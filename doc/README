@@ -1,0 +1,20 @@
+THRIFT v0.01
+
+Some time soon this document will tell you all about Thrift, what it does, how
+it was designed, oh and some other stuff too. But in the meantime, all it does
+is tell you that Thrift is the 2nd coming of Pillar, originally written by
+the great Adam D'Angelo, and now manned mainly by mcslee and aditya at
+facebook.com.
+
+Oh yeah... a few rules:
+
+1) This shit is open source. Don't mess.
+
+2) Mark Slee is anal about coding standards and commenting, especially because
+   this is open source. Again, don't mess.
+
+3) You need three things to make a few. Otherwise call it a couple.
+
+That's all.
+
+-mcslee, May 22, 2006
