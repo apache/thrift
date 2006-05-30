@@ -25,6 +25,7 @@ class t_base_type : public t_type {
     t_type(name), base_(base) {}
     
   t_base get_base() const { return base_; }
+  bool is_void() const { return base_ == TYPE_VOID; }
   bool is_base_type() const { return true; }
     
  private:

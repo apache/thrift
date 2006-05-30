@@ -1,27 +1,19 @@
 #ifndef T_LIST_H
 #define T_LIST_H
 
-#include "t_field.h"
-#include <vector>
+#include "t_type.h"
 
-/**
- * List of elements.
- *
- * @author Mark Slee <mcslee@facebook.com>
- */
-class t_list {
+class t_list : public t_type {
  public:
-  t_list() {}
+  t_list(t_type* elem_type) : elem_type_(elem_type) {}
   ~t_list() {}
 
-  /** Add a new field to the list */
-  void append(t_field* elem) { list_.push_back(elem); }
-
-  /** Retrieve the list contents */
-  const std::vector<t_field*>& elems() const { return list_; }
+  t_type* get_elem_type() const { return elem_type_; }
+  bool is_list() const { return true; }
 
  private:
-  std::vector<t_field*> list_;
+  t_type* elem_type_;
 };
 
 #endif
+

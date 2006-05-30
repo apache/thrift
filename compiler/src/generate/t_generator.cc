@@ -9,6 +9,9 @@ using namespace std;
  * @param program The thrift program to compile into C++ source
  */
 void t_generator::generate_program(t_program *tprogram) {
+  // Set program name
+  program_name_ = get_program_name(tprogram);
+
   // Initialize the generator
   init_generator(tprogram);
 
@@ -37,6 +40,7 @@ void t_generator::generate_program(t_program *tprogram) {
   vector<t_service*> services = tprogram->get_services();
   vector<t_service*>::iterator sv_iter;
   for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
+    service_name_ = get_service_name(*sv_iter);
     generate_service(*sv_iter);
   }
 

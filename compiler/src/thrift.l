@@ -23,7 +23,7 @@ identifier   ([a-zA-Z_][a-zA-Z_0-9]*)
 whitespace   ([ \t\r\n]*)
 multicomm    ("/*""/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
 comment      ("//"[^\n]*)
-symbol       ([\,\{\}\(\)\=])
+symbol       ([\,\{\}\(\)\=<>])
 
 %%
 

@@ -14,10 +14,16 @@ class t_type {
 
   virtual const std::string& get_name() const { return name_; }
 
+  virtual bool is_void()      const { return false; }
   virtual bool is_base_type() const { return false; }
   virtual bool is_typedef()   const { return false; }
   virtual bool is_enum()      const { return false; }
   virtual bool is_struct()    const { return false; }
+  virtual bool is_list()      const { return false; }
+  virtual bool is_set()       const { return false; }
+  virtual bool is_map()       const { return false; }
+
+  bool is_container() const { return is_map() || is_set() || is_list(); }
 
  protected:
   t_type() {}

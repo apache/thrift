@@ -1,6 +1,7 @@
 #ifndef T_PROGRAM_H
 #define T_PROGRAM_H
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -9,6 +10,9 @@
 #include "t_enum.h"
 #include "t_struct.h"
 #include "t_service.h"
+#include "t_list.h"
+#include "t_map.h"
+#include "t_set.h"
 
 /**
  * Top level class representing an entire thrift program. A program consists
@@ -52,12 +56,6 @@ class t_program {
   const std::vector<t_struct*>&  get_structs()  const { return structs_;  }
   const std::vector<t_service*>& get_services() const { return services_; }
 
-  // New program element addition
-  void add_typedef(t_typedef *td) { typedefs_.push_back(td); }
-  void add_enum   (t_enum *te)    { enums_.push_back(te);    }
-  void add_struct (t_struct *ts)  { structs_.push_back(ts);  }
-  void add_service(t_service *ts) { services_.push_back(ts); }
-
   // Accessors for global types
   t_type* get_void_type()   const { return type_void;   }
   t_type* get_string_type() const { return type_string; }
@@ -66,6 +64,31 @@ class t_program {
   t_type* get_u32_type()    const { return type_u32;    }
   t_type* get_i64_type()    const { return type_i64;    }
   t_type* get_u64_type()    const { return type_u64;    }
+
+  // Custom data type lookup
+  void add_custom_type(std::string name, t_type* type) {
+    custom_types_[name] = type;
+  }
+  t_type* get_custom_type(std::string name) {
+    return custom_types_[name];
+  }
+
+  // New program element addition
+  void add_typedef(t_typedef* td) {
+    typedefs_.push_back(td);
+    add_custom_type(td->get_symbolic(), td);
+  }
+  void add_enum(t_enum* te) {
+    enums_.push_back(te);
+    add_custom_type(te->get_name(), te);
+  }
+  void add_struct(t_struct* ts) {
+    structs_.push_back(ts);
+    add_custom_type(ts->get_name(), ts);
+  }
+  void add_service(t_service* ts) {
+    services_.push_back(ts);
+  }
 
  private:
   // Name
@@ -76,7 +99,10 @@ class t_program {
   std::vector<t_enum*>    enums_;
   std::vector<t_struct*>  structs_;
   std::vector<t_service*> services_;
-  
+
+  // Type map
+  std::map<std::string, t_type*> custom_types_;
+
   // Global base types
   t_type* type_void;
   t_type* type_string;

@@ -137,6 +137,7 @@ int main(int argc, char** argv) {
   
   // Parse it
   g_program = new t_program(name);
+
   if (yyparse() != 0) {
     failure("Parser error.");
   }
@@ -146,6 +147,8 @@ int main(int argc, char** argv) {
     t_cpp_generator* cpp = new t_cpp_generator();
     cpp->generate_program(g_program);
     delete cpp;
+  } catch (string s) {
+    printf("Error: %s\n", s.c_str());
   } catch (const char* exc) {
     printf("Error: %s\n", exc);
   }

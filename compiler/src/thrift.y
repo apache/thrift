@@ -27,7 +27,6 @@ int y_field_val = 0;
   t_service*  tservice;
   t_function* tfunction;
   t_field*    tfield;
-  t_list*     tlist;
   t_constant* tconstant;
 }
 
@@ -63,13 +62,17 @@ int y_field_val = 0;
 
 /** Types */
 %type<ttype>     BaseType
+%type<ttype>     ContainerType
+%type<ttype>     MapType
+%type<ttype>     SetType
+%type<ttype>     ListType
 
 %type<ttypedef>  Typedef
 %type<ttype>     DefinitionType
 
 %type<tfield>    Field
 %type<ttype>     FieldType
-%type<tlist>     FieldList
+%type<tstruct>   FieldList
 
 %type<tenum>     Enum
 %type<tenum>     EnumDefList
@@ -130,7 +133,6 @@ Typedef:
   tok_typedef DefinitionType tok_identifier
     {
       pdebug("TypeDef -> tok_typedef DefinitionType tok_identifier");
-      
       t_typedef *td = new t_typedef($2, $3);
       $$ = td;
     }
@@ -165,10 +167,10 @@ EnumDefList:
 EnumDef:
   tok_identifier '=' tok_int_constant
     {
+      pdebug("EnumDef => tok_identifier = tok_int_constant");
       if ($3 < 0) {
         printf("WARNING (%d): Negative value supplied for enum %s.\n", yylineno, $1);
       }
-      pdebug("EnumDef => tok_identifier = tok_int_constant");
       $$ = new t_constant($1, $3);
     }
 |
@@ -182,7 +184,8 @@ Struct:
   tok_struct tok_identifier '{' FieldList '}'
     {
       pdebug("Struct -> tok_struct tok_identifier { FieldList }");
-      $$ = new t_struct($2, $4);
+      $4->set_name($2);
+      $$ = $4;
       y_field_val = 0;
     }
 
@@ -210,8 +213,7 @@ FunctionList:
 Function:
   FunctionType FunctionModifiers tok_identifier '(' FieldList ')'
     {
-      t_struct* fun_args = new t_struct("__targs", $5);
-      $$ = new t_function($1, $3, fun_args);
+      $$ = new t_function($1, $3, $5);
       y_field_val = 0;
     }
 
@@ -231,26 +233,29 @@ FieldList:
 | Field
     {
       pdebug("FieldList -> Field");
-      $$ = new t_list;
+      $$ = new t_struct;
       $$->append($1);
     }
 |
     {
       pdebug("FieldList -> ");
-      $$ = new t_list;
+      $$ = new t_struct;
     }
 
 Field:
   FieldType tok_identifier '=' tok_int_constant
     {
+      pdebug("Field -> FieldType tok_identifier = tok_int_constant");
       if ($4 < 0) {
         yyerror("Negative value (%d) not allowed as a field key.", $4);
+        exit(1);
       }
       $$ = new t_field($1, $2, (uint32_t)$4);
       y_field_val = $4+1;
     }
 | FieldType tok_identifier
     {
+      pdebug("Field -> FieldType tok_identifier");
       printf("WARNING (%d): No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", yylineno, $2);
       $$ = new t_field($1, $2, y_field_val++);
     }
@@ -261,25 +266,42 @@ DefinitionType:
       pdebug("DefinitionType -> BaseType");
       $$ = $1;
     }
+| ContainerType
+    {
+      pdebug("DefinitionType -> ContainerType");
+      $$ = $1;
+    }
 
 FunctionType:
   FieldType
     {
+      pdebug("FunctionType -> FieldType");
       $$ = $1;
     }
 | tok_void
     {
+      pdebug("FunctionType -> tok_void");
       $$ = g_program->get_void_type();
     }
 
 FieldType:
   tok_identifier
     {
-      /** TODO(mcslee): Dynamic type lookup */
-      yyerror("No dynamic type lookup yet.");
+      pdebug("FieldType -> tok_identifier");
+      $$ = g_program->get_custom_type($1);
+      if ($$ == NULL) {
+        yyerror("Type \"%s\" has not been defined.", $1);
+        exit(1);
+      }
     }
 | BaseType
     {
+      pdebug("FieldType -> BaseType");
+      $$ = $1;
+    }
+| ContainerType
+    {
+      pdebug("FieldType -> ContainerType");
       $$ = $1;
     }
 
@@ -313,6 +335,44 @@ BaseType:
     {
       pdebug("BaseType -> tok_u64");
       $$ = g_program->get_u64_type();
+    }
+
+ContainerType:
+  MapType
+    {
+      pdebug("ContainerType -> MapType");
+      $$ = $1;
+    }
+| SetType
+    {
+      pdebug("ContainerType -> SetType");
+      $$ = $1;
+    }
+| ListType
+    {
+      pdebug("ContainerType -> ListType");
+      $$ = $1;
+    }
+
+MapType:
+  tok_map '<' FieldType ',' FieldType '>'
+    {
+      pdebug("MapType -> tok_map <FieldType, FieldType>");
+      $$ = new t_map($3, $5);
+    }
+
+SetType:
+  tok_set '<' FieldType '>'
+    {
+      pdebug("SetType -> tok_set<FieldType>");
+      $$ = new t_set($3);
+    }
+
+ListType:
+  tok_list '<' FieldType '>'
+    {
+      pdebug("ListType -> tok_list<FieldType>");
+      $$ = new t_list($3);
     }
 
 %%
