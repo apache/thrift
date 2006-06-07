@@ -16,11 +16,14 @@ class TServerSocket : public TServerTransport {
   TServerSocket(int port);
   ~TServerSocket();
 
-  bool listen();
-  TTransport* accept();
+  void listen();
   void close();
 
+ protected:
+  TTransport* acceptImpl();
+
  private:
+
   int port_;
   int serverSocket_;
   int acceptBacklog_;

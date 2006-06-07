@@ -14,10 +14,10 @@
  */
 class TSimpleServer : public TServer {
  public:
-  TSimpleServer(TDispatcher* dispatcher,
+  TSimpleServer(TProcessor* processor,
                 TServerOptions* options,
                 TServerTransport* serverTransport) :
-    TServer(dispatcher, options), serverTransport_(serverTransport) {}
+    TServer(processor, options), serverTransport_(serverTransport) {}
     
   ~TSimpleServer() {}
 

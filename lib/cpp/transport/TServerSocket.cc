@@ -1,5 +1,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <errno.h>
 
 #include "transport/TSocket.h"
 #include "transport/TServerSocket.h"
@@ -11,11 +12,12 @@ TServerSocket::~TServerSocket() {
   close();
 }
 
-bool TServerSocket::listen() {
+void TServerSocket::listen() {
   serverSocket_ = socket(AF_INET, SOCK_STREAM, 0);
   if (serverSocket_ == -1) {
+    perror("TServerSocket::listen() socket");
     close();
-    return false;
+    throw TTransportException(TTX_NOT_OPEN, "Could not create server socket.");
   }
 
   // Set reusaddress to prevent 2MSL delay on accept
@@ -24,16 +26,16 @@ bool TServerSocket::listen() {
                        &one, sizeof(one))) {
     perror("TServerSocket::listen() SO_REUSEADDR");
     close();
-    return false;
+    throw TTransportException(TTX_NOT_OPEN, "Could not set SO_REUSEADDR");
   }
 
   // Turn linger off, don't want to block on calls to close
   struct linger ling = {0, 0};
   if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_LINGER,
                        &ling, sizeof(ling))) {
-    perror("TServerSocket::listen() SO_LINGER");
     close();
-    return false;
+    perror("TServerSocket::listen() SO_LINGER");
+    throw TTransportException(TTX_NOT_OPEN, "Could not set SO_LINGER");
   }
 
   // Bind to a port
@@ -47,24 +49,22 @@ bool TServerSocket::listen() {
     sprintf(errbuf, "TServerSocket::listen() BIND %d", port_);
     perror(errbuf);
     close();
-    return false;
+    throw TTransportException(TTX_NOT_OPEN, "Could not bind");
   }
 
   // Call listen
   if (-1 == ::listen(serverSocket_, acceptBacklog_)) {
     perror("TServerSocket::listen() LISTEN");
     close();
-    return false;
+    throw TTransportException(TTX_NOT_OPEN, "Could not listen");
   }
 
   // The socket is now listening!
-  return true;
 }
 
-TTransport* TServerSocket::accept() {
+TTransport* TServerSocket::acceptImpl() {
   if (serverSocket_ <= 0) {
-    // TODO(mcslee): Log error with common logging tool
-    return NULL;
+    throw TTransportException(TTX_NOT_OPEN, "TServerSocket not listening");
   }
 
   struct sockaddr_in clientAddress;
@@ -75,7 +75,7 @@ TTransport* TServerSocket::accept() {
     
   if (clientSocket <= 0) {
     perror("TServerSocket::accept()");
-    return NULL;
+    throw TTransportException(TTX_UNKNOWN, "ERROR:" + errno);
   }
 
   return new TSocket(clientSocket);

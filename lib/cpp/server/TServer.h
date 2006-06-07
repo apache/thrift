@@ -1,7 +1,7 @@
 #ifndef T_SERVER_H
 #define T_SERVER_H
 
-#include "TDispatcher.h"
+#include "TProcessor.h"
 
 class TServerOptions;
 
@@ -16,10 +16,10 @@ class TServer {
   virtual void run() = 0;
 
  protected:
-  TServer(TDispatcher* dispatcher, TServerOptions* options) :
-    dispatcher_(dispatcher), options_(options) {}
+  TServer(TProcessor* processor, TServerOptions* options) :
+    processor_(processor), options_(options) {}
     
-  TDispatcher* dispatcher_;
+  TProcessor* processor_;
   TServerOptions* options_;
 };
 

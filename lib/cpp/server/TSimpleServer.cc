@@ -1,60 +1,54 @@
 #include "server/TSimpleServer.h"
+#include "transport/TBufferedTransport.h"
+#include "transport/TTransportException.h"
 #include <string>
+#include <iostream>
 using namespace std;
 
+/**
+ * A simple single-threaded application server. Perfect for unit tests!
+ *
+ * @author Mark Slee <mcslee@facebook.com>
+ */
 void TSimpleServer::run() {
-  TTransport* client;
+  TTransport* client = NULL;
 
-  // Start the server listening
-  if (serverTransport_->listen() == false) {
-    // TODO(mcslee): Log error here
-    fprintf(stderr, "TSimpleServer::run(): Call to listen failed\n");
+  try {
+    // Start the server listening
+    serverTransport_->listen();
+  } catch (TTransportException& ttx) {
+    cerr << "TSimpleServer::run() listen(): " << ttx.getMessage() << endl;
     return;
   }
 
   // Fetch client from server
   while (true) {
-    // fprintf(stderr, "Listening for connection\n");
-    if ((client = serverTransport_->accept()) == NULL) {
-      // fprintf(stderr, "Got NULL connection, exiting.\n");
-      break;
-    }
-
-    while (true) {
-      // Read header from client
-      // fprintf(stderr, "Reading 4 byte header from client.\n");
-      string in;
-      if (client->read(in, 4) <= 0) {
-        // fprintf(stderr, "Size header negative. Exception!\n");
-        break;
+    try {
+      client = serverTransport_->accept();
+      if (client != NULL) {
+        // Process for as long as we can keep the processor happy!
+        TBufferedTransport bufferedClient(client);
+        while (processor_->process(&bufferedClient)) {}
       }
-      
-      // Read payload from client
-      int32_t size = *(int32_t*)(in.data());
-      // fprintf(stderr, "Reading %d byte payload from client.\n", size);
-      if (client->read(in, size) < size) {
-        // fprintf(stderr, "Didn't get enough data!!!\n");
-        break;
+    } catch (TTransportException& ttx) {
+      if (client != NULL) {
+        cerr << "TSimpleServer client died: " << ttx.getMessage() << endl;
       }
-      
-      // Pass payload to dispatcher
-      // TODO(mcslee): Wrap this in try/catch and return exceptions
-      string out = dispatcher_->dispatch(in);
-      
-      size = out.size();
-      
-      // Write size of response packet
-      client->write(string((char*)&size, 4));
-      
-      // Write response payload
-      client->write(out);
     }
   
-    // Clean up that client
-    // fprintf(stderr, "Closing and cleaning up client\n");
-    client->close();
-    delete client;
+    // Clean up the client
+    if (client != NULL) {
+
+      // Ensure no resource leaks
+      client->close();
+
+      // Ensure no memory leaks
+      delete client;
+
+      // Ensure we don't try to double-free on the next pass
+      client = NULL;
+    }
   }
 
-  // TODO(mcslee): Is this a timeout case or the real thing?
+  // TODO(mcslee): Could this be a timeout case? Or always the real thing?
 }

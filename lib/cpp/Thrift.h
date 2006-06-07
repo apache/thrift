@@ -1,7 +1,8 @@
 #ifndef THRIFT_H
 #define THRIFT_H
 
-#include <sys/types.h>
+#include <netinet/in.h>
+#include <inttypes.h>
 #include <string>
 #include <map>
 #include <list>

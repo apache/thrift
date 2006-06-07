@@ -14,29 +14,114 @@ class TBinaryProtocol : public TProtocol {
   TBinaryProtocol() {}
   ~TBinaryProtocol() {}
 
-  std::string
-    readFunction(TBuf& buf) const;
-  std::string
-    writeFunction(const std::string& name, const std::string& args) const;
+  /**
+   * Writing functions.
+   */
 
-  std::map<uint32_t, TBuf>
-    readStruct(TBuf& buf) const;
-  std::string
-    writeStruct(const std::map<uint32_t,std::string>& s) const;
+  uint32_t writeStructBegin   (TTransport*    out,
+                               const std::string& name)   const;
 
-  std::string readString  (TBuf& buf) const;
-  uint8_t     readByte    (TBuf& buf) const;
-  uint32_t    readU32     (TBuf& buf) const;
-  int32_t     readI32     (TBuf& buf) const;
-  uint64_t    readU64     (TBuf& buf) const;
-  int64_t     readI64     (TBuf& buf) const;
+  uint32_t writeStructEnd     (TTransport*    out)        const;
 
-  std::string writeString (const std::string& str) const;
-  std::string writeByte   (const uint8_t  byte)    const;
-  std::string writeU32    (const uint32_t u32)     const;
-  std::string writeI32    (const int32_t  i32)     const;
-  std::string writeU64    (const uint64_t u64)     const;
-  std::string writeI64    (const int64_t  i64)     const;
+  uint32_t writeFieldBegin    (TTransport*    out,
+                               const std::string& name,
+                               const TType    fieldType,
+                               const uint16_t fieldId)    const;
+
+  uint32_t writeFieldEnd      (TTransport*    out)        const;
+
+  uint32_t writeFieldStop     (TTransport*    out)        const;
+                                       
+  uint32_t writeMapBegin      (TTransport*    out,
+                               const TType    keyType,
+                               const TType    valType,
+                               const uint32_t size)       const;
+
+  uint32_t writeMapEnd        (TTransport*    out)        const;
+
+  uint32_t writeListBegin     (TTransport*    out,
+                               const TType    elemType,
+                               const uint32_t size)       const;
+
+  uint32_t writeListEnd       (TTransport*    out)        const;
+
+  uint32_t writeSetBegin      (TTransport*    out,
+                               const TType    elemType,
+                               const uint32_t size)       const;
+
+  uint32_t writeSetEnd        (TTransport*    out)        const;
+
+  uint32_t writeByte          (TTransport*    out,
+                               const uint8_t  byte)       const;
+
+  uint32_t writeU32           (TTransport*    out,
+                               const uint32_t u32)        const;
+
+  uint32_t writeI32           (TTransport*    out,
+                               const int32_t  i32)        const;
+
+  uint32_t writeU64           (TTransport*    out,
+                               const uint64_t u64)        const;
+
+  uint32_t writeI64           (TTransport*    out,
+                               const int64_t  i64)        const;
+
+  uint32_t writeString        (TTransport*    out,
+                               const std::string& str)    const;
+
+  /**
+   * Reading functions
+   */
+
+  uint32_t readStructBegin    (TTransport*    in,
+                               std::string& name)         const;
+
+  uint32_t readStructEnd      (TTransport*    in)         const;
+
+  uint32_t readFieldBegin     (TTransport*    in,
+                               std::string&   name,
+                               TType&         fieldType,
+                               uint16_t&      fieldId)    const;
+  
+  uint32_t readFieldEnd       (TTransport*    in)         const;
+ 
+  uint32_t readMapBegin       (TTransport*    in,
+                               TType&         keyType,
+                               TType&         valType,
+                               uint32_t&      size)       const;
+
+  uint32_t readMapEnd         (TTransport*    in)         const;
+
+  uint32_t readListBegin      (TTransport*    in,
+                               TType&         elemType,
+                               uint32_t&      size)       const;
+  
+  uint32_t readListEnd        (TTransport*    in)         const;
+
+  uint32_t readSetBegin       (TTransport*    in,
+                               TType&         elemType,
+                               uint32_t&      size)       const;
+
+  uint32_t readSetEnd         (TTransport*    in)         const;
+
+  uint32_t readByte           (TTransport*    in,
+                               uint8_t&       byte)       const;
+
+  uint32_t readU32            (TTransport*    in,
+                               uint32_t&      u32)        const;
+
+  uint32_t readI32            (TTransport*    in,
+                               int32_t&       i32)        const;
+
+  uint32_t readU64            (TTransport*    in,
+                               uint64_t&      u64)        const;
+
+  uint32_t readI64            (TTransport*    in,
+                               int64_t&       i64)        const;
+
+  uint32_t readString         (TTransport*    in,
+                               std::string&   str)        const;
+
 };
 
 #endif
