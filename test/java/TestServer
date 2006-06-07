@@ -1,0 +1,2 @@
+#!/bin/bash -v
+java -server -cp thrifttest.jar:/usr/local/lib/libthrift.jar com.facebook.thrift.test.TestServer $1

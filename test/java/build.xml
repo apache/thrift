@@ -1,0 +1,36 @@
+<project name="thrifttest" default="test" basedir=".">
+
+  <description>Thrift Test Build File</description>
+
+  <property name="src" location="src" />
+  <property name="gen" location="gen-java" />
+  <property name="build" location="build" />
+  <property name="cpath" location="/usr/local/lib/libthrift.jar" />
+
+  <target name="init">
+    <tstamp />
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="generate">
+    <exec executable="thrift">
+      <arg line="-java ../ThriftTest.thrift" />
+    </exec>
+  </target>
+
+  <target name="compile" depends="init,generate">
+    <javac srcdir="${gen}" destdir="${build}" classpath="${cpath}" />
+    <javac srcdir="${src}" destdir="${build}" classpath="${cpath}:${gen}" />
+  </target>
+
+  <target name="test" depends="compile">
+    <jar jarfile="thrifttest.jar" basedir="${build}"/>
+  </target>
+
+  <target name="clean">
+    <delete dir="gen-java" />
+    <delete dir="${build}" />
+    <delete file="thrifttest.jar" />
+  </target>
+
+</project>

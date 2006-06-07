@@ -1,10 +1,25 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include "protocol/TBinaryProtocol.h"
-#include "client/TSimpleClient.h"
+#include "transport/TBufferedTransport.h"
 #include "transport/TSocket.h"
-#include "gen-cpp/ThriftTest.h"
+#include "ThriftTest.h"
 using namespace std;
+
+extern uint32_t g_socket_syscalls;
+
+// Current time, microseconds since the epoch
+uint64_t now()
+{
+  long long ret;
+  struct timeval tv;
+  
+  gettimeofday(&tv, NULL);
+  ret = tv.tv_sec;
+  ret = ret*1000*1000 + tv.tv_usec;
+  return ret;
+}
 
 int main(int argc, char** argv) {
   string host = "localhost";
@@ -22,18 +37,25 @@ int main(int argc, char** argv) {
   }
 
   TSocket socket(host, port);
-  TSimpleClient simpleClient(&socket);
+  TBufferedTransport bufferedSocket(&socket, 2048);
   TBinaryProtocol binaryProtocol;
-  ThriftTestClient testClient(&simpleClient, &binaryProtocol);
+  ThriftTestClient testClient(&bufferedSocket, &binaryProtocol);
   
   int test = 0;
   for (test = 0; test < numTests; ++test) {
+
+    /**
+     * CONNECT TEST
+     */
     printf("Test #%d, connect %s:%d\n", test+1, host.c_str(), port);
-    bool success = simpleClient.open();
-    if (!success) {
-      printf("Connect failed, server down?\n");
+    try {
+      bufferedSocket.open();
+    } catch (TTransportException& ttx) {
+      printf("Connect failed: %s\n", ttx.getMessage().c_str());
       continue;
     }
+
+    uint64_t start = now();
     
     /**
      * VOID TEST
@@ -319,9 +341,13 @@ int main(int argc, char** argv) {
     }
     printf("}\n");
 
-    simpleClient.close();
+    uint64_t stop = now();
+    printf("Total time: %lu us\n", stop-start);
+
+    bufferedSocket.close();
   }
 
+  printf("\nSocket syscalls: %u", g_socket_syscalls);
   printf("\nAll tests done.\n");
   return 0;
 }

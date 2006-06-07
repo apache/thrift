@@ -2,7 +2,7 @@
 #include "protocol/TBinaryProtocol.h"
 #include "server/TSimpleServer.h"
 #include "transport/TServerSocket.h"
-#include "gen-cpp/ThriftTest.h"
+#include "ThriftTest.h"
 using namespace std;
 
 class TestServer : public ThriftTestServerIf {
@@ -117,12 +117,12 @@ class TestServer : public ThriftTestServerIf {
     return thing;
   }
 
-  Numberz testEnum(Numberz thing = 0) {
+  Numberz testEnum(Numberz thing) {
     printf("testEnum(%d)\n", thing);
     return thing;
   }
 
-  UserId testTypedef(UserId thing = 0) {
+  UserId testTypedef(UserId thing) {
     printf("testTypedef(%lu)\n", thing);
     return thing;
   }
