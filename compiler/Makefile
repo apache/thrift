@@ -96,9 +96,8 @@ install: thrift
 
 # Remove auto-gen'd files and binaries
 clean:
-	rm -f \
-	$(OBJS) \
-	$(GOBS) \
+	rm -fr \
+	$(OBJ_DIR) \
 	$(GENS) \
 	$(BIN_DIR)thrift.exe \
 	$(BIN_DIR)thrift
