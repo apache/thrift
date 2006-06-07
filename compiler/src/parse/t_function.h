@@ -19,29 +19,10 @@ class t_function {
 
   ~t_function() {}
 
-  /**
-   * Implementation of the Fowler / Noll / Vo (FNV) Hash 
-   *	http://www.isthe.com/chongo/tech/comp/fnv/
-   */
-  static uint32_t fnv32(const char *s) {
-    uint32_t hash = (uint32_t)216613626;
-    while (*s) {
-      hash +=
-        (hash << 1) +
-        (hash << 4) +
-        (hash << 7) +
-        (hash << 8) +
-        (hash << 24);
-      hash ^= *s++;
-    }
-    return hash;
-  }
-
   t_type*      get_returntype() const { return returntype_; }
   const std::string& get_name() const { return name_; }
   t_struct*    get_arglist()    const { return arglist_; }
-  uint32_t     get_hash()       const { return fnv32(name_.c_str()); }
- 
+
  private:
   t_type* returntype_;
   std::string name_;

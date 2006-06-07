@@ -49,7 +49,6 @@ symbol       ([\,\{\}\(\)\=<>])
 
 "typedef"     { return tok_typedef;  }
 "struct"      { return tok_struct;   }
-"function"    { return tok_function; }
 "service"     { return tok_service;  }
 "enum"        { return tok_enum;     }
 

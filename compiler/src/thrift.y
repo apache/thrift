@@ -56,7 +56,6 @@ int y_field_val = 0;
 /** Thrift actions */
 %token tok_typedef
 %token tok_struct
-%token tok_function
 %token tok_service
 %token tok_enum
 
@@ -213,6 +212,7 @@ FunctionList:
 Function:
   FunctionType FunctionModifiers tok_identifier '(' FieldList ')'
     {
+      $5->set_name(std::string($3) + "_args");
       $$ = new t_function($1, $3, $5);
       y_field_val = 0;
     }

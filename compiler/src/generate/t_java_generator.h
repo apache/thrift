@@ -1,5 +1,5 @@
-#ifndef T_CPP_GENERATOR_H
-#define T_CPP_GENERATOR_H
+#ifndef T_JAVA_GENERATOR_H
+#define T_JAVA_GENERATOR_H
 
 #include <string>
 #include <fstream>
@@ -9,17 +9,17 @@
 #include "t_oop_generator.h"
 
 // TODO(mcslee: Paramaterize the output dir
-#define T_CPP_DIR "gen-cpp"
+#define T_JAVA_DIR "gen-java"
 
 /**
- * C++ code generator. This is legitimacy incarnate.
+ * Java code generator.
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_cpp_generator : public t_oop_generator {
+class t_java_generator : public t_oop_generator {
  public:
-  t_cpp_generator() {}
-  ~t_cpp_generator() {}
+  t_java_generator() {}
+  ~t_java_generator() {}
 
   /** Init and close methods */
 
@@ -70,7 +70,8 @@ class t_cpp_generator : public t_oop_generator {
                                           std::string prefix="");
 
   void generate_serialize_map_element    (t_map*      tmap,
-                                          std::string iter);
+                                          std::string iter,
+                                          std::string map);
 
   void generate_serialize_set_element    (t_set*      tmap,
                                           std::string iter);
@@ -80,6 +81,9 @@ class t_cpp_generator : public t_oop_generator {
 
   /** Helper rendering functions */
 
+  std::string java_package();
+  std::string java_type_imports();
+  std::string java_thrift_imports();
   std::string type_name(t_type* ttype);
   std::string base_type_name(t_base_type::t_base tbase);
   std::string declare_field(t_field* tfield, bool init=false);
@@ -94,6 +98,10 @@ class t_cpp_generator : public t_oop_generator {
   std::ofstream f_types_;
   std::ofstream f_header_;
   std::ofstream f_service_;
+
+  std::ofstream f_client_;
+  std::ofstream f_server_;
+
 };
 
 #endif

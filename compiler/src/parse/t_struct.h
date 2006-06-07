@@ -10,6 +10,8 @@
 class t_struct : public t_type {
  public:
   t_struct() {}
+  t_struct(const std::string& name) : t_type(name) {}
+
   ~t_struct() {}
 
   /** Set the struct name */

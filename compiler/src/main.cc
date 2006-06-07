@@ -19,6 +19,7 @@
 #include "main.h"
 #include "parse/t_program.h"
 #include "generate/t_cpp_generator.h"
+#include "generate/t_java_generator.h"
 
 using namespace std;
 
@@ -91,7 +92,13 @@ void failure(char* fmt, ...) {
  * Diplays the usage message and then exits with an error code.
  */
 void usage() {
-  fprintf(stderr, "Usage: thrift [-d] <filename>\n");
+  fprintf(stderr, "Usage: thrift [options] file\n");
+  fprintf(stderr, "Options:\n");
+  fprintf(stderr, "  -cpp    Generate C++ output files\n");
+  fprintf(stderr, "  -java   Generate Java output files\n");
+  //fprintf(stderr, "  -php    Generate PHP output files\n");
+  //fprintf(stderr, "  -python Generate Python output files\n");
+  fprintf(stderr, "  -d      Print parse debugging to standard output\n");
   exit(1);
 }
 
@@ -100,23 +107,36 @@ void usage() {
  */
 int main(int argc, char** argv) {
   int i;
+  bool gen_cpp = false;
+  bool gen_java = false;
+
+  // Setup time string
+  time_t now = time(NULL);
+  g_time_str = ctime(&now);
 
   // Check for necessary arguments
-  if (argc < 2) usage();
+  if (argc < 2) {
+    usage();
+  }
 
   for (i = 1; i < argc-1; i++) {
     if (strcmp(argv[i], "-d") == 0) {
       g_debug = 1;
+    } else if (strcmp(argv[i], "-cpp") == 0) {
+      gen_cpp = true;
+    } else if (strcmp(argv[i], "-java") == 0) {
+      gen_java = true;
     } else {
       fprintf(stderr, "!!! Unrecognized option: %s\n", argv[i]);
       usage();
     }
   }
   
-  // Setup time string
-  time_t now = time(NULL);
-  g_time_str = ctime(&now);
-
+  if (!gen_cpp && !gen_java) {
+    fprintf(stderr, "!!! No output language(s) specified\n\n");
+    usage();
+  }
+  
   // Open input file
   char* input_file = argv[i];
   yyin = fopen(input_file, "r");
@@ -144,9 +164,18 @@ int main(int argc, char** argv) {
 
   // Generate code
   try {
-    t_cpp_generator* cpp = new t_cpp_generator();
-    cpp->generate_program(g_program);
-    delete cpp;
+    if (gen_cpp) {
+      t_cpp_generator* cpp = new t_cpp_generator();
+      cpp->generate_program(g_program);
+      delete cpp;
+    }
+
+    if (gen_java) {
+      t_java_generator* java = new t_java_generator();
+      java->generate_program(g_program);
+      delete java;
+    }
+
   } catch (string s) {
     printf("Error: %s\n", s.c_str());
   } catch (const char* exc) {
@@ -157,6 +186,5 @@ int main(int argc, char** argv) {
   delete g_program;
 
   // Finished
-  printf("\nDone!\n");
   return 0;
 }

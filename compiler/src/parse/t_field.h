@@ -11,6 +11,9 @@
  */
 class t_field {
  public:
+  t_field(t_type* type, std::string name) :
+    type_(type), name_(name), key_(0) {}
+
   t_field(t_type* type, std::string name, uint32_t key) :
     type_(type), name_(name), key_(key) {}
 
