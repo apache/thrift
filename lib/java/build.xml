@@ -1,0 +1,32 @@
+<project name="libthrift" default="dist" basedir=".">
+
+  <description>Thrift Build File</description>
+
+  <property name="src" location="src" />
+  <property name="build" location="build" />
+
+  <target name="init">
+    <tstamp />
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compile" depends="init">
+    <javac srcdir="${src}" destdir="${build}" />
+  </target>
+
+  <target name="dist" depends="compile">
+    <jar jarfile="libthrift.jar" basedir="${build}"/>
+  </target>
+
+  <target name="install" depends="dist">
+    <exec executable="sudo">
+      <arg line="install libthrift.jar /usr/local/lib/" />
+    </exec>
+  </target>
+
+  <target name="clean">
+    <delete dir="${build}" />
+    <delete file="libthrift.jar" />
+  </target>
+
+</project>
