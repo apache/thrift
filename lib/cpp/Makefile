@@ -12,14 +12,14 @@ target: libthrift
 
 # Tools
 LD    = g++
-LDFL  = -shared -Wall -I. -fPIC -Wl,-soname=libthrift.so
+LDFL  = -shared -Wall -Isrc -fPIC -Wl,-soname=libthrift.so
 
 # Source files
-SRCS  = protocol/TBinaryProtocol.cc \
-	transport/TBufferedTransport.cc \
-	transport/TSocket.cc \
-	transport/TServerSocket.cc \
-	server/TSimpleServer.cc
+SRCS  = src/protocol/TBinaryProtocol.cc \
+	src/transport/TBufferedTransport.cc \
+	src/transport/TSocket.cc \
+	src/transport/TServerSocket.cc \
+	src/server/TSimpleServer.cc
 
 # Linked library
 libthrift:
