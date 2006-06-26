@@ -16,7 +16,7 @@ uint32_t TBinaryProtocol::writeFieldBegin(TTransport* out,
                                           const uint16_t fieldId) const {
   return
     writeByte(out, (uint8_t)fieldType) +
-    writeU32(out, (uint32_t)fieldId);
+    writeI32(out, (int32_t)fieldId);
 }
 
 uint32_t TBinaryProtocol::writeFieldEnd(TTransport* out) const {
@@ -31,11 +31,11 @@ uint32_t TBinaryProtocol::writeFieldStop(TTransport* out) const {
 uint32_t TBinaryProtocol::writeMapBegin(TTransport* out,
                                         const TType keyType,
                                         const TType valType,
-                                        const uint32_t size) const {
+                                        const int32_t size) const {
   return
     writeByte(out, (uint8_t)keyType) +
     writeByte(out, (uint8_t)valType) +
-    writeU32(out, size);
+    writeI32(out, (int32_t)size);
 }
 
 uint32_t TBinaryProtocol::writeMapEnd(TTransport* out) const {
@@ -44,10 +44,10 @@ uint32_t TBinaryProtocol::writeMapEnd(TTransport* out) const {
 
 uint32_t TBinaryProtocol::writeListBegin(TTransport* out,
                                          const TType elemType,
-                                         const uint32_t size) const {
+                                         const int32_t size) const {
   return
     writeByte(out, (uint8_t) elemType) +
-    writeU32(out, size);
+    writeI32(out, (int32_t)size);
 }
 
 uint32_t TBinaryProtocol::writeListEnd(TTransport* out) const {
@@ -56,10 +56,10 @@ uint32_t TBinaryProtocol::writeListEnd(TTransport* out) const {
 
 uint32_t TBinaryProtocol::writeSetBegin(TTransport* out,
                                         const TType elemType,
-                                        const uint32_t size) const {
+                                        const int32_t size) const {
   return
     writeByte(out, (uint8_t)elemType) +
-    writeU32(out, size);
+    writeI32(out, (int32_t)size);
 }
 
 uint32_t TBinaryProtocol::writeSetEnd(TTransport* out) const {
@@ -102,7 +102,7 @@ uint32_t TBinaryProtocol::writeI64(TTransport* out,
 
 uint32_t TBinaryProtocol::writeString(TTransport* out,
                                       const string& str) const {
-  uint32_t result = writeU32(out, str.size());
+  uint32_t result = writeI32(out, str.size());
   out->write((uint8_t*)str.data(), str.size());
   return result + str.size();
 }
@@ -133,8 +133,8 @@ uint32_t TBinaryProtocol::readFieldBegin(TTransport* in,
     fieldId = 0;
     return result;
   }
-  uint32_t id;
-  result += readU32(in, id);
+  int32_t id;
+  result += readI32(in, id);
   fieldId = (uint16_t)id;
   return result;
 }
@@ -146,14 +146,14 @@ uint32_t TBinaryProtocol::readFieldEnd(TTransport* in) const {
 uint32_t TBinaryProtocol::readMapBegin(TTransport* in,
                                        TType& keyType,
                                        TType& valType,
-                                       uint32_t& size) const {
+                                       int32_t& size) const {
   uint8_t k, v;
   uint32_t result = 0;
   result += readByte(in, k);
   keyType = (TType)k;
   result += readByte(in, v);
   valType = (TType)v;
-  result += readU32(in, size);
+  result += readI32(in, size);
   return result;
 }
 
@@ -163,12 +163,12 @@ uint32_t TBinaryProtocol::readMapEnd(TTransport* in) const {
 
 uint32_t TBinaryProtocol::readListBegin(TTransport* in,
                                         TType& elemType,
-                                        uint32_t& size) const {
+                                        int32_t& size) const {
   uint8_t e;
   uint32_t result = 0;
   result += readByte(in, e);
   elemType = (TType)e;
-  result += readU32(in, size);
+  result += readI32(in, size);
   return result;
 }
 
@@ -178,12 +178,12 @@ uint32_t TBinaryProtocol::readListEnd(TTransport* in) const {
 
 uint32_t TBinaryProtocol::readSetBegin(TTransport* in,
                                        TType& elemType,
-                                       uint32_t& size) const {
+                                       int32_t& size) const {
   uint8_t e;
   uint32_t result = 0;
   result += readByte(in, e);
   elemType = (TType)e;
-  result += readU32(in, size);
+  result += readI32(in, size);
   return result;
 }
 
@@ -237,10 +237,11 @@ uint32_t TBinaryProtocol::readI64(TTransport* in,
 
 uint32_t TBinaryProtocol::readString(TTransport* in,
                                      string& str) const {
-  uint32_t size, result;
-  result = readU32(in, size);
+  uint32_t result;
+  int32_t size;
+  result = readI32(in, size);
   uint8_t b[size];
   in->readAll(b, size);
   str = string((char*)b, size);
-  return result+size;
+  return result + (uint32_t)size;
 }

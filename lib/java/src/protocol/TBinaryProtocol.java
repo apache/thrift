@@ -23,7 +23,7 @@ public class TBinaryProtocol implements TProtocol {
                                TField     field)   throws TException {
     return
       writeByte(out, field.type.getCode()) +
-      writeU32(out, field.id);
+      writeI32(out, field.id);
   }
 
   public int writeFieldEnd    (TTransport out)     throws TException {
@@ -40,7 +40,7 @@ public class TBinaryProtocol implements TProtocol {
     return
       writeByte(out, map.keyType.getCode()) +
       writeByte(out, map.valueType.getCode()) +
-      writeU32(out, map.size);
+      writeI32(out, map.size);
   }
 
   public int writeMapEnd      (TTransport out)     throws TException {
@@ -51,7 +51,7 @@ public class TBinaryProtocol implements TProtocol {
                                TList      list)    throws TException {
     return
       writeByte(out, list.elemType.getCode()) +
-      writeU32(out, list.size);
+      writeI32(out, list.size);
   }
 
   public int writeListEnd     (TTransport out)     throws TException {
@@ -62,7 +62,7 @@ public class TBinaryProtocol implements TProtocol {
                                TSet       set)     throws TException {
     return
       writeByte(out, set.elemType.getCode()) +
-      writeU32(out, set.size);
+      writeI32(out, set.size);
   }
 
   public int writeSetEnd      (TTransport out)     throws TException {
@@ -102,7 +102,7 @@ public class TBinaryProtocol implements TProtocol {
   public int writeString      (TTransport out,
                                TString    str)     throws TException {
     byte[] dat = str.value.getBytes();
-    int sent = writeU32(out, new UInt32(dat.length));
+    int sent = writeI32(out, new Int32(dat.length));
     out.write(dat, 0, dat.length);
     return sent + dat.length;
   }
@@ -129,10 +129,10 @@ public class TBinaryProtocol implements TProtocol {
     recv += readByte(in, t);
     field.type = TType.getType(t);
     if (field.type.equals(TType.STOP)) {
-      field.id = new UInt32(0);
+      field.id = new Int32(0);
       return recv;
     }
-    recv += readU32(in, field.id);
+    recv += readI32(in, field.id);
     return recv;
   }
   
@@ -148,7 +148,7 @@ public class TBinaryProtocol implements TProtocol {
     map.keyType = TType.getType(t);
     recv += readByte(in, t);
     map.valueType = TType.getType(t);
-    recv += readU32(in, map.size);
+    recv += readI32(in, map.size);
     return recv;
   }
 
@@ -162,7 +162,7 @@ public class TBinaryProtocol implements TProtocol {
     UInt8 t = new UInt8();
     recv += readByte(in, t);
     list.elemType = TType.getType(t);
-    recv += readU32(in, list.size);
+    recv += readI32(in, list.size);
     return recv;
   }
 
@@ -176,7 +176,7 @@ public class TBinaryProtocol implements TProtocol {
     UInt8 t = new UInt8();
     recv += readByte(in, t);
     set.elemType = TType.getType(t);
-    recv += readU32(in, set.size);
+    recv += readI32(in, set.size);
     return recv;
   }
 
@@ -226,11 +226,11 @@ public class TBinaryProtocol implements TProtocol {
 
   public int readString       (TTransport  in,
                                TString     s)      throws TException {
-    UInt32 size = new UInt32();
-    int recv = readU32(in, size);
-    byte[] buf = new byte[size.toInt()];
-    in.readAll(buf, 0, size.toInt());
+    Int32 size = new Int32();
+    int recv = readI32(in, size);
+    byte[] buf = new byte[size.get()];
+    in.readAll(buf, 0, size.get());
     s.value = new String(buf);
-    return recv + size.toInt();
+    return recv + size.get();
   }
 }

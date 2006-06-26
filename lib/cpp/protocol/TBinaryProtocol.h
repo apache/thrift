@@ -35,19 +35,19 @@ class TBinaryProtocol : public TProtocol {
   uint32_t writeMapBegin      (TTransport*    out,
                                const TType    keyType,
                                const TType    valType,
-                               const uint32_t size)       const;
+                               const int32_t  size)       const;
 
   uint32_t writeMapEnd        (TTransport*    out)        const;
 
   uint32_t writeListBegin     (TTransport*    out,
                                const TType    elemType,
-                               const uint32_t size)       const;
+                               const int32_t  size)       const;
 
   uint32_t writeListEnd       (TTransport*    out)        const;
 
   uint32_t writeSetBegin      (TTransport*    out,
                                const TType    elemType,
-                               const uint32_t size)       const;
+                               const int32_t  size)       const;
 
   uint32_t writeSetEnd        (TTransport*    out)        const;
 
@@ -88,19 +88,19 @@ class TBinaryProtocol : public TProtocol {
   uint32_t readMapBegin       (TTransport*    in,
                                TType&         keyType,
                                TType&         valType,
-                               uint32_t&      size)       const;
+                               int32_t&       size)       const;
 
   uint32_t readMapEnd         (TTransport*    in)         const;
 
   uint32_t readListBegin      (TTransport*    in,
                                TType&         elemType,
-                               uint32_t&      size)       const;
+                               int32_t&       size)       const;
   
   uint32_t readListEnd        (TTransport*    in)         const;
 
   uint32_t readSetBegin       (TTransport*    in,
                                TType&         elemType,
-                               uint32_t&      size)       const;
+                               int32_t&       size)       const;
 
   uint32_t readSetEnd         (TTransport*    in)         const;
 

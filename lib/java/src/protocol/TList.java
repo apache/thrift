@@ -11,14 +11,14 @@ public class TList {
   public TList() {}
   
   public TList(TType t, int s) {
-    this(t, new UInt32(s));
+    this(t, new Int32(s));
   }
 
-  public TList(TType t, UInt32 s) {
+  public TList(TType t, Int32 s) {
     elemType = t;
     size = s;
   }
 
   public TType  elemType = TType.STOP;
-  public UInt32 size = new UInt32();
+  public Int32 size = new Int32();
 }

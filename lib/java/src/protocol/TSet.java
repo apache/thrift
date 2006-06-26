@@ -11,14 +11,14 @@ public class TSet {
   public TSet() {}
 
   public TSet(TType t, int s) {
-    this(t, new UInt32(s));
+    this(t, new Int32(s));
   }
 
-  public TSet(TType t, UInt32 s) {
+  public TSet(TType t, Int32 s) {
     elemType = t;
     size = s;
   }
 
   public TType  elemType = TType.STOP;
-  public UInt32 size = new UInt32();
+  public Int32 size = new Int32();
 }

@@ -73,19 +73,19 @@ class TProtocol {
   virtual uint32_t writeMapBegin      (TTransport*    out,
                                        const TType    keyType,
                                        const TType    valType,
-                                       const uint32_t size)       const = 0;
+                                       const int32_t  size)       const = 0;
 
   virtual uint32_t writeMapEnd        (TTransport*    out)        const = 0;
 
   virtual uint32_t writeListBegin     (TTransport*    out,
                                        const TType    elemType,
-                                       const uint32_t size)       const = 0;
+                                       const int32_t  size)       const = 0;
 
   virtual uint32_t writeListEnd       (TTransport*    out)        const = 0;
 
   virtual uint32_t writeSetBegin      (TTransport*    out,
                                        const TType    elemType,
-                                       const uint32_t size)       const = 0;
+                                       const int32_t  size)       const = 0;
 
   virtual uint32_t writeSetEnd        (TTransport*    out)        const = 0;
 
@@ -126,19 +126,19 @@ class TProtocol {
   virtual uint32_t readMapBegin       (TTransport*    in,
                                        TType&         keyType,
                                        TType&         valType,
-                                       uint32_t&      size)       const = 0;
+                                       int32_t&       size)       const = 0;
 
   virtual uint32_t readMapEnd         (TTransport*    in)         const = 0;
 
   virtual uint32_t readListBegin      (TTransport*    in,
                                        TType&         elemType,
-                                       uint32_t&      size)       const = 0;
+                                       int32_t&       size)       const = 0;
 
   virtual uint32_t readListEnd        (TTransport*    in)         const = 0;
 
   virtual uint32_t readSetBegin       (TTransport*    in,
                                        TType&         elemType,
-                                       uint32_t&      size)       const = 0;
+                                       int32_t&       size)       const = 0;
 
   virtual uint32_t readSetEnd         (TTransport*    in)         const = 0;
 
@@ -218,7 +218,7 @@ class TProtocol {
         uint32_t result = 0;
         TType keyType;
         TType valType;
-        uint32_t i, size;
+        int32_t i, size;
         result += readMapBegin(in, keyType, valType, size);
         for (i = 0; i < size; i++) {
           result += skip(in, keyType);
@@ -231,7 +231,7 @@ class TProtocol {
       {
         uint32_t result = 0;
         TType elemType;
-        uint32_t i, size;
+        int32_t i, size;
         result += readSetBegin(in, elemType, size);
         for (i = 0; i < size; i++) {
           result += skip(in, elemType);
@@ -243,7 +243,7 @@ class TProtocol {
       {
         uint32_t result = 0;
         TType elemType;
-        uint32_t i, size;
+        int32_t i, size;
         result += readListBegin(in, elemType, size);
         for (i = 0; i < size; i++) {
           result += skip(in, elemType);

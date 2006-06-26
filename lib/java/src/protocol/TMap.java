@@ -11,10 +11,10 @@ public class TMap {
   public TMap() {}
   
   public TMap(TType k, TType v, int s) {
-    this(k, v, new UInt32(s));
+    this(k, v, new Int32(s));
   }
 
-  public TMap(TType k, TType v, UInt32 s) {
+  public TMap(TType k, TType v, Int32 s) {
     keyType = k;
     valueType = v;
     size = s;
@@ -22,5 +22,5 @@ public class TMap {
 
   public TType  keyType = TType.STOP;
   public TType  valueType = TType.STOP;
-  public UInt32 size = new UInt32();;
+  public Int32 size = new Int32();;
 }
