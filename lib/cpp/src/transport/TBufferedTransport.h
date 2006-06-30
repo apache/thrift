@@ -53,6 +53,10 @@ class TBufferedTransport : public TTransport {
   void close() {
     transport_->close();
   }
+
+  uint32_t readAll(uint8_t* buf, uint32_t len) {
+    return transport_->readAll(buf, len);
+  }
   
   uint32_t read(uint8_t* buf, uint32_t len);
 

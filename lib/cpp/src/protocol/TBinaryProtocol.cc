@@ -240,8 +240,12 @@ uint32_t TBinaryProtocol::readString(TTransport* in,
   uint32_t result;
   int32_t size;
   result = readI32(in, size);
-  uint8_t b[size];
+
+  // Use the heap here to prevent stack overflow for v. large strings
+  uint8_t *b = new uint8_t[size];
   in->readAll(b, size);
   str = string((char*)b, size);
+  delete [] b;
+
   return result + (uint32_t)size;
 }

@@ -7,7 +7,7 @@ uint32_t TBufferedTransport::read(uint8_t* buf, uint32_t len) {
   // We don't have enough data yet
   if (rLen_-rPos_ < need) {
     // Copy out whatever we have
-    if (rLen_ > 0) {
+    if (rLen_-rPos_ > 0) {
       memcpy(buf, rBuf_+rPos_, rLen_-rPos_);
       need -= rLen_-rPos_;
       buf += rLen_-rPos_;

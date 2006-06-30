@@ -35,18 +35,8 @@ public class TestServer extends ThriftTestServerIf {
     return thing;
   }
 
-  public UInt32 testU32(UInt32 thing) {
-    System.out.print("testU32(" + thing.get() + ")\n");
-    return thing;
-  }
-
   public Int32 testI32(Int32 thing) {
     System.out.print("testI32(" + thing.get() + ")\n");
-    return thing;
-  }
-
-  public UInt64 testU64(UInt64 thing) {
-    System.out.print("testU64(" + thing.toLong() + ")\n");
     return thing;
   }
 
@@ -59,9 +49,7 @@ public class TestServer extends ThriftTestServerIf {
     System.out.print("testStruct({" +
                      "\"" + thing.string_thing.value + "\", " +
                      thing.byte_thing.get() + ", " +
-                     thing.u32_thing.get() + ", " +
                      thing.i32_thing.get() + ", " +
-                     thing.u64_thing.toLong() + ", " +
                      thing.i64_thing.get() + "})\n");
     return thing;
   }
@@ -72,9 +60,7 @@ public class TestServer extends ThriftTestServerIf {
                      nest.byte_thing.get() + ", {" +
                      "\"" + thing.string_thing.value + "\", " +
                      thing.byte_thing.get() + ", " +
-                     thing.u32_thing.get() + ", " +
                      thing.i32_thing.get() + ", " +
-                     thing.u64_thing.toLong() + ", " +
                      thing.i64_thing.get() + "}, " +
                      nest.i32_thing.get() + "})\n");
     return nest;
@@ -130,8 +116,8 @@ public class TestServer extends ThriftTestServerIf {
     return thing;
   }
 
-  public UInt64 testTypedef(UInt64 thing) {
-    System.out.print("testTypedef(" + thing.toLong() + ")\n");
+  public Int64 testTypedef(Int64 thing) {
+    System.out.print("testTypedef(" + thing.get() + ")\n");
     return thing;
   }
 
@@ -153,31 +139,27 @@ public class TestServer extends ThriftTestServerIf {
     return mapmap;
   }
 
-  public HashMap<UInt64, HashMap<Int32,Insanity>> testInsanity(Insanity argument) {
+  public HashMap<Int64, HashMap<Int32,Insanity>> testInsanity(Insanity argument) {
     System.out.print("testInsanity()\n");
     
     Xtruct hello = new Xtruct();
     hello.string_thing.value = "Hello2";
     hello.byte_thing.set((short)2);
-    hello.u32_thing.set(2);
     hello.i32_thing.set(2);
-    hello.u64_thing.set(2);
     hello.i64_thing.set(2);
 
     Xtruct goodbye = new Xtruct();
     goodbye.string_thing.value = "Goodbye4";
     goodbye.byte_thing.set((short)4);
-    goodbye.u32_thing.set(4);
     goodbye.i32_thing.set(4);
-    goodbye.u64_thing.set(4);
     goodbye.i64_thing.set(4);
 
     Insanity crazy = new Insanity();
-    crazy.userMap.put(Numberz.EIGHT, new UInt64(8));
+    crazy.userMap.put(Numberz.EIGHT, new Int64(8));
     crazy.xtructs.add(goodbye);
 
     Insanity looney = new Insanity();
-    crazy.userMap.put(Numberz.FIVE, new UInt64(5));
+    crazy.userMap.put(Numberz.FIVE, new Int64(5));
     crazy.xtructs.add(hello);
 
     HashMap<Int32,Insanity> first_map = new HashMap<Int32, Insanity>();
@@ -188,10 +170,10 @@ public class TestServer extends ThriftTestServerIf {
 
     second_map.put(Numberz.SIX, looney);
 
-    HashMap<UInt64,HashMap<Int32,Insanity>> insane =
-      new HashMap<UInt64, HashMap<Int32,Insanity>>();
-    insane.put(new UInt64(1), first_map);
-    insane.put(new UInt64(2), second_map);
+    HashMap<Int64,HashMap<Int32,Insanity>> insane =
+      new HashMap<Int64, HashMap<Int32,Insanity>>();
+    insane.put(new Int64(1), first_map);
+    insane.put(new Int64(2), second_map);
 
     return insane;
   }

@@ -78,27 +78,13 @@ public class TestClient {
         System.out.print("testByte(1)");
         UInt8 u8 = testClient.testByte(new UInt8((short)1));
         System.out.print(" = " + u8.get() + "\n");
-
-        /**
-         * U32 TEST
-         */
-        System.out.print("testU32(1)");
-        UInt32 u32 = testClient.testU32(new UInt32(1));
-        System.out.print(" = " + u32.get() + "\n");
-    
+  
         /**
          * I32 TEST
          */
         System.out.print("testI32(-1)");
         Int32 i32 = testClient.testI32(new Int32(-1));
         System.out.print(" = " + i32.get() + "\n");
-
-        /**
-         * U64 TEST
-         */
-        System.out.print("testU64(34359738368)");
-        UInt64 u64 = testClient.testU64(new UInt64(34359738368L));
-        System.out.print(" = " + u64.toLong() + "\n");
 
         /**
          * I64 TEST
@@ -110,27 +96,23 @@ public class TestClient {
         /**
          * STRUCT TEST
          */
-        System.out.print("testStruct({\"Zero\", 1, 2, -3, 4, -5})");
+        System.out.print("testStruct({\"Zero\", 1, -3, -5})");
         Xtruct out = new Xtruct();
         out.string_thing.value = "Zero";
         out.byte_thing.set((short)1);
-        out.u32_thing.set(2);
         out.i32_thing.set(-3);
-        out.u64_thing.set(4);
         out.i64_thing.set(-5);
         Xtruct in = testClient.testStruct(out);
         System.out.print(" = {" +
                          "\"" + in.string_thing.value + "\", " +
                          in.byte_thing.get() + ", " +
-                         in.u32_thing.get() + ", " +
                          in.i32_thing.get() + ", " +
-                         in.u64_thing.toLong() + ", " +
                          in.i64_thing.get() + "}\n");
 
         /**
          * NESTED STRUCT TEST
          */
-        System.out.print("testNest({1, {\"Zero\", 1, 2, -3, 4, -5}), 5}");
+        System.out.print("testNest({1, {\"Zero\", 1, -3, -5}), 5}");
         Xtruct2 out2 = new Xtruct2();
         out2.byte_thing.set((short)1);
         out2.struct_thing = out;
@@ -141,9 +123,7 @@ public class TestClient {
                          in2.byte_thing.get() + ", {" +
                          "\"" + in.string_thing.value + "\", " +
                          in.byte_thing.get() + ", " +
-                         in.u32_thing.get() + ", " +
                          in.i32_thing.get() + ", " +
-                         in.u64_thing.toLong() + ", " +
                          in.i64_thing.get() + "}, " +
                          in2.i32_thing.get() + "}\n");
 
@@ -267,8 +247,8 @@ public class TestClient {
          * TYPEDEF TEST
          */
         System.out.print("testTypedef(309858235082523)");
-        UInt64 uid = testClient.testTypedef(new UInt64(309858235082523L));
-        System.out.print(" = " + uid.toLong() + "\n");
+        Int64 uid = testClient.testTypedef(new Int64(309858235082523L));
+        System.out.print(" = " + uid.get() + "\n");
 
         /**
          * NESTED MAP TEST
@@ -291,31 +271,29 @@ public class TestClient {
          * INSANITY TEST
          */
         Insanity insane = new Insanity();
-        insane.userMap.put(Numberz.FIVE, new UInt64(5000));
+        insane.userMap.put(Numberz.FIVE, new Int64(5000));
         Xtruct truck = new Xtruct();
         truck.string_thing.value = "Truck";
         truck.byte_thing.set((short)8);
-        truck.u32_thing.set(8);
         truck.i32_thing.set(8);
-        truck.u64_thing.set(8);
         truck.i64_thing.set(8);
         insane.xtructs.add(truck);
         System.out.print("testInsanity()");
-        HashMap<UInt64,HashMap<Int32,Insanity>> whoa =
+        HashMap<Int64,HashMap<Int32,Insanity>> whoa =
           testClient.testInsanity(insane);
         System.out.print(" = {");
-        for (UInt64 key : whoa.keySet()) {
+        for (Int64 key : whoa.keySet()) {
           HashMap<Int32,Insanity> val = whoa.get(key);
-          System.out.print(key.toLong() + " => {");
+          System.out.print(key.get() + " => {");
 
           for (Int32 k2 : val.keySet()) {
             Insanity v2 = val.get(k2);
             System.out.print(k2.get() + " => {");
-            HashMap<Int32, UInt64> userMap = v2.userMap;
+            HashMap<Int32, Int64> userMap = v2.userMap;
             System.out.print("{");
             for (Int32 k3 : userMap.keySet()) {
               System.out.print(k3.get() + " => " +
-                               userMap.get(k3).toLong() + ", ");
+                               userMap.get(k3).get() + ", ");
             }
             System.out.print("}, ");
 
@@ -325,9 +303,7 @@ public class TestClient {
               System.out.print("{" +
                                "\"" + x.string_thing.value + "\", " +
                                x.byte_thing.get() + ", " +
-                               x.u32_thing.get() + ", "+
                                x.i32_thing.get() + ", "+
-                               x.u64_thing.toLong() + ", "+
                                x.i64_thing.get() + "}, ");
             }
             System.out.print("}");

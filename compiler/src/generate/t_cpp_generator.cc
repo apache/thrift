@@ -140,7 +140,8 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   f_service_.open(f_service_name.c_str());
 
   // Print header file includes
-  f_header_ << autogen_comment();
+  f_header_ <<
+    autogen_comment();
   f_header_ <<
     "#ifndef " << service_name_ << "_H" << endl <<
     "#define " << service_name_ << "_H" << endl <<
@@ -150,7 +151,8 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     "#include \"protocol/TProtocol.h\"" << endl <<
     "#include \"" << program_name_ << "Types.h\"" << endl <<
     endl;
-  f_service_ << autogen_comment();
+  f_service_ <<
+    autogen_comment();
   f_service_ <<
     "#include \"" << service_name_ << ".h\"" << endl << endl;
 
@@ -643,9 +645,8 @@ void t_cpp_generator::generate_deserialize_container(t_type* ttype,
   string etype = tmp("_etype");
   
   indent(f_service_) <<
-    "uint32_t " << size << ";" << endl;
+    "int32_t " << size << ";" << endl;
   
-
   // Declare variables, read header
   if (ttype->is_map()) {
     f_service_ <<
@@ -669,7 +670,7 @@ void t_cpp_generator::generate_deserialize_container(t_type* ttype,
   // For loop iterates over elements
   string i = tmp("_i");
   indent(f_service_) <<
-    "uint32_t " << i << ";" << endl;
+    "int32_t " << i << ";" << endl;
   indent(f_service_) <<
     "for (" <<
     i << " = 0; " << i << " < " << size << "; ++" << i << ")" << endl;

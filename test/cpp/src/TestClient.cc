@@ -77,27 +77,13 @@ int main(int argc, char** argv) {
     printf("testByte(1)");
     uint8_t u8 = testClient.testByte(1);
     printf(" = %d\n", (int)u8);
-
-    /**
-     * U32 TEST
-     */
-    printf("testU32(1)");
-    uint32_t u32 = testClient.testU32(1);
-    printf(" = %u\n", u32);
-    
+ 
     /**
      * I32 TEST
      */
     printf("testI32(-1)");
     int32_t i32 = testClient.testI32(-1);
     printf(" = %d\n", i32);
-
-    /**
-     * U64 TEST
-     */
-    printf("testU64(34359738368)");
-    uint64_t u64 = testClient.testU64(34359738368);
-    printf(" = %lu\n", u64);
 
     /**
      * I64 TEST
@@ -109,40 +95,34 @@ int main(int argc, char** argv) {
     /**
      * STRUCT TEST
      */
-    printf("testStruct({\"Zero\", 1, 2, -3, 4, -5})");
+    printf("testStruct({\"Zero\", 1, -3, -5})");
     Xtruct out;
     out.string_thing = "Zero";
     out.byte_thing = 1;
-    out.u32_thing = 2;
     out.i32_thing = -3;
-    out.u64_thing = 4;
     out.i64_thing = -5;
     Xtruct in = testClient.testStruct(out);
-    printf(" = {\"%s\", %d, %u, %d, %lu, %ld}\n",
+    printf(" = {\"%s\", %d, %d, %ld}\n",
            in.string_thing.c_str(),
            (int)in.byte_thing,
-           in.u32_thing,
            in.i32_thing,
-           in.u64_thing,
            in.i64_thing);
     
     /**
      * NESTED STRUCT TEST
      */
-    printf("testNest({1, {\"Zero\", 1, 2, -3, 4, -5}), 5}");
+    printf("testNest({1, {\"Zero\", 1, -3, -5}), 5}");
     Xtruct2 out2;
     out2.byte_thing = 1;
     out2.struct_thing = out;
     out2.i32_thing = 5;
     Xtruct2 in2 = testClient.testNest(out2);
     in = in2.struct_thing;
-    printf(" = {%d, {\"%s\", %d, %u, %d, %lu, %ld}, %d}\n",
+    printf(" = {%d, {\"%s\", %d, %d, %ld}, %d}\n",
            in2.byte_thing,
            in.string_thing.c_str(),
            (int)in.byte_thing,
-           in.u32_thing,
            in.i32_thing,
-           in.u64_thing,
            in.i64_thing,
            in2.i32_thing);   
 
@@ -270,7 +250,7 @@ int main(int argc, char** argv) {
      */
     printf("testTypedef(309858235082523)");
     UserId uid = testClient.testTypedef(309858235082523);
-    printf(" = %lu\n", uid);
+    printf(" = %ld\n", uid);
 
     /**
      * NESTED MAP TEST
@@ -297,9 +277,7 @@ int main(int argc, char** argv) {
     Xtruct truck;
     truck.string_thing = "Truck";
     truck.byte_thing = 8;
-    truck.u32_thing = 8;
     truck.i32_thing = 8;
-    truck.u64_thing = 8;
     truck.i64_thing = 8;
     insane.xtructs.push_back(truck);
     printf("testInsanity()");
@@ -307,7 +285,7 @@ int main(int argc, char** argv) {
     printf(" = {");
     map<UserId, map<Numberz,Insanity> >::const_iterator i_iter;
     for (i_iter = whoa.begin(); i_iter != whoa.end(); ++i_iter) {
-      printf("%lu => {", i_iter->first);
+      printf("%ld => {", i_iter->first);
       map<Numberz,Insanity>::const_iterator i2_iter;
       for (i2_iter = i_iter->second.begin();
            i2_iter != i_iter->second.end();
@@ -317,7 +295,7 @@ int main(int argc, char** argv) {
         map<Numberz, UserId>::const_iterator um;
         printf("{");
         for (um = userMap.begin(); um != userMap.end(); ++um) {
-          printf("%d => %lu, ", um->first, um->second);
+          printf("%d => %ld, ", um->first, um->second);
         }
         printf("}, ");
 
@@ -325,12 +303,10 @@ int main(int argc, char** argv) {
         list<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
-          printf("{\"%s\", %d, %u, %d, %lu, %ld}, ",
+          printf("{\"%s\", %d, %d, %ld}, ",
                  x->string_thing.c_str(),
                  (int)x->byte_thing,
-                 x->u32_thing,
                  x->i32_thing,
-                 x->u64_thing,
                  x->i64_thing);
         }
         printf("}");

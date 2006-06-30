@@ -24,18 +24,8 @@ class TestServer : public ThriftTestServerIf {
     return thing;
   }
 
-  uint32_t testU32(uint32_t thing) {
-    printf("testU32(%u)\n", thing);
-    return thing;
-  }
-
   int32_t testI32(int32_t thing) {
     printf("testI32(%d)\n", thing);
-    return thing;
-  }
-
-  uint64_t testU64(uint64_t thing) {
-    printf("testU64(%lu)\n", thing);
     return thing;
   }
 
@@ -45,25 +35,21 @@ class TestServer : public ThriftTestServerIf {
   }
 
   Xtruct testStruct(Xtruct thing) {
-    printf("testStruct({\"%s\", %d, %u, %d, %lu, %ld})\n",
+    printf("testStruct({\"%s\", %d, %d, %ld})\n",
            thing.string_thing.c_str(),
            (int)thing.byte_thing,
-           thing.u32_thing,
            thing.i32_thing,
-           thing.u64_thing,
            thing.i64_thing);
     return thing;
   }
 
   Xtruct2 testNest(Xtruct2 nest) {
     Xtruct thing = nest.struct_thing;
-    printf("testNest({%d, {\"%s\", %d, %u, %d, %lu, %ld}, %d})\n",
+    printf("testNest({%d, {\"%s\", %d, %d, %ld}, %d})\n",
            (int)nest.byte_thing,
            thing.string_thing.c_str(),
            (int)thing.byte_thing,
-           thing.u32_thing,
            thing.i32_thing,
-           thing.u64_thing,
            thing.i64_thing,
            nest.i32_thing);
     return nest;
@@ -123,7 +109,7 @@ class TestServer : public ThriftTestServerIf {
   }
 
   UserId testTypedef(UserId thing) {
-    printf("testTypedef(%lu)\n", thing);
+    printf("testTypedef(%ld)\n", thing);
     return thing;
   }
 
@@ -150,17 +136,13 @@ class TestServer : public ThriftTestServerIf {
     Xtruct hello;
     hello.string_thing = "Hello2";
     hello.byte_thing = 2;
-    hello.u32_thing = 2;
     hello.i32_thing = 2;
-    hello.u64_thing = 2;
     hello.i64_thing = 2;
 
     Xtruct goodbye;
     goodbye.string_thing = "Goodbye4";
     goodbye.byte_thing = 4;
-    goodbye.u32_thing = 4;
     goodbye.i32_thing = 4;
-    goodbye.u64_thing = 4;
     goodbye.i64_thing = 4;
 
     Insanity crazy;
@@ -187,7 +169,7 @@ class TestServer : public ThriftTestServerIf {
     printf(" = {");
     map<UserId, map<Numberz,Insanity> >::const_iterator i_iter;
     for (i_iter = insane.begin(); i_iter != insane.end(); ++i_iter) {
-      printf("%lu => {", i_iter->first);
+      printf("%ld => {", i_iter->first);
       map<Numberz,Insanity>::const_iterator i2_iter;
       for (i2_iter = i_iter->second.begin();
            i2_iter != i_iter->second.end();
@@ -197,7 +179,7 @@ class TestServer : public ThriftTestServerIf {
         map<Numberz, UserId>::const_iterator um;
         printf("{");
         for (um = userMap.begin(); um != userMap.end(); ++um) {
-          printf("%d => %lu, ", um->first, um->second);
+          printf("%d => %ld, ", um->first, um->second);
         }
         printf("}, ");
 
@@ -205,12 +187,10 @@ class TestServer : public ThriftTestServerIf {
         list<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
-          printf("{\"%s\", %d, %u, %d, %lu, %ld}, ",
+          printf("{\"%s\", %d, %d, %ld}, ",
                  x->string_thing.c_str(),
                  (int)x->byte_thing,
-                 x->u32_thing,
                  x->i32_thing,
-                 x->u64_thing,
                  x->i64_thing);
         }
         printf("}");

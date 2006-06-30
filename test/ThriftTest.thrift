@@ -8,15 +8,13 @@ enum Numberz
   EIGHT = 8
 }
 
-typedef u64 UserId
+typedef i64 UserId
 
 struct Xtruct
 {
   string string_thing = 0,
   byte   byte_thing = 1,
-  u32    u32_thing = 2,
   i32    i32_thing = 3,
-  u64    u64_thing = 4,
   i64    i64_thing = 5
 }
 
@@ -38,9 +36,7 @@ service ThriftTest
   void         testVoid()
   string       testString(string thing = 0)
   byte         testByte(byte thing = 0)
-  u32          testU32(u32 thing = 0)
   i32          testI32(i32 thing = 0)
-  u64          testU64(u64 thing = 0)
   i64          testI64(i64 thing = 0)
   Xtruct       testStruct(Xtruct thing = 0)
   Xtruct2      testNest(Xtruct2 thing = 0)

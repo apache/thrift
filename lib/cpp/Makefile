@@ -17,6 +17,7 @@ LDFL  = -shared -Wall -Isrc -fPIC -Wl,-soname=libthrift.so
 # Source files
 SRCS  = src/protocol/TBinaryProtocol.cc \
 	src/transport/TBufferedTransport.cc \
+	src/transport/TChunkedTransport.cc \
 	src/transport/TSocket.cc \
 	src/transport/TServerSocket.cc \
 	src/server/TSimpleServer.cc

@@ -20,6 +20,7 @@
 #include "parse/t_program.h"
 #include "generate/t_cpp_generator.h"
 #include "generate/t_java_generator.h"
+#include "generate/t_php_generator.h"
 
 using namespace std;
 
@@ -96,7 +97,7 @@ void usage() {
   fprintf(stderr, "Options:\n");
   fprintf(stderr, "  -cpp    Generate C++ output files\n");
   fprintf(stderr, "  -java   Generate Java output files\n");
-  //fprintf(stderr, "  -php    Generate PHP output files\n");
+  fprintf(stderr, "  -php    Generate PHP output files\n");
   //fprintf(stderr, "  -python Generate Python output files\n");
   fprintf(stderr, "  -d      Print parse debugging to standard output\n");
   exit(1);
@@ -109,6 +110,7 @@ int main(int argc, char** argv) {
   int i;
   bool gen_cpp = false;
   bool gen_java = false;
+  bool gen_php = false;
 
   // Setup time string
   time_t now = time(NULL);
@@ -126,13 +128,15 @@ int main(int argc, char** argv) {
       gen_cpp = true;
     } else if (strcmp(argv[i], "-java") == 0) {
       gen_java = true;
+    } else if (strcmp(argv[i], "-php") == 0) {
+      gen_php = true;
     } else {
       fprintf(stderr, "!!! Unrecognized option: %s\n", argv[i]);
       usage();
     }
   }
   
-  if (!gen_cpp && !gen_java) {
+  if (!gen_cpp && !gen_java && !gen_php) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
@@ -176,6 +180,11 @@ int main(int argc, char** argv) {
       delete java;
     }
 
+    if (gen_php) {
+      t_php_generator* php = new t_php_generator();
+      php->generate_program(g_program);
+      delete php;
+    }
   } catch (string s) {
     printf("Error: %s\n", s.c_str());
   } catch (const char* exc) {
