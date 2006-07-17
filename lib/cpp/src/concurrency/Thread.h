@@ -5,7 +5,10 @@ namespace facebook { namespace thrift { namespace concurrency {
 
 class Thread;
 
-/** Minimal runnable class.  More or less analogous to java.lang.Runnable. */
+/** Minimal runnable class.  More or less analogous to java.lang.Runnable. 
+
+    @author marc
+    @version $Id:$ */
 
 class Runnable {
 

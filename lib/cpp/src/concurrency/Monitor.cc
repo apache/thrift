@@ -1,15 +1,17 @@
 #include "Monitor.h" 
+#include "Util.h"
 
 #include <assert.h>
 #include <errno.h>
 #include <pthread.h>
+
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
 /** Monitor implementation using the POSIX pthread library
     
     @author marc
-    @version $Id$ */
+    @version $Id:$ */
 
 class Monitor::Impl {
 
@@ -61,7 +63,7 @@ class Monitor::Impl {
 
       struct timespec abstime;
 
-      toAbsoluteTimespec(abstime, timeout);
+      Util::toAbsoluteTimespec(abstime, timeout);
 
       int result  = pthread_cond_timedwait(&_pthread_cond, &_pthread_mutex, &abstime);
 
@@ -87,29 +89,6 @@ class Monitor::Impl {
   }
 
 private:
-
-  /** Converts relative timeout specified as a duration in milliseconds to a struct timespec structure
-      specifying current time plus timeout 
-
-      @param timeout time to delay in milliseconds
-      @return struct timespec current time plus timeout  */
-
-  static const void toAbsoluteTimespec(struct timespec& result, long long timeout) {
-
-    // XXX Darwin doesn't seem to have any readily useable hi-res clock.
-
-    time_t seconds; 
-
-    assert(time(&seconds) != (time_t)-1);
-
-    seconds+= (timeout / 1000);
-
-    long nanoseconds = (timeout % 1000) * 1000000;
-
-    result.tv_sec = seconds + (nanoseconds / 1000000000);
-
-    result.tv_nsec = nanoseconds % 1000000000;
-  }
 
   mutable pthread_mutex_t _pthread_mutex;
 

@@ -1,5 +1,5 @@
-#if !defined(_concurrency_mutex_h_)
-#define _concurrency_mutex_h_ 1
+#if !defined(_concurrency_Monitor_h_)
+#define _concurrency_Monitor_h_ 1
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
@@ -11,7 +11,7 @@ namespace facebook { namespace thrift { namespace concurrency {
      methods without needing to cast away constness or change to non-const signatures.  
 
      @author marc
-     @version $Id$ */
+     @version $Id:$ */
 
 class Monitor {
 
@@ -56,4 +56,4 @@ class Synchronized {
 
 }}} // facebook::thrift::concurrency
 
-#endif // !defined(_concurrency_mutex_h_)
+#endif // !defined(_concurrency_Monitor_h_)

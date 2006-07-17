@@ -3,6 +3,11 @@
 #include <assert.h>
 #include <pthread.h>
 
+/** Implementation of Mutex class using POSIX mutex
+
+    @author marc
+    @version $Id:$ */
+
 namespace facebook { namespace thrift { namespace concurrency { 
 
 class Mutex::impl {

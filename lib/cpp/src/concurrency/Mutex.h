@@ -3,6 +3,11 @@
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
+/**  A simple mutex class
+
+     @author marc
+     @version $Id:$ */
+
 class Mutex {
 
  public:

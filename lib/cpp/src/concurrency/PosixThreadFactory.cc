@@ -5,7 +5,10 @@
 
 namespace facebook { namespace thrift { namespace concurrency {
 
-/**  The POSIX thread class.  */
+/**  The POSIX thread class. 
+
+     @author marc
+     @version $Id:$ */
 
 class PthreadThread: public Thread {
 
@@ -139,7 +142,7 @@ private:
   /** Converts relative thread priorities to absolute value based on posix thread scheduler policy
 
       The idea is simply to divide up the priority range for the given policy into the correpsonding relative
-      priority level (lowest..highest) and then prorate accordingly. */
+      priority level (lowest..highest) and then pro-rate accordingly. */
 
   static int toPthreadPriority(POLICY policy, PRIORITY priority) {
 

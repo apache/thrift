@@ -1,13 +1,16 @@
 #if !defined(_concurrency_ThreadManager_h_)
 #define _concurrency_ThreadManager_h_ 1
 
-#include "Monitor.h"
+#include <sys/types.h>
+
 #include "Thread.h"
 
-#include <set>
-#include <queue>
-
 namespace facebook { namespace thrift { namespace concurrency { 
+
+/** Thread Pool Manager and related classes
+
+    @author marc
+    @version $Id:$ */
 
 class ThreadManager;
 
@@ -19,12 +22,37 @@ class PoolPolicy {
 
  public:
 
-  virtual ~PoolPolicy() = 0;
+  PoolPolicy() {}
 
-  virtual void onlowWatermark(ThreadManager* source) const = 0;
+  virtual ~PoolPolicy() {}
 
-  virtual void onhighWatermark(ThreadManager* source) const = 0;
+  virtual void onEmpty(ThreadManager* source) const = 0;
 
+  virtual void onLowWatermark(ThreadManager* source) const = 0;
+
+  virtual void onHighWatermark(ThreadManager* source) const = 0;
+
+};
+
+class BasicPoolPolicy : public PoolPolicy {
+
+ public:
+
+  BasicPoolPolicy();
+
+  virtual ~BasicPoolPolicy();
+
+  virtual void onEmpty(ThreadManager* source) const;
+
+  virtual void onLowWatermark(ThreadManager* source) const;
+
+  virtual void onHighWatermark(ThreadManager* source) const;
+
+ private:
+
+  class Impl;
+
+  Impl* _impl;
 };
 
 /** ThreadManager class
@@ -41,9 +69,9 @@ class ThreadManager {
 
  public:
 
-  ThreadManager(size_t highWatermark=4, size_t lowWatermark=2);
+  ThreadManager(size_t highWatermark=4, size_t lowWatermark=2) {};
 
-  virtual ~ThreadManager() = 0;
+  virtual ~ThreadManager() {};
 
   virtual const PoolPolicy* poolPolicy() const = 0;
 
@@ -89,32 +117,13 @@ class ThreadManager {
 
   virtual void remove(Runnable* task) = 0;
 
- private:
-
-  size_t _hiwat;
-
-  size_t _lowat;
-
-  size_t _idleCount;
-
-  const PoolPolicy* _poolPolicy;;
-
-  const ThreadFactory* _threadFactory;;
+  static ThreadManager* newThreadManager(size_t lowWatermark=2, size_t highWatermark=4);
 
   class Task;
-
-  friend class Task;
-
-  std::queue<Task*> _tasks;
-
-  Monitor _monitor;
-
+  
   class Worker;
 
-  friend class Worker;
-
-  std::set<Thread*> _workers;
-
+  class Impl;
 };
 
 }}} // facebook::thrift::concurrency

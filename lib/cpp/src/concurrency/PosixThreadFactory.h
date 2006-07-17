@@ -7,7 +7,8 @@ namespace facebook { namespace thrift { namespace concurrency {
 
 /** A thread factory to create posix threads 
 
-    @author marc */
+    @author marc
+    @version $Id:$ */
 
 class PosixThreadFactory : public ThreadFactory {
 
