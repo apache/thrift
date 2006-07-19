@@ -2,7 +2,7 @@
 #define _concurrency_Util_h_ 1
 
 #include <assert.h>
-#include <time.h>
+#include <sys/time.h>
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
@@ -19,45 +19,34 @@ class Util {
 
  public:
 
-  /** Converts relative timeout specified as a duration in milliseconds to a struct timespec structure
-      specifying current time plus timeout 
+  /** Converts timespec to milliseconds
 
-      @param struct timespec& current time plus timeout result  
-      @param timeout time to delay in milliseconds */
+      @param struct timespec& result
+      @param time or duration in milliseconds */
 
-  static const void toAbsoluteTimespec(struct timespec& result, long long value) {
+  static void toTimespec(struct timespec& result, long long value) {
     
-    // XXX Darwin doesn't seem to have any readily useable hi-res clock.
+    result.tv_sec = value / 1000; // ms to s
     
-    time_t seconds; 
-    
-    assert(time(&seconds) != (time_t)-1);
-    
-    seconds+= (value / 1000);
-    
-    long nanoseconds = (value % 1000) * 1000000;
-    
-    result.tv_sec = seconds + (nanoseconds / 1000000000);
-    
-    result.tv_nsec = nanoseconds % 1000000000;
+    result.tv_nsec = (value % 1000) * 1000000; // ms to ns
   }
 
-  /** Converts absolute timespec to milliseconds from epoch */
+  /** Converts timespec to milliseconds */
 
   static const void toMilliseconds(long long& result, const struct timespec& value) {
 
-    result = value.tv_sec * 1000 + value.tv_nsec * 1000000;
+    result = value.tv_sec * 1000 + value.tv_nsec / 1000000;
   }
 
   /** Get current time as milliseconds from epoch */
 
   static const long long currentTime() {
 
-    time_t now;
+    struct timeval now;
 
-    time(&now);
+    assert(gettimeofday(&now, NULL) == 0);
 
-    return (long long)now * 1000;
+    return ((long long)now.tv_sec) * 1000LL + now.tv_usec / 1000;
   }
 };
 

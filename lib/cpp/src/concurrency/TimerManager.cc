@@ -82,22 +82,25 @@ public:
 
       {Synchronized s(_manager->_monitor);
 
-	/* Update next timeout if necessary */
-
 	task_iterator expiredTaskEnd;
 
+	long long now = Util::currentTime();
+
 	while(_manager->_state == TimerManager::STARTED && 
-	      (expiredTaskEnd = _manager->_taskMap.upper_bound(Util::currentTime())) == _manager->_taskMap.begin()) {
+	      (expiredTaskEnd = _manager->_taskMap.upper_bound(now)) == _manager->_taskMap.begin()) {
 
 	  long long timeout = 0LL;
 
 	  if(!_manager->_taskMap.empty()) {
 
-	    timeout = Util::currentTime() - _manager->_taskMap.begin()->first;
+	    timeout = _manager->_taskMap.begin()->first - now;
 	  }
+
+	  assert((timeout != 0 && _manager->_taskCount > 0) || (timeout == 0 && _manager->_taskCount == 0));
 	    
  	  _manager->_monitor.wait(timeout);
-	  
+
+	  now = Util::currentTime();
 	}
 	
 	if(_manager->_state == TimerManager::STARTED) {
@@ -151,13 +154,29 @@ public:
 };
 
 TimerManager::TimerManager() :
+  _taskCount(0),
   _state(TimerManager::UNINITIALIZED),
   _dispatcher(new Dispatcher(this)) {
 }
 
 
 TimerManager::~TimerManager() {
-  delete _dispatcher;
+
+  /* If we haven't been explicitly stopped, do so now.  We don't need to grab the monitor here, since
+     stop already takes care of reentrancy. */
+  
+  if(_state != STOPPED) {
+    
+    try {
+      
+      stop();
+      
+    } catch(...) {
+      
+      // uhoh
+      
+    }
+  }
 }
 
 void TimerManager::start() {
@@ -196,6 +215,8 @@ void TimerManager::start() {
 
 void TimerManager::stop() {
 
+  bool doStop = false;
+
   {Synchronized s(_monitor);
 
     if(_state == TimerManager::UNINITIALIZED) {
@@ -203,6 +224,8 @@ void TimerManager::stop() {
       _state = TimerManager::STOPPED;
 
     } else if(_state != STOPPING &&  _state != STOPPED) {
+
+      doStop = true;
 
       _state = STOPPING;
 
@@ -214,6 +237,21 @@ void TimerManager::stop() {
       _monitor.wait();
     }
   }
+
+  if(doStop) {
+
+    // Clean up any outstanding tasks
+
+    for(task_iterator ix =  _taskMap.begin(); ix != _taskMap.end(); ix++) {
+
+      delete ix->second;
+
+      _taskMap.erase(ix);
+    }
+
+    delete _dispatcher;
+  }
+
 }
 
 const ThreadFactory* TimerManager::threadFactory() const {

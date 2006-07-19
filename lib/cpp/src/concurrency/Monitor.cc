@@ -59,6 +59,8 @@ class Monitor::Impl {
 
     // XXX Need to assert that caller owns mutex
 
+    assert(timeout >= 0LL);
+
     if(timeout == 0LL) {
 
       assert(pthread_cond_wait(&_pthread_cond, &_pthread_mutex) == 0);
@@ -67,13 +69,15 @@ class Monitor::Impl {
 
       struct timespec abstime;
 
+      long long now = Util::currentTime();
+
+      Util::toTimespec(abstime, now + timeout);
+
       int result  = pthread_cond_timedwait(&_pthread_cond, &_pthread_mutex, &abstime);
 
       if(result == ETIMEDOUT) {
 
-	// XXX Add assert once currentTime is fixed to have ms resolution or better
-
-	// assert(Util::currentTime() >= (now + timeout));
+	assert(Util::currentTime() >= (now + timeout));
       }
     }
   }

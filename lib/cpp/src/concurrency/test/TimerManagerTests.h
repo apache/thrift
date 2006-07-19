@@ -1,6 +1,7 @@
 #include <TimerManager.h>
 #include <PosixThreadFactory.h>
 #include <Monitor.h>
+#include <Util.h>
 
 #include <assert.h>
 #include <iostream>
@@ -20,12 +21,30 @@ class TimerManagerTests {
 
   public:
     
-  Task(Monitor& monitor) : 
+  Task(Monitor& monitor, long long timeout) : 
+    _timeout(timeout),
+    _startTime(Util::currentTime()),
     _monitor(monitor),
+    _success(false),
     _done(false) {}
 
     void run() {
 
+      _endTime = Util::currentTime();
+
+      // Figure out error percentage
+
+      long long delta = _endTime - _startTime;
+
+
+      delta = delta > _timeout ?  delta - _timeout : _timeout - delta;
+
+      float error = delta / _timeout;
+
+      if(error < .10) {
+	_success = true;
+      }
+      
       std::cout << "\t\t\tHello World" << std::endl;
 
       _done = true;
@@ -34,37 +53,60 @@ class TimerManagerTests {
 	_monitor.notifyAll();
       }
     }
-    
+
+
+    long long _timeout;
+    long long _startTime;
+    long long _endTime;
     Monitor& _monitor;
+    bool _success;
     bool _done;
   };
 
 public:
 
-  bool test00() {
+  /** This test creates two tasks and waits for the first to expire within 10% of the expected expiration time.  It then verifies that
+      the timer manager properly clean up itself and the remaining orphaned timeout task when the manager goes out of scope and its 
+      destructor is called. */
 
-    TimerManager* timerManager =  new TimerManager();
+  bool test00(long long timeout=1000LL) {
 
-    timerManager->threadFactory(new PosixThreadFactory());
+    TimerManagerTests::Task* orphanTask = new TimerManagerTests::Task(_monitor, 10 * timeout);
 
-    timerManager->start();
+    {
 
-    assert(timerManager->state() == TimerManager::STARTED);
+      TimerManager timerManager;
+      
+      timerManager.threadFactory(new PosixThreadFactory());
+      
+      timerManager.start();
+      
+      assert(timerManager.state() == TimerManager::STARTED);
 
-    TimerManagerTests::Task* task = new TimerManagerTests::Task(_monitor);
+      TimerManagerTests::Task* task = new TimerManagerTests::Task(_monitor, timeout);
 
-    {Synchronized s(_monitor);
+      {Synchronized s(_monitor);
 
-      timerManager->add(task, 1000LL);
+	timerManager.add(orphanTask, 10 * timeout);
 
-      _monitor.wait();
+	timerManager.add(task, timeout);
+
+	_monitor.wait();
+      }
+
+      assert(task->_done);
+
+
+      std::cout << "\t\t\t" << (task->_success ? "Success" : "Failure") << "!" << std::endl;
+
+      delete task;
     }
 
-    assert(task->_done);
+    // timerManager.stop(); This is where it happens via destructor
 
-    delete task;
+    assert(!orphanTask->_done);
 
-    std::cout << "\t\t\tSuccess!" << std::endl;
+    delete orphanTask;
 
     return true;
   }
