@@ -22,6 +22,8 @@ public:
 
   static const int MB = 1024 * 1024;
 
+  static void* threadMain(void* arg);
+
 private:
 
   pthread_t _pthread;
@@ -36,26 +38,6 @@ private:
 
   Runnable* _runnable;
 
-  static void* threadMain(void* arg) {
-
-    // XXX need a lock here when testing thread state
-
-    PthreadThread* thread = (PthreadThread*)arg;
-
-    if(thread->_state != starting) {
-      return (void*)0;
-    }
-
-    thread->_state = starting;
-
-    thread->_runnable->run();
-
-    if(thread->_state != stopping && thread->_state != stopped) {
-      thread->_state = stopping;
-    }
-    
-    return (void*)0;
-  }
 
 public:
   
@@ -95,9 +77,9 @@ public:
 
     // Set thread priority
 
-    assert(pthread_attr_setschedparam(&thread_attr, &sched_param) == 0);
+    // assert(pthread_attr_setschedparam(&thread_attr, &sched_param) == 0);
 
-    assert(pthread_create(&_pthread, &thread_attr, PthreadThread::threadMain, (void*)this) == 0);
+    assert(pthread_create(&_pthread, &thread_attr, threadMain, (void*)this) == 0);
   }
 
   void join() {
@@ -113,6 +95,26 @@ public:
   const Runnable* runnable() const {return _runnable;}
 
 };
+
+void* PthreadThread::threadMain(void* arg) {
+  // XXX need a lock here when testing thread state
+
+  PthreadThread* thread = (PthreadThread*)arg;
+  
+  if(thread->_state != starting) {
+    return (void*)0;
+  }
+
+  thread->_state = starting;
+
+  thread->_runnable->run();
+
+  if(thread->_state != stopping && thread->_state != stopped) {
+    thread->_state = stopping;
+  }
+    
+  return (void*)0;
+}
 
 /** POSIX Thread factory implementation */
 

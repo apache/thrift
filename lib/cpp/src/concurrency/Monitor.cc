@@ -1,8 +1,12 @@
 #include "Monitor.h" 
+#include "Exception.h" 
 #include "Util.h"
 
 #include <assert.h>
 #include <errno.h>
+
+#include <iostream>
+
 #include <pthread.h>
 
 
@@ -57,19 +61,19 @@ class Monitor::Impl {
 
     if(timeout == 0LL) {
 
-      pthread_cond_wait(&_pthread_cond, &_pthread_mutex);
+      assert(pthread_cond_wait(&_pthread_cond, &_pthread_mutex) == 0);
 
     } else {
 
       struct timespec abstime;
 
-      Util::toAbsoluteTimespec(abstime, timeout);
-
       int result  = pthread_cond_timedwait(&_pthread_cond, &_pthread_mutex, &abstime);
 
       if(result == ETIMEDOUT) {
 
-	// XXX If result is timeout need to throw timeout exception
+	// XXX Add assert once currentTime is fixed to have ms resolution or better
+
+	// assert(Util::currentTime() >= (now + timeout));
       }
     }
   }
@@ -101,7 +105,7 @@ private:
 
 Monitor::Monitor() : _impl(new Monitor::Impl()) {}
 
-      Monitor::~Monitor() { delete _impl;}
+Monitor::~Monitor() { delete _impl;}
 
 void Monitor::lock() const {_impl->lock();}
 

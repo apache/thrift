@@ -1,6 +1,7 @@
 #if !defined(_concurrency_TimerManager_h_)
 #define _concurrency_TimerManager_h_ 1
 
+#include "Exception.h"
 #include "Monitor.h"
 #include "Thread.h"
 
@@ -9,7 +10,7 @@
 #include <time.h>
 
 namespace facebook { namespace thrift { namespace concurrency { 
-      
+
 /** Timer Manager 
 	  
     This class dispatches timer tasks when they fall due.
@@ -23,31 +24,56 @@ class TimerManager {
 
   TimerManager();
 
-  virtual ~TimerManager() = 0;
+  virtual ~TimerManager();
 
-  virtual const ThreadFactory* threadFactory() const = 0;
+  virtual const ThreadFactory* threadFactory() const;
 
-  virtual void threadFactory(const ThreadFactory* value) = 0;
+  virtual void threadFactory(const ThreadFactory* value);
 
-  virtual size_t taskCount() const  = 0;
+  /** Starts the timer manager service 
+
+      @throws IllegalArgumentException Missing thread factory attribute */
+
+  virtual void start();
+
+  /** Stops the timer manager service */
+
+  virtual void stop();
+
+  virtual size_t taskCount() const ;
 
   /** Adds a task to be executed at some time in the future by a worker thread.
       
       @param task The task to execute
       @param timeout Time in milliseconds to delay before executing task */
 
-  virtual void add(Runnable* task, long long timeout) = 0;
+  virtual void add(Runnable* task, long long timeout);
 
   /** Adds a task to be executed at some time in the future by a worker thread.
       
       @param task The task to execute
       @param timeout Absolute time in the future to execute task. */ 
 
-  virtual void add(Runnable* task, const struct timespec& timeout) = 0;
+  virtual void add(Runnable* task, const struct timespec& timeout);
 
-  /** Removes a pending task */
+  /** Removes a pending task 
 
-  virtual void remove(Runnable* task) = 0;
+      @throws NoSuchTaskException Specified task doesn't exist.  It was either processed already or this call was made for a task that
+      was never added to this timer
+
+      @throws UncancellableTaskException Specified task is already being executed or has completed execution. */
+
+  virtual void remove(Runnable* task);
+
+  enum STATE {
+    UNINITIALIZED = 1000,
+    STARTING = 1001,
+    STARTED = 1002,
+    STOPPING = 1003,
+    STOPPED = 1004
+  };
+  
+  virtual const STATE state() const;
 
  private:
   
@@ -61,15 +87,18 @@ class TimerManager {
 
   size_t _taskCount;
 
-  long long _nextTimeout;
-
   Monitor _monitor;
+
+  STATE _state;
 
   class Dispatcher;
 
   friend class Dispatcher;
 
   Dispatcher* _dispatcher;
+
+  Thread* _dispatcherThread;
+
 };
 
 }}} // facebook::thrift::concurrency

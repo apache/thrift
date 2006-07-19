@@ -176,7 +176,7 @@ class ThreadManager::Worker: public Runnable {
 
   void run() {
 
-    {Synchronized(_manager->_monitor);
+    {Synchronized s(_manager->_monitor);
 
       if(_state == STARTING) {
 	_state = STARTED;
@@ -191,7 +191,7 @@ class ThreadManager::Worker: public Runnable {
 
 	 Once the queue is non-empty, dequeue a task, release monitor, and execute. */
 
-      {Synchronized(_manager->_monitor);
+      {Synchronized s(_manager->_monitor);
 
 	while(_state == STARTED && _manager->_tasks.empty()) {
 	  
@@ -221,7 +221,7 @@ class ThreadManager::Worker: public Runnable {
 
     } while(_state == STARTED);
 
-    {Synchronized(_manager->_monitor);
+    {Synchronized s(_manager->_monitor);
 
       if(_state == STOPPING) {
 
