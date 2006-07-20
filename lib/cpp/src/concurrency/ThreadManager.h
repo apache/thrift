@@ -66,7 +66,9 @@ class ThreadManager {
 
   static ThreadManager* newThreadManager();
 
-  static ThreadManager* newSimpleThreadManager();
+  /** Creates a simple thread manager the uses count number of worker threads */
+
+  static ThreadManager* newSimpleThreadManager(size_t count=4);
 
   class Task;
   

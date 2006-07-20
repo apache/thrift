@@ -414,8 +414,8 @@ ThreadManager* ThreadManager::newThreadManager() {
    return new ThreadManager::Impl();
 }
 
-ThreadManager* ThreadManager::newSimpleThreadManager() {
-   return new SimpleThreadManager();
+ThreadManager* ThreadManager::newSimpleThreadManager(size_t count) {
+   return new SimpleThreadManager(count);
 }
 
 }}} // facebook::thrift::concurrency
