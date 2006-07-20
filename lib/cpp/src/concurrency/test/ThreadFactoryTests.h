@@ -83,7 +83,7 @@ public:
     int& _count;
   };
 
-  bool reapNThreads(int count=100) {
+  bool reapNThreads(int count=10) {
 
     Monitor* monitor = new Monitor();
 
@@ -127,11 +127,11 @@ public:
   public:
 
     enum STATE {
-      UNINITIALIZED = 1000,
-      STARTING = 1001,
-      STARTED = 1002,
-      STOPPING = 1003,
-      STOPPED = 1004
+      UNINITIALIZED,
+      STARTING,
+      STARTED,
+      STOPPING,
+      STOPPED
     };
 
   SynchStartTask(Monitor& monitor,

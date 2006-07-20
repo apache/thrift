@@ -2,6 +2,7 @@
 #define _concurrency_Util_h_ 1
 
 #include <assert.h>
+#include <stddef.h>
 #include <sys/time.h>
 
 namespace facebook { namespace thrift { namespace concurrency { 

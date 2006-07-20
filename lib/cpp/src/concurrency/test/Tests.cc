@@ -30,9 +30,11 @@ int main(int argc, char** argv) {
 
     assert(threadFactoryTests.helloWorldTest());
 
-    std::cout << "\t\tThreadFactory reap N threads test: N = 100" << std::endl;
+    size_t count =  10000;
 
-    assert(threadFactoryTests.reapNThreads(100));
+    std::cout << "\t\tThreadFactory reap N threads test: N = " << count << std::endl;
+
+    assert(threadFactoryTests.reapNThreads(count));
 
     std::cout << "\t\tThreadFactory synchrous start test" << std::endl;
 

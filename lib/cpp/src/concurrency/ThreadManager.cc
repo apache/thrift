@@ -164,7 +164,7 @@ class ThreadManager::Worker: public Runnable {
 
       _manager->_workerCount++;
 
-      _manager->_monitor.notify();
+      _manager->_monitor.notifyAll();
     }
 
     do {
@@ -358,10 +358,8 @@ void ThreadManager::Impl::add(Runnable* value) {
     /* If queue was empty notify a thread, otherwise all worker threads are running and will get around to this
        task in time. */
 
-    if(isEmpty) {
+    if(isEmpty && _idleCount > 0) {
 
-      assert(_idleCount == _workerCount);
-      
       _monitor.notify();
     }
   }
