@@ -30,13 +30,13 @@ int main(int argc, char** argv) {
 
     assert(threadFactoryTests.helloWorldTest());
 
-    size_t count =  10000;
+    size_t count =  1000;
 
     std::cout << "\t\tThreadFactory reap N threads test: N = " << count << std::endl;
 
     assert(threadFactoryTests.reapNThreads(count));
 
-    std::cout << "\t\tThreadFactory synchrous start test" << std::endl;
+    std::cout << "\t\tThreadFactory synchronous start test" << std::endl;
 
     assert(threadFactoryTests.synchStartTest());
   }
@@ -56,11 +56,17 @@ int main(int argc, char** argv) {
 
     std::cout << "ThreadManager tests..." << std::endl;
 
-    std::cout << "\t\tThreadManager test00" << std::endl;
+    size_t workerCount = 10;
+
+    size_t taskCount = 10000;
+
+    long long delay = 10LL;
+
+    std::cout << "\t\tThreadManager load test: worker count: " << workerCount << " task count: " << taskCount << " delay: " << delay << std::endl;
 
     ThreadManagerTests threadManagerTests;
 
-    assert(threadManagerTests.test00());
+    assert(threadManagerTests.loadTest(taskCount, delay, workerCount));
   }
 }
 

@@ -32,6 +32,26 @@ class ThreadManager {
 
   virtual ~ThreadManager() {}
 
+  /** Starts the thread manager.  Verifies all attributes have been properly initialized, then allocates necessary resources to begin operation */
+  
+  virtual void start() = 0;
+
+  /** Stops the thread manager.  Aborts all remaining unprocessed task, shuts down all created worker threads, and realeases all allocated resources.
+      This method blocks for all worker threads to complete, thus it can potentially block forever if a worker thread is running a task that 
+      won't terminate. */
+
+  virtual void stop() = 0;
+
+  enum STATE {
+    UNINITIALIZED,
+    STARTING,
+    STARTED,
+    STOPPING,
+    STOPPED
+  };
+  
+  virtual const STATE state() const = 0;
+
   virtual const ThreadFactory* threadFactory() const = 0;
 
   virtual void threadFactory(const ThreadFactory* value) = 0;

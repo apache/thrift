@@ -17,6 +17,18 @@ class Runnable {
   virtual ~Runnable() {};
 
   virtual void run() = 0;
+
+  virtual Thread* thread() {return _thread;}
+
+ private:
+
+  /** Sets the thread that is executing this object.  This is only meant for use by concrete implementations of Thread. */
+
+  friend class Thread;
+
+  virtual void thread(Thread* value) {_thread = value;}
+
+  Thread* _thread;
 };
 
 /** Minimal thread class.  Returned by thread factory bound to a Runnable object and ready to start execution.  More or less analogous to java.lang.Thread
@@ -43,7 +55,15 @@ class Thread {
 
   /** Gets the runnable object this thread is hosting */
   
-  virtual Runnable* runnable() const = 0;
+  virtual Runnable* runnable() const {return _runnable;}
+
+ protected:
+
+  virtual void runnable(Runnable* value, bool x=false) {_runnable = value; _runnable->thread(this);}
+
+ private:
+  
+  Runnable* _runnable;
 };
 
 /** Factory to create platform-specific thread object and bind them to Runnable object for execution */

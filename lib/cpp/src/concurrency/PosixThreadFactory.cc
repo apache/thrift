@@ -36,9 +36,6 @@ private:
 
   int _stackSize;
 
-  Runnable* _runnable;
-
-
 public:
   
   PthreadThread(int policy, int priority, int stackSize, Runnable* runnable) : 
@@ -46,9 +43,10 @@ public:
     _state(uninitialized), 
     _policy(policy),
     _priority(priority),
-    _stackSize(stackSize),
-    _runnable(runnable)
-  {}
+    _stackSize(stackSize) { 
+
+    this->Thread::runnable(runnable);
+  }
 
   void start() {
 
@@ -92,7 +90,9 @@ public:
     }
   }
 
-  Runnable* runnable() const {return _runnable;}
+  Runnable* runnable() const {return Thread::runnable();}
+
+  void runnable(Runnable* value) {Thread::runnable(value);}
 
 };
 
@@ -107,7 +107,7 @@ void* PthreadThread::threadMain(void* arg) {
 
   thread->_state = starting;
 
-  thread->_runnable->run();
+  thread->runnable()->run();
 
   if(thread->_state != stopping && thread->_state != stopped) {
     thread->_state = stopping;

@@ -28,27 +28,35 @@ public:
       _monitor(monitor),
       _count(count),
       _timeout(timeout),
-      _addTime(Util::currentTime()),
-      _success(false),
       _done(false) {}
 
     void run() {
 
-      _startTime = Util::currentTime();
-      
       Monitor sleep;
 
       {Synchronized s(sleep);
 
-	sleep.wait(_timeout);
-      }
+	long long time00 = Util::currentTime();
 
-      _endTime = Util::currentTime();
+	sleep.wait(_timeout);
+
+	long long time01 = Util::currentTime();
+
+	double error = ((time01 - time00) - _timeout) / (double)_timeout;
+	
+	if(error < 0.0) {
+	  
+	  error*= -1.0;
+	}
+
+	if(error > .10) {
+	  
+	  assert(false);
+	}
+      }
 
       _done = true;
       
-      _success = true;
-
       {Synchronized s(_monitor);
 
 	// std::cout << "Thread " << _count << " completed " << std::endl;
@@ -65,17 +73,13 @@ public:
     Monitor& _monitor;
     size_t& _count;
     long long _timeout;
-    long long _addTime;
-    long long _startTime;
-    long long _endTime;
-    bool _success;
     bool _done;
   };
 
   /** Dispatch count tasks, each of which blocks for timeout milliseconds then completes.
       Verify that all tasks completed and that thread manager cleans up properly on delete. */
 
-  bool test00(size_t count=100, long long timeout=100LL, size_t workerCount=4) {
+  bool loadTest(size_t count=100, long long timeout=100LL, size_t workerCount=4) {
 
     Monitor monitor;
 
@@ -84,6 +88,8 @@ public:
     ThreadManager* threadManager = ThreadManager::newSimpleThreadManager(workerCount);
       
     threadManager->threadFactory(new PosixThreadFactory());
+
+    threadManager->start();
       
     std::set<ThreadManagerTests::Task*> tasks;
 
@@ -91,6 +97,8 @@ public:
 
       tasks.insert(new ThreadManagerTests::Task(monitor, activeCount, timeout));
     }
+
+    long long time00 = Util::currentTime();
 
     for(std::set<ThreadManagerTests::Task*>::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
 
@@ -105,19 +113,27 @@ public:
       }
     }
 
-    bool success;
+    long long time01 = Util::currentTime();
 
     for(std::set<ThreadManagerTests::Task*>::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
-
-      success = success || (*ix)->_success;
 
       delete *ix;
       
     }
 
+    double expectedTime = ((count + (workerCount - 1)) / workerCount) * timeout;
+
+    double error = ((time01 - time00) - expectedTime) / expectedTime;
+
+    if(error < 0) {
+      error*= -1.0;
+    }
+
+    bool success = error < .10;
+
     delete threadManager;
 
-    std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "!" << std::endl;
+    std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "! expected time: " << expectedTime << "ms elapsed time: "<< time01 - time00 << "ms error%: " << error * 100.0 << std::endl;
 
     return true;
   }
