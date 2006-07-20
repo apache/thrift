@@ -3,6 +3,7 @@
 
 #include "ThreadFactoryTests.h"
 #include "TimerManagerTests.h"
+#include "ThreadManagerTests.h"
 
 int main(int argc, char** argv) {
 
@@ -47,6 +48,17 @@ int main(int argc, char** argv) {
     TimerManagerTests timerManagerTests;
 
     assert(timerManagerTests.test00());
+  }
+
+  if(runAll || arg.compare("thread-manager") == 0) {
+
+    std::cout << "ThreadManager tests..." << std::endl;
+
+    std::cout << "\t\tThreadManager test00" << std::endl;
+
+    ThreadManagerTests threadManagerTests;
+
+    assert(threadManagerTests.test00());
   }
 }
 

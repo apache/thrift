@@ -119,5 +119,3 @@ public:
 
 }}}} // facebook::thrift::concurrency
 
-using namespace facebook::thrift::concurrency::test;
-

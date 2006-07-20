@@ -251,7 +251,6 @@ void TimerManager::stop() {
 
     delete _dispatcher;
   }
-
 }
 
 const ThreadFactory* TimerManager::threadFactory() const {

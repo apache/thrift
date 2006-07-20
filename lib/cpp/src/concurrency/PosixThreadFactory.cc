@@ -92,7 +92,7 @@ public:
     }
   }
 
-  const Runnable* runnable() const {return _runnable;}
+  Runnable* runnable() const {return _runnable;}
 
 };
 

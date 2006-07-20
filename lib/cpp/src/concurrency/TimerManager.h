@@ -66,11 +66,11 @@ class TimerManager {
   virtual void remove(Runnable* task);
 
   enum STATE {
-    UNINITIALIZED = 1000,
-    STARTING = 1001,
-    STARTED = 1002,
-    STOPPING = 1003,
-    STOPPED = 1004
+    UNINITIALIZED,
+    STARTING,
+    STARTED,
+    STOPPING,
+    STOPPED
   };
   
   virtual const STATE state() const;

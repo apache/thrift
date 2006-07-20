@@ -43,7 +43,7 @@ class Thread {
 
   /** Gets the runnable object this thread is hosting */
   
-  virtual const Runnable* runnable() const = 0;
+  virtual Runnable* runnable() const = 0;
 };
 
 /** Factory to create platform-specific thread object and bind them to Runnable object for execution */
