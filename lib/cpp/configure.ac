@@ -28,6 +28,8 @@ AC_CHECK_HEADERS([stddef.h])
 
 AC_CHECK_HEADERS([sys/socket.h])
 
+AC_CHECK_HEADERS([bits/socket.h])
+
 AC_CHECK_HEADERS([sys/time.h])
 
 AC_CHECK_HEADERS([unistd.h])
@@ -44,6 +46,18 @@ AC_HEADER_TIME
 
 AC_TYPE_SIZE_T
 
+AC_TYPE_INT32_T
+x
+AC_TYPE_INT64_T
+
+AC_TYPE_UINT16_T
+
+AC_TYPE_UINT32_T
+
+AC_TYPE_UINT64_T
+
+AC_TYPE_UINT8_T
+
 AC_CONFIG_HEADERS(config.h:config.hin)
 
 AC_PROG_CC
@@ -54,4 +68,4 @@ AC_PROG_INSTALL
 
 AC_PROG_LIBTOOL
 
-AC_OUTPUT([Makefile src/Makefile src/concurrency/Makefile])
+AC_OUTPUT(Makefile)

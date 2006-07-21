@@ -162,9 +162,16 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
   uint32_t sent = 0;
     
   while (sent < len) {
+
+    int flags = 0;
+
+    #if HAVE_BITS_SOCKET_H
     // Note the use of MSG_NOSIGNAL to suppress SIGPIPE errors, instead we
     // check for the EPIPE return condition and close the socket in that case
-    int b = send(socket_, buf + sent, len - sent, MSG_NOSIGNAL);
+    flags |= MSG_NOSIGNAL;
+    #endif // HAVE_BITS_SOCKET_H
+
+    int b = send(socket_, buf + sent, len - sent, flags);
     ++g_socket_syscalls;
 
     // Fail on a send error

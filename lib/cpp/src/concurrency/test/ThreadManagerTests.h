@@ -49,7 +49,7 @@ public:
 	  error*= -1.0;
 	}
 
-	if(error > .10) {
+	if(error > .20) {
 	  
 	  assert(false);
 	}

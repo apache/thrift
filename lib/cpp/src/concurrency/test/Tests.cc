@@ -56,9 +56,9 @@ int main(int argc, char** argv) {
 
     std::cout << "ThreadManager tests..." << std::endl;
 
-    size_t workerCount = 10;
+    size_t workerCount = 100;
 
-    size_t taskCount = 10000;
+    size_t taskCount = 100000;
 
     long long delay = 10LL;
 
