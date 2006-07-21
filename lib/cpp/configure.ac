@@ -28,11 +28,11 @@ AC_CHECK_HEADERS([stddef.h])
 
 AC_CHECK_HEADERS([sys/socket.h])
 
-AC_CHECK_HEADERS([bits/socket.h])
-
 AC_CHECK_HEADERS([sys/time.h])
 
 AC_CHECK_HEADERS([unistd.h])
+
+AC_CHECK_LIB(pthread, pthread_create)
 
 AC_C_CONST
 
@@ -47,7 +47,7 @@ AC_HEADER_TIME
 AC_TYPE_SIZE_T
 
 AC_TYPE_INT32_T
-x
+
 AC_TYPE_INT64_T
 
 AC_TYPE_UINT16_T

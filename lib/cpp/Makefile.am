@@ -10,6 +10,7 @@ libconcurrency_la_SOURCES = src/concurrency/Monitor.cc \
 
 libconcurrency_inst_headers = src/concurrency/Exception.h \
                               src/concurrency/Monitor.h \
+                              src/concurrency/PosixThreadFactory.h \
                               src/concurrency/Thread.h \
                               src/concurrency/ThreadManager.h \
                               src/concurrency/TimerManager.h

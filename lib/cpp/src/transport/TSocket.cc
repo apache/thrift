@@ -1,3 +1,4 @@
+#include <config.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -165,11 +166,11 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
 
     int flags = 0;
 
-    #if HAVE_BITS_SOCKET_H
+    #if defined(MSG_NOSIGNAL)
     // Note the use of MSG_NOSIGNAL to suppress SIGPIPE errors, instead we
     // check for the EPIPE return condition and close the socket in that case
     flags |= MSG_NOSIGNAL;
-    #endif // HAVE_BITS_SOCKET_H
+    #endif // defined(MSG_NOSIGNAL)
 
     int b = send(socket_, buf + sent, len - sent, flags);
     ++g_socket_syscalls;

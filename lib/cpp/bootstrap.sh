@@ -16,24 +16,25 @@ autoscan.log \
 config.guess \
 config.h \
 config.hin \
-config.hin \
 config.log \
 config.status \
 config.sub \
 configure \
 configure.scan \
 depcomp \
+.deps \
 install-sh \
+.libs \
 libtool \
 ltmain.sh \
-missing \
-stamp-h1
+Makefile.in \
+missing
 
 
 autoscan
 autoheader
 aclocal
-libtoolize --force
+libtoolize --automake
 touch NEWS README AUTHORS ChangeLog
 autoconf
 automake -ac
