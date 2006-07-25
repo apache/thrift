@@ -1,6 +1,7 @@
 #include <Thread.h>
 #include <PosixThreadFactory.h>
 #include <Monitor.h>
+#include <Util.h>
 
 #include <assert.h>
 #include <iostream>
@@ -216,9 +217,42 @@ public:
 
     assert(state == SynchStartTask::STOPPED);
 
+    bool success = true;
+
+    std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "!" << std::endl;
+
     return true;
   }
 
+  /** See how accurate monitor timeout is. */
+
+  bool monitorTimeoutTest(size_t count=1000, long long timeout=10) {
+
+    Monitor monitor;
+
+    long long startTime = Util::currentTime();
+
+    for(size_t ix = 0; ix < count; ix++) {
+      {Synchronized s(monitor);
+	monitor.wait(timeout);
+      }
+    }
+
+    long long endTime = Util::currentTime();
+
+    double error = ((endTime - startTime) - (count * timeout)) / (double)(count * timeout);
+
+    if(error < 0.0)  {
+
+      error *= 1.0;
+    }
+
+    bool success = error < .10;
+
+    std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "! expected time: " << count * timeout << "ms elapsed time: "<< endTime - startTime << "ms error%: " << error * 100.0 << std::endl;
+
+    return success;
+  }
 };
   
 

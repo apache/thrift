@@ -1,3 +1,4 @@
+#include <config.h>
 #include <ThreadManager.h>
 #include <PosixThreadFactory.h>
 #include <Monitor.h>
@@ -6,6 +7,8 @@
 #include <assert.h>
 #include <set>
 #include <iostream>
+#include <set>
+#include <stdint.h>
 
 namespace facebook { namespace thrift { namespace concurrency { namespace test {
 
@@ -32,28 +35,15 @@ public:
 
     void run() {
 
-      Monitor sleep;
+      _startTime = Util::currentTime();
 
-      {Synchronized s(sleep);
+      {Synchronized s(_sleep);
 
-	long long time00 = Util::currentTime();
 
-	sleep.wait(_timeout);
-
-	long long time01 = Util::currentTime();
-
-	double error = ((time01 - time00) - _timeout) / (double)_timeout;
-	
-	if(error < 0.0) {
-	  
-	  error*= -1.0;
-	}
-
-	if(error > .20) {
-	  
-	  assert(false);
-	}
+	_sleep.wait(_timeout);
       }
+
+      _endTime = Util::currentTime();
 
       _done = true;
       
@@ -73,7 +63,10 @@ public:
     Monitor& _monitor;
     size_t& _count;
     long long _timeout;
+    long long _startTime;
+    long long _endTime;
     bool _done;
+    Monitor _sleep;
   };
 
   /** Dispatch count tasks, each of which blocks for timeout milliseconds then completes.
@@ -86,8 +79,12 @@ public:
     size_t activeCount = count;
 
     ThreadManager* threadManager = ThreadManager::newSimpleThreadManager(workerCount);
+
+    PosixThreadFactory* threadFactory = new PosixThreadFactory();
+
+    threadFactory->priority(PosixThreadFactory::HIGHEST);
       
-    threadManager->threadFactory(new PosixThreadFactory());
+    threadManager->threadFactory(threadFactory);
 
     threadManager->start();
       
@@ -115,11 +112,45 @@ public:
 
     long long time01 = Util::currentTime();
 
+    long long firstTime = 9223372036854775807LL;
+    long long lastTime = 0;
+
+    double averageTime = 0;
+    long long minTime = 9223372036854775807LL;
+    long long maxTime = 0;
+
     for(std::set<ThreadManagerTests::Task*>::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
+      
+      ThreadManagerTests::Task* task = *ix;
+
+      long long delta = task->_endTime - task->_startTime;
+
+      assert(delta > 0);
+
+      if(task->_startTime < firstTime) {
+	firstTime = task->_startTime;
+      }
+
+      if(task->_endTime > lastTime) {
+	lastTime = task->_endTime;
+      }
+
+      if(delta < minTime) {
+	minTime = delta;
+      }
+
+      if(delta > maxTime) {
+	maxTime = delta;
+      }
+
+      averageTime+= delta;
 
       delete *ix;
-      
     }
+    
+    averageTime /= count;
+
+    std::cout << "\t\t\tfirst start: " << firstTime << "ms Last end: " << lastTime << "ms min: " << minTime << "ms max: " << maxTime << "ms average: " << averageTime << "ms" << std::endl;
 
     double expectedTime = ((count + (workerCount - 1)) / workerCount) * timeout;
 
@@ -133,9 +164,11 @@ public:
 
     delete threadManager;
 
+    delete threadFactory;
+
     std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "! expected time: " << expectedTime << "ms elapsed time: "<< time01 - time00 << "ms error%: " << error * 100.0 << std::endl;
 
-    return true;
+    return success;
   }
 };
   

@@ -34,6 +34,10 @@ AC_CHECK_HEADERS([unistd.h])
 
 AC_CHECK_LIB(pthread, pthread_create)
 
+AC_CHECK_LIB(rt, sched_get_priority_min)
+
+AC_CHECK_FUNCS([clock_gettime])
+
 AC_C_CONST
 
 AC_C_VOLATILE
