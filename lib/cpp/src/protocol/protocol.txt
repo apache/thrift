@@ -1,0 +1,129 @@
+This is the BNF for the  Thrift wire protocol.  Wire-protocol encoder/decoders must provide methods to encode/decode all the terminals in this BNF.  The BNF is designed to allow for both binary and ascii encodings, including XML encodings.  The latter requirement necessitates breaking all logical message components into header and body as well as delimiting beginning and  end of each component.  In this was it is possible to represent a component as a start tag (component bebug) with attributes (component-header) some arbitray number of child elements, and end tag (component end).
+
+For binary formats it is typically not necessary to represent the begin and end of component on the wire.  The only time the driver expects variable input is for field lists.  Field lists are terminated with the special STOP field.  Thus, the driver always knows what component to expect next.  Thus binary formats can dispence with component start and end delimiters.
+
+""" General message format """
+
+     message-stream :           message-stream message | NIL
+     message : 	    		MSG_b message-header message-body MSG_e 
+     message-header :      	MSGH_b protocol-version sequence-number message-type MSGH_e
+     protocol-version : 	protocol-version-major protocol-version-minor 
+     protocol-version-major : 	UINT08
+     protocol-version-minor : 	UINT08
+     sequence-number :		UINT32
+     message-type :		INVOKE | REPLY
+
+     message-body :		invoke-body | reply-body
+
+""" service function invoke message body """
+
+     invoke-body :		function-specifier arguments
+
+     function-specifier :	service-qname function-name
+     service-qname :		package-name service-name
+     function-name : 		STRING
+     package-name :		STRING
+     service-name :		STRING
+
+     arguments :  		ARGS_b arg-list ARGS_e
+     arg-list :    		arg-list arg | NIL
+     arg :     			ARG_b arg-identifier arg-value ARG_e
+     arg-identifier : 		arg-name | arg-id | arg-name arg-id
+     arg-name :			STRING
+     arg-id : 			UINT32
+     arg-value :		datum
+
+""" service function reply message body """
+
+     reply-body :		in-reply-to-id result
+
+     result :			RES_b result-header result-body RES_e
+
+     result-header :		RESH_b result-type RESH_e
+
+     result-type : 		RES_NORMAL | RES_ERROR | RES_IOERROR
+
+     result-body :		normal-result-body | error-result-body
+
+     normal-result-body :	RESB_b datum RESB_e
+
+     error-result-body :	RESB_b datum RESB_e   // error datum is constrained to be derived from some exception type 
+
+""" wire representation  of simple, collection and composite data """
+     				
+     datum :   			DATUM_b datum-header datum-body DATUM_e 
+     datum-header : 		DATUMH_b type-specifier datum-identifier DATUMH_e 
+     type-specifier : 		simple-type-specifier |  complex-type-specifier
+
+     datum-identifier :		datum-qname | datum-id | datum-name datum-id
+
+     datum-qname :		package-name datum-name
+     datum-name :		STRING
+     datum-id : 		UINT32
+     datum-body :	   	DATUMB_b simple-datum | collection-datum | struct-datum DATUMB_e
+
+""" simple datum """
+
+     simple-type-specifier :	I08 | I16 | I32 | I64 | U08 | U16 | U32 | U64 | STRING | UTF8 | UTF16 | FLOAT | BOOL | STOP
+
+     simple-data :	   	simple-data simple-datum | NIL
+
+     simple-datum :		bool-datum |
+     		  		i08-datum | i16-datum | i32-datum | i64-datum | 
+     		  		u08-datum | u16b-datum | u32-datum | u64-datum | 
+				string-datum | utf7-datum | utf8-datum | utf16-datum  // string and utf7 are equivalent
+
+""" Complex data """
+
+     complex-type-specifier	collection-type-specifier | struct-type-specifier
+
+""" collection datum """
+
+     collection-type-specifier : ARRAY | MAP | SET | LIST
+
+     collection-datum :		list-datum | set-datum | map-datum
+
+     array-datum :    		simple-array-datum | complex-array-datum
+
+     simple-array-datum :	ARRAY_b element-count simple-type-specifier simple-data ARRAY_e
+
+     complex-array-datum :	ARRAY_b element-count simple-type-specifier simple-data ARRAY_e
+
+     list-datum :     		LIST_b element-count element-type-specifier elements LIST_e
+
+     element-count :		UINT32
+
+     element-type-specifier :	type-specifier
+
+     elements : 		elements element | NIL
+
+     element :			datum
+
+     set-datum :     		SET_b element-count element-type-specifier elements SET_e
+
+     map-datum :		MAP_b element-count map-key-type-specifier map-value-type-specifier map-pairs MAP_e
+
+     map-key-type-specifier : 	type-specifier
+
+     map-value-type-specifier : type-specifier
+
+     map-pairs :		map-pairs map-pair | NIL
+
+     map-pair :			MAPP_b key-datum value-datum MAPP_e
+
+""" struct datum """
+
+     struct-type-specifier :    STRUCT
+
+     struct-datum :	   	STRUCT_b field-list STRUCT_e
+
+     field-list :	 	fields terminal-field
+
+     fields :	 		fields field | NIL
+
+     field :			datum
+
+     terminal-field :		datum  // Datum type is STOP
+
+
+
