@@ -5,6 +5,8 @@
 #include <iostream>
 using namespace std;
 
+namespace facebook { namespace thrift { namespace server { 
+
 /**
  * A simple single-threaded application server. Perfect for unit tests!
  *
@@ -52,3 +54,5 @@ void TSimpleServer::run() {
 
   // TODO(mcslee): Could this be a timeout case? Or always the real thing?
 }
+
+}}} // facebook::thrift::server

@@ -4,6 +4,8 @@
 #include "transport/TTransport.h"
 #include "transport/TTransportException.h"
 
+namespace facebook { namespace thrift { namespace transport { 
+
 /**
  * Server transport framework. A server needs to have some facility for
  * creating base transports to read/write from.
@@ -57,5 +59,7 @@ class TServerTransport {
   virtual TTransport* acceptImpl() = 0;
 
 };
+
+}}} // facebook::thrift::transport
 
 #endif

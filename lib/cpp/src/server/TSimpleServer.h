@@ -4,6 +4,8 @@
 #include "server/TServer.h"
 #include "transport/TServerTransport.h"
 
+namespace facebook { namespace thrift { namespace server { 
+
 /**
  * This is the most basic simple server. It is single-threaded and runs a
  * continuous loop of accepting a single connection, processing requests on
@@ -26,5 +28,7 @@ class TSimpleServer : public TServer {
  protected:
   TServerTransport* serverTransport_;
 };
+
+}}} // facebook::thrift::server
 
 #endif

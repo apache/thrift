@@ -5,11 +5,15 @@
 #include "Monitor.h"
 #include "Thread.h"
 
+#include <boost/shared_ptr.hpp>
+
 #include <map>
 
 #include <time.h>
 
 namespace facebook { namespace thrift { namespace concurrency { 
+
+using namespace boost;
 
 /** Timer Manager 
 	  
@@ -26,9 +30,9 @@ class TimerManager {
 
   virtual ~TimerManager();
 
-  virtual const ThreadFactory* threadFactory() const;
+  virtual shared_ptr<const ThreadFactory> threadFactory() const;
 
-  virtual void threadFactory(const ThreadFactory* value);
+  virtual void threadFactory(shared_ptr<const ThreadFactory> value);
 
   /** Starts the timer manager service 
 
@@ -47,14 +51,14 @@ class TimerManager {
       @param task The task to execute
       @param timeout Time in milliseconds to delay before executing task */
 
-  virtual void add(Runnable* task, long long timeout);
+  virtual void add(shared_ptr<Runnable> task, long long timeout);
 
   /** Adds a task to be executed at some time in the future by a worker thread.
       
       @param task The task to execute
       @param timeout Absolute time in the future to execute task. */ 
 
-  virtual void add(Runnable* task, const struct timespec& timeout);
+  virtual void add(shared_ptr<Runnable> task, const struct timespec& timeout);
 
   /** Removes a pending task 
 
@@ -63,7 +67,7 @@ class TimerManager {
 
       @throws UncancellableTaskException Specified task is already being executed or has completed execution. */
 
-  virtual void remove(Runnable* task);
+  virtual void remove(shared_ptr<Runnable> task);
 
   enum STATE {
     UNINITIALIZED,
@@ -77,13 +81,13 @@ class TimerManager {
 
  private:
   
-  const ThreadFactory* _threadFactory;
+  shared_ptr<const ThreadFactory> _threadFactory;
   
   class Task;
 
   friend class Task;
 
-  std::multimap<long long, Task*> _taskMap;
+  std::multimap<long long, shared_ptr<Task> > _taskMap;
 
   size_t _taskCount;
 
@@ -95,9 +99,9 @@ class TimerManager {
 
   friend class Dispatcher;
 
-  Dispatcher* _dispatcher;
+  shared_ptr<Dispatcher> _dispatcher;
 
-  Thread* _dispatcherThread;
+  shared_ptr<Thread> _dispatcherThread;
 
 };
 

@@ -6,6 +6,8 @@
 #include "transport/TTransport.h"
 #include "transport/TServerSocket.h"
 
+namespace facebook { namespace thrift { namespace transport { 
+
 /**
  * TCP Socket implementation of the TTransport interface.
  *
@@ -97,4 +99,5 @@ class TSocket : public TTransport {
   int socket_;
 };
 
+}}} // facebook::thrift::transport
 #endif

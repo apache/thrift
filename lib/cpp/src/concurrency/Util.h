@@ -5,7 +5,7 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include <sys/time.h>
+#include <time.h>
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
@@ -55,9 +55,9 @@ class Util {
 
     struct timespec now;
 
-    assert(clock_gettime(&now, NULL) == 0);
+    assert(clock_gettime(CLOCK_REALTIME, &now) == 0);
 
-    return = (now.tv_sec * MS_PER_S) + (now.tv_nsec / NS_PER_MS) + (now.tv_nsec % NS_PER_MS >= 500000 ? 1 : 0) ;
+    return (now.tv_sec * MS_PER_S) + (now.tv_nsec / NS_PER_MS) + (now.tv_nsec % NS_PER_MS >= 500000 ? 1 : 0) ;
 
 #elif defined(HAVE_GETTIMEOFDAY)
 
@@ -66,10 +66,10 @@ class Util {
     assert(gettimeofday(&now, NULL) == 0);
 
     return (((long long)now.tv_sec) * MS_PER_S) + (now.tv_usec / MS_PER_S) + (now.tv_usec % MS_PER_S >= 500 ? 1 : 0);
+
 #endif // defined(HAVE_GETTIMEDAY)
   }
 };
-
 
 }}} // facebook::thrift::concurrency
 

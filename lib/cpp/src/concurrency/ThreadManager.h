@@ -1,11 +1,15 @@
 #if !defined(_concurrency_ThreadManager_h_)
 #define _concurrency_ThreadManager_h_ 1
 
+#include <boost/shared_ptr.hpp>
+
 #include <sys/types.h>
 
 #include "Thread.h"
 
 namespace facebook { namespace thrift { namespace concurrency { 
+
+using namespace boost;
 
 /** Thread Pool Manager and related classes
 
@@ -52,9 +56,9 @@ class ThreadManager {
   
   virtual const STATE state() const = 0;
 
-  virtual const ThreadFactory* threadFactory() const = 0;
+  virtual shared_ptr<ThreadFactory> threadFactory() const = 0;
 
-  virtual void threadFactory(const ThreadFactory* value) = 0;
+  virtual void threadFactory(shared_ptr<ThreadFactory> value) = 0;
 
   virtual void addWorker(size_t value=1) = 0;
 
@@ -76,19 +80,22 @@ class ThreadManager {
 
   virtual size_t totalTaskCount() const = 0;
 
-  /** Adds a task to be execued at some time in the future by a worker thread. */
+  /** Adds a task to be execued at some time in the future by a worker thread.
 
-  virtual void add(Runnable* value) = 0;
+  @param value The task to run */
+
+
+  virtual void add(shared_ptr<Runnable>value) = 0;
 
   /** Removes a pending task */
 
-  virtual void remove(Runnable* task) = 0;
+  virtual void remove(shared_ptr<Runnable> task) = 0;
 
-  static ThreadManager* newThreadManager();
+  static shared_ptr<ThreadManager> newThreadManager();
 
   /** Creates a simple thread manager the uses count number of worker threads */
 
-  static ThreadManager* newSimpleThreadManager(size_t count=4);
+  static shared_ptr<ThreadManager> newSimpleThreadManager(size_t count=4);
 
   class Task;
   

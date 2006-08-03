@@ -4,6 +4,8 @@
 #include <string>
 #include "transport/TTransportException.h"
 
+namespace facebook { namespace thrift { namespace transport { 
+
 /**
  * Generic interface for a method of transporting data. A TTransport may be
  * capable of either reading or writing, but not necessarily both.
@@ -93,5 +95,7 @@ class TTransport {
    */
   TTransport() {}
 };
+
+}}} // facebook::thrift::transport
 
 #endif

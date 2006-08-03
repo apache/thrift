@@ -33,7 +33,7 @@ missing
 
 autoscan
 autoheader
-aclocal
+aclocal -I ./aclocal
 libtoolize --automake
 touch NEWS README AUTHORS ChangeLog
 autoconf

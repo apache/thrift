@@ -1,7 +1,7 @@
-#include <TimerManager.h>
-#include <PosixThreadFactory.h>
-#include <Monitor.h>
-#include <Util.h>
+#include <concurrency/TimerManager.h>
+#include <concurrency/PosixThreadFactory.h>
+#include <concurrency/Monitor.h>
+#include <concurrency/Util.h>
 
 #include <assert.h>
 #include <iostream>
@@ -17,16 +17,22 @@ using namespace facebook::thrift::concurrency;
 
 class TimerManagerTests {
 
+ public:
+
+  static const double ERROR;
+
  class Task: public Runnable {
 
   public:
     
-  Task(Monitor& monitor, long long timeout) : 
-    _timeout(timeout),
-    _startTime(Util::currentTime()),
-    _monitor(monitor),
-    _success(false),
+    Task(Monitor& monitor, long long timeout) : 
+      _timeout(timeout),
+      _startTime(Util::currentTime()),
+      _monitor(monitor),
+      _success(false),
     _done(false) {}
+
+   ~Task() {std::cerr << this << std::endl;}
 
     void run() {
 
@@ -41,19 +47,20 @@ class TimerManagerTests {
 
       float error = delta / _timeout;
 
-      if(error < .10) {
+      if(error < ERROR) {
 	_success = true;
       }
       
-      std::cout << "\t\t\tHello World" << std::endl;
-
       _done = true;
-      
+
+      std::cout << "\t\t\tTimerManagerTests::Task[" << this << "] done" << std::endl; //debug      
+
       {Synchronized s(_monitor);
 	_monitor.notifyAll();
       }
     }
 
+    
 
     long long _timeout;
     long long _startTime;
@@ -63,27 +70,25 @@ class TimerManagerTests {
     bool _done;
   };
 
-public:
-
   /** This test creates two tasks and waits for the first to expire within 10% of the expected expiration time.  It then verifies that
       the timer manager properly clean up itself and the remaining orphaned timeout task when the manager goes out of scope and its 
       destructor is called. */
 
   bool test00(long long timeout=1000LL) {
 
-    TimerManagerTests::Task* orphanTask = new TimerManagerTests::Task(_monitor, 10 * timeout);
+    shared_ptr<TimerManagerTests::Task> orphanTask = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, 10 * timeout));
 
     {
 
       TimerManager timerManager;
       
-      timerManager.threadFactory(new PosixThreadFactory());
+      timerManager.threadFactory(shared_ptr<PosixThreadFactory>(new PosixThreadFactory()));
       
       timerManager.start();
       
       assert(timerManager.state() == TimerManager::STARTED);
 
-      TimerManagerTests::Task* task = new TimerManagerTests::Task(_monitor, timeout);
+      shared_ptr<TimerManagerTests::Task> task = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, timeout));
 
       {Synchronized s(_monitor);
 
@@ -98,15 +103,11 @@ public:
 
 
       std::cout << "\t\t\t" << (task->_success ? "Success" : "Failure") << "!" << std::endl;
-
-      delete task;
     }
 
     // timerManager.stop(); This is where it happens via destructor
 
     assert(!orphanTask->_done);
-
-    delete orphanTask;
 
     return true;
   }
@@ -115,7 +116,8 @@ public:
 
   Monitor _monitor;
 };
-  
 
+const double TimerManagerTests::ERROR = .20;
+  
 }}}} // facebook::thrift::concurrency
 

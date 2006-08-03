@@ -3,6 +3,8 @@
 
 #include "transport/TServerTransport.h"
 
+namespace facebook { namespace thrift { namespace transport { 
+
 class TSocket;
 
 /**
@@ -28,5 +30,7 @@ class TServerSocket : public TServerTransport {
   int serverSocket_;
   int acceptBacklog_;
 };
+
+}}} // facebook::thrift::transport
 
 #endif

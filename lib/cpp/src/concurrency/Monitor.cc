@@ -22,34 +22,25 @@ class Monitor::Impl {
  public:
 
   Impl() : 
-    mutexInitialized(false) {
+    mutexInitialized(false),
+    condInitialized(false) {
     
-    /* XXX
-       Need to fix this to handle failures without leaking.  */
+    try {
 
-    assert(pthread_mutex_init(&_pthread_mutex, NULL) == 0);
+      assert(pthread_mutex_init(&_pthread_mutex, NULL) == 0);
 
-    mutexInitialized = true;
+      mutexInitialized = true;
 
-    assert(pthread_cond_init(&_pthread_cond, NULL) == 0);
-  }
+      assert(pthread_cond_init(&_pthread_cond, NULL) == 0);
 
-  ~Impl() {
+      condInitialized = true;
 
-    if(mutexInitialized) {
-
-      mutexInitialized = false;
-
-      assert(pthread_mutex_destroy(&_pthread_mutex) == 0);
-    }
-
-    if(condInitialized) {
-
-      condInitialized = false;
-
-      assert(pthread_cond_destroy(&_pthread_cond) == 0);
+    } catch(...) {
+      cleanup();
     }
   }
+
+  ~Impl() {cleanup();}
 
   void lock() const {pthread_mutex_lock(&_pthread_mutex);}
 
@@ -97,6 +88,23 @@ class Monitor::Impl {
   }
 
 private:
+
+  void cleanup() {
+
+    if(mutexInitialized) {
+
+      mutexInitialized = false;
+
+      assert(pthread_mutex_destroy(&_pthread_mutex) == 0);
+    }
+
+    if(condInitialized) {
+
+      condInitialized = false;
+
+      assert(pthread_cond_destroy(&_pthread_cond) == 0);
+    }
+  }
 
   mutable pthread_mutex_t _pthread_mutex;
 

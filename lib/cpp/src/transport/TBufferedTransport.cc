@@ -1,6 +1,8 @@
 #include "TBufferedTransport.h"
 using std::string;
 
+namespace facebook { namespace thrift { namespace transport { 
+
 uint32_t TBufferedTransport::read(uint8_t* buf, uint32_t len) {
   uint32_t need = len;
 
@@ -58,3 +60,5 @@ void TBufferedTransport::flush()  {
   // Flush the underlying transport
   transport_->flush();
 }
+
+}}} // facebook::thrift::transport

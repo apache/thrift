@@ -8,6 +8,10 @@
 
 #include "transport/TTransport.h"
 
+namespace facebook { namespace thrift { namespace protocol { 
+
+using namespace facebook::thrift::transport;
+
 #define ntohll(x) (((uint64_t)(ntohl((int)((x << 32) >> 32))) << 32) | (uint32_t)ntohl(((int)(x >> 32))))
 
 #define htonll(x) ntohll(x)
@@ -260,4 +264,7 @@ class TProtocol {
   TProtocol() {}
 };
 
+}}} // facebook::thrift::protocol
+
 #endif
+

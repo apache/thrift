@@ -1,8 +1,8 @@
 #include <config.h>
-#include <ThreadManager.h>
-#include <PosixThreadFactory.h>
-#include <Monitor.h>
-#include <Util.h>
+#include <concurrency/ThreadManager.h>
+#include <concurrency/PosixThreadFactory.h>
+#include <concurrency/Monitor.h>
+#include <concurrency/Util.h>
 
 #include <assert.h>
 #include <set>
@@ -22,6 +22,8 @@ using namespace facebook::thrift::concurrency;
 class ThreadManagerTests {
 
 public:
+
+  static const double ERROR;
 
   class Task: public Runnable {
 
@@ -78,9 +80,9 @@ public:
 
     size_t activeCount = count;
 
-    ThreadManager* threadManager = ThreadManager::newSimpleThreadManager(workerCount);
+    shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
 
-    PosixThreadFactory* threadFactory = new PosixThreadFactory();
+    shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
 
     threadFactory->priority(PosixThreadFactory::HIGHEST);
       
@@ -88,16 +90,16 @@ public:
 
     threadManager->start();
       
-    std::set<ThreadManagerTests::Task*> tasks;
+    std::set<shared_ptr<ThreadManagerTests::Task> > tasks;
 
     for(size_t ix = 0; ix < count; ix++) {
 
-      tasks.insert(new ThreadManagerTests::Task(monitor, activeCount, timeout));
+      tasks.insert(shared_ptr<ThreadManagerTests::Task>(new ThreadManagerTests::Task(monitor, activeCount, timeout)));
     }
 
     long long time00 = Util::currentTime();
 
-    for(std::set<ThreadManagerTests::Task*>::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
+    for(std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
 
 	threadManager->add(*ix);
     }
@@ -119,9 +121,9 @@ public:
     long long minTime = 9223372036854775807LL;
     long long maxTime = 0;
 
-    for(std::set<ThreadManagerTests::Task*>::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
+    for(std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
       
-      ThreadManagerTests::Task* task = *ix;
+      shared_ptr<ThreadManagerTests::Task> task = *ix;
 
       long long delta = task->_endTime - task->_startTime;
 
@@ -144,8 +146,6 @@ public:
       }
 
       averageTime+= delta;
-
-      delete *ix;
     }
     
     averageTime /= count;
@@ -160,18 +160,16 @@ public:
       error*= -1.0;
     }
 
-    bool success = error < .10;
-
-    delete threadManager;
-
-    delete threadFactory;
+    bool success = error < ERROR;
 
     std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "! expected time: " << expectedTime << "ms elapsed time: "<< time01 - time00 << "ms error%: " << error * 100.0 << std::endl;
 
     return success;
   }
 };
-  
+
+const double ThreadManagerTests::ERROR = .20;
+
 }}}} // facebook::thrift::concurrency
 
 using namespace facebook::thrift::concurrency::test;

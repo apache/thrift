@@ -4,6 +4,8 @@
 #include "transport/TTransport.h"
 #include <string>
 
+namespace facebook { namespace thrift { namespace transport { 
+
 /**
  * Chunked transport. All writes go into an in-memory buffer until flush is
  * called, at which point the transport writes the length of the entire
@@ -72,5 +74,7 @@ class TChunkedTransport : public TTransport {
    */
   void readChunk();
 };
+
+}}} // facebook::thrift::transport
 
 #endif

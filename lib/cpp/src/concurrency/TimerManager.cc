@@ -13,7 +13,7 @@ namespace facebook { namespace thrift { namespace concurrency {
     @author marc
     @version $Id:$ */
 
-typedef std::multimap<long long, TimerManager::Task*>::iterator task_iterator;
+typedef std::multimap<long long, shared_ptr<TimerManager::Task> >::iterator task_iterator;
 typedef std::pair<task_iterator, task_iterator> task_range;
 
 class TimerManager::Task : public Runnable {
@@ -26,12 +26,14 @@ public:
     COMPLETE
   };
 
-  Task(Runnable* runnable) :
+  Task(shared_ptr<Runnable> runnable) :
     _runnable(runnable),
     _state(WAITING) 
   {}
   
-  ~Task() {};
+  ~Task() {
+    std::cerr << "TimerManager::Task.dtor[" << this << "]" << std::endl; //debug
+};
   
   void run() {
     if(_state == EXECUTING) {
@@ -42,7 +44,7 @@ public:
 
  private:
 
-  Runnable* _runnable;
+  shared_ptr<Runnable> _runnable;
 
   class TimerManager::Dispatcher;
 
@@ -58,7 +60,9 @@ public:
     _manager(manager) {
 }
   
-  ~Dispatcher() {}
+  ~Dispatcher() {
+    std::cerr << "Dispatcher::dtor[" << this << "]" << std::endl; //debug
+  }
   
   /** Dispatcher entry point
 
@@ -78,7 +82,7 @@ public:
 
     do {
 
-      std::set<TimerManager::Task*> expiredTasks;
+      std::set<shared_ptr<TimerManager::Task> > expiredTasks;
 
       {Synchronized s(_manager->_monitor);
 
@@ -107,7 +111,7 @@ public:
 	  
 	  for(task_iterator ix = _manager->_taskMap.begin(); ix != expiredTaskEnd; ix++) {
 
-	    TimerManager::Task* task = ix->second;
+	    shared_ptr<TimerManager::Task> task = ix->second;
 	    
 	    expiredTasks.insert(task);
 
@@ -123,11 +127,9 @@ public:
 	}
       }
       
-      for(std::set<Task*>::iterator ix =  expiredTasks.begin(); ix != expiredTasks.end(); ix++) {
+      for(std::set<shared_ptr<Task> >::iterator ix =  expiredTasks.begin(); ix != expiredTasks.end(); ix++) {
 	
 	(*ix)->run();
-
-	delete *ix;
       }
       
     } while(_manager->_state == TimerManager::STARTED);
@@ -156,7 +158,7 @@ public:
 TimerManager::TimerManager() :
   _taskCount(0),
   _state(TimerManager::UNINITIALIZED),
-  _dispatcher(new Dispatcher(this)) {
+  _dispatcher(shared_ptr<Dispatcher>(new Dispatcher(this))) {
 }
 
 
@@ -164,6 +166,8 @@ TimerManager::~TimerManager() {
 
   /* If we haven't been explicitly stopped, do so now.  We don't need to grab the monitor here, since
      stop already takes care of reentrancy. */
+
+  std::cerr << "TimerManager::dtor[" << this << "]" << std::endl;
   
   if(_state != STOPPED) {
     
@@ -172,6 +176,8 @@ TimerManager::~TimerManager() {
       stop();
       
     } catch(...) {
+      std::cerr << "TimerManager::dtor[" << this << "] uhoh " << std::endl;
+      throw;
       
       // uhoh
       
@@ -244,23 +250,23 @@ void TimerManager::stop() {
 
     for(task_iterator ix =  _taskMap.begin(); ix != _taskMap.end(); ix++) {
 
-      delete ix->second;
-
       _taskMap.erase(ix);
     }
 
-    delete _dispatcher;
+    // Remove dispatcher's reference to us. 
+
+    _dispatcher->_manager = NULL;
   }
 }
 
-const ThreadFactory* TimerManager::threadFactory() const {
+shared_ptr<const ThreadFactory> TimerManager::threadFactory() const {
 
   Synchronized s(_monitor); 
 
   return _threadFactory;
 }
       
-void TimerManager::threadFactory(const ThreadFactory*  value) {
+void TimerManager::threadFactory(shared_ptr<const ThreadFactory>  value) {
     
   Synchronized s(_monitor); 
   
@@ -272,7 +278,7 @@ size_t TimerManager::taskCount() const {
   return _taskCount;
 }
       
-void TimerManager::add(Runnable* task, long long timeout) {
+void TimerManager::add(shared_ptr<Runnable> task, long long timeout) {
 
   long long now = Util::currentTime();
 
@@ -286,7 +292,7 @@ void TimerManager::add(Runnable* task, long long timeout) {
 
     _taskCount++;
 
-    _taskMap.insert(std::pair<long long, Task*>(timeout, new Task(task)));
+    _taskMap.insert(std::pair<long long, shared_ptr<Task> >(timeout, shared_ptr<Task>(new Task(task))));
 
     /* If the task map was empty, or if we have an expiration that is earlier than any previously seen,
        kick the dispatcher so it can update its timeout */
@@ -298,7 +304,7 @@ void TimerManager::add(Runnable* task, long long timeout) {
   }
 }
 
-void TimerManager::add(Runnable* task, const struct timespec& value) {
+void TimerManager::add(shared_ptr<Runnable> task, const struct timespec& value) {
 
   long long  expiration;
 
@@ -314,7 +320,7 @@ void TimerManager::add(Runnable* task, const struct timespec& value) {
 }
 
 
-void TimerManager::remove(Runnable* task) {
+void TimerManager::remove(shared_ptr<Runnable> task) {
   {Synchronized s(_monitor); 
 
     if(_state != TimerManager::STARTED) {

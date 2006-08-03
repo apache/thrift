@@ -4,6 +4,10 @@
 #include <string>
 #include "transport/TTransport.h"
 
+namespace facebook { namespace thrift { 
+
+using namespace facebook::thrift::transport;
+
 /**
  * A processor is a generic object that acts upon two streams of data, one
  * an input and the other an output. The definition of this object is loose,
@@ -20,5 +24,7 @@ class TProcessor {
  protected:
   TProcessor() {}
 };
+
+}} // facebook::thrift
 
 #endif

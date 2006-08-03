@@ -10,6 +10,8 @@
 #include "transport/TSocket.h"
 #include "transport/TTransportException.h"
 
+namespace facebook { namespace thrift { namespace transport { 
+
 using namespace std;
 
 uint32_t g_socket_syscalls = 0;
@@ -230,3 +232,4 @@ void TSocket::setNoDelay(bool noDelay) {
     perror("TSocket::setNoDelay()");
   }
 }
+}}} // facebook::thrift::transport

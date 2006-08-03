@@ -1,7 +1,7 @@
-#include <Thread.h>
-#include <PosixThreadFactory.h>
-#include <Monitor.h>
-#include <Util.h>
+#include <concurrency/Thread.h>
+#include <concurrency/PosixThreadFactory.h>
+#include <concurrency/Monitor.h>
+#include <concurrency/Util.h>
 
 #include <assert.h>
 #include <iostream>
@@ -18,9 +18,14 @@ using namespace facebook::thrift::concurrency;
 
 class ThreadFactoryTests {
 
- class Task: public Runnable {
+public:
+
+  static const double ERROR;
+  
+  class Task: public Runnable {
 
   public:
+
 
     Task() {}
 
@@ -29,25 +34,19 @@ class ThreadFactoryTests {
     }
   };
 
-public:
-
   /** Hello world test */
 
   bool helloWorldTest() {
 
     PosixThreadFactory threadFactory =  PosixThreadFactory();
 
-    Task* task = new ThreadFactoryTests::Task();
+    shared_ptr<Task> task = shared_ptr<Task>(new ThreadFactoryTests::Task());
 
-    Thread* thread = threadFactory.newThread(task);
+    shared_ptr<Thread> thread = threadFactory.newThread(task);
 
     thread->start();
 
     thread->join();
-
-    delete thread;
-
-    delete task;
 
     std::cout << "\t\t\tSuccess!" << std::endl;
 
@@ -92,13 +91,13 @@ public:
 
     PosixThreadFactory threadFactory =  PosixThreadFactory();
 
-    std::set<Thread*> threads;
+    std::set<shared_ptr<Thread> > threads;
 
     for(int ix = 0; ix < count; ix++) {
-      threads.insert(threadFactory.newThread(new ReapNTask(*monitor, *activeCount)));
+      threads.insert(threadFactory.newThread(shared_ptr<Runnable>(new ReapNTask(*monitor, *activeCount))));
     }
 
-    for(std::set<Thread*>::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
+    for(std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
 
       (*thread)->start();
     }
@@ -111,11 +110,9 @@ public:
       }
     }
 
-    for(std::set<Thread*>::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
+    for(std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
 
-      delete (*thread)->runnable();
-
-      delete *thread;
+      threads.erase(*thread);
     }
 
     std::cout << "\t\t\tSuccess!" << std::endl;
@@ -177,11 +174,11 @@ public:
     
     SynchStartTask::STATE state = SynchStartTask::UNINITIALIZED;
     
-    SynchStartTask* task = new SynchStartTask(monitor, state);
+    shared_ptr<SynchStartTask> task = shared_ptr<SynchStartTask>(new SynchStartTask(monitor, state));
 
     PosixThreadFactory threadFactory =  PosixThreadFactory();
 
-    Thread* thread = threadFactory.newThread(task);
+    shared_ptr<Thread> thread = threadFactory.newThread(task);
 
     if(state == SynchStartTask::UNINITIALIZED) {
 
@@ -247,16 +244,15 @@ public:
       error *= 1.0;
     }
 
-    bool success = error < .10;
+    bool success = error < ThreadFactoryTests::ERROR;
 
     std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "! expected time: " << count * timeout << "ms elapsed time: "<< endTime - startTime << "ms error%: " << error * 100.0 << std::endl;
 
     return success;
   }
 };
-  
 
-}}}} // facebook::thrift::concurrency
+const double ThreadFactoryTests::ERROR = .20;
 
-using namespace facebook::thrift::concurrency::test;
+}}}} // facebook::thrift::concurrency::test
 

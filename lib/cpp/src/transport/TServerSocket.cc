@@ -5,6 +5,8 @@
 #include "transport/TSocket.h"
 #include "transport/TServerSocket.h"
 
+namespace facebook { namespace thrift { namespace transport { 
+
 TServerSocket::TServerSocket(int port) :
   port_(port), serverSocket_(0), acceptBacklog_(1024) {}
 
@@ -88,3 +90,5 @@ void TServerSocket::close() {
   }
   serverSocket_ = 0;
 }
+
+}}} // facebook::thrift::transport

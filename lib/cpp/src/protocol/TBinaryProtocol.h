@@ -3,6 +3,8 @@
 
 #include "protocol/TProtocol.h"
 
+namespace facebook { namespace thrift { namespace protocol { 
+
 /**
  * The default binary protocol for thrift. Writes all data in a very basic
  * binary format, essentially just spitting out the raw bytes.
@@ -124,4 +126,7 @@ class TBinaryProtocol : public TProtocol {
 
 };
 
+}}} // facebook::thrift::protocol
+
 #endif
+

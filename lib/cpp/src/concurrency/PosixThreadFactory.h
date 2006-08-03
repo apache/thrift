@@ -3,7 +3,11 @@
 
 #include "Thread.h"
 
+#include <boost/shared_ptr.hpp>
+
 namespace facebook { namespace thrift { namespace concurrency { 
+
+using namespace boost;
 
 /** A thread factory to create posix threads 
 
@@ -43,7 +47,7 @@ class PosixThreadFactory : public ThreadFactory {
 
   // From ThreadFactory;
 
-  Thread* newThread(Runnable* runnable) const;
+  shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const;
 
   /** Sets stack size for created threads
 
@@ -69,7 +73,7 @@ class PosixThreadFactory : public ThreadFactory {
   
   class Impl;
 
-  Impl* _impl;
+  shared_ptr<Impl> _impl;
 };
 
 }}} // facebook::thrift::concurrency

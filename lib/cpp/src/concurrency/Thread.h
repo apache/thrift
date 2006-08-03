@@ -1,7 +1,12 @@
 #if !defined(_concurrency_Thread_h_)
 #define _concurrency_Thread_h_ 1
 
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+
 namespace facebook { namespace thrift { namespace concurrency { 
+
+using namespace boost;
 
 class Thread;
 
@@ -18,17 +23,17 @@ class Runnable {
 
   virtual void run() = 0;
 
-  virtual Thread* thread() {return _thread;}
+  /** Gets the thread object that is hosting this runnable object  - can return an empty shared pointer if no references remain on thet thread  object */
 
- private:
+  virtual shared_ptr<Thread> thread() {return _thread.lock();}
 
   /** Sets the thread that is executing this object.  This is only meant for use by concrete implementations of Thread. */
 
-  friend class Thread;
+  virtual void thread(shared_ptr<Thread> value) {_thread = value;}
 
-  virtual void thread(Thread* value) {_thread = value;}
+ private:
 
-  Thread* _thread;
+  weak_ptr<Thread> _thread;
 };
 
 /** Minimal thread class.  Returned by thread factory bound to a Runnable object and ready to start execution.  More or less analogous to java.lang.Thread
@@ -55,15 +60,14 @@ class Thread {
 
   /** Gets the runnable object this thread is hosting */
   
-  virtual Runnable* runnable() const {return _runnable;}
+  virtual shared_ptr<Runnable> runnable() const {return _runnable;}
 
  protected:
 
-  virtual void runnable(Runnable* value, bool x=false) {_runnable = value; _runnable->thread(this);}
+  virtual void runnable(shared_ptr<Runnable> value) {_runnable = value;}
 
  private:
-  
-  Runnable* _runnable;
+  shared_ptr<Runnable> _runnable;
 };
 
 /** Factory to create platform-specific thread object and bind them to Runnable object for execution */
@@ -74,7 +78,7 @@ class ThreadFactory {
 
   virtual ~ThreadFactory() {}
 
-  virtual Thread* newThread(Runnable* runnable) const = 0;
+  virtual shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const = 0;
 };
 
 }}} // facebook::thrift::concurrency

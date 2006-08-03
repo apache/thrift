@@ -3,6 +3,8 @@
 
 #include "transport/TTransport.h"
 
+namespace facebook { namespace thrift { namespace transport { 
+
 /**
  * The null transport is a dummy transport that doesn't actually do anything.
  * It's sort of an analogy to /dev/null, you can never read anything from it
@@ -20,5 +22,7 @@ class TNullTransport : public TTransport {
   void open() { }
   void write(const std::string& s) {}
 };
+
+}}} // facebook::thrift::transport
 
 #endif

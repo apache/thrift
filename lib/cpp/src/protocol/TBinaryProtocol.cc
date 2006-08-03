@@ -1,6 +1,8 @@
 #include "protocol/TBinaryProtocol.h"
 using std::string;
 
+namespace facebook { namespace thrift { namespace protocol { 
+
 uint32_t TBinaryProtocol::writeStructBegin(TTransport* out,
                                            const string& name) const {
   return 0;
@@ -249,3 +251,4 @@ uint32_t TBinaryProtocol::readString(TTransport* in,
 
   return result + (uint32_t)size;
 }
+}}} // facebook::thrift::protocol

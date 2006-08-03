@@ -4,6 +4,8 @@
 #include "transport/TTransport.h"
 #include <string>
 
+namespace facebook { namespace thrift { namespace transport { 
+
 /**
  * Buffered transport. For reads it will read more data than is requested
  * and will serve future data out of a local buffer. For writes, data is
@@ -75,5 +77,7 @@ class TBufferedTransport : public TTransport {
   uint32_t wBufSize_;
   uint32_t wLen_;
 };
+
+}}} // facebook::thrift::transport
 
 #endif

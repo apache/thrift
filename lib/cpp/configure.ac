@@ -32,6 +32,8 @@ AC_CHECK_HEADERS([sys/time.h])
 
 AC_CHECK_HEADERS([unistd.h])
 
+AX_BOOST_BASE([1.33.1])
+
 AC_CHECK_LIB(pthread, pthread_create)
 
 AC_CHECK_LIB(rt, sched_get_priority_min)

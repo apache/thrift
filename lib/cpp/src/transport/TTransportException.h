@@ -3,6 +3,8 @@
 
 #include <string>
 
+namespace facebook { namespace thrift { namespace transport { 
+
 /**
  * Error codes for the various types of exceptions.
  */
@@ -59,5 +61,7 @@ class TTransportException {
   /** Description */
   std::string message_;
 };
+
+}}} // facebook::thrift::transport
 
 #endif

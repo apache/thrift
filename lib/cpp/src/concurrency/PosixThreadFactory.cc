@@ -3,7 +3,13 @@
 #include <assert.h>
 #include <pthread.h>
 
+#include <iostream>
+
+#include <boost/weak_ptr.hpp>
+
 namespace facebook { namespace thrift { namespace concurrency {
+
+using namespace boost;
 
 /**  The POSIX thread class. 
 
@@ -36,16 +42,21 @@ private:
 
   int _stackSize;
 
+  weak_ptr<PthreadThread> _self;
+
 public:
   
-  PthreadThread(int policy, int priority, int stackSize, Runnable* runnable) : 
+  PthreadThread(int policy, int priority, int stackSize, shared_ptr<Runnable> runnable) : 
     _pthread(0),
     _state(uninitialized), 
     _policy(policy),
     _priority(priority),
-    _stackSize(stackSize) { 
+    _stackSize(stackSize) {
 
     this->Thread::runnable(runnable);
+  }
+
+  ~PthreadThread() {
   }
 
   void start() {
@@ -75,9 +86,13 @@ public:
 
     // Set thread priority
 
-    // assert(pthread_attr_setschedparam(&thread_attr, &sched_param) == 0);
+    assert(pthread_attr_setschedparam(&thread_attr, &sched_param) == 0);
 
-    assert(pthread_create(&_pthread, &thread_attr, threadMain, (void*)this) == 0);
+    shared_ptr<PthreadThread>* selfRef = new shared_ptr<PthreadThread>();
+
+    *selfRef = _self.lock();
+
+    assert(pthread_create(&_pthread, &thread_attr, threadMain, (void*)selfRef) == 0);
   }
 
   void join() {
@@ -90,17 +105,27 @@ public:
     }
   }
 
-  Runnable* runnable() const {return Thread::runnable();}
+  shared_ptr<Runnable> runnable() const {return Thread::runnable();}
 
-  void runnable(Runnable* value) {Thread::runnable(value);}
+  void runnable(shared_ptr<Runnable> value) {Thread::runnable(value);}
 
+  void weakRef(shared_ptr<PthreadThread> self) {
+    assert(self.get() == this);
+    _self = weak_ptr<PthreadThread>(self);
+  }
 };
 
 void* PthreadThread::threadMain(void* arg) {
   // XXX need a lock here when testing thread state
 
-  PthreadThread* thread = (PthreadThread*)arg;
-  
+  shared_ptr<PthreadThread> thread = *(shared_ptr<PthreadThread>*)arg;
+
+  delete reinterpret_cast<shared_ptr<PthreadThread>*>(arg);
+
+  if(thread == NULL) {
+    return (void*)0;
+  }
+
   if(thread->_state != starting) {
     return (void*)0;
   }
@@ -184,9 +209,12 @@ public:
 
       @param runnable A runnable object */
 
-  Thread* newThread(Runnable* runnable) const {
+  shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const {
 
-    return new PthreadThread(toPthreadPolicy(_policy), toPthreadPriority(_policy, _priority), _stackSize, runnable);
+    shared_ptr<PthreadThread> result = shared_ptr<PthreadThread>(new PthreadThread(toPthreadPolicy(_policy), toPthreadPriority(_policy, _priority), _stackSize, runnable));
+    result->weakRef(result);
+    runnable->thread(result);
+    return result;
   }
 
   int stackSize() const { return _stackSize;}
@@ -198,7 +226,7 @@ public:
   /** Sets priority.
       
       XXX
-      Need to handle incremental priorities properl. */
+      Need to handle incremental priorities properly. */
 
   void priority(PRIORITY value) { _priority = value;}
 
@@ -207,7 +235,7 @@ public:
 PosixThreadFactory::PosixThreadFactory(POLICY policy, PRIORITY priority, int stackSize, bool detached) : 
   _impl(new PosixThreadFactory::Impl(policy, priority, stackSize, detached)) {}
 
-Thread* PosixThreadFactory::newThread(Runnable* runnable) const {return _impl->newThread(runnable);}
+shared_ptr<Thread> PosixThreadFactory::newThread(shared_ptr<Runnable> runnable) const {return _impl->newThread(runnable);}
 
 int PosixThreadFactory::stackSize() const {return _impl->stackSize();}
 

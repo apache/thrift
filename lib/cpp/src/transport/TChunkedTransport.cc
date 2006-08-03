@@ -1,6 +1,8 @@
 #include "TChunkedTransport.h"
 using std::string;
 
+namespace facebook { namespace thrift { namespace transport { 
+
 uint32_t TChunkedTransport::read(uint8_t* buf, uint32_t len) {
   uint32_t need = len;
 
@@ -95,3 +97,5 @@ void TChunkedTransport::flush()  {
   // Flush the underlying
   transport_->flush();
 }
+
+}}} // facebook::thrift::transport

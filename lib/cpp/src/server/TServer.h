@@ -3,6 +3,10 @@
 
 #include "TProcessor.h"
 
+namespace facebook { namespace thrift { namespace server { 
+
+using namespace facebook::thrift;
+
 class TServerOptions;
 
 /**
@@ -32,5 +36,7 @@ class TServerOptions {
  protected:
   // TODO(mcslee): Fill data members in here
 };
+
+}}} // facebook::thrift::server
 
 #endif
