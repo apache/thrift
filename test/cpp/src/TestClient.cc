@@ -1,13 +1,20 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include "protocol/TBinaryProtocol.h"
-#include "transport/TBufferedTransport.h"
-#include "transport/TSocket.h"
-#include "ThriftTest.h"
-using namespace std;
+#include <protocol/TBinaryProtocol.h>
+#include <transport/TBufferedTransport.h>
+#include <transport/TSocket.h>
 
-extern uint32_t g_socket_syscalls;
+#include <boost/shared_ptr.hpp>
+#include "ThriftTest.h"
+
+using namespace boost;
+using namespace std;
+using namespace facebook::thrift;
+using namespace facebook::thrift::protocol;
+using namespace facebook::thrift::transport;
+
+//extern uint32_t g_socket_syscalls;
 
 // Current time, microseconds since the epoch
 uint64_t now()
@@ -36,10 +43,10 @@ int main(int argc, char** argv) {
     numTests = atoi(argv[3]);
   }
 
-  TSocket socket(host, port);
-  TBufferedTransport bufferedSocket(&socket, 2048);
-  TBinaryProtocol binaryProtocol;
-  ThriftTestClient testClient(&bufferedSocket, &binaryProtocol);
+  shared_ptr<TSocket> socket(new TSocket(host, port));
+  shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
+  shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol());
+  ThriftTestClient testClient(bufferedSocket, binaryProtocol);
   
   int test = 0;
   for (test = 0; test < numTests; ++test) {
@@ -49,7 +56,7 @@ int main(int argc, char** argv) {
      */
     printf("Test #%d, connect %s:%d\n", test+1, host.c_str(), port);
     try {
-      bufferedSocket.open();
+      bufferedSocket->open();
     } catch (TTransportException& ttx) {
       printf("Connect failed: %s\n", ttx.getMessage().c_str());
       continue;
@@ -320,10 +327,10 @@ int main(int argc, char** argv) {
     uint64_t stop = now();
     printf("Total time: %lu us\n", stop-start);
 
-    bufferedSocket.close();
+    bufferedSocket->close();
   }
 
-  printf("\nSocket syscalls: %u", g_socket_syscalls);
+  //  printf("\nSocket syscalls: %u", g_socket_syscalls);
   printf("\nAll tests done.\n");
   return 0;
 }

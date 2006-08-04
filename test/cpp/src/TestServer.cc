@@ -1,13 +1,25 @@
-#include <stdio.h>
-#include "protocol/TBinaryProtocol.h"
-#include "server/TSimpleServer.h"
-#include "transport/TServerSocket.h"
+#include <concurrency/ThreadManager.h>
+#include <concurrency/PosixThreadFactory.h>
+#include <protocol/TBinaryProtocol.h>
+#include <server/TSimpleServer.h>
+#include <server/TThreadPoolServer.h>
+#include <transport/TServerSocket.h>
 #include "ThriftTest.h"
+
+#include <iostream>
+#include <stdexcept>
+#include <sstream>
+
 using namespace std;
+
+using namespace facebook::thrift;
+using namespace facebook::thrift::protocol;
+using namespace facebook::thrift::transport;
+using namespace facebook::thrift::server;
 
 class TestServer : public ThriftTestServerIf {
  public:
-  TestServer(TProtocol* protocol) :
+  TestServer(shared_ptr<TProtocol> protocol) :
     ThriftTestServerIf(protocol) {}
 
   void testVoid() {
@@ -203,32 +215,127 @@ class TestServer : public ThriftTestServerIf {
 
     return insane;
   }
-
 };
 
 int main(int argc, char **argv) {
+
   int port = 9090;
-  if (argc > 1) {
-    port = atoi(argv[1]);
+  string serverType = "simple";
+  string protocolType = "binary";
+  size_t workerCount = 4;
+
+  ostringstream usage;
+
+  usage <<
+    argv[0] << " [--port=<port number>] [--server-type=<server-type>] [--protocol-type=<protocol-type>] [--workers=<worker-count>]" << endl <<
+
+    "\t\tserver-type\t\ttype of server, \"simple-server\" or \"thread-pool\".  Default is " << serverType << endl <<
+
+    "\t\tprotocol-type\t\ttype of protocol, \"binary\", \"ascii\", or \"xml\".  Default is " << protocolType << endl <<
+
+    "\t\tworkers\t\tNumber of thread pools workers.  Only valid for thread-pool server type.  Default is " << workerCount << endl;
+    
+  map<string, string>  args;
+  
+  for(int ix = 1; ix < argc; ix++) {
+
+    string arg(argv[ix]);
+
+    if(arg.compare(0,2, "--") == 0) {
+
+      size_t end = arg.find_first_of("=", 2);
+
+      if(end != string::npos) {
+	args[string(arg, 2, end - 2)] = string(arg, end + 1);
+      } else {
+	args[string(arg, 2, end - 2)] = "true";
+      }
+      ix++;
+    } else {
+      throw invalid_argument("Unexcepted command line token: "+arg);
+    }
   }
- 
+
+  try {
+
+    if(!args["port"].empty()) {
+      port = atoi(args["port"].c_str());
+    }
+
+    if(!args["server-type"].empty()) {
+      serverType = args["server-type"];
+      
+      if(serverType == "simple") {
+
+      } else if(serverType == "thread-pool") {
+
+      } else {
+
+	throw invalid_argument("Unknown server type "+serverType);
+      }
+    }
+
+    if(!args["protocol-type"].empty()) {
+      protocolType = args["protocol-type"];
+      
+      if(protocolType == "binary") {
+      } else if(protocolType == "ascii") {
+	throw invalid_argument("ASCII protocol not supported");
+      } else if(protocolType == "xml") {
+	throw invalid_argument("XML protocol not supported");
+      } else {
+	throw invalid_argument("Unknown protocol type "+protocolType);
+      }
+    } 
+
+    if(!args["workers"].empty()) {
+      workerCount = atoi(args["workers"].c_str());
+    }
+  } catch(exception& e) {
+    cerr << e.what() << endl;
+    cerr << usage;
+  }
+
   // Dispatcher
-  TBinaryProtocol binaryProtocol;
-  TestServer testServer(&binaryProtocol);
+  shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol);
+
+  shared_ptr<TestServer> testServer(new TestServer(binaryProtocol));
 
   // Options
-  TServerOptions serverOptions;
+  shared_ptr<TServerOptions> serverOptions(new TServerOptions());
 
   // Transport
-  TServerSocket serverSocket(port);
+  shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
 
-  // Server
-  TSimpleServer simpleServer(&testServer,
-                             &serverOptions,
-                             &serverSocket);
+  if(serverType == "simple") {
 
-  printf("Starting the server on port %d...\n", port);
-  simpleServer.run();
+    // Server
+    TSimpleServer simpleServer(testServer,
+			       serverOptions,
+			       serverSocket);
+
+    printf("Starting the server on port %d...\n", port);
+    simpleServer.run();
+
+  } else if(serverType == "thread-pool") {
+
+    shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
+
+    shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
+
+    threadManager->threadFactory(threadFactory);
+
+    threadManager->start();
+
+    TThreadPoolServer threadPoolServer(testServer,
+				       serverOptions,
+				       serverSocket,
+				       threadManager);
+
+    printf("Starting the server on port %d...\n", port);
+    threadPoolServer.run();
+  }
+
   printf("done.\n");
   return 0;
 }

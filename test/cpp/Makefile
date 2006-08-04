@@ -4,12 +4,18 @@
 #   Mark Slee <mcslee@facebook.com>
 
 # Default target is everything
+
+ifndef thrift_home
+thrift_home=../../build
+endif #thrift_home
 target: all
 
 # Tools
 THRIFT = thrift
 CC     = g++
 LD     = g++
+
+include_flags = $(patsubst %,-I$(thrift_home)/include/%, thrift boost-1_33_1)
 
 # Compiler flags
 LIBS  = ../../lib/cpp/src/server/TSimpleServer.cc \
@@ -18,8 +24,8 @@ LIBS  = ../../lib/cpp/src/server/TSimpleServer.cc \
 	../../lib/cpp/src/transport/TChunkedTransport.cc \
 	../../lib/cpp/src/transport/TServerSocket.cc \
 	../../lib/cpp/src/transport/TSocket.cc
-DCFL  = -Wall -O3 -g -Igen-cpp -I../../lib/cpp/src $(LIBS)
-CFL   = -Wall -O3 -Igen-cpp -I../../lib/cpp/src -lthrift
+DCFL  = -Wall -O3 -g -Igen-cpp $(include_flags) $(LIBS)
+CFL   = -Wall -O3 -Igen-cpp $(include_flags) -L$(thrift_home)/lib -lthrift
 
 all: server client
 
