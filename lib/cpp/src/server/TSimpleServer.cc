@@ -13,7 +13,8 @@ namespace facebook { namespace thrift { namespace server {
  * @author Mark Slee <mcslee@facebook.com>
  */
 void TSimpleServer::run() {
-  TTransport* client = NULL;
+
+  shared_ptr<TTransport> client;
 
   try {
     // Start the server listening
@@ -29,8 +30,8 @@ void TSimpleServer::run() {
       client = serverTransport_->accept();
       if (client != NULL) {
         // Process for as long as we can keep the processor happy!
-        TBufferedTransport bufferedClient(client);
-        while (processor_->process(&bufferedClient)) {}
+        shared_ptr<TBufferedTransport> bufferedClient(new TBufferedTransport(client));
+        while (processor_->process(bufferedClient)) {}
       }
     } catch (TTransportException& ttx) {
       if (client != NULL) {
@@ -43,13 +44,7 @@ void TSimpleServer::run() {
 
       // Ensure no resource leaks
       client->close();
-
-      // Ensure no memory leaks
-      delete client;
-
-      // Ensure we don't try to double-free on the next pass
-      client = NULL;
-    }
+     }
   }
 
   // TODO(mcslee): Could this be a timeout case? Or always the real thing?

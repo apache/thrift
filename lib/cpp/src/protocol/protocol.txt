@@ -25,13 +25,7 @@ For binary formats it is typically not necessary to represent the begin and end 
      package-name :		STRING
      service-name :		STRING
 
-     arguments :  		ARGS_b arg-list ARGS_e
-     arg-list :    		arg-list arg | NIL
-     arg :     			ARG_b arg-identifier arg-value ARG_e
-     arg-identifier : 		arg-name | arg-id | arg-name arg-id
-     arg-name :			STRING
-     arg-id : 			UINT32
-     arg-value :		datum
+     arguments :  		struct-datum
 
 """ service function reply message body """
 
@@ -79,15 +73,9 @@ For binary formats it is typically not necessary to represent the begin and end 
 
 """ collection datum """
 
-     collection-type-specifier : ARRAY | MAP | SET | LIST
+     collection-type-specifier : MAP | SET | LIST
 
      collection-datum :		list-datum | set-datum | map-datum
-
-     array-datum :    		simple-array-datum | complex-array-datum
-
-     simple-array-datum :	ARRAY_b element-count simple-type-specifier simple-data ARRAY_e
-
-     complex-array-datum :	ARRAY_b element-count simple-type-specifier simple-data ARRAY_e
 
      list-datum :     		LIST_b element-count element-type-specifier elements LIST_e
 

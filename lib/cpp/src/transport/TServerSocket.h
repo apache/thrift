@@ -1,7 +1,8 @@
 #ifndef T_SERVER_SOCKET_H
 #define T_SERVER_SOCKET_H
 
-#include "transport/TServerTransport.h"
+#include <transport/TServerTransport.h>
+#include <boost/shared_ptr.hpp>
 
 namespace facebook { namespace thrift { namespace transport { 
 
@@ -22,7 +23,7 @@ class TServerSocket : public TServerTransport {
   void close();
 
  protected:
-  TTransport* acceptImpl();
+  shared_ptr<TTransport> acceptImpl();
 
  private:
 

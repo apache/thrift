@@ -1,11 +1,14 @@
 #ifndef T_SERVER_H
 #define T_SERVER_H
 
-#include "TProcessor.h"
+#include <TProcessor.h>
+
+#include <boost/shared_ptr.hpp>
 
 namespace facebook { namespace thrift { namespace server { 
 
 using namespace facebook::thrift;
+using namespace boost;
 
 class TServerOptions;
 
@@ -15,25 +18,25 @@ class TServerOptions;
  * @author Mark Slee <mcslee@facebook.com>
  */
 class TServer {
- public:
+public:
   virtual ~TServer() {}
   virtual void run() = 0;
-
- protected:
-  TServer(TProcessor* processor, TServerOptions* options) :
+  
+protected:
+  TServer(shared_ptr<TProcessor> processor, shared_ptr<TServerOptions> options) :
     processor_(processor), options_(options) {}
-    
-  TProcessor* processor_;
-  TServerOptions* options_;
+  
+  shared_ptr<TProcessor> processor_;
+  shared_ptr<TServerOptions> options_;
 };
-
+  
 /**
  * Class to encapsulate all generic server options.
  */
 class TServerOptions {
- public:
+public:
   // TODO(mcslee): Fill in getters/setters here
- protected:
+protected:
   // TODO(mcslee): Fill data members in here
 };
 

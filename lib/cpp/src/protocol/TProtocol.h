@@ -1,14 +1,18 @@
 #ifndef T_PROTOCOL_H
 #define T_PROTOCOL_H
 
+#include <transport/TTransport.h>
+
+#include <boost/shared_ptr.hpp>
+
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <string>
 #include <map>
 
-#include "transport/TTransport.h"
-
 namespace facebook { namespace thrift { namespace protocol { 
+
+using namespace boost;
 
 using namespace facebook::thrift::transport;
 
@@ -41,6 +45,14 @@ enum TType {
 };
 
 /**
+ * Enumerated definition of the message types that the Thrift protocol supports.
+ */
+enum TMessageType {
+  T_CALL       = 1,
+  T_REPLY      = 2
+};
+
+/**
  * Abstract class for a thrift protocol driver. These are all the methods that
  * a protocol must implement. Essentially, there must be some way of reading
  * and writing all the base types, plus a mechanism for writing out structs
@@ -60,114 +72,127 @@ class TProtocol {
    * Writing functions.
    */
 
-  virtual uint32_t writeStructBegin   (TTransport*    out,
+  virtual uint32_t writeMessageBegin   (shared_ptr<TTransport> out,
+					const TMessageType messageType,
+					const uint32_t seqid) const = 0;
+
+  virtual uint32_t writeMessageEnd   (shared_ptr<TTransport> out) const = 0;
+
+
+  virtual uint32_t writeStructBegin   (shared_ptr<TTransport>    out,
                                        const std::string& name)   const = 0;
 
-  virtual uint32_t writeStructEnd     (TTransport*    out)        const = 0;
+  virtual uint32_t writeStructEnd     (shared_ptr<TTransport>    out)        const = 0;
 
-  virtual uint32_t writeFieldBegin    (TTransport*    out,
+  virtual uint32_t writeFieldBegin    (shared_ptr<TTransport>    out,
                                        const std::string& name,
                                        const TType    fieldType,
                                        const uint16_t fieldId)    const = 0;
 
-  virtual uint32_t writeFieldEnd      (TTransport*    out)        const = 0;
+  virtual uint32_t writeFieldEnd      (shared_ptr<TTransport>    out)        const = 0;
 
-  virtual uint32_t writeFieldStop     (TTransport*    out)        const = 0;
+  virtual uint32_t writeFieldStop     (shared_ptr<TTransport>    out)        const = 0;
                                       
-  virtual uint32_t writeMapBegin      (TTransport*    out,
+  virtual uint32_t writeMapBegin      (shared_ptr<TTransport>    out,
                                        const TType    keyType,
                                        const TType    valType,
                                        const int32_t  size)       const = 0;
 
-  virtual uint32_t writeMapEnd        (TTransport*    out)        const = 0;
+  virtual uint32_t writeMapEnd        (shared_ptr<TTransport>    out)        const = 0;
 
-  virtual uint32_t writeListBegin     (TTransport*    out,
+  virtual uint32_t writeListBegin     (shared_ptr<TTransport>    out,
                                        const TType    elemType,
                                        const int32_t  size)       const = 0;
 
-  virtual uint32_t writeListEnd       (TTransport*    out)        const = 0;
+  virtual uint32_t writeListEnd       (shared_ptr<TTransport>    out)        const = 0;
 
-  virtual uint32_t writeSetBegin      (TTransport*    out,
+  virtual uint32_t writeSetBegin      (shared_ptr<TTransport>    out,
                                        const TType    elemType,
                                        const int32_t  size)       const = 0;
 
-  virtual uint32_t writeSetEnd        (TTransport*    out)        const = 0;
+  virtual uint32_t writeSetEnd        (shared_ptr<TTransport>    out)        const = 0;
 
-  virtual uint32_t writeByte          (TTransport*    out,
+  virtual uint32_t writeByte          (shared_ptr<TTransport>    out,
                                        const uint8_t  byte)       const = 0;
 
-  virtual uint32_t writeU32           (TTransport*    out,
+  virtual uint32_t writeU32           (shared_ptr<TTransport>    out,
                                        const uint32_t u32)        const = 0;
 
-  virtual uint32_t writeI32           (TTransport*    out,
+  virtual uint32_t writeI32           (shared_ptr<TTransport>    out,
                                        const int32_t  i32)        const = 0;
 
-  virtual uint32_t writeU64           (TTransport*    out,
+  virtual uint32_t writeU64           (shared_ptr<TTransport>    out,
                                        const uint64_t u64)        const = 0;
 
-  virtual uint32_t writeI64           (TTransport*    out,
+  virtual uint32_t writeI64           (shared_ptr<TTransport>    out,
                                        const int64_t  i64)        const = 0;
 
-  virtual uint32_t writeString        (TTransport*    out,
+  virtual uint32_t writeString        (shared_ptr<TTransport>    out,
                                        const std::string& str)    const = 0;
 
   /**
    * Reading functions
    */
 
-  virtual uint32_t readStructBegin    (TTransport*    in,
+  virtual uint32_t readMessasgeBegin    (shared_ptr<TTransport>    in,
+					 TMessageType& messageType,
+					 uint32_t& seqid) const = 0;
+
+  virtual uint32_t readMessageEnd      (shared_ptr<TTransport>    in)         const = 0;
+
+  virtual uint32_t readStructBegin    (shared_ptr<TTransport>    in,
                                        std::string& name)         const = 0;
 
-  virtual uint32_t readStructEnd      (TTransport*    in)         const = 0;
+  virtual uint32_t readStructEnd      (shared_ptr<TTransport>    in)         const = 0;
 
-  virtual uint32_t readFieldBegin     (TTransport*    in,
+  virtual uint32_t readFieldBegin     (shared_ptr<TTransport>    in,
                                        std::string&   name,
                                        TType&         fieldType,
                                        uint16_t&      fieldId)    const = 0;
   
-  virtual uint32_t readFieldEnd       (TTransport*    in)         const = 0;
+  virtual uint32_t readFieldEnd       (shared_ptr<TTransport>    in)         const = 0;
  
-  virtual uint32_t readMapBegin       (TTransport*    in,
+  virtual uint32_t readMapBegin       (shared_ptr<TTransport>    in,
                                        TType&         keyType,
                                        TType&         valType,
                                        int32_t&       size)       const = 0;
 
-  virtual uint32_t readMapEnd         (TTransport*    in)         const = 0;
+  virtual uint32_t readMapEnd         (shared_ptr<TTransport>    in)         const = 0;
 
-  virtual uint32_t readListBegin      (TTransport*    in,
+  virtual uint32_t readListBegin      (shared_ptr<TTransport>    in,
                                        TType&         elemType,
                                        int32_t&       size)       const = 0;
 
-  virtual uint32_t readListEnd        (TTransport*    in)         const = 0;
+  virtual uint32_t readListEnd        (shared_ptr<TTransport>    in)         const = 0;
 
-  virtual uint32_t readSetBegin       (TTransport*    in,
+  virtual uint32_t readSetBegin       (shared_ptr<TTransport>    in,
                                        TType&         elemType,
                                        int32_t&       size)       const = 0;
 
-  virtual uint32_t readSetEnd         (TTransport*    in)         const = 0;
+  virtual uint32_t readSetEnd         (shared_ptr<TTransport>    in)         const = 0;
 
-  virtual uint32_t readByte           (TTransport*    in,
+  virtual uint32_t readByte           (shared_ptr<TTransport>    in,
                                        uint8_t&       byte)       const = 0;
 
-  virtual uint32_t readU32            (TTransport*    in,
+  virtual uint32_t readU32            (shared_ptr<TTransport>    in,
                                        uint32_t&      u32)        const = 0;
 
-  virtual uint32_t readI32            (TTransport*    in,
+  virtual uint32_t readI32            (shared_ptr<TTransport>    in,
                                        int32_t&       i32)        const = 0;
 
-  virtual uint32_t readU64            (TTransport*    in,
+  virtual uint32_t readU64            (shared_ptr<TTransport>    in,
                                        uint64_t&      u64)        const = 0;
 
-  virtual uint32_t readI64            (TTransport*    in,
+  virtual uint32_t readI64            (shared_ptr<TTransport>    in,
                                        int64_t&       i64)        const = 0;
 
-  virtual uint32_t readString         (TTransport*    in,
+  virtual uint32_t readString         (shared_ptr<TTransport>    in,
                                        std::string&   str)        const = 0;
 
   /**
    * Method to arbitrarily skip over data.
    */
-  uint32_t skip(TTransport* in, TType type) const {
+  uint32_t skip(shared_ptr<TTransport> in, TType type) const {
     switch (type) {
     case T_BYTE:
       {

@@ -4,8 +4,11 @@
 
 #include "transport/TSocket.h"
 #include "transport/TServerSocket.h"
+#include <boost/shared_ptr.hpp>
 
 namespace facebook { namespace thrift { namespace transport { 
+
+using namespace boost;
 
 TServerSocket::TServerSocket(int port) :
   port_(port), serverSocket_(0), acceptBacklog_(1024) {}
@@ -64,7 +67,7 @@ void TServerSocket::listen() {
   // The socket is now listening!
 }
 
-TTransport* TServerSocket::acceptImpl() {
+shared_ptr<TTransport> TServerSocket::acceptImpl() {
   if (serverSocket_ <= 0) {
     throw TTransportException(TTX_NOT_OPEN, "TServerSocket not listening");
   }
@@ -80,7 +83,7 @@ TTransport* TServerSocket::acceptImpl() {
     throw TTransportException(TTX_UNKNOWN, "ERROR:" + errno);
   }
 
-  return new TSocket(clientSocket);
+  return shared_ptr<TTransport>(new TSocket(clientSocket));
 }
 
 void TServerSocket::close() {

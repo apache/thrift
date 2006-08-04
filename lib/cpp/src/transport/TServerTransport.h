@@ -3,8 +3,11 @@
 
 #include "transport/TTransport.h"
 #include "transport/TTransportException.h"
+#include <boost/shared_ptr.hpp>
 
 namespace facebook { namespace thrift { namespace transport { 
+
+using namespace boost;
 
 /**
  * Server transport framework. A server needs to have some facility for
@@ -34,8 +37,8 @@ class TServerTransport {
    * @return A new TTransport object
    * @throws TTransportException if there is an error
    */
-  TTransport* accept() {
-    TTransport* result = acceptImpl();
+  shared_ptr<TTransport> accept() {
+    shared_ptr<TTransport> result = acceptImpl();
     if (result == NULL) {
       throw TTransportException("accept() may not return NULL");
     }
@@ -56,7 +59,7 @@ class TServerTransport {
    * @return A newly allocated TTransport object
    * @throw TTransportException If an error occurs
    */
-  virtual TTransport* acceptImpl() = 0;
+  virtual shared_ptr<TTransport> acceptImpl() = 0;
 
 };
 

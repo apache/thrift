@@ -2,9 +2,12 @@
 #define T_PROCESSOR_H
 
 #include <string>
-#include "transport/TTransport.h"
+#include <transport/TTransport.h>
+#include <boost/shared_ptr.hpp>
 
 namespace facebook { namespace thrift { 
+
+using namespace boost;
 
 using namespace facebook::thrift::transport;
 
@@ -19,8 +22,8 @@ using namespace facebook::thrift::transport;
 class TProcessor {
  public:
   virtual ~TProcessor() {}
-  virtual bool process(TTransport* in, TTransport *out) = 0;
-  virtual bool process(TTransport* io) { return process(io, io); }
+  virtual bool process(shared_ptr<TTransport> in, shared_ptr<TTransport> out) = 0;
+  virtual bool process(shared_ptr<TTransport> io) { return process(io, io); }
  protected:
   TProcessor() {}
 };

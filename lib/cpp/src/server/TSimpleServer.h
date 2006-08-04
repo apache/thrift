@@ -16,9 +16,9 @@ namespace facebook { namespace thrift { namespace server {
  */
 class TSimpleServer : public TServer {
  public:
-  TSimpleServer(TProcessor* processor,
-                TServerOptions* options,
-                TServerTransport* serverTransport) :
+  TSimpleServer(shared_ptr<TProcessor> processor,
+                shared_ptr<TServerOptions> options,
+                shared_ptr<TServerTransport> serverTransport) :
     TServer(processor, options), serverTransport_(serverTransport) {}
     
   ~TSimpleServer() {}
@@ -26,7 +26,7 @@ class TSimpleServer : public TServer {
   void run();
 
  protected:
-  TServerTransport* serverTransport_;
+  shared_ptr<TServerTransport> serverTransport_;
 };
 
 }}} // facebook::thrift::server

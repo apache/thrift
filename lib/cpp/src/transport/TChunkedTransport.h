@@ -1,10 +1,13 @@
 #ifndef T_CHUNKED_TRANSPORT_H
 #define T_CHUNKED_TRANSPORT_H
 
-#include "transport/TTransport.h"
+#include <transport/TTransport.h>
 #include <string>
+#include <boost/shared_ptr.hpp>
 
 namespace facebook { namespace thrift { namespace transport { 
+
+using namespace boost;
 
 /**
  * Chunked transport. All writes go into an in-memory buffer until flush is
@@ -16,7 +19,7 @@ namespace facebook { namespace thrift { namespace transport {
  */
 class TChunkedTransport : public TTransport {
  public:
-  TChunkedTransport(TTransport* transport) :
+  TChunkedTransport(shared_ptr<TTransport> transport) :
     transport_(transport),
     rPos_(0), rLen_(0),
     wBufSize_(512), wLen_(0) {
@@ -24,7 +27,7 @@ class TChunkedTransport : public TTransport {
     wBuf_ = new uint8_t[wBufSize_];
   }
 
-  TChunkedTransport(TTransport* transport, uint32_t sz) :
+  TChunkedTransport(shared_ptr<TTransport> transport, uint32_t sz) :
     transport_(transport),
     rPos_(0), rLen_(0),
     wBufSize_(sz), wLen_(0) {
@@ -60,7 +63,7 @@ class TChunkedTransport : public TTransport {
   void flush();
 
  protected:
-  TTransport* transport_;
+  shared_ptr<TTransport> transport_;
   uint8_t* rBuf_;
   uint32_t rPos_;
   uint32_t rLen_;

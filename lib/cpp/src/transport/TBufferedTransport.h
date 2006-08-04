@@ -1,10 +1,14 @@
 #ifndef T_BUFFERED_TRANSPORT_H
 #define T_BUFFERED_TRANSPORT_H
 
-#include "transport/TTransport.h"
+#include <transport/TTransport.h>
 #include <string>
 
+#include <boost/shared_ptr.hpp>
+
 namespace facebook { namespace thrift { namespace transport { 
+
+using namespace boost;
 
 /**
  * Buffered transport. For reads it will read more data than is requested
@@ -15,7 +19,7 @@ namespace facebook { namespace thrift { namespace transport {
  */
 class TBufferedTransport : public TTransport {
  public:
-  TBufferedTransport(TTransport* transport) :
+  TBufferedTransport(shared_ptr<TTransport> transport) :
     transport_(transport),
     rBufSize_(512), rPos_(0), rLen_(0),
     wBufSize_(512), wLen_(0) {
@@ -23,7 +27,7 @@ class TBufferedTransport : public TTransport {
     wBuf_ = new uint8_t[wBufSize_];
   }
 
-  TBufferedTransport(TTransport* transport, uint32_t sz) :
+  TBufferedTransport(shared_ptr<TTransport> transport, uint32_t sz) :
     transport_(transport),
     rBufSize_(sz), rPos_(0), rLen_(0),
     wBufSize_(sz), wLen_(0) {
@@ -31,7 +35,7 @@ class TBufferedTransport : public TTransport {
     wBuf_ = new uint8_t[wBufSize_];
   }
 
-  TBufferedTransport(TTransport* transport, uint32_t rsz, uint32_t wsz) :
+  TBufferedTransport(shared_ptr<TTransport> transport, uint32_t rsz, uint32_t wsz) :
     transport_(transport),
     rBufSize_(rsz), rPos_(0), rLen_(0),
     wBufSize_(wsz), wLen_(0) {
@@ -67,7 +71,7 @@ class TBufferedTransport : public TTransport {
   void flush();
 
  protected:
-  TTransport* transport_;
+  shared_ptr<TTransport> transport_;
   uint8_t* rBuf_;
   uint32_t rBufSize_;
   uint32_t rPos_;
