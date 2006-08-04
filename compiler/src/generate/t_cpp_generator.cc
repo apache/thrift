@@ -207,13 +207,13 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
   indent_up();
   f_header_ <<
     indent() << service_name_ << "Client" <<
-    "(TTransport* trans, TProtocol* prot) : " <<
+    "(boost::shared_ptr<facebook::thrift::transport::TTransport> trans, boost::shared_ptr<facebook::thrift::protocol::TProtocol> prot) : " <<
     "_itrans(trans), _otrans(trans), " <<
     "_iprot(prot), _oprot(prot) {}" << endl;
   f_header_ <<
     indent() << service_name_ << "Client" <<
-    "(TTransport* itrans, TTransport* otrans," <<
-    " TProtocol* iprot, TProtocol* oprot) : " <<
+    "(boost::shared_ptr<facebook::thrift::transport::TTransport> itrans, boost::shared_ptr<facebook::thrift::transport::TTransport> otrans," <<
+    " boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) : " <<
     "_itrans(itrans), _otrans(otrans), " <<
     "_iprot(iprot), _oprot(oprot) {}" << endl;
 
@@ -228,10 +228,10 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     " protected:" << endl;
   indent_up();
   f_header_ <<
-    indent() << "TTransport* _itrans;" << endl <<
-    indent() << "TTransport* _otrans;" << endl <<
-    indent() << "TProtocol*  _iprot;"  << endl <<
-    indent() << "TProtocol*  _oprot;"  << endl;
+    indent() << "boost::shared_ptr<facebook::thrift::transport::TTransport> _itrans;" << endl <<
+    indent() << "boost::shared_ptr<facebook::thrift::transport::TTransport> _otrans;" << endl <<
+    indent() << "boost::shared_ptr<facebook::thrift::protocol::TProtocol>  _iprot;"  << endl <<
+    indent() << "boost::shared_ptr<facebook::thrift::protocol::TProtocol>  _oprot;"  << endl;
   indent_down();  
 
   f_header_ <<
@@ -254,13 +254,13 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
       indent() <<
       "_oprot->writeStructBegin(_otrans, \"function\");" << endl <<
       indent() <<
-      "_oprot->writeFieldBegin(_otrans, \"name\", T_STRING, 0);" << endl <<
+      "_oprot->writeFieldBegin(_otrans, \"name\", facebook::thrift::protocol::T_STRING, 0);" << endl <<
       indent() <<
       "_oprot->writeString(_otrans, \"" << funname << "\");" << endl <<
       indent() <<
       "_oprot->writeFieldEnd(_otrans);" << endl <<
       indent() <<
-      "_oprot->writeFieldBegin(_otrans, \"args\", T_STRUCT, 1);" << endl;     
+      "_oprot->writeFieldBegin(_otrans, \"args\", facebook::thrift::protocol::T_STRUCT, 1);" << endl;     
     generate_serialize_struct((*f_iter)->get_arglist());
     f_service_ <<
       indent() <<
@@ -317,18 +317,18 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
   f_header_ <<
     "class " << service_name_ << "ServerIf : " <<
     "public " << service_name_ << "If, " <<
-    "public TProcessor {" << endl <<
+    "public facebook::thrift::TProcessor {" << endl <<
     " public: " << endl;
   indent_up();
   f_header_ << 
     indent() <<
-    service_name_ << "ServerIf(TProtocol* protocol) : " <<
+    service_name_ << "ServerIf(boost::shared_ptr<facebook::thrift::protocol::TProtocol> protocol) : " <<
                        "_iprot(protocol), _oprot(protocol) {}" << endl <<
     indent() <<
-    service_name_ << "ServerIf(TProtocol* iprot, TProtocol* oprot) : " <<
+    service_name_ << "ServerIf(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) : " <<
                        "_iprot(iprot), _oprot(oprot) {}" << endl <<
-    indent() << "bool process(TTransport *_itrans, " <<
-                             "TTransport* _otrans);" << endl <<
+    indent() << "bool process(boost::shared_ptr<facebook::thrift::transport::TTransport> _itrans, " <<
+                             "boost::shared_ptr<facebook::thrift::transport::TTransport> _otrans);" << endl <<
     indent() << "virtual ~" << service_name_ << "ServerIf() {}" << endl;
   indent_down();
 
@@ -337,8 +337,8 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
     " protected:" << endl;
   indent_up();
   f_header_ <<
-    indent() << "TProtocol* _iprot;" << endl <<
-    indent() << "TProtocol* _oprot;" << endl;
+    indent() << "boost::shared_ptr<facebook::thrift::protocol::TProtocol> _iprot;" << endl <<
+    indent() << "boost::shared_ptr<facebook::thrift::protocol::TProtocol> _oprot;" << endl;
   indent_down();
 
   // Process function declarations
@@ -348,7 +348,7 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_header_) <<
       "void process_" << (*f_iter)->get_name() <<
-      "(TTransport* _itrans, TTransport* _otrans);" << endl;
+      "(boost::shared_ptr<facebook::thrift::transport::TTransport> _itrans, boost::shared_ptr<facebook::thrift::transport::TTransport> _otrans);" << endl;
   }
   indent_down();
   f_header_ <<
@@ -357,7 +357,7 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
   // Generate the server implementation
   f_service_ <<
     "bool " << service_name_ << "ServerIf::" <<
-    "process(TTransport* _itrans, TTransport* _otrans) {" << endl;
+    "process(boost::shared_ptr<facebook::thrift::transport::TTransport> _itrans, boost::shared_ptr<facebook::thrift::transport::TTransport> _otrans) {" << endl;
   indent_up();
 
   f_service_ <<
@@ -366,7 +366,7 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
     indent() <<
     "std::string _fname;" << endl <<
     indent() <<
-    "TType _ftype;" << endl <<
+    "facebook::thrift::protocol::TType _ftype;" << endl <<
     indent() <<
     "uint16_t _fid;" << endl <<
     indent() <<
@@ -440,7 +440,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   f_service_ <<
     "void " << tservice->get_name() << "ServerIf::" <<
     "process_" << tfunction->get_name() <<
-    "(TTransport *_itrans, TTransport *_otrans)" << endl;
+    "(boost::shared_ptr<facebook::thrift::transport::TTransport> _itrans, boost::shared_ptr<facebook::thrift::transport::TTransport> _otrans)" << endl;
   scope_up(f_service_);
 
   // Get the struct of function call params
@@ -579,7 +579,7 @@ void t_cpp_generator::generate_deserialize_struct(t_struct* tstruct,
   // Declare stack tmp variables
   f_service_ <<
     indent() << "std::string " << fname << ";" << endl <<
-    indent() << "TType " << ftype << ";" << endl <<
+    indent() << "facebook::thrift::protocol::TType " << ftype << ";" << endl <<
     indent() << "uint16_t " << fid << ";" << endl <<
     indent() << "_iprot->readStructBegin(_itrans, " << fname << ");" << endl;
   
@@ -596,7 +596,7 @@ void t_cpp_generator::generate_deserialize_struct(t_struct* tstruct,
     
     // Check for field STOP marker
     indent(f_service_) <<
-      "if (" << ftype << " == T_STOP) { break; }" << endl;
+      "if (" << ftype << " == facebook::thrift::protocol::T_STOP) { break; }" << endl;
     
     // Switch statement on the field we are reading
     indent(f_service_) <<
@@ -650,18 +650,18 @@ void t_cpp_generator::generate_deserialize_container(t_type* ttype,
   // Declare variables, read header
   if (ttype->is_map()) {
     f_service_ <<
-      indent() << "TType " << ktype << ";" << endl <<
-      indent() << "TType " << vtype << ";" << endl <<
+      indent() << "facebook::thrift::protocol::TType " << ktype << ";" << endl <<
+      indent() << "facebook::thrift::protocol::TType " << vtype << ";" << endl <<
       indent() << "_iprot->readMapBegin(_itrans, " <<
                    ktype << ", " << vtype << ", " << size << ");" << endl;
   } else if (ttype->is_set()) {
     f_service_ <<
-      indent() << "TType " << etype << ";" << endl <<
+      indent() << "facebook::thrift::protocol::TType " << etype << ";" << endl <<
       indent() << "_iprot->readSetBegin(_itrans, " <<
                    etype << ", " << size << ");" << endl;
   } else if (ttype->is_list()) {
     f_service_ <<
-      indent() << "TType " << etype << ";" << endl <<
+      indent() << "facebook::thrift::protocol::TType " << etype << ";" << endl <<
       indent() << "_iprot->readListBegin(_itrans, " <<
                    etype << ", " << size << ");" << endl;
   }
@@ -1082,28 +1082,28 @@ string t_cpp_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_VOID:
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
-      return "T_STRING";
+      return "facebook::thrift::protocol::T_STRING";
     case t_base_type::TYPE_BYTE:
-      return "T_BYTE";
+      return "facebook::thrift::protocol::T_BYTE";
     case t_base_type::TYPE_I32:
-      return "T_I32";
+      return "facebook::thrift::protocol::T_I32";
     case t_base_type::TYPE_U32:
-      return "T_U32";
+      return "facebook::thrift::protocol::T_U32";
     case t_base_type::TYPE_I64:
-      return "T_I64";
+      return "facebook::thrift::protocol::T_I64";
     case t_base_type::TYPE_U64:
-      return "T_U64";
+      return "facebook::thrift::protocol::T_U64";
     }
   } else if (type->is_enum()) {
-    return "T_I32";
+    return "facebook::thrift::protocol::T_I32";
   } else if (type->is_struct()) {
-    return "T_STRUCT";
+    return "facebook::thrift::protocol::T_STRUCT";
   } else if (type->is_map()) {
-    return "T_MAP";
+    return "facebook::thrift::protocol::T_MAP";
   } else if (type->is_set()) {
-    return "T_SET";
+    return "facebook::thrift::protocol::T_SET";
   } else if (type->is_list()) {
-    return "T_LIST";
+    return "facebook::thrift::protocol::T_LIST";
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
