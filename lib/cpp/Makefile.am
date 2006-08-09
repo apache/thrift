@@ -1,5 +1,4 @@
 lib_LTLIBRARIES = libthrift.la
-#lib_LIBRARIES = libthrift.a
 
 common_cxxflags = -Isrc $(BOOST_CPPFLAGS)
 common_ldflags = $(BOOST_LDFLAGS)
@@ -18,14 +17,12 @@ libthrift_sources = src/concurrency/Monitor.cc \
                     src/server/TSimpleServer.cc \
                     src/server/TThreadPoolServer.cc
 
-#libthrift_a_SOURCES = $(libthrift_sources)
 libthrift_la_SOURCES = $(libthrift_sources)
 
 libthrift_cxxflags =  $(common_cxxflags)
 libthrift_ldflags =  $(common_ldflags)
 
 libthrift_la_CXXFLAGS =  $(libthrift_cxxflags)
-libthrift_a_CXXFLAGS =  $(libthrift_cxxflags)
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
@@ -70,7 +67,7 @@ concurrency_test_SOURCES = src/concurrency/test/Tests.cc \
                            src/concurrency/test/ThreadManagerTests.h \
                            src/concurrency/test/TimerManagerTests.h
 
-concurrency_test_LDADD = libthrift.a
+concurrency_test_LDADD = libthrift.la
 
 concurrency_test_CXXFLAGS =  $(common_cxxflags)
 concurrency_test_LDFLAGS =  $(common_ldflags)
