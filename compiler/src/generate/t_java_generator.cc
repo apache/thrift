@@ -33,7 +33,6 @@ string t_java_generator::java_type_imports() {
     "import java.util.HashMap;\n" +
     "import java.util.HashSet;\n" +
     "import com.facebook.thrift.*;\n" +
-    "import com.facebook.thrift.types.*;\n" +
     "import com.facebook.thrift.protocol.TString;\n\n";
 }
 
@@ -73,8 +72,7 @@ void t_java_generator::generate_enum(t_enum* tenum) {
 
   f_enum <<
     autogen_comment() <<
-    java_package() <<
-    "import com.facebook.thrift.types.Int32;" << endl << endl;
+    java_package() << endl;
 
   f_enum <<
     "public class " << tenum->get_name() << " ";
@@ -91,8 +89,8 @@ void t_java_generator::generate_enum(t_enum* tenum) {
     }
 
     indent(f_enum) <<
-      "public static final Int32 " << (*c_iter)->get_name() <<
-      " = new Int32(" << value << ");" << endl;
+      "public static final int " << (*c_iter)->get_name() <<
+      " = " << value << ";" << endl;
   }
 
   scope_down(f_enum);
@@ -236,6 +234,45 @@ void t_java_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) <<
       "public " << function_signature(*f_iter) << " throws TException" << endl;
     scope_up(f_service_);
+    indent(f_service_) <<
+      "send_" << funname << "(";
+
+    // Get the struct of function call params
+    t_struct* arg_struct = (*f_iter)->get_arglist();
+    
+    // Declare the function arguments
+    const vector<t_field*>& fields = arg_struct->get_members();
+    vector<t_field*>::const_iterator fld_iter;
+    bool first = true;
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      if (first) {
+        first = false;
+      } else {
+        f_service_ << ", ";
+      }
+      f_service_ << (*fld_iter)->get_name();
+    }
+    f_service_ << ");" << endl;
+
+    if (!(*f_iter)->is_async()) {
+      f_service_ << indent();
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        f_service_ << "return ";
+      }
+      f_service_ <<
+        "recv_" << funname << "();" << endl;
+    }
+    scope_down(f_service_);
+    f_service_ << endl;
+      
+    t_function send_function(g_program->get_void_type(),
+                             string("send_") + (*f_iter)->get_name(),
+                             (*f_iter)->get_arglist());
+
+    // Open function
+    indent(f_service_) <<
+      "public " << function_signature(&send_function) << " throws TException" << endl;
+    scope_up(f_service_);
 
     // Serialize the request
     f_service_ <<
@@ -247,7 +284,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
       "new TField(\"name\", TType.STRING, 0));" << endl <<
       indent() <<
       "_oprot.writeString(_otrans, " <<
-      "new TString(\"" << funname << "\"));" << endl <<
+      "\"" << funname << "\");" << endl <<
       indent() <<
       "_oprot.writeFieldEnd(_otrans);" << endl <<
       indent() <<
@@ -266,32 +303,46 @@ void t_java_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) <<
       "_otrans.flush();" << endl;
 
-    // Read the response
-    t_struct result_struct((*f_iter)->get_name() + "_result");
-    t_field result_field((*f_iter)->get_returntype(), "_result");
-
-    // Add a field to the return struct if non void
-    if (!(*f_iter)->get_returntype()->is_void()) {
-      indent(f_service_) <<
-        declare_field(&result_field, true) << endl;
-      result_struct.append(&result_field);
-    }
-
-    // Deserialize response struct
-    generate_deserialize_struct(&result_struct);
-
-    // Careful, only return _result if not a void function
-    if (!(*f_iter)->get_returntype()->is_void()) {
-      indent(f_service_) <<
-        "return _result;" << endl;
-    } else {
-      indent(f_service_) <<
-        "return;" << endl;
-    }
-
-    // Close function
     scope_down(f_service_);
     f_service_ << endl;
+
+    if (!(*f_iter)->is_async()) {
+      t_struct noargs;
+      t_function recv_function((*f_iter)->get_returntype(),
+                               string("recv_") + (*f_iter)->get_name(),
+                               &noargs);
+      // Open function
+      indent(f_service_) <<
+        "public " << function_signature(&recv_function) << " throws TException" << endl;
+      scope_up(f_service_);
+      
+      // Read the response
+      t_struct result_struct((*f_iter)->get_name() + "_result");
+      t_field result_field((*f_iter)->get_returntype(), "_result");
+      
+      // Add a field to the return struct if non void
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        indent(f_service_) <<
+          declare_field(&result_field, true) << endl;
+        result_struct.append(&result_field);
+      }
+      
+      // Deserialize response struct
+      generate_deserialize_struct(&result_struct);
+      
+      // Careful, only return _result if not a void function
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        indent(f_service_) <<
+          "return _result;" << endl;
+      } else {
+        indent(f_service_) <<
+          "return;" << endl;
+      }
+      
+      // Close function
+      scope_down(f_service_);
+      f_service_ << endl;
+    }
   }
 
   indent_down();
@@ -356,21 +407,21 @@ void t_java_generator::generate_service_server(t_service* tservice) {
 
   f_service_ <<
     indent() <<
-    "TString _fname = new TString();" << endl <<
+    "String _fname;" << endl <<
     indent() <<
-    "TStruct _struct = new TStruct();" << endl <<
+    "TStruct _struct;" << endl <<
     indent() <<
-    "TField _field = new TField();" << endl <<
+    "TField _field;" << endl <<
     indent() <<
-    "_iprot.readStructBegin(_itrans, _struct);" << endl <<
+    "_struct = _iprot.readStructBegin(_itrans);" << endl <<
     indent() <<
-    "_iprot.readFieldBegin(_itrans, _field);" << endl <<
+    "_field = _iprot.readFieldBegin(_itrans);" << endl <<
     indent() <<
-    "_iprot.readString(_itrans, _fname);" << endl <<
+    "_fname = _iprot.readString(_itrans);" << endl <<
     indent() <<
     "_iprot.readFieldEnd(_itrans);" << endl <<
     indent() <<
-    "_iprot.readFieldBegin(_itrans, _field);" << endl;
+    "_field = _iprot.readFieldBegin(_itrans);" << endl;
 
   bool first = true;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -381,7 +432,7 @@ void t_java_generator::generate_service_server(t_service* tservice) {
       first = false;
     }
     f_service_ <<
-      "if (_fname.value.equals(\"" << (*f_iter)->get_name() <<"\")) {" << endl;
+      "if (_fname.equals(\"" << (*f_iter)->get_name() <<"\")) {" << endl;
     indent_up();
     indent(f_service_) <<
       "process_" << (*f_iter)->get_name() <<
@@ -404,7 +455,7 @@ void t_java_generator::generate_service_server(t_service* tservice) {
     indent() <<
     "_iprot.readFieldEnd(_itrans);" << endl <<
     indent() <<
-    "_iprot.readFieldBegin(_itrans, _field);" << endl <<   
+    "_field = _iprot.readFieldBegin(_itrans);" << endl <<   
     indent() <<
     "_iprot.readStructEnd(_itrans);" << endl <<
     indent() <<
@@ -514,7 +565,7 @@ void t_java_generator::generate_deserialize_field(t_field* tfield,
   } else if (type->is_base_type() || type->is_enum()) {
 
     indent(f_service_) <<
-      "_iprot.";
+      name << " = _iprot.";
     
     if (type->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
@@ -524,28 +575,28 @@ void t_java_generator::generate_deserialize_field(t_field* tfield,
           name;
         break;
       case t_base_type::TYPE_STRING:        
-        f_service_ << "readString(_itrans, " << name << ");";
+        f_service_ << "readString(_itrans);";
         break;
       case t_base_type::TYPE_BYTE:
-        f_service_ << "readByte(_itrans, " << name << ");";
+        f_service_ << "readByte(_itrans);";
         break;
       case t_base_type::TYPE_I32:
-        f_service_ << "readI32(_itrans, " << name << ");";
+        f_service_ << "readI32(_itrans);";
         break;
       case t_base_type::TYPE_U32:
-        f_service_ << "readU32(_itrans, " << name << ");";
+        f_service_ << "readU32(_itrans);";
         break;
       case t_base_type::TYPE_I64:
-        f_service_ << "readI64(_itrans, " << name << ");";
+        f_service_ << "readI64(_itrans);";
         break;
       case t_base_type::TYPE_U64:
-        f_service_ << "readU64(_itrans, " << name << ");";
+        f_service_ << "readU64(_itrans);";
         break;
       default:
         throw "compiler error: no C++ name for base type " + tbase;
       }
     } else if (type->is_enum()) {
-      f_service_ << "readI32(_itrans, " << name << ");";
+      f_service_ << "readI32(_itrans);";
     }
     f_service_ <<
       endl;
@@ -574,9 +625,8 @@ void t_java_generator::generate_deserialize_struct(t_struct* tstruct,
   
   // Declare stack tmp variables
   f_service_ <<
-    indent() << "TStruct " << _struct << " = new TStruct();" << endl <<
-    indent() << "TField " << _field << " = new TField();" << endl <<
-    indent() << "_iprot.readStructBegin(_itrans, " << _struct << ");" << endl;
+    indent() << "TField " << _field << ";" << endl <<
+    indent() << "TStruct " << _struct << " = _iprot.readStructBegin(_itrans);" << endl;
   
   // Loop over reading in fields
   indent(f_service_) <<
@@ -586,11 +636,11 @@ void t_java_generator::generate_deserialize_struct(t_struct* tstruct,
     
     // Read beginning field marker
     indent(f_service_) <<
-      "_iprot.readFieldBegin(_itrans, " << _field << ");" << endl;
+      _field << " = _iprot.readFieldBegin(_itrans);" << endl;
     
     // Check for field STOP marker and break
     indent(f_service_) <<
-      "if (" << _field << ".type.equals(TType.STOP)) { " << endl;
+      "if (" << _field << ".type == TType.STOP) { " << endl;
     indent_up();
     indent(f_service_) <<
       "break;" << endl;
@@ -600,7 +650,7 @@ void t_java_generator::generate_deserialize_struct(t_struct* tstruct,
     
     // Switch statement on the field we are reading
     indent(f_service_) <<
-      "switch ((int)" << _field << ".id.get())" << endl;
+      "switch ((int)" << _field << ".id)" << endl;
 
       scope_up(f_service_);
     
@@ -656,16 +706,13 @@ void t_java_generator::generate_deserialize_container(t_type* ttype,
   // Declare variables, read header
   if (ttype->is_map()) {
     f_service_ <<
-      indent() << "TMap " << obj << " = new TMap();" << endl <<
-      indent() << "_iprot.readMapBegin(_itrans, " << obj << ");" << endl;
+      indent() << "TMap " << obj << " = _iprot.readMapBegin(_itrans);" << endl;
   } else if (ttype->is_set()) {
     f_service_ <<
-      indent() << "TSet " << obj << " = new TSet();" << endl <<
-      indent() << "_iprot.readSetBegin(_itrans, " << obj << ");" << endl;
+      indent() << "TSet " << obj << " = _iprot.readSetBegin(_itrans);" << endl;
   } else if (ttype->is_list()) {
     f_service_ <<
-      indent() << "TList " << obj << " = new TList();" << endl <<
-      indent() << "_iprot.readListBegin(_itrans, " << obj << ");" << endl;
+      indent() << "TList " << obj << " = _iprot.readListBegin(_itrans);" << endl;
   }
 
 
@@ -673,7 +720,7 @@ void t_java_generator::generate_deserialize_container(t_type* ttype,
   string i = tmp("_i");
   indent(f_service_) <<
     "for (int " << i << " = 0; " <<
-    i << " < " << obj << ".size.get()" << "; " <<
+    i << " < " << obj << ".size" << "; " <<
     "++" << i << ")" << endl;
   
     scope_up(f_service_);
@@ -853,7 +900,7 @@ void t_java_generator::generate_serialize_struct(t_struct* tstruct,
       indent() <<
       _field << ".type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl <<
       indent() <<
-      _field << ".id.set(" << (*f_iter)->get_key() << ");" << endl <<
+      _field << ".id = " << (*f_iter)->get_key() << ";" << endl <<
       indent() <<
       "_oprot.writeFieldBegin(_otrans, " << _field << ");" << endl;
     // Write field contents
@@ -975,28 +1022,29 @@ void t_java_generator::generate_serialize_list_element(t_list* tlist,
  * Returns a Java type name
  *
  * @param ttype The type
+ * @param container Is the type going inside a container?
  */
-string t_java_generator::type_name(t_type* ttype) {
+string t_java_generator::type_name(t_type* ttype, bool in_container) {
   // In Java typedefs are just resolved to their real type
   while (ttype->is_typedef()) {
     ttype = ((t_typedef*)ttype)->get_type();
   }
 
   if (ttype->is_base_type()) {
-    return base_type_name(((t_base_type*)ttype)->get_base());
+    return base_type_name(((t_base_type*)ttype)->get_base(), in_container);
   } else if (ttype->is_enum()) {
-    return "Int32";
+    return (in_container ? "Integer" : "int");
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*) ttype;
     return "HashMap<" +
-      type_name(tmap->get_key_type()) + "," +
-      type_name(tmap->get_val_type()) + ">";
+      type_name(tmap->get_key_type(), true) + "," +
+      type_name(tmap->get_val_type(), true) + ">";
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*) ttype;
-    return "HashSet<" + type_name(tset->get_elem_type()) + ">";
+    return "HashSet<" + type_name(tset->get_elem_type(), true) + ">";
   } else if (ttype->is_list()) {
     t_list* tlist = (t_list*) ttype;
-    return "ArrayList<" + type_name(tlist->get_elem_type()) + ">";
+    return "ArrayList<" + type_name(tlist->get_elem_type(), true) + ">";
   } else {
     return ttype->get_name();
   }
@@ -1006,23 +1054,23 @@ string t_java_generator::type_name(t_type* ttype) {
  * Returns the C++ type that corresponds to the thrift type.
  *
  * @param tbase The base type
+ * @param container Is it going in a Java container?
  */
-string t_java_generator::base_type_name(t_base_type::t_base tbase) {
+string t_java_generator::base_type_name(t_base_type::t_base tbase,
+                                        bool in_container) {
   switch (tbase) {
   case t_base_type::TYPE_VOID:
     return "void";
   case t_base_type::TYPE_STRING:
-    return "TString";
+    return "String";
   case t_base_type::TYPE_BYTE:
-    return "UInt8";
+    return "byte";
   case t_base_type::TYPE_I32:
-    return "Int32";
   case t_base_type::TYPE_U32:
-    return "UInt32";
+    return (in_container ? "Integer" : "int");
   case t_base_type::TYPE_I64:
-    return "Int64";
   case t_base_type::TYPE_U64:
-    return "UInt64";
+    return (in_container ? "Long" : "long");
   default:
     throw "compiler error: no C++ name for base type " + tbase;
   }
@@ -1037,7 +1085,32 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
   // TODO(mcslee): do we ever need to initialize the field?
   string result = type_name(tfield->get_type()) + " " + tfield->get_name();
   if (init) {
-    result += " = new " + type_name(tfield->get_type()) + "()";
+    t_type* ttype = tfield->get_type();
+    while (ttype->is_typedef()) {
+      ttype = ((t_typedef*)ttype)->get_type();
+    }
+    if (ttype->is_base_type()) {
+      t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+      switch (tbase) {
+      case t_base_type::TYPE_VOID:
+        throw "NO T_VOID CONSTRUCT";
+      case t_base_type::TYPE_STRING:
+        result += " = \"\"";
+        break;
+      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I32:
+      case t_base_type::TYPE_U32:
+      case t_base_type::TYPE_I64:
+      case t_base_type::TYPE_U64:
+        result += " = 0";
+        break;
+    }
+
+    } else  if (ttype->is_enum()) {
+      result += " = 0";
+    } else {
+      result += " = new " + type_name(tfield->get_type()) + "()";
+    }
   }
   return result + ";";
 }

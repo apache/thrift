@@ -84,8 +84,8 @@ class t_java_generator : public t_oop_generator {
   std::string java_package();
   std::string java_type_imports();
   std::string java_thrift_imports();
-  std::string type_name(t_type* ttype);
-  std::string base_type_name(t_base_type::t_base tbase);
+  std::string type_name(t_type* ttype, bool in_container=false);
+  std::string base_type_name(t_base_type::t_base tbase, bool in_container=false);
   std::string declare_field(t_field* tfield, bool init=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);

@@ -18,7 +18,10 @@
  */
 class t_php_generator : public t_oop_generator {
  public:
-  t_php_generator() {}
+  t_php_generator(bool binary_inline=false) {
+    binary_inline_ = binary_inline;
+  }
+  
   ~t_php_generator() {}
 
   /** Init and close methods */
@@ -93,6 +96,11 @@ class t_php_generator : public t_oop_generator {
 
   std::ofstream f_types_;
   std::ofstream f_service_;
+
+  /** Generate protocol-independent template? Or Binary inline code? */
+
+  bool binary_inline_;
+
 };
 
 #endif

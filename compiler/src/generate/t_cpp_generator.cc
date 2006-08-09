@@ -220,7 +220,18 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter; 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    t_function send_function(g_program->get_void_type(),
+                             string("send_") + (*f_iter)->get_name(),
+                             (*f_iter)->get_arglist());
     indent(f_header_) << function_signature(*f_iter) << ";" << endl;
+    indent(f_header_) << function_signature(&send_function) << ";" << endl;
+    if (!(*f_iter)->is_async()) {
+      t_struct noargs;
+      t_function recv_function((*f_iter)->get_returntype(),
+                               string("recv_") + (*f_iter)->get_name(),
+                               &noargs);
+      indent(f_header_) << function_signature(&recv_function) << ";" << endl;
+    }
   }
   indent_down();
   
@@ -245,8 +256,47 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     string funname = (*f_iter)->get_name();
 
     // Open function
-    f_service_ <<
-      function_signature(*f_iter, scope) << "" << endl;
+    indent(f_service_) <<
+      function_signature(*f_iter, scope) << endl;
+    scope_up(f_service_);
+    indent(f_service_) <<
+      "send_" << funname << "(";
+
+    // Get the struct of function call params
+    t_struct* arg_struct = (*f_iter)->get_arglist();
+    
+    // Declare the function arguments
+    const vector<t_field*>& fields = arg_struct->get_members();
+    vector<t_field*>::const_iterator fld_iter;
+    bool first = true;
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      if (first) {
+        first = false;
+      } else {
+        f_service_ << ", ";
+      }
+      f_service_ << (*fld_iter)->get_name();
+    }
+    f_service_ << ");" << endl;
+
+    if (!(*f_iter)->is_async()) {
+      f_service_ << indent();
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        f_service_ << "return ";
+      }
+      f_service_ <<
+        "recv_" << funname << "();" << endl;
+    }
+    scope_down(f_service_);
+    f_service_ << endl;
+
+    t_function send_function(g_program->get_void_type(),
+                             string("send_") + (*f_iter)->get_name(),
+                             (*f_iter)->get_arglist());
+
+    // Open function
+    indent(f_service_) <<
+      function_signature(&send_function, scope) << endl;
     scope_up(f_service_);
 
     // Serialize the request
@@ -273,33 +323,48 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     // Flush the request
     indent(f_service_) <<
       "_otrans->flush();" << endl;
-
-    // Read the response
-    t_struct result_struct((*f_iter)->get_name() + "_result");
-    t_field result_field((*f_iter)->get_returntype(), "_result");
-
-    // Add a field to the return struct if non void
-    if (!(*f_iter)->get_returntype()->is_void()) {
-      indent(f_service_) <<
-        type_name((*f_iter)->get_returntype()) << " _result;" << endl;
-      result_struct.append(&result_field);
-    }
-
-    // Deserialize response struct
-    generate_deserialize_struct(&result_struct);
-
-    // Careful, only return _result if not a void function
-    if (!(*f_iter)->get_returntype()->is_void()) {
-      indent(f_service_) <<
-        "return _result;" << endl;
-    } else {
-      indent(f_service_) <<
-        "return;" << endl;
-    }
-
-    // Close function
+    
     scope_down(f_service_);
-    indent(f_service_) << endl;
+    f_service_ << endl;
+
+    if (!(*f_iter)->is_async()) {
+      t_struct noargs;
+      t_function recv_function((*f_iter)->get_returntype(),
+                               string("recv_") + (*f_iter)->get_name(),
+                               &noargs);
+      // Open function
+      indent(f_service_) <<
+        function_signature(&recv_function, scope) << endl;
+      scope_up(f_service_);
+
+      // Read the response
+      t_struct result_struct((*f_iter)->get_name() + "_result");
+      t_field result_field((*f_iter)->get_returntype(), "_result");
+      
+      // Add a field to the return struct if non void
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        indent(f_service_) <<
+          type_name((*f_iter)->get_returntype()) << " _result;" << endl;
+        result_struct.append(&result_field);
+      }
+      
+      // Deserialize response struct
+      generate_deserialize_struct(&result_struct);
+      
+      // Careful, only return _result if not a void function
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        indent(f_service_) <<
+          "return _result;" << endl;
+      } else {
+        indent(f_service_) <<
+          "return;" << endl;
+      }
+      
+      // Close function
+      scope_down(f_service_);
+      f_service_ << endl;
+    }
+
   }
 }
 

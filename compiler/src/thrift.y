@@ -20,6 +20,7 @@ int y_field_val = 0;
 %union {
   char*       id;
   int         iconst;
+  bool        tbool;
   t_type*     ttype;
   t_typedef*  ttypedef;
   t_enum*     tenum;
@@ -82,9 +83,10 @@ int y_field_val = 0;
 %type<tservice>  Service
 
 %type<tfunction> Function
-%type<id>        FunctionModifiers
 %type<ttype>     FunctionType
 %type<tservice>  FunctionList
+
+%type<tbool>     AsyncOptional
 
 %%
 
@@ -210,17 +212,21 @@ FunctionList:
     }
 
 Function:
-  FunctionType FunctionModifiers tok_identifier '(' FieldList ')'
+  FunctionType AsyncOptional tok_identifier '(' FieldList ')'
     {
       $5->set_name(std::string($3) + "_args");
-      $$ = new t_function($1, $3, $5);
+      $$ = new t_function($1, $3, $5, $2);
       y_field_val = 0;
     }
 
-FunctionModifiers:
+AsyncOptional:
+  tok_async
     {
-      /** TODO(mcslee): implement async modifier, etc. */
-      $$ = 0;
+      $$ = true;
+    }
+|
+    {
+      $$ = false;
     }
 
 FieldList:

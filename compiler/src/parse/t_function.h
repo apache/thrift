@@ -7,26 +7,33 @@
 
 /**
  * Representation of a function. Key parst are return type, function name,
- * optional modifiers, and an argument list. Each function also has a
- * hash signature that is used in the network protocol.
+ * optional modifiers, and an argument list.
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
 class t_function {
  public:
-  t_function(t_type* returntype, std::string name, t_struct* arglist) :
-    returntype_(returntype), name_(name), arglist_(arglist) {}
+  t_function(t_type* returntype,
+             std::string name,
+             t_struct* arglist,
+             bool async=false) :
+    returntype_(returntype),
+    name_(name),
+    arglist_(arglist),
+    async_(async) {}
 
   ~t_function() {}
 
   t_type*      get_returntype() const { return returntype_; }
   const std::string& get_name() const { return name_; }
   t_struct*    get_arglist()    const { return arglist_; }
+  bool         is_async()       const { return async_; }
 
  private:
   t_type* returntype_;
   std::string name_;
   t_struct* arglist_;
+  bool async_;
 };
 
 #endif

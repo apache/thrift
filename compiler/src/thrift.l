@@ -33,6 +33,7 @@ symbol       ([\,\{\}\(\)\=<>])
 
 {symbol}      { return yytext[0];   }
 
+"void"        { return tok_void;     }
 "byte"        { return tok_byte;     }
 "string"      { return tok_string;   }
 "i32"         { return tok_i32;      }
@@ -44,13 +45,13 @@ symbol       ([\,\{\}\(\)\=<>])
 "list"        { return tok_list;     }
 "set"         { return tok_set;      }
 
-"void"        { return tok_void;     }
 "async"       { return tok_async;    }
 
 "typedef"     { return tok_typedef;  }
 "struct"      { return tok_struct;   }
 "service"     { return tok_service;  }
 "enum"        { return tok_enum;     }
+
 
 {intconstant} { yylval.iconst = atoi(yytext) ; return tok_int_constant; }
 {identifier}  { yylval.id = strdup(yytext); return tok_identifier; }

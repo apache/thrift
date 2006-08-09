@@ -145,7 +145,7 @@ void t_php_generator::generate_service(t_service* tservice) {
     php_includes();
 
   f_service_ <<
-    "require_once '" << service_name_ << "Types.php';" << endl << endl;
+    "require_once dirname(__FILE__).'/" << service_name_ << "Types.php';" << endl << endl;
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_interface(tservice);
@@ -191,24 +191,41 @@ void t_php_generator::generate_service_client(t_service* tservice) {
   // Private members
   f_service_ <<
     indent() << "private $_itrans = null;" << endl <<
-    indent() << "private $_otrans = null;" << endl <<
-    indent() << "private $_iprot = null;"  << endl <<
-    indent() << "private $_oprot = null;"  << endl << endl;
+    indent() << "private $_otrans = null;" << endl << endl;
+
+  if (!binary_inline_) {
+    f_service_ <<
+      indent() << "private $_iprot = null;"  << endl <<
+      indent() << "private $_oprot = null;"  << endl << endl;
+  }
 
   // Constructor function
   f_service_ <<
     indent() << "public function __construct() {" << endl <<
     indent() << "  $argv = func_get_args();" << endl <<
-    indent() << "  $argc = count($argv);" << endl <<
-    indent() << "  if ($argc == 2) {" << endl <<
-    indent() << "    $this->_itrans = $this->_otrans = $argv[0];" << endl <<
-    indent() << "    $this->_iprot = $this->_oprot = $argv[1];" << endl <<
-    indent() << "  } else if ($argc == 4) {" << endl <<
-    indent() << "    $this->_itrans = $argv[0];" << endl <<
-    indent() << "    $this->_otrans = $argv[1];" << endl <<
-    indent() << "    $this->_iprot = $argv[2];" << endl <<
-    indent() << "    $this->_oprot = $argv[3];" << endl <<
-    indent() << "  }" << endl <<
+    indent() << "  $argc = count($argv);" << endl;
+
+  if (binary_inline_) {
+    f_service_ <<
+      indent() << "  if ($argc == 1) {" << endl <<
+      indent() << "    $this->_itrans = $this->_otrans = $argv[0];" << endl <<
+      indent() << "  } else if ($argc == 2) {" << endl <<
+      indent() << "    $this->_itrans = $argv[0];" << endl <<
+      indent() << "    $this->_otrans = $argv[1];" << endl <<
+      indent() << "  }" << endl;
+  } else {
+    f_service_ <<
+      indent() << "  if ($argc == 2) {" << endl <<
+      indent() << "    $this->_itrans = $this->_otrans = $argv[0];" << endl <<
+      indent() << "    $this->_iprot = $this->_oprot = $argv[1];" << endl <<
+      indent() << "  } else if ($argc == 4) {" << endl <<
+      indent() << "    $this->_itrans = $argv[0];" << endl <<
+      indent() << "    $this->_otrans = $argv[1];" << endl <<
+      indent() << "    $this->_iprot = $argv[2];" << endl <<
+      indent() << "    $this->_oprot = $argv[3];" << endl <<
+      indent() << "  }" << endl;
+  }
+  f_service_ <<
     indent() << "}" << endl << endl;   
 
   // Generate client method implementations
@@ -222,27 +239,40 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       "public function " << function_signature(*f_iter) << endl;
     scope_up(f_service_);
 
-    // Serialize the request
-    f_service_ <<
-      indent() <<
-      "$this->_oprot->writeStructBegin($this->_otrans, 'function');" << endl <<
-      indent() <<
-      "$this->_oprot->writeFieldBegin($this->_otrans, 'name', TType::STRING, 0);"  << endl <<
-      indent() <<
-      "$this->_oprot->writeString($this->_otrans, '" << funname << "');" << endl <<
-      indent() <<
-      "$this->_oprot->writeFieldEnd($this->_otrans);" << endl <<
-      indent() <<
-      "$this->_oprot->writeFieldBegin($this->_otrans, 'args', TType::STRUCT, 1);" << endl;
+    // Serialize the request header
+    if (binary_inline_) {
+      f_service_ <<
+        indent() << "$_output = '';" << endl <<
+        indent() << "$_output .= pack('c', TType::STRING);" << endl <<
+        indent() << "$_output .= strrev(pack('l', 0));" << endl <<
+        indent() << "$_output .= strrev(pack('l', strlen('" << funname << "')));" << endl <<
+        indent() << "$_output .= '" << funname << "';" << endl <<
+        indent() << "$_output .= pack('c', TType::STRUCT);" << endl <<
+        indent() << "$_output .= strrev(pack('l', 1));" << endl;
+    } else {
+      f_service_ <<
+        indent() << "$this->_oprot->writeStructBegin($this->_otrans, 'function');" << endl <<
+        indent() << "$this->_oprot->writeFieldBegin($this->_otrans, 'name', TType::STRING, 0);"  << endl <<
+        indent() << "$this->_oprot->writeString($this->_otrans, '" << funname << "');" << endl <<
+        indent() << "$this->_oprot->writeFieldEnd($this->_otrans);" << endl <<
+        indent() << "$this->_oprot->writeFieldBegin($this->_otrans, 'args', TType::STRUCT, 1);" << endl;
+    }
+
+    // Serialize request arguments
     generate_serialize_struct((*f_iter)->get_arglist());
-    f_service_ <<
-      indent() <<
-      "$this->_oprot->writeFieldEnd($this->_otrans);" << endl <<
-      indent() <<
-      "$this->_oprot->writeFieldStop($this->_otrans);" << endl <<
-      indent() <<
-      "$this->_oprot->writeStructEnd($this->_otrans);" << endl;
-    
+
+    // Write to the stream
+    if (binary_inline_) { 
+      f_service_ <<
+        indent() << "$_output .= pack('c', TType::STOP);" << endl <<
+        indent() << "$this->_otrans->write($_output);" << endl;
+    } else {
+      f_service_ <<
+        indent() << "$this->_oprot->writeFieldEnd($this->_otrans);" << endl <<
+        indent() << "$this->_oprot->writeFieldStop($this->_otrans);" << endl <<
+        indent() << "$this->_oprot->writeStructEnd($this->_otrans);" << endl;
+    }
+      
     // Flush the request
     indent(f_service_) <<
       "$this->_otrans->flush();" << endl;
@@ -305,46 +335,99 @@ void t_php_generator::generate_deserialize_field(t_field* tfield,
     generate_deserialize_container(tfield->get_type(), name);
   } else if (type->is_base_type() || type->is_enum()) {
 
-    indent(f_service_) <<
-      "$this->_iprot->";
-    
-    if (type->is_base_type()) {
-      t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-      switch (tbase) {
-      case t_base_type::TYPE_VOID:
-        throw "compiler error: cannot serialize void field in a struct: " +
-          name;
-        break;
-      case t_base_type::TYPE_STRING:        
-        f_service_ << "readString($this->_itrans, $" << name << ");";
-        break;
-      case t_base_type::TYPE_BYTE:
-        f_service_ << "readByte($this->_itrans, $" << name << ");";
-        break;
-      case t_base_type::TYPE_I32:
-        f_service_ << "readI32($this->_itrans, $" << name << ");";
-        break;
-      case t_base_type::TYPE_U32:
-        f_service_ << "readU32($this->_itrans, $" << name << ");";
-        break;
-      case t_base_type::TYPE_I64:
-        f_service_ << "readI64($this->_itrans, $" << name << ");";
-        break;
-      case t_base_type::TYPE_U64:
-        f_service_ << "readU64($this->_itrans, $" << name << ");";
-        break;
-      default:
-        throw "compiler error: no C++ name for base type " + tbase;
+    if (binary_inline_) {
+      if (type->is_base_type()) {
+        t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+        switch (tbase) {
+        case t_base_type::TYPE_VOID:
+          throw "compiler error: cannot serialize void field in a struct: " +
+            name;
+          break;
+        case t_base_type::TYPE_STRING:        
+          f_service_ <<
+            indent() << "$_len = unpack('l', strrev($this->_itrans->readAll(4)));" << endl <<
+            indent() << "$_len = $_len[1];" << endl <<
+            indent() << "$" << name << " = $this->_itrans->readAll($_len);" << endl;
+          break;
+        case t_base_type::TYPE_BYTE:
+          f_service_ <<
+            indent() << "$" << name << " = unpack('c', $this->_itrans->readAll(1));" << endl <<
+            indent() << "$" << name << " = $" << name << "[1];" << endl;
+          break;
+        case t_base_type::TYPE_I32:
+          f_service_ <<
+            indent() << "$" << name << " = unpack('l', strrev($this->_itrans->readAll(4)));" << endl <<
+            indent() << "$" << name << " = $" << name << "[1];" << endl;
+          break;
+        case t_base_type::TYPE_U32:
+          f_service_ << "readU32($this->_itrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_I64:
+          f_service_ <<
+            indent() << "$_arr = unpack('N2', $this->_itrans->readAll(8));" << endl <<
+            indent() << "if ($_arr[1] & 0x80000000) {" << endl <<
+            indent() << "  $_arr[1] = $_arr[1] ^ 0xFFFFFFFF;" << endl <<
+            indent() << "  $_arr[2] = $_arr[2] ^ 0xFFFFFFFF;" << endl <<
+            indent() << "  $" << name << " = 0 - $_arr[1]*4294967296 - $_arr[2] - 1;" << endl <<
+            indent() << "} else {" << endl <<
+            indent() << "  $" << name << " = $_arr[1]*4294967296 + $_arr[2];" << endl <<
+            indent() << "}" << endl;
+          break;
+        case t_base_type::TYPE_U64:
+          f_service_ << "readU64($this->_itrans, $" << name << ");";
+          break;
+        default:
+          throw "compiler error: no C++ name for base type " + tbase;
+        }
+      } else if (type->is_enum()) {
+        f_service_ <<
+          indent() << "$" << name << " = unpack('l', strrev($this->_itrans->readAll(4)));" << endl <<
+          indent() << "$" << name << " = $" << name << "[1];" << endl;
       }
-    } else if (type->is_enum()) {
-      f_service_ << "readI32($this->_itrans, $" << name << ");";
+
+    } else {
+
+      indent(f_service_) <<
+        "$this->_iprot->";
+      
+      if (type->is_base_type()) {
+        t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+        switch (tbase) {
+        case t_base_type::TYPE_VOID:
+          throw "compiler error: cannot serialize void field in a struct: " +
+            name;
+          break;
+        case t_base_type::TYPE_STRING:        
+          f_service_ << "readString($this->_itrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_BYTE:
+          f_service_ << "readByte($this->_itrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_I32:
+          f_service_ << "readI32($this->_itrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_U32:
+          f_service_ << "readU32($this->_itrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_I64:
+          f_service_ << "readI64($this->_itrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_U64:
+          f_service_ << "readU64($this->_itrans, $" << name << ");";
+          break;
+        default:
+          throw "compiler error: no C++ name for base type " + tbase;
+        }
+      } else if (type->is_enum()) {
+        f_service_ << "readI32($this->_itrans, $" << name << ");";
+      }
+      f_service_ << endl;
     }
-    f_service_ <<
-      endl;
+
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
            tfield->get_name().c_str(), type_name(type).c_str());
-  }
+  }  
 }
 
 /**
@@ -365,13 +448,20 @@ void t_php_generator::generate_deserialize_struct(t_struct* tstruct,
   string ftype = tmp("_ftype");
   string fname = tmp("_name");
 
-  // Declare stack tmp variables
+  t_field ffid(g_program->get_i32_type(), fid);
+  t_field fftype(g_program->get_byte_type(), ftype);
+
   f_service_ <<
     indent() << "$" << fname << " = null;" << endl <<
     indent() << "$" << ftype << " = null;" << endl <<
-    indent() << "$" << fid << " = 0;" << endl <<
-    indent() << "$this->_iprot->readStructBegin($this->_itrans, $" << fname << ");" << endl;
-  
+    indent() << "$" << fid << " = 0;" << endl;
+
+  // Declare stack tmp variables
+  if (!binary_inline_) {
+    f_service_ <<
+      indent() << "$this->_iprot->readStructBegin($this->_itrans, $" << fname << ");" << endl;   
+  }
+
   // Loop over reading in fields
   indent(f_service_) <<
     "while (true)" << endl;
@@ -379,20 +469,30 @@ void t_php_generator::generate_deserialize_struct(t_struct* tstruct,
     scope_up(f_service_);
     
     // Read beginning field marker
-    indent(f_service_) <<
-      "$this->_iprot->readFieldBegin($this->_itrans, " << 
-      "$" << fname << ", $" << ftype << ", $" << fid << ");" << endl;
+    if (binary_inline_) {
+      generate_deserialize_field(&fftype);
+      f_service_ <<
+        indent() << "if ($" << ftype << " == TType::STOP) {" << endl <<
+        indent() << "  break;" << endl <<
+        indent() << "}" << endl;      
+      generate_deserialize_field(&ffid);
+    } else {
+      indent(f_service_) <<
+        "$this->_iprot->readFieldBegin($this->_itrans, " << 
+        "$" << fname << ", $" << ftype << ", $" << fid << ");" << endl;
+
+      // Check for field STOP marker and break
+      indent(f_service_) <<
+        "if ($" << ftype << " == TType::STOP) {" << endl;
+      indent_up();
+      indent(f_service_) <<
+        "break;" << endl;
+      indent_down();
+      indent(f_service_) <<
+        "}" << endl;
+    }
     
-    // Check for field STOP marker and break
-    indent(f_service_) <<
-      "if ($" << ftype << " == TType::STOP) { " << endl;
-    indent_up();
-    indent(f_service_) <<
-      "break;" << endl;
-    indent_down();
-    indent(f_service_) <<
-      "}" << endl;
-    
+   
     // Switch statement on the field we are reading
     indent(f_service_) <<
       "switch ($" << fid << ")" << endl;
@@ -417,15 +517,19 @@ void t_php_generator::generate_deserialize_struct(t_struct* tstruct,
         indent() <<  "  break;" << endl;
       
       scope_down(f_service_);
-
-    // Read field end marker
-    indent(f_service_) <<
-      "$this->_iprot->readFieldEnd($this->_itrans);" << endl;
+      
+    if (!binary_inline_) {
+      // Read field end marker
+      indent(f_service_) <<
+        "$this->_iprot->readFieldEnd($this->_itrans);" << endl;
+    }
     
     scope_down(f_service_);
-      
-  indent(f_service_) <<
-    "$this->_iprot->readStructEnd($this->_itrans);" << endl;
+    
+  if (!binary_inline_) {
+    indent(f_service_) <<
+      "$this->_iprot->readStructEnd($this->_itrans);" << endl;
+  }
 
   scope_down(f_service_);
 }
@@ -439,6 +543,11 @@ void t_php_generator::generate_deserialize_container(t_type* ttype,
   string vtype = tmp("_vtype");
   string etype = tmp("_etype");
   
+  t_field fsize(g_program->get_i32_type(), size);
+  t_field fktype(g_program->get_byte_type(), ktype);
+  t_field fvtype(g_program->get_byte_type(), vtype);
+  t_field fetype(g_program->get_byte_type(), etype);
+
   indent(f_service_) <<
     "$" << size << " = 0;" << endl;
   
@@ -446,19 +555,36 @@ void t_php_generator::generate_deserialize_container(t_type* ttype,
   if (ttype->is_map()) {
     f_service_ <<
       indent() << "$" << ktype << " = 0;" << endl <<
-      indent() << "$" << vtype << " = 0;" << endl <<
-      indent() << "$this->_iprot->readMapBegin($this->_itrans, " <<
-      "$" << ktype << ", $" << vtype << ", $" << size << ");" << endl;
+      indent() << "$" << vtype << " = 0;" << endl;
+    if (binary_inline_) {
+      generate_deserialize_field(&fktype);
+      generate_deserialize_field(&fvtype);
+      generate_deserialize_field(&fsize);
+    } else {
+      f_service_ <<
+        indent() << "$this->_iprot->readMapBegin($this->_itrans, " <<
+        "$" << ktype << ", $" << vtype << ", $" << size << ");" << endl;
+    }
   } else if (ttype->is_set()) {
-    f_service_ <<
-      indent() << "$" << etype << " = 0;" << endl <<
-      indent() << "$this->_iprot->readSetBegin($this->_itrans, " <<
-      "$" << etype << ", $" << size << ");" << endl;
+    if (binary_inline_) {
+      generate_deserialize_field(&fetype);
+      generate_deserialize_field(&fsize);
+    } else {
+      f_service_ <<
+        indent() << "$" << etype << " = 0;" << endl <<
+        indent() << "$this->_iprot->readSetBegin($this->_itrans, " <<
+        "$" << etype << ", $" << size << ");" << endl;
+    }
   } else if (ttype->is_list()) {
-    f_service_ <<
-      indent() << "$" << etype << " = 0;" << endl <<
-      indent() << "$this->_iprot->readListBegin($this->_itrans, " <<
-      "$" << etype << ", $" << size << ");" << endl;
+    if (binary_inline_) {
+      generate_deserialize_field(&fetype);
+      generate_deserialize_field(&fsize);
+    } else {
+      f_service_ <<
+        indent() << "$" << etype << " = 0;" << endl <<
+        indent() << "$this->_iprot->readListBegin($this->_itrans, " <<
+        "$" << etype << ", $" << size << ");" << endl;
+    }
   }
 
   // For loop iterates over elements
@@ -479,13 +605,15 @@ void t_php_generator::generate_deserialize_container(t_type* ttype,
     
     scope_down(f_service_);
 
-  // Read container end
-  if (ttype->is_map()) {
-    indent(f_service_) << "$this->_iprot->readMapEnd($this->_itrans);" << endl;
-  } else if (ttype->is_set()) {
-    indent(f_service_) << "$this->_iprot->readSetEnd($this->_itrans);" << endl;
-  } else if (ttype->is_list()) {
-    indent(f_service_) << "$this->_iprot->readListEnd($this->_itrans);" << endl;
+  if (!binary_inline_) {
+    // Read container end
+    if (ttype->is_map()) {
+      indent(f_service_) << "$this->_iprot->readMapEnd($this->_itrans);" << endl;
+    } else if (ttype->is_set()) {
+      indent(f_service_) << "$this->_iprot->readSetEnd($this->_itrans);" << endl;
+    } else if (ttype->is_list()) {
+      indent(f_service_) << "$this->_iprot->readListEnd($this->_itrans);" << endl;
+    }
   }
 
   scope_down(f_service_);
@@ -571,41 +699,84 @@ void t_php_generator::generate_serialize_field(t_field* tfield,
   } else if (type->is_base_type() || type->is_enum()) {
 
     string name = prefix + tfield->get_name();
-    indent(f_service_) <<
-      "$this->_oprot->";
-    
-    if (type->is_base_type()) {
-      t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-      switch (tbase) {
-      case t_base_type::TYPE_VOID:
-        throw
-          "compiler error: cannot serialize void field in a struct: " + name;
-        break;
-      case t_base_type::TYPE_STRING:
-        f_service_ << "writeString($this->_otrans, $" << name << ");";
-        break;
-      case t_base_type::TYPE_BYTE:
-        f_service_ << "writeByte($this->_otrans, $" << name << ");";
-        break;
-      case t_base_type::TYPE_I32:
-        f_service_ << "writeI32($this->_otrans, $" << name << ");";
-        break;
-      case t_base_type::TYPE_U32:
-        f_service_ << "writeU32($this->_otrans, $" << name << ");";
-        break;
-      case t_base_type::TYPE_I64:
-        f_service_ << "writeI64($this->_otrans, $" << name << ");";
-        break;
-      case t_base_type::TYPE_U64:
-        f_service_ << "writeU64($this->_otrans, $" << name << ");";
-        break;
-      default:
-        throw "compiler error: no C++ name for base type " + tbase;
+
+    if (binary_inline_) {
+      if (type->is_base_type()) {
+        t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+        switch (tbase) {
+        case t_base_type::TYPE_VOID:
+          throw
+            "compiler error: cannot serialize void field in a struct: " + name;
+          break;
+        case t_base_type::TYPE_STRING:
+          f_service_ <<
+            indent() << "$_output .= strrev(pack('l', strlen($" << name << ")));" << endl <<
+            indent() << "$_output .= $" << name << ";" << endl;
+          break;
+        case t_base_type::TYPE_BYTE:
+          f_service_ <<
+            indent() << "$_output .= pack('c', $" << name << ");" << endl;
+          break;
+        case t_base_type::TYPE_I32:
+          f_service_ <<
+            indent() << "$_output .= strrev(pack('l', $" << name << "));" << endl;
+          break;
+        case t_base_type::TYPE_U32:
+          f_service_ <<
+            indent() << "writeU32($this->_otrans, $" << name << ");" << endl;
+          break;
+        case t_base_type::TYPE_I64:
+          f_service_ << 
+            indent() << "$_output .= pack('N2', $" << name << " >> 32, $" << name << " & 0xFFFFFFFF);" << endl;
+          break;
+        case t_base_type::TYPE_U64:
+          f_service_ << "writeU64($this->_otrans, $" << name << ");";
+          break;
+        default:
+          throw "compiler error: no C++ name for base type " + tbase;
+        }
+      } else if (type->is_enum()) {
+        f_service_ <<
+          indent() << "$_output .= strrev(pack('l', $" << name << "));" << endl;
       }
-    } else if (type->is_enum()) {
-      f_service_ << "writeI32($this->_otrans, $" << name << ");";
+    } else {
+
+      indent(f_service_) <<
+        "$this->_oprot->";
+      
+      if (type->is_base_type()) {
+        t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+        switch (tbase) {
+        case t_base_type::TYPE_VOID:
+          throw
+            "compiler error: cannot serialize void field in a struct: " + name;
+          break;
+        case t_base_type::TYPE_STRING:
+          f_service_ << "writeString($this->_otrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_BYTE:
+          f_service_ << "writeByte($this->_otrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_I32:
+          f_service_ << "writeI32($this->_otrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_U32:
+          f_service_ << "writeU32($this->_otrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_I64:
+          f_service_ << "writeI64($this->_otrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_U64:
+          f_service_ << "writeU64($this->_otrans, $" << name << ");";
+          break;
+        default:
+          throw "compiler error: no C++ name for base type " + tbase;
+        }
+      } else if (type->is_enum()) {
+        f_service_ << "writeI32($this->_otrans, $" << name << ");";
+      }
+      f_service_ << endl;
     }
-    f_service_ << endl;
   } else {
     printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s%s' TYPE '%s'\n",
            prefix.c_str(),
@@ -627,25 +798,46 @@ void t_php_generator::generate_serialize_struct(t_struct* tstruct,
   vector<t_field*>::const_iterator f_iter;
 
   scope_up(f_service_);
-  indent(f_service_) <<
-    "$this->_oprot->writeStructBegin($this->_otrans, '" << name << "');" << endl;
+
+  if (!binary_inline_) {
+    indent(f_service_) <<
+      "$this->_oprot->writeStructBegin($this->_otrans, '" << name << "');" << endl;
+  }
+
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     // Write field header
-    indent(f_service_) <<
-      "$this->_oprot->writeFieldBegin($this->_otrans, " <<
-      "'" << (*f_iter)->get_name() << "', " <<
-      type_to_enum((*f_iter)->get_type()) << ", " <<
-      (*f_iter)->get_key() << ");" << endl;
+    if (binary_inline_) {
+      f_service_ <<
+        indent() << "$_output .= pack('c', " << type_to_enum((*f_iter)->get_type()) << ");" << endl <<
+        indent() << "$_output .= strrev(pack('l', " << (*f_iter)->get_key() << "));" << endl;
+    } else {
+      indent(f_service_) <<
+        "$this->_oprot->writeFieldBegin($this->_otrans, " <<
+        "'" << (*f_iter)->get_name() << "', " <<
+        type_to_enum((*f_iter)->get_type()) << ", " <<
+        (*f_iter)->get_key() << ");" << endl;
+    }
+
     // Write field contents
     generate_serialize_field(*f_iter, prefix);
+
     // Write field closer
-    indent(f_service_) <<
-      "$this->_oprot->writeFieldEnd($this->_otrans);" << endl;
+    if (binary_inline_) {
+    } else {
+      indent(f_service_) <<
+        "$this->_oprot->writeFieldEnd($this->_otrans);" << endl;
+    }
   }
-  // Write the struct map
-  f_service_ <<
-    indent() << "$this->_oprot->writeFieldStop($this->_otrans);" << endl <<
-    indent() << "$this->_oprot->writeStructEnd($this->_otrans);" << endl;
+
+  if (binary_inline_) {
+    f_service_ <<
+      indent() << "$_output .= pack('c', TType::STOP);" << endl;
+  } else {
+    // Write the struct map
+    f_service_ <<
+      indent() << "$this->_oprot->writeFieldStop($this->_otrans);" << endl <<
+      indent() << "$this->_oprot->writeStructEnd($this->_otrans);" << endl;
+  }
 
   scope_down(f_service_);
 }
@@ -655,21 +847,42 @@ void t_php_generator::generate_serialize_container(t_type* ttype,
   scope_up(f_service_);
   
   if (ttype->is_map()) {
-    indent(f_service_) <<
-      "$this->_oprot->writeMapBegin($this->_otrans, " <<
-      type_to_enum(((t_map*)ttype)->get_key_type()) << ", " <<
-      type_to_enum(((t_map*)ttype)->get_val_type()) << ", " <<
-      "count($" << prefix << "));" << endl;
+    if (binary_inline_) {
+      f_service_ <<
+        indent() << "$_output .= pack('c', " << type_to_enum(((t_map*)ttype)->get_key_type()) << ");" << endl <<
+        indent() << "$_output .= pack('c', " << type_to_enum(((t_map*)ttype)->get_val_type()) << ");" << endl <<
+        indent() << "$_output .= strrev(pack('l', count($" << prefix << ")));" << endl;
+    } else {
+      indent(f_service_) <<
+        "$this->_oprot->writeMapBegin($this->_otrans, " <<
+        type_to_enum(((t_map*)ttype)->get_key_type()) << ", " <<
+        type_to_enum(((t_map*)ttype)->get_val_type()) << ", " <<
+        "count($" << prefix << "));" << endl;
+    }
   } else if (ttype->is_set()) {
-    indent(f_service_) <<
-      "$this->_oprot->writeSetBegin($this->_otrans, " <<
-      type_to_enum(((t_set*)ttype)->get_elem_type()) << ", " <<
-      "count($" << prefix << "));" << endl;
+    if (binary_inline_) {
+      f_service_ <<
+        indent() << "$_output .= pack('c', " << type_to_enum(((t_set*)ttype)->get_elem_type()) << ");" << endl <<
+        indent() << "$_output .= strrev(pack('l', count($" << prefix << ")));" << endl;
+
+    } else {
+      indent(f_service_) <<
+        "$this->_oprot->writeSetBegin($this->_otrans, " <<
+        type_to_enum(((t_set*)ttype)->get_elem_type()) << ", " <<
+        "count($" << prefix << "));" << endl;
+    }
   } else if (ttype->is_list()) {
-    indent(f_service_) <<
-      "$this->_oprot->writeListBegin($this->_otrans, " <<
-      type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " <<
-      "count($" << prefix << "));" << endl;
+    if (binary_inline_) {
+      f_service_ <<
+        indent() << "$_output .= pack('c', " << type_to_enum(((t_list*)ttype)->get_elem_type()) << ");" << endl <<
+        indent() << "$_output .= strrev(pack('l', count($" << prefix << ")));" << endl;
+
+    } else {
+      indent(f_service_) <<
+        "$this->_oprot->writeListBegin($this->_otrans, " <<
+        type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " <<
+        "count($" << prefix << "));" << endl;
+    }
   }
 
     scope_up(f_service_);
@@ -699,6 +912,10 @@ void t_php_generator::generate_serialize_container(t_type* ttype,
       scope_down(f_service_);
     }
     
+ 
+    scope_down(f_service_);
+
+  if (!binary_inline_) {
     if (ttype->is_map()) {
       indent(f_service_) <<
         "$this->_oprot->writeMapEnd($this->_otrans);" << endl;
@@ -709,8 +926,7 @@ void t_php_generator::generate_serialize_container(t_type* ttype,
       indent(f_service_) <<
         "$this->_oprot->writeListEnd($this->_otrans);" << endl;
     }
-    
-    scope_down(f_service_);
+  }
  
   scope_down(f_service_);  
 }

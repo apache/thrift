@@ -98,6 +98,7 @@ void usage() {
   fprintf(stderr, "  -cpp    Generate C++ output files\n");
   fprintf(stderr, "  -java   Generate Java output files\n");
   fprintf(stderr, "  -php    Generate PHP output files\n");
+  fprintf(stderr, "  -phpi   Generate PHP inlined files\n");
   //fprintf(stderr, "  -python Generate Python output files\n");
   fprintf(stderr, "  -d      Print parse debugging to standard output\n");
   exit(1);
@@ -111,6 +112,7 @@ int main(int argc, char** argv) {
   bool gen_cpp = false;
   bool gen_java = false;
   bool gen_php = false;
+  bool php_inline = false;
 
   // Setup time string
   time_t now = time(NULL);
@@ -130,6 +132,10 @@ int main(int argc, char** argv) {
       gen_java = true;
     } else if (strcmp(argv[i], "-php") == 0) {
       gen_php = true;
+      php_inline = false;
+    } else if (strcmp(argv[i], "-phpi") == 0) {
+      gen_php = true;
+      php_inline = true;
     } else {
       fprintf(stderr, "!!! Unrecognized option: %s\n", argv[i]);
       usage();
@@ -181,7 +187,7 @@ int main(int argc, char** argv) {
     }
 
     if (gen_php) {
-      t_php_generator* php = new t_php_generator();
+      t_php_generator* php = new t_php_generator(php_inline);
       php->generate_program(g_program);
       delete php;
     }
