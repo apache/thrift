@@ -1,6 +1,5 @@
 package com.facebook.thrift.protocol;
 
-import com.facebook.thrift.types.*;
 import com.facebook.thrift.TException;
 import com.facebook.thrift.transport.TTransport;
 
@@ -11,94 +10,68 @@ import com.facebook.thrift.transport.TTransport;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TProtocolUtil {
-  public static int skip(TProtocol prot, TTransport in, TType type)
+  public static void skip(TProtocol prot, TTransport in, byte type)
     throws TException {
 
     switch (type) {
-    case BYTE:
+    case TType.BYTE:
       {
-        UInt8 b = new UInt8();
-        return prot.readByte(in, b);
+        prot.readByte(in);
       }
-    case U32:
+    case TType.U32:
+    case TType.I32:
       {
-        UInt32 u32 = new UInt32();
-        return prot.readU32(in, u32);
+        prot.readI32(in);
       }
-    case I32:
+    case TType.U64:
+    case TType.I64:
       {
-        Int32 i32 = new Int32();
-        return prot.readI32(in, i32);
+        prot.readI64(in);
       }
-    case U64:
+    case TType.STRING:
       {
-        UInt64 u64 = new UInt64();
-        return prot.readU64(in, u64);
+        prot.readString(in);
       }
-    case I64:
+    case TType.STRUCT:
       {
-        Int64 i64 = new Int64();
-        return prot.readI64(in, i64);
-      }
-    case STRING:
-      {
-        TString s = new TString();
-        return prot.readString(in, s);
-      }
-    case STRUCT:
-      {
-        int result = 0;
-        TString name = new TString();
-        TStruct struct = new TStruct();
-        TField field = new TField();
-        result += prot.readStructBegin(in, struct);
+        prot.readStructBegin(in);
         while (true) {
-          result += prot.readFieldBegin(in, field);
-          if (field.type.equals(TType.STOP)) {
+          TField field = prot.readFieldBegin(in);
+          if (field.type == TType.STOP) {
             break;
           }
-          result += skip(prot, in, field.type);
-          result += prot.readFieldEnd(in);
+          skip(prot, in, field.type);
+          prot.readFieldEnd(in);
         }
-        result += prot.readStructEnd(in);
-        return result;
+        prot.readStructEnd(in);
       }
-    case MAP:
+    case TType.MAP:
       {
-        int result = 0;
-        TMap map = new TMap();
-        result += prot.readMapBegin(in, map);
-        for (int i = 0; i < map.size.get(); i++) {
-          result += skip(prot, in, map.keyType);
-          result += skip(prot, in, map.valueType);
+        TMap map = prot.readMapBegin(in);
+        for (int i = 0; i < map.size; i++) {
+          skip(prot, in, map.keyType);
+          skip(prot, in, map.valueType);
         }
-        result += prot.readMapEnd(in);
-        return result;
+        prot.readMapEnd(in);
       }
-    case SET:
-      {
-        int result = 0;
-        TSet set = new TSet();
-        result += prot.readSetBegin(in, set);
-        for (int i = 0; i < set.size.get(); i++) {
-          result += skip(prot, in, set.elemType);
+    case TType.SET:
+      {        
+        TSet set = prot.readSetBegin(in);
+        for (int i = 0; i < set.size; i++) {
+          skip(prot, in, set.elemType);
         }
-        result += prot.readSetEnd(in);
-        return result;
+        prot.readSetEnd(in);
       }
-    case LIST:
+    case TType.LIST:
       {
-        int result = 0;
-        TList list = new TList();
-        result += prot.readListBegin(in, list);
-        for (int i = 0; i < list.size.get(); i++) {
-          result += skip(prot, in, list.elemType);
+        TList list = prot.readListBegin(in);
+        for (int i = 0; i < list.size; i++) {
+          skip(prot, in, list.elemType);
         }
-        result += prot.readListEnd(in);
-        return result;
+        prot.readListEnd(in);
       }
     default:
-      return 0;
+      return;
     }
   }
 }

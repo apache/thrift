@@ -1,7 +1,5 @@
 package com.facebook.thrift.protocol;
 
-import com.facebook.thrift.types.*;
-
 /**
  * Helper class that encapsulates struct metadata.
  *

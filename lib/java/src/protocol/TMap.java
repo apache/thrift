@@ -1,7 +1,5 @@
 package com.facebook.thrift.protocol;
 
-import com.facebook.thrift.types.*;
-
 /**
  * Helper class that encapsulates map metadata.
  *
@@ -10,17 +8,13 @@ import com.facebook.thrift.types.*;
 public class TMap {
   public TMap() {}
   
-  public TMap(TType k, TType v, int s) {
-    this(k, v, new Int32(s));
-  }
-
-  public TMap(TType k, TType v, Int32 s) {
+  public TMap(byte k, byte v, int s) {
     keyType = k;
     valueType = v;
     size = s;
   }
 
-  public TType  keyType = TType.STOP;
-  public TType  valueType = TType.STOP;
-  public Int32 size = new Int32();;
+  public byte  keyType   = TType.STOP;
+  public byte  valueType = TType.STOP;
+  public int   size      = 0;
 }

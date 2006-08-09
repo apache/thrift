@@ -1,7 +1,5 @@
 package com.facebook.thrift.protocol;
 
-import com.facebook.thrift.types.*;
-
 /**
  * Helper class that encapsulates set metadata.
  *
@@ -10,15 +8,11 @@ import com.facebook.thrift.types.*;
 public class TSet {
   public TSet() {}
 
-  public TSet(TType t, int s) {
-    this(t, new Int32(s));
-  }
-
-  public TSet(TType t, Int32 s) {
+  public TSet(byte t, int s) {
     elemType = t;
     size = s;
   }
 
-  public TType  elemType = TType.STOP;
-  public Int32 size = new Int32();
+  public byte elemType = TType.STOP;
+  public int  size     = 0;
 }

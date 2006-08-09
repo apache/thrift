@@ -32,8 +32,8 @@ public class TSocket extends TIOStreamTransport {
     socket_ = socket;
     if (isOpen()) {
       try {
-        inputStream_ = new BufferedInputStream(socket_.getInputStream());
-        outputStream_ = new BufferedOutputStream(socket_.getOutputStream());
+        inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
+        outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
       } catch (IOException iox) {
         close();
         throw new TTransportException(iox);
@@ -96,8 +96,8 @@ public class TSocket extends TIOStreamTransport {
 
     try {
       socket_.connect(new InetSocketAddress(host_, port_));
-      inputStream_ = new BufferedInputStream(socket_.getInputStream());
-      outputStream_ = new BufferedOutputStream(socket_.getOutputStream());
+      inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
+      outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
     } catch (IOException iox) {
       close();
       throw new TTransportException(iox);

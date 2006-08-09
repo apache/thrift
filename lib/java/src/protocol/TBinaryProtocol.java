@@ -2,7 +2,6 @@ package com.facebook.thrift.protocol;
 
 import com.facebook.thrift.TException;
 import com.facebook.thrift.transport.TTransport;
-import com.facebook.thrift.types.*;
 
 /**
  * Binary protocol implementation for thrift.
@@ -10,227 +9,176 @@ import com.facebook.thrift.types.*;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TBinaryProtocol implements TProtocol {
-  public int writeStructBegin (TTransport out,
-                               TStruct    struct)  throws TException {
-    return 0;
+  public void writeStructBegin(TTransport out, TStruct struct) throws TException {}
+
+  public void writeStructEnd(TTransport out) throws TException {}
+
+  public void writeFieldBegin(TTransport out, TField field) throws TException {
+    writeByte(out, field.type);
+    writeI32(out, field.id);
   }
 
-  public int writeStructEnd   (TTransport out)     throws TException {
-    return 0;
+  public void writeFieldEnd(TTransport out) throws TException {}
+
+  public void writeFieldStop(TTransport out) throws TException {
+    writeByte(out, TType.STOP);
   }
 
-  public int writeFieldBegin  (TTransport out,
-                               TField     field)   throws TException {
-    return
-      writeByte(out, field.type.getCode()) +
-      writeI32(out, field.id);
+  public void writeMapBegin(TTransport out, TMap map) throws TException {
+    writeByte(out, map.keyType);
+    writeByte(out, map.valueType);
+    writeI32(out, map.size);
   }
 
-  public int writeFieldEnd    (TTransport out)     throws TException {
-    return 0;
+  public void writeMapEnd(TTransport out) throws TException {}
+
+  public void writeListBegin(TTransport out, TList list) throws TException {
+    writeByte(out, list.elemType);
+    writeI32(out, list.size);
   }
 
-  public int writeFieldStop   (TTransport out)     throws TException {
-    return
-      writeByte(out, TType.STOP.getCode());
+  public void writeListEnd(TTransport out) throws TException {}
+
+  public void writeSetBegin(TTransport out, TSet set) throws TException {
+    writeByte(out, set.elemType);
+    writeI32(out, set.size);
   }
 
-  public int writeMapBegin    (TTransport out,
-                               TMap       map)     throws TException {
-    return
-      writeByte(out, map.keyType.getCode()) +
-      writeByte(out, map.valueType.getCode()) +
-      writeI32(out, map.size);
+  public void writeSetEnd(TTransport out) throws TException {}
+
+  byte[] bout = new byte[1];
+  public void writeByte(TTransport out, byte b) throws TException {
+    bout[0] = b;
+    out.write(bout, 0, 1);
   }
 
-  public int writeMapEnd      (TTransport out)     throws TException {
-    return 0;
+  public void writeU32(TTransport out, int u32) throws TException {
+    writeI32(out, u32);
   }
 
-  public int writeListBegin   (TTransport out,
-                               TList      list)    throws TException {
-    return
-      writeByte(out, list.elemType.getCode()) +
-      writeI32(out, list.size);
+  byte[] i32out = new byte[4];
+  public void writeI32(TTransport out, int i32) throws TException {
+    i32out[0] = (byte)(0xff & (i32 >> 24));
+    i32out[1] = (byte)(0xff & (i32 >> 16));
+    i32out[2] = (byte)(0xff & (i32 >> 8));
+    i32out[3] = (byte)(0xff & (i32));
+    out.write(i32out, 0, 4);
   }
 
-  public int writeListEnd     (TTransport out)     throws TException {
-    return 0;
+  public void writeU64(TTransport out, long u64) throws TException {
+    writeI64(out, u64);
   }
 
-  public int writeSetBegin    (TTransport out,
-                               TSet       set)     throws TException {
-    return
-      writeByte(out, set.elemType.getCode()) +
-      writeI32(out, set.size);
+  byte[] i64out = new byte[8];
+  public void writeI64(TTransport out, long i64) throws TException {
+    i64out[0] = (byte)(0xff & (i64 >> 56));
+    i64out[1] = (byte)(0xff & (i64 >> 48));
+    i64out[2] = (byte)(0xff & (i64 >> 40));
+    i64out[3] = (byte)(0xff & (i64 >> 32));
+    i64out[4] = (byte)(0xff & (i64 >> 24));
+    i64out[5] = (byte)(0xff & (i64 >> 16));
+    i64out[6] = (byte)(0xff & (i64 >> 8));
+    i64out[7] = (byte)(0xff & (i64));
+    out.write(i64out, 0, 8);
   }
 
-  public int writeSetEnd      (TTransport out)     throws TException {
-    return 0;
-  }
-
-  public int writeByte        (TTransport out,
-                               UInt8      b)       throws TException {
-    out.write(b.data(), 0, 1);
-    return 1;
-  }
-
-  public int writeU32         (TTransport out,
-                               UInt32     u32)     throws TException {
-    out.write(u32.data(), 0, 4);
-    return 4;
-  }
-
-  public int writeI32         (TTransport out,
-                               Int32      i32)     throws TException {
-    out.write(i32.data(), 0, 4);
-    return 4;
-  }
-
-  public int writeU64         (TTransport out,
-                               UInt64     u64)     throws TException {
-    out.write(u64.data(), 0, 8);
-    return 8;
-  }
-
-  public int writeI64         (TTransport out,
-                               Int64      i64)     throws TException {
-    out.write(i64.data(), 0, 8);
-    return 8;
-  }
-
-  public int writeString      (TTransport out,
-                               TString    str)     throws TException {
-    byte[] dat = str.value.getBytes();
-    int sent = writeI32(out, new Int32(dat.length));
+  public void writeString(TTransport out, String str) throws TException {
+    byte[] dat = str.getBytes();
+    writeI32(out, dat.length);
     out.write(dat, 0, dat.length);
-    return sent + dat.length;
   }
 
   /**
    * Reading methods.
    */
 
-  public int readStructBegin  (TTransport in,
-                               TStruct    struct)  throws TException {
-    struct.name = "";
-    return 0;
+  public TStruct readStructBegin(TTransport in) throws TException {
+    return new TStruct();
   }
 
-  public int readStructEnd    (TTransport  in)     throws TException {
-    return 0;
-  }
+  public void readStructEnd(TTransport in) throws TException {}
 
-  public int readFieldBegin   (TTransport  in,
-                               TField      field)  throws TException {
-    int recv = 0;
-    UInt8 t = new UInt8();
-
-    recv += readByte(in, t);
-    field.type = TType.getType(t);
-    if (field.type.equals(TType.STOP)) {
-      field.id = new Int32(0);
-      return recv;
+  public TField readFieldBegin(TTransport in) throws TException {
+    TField field = new TField();
+    field.type = readByte(in);
+    if (field.type != TType.STOP) {
+      field.id = readI32(in);
     }
-    recv += readI32(in, field.id);
-    return recv;
+    return field;
   }
   
-  public int readFieldEnd     (TTransport  in)     throws TException {
-    return 0;
-  }
+  public void readFieldEnd(TTransport in) throws TException {}
  
-  public int readMapBegin     (TTransport  in,
-                               TMap        map)    throws TException {
-    int recv = 0;
-    UInt8 t = new UInt8();
-    recv += readByte(in, t);
-    map.keyType = TType.getType(t);
-    recv += readByte(in, t);
-    map.valueType = TType.getType(t);
-    recv += readI32(in, map.size);
-    return recv;
+  public TMap readMapBegin(TTransport in) throws TException {
+    TMap map = new TMap();
+    map.keyType = readByte(in);
+    map.valueType = readByte(in);
+    map.size = readI32(in);
+    return map;
   }
 
-  public int readMapEnd       (TTransport  in)     throws TException {
-    return 0;
+  public void readMapEnd(TTransport in) throws TException {}
+
+  public TList readListBegin(TTransport in) throws TException {
+    TList list = new TList();
+    list.elemType = readByte(in);
+    list.size = readI32(in);
+    return list;
   }
 
-  public int readListBegin    (TTransport  in,
-                               TList       list)   throws TException {
-    int recv = 0;
-    UInt8 t = new UInt8();
-    recv += readByte(in, t);
-    list.elemType = TType.getType(t);
-    recv += readI32(in, list.size);
-    return recv;
+  public void readListEnd(TTransport in) throws TException {}
+
+  public TSet readSetBegin(TTransport in) throws TException {
+    TSet set = new TSet();
+    set.elemType = readByte(in);
+    set.size = readI32(in);
+    return set;
   }
 
-  public int readListEnd      (TTransport  in)     throws TException {
-    return 0;
+  public void readSetEnd(TTransport in) throws TException {}
+
+  byte[] bin = new byte[1];
+  public byte readByte(TTransport in) throws TException {
+    in.readAll(bin, 0, 1);
+    return bin[0];
   }
 
-  public int readSetBegin     (TTransport  in,
-                               TSet        set)    throws TException {
-    int recv = 0;
-    UInt8 t = new UInt8();
-    recv += readByte(in, t);
-    set.elemType = TType.getType(t);
-    recv += readI32(in, set.size);
-    return recv;
+  public int readU32(TTransport in) throws TException {
+    return readI32(in);
   }
 
-  public int readSetEnd       (TTransport  in)     throws TException {
-    return 0;
+  byte[] i32rd = new byte[4];
+  public int readI32(TTransport in) throws TException {
+    in.readAll(i32rd, 0, 4);
+    return
+      ((i32rd[0] & 0xff) << 24) |
+      ((i32rd[1] & 0xff) << 16) |
+      ((i32rd[2] & 0xff) <<  8) |
+      ((i32rd[3] & 0xff));
   }
 
-  public int readByte         (TTransport  in,
-                               UInt8       b)      throws TException {
-    byte[] buf = new byte[1];
-    in.readAll(buf, 0, 1);
-    b.read(buf, 0);
-    return 1;
-  }
-
-  public int readU32          (TTransport  in,
-                               UInt32      u32)    throws TException {
-    byte[] buf = new byte[4];
-    in.readAll(buf, 0, 4);
-    u32.read(buf, 0);
-    return 4;
-  }
-
-  public int readI32          (TTransport  in,
-                               Int32       i32)    throws TException {
-    byte[] buf = new byte[4];
-    in.readAll(buf, 0, 4);
-    i32.read(buf, 0);
-    return 4;
-  }
-
-  public int readU64          (TTransport  in,
-                               UInt64      u64)    throws TException {
-    byte[] buf = new byte[8];
-    in.readAll(buf, 0, 8);
-    u64.read(buf, 0);
-    return 8;
+  public long readU64(TTransport in) throws TException {
+    return readI64(in);
   }
   
-  public int readI64          (TTransport  in,
-                               Int64       i64)    throws TException {
-    byte[] buf = new byte[8];
-    in.readAll(buf, 0, 8);
-    i64.read(buf, 0);
-    return 8;
+  byte[] i64rd = new byte[8];
+  public long readI64(TTransport in) throws TException {
+    in.readAll(i64rd, 0, 8);
+    return
+      ((long)(i64rd[0] & 0xff) << 56) |
+      ((long)(i64rd[1] & 0xff) << 48) |
+      ((long)(i64rd[2] & 0xff) << 40) |
+      ((long)(i64rd[3] & 0xff) << 32) |
+      ((long)(i64rd[4] & 0xff) << 24) |
+      ((long)(i64rd[5] & 0xff) << 16) |
+      ((long)(i64rd[6] & 0xff) <<  8) |
+      ((long)(i64rd[7] & 0xff));
   }
 
-  public int readString       (TTransport  in,
-                               TString     s)      throws TException {
-    Int32 size = new Int32();
-    int recv = readI32(in, size);
-    byte[] buf = new byte[size.get()];
-    in.readAll(buf, 0, size.get());
-    s.value = new String(buf);
-    return recv + size.get();
+  public String readString(TTransport in)  throws TException {
+    int size = readI32(in);
+    byte[] buf = new byte[size];
+    in.readAll(buf, 0, size);
+    return new String(buf);
   }
 }

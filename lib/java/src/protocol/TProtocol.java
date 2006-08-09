@@ -1,6 +1,5 @@
 package com.facebook.thrift.protocol;
 
-import com.facebook.thrift.types.*;
 import com.facebook.thrift.TException;
 import com.facebook.thrift.transport.TTransport;
 
@@ -15,95 +14,85 @@ public interface TProtocol {
    * Writing methods.
    */
 
-  public int writeStructBegin (TTransport out,
-                               TStruct    struct)  throws TException;
-  public int writeStructEnd   (TTransport out)     throws TException;
+  public void writeStructBegin (TTransport out,
+                                TStruct    struct)  throws TException;
 
-  public int writeFieldBegin  (TTransport out,
-                               TField     field)   throws TException;
+  public void writeStructEnd   (TTransport out)     throws TException;
 
-  public int writeFieldEnd    (TTransport out)     throws TException;
+  public void writeFieldBegin  (TTransport out,
+                                TField     field)   throws TException;
 
-  public int writeFieldStop   (TTransport out)     throws TException;
+  public void writeFieldEnd    (TTransport out)     throws TException;
 
-  public int writeMapBegin    (TTransport out,
-                               TMap       map)     throws TException;
+  public void writeFieldStop   (TTransport out)     throws TException;
 
-  public int writeMapEnd      (TTransport out)     throws TException;
+  public void writeMapBegin    (TTransport out,
+                                TMap       map)     throws TException;
 
-  public int writeListBegin   (TTransport out,
-                               TList      list)    throws TException;
+  public void writeMapEnd      (TTransport out)     throws TException;
 
-  public int writeListEnd     (TTransport out)     throws TException;
+  public void writeListBegin   (TTransport out,
+                                TList      list)    throws TException;
 
-  public int writeSetBegin    (TTransport out,
-                               TSet       set)     throws TException;
+  public void writeListEnd     (TTransport out)     throws TException;
 
-  public int writeSetEnd      (TTransport out)     throws TException;
+  public void writeSetBegin    (TTransport out,
+                                TSet       set)     throws TException;
 
-  public int writeByte        (TTransport out,
-                               UInt8      b)       throws TException;
+  public void writeSetEnd      (TTransport out)     throws TException;
 
-  public int writeU32         (TTransport out,
-                               UInt32     u32)     throws TException;
+  public void writeByte        (TTransport out,
+                                byte       b)       throws TException;
 
-  public int writeI32         (TTransport out,
-                               Int32      i32)     throws TException;
+  public void writeU32         (TTransport out,
+                                int        u32)     throws TException;
 
-  public int writeU64         (TTransport out,
-                               UInt64     u64)     throws TException;
+  public void writeI32         (TTransport out,
+                                int        i32)     throws TException;
 
-  public int writeI64         (TTransport out,
-                               Int64      i64)     throws TException;
+  public void writeU64         (TTransport out,
+                                long       u64)     throws TException;
 
-  public int writeString      (TTransport out,
-                               TString    str)     throws TException;
+  public void writeI64         (TTransport out,
+                                long       i64)     throws TException;
+
+  public void writeString      (TTransport out,
+                                String     str)     throws TException;
 
   /**
    * Reading methods.
    */
 
-  public int readStructBegin  (TTransport in,
-                               TStruct    struct)  throws TException;
+  public TStruct readStructBegin  (TTransport in)  throws TException;
 
-  public int readStructEnd    (TTransport  in)     throws TException;
+  public void    readStructEnd    (TTransport in)  throws TException;
 
-  public int readFieldBegin   (TTransport  in,
-                               TField      field)  throws TException;
+  public TField  readFieldBegin   (TTransport in)  throws TException;
   
-  public int readFieldEnd     (TTransport  in)     throws TException;
+  public void    readFieldEnd     (TTransport in)  throws TException;
  
-  public int readMapBegin     (TTransport  in,
-                               TMap        map)    throws TException;
+  public TMap    readMapBegin     (TTransport in)  throws TException;
 
-  public int readMapEnd       (TTransport  in)     throws TException;
+  public void    readMapEnd       (TTransport in)  throws TException;
 
-  public int readListBegin    (TTransport  in,
-                               TList       list)   throws TException;
+  public TList   readListBegin    (TTransport in)  throws TException;
 
-  public int readListEnd      (TTransport  in)     throws TException;
+  public void    readListEnd      (TTransport in)  throws TException;
 
-  public int readSetBegin     (TTransport  in,
-                               TSet        set)    throws TException;
+  public TSet    readSetBegin     (TTransport in)  throws TException;
 
-  public int readSetEnd       (TTransport  in)     throws TException;
+  public void    readSetEnd       (TTransport in)  throws TException;
 
-  public int readByte         (TTransport  in,
-                               UInt8       b)      throws TException;
+  public byte    readByte         (TTransport in)  throws TException;
 
-  public int readU32          (TTransport  in,
-                               UInt32      u32)    throws TException;
+  public int     readU32          (TTransport in)  throws TException;
 
-  public int readI32          (TTransport  in,
-                               Int32       i32)    throws TException;
+  public int     readI32          (TTransport in)  throws TException;
 
-  public int readU64          (TTransport  in,
-                               UInt64      u64)    throws TException;
+  public long    readU64          (TTransport in)  throws TException;
   
-  public int readI64          (TTransport  in,
-                               Int64       i64)    throws TException;
+  public long    readI64          (TTransport in)  throws TException;
 
-  public int readString       (TTransport  in,
-                               TString     s)      throws TException;
+  public String  readString       (TTransport in)  throws TException;
 
 }
