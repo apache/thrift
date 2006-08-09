@@ -1,3 +1,4 @@
+#!python
 """ Thrift IDL parser/compiler
     
     This parser uses the Python PLY LALR parser generator to build a parser for the Thrift IDL grammar.
@@ -18,7 +19,6 @@ import lex
 import os
 import pickle
 import string
-import sys
 import yacc
 
 class Error(object):
@@ -106,6 +106,7 @@ class PrimitiveType(Type):
 	Type.__init__(self, None, name)
 
 
+STOP_TYPE =  PrimitiveType("stop")
 VOID_TYPE =  PrimitiveType("void")
 BOOL_TYPE = PrimitiveType("bool")
 STRING_TYPE =PrimitiveType("utf7")
@@ -124,6 +125,7 @@ U64_TYPE = PrimitiveType("u64")
 FLOAT_TYPE = PrimitiveType("float")
 
 PRIMITIVE_MAP = {
+    "stop" : STOP_TYPE,
     "void" : VOID_TYPE,
     "bool" : BOOL_TYPE,
     "string": UTF7_TYPE,
@@ -272,6 +274,27 @@ def validateFieldList(fieldList):
     if len(errors):
 	raise ErrorException(errors)
 
+    def assignId(field, currentId, ids):
+	'Finds the next available id number for a field'
+	id= currentId - 1
+
+	while id in ids:
+	    id -= 1
+	    
+	field.id = id
+
+	ids[field.id] = field
+	
+	return id
+
+    # assign ids for all fields with unspecified ids
+	
+    currentId = 0
+	
+    for fields in fieldList:
+	if not field.id:
+	    currentId = assignId(field, currentId, ids)
+	
 class Struct(Type):
 
     def __init__(self, symbols, name, fieldList):
@@ -379,9 +402,10 @@ class Program(object):
 
     def addCollection(self, collection):
 	if collection.name in self.collectionMap:
-	    return
+	    return self.collectionMap[collection.name]
 	else:
 	    self.collectionMap[collection.name] = collection
+	    return collection
 
     def getType(self, parent, symbol):
 	""" Get the type definition for a symbol"""
@@ -439,12 +463,13 @@ class Program(object):
             except ErrorException, e:
                 errors+= e.errors
 
-        # Verify that service fuunction result and arg list types exist and replace type name with reference to definition
+        # Verify that service function result and arg list types exist and replace type name with reference to definition
 
 	for service in self.serviceMap.values():
+
 	    for function in service.functionList:
 		try:
-		    function.resultType  = self.getType(service, function.resultType)
+		    function.resultType = self.getType(service, function.resultType)
 		except ErrorException, e:
 		    errors+= e.errors
 
@@ -817,20 +842,17 @@ class Parser(object):
     def p_collectiontype_1(self, p):
         'collectiontype : maptype'
 	self.pdebug("p_collectiontype_1", p)
-	p[0] = p[1]
-	self.program.addCollection(p[0])
+	p[0] = self.program.addCollection(p[1])
 
     def p_collectiontype_2(self, p):
         'collectiontype : settype'
 	self.pdebug("p_collectiontype_2", p)
-	p[0] = p[1]
-	self.program.addCollection(p[0])
+	p[0] = self.program.addCollection(p[1])
 
     def p_collectiontype_3(self, p):
         'collectiontype : listtype'
 	self.pdebug("p_collectiontype_3", p)
-	p[0] = p[1]
-	self.program.addCollection(p[0])
+	p[0] = self.program.addCollection(p[1])
 
     def p_maptype(self, p):
         'maptype : MAP LANGLE fieldtype COMMA fieldtype RANGLE'
@@ -900,8 +922,3 @@ class Parser(object):
 
 	    pickle.dump(self.program, outf)
 
-if __name__ == '__main__':
-
-    parser = Parser(debug=True);
-
-    parser.parse(sys.argv[1])
