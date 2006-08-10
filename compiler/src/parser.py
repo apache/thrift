@@ -34,8 +34,11 @@ class Error(object):
 	return str(self.start)+": error: "+self.message
 
 class SyntaxError(Error):
-    def __init__(self, lexToken):
-	Error.__init__(self, lexToken.lineno, lexToken.lineno, "syntax error "+str(lexToken.value))
+    def __init__(self, yaccSymbol):
+	if isinstance(yaccSymbol, yacc.YaccSymbol):
+	    Error.__init__(self, yaccSymbol.lineno, yaccSymbol.lineno, "syntax error "+str(yaccSymbol.value))
+	else:
+	    Error.__init__(self, 1, 1, "syntax error "+str(yaccSymbol))
 
 class SymanticsError(Error):
 
@@ -79,6 +82,17 @@ class Identifier(Definition):
 	    result+="="+str(self.id)
 	return result
 
+
+def toCanonicalType(ttype):
+    if isinstance(ttype, TypeDef):
+	return toCanonicalType(ttype.definitionType)
+    else:
+	return ttype
+
+def isComparableType(ttype):
+    ttype = toCanonicalType(ttype)
+    return isinstance(ttype, PrimitiveType) or isinstance(ttype, Enum)
+
 class Type(Definition):
     """ Abstract Type definition """
 
@@ -104,7 +118,6 @@ class PrimitiveType(Type):
 
     def __init__(self, name):
 	Type.__init__(self, None, name)
-
 
 STOP_TYPE =  PrimitiveType("stop")
 VOID_TYPE =  PrimitiveType("void")
@@ -151,6 +164,9 @@ class CollectionType(Type):
     def __init__(self, symbols, name):
 	Type.__init__(self, symbols, name)
 
+    def validate(self):
+	return True
+
 class Map(CollectionType):
 
     def __init__(self, symbols, keyType, valueType):
@@ -158,11 +174,19 @@ class Map(CollectionType):
 	self.keyType = keyType
 	self.valueType = valueType
 
+    def validate(self):
+	if not isComparableType(self.keyType):
+	    raise ErrorException([SymanticsError(self, "key type \""+str(self.keyType)+"\" is not a comparable type.")])
+
 class Set(CollectionType):
 
     def __init__(self, symbols, valueType):
 	CollectionType.__init__(self, symbols, "set<"+valueType.name+">")
 	self.valueType = valueType
+
+    def validate(self):
+	if not isComparableType(self.valueType):
+	    raise ErrorException([SymanticsError(self, "value type \""+str(self.valueType)+"\" is not a comparable type.")])
 
 class List(CollectionType):
 
@@ -452,6 +476,8 @@ class Program(object):
                     collection.keyType = self.getType(collection, collection.keyType)
 
                 collection.valueType = self.getType(collection, collection.valueType)
+		
+		collection.validate()
             
             except ErrorException, e:
                 errors+= e.errors
@@ -481,7 +507,6 @@ class Program(object):
 
 	if len(errors):
 	    raise ErrorException(errors)
-		    
 
 class Parser(object):
     
@@ -870,7 +895,11 @@ class Parser(object):
 	p[0] = List(p, p[3])
 
     def p_error(self, p):
-        self.errors.append(SyntaxError(p))
+	# p_error is called with an empty token if eof was encountered unexpectedly.
+	if not p:
+	    self.errors.append(SyntaxError("Unexpected end of file"))
+	else:
+	    self.errors.append(SyntaxError(p))
 
     def pdebug(self, name, p):
 	if self.debug:
