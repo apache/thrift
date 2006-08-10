@@ -1,7 +1,7 @@
 #ifndef T_BINARY_PROTOCOL_H
 #define T_BINARY_PROTOCOL_H
 
-#include <protocol/TProtocol.h>
+#include "TProtocol.h"
 
 #include <boost/shared_ptr.hpp>
 

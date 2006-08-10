@@ -1,8 +1,8 @@
 #ifndef T_SERVER_TRANSPORT_H
 #define T_SERVER_TRANSPORT_H
 
-#include "transport/TTransport.h"
-#include "transport/TTransportException.h"
+#include "TTransport.h"
+#include "TTransportException.h"
 #include <boost/shared_ptr.hpp>
 
 namespace facebook { namespace thrift { namespace transport { 

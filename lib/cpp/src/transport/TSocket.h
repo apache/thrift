@@ -3,8 +3,8 @@
 
 #include <string>
 
-#include "transport/TTransport.h"
-#include "transport/TServerSocket.h"
+#include "TTransport.h"
+#include "TServerSocket.h"
 
 namespace facebook { namespace thrift { namespace transport { 
 

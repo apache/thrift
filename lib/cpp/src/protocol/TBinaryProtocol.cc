@@ -1,4 +1,5 @@
-#include "protocol/TBinaryProtocol.h"
+#include "TBinaryProtocol.h"
+
 using std::string;
 
 namespace facebook { namespace thrift { namespace protocol { 

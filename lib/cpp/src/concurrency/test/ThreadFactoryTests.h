@@ -26,7 +26,6 @@ public:
 
   public:
 
-
     Task() {}
 
     void run() {

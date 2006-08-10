@@ -5,7 +5,7 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include <time.h>
+#include <sys/time.h>
 
 namespace facebook { namespace thrift { namespace concurrency { 
 

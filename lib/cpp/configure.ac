@@ -14,6 +14,10 @@ AC_CHECK_FUNCS([memset])
 
 AC_CHECK_FUNCS([socket])
 
+AC_CHECK_FUNCS([strtol])
+
+AC_CHECK_FUNCS([strtoul])
+
 AC_CHECK_HEADERS([arpa/inet.h])
 
 AC_CHECK_HEADERS([inttypes.h])
@@ -51,6 +55,8 @@ AC_HEADER_STDC
 AC_HEADER_TIME
 
 AC_TYPE_SIZE_T
+
+AC_TYPE_INT16_T
 
 AC_TYPE_INT32_T
 

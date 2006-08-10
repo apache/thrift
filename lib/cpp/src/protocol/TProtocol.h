@@ -29,8 +29,10 @@ struct TBuf;
  * the end of a sequence of fields.
  */
 enum TType {
-  T_STOP       = 1,
+  T_STOP       = 0,
+  T_BOOL       = 1,
   T_BYTE       = 2,
+  T_U08       = 2,
   T_U16        = 3,
   T_I16        = 4,
   T_U32        = 5,
@@ -38,10 +40,13 @@ enum TType {
   T_U64        = 7,
   T_I64        = 8,
   T_STRING     = 9,
+  T_UTF7       = 9,
   T_STRUCT     = 10,
   T_MAP        = 11,
   T_SET        = 12,
-  T_LIST       = 13
+  T_LIST       = 13,
+  T_UTF8       = 14,
+  T_UTF16      = 15
 };
 
 /**

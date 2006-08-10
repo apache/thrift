@@ -7,8 +7,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "transport/TSocket.h"
-#include "transport/TTransportException.h"
+#include "TSocket.h"
+#include "TTransportException.h"
 
 namespace facebook { namespace thrift { namespace transport { 
 

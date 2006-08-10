@@ -1,7 +1,7 @@
 #ifndef T_NULL_TRANSPORT
 #define T_NULL_TRANSPORT
 
-#include "transport/TTransport.h"
+#include "TTransport.h"
 
 namespace facebook { namespace thrift { namespace transport { 
 

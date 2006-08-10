@@ -2,8 +2,8 @@
 #include <netinet/in.h>
 #include <errno.h>
 
-#include "transport/TSocket.h"
-#include "transport/TServerSocket.h"
+#include "TSocket.h"
+#include "TServerSocket.h"
 #include <boost/shared_ptr.hpp>
 
 namespace facebook { namespace thrift { namespace transport { 

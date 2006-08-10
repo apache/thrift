@@ -29,7 +29,7 @@ include_thrift_HEADERS = \
 			 src/Thrift.h \
 			 src/TProcessor.h
 
-include_concurrencydir = $(includedir)/thrift/concurrency
+include_concurrencydir = $(include_thriftdir)/concurrency
 include_concurrency_HEADERS = \
 			 src/concurrency/Exception.h \
                          src/concurrency/Monitor.h \
@@ -38,12 +38,12 @@ include_concurrency_HEADERS = \
                          src/concurrency/ThreadManager.h \
                          src/concurrency/TimerManager.h
 
-include_protocoldir = $(includedir)/thrift/protocol
+include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = \
                          src/protocol/TBinaryProtocol.h \
                          src/protocol/TProtocol.h
 
-include_transportdir = $(includedir)/thrift/transport
+include_transportdir = $(include_thriftdir)/transport
 include_transport_HEADERS = \
                          src/transport/TBufferedTransport.h \
                          src/transport/TChunkedTransport.h \
@@ -54,7 +54,7 @@ include_transport_HEADERS = \
                          src/transport/TTransport.h \
                          src/transport/TTransportException.h
 
-include_serverdir = $(includedir)/thrift/server
+include_serverdir = $(include_thriftdir)/server
 include_server_HEADERS = \
                          src/server/TServer.h \
                          src/server/TSimpleServer.h \

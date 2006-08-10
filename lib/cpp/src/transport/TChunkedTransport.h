@@ -1,7 +1,7 @@
 #ifndef T_CHUNKED_TRANSPORT_H
 #define T_CHUNKED_TRANSPORT_H
 
-#include <transport/TTransport.h>
+#include "TTransport.h"
 #include <string>
 #include <boost/shared_ptr.hpp>
 
