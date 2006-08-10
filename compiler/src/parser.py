@@ -867,7 +867,7 @@ class Parser(object):
     def p_listtype(self, p):
         'listtype : LIST LANGLE fieldtype RANGLE'
 	self.pdebug("p_listtype", p)
-	p[0] = Set(p, p[3])
+	p[0] = List(p, p[3])
 
     def p_error(self, p):
         self.errors.append(SyntaxError(p))
@@ -921,4 +921,3 @@ class Parser(object):
 	    outf = file(os.path.splitext(filename)[0]+".thyc", "w")
 
 	    pickle.dump(self.program, outf)
-

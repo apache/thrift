@@ -24,5 +24,8 @@ if __name__ == '__main__':
 
     p.parse(filename, False)
 
+    if len(p.errors):
+	sys.exit(-1)
+
     [g(p.program, filename) for g in generators]
 
