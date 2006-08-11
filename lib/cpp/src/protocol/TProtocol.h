@@ -79,6 +79,7 @@ class TProtocol {
    */
 
   virtual uint32_t writeMessageBegin(shared_ptr<TTransport> out,
+				     const std::string name,
 				     const TMessageType messageType,
 				     const uint32_t seqid) const = 0;
 
@@ -150,8 +151,9 @@ class TProtocol {
    */
 
   virtual uint32_t readMessageBegin(shared_ptr<TTransport> in,
-				     TMessageType& messageType,
-				     uint32_t& seqid) const = 0;
+				    std::string& name,
+				    TMessageType& messageType,
+				    uint32_t& seqid) const = 0;
   
   virtual uint32_t readMessageEnd(shared_ptr<TTransport> in) const = 0;
 

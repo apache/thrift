@@ -256,59 +256,6 @@ CPP_TRANSPORT_NS = CPP_THRIFT_NS+"::transport"
 CPP_TRANSPORT = CPP_TRANSPORT_NS+"::TTransport"
 CPP_TRANSPORTP = CPP_SP.substitute(klass=CPP_TRANSPORT)
 
-CPP_SERVER_FUNCTION_DECLARATION = Template("""    void process_${function}(uint32_t seqid, """+CPP_TRANSPORTP+""" itrans, """+CPP_TRANSPORTP+""" otrans);
-""")
-
-CPP_SERVER_FUNCTION_DEFINITION = Template("""
-void ${service}ServerIf::process_${function}(uint32_t seqid, """+CPP_TRANSPORTP+""" itrans, """+CPP_TRANSPORTP+""" otrans) {
-
-    uint32_t xfer = 0;
-
-    ${argsStructDeclaration};
-
-    ${argsStructReader};
-
-    iprot->readMessageEnd(itrans);
-
-    ${returnValueDeclaration};
-
-    ${functionCall};
-
-    ${resultStructDeclaration};
-
-    ${returnToResult};
-
-    oprot->writeMessageBegin(otrans, """+CPP_PROTOCOL_REPLY+""", seqid);
-
-    ${resultStructWriter};
-
-    oprot->writeMessaeEnd(otrans);
-
-    otrans->flush();
-}
-""")
-
-CPP_SERVER_PROCESS_DEFINITION = Template("""
-bool ${service}ServerIf::process("""+CPP_TRANSPORTP+""" itrans, """+CPP_TRANSPORTP+""" otrans) {
-
-    uint32_t xfer = 0;
-
-    std::string name;
-
-    """+CPP_MESSAGE_TYPE+""" messageType;
-
-    uint32_t seqid;
-
-    _iprot->readMessageBegin(_itrans, name, messageType, cseqid);
-
-    if(messageType == """+CPP_PROTOCOL_CALL+""") {
-${callProcessSwitch}
-    } else {
-        throw """+CPP_EXCEPTION+"""(\"Unexpected message type\");     
-    }
-}
-""")
-
 CPP_PROTOCOL_TSTOP = CPP_PROTOCOL_NS+"::T_STOP"
 CPP_PROTOCOL_TTYPE = CPP_PROTOCOL_NS+"::TType"
 CPP_PROTOCOL_MESSAGE_TYPE = CPP_PROTOCOL_NS+"::TMessageType"
@@ -338,6 +285,60 @@ CPP_TTYPE_MAP = {
     MapType : CPP_PROTOCOL_NS+"::T_MAP",
     SetType : CPP_PROTOCOL_NS+"::T_SET"
 }
+
+
+CPP_SERVER_FUNCTION_DECLARATION = Template("""    void process_${function}(uint32_t seqid, """+CPP_TRANSPORTP+""" itrans, """+CPP_TRANSPORTP+""" otrans);
+""")
+
+CPP_SERVER_FUNCTION_DEFINITION = Template("""
+void ${service}ServerIf::process_${function}(uint32_t seqid, """+CPP_TRANSPORTP+""" itrans, """+CPP_TRANSPORTP+""" otrans) {
+
+    uint32_t xfer = 0;
+
+    ${argsStructDeclaration};
+
+    ${argsStructReader};
+
+    _iprot->readMessageEnd(itrans);
+
+    ${returnValueDeclaration};
+
+    ${functionCall};
+
+    ${resultStructDeclaration};
+
+    ${returnToResult};
+
+    _oprot->writeMessageBegin(otrans, \"${function}\", """+CPP_PROTOCOL_REPLY+""", seqid);
+
+    ${resultStructWriter};
+
+    _oprot->writeMessageEnd(otrans);
+
+    otrans->flush();
+}
+""")
+
+CPP_SERVER_PROCESS_DEFINITION = Template("""
+bool ${service}ServerIf::process("""+CPP_TRANSPORTP+""" itrans, """+CPP_TRANSPORTP+""" otrans) {
+
+    uint32_t xfer = 0;
+
+    std::string name;
+
+    """+CPP_PROTOCOL_MESSAGE_TYPE+""" messageType;
+
+    uint32_t seqid;
+
+    _iprot->readMessageBegin(itrans, name, messageType, seqid);
+
+    if(messageType == """+CPP_PROTOCOL_CALL+""") {
+${callProcessSwitch}
+    } else {
+        throw """+CPP_EXCEPTION+"""(\"Unexpected message type\");     
+    }
+}
+""")
 
 def toWireType(ttype):
 
@@ -384,11 +385,12 @@ CPP_CLIENT_FUNCTION_DEFINITION = Template("""
 ${returnDeclaration} ${service}Client::${function}(${argsDeclaration}) {
 
     uint32_t xfer = 0;
+    std::string name;
     """+CPP_PROTOCOL_MESSAGE_TYPE+""" messageType;
     uint32_t cseqid = 0;
     uint32_t rseqid = 0;
 
-    _oprot->writeMessageBegin(_otrans, """+CPP_PROTOCOL_CALL+""", cseqid);
+    _oprot->writeMessageBegin(_otrans, \"${function}\", """+CPP_PROTOCOL_CALL+""", cseqid);
 
     ${argsStructDeclaration};
 
@@ -398,7 +400,7 @@ ${argsToStruct};
 
     _otrans->flush();
 
-    _iprot->readMessageBegin(_itrans, messageType, rseqid);
+    _iprot->readMessageBegin(_itrans, name, messageType, rseqid);
 
     if(messageType != """+CPP_PROTOCOL_REPLY+""" || 
        rseqid != cseqid) {
@@ -478,11 +480,10 @@ def toServerServiceDefinition(service, debugp=None):
     for function in service.functionList:
 	
 	result+= toServerFunctionDefinition(service.name, function, debugp)
-
     
-    callProcessSwitch = "if"+string.join(["(name.compare(\""+function.name+"\") == 0) {"+toServerProcessFunctionCall(function)+";}" for function in service.functionList], "\n    else if")
+    callProcessSwitch = "        if"+string.join(["(name.compare(\""+function.name+"\") == 0) { process_"+function.name+"(seqid, itrans, otrans);}" for function in service.functionList], "\n        else if")+"\n        else {throw "+CPP_EXCEPTION+"(\"Unknown function name \\\"\"+name+\"\\\"\");}"
 
-    result+= CPP_SERVER_PROCESS_DEFINITION(service=service.name, callProcessSwitch=callProcessSwitch)
+    result+= CPP_SERVER_PROCESS_DEFINITION.substitute(service=service.name, callProcessSwitch=callProcessSwitch)
 
     return result
 

@@ -25,6 +25,7 @@ using namespace boost;
    */
 
   virtual uint32_t writeMessageBegin(shared_ptr<TTransport> out,
+				     const std::string name,
 				     const TMessageType messageType,
 				     const uint32_t seqid) const;
 
@@ -97,8 +98,9 @@ using namespace boost;
 
 
   uint32_t readMessasgeBegin(shared_ptr<TTransport> in,
-			      TMessageType& messageType,
-			      uint32_t& seqid) const;
+			     std::string& name,
+			     TMessageType& messageType,
+			     uint32_t& seqid) const;
 
   uint32_t readMessageEnd(shared_ptr<TTransport> in) const;
 

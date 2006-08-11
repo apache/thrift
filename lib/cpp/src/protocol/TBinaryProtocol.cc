@@ -5,9 +5,11 @@ using std::string;
 namespace facebook { namespace thrift { namespace protocol { 
 
 uint32_t TBinaryProtocol::writeMessageBegin(shared_ptr<TTransport> out,
+					    const std::string name,
 					    const TMessageType messageType,
 					    const uint32_t seqid) const {
   return 
+    writeString(out, name) + 
     writeByte(out, (uint8_t)messageType) +
     writeU32(out, seqid);
 }
@@ -134,11 +136,13 @@ uint32_t TBinaryProtocol::writeString(shared_ptr<TTransport> out,
  */
 
 uint32_t TBinaryProtocol::readMessasgeBegin(shared_ptr<TTransport> in,
+					    std::string& name,
 					    TMessageType& messageType,
 					    uint32_t& seqid) const {
 
   uint32_t result = 0;
   uint8_t type;
+  result+= readString(in, name);
   result+=  readByte(in, type);
   messageType = (TMessageType)type;
   result+= readU32(in, seqid);
