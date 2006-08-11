@@ -30,23 +30,24 @@ struct TBuf;
  */
 enum TType {
   T_STOP       = 0,
-  T_BOOL       = 1,
-  T_BYTE       = 2,
-  T_U08       = 2,
-  T_U16        = 3,
-  T_I16        = 4,
-  T_U32        = 5,
-  T_I32        = 6,
-  T_U64        = 7,
-  T_I64        = 8,
-  T_STRING     = 9,
-  T_UTF7       = 9,
-  T_STRUCT     = 10,
-  T_MAP        = 11,
-  T_SET        = 12,
-  T_LIST       = 13,
-  T_UTF8       = 14,
-  T_UTF16      = 15
+  T_VOID       = 1,
+  T_BOOL       = 2,
+  T_BYTE       = 3,
+  T_U08        = 4,
+  T_U16        = 5,
+  T_I16        = 6,
+  T_U32        = 7,
+  T_I32        = 8,
+  T_U64        = 9,
+  T_I64        = 10,
+  T_STRING     = 11,
+  T_UTF7       = 12,
+  T_STRUCT     = 13,
+  T_MAP        = 14,
+  T_SET        = 15,
+  T_LIST       = 16,
+  T_UTF8       = 17,
+  T_UTF16      = 18
 };
 
 /**
@@ -148,7 +149,7 @@ class TProtocol {
    * Reading functions
    */
 
-  virtual uint32_t readMessasgeBegin(shared_ptr<TTransport> in,
+  virtual uint32_t readMessageBegin(shared_ptr<TTransport> in,
 				     TMessageType& messageType,
 				     uint32_t& seqid) const = 0;
   

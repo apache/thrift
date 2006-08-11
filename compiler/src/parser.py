@@ -84,14 +84,14 @@ class Identifier(Definition):
 
 
 def toCanonicalType(ttype):
-    if isinstance(ttype, TypeDef):
+    if isinstance(ttype, TypedefType):
 	return toCanonicalType(ttype.definitionType)
     else:
 	return ttype
 
 def isComparableType(ttype):
     ttype = toCanonicalType(ttype)
-    return isinstance(ttype, PrimitiveType) or isinstance(ttype, Enum)
+    return isinstance(ttype, PrimitiveType) or isinstance(ttype, EnumType)
 
 class Type(Definition):
     """ Abstract Type definition """
@@ -103,7 +103,7 @@ class Type(Definition):
     def __str__(self):
 	return self.name
 
-class TypeDef(Type):
+class TypedefType(Type):
 
     def __init__(self, symbols, name, definitionType):
 	Type.__init__(self, symbols, name)
@@ -167,7 +167,7 @@ class CollectionType(Type):
     def validate(self):
 	return True
 
-class Map(CollectionType):
+class MapType(CollectionType):
 
     def __init__(self, symbols, keyType, valueType):
 	CollectionType.__init__(self, symbols, "map<"+keyType.name+","+valueType.name +">")
@@ -178,7 +178,7 @@ class Map(CollectionType):
 	if not isComparableType(self.keyType):
 	    raise ErrorException([SymanticsError(self, "key type \""+str(self.keyType)+"\" is not a comparable type.")])
 
-class Set(CollectionType):
+class SetType(CollectionType):
 
     def __init__(self, symbols, valueType):
 	CollectionType.__init__(self, symbols, "set<"+valueType.name+">")
@@ -188,13 +188,13 @@ class Set(CollectionType):
 	if not isComparableType(self.valueType):
 	    raise ErrorException([SymanticsError(self, "value type \""+str(self.valueType)+"\" is not a comparable type.")])
 
-class List(CollectionType):
+class ListType(CollectionType):
 
     def __init__(self, symbols, valueType):
 	CollectionType.__init__(self, symbols, "list<"+valueType.name+">")
 	self.valueType = valueType
 
-class Enum(Definition):
+class EnumType(Definition):
 
     def __init__(self, symbols, name, enumDefs):
 	Definition.__init__(self, symbols, name)
@@ -319,7 +319,7 @@ def validateFieldList(fieldList):
 	if not field.id:
 	    currentId = assignId(field, currentId, ids)
 	
-class Struct(Type):
+class StructType(Type):
 
     def __init__(self, symbols, name, fieldList):
 	Type.__init__(self, symbols, name)
@@ -333,16 +333,22 @@ class Struct(Type):
 
 class Function(Definition):
 
-    def __init__(self, symbols, name, resultType, argsStruct):
+    def __init__(self, symbols, name, resultStruct, argsStruct, ):
 	Definition.__init__(self, symbols, name)
-	self.resultType = resultType
+	self.resultStruct = resultStruct
 	self.argsStruct = argsStruct
 
     def validate(self):
 	validateFieldList(self.argsStruct.fieldList)
+
+    def args(self):
+	return self.argsStruct.fieldList
+
+    def returnType(self):
+	return self.resultStruct.fieldList[0].type
     
     def __str__(self):
-	return self.name+"("+string.join(map(lambda a: str(a), self.argsStruct), ", ")+") => "+str(self.resultType)
+	return self.name+"("+string.join(map(lambda a: str(a), self.argsStruct), ", ")+") => "+str(self.resultStruct)
 
 class Service(Definition):
 
@@ -472,7 +478,7 @@ class Program(object):
 
 	for collection in self.collectionMap.values():
             try:
-                if isinstance(collection, Map):
+                if isinstance(collection, MapType):
                     collection.keyType = self.getType(collection, collection.keyType)
 
                 collection.valueType = self.getType(collection, collection.valueType)
@@ -494,10 +500,12 @@ class Program(object):
 	for service in self.serviceMap.values():
 
 	    for function in service.functionList:
-		try:
-		    function.resultType = self.getType(service, function.resultType)
-		except ErrorException, e:
-		    errors+= e.errors
+
+		for field in function.resultStruct.fieldList:
+		    try:
+			field.type = self.getType(function, field)
+		    except ErrorException, e:
+			errors+= e.errors
 
 		for field in function.argsStruct.fieldList:
 		    try:
@@ -655,7 +663,7 @@ class Parser(object):
     def p_typedef(self, p):
 	'typedef : TYPEDEF definitiontype ID'
 	self.pdebug("p_typedef", p)
-	p[0] = TypeDef(p, p[3], p[2])
+	p[0] = TypedefType(p, p[3], p[2])
 	try:
 	    p[0].validate()
 
@@ -665,7 +673,7 @@ class Parser(object):
     def p_enum(self, p):
 	'enum : ENUM ID LBRACE enumdeflist RBRACE'
 	self.pdebug("p_enum", p)
-	p[0] = Enum(p, p[2], p[4])
+	p[0] = EnumType(p, p[2], p[4])
 
 	try:
 	    p[0].validate()
@@ -695,7 +703,7 @@ class Parser(object):
     def p_struct(self, p):
 	'struct :  STRUCT ID LBRACE fieldlist RBRACE'
 	self.pdebug("p_struct", p)
-	p[0] = Struct(p, p[2], p[4])
+	p[0] = StructType(p, p[2], p[4])
 
 	try:
 	    p[0].validate()
@@ -724,7 +732,10 @@ class Parser(object):
     def p_function(self, p):
 	'function : functiontype functionmodifiers ID LPAREN fieldlist RPAREN'
 	self.pdebug("p_function", p)
-	p[0] = Function(p, p[3], p[1], Struct(p, p[3]+"_args", p[5]))
+
+	resultStruct = StructType(p, p[3]+"_result", (Field(p, p[1], Identifier(None, "success", 1)),))
+	
+	p[0] = Function(p, p[3], resultStruct, StructType(p, p[3]+"_args", p[5]))
 	try:
 	    p[0].validate()
 	except ErrorException, e:
@@ -878,17 +889,17 @@ class Parser(object):
     def p_maptype(self, p):
         'maptype : MAP LANGLE fieldtype COMMA fieldtype RANGLE'
 	self.pdebug("p_maptype", p)
-	p[0] = Map(p, p[3], p[5])
+	p[0] = MapType(p, p[3], p[5])
 
     def p_settype(self, p):
         'settype : SET LANGLE fieldtype RANGLE'
 	self.pdebug("p_settype", p)
-	p[0] = Set(p, p[3])
+	p[0] = SetType(p, p[3])
 
     def p_listtype(self, p):
         'listtype : LIST LANGLE fieldtype RANGLE'
 	self.pdebug("p_listtype", p)
-	p[0] = List(p, p[3])
+	p[0] = ListType(p, p[3])
 
     def p_error(self, p):
 	# p_error is called with an empty token if eof was encountered unexpectedly.

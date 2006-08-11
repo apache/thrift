@@ -117,9 +117,9 @@ CPP_PRIMITIVE_MAP = {
 }
 
 CPP_CONTAINER_MAP = {
-    Map : "std::map",
-    List: "std::list",
-    Set : "std::set",
+    MapType : "std::map",
+    ListType: "std::list",
+    SetType : "std::set",
 }
 
 def typeToCTypeDeclaration(ttype):
@@ -131,10 +131,10 @@ def typeToCTypeDeclaration(ttype):
 
         result = CPP_CONTAINER_MAP[type(ttype)]+"<"
         
-        if isinstance(ttype, Map):
+        if isinstance(ttype, MapType):
             result+= typeToCTypeDeclaration(ttype.keyType)+", "+ typeToCTypeDeclaration(ttype.valueType)
 
-        elif isinstance(ttype, Set) or isinstance(ttype, List):
+        elif isinstance(ttype, SetType) or isinstance(ttype, ListType):
             result+= typeToCTypeDeclaration(ttype.valueType)
 
         else:
@@ -144,17 +144,17 @@ def typeToCTypeDeclaration(ttype):
 
         return result
 
-    elif isinstance(ttype, Struct):
+    elif isinstance(ttype, StructType):
         return "struct "+ttype.name
 
-    elif isinstance(ttype, TypeDef):
+    elif isinstance(ttype, TypedefType):
         return ttype.name;
 
-    elif isinstance(ttype, Enum):
+    elif isinstance(ttype, EnumType):
         return ttype.name;
 
     elif isinstance(ttype, Function):
-        return typeToCTypeDeclaration(ttype.resultType)+ " "+ttype.name+"("+string.join([typeToCTypeDeclaration(arg) for arg in ttype.argsStruct.fieldList], ", ")+")"
+        return typeToCTypeDeclaration(ttype.returnType())+ " "+ttype.name+"("+string.join([typeToCTypeDeclaration(arg) for arg in ttype.args()], ", ")+")"
 
     elif isinstance(ttype, Field):
         return typeToCTypeDeclaration(ttype.type)+ " "+ttype.name
@@ -189,16 +189,23 @@ def toStructDefinition(struct):
     result = "struct "+struct.name+" {\n"
 
     for field in struct.fieldList:
-        result += "    "+typeToCTypeDeclaration(field)+";\n"
+	if toCanonicalType(field.type) != VOID_TYPE:
+	    result += "    "+typeToCTypeDeclaration(field)+";\n"
+
+    result+= "    struct {\n"
+
+    for field in struct.fieldList:
+	result+= "        bool "+field.name+";\n"
+    result+= "   } __isset;\n"
 
     result+= "};\n"
 
     return result
 
 CPP_DEFINITION_MAP = {
-    TypeDef : toTypeDefDefinition,
-    Enum : toEnumDefinition,
-    Struct : toStructDefinition,
+    TypedefType : toTypeDefDefinition,
+    EnumType : toEnumDefinition,
+    StructType : toStructDefinition,
     Service : None
     }
     
@@ -233,6 +240,8 @@ def toServiceInterfaceDeclaration(service, debugp=None):
 
     return CPP_INTERFACE_DECLARATION.substitute(service=service.name, functionDeclarations=functionDeclarations)
 
+CPP_EXCEPTION = CPP_THRIFT_NS+"::Exception"
+
 CPP_SP = Template("boost::shared_ptr<${klass}> ")
 
 CPP_PROCESSOR = CPP_THRIFT_NS+"::TProcessor"
@@ -255,11 +264,19 @@ void ${service}ServerIf::process_${function}("""+CPP_TRANSPORTP+""" itrans, """+
 
     uint32_t xfer = 0;
 
-${argsStructDeclaration}
-${argsStructReader}    
-${resultDeclaration}
-${functionCall}
-${resultWriter}
+    ${argsStructDeclaration};
+
+    ${argsStructReader};
+
+    ${returnValueDeclaration};
+
+    ${functionCall};
+
+    ${resultStructDeclaration};
+
+    ${returnToResult};
+
+    ${resultStructWriter};
 
     otrans->flush();
 }
@@ -267,6 +284,9 @@ ${resultWriter}
 
 CPP_PROTOCOL_TSTOP = CPP_PROTOCOL_NS+"::T_STOP"
 CPP_PROTOCOL_TTYPE = CPP_PROTOCOL_NS+"::TType"
+CPP_PROTOCOL_MESSAGE_TYPE = CPP_PROTOCOL_NS+"::TMessageType"
+CPP_PROTOCOL_CALL = CPP_PROTOCOL_NS+"::T_CALL"
+CPP_PROTOCOL_REPLY = CPP_PROTOCOL_NS+"::T_REPLY"
 
 CPP_TTYPE_MAP = {
     STOP_TYPE : CPP_PROTOCOL_NS+"::T_STOP",
@@ -286,10 +306,10 @@ CPP_TTYPE_MAP = {
     U32_TYPE : CPP_PROTOCOL_NS+"::T_U32",
     U64_TYPE : CPP_PROTOCOL_NS+"::T_U64",
     FLOAT_TYPE : CPP_PROTOCOL_NS+"::T_FLOAT",
-    Struct : CPP_PROTOCOL_NS+"::T_STRUCT",
-    List : CPP_PROTOCOL_NS+"::T_LIST",
-    Map : CPP_PROTOCOL_NS+"::T_MAP",
-    Set : CPP_PROTOCOL_NS+"::T_SET"
+    StructType : CPP_PROTOCOL_NS+"::T_STRUCT",
+    ListType : CPP_PROTOCOL_NS+"::T_LIST",
+    MapType : CPP_PROTOCOL_NS+"::T_MAP",
+    SetType : CPP_PROTOCOL_NS+"::T_SET"
 }
 
 def toWireType(ttype):
@@ -297,13 +317,13 @@ def toWireType(ttype):
     if isinstance(ttype, PrimitiveType):
 	return CPP_TTYPE_MAP[ttype]
 
-    elif isinstance(ttype, Enum):
+    elif isinstance(ttype, EnumType):
 	return CPP_TTYPE_MAP[I32_TYPE]
 
-    elif isinstance(ttype, TypeDef):
+    elif isinstance(ttype, TypedefType):
 	return toWireType(toCanonicalType(ttype))
 
-    elif isinstance(ttype, Struct) or isinstance(ttype, CollectionType):
+    elif isinstance(ttype, StructType) or isinstance(ttype, CollectionType):
 	return CPP_TTYPE_MAP[type(ttype)]
 
     else:
@@ -332,6 +352,46 @@ def toServerDeclaration(service, debugp=None):
 CPP_CLIENT_FUNCTION_DECLARATION = Template("""    ${functionDeclaration};
 """)
 
+
+CPP_CLIENT_FUNCTION_DEFINITION = Template("""
+${returnDeclaration} ${service}Client::${function}(${argsDeclaration}) {
+
+    uint32_t xfer = 0;
+    """+CPP_PROTOCOL_MESSAGE_TYPE+""" messageType;
+    uint32_t cseqid = 0;
+    uint32_t rseqid = 0;
+
+    _oprot->writeMessageBegin(_otrans, """+CPP_PROTOCOL_CALL+""", cseqid);
+
+    ${argsStructDeclaration};
+
+${argsToStruct};
+
+    ${argsStructWriter};
+
+    _otrans->flush();
+
+    _iprot->readMessageBegin(_itrans, messageType, rseqid);
+
+    if(messageType != """+CPP_PROTOCOL_REPLY+""" || 
+       rseqid != cseqid) {
+        throw """+CPP_EXCEPTION+"""(\"unexpected message type or id\");
+    }
+
+    ${resultStructDeclaration};
+
+    ${resultStructReader};
+
+    _iprot->readMessageEnd(_itrans);
+
+    if(__result.__isset.success) {
+        ${success};
+    } else {
+        throw """+CPP_EXCEPTION+"""(\"${function} failed\");
+    }
+}
+""")
+
 CPP_CLIENT_DECLARATION = Template("""
 class ${service}Client : public ${service}If {
 
@@ -349,36 +409,48 @@ ${functionDeclarations}
     """+CPP_PROTOCOLP+""" _oprot;
 };""")
 
+def toServerFunctionDefinition(servicePrefix, function, debugp=None):
+    result = ""
+
+    argsStructDeclaration = typeToCTypeDeclaration(function.argsStruct)+" __args"
+
+    argsStructReader = toReaderCall("__args", function.argsStruct, "_iprot")
+
+    resultStructDeclaration = typeToCTypeDeclaration(function.resultStruct)+" __result"
+
+    resultStructWriter = toWriterCall("__result", function.resultStruct, "_oprot")
+
+    if function.returnType() != VOID_TYPE:
+	returnValueDeclaration = typeToCTypeDeclaration(toCanonicalType(function.returnType()))+"  __returnValue"
+	functionCall = "__returnValue = "
+	returnToResult = "__result.success = __returnValue"
+    else:
+	returnValueDeclaration = ""
+	functionCall = ""
+	returnToResult = ""
+
+    functionCall+= function.name+"("+string.join(["__args."+arg.name for arg in function.args()], ", ")+")"
+
+    result+= CPP_SERVER_FUNCTION_DEFINITION.substitute(service=servicePrefix, function=function.name,
+						       argsStructDeclaration=argsStructDeclaration, 
+						       argsStructReader=argsStructReader, 
+						       functionCall=functionCall,
+						       returnToResult=returnToResult,
+						       resultStructDeclaration=resultStructDeclaration,
+						       resultStructWriter=resultStructWriter,
+						       returnValueDeclaration=returnValueDeclaration)
+
+    
+
+    return result
+
 def toServerServiceDefinition(service, debugp=None):
 
     result = ""
 
     for function in service.functionList:
-
-	if len(function.argsStruct.fieldList) > 0:
-	    argsStructDeclaration = "    "+typeToCTypeDeclaration(function.argsStruct)+" __args;\n"
-	    argsStructReader = "    "+toReaderCall("__args", function.argsStruct, "_iprot")+";\n"
-	else:
-	    argsStructDeclaration = ""
-	    argsStructReader = ""
-
-	functionCall = "    "
-	resultDeclaration = ""
-	resultWriter = ""
-
-	if toCanonicalType(function.resultType) != VOID_TYPE:
-	    resultDeclaration = "    "+typeToCTypeDeclaration(function.resultType)+" __result;\n"
-	    functionCall+= "__result = "
-
-	functionCall+= function.name+"("+string.join(["__args."+arg.name for arg in function.argsStruct.fieldList], ", ")+");\n"
-
-	if toCanonicalType(function.resultType) != VOID_TYPE:
-	    resultWriter = "    "+toWriterCall("__result", function.resultType, "_oprot")+";"
-
-	result+= CPP_SERVER_FUNCTION_DEFINITION.substitute(service=service.name, function=function.name,
-							   argsStructDeclaration=argsStructDeclaration, argsStructReader=argsStructReader, 
-							   functionCall=functionCall,
-							   resultDeclaration=resultDeclaration, resultWriter=resultWriter)
+	
+	result+= toServerFunctionDefinition(service.name, function, debugp)
 
     return result
 
@@ -391,6 +463,53 @@ def toClientDeclaration(service, debugp=None):
     functionDeclarations = string.join([CPP_CLIENT_FUNCTION_DECLARATION.substitute(functionDeclaration=typeToCTypeDeclaration(function)) for function in service.functionList], "")
 
     return CPP_CLIENT_DECLARATION.substitute(service=service.name, functionDeclarations=functionDeclarations)+"\n"
+
+def toClientFunctionDefinition(servicePrefix, function, debugp=None):
+
+    returnDeclaration = typeToCTypeDeclaration(function.returnType())
+
+    argsDeclaration = string.join([typeToCTypeDeclaration(function.args()[ix].type)+" __arg"+str(ix) for ix in range(len(function.args()))], ", ")
+
+    argsStructDeclaration = typeToCTypeDeclaration(function.argsStruct)+" __args"
+
+    argsStructWriter = toWriterCall("__args", function.argsStruct, "_oprot", "_otrans")
+
+    argsToStruct= string.join(["    __args."+function.args()[ix].name+" = __arg"+str(ix) for ix in range(len(function.args()))], ";\n")
+    
+    resultStructDeclaration = typeToCTypeDeclaration(function.resultStruct)+" __result"
+
+    resultStructReader = toReaderCall("__result", function.resultStruct, "_iprot", "_itrans")
+
+    if(toCanonicalType(function.returnType()) != VOID_TYPE):
+	
+	success = "return __result.success;"
+    else:
+	success = ""
+	    
+    return CPP_CLIENT_FUNCTION_DEFINITION.substitute(service=servicePrefix,
+						     function=function.name,
+						     returnDeclaration=returnDeclaration,
+						     argsDeclaration=argsDeclaration,
+						     argsStructDeclaration=argsStructDeclaration,
+						     argsStructWriter=argsStructWriter,
+						     argsToStruct=argsToStruct,
+						     resultStructDeclaration=resultStructDeclaration, 
+						     resultStructReader=resultStructReader,
+						     success=success)
+
+def toClientServiceDefinition(service, debugp=None):
+
+    result = ""
+
+    for function in service.functionList:
+
+	result+= toClientFunctionDefinition(service.name, function)
+
+    return result
+
+def toClientDefinition(program, debugp=None):
+
+    return string.join([toClientServiceDefinition(service) for service in program.serviceMap.values()], "\n")
 
 def toServiceDeclaration(service, debugp=None):
     return toServiceInterfaceDeclaration(service, debugp) + toServerDeclaration(service, debugp) + toClientDeclaration(service, debugp)
@@ -522,6 +641,7 @@ ${readFieldListSwitch}
 """)
 
 CPP_PRIMITIVE_TYPE_IO_METHOD_SUFFIX_MAP = {
+    "void" :"Void",
     "bool" : "Bool",
     "string": "String",
     "utf7": "String",
@@ -539,9 +659,9 @@ CPP_PRIMITIVE_TYPE_IO_METHOD_SUFFIX_MAP = {
 }
 
 CPP_COLLECTION_TYPE_IO_METHOD_SUFFIX_MAP = {
-    Map : "map",
-    List : "list",
-    Set : "set"
+    MapType : "map",
+    ListType : "list",
+    SetType : "set"
 }
 
 def typeToIOMethodSuffix(ttype):
@@ -553,64 +673,70 @@ def typeToIOMethodSuffix(ttype):
 
         result = CPP_COLLECTION_TYPE_IO_METHOD_SUFFIX_MAP[type(ttype)]+"_"
 
-        if isinstance(ttype, Map):
+        if isinstance(ttype, MapType):
             result+= "k_"+typeToIOMethodSuffix(ttype.keyType)+"_"
 
         result += "v_"+typeToIOMethodSuffix(ttype.valueType)
 
         return result
 
-    elif isinstance(ttype, Struct):
+    elif isinstance(ttype, StructType):
         return "struct_"+ttype.name
 
-    elif isinstance(ttype, TypeDef):
+    elif isinstance(ttype, TypedefType):
         return ttype.name
 
-    elif isinstance(ttype, Enum):
+    elif isinstance(ttype, EnumType):
         return ttype.name
 
     else:
         raise Exception, "Unknown type "+str(ttype)
 
-def toReaderCall(value, ttype, reader="iprot"):
+def toReaderCall(value, ttype, reader="iprot", transport="itrans"):
 
     suffix = typeToIOMethodSuffix(ttype)
 
     if isinstance(ttype, PrimitiveType):
-        return "xfer += "+reader+"->read"+suffix+"(itrans, "+value+")"
+	if ttype != VOID_TYPE:
+	    return "xfer += "+reader+"->read"+suffix+"("+transport+", "+value+")"
+	else:
+	    return ""
 
     elif isinstance(ttype, CollectionType):
-        return "xfer+= read_"+suffix+"("+reader+", itrans, "+value+")"
+        return "xfer+= read_"+suffix+"("+reader+", "+transport+", "+value+")"
 
-    elif isinstance(ttype, Struct):
-        return "xfer+= read_"+suffix+"("+reader+", itrans, "+value+")"
+    elif isinstance(ttype, StructType):
+        return "xfer+= read_"+suffix+"("+reader+", "+transport+", "+value+")"
 
-    elif isinstance(ttype, TypeDef):
+    elif isinstance(ttype, TypedefType):
         return toReaderCall("reinterpret_cast<"+typeToCTypeDeclaration(ttype.definitionType)+"&>("+value+")", ttype.definitionType, reader)
 
-    elif isinstance(ttype, Enum):
+    elif isinstance(ttype, EnumType):
         return toReaderCall("reinterpret_cast<"+typeToCTypeDeclaration(I32_TYPE)+"&>("+value+")", I32_TYPE, reader)
 
     else:
         raise Exception, "Unknown type "+str(ttype)
 
-def toWriterCall(value, ttype, writer="oprot"):
+def toWriterCall(value, ttype, writer="oprot", transport="otrans"):
 
     suffix = typeToIOMethodSuffix(ttype)
 
     if isinstance(ttype, PrimitiveType):
-        return "xfer+= "+writer+"->write"+suffix+"(otrans, "+value+")"
+	if ttype != VOID_TYPE:
+	    return "xfer+= "+writer+"->write"+suffix+"("+transport+", "+value+")"
+	else:
+	    return ""
 
     elif isinstance(ttype, CollectionType):
-        return "xfer+= write_"+suffix+"("+writer+", otrans, "+value+")"
+        return "xfer+= write_"+suffix+"("+writer+", "+transport+", "+value+")"
 
-    elif isinstance(ttype, Struct):
-        return "xfer+= write_"+suffix+"("+writer+", otrans, "+value+")"
+    elif isinstance(ttype, StructType):
+        return "xfer+= write_"+suffix+"("+writer+", "+transport+", "+value+")"
 
-    elif isinstance(ttype, TypeDef):
+    elif isinstance(ttype, TypedefType):
         return toWriterCall("reinterpret_cast<const "+typeToCTypeDeclaration(ttype.definitionType)+"&>("+value+")", ttype.definitionType, writer)
 
-    elif isinstance(ttype, Enum):
+    elif isinstance(ttype, EnumType):
         return toWriterCall("reinterpret_cast<const "+typeToCTypeDeclaration(I32_TYPE)+"&>("+value+")", I32_TYPE, writer)
 
     else:
@@ -686,12 +812,12 @@ def toCollectionReaderDefinition(ttype):
 
     suffix = typeToIOMethodSuffix(ttype)
 
-    if isinstance(ttype, Map):
+    if isinstance(ttype, MapType):
         keyReaderCall = toReaderCall("key", ttype.keyType)
 
     valueReaderCall= toReaderCall("elem", ttype.valueType)
 
-    if isinstance(ttype, Map):
+    if isinstance(ttype, MapType):
         return CPP_READ_MAP_DEFINITION.substitute(suffix=suffix, declaration=typeToCTypeDeclaration(ttype),
                                                   keyType=typeToCTypeDeclaration(ttype.keyType),
                                                   keyReaderCall=keyReaderCall,
@@ -699,7 +825,7 @@ def toCollectionReaderDefinition(ttype):
                                                   valueReaderCall=valueReaderCall)
 
     else:
-	if isinstance(ttype, List):
+	if isinstance(ttype, ListType):
 	    insert="push_back"
 	else:
 	    insert="insert"
@@ -714,14 +840,14 @@ def toCollectionWriterDefinition(ttype):
 
     suffix = typeToIOMethodSuffix(ttype)
 
-    if isinstance(ttype, Map):
+    if isinstance(ttype, MapType):
         keyWriterCall = toWriterCall("ix->first", ttype.keyType)
         valueWriterCall = toWriterCall("ix->second", ttype.valueType)
 
     else:
 	valueWriterCall= toWriterCall("*ix", ttype.valueType)
 
-    if isinstance(ttype, Map):
+    if isinstance(ttype, MapType):
         return CPP_WRITE_MAP_DEFINITION.substitute(suffix=suffix, declaration=typeToCTypeDeclaration(ttype),
                                                   keyType=typeToCTypeDeclaration(ttype.keyType),
                                                   keyWriterCall=keyWriterCall,
@@ -742,6 +868,8 @@ uint32_t read_${suffix}("""+CPP_PROTOCOLP+""" iprot, """+CPP_TRANSPORTP+""" itra
     int16_t id;
     uint32_t xfer = 0;
 
+    xfer+= iprot->readStructBegin(itrans, name);
+
     while(true) {
 
         xfer+= iprot->readFieldBegin(itrans, name, type, id);
@@ -750,10 +878,14 @@ uint32_t read_${suffix}("""+CPP_PROTOCOLP+""" iprot, """+CPP_TRANSPORTP+""" itra
 
         switch(id) {
 ${fieldSwitch}
-            default: xfer += iprot->skip(itrans, type); break;}
+            default: xfer += iprot->skip(itrans, type); break;
+	}
 
         xfer+= iprot->readFieldEnd(itrans);
     }
+
+    xfer+= iprot->readStructEnd(itrans);
+
     return xfer;
 }
 """)
@@ -792,7 +924,7 @@ def toStructReaderDefinition(ttype):
 
     for field in fieldList:
         fieldSwitch+= "            case "+str(field.id)+": "
-        fieldSwitch+= toReaderCall("value."+field.name, field.type)+"; break;\n"
+        fieldSwitch+= toReaderCall("value."+field.name, field.type)+"; value.__isset."+field.name+" = true; break;\n"
 
     return CPP_READ_STRUCT_DEFINITION.substitute(suffix=suffix, declaration=typeToCTypeDeclaration(ttype), fieldSwitch=fieldSwitch)
 
@@ -813,13 +945,13 @@ def toReaderDefinition(ttype):
     if isinstance(ttype, CollectionType):
         return toCollectionReaderDefinition(ttype)
 
-    elif isinstance(ttype, Struct):
+    elif isinstance(ttype, StructType):
         return toStructReaderDefinition(ttype)
 
-    elif isinstance(ttype, TypeDef):
+    elif isinstance(ttype, TypedefType):
 	return ""
 
-    elif isinstance(ttype, Enum):
+    elif isinstance(ttype, EnumType):
 	return ""
 
     else:
@@ -829,13 +961,13 @@ def toWriterDefinition(ttype):
     if isinstance(ttype, CollectionType):
         return toCollectionWriterDefinition(ttype)
 
-    elif isinstance(ttype, Struct):
+    elif isinstance(ttype, StructType):
         return toStructWriterDefinition(ttype)
 
-    elif isinstance(ttype, TypeDef):
+    elif isinstance(ttype, TypedefType):
 	return ""
 
-    elif isinstance(ttype, Enum):
+    elif isinstance(ttype, EnumType):
 	return ""
 
     else:
@@ -853,23 +985,23 @@ def toOrderedIOList(ttype, result=None):
 
     elif isinstance(ttype, CollectionType):
 
-	if isinstance(ttype, Map):
+	if isinstance(ttype, MapType):
 	    result = toOrderedIOList(ttype.keyType, result)
 
 	result = toOrderedIOList(ttype.valueType, result)
 
 	result.append(ttype)
 
-    elif isinstance(ttype, Struct):
+    elif isinstance(ttype, StructType):
 	for field in ttype.fieldList:
 	    result = toOrderedIOList(field.type, result)
 	result.append(ttype)
 
-    elif isinstance(ttype, TypeDef):
+    elif isinstance(ttype, TypedefType):
 	result.append(ttype)
 	return result
 
-    elif isinstance(ttype, Enum):
+    elif isinstance(ttype, EnumType):
 	result.append(ttype)
 	return result
 
@@ -886,13 +1018,13 @@ def toOrderedIOList(ttype, result=None):
 	    result = toOrderedIOList(function, result)
 
     elif isinstance(ttype, Function):
-	result = toOrderedIOList(ttype.resultType, result)
+	result = toOrderedIOList(ttype.returnType(), result)
 
 	# skip the args struct itself and just order the arguments themselves
-	# we don't want the arg struct to be referred to until laters, since we need to
+	# we don't want the arg struct to be referred to until later, since we need to
 	# inline those struct definitions with the implementation, not in the types header
 	
-	for field in ttype.argsStruct.fieldList:
+	for field in ttype.args():
 	    result = toOrderedIOList(field.type, result)
 
     else:
@@ -912,19 +1044,20 @@ def toIOMethodImplementations(program):
 	result+= toReaderDefinition(ttype)
 	result+= toWriterDefinition(ttype)
 
-    # for all function argument lists we need to create both struct definitions
-    # and io methods.  We keep the struct definitions local, since they aren't part of the service
-    # API
+    # For all function argument lists, we need to create both struct definitions
+    # and io methods.  We keep the struct definitions local, since they aren't part of the service API
+    #
     # Note that we don't need to do a depth-first traverse of arg structs since they can only include fields
     # we've already seen
 
     for service in program.serviceMap.values():
 	for function in service.functionList:
-	    if len(function.argsStruct.fieldList) == 0:
-		continue
 	    result+= toStructDefinition(function.argsStruct)
-	    result+=toReaderDefinition(function.argsStruct)
-	    result+=toWriterDefinition(function.argsStruct)
+	    result+= toReaderDefinition(function.argsStruct)
+	    result+= toWriterDefinition(function.argsStruct)
+	    result+= toStructDefinition(function.resultStruct)
+	    result+= toReaderDefinition(function.resultStruct)
+	    result+= toWriterDefinition(function.resultStruct)
 
     return result;
 
@@ -958,6 +1091,8 @@ def writeImplementationSource(program, filename, genDir=None, debugp=None):
     cfile.write(toIOMethodImplementations(program))
 
     cfile.write(toServerDefinition(program))
+
+    cfile.write(toClientDefinition(program))
 
     cfile.writeln(CPP_IMPL_FOOTER.substitute(source=basename))
 

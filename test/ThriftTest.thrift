@@ -31,6 +31,8 @@ struct Insanity
   list<Xtruct> xtructList = 1
 }
 
+struct Empty {}
+
 service ThriftTest
 {
   void         testVoid()
