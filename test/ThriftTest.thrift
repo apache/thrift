@@ -20,15 +20,15 @@ struct Xtruct
 
 struct Xtruct2
 {
-  byte   byte_thing = 0,
-  Xtruct struct_thing = 1,
-  i32    i32_thing = 2
+  byte   byte_thing,
+  Xtruct struct_thing,
+  i32    i32_thing
 }
 
 struct Insanity
 {
   map<Numberz, UserId> userMap = 0,
-  list<Xtruct> xtructs = 1
+  list<Xtruct> xtructList = 1
 }
 
 service ThriftTest
@@ -50,4 +50,6 @@ service ThriftTest
 
   /* So you think you've got this all worked, out eh? */
   map<UserId, map<Numberz,Insanity>> testInsanity(Insanity argument = 0)
+  
+  Xtruct	testMulti(byte arg0, i32 arg1, u64 arg2, map<i16, string> arg3, Numberz arg4, UserId arg5)
 }

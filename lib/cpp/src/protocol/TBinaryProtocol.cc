@@ -28,10 +28,10 @@ uint32_t TBinaryProtocol::writeStructEnd(shared_ptr<TTransport> out) const {
 uint32_t TBinaryProtocol::writeFieldBegin(shared_ptr<TTransport> out,
                                           const string& name,
                                           const TType fieldType,
-                                          const uint16_t fieldId) const {
+                                          const int16_t fieldId) const {
   return
     writeByte(out, (uint8_t)fieldType) +
-    writeI32(out, (int32_t)fieldId);
+    writeI16(out, fieldId);
 }
 
 uint32_t TBinaryProtocol::writeFieldEnd(shared_ptr<TTransport> out) const {
@@ -81,24 +81,31 @@ uint32_t TBinaryProtocol::writeSetEnd(shared_ptr<TTransport> out) const {
   return 0;
 }
 
+uint32_t TBinaryProtocol::writeBool(shared_ptr<TTransport> out,
+                                    const bool value) const {
+  uint8_t tmp =  value ? 1 : 0;
+  out->write(&tmp, 1);
+  return 1;
+}
+
 uint32_t TBinaryProtocol::writeByte(shared_ptr<TTransport> out,
                                     const uint8_t byte) const {
   out->write(&byte, 1);
   return 1;
 }
 
-uint32_t TBinaryProtocol::writeU32(shared_ptr<TTransport> out,
-                                   const uint32_t u32) const {
-  uint32_t net = (uint32_t)htonl(u32);
-  out->write((uint8_t*)&net, 4);
-  return 4;
+uint32_t TBinaryProtocol::writeU16(shared_ptr<TTransport> out,
+                                   const uint16_t u16) const {
+  uint16_t net = (uint16_t)htons(u16);
+  out->write((uint8_t*)&net, 2);
+  return 2;
 }
 
-uint32_t TBinaryProtocol::writeI32(shared_ptr<TTransport> out,
-                                   const int32_t i32) const {
-  int32_t net = (int32_t)htonl(i32);
-  out->write((uint8_t*)&net, 4);
-  return 4;
+uint32_t TBinaryProtocol::writeI16(shared_ptr<TTransport> out,
+                                   const int16_t i16) const {
+  int16_t net = (int16_t)htons(i16);
+  out->write((uint8_t*)&net, 2);
+  return 2;
 }
 
 uint32_t TBinaryProtocol::writeU64(shared_ptr<TTransport> out,
@@ -155,7 +162,7 @@ uint32_t TBinaryProtocol::readStructEnd(shared_ptr<TTransport> in) const {
 uint32_t TBinaryProtocol::readFieldBegin(shared_ptr<TTransport> in,
                                          string& name,
                                          TType& fieldType,
-                                         uint16_t& fieldId) const {
+                                         int16_t& fieldId) const {
   uint32_t result = 0;
   uint8_t type;
   result += readByte(in, type);
@@ -164,9 +171,7 @@ uint32_t TBinaryProtocol::readFieldBegin(shared_ptr<TTransport> in,
     fieldId = 0;
     return result;
   }
-  int32_t id;
-  result += readI32(in, id);
-  fieldId = (uint16_t)id;
+  result += readI16(in, fieldId);
   return result;
 }
   
@@ -222,12 +227,38 @@ uint32_t TBinaryProtocol::readSetEnd(shared_ptr<TTransport> in) const {
   return 0;
 }
 
+uint32_t TBinaryProtocol::readBool(shared_ptr<TTransport> in,
+                                   bool& value) const {
+  uint8_t b[1];
+  in->readAll(b, 1);
+  value = *(uint8_t*)b != 0;
+  return 1;
+}
+
 uint32_t TBinaryProtocol::readByte(shared_ptr<TTransport> in,
                                    uint8_t& byte) const {
   uint8_t b[1];
   in->readAll(b, 1);
   byte = *(uint8_t*)b;
   return 1;
+}
+
+uint32_t TBinaryProtocol::readU16(shared_ptr<TTransport> in,
+                                  uint16_t& u16) const {
+  uint8_t b[2];
+  in->readAll(b, 2);
+  u16 = *(uint16_t*)b;
+  u16 = (uint16_t)ntohs(u16);
+  return 2;
+}
+
+uint32_t TBinaryProtocol::readI16(shared_ptr<TTransport> in,
+                                  int16_t& i16) const {
+  uint8_t b[2];
+  in->readAll(b, 2);
+  i16 = *(int16_t*)b;
+  i16 = (int16_t)ntohs(i16);
+  return 2;
 }
 
 uint32_t TBinaryProtocol::readU32(shared_ptr<TTransport> in,

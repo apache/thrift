@@ -300,10 +300,10 @@ def validateFieldList(fieldList):
 
     def assignId(field, currentId, ids):
 	'Finds the next available id number for a field'
-	id= currentId - 1
+	id = currentId - 1
 
 	while id in ids:
-	    id -= 1
+	    id-= 1
 	    
 	field.id = id
 
@@ -315,7 +315,7 @@ def validateFieldList(fieldList):
 	
     currentId = 0
 	
-    for fields in fieldList:
+    for field in fieldList:
 	if not field.id:
 	    currentId = assignId(field, currentId, ids)
 	
@@ -333,16 +333,16 @@ class Struct(Type):
 
 class Function(Definition):
 
-    def __init__(self, symbols, name, resultType, argFieldList):
+    def __init__(self, symbols, name, resultType, argsStruct):
 	Definition.__init__(self, symbols, name)
 	self.resultType = resultType
-	self.argFieldList = argFieldList
+	self.argsStruct = argsStruct
 
     def validate(self):
-	validateFieldList(self.argFieldList)
+	validateFieldList(self.argsStruct.fieldList)
     
     def __str__(self):
-	return self.name+"("+string.join(map(lambda a: str(a), self.argFieldList), ", ")+") => "+str(self.resultType)
+	return self.name+"("+string.join(map(lambda a: str(a), self.argsStruct), ", ")+") => "+str(self.resultType)
 
 class Service(Definition):
 
@@ -499,7 +499,7 @@ class Program(object):
 		except ErrorException, e:
 		    errors+= e.errors
 
-		for field in function.argFieldList:
+		for field in function.argsStruct.fieldList:
 		    try:
 			field.type = self.getType(function, field)
 		    except ErrorException, e:
@@ -662,10 +662,6 @@ class Parser(object):
 	except ErrorException, e:
 	    self.errors+= e.errors
 
-#    def p_definition_or_referencye_type_1(self, p):
-#       XXX need to all typedef struct foo foo_t by allowing references
-#	pass
-	    
     def p_enum(self, p):
 	'enum : ENUM ID LBRACE enumdeflist RBRACE'
 	self.pdebug("p_enum", p)
@@ -728,7 +724,7 @@ class Parser(object):
     def p_function(self, p):
 	'function : functiontype functionmodifiers ID LPAREN fieldlist RPAREN'
 	self.pdebug("p_function", p)
-	p[0] = Function(p, p[3], p[1], p[5])
+	p[0] = Function(p, p[3], p[1], Struct(p, p[3]+"_args", p[5]))
 	try:
 	    p[0].validate()
 	except ErrorException, e:
