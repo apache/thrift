@@ -97,10 +97,10 @@ using namespace boost;
    */
 
 
-  uint32_t readMessasgeBegin(shared_ptr<TTransport> in,
-			     std::string& name,
-			     TMessageType& messageType,
-			     uint32_t& seqid) const;
+  uint32_t readMessageBegin(shared_ptr<TTransport> in,
+			    std::string& name,
+			    TMessageType& messageType,
+			    uint32_t& seqid) const;
 
   uint32_t readMessageEnd(shared_ptr<TTransport> in) const;
 

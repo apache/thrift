@@ -230,7 +230,7 @@ CPP_INTERFACE_FUNCTION_DECLARATION = Template("""    virtual ${functionDeclarati
 CPP_INTERFACE_DECLARATION = Template("""
 class ${service}If {
     public:
-    ~${service}If() {}
+    virtual ~${service}If() {}
 ${functionDeclarations}};
 """)
 
@@ -322,8 +322,6 @@ void ${service}ServerIf::process_${function}(uint32_t seqid, """+CPP_TRANSPORTP+
 CPP_SERVER_PROCESS_DEFINITION = Template("""
 bool ${service}ServerIf::process("""+CPP_TRANSPORTP+""" itrans, """+CPP_TRANSPORTP+""" otrans) {
 
-    uint32_t xfer = 0;
-
     std::string name;
 
     """+CPP_PROTOCOL_MESSAGE_TYPE+""" messageType;
@@ -337,6 +335,8 @@ ${callProcessSwitch}
     } else {
         throw """+CPP_EXCEPTION+"""(\"Unexpected message type\");     
     }
+
+    return true;
 }
 """)
 
@@ -785,7 +785,7 @@ uint32_t read_${suffix}("""+CPP_PROTOCOLP+""" iprot, """+CPP_TRANSPORTP+""" itra
 
    xfer += iprot->readU32(itrans, count);
 
-   for(int ix = 0; ix <  count; ix++) {
+   for(uint32_t ix = 0; ix < count; ix++) {
        ${keyReaderCall};
        ${valueReaderCall};
        value.insert(std::make_pair(key, elem));
@@ -819,7 +819,7 @@ uint32_t read_${suffix}("""+CPP_PROTOCOLP+""" iprot, """+CPP_TRANSPORTP+""" itra
 
    xfer+= iprot->readU32(itrans,  count);
 
-   for(int ix = 0; ix < count; ix++) {
+   for(uint32_t ix = 0; ix < count; ix++) {
        ${valueReaderCall};
        value.${insert}(elem);
    }

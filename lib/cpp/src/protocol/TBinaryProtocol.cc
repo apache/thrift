@@ -110,6 +110,20 @@ uint32_t TBinaryProtocol::writeI16(shared_ptr<TTransport> out,
   return 2;
 }
 
+uint32_t TBinaryProtocol::writeU32(shared_ptr<TTransport> out,
+                                   const uint32_t u32) const {
+  uint32_t net = (uint32_t)htonl(u32);
+  out->write((uint8_t*)&net, 4);
+  return 4;
+}
+
+uint32_t TBinaryProtocol::writeI32(shared_ptr<TTransport> out,
+                                   const int32_t i32) const {
+  int32_t net = (int32_t)htonl(i32);
+  out->write((uint8_t*)&net, 4);
+  return 4;
+}
+
 uint32_t TBinaryProtocol::writeU64(shared_ptr<TTransport> out,
                                    const uint64_t u64) const {
   uint64_t net = (uint64_t)htonll(u64);
@@ -135,10 +149,10 @@ uint32_t TBinaryProtocol::writeString(shared_ptr<TTransport> out,
  * Reading functions
  */
 
-uint32_t TBinaryProtocol::readMessasgeBegin(shared_ptr<TTransport> in,
-					    std::string& name,
-					    TMessageType& messageType,
-					    uint32_t& seqid) const {
+uint32_t TBinaryProtocol::readMessageBegin(shared_ptr<TTransport> in,
+					   std::string& name,
+					   TMessageType& messageType,
+					   uint32_t& seqid) const {
 
   uint32_t result = 0;
   uint8_t type;

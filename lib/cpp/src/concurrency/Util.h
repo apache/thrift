@@ -5,7 +5,11 @@
 
 #include <assert.h>
 #include <stddef.h>
+#if defined(HAVE_CLOCK_GETTIME)
+#include <time.h>
+#else // defined(HAVE_CLOCK_GETTIME)
 #include <sys/time.h>
+#endif // defined(HAVE_CLOCK_GETTIME)
 
 namespace facebook { namespace thrift { namespace concurrency { 
 

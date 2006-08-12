@@ -28,7 +28,7 @@ struct Xtruct2
 struct Insanity
 {
   map<Numberz, UserId> userMap = 0,
-  list<Xtruct> xtructList = 1
+  list<Xtruct> xtructs = 1
 }
 
 struct Empty {}

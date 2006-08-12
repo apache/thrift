@@ -8,14 +8,23 @@
 ifndef thrift_home
 thrift_home=../../build
 endif #thrift_home
+
 target: all
 
+ifndef boost_home
+boost_home=../../../../../thirdparty/boost_1_33_1
+endif #thrift_home
+target: all
+
+include_paths = $(thrift_home)/include/thrift \
+		$(boost_home)
+
+include_flags = $(patsubst %,-I%, $(include_paths))
+
 # Tools
-THRIFT = thrift
+THRIFT = python ../../compiler/src/thrift.py ~/ws/thrift/dev/test/ThriftTest.thrift  --cpp
 CC     = g++
 LD     = g++
-
-include_flags = $(patsubst %,-I$(thrift_home)/include/%, thrift boost-1_33_1)
 
 # Compiler flags
 LIBS  = ../../lib/cpp/src/server/TSimpleServer.cc \
@@ -24,8 +33,8 @@ LIBS  = ../../lib/cpp/src/server/TSimpleServer.cc \
 	../../lib/cpp/src/transport/TChunkedTransport.cc \
 	../../lib/cpp/src/transport/TServerSocket.cc \
 	../../lib/cpp/src/transport/TSocket.cc
-DCFL  = -Wall -O3 -g -Igen-cpp $(include_flags) $(LIBS)
-CFL   = -Wall -O3 -Igen-cpp $(include_flags) -L$(thrift_home)/lib -lthrift
+DCFL  = -Wall -O3 -g -I../cpp-gen $(include_flags) $(LIBS)
+CFL   = -Wall -O3 -I../cpp-gen $(include_flags) -L$(thrift_home)/lib -lthrift
 
 all: server client
 
@@ -35,16 +44,16 @@ stubs: ../ThriftTest.thrift
 	$(THRIFT) -cpp ../ThriftTest.thrift
 
 server-debug: stubs
-	g++ -o TestServer $(DCFL) src/TestServer.cc gen-cpp/ThriftTest.cc
+	g++ -o TestServer $(DCFL) src/TestServer.cc ../cpp-gen/ThriftTest.cc
 
 client-debug: stubs
-	g++ -o TestClient $(DCFL) src/TestClient.cc gen-cpp/ThriftTest.cc
+	g++ -o TestClient $(DCFL) src/TestClient.cc ../cpp-gen/ThriftTest.cc
 
 server: stubs
-	g++ -o TestServer $(CFL) src/TestServer.cc gen-cpp/ThriftTest.cc
+	g++ -o TestServer $(CFL) src/TestServer.cc ../cpp-gen/ThriftTest.cc
 
 client: stubs
-	g++ -o TestClient $(CFL) src/TestClient.cc gen-cpp/ThriftTest.cc
+	g++ -o TestClient $(CFL) src/TestClient.cc ../cpp-gen/ThriftTest.cc
 
 clean:
-	rm -fr TestServer TestClient gen-cpp
+	rm -fr TestServer TestClient ../cpp-gen

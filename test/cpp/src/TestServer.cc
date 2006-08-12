@@ -215,6 +215,18 @@ class TestServer : public ThriftTestServerIf {
 
     return insane;
   }
+
+  Xtruct testMulti(uint8_t arg0, int32_t arg1, uint64_t arg2, std::map<int16_t, std::string>  arg3, Numberz arg4, UserId arg5) {
+    printf("testMulti()\n");
+    
+    Xtruct hello;
+    hello.string_thing = "Hello2";
+    hello.byte_thing = arg0;
+    hello.i32_thing = arg1;
+    hello.i64_thing = (int64_t)arg2;
+
+    return hello;
+  }
 };
 
 int main(int argc, char **argv) {
