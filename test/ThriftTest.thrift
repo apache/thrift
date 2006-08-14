@@ -31,27 +31,50 @@ struct Insanity
   list<Xtruct> xtructs = 1
 }
 
+exception Exception {
+    u32 errorCode,
+    string message
+}
+
+exception Xception {
+    u32 errorCode,
+    Xtruct struct_thing
+}
+ 
 struct Empty {}
+struct OneField {
+   Empty field
+}
 
 service ThriftTest
 {
-  void         testVoid()
-  string       testString(string thing = 0)
-  byte         testByte(byte thing = 0)
-  i32          testI32(i32 thing = 0)
-  i64          testI64(i64 thing = 0)
-  Xtruct       testStruct(Xtruct thing = 0)
-  Xtruct2      testNest(Xtruct2 thing = 0)
-  map<i32,i32> testMap(map<i32,i32> thing = 0)
-  set<i32>     testSet(set<i32> thing = 0)
-  list<i32>    testList(list<i32> thing = 0)
-  Numberz      testEnum(Numberz thing = 0)
-  UserId       testTypedef(UserId thing = 0)
+  void         testVoid(),
+  string       testString(string thing = 0),
+  byte         testByte(byte thing = 0),
+  i32          testI32(i32 thing = 0),
+  i64          testI64(i64 thing = 0),
+  Xtruct       testStruct(Xtruct thing = 0),
+  Xtruct2      testNest(Xtruct2 thing = 0),
+  map<i32,i32> testMap(map<i32,i32> thing = 0),
+  set<i32>     testSet(set<i32> thing = 0),
+  list<i32>    testList(list<i32> thing = 0),
+  Numberz      testEnum(Numberz thing = 0),
+  UserId       testTypedef(UserId thing = 0),
 
-  map<i32,map<i32,i32>> testMapMap(i32 hello = 0)
+  map<i32,map<i32,i32>> testMapMap(i32 hello = 0),
 
   /* So you think you've got this all worked, out eh? */
-  map<UserId, map<Numberz,Insanity>> testInsanity(Insanity argument = 0)
+  map<UserId, map<Numberz,Insanity>> testInsanity(Insanity argument = 0),
+
+  /* Multiple parameters */
   
-  Xtruct	testMulti(byte arg0, i32 arg1, u64 arg2, map<i16, string> arg3, Numberz arg4, UserId arg5)
+  Xtruct	testMulti(byte arg0, i32 arg1, u64 arg2, map<i16, string> arg3, Numberz arg4, UserId arg5),
+
+  /* Exception specifier */
+
+  Xtruct testException(string arg) throws(Exception err1),
+
+  /* Multiple exceptions specifier */
+
+  Xtruct testMultiException(string arg0, string arg1) throws(Exception err1=1, Xception err2)
 }

@@ -136,6 +136,7 @@ U16_TYPE = PrimitiveType("u16")
 U32_TYPE = PrimitiveType("u32")
 U64_TYPE = PrimitiveType("u64")
 FLOAT_TYPE = PrimitiveType("float")
+DOUBLE_TYPE = PrimitiveType("double")
 
 PRIMITIVE_MAP = {
     "stop" : STOP_TYPE,
@@ -154,7 +155,8 @@ PRIMITIVE_MAP = {
     "u16": U16_TYPE,
     "u32": U32_TYPE,
     "u64": U64_TYPE,
-    "float": FLOAT_TYPE
+    "float": FLOAT_TYPE,
+    "double": DOUBLE_TYPE
 }
 
 """ Collection Types """
@@ -331,6 +333,11 @@ class StructType(Type):
     def __str__(self):
 	return self.name+"<"+string.join(map(lambda a: str(a), self.fieldList), ", ")+">"
 
+class ExceptionType(StructType):
+
+    def __init__(self, symbols, name, fieldList):
+	StructType.__init__(self, symbols, name, fieldList)
+
 class Function(Definition):
 
     def __init__(self, symbols, name, resultStruct, argsStruct, ):
@@ -340,15 +347,19 @@ class Function(Definition):
 
     def validate(self):
 	validateFieldList(self.argsStruct.fieldList)
+	validateFieldList(self.resultStruct.fieldList)
 
     def args(self):
 	return self.argsStruct.fieldList
 
     def returnType(self):
 	return self.resultStruct.fieldList[0].type
+
+    def exceptions(self):
+	return self.resultStruct.fieldList[1:]
     
     def __str__(self):
-	return self.name+"("+string.join(map(lambda a: str(a), self.argsStruct), ", ")+") => "+str(self.resultStruct)
+	return self.name+"("+str(self.argsStruct)+") => "+str(self.resultStruct)
 
 class Service(Definition):
 
@@ -522,7 +533,7 @@ class Parser(object):
                 # "CONST",
 		"DOUBLE",
 		"ENUM", 
-                # "EXCEPTION",
+                "EXCEPTION",
                 # "EXTENDS",
 		"I08",
 		"I16",
@@ -536,6 +547,7 @@ class Parser(object):
 		"STRING",
 		"STRUCT", 
                 # "SYNCHRONIZED",
+		"THROWS",
 		"TYPEDEF",
 		"U08", 
 		"U16",
@@ -660,6 +672,15 @@ class Parser(object):
 	except ErrorException, e:
 	    self.errors+= e.errors
 
+    def p_definition_5(self, p):
+	'definition : exception'
+	self.pdebug("p_definition_5", p)
+	p[0] = p[1]
+	try:
+	    self.program.addStruct(p[0])
+	except ErrorException, e:
+	    self.errors+= e.errors
+
     def p_typedef(self, p):
 	'typedef : TYPEDEF definitiontype ID'
 	self.pdebug("p_typedef", p)
@@ -710,6 +731,16 @@ class Parser(object):
 	except ErrorException, e:
 	    self.errors+= e.errors
 
+    def p_exception(self, p):
+	'exception :  EXCEPTION ID LBRACE fieldlist RBRACE'
+	self.pdebug("p_struct", p)
+	p[0] = ExceptionType(p, p[2], p[4])
+
+	try:
+	    p[0].validate()
+	except ErrorException, e:
+	    self.errors+= e.errors
+
     def p_service(self, p):
 	'service : SERVICE ID LBRACE functionlist RBRACE'
 	self.pdebug("p_service", p)
@@ -720,20 +751,25 @@ class Parser(object):
 	    self.errors+= e.errors
 
     def p_functionlist_1(self, p):
-        'functionlist : functionlist function'
+        'functionlist : function COMMA functionlist'
 	self.pdebug("p_functionlist_1", p)
-	p[0] = p[1] + (p[2],)
+	p[0] = (p[1],) + p[3]
 
     def p_functionlist_2(self, p):
-        'functionlist :'
+        'functionlist : function'
 	self.pdebug("p_functionlist_2", p)
+	p[0] = (p[1],)
+
+    def p_functionlist_3(self, p):
+        'functionlist : '
+	self.pdebug("p_functionlist_3", p)
 	p[0] = ()
 
     def p_function(self, p):
-	'function : functiontype functionmodifiers ID LPAREN fieldlist RPAREN'
+	'function : functiontype functionmodifiers ID LPAREN fieldlist RPAREN exceptionspecifier'
 	self.pdebug("p_function", p)
 
-	resultStruct = StructType(p, p[3]+"_result", (Field(p, p[1], Identifier(None, "success", 1)),))
+	resultStruct = StructType(p, p[3]+"_result", (Field(p, p[1], Identifier(None, "success", 0)),)+p[7])
 	
 	p[0] = Function(p, p[3], resultStruct, StructType(p, p[3]+"_args", p[5]))
 	try:
@@ -747,9 +783,9 @@ class Parser(object):
 	p[0] = ()
 
     def p_fieldlist_1(self, p):
-	'fieldlist : fieldlist COMMA field'
+	'fieldlist : field COMMA fieldlist'
 	self.pdebug("p_fieldlist_1", p)
-	p[0] = p[1] + (p[3],)
+	p[0] = (p[1],) + p[3]
 
     def p_fieldlist_2(self, p):
 	'fieldlist : field'
@@ -770,6 +806,16 @@ class Parser(object):
         'field : fieldtype ID'
 	self.pdebug("p_field_2", p)
 	p[0] = Field(p, p[1], Identifier(None, p[2]))
+
+    def p_exceptionSpecifier_1(self, p):
+	'exceptionspecifier : THROWS LPAREN fieldlist RPAREN'
+	self.pdebug("p_exceptionspecifier", p)
+	p[0] = p[3]
+
+    def p_exceptionSpecifier_2(self, p):
+	'exceptionspecifier : empty'
+	self.pdebug("p_exceptionspecifier", p)
+	p[0] = ()
 
     def p_definitiontype_1(self, p):
         'definitiontype : basetype'
@@ -901,6 +947,10 @@ class Parser(object):
 	self.pdebug("p_listtype", p)
 	p[0] = ListType(p, p[3])
 
+    def p_empty(self, p):
+	"empty : "
+	pass
+
     def p_error(self, p):
 	# p_error is called with an empty token if eof was encountered unexpectedly.
 	if not p:
@@ -910,7 +960,7 @@ class Parser(object):
 
     def pdebug(self, name, p):
 	if self.debug:
-	    print(name+"("+string.join(map(lambda t: "<<"+str(t)+">>", p), ", ")+")")
+	    print(name+"("+string.join(["P["+str(ix)+"]<<"+str(p[ix])+">>" for ix in range(len(p))], ", ")+")")
 
     def __init__(self, **kw):
         self.debug = kw.get('debug', 0)
