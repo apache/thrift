@@ -246,7 +246,7 @@ class TestServer : public ThriftTestServerIf {
   
   virtual struct Xtruct testMultiException(std::string arg0, std::string arg1) throw(struct Xception, struct Xception2) {
 
-    printf("testException(%s, %s)\n", arg0.c_str(), arg1.c_str());
+    printf("testMultiException(%s, %s)\n", arg0.c_str(), arg1.c_str());
 
     if(arg0.compare("Xception") == 0) {
       Xception e;

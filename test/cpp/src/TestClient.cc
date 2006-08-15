@@ -325,26 +325,52 @@ int main(int argc, char** argv) {
     }
     printf("}\n");
 
-    /* test multi exception */
+    /* test exception */
 
     try {
-      Xtruct result = testClient.testMultiException("Xception", "test 1");
+      printf("testClient.testException(\"Xception\") =>");
+      testClient.testException("Xception");
+      printf("  void\nFAILURE\n");
       
     }  catch(Xception& e) {
-      printf("testClient.testMulticException(\"Xception\", \"test 1\") => {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
+      printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
     }
-   
+    
     try {
+      printf("testClient.testException(\"success\") =>");
+      testClient.testException("success");
+      printf("  void\n");
+    } catch(...) {
+      printf("  exception\nFAILURE\n");
+    }
+    
+    /* test multi exception */
+    
+    try {
+      printf("testClient.testMultiException(\"Xception\", \"test 1\") =>");
+      Xtruct result = testClient.testMultiException("Xception", "test 1");
+      printf("  result\nFAILURE\n");
+    }  catch(Xception& e) {
+      printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
+    }
+
+    try {
+      printf("testClient.testMultiException(\"Xception2\", \"test 2\") =>");
       Xtruct result = testClient.testMultiException("Xception2", "test 2");
+      printf("  result\nFAILURE\n");
       
     }  catch(Xception2& e) {
-      printf("testClient.testMultiException(\"Xception2\", \"test 2\") => {%u, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing.c_str());
+      printf("  {%u, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing.c_str());
     }
     
-    Xtruct result = testClient.testMultiException("success", "test 3");
+    try {
+      printf("testClient.testMultiException(\"success\", \"test 3\") =>");
+      Xtruct result = testClient.testMultiException("success", "test 3");
+      printf("  {{\"%s\"}}\n", result.string_thing.c_str());
+    } catch(...) {
+      printf("  exception\nFAILURE\n");
+    }
     
-    printf("testClient.testMultiException(\"success\", \"test 3\") => {{\"%s\"}}\n", result.string_thing.c_str());
-
     uint64_t stop = now();
     printf("Total time: %llu us\n", stop-start);
     
