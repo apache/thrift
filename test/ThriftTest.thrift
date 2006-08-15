@@ -1,3 +1,5 @@
+//namespace thrift.test
+
 enum Numberz
 {
   ONE = 1,

@@ -384,10 +384,18 @@ class Service(Definition):
 
 class Program(object):
 
-    def __init__(self, symbols=None, name="", definitions=None, serviceMap=None, typedefMap=None, enumMap=None, structMap=None, collectionMap=None,
+    def __init__(self, symbols=None, name="", 
+		 namespace="",
+		 definitions=None, 
+		 serviceMap=None, 
+		 typedefMap=None, 
+		 enumMap=None, structMap=None, 
+		 collectionMap=None,
                  primitiveMap=None):
 
 	self.name = name
+
+	self.namespace = namespace
 
         if not definitions:
             definitions = []
@@ -527,6 +535,12 @@ class Program(object):
 	if len(errors):
 	    raise ErrorException(errors)
 
+    def validateNamespace(self,  namespace):
+
+	if self.namespace != "":
+	    raise ErrorException([SymanticsError, self, "namespace already defined as \""+self.namespace+"\""])
+	self.namespace = namespace
+
 class Parser(object):
     
     reserved = ("BYTE",
@@ -541,6 +555,7 @@ class Parser(object):
 		"I64",
 		"LIST", 
 		"MAP",
+		"NAMESPACE",
 		"SERVICE", 
 		"SET",
                 # "STATIC",
@@ -560,14 +575,14 @@ class Parser(object):
 
     tokens = reserved + (
 	# Literals (identifier, integer constant, float constant, string constant, char const)
-	'ID', 'ICONST', 'SCONST', 'FCONST', 
+	'ID', 'ICONST', # 'SCONST', 'FCONST', 
 	# Operators default=, optional*, variable...
 	'ASSIGN',  #'OPTIONAL', 'ELLIPSIS',
 	# Delimeters ( ) { } < > , . ; :
 	'LPAREN', 'RPAREN',
 	'LBRACE', 'RBRACE',
 	'LANGLE', 'RANGLE',
-	'COMMA' #, 'PERIOD', 'SEMI' , 'COLON'
+	'COMMA', 'PERIOD' #, 'SEMI' , 'COLON'
 	)
 
     precendence = ()
@@ -596,7 +611,7 @@ class Parser(object):
     t_LBRACE           = r'\{'
     t_RBRACE           = r'\}'
     t_COMMA            = r','
-#    t_PERIOD           = r'\.'
+    t_PERIOD           = r'\.'
 #    t_SEMI             = r';'
 #    t_COLON            = r':'
 #    t_ELLIPSIS         = r'\.\.\.'
@@ -605,10 +620,10 @@ class Parser(object):
     t_ICONST = r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
 
     # Floating literal
-    t_FCONST = r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
+#    t_FCONST = r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
 
     # String literal
-    t_SCONST = r'\"([^\\\n]|(\\.))*?\"'
+#    t_SCONST = r'\"([^\\\n]|(\\.))*?\"'
 
     # Comments
     def t_comment(self, t):
@@ -681,6 +696,11 @@ class Parser(object):
 	except ErrorException, e:
 	    self.errors+= e.errors
 
+    def p_definition_6(self, p):
+	'definition : namespace'
+	self.pdebug("p_definition_6", p)
+	p[0] = p[1]
+
     def p_typedef(self, p):
 	'typedef : TYPEDEF definitiontype ID'
 	self.pdebug("p_typedef", p)
@@ -740,6 +760,26 @@ class Parser(object):
 	    p[0].validate()
 	except ErrorException, e:
 	    self.errors+= e.errors
+
+    def p_namespace(self, p):
+	'namespace :  NAMESPACE namespacespecifier'
+	self.pdebug("p_struct", p)
+	p[0] = p[2]
+
+	try:
+	    self.program.validateNamespace(p[0])
+	except ErrorException, e:
+	    self.errors+= e.errors
+
+    def p_namespacespecifier_1(self, p):
+	'namespacespecifier : ID'
+	self.pdebug("p_namespacespecifier", p)
+	p[0] = p[1]
+	
+    def p_namespacespecifier_2(self, p):
+	'namespacespecifier : ID PERIOD namespacespecifier'
+	self.pdebug("p_namespacespecifier", p)
+	p[0] = p[1]+"."+p[3]
 
     def p_service(self, p):
 	'service : SERVICE ID LBRACE functionlist RBRACE'

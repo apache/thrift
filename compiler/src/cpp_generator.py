@@ -18,9 +18,11 @@ CPP_TYPES_HEADER = Template(HEADER_COMMENT+"""
 #define ${source}_types_h_ 1
 
 #include <Thrift.h>
+${namespacePrefix}
 """)
 
 CPP_TYPES_FOOTER = Template("""
+${namespaceSuffix}
 #endif // !defined(${source}_types_h_)
 """)
 
@@ -33,16 +35,23 @@ CPP_SERVICES_HEADER = Template(HEADER_COMMENT+"""
 #include <protocol/TProtocol.h>
 #include <transport/TTransport.h>
 #include \"${source}_types.h\"
+
+${namespacePrefix}
 """)
 
 CPP_SERVICES_FOOTER = Template("""
+${namespaceSuffix}
 #endif // !defined(${source}_h_)""")
 
 CPP_IMPL_HEADER = Template(HEADER_COMMENT+"""
 #include \"${source}.h\"
+
+${namespacePrefix}
 """)
 
-CPP_IMPL_FOOTER = Template("")
+CPP_IMPL_FOOTER = Template("""
+${namespaceSuffix}
+""")
 
 def cpp_debug(arg):
     print(arg)
@@ -123,7 +132,19 @@ CPP_CONTAINER_MAP = {
     SetType : "std::set",
 }
 
-def typeToCTypeDeclaration(ttype):
+def toCNamespacePrefix(namespace):
+    if not namespace:
+	return ""
+    else:
+	return string.join(["namespace "+token + " {" for token in string.split(namespace, ".")], " ")
+
+def toCNamespaceSuffix(namespace):
+    if not namespace:
+	return ""
+    else:
+	return string.join(["}" for token in string.split(namespace, ".")], "")
+
+def toCTypeDeclaration(ttype):
     """ Converts the thrift IDL type to the corresponding C/C++ type.  Note that if ttype is FieldType, this function c
 converts to type declaration followed by field name, i.e. \"string string_thing\""""
 
@@ -135,10 +156,10 @@ converts to type declaration followed by field name, i.e. \"string string_thing\
         result = CPP_CONTAINER_MAP[type(ttype)]+"<"
         
         if isinstance(ttype, MapType):
-            result+= typeToCTypeDeclaration(ttype.keyType)+", "+ typeToCTypeDeclaration(ttype.valueType)
+            result+= toCTypeDeclaration(ttype.keyType)+", "+ toCTypeDeclaration(ttype.valueType)
 
         elif isinstance(ttype, SetType) or isinstance(ttype, ListType):
-            result+= typeToCTypeDeclaration(ttype.valueType)
+            result+= toCTypeDeclaration(ttype.valueType)
 
         else:
             raise Exception, "Unknown Collection Type "+str(ttype)
@@ -157,13 +178,13 @@ converts to type declaration followed by field name, i.e. \"string string_thing\
         return ttype.name;
 
     elif isinstance(ttype, Function):
-        result = typeToCTypeDeclaration(ttype.returnType())+ " "+ttype.name+"("+string.join([typeToCTypeDeclaration(arg) for arg in ttype.args()], ", ")+")"
+        result = toCTypeDeclaration(ttype.returnType())+ " "+ttype.name+"("+string.join([toCTypeDeclaration(arg) for arg in ttype.args()], ", ")+")"
 	if len(ttype.exceptions()):
-	    result+= " throw("+string.join([typeToCTypeDeclaration(exceptions.type) for exceptions in ttype.exceptions()], ", ")+")"
+	    result+= " throw("+string.join([toCTypeDeclaration(exceptions.type) for exceptions in ttype.exceptions()], ", ")+")"
 	return result
 
     elif isinstance(ttype, Field):
-        return typeToCTypeDeclaration(ttype.type)+ " "+ttype.name
+        return toCTypeDeclaration(ttype.type)+ " "+ttype.name
 
     else:
         raise Exception, "Unknown type "+str(ttype)
@@ -171,7 +192,7 @@ converts to type declaration followed by field name, i.e. \"string string_thing\
 def toTypeDefDefinition(typedef):
     """ Converts a thrift typedef to a C/C++ typedef """
 
-    return "typedef "+typeToCTypeDeclaration(typedef.definitionType)+" "+typedef.name+";"
+    return "typedef "+toCTypeDeclaration(typedef.definitionType)+" "+typedef.name+";"
 
 def toEnumDefinition(enum):
     """ Converts a thrift enum to a C/C++ enum """
@@ -198,7 +219,7 @@ def toStructDefinition(struct):
 
     for field in struct.fieldList:
 	if toCanonicalType(field.type) != VOID_TYPE:
-	    result += "    "+typeToCTypeDeclaration(field)+";\n"
+	    result += "    "+toCTypeDeclaration(field)+";\n"
 
     result+= "    struct {\n"
 
@@ -247,7 +268,7 @@ ${functionDeclarations}};
 def toServiceInterfaceDeclaration(service, debugp=None):
     """Converts a thrift service definition into a C++ abstract base class"""
 
-    functionDeclarations = string.join([CPP_INTERFACE_FUNCTION_DECLARATION.substitute(service=service.name, functionDeclaration=typeToCTypeDeclaration(function)) for function in service.functionList], "")
+    functionDeclarations = string.join([CPP_INTERFACE_FUNCTION_DECLARATION.substitute(service=service.name, functionDeclaration=toCTypeDeclaration(function)) for function in service.functionList], "")
 
     return CPP_INTERFACE_DECLARATION.substitute(service=service.name, functionDeclarations=functionDeclarations)
 
@@ -350,7 +371,7 @@ ${callProcessSwitch}
 """)
 
 def toWireType(ttype):
-    """Converts a thrift type to the corresponding wire type.   This differs from typeToCTypeDeclaration in that it reduces typedefs
+    """Converts a thrift type to the corresponding wire type.   This differs from toCTypeDeclaration in that it reduces typedefs
 to their canonical form and converts enums to signedf 32 bit integers"""
 
     if isinstance(ttype, PrimitiveType):
@@ -454,11 +475,11 @@ def toServerFunctionDefinition(servicePrefix, function, debugp=None):
     """Converts a thrift service method declaration into a server method-call processoror function"""
     result = ""
 
-    argsStructDeclaration = typeToCTypeDeclaration(function.argsStruct)+" __args"
+    argsStructDeclaration = toCTypeDeclaration(function.argsStruct)+" __args"
 
     argsStructReader = toReaderCall("__args", function.argsStruct, "_iprot")
 
-    resultStructDeclaration = typeToCTypeDeclaration(function.resultStruct)+" __result"
+    resultStructDeclaration = toCTypeDeclaration(function.resultStruct)+" __result"
 
     resultStructWriter = toWriterCall("__result", function.resultStruct, "_oprot")
 
@@ -478,7 +499,7 @@ def toServerFunctionDefinition(servicePrefix, function, debugp=None):
     if len(exceptions) > 0:
 	functionCallPrefix= "try {"+functionCallPrefix
 
-	functionCallSuffix = functionCallSuffix+"} "+string.join(["catch("+typeToCTypeDeclaration(exceptions[ix].type)+"& e"+str(ix)+") {__result."+exceptions[ix].name+" = e"+str(ix)+"; __result.__isset."+exceptions[ix].name+"  = true;}" for ix in range(len(exceptions))], "")
+	functionCallSuffix = functionCallSuffix+"} "+string.join(["catch("+toCTypeDeclaration(exceptions[ix].type)+"& e"+str(ix)+") {__result."+exceptions[ix].name+" = e"+str(ix)+"; __result.__isset."+exceptions[ix].name+"  = true;}" for ix in range(len(exceptions))], "")
 
     functionCall = functionCallPrefix+functionCall+functionCallSuffix
 
@@ -511,29 +532,29 @@ def toServerDefinition(program, debugp=None):
 
 def toClientDeclaration(service, debugp=None):
 
-    functionDeclarations = string.join([CPP_CLIENT_FUNCTION_DECLARATION.substitute(functionDeclaration=typeToCTypeDeclaration(function)) for function in service.functionList], "")
+    functionDeclarations = string.join([CPP_CLIENT_FUNCTION_DECLARATION.substitute(functionDeclaration=toCTypeDeclaration(function)) for function in service.functionList], "")
 
     return CPP_CLIENT_DECLARATION.substitute(service=service.name, functionDeclarations=functionDeclarations)+"\n"
 
 def toClientFunctionDefinition(servicePrefix, function, debugp=None):
     """Converts a thrift service method declaration to a client stub implementation"""
 
-    returnDeclaration = typeToCTypeDeclaration(function.returnType())
+    returnDeclaration = toCTypeDeclaration(function.returnType())
 
-    argsDeclaration = string.join([typeToCTypeDeclaration(function.args()[ix].type)+" __arg"+str(ix) for ix in range(len(function.args()))], ", ")
+    argsDeclaration = string.join([toCTypeDeclaration(function.args()[ix].type)+" __arg"+str(ix) for ix in range(len(function.args()))], ", ")
 
-    exceptionDeclaration = string.join([typeToCTypeDeclaration(exception.type) for exception in function.exceptions()], ", ")
+    exceptionDeclaration = string.join([toCTypeDeclaration(exception.type) for exception in function.exceptions()], ", ")
 
     if len(exceptionDeclaration)> 0:
 	exceptionDeclaration = "throw("+exceptionDeclaration+")"
 
-    argsStructDeclaration = typeToCTypeDeclaration(function.argsStruct)+" __args"
+    argsStructDeclaration = toCTypeDeclaration(function.argsStruct)+" __args"
 
     argsStructWriter = toWriterCall("__args", function.argsStruct, "_oprot", "_otrans")
 
     argsToStruct= string.join(["    __args."+function.args()[ix].name+" = __arg"+str(ix) for ix in range(len(function.args()))], ";\n")
     
-    resultStructDeclaration = typeToCTypeDeclaration(function.resultStruct)+" __result"
+    resultStructDeclaration = toCTypeDeclaration(function.resultStruct)+" __result"
 
     resultStructReader = toReaderCall("__result", function.resultStruct, "_iprot", "_itrans")
 
@@ -637,11 +658,11 @@ thrift source, filename, and the optional generated C++ code directory, genDir, 
 
     basename = toBasename(filename)
 
-    cfile.writeln(CPP_TYPES_HEADER.substitute(source=basename, date=time.ctime()))
+    cfile.writeln(CPP_TYPES_HEADER.substitute(source=basename, date=time.ctime(), namespacePrefix=toCNamespacePrefix(program.namespace)))
 
     cfile.write(toDefinitions(program.definitions))
 
-    cfile.writeln(CPP_TYPES_FOOTER.substitute(source=basename))
+    cfile.writeln(CPP_TYPES_FOOTER.substitute(source=basename, namespaceSuffix=toCNamespaceSuffix(program.namespace)))
 
     cfile.close()
 
@@ -672,7 +693,7 @@ def writeServicesHeader(program, filename, genDir=None, debugp=None):
 
     basename = toBasename(filename)
 
-    cfile.writeln(CPP_SERVICES_HEADER.substitute(source=basename, date=time.ctime()))
+    cfile.writeln(CPP_SERVICES_HEADER.substitute(source=basename, date=time.ctime(), namespacePrefix=toCNamespacePrefix(program.namespace)))
 
     services = []
 
@@ -686,7 +707,7 @@ def writeServicesHeader(program, filename, genDir=None, debugp=None):
 
         cfile.write(toServiceDeclaration(service))
 
-    cfile.writeln(CPP_SERVICES_FOOTER.substitute(source=basename))
+    cfile.writeln(CPP_SERVICES_FOOTER.substitute(source=basename, namespaceSuffix=toCNamespaceSuffix(program.namespace)))
 
     cfile.close()
 
@@ -789,10 +810,10 @@ method for a complex type"""
         return "xfer+= read_"+suffix+"("+reader+", "+transport+", "+value+")"
 
     elif isinstance(ttype, TypedefType):
-        return toReaderCall("reinterpret_cast<"+typeToCTypeDeclaration(ttype.definitionType)+"&>("+value+")", ttype.definitionType, reader)
+        return toReaderCall("reinterpret_cast<"+toCTypeDeclaration(ttype.definitionType)+"&>("+value+")", ttype.definitionType, reader)
 
     elif isinstance(ttype, EnumType):
-        return toReaderCall("reinterpret_cast<"+typeToCTypeDeclaration(I32_TYPE)+"&>("+value+")", I32_TYPE, reader)
+        return toReaderCall("reinterpret_cast<"+toCTypeDeclaration(I32_TYPE)+"&>("+value+")", I32_TYPE, reader)
 
     else:
         raise Exception, "Unknown type "+str(ttype)
@@ -816,10 +837,10 @@ method for a complex type"""
         return "xfer+= write_"+suffix+"("+writer+", "+transport+", "+value+")"
 
     elif isinstance(ttype, TypedefType):
-        return toWriterCall("reinterpret_cast<const "+typeToCTypeDeclaration(ttype.definitionType)+"&>("+value+")", ttype.definitionType, writer)
+        return toWriterCall("reinterpret_cast<const "+toCTypeDeclaration(ttype.definitionType)+"&>("+value+")", ttype.definitionType, writer)
 
     elif isinstance(ttype, EnumType):
-        return toWriterCall("reinterpret_cast<const "+typeToCTypeDeclaration(I32_TYPE)+"&>("+value+")", I32_TYPE, writer)
+        return toWriterCall("reinterpret_cast<const "+toCTypeDeclaration(I32_TYPE)+"&>("+value+")", I32_TYPE, writer)
 
     else:
         raise Exception, "Unknown type "+str(ttype)
@@ -901,10 +922,10 @@ def toCollectionReaderDefinition(collection):
     valueReaderCall= toReaderCall("elem", collection.valueType)
 
     if isinstance(collection, MapType):
-        return CPP_READ_MAP_DEFINITION.substitute(suffix=suffix, declaration=typeToCTypeDeclaration(collection),
-                                                  keyType=typeToCTypeDeclaration(collection.keyType),
+        return CPP_READ_MAP_DEFINITION.substitute(suffix=suffix, declaration=toCTypeDeclaration(collection),
+                                                  keyType=toCTypeDeclaration(collection.keyType),
                                                   keyReaderCall=keyReaderCall,
-                                                  valueType=typeToCTypeDeclaration(collection.valueType),
+                                                  valueType=toCTypeDeclaration(collection.valueType),
                                                   valueReaderCall=valueReaderCall)
 
     else:
@@ -913,9 +934,9 @@ def toCollectionReaderDefinition(collection):
 	else:
 	    insert="insert"
 
-        return CPP_READ_LIST_DEFINITION.substitute(suffix=suffix, declaration=typeToCTypeDeclaration(collection),
+        return CPP_READ_LIST_DEFINITION.substitute(suffix=suffix, declaration=toCTypeDeclaration(collection),
                                                    valueReaderCall=valueReaderCall,
-                                                   valueType=typeToCTypeDeclaration(collection.valueType),
+                                                   valueType=toCTypeDeclaration(collection.valueType),
 						   insert=insert)
 
 
@@ -932,16 +953,16 @@ def toCollectionWriterDefinition(collection):
 	valueWriterCall= toWriterCall("*ix", collection.valueType)
 
     if isinstance(collection, MapType):
-        return CPP_WRITE_MAP_DEFINITION.substitute(suffix=suffix, declaration=typeToCTypeDeclaration(collection),
-                                                  keyType=typeToCTypeDeclaration(collection.keyType),
+        return CPP_WRITE_MAP_DEFINITION.substitute(suffix=suffix, declaration=toCTypeDeclaration(collection),
+                                                  keyType=toCTypeDeclaration(collection.keyType),
                                                   keyWriterCall=keyWriterCall,
-                                                  valueType=typeToCTypeDeclaration(collection.valueType),
+                                                  valueType=toCTypeDeclaration(collection.valueType),
                                                   valueWriterCall=valueWriterCall)
 
     else:
-        return CPP_WRITE_LIST_DEFINITION.substitute(suffix=suffix, declaration=typeToCTypeDeclaration(collection),
+        return CPP_WRITE_LIST_DEFINITION.substitute(suffix=suffix, declaration=toCTypeDeclaration(collection),
                                                    valueWriterCall=valueWriterCall,
-                                                   valueType=typeToCTypeDeclaration(collection.valueType))
+                                                   valueType=toCTypeDeclaration(collection.valueType))
 
 
 CPP_READ_STRUCT_DEFINITION = Template("""
@@ -1007,7 +1028,7 @@ def toStructReaderDefinition(struct):
         fieldSwitch+= "            case "+str(field.id)+": "
         fieldSwitch+= toReaderCall("value."+field.name, field.type)+"; value.__isset."+field.name+" = true; break;\n"
 
-    return CPP_READ_STRUCT_DEFINITION.substitute(suffix=suffix, declaration=typeToCTypeDeclaration(struct), fieldSwitch=fieldSwitch)
+    return CPP_READ_STRUCT_DEFINITION.substitute(suffix=suffix, declaration=toCTypeDeclaration(struct), fieldSwitch=fieldSwitch)
 
 
 def toStructWriterDefinition(struct):
@@ -1025,7 +1046,7 @@ def toStructWriterDefinition(struct):
 
     fieldWriterCalls = "    "+string.join(fieldWriterCalls, "\n    ")
 
-    return CPP_WRITE_STRUCT_DEFINITION.substitute(name=struct.name, suffix=suffix, declaration=typeToCTypeDeclaration(struct), fieldWriterCalls=fieldWriterCalls)
+    return CPP_WRITE_STRUCT_DEFINITION.substitute(name=struct.name, suffix=suffix, declaration=toCTypeDeclaration(struct), fieldWriterCalls=fieldWriterCalls)
     
 CPP_WRITE_RESULT_STRUCT_DEFINITION = Template("""
 uint32_t write_${suffix}("""+CPP_PROTOCOLP+""" oprot, """+CPP_TRANSPORTP+""" otrans, const ${declaration}& value) {
@@ -1054,7 +1075,7 @@ def toResultStructWriterDefinition(struct):
 
     fieldWriterCalls = "    "+string.join(fieldWriterCalls, "\n    else ")
 
-    return CPP_WRITE_STRUCT_DEFINITION.substitute(name=struct.name, suffix=suffix, declaration=typeToCTypeDeclaration(struct), fieldWriterCalls=fieldWriterCalls)
+    return CPP_WRITE_STRUCT_DEFINITION.substitute(name=struct.name, suffix=suffix, declaration=toCTypeDeclaration(struct), fieldWriterCalls=fieldWriterCalls)
 
 def toReaderDefinition(ttype):
     """Converts thrift type to a reader function definition"""
@@ -1213,7 +1234,7 @@ thrift source, filename, and the optional generated C++ code directory, genDir, 
 
     basename = toBasename(filename)
 
-    cfile.writeln(CPP_IMPL_HEADER.substitute(source=basename, date=time.ctime()))
+    cfile.writeln(CPP_IMPL_HEADER.substitute(source=basename, date=time.ctime(), namespacePrefix=toCNamespacePrefix(program.namespace)))
 
     cfile.write(toIOMethodImplementations(program))
 
@@ -1221,7 +1242,7 @@ thrift source, filename, and the optional generated C++ code directory, genDir, 
 
     cfile.write(toClientDefinition(program))
 
-    cfile.writeln(CPP_IMPL_FOOTER.substitute(source=basename))
+    cfile.writeln(CPP_IMPL_FOOTER.substitute(source=basename, namespaceSuffix=toCNamespaceSuffix(program.namespace)))
 
     cfile.close()
 
