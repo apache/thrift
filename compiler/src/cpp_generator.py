@@ -217,15 +217,28 @@ def toStructDefinition(struct):
 
     result = "struct "+struct.name+" {\n"
 
-    for field in struct.fieldList:
-	if toCanonicalType(field.type) != VOID_TYPE:
-	    result += "    "+toCTypeDeclaration(field)+";\n"
+    # Create constructor defaults for primitive types
 
-    result+= "    struct {\n"
+    ctorValues = string.join([field.name+"(0)" for field in struct.fieldList if isinstance(toCanonicalType(field.type), PrimitiveType) and toCanonicalType(field.type) not in [STRING_TYPE, UTF8_TYPE, UTF16_TYPE, VOID_TYPE]], ", ")
 
-    for field in struct.fieldList:
-	result+= "        bool "+field.name+";\n"
-    result+= "   } __isset;\n"
+    if len(ctorValues) > 0:
+	result+= "    "+struct.name+"() : "+ctorValues+ " {}\n" 
+
+    # Field declarations
+
+    result+= string.join(["    "+toCTypeDeclaration(field)+";\n" for field in struct.fieldList if toCanonicalType(field.type) != VOID_TYPE], "")
+
+    # is-field-set struct and ctor
+
+    ctorValues = string.join([field.name+"(false)" for field in struct.fieldList if toCanonicalType(field.type) != VOID_TYPE], ", ")
+
+    if len(ctorValues) > 0:
+	result+= "    struct __isset {\n"
+	result+= "        __isset() : "+ctorValues+" {}\n"
+	result+= string.join(["        bool "+field.name+";\n" for field in struct.fieldList if toCanonicalType(field.type) != VOID_TYPE], "")
+        result+= "   } __isset;\n"
+
+    # bring it on home
 
     result+= "};\n"
 
@@ -337,7 +350,7 @@ void ${service}ServerIf::process_${function}(uint32_t seqid, """+CPP_TRANSPORTP+
 
     ${resultStructDeclaration};
 
-    ${functionCall};
+    ${functionCall}
 
     _oprot->writeMessageBegin(otrans, \"${function}\", """+CPP_PROTOCOL_REPLY+""", seqid);
 
@@ -446,11 +459,8 @@ ${argsToStruct};
 
     _iprot->readMessageEnd(_itrans);
 
-    if(__result.__isset.success) {
-        ${success}
-    } ${error} else {
-        throw """+CPP_EXCEPTION+"""(\"${function} failed: unknown result");
-    }
+${returnResult}
+    throw """+CPP_EXCEPTION+"""(\"${function} failed: unknown result");
 }
 """)
 
@@ -483,11 +493,9 @@ def toServerFunctionDefinition(servicePrefix, function, debugp=None):
 
     resultStructWriter = toWriterCall("__result", function.resultStruct, "_oprot")
 
-    
-
-    if function.returnType() != VOID_TYPE:
+    if toCanonicalType(function.returnType()) != VOID_TYPE:
 	functionCallPrefix= "__result.success = "
-	functionCallSuffix = "__result.__isset.success = true;"
+	functionCallSuffix = "\n    __result.__isset.success = true;"
     else:
 	functionCallPrefix = ""
 	functionCallSuffix = ""
@@ -497,9 +505,10 @@ def toServerFunctionDefinition(servicePrefix, function, debugp=None):
     exceptions = function.exceptions()
 
     if len(exceptions) > 0:
-	functionCallPrefix= "try {"+functionCallPrefix
+	functionCallPrefix= "try {\n        "+functionCallPrefix
 
-	functionCallSuffix = functionCallSuffix+"} "+string.join(["catch("+toCTypeDeclaration(exceptions[ix].type)+"& e"+str(ix)+") {__result."+exceptions[ix].name+" = e"+str(ix)+"; __result.__isset."+exceptions[ix].name+"  = true;}" for ix in range(len(exceptions))], "")
+	functionCallSuffix+= "\n    }"+string.join([" catch("+toCTypeDeclaration(exceptions[ix].type)+"& e"+str(ix)+") {\n        __result."+exceptions[ix].name+" = e"+str(ix)+";\n        __result.__isset."+exceptions[ix].name+" = true;\n    }" 
+		     for ix in range(len(exceptions))], "")
 
     functionCall = functionCallPrefix+functionCall+functionCallSuffix
 
@@ -520,7 +529,7 @@ def toServerServiceDefinition(service, debugp=None):
 	
 	result+= toServerFunctionDefinition(service.name, function, debugp)
     
-    callProcessSwitch = "        if"+string.join(["(name.compare(\""+function.name+"\") == 0) { process_"+function.name+"(seqid, itrans, otrans);}" for function in service.functionList], "\n        else if")+"\n        else {throw "+CPP_EXCEPTION+"(\"Unknown function name \\\"\"+name+\"\\\"\");}"
+    callProcessSwitch = "        if"+string.join(["(name.compare(\""+function.name+"\") == 0) { process_"+function.name+"(seqid, itrans, otrans);\n}" for function in service.functionList], "\n        else if")+" else {throw "+CPP_EXCEPTION+"(\"Unknown function name \\\"\"+name+\"\\\"\");}"
 
     result+= CPP_SERVER_PROCESS_DEFINITION.substitute(service=service.name, callProcessSwitch=callProcessSwitch)
 
@@ -538,6 +547,8 @@ def toClientDeclaration(service, debugp=None):
 
 def toClientFunctionDefinition(servicePrefix, function, debugp=None):
     """Converts a thrift service method declaration to a client stub implementation"""
+
+    isVoid = toCanonicalType(function.returnType()) == VOID_TYPE
 
     returnDeclaration = toCTypeDeclaration(function.returnType())
 
@@ -558,18 +569,27 @@ def toClientFunctionDefinition(servicePrefix, function, debugp=None):
 
     resultStructReader = toReaderCall("__result", function.resultStruct, "_iprot", "_itrans")
 
-    if(toCanonicalType(function.returnType()) != VOID_TYPE):
-	
-	success = "return __result.success;"
-    else:
-	success = ""
-    
     exceptions = function.exceptions()
 
+    """ void return and non-void returns require very different arrangments.  For void returns, we don't actually expect
+        anything to have been sent from the remote side, therefore  we need to check for explicit exception returns first,
+	then, if none were encountered, return.  For void we test for success first - since this is the most likey result -
+	and then check for exceptions.  In both cases, we need to handle the case where there are no specified exceptions. """
+
     if len(exceptions) > 0:
-	error = "else if "+string.join(["(__result.__isset."+exception.name+") { throw  __result."+exception.name+";}" for exception in exceptions], "else if")
+	errors= ["if(__result.__isset."+exception.name+") {\n        throw  __result."+exception.name+";\n    }" for exception in exceptions]
     else:
-	error = ""
+	errors = []
+
+    if not isVoid:
+	returnResult = "    if(__result.__isset.success) {\n        return __result.success;\n}"
+	if len(errors) > 0:
+	    returnResult+= " else "+string.join(errors, " else ")
+    else:
+	if len(errors) > 0:
+	    returnResult= "    "+string.join(errors, " else ")+" else {\n        return;\n    }\n"
+	else:
+	    returnResult="    return;\n"
 	    
     return CPP_CLIENT_FUNCTION_DEFINITION.substitute(service=servicePrefix,
 						     function=function.name,
@@ -581,8 +601,7 @@ def toClientFunctionDefinition(servicePrefix, function, debugp=None):
 						     argsToStruct=argsToStruct,
 						     resultStructDeclaration=resultStructDeclaration, 
 						     resultStructReader=resultStructReader,
-						     success=success,
-						     error=error)
+						     returnResult=returnResult)
 
 def toClientServiceDefinition(service, debugp=None):
     """Converts a thrift service definition to a client stub implementation"""
@@ -1025,6 +1044,8 @@ def toStructReaderDefinition(struct):
     fieldSwitch=""
 
     for field in fieldList:
+	if toCanonicalType(field.type) == VOID_TYPE:
+	    continue;
         fieldSwitch+= "            case "+str(field.id)+": "
         fieldSwitch+= toReaderCall("value."+field.name, field.type)+"; value.__isset."+field.name+" = true; break;\n"
 
@@ -1042,7 +1063,8 @@ def toStructWriterDefinition(struct):
 							      type=toWireType(toCanonicalType(field.type)),
 							      id=field.id,
 							      fieldWriterCall=toWriterCall("value."+field.name, field.type))+";" 
-			for field in struct.fieldList]
+			for field in struct.fieldList if toCanonicalType(field.type) != VOID_TYPE
+			]
 
     fieldWriterCalls = "    "+string.join(fieldWriterCalls, "\n    ")
 
@@ -1064,6 +1086,7 @@ ${fieldWriterCalls}
     
 def toResultStructReaderDefinition(struct):
     """Converts internal results struct to a reader function definition"""
+
     return toStructReaderDefinition(struct)
 
 def toResultStructWriterDefinition(struct):
@@ -1071,7 +1094,12 @@ def toResultStructWriterDefinition(struct):
 
     suffix = typeToIOMethodSuffix(struct)
 
-    fieldWriterCalls = ["if(value.__isset."+field.name+") { "+toWriterCall("value."+field.name, field.type)+";}" for field in struct.fieldList]
+    fieldWriterCalls = ["if(value.__isset."+field.name+") { "+
+			CPP_WRITE_FIELD_DEFINITION.substitute(name=field.name,
+							      type=toWireType(toCanonicalType(field.type)),
+							      id=field.id,
+							      fieldWriterCall=toWriterCall("value."+field.name, field.type))+";}" 
+			for field in struct.fieldList if toCanonicalType(field.type) != VOID_TYPE]
 
     fieldWriterCalls = "    "+string.join(fieldWriterCalls, "\n    else ")
 

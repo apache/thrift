@@ -17,6 +17,8 @@ using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::transport;
 using namespace facebook::thrift::server;
 
+using namespace thrift::test;
+
 class TestServer : public ThriftTestServerIf {
  public:
   TestServer(shared_ptr<TProtocol> protocol) :
@@ -42,12 +44,12 @@ class TestServer : public ThriftTestServerIf {
   }
 
   int64_t testI64(int64_t thing) {
-    printf("testI64(%ld)\n", thing);
+    printf("testI64(%lld)\n", thing);
     return thing;
   }
 
   Xtruct testStruct(Xtruct thing) {
-    printf("testStruct({\"%s\", %d, %d, %ld})\n",
+    printf("testStruct({\"%s\", %d, %d, %lld})\n",
            thing.string_thing.c_str(),
            (int)thing.byte_thing,
            thing.i32_thing,
@@ -57,7 +59,7 @@ class TestServer : public ThriftTestServerIf {
 
   Xtruct2 testNest(Xtruct2 nest) {
     Xtruct thing = nest.struct_thing;
-    printf("testNest({%d, {\"%s\", %d, %d, %ld}, %d})\n",
+    printf("testNest({%d, {\"%s\", %d, %d, %lld}, %d})\n",
            (int)nest.byte_thing,
            thing.string_thing.c_str(),
            (int)thing.byte_thing,
@@ -121,7 +123,7 @@ class TestServer : public ThriftTestServerIf {
   }
 
   UserId testTypedef(UserId thing) {
-    printf("testTypedef(%ld)\n", thing);
+    printf("testTypedef(%lld)\n", thing);
     return thing;
   }
 
@@ -181,7 +183,7 @@ class TestServer : public ThriftTestServerIf {
     printf(" = {");
     map<UserId, map<Numberz,Insanity> >::const_iterator i_iter;
     for (i_iter = insane.begin(); i_iter != insane.end(); ++i_iter) {
-      printf("%ld => {", i_iter->first);
+      printf("%lld => {", i_iter->first);
       map<Numberz,Insanity>::const_iterator i2_iter;
       for (i2_iter = i_iter->second.begin();
            i2_iter != i_iter->second.end();
@@ -191,7 +193,7 @@ class TestServer : public ThriftTestServerIf {
         map<Numberz, UserId>::const_iterator um;
         printf("{");
         for (um = userMap.begin(); um != userMap.end(); ++um) {
-          printf("%d => %ld, ", um->first, um->second);
+          printf("%d => %lld, ", um->first, um->second);
         }
         printf("}, ");
 
@@ -199,7 +201,7 @@ class TestServer : public ThriftTestServerIf {
         list<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
-          printf("{\"%s\", %d, %d, %ld}, ",
+          printf("{\"%s\", %d, %d, %lld}, ",
                  x->string_thing.c_str(),
                  (int)x->byte_thing,
                  x->i32_thing,
@@ -227,6 +229,42 @@ class TestServer : public ThriftTestServerIf {
 
     return hello;
   }
+
+  virtual void testException(std::string arg) throw(struct thrift::test::Xception) {
+    printf("testException(%s)\n", arg.c_str());
+    if(arg.compare("Xception") == 0) {
+      Xception e;
+      e.errorCode = 1001;
+      e.message = "This is an Xception";
+      throw e;
+    } else {
+      Xtruct result;
+      result.string_thing = arg;
+      return;
+    }
+  }
+  
+  virtual struct Xtruct testMultiException(std::string arg0, std::string arg1) throw(struct Xception, struct Xception2) {
+
+    printf("testException(%s, %s)\n", arg0.c_str(), arg1.c_str());
+
+    if(arg0.compare("Xception") == 0) {
+      Xception e;
+      e.errorCode = 1001;
+      e.message = "This is an Xception";
+      throw e;
+    
+    } else if(arg0.compare("Xception2") == 0) {
+      Xception2 e;
+      e.errorCode = 2002;
+      e.struct_thing.string_thing = "This is an Xception2";
+      throw e;
+    } else {
+      Xtruct result;
+      result.string_thing = arg1;
+      return  result;
+    }
+  }
 };
 
 int main(int argc, char **argv) {
@@ -241,7 +279,7 @@ int main(int argc, char **argv) {
   usage <<
     argv[0] << " [--port=<port number>] [--server-type=<server-type>] [--protocol-type=<protocol-type>] [--workers=<worker-count>]" << endl <<
 
-    "\t\tserver-type\t\ttype of server, \"simple-server\" or \"thread-pool\".  Default is " << serverType << endl <<
+    "\t\tserver-type\t\ttype of server, \"simple\" or \"thread-pool\".  Default is " << serverType << endl <<
 
     "\t\tprotocol-type\t\ttype of protocol, \"binary\", \"ascii\", or \"xml\".  Default is " << protocolType << endl <<
 

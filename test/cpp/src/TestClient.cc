@@ -13,6 +13,7 @@ using namespace std;
 using namespace facebook::thrift;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::transport;
+using namespace thrift::test;
 
 //extern uint32_t g_socket_syscalls;
 
@@ -96,8 +97,8 @@ int main(int argc, char** argv) {
      * I64 TEST
      */
     printf("testI64(-34359738368)");
-    int64_t i64 = testClient.testI64(-34359738368);
-    printf(" = %ld\n", i64);
+    int64_t i64 = testClient.testI64(-34359738368LL);
+    printf(" = %lld\n", i64);
     
     /**
      * STRUCT TEST
@@ -109,7 +110,7 @@ int main(int argc, char** argv) {
     out.i32_thing = -3;
     out.i64_thing = -5;
     Xtruct in = testClient.testStruct(out);
-    printf(" = {\"%s\", %d, %d, %ld}\n",
+    printf(" = {\"%s\", %d, %d, %lld}\n",
            in.string_thing.c_str(),
            (int)in.byte_thing,
            in.i32_thing,
@@ -125,7 +126,7 @@ int main(int argc, char** argv) {
     out2.i32_thing = 5;
     Xtruct2 in2 = testClient.testNest(out2);
     in = in2.struct_thing;
-    printf(" = {%d, {\"%s\", %d, %d, %ld}, %d}\n",
+    printf(" = {%d, {\"%s\", %d, %d, %lld}, %d}\n",
            in2.byte_thing,
            in.string_thing.c_str(),
            (int)in.byte_thing,
@@ -256,8 +257,8 @@ int main(int argc, char** argv) {
      * TYPEDEF TEST
      */
     printf("testTypedef(309858235082523)");
-    UserId uid = testClient.testTypedef(309858235082523);
-    printf(" = %ld\n", uid);
+    UserId uid = testClient.testTypedef(309858235082523LL);
+    printf(" = %lld\n", uid);
 
     /**
      * NESTED MAP TEST
@@ -292,7 +293,7 @@ int main(int argc, char** argv) {
     printf(" = {");
     map<UserId, map<Numberz,Insanity> >::const_iterator i_iter;
     for (i_iter = whoa.begin(); i_iter != whoa.end(); ++i_iter) {
-      printf("%ld => {", i_iter->first);
+      printf("%lld => {", i_iter->first);
       map<Numberz,Insanity>::const_iterator i2_iter;
       for (i2_iter = i_iter->second.begin();
            i2_iter != i_iter->second.end();
@@ -302,7 +303,7 @@ int main(int argc, char** argv) {
         map<Numberz, UserId>::const_iterator um;
         printf("{");
         for (um = userMap.begin(); um != userMap.end(); ++um) {
-          printf("%d => %ld, ", um->first, um->second);
+          printf("%d => %lld, ", um->first, um->second);
         }
         printf("}, ");
 
@@ -310,7 +311,7 @@ int main(int argc, char** argv) {
         list<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
-          printf("{\"%s\", %d, %d, %ld}, ",
+          printf("{\"%s\", %d, %d, %lld}, ",
                  x->string_thing.c_str(),
                  (int)x->byte_thing,
                  x->i32_thing,
@@ -324,9 +325,29 @@ int main(int argc, char** argv) {
     }
     printf("}\n");
 
-    uint64_t stop = now();
-    printf("Total time: %lu us\n", stop-start);
+    /* test multi exception */
 
+    try {
+      Xtruct result = testClient.testMultiException("Xception", "test 1");
+      
+    }  catch(Xception& e) {
+      printf("testClient.testMulticException(\"Xception\", \"test 1\") => {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
+    }
+   
+    try {
+      Xtruct result = testClient.testMultiException("Xception2", "test 2");
+      
+    }  catch(Xception2& e) {
+      printf("testClient.testMultiException(\"Xception2\", \"test 2\") => {%u, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing.c_str());
+    }
+    
+    Xtruct result = testClient.testMultiException("success", "test 3");
+    
+    printf("testClient.testMultiException(\"success\", \"test 3\") => {{\"%s\"}}\n", result.string_thing.c_str());
+
+    uint64_t stop = now();
+    printf("Total time: %llu us\n", stop-start);
+    
     bufferedSocket->close();
   }
 

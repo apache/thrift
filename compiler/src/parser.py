@@ -122,8 +122,8 @@ class PrimitiveType(Type):
 STOP_TYPE =  PrimitiveType("stop")
 VOID_TYPE =  PrimitiveType("void")
 BOOL_TYPE = PrimitiveType("bool")
-STRING_TYPE =PrimitiveType("utf7")
-UTF7_TYPE = PrimitiveType("utf7")
+STRING_TYPE = PrimitiveType("utf7")
+UTF7_TYPE = STRING_TYPE
 UTF8_TYPE = PrimitiveType("utf8")
 UTF16_TYPE = PrimitiveType("utf16")
 BYTE_TYPE = PrimitiveType("u08")

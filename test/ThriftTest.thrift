@@ -33,12 +33,12 @@ struct Insanity
   list<Xtruct> xtructs = 1
 }
 
-exception Exception {
+exception Xception {
     u32 errorCode,
     string message
 }
 
-exception Xception {
+exception Xception2 {
     u32 errorCode,
     Xtruct struct_thing
 }
@@ -74,9 +74,9 @@ service ThriftTest
 
   /* Exception specifier */
 
-  Xtruct testException(string arg) throws(Exception err1),
+  void testException(string arg) throws(Xception err1),
 
   /* Multiple exceptions specifier */
 
-  Xtruct testMultiException(string arg0, string arg1) throws(Exception err1=1, Xception err2)
+  Xtruct testMultiException(string arg0, string arg1) throws(Xception err1=1, Xception2 err2)
 }

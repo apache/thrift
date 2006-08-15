@@ -22,18 +22,12 @@ include_paths = $(thrift_home)/include/thrift \
 include_flags = $(patsubst %,-I%, $(include_paths))
 
 # Tools
-THRIFT = python ../../compiler/src/thrift.py ~/ws/thrift/dev/test/ThriftTest.thrift  --cpp
+THRIFT = python ../../compiler/src/thrift.py ~/ws/thrift/dev/test/ThriftTest.thrift
 CC     = g++
 LD     = g++
 
 # Compiler flags
-LIBS  = ../../lib/cpp/src/server/TSimpleServer.cc \
-	../../lib/cpp/src/protocol/TBinaryProtocol.cc \
-	../../lib/cpp/src/transport/TBufferedTransport.cc \
-	../../lib/cpp/src/transport/TChunkedTransport.cc \
-	../../lib/cpp/src/transport/TServerSocket.cc \
-	../../lib/cpp/src/transport/TSocket.cc
-DCFL  = -Wall -O3 -g -I../cpp-gen $(include_flags) $(LIBS)
+DCFL  = -Wall -O3 -g -I../cpp-gen $(include_flags) -L$(thrift_home)/lib -lthrift
 CFL   = -Wall -O3 -I../cpp-gen $(include_flags) -L$(thrift_home)/lib -lthrift
 
 all: server client
@@ -41,7 +35,7 @@ all: server client
 debug: server-debug client-debug
 
 stubs: ../ThriftTest.thrift
-	$(THRIFT) -cpp ../ThriftTest.thrift
+	$(THRIFT) --cpp ../ThriftTest.thrift
 
 server-debug: stubs
 	g++ -o TestServer $(DCFL) src/TestServer.cc ../cpp-gen/ThriftTest.cc
