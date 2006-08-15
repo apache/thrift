@@ -1,4 +1,4 @@
-//namespace thrift.test
+namespace thrift.test
 
 enum Numberz
 {
