@@ -2,6 +2,7 @@
 #define T_SERVER_H
 
 #include <TProcessor.h>
+#include <concurrency/Thread.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -17,7 +18,7 @@ class TServerOptions;
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class TServer {
+class TServer : public concurrency::Runnable {
 public:
   virtual ~TServer() {}
   virtual void run() = 0;

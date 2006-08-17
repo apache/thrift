@@ -1,0 +1,50 @@
+# Makefile for Thrift test project.
+# 
+# Author:
+#   Marc Kwiatkowski <marc@facebook.com>
+
+
+ifndef thrift_home
+thrift_home=../../../../build
+endif #thrift_home
+
+target: all
+
+ifndef thirdparty
+thirdparty = ../../../../../../../thirdparty
+endif #thirdparty
+
+ifndef boost_home
+boost_home = /usr/local/include/boost-1_33_1
+endif #thrift_home
+target: all
+
+include_paths = $(thrift_home)/include/thrift \
+		$(boost_home)
+
+include_flags = $(patsubst %,-I%, $(include_paths))
+
+# Tools
+THRIFT = thrift
+CC     = g++
+LD     = g++
+
+# Compiler flags
+DCFL  = -Wall -O3 -g -I cpp-gen $(include_flags) -L$(thrift_home)/lib -lthrift
+CFL   = -Wall -O3 -I cpp-gen $(include_flags) -L$(thrift_home)/lib -lthrift
+
+all: stress-test
+
+debug: stress-test-debug
+
+stubs: StressTest.thrift
+	$(THRIFT) --cpp StressTest.thrift
+
+stress-test-debug: stubs
+	g++ -o stress-test $(DCFL) main.cc cpp-gen/StressTest.cc
+
+stress-test: stubs
+	g++ -o stress-test $(CFL) main.cc cpp-gen/StressTest.cc
+
+clean:
+	rm -fr stress-test cpp-gen
