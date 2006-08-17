@@ -1,18 +1,41 @@
+#!python
 import sys
-import generator
-import cpp_generator
-import parser
+from thrift import cpp_generator
+from thrift import generator
+from thrift import parser
 
-if __name__ == '__main__':
-
-    args = sys.argv[1:]
+def thrift(source, cpp=False, perl=False, php=False, python=False, java=False, ruby=False, debug=False):
 
     generators = []
+
+    if cpp:
+	generators.append(cpp_generator.CPPGenerator())
+    
+    p = parser.Parser(debug=debug)
+
+    p.parse(source, False)
+
+    for generator in generators:
+	generator(p.program, source)
+
+    if len(p.errors):
+	return -1
+    else:
+	return 0
+
+def main(args):
+
+    cpp = False
+    perl = False
+    php = False
+    python = False
+    java = False
+    ruby = False
 
     debug = False
 
     if "--cpp" in args:
-	generators.append(cpp_generator.CPPGenerator())
+	cpp = True
 	args.remove("--cpp")
     if "--debug" in args:
 	debug = True
@@ -20,12 +43,10 @@ if __name__ == '__main__':
 
     filename = args[-1]
 
-    p = parser.Parser(debug=debug)
+    result = thrift(filename, cpp, java, perl, php, python, ruby, debug)
 
-    p.parse(filename, False)
+    sys.exit(result)
 
-    if len(p.errors):
-	sys.exit(-1)
-
-    [g(p.program, filename) for g in generators]
+if __name__ == '__main__':
+    main(sys.argv)
 
