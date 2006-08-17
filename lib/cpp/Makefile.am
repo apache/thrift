@@ -73,5 +73,3 @@ concurrency_test_LDADD = libthrift.la
 
 concurrency_test_CXXFLAGS =  $(common_cxxflags)
 concurrency_test_LDFLAGS =  $(common_ldflags)
-
-dist_bin_SCRIPTS = thrift

@@ -80,7 +80,7 @@ public:
     {Synchronized s(_monitor);
 
       _workerCount--;
-
+	  
       if(_workerCount == 0) {
 	
 	_monitor.notify();
@@ -88,7 +88,6 @@ public:
     }
   }
   
-private:
   shared_ptr<TTransport> _transport;
   shared_ptr<ServiceClient> _client;
   Monitor& _monitor;
@@ -100,7 +99,6 @@ private:
   Monitor _sleep;
 };
     
-
 int main(int argc, char **argv) {
 
   int port = 9090;
@@ -110,7 +108,7 @@ int main(int argc, char **argv) {
   size_t clientCount = 10;
   size_t loopCount = 10000;
 
-  ostringstream usage;
+     ostringstream usage;
 
   usage <<
     argv[0] << " [--port=<port number>] [--server-type=<server-type>] [--protocol-type=<protocol-type>] [--workers=<worker-count>]" << endl <<
@@ -131,12 +129,13 @@ int main(int argc, char **argv) {
 
       size_t end = arg.find_first_of("=", 2);
 
+      string key = string(arg, 2, end - 2);
+
       if(end != string::npos) {
-	args[string(arg, 2, end - 2)] = string(arg, end + 1);
+	args[key] = string(arg, end + 1);
       } else {
-	args[string(arg, 2, end - 2)] = "true";
+	args[key] = "true";
       }
-      ix++;
     } else {
       throw invalid_argument("Unexcepted command line token: "+arg);
     }
@@ -212,7 +211,7 @@ int main(int argc, char **argv) {
 										      threadManager)));
   }
 
-  cout << "Starting the server on port " << port << endl;
+  cerr << "Starting the server on port " << port << endl;
 
   serverThread->start();
 
@@ -236,19 +235,67 @@ int main(int argc, char **argv) {
     (*thread)->start();
   }
 
-  cout << endl;
+  cerr << endl;
+
+  long long time00;
+  long long time01;
   
   {Synchronized s(monitor);
     threadCount = clientCount;
-
-    cout << "Launch "<< clientCount << " client threads" << endl;
+    
+    cerr << "Launch "<< clientCount << " client threads" << endl;
+    
+    time00 =  Util::currentTime();
+    
     monitor.notifyAll();
     
     while(threadCount > 0) {
       monitor.wait();
     }
+    
+    time01 =  Util::currentTime();
   }
+  
+  long long firstTime = 9223372036854775807LL;
+  long long lastTime = 0;
 
-  printf("done.\n");
+  double averageTime = 0;
+  long long minTime = 9223372036854775807LL;
+  long long maxTime = 0;
+  
+  for(set<shared_ptr<Thread> >::iterator ix = clientThreads.begin(); ix != clientThreads.end(); ix++) {
+      
+    shared_ptr<ClientThread> client = dynamic_pointer_cast<ClientThread>((*ix)->runnable());
+      
+    long long delta = client->_endTime - client->_startTime;
+      
+    assert(delta > 0);
+
+    if(client->_startTime < firstTime) {
+      firstTime = client->_startTime;
+    }
+      
+    if(client->_endTime > lastTime) {
+      lastTime = client->_endTime;
+    }
+      
+    if(delta < minTime) {
+      minTime = delta;
+    }
+      
+    if(delta > maxTime) {
+      maxTime = delta;
+    }
+      
+    averageTime+= delta;
+  }
+    
+  averageTime /= clientCount;
+    
+
+  cout <<  "workers :" << workerCount << ", client : " << clientCount << ", loops : " << loopCount << ", rate : " << (clientCount * loopCount * 1000) / ((double)(time01 - time00)) << endl;
+    
+  cerr << "done." << endl;
+
   return 0;
 }
