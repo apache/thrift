@@ -26,6 +26,7 @@ libthrift_la_CXXFLAGS =  $(libthrift_cxxflags)
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
+			 config.h \
 			 src/Thrift.h \
 			 src/TProcessor.h
 
@@ -36,7 +37,8 @@ include_concurrency_HEADERS = \
                          src/concurrency/PosixThreadFactory.h \
                          src/concurrency/Thread.h \
                          src/concurrency/ThreadManager.h \
-                         src/concurrency/TimerManager.h
+                         src/concurrency/TimerManager.h \
+                         src/concurrency/Util.h 
 
 include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = \
@@ -71,3 +73,5 @@ concurrency_test_LDADD = libthrift.la
 
 concurrency_test_CXXFLAGS =  $(common_cxxflags)
 concurrency_test_LDFLAGS =  $(common_ldflags)
+
+dist_bin_SCRIPTS = thrift
