@@ -49,19 +49,19 @@ using namespace boost;
   uint32_t writeMapBegin(shared_ptr<TTransport> out,
 			  const TType keyType,
 			  const TType valType,
-			  const int32_t size) const;
+			  const uint32_t size) const;
 
   uint32_t writeMapEnd(shared_ptr<TTransport> out) const;
 
   uint32_t writeListBegin(shared_ptr<TTransport> out,
 			   const TType elemType,
-			   const int32_t size) const;
+			   const uint32_t size) const;
 
   uint32_t writeListEnd(shared_ptr<TTransport> out) const;
 
   uint32_t writeSetBegin(shared_ptr<TTransport> out,
 			  const TType elemType,
-			  const int32_t size) const;
+			  const uint32_t size) const;
 
   uint32_t writeSetEnd(shared_ptr<TTransport> out) const;
 
@@ -119,19 +119,19 @@ using namespace boost;
   uint32_t readMapBegin(shared_ptr<TTransport> in,
 			 TType& keyType,
 			 TType& valType,
-			 int32_t& size) const;
+			 uint32_t& size) const;
 
   uint32_t readMapEnd(shared_ptr<TTransport> in) const;
 
   uint32_t readListBegin(shared_ptr<TTransport> in,
 			  TType& elemType,
-			  int32_t& size) const;
+			  uint32_t& size) const;
   
   uint32_t readListEnd(shared_ptr<TTransport> in) const;
 
   uint32_t readSetBegin(shared_ptr<TTransport> in,
 			 TType& elemType,
-			 int32_t& size) const;
+			 uint32_t& size) const;
 
   uint32_t readSetEnd(shared_ptr<TTransport> in) const;
 

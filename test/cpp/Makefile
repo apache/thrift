@@ -22,7 +22,10 @@ include_paths = $(thrift_home)/include/thrift \
 include_flags = $(patsubst %,-I%, $(include_paths))
 
 # Tools
-THRIFT = python ../../compiler/src/thrift.py ~/ws/thrift/dev/test/ThriftTest.thrift
+ifndef THRIFT
+THRIFT = thrift
+endif # THRIFT
+
 CC     = g++
 LD     = g++
 

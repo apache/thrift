@@ -329,8 +329,6 @@ class Reader(CodeGenerator):
 
         result+= self.toReadStructEnd()
 
-        result+= self.indent()+"return "+value+";\n"
-
         return result
 
     def toReadCollection(self, value, collection):
@@ -631,11 +629,16 @@ class ClientFunctionGenerator(CodeGenerator):
 
 	result+= self.indent()+"}\n"
 
+	result+= self.reader.toReadMessageEnd()
+
+	if not isVoidType(function.returnType()):
+	    result+= self.indent()+"return "+resultVar.name+"->success;\n"
+	else:
+	    result+= self.indent()+"return;\n"
+
 	self.indent-= 1
 
 	self.oldScope()
-
-	result+= self.reader.toReadMessageEnd()
 
 	result+= self.indent()+"}\n"
 	

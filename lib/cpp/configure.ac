@@ -1,6 +1,6 @@
 AC_PREREQ(2.59)
 
-AC_INIT(thrift, 1.0)
+AC_INIT(thriftcpp, 1.0)
 
 AC_CONFIG_SRCDIR(src/Thrift.h)
 

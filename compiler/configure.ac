@@ -1,0 +1,13 @@
+AC_PREREQ(2.59)
+
+AC_INIT([compiler], [1.0])
+
+AC_CONFIG_AUX_DIR([.])
+
+AM_INIT_AUTOMAKE
+
+AM_PATH_PYTHON(2.4,, :)
+
+AC_CONFIG_FILES([Makefile])
+
+AC_OUTPUT

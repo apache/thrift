@@ -103,19 +103,19 @@ class TProtocol {
   virtual uint32_t writeMapBegin(shared_ptr<TTransport> out,
 				 const TType keyType,
 				 const TType valType,
-				 const int32_t size) const = 0;
+				 const uint32_t size) const = 0;
 
   virtual uint32_t writeMapEnd(shared_ptr<TTransport> out) const = 0;
   
   virtual uint32_t writeListBegin(shared_ptr<TTransport> out,
 				  const TType elemType,
-				  const int32_t size) const = 0;
+				  const uint32_t size) const = 0;
 
   virtual uint32_t writeListEnd(shared_ptr<TTransport> out) const = 0;
 
   virtual uint32_t writeSetBegin(shared_ptr<TTransport> out,
 				 const TType elemType,
-				 const int32_t size) const = 0;
+				 const uint32_t size) const = 0;
 
   virtual uint32_t writeSetEnd(shared_ptr<TTransport> out) const = 0;
 
@@ -172,19 +172,19 @@ class TProtocol {
   virtual uint32_t readMapBegin(shared_ptr<TTransport> in,
 				TType& keyType,
 				TType& valType,
-				int32_t& size) const = 0;
+				uint32_t& size) const = 0;
 
   virtual uint32_t readMapEnd(shared_ptr<TTransport> in) const = 0;
 
   virtual uint32_t readListBegin(shared_ptr<TTransport> in,
 				 TType& elemType,
-				 int32_t& size) const = 0;
+				 uint32_t& size) const = 0;
 
   virtual uint32_t readListEnd(shared_ptr<TTransport> in) const = 0;
 
   virtual uint32_t readSetBegin(shared_ptr<TTransport> in,
 				TType& elemType,
-				int32_t& size) const = 0;
+				uint32_t& size) const = 0;
 
   virtual uint32_t readSetEnd(shared_ptr<TTransport> in) const = 0;
 
@@ -273,7 +273,7 @@ class TProtocol {
         uint32_t result = 0;
         TType keyType;
         TType valType;
-        int32_t i, size;
+        uint32_t i, size;
         result += readMapBegin(in, keyType, valType, size);
         for (i = 0; i < size; i++) {
           result += skip(in, keyType);
@@ -286,7 +286,7 @@ class TProtocol {
       {
         uint32_t result = 0;
         TType elemType;
-        int32_t i, size;
+        uint32_t i, size;
         result += readSetBegin(in, elemType, size);
         for (i = 0; i < size; i++) {
           result += skip(in, elemType);
@@ -298,7 +298,7 @@ class TProtocol {
       {
         uint32_t result = 0;
         TType elemType;
-        int32_t i, size;
+        uint32_t i, size;
         result += readListBegin(in, elemType, size);
         for (i = 0; i < size; i++) {
           result += skip(in, elemType);

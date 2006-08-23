@@ -871,14 +871,21 @@ uint32_t read_${suffix}("""+CPP_PROTOCOLP+""" iprot, """+CPP_TRANSPORTP+""" itra
    ${keyType} key;
    ${valueType} elem;
    uint32_t xfer = 0;
+   """+CPP_PROTOCOL_TTYPE+""" keyType;
+   """+CPP_PROTOCOL_TTYPE+""" valueType;
 
-   xfer += iprot->readU32(itrans, count);
+   xfer += iprot->readMapBegin(itrans, keyType, valueType, count);
 
+   /* XXX
+      Should we assert that read key and value type are correct? */
+   
    for(uint32_t ix = 0; ix < count; ix++) {
        ${keyReaderCall};
        ${valueReaderCall};
        value.insert(std::make_pair(key, elem));
    }
+
+   xfer += iprot->readMapEnd(itrans);
 
    return xfer;
 }
@@ -889,12 +896,14 @@ uint32_t write_${suffix}("""+CPP_PROTOCOLP+""" oprot, """+CPP_TRANSPORTP+""" otr
 
    uint32_t xfer = 0;
 
-   xfer += oprot->writeU32(otrans, value.size());
+   xfer += oprot->writeMapBegin(otrans, ${keyWireType}, ${valueWireType}, value.size());
 
    for(${declaration}::const_iterator ix = value.begin(); ix != value.end(); ++ix) {
        ${keyWriterCall};
        ${valueWriterCall};
    }
+
+   xfer += oprot->writeMapEnd(otrans);
    return xfer;
 }
 """)
@@ -905,6 +914,12 @@ uint32_t read_${suffix}("""+CPP_PROTOCOLP+""" iprot, """+CPP_TRANSPORTP+""" itra
    uint32_t count;
    ${valueType} elem;
    uint32_t xfer = 0;
+   """+CPP_PROTOCOL_TTYPE+""" valueType;
+
+   xfer += iprot->read${protocolSuffix}Begin(itrans, valueType, count);
+
+   /* XXX
+      Should we assert that read value type is correct? */
 
    xfer+= iprot->readU32(itrans,  count);
 
@@ -912,6 +927,8 @@ uint32_t read_${suffix}("""+CPP_PROTOCOLP+""" iprot, """+CPP_TRANSPORTP+""" itra
        ${valueReaderCall};
        value.${insert}(elem);
    }
+
+   xfer += iprot->read${protocolSuffix}End(itrans);
    return xfer;
 }
 """)
@@ -921,11 +938,14 @@ uint32_t write_${suffix}("""+CPP_PROTOCOLP+""" oprot, """+CPP_TRANSPORTP+""" otr
 
    uint32_t xfer = 0;
 
-   xfer+= oprot->writeU32(otrans, value.size());
+   xfer+= oprot->write${protocolSuffix}Begin(otrans, ${valueWireType}, value.size());
 
    for(${declaration}::const_iterator ix = value.begin(); ix != value.end(); ++ix) {
        ${valueWriterCall};
    }
+
+   xfer+= oprot->write${protocolSuffix}End(otrans);
+
    return xfer;
 }
 """)
@@ -949,11 +969,14 @@ def toCollectionReaderDefinition(collection):
 
     else:
 	if isinstance(collection, ListType):
+	    protocolSuffix="List"
 	    insert="push_back"
 	else:
+	    protocolSuffix="Set"
 	    insert="insert"
 
         return CPP_READ_LIST_DEFINITION.substitute(suffix=suffix, declaration=toCTypeDeclaration(collection),
+						   protocolSuffix=protocolSuffix,
                                                    valueReaderCall=valueReaderCall,
                                                    valueType=toCTypeDeclaration(collection.valueType),
 						   insert=insert)
@@ -966,22 +989,36 @@ def toCollectionWriterDefinition(collection):
 
     if isinstance(collection, MapType):
         keyWriterCall = toWriterCall("ix->first", collection.keyType)
+	keyWireType = toWireType(collection.keyType)
         valueWriterCall = toWriterCall("ix->second", collection.valueType)
 
     else:
 	valueWriterCall= toWriterCall("*ix", collection.valueType)
 
+    valueWireType = toWireType(collection.valueType)
+
     if isinstance(collection, MapType):
         return CPP_WRITE_MAP_DEFINITION.substitute(suffix=suffix, declaration=toCTypeDeclaration(collection),
-                                                  keyType=toCTypeDeclaration(collection.keyType),
-                                                  keyWriterCall=keyWriterCall,
-                                                  valueType=toCTypeDeclaration(collection.valueType),
-                                                  valueWriterCall=valueWriterCall)
+						   keyType=toCTypeDeclaration(collection.keyType),
+						   keyWireType=keyWireType,
+						   keyWriterCall=keyWriterCall,
+						   valueType=toCTypeDeclaration(collection.valueType),
+						   valueWireType=valueWireType,
+						   valueWriterCall=valueWriterCall)
 
     else:
+	if isinstance(collection, ListType):
+	    protocolSuffix = "List"
+	elif isinstance(collection, SetType):
+	    protocolSuffix = "Set"
+	else:
+	    raise Exception, "Unknown collection type "+str(type(collection))+":"+str(collection)
+	    
         return CPP_WRITE_LIST_DEFINITION.substitute(suffix=suffix, declaration=toCTypeDeclaration(collection),
-                                                   valueWriterCall=valueWriterCall,
-                                                   valueType=toCTypeDeclaration(collection.valueType))
+						    protocolSuffix=protocolSuffix,
+						    valueWireType=valueWireType,
+						    valueWriterCall=valueWriterCall,
+						    valueType=toCTypeDeclaration(collection.valueType))
 
 
 CPP_READ_STRUCT_DEFINITION = Template("""

@@ -48,11 +48,11 @@ uint32_t TBinaryProtocol::writeFieldStop(shared_ptr<TTransport> out) const {
 uint32_t TBinaryProtocol::writeMapBegin(shared_ptr<TTransport> out,
                                         const TType keyType,
                                         const TType valType,
-                                        const int32_t size) const {
+                                        const uint32_t size) const {
   return
     writeByte(out, (uint8_t)keyType) +
     writeByte(out, (uint8_t)valType) +
-    writeI32(out, (int32_t)size);
+    writeU32(out, (uint32_t)size);
 }
 
 uint32_t TBinaryProtocol::writeMapEnd(shared_ptr<TTransport> out) const {
@@ -61,10 +61,10 @@ uint32_t TBinaryProtocol::writeMapEnd(shared_ptr<TTransport> out) const {
 
 uint32_t TBinaryProtocol::writeListBegin(shared_ptr<TTransport> out,
                                          const TType elemType,
-                                         const int32_t size) const {
+                                         const uint32_t size) const {
   return
     writeByte(out, (uint8_t) elemType) +
-    writeI32(out, (int32_t)size);
+    writeU32(out, (int32_t)size);
 }
 
 uint32_t TBinaryProtocol::writeListEnd(shared_ptr<TTransport> out) const {
@@ -73,10 +73,10 @@ uint32_t TBinaryProtocol::writeListEnd(shared_ptr<TTransport> out) const {
 
 uint32_t TBinaryProtocol::writeSetBegin(shared_ptr<TTransport> out,
                                         const TType elemType,
-                                        const int32_t size) const {
+                                        const uint32_t size) const {
   return
     writeByte(out, (uint8_t)elemType) +
-    writeI32(out, (int32_t)size);
+    writeU32(out, (int32_t)size);
 }
 
 uint32_t TBinaryProtocol::writeSetEnd(shared_ptr<TTransport> out) const {
@@ -200,14 +200,14 @@ uint32_t TBinaryProtocol::readFieldEnd(shared_ptr<TTransport> in) const {
 uint32_t TBinaryProtocol::readMapBegin(shared_ptr<TTransport> in,
                                        TType& keyType,
                                        TType& valType,
-                                       int32_t& size) const {
+                                       uint32_t& size) const {
   uint8_t k, v;
   uint32_t result = 0;
   result += readByte(in, k);
   keyType = (TType)k;
   result += readByte(in, v);
   valType = (TType)v;
-  result += readI32(in, size);
+  result += readU32(in, size);
   return result;
 }
 
@@ -217,12 +217,12 @@ uint32_t TBinaryProtocol::readMapEnd(shared_ptr<TTransport> in) const {
 
 uint32_t TBinaryProtocol::readListBegin(shared_ptr<TTransport> in,
                                         TType& elemType,
-                                        int32_t& size) const {
+                                        uint32_t& size) const {
   uint8_t e;
   uint32_t result = 0;
   result += readByte(in, e);
   elemType = (TType)e;
-  result += readI32(in, size);
+  result += readU32(in, size);
   return result;
 }
 
@@ -232,12 +232,12 @@ uint32_t TBinaryProtocol::readListEnd(shared_ptr<TTransport> in) const {
 
 uint32_t TBinaryProtocol::readSetBegin(shared_ptr<TTransport> in,
                                        TType& elemType,
-                                       int32_t& size) const {
+                                       uint32_t& size) const {
   uint8_t e;
   uint32_t result = 0;
   result += readByte(in, e);
   elemType = (TType)e;
-  result += readI32(in, size);
+  result += readU32(in, size);
   return result;
 }
 
@@ -318,8 +318,8 @@ uint32_t TBinaryProtocol::readI64(shared_ptr<TTransport> in,
 uint32_t TBinaryProtocol::readString(shared_ptr<TTransport> in,
                                      string& str) const {
   uint32_t result;
-  int32_t size;
-  result = readI32(in, size);
+  uint32_t size;
+  result = readU32(in, size);
 
   // Use the heap here to prevent stack overflow for v. large strings
   uint8_t *b = new uint8_t[size];

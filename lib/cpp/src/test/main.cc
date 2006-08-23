@@ -34,6 +34,10 @@ class Server : public ServiceServerIf {
   uint16_t echoU16(uint16_t arg) {return arg;}
   uint32_t echoU32(uint32_t arg) {return arg;}
   uint64_t echoU64(uint64_t arg) {return arg;}
+  string echoString(string arg) {return arg;}
+  list<uint8_t> echoList(list<uint8_t> arg) {return arg;}
+  set<uint8_t> echoSet(set<uint8_t> arg) {return arg;}
+  map<uint8_t, uint8_t> echoMap(map<uint8_t, uint8_t> arg) {return arg;}
 };
 
 class ClientThread: public Runnable {
@@ -107,17 +111,20 @@ int main(int argc, char **argv) {
   size_t workerCount = 4;
   size_t clientCount = 10;
   size_t loopCount = 10000;
+  bool runServer = true;
 
-     ostringstream usage;
+  ostringstream usage;
 
   usage <<
-    argv[0] << " [--port=<port number>] [--server-type=<server-type>] [--protocol-type=<protocol-type>] [--workers=<worker-count>]" << endl <<
-
-    "\t\tserver-type\t\ttype of server, \"simple\" or \"thread-pool\".  Default is " << serverType << endl <<
-
-    "\t\tprotocol-type\t\ttype of protocol, \"binary\", \"ascii\", or \"xml\".  Default is " << protocolType << endl <<
-
-    "\t\tworkers\t\tNumber of thread pools workers.  Only valid for thread-pool server type.  Default is " << workerCount << endl;
+    argv[0] << " [--port=<port number>] [--server] [--server-type=<server-type>] [--protocol-type=<protocol-type>] [--workers=<worker-count>] [--clients=<client-count>] [--loop=<loop-count>]" << endl <<
+    "\tclients        Number of client threads to create - 0 implies no clients, i.e. server only.  Default is " << clientCount << endl <<
+    "\thelp           Prints this help text." << endl <<
+    "\tloop           The number of remote thrift calls each client makes.  Default is " << loopCount << endl <<
+    "\tport           The port the server and clients should bind to for thrift network connections.  Default is " << port << endl <<
+    "\tserver         Run the Thrift server in this process.  Default is " << runServer << endl <<
+    "\tserver-type    Type of server, \"simple\" or \"thread-pool\".  Default is " << serverType << endl <<
+    "\tprotocol-type  Type of protocol, \"binary\", \"ascii\", or \"xml\".  Default is " << protocolType << endl <<
+    "\tworkers        Number of thread pools workers.  Only valid for thread-pool server type.  Default is " << workerCount << endl;
     
   map<string, string>  args;
   
@@ -143,8 +150,25 @@ int main(int argc, char **argv) {
 
   try {
 
+    if(!args["clients"].empty()) {
+      clientCount = atoi(args["clients"].c_str());
+    }
+
+    if(!args["help"].empty()) {
+      cerr << usage.str();
+      return 0;
+    }
+
+    if(!args["loop"].empty()) {
+      loopCount = atoi(args["loop"].c_str());
+    }
+
     if(!args["port"].empty()) {
       port = atoi(args["port"].c_str());
+    }
+
+    if(!args["server"].empty()) {
+      runServer = args["server"] == "true";
     }
 
     if(!args["server-type"].empty()) {
@@ -164,138 +188,141 @@ int main(int argc, char **argv) {
       workerCount = atoi(args["workers"].c_str());
     }
 
-    if(!args["clients"].empty()) {
-      clientCount = atoi(args["clients"].c_str());
-    }
-
-    if(!args["loop"].empty()) {
-      loopCount = atoi(args["loop"].c_str());
-    }
   } catch(exception& e) {
     cerr << e.what() << endl;
     cerr << usage;
   }
 
-  // Dispatcher
-  shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol);
-
-  shared_ptr<Server> server(new Server(binaryProtocol));
-
-  // Options
-  shared_ptr<TServerOptions> serverOptions(new TServerOptions());
-
-  // Transport
-  shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
-
-  // ThreadFactory
-
   shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
 
-  shared_ptr<Thread> serverThread;
+  if(runServer) {
 
-  if(serverType == "simple") {
+    // Dispatcher
+    shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol);
 
-    serverThread = threadFactory->newThread(shared_ptr<Runnable>(new TSimpleServer(server, serverOptions, serverSocket)));
+    shared_ptr<Server> server(new Server(binaryProtocol));
 
-  } else if(serverType == "thread-pool") {
+    // Options
+    shared_ptr<TServerOptions> serverOptions(new TServerOptions());
 
-    shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
+    // Transport
+    shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
 
-    threadManager->threadFactory(threadFactory);
+    // ThreadFactory
 
-    threadManager->start();
+    shared_ptr<Thread> serverThread;
 
-    serverThread = threadFactory->newThread(shared_ptr<TServer>(new TThreadPoolServer(server,
-										      serverOptions,
-										      serverSocket,
-										      threadManager)));
+    if(serverType == "simple") {
+      
+      serverThread = threadFactory->newThread(shared_ptr<Runnable>(new TSimpleServer(server, serverOptions, serverSocket)));
+      
+    } else if(serverType == "thread-pool") {
+
+      shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
+
+      threadManager->threadFactory(threadFactory);
+
+      threadManager->start();
+
+      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TThreadPoolServer(server,
+											serverOptions,
+											serverSocket,
+											threadManager)));
+    }
+
+    cerr << "Starting the server on port " << port << endl;
+
+    serverThread->start();
+    
+    // If we aren't running clients, just wait forever for external clients
+
+    if(clientCount == 0) {
+      serverThread->join();
+    }
   }
 
-  cerr << "Starting the server on port " << port << endl;
+  if(clientCount > 0) {
 
-  serverThread->start();
+    Monitor monitor;
 
-  Monitor monitor;
+    size_t threadCount = 0;
 
-  size_t threadCount = 0;
+    set<shared_ptr<Thread> > clientThreads;
 
-  set<shared_ptr<Thread> > clientThreads;
-
-  for(size_t ix = 0; ix < clientCount; ix++) {
+    for(size_t ix = 0; ix < clientCount; ix++) {
     
-    shared_ptr<TSocket> socket(new TSocket("127.0.01", port));
-    shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
-    shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol());
-    shared_ptr<ServiceClient> serviceClient(new ServiceClient(bufferedSocket, binaryProtocol));
+      shared_ptr<TSocket> socket(new TSocket("127.0.01", port));
+      shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
+      shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol());
+      shared_ptr<ServiceClient> serviceClient(new ServiceClient(bufferedSocket, binaryProtocol));
     
-    clientThreads.insert(threadFactory->newThread(shared_ptr<ClientThread>(new ClientThread(bufferedSocket, serviceClient, monitor, threadCount, loopCount))));
-  }
+      clientThreads.insert(threadFactory->newThread(shared_ptr<ClientThread>(new ClientThread(bufferedSocket, serviceClient, monitor, threadCount, loopCount))));
+    }
   
-  for(std::set<shared_ptr<Thread> >::const_iterator thread = clientThreads.begin(); thread != clientThreads.end(); thread++) {
-    (*thread)->start();
-  }
+    for(std::set<shared_ptr<Thread> >::const_iterator thread = clientThreads.begin(); thread != clientThreads.end(); thread++) {
+      (*thread)->start();
+    }
 
-  cerr << endl;
-
-  long long time00;
-  long long time01;
+    long long time00;
+    long long time01;
   
-  {Synchronized s(monitor);
-    threadCount = clientCount;
+    {Synchronized s(monitor);
+      threadCount = clientCount;
     
-    cerr << "Launch "<< clientCount << " client threads" << endl;
+      cerr << "Launch "<< clientCount << " client threads" << endl;
     
-    time00 =  Util::currentTime();
+      time00 =  Util::currentTime();
     
-    monitor.notifyAll();
+      monitor.notifyAll();
+      
+      while(threadCount > 0) {
+	monitor.wait();
+      }
     
-    while(threadCount > 0) {
-      monitor.wait();
+      time01 =  Util::currentTime();
     }
-    
-    time01 =  Util::currentTime();
-  }
   
-  long long firstTime = 9223372036854775807LL;
-  long long lastTime = 0;
+    long long firstTime = 9223372036854775807LL;
+    long long lastTime = 0;
 
-  double averageTime = 0;
-  long long minTime = 9223372036854775807LL;
-  long long maxTime = 0;
+    double averageTime = 0;
+    long long minTime = 9223372036854775807LL;
+    long long maxTime = 0;
   
-  for(set<shared_ptr<Thread> >::iterator ix = clientThreads.begin(); ix != clientThreads.end(); ix++) {
+    for(set<shared_ptr<Thread> >::iterator ix = clientThreads.begin(); ix != clientThreads.end(); ix++) {
       
-    shared_ptr<ClientThread> client = dynamic_pointer_cast<ClientThread>((*ix)->runnable());
+      shared_ptr<ClientThread> client = dynamic_pointer_cast<ClientThread>((*ix)->runnable());
       
-    long long delta = client->_endTime - client->_startTime;
+      long long delta = client->_endTime - client->_startTime;
       
-    assert(delta > 0);
+      assert(delta > 0);
 
-    if(client->_startTime < firstTime) {
-      firstTime = client->_startTime;
-    }
+      if(client->_startTime < firstTime) {
+	firstTime = client->_startTime;
+      }
       
-    if(client->_endTime > lastTime) {
-      lastTime = client->_endTime;
-    }
+      if(client->_endTime > lastTime) {
+	lastTime = client->_endTime;
+      }
       
-    if(delta < minTime) {
-      minTime = delta;
-    }
+      if(delta < minTime) {
+	minTime = delta;
+      }
       
-    if(delta > maxTime) {
-      maxTime = delta;
-    }
+      if(delta > maxTime) {
+	maxTime = delta;
+      }
       
-    averageTime+= delta;
+      averageTime+= delta;
+    }
+    
+    averageTime /= clientCount;
+    
+    
+    cout <<  "workers :" << workerCount << ", client : " << clientCount << ", loops : " << loopCount << ", rate : " << (clientCount * loopCount * 1000) / ((double)(time01 - time00)) << endl;
+    
+    cerr << "done." << endl;
   }
-    
-  averageTime /= clientCount;
-    
-
-  cout <<  "workers :" << workerCount << ", client : " << clientCount << ", loops : " << loopCount << ", rate : " << (clientCount * loopCount * 1000) / ((double)(time01 - time00)) << endl;
-    
-  cerr << "done." << endl;
 
   return 0;
 }

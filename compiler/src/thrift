@@ -1,15 +1,19 @@
 #!python
 import sys
-from thrift import cpp_generator
 from thrift import generator
+from thrift import cpp_generator
+from thrift import php_generator
 from thrift import parser
 
-def thrift(source, cpp=False, perl=False, php=False, python=False, java=False, ruby=False, debug=False):
+def thrift(source, cpp=False, java=False, perl=False, php=False, python=False, ruby=False, debug=False):
 
     generators = []
 
     if cpp:
 	generators.append(cpp_generator.CPPGenerator())
+    
+    if php:
+	generators.append(php_generator.PHPGenerator())
     
     p = parser.Parser(debug=debug)
 
@@ -37,6 +41,9 @@ def main(args):
     if "--cpp" in args:
 	cpp = True
 	args.remove("--cpp")
+    if "--php" in args:
+	php = True
+	args.remove("--php")
     if "--debug" in args:
 	debug = True
 	args.remove("--debug")

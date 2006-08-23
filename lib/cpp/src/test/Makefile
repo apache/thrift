@@ -38,7 +38,7 @@ all: stress-test
 debug: stress-test-debug
 
 stubs: StressTest.thrift
-	$(THRIFT) --cpp StressTest.thrift
+	$(THRIFT) --cpp --php StressTest.thrift
 
 stress-test-debug: stubs
 	g++ -o stress-test $(DCFL) main.cc cpp-gen/StressTest.cc
