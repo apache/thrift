@@ -12,7 +12,6 @@ Makefile \
 Makefile.in \
 Makefile.orig \
 NEWS \
-README \
 aclocal.m4 \
 autom4te.cache \
 autoscan.log \
