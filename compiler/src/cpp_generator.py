@@ -226,16 +226,16 @@ def toStructDefinition(struct):
 
     # Field declarations
 
-    result+= string.join(["    "+toCTypeDeclaration(field)+";\n" for field in struct.fieldList if toCanonicalType(field.type) != VOID_TYPE], "")
+    result+= string.join(["    "+toCTypeDeclaration(field)+";\n" for field in struct.fieldList if not isVoidType(field.type)], "")
 
     # is-field-set struct and ctor
 
-    ctorValues = string.join([field.name+"(false)" for field in struct.fieldList if toCanonicalType(field.type) != VOID_TYPE], ", ")
+    ctorValues = string.join([field.name+"(false)" for field in struct.fieldList if not isVoidType(field.type)], ", ")
 
     if len(ctorValues) > 0:
 	result+= "    struct __isset {\n"
 	result+= "        __isset() : "+ctorValues+" {}\n"
-	result+= string.join(["        bool "+field.name+";\n" for field in struct.fieldList if toCanonicalType(field.type) != VOID_TYPE], "")
+	result+= string.join(["        bool "+field.name+";\n" for field in struct.fieldList if not isVoidType(field.type)], "")
         result+= "   } __isset;\n"
 
     # bring it on home
@@ -460,7 +460,7 @@ ${argsToStruct};
     _iprot->readMessageEnd(_itrans);
 
 ${returnResult}
-    throw """+CPP_EXCEPTION+"""(\"${function} failed: unknown result");
+    throw """+CPP_EXCEPTION+"""(\"${function} failed: unknown result\");
 }
 """)
 
@@ -493,7 +493,7 @@ def toServerFunctionDefinition(servicePrefix, function, debugp=None):
 
     resultStructWriter = toWriterCall("__result", function.resultStruct, "_oprot")
 
-    if toCanonicalType(function.returnType()) != VOID_TYPE:
+    if not isVoidType(function.returnType()):
 	functionCallPrefix= "__result.success = "
 	functionCallSuffix = "\n    __result.__isset.success = true;"
     else:
@@ -548,7 +548,7 @@ def toClientDeclaration(service, debugp=None):
 def toClientFunctionDefinition(servicePrefix, function, debugp=None):
     """Converts a thrift service method declaration to a client stub implementation"""
 
-    isVoid = toCanonicalType(function.returnType()) == VOID_TYPE
+    isVoid = isVoidType(function.returnType())
 
     returnDeclaration = toCTypeDeclaration(function.returnType())
 
@@ -1044,7 +1044,7 @@ def toStructReaderDefinition(struct):
     fieldSwitch=""
 
     for field in fieldList:
-	if toCanonicalType(field.type) == VOID_TYPE:
+	if isVoidType(field.type):
 	    continue;
         fieldSwitch+= "            case "+str(field.id)+": "
         fieldSwitch+= toReaderCall("value."+field.name, field.type)+"; value.__isset."+field.name+" = true; break;\n"
@@ -1063,7 +1063,7 @@ def toStructWriterDefinition(struct):
 							      type=toWireType(toCanonicalType(field.type)),
 							      id=field.id,
 							      fieldWriterCall=toWriterCall("value."+field.name, field.type))+";" 
-			for field in struct.fieldList if toCanonicalType(field.type) != VOID_TYPE
+			for field in struct.fieldList if not isVoidType(field.type)
 			]
 
     fieldWriterCalls = "    "+string.join(fieldWriterCalls, "\n    ")
@@ -1099,7 +1099,7 @@ def toResultStructWriterDefinition(struct):
 							      type=toWireType(toCanonicalType(field.type)),
 							      id=field.id,
 							      fieldWriterCall=toWriterCall("value."+field.name, field.type))+";}" 
-			for field in struct.fieldList if toCanonicalType(field.type) != VOID_TYPE]
+			for field in struct.fieldList if not isVoidType(field.type)]
 
     fieldWriterCalls = "    "+string.join(fieldWriterCalls, "\n    else ")
 

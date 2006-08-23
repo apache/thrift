@@ -50,8 +50,8 @@ class SymanticsError(Error):
 	return str(self.start)+": error: "+self.message
 
 class ErrorException(Exception):
-
     def __init__(self, errors=None):
+	Exception.__init__(self)
 	self.errors = errors
 
 class Definition(object):
@@ -82,14 +82,18 @@ class Identifier(Definition):
 	    result+="="+str(self.id)
 	return result
 
-
 def toCanonicalType(ttype):
     if isinstance(ttype, TypedefType):
 	return toCanonicalType(ttype.definitionType)
     else:
 	return ttype
 
+def isVoidType(ttype):
+    """Is canonnical type of the specified type void?"""
+    return toCanonicalType(ttype) == VOID_TYPE
+
 def isComparableType(ttype):
+    """Is the type one that is implicitly comparable and thus is suitable for use in C++ maps and sets and java Sets and Maps?"""
     ttype = toCanonicalType(ttype)
     return isinstance(ttype, PrimitiveType) or isinstance(ttype, EnumType)
 
@@ -227,14 +231,16 @@ class EnumType(Definition):
 	def assignId(enumDef, currentId, ids):
 	    'Finds the next available id number for an enum definition'
 
-	    id= currentId + 1
+	    eid= currentId + 1
 
-	    while id in ids:
-		id += 1
+	    while eid in ids:
+		eid += 1
 	    
-	    enumDef.id = id
+	    enumDef.id = eid
 
 	    ids[enumDef.id] = enumDef
+	    
+	    return eid
 
 	# assign ids for all enum defs with unspecified ids
 	
@@ -302,16 +308,16 @@ def validateFieldList(fieldList):
 
     def assignId(field, currentId, ids):
 	'Finds the next available id number for a field'
-	id = currentId - 1
+	fid = currentId - 1
 
-	while id in ids:
-	    id-= 1
+	while fid in ids:
+	    fid-= 1
 	    
-	field.id = id
+	field.id = fid
 
 	ids[field.id] = field
 	
-	return id
+	return fid
 
     # assign ids for all fields with unspecified ids
 	
@@ -340,7 +346,7 @@ class ExceptionType(StructType):
 
 class Function(Definition):
 
-    def __init__(self, symbols, name, resultStruct, argsStruct, ):
+    def __init__(self, symbols, name, resultStruct, argsStruct):
 	Definition.__init__(self, symbols, name)
 	self.resultStruct = resultStruct
 	self.argsStruct = argsStruct
@@ -373,7 +379,7 @@ class Service(Definition):
 	functionNames = {}
 	for function in self.functionList:
 	    if function.name in functionNames:
-		oldFunction = functionName[function.name]
+		oldFunction = functionNames[function.name]
 		errors.append(SymanticsError(function, "function "+function.name+" already defined at "+str(oldFunction.start)))
 	
 	if len(errors):
@@ -384,7 +390,7 @@ class Service(Definition):
 
 class Program(object):
 
-    def __init__(self, symbols=None, name="", 
+    def __init__(self, symbols=None, name="",
 		 namespace="",
 		 definitions=None, 
 		 serviceMap=None, 
@@ -470,16 +476,16 @@ class Program(object):
 	else:
 	    raise ErrorException([SymanticsError(parent, "unknown symbol \""+str(symbol)+"\"")])
 
-	for map in (self.primitiveMap, self.collectionMap, self.typedefMap, self.enumMap, self.structMap):
-	    if typeName in map:
-		return map[typeName]
+	for tmap in (self.primitiveMap, self.collectionMap, self.typedefMap, self.enumMap, self.structMap):
+	    if typeName in tmap:
+		return tmap[typeName]
 
 	raise ErrorException([SymanticsError(parent, "\""+typeName+"\"  is not defined.")])
 
     def hasType(self, parent, symbol):
 	""" Determine if a type definition exists for the symbol"""
 
-        return self.getType(parent, symbol) == True
+        return self.getType(parent, symbol) != None
 
     def validate(self):
 
