@@ -24,7 +24,7 @@ HEADER_COMMENT = """<?php
  """
 
 PHP_TYPES_HEADER = Template(HEADER_COMMENT+"""
-require_once THRIFT_ROOT.\'/Thrift.php\';
+require_once ${prefix}.'thrift/Thrift.php\';
 """)
 
 PHP_TYPES_FOOTER = Template("""
@@ -33,9 +33,10 @@ PHP_TYPES_FOOTER = Template("""
 
 PHP_SERVICES_HEADER = Template(HEADER_COMMENT+"""
 
-require_once THRIFT_ROOT.'/Thrift.php';
 require_once dirname(__FILE__).\'/${source}_types.php\';
-
+require_once ${prefix}.'thrift/protocol/TType.php';
+require_once ${prefix}.'thrift/protocol/TProtocol.php';
+require_once ${prefix}.'thrift/transport/TTransport.php';
 """)
 
 PHP_SERVICES_FOOTER = Template("""
@@ -44,8 +45,8 @@ PHP_SERVICES_FOOTER = Template("""
 
 PHP_IMPL_HEADER = Template(HEADER_COMMENT+"""
 
-require_once THRIFT_ROOT.'/Thrift.php';
-require_once dirname(__FILE__).\'/${source}_types.php\';
+require_once ${prefix}.'thrift/Thrift.php';
+require_once ${prefix}.dirname(__FILE__).\'/${source}_types.php\';
 
 """)
 
@@ -199,8 +200,8 @@ class Reader(CodeGenerator):
         self.iprot = iprot
         self.itrans = itrans
 
-    def toReadMessageBegin(self, messageNameVar, seqidVar):
-        return self.indent()+self.iprot+"->readMessageBegin("+self.itrans+", "+messageNameVar.name+", "+seqidVar.name+");\n"
+    def toReadMessageBegin(self, messageNameVar, messageTypeVar, seqidVar):
+        return self.indent()+self.iprot+"->readMessageBegin("+self.itrans+", "+messageNameVar.name+", "+messageTypeVar.name+", "+seqidVar.name+");\n"
 
     def toReadMessageEnd(self):
         return self.indent()+self.iprot+"->readMessageEnd("+self.itrans+");\n"
@@ -236,10 +237,10 @@ class Reader(CodeGenerator):
         return self.indent()+self.iprot+"->readFieldEnd("+self.itrans+");\n"
 
     def toSkipField(self, fieldTypeVar):
-        return self.indent()+self.iprot+"->skipField("+self.itrans+", "+fieldTypeVar.name+");\n"
+        return self.indent()+self.iprot+"->skip("+self.itrans+", "+fieldTypeVar.name+");\n"
 
     def toReadPrimitive(self, value, suffix):
-        return self.indent()+value+" = "+self.iprot+"->read"+suffix+"("+self.itrans+");\n"
+        return self.indent()+self.iprot+"->read"+suffix+"("+self.itrans+", "+value+");\n"
 
     def toRead(self, value, ttype):
 
@@ -397,8 +398,8 @@ class Writer(CodeGenerator):
         self.oprot = oprot
         self.otrans = otrans
 
-    def toWriteMessageBegin(self, messageName, seqid):
-        return self.indent()+self.oprot+"->writeMessageBegin("+self.otrans+", "+messageName+", "+seqid+");\n"
+    def toWriteMessageBegin(self, messageName, type, seqid):
+        return self.indent()+self.oprot+"->writeMessageBegin("+self.otrans+", "+messageName+", "+type+", "+seqid+");\n"
 
     def toWriteMessageEnd(self):
         return self.indent()+self.oprot+"->writeMessageEnd("+self.otrans+");\n"
@@ -521,11 +522,11 @@ class Writer(CodeGenerator):
 
 	if isMap:
 
-	    result+= self.indent()+"forech("+value+" as "+keyVar.name+" => "+elemVar.name+") {\n"
+	    result+= self.indent()+"foreach("+value+" as "+keyVar.name+" => "+elemVar.name+") {\n"
 
 	else:
 
-	    result+= self.indent()+"forech("+value+" as "+elemVar.name+") {\n"
+	    result+= self.indent()+"foreach("+value+" as "+elemVar.name+") {\n"
 	    
         self.indent+= 1
 
@@ -569,7 +570,7 @@ class ClientFunctionGenerator(CodeGenerator):
 
 	self.indent+= 1
 
-	result+= self.writer.toWriteMessageBegin("\""+function.name+"\"", "$this->seqid")
+	result+= self.writer.toWriteMessageBegin("\""+function.name+"\"", PHP_PROTOCOL_CALL, "$this->seqid")
 	result+= self.indent()+"$this->_seqid++;\n"
 
 	# Send the args struct 
@@ -606,14 +607,16 @@ class ClientFunctionGenerator(CodeGenerator):
 	result+= self.writer.toWriteFlush();
 
 	resultVar = self.declare(function.resultStruct, "result")
-	nameVar = self.declare(function.resultStruct, "name")
-	seqidVar = self.declare(function.resultStruct, "seqid")
+	nameVar = self.declare(STRING_TYPE, "name")
+	typeVar = self.declare(U32_TYPE, "type")
+	seqidVar = self.declare(U32_TYPE, "seqid")
 
 	result+= self.toDeclaration(resultVar, True)
 	result+= self.toDeclaration(nameVar)
+	result+= self.toDeclaration(typeVar)
 	result+= self.toDeclaration(seqidVar)
 
-	result+= self.reader.toReadMessageBegin(nameVar, seqidVar)
+	result+= self.reader.toReadMessageBegin(nameVar, typeVar, seqidVar)
 
 	result+= self.indent()+"{\n"
 
@@ -846,8 +849,8 @@ PHP_SP = Template("boost::shared_ptr<${klass}> ")
 
 PHP_PROTOCOL_TSTOP = "TType::STOP"
 PHP_PROTOCOL_TTYPE = "TType::"
-PHP_PROTOCOL_CALL = "TMessageType::T_CALL"
-PHP_PROTOCOL_REPLY = "TMessageType::T_REPLY"
+PHP_PROTOCOL_CALL = "TMessageType::CALL"
+PHP_PROTOCOL_REPLY = "TMessageType::REPLY"
 
 PHP_TTYPE_MAP = {
     STOP_TYPE : PHP_PROTOCOL_TTYPE+"STOP",
@@ -870,7 +873,7 @@ PHP_TTYPE_MAP = {
     DOUBLE_TYPE : PHP_PROTOCOL_TTYPE+"DOUBLE",
     StructType : PHP_PROTOCOL_TTYPE+"STRUCT",
     ExceptionType : PHP_PROTOCOL_TTYPE+"STRUCT",
-    ListType : PHP_PROTOCOL_TTYPE+"LIST",
+    ListType : PHP_PROTOCOL_TTYPE+"LST",
     MapType : PHP_PROTOCOL_TTYPE+"MAP",
     SetType : PHP_PROTOCOL_TTYPE+"SET"
 }
@@ -895,7 +898,7 @@ to their canonical form and converts enums to signedf 32 bit integers"""
     else:
 	raise Exception, "No wire type for thrift type: "+str(ttype)
 
-def toGenDir(filename, suffix="php-gen", debugp=None):
+def toGenDir(filename, suffix="gen-php", debugp=None):
     """creates a generated-code subdirectory for C++ code based on filename of thrift source file and optional suffix"""
 
     result = os.path.join(os.path.split(filename)[0], suffix)
@@ -948,7 +951,7 @@ thrift source, filename, and the optional generated C++ code directory, genDir, 
 
     basename = toBasename(filename)
 
-    phpFile.write(PHP_TYPES_HEADER.substitute(source=basename, date=time.ctime(), namespacePrefix=toPHPNamespacePrefix(program.namespace)))
+    phpFile.write(PHP_TYPES_HEADER.substitute(prefix=PREFIX, source=basename, date=time.ctime(), namespacePrefix=toPHPNamespacePrefix(program.namespace)))
 
     phpFile.write(toDefinitions(program.definitions))
 
@@ -984,7 +987,7 @@ thrift source, filename, and the optional generated C++ code directory, genDir, 
 
     basename = toBasename(filename)
 
-    phpFile.write(PHP_SERVICES_HEADER.substitute(source=basename, date=time.ctime(), namespacePrefix=toPHPNamespacePrefix(program.namespace)))
+    phpFile.write(PHP_SERVICES_HEADER.substitute(prefix=PREFIX, source=basename, date=time.ctime(), namespacePrefix=toPHPNamespacePrefix(program.namespace)))
 
     # Generate classes for function result "structs"
 

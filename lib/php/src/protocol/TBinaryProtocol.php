@@ -1,7 +1,7 @@
 <?php
 
 /** For transport operations */
-require_once THRIFT_ROOT.'/transport/TTransport.php';
+require_once PREFIX.'thrift/transport/TTransport.php';
 
 /**
  * Binary implementation of the Thrift protocol.
@@ -10,6 +10,17 @@ require_once THRIFT_ROOT.'/transport/TTransport.php';
  * @author Mark Slee <mcslee@facebook.com>
  */
 class TBinaryProtocol extends TProtocol {
+
+  public function writeMessageBegin($out, $name, $type, $seqid) {
+      return 
+        $this->writeString($out, $name) +
+        $this->writeByte($out, $type) +
+        $this->writeU32($out, $seqid);
+  }
+
+  public function writeMessageEnd($out) {
+    return 0;
+  }
 
   public function writeStructBegin($out, $name) {
     return 0;
@@ -22,7 +33,7 @@ class TBinaryProtocol extends TProtocol {
   public function writeFieldBegin($out, $fieldName, $fieldType, $fieldId) {
     return
       $this->writeByte($out, $fieldType) +
-      $this->writeI32($out, $fieldId);
+      $this->writeI16($out, $fieldId);
   }
 
   public function writeFieldEnd($out) {
@@ -65,38 +76,128 @@ class TBinaryProtocol extends TProtocol {
     return 0;
   }
 
-  public function writeByte($out, $byte) {
-    $data = pack('c', $byte);
+  public function writeBool($out, $value) {
+    $data = pack('c', $value ? 1 : 0);
     $out->write($data, 1);
     return 1;
   }
 
-  public function writeI32($out, $i32) {
-    $data = pack('l', $i32);
-  //if (!defined('BIG_ENDIAN')) {
-      $data = strrev($data);
-  //}
+  public function writeByte($out, $value) {
+    $data = pack('c', $value);
+    $out->write($data, 1);
+    return 1;
+  }
+
+  public function writeI08($out, $value) {
+    $data = pack('c', $value);
+    $out->write($data, 1);
+    return 1;
+  }
+
+  public function writeI16($out, $value) {
+    $data = pack('n', $value);
+    $out->write($data, 2);
+    return 2;
+  }
+
+  public function writeI32($out, $value) {
+    $data = pack('N', $value);
     $out->write($data, 4);
     return 4;
   }
 
-  public function writeI64($out, $i64) {
-    $hi = $i64 >> 32;
-    $lo = $i64 & 0xFFFFFFFF;
-    if (!defined('BIG_ENDIAN')) {
+  public function writeI64($out, $value) {
+
+    /* If we are on a 32bit architecture we have to explicitly deal with 64-bit twos-complement arithmetic
+       since PHP wants to treat all ints as signed and any int over 2^31 - 1 as a float */
+    
+    if(PHP_INT_SIZE == 4) {
+
+      $neg = $value < 0;
+  
+      if($neg) {
+	$value*= -1;
+      }
+    
+      $hi = (int)($value / 4294967296);
+      $lo = (int)$value;
+    
+      if($neg) {
+	$hi = ~$hi;
+	$lo = ~$lo;
+	if(($lo & (int)0xffffffff) == (int)0xffffffff) {
+	  $lo = 0;
+	  $hi++;
+	} else {
+	  $lo++;
+	}
+      }
       $data = pack('N2', $hi, $lo);
+    
     } else {
-      $data = pack('N2', $lo, $hi);
+      $hi = $value >> 32;
+      $lo = $value & 0xFFFFFFFF;
+      $data = pack('N2', $hi, $lo);
     }
+
     $out->write($data, 8);
     return 8;
   }
 
-  public function writeString($out, $str) {
-    $len = strlen($str);
-    $result = $this->writeI32($out, $len);
-    $out->write($str, $len);
+  public function writeU08($out, $value) {
+    $data = pack('c', $value);
+    $out->write($data, 1);
+    return 1;
+  }
+
+  public function writeU16($out, $value) {
+    $data = pack('n', $value);
+    $out->write($data, 2);
+    return 2;
+  }
+
+  public function writeU32($out, $value) {
+    $data = pack('N', $value);
+    $out->write($data, 4);
+    return 4;
+  }
+
+  public function writeU64($out, $value) {
+
+    /* If we are on a 32bit architecture we have to explicitly deal with 64-bit twos-complement arithmetic
+     since PHP wants to treat all ints as signed and any int over 2^31 - 1 as a float */
+
+    if(PHP_INT_SIZE == 4) {
+
+      $hi = (int)($value / 4294967296);
+      $lo = (int)$value;
+      $data = pack('N2', $hi, $lo);
+    
+    } else {
+      $hi = $value >> 32;
+      $lo = $value & 0xFFFFFFFF;
+      $data = pack('N2', $hi, $lo);
+    }
+    
+    $out->write($data, 8);
+    return 8;
+  }
+
+  public function writeString($out, $value) {
+    $len = strlen($value);
+    $result = $this->writeU32($out, $len);
+    $out->write($value, $len);
     return $result + $len;
+  }
+
+  public function readMessageBegin($in, &$name, &$type, &$seqid) {
+      $result = $this->readString($in, $name);
+      $result+= $this->readByte($in, $type);
+      $result+= $this->readU32($in, $seqid);
+  }
+
+  public function readMessageEnd($out) {
+    return 0;
   }
 
   public function readStructBegin($in, &$name) {
@@ -114,7 +215,7 @@ class TBinaryProtocol extends TProtocol {
       $fieldId = 0;
       return $result;
     }
-    $result += $this->readI32($in, $fieldId);
+    $result += $this->readI16($in, $fieldId);
     return $result;
   }
 
@@ -153,41 +254,165 @@ class TBinaryProtocol extends TProtocol {
     return 0;
   }
 
-  public function readByte($in, &$byte) {
+  public function readBool($in, &$value) {
     $data = $in->readAll(1);
     $arr = unpack('c', $data);
-    $byte = $arr[1];
+    $value = $arr[1] == 1;
     return 1;
   }
 
-  public function readI32($in, &$i32) {
-    $data = $in->readAll(4);
-    if (!defined('BIG_ENDIAN')) {
-      $data = strrev($data);
+  public function readByte($in, &$value) {
+    $data = $in->readAll(1);
+    $arr = unpack('c', $data);
+    $value = $arr[1];
+    return 1;
+  }
+
+  public function readI08($in, &$value) {
+    $data = $in->readAll(1);
+    $arr = unpack('c', $data);
+    $value = $arr[1];
+    return 1;
+  }
+
+  public function readI16($in, &$value) {
+    $data = $in->readAll(2);
+    $arr = unpack('n', $data);
+    $value = $arr[1];
+    if($value > 0x7fff) {
+        $value = 0 - (($value - 1) ^ 0xffff);
     }
-    $arr = unpack('l', $data);
-    $i32 = $arr[1];
+    return 2;
+  }
+
+  public function readI32($in, &$value) {
+    $data = $in->readAll(4);
+    $arr = unpack('N', $data);
+    $value = $arr[1];
+    if($value > 0x7fffffff) {
+      $value = 0 - (($value - 1) ^ 0xffffffff);
+    }
     return 4;
   }
 
-  public function readI64($in, &$i64) {
+  public function readI64($in, &$value) {
+
+    $data = $in->readAll(8);
+
+    $arr = unpack('N2', $data);
+    
+    /* If we are on a 32bit architecture we have to explicitly deal with 64-bit twos-complement arithmetic
+     since PHP wants to treat all ints as signed and any int over 2^31 - 1 as a float */
+
+    if(PHP_INT_SIZE == 4) {
+
+      $hi = $arr[1];
+      $lo = $arr[2];
+      $isNeg = $hi  < 0;
+    
+      // Check for a negative
+      if($isNeg) {
+	$hi = ~$hi & (int)0xffffffff;
+	$lo = ~$lo & (int)0xffffffff;
+
+	if($lo == (int)0xffffffff) {
+	  $hi++;
+	  $lo = 0;
+	} else {
+	  $lo++;
+	}
+      }
+
+      /* Force 32bit words in excess of 2G to pe positive - we deal wigh sign
+       explicitly below */
+      
+      if($hi & (int)0x80000000) {
+	$hi&= (int)0x7fffffff;
+	$hi += 0x80000000;
+      }
+      
+      if($lo & (int)0x80000000) {
+	$lo&= (int)0x7fffffff;
+	$lo += 0x80000000;
+      }
+    
+      $value = $hi * 4294967296 + $lo;
+
+      if($isNeg) {
+	$value = 0 - $value;
+      }
+    } else {
+
+      // Check for a negative
+      if ($arr[1] & 0x80000000) {
+	$arr[1] = $arr[1] ^ 0xFFFFFFFF;
+	$arr[2] = $arr[2] ^ 0xFFFFFFFF;
+	$value = 0 - $arr[1]*4294967296 - $arr[2] - 1;
+      } else {
+	$value = $arr[1]*4294967296 + $arr[2];
+      }
+    }
+    
+    return 8;
+  }
+
+  public function readU08($in, &$value) {
+    $data = $in->readAll(1);
+    $arr = unpack('c', $data);
+    $value = $arr[1];
+    return 1;
+  }
+
+  public function readU16($in, &$value) {
+    $data = $in->readAll(2);
+    $arr = unpack('n', $data);
+    $value = $arr[1];
+    return 2;
+  }
+
+  public function readU32($in, &$value) {
+    $data = $in->readAll(4);
+    $arr = unpack('N', $data);
+    $value = $arr[1];
+    return 4;
+  }
+
+  public function readU64($in, &$value) {
     $data = $in->readAll(8);
     $arr = unpack('N2', $data);
 
-    // Check for a negative
-    if ($arr[1] & 0x80000000) {
-      $arr[1] = $arr[1] ^ 0xFFFFFFFF;
-      $arr[2] = $arr[2] ^ 0xFFFFFFFF;
-      $i64 = 0 - $arr[1]*4294967296 - $arr[2] - 1;
+    /* If we are on a 32bit architecture we have to explicitly deal with 64-bit twos-complement arithmetic
+     since PHP wants to treat all ints as signed and any int over 2^31 - 1 as a float */
+
+    if(PHP_INT_SIZE == 4) {
+
+      $hi = $arr[1];
+      $lo = $arr[2];
+
+      /* Prevent implicit integer sign extension */
+    
+      if($hi & (int)0x80000000) {
+	$hi&= (int)0x7fffffff;
+	$hi += 0x80000000;
+      }
+
+      if($lo & (int)0x80000000) {
+	$lo&= (int)0x7fffffff;
+	$lo += 0x80000000;
+      }
+    
+      $value = $hi * 4294967296 + $lo;
+
     } else {
-      $i64 = $arr[1]*4294967296 + $arr[2];
+
+    $value = $arr[1]*4294967296 + $arr[2];
     }
     return 8;
   }
 
-  public function readString($in, &$str) {
-    $result = $this->readI32($in, $len);
-    $str = $in->readAll($len);
+  public function readString($in, &$value) {
+    $result = $this->readU32($in, $len);
+    $value = $in->readAll($len);
     return $result + $len;
   }
 }

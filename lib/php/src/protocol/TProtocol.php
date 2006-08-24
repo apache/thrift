@@ -1,7 +1,7 @@
 <?php
 
 /** Types */
-require_once THRIFT_ROOT.'/protocol/TType.php';
+require_once PREFIX.'thrift/protocol/TType.php';
 
 /**
  * Protocol module.
@@ -10,6 +10,21 @@ require_once THRIFT_ROOT.'/protocol/TType.php';
  * @author Mark Slee <mcslee@facebook.com>
  */
 abstract class TProtocol {
+
+  /** Writes the message header
+  
+      @param TTransport $out Output transport
+      @param name $name Function name
+      @param type $type message type TMessageType::CALL or TMessageType::REPLY
+      @parem seqid $seqid The sequence id of this message */
+
+  public abstract function writeMessageBegin($out, $name, $type, $seqid);
+
+  /** Close the message
+  
+      @param TTransport $out Output transport */
+
+  public abstract function writeMessageEnd($out);
 
   /**
    * Writes a struct header.
@@ -67,6 +82,21 @@ abstract class TProtocol {
 
   public abstract function writeString($out, $str);
 
+
+  /** Reads the message header
+  
+      @param TTransport $out Output transport
+      @param name $name Function name
+      @param type $type message type TMessageType::CALL or TMessageType::REPLY
+      @parem seqid $seqid The sequence id of this message */
+
+  public abstract function readMessageBegin($out, &$name, &$type, &$seqid);
+
+  /** Read the close of message
+  
+      @param TTransport $out Output transport */
+
+  public abstract function readMessageEnd($out);
 
   public abstract function readStructBegin($in, &$name);
   

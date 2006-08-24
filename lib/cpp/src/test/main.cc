@@ -31,6 +31,9 @@ class Server : public ServiceServerIf {
 
   void echoVoid() {return;}
   uint8_t echoByte(uint8_t arg) {return arg;}
+  int16_t echoI16(int16_t arg) {return arg;}
+  int32_t echoI32(int32_t arg) {return arg;}
+  int64_t echoI64(int64_t arg) {return arg;}
   uint16_t echoU16(uint16_t arg) {return arg;}
   uint32_t echoU32(uint32_t arg) {return arg;}
   uint64_t echoU64(uint64_t arg) {return arg;}
@@ -43,12 +46,13 @@ class Server : public ServiceServerIf {
 class ClientThread: public Runnable {
 public:
 
-  ClientThread(shared_ptr<TTransport>transport, shared_ptr<ServiceClient> client, Monitor& monitor, size_t& workerCount, size_t loopCount) :
+  ClientThread(shared_ptr<TTransport>transport, shared_ptr<ServiceClient> client, Monitor& monitor, size_t& workerCount, size_t loopCount, TType loopType) :
     _transport(transport),
     _client(client),
     _monitor(monitor),
     _workerCount(workerCount),
-    _loopCount(loopCount)
+    _loopCount(loopCount),
+    _loopType(loopType)
   {}
 
   void run() {
@@ -65,14 +69,17 @@ public:
 
     _transport->open();
 
-    //uint64_t arg = 0;
-    //uint64_t result = 0;
-
-    for(size_t ix = 0; ix < _loopCount; ix++) {
-      //      result = _client->echoU64(arg);
-      //      assert(result == arg);
-      _client->echoVoid();
-      //arg++;
+    switch(_loopType) {
+    case T_VOID: loopEchoVoid(); break;
+    case T_BYTE: loopEchoByte(); break;
+    case T_I16: loopEchoI16(); break;
+    case T_I32: loopEchoI32(); break;
+    case T_I64: loopEchoI64(); break;
+    case T_U16: loopEchoU16(); break;
+    case T_U32: loopEchoU32(); break;
+    case T_U64: loopEchoU64(); break;
+    case T_STRING: loopEchoString(); break;
+    default: cerr << "Unexpected loop type" << _loopType << endl; break;
     }
     
     _endTime = Util::currentTime();
@@ -91,12 +98,91 @@ public:
       }
     }
   }
+
+  void loopEchoVoid() {
+    for(size_t ix = 0; ix < _loopCount; ix++) {
+      _client->echoVoid();
+    }
+  }
+
+  void loopEchoByte() {
+    for(size_t ix = 0; ix < _loopCount; ix++) {
+      uint8_t arg = 1;
+      uint8_t result;
+      result =_client->echoByte(arg);
+      assert(result == arg);
+    }
+  }
+  
+  void loopEchoI16() {
+    for(size_t ix = 0; ix < _loopCount; ix++) {
+      uint16_t arg = 1;
+      uint16_t result;
+      result =_client->echoI16(arg);
+      assert(result == arg);
+    }
+  }
+
+  void loopEchoI32() {
+    for(size_t ix = 0; ix < _loopCount; ix++) {
+      uint32_t arg = 1;
+      uint32_t result;
+      result =_client->echoI32(arg);
+      assert(result == arg);
+    }
+  }
+
+  void loopEchoI64() {
+    for(size_t ix = 0; ix < _loopCount; ix++) {
+      uint64_t arg = 1;
+      uint64_t result;
+      result =_client->echoI64(arg);
+      assert(result == arg);
+    }
+  }
+  
+  void loopEchoU16() {
+    for(size_t ix = 0; ix < _loopCount; ix++) {
+      uint16_t arg = 1;
+      uint16_t result;
+      result =_client->echoU16(arg);
+      assert(result == arg);
+    }
+  }
+
+  void loopEchoU32() {
+    for(size_t ix = 0; ix < _loopCount; ix++) {
+      uint32_t arg = 1;
+      uint32_t result;
+      result =_client->echoU32(arg);
+      assert(result == arg);
+    }
+  }
+
+  void loopEchoU64() {
+    for(size_t ix = 0; ix < _loopCount; ix++) {
+      uint64_t arg = 1;
+      uint64_t result;
+      result =_client->echoU64(arg);
+      assert(result == arg);
+    }
+  }
+  
+  void loopEchoString() {
+    for(size_t ix = 0; ix < _loopCount; ix++) {
+      string arg = "hello";
+      string result;
+      result =_client->echoString(arg);
+      assert(result == arg);
+    }
+  }
   
   shared_ptr<TTransport> _transport;
   shared_ptr<ServiceClient> _client;
   Monitor& _monitor;
   size_t& _workerCount;
   size_t _loopCount;
+  TType _loopType;
   long long _startTime;
   long long _endTime;
   bool _done;
@@ -111,6 +197,8 @@ int main(int argc, char **argv) {
   size_t workerCount = 4;
   size_t clientCount = 10;
   size_t loopCount = 10000;
+  TType loopType  = T_VOID;
+  string callName = "echoVoid";
   bool runServer = true;
 
   ostringstream usage;
@@ -119,6 +207,7 @@ int main(int argc, char **argv) {
     argv[0] << " [--port=<port number>] [--server] [--server-type=<server-type>] [--protocol-type=<protocol-type>] [--workers=<worker-count>] [--clients=<client-count>] [--loop=<loop-count>]" << endl <<
     "\tclients        Number of client threads to create - 0 implies no clients, i.e. server only.  Default is " << clientCount << endl <<
     "\thelp           Prints this help text." << endl <<
+    "\tcall           Service method to call.  Default is " << callName << endl <<
     "\tloop           The number of remote thrift calls each client makes.  Default is " << loopCount << endl <<
     "\tport           The port the server and clients should bind to for thrift network connections.  Default is " << port << endl <<
     "\tserver         Run the Thrift server in this process.  Default is " << runServer << endl <<
@@ -161,6 +250,10 @@ int main(int argc, char **argv) {
 
     if(!args["loop"].empty()) {
       loopCount = atoi(args["loop"].c_str());
+    }
+
+    if(!args["call"].empty()) {
+      callName = args["call"];
     }
 
     if(!args["port"].empty()) {
@@ -249,6 +342,17 @@ int main(int argc, char **argv) {
 
     set<shared_ptr<Thread> > clientThreads;
 
+    if(callName == "echoVoid") { loopType = T_VOID;}
+    else if(callName == "echoByte") { loopType = T_BYTE;}
+    else if(callName == "echoI16") { loopType = T_I16;}
+    else if(callName == "echoI32") { loopType = T_I32;}
+    else if(callName == "echoI64") { loopType = T_I64;}
+    else if(callName == "echoU16") { loopType = T_U16;}
+    else if(callName == "echoU32") { loopType = T_U32;}
+    else if(callName == "echoU64") { loopType = T_U64;}
+    else if(callName == "echoString") { loopType = T_STRING;}
+    else {throw invalid_argument("Unknown service call "+callName);}
+
     for(size_t ix = 0; ix < clientCount; ix++) {
     
       shared_ptr<TSocket> socket(new TSocket("127.0.01", port));
@@ -256,7 +360,7 @@ int main(int argc, char **argv) {
       shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol());
       shared_ptr<ServiceClient> serviceClient(new ServiceClient(bufferedSocket, binaryProtocol));
     
-      clientThreads.insert(threadFactory->newThread(shared_ptr<ClientThread>(new ClientThread(bufferedSocket, serviceClient, monitor, threadCount, loopCount))));
+      clientThreads.insert(threadFactory->newThread(shared_ptr<ClientThread>(new ClientThread(bufferedSocket, serviceClient, monitor, threadCount, loopCount, loopType))));
     }
   
     for(std::set<shared_ptr<Thread> >::const_iterator thread = clientThreads.begin(); thread != clientThreads.end(); thread++) {

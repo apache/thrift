@@ -624,7 +624,7 @@ def toServiceDeclaration(service, debugp=None):
 
     return toServiceInterfaceDeclaration(service, debugp) + toServerDeclaration(service, debugp) + toClientDeclaration(service, debugp)
 
-def toGenDir(filename, suffix="cpp-gen", debugp=None):
+def toGenDir(filename, suffix="gen-cpp", debugp=None):
     """creates a generated-code subdirectory for C++ code based on filename of thrift source file and optional suffix"""
 
     result = os.path.join(os.path.split(filename)[0], suffix)

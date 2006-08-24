@@ -33,7 +33,8 @@ enum TType {
   T_VOID       = 1,
   T_BOOL       = 2,
   T_BYTE       = 3,
-  T_U08        = 4,
+  T_U08        = 3,
+  T_I08        = 4,
   T_U16        = 5,
   T_I16        = 6,
   T_U32        = 7,
@@ -41,13 +42,13 @@ enum TType {
   T_U64        = 9,
   T_I64        = 10,
   T_STRING     = 11,
-  T_UTF7       = 12,
-  T_STRUCT     = 13,
-  T_MAP        = 14,
-  T_SET        = 15,
-  T_LIST       = 16,
-  T_UTF8       = 17,
-  T_UTF16      = 18
+  T_UTF7       = 11,
+  T_STRUCT     = 12,
+  T_MAP        = 13,
+  T_SET        = 14,
+  T_LIST       = 15,
+  T_UTF8       = 16,
+  T_UTF16      = 17
 };
 
 /**
