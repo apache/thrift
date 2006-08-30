@@ -38,13 +38,13 @@ all: stress-test
 debug: stress-test-debug
 
 stubs: StressTest.thrift
-	$(THRIFT) --cpp --php StressTest.thrift
+	$(THRIFT) --cpp --php ../StressTest.thrift
 
 stress-test-debug: stubs
-	g++ -o stress-test $(DCFL) main.cc cpp-gen/StressTest.cc
+	g++ -o stress-test $(DCFL) src/main.cc cpp-gen/StressTest.cc
 
 stress-test: stubs
-	g++ -o stress-test $(CFL) main.cc cpp-gen/StressTest.cc
+	g++ -o stress-test $(CFL) src/main.cc cpp-gen/StressTest.cc
 
 clean:
 	rm -fr stress-test cpp-gen
