@@ -1,19 +1,26 @@
 <?php
 
+if (!isset($GEN_DIR)) {
+  $GEN_DIR = 'gen-php';
+}
+if (!isset($MODE)) {
+  $MODE = 'normal';
+}
+
 /** Include the Thrift base */
 require_once '/home/mcslee/code/projects/thrift/lib/php/src/Thrift.php';
 
 /** Include the binary protocol */
-require_once THRIFT_ROOT.'/protocol/TBinaryProtocol.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/protocol/TBinaryProtocol.php';
 
 /** Include the socket layer */
-require_once THRIFT_ROOT.'/transport/TSocket.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/transport/TSocket.php';
 
 /** Include the socket layer */
-require_once THRIFT_ROOT.'/transport/TBufferedTransport.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
 
 /** Include the generated code */
-require_once '/home/mcslee/code/projects/thrift/test/php/gen-php/ThriftTest.php';
+require_once '/home/mcslee/code/projects/thrift/test/php/'.$GEN_DIR.'/ThriftTest.php';
 
 $host = 'localhost';
 $port = 9090;
@@ -27,11 +34,18 @@ if ($argc > 2) {
 }
 
 $socket = new TSocket($host, $port);
-$bufferedSocket = new TBufferedTransport($socket, 1024, 1024);
-$binary = new TBinaryProtocol();
 
-$testClient = new ThriftTestClient($bufferedSocket, $binary);
-$bufferedSocket->open();
+if ($MODE == 'inline') {
+  $transport = $socket;
+  $testClient = new ThriftTestClient($transport);
+} else {
+  $bufferedSocket = new TBufferedTransport($socket, 1024, 1024);
+  $transport = $bufferedSocket;
+  $protocol = new TBinaryProtocol();
+  $testClient = new ThriftTestClient($transport, $protocol);
+}
+
+$transport->open();
 
 $start = microtime(true);
 
@@ -261,16 +275,20 @@ foreach ($whoa as $key => $val) {
     print_r("$k2 => {");
     $userMap = $v2->userMap;
     print_r("{");
-    foreach ($userMap as $k3 => $v3) {
-      print_r("$k3 => $v3, ");
+    if (is_array($usermap)) {
+      foreach ($userMap as $k3 => $v3) {
+        print_r("$k3 => $v3, ");
+      }
     }
     print_r("}, ");
     
     $xtructs = $v2->xtructs;
     print_r("{");
-    foreach ($xtructs as $x) {
-      print_r("{\"".$x->string_thing."\", ".
-              $x->byte_thing.", ".$x->i32_thing.", ".$x->i64_thing."}, ");
+    if (is_array($xtructs)) {
+      foreach ($xtructs as $x) {
+        print_r("{\"".$x->string_thing."\", ".
+                $x->byte_thing.", ".$x->i32_thing.", ".$x->i64_thing."}, ");
+      }
     }
     print_r("}");
     
@@ -279,6 +297,17 @@ foreach ($whoa as $key => $val) {
   print_r("}, ");
 }
 print_r("}\n");
+
+/**
+ * EXCEPTION TEST
+ */
+print_r("testException('Xception')");
+try {
+  $testClient->testException('Xception');
+  print_r("  void\nFAILURE\n");
+} catch (Xception $x) {
+  print_r(' caught xception '.$x->errorCode.': '.$x->message."\n");
+}
 
 
 /**
@@ -321,7 +350,7 @@ if ($num != $num2) {
   print "Missed $num = $num2\n";
 }
 
-$bufferedSocket->close();
+$transport->close();
 return;
 
 ?>

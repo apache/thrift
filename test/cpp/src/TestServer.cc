@@ -33,7 +33,7 @@ class TestServer : public ThriftTestServerIf {
     return thing;
   }
 
-  uint8_t testByte(uint8_t thing) {
+  int8_t testByte(int8_t thing) {
     printf("testByte(%d)\n", (int)thing);
     return thing;
   }
@@ -44,12 +44,12 @@ class TestServer : public ThriftTestServerIf {
   }
 
   int64_t testI64(int64_t thing) {
-    printf("testI64(%lld)\n", thing);
+    printf("testI64(%ld)\n", thing);
     return thing;
   }
 
   Xtruct testStruct(Xtruct thing) {
-    printf("testStruct({\"%s\", %d, %d, %lld})\n",
+    printf("testStruct({\"%s\", %d, %d, %ld})\n",
            thing.string_thing.c_str(),
            (int)thing.byte_thing,
            thing.i32_thing,
@@ -59,7 +59,7 @@ class TestServer : public ThriftTestServerIf {
 
   Xtruct2 testNest(Xtruct2 nest) {
     Xtruct thing = nest.struct_thing;
-    printf("testNest({%d, {\"%s\", %d, %d, %lld}, %d})\n",
+    printf("testNest({%d, {\"%s\", %d, %d, %ld}, %d})\n",
            (int)nest.byte_thing,
            thing.string_thing.c_str(),
            (int)thing.byte_thing,
@@ -123,7 +123,7 @@ class TestServer : public ThriftTestServerIf {
   }
 
   UserId testTypedef(UserId thing) {
-    printf("testTypedef(%lld)\n", thing);
+    printf("testTypedef(%ld)\n", thing);
     return thing;
   }
 
@@ -183,7 +183,7 @@ class TestServer : public ThriftTestServerIf {
     printf(" = {");
     map<UserId, map<Numberz,Insanity> >::const_iterator i_iter;
     for (i_iter = insane.begin(); i_iter != insane.end(); ++i_iter) {
-      printf("%lld => {", i_iter->first);
+      printf("%ld => {", i_iter->first);
       map<Numberz,Insanity>::const_iterator i2_iter;
       for (i2_iter = i_iter->second.begin();
            i2_iter != i_iter->second.end();
@@ -193,7 +193,7 @@ class TestServer : public ThriftTestServerIf {
         map<Numberz, UserId>::const_iterator um;
         printf("{");
         for (um = userMap.begin(); um != userMap.end(); ++um) {
-          printf("%d => %lld, ", um->first, um->second);
+          printf("%d => %ld, ", um->first, um->second);
         }
         printf("}, ");
 
@@ -201,7 +201,7 @@ class TestServer : public ThriftTestServerIf {
         list<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
-          printf("{\"%s\", %d, %d, %lld}, ",
+          printf("{\"%s\", %d, %d, %ld}, ",
                  x->string_thing.c_str(),
                  (int)x->byte_thing,
                  x->i32_thing,
@@ -218,7 +218,7 @@ class TestServer : public ThriftTestServerIf {
     return insane;
   }
 
-  Xtruct testMulti(uint8_t arg0, int32_t arg1, uint64_t arg2, std::map<int16_t, std::string>  arg3, Numberz arg4, UserId arg5) {
+  Xtruct testMulti(int8_t arg0, int32_t arg1, int64_t arg2, std::map<int16_t, std::string>  arg3, Numberz arg4, UserId arg5) {
     printf("testMulti()\n");
     
     Xtruct hello;
@@ -230,9 +230,9 @@ class TestServer : public ThriftTestServerIf {
     return hello;
   }
 
-  virtual void testException(std::string arg) throw(struct thrift::test::Xception) {
+  void testException(std::string arg) throw(Xception) {
     printf("testException(%s)\n", arg.c_str());
-    if(arg.compare("Xception") == 0) {
+    if (arg.compare("Xception") == 0) {
       Xception e;
       e.errorCode = 1001;
       e.message = "This is an Xception";
@@ -244,7 +244,7 @@ class TestServer : public ThriftTestServerIf {
     }
   }
   
-  virtual struct Xtruct testMultiException(std::string arg0, std::string arg1) throw(struct Xception, struct Xception2) {
+  Xtruct testMultiException(std::string arg0, std::string arg1) throw(Xception, Xception2) {
 
     printf("testMultiException(%s, %s)\n", arg0.c_str(), arg1.c_str());
 
@@ -357,7 +357,7 @@ int main(int argc, char **argv) {
   // Transport
   shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
 
-  if(serverType == "simple") {
+  if (serverType == "simple") {
 
     // Server
     TSimpleServer simpleServer(testServer,
@@ -367,7 +367,7 @@ int main(int argc, char **argv) {
     printf("Starting the server on port %d...\n", port);
     simpleServer.run();
 
-  } else if(serverType == "thread-pool") {
+  } else if (serverType == "thread-pool") {
 
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
 

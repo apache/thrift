@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
      */
     printf("testI64(-34359738368)");
     int64_t i64 = testClient.testI64(-34359738368LL);
-    printf(" = %lld\n", i64);
+    printf(" = %ld\n", i64);
     
     /**
      * STRUCT TEST
@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
     out.i32_thing = -3;
     out.i64_thing = -5;
     Xtruct in = testClient.testStruct(out);
-    printf(" = {\"%s\", %d, %d, %lld}\n",
+    printf(" = {\"%s\", %d, %d, %ld}\n",
            in.string_thing.c_str(),
            (int)in.byte_thing,
            in.i32_thing,
@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
     out2.i32_thing = 5;
     Xtruct2 in2 = testClient.testNest(out2);
     in = in2.struct_thing;
-    printf(" = {%d, {\"%s\", %d, %d, %lld}, %d}\n",
+    printf(" = {%d, {\"%s\", %d, %d, %ld}, %d}\n",
            in2.byte_thing,
            in.string_thing.c_str(),
            (int)in.byte_thing,
@@ -258,7 +258,7 @@ int main(int argc, char** argv) {
      */
     printf("testTypedef(309858235082523)");
     UserId uid = testClient.testTypedef(309858235082523LL);
-    printf(" = %lld\n", uid);
+    printf(" = %ld\n", uid);
 
     /**
      * NESTED MAP TEST
@@ -293,7 +293,7 @@ int main(int argc, char** argv) {
     printf(" = {");
     map<UserId, map<Numberz,Insanity> >::const_iterator i_iter;
     for (i_iter = whoa.begin(); i_iter != whoa.end(); ++i_iter) {
-      printf("%lld => {", i_iter->first);
+      printf("%ld => {", i_iter->first);
       map<Numberz,Insanity>::const_iterator i2_iter;
       for (i2_iter = i_iter->second.begin();
            i2_iter != i_iter->second.end();
@@ -303,7 +303,7 @@ int main(int argc, char** argv) {
         map<Numberz, UserId>::const_iterator um;
         printf("{");
         for (um = userMap.begin(); um != userMap.end(); ++um) {
-          printf("%d => %lld, ", um->first, um->second);
+          printf("%d => %ld, ", um->first, um->second);
         }
         printf("}, ");
 
@@ -311,7 +311,7 @@ int main(int argc, char** argv) {
         list<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
-          printf("{\"%s\", %d, %d, %lld}, ",
+          printf("{\"%s\", %d, %d, %ld}, ",
                  x->string_thing.c_str(),
                  (int)x->byte_thing,
                  x->i32_thing,
@@ -350,7 +350,7 @@ int main(int argc, char** argv) {
       printf("testClient.testMultiException(\"Xception\", \"test 1\") =>");
       Xtruct result = testClient.testMultiException("Xception", "test 1");
       printf("  result\nFAILURE\n");
-    }  catch(Xception& e) {
+    } catch(Xception& e) {
       printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
     }
 
@@ -359,7 +359,7 @@ int main(int argc, char** argv) {
       Xtruct result = testClient.testMultiException("Xception2", "test 2");
       printf("  result\nFAILURE\n");
       
-    }  catch(Xception2& e) {
+    } catch(Xception2& e) {
       printf("  {%u, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing.c_str());
     }
     
@@ -372,7 +372,7 @@ int main(int argc, char** argv) {
     }
     
     uint64_t stop = now();
-    printf("Total time: %llu us\n", stop-start);
+    printf("Total time: %lu us\n", stop-start);
     
     bufferedSocket->close();
   }

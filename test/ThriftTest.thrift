@@ -14,10 +14,10 @@ typedef i64 UserId
 
 struct Xtruct
 {
-  string string_thing = 0,
-  byte   byte_thing = 1,
-  i32    i32_thing = 3,
-  i64    i64_thing = 5
+  string string_thing = 1,
+  byte   byte_thing = 4,
+  i32    i32_thing = 9,
+  i64    i64_thing = 11
 }
 
 struct Xtruct2
@@ -34,43 +34,44 @@ struct Insanity
 }
 
 exception Xception {
-    u32 errorCode,
+    i32 errorCode,
     string message
 }
 
 exception Xception2 {
-    u32 errorCode,
+    i32 errorCode,
     Xtruct struct_thing
 }
  
-struct Empty {}
+struct EmptyStruct {}
+
 struct OneField {
-   Empty field
+   EmptyStruct field
 }
 
 service ThriftTest
 {
   void         testVoid(),
-  string       testString(string thing = 0),
-  byte         testByte(byte thing = 0),
-  i32          testI32(i32 thing = 0),
-  i64          testI64(i64 thing = 0),
-  Xtruct       testStruct(Xtruct thing = 0),
-  Xtruct2      testNest(Xtruct2 thing = 0),
-  map<i32,i32> testMap(map<i32,i32> thing = 0),
-  set<i32>     testSet(set<i32> thing = 0),
-  list<i32>    testList(list<i32> thing = 0),
-  Numberz      testEnum(Numberz thing = 0),
-  UserId       testTypedef(UserId thing = 0),
+  string       testString(string thing = 1),
+  byte         testByte(byte thing = 1),
+  i32          testI32(i32 thing = 1),
+  i64          testI64(i64 thing = 1),
+  Xtruct       testStruct(Xtruct thing = 1),
+  Xtruct2      testNest(Xtruct2 thing = 1),
+  map<i32,i32> testMap(map<i32,i32> thing = 1),
+  set<i32>     testSet(set<i32> thing = 1),
+  list<i32>    testList(list<i32> thing = 1),
+  Numberz      testEnum(Numberz thing = 1),
+  UserId       testTypedef(UserId thing = 1),
 
-  map<i32,map<i32,i32>> testMapMap(i32 hello = 0),
+  map<i32,map<i32,i32>> testMapMap(i32 hello = 1),
 
   /* So you think you've got this all worked, out eh? */
-  map<UserId, map<Numberz,Insanity>> testInsanity(Insanity argument = 0),
+  map<UserId, map<Numberz,Insanity>> testInsanity(Insanity argument = 1),
 
   /* Multiple parameters */
   
-  Xtruct	testMulti(byte arg0, i32 arg1, u64 arg2, map<i16, string> arg3, Numberz arg4, UserId arg5),
+  Xtruct	testMulti(byte arg0, i32 arg1, i64 arg2, map<i16, string> arg3, Numberz arg4, UserId arg5),
 
   /* Exception specifier */
 
