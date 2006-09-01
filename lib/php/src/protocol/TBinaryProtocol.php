@@ -1,7 +1,7 @@
 <?php
 
 /** For transport operations */
-require_once PREFIX.'thrift/transport/TTransport.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/transport/TTransport.php';
 
 /**
  * Binary implementation of the Thrift protocol.
@@ -12,10 +12,10 @@ require_once PREFIX.'thrift/transport/TTransport.php';
 class TBinaryProtocol extends TProtocol {
 
   public function writeMessageBegin($out, $name, $type, $seqid) {
-      return 
-        $this->writeString($out, $name) +
-        $this->writeByte($out, $type) +
-        $this->writeU32($out, $seqid);
+    return 
+      $this->writeString($out, $name) +
+      $this->writeByte($out, $type) +
+      $this->writeI32($out, $seqid);
   }
 
   public function writeMessageEnd($out) {
@@ -88,12 +88,6 @@ class TBinaryProtocol extends TProtocol {
     return 1;
   }
 
-  public function writeI08($out, $value) {
-    $data = pack('c', $value);
-    $out->write($data, 1);
-    return 1;
-  }
-
   public function writeI16($out, $value) {
     $data = pack('n', $value);
     $out->write($data, 2);
@@ -107,25 +101,23 @@ class TBinaryProtocol extends TProtocol {
   }
 
   public function writeI64($out, $value) {
-
-    /* If we are on a 32bit architecture we have to explicitly deal with 64-bit twos-complement arithmetic
-       since PHP wants to treat all ints as signed and any int over 2^31 - 1 as a float */
-    
-    if(PHP_INT_SIZE == 4) {
-
+    // If we are on a 32bit architecture we have to explicitly deal with
+    // 64-bit twos-complement arithmetic since PHP wants to treat all ints
+    // as signed and any int over 2^31 - 1 as a float   
+    if (PHP_INT_SIZE == 4) {
       $neg = $value < 0;
-  
-      if($neg) {
-	$value*= -1;
+
+      if ($neg) {
+	$value *= -1;
       }
-    
+   
       $hi = (int)($value / 4294967296);
       $lo = (int)$value;
     
-      if($neg) {
+      if ($neg) {
 	$hi = ~$hi;
 	$lo = ~$lo;
-	if(($lo & (int)0xffffffff) == (int)0xffffffff) {
+	if (($lo & (int)0xffffffff) == (int)0xffffffff) {
 	  $lo = 0;
 	  $hi++;
 	} else {
@@ -144,56 +136,18 @@ class TBinaryProtocol extends TProtocol {
     return 8;
   }
 
-  public function writeU08($out, $value) {
-    $data = pack('c', $value);
-    $out->write($data, 1);
-    return 1;
-  }
-
-  public function writeU16($out, $value) {
-    $data = pack('n', $value);
-    $out->write($data, 2);
-    return 2;
-  }
-
-  public function writeU32($out, $value) {
-    $data = pack('N', $value);
-    $out->write($data, 4);
-    return 4;
-  }
-
-  public function writeU64($out, $value) {
-
-    /* If we are on a 32bit architecture we have to explicitly deal with 64-bit twos-complement arithmetic
-     since PHP wants to treat all ints as signed and any int over 2^31 - 1 as a float */
-
-    if(PHP_INT_SIZE == 4) {
-
-      $hi = (int)($value / 4294967296);
-      $lo = (int)$value;
-      $data = pack('N2', $hi, $lo);
-    
-    } else {
-      $hi = $value >> 32;
-      $lo = $value & 0xFFFFFFFF;
-      $data = pack('N2', $hi, $lo);
-    }
-    
-    $out->write($data, 8);
-    return 8;
-  }
-
   public function writeString($out, $value) {
     $len = strlen($value);
-    $result = $this->writeU32($out, $len);
+    $result = $this->writeI32($out, $len);
     $out->write($value, $len);
     return $result + $len;
   }
 
   public function readMessageBegin($in, &$name, &$type, &$seqid) {
-      $result = $this->readString($in, $name);
-      $result+= $this->readByte($in, $type);
-      $result+= $this->readU32($in, $seqid);
+    return 
+      $this->readString($in, $name) +
+      $this->readByte($in, $type) +
+      $this->readI32($in, $seqid);
   }
 
   public function readMessageEnd($out) {
@@ -224,10 +178,10 @@ class TBinaryProtocol extends TProtocol {
   }
 
   public function readMapBegin($in, &$keyType, &$valType, &$size) {
-    $result = $this->readByte($in, $keyType);
-    $result += $this->readByte($in, $valType);
-    $result += $this->readI32($in, $size);
-    return $result;
+    return
+      $this->readByte($in, $keyType) +
+      $this->readByte($in, $valType) +
+      $this->readI32($in, $size);
   }
 
   public function readMapEnd($in) {
@@ -235,9 +189,9 @@ class TBinaryProtocol extends TProtocol {
   }
 
   public function readListBegin($in, &$elemType, &$size) {
-    $result = $this->readByte($in, $elemType);
-    $result += $this->readI32($in, $size);
-    return $result;
+    return
+      $this->readByte($in, $elemType) +
+      $this->readI32($in, $size);
   }
 
   public function readListEnd($in) {
@@ -245,9 +199,9 @@ class TBinaryProtocol extends TProtocol {
   }
 
   public function readSetBegin($in, &$elemType, &$size) {
-    $result = $this->readByte($in, $elemType);
-    $result += $this->readI32($in, $size);
-    return $result;
+    return
+      $this->readByte($in, $elemType) +
+      $this->readI32($in, $size);
   }
 
   public function readSetEnd($in) {
@@ -268,19 +222,12 @@ class TBinaryProtocol extends TProtocol {
     return 1;
   }
 
-  public function readI08($in, &$value) {
-    $data = $in->readAll(1);
-    $arr = unpack('c', $data);
-    $value = $arr[1];
-    return 1;
-  }
-
   public function readI16($in, &$value) {
     $data = $in->readAll(2);
     $arr = unpack('n', $data);
     $value = $arr[1];
-    if($value > 0x7fff) {
-        $value = 0 - (($value - 1) ^ 0xffff);
+    if ($value > 0x7fff) {
+      $value = 0 - (($value - 1) ^ 0xffff);
     }
     return 2;
   }
@@ -289,33 +236,32 @@ class TBinaryProtocol extends TProtocol {
     $data = $in->readAll(4);
     $arr = unpack('N', $data);
     $value = $arr[1];
-    if($value > 0x7fffffff) {
+    if ($value > 0x7fffffff) {
       $value = 0 - (($value - 1) ^ 0xffffffff);
     }
     return 4;
   }
 
   public function readI64($in, &$value) {
-
     $data = $in->readAll(8);
 
     $arr = unpack('N2', $data);
     
-    /* If we are on a 32bit architecture we have to explicitly deal with 64-bit twos-complement arithmetic
-     since PHP wants to treat all ints as signed and any int over 2^31 - 1 as a float */
-
-    if(PHP_INT_SIZE == 4) {
+    // If we are on a 32bit architecture we have to explicitly deal with
+    // 64-bit twos-complement arithmetic since PHP wants to treat all ints
+    // as signed and any int over 2^31 - 1 as a float
+    if (PHP_INT_SIZE == 4) {
 
       $hi = $arr[1];
       $lo = $arr[2];
       $isNeg = $hi  < 0;
     
       // Check for a negative
-      if($isNeg) {
+      if ($isNeg) {
 	$hi = ~$hi & (int)0xffffffff;
 	$lo = ~$lo & (int)0xffffffff;
 
-	if($lo == (int)0xffffffff) {
+	if ($lo == (int)0xffffffff) {
 	  $hi++;
 	  $lo = 0;
 	} else {
@@ -323,22 +269,22 @@ class TBinaryProtocol extends TProtocol {
 	}
       }
 
-      /* Force 32bit words in excess of 2G to pe positive - we deal wigh sign
-       explicitly below */
+      // Force 32bit words in excess of 2G to pe positive - we deal wigh sign
+      // explicitly below
       
-      if($hi & (int)0x80000000) {
-	$hi&= (int)0x7fffffff;
+      if ($hi & (int)0x80000000) {
+	$hi &= (int)0x7fffffff;
 	$hi += 0x80000000;
       }
       
-      if($lo & (int)0x80000000) {
-	$lo&= (int)0x7fffffff;
+      if ($lo & (int)0x80000000) {
+	$lo &= (int)0x7fffffff;
 	$lo += 0x80000000;
       }
     
       $value = $hi * 4294967296 + $lo;
 
-      if($isNeg) {
+      if ($isNeg) {
 	$value = 0 - $value;
       }
     } else {
@@ -356,62 +302,8 @@ class TBinaryProtocol extends TProtocol {
     return 8;
   }
 
-  public function readU08($in, &$value) {
-    $data = $in->readAll(1);
-    $arr = unpack('c', $data);
-    $value = $arr[1];
-    return 1;
-  }
-
-  public function readU16($in, &$value) {
-    $data = $in->readAll(2);
-    $arr = unpack('n', $data);
-    $value = $arr[1];
-    return 2;
-  }
-
-  public function readU32($in, &$value) {
-    $data = $in->readAll(4);
-    $arr = unpack('N', $data);
-    $value = $arr[1];
-    return 4;
-  }
-
-  public function readU64($in, &$value) {
-    $data = $in->readAll(8);
-    $arr = unpack('N2', $data);
-
-    /* If we are on a 32bit architecture we have to explicitly deal with 64-bit twos-complement arithmetic
-     since PHP wants to treat all ints as signed and any int over 2^31 - 1 as a float */
-
-    if(PHP_INT_SIZE == 4) {
-
-      $hi = $arr[1];
-      $lo = $arr[2];
-
-      /* Prevent implicit integer sign extension */
-    
-      if($hi & (int)0x80000000) {
-	$hi&= (int)0x7fffffff;
-	$hi += 0x80000000;
-      }
-
-      if($lo & (int)0x80000000) {
-	$lo&= (int)0x7fffffff;
-	$lo += 0x80000000;
-      }
-    
-      $value = $hi * 4294967296 + $lo;
-
-    } else {
-
-    $value = $arr[1]*4294967296 + $arr[2];
-    }
-    return 8;
-  }
-
   public function readString($in, &$value) {
-    $result = $this->readU32($in, $len);
+    $result = $this->readI32($in, $len);
     $value = $in->readAll($len);
     return $result + $len;
   }

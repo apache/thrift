@@ -1,7 +1,10 @@
 <?php
 
-/** Types */
-require_once PREFIX.'thrift/protocol/TType.php';
+/**
+ * For Type Constants
+ */
+require_once $GLOBALS['THRIFT_ROOT'].'/protocol/TType.php';
+
 
 /**
  * Protocol module.
@@ -11,19 +14,21 @@ require_once PREFIX.'thrift/protocol/TType.php';
  */
 abstract class TProtocol {
 
-  /** Writes the message header
-  
-      @param TTransport $out Output transport
-      @param name $name Function name
-      @param type $type message type TMessageType::CALL or TMessageType::REPLY
-      @parem seqid $seqid The sequence id of this message */
-
+  /** 
+   * Writes the message header
+   *
+   * @param TTransport $out Output transport
+   * @param string $name Function name
+   * @param int $type message type TMessageType::CALL or TMessageType::REPLY
+   * @param int $seqid The sequence id of this message
+   */
   public abstract function writeMessageBegin($out, $name, $type, $seqid);
 
-  /** Close the message
-  
-      @param TTransport $out Output transport */
-
+  /**
+   * Close the message
+   *
+   * @param TTransport $out Output transport
+   */
   public abstract function writeMessageEnd($out);
 
   /**
@@ -76,6 +81,8 @@ abstract class TProtocol {
   
   public abstract function writeByte($out, $byte);
   
+  public abstract function writeI16($out, $i16);
+
   public abstract function writeI32($out, $i32);
 
   public abstract function writeI64($out, $i64);
@@ -83,19 +90,21 @@ abstract class TProtocol {
   public abstract function writeString($out, $str);
 
 
-  /** Reads the message header
-  
-      @param TTransport $out Output transport
-      @param name $name Function name
-      @param type $type message type TMessageType::CALL or TMessageType::REPLY
-      @parem seqid $seqid The sequence id of this message */
-
+  /**
+   * Reads the message header
+   *
+   * @param TTransport $out Output transport
+   * @param string $name Function name
+   * @param int $type message type TMessageType::CALL or TMessageType::REPLY
+   * @parem int $seqid The sequence id of this message
+   */
   public abstract function readMessageBegin($out, &$name, &$type, &$seqid);
 
-  /** Read the close of message
-  
-      @param TTransport $out Output transport */
-
+  /**
+   * Read the close of message
+   *
+   * @param TTransport $out Output transport
+   */
   public abstract function readMessageEnd($out);
 
   public abstract function readStructBegin($in, &$name);
@@ -120,16 +129,27 @@ abstract class TProtocol {
 
   public abstract function readByte($in, &$byte);
   
+  public abstract function readI16($in, &$i16);
+
   public abstract function readI32($in, &$i32);
 
   public abstract function readI64($in, &$i64);
 
   public abstract function readString($in, &$str);
 
+  /**
+   * The skip function is a utility to parse over unrecognized date without
+   * causing corruption.
+   *
+   * @param TTransport $in Input transport
+   * @param TType $type What type is it
+   */
   public function skip($in, $type) {
     switch ($type) {
     case TType::BYTE:
       return $this->readByte($in, $byte);
+    case TType::I16;
+      return $this->readI16($in, $i16);
     case TType::I32:
       return $this->readI32($in, $i32);
     case TType::I64:

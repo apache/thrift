@@ -9,7 +9,7 @@
 #include <set>
 #include <exception>
 
-namespace facebook {namespace thrift {
+namespace facebook { namespace thrift {
 
 class Exception : public std::exception {
 private:

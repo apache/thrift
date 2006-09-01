@@ -33,11 +33,8 @@ enum TType {
   T_VOID       = 1,
   T_BOOL       = 2,
   T_BYTE       = 3,
-  T_U08        = 3,
-  T_I08        = 4,
-  T_U16        = 5,
+  T_I08        = 3,
   T_I16        = 6,
-  T_U32        = 7,
   T_I32        = 8,
   T_U64        = 9,
   T_I64        = 10,
@@ -82,7 +79,7 @@ class TProtocol {
   virtual uint32_t writeMessageBegin(shared_ptr<TTransport> out,
 				     const std::string name,
 				     const TMessageType messageType,
-				     const uint32_t seqid) const = 0;
+				     const int32_t seqid) const = 0;
 
   virtual uint32_t writeMessageEnd(shared_ptr<TTransport> out) const = 0;
 
@@ -124,22 +121,13 @@ class TProtocol {
 			     const bool value) const = 0;
 
   virtual uint32_t writeByte(shared_ptr<TTransport> out,
-			     const uint8_t byte) const = 0;
+			     const int8_t byte) const = 0;
 
   virtual uint32_t writeI16(shared_ptr<TTransport> out,
 			    const int16_t i16) const = 0;
 
-  virtual uint32_t writeU16(shared_ptr<TTransport> out,
-			    const uint16_t u16) const = 0;
-
-  virtual uint32_t writeU32(shared_ptr<TTransport> out,
-			    const uint32_t u32) const = 0;
-  
   virtual uint32_t writeI32(shared_ptr<TTransport> out,
 			    const int32_t i32) const = 0;
-
-  virtual uint32_t writeU64(shared_ptr<TTransport> out,
-			    const uint64_t u64) const = 0;
 
   virtual uint32_t writeI64(shared_ptr<TTransport> out,
 			    const int64_t i64) const = 0;
@@ -154,7 +142,7 @@ class TProtocol {
   virtual uint32_t readMessageBegin(shared_ptr<TTransport> in,
 				    std::string& name,
 				    TMessageType& messageType,
-				    uint32_t& seqid) const = 0;
+				    int32_t& seqid) const = 0;
   
   virtual uint32_t readMessageEnd(shared_ptr<TTransport> in) const = 0;
 
@@ -193,22 +181,13 @@ class TProtocol {
 			    bool& value) const = 0;
 
   virtual uint32_t readByte(shared_ptr<TTransport> in,
-			    uint8_t& byte) const = 0;
-
-  virtual uint32_t readU16(shared_ptr<TTransport> in,
-			   uint16_t& u16) const = 0;
+			    int8_t& byte) const = 0;
 
   virtual uint32_t readI16(shared_ptr<TTransport> in,
 			   int16_t& i16) const = 0;
 
-  virtual uint32_t readU32(shared_ptr<TTransport> in,
-			   uint32_t& u32) const = 0;
-
   virtual uint32_t readI32(shared_ptr<TTransport> in,
 			   int32_t& i32) const = 0;
-
-  virtual uint32_t readU64(shared_ptr<TTransport> in,
-			   uint64_t& u64) const = 0;
 
   virtual uint32_t readI64(shared_ptr<TTransport> in,
 			   int64_t& i64) const = 0;
@@ -223,23 +202,18 @@ class TProtocol {
     switch (type) {
     case T_BYTE:
       {
-        uint8_t byte;
+        int8_t byte;
         return readByte(in, byte);
       }
-    case T_U32:
+    case T_I16:
       {
-        uint32_t u32;
-        return readU32(in, u32);
+        int16_t i16;
+        return readI16(in, i16);
       }
     case T_I32:
       {
         int32_t i32;
         return readI32(in, i32);
-      }
-    case T_U64:
-      {
-        uint64_t u64;
-        return readU64(in, u64);
       }
     case T_I64:
       {
