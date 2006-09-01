@@ -1,6 +1,6 @@
 #!/bin/sh
 
-subdirs="compiler lib/cpp lib/php"
+subdirs="compiler/py lib/cpp lib/php"
 
 rm -rf \
 AUTHORS \
