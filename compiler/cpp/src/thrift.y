@@ -13,7 +13,7 @@
 #include "globals.h"
 #include "parse/t_program.h"
 
-int y_field_val = 0;
+int y_field_val = -1;
 
 %}
 
@@ -35,13 +35,16 @@ int y_field_val = 0;
 %token<id>     tok_identifier
 %token<iconst> tok_int_constant
 
+/** Namespace */
+%token tok_namespace
+
 /** Base datatypes */
 %token tok_byte
 %token tok_string
+%token tok_i16
 %token tok_i32
-%token tok_u32
 %token tok_i64
-%token tok_u64
+%token tok_double
 
 /** Complex Types */
 %token tok_map
@@ -57,6 +60,8 @@ int y_field_val = 0;
 /** Thrift actions */
 %token tok_typedef
 %token tok_struct
+%token tok_xception
+%token tok_throws
 %token tok_service
 %token tok_enum
 
@@ -67,18 +72,22 @@ int y_field_val = 0;
 %type<ttype>     SetType
 %type<ttype>     ListType
 
+%type<id>        Namespace
+
 %type<ttypedef>  Typedef
 %type<ttype>     DefinitionType
 
 %type<tfield>    Field
 %type<ttype>     FieldType
 %type<tstruct>   FieldList
+%type<tstruct>   ThrowsOptional
 
 %type<tenum>     Enum
 %type<tenum>     EnumDefList
 %type<tconstant> EnumDef
 
 %type<tstruct>   Struct
+%type<tstruct>   Xception
 
 %type<tservice>  Service
 
@@ -109,7 +118,12 @@ DefinitionList:
     }
 
 Definition:
-  Typedef
+  Namespace
+    {
+      pdebug("Definition -> Namespace");
+      g_program->set_namespace($1);
+    }
+| Typedef
     {
       pdebug("Definition -> Typedef");
       g_program->add_typedef($1);
@@ -124,11 +138,23 @@ Definition:
       pdebug("Definition -> Struct");
       g_program->add_struct($1);
     }
+| Xception
+    { 
+      pdebug("Definition -> Xception");
+      g_program->add_xception($1);     
+    }
 | Service
     {
       pdebug("Definition -> Service");
       g_program->add_service($1);
-    }  
+    }
+
+Namespace:
+  tok_namespace tok_identifier
+    {
+      pdebug("Namespace -> tok_namespace tok_identifier");
+      $$ = $2;
+    }
 
 Typedef:
   tok_typedef DefinitionType tok_identifier
@@ -187,7 +213,17 @@ Struct:
       pdebug("Struct -> tok_struct tok_identifier { FieldList }");
       $4->set_name($2);
       $$ = $4;
-      y_field_val = 0;
+      y_field_val = -1;
+    }
+
+Xception:
+  tok_xception tok_identifier '{' FieldList '}'
+    {
+      pdebug("Xception -> tok_xception tok_identifier { FieldList }");
+      $4->set_name($2);
+      $4->set_xception(true);
+      $$ = $4;
+      y_field_val = -1;
     }
 
 Service:
@@ -199,7 +235,7 @@ Service:
     }
 
 FunctionList:
-  FunctionList Function
+  FunctionList Function CommaOptional
     {
       pdebug("FunctionList -> FunctionList Function");
       $$ = $1;
@@ -211,12 +247,18 @@ FunctionList:
       $$ = new t_service;
     }
 
+CommaOptional:
+  ','
+    {}
+|
+    {}
+
 Function:
-  FunctionType AsyncOptional tok_identifier '(' FieldList ')'
+  FunctionType AsyncOptional tok_identifier '(' FieldList ')' ThrowsOptional
     {
       $5->set_name(std::string($3) + "_args");
-      $$ = new t_function($1, $3, $5, $2);
-      y_field_val = 0;
+      $$ = new t_function($1, $3, $5, $7, $2);
+      y_field_val = -1;
     }
 
 AsyncOptional:
@@ -227,6 +269,16 @@ AsyncOptional:
 |
     {
       $$ = false;
+    }
+
+ThrowsOptional:
+  tok_throws '(' FieldList ')'
+    {
+      $$ = $3;
+    }
+|
+    {
+      $$ = new t_struct;
     }
 
 FieldList:
@@ -252,18 +304,17 @@ Field:
   FieldType tok_identifier '=' tok_int_constant
     {
       pdebug("Field -> FieldType tok_identifier = tok_int_constant");
-      if ($4 < 0) {
-        yyerror("Negative value (%d) not allowed as a field key.", $4);
-        exit(1);
+      if ($4 <= 0) {
+        printf("WARNING (%d): Nonpositive value (%d) not allowed as a field key for '%s'.\n", yylineno, $4, $2);
+        $4 = y_field_val--;
       }
-      $$ = new t_field($1, $2, (uint32_t)$4);
-      y_field_val = $4+1;
+      $$ = new t_field($1, $2, $4);
     }
 | FieldType tok_identifier
     {
       pdebug("Field -> FieldType tok_identifier");
-      printf("WARNING (%d): No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", yylineno, $2);
-      $$ = new t_field($1, $2, y_field_val++);
+      printf("WARNING (%d): No field key specified for '%s', resulting protocol may have conflicts or not be backwards compatible!\n", yylineno, $2);
+      $$ = new t_field($1, $2, y_field_val--);
     }
 
 DefinitionType:
@@ -322,25 +373,20 @@ BaseType:
       pdebug("BaseType -> tok_byte");
       $$ = g_program->get_byte_type();
     }
+| tok_i16
+    {
+      pdebug("BaseType -> tok_i16");
+      $$ = g_program->get_i16_type();
+    }
 | tok_i32
     {
       pdebug("BaseType -> tok_i32");
       $$ = g_program->get_i32_type();
     }
-| tok_u32
-    {
-      pdebug("BaseType -> tok_u32");
-      $$ = g_program->get_u32_type();
-    }
 | tok_i64
     {
       pdebug("BaseType -> tok_i64");
       $$ = g_program->get_i64_type();
-    }
-| tok_u64
-    {
-      pdebug("BaseType -> tok_u64");
-      $$ = g_program->get_u64_type();
     }
 
 ContainerType:

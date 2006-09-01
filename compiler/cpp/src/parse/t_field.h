@@ -14,19 +14,19 @@ class t_field {
   t_field(t_type* type, std::string name) :
     type_(type), name_(name), key_(0) {}
 
-  t_field(t_type* type, std::string name, uint32_t key) :
+  t_field(t_type* type, std::string name, int32_t key) :
     type_(type), name_(name), key_(key) {}
 
   ~t_field() {}
 
   t_type* get_type() const { return type_; }
   const std::string& get_name() const { return name_; }
-  uint32_t get_key() const { return key_; }
+  int32_t get_key() const { return key_; }
 
  private:
   t_type* type_;
   std::string name_;
-  uint32_t key_;
+  int32_t key_;
 };
 
 #endif

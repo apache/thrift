@@ -95,12 +95,12 @@ void failure(char* fmt, ...) {
 void usage() {
   fprintf(stderr, "Usage: thrift [options] file\n");
   fprintf(stderr, "Options:\n");
-  fprintf(stderr, "  -cpp    Generate C++ output files\n");
-  fprintf(stderr, "  -java   Generate Java output files\n");
-  fprintf(stderr, "  -php    Generate PHP output files\n");
-  fprintf(stderr, "  -phpi   Generate PHP inlined files\n");
+  fprintf(stderr, "  --cpp    Generate C++ output files\n");
+  fprintf(stderr, "  --java   Generate Java output files\n");
+  fprintf(stderr, "  --php    Generate PHP output files\n");
+  fprintf(stderr, "  --phpi   Generate PHP inlined files\n");
   //fprintf(stderr, "  -python Generate Python output files\n");
-  fprintf(stderr, "  -d      Print parse debugging to standard output\n");
+  fprintf(stderr, "  --debug      Print parse debugging to standard output\n");
   exit(1);
 }
 
@@ -124,16 +124,16 @@ int main(int argc, char** argv) {
   }
 
   for (i = 1; i < argc-1; i++) {
-    if (strcmp(argv[i], "-d") == 0) {
+    if (strcmp(argv[i], "--debug") == 0) {
       g_debug = 1;
-    } else if (strcmp(argv[i], "-cpp") == 0) {
+    } else if (strcmp(argv[i], "--cpp") == 0) {
       gen_cpp = true;
-    } else if (strcmp(argv[i], "-java") == 0) {
+    } else if (strcmp(argv[i], "--java") == 0) {
       gen_java = true;
-    } else if (strcmp(argv[i], "-php") == 0) {
+    } else if (strcmp(argv[i], "--php") == 0) {
       gen_php = true;
       php_inline = false;
-    } else if (strcmp(argv[i], "-phpi") == 0) {
+    } else if (strcmp(argv[i], "--phpi") == 0) {
       gen_php = true;
       php_inline = true;
     } else {

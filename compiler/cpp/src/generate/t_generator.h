@@ -29,14 +29,17 @@ class t_generator {
   /** Optional methods that may be imlemented by subclasses. */
 
   virtual void init_generator    (t_program*  tprogram) {}
-  virtual void close_generator   () {}
+  virtual void close_generator   (t_program*  tprogram) {}
 
   /** Pure virtual methods implemented by the generator subclasses. */
 
-  virtual void generate_typedef  (t_typedef*  ttypedef) = 0;
-  virtual void generate_enum     (t_enum*     tenum)    = 0;
-  virtual void generate_struct   (t_struct*   tstruct)  = 0;
-  virtual void generate_service  (t_service*  tservice) = 0;
+  virtual void generate_typedef  (t_typedef*  ttypedef)  = 0;
+  virtual void generate_enum     (t_enum*     tenum)     = 0;
+  virtual void generate_struct   (t_struct*   tstruct)   = 0;
+  virtual void generate_xception (t_struct*   txception) {
+    generate_struct(txception);
+  }
+  virtual void generate_service  (t_service*  tservice)  = 0;
 
   /** Method to get the program name, may be overridden */
 

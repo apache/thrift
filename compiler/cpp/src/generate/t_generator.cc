@@ -36,6 +36,13 @@ void t_generator::generate_program(t_program *tprogram) {
     generate_struct(*st_iter);
   }
 
+  // Generate xceptions
+  vector<t_struct*> xceptions = tprogram->get_xceptions();
+  vector<t_struct*>::iterator x_iter;
+  for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+    generate_xception(*x_iter);
+  }
+
   // Generate services
   vector<t_service*> services = tprogram->get_services();
   vector<t_service*>::iterator sv_iter;
@@ -45,5 +52,5 @@ void t_generator::generate_program(t_program *tprogram) {
   }
 
   // Close the generator
-  close_generator();
+  close_generator(tprogram);
 }

@@ -24,7 +24,7 @@ class t_java_generator : public t_oop_generator {
   /** Init and close methods */
 
   void init_generator(t_program *tprogram);
-  void close_generator();
+  void close_generator(t_program *tprogram);
 
   /** Program-level generation functions */
 

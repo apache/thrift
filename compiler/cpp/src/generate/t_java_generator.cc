@@ -49,7 +49,7 @@ string t_java_generator::java_thrift_imports() {
 /**
  * Does nothing in Java
  */
-void t_java_generator::close_generator() {}
+void t_java_generator::close_generator(t_program *tprogram) {}
 
 /**
  * Generates a typedef. This is not done in Java.
@@ -583,14 +583,8 @@ void t_java_generator::generate_deserialize_field(t_field* tfield,
       case t_base_type::TYPE_I32:
         f_service_ << "readI32(_itrans);";
         break;
-      case t_base_type::TYPE_U32:
-        f_service_ << "readU32(_itrans);";
-        break;
       case t_base_type::TYPE_I64:
         f_service_ << "readI64(_itrans);";
-        break;
-      case t_base_type::TYPE_U64:
-        f_service_ << "readU64(_itrans);";
         break;
       default:
         throw "compiler error: no C++ name for base type " + tbase;
@@ -846,14 +840,8 @@ void t_java_generator::generate_serialize_field(t_field* tfield,
       case t_base_type::TYPE_I32:
         f_service_ << "writeI32(_otrans, " << name << ");";
         break;
-      case t_base_type::TYPE_U32:
-        f_service_ << "writeU32(_otrans, " << name << ");";
-        break;
       case t_base_type::TYPE_I64:
         f_service_ << "writeI64(_otrans, " << name << ");";
-        break;
-      case t_base_type::TYPE_U64:
-        f_service_ << "writeU64(_otrans, " << name << ");";
         break;
       default:
         throw "compiler error: no C++ name for base type " + tbase;
@@ -1066,10 +1054,8 @@ string t_java_generator::base_type_name(t_base_type::t_base tbase,
   case t_base_type::TYPE_BYTE:
     return "byte";
   case t_base_type::TYPE_I32:
-  case t_base_type::TYPE_U32:
     return (in_container ? "Integer" : "int");
   case t_base_type::TYPE_I64:
-  case t_base_type::TYPE_U64:
     return (in_container ? "Long" : "long");
   default:
     throw "compiler error: no C++ name for base type " + tbase;
@@ -1099,9 +1085,7 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
         break;
       case t_base_type::TYPE_BYTE:
       case t_base_type::TYPE_I32:
-      case t_base_type::TYPE_U32:
       case t_base_type::TYPE_I64:
-      case t_base_type::TYPE_U64:
         result += " = 0";
         break;
     }
@@ -1168,12 +1152,8 @@ string t_java_generator::type_to_enum(t_type* type) {
       return "TType.BYTE";
     case t_base_type::TYPE_I32:
       return "TType.I32";
-    case t_base_type::TYPE_U32:
-      return "TType.U32";
     case t_base_type::TYPE_I64:
       return "TType.I64";
-    case t_base_type::TYPE_U64:
-      return "TType.U64";
     }
   } else if (type->is_enum()) {
     return "TType.I32";

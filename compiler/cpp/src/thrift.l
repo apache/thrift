@@ -19,7 +19,7 @@
 
 /** Helper definitions */
 intconstant  ([0-9]+)
-identifier   ([a-zA-Z_][a-zA-Z_0-9]*)
+identifier   ([a-zA-Z_][\.a-zA-Z_0-9]*)
 whitespace   ([ \t\r\n]*)
 multicomm    ("/*""/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
 comment      ("//"[^\n]*)
@@ -31,15 +31,17 @@ symbol       ([\,\{\}\(\)\=<>])
 {multicomm}   { /* do nothing */ }
 {comment}     { /* do nothing */ }
 
-{symbol}      { return yytext[0];   }
+{symbol}      { return yytext[0]; }
+
+"namespace"   { return tok_namespace; }
 
 "void"        { return tok_void;     }
 "byte"        { return tok_byte;     }
-"string"      { return tok_string;   }
+"i16"         { return tok_i16;      }
 "i32"         { return tok_i32;      }
-"u32"         { return tok_u32;      }
 "i64"         { return tok_i64;      }
-"u64"         { return tok_u64;      }
+"double"      { return tok_double;   }
+"string"      { return tok_string;   }
 
 "map"         { return tok_map;      }
 "list"        { return tok_list;     }
@@ -49,11 +51,13 @@ symbol       ([\,\{\}\(\)\=<>])
 
 "typedef"     { return tok_typedef;  }
 "struct"      { return tok_struct;   }
+"exception"   { return tok_xception; }
+"throws"      { return tok_throws;   }
 "service"     { return tok_service;  }
 "enum"        { return tok_enum;     }
 
 
-{intconstant} { yylval.iconst = atoi(yytext) ; return tok_int_constant; }
+{intconstant} { yylval.iconst = atoi(yytext); return tok_int_constant; }
 {identifier}  { yylval.id = strdup(yytext); return tok_identifier; }
 
 %%

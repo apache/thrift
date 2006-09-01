@@ -24,21 +24,29 @@ class t_cpp_generator : public t_oop_generator {
   /** Init and close methods */
 
   void init_generator(t_program *tprogram);
-  void close_generator();
+  void close_generator(t_program *tprogram);
 
   /** Program-level generation functions */
 
-  void generate_typedef (t_typedef*  ttypedef);
-  void generate_enum    (t_enum*     tenum);
-  void generate_struct  (t_struct*   tstruct);
-  void generate_service (t_service*  tservice);
+  void generate_typedef  (t_typedef*  ttypedef);
+  void generate_enum     (t_enum*     tenum);
+  void generate_struct   (t_struct*   tstruct);
+  void generate_service  (t_service*  tservice);
+
+  void generate_struct_definition (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_reader     (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_writer     (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_result_writer (std::ofstream& out, t_struct* tstruct);
 
   /** Service-level generation functions */
 
   void generate_service_interface (t_service* tservice);
+  void generate_service_helpers   (t_service* tservice);
   void generate_service_client    (t_service* tservice);
   void generate_service_server    (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
+
+  void generate_function_helpers  (t_function* tfunction);
 
   /** Serialization constructs */
 
@@ -80,6 +88,8 @@ class t_cpp_generator : public t_oop_generator {
 
   /** Helper rendering functions */
 
+  std::string namespace_open(std::string ns);
+  std::string namespace_close(std::string ns);
   std::string type_name(t_type* ttype);
   std::string base_type_name(t_base_type::t_base tbase);
   std::string declare_field(t_field* tfield, bool init=false);
