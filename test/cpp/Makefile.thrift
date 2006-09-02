@@ -42,16 +42,16 @@ stubs: ../ThriftTest.thrift
 	$(THRIFT) --cpp ../ThriftTest.thrift
 
 server-debug: stubs
-	g++ -o TestServer $(DCFL) src/TestServer.cc ./gen-cpp/ThriftTest.cc
+	g++ -o TestServer $(DCFL) src/TestServer.cc ./gen-cpp/ThriftTest.cc ./gen-cpp/ThriftTest_types.cc
 
 client-debug: stubs
-	g++ -o TestClient $(DCFL) src/TestClient.cc ./gen-cpp/ThriftTest.cc
+	g++ -o TestClient $(DCFL) src/TestClient.cc ./gen-cpp/ThriftTest.cc ./gen-cpp/ThriftTest_types.cc
 
 server: stubs
-	g++ -o TestServer $(CFL) src/TestServer.cc ./gen-cpp/ThriftTest.cc
+	g++ -o TestServer $(CFL) src/TestServer.cc ./gen-cpp/ThriftTest.cc ./gen-cpp/ThriftTest_types.cc
 
 client: stubs
-	g++ -o TestClient $(CFL) src/TestClient.cc ./gen-cpp/ThriftTest.cc
+	g++ -o TestClient $(CFL) src/TestClient.cc ./gen-cpp/ThriftTest.cc ./gen-cpp/ThriftTest_types.cc
 
 clean:
 	rm -fr TestServer TestClient ../cpp-gen

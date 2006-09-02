@@ -81,3 +81,8 @@ service ThriftTest
 
   Xtruct testMultiException(string arg0, string arg1) throws(Xception err1=1, Xception2 err2)
 }
+
+service SecondService
+{
+  void blahBlah()
+}

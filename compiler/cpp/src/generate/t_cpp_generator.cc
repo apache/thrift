@@ -18,8 +18,13 @@ void t_cpp_generator::init_generator(t_program* tprogram) {
   string f_types_name = string(T_CPP_DIR)+"/"+program_name_+"_types.h";
   f_types_.open(f_types_name.c_str());
 
+  string f_types_impl_name = string(T_CPP_DIR)+"/"+program_name_+"_types.cc";
+  f_types_impl_.open(f_types_impl_name.c_str());
+
   // Print header
   f_types_ <<
+    autogen_comment();
+  f_types_impl_ <<
     autogen_comment();
 
   // Start ifndef
@@ -31,43 +36,23 @@ void t_cpp_generator::init_generator(t_program* tprogram) {
   // Include base types
   f_types_ <<
     "#include <Thrift.h>" << endl <<
-    endl;
-
-  string open_ns = namespace_open(tprogram->get_namespace());
-
-  f_types_ <<
-    open_ns << endl <<
-    endl;
-
-  // Make output files
-  string f_header_name = string(T_CPP_DIR)+"/"+program_name_+".h";
-  f_header_.open(f_header_name.c_str());
-  string f_service_name = string(T_CPP_DIR)+"/"+program_name_+".cc";
-  f_service_.open(f_service_name.c_str());
-
-  // Print header file includes
-  f_header_ <<
-    autogen_comment();
-  f_header_ <<
-    "#ifndef " << program_name_ << "_H" << endl <<
-    "#define " << program_name_ << "_H" << endl <<
-    endl <<
-    "#include <Thrift.h>" << endl <<
-    "#include <TProcessor.h>" << endl <<
     "#include <protocol/TProtocol.h>" << endl <<
     "#include <transport/TTransport.h>" << endl <<
-    "#include \"" << program_name_ << "_types.h\"" << endl <<
-    endl <<
-    open_ns << endl <<
     endl;
 
-  // Service implementation file includes
-  f_service_ <<
-    autogen_comment();
-  f_service_ <<
-    "#include \"" << program_name_ << ".h\"" << endl << 
-    endl <<
-    open_ns << endl <<
+  f_types_impl_ <<
+    "#include \"" << program_name_ <<"_types.h\"" << endl <<
+    endl;
+
+  ns_open_ = namespace_open(tprogram->get_namespace());
+  ns_close_ = namespace_close(tprogram->get_namespace());
+
+  f_types_ <<
+    ns_open_ << endl <<
+    endl;
+
+  f_types_impl_ <<
+    ns_open_ << endl <<
     endl;
 }
 
@@ -76,31 +61,20 @@ void t_cpp_generator::init_generator(t_program* tprogram) {
  */
 void t_cpp_generator::close_generator(t_program* tprogram) {
   // Close ns
-  string close_ns = namespace_close(tprogram->get_namespace());
   f_types_ <<
-    close_ns << endl <<
+    ns_close_ << endl <<
     endl;
-  f_header_ <<
-    close_ns << endl <<
-    endl;
-  f_service_ <<
-    close_ns << endl <<
-    endl;
+  f_types_impl_ <<
+    ns_close_ << endl;
 
   // Close ifndef
   f_types_ <<
     "#endif" << endl;
-  f_header_ <<
-    "#endif" << endl;
-  
+ 
   // Close output file
   f_types_.close();
-
-  // Close files
-  f_header_.close();
-  f_service_.close();
+  f_types_impl_.close();
 }
-
 
 /**
  * Generates a typedef. This is just a simple 1-liner in C++
@@ -161,8 +135,8 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
  */
 void t_cpp_generator::generate_struct(t_struct* tstruct) {
   generate_struct_definition(f_types_, tstruct);
-  generate_struct_reader(f_service_, tstruct);
-  generate_struct_writer(f_service_, tstruct);
+  generate_struct_reader(f_types_impl_, tstruct);
+  generate_struct_writer(f_types_impl_, tstruct);
 }
 
 /**
@@ -175,7 +149,9 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
                                                  t_struct* tstruct) {
   // Open struct def
   out <<
-    indent() << "typedef struct _" << tstruct->get_name() << " {" << endl;
+    indent() << "class " << tstruct->get_name() << " {" << endl <<
+    indent() << " public:" << endl <<
+    endl;
   
   indent_up();
 
@@ -195,7 +171,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       if (!init_ctor) {
         init_ctor = true;
         indent(out) <<
-          "_" << tstruct->get_name() << "() : ";
+          tstruct->get_name() << "() : ";
         out << (*m_iter)->get_name() << "(0)";
       } else
         out << ", " << (*m_iter)->get_name() << "(0)";
@@ -213,9 +189,10 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
 
   // Isset vector
   if (members.size() > 0) {
-    indent(out) <<
-      "struct __isset {" << endl;
-      indent_up();
+    out <<
+      endl <<
+      indent() <<"struct __isset {" << endl;
+    indent_up();
       
       indent(out) <<
         "__isset() : ";
@@ -236,14 +213,24 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
         indent(out) <<
           "bool " << (*m_iter)->get_name() << ";" << endl;
       }
-      indent_down();
+    indent_down();
     indent(out) <<
       "} __isset;" << endl;  
   }
 
+  out <<
+    endl <<
+    indent() << "uint32_t read(" <<
+    "boost::shared_ptr<const facebook::thrift::protocol::TProtocol> iprot, " <<
+    "boost::shared_ptr<facebook::thrift::transport::TTransport> itrans);" << endl <<
+    indent() << "uint32_t write(" <<
+    "boost::shared_ptr<const facebook::thrift::protocol::TProtocol> oprot, " <<
+    "boost::shared_ptr<facebook::thrift::transport::TTransport> otrans) const;" << endl <<
+    endl;
+
   indent_down(); 
   indent(out) <<
-    "} " << tstruct->get_name() << ";" << endl <<
+    "};" << endl <<
     endl;
 }
 
@@ -256,10 +243,9 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
 void t_cpp_generator::generate_struct_reader(ofstream& out,
                                              t_struct* tstruct) {
   indent(out) <<
-    "uint32_t read_struct_" << tstruct->get_name() << "(" <<
+    "uint32_t " << tstruct->get_name() << "::read(" <<
     "boost::shared_ptr<const facebook::thrift::protocol::TProtocol> iprot, " <<
-    "boost::shared_ptr<facebook::thrift::transport::TTransport> itrans, " <<
-    tstruct->get_name() << "& value) {" << endl;
+    "boost::shared_ptr<facebook::thrift::transport::TTransport> itrans) {" << endl;
   indent_up();
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -302,9 +288,9 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
         indent(out) <<
           "case " << (*f_iter)->get_key() << ":" << endl;
         indent_up();
-        generate_deserialize_field(*f_iter, "value.");
+        generate_deserialize_field(out, *f_iter, "this->");
         out <<
-          indent() << "value.__isset." << (*f_iter)->get_name() << " = true;" << endl <<
+          indent() << "this->__isset." << (*f_iter)->get_name() << " = true;" << endl <<
           indent() << "break;" << endl;
         indent_down();
       }
@@ -346,44 +332,39 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<
-    "uint32_t write_struct_" << name << "(" <<
+    "uint32_t " << tstruct->get_name() << "::write(" <<
     "boost::shared_ptr<const facebook::thrift::protocol::TProtocol> oprot, " <<
-    "boost::shared_ptr<facebook::thrift::transport::TTransport> otrans, " <<
-    "const " << name << "& value) {" << endl;
+    "boost::shared_ptr<facebook::thrift::transport::TTransport> otrans) const {" << endl;
   indent_up();
 
   out <<
-    endl <<
-    indent() << "uint32_t xfer = 0;" << endl <<
-    endl;
+    indent() << "uint32_t xfer = 0;" << endl;
 
   indent(out) <<
     "xfer += oprot->writeStructBegin(otrans, \"" << name << "\");" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     // Write field header
     out <<
-      endl <<
       indent() << "xfer += oprot->writeFieldBegin(otrans, " <<
       "\"" << (*f_iter)->get_name() << "\", " <<
       type_to_enum((*f_iter)->get_type()) << ", " <<
       (*f_iter)->get_key() << ");" << endl;
     // Write field contents
-    generate_serialize_field(*f_iter, "value.");
+    generate_serialize_field(out, *f_iter, "this->");
     // Write field closer
     indent(out) <<
-      "xfer += oprot->writeFieldEnd(otrans);" << endl <<
-      endl;
+      "xfer += oprot->writeFieldEnd(otrans);" << endl;
   }
   // Write the struct map
   out <<
     indent() << "xfer += oprot->writeFieldStop(otrans);" << endl <<
-    endl <<
     indent() << "xfer += oprot->writeStructEnd(otrans);" << endl <<
     indent() << "return xfer;" << endl;
 
   indent_down();
   indent(out) <<
-    "}" << endl << endl;
+    "}" << endl <<
+    endl;
 }
 
 /**
@@ -401,10 +382,9 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<
-    "uint32_t write_struct_" << name << "(" <<
+    "uint32_t " << tstruct->get_name() << "::write(" <<
     "boost::shared_ptr<const facebook::thrift::protocol::TProtocol> oprot, " <<
-    "boost::shared_ptr<facebook::thrift::transport::TTransport> otrans, " <<
-    "const " << name << "& value) {" << endl;
+    "boost::shared_ptr<facebook::thrift::transport::TTransport> otrans) const {" << endl;
   indent_up();
 
   out <<
@@ -427,7 +407,7 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
         " else if ";
     }
 
-    out << "(value.__isset." << (*f_iter)->get_name() << ") {" << endl;
+    out << "(this->__isset." << (*f_iter)->get_name() << ") {" << endl;
     
     indent_up();
 
@@ -438,7 +418,7 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
       type_to_enum((*f_iter)->get_type()) << ", " <<
       (*f_iter)->get_key() << ");" << endl;
     // Write field contents
-    generate_serialize_field(*f_iter, "value.");
+    generate_serialize_field(out, *f_iter, "this->");
     // Write field closer
     indent(out) << "xfer += oprot->writeFieldEnd(otrans);" << endl;
 
@@ -455,7 +435,8 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
 
   indent_down();
   indent(out) <<
-    "}" << endl << endl;
+    "}" << endl <<
+    endl;
 }
 
 /**
@@ -467,10 +448,52 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
  * @param tservice The service definition
  */
 void t_cpp_generator::generate_service(t_service* tservice) {
+  string svcname = tservice->get_name();
+  
+  // Make output files
+  string f_header_name = string(T_CPP_DIR)+"/"+svcname+".h";
+  f_header_.open(f_header_name.c_str());
+
+  // Print header file includes
+  f_header_ <<
+    autogen_comment();
+  f_header_ <<
+    "#ifndef " << svcname << "_H" << endl <<
+    "#define " << svcname << "_H" << endl <<
+    endl <<
+    "#include <TProcessor.h>" << endl <<
+    "#include \"" << program_name_ << "_types.h\"" << endl <<
+    endl <<
+    ns_open_ << endl <<
+    endl;
+
+  // Service implementation file includes
+  string f_service_name = string(T_CPP_DIR)+"/"+svcname+".cc";
+  f_service_.open(f_service_name.c_str());
+  f_service_ <<
+    autogen_comment();
+  f_service_ <<
+    "#include \"" << svcname << ".h\"" << endl << 
+    endl <<
+    ns_open_ << endl <<
+    endl;
+
   generate_service_interface(tservice);
   generate_service_helpers(tservice);
   generate_service_server(tservice);
   generate_service_client(tservice);
+
+  f_service_ <<
+    ns_close_ << endl <<
+    endl;
+  f_header_ <<
+    ns_close_ << endl <<
+    endl;
+  f_header_ <<
+    "#endif" << endl;
+
+  f_service_.close();
+  f_header_.close();
 }
 
 /**
@@ -636,7 +659,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     }
       
     f_service_ <<
-      indent() << "write_struct_" <<  argsname << "(_oprot, _otrans, __args);" << endl <<
+      indent() << "__args.write(_oprot, _otrans);" << endl <<
       endl <<
       indent() << "_oprot->writeMessageEnd(_otrans);" << endl <<
       indent() << "_otrans->flush();" << endl;
@@ -671,7 +694,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
       f_service_ <<
         indent() << "}" << endl <<
         indent() << resultname << " __result;" << endl <<
-        indent() << "read_struct_" << resultname << "(_iprot, _itrans, __result);" << endl <<
+        indent() << "__result.read(_iprot, _itrans);" << endl <<
         indent() << "_iprot->readMessageEnd(_itrans);" << endl <<
         endl;
 
@@ -868,7 +891,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
 
   f_service_ <<
     indent() << argsname << " __args;" << endl <<
-    indent() << "read_struct_" << argsname << "(_iprot, itrans, __args);" << endl <<
+    indent() << "__args.read(_iprot, itrans);" << endl <<
     indent() << "_iprot->readMessageEnd(itrans);" << endl <<
     endl;
 
@@ -950,7 +973,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   f_service_ <<
     endl <<
     indent() << "_oprot->writeMessageBegin(otrans, \"" << tfunction->get_name() << "\", facebook::thrift::protocol::T_REPLY, seqid);" << endl <<
-    indent() << "write_struct_" << resultname << "(_oprot, otrans, __result);" << endl <<
+    indent() << "__result.write(_oprot, otrans);" << endl <<
     indent() << "_oprot->writeMessageEnd(otrans);" << endl <<
     indent() << "otrans->flush();" << endl;
     
@@ -962,7 +985,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
 /**
  * Deserializes a field of any type.
  */
-void t_cpp_generator::generate_deserialize_field(t_field* tfield,
+void t_cpp_generator::generate_deserialize_field(ofstream& out,
+                                                 t_field* tfield,
                                                  string prefix) {
   t_type* type = tfield->get_type();
   while (type->is_typedef()) {
@@ -977,12 +1001,12 @@ void t_cpp_generator::generate_deserialize_field(t_field* tfield,
   string name = prefix + tfield->get_name();
 
   if (type->is_struct() || type->is_xception()) {
-    generate_deserialize_struct((t_struct*)(tfield->get_type()), name);
+    generate_deserialize_struct(out, (t_struct*)(tfield->get_type()), name);
   } else if (type->is_container()) {
-    generate_deserialize_container(tfield->get_type(), name);
+    generate_deserialize_container(out, tfield->get_type(), name);
   } else if (type->is_base_type() || type->is_enum()) {
 
-    indent(f_service_) <<
+    indent(out) <<
       "xfer += iprot->";
     
     if (type->is_base_type()) {
@@ -993,30 +1017,30 @@ void t_cpp_generator::generate_deserialize_field(t_field* tfield,
           name;
         break;
       case t_base_type::TYPE_STRING:
-        f_service_ << "readString(itrans, " << name << ");";
+        out << "readString(itrans, " << name << ");";
         break;
       case t_base_type::TYPE_BOOL:
-        f_service_ << "readBool(itrans, " << name << ");";
+        out << "readBool(itrans, " << name << ");";
         break;
       case t_base_type::TYPE_BYTE:
-        f_service_ << "readByte(itrans, " << name << ");";
+        out << "readByte(itrans, " << name << ");";
         break;
       case t_base_type::TYPE_I16:
-        f_service_ << "readI16(itrans, " << name << ");";
+        out << "readI16(itrans, " << name << ");";
         break;
       case t_base_type::TYPE_I32:
-        f_service_ << "readI32(itrans, " << name << ");";
+        out << "readI32(itrans, " << name << ");";
         break;
       case t_base_type::TYPE_I64:
-        f_service_ << "readI64(itrans, " << name << ");";
+        out << "readI64(itrans, " << name << ");";
         break;
       default:
         throw "compiler error: no C++ reader for base type " + tbase + name;
       }
     } else if (type->is_enum()) {
-      f_service_ << "readI32(itrans, (int32_t&)" << name << ");";
+      out << "readI32(itrans, (int32_t&)" << name << ");";
     }
-    f_service_ <<
+    out <<
       endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
@@ -1030,38 +1054,40 @@ void t_cpp_generator::generate_deserialize_field(t_field* tfield,
  * buffer for deserialization, and that there is a variable protocol which
  * is a reference to a TProtocol serialization object.
  */
-void t_cpp_generator::generate_deserialize_struct(t_struct* tstruct,
+void t_cpp_generator::generate_deserialize_struct(ofstream& out,
+                                                  t_struct* tstruct,
                                                   string prefix) {
-  indent(f_service_) <<
-    "xfer += read_struct_" << tstruct->get_name() << "(iprot, itrans, " << prefix << ");" << endl;
+  indent(out) <<
+    "xfer += " << prefix << ".read(iprot, itrans);" << endl;
 }
 
-void t_cpp_generator::generate_deserialize_container(t_type* ttype,
+void t_cpp_generator::generate_deserialize_container(ofstream& out,
+                                                     t_type* ttype,
                                                      string prefix) {
-  scope_up(f_service_);
+  scope_up(out);
   
   string size = tmp("_size");
   string ktype = tmp("_ktype");
   string vtype = tmp("_vtype");
   string etype = tmp("_etype");
   
-  indent(f_service_) <<
+  indent(out) <<
     "uint32_t " << size << ";" << endl;
   
   // Declare variables, read header
   if (ttype->is_map()) {
-    f_service_ <<
+    out <<
       indent() << "facebook::thrift::protocol::TType " << ktype << ";" << endl <<
       indent() << "facebook::thrift::protocol::TType " << vtype << ";" << endl <<
       indent() << "iprot->readMapBegin(itrans, " <<
                    ktype << ", " << vtype << ", " << size << ");" << endl;
   } else if (ttype->is_set()) {
-    f_service_ <<
+    out <<
       indent() << "facebook::thrift::protocol::TType " << etype << ";" << endl <<
       indent() << "iprot->readSetBegin(itrans, " <<
                    etype << ", " << size << ");" << endl;
   } else if (ttype->is_list()) {
-    f_service_ <<
+    out <<
       indent() << "facebook::thrift::protocol::TType " << etype << ";" << endl <<
       indent() << "iprot->readListBegin(itrans, " <<
                    etype << ", " << size << ");" << endl;
@@ -1070,84 +1096,87 @@ void t_cpp_generator::generate_deserialize_container(t_type* ttype,
 
   // For loop iterates over elements
   string i = tmp("_i");
-  indent(f_service_) <<
+  indent(out) <<
     "uint32_t " << i << ";" << endl;
-  indent(f_service_) <<
+  indent(out) <<
     "for (" <<
     i << " = 0; " << i << " < " << size << "; ++" << i << ")" << endl;
   
-    scope_up(f_service_);
+    scope_up(out);
     
     if (ttype->is_map()) {
-      generate_deserialize_map_element((t_map*)ttype, prefix);
+      generate_deserialize_map_element(out, (t_map*)ttype, prefix);
     } else if (ttype->is_set()) {
-      generate_deserialize_set_element((t_set*)ttype, prefix);
+      generate_deserialize_set_element(out, (t_set*)ttype, prefix);
     } else if (ttype->is_list()) {
-      generate_deserialize_list_element((t_list*)ttype, prefix);
+      generate_deserialize_list_element(out, (t_list*)ttype, prefix);
     }
     
-    scope_down(f_service_);
+    scope_down(out);
 
   // Read container end
   if (ttype->is_map()) {
-    indent(f_service_) << "iprot->readMapEnd(itrans);" << endl;
+    indent(out) << "iprot->readMapEnd(itrans);" << endl;
   } else if (ttype->is_set()) {
-    indent(f_service_) << "iprot->readSetEnd(itrans);" << endl;
+    indent(out) << "iprot->readSetEnd(itrans);" << endl;
   } else if (ttype->is_list()) {
-    indent(f_service_) << "iprot->readListEnd(itrans);" << endl;
+    indent(out) << "iprot->readListEnd(itrans);" << endl;
   }
 
-  scope_down(f_service_);
+  scope_down(out);
 }
 
 
 /**
  * Generates code to deserialize a map
  */
-void t_cpp_generator::generate_deserialize_map_element(t_map* tmap,
+void t_cpp_generator::generate_deserialize_map_element(ofstream& out,
+                                                       t_map* tmap,
                                                        string prefix) {
   string key = tmp("_key");
   string val = tmp("_val");
   t_field fkey(tmap->get_key_type(), key);
   t_field fval(tmap->get_val_type(), val);
 
-  indent(f_service_) <<
+  indent(out) <<
     declare_field(&fkey) << endl;
-  indent(f_service_) <<
+  indent(out) <<
     declare_field(&fval) << endl;
 
-  generate_deserialize_field(&fkey);
-  generate_deserialize_field(&fval);
+  generate_deserialize_field(out, &fkey);
+  generate_deserialize_field(out, &fval);
 
-  indent(f_service_) <<
+  indent(out) <<
     prefix << ".insert(std::make_pair(" << key << ", " << val << "));" << endl;
 }
 
-void t_cpp_generator::generate_deserialize_set_element(t_set* tset,
+void t_cpp_generator::generate_deserialize_set_element(ofstream& out,
+                                                       t_set* tset,
                                                        string prefix) {
   string elem = tmp("_elem");
   t_field felem(tset->get_elem_type(), elem);
 
-  indent(f_service_) <<
+  indent(out) <<
     declare_field(&felem) << endl;
 
-  generate_deserialize_field(&felem);
+  generate_deserialize_field(out, &felem);
 
-  indent(f_service_) <<
+  indent(out) <<
     prefix << ".insert(" << elem << ");" << endl;
 }
 
-void t_cpp_generator::generate_deserialize_list_element(t_list* tlist,
+void t_cpp_generator::generate_deserialize_list_element(ofstream& out,
+                                                        t_list* tlist,
                                                         string prefix) {
   string elem = tmp("_elem");
   t_field felem(tlist->get_elem_type(), elem);
 
-  indent(f_service_) <<
+  indent(out) <<
     declare_field(&felem) << endl;
 
-  generate_deserialize_field(&felem);
+  generate_deserialize_field(out, &felem);
 
-  indent(f_service_) <<
+  indent(out) <<
     prefix << ".push_back(" << elem << ");" << endl;
 }
 
@@ -1158,7 +1187,8 @@ void t_cpp_generator::generate_deserialize_list_element(t_list* tlist,
  * @param tfield The field to serialize
  * @param prefix Name to prepend to field name
  */
-void t_cpp_generator::generate_serialize_field(t_field* tfield,
+void t_cpp_generator::generate_serialize_field(ofstream& out,
+                                               t_field* tfield,
                                                string prefix) {
   t_type* type = tfield->get_type();
   while (type->is_typedef()) {
@@ -1172,15 +1202,17 @@ void t_cpp_generator::generate_serialize_field(t_field* tfield,
   }
   
   if (type->is_struct() || type->is_xception()) {
-    generate_serialize_struct((t_struct*)(tfield->get_type()),
+    generate_serialize_struct(out,
+                              (t_struct*)(tfield->get_type()),
                               prefix + tfield->get_name());
   } else if (type->is_container()) {
-    generate_serialize_container(tfield->get_type(),
+    generate_serialize_container(out,
+                                 tfield->get_type(),
                                  prefix + tfield->get_name());
   } else if (type->is_base_type() || type->is_enum()) {
 
     string name = prefix + tfield->get_name();
-    indent(f_service_) <<
+    indent(out) <<
       "xfer += oprot->";
     
     if (type->is_base_type()) {
@@ -1191,30 +1223,30 @@ void t_cpp_generator::generate_serialize_field(t_field* tfield,
           "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        f_service_ << "writeString(otrans, " << name << ");";
+        out << "writeString(otrans, " << name << ");";
         break;
       case t_base_type::TYPE_BOOL:
-        f_service_ << "writeBool(otrans, " << name << ");";
+        out << "writeBool(otrans, " << name << ");";
         break;
       case t_base_type::TYPE_BYTE:
-        f_service_ << "writeByte(otrans, " << name << ");";
+        out << "writeByte(otrans, " << name << ");";
         break;
       case t_base_type::TYPE_I16:
-        f_service_ << "writeI16(otrans, " << name << ");";
+        out << "writeI16(otrans, " << name << ");";
         break;
       case t_base_type::TYPE_I32:
-        f_service_ << "writeI32(otrans, " << name << ");";
+        out << "writeI32(otrans, " << name << ");";
         break;
       case t_base_type::TYPE_I64:
-        f_service_ << "writeI64(otrans, " << name << ");";
+        out << "writeI64(otrans, " << name << ");";
         break;
       default:
         throw "compiler error: no C++ writer for base type " + tbase + name;
       }
     } else if (type->is_enum()) {
-      f_service_ << "writeI32(otrans, (int32_t)" << name << ");";
+      out << "writeI32(otrans, (int32_t)" << name << ");";
     }
-    f_service_ << endl;
+    out << endl;
   } else {
     printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s%s' TYPE '%s'\n",
            prefix.c_str(),
@@ -1229,97 +1261,102 @@ void t_cpp_generator::generate_serialize_field(t_field* tfield,
  * @param tstruct The struct to serialize
  * @param prefix  String prefix to attach to all fields
  */
-void t_cpp_generator::generate_serialize_struct(t_struct* tstruct,
+void t_cpp_generator::generate_serialize_struct(ofstream& out,
+                                                t_struct* tstruct,
                                                 string prefix) {
-  indent(f_service_) <<
-    "xfer += write_struct_" << tstruct->get_name() << "(oprot, otrans, " << prefix << ");" << endl;
+  indent(out) <<
+    "xfer += " << prefix << ".write(oprot, otrans);" << endl;
 }
 
-void t_cpp_generator::generate_serialize_container(t_type* ttype,
+void t_cpp_generator::generate_serialize_container(ofstream& out,
+                                                   t_type* ttype,
                                                    string prefix) {
-  scope_up(f_service_);
+  scope_up(out);
   
   if (ttype->is_map()) {
-    indent(f_service_) <<
+    indent(out) <<
       "xfer += oprot->writeMapBegin(otrans, " <<
       type_to_enum(((t_map*)ttype)->get_key_type()) << ", " <<
       type_to_enum(((t_map*)ttype)->get_val_type()) << ", " <<
       prefix << ".size());" << endl;
   } else if (ttype->is_set()) {
-    indent(f_service_) <<
+    indent(out) <<
       "xfer += oprot->writeSetBegin(otrans, " <<
       type_to_enum(((t_set*)ttype)->get_elem_type()) << ", " <<
       prefix << ".size());" << endl;
   } else if (ttype->is_list()) {
-    indent(f_service_) <<
+    indent(out) <<
       "xfer += oprot->writeListBegin(otrans, " <<
       type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " <<
       prefix << ".size());" << endl;
   }
 
   string iter = tmp("_iter");
-  indent(f_service_) <<
+  indent(out) <<
     type_name(ttype) << "::const_iterator " << iter << ";" << endl;
-  indent(f_service_) <<
+  indent(out) <<
     "for (" << iter << " = " << prefix  << ".begin(); " <<
     iter << " != " << prefix << ".end(); " <<
     "++" << iter << ")" << endl;
 
-    scope_up(f_service_);
+    scope_up(out);
 
     if (ttype->is_map()) {
-      generate_serialize_map_element((t_map*)ttype, iter);
+      generate_serialize_map_element(out, (t_map*)ttype, iter);
     } else if (ttype->is_set()) {
-      generate_serialize_set_element((t_set*)ttype, iter);
+      generate_serialize_set_element(out, (t_set*)ttype, iter);
     } else if (ttype->is_list()) {
-      generate_serialize_list_element((t_list*)ttype, iter);
+      generate_serialize_list_element(out, (t_list*)ttype, iter);
     }
 
-    scope_down(f_service_);
+    scope_down(out);
     
     if (ttype->is_map()) {
-      indent(f_service_) <<
+      indent(out) <<
         "xfer += oprot->writeMapEnd(otrans);" << endl;
     } else if (ttype->is_set()) {
-      indent(f_service_) <<
+      indent(out) <<
         "xfer += oprot->writeSetEnd(otrans);" << endl;
     } else if (ttype->is_list()) {
-      indent(f_service_) <<
+      indent(out) <<
         "xfer += oprot->writeListEnd(otrans);" << endl;
     }    
 
-  scope_down(f_service_);  
+  scope_down(out);  
 }
 
 /**
  * Serializes the members of a map.
  *
  */
-void t_cpp_generator::generate_serialize_map_element(t_map* tmap,
+void t_cpp_generator::generate_serialize_map_element(ofstream& out,
+                                                     t_map* tmap,
                                                      string iter) {
   t_field kfield(tmap->get_key_type(), iter + "->first");
-  generate_serialize_field(&kfield, "");
+  generate_serialize_field(out, &kfield, "");
 
   t_field vfield(tmap->get_val_type(), iter + "->second");
-  generate_serialize_field(&vfield, "");
+  generate_serialize_field(out, &vfield, "");
 }
 
 /**
  * Serializes the members of a set.
  */
-void t_cpp_generator::generate_serialize_set_element(t_set* tset,
+void t_cpp_generator::generate_serialize_set_element(ofstream& out,
+                                                     t_set* tset,
                                                      string iter) {
   t_field efield(tset->get_elem_type(), "(*" + iter + ")");
-  generate_serialize_field(&efield, "");
+  generate_serialize_field(out, &efield, "");
 }
 
 /**
  * Serializes the members of a list.
  */
-void t_cpp_generator::generate_serialize_list_element(t_list* tlist,
+void t_cpp_generator::generate_serialize_list_element(ofstream& out,
+                                                      t_list* tlist,
                                                       string iter) {
   t_field efield(tlist->get_elem_type(), "(*" + iter + ")");
-  generate_serialize_field(&efield, "");
+  generate_serialize_field(out, &efield, "");
 }
 
 /**

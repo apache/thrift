@@ -374,6 +374,7 @@ void t_java_generator::generate_service(t_service* tservice) {
   f_service_ <<
     "public class " << service_name_ << " {" << endl <<
     endl;
+  indent_up();
 
   // Generate the three main parts of the service
   generate_service_interface(tservice);
@@ -381,6 +382,7 @@ void t_java_generator::generate_service(t_service* tservice) {
   generate_service_server(tservice);
   generate_service_helpers(tservice);
 
+  indent_down();
   f_service_ <<
     "}" << endl;
   f_service_.close();

@@ -34,6 +34,7 @@ class t_cpp_generator : public t_oop_generator {
   void generate_service  (t_service*  tservice);
 
   void generate_struct_definition (std::ofstream& out, t_struct* tstruct);
+
   void generate_struct_reader     (std::ofstream& out, t_struct* tstruct);
   void generate_struct_writer     (std::ofstream& out, t_struct* tstruct);
   void generate_struct_result_writer (std::ofstream& out, t_struct* tstruct);
@@ -50,40 +51,52 @@ class t_cpp_generator : public t_oop_generator {
 
   /** Serialization constructs */
 
-  void generate_deserialize_field        (t_field*    tfield, 
+  void generate_deserialize_field        (std::ofstream& out,
+                                          t_field*    tfield, 
                                           std::string prefix="");
   
-  void generate_deserialize_struct       (t_struct*   tstruct,
+  void generate_deserialize_struct       (std::ofstream& out,
+                                          t_struct*   tstruct,
                                           std::string prefix="");
   
-  void generate_deserialize_container    (t_type*     ttype,
+  void generate_deserialize_container    (std::ofstream& out,
+                                          t_type*     ttype,
                                           std::string prefix="");
   
-  void generate_deserialize_set_element  (t_set*      tset,
+  void generate_deserialize_set_element  (std::ofstream& out,
+                                          t_set*      tset,
                                           std::string prefix="");
 
-  void generate_deserialize_map_element  (t_map*      tmap,
+  void generate_deserialize_map_element  (std::ofstream& out,
+                                          t_map*      tmap,
                                           std::string prefix="");
 
-  void generate_deserialize_list_element (t_list*     tlist,
+  void generate_deserialize_list_element (std::ofstream& out,
+                                          t_list*     tlist,
                                           std::string prefix="");
 
-  void generate_serialize_field          (t_field*    tfield,
+  void generate_serialize_field          (std::ofstream& out,
+                                          t_field*    tfield,
                                           std::string prefix="");
 
-  void generate_serialize_struct         (t_struct*   tstruct,
+  void generate_serialize_struct         (std::ofstream& out,
+                                          t_struct*   tstruct,
                                           std::string prefix="");
 
-  void generate_serialize_container      (t_type*     ttype,
+  void generate_serialize_container      (std::ofstream& out,
+                                          t_type*     ttype,
                                           std::string prefix="");
 
-  void generate_serialize_map_element    (t_map*      tmap,
+  void generate_serialize_map_element    (std::ofstream& out,
+                                          t_map*      tmap,
                                           std::string iter);
 
-  void generate_serialize_set_element    (t_set*      tmap,
+  void generate_serialize_set_element    (std::ofstream& out,
+                                          t_set*      tmap,
                                           std::string iter);
 
-  void generate_serialize_list_element   (t_list*     tlist,
+  void generate_serialize_list_element   (std::ofstream& out,
+                                          t_list*     tlist,
                                           std::string iter);
 
   /** Helper rendering functions */
@@ -101,7 +114,12 @@ class t_cpp_generator : public t_oop_generator {
 
   /** File streams */
 
+  std::string ns_open_;
+  std::string ns_close_;
+
   std::ofstream f_types_;
+  std::ofstream f_types_impl_;
+
   std::ofstream f_header_;
   std::ofstream f_service_;
 };
