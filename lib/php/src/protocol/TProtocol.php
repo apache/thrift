@@ -79,6 +79,8 @@ abstract class TProtocol {
 
   public abstract function writeSetEnd($out);
   
+  public abstract function writeBool($out, $bool);
+
   public abstract function writeByte($out, $byte);
   
   public abstract function writeI16($out, $i16);
@@ -127,6 +129,8 @@ abstract class TProtocol {
   
   public abstract function readSetEnd($in);
 
+  public abstract function readBool($in, &$bool);
+  
   public abstract function readByte($in, &$byte);
   
   public abstract function readI16($in, &$i16);
@@ -146,6 +150,8 @@ abstract class TProtocol {
    */
   public function skip($in, $type) {
     switch ($type) {
+    case TType::BOOL:
+      return $this->readBool($in, $bool);
     case TType::BYTE:
       return $this->readByte($in, $byte);
     case TType::I16;

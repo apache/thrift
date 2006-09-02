@@ -1,22 +1,22 @@
 package com.facebook.thrift.test;
 
-import com.facebook.thrift.types.*;
+import com.facebook.thrift.TException;
 import com.facebook.thrift.protocol.TBinaryProtocol;
 import com.facebook.thrift.protocol.TProtocol;
-import com.facebook.thrift.protocol.TString;
 import com.facebook.thrift.server.TServer;
 import com.facebook.thrift.server.TSimpleServer;
 import com.facebook.thrift.transport.TServerSocket;
 import com.facebook.thrift.transport.TServerTransport;
 
-import ThriftTest.*;
+// Generated code
+import thrift.test.*;
 
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class TestServer extends ThriftTestServerIf {
+public class TestServer extends ThriftTest.Server {
   public TestServer(TProtocol prot) {
     super(prot);
   }
@@ -25,158 +25,198 @@ public class TestServer extends ThriftTestServerIf {
     System.out.print("testVoid()\n");
   }
 
-  public TString testString(TString thing) {
-    System.out.print("testString(\"" + thing.value + "\")\n");
+  public String testString(String thing) {
+    System.out.print("testString(\"" + thing + "\")\n");
     return thing;
   }
 
-  public UInt8 testByte(UInt8 thing) {
-    System.out.print("testByte(" + thing.get() + ")\n");
+  public byte testByte(byte thing) {
+    System.out.print("testByte(" + thing + ")\n");
     return thing;
   }
 
-  public Int32 testI32(Int32 thing) {
-    System.out.print("testI32(" + thing.get() + ")\n");
+  public int testI32(int thing) {
+    System.out.print("testI32(" + thing + ")\n");
     return thing;
   }
 
-  public Int64 testI64(Int64 thing) {
-    System.out.print("testI64(" + thing.get() + ")\n");
+  public long testI64(long thing) {
+    System.out.print("testI64(" + thing + ")\n");
     return thing;
   }
   
   public Xtruct testStruct(Xtruct thing) {
     System.out.print("testStruct({" +
-                     "\"" + thing.string_thing.value + "\", " +
-                     thing.byte_thing.get() + ", " +
-                     thing.i32_thing.get() + ", " +
-                     thing.i64_thing.get() + "})\n");
+                     "\"" + thing.string_thing + "\", " +
+                     thing.byte_thing + ", " +
+                     thing.i32_thing + ", " +
+                     thing.i64_thing + "})\n");
     return thing;
   }
   
   public Xtruct2 testNest(Xtruct2 nest) {
     Xtruct thing = nest.struct_thing;
     System.out.print("testNest({" +
-                     nest.byte_thing.get() + ", {" +
-                     "\"" + thing.string_thing.value + "\", " +
-                     thing.byte_thing.get() + ", " +
-                     thing.i32_thing.get() + ", " +
-                     thing.i64_thing.get() + "}, " +
-                     nest.i32_thing.get() + "})\n");
+                     nest.byte_thing + ", {" +
+                     "\"" + thing.string_thing + "\", " +
+                     thing.byte_thing + ", " +
+                     thing.i32_thing + ", " +
+                     thing.i64_thing + "}, " +
+                     nest.i32_thing + "})\n");
     return nest;
   }
   
-  public HashMap<Int32,Int32> testMap(HashMap<Int32,Int32> thing) {
+  public HashMap<Integer,Integer> testMap(HashMap<Integer,Integer> thing) {
     System.out.print("testMap({");
     boolean first = true;
-    for (Int32 key : thing.keySet()) {
+    for (int key : thing.keySet()) {
       if (first) {
         first = false;
       } else {
         System.out.print(", ");
       }
-      System.out.print(key.get() + " => " + thing.get(key).get());
+      System.out.print(key + " => " + thing.get(key));
     }
     System.out.print("})\n");
     return thing;
   }
 
-  public HashSet<Int32> testSet(HashSet<Int32> thing) {
+  public HashSet<Integer> testSet(HashSet<Integer> thing) {
     System.out.print("testSet({");
     boolean first = true;
-    for (Int32 elem : thing) {
+    for (int elem : thing) {
       if (first) {
         first = false;
       } else {
         System.out.print(", ");
       }
-      System.out.print(elem.get());
+      System.out.print(elem);
     }
     System.out.print("})\n");
     return thing;
   }
 
-  public ArrayList<Int32> testList(ArrayList<Int32> thing) {
+  public ArrayList<Integer> testList(ArrayList<Integer> thing) {
     System.out.print("testList({");
     boolean first = true;
-    for (Int32 elem : thing) {
+    for (int elem : thing) {
       if (first) {
         first = false;
       } else {
         System.out.print(", ");
       }
-      System.out.print(elem.get());
+      System.out.print(elem);
     }
     System.out.print("})\n");
     return thing;
   }
 
-  public Int32 testEnum(Int32 thing) {
-    System.out.print("testEnum(" + thing.get() + ")\n");
+  public int testEnum(int thing) {
+    System.out.print("testEnum(" + thing + ")\n");
     return thing;
   }
 
-  public Int64 testTypedef(Int64 thing) {
-    System.out.print("testTypedef(" + thing.get() + ")\n");
+  public long testTypedef(long thing) {
+    System.out.print("testTypedef(" + thing + ")\n");
     return thing;
   }
 
-  public HashMap<Int32,HashMap<Int32,Int32>> testMapMap(Int32 hello) {
-    System.out.print("testMapMap(" + hello.get() + ")\n");
-    HashMap<Int32,HashMap<Int32,Int32>> mapmap =
-      new HashMap<Int32,HashMap<Int32,Int32>>();
+  public HashMap<Integer,HashMap<Integer,Integer>> testMapMap(int hello) {
+    System.out.print("testMapMap(" + hello + ")\n");
+    HashMap<Integer,HashMap<Integer,Integer>> mapmap =
+      new HashMap<Integer,HashMap<Integer,Integer>>();
 
-    HashMap<Int32,Int32> pos = new HashMap<Int32,Int32>();
-    HashMap<Int32,Int32> neg = new HashMap<Int32,Int32>();
+    HashMap<Integer,Integer> pos = new HashMap<Integer,Integer>();
+    HashMap<Integer,Integer> neg = new HashMap<Integer,Integer>();
     for (int i = 1; i < 5; i++) {
-      pos.put(new Int32(i), new Int32(i));
-      neg.put(new Int32(-i), new Int32(-i));
+      pos.put(i, i);
+      neg.put(-i, -i);
     }
 
-    mapmap.put(new Int32(4), pos);
-    mapmap.put(new Int32(-4), neg);
+    mapmap.put(4, pos);
+    mapmap.put(-4, neg);
 
     return mapmap;
   }
 
-  public HashMap<Int64, HashMap<Int32,Insanity>> testInsanity(Insanity argument) {
+  public HashMap<Long, HashMap<Integer,Insanity>> testInsanity(Insanity argument) {
     System.out.print("testInsanity()\n");
     
     Xtruct hello = new Xtruct();
-    hello.string_thing.value = "Hello2";
-    hello.byte_thing.set((short)2);
-    hello.i32_thing.set(2);
-    hello.i64_thing.set(2);
+    hello.string_thing = "Hello2";
+    hello.byte_thing = 2;
+    hello.i32_thing = 2;
+    hello.i64_thing = 2;
 
     Xtruct goodbye = new Xtruct();
-    goodbye.string_thing.value = "Goodbye4";
-    goodbye.byte_thing.set((short)4);
-    goodbye.i32_thing.set(4);
-    goodbye.i64_thing.set(4);
+    goodbye.string_thing = "Goodbye4";
+    goodbye.byte_thing = (byte)4;
+    goodbye.i32_thing = 4;
+    goodbye.i64_thing = (long)4;
 
     Insanity crazy = new Insanity();
-    crazy.userMap.put(Numberz.EIGHT, new Int64(8));
+    crazy.userMap.put(Numberz.EIGHT, (long)8);
     crazy.xtructs.add(goodbye);
 
     Insanity looney = new Insanity();
-    crazy.userMap.put(Numberz.FIVE, new Int64(5));
+    crazy.userMap.put(Numberz.FIVE, (long)5);
     crazy.xtructs.add(hello);
 
-    HashMap<Int32,Insanity> first_map = new HashMap<Int32, Insanity>();
-    HashMap<Int32,Insanity> second_map = new HashMap<Int32, Insanity>();;
+    HashMap<Integer,Insanity> first_map = new HashMap<Integer, Insanity>();
+    HashMap<Integer,Insanity> second_map = new HashMap<Integer, Insanity>();;
 
     first_map.put(Numberz.TWO, crazy);
     first_map.put(Numberz.THREE, crazy);
 
     second_map.put(Numberz.SIX, looney);
 
-    HashMap<Int64,HashMap<Int32,Insanity>> insane =
-      new HashMap<Int64, HashMap<Int32,Insanity>>();
-    insane.put(new Int64(1), first_map);
-    insane.put(new Int64(2), second_map);
+    HashMap<Long,HashMap<Integer,Insanity>> insane =
+      new HashMap<Long, HashMap<Integer,Insanity>>();
+    insane.put((long)1, first_map);
+    insane.put((long)2, second_map);
 
     return insane;
   }
+
+  public Xtruct testMulti(byte arg0, int arg1, long arg2, HashMap<Short,String> arg3, int arg4, long arg5) {
+    System.out.print("testMulti()\n");
+    
+    Xtruct hello = new Xtruct();;
+    hello.string_thing = "Hello2";
+    hello.byte_thing = arg0;
+    hello.i32_thing = arg1;
+    hello.i64_thing = arg2;
+    return hello;
+  }
+
+  public void testException(String arg) throws Xception {
+    System.out.print("testException("+arg+")\n");
+    if (arg.equals("Xception")) {
+      Xception x = new Xception();
+      x.errorCode = 1001;
+      x.message = "This is an Xception";
+      throw x;
+    }
+    return;
+  }
+
+  public Xtruct testMultiException(String arg0, String arg1) throws Xception, Xception2 {
+    System.out.print("testMultiException(" + arg0 + ", " + arg1 + ")\n");
+    if (arg0.equals("Xception")) {
+      Xception x = new Xception();
+      x.errorCode = 1001;
+      x.message = "This is an Xception";
+    } else if (arg0.equals("Xception2")) {
+      Xception2 x = new Xception2();
+      x.errorCode = 2002;
+      x.struct_thing.string_thing = "This is an Xception2";
+    }
+     
+    Xtruct result = new Xtruct();
+    result.string_thing = arg1;
+    return result;
+  }
+
 
   public static void main(String [] args) {
     try {

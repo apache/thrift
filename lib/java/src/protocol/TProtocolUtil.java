@@ -14,16 +14,22 @@ public class TProtocolUtil {
     throws TException {
 
     switch (type) {
+    case TType.BOOL:
+      {
+        prot.readBool(in);
+      }
     case TType.BYTE:
       {
         prot.readByte(in);
       }
-    case TType.U32:
+    case TType.I16:
+      {
+        prot.readI16(in);
+      }
     case TType.I32:
       {
         prot.readI32(in);
       }
-    case TType.U64:
     case TType.I64:
       {
         prot.readI64(in);

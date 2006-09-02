@@ -39,6 +39,7 @@ int y_field_val = -1;
 %token tok_namespace
 
 /** Base datatypes */
+%token tok_bool
 %token tok_byte
 %token tok_string
 %token tok_i16
@@ -367,6 +368,11 @@ BaseType:
     {
       pdebug("BaseType -> tok_string");
       $$ = g_program->get_string_type();
+    }
+| tok_bool
+    {
+      pdebug("BaseType -> tok_bool");
+      $$ = g_program->get_bool_type();
     }
 | tok_byte
     {

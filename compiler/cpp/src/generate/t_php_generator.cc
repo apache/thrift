@@ -687,6 +687,11 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
             indent() << "}" << endl <<
             indent() << "$" << name << " = " << itrans << "->readAll($_len);" << endl;
           break;
+        case t_base_type::TYPE_BOOL:
+          out <<
+            indent() << "$" << name << " = unpack('c', " << itrans << "->readAll(1));" << endl <<
+            indent() << "$" << name << " = (bool)$" << name << "[1];" << endl;
+          break;
         case t_base_type::TYPE_BYTE:
           out <<
             indent() << "$" << name << " = unpack('c', " << itrans << "->readAll(1));" << endl <<
@@ -747,6 +752,9 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
           break;
         case t_base_type::TYPE_STRING:        
           out << "readString($itrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_BOOL:
+          out << "readBool($itrans, $" << name << ");";
           break;
         case t_base_type::TYPE_BYTE:
           out << "readByte($itrans, $" << name << ");";
@@ -975,6 +983,10 @@ void t_php_generator::generate_serialize_field(ofstream &out,
             indent() << "$_output .= pack('N', strlen($" << name << "));" << endl <<
             indent() << "$_output .= $" << name << ";" << endl;
           break;
+        case t_base_type::TYPE_BOOL:
+          out <<
+            indent() << "$_output .= pack('c', $" << name << " ? 1 : 0);" << endl;
+          break;
         case t_base_type::TYPE_BYTE:
           out <<
             indent() << "$_output .= pack('c', $" << name << ");" << endl;
@@ -1012,6 +1024,9 @@ void t_php_generator::generate_serialize_field(ofstream &out,
           break;
         case t_base_type::TYPE_STRING:
           out << "writeString($otrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_BOOL:
+          out << "writeBool($otrans, $" << name << ");";
           break;
         case t_base_type::TYPE_BYTE:
           out << "writeByte($otrans, $" << name << ");";
@@ -1225,6 +1240,8 @@ string t_php_generator::base_type_name(t_base_type::t_base tbase) {
     return "void";
   case t_base_type::TYPE_STRING:
     return "TString";
+  case t_base_type::TYPE_BOOL:
+    return "bool";
   case t_base_type::TYPE_BYTE:
     return "UInt8";
   case t_base_type::TYPE_I16:
@@ -1257,6 +1274,9 @@ string t_php_generator::declare_field(t_field* tfield, bool init, bool obj) {
         break;
       case t_base_type::TYPE_STRING:
         result += " = ''";
+        break;
+      case t_base_type::TYPE_BOOL:
+        result += " = false";
         break;
       case t_base_type::TYPE_BYTE:
       case t_base_type::TYPE_I16:
@@ -1330,6 +1350,8 @@ string t_php_generator ::type_to_enum(t_type* type) {
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
       return "TType::STRING";
+    case t_base_type::TYPE_BOOL:
+      return "TType::BOOL";
     case t_base_type::TYPE_BYTE:
       return "TType::BYTE";
     case t_base_type::TYPE_I16:

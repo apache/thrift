@@ -14,6 +14,7 @@ class t_base_type : public t_type {
   enum t_base {
     TYPE_VOID,
     TYPE_STRING,
+    TYPE_BOOL,
     TYPE_BYTE,
     TYPE_I16,
     TYPE_I32,

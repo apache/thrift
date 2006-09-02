@@ -200,10 +200,15 @@ class TProtocol {
    */
   uint32_t skip(shared_ptr<TTransport> in, TType type) const {
     switch (type) {
+    case T_BOOL:
+      {
+        bool boolv;
+        return readBool(in, boolv);
+      }
     case T_BYTE:
       {
-        int8_t byte;
-        return readByte(in, byte);
+        int8_t bytev;
+        return readByte(in, bytev);
       }
     case T_I16:
       {

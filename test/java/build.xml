@@ -14,11 +14,16 @@
 
   <target name="generate">
     <exec executable="thrift">
-      <arg line="-java ../ThriftTest.thrift" />
+      <arg line="--java ../ThriftTest.thrift" />
     </exec>
   </target>
 
   <target name="compile" depends="init,generate">
+    <javac srcdir="${gen}" destdir="${build}" classpath="${cpath}" />
+    <javac srcdir="${src}" destdir="${build}" classpath="${cpath}:${gen}" />
+  </target>
+
+  <target name="compileonly">
     <javac srcdir="${gen}" destdir="${build}" classpath="${cpath}" />
     <javac srcdir="${src}" destdir="${build}" classpath="${cpath}:${gen}" />
   </target>

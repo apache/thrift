@@ -19,10 +19,10 @@ using namespace facebook::thrift::server;
 
 using namespace thrift::test;
 
-class TestServer : public ThriftTestServerIf {
+class TestServer : public ThriftTestServer {
  public:
   TestServer(shared_ptr<TProtocol> protocol) :
-    ThriftTestServerIf(protocol) {}
+    ThriftTestServer(protocol) {}
 
   void testVoid() {
     printf("testVoid()\n");

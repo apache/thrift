@@ -31,52 +31,75 @@ class t_java_generator : public t_oop_generator {
   void generate_typedef (t_typedef*  ttypedef);
   void generate_enum    (t_enum*     tenum);
   void generate_struct  (t_struct*   tstruct);
+  void generate_xception(t_struct*   txception);
   void generate_service (t_service*  tservice);
 
   /** Service-level generation functions */
 
+  void generate_java_struct(t_struct* tstruct, bool is_exception);
+
+  void generate_java_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool in_class=false, bool is_result=false);
+  void generate_java_struct_reader(std::ofstream& out, t_struct* tstruct);
+  void generate_java_struct_result_writer(std::ofstream& out, t_struct* tstruct);
+  void generate_java_struct_writer(std::ofstream& out, t_struct* tstruct);
+
+  void generate_function_helpers(t_function* tfunction);
+
   void generate_service_interface (t_service* tservice);
+  void generate_service_helpers   (t_service* tservice);
   void generate_service_client    (t_service* tservice);
   void generate_service_server    (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
 
   /** Serialization constructs */
 
-  void generate_deserialize_field        (t_field*    tfield, 
+  void generate_deserialize_field        (std::ofstream& out,
+                                          t_field*    tfield, 
                                           std::string prefix="");
   
-  void generate_deserialize_struct       (t_struct*   tstruct,
+  void generate_deserialize_struct       (std::ofstream& out,
+                                          t_struct*   tstruct,
                                           std::string prefix="");
   
-  void generate_deserialize_container    (t_type*     ttype,
+  void generate_deserialize_container    (std::ofstream& out,
+                                          t_type*     ttype,
                                           std::string prefix="");
   
-  void generate_deserialize_set_element  (t_set*      tset,
+  void generate_deserialize_set_element  (std::ofstream& out,
+                                          t_set*      tset,
                                           std::string prefix="");
 
-  void generate_deserialize_map_element  (t_map*      tmap,
+  void generate_deserialize_map_element  (std::ofstream& out,
+                                          t_map*      tmap,
                                           std::string prefix="");
 
-  void generate_deserialize_list_element (t_list*     tlist,
+  void generate_deserialize_list_element (std::ofstream& out,
+                                          t_list*     tlist,
                                           std::string prefix="");
 
-  void generate_serialize_field          (t_field*    tfield,
+  void generate_serialize_field          (std::ofstream& out,
+                                          t_field*    tfield,
                                           std::string prefix="");
 
-  void generate_serialize_struct         (t_struct*   tstruct,
+  void generate_serialize_struct         (std::ofstream& out,
+                                          t_struct*   tstruct,
                                           std::string prefix="");
 
-  void generate_serialize_container      (t_type*     ttype,
+  void generate_serialize_container      (std::ofstream& out,
+                                          t_type*     ttype,
                                           std::string prefix="");
 
-  void generate_serialize_map_element    (t_map*      tmap,
+  void generate_serialize_map_element    (std::ofstream& out,
+                                          t_map*      tmap,
                                           std::string iter,
                                           std::string map);
 
-  void generate_serialize_set_element    (t_set*      tmap,
+  void generate_serialize_set_element    (std::ofstream& out,
+                                          t_set*      tmap,
                                           std::string iter);
 
-  void generate_serialize_list_element   (t_list*     tlist,
+  void generate_serialize_list_element   (std::ofstream& out,
+                                          t_list*     tlist,
                                           std::string iter);
 
   /** Helper rendering functions */
@@ -94,14 +117,9 @@ class t_java_generator : public t_oop_generator {
  private:
 
   /** File streams */
+  std::string package_name_;
 
-  std::ofstream f_types_;
-  std::ofstream f_header_;
   std::ofstream f_service_;
-
-  std::ofstream f_client_;
-  std::ofstream f_server_;
-
 };
 
 #endif

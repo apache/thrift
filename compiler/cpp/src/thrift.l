@@ -36,6 +36,7 @@ symbol       ([\,\{\}\(\)\=<>])
 "namespace"   { return tok_namespace; }
 
 "void"        { return tok_void;     }
+"bool"        { return tok_bool;     }
 "byte"        { return tok_byte;     }
 "i16"         { return tok_i16;      }
 "i32"         { return tok_i32;      }

@@ -32,6 +32,7 @@ class t_program {
     name_(name), namespace_() {
     type_void   = new t_base_type("void",   t_base_type::TYPE_VOID);
     type_string = new t_base_type("string", t_base_type::TYPE_STRING);
+    type_bool   = new t_base_type("bool",   t_base_type::TYPE_BOOL);
     type_byte   = new t_base_type("byte",   t_base_type::TYPE_BYTE);
     type_i16    = new t_base_type("i16",    t_base_type::TYPE_I16);
     type_i32    = new t_base_type("i32",    t_base_type::TYPE_I32);
@@ -40,6 +41,7 @@ class t_program {
 
   ~t_program() {
     delete type_string;
+    delete type_bool;
     delete type_byte;
     delete type_i16;
     delete type_i32;
@@ -62,6 +64,7 @@ class t_program {
   // Accessors for global types
   t_type* get_void_type()   const { return type_void;   }
   t_type* get_string_type() const { return type_string; }
+  t_type* get_bool_type()   const { return type_byte;   }
   t_type* get_byte_type()   const { return type_byte;   }
   t_type* get_i16_type()    const { return type_i16;    }
   t_type* get_i32_type()    const { return type_i32;    }
@@ -122,6 +125,7 @@ class t_program {
   // Global base types
   t_type* type_void;
   t_type* type_string;
+  t_type* type_bool;
   t_type* type_byte;
   t_type* type_i16;
   t_type* type_i32;

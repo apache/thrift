@@ -41,7 +41,7 @@ class t_php_generator : public t_oop_generator {
 
 
   void generate_php_struct(t_struct* tstruct, bool is_exception);
-  void generate_php_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception);
+  void generate_php_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false);
   void generate_php_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_php_struct_writer(std::ofstream& out, t_struct* tstruct);
 

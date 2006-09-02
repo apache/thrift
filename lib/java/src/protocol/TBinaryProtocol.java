@@ -9,13 +9,23 @@ import com.facebook.thrift.transport.TTransport;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TBinaryProtocol implements TProtocol {
+
+  public void writeMessageBegin(TTransport out, TMessage message) throws TException {
+    writeString(out, message.name);
+    writeByte(out, message.type);
+    writeI32(out, message.seqid);
+  }
+
+  public void writeMessageEnd(TTransport out) throws TException {}
+
+
   public void writeStructBegin(TTransport out, TStruct struct) throws TException {}
 
   public void writeStructEnd(TTransport out) throws TException {}
 
   public void writeFieldBegin(TTransport out, TField field) throws TException {
     writeByte(out, field.type);
-    writeI32(out, field.id);
+    writeI16(out, field.id);
   }
 
   public void writeFieldEnd(TTransport out) throws TException {}
@@ -46,14 +56,21 @@ public class TBinaryProtocol implements TProtocol {
 
   public void writeSetEnd(TTransport out) throws TException {}
 
+  public void writeBool(TTransport out, boolean b) throws TException {
+    writeByte(out, b ? (byte)1 : (byte)0);
+  }
+
   byte[] bout = new byte[1];
   public void writeByte(TTransport out, byte b) throws TException {
     bout[0] = b;
     out.write(bout, 0, 1);
   }
 
-  public void writeU32(TTransport out, int u32) throws TException {
-    writeI32(out, u32);
+  byte[] i16out = new byte[2];
+  public void writeI16(TTransport out, short i16) throws TException {
+    i16out[0] = (byte)(0xff & (i16 >> 8));
+    i16out[1] = (byte)(0xff & (i16));
+    out.write(i16out, 0, 2);
   }
 
   byte[] i32out = new byte[4];
@@ -63,10 +80,6 @@ public class TBinaryProtocol implements TProtocol {
     i32out[2] = (byte)(0xff & (i32 >> 8));
     i32out[3] = (byte)(0xff & (i32));
     out.write(i32out, 0, 4);
-  }
-
-  public void writeU64(TTransport out, long u64) throws TException {
-    writeI64(out, u64);
   }
 
   byte[] i64out = new byte[8];
@@ -92,6 +105,16 @@ public class TBinaryProtocol implements TProtocol {
    * Reading methods.
    */
 
+  public TMessage readMessageBegin(TTransport in) throws TException {
+    TMessage message = new TMessage();
+    message.name = readString(in);
+    message.type = readByte(in);
+    message.seqid = readI32(in);
+    return message;
+  }
+
+  public void readMessageEnd(TTransport in) throws TException {}
+
   public TStruct readStructBegin(TTransport in) throws TException {
     return new TStruct();
   }
@@ -102,7 +125,7 @@ public class TBinaryProtocol implements TProtocol {
     TField field = new TField();
     field.type = readByte(in);
     if (field.type != TType.STOP) {
-      field.id = readI32(in);
+      field.id = readI16(in);
     }
     return field;
   }
@@ -137,14 +160,23 @@ public class TBinaryProtocol implements TProtocol {
 
   public void readSetEnd(TTransport in) throws TException {}
 
+  public boolean readBool(TTransport in) throws TException {
+    return (readByte(in) == 1);
+  }
+
   byte[] bin = new byte[1];
   public byte readByte(TTransport in) throws TException {
     in.readAll(bin, 0, 1);
     return bin[0];
   }
 
-  public int readU32(TTransport in) throws TException {
-    return readI32(in);
+  byte[] i16rd = new byte[2];
+  public short readI16(TTransport in) throws TException {
+    in.readAll(i16rd, 0, 2);
+    return
+      (short)
+      (((i16rd[0] & 0xff) << 8) |
+       ((i16rd[1] & 0xff)));
   }
 
   byte[] i32rd = new byte[4];
@@ -156,11 +188,7 @@ public class TBinaryProtocol implements TProtocol {
       ((i32rd[2] & 0xff) <<  8) |
       ((i32rd[3] & 0xff));
   }
-
-  public long readU64(TTransport in) throws TException {
-    return readI64(in);
-  }
-  
+ 
   byte[] i64rd = new byte[8];
   public long readI64(TTransport in) throws TException {
     in.readAll(i64rd, 0, 8);

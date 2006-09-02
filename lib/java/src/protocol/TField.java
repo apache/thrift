@@ -8,7 +8,7 @@ package com.facebook.thrift.protocol;
 public class TField {
   public TField() {}
 
-  public TField(String n, byte t, int i) {
+  public TField(String n, byte t, short i) {
     name = n;
     type = t;
     id = i;
@@ -16,5 +16,5 @@ public class TField {
 
   public String name = "";
   public byte   type = TType.STOP;
-  public int    id   = 0;
+  public short  id   = 0;
 }

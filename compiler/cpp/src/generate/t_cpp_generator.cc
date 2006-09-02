@@ -667,15 +667,10 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
         f_service_ <<
           indent() << "throw facebook::thrift::Exception(\"Unexpected message type, name, or id\");" << endl;
       indent_down();
-      f_service_ <<
-        indent() << "}" << endl;
 
       f_service_ <<
-        endl <<
-        indent() << resultname << " __result;" << endl;
-
-      // Add a field to the return struct if non void
-      f_service_ <<
+        indent() << "}" << endl <<
+        indent() << resultname << " __result;" << endl <<
         indent() << "read_struct_" << resultname << "(_iprot, _itrans, __result);" << endl <<
         indent() << "_iprot->readMessageEnd(_itrans);" << endl <<
         endl;
@@ -727,21 +722,21 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
 
   // Generate the header portion
   f_header_ <<
-    "class " << service_name_ << "ServerIf : " <<
+    "class " << service_name_ << "Server : " <<
     "public " << service_name_ << "If, " <<
     "public facebook::thrift::TProcessor {" << endl <<
     " public: " << endl;
   indent_up();
   f_header_ << 
     indent() <<
-    service_name_ << "ServerIf(boost::shared_ptr<const facebook::thrift::protocol::TProtocol> protocol) : " <<
+    service_name_ << "Server(boost::shared_ptr<const facebook::thrift::protocol::TProtocol> protocol) : " <<
                        "_iprot(protocol), _oprot(protocol) {}" << endl <<
     indent() <<
-    service_name_ << "ServerIf(boost::shared_ptr<const facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> oprot) : " <<
+    service_name_ << "Server(boost::shared_ptr<const facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> oprot) : " <<
                        "_iprot(iprot), _oprot(oprot) {}" << endl <<
     indent() << "bool process(boost::shared_ptr<facebook::thrift::transport::TTransport> _itrans, " <<
                              "boost::shared_ptr<facebook::thrift::transport::TTransport> _otrans);" << endl <<
-    indent() << "virtual ~" << service_name_ << "ServerIf() {}" << endl;
+    indent() << "virtual ~" << service_name_ << "Server() {}" << endl;
   indent_down();
 
   // Protected data members
@@ -768,7 +763,7 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
 
   // Generate the server implementation
   f_service_ <<
-    "bool " << service_name_ << "ServerIf::" <<
+    "bool " << service_name_ << "Server::" <<
     "process(boost::shared_ptr<facebook::thrift::transport::TTransport> itrans, boost::shared_ptr<facebook::thrift::transport::TTransport> otrans) {" << endl;
   indent_up();
 
@@ -832,6 +827,10 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
  * @param tfunction The function
  */
 void t_cpp_generator::generate_function_helpers(t_function* tfunction) {
+  if (tfunction->is_async()) {
+    return;
+  }
+
   t_struct result(tfunction->get_name() + "_result");
   t_field success(tfunction->get_returntype(), "success", 0);
   if (!tfunction->get_returntype()->is_void()) {
@@ -859,7 +858,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
                                                 t_function* tfunction) {
   // Open function
   f_service_ <<
-    "void " << tservice->get_name() << "ServerIf::" <<
+    "void " << tservice->get_name() << "Server::" <<
     "process_" << tfunction->get_name() <<
     "(int32_t seqid, boost::shared_ptr<facebook::thrift::transport::TTransport> itrans, boost::shared_ptr<facebook::thrift::transport::TTransport> otrans)" << endl;
   scope_up(f_service_);
@@ -871,13 +870,19 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     indent() << argsname << " __args;" << endl <<
     indent() << "read_struct_" << argsname << "(_iprot, itrans, __args);" << endl <<
     indent() << "_iprot->readMessageEnd(itrans);" << endl <<
-    endl <<
-    indent() << resultname << " __result;" << endl;
- 
+    endl;
+
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
 
+  // Declare result
+  if (!tfunction->is_async()) {
+    f_service_ <<
+      indent() << resultname << " __result;" << endl;
+  }
+
+  // Try block for functions with exceptions
   if (xceptions.size() > 0) {
     f_service_ <<
       indent() << "try {" << endl;
@@ -890,7 +895,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   vector<t_field*>::const_iterator f_iter;
 
   f_service_ << indent();
-  if (!tfunction->get_returntype()->is_void()) {
+  if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
     f_service_ << "__result.success = ";    
   }
   f_service_ <<
@@ -907,26 +912,39 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   f_service_ << ");" << endl;
 
   // Set isset on success field
-  if (!tfunction->get_returntype()->is_void()) {
+  if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
     f_service_ <<
       indent() << "__result.__isset.success = true;" << endl;
   }
 
-  if (xceptions.size() > 0) {
+  if (!tfunction->is_async() && xceptions.size() > 0) {
     indent_down();
     f_service_ << indent() << "}";
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ << " catch (" << (*x_iter)->get_type()->get_name() << " &" << (*x_iter)->get_name() << ") {" << endl;
-      indent_up();
-      f_service_ <<
-        indent() << "__result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << ";" << endl <<
-        indent() << "__result.__isset." << (*x_iter)->get_name() << " = true;" << endl;
-      indent_down();
-      f_service_ << indent() << "}";
+      if (!tfunction->is_async()) {
+        indent_up();
+        f_service_ <<
+          indent() << "__result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << ";" << endl <<
+          indent() << "__result.__isset." << (*x_iter)->get_name() << " = true;" << endl;
+        indent_down();
+        f_service_ << indent() << "}";
+      } else {
+        f_service_ << "}";
+      }
     }
     f_service_ << endl;
   }
 
+  // Shortcut out here for async functions
+  if (tfunction->is_async()) {
+    f_service_ <<
+      indent() << "return;" << endl;
+    indent_down();
+    f_service_ << "}" << endl <<
+      endl;
+    return;
+  }
 
   // Serialize the result into a struct
   f_service_ <<
@@ -976,6 +994,9 @@ void t_cpp_generator::generate_deserialize_field(t_field* tfield,
         break;
       case t_base_type::TYPE_STRING:
         f_service_ << "readString(itrans, " << name << ");";
+        break;
+      case t_base_type::TYPE_BOOL:
+        f_service_ << "readBool(itrans, " << name << ");";
         break;
       case t_base_type::TYPE_BYTE:
         f_service_ << "readByte(itrans, " << name << ");";
@@ -1171,6 +1192,9 @@ void t_cpp_generator::generate_serialize_field(t_field* tfield,
         break;
       case t_base_type::TYPE_STRING:
         f_service_ << "writeString(otrans, " << name << ");";
+        break;
+      case t_base_type::TYPE_BOOL:
+        f_service_ << "writeBool(otrans, " << name << ");";
         break;
       case t_base_type::TYPE_BYTE:
         f_service_ << "writeByte(otrans, " << name << ");";
@@ -1378,6 +1402,8 @@ string t_cpp_generator::base_type_name(t_base_type::t_base tbase) {
     return "void";
   case t_base_type::TYPE_STRING:
     return "std::string";
+  case t_base_type::TYPE_BOOL:
+    return "bool";
   case t_base_type::TYPE_BYTE:
     return "int8_t";
   case t_base_type::TYPE_I16:
@@ -1412,6 +1438,9 @@ string t_cpp_generator::declare_field(t_field* tfield, bool init) {
         break;
       case t_base_type::TYPE_STRING:
         result += " = \"\"";
+        break;
+      case t_base_type::TYPE_BOOL:
+        result += " = false";
         break;
       case t_base_type::TYPE_BYTE:
       case t_base_type::TYPE_I16:
@@ -1478,6 +1507,8 @@ string t_cpp_generator::type_to_enum(t_type* type) {
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
       return "facebook::thrift::protocol::T_STRING";
+    case t_base_type::TYPE_BOOL:
+      return "facebook::thrift::protocol::T_BOOL";
     case t_base_type::TYPE_BYTE:
       return "facebook::thrift::protocol::T_BYTE";
     case t_base_type::TYPE_I16:
