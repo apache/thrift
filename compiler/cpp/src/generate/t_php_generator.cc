@@ -118,8 +118,6 @@ void t_php_generator::generate_xception(t_struct* txception) {
 void t_php_generator::generate_php_struct(t_struct* tstruct,
                                           bool is_exception) {
   generate_php_struct_definition(f_types_, tstruct, is_exception);
-  generate_php_struct_reader(f_types_, tstruct);
-  generate_php_struct_writer(f_types_, tstruct);
 }
 
 /**
@@ -153,8 +151,12 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
       "public $" << (*m_iter)->get_name() << " = null;" << endl;
   }
  
-  indent_down();
+  out << endl;
 
+  generate_php_struct_reader(out, tstruct);
+  generate_php_struct_writer(out, tstruct);
+
+  indent_down();
   out <<
     indent() << "}" << endl <<
     endl;
@@ -166,8 +168,7 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<
-    "function read_struct_" << tstruct->get_name() <<
-    "($iprot, $itrans, &$value) " << endl;
+    "public function read($iprot, $itrans) " << endl;
   scope_up(out);
 
   out <<
@@ -223,7 +224,7 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
         indent(out) <<
           "case " << (*f_iter)->get_key() << ":" << endl;
         indent_up();
-        generate_deserialize_field(out, *f_iter, "value->");
+        generate_deserialize_field(out, *f_iter, "this->");
         indent(out) <<
           "break;" << endl;
         indent_down();
@@ -267,12 +268,10 @@ void t_php_generator::generate_php_struct_writer(ofstream& out,
 
   if (binary_inline_) {
     indent(out) <<
-      "function write_struct_" << name <<
-      "(&$_output, &$value) {" << endl;
+      "public function write(&$_output) {" << endl;
   } else {
     indent(out) <<
-      "function write_struct_" << name <<
-      "($oprot, $otrans, &$value) {" << endl;
+      "public function write($oprot, $otrans) {" << endl;
   }
   indent_up();
   
@@ -299,7 +298,7 @@ void t_php_generator::generate_php_struct_writer(ofstream& out,
     }
 
     // Write field contents
-    generate_serialize_field(out, *f_iter, "value->");
+    generate_serialize_field(out, *f_iter, "this->");
 
     // Write field closer
     if (!binary_inline_) {
@@ -370,8 +369,6 @@ void t_php_generator::generate_service_helpers(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
     generate_php_struct_definition(f_service_, ts, false);
-    generate_php_struct_reader(f_service_, ts);
-    generate_php_struct_writer(f_service_, ts);
     generate_php_function_helpers(*f_iter);
   }
 }
@@ -396,7 +393,6 @@ void t_php_generator::generate_php_function_helpers(t_function* tfunction) {
   }
 
   generate_php_struct_definition(f_service_, &result, false);
-  generate_php_struct_reader(f_service_, &result);
 }
 
 /**
@@ -543,11 +539,11 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       // Write to the stream
       if (binary_inline_) { 
         f_service_ <<
-          indent() << "write_struct_" << argsname << "($_output, $__args);" << endl <<
+          indent() << "$__args->write($_output, $__args);" << endl <<
           indent() << "$this->_otrans->write($_output);" << endl;
       } else {
         f_service_ <<
-          indent() << "write_struct_" << argsname << "($this->_oprot, $this->_otrans, $__args);" << endl <<
+          indent() << "$__args->write($this->_oprot, $this->_otrans);" << endl <<
           indent() << "$this->_oprot->writeMessageEnd($this->_otrans);" << endl;
       }
       
@@ -594,7 +590,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
 
       f_service_ <<
         indent() << "$__result = new " << resultname << "();" << endl <<
-        indent() << "read_struct_" << resultname << "($this->_iprot, $this->_otrans, $__result);" << endl;
+        indent() << "$__result->read($this->_iprot, $this->_otrans);" << endl;
 
       if (!binary_inline_) {
         f_service_ <<
@@ -794,7 +790,7 @@ void t_php_generator::generate_deserialize_struct(ofstream &out,
                                                   string prefix) {
   out <<
     indent() << "$" << prefix << " = new " << tstruct->get_name() << "();" << endl <<
-    indent() << "$xfer += read_struct_" << tstruct->get_name() << "($iprot, $itrans, $" << prefix << ");" << endl;
+    indent() << "$xfer += $" << prefix << "->read($iprot, $itrans);" << endl;
 }
 
 void t_php_generator::generate_deserialize_container(ofstream &out,
@@ -1067,10 +1063,10 @@ void t_php_generator::generate_serialize_struct(ofstream &out,
                                                 string prefix) {
   if (binary_inline_) {
     indent(out) <<
-      "$xfer += write_struct_" << tstruct->get_name() << "($_output, $" << prefix << ");" << endl;
+      "$xfer += $" << prefix << "->write($_output);" << endl;
   } else {
     indent(out) <<
-      "$xfer += write_struct_" << tstruct->get_name() << "($oprot, $otrans, $" << prefix << ");" << endl;
+      "$xfer += $" << prefix << "->write($oprot, $otrans);" << endl;
   }
 }
 
@@ -1363,7 +1359,7 @@ string t_php_generator ::type_to_enum(t_type* type) {
     }
   } else if (type->is_enum()) {
     return "TType::I32";
-  } else if (type->is_struct()) {
+  } else if (type->is_struct() || type->is_xception()) {
     return "TType::STRUCT";
   } else if (type->is_map()) {
     return "TType::MAP";

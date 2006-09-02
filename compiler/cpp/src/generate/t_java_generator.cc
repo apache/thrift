@@ -174,12 +174,13 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     generate_java_struct_writer(out, tstruct);
   }
   scope_down(out);
+  out << endl;
 }
 
 void t_java_generator::generate_java_struct_reader(ofstream& out,
                                                    t_struct* tstruct) {
   out <<
-    indent() << "public static " << tstruct->get_name() << " read(TProtocol _iprot, TTransport _itrans) throws TException {" << endl;
+    indent() << "public void read(TProtocol _iprot, TTransport _itrans) throws TException {" << endl;
   indent_up();
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -187,7 +188,6 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
 
   // Declare stack tmp variables
   out <<
-    indent() << tstruct->get_name() << " _value = new " << tstruct->get_name() << "();" << endl <<
     indent() << "TField _field;" << endl <<
     indent() << "TStruct _struct = _iprot.readStructBegin(_itrans);" << endl;
   
@@ -222,9 +222,9 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
         indent(out) <<
           "case " << (*f_iter)->get_key() << ":" << endl;
         indent_up();
-        generate_deserialize_field(out, *f_iter, "_value.");
+        generate_deserialize_field(out, *f_iter, "this.");
         out <<
-          indent() << "_value.__isset." << (*f_iter)->get_name() << " = true;" << endl;
+          indent() << "this.__isset." << (*f_iter)->get_name() << " = true;" << endl;
         indent(out) <<
           "break;" << endl;
         indent_down();
@@ -245,8 +245,7 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
     scope_down(out);
       
     out <<
-      indent() << "_iprot.readStructEnd(_itrans);" << endl <<
-      indent() << "return _value;" << endl; 
+      indent() << "_iprot.readStructEnd(_itrans);" << endl;
 
   indent_down();
   out <<
@@ -290,8 +289,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
 
   indent_down();
   out <<
-    indent() << "}" << endl <<
-    endl;
+    indent() << "}" << endl;
 }
 
 void t_java_generator::generate_java_struct_result_writer(ofstream& out,
@@ -545,7 +543,8 @@ void t_java_generator::generate_service_client(t_service* tservice) {
 
       f_service_ <<
         indent() << "TMessage _msg = _iprot.readMessageBegin(_itrans);" << endl <<
-        indent() << resultname << " __result = " << resultname << ".read(_iprot, _itrans);" << endl <<
+        indent() << resultname << " __result = new " << resultname << "();" << endl <<
+        indent() << "__result.read(_iprot, _itrans);" << endl <<
         indent() << "_iprot.readMessageEnd(_itrans);" << endl <<
         endl;
 
@@ -722,7 +721,8 @@ void t_java_generator::generate_process_function(t_service* tservice,
   string resultname = tfunction->get_name() + "_result";
 
   f_service_ <<
-    indent() << argsname << " __args = " << argsname << ".read(_iprot, _itrans);" << endl <<
+    indent() << argsname << " __args = new " << argsname << "();" << endl <<
+    indent() << "__args.read(_iprot, _itrans);" << endl <<
     indent() << "_iprot.readMessageEnd(_itrans);" << endl;
 
   t_struct* xs = tfunction->get_xceptions();
@@ -890,7 +890,8 @@ void t_java_generator::generate_deserialize_struct(ofstream& out,
                                                    t_struct* tstruct,
                                                    string prefix) {
   out <<
-    indent() << prefix << " = " << tstruct->get_name() << ".read(_iprot, _itrans);" << endl;
+    indent() << prefix << " = new " << tstruct->get_name() << "();" << endl <<
+    indent() << prefix << ".read(_iprot, _itrans);" << endl;
 }
 
 void t_java_generator::generate_deserialize_container(ofstream& out,
@@ -1292,10 +1293,12 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
         break;
     }
 
-    } else  if (ttype->is_enum()) {
+    } else if (ttype->is_enum()) {
       result += " = 0";
+    } else if (ttype->is_container()) {
+      result += " = new " + type_name(ttype) + "()";
     } else {
-      result += " = new " + type_name(tfield->get_type()) + "()";
+      result += " = null";
     }
   }
   return result + ";";
