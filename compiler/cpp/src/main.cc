@@ -21,6 +21,7 @@
 #include "generate/t_cpp_generator.h"
 #include "generate/t_java_generator.h"
 #include "generate/t_php_generator.h"
+#include "generate/t_py_generator.h"
 
 using namespace std;
 
@@ -99,8 +100,8 @@ void usage() {
   fprintf(stderr, "  --java   Generate Java output files\n");
   fprintf(stderr, "  --php    Generate PHP output files\n");
   fprintf(stderr, "  --phpi   Generate PHP inlined files\n");
-  //fprintf(stderr, "  -python Generate Python output files\n");
-  fprintf(stderr, "  --debug      Print parse debugging to standard output\n");
+  fprintf(stderr, "  --py     Generate Python output files\n");
+  fprintf(stderr, "  --debug  Print parse debugging to standard output\n");
   exit(1);
 }
 
@@ -111,6 +112,7 @@ int main(int argc, char** argv) {
   int i;
   bool gen_cpp = false;
   bool gen_java = false;
+  bool gen_py = false;
   bool gen_php = false;
   bool php_inline = false;
 
@@ -136,13 +138,15 @@ int main(int argc, char** argv) {
     } else if (strcmp(argv[i], "--phpi") == 0) {
       gen_php = true;
       php_inline = true;
+    } else if (strcmp(argv[i], "--py") == 0) {
+      gen_py = true;
     } else {
       fprintf(stderr, "!!! Unrecognized option: %s\n", argv[i]);
       usage();
     }
   }
   
-  if (!gen_cpp && !gen_java && !gen_php) {
+  if (!gen_cpp && !gen_java && !gen_php && !gen_py) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
@@ -190,6 +194,12 @@ int main(int argc, char** argv) {
       t_php_generator* php = new t_php_generator(php_inline);
       php->generate_program(g_program);
       delete php;
+    }
+
+    if (gen_py) {
+      t_py_generator* py = new t_py_generator();
+      py->generate_program(g_program);
+      delete py;
     }
   } catch (string s) {
     printf("Error: %s\n", s.c_str());

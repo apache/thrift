@@ -341,7 +341,7 @@ void t_php_generator::generate_service(t_service* tservice) {
     php_includes();
 
   f_service_ <<
-    "require_once dirname(__FILE__).'/" << service_name_ << "_types.php';" << endl << endl;
+    "require_once dirname(__FILE__).'/" << program_name_ << "_types.php';" << endl << endl;
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_interface(tservice);
@@ -1287,7 +1287,7 @@ string t_php_generator::declare_field(t_field* tfield, bool init, bool obj) {
       result += " = 0";
     } else if (type->is_container()) {
       result += " = array()";
-    } else if (type->is_struct()) {
+    } else if (type->is_struct() || type->is_xception()) {
       if (obj) {
         result += " = new " + type->get_name() + "()";
       } else {
