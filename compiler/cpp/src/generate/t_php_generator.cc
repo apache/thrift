@@ -809,6 +809,7 @@ void t_php_generator::generate_deserialize_container(ofstream &out,
   t_field fetype(g_program->get_byte_type(), etype);
 
   indent(out) <<
+    prefix << " = array();" << endl <<
     "$" << size << " = 0;" << endl;
   
   // Declare variables, read header

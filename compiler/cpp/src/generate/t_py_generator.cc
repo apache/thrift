@@ -640,8 +640,8 @@ void t_py_generator::generate_deserialize_struct(ofstream &out,
 }
 
 void t_py_generator::generate_deserialize_container(ofstream &out,
-                                                     t_type* ttype,
-                                                     string prefix) {
+                                                    t_type* ttype,
+                                                    string prefix) {
   string size = tmp("_size");
   string ktype = tmp("_ktype");
   string vtype = tmp("_vtype");
@@ -655,12 +655,15 @@ void t_py_generator::generate_deserialize_container(ofstream &out,
   // Declare variables, read header
   if (ttype->is_map()) {
     out <<
+      indent() << prefix << " = {}" << endl <<
       indent() << "(" << ktype << ", " << vtype << ", " << size << " ) = iprot.readMapBegin(itrans) " << endl;
   } else if (ttype->is_set()) {
     out <<
+      indent() << prefix << " = []" << endl <<
       indent() << "(" << etype << ", " << size << ") = iprot.readSetBegin(itrans)" << endl;
   } else if (ttype->is_list()) {
     out <<
+      indent() << prefix << " = []" << endl <<
       indent() << "(" << etype << ", " << size << ") = iprot.readListBegin(itrans)" << endl;
   }
 
