@@ -6,25 +6,25 @@
 # Default target is everything
 
 ifndef thrift_home
-thrift_home=/usr/local
+thrift_home=../..
 endif #thrift_home
 
 target: all
 
 ifndef boost_home
-boost_home=../../../../../thirdparty/boost_1_33_1
+#boost_home=../../../../../thirdparty/boost_1_33_1
 boost_home=/usr/local/include/boost-1_33_1
 endif #boost_home
 target: all
 
-include_paths = $(thrift_home)/include/thrift \
+include_paths = $(thrift_home)/lib/cpp/src \
 		$(boost_home)
 
 include_flags = $(patsubst %,-I%, $(include_paths))
 
 # Tools
 ifndef THRIFT
-THRIFT = thrift
+THRIFT = ../../compiler/cpp/bin/thrift
 endif # THRIFT
 
 CC     = g++
@@ -54,4 +54,4 @@ client: stubs
 	g++ -o TestClient $(CFL) src/TestClient.cc ./gen-cpp/ThriftTest.cc ./gen-cpp/ThriftTest_types.cc
 
 clean:
-	rm -fr TestServer TestClient ../cpp-gen
+	rm -fr TestServer TestClient gen-cpp
