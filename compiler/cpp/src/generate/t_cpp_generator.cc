@@ -480,8 +480,10 @@ void t_cpp_generator::generate_service(t_service* tservice) {
 
   generate_service_interface(tservice);
   generate_service_helpers(tservice);
-  generate_service_server(tservice);
   generate_service_client(tservice);
+  generate_service_server(tservice);
+  generate_service_multiface(tservice);
+
 
   f_service_ <<
     ns_close_ << endl <<
@@ -534,6 +536,93 @@ void t_cpp_generator::generate_service_interface(t_service* tservice) {
   indent_down();
   f_header_ <<
     "}; " << endl << endl;
+}
+
+/**
+ * Generates a multiface, which is a single server that just takes a set
+ * of objects implementing the interface and calls them all, returning the
+ * value of the last one to be called.
+ *
+ * @param tservice The service to generate a multiserver for.
+ */
+void t_cpp_generator::generate_service_multiface(t_service* tservice) {
+    // Generate the dispatch methods
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter; 
+
+  string list_type = string("std::vector<boost::shared_ptr<") + service_name_ + "If> >";
+
+  // Generate the header portion
+  f_header_ <<
+    "class " << service_name_ << "Multiface : " <<
+    "public " << service_name_ << "If {" << endl <<
+    " public: " << endl;
+  indent_up();
+  f_header_ << 
+    indent() << service_name_ << "Multiface(" << list_type << "& ifaces) : _ifaces(ifaces) {}" << endl <<
+    indent() << "virtual ~" << service_name_ << "Multiface() {}" << endl;
+  indent_down();
+
+  // Protected data members
+  f_header_ <<
+    " protected:" << endl;
+  indent_up();
+  f_header_ <<
+    indent() << list_type << "& _ifaces;" << endl;
+  indent_down();
+
+  f_header_ <<
+    indent() << " public:" << endl;
+  indent_up();
+
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    t_struct* arglist = (*f_iter)->get_arglist();
+    const vector<t_field*>& args = arglist->get_members();
+    vector<t_field*>::const_iterator a_iter;
+
+    string call = string("_ifaces[i]->") + (*f_iter)->get_name() + "(";
+    bool first = true;
+    for (a_iter = args.begin(); a_iter != args.end(); ++a_iter) {
+      if (first) {
+        first = false;
+      } else {
+        call += ", ";
+      }
+      call += (*a_iter)->get_name();
+    }
+    call += ")";
+
+    f_header_ <<
+      indent() << function_signature(*f_iter) << " {" << endl;
+    indent_up();
+    f_header_ <<
+      indent() << "uint32_t sz = _ifaces.size();" << endl <<
+      indent() << "for (uint32_t i = 0; i < sz; ++i) {" << endl;
+    if (!(*f_iter)->get_returntype()->is_void()) {
+      f_header_ <<
+        indent() << "  if (i == sz - 1) {" << endl <<
+        indent() << "    return " << call << ";" << endl <<
+        indent() << "  } else {" << endl <<
+        indent() << "    " << call << ";" << endl <<
+        indent() << "  }" << endl;
+    } else {
+      f_header_ <<
+        indent() << "  " << call << ";" << endl;
+    }
+
+    f_header_ <<
+      indent() << "}" << endl;
+    
+    indent_down();
+    f_header_ <<
+      indent() << "}" << endl <<
+      endl;
+  }
+
+  indent_down();
+  f_header_ <<
+    indent() << "};" << endl <<
+    endl;
 }
 
 /**
@@ -746,17 +835,16 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
   // Generate the header portion
   f_header_ <<
     "class " << service_name_ << "Server : " <<
-    "public " << service_name_ << "If, " <<
     "public facebook::thrift::TProcessor {" << endl <<
     " public: " << endl;
   indent_up();
   f_header_ << 
     indent() <<
-    service_name_ << "Server(boost::shared_ptr<const facebook::thrift::protocol::TProtocol> protocol) : " <<
-                       "_iprot(protocol), _oprot(protocol) {}" << endl <<
+    service_name_ << "Server(boost::shared_ptr<" << service_name_ << "If> iface, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> prot) : " <<
+                       "_iface(iface), _iprot(prot), _oprot(prot) {}" << endl <<
     indent() <<
-    service_name_ << "Server(boost::shared_ptr<const facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> oprot) : " <<
-                       "_iprot(iprot), _oprot(oprot) {}" << endl <<
+    service_name_ << "Server(boost::shared_ptr<" << service_name_ << "If> iface, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> oprot) : " <<
+                       "_iface(iface), _iprot(iprot), _oprot(oprot) {}" << endl <<
     indent() << "bool process(boost::shared_ptr<facebook::thrift::transport::TTransport> _itrans, " <<
                              "boost::shared_ptr<facebook::thrift::transport::TTransport> _otrans);" << endl <<
     indent() << "virtual ~" << service_name_ << "Server() {}" << endl;
@@ -767,6 +855,7 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
     " protected:" << endl;
   indent_up();
   f_header_ <<
+    indent() << "boost::shared_ptr<" << service_name_ << "If> _iface;" << endl <<
     indent() << "boost::shared_ptr<const facebook::thrift::protocol::TProtocol> _iprot;" << endl <<
     indent() << "boost::shared_ptr<const facebook::thrift::protocol::TProtocol> _oprot;" << endl;
   indent_down();
@@ -838,108 +927,11 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
     "}" << endl <<
     endl;
 
-  // Multiserver
-  generate_service_multiserver(tservice);
-
   // Generate the process subfunctions
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_process_function(tservice, *f_iter);
   }
 }
-
-/**
- * Generates a multiserver, which is a single server that just takes a set
- * of objects implementing the interface and calls them all, returning the
- * value of the last one to be called.
- *
- * @param tservice The service to generate a multiserver for.
- */
-void t_cpp_generator::generate_service_multiserver(t_service* tservice) {
-    // Generate the dispatch methods
-  vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
-
-  string list_type = string("std::vector<boost::shared_ptr<") + service_name_ + "If> >";
-
-  // Generate the header portion
-  f_header_ <<
-    "class " << service_name_ << "MultiServer : " <<
-    "public " << service_name_ << "Server {" << endl <<
-    " public: " << endl;
-  indent_up();
-  f_header_ << 
-    indent() <<
-    service_name_ << "MultiServer(boost::shared_ptr<const facebook::thrift::protocol::TProtocol> protocol, " << list_type << "& servers) : " <<
-    service_name_ << "Server(protocol), _servers(servers) {}" << endl <<
-    indent() <<
-    service_name_ << "MultiServer(boost::shared_ptr<const facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> oprot, " << list_type << "& servers) : " <<
-    service_name_ << "Server(iprot, oprot), _servers(servers) {}" << endl <<
-    indent() << "virtual ~" << service_name_ << "MultiServer() {}" << endl;
-  indent_down();
-
-  // Protected data members
-  f_header_ <<
-    " protected:" << endl;
-  indent_up();
-  f_header_ <<
-    indent() << list_type << "& _servers;" << endl;
-  indent_down();
-
-  f_header_ <<
-    indent() << " public:" << endl;
-  indent_up();
-
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    t_struct* arglist = (*f_iter)->get_arglist();
-    const vector<t_field*>& args = arglist->get_members();
-    vector<t_field*>::const_iterator a_iter;
-
-    string call = string("_servers[i]->") + (*f_iter)->get_name() + "(";
-    bool first = true;
-    for (a_iter = args.begin(); a_iter != args.end(); ++a_iter) {
-      if (first) {
-        first = false;
-      } else {
-        call += ", ";
-      }
-      call += (*a_iter)->get_name();
-    }
-    call += ")";
-
-    f_header_ <<
-      indent() << function_signature(*f_iter) << " {" << endl;
-    indent_up();
-    f_header_ <<
-      indent() << "uint32_t sz = _servers.size();" << endl <<
-      indent() << "for (uint32_t i = 0; i < sz; ++i) {" << endl;
-    if (!(*f_iter)->get_returntype()->is_void()) {
-      f_header_ <<
-        indent() << "  if (i == sz - 1) {" << endl <<
-        indent() << "    return " << call << ";" << endl <<
-        indent() << "  } else {" << endl <<
-        indent() << "    " << call << ";" << endl <<
-        indent() << "  }" << endl;
-    } else {
-      f_header_ <<
-        indent() << "  " << call << ";" << endl;
-    }
-
-    f_header_ <<
-      indent() << "}" << endl;
-    
-    indent_down();
-    f_header_ <<
-      indent() << "}" << endl <<
-      endl;
-  }
-
-  indent_down();
-
-  f_header_ <<
-    indent() << "};" << endl <<
-    endl;
-}
-
 
 /**
  * Generates a struct and helpers for a function.
@@ -1019,7 +1011,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     f_service_ << "__result.success = ";    
   }
   f_service_ <<
-    tfunction->get_name() << "(";
+    "_iface->" << tfunction->get_name() << "(";
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {

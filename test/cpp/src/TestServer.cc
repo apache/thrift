@@ -19,10 +19,9 @@ using namespace facebook::thrift::server;
 
 using namespace thrift::test;
 
-class TestServer : public ThriftTestServer {
+class TestHandler : public ThriftTestIf {
  public:
-  TestServer(shared_ptr<TProtocol> protocol) :
-    ThriftTestServer(protocol) {}
+  TestHandler() {}
 
   void testVoid() {
     printf("testVoid()\n");
@@ -339,7 +338,9 @@ int main(int argc, char **argv) {
   // Dispatcher
   shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol);
 
-  shared_ptr<TestServer> testServer(new TestServer(binaryProtocol));
+  shared_ptr<TestHandler> testHandler(new TestHandler());
+
+  shared_ptr<ThriftTestServer> testServer(new ThriftTestServer(testHandler, binaryProtocol));
 
   // Options
   shared_ptr<TServerOptions> serverOptions(new TServerOptions());

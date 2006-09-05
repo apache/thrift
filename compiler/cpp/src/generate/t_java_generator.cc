@@ -599,27 +599,29 @@ void t_java_generator::generate_service_server(t_service* tservice) {
 
   // Generate the header portion
   f_service_ <<
-    "public abstract static class Server implements Iface, TProcessor {" << endl;
+    "public static class Server implements TProcessor {" << endl;
   indent_up();
 
   indent(f_service_) <<
-    "public Server(TProtocol prot)" << endl;
+    "public Server(Iface iface, TProtocol prot)" << endl;
   scope_up(f_service_);
   indent(f_service_) << 
-    "this(prot, prot);" << endl;
+    "this(iface, prot, prot);" << endl;
   scope_down(f_service_);
   f_service_ << endl;
 
   indent(f_service_) <<
-    "public Server(TProtocol iprot, TProtocol oprot)" << endl;
+    "public Server(Iface iface, TProtocol iprot, TProtocol oprot)" << endl;
   scope_up(f_service_);
   f_service_ <<
+    indent() << "_iface = iface;" << endl <<
     indent() << "_iprot = iprot;" << endl <<
     indent() << "_oprot = oprot;" << endl;
   scope_down(f_service_);
   f_service_ << endl;
  
   f_service_ <<
+    indent() << "private Iface _iface;" << endl <<
     indent() << "private TProtocol _iprot;" << endl <<
     indent() << "private TProtocol _oprot;" << endl << endl;
   
@@ -753,7 +755,7 @@ void t_java_generator::generate_process_function(t_service* tservice,
     f_service_ << "__result.success = ";
   }
   f_service_ <<
-    tfunction->get_name() << "(";
+    "_iface." << tfunction->get_name() << "(";
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
