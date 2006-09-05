@@ -1,5 +1,5 @@
-#ifndef T_BINARY_PROTOCOL_H
-#define T_BINARY_PROTOCOL_H
+#ifndef _THRIFT_PROTOCOL_TBINARYPROTOCOL_H_
+#define _THRIFT_PROTOCOL_TBINARYPROTOCOL_H_ 1
 
 #include "TProtocol.h"
 
@@ -147,5 +147,6 @@ using namespace boost;
 
 }}} // facebook::thrift::protocol
 
-#endif
+#endif // #ifndef _THRIFT_PROTOCOL_TBINARYPROTOCOL_H_
+
 

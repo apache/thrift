@@ -1,5 +1,5 @@
-#ifndef T_SOCKET_H
-#define T_SOCKET_H
+#ifndef _THRIFT_TRANSPORT_TSOCKET_H_
+#define _THRIFT_TRANSPORT_TSOCKET_H_ 1
 
 #include <string>
 
@@ -100,4 +100,6 @@ class TSocket : public TTransport {
 };
 
 }}} // facebook::thrift::transport
-#endif
+
+#endif // #ifndef _THRIFT_TRANSPORT_TSOCKET_H_
+

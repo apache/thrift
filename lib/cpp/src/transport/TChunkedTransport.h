@@ -1,5 +1,5 @@
-#ifndef T_CHUNKED_TRANSPORT_H
-#define T_CHUNKED_TRANSPORT_H
+#ifndef _THRIFT_TRANSPORT_TCHUNKEDTRANSPORT_H_
+#define _THRIFT_TRANSPORT_TCHUNKEDTRANSPORT_H_ 1
 
 #include "TTransport.h"
 #include <string>
@@ -80,4 +80,4 @@ class TChunkedTransport : public TTransport {
 
 }}} // facebook::thrift::transport
 
-#endif
+#endif // #ifndef _THRIFT_TRANSPORT_TCHUNKEDTRANSPORT_H_

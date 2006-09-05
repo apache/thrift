@@ -11,11 +11,12 @@ namespace facebook { namespace thrift { namespace concurrency { namespace test {
 
 using namespace facebook::thrift::concurrency;
 
-/** ThreadManagerTests class 
-
-    @author marc
-    @version $Id:$ */
-
+/**
+ * ThreadManagerTests class 
+ *
+ * @author marc
+ * @version $Id:$
+ */
 class ThreadFactoryTests {
 
 public:
@@ -33,8 +34,9 @@ public:
     }
   };
 
-  /** Hello world test */
-
+  /**
+   * Hello world test
+   */
   bool helloWorldTest() {
 
     PosixThreadFactory threadFactory =  PosixThreadFactory();
@@ -52,28 +54,26 @@ public:
     return true;
   }
 
-  /** Reap N threads  */
-
- class ReapNTask: public Runnable {
-
-  public:
-
-  ReapNTask(Monitor& monitor, int& activeCount) :
-    _monitor(monitor),
-      _count(activeCount) {
-      }
+  /**
+   * Reap N threads
+   */
+  class ReapNTask: public Runnable {
     
+   public:
+    
+    ReapNTask(Monitor& monitor, int& activeCount) :
+      _monitor(monitor),
+      _count(activeCount) {}
+      
     void run() {
-
-      {Synchronized s(_monitor);
-
-	_count--;
-
-	//std::cout << "\t\t\tthread count: " << _count << std::endl;
-
-	if(_count == 0) {
-	  _monitor.notify();
-	}
+      Synchronized s(_monitor);
+      
+      _count--;
+      
+      //std::cout << "\t\t\tthread count: " << _count << std::endl;
+      
+      if (_count == 0) {
+        _monitor.notify();
       }
     }
 
@@ -92,25 +92,24 @@ public:
 
     std::set<shared_ptr<Thread> > threads;
 
-    for(int ix = 0; ix < count; ix++) {
+    for (int ix = 0; ix < count; ix++) {
       threads.insert(threadFactory.newThread(shared_ptr<Runnable>(new ReapNTask(*monitor, *activeCount))));
     }
 
-    for(std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
+    for (std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
 
       (*thread)->start();
     }
 
 
-    {Synchronized s(*monitor);
-
-      while(*activeCount > 0) {
+    {
+      Synchronized s(*monitor);
+      while (*activeCount > 0) {
 	monitor->wait(1000);
       }
     }
 
-    for(std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
-
+    for (std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
       threads.erase(*thread);
     }
 
@@ -119,10 +118,10 @@ public:
     return true;
   }
 
- class SynchStartTask: public Runnable {
+  class SynchStartTask: public Runnable {
 
-  public:
-
+   public:
+    
     enum STATE {
       UNINITIALIZED,
       STARTING,
@@ -131,38 +130,33 @@ public:
       STOPPED
     };
 
-  SynchStartTask(Monitor& monitor,
-		 volatile  STATE& state) :
-    _monitor(monitor),
-    _state(state) {
-    }
+    SynchStartTask(Monitor& monitor, volatile  STATE& state) :
+      _monitor(monitor),
+      _state(state) {}
 
     void run() {
-
-      {Synchronized s(_monitor);
-
-	if(_state == SynchStartTask::STARTING) {
+      {
+        Synchronized s(_monitor);
+	if (_state == SynchStartTask::STARTING) {
 	  _state = SynchStartTask::STARTED;
 	  _monitor.notify();
 	}
       }
 
-      {Synchronized s(_monitor);
-	
-	while(_state == SynchStartTask::STARTED) {
+      {
+        Synchronized s(_monitor);
+        while (_state == SynchStartTask::STARTED) {
 	  _monitor.wait();
 	}
 
-	if(_state == SynchStartTask::STOPPING) {
-	  
-	  _state = SynchStartTask::STOPPED;
-	  
-	  _monitor.notifyAll();
+	if (_state == SynchStartTask::STOPPING) {
+          _state = SynchStartTask::STOPPED;
+          _monitor.notifyAll();
 	}
       }
     }
 
-    private:
+   private:
     Monitor& _monitor;
     volatile  STATE& _state;
   };
@@ -179,34 +173,35 @@ public:
 
     shared_ptr<Thread> thread = threadFactory.newThread(task);
 
-    if(state == SynchStartTask::UNINITIALIZED) {
+    if (state == SynchStartTask::UNINITIALIZED) {
 
       state = SynchStartTask::STARTING;
 
       thread->start();
     }
 
-    {Synchronized s(monitor);
-      
-      while(state == SynchStartTask::STARTING) {
+    {
+      Synchronized s(monitor);
+      while (state == SynchStartTask::STARTING) {
 	monitor.wait();
       }
     }
 
     assert(state != SynchStartTask::STARTING);
 
-    {Synchronized s(monitor);
+    {
+      Synchronized s(monitor);
 
       monitor.wait(100);
 
-      if(state == SynchStartTask::STARTED) {
+      if (state == SynchStartTask::STARTED) {
 
 	state = SynchStartTask::STOPPING;
 
 	monitor.notify();
       }
       
-      while(state == SynchStartTask::STOPPING) {
+      while (state == SynchStartTask::STOPPING) {
 	monitor.wait();
       }
     }
@@ -228,8 +223,9 @@ public:
 
     long long startTime = Util::currentTime();
 
-    for(size_t ix = 0; ix < count; ix++) {
-      {Synchronized s(monitor);
+    for (size_t ix = 0; ix < count; ix++) {
+      {
+        Synchronized s(monitor);
 	monitor.wait(timeout);
       }
     }
@@ -238,7 +234,7 @@ public:
 
     double error = ((endTime - startTime) - (count * timeout)) / (double)(count * timeout);
 
-    if(error < 0.0)  {
+    if (error < 0.0)  {
 
       error *= 1.0;
     }

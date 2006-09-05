@@ -1,5 +1,5 @@
-#ifndef T_NULL_TRANSPORT
-#define T_NULL_TRANSPORT
+#ifndef _THRIFT_TRANSPORT_TNULLTRANSPORT_H_
+#define _THRIFT_TRANSPORT_TNULLTRANSPORT_H_ 1
 
 #include "TTransport.h"
 
@@ -25,4 +25,4 @@ class TNullTransport : public TTransport {
 
 }}} // facebook::thrift::transport
 
-#endif
+#endif // #ifndef _THRIFT_TRANSPORT_TNULLTRANSPORT_H_

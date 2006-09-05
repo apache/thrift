@@ -1,5 +1,5 @@
-#ifndef THRIFT_H
-#define THRIFT_H
+#ifndef _THRIFT_THRIFT_H_
+#define _THRIFT_THRIFT_H_ 1
 
 #include <netinet/in.h>
 #include <inttypes.h>
@@ -24,4 +24,4 @@ public:
 
 }} // facebook::thrift
 
-#endif
+#endif // #ifndef _THRIFT_THRIFT_H_

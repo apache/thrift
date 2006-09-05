@@ -1,5 +1,5 @@
-#ifndef T_PROTOCOL_H
-#define T_PROTOCOL_H
+#ifndef _THRIFT_PROTOCOL_TPROTOCOL_H_
+#define _THRIFT_PROTOCOL_TPROTOCOL_H_ 1
 
 #include <transport/TTransport.h>
 
@@ -20,7 +20,7 @@ using namespace facebook::thrift::transport;
 
 #define htonll(x) ntohll(x)
 
-/** Forward declaration for TProtocol */
+// Forward declaration for TProtocol
 struct TBuf;
 
 /**
@@ -49,7 +49,8 @@ enum TType {
 };
 
 /**
- * Enumerated definition of the message types that the Thrift protocol supports.
+ * Enumerated definition of the message types that the Thrift protocol
+ * supports.
  */
 enum TMessageType {
   T_CALL       = 1,
@@ -297,5 +298,4 @@ class TProtocol {
 
 }}} // facebook::thrift::protocol
 
-#endif
-
+#endif // #define _THRIFT_PROTOCOL_TPROTOCOL_H_ 1

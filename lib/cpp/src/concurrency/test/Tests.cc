@@ -14,13 +14,13 @@ int main(int argc, char** argv) {
 
   args[0] = "all";
 
-  for(int ix = 1; ix < argc; ix++) {
+  for (int ix = 1; ix < argc; ix++) {
     args[ix - 1] = std::string(argv[ix]);
   }
 
   bool runAll = args[0].compare("all") == 0;
 
-  if(runAll || args[0].compare("thread-factory") == 0) {
+  if (runAll || args[0].compare("thread-factory") == 0) {
 
     ThreadFactoryTests threadFactoryTests;
     
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     assert(threadFactoryTests.monitorTimeoutTest());
   }
 
-  if(runAll || args[0].compare("util") == 0) {
+  if (runAll || args[0].compare("util") == 0) {
 
     std::cout << "Util tests..." << std::endl;
 
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     time01 = time00;
     size_t count = 0;
     
-    while(time01 < time00 + 10) {
+    while (time01 < time00 + 10) {
       count++;
       time01 = Util::currentTime();
     }
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
   }
 
 
-  if(runAll || args[0].compare("timer-manager") == 0) {
+  if (runAll || args[0].compare("timer-manager") == 0) {
 
     std::cout << "TimerManager tests..." << std::endl;
 
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     assert(timerManagerTests.test00());
   }
 
-  if(runAll || args[0].compare("thread-manager") == 0) {
+  if (runAll || args[0].compare("thread-manager") == 0) {
 
     std::cout << "ThreadManager tests..." << std::endl;
 
@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  if(runAll || args[0].compare("thread-manager-benchmark") == 0) {
+  if (runAll || args[0].compare("thread-manager-benchmark") == 0) {
 
     std::cout << "ThreadManager benchmark tests..." << std::endl;
 
@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
 
       long long delay = 10LL;
 
-      for(size_t workerCount = minWorkerCount; workerCount < maxWorkerCount; workerCount*= 2) {
+      for (size_t workerCount = minWorkerCount; workerCount < maxWorkerCount; workerCount*= 2) {
 
 	size_t taskCount = workerCount * tasksPerWorker;
 

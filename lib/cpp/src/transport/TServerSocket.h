@@ -1,5 +1,5 @@
-#ifndef T_SERVER_SOCKET_H
-#define T_SERVER_SOCKET_H
+#ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_
+#define _THRIFT_TRANSPORT_TSERVERSOCKET_H_ 1
 
 #include "TServerTransport.h"
 #include <boost/shared_ptr.hpp>
@@ -34,4 +34,4 @@ class TServerSocket : public TServerTransport {
 
 }}} // facebook::thrift::transport
 
-#endif
+#endif // #ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_

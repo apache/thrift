@@ -1,5 +1,5 @@
-#ifndef T_PROCESSOR_H
-#define T_PROCESSOR_H
+#ifndef _THRIFT_TPROCESSOR_H_
+#define _THRIFT_TPROCESSOR_H_ 1
 
 #include <string>
 #include <transport/TTransport.h>
@@ -30,4 +30,4 @@ class TProcessor {
 
 }} // facebook::thrift
 
-#endif
+#endif // #ifndef _THRIFT_PROCESSOR_H_

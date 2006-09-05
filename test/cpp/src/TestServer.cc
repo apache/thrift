@@ -248,13 +248,12 @@ class TestServer : public ThriftTestServer {
 
     printf("testMultiException(%s, %s)\n", arg0.c_str(), arg1.c_str());
 
-    if(arg0.compare("Xception") == 0) {
+    if (arg0.compare("Xception") == 0) {
       Xception e;
       e.errorCode = 1001;
       e.message = "This is an Xception";
       throw e;
-    
-    } else if(arg0.compare("Xception2") == 0) {
+    } else if (arg0.compare("Xception2") == 0) {
       Xception2 e;
       e.errorCode = 2002;
       e.struct_thing.string_thing = "This is an Xception2";
@@ -287,15 +286,11 @@ int main(int argc, char **argv) {
     
   map<string, string>  args;
   
-  for(int ix = 1; ix < argc; ix++) {
-
+  for (int ix = 1; ix < argc; ix++) {
     string arg(argv[ix]);
-
-    if(arg.compare(0,2, "--") == 0) {
-
+    if (arg.compare(0,2, "--") == 0) {
       size_t end = arg.find_first_of("=", 2);
-
-      if(end != string::npos) {
+      if (end != string::npos) {
 	args[string(arg, 2, end - 2)] = string(arg, end + 1);
       } else {
 	args[string(arg, 2, end - 2)] = "true";
@@ -308,40 +303,35 @@ int main(int argc, char **argv) {
 
   try {
 
-    if(!args["port"].empty()) {
+    if (!args["port"].empty()) {
       port = atoi(args["port"].c_str());
     }
 
-    if(!args["server-type"].empty()) {
-      serverType = args["server-type"];
-      
-      if(serverType == "simple") {
-
-      } else if(serverType == "thread-pool") {
-
+    if (!args["server-type"].empty()) {
+      serverType = args["server-type"];     
+      if (serverType == "simple") {
+      } else if (serverType == "thread-pool") {
       } else {
-
 	throw invalid_argument("Unknown server type "+serverType);
       }
     }
 
-    if(!args["protocol-type"].empty()) {
+    if (!args["protocol-type"].empty()) {
       protocolType = args["protocol-type"];
-      
-      if(protocolType == "binary") {
-      } else if(protocolType == "ascii") {
+      if (protocolType == "binary") {
+      } else if (protocolType == "ascii") {
 	throw invalid_argument("ASCII protocol not supported");
-      } else if(protocolType == "xml") {
+      } else if (protocolType == "xml") {
 	throw invalid_argument("XML protocol not supported");
       } else {
 	throw invalid_argument("Unknown protocol type "+protocolType);
       }
     } 
 
-    if(!args["workers"].empty()) {
+    if (!args["workers"].empty()) {
       workerCount = atoi(args["workers"].c_str());
     }
-  } catch(exception& e) {
+  } catch (exception& e) {
     cerr << e.what() << endl;
     cerr << usage;
   }
@@ -369,9 +359,11 @@ int main(int argc, char **argv) {
 
   } else if (serverType == "thread-pool") {
 
-    shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
+    shared_ptr<ThreadManager> threadManager =
+      ThreadManager::newSimpleThreadManager(workerCount);
 
-    shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
+    shared_ptr<PosixThreadFactory> threadFactory =
+      shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
 
     threadManager->threadFactory(threadFactory);
 

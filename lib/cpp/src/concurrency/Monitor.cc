@@ -9,125 +9,97 @@
 
 #include <pthread.h>
 
-
 namespace facebook { namespace thrift { namespace concurrency { 
 
-/** Monitor implementation using the POSIX pthread library
-    
-    @author marc
-    @version $Id:$ */
-
+/**
+ * Monitor implementation using the POSIX pthread library
+ * 
+ * @author marc
+ * @version $Id:$
+ */
 class Monitor::Impl {
 
  public:
 
-  Impl() : 
+  Impl() :
     mutexInitialized(false),
     condInitialized(false) {
     
     try {
-
       assert(pthread_mutex_init(&_pthread_mutex, NULL) == 0);
-
       mutexInitialized = true;
-
       assert(pthread_cond_init(&_pthread_cond, NULL) == 0);
-
       condInitialized = true;
-
     } catch(...) {
       cleanup();
     }
   }
 
-  ~Impl() {cleanup();}
+  ~Impl() { cleanup(); }
 
-  void lock() const {pthread_mutex_lock(&_pthread_mutex);}
+  void lock() const { pthread_mutex_lock(&_pthread_mutex); }
 
-  void unlock() const {pthread_mutex_unlock(&_pthread_mutex);}
+  void unlock() const { pthread_mutex_unlock(&_pthread_mutex); }
 
   void wait(long long timeout) const {
 
     // XXX Need to assert that caller owns mutex
-
     assert(timeout >= 0LL);
-
-    if(timeout == 0LL) {
-
+    if (timeout == 0LL) {
       assert(pthread_cond_wait(&_pthread_cond, &_pthread_mutex) == 0);
-
     } else {
-
       struct timespec abstime;
-
       long long now = Util::currentTime();
-
       Util::toTimespec(abstime, now + timeout);
-
-      int result  = pthread_cond_timedwait(&_pthread_cond, &_pthread_mutex, &abstime);
-
-      if(result == ETIMEDOUT) {
-
+      int result = pthread_cond_timedwait(&_pthread_cond, &_pthread_mutex, &abstime);
+      if (result == ETIMEDOUT) {
 	assert(Util::currentTime() >= (now + timeout));
       }
     }
   }
 
   void notify() {
-
     // XXX Need to assert that caller owns mutex
-
     assert(pthread_cond_signal(&_pthread_cond) == 0);
   }
 
   void notifyAll() {
-
     // XXX Need to assert that caller owns mutex
-
     assert(pthread_cond_broadcast(&_pthread_cond) == 0);
   }
 
-private:
+ private:
 
   void cleanup() {
-
-    if(mutexInitialized) {
-
+    if (mutexInitialized) {
       mutexInitialized = false;
-
       assert(pthread_mutex_destroy(&_pthread_mutex) == 0);
     }
 
-    if(condInitialized) {
-
+    if (condInitialized) {
       condInitialized = false;
-
       assert(pthread_cond_destroy(&_pthread_cond) == 0);
     }
   }
 
   mutable pthread_mutex_t _pthread_mutex;
-
   mutable bool mutexInitialized;
-
   mutable pthread_cond_t _pthread_cond;
-
   mutable bool condInitialized;
 };
 
 Monitor::Monitor() : _impl(new Monitor::Impl()) {}
 
-Monitor::~Monitor() { delete _impl;}
+Monitor::~Monitor() { delete _impl; }
 
-void Monitor::lock() const {_impl->lock();}
+void Monitor::lock() const { _impl->lock(); }
 
-void Monitor::unlock() const {_impl->unlock();}
+void Monitor::unlock() const { _impl->unlock(); }
 
-void Monitor::wait(long long timeout) const {_impl->wait(timeout);}
+void Monitor::wait(long long timeout) const { _impl->wait(timeout); }
 
-void Monitor::notify() const {_impl->notify();}
+void Monitor::notify() const { _impl->notify(); }
 
-void Monitor::notifyAll() const {_impl->notifyAll();}
+void Monitor::notifyAll() const { _impl->notifyAll(); }
 
 }}} // facebook::thrift::concurrency
-

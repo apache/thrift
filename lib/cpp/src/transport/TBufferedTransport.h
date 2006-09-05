@@ -1,5 +1,5 @@
-#ifndef T_BUFFERED_TRANSPORT_H
-#define T_BUFFERED_TRANSPORT_H
+#ifndef _THRIFT_TRANSPORT_TBUFFEREDTRANSPORT_H_
+#define _THRIFT_TRANSPORT_TBUFFEREDTRANSPORT_H_ 1
 
 #include "TTransport.h"
 #include <string>
@@ -84,4 +84,4 @@ class TBufferedTransport : public TTransport {
 
 }}} // facebook::thrift::transport
 
-#endif
+#endif // #ifndef _THRIFT_TRANSPORT_TBUFFEREDTRANSPORT_H_

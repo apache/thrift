@@ -1,5 +1,5 @@
-#if !defined(_concurrency_Exception_h_)
-#define _concurrency_Exception_h_ 1
+#ifndef _THRIFT_CONCURRENCY_EXCEPTION_H_
+#define _THRIFT_CONCURRENCY_EXCEPTION_H_ 1
 
 #include <exception>
 
@@ -17,4 +17,4 @@ class TimedOutException : public std::exception {};
 
 }}} // facebook::thrift::concurrency
 
-#endif // !defined(_concurrency_Exception_h_)
+#endif // #ifndef _THRIFT_CONCURRENCY_EXCEPTION_H_

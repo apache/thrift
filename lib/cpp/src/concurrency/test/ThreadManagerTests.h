@@ -14,11 +14,12 @@ namespace facebook { namespace thrift { namespace concurrency { namespace test {
 
 using namespace facebook::thrift::concurrency;
 
-/** ThreadManagerTests class 
-
-    @author marc
-    @version $Id:$ */
-
+/**
+ * ThreadManagerTests class 
+ *
+ * @author marc
+ * @version $Id:$
+ */
 class ThreadManagerTests {
 
 public:
@@ -39,8 +40,8 @@ public:
 
       _startTime = Util::currentTime();
 
-      {Synchronized s(_sleep);
-
+      {
+        Synchronized s(_sleep);
 
 	_sleep.wait(_timeout);
       }
@@ -49,13 +50,14 @@ public:
 
       _done = true;
       
-      {Synchronized s(_monitor);
+      {
+        Synchronized s(_monitor);
 
 	// std::cout << "Thread " << _count << " completed " << std::endl;
       
 	_count--;
 
-	if(_count == 0) {
+	if (_count == 0) {
 	  
 	  _monitor.notify();
 	}
@@ -71,9 +73,11 @@ public:
     Monitor _sleep;
   };
 
-  /** Dispatch count tasks, each of which blocks for timeout milliseconds then completes.
-      Verify that all tasks completed and that thread manager cleans up properly on delete. */
-
+  /**
+   * Dispatch count tasks, each of which blocks for timeout milliseconds then
+   * completes. Verify that all tasks completed and that thread manager cleans
+   * up properly on delete.
+   */
   bool loadTest(size_t count=100, long long timeout=100LL, size_t workerCount=4) {
 
     Monitor monitor;
@@ -92,20 +96,21 @@ public:
       
     std::set<shared_ptr<ThreadManagerTests::Task> > tasks;
 
-    for(size_t ix = 0; ix < count; ix++) {
+    for (size_t ix = 0; ix < count; ix++) {
 
       tasks.insert(shared_ptr<ThreadManagerTests::Task>(new ThreadManagerTests::Task(monitor, activeCount, timeout)));
     }
 
     long long time00 = Util::currentTime();
 
-    for(std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
+    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
 
 	threadManager->add(*ix);
     }
 
-    {Synchronized s(monitor);
-      
+    {
+      Synchronized s(monitor);
+
       while(activeCount > 0) {
 	
 	monitor.wait();
@@ -121,7 +126,7 @@ public:
     long long minTime = 9223372036854775807LL;
     long long maxTime = 0;
 
-    for(std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
+    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
       
       shared_ptr<ThreadManagerTests::Task> task = *ix;
 
@@ -129,19 +134,19 @@ public:
 
       assert(delta > 0);
 
-      if(task->_startTime < firstTime) {
+      if (task->_startTime < firstTime) {
 	firstTime = task->_startTime;
       }
 
-      if(task->_endTime > lastTime) {
+      if (task->_endTime > lastTime) {
 	lastTime = task->_endTime;
       }
 
-      if(delta < minTime) {
+      if (delta < minTime) {
 	minTime = delta;
       }
 
-      if(delta > maxTime) {
+      if (delta > maxTime) {
 	maxTime = delta;
       }
 
@@ -156,7 +161,7 @@ public:
 
     double error = ((time01 - time00) - expectedTime) / expectedTime;
 
-    if(error < 0) {
+    if (error < 0) {
       error*= -1.0;
     }
 

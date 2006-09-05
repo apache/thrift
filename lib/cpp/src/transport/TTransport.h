@@ -1,5 +1,5 @@
-#ifndef T_TRANSPORT_H
-#define T_TRANSPORT_H
+#ifndef _THRIFT_TRANSPORT_TTRANSPORT_H_
+#define _THRIFT_TRANSPORT_TTRANSPORT_H_ 1
 
 #include "TTransportException.h"
 #include <string>
@@ -98,4 +98,4 @@ class TTransport {
 
 }}} // facebook::thrift::transport
 
-#endif
+#endif // #ifndef _THRIFT_TRANSPORT_TTRANSPORT_H_
