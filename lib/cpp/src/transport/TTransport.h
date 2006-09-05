@@ -72,6 +72,17 @@ class TTransport {
   }
 
   /**
+   * Called when read is completed. 
+   * This can be over-ridden to perform a transport-specific action
+   * e.g. logging the request to a file
+   *
+   */
+  virtual void readEnd() {
+    // default behaviour is to do nothing
+    return;
+  }
+
+  /**
    * Writes the string in its entirety to the buffer.
    *
    * @param s The string to write out
@@ -79,6 +90,17 @@ class TTransport {
    */
   virtual void write(const uint8_t* buf, uint32_t len) {
     throw TTransportException(TTX_NOT_OPEN, "Base TTransport cannot write.");
+  }
+
+  /**
+   * Called when write is completed. 
+   * This can be over-ridden to perform a transport-specific action
+   * at the end of a request.
+   *
+   */
+  virtual void writeEnd() {
+    // default behaviour is to do nothing
+    return;
   }
 
   /**

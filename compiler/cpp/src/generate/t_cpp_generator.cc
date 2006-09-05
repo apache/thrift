@@ -982,6 +982,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     indent() << argsname << " __args;" << endl <<
     indent() << "__args.read(_iprot, itrans);" << endl <<
     indent() << "_iprot->readMessageEnd(itrans);" << endl <<
+    indent() << "itrans->readEnd();" << endl <<
     endl;
 
   t_struct* xs = tfunction->get_xceptions();
@@ -1064,7 +1065,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     indent() << "_oprot->writeMessageBegin(otrans, \"" << tfunction->get_name() << "\", facebook::thrift::protocol::T_REPLY, seqid);" << endl <<
     indent() << "__result.write(_oprot, otrans);" << endl <<
     indent() << "_oprot->writeMessageEnd(otrans);" << endl <<
-    indent() << "otrans->flush();" << endl;
+    indent() << "otrans->flush();" << endl <<
+    indent() << "otrans->writeEnd();" << endl;
     
   // Close function
   scope_down(f_service_);
