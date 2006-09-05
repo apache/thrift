@@ -70,7 +70,7 @@ class TBinaryProtocol(TProtocolBase):
     otrans.write(buff)
     
   def writeI64(self, otrans, i64):
-    buff = pack("!l", i64)
+    buff = pack("!q", i64)
     otrans.write(buff)
 
   def writeString(self, otrans, str):
@@ -150,7 +150,7 @@ class TBinaryProtocol(TProtocolBase):
 
   def readI64(self, itrans):
     buff = itrans.readAll(8)
-    val, = unpack('!l', buff)
+    val, = unpack('!q', buff)
     return val
 
   def readString(self, itrans):

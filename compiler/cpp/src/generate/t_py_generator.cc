@@ -331,13 +331,15 @@ void t_py_generator::generate_service(t_service* tservice) {
     py_imports() << endl;
 
   f_service_ <<
-    "from " << program_name_ << "_types import *" << endl << endl;
+    "from " << program_name_ << "_types import *" << endl << 
+    "from thrift.Thrift import TProcessor" << endl <<
+    endl;
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_interface(tservice);
   generate_service_client(tservice);
   generate_service_helpers(tservice);
-  // generate_service_server(tservice);
+  generate_service_server(tservice);
   
   // Close service file
   f_service_ << endl;
@@ -555,6 +557,177 @@ void t_py_generator::generate_service_client(t_service* tservice) {
   indent_down();
   f_service_ <<
     endl;
+}
+
+/**
+ * Generates a service server definition.
+ *
+ * @param tservice The service to generate a server for.
+ */
+void t_py_generator::generate_service_server(t_service* tservice) {
+  // Generate the dispatch methods
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter; 
+
+  // Generate the header portion
+  f_service_ <<
+    "class Server(Iface, TProcessor):" << endl;
+  indent_up();
+
+  indent(f_service_) <<
+    "def __init__(self, handler, iprot, oprot=None):" << endl;
+  indent_up();
+  f_service_ <<
+    indent() << "self.__handler = handler" << endl <<
+    indent() << "self.__iprot = iprot" << endl <<
+    indent() << "if oprot == None:" << endl <<
+    indent() << "  self.__oprot = iprot" << endl <<
+    indent() << "else:" << endl <<
+    indent() << "  self.__oprot = oprot" << endl;
+  indent_down();
+  f_service_ << endl;
+ 
+  // Generate the server implementation
+  indent(f_service_) <<
+    "def process(self, itrans, otrans):" << endl;
+  indent_up();
+
+  f_service_ <<
+    indent() << "(name, type, seqid)  = self.__iprot.readMessageBegin(itrans)" << endl;
+
+  // TODO(mcslee): validate message
+
+  bool first = true;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    if (!first) {
+      f_service_ << indent() << "el";
+    } else {
+      f_service_ << indent();
+      first = false;
+    }
+    f_service_ <<
+      "if name == \"" << (*f_iter)->get_name() << "\":" << endl;
+    indent_up();
+    indent(f_service_) <<
+      "self.process_" << (*f_iter)->get_name() << "(seqid, itrans, otrans)" << endl;
+    indent_down();
+  }
+  f_service_ <<
+    indent() << "else:" << endl <<
+    indent() << "  print 'Unknown function %s' % (name)" << endl;
+  f_service_ << endl;
+  
+  // Read end of args field, the T_STOP, and the struct close
+  f_service_ <<
+    indent() << "return True" << endl;
+
+  indent_down();
+  f_service_ << endl;
+
+  // Generate the process subfunctions
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_process_function(tservice, *f_iter);
+  }
+
+  indent_down();
+  f_service_ << endl;
+}
+
+/**
+ * Generates a process function definition.
+ *
+ * @param tfunction The function to write a dispatcher for
+ */
+void t_py_generator::generate_process_function(t_service* tservice,
+                                               t_function* tfunction) {
+  // Open function
+  indent(f_service_) <<
+    "def process_" << tfunction->get_name() <<
+    "(self, seqid, itrans, otrans):" << endl;
+  indent_up();
+
+  string argsname = tfunction->get_name() + "_args";
+  string resultname = tfunction->get_name() + "_result";
+
+  f_service_ <<
+    indent() << "__args = " << argsname << "()" << endl <<
+    indent() << "__args.read(self.__iprot, itrans)" << endl <<
+    indent() << "self.__iprot.readMessageEnd(itrans)" << endl;
+
+  t_struct* xs = tfunction->get_xceptions();
+  const std::vector<t_field*>& xceptions = xs->get_members();
+  vector<t_field*>::const_iterator x_iter;
+
+  // Declare result for non async function
+  if (!tfunction->is_async()) {
+    f_service_ <<
+      indent() << "__result = " << resultname << "()" << endl;
+  }
+
+  // Try block for a function with exceptions
+  if (xceptions.size() > 0) {
+    f_service_ <<
+      indent() << "try:" << endl;
+    indent_up();
+  }
+ 
+  // Generate the function call
+  t_struct* arg_struct = tfunction->get_arglist();
+  const std::vector<t_field*>& fields = arg_struct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  f_service_ << indent();
+  if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
+    f_service_ << "__result.success = ";
+  }
+  f_service_ <<
+    "self.__handler." << tfunction->get_name() << "(";
+  bool first = true;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if (first) {
+      first = false;
+    } else {
+      f_service_ << ", ";
+    }
+    f_service_ << "__args." << (*f_iter)->get_name();
+  }
+  f_service_ << ")" << endl;
+
+  if (!tfunction->is_async() && xceptions.size() > 0) {
+    indent_down();
+    for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+      f_service_ <<
+        indent() << "except " << (*x_iter)->get_type()->get_name() << ", " << (*x_iter)->get_name() << ":" << endl;
+      if (!tfunction->is_async()) {
+        indent_up();
+        f_service_ <<
+          indent() << "__result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << endl;
+        indent_down();
+      } else {
+        f_service_ <<
+          indent() << "pass" << endl;
+      }
+    }
+  }
+
+  // Shortcut out here for async functions
+  if (tfunction->is_async()) {
+    f_service_ <<
+      indent() << "return" << endl;
+    indent_down();
+    f_service_ << endl;
+    return;
+  }
+
+  f_service_ <<
+    indent() << "self.__oprot.writeMessageBegin(otrans, \"" << tfunction->get_name() << "\", TMessageType.REPLY, seqid)" << endl <<
+    indent() << "__result.write(self.__oprot, otrans)" << endl <<
+    indent() << "self.__oprot.writeMessageEnd(otrans)" << endl <<
+    indent() << "otrans.flush()" << endl;
+
+  // Close function
+  indent_down();
+  f_service_ << endl;
 }
 
 /**

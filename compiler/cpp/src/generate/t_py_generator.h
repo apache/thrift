@@ -48,6 +48,9 @@ class t_py_generator : public t_oop_generator {
   void generate_service_interface (t_service* tservice);
   void generate_service_client    (t_service* tservice);
 
+  void generate_service_server    (t_service* tservice);
+  void generate_process_function  (t_service* tservice, t_function* tfunction);
+
   /** Serialization constructs */
 
   void generate_deserialize_field        (std::ofstream &out,

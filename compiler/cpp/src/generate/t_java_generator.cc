@@ -547,8 +547,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
         indent() << "TMessage _msg = _iprot.readMessageBegin(_itrans);" << endl <<
         indent() << resultname << " __result = new " << resultname << "();" << endl <<
         indent() << "__result.read(_iprot, _itrans);" << endl <<
-        indent() << "_iprot.readMessageEnd(_itrans);" << endl <<
-        endl;
+        indent() << "_iprot.readMessageEnd(_itrans);" << endl;
 
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
@@ -734,8 +733,7 @@ void t_java_generator::generate_process_function(t_service* tservice,
   // Declare result for non async function
   if (!tfunction->is_async()) {
     f_service_ <<
-      indent() << resultname << " __result = new " << resultname << "();" << endl <<
-      endl;
+      indent() << resultname << " __result = new " << resultname << "();" << endl;
   }
 
   // Try block for a function with exceptions
@@ -803,7 +801,6 @@ void t_java_generator::generate_process_function(t_service* tservice,
   }
 
   f_service_ <<
-    endl <<
     indent() << "_oprot.writeMessageBegin(_otrans, new TMessage(\"" << tfunction->get_name() << "\", TMessageType.REPLY, seqid));" << endl <<
     indent() << "__result.write(_oprot, _otrans);" << endl <<
     indent() << "_oprot.writeMessageEnd(_otrans);" << endl <<
