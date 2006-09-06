@@ -32,7 +32,7 @@ LD     = g++
 
 # Compiler flags
 DCFL  = -Wall -O3 -g -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp -lthrift
-CFL   = -Wall -O3 -I./gen-cpp $(include_flags) -L$(thrift_home)/lib -lthrift
+CFL   = -Wall -O3 -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp -lthrift
 
 all: server client
 
