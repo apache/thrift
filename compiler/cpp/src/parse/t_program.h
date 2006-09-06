@@ -37,6 +37,7 @@ class t_program {
     type_i16    = new t_base_type("i16",    t_base_type::TYPE_I16);
     type_i32    = new t_base_type("i32",    t_base_type::TYPE_I32);
     type_i64    = new t_base_type("i64",    t_base_type::TYPE_I64);
+    type_double = new t_base_type("double", t_base_type::TYPE_DOUBLE);
   }
 
   ~t_program() {
@@ -46,6 +47,7 @@ class t_program {
     delete type_i16;
     delete type_i32;
     delete type_i64;
+    delete type_double;
   }
 
   // Name accessor
@@ -69,6 +71,7 @@ class t_program {
   t_type* get_i16_type()    const { return type_i16;    }
   t_type* get_i32_type()    const { return type_i32;    }
   t_type* get_i64_type()    const { return type_i64;    }
+  t_type* get_double_type() const { return type_double; }
 
   // Custom data type lookup
   t_type* get_custom_type(std::string name) {
@@ -130,6 +133,7 @@ class t_program {
   t_type* type_i16;
   t_type* type_i32;
   t_type* type_i64;
+  t_type* type_double;
 };
 
 #endif

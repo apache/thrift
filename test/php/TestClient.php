@@ -85,6 +85,13 @@ $i64 = $testClient->testI64(-34359738368);
 print_r(" = $i64\n");
 
 /**
+ * DOUBLE TEST
+ */
+print_r("testDouble(-852.234234234)");
+$dub = $testClient->testDouble(-852.234234234);
+print_r(" = $dub\n");
+
+/**
  * STRUCT TEST
  */
 print_r("testStruct({\"Zero\", 1, -3, -5})");

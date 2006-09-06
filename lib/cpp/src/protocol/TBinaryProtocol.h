@@ -80,6 +80,10 @@ using namespace boost;
   uint32_t writeI64(shared_ptr<TTransport> out,
 		     const int64_t i64) const;
 
+  uint32_t writeDouble(shared_ptr<TTransport> out,
+                       const double dub) const;
+
+
   uint32_t writeString(shared_ptr<TTransport> out,
 			const std::string& str) const;
 
@@ -140,6 +144,9 @@ using namespace boost;
 
   uint32_t readI64(shared_ptr<TTransport> in,
 		    int64_t& i64) const;
+
+  uint32_t readDouble(shared_ptr<TTransport> in,
+                      double& dub) const;
 
   uint32_t readString(shared_ptr<TTransport> in,
 		       std::string& str) const;

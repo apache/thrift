@@ -1125,6 +1125,9 @@ void t_cpp_generator::generate_deserialize_field(ofstream& out,
       case t_base_type::TYPE_I64:
         out << "readI64(itrans, " << name << ");";
         break;
+      case t_base_type::TYPE_DOUBLE:
+        out << "readDouble(itrans, " << name << ");";
+        break;
       default:
         throw "compiler error: no C++ reader for base type " + tbase + name;
       }
@@ -1330,6 +1333,9 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
         break;
       case t_base_type::TYPE_I64:
         out << "writeI64(otrans, " << name << ");";
+        break;
+      case t_base_type::TYPE_DOUBLE:
+        out << "writeDouble(otrans, " << name << ");";
         break;
       default:
         throw "compiler error: no C++ writer for base type " + tbase + name;
@@ -1540,6 +1546,8 @@ string t_cpp_generator::base_type_name(t_base_type::t_base tbase) {
     return "int32_t";
   case t_base_type::TYPE_I64:
     return "int64_t";
+  case t_base_type::TYPE_DOUBLE:
+    return "double";
   default:
     throw "compiler error: no C++ base type name for base type " + tbase;
   }
@@ -1575,6 +1583,9 @@ string t_cpp_generator::declare_field(t_field* tfield, bool init) {
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
         result += " = 0";
+        break;
+      case t_base_type::TYPE_DOUBLE:
+        result += " = (double)0";
         break;
       default:
         throw "compiler error: no C++ initializer for base type " + tbase;
@@ -1645,6 +1656,8 @@ string t_cpp_generator::type_to_enum(t_type* type) {
       return "facebook::thrift::protocol::T_I32";
     case t_base_type::TYPE_I64:
       return "facebook::thrift::protocol::T_I64";
+    case t_base_type::TYPE_DOUBLE:
+      return "facebook::thrift::protocol::T_DOUBLE";
     }
   } else if (type->is_enum()) {
     return "facebook::thrift::protocol::T_I32";

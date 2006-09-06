@@ -89,6 +89,8 @@ abstract class TProtocol {
 
   public abstract function writeI64($out, $i64);
 
+  public abstract function writeDouble($out, $dub);
+
   public abstract function writeString($out, $str);
 
 
@@ -139,6 +141,8 @@ abstract class TProtocol {
 
   public abstract function readI64($in, &$i64);
 
+  public abstract function readDouble($in, &$dub);
+
   public abstract function readString($in, &$str);
 
   /**
@@ -160,6 +164,8 @@ abstract class TProtocol {
       return $this->readI32($in, $i32);
     case TType::I64:
       return $this->readI64($in, $i64);
+    case TType::DOUBLE:
+      return $this->readDouble($in, $dub);
     case TType::STRING:
       return $this->readString($in, $str);
     case TType::STRUCT:

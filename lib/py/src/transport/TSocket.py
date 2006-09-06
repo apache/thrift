@@ -36,7 +36,7 @@ class TSocket(TTransportBase):
   def read(self, sz):
     buff = self.handle.recv(sz)
     if len(buff) == 0:
-      raise Exception('TScket read 0 bytes')
+      raise Exception('TSocket read 0 bytes')
     return buff
 
   def write(self, buff):

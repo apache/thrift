@@ -23,6 +23,7 @@ identifier   ([a-zA-Z_][\.a-zA-Z_0-9]*)
 whitespace   ([ \t\r\n]*)
 multicomm    ("/*""/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
 comment      ("//"[^\n]*)
+unixcomment  ("#"[^\n]*)
 symbol       ([\,\{\}\(\)\=<>])
 
 %%
@@ -30,6 +31,7 @@ symbol       ([\,\{\}\(\)\=<>])
 {whitespace}  { /* do nothing */ }
 {multicomm}   { /* do nothing */ }
 {comment}     { /* do nothing */ }
+{unixcomment} { /* do nothing */ }
 
 {symbol}      { return yytext[0]; }
 

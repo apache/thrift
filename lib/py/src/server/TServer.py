@@ -1,3 +1,6 @@
+import sys
+import traceback
+
 from thrift.Thrift import TProcessor
 from thrift.transport import TTransport
 
@@ -27,6 +30,6 @@ class TSimpleServer(TServer):
         while True:
           self.processor.process(client, client)
       except Exception, x:
-        print x
+        print '%s, %s, %s' % (type(x), x, traceback.format_exc())
         print 'Client died.'
       client.close()

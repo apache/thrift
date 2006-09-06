@@ -94,6 +94,13 @@ public class TestClient {
         System.out.print(" = " + i64 + "\n");
 
         /**
+         * DOUBLE TEST
+         */
+        System.out.print("testDouble(5.325098235)");
+        double dub = testClient.testDouble(5.325098235);
+        System.out.print(" = " + dub + "\n");
+
+        /**
          * STRUCT TEST
          */
         System.out.print("testStruct({\"Zero\", 1, -3, -5})");

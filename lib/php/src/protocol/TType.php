@@ -15,7 +15,8 @@ class TType {
   const VOID   = 1;
   const BOOL   = 2;
   const BYTE   = 3;
-  const I08    = 4;
+  const I08    = 3;
+  const DOUBLE = 4;
   const I16    = 6;
   const I32    = 8;
   const I64    = 10;

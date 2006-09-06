@@ -34,6 +34,10 @@ public class TProtocolUtil {
       {
         prot.readI64(in);
       }
+    case TType.DOUBLE:
+      {
+        prot.readDouble(in);
+      }
     case TType.STRING:
       {
         prot.readString(in);

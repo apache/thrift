@@ -867,6 +867,9 @@ void t_java_generator::generate_deserialize_field(ofstream& out,
       case t_base_type::TYPE_I64:
         out << "readI64(_itrans);";
         break;
+      case t_base_type::TYPE_DOUBLE:
+        out << "readDouble(_itrans);";
+        break;
       default:
         throw "compiler error: no Java name for base type " + tbase;
       }
@@ -1068,6 +1071,9 @@ void t_java_generator::generate_serialize_field(ofstream& out,
       case t_base_type::TYPE_I64:
         out << "writeI64(_otrans, " << name << ");";
         break;
+      case t_base_type::TYPE_DOUBLE:
+        out << "writeDouble(_otrans, " << name << ");";
+        break;
       default:
         throw "compiler error: no Java name for base type " + tbase;
       }
@@ -1256,6 +1262,8 @@ string t_java_generator::base_type_name(t_base_type::t_base tbase,
     return (in_container ? "Integer" : "int");
   case t_base_type::TYPE_I64:
     return (in_container ? "Long" : "long");
+  case t_base_type::TYPE_DOUBLE:
+    return (in_container ? "Double" : "double");
   default:
     throw "compiler error: no C++ name for base type " + tbase;
   }
@@ -1291,6 +1299,9 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
         result += " = 0";
+        break;
+      case t_base_type::TYPE_DOUBLE:
+        result += " = (double)0";
         break;
     }
 
@@ -1372,6 +1383,8 @@ string t_java_generator::type_to_enum(t_type* type) {
       return "TType.I32";
     case t_base_type::TYPE_I64:
       return "TType.I64";
+    case t_base_type::TYPE_DOUBLE:
+      return "TType.DOUBLE";
     }
   } else if (type->is_enum()) {
     return "TType.I32";

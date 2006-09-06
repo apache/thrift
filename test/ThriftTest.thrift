@@ -56,6 +56,7 @@ service ThriftTest
   byte         testByte(byte thing = 1),
   i32          testI32(i32 thing = 1),
   i64          testI64(i64 thing = 1),
+  double       testDouble(double thing = 1),
   Xtruct       testStruct(Xtruct thing = 1),
   Xtruct2      testNest(Xtruct2 thing = 1),
   map<i32,i32> testMap(map<i32,i32> thing = 1),

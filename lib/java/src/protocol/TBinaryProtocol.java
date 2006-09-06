@@ -95,6 +95,10 @@ public class TBinaryProtocol implements TProtocol {
     out.write(i64out, 0, 8);
   }
 
+  public void writeDouble(TTransport out, double dub) throws TException {
+    writeI64(out, Double.doubleToLongBits(dub));
+  }
+
   public void writeString(TTransport out, String str) throws TException {
     byte[] dat = str.getBytes();
     writeI32(out, dat.length);
@@ -201,6 +205,10 @@ public class TBinaryProtocol implements TProtocol {
       ((long)(i64rd[5] & 0xff) << 16) |
       ((long)(i64rd[6] & 0xff) <<  8) |
       ((long)(i64rd[7] & 0xff));
+  }
+
+  public double readDouble(TTransport in) throws TException {
+    return Double.longBitsToDouble(readI64(in));
   }
 
   public String readString(TTransport in)  throws TException {

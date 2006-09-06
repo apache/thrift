@@ -99,6 +99,13 @@ int main(int argc, char** argv) {
     printf("testI64(-34359738368)");
     int64_t i64 = testClient.testI64(-34359738368LL);
     printf(" = %ld\n", i64);
+
+    /**
+     * DOUBLE TEST
+     */
+    printf("testDouble(-5.2098523)");
+    double dub = testClient.testDouble(-5.2098523);
+    printf(" = %lf\n", dub);
     
     /**
      * STRUCT TEST

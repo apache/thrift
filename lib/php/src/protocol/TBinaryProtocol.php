@@ -136,6 +136,12 @@ class TBinaryProtocol extends TProtocol {
     return 8;
   }
 
+  public function writeDouble($out, $value) {
+    $data = pack('d', $value);
+    $out->write(strrev($data), 8);
+    return 8;
+  }
+
   public function writeString($out, $value) {
     $len = strlen($value);
     $result = $this->writeI32($out, $len);
@@ -299,6 +305,13 @@ class TBinaryProtocol extends TProtocol {
       }
     }
     
+    return 8;
+  }
+
+  public function readDouble($in, &$value) {
+    $data = strrev($in->readAll(8));
+    $arr = unpack('d', $data);
+    $value = $arr[1];
     return 8;
   }
 

@@ -3,7 +3,8 @@ class TType:
   VOID   = 1
   BOOL   = 2
   BYTE   = 3
-  I08    = 4
+  I08    = 3
+  DOUBLE = 4
   I16    = 6
   I32    = 8
   I64    = 10
@@ -78,6 +79,9 @@ class TProtocolBase:
   def writeI64(self, otrans, i64):
     pass
 
+  def writeDouble(self, otrans, dub):
+    pass
+
   def writeString(self, otrans, str):
     pass
 
@@ -132,6 +136,9 @@ class TProtocolBase:
   def readI64(self, itrans):
     pass
 
+  def readDouble(self, itrans):
+    pass
+
   def readString(self, itrans):
     pass
 
@@ -148,6 +155,8 @@ class TProtocolBase:
       self.readI32(itrans)
     elif type == TType.I64:
       self.readI64(itrans)
+    elif type == TType.DOUBLE:
+      self.readDouble(itrans)
     elif type == TType.STRING:
       self.readString(itrans)
     elif type == TType.STRUCT:

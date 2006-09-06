@@ -784,6 +784,9 @@ void t_py_generator::generate_deserialize_field(ofstream &out,
       case t_base_type::TYPE_I64:
         out << "readI64(itrans);";
         break;
+      case t_base_type::TYPE_DOUBLE:
+        out << "readDouble(itrans);";
+        break;
       default:
         throw "compiler error: no PHP name for base type " + tbase;
       }
@@ -988,6 +991,9 @@ void t_py_generator::generate_serialize_field(ofstream &out,
       case t_base_type::TYPE_I64:
         out << "writeI64(otrans, " << name << ")";
         break;
+      case t_base_type::TYPE_DOUBLE:
+        out << "writeDouble(otrans, " << name << ")";
+        break;
       default:
         throw "compiler error: no PHP name for base type " + tbase;
       }
@@ -1161,6 +1167,8 @@ string t_py_generator::base_type_name(t_base_type::t_base tbase) {
     return "Int32";
   case t_base_type::TYPE_I64:
     return "Int64";
+  case t_base_type::TYPE_DOUBLE:
+    return "Double";
   default:
     throw "compiler error: no PHP name for base type " + tbase;
   }
@@ -1194,6 +1202,9 @@ string t_py_generator::declare_field(t_field* tfield, bool init, bool obj) {
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
         result += " = 0";
+        break;
+      case t_base_type::TYPE_DOUBLE:
+        result += " = 0.0";
         break;
       default:
         throw "compiler error: no PHP initializer for base type " + tbase;
@@ -1275,6 +1286,8 @@ string t_py_generator::type_to_enum(t_type* type) {
       return "TType.I32";
     case t_base_type::TYPE_I64:
       return "TType.I64";
+    case t_base_type::TYPE_DOUBLE:
+      return "TType.DOUBLE";
     }
   } else if (type->is_enum()) {
     return "TType.I32";

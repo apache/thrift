@@ -16,7 +16,7 @@ using namespace boost;
 
 using namespace facebook::thrift::transport;
 
-#define ntohll(x) (((uint64_t)(ntohl((int)((x << 32) >> 32))) << 32) | (uint32_t)ntohl(((int)(x >> 32))))
+#define ntohll(x) (((uint64_t)(ntohl((int)((x & 0x00000000FFFFFFFF)))) << 32) | (uint32_t)ntohl(((int)(x >> 32 & 0x00000000FFFFFFFF))))
 
 #define htonll(x) ntohll(x)
 
@@ -38,6 +38,7 @@ enum TType {
   T_I32        = 8,
   T_U64        = 9,
   T_I64        = 10,
+  T_DOUBLE     = 4,
   T_STRING     = 11,
   T_UTF7       = 11,
   T_STRUCT     = 12,
@@ -133,6 +134,9 @@ class TProtocol {
   virtual uint32_t writeI64(shared_ptr<TTransport> out,
 			    const int64_t i64) const = 0;
 
+  virtual uint32_t writeDouble(shared_ptr<TTransport> out,
+                               const double dub) const = 0;
+
   virtual uint32_t writeString(shared_ptr<TTransport> out,
 			       const std::string& str) const = 0;
 
@@ -193,6 +197,9 @@ class TProtocol {
   virtual uint32_t readI64(shared_ptr<TTransport> in,
 			   int64_t& i64) const = 0;
 
+  virtual uint32_t readDouble(shared_ptr<TTransport> in,
+			      double& dub) const = 0;
+
   virtual uint32_t readString(shared_ptr<TTransport> in,
 			      std::string& str) const = 0;
 
@@ -225,6 +232,11 @@ class TProtocol {
       {
         int64_t i64;
         return readI64(in, i64);
+      }
+    case T_DOUBLE:
+      {
+        double dub;
+        return readDouble(in, dub);
       }
     case T_STRING:
       {

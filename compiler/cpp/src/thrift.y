@@ -394,6 +394,11 @@ BaseType:
       pdebug("BaseType -> tok_i64");
       $$ = g_program->get_i64_type();
     }
+| tok_double
+    {
+      pdebug("BaseType -> tok_double");
+      $$ = g_program->get_double_type();
+    }
 
 ContainerType:
   MapType

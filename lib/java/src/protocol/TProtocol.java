@@ -61,6 +61,10 @@ public interface TProtocol {
   public void writeI64         (TTransport out,
                                 long       i64)     throws TException;
 
+  public void writeDouble      (TTransport out,
+                                double     dub)     throws TException;
+
+
   public void writeString      (TTransport out,
                                 String     str)     throws TException;
 
@@ -101,6 +105,8 @@ public interface TProtocol {
   public int      readI32          (TTransport in)  throws TException;
  
   public long     readI64          (TTransport in)  throws TException;
+
+  public double   readDouble       (TTransport in)  throws TException;
 
   public String   readString       (TTransport in)  throws TException;
 

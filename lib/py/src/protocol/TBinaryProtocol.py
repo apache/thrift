@@ -73,6 +73,10 @@ class TBinaryProtocol(TProtocolBase):
     buff = pack("!q", i64)
     otrans.write(buff)
 
+  def writeDouble(self, otrans, dub):
+    buff = pack("!d", dub)
+    otrans.write(buff)
+
   def writeString(self, otrans, str):
     self.writeI32(otrans, len(str))
     otrans.write(str)
@@ -151,6 +155,11 @@ class TBinaryProtocol(TProtocolBase):
   def readI64(self, itrans):
     buff = itrans.readAll(8)
     val, = unpack('!q', buff)
+    return val
+
+  def readDouble(self, itrans):
+    buff = itrans.readAll(8)
+    val, = unpack('!d', buff)
     return val
 
   def readString(self, itrans):

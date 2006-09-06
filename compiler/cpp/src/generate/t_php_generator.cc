@@ -622,7 +622,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
           "return;" << endl;
       } else {
         f_service_ <<
-          indent() << "throw Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+          indent() << "throw new Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }     
     }      
 
@@ -722,6 +722,11 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
             indent() << "  $" << name << " = $_arr[1]*4294967296 + $_arr[2];" << endl <<
             indent() << "}" << endl;
           break;
+        case t_base_type::TYPE_DOUBLE:
+          out <<
+            indent() << "$_arr = unpack('d', strrev(" << itrans << "->readAll(8)));" << endl <<
+            indent() << "$" << name << " = $_arr[1];" << endl;
+          break;
         default:
           throw "compiler error: no PHP name for base type " + tbase + tfield->get_name();
         }
@@ -763,6 +768,9 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
           break;
         case t_base_type::TYPE_I64:
           out << "readI64($itrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_DOUBLE:
+          out << "readDouble($itrans, $" << name << ");";
           break;
         default:
           throw "compiler error: no PHP name for base type " + tbase;
@@ -808,9 +816,9 @@ void t_php_generator::generate_deserialize_container(ofstream &out,
   t_field fvtype(g_program->get_byte_type(), vtype);
   t_field fetype(g_program->get_byte_type(), etype);
 
-  indent(out) <<
-    prefix << " = array();" << endl <<
-    "$" << size << " = 0;" << endl;
+  out <<
+    indent() << "$" << prefix << " = array();" << endl <<
+    indent() << "$" << size << " = 0;" << endl;
   
   // Declare variables, read header
   if (ttype->is_map()) {
@@ -1000,6 +1008,10 @@ void t_php_generator::generate_serialize_field(ofstream &out,
           out << 
             indent() << "$_output .= pack('N2', $" << name << " >> 32, $" << name << " & 0xFFFFFFFF);" << endl;
           break;
+        case t_base_type::TYPE_DOUBLE:
+          out << 
+            indent() << "$_output .= strrev(pack('d', $" << name << "));" << endl;
+          break;
         default:
           throw "compiler error: no PHP name for base type " + tbase;
         }
@@ -1036,6 +1048,9 @@ void t_php_generator::generate_serialize_field(ofstream &out,
           break;
         case t_base_type::TYPE_I64:
           out << "writeI64($otrans, $" << name << ");";
+          break;
+        case t_base_type::TYPE_DOUBLE:
+          out << "writeDouble($otrans, $" << name << ");";
           break;
         default:
           throw "compiler error: no PHP name for base type " + tbase;
@@ -1247,6 +1262,8 @@ string t_php_generator::base_type_name(t_base_type::t_base tbase) {
     return "Int32";
   case t_base_type::TYPE_I64:
     return "Int64";
+  case t_base_type::TYPE_DOUBLE:
+    return "Double";
   default:
     throw "compiler error: no PHP name for base type " + tbase;
   }
@@ -1280,6 +1297,9 @@ string t_php_generator::declare_field(t_field* tfield, bool init, bool obj) {
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
         result += " = 0";
+        break;
+      case t_base_type::TYPE_DOUBLE:
+        result += " = 0.0";
         break;
       default:
         throw "compiler error: no PHP initializer for base type " + tbase;
@@ -1357,6 +1377,8 @@ string t_php_generator ::type_to_enum(t_type* type) {
       return "TType::I32";
     case t_base_type::TYPE_I64:
       return "TType::I64";
+    case t_base_type::TYPE_DOUBLE:
+      return "TType::DOUBLE";
     }
   } else if (type->is_enum()) {
     return "TType::I32";

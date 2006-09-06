@@ -10,6 +10,7 @@ public final class TType {
   public static final byte VOID   = 1;
   public static final byte BOOL   = 2;
   public static final byte BYTE   = 3;
+  public static final byte DOUBLE = 4;
   public static final byte I16    = 6;
   public static final byte I32    = 8;
   public static final byte I64    = 10;

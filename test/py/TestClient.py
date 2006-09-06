@@ -32,8 +32,14 @@ print client.testByte(63)
 print "testI32(-1)"
 print client.testI32(-1)
 
+print "testI32(0)"
+print client.testI32(0)
+
 print "testI64(-34359738368)"
 print client.testI64(-34359738368)
+
+print "testDouble(-5.235098235)"
+print client.testDouble(-5.235098235)
 
 print "testStruct({Zero, 1, -3, -5})"
 x = Xtruct()

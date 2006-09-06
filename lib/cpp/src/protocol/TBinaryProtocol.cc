@@ -116,7 +116,24 @@ uint32_t TBinaryProtocol::writeI64(shared_ptr<TTransport> out,
   out->write((uint8_t*)&net, 8);
   return 8;
 }
+  
+uint32_t TBinaryProtocol::writeDouble(shared_ptr<TTransport> out,
+                                      const double dub) const {
+  uint8_t b[8];
+  uint8_t* d = (uint8_t*)&dub;
+  b[0] = d[7];
+  b[1] = d[6];
+  b[2] = d[5];
+  b[3] = d[4];
+  b[4] = d[3];
+  b[5] = d[2];
+  b[6] = d[1];
+  b[7] = d[0];
+  out->write((uint8_t*)b, 8);
+  return 8;
+}
 
+  
 uint32_t TBinaryProtocol::writeString(shared_ptr<TTransport> out,
                                       const string& str) const {
   uint32_t result = writeI32(out, str.size());
@@ -273,6 +290,23 @@ uint32_t TBinaryProtocol::readI64(shared_ptr<TTransport> in,
   in->readAll(b, 8);
   i64 = *(int64_t*)b;
   i64 = (int64_t)ntohll(i64);
+  return 8;
+}
+
+uint32_t TBinaryProtocol::readDouble(shared_ptr<TTransport> in,
+                                     double& dub) const {
+  uint8_t b[8];
+  uint8_t d[8];
+  in->readAll(b, 8);
+  d[0] = b[7];
+  d[1] = b[6];
+  d[2] = b[5];
+  d[3] = b[4];
+  d[4] = b[3];
+  d[5] = b[2];
+  d[6] = b[1];
+  d[7] = b[0];
+  dub = *(double*)d;
   return 8;
 }
 

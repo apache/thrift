@@ -45,6 +45,11 @@ public class TestServer {
       System.out.print("testI64(" + thing + ")\n");
       return thing;
     }
+
+    public double testDouble(double thing) {
+      System.out.print("testDouble(" + thing + ")\n");
+      return thing;
+    }
   
     public Xtruct testStruct(Xtruct thing) {
       System.out.print("testStruct({" +

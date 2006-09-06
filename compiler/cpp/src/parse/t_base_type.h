@@ -10,7 +10,9 @@
  */
 class t_base_type : public t_type {
  public:
-  /** Enumeration of thrift base types */
+  /**
+   * Enumeration of thrift base types
+   */
   enum t_base {
     TYPE_VOID,
     TYPE_STRING,
@@ -18,7 +20,8 @@ class t_base_type : public t_type {
     TYPE_BYTE,
     TYPE_I16,
     TYPE_I32,
-    TYPE_I64
+    TYPE_I64,
+    TYPE_DOUBLE
   };
 
   t_base_type(std::string name, t_base base) :

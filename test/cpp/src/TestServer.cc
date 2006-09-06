@@ -47,6 +47,11 @@ class TestHandler : public ThriftTestIf {
     return thing;
   }
 
+  double testDouble(double thing) {
+    printf("testDouble(%lf)\n", thing);
+    return thing;
+  }
+
   Xtruct testStruct(Xtruct thing) {
     printf("testStruct({\"%s\", %d, %d, %ld})\n",
            thing.string_thing.c_str(),
