@@ -7,7 +7,7 @@
 target: all
 
 # Tools
-THRIFT = thrift
+THRIFT = ../../compiler/cpp/bin/thrift
 
 all: stubs
 

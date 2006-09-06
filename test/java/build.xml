@@ -5,7 +5,7 @@
   <property name="src" location="src" />
   <property name="gen" location="gen-java" />
   <property name="build" location="build" />
-  <property name="cpath" location="/usr/local/lib/libthrift.jar" />
+  <property name="cpath" location="../../lib/java/libthrift.jar" />
 
   <target name="init">
     <tstamp />
@@ -13,7 +13,7 @@
   </target>
 
   <target name="generate">
-    <exec executable="thrift">
+    <exec executable="../../compiler/cpp/bin/thrift">
       <arg line="--java ../ThriftTest.thrift" />
     </exec>
   </target>
