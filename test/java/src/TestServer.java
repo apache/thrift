@@ -5,6 +5,7 @@ import com.facebook.thrift.protocol.TBinaryProtocol;
 import com.facebook.thrift.protocol.TProtocol;
 import com.facebook.thrift.server.TServer;
 import com.facebook.thrift.server.TSimpleServer;
+import com.facebook.thrift.server.TThreadPoolServer;
 import com.facebook.thrift.transport.TServerSocket;
 import com.facebook.thrift.transport.TServerTransport;
 
@@ -243,23 +244,22 @@ public class TestServer {
       ThriftTest.Server testServer =
         new ThriftTest.Server(testHandler, binaryProtocol);
 
-      // Options
-      TServer.Options serverOptions =
-        new TServer.Options();
-
       // Transport
-      ServerSocket serverSocket =
-        new ServerSocket(port);
       TServerSocket tServerSocket =
-        new TServerSocket(serverSocket);
+        new TServerSocket(port);
 
-      // Server
-      TSimpleServer simpleServer =
-        new TSimpleServer(testServer, serverOptions, tServerSocket);
+      TServer serverEngine;
+
+      // Simple Server
+      // serverEngine = new TSimpleServer(testServer, tServerSocket);
+
+      // ThreadPool Server
+      serverEngine =  new TThreadPoolServer(testServer, tServerSocket);
 
       // Run it
       System.out.println("Starting the server on port " + port + "...");
-      simpleServer.run();
+      serverEngine.run();
+
     } catch (Exception x) {
       x.printStackTrace();
     }

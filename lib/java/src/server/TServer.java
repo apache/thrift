@@ -24,6 +24,13 @@ public abstract class TServer {
   protected Options options_;
 
   /**
+   * Default options constructor
+   */
+  protected TServer(TProcessor processor) {
+    this(processor, new Options());
+  }
+
+  /**
    * Default constructor, all servers take a processor and some options.
    */
   protected TServer(TProcessor processor, Options options) {

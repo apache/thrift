@@ -1,6 +1,7 @@
 package com.facebook.thrift.transport;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -11,10 +12,24 @@ import java.net.Socket;
  */
 public class TServerSocket extends TServerTransport {
   
-  private ServerSocket serverSocket_;
-  
+  private ServerSocket serverSocket_ = null;
+  private int port_ = 0;
+
   public TServerSocket(ServerSocket serverSocket) {
     serverSocket_ = serverSocket;
+  }
+
+  public TServerSocket(int port) throws TTransportException {
+    port_ = port;
+    try {
+      serverSocket_ = new ServerSocket();
+      serverSocket_.setReuseAddress(true);
+      serverSocket_.setSoTimeout(0);
+      serverSocket_.bind(new InetSocketAddress(port_));
+    } catch (IOException ioe) {
+      serverSocket_ = null;
+      throw new TTransportException("Could not create ServerSocket on port " + port + ".");
+    }
   }
 
   public void listen() throws TTransportException {}

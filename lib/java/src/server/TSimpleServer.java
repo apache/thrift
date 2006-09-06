@@ -16,6 +16,12 @@ public class TSimpleServer extends TServer {
   private TServerTransport serverTransport_;
 
   public TSimpleServer(TProcessor processor,
+                       TServerTransport serverTransport) {
+    this(processor, new TServer.Options(), serverTransport);
+  }
+
+
+  public TSimpleServer(TProcessor processor,
                        TServer.Options options,
                        TServerTransport serverTransport) {
     super(processor, options);
