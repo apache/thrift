@@ -21,8 +21,9 @@ class TSocket(TTransportBase):
     self.handle.connect((self.host, self.port))
 
   def close(self):
-    self.handle.close()
-    self.handle = None
+    if self.handle != None:
+      self.handle.close()
+      self.handle = None
 
   def readAll(self, sz):
     buff = ''

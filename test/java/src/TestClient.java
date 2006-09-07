@@ -42,13 +42,16 @@ public class TestClient {
       ThriftTest.Client testClient =
         new ThriftTest.Client(tSocket, binaryProtocol);
 
+      long timeMin = 0;
+      long timeMax = 0;
+      long timeTot = 0;
+
       for (int test = 0; test < numTests; ++test) {
 
         /**
          * CONNECT TEST
          */
-        System.out.println("Test #" + (test+1) + ", " +
-                           "connect " + host + ":" + port);
+        System.out.println("Test #" + (test+1) + ", " + "connect " + host + ":" + port);
         try {
           tSocket.open();
         } catch (TTransportException ttx) {
@@ -56,7 +59,7 @@ public class TestClient {
           continue;
         }
 
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
     
         /**
          * VOID TEST
@@ -110,11 +113,7 @@ public class TestClient {
         out.i32_thing = -3;
         out.i64_thing = -5;
         Xtruct in = testClient.testStruct(out);
-        System.out.print(" = {" +
-                         "\"" + in.string_thing + "\", " +
-                         in.byte_thing + ", " +
-                         in.i32_thing + ", " +
-                         in.i64_thing + "}\n");
+        System.out.print(" = {" + "\"" + in.string_thing + "\", " + in.byte_thing + ", " + in.i32_thing + ", " + in.i64_thing + "}\n");
 
         /**
          * NESTED STRUCT TEST
@@ -126,13 +125,7 @@ public class TestClient {
         out2.i32_thing = 5;
         Xtruct2 in2 = testClient.testNest(out2);
         in = in2.struct_thing;
-        System.out.print(" = {" +
-                         in2.byte_thing + ", {" +
-                         "\"" + in.string_thing + "\", " +
-                         in.byte_thing + ", " +
-                         in.i32_thing + ", " +
-                         in.i64_thing + "}, " +
-                         in2.i32_thing + "}\n");
+        System.out.print(" = {" + in2.byte_thing + ", {" + "\"" + in.string_thing + "\", " + in.byte_thing + ", " + in.i32_thing + ", " + in.i64_thing + "}, " + in2.i32_thing + "}\n");
 
         /**
          * MAP TEST
@@ -299,19 +292,14 @@ public class TestClient {
             HashMap<Integer, Long> userMap = v2.userMap;
             System.out.print("{");
             for (int k3 : userMap.keySet()) {
-              System.out.print(k3 + " => " +
-                               userMap.get(k3) + ", ");
+              System.out.print(k3 + " => " + userMap.get(k3) + ", ");
             }
             System.out.print("}, ");
 
             ArrayList<Xtruct> xtructs = v2.xtructs;
             System.out.print("{");
             for (Xtruct x : xtructs) {
-              System.out.print("{" +
-                               "\"" + x.string_thing + "\", " +
-                               x.byte_thing + ", " +
-                               x.i32_thing + ", "+
-                               x.i64_thing + "}, ");
+              System.out.print("{" + "\"" + x.string_thing + "\", " + x.byte_thing + ", " + x.i32_thing + ", "+ x.i64_thing + "}, ");
             }
             System.out.print("}");
 
@@ -321,14 +309,32 @@ public class TestClient {
         }
         System.out.print("}\n");
 
-        long stop = System.currentTimeMillis();
-        System.out.println("Total time: " + (stop-start) + "ms");
+        long stop = System.nanoTime();
+        long tot = stop-start;
+
+        System.out.println("Total time: " + tot/1000 + "us");
+
+        if (timeMin == 0 || tot < timeMin) {
+          timeMin = tot;
+        }
+        if (tot > timeMax) {
+          timeMax = tot;
+        }
+        timeTot += tot;
 
         tSocket.close();
       }
+
+      long timeAvg = timeTot / numTests;
       
+      System.out.println("Min time: " + timeMin/1000 + "us");
+      System.out.println("Max time: " + timeMax/1000 + "us");
+      System.out.println("Avg time: " + timeAvg/1000 + "us");
+            
     } catch (Exception x) {
       x.printStackTrace();
-    }
+    }  
+
   }
+
 }

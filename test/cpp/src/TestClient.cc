@@ -45,23 +45,28 @@ int main(int argc, char** argv) {
   }
 
   shared_ptr<TSocket> socket(new TSocket(host, port));
-  shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
+  shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
   shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol());
   ThriftTestClient testClient(bufferedSocket, binaryProtocol);
-  
+
+  uint64_t time_min = 0;
+  uint64_t time_max = 0;
+  uint64_t time_tot = 0;
+ 
   int test = 0;
   for (test = 0; test < numTests; ++test) {
 
-    /**
-     * CONNECT TEST
-     */
-    printf("Test #%d, connect %s:%d\n", test+1, host.c_str(), port);
     try {
       bufferedSocket->open();
     } catch (TTransportException& ttx) {
       printf("Connect failed: %s\n", ttx.getMessage().c_str());
       continue;
     }
+    
+    /**
+     * CONNECT TEST
+     */
+    printf("Test #%d, connect %s:%d\n", test+1, host.c_str(), port);
 
     uint64_t start = now();
     
@@ -379,12 +384,29 @@ int main(int argc, char** argv) {
     }
     
     uint64_t stop = now();
+    uint64_t tot = stop-start;
+
     printf("Total time: %lu us\n", stop-start);
     
+    time_tot += tot;
+    if (time_min == 0 || tot < time_min) {
+      time_min = tot;
+    }
+    if (tot > time_max) {
+      time_max = tot;
+    }
+
     bufferedSocket->close();
   }
 
   //  printf("\nSocket syscalls: %u", g_socket_syscalls);
   printf("\nAll tests done.\n");
+
+  uint64_t time_avg = time_tot / numTests;
+
+  printf("Min time: %lu us\n", time_min);
+  printf("Max time: %lu us\n", time_max);
+  printf("Avg time: %lu us\n", time_avg);
+
   return 0;
 }

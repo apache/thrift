@@ -23,7 +23,8 @@ class TProcessor {
  public:
   virtual ~TProcessor() {}
   virtual bool process(shared_ptr<TTransport> in, shared_ptr<TTransport> out) = 0;
-  virtual bool process(shared_ptr<TTransport> io) { return process(io, io); }
+  bool process(shared_ptr<TTransport> io) { return process(io, io); }
+
  protected:
   TProcessor() {}
 };

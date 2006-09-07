@@ -13,19 +13,9 @@ import com.facebook.thrift.transport.TTransportException;
  */
 public class TSimpleServer extends TServer {
 
-  private TServerTransport serverTransport_;
-
   public TSimpleServer(TProcessor processor,
                        TServerTransport serverTransport) {
-    this(processor, new TServer.Options(), serverTransport);
-  }
-
-
-  public TSimpleServer(TProcessor processor,
-                       TServer.Options options,
-                       TServerTransport serverTransport) {
-    super(processor, options);
-    serverTransport_ = serverTransport;
+    super(processor, serverTransport);
   }
 
   public void run() {
@@ -38,18 +28,24 @@ public class TSimpleServer extends TServer {
 
     while (true) {
       TTransport client = null;
+      TTransport[] io = null;
       try {
         client = serverTransport_.accept();
         if (client != null) {
-          while (processor_.process(client, client));
+          io = transportFactory_.getIOTransports(client);
+          while (processor_.process(io[0], io[1]));
         }
       } catch (TException tx) {
         tx.printStackTrace();
       }
 
-      if (client != null) {
-        client.close();
-        client = null;
+      if (io != null) {
+        if (io[0] != null) {
+          io[0].close();
+        }
+        if (io[1] != null) {
+          io[1].close();
+        }
       }
     }
   }

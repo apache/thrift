@@ -1,7 +1,7 @@
 lib_LTLIBRARIES = libthrift.la
 
-common_cxxflags = -Isrc $(BOOST_CPPFLAGS)
-common_ldflags = $(BOOST_LDFLAGS)
+common_cxxflags = -Wall -Isrc $(BOOST_CPPFLAGS)
+common_ldflags = -Wall $(BOOST_LDFLAGS)
 
 # Define the source file for the module
 
@@ -54,7 +54,9 @@ include_transport_HEADERS = \
                          src/transport/TServerTransport.h \
                          src/transport/TSocket.h \
                          src/transport/TTransport.h \
-                         src/transport/TTransportException.h
+                         src/transport/TTransportException.h \
+                         src/transport/TTransportFactory.h \
+                         src/transport/TBufferedTransportFactory.h
 
 include_serverdir = $(include_thriftdir)/server
 include_server_HEADERS = \

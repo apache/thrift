@@ -5,6 +5,7 @@ sys.path.append('./gen-py')
 
 import ThriftTest
 from ThriftTest_types import *
+from thrift.transport import TTransport
 from thrift.transport import TSocket
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
@@ -54,5 +55,6 @@ transport = TSocket.TServerSocket(9090)
 protocol = TBinaryProtocol.TBinaryProtocol()
 handler = TestHandler()
 iface = ThriftTest.Server(handler, protocol)
-server = TServer.TSimpleServer(iface, transport)
+factory = TTransport.TBufferedTransportFactory()
+server = TServer.TSimpleServer(iface, transport, factory)
 server.run()

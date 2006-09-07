@@ -1,7 +1,7 @@
 #ifndef _THRIFT_TRANSPORT_TTRANSPORT_H_
 #define _THRIFT_TRANSPORT_TTRANSPORT_H_ 1
 
-#include "TTransportException.h"
+#include <transport/TTransportException.h>
 #include <string>
 
 namespace facebook { namespace thrift { namespace transport { 

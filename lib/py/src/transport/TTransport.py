@@ -36,6 +36,22 @@ class TServerTransportBase:
   def close(self):
     pass
 
+class TTransportFactoryBase:
+
+  """Base class for a Transport Factory"""
+
+  def getIOTransports(self, trans):
+    return (trans, trans)
+
+class TBufferedTransportFactory:
+
+  """Factory transport that builds buffered transports"""
+
+  def getIOTransports(self, trans):
+    buffered = TBufferedTransport(trans)
+    return (buffered, buffered)
+
+
 class TBufferedTransport(TTransportBase):
 
   """Class that wraps another transport and buffers its I/O."""

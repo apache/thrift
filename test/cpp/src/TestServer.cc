@@ -4,6 +4,7 @@
 #include <server/TSimpleServer.h>
 #include <server/TThreadPoolServer.h>
 #include <transport/TServerSocket.h>
+#include <transport/TBufferedTransportFactory.h>
 #include "ThriftTest.h"
 
 #include <iostream>
@@ -53,23 +54,13 @@ class TestHandler : public ThriftTestIf {
   }
 
   Xtruct testStruct(Xtruct thing) {
-    printf("testStruct({\"%s\", %d, %d, %ld})\n",
-           thing.string_thing.c_str(),
-           (int)thing.byte_thing,
-           thing.i32_thing,
-           thing.i64_thing);
+    printf("testStruct({\"%s\", %d, %d, %ld})\n", thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing);
     return thing;
   }
 
   Xtruct2 testNest(Xtruct2 nest) {
     Xtruct thing = nest.struct_thing;
-    printf("testNest({%d, {\"%s\", %d, %d, %ld}, %d})\n",
-           (int)nest.byte_thing,
-           thing.string_thing.c_str(),
-           (int)thing.byte_thing,
-           thing.i32_thing,
-           thing.i64_thing,
-           nest.i32_thing);
+    printf("testNest({%d, {\"%s\", %d, %d, %ld}, %d})\n", (int)nest.byte_thing, thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing, nest.i32_thing);
     return nest;
   }
 
@@ -205,11 +196,7 @@ class TestHandler : public ThriftTestIf {
         list<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
-          printf("{\"%s\", %d, %d, %ld}, ",
-                 x->string_thing.c_str(),
-                 (int)x->byte_thing,
-                 x->i32_thing,
-                 x->i64_thing);
+          printf("{\"%s\", %d, %d, %ld}, ", x->string_thing.c_str(), (int)x->byte_thing, x->i32_thing, x->i64_thing);
         }
         printf("}");
 
@@ -347,18 +334,23 @@ int main(int argc, char **argv) {
 
   shared_ptr<ThriftTestServer> testServer(new ThriftTestServer(testHandler, binaryProtocol));
 
-  // Options
-  shared_ptr<TServerOptions> serverOptions(new TServerOptions());
-
   // Transport
   shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
+
+  // Factory
+  shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+
+  // Options
+  shared_ptr<TServerOptions> serverOptions(new TServerOptions());
 
   if (serverType == "simple") {
 
     // Server
     TSimpleServer simpleServer(testServer,
-			       serverOptions,
-			       serverSocket);
+			       serverSocket,
+                               transportFactory,
+			       serverOptions
+                               );
 
     printf("Starting the server on port %d...\n", port);
     simpleServer.run();
@@ -376,9 +368,10 @@ int main(int argc, char **argv) {
     threadManager->start();
 
     TThreadPoolServer threadPoolServer(testServer,
-				       serverOptions,
 				       serverSocket,
-				       threadManager);
+                                       transportFactory,
+				       threadManager,
+				       serverOptions);
 
     printf("Starting the server on port %d...\n", port);
     threadPoolServer.run();

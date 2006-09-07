@@ -1,5 +1,4 @@
 #include "server/TSimpleServer.h"
-#include "transport/TBufferedTransport.h"
 #include "transport/TTransportException.h"
 #include <string>
 #include <iostream>
@@ -15,6 +14,7 @@ namespace facebook { namespace thrift { namespace server {
 void TSimpleServer::run() {
 
   shared_ptr<TTransport> client;
+  pair<shared_ptr<TTransport>,shared_ptr<TTransport> > io;
 
   try {
     // Start the server listening
@@ -25,26 +25,21 @@ void TSimpleServer::run() {
   }
 
   // Fetch client from server
-  while (true) {
-    try {
+  try {
+    while (true) {
       client = serverTransport_->accept();
-      if (client != NULL) {
-        // Process for as long as we can keep the processor happy!
-        shared_ptr<TBufferedTransport> bufferedClient(new TBufferedTransport(client));
-        while (processor_->process(bufferedClient)) {}
-      }
-    } catch (TTransportException& ttx) {
-      if (client != NULL) {
+      io = transportFactory_->getIOTransports(client);
+      try {
+        while (processor_->process(io.first, io.second)) {}
+      } catch (TTransportException& ttx) {
         cerr << "TSimpleServer client died: " << ttx.getMessage() << endl;
       }
-    }
-  
-    // Clean up the client
-    if (client != NULL) {
-
-      // Ensure no resource leaks
+      io.first->close();
+      io.second->close();
       client->close();
-     }
+    }
+  } catch (TTransportException& ttx) {
+    cerr << "TServerTransport died on accept: " << ttx.getMessage() << endl;
   }
 
   // TODO(mcslee): Could this be a timeout case? Or always the real thing?

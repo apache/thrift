@@ -1,6 +1,9 @@
 package com.facebook.thrift.server;
 
 import com.facebook.thrift.TProcessor;
+import com.facebook.thrift.transport.TServerTransport;
+import com.facebook.thrift.transport.TTransportFactory;
+import com.facebook.thrift.transport.TBaseTransportFactory;
 
 /**
  * Generic interface for a Thrift server.
@@ -17,24 +20,64 @@ public abstract class TServer {
     public Options() {}
   }
 
-  /** Core processor */
+  /**
+   * Core processor
+   */
   protected TProcessor processor_;
 
-  /** Server options */
+  /**
+   * Server options
+   */
   protected Options options_;
 
   /**
-   * Default options constructor
+   * Server transport
    */
-  protected TServer(TProcessor processor) {
-    this(processor, new Options());
-  }
+  protected TServerTransport serverTransport_;
 
   /**
-   * Default constructor, all servers take a processor and some options.
+   * Transport Factory
    */
-  protected TServer(TProcessor processor, Options options) {
+  protected TTransportFactory transportFactory_;
+
+  /**
+   * Default constructors.
+   */
+
+  protected TServer(TProcessor processor,
+                    TServerTransport serverTransport) {
+    this(processor,
+         serverTransport,
+         new TBaseTransportFactory(),
+         new Options());
+  }
+
+  protected TServer(TProcessor processor,
+                    TServerTransport serverTransport,
+                    TTransportFactory transportFactory) {
+    this(processor,
+         serverTransport,
+         transportFactory,
+         new Options());
+  }
+
+
+  protected TServer(TProcessor processor,
+                    TServerTransport serverTransport,
+                    Options options) {
+    this(processor,
+         serverTransport,
+         new TBaseTransportFactory(),
+         options);
+  }
+
+  protected TServer(TProcessor processor,
+                    TServerTransport serverTransport,
+                    TTransportFactory transportFactory,
+                    Options options) {
     processor_ = processor;
+    serverTransport_ = serverTransport;
+    transportFactory_ = transportFactory;
     options_ = options;
   }
   

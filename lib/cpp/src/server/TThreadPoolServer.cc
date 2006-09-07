@@ -1,5 +1,4 @@
 #include "server/TThreadPoolServer.h"
-#include "transport/TBufferedTransport.h"
 #include "transport/TTransportException.h"
 #include "concurrency/Thread.h"
 #include "concurrency/ThreadManager.h"
@@ -15,53 +14,51 @@ using namespace facebook::thrift::transport;
 class TThreadPoolServer::Task: public Runnable {
     
   shared_ptr<TProcessor> _processor;
-  shared_ptr<TTransport> _transport;
-  shared_ptr<TBufferedTransport> _bufferedTransport;
+  shared_ptr<TTransport> _input;
+  shared_ptr<TTransport> _output;
     
 public:
     
   Task(shared_ptr<TProcessor> processor,
-       shared_ptr<TTransport> transport) :
+       shared_ptr<TTransport> input,
+       shared_ptr<TTransport> output) :
     _processor(processor),
-    _transport(transport),
-    _bufferedTransport(new TBufferedTransport(transport)) {
+    _input(input),
+    _output(output) {
   }
 
   ~Task() {}
     
-  void run() {
-      
+  void run() {     
     while(true) {
-	
       try {
-	_processor->process(_bufferedTransport);
-	
+	_processor->process(_input, _output);
       } catch (TTransportException& ttx) {
-	
-	break;
-	
+        break;
       } catch(...) {
-	
-	break;
+        break;
       }
     }
-    
-    _bufferedTransport->close();
+    _input->close();
+    _output->close();
   }
 };
   
 TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
-				     shared_ptr<TServerOptions> options,
-				     shared_ptr<TServerTransport> serverTransport,
-				     shared_ptr<ThreadManager> threadManager) :
-  TServer(processor, options), 
-  serverTransport_(serverTransport), 
+                                     shared_ptr<TServerTransport> serverTransport,
+                                     shared_ptr<TTransportFactory> transportFactory,
+                                     shared_ptr<ThreadManager> threadManager,
+                                     shared_ptr<TServerOptions> options) :
+  TServer(processor, serverTransport, transportFactory, options), 
   threadManager_(threadManager) {
 }
-    
+
 TThreadPoolServer::~TThreadPoolServer() {}
 
 void TThreadPoolServer::run() {
+
+  shared_ptr<TTransport> client;
+  pair<shared_ptr<TTransport>,shared_ptr<TTransport> > io;
 
   try {
     // Start the server listening
@@ -71,15 +68,14 @@ void TThreadPoolServer::run() {
     return;
   }
   
-  // Fetch client from server
-  
-  while (true) {
-    
+  while (true) {   
     try {
-      
-      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, 
-											  shared_ptr<TTransport>(serverTransport_->accept()))));
-      
+      // Fetch client from server
+      client = serverTransport_->accept();
+      // Make IO transports
+      io = transportFactory_->getIOTransports(client);
+      // Add to threadmanager pool
+      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, io.first, io.second)));
     } catch (TTransportException& ttx) {
       break;
     }

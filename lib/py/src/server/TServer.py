@@ -8,8 +8,13 @@ class TServer:
 
   """Base interface for a server, which must have a run method."""
 
-  def __init__(self, proc):
-    self.processor = proc
+  def __init__(self, processor, serverTransport, transportFactory=None):
+    self.processor = processor
+    self.serverTransport = serverTransport
+    if transportFactory == None:
+      self.transportFactory = TTransport.TTransportFactoryBase()
+    else:
+      self.transportFactory = transportFactory
 
   def run(self):
     pass
@@ -18,18 +23,20 @@ class TSimpleServer(TServer):
 
   """Simple single-threaded server that just pumps around one transport."""
 
-  def __init__(self, proc, trans):
-    TServer.__init__(self, proc)
-    self.transport = trans
+  def __init__(self, processor, serverTransport, transportFactory=None):
+    TServer.__init__(self, processor, serverTransport, transportFactory)
 
   def run(self):
-    self.transport.listen()
+    self.serverTransport.listen()
     while True:
-      client = TTransport.TBufferedTransport(self.transport.accept())
+      client = self.serverTransport.accept()
+      (input, output) = self.transportFactory.getIOTransports(client)
       try:
         while True:
-          self.processor.process(client, client)
+          self.processor.process(input, output)
       except Exception, x:
         print '%s, %s, %s' % (type(x), x, traceback.format_exc())
         print 'Client died.'
-      client.close()
+
+      input.close()
+      output.close()

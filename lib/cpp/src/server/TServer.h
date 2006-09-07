@@ -1,7 +1,9 @@
-#ifndef T_SERVER_H
-#define T_SERVER_H
+#ifndef _THRIFT_SERVER_TSERVER_H_
+#define _THRIFT_SERVER_TSERVER_H_ 1
 
 #include <TProcessor.h>
+#include <transport/TServerTransport.h>
+#include <transport/TTransportFactory.h>
 #include <concurrency/Thread.h>
 
 #include <boost/shared_ptr.hpp>
@@ -9,6 +11,7 @@
 namespace facebook { namespace thrift { namespace server { 
 
 using namespace facebook::thrift;
+using namespace facebook::thrift::transport;
 using namespace boost;
 
 class TServerOptions;
@@ -24,10 +27,22 @@ public:
   virtual void run() = 0;
   
 protected:
-  TServer(shared_ptr<TProcessor> processor, shared_ptr<TServerOptions> options) :
+  TServer(shared_ptr<TProcessor> processor,
+          shared_ptr<TServerTransport> serverTransport,
+          shared_ptr<TTransportFactory> transportFactory,
+          shared_ptr<TServerOptions> options) :
+    processor_(processor),
+    serverTransport_(serverTransport),
+    transportFactory_(transportFactory),
+    options_(options) {}
+
+  TServer(shared_ptr<TProcessor> processor,
+          shared_ptr<TServerOptions> options) :
     processor_(processor), options_(options) {}
-  
+ 
   shared_ptr<TProcessor> processor_;
+  shared_ptr<TServerTransport> serverTransport_;
+  shared_ptr<TTransportFactory> transportFactory_;
   shared_ptr<TServerOptions> options_;
 };
   
@@ -35,12 +50,12 @@ protected:
  * Class to encapsulate all generic server options.
  */
 class TServerOptions {
-public:
+ public:
   // TODO(mcslee): Fill in getters/setters here
-protected:
+ protected:
   // TODO(mcslee): Fill data members in here
 };
 
 }}} // facebook::thrift::server
 
-#endif
+#endif // #ifndef _THRIFT_SERVER_TSERVER_H_

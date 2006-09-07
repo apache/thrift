@@ -1,5 +1,5 @@
-#ifndef T_THREADPOOL_SERVER_H
-#define T_THREADPOOL_SERVER_H
+#ifndef _THRIFT_SERVER_TTHREADPOOLSERVER_H_
+#define _THRIFT_SERVER_TTHREADPOOLSERVER_H_ 1
 
 #include <concurrency/ThreadManager.h>
 #include <server/TServer.h>
@@ -19,9 +19,10 @@ public:
   class Task;
   
   TThreadPoolServer(shared_ptr<TProcessor> processor,
-		    shared_ptr<TServerOptions> options,
 		    shared_ptr<TServerTransport> serverTransport,
-		    shared_ptr<ThreadManager> threadManager);
+		    shared_ptr<TTransportFactory> transportFactory,
+		    shared_ptr<ThreadManager> threadManager,
+		    shared_ptr<TServerOptions> options);
 
   virtual ~TThreadPoolServer();
 
@@ -29,11 +30,10 @@ public:
 
 protected:
 
-  shared_ptr<TServerTransport> serverTransport_;
   shared_ptr<ThreadManager> threadManager_;
   
 };
 
 }}} // facebook::thrift::server
 
-#endif
+#endif // #ifndef _THRIFT_SERVER_TTHREADPOOLSERVER_H_

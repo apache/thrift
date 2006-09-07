@@ -1,5 +1,5 @@
-#ifndef T_SIMPLE_SERVER_H
-#define T_SIMPLE_SERVER_H
+#ifndef _THRIFT_SERVER_TSIMPLESERVER_H_
+#define _THRIFT_SERVER_TSIMPLESERVER_H_ 1
 
 #include "server/TServer.h"
 #include "transport/TServerTransport.h"
@@ -17,18 +17,17 @@ namespace facebook { namespace thrift { namespace server {
 class TSimpleServer : public TServer {
  public:
   TSimpleServer(shared_ptr<TProcessor> processor,
-                shared_ptr<TServerOptions> options,
-                shared_ptr<TServerTransport> serverTransport) :
-    TServer(processor, options), serverTransport_(serverTransport) {}
+                shared_ptr<TServerTransport> serverTransport,
+                shared_ptr<TTransportFactory> transportFactory,
+                shared_ptr<TServerOptions> options) :
+    TServer(processor, serverTransport, transportFactory, options) {}
     
   ~TSimpleServer() {}
 
   void run();
 
- protected:
-  shared_ptr<TServerTransport> serverTransport_;
 };
 
 }}} // facebook::thrift::server
 
-#endif
+#endif // #ifndef _THRIFT_SERVER_TSIMPLESERVER_H_
