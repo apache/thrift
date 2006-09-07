@@ -835,20 +835,7 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
   // Generate the header portion
   f_header_ <<
     "class " << service_name_ << "Server : " <<
-    "public facebook::thrift::TProcessor {" << endl <<
-    " public: " << endl;
-  indent_up();
-  f_header_ << 
-    indent() <<
-    service_name_ << "Server(boost::shared_ptr<" << service_name_ << "If> iface, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> prot) : " <<
-                       "_iface(iface), _iprot(prot), _oprot(prot) {}" << endl <<
-    indent() <<
-    service_name_ << "Server(boost::shared_ptr<" << service_name_ << "If> iface, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> oprot) : " <<
-                       "_iface(iface), _iprot(iprot), _oprot(oprot) {}" << endl <<
-    indent() << "bool process(boost::shared_ptr<facebook::thrift::transport::TTransport> _itrans, " <<
-                             "boost::shared_ptr<facebook::thrift::transport::TTransport> _otrans);" << endl <<
-    indent() << "virtual ~" << service_name_ << "Server() {}" << endl;
-  indent_down();
+    "public facebook::thrift::TProcessor {" << endl;
 
   // Protected data members
   f_header_ <<
@@ -857,7 +844,8 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
   f_header_ <<
     indent() << "boost::shared_ptr<" << service_name_ << "If> _iface;" << endl <<
     indent() << "boost::shared_ptr<const facebook::thrift::protocol::TProtocol> _iprot;" << endl <<
-    indent() << "boost::shared_ptr<const facebook::thrift::protocol::TProtocol> _oprot;" << endl;
+    indent() << "boost::shared_ptr<const facebook::thrift::protocol::TProtocol> _oprot;" << endl <<
+    indent() << "std::map<std::string, void (" << service_name_ << "Server::*)(int32_t, boost::shared_ptr<facebook::thrift::transport::TTransport>, boost::shared_ptr<facebook::thrift::transport::TTransport>)> _processMap;" << endl;
   indent_down();
 
   // Process function declarations
@@ -870,8 +858,39 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
       "(int32_t seqid, boost::shared_ptr<facebook::thrift::transport::TTransport> _itrans, boost::shared_ptr<facebook::thrift::transport::TTransport> _otrans);" << endl;
   }
   indent_down();
+
+  indent_up();
+  string declare_map = "";
+  indent_up();
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    declare_map += indent();
+    declare_map += "_processMap[\"";
+    declare_map += (*f_iter)->get_name();
+    declare_map += "\"] = &";
+    declare_map += service_name_;
+    declare_map += "Server::process_";
+    declare_map += (*f_iter)->get_name();
+    declare_map += ";\n";
+  }
+  indent_down();
+
+  f_header_ << 
+    " public: " << endl <<
+    indent() << service_name_ << "Server(boost::shared_ptr<" << service_name_ << "If> iface, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> prot) : " <<
+    "_iface(iface), _iprot(prot), _oprot(prot) {" << endl <<
+    declare_map <<
+    indent() << "}" << endl <<
+    indent() << service_name_ << "Server(boost::shared_ptr<" << service_name_ << "If> iface, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<const facebook::thrift::protocol::TProtocol> oprot) : " <<
+    "_iface(iface), _iprot(iprot), _oprot(oprot) {" << endl <<
+    declare_map <<
+    indent() << "}" << endl <<
+    endl <<
+    indent() << "bool process(boost::shared_ptr<facebook::thrift::transport::TTransport> _itrans, boost::shared_ptr<facebook::thrift::transport::TTransport> _otrans);" << endl <<
+    indent() << "virtual ~" << service_name_ << "Server() {}" << endl;
+  indent_down();
   f_header_ <<
     "};" << endl << endl;
+
 
   // Generate the server implementation
   f_service_ <<
@@ -891,7 +910,19 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
     indent() << "  throw facebook::thrift::Exception(\"Unexpected message type\");" << endl <<
     indent() << "}" << endl <<
     endl;
-    
+
+  // HOT: member function pointer map
+  f_service_ <<
+    indent() << "std::map<std::string, void (" << service_name_ << "Server::*)(int32_t, boost::shared_ptr<facebook::thrift::transport::TTransport>, boost::shared_ptr<facebook::thrift::transport::TTransport>)>::iterator pfn;" << endl <<
+    indent() << "pfn = _processMap.find(fname);" << endl <<
+    indent() << "if (pfn == _processMap.end()) {" << endl <<
+    indent() << "  throw facebook::thrift::Exception(\"Unknown function name: '\"+fname+\"'\");" << endl <<
+    indent() << "} else {" << endl <<
+    indent() << "  (this->*(pfn->second))(seqid, itrans, otrans);" << endl <<
+    indent() << "}" << endl;  
+
+  // DEPRECATED: if else if bullshit
+  /*
   bool first = true;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     if (!first) {
@@ -917,6 +948,7 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
   indent_down();
   indent(f_service_) <<
     "}" << endl;
+  */
 
   // Read end of args field, the T_STOP, and the struct close
   f_service_ <<
@@ -931,6 +963,7 @@ void t_cpp_generator::generate_service_server(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_process_function(tservice, *f_iter);
   }
+
 }
 
 /**

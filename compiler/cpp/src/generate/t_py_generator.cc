@@ -583,7 +583,15 @@ void t_py_generator::generate_service_server(t_service* tservice) {
     indent() << "if oprot == None:" << endl <<
     indent() << "  self.__oprot = iprot" << endl <<
     indent() << "else:" << endl <<
-    indent() << "  self.__oprot = oprot" << endl;
+    indent() << "  self.__oprot = oprot" << endl <<
+    indent() << "self.__processMap = {" << endl;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    f_service_ <<
+      indent() << "  \"" << (*f_iter)->get_name() << "\" : Server.process_" << (*f_iter)->get_name() << "," << endl;
+  }
+  f_service_ <<
+    indent() << "}" << endl;
+  
   indent_down();
   f_service_ << endl;
  
@@ -597,6 +605,14 @@ void t_py_generator::generate_service_server(t_service* tservice) {
 
   // TODO(mcslee): validate message
 
+  // HOT: dictionary lookup
+  f_service_ <<
+    indent() << "if name not in self.__processMap:" << endl <<
+    indent() << "  print 'Unknown function %s' % (name)" << endl <<
+    indent() << "else:" << endl <<
+    indent() << "  self.__processMap[name](self, seqid, itrans, otrans)" << endl;
+  // DEPRECATED: if else if bullshit
+  /*
   bool first = true;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     if (!first) {
@@ -616,7 +632,8 @@ void t_py_generator::generate_service_server(t_service* tservice) {
     indent() << "else:" << endl <<
     indent() << "  print 'Unknown function %s' % (name)" << endl;
   f_service_ << endl;
-  
+  */  
+
   // Read end of args field, the T_STOP, and the struct close
   f_service_ <<
     indent() << "return True" << endl;
