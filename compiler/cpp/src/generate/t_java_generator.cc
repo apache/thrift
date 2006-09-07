@@ -599,11 +599,11 @@ void t_java_generator::generate_service_server(t_service* tservice) {
 
   // Generate the header portion
   f_service_ <<
-    "public static class Server implements TProcessor {" << endl;
+    "public static class Processor implements TProcessor {" << endl;
   indent_up();
 
   indent(f_service_) <<
-    "public Server(Iface iface, TProtocol prot)" << endl;
+    "public Processor(Iface iface, TProtocol prot)" << endl;
   scope_up(f_service_);
   indent(f_service_) << 
     "this(iface, prot, prot);" << endl;
@@ -611,7 +611,7 @@ void t_java_generator::generate_service_server(t_service* tservice) {
   f_service_ << endl;
 
   indent(f_service_) <<
-    "public Server(Iface iface, TProtocol iprot, TProtocol oprot)" << endl;
+    "public Processor(Iface iface, TProtocol iprot, TProtocol oprot)" << endl;
   scope_up(f_service_);
   f_service_ <<
     indent() << "_iface = iface;" << endl <<

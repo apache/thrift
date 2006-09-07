@@ -332,7 +332,7 @@ int main(int argc, char **argv) {
 
   shared_ptr<TestHandler> testHandler(new TestHandler());
 
-  shared_ptr<ThriftTestServer> testServer(new ThriftTestServer(testHandler, binaryProtocol));
+  shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler, binaryProtocol));
 
   // Transport
   shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
@@ -346,7 +346,7 @@ int main(int argc, char **argv) {
   if (serverType == "simple") {
 
     // Server
-    TSimpleServer simpleServer(testServer,
+    TSimpleServer simpleServer(testProcessor,
 			       serverSocket,
                                transportFactory,
 			       serverOptions
@@ -367,7 +367,7 @@ int main(int argc, char **argv) {
 
     threadManager->start();
 
-    TThreadPoolServer threadPoolServer(testServer,
+    TThreadPoolServer threadPoolServer(testProcessor,
 				       serverSocket,
                                        transportFactory,
 				       threadManager,

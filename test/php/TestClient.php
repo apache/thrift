@@ -7,8 +7,11 @@ if (!isset($MODE)) {
   $MODE = 'normal';
 }
 
+/** Set the Thrift root */
+$GLOBALS['THRIFT_ROOT'] = '../../lib/php/src';
+
 /** Include the Thrift base */
-require_once '/home/mcslee/code/projects/thrift/lib/php/src/Thrift.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
 
 /** Include the binary protocol */
 require_once $GLOBALS['THRIFT_ROOT'].'/protocol/TBinaryProtocol.php';

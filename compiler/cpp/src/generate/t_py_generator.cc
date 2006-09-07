@@ -571,7 +571,7 @@ void t_py_generator::generate_service_server(t_service* tservice) {
 
   // Generate the header portion
   f_service_ <<
-    "class Server(Iface, TProcessor):" << endl;
+    "class Processor(Iface, TProcessor):" << endl;
   indent_up();
 
   indent(f_service_) <<
@@ -587,7 +587,7 @@ void t_py_generator::generate_service_server(t_service* tservice) {
     indent() << "self.__processMap = {" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ <<
-      indent() << "  \"" << (*f_iter)->get_name() << "\" : Server.process_" << (*f_iter)->get_name() << "," << endl;
+      indent() << "  \"" << (*f_iter)->get_name() << "\" : Processor.process_" << (*f_iter)->get_name() << "," << endl;
   }
   f_service_ <<
     indent() << "}" << endl;
