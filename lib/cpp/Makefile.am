@@ -11,7 +11,7 @@ libthrift_sources = src/concurrency/Monitor.cc \
                     src/concurrency/TimerManager.cc \
 	            src/protocol/TBinaryProtocol.cc \
                     src/transport/TBufferedTransport.cc \
-                    src/transport/TChunkedTransport.cc \
+                    src/transport/TFramedTransport.cc \
                     src/transport/TSocket.cc \
                     src/transport/TServerSocket.cc \
                     src/server/TSimpleServer.cc \
@@ -48,7 +48,7 @@ include_protocol_HEADERS = \
 include_transportdir = $(include_thriftdir)/transport
 include_transport_HEADERS = \
                          src/transport/TBufferedTransport.h \
-                         src/transport/TChunkedTransport.h \
+                         src/transport/TFramedTransport.h \
                          src/transport/TNullTransport.h \
                          src/transport/TServerSocket.h \
                          src/transport/TServerTransport.h \

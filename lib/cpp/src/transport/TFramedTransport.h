@@ -1,5 +1,5 @@
-#ifndef _THRIFT_TRANSPORT_TCHUNKEDTRANSPORT_H_
-#define _THRIFT_TRANSPORT_TCHUNKEDTRANSPORT_H_ 1
+#ifndef _THRIFT_TRANSPORT_TFRAMEDTRANSPORT_H_
+#define _THRIFT_TRANSPORT_TFRAMEDTRANSPORT_H_ 1
 
 #include "TTransport.h"
 #include <string>
@@ -10,16 +10,16 @@ namespace facebook { namespace thrift { namespace transport {
 using namespace boost;
 
 /**
- * Chunked transport. All writes go into an in-memory buffer until flush is
+ * Framed transport. All writes go into an in-memory buffer until flush is
  * called, at which point the transport writes the length of the entire
  * binary chunk followed by the data payload. This allows the receiver on the
  * other end to always do fixed-length reads.
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class TChunkedTransport : public TTransport {
+class TFramedTransport : public TTransport {
  public:
-  TChunkedTransport(shared_ptr<TTransport> transport) :
+  TFramedTransport(shared_ptr<TTransport> transport) :
     transport_(transport),
     rPos_(0), rLen_(0),
     wBufSize_(512), wLen_(0) {
@@ -27,7 +27,7 @@ class TChunkedTransport : public TTransport {
     wBuf_ = new uint8_t[wBufSize_];
   }
 
-  TChunkedTransport(shared_ptr<TTransport> transport, uint32_t sz) :
+  TFramedTransport(shared_ptr<TTransport> transport, uint32_t sz) :
     transport_(transport),
     rPos_(0), rLen_(0),
     wBufSize_(sz), wLen_(0) {
@@ -35,7 +35,7 @@ class TChunkedTransport : public TTransport {
     wBuf_ = new uint8_t[wBufSize_];
   }
 
-  ~TChunkedTransport() {
+  ~TFramedTransport() {
     if (rBuf_ != NULL) {
       delete [] rBuf_;
     }
@@ -73,11 +73,11 @@ class TChunkedTransport : public TTransport {
   uint32_t wLen_;
 
   /**
-   * Reads a chunk of input from the underlying stream.
+   * Reads a frame of input from the underlying stream.
    */
-  void readChunk();
+  void readFrame();
 };
 
 }}} // facebook::thrift::transport
 
-#endif // #ifndef _THRIFT_TRANSPORT_TCHUNKEDTRANSPORT_H_
+#endif // #ifndef _THRIFT_TRANSPORT_TFRAMEDTRANSPORT_H_

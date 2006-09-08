@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Chunked transport. Writes and reads data in chunks that are stamped with
+ * Framed transport. Writes and reads data in chunks that are stamped with
  * their length.
  *
  * @package thrift.transport
  * @author Mark Slee <mcslee@facebook.com>
  */
-class TChunkedTransport extends TTransport {
+class TFramedTransport extends TTransport {
 
   /**
    * Underlying transport object.
@@ -52,7 +52,7 @@ class TChunkedTransport extends TTransport {
     if ($need > $have) {
       $out = $this->rBuf_;
       $need -= $have;
-      $this->readChunk();
+      $this->readFrame();
     }
 
     $give = $need;
@@ -70,7 +70,7 @@ class TChunkedTransport extends TTransport {
   /**
    * Reads a chunk of data into the internal read buffer.
    */
-  private function readChunk() {
+  private function readFrame() {
     $buf = $this->transport_->readAll(4);
     $val = unpack('N', $buf);
     $sz = $val[1];

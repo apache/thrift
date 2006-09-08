@@ -6,7 +6,7 @@ protocol_SCRIPTS = src/protocol/TProtocol.php \
 
 transport_SCRIPTS = src/transport/TTransport.php \
                     src/transport/TBufferedTransport.php \
-                    src/transport/TChunkedTransport.php \
+                    src/transport/TFramedTransport.php \
                     src/transport/TSocket.php \
                     src/transport/TSocketPool.php
 

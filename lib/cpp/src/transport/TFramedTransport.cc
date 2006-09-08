@@ -1,9 +1,11 @@
-#include "TChunkedTransport.h"
+#include <transport/TFramedTransport.h>
+#include <netinet/in.h>
+
 using std::string;
 
 namespace facebook { namespace thrift { namespace transport { 
 
-uint32_t TChunkedTransport::read(uint8_t* buf, uint32_t len) {
+uint32_t TFramedTransport::read(uint8_t* buf, uint32_t len) {
   uint32_t need = len;
 
   // We don't have enough data yet
@@ -16,7 +18,7 @@ uint32_t TChunkedTransport::read(uint8_t* buf, uint32_t len) {
     }
 
     // Read another chunk
-    readChunk();
+    readFrame();
   }
   
   // Hand over whatever we have
@@ -30,8 +32,8 @@ uint32_t TChunkedTransport::read(uint8_t* buf, uint32_t len) {
   return (len - need);
 }
 
-void TChunkedTransport::readChunk() {
-  // Get rid of the old chunk
+void TFramedTransport::readFrame() {
+  // Get rid of the old frame
   if (rBuf_ != NULL) {
     delete [] rBuf_;
     rBuf_ = NULL;
@@ -40,19 +42,20 @@ void TChunkedTransport::readChunk() {
   // Read in the next chunk size
   int32_t sz;
   transport_->readAll((uint8_t*)&sz, 4);
+  sz = (int32_t)ntohl(sz);
 
   if (sz < 0) {
-    throw new TTransportException("Next chunk has negative size");
+    throw new TTransportException("Frame size has negative value");
   }
 
-  // Read the chunk payload, reset markers
+  // Read the frame payload, reset markers
   rBuf_ = new uint8_t[sz];
   transport_->readAll(rBuf_, sz);
   rPos_ = 0;
   rLen_ = sz;
 }
 
-void TChunkedTransport::write(const uint8_t* buf, uint32_t len) {
+void TFramedTransport::write(const uint8_t* buf, uint32_t len) {
   if (len == 0) {
     return;
   }
@@ -81,12 +84,14 @@ void TChunkedTransport::write(const uint8_t* buf, uint32_t len) {
   wLen_ += len;
 }
 
-void TChunkedTransport::flush()  {
-  // Write chunk size
+void TFramedTransport::flush()  {
+  // Write frame size
   int32_t sz = wLen_;
+  sz = (int32_t)htonl(sz);
+
   transport_->write((const uint8_t*)&sz, 4);
   
-  // Write chunk body
+  // Write frame body
   if (sz > 0) {
     transport_->write(wBuf_, wLen_);
   }
