@@ -145,7 +145,9 @@ class TBinaryProtocol extends TProtocol {
   public function writeString($out, $value) {
     $len = strlen($value);
     $result = $this->writeI32($out, $len);
-    $out->write($value, $len);
+    if ($len) {
+      $out->write($value, $len);
+    }
     return $result + $len;
   }
 
@@ -317,7 +319,11 @@ class TBinaryProtocol extends TProtocol {
 
   public function readString($in, &$value) {
     $result = $this->readI32($in, $len);
-    $value = $in->readAll($len);
+    if ($len) {
+      $value = $in->readAll($len);
+    } else {
+      $value = '';
+    }
     return $result + $len;
   }
 }

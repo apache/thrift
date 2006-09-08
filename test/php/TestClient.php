@@ -17,7 +17,7 @@ require_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
 require_once $GLOBALS['THRIFT_ROOT'].'/protocol/TBinaryProtocol.php';
 
 /** Include the socket layer */
-require_once $GLOBALS['THRIFT_ROOT'].'/transport/TSocket.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/transport/TSocketPool.php';
 
 /** Include the socket layer */
 require_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
@@ -36,7 +36,11 @@ if ($argc > 2) {
   $host = $argv[1];
 }
 
+$hosts = array('localhost', '8.2.3.5');
+
 $socket = new TSocket($host, $port);
+$socket = new TSocketPool($hosts, $port);
+$socket->setDebug(TRUE);
 
 if ($MODE == 'inline') {
   $transport = $socket;

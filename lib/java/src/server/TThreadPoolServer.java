@@ -101,8 +101,12 @@ public class TThreadPoolServer extends TServer {
       try {
         io = transportFactory_.getIOTransports(client_);
         while (processor_.process(io[0], io[1])) {}
+      } catch (TTransportException ttx) {
+        // Assume the client died and continue silently
       } catch (TException tx) {
         tx.printStackTrace();
+      } catch (Exception x) {
+        x.printStackTrace();
       }
 
       if (io != null) {

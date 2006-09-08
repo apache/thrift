@@ -105,4 +105,3 @@ class TBufferedTransport extends TTransport {
 }
 
 ?>
-

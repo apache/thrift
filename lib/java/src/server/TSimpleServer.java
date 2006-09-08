@@ -35,8 +35,12 @@ public class TSimpleServer extends TServer {
           io = transportFactory_.getIOTransports(client);
           while (processor_.process(io[0], io[1]));
         }
+      } catch (TTransportException ttx) {
+        // Client died, just move on
       } catch (TException tx) {
         tx.printStackTrace();
+      } catch (Exception x) {
+        x.printStackTrace();
       }
 
       if (io != null) {
