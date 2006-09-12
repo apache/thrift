@@ -258,7 +258,7 @@ public class TestServer {
 
       // Run it
       System.out.println("Starting the server on port " + port + "...");
-      serverEngine.run();
+      serverEngine.serve();
 
     } catch (Exception x) {
       x.printStackTrace();

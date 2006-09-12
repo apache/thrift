@@ -84,5 +84,5 @@ public abstract class TServer {
   /**
    * The run method fires up the server and gets things going.
    */
-  public abstract void run();
+  public abstract void serve();
 }

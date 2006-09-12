@@ -58,7 +58,7 @@ public class TThreadPoolServer extends TServer {
   }
 
 
-  public void run() {
+  public void serve() {
     try {
       serverTransport_.listen();
     } catch (TTransportException ttx) {
@@ -67,13 +67,15 @@ public class TThreadPoolServer extends TServer {
     }
 
     while (true) {
+      int failureCount = 0;
       try {
         TTransport client = serverTransport_.accept();
         WorkerProcess wp = new WorkerProcess(client);
         executorService_.execute(wp);
       } catch (TTransportException ttx) {
+        ++failureCount;
         ttx.printStackTrace();
-      }
+      }     
     }
   }
 

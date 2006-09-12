@@ -255,10 +255,10 @@ CommaOptional:
     {}
 
 Function:
-  FunctionType AsyncOptional tok_identifier '(' FieldList ')' ThrowsOptional
+  AsyncOptional FunctionType tok_identifier '(' FieldList ')' ThrowsOptional
     {
       $5->set_name(std::string($3) + "_args");
-      $$ = new t_function($1, $3, $5, $7, $2);
+      $$ = new t_function($2, $3, $5, $7, $1);
       y_field_val = -1;
     }
 

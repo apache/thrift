@@ -66,7 +66,7 @@ class t_program {
   // Accessors for global types
   t_type* get_void_type()   const { return type_void;   }
   t_type* get_string_type() const { return type_string; }
-  t_type* get_bool_type()   const { return type_byte;   }
+  t_type* get_bool_type()   const { return type_bool;   }
   t_type* get_byte_type()   const { return type_byte;   }
   t_type* get_i16_type()    const { return type_i16;    }
   t_type* get_i32_type()    const { return type_i32;    }

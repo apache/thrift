@@ -18,7 +18,7 @@ public class TSimpleServer extends TServer {
     super(processor, serverTransport);
   }
 
-  public void run() {
+  public void serve() {
     try {
       serverTransport_.listen();
     } catch (TTransportException ttx) {
