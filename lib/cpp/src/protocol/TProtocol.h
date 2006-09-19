@@ -16,9 +16,13 @@ using namespace boost;
 
 using namespace facebook::thrift::transport;
 
-#define ntohll(x) (((uint64_t)(ntohl((int)((x & 0x00000000FFFFFFFF)))) << 32) | (uint32_t)ntohl(((int)(x >> 32 & 0x00000000FFFFFFFF))))
-
-#define htonll(x) ntohll(x)
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define ntohll(n) (n)
+#define htonll(n) (n)
+#else
+#define ntohll(n) ( (((unsigned long long)ntohl(n)) << 32) + ntohl(n >> 32) )
+#define htonll(n) ( (((unsigned long long)htonl(n)) << 32) + htonl(n >> 32) )
+#endif
 
 // Forward declaration for TProtocol
 struct TBuf;
