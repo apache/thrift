@@ -26,7 +26,7 @@ public:
 
   virtual ~TThreadPoolServer();
 
-  virtual void run();
+  virtual void serve();
 
 protected:
 

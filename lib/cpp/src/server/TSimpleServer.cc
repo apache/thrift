@@ -11,7 +11,7 @@ namespace facebook { namespace thrift { namespace server {
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-void TSimpleServer::run() {
+void TSimpleServer::serve() {
 
   shared_ptr<TTransport> client;
   pair<shared_ptr<TTransport>,shared_ptr<TTransport> > io;

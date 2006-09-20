@@ -6,7 +6,7 @@ from thrift.transport import TTransport
 
 class TServer:
 
-  """Base interface for a server, which must have a run method."""
+  """Base interface for a server, which must have a serve method."""
 
   def __init__(self, processor, serverTransport, transportFactory=None):
     self.processor = processor
@@ -16,7 +16,7 @@ class TServer:
     else:
       self.transportFactory = transportFactory
 
-  def run(self):
+  def serve(self):
     pass
 
 class TSimpleServer(TServer):
@@ -26,7 +26,7 @@ class TSimpleServer(TServer):
   def __init__(self, processor, serverTransport, transportFactory=None):
     TServer.__init__(self, processor, serverTransport, transportFactory)
 
-  def run(self):
+  def serve(self):
     self.serverTransport.listen()
     while True:
       client = self.serverTransport.accept()

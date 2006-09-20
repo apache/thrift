@@ -55,7 +55,7 @@ TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
 
 TThreadPoolServer::~TThreadPoolServer() {}
 
-void TThreadPoolServer::run() {
+void TThreadPoolServer::serve() {
 
   shared_ptr<TTransport> client;
   pair<shared_ptr<TTransport>,shared_ptr<TTransport> > io;

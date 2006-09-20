@@ -353,7 +353,7 @@ int main(int argc, char **argv) {
                                );
 
     printf("Starting the server on port %d...\n", port);
-    simpleServer.run();
+    simpleServer.serve();
 
   } else if (serverType == "thread-pool") {
 
@@ -374,7 +374,7 @@ int main(int argc, char **argv) {
 				       serverOptions);
 
     printf("Starting the server on port %d...\n", port);
-    threadPoolServer.run();
+    threadPoolServer.serve();
   }
 
   printf("done.\n");

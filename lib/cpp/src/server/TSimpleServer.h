@@ -24,7 +24,7 @@ class TSimpleServer : public TServer {
     
   ~TSimpleServer() {}
 
-  void run();
+  void serve();
 
 };
 

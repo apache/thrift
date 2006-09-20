@@ -165,12 +165,28 @@ class TSocket extends TTransport {
       stream_set_timeout($this->handle_, 0, $this->recvTimeout_*1000);
       $this->sendTimeoutSet_ = FALSE;
     }
-    $buf = @stream_get_contents($this->handle_, $len);
-    if ($buf === FALSE || strlen($buf) !== $len) {
-      throw new Exception('TSocket: Could not read '.$len.' bytes from '.
-                          $this->host_.':'.$this->port_);
+    // This call does not obey stream_set_timeout values!
+    // $buf = @stream_get_contents($this->handle_, $len);
+
+    $pre = null;
+    while (true) {
+      $buf = @fread($this->handle_, $len);
+      if ($buf === FALSE) {
+        throw new Exception('TSocket: Could not read '.$len.' bytes from '.
+                            $this->host_.':'.$this->port_);
+      } else if (($sz = strlen($buf)) < $len) {
+        $md = stream_get_meta_data($this->handle_);
+        if ($md['timed_out']) {
+          throw new Exception('TSocket: timed out reading '.$len.' bytes from '.
+                              $this->host_.':'.$this->port_);
+        } else {
+          $pre .= $buf;
+          $len -= $sz;
+        }
+      } else {
+        return $pre.$buf;
+      }
     }
-    return $buf;
   }
 
   /**
@@ -184,7 +200,7 @@ class TSocket extends TTransport {
       stream_set_timeout($this->handle_, 0, $this->recvTimeout_*1000);
       $this->sendTimeoutSet_ = FALSE;
     }
-    $data = @fread($this->handle_, 1);
+    $data = @fread($this->handle_, $len);
     if ($data === FALSE) {
       throw new Exception('TSocket: Could not read '.$len.' bytes from '.
                           $this->host_.':'.$this->port_);
