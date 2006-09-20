@@ -341,7 +341,7 @@ void t_php_generator::generate_service(t_service* tservice) {
     php_includes();
 
   f_service_ <<
-    "require_once $GLOBALS['THRIFT_ROOT'].'/packages/" << program_name_ << "/" << program_name << "_types.php';" << endl << endl;
+    "require_once $GLOBALS['THRIFT_ROOT'].'/packages/" << program_name_ << "/" << program_name_ << "_types.php';" << endl << endl;
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_interface(tservice);
