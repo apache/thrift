@@ -35,7 +35,7 @@ class TFramedTransport extends TTransport {
    *
    * @param TTransport $transport Underlying transport
    */
-  public __construct($transport=null) {
+  public function __construct($transport=null) {
     $this->transport_ = $transport;
   }
 
