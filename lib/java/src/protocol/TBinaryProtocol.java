@@ -60,21 +60,21 @@ public class TBinaryProtocol implements TProtocol {
     writeByte(out, b ? (byte)1 : (byte)0);
   }
 
-  byte[] bout = new byte[1];
   public void writeByte(TTransport out, byte b) throws TException {
+    byte[] bout = new byte[1];
     bout[0] = b;
     out.write(bout, 0, 1);
   }
 
-  byte[] i16out = new byte[2];
   public void writeI16(TTransport out, short i16) throws TException {
+    byte[] i16out = new byte[2];
     i16out[0] = (byte)(0xff & (i16 >> 8));
     i16out[1] = (byte)(0xff & (i16));
     out.write(i16out, 0, 2);
   }
 
-  byte[] i32out = new byte[4];
   public void writeI32(TTransport out, int i32) throws TException {
+    byte[] i32out = new byte[4];
     i32out[0] = (byte)(0xff & (i32 >> 24));
     i32out[1] = (byte)(0xff & (i32 >> 16));
     i32out[2] = (byte)(0xff & (i32 >> 8));
@@ -82,8 +82,8 @@ public class TBinaryProtocol implements TProtocol {
     out.write(i32out, 0, 4);
   }
 
-  byte[] i64out = new byte[8];
   public void writeI64(TTransport out, long i64) throws TException {
+    byte[] i64out = new byte[8];
     i64out[0] = (byte)(0xff & (i64 >> 56));
     i64out[1] = (byte)(0xff & (i64 >> 48));
     i64out[2] = (byte)(0xff & (i64 >> 40));
@@ -168,14 +168,14 @@ public class TBinaryProtocol implements TProtocol {
     return (readByte(in) == 1);
   }
 
-  byte[] bin = new byte[1];
   public byte readByte(TTransport in) throws TException {
+    byte[] bin = new byte[1];
     in.readAll(bin, 0, 1);
     return bin[0];
   }
 
-  byte[] i16rd = new byte[2];
   public short readI16(TTransport in) throws TException {
+    byte[] i16rd = new byte[2];
     in.readAll(i16rd, 0, 2);
     return
       (short)
@@ -183,8 +183,8 @@ public class TBinaryProtocol implements TProtocol {
        ((i16rd[1] & 0xff)));
   }
 
-  byte[] i32rd = new byte[4];
   public int readI32(TTransport in) throws TException {
+    byte[] i32rd = new byte[4];
     in.readAll(i32rd, 0, 4);
     return
       ((i32rd[0] & 0xff) << 24) |
@@ -193,8 +193,8 @@ public class TBinaryProtocol implements TProtocol {
       ((i32rd[3] & 0xff));
   }
  
-  byte[] i64rd = new byte[8];
   public long readI64(TTransport in) throws TException {
+    byte[] i64rd = new byte[8];
     in.readAll(i64rd, 0, 8);
     return
       ((long)(i64rd[0] & 0xff) << 56) |
