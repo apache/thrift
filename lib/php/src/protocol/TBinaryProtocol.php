@@ -1,7 +1,7 @@
 <?php
 
 /** For transport operations */
-require_once $GLOBALS['THRIFT_ROOT'].'/transport/TTransport.php';
+include_once $GLOBALS['THRIFT_ROOT'].'/transport/TTransport.php';
 
 /**
  * Binary implementation of the Thrift protocol.

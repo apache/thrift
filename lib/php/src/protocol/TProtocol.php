@@ -3,7 +3,7 @@
 /**
  * For Type Constants
  */
-require_once $GLOBALS['THRIFT_ROOT'].'/protocol/TType.php';
+include_once $GLOBALS['THRIFT_ROOT'].'/protocol/TType.php';
 
 
 /**

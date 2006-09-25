@@ -30,7 +30,7 @@ void t_php_generator::init_generator(t_program* tprogram) {
  */
 string t_php_generator::php_includes() {
   return
-    string("require_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';\n\n");
+    string("include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';\n\n");
 }
 
 /**
@@ -341,7 +341,7 @@ void t_php_generator::generate_service(t_service* tservice) {
     php_includes();
 
   f_service_ <<
-    "require_once $GLOBALS['THRIFT_ROOT'].'/packages/" << program_name_ << "/" << program_name_ << "_types.php';" << endl << endl;
+    "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << program_name_ << "/" << program_name_ << "_types.php';" << endl << endl;
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_interface(tservice);
