@@ -5,6 +5,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 
 /**
  * Socket implementation of the TTransport interface. To be commented soon!
@@ -13,14 +14,25 @@ import java.net.Socket;
  */
 public class TSocket extends TIOStreamTransport {
 
-  /** Wrapped Socket object */
+  /**
+   * Wrapped Socket object
+   */
   private Socket socket_ = null;
   
-  /** Remote host */
+  /**
+   * Remote host
+   */
   private String host_  = null;
 
-  /** Remote port */
+  /**
+   * Remote port
+   */
   private int port_ = 0;
+
+  /**
+   * Socket timeout
+   */
+  private int timeout_ = 0;
 
   /**
    * Constructor that takes an already created socket.
@@ -30,6 +42,7 @@ public class TSocket extends TIOStreamTransport {
    */
   public TSocket(Socket socket) throws TTransportException {
     socket_ = socket;
+   
     if (isOpen()) {
       try {
         inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
@@ -49,9 +62,36 @@ public class TSocket extends TIOStreamTransport {
    * @param port Remote port
    */
   public TSocket(String host, int port) {
+    this(host, port, 500);
+  }
+
+  /**
+   * Creates a new unconnected socket that will connect to the given host
+   * on the given port.
+   *
+   * @param host    Remote host
+   * @param port    Remote port
+   * @param timeout Socket timeout
+   */
+  public TSocket(String host, int port, int timeout) {
     socket_ = new Socket();
     host_ = host;
     port_ = port;
+    timeout_ = timeout;
+  }
+
+  /**
+   * Sets the socket timeout
+   *
+   * @param timeout Milliseconds timeout
+   */
+  public void setTimeout(int timeout) {
+    timeout_ = timeout;
+    try {
+      socket_.setSoTimeout(timeout);
+    } catch (SocketException sx) {
+      sx.printStackTrace();
+    }
   }
 
   /**
