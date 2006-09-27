@@ -42,7 +42,13 @@ public class TSocket extends TIOStreamTransport {
    */
   public TSocket(Socket socket) throws TTransportException {
     socket_ = socket;
-   
+    try {
+      socket_.setSoLinger(false, 0);
+      socket_.setTcpNoDelay(true);
+    } catch (SocketException sx) {
+      sx.printStackTrace();
+    }
+
     if (isOpen()) {
       try {
         inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
@@ -62,7 +68,7 @@ public class TSocket extends TIOStreamTransport {
    * @param port Remote port
    */
   public TSocket(String host, int port) {
-    this(host, port, 500);
+    this(host, port, 0);
   }
 
   /**
@@ -74,10 +80,24 @@ public class TSocket extends TIOStreamTransport {
    * @param timeout Socket timeout
    */
   public TSocket(String host, int port, int timeout) {
-    socket_ = new Socket();
     host_ = host;
     port_ = port;
     timeout_ = timeout;
+    initSocket();
+  }
+
+  /**
+   * Initializes the socket object
+   */
+  private void initSocket() {
+    socket_ = new Socket();
+    try {
+      socket_.setSoLinger(false, 0);
+      socket_.setTcpNoDelay(true);
+      socket_.setSoTimeout(timeout_);
+    } catch (SocketException sx) {
+      sx.printStackTrace();
+    }
   }
 
   /**
@@ -95,13 +115,11 @@ public class TSocket extends TIOStreamTransport {
   }
 
   /**
-   * Returns a reference to the underlying socket. Can be used to set
-   * socket options, etc. If an underlying socket does not exist yet, this
-   * will create one.
+   * Returns a reference to the underlying socket.
    */
   public Socket getSocket() {
     if (socket_ == null) {
-      socket_ = new Socket();
+      initSocket();
     }
     return socket_;
   }
@@ -120,18 +138,19 @@ public class TSocket extends TIOStreamTransport {
    * Connects the socket, creating a new socket object if necessary.
    */
   public void open() throws TTransportException {
-    if (socket_ == null) {
-      if (host_.length() == 0) {
-        throw new TTransportException("Cannot open null host.");
-      }
-      if (port_ <= 0) {
-        throw new TTransportException("Cannot open without port.");
-      }
-      socket_ = new Socket();
-    }
-
     if (isOpen()) {
       throw new TTransportException("Socket already connected.");
+    }
+
+    if (host_.length() == 0) {
+      throw new TTransportException("Cannot open null host.");
+    }
+    if (port_ <= 0) {
+      throw new TTransportException("Cannot open without port.");
+    }
+
+    if (socket_ == null) {
+      initSocket();
     }
 
     try {

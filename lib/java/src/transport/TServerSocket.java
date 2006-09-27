@@ -85,11 +85,7 @@ public class TServerSocket extends TServerTransport {
       throw new TTransportException("No underlying server socket.");
     }
     try {
-      // Accept socket and tune TCP params
       Socket result = serverSocket_.accept();
-      client.setSoLinger(false, 0);
-      client.setTcpNoDelay(true);
-      // Wrap in TSocket and set timeout
       TSocket result2 = new TSocket(result);
       result2.setTimeout(clientTimeout_);
       return result2;
