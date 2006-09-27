@@ -126,23 +126,30 @@ int main(int argc, char** argv) {
   }
 
   for (i = 1; i < argc-1; i++) {
-    if (strcmp(argv[i], "--debug") == 0) {
-      g_debug = 1;
-    } else if (strcmp(argv[i], "--cpp") == 0) {
-      gen_cpp = true;
-    } else if (strcmp(argv[i], "--java") == 0) {
-      gen_java = true;
-    } else if (strcmp(argv[i], "--php") == 0) {
-      gen_php = true;
-      php_inline = false;
-    } else if (strcmp(argv[i], "--phpi") == 0) {
-      gen_php = true;
-      php_inline = true;
-    } else if (strcmp(argv[i], "--py") == 0) {
-      gen_py = true;
-    } else {
-      fprintf(stderr, "!!! Unrecognized option: %s\n", argv[i]);
-      usage();
+    char* arg;
+    arg = strtok(argv[i], " ");
+    while (arg != NULL) {
+      if (strcmp(arg, "--debug") == 0) {
+        g_debug = 1;
+      } else if (strcmp(arg, "--cpp") == 0) {
+        gen_cpp = true;
+      } else if (strcmp(arg, "--java") == 0) {
+        gen_java = true;
+      } else if (strcmp(arg, "--php") == 0) {
+        gen_php = true;
+        php_inline = false;
+      } else if (strcmp(arg, "--phpi") == 0) {
+        gen_php = true;
+        php_inline = true;
+      } else if (strcmp(arg, "--py") == 0) {
+        gen_py = true;
+      } else {
+        fprintf(stderr, "!!! Unrecognized option: %s\n", arg);
+        usage();
+      }
+
+      // Tokenize more
+      arg = strtok(NULL, " ");
     }
   }
   
