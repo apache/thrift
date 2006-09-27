@@ -1552,7 +1552,7 @@ string t_cpp_generator::type_name(t_type* ttype) {
     return "std::set<" + type_name(tset->get_elem_type()) + "> ";
   } else if (ttype->is_list()) {
     t_list* tlist = (t_list*) ttype;
-    return "std::list<" + type_name(tlist->get_elem_type()) + "> ";
+    return "std::vector<" + type_name(tlist->get_elem_type()) + "> ";
   } else {
     return ttype->get_name();
   }
