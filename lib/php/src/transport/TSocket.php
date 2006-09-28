@@ -169,9 +169,9 @@ class TSocket extends TTransport {
     // $buf = @stream_get_contents($this->handle_, $len);
 
     $pre = null;
-    while (true) {
+    while (TRUE) {
       $buf = @fread($this->handle_, $len);
-      if ($buf === FALSE) {
+      if (!$buf) {
         throw new Exception('TSocket: Could not read '.$len.' bytes from '.
                             $this->host_.':'.$this->port_);
       } else if (($sz = strlen($buf)) < $len) {
