@@ -368,8 +368,11 @@ void t_php_generator::generate_service_helpers(t_service* tservice) {
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
+    string name = ts->get_name();
+    ts->set_name(service_name_ + "_" + name);
     generate_php_struct_definition(f_service_, ts, false);
     generate_php_function_helpers(*f_iter);
+    ts->set_name(name);
   }
 }
 
@@ -379,7 +382,7 @@ void t_php_generator::generate_service_helpers(t_service* tservice) {
  * @param tfunction The function
  */
 void t_php_generator::generate_php_function_helpers(t_function* tfunction) {
-  t_struct result(tfunction->get_name() + "_result");
+  t_struct result(service_name_ + "_" + tfunction->get_name() + "_result");
   t_field success(tfunction->get_returntype(), "success", 0);
   if (!tfunction->get_returntype()->is_void()) {
     result.append(&success);
@@ -514,7 +517,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       "public function send_" << function_signature(*f_iter) << endl;
     scope_up(f_service_);  
 
-      std::string argsname = (*f_iter)->get_name() + "_args";
+      std::string argsname = service_name_ + "_" + (*f_iter)->get_name() + "_args";
 
       // Serialize the request header
       if (binary_inline_) {
@@ -556,7 +559,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       
 
     if (!(*f_iter)->is_async()) {
-      std::string resultname = (*f_iter)->get_name() + "_result";
+      std::string resultname = service_name_ + "_" + (*f_iter)->get_name() + "_result";
       t_struct noargs;
       
       t_function recv_function((*f_iter)->get_returntype(),

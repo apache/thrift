@@ -1212,7 +1212,7 @@ string t_py_generator::declare_field(t_field* tfield, bool init, bool obj) {
         result += " = ''";
         break;
       case t_base_type::TYPE_BOOL:
-        result += " = false";
+        result += " = False";
         break;
       case t_base_type::TYPE_BYTE:
       case t_base_type::TYPE_I16:
