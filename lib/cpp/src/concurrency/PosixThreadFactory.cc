@@ -161,7 +161,7 @@ class PosixThreadFactory::Impl {
     int quanta = (HIGHEST - LOWEST) + 1;
     float stepsperquanta = (max_priority - min_priority) / quanta;
 
-    if(priority <= HIGHEST) {
+    if (priority <= HIGHEST) {
       return (int)(min_priority + stepsperquanta * priority);
     } else {
       // should never get here for priority increments.

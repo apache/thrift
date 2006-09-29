@@ -17,7 +17,12 @@ class TSocket;
 class TServerSocket : public TServerTransport {
  public:
   TServerSocket(int port);
+  TServerSocket(int port, int sendTimeout, int recvTimeout);
+
   ~TServerSocket();
+
+  void setSendTimeout(int sendTimeout);
+  void setRecvTimeout(int recvTimeout);
 
   void listen();
   void close();
@@ -26,10 +31,11 @@ class TServerSocket : public TServerTransport {
   shared_ptr<TTransport> acceptImpl();
 
  private:
-
   int port_;
   int serverSocket_;
   int acceptBacklog_;
+  int sendTimeout_;
+  int recvTimeout_;
 };
 
 }}} // facebook::thrift::transport

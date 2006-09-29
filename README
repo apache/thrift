@@ -57,6 +57,10 @@ You may need to specify the locacation of the boost files explicitly:   If you i
 
 	./configure --with-boost=/usr/local
 
+Note that by default the thrift C++ library is built with no debugging symbols included. If you would like debugging symbols during development work, run:
+
+        ./configure --CFLAGS='-g -O2'
+
 Run ./configure --help to see other configuration options
 
 Make thrift 

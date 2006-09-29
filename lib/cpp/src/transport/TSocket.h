@@ -82,6 +82,22 @@ class TSocket : public TTransport {
    */
   void setNoDelay(bool noDelay);
 
+  /**
+   * Set the connect timeout
+   */
+  void setConnTimeout(int ms);
+
+  /**
+   * Set the receive timeout
+   */
+  void setRecvTimeout(int ms);
+
+  /**
+   * Set the send timeout
+   */
+  void setSendTimeout(int ms);
+
+
  private:
   /**
    * Constructor to create socket from raw UNIX handle. Never called directly
@@ -97,6 +113,24 @@ class TSocket : public TTransport {
 
   /** Underlying UNIX socket handle */
   int socket_;
+
+  /** Connect timeout in ms */
+  int connTimeout_;
+
+  /** Send timeout in ms */
+  int sendTimeout_;
+
+  /** Recv timeout in ms */
+  int recvTimeout_;
+
+  /** Linger on */
+  bool lingerOn_;
+  
+  /** Linger val */
+  int lingerVal_;
+
+  /** Nodelay */
+  bool noDelay_;
 };
 
 }}} // facebook::thrift::transport

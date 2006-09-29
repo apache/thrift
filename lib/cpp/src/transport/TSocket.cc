@@ -6,14 +6,19 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <sys/select.h>
 
+#include "concurrency/Monitor.h"
 #include "TSocket.h"
 #include "TTransportException.h"
 
 namespace facebook { namespace thrift { namespace transport { 
 
 using namespace std;
+using namespace facebook::thrift::concurrency;
 
+// Global var to track total socket sys calls
 uint32_t g_socket_syscalls = 0;
 
 /**
@@ -23,18 +28,35 @@ uint32_t g_socket_syscalls = 0;
  */
 
 // Mutex to protect syscalls to netdb
-pthread_mutex_t g_netdb_mutex = PTHREAD_MUTEX_INITIALIZER;
+static Monitor s_netdb_monitor;
 
 // TODO(mcslee): Make this an option to the socket class
 #define MAX_RECV_RETRIES 20
-
-TSocket::TSocket(string host, int port) :
-  host_(host), port_(port), socket_(0) {}
-
-TSocket::TSocket(int socket) {
-  socket_ = socket;
+  
+TSocket::TSocket(string host, int port) : 
+  host_(host),
+  port_(port),
+  socket_(0),
+  connTimeout_(0),
+  sendTimeout_(0),
+  recvTimeout_(0),
+  lingerOn_(1),
+  lingerVal_(0),
+  noDelay_(1) {
 }
 
+TSocket::TSocket(int socket) :
+  host_(""),
+  port_(0),
+  socket_(socket),
+  connTimeout_(0),
+  sendTimeout_(0),
+  recvTimeout_(0),
+  lingerOn_(1),
+  lingerVal_(0),
+  noDelay_(1) {
+}
+  
 TSocket::~TSocket() {
   close();
 }
@@ -51,25 +73,35 @@ void TSocket::open() {
     close();
     throw TTransportException(TTX_NOT_OPEN, "socket() ERROR:" + errno);
   }
-  
+
+  // Send timeout
+  if (sendTimeout_ > 0) {
+    setSendTimeout(sendTimeout_);
+  }
+
+  // Recv timeout
+  if (recvTimeout_ > 0) {
+    setRecvTimeout(recvTimeout_);
+  }
+
+  // Linger
+  setLinger(lingerOn_, lingerVal_);
+
+  // No delay
+  setNoDelay(noDelay_);
+
   // Lookup the hostname
   struct sockaddr_in addr;
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port_);
 
-  /*
-  if (inet_pton(AF_INET, host_.c_str(), &addr.sin_addr) < 0) {
-    perror("TSocket::open() inet_pton");
-  }
-  */
-
   {
-    // TODO(mcslee): Fix scope-locking here to protect hostname lookups
-    // scopelock sl(&netdb_mutex);
+    // Scope lock on host entry lookup
+    Synchronized s(s_netdb_monitor);
     struct hostent *host_entry = gethostbyname(host_.c_str());
     
     if (host_entry == NULL) {
-      // perror("dns error: failed call to gethostbyname.\n");
+      perror("TSocket: dns error: failed call to gethostbyname.");
       close();
       throw TTransportException(TTX_NOT_OPEN, "gethostbyname() failed");
     }
@@ -79,18 +111,69 @@ void TSocket::open() {
            host_entry->h_addr_list[0],
            host_entry->h_length);
   }
+
+  // Set the socket to be non blocking for connect if a timeout exists
+  int flags = fcntl(socket_, F_GETFL, 0); 
+  if (connTimeout_ > 0) {
+    fcntl(socket_, F_SETFL, flags | O_NONBLOCK);
+  } else {
+    fcntl(socket_, F_SETFL, flags | ~O_NONBLOCK);
+  }
+
+  // Conn timeout
+  struct timeval c = {(int)(connTimeout_/1000),
+                      (int)((connTimeout_%1000)*1000)};
    
   // Connect the socket
   int ret = connect(socket_, (struct sockaddr *)&addr, sizeof(addr));
   
-  // Connect failed
-  if (ret < 0) {
-    perror("TSocket::open() connect");
+  if (ret == 0) {
+    goto done;
+  }
+
+  if (errno != EINPROGRESS) {
     close();
+    char buff[1024];
+    sprintf(buff, "TSocket::open() connect %s %d", host_.c_str(), port_);
+    perror(buff);
     throw TTransportException(TTX_NOT_OPEN, "open() ERROR: " + errno);
   }
 
-  // Connection was successful
+  fd_set fds;
+  FD_ZERO(&fds);
+  FD_SET(socket_, &fds);
+  ret = select(socket_+1, NULL, &fds, NULL, &c);
+
+  if (ret > 0) {
+    // Ensure connected
+    int val;
+    socklen_t lon;
+    lon = sizeof(int);
+    int ret2 = getsockopt(socket_, SOL_SOCKET, SO_ERROR, (void *)&val, &lon);
+    if (ret2 == -1) {
+      close();
+      perror("TSocket::open() getsockopt SO_ERROR");
+      throw TTransportException(TTX_NOT_OPEN, "open() ERROR: " + errno);
+    }
+    if (val == 0) {
+      goto done;
+    }
+    close();
+    perror("TSocket::open() SO_ERROR was set");
+    throw TTransportException(TTX_NOT_OPEN, "open() ERROR: " + errno);
+  } else if (ret == 0) {
+    close();
+    perror("TSocket::open() timeed out");
+    throw TTransportException(TTX_NOT_OPEN, "open() ERROR: " + errno);   
+  } else {
+    close();
+    perror("TSocket::open() select error");
+    throw TTransportException(TTX_NOT_OPEN, "open() ERROR: " + errno);
+  }
+
+ done:
+  // Set socket back to normal mode (blocking)
+  fcntl(socket_, F_SETFL, flags);
 }
 
 void TSocket::close() {
@@ -167,12 +250,11 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
   while (sent < len) {
 
     int flags = 0;
-
-    #if defined(MSG_NOSIGNAL)
+    #ifdef MSG_NOSIGNAL
     // Note the use of MSG_NOSIGNAL to suppress SIGPIPE errors, instead we
     // check for the EPIPE return condition and close the socket in that case
     flags |= MSG_NOSIGNAL;
-    #endif // defined(MSG_NOSIGNAL)
+    #endif // ifdef MSG_NOSIGNAL
 
     int b = send(socket_, buf + sent, len - sent, flags);
     ++g_socket_syscalls;
@@ -207,29 +289,63 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
 }
 
 void TSocket::setLinger(bool on, int linger) {
-  // TODO(mcslee): Store these options so they can be set pre-connect
+  lingerOn_ = on;
+  lingerVal_ = linger;
   if (socket_ <= 0) {
     return;
   }
 
-  struct linger ling = {(on ? 1 : 0), linger};
-  if (-1 == setsockopt(socket_, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling))) {
-    close();
+  struct linger l = {(lingerOn_ ? 1 : 0), lingerVal_};
+  int ret = setsockopt(socket_, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
+  if (ret == -1) {
     perror("TSocket::setLinger()");
   }
 }
 
 void TSocket::setNoDelay(bool noDelay) {
-  // TODO(mcslee): Store these options so they can be set pre-connect
+  noDelay_ = noDelay;
   if (socket_ <= 0) {
     return;
   }
 
   // Set socket to NODELAY
-  int val = (noDelay ? 1 : 0);
-  if (-1 == setsockopt(socket_, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val))) {
-    close();
+  int v = noDelay_ ? 1 : 0;
+  int ret = setsockopt(socket_, IPPROTO_TCP, TCP_NODELAY, &v, sizeof(v));
+  if (ret == -1) {
     perror("TSocket::setNoDelay()");
   }
 }
+
+void TSocket::setConnTimeout(int ms) {
+  connTimeout_ = ms;
+}
+
+void TSocket::setRecvTimeout(int ms) {
+  recvTimeout_ = ms;
+  if (socket_ <= 0) {
+    return;
+  }
+
+  struct timeval r = {(int)(recvTimeout_/1000),
+                      (int)((recvTimeout_%1000)*1000)};
+  int ret = setsockopt(socket_, SOL_SOCKET, SO_RCVTIMEO, &r, sizeof(r));
+  if (ret == -1) {
+    perror("TSocket::setRecvTimeout()");
+  }
+}
+
+void TSocket::setSendTimeout(int ms) {
+  sendTimeout_ = ms;
+  if (socket_ <= 0) {
+    return;
+  }
+   
+  struct timeval s = {(int)(sendTimeout_/1000),
+                      (int)((sendTimeout_%1000)*1000)};
+  int ret = setsockopt(socket_, SOL_SOCKET, SO_SNDTIMEO, &s, sizeof(s));
+  if (ret == -1) {
+    perror("TSocket::setSendTimeout()");
+  }
+}
+
 }}} // facebook::thrift::transport
