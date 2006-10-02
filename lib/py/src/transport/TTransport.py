@@ -1,3 +1,11 @@
+from cStringIO import StringIO
+
+class TTransportException(Exception):
+
+  """Custom Transport Exception class"""
+
+  pass
+
 class TTransportBase:
 
   """Base class for Thrift transport layer."""
@@ -58,7 +66,7 @@ class TBufferedTransport(TTransportBase):
 
   def __init__(self, trans):
     self.__trans = trans
-    self.__buf = ''
+    self.__buf = StringIO()
 
   def isOpen(self):
     return self.__trans.isOpen()
@@ -76,8 +84,8 @@ class TBufferedTransport(TTransportBase):
     return self.__trans.readAll(sz)
 
   def write(self, buf):
-    self.__buf += buf
+    self.__buf.write(buf)
 
   def flush(self):
-    self.__trans.write(self.__buf)
-    self.__buf = ''
+    self.__trans.write(self.__buf.getvalue())
+    self.__buf = StringIO()

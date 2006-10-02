@@ -10,7 +10,7 @@ class TSocket(TTransportBase):
     self.port = port
     self.handle = None
 
-  def set_handle(self, h):
+  def setHandle(self, h):
     self.handle = h
 
   def isOpen(self):
@@ -37,7 +37,7 @@ class TSocket(TTransportBase):
   def read(self, sz):
     buff = self.handle.recv(sz)
     if len(buff) == 0:
-      raise Exception('TSocket read 0 bytes')
+      raise TTransportException('TSocket read 0 bytes')
     return buff
 
   def write(self, buff):
@@ -46,7 +46,7 @@ class TSocket(TTransportBase):
     while sent < have:
       plus = self.handle.send(buff)
       if plus == 0:
-        raise Exception('sent 0 bytes')
+        raise TTransportException('sent 0 bytes')
       sent += plus
       buff = buff[plus:]
 
@@ -63,13 +63,16 @@ class TServerSocket(TServerTransportBase):
  
   def listen(self):
     self.handle = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    if hasattr(self.handle, 'set_timeout'):
+      self.handle.set_timeout(None)
     self.handle.bind(('', self.port))
     self.handle.listen(128)
 
   def accept(self):
     (client, addr) = self.handle.accept()
     result = TSocket()
-    result.set_handle(client)
+    result.setHandle(client)
     return result
 
   def close(self):

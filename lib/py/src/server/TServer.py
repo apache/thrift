@@ -34,9 +34,37 @@ class TSimpleServer(TServer):
       try:
         while True:
           self.processor.process(input, output)
+      except TTransport.TTransportException, tx:
+        pass
       except Exception, x:
         print '%s, %s, %s' % (type(x), x, traceback.format_exc())
-        print 'Client died.'
 
       input.close()
       output.close()
+
+class TThreadedServer(TServer):
+
+  """Threaded server that spawns a new thread per each connection."""
+
+  def __init__(self, processor, serverTransport, transportFactory=None):
+    TServer.__init__(self, processor, serverTransport, transportFactory)
+
+  def serve(self):
+    self.serverTransport.listen()
+    while True:
+      try:
+        client = self.serverTransport.accept()
+        t = threading.Thread(target = self.handle, args=(client,))
+        t.start()
+      except Exception, x:
+        print '%s, %s, %s,' % (type(x), x, traceback.format_exc())
+
+  def handle(self, client):
+    (input, output) = self.transportFactory.getIOTransports(client)
+    try:
+      while True:
+        self.processor.process(input, output)
+    except TTransport.TTransportException, tx:
+      pass
+    except Exception, x:
+      print '%s, %s, %s' % (type(x), x, traceback.format_exc())
