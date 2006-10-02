@@ -1,5 +1,6 @@
 import sys
 import traceback
+import threading
 
 from thrift.Thrift import TProcessor
 from thrift.transport import TTransport
