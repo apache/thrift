@@ -118,17 +118,17 @@ class TSocket extends TTransport {
    */
   public function open() {
     if ($this->persist_) {
-      $this->handle_ = pfsockopen($this->host_,
+      $this->handle_ = @pfsockopen($this->host_,
+                                   $this->port_,
+                                   $errno,
+                                   $errstr,
+                                   $this->sendTimeout_/1000.0);
+    } else {
+      $this->handle_ = @fsockopen($this->host_,
                                   $this->port_,
                                   $errno,
                                   $errstr,
                                   $this->sendTimeout_/1000.0);
-    } else {
-      $this->handle_ = fsockopen($this->host_,
-                                 $this->port_,
-                                 $errno,
-                                 $errstr,
-                                 $this->sendTimeout_/1000.0);
     }
 
     // Connect failed?
