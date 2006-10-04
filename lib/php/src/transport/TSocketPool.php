@@ -24,18 +24,9 @@ if (!function_exists('apc_fetch')) {
 class TSocketPool extends TSocket {
 
   /**
-   * Remote hostname
-   * 
-   * @var array
+   * Remote servers. Array of associative arrays with 'host' and 'port' keys
    */
-  private $hosts_ = array('localhost');
-
-  /**
-   * Remote ports
-   * 
-   * @var array
-   */
-  private $ports_ = array('9090');
+  private $servers_ = array();
 
   /**
    * How many times to retry each host in connect
@@ -84,17 +75,18 @@ class TSocketPool extends TSocket {
                               $ports=array(9090),
                               $persist=FALSE) {
     parent::__construct(null, 0, $persist);
-    $this->hosts_ = $hosts;
 
-    // Ports may be an array or a single port
-    if (is_array($ports)) {
-      $this->ports_ = $ports;
-    } else {
-      $this->ports_ = array();
-      $num = count($hosts);
-      for ($i = 0; $i < $num; ++$i) {
-        $this->ports_ []= $ports;
+    if (!is_array($ports)) {
+      $port = $ports;
+      $ports = array();
+      foreach ($hosts as $key => $val) {
+        $ports[$key] = $port;
       }
+    }
+
+    foreach ($hosts as $key => $host) {
+      $this->servers_ []= array('host' => $host,
+                                'port' => $ports[$key]);
     }
   }
 
@@ -149,22 +141,21 @@ class TSocketPool extends TSocket {
    * and trying to find one that works.
    */
   public function open() {
-    $numServers = count($this->hosts_);
-
-    // Check if a random server from the pool should be hit
+    // Check if we want order randomization
     if ($this->randomize_) {
-      $startingPoint = mt_rand(0, $numServers-1);
-    } else {
-      $startingPoint = 0;
+      shuffle($this->servers_);
     }
-    $i = $startingPoint;
 
-    do {     
-      $host = $this->hosts_[$i];
-      $port = $this->ports_[$i];
+    // Count servers to identify the "last" one
+    $numServers = count($this->servers_);
+
+    for ($i = 0; $i < $numServers; ++$i) {
+
+      // This extracts the $host and $port variables
+      extract($this->servers_[$i]);
 
       // Check APC cache for a record of this server being down
-      $failtimeKey = 'thrift_failtime:'.$host_.':'.$port.'~';
+      $failtimeKey = 'thrift_failtime:'.$host.':'.$port.'~';
 
       // Cache miss? Assume it's OK
       $lastFailtime = apc_fetch($failtimeKey);
@@ -191,8 +182,7 @@ class TSocketPool extends TSocket {
       // is the LAST server we are trying, just hammer away on it
       $isLastServer = FALSE;
       if ($alwaysTryLast) {
-        $isLastServer =
-          ( (($i+1) % $numServers) == $startingPoint ) ? TRUE : FALSE;
+        $isLastServer = ($i == ($numServers - 1));
       }
 
       if (($lastFailtime === 0) ||
@@ -203,14 +193,17 @@ class TSocketPool extends TSocket {
         $this->host_ = $host;
         $this->port_ = $port;
           
+        // Try up to numRetries_ connections per server
         for ($attempt = 0; $attempt < $this->numRetries_; $attempt++) {
           try {
+            // Use the underlying TSocket open function
             parent::open();
 
             // Only clear the failure counts if required to do so
             if ($lastFailtime > 0) {
               apc_store($failtimeKey, 0);
             }
+
             // Successful connection, return now
             return;
 
@@ -247,9 +240,7 @@ class TSocketPool extends TSocket {
           apc_store($consecfailsKey, $consecfails);
         }
       }
-      $i = ($i + 1) % $numServers;
-
-    } while ($i != $startingPoint);
+    }
 
     // Holy shit we failed them all. The system is totally ill!
     $error = 'TSocketPool: All hosts in pool are down. ';
