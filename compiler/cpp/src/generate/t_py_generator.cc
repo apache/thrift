@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <sstream>
 #include "t_py_generator.h"
 using namespace std;
@@ -164,6 +165,14 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   } else {
     generate_py_struct_writer(out, tstruct);
   }
+
+  out <<
+    indent() << "def __str__(self): " << endl <<
+    indent() << "  return str(self.__dict__)" << endl <<
+    endl <<
+    indent() << "def __repr__(self): " << endl <<
+    indent() << "  return repr(self.__dict__)" << endl <<
+    endl;
 
   indent_down();
 }
@@ -340,7 +349,8 @@ void t_py_generator::generate_service(t_service* tservice) {
   generate_service_client(tservice);
   generate_service_helpers(tservice);
   generate_service_server(tservice);
-  
+  generate_service_remote(tservice);
+
   // Close service file
   f_service_ << endl;
   f_service_.close();
@@ -557,6 +567,143 @@ void t_py_generator::generate_service_client(t_service* tservice) {
   indent_down();
   f_service_ <<
     endl;
+}
+
+/**
+ * Generates a command line tool for making remote requests
+ *
+ * @param tservice The service to generate a remote for.
+ */
+void t_py_generator::generate_service_remote(t_service* tservice) {
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter; 
+
+  string f_remote_name = string(T_PY_DIR)+"/"+service_name_+"-remote";
+  ofstream f_remote;
+  f_remote.open(f_remote_name.c_str());
+
+  f_remote <<
+    "#!/usr/bin/python" << endl <<
+    py_autogen_comment() << endl <<
+    "import sys" << endl <<
+    "import pprint" << endl <<
+    "from thrift.transport import TTransport" << endl <<
+    "from thrift.transport import TSocket" << endl <<
+    "from thrift.protocol import TBinaryProtocol" << endl <<
+    endl;
+
+  f_remote <<
+    "import " << service_name_ << endl <<
+    "from " << program_name_ << "_types import *" << endl << 
+    endl;
+
+  f_remote <<
+    "if len(sys.argv) <= 1 or sys.argv[1] == '--help':" << endl <<
+    "  print ''" << endl <<
+    "  print 'Usage: ' + sys.argv[0] + ' [-h host:port] [-f[ramed]] function [arg1,[arg2...]]'" << endl <<
+    "  print ''" << endl <<
+    "  print 'Functions:'" << endl;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    f_remote <<
+      "  print '  " << (*f_iter)->get_returntype()->get_name() << " " << (*f_iter)->get_name() << "(";
+    t_struct* arg_struct = (*f_iter)->get_arglist();
+    const std::vector<t_field*>& args = arg_struct->get_members();
+    vector<t_field*>::const_iterator a_iter;
+    int num_args = args.size();
+    bool first = true;
+    for (int i = 0; i < num_args; ++i) {
+      if (first) {
+        first = false;
+      } else {
+        f_remote << ", ";
+      }
+      f_remote << 
+        args[i]->get_type()->get_name() << " " << args[i]->get_name();
+    }
+    f_remote << ")'" << endl;
+  }  
+  f_remote <<
+    "  print ''" << endl <<
+    "  sys.exit(0)" << endl <<
+    endl;
+
+  f_remote <<
+    "pp = pprint.PrettyPrinter(indent = 2)" << endl <<
+    "host = 'localhost'" << endl <<
+    "port = 9190" << endl <<
+    "framed = False" << endl <<
+    "argi = 1" << endl <<
+    endl <<
+    "if sys.argv[1] == '-h':" << endl <<
+    "  parts = sys.argv[2].split(':') " << endl <<
+    "  host = parts[0]" << endl <<
+    "  port = int(parts[1])" << endl <<
+    "  argi = 3" << endl <<
+    endl <<
+    "if sys.argv[argi] == '-f' or sys.argv[argi] == '-framed':" << endl <<
+    "  framed = True" << endl <<
+    "  argi += 1" << endl <<
+    endl <<
+    "cmd = sys.argv[argi]" << endl <<
+    "args = sys.argv[argi+1:]" << endl <<
+    endl <<
+    "socket = TSocket.TSocket(host, port)" << endl <<
+    "if framed:" << endl <<
+    "  transport = TTransport.TFramedTransport(socket)" << endl <<
+    "else:" << endl <<
+    "  transport = TTransport.TBufferedTransport(socket)" << endl <<
+    "protocol = TBinaryProtocol.TBinaryProtocol()" << endl <<
+    "client = " << service_name_ << ".Client(transport, protocol)" << endl <<
+    "transport.open()" << endl <<
+    endl;
+  
+  // Generate the dispatch methods
+  bool first = true;
+
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    if (first) {
+      first = false;
+    } else {
+      f_remote << "el";
+    }
+
+    t_struct* arg_struct = (*f_iter)->get_arglist();
+    const std::vector<t_field*>& args = arg_struct->get_members();
+    vector<t_field*>::const_iterator a_iter;
+    int num_args = args.size();
+
+    f_remote <<
+      "if cmd == '" << (*f_iter)->get_name() << "':" << endl <<
+      "  if len(args) != " << num_args << ":" << endl <<
+      "    print '" << (*f_iter)->get_name() << " requires " << num_args << " args'" << endl <<
+      "    sys.exit(1)" << endl <<
+      "  pp.pprint(client." << (*f_iter)->get_name() << "(";
+    for (int i = 0; i < num_args; ++i) {
+      if (args[i]->get_type()->is_struct()) {
+        f_remote << "eval(args[" << i << "]),";
+      } else {
+        f_remote << "args[" << i << "],";
+      }
+    }
+    f_remote << "))" << endl;
+   
+    f_remote << endl;
+  }
+
+  f_remote << "transport.close()" << endl;
+  
+  // Close service file
+  f_remote.close();
+  
+  // Make file executable
+  chmod(f_remote_name.c_str(),
+        S_IRUSR |
+        S_IWUSR |
+        S_IXUSR |
+        S_IRGRP |
+        S_IXGRP |
+        S_IROTH |
+        S_IXOTH);
 }
 
 /**
@@ -1146,18 +1293,18 @@ string t_py_generator::type_name(t_type* ttype) {
   if (ttype->is_base_type()) {
     return base_type_name(((t_base_type*)ttype)->get_base());
   } else if (ttype->is_enum()) {
-    return "Int32";
+    return "int";
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*) ttype;
-    return "HashMap<" +
+    return "map<" +
       type_name(tmap->get_key_type()) + "," +
       type_name(tmap->get_val_type()) + ">";
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*) ttype;
-    return "HashSet<" + type_name(tset->get_elem_type()) + ">";
+    return "set<" + type_name(tset->get_elem_type()) + ">";
   } else if (ttype->is_list()) {
     t_list* tlist = (t_list*) ttype;
-    return "ArrayList<" + type_name(tlist->get_elem_type()) + ">";
+    return "list<" + type_name(tlist->get_elem_type()) + ">";
   } else {
     return ttype->get_name();
   }

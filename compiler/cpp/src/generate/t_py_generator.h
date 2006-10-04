@@ -45,8 +45,10 @@ class t_py_generator : public t_oop_generator {
   /** Service-level generation functions */
 
   void generate_service_helpers(t_service*  tservice);
-  void generate_service_interface (t_service* tservice);
-  void generate_service_client    (t_service* tservice);
+  void generate_service_interface(t_service* tservice);
+  void generate_service_client(t_service* tservice);
+  void generate_service_remote(t_service* tservice);
+
 
   void generate_service_server    (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
