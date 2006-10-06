@@ -630,7 +630,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
   f_remote <<
     "pp = pprint.PrettyPrinter(indent = 2)" << endl <<
     "host = 'localhost'" << endl <<
-    "port = 9190" << endl <<
+    "port = 9090" << endl <<
     "framed = False" << endl <<
     "argi = 1" << endl <<
     endl <<
@@ -679,10 +679,10 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
       "    sys.exit(1)" << endl <<
       "  pp.pprint(client." << (*f_iter)->get_name() << "(";
     for (int i = 0; i < num_args; ++i) {
-      if (args[i]->get_type()->is_struct()) {
-        f_remote << "eval(args[" << i << "]),";
-      } else {
+      if (args[i]->get_type() == g_program->get_string_type()) {
         f_remote << "args[" << i << "],";
+      } else {
+        f_remote << "eval(args[" << i << "]),";
       }
     }
     f_remote << "))" << endl;
