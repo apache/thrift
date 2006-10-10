@@ -31,8 +31,8 @@ CC     = g++
 LD     = g++
 
 # Compiler flags
-DCFL  = -Wall -O3 -g -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp -lthrift
-CFL   = -Wall -O3 -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp -lthrift
+DCFL  = -Wall -O3 -g -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp -lthrift -levent
+CFL   = -Wall -O3 -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp -lthrift -levent
 
 all: server client
 
@@ -42,7 +42,7 @@ stubs: ../ThriftTest.thrift
 	$(THRIFT) --cpp ../ThriftTest.thrift
 
 server-debug: stubs
-	g++ -o TestServer $(DCFL) src/TestServer.cc ./gen-cpp/ThriftTest.cc ./gen-cpp/ThriftTest_types.cc
+	g++ -o TestServer $(DCFL) src/TestServer.cc ./gen-cpp/ThriftTest.cc ./gen-cpp/ThriftTest_types.cc 
 
 client-debug: stubs
 	g++ -o TestClient $(DCFL) src/TestClient.cc ./gen-cpp/ThriftTest.cc ./gen-cpp/ThriftTest_types.cc

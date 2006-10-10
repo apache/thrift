@@ -3,7 +3,9 @@ package com.facebook.thrift.test;
 // Generated code
 import thrift.test.*;
 
+import com.facebook.thrift.transport.TTransport;
 import com.facebook.thrift.transport.TSocket;
+import com.facebook.thrift.transport.THttpClient;
 import com.facebook.thrift.transport.TTransportException;
 import com.facebook.thrift.protocol.TBinaryProtocol;
 
@@ -23,24 +25,41 @@ public class TestClient {
     try {
       String host = "localhost";
       int port = 9090;
+      String url = null;
       int numTests = 1;
+
+      try {
+        for (int i = 0; i < args.length; ++i) {
+          if (args[i].equals("-h")) {
+            String[] hostport = (args[++i]).split(";");
+            host = hostport[0];
+            port = Integer.valueOf(hostport[1]);            
+          }
+
+          if (args[i].equals("-u")) {
+            url = args[++i];
+          }
+
+          if (args[i].equals("-n")) {
+            numTests = Integer.valueOf(args[++i]);
+          }
+        }
+      } catch (Exception x) {
+        x.printStackTrace();
+      }
       
-      if (args.length > 0) {
-        host = args[0];
-      }
-      if (args.length > 1) {
-        port = Integer.valueOf(args[1]);
-      }
-      if (args.length > 2) {
-        numTests = Integer.valueOf(args[2]);
-      }
+      TTransport transport;
       
-      TSocket tSocket =
-        new TSocket(host, port);
+      if (url != null) {
+        transport = new THttpClient(url);
+      } else {
+        transport = new TSocket(host, port);
+      }
+
       TBinaryProtocol binaryProtocol =
         new TBinaryProtocol();
       ThriftTest.Client testClient =
-        new ThriftTest.Client(tSocket, binaryProtocol);
+        new ThriftTest.Client(transport, binaryProtocol);
 
       long timeMin = 0;
       long timeMax = 0;
@@ -53,7 +72,7 @@ public class TestClient {
          */
         System.out.println("Test #" + (test+1) + ", " + "connect " + host + ":" + port);
         try {
-          tSocket.open();
+          transport.open();
         } catch (TTransportException ttx) {
           System.out.println("Connect failed: " + ttx.getMessage());
           continue;
@@ -322,7 +341,7 @@ public class TestClient {
         }
         timeTot += tot;
 
-        tSocket.close();
+        transport.close();
       }
 
       long timeAvg = timeTot / numTests;

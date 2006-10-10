@@ -213,12 +213,12 @@ int main(int argc, char** argv) {
     /**
      * LIST TEST
      */
-    list<int32_t> listout;
+    vector<int32_t> listout;
     for (int32_t i = -2; i < 3; ++i) {
       listout.push_back(i);
     }
     printf("testList({");
-    list<int32_t>::const_iterator l_iter;
+    vector<int32_t>::const_iterator l_iter;
     first = true;
     for (l_iter = listout.begin(); l_iter != listout.end(); ++l_iter) {
       if (first) {
@@ -229,7 +229,7 @@ int main(int argc, char** argv) {
       printf("%d", *l_iter);
     }
     printf("})");
-    list<int32_t> listin = testClient.testList(listout);
+    vector<int32_t> listin = testClient.testList(listout);
     printf(" = {");
     first = true;
     for (l_iter = listin.begin(); l_iter != listin.end(); ++l_iter) {
@@ -319,8 +319,8 @@ int main(int argc, char** argv) {
         }
         printf("}, ");
 
-        list<Xtruct> xtructs = i2_iter->second.xtructs;
-        list<Xtruct>::const_iterator x;
+        vector<Xtruct> xtructs = i2_iter->second.xtructs;
+        vector<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
           printf("{\"%s\", %d, %d, %ld}, ",

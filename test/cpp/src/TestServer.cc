@@ -3,6 +3,7 @@
 #include <protocol/TBinaryProtocol.h>
 #include <server/TSimpleServer.h>
 #include <server/TThreadPoolServer.h>
+#include <server/TNonblockingServer.h>
 #include <transport/TServerSocket.h>
 #include <transport/TBufferedTransportFactory.h>
 #include "ThriftTest.h"
@@ -96,9 +97,9 @@ class TestHandler : public ThriftTestIf {
     return thing;
   }
 
-  list<int32_t> testList(list<int32_t> thing) {
+  vector<int32_t> testList(vector<int32_t> thing) {
     printf("testList({");
-    list<int32_t>::const_iterator l_iter;
+    vector<int32_t>::const_iterator l_iter;
     bool first = true;
     for (l_iter = thing.begin(); l_iter != thing.end(); ++l_iter) {
       if (first) {
@@ -192,8 +193,8 @@ class TestHandler : public ThriftTestIf {
         }
         printf("}, ");
 
-        list<Xtruct> xtructs = i2_iter->second.xtructs;
-        list<Xtruct>::const_iterator x;
+        vector<Xtruct> xtructs = i2_iter->second.xtructs;
+        vector<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
           printf("{\"%s\", %d, %d, %ld}, ", x->string_thing.c_str(), (int)x->byte_thing, x->i32_thing, x->i64_thing);
@@ -302,6 +303,7 @@ int main(int argc, char **argv) {
       serverType = args["server-type"];     
       if (serverType == "simple") {
       } else if (serverType == "thread-pool") {
+      } else if (serverType == "nonblocking") {
       } else {
 	throw invalid_argument("Unknown server type "+serverType);
       }
@@ -375,6 +377,15 @@ int main(int argc, char **argv) {
 
     printf("Starting the server on port %d...\n", port);
     threadPoolServer.serve();
+
+  } else if (serverType == "nonblocking") {
+
+    TNonblockingServer nonblockingServer(testProcessor,
+                                         serverOptions,
+                                         port);
+    printf("Starting the nonblocking server on port %d...\n", port);
+    nonblockingServer.serve();
+
   }
 
   printf("done.\n");
