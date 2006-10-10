@@ -19,14 +19,17 @@
 class t_java_generator : public t_oop_generator {
  public:
   t_java_generator() {}
-  ~t_java_generator() {}
 
-  /** Init and close methods */
+  /**
+   * Init and close methods
+   */
 
   void init_generator(t_program *tprogram);
   void close_generator(t_program *tprogram);
 
-  /** Program-level generation functions */
+  /**
+   * Program-level generation functions
+   */
 
   void generate_typedef (t_typedef*  ttypedef);
   void generate_enum    (t_enum*     tenum);
@@ -34,7 +37,9 @@ class t_java_generator : public t_oop_generator {
   void generate_xception(t_struct*   txception);
   void generate_service (t_service*  tservice);
 
-  /** Service-level generation functions */
+  /**
+   * Service-level generation functions
+   */
 
   void generate_java_struct(t_struct* tstruct, bool is_exception);
 
@@ -51,7 +56,9 @@ class t_java_generator : public t_oop_generator {
   void generate_service_server    (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
 
-  /** Serialization constructs */
+  /**
+   * Serialization constructs
+   */
 
   void generate_deserialize_field        (std::ofstream& out,
                                           t_field*    tfield, 
@@ -102,7 +109,9 @@ class t_java_generator : public t_oop_generator {
                                           t_list*     tlist,
                                           std::string iter);
 
-  /** Helper rendering functions */
+  /**
+   * Helper rendering functions
+   */
 
   std::string java_package();
   std::string java_type_imports();
@@ -116,9 +125,11 @@ class t_java_generator : public t_oop_generator {
 
  private:
 
-  /** File streams */
-  std::string package_name_;
+  /**
+   * File streams
+   */
 
+  std::string package_name_;
   std::ofstream f_service_;
 };
 

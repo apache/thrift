@@ -13,10 +13,19 @@
 #include "globals.h"
 #include "parse/t_program.h"
 
+/**
+ * This global variable is used for automatic numbering of field indices etc.
+ * when parsing the members of a struct. Field values are automatically
+ * assigned starting from -1 and working their way down.
+ */
 int y_field_val = -1;
 
 %}
 
+/**
+ * This structure is used by the parser to hold the data types associated with
+ * various parse nodes.
+ */
 %union {
   char*       id;
   int         iconst;
@@ -31,14 +40,25 @@ int y_field_val = -1;
   t_constant* tconstant;
 }
 
-/** Strings and constants */
+/**
+ * Strings identifier
+ */
 %token<id>     tok_identifier
+
+/**
+ * Integer constant value
+ */
 %token<iconst> tok_int_constant
 
-/** Namespace */
+/**
+ * Namespace keyword
+ */
 %token tok_namespace
 
-/** Base datatypes */
+/**
+ * Base datatype keywords
+ */
+%token tok_void
 %token tok_bool
 %token tok_byte
 %token tok_string
@@ -47,18 +67,21 @@ int y_field_val = -1;
 %token tok_i64
 %token tok_double
 
-/** Complex Types */
+/**
+ * Complex type keywords
+ */
 %token tok_map
 %token tok_list
 %token tok_set
 
-/** Function types */
-%token tok_void
-
-/** Modifiers */ 
+/**
+ * Function modifiers
+ */ 
 %token tok_async
 
-/** Thrift actions */
+/**
+ * Thrift language keywords
+ */
 %token tok_typedef
 %token tok_struct
 %token tok_xception
@@ -66,14 +89,17 @@ int y_field_val = -1;
 %token tok_service
 %token tok_enum
 
-/** Types */
+/**
+ * Grammar nodes
+ */
+
+%type<id>        Namespace
+
 %type<ttype>     BaseType
 %type<ttype>     ContainerType
 %type<ttype>     MapType
 %type<ttype>     SetType
 %type<ttype>     ListType
-
-%type<id>        Namespace
 
 %type<ttypedef>  Typedef
 %type<ttype>     DefinitionType
@@ -81,7 +107,6 @@ int y_field_val = -1;
 %type<tfield>    Field
 %type<ttype>     FieldType
 %type<tstruct>   FieldList
-%type<tstruct>   ThrowsOptional
 
 %type<tenum>     Enum
 %type<tenum>     EnumDefList
@@ -89,18 +114,24 @@ int y_field_val = -1;
 
 %type<tstruct>   Struct
 %type<tstruct>   Xception
-
 %type<tservice>  Service
 
 %type<tfunction> Function
 %type<ttype>     FunctionType
 %type<tservice>  FunctionList
 
+%type<tstruct>   ThrowsOptional
 %type<tbool>     AsyncOptional
 
 %%
 
-/** Thrift Grammar */
+/**
+ * Thrift Grammar Implementation.
+ *
+ * For the most part this source file works its way top down from what you
+ * might expect to find in a typical .thrift file, i.e. type definitions and
+ * namespaces up top followed by service definitions using those types.
+ */
 
 Program:
   DefinitionList

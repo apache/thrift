@@ -18,14 +18,17 @@
 class t_py_generator : public t_oop_generator {
  public:
   t_py_generator() {}
-  ~t_py_generator() {}
 
-  /** Init and close methods */
+  /**
+   * Init and close methods
+   */
 
   void init_generator(t_program *tprogram);
   void close_generator(t_program *tprogram);
 
-  /** Program-level generation functions */
+  /**
+   * Program-level generation functions
+   */
 
   void generate_typedef  (t_typedef*  ttypedef);
   void generate_enum     (t_enum*     tenum);
@@ -33,27 +36,30 @@ class t_py_generator : public t_oop_generator {
   void generate_xception (t_struct*   txception);
   void generate_service  (t_service*  tservice);
 
+  /**
+   * Struct generation code
+   */
 
   void generate_py_struct(t_struct* tstruct, bool is_exception);
   void generate_py_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool is_result=false);
   void generate_py_struct_reader(std::ofstream& out, t_struct* tstruct);
-  void generate_py_struct_result_writer(std::ofstream& out, t_struct* tstruct);
   void generate_py_struct_writer(std::ofstream& out, t_struct* tstruct);
+  void generate_py_function_helpers(t_function* tfunction);
 
-  void generate_py_function_helpers  (t_function* tfunction);
+  /**
+   * Service-level generation functions
+   */
 
-  /** Service-level generation functions */
-
-  void generate_service_helpers(t_service*  tservice);
-  void generate_service_interface(t_service* tservice);
-  void generate_service_client(t_service* tservice);
-  void generate_service_remote(t_service* tservice);
-
-
+  void generate_service_helpers   (t_service*  tservice);
+  void generate_service_interface (t_service* tservice);
+  void generate_service_client    (t_service* tservice);
+  void generate_service_remote    (t_service* tservice);
   void generate_service_server    (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
 
-  /** Serialization constructs */
+  /**
+   * Serialization constructs
+   */
 
   void generate_deserialize_field        (std::ofstream &out,
                                           t_field*    tfield, 
@@ -105,12 +111,12 @@ class t_py_generator : public t_oop_generator {
                                           t_list*     tlist,
                                           std::string iter);
 
-  /** Helper rendering functions */
+  /**
+   * Helper rendering functions
+   */
 
   std::string py_autogen_comment();
   std::string py_imports();
-  std::string type_name(t_type* ttype);
-  std::string base_type_name(t_base_type::t_base tbase);
   std::string declare_field(t_field* tfield, bool init=false, bool obj=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);
@@ -118,7 +124,10 @@ class t_py_generator : public t_oop_generator {
 
  private:
 
-  /** File streams */
+  /**
+   * File streams
+   */
+
   std::ofstream f_types_;
   std::ofstream f_service_;
 

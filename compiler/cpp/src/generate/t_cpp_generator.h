@@ -8,7 +8,7 @@
 
 #include "t_oop_generator.h"
 
-// TODO(mcslee: Paramaterize the output dir
+// TODO(mcslee): Paramaterize the output dir
 #define T_CPP_DIR "gen-cpp"
 
 /**
@@ -19,27 +19,31 @@
 class t_cpp_generator : public t_oop_generator {
  public:
   t_cpp_generator() {}
-  ~t_cpp_generator() {}
 
-  /** Init and close methods */
+  /**
+   * Init and close methods
+   */
 
   void init_generator(t_program *tprogram);
   void close_generator(t_program *tprogram);
 
-  /** Program-level generation functions */
+  /**
+   * Program-level generation functions
+   */
 
   void generate_typedef  (t_typedef*  ttypedef);
   void generate_enum     (t_enum*     tenum);
   void generate_struct   (t_struct*   tstruct);
   void generate_service  (t_service*  tservice);
 
-  void generate_struct_definition (std::ofstream& out, t_struct* tstruct);
-
-  void generate_struct_reader     (std::ofstream& out, t_struct* tstruct);
-  void generate_struct_writer     (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_definition    (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_reader        (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_writer        (std::ofstream& out, t_struct* tstruct);
   void generate_struct_result_writer (std::ofstream& out, t_struct* tstruct);
 
-  /** Service-level generation functions */
+  /**
+   * Service-level generation functions
+   */
 
   void generate_service_interface (t_service* tservice);
   void generate_service_multiface (t_service* tservice);
@@ -47,10 +51,11 @@ class t_cpp_generator : public t_oop_generator {
   void generate_service_client    (t_service* tservice);
   void generate_service_server    (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
-
   void generate_function_helpers  (t_function* tfunction);
 
-  /** Serialization constructs */
+  /**
+   * Serialization constructs
+   */
 
   void generate_deserialize_field        (std::ofstream& out,
                                           t_field*    tfield, 
@@ -100,7 +105,9 @@ class t_cpp_generator : public t_oop_generator {
                                           t_list*     tlist,
                                           std::string iter);
 
-  /** Helper rendering functions */
+  /**
+   * Helper rendering functions
+   */
 
   std::string namespace_open(std::string ns);
   std::string namespace_close(std::string ns);
@@ -113,14 +120,20 @@ class t_cpp_generator : public t_oop_generator {
 
  private:
 
-  /** File streams */
+  /**
+   * Strings for namespace, computed once up front then used directly
+   */
 
   std::string ns_open_;
   std::string ns_close_;
 
+  /**
+   * File streams, stored here to avoid passing them as parameters to every
+   * function.
+   */
+
   std::ofstream f_types_;
   std::ofstream f_types_impl_;
-
   std::ofstream f_header_;
   std::ofstream f_service_;
 };

@@ -24,12 +24,15 @@
  *   Exceptions
  *   Services
  *
+ * The program module also contains the definitions of the base types.
+ *
  * @author Mark Slee <mcslee@facebook.com>
  */
 class t_program {
  public:
   t_program(std::string name) :
-    name_(name), namespace_() {
+    name_(name),
+    namespace_() {
     type_void   = new t_base_type("void",   t_base_type::TYPE_VOID);
     type_string = new t_base_type("string", t_base_type::TYPE_STRING);
     type_bool   = new t_base_type("bool",   t_base_type::TYPE_BOOL);
@@ -51,10 +54,14 @@ class t_program {
   }
 
   // Name accessor
-  const std::string& get_name() const { return name_; }
+  const std::string& get_name() const {
+    return name_;
+  }
 
   // Namespace
-  const std::string& get_namespace() const { return namespace_; }
+  const std::string& get_namespace() const {
+    return namespace_;
+  }
 
   // Accessors for program elements
   const std::vector<t_typedef*>& get_typedefs()  const { return typedefs_;  }
@@ -79,6 +86,7 @@ class t_program {
   }
 
   // New program element addition
+
   void set_namespace(std::string name) {
     namespace_ = name;
   }
@@ -87,23 +95,28 @@ class t_program {
     typedefs_.push_back(td);
     add_custom_type(td->get_symbolic(), td);
   }
+
   void add_enum(t_enum* te) {
     enums_.push_back(te);
     add_custom_type(te->get_name(), te);
   }
+
   void add_struct(t_struct* ts) {
     structs_.push_back(ts);
     add_custom_type(ts->get_name(), ts);
   }
+
   void add_xception(t_struct* tx) {
     xceptions_.push_back(tx);
     add_custom_type(tx->get_name(), tx);
   }
+
   void add_service(t_service* ts) {
     services_.push_back(ts);
   }
 
  private:
+
   // Add custom type for lookup
   void add_custom_type(std::string name, t_type* type) {
     custom_types_[name] = type;

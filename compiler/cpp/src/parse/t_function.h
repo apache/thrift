@@ -6,8 +6,9 @@
 #include "t_struct.h"
 
 /**
- * Representation of a function. Key parst are return type, function name,
- * optional modifiers, and an argument list.
+ * Representation of a function. Key parts are return type, function name,
+ * optional modifiers, and an argument list, which is implemented as a thrift
+ * struct.
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
@@ -24,7 +25,6 @@ class t_function {
     xceptions_ = new t_struct;
   }
 
-
   t_function(t_type* returntype,
              std::string name,
              t_struct* arglist,
@@ -38,11 +38,25 @@ class t_function {
 
   ~t_function() {}
 
-  t_type*      get_returntype() const { return returntype_; }
-  const std::string& get_name() const { return name_; }
-  t_struct*    get_arglist()    const { return arglist_; }
-  t_struct*    get_xceptions()  const { return xceptions_; }
-  bool         is_async()       const { return async_; }
+  t_type* get_returntype() const {
+    return returntype_;
+  }
+
+  const std::string& get_name() const {
+    return name_;
+  }
+
+  t_struct* get_arglist() const {
+    return arglist_;
+  }
+
+  t_struct* get_xceptions() const {
+    return xceptions_;
+  }
+
+  bool is_async() const {
+    return async_;
+  }
 
  private:
   t_type* returntype_;

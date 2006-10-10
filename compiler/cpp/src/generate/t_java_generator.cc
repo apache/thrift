@@ -18,14 +18,17 @@ void t_java_generator::init_generator(t_program* tprogram) {
 
 /**
  * Packages the generated file
+ *
+ * @return String of the package, i.e. "package com.facebook.thriftdemo;"
  */
 string t_java_generator::java_package() {
-  // TODO(mcslee): Allow destination package to be specified in .thrift file
   return string("package ") + package_name_ + ";\n\n";
 }
 
 /**
  * Prints standard java imports
+ *
+ * @return List of imports for Java types that are used in here
  */
 string t_java_generator::java_type_imports() {
   return
@@ -38,6 +41,8 @@ string t_java_generator::java_type_imports() {
 
 /**
  * Prints standard java imports
+ *
+ * @return List of imports necessary for thrift
  */
 string t_java_generator::java_thrift_imports() {
   return
@@ -47,20 +52,21 @@ string t_java_generator::java_thrift_imports() {
 }
 
 /**
- * Does nothing in Java
+ * Nothing in Java
  */
 void t_java_generator::close_generator(t_program *tprogram) {}
 
 /**
- * Generates a typedef. This is not done in Java.
+ * Generates a typedef. This is not done in Java, since it does
+ * not support arbitrary name replacements, and it'd be a wacky waste
+ * of overhead to make wrapper classes.
  *
  * @param ttypedef The type definition
  */
 void t_java_generator::generate_typedef(t_typedef* ttypedef) {}
 
 /**
- * Generates code for an enumerated type. In C++, this is essentially the same
- * as the thrift definition itself, using the enum keyword in C++.
+ * Enums are a class with a set of static constants. 
  *
  * @param tenum The enumeration
  */
@@ -70,6 +76,7 @@ void t_java_generator::generate_enum(t_enum* tenum) {
   ofstream f_enum;
   f_enum.open(f_enum_name.c_str());
 
+  // Comment and package it
   f_enum <<
     autogen_comment() <<
     java_package() << endl;
@@ -94,12 +101,12 @@ void t_java_generator::generate_enum(t_enum* tenum) {
   }
 
   scope_down(f_enum);
+  f_enum.close();
 }
 
 /**
- * Generates a struct definition for a thrift data type. In C++, this is just
- * simple C struct with basic data members. There are no constructors,
- * initializers, etc.
+ * Generates a struct definition for a thrift data type. This is a class
+ * with data members, read(), write(), and an inner Isset class.
  *
  * @param tstruct The struct definition
  */
@@ -107,10 +114,21 @@ void t_java_generator::generate_struct(t_struct* tstruct) {
   generate_java_struct(tstruct, false);
 }
 
+/**
+ * Exceptions are structs, but they inherit from Exception
+ *
+ * @param tstruct The struct definition
+ */
 void t_java_generator::generate_xception(t_struct* txception) {
   generate_java_struct(txception, true);
 }
 
+
+/**
+ * Java struct definition.
+ *
+ * @param tstruct The struct definition
+ */
 void t_java_generator::generate_java_struct(t_struct* tstruct,
                                             bool is_exception) {
   // Make output file
@@ -130,6 +148,16 @@ void t_java_generator::generate_java_struct(t_struct* tstruct,
   f_struct.close();
 }
 
+/**
+ * Java struct definition. This has various parameters, as it could be
+ * generated standalone or inside another class as a helper. If it
+ * is a helper than it is a static class.
+ *
+ * @param tstruct      The struct definition
+ * @param is_exception Is this an exception?
+ * @param in_class     If inside a class, needs to be static class
+ * @param is_result    If this is a result it needs a different writer
+ */
 void t_java_generator::generate_java_struct_definition(ofstream &out,
                                                        t_struct* tstruct,
                                                        bool is_exception,
@@ -144,6 +172,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   
   scope_up(out);
 
+  // Members are public
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter; 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -151,6 +180,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
       "public " << declare_field(*m_iter, true) << endl;
   }
 
+  // Inner Isset class
   if (members.size() > 0) {
     out <<
       endl <<
@@ -177,6 +207,11 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   out << endl;
 }
 
+/**
+ * Generates a function to read all the fields of the struct.
+ *
+ * @param tstruct The struct definition
+ */
 void t_java_generator::generate_java_struct_reader(ofstream& out,
                                                    t_struct* tstruct) {
   out <<
@@ -194,7 +229,6 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
   // Loop over reading in fields
   indent(out) <<
     "while (true)" << endl;
-
     scope_up(out);
     
     // Read beginning field marker
@@ -253,6 +287,11 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
     endl;
 }
 
+/**
+ * Generates a function to write all the fields of the struct
+ *
+ * @param tstruct The struct definition
+ */
 void t_java_generator::generate_java_struct_writer(ofstream& out,
                                                    t_struct* tstruct) {
   out <<
@@ -292,6 +331,14 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
     indent() << "}" << endl;
 }
 
+/**
+ * Generates a function to write all the fields of the struct,
+ * which is a function result. These fields are only written
+ * if they are set in the Isset array, and only one of them
+ * can be set at a time.
+ *
+ * @param tstruct The struct definition
+ */
 void t_java_generator::generate_java_struct_result_writer(ofstream& out,
                                                           t_struct* tstruct) {
   out <<
@@ -409,6 +456,11 @@ void t_java_generator::generate_service_interface(t_service* tservice) {
     endl;
 }
 
+/**
+ * Generates structs for all the service args and return types
+ *
+ * @param tservice The service
+ */
 void t_java_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter; 
@@ -541,13 +593,13 @@ void t_java_generator::generate_service_client(t_service* tservice) {
         "public " << function_signature(&recv_function) << endl;
       scope_up(f_service_);
            
-      // TODO(mcslee): Message validation here
-
       f_service_ <<
         indent() << "TMessage _msg = _iprot.readMessageBegin(_itrans);" << endl <<
         indent() << resultname << " __result = new " << resultname << "();" << endl <<
         indent() << "__result.read(_iprot, _itrans);" << endl <<
         indent() << "_iprot.readMessageEnd(_itrans);" << endl;
+
+      // TODO(mcslee): Message validation here, was the seqid etc ok?
 
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
@@ -567,7 +619,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
           indent() << "}" << endl;
       }
 
-      // Careful, only return _result if not a void function
+      // If you get here it's an exception, unless a void function
       if ((*f_iter)->get_returntype()->is_void()) {
         indent(f_service_) <<
           "return;" << endl;
@@ -627,14 +679,13 @@ void t_java_generator::generate_service_server(t_service* tservice) {
   
   // Generate the server implementation
   indent(f_service_) <<
-    "public boolean process(TTransport _itrans, TTransport _otrans) " <<
-    "throws TException" << endl;
+    "public boolean process(TTransport _itrans, TTransport _otrans) throws TException" << endl;
   scope_up(f_service_);
 
   f_service_ <<
     indent() << "TMessage _msg = _iprot.readMessageBegin(_itrans);" << endl;
 
-  // TODO(mcslee): validate message
+  // TODO(mcslee): validate message, was the seqid etc. legit?
 
   bool first = true;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -648,8 +699,7 @@ void t_java_generator::generate_service_server(t_service* tservice) {
       "if (_msg.name.equals(\"" << (*f_iter)->get_name() <<"\")) {" << endl;
     indent_up();
     indent(f_service_) <<
-      "process_" << (*f_iter)->get_name() <<
-      "(_msg.seqid, _itrans, _otrans);" << endl;
+      "process_" << (*f_iter)->get_name() << "(_msg.seqid, _itrans, _otrans);" << endl;
     indent_down();
     indent(f_service_) << "}";
   }
@@ -657,8 +707,7 @@ void t_java_generator::generate_service_server(t_service* tservice) {
     " else {" << endl;
   indent_up();
   indent(f_service_) <<
-    "System.err.println" <<
-    "(\"Unknown function: '\" + _msg.name + \"'\");" << endl;
+    "System.err.println(\"Unknown function: '\" + _msg.name + \"'\");" << endl;
   indent_down();
   indent(f_service_) <<
     "}" << endl;
@@ -716,8 +765,7 @@ void t_java_generator::generate_process_function(t_service* tservice,
                                                  t_function* tfunction) {
   // Open function
   indent(f_service_) <<
-    "private void process_" << tfunction->get_name() <<
-    "(int seqid, TTransport _itrans, TTransport _otrans) throws TException" << endl;
+    "private void process_" << tfunction->get_name() << "(int seqid, TTransport _itrans, TTransport _otrans) throws TException" << endl;
   scope_up(f_service_);
 
   string argsname = tfunction->get_name() + "_args";
@@ -815,6 +863,9 @@ void t_java_generator::generate_process_function(t_service* tservice,
 
 /**
  * Deserializes a field of any type.
+ *
+ * @param tfield The field
+ * @param prefix The variable name or container for this field
  */
 void t_java_generator::generate_deserialize_field(ofstream& out,
                                                   t_field* tfield,
@@ -885,10 +936,7 @@ void t_java_generator::generate_deserialize_field(ofstream& out,
 }
 
 /**
- * Generates an unserializer for a variable. This makes two key assumptions,
- * first that there is a const char* variable named data that points to the
- * buffer for deserialization, and that there is a variable protocol which
- * is a reference to a TProtocol serialization object.
+ * Generates an unserializer for a struct, invokes read()
  */
 void t_java_generator::generate_deserialize_struct(ofstream& out,
                                                    t_struct* tstruct,
@@ -898,6 +946,9 @@ void t_java_generator::generate_deserialize_struct(ofstream& out,
     indent() << prefix << ".read(_iprot, _itrans);" << endl;
 }
 
+/**
+ * Deserializes a container by reading its size and then iterating
+ */
 void t_java_generator::generate_deserialize_container(ofstream& out,
                                                       t_type* ttype,
                                                       string prefix) {
@@ -981,6 +1032,9 @@ void t_java_generator::generate_deserialize_map_element(ofstream& out,
     prefix << ".put(" << key << ", " << val << ");" << endl;
 }
 
+/**
+ * Deserializes a set element
+ */
 void t_java_generator::generate_deserialize_set_element(ofstream& out,
                                                         t_set* tset,
                                                         string prefix) {
@@ -996,6 +1050,9 @@ void t_java_generator::generate_deserialize_set_element(ofstream& out,
     prefix << ".add(" << elem << ");" << endl;
 }
 
+/**
+ * Deserializes a list element
+ */
 void t_java_generator::generate_deserialize_list_element(ofstream& out,
                                                          t_list* tlist,
                                                          string prefix) {
@@ -1102,6 +1159,12 @@ void t_java_generator::generate_serialize_struct(ofstream& out,
     indent() << prefix << ".write(_oprot, _otrans);" << endl;
 }
 
+/**
+ * Serializes a container by writing its size then the elements.
+ *
+ * @param ttype  The type of container
+ * @param prefix String prefix for fields
+ */
 void t_java_generator::generate_serialize_container(ofstream& out,
                                                     t_type* ttype,
                                                     string prefix) {
@@ -1174,7 +1237,6 @@ void t_java_generator::generate_serialize_container(ofstream& out,
 
 /**
  * Serializes the members of a map.
- *
  */ 
 void t_java_generator::generate_serialize_map_element(ofstream& out,
                                                       t_map* tmap,
@@ -1182,7 +1244,6 @@ void t_java_generator::generate_serialize_map_element(ofstream& out,
                                                       string map) {
   t_field kfield(tmap->get_key_type(), iter);
   generate_serialize_field(out, &kfield, "");
-
   t_field vfield(tmap->get_val_type(), map + ".get(" + iter + ")");
   generate_serialize_field(out, &vfield, "");
 }
@@ -1212,6 +1273,7 @@ void t_java_generator::generate_serialize_list_element(ofstream& out,
  *
  * @param ttype The type
  * @param container Is the type going inside a container?
+ * @return Java type name, i.e. HashMap<Key,Value>
  */
 string t_java_generator::type_name(t_type* ttype, bool in_container) {
   // In Java typedefs are just resolved to their real type
@@ -1326,8 +1388,7 @@ string t_java_generator::function_signature(t_function* tfunction,
                                             string prefix) {
   t_type* ttype = tfunction->get_returntype();
   std::string result =
-    type_name(ttype) + " " + prefix + tfunction->get_name() +
-    "(" + argument_list(tfunction->get_arglist()) + ") throws ";
+    type_name(ttype) + " " + prefix + tfunction->get_name() + "(" + argument_list(tfunction->get_arglist()) + ") throws ";
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
@@ -1339,7 +1400,7 @@ string t_java_generator::function_signature(t_function* tfunction,
 }
 
 /**
- * Renders a field list
+ * Renders a comma separated field list, with type names
  */
 string t_java_generator::argument_list(t_struct* tstruct) {
   string result = "";

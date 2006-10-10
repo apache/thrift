@@ -3,7 +3,8 @@
  *
  * This file contains the main compiler engine for Thrift, which invokes the
  * scanner/parser to build the thrift object tree. The interface generation
- * code for each language lives in a file by the language name.
+ * code for each language lives in a file by the language name under the
+ * generate/ folder, and all parse structures live in parse/
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
@@ -13,7 +14,7 @@
 #include <stdarg.h>
 #include <string>
 
-// Careful: must include globals first
+// Careful: must include globals first here for extern/global definitions
 #include "globals.h"
 
 #include "main.h"
@@ -25,15 +26,20 @@
 
 using namespace std;
 
-/** Global program tree */
+/**
+ * Global program tree
+ */
 t_program* g_program;
 
-/** Global debug state */
+/**
+ * Global debug state
+ */
 int g_debug = 0;
 
-/** Global time string */
+/**
+ * Global time string
+ */
 char* g_time_str;
-
 
 /**
  * Report an error to the user. This is called yyerror for historical
@@ -106,15 +112,17 @@ void usage() {
 }
 
 /**
- * Parse it up.. then spit it back out, in pretty much every language
+ * Parse it up.. then spit it back out, in pretty much every language. Alright
+ * not that many languages, but the cool ones that we care about.
  */
 int main(int argc, char** argv) {
   int i;
+
   bool gen_cpp = false;
   bool gen_java = false;
   bool gen_py = false;
   bool gen_php = false;
-  bool php_inline = false;
+  bool gen_phpi = false;
 
   // Setup time string
   time_t now = time(NULL);
@@ -125,6 +133,7 @@ int main(int argc, char** argv) {
     usage();
   }
 
+  // Hacky parameter handling... I didn't feel like using a library sorry!
   for (i = 1; i < argc-1; i++) {
     char* arg;
     arg = strtok(argv[i], " ");
@@ -137,10 +146,8 @@ int main(int argc, char** argv) {
         gen_java = true;
       } else if (strcmp(arg, "--php") == 0) {
         gen_php = true;
-        php_inline = false;
       } else if (strcmp(arg, "--phpi") == 0) {
-        gen_php = true;
-        php_inline = true;
+        gen_phpi = true;
       } else if (strcmp(arg, "--py") == 0) {
         gen_py = true;
       } else {
@@ -153,7 +160,7 @@ int main(int argc, char** argv) {
     }
   }
   
-  if (!gen_cpp && !gen_java && !gen_php && !gen_py) {
+  if (!gen_cpp && !gen_java && !gen_php && !gen_phpi && !gen_py) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
@@ -176,9 +183,10 @@ int main(int argc, char** argv) {
     name = name.substr(0, dot);
   }
   
-  // Parse it
+  // Instance of the global parse tree
   g_program = new t_program(name);
 
+  // Parse it!
   if (yyparse() != 0) {
     failure("Parser error.");
   }
@@ -198,9 +206,15 @@ int main(int argc, char** argv) {
     }
 
     if (gen_php) {
-      t_php_generator* php = new t_php_generator(php_inline);
+      t_php_generator* php = new t_php_generator(false);
       php->generate_program(g_program);
       delete php;
+    }
+
+    if (gen_phpi) {
+      t_php_generator* phpi = new t_php_generator(true);
+      phpi->generate_program(g_program);
+      delete phpi;
     }
 
     if (gen_py) {
@@ -208,6 +222,7 @@ int main(int argc, char** argv) {
       py->generate_program(g_program);
       delete py;
     }
+
   } catch (string s) {
     printf("Error: %s\n", s.c_str());
   } catch (const char* exc) {

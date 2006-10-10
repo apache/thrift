@@ -1,17 +1,27 @@
 #ifndef T_MAIN_H
 #define T_MAIN_H
 
-/** Defined in the flex library */
-extern int   yylex(void);
-extern int   yyparse(void);
+/**
+ * Defined in the flex library
+ */
 
-/** Expected to be defined by Flex/Bison */
-extern void  yyerror(char* fmt, ...);
+extern int yylex(void);
+extern int yyparse(void);
 
-/** Parse debug output */
-extern void  pdebug(char* fmt, ...);
+/**
+ * Expected to be defined by Flex/Bison
+ */
+extern void yyerror(char* fmt, ...);
 
-/** Flex utilities */
+/**
+ * Parse debugging output, used to print warnings etc.
+ */
+extern void pdebug(char* fmt, ...);
+
+/**
+ * Flex utilities
+ */
+
 extern int   yylineno;
 extern char  yytext[];
 extern FILE* yyin;

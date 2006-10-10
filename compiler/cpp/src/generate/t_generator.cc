@@ -7,6 +7,7 @@ using namespace std;
  * program to perform the correct actions.
  *
  * @param program The thrift program to compile into C++ source
+ * @author Mark Slee <mcslee@facebook.com>
  */
 void t_generator::generate_program(t_program *tprogram) {
   // Set program name

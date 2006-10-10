@@ -7,24 +7,29 @@
 #include "t_type.h"
 #include "t_field.h"
 
+/**
+ * A struct is a container for a set of member fields that has a name. Structs
+ * are also used to implement exception types.
+ *
+ * @author Mark Slee <mcslee@facebook.com>
+ */
 class t_struct : public t_type {
  public:
-  t_struct() : is_xception_(false) {}
-  t_struct(const std::string& name) : t_type(name), is_xception_(false) {}
+  t_struct() :
+    is_xception_(false) {}
 
-  ~t_struct() {}
+  t_struct(const std::string& name) :
+    t_type(name),
+    is_xception_(false) {}
 
-  /** Set the struct name */
   void set_name(const std::string& name) {
     name_ = name;
   }
 
-  /** Mark as an exception */
   void set_xception(bool is_xception) {
     is_xception_ = is_xception;
   }
 
-  /** Add a new field to the list */
   void append(t_field* elem) {
     members_.push_back(elem);
   }

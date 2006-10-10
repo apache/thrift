@@ -4,7 +4,8 @@
 #include "t_type.h"
 
 /**
- * A thrift base type, which must be one of the defined enumerated types.
+ * A thrift base type, which must be one of the defined enumerated types inside
+ * this definition.
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
@@ -25,11 +26,20 @@ class t_base_type : public t_type {
   };
 
   t_base_type(std::string name, t_base base) :
-    t_type(name), base_(base) {}
+    t_type(name),
+    base_(base) {}
     
-  t_base get_base() const { return base_; }
-  bool is_void() const { return base_ == TYPE_VOID; }
-  bool is_base_type() const { return true; }
+  t_base get_base() const {
+    return base_;
+  }
+
+  bool is_void() const {
+    return base_ == TYPE_VOID;
+  }
+
+  bool is_base_type() const {
+    return true;
+  }
     
  private:
   t_base base_;

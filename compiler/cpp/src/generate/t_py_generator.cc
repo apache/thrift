@@ -40,7 +40,7 @@ string t_py_generator::py_autogen_comment() {
 }
 
 /**
- * Prints standard java imports
+ * Prints standard thrift imports
  */
 string t_py_generator::py_imports() {
   return
@@ -48,7 +48,7 @@ string t_py_generator::py_imports() {
 }
 
 /**
- * Does nothing in Python
+ * Closes the type files
  */
 void t_py_generator::close_generator(t_program *tprogram) {
   // Close types file
@@ -63,8 +63,8 @@ void t_py_generator::close_generator(t_program *tprogram) {
 void t_py_generator::generate_typedef(t_typedef* ttypedef) {}
 
 /**
- * Generates code for an enumerated type. Since define is expensive to lookup
- * in PHP, we use a global array for this.
+ * Generates code for an enumerated type. Done using a class to scope
+ * the values.
  *
  * @param tenum The enumeration
  */
@@ -91,6 +91,9 @@ void t_py_generator::generate_enum(t_enum* tenum) {
   f_types_ << endl;
 }
 
+/**
+ * Generates a python struct
+ */
 void t_py_generator::generate_struct(t_struct* tstruct) {
   generate_py_struct(tstruct, false);
 }
@@ -105,6 +108,9 @@ void t_py_generator::generate_xception(t_struct* txception) {
   generate_py_struct(txception, true);  
 }
 
+/**
+ * Generates a python struct
+ */
 void t_py_generator::generate_py_struct(t_struct* tstruct,
                                         bool is_exception) {
   generate_py_struct_definition(f_types_, tstruct, is_exception);
@@ -160,12 +166,10 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   out << endl;
 
   generate_py_struct_reader(out, tstruct);
-  if (is_result) {
-    generate_py_struct_result_writer(out, tstruct);
-  } else {
-    generate_py_struct_writer(out, tstruct);
-  }
+  generate_py_struct_writer(out, tstruct);
 
+  // Printing utilities so that on the command line thrift
+  // structs look pretty like dictionaries
   out <<
     indent() << "def __str__(self): " << endl <<
     indent() << "  return str(self.__dict__)" << endl <<
@@ -177,6 +181,9 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   indent_down();
 }
 
+/**
+ * Generates the read method for a struct
+ */
 void t_py_generator::generate_py_struct_reader(ofstream& out,
                                                 t_struct* tstruct) {
   const vector<t_field*>& fields = tstruct->get_members();
@@ -245,45 +252,6 @@ void t_py_generator::generate_py_struct_reader(ofstream& out,
 
 void t_py_generator::generate_py_struct_writer(ofstream& out,
                                                t_struct* tstruct) {
-  string name = tstruct->get_name();
-  const vector<t_field*>& fields = tstruct->get_members();
-  vector<t_field*>::const_iterator f_iter;
-
-  indent(out) <<
-    "def write(self, oprot, otrans):" << endl;
-  indent_up();
-  
-  indent(out) <<
-    "oprot.writeStructBegin(otrans, '" << name << "')" << endl;
-
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    // Write field header
-    indent(out) <<
-      "oprot.writeFieldBegin(otrans, " <<
-      "'" << (*f_iter)->get_name() << "', " <<
-      type_to_enum((*f_iter)->get_type()) << ", " <<
-      (*f_iter)->get_key() << ")" << endl;
-
-    // Write field contents
-    generate_serialize_field(out, *f_iter, "self.");
-
-    // Write field closer
-    indent(out) <<
-      "oprot.writeFieldEnd(otrans)" << endl;
-  }
-
-  // Write the struct map
-  out <<
-    indent() << "oprot.writeFieldStop(otrans)" << endl <<
-    indent() << "oprot.writeStructEnd(otrans)" << endl;
-
-  indent_down();
-  out <<
-    endl;
-}
-
-void t_py_generator::generate_py_struct_result_writer(ofstream& out,
-                                                      t_struct* tstruct) {
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -393,7 +361,6 @@ void t_py_generator::generate_py_function_helpers(t_function* tfunction) {
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     result.append(*f_iter);
   }
-
   generate_py_struct_definition(f_service_, &result, false, true);
 }
 
@@ -525,7 +492,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       f_service_ <<
         indent() << "(fname, mtype, rseqid) = self.__iprot.readMessageBegin(self.__itrans)" << endl;
 
-      // TODO(mcslee): Validate message reply here
+      // TODO(mcslee): Validate message reply here, seq ids etc.
 
       f_service_ <<
         indent() << "__result = " << resultname << "()" << endl <<
@@ -560,8 +527,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
 
     // Close function
     indent_down();
-    f_service_ << endl;
-    
+    f_service_ << endl;   
   }
 
   indent_down();
@@ -695,7 +661,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
   // Close service file
   f_remote.close();
   
-  // Make file executable
+  // Make file executable, love that bitwise OR action
   chmod(f_remote_name.c_str(),
         S_IRUSR |
         S_IWUSR |
@@ -752,34 +718,12 @@ void t_py_generator::generate_service_server(t_service* tservice) {
 
   // TODO(mcslee): validate message
 
-  // HOT: dictionary lookup
+  // HOT: dictionary function lookup
   f_service_ <<
     indent() << "if name not in self.__processMap:" << endl <<
     indent() << "  print 'Unknown function %s' % (name)" << endl <<
     indent() << "else:" << endl <<
     indent() << "  self.__processMap[name](self, seqid, itrans, otrans)" << endl;
-  // DEPRECATED: if else if bullshit
-  /*
-  bool first = true;
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    if (!first) {
-      f_service_ << indent() << "el";
-    } else {
-      f_service_ << indent();
-      first = false;
-    }
-    f_service_ <<
-      "if name == \"" << (*f_iter)->get_name() << "\":" << endl;
-    indent_up();
-    indent(f_service_) <<
-      "self.process_" << (*f_iter)->get_name() << "(seqid, itrans, otrans)" << endl;
-    indent_down();
-  }
-  f_service_ <<
-    indent() << "else:" << endl <<
-    indent() << "  print 'Unknown function %s' % (name)" << endl;
-  f_service_ << endl;
-  */  
 
   // Read end of args field, the T_STOP, and the struct close
   f_service_ <<
@@ -961,15 +905,12 @@ void t_py_generator::generate_deserialize_field(ofstream &out,
 
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
-           tfield->get_name().c_str(), type_name(type).c_str());
+           tfield->get_name().c_str(), type->get_name().c_str());
   }  
 }
 
 /**
- * Generates an unserializer for a variable. This makes two key assumptions,
- * first that there is a const char* variable named data that points to the
- * buffer for deserialization, and that there is a variable protocol which
- * is a reference to a TProtocol serialization object.
+ * Generates an unserializer for a struct, calling read()
  */
 void t_py_generator::generate_deserialize_struct(ofstream &out,
                                                   t_struct* tstruct,
@@ -979,6 +920,10 @@ void t_py_generator::generate_deserialize_struct(ofstream &out,
     indent() << prefix << ".read(iprot, itrans)" << endl;
 }
 
+/**
+ * Serialize a container by writing out the header followed by
+ * data and then a footer.
+ */
 void t_py_generator::generate_deserialize_container(ofstream &out,
                                                     t_type* ttype,
                                                     string prefix) {
@@ -1060,16 +1005,14 @@ void t_py_generator::generate_deserialize_map_element(ofstream &out,
     prefix << "[" << key << "] = " << val << endl;
 }
 
+/**
+ * Write a set element
+ */
 void t_py_generator::generate_deserialize_set_element(ofstream &out,
                                                        t_set* tset,
                                                        string prefix) {
   string elem = tmp("_elem");
   t_field felem(tset->get_elem_type(), elem);
-
-  /*
-  indent(out) <<
-    "$" << elem << " = null;" << endl;
-  */
 
   generate_deserialize_field(out, &felem);
 
@@ -1077,16 +1020,14 @@ void t_py_generator::generate_deserialize_set_element(ofstream &out,
     prefix << ".append(" << elem << ")" << endl;
 }
 
+/**
+ * Write a list element
+ */
 void t_py_generator::generate_deserialize_list_element(ofstream &out,
                                                         t_list* tlist,
                                                         string prefix) {
   string elem = tmp("_elem");
   t_field felem(tlist->get_elem_type(), elem);
-
-  /*
-  indent(out) <<
-    "$" << elem << " = null;" << endl;
-  */
 
   generate_deserialize_field(out, &felem);
 
@@ -1169,7 +1110,7 @@ void t_py_generator::generate_serialize_field(ofstream &out,
     printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s%s' TYPE '%s'\n",
            prefix.c_str(),
            tfield->get_name().c_str(),
-           type_name(type).c_str());
+           type->get_name().c_str());
   }
 }
 
@@ -1180,15 +1121,15 @@ void t_py_generator::generate_serialize_field(ofstream &out,
  * @param prefix  String prefix to attach to all fields
  */
 void t_py_generator::generate_serialize_struct(ofstream &out,
-                                                t_struct* tstruct,
-                                                string prefix) {
+                                               t_struct* tstruct,
+                                               string prefix) {
   indent(out) <<
     prefix << ".write(oprot, otrans)" << endl;
 }
 
 void t_py_generator::generate_serialize_container(ofstream &out,
-                                                   t_type* ttype,
-                                                   string prefix) {
+                                                  t_type* ttype,
+                                                  string prefix) {
   if (ttype->is_map()) {
     indent(out) <<
       "oprot.writeMapBegin(otrans, " <<
@@ -1207,31 +1148,30 @@ void t_py_generator::generate_serialize_container(ofstream &out,
       "len(" << prefix << "))" << endl;
   }
 
-    if (ttype->is_map()) {
-      string kiter = tmp("_kiter");
-      string viter = tmp("_viter");
-      indent(out) << 
-        "for " << kiter << "," << viter << " in " << prefix << ":" << endl;
-      indent_up();
-      generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
-      indent_down();
-    } else if (ttype->is_set()) {
-      string iter = tmp("_iter");
-      indent(out) << 
-        "for " << iter << " in " << prefix << ":" << endl;
-      indent_up();
-      generate_serialize_set_element(out, (t_set*)ttype, iter);
-      indent_down();
-    } else if (ttype->is_list()) {
-      string iter = tmp("_iter");
-      indent(out) << 
-        "for " << iter << " in " << prefix << ":" << endl;
-      indent_up();
-      generate_serialize_list_element(out, (t_list*)ttype, iter);
-      indent_down();
-    }
+  if (ttype->is_map()) {
+    string kiter = tmp("_kiter");
+    string viter = tmp("_viter");
+    indent(out) << 
+      "for " << kiter << "," << viter << " in " << prefix << ":" << endl;
+    indent_up();
+    generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
+    indent_down();
+  } else if (ttype->is_set()) {
+    string iter = tmp("_iter");
+    indent(out) << 
+      "for " << iter << " in " << prefix << ":" << endl;
+    indent_up();
+    generate_serialize_set_element(out, (t_set*)ttype, iter);
+    indent_down();
+  } else if (ttype->is_list()) {
+    string iter = tmp("_iter");
+    indent(out) << 
+      "for " << iter << " in " << prefix << ":" << endl;
+    indent_up();
+    generate_serialize_list_element(out, (t_list*)ttype, iter);
+    indent_down();
+  }
     
-
   if (ttype->is_map()) {
     indent(out) <<
       "oprot.writeMapEnd(otrans)" << endl;
@@ -1277,65 +1217,6 @@ void t_py_generator::generate_serialize_list_element(ofstream &out,
                                                       string iter) {
   t_field efield(tlist->get_elem_type(), iter);
   generate_serialize_field(out, &efield, "");
-}
-
-/**
- * Returns a Java type name
- *
- * @param ttype The type
- */
-string t_py_generator::type_name(t_type* ttype) {
-  // In Java typedefs are just resolved to their real type
-  while (ttype->is_typedef()) {
-    ttype = ((t_typedef*)ttype)->get_type();
-  }
-
-  if (ttype->is_base_type()) {
-    return base_type_name(((t_base_type*)ttype)->get_base());
-  } else if (ttype->is_enum()) {
-    return "int";
-  } else if (ttype->is_map()) {
-    t_map* tmap = (t_map*) ttype;
-    return "map<" +
-      type_name(tmap->get_key_type()) + "," +
-      type_name(tmap->get_val_type()) + ">";
-  } else if (ttype->is_set()) {
-    t_set* tset = (t_set*) ttype;
-    return "set<" + type_name(tset->get_elem_type()) + ">";
-  } else if (ttype->is_list()) {
-    t_list* tlist = (t_list*) ttype;
-    return "list<" + type_name(tlist->get_elem_type()) + ">";
-  } else {
-    return ttype->get_name();
-  }
-}
-
-/**
- * Returns the C++ type that corresponds to the thrift type.
- *
- * @param tbase The base type
- */
-string t_py_generator::base_type_name(t_base_type::t_base tbase) {
-  switch (tbase) {
-  case t_base_type::TYPE_VOID:
-    return "void";
-  case t_base_type::TYPE_STRING:
-    return "TString";
-  case t_base_type::TYPE_BOOL:
-    return "bool";
-  case t_base_type::TYPE_BYTE:
-    return "UInt8";
-  case t_base_type::TYPE_I16:
-    return "Int16";
-  case t_base_type::TYPE_I32:
-    return "Int32";
-  case t_base_type::TYPE_I64:
-    return "Int64";
-  case t_base_type::TYPE_DOUBLE:
-    return "Double";
-  default:
-    throw "compiler error: no PHP name for base type " + tbase;
-  }
 }
 
 /**
@@ -1400,6 +1281,7 @@ string t_py_generator::declare_field(t_field* tfield, bool init, bool obj) {
  */
 string t_py_generator::function_signature(t_function* tfunction,
                                            string prefix) {
+  // TODO(mcslee): Nitpicky, no ',' if argument_list is empty
   return
     prefix + tfunction->get_name() +
     "(self, " + argument_list(tfunction->get_arglist()) + ")";
@@ -1426,7 +1308,7 @@ string t_py_generator::argument_list(t_struct* tstruct) {
 }
 
 /**
- * Converts the parse type to a C++ enum string for the given type.
+ * Converts the parse type to a Python tyoe
  */
 string t_py_generator::type_to_enum(t_type* type) {
   while (type->is_typedef()) {
