@@ -63,9 +63,14 @@ class TTransport {
    */
   virtual uint32_t readAll(uint8_t* buf, uint32_t len) {
     uint32_t have = 0;
+    uint32_t get = 0;
     
     while (have < len) {
-      have += read(buf+have, len-have);
+      get = read(buf+have, len-have);
+      if (get <= 0) {
+        throw TTransportException("No more data to read.");
+      }
+      have += get;
     }
 
     return have;

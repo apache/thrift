@@ -33,21 +33,21 @@ class PthreadThread: public Thread {
   static void* threadMain(void* arg);
 
  private:
-  pthread_t _pthread;
-  STATE _state;
-  int _policy;
-  int _priority;
-  int _stackSize;
-  weak_ptr<PthreadThread> _self;
+  pthread_t pthread_;
+  STATE state_;
+  int policy_;
+  int priority_;
+  int stackSize_;
+  weak_ptr<PthreadThread> self_;
 
  public:
   
   PthreadThread(int policy, int priority, int stackSize, shared_ptr<Runnable> runnable) : 
-    _pthread(0),
-    _state(uninitialized), 
-    _policy(policy),
-    _priority(priority),
-    _stackSize(stackSize) {
+    pthread_(0),
+    state_(uninitialized), 
+    policy_(policy),
+    priority_(priority),
+    stackSize_(stackSize) {
 
     this->Thread::runnable(runnable);
   }
@@ -55,38 +55,38 @@ class PthreadThread: public Thread {
   ~PthreadThread() {}
 
   void start() {
-    if (_state != uninitialized) {
+    if (state_ != uninitialized) {
       return;
     }
 
-    _state = starting;
+    state_ = starting;
 
     pthread_attr_t thread_attr;
     assert(pthread_attr_init(&thread_attr) == 0);
     assert(pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_JOINABLE) == 0);
 
     // Set thread stack size
-    assert(pthread_attr_setstacksize(&thread_attr, MB * _stackSize) == 0);
+    assert(pthread_attr_setstacksize(&thread_attr, MB * stackSize_) == 0);
 
     // Set thread policy
-    assert(pthread_attr_setschedpolicy(&thread_attr, _policy) == 0);
+    assert(pthread_attr_setschedpolicy(&thread_attr, policy_) == 0);
 
     struct sched_param sched_param;
-    sched_param.sched_priority = _priority;
+    sched_param.sched_priority = priority_;
 
     // Set thread priority
     assert(pthread_attr_setschedparam(&thread_attr, &sched_param) == 0);
 
     // Create reference
     shared_ptr<PthreadThread>* selfRef = new shared_ptr<PthreadThread>();
-    *selfRef = _self.lock();
-    assert(pthread_create(&_pthread, &thread_attr, threadMain, (void*)selfRef) == 0);
+    *selfRef = self_.lock();
+    assert(pthread_create(&pthread_, &thread_attr, threadMain, (void*)selfRef) == 0);
   }
 
   void join() {
-    if (_state != stopped) {
+    if (state_ != stopped) {
       void* ignore;
-      pthread_join(_pthread, &ignore);
+      pthread_join(pthread_, &ignore);
     }
   }
 
@@ -96,7 +96,7 @@ class PthreadThread: public Thread {
 
   void weakRef(shared_ptr<PthreadThread> self) {
     assert(self.get() == this);
-    _self = weak_ptr<PthreadThread>(self);
+    self_ = weak_ptr<PthreadThread>(self);
   }
 };
 
@@ -109,14 +109,14 @@ void* PthreadThread::threadMain(void* arg) {
     return (void*)0;
   }
 
-  if (thread->_state != starting) {
+  if (thread->state_ != starting) {
     return (void*)0;
   }
 
-  thread->_state = starting;
+  thread->state_ = starting;
   thread->runnable()->run();
-  if (thread->_state != stopping && thread->_state != stopped) {
-    thread->_state = stopping;
+  if (thread->state_ != stopping && thread->state_ != stopped) {
+    thread->state_ = stopping;
   }
     
   return (void*)0;
@@ -128,10 +128,10 @@ void* PthreadThread::threadMain(void* arg) {
 class PosixThreadFactory::Impl {
 
  private:
-  POLICY _policy;
-  PRIORITY _priority;
-  int _stackSize;
-  bool _detached;
+  POLICY policy_;
+  PRIORITY priority_;
+  int stackSize_;
+  bool detached_;
 
   /**
    * Converts generic posix thread schedule policy enums into pthread
@@ -173,10 +173,10 @@ class PosixThreadFactory::Impl {
  public:
 
   Impl(POLICY policy, PRIORITY priority, int stackSize, bool detached) : 
-    _policy(policy),
-    _priority(priority),
-    _stackSize(stackSize),
-    _detached(detached) {}
+    policy_(policy),
+    priority_(priority),
+    stackSize_(stackSize),
+    detached_(detached) {}
 
   /**
    * Creates a new POSIX thread to run the runnable object 
@@ -184,17 +184,17 @@ class PosixThreadFactory::Impl {
    * @param runnable A runnable object
    */
   shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const {
-    shared_ptr<PthreadThread> result = shared_ptr<PthreadThread>(new PthreadThread(toPthreadPolicy(_policy), toPthreadPriority(_policy, _priority), _stackSize, runnable));
+    shared_ptr<PthreadThread> result = shared_ptr<PthreadThread>(new PthreadThread(toPthreadPolicy(policy_), toPthreadPriority(policy_, priority_), stackSize_, runnable));
     result->weakRef(result);
     runnable->thread(result);
     return result;
   }
 
-  int stackSize() const { return _stackSize; }
+  int stackSize() const { return stackSize_; }
 
-  void stackSize(int value) { _stackSize = value; }
+  void stackSize(int value) { stackSize_ = value; }
 
-  PRIORITY priority() const { return _priority; }
+  PRIORITY priority() const { return priority_; }
 
   /**
    * Sets priority.
@@ -202,20 +202,20 @@ class PosixThreadFactory::Impl {
    *  XXX
    *  Need to handle incremental priorities properly.
    */
-  void priority(PRIORITY value) { _priority = value; }
+  void priority(PRIORITY value) { priority_ = value; }
 };
 
 PosixThreadFactory::PosixThreadFactory(POLICY policy, PRIORITY priority, int stackSize, bool detached) : 
-  _impl(new PosixThreadFactory::Impl(policy, priority, stackSize, detached)) {}
+  impl_(new PosixThreadFactory::Impl(policy, priority, stackSize, detached)) {}
 
-shared_ptr<Thread> PosixThreadFactory::newThread(shared_ptr<Runnable> runnable) const { return _impl->newThread(runnable); }
+shared_ptr<Thread> PosixThreadFactory::newThread(shared_ptr<Runnable> runnable) const { return impl_->newThread(runnable); }
 
-int PosixThreadFactory::stackSize() const { return _impl->stackSize(); }
+int PosixThreadFactory::stackSize() const { return impl_->stackSize(); }
 
-void PosixThreadFactory::stackSize(int value) { _impl->stackSize(value); }
+void PosixThreadFactory::stackSize(int value) { impl_->stackSize(value); }
 
-PosixThreadFactory::PRIORITY PosixThreadFactory::priority() const { return _impl->priority(); }
+PosixThreadFactory::PRIORITY PosixThreadFactory::priority() const { return impl_->priority(); }
 
-void PosixThreadFactory::priority(PosixThreadFactory::PRIORITY value) { _impl->priority(value); }
+void PosixThreadFactory::priority(PosixThreadFactory::PRIORITY value) { impl_->priority(value); }
 
 }}} // facebook::thrift::concurrency

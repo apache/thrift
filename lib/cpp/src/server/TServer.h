@@ -26,6 +26,10 @@ public:
   virtual ~TServer() {}
   virtual void serve() = 0;
   
+  shared_ptr<TProcessor> getProcessor() {
+    return processor_;
+  }
+  
 protected:
   TServer(shared_ptr<TProcessor> processor,
           shared_ptr<TServerTransport> serverTransport,

@@ -28,8 +28,8 @@ class TimerManager::Task : public Runnable {
   };
 
   Task(shared_ptr<Runnable> runnable) :
-    _runnable(runnable),
-    _state(WAITING) {}
+    runnable_(runnable),
+    state_(WAITING) {}
   
   ~Task() {
     //debug
@@ -37,24 +37,24 @@ class TimerManager::Task : public Runnable {
   }
   
   void run() {
-    if (_state == EXECUTING) {
-      _runnable->run();
-      _state = COMPLETE;
+    if (state_ == EXECUTING) {
+      runnable_->run();
+      state_ = COMPLETE;
     }
   }
 
  private:
-  shared_ptr<Runnable> _runnable;
+  shared_ptr<Runnable> runnable_;
   class TimerManager::Dispatcher;
   friend class TimerManager::Dispatcher;
-  STATE _state;
+  STATE state_;
 };
 
 class TimerManager::Dispatcher: public Runnable {
 
  public:
   Dispatcher(TimerManager* manager) : 
-    _manager(manager) {}
+    manager_(manager) {}
   
   ~Dispatcher() {
     // debug
@@ -64,45 +64,45 @@ class TimerManager::Dispatcher: public Runnable {
   /**
    * Dispatcher entry point
    *
-   * As long as dispatcher thread is running, pull tasks off the task _taskMap
+   * As long as dispatcher thread is running, pull tasks off the task taskMap_
    * and execute.
    */
   void run() {
     {
-      Synchronized s(_manager->_monitor);
-      if (_manager->_state == TimerManager::STARTING) {
-	_manager->_state = TimerManager::STARTED;
-	_manager->_monitor.notifyAll();
+      Synchronized s(manager_->monitor_);
+      if (manager_->state_ == TimerManager::STARTING) {
+	manager_->state_ = TimerManager::STARTED;
+	manager_->monitor_.notifyAll();
       }
     }
 
     do {
       std::set<shared_ptr<TimerManager::Task> > expiredTasks;
       {
-        Synchronized s(_manager->_monitor);
+        Synchronized s(manager_->monitor_);
 	task_iterator expiredTaskEnd;
 	long long now = Util::currentTime();
-	while (_manager->_state == TimerManager::STARTED && 
-               (expiredTaskEnd = _manager->_taskMap.upper_bound(now)) == _manager->_taskMap.begin()) {
+	while (manager_->state_ == TimerManager::STARTED && 
+               (expiredTaskEnd = manager_->taskMap_.upper_bound(now)) == manager_->taskMap_.begin()) {
 	  long long timeout = 0LL;
-	  if (!_manager->_taskMap.empty()) {
-            timeout = _manager->_taskMap.begin()->first - now;
+	  if (!manager_->taskMap_.empty()) {
+            timeout = manager_->taskMap_.begin()->first - now;
 	  }
-          assert((timeout != 0 && _manager->_taskCount > 0) || (timeout == 0 && _manager->_taskCount == 0));
-          _manager->_monitor.wait(timeout);
+          assert((timeout != 0 && manager_->taskCount_ > 0) || (timeout == 0 && manager_->taskCount_ == 0));
+          manager_->monitor_.wait(timeout);
 	  now = Util::currentTime();
 	}
 	
-	if (_manager->_state == TimerManager::STARTED) {
-          for (task_iterator ix = _manager->_taskMap.begin(); ix != expiredTaskEnd; ix++) {
+	if (manager_->state_ == TimerManager::STARTED) {
+          for (task_iterator ix = manager_->taskMap_.begin(); ix != expiredTaskEnd; ix++) {
 	    shared_ptr<TimerManager::Task> task = ix->second;
             expiredTasks.insert(task);
-	    if (task->_state == TimerManager::Task::WAITING) {
-	      task->_state = TimerManager::Task::EXECUTING;
+	    if (task->state_ == TimerManager::Task::WAITING) {
+	      task->state_ = TimerManager::Task::EXECUTING;
 	    }
-            _manager->_taskCount--;
+            manager_->taskCount_--;
 	  }
-          _manager->_taskMap.erase(_manager->_taskMap.begin(), expiredTaskEnd);
+          manager_->taskMap_.erase(manager_->taskMap_.begin(), expiredTaskEnd);
 	}
       }
       
@@ -110,27 +110,27 @@ class TimerManager::Dispatcher: public Runnable {
         (*ix)->run();
       }
       
-    } while (_manager->_state == TimerManager::STARTED);
+    } while (manager_->state_ == TimerManager::STARTED);
 
     {
-      Synchronized s(_manager->_monitor);
-      if (_manager->_state == TimerManager::STOPPING) {
-	_manager->_state = TimerManager::STOPPED; 
-	_manager->_monitor.notify();
+      Synchronized s(manager_->monitor_);
+      if (manager_->state_ == TimerManager::STOPPING) {
+	manager_->state_ = TimerManager::STOPPED; 
+	manager_->monitor_.notify();
       }
     }
     return;
   }
 
  private:
-  TimerManager* _manager;
+  TimerManager* manager_;
   friend class TimerManager;
 };
 
 TimerManager::TimerManager() :
-  _taskCount(0),
-  _state(TimerManager::UNINITIALIZED),
-  _dispatcher(shared_ptr<Dispatcher>(new Dispatcher(this))) {
+  taskCount_(0),
+  state_(TimerManager::UNINITIALIZED),
+  dispatcher_(shared_ptr<Dispatcher>(new Dispatcher(this))) {
 }
 
 
@@ -140,7 +140,7 @@ TimerManager::~TimerManager() {
   // the monitor here, since stop already takes care of reentrancy.
   std::cerr << "TimerManager::dtor[" << this << "]" << std::endl;
   
-  if (_state != STOPPED) {
+  if (state_ != STOPPED) {
     try {
       stop();
     } catch(...) {
@@ -154,69 +154,69 @@ TimerManager::~TimerManager() {
 void TimerManager::start() {
   bool doStart = false;
   {
-    Synchronized s(_monitor);
-    if (_threadFactory == NULL) {
+    Synchronized s(monitor_);
+    if (threadFactory_ == NULL) {
       throw InvalidArgumentException();
     }
-    if (_state == TimerManager::UNINITIALIZED) {
-      _state = TimerManager::STARTING;
+    if (state_ == TimerManager::UNINITIALIZED) {
+      state_ = TimerManager::STARTING;
       doStart = true;
     }
   }
 
   if (doStart) {
-    _dispatcherThread = _threadFactory->newThread(_dispatcher);
-    _dispatcherThread->start();
+    dispatcherThread_ = threadFactory_->newThread(dispatcher_);
+    dispatcherThread_->start();
   }
 
   {
-    Synchronized s(_monitor);
-    while (_state == TimerManager::STARTING) {
-      _monitor.wait();
+    Synchronized s(monitor_);
+    while (state_ == TimerManager::STARTING) {
+      monitor_.wait();
     }
-    assert(_state != TimerManager::STARTING);
+    assert(state_ != TimerManager::STARTING);
   }
 }
 
 void TimerManager::stop() {
   bool doStop = false;
   {
-    Synchronized s(_monitor);
-    if (_state == TimerManager::UNINITIALIZED) {
-      _state = TimerManager::STOPPED;
-    } else if (_state != STOPPING &&  _state != STOPPED) {
+    Synchronized s(monitor_);
+    if (state_ == TimerManager::UNINITIALIZED) {
+      state_ = TimerManager::STOPPED;
+    } else if (state_ != STOPPING &&  state_ != STOPPED) {
       doStop = true;
-      _state = STOPPING;
-      _monitor.notifyAll();
+      state_ = STOPPING;
+      monitor_.notifyAll();
     }
-    while (_state != STOPPED) {
-      _monitor.wait();
+    while (state_ != STOPPED) {
+      monitor_.wait();
     }
   }
 
   if (doStop) {
     // Clean up any outstanding tasks
-    for (task_iterator ix =  _taskMap.begin(); ix != _taskMap.end(); ix++) {
-      _taskMap.erase(ix);
+    for (task_iterator ix =  taskMap_.begin(); ix != taskMap_.end(); ix++) {
+      taskMap_.erase(ix);
     }
 
     // Remove dispatcher's reference to us. 
-    _dispatcher->_manager = NULL;
+    dispatcher_->manager_ = NULL;
   }
 }
 
 shared_ptr<const ThreadFactory> TimerManager::threadFactory() const {
-  Synchronized s(_monitor); 
-  return _threadFactory;
+  Synchronized s(monitor_); 
+  return threadFactory_;
 }
       
 void TimerManager::threadFactory(shared_ptr<const ThreadFactory>  value) {
-  Synchronized s(_monitor); 
-  _threadFactory = value;
+  Synchronized s(monitor_); 
+  threadFactory_ = value;
 }
 
 size_t TimerManager::taskCount() const {
-  return _taskCount;
+  return taskCount_;
 }
       
 void TimerManager::add(shared_ptr<Runnable> task, long long timeout) {
@@ -224,19 +224,19 @@ void TimerManager::add(shared_ptr<Runnable> task, long long timeout) {
   timeout += now;
 
   {
-    Synchronized s(_monitor); 
-    if (_state != TimerManager::STARTED) {
+    Synchronized s(monitor_); 
+    if (state_ != TimerManager::STARTED) {
       throw IllegalStateException();
     }
 
-    _taskCount++;
-    _taskMap.insert(std::pair<long long, shared_ptr<Task> >(timeout, shared_ptr<Task>(new Task(task))));
+    taskCount_++;
+    taskMap_.insert(std::pair<long long, shared_ptr<Task> >(timeout, shared_ptr<Task>(new Task(task))));
 
     // If the task map was empty, or if we have an expiration that is earlier
     // than any previously seen, kick the dispatcher so it can update its
     // timeout
-    if (_taskCount == 1 || timeout < _taskMap.begin()->first) {
-      _monitor.notify();
+    if (taskCount_ == 1 || timeout < taskMap_.begin()->first) {
+      monitor_.notify();
     }
   }
 }
@@ -257,13 +257,13 @@ void TimerManager::add(shared_ptr<Runnable> task, const struct timespec& value) 
 
 
 void TimerManager::remove(shared_ptr<Runnable> task) {
-  Synchronized s(_monitor); 
-  if (_state != TimerManager::STARTED) {
+  Synchronized s(monitor_); 
+  if (state_ != TimerManager::STARTED) {
     throw IllegalStateException();
   }
 }
 
-const TimerManager::STATE TimerManager::state() const { return _state; }
+const TimerManager::STATE TimerManager::state() const { return state_; }
 
 }}} // facebook::thrift::concurrency
 

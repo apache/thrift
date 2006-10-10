@@ -12,19 +12,15 @@ using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::transport;
 
 class TThreadPoolServer::Task: public Runnable {
-    
-  shared_ptr<TProcessor> _processor;
-  shared_ptr<TTransport> _input;
-  shared_ptr<TTransport> _output;
-    
+       
 public:
     
   Task(shared_ptr<TProcessor> processor,
        shared_ptr<TTransport> input,
        shared_ptr<TTransport> output) :
-    _processor(processor),
-    _input(input),
-    _output(output) {
+    processor_(processor),
+    input_(input),
+    output_(output) {
   }
 
   ~Task() {}
@@ -32,16 +28,22 @@ public:
   void run() {     
     while(true) {
       try {
-	_processor->process(_input, _output);
+	processor_->process(input_, output_);
       } catch (TTransportException& ttx) {
         break;
       } catch(...) {
         break;
       }
     }
-    _input->close();
-    _output->close();
+    input_->close();
+    output_->close();
   }
+
+ private:
+  shared_ptr<TProcessor> processor_;
+  shared_ptr<TTransport> input_;
+  shared_ptr<TTransport> output_;
+
 };
   
 TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,

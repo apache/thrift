@@ -86,17 +86,17 @@ class TimerManager {
   virtual const STATE state() const;
 
  private:
-  shared_ptr<const ThreadFactory> _threadFactory;
+  shared_ptr<const ThreadFactory> threadFactory_;
   class Task;
   friend class Task;
-  std::multimap<long long, shared_ptr<Task> > _taskMap;
-  size_t _taskCount;
-  Monitor _monitor;
-  STATE _state;
+  std::multimap<long long, shared_ptr<Task> > taskMap_;
+  size_t taskCount_;
+  Monitor monitor_;
+  STATE state_;
   class Dispatcher;
   friend class Dispatcher;
-  shared_ptr<Dispatcher> _dispatcher;
-  shared_ptr<Thread> _dispatcherThread;
+  shared_ptr<Dispatcher> dispatcher_;
+  shared_ptr<Thread> dispatcherThread_;
 };
 
 }}} // facebook::thrift::concurrency

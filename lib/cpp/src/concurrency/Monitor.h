@@ -39,22 +39,23 @@ class Monitor {
 
   class Impl;
 
-  Impl* _impl;
+  Impl* impl_;
 };
 
 class Synchronized {
  public:
   
- Synchronized(const Monitor& value) : _monitor(value) {
-    _monitor.lock();
+ Synchronized(const Monitor& value) :
+   monitor_(value) {
+   monitor_.lock();
   }
 
   ~Synchronized() {
-    _monitor.unlock();
+    monitor_.unlock();
   }
 
  private:
-  const Monitor& _monitor;
+  const Monitor& monitor_;
 };
 
 

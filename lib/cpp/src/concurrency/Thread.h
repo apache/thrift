@@ -26,16 +26,16 @@ class Runnable {
    * Gets the thread object that is hosting this runnable object  - can return
    * an empty shared pointer if no references remain on thet thread  object
    */
-  virtual shared_ptr<Thread> thread() { return _thread.lock(); }
+  virtual shared_ptr<Thread> thread() { return thread_.lock(); }
 
   /**
    * Sets the thread that is executing this object.  This is only meant for
    * use by concrete implementations of Thread.
    */
-  virtual void thread(shared_ptr<Thread> value) { _thread = value; }
+  virtual void thread(shared_ptr<Thread> value) { thread_ = value; }
 
  private:
-  weak_ptr<Thread> _thread;
+  weak_ptr<Thread> thread_;
 };
 
 /**

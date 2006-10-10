@@ -13,13 +13,19 @@
 namespace facebook { namespace thrift {
 
 class Exception : public std::exception {
-private:
-  const std::string _message;
-
 public:
-  Exception(const std::string message) : _message(message) {}
+  Exception(const std::string message) :
+    message_(message) {}
+
   ~Exception() throw () {}
-  const char* what() {return _message.c_str();}
+
+  const char* what() {
+    return message_.c_str();
+  }
+
+private:
+  const std::string message_;
+
 };
 
 }} // facebook::thrift

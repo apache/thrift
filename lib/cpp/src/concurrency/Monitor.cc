@@ -22,14 +22,14 @@ class Monitor::Impl {
  public:
 
   Impl() :
-    mutexInitialized(false),
-    condInitialized(false) {
+    mutexInitialized_(false),
+    condInitialized_(false) {
     
     try {
-      assert(pthread_mutex_init(&_pthread_mutex, NULL) == 0);
-      mutexInitialized = true;
-      assert(pthread_cond_init(&_pthread_cond, NULL) == 0);
-      condInitialized = true;
+      assert(pthread_mutex_init(&pthread_mutex_, NULL) == 0);
+      mutexInitialized_ = true;
+      assert(pthread_cond_init(&pthread_cond_, NULL) == 0);
+      condInitialized_ = true;
     } catch(...) {
       cleanup();
     }
@@ -37,21 +37,23 @@ class Monitor::Impl {
 
   ~Impl() { cleanup(); }
 
-  void lock() const { pthread_mutex_lock(&_pthread_mutex); }
+  void lock() const { pthread_mutex_lock(&pthread_mutex_); }
 
-  void unlock() const { pthread_mutex_unlock(&_pthread_mutex); }
+  void unlock() const { pthread_mutex_unlock(&pthread_mutex_); }
 
   void wait(long long timeout) const {
 
     // XXX Need to assert that caller owns mutex
     assert(timeout >= 0LL);
     if (timeout == 0LL) {
-      assert(pthread_cond_wait(&_pthread_cond, &_pthread_mutex) == 0);
+      assert(pthread_cond_wait(&pthread_cond_, &pthread_mutex_) == 0);
     } else {
       struct timespec abstime;
       long long now = Util::currentTime();
       Util::toTimespec(abstime, now + timeout);
-      int result = pthread_cond_timedwait(&_pthread_cond, &_pthread_mutex, &abstime);
+      int result = pthread_cond_timedwait(&pthread_cond_,
+                                          &pthread_mutex_,
+                                          &abstime);
       if (result == ETIMEDOUT) {
 	assert(Util::currentTime() >= (now + timeout));
       }
@@ -60,46 +62,46 @@ class Monitor::Impl {
 
   void notify() {
     // XXX Need to assert that caller owns mutex
-    assert(pthread_cond_signal(&_pthread_cond) == 0);
+    assert(pthread_cond_signal(&pthread_cond_) == 0);
   }
 
   void notifyAll() {
     // XXX Need to assert that caller owns mutex
-    assert(pthread_cond_broadcast(&_pthread_cond) == 0);
+    assert(pthread_cond_broadcast(&pthread_cond_) == 0);
   }
 
  private:
 
   void cleanup() {
-    if (mutexInitialized) {
-      mutexInitialized = false;
-      assert(pthread_mutex_destroy(&_pthread_mutex) == 0);
+    if (mutexInitialized_) {
+      mutexInitialized_ = false;
+      assert(pthread_mutex_destroy(&pthread_mutex_) == 0);
     }
 
-    if (condInitialized) {
-      condInitialized = false;
-      assert(pthread_cond_destroy(&_pthread_cond) == 0);
+    if (condInitialized_) {
+      condInitialized_ = false;
+      assert(pthread_cond_destroy(&pthread_cond_) == 0);
     }
   }
 
-  mutable pthread_mutex_t _pthread_mutex;
-  mutable bool mutexInitialized;
-  mutable pthread_cond_t _pthread_cond;
-  mutable bool condInitialized;
+  mutable pthread_mutex_t pthread_mutex_;
+  mutable bool mutexInitialized_;
+  mutable pthread_cond_t pthread_cond_;
+  mutable bool condInitialized_;
 };
 
-Monitor::Monitor() : _impl(new Monitor::Impl()) {}
+Monitor::Monitor() : impl_(new Monitor::Impl()) {}
 
-Monitor::~Monitor() { delete _impl; }
+Monitor::~Monitor() { delete impl_; }
 
-void Monitor::lock() const { _impl->lock(); }
+void Monitor::lock() const { impl_->lock(); }
 
-void Monitor::unlock() const { _impl->unlock(); }
+void Monitor::unlock() const { impl_->unlock(); }
 
-void Monitor::wait(long long timeout) const { _impl->wait(timeout); }
+void Monitor::wait(long long timeout) const { impl_->wait(timeout); }
 
-void Monitor::notify() const { _impl->notify(); }
+void Monitor::notify() const { impl_->notify(); }
 
-void Monitor::notifyAll() const { _impl->notifyAll(); }
+void Monitor::notifyAll() const { impl_->notifyAll(); }
 
 }}} // facebook::thrift::concurrency

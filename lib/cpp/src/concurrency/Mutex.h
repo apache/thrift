@@ -18,20 +18,20 @@ class Mutex {
 
  private:
   class impl;
-  impl* _impl;
+  impl* impl_;
 };
 
 class MutexMonitor {
  public: 
-  MutexMonitor(const Mutex& value) : _mutex(value) {
-    _mutex.lock();
+  MutexMonitor(const Mutex& value) : mutex_(value) {
+    mutex_.lock();
   }
   ~MutexMonitor() {
-    _mutex.unlock();
+    mutex_.unlock();
   }
 
  private:
-  const Mutex& _mutex;
+  const Mutex& mutex_;
 };
 
 

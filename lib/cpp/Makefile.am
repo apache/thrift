@@ -1,7 +1,7 @@
 lib_LTLIBRARIES = libthrift.la
 
 common_cxxflags = -Wall -Isrc $(BOOST_CPPFLAGS)
-common_ldflags = -Wall $(BOOST_LDFLAGS)
+common_ldflags = -Wall $(BOOST_LDFLAGS) -levent
 
 # Define the source file for the module
 
@@ -12,10 +12,12 @@ libthrift_sources = src/concurrency/Monitor.cc \
 	            src/protocol/TBinaryProtocol.cc \
                     src/transport/TBufferedTransport.cc \
                     src/transport/TFramedTransport.cc \
+                    src/transport/TMemoryBuffer.cc \
                     src/transport/TSocket.cc \
                     src/transport/TServerSocket.cc \
                     src/server/TSimpleServer.cc \
-                    src/server/TThreadPoolServer.cc
+                    src/server/TThreadPoolServer.cc \
+                    src/server/TNonblockingServer.cc
 
 libthrift_la_SOURCES = $(libthrift_sources)
 
@@ -50,6 +52,7 @@ include_transport_HEADERS = \
                          src/transport/TBufferedTransport.h \
                          src/transport/TFramedTransport.h \
                          src/transport/TNullTransport.h \
+                         src/transport/TMemoryBuffer.h \
                          src/transport/TServerSocket.h \
                          src/transport/TServerTransport.h \
                          src/transport/TSocket.h \
@@ -62,7 +65,8 @@ include_serverdir = $(include_thriftdir)/server
 include_server_HEADERS = \
                          src/server/TServer.h \
                          src/server/TSimpleServer.h \
-                         src/server/TThreadPoolServer.h
+                         src/server/TThreadPoolServer.h \
+                         src/server/TNonblockingServer.h
 
 bin_PROGRAMS = concurrency_test
 

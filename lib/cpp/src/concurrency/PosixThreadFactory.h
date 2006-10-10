@@ -79,7 +79,7 @@ class PosixThreadFactory : public ThreadFactory {
   
  private:
   class Impl;
-  shared_ptr<Impl> _impl;
+  shared_ptr<Impl> impl_;
 };
 
 }}} // facebook::thrift::concurrency
