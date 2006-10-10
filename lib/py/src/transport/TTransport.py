@@ -1,4 +1,5 @@
 from cStringIO import StringIO
+from struct import pack,unpack
 
 class TTransportException(Exception):
 
@@ -89,3 +90,45 @@ class TBufferedTransport(TTransportBase):
   def flush(self):
     self.__trans.write(self.__buf.getvalue())
     self.__buf = StringIO()
+
+class TFramedTransportFactory:
+
+  """Factory transport that builds framed transports"""
+
+  def getIOTransports(self, trans):
+    framed = TFramedTransport(trans)
+    return (framed, framed)
+
+
+class TFramedTransport(TTransportBase):
+
+  """Class that wraps another transport and frames its I/O when writing."""
+
+  def __init__(self, trans):
+    self.__trans = trans
+    self.__wbuf = StringIO()
+
+  def isOpen(self):
+    return self.__trans.isOpen()
+
+  def open(self):
+    return self.__trans.open()
+
+  def close(self):
+    return self.__trans.close()
+
+  def read(self, sz):
+    return self.__trans.read(sz)
+
+  def readAll(self, sz):
+    return self.__trans.readAll(sz)
+
+  def write(self, buf):
+    self.__wbuf.write(buf)
+
+  def flush(self):
+    wout = self.__wbuf.getvalue()
+    wsz = len(wout)
+    self.__trans.write(pack("!i", wsz))
+    self.__trans.write(wout)
+    self.__wbuf = StringIO()
