@@ -5,7 +5,6 @@
  */
 include_once $GLOBALS['THRIFT_ROOT'].'/protocol/TType.php';
 
-
 /**
  * Protocol module.
  *
@@ -213,6 +212,100 @@ abstract class TProtocol {
     default:
       return 0;
     }
+  }
+
+  /**
+   * Utility for skipping binary data
+   *
+   * @param TTransport $itrans TTransport object
+   * @param int        $type   Field type
+   */
+  public static function skipBinary($itrans, $type) {
+    switch ($type) {
+    case TType::BOOL:
+      return $itrans->readAll(1);
+    case TType::BYTE:
+      return $itrans->readAll(1);
+    case TType::I16;
+      return $itrans->readAll(2);
+    case TType::I32:
+      return $itrans->readAll(4);
+    case TType::I64:
+      return $itrans->readAll(8);
+    case TType::DOUBLE:
+      return $itrans->readAll(8);
+    case TType::STRING:
+      $len = unpack('N', $itrans->readAll(4));
+      $len = $len[1];
+      if ($len > 0x7fffffff) {
+        $len = 0 - (($len - 1) ^ 0xffffffff);
+      }
+      return 4 + $itrans->readAll($len);
+    case TType::STRUCT:
+      {
+        $result = 0;
+        while (true) {
+          $ftype = 0;
+          $fid = 0;
+          $data = $in->readAll(1);
+          $arr = unpack('c', $data);
+          $ftype = $arr[1];
+          if ($ftype == TType::STOP) {
+            break;
+          }
+          // I16 field id
+          $result += $itrans->readAll(2);
+          $result += self::skipBinary($itrans, $ftype);
+        }
+        return $result;
+      }
+    case TType::MAP:
+      {
+        // Ktype
+        $data = $itrans->readAll(1);
+        $arr = unpack('c', $data);
+        $ktype = $arr[1];
+        // Vtype
+        $data = $itrans->readAll(1);
+        $arr = unpack('c', $data);
+        $vtype = $arr[1];
+        // Size
+        $data = $itrans->readAll(4);
+        $arr = unpack('N', $data);
+        $size = $arr[1];
+        if ($size > 0x7fffffff) {
+          $size = 0 - (($size - 1) ^ 0xffffffff);
+        }
+        $result = 6;
+        for ($i = 0; $i < $size; $i++) {
+          $result += self::skipBinary($itrans, $ktype);
+          $result += self::skipBinary($itrans, $vtype);
+        }
+        return $result;
+      }
+    case TType::SET:
+    case TType::LST:
+      {
+        // Vtype
+        $data = $itrans->readAll(1);
+        $arr = unpack('c', $data);
+        $vtype = $arr[1];
+        // Size
+        $data = $itrans->readAll(4);
+        $arr = unpack('N', $data);
+        $size = $arr[1];
+        if ($size > 0x7fffffff) {
+          $size = 0 - (($size - 1) ^ 0xffffffff);
+        }
+        $result = 5;
+        for ($i = 0; $i < $size; $i++) {
+          $result += self::skipBinary($itrans, $vtype);
+        }
+        return $result;
+      }
+    default:
+      return 0;
+    }   
   }
 }
 

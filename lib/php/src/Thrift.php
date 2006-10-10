@@ -1,6 +1,8 @@
 <?php
 
-/** Set global THRIFT ROOT automatically via inclusion here */
+/**
+ * Set global THRIFT ROOT automatically via inclusion here
+ */
 if (!isset($GLOBALS['THRIFT_ROOT'])) {
   $GLOBALS['THRIFT_ROOT'] = dirname(__FILE__);
 }
