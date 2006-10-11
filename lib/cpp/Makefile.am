@@ -11,6 +11,8 @@ libthrift_sources = src/concurrency/Monitor.cc \
                     src/concurrency/TimerManager.cc \
 	            src/protocol/TBinaryProtocol.cc \
                     src/transport/TBufferedTransport.cc \
+                    src/transport/TBufferedFileWriter.cc \
+                    src/transport/TBufferedRouterTransport.cc \
                     src/transport/TFramedTransport.cc \
                     src/transport/TMemoryBuffer.cc \
                     src/transport/TSocket.cc \
@@ -30,7 +32,8 @@ include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
 			 config.h \
 			 src/Thrift.h \
-			 src/TProcessor.h
+			 src/TProcessor.h \
+			 src/TLogging.h
 
 include_concurrencydir = $(include_thriftdir)/concurrency
 include_concurrency_HEADERS = \
@@ -59,7 +62,9 @@ include_transport_HEADERS = \
                          src/transport/TTransport.h \
                          src/transport/TTransportException.h \
                          src/transport/TTransportFactory.h \
-                         src/transport/TBufferedTransportFactory.h
+                         src/transport/TBufferedTransportFactory.h \
+                         src/transport/TBufferedFileWriter.h \
+                         src/transport/TBufferedRouterTransport.h
 
 include_serverdir = $(include_thriftdir)/server
 include_server_HEADERS = \
