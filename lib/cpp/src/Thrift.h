@@ -10,6 +10,8 @@
 #include <vector>
 #include <exception>
 
+#include "TLogging.h"
+
 namespace facebook { namespace thrift {
 
 class Exception : public std::exception {

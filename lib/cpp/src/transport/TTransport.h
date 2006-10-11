@@ -1,6 +1,7 @@
 #ifndef _THRIFT_TRANSPORT_TTRANSPORT_H_
 #define _THRIFT_TRANSPORT_TTRANSPORT_H_ 1
 
+#include "Thrift.h"
 #include <transport/TTransportException.h>
 #include <string>
 
@@ -72,7 +73,7 @@ class TTransport {
       }
       have += get;
     }
-
+    
     return have;
   }
 

@@ -15,6 +15,7 @@ uint32_t TBufferedTransport::read(uint8_t* buf, uint32_t len) {
       buf += rLen_-rPos_;
     }    
     // Get more from underlying transport up to buffer size
+    // TODO: should this be a readAll?
     rLen_ = transport_->read(rBuf_, rBufSize_);
     rPos_ = 0;
   }

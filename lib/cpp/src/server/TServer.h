@@ -21,10 +21,13 @@ class TServerOptions;
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class TServer {
+class TServer : public concurrency::Runnable {
 public:
   virtual ~TServer() {}
   virtual void serve() = 0;
+
+  // Allows running the server as a Runnable thread
+  virtual void run() { serve(); }
   
   shared_ptr<TProcessor> getProcessor() {
     return processor_;
