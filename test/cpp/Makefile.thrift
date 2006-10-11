@@ -31,8 +31,8 @@ CC     = g++
 LD     = g++
 
 # Compiler flags
-DCFL  = -Wall -O3 -g -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp -lthrift -levent
-CFL   = -Wall -O3 -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp -lthrift -levent
+DCFL  = -Wall -O3 -g -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -levent
+CFL   = -Wall -O3 -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -levent
 
 all: server client
 

@@ -8,7 +8,12 @@
 #include <transport/TServerSocket.h>
 #include <transport/TSocket.h>
 #include <transport/TBufferedTransport.h>
-#include "StressTest.h"
+#include <transport/TBufferedTransportFactory.h>
+#include <transport/TBufferedRouterTransport.h>
+#include <transport/TBufferedRouterTransportFactory.h>
+#include <transport/TBufferedFileWriter.h>
+
+#include "Service.h"
 
 #include <iostream>
 #include <set>
@@ -24,23 +29,17 @@ using namespace facebook::thrift::server;
 
 using namespace test::stress;
 
-class Server : public ServiceServerIf {
+class Server : public ServiceIf {
  public:
-  Server(shared_ptr<TProtocol> protocol) :
-    ServiceServerIf(protocol) {}
-
+  Server() {};
   void echoVoid() {return;}
-  uint8_t echoByte(uint8_t arg) {return arg;}
-  int16_t echoI16(int16_t arg) {return arg;}
+  int8_t echoByte(int8_t arg) {return arg;}
   int32_t echoI32(int32_t arg) {return arg;}
   int64_t echoI64(int64_t arg) {return arg;}
-  uint16_t echoU16(uint16_t arg) {return arg;}
-  uint32_t echoU32(uint32_t arg) {return arg;}
-  uint64_t echoU64(uint64_t arg) {return arg;}
   string echoString(string arg) {return arg;}
-  list<uint8_t> echoList(list<uint8_t> arg) {return arg;}
-  set<uint8_t> echoSet(set<uint8_t> arg) {return arg;}
-  map<uint8_t, uint8_t> echoMap(map<uint8_t, uint8_t> arg) {return arg;}
+  vector<int8_t> echoList(vector<int8_t> arg) {return arg;}
+  set<int8_t> echoSet(set<int8_t> arg) {return arg;}
+  map<int8_t, int8_t> echoMap(map<int8_t, int8_t> arg) {return arg;}
 };
 
 class ClientThread: public Runnable {
@@ -72,12 +71,8 @@ public:
     switch(_loopType) {
     case T_VOID: loopEchoVoid(); break;
     case T_BYTE: loopEchoByte(); break;
-    case T_I16: loopEchoI16(); break;
     case T_I32: loopEchoI32(); break;
     case T_I64: loopEchoI64(); break;
-    case T_U16: loopEchoU16(); break;
-    case T_U32: loopEchoU32(); break;
-    case T_U64: loopEchoU64(); break;
     case T_STRING: loopEchoString(); break;
     default: cerr << "Unexpected loop type" << _loopType << endl; break;
     }
@@ -107,26 +102,17 @@ public:
 
   void loopEchoByte() {
     for(size_t ix = 0; ix < _loopCount; ix++) {
-      uint8_t arg = 1;
-      uint8_t result;
+      int8_t arg = 1;
+      int8_t result;
       result =_client->echoByte(arg);
       assert(result == arg);
     }
   }
   
-  void loopEchoI16() {
-    for(size_t ix = 0; ix < _loopCount; ix++) {
-      uint16_t arg = 1;
-      uint16_t result;
-      result =_client->echoI16(arg);
-      assert(result == arg);
-    }
-  }
-
   void loopEchoI32() {
     for(size_t ix = 0; ix < _loopCount; ix++) {
-      uint32_t arg = 1;
-      uint32_t result;
+      int32_t arg = 1;
+      int32_t result;
       result =_client->echoI32(arg);
       assert(result == arg);
     }
@@ -134,40 +120,13 @@ public:
 
   void loopEchoI64() {
     for(size_t ix = 0; ix < _loopCount; ix++) {
-      uint64_t arg = 1;
-      uint64_t result;
+      int64_t arg = 1;
+      int64_t result;
       result =_client->echoI64(arg);
       assert(result == arg);
     }
   }
-  
-  void loopEchoU16() {
-    for(size_t ix = 0; ix < _loopCount; ix++) {
-      uint16_t arg = 1;
-      uint16_t result;
-      result =_client->echoU16(arg);
-      assert(result == arg);
-    }
-  }
-
-  void loopEchoU32() {
-    for(size_t ix = 0; ix < _loopCount; ix++) {
-      uint32_t arg = 1;
-      uint32_t result;
-      result =_client->echoU32(arg);
-      assert(result == arg);
-    }
-  }
-
-  void loopEchoU64() {
-    for(size_t ix = 0; ix < _loopCount; ix++) {
-      uint64_t arg = 1;
-      uint64_t result;
-      result =_client->echoU64(arg);
-      assert(result == arg);
-    }
-  }
-  
+    
   void loopEchoString() {
     for(size_t ix = 0; ix < _loopCount; ix++) {
       string arg = "hello";
@@ -200,6 +159,8 @@ int main(int argc, char **argv) {
   TType loopType  = T_VOID;
   string callName = "echoVoid";
   bool runServer = true;
+  bool logRequests = false;
+  string requestLogPath = "./requestlog.tlog";
 
   ostringstream usage;
 
@@ -213,6 +174,7 @@ int main(int argc, char **argv) {
     "\tserver         Run the Thrift server in this process.  Default is " << runServer << endl <<
     "\tserver-type    Type of server, \"simple\" or \"thread-pool\".  Default is " << serverType << endl <<
     "\tprotocol-type  Type of protocol, \"binary\", \"ascii\", or \"xml\".  Default is " << protocolType << endl <<
+    "\tlog-request    Log all request to ./requestlog.tlog. Default is " << logRequests << endl <<
     "\tworkers        Number of thread pools workers.  Only valid for thread-pool server type.  Default is " << workerCount << endl;
     
   map<string, string>  args;
@@ -264,6 +226,10 @@ int main(int argc, char **argv) {
       runServer = args["server"] == "true";
     }
 
+    if(!args["log-request"].empty()) {
+      logRequests = args["log-request"] == "true";
+    }
+
     if(!args["server-type"].empty()) {
       serverType = args["server-type"];
       
@@ -293,21 +259,36 @@ int main(int argc, char **argv) {
     // Dispatcher
     shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol);
 
-    shared_ptr<Server> server(new Server(binaryProtocol));
+    shared_ptr<Server> serviceHandler(new Server());
 
-    // Options
-    shared_ptr<TServerOptions> serverOptions(new TServerOptions());
+    shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler, binaryProtocol));
 
     // Transport
     shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
 
-    // ThreadFactory
+    // Transport Factory
+    shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+
+    // Options
+    shared_ptr<TServerOptions> serverOptions(new TServerOptions());
+
+    if (logRequests) {
+      // initialize the log file
+      shared_ptr<TBufferedFileWriter> bufferedFileWriter(new TBufferedFileWriter(requestLogPath, 1000));
+      bufferedFileWriter->setChunkSize(2 * 1024 * 1024);
+      bufferedFileWriter->setMaxEventSize(1024 * 16);
+      
+      transportFactory = shared_ptr<TTransportFactory>(new TBufferedRouterTransportFactory(bufferedFileWriter));
+    }
 
     shared_ptr<Thread> serverThread;
 
     if(serverType == "simple") {
       
-      serverThread = threadFactory->newThread(shared_ptr<Runnable>(new TSimpleServer(server, serverOptions, serverSocket)));
+      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TSimpleServer(serviceProcessor, 
+                                                                                    serverSocket, 
+                                                                                    transportFactory, 
+                                                                                    serverOptions)));
       
     } else if(serverType == "thread-pool") {
 
@@ -316,11 +297,12 @@ int main(int argc, char **argv) {
       threadManager->threadFactory(threadFactory);
 
       threadManager->start();
-
-      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TThreadPoolServer(server,
-											serverOptions,
-											serverSocket,
-											threadManager)));
+      
+      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TThreadPoolServer(serviceProcessor,
+                                                                                        serverSocket,
+                                                                                        transportFactory,
+                                                                                        threadManager,
+                                                                                        serverOptions)));
     }
 
     cerr << "Starting the server on port " << port << endl;
@@ -344,12 +326,8 @@ int main(int argc, char **argv) {
 
     if(callName == "echoVoid") { loopType = T_VOID;}
     else if(callName == "echoByte") { loopType = T_BYTE;}
-    else if(callName == "echoI16") { loopType = T_I16;}
     else if(callName == "echoI32") { loopType = T_I32;}
     else if(callName == "echoI64") { loopType = T_I64;}
-    else if(callName == "echoU16") { loopType = T_U16;}
-    else if(callName == "echoU32") { loopType = T_U32;}
-    else if(callName == "echoU64") { loopType = T_U64;}
     else if(callName == "echoString") { loopType = T_STRING;}
     else {throw invalid_argument("Unknown service call "+callName);}
 
@@ -358,9 +336,9 @@ int main(int argc, char **argv) {
       shared_ptr<TSocket> socket(new TSocket("127.0.01", port));
       shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
       shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol());
-      shared_ptr<ServiceClient> serviceClient(new ServiceClient(bufferedSocket, binaryProtocol));
+      shared_ptr<ServiceClient> serviceClient(new ServiceClient(socket, binaryProtocol));
     
-      clientThreads.insert(threadFactory->newThread(shared_ptr<ClientThread>(new ClientThread(bufferedSocket, serviceClient, monitor, threadCount, loopCount, loopType))));
+      clientThreads.insert(threadFactory->newThread(shared_ptr<ClientThread>(new ClientThread(socket, serviceClient, monitor, threadCount, loopCount, loopType))));
     }
   
     for(std::set<shared_ptr<Thread> >::const_iterator thread = clientThreads.begin(); thread != clientThreads.end(); thread++) {

@@ -2,49 +2,51 @@
 # 
 # Author:
 #   Marc Kwiatkowski <marc@facebook.com>
+#   Aditya Agarwal   <aditya@facebook.com>
 
 
 ifndef thrift_home
-thrift_home=../../../../build
+thrift_home=../..
 endif #thrift_home
 
 target: all
-
-ifndef thirdparty
-thirdparty = ../../../../../../../thirdparty
-endif #thirdparty
 
 ifndef boost_home
-boost_home = /usr/local/include/boost-1_33_1
-endif #thrift_home
+#boost_home=../../../../../thirdparty/boost_1_33_1
+boost_home=/usr/local/include/boost-1_33_1
+endif #boost_home
 target: all
 
-include_paths = $(thrift_home)/include/thrift \
+include_paths = $(thrift_home)/lib/cpp/src \
+		$(thrift_home)/lib/cpp \
 		$(boost_home)
 
 include_flags = $(patsubst %,-I%, $(include_paths))
 
 # Tools
-THRIFT = thrift
+ifndef THRIFT
+THRIFT = ../../compiler/cpp/bin/thrift
+endif # THRIFT
+
 CC     = g++
 LD     = g++
 
 # Compiler flags
-DCFL  = -Wall -O3 -g -I cpp-gen $(include_flags) -L$(thrift_home)/lib -lthrift
-CFL   = -Wall -O3 -I cpp-gen $(include_flags) -L$(thrift_home)/lib -lthrift
+DCFL  = -Wall -O3 -g -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -levent
+CFL   = -Wall -O3 -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -levent
 
 all: stress-test
 
 debug: stress-test-debug
 
-stubs: StressTest.thrift
+stubs: ../StressTest.thrift
 	$(THRIFT) --cpp --php ../StressTest.thrift
 
 stress-test-debug: stubs
-	g++ -o stress-test $(DCFL) src/main.cc cpp-gen/StressTest.cc
+	g++ -o stress-test $(DCFL) src/main.cc ./gen-cpp/Service.cc gen-cpp/StressTest_types.cc
 
 stress-test: stubs
-	g++ -o stress-test $(CFL) src/main.cc cpp-gen/StressTest.cc
+	g++ -o stress-test $(CFL) src/main.cc ./gen-cpp/Service.cc gen-cpp/StressTest_types.cc
 
 clean:
-	rm -fr stress-test cpp-gen
+	rm -fr stress-test gen-cpp
