@@ -34,6 +34,7 @@ multicomm    ("/*""/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
 comment      ("//"[^\n]*)
 unixcomment  ("#"[^\n]*)
 symbol       ([\,\{\}\(\)\=<>])
+cpptype      ("[cpp:".*"]")
 
 %%
 
@@ -64,8 +65,21 @@ symbol       ([\,\{\}\(\)\=<>])
 "service"     { return tok_service;   }
 "enum"        { return tok_enum;      }
 
-{intconstant} { yylval.iconst = atoi(yytext); return tok_int_constant; }
+{intconstant} {
+  yylval.iconst = atoi(yytext);
+  return tok_int_constant;
+}
 
-{identifier}  { yylval.id = strdup(yytext); return tok_identifier; }
+{cpptype} {
+  yylval.id = strdup(yytext+5);
+  yylval.id[strlen(yylval.id)-1] = '\0';
+  return tok_cpptype;
+}
+
+{identifier} {
+  yylval.id = strdup(yytext);
+  return tok_identifier;
+}
+
 
 %%

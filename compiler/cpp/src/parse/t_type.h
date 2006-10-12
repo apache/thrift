@@ -24,13 +24,10 @@ class t_type {
   virtual bool is_enum()      const { return false; }
   virtual bool is_struct()    const { return false; }
   virtual bool is_xception()  const { return false; }
+  virtual bool is_container() const { return false; }
   virtual bool is_list()      const { return false; }
   virtual bool is_set()       const { return false; }
   virtual bool is_map()       const { return false; }
-
-  bool is_container() const {
-    return is_map() || is_set() || is_list();
-  }
 
  protected:
   t_type() {}

@@ -44,6 +44,7 @@ int y_field_val = -1;
  * Strings identifier
  */
 %token<id>     tok_identifier
+%token<id>     tok_cpptype
 
 /**
  * Integer constant value
@@ -122,6 +123,7 @@ int y_field_val = -1;
 
 %type<tstruct>   ThrowsOptional
 %type<tbool>     AsyncOptional
+%type<id>        CppTypeOptional
 
 %%
 
@@ -449,24 +451,43 @@ ContainerType:
     }
 
 MapType:
-  tok_map '<' FieldType ',' FieldType '>'
+  tok_map CppTypeOptional '<' FieldType ',' FieldType '>'
     {
       pdebug("MapType -> tok_map <FieldType, FieldType>");
-      $$ = new t_map($3, $5);
+      $$ = new t_map($4, $6);
+      if ($2 != NULL) {
+        ((t_container*)$$)->set_cpp_name(std::string($2));
+      }
     }
 
 SetType:
-  tok_set '<' FieldType '>'
+  tok_set CppTypeOptional '<' FieldType '>'
     {
       pdebug("SetType -> tok_set<FieldType>");
-      $$ = new t_set($3);
+      $$ = new t_set($4);
+      if ($2 != NULL) {
+        ((t_container*)$$)->set_cpp_name(std::string($2));
+      }
     }
 
 ListType:
-  tok_list '<' FieldType '>'
+  tok_list CppTypeOptional '<' FieldType '>'
     {
       pdebug("ListType -> tok_list<FieldType>");
-      $$ = new t_list($3);
+      $$ = new t_list($4);
+      if ($2 != NULL) {
+        ((t_container*)$$)->set_cpp_name(std::string($2));
+      }
+    }
+
+CppTypeOptional:
+  tok_cpptype
+    {
+      $$ = $1;
+    }
+|
+    {
+      $$ = NULL;
     }
 
 %%

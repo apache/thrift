@@ -1,14 +1,14 @@
 #ifndef T_LIST_H
 #define T_LIST_H
 
-#include "t_type.h"
+#include "t_container.h"
 
 /**
  * A list is a lightweight container type that just wraps another data type.
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_list : public t_type {
+class t_list : public t_container {
  public:
   t_list(t_type* elem_type) :
     elem_type_(elem_type) {}

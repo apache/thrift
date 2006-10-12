@@ -1,13 +1,15 @@
 #ifndef T_MAP_H
 #define T_MAP_H
 
+#include "t_container.h"
+
 /**
  * A map is a lightweight container type that just wraps another two data
  * types.
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_map : public t_type {
+class t_map : public t_container {
  public:
   t_map(t_type* key_type, t_type* val_type) :
     key_type_(key_type),
