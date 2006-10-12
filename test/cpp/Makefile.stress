@@ -43,10 +43,10 @@ stubs: ../StressTest.thrift
 	$(THRIFT) --cpp --php ../StressTest.thrift
 
 stress-test-debug: stubs
-	g++ -o stress-test $(DCFL) src/main.cc ./gen-cpp/Service.cc gen-cpp/StressTest_types.cc
+	g++ -o stress-test $(DCFL) src/main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
 
 stress-test: stubs
-	g++ -o stress-test $(CFL) src/main.cc ./gen-cpp/Service.cc gen-cpp/StressTest_types.cc
+	g++ -o stress-test $(CFL) src/main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
 
 clean:
 	rm -fr stress-test gen-cpp
