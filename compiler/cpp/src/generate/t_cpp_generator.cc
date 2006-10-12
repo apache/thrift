@@ -18,7 +18,7 @@ void t_cpp_generator::init_generator(t_program* tprogram) {
   string f_types_name = string(T_CPP_DIR)+"/"+program_name_+"_types.h";
   f_types_.open(f_types_name.c_str());
 
-  string f_types_impl_name = string(T_CPP_DIR)+"/"+program_name_+"_types.cc";
+  string f_types_impl_name = string(T_CPP_DIR)+"/"+program_name_+"_types.cpp";
   f_types_impl_.open(f_types_impl_name.c_str());
 
   // Print header
@@ -457,7 +457,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     endl;
 
   // Service implementation file includes
-  string f_service_name = string(T_CPP_DIR)+"/"+svcname+".cc";
+  string f_service_name = string(T_CPP_DIR)+"/"+svcname+".cpp";
   f_service_.open(f_service_name.c_str());
   f_service_ <<
     autogen_comment();
