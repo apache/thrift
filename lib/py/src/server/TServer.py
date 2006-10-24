@@ -88,7 +88,7 @@ class TThreadPoolServer(TServer):
     """Loop around getting clients from the shared queue and process them."""
     while True:
       try:
-        client = self.client.get()
+        client = self.clients.get()
         self.serveClient(client)
       except Exception, x:
         print '%s, %s, %s' % (type(x), x, traceback.format_exc())
