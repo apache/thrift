@@ -80,7 +80,7 @@ class TThreadPoolServer(TServer):
     self.clients = Queue.Queue()
     self.threads = 10
 
-  def setNumThreads(num):
+  def setNumThreads(self, num):
     """Set the number of worker threads that should be created"""
     self.threads = num
 
