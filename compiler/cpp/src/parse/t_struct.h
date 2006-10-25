@@ -7,6 +7,9 @@
 #include "t_type.h"
 #include "t_field.h"
 
+// Forward declare that puppy
+class t_program;
+
 /**
  * A struct is a container for a set of member fields that has a name. Structs
  * are also used to implement exception types.
@@ -15,11 +18,12 @@
  */
 class t_struct : public t_type {
  public:
-  t_struct() :
+  t_struct(t_program* program) :
+    t_type(program),
     is_xception_(false) {}
 
-  t_struct(const std::string& name) :
-    t_type(name),
+  t_struct(t_program* program, const std::string& name) :
+    t_type(program, name),
     is_xception_(false) {}
 
   void set_name(const std::string& name) {

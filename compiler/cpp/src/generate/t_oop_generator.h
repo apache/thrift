@@ -12,6 +12,8 @@
  */
 class t_oop_generator : public t_generator {
  public:
+  t_oop_generator(t_program* program) :
+    t_generator(program) {}
 
   /**
    * Scoping, using curly braces!

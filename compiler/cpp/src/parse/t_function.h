@@ -22,7 +22,7 @@ class t_function {
     name_(name),
     arglist_(arglist),
     async_(async) {
-    xceptions_ = new t_struct;
+    xceptions_ = new t_struct(NULL);
   }
 
   t_function(t_type* returntype,

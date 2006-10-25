@@ -14,8 +14,8 @@
  */
 class t_typedef : public t_type {
  public:
-  t_typedef(t_type* type, std::string symbolic) :
-    t_type(symbolic),
+  t_typedef(t_program* program, t_type* type, std::string symbolic) :
+    t_type(program, symbolic),
     type_(type),
     symbolic_(symbolic) {}
 

@@ -18,14 +18,15 @@
  */
 class t_cpp_generator : public t_oop_generator {
  public:
-  t_cpp_generator() {}
+  t_cpp_generator(t_program* program) :
+    t_oop_generator(program) {}
 
   /**
    * Init and close methods
    */
 
-  void init_generator(t_program *tprogram);
-  void close_generator(t_program *tprogram);
+  void init_generator();
+  void close_generator();
 
   /**
    * Program-level generation functions
@@ -49,7 +50,8 @@ class t_cpp_generator : public t_oop_generator {
   void generate_service_multiface (t_service* tservice);
   void generate_service_helpers   (t_service* tservice);
   void generate_service_client    (t_service* tservice);
-  void generate_service_server    (t_service* tservice);
+  void generate_service_processor (t_service* tservice);
+  void generate_service_skeleton  (t_service*  tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
   void generate_function_helpers  (t_function* tfunction);
 
@@ -109,6 +111,7 @@ class t_cpp_generator : public t_oop_generator {
    * Helper rendering functions
    */
 
+  std::string namespace_prefix(std::string ns);
   std::string namespace_open(std::string ns);
   std::string namespace_close(std::string ns);
   std::string type_name(t_type* ttype);

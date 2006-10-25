@@ -10,10 +10,10 @@ using namespace std;
  *
  * @param tprogram The program to generate
  */
-void t_java_generator::init_generator(t_program* tprogram) {
+void t_java_generator::init_generator() {
   // Make output directory
   mkdir(T_JAVA_DIR, S_IREAD | S_IWRITE | S_IEXEC);
-  package_name_ = tprogram->get_namespace();
+  package_name_ = program_->get_java_package();
 }
 
 /**
@@ -22,7 +22,10 @@ void t_java_generator::init_generator(t_program* tprogram) {
  * @return String of the package, i.e. "package com.facebook.thriftdemo;"
  */
 string t_java_generator::java_package() {
-  return string("package ") + package_name_ + ";\n\n";
+  if (!package_name_.empty()) {
+    return string("package ") + package_name_ + ";\n\n";
+  }
+  return "";
 }
 
 /**
@@ -54,7 +57,7 @@ string t_java_generator::java_thrift_imports() {
 /**
  * Nothing in Java
  */
-void t_java_generator::close_generator(t_program *tprogram) {}
+void t_java_generator::close_generator() {}
 
 /**
  * Generates a typedef. This is not done in Java, since it does
@@ -163,7 +166,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
                                                        bool is_exception,
                                                        bool in_class,
                                                        bool is_result) {
-  out <<
+  indent(out) <<
     "public " << (in_class ? "static " : "") << "class " << tstruct->get_name() << " ";
   
   if (is_exception) {
@@ -441,8 +444,15 @@ void t_java_generator::generate_service(t_service* tservice) {
  * @param tservice The service to generate a header definition for
  */
 void t_java_generator::generate_service_interface(t_service* tservice) {
+  string extends = "";
+  string extends_iface = "";
+  if (tservice->get_extends() != NULL) {
+    extends = type_name(tservice->get_extends());
+    extends_iface = " extends " + extends + ".Iface";
+  }
+
   f_service_ <<
-    indent() << "public interface Iface {" << endl;
+    indent() << "public interface Iface" << extends_iface << " {" << endl;
   indent_up();
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter; 
@@ -477,8 +487,15 @@ void t_java_generator::generate_service_helpers(t_service* tservice) {
  * @param tservice The service to generate a server for.
  */
 void t_java_generator::generate_service_client(t_service* tservice) {
-  f_service_ <<
-    "public static class Client implements Iface {" << endl;
+  string extends = "";
+  string extends_client = "";
+  if (tservice->get_extends() != NULL) {
+    extends = type_name(tservice->get_extends());
+    extends_client = " extends " + extends + ".Client";
+  }
+
+  indent(f_service_) <<
+    "public static class Client" << extends_client << " implements Iface {" << endl;
   indent_up();
 
   indent(f_service_) <<
@@ -493,22 +510,29 @@ void t_java_generator::generate_service_client(t_service* tservice) {
     "public Client(TTransport itrans, TTransport otrans," <<
     " TProtocol iprot, TProtocol oprot)" << endl;
   scope_up(f_service_);
-  f_service_ <<
-    indent() << "_itrans = itrans;" << endl <<
-    indent() << "_otrans = otrans;" << endl <<
-    indent() << "_iprot = iprot;" << endl <<
-    indent() << "_oprot = oprot;" << endl;
+  if (extends.empty()) {
+    f_service_ <<
+      indent() << "_itrans = itrans;" << endl <<
+      indent() << "_otrans = otrans;" << endl <<
+      indent() << "_iprot = iprot;" << endl <<
+      indent() << "_oprot = oprot;" << endl;
+  } else {
+    f_service_ <<
+      indent() << "super(itrans, otrans, iprot, oprot);" << endl;
+  }
   scope_down(f_service_);
   f_service_ << endl;
  
-  f_service_ <<
-    indent() << "private TTransport _itrans;" << endl <<
-    indent() << "private TTransport _otrans;" << endl <<
-    indent() << "private TProtocol  _iprot;"  << endl <<
-    indent() << "private TProtocol  _oprot;"  << endl <<
-    endl <<
-    indent() << "private int _seqid;" << endl <<
-    endl;
+  if (extends.empty()) {
+    f_service_ <<
+      indent() << "protected TTransport _itrans;" << endl <<
+      indent() << "protected TTransport _otrans;" << endl <<
+      indent() << "protected TProtocol  _iprot;"  << endl <<
+      indent() << "protected TProtocol  _oprot;"  << endl <<
+      endl <<
+      indent() << "protected int _seqid;" << endl <<
+      endl;
+  }
 
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
@@ -551,7 +575,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
     scope_down(f_service_);
     f_service_ << endl;
       
-    t_function send_function(g_program->get_void_type(),
+    t_function send_function(g_type_void,
                              string("send_") + (*f_iter)->get_name(),
                              (*f_iter)->get_arglist());
 
@@ -583,7 +607,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
     if (!(*f_iter)->is_async()) {
       string resultname = (*f_iter)->get_name() + "_result";
 
-      t_struct noargs;
+      t_struct noargs(program_);
       t_function recv_function((*f_iter)->get_returntype(),
                                string("recv_") + (*f_iter)->get_name(),
                                &noargs,
@@ -635,7 +659,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
   }
 
   indent_down();
-  f_service_ <<
+  indent(f_service_) <<
     "}" << endl;
 }
 
@@ -649,9 +673,17 @@ void t_java_generator::generate_service_server(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter; 
 
+  // Extends stuff
+  string extends = "";
+  string extends_processor = "";
+  if (tservice->get_extends() != NULL) {
+    extends = type_name(tservice->get_extends());
+    extends_processor = " extends " + extends + ".Processor";
+  }
+
   // Generate the header portion
-  f_service_ <<
-    "public static class Processor implements TProcessor {" << endl;
+  indent(f_service_) <<
+    "public static class Processor" << extends_processor << " implements TProcessor {" << endl;
   indent_up();
 
   indent(f_service_) <<
@@ -665,17 +697,48 @@ void t_java_generator::generate_service_server(t_service* tservice) {
   indent(f_service_) <<
     "public Processor(Iface iface, TProtocol iprot, TProtocol oprot)" << endl;
   scope_up(f_service_);
+  if (extends.empty()) {
+    f_service_ <<
+      indent() << "_iprot = iprot;" << endl <<
+      indent() << "_oprot = oprot;" << endl;
+  } else {
+    f_service_ <<
+      indent() << "super(iface, iprot, oprot);" << endl;
+  }
   f_service_ <<
-    indent() << "_iface = iface;" << endl <<
-    indent() << "_iprot = iprot;" << endl <<
-    indent() << "_oprot = oprot;" << endl;
+    indent() << "_iface = iface;" << endl;
+
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    f_service_ <<
+      indent() << "_processMap.put(\"" << (*f_iter)->get_name() << "\", new " << (*f_iter)->get_name() << "());" << endl;
+  }
+  
   scope_down(f_service_);
   f_service_ << endl;
- 
+  
+  if (extends.empty()) {
+    f_service_ <<
+      indent() << "private static interface ProcessFunction {" << endl <<
+      indent() << "  public void process(int seqid, TTransport _itrans, TTransport _otrans) throws TException;" << endl <<
+      indent() << "}" << endl <<
+      endl;
+  }
+
   f_service_ <<
-    indent() << "private Iface _iface;" << endl <<
-    indent() << "private TProtocol _iprot;" << endl <<
-    indent() << "private TProtocol _oprot;" << endl << endl;
+    indent() << "private Iface _iface;" << endl;
+
+  if (extends.empty()) {
+    f_service_ <<
+      indent() << "protected final HashMap<String,ProcessFunction> _processMap = new HashMap<String,ProcessFunction>();" << endl;
+  }
+
+  if (extends.empty()) {
+    f_service_ <<
+      indent() << "protected TProtocol _iprot;" << endl <<
+      indent() << "protected TProtocol _oprot;" << endl;
+  }
+  
+  f_service_ << endl;
   
   // Generate the server implementation
   indent(f_service_) <<
@@ -683,34 +746,17 @@ void t_java_generator::generate_service_server(t_service* tservice) {
   scope_up(f_service_);
 
   f_service_ <<
-    indent() << "TMessage _msg = _iprot.readMessageBegin(_itrans);" << endl;
+    indent() << "TMessage msg = _iprot.readMessageBegin(_itrans);" << endl;
 
   // TODO(mcslee): validate message, was the seqid etc. legit?
 
-  bool first = true;
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    if (!first) {
-      f_service_ << " else ";
-    } else {
-      f_service_ << indent();
-      first = false;
-    }
-    f_service_ <<
-      "if (_msg.name.equals(\"" << (*f_iter)->get_name() <<"\")) {" << endl;
-    indent_up();
-    indent(f_service_) <<
-      "process_" << (*f_iter)->get_name() << "(_msg.seqid, _itrans, _otrans);" << endl;
-    indent_down();
-    indent(f_service_) << "}";
-  }
   f_service_ <<
-    " else {" << endl;
-  indent_up();
-  indent(f_service_) <<
-    "System.err.println(\"Unknown function: '\" + _msg.name + \"'\");" << endl;
-  indent_down();
-  indent(f_service_) <<
-    "}" << endl;
+    indent() << "ProcessFunction fn = _processMap.get(msg.name);" << endl <<
+    indent() << "if (fn == null) {" << endl <<
+    indent() << "  System.err.println(\"Unknown function: '\" + msg.name + \"'\");" << endl <<
+    indent() << "} else {" << endl <<
+    indent() << "  fn.process(msg.seqid, _itrans, _otrans);" << endl <<
+    indent() << "}" << endl;
   
   // Read end of args field, the T_STOP, and the struct close
   f_service_ <<
@@ -725,7 +771,7 @@ void t_java_generator::generate_service_server(t_service* tservice) {
   }
 
   indent_down();
-  f_service_ <<
+  indent(f_service_) <<
     "}" << endl <<
     endl;
 }
@@ -740,7 +786,7 @@ void t_java_generator::generate_function_helpers(t_function* tfunction) {
     return;
   }
 
-  t_struct result(tfunction->get_name() + "_result");
+  t_struct result(program_, tfunction->get_name() + "_result");
   t_field success(tfunction->get_returntype(), "success", 0);
   if (!tfunction->get_returntype()->is_void()) {
     result.append(&success);
@@ -763,9 +809,14 @@ void t_java_generator::generate_function_helpers(t_function* tfunction) {
  */
 void t_java_generator::generate_process_function(t_service* tservice,
                                                  t_function* tfunction) {
+  // Open class
+  indent(f_service_) <<
+    "private class " << tfunction->get_name() << " implements ProcessFunction {" << endl;
+  indent_up();
+
   // Open function
   indent(f_service_) <<
-    "private void process_" << tfunction->get_name() << "(int seqid, TTransport _itrans, TTransport _otrans) throws TException" << endl;
+    "public void process(int seqid, TTransport _itrans, TTransport _otrans) throws TException" << endl;
   scope_up(f_service_);
 
   string argsname = tfunction->get_name() + "_args";
@@ -859,6 +910,12 @@ void t_java_generator::generate_process_function(t_service* tservice,
   // Close function
   scope_down(f_service_);
   f_service_ << endl;
+
+  // Close class
+  indent_down();
+  f_service_ <<
+    indent() << "}" << endl <<
+    endl;
 }
 
 /**
@@ -942,7 +999,7 @@ void t_java_generator::generate_deserialize_struct(ofstream& out,
                                                    t_struct* tstruct,
                                                    string prefix) {
   out <<
-    indent() << prefix << " = new " << tstruct->get_name() << "();" << endl <<
+    indent() << prefix << " = new " << type_name(tstruct) << "();" << endl <<
     indent() << prefix << ".read(_iprot, _itrans);" << endl;
 }
 
@@ -1296,9 +1353,18 @@ string t_java_generator::type_name(t_type* ttype, bool in_container) {
   } else if (ttype->is_list()) {
     t_list* tlist = (t_list*) ttype;
     return "ArrayList<" + type_name(tlist->get_elem_type(), true) + ">";
-  } else {
-    return ttype->get_name();
   }
+
+  // Check for namespacing
+  t_program* program = ttype->get_program();
+  if (program != NULL && program != program_) {
+    string package = program->get_java_package();
+    if (!package.empty()) {
+      return package + "." + ttype->get_name();
+    }
+  }
+
+  return ttype->get_name();
 }
 
 /**

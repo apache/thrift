@@ -5,6 +5,10 @@
 #include <string>
 #include <vector>
 
+// For program_name()
+#include "main.h"
+
+#include "t_scope.h"
 #include "t_base_type.h"
 #include "t_typedef.h"
 #include "t_enum.h"
@@ -30,38 +34,26 @@
  */
 class t_program {
  public:
-  t_program(std::string name) :
-    name_(name),
-    namespace_() {
-    type_void   = new t_base_type("void",   t_base_type::TYPE_VOID);
-    type_string = new t_base_type("string", t_base_type::TYPE_STRING);
-    type_bool   = new t_base_type("bool",   t_base_type::TYPE_BOOL);
-    type_byte   = new t_base_type("byte",   t_base_type::TYPE_BYTE);
-    type_i16    = new t_base_type("i16",    t_base_type::TYPE_I16);
-    type_i32    = new t_base_type("i32",    t_base_type::TYPE_I32);
-    type_i64    = new t_base_type("i64",    t_base_type::TYPE_I64);
-    type_double = new t_base_type("double", t_base_type::TYPE_DOUBLE);
+  t_program(std::string path, std::string name) :
+    path_(path), 
+    name_(name) {
+    scope_ = new t_scope();
   }
 
-  ~t_program() {
-    delete type_string;
-    delete type_bool;
-    delete type_byte;
-    delete type_i16;
-    delete type_i32;
-    delete type_i64;
-    delete type_double;
+  t_program(std::string path) :
+    path_(path) {
+    name_ = program_name(path);
+    scope_ = new t_scope();
   }
+
+  // Path accessor   
+  const std::string& get_path() const { return path_; }
 
   // Name accessor
-  const std::string& get_name() const {
-    return name_;
-  }
+  const std::string& get_name() const { return name_; }
 
   // Namespace
-  const std::string& get_namespace() const {
-    return namespace_;
-  }
+  const std::string& get_namespace() const { return namespace_; }
 
   // Accessors for program elements
   const std::vector<t_typedef*>& get_typedefs()  const { return typedefs_;  }
@@ -70,57 +62,67 @@ class t_program {
   const std::vector<t_struct*>&  get_xceptions() const { return xceptions_; }
   const std::vector<t_service*>& get_services()  const { return services_;  }
 
-  // Accessors for global types
-  t_type* get_void_type()   const { return type_void;   }
-  t_type* get_string_type() const { return type_string; }
-  t_type* get_bool_type()   const { return type_bool;   }
-  t_type* get_byte_type()   const { return type_byte;   }
-  t_type* get_i16_type()    const { return type_i16;    }
-  t_type* get_i32_type()    const { return type_i32;    }
-  t_type* get_i64_type()    const { return type_i64;    }
-  t_type* get_double_type() const { return type_double; }
+  // Program elements
+  void add_typedef  (t_typedef* td) { typedefs_.push_back(td);  }
+  void add_enum     (t_enum*    te) { enums_.push_back(te);     }
+  void add_struct   (t_struct*  ts) { structs_.push_back(ts);   }
+  void add_xception (t_struct*  tx) { xceptions_.push_back(tx); }
+  void add_service  (t_service* ts) { services_.push_back(ts);  }
 
-  // Custom data type lookup
-  t_type* get_custom_type(std::string name) {
-    return custom_types_[name];
-  }
+  // Programs to include
+  const std::vector<t_program*>& get_includes() const { return includes_; }
 
-  // New program element addition
-
+  // Scoping and namespacing
   void set_namespace(std::string name) {
     namespace_ = name;
   }
 
-  void add_typedef(t_typedef* td) {
-    typedefs_.push_back(td);
-    add_custom_type(td->get_symbolic(), td);
+  // Scope accessor
+  t_scope* scope() {
+    return scope_;
   }
 
-  void add_enum(t_enum* te) {
-    enums_.push_back(te);
-    add_custom_type(te->get_name(), te);
+  // Includes
+
+  void add_include(std::string path) {
+    includes_.push_back(new t_program(path));
   }
 
-  void add_struct(t_struct* ts) {
-    structs_.push_back(ts);
-    add_custom_type(ts->get_name(), ts);
+  std::vector<t_program*>& get_includes() {
+    return includes_;
   }
 
-  void add_xception(t_struct* tx) {
-    xceptions_.push_back(tx);
-    add_custom_type(tx->get_name(), tx);
+  // Language specific namespace / packaging
+
+  void set_cpp_namespace(std::string cpp_namespace) {
+    cpp_namespace_ = cpp_namespace;
   }
 
-  void add_service(t_service* ts) {
-    services_.push_back(ts);
+  const std::string& get_cpp_namespace() const {
+    return cpp_namespace_;
   }
+
+  void add_cpp_include(std::string path) {
+    cpp_includes_.push_back(path);
+  }
+
+  const std::vector<std::string>& get_cpp_includes() {
+    return cpp_includes_;
+  }
+
+  void set_java_package(std::string java_package) {
+    java_package_ = java_package;
+  }
+
+  const std::string& get_java_package() const {
+    return java_package_;
+  }
+
 
  private:
 
-  // Add custom type for lookup
-  void add_custom_type(std::string name, t_type* type) {
-    custom_types_[name] = type;
-  }
+  // File path
+  std::string path_;
 
   // Name
   std::string name_;
@@ -128,25 +130,28 @@ class t_program {
   // Namespace
   std::string namespace_;
 
-  // Components
-  std::vector<t_typedef*>  typedefs_;
-  std::vector<t_enum*>     enums_;
-  std::vector<t_struct*>   structs_;
-  std::vector<t_struct*>   xceptions_;
-  std::vector<t_service*>  services_;
+  // Included programs
+  std::vector<t_program*> includes_;
 
-  // Type map
-  std::map<std::string, t_type*> custom_types_;
+  // Identifier lookup scope
+  t_scope* scope_;
 
-  // Global base types
-  t_type* type_void;
-  t_type* type_string;
-  t_type* type_bool;
-  t_type* type_byte;
-  t_type* type_i16;
-  t_type* type_i32;
-  t_type* type_i64;
-  t_type* type_double;
+  // Components to generate code for
+  std::vector<t_typedef*> typedefs_;
+  std::vector<t_enum*>    enums_;
+  std::vector<t_struct*>  structs_;
+  std::vector<t_struct*>  xceptions_;
+  std::vector<t_service*> services_;
+
+  // C++ namespace
+  std::string cpp_namespace_;
+
+  // C++ extra includes
+  std::vector<std::string> cpp_includes_;
+
+  // Java package
+  std::string java_package_;
+
 };
 
 #endif

@@ -4,34 +4,42 @@
 #include "t_function.h"
 #include <vector>
 
+class t_program;
+
 /**
  * A service consists of a set of functions.
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_service {
+class t_service : public t_type {
  public:
-  t_service() {}
+  t_service(t_program* program) :
+    t_type(program),
+    extends_(NULL) {}
 
-  void set_name(std::string name) {
-    name_ = name;
+  bool is_service() const {
+    return true;
+  }
+
+  void set_extends(t_service* extends) {
+    extends_ = extends;
   }
 
   void add_function(t_function* func) {
     functions_.push_back(func);
   }
 
-  const std::string& get_name() const {
-    return name_;
-  }
-
   const std::vector<t_function*>& get_functions() const {
     return functions_;
   }
 
+  t_service* get_extends() {
+    return extends_;
+  }
+
  private:
-  std::string name_;
   std::vector<t_function*> functions_;
+  t_service* extends_;
 };
 
 #endif

@@ -13,12 +13,15 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string>
+#include <sys/types.h>
+#include <sys/stat.h>
 
-// Careful: must include globals first here for extern/global definitions
+// Careful: must include globals first for extern definitions
 #include "globals.h"
 
 #include "main.h"
 #include "parse/t_program.h"
+#include "parse/t_scope.h"
 #include "generate/t_cpp_generator.h"
 #include "generate/t_java_generator.h"
 #include "generate/t_php_generator.h"
@@ -32,14 +35,77 @@ using namespace std;
 t_program* g_program;
 
 /**
+ * Global types
+ */
+
+t_type* g_type_void;
+t_type* g_type_string;
+t_type* g_type_bool;
+t_type* g_type_byte;
+t_type* g_type_i16;
+t_type* g_type_i32;
+t_type* g_type_i64;
+t_type* g_type_double;
+
+/**
+ * Global scope
+ */
+t_scope* g_scope;
+
+/**
+ * Parent scope to also parse types
+ */
+t_scope* g_parent_scope;
+
+/**
+ * Prefix for putting types in parent scope
+ */
+string g_parent_prefix;
+
+/**
+ * Parsing pass
+ */
+PARSE_MODE g_parse_mode;
+
+/**
+ * Current directory of file being parsed
+ */
+string g_curdir;
+
+/**
+ * Current file being parsed
+ */
+string g_curpath;
+
+/**
  * Global debug state
  */
 int g_debug = 0;
 
 /**
+ * Warning level
+ */
+int g_warn = 1;
+
+/**
+ * Verbose output
+ */
+int g_verbose = 0;
+
+/**
  * Global time string
  */
 char* g_time_str;
+
+/**
+ * Flags to control code generation
+ */
+bool gen_cpp = false;
+bool gen_java = false;
+bool gen_py = false;
+bool gen_php = false;
+bool gen_phpi = false;
+bool gen_recurse = false;
 
 /**
  * Report an error to the user. This is called yyerror for historical
@@ -52,10 +118,10 @@ char* g_time_str;
 void yyerror(char* fmt, ...) {
   va_list args;
   fprintf(stderr,
-          "\n!!! Error: line %d (last token was '%s')",
+          "[ERROR:%s:%d] (last token was '%s')\n",
+          g_curpath.c_str(),
           yylineno,
           yytext);
-  fprintf(stderr, "\n!!! ");
 
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
@@ -74,7 +140,39 @@ void pdebug(char* fmt, ...) {
     return;
   }
   va_list args;
-  printf("[Parse] ");
+  printf("[PARSE] ");
+  va_start(args, fmt);
+  vprintf(fmt, args);
+  va_end(args);
+  printf("\n");
+}
+
+/**
+ * Prints a verbose output mode message
+ *
+ * @param fmt C format string followed by additional arguments
+ */
+void pverbose(char* fmt, ...) {
+  if (g_verbose == 0) {
+    return;
+  }
+  va_list args;
+  va_start(args, fmt);
+  vprintf(fmt, args);
+  va_end(args);
+}
+
+/**
+ * Prints a warning message
+ *
+ * @param fmt C format string followed by additional arguments
+ */
+void pwarning(int level, char* fmt, ...) {
+  if (g_warn < level) {
+    return;
+  }
+  va_list args;
+  printf("[WARNING:%s:%d] ", g_curpath.c_str(), yylineno);
   va_start(args, fmt);
   vprintf(fmt, args);
   va_end(args);
@@ -88,7 +186,7 @@ void pdebug(char* fmt, ...) {
  */
 void failure(char* fmt, ...) {
   va_list args; 
-  fprintf(stderr, "\n!!! Failure: ");
+  fprintf(stderr, "[FAILURE:%s:%d] ", g_curpath.c_str(), yylineno);
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   va_end(args);
@@ -97,18 +195,186 @@ void failure(char* fmt, ...) {
 }
 
 /**
+ * Converts a string filename into a thrift program name
+ */
+string program_name(string filename) {
+  string::size_type slash = filename.rfind("/");
+  if (slash != string::npos) {
+    filename = filename.substr(slash+1);
+  }
+  string::size_type dot = filename.rfind(".");
+  if (dot != string::npos) {
+    filename = filename.substr(0, dot);
+  }
+  return filename;
+}
+
+/**
+ * Gets the directory path of a filename
+ */
+string directory_name(string filename) {
+  string::size_type slash = filename.rfind("/");
+  // No slash, just use the current directory
+  if (slash == string::npos) {
+    return ".";
+  }
+  return filename.substr(0, slash);
+}
+
+/**
+ * Finds the appropriate file path for the given filename
+ */
+string include_file(string filename) {
+  // Absolute path? Just try that
+  if (filename[0] != '/') {
+    filename = g_curdir + "/" + filename;
+  }
+
+  // Realpath!
+  char rp[PATH_MAX];
+  if (realpath(filename.c_str(), rp) == NULL) {
+    pwarning(0, "Cannot open include file %s\n", filename.c_str());
+    return std::string();
+  }
+  
+  // Stat this files
+  struct stat finfo;
+  if (stat(rp, &finfo) == 0) {
+    return rp;
+  }
+
+  // Uh oh
+  pwarning(0, "Could not find include file %s\n", filename.c_str());
+  return std::string();
+}
+
+/**
  * Diplays the usage message and then exits with an error code.
  */
 void usage() {
   fprintf(stderr, "Usage: thrift [options] file\n");
   fprintf(stderr, "Options:\n");
-  fprintf(stderr, "  --cpp    Generate C++ output files\n");
-  fprintf(stderr, "  --java   Generate Java output files\n");
-  fprintf(stderr, "  --php    Generate PHP output files\n");
-  fprintf(stderr, "  --phpi   Generate PHP inlined files\n");
-  fprintf(stderr, "  --py     Generate Python output files\n");
-  fprintf(stderr, "  --debug  Print parse debugging to standard output\n");
+  fprintf(stderr, "  --cpp        Generate C++ output files\n");
+  fprintf(stderr, "  --java       Generate Java output files\n");
+  fprintf(stderr, "  --php        Generate PHP output files\n");
+  fprintf(stderr, "  --phpi       Generate PHP inlined files\n");
+  fprintf(stderr, "  --py         Generate Python output files\n");
+  fprintf(stderr, "  --nowarn     Suppress all compiler warnings (BAD!)\n");
+  fprintf(stderr, "  --strict     Strict compiler warnings on\n");
+  fprintf(stderr, "  --v[erbose]  Verbose mode\n");
+  fprintf(stderr, "  --r[ecurse]  Also generate included files\n");
+  fprintf(stderr, "  --debug      Parse debug trace to stdout\n");
   exit(1);
+}
+
+/**
+ * Parses a program
+ */
+void parse(t_program* program, t_program* parent_program) {  
+  // Get scope file path
+  string path = program->get_path();
+  
+  // Set current dir global, which is used in the include_file function
+  g_curdir = directory_name(path);
+  g_curpath = path;
+
+  // Open the file
+  yyin = fopen(path.c_str(), "r");
+  if (yyin == 0) {
+    failure("Could not open input file: \"%s\"", path.c_str());
+  }
+
+  // Create new scope and scan for includes
+  pverbose("Scanning %s for includes\n", path.c_str());
+  g_parse_mode = INCLUDES; 
+  g_program = program;
+  g_scope = program->scope();
+  if (yyparse() != 0) {
+    failure("Parser error during include pass.");
+  }
+  fclose(yyin);
+
+  // Recursively parse all the include programs
+  vector<t_program*>& includes = program->get_includes();
+  vector<t_program*>::iterator iter;
+  for (iter = includes.begin(); iter != includes.end(); ++iter) {
+    parse(*iter, program);
+  }
+
+  // Parse the program the file
+  g_parse_mode = PROGRAM;
+  g_program = program;
+  g_scope = program->scope();
+  g_parent_scope = (parent_program != NULL) ? parent_program->scope() : NULL;
+  g_parent_prefix = program->get_name() + ".";
+  g_curpath = path;
+  yyin = fopen(path.c_str(), "r");
+  if (yyin == 0) {
+    failure("Could not open input file: \"%s\"", path.c_str());
+  }
+  pverbose("Parsing %s for types\n", path.c_str());
+  if (yyparse() != 0) {
+    failure("Parser error during types pass.");
+  }
+  fclose(yyin);
+}
+
+/**
+ * Generate code
+ */
+void generate(t_program* program) {
+  // Oooohh, recursive code generation, hot!!
+  if (gen_recurse) {
+    const vector<t_program*>& includes = program->get_includes();
+    for (size_t i = 0; i < includes.size(); ++i) {
+      generate(includes[i]);
+    }
+  }
+
+  // Generate code!
+  try {
+    pverbose("Program: %s\n", program->get_path().c_str());
+
+    if (gen_cpp) {
+      pverbose("Generating C++\n");
+      t_cpp_generator* cpp = new t_cpp_generator(program);
+      cpp->generate_program();
+      delete cpp;
+    }
+
+    if (gen_java) {
+      pverbose("Generating Java\n");
+      t_java_generator* java = new t_java_generator(program);
+      java->generate_program();
+      delete java;
+    }
+
+    if (gen_php) {
+      pverbose("Generating PHP\n");
+      t_php_generator* php = new t_php_generator(program, false);
+      php->generate_program();
+      delete php;
+    }
+
+    if (gen_phpi) {
+      pverbose("Generating PHP-inline\n");
+      t_php_generator* phpi = new t_php_generator(program, true);
+      phpi->generate_program();
+      delete phpi;
+    }
+
+    if (gen_py) {
+      pverbose("Generating Python\n");
+      t_py_generator* py = new t_py_generator(program);
+      py->generate_program();
+      delete py;
+    }
+  } catch (string s) {
+    printf("Error: %s\n", s.c_str());
+  } catch (const char* exc) {
+    printf("Error: %s\n", exc);
+  }
+
 }
 
 /**
@@ -118,17 +384,12 @@ void usage() {
 int main(int argc, char** argv) {
   int i;
 
-  bool gen_cpp = false;
-  bool gen_java = false;
-  bool gen_py = false;
-  bool gen_php = false;
-  bool gen_phpi = false;
-
   // Setup time string
   time_t now = time(NULL);
   g_time_str = ctime(&now);
 
-  // Check for necessary arguments
+  // Check for necessary arguments, you gotta have at least a filename and
+  // an output language flag
   if (argc < 2) {
     usage();
   }
@@ -140,6 +401,14 @@ int main(int argc, char** argv) {
     while (arg != NULL) {
       if (strcmp(arg, "--debug") == 0) {
         g_debug = 1;
+      } else if (strcmp(arg, "--nowarn") == 0) {
+        g_warn = 0;
+      } else if (strcmp(arg, "--strict") == 0) {
+        g_warn = 2;
+      } else if (strcmp(arg, "--v") == 0 || strcmp(arg, "--verbose") == 0 ) {
+        g_verbose = 1;
+      } else if (strcmp(arg, "--r") == 0 || strcmp(arg, "--recurse") == 0 ) {
+        gen_recurse = true;
       } else if (strcmp(arg, "--cpp") == 0) {
         gen_cpp = true;
       } else if (strcmp(arg, "--java") == 0) {
@@ -160,77 +429,51 @@ int main(int argc, char** argv) {
     }
   }
   
+  // You gotta generate something!
   if (!gen_cpp && !gen_java && !gen_php && !gen_phpi && !gen_py) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
-  
-  // Open input file
-  char* input_file = argv[i];
-  yyin = fopen(input_file, "r");
-  if (yyin == 0) {
-    failure("Could not open input file: \"%s\"", input_file);
+
+  // Real-pathify it
+  char rp[PATH_MAX];
+  if (realpath(argv[i], rp) == NULL) {
+    failure("Could not open input file: %s", argv[i]);
   }
-  
-  // Extract program name by dropping directory and .thrift from filename
-  string name = input_file;
-  string::size_type slash = name.rfind("/");
-  if (slash != string::npos) {
-    name = name.substr(slash+1);
-  }
-  string::size_type dot = name.find(".");
-  if (dot != string::npos) {
-    name = name.substr(0, dot);
-  }
-  
+  string input_file(rp);
+
   // Instance of the global parse tree
-  g_program = new t_program(name);
+  t_program* program = new t_program(input_file);
+
+  // Initialize global types
+  g_type_void   = new t_base_type("void",   t_base_type::TYPE_VOID);
+  g_type_string = new t_base_type("string", t_base_type::TYPE_STRING);
+  g_type_bool   = new t_base_type("bool",   t_base_type::TYPE_BOOL);
+  g_type_byte   = new t_base_type("byte",   t_base_type::TYPE_BYTE);
+  g_type_i16    = new t_base_type("i16",    t_base_type::TYPE_I16);
+  g_type_i32    = new t_base_type("i32",    t_base_type::TYPE_I32);
+  g_type_i64    = new t_base_type("i64",    t_base_type::TYPE_I64);
+  g_type_double = new t_base_type("double", t_base_type::TYPE_DOUBLE);
 
   // Parse it!
-  if (yyparse() != 0) {
-    failure("Parser error.");
-  }
+  parse(program, NULL);
 
-  // Generate code
-  try {
-    if (gen_cpp) {
-      t_cpp_generator* cpp = new t_cpp_generator();
-      cpp->generate_program(g_program);
-      delete cpp;
-    }
+  // Generate it!
+  generate(program);
 
-    if (gen_java) {
-      t_java_generator* java = new t_java_generator();
-      java->generate_program(g_program);
-      delete java;
-    }
+  // Clean up. Who am I kidding... this program probably orphans heap memory
+  // all over the place, but who cares because it is about to exit and it is
+  // all referenced and used by this wacky parse tree up until now anyways.
 
-    if (gen_php) {
-      t_php_generator* php = new t_php_generator(false);
-      php->generate_program(g_program);
-      delete php;
-    }
-
-    if (gen_phpi) {
-      t_php_generator* phpi = new t_php_generator(true);
-      phpi->generate_program(g_program);
-      delete phpi;
-    }
-
-    if (gen_py) {
-      t_py_generator* py = new t_py_generator();
-      py->generate_program(g_program);
-      delete py;
-    }
-
-  } catch (string s) {
-    printf("Error: %s\n", s.c_str());
-  } catch (const char* exc) {
-    printf("Error: %s\n", exc);
-  }
-
-  // Clean up
-  delete g_program;
+  delete program;
+  delete g_type_void;
+  delete g_type_string;
+  delete g_type_bool;
+  delete g_type_byte;
+  delete g_type_i16;
+  delete g_type_i32;
+  delete g_type_i64;
+  delete g_type_double;
 
   // Finished
   return 0;

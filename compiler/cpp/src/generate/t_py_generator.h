@@ -17,14 +17,15 @@
  */
 class t_py_generator : public t_oop_generator {
  public:
-  t_py_generator() {}
+  t_py_generator(t_program* program) :
+    t_oop_generator(program) {}
 
   /**
    * Init and close methods
    */
 
-  void init_generator(t_program *tprogram);
-  void close_generator(t_program *tprogram);
+  void init_generator();
+  void close_generator();
 
   /**
    * Program-level generation functions
@@ -117,7 +118,9 @@ class t_py_generator : public t_oop_generator {
 
   std::string py_autogen_comment();
   std::string py_imports();
+  std::string render_includes();
   std::string declare_field(t_field* tfield, bool init=false, bool obj=false);
+  std::string type_name(t_type* ttype);
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);

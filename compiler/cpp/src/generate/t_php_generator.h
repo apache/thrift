@@ -15,8 +15,9 @@
  */
 class t_php_generator : public t_oop_generator {
  public:
-  t_php_generator(bool binary_inline=false) {
-    binary_inline_ = binary_inline;
+  t_php_generator(t_program* program, bool binary_inline=false) :
+    t_oop_generator(program),
+    binary_inline_(binary_inline) {
     if (binary_inline_) {
       T_PHP_DIR = "gen-phpi";
     } else {
@@ -28,8 +29,8 @@ class t_php_generator : public t_oop_generator {
    * Init and close methods
    */
 
-  void init_generator(t_program *tprogram);
-  void close_generator(t_program *tprogram);
+  void init_generator();
+  void close_generator();
 
   /**
    * Program-level generation functions

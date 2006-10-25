@@ -11,7 +11,7 @@ using namespace std;
  *
  * @param tprogram The program to generate
  */
-void t_py_generator::init_generator(t_program* tprogram) {
+void t_py_generator::init_generator() {
   // Make output directory
   mkdir(T_PY_DIR, S_IREAD | S_IWRITE | S_IEXEC);
 
@@ -23,7 +23,22 @@ void t_py_generator::init_generator(t_program* tprogram) {
   f_types_ <<
     py_autogen_comment() << endl <<
     py_imports() << endl <<
-    endl;
+    render_includes() << endl;
+}
+
+/**
+ * Renders all the imports necessary for including another Thrift program
+ */
+string t_py_generator::render_includes() {
+  const vector<t_program*>& includes = program_->get_includes();
+  string result = "";
+  for (size_t i = 0; i < includes.size(); ++i) {
+    result += "import " + includes[i]->get_name() + "_types\n";
+  }
+  if (includes.size() > 0) {
+    result += "\n";
+  }
+  return result;
 }
 
 /**
@@ -50,7 +65,7 @@ string t_py_generator::py_imports() {
 /**
  * Closes the type files
  */
-void t_py_generator::close_generator(t_program *tprogram) {
+void t_py_generator::close_generator() {
   // Close types file
   f_types_.close();
 }
@@ -307,6 +322,11 @@ void t_py_generator::generate_service(t_service* tservice) {
     py_autogen_comment() << endl <<
     py_imports() << endl;
 
+  if (tservice->get_extends() != NULL) {
+    f_service_ <<
+      "import " << tservice->get_extends()->get_name() << endl;
+  }
+
   f_service_ <<
     "from " << program_name_ << "_types import *" << endl << 
     "from thrift.Thrift import TProcessor" << endl <<
@@ -315,8 +335,8 @@ void t_py_generator::generate_service(t_service* tservice) {
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_interface(tservice);
   generate_service_client(tservice);
-  generate_service_helpers(tservice);
   generate_service_server(tservice);
+  generate_service_helpers(tservice);
   generate_service_remote(tservice);
 
   // Close service file
@@ -349,7 +369,7 @@ void t_py_generator::generate_service_helpers(t_service* tservice) {
  * @param tfunction The function
  */
 void t_py_generator::generate_py_function_helpers(t_function* tfunction) {
-  t_struct result(tfunction->get_name() + "_result");
+  t_struct result(program_, tfunction->get_name() + "_result");
   t_field success(tfunction->get_returntype(), "success", 0);
   if (!tfunction->get_returntype()->is_void()) {
     result.append(&success);
@@ -370,8 +390,15 @@ void t_py_generator::generate_py_function_helpers(t_function* tfunction) {
  * @param tservice The service to generate a header definition for
  */
 void t_py_generator::generate_service_interface(t_service* tservice) {
+  string extends = "";
+  string extends_if = "";
+  if (tservice->get_extends() != NULL) {
+    extends = type_name(tservice->get_extends());
+    extends_if = "(" + extends + ".Iface)";
+  }
+
   f_service_ <<
-    "class Iface:" << endl;
+    "class Iface" << extends_if << ":" << endl;
   indent_up();
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter; 
@@ -391,25 +418,39 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
  * @param tservice The service to generate a server for.
  */
 void t_py_generator::generate_service_client(t_service* tservice) {
+  string extends = "";
+  string extends_client = "";
+  if (tservice->get_extends() != NULL) {
+    extends = type_name(tservice->get_extends());
+    extends_client = extends + ".Client, ";
+  }
+
   f_service_ <<
-    "class Client(Iface):" << endl;
+    "class Client(" << extends_client << "Iface):" << endl;
   indent_up();
 
   // Constructor function
   f_service_ <<
-    indent() << "def __init__(self, one, two, three=None, four=None):" << endl <<
-    indent() << "  if three == None or four == None:" << endl <<
-    indent() << "    self.__otrans = one" << endl <<
-    indent() << "    self.__itrans = one" << endl <<
-    indent() << "    self.__iprot = two" << endl <<
-    indent() << "    self.__oprot = two" << endl <<
-    indent() << "  else:" << endl <<
-    indent() << "    self.__otrans = one" << endl <<
-    indent() << "    self.__itrans = two" << endl <<
-    indent() << "    self.__iprot = three" << endl <<
-    indent() << "    self.__oprot = four" << endl <<
-    indent() << "  self.__seqid = 0" << endl <<
-    endl;
+    indent() << "def __init__(self, one, two, three=None, four=None):" << endl;
+  if (extends.empty()) {
+    f_service_ <<
+      indent() << "  if three == None or four == None:" << endl <<
+      indent() << "    self._otrans = one" << endl <<
+      indent() << "    self._itrans = one" << endl <<
+      indent() << "    self._iprot = two" << endl <<
+      indent() << "    self._oprot = two" << endl <<
+      indent() << "  else:" << endl <<
+      indent() << "    self._otrans = one" << endl <<
+      indent() << "    self._itrans = two" << endl <<
+      indent() << "    self._iprot = three" << endl <<
+      indent() << "    self._oprot = four" << endl <<
+      indent() << "  self._seqid = 0" << endl <<
+      endl;
+  } else {
+    f_service_ <<
+      indent() << "  " << extends << ".Client.__init__(self, one, two, three, four)" << endl <<
+      endl;
+  }
 
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
@@ -457,7 +498,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
 
       // Serialize the request header
       f_service_ <<
-        indent() << "self.__oprot.writeMessageBegin(self.__otrans, '" << (*f_iter)->get_name() << "', TMessageType.CALL, self.__seqid)" << endl;
+        indent() << "self._oprot.writeMessageBegin(self._otrans, '" << (*f_iter)->get_name() << "', TMessageType.CALL, self._seqid)" << endl;
       
       f_service_ <<
         indent() << "__args = " << argsname << "()" << endl;
@@ -469,16 +510,16 @@ void t_py_generator::generate_service_client(t_service* tservice) {
            
       // Write to the stream
       f_service_ <<
-        indent() << "__args.write(self.__oprot, self.__otrans)" << endl <<
-        indent() << "self.__oprot.writeMessageEnd(self.__otrans)" << endl <<
-        indent() << "self.__otrans.flush()" << endl;
+        indent() << "__args.write(self._oprot, self._otrans)" << endl <<
+        indent() << "self._oprot.writeMessageEnd(self._otrans)" << endl <<
+        indent() << "self._otrans.flush()" << endl;
 
     indent_down();
       
 
     if (!(*f_iter)->is_async()) {
       std::string resultname = (*f_iter)->get_name() + "_result";
-      t_struct noargs;
+      t_struct noargs(program_);
       
       t_function recv_function((*f_iter)->get_returntype(),
                                string("recv_") + (*f_iter)->get_name(),
@@ -490,14 +531,14 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       indent_up();
 
       f_service_ <<
-        indent() << "(fname, mtype, rseqid) = self.__iprot.readMessageBegin(self.__itrans)" << endl;
+        indent() << "(fname, mtype, rseqid) = self._iprot.readMessageBegin(self._itrans)" << endl;
 
       // TODO(mcslee): Validate message reply here, seq ids etc.
 
       f_service_ <<
         indent() << "__result = " << resultname << "()" << endl <<
-        indent() << "__result.read(self.__iprot, self.__otrans)" << endl <<
-        indent() << "self.__iprot.readMessageEnd(self.__itrans)" << endl;
+        indent() << "__result.read(self._iprot, self._otrans)" << endl <<
+        indent() << "self._iprot.readMessageEnd(self._itrans)" << endl;
 
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
@@ -645,7 +686,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
       "    sys.exit(1)" << endl <<
       "  pp.pprint(client." << (*f_iter)->get_name() << "(";
     for (int i = 0; i < num_args; ++i) {
-      if (args[i]->get_type() == g_program->get_string_type()) {
+      if (args[i]->get_type() == g_type_string) {
         f_remote << "args[" << i << "],";
       } else {
         f_remote << "eval(args[" << i << "]),";
@@ -682,29 +723,35 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter; 
 
+  string extends = "";
+  string extends_processor = "";
+  if (tservice->get_extends() != NULL) {
+    extends = type_name(tservice->get_extends());
+    extends_processor = extends + ".Processor, ";
+  }
+
   // Generate the header portion
   f_service_ <<
-    "class Processor(Iface, TProcessor):" << endl;
+    "class Processor(" << extends_processor << "Iface, TProcessor):" << endl;
   indent_up();
 
   indent(f_service_) <<
     "def __init__(self, handler, iprot, oprot=None):" << endl;
   indent_up();
-  f_service_ <<
-    indent() << "self.__handler = handler" << endl <<
-    indent() << "self.__iprot = iprot" << endl <<
-    indent() << "if oprot == None:" << endl <<
-    indent() << "  self.__oprot = iprot" << endl <<
-    indent() << "else:" << endl <<
-    indent() << "  self.__oprot = oprot" << endl <<
-    indent() << "self.__processMap = {" << endl;
+  if (extends.empty()) {
+    f_service_ <<
+      indent() << "self._handler = handler" << endl <<
+      indent() << "self._iprot = iprot" << endl <<
+      indent() << "if oprot == None:" << endl <<
+      indent() << "  self._oprot = iprot" << endl <<
+      indent() << "else:" << endl <<
+      indent() << "  self._oprot = oprot" << endl <<
+      indent() << "self._processMap = {}" << endl;
+  }
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ <<
-      indent() << "  \"" << (*f_iter)->get_name() << "\" : Processor.process_" << (*f_iter)->get_name() << "," << endl;
-  }
-  f_service_ <<
-    indent() << "}" << endl;
-  
+      indent() << "self._processMap[\"" << (*f_iter)->get_name() << "\"] = Processor.process_" << (*f_iter)->get_name() << endl;
+  } 
   indent_down();
   f_service_ << endl;
  
@@ -714,16 +761,16 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   indent_up();
 
   f_service_ <<
-    indent() << "(name, type, seqid)  = self.__iprot.readMessageBegin(itrans)" << endl;
+    indent() << "(name, type, seqid)  = self._iprot.readMessageBegin(itrans)" << endl;
 
   // TODO(mcslee): validate message
 
   // HOT: dictionary function lookup
   f_service_ <<
-    indent() << "if name not in self.__processMap:" << endl <<
+    indent() << "if name not in self._processMap:" << endl <<
     indent() << "  print 'Unknown function %s' % (name)" << endl <<
     indent() << "else:" << endl <<
-    indent() << "  self.__processMap[name](self, seqid, itrans, otrans)" << endl;
+    indent() << "  self._processMap[name](self, seqid, itrans, otrans)" << endl;
 
   // Read end of args field, the T_STOP, and the struct close
   f_service_ <<
@@ -759,8 +806,8 @@ void t_py_generator::generate_process_function(t_service* tservice,
 
   f_service_ <<
     indent() << "__args = " << argsname << "()" << endl <<
-    indent() << "__args.read(self.__iprot, itrans)" << endl <<
-    indent() << "self.__iprot.readMessageEnd(itrans)" << endl;
+    indent() << "__args.read(self._iprot, itrans)" << endl <<
+    indent() << "self._iprot.readMessageEnd(itrans)" << endl;
 
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
@@ -789,7 +836,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
     f_service_ << "__result.success = ";
   }
   f_service_ <<
-    "self.__handler." << tfunction->get_name() << "(";
+    "self._handler." << tfunction->get_name() << "(";
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
@@ -828,9 +875,9 @@ void t_py_generator::generate_process_function(t_service* tservice,
   }
 
   f_service_ <<
-    indent() << "self.__oprot.writeMessageBegin(otrans, \"" << tfunction->get_name() << "\", TMessageType.REPLY, seqid)" << endl <<
-    indent() << "__result.write(self.__oprot, otrans)" << endl <<
-    indent() << "self.__oprot.writeMessageEnd(otrans)" << endl <<
+    indent() << "self._oprot.writeMessageBegin(otrans, \"" << tfunction->get_name() << "\", TMessageType.REPLY, seqid)" << endl <<
+    indent() << "__result.write(self._oprot, otrans)" << endl <<
+    indent() << "self._oprot.writeMessageEnd(otrans)" << endl <<
     indent() << "otrans.flush()" << endl;
 
   // Close function
@@ -916,7 +963,7 @@ void t_py_generator::generate_deserialize_struct(ofstream &out,
                                                   t_struct* tstruct,
                                                   string prefix) {
   out <<
-    indent() << prefix << " = " << tstruct->get_name() << "()" << endl <<
+    indent() << prefix << " = " << type_name(tstruct) << "()" << endl <<
     indent() << prefix << ".read(iprot, itrans)" << endl;
 }
 
@@ -932,10 +979,10 @@ void t_py_generator::generate_deserialize_container(ofstream &out,
   string vtype = tmp("_vtype");
   string etype = tmp("_etype");
   
-  t_field fsize(g_program->get_i32_type(), size);
-  t_field fktype(g_program->get_byte_type(), ktype);
-  t_field fvtype(g_program->get_byte_type(), vtype);
-  t_field fetype(g_program->get_byte_type(), etype);
+  t_field fsize(g_type_i32, size);
+  t_field fktype(g_type_byte, ktype);
+  t_field fvtype(g_type_byte, vtype);
+  t_field fetype(g_type_byte, etype);
 
   // Declare variables, read header
   if (ttype->is_map()) {
@@ -990,13 +1037,6 @@ void t_py_generator::generate_deserialize_map_element(ofstream &out,
   string val = tmp("_val");
   t_field fkey(tmap->get_key_type(), key);
   t_field fval(tmap->get_val_type(), val);
-
-  /*
-  indent(out) <<
-    declare_field(&fkey, true, true) << endl;
-  indent(out) <<
-    declare_field(&fval, true, true) << endl;
-  */
 
   generate_deserialize_field(out, &fkey);
   generate_deserialize_field(out, &fval);
@@ -1264,7 +1304,7 @@ string t_py_generator::declare_field(t_field* tfield, bool init, bool obj) {
       }
     } else if (type->is_struct() || type->is_xception()) {
       if (obj) {
-        result += " = " + type->get_name() + "()";
+        result += " = " + type_name((t_struct*)type) + "()";
       } else {
         result += " = None";
       }
@@ -1305,6 +1345,18 @@ string t_py_generator::argument_list(t_struct* tstruct) {
     result += (*f_iter)->get_name();
   }
   return result;
+}
+
+string t_py_generator::type_name(t_type* ttype) {
+  t_program* program = ttype->get_program();
+  if (program != NULL && program != program_) {
+    if (ttype->is_service()) {
+      return ttype->get_name();
+    } else {
+      return program->get_name() + "_types." + ttype->get_name();
+    }
+  }
+  return ttype->get_name();
 }
 
 /**

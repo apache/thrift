@@ -10,7 +10,7 @@ using namespace std;
  *
  * @param tprogram The program to generate
  */
-void t_php_generator::init_generator(t_program* tprogram) {
+void t_php_generator::init_generator() {
   // Make output directory
   mkdir(T_PHP_DIR, S_IREAD | S_IWRITE | S_IEXEC);
 
@@ -36,7 +36,7 @@ string t_php_generator::php_includes() {
 /**
  * Close up (or down) some filez.
  */
-void t_php_generator::close_generator(t_program *tprogram) {
+void t_php_generator::close_generator() {
   // Close types file
   f_types_ << "?>" << endl;
   f_types_.close();
@@ -80,7 +80,6 @@ void t_php_generator::generate_enum(t_enum* tenum) {
   // We're also doing it this way to see how it performs. It's more legible
   // code but you can't do things like an 'extract' on it, which is a bit of
   // a downer.
-
   f_types_ <<
     "final class " << tenum->get_name() << " {" << endl;
   indent_up();
@@ -96,6 +95,10 @@ void t_php_generator::generate_enum(t_enum* tenum) {
     indent(f_types_) <<
       "const " << (*c_iter)->get_name() << " = " << value << ";" << endl;
   }
+
+  // Prevent instantiation of this class
+  f_types_ <<
+    indent() << "private function __construct() {}" << endl;
 
   indent_down();
   f_types_ << "}" << endl << endl;
@@ -201,8 +204,8 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
     
     // Read beginning field marker
     if (binary_inline_) {
-      t_field fftype(g_program->get_byte_type(), "ftype");
-      t_field ffid(g_program->get_i16_type(), "fid");
+      t_field fftype(g_type_byte, "ftype");
+      t_field ffid(g_type_i16, "fid");
       generate_deserialize_field(out, &fftype);
       out <<
         indent() << "if ($ftype == TType::STOP) {" << endl <<
@@ -364,7 +367,15 @@ void t_php_generator::generate_service(t_service* tservice) {
     php_includes();
 
   f_service_ <<
-    "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << program_name_ << "/" << program_name_ << "_types.php';" << endl << endl;
+    "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << program_name_ << "/" << program_name_ << "_types.php';" << endl;
+
+  if (tservice->get_extends() != NULL) {
+    f_service_ <<
+      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << tservice->get_extends()->get_program()->get_name() << "/" << tservice->get_extends()->get_name() << ".php';" << endl;
+  }
+  
+  f_service_ <<
+    endl;
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_interface(tservice);
@@ -387,32 +398,55 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter; 
 
+  string extends = "";
+  string extends_processor = "";
+  if (tservice->get_extends() != NULL) {
+    extends = tservice->get_extends()->get_name();
+    extends_processor = " extends " + extends + "Processor";
+  }
+
   // Generate the header portion
   f_service_ <<
-    "class " << service_name_ << "Processor {" << endl;
+    "class " << service_name_ << "Processor" << extends_processor << " {" << endl;
   indent_up();
 
-  f_service_ <<
-    indent() << "private $_handler = null;" << endl;
-  if (!binary_inline_) {
-    f_service_ << 
-      indent() << "private $_iprot = null;" << endl <<
-      indent() << "private $_oprot = null;" << endl <<
-      endl;
+  if (extends.empty()) {
+    f_service_ <<
+      indent() << "protected $_handler = null;" << endl;
+    if (!binary_inline_) {
+      f_service_ << 
+        indent() << "protected $_iprot = null;" << endl <<
+        indent() << "protected $_oprot = null;" << endl <<
+        endl;
+    }
   }
 
   if (binary_inline_) {
     f_service_ <<
-      indent() << "public function __construct($handler) {" << endl << 
-      indent() << "  $this->_handler = $handler;" << endl <<
+      indent() << "public function __construct($handler) {" << endl;
+    if (extends.empty()) {
+      f_service_ <<
+        indent() << "  $this->_handler = $handler;" << endl;
+    } else {
+      f_service_ <<
+        indent() << "  parent::__construct($handler);" << endl;
+    }
+    f_service_ <<
       indent() << "}" << endl <<
       endl;
   } else {
     f_service_ <<
-      indent() << "public function __construct($handler, $iprot, $oprot=null) {" << endl << 
-      indent() << "  $this->_handler = $handler;" << endl <<
-      indent() << "  $this->_iprot = $iprot;" << endl <<
-      indent() << "  $this->_oprot = $oprot ? $oprot : $iprot;" << endl <<
+      indent() << "public function __construct($handler, $iprot, $oprot=null) {" << endl;
+    if (extends.empty()) {
+      f_service_ <<
+        indent() << "  $this->_handler = $handler;" << endl <<
+        indent() << "  $this->_iprot = $iprot;" << endl <<
+        indent() << "  $this->_oprot = $oprot ? $oprot : $iprot;" << endl;
+    } else {
+      f_service_ <<
+        indent() << "  parent::__construct($handler, $iprot, $oprot);" << endl;
+    }
+    f_service_ <<
       indent() << "}" << endl <<
       endl;
   }
@@ -429,9 +463,9 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
     endl;
 
   if (binary_inline_) {
-    t_field ffname(g_program->get_string_type(), "fname");
-    t_field fmtype(g_program->get_byte_type(), "mtype");
-    t_field fseqid(g_program->get_i32_type(), "rseqid");
+    t_field ffname(g_type_string, "fname");
+    t_field fmtype(g_type_byte, "mtype");
+    t_field fseqid(g_type_i32, "rseqid");
     generate_deserialize_field(f_service_, &ffname, "", true);
     generate_deserialize_field(f_service_, &fmtype, "", true);
     generate_deserialize_field(f_service_, &fseqid, "", true);
@@ -602,7 +636,7 @@ void t_php_generator::generate_service_helpers(t_service* tservice) {
  * @param tfunction The function
  */
 void t_php_generator::generate_php_function_helpers(t_function* tfunction) {
-  t_struct result(service_name_ + "_" + tfunction->get_name() + "_result");
+  t_struct result(program_, service_name_ + "_" + tfunction->get_name() + "_result");
   t_field success(tfunction->get_returntype(), "success", 0);
   if (!tfunction->get_returntype()->is_void()) {
     result.append(&success);
@@ -624,14 +658,20 @@ void t_php_generator::generate_php_function_helpers(t_function* tfunction) {
  * @param tservice The service to generate a header definition for
  */
 void t_php_generator::generate_service_interface(t_service* tservice) {
+  string extends = "";
+  string extends_if = "";
+  if (tservice->get_extends() != NULL) {
+    extends = " extends " + tservice->get_extends()->get_name();
+    extends_if = " extends " + tservice->get_extends()->get_name() + "If";
+  }
   f_service_ <<
-    "abstract class " << service_name_ << "If {" << endl;
+    "interface " << service_name_ << "If" << extends_if << " {" << endl;
   indent_up();
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter; 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_service_) <<
-      "public abstract function " << function_signature(*f_iter) << ";" << endl;
+      "public function " << function_signature(*f_iter) << ";" << endl;
   }
   indent_down();
   f_service_ <<
@@ -644,53 +684,59 @@ void t_php_generator::generate_service_interface(t_service* tservice) {
  * @param tservice The service to generate a server for.
  */
 void t_php_generator::generate_service_client(t_service* tservice) {
-  f_service_ <<
-    "class " << service_name_ << "Client " <<
-    "extends " << service_name_ << "If {" << endl;
-  indent_up();
-
-  // Private members
-  f_service_ <<
-    indent() << "private $_itrans = null;" << endl <<
-    indent() << "private $_otrans = null;" << endl <<
-    endl;
-
-  if (!binary_inline_) {
-    f_service_ <<
-      indent() << "private $_iprot = null;" << endl <<
-      indent() << "private $_oprot = null;" << endl <<
-      endl;
+  string extends = "";
+  string extends_client = "";
+  if (tservice->get_extends() != NULL) {
+    extends = tservice->get_extends()->get_name();
+    extends_client = " extends " + extends + "Client";
   }
 
   f_service_ <<
-    indent() << "private $_seqid = 0;" << endl <<
-    endl;
+    "class " << service_name_ << "Client" << extends_client << " implements " << service_name_ << "If {" << endl;
+  indent_up();
+
+  // Private members
+  if (extends.empty()) {
+    f_service_ <<
+      indent() << "protected $_itrans = null;" << endl <<
+      indent() << "protected $_otrans = null;" << endl <<
+      endl;
+    if (!binary_inline_) {
+      f_service_ <<
+        indent() << "protected $_iprot = null;" << endl <<
+        indent() << "protected $_oprot = null;" << endl <<
+        endl;
+    }
+    f_service_ <<
+      indent() << "protected $_seqid = 0;" << endl <<
+      endl;
+  }
 
   // Constructor function
   f_service_ <<
-    indent() << "public function __construct() {" << endl <<
-    indent() << "  $argv = func_get_args();" << endl <<
-    indent() << "  $argc = count($argv);" << endl;
-
-  if (binary_inline_) {
+    indent() << "public function __construct() {" << endl;
+  f_service_ <<
+    indent() << "  $argv = func_get_args();" << endl;
+  if (!extends.empty()) {
     f_service_ <<
-      indent() << "  if ($argc == 1) {" << endl <<
-      indent() << "    $this->_itrans = $this->_otrans = $argv[0];" << endl <<
-      indent() << "  } else if ($argc == 2) {" << endl <<
-      indent() << "    $this->_itrans = $argv[0];" << endl <<
-      indent() << "    $this->_otrans = $argv[1];" << endl <<
-      indent() << "  }" << endl;
+      indent() << "  parent::__construct($argv[0], $argv[1], $argv[2], $argv[3]);" << endl;
   } else {
-    f_service_ <<
-      indent() << "  if ($argc == 2) {" << endl <<
-      indent() << "    $this->_itrans = $this->_otrans = $argv[0];" << endl <<
-      indent() << "    $this->_iprot = $this->_oprot = $argv[1];" << endl <<
-      indent() << "  } else if ($argc == 4) {" << endl <<
-      indent() << "    $this->_itrans = $argv[0];" << endl <<
-      indent() << "    $this->_otrans = $argv[1];" << endl <<
-      indent() << "    $this->_iprot = $argv[2];" << endl <<
-      indent() << "    $this->_oprot = $argv[3];" << endl <<
-      indent() << "  }" << endl;
+    if (binary_inline_) {
+      f_service_ <<
+        indent() << "  $this->_itrans = $this->_otrans = $argv[0];" << endl <<
+        indent() << "  if ($argv[1]) {" << endl <<
+        indent() << "    $this->_otrans = $argv[1];" << endl <<
+        indent() << "  }" << endl;
+    } else {
+      f_service_ <<
+        indent() << "  $this->_itrans = $this->_otrans = $argv[0];" << endl <<
+        indent() << "  $this->_iprot = $this->_oprot = $argv[1];" << endl <<
+        indent() << "  if ($argv[2]) {" << endl <<
+        indent() << "    $this->_otrans = $argv[1];" << endl <<
+        indent() << "    $this->_iprot = $argv[2];" << endl <<
+        indent() << "    $this->_oprot = $argv[3];" << endl <<
+        indent() << "  }" << endl;
+    }
   }
   f_service_ <<
     indent() << "}" << endl << endl;   
@@ -780,7 +826,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
 
     if (!(*f_iter)->is_async()) {
       std::string resultname = service_name_ + "_" + (*f_iter)->get_name() + "_result";
-      t_struct noargs;
+      t_struct noargs(program_);
       
       t_function recv_function((*f_iter)->get_returntype(),
                                string("recv_") + (*f_iter)->get_name(),
@@ -798,9 +844,9 @@ void t_php_generator::generate_service_client(t_service* tservice) {
         endl;
 
       if (binary_inline_) {
-        t_field ffname(g_program->get_string_type(), "fname");
-        t_field fmtype(g_program->get_byte_type(), "mtype");
-        t_field fseqid(g_program->get_i32_type(), "rseqid");
+        t_field ffname(g_type_string, "fname");
+        t_field fmtype(g_type_byte, "mtype");
+        t_field fseqid(g_type_i32, "rseqid");
         generate_deserialize_field(f_service_, &ffname, "", true);
         generate_deserialize_field(f_service_, &fmtype, "", true);
         generate_deserialize_field(f_service_, &fseqid, "", true);
@@ -1046,10 +1092,10 @@ void t_php_generator::generate_deserialize_container(ofstream &out,
   string vtype = tmp("_vtype");
   string etype = tmp("_etype");
   
-  t_field fsize(g_program->get_i32_type(), size);
-  t_field fktype(g_program->get_byte_type(), ktype);
-  t_field fvtype(g_program->get_byte_type(), vtype);
-  t_field fetype(g_program->get_byte_type(), etype);
+  t_field fsize(g_type_i32, size);
+  t_field fktype(g_type_byte, ktype);
+  t_field fvtype(g_type_byte, vtype);
+  t_field fetype(g_type_byte, etype);
 
   out <<
     indent() << "$" << prefix << " = array();" << endl <<

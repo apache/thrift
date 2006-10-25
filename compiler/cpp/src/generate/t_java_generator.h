@@ -18,14 +18,15 @@
  */
 class t_java_generator : public t_oop_generator {
  public:
-  t_java_generator() {}
+  t_java_generator(t_program* program) :
+    t_oop_generator(program) {}
 
   /**
    * Init and close methods
    */
 
-  void init_generator(t_program *tprogram);
-  void close_generator(t_program *tprogram);
+  void init_generator();
+  void close_generator();
 
   /**
    * Program-level generation functions

@@ -15,8 +15,11 @@
  */
 class t_generator {
  public:
-  t_generator() {
+  t_generator(t_program* program) {
     tmp_ = 0;
+    indent_ = 0;
+    program_ = program;
+    program_name_ = get_program_name(program);
   }
 
   virtual ~t_generator() {}
@@ -26,7 +29,7 @@ class t_generator {
    * and performs general actions. This is implemented by the base class and
    * should not be overwritten in the subclasses.
    */
-  void generate_program  (t_program*  tprogram);
+  void generate_program();
 
  protected:
 
@@ -35,8 +38,8 @@ class t_generator {
    * steps at the beginning or end of code generation.
    */
 
-  virtual void init_generator    (t_program*  tprogram) {}
-  virtual void close_generator   (t_program*  tprogram) {}
+  virtual void init_generator() {}
+  virtual void close_generator() {}
 
   /**
    * Pure virtual methods implemented by the generator subclasses.
@@ -107,6 +110,11 @@ class t_generator {
   }
 
  protected:
+  /**
+   * The program being generated
+   */
+  t_program* program_;
+
   /**
    * Quick accessor for formatted program name that is currently being
    * generated.

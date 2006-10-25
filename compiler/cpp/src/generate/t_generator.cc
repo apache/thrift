@@ -9,43 +9,40 @@ using namespace std;
  * @param program The thrift program to compile into C++ source
  * @author Mark Slee <mcslee@facebook.com>
  */
-void t_generator::generate_program(t_program *tprogram) {
-  // Set program name
-  program_name_ = get_program_name(tprogram);
-
+void t_generator::generate_program() {
   // Initialize the generator
-  init_generator(tprogram);
+  init_generator();
 
   // Generate typedefs
-  vector<t_typedef*> typedefs = tprogram->get_typedefs();
+  vector<t_typedef*> typedefs = program_->get_typedefs();
   vector<t_typedef*>::iterator td_iter;
   for (td_iter = typedefs.begin(); td_iter != typedefs.end(); ++td_iter) {
     generate_typedef(*td_iter);
   }
 
   // Generate enums
-  vector<t_enum*> enums = tprogram->get_enums();
+  vector<t_enum*> enums = program_->get_enums();
   vector<t_enum*>::iterator en_iter;
   for (en_iter = enums.begin(); en_iter != enums.end(); ++en_iter) {
     generate_enum(*en_iter);
   }
 
   // Generate structs
-  vector<t_struct*> structs = tprogram->get_structs();
+  vector<t_struct*> structs = program_->get_structs();
   vector<t_struct*>::iterator st_iter;
   for (st_iter = structs.begin(); st_iter != structs.end(); ++st_iter) {
     generate_struct(*st_iter);
   }
 
   // Generate xceptions
-  vector<t_struct*> xceptions = tprogram->get_xceptions();
+  vector<t_struct*> xceptions = program_->get_xceptions();
   vector<t_struct*>::iterator x_iter;
   for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
     generate_xception(*x_iter);
   }
 
   // Generate services
-  vector<t_service*> services = tprogram->get_services();
+  vector<t_service*> services = program_->get_services();
   vector<t_service*>::iterator sv_iter;
   for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
     service_name_ = get_service_name(*sv_iter);
@@ -53,5 +50,5 @@ void t_generator::generate_program(t_program *tprogram) {
   }
 
   // Close the generator
-  close_generator(tprogram);
+  close_generator();
 }

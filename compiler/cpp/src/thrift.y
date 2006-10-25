@@ -12,6 +12,7 @@
 #include "main.h"
 #include "globals.h"
 #include "parse/t_program.h"
+#include "parse/t_scope.h"
 
 /**
  * This global variable is used for automatic numbering of field indices etc.
@@ -44,7 +45,7 @@ int y_field_val = -1;
  * Strings identifier
  */
 %token<id>     tok_identifier
-%token<id>     tok_cpptype
+%token<id>     tok_literal
 
 /**
  * Integer constant value
@@ -52,9 +53,14 @@ int y_field_val = -1;
 %token<iconst> tok_int_constant
 
 /**
- * Namespace keyword
+ * Header keywoards
  */
+%token tok_include
 %token tok_namespace
+%token tok_cpp_namespace
+%token tok_cpp_include
+%token tok_cpp_type
+%token tok_java_package
 
 /**
  * Base datatype keywords
@@ -87,6 +93,7 @@ int y_field_val = -1;
 %token tok_struct
 %token tok_xception
 %token tok_throws
+%token tok_extends
 %token tok_service
 %token tok_enum
 
@@ -94,13 +101,13 @@ int y_field_val = -1;
  * Grammar nodes
  */
 
-%type<id>        Namespace
-
 %type<ttype>     BaseType
 %type<ttype>     ContainerType
 %type<ttype>     MapType
 %type<ttype>     SetType
 %type<ttype>     ListType
+
+%type<ttype>     TypeDefinition
 
 %type<ttypedef>  Typedef
 %type<ttype>     DefinitionType
@@ -122,6 +129,7 @@ int y_field_val = -1;
 %type<tservice>  FunctionList
 
 %type<tstruct>   ThrowsOptional
+%type<tservice>  ExtendsOptional
 %type<tbool>     AsyncOptional
 %type<id>        CppTypeOptional
 
@@ -136,10 +144,67 @@ int y_field_val = -1;
  */
 
 Program:
-  DefinitionList
-  {
-    pdebug("Program -> DefinitionList");
-  }
+  HeaderList DefinitionList
+    {
+      pdebug("Program -> Headers DefinitionList");
+    }
+
+HeaderList:
+  HeaderList Header
+    {
+      pdebug("HeaderList -> HeaderList Header");
+    }
+|
+    {
+      pdebug("HeaderList -> ");
+    }
+
+Header:
+  Include
+    {
+      pdebug("Header -> Include");
+    }
+| tok_namespace tok_identifier
+    {
+      pwarning(1, "'namespace' is deprecated. Use 'cpp_namespace' and/or 'java_package' instead");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_cpp_namespace($2);
+        g_program->set_java_package($2);
+      }
+    }
+| tok_cpp_namespace tok_identifier
+    {
+      pdebug("Header -> tok_cpp_namespace tok_identifier");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_cpp_namespace($2);
+      }
+    }
+| tok_cpp_include tok_literal
+    {
+      pdebug("Header -> tok_cpp_include tok_literal");
+      if (g_parse_mode == PROGRAM) {
+        g_program->add_cpp_include($2);
+      }
+    }
+| tok_java_package tok_identifier
+    {
+      pdebug("Header -> tok_java_package tok_identifier");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_java_package($2);
+      }
+    }
+
+Include:
+  tok_include tok_literal
+    {
+      pdebug("Include -> tok_include tok_literal");     
+      if (g_parse_mode == INCLUDES) {
+        std::string path = include_file(std::string($2));
+        if (!path.empty()) {
+          g_program->add_include(path);
+        }
+      }
+    }
 
 DefinitionList:
   DefinitionList Definition
@@ -152,49 +217,63 @@ DefinitionList:
     }
 
 Definition:
-  Namespace
+  TypeDefinition
     {
-      pdebug("Definition -> Namespace");
-      g_program->set_namespace($1);
-    }
-| Typedef
-    {
-      pdebug("Definition -> Typedef");
-      g_program->add_typedef($1);
-    }
-| Enum
-    {
-      pdebug("Definition -> Enum");
-      g_program->add_enum($1);
-    }
-| Struct
-    {
-      pdebug("Definition -> Struct");
-      g_program->add_struct($1);
-    }
-| Xception
-    { 
-      pdebug("Definition -> Xception");
-      g_program->add_xception($1);     
+      pdebug("Definition -> TypeDefinition");
+      if (g_parse_mode == PROGRAM) {
+        g_scope->add_type($1->get_name(), $1);
+        if (g_parent_scope != NULL) {
+          g_parent_scope->add_type(g_parent_prefix + $1->get_name(), $1);
+        }
+      }
     }
 | Service
     {
       pdebug("Definition -> Service");
-      g_program->add_service($1);
+      if (g_parse_mode == PROGRAM) {
+        g_scope->add_service($1->get_name(), $1);
+        if (g_parent_scope != NULL) {
+          g_parent_scope->add_service(g_parent_prefix + $1->get_name(), $1);
+        }
+        g_program->add_service($1);
+      }
     }
 
-Namespace:
-  tok_namespace tok_identifier
+TypeDefinition:
+  Typedef
     {
-      pdebug("Namespace -> tok_namespace tok_identifier");
-      $$ = $2;
+      pdebug("TypeDefinition -> Typedef");
+      if (g_parse_mode == PROGRAM) {
+        g_program->add_typedef($1);
+      }
+    }
+| Enum
+    {
+      pdebug("TypeDefinition -> Enum");
+      if (g_parse_mode == PROGRAM) {
+        g_program->add_enum($1);
+      }
+    }
+| Struct
+    {
+      pdebug("TypeDefinition -> Struct");
+      if (g_parse_mode == PROGRAM) {
+        g_program->add_struct($1);
+      }
+    }
+| Xception
+    { 
+      pdebug("TypeDefinition -> Xception");
+      if (g_parse_mode == PROGRAM) {
+        g_program->add_xception($1);
+      }
     }
 
 Typedef:
   tok_typedef DefinitionType tok_identifier
     {
       pdebug("TypeDef -> tok_typedef DefinitionType tok_identifier");
-      t_typedef *td = new t_typedef($2, $3);
+      t_typedef *td = new t_typedef(g_program, $2, $3);
       $$ = td;
     }
 
@@ -216,13 +295,13 @@ EnumDefList:
 | EnumDef
     {
       pdebug("EnumDefList -> EnumDef");
-      $$ = new t_enum;
+      $$ = new t_enum(g_program);
       $$->append($1);
     }
 |
     {
       pdebug("EnumDefList -> ");
-      $$ = new t_enum;
+      $$ = new t_enum(g_program);
     }
 
 EnumDef:
@@ -230,7 +309,7 @@ EnumDef:
     {
       pdebug("EnumDef => tok_identifier = tok_int_constant");
       if ($3 < 0) {
-        printf("WARNING (%d): Negative value supplied for enum %s.\n", yylineno, $1);
+        pwarning(1, "Negative value supplied for enum %s.\n", $1);
       }
       $$ = new t_constant($1, $3);
     }
@@ -261,11 +340,30 @@ Xception:
     }
 
 Service:
-  tok_service tok_identifier '{' FunctionList '}'
+  tok_service tok_identifier ExtendsOptional '{' FunctionList '}'
     {
       pdebug("Service -> tok_service tok_identifier { FunctionList }");
-      $$ = $4;
+      $$ = $5;
       $$->set_name($2);
+      $$->set_extends($3);
+    }
+
+ExtendsOptional:
+  tok_extends tok_identifier
+    {
+      pdebug("ExtendsOptional -> tok_extends tok_identifier");
+      $$ = NULL;
+      if (g_parse_mode == PROGRAM) {
+        $$ = g_scope->get_service($2);
+        if ($$ == NULL) {
+          yyerror("Service \"%s\" has not been defined.", $2);
+          exit(1);
+        }
+      }
+    }
+|
+    {
+      $$ = NULL;
     }
 
 FunctionList:
@@ -278,7 +376,7 @@ FunctionList:
 |
     {
       pdebug("FunctionList -> ");
-      $$ = new t_service;
+      $$ = new t_service(g_program);
     }
 
 CommaOptional:
@@ -308,11 +406,12 @@ AsyncOptional:
 ThrowsOptional:
   tok_throws '(' FieldList ')'
     {
+      pdebug("ThrowsOptional -> tok_throws ( FieldList )");
       $$ = $3;
     }
 |
     {
-      $$ = new t_struct;
+      $$ = new t_struct(g_program);
     }
 
 FieldList:
@@ -325,30 +424,40 @@ FieldList:
 | Field
     {
       pdebug("FieldList -> Field");
-      $$ = new t_struct;
+      $$ = new t_struct(g_program);
       $$->append($1);
     }
 |
     {
       pdebug("FieldList -> ");
-      $$ = new t_struct;
+      $$ = new t_struct(g_program);
     }
 
 Field:
-  FieldType tok_identifier '=' tok_int_constant
+  tok_int_constant ':' FieldType tok_identifier
     {
-      pdebug("Field -> FieldType tok_identifier = tok_int_constant");
-      if ($4 <= 0) {
-        printf("WARNING (%d): Nonpositive value (%d) not allowed as a field key for '%s'.\n", yylineno, $4, $2);
-        $4 = y_field_val--;
+      pdebug("tok_int_constant : Field -> FieldType tok_identifier");
+      if ($1 <= 0) {
+        pwarning(1, "Nonpositive value (%d) not allowed as a field key for '%s'.\n", $1, $4);
+        $1 = y_field_val--;
       }
-      $$ = new t_field($1, $2, $4);
+      $$ = new t_field($3, $4, $1);
     }
 | FieldType tok_identifier
     {
       pdebug("Field -> FieldType tok_identifier");
-      printf("WARNING (%d): No field key specified for '%s', resulting protocol may have conflicts or not be backwards compatible!\n", yylineno, $2);
+      pwarning(2, "No field key specified for '%s', resulting protocol may have conflicts or not be backwards compatible!\n", $2);
       $$ = new t_field($1, $2, y_field_val--);
+    }
+| FieldType tok_identifier '=' tok_int_constant
+    {
+      pwarning(1, "Trailing = id notation is deprecated. Use 'Id: Type Name' notatio instead"); 
+      pdebug("Field -> FieldType tok_identifier = tok_int_constant");
+      if ($4 <= 0) {
+        pwarning(1, "Nonpositive value (%d) not allowed as a field key for '%s'.\n", $4, $2);
+        $4 = y_field_val--;
+      }
+      $$ = new t_field($1, $2, $4);
     }
 
 DefinitionType:
@@ -372,17 +481,23 @@ FunctionType:
 | tok_void
     {
       pdebug("FunctionType -> tok_void");
-      $$ = g_program->get_void_type();
+      $$ = g_type_void;
     }
 
 FieldType:
   tok_identifier
     {
       pdebug("FieldType -> tok_identifier");
-      $$ = g_program->get_custom_type($1);
-      if ($$ == NULL) {
-        yyerror("Type \"%s\" has not been defined.", $1);
-        exit(1);
+      if (g_parse_mode == INCLUDES) {
+        // Ignore identifiers in include mode
+        $$ = NULL;
+      } else {
+        // Lookup the identifier in the current scope
+        $$ = g_scope->get_type($1);
+        if ($$ == NULL) {
+          yyerror("Type \"%s\" has not been defined.", $1);
+          exit(1);
+        }
       }
     }
 | BaseType
@@ -400,37 +515,37 @@ BaseType:
   tok_string
     {
       pdebug("BaseType -> tok_string");
-      $$ = g_program->get_string_type();
+      $$ = g_type_string;
     }
 | tok_bool
     {
       pdebug("BaseType -> tok_bool");
-      $$ = g_program->get_bool_type();
+      $$ = g_type_bool;
     }
 | tok_byte
     {
       pdebug("BaseType -> tok_byte");
-      $$ = g_program->get_byte_type();
+      $$ = g_type_byte;
     }
 | tok_i16
     {
       pdebug("BaseType -> tok_i16");
-      $$ = g_program->get_i16_type();
+      $$ = g_type_i16;
     }
 | tok_i32
     {
       pdebug("BaseType -> tok_i32");
-      $$ = g_program->get_i32_type();
+      $$ = g_type_i32;
     }
 | tok_i64
     {
       pdebug("BaseType -> tok_i64");
-      $$ = g_program->get_i64_type();
+      $$ = g_type_i64;
     }
 | tok_double
     {
       pdebug("BaseType -> tok_double");
-      $$ = g_program->get_double_type();
+      $$ = g_type_double;
     }
 
 ContainerType:
@@ -471,19 +586,19 @@ SetType:
     }
 
 ListType:
-  tok_list CppTypeOptional '<' FieldType '>'
+  tok_list '<' FieldType '>' CppTypeOptional
     {
       pdebug("ListType -> tok_list<FieldType>");
-      $$ = new t_list($4);
-      if ($2 != NULL) {
-        ((t_container*)$$)->set_cpp_name(std::string($2));
+      $$ = new t_list($3);
+      if ($5 != NULL) {
+        ((t_container*)$$)->set_cpp_name(std::string($5));
       }
     }
 
 CppTypeOptional:
-  tok_cpptype
+  '[' tok_cpp_type tok_literal ']'
     {
-      $$ = $1;
+      $$ = $3;
     }
 |
     {

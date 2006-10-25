@@ -11,7 +11,8 @@
  */
 class t_enum : public t_type {
  public:
-  t_enum() {}
+  t_enum(t_program* program) :
+    t_type(program) {}
 
   void set_name(std::string name) {
     name_ = name;
