@@ -21,16 +21,24 @@ class TFramedTransport : public TTransport {
  public:
   TFramedTransport(shared_ptr<TTransport> transport) :
     transport_(transport),
-    rPos_(0), rLen_(0),
-    wBufSize_(512), wLen_(0) {
+    rPos_(0),
+    rLen_(0),
+    read_(true),
+    wBufSize_(512),
+    wLen_(0),
+    write_(true) {
     rBuf_ = NULL;
     wBuf_ = new uint8_t[wBufSize_];
   }
 
   TFramedTransport(shared_ptr<TTransport> transport, uint32_t sz) :
     transport_(transport),
-    rPos_(0), rLen_(0),
-    wBufSize_(sz), wLen_(0) {
+    rPos_(0),
+    rLen_(0),
+    read_(true),
+    wBufSize_(sz),
+    wLen_(0),
+    write_(true) {
     rBuf_ = NULL;
     wBuf_ = new uint8_t[wBufSize_];
   }
@@ -44,18 +52,26 @@ class TFramedTransport : public TTransport {
     }
   }
 
-  bool isOpen() {
-    return transport_->isOpen();
+  void setRead(bool read) {
+    read_ = read;
   }
-  
+
+  void setWrite(bool write) {
+    write_ = write;
+  }
+ 
   void open() {
     transport_->open();
+  }
+
+  bool isOpen() {
+    return transport_->isOpen();
   }
 
   void close() {
     transport_->close();
   }
-  
+ 
   uint32_t read(uint8_t* buf, uint32_t len);
 
   void write(const uint8_t* buf, uint32_t len);
@@ -67,10 +83,12 @@ class TFramedTransport : public TTransport {
   uint8_t* rBuf_;
   uint32_t rPos_;
   uint32_t rLen_;
+  bool read_;
 
   uint8_t* wBuf_;
   uint32_t wBufSize_;
   uint32_t wLen_;
+  bool write_;
 
   /**
    * Reads a frame of input from the underlying stream.

@@ -6,6 +6,10 @@ using std::string;
 namespace facebook { namespace thrift { namespace transport { 
 
 uint32_t TFramedTransport::read(uint8_t* buf, uint32_t len) {
+  if (!read_) {
+    return transport_->read(buf, len);
+  }
+
   uint32_t need = len;
 
   // We don't have enough data yet
@@ -60,6 +64,12 @@ void TFramedTransport::write(const uint8_t* buf, uint32_t len) {
     return;
   }
 
+  // Shortcut out if not write mode
+  if (!write_) {
+    transport_->write(buf, len);
+    return;
+  }
+
   // Need to grow the buffer
   if (len + wLen_ >= wBufSize_) {
 
@@ -85,6 +95,11 @@ void TFramedTransport::write(const uint8_t* buf, uint32_t len) {
 }
 
 void TFramedTransport::flush()  {
+  if (!write_) {
+    transport_->flush();
+    return;
+  }
+
   // Write frame size
   int32_t sz = wLen_;
   sz = (int32_t)htonl(sz);
