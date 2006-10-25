@@ -7,10 +7,8 @@
 #include <server/TThreadPoolServer.h>
 #include <transport/TServerSocket.h>
 #include <transport/TSocket.h>
-#include <transport/TBufferedTransport.h>
-#include <transport/TBufferedTransportFactory.h>
+#include <transport/TTransportUtils.h>
 #include <transport/TBufferedRouterTransport.h>
-#include <transport/TBufferedRouterTransportFactory.h>
 #include <transport/TBufferedFileWriter.h>
 
 #include "Service.h"
@@ -257,11 +255,9 @@ int main(int argc, char **argv) {
   if(runServer) {
 
     // Dispatcher
-    shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol);
-
     shared_ptr<Server> serviceHandler(new Server());
 
-    shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler, binaryProtocol));
+    shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
 
     // Transport
     shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
@@ -269,8 +265,8 @@ int main(int argc, char **argv) {
     // Transport Factory
     shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
 
-    // Options
-    shared_ptr<TServerOptions> serverOptions(new TServerOptions());
+    // Protocol Factory
+    shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
     if (logRequests) {
       // initialize the log file
@@ -285,24 +281,15 @@ int main(int argc, char **argv) {
 
     if(serverType == "simple") {
       
-      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TSimpleServer(serviceProcessor, 
-                                                                                    serverSocket, 
-                                                                                    transportFactory, 
-                                                                                    serverOptions)));
+      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TSimpleServer(serviceProcessor, serverSocket, transportFactory, protocolFactory)));
       
     } else if(serverType == "thread-pool") {
 
       shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
 
       threadManager->threadFactory(threadFactory);
-
-      threadManager->start();
-      
-      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TThreadPoolServer(serviceProcessor,
-                                                                                        serverSocket,
-                                                                                        transportFactory,
-                                                                                        threadManager,
-                                                                                        serverOptions)));
+      threadManager->start();     
+      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TThreadPoolServer(serviceProcessor, serverSocket, transportFactory, protocolFactory, threadManager)));
     }
 
     cerr << "Starting the server on port " << port << endl;
@@ -311,12 +298,12 @@ int main(int argc, char **argv) {
     
     // If we aren't running clients, just wait forever for external clients
 
-    if(clientCount == 0) {
+    if (clientCount == 0) {
       serverThread->join();
     }
   }
 
-  if(clientCount > 0) {
+  if (clientCount > 0) {
 
     Monitor monitor;
 
@@ -335,8 +322,8 @@ int main(int argc, char **argv) {
     
       shared_ptr<TSocket> socket(new TSocket("127.0.01", port));
       shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
-      shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol());
-      shared_ptr<ServiceClient> serviceClient(new ServiceClient(socket, binaryProtocol));
+      shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket, bufferedSocket));
+      shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
     
       clientThreads.insert(threadFactory->newThread(shared_ptr<ClientThread>(new ClientThread(socket, serviceClient, monitor, threadCount, loopCount, loopType))));
     }

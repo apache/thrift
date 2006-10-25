@@ -1,14 +1,14 @@
-namespace test.stress
+cpp_namespace test.stress
 
 service Service {
 
   void echoVoid(),
-  byte echoByte(byte arg),
-  i32 echoI32(i32 arg),
-  i64 echoI64(i64 arg),
-  string echoString(string arg),
-  list<byte>  echoList(list<byte> arg),
-  set<byte>  echoSet(set<byte> arg),
-  map<byte, byte>  echoMap(map<byte, byte> arg),
+  byte echoByte(1: byte arg),
+  i32 echoI32(1: i32 arg),
+  i64 echoI64(1: i64 arg),
+  string echoString(1: string arg),
+  list<byte>  echoList(1: list<byte> arg),
+  set<byte>  echoSet(1: set<byte> arg),
+  map<byte, byte>  echoMap(1: map<byte, byte> arg),
 }
 
