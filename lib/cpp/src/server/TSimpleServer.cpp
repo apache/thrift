@@ -14,7 +14,8 @@ namespace facebook { namespace thrift { namespace server {
 void TSimpleServer::serve() {
 
   shared_ptr<TTransport> client;
-  pair<shared_ptr<TTransport>,shared_ptr<TTransport> > io;
+  pair<shared_ptr<TTransport>,shared_ptr<TTransport> > iot;
+  pair<shared_ptr<TProtocol>,shared_ptr<TProtocol> > iop;
 
   try {
     // Start the server listening
@@ -28,14 +29,15 @@ void TSimpleServer::serve() {
   try {
     while (true) {
       client = serverTransport_->accept();
-      io = transportFactory_->getIOTransports(client);
+      iot = transportFactory_->getIOTransports(client);
+      iop = protocolFactory_->getIOProtocols(iot.first, iot.second);
       try {
-        while (processor_->process(io.first, io.second)) {}
+        while (processor_->process(iop.first, iop.second)) {}
       } catch (TTransportException& ttx) {
         cerr << "TSimpleServer client died: " << ttx.getMessage() << endl;
       }
-      io.first->close();
-      io.second->close();
+      iot.first->close();
+      iot.second->close();
       client->close();
     }
   } catch (TTransportException& ttx) {

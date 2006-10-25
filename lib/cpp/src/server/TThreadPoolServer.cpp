@@ -16,8 +16,8 @@ class TThreadPoolServer::Task: public Runnable {
 public:
     
   Task(shared_ptr<TProcessor> processor,
-       shared_ptr<TTransport> input,
-       shared_ptr<TTransport> output) :
+       shared_ptr<TProtocol> input,
+       shared_ptr<TProtocol> output) :
     processor_(processor),
     input_(input),
     output_(output) {
@@ -35,23 +35,24 @@ public:
         break;
       }
     }
-    input_->close();
-    output_->close();
+    input_->getInputTransport()->close();
+    output_->getOutputTransport()->close();
   }
 
  private:
   shared_ptr<TProcessor> processor_;
-  shared_ptr<TTransport> input_;
-  shared_ptr<TTransport> output_;
+  shared_ptr<TProtocol> input_;
+  shared_ptr<TProtocol> output_;
 
 };
   
 TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
                                      shared_ptr<TServerTransport> serverTransport,
                                      shared_ptr<TTransportFactory> transportFactory,
-                                     shared_ptr<ThreadManager> threadManager,
-                                     shared_ptr<TServerOptions> options) :
-  TServer(processor, serverTransport, transportFactory, options), 
+                                     shared_ptr<TProtocolFactory> protocolFactory,
+
+                                     shared_ptr<ThreadManager> threadManager) :
+  TServer(processor, serverTransport, transportFactory, protocolFactory), 
   threadManager_(threadManager) {
 }
 
@@ -60,7 +61,8 @@ TThreadPoolServer::~TThreadPoolServer() {}
 void TThreadPoolServer::serve() {
 
   shared_ptr<TTransport> client;
-  pair<shared_ptr<TTransport>,shared_ptr<TTransport> > io;
+  pair<shared_ptr<TTransport>,shared_ptr<TTransport> > iot;
+  pair<shared_ptr<TProtocol>,shared_ptr<TProtocol> > iop;
 
   try {
     // Start the server listening
@@ -75,9 +77,11 @@ void TThreadPoolServer::serve() {
       // Fetch client from server
       client = serverTransport_->accept();
       // Make IO transports
-      io = transportFactory_->getIOTransports(client);
+      iot = transportFactory_->getIOTransports(client);
+      iop = protocolFactory_->getIOProtocols(iot.first, iot.second);
+
       // Add to threadmanager pool
-      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, io.first, io.second)));
+      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, iop.first, iop.second)));
     } catch (TTransportException& ttx) {
       break;
     }

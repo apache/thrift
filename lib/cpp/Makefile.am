@@ -10,13 +10,11 @@ libthrift_sources = src/concurrency/Monitor.cpp \
                     src/concurrency/ThreadManager.cpp \
                     src/concurrency/TimerManager.cpp \
 	            src/protocol/TBinaryProtocol.cpp \
-                    src/transport/TBufferedTransport.cpp \
                     src/transport/TBufferedFileWriter.cpp \
                     src/transport/TBufferedRouterTransport.cpp \
-                    src/transport/TFramedTransport.cpp \
-                    src/transport/TMemoryBuffer.cpp \
                     src/transport/TSocket.cpp \
                     src/transport/TServerSocket.cpp \
+                    src/transport/TTransportUtils.cpp \
                     src/server/TSimpleServer.cpp \
                     src/server/TThreadPoolServer.cpp \
                     src/server/TNonblockingServer.cpp
@@ -52,19 +50,14 @@ include_protocol_HEADERS = \
 
 include_transportdir = $(include_thriftdir)/transport
 include_transport_HEADERS = \
-                         src/transport/TBufferedTransport.h \
-                         src/transport/TFramedTransport.h \
-                         src/transport/TNullTransport.h \
-                         src/transport/TMemoryBuffer.h \
+                         src/transport/TBufferedFileWriter.h \
+                         src/transport/TBufferedRouterTransport.h \
                          src/transport/TServerSocket.h \
                          src/transport/TServerTransport.h \
                          src/transport/TSocket.h \
                          src/transport/TTransport.h \
                          src/transport/TTransportException.h \
-                         src/transport/TTransportFactory.h \
-                         src/transport/TBufferedTransportFactory.h \
-                         src/transport/TBufferedFileWriter.h \
-                         src/transport/TBufferedRouterTransport.h
+                         src/transport/TTransportUtils.h
 
 include_serverdir = $(include_thriftdir)/server
 include_server_HEADERS = \

@@ -1,9 +1,9 @@
 #ifndef _THRIFT_SERVER_TNONBLOCKINGSERVER_H_
 #define _THRIFT_SERVER_TNONBLOCKINGSERVER_H_ 1
 
-#include "Thrift.h"
-#include "server/TServer.h"
-#include "transport/TMemoryBuffer.h"
+#include <Thrift.h>
+#include <server/TServer.h>
+#include <transport/TTransportUtils.h>
 #include <stack>
 #include <event.h>
 
@@ -50,10 +50,8 @@ class TNonblockingServer : public TServer {
   void handleEvent(int fd, short which);
 
  public:
-  TNonblockingServer(shared_ptr<TProcessor> processor,
-                     shared_ptr<TServerOptions> options,
-                     int port) :
-    TServer(processor, options),
+  TNonblockingServer(shared_ptr<TProcessor> processor, int port) :
+    TServer(processor),
     serverSocket_(0),
     port_(port),
     frameResponses_(true) {}
@@ -157,6 +155,12 @@ class TConnection {
   // Transport that processor writes to
   shared_ptr<TMemoryBuffer> outputTransport_;
 
+  // Protocol encoder
+  shared_ptr<TProtocol> outputProtocol_;
+
+  // Protocol decoder
+  shared_ptr<TProtocol> inputProtocol_;
+  
   // Go into read mode
   void setRead() {
     setFlags(EV_READ | EV_PERSIST);
@@ -190,6 +194,12 @@ class TConnection {
     inputTransport_ = shared_ptr<TMemoryBuffer>(new TMemoryBuffer(readBuffer_, readBufferSize_));
     outputTransport_ = shared_ptr<TMemoryBuffer>(new TMemoryBuffer());
     
+    // Create protocol
+    std::pair<shared_ptr<TProtocol>,shared_ptr<TProtocol> > iop;
+    iop = s->getProtocolFactory()->getIOProtocols(inputTransport_, outputTransport_);
+    inputProtocol_ = iop.first;
+    outputProtocol_ = iop.second;
+
     init(socket, eventFlags, s);
   }
 

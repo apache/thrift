@@ -153,7 +153,7 @@ void TConnection::transition() {
 
     try {
       // Invoke the processor
-      server_->getProcessor()->process(inputTransport_, outputTransport_);
+      server_->getProcessor()->process(inputProtocol_, outputProtocol_);
     } catch (TTransportException &x) {
       fprintf(stderr, "Server::process %s\n", x.getMessage().c_str());
       close();

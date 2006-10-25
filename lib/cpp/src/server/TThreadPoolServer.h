@@ -21,8 +21,8 @@ public:
   TThreadPoolServer(shared_ptr<TProcessor> processor,
 		    shared_ptr<TServerTransport> serverTransport,
 		    shared_ptr<TTransportFactory> transportFactory,
-		    shared_ptr<ThreadManager> threadManager,
-		    shared_ptr<TServerOptions> options);
+                    shared_ptr<TProtocolFactory> protocolFactory,
+		    shared_ptr<ThreadManager> threadManager);
 
   virtual ~TThreadPoolServer();
 

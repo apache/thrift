@@ -19,8 +19,8 @@ class TSimpleServer : public TServer {
   TSimpleServer(shared_ptr<TProcessor> processor,
                 shared_ptr<TServerTransport> serverTransport,
                 shared_ptr<TTransportFactory> transportFactory,
-                shared_ptr<TServerOptions> options) :
-    TServer(processor, serverTransport, transportFactory, options) {}
+                shared_ptr<TProtocolFactory> protocolFactory) :
+    TServer(processor, serverTransport, transportFactory, protocolFactory) {}
     
   ~TSimpleServer() {}
 

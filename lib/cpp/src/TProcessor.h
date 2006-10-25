@@ -2,14 +2,14 @@
 #define _THRIFT_TPROCESSOR_H_ 1
 
 #include <string>
-#include <transport/TTransport.h>
+#include <protocol/TProtocol.h>
 #include <boost/shared_ptr.hpp>
 
 namespace facebook { namespace thrift { 
 
 using namespace boost;
 
-using namespace facebook::thrift::transport;
+using namespace facebook::thrift::protocol;
 
 /**
  * A processor is a generic object that acts upon two streams of data, one
@@ -22,8 +22,13 @@ using namespace facebook::thrift::transport;
 class TProcessor {
  public:
   virtual ~TProcessor() {}
-  virtual bool process(shared_ptr<TTransport> in, shared_ptr<TTransport> out) = 0;
-  bool process(shared_ptr<TTransport> io) { return process(io, io); }
+
+  virtual bool process(shared_ptr<TProtocol> in,
+                       shared_ptr<TProtocol> out) = 0;
+
+  bool process(shared_ptr<TProtocol> io) {
+    return process(io, io);
+  }
 
  protected:
   TProcessor() {}

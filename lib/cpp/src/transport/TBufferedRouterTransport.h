@@ -87,6 +87,30 @@ class TBufferedRouterTransport : public TTransport {
   uint32_t wLen_;
 };
 
+
+/**
+ * Wraps a transport into a bufferedRouter instance.
+ *
+ * @author Aditya Agarwal <aditya@facebook.com>
+ */
+class TBufferedRouterTransportFactory : public TTransportFactory {
+ public:
+  TBufferedRouterTransportFactory(boost::shared_ptr<TTransport> rTrans): rTrans_(rTrans) {}
+
+  virtual ~TBufferedRouterTransportFactory() {}
+
+  /**
+   * Wraps the transport into a buffered one.
+   */
+  virtual std::pair<boost::shared_ptr<TTransport>, boost::shared_ptr<TTransport> > getIOTransports(boost::shared_ptr<TTransport> trans) {
+    boost::shared_ptr<TTransport> buffered(new TBufferedRouterTransport(trans, rTrans_));
+    return std::make_pair(buffered, buffered);
+  }
+
+ private:
+  boost::shared_ptr<TTransport> rTrans_;
+};
+
 }}} // facebook::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TBUFFEREDROUTERTRANSPORT_H_
