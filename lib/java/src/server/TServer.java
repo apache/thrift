@@ -1,9 +1,10 @@
 package com.facebook.thrift.server;
 
 import com.facebook.thrift.TProcessor;
+import com.facebook.thrift.protocol.TBinaryProtocol;
+import com.facebook.thrift.protocol.TProtocolFactory;
 import com.facebook.thrift.transport.TServerTransport;
 import com.facebook.thrift.transport.TTransportFactory;
-import com.facebook.thrift.transport.TBaseTransportFactory;
 
 /**
  * Generic interface for a Thrift server.
@@ -13,22 +14,9 @@ import com.facebook.thrift.transport.TBaseTransportFactory;
 public abstract class TServer {
 
   /**
-   * The options class should be subclassed by particular servers which have
-   * specific options needs, while the general options should live here.
-   */
-  public static class Options {
-    public Options() {}
-  }
-
-  /**
    * Core processor
    */
   protected TProcessor processor_;
-
-  /**
-   * Server options
-   */
-  protected Options options_;
 
   /**
    * Server transport
@@ -41,6 +29,11 @@ public abstract class TServer {
   protected TTransportFactory transportFactory_;
 
   /**
+   * Protocol Factory
+   */
+  protected TProtocolFactory protocolFactory_;
+
+  /**
    * Default constructors.
    */
 
@@ -48,8 +41,8 @@ public abstract class TServer {
                     TServerTransport serverTransport) {
     this(processor,
          serverTransport,
-         new TBaseTransportFactory(),
-         new Options());
+         new TTransportFactory(),
+         new TBinaryProtocol.Factory());
   }
 
   protected TServer(TProcessor processor,
@@ -58,31 +51,22 @@ public abstract class TServer {
     this(processor,
          serverTransport,
          transportFactory,
-         new Options());
-  }
-
-
-  protected TServer(TProcessor processor,
-                    TServerTransport serverTransport,
-                    Options options) {
-    this(processor,
-         serverTransport,
-         new TBaseTransportFactory(),
-         options);
+         new TBinaryProtocol.Factory());
   }
 
   protected TServer(TProcessor processor,
                     TServerTransport serverTransport,
                     TTransportFactory transportFactory,
-                    Options options) {
+                    TProtocolFactory protocolFactory) {
     processor_ = processor;
     serverTransport_ = serverTransport;
     transportFactory_ = transportFactory;
-    options_ = options;
+    protocolFactory_ = protocolFactory;
   }
   
   /**
    * The run method fires up the server and gets things going.
    */
   public abstract void serve();
+
 }

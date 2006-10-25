@@ -1,6 +1,6 @@
 package com.facebook.thrift;
 
-import com.facebook.thrift.transport.TTransport;
+import com.facebook.thrift.protocol.TProtocol;
 
 /**
  * A processor is a generic object which operates upon an input stream and
@@ -9,6 +9,6 @@ import com.facebook.thrift.transport.TTransport;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public interface TProcessor {
-  public boolean process(TTransport in, TTransport out)
+  public boolean process(TProtocol in, TProtocol out)
     throws TException;
 }

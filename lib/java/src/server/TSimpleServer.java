@@ -2,6 +2,8 @@ package com.facebook.thrift.server;
 
 import com.facebook.thrift.TException;
 import com.facebook.thrift.TProcessor;
+import com.facebook.thrift.protocol.TProtocol;
+import com.facebook.thrift.protocol.TProtocolFactory;
 import com.facebook.thrift.transport.TServerTransport;
 import com.facebook.thrift.transport.TTransport;
 import com.facebook.thrift.transport.TTransportException;
@@ -28,12 +30,14 @@ public class TSimpleServer extends TServer {
 
     while (true) {
       TTransport client = null;
-      TTransport[] io = null;
+      TTransport[] iot = null;
+      TProtocol[] iop = null;
       try {
         client = serverTransport_.accept();
         if (client != null) {
-          io = transportFactory_.getIOTransports(client);
-          while (processor_.process(io[0], io[1]));
+          iot = transportFactory_.getIOTransports(client);
+          iop = protocolFactory_.getIOProtocols(iot[0], iot[1]);
+          while (processor_.process(iop[0], iop[1]));
         }
       } catch (TTransportException ttx) {
         // Client died, just move on
@@ -43,12 +47,12 @@ public class TSimpleServer extends TServer {
         x.printStackTrace();
       }
 
-      if (io != null) {
-        if (io[0] != null) {
-          io[0].close();
+      if (iot != null) {
+        if (iot[0] != null) {
+          iot[0].close();
         }
-        if (io[1] != null) {
-          io[1].close();
+        if (iot[1] != null) {
+          iot[1].close();
         }
       }
     }

@@ -2,11 +2,12 @@ package com.facebook.thrift.server;
 
 import com.facebook.thrift.TException;
 import com.facebook.thrift.TProcessor;
+import com.facebook.thrift.protocol.TProtocol;
+import com.facebook.thrift.protocol.TProtocolFactory;
 import com.facebook.thrift.transport.TServerTransport;
 import com.facebook.thrift.transport.TTransport;
 import com.facebook.thrift.transport.TTransportException;
 import com.facebook.thrift.transport.TTransportFactory;
-import com.facebook.thrift.transport.TBaseTransportFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -26,25 +27,21 @@ public class TThreadPoolServer extends TServer {
   private ExecutorService executorService_;
 
   // Customizable server options
-  public static class Options extends TServer.Options {
+  public static class Options {
     public int minWorkerThreads = 5;
     public int maxWorkerThreads = Integer.MAX_VALUE;
   }
 
   public TThreadPoolServer(TProcessor processor,
                            TServerTransport serverTransport) {
-    this(processor,
-         serverTransport,
-         new TBaseTransportFactory(),
-         new Options());
+    this(processor, serverTransport, new Options());
   }
   
   public TThreadPoolServer(TProcessor processor,
                            TServerTransport serverTransport,
-                           TTransportFactory transportFactory,
                            Options options) {
-    super(processor, serverTransport, transportFactory, options);
-    serverTransport_ = serverTransport;
+    super(processor, serverTransport);
+
     executorService_ = null;
 
     LinkedBlockingQueue<Runnable> executorQueue =
@@ -99,10 +96,12 @@ public class TThreadPoolServer extends TServer {
      * Loops on processing a client forever
      */
     public void run() {
-      TTransport[] io = null;
+      TTransport[] iot = null;
+      TProtocol[] iop = null;
       try {
-        io = transportFactory_.getIOTransports(client_);
-        while (processor_.process(io[0], io[1])) {}
+        iot = transportFactory_.getIOTransports(client_);
+        iop = protocolFactory_.getIOProtocols(iot[0], iot[1]);
+        while (processor_.process(iop[0], iop[1])) {}
       } catch (TTransportException ttx) {
         // Assume the client died and continue silently
       } catch (TException tx) {
@@ -111,12 +110,12 @@ public class TThreadPoolServer extends TServer {
         x.printStackTrace();
       }
 
-      if (io != null) {
-        if (io[0] != null) {
-          io[0].close();
+      if (iot != null) {
+        if (iot[0] != null) {
+          iot[0].close();
         }
-        if (io[1] != null) {
-          io[1].close();
+        if (iot[1] != null) {
+          iot[1].close();
         }
       }
     }

@@ -10,75 +10,75 @@ import com.facebook.thrift.transport.TTransport;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TProtocolUtil {
-  public static void skip(TProtocol prot, TTransport in, byte type)
+  public static void skip(TProtocol prot, byte type)
     throws TException {
 
     switch (type) {
     case TType.BOOL:
       {
-        prot.readBool(in);
+        prot.readBool();
       }
     case TType.BYTE:
       {
-        prot.readByte(in);
+        prot.readByte();
       }
     case TType.I16:
       {
-        prot.readI16(in);
+        prot.readI16();
       }
     case TType.I32:
       {
-        prot.readI32(in);
+        prot.readI32();
       }
     case TType.I64:
       {
-        prot.readI64(in);
+        prot.readI64();
       }
     case TType.DOUBLE:
       {
-        prot.readDouble(in);
+        prot.readDouble();
       }
     case TType.STRING:
       {
-        prot.readString(in);
+        prot.readString();
       }
     case TType.STRUCT:
       {
-        prot.readStructBegin(in);
+        prot.readStructBegin();
         while (true) {
-          TField field = prot.readFieldBegin(in);
+          TField field = prot.readFieldBegin();
           if (field.type == TType.STOP) {
             break;
           }
-          skip(prot, in, field.type);
-          prot.readFieldEnd(in);
+          skip(prot, field.type);
+          prot.readFieldEnd();
         }
-        prot.readStructEnd(in);
+        prot.readStructEnd();
       }
     case TType.MAP:
       {
-        TMap map = prot.readMapBegin(in);
+        TMap map = prot.readMapBegin();
         for (int i = 0; i < map.size; i++) {
-          skip(prot, in, map.keyType);
-          skip(prot, in, map.valueType);
+          skip(prot, map.keyType);
+          skip(prot, map.valueType);
         }
-        prot.readMapEnd(in);
+        prot.readMapEnd();
       }
     case TType.SET:
       {        
-        TSet set = prot.readSetBegin(in);
+        TSet set = prot.readSetBegin();
         for (int i = 0; i < set.size; i++) {
-          skip(prot, in, set.elemType);
+          skip(prot, set.elemType);
         }
-        prot.readSetEnd(in);
+        prot.readSetEnd();
       }
     case TType.LIST:
       {
-        TList list = prot.readListBegin(in);
+        TList list = prot.readListBegin();
         for (int i = 0; i < list.size; i++) {
-          skip(prot, in, list.elemType);
+          skip(prot, list.elemType);
         }
-        prot.readListEnd(in);
+        prot.readListEnd();
       }
     default:
       return;
