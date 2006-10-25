@@ -7,8 +7,6 @@
 #include <stack>
 #include <event.h>
 
-#
-
 namespace facebook { namespace thrift { namespace server { 
 
 using boost::shared_ptr;
@@ -38,6 +36,9 @@ class TNonblockingServer : public TServer {
   // Port server runs on
   int port_;
 
+  // Whether to frame responses
+  bool frameResponses_;
+
   /**
    * This is a stack of all the objects that have been created but that
    * are NOT currently in use. When we close a connection, we place it on this
@@ -52,9 +53,20 @@ class TNonblockingServer : public TServer {
   TNonblockingServer(shared_ptr<TProcessor> processor,
                      shared_ptr<TServerOptions> options,
                      int port) :
-    TServer(processor, options), serverSocket_(0), port_(port) {}
+    TServer(processor, options),
+    serverSocket_(0),
+    port_(port),
+    frameResponses_(true) {}
     
   ~TNonblockingServer() {}
+
+  void setFrameResponses(bool frameResponses) {
+    frameResponses_ = frameResponses;
+  }
+
+  bool getFrameResponses() {
+    return frameResponses_;
+  }
 
   TConnection* createConnection(int socket, short flags);
 
@@ -86,6 +98,7 @@ enum TAppState {
   APP_INIT,
   APP_READ_FRAME_SIZE,
   APP_READ_REQUEST,
+  APP_SEND_FRAME_SIZE,
   APP_SEND_RESULT
 };
 
@@ -134,6 +147,9 @@ class TConnection {
 
   // How far through writing are we?
   uint32_t writeBufferPos_;
+
+  // Frame size
+  int32_t frameSize_;
 
   // Transport to read from
   shared_ptr<TMemoryBuffer> inputTransport_;
