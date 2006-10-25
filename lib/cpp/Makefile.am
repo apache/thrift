@@ -5,21 +5,21 @@ common_ldflags = -Wall $(BOOST_LDFLAGS) -levent
 
 # Define the source file for the module
 
-libthrift_sources = src/concurrency/Monitor.cc \
-                    src/concurrency/PosixThreadFactory.cc \
-                    src/concurrency/ThreadManager.cc \
-                    src/concurrency/TimerManager.cc \
-	            src/protocol/TBinaryProtocol.cc \
-                    src/transport/TBufferedTransport.cc \
-                    src/transport/TBufferedFileWriter.cc \
-                    src/transport/TBufferedRouterTransport.cc \
-                    src/transport/TFramedTransport.cc \
-                    src/transport/TMemoryBuffer.cc \
-                    src/transport/TSocket.cc \
-                    src/transport/TServerSocket.cc \
-                    src/server/TSimpleServer.cc \
-                    src/server/TThreadPoolServer.cc \
-                    src/server/TNonblockingServer.cc
+libthrift_sources = src/concurrency/Monitor.cpp \
+                    src/concurrency/PosixThreadFactory.cpp \
+                    src/concurrency/ThreadManager.cpp \
+                    src/concurrency/TimerManager.cpp \
+	            src/protocol/TBinaryProtocol.cpp \
+                    src/transport/TBufferedTransport.cpp \
+                    src/transport/TBufferedFileWriter.cpp \
+                    src/transport/TBufferedRouterTransport.cpp \
+                    src/transport/TFramedTransport.cpp \
+                    src/transport/TMemoryBuffer.cpp \
+                    src/transport/TSocket.cpp \
+                    src/transport/TServerSocket.cpp \
+                    src/server/TSimpleServer.cpp \
+                    src/server/TThreadPoolServer.cpp \
+                    src/server/TNonblockingServer.cpp
 
 libthrift_la_SOURCES = $(libthrift_sources)
 
@@ -75,7 +75,7 @@ include_server_HEADERS = \
 
 bin_PROGRAMS = concurrency_test
 
-concurrency_test_SOURCES = src/concurrency/test/Tests.cc \
+concurrency_test_SOURCES = src/concurrency/test/Tests.cpp \
                            src/concurrency/test/ThreadFactoryTests.h \
                            src/concurrency/test/ThreadManagerTests.h \
                            src/concurrency/test/TimerManagerTests.h

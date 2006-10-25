@@ -68,7 +68,7 @@ class TMemoryBuffer : public TTransport {
 
   void getBuffer(uint8_t** bufPtr, uint32_t* sz) {
     *bufPtr = buffer_;
-    *sz = bufferSize_;
+    *sz = wPos_;
   }
 
   void resetBuffer() {
