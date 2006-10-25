@@ -25,15 +25,6 @@ class TSocket(TTransportBase):
       self.handle.close()
       self.handle = None
 
-  def readAll(self, sz):
-    buff = ''
-    have = 0
-    while (have < sz):
-      chunk = self.read(sz-have)
-      have += len(chunk)
-      buff += chunk
-    return buff
-
   def read(self, sz):
     buff = self.handle.recv(sz)
     if len(buff) == 0:

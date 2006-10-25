@@ -24,7 +24,13 @@ class TTransportBase:
     pass
 
   def readAll(self, sz):
-    pass
+    buff = ''
+    have = 0
+    while (have < sz):
+      chunk = self.read(sz-have)
+      have += len(chunk)
+      buff += chunk
+    return buff
 
   def write(self, buf):
     pass
@@ -81,14 +87,12 @@ class TBufferedTransport(TTransportBase):
   def read(self, sz):
     return self.__trans.read(sz)
 
-  def readAll(self, sz):
-    return self.__trans.readAll(sz)
-
   def write(self, buf):
     self.__buf.write(buf)
 
   def flush(self):
     self.__trans.write(self.__buf.getvalue())
+    self.__trans.flush()
     self.__buf = StringIO()
 
 class TFramedTransportFactory:
@@ -104,9 +108,16 @@ class TFramedTransport(TTransportBase):
 
   """Class that wraps another transport and frames its I/O when writing."""
 
-  def __init__(self, trans):
+  def __init__(self, trans, read=True, write=True):
     self.__trans = trans
-    self.__wbuf = StringIO()
+    if read:
+      self.__rbuf = ''
+    else:
+      self.__rbuf = None
+    if write:
+      self.__wbuf = StringIO()
+    else:
+      self.__wbuf = None
 
   def isOpen(self):
     return self.__trans.isOpen()
@@ -118,17 +129,35 @@ class TFramedTransport(TTransportBase):
     return self.__trans.close()
 
   def read(self, sz):
-    return self.__trans.read(sz)
+    if self.__rbuf == None:
+      return self.__trans.read(sz)
+    if len(self.__rbuf) == 0:
+      self.readFrame()
+    give = min(len(self.__rbuf), sz)
+    buff = self.__rbuf[0:give]
+    self.__rbuf = self.__rbuf[give:]
+    return buff
 
-  def readAll(self, sz):
-    return self.__trans.readAll(sz)
-
+  def readFrame(self):
+    buff = self.__trans.readAll(4)
+    sz, = unpack('!i', buff)
+    self.__rbuf = self.__trans.readAll(sz)
+  
   def write(self, buf):
+    if self.__wbuf == None:
+      return self.__trans.write(buf)
     self.__wbuf.write(buf)
 
   def flush(self):
+    if self.__wbuf == None:
+      return self.__trans.flush()
     wout = self.__wbuf.getvalue()
     wsz = len(wout)
-    self.__trans.write(pack("!i", wsz))
-    self.__trans.write(wout)
+    # N.B.: Doing this string concatenation is WAY cheaper than making
+    # two separate calls to the underlying socket object. Socket writes in
+    # Python turn out to be REALLY expensive, but it seems to do a pretty
+    # good job of managing string buffer operations without excessive copies
+    buf = pack("!i", wsz) + wout
+    self.__trans.write(buf)
+    self.__trans.flush()
     self.__wbuf = StringIO()
