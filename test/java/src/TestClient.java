@@ -6,6 +6,7 @@ import thrift.test.*;
 import com.facebook.thrift.transport.TTransport;
 import com.facebook.thrift.transport.TSocket;
 import com.facebook.thrift.transport.THttpClient;
+import com.facebook.thrift.transport.TFramedTransport;
 import com.facebook.thrift.transport.TTransportException;
 import com.facebook.thrift.protocol.TBinaryProtocol;
 
@@ -27,20 +28,24 @@ public class TestClient {
       int port = 9090;
       String url = null;
       int numTests = 1;
+      boolean framed = false;
+      boolean framedInput = true;
+      boolean framedOutput = true;
 
       try {
         for (int i = 0; i < args.length; ++i) {
           if (args[i].equals("-h")) {
-            String[] hostport = (args[++i]).split(";");
+            String[] hostport = (args[++i]).split(":");
             host = hostport[0];
             port = Integer.valueOf(hostport[1]);            
-          }
-
-          if (args[i].equals("-u")) {
+          } else if (args[i].equals("-f") || args[i].equals("-framed")) {
+            framed = true;
+          } else if (args[i].equals("-fo")) {
+            framed = true;
+            framedInput = false;
+          } else if (args[i].equals("-u")) {
             url = args[++i];
-          }
-
-          if (args[i].equals("-n")) {
+          } else if (args[i].equals("-n")) {
             numTests = Integer.valueOf(args[++i]);
           }
         }
@@ -53,7 +58,14 @@ public class TestClient {
       if (url != null) {
         transport = new THttpClient(url);
       } else {
-        transport = new TSocket(host, port);
+        TSocket socket = new TSocket(host, port);
+        socket.setTimeout(1000);
+        transport = socket;
+        if (framed) {
+          transport = new TFramedTransport(transport,
+                                           framedInput,
+                                           framedOutput);
+        }
       }
 
       TBinaryProtocol binaryProtocol =

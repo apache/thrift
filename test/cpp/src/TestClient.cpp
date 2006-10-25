@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <protocol/TBinaryProtocol.h>
-#include <transport/TBufferedTransport.h>
+#include <transport/TTransportUtils.h>
 #include <transport/TSocket.h>
 
 #include <boost/shared_ptr.hpp>
@@ -33,21 +33,50 @@ int main(int argc, char** argv) {
   string host = "localhost";
   int port = 9090;
   int numTests = 1;
+  bool framed = false;
+  bool frameInput = true;
 
-  if (argc > 1) {
-    host = argv[1];
+  for (int i = 0; i < argc; ++i) {
+    if (strcmp(argv[i], "-h") == 0) {
+      char* pch = strtok(argv[++i], ":");
+      if (pch != NULL) {
+        host = string(pch);
+      }
+      pch = strtok(NULL, ":");
+      if (pch != NULL) {
+        port = atoi(pch);
+      }
+    } else if (strcmp(argv[i], "-n") == 0) {
+      numTests = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "-f") == 0) {
+      framed = true;
+    } else if (strcmp(argv[i], "-fo") == 0) {
+      framed = true;
+      frameInput = false;
+    }
   }
-  if (argc > 2) {
-    port = atoi(argv[2]);
-  }
-  if (argc > 3) {
-    numTests = atoi(argv[3]);
-  }
+
+
+  shared_ptr<TTransport> transport;
 
   shared_ptr<TSocket> socket(new TSocket(host, port));
-  shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
-  shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol());
-  ThriftTestClient testClient(bufferedSocket, binaryProtocol);
+  
+  if (framed) {
+    shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
+    framedSocket->setRead(frameInput);
+    transport = framedSocket;
+    if (frameInput) {
+      printf("Using bi-directional framed transport mode\n");
+    } else {
+      printf("Using framed output only mode\n");
+    }
+  } else {
+    shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
+    transport = bufferedSocket;
+  }
+
+  shared_ptr<TBinaryProtocol> protocol(new TBinaryProtocol(transport, transport));
+  ThriftTestClient testClient(protocol);
 
   uint64_t time_min = 0;
   uint64_t time_max = 0;
@@ -57,7 +86,7 @@ int main(int argc, char** argv) {
   for (test = 0; test < numTests; ++test) {
 
     try {
-      bufferedSocket->open();
+      transport->open();
     } catch (TTransportException& ttx) {
       printf("Connect failed: %s\n", ttx.getMessage().c_str());
       continue;
@@ -396,7 +425,7 @@ int main(int argc, char** argv) {
       time_max = tot;
     }
 
-    bufferedSocket->close();
+    transport->close();
   }
 
   //  printf("\nSocket syscalls: %u", g_socket_syscalls);

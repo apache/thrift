@@ -1,4 +1,5 @@
-namespace thrift.test
+java_package thrift.test
+cpp_namespace thrift.test
 
 enum Numberz
 {
@@ -14,61 +15,61 @@ typedef i64 UserId
 
 struct Xtruct
 {
-  string string_thing = 1,
-  byte   byte_thing = 4,
-  i32    i32_thing = 9,
-  i64    i64_thing = 11
+  1:  string string_thing,
+  4:  byte   byte_thing,
+  9:  i32    i32_thing,
+  11: i64    i64_thing
 }
 
 struct Xtruct2
 {
-  byte   byte_thing,
-  Xtruct struct_thing,
-  i32    i32_thing
+  1: byte   byte_thing,
+  2: Xtruct struct_thing,
+  3: i32    i32_thing
 }
 
 struct Insanity
 {
-  map<Numberz, UserId> userMap = 0,
-  list<Xtruct> xtructs = 1
+  1: map<Numberz, UserId> userMap,
+  2: list<Xtruct> xtructs
 }
 
 exception Xception {
-    i32 errorCode,
-    string message
+  1: i32 errorCode,
+  2: string message
 }
 
 exception Xception2 {
-    i32 errorCode,
-    Xtruct struct_thing
+  1: i32 errorCode,
+  2: Xtruct struct_thing
 }
  
 struct EmptyStruct {}
 
 struct OneField {
-   EmptyStruct field
+  1: EmptyStruct field
 }
 
 service ThriftTest
 {
   void         testVoid(),
-  string       testString(string thing = 1),
-  byte         testByte(byte thing = 1),
-  i32          testI32(i32 thing = 1),
-  i64          testI64(i64 thing = 1),
-  double       testDouble(double thing = 1),
-  Xtruct       testStruct(Xtruct thing = 1),
-  Xtruct2      testNest(Xtruct2 thing = 1),
-  map<i32,i32> testMap(map<i32,i32> thing = 1),
-  set<i32>     testSet(set<i32> thing = 1),
-  list<i32>    testList(list<i32> thing = 1),
-  Numberz      testEnum(Numberz thing = 1),
-  UserId       testTypedef(UserId thing = 1),
+  string       testString(1: string thing),
+  byte         testByte(1: byte thing),
+  i32          testI32(1: i32 thing),
+  i64          testI64(1: i64 thing),
+  double       testDouble(1: double thing),
+  Xtruct       testStruct(1: Xtruct thing),
+  Xtruct2      testNest(1: Xtruct2 thing),
+  map<i32,i32> testMap(1: map<i32,i32> thing),
+  set<i32>     testSet(1: set<i32> thing),
+  list<i32>    testList(1: list<i32> thing),
+  Numberz      testEnum(1: Numberz thing),
+  UserId       testTypedef(1: UserId thing),
 
-  map<i32,map<i32,i32>> testMapMap(i32 hello = 1),
+  map<i32,map<i32,i32>> testMapMap(1: i32 hello),
 
   /* So you think you've got this all worked, out eh? */
-  map<UserId, map<Numberz,Insanity>> testInsanity(Insanity argument = 1),
+  map<UserId, map<Numberz,Insanity>> testInsanity(1: Insanity argument),
 
   /* Multiple parameters */
   
@@ -80,7 +81,7 @@ service ThriftTest
 
   /* Multiple exceptions specifier */
 
-  Xtruct testMultiException(string arg0, string arg1) throws(Xception err1=1, Xception2 err2)
+  Xtruct testMultiException(string arg0, string arg1) throws(Xception err1, Xception2 err2)
 }
 
 service SecondService

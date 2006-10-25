@@ -5,7 +5,7 @@
 #include <server/TThreadPoolServer.h>
 #include <server/TNonblockingServer.h>
 #include <transport/TServerSocket.h>
-#include <transport/TBufferedTransportFactory.h>
+#include <transport/TTransportUtils.h>
 #include "ThriftTest.h"
 
 #include <iostream>
@@ -264,13 +264,14 @@ int main(int argc, char **argv) {
   string serverType = "simple";
   string protocolType = "binary";
   size_t workerCount = 4;
+  bool frameOutput = true;
 
   ostringstream usage;
 
   usage <<
     argv[0] << " [--port=<port number>] [--server-type=<server-type>] [--protocol-type=<protocol-type>] [--workers=<worker-count>]" << endl <<
 
-    "\t\tserver-type\t\ttype of server, \"simple\" or \"thread-pool\".  Default is " << serverType << endl <<
+    "\t\tserver-type\t\ttype of server, \"simple\", \"thread-pool\", or \"nonblocking\".  Default is " << serverType << endl <<
 
     "\t\tprotocol-type\t\ttype of protocol, \"binary\", \"ascii\", or \"xml\".  Default is " << protocolType << endl <<
 
@@ -285,9 +286,8 @@ int main(int argc, char **argv) {
       if (end != string::npos) {
 	args[string(arg, 2, end - 2)] = string(arg, end + 1);
       } else {
-	args[string(arg, 2, end - 2)] = "true";
+	args[string(arg, 2)] = "true";
       }
-      ix++;
     } else {
       throw invalid_argument("Unexcepted command line token: "+arg);
     }
@@ -297,6 +297,10 @@ int main(int argc, char **argv) {
 
     if (!args["port"].empty()) {
       port = atoi(args["port"].c_str());
+    }
+
+    if (!args["noframe"].empty()) {
+      frameOutput = false;
     }
 
     if (!args["server-type"].empty()) {
@@ -330,11 +334,11 @@ int main(int argc, char **argv) {
   }
 
   // Dispatcher
-  shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol);
+  shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
   shared_ptr<TestHandler> testHandler(new TestHandler());
 
-  shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler, binaryProtocol));
+  shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
 
   // Transport
   shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
@@ -342,17 +346,13 @@ int main(int argc, char **argv) {
   // Factory
   shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
 
-  // Options
-  shared_ptr<TServerOptions> serverOptions(new TServerOptions());
-
   if (serverType == "simple") {
 
     // Server
     TSimpleServer simpleServer(testProcessor,
 			       serverSocket,
                                transportFactory,
-			       serverOptions
-                               );
+                               protocolFactory);
 
     printf("Starting the server on port %d...\n", port);
     simpleServer.serve();
@@ -372,17 +372,22 @@ int main(int argc, char **argv) {
     TThreadPoolServer threadPoolServer(testProcessor,
 				       serverSocket,
                                        transportFactory,
-				       threadManager,
-				       serverOptions);
+                                       protocolFactory,
+				       threadManager);
 
     printf("Starting the server on port %d...\n", port);
     threadPoolServer.serve();
 
   } else if (serverType == "nonblocking") {
 
-    TNonblockingServer nonblockingServer(testProcessor,
-                                         serverOptions,
-                                         port);
+    TNonblockingServer nonblockingServer(testProcessor, port);
+    nonblockingServer.setFrameResponses(frameOutput);
+    if (frameOutput) {
+      printf("Using framed output mode\n");
+    } else {
+      printf("Using non-framed output mode\n");
+    }
+
     printf("Starting the nonblocking server on port %d...\n", port);
     nonblockingServer.serve();
 
