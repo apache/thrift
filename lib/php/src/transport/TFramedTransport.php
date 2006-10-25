@@ -31,12 +31,28 @@ class TFramedTransport extends TTransport {
   private $wBuf_;
 
   /**
+   * Whether to frame reads
+   *
+   * @var bool
+   */
+  private $read_;
+
+  /**
+   * Whether to frame writes
+   *
+   * @var bool
+   */
+  private $write_;
+
+  /**
    * Constructor.
    *
    * @param TTransport $transport Underlying transport
    */
-  public function __construct($transport=null) {
+  public function __construct($transport=null, $read=true, $write=true) {
     $this->transport_ = $transport;
+    $this->read_ = $read;
+    $this->write_ = $write;
   }
 
   /**
@@ -46,24 +62,24 @@ class TFramedTransport extends TTransport {
    * @param int $len How much data
    */
   public function read($len) {
-    $out = '';
-    $need = $len;
-    $have = strlen($this->rBuf_);
-    if ($need > $have) {
-      $out = $this->rBuf_;
-      $need -= $have;
+    if (!$this->read_) {
+      return $this->transport_->read($len);
+    }
+
+    if (empty($this->rBuf_)) {
       $this->readFrame();
     }
 
-    $give = $need;
-    if (strlen($this->rBuf_) < $give) {
-      $out .= $this->rBuf_;
-      $this->rBuf_ = '';
-    } else {
-      $out .= substr($this->rBuf_, 0, $give);
-      $this->rBuf_ = substr($this->rBuf_, $give);
+    // Just return full buff
+    if ($len > strlen($this->rBuf_)) {
+      $out = $this->rBuf_;
+      $this->rBuf_ = null;
+      return $out;
     }
-
+    
+    // Return substr
+    $out = substr($this->rBuf_, 0, $len);
+    $this->rBuf_ = substr($this->rBuf_, $len);
     return $out;
   }
 
@@ -85,6 +101,10 @@ class TFramedTransport extends TTransport {
    * @param int    $len Limit of bytes to write
    */
   public function write($buf, $len=null) {
+    if (!$this->write_) {
+      return $this->transport_->write($buf, $len);
+    }
+
     if ($len !== null && $len < strlen($buf)) {
       $buf = substr($buf, 0, $len);
     }
@@ -96,6 +116,10 @@ class TFramedTransport extends TTransport {
    * followed by the actual data.
    */
   public function flush() {
+    if (!$this->write_) {
+      return $this->transport_->flush();
+    }
+
     $out = pack('N', strlen($this->wBuf_));
     $out .= $this->wBuf_;
     $this->transport_->write($out);
