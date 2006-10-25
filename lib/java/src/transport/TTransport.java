@@ -55,7 +55,7 @@ public abstract class TTransport {
     int ret = 0;
     while (got < len) {
       ret = read(buf, off+got, len-got);
-      if (ret == -1) {
+      if (ret <= 0) {
         throw new TTransportException("Cannot read. Remote side has closed.");
       }
       got += ret;
