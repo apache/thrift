@@ -5,18 +5,23 @@ import Queue
 
 from thrift.Thrift import TProcessor
 from thrift.transport import TTransport
+from thrift.protocol import TBinaryProtocol
 
 class TServer:
 
   """Base interface for a server, which must have a serve method."""
 
-  def __init__(self, processor, serverTransport, transportFactory=None):
+  def __init__(self, processor, serverTransport, transportFactory=None, protocolFactory=None):
     self.processor = processor
     self.serverTransport = serverTransport
     if transportFactory == None:
       self.transportFactory = TTransport.TTransportFactoryBase()
     else:
       self.transportFactory = transportFactory
+    if protocolFactory == None:
+      self.protocolFactory = TBinaryProtocol.TBinaryProtocolFactory()
+    else:
+      self.protocolFactory = protocolFactory
 
   def serve(self):
     pass
@@ -25,31 +30,32 @@ class TSimpleServer(TServer):
 
   """Simple single-threaded server that just pumps around one transport."""
 
-  def __init__(self, processor, serverTransport, transportFactory=None):
-    TServer.__init__(self, processor, serverTransport, transportFactory)
+  def __init__(self, processor, serverTransport, transportFactory=None, protocolFactory=None):
+    TServer.__init__(self, processor, serverTransport, transportFactory, protocolFactory)
 
   def serve(self):
     self.serverTransport.listen()
     while True:
       client = self.serverTransport.accept()
-      (input, output) = self.transportFactory.getIOTransports(client)
+      (itrans, otrans) = self.transportFactory.getIOTransports(client)
+      (iprot, oprot) = self.protocolFactory.getIOProtocols(itrans, otrans)
       try:
         while True:
-          self.processor.process(input, output)
+          self.processor.process(iprot, oprot)
       except TTransport.TTransportException, tx:
         pass
       except Exception, x:
         print '%s, %s, %s' % (type(x), x, traceback.format_exc())
 
-      input.close()
-      output.close()
+      itrans.close()
+      otrans.close()
 
 class TThreadedServer(TServer):
 
   """Threaded server that spawns a new thread per each connection."""
 
-  def __init__(self, processor, serverTransport, transportFactory=None):
-    TServer.__init__(self, processor, serverTransport, transportFactory)
+  def __init__(self, processor, serverTransport, transportFactory=None, protocolFactory=None):
+    TServer.__init__(self, processor, serverTransport, transportFactory, protocolFactory)
 
   def serve(self):
     self.serverTransport.listen()
@@ -62,14 +68,18 @@ class TThreadedServer(TServer):
         print '%s, %s, %s,' % (type(x), x, traceback.format_exc())
 
   def handle(self, client):
-    (input, output) = self.transportFactory.getIOTransports(client)
+    (itrans, otrans) = self.transportFactory.getIOTransports(client)
+    (iprot, oprot) = self.protocolFactory.getIOProtocols(itrans, otrans)
     try:
       while True:
-        self.processor.process(input, output)
+        self.processor.process(iprot, oprot)
     except TTransport.TTransportException, tx:
       pass
     except Exception, x:
       print '%s, %s, %s' % (type(x), x, traceback.format_exc())
+
+    itrans.close()
+    otrans.close()
 
 class TThreadPoolServer(TServer):
 
@@ -95,14 +105,18 @@ class TThreadPoolServer(TServer):
       
   def serveClient(self, client):
     """Process input/output from a client for as long as possible"""
-    (input, output) = self.transportFactory.getIOTransports(client)
+    (itrans, otrans) = self.transportFactory.getIOTransports(client)
+    (iprot, oprot) = self.protocolFactory.getIOProtocols(itrans, otrans)
     try:
       while True:
-        self.processor.process(input, output)
+        self.processor.process(iprot, oprot)
     except TTransport.TTransportException, tx:
       pass
     except Exception, x:
       print '%s, %s, %s' % (type(x), x, traceback.format_exc())
+
+    itrans.close()
+    otrans.close()
 
   def serve(self):
     """Start a fixed number of worker threads and put client into a queue"""

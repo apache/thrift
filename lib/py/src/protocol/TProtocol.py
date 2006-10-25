@@ -25,165 +25,171 @@ class TProtocolBase:
 
   """Base class for Thrift protocol driver."""
 
-  def writeMessageBegin(self, otrans, name, type, seqid):
+  def __init__(self, itrans, otrans=None):
+    self.itrans = self.otrans = itrans
+    if otrans != None:
+      self.otrans = otrans
+
+  def writeMessageBegin(self, name, type, seqid):
     pass
 
-  def writeMessageEnd(self, otrans):
+  def writeMessageEnd(self):
     pass
 
-  def writeStructBegin(self, otrans, name):
+  def writeStructBegin(self, name):
     pass
 
-  def writeStructEnd(self, otrans):
+  def writeStructEnd(self):
     pass
 
-  def writeFieldBegin(self, otrans, name, type, id):
+  def writeFieldBegin(self, name, type, id):
     pass
 
-  def writeFieldEnd(self, otrans):
+  def writeFieldEnd(self):
     pass
 
-  def writeFieldStop(self, otrans):
+  def writeFieldStop(self):
     pass
 
-  def writeMapBegin(self, otrans, ktype, vtype, size):
+  def writeMapBegin(self, ktype, vtype, size):
     pass
 
-  def writeMapEnd(self, otrans):
+  def writeMapEnd(self):
     pass
 
-  def writeListBegin(self, otrans, etype, size):
+  def writeListBegin(self, etype, size):
     pass
 
-  def writeListEnd(self, otrans):
+  def writeListEnd(self):
     pass
 
-  def writeSetBegin(self, otrans, etype, size):
+  def writeSetBegin(self, etype, size):
     pass
 
-  def writeSetEnd(self, otrans):
+  def writeSetEnd(self):
     pass
 
-  def writeBool(self, otrans, bool):
+  def writeBool(self, bool):
     pass
 
-  def writeByte(self, otrans, byte):
+  def writeByte(self, byte):
     pass
 
-  def writeI16(self, otrans, i16):
+  def writeI16(self, i16):
     pass
 
-  def writeI32(self, otrans, i32):
+  def writeI32(self, i32):
     pass
 
-  def writeI64(self, otrans, i64):
+  def writeI64(self, i64):
     pass
 
-  def writeDouble(self, otrans, dub):
+  def writeDouble(self, dub):
     pass
 
-  def writeString(self, otrans, str):
+  def writeString(self, str):
     pass
 
-  def readMessageBegin(self, itrans):
+  def readMessageBegin(self):
     pass
 
-  def readMessageEnd(self, itrans):
+  def readMessageEnd(self):
     pass
 
-  def readStructBegin(self, itrans):
+  def readStructBegin(self):
     pass
 
-  def readStructEnd(self, itrans):
+  def readStructEnd(self):
     pass
 
-  def readFieldBegin(self, itrans):
+  def readFieldBegin(self):
     pass
 
-  def readFieldEnd(self, itrans):
+  def readFieldEnd(self):
     pass
 
-  def readMapBegin(self, itrans):
+  def readMapBegin(self):
     pass
 
-  def readMapEnd(self, itrans):
+  def readMapEnd(self):
     pass
 
-  def readListBegin(self, itrans):
+  def readListBegin(self):
     pass
 
-  def readListEnd(self, itrans):
+  def readListEnd(self):
     pass
 
-  def readSetBegin(self, itrans):
+  def readSetBegin(self):
     pass
 
-  def readSetEnd(self, itrans):
+  def readSetEnd(self):
     pass
 
-  def readBool(self, itrans):
+  def readBool(self):
     pass
 
-  def readByte(self, itrans):
+  def readByte(self):
     pass
 
-  def readI16(self, itrans):
+  def readI16(self):
     pass
 
-  def readI32(self, itrans):
+  def readI32(self):
     pass
 
-  def readI64(self, itrans):
+  def readI64(self):
     pass
 
-  def readDouble(self, itrans):
+  def readDouble(self):
     pass
 
-  def readString(self, itrans):
+  def readString(self):
     pass
 
-  def skip(self, itrans, type):
+  def skip(self, type):
     if type == TType.STOP:
       return
     elif type == TType.BOOL:
-      self.readBool(itrans)
+      self.readBool()
     elif type == TType.BYTE:
-      self.readByte(itrans)
+      self.readByte()
     elif type == TType.I16:
-      self.readI16(itrans)
+      self.readI16()
     elif type == TType.I32:
-      self.readI32(itrans)
+      self.readI32()
     elif type == TType.I64:
-      self.readI64(itrans)
+      self.readI64()
     elif type == TType.DOUBLE:
-      self.readDouble(itrans)
+      self.readDouble()
     elif type == TType.STRING:
-      self.readString(itrans)
+      self.readString()
     elif type == TType.STRUCT:
-      name = self.readStructBegin(itrans)
+      name = self.readStructBegin()
       while True:
-        (name, type, id) = self.readFieldBegin(itrans)
+        (name, type, id) = self.readFieldBegin()
         if type == TType.STOP:
           break
-        self.skip(itrans, type)
-        self.readFieldEnd(itrans)
-      self.readStructEnd(itrans)
+        self.skip(type)
+        self.readFieldEnd()
+      self.readStructEnd()
     elif type == TType.MAP:
-      (ktype, vtype, size) = self.readMapBegin(itrans)
+      (ktype, vtype, size) = self.readMapBegin()
       for i in range(size):
-        self.skip(itrans, ktype)
-        self.skip(itrans, vtype)
-      self.readMapEnd(itrans)
+        self.skip(ktype)
+        self.skip(vtype)
+      self.readMapEnd()
     elif type == TType.SET:
-      (etype, size) = self.readSetBegin(itrans)
+      (etype, size) = self.readSetBegin()
       for i in range(size):
-        self.skip(itrans, etype)
-      self.readSetEnd(itrans)
+        self.skip(etype)
+      self.readSetEnd()
     elif type == TType.LIST:
-      (etype, size) = self.readListBegin(itrans)
+      (etype, size) = self.readListBegin()
       for i in range(size):
-        self.skip(itrans, etype)
-      self.readListEnd(itrans)
+        self.skip(etype)
+      self.readListEnd()
 
-
-    
+class TProtocolFactory:
+  def getIOProtocols(self, itrans, otrans):
+    pass
