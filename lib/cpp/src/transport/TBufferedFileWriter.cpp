@@ -94,12 +94,12 @@ TBufferedFileWriter::~TBufferedFileWriter() {
 void TBufferedFileWriter::enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool blockUntilFlush) {
   // make sure that event size is valid
   if ( (maxEventSize_ > 0) && (eventLen > maxEventSize_) ) {
-    //    ERROR("msg size is greater than max event size: %lu > %u\n", eventLen, maxEventSize_);
+    //    T_ERROR("msg size is greater than max event size: %lu > %u\n", eventLen, maxEventSize_);
     return;
   }
 
   if (eventLen == 0) {
-    ERROR("cannot enqueue an empty event");
+    T_ERROR("cannot enqueue an empty event");
     return;
   }
 
@@ -128,7 +128,7 @@ void TBufferedFileWriter::enqueueEvent(const eventInfo& toEnqueue, bool blockUnt
   
   // circular buffer has wrapped around (and is full)
   if(tailPos_ == headPos_) {
-    //    DEBUG("queue is full");
+    //    T_DEBUG("queue is full");
     isFull_ = true;
   }
 
@@ -265,18 +265,18 @@ void TBufferedFileWriter::writerThread() {
 
     // sanity check on event
     if ( (maxEventSize_ > 0) && (outEvent.eventSize_ > maxEventSize_)) {
-      ERROR("msg size is greater than max event size: %u > %u\n", outEvent.eventSize_, maxEventSize_);
+      T_ERROR("msg size is greater than max event size: %u > %u\n", outEvent.eventSize_, maxEventSize_);
       continue;
     }
     //long long diff = now()-start;
-    //DEBUG("got a dequeue of size %d after %lld ms\n", (int)s.size(), diff/1000);
+    //T_DEBUG("got a dequeue of size %d after %lld ms\n", (int)s.size(), diff/1000);
 
     // If chunking is required, then make sure that msg does not cross chunk boundary
     if( (outEvent.eventSize_ > 0) && (chunkSize_ != 0)) {
 
       // event size must be less than chunk size
       if(outEvent.eventSize_ > chunkSize_) {
-        ERROR("TBufferedFileWriter: event size(%u) is greater than chunk size(%u): skipping event",
+        T_ERROR("TBufferedFileWriter: event size(%u) is greater than chunk size(%u): skipping event",
               outEvent.eventSize_, chunkSize_);
         continue;
       }
@@ -290,14 +290,14 @@ void TBufferedFileWriter::writerThread() {
 
         // sanity check
         if (padding <= 0) {
-          DEBUG("Padding is empty, skipping event");
+          T_DEBUG("Padding is empty, skipping event");
           continue;
         }
         if (padding > (int32_t)chunkSize_) {
-          DEBUG("padding is larger than chunk size, skipping event");
+          T_DEBUG("padding is larger than chunk size, skipping event");
           continue;
         }
-        //        DEBUG("padding %d zeros to get to chunk %lld\n", padding, chunk2);
+        //        T_DEBUG("padding %d zeros to get to chunk %lld\n", padding, chunk2);
         uint8_t zeros[padding];
         bzero(zeros, padding);
         if(-1 == ::write(fd_, zeros, padding)) {
@@ -328,7 +328,7 @@ void TBufferedFileWriter::writerThread() {
     if((getCurrentTime() >= nextFlush && unflushed > 0) ||
        unflushed > flushMaxBytes_ ||
        (outEvent.eventSize_ == 0) ) {
-      //Debug("flushing %d bytes to %s (%d %d, full? %d)", unflushed, filename_.c_str(), headPos_, tailPos_, isFull_);
+      //T_DEBUG("flushing %d bytes to %s (%d %d, full? %d)", unflushed, filename_.c_str(), headPos_, tailPos_, isFull_);
 
       // sync (force flush) file to disk
       fsync(fd_);
