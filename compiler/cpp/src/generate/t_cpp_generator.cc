@@ -1210,7 +1210,7 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
   }
 
   f_skeleton <<
-    "class " << svcname << "Handler : public " << svcname << "If {" << endl <<
+    "class " << svcname << "Handler : virtual public " << svcname << "If {" << endl <<
     " public:" << endl;
   indent_up();
   f_skeleton <<
