@@ -872,8 +872,12 @@ void t_java_generator::generate_process_function(t_service* tservice,
   if (tfunction->is_async()) {
     f_service_ <<
       indent() << "return;" << endl;
+    scope_down(f_service_);
+
+    // Close class
     indent_down();
-    f_service_ << "}" << endl <<
+    f_service_ <<
+      indent() << "}" << endl <<
       endl;
     return;
   }
