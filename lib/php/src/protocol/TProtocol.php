@@ -1,212 +1,271 @@
 <?php
 
 /**
- * For Type Constants
- */
-include_once $GLOBALS['THRIFT_ROOT'].'/protocol/TType.php';
-
-/**
- * Protocol module.
+ * Protocol module. Contains all the types and definitions needed to implement
+ * a protocol encoder/decoder.
  *
  * @package thrift.protocol
  * @author Mark Slee <mcslee@facebook.com>
  */
+
+/**
+ * Data types that can be sent via Thrift
+ */
+class TType {
+  const STOP   = 0;
+  const VOID   = 1;
+  const BOOL   = 2;
+  const BYTE   = 3;
+  const I08    = 3;
+  const DOUBLE = 4;
+  const I16    = 6;
+  const I32    = 8;
+  const I64    = 10;
+  const STRING = 11;
+  const UTF7   = 11;
+  const STRUCT = 12;
+  const MAP    = 13;
+  const SET    = 14;
+  const LST    = 15;    // N.B. cannot use LIST keyword in PHP!
+  const UTF8   = 16;
+  const UTF16  = 17;
+}
+
+/**
+ * Message types for RPC
+ */
+class TMessageType {
+  const CALL  = 1;
+  const REPLY = 2;
+}
+
+/**
+ * Protocol base class module.
+ */
 abstract class TProtocol {
+
+  /**
+   * Input transport
+   *
+   * @var TTransport
+   */
+  protected $inputTransport_;
+
+  /**
+   * Output transport
+   *
+   * @var TTransport
+   */
+  protected $outputTransport_;
+
+  /**
+   * Constructor
+   */
+  protected function __construct($in, $out=null) {
+    $this->inputTransport_ = $in;
+    $this->outputTransport_ = $out ? $out : $in;
+  }
+
+  /**
+   * Accessor for input
+   *
+   * @return TTransport
+   */
+  public function getInputTransport() {
+    return $this->inputTransport_;
+  }
+
+  /**
+   * Accessor for output
+   *
+   * @return TTransport
+   */
+  public function getOutputTransport() {
+    return $this->outputTransport_;
+  }
 
   /** 
    * Writes the message header
    *
-   * @param TTransport $out Output transport
    * @param string $name Function name
    * @param int $type message type TMessageType::CALL or TMessageType::REPLY
    * @param int $seqid The sequence id of this message
    */
-  public abstract function writeMessageBegin($out, $name, $type, $seqid);
+  public abstract function writeMessageBegin($name, $type, $seqid);
 
   /**
    * Close the message
-   *
-   * @param TTransport $out Output transport
    */
-  public abstract function writeMessageEnd($out);
+  public abstract function writeMessageEnd();
 
   /**
    * Writes a struct header.
    *
-   * @param TTransport $out  Output transport
    * @param string     $name Struct name
    * @throws TException on write error
    * @return int How many bytes written
    */
-  public abstract function writeStructBegin($out, $name);
-
+  public abstract function writeStructBegin($name);
 
   /**
    * Close a struct.
    *
-   * @param TTransport $out Output transport
    * @throws TException on write error
    * @return int How many bytes written
    */
-  public abstract function writeStructEnd($out);
+  public abstract function writeStructEnd();
 
   /*
    * Starts a field.
    *
-   * @param TTransport $out  Output transport
    * @param string     $name Field name
    * @param int        $type Field type
    * @param int        $fid  Field id
    * @throws TException on write error
    * @return int How many bytes written
    */
-  public abstract function writeFieldBegin($out, $fieldName, $fieldType, $fieldId);
+  public abstract function writeFieldBegin($fieldName, $fieldType, $fieldId);
 
-  public abstract function writeFieldEnd($out);
+  public abstract function writeFieldEnd();
 
-  public abstract function writeFieldStop($out);
+  public abstract function writeFieldStop();
 
-  public abstract function writeMapBegin($out, $keyType, $valType, $size);
+  public abstract function writeMapBegin($keyType, $valType, $size);
 
-  public abstract function writeMapEnd($out);
+  public abstract function writeMapEnd();
   
-  public abstract function writeListBegin($out, $elemType, $size);
+  public abstract function writeListBegin($elemType, $size);
   
-  public abstract function writeListEnd($out);
+  public abstract function writeListEnd();
 
-  public abstract function writeSetBegin($out, $elemType, $size);
+  public abstract function writeSetBegin($elemType, $size);
 
-  public abstract function writeSetEnd($out);
+  public abstract function writeSetEnd();
   
-  public abstract function writeBool($out, $bool);
+  public abstract function writeBool($bool);
 
-  public abstract function writeByte($out, $byte);
+  public abstract function writeByte($byte);
   
-  public abstract function writeI16($out, $i16);
+  public abstract function writeI16($i16);
 
-  public abstract function writeI32($out, $i32);
+  public abstract function writeI32($i32);
 
-  public abstract function writeI64($out, $i64);
+  public abstract function writeI64($i64);
 
-  public abstract function writeDouble($out, $dub);
+  public abstract function writeDouble($dub);
 
-  public abstract function writeString($out, $str);
-
+  public abstract function writeString($str);
 
   /**
    * Reads the message header
    *
-   * @param TTransport $out Output transport
    * @param string $name Function name
    * @param int $type message type TMessageType::CALL or TMessageType::REPLY
    * @parem int $seqid The sequence id of this message
    */
-  public abstract function readMessageBegin($in, &$name, &$type, &$seqid);
+  public abstract function readMessageBegin(&$name, &$type, &$seqid);
 
   /**
    * Read the close of message
-   *
-   * @param TTransport $out Output transport
    */
-  public abstract function readMessageEnd($in);
+  public abstract function readMessageEnd();
 
-  public abstract function readStructBegin($in, &$name);
+  public abstract function readStructBegin(&$name);
   
-  public abstract function readStructEnd($in);
+  public abstract function readStructEnd();
 
-  public abstract function readFieldBegin($in, &$name, &$fieldType, &$fieldId);
+  public abstract function readFieldBegin(&$name, &$fieldType, &$fieldId);
 
-  public abstract function readFieldEnd($in);
+  public abstract function readFieldEnd();
 
-  public abstract function readMapBegin($in, &$keyType, &$valType, &$size);
+  public abstract function readMapBegin(&$keyType, &$valType, &$size);
 
-  public abstract function readMapEnd($in);
+  public abstract function readMapEnd();
 
-  public abstract function readListBegin($in, &$elemType, &$size);
+  public abstract function readListBegin(&$elemType, &$size);
   
-  public abstract function readListEnd($in);
+  public abstract function readListEnd();
 
-  public abstract function readSetBegin($in, &$elemType, &$size);
+  public abstract function readSetBegin(&$elemType, &$size);
   
-  public abstract function readSetEnd($in);
+  public abstract function readSetEnd();
 
-  public abstract function readBool($in, &$bool);
+  public abstract function readBool(&$bool);
   
-  public abstract function readByte($in, &$byte);
+  public abstract function readByte(&$byte);
   
-  public abstract function readI16($in, &$i16);
+  public abstract function readI16(&$i16);
 
-  public abstract function readI32($in, &$i32);
+  public abstract function readI32(&$i32);
 
-  public abstract function readI64($in, &$i64);
+  public abstract function readI64(&$i64);
 
-  public abstract function readDouble($in, &$dub);
+  public abstract function readDouble(&$dub);
 
-  public abstract function readString($in, &$str);
+  public abstract function readString(&$str);
 
   /**
    * The skip function is a utility to parse over unrecognized date without
    * causing corruption.
    *
-   * @param TTransport $in Input transport
    * @param TType $type What type is it
    */
-  public function skip($in, $type) {
+  public function skip($type) {
     switch ($type) {
     case TType::BOOL:
-      return $this->readBool($in, $bool);
+      return $this->readBool($bool);
     case TType::BYTE:
-      return $this->readByte($in, $byte);
+      return $this->readByte($byte);
     case TType::I16;
-      return $this->readI16($in, $i16);
+      return $this->readI16($i16);
     case TType::I32:
-      return $this->readI32($in, $i32);
+      return $this->readI32($i32);
     case TType::I64:
-      return $this->readI64($in, $i64);
+      return $this->readI64($i64);
     case TType::DOUBLE:
-      return $this->readDouble($in, $dub);
+      return $this->readDouble($dub);
     case TType::STRING:
-      return $this->readString($in, $str);
+      return $this->readString($str);
     case TType::STRUCT:
       {
-        $result = $this->readStructBegin($in, $name);
+        $result = $this->readStructBegin($name);
         while (true) {
-          $result += $this->readFieldBegin($in, $name, $ftype, $fid);
+          $result += $this->readFieldBegin($name, $ftype, $fid);
           if ($ftype == TType::STOP) {
             break;
           }
-          $result += $this->skip($in, $ftype);
-          $result += $this->readFieldEnd($in);
+          $result += $this->skip($ftype);
+          $result += $this->readFieldEnd();
         }
-        $result += $this->readStructEnd($in);
+        $result += $this->readStructEnd();
         return $result;
       }
     case TType::MAP:
       {
-        $result = $this->readMapBegin($in, $keyType, $valType, $size);
+        $result = $this->readMapBegin($keyType, $valType, $size);
         for ($i = 0; $i < $size; $i++) {
-          $result += $this->skip($in, $keyType);
-          $result += $this->skip($in, $valType);
+          $result += $this->skip($keyType);
+          $result += $this->skip($valType);
         }
-        $result += $this->readMapEnd($in);
+        $result += $this->readMapEnd();
         return $result;
       }
     case TType::SET:
       {
-        $result = $this->readSetBegin($in, $elemType, $size);
+        $result = $this->readSetBegin($elemType, $size);
         for ($i = 0; $i < $size; $i++) {
-          $result += $this->skip($in, $elemType);
+          $result += $this->skip($elemType);
         }
-        $result += $this->readSetEnd($in);
+        $result += $this->readSetEnd();
         return $result;
       }
     case TType::LST:
       {
-        $result = $this->readListBegin($in, $elemType, $size);
+        $result = $this->readListBegin($elemType, $size);
         for ($i = 0; $i < $size; $i++) {
-          $result += $this->skip($in, $elemType);
+          $result += $this->skip($elemType);
         }
-        $result += $this->readListEnd($in);
+        $result += $this->readListEnd();
         return $result;
       }
     default:
@@ -247,7 +306,7 @@ abstract class TProtocol {
         while (true) {
           $ftype = 0;
           $fid = 0;
-          $data = $in->readAll(1);
+          $data = $itrans->readAll(1);
           $arr = unpack('c', $data);
           $ftype = $arr[1];
           if ($ftype == TType::STOP) {
@@ -308,5 +367,18 @@ abstract class TProtocol {
     }   
   }
 }
+
+/**
+ * Protocol factory creates protocol objects from transports
+ */
+interface TProtocolFactory {
+  /**
+   * Build input and output protocols from the given transports.
+   *
+   * @return array Two elements, (iprot, oprot)
+   */
+  public function getIOProtocols($itrans, $otrans);
+}
+    
 
 ?>
