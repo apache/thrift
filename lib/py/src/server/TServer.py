@@ -85,8 +85,8 @@ class TThreadPoolServer(TServer):
 
   """Server with a fixed size pool of threads which service requests."""
 
-  def __init__(self, processor, serverTransport, transportFactory=None):
-    TServer.__init__(self, processor, serverTransport, transportFactory)
+  def __init__(self, processor, serverTransport, transportFactory=None, protocolFactory=None):
+    TServer.__init__(self, processor, serverTransport, transportFactory, protocolFactory)
     self.clients = Queue.Queue()
     self.threads = 10
 
