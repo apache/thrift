@@ -51,10 +51,10 @@ class TestHandler:
       x.message = str
       raise x
 
-transport = TSocket.TServerSocket(9090)
-protocol = TBinaryProtocol.TBinaryProtocol()
 handler = TestHandler()
-processor = ThriftTest.Processor(handler, protocol)
-factory = TTransport.TBufferedTransportFactory()
-server = TServer.TSimpleServer(processor, transport, factory)
+processor = ThriftTest.Processor(handler)
+transport = TSocket.TServerSocket(9090)
+tfactory = TTransport.TBufferedTransportFactory()
+pfactory = TBinaryProtocol.TBinaryProtocolFactory()
+server = TServer.TThreadedServer(processor, transport, tfactory, pfactory)
 server.serve()

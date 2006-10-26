@@ -48,8 +48,8 @@ if framed:
 else:
   transport = TTransport.TBufferedTransport(socket)
 
-protocol = TBinaryProtocol.TBinaryProtocol()
-client = ThriftTest.Client(transport, protocol)
+protocol = TBinaryProtocol.TBinaryProtocol(transport)
+client = ThriftTest.Client(protocol)
 
 # Connect!
 transport.open()

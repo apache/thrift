@@ -237,12 +237,10 @@ public class TestServer {
       }
       
       // Processor
-      TBinaryProtocol binaryProtocol =
-        new TBinaryProtocol();
       TestHandler testHandler =
         new TestHandler();
       ThriftTest.Processor testProcessor =
-        new ThriftTest.Processor(testHandler, binaryProtocol);
+        new ThriftTest.Processor(testHandler);
 
       // Transport
       TServerSocket tServerSocket =
@@ -254,7 +252,7 @@ public class TestServer {
       // serverEngine = new TSimpleServer(testProcessor, tServerSocket);
 
       // ThreadPool Server
-      serverEngine =  new TThreadPoolServer(testProcessor, tServerSocket);
+      serverEngine = new TThreadPoolServer(testProcessor, tServerSocket);
 
       // Run it
       System.out.println("Starting the server on port " + port + "...");

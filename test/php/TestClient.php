@@ -36,7 +36,7 @@ if ($argc > 2) {
   $host = $argv[1];
 }
 
-$hosts = array('localhost', '8.2.3.5');
+$hosts = array('localhost');
 
 $socket = new TSocket($host, $port);
 $socket = new TSocketPool($hosts, $port);
@@ -48,8 +48,8 @@ if ($MODE == 'inline') {
 } else {
   $bufferedSocket = new TBufferedTransport($socket, 1024, 1024);
   $transport = $bufferedSocket;
-  $protocol = new TBinaryProtocol();
-  $testClient = new ThriftTestClient($transport, $protocol);
+  $protocol = new TBinaryProtocol($transport);
+  $testClient = new ThriftTestClient($protocol);
 }
 
 $transport->open();

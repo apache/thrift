@@ -69,9 +69,9 @@ public class TestClient {
       }
 
       TBinaryProtocol binaryProtocol =
-        new TBinaryProtocol();
+        new TBinaryProtocol(transport, transport);
       ThriftTest.Client testClient =
-        new ThriftTest.Client(transport, binaryProtocol);
+        new ThriftTest.Client(binaryProtocol);
 
       long timeMin = 0;
       long timeMax = 0;
