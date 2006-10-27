@@ -505,10 +505,9 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       f_service_ <<
         indent() << "args.write(self._oprot)" << endl <<
         indent() << "self._oprot.writeMessageEnd()" << endl <<
-        indent() << "self._oprot.otrans.flush()" << endl;
+        indent() << "self._oprot.otrans.flush()" << endl;  
 
     indent_down();
-      
 
     if (!(*f_iter)->is_async()) {
       std::string resultname = (*f_iter)->get_name() + "_result";
@@ -557,11 +556,11 @@ void t_py_generator::generate_service_client(t_service* tservice) {
         f_service_ <<
           indent() << "raise Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }     
-    }      
 
-    // Close function
-    indent_down();
-    f_service_ << endl;   
+      // Close function
+      indent_down();
+      f_service_ << endl;   
+    }      
   }
 
   indent_down();
