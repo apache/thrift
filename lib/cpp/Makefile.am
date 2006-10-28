@@ -5,7 +5,8 @@ common_ldflags = -Wall $(BOOST_LDFLAGS) -levent
 
 # Define the source file for the module
 
-libthrift_sources = src/concurrency/Monitor.cpp \
+libthrift_sources = src/concurrency/Mutex.cpp \
+                    src/concurrency/Monitor.cpp \
                     src/concurrency/PosixThreadFactory.cpp \
                     src/concurrency/ThreadManager.cpp \
                     src/concurrency/TimerManager.cpp \
@@ -36,6 +37,7 @@ include_thrift_HEADERS = \
 include_concurrencydir = $(include_thriftdir)/concurrency
 include_concurrency_HEADERS = \
 			 src/concurrency/Exception.h \
+                         src/concurrency/Mutex.h \
                          src/concurrency/Monitor.h \
                          src/concurrency/PosixThreadFactory.h \
                          src/concurrency/Thread.h \
