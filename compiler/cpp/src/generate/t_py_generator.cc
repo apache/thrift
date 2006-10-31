@@ -734,6 +734,9 @@ void t_py_generator::generate_service_server(t_service* tservice) {
     f_service_ <<
       indent() << "self._handler = handler" << endl <<
       indent() << "self._processMap = {}" << endl;
+  } else {
+    f_service_ <<
+      indent() << extends << ".Processor.__init__(self)" << endl;
   }
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ <<
