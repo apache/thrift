@@ -29,7 +29,6 @@ install-sh \
 .libs \
 libtool \
 ltmain.sh \
-Makefile.in \
 missing
 
 echo "SUBDIRS = ${subdirs}" > Makefile.am
