@@ -1179,22 +1179,22 @@ void t_py_generator::generate_serialize_container(ofstream &out,
   }
 
   if (ttype->is_map()) {
-    string kiter = tmp("_kiter");
-    string viter = tmp("_viter");
+    string kiter = tmp("kiter");
+    string viter = tmp("viter");
     indent(out) << 
-      "for " << kiter << "," << viter << " in " << prefix << ":" << endl;
+      "for " << kiter << "," << viter << " in " << prefix << ".items():" << endl;
     indent_up();
     generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
     indent_down();
   } else if (ttype->is_set()) {
-    string iter = tmp("_iter");
+    string iter = tmp("iter");
     indent(out) << 
       "for " << iter << " in " << prefix << ":" << endl;
     indent_up();
     generate_serialize_set_element(out, (t_set*)ttype, iter);
     indent_down();
   } else if (ttype->is_list()) {
-    string iter = tmp("_iter");
+    string iter = tmp("iter");
     indent(out) << 
       "for " << iter << " in " << prefix << ":" << endl;
     indent_up();
