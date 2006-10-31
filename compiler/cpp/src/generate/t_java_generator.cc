@@ -37,6 +37,7 @@ string t_java_generator::java_type_imports() {
   return
     string() +
     "import java.util.ArrayList;\n" +
+    "import java.util.AbstractMap;\n" +
     "import java.util.HashMap;\n" +
     "import java.util.HashSet;\n" +
     "import com.facebook.thrift.*;\n\n";
@@ -701,7 +702,7 @@ void t_java_generator::generate_service_server(t_service* tservice) {
   
   if (extends.empty()) {
     f_service_ <<
-      indent() << "private static interface ProcessFunction {" << endl <<
+      indent() << "protected static interface ProcessFunction {" << endl <<
       indent() << "  public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException;" << endl <<
       indent() << "}" << endl <<
       endl;
@@ -1313,7 +1314,7 @@ void t_java_generator::generate_serialize_list_element(ofstream& out,
  * @param container Is the type going inside a container?
  * @return Java type name, i.e. HashMap<Key,Value>
  */
-string t_java_generator::type_name(t_type* ttype, bool in_container) {
+string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_init) {
   // In Java typedefs are just resolved to their real type
   while (ttype->is_typedef()) {
     ttype = ((t_typedef*)ttype)->get_type();
@@ -1325,7 +1326,13 @@ string t_java_generator::type_name(t_type* ttype, bool in_container) {
     return (in_container ? "Integer" : "int");
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*) ttype;
-    return "HashMap<" +
+    string prefix;
+    if (in_init) {
+      prefix = "HashMap";
+    } else {
+      prefix = "AbstractMap";
+    }
+    return prefix + "<" +
       type_name(tmap->get_key_type(), true) + "," +
       type_name(tmap->get_val_type(), true) + ">";
   } else if (ttype->is_set()) {
@@ -1417,7 +1424,7 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
     } else if (ttype->is_enum()) {
       result += " = 0";
     } else if (ttype->is_container()) {
-      result += " = new " + type_name(ttype) + "()";
+      result += " = new " + type_name(ttype, false, true) + "()";
     } else {
       result += " = null";
     }
