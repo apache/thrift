@@ -285,18 +285,20 @@ Enum:
       $$->set_name($2);
     }
 
+CommaOrSemicolonOptional:
+  ','
+    {}
+| ';'
+    {}
+|
+    {}
+
 EnumDefList:
-  EnumDefList ',' EnumDef
+  EnumDefList EnumDef
     {
       pdebug("EnumDefList -> EnumDefList EnumDef");
       $$ = $1;
-      $$->append($3);
-    }
-| EnumDef
-    {
-      pdebug("EnumDefList -> EnumDef");
-      $$ = new t_enum(g_program);
-      $$->append($1);
+      $$->append($2);
     }
 |
     {
@@ -305,7 +307,7 @@ EnumDefList:
     }
 
 EnumDef:
-  tok_identifier '=' tok_int_constant
+  tok_identifier '=' tok_int_constant CommaOrSemicolonOptional
     {
       pdebug("EnumDef => tok_identifier = tok_int_constant");
       if ($3 < 0) {
@@ -367,7 +369,7 @@ ExtendsOptional:
     }
 
 FunctionList:
-  FunctionList Function CommaOptional
+  FunctionList Function
     {
       pdebug("FunctionList -> FunctionList Function");
       $$ = $1;
@@ -379,14 +381,8 @@ FunctionList:
       $$ = new t_service(g_program);
     }
 
-CommaOptional:
-  ','
-    {}
-|
-    {}
-
 Function:
-  AsyncOptional FunctionType tok_identifier '(' FieldList ')' ThrowsOptional
+  AsyncOptional FunctionType tok_identifier '(' FieldList ')' ThrowsOptional CommaOrSemicolonOptional
     {
       $5->set_name(std::string($3) + "_args");
       $$ = new t_function($2, $3, $5, $7, $1);
@@ -415,17 +411,11 @@ ThrowsOptional:
     }
 
 FieldList:
-  FieldList ',' Field
+  FieldList Field
     {
       pdebug("FieldList -> FieldList , Field");
       $$ = $1;
-      $$->append($3);
-    }
-| Field
-    {
-      pdebug("FieldList -> Field");
-      $$ = new t_struct(g_program);
-      $$->append($1);
+      $$->append($2);
     }
 |
     {
@@ -434,7 +424,7 @@ FieldList:
     }
 
 Field:
-  tok_int_constant ':' FieldType tok_identifier
+  tok_int_constant ':' FieldType tok_identifier CommaOrSemicolonOptional
     {
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
       if ($1 <= 0) {
