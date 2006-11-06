@@ -1195,7 +1195,7 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
     "#include <protocol/TBinaryProtocol.h>" << endl <<
     "#include <server/TSimpleServer.h>" << endl <<
     "#include <transport/TServerSocket.h>" << endl <<
-    "#include <transport/TBufferedTransportFactory.h>" << endl <<
+    "#include <transport/TTransportUtils.h>" << endl <<
     endl <<
     "using namespace facebook::thrift;" << endl <<
     "using namespace facebook::thrift::protocol;" << endl <<
