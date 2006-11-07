@@ -1,8 +1,7 @@
 thrift_SCRIPTS = src/Thrift.php
 
 protocol_SCRIPTS = src/protocol/TProtocol.php \
-                   src/protocol/TBinaryProtocol.php \
-                   src/protocol/TType.php
+                   src/protocol/TBinaryProtocol.php
 
 transport_SCRIPTS = src/transport/TTransport.php \
                     src/transport/TBufferedTransport.php \
