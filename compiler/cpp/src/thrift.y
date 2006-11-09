@@ -433,15 +433,15 @@ Field:
       }
       $$ = new t_field($3, $4, $1);
     }
-| FieldType tok_identifier
+| FieldType tok_identifier CommaOrSemicolonOptional
     {
       pdebug("Field -> FieldType tok_identifier");
       pwarning(2, "No field key specified for '%s', resulting protocol may have conflicts or not be backwards compatible!\n", $2);
       $$ = new t_field($1, $2, y_field_val--);
     }
-| FieldType tok_identifier '=' tok_int_constant
+| FieldType tok_identifier '=' tok_int_constant CommaOrSemicolonOptional
     {
-      pwarning(1, "Trailing = id notation is deprecated. Use 'Id: Type Name' notatio instead"); 
+      pwarning(1, "Trailing = id notation is deprecated. Use 'Id: Type Name' notation instead"); 
       pdebug("Field -> FieldType tok_identifier = tok_int_constant");
       if ($4 <= 0) {
         pwarning(1, "Nonpositive value (%d) not allowed as a field key for '%s'.\n", $4, $2);

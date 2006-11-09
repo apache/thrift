@@ -80,7 +80,7 @@ string g_curpath;
 /**
  * Search path for inclusions
  */
-vector <string> g_incl_searchpath;
+vector<string> g_incl_searchpath;
 
 /**
  * Global debug state
@@ -279,18 +279,18 @@ string include_file(string filename) {
 void usage() {
   fprintf(stderr, "Usage: thrift [options] file\n");
   fprintf(stderr, "Options:\n");
-  fprintf(stderr, "  --cpp        Generate C++ output files\n");
-  fprintf(stderr, "  --java       Generate Java output files\n");
-  fprintf(stderr, "  --php        Generate PHP output files\n");
-  fprintf(stderr, "  --phpi       Generate PHP inlined files\n");
-  fprintf(stderr, "  --py         Generate Python output files\n");
+  fprintf(stderr, "  -cpp        Generate C++ output files\n");
+  fprintf(stderr, "  -java       Generate Java output files\n");
+  fprintf(stderr, "  -php        Generate PHP output files\n");
+  fprintf(stderr, "  -phpi       Generate PHP inlined files\n");
+  fprintf(stderr, "  -py         Generate Python output files\n");
   fprintf(stderr, "  -I dir       Add a directory to the list of directories \n");
   fprintf(stderr, "               searched for include directives\n");
-  fprintf(stderr, "  --nowarn     Suppress all compiler warnings (BAD!)\n");
-  fprintf(stderr, "  --strict     Strict compiler warnings on\n");
-  fprintf(stderr, "  --v[erbose]  Verbose mode\n");
-  fprintf(stderr, "  --r[ecurse]  Also generate included files\n");
-  fprintf(stderr, "  --debug      Parse debug trace to stdout\n");
+  fprintf(stderr, "  -nowarn     Suppress all compiler warnings (BAD!)\n");
+  fprintf(stderr, "  -strict     Strict compiler warnings on\n");
+  fprintf(stderr, "  -v[erbose]  Verbose mode\n");
+  fprintf(stderr, "  -r[ecurse]  Also generate included files\n");
+  fprintf(stderr, "  -debug      Parse debug trace to stdout\n");
   exit(1);
 }
 
@@ -424,27 +424,33 @@ int main(int argc, char** argv) {
   // Hacky parameter handling... I didn't feel like using a library sorry!
   for (i = 1; i < argc-1; i++) {
     char* arg;
+
     arg = strtok(argv[i], " ");
     while (arg != NULL) {
-      if (strcmp(arg, "--debug") == 0) {
+      // Treat double dashes as single dashes
+      if (false && arg[0] == '-') {
+        ++arg;
+      }
+
+      if (strcmp(arg, "-debug") == 0) {
         g_debug = 1;
-      } else if (strcmp(arg, "--nowarn") == 0) {
+      } else if (strcmp(arg, "-nowarn") == 0) {
         g_warn = 0;
-      } else if (strcmp(arg, "--strict") == 0) {
+      } else if (strcmp(arg, "-strict") == 0) {
         g_warn = 2;
-      } else if (strcmp(arg, "--v") == 0 || strcmp(arg, "--verbose") == 0 ) {
+      } else if (strcmp(arg, "-v") == 0 || strcmp(arg, "-verbose") == 0 ) {
         g_verbose = 1;
-      } else if (strcmp(arg, "--r") == 0 || strcmp(arg, "--recurse") == 0 ) {
+      } else if (strcmp(arg, "-r") == 0 || strcmp(arg, "-recurse") == 0 ) {
         gen_recurse = true;
-      } else if (strcmp(arg, "--cpp") == 0) {
+      } else if (strcmp(arg, "-cpp") == 0) {
         gen_cpp = true;
-      } else if (strcmp(arg, "--java") == 0) {
+      } else if (strcmp(arg, "-java") == 0) {
         gen_java = true;
-      } else if (strcmp(arg, "--php") == 0) {
+      } else if (strcmp(arg, "-php") == 0) {
         gen_php = true;
-      } else if (strcmp(arg, "--phpi") == 0) {
+      } else if (strcmp(arg, "-phpi") == 0) {
         gen_phpi = true;
-      } else if (strcmp(arg, "--py") == 0) {
+      } else if (strcmp(arg, "-py") == 0) {
         gen_py = true;
       } else if (strcmp(arg, "-I") == 0) {
         // An argument of "-I\ asdf" is invalid and has unknown results
