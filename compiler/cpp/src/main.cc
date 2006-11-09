@@ -78,6 +78,11 @@ string g_curdir;
 string g_curpath;
 
 /**
+ * Search path for inclusions
+ */
+vector <string> g_incl_searchpath;
+
+/**
  * Global debug state
  */
 int g_debug = 0;
@@ -226,23 +231,43 @@ string directory_name(string filename) {
  */
 string include_file(string filename) {
   // Absolute path? Just try that
-  if (filename[0] != '/') {
-    filename = g_curdir + "/" + filename;
-  }
-
-  // Realpath!
-  char rp[PATH_MAX];
-  if (realpath(filename.c_str(), rp) == NULL) {
-    pwarning(0, "Cannot open include file %s\n", filename.c_str());
-    return std::string();
+  if (filename[0] == '/') {
+    // Realpath!
+    char rp[PATH_MAX];
+    if (realpath(filename.c_str(), rp) == NULL) {
+      pwarning(0, "Cannot open include file %s\n", filename.c_str());
+      return std::string();
+    }
+  
+    // Stat this files
+    struct stat finfo;
+    if (stat(rp, &finfo) == 0) {
+      return rp;
+    }
+  } else { // relative path, start searching
+    // new search path with current dir global
+    vector<string> sp = g_incl_searchpath;
+    sp.insert(sp.begin(), g_curdir);
+   
+    // iterate through paths
+    vector<string>::iterator it;
+    for (it = sp.begin(); it != sp.end(); it++) {
+      string sfilename = *(it) + "/" + filename;
+      
+      // Realpath!
+      char rp[PATH_MAX];
+      if (realpath(sfilename.c_str(), rp) == NULL) {
+        continue;
+      }
+  
+      // Stat this files
+      struct stat finfo;
+      if (stat(rp, &finfo) == 0) {
+        return rp;
+      }
+    }
   }
   
-  // Stat this files
-  struct stat finfo;
-  if (stat(rp, &finfo) == 0) {
-    return rp;
-  }
-
   // Uh oh
   pwarning(0, "Could not find include file %s\n", filename.c_str());
   return std::string();
@@ -259,6 +284,8 @@ void usage() {
   fprintf(stderr, "  --php        Generate PHP output files\n");
   fprintf(stderr, "  --phpi       Generate PHP inlined files\n");
   fprintf(stderr, "  --py         Generate Python output files\n");
+  fprintf(stderr, "  -I dir       Add a directory to the list of directories \n");
+  fprintf(stderr, "               searched for include directives\n");
   fprintf(stderr, "  --nowarn     Suppress all compiler warnings (BAD!)\n");
   fprintf(stderr, "  --strict     Strict compiler warnings on\n");
   fprintf(stderr, "  --v[erbose]  Verbose mode\n");
@@ -419,6 +446,15 @@ int main(int argc, char** argv) {
         gen_phpi = true;
       } else if (strcmp(arg, "--py") == 0) {
         gen_py = true;
+      } else if (strcmp(arg, "-I") == 0) {
+        // An argument of "-I\ asdf" is invalid and has unknown results
+        arg = argv[++i];
+
+        if (arg == NULL) {
+          fprintf(stderr, "!!! Missing Include directory");
+          usage();
+        }
+        g_incl_searchpath.push_back(arg);
       } else {
         fprintf(stderr, "!!! Unrecognized option: %s\n", arg);
         usage();
