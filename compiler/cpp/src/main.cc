@@ -428,7 +428,7 @@ int main(int argc, char** argv) {
     arg = strtok(argv[i], " ");
     while (arg != NULL) {
       // Treat double dashes as single dashes
-      if (false && arg[0] == '-') {
+      if (arg[0] == '-' && arg[1] == '-') {
         ++arg;
       }
 
