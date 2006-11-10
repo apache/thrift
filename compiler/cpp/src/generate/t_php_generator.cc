@@ -158,6 +158,27 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
  
   out << endl;
 
+  out <<
+    indent() << "public function __construct($vals=null) {" << endl;
+  indent_up();
+  out <<
+    indent() << "if (is_array($vals)) {" << endl;
+  indent_up();
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    out <<
+      indent() << "if (isset($vals['" << (*m_iter)->get_name() << "'])) {" << endl <<
+      indent() << "  $this->" << (*m_iter)->get_name() << " = $vals['" << (*m_iter)->get_name() << "'];" << endl <<
+      indent() << "}" << endl;
+  }
+  indent_down();
+  out <<
+    indent() << "}" << endl;
+
+  indent_down();
+  out <<
+    indent() << "}" << endl <<
+    endl;
+  
   generate_php_struct_reader(out, tstruct);
   generate_php_struct_writer(out, tstruct);
 
