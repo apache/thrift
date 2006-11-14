@@ -395,6 +395,7 @@ void t_php_generator::generate_service(t_service* tservice) {
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_interface(tservice);
+  generate_service_rest(tservice);
   generate_service_client(tservice);
   generate_service_helpers(tservice);
   generate_service_processor(tservice);
@@ -670,6 +671,55 @@ void t_php_generator::generate_service_interface(t_service* tservice) {
   indent_down();
   f_service_ <<
     "}" << endl << endl;
+}
+
+/**
+ * Generates a REST interface
+ */
+void t_php_generator::generate_service_rest(t_service* tservice) {
+  string extends = "";
+  string extends_if = "";
+  if (tservice->get_extends() != NULL) {
+    extends = " extends " + tservice->get_extends()->get_name();
+    extends_if = " extends " + tservice->get_extends()->get_name() + "Rest";
+  }
+  f_service_ <<
+    "class " << service_name_ << "Rest" << extends_if << " implements " << service_name_ << "If {" << endl;
+  indent_up();
+  f_service_ <<
+    indent() << "var $impl_;" << endl <<
+    endl <<
+    indent() << "public function __construct($impl) {" << endl <<
+    indent() << "  $this->impl_ = $impl;" << endl <<
+    indent() << "}" << endl <<
+    endl;
+
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter; 
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    indent(f_service_) <<
+      "public function " << (*f_iter)->get_name() << "($request) {" << endl;
+    indent_up();
+    const vector<t_field*>& args = (*f_iter)->get_arglist()->get_members();
+    vector<t_field*>::const_iterator a_iter;
+    for (a_iter = args.begin(); a_iter != args.end(); ++a_iter) {
+      f_service_ <<
+        indent() << "$" << (*a_iter)->get_name() << " = $request['" << (*a_iter)->get_name() << "'];" << endl;
+      if ((*a_iter)->get_type()->is_list()) {
+        f_service_ << 
+          indent() << "$" << (*a_iter)->get_name() << " = explode(',', $" << (*a_iter)->get_name() << ");" << endl;
+      }      
+    }
+    f_service_ <<
+      indent() << "return $this->impl_->" << (*f_iter)->get_name() << "(" << argument_list((*f_iter)->get_arglist()) << ");" << endl;
+    indent_down();
+    indent(f_service_) <<
+      "}" << endl <<
+      endl;
+  }
+  indent_down();
+  f_service_ <<
+    "}" << endl << endl; 
 }
 
 /**
