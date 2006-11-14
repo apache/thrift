@@ -684,7 +684,7 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
     extends_if = " extends " + tservice->get_extends()->get_name() + "Rest";
   }
   f_service_ <<
-    "class " << service_name_ << "Rest" << extends_if << " implements " << service_name_ << "If {" << endl;
+    "class " << service_name_ << "Rest" << extends_if << " {" << endl;
   indent_up();
   f_service_ <<
     indent() << "var $impl_;" << endl <<
