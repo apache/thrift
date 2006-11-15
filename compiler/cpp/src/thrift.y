@@ -316,7 +316,7 @@ EnumDef:
       $$ = new t_constant($1, $3);
     }
 |
-  tok_identifier
+  tok_identifier CommaOrSemicolonOptional
     {
       pdebug("EnumDef => tok_identifier");
       $$ = new t_constant($1);
