@@ -23,21 +23,25 @@ enum TTransportExceptionType {
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class TTransportException {
+class TTransportException : public facebook::thrift::TException {
  public:
   TTransportException() :
-    type_(TTX_UNKNOWN), message_() {}
+    facebook::thrift::TException(),
+    type_(TTX_UNKNOWN) {}
 
   TTransportException(TTransportExceptionType type) :
-    type_(type), message_() {}
+    facebook::thrift::TException(), 
+    type_(type) {}
 
-  TTransportException(std::string message) :
-    type_(TTX_UNKNOWN), message_(message) {}
+  TTransportException(const std::string message) :
+    facebook::thrift::TException(message),
+    type_(TTX_UNKNOWN) {}
 
-  TTransportException(TTransportExceptionType type, std::string message) :
-    type_(type), message_(message) {}
+  TTransportException(TTransportExceptionType type, const std::string message) :
+    facebook::thrift::TException(message),
+    type_(type) {}
 
-  ~TTransportException() {}
+  virtual ~TTransportException() throw() {}
 
   /**
    * Returns an error code that provides information about the type of error
@@ -45,21 +49,14 @@ class TTransportException {
    *
    * @return Error code
    */
-  TTransportExceptionType getType() { return type_; }
+  TTransportExceptionType getType() {
+    return type_;
+  }
  
-  /**
-   * Returns an informative message about what caused this error.
-   *
-   * @return Error string
-   */
-  const std::string& getMessage() { return message_; }
-
  protected:
   /** Error code */
   TTransportExceptionType type_;
 
-  /** Description */
-  std::string message_;
 };
 
 }}} // facebook::thrift::transport

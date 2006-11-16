@@ -2,6 +2,7 @@
 #define _THRIFT_TRANSPORT_TSOCKET_H_ 1
 
 #include <string>
+#include <sys/time.h>
 
 #include "TTransport.h"
 #include "TServerSocket.h"
@@ -43,6 +44,11 @@ class TSocket : public TTransport {
    * @return Is the socket alive?
    */
   bool isOpen();
+
+  /**
+   * Calls select on the socket to see if there is more data available.
+   */
+  bool peek();
 
   /**
    * Creates and opens the UNIX socket.
@@ -131,6 +137,9 @@ class TSocket : public TTransport {
 
   /** Nodelay */
   bool noDelay_;
+
+  /** Recv timeout timeval */
+  struct timeval recvTimeval_;
 };
 
 }}} // facebook::thrift::transport

@@ -24,7 +24,21 @@ class TTransport {
   /**
    * Whether this transport is open.
    */
-  virtual bool isOpen() { return false; }
+  virtual bool isOpen() {
+    return false;
+  }
+
+  /**
+   * Tests whether there is more data to read or if the remote side is
+   * still open. By default this is true whenever the transport is open,
+   * but implementations should add logic to test for this condition where
+   * possible (i.e. on a socket).
+   * This is used by a server to check if it should listen for another
+   * request.
+   */
+  virtual bool peek() {
+    return isOpen();
+  }
 
   /**
    * Opens the transport for communications.

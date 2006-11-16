@@ -154,10 +154,14 @@ void TConnection::transition() {
     try {
       // Invoke the processor
       server_->getProcessor()->process(inputProtocol_, outputProtocol_);
-    } catch (TTransportException &x) {
-      fprintf(stderr, "Server::process %s\n", x.getMessage().c_str());
+    } catch (TTransportException &ttx) {
+      fprintf(stderr, "Server::process() %s\n", ttx.what());
       close();
-      return;    
+      return;
+    } catch (TException &x) {
+      fprintf(stderr, "Server::process() %s\n", x.what());
+      close();     
+      return;
     } catch (...) {
       fprintf(stderr, "Server::process() unknown exception\n");
       close();

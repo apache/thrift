@@ -8,6 +8,7 @@
 namespace facebook { namespace thrift { namespace server { 
 
 using namespace std;
+using namespace facebook::thrift;
 using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::transport;
 
@@ -26,14 +27,18 @@ public:
   ~Task() {}
     
   void run() {     
-    while(true) {
-      try {
-	processor_->process(input_, output_);
-      } catch (TTransportException& ttx) {
-        break;
-      } catch(...) {
-        break;
+    try {
+      while (processor_->process(input_, output_)) {
+        if (!input_->getInputTransport()->peek()) {
+          break;
+        }
       }
+    } catch (TTransportException& ttx) {
+      cerr << "TThreadPoolServer client died: " << ttx.what() << endl;
+    } catch (TException& x) {
+      cerr << "TThreadPoolServer exception: " << x.what() << endl;
+    } catch (...) {
+      cerr << "TThreadPoolServer uncaught exception." << endl;
     }
     input_->getInputTransport()->close();
     output_->getOutputTransport()->close();
@@ -68,7 +73,7 @@ void TThreadPoolServer::serve() {
     // Start the server listening
     serverTransport_->listen();
   } catch (TTransportException& ttx) {
-    cerr << "TThreadPoolServer::run() listen(): " << ttx.getMessage() << endl;
+    cerr << "TThreadPoolServer::run() listen(): " << ttx.what() << endl;
     return;
   }
   

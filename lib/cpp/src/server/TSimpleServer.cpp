@@ -21,7 +21,7 @@ void TSimpleServer::serve() {
     // Start the server listening
     serverTransport_->listen();
   } catch (TTransportException& ttx) {
-    cerr << "TSimpleServer::run() listen(): " << ttx.getMessage() << endl;
+    cerr << "TSimpleServer::run() listen(): " << ttx.what() << endl;
     return;
   }
 
@@ -32,16 +32,21 @@ void TSimpleServer::serve() {
       iot = transportFactory_->getIOTransports(client);
       iop = protocolFactory_->getIOProtocols(iot.first, iot.second);
       try {
-        while (processor_->process(iop.first, iop.second)) {}
+        while (processor_->process(iop.first, iop.second)) {
+          // Peek ahead, is the remote side closed?
+          if (!iot.first->peek()) {
+            break;
+          }
+        }
       } catch (TTransportException& ttx) {
-        cerr << "TSimpleServer client died: " << ttx.getMessage() << endl;
+        cerr << "TSimpleServer client died: " << ttx.what() << endl;
       }
       iot.first->close();
       iot.second->close();
       client->close();
     }
   } catch (TTransportException& ttx) {
-    cerr << "TServerTransport died on accept: " << ttx.getMessage() << endl;
+    cerr << "TServerTransport died on accept: " << ttx.what() << endl;
   }
 
   // TODO(mcslee): Could this be a timeout case? Or always the real thing?

@@ -71,6 +71,14 @@ class TBufferedTransport : public TTransport {
     return transport_->isOpen();
   }
   
+  bool peek() {    
+    if (rPos_ >= rLen_) {
+      rLen_ = transport_->read(rBuf_, rBufSize_);
+      rPos_ = 0;
+    }
+    return (rLen_ > rPos_);
+  }
+
   void open() {
     transport_->open();
   }
@@ -177,6 +185,13 @@ class TFramedTransport : public TTransport {
     return transport_->isOpen();
   }
 
+  bool peek() {
+    if (rPos_ < rLen_) {
+      return true;
+    }
+    return transport_->peek();
+  }
+
   void close() {
     transport_->close();
   }
@@ -260,7 +275,10 @@ class TMemoryBuffer : public TTransport {
     return true;
   }
 
- 
+  bool peek() {
+    return (rPos_ < wPos_);
+  }
+
   void open() {}
 
   void close() {}

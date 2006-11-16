@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
     try {
       transport->open();
     } catch (TTransportException& ttx) {
-      printf("Connect failed: %s\n", ttx.getMessage().c_str());
+      printf("Connect failed: %s\n", ttx.what());
       continue;
     }
     
@@ -373,7 +373,7 @@ int main(int argc, char** argv) {
       testClient.testException("Xception");
       printf("  void\nFAILURE\n");
       
-    }  catch(Xception& e) {
+    } catch(Xception& e) {
       printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
     }
     

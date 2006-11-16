@@ -186,7 +186,7 @@ class TConnection {
   TConnection(int socket, short eventFlags, TNonblockingServer *s) {
     readBuffer_ = (uint8_t*)malloc(1024);
     if (readBuffer_ == NULL) {
-      throw new facebook::thrift::Exception("Out of memory.");
+      throw new facebook::thrift::TException("Out of memory.");
     }
     readBufferSize_ = 1024;
     

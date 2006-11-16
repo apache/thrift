@@ -845,7 +845,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
         indent() << "if (mtype != facebook::thrift::protocol::T_REPLY || fname.compare(\"" << (*f_iter)->get_name() << "\") != 0) {" << endl;
       indent_up();
         f_service_ <<
-          indent() << "throw facebook::thrift::Exception(\"Unexpected message type, name, or id\");" << endl;
+          indent() << "throw facebook::thrift::TException(\"Unexpected message type, name, or id\");" << endl;
       indent_down();
 
       f_service_ <<
@@ -879,7 +879,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
           "return;" << endl;
       } else {
         f_service_ <<
-          indent() << "throw facebook::thrift::Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+          indent() << "throw facebook::thrift::TException(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
              
       // Close function
@@ -985,7 +985,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     indent() << "iprot->readMessageBegin(fname, mtype, seqid);" << endl <<
     endl <<
     indent() << "if (mtype != facebook::thrift::protocol::T_CALL) {" << endl <<
-    indent() << "  throw facebook::thrift::Exception(\"Unexpected message type\");" << endl <<
+    indent() << "  throw facebook::thrift::TException(\"Unexpected message type\");" << endl <<
     indent() << "}" << endl <<
     endl <<
     indent() << "return process_fn(iprot, oprot, fname, seqid);" <<
@@ -1007,7 +1007,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     indent() << "if (pfn == processMap_.end()) {" << endl;
   if (extends.empty()) {
     f_service_ <<
-      indent() << "  throw facebook::thrift::Exception(\"Unknown function name: '\"+fname+\"'\");" << endl;
+      indent() << "  throw facebook::thrift::TException(\"Unknown function name: '\"+fname+\"'\");" << endl;
   } else {
     f_service_ <<
       indent() << "  return " << extends << "Processor::process_fn(iprot, oprot, fname, seqid);" << endl;

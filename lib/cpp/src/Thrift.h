@@ -14,15 +14,21 @@
 
 namespace facebook { namespace thrift {
 
-class Exception : public std::exception {
+class TException : public std::exception {
 public:
-  Exception(const std::string message) :
+  TException() {}
+
+  TException(const std::string message) :
     message_(message) {}
 
-  ~Exception() throw () {}
+  ~TException() throw() {}
 
   const char* what() {
-    return message_.c_str();
+    if (message_.empty()) {
+      return "Default TException.";
+    } else {
+      return message_.c_str();
+    }
   }
 
 private:

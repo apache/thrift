@@ -138,12 +138,15 @@ class PosixThreadFactory::Impl {
    * API values.
    */
   static int toPthreadPolicy(POLICY policy) {
-    switch(policy) {
-    case OTHER: return SCHED_OTHER; break;
-    case FIFO: return SCHED_FIFO; break;
-    case ROUND_ROBIN: return SCHED_RR; break;
-    default: return SCHED_OTHER; break;
+    switch (policy) {
+    case OTHER:
+      return SCHED_OTHER;
+    case FIFO:
+      return SCHED_FIFO;
+    case ROUND_ROBIN:
+      return SCHED_RR;
     }
+    return SCHED_OTHER;
   }
 
   /**

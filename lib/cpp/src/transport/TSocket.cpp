@@ -43,6 +43,8 @@ TSocket::TSocket(string host, int port) :
   lingerOn_(1),
   lingerVal_(0),
   noDelay_(1) {
+  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
+  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
 }
 
 TSocket::TSocket(int socket) :
@@ -55,6 +57,8 @@ TSocket::TSocket(int socket) :
   lingerOn_(1),
   lingerVal_(0),
   noDelay_(1) {
+  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
+  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
 }
   
 TSocket::~TSocket() {
@@ -63,6 +67,20 @@ TSocket::~TSocket() {
 
 bool TSocket::isOpen() {
   return (socket_ > 0); 
+}
+
+bool TSocket::peek() {
+  if (!isOpen()) {
+    return false;
+  }
+  uint8_t buf;
+  int r = recv(socket_, &buf, 1, MSG_PEEK);
+  if (r == -1) {
+    perror("TSocket::peek()");
+    close();
+    throw TTransportException(TTX_UNKNOWN, "recv() ERROR:" + errno);
+  }
+  return (r > 0);
 }
 
 void TSocket::open() {
@@ -322,12 +340,14 @@ void TSocket::setConnTimeout(int ms) {
 
 void TSocket::setRecvTimeout(int ms) {
   recvTimeout_ = ms;
+  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
+  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
   if (socket_ <= 0) {
     return;
   }
 
-  struct timeval r = {(int)(recvTimeout_/1000),
-                      (int)((recvTimeout_%1000)*1000)};
+  // Copy because select may modify
+  struct timeval r = recvTimeval_;
   int ret = setsockopt(socket_, SOL_SOCKET, SO_RCVTIMEO, &r, sizeof(r));
   if (ret == -1) {
     perror("TSocket::setRecvTimeout()");

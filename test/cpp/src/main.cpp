@@ -2,6 +2,7 @@
 #include <concurrency/PosixThreadFactory.h>
 #include <concurrency/Monitor.h>
 #include <concurrency/Util.h>
+#include <concurrency/Mutex.h>
 #include <protocol/TBinaryProtocol.h>
 #include <server/TSimpleServer.h>
 #include <server/TThreadPoolServer.h>
@@ -18,19 +19,57 @@
 #include <stdexcept>
 #include <sstream>
 
+#include <map>
+#include <ext/hash_map>
+using __gnu_cxx::hash_map;
+using __gnu_cxx::hash;
+
 using namespace std;
 
 using namespace facebook::thrift;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::transport;
 using namespace facebook::thrift::server;
+using namespace facebook::thrift::concurrency;
 
 using namespace test::stress;
 
+struct eqstr {
+  bool operator()(const char* s1, const char* s2) const {
+    return strcmp(s1, s2) == 0;
+  }
+};
+
+struct ltstr {
+  bool operator()(const char* s1, const char* s2) const {
+    return strcmp(s1, s2) < 0;
+  }
+};
+
+
+// typedef hash_map<const char*, int, hash<const char*>, eqstr> count_map; 
+typedef map<const char*, int, ltstr> count_map; 
+
 class Server : public ServiceIf {
  public:
-  Server() {};
-  void echoVoid() {return;}
+  Server() {}
+
+  void count(const char* method) {
+    MutexMonitor m(lock_);
+    int ct = counts_[method];
+    counts_[method] = ++ct;
+  }
+
+  void echoVoid() {
+    count("echoVoid");
+    return;
+  }
+
+  count_map getCount() {
+    MutexMonitor m(lock_);
+    return counts_;
+  }
+
   int8_t echoByte(int8_t arg) {return arg;}
   int32_t echoI32(int32_t arg) {return arg;}
   int64_t echoI64(int64_t arg) {return arg;}
@@ -38,6 +77,11 @@ class Server : public ServiceIf {
   vector<int8_t> echoList(vector<int8_t> arg) {return arg;}
   set<int8_t> echoSet(set<int8_t> arg) {return arg;}
   map<int8_t, int8_t> echoMap(map<int8_t, int8_t> arg) {return arg;}
+
+private:
+  count_map counts_;
+  Mutex lock_;
+
 };
 
 class ClientThread: public Runnable {
@@ -252,10 +296,10 @@ int main(int argc, char **argv) {
 
   shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
 
-  if(runServer) {
+  // Dispatcher
+  shared_ptr<Server> serviceHandler(new Server());
 
-    // Dispatcher
-    shared_ptr<Server> serviceHandler(new Server());
+  if(runServer) {
 
     shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
 
@@ -390,6 +434,11 @@ int main(int argc, char **argv) {
     
     cout <<  "workers :" << workerCount << ", client : " << clientCount << ", loops : " << loopCount << ", rate : " << (clientCount * loopCount * 1000) / ((double)(time01 - time00)) << endl;
     
+    count_map count = serviceHandler->getCount();
+    count_map::iterator iter;
+    for (iter = count.begin(); iter != count.end(); ++iter) {
+      printf("%s => %d\n", iter->first, iter->second);
+    }
     cerr << "done." << endl;
   }
 
