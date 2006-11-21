@@ -171,7 +171,7 @@ class TSocket extends TTransport {
     $pre = null;
     while (TRUE) {
       $buf = @fread($this->handle_, $len);
-      if (!$buf) {
+      if ($buf === FALSE || $buf === '') {
         throw new Exception('TSocket: Could not read '.$len.' bytes from '.
                             $this->host_.':'.$this->port_);
       } else if (($sz = strlen($buf)) < $len) {
@@ -201,7 +201,7 @@ class TSocket extends TTransport {
       $this->sendTimeoutSet_ = FALSE;
     }
     $data = @fread($this->handle_, $len);
-    if (!$data) {
+    if ($data === FALSE || $data === '') {
       throw new Exception('TSocket: Could not read '.$len.' bytes from '.
                           $this->host_.':'.$this->port_);
     }
