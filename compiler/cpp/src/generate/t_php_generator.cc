@@ -158,26 +158,28 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
  
   out << endl;
 
-  out <<
-    indent() << "public function __construct($vals=null) {" << endl;
-  indent_up();
-  out <<
-    indent() << "if (is_array($vals)) {" << endl;
-  indent_up();
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+  // Generate constructor from array
+  if (members.size() > 0) {
     out <<
-      indent() << "if (isset($vals['" << (*m_iter)->get_name() << "'])) {" << endl <<
-      indent() << "  $this->" << (*m_iter)->get_name() << " = $vals['" << (*m_iter)->get_name() << "'];" << endl <<
+      indent() << "public function __construct($vals=null) {" << endl;
+    indent_up();
+    out <<
+      indent() << "if (is_array($vals)) {" << endl;
+    indent_up();
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      out <<
+        indent() << "if (isset($vals['" << (*m_iter)->get_name() << "'])) {" << endl <<
+        indent() << "  $this->" << (*m_iter)->get_name() << " = $vals['" << (*m_iter)->get_name() << "'];" << endl <<
+        indent() << "}" << endl;
+    }
+    indent_down();
+    out <<
       indent() << "}" << endl;
+    indent_down();
+    out <<
+      indent() << "}" << endl <<
+      endl;
   }
-  indent_down();
-  out <<
-    indent() << "}" << endl;
-
-  indent_down();
-  out <<
-    indent() << "}" << endl <<
-    endl;
   
   generate_php_struct_reader(out, tstruct);
   generate_php_struct_writer(out, tstruct);
@@ -947,10 +949,10 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
 
   if (type->is_struct() || type->is_xception()) {
     generate_deserialize_struct(out,
-                                (t_struct*)(tfield->get_type()),
+                                (t_struct*)type,
                                  name);
   } else if (type->is_container()) {
-    generate_deserialize_container(out, tfield->get_type(), name);
+    generate_deserialize_container(out, type, name);
   } else if (type->is_base_type() || type->is_enum()) {
 
     if (binary_inline_) {
@@ -1254,11 +1256,11 @@ void t_php_generator::generate_serialize_field(ofstream &out,
   
   if (type->is_struct() || type->is_xception()) {
     generate_serialize_struct(out,
-                              (t_struct*)(tfield->get_type()),
+                              (t_struct*)type,
                               prefix + tfield->get_name());
   } else if (type->is_container()) {
     generate_serialize_container(out,
-                                 tfield->get_type(),
+                                 type,
                                  prefix + tfield->get_name());
   } else if (type->is_base_type() || type->is_enum()) {
 

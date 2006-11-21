@@ -102,7 +102,7 @@ void t_cpp_generator::close_generator() {
  */
 void t_cpp_generator::generate_typedef(t_typedef* ttypedef) {
   f_types_ <<
-    indent() << "typedef " << type_name(ttypedef->get_type()) << " " << ttypedef->get_symbolic() << ";" << endl <<
+    indent() << "typedef " << type_name(ttypedef->get_type(), true) << " " << ttypedef->get_symbolic() << ";" << endl <<
     endl;
 }
 
@@ -1277,9 +1277,9 @@ void t_cpp_generator::generate_deserialize_field(ofstream& out,
   string name = prefix + tfield->get_name();
 
   if (type->is_struct() || type->is_xception()) {
-    generate_deserialize_struct(out, (t_struct*)(tfield->get_type()), name);
+    generate_deserialize_struct(out, (t_struct*)type, name);
   } else if (type->is_container()) {
-    generate_deserialize_container(out, tfield->get_type(), name);
+    generate_deserialize_container(out, type, name);
   } else if (type->is_base_type() || type->is_enum()) {
     indent(out) <<
       "xfer += iprot->";
@@ -1478,11 +1478,11 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
   
   if (type->is_struct() || type->is_xception()) {
     generate_serialize_struct(out,
-                              (t_struct*)(tfield->get_type()),
+                              (t_struct*)type,
                               prefix + tfield->get_name());
   } else if (type->is_container()) {
     generate_serialize_container(out,
-                                 tfield->get_type(),
+                                 type,
                                  prefix + tfield->get_name());
   } else if (type->is_base_type() || type->is_enum()) {
 
@@ -1704,7 +1704,7 @@ string t_cpp_generator::namespace_close(string ns) {
  * @param ttype The type
  * @return String of the type name, i.e. std::set<type>
  */
-string t_cpp_generator::type_name(t_type* ttype) {
+string t_cpp_generator::type_name(t_type* ttype, bool in_typedef) {
   if (ttype->is_base_type()) {
     return base_type_name(((t_base_type*)ttype)->get_base());
   }
@@ -1720,27 +1720,33 @@ string t_cpp_generator::type_name(t_type* ttype) {
   if (ttype->is_map()) {
     t_map* tmap = (t_map*) ttype;
     return "std::map<" +
-      type_name(tmap->get_key_type()) + ", " +
-      type_name(tmap->get_val_type()) + "> ";
+      type_name(tmap->get_key_type(), in_typedef) + ", " +
+      type_name(tmap->get_val_type(), in_typedef) + "> ";
   }
   if (ttype->is_set()) {
     t_set* tset = (t_set*) ttype;
-    return "std::set<" + type_name(tset->get_elem_type()) + "> ";
+    return "std::set<" + type_name(tset->get_elem_type(), in_typedef) + "> ";
   }
   if (ttype->is_list()) {
     t_list* tlist = (t_list*) ttype;
-    return "std::vector<" + type_name(tlist->get_elem_type()) + "> ";
+    return "std::vector<" + type_name(tlist->get_elem_type(), in_typedef) + "> ";
+  }
+
+  string class_prefix;
+  if (in_typedef && (ttype->is_struct() || ttype->is_xception())) {
+    class_prefix = "class ";
   }
 
   // Check if it needs to be namespaced
   t_program* program = ttype->get_program();
   if (program != NULL && program != program_) {
     return
+      class_prefix +
       namespace_prefix(program->get_cpp_namespace()) +
       ttype->get_name();
   }
 
-  return ttype->get_name();
+  return class_prefix + ttype->get_name();
 }
 
 /**

@@ -114,7 +114,7 @@ class t_cpp_generator : public t_oop_generator {
   std::string namespace_prefix(std::string ns);
   std::string namespace_open(std::string ns);
   std::string namespace_close(std::string ns);
-  std::string type_name(t_type* ttype);
+  std::string type_name(t_type* ttype, bool in_typedef=false);
   std::string base_type_name(t_base_type::t_base tbase);
   std::string declare_field(t_field* tfield, bool init=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");

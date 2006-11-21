@@ -923,10 +923,10 @@ void t_java_generator::generate_deserialize_field(ofstream& out,
 
   if (type->is_struct() || type->is_xception()) {
     generate_deserialize_struct(out,
-                                (t_struct*)(tfield->get_type()),
+                                (t_struct*)type,
                                 name);
   } else if (type->is_container()) {
-    generate_deserialize_container(out, tfield->get_type(), name);
+    generate_deserialize_container(out, type, name);
   } else if (type->is_base_type() || type->is_enum()) {
 
     indent(out) <<
@@ -1130,11 +1130,11 @@ void t_java_generator::generate_serialize_field(ofstream& out,
   
   if (type->is_struct() || type->is_xception()) {
     generate_serialize_struct(out,
-                              (t_struct*)(tfield->get_type()),
+                              (t_struct*)type,
                               prefix + tfield->get_name());
   } else if (type->is_container()) {
     generate_serialize_container(out,
-                                 tfield->get_type(),
+                                 type,
                                  prefix + tfield->get_name());
   } else if (type->is_base_type() || type->is_enum()) {
 
