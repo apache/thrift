@@ -748,7 +748,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       indent() << "protected $output_ = null;" << endl <<
       endl;
     f_service_ <<
-      indent() << "protected $_seqid = 0;" << endl <<
+      indent() << "protected $seqid_ = 0;" << endl <<
       endl;
   }
 
@@ -816,10 +816,10 @@ void t_php_generator::generate_service_client(t_service* tservice) {
           indent() << "$buff = '';" << endl <<
           indent() << "$buff .= pack('N', strlen('" << funname << "'));" << endl <<
           indent() << "$buff .= '" << funname << "';" << endl <<
-          indent() << "$buff .= pack('cN', TMessageType::CALL, $this->seqid);" << endl;
+          indent() << "$buff .= pack('cN', TMessageType::CALL, $this->seqid_);" << endl;
       } else {
         f_service_ <<
-          indent() << "$this->output_->writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType::CALL, $this->seqid);" << endl;
+          indent() << "$this->output_->writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType::CALL, $this->seqid_);" << endl;
       }
       
       f_service_ <<
