@@ -28,17 +28,20 @@ int y_field_val = -1;
  * various parse nodes.
  */
 %union {
-  char*       id;
-  int         iconst;
-  bool        tbool;
-  t_type*     ttype;
-  t_typedef*  ttypedef;
-  t_enum*     tenum;
-  t_struct*   tstruct;
-  t_service*  tservice;
-  t_function* tfunction;
-  t_field*    tfield;
-  t_constant* tconstant;
+  char*          id;
+  int            iconst;
+  double         dconst;
+  bool           tbool;
+  t_type*        ttype;
+  t_typedef*     ttypedef;
+  t_enum*        tenum;
+  t_enum_value*  tenumv;
+  t_const*       tconst;
+  t_const_value* tconstv;
+  t_struct*      tstruct;
+  t_service*     tservice;
+  t_function*    tfunction;
+  t_field*       tfield;
 }
 
 /**
@@ -48,9 +51,10 @@ int y_field_val = -1;
 %token<id>     tok_literal
 
 /**
- * Integer constant value
+ * Constant values
  */
 %token<iconst> tok_int_constant
+%token<dconst> tok_dub_constant
 
 /**
  * Header keywoards
@@ -96,6 +100,7 @@ int y_field_val = -1;
 %token tok_extends
 %token tok_service
 %token tok_enum
+%token tok_const
 
 /**
  * Grammar nodes
@@ -118,7 +123,14 @@ int y_field_val = -1;
 
 %type<tenum>     Enum
 %type<tenum>     EnumDefList
-%type<tconstant> EnumDef
+%type<tenumv>    EnumDef
+
+%type<tconst>    Const
+%type<tconstv>   ConstValue
+%type<tconstv>   ConstList
+%type<tconstv>   ConstListContents
+%type<tconstv>   ConstMap
+%type<tconstv>   ConstMapContents
 
 %type<tstruct>   Struct
 %type<tstruct>   Xception
@@ -217,7 +229,14 @@ DefinitionList:
     }
 
 Definition:
-  TypeDefinition
+  Const
+    {
+      pdebug("Definition -> Const");
+      if (g_parse_mode == PROGRAM) {
+        g_program->add_const($1);
+      }    
+    }
+| TypeDefinition
     {
       pdebug("Definition -> TypeDefinition");
       if (g_parse_mode == PROGRAM) {
@@ -309,17 +328,97 @@ EnumDefList:
 EnumDef:
   tok_identifier '=' tok_int_constant CommaOrSemicolonOptional
     {
-      pdebug("EnumDef => tok_identifier = tok_int_constant");
+      pdebug("EnumDef -> tok_identifier = tok_int_constant");
       if ($3 < 0) {
         pwarning(1, "Negative value supplied for enum %s.\n", $1);
       }
-      $$ = new t_constant($1, $3);
+      $$ = new t_enum_value($1, $3);
     }
 |
   tok_identifier CommaOrSemicolonOptional
     {
-      pdebug("EnumDef => tok_identifier");
-      $$ = new t_constant($1);
+      pdebug("EnumDef -> tok_identifier");
+      $$ = new t_enum_value($1);
+    }
+
+Const:
+  tok_const FieldType tok_identifier '=' ConstValue CommaOrSemicolonOptional
+    {
+      pdebug("Const -> tok_const FieldType tok_identifier = ConstValue");
+      $$ = new t_const($2, $3, $5);
+      validate_const_type($$);
+    }
+
+ConstValue:
+  tok_int_constant
+    {
+      pdebug("ConstValue => tok_int_constant");
+      $$ = new t_const_value();
+      $$->set_integer($1);
+    }
+| tok_dub_constant
+    {
+      pdebug("ConstValue => tok_dub_constant");
+      $$ = new t_const_value();
+      $$->set_double($1);
+    }
+| tok_literal
+    {
+      pdebug("ConstValue => tok_literal");
+      $$ = new t_const_value();
+      $$->set_string($1);
+    }
+| ConstList
+    {
+      pdebug("ConstValue => ConstList");
+      $$ = $1;
+    }
+| ConstMap
+    {
+      pdebug("ConstValue => ConstMap");
+      $$ = $1; 
+    }
+
+ConstList:
+  '[' ConstListContents ']'
+    {
+      pdebug("ConstList => [ ConstListContents ]");
+      $$ = $2;
+    }
+
+ConstListContents:
+  ConstListContents ConstValue CommaOrSemicolonOptional
+    {
+      pdebug("ConstListContents => ConstListContents ConstValue CommaOrSemicolonOptional");
+      $$ = $1;
+      $$->add_list($2);
+    }
+|
+    {
+      pdebug("ConstListContents =>");
+      $$ = new t_const_value();
+      $$->set_list();
+    }
+
+ConstMap:
+  '{' ConstMapContents '}'
+    {
+      pdebug("ConstMap => { ConstMapContents }");
+      $$ = $2;
+    }
+
+ConstMapContents:
+  ConstMapContents ConstValue ':' ConstValue CommaOrSemicolonOptional
+    {
+      pdebug("ConstMapContents => ConstMapContents ConstValue CommaOrSemicolonOptional");
+      $$ = $1;
+      $$->add_map($2, $4);
+    }
+|
+    {
+      pdebug("ConstMapContents =>");
+      $$ = new t_const_value();
+      $$->set_map();
     }
 
 Struct:

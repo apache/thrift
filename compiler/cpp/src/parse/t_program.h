@@ -12,6 +12,7 @@
 #include "t_base_type.h"
 #include "t_typedef.h"
 #include "t_enum.h"
+#include "t_const.h"
 #include "t_struct.h"
 #include "t_service.h"
 #include "t_list.h"
@@ -24,6 +25,7 @@
  *
  *   Typedefs
  *   Enumerations
+ *   Constants
  *   Structs
  *   Exceptions
  *   Services
@@ -58,6 +60,7 @@ class t_program {
   // Accessors for program elements
   const std::vector<t_typedef*>& get_typedefs()  const { return typedefs_;  }
   const std::vector<t_enum*>&    get_enums()     const { return enums_;     }
+  const std::vector<t_const*>&   get_consts()    const { return consts_;    }
   const std::vector<t_struct*>&  get_structs()   const { return structs_;   }
   const std::vector<t_struct*>&  get_xceptions() const { return xceptions_; }
   const std::vector<t_service*>& get_services()  const { return services_;  }
@@ -65,6 +68,7 @@ class t_program {
   // Program elements
   void add_typedef  (t_typedef* td) { typedefs_.push_back(td);  }
   void add_enum     (t_enum*    te) { enums_.push_back(te);     }
+  void add_const    (t_const*   tc) { consts_.push_back(tc);    }
   void add_struct   (t_struct*  ts) { structs_.push_back(ts);   }
   void add_xception (t_struct*  tx) { xceptions_.push_back(tx); }
   void add_service  (t_service* ts) { services_.push_back(ts);  }
@@ -139,6 +143,7 @@ class t_program {
   // Components to generate code for
   std::vector<t_typedef*> typedefs_;
   std::vector<t_enum*>    enums_;
+  std::vector<t_const*>   consts_;
   std::vector<t_struct*>  structs_;
   std::vector<t_struct*>  xceptions_;
   std::vector<t_service*> services_;

@@ -1,11 +1,11 @@
 #ifndef T_ENUM_H
 #define T_ENUM_H
 
-#include "t_constant.h"
+#include "t_enum_value.h"
 #include <vector>
 
 /**
- * An enumerated type. A list of t_constant objects with a name for the type.
+ * An enumerated type. A list of constant objects with a name for the type.
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
@@ -18,11 +18,11 @@ class t_enum : public t_type {
     name_ = name;
   }
   
-  void append(t_constant* constant) {
+  void append(t_enum_value* constant) {
     constants_.push_back(constant);
   }
 
-  const std::vector<t_constant*>& get_constants() {
+  const std::vector<t_enum_value*>& get_constants() {
     return constants_;
   }
 
@@ -31,7 +31,7 @@ class t_enum : public t_type {
   }
 
  private:
-  std::vector<t_constant*> constants_;
+  std::vector<t_enum_value*> constants_;
 };
 
 #endif

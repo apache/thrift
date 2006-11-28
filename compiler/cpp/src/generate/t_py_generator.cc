@@ -88,8 +88,8 @@ void t_py_generator::generate_enum(t_enum* tenum) {
     "class " << tenum->get_name() << ":" << endl;
   indent_up();
   
-  vector<t_constant*> constants = tenum->get_constants();
-  vector<t_constant*>::iterator c_iter;
+  vector<t_enum_value*> constants = tenum->get_constants();
+  vector<t_enum_value*>::iterator c_iter;
   int value = -1;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     if ((*c_iter)->has_value()) {

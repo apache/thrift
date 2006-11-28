@@ -117,8 +117,8 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
     indent() << "enum " << tenum->get_name() << " {" << endl;
   indent_up();
 
-  vector<t_constant*> constants = tenum->get_constants();
-  vector<t_constant*>::iterator c_iter;
+  vector<t_enum_value*> constants = tenum->get_constants();
+  vector<t_enum_value*>::iterator c_iter;
   bool first = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     if (first) {

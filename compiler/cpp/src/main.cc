@@ -145,7 +145,7 @@ void pdebug(char* fmt, ...) {
     return;
   }
   va_list args;
-  printf("[PARSE] ");
+  printf("[PARSE:%d] ", yylineno);
   va_start(args, fmt);
   vprintf(fmt, args);
   va_end(args);
@@ -189,7 +189,7 @@ void pwarning(int level, char* fmt, ...) {
  *
  * @param fmt C format string followed by additional arguments
  */
-void failure(char* fmt, ...) {
+void failure(const char* fmt, ...) {
   va_list args; 
   fprintf(stderr, "[FAILURE:%s:%d] ", g_curpath.c_str(), yylineno);
   va_start(args, fmt);
@@ -295,6 +295,121 @@ void usage() {
 }
 
 /**
+ * You know, when I started working on Thrift I really thought it wasn't going
+ * to become a programming language because it was just a generator and it
+ * wouldn't need runtime type information and all that jazz. But then we
+ * decided to add constants, and all of a sudden that means runtime type
+ * validation and inference, except the "runtime" is the code generator
+ * runtime. Shit. I've been had.
+ */
+void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
+  if (type->is_void()) {
+    throw "type error: cannot declare a void const: " + name;
+  }
+
+  if (type->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_STRING:
+      if (value->get_type() != t_const_value::CV_STRING) {
+        throw "type error: const \"" + name + "\" was declared as string";
+      }
+      break;
+    case t_base_type::TYPE_BOOL:
+      if (value->get_type() != t_const_value::CV_INTEGER) {
+        throw "type error: const \"" + name + "\" was declared as bool";
+      }
+      break;
+    case t_base_type::TYPE_BYTE:
+      if (value->get_type() != t_const_value::CV_INTEGER) {
+        throw "type error: const \"" + name + "\" was declared as byte";
+      }
+      break;
+    case t_base_type::TYPE_I16:
+      if (value->get_type() != t_const_value::CV_INTEGER) {
+        throw "type error: const \"" + name + "\" was declared as i16";
+      }
+      break;
+    case t_base_type::TYPE_I32:
+      if (value->get_type() != t_const_value::CV_INTEGER) {
+        throw "type error: const \"" + name + "\" was declared as i32";
+      }
+      break;
+    case t_base_type::TYPE_I64:
+      if (value->get_type() != t_const_value::CV_INTEGER) {
+        throw "type error: const \"" + name + "\" was declared as i64";
+      }
+      break;
+    case t_base_type::TYPE_DOUBLE:
+      if (value->get_type() != t_const_value::CV_INTEGER &&
+          value->get_type() != t_const_value::CV_DOUBLE) {
+        throw "type error: const \"" + name + "\" was declared as double";
+      }
+      break;
+    default:
+      throw "compiler error: no const of base type " + tbase + name;
+    }
+  } else if (type->is_enum()) {
+    if (value->get_type() != t_const_value::CV_INTEGER) {
+      throw "type error: const \"" + name + "\" was declared as enum";
+    }
+  } else if (type->is_struct() || type->is_xception()) {
+    if (value->get_type() != t_const_value::CV_MAP) {
+      throw "type error: const \"" + name + "\" was declared as struct/xception";
+    }
+    const vector<t_field*>& fields = ((t_struct*)type)->get_members();
+    vector<t_field*>::const_iterator f_iter;
+
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      if (v_iter->first->get_type() != t_const_value::CV_STRING) {
+        throw "type error: " + name + " struct key must be string";
+      }
+      t_type* field_type = NULL;
+      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        if ((*f_iter)->get_name() == v_iter->first->get_string()) {
+          field_type = (*f_iter)->get_type();
+        }
+      }
+      if (field_type == NULL) {
+        throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
+      }
+
+      validate_const_rec(name + "." + v_iter->first->get_string(), field_type, v_iter->second);
+    }
+  } else if (type->is_map()) {
+    t_type* k_type = ((t_map*)type)->get_key_type();
+    t_type* v_type = ((t_map*)type)->get_val_type();
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      validate_const_rec(name + "<key>", k_type, v_iter->first);
+      validate_const_rec(name + "<val>", v_type, v_iter->second);
+    }    
+  } else if (type->is_list() || type->is_set()) {
+    t_type* e_type;
+    if (type->is_list()) {
+      e_type = ((t_list*)type)->get_elem_type();
+    } else {
+      e_type = ((t_set*)type)->get_elem_type();
+    }
+    const vector<t_const_value*>& val = value->get_list();
+    vector<t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      validate_const_rec(name + "<elem>", e_type, *v_iter);
+    }
+  }
+}
+
+/**
+ * Check the type of the parsed const information against its declared type
+ */
+void validate_const_type(t_const* c) {
+  validate_const_rec(c->get_name(), c->get_type(), c->get_value());
+}
+
+/**
  * Parses a program
  */
 void parse(t_program* program, t_program* parent_program) {  
@@ -316,8 +431,12 @@ void parse(t_program* program, t_program* parent_program) {
   g_parse_mode = INCLUDES; 
   g_program = program;
   g_scope = program->scope();
-  if (yyparse() != 0) {
-    failure("Parser error during include pass.");
+  try {
+    if (yyparse() != 0) {
+      failure("Parser error during include pass.");
+    }
+  } catch (string x) {
+    failure(x.c_str());
   }
   fclose(yyin);
 

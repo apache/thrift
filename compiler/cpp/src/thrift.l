@@ -27,14 +27,16 @@
  * Helper definitions, comments, constants, and whatnot
  */
 
-intconstant  ([0-9]+)
+intconstant  ([+-]?[0-9]+)
+dubconstant  ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
 identifier   ([a-zA-Z_][\.a-zA-Z_0-9]*)
 whitespace   ([ \t\r\n]*)
 multicomm    ("/*""/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
 comment      ("//"[^\n]*)
 unixcomment  ("#"[^\n]*)
 symbol       ([:;\,\{\}\(\)\=<>\[\]])
-literal      ("\""[^"]*"\"")
+dliteral      ("\""[^"]*"\"")
+sliteral      ("'"[^']*"'")
 
 %%
 
@@ -71,10 +73,16 @@ literal      ("\""[^"]*"\"")
 "throws"        { return tok_throws;        }
 "service"       { return tok_service;       }
 "enum"          { return tok_enum;          }
+"const"         { return tok_const;         }
 
 {intconstant} {
   yylval.iconst = atoi(yytext);
   return tok_int_constant;
+}
+
+{dubconstant} {
+  yylval.dconst = atof(yytext);
+  return tok_dub_constant;
 }
 
 {identifier} {
@@ -82,7 +90,13 @@ literal      ("\""[^"]*"\"")
   return tok_identifier;
 }
 
-{literal} {
+{dliteral} {
+  yylval.id = strdup(yytext+1);
+  yylval.id[strlen(yylval.id)-1] = '\0';
+  return tok_literal;
+}
+
+{sliteral} {
   yylval.id = strdup(yytext+1);
   yylval.id[strlen(yylval.id)-1] = '\0';
   return tok_literal;

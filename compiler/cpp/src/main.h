@@ -2,6 +2,7 @@
 #define T_MAIN_H
 
 #include <string>
+#include "parse/t_const.h"
 
 /**
  * Defined in the flex library
@@ -29,7 +30,12 @@ void pwarning(int level, char* fmt, ...);
 /**
  * Failure!
  */
-void failure(char* fmt, ...);
+void failure(const char* fmt, ...);
+
+/**
+ * Check constant types
+ */
+void validate_const_type(t_const* c);
 
 /**
  * Converts a string filename into a thrift program name

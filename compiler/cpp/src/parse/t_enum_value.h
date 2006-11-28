@@ -1,5 +1,5 @@
-#ifndef T_CONSTANT_H
-#define T_CONSTANT_H
+#ifndef T_ENUM_VALUE_H
+#define T_ENUM_VALUE_H
 
 #include <string>
 
@@ -10,19 +10,19 @@
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_constant {
+class t_enum_value {
  public:
-  t_constant(std::string name) :
+  t_enum_value(std::string name) :
     name_(name),
     has_value_(false),
     value_(0) {}
 
-  t_constant(std::string name, int value) :
+  t_enum_value(std::string name, int value) :
     name_(name),
     has_value_(true),
     value_(value) {}
 
-  ~t_constant() {}
+  ~t_enum_value() {}
 
   const std::string& get_name() {
     return name_;
