@@ -210,6 +210,9 @@ void t_py_generator::print_const_value(t_type* type, t_const_value* value) {
     } else {
       etype = ((t_set*)type)->get_elem_type();
     }
+    if (type->is_set()) {
+      f_consts_ << "set(";
+    }
     f_consts_ << "[" << endl;
     indent_up();
     const vector<t_const_value*>& val = value->get_list();
@@ -221,6 +224,9 @@ void t_py_generator::print_const_value(t_type* type, t_const_value* value) {
     }
     indent_down();
     indent(f_consts_) << "]";
+    if (type->is_set()) {
+      f_consts_ << ")";
+    }
   }
 }
 
@@ -1109,7 +1115,7 @@ void t_py_generator::generate_deserialize_container(ofstream &out,
       indent() << "(" << ktype << ", " << vtype << ", " << size << " ) = iprot.readMapBegin() " << endl;
   } else if (ttype->is_set()) {
     out <<
-      indent() << prefix << " = []" << endl <<
+      indent() << prefix << " = set()" << endl <<
       indent() << "(" << etype << ", " << size << ") = iprot.readSetBegin()" << endl;
   } else if (ttype->is_list()) {
     out <<
@@ -1175,7 +1181,7 @@ void t_py_generator::generate_deserialize_set_element(ofstream &out,
   generate_deserialize_field(out, &felem);
 
   indent(out) <<
-    prefix << ".append(" << elem << ")" << endl;
+    prefix << ".add(" << elem << ")" << endl;
 }
 
 /**

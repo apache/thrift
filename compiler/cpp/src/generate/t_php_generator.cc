@@ -219,6 +219,9 @@ void t_php_generator::print_const_value(t_type* type, t_const_value* value) {
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       f_consts_ << indent();
       print_const_value(etype, *v_iter);
+      if (type->is_set()) {
+        f_consts_ << " => true";
+      }
       f_consts_ << "," << endl;
     }
     indent_down();
@@ -1337,7 +1340,7 @@ void t_php_generator::generate_deserialize_set_element(ofstream &out,
   generate_deserialize_field(out, &felem);
 
   indent(out) <<
-    "$" << prefix << " []= $" << elem << ";" << endl;
+    "$" << prefix << "[$" << elem << "] = true;" << endl;
 }
 
 void t_php_generator::generate_deserialize_list_element(ofstream &out,
@@ -1555,7 +1558,7 @@ void t_php_generator::generate_serialize_container(ofstream &out,
     } else if (ttype->is_set()) {
       string iter = tmp("iter");
       indent(out) << 
-        "foreach ($" << prefix << " as $" << iter << ")" << endl;
+        "foreach ($" << prefix << " as $" << iter << " => $true)" << endl;
       scope_up(out);
       generate_serialize_set_element(out, (t_set*)ttype, iter);
       scope_down(out);

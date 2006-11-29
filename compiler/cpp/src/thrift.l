@@ -28,6 +28,7 @@
  */
 
 intconstant  ([+-]?[0-9]+)
+hexconstant  ("0x"[0-9A-Fa-f]+)
 dubconstant  ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
 identifier   ([a-zA-Z_][\.a-zA-Z_0-9]*)
 whitespace   ([ \t\r\n]*)
@@ -77,6 +78,12 @@ sliteral      ("'"[^']*"'")
 
 {intconstant} {
   yylval.iconst = atoi(yytext);
+  return tok_int_constant;
+}
+
+{hexconstant} {
+  sscanf(yytext+2, "%x", &yylval.iconst);
+  printf("%d\n", yylval.iconst);
   return tok_int_constant;
 }
 
