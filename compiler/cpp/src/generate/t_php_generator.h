@@ -38,9 +38,12 @@ class t_php_generator : public t_oop_generator {
 
   void generate_typedef  (t_typedef*  ttypedef);
   void generate_enum     (t_enum*     tenum);
+  void generate_const    (t_const*    tconst);
   void generate_struct   (t_struct*   tstruct);
   void generate_xception (t_struct*   txception);
   void generate_service  (t_service*  tservice);
+
+  void print_const_value (t_type* type, t_const_value* value);
 
   /**
    * Structs!
@@ -138,6 +141,7 @@ class t_php_generator : public t_oop_generator {
    * File streams
    */
   std::ofstream f_types_;
+  std::ofstream f_consts_;
   std::ofstream f_helpers_;
   std::ofstream f_service_;
 

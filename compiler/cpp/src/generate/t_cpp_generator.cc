@@ -143,6 +143,196 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
 }
 
 /**
+ * Generates a class that holds all the constants.
+ */
+void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
+  string f_consts_name = string(T_CPP_DIR)+"/"+program_name_+"_constants.h";
+  ofstream f_consts;
+  f_consts.open(f_consts_name.c_str());
+
+  string f_consts_impl_name = string(T_CPP_DIR)+"/"+program_name_+"_constants.cpp";
+  ofstream f_consts_impl;
+  f_consts_impl.open(f_consts_impl_name.c_str());
+
+  // Print header
+  f_consts <<
+    autogen_comment();
+  f_consts_impl <<
+    autogen_comment();
+
+  // Start ifndef
+  f_consts <<
+    "#ifndef " << program_name_ << "_CONSTANTS_H" << endl <<
+    "#define " << program_name_ << "_CONSTANTS_H" << endl <<
+    endl <<
+    "#include \"" << program_name_ << "_types.h\"" << endl <<
+    endl <<
+    ns_open_ << endl <<
+    endl;
+
+  f_consts_impl <<
+    "#include \"" << program_name_ << "_constants.h\"" << endl <<
+    endl <<
+    ns_open_ << endl <<
+    endl;
+
+  f_consts <<
+    "class " << program_name_ << "Constants {" << endl <<
+    " public:" << endl <<
+    "  " << program_name_ << "Constants();" << endl <<
+    endl;
+  indent_up();
+  vector<t_const*>::iterator c_iter;
+  for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+    string name = (*c_iter)->get_name();
+    t_type* type = (*c_iter)->get_type();
+    f_consts <<
+      indent() << type_name(type) << " " << name << ";" << endl;
+  }
+  indent_down();
+  f_consts <<
+    "};" << endl;  
+
+  f_consts_impl <<
+    "const " << program_name_ << "Constants g_" << program_name_ << "_constants;" << endl <<
+    endl <<
+    program_name_ << "Constants::" << program_name_ << "Constants() {" << endl;
+  indent_up();
+  for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+    print_const_value(f_consts_impl,
+                      (*c_iter)->get_name(),
+                      (*c_iter)->get_type(),
+                      (*c_iter)->get_value());
+  }
+  indent_down();
+  indent(f_consts_impl) <<
+    "}" << endl;
+
+  f_consts <<
+    endl <<
+    "extern const " << program_name_ << "Constants g_" << program_name_ << "_constants;" << endl <<
+    endl <<
+    ns_close_ << endl <<
+    endl <<
+    "#endif" << endl;
+  f_consts.close();
+
+  f_consts_impl <<
+    endl <<
+    ns_close_ << endl <<
+    endl;
+}
+
+/**
+ * Prints the value of a constant with the given type. Note that type checking
+ * is NOT performed in this function as it is always run beforehand using the
+ * validate_types method in main.cc
+ */
+void t_cpp_generator::print_const_value(ofstream& out, string name, t_type* type, t_const_value* value) {
+  if (type->is_base_type()) {
+    string v2 = render_const_value(out, name, type, value);
+    indent(out) << name << " = " << v2 << ";" << endl <<
+      endl;
+  } else if (type->is_enum()) {
+    indent(out) << name << " = (" << type->get_name() << ")" << value->get_integer() << ";" << endl <<
+      endl;
+  } else if (type->is_struct() || type->is_xception()) {
+    const vector<t_field*>& fields = ((t_struct*)type)->get_members();
+    vector<t_field*>::const_iterator f_iter;
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      t_type* field_type = NULL;
+      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        if ((*f_iter)->get_name() == v_iter->first->get_string()) {
+          field_type = (*f_iter)->get_type();
+        }
+      }
+      if (field_type == NULL) {
+        throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
+      }
+      string val = render_const_value(out, name, field_type, v_iter->second);
+      indent(out) << name << "." << v_iter->first->get_string() << " = " << val << ";" << endl;
+      indent(out) << name << ".__isset." << v_iter->first->get_string() << " = true;" << endl;
+    }
+    out << endl;
+  } else if (type->is_map()) {
+    t_type* ktype = ((t_map*)type)->get_key_type();
+    t_type* vtype = ((t_map*)type)->get_val_type();
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      string key = render_const_value(out, name, ktype, v_iter->first);
+      string val = render_const_value(out, name, vtype, v_iter->second);
+      indent(out) << name << "[" << key << "] = " << val << ";" << endl;
+    }
+    out << endl;
+  } else if (type->is_list()) {
+    t_type* etype = ((t_list*)type)->get_elem_type();
+    const vector<t_const_value*>& val = value->get_list();
+    vector<t_const_value*>::const_iterator v_iter;
+    int i = 0;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      string val = render_const_value(out, name, etype, *v_iter);
+      indent(out) << name << "[" << (i++) << "] = " << val << ";" << endl;
+    }
+    out << endl;
+  } else if (type->is_set()) {
+    t_type* etype = ((t_set*)type)->get_elem_type();
+    const vector<t_const_value*>& val = value->get_list();
+    vector<t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      string val = render_const_value(out, name, etype, *v_iter);
+      indent(out) << name << ".insert(" << val << ");" << endl;
+    }
+    out << endl;
+  }
+}
+
+/**
+ *
+ */
+string t_cpp_generator::render_const_value(ofstream& out, string name, t_type* type, t_const_value* value) {
+  std::ostringstream render;
+
+  if (type->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_STRING:
+      render << "\"" + value->get_string() + "\"";
+      break;
+    case t_base_type::TYPE_BOOL:
+      render << ((value->get_integer() > 0) ? "true" : "false");
+      break;
+    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      render << value->get_integer();
+      break;
+    case t_base_type::TYPE_DOUBLE:
+      if (value->get_type() == t_const_value::CV_INTEGER) {
+        render << value->get_integer();
+      } else {
+        render << value->get_double();
+      }
+      break;
+    default:
+      throw "compiler error: no const of base type " + tbase;
+    }
+  } else if (type->is_enum()) {
+    render << value->get_integer();
+  } else {
+    string t = tmp("tmp");
+    indent(out) << type_name(type) << " " << t << ";" << endl;
+    print_const_value(out, t, type, value);
+    render << t;
+  }
+
+  return render.str();
+}
+
+/**
  * Generates a struct definition for a thrift data type. This is a class
  * with data members and a read/write() function, plus a mirroring isset
  * inner class.

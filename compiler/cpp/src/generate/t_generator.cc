@@ -27,6 +27,10 @@ void t_generator::generate_program() {
     generate_enum(*en_iter);
   }
 
+  // Generate constants
+  vector<t_const*> consts = program_->get_consts();
+  generate_consts(consts);
+
   // Generate structs
   vector<t_struct*> structs = program_->get_structs();
   vector<t_struct*>::iterator st_iter;
@@ -51,4 +55,11 @@ void t_generator::generate_program() {
 
   // Close the generator
   close_generator();
+}
+
+void t_generator::generate_consts(vector<t_const*> consts) {
+  vector<t_const*>::iterator c_iter;
+  for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+    generate_const(*c_iter);
+  }
 }

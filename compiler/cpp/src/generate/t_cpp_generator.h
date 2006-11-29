@@ -28,6 +28,8 @@ class t_cpp_generator : public t_oop_generator {
   void init_generator();
   void close_generator();
 
+  void generate_consts(std::vector<t_const*> consts);
+
   /**
    * Program-level generation functions
    */
@@ -36,6 +38,9 @@ class t_cpp_generator : public t_oop_generator {
   void generate_enum     (t_enum*     tenum);
   void generate_struct   (t_struct*   tstruct);
   void generate_service  (t_service*  tservice);
+
+  void print_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
+  std::string render_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
 
   void generate_struct_definition    (std::ofstream& out, t_struct* tstruct);
   void generate_struct_reader        (std::ofstream& out, t_struct* tstruct);

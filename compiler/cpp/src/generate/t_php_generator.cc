@@ -17,12 +17,23 @@ void t_php_generator::init_generator() {
   // Make output file
   string f_types_name = string(T_PHP_DIR)+"/"+program_name_+"_types.php";
   f_types_.open(f_types_name.c_str());
+  string f_consts_name = string(T_PHP_DIR)+"/"+program_name_+"_constants.php";
+  f_consts_.open(f_consts_name.c_str());
 
   // Print header
   f_types_ <<
     "<?php" << endl <<
     autogen_comment() <<
     php_includes();
+
+  // Print header
+  f_consts_ <<
+    "<?php" << endl <<
+    autogen_comment() <<
+    "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + program_name_ + "/" + program_name_ + "_types.php';" << endl <<
+    endl <<
+    "$GLOBALS['" << program_name_ << "_CONSTANTS'] = array(); " << endl <<
+    endl;
 }
 
 /**
@@ -40,6 +51,9 @@ void t_php_generator::close_generator() {
   // Close types file
   f_types_ << "?>" << endl;
   f_types_.close();
+
+  f_consts_ << "?>" << endl;
+  f_consts_.close();
 }
 
 /**
@@ -102,6 +116,114 @@ void t_php_generator::generate_enum(t_enum* tenum) {
 
   indent_down();
   f_types_ << "}" << endl << endl;
+}
+
+/**
+ * Generate a constant value
+ */
+void t_php_generator::generate_const(t_const* tconst) {
+  t_type* type = tconst->get_type();
+  string name = tconst->get_name();
+  t_const_value* value = tconst->get_value();
+  
+  f_consts_ << "$GLOBALS['" << program_name_ << "_CONSTANTS']['" << name << "'] = "; 
+  print_const_value(type, value);
+  f_consts_ << ";" << endl << endl;
+}
+
+/**
+ * Prints the value of a constant with the given type. Note that type checking
+ * is NOT performed in this function as it is always run beforehand using the
+ * validate_types method in main.cc
+ */
+void t_php_generator::print_const_value(t_type* type, t_const_value* value) {
+  if (type->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_STRING:
+      f_consts_ << "'" << value->get_string() << "'";
+      break;
+    case t_base_type::TYPE_BOOL:
+      f_consts_ << (value->get_integer() > 0 ? "true" : "false");
+      break;
+    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      f_consts_ << value->get_integer();
+      break;
+    case t_base_type::TYPE_DOUBLE:
+      if (value->get_type() == t_const_value::CV_INTEGER) {
+        f_consts_ << value->get_integer();
+      } else {
+        f_consts_ << value->get_double();
+      }
+      break;
+    default:
+      throw "compiler error: no const of base type " + tbase;
+    }
+  } else if (type->is_enum()) {
+    indent(f_consts_) << value->get_integer();
+  } else if (type->is_struct() || type->is_xception()) {
+    f_consts_ << "new " << type->get_name() << "(array(" << endl;
+    indent_up();
+    const vector<t_field*>& fields = ((t_struct*)type)->get_members();
+    vector<t_field*>::const_iterator f_iter;
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      t_type* field_type = NULL;
+      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        if ((*f_iter)->get_name() == v_iter->first->get_string()) {
+          field_type = (*f_iter)->get_type();
+        }
+      }
+      if (field_type == NULL) {
+        throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
+      }
+      f_consts_ << indent();
+      print_const_value(g_type_string, v_iter->first);
+      f_consts_ << " => ";
+      print_const_value(field_type, v_iter->second);
+      f_consts_ << endl;
+    }
+    indent_down();
+    indent(f_consts_) << "))";
+  } else if (type->is_map()) {
+    t_type* ktype = ((t_map*)type)->get_key_type();
+    t_type* vtype = ((t_map*)type)->get_val_type();
+    f_consts_ << "array(" << endl;
+    indent_up();
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      f_consts_ << indent();
+      print_const_value(ktype, v_iter->first);
+      f_consts_ << " => ";
+      print_const_value(vtype, v_iter->second);
+      f_consts_ << "," << endl;
+    }
+    indent_down();
+    indent(f_consts_) << ")";
+  } else if (type->is_list() || type->is_set()) {
+    t_type* etype;
+    if (type->is_list()) {
+      etype = ((t_list*)type)->get_elem_type();
+    } else {
+      etype = ((t_set*)type)->get_elem_type();
+    }
+    f_consts_ << "array(" << endl;
+    indent_up();
+    const vector<t_const_value*>& val = value->get_list();
+    vector<t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      f_consts_ << indent();
+      print_const_value(etype, *v_iter);
+      f_consts_ << "," << endl;
+    }
+    indent_down();
+    indent(f_consts_) << ")";
+  }
 }
 
 /**

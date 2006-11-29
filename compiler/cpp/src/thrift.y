@@ -345,8 +345,12 @@ Const:
   tok_const FieldType tok_identifier '=' ConstValue CommaOrSemicolonOptional
     {
       pdebug("Const -> tok_const FieldType tok_identifier = ConstValue");
-      $$ = new t_const($2, $3, $5);
-      validate_const_type($$);
+      if (g_parse_mode == PROGRAM) {
+        $$ = new t_const($2, $3, $5);
+        validate_const_type($$);
+      } else {
+        $$ = NULL;
+      }
     }
 
 ConstValue:

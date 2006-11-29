@@ -109,6 +109,173 @@ void t_java_generator::generate_enum(t_enum* tenum) {
 }
 
 /**
+ * Generates a class that holds all the constants.
+ */
+void t_java_generator::generate_consts(std::vector<t_const*> consts) {
+  string f_consts_name = string(T_JAVA_DIR)+"/Constants.java";
+  ofstream f_consts;
+  f_consts.open(f_consts_name.c_str());
+
+  // Print header
+  f_consts <<
+    autogen_comment() <<
+    java_package() << 
+    java_type_imports();
+
+  f_consts <<
+    "public class Constants {" << endl <<
+    endl;
+  indent_up();
+  vector<t_const*>::iterator c_iter;
+  for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+    print_const_value(f_consts,
+                      (*c_iter)->get_name(),
+                      (*c_iter)->get_type(),
+                      (*c_iter)->get_value(),
+                      false);
+  }
+  indent_down();
+  indent(f_consts) <<
+    "}" << endl;
+  f_consts.close();
+}
+
+
+/**
+ * Prints the value of a constant with the given type. Note that type checking
+ * is NOT performed in this function as it is always run beforehand using the
+ * validate_types method in main.cc
+ */
+void t_java_generator::print_const_value(ofstream& out, string name, t_type* type, t_const_value* value, bool in_static) {
+  if (type->is_base_type()) {
+    string v2 = render_const_value(out, name, type, value);
+    indent(out) << "public static final " << type_name(type) << " " << name << " = " << v2 << ";" << endl <<
+      endl;
+  } else if (type->is_enum()) {
+    indent(out) << "public static final int " << name << " = " << value->get_integer() << ";" << endl <<
+      endl;
+  } else if (type->is_struct() || type->is_xception()) {
+    const vector<t_field*>& fields = ((t_struct*)type)->get_members();
+    vector<t_field*>::const_iterator f_iter;
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    indent(out) <<
+      (in_static ? "" : "public static final ") <<
+      type_name(type) << " " << name <<
+      " = new " << type_name(type) << "();" << endl;
+    if (!in_static) {
+      indent(out) << "static {" << endl;
+      indent_up();
+    }
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      t_type* field_type = NULL;
+      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        if ((*f_iter)->get_name() == v_iter->first->get_string()) {
+          field_type = (*f_iter)->get_type();
+        }
+      }
+      if (field_type == NULL) {
+        throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
+      }
+      string val = render_const_value(out, name, field_type, v_iter->second);
+      indent(out) << name << "." << v_iter->first->get_string() << " = " << val << ";" << endl;
+      indent(out) << name << ".__isset." << v_iter->first->get_string() << " = true;" << endl;
+    }
+    if (!in_static) {
+      indent_down();
+      indent(out) << "}" << endl;
+    }
+    out << endl;
+  } else if (type->is_map()) {
+    indent(out) <<
+      (in_static ? "" : "public static final ") <<
+      type_name(type, true, true) << " " << name << " = new " << type_name(type, true, true) << "();" << endl;
+    if (!in_static) {
+      indent(out) << "static {" << endl;
+      indent_up();
+    }
+    t_type* ktype = ((t_map*)type)->get_key_type();
+    t_type* vtype = ((t_map*)type)->get_val_type();
+    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      string key = render_const_value(out, name, ktype, v_iter->first);
+      string val = render_const_value(out, name, vtype, v_iter->second);
+      indent(out) << name << ".put(" << key << ", " << val << ");" << endl;
+    }
+    if (!in_static) {
+      indent_down();
+      indent(out) << "}" << endl;
+    }
+    out << endl;
+  } else if (type->is_list() || type->is_set()) {
+    indent(out) <<
+      (in_static ? "" : "public static final ") <<
+      type_name(type) << " " << name << " = new " << type_name(type) << "();" << endl;
+    if (!in_static) {
+      indent(out) << "static {" << endl;
+      indent_up();
+    }
+    t_type* etype;
+    if (type->is_list()) {
+      etype = ((t_list*)type)->get_elem_type();
+    } else {
+      etype = ((t_set*)type)->get_elem_type();
+    }
+    const vector<t_const_value*>& val = value->get_list();
+    vector<t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      string val = render_const_value(out, name, etype, *v_iter);
+      indent(out) << name << ".add(" << val << ");" << endl;
+    }
+    if (!in_static) {
+      indent_down();
+      indent(out) << "}" << endl;
+    }
+    out << endl;
+  }
+}
+
+string t_java_generator::render_const_value(ofstream& out, string name, t_type* type, t_const_value* value) {
+  std::ostringstream render;
+
+  if (type->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_STRING:
+      render << "\"" + value->get_string() + "\"";
+      break;
+    case t_base_type::TYPE_BOOL:
+      render << ((value->get_integer() > 0) ? "TRUE" : "FALSE");
+      break;
+    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      render << value->get_integer();
+      break;
+    case t_base_type::TYPE_DOUBLE:
+      if (value->get_type() == t_const_value::CV_INTEGER) {
+        render << value->get_integer();
+      } else {
+        render << value->get_double();
+      }
+      break;
+    default:
+      throw "compiler error: no const of base type " + tbase;
+    }
+  } else if (type->is_enum()) {
+    render << value->get_integer();
+  } else {
+    string t = tmp("tmp");
+    print_const_value(out, t, type, value, true);
+    render << t;
+  }
+
+  return render.str();
+}
+
+/**
  * Generates a struct definition for a thrift data type. This is a class
  * with data members, read(), write(), and an inner Isset class.
  *

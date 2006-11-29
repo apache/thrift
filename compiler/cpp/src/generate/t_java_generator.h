@@ -28,6 +28,8 @@ class t_java_generator : public t_oop_generator {
   void init_generator();
   void close_generator();
 
+  void generate_consts(std::vector<t_const*> consts);
+
   /**
    * Program-level generation functions
    */
@@ -37,6 +39,9 @@ class t_java_generator : public t_oop_generator {
   void generate_struct  (t_struct*   tstruct);
   void generate_xception(t_struct*   txception);
   void generate_service (t_service*  tservice);
+
+  void print_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value, bool in_static);
+  std::string render_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
 
   /**
    * Service-level generation functions

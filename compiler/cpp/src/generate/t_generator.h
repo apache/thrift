@@ -41,12 +41,15 @@ class t_generator {
   virtual void init_generator() {}
   virtual void close_generator() {}
 
+  virtual void generate_consts(std::vector<t_const*> consts);
+
   /**
    * Pure virtual methods implemented by the generator subclasses.
    */
 
   virtual void generate_typedef  (t_typedef*  ttypedef)  = 0;
   virtual void generate_enum     (t_enum*     tenum)     = 0;
+  virtual void generate_const    (t_const*    tconst) {}
   virtual void generate_struct   (t_struct*   tstruct)   = 0;
   virtual void generate_service  (t_service*  tservice)  = 0;
   virtual void generate_xception (t_struct*   txception) {
