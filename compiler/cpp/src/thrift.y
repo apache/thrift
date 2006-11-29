@@ -372,6 +372,12 @@ ConstValue:
       $$ = new t_const_value();
       $$->set_string($1);
     }
+| tok_identifier
+    {
+      pdebug("ConstValue => tok_identifier");
+      $$ = new t_const_value();
+      $$->set_string($1);
+    }
 | ConstList
     {
       pdebug("ConstValue => ConstList");
