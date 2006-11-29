@@ -83,7 +83,6 @@ sliteral      ("'"[^']*"'")
 
 {hexconstant} {
   sscanf(yytext+2, "%x", &yylval.iconst);
-  printf("%d\n", yylval.iconst);
   return tok_int_constant;
 }
 
