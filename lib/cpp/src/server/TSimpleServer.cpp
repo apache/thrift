@@ -40,6 +40,8 @@ void TSimpleServer::serve() {
         }
       } catch (TTransportException& ttx) {
         cerr << "TSimpleServer client died: " << ttx.what() << endl;
+      } catch (TException& tx) {
+        cerr << "TSimpleServer exception: " << tx.what() << endl;
       }
       iot.first->close();
       iot.second->close();
@@ -47,6 +49,8 @@ void TSimpleServer::serve() {
     }
   } catch (TTransportException& ttx) {
     cerr << "TServerTransport died on accept: " << ttx.what() << endl;
+  } catch (TException& tx) {
+    cerr << "Some kind of accept exception: " << tx.what() << endl;
   }
 
   // TODO(mcslee): Could this be a timeout case? Or always the real thing?
