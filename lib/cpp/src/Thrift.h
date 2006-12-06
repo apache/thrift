@@ -23,7 +23,7 @@ public:
 
   ~TException() throw() {}
 
-  const char* what() {
+  const char* what() const throw() {
     if (message_.empty()) {
       return "Default TException.";
     } else {
