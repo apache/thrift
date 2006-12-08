@@ -684,6 +684,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
 
   // Generate all the components
   generate_service_interface(tservice);
+  generate_service_null(tservice);
   generate_service_helpers(tservice);
   generate_service_client(tservice);
   generate_service_processor(tservice);
@@ -749,6 +750,48 @@ void t_cpp_generator::generate_service_interface(t_service* tservice) {
   f_header_ <<
     "}; " << endl << endl;
 }
+
+/**
+ * Generates a null implementation of the service.
+ *
+ * @param tservice The service to generate a header definition for
+ */
+void t_cpp_generator::generate_service_null(t_service* tservice) {
+  string extends = "";
+  if (tservice->get_extends() != NULL) {
+    extends = " : virtual public " + type_name(tservice->get_extends()) + "Null";
+  }
+  f_header_ <<
+    "class " << service_name_ << "Null : virtual public " << service_name_ << "If" << extends << " {" << endl <<
+    " public: " << endl;
+  indent_up(); 
+  f_header_ <<
+    indent() << "virtual ~" << service_name_ << "If() {}" << endl;
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter; 
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    f_header_ <<
+      indent() << function_signature(*f_iter) << " {" << endl;
+    indent_up();
+    t_type* returntype = (*f_iter)->get_returntype();
+    if (returntype->is_void()) {
+      f_header_ <<
+        indent() << "return;" << endl;
+    } else {
+      t_field returnfield(returntype, "rval");
+      f_header_ <<
+        indent() << declare_field(&returnfield, true) << endl <<
+        indent() << "return rval;" << endl;
+    }
+    indent_down();
+    f_header_ <<
+      indent() << "}" << endl;
+  }
+  indent_down();
+  f_header_ <<
+    "}; " << endl << endl;
+}
+
 
 /**
  * Generates a multiface, which is a single server that just takes a set

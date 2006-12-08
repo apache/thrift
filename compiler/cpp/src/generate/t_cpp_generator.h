@@ -52,6 +52,7 @@ class t_cpp_generator : public t_oop_generator {
    */
 
   void generate_service_interface (t_service* tservice);
+  void generate_service_null      (t_service* tservice);
   void generate_service_multiface (t_service* tservice);
   void generate_service_helpers   (t_service* tservice);
   void generate_service_client    (t_service* tservice);
