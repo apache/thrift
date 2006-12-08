@@ -25,7 +25,10 @@ class TNullTransport : public TTransport {
 
   void open() {}
 
-  void write(const std::string& s) {}
+  void write(const uint8_t* buf, uint32_t len) {
+    return;
+  }
+
 };
 
 

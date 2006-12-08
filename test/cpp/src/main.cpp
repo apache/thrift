@@ -11,6 +11,7 @@
 #include <transport/TTransportUtils.h>
 #include <transport/TBufferedRouterTransport.h>
 #include <transport/TBufferedFileWriter.h>
+#include <TLogging.h>
 
 #include "Service.h"
 
@@ -73,7 +74,12 @@ class Server : public ServiceIf {
   int8_t echoByte(int8_t arg) {return arg;}
   int32_t echoI32(int32_t arg) {return arg;}
   int64_t echoI64(int64_t arg) {return arg;}
-  string echoString(string arg) {return arg;}
+  string echoString(string arg) {
+    if (arg != "hello") {
+      T_ERROR_ABORT("WRONG STRING!!!!");
+    }
+    return arg;
+  }
   vector<int8_t> echoList(vector<int8_t> arg) {return arg;}
   set<int8_t> echoSet(set<int8_t> arg) {return arg;}
   map<int8_t, int8_t> echoMap(map<int8_t, int8_t> arg) {return arg;}
@@ -189,20 +195,22 @@ public:
   bool _done;
   Monitor _sleep;
 };
-    
+
+
 int main(int argc, char **argv) {
 
-  int port = 9090;
+  int port = 9091;
   string serverType = "thread-pool";
   string protocolType = "binary";
   size_t workerCount = 4;
-  size_t clientCount = 10;
-  size_t loopCount = 10000;
+  size_t clientCount = 20;
+  size_t loopCount = 50000;
   TType loopType  = T_VOID;
   string callName = "echoVoid";
   bool runServer = true;
   bool logRequests = false;
   string requestLogPath = "./requestlog.tlog";
+  bool replayRequests = false;
 
   ostringstream usage;
 
@@ -217,8 +225,10 @@ int main(int argc, char **argv) {
     "\tserver-type    Type of server, \"simple\" or \"thread-pool\".  Default is " << serverType << endl <<
     "\tprotocol-type  Type of protocol, \"binary\", \"ascii\", or \"xml\".  Default is " << protocolType << endl <<
     "\tlog-request    Log all request to ./requestlog.tlog. Default is " << logRequests << endl <<
+    "\treplay-request Replay requests from log file (./requestlog.tlog) Default is " << replayRequests << endl <<
     "\tworkers        Number of thread pools workers.  Only valid for thread-pool server type.  Default is " << workerCount << endl;
     
+        
   map<string, string>  args;
   
   for(int ix = 1; ix < argc; ix++) {
@@ -272,6 +282,10 @@ int main(int argc, char **argv) {
       logRequests = args["log-request"] == "true";
     }
 
+    if(!args["replay-request"].empty()) {
+      replayRequests = args["replay-request"] == "true";
+    }
+
     if(!args["server-type"].empty()) {
       serverType = args["server-type"];
       
@@ -299,6 +313,28 @@ int main(int argc, char **argv) {
   // Dispatcher
   shared_ptr<Server> serviceHandler(new Server());
 
+  if (replayRequests) {
+    shared_ptr<Server> serviceHandler(new Server());
+    shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
+  
+    // Transports
+    shared_ptr<TFileTransport> fileTransport(new TFileTransport(requestLogPath));
+    fileTransport->setChunkSize(2 * 1024 * 1024);
+    fileTransport->setMaxEventSize(1024 * 16);
+    fileTransport->seekToEnd();
+
+    // Protocol Factory
+    shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+
+    TFileProcessor fileProcessor(serviceProcessor,
+                                 protocolFactory,
+                                 fileTransport);
+
+    fileProcessor.process(0, true);                                     
+    exit(0);
+  }
+
+
   if(runServer) {
 
     shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
@@ -314,11 +350,12 @@ int main(int argc, char **argv) {
 
     if (logRequests) {
       // initialize the log file
-      shared_ptr<TBufferedFileWriter> bufferedFileWriter(new TBufferedFileWriter(requestLogPath, 1000));
-      bufferedFileWriter->setChunkSize(2 * 1024 * 1024);
-      bufferedFileWriter->setMaxEventSize(1024 * 16);
+      shared_ptr<TFileTransport> fileTransport(new TFileTransport(requestLogPath));
+      fileTransport->setChunkSize(2 * 1024 * 1024);
+      fileTransport->setMaxEventSize(1024 * 16);
       
-      transportFactory = shared_ptr<TTransportFactory>(new TBufferedRouterTransportFactory(bufferedFileWriter));
+      transportFactory = 
+        shared_ptr<TTransportFactory>(new TBufferedRouterTransportFactory(fileTransport));
     }
 
     shared_ptr<Thread> serverThread;

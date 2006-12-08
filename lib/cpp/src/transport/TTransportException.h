@@ -12,6 +12,7 @@ enum TTransportExceptionType {
   TTX_UNKNOWN = 0,
   TTX_NOT_OPEN = 1,
   TTX_TIMED_OUT = 2,
+  TTX_EOF = 3,
 };
 
 /**
