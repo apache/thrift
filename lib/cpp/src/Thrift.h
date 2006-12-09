@@ -21,7 +21,7 @@ public:
   TException(const std::string message) :
     message_(message) {}
 
-  ~TException() throw() {}
+  virtual ~TException() throw() {}
 
   const char* what() const throw() {
     if (message_.empty()) {
