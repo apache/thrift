@@ -64,7 +64,10 @@ void TFileTransport::resetOutputFile(int fd, string filename, long long offset) 
   if (fd_ > 0) {
     // TODO: should there be a flush here?
     fprintf(stderr, "error, current file (%s) not closed\n", filename_.c_str());
-    ::close(fd_);
+    if(-1 == ::close(fd_)) {
+      perror("TFileTransport: error in file close");
+      throw TTransportException("TFileTransport: error in file close");
+    }
   }
 
   if (fd) {
@@ -102,7 +105,9 @@ TFileTransport::~TFileTransport() {
 
   // close logfile
   if (fd_ > 0) {
-    ::close(fd_);
+    if(-1 == ::close(fd_)) {
+      perror("TFileTransport: error in file close");
+    }
   }
 }
 
@@ -251,8 +256,8 @@ void TFileTransport::writerThread() {
     if(closing_) {
       if(-1 == ::close(fd_)) {
         perror("TFileTransport: error in close");
+        throw TTransportException("TFileTransport: error in file close");
       }
-      throw TTransportException("error in file close");
       fd_ = 0;
       return;
     }
@@ -317,7 +322,6 @@ void TFileTransport::writerThread() {
     if(outEvent->eventSize_ > 0) {
       if(-1 == ::write(fd_, outEvent->eventBuff_, outEvent->eventSize_)) {
         perror("TFileTransport: error while writing event");
-        // TODO: should this trigger an exception or simply continue?
         throw TTransportException("TFileTransport: error while writing event");
       }
 
@@ -431,7 +435,6 @@ bool TFileTransport::readEvent() {
       if (readState_.bufferLen_ == -1) {
         readState_.resetAllValues();
         perror("TFileTransport: error while reading from file");
-        // TODO: should this trigger an exception or simply continue?
         throw TTransportException("TFileTransport: error while reading from file");
       } else if (readState_.bufferLen_ == 0) {  // EOF
         // wait indefinitely if there is no timeout
@@ -574,7 +577,6 @@ void TFileTransport::seekToChunk(int32_t chunk) {
   readState_.resetAllValues();
   if (offset_ == -1) {
     perror("TFileTransport: lseek error in seekToChunk");
-    // TODO: should this trigger an exception or simply continue?
     throw TTransportException("TFileTransport: lseek error in seekToChunk");
   }
 
