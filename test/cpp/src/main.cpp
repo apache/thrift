@@ -10,7 +10,7 @@
 #include <transport/TSocket.h>
 #include <transport/TTransportUtils.h>
 #include <transport/TBufferedRouterTransport.h>
-#include <transport/TBufferedFileWriter.h>
+#include <transport/TFileTransport.h>
 #include <TLogging.h>
 
 #include "Service.h"

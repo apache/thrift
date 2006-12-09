@@ -14,7 +14,7 @@ using namespace boost;
 /**
  * BufferedRouterTransport. Funcationally equivalent to TBufferedTransport
  * but routes the request to another Transport (typical use case is to route
- * the request to TBufferedFileWriter to store the request on disk). The
+ * the request to TFileTransport to store the request on disk). The
  * underlying buffer expands to a keep a copy of the entire request/response.
  *
  * @author Aditya Agarwal <aditya@facebook.com>

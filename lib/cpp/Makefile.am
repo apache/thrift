@@ -11,7 +11,7 @@ libthrift_sources = src/concurrency/Mutex.cpp \
                     src/concurrency/ThreadManager.cpp \
                     src/concurrency/TimerManager.cpp \
 	            src/protocol/TBinaryProtocol.cpp \
-                    src/transport/TBufferedFileWriter.cpp \
+                    src/transport/TFileTransport.cpp \
                     src/transport/TBufferedRouterTransport.cpp \
                     src/transport/TSocket.cpp \
                     src/transport/TServerSocket.cpp \
@@ -52,7 +52,7 @@ include_protocol_HEADERS = \
 
 include_transportdir = $(include_thriftdir)/transport
 include_transport_HEADERS = \
-                         src/transport/TBufferedFileWriter.h \
+                         src/transport/TFileTransport.h \
                          src/transport/TBufferedRouterTransport.h \
                          src/transport/TServerSocket.h \
                          src/transport/TServerTransport.h \
