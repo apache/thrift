@@ -766,7 +766,7 @@ void t_cpp_generator::generate_service_null(t_service* tservice) {
     " public: " << endl;
   indent_up(); 
   f_header_ <<
-    indent() << "virtual ~" << service_name_ << "If() {}" << endl;
+    indent() << "virtual ~" << service_name_ << "Null() {}" << endl;
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter; 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
