@@ -759,7 +759,7 @@ void t_cpp_generator::generate_service_interface(t_service* tservice) {
 void t_cpp_generator::generate_service_null(t_service* tservice) {
   string extends = "";
   if (tservice->get_extends() != NULL) {
-    extends = " : virtual public " + type_name(tservice->get_extends()) + "Null";
+    extends = " , virtual public " + type_name(tservice->get_extends()) + "Null";
   }
   f_header_ <<
     "class " << service_name_ << "Null : virtual public " << service_name_ << "If" << extends << " {" << endl <<
