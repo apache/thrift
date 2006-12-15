@@ -34,15 +34,22 @@ class t_cpp_generator : public t_oop_generator {
    * Program-level generation functions
    */
 
-  void generate_typedef  (t_typedef*  ttypedef);
-  void generate_enum     (t_enum*     tenum);
-  void generate_struct   (t_struct*   tstruct);
-  void generate_service  (t_service*  tservice);
+  void generate_typedef(t_typedef* ttypedef);
+  void generate_enum(t_enum* tenum);
+  void generate_struct(t_struct* tstruct) {
+    generate_cpp_struct(tstruct, false);
+  }
+  void generate_xception(t_struct* txception) {
+    generate_cpp_struct(txception, true);
+  }
+  void generate_cpp_struct(t_struct* tstruct, bool is_exception);
+
+  void generate_service(t_service* tservice);
 
   void print_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
   std::string render_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
 
-  void generate_struct_definition    (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_definition    (std::ofstream& out, t_struct* tstruct, bool is_exception=false);
   void generate_struct_reader        (std::ofstream& out, t_struct* tstruct);
   void generate_struct_writer        (std::ofstream& out, t_struct* tstruct);
   void generate_struct_result_writer (std::ofstream& out, t_struct* tstruct);

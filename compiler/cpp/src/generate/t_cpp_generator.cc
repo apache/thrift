@@ -339,8 +339,8 @@ string t_cpp_generator::render_const_value(ofstream& out, string name, t_type* t
  *
  * @param tstruct The struct definition
  */
-void t_cpp_generator::generate_struct(t_struct* tstruct) {
-  generate_struct_definition(f_types_, tstruct);
+void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) {
+  generate_struct_definition(f_types_, tstruct, is_exception);
   generate_struct_reader(f_types_impl_, tstruct);
   generate_struct_writer(f_types_impl_, tstruct);
 }
@@ -352,10 +352,16 @@ void t_cpp_generator::generate_struct(t_struct* tstruct) {
  * @param tstruct The struct
  */
 void t_cpp_generator::generate_struct_definition(ofstream& out,
-                                                 t_struct* tstruct) {
+                                                 t_struct* tstruct,
+                                                 bool is_exception) {
+  string extends = "";
+  if (is_exception) {
+    extends = " : public facebook::thrift::TException";
+  }
+
   // Open struct def
   out <<
-    indent() << "class " << tstruct->get_name() << " {" << endl <<
+    indent() << "class " << tstruct->get_name() << extends << " {" << endl <<
     indent() << " public:" << endl <<
     endl;
   indent_up();
