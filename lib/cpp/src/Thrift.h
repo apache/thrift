@@ -32,7 +32,7 @@ public:
   }
 
 private:
-  const std::string message_;
+  std::string message_;
 
 };
 
