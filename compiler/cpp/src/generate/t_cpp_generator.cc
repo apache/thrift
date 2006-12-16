@@ -393,6 +393,10 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     out << " {} " << endl;
   }
   
+  out <<
+    endl <<
+    indent() << "virtual ~" << tstruct->get_name() << "() throw() {}" << endl << endl;
+
   // Declare all fields
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     indent(out) <<
