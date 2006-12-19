@@ -164,7 +164,7 @@ void TFramedTransport::flush()  {
   transport_->write((const uint8_t*)&sz, 4);
   
   // Write frame body
-  if (sz > 0) {
+  if (wLen_ > 0) {
     transport_->write(wBuf_, wLen_);
   }
 
