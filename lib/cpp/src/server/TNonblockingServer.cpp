@@ -37,13 +37,9 @@ void TConnection::workSocket() {
     // It is an error to be in this state if we already have all the data
     assert(readBufferPos_ < readWant_);
 
-    // How much space is availble, and how much will we fetch
-    uint32_t avail = readBufferSize_ - readBufferPos_;
-    uint32_t fetch = readWant_ - readBufferPos_;
-
     // Double the buffer size until it is big enough
-    if (fetch > avail) {
-      while (fetch > avail) {
+    if (readWant_ > readBufferSize_) {
+      while (readWant_ > readBufferSize_) {
         readBufferSize_ *= 2;
       }
       readBuffer_ = (uint8_t*)realloc(readBuffer_, readBufferSize_);
@@ -55,6 +51,7 @@ void TConnection::workSocket() {
     }
 
     // Read from the socket
+    uint32_t fetch = readWant_ - readBufferPos_;
     int got = recv(socket_, readBuffer_ + readBufferPos_, fetch, 0);
     
     if (got > 0) {
