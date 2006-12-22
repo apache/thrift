@@ -53,7 +53,7 @@ Once the configure scripts are generated, thrift can be configured.  From the to
 
 	./configure
 
-You may need to specify the locacation of the boost files explicitly:   If you installed boost in  /usr/local, you would run configure as follows:
+You may need to specify the location of the boost files explicitly:   If you installed boost in  /usr/local, you would run configure as follows:
 
 	./configure --with-boost=/usr/local
 
