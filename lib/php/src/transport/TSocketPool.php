@@ -181,7 +181,7 @@ class TSocketPool extends TSocket {
       // Only connect if not in the middle of a fail interval, OR if this
       // is the LAST server we are trying, just hammer away on it
       $isLastServer = FALSE;
-      if ($alwaysTryLast) {
+      if ($this->alwaysTryLast_) {
         $isLastServer = ($i == ($numServers - 1));
       }
 
