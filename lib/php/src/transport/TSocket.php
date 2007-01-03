@@ -65,16 +65,28 @@ class TSocket extends TTransport {
   private $debug_ = FALSE;
 
   /**
+   * Debug handler
+   *
+   * @var mixed
+   */
+  private $debugHandler_ = null;
+
+  /**
    * Socket constructor
    *
-   * @param string $host    Remote hostname
-   * @param int    $port    Remote port
-   * @param bool   $persist Whether to use a persistent socket
+   * @param string $host         Remote hostname
+   * @param int    $port         Remote port
+   * @param bool   $persist      Whether to use a persistent socket
+   * @param string $debugHandler Function to call for error logging
    */
-  public function __construct($host='localhost', $port=9090, $persist=FALSE) {
+  public function __construct($host='localhost',
+                              $port=9090,
+                              $persist=FALSE,
+                              $debugHandler=null) {
     $this->host_ = $host;
     $this->port_ = $port;
     $this->persist_ = $persist;
+    $this->debugHandler_ = $debugHandler ? $debugHandler : 'error_log';
   }
 
   /**
@@ -135,7 +147,7 @@ class TSocket extends TTransport {
     if ($this->handle_ === FALSE) {
       $error = 'TSocket: Could not connect to '.$this->host_.':'.$this->port_;
       if ($this->debug_) {
-        error_log($error);
+        $this->debugHandler_($error);
       }
       throw new Exception($error);
     }
