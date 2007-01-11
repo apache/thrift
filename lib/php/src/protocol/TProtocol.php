@@ -216,7 +216,7 @@ abstract class TProtocol {
       return $this->readBool($bool);
     case TType::BYTE:
       return $this->readByte($byte);
-    case TType::I16;
+    case TType::I16:
       return $this->readI16($i16);
     case TType::I32:
       return $this->readI32($i32);
@@ -285,7 +285,7 @@ abstract class TProtocol {
       return $itrans->readAll(1);
     case TType::BYTE:
       return $itrans->readAll(1);
-    case TType::I16;
+    case TType::I16:
       return $itrans->readAll(2);
     case TType::I32:
       return $itrans->readAll(4);
