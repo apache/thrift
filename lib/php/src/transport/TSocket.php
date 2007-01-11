@@ -147,7 +147,7 @@ class TSocket extends TTransport {
     if ($this->handle_ === FALSE) {
       $error = 'TSocket: Could not connect to '.$this->host_.':'.$this->port_;
       if ($this->debug_) {
-        $this->debugHandler_($error);
+        call_user_func($this->debugHandler_, $error);
       }
       throw new Exception($error);
     }

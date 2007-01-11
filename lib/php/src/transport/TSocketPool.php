@@ -182,9 +182,10 @@ class TSocketPool extends TSocket {
         if ($elapsed > $retryInterval) {
           $retryIntervalPassed = TRUE;
           if ($this->debug_) {
-            $this->debugHandler_('TSocketPool: retryInterval '.
-                                 '('.$this->retryInterval_.') '.
-                                 'has passed for host '.$host.':'.$port);
+            call_user_func($this->debugHandler_,
+                           'TSocketPool: retryInterval '.
+                           '('.$this->retryInterval_.') '.
+                           'has passed for host '.$host.':'.$port);
           }
         }
       }
@@ -238,9 +239,10 @@ class TSocketPool extends TSocket {
         // Log and cache this failure
         if ($consecfails >= $this->maxConsecutiveFailures_) {
           if ($this->debug_) {
-            $this->debugHandler_('TSocketPool: marking '.$host.':'.$port.
-                                 ' as down for '.$this->retryInterval.' secs '.
-                                 'after '.$consecfails.' failed attempts.');
+            call_user_func($this->debugHandler_,
+                           'TSocketPool: marking '.$host.':'.$port.
+                           ' as down for '.$this->retryInterval.' secs '.
+                           'after '.$consecfails.' failed attempts.');
           }
           // Store the failure time
           apc_store($failtimeKey, time());
@@ -262,7 +264,7 @@ class TSocketPool extends TSocket {
     $hostlist = implode(',', $hosts);
     $error .= '('.$hostlist.')';
     if ($this->debug_) {
-      $this->debugHandler_($error);
+      call_user_func($this->debugHandler_, $error);
     }
     throw new Exception($error);
   }
