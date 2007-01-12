@@ -788,10 +788,15 @@ void t_cpp_generator::generate_service_null(t_service* tservice) {
       f_header_ <<
         indent() << "return;" << endl;
     } else {
-      t_field returnfield(returntype, "rval");
-      f_header_ <<
-        indent() << declare_field(&returnfield, true) << endl <<
-        indent() << "return rval;" << endl;
+      if (is_complex_type(returntype)) {
+        f_header_ <<
+          indent() << "return;" << endl;
+      } else {
+        t_field returnfield(returntype, "_return");
+        f_header_ <<
+          indent() << declare_field(&returnfield, true) << endl <<
+          indent() << "return _return;" << endl;
+      }
     }
     indent_down();
     f_header_ <<
@@ -873,6 +878,10 @@ void t_cpp_generator::generate_service_multiface(t_service* tservice) {
 
     string call = string("ifaces_[i]->") + (*f_iter)->get_name() + "(";
     bool first = true;
+    if (is_complex_type((*f_iter)->get_returntype())) {
+      call += "_return";
+      first = false;
+    }
     for (a_iter = args.begin(); a_iter != args.end(); ++a_iter) {
       if (first) {
         first = false;
@@ -891,8 +900,16 @@ void t_cpp_generator::generate_service_multiface(t_service* tservice) {
       indent() << "for (uint32_t i = 0; i < sz; ++i) {" << endl;
     if (!(*f_iter)->get_returntype()->is_void()) {
       f_header_ <<
-        indent() << "  if (i == sz - 1) {" << endl <<
-        indent() << "    return " << call << ";" << endl <<
+        indent() << "  if (i == sz - 1) {" << endl;
+      if (is_complex_type((*f_iter)->get_returntype())) {
+        f_header_ <<
+          indent() << "    " << call << ";" << endl <<
+          indent() << "    return;" << endl;
+      } else {
+        f_header_ <<
+          indent() << "    return " << call << ";" << endl;
+      }
+      f_header_ <<
         indent() << "  } else {" << endl <<
         indent() << "    " << call << ";" << endl <<
         indent() << "  }" << endl;
@@ -1024,10 +1041,15 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     if (!(*f_iter)->is_async()) {
       f_service_ << indent();
       if (!(*f_iter)->get_returntype()->is_void()) {
-        f_service_ << "return ";
+        if (is_complex_type((*f_iter)->get_returntype())) {
+          f_service_ << "recv_" << funname << "(_return);" << endl;
+        } else {
+          f_service_ << "return recv_" << funname << "();" << endl;
+        }
+      } else {
+        f_service_ <<
+          "recv_" << funname << "();" << endl;
       }
-      f_service_ <<
-        "recv_" << funname << "();" << endl;
     }
     scope_down(f_service_);
     f_service_ << endl;
@@ -1100,10 +1122,18 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
 
       // Careful, only look for _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
-        f_service_ <<
-          indent() << "if (result.__isset.success) {" << endl <<
-          indent() << "  return result.success;" << endl <<
-          indent() << "}" << endl;
+        if (is_complex_type((*f_iter)->get_returntype())) {
+          f_service_ <<
+            indent() << "if (result.__isset.success) {" << endl <<
+            indent() << "  _return = result.success;" << endl <<
+            indent() << "  return;" << endl <<
+            indent() << "}" << endl;
+        } else {
+          f_service_ <<
+            indent() << "if (result.__isset.success) {" << endl <<
+            indent() << "  return result.success;" << endl <<
+            indent() << "}" << endl;
+        }
       }
 
       t_struct* xs = (*f_iter)->get_xceptions();
@@ -1349,13 +1379,19 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   const std::vector<t_field*>& fields = arg_struct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
+  bool first = true;
   f_service_ << indent();
   if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
-    f_service_ << "result.success = ";    
+    if (is_complex_type(tfunction->get_returntype())) {
+      first = false;
+      f_service_ << "iface_->" << tfunction->get_name() << "(result.success";
+    } else {
+      f_service_ << "result.success = iface_->" << tfunction->get_name() << "(";
+    }
+  } else {
+    f_service_ <<
+      "iface_->" << tfunction->get_name() << "(";
   }
-  f_service_ <<
-    "iface_->" << tfunction->get_name() << "(";
-  bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
       first = false;
@@ -2095,9 +2131,19 @@ string t_cpp_generator::declare_field(t_field* tfield, bool init) {
 string t_cpp_generator::function_signature(t_function* tfunction,
                                            string prefix) {
   t_type* ttype = tfunction->get_returntype();
-  return
-    type_name(ttype) + " " + prefix + tfunction->get_name() +
-    "(" + argument_list(tfunction->get_arglist()) + ")";
+  t_struct* arglist = tfunction->get_arglist();
+
+  if (is_complex_type(ttype)) {
+    bool empty = arglist->get_members().size() == 0;
+    return
+      "void " + prefix + tfunction->get_name() +
+      "(" + type_name(ttype) + "& _return" +
+      (empty ? "" : (", " + argument_list(arglist))) + ")";
+  } else {
+    return
+      type_name(ttype) + " " + prefix + tfunction->get_name() +
+      "(" + argument_list(arglist) + ")";
+  }
 }
 
 /**
