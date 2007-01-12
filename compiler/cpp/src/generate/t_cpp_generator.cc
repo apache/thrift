@@ -102,7 +102,7 @@ void t_cpp_generator::close_generator() {
  */
 void t_cpp_generator::generate_typedef(t_typedef* ttypedef) {
   f_types_ <<
-    indent() << "typedef " << type_name(ttypedef->get_type(), false, true) << " " << ttypedef->get_symbolic() << ";" << endl <<
+    indent() << "typedef " << type_name(ttypedef->get_type(), true) << " " << ttypedef->get_symbolic() << ";" << endl <<
     endl;
 }
 
@@ -1947,9 +1947,18 @@ string t_cpp_generator::namespace_close(string ns) {
  * @param ttype The type
  * @return String of the type name, i.e. std::set<type>
  */
-string t_cpp_generator::type_name(t_type* ttype, bool arg, bool in_typedef) {
+string t_cpp_generator::type_name(t_type* ttype, bool in_typedef, bool arg) {
   if (ttype->is_base_type()) {
-    return base_type_name(((t_base_type*)ttype)->get_base());
+    string bname = base_type_name(((t_base_type*)ttype)->get_base());
+    if (!arg) {
+      return bname;
+    }
+
+    if (((t_base_type*)ttype)->get_base() == t_base_type::TYPE_STRING) {
+      return "const " + bname + "&";
+    } else {
+      return "const " + bname;
+    }
   }
   
   // Check for a custom overloaded C++ name
@@ -2109,7 +2118,7 @@ string t_cpp_generator::argument_list(t_struct* tstruct) {
     } else {
       result += ", ";
     }
-    result += type_name((*f_iter)->get_type()) + " " + (*f_iter)->get_name();
+    result += type_name((*f_iter)->get_type(), false, true) + " " + (*f_iter)->get_name();
   }
   return result;
 }
