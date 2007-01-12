@@ -58,6 +58,7 @@ sliteral      ("'"[^']*"'")
 "cpp_include"   { return tok_cpp_include;   }
 "cpp_type"      { return tok_cpp_type;      }
 "java_package"  { return tok_java_package;  }
+"php_namespace" { return tok_php_namespace; }
 "include"       { return tok_include;       }
 
 "void"          { return tok_void;          }

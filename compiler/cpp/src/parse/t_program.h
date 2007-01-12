@@ -114,6 +114,14 @@ class t_program {
     return cpp_includes_;
   }
 
+  void set_php_namespace(std::string php_namespace) {
+    php_namespace_ = php_namespace;
+  }
+
+  const std::string& get_php_namespace() const {
+    return php_namespace_;
+  }
+
   void set_java_package(std::string java_package) {
     java_package_ = java_package;
   }
@@ -153,6 +161,9 @@ class t_program {
 
   // C++ extra includes
   std::vector<std::string> cpp_includes_;
+
+  // PHP namespace
+  std::string php_namespace_;
 
   // Java package
   std::string java_package_;

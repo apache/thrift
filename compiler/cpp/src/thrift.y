@@ -64,6 +64,7 @@ int y_field_val = -1;
 %token tok_cpp_namespace
 %token tok_cpp_include
 %token tok_cpp_type
+%token tok_php_namespace
 %token tok_java_package
 
 /**
@@ -196,6 +197,13 @@ Header:
       pdebug("Header -> tok_cpp_include tok_literal");
       if (g_parse_mode == PROGRAM) {
         g_program->add_cpp_include($2);
+      }
+    }
+| tok_php_namespace tok_identifier
+    {
+      pdebug("Header -> tok_php_namespace tok_identifier");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_php_namespace($2);
       }
     }
 | tok_java_package tok_identifier

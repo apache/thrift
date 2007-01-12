@@ -71,7 +71,7 @@ void t_php_generator::generate_typedef(t_typedef* ttypedef) {}
  */
 void t_php_generator::generate_enum(t_enum* tenum) {
   f_types_ <<
-    "$GLOBALS['E_" << tenum->get_name() << "'] = array(" << endl;
+    "$GLOBALS['" << php_namespace(tenum->get_program()) << "E_" << tenum->get_name() << "'] = array(" << endl;
   
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
@@ -95,7 +95,7 @@ void t_php_generator::generate_enum(t_enum* tenum) {
   // code but you can't do things like an 'extract' on it, which is a bit of
   // a downer.
   f_types_ <<
-    "final class " << tenum->get_name() << " {" << endl;
+    "final class " << php_namespace(tenum->get_program()) << tenum->get_name() << " {" << endl;
   indent_up();
   
   value = -1;
@@ -165,7 +165,7 @@ void t_php_generator::print_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_enum()) {
     indent(f_consts_) << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    f_consts_ << "new " << type->get_name() << "(array(" << endl;
+    f_consts_ << "new " << php_namespace(type->get_program()) << type->get_name() << "(array(" << endl;
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -268,7 +268,7 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
   vector<t_field*>::const_iterator m_iter; 
 
   out <<
-    "class " << tstruct->get_name();
+    "class " << php_namespace(tstruct->get_program()) << tstruct->get_name();
   if (is_exception) {
     out << " extends Exception";
   }
@@ -1213,7 +1213,7 @@ void t_php_generator::generate_deserialize_struct(ofstream &out,
                                                   t_struct* tstruct,
                                                   string prefix) {
   out <<
-    indent() << "$" << prefix << " = new " << tstruct->get_name() << "();" << endl <<
+    indent() << "$" << prefix << " = new " << php_namespace(tstruct->get_program()) << tstruct->get_name() << "();" << endl <<
     indent() << "$xfer += $" << prefix << "->read($input);" << endl;
 }
 
@@ -1665,7 +1665,7 @@ string t_php_generator::declare_field(t_field* tfield, bool init, bool obj) {
       result += " = array()";
     } else if (type->is_struct() || type->is_xception()) {
       if (obj) {
-        result += " = new " + type->get_name() + "()";
+        result += " = new " + php_namespace(type->get_program()) + type->get_name() + "()";
       } else {
         result += " = null";
       }
