@@ -55,6 +55,18 @@ class TFramedTransport extends TTransport {
     $this->write_ = $write;
   }
 
+  public function isOpen() {
+    return $this->transport_->isOpen();
+  }
+
+  public function open() {
+    $this->transport_->open();
+  }
+
+  public function close() {
+    $this->transport_->close();
+  }
+
   /**
    * Reads from the buffer. When more data is required reads another entire
    * chunk and serves future reads out of that.
