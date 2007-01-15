@@ -65,13 +65,6 @@ class TSocketPool extends TSocket {
   private $alwaysTryLast_ = TRUE;
 
   /**
-   * User can supply their own debug handler instead of error_log
-   *
-   * @var mixed
-   */
-  private $debugHandler_ = null;
-
-  /**
    * Socket pool constructor
    *
    * @param array  $hosts        List of remote hostnames
@@ -84,8 +77,6 @@ class TSocketPool extends TSocket {
                               $persist=FALSE,
                               $debugHandler=null) {
     parent::__construct(null, 0, $persist, $debugHandler);
-
-    $this->debugHandler_ = $debugHandler ? $debugHandler : 'error_log';
 
     if (!is_array($ports)) {
       $port = $ports;
@@ -179,7 +170,7 @@ class TSocketPool extends TSocket {
       // Cache hit...make sure enough the retry interval has elapsed
       if ($lastFailtime > 0) {
         $elapsed = time() - $lastFailtime;
-        if ($elapsed > $retryInterval) {
+        if ($elapsed > $this->retryInterval_) {
           $retryIntervalPassed = TRUE;
           if ($this->debug_) {
             call_user_func($this->debugHandler_,

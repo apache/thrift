@@ -62,14 +62,14 @@ class TSocket extends TTransport {
    *
    * @var bool
    */
-  private $debug_ = FALSE;
+  protected $debug_ = FALSE;
 
   /**
    * Debug handler
    *
    * @var mixed
    */
-  private $debugHandler_ = null;
+  protected $debugHandler_ = null;
 
   /**
    * Socket constructor
