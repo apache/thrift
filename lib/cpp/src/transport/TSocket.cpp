@@ -47,6 +47,20 @@ TSocket::TSocket(string host, int port) :
   recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
 }
 
+TSocket::TSocket() : 
+  host_(""),
+  port_(0),
+  socket_(0),
+  connTimeout_(0),
+  sendTimeout_(0),
+  recvTimeout_(0),
+  lingerOn_(1),
+  lingerVal_(0),
+  noDelay_(1) {
+  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
+  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
+}
+
 TSocket::TSocket(int socket) :
   host_(""),
   port_(0),
@@ -304,6 +318,14 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
     }
     sent += b;
   }
+}
+
+void TSocket::setHost(string host) {
+  host_ = host;
+}
+
+void TSocket::setPort(int port) {
+  port_ = port;
 }
 
 void TSocket::setLinger(bool on, int linger) {

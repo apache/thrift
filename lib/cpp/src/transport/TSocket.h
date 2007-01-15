@@ -28,10 +28,18 @@ class TSocket : public TTransport {
    * Constructs a new socket. Note that this does NOT actually connect the
    * socket.
    *
+   */
+  TSocket();
+  
+  /**
+   * Constructs a new socket. Note that this does NOT actually connect the
+   * socket.
+   *
    * @param host An IP address or hostname to connect to
    * @param port The port to connect on
    */
   TSocket(std::string host, int port);
+
 
   /**
    * Destroyes the socket object, closing it if necessary.
@@ -71,6 +79,20 @@ class TSocket : public TTransport {
    * Writes to the underlying socket.
    */
   void write(const uint8_t* buf, uint32_t len);
+
+  /**
+   * Set the host that socket will connect to
+   *
+   * @param host host identifier
+   */
+  void setHost(std::string host);
+
+  /**
+   * Set the port that socket will connect to
+   *
+   * @param port port number
+   */
+  void setPort(int port);
 
   /**
    * Controls whether the linger option is set on the socket.
