@@ -727,10 +727,11 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*>::iterator f_iter; 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
+    ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_args");
     generate_struct_definition(f_service_, ts);
     generate_struct_reader(f_service_, ts);
     generate_struct_writer(f_service_, ts);
-    generate_function_helpers(*f_iter);
+    generate_function_helpers(tservice, *f_iter);
   }
 }
 
@@ -1065,8 +1066,8 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     scope_up(f_service_);
 
     // Function arguments and results
-    string argsname = (*f_iter)->get_name() + "_args";
-    string resultname = (*f_iter)->get_name() + "_result";
+    string argsname = tservice->get_name() + "_" + (*f_iter)->get_name() + "_args";
+    string resultname = tservice->get_name() + "_" + (*f_iter)->get_name() + "_result";
 
     // Serialize the request
     f_service_ <<
@@ -1310,12 +1311,13 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
  *
  * @param tfunction The function
  */
-void t_cpp_generator::generate_function_helpers(t_function* tfunction) {
+void t_cpp_generator::generate_function_helpers(t_service* tservice,
+                                                t_function* tfunction) {
   if (tfunction->is_async()) {
     return;
   }
 
-  t_struct result(program_, tfunction->get_name() + "_result");
+  t_struct result(program_, tservice->get_name() + "_" + tfunction->get_name() + "_result");
   t_field success(tfunction->get_returntype(), "success", 0);
   if (!tfunction->get_returntype()->is_void()) {
     result.append(&success);
@@ -1347,8 +1349,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     "(int32_t seqid, boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot)" << endl;
   scope_up(f_service_);
 
-  string argsname = tfunction->get_name() + "_args";
-  string resultname = tfunction->get_name() + "_result";
+  string argsname = tservice->get_name() + "_" + tfunction->get_name() + "_args";
+  string resultname = tservice->get_name() + "_" + tfunction->get_name() + "_result";
 
   f_service_ <<
     indent() << argsname << " args;" << endl <<

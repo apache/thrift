@@ -66,7 +66,7 @@ class t_cpp_generator : public t_oop_generator {
   void generate_service_processor (t_service* tservice);
   void generate_service_skeleton  (t_service*  tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
-  void generate_function_helpers  (t_function* tfunction);
+  void generate_function_helpers  (t_service* tservice, t_function* tfunction);
 
   /**
    * Serialization constructs
