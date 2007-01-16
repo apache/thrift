@@ -1,17 +1,15 @@
 #!/bin/sh
 
-subdirs="compiler/py lib/cpp lib/php lib/py"
-
 rm -rf \
 AUTHORS \
 COPYING \
 ChangeLog \
 INSTALL \
-Makefile.am \
 Makefile \
 Makefile.in \
 Makefile.orig \
 NEWS \
+README \
 aclocal.m4 \
 autom4te.cache \
 autoscan.log \
@@ -29,21 +27,10 @@ install-sh \
 .libs \
 libtool \
 ltmain.sh \
+Makefile.in \
 missing
-
-echo "SUBDIRS = ${subdirs}" > Makefile.am
 
 aclocal
 touch NEWS README AUTHORS ChangeLog
 autoconf
 automake -ac
-
-for subdir in ${subdirs}; do 
-    if [ -x "${subdir}/bootstrap.sh" ]; then 
-	cwd="`pwd`"
-	cd ${subdir}
-	./bootstrap.sh
-	cd ${cwd}
-    fi
-done
-
