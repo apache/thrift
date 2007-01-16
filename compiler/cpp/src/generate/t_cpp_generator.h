@@ -135,6 +135,10 @@ class t_cpp_generator : public t_oop_generator {
   std::string type_to_enum(t_type* ttype);
 
   bool is_complex_type(t_type* ttype) {
+    while (ttype->is_typedef()) {
+      ttype = ((t_typedef*)ttype)->get_type();
+    }
+
     return
       ttype->is_container() || 
       ttype->is_struct() ||
