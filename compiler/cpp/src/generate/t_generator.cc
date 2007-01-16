@@ -13,18 +13,18 @@ void t_generator::generate_program() {
   // Initialize the generator
   init_generator();
 
-  // Generate typedefs
-  vector<t_typedef*> typedefs = program_->get_typedefs();
-  vector<t_typedef*>::iterator td_iter;
-  for (td_iter = typedefs.begin(); td_iter != typedefs.end(); ++td_iter) {
-    generate_typedef(*td_iter);
-  }
-
   // Generate enums
   vector<t_enum*> enums = program_->get_enums();
   vector<t_enum*>::iterator en_iter;
   for (en_iter = enums.begin(); en_iter != enums.end(); ++en_iter) {
     generate_enum(*en_iter);
+  }
+
+  // Generate typedefs
+  vector<t_typedef*> typedefs = program_->get_typedefs();
+  vector<t_typedef*>::iterator td_iter;
+  for (td_iter = typedefs.begin(); td_iter != typedefs.end(); ++td_iter) {
+    generate_typedef(*td_iter);
   }
 
   // Generate constants
