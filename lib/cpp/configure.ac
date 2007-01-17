@@ -6,11 +6,21 @@ AC_CONFIG_SRCDIR(src/Thrift.h)
 
 AM_INIT_AUTOMAKE
 
+AC_FUNC_MALLOC
+
+AC_FUNC_REALLOC
+
+AC_FUNC_SELECT_ARGTYPES
+
+AC_CHECK_FUNCS([bzero])
+
 AC_CHECK_FUNCS([gethostbyname])
 
 AC_CHECK_FUNCS([gettimeofday])
 
 AC_CHECK_FUNCS([memset])
+
+AC_CHECK_FUNCS([select])
 
 AC_CHECK_FUNCS([socket])
 
@@ -19,6 +29,8 @@ AC_CHECK_FUNCS([strtol])
 AC_CHECK_FUNCS([strtoul])
 
 AC_CHECK_HEADERS([arpa/inet.h])
+
+AC_CHECK_HEADERS([fcntl.h])
 
 AC_CHECK_HEADERS([inttypes.h])
 
@@ -53,6 +65,10 @@ AC_HEADER_STDBOOL
 AC_HEADER_STDC
 
 AC_HEADER_TIME
+
+AC_TYPE_OFF_T
+
+AC_TYPE_MODE_T
 
 AC_TYPE_SIZE_T
 

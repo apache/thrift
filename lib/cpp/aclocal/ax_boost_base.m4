@@ -24,7 +24,7 @@ dnl @license AllPermissive
 AC_DEFUN([AX_BOOST_BASE],
 [
 AC_ARG_WITH([boost],
-	AS_HELP_STRING([--with-boost@<:@=DIR@:>@], [use boost (default is No) - it is possible to specify the root directory for boost (optional)]),
+	AS_HELP_STRING([--with-boost@<:@=DIR@:>@], [use boost (default is yes) - it is possible to specify an alternate root directory for boost]),
 	[
     if test "$withval" = "no"; then
 		want_boost="no"
@@ -32,11 +32,11 @@ AC_ARG_WITH([boost],
         want_boost="yes"
         ac_boost_path=""
     else
-	    want_boost="yes"
+        want_boost="yes"
         ac_boost_path="$withval"
 	fi
     ],
-    [want_boost="no"])
+    [want_boost="yes"])
 
 if test "x$want_boost" = "xyes"; then
 	boost_lib_version_req=ifelse([$1], ,1.20.0,$1)
