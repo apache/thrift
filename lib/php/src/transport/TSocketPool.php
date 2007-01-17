@@ -232,7 +232,7 @@ class TSocketPool extends TSocket {
           if ($this->debug_) {
             call_user_func($this->debugHandler_,
                            'TSocketPool: marking '.$host.':'.$port.
-                           ' as down for '.$this->retryInterval.' secs '.
+                           ' as down for '.$this->retryInterval_.' secs '.
                            'after '.$consecfails.' failed attempts.');
           }
           // Store the failure time
