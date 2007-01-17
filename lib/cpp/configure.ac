@@ -50,6 +50,8 @@ AC_CHECK_HEADERS([unistd.h])
 
 AX_BOOST_BASE([1.33.1])
 
+AX_EVENT_BASE([1.2.0])
+
 AC_CHECK_LIB(pthread, pthread_create)
 
 AC_CHECK_LIB(rt, sched_get_priority_min)

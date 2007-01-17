@@ -1,7 +1,7 @@
 lib_LTLIBRARIES = libthrift.la
 
-common_cxxflags = -Wall -Isrc $(BOOST_CPPFLAGS)
-common_ldflags = -Wall $(BOOST_LDFLAGS) -levent
+common_cxxflags = -Wall -Isrc $(BOOST_CPPFLAGS) $(EVENT_CPPFLAGS)
+common_ldflags = -Wall $(BOOST_LDFLAGS) $(EVENT_LDFLAGS)
 
 # Define the source file for the module
 

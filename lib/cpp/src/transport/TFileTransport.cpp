@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <iostream>
+#include <sys/stat.h>
 
 using namespace std;
 
