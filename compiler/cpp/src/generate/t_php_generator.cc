@@ -631,8 +631,8 @@ void t_php_generator::generate_process_function(t_service* tservice,
     "($seqid, $input, $output) {" << endl;
   indent_up();
 
-  string argsname = service_name_ + "_" + tfunction->get_name() + "_args";
-  string resultname = service_name_ + "_" + tfunction->get_name() + "_result";
+  string argsname = php_namespace(tservice->get_program()) + service_name_ + "_" + tfunction->get_name() + "_args";
+  string resultname = php_namespace(tservice->get_program()) + service_name_ + "_" + tfunction->get_name() + "_result";
 
   f_service_ <<
     indent() << "$args = new " << argsname << "();" << endl <<
@@ -933,7 +933,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       "public function send_" << function_signature(*f_iter) << endl;
     scope_up(f_service_);  
 
-      std::string argsname = service_name_ + "_" + (*f_iter)->get_name() + "_args";
+      std::string argsname = php_namespace(tservice->get_program()) + service_name_ + "_" + (*f_iter)->get_name() + "_args";
 
       // Serialize the request header
       if (binary_inline_) {
@@ -972,7 +972,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       
 
     if (!(*f_iter)->is_async()) {
-      std::string resultname = service_name_ + "_" + (*f_iter)->get_name() + "_result";
+      std::string resultname = php_namespace(tservice->get_program()) + service_name_ + "_" + (*f_iter)->get_name() + "_result";
       t_struct noargs(program_);
       
       t_function recv_function((*f_iter)->get_returntype(),
