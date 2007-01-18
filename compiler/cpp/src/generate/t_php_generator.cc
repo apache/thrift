@@ -830,9 +830,13 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
     const vector<t_field*>& args = (*f_iter)->get_arglist()->get_members();
     vector<t_field*>::const_iterator a_iter;
     for (a_iter = args.begin(); a_iter != args.end(); ++a_iter) {
+      t_type* atype = (*a_iter)->get_type();
+      while (atype->is_typedef()) {
+        atype = ((t_typedef*)atype)->get_type();
+      }
       f_service_ <<
         indent() << "$" << (*a_iter)->get_name() << " = $request['" << (*a_iter)->get_name() << "'];" << endl;
-      if ((*a_iter)->get_type()->is_list()) {
+      if (atype->is_list()) {
         f_service_ << 
           indent() << "$" << (*a_iter)->get_name() << " = explode(',', $" << (*a_iter)->get_name() << ");" << endl;
       }      
