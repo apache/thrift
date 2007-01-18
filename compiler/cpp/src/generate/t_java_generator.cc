@@ -479,6 +479,13 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
     indent() << "oprot.writeStructBegin(struct);" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    bool null_allowed = type_can_be_null((*f_iter)->get_type());
+    if (null_allowed) {
+      out <<
+        indent() << "if (this." << (*f_iter)->get_name() << " != null) {" << endl;
+      indent_up();
+    }
+
     out <<
       indent() << "field.name = \"" << (*f_iter)->get_name() << "\";" << endl <<
       indent() << "field.type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl <<
@@ -491,6 +498,11 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
     // Write field closer
     indent(out) <<
       "oprot.writeFieldEnd();" << endl;
+    
+    if (null_allowed) {
+      indent_down();
+      indent(out) << "}" << endl;
+    }
   }
   // Write the struct map
   out <<
@@ -541,6 +553,13 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
       "(this.__isset." << (*f_iter)->get_name() << ") {" << endl;
     indent_up();
 
+    bool null_allowed = type_can_be_null((*f_iter)->get_type());
+    if (null_allowed) {
+      out <<
+        indent() << "if (this." << (*f_iter)->get_name() << " != null) {" << endl;
+      indent_up();
+    }
+
     out <<
       indent() << "field.name = \"" << (*f_iter)->get_name() << "\";" << endl <<
       indent() << "field.type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl <<
@@ -553,6 +572,11 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
     // Write field closer
     indent(out) <<
       "oprot.writeFieldEnd();" << endl;
+
+    if (null_allowed) {
+      indent_down();
+      indent(out) << "}" << endl;
+    }
 
     indent_down();
     indent(out) << "}";

@@ -129,6 +129,19 @@ class t_java_generator : public t_oop_generator {
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
 
+  bool type_can_be_null(t_type* ttype) {
+    while (ttype->is_typedef()) {
+      ttype = ((t_typedef*)ttype)->get_type();
+    }
+
+    return
+      ttype->is_container() || 
+      ttype->is_struct() ||
+      ttype->is_xception() ||
+      (ttype->is_base_type() && (((t_base_type*)ttype)->get_base() == t_base_type::TYPE_STRING));
+  }
+
+
  private:
 
   /**
