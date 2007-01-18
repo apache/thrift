@@ -65,7 +65,9 @@ CFL = -g -Wall -I$(SRC_DIR) -I$(OBJ_DIR)
 LIBS = -lfl
 
 # Build directories
-obj_dirs: $(OBJ_DIR)parse $(OBJ_DIR)generate
+obj_dirs: $(BIN_DIR) $(OBJ_DIR)parse $(OBJ_DIR)generate
+$(BIN_DIR):
+	$(MKDIR) -p $(BIN_DIR)
 $(OBJ_DIR)parse:
 	$(MKDIR) -p $(OBJ_DIR)parse
 $(OBJ_DIR)generate:
