@@ -35,6 +35,7 @@ BIN_DIR = bin/
 # Source files
 SRC_FILES = main.cc \
             generate/t_generator.cc \
+            generate/t_xsd_generator.cc \
             generate/t_py_generator.cc \
             generate/t_java_generator.cc \
             generate/t_php_generator.cc \

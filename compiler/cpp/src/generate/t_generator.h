@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include "parse/t_program.h"
+#include "globals.h"
 
 /**
  * Base class for a thrift code generator. This class defines the basic
