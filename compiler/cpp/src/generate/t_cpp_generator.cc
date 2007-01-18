@@ -727,11 +727,13 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*>::iterator f_iter; 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
+    string name_orig = ts->get_name();
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_args");
     generate_struct_definition(f_service_, ts);
     generate_struct_reader(f_service_, ts);
     generate_struct_writer(f_service_, ts);
     generate_function_helpers(tservice, *f_iter);
+    ts->set_name(name_orig);
   }
 }
 
