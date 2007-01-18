@@ -63,7 +63,7 @@ typedef struct readState {
 
   readState() {
     event_ = 0;
-    resetAllValues();
+   resetAllValues();
   }
 
   ~readState() {
@@ -104,6 +104,7 @@ class TFileTransport : public TTransport {
   void seekToChunk(int chunk);
   void seekToEnd();
   uint32_t getNumChunks();
+  uint32_t getCurChunk();
 
   // for changing the output file
   void resetOutputFile(int fd, string filename, long long offset);
@@ -323,6 +324,12 @@ class TFileProcessor {
    */
   void process(uint32_t numEvents, bool tail);
 
+  /**
+   * process events until the end of the chunk
+   *
+   */
+  void processChunk();
+  
  private:
   shared_ptr<TProcessor> processor_;
   shared_ptr<TProtocolFactory> protocolFactory_;

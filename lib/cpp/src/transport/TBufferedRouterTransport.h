@@ -50,6 +50,21 @@ class TBufferedRouterTransport : public TTransport {
     return trans_->isOpen();
   }
   
+  bool peek() {    
+    if (rPos_ >= rLen_) {
+      // Double the size of the underlying buffer if it is full
+      if (rLen_ == rBufSize_) {
+        rBufSize_ *=2;
+        rBuf_ = (uint8_t *)realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
+      }
+    
+      // try to fill up the buffer
+      rLen_ += trans_->read(rBuf_+rPos_, rBufSize_ - rPos_);
+    }
+    return (rLen_ > rPos_);
+  }
+
+
   void open() {
     trans_->open();
   }

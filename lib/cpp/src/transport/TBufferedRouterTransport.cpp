@@ -27,14 +27,17 @@ uint32_t TBufferedRouterTransport::read(uint8_t* buf, uint32_t len) {
     rLen_ += trans_->read(rBuf_+rPos_, rBufSize_ - rPos_);
   }
 
+
   // Hand over whatever we have
   uint32_t give = need;
   if (rLen_-rPos_ < give) {
     give = rLen_-rPos_;
   }
-  memcpy(buf, rBuf_+rPos_, give);
-  rPos_ += give;
-  need -= give;
+  if (give > 0) {
+    memcpy(buf, rBuf_+rPos_, give);
+    rPos_ += give;
+    need -= give;
+  }
 
   return (len - need);
 }
