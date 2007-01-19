@@ -70,6 +70,7 @@ sliteral      ("'"[^']*"'")
 "i64"           { return tok_i64;           }
 "double"        { return tok_double;        }
 "string"        { return tok_string;        }
+"slist"         { return tok_slist;         }
 "map"           { return tok_map;           }
 "list"          { return tok_list;          }
 "set"           { return tok_set;           }

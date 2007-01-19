@@ -75,6 +75,7 @@ int y_field_val = -1;
 %token tok_bool
 %token tok_byte
 %token tok_string
+%token tok_slist
 %token tok_i16
 %token tok_i32
 %token tok_i64
@@ -636,6 +637,11 @@ BaseType:
     {
       pdebug("BaseType -> tok_string");
       $$ = g_type_string;
+    }
+| tok_slist
+    {
+      pdebug("BaseType -> tok_slist");
+      $$ = g_type_slist;
     }
 | tok_bool
     {

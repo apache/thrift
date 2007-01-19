@@ -811,7 +811,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
       "    sys.exit(1)" << endl <<
       "  pp.pprint(client." << (*f_iter)->get_name() << "(";
     for (int i = 0; i < num_args; ++i) {
-      if (args[i]->get_type() == g_type_string) {
+      if (args[i]->get_type()->is_string()) {
         f_remote << "args[" << i << "],";
       } else {
         f_remote << "eval(args[" << i << "]),";

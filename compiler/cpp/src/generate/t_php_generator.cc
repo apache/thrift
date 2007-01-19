@@ -836,7 +836,8 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
       }
       f_service_ <<
         indent() << "$" << (*a_iter)->get_name() << " = $request['" << (*a_iter)->get_name() << "'];" << endl;
-      if (atype->is_list()) {
+      if (atype->is_string() &&
+          ((t_base_type*)atype)->is_string_list()) {
         f_service_ << 
           indent() << "$" << (*a_iter)->get_name() << " = explode(',', $" << (*a_iter)->get_name() << ");" << endl;
       }      

@@ -47,6 +47,7 @@ extern t_program* g_program;
 
 extern t_type* g_type_void;
 extern t_type* g_type_string;
+extern t_type* g_type_slist;
 extern t_type* g_type_bool;
 extern t_type* g_type_byte;
 extern t_type* g_type_i16;
