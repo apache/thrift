@@ -20,11 +20,13 @@ class t_struct : public t_type {
  public:
   t_struct(t_program* program) :
     t_type(program),
-    is_xception_(false) {}
+    is_xception_(false),
+    xsd_all_(false) {}
 
   t_struct(t_program* program, const std::string& name) :
     t_type(program, name),
-    is_xception_(false) {}
+    is_xception_(false),
+    xsd_all_(false) {}
 
   void set_name(const std::string& name) {
     name_ = name;
@@ -32,6 +34,14 @@ class t_struct : public t_type {
 
   void set_xception(bool is_xception) {
     is_xception_ = is_xception;
+  }
+
+  void set_xsd_all(bool xsd_all) {
+    xsd_all_ = xsd_all;
+  }
+
+  bool get_xsd_all() const {
+    return xsd_all_;
   }
 
   void append(t_field* elem) {
@@ -53,6 +63,9 @@ class t_struct : public t_type {
  private:
   std::vector<t_field*> members_;
   bool is_xception_;
+
+  bool xsd_all_;
+
 };
 
 #endif

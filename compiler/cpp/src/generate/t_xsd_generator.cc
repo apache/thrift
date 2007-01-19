@@ -26,10 +26,15 @@ void t_xsd_generator::generate_typedef(t_typedef* ttypedef) {
 void t_xsd_generator::generate_struct(t_struct* tstruct) {
   vector<t_field*>::const_iterator m_iter; 
   const vector<t_field*>& members = tstruct->get_members();
+  bool xsd_all = tstruct->get_xsd_all();
   
   indent(s_xsd_types_) << "<xsd:complexType name=\"" << tstruct->get_name() << "\">" << endl;
   indent_up();
-  indent(s_xsd_types_) << "<xsd:sequence>" << endl;
+  if (xsd_all) {
+    indent(s_xsd_types_) << "<xsd:all minOccurs=\"0\" maxOccurs=\"1\">" << endl;
+  } else {
+    indent(s_xsd_types_) << "<xsd:sequence>" << endl;
+  }
   indent_up();
   
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -37,7 +42,11 @@ void t_xsd_generator::generate_struct(t_struct* tstruct) {
   } 
 
   indent_down();
-  indent(s_xsd_types_) << "</xsd:sequence>" << endl;
+  if (xsd_all) {
+    indent(s_xsd_types_) << "</xsd:all>" << endl;
+  } else {
+    indent(s_xsd_types_) << "</xsd:sequence>" << endl;
+  }
   indent_down();
   indent(s_xsd_types_) <<
     "</xsd:complexType>" << endl <<

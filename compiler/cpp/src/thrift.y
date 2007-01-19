@@ -66,6 +66,7 @@ int y_field_val = -1;
 %token tok_cpp_type
 %token tok_php_namespace
 %token tok_java_package
+%token tok_xsd_all
 
 /**
  * Base datatype keywords
@@ -144,6 +145,7 @@ int y_field_val = -1;
 %type<tstruct>   ThrowsOptional
 %type<tservice>  ExtendsOptional
 %type<tbool>     AsyncOptional
+%type<tbool>     XsdAllOptional
 %type<id>        CppTypeOptional
 
 %%
@@ -440,12 +442,23 @@ ConstMapContents:
     }
 
 Struct:
-  tok_struct tok_identifier '{' FieldList '}'
+  tok_struct tok_identifier XsdAllOptional '{' FieldList '}'
     {
       pdebug("Struct -> tok_struct tok_identifier { FieldList }");
-      $4->set_name($2);
-      $$ = $4;
+      $5->set_name($2);
+      $5->set_xsd_all($3);
+      $$ = $5;
       y_field_val = -1;
+    }
+
+XsdAllOptional:
+  tok_xsd_all
+    {
+      $$ = true;
+    }
+|
+    {
+      $$ = false;
     }
 
 Xception:
