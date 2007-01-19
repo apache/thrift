@@ -9,7 +9,7 @@
 
 namespace facebook { namespace thrift { namespace server { 
 
-void TConnection::init(int socket, short eventFlags, TNonblockingServer* s) {
+  void TConnection::init(int socket, short eventFlags, TNonblockingServer* s) {
   socket_ = socket;
   server_ = s;
   appState_ = APP_INIT;
@@ -27,6 +27,18 @@ void TConnection::init(int socket, short eventFlags, TNonblockingServer* s) {
   
   // Set flags, which also registers the event
   setFlags(eventFlags);
+
+  // TODO: this needs to be replaced by the new version of TTransportFactory
+  factoryInputTransport_ = (s->getTransportFactory()->getIOTransports(inputTransport_)).first;
+  //  factoryOutputTransport_ = (transportFactory->getIOTransports(outputTransport_)).first;
+
+  // Create protocol
+  std::pair<shared_ptr<TProtocol>,shared_ptr<TProtocol> > iop;
+  iop = s->getProtocolFactory()->getIOProtocols(factoryInputTransport_ ,
+                                                outputTransport_);
+  inputProtocol_ = iop.first;
+  outputProtocol_ = iop.second;
+
 }
 
 void TConnection::workSocket() {
@@ -152,11 +164,11 @@ void TConnection::transition() {
       // Invoke the processor
       server_->getProcessor()->process(inputProtocol_, outputProtocol_);
     } catch (TTransportException &ttx) {
-      fprintf(stderr, "Server::process() %s\n", ttx.what());
+      fprintf(stderr, "TTransportException: Server::process() %s\n", ttx.what());
       close();
       return;
     } catch (TException &x) {
-      fprintf(stderr, "Server::process() %s\n", x.what());
+      fprintf(stderr, "TException: Server::process() %s\n", x.what());
       close();     
       return;
     } catch (...) {
@@ -339,6 +351,10 @@ void TConnection::close() {
   }
   socket_ = 0;
 
+  // close any factory produced transports
+  factoryInputTransport_->close();
+  //  factoryOutputTransport_->close();
+
   // Give this object back to the server that owns it
   server_->returnConnection(this);
 }
@@ -350,7 +366,7 @@ void TConnection::close() {
 TConnection* TNonblockingServer::createConnection(int socket, short flags) {
   // Check the stack
   if (connectionStack_.empty()) {
-    return new TConnection(socket, flags, this);
+    return new TConnection(socket, flags, this, this->getTransportFactory());
   } else {
     TConnection* result = connectionStack_.top();
     connectionStack_.pop();

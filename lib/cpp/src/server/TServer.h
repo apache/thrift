@@ -33,10 +33,19 @@ public:
   shared_ptr<TProcessor> getProcessor() {
     return processor_;
   }
+
+  shared_ptr<TServerTransport> getServerTransport() {
+    return serverTransport_;
+  }
+
+  shared_ptr<TTransportFactory> getTransportFactory() {
+    return transportFactory_;
+  }
   
   shared_ptr<TProtocolFactory> getProtocolFactory() {
     return protocolFactory_;
   }
+
 
 protected:
   TServer(shared_ptr<TProcessor> processor,
@@ -70,6 +79,27 @@ protected:
     transportFactory_ = boost::shared_ptr<TTransportFactory>(new TTransportFactory());
     protocolFactory_ = boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory());
   }
+
+  TServer(shared_ptr<TProcessor> processor, 
+          shared_ptr<TTransportFactory> transportFactory) :
+    processor_(processor),
+    transportFactory_(transportFactory) {
+    protocolFactory_ = boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory());
+  }
+
+  TServer(shared_ptr<TProcessor> processor, 
+          shared_ptr<TProtocolFactory> protocolFactory) :
+    processor_(processor) {
+    transportFactory_ = boost::shared_ptr<TTransportFactory>(new TTransportFactory());
+    protocolFactory_ = protocolFactory;
+  }
+
+  TServer(shared_ptr<TProcessor>        processor,           
+          shared_ptr<TProtocolFactory>  protocolFactory,
+          shared_ptr<TTransportFactory> transportFactory):
+    processor_(processor),
+    transportFactory_(transportFactory),
+    protocolFactory_(protocolFactory) {}
  
   shared_ptr<TProcessor> processor_;
   shared_ptr<TServerTransport> serverTransport_;
