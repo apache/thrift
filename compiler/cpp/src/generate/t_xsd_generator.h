@@ -54,9 +54,10 @@ class t_xsd_generator : public t_generator {
   std::string base_type_name(t_base_type::t_base tbase);
 
   /**
-   * Output xsd file
+   * Output xsd/php file
    */
   std::ofstream f_xsd_;
+  std::ofstream f_php_;
 
   /**
    * Output string stream
