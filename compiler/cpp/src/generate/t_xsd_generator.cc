@@ -122,13 +122,13 @@ void t_xsd_generator::generate_service(t_service* tservice) {
   indent(f_xsd_) << s_xsd_types_.str();
 
   // Keep a list of all the possible exceptions that might get thrown
-  set<t_struct*> all_xceptions;
+  map<string, t_struct*> all_xceptions;
 
   // List the elements that you might actually get
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter; 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    string elemname = (*f_iter)->get_name() + "_result";
+    string elemname = (*f_iter)->get_name() + "_response";
     t_type* returntype = (*f_iter)->get_returntype();
     generate_element(f_xsd_, elemname, returntype);
     f_xsd_ << endl;
@@ -137,13 +137,13 @@ void t_xsd_generator::generate_service(t_service* tservice) {
     const std::vector<t_field*>& xceptions = xs->get_members();
     vector<t_field*>::const_iterator x_iter;
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-      all_xceptions.insert((t_struct*)((*x_iter)->get_type()));
+      all_xceptions[(*x_iter)->get_name()] = (t_struct*)((*x_iter)->get_type());
     }
   }
 
-  set<t_struct*>::iterator ax_iter;
+  map<string, t_struct*>::iterator ax_iter;
   for (ax_iter = all_xceptions.begin(); ax_iter != all_xceptions.end(); ++ax_iter) {
-    generate_element(f_xsd_, (*ax_iter)->get_name(), *ax_iter);
+    generate_element(f_xsd_, ax_iter->first, ax_iter->second);
   }
 
   // Close the XSD document
