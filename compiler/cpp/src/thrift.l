@@ -60,6 +60,7 @@ sliteral      ("'"[^']*"'")
 "java_package"  { return tok_java_package;  }
 "php_namespace" { return tok_php_namespace; }
 "xsd_all"       { return tok_xsd_all;       }
+"xsd_optional"  { return tok_xsd_optional;  }
 "include"       { return tok_include;       }
 
 "void"          { return tok_void;          }

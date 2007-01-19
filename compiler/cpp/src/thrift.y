@@ -67,6 +67,7 @@ int y_field_val = -1;
 %token tok_php_namespace
 %token tok_java_package
 %token tok_xsd_all
+%token tok_xsd_optional
 
 /**
  * Base datatype keywords
@@ -143,11 +144,12 @@ int y_field_val = -1;
 %type<ttype>     FunctionType
 %type<tservice>  FunctionList
 
-%type<tstruct>   ThrowsOptional
-%type<tservice>  ExtendsOptional
-%type<tbool>     AsyncOptional
-%type<tbool>     XsdAllOptional
-%type<id>        CppTypeOptional
+%type<tstruct>   Throws
+%type<tservice>  Extends
+%type<tbool>     Async
+%type<tbool>     XsdAll
+%type<tbool>     XsdOptional
+%type<id>        CppType
 
 %%
 
@@ -443,7 +445,7 @@ ConstMapContents:
     }
 
 Struct:
-  tok_struct tok_identifier XsdAllOptional '{' FieldList '}'
+  tok_struct tok_identifier XsdAll '{' FieldList '}'
     {
       pdebug("Struct -> tok_struct tok_identifier { FieldList }");
       $5->set_name($2);
@@ -452,8 +454,18 @@ Struct:
       y_field_val = -1;
     }
 
-XsdAllOptional:
+XsdAll:
   tok_xsd_all
+    {
+      $$ = true;
+    }
+|
+    {
+      $$ = false;
+    }
+
+XsdOptional:
+  tok_xsd_optional
     {
       $$ = true;
     }
@@ -473,7 +485,7 @@ Xception:
     }
 
 Service:
-  tok_service tok_identifier ExtendsOptional '{' FunctionList '}'
+  tok_service tok_identifier Extends '{' FunctionList '}'
     {
       pdebug("Service -> tok_service tok_identifier { FunctionList }");
       $$ = $5;
@@ -481,10 +493,10 @@ Service:
       $$->set_extends($3);
     }
 
-ExtendsOptional:
+Extends:
   tok_extends tok_identifier
     {
-      pdebug("ExtendsOptional -> tok_extends tok_identifier");
+      pdebug("Extends -> tok_extends tok_identifier");
       $$ = NULL;
       if (g_parse_mode == PROGRAM) {
         $$ = g_scope->get_service($2);
@@ -513,14 +525,14 @@ FunctionList:
     }
 
 Function:
-  AsyncOptional FunctionType tok_identifier '(' FieldList ')' ThrowsOptional CommaOrSemicolonOptional
+  Async FunctionType tok_identifier '(' FieldList ')' Throws CommaOrSemicolonOptional
     {
       $5->set_name(std::string($3) + "_args");
       $$ = new t_function($2, $3, $5, $7, $1);
       y_field_val = -1;
     }
 
-AsyncOptional:
+Async:
   tok_async
     {
       $$ = true;
@@ -530,10 +542,10 @@ AsyncOptional:
       $$ = false;
     }
 
-ThrowsOptional:
+Throws:
   tok_throws '(' FieldList ')'
     {
-      pdebug("ThrowsOptional -> tok_throws ( FieldList )");
+      pdebug("Throws -> tok_throws ( FieldList )");
       $$ = $3;
     }
 |
@@ -555,7 +567,7 @@ FieldList:
     }
 
 Field:
-  tok_int_constant ':' FieldType tok_identifier CommaOrSemicolonOptional
+  tok_int_constant ':' FieldType tok_identifier XsdOptional CommaOrSemicolonOptional
     {
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
       if ($1 <= 0) {
@@ -563,12 +575,14 @@ Field:
         $1 = y_field_val--;
       }
       $$ = new t_field($3, $4, $1);
+      $$->set_xsd_optional($5);
     }
-| FieldType tok_identifier CommaOrSemicolonOptional
+| FieldType tok_identifier XsdOptional CommaOrSemicolonOptional
     {
       pdebug("Field -> FieldType tok_identifier");
       pwarning(2, "No field key specified for '%s', resulting protocol may have conflicts or not be backwards compatible!\n", $2);
       $$ = new t_field($1, $2, y_field_val--);
+      $$->set_xsd_optional($3);
     }
 | FieldType tok_identifier '=' tok_int_constant CommaOrSemicolonOptional
     {
@@ -692,7 +706,7 @@ ContainerType:
     }
 
 MapType:
-  tok_map CppTypeOptional '<' FieldType ',' FieldType '>'
+  tok_map CppType '<' FieldType ',' FieldType '>'
     {
       pdebug("MapType -> tok_map <FieldType, FieldType>");
       $$ = new t_map($4, $6);
@@ -702,7 +716,7 @@ MapType:
     }
 
 SetType:
-  tok_set CppTypeOptional '<' FieldType '>'
+  tok_set CppType '<' FieldType '>'
     {
       pdebug("SetType -> tok_set<FieldType>");
       $$ = new t_set($4);
@@ -712,7 +726,7 @@ SetType:
     }
 
 ListType:
-  tok_list '<' FieldType '>' CppTypeOptional
+  tok_list '<' FieldType '>' CppType
     {
       pdebug("ListType -> tok_list<FieldType>");
       $$ = new t_list($3);
@@ -721,7 +735,7 @@ ListType:
       }
     }
 
-CppTypeOptional:
+CppType:
   '[' tok_cpp_type tok_literal ']'
     {
       $$ = $3;

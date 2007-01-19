@@ -38,7 +38,7 @@ void t_xsd_generator::generate_struct(t_struct* tstruct) {
   indent_up();
   
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    generate_element(s_xsd_types_, (*m_iter)->get_name(), (*m_iter)->get_type());
+    generate_element(s_xsd_types_, (*m_iter)->get_name(), (*m_iter)->get_type(), (*m_iter)->get_xsd_optional());
   } 
 
   indent_down();
@@ -55,10 +55,13 @@ void t_xsd_generator::generate_struct(t_struct* tstruct) {
 
 void t_xsd_generator::generate_element(ostream& out,
                                        string name,
-                                       t_type* ttype) {
+                                       t_type* ttype,
+                                       bool optional) {
+  string soptional = optional ? " minoccurs=\"0\" maxOccurs=\"1\"" : "";
+
   if (ttype->is_void() || ttype->is_list()) {
     indent(out) <<
-      "<xsd:element name=\"" << name << "\">" << endl;
+      "<xsd:element name=\"" << name << "\"" << soptional << ">" << endl;
     indent_up();
     if (ttype->is_void()) {
       indent(out) << 
@@ -87,7 +90,7 @@ void t_xsd_generator::generate_element(ostream& out,
       "</xsd:element>" << endl;
   } else {
     indent(out) <<
-      "<xsd:element name=\"" << name << "\" type=\"" << type_name(ttype) << "\" />" << endl;
+      "<xsd:element name=\"" << name << "\"" << soptional << " type=\"" << type_name(ttype) << "\" />" << endl;
   }
 }
 

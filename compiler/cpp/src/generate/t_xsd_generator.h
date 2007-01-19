@@ -40,7 +40,7 @@ class t_xsd_generator : public t_generator {
 
  private:
 
-  void generate_element(std::ostream& out, std::string name, t_type* ttype);
+  void generate_element(std::ostream& out, std::string name, t_type* ttype, bool optional=false);
 
   std::string ns(std::string in, std::string ns) {
     return ns + ":" + in;

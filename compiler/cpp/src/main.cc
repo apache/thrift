@@ -435,6 +435,7 @@ void parse(t_program* program, t_program* parent_program) {
   g_program = program;
   g_scope = program->scope();
   try {
+    yylineno = 1;
     if (yyparse() != 0) {
       failure("Parser error during include pass.");
     }
@@ -462,6 +463,7 @@ void parse(t_program* program, t_program* parent_program) {
     failure("Could not open input file: \"%s\"", path.c_str());
   }
   pverbose("Parsing %s for types\n", path.c_str());
+  yylineno = 1;
   if (yyparse() != 0) {
     failure("Parser error during types pass.");
   }
