@@ -110,10 +110,6 @@ void t_php_generator::generate_enum(t_enum* tenum) {
       "const " << (*c_iter)->get_name() << " = " << value << ";" << endl;
   }
 
-  // Prevent instantiation of this class
-  f_types_ <<
-    indent() << "private function __construct() {}" << endl;
-
   indent_down();
   f_types_ << "}" << endl << endl;
 }
