@@ -50,6 +50,13 @@ class TNonblockingServer : public TServer {
   void handleEvent(int fd, short which);
 
  public:
+  TNonblockingServer(shared_ptr<TProcessor> processor,
+                     int port) :
+    TServer(processor),
+    serverSocket_(0),
+    port_(port),
+    frameResponses_(true) {}
+
   TNonblockingServer(shared_ptr<TProcessor> processor, 
                      shared_ptr<TProtocolFactory> protocolFactory,
                      int port) :
