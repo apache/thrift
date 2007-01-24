@@ -79,30 +79,30 @@ uint32_t TBinaryProtocol::writeSetEnd() {
 
 uint32_t TBinaryProtocol::writeBool(const bool value) {
   uint8_t tmp =  value ? 1 : 0;
-  outputTransport_->write(&tmp, 1);
+  trans_->write(&tmp, 1);
   return 1;
 }
 
 uint32_t TBinaryProtocol::writeByte(const int8_t byte) {
-  outputTransport_->write((uint8_t*)&byte, 1);
+  trans_->write((uint8_t*)&byte, 1);
   return 1;
 }
 
 uint32_t TBinaryProtocol::writeI16(const int16_t i16) {
   int16_t net = (int16_t)htons(i16);
-  outputTransport_->write((uint8_t*)&net, 2);
+  trans_->write((uint8_t*)&net, 2);
   return 2;
 }
 
 uint32_t TBinaryProtocol::writeI32(const int32_t i32) {
   int32_t net = (int32_t)htonl(i32);
-  outputTransport_->write((uint8_t*)&net, 4);
+  trans_->write((uint8_t*)&net, 4);
   return 4;
 }
 
 uint32_t TBinaryProtocol::writeI64(const int64_t i64) {
   int64_t net = (int64_t)htonll(i64);
-  outputTransport_->write((uint8_t*)&net, 8);
+  trans_->write((uint8_t*)&net, 8);
   return 8;
 }
   
@@ -117,14 +117,14 @@ uint32_t TBinaryProtocol::writeDouble(const double dub) {
   b[5] = d[2];
   b[6] = d[1];
   b[7] = d[0];
-  outputTransport_->write((uint8_t*)b, 8);
+  trans_->write((uint8_t*)b, 8);
   return 8;
 }
 
   
 uint32_t TBinaryProtocol::writeString(const string& str) {
   uint32_t result = writeI32(str.size());
-  outputTransport_->write((uint8_t*)str.data(), str.size());
+  trans_->write((uint8_t*)str.data(), str.size());
   return result + str.size();
 }
 
@@ -233,21 +233,21 @@ uint32_t TBinaryProtocol::readSetEnd() {
 
 uint32_t TBinaryProtocol::readBool(bool& value) {
   uint8_t b[1];
-  inputTransport_->readAll(b, 1);
+  trans_->readAll(b, 1);
   value = *(int8_t*)b != 0;
   return 1;
 }
 
 uint32_t TBinaryProtocol::readByte(int8_t& byte) {
   uint8_t b[1];
-  inputTransport_->readAll(b, 1);
+  trans_->readAll(b, 1);
   byte = *(int8_t*)b;
   return 1;
 }
 
 uint32_t TBinaryProtocol::readI16(int16_t& i16) {
   uint8_t b[2];
-  inputTransport_->readAll(b, 2);
+  trans_->readAll(b, 2);
   i16 = *(int16_t*)b;
   i16 = (int16_t)ntohs(i16);
   return 2;
@@ -255,7 +255,7 @@ uint32_t TBinaryProtocol::readI16(int16_t& i16) {
 
 uint32_t TBinaryProtocol::readI32(int32_t& i32) {
   uint8_t b[4];
-  inputTransport_->readAll(b, 4);
+  trans_->readAll(b, 4);
   i32 = *(int32_t*)b;
   i32 = (int32_t)ntohl(i32);
   return 4;
@@ -263,7 +263,7 @@ uint32_t TBinaryProtocol::readI32(int32_t& i32) {
 
 uint32_t TBinaryProtocol::readI64(int64_t& i64) {
   uint8_t b[8];
-  inputTransport_->readAll(b, 8);
+  trans_->readAll(b, 8);
   i64 = *(int64_t*)b;
   i64 = (int64_t)ntohll(i64);
   return 8;
@@ -272,7 +272,7 @@ uint32_t TBinaryProtocol::readI64(int64_t& i64) {
 uint32_t TBinaryProtocol::readDouble(double& dub) {
   uint8_t b[8];
   uint8_t d[8];
-  inputTransport_->readAll(b, 8);
+  trans_->readAll(b, 8);
   d[0] = b[7];
   d[1] = b[6];
   d[2] = b[5];
@@ -294,7 +294,7 @@ uint32_t TBinaryProtocol::readString(string& str) {
 
   // Use the heap here to prevent stack overflow for v. large strings
   uint8_t *b = new uint8_t[size];
-  inputTransport_->readAll(b, size);
+  trans_->readAll(b, size);
   str = string((char*)b, size);
   delete [] b;
 

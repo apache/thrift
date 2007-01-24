@@ -14,8 +14,10 @@ namespace facebook { namespace thrift { namespace server {
 void TSimpleServer::serve() {
 
   shared_ptr<TTransport> client;
-  pair<shared_ptr<TTransport>,shared_ptr<TTransport> > iot;
-  pair<shared_ptr<TProtocol>,shared_ptr<TProtocol> > iop;
+  shared_ptr<TTransport> inputTransport;
+  shared_ptr<TTransport> outputTransport;
+  shared_ptr<TProtocol> inputProtocol;
+  shared_ptr<TProtocol> outputProtocol;
 
   try {
     // Start the server listening
@@ -29,12 +31,14 @@ void TSimpleServer::serve() {
   try {
     while (true) {
       client = serverTransport_->accept();
-      iot = transportFactory_->getIOTransports(client);
-      iop = protocolFactory_->getIOProtocols(iot.first, iot.second);
+      inputTransport = inputTransportFactory_->getTransport(client);
+      outputTransport = outputTransportFactory_->getTransport(client);
+      inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
+      outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
       try {
-        while (processor_->process(iop.first, iop.second)) {
+        while (processor_->process(inputProtocol, outputProtocol)) {
           // Peek ahead, is the remote side closed?
-          if (!iot.first->peek()) {
+          if (!inputTransport->peek()) {
             break;
           }
         }
@@ -43,8 +47,8 @@ void TSimpleServer::serve() {
       } catch (TException& tx) {
         cerr << "TSimpleServer exception: " << tx.what() << endl;
       }
-      iot.first->close();
-      iot.second->close();
+      inputTransport->close();
+      outputTransport->close();
       client->close();
     }
   } catch (TTransportException& ttx) {

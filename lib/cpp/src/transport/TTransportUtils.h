@@ -122,9 +122,8 @@ class TBufferedTransportFactory : public TTransportFactory {
   /**
    * Wraps the transport into a buffered one.
    */
-  virtual std::pair<boost::shared_ptr<TTransport>, boost::shared_ptr<TTransport> > getIOTransports(boost::shared_ptr<TTransport> trans) {
-    boost::shared_ptr<TTransport> buffered(new TBufferedTransport(trans));
-    return std::make_pair(buffered, buffered);
+  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
+    return boost::shared_ptr<TTransport>(new TBufferedTransport(trans));
   }
 
 };

@@ -28,17 +28,13 @@ namespace facebook { namespace thrift { namespace server {
   // Set flags, which also registers the event
   setFlags(eventFlags);
 
-  // TODO: this needs to be replaced by the new version of TTransportFactory
-  factoryInputTransport_ = (s->getTransportFactory()->getIOTransports(inputTransport_)).first;
-  //  factoryOutputTransport_ = (transportFactory->getIOTransports(outputTransport_)).first;
+  // get input/transports
+  factoryInputTransport_ = s->getInputTransportFactory()->getTransport(inputTransport_);
+  factoryOutputTransport_ = s->getOutputTransportFactory()->getTransport(outputTransport_);
 
   // Create protocol
-  std::pair<shared_ptr<TProtocol>,shared_ptr<TProtocol> > iop;
-  iop = s->getProtocolFactory()->getIOProtocols(factoryInputTransport_ ,
-                                                outputTransport_);
-  inputProtocol_ = iop.first;
-  outputProtocol_ = iop.second;
-
+  inputProtocol_ = s->getInputProtocolFactory()->getProtocol(factoryInputTransport_);
+  outputProtocol_ = s->getOutputProtocolFactory()->getProtocol(factoryOutputTransport_);
 }
 
 void TConnection::workSocket() {
@@ -353,7 +349,7 @@ void TConnection::close() {
 
   // close any factory produced transports
   factoryInputTransport_->close();
-  //  factoryOutputTransport_->close();
+  factoryOutputTransport_->close();
 
   // Give this object back to the server that owns it
   server_->returnConnection(this);
@@ -366,7 +362,7 @@ void TConnection::close() {
 TConnection* TNonblockingServer::createConnection(int socket, short flags) {
   // Check the stack
   if (connectionStack_.empty()) {
-    return new TConnection(socket, flags, this, this->getTransportFactory());
+    return new TConnection(socket, flags, this);
   } else {
     TConnection* result = connectionStack_.top();
     connectionStack_.pop();

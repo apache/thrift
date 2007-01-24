@@ -17,8 +17,8 @@ using namespace boost;
  */
     class TBinaryProtocol : public TProtocol {
  public:
-  TBinaryProtocol(shared_ptr<TTransport> in, shared_ptr<TTransport> out) :
-    TProtocol(in, out) {}
+  TBinaryProtocol(shared_ptr<TTransport> trans) :
+    TProtocol(trans) {}
 
   ~TBinaryProtocol() {}
 
@@ -137,9 +137,8 @@ class TBinaryProtocolFactory : public TProtocolFactory {
 
   virtual ~TBinaryProtocolFactory() {}
 
-  std::pair<boost::shared_ptr<TProtocol>, boost::shared_ptr<TProtocol> > getIOProtocols(boost::shared_ptr<TTransport> in, boost::shared_ptr<TTransport> out) {
-    boost::shared_ptr<TProtocol> prot(new TBinaryProtocol(in, out));
-    return std::make_pair(prot, prot);
+  boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) {
+    return boost::shared_ptr<TProtocol>(new TBinaryProtocol(trans));
   }
 };
 

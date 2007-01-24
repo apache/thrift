@@ -155,8 +155,8 @@ class TTransportFactory {
   /**
    * Default implementation does nothing, just returns the transport given.
    */
-  virtual std::pair<boost::shared_ptr<TTransport>, boost::shared_ptr<TTransport> > getIOTransports(boost::shared_ptr<TTransport> trans) {
-    return std::make_pair(trans, trans);
+  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
+    return trans;
   }
 
 };

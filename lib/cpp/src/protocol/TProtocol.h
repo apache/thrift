@@ -282,22 +282,24 @@ class TProtocol {
     }
   }
 
-  shared_ptr<TTransport> getInputTransport() {
-    return inputTransport_;
+  inline shared_ptr<TTransport> getTransport() {
+    return trans_;
   }
 
-  shared_ptr<TTransport> getOutputTransport() {
-    return outputTransport_;
+  // TODO: remove these two calls, they are for backwards
+  // compatibility
+  inline shared_ptr<TTransport> getInputTransport() {
+    return trans_;
+  }
+  inline shared_ptr<TTransport> getOutputTransport() {
+    return trans_;
   }
 
  protected:
-  TProtocol(shared_ptr<TTransport> in, shared_ptr<TTransport> out) :
-    inputTransport_(in),
-    outputTransport_(out) {}
+  TProtocol(shared_ptr<TTransport> trans):
+    trans_(trans) {}
     
-  shared_ptr<TTransport> inputTransport_;
-
-  shared_ptr<TTransport> outputTransport_;
+  shared_ptr<TTransport> trans_;
 
  private:
   TProtocol() {}
@@ -312,7 +314,7 @@ class TProtocolFactory {
 
   virtual ~TProtocolFactory() {}
 
-  virtual std::pair<boost::shared_ptr<TProtocol>, boost::shared_ptr<TProtocol> > getIOProtocols(boost::shared_ptr<TTransport> in, boost::shared_ptr<TTransport> out) = 0;
+  virtual boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) = 0;
 };
 
 }}} // facebook::thrift::protocol

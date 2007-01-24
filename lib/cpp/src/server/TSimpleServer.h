@@ -21,6 +21,16 @@ class TSimpleServer : public TServer {
                 shared_ptr<TTransportFactory> transportFactory,
                 shared_ptr<TProtocolFactory> protocolFactory) :
     TServer(processor, serverTransport, transportFactory, protocolFactory) {}
+
+  TSimpleServer(shared_ptr<TProcessor> processor,
+                shared_ptr<TServerTransport> serverTransport,
+                shared_ptr<TTransportFactory> inputTransportFactory,
+                shared_ptr<TTransportFactory> outputTransportFactory,
+                shared_ptr<TProtocolFactory> inputProtocolFactory,
+                shared_ptr<TProtocolFactory> outputProtocolFactory):
+    TServer(processor, serverTransport, 
+            inputTransportFactory, outputTransportFactory,
+            inputProtocolFactory, outputProtocolFactory) {}
     
   ~TSimpleServer() {}
 

@@ -38,73 +38,92 @@ public:
     return serverTransport_;
   }
 
-  shared_ptr<TTransportFactory> getTransportFactory() {
-    return transportFactory_;
+  shared_ptr<TTransportFactory> getInputTransportFactory() {
+    return inputTransportFactory_;
+  }
+
+  shared_ptr<TTransportFactory> getOutputTransportFactory() {
+    return outputTransportFactory_;
   }
   
-  shared_ptr<TProtocolFactory> getProtocolFactory() {
-    return protocolFactory_;
+  shared_ptr<TProtocolFactory> getInputProtocolFactory() {
+    return inputProtocolFactory_;
   }
 
+  shared_ptr<TProtocolFactory> getOutputProtocolFactory() {
+    return outputProtocolFactory_;
+  }
 
 protected:
+  TServer(shared_ptr<TProcessor> processor):
+    processor_(processor) {
+    setInputTransportFactory(shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setOutputTransportFactory(shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setInputProtocolFactory(shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+    setOutputProtocolFactory(shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+  }
+
+  TServer(shared_ptr<TProcessor> processor,
+          shared_ptr<TServerTransport> serverTransport):
+    processor_(processor),
+    serverTransport_(serverTransport) {
+    setInputTransportFactory(shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setOutputTransportFactory(shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setInputProtocolFactory(shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+    setOutputProtocolFactory(shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+  }
+
   TServer(shared_ptr<TProcessor> processor,
           shared_ptr<TServerTransport> serverTransport,
           shared_ptr<TTransportFactory> transportFactory,
-          shared_ptr<TProtocolFactory> protocolFactory) :
+          shared_ptr<TProtocolFactory> protocolFactory):
     processor_(processor),
     serverTransport_(serverTransport),
-    transportFactory_(transportFactory),
-    protocolFactory_(protocolFactory) {}
+    inputTransportFactory_(transportFactory),
+    outputTransportFactory_(transportFactory),
+    inputProtocolFactory_(protocolFactory),
+    outputProtocolFactory_(protocolFactory) {}
 
   TServer(shared_ptr<TProcessor> processor,
           shared_ptr<TServerTransport> serverTransport,
-          shared_ptr<TTransportFactory> transportFactory) :
+          shared_ptr<TTransportFactory> inputTransportFactory,
+          shared_ptr<TTransportFactory> outputTransportFactory,
+          shared_ptr<TProtocolFactory> inputProtocolFactory,
+          shared_ptr<TProtocolFactory> outputProtocolFactory):
     processor_(processor),
     serverTransport_(serverTransport),
-    transportFactory_(transportFactory) {
-  protocolFactory_ = boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory());
- }
+    inputTransportFactory_(inputTransportFactory),
+    outputTransportFactory_(outputTransportFactory),
+    inputProtocolFactory_(inputProtocolFactory),
+    outputProtocolFactory_(outputProtocolFactory) {}
 
-  TServer(shared_ptr<TProcessor> processor,
-          shared_ptr<TServerTransport> serverTransport) :
-    processor_(processor),
-    serverTransport_(serverTransport) {
-    transportFactory_ = boost::shared_ptr<TTransportFactory>(new TTransportFactory());
-    protocolFactory_ = boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory());
-  }
-
-  TServer(shared_ptr<TProcessor> processor) :
-    processor_(processor) {
-    transportFactory_ = boost::shared_ptr<TTransportFactory>(new TTransportFactory());
-    protocolFactory_ = boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory());
-  }
-
-  TServer(shared_ptr<TProcessor> processor, 
-          shared_ptr<TTransportFactory> transportFactory) :
-    processor_(processor),
-    transportFactory_(transportFactory) {
-    protocolFactory_ = boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory());
-  }
-
-  TServer(shared_ptr<TProcessor> processor, 
-          shared_ptr<TProtocolFactory> protocolFactory) :
-    processor_(processor) {
-    transportFactory_ = boost::shared_ptr<TTransportFactory>(new TTransportFactory());
-    protocolFactory_ = protocolFactory;
-  }
-
-  TServer(shared_ptr<TProcessor>        processor,           
-          shared_ptr<TProtocolFactory>  protocolFactory,
-          shared_ptr<TTransportFactory> transportFactory):
-    processor_(processor),
-    transportFactory_(transportFactory),
-    protocolFactory_(protocolFactory) {}
  
+  // Class variables
   shared_ptr<TProcessor> processor_;
   shared_ptr<TServerTransport> serverTransport_;
-  shared_ptr<TTransportFactory> transportFactory_;
-  shared_ptr<TProtocolFactory> protocolFactory_;
+
+  shared_ptr<TTransportFactory> inputTransportFactory_;
+  shared_ptr<TTransportFactory> outputTransportFactory_;
+
+  shared_ptr<TProtocolFactory> inputProtocolFactory_;
+  shared_ptr<TProtocolFactory> outputProtocolFactory_;
+
+  void setInputTransportFactory(shared_ptr<TTransportFactory> inputTransportFactory) {
+    inputTransportFactory_ = inputTransportFactory;
+  }
+
+  void setOutputTransportFactory(shared_ptr<TTransportFactory> outputTransportFactory) {
+    outputTransportFactory_ = outputTransportFactory;
+  }
+
+  void setInputProtocolFactory(shared_ptr<TProtocolFactory> inputProtocolFactory) {
+    inputProtocolFactory_ = inputProtocolFactory;
+  }
+
+  void setOutputProtocolFactory(shared_ptr<TProtocolFactory> outputProtocolFactory) {
+    outputProtocolFactory_ = outputProtocolFactory;
+  }
+
 };
   
 }}} // facebook::thrift::server

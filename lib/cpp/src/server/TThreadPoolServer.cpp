@@ -29,7 +29,7 @@ public:
   void run() {     
     try {
       while (processor_->process(input_, output_)) {
-        if (!input_->getInputTransport()->peek()) {
+        if (!input_->getTransport()->peek()) {
           break;
         }
       }
@@ -40,8 +40,8 @@ public:
     } catch (...) {
       cerr << "TThreadPoolServer uncaught exception." << endl;
     }
-    input_->getInputTransport()->close();
-    output_->getOutputTransport()->close();
+    input_->getTransport()->close();
+    output_->getTransport()->close();
   }
 
  private:
@@ -55,19 +55,31 @@ TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
                                      shared_ptr<TServerTransport> serverTransport,
                                      shared_ptr<TTransportFactory> transportFactory,
                                      shared_ptr<TProtocolFactory> protocolFactory,
-
                                      shared_ptr<ThreadManager> threadManager) :
   TServer(processor, serverTransport, transportFactory, protocolFactory), 
-  threadManager_(threadManager) {
-}
+  threadManager_(threadManager) {}
+
+TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
+                                     shared_ptr<TServerTransport> serverTransport,
+                                     shared_ptr<TTransportFactory> inputTransportFactory,
+                                     shared_ptr<TTransportFactory> outputTransportFactory,
+                                     shared_ptr<TProtocolFactory> inputProtocolFactory,
+                                     shared_ptr<TProtocolFactory> outputProtocolFactory, 
+                                     shared_ptr<ThreadManager> threadManager) :
+  TServer(processor, serverTransport, inputTransportFactory, outputTransportFactory,
+          inputProtocolFactory, outputProtocolFactory),
+  threadManager_(threadManager) {}
+
 
 TThreadPoolServer::~TThreadPoolServer() {}
 
 void TThreadPoolServer::serve() {
 
   shared_ptr<TTransport> client;
-  pair<shared_ptr<TTransport>,shared_ptr<TTransport> > iot;
-  pair<shared_ptr<TProtocol>,shared_ptr<TProtocol> > iop;
+  shared_ptr<TTransport> inputTransport;
+  shared_ptr<TTransport> outputTransport;
+  shared_ptr<TProtocol> inputProtocol;
+  shared_ptr<TProtocol> outputProtocol;
 
   try {
     // Start the server listening
@@ -82,11 +94,13 @@ void TThreadPoolServer::serve() {
       // Fetch client from server
       client = serverTransport_->accept();
       // Make IO transports
-      iot = transportFactory_->getIOTransports(client);
-      iop = protocolFactory_->getIOProtocols(iot.first, iot.second);
+      inputTransport = inputTransportFactory_->getTransport(client);
+      outputTransport = outputTransportFactory_->getTransport(client);
+      inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
+      outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
       // Add to threadmanager pool
-      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, iop.first, iop.second)));
+      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, inputProtocol, outputProtocol)));
     } catch (TTransportException& ttx) {
       break;
     }
