@@ -110,7 +110,8 @@ int main(int argc, char** argv) {
      * STRING TEST
      */
     printf("testString(\"Test\")");
-    string s = testClient.testString("Test");
+    string s;
+    testClient.testString(s, "Test");
     printf(" = \"%s\"\n", s.c_str());
    
     /**
@@ -150,7 +151,8 @@ int main(int argc, char** argv) {
     out.byte_thing = 1;
     out.i32_thing = -3;
     out.i64_thing = -5;
-    Xtruct in = testClient.testStruct(out);
+    Xtruct in;
+    testClient.testStruct(in, out);
     printf(" = {\"%s\", %d, %d, %ld}\n",
            in.string_thing.c_str(),
            (int)in.byte_thing,
@@ -165,7 +167,8 @@ int main(int argc, char** argv) {
     out2.byte_thing = 1;
     out2.struct_thing = out;
     out2.i32_thing = 5;
-    Xtruct2 in2 = testClient.testNest(out2);
+    Xtruct2 in2;
+    testClient.testNest(in2, out2);
     in = in2.struct_thing;
     printf(" = {%d, {\"%s\", %d, %d, %ld}, %d}\n",
            in2.byte_thing,
@@ -194,7 +197,8 @@ int main(int argc, char** argv) {
       printf("%d => %d", m_iter->first, m_iter->second);
     }
     printf("})");
-    map<int32_t,int32_t> mapin = testClient.testMap(mapout);
+    map<int32_t,int32_t> mapin;
+    testClient.testMap(mapin, mapout);
     printf(" = {");
     first = true;
     for (m_iter = mapin.begin(); m_iter != mapin.end(); ++m_iter) {
@@ -226,7 +230,8 @@ int main(int argc, char** argv) {
       printf("%d", *s_iter);
     }
     printf("})");
-    set<int32_t> setin = testClient.testSet(setout);
+    set<int32_t> setin;
+    testClient.testSet(setin, setout);
     printf(" = {");
     first = true;
     for (s_iter = setin.begin(); s_iter != setin.end(); ++s_iter) {
@@ -258,7 +263,8 @@ int main(int argc, char** argv) {
       printf("%d", *l_iter);
     }
     printf("})");
-    vector<int32_t> listin = testClient.testList(listout);
+    vector<int32_t> listin;
+    testClient.testList(listin, listout);
     printf(" = {");
     first = true;
     for (l_iter = listin.begin(); l_iter != listin.end(); ++l_iter) {
@@ -305,7 +311,8 @@ int main(int argc, char** argv) {
      * NESTED MAP TEST
      */
     printf("testMapMap(1)");
-    map<int32_t, map<int32_t, int32_t> > mm = testClient.testMapMap(1);
+    map<int32_t, map<int32_t, int32_t> > mm;
+    testClient.testMapMap(mm, 1);
     printf(" = {");
     map<int32_t, map<int32_t, int32_t> >::const_iterator mi;
     for (mi = mm.begin(); mi != mm.end(); ++mi) {
@@ -330,7 +337,8 @@ int main(int argc, char** argv) {
     truck.i64_thing = 8;
     insane.xtructs.push_back(truck);
     printf("testInsanity()");
-    map<UserId, map<Numberz,Insanity> > whoa = testClient.testInsanity(insane);
+    map<UserId, map<Numberz,Insanity> > whoa;
+    testClient.testInsanity(whoa, insane);
     printf(" = {");
     map<UserId, map<Numberz,Insanity> >::const_iterator i_iter;
     for (i_iter = whoa.begin(); i_iter != whoa.end(); ++i_iter) {
@@ -389,7 +397,8 @@ int main(int argc, char** argv) {
     
     try {
       printf("testClient.testMultiException(\"Xception\", \"test 1\") =>");
-      Xtruct result = testClient.testMultiException("Xception", "test 1");
+      Xtruct result;
+      testClient.testMultiException(result, "Xception", "test 1");
       printf("  result\nFAILURE\n");
     } catch(Xception& e) {
       printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
@@ -397,7 +406,8 @@ int main(int argc, char** argv) {
 
     try {
       printf("testClient.testMultiException(\"Xception2\", \"test 2\") =>");
-      Xtruct result = testClient.testMultiException("Xception2", "test 2");
+      Xtruct result;
+      testClient.testMultiException(result, "Xception2", "test 2");
       printf("  result\nFAILURE\n");
       
     } catch(Xception2& e) {
@@ -406,7 +416,8 @@ int main(int argc, char** argv) {
     
     try {
       printf("testClient.testMultiException(\"success\", \"test 3\") =>");
-      Xtruct result = testClient.testMultiException("success", "test 3");
+      Xtruct result;
+      testClient.testMultiException(result, "success", "test 3");
       printf("  {{\"%s\"}}\n", result.string_thing.c_str());
     } catch(...) {
       printf("  exception\nFAILURE\n");

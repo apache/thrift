@@ -29,43 +29,43 @@ class TestHandler : public ThriftTestIf {
     printf("testVoid()\n");
   }
 
-  string testString(string thing) {
+  void testString(string& out, const string &thing) {
     printf("testString(\"%s\")\n", thing.c_str());
-    return thing;
+    out = thing;
   }
 
-  int8_t testByte(int8_t thing) {
+  int8_t testByte(const int8_t thing) {
     printf("testByte(%d)\n", (int)thing);
     return thing;
   }
 
-  int32_t testI32(int32_t thing) {
+  int32_t testI32(const int32_t thing) {
     printf("testI32(%d)\n", thing);
     return thing;
   }
 
-  int64_t testI64(int64_t thing) {
+  int64_t testI64(const int64_t thing) {
     printf("testI64(%ld)\n", thing);
     return thing;
   }
 
-  double testDouble(double thing) {
+  double testDouble(const double thing) {
     printf("testDouble(%lf)\n", thing);
     return thing;
   }
 
-  Xtruct testStruct(Xtruct thing) {
+  void testStruct(Xtruct& out, const Xtruct &thing) {
     printf("testStruct({\"%s\", %d, %d, %ld})\n", thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing);
-    return thing;
+    out = thing;
   }
 
-  Xtruct2 testNest(Xtruct2 nest) {
-    Xtruct thing = nest.struct_thing;
+  void testNest(Xtruct2& out, const Xtruct2& nest) {
+    const Xtruct &thing = nest.struct_thing;
     printf("testNest({%d, {\"%s\", %d, %d, %ld}, %d})\n", (int)nest.byte_thing, thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing, nest.i32_thing);
-    return nest;
+    out = nest;
   }
 
-  map<int32_t, int32_t> testMap(map<int32_t, int32_t> thing) {
+  void testMap(map<int32_t, int32_t> &out, const map<int32_t, int32_t> &thing) {
     printf("testMap({");
     map<int32_t, int32_t>::const_iterator m_iter;
     bool first = true;
@@ -78,10 +78,10 @@ class TestHandler : public ThriftTestIf {
       printf("%d => %d", m_iter->first, m_iter->second);
     }
     printf("})\n");
-    return thing;
+    out = thing;
   }
 
-  set<int32_t> testSet(set<int32_t> thing) {
+  void testSet(set<int32_t> &out, const set<int32_t> &thing) {
     printf("testSet({");
     set<int32_t>::const_iterator s_iter;
     bool first = true;
@@ -94,10 +94,10 @@ class TestHandler : public ThriftTestIf {
       printf("%d", *s_iter);
     }
     printf("})\n");
-    return thing;
+    out = thing;
   }
 
-  vector<int32_t> testList(vector<int32_t> thing) {
+  void testList(vector<int32_t> &out, const vector<int32_t> &thing) {
     printf("testList({");
     vector<int32_t>::const_iterator l_iter;
     bool first = true;
@@ -110,22 +110,21 @@ class TestHandler : public ThriftTestIf {
       printf("%d", *l_iter);
     }
     printf("})\n");
-    return thing;
+    out = thing;
   }
 
-  Numberz testEnum(Numberz thing) {
+  Numberz testEnum(const Numberz thing) {
     printf("testEnum(%d)\n", thing);
     return thing;
   }
 
-  UserId testTypedef(UserId thing) {
+  UserId testTypedef(const UserId thing) {
     printf("testTypedef(%ld)\n", thing);
     return thing;
   }
 
-  map<int32_t, map<int32_t,int32_t> > testMapMap(int32_t hello) {
+  void testMapMap(map<int32_t, map<int32_t,int32_t> > &mapmap, const int32_t hello) {
     printf("testMapMap(%d)\n", hello);
-    map<int32_t, map<int32_t,int32_t> > mapmap;
 
     map<int32_t,int32_t> pos;
     map<int32_t,int32_t> neg;
@@ -137,10 +136,9 @@ class TestHandler : public ThriftTestIf {
     mapmap.insert(make_pair(4, pos));
     mapmap.insert(make_pair(-4, neg));
 
-    return mapmap;
   }
 
-  map<UserId, map<Numberz,Insanity> > testInsanity(Insanity argument) {
+  void testInsanity(map<UserId, map<Numberz,Insanity> > &insane, const Insanity &argument) {
     printf("testInsanity()\n");
     
     Xtruct hello;
@@ -171,7 +169,6 @@ class TestHandler : public ThriftTestIf {
 
     second_map.insert(make_pair(SIX, looney));
 
-    map<UserId, map<Numberz,Insanity> > insane;
     insane.insert(make_pair(1, first_map));
     insane.insert(make_pair(2, second_map));
 
@@ -207,22 +204,19 @@ class TestHandler : public ThriftTestIf {
     }
     printf("}\n");
 
-    return insane;
+    
   }
 
-  Xtruct testMulti(int8_t arg0, int32_t arg1, int64_t arg2, std::map<int16_t, std::string>  arg3, Numberz arg4, UserId arg5) {
+  void testMulti(Xtruct &hello, const int8_t arg0, const int32_t arg1, const int64_t arg2, const std::map<int16_t, std::string>  &arg3, const Numberz arg4, const UserId arg5) {
     printf("testMulti()\n");
     
-    Xtruct hello;
     hello.string_thing = "Hello2";
     hello.byte_thing = arg0;
     hello.i32_thing = arg1;
     hello.i64_thing = (int64_t)arg2;
-
-    return hello;
   }
 
-  void testException(std::string arg) throw(Xception) {
+  void testException(const std::string &arg) throw(Xception) {
     printf("testException(%s)\n", arg.c_str());
     if (arg.compare("Xception") == 0) {
       Xception e;
@@ -236,7 +230,7 @@ class TestHandler : public ThriftTestIf {
     }
   }
   
-  Xtruct testMultiException(std::string arg0, std::string arg1) throw(Xception, Xception2) {
+  void testMultiException(Xtruct &result, const std::string &arg0, const std::string &arg1) throw(Xception, Xception2) {
 
     printf("testMultiException(%s, %s)\n", arg0.c_str(), arg1.c_str());
 
@@ -251,9 +245,8 @@ class TestHandler : public ThriftTestIf {
       e.struct_thing.string_thing = "This is an Xception2";
       throw e;
     } else {
-      Xtruct result;
       result.string_thing = arg1;
-      return  result;
+      return;
     }
   }
 };
