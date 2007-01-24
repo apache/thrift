@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     transport = bufferedSocket;
   }
 
-  shared_ptr<TBinaryProtocol> protocol(new TBinaryProtocol(transport, transport));
+  shared_ptr<TBinaryProtocol> protocol(new TBinaryProtocol(transport));
   ThriftTestClient testClient(protocol);
 
   uint64_t time_min = 0;
