@@ -229,9 +229,7 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
   ++g_socket_syscalls;
   
   // Check for error on read
-  if (got < 0) {
-    perror("TSocket::read()");
-    
+  if (got < 0) {   
     // If temporarily out of resources, sleep a bit and try again
     if (errno == EAGAIN && retries++ < MAX_RECV_RETRIES) {
       usleep(50);
@@ -243,6 +241,9 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
       goto try_again;
     }
     
+    // Now it's not a try again case, but a real probblez
+    perror("TSocket::read()");
+
     // If we disconnect with no linger time
     if (errno == ECONNRESET) {
       throw TTransportException(TTX_NOT_OPEN, "ECONNRESET");
