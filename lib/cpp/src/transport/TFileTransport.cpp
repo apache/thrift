@@ -557,21 +557,32 @@ void TFileTransport::seekToChunk(int32_t chunk) {
     throw TTransportException("File not open");
   }
  
-  int32_t lastChunk = getNumChunks();
+  int32_t numChunks = getNumChunks();
+
+  // file is empty, seeking to chunk is pointless
+  if (numChunks == 0) {
+    return;
+  }
 
   // negative indicates reverse seek (from the end)
   if (chunk < 0) {
-    chunk += lastChunk;
+    chunk += numChunks;
+  }
+
+  // too large a value for reverse seek, just seek to beginning
+  if (chunk < 0) {
+    T_DEBUG("Incorrect value for reverse seek. Seeking to beginning...", chunk)
+    chunk = 0;
   }
   
   // cannot seek past EOF
-  if (chunk > lastChunk) {
-    T_DEBUG("Trying to seek past EOF. Seeking to EOF instead");
-    chunk = lastChunk;
-  }
-
+  bool seekToEnd = false;
   uint32_t minEndOffset = 0;
-  if (chunk == lastChunk) {
+  if (chunk >= numChunks) {
+    T_DEBUG("Trying to seek past EOF. Seeking to EOF instead...");
+    seekToEnd = true;
+    chunk = numChunks - 1;
+    // this is the min offset to process events till
     minEndOffset = lseek(fd_, 0, SEEK_END);
   }
   
@@ -583,13 +594,13 @@ void TFileTransport::seekToChunk(int32_t chunk) {
   }
 
   // seek to EOF if user wanted to go to last chunk
-  uint32_t oldReadTimeout = getReadTimeout();
-  setReadTimeout(0);  
-  if (chunk == lastChunk) {
+  if (seekToEnd) {
+    uint32_t oldReadTimeout = getReadTimeout();
+    setReadTimeout(0);  
     // keep on reading unti the last event at point of seekChunk call
     while( readEvent() && ((offset_ + readState_.bufferPtr_) < minEndOffset)) {};
+    setReadTimeout(oldReadTimeout);
   }
-  setReadTimeout(oldReadTimeout);
 
 }
 
@@ -603,7 +614,12 @@ uint32_t TFileTransport::getNumChunks() {
   }
   struct stat f_info;
   fstat(fd_, &f_info);
-  return (f_info.st_size)/chunkSize_;
+  if (f_info.st_size > 0) {
+    return ((f_info.st_size)/chunkSize_) + 1;
+  } 
+
+  // empty file has no chunks
+  return 0;  
 }
 
 uint32_t TFileTransport::getCurChunk() {
