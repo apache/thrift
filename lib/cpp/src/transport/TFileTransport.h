@@ -119,6 +119,8 @@ class TFileTransport : public TTransport {
     return readBuffSize_;
   }
 
+  static const int32_t TAIL_READ_TIMEOUT = -1;
+  static const int32_t NO_TAIL_READ_TIMEOUT = 0;
   void setReadTimeout(int32_t readTimeout) {
     readTimeout_ = readTimeout;
   }
@@ -205,6 +207,10 @@ class TFileTransport : public TTransport {
   // helper functions for reading from a file
   bool readEvent();
 
+  // event corruption-related functions
+  bool isEventCorrupted();
+  void performRecovery();
+
   // Utility functions
   void openLogFile();
   uint32_t getCurrentTime();
@@ -252,6 +258,10 @@ class TFileTransport : public TTransport {
   // sleep duration when EOF is hit
   uint32_t eofSleepTime_;
   static const uint32_t DEFAULT_EOF_SLEEP_TIME_US = 500 * 1000;
+
+  // sleep duration when a corrupted event is encountered
+  uint32_t corruptedEventSleepTime_;
+  static const uint32_t DEFAULT_CORRUPTED_SLEEP_TIME_US = 1 * 1000 * 1000;
     
   // writer thread id
   pthread_t writerThreadId_;
@@ -279,6 +289,10 @@ class TFileTransport : public TTransport {
   // Offset within the file
   off_t offset_;
 
+  // event corruption information
+  uint32_t lastBadChunk;
+  uint32_t numCorruptedEventsinChunk;
+  
 };
 
 // Exception thrown when EOF is hit
@@ -303,6 +317,11 @@ class TFileProcessor {
                  shared_ptr<TProtocolFactory> protocolFactory,
                  shared_ptr<TFileTransport> inputTransport);
 
+  TFileProcessor(shared_ptr<TProcessor> processor,
+                 shared_ptr<TProtocolFactory> inputProtocolFactory,
+                 shared_ptr<TProtocolFactory> outputProtocolFactory,
+                 shared_ptr<TFileTransport> inputTransport);
+
   /** 
    * Constructor
    * 
@@ -314,7 +333,7 @@ class TFileProcessor {
   TFileProcessor(shared_ptr<TProcessor> processor,
                  shared_ptr<TProtocolFactory> protocolFactory,
                  shared_ptr<TFileTransport> inputTransport,
-                 shared_ptr<TTransport> outputTransport);                      
+                 shared_ptr<TTransport> outputTransport);
 
   /**
    * processes events from the file
@@ -332,7 +351,8 @@ class TFileProcessor {
   
  private:
   shared_ptr<TProcessor> processor_;
-  shared_ptr<TProtocolFactory> protocolFactory_;
+  shared_ptr<TProtocolFactory> inputProtocolFactory_;
+  shared_ptr<TProtocolFactory> outputProtocolFactory_;
   shared_ptr<TFileTransport> inputTransport_;
   shared_ptr<TTransport> outputTransport_;
 };
