@@ -1119,7 +1119,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
       indent() << "args.write(oprot_);" << endl <<
       endl <<
       indent() << "oprot_->writeMessageEnd();" << endl <<
-      indent() << "oprot_->getOutputTransport()->flush();" << endl;
+      indent() << "oprot_->getTransport()->flush();" << endl;
        
     scope_down(f_service_);
     f_service_ << endl;
@@ -1411,7 +1411,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     indent() << argsname << " args;" << endl <<
     indent() << "args.read(iprot);" << endl <<
     indent() << "iprot->readMessageEnd();" << endl <<
-    indent() << "iprot->getInputTransport()->readEnd();" << endl <<
+    indent() << "iprot->getTransport()->readEnd();" << endl <<
     endl;
 
   t_struct* xs = tfunction->get_xceptions();
@@ -1500,8 +1500,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() << "\", facebook::thrift::protocol::T_REPLY, seqid);" << endl <<
     indent() << "result.write(oprot);" << endl <<
     indent() << "oprot->writeMessageEnd();" << endl <<
-    indent() << "oprot->getOutputTransport()->flush();" << endl <<
-    indent() << "oprot->getOutputTransport()->writeEnd();" << endl;
+    indent() << "oprot->getTransport()->flush();" << endl <<
+    indent() << "oprot->getTransport()->writeEnd();" << endl;
     
   // Close function
   scope_down(f_service_);
