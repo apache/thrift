@@ -49,10 +49,10 @@ class t_cpp_generator : public t_oop_generator {
   void print_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
   std::string render_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
 
-  void generate_struct_definition    (std::ofstream& out, t_struct* tstruct, bool is_exception=false);
-  void generate_struct_reader        (std::ofstream& out, t_struct* tstruct);
-  void generate_struct_writer        (std::ofstream& out, t_struct* tstruct);
-  void generate_struct_result_writer (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_definition    (std::ofstream& out, t_struct* tstruct, bool is_exception=false, bool pointers=false, bool read=true, bool write=true);
+  void generate_struct_reader        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
+  void generate_struct_writer        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
+  void generate_struct_result_writer (std::ofstream& out, t_struct* tstruct, bool pointers=false);
 
   /**
    * Service-level generation functions
@@ -74,7 +74,8 @@ class t_cpp_generator : public t_oop_generator {
 
   void generate_deserialize_field        (std::ofstream& out,
                                           t_field*    tfield, 
-                                          std::string prefix="");
+                                          std::string prefix="",
+                                          std::string suffix="");
   
   void generate_deserialize_struct       (std::ofstream& out,
                                           t_struct*   tstruct,
@@ -98,7 +99,8 @@ class t_cpp_generator : public t_oop_generator {
 
   void generate_serialize_field          (std::ofstream& out,
                                           t_field*    tfield,
-                                          std::string prefix="");
+                                          std::string prefix="",
+                                          std::string suffix="");
 
   void generate_serialize_struct         (std::ofstream& out,
                                           t_struct*   tstruct,
@@ -129,7 +131,7 @@ class t_cpp_generator : public t_oop_generator {
   std::string namespace_close(std::string ns);
   std::string type_name(t_type* ttype, bool in_typedef=false, bool arg=false);
   std::string base_type_name(t_base_type::t_base tbase);
-  std::string declare_field(t_field* tfield, bool init=false);
+  std::string declare_field(t_field* tfield, bool init=false, bool pointer=false, bool constant=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);

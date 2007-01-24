@@ -353,7 +353,10 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
  */
 void t_cpp_generator::generate_struct_definition(ofstream& out,
                                                  t_struct* tstruct,
-                                                 bool is_exception) {
+                                                 bool is_exception,
+                                                 bool pointers,
+                                                 bool read,
+                                                 bool write) {
   string extends = "";
   if (is_exception) {
     extends = " : public facebook::thrift::TException";
@@ -372,20 +375,22 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   
   // Default constructor
   bool init_ctor = false;
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    t_type* t = (*m_iter)->get_type();
-    while (t->is_typedef()) {
-      t = ((t_typedef*)t)->get_type();
-    }
-    if (t->is_base_type() &&
-        ((t_base_type*)t)->get_base() != t_base_type::TYPE_STRING) {
-      if (!init_ctor) {
-        init_ctor = true;
-        indent(out) <<
-          tstruct->get_name() << "() : ";
-        out << (*m_iter)->get_name() << "(0)";
-      } else {
-        out << ", " << (*m_iter)->get_name() << "(0)";
+  if (!pointers) {
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* t = (*m_iter)->get_type();
+      while (t->is_typedef()) {
+        t = ((t_typedef*)t)->get_type();
+      }
+      if (t->is_base_type() &&
+          ((t_base_type*)t)->get_base() != t_base_type::TYPE_STRING) {
+        if (!init_ctor) {
+          init_ctor = true;
+          indent(out) <<
+            tstruct->get_name() << "() : ";
+          out << (*m_iter)->get_name() << "(0)";
+        } else {
+          out << ", " << (*m_iter)->get_name() << "(0)";
+        }
       }
     }
   }
@@ -400,11 +405,11 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   // Declare all fields
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     indent(out) <<
-      declare_field(*m_iter) << endl;
+      declare_field(*m_iter, false, pointers && !(*m_iter)->get_type()->is_xception(), !read) << endl;
   }
   
   // Isset struct has boolean fields
-  if (members.size() > 0) {
+  if (members.size() > 0 && (!pointers || read)) {
     out <<
       endl <<
       indent() <<"struct __isset {" << endl;
@@ -436,9 +441,16 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   }
 
   out <<
-    endl <<
-    indent() << "uint32_t read(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot);" << endl <<
-    indent() << "uint32_t write(boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) const;" << endl <<
+    endl;
+  if (read) {
+    out <<
+      indent() << "uint32_t read(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot);" << endl;
+  }
+  if (write) {
+    out <<
+      indent() << "uint32_t write(boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) const;" << endl;
+  }
+  out <<
     endl;
 
   indent_down(); 
@@ -454,7 +466,8 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
  * @param tstruct The struct
  */
 void t_cpp_generator::generate_struct_reader(ofstream& out,
-                                             t_struct* tstruct) {
+                                             t_struct* tstruct,
+                                             bool pointers) {
   indent(out) <<
     "uint32_t " << tstruct->get_name() << "::read(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot) {" << endl;
   indent_up();
@@ -499,7 +512,11 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
         indent(out) <<
           "case " << (*f_iter)->get_key() << ":" << endl;
         indent_up();
-        generate_deserialize_field(out, *f_iter, "this->");
+        if (pointers && !(*f_iter)->get_type()->is_xception()) {
+          generate_deserialize_field(out, *f_iter, "(*(this->", "))");
+        } else {
+          generate_deserialize_field(out, *f_iter, "this->");
+        }
         out <<
           indent() << "this->__isset." << (*f_iter)->get_name() << " = true;" << endl <<
           indent() << "break;" << endl;
@@ -537,7 +554,8 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
  * @param tstruct The struct
  */
 void t_cpp_generator::generate_struct_writer(ofstream& out,
-                                             t_struct* tstruct) {
+                                             t_struct* tstruct,
+                                             bool pointers) {
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -559,7 +577,11 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
       type_to_enum((*f_iter)->get_type()) << ", " <<
       (*f_iter)->get_key() << ");" << endl;
     // Write field contents
-    generate_serialize_field(out, *f_iter, "this->");
+    if (pointers) {
+      generate_serialize_field(out, *f_iter, "(*(this->", "))");
+    } else {
+      generate_serialize_field(out, *f_iter, "this->");
+    }
     // Write field closer
     indent(out) <<
       "xfer += oprot->writeFieldEnd();" << endl;
@@ -585,7 +607,8 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
  * @param tstruct The result struct
  */
 void t_cpp_generator::generate_struct_result_writer(ofstream& out,
-                                                    t_struct* tstruct) {
+                                                    t_struct* tstruct,
+                                                    bool pointers) {
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -625,7 +648,11 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
       type_to_enum((*f_iter)->get_type()) << ", " <<
       (*f_iter)->get_key() << ");" << endl;
     // Write field contents
-    generate_serialize_field(out, *f_iter, "this->");
+    if (pointers) {
+      generate_serialize_field(out, *f_iter, "(*(this->", "))");
+    } else {
+      generate_serialize_field(out, *f_iter, "this->");
+    }
     // Write field closer
     indent(out) << "xfer += oprot->writeFieldEnd();" << endl;
 
@@ -728,12 +755,17 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
     string name_orig = ts->get_name();
+
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_args");
-    generate_struct_definition(f_service_, ts);
+    generate_struct_definition(f_service_, ts, false);
     generate_struct_reader(f_service_, ts);
     generate_struct_writer(f_service_, ts);
-    generate_function_helpers(tservice, *f_iter);
+    ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_pargs");
+    generate_struct_definition(f_service_, ts, false, true, false, true);
+    generate_struct_writer(f_service_, ts, true);
     ts->set_name(name_orig);
+
+    generate_function_helpers(tservice, *f_iter);
   }
 }
 
@@ -1068,8 +1100,8 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     scope_up(f_service_);
 
     // Function arguments and results
-    string argsname = tservice->get_name() + "_" + (*f_iter)->get_name() + "_args";
-    string resultname = tservice->get_name() + "_" + (*f_iter)->get_name() + "_result";
+    string argsname = tservice->get_name() + "_" + (*f_iter)->get_name() + "_pargs";
+    string resultname = tservice->get_name() + "_" + (*f_iter)->get_name() + "_presult";
 
     // Serialize the request
     f_service_ <<
@@ -1080,7 +1112,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ <<
-        indent() << "args." << (*fld_iter)->get_name() << " = " << (*fld_iter)->get_name() << ";" << endl;
+        indent() << "args." << (*fld_iter)->get_name() << " = &" << (*fld_iter)->get_name() << ";" << endl;
     }
       
     f_service_ <<
@@ -1117,8 +1149,24 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
       indent_down();
 
       f_service_ <<
-        indent() << "}" << endl <<
-        indent() << resultname << " result;" << endl <<
+        indent() << "}" << endl;
+
+      if (!(*f_iter)->get_returntype()->is_void() &&
+          !is_complex_type((*f_iter)->get_returntype())) {
+        t_field returnfield((*f_iter)->get_returntype(), "_return");
+        f_service_ <<
+          indent() << declare_field(&returnfield) << endl;
+      }
+
+      f_service_ <<
+        indent() << resultname << " result;" << endl;
+
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        f_service_ <<
+          indent() << "result.success = &_return;" << endl;
+      }
+
+      f_service_ <<
         indent() << "result.read(iprot_);" << endl <<
         indent() << "iprot_->readMessageEnd();" << endl <<
         endl;
@@ -1128,13 +1176,13 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
         if (is_complex_type((*f_iter)->get_returntype())) {
           f_service_ <<
             indent() << "if (result.__isset.success) {" << endl <<
-            indent() << "  _return = result.success;" << endl <<
+            indent() << "  // _return pointer has now been filled" << endl <<
             indent() << "  return;" << endl <<
             indent() << "}" << endl;
         } else {
           f_service_ <<
             indent() << "if (result.__isset.success) {" << endl <<
-            indent() << "  return result.success;" << endl <<
+            indent() << "  return _return;" << endl <<
             indent() << "}" << endl;
         }
       }
@@ -1332,9 +1380,14 @@ void t_cpp_generator::generate_function_helpers(t_service* tservice,
     result.append(*f_iter);
   }
 
-  generate_struct_definition(f_service_, &result);
+  generate_struct_definition(f_service_, &result, false);
   generate_struct_reader(f_service_, &result);
   generate_struct_result_writer(f_service_, &result);
+
+  result.set_name(tservice->get_name() + "_" + tfunction->get_name() + "_presult");
+  generate_struct_definition(f_service_, &result, false, true, true, false);
+  generate_struct_reader(f_service_, &result, true);
+
 }
 
 /**
@@ -1546,7 +1599,8 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
  */
 void t_cpp_generator::generate_deserialize_field(ofstream& out,
                                                  t_field* tfield,
-                                                 string prefix) {
+                                                 string prefix,
+                                                 string suffix) {
   t_type* type = tfield->get_type();
   while (type->is_typedef()) {
     type = ((t_typedef*)type)->get_type();
@@ -1557,7 +1611,7 @@ void t_cpp_generator::generate_deserialize_field(ofstream& out,
       prefix + tfield->get_name();
   }
 
-  string name = prefix + tfield->get_name();
+  string name = prefix + tfield->get_name() + suffix;
 
   if (type->is_struct() || type->is_xception()) {
     generate_deserialize_struct(out, (t_struct*)type, name);
@@ -1747,29 +1801,30 @@ void t_cpp_generator::generate_deserialize_list_element(ofstream& out,
  */
 void t_cpp_generator::generate_serialize_field(ofstream& out,
                                                t_field* tfield,
-                                               string prefix) {
+                                               string prefix,
+                                               string suffix) {
   t_type* type = tfield->get_type();
   while (type->is_typedef()) {
     type = ((t_typedef*)type)->get_type();
   }
 
+  string name = prefix + tfield->get_name() + suffix;
+
   // Do nothing for void types
   if (type->is_void()) {
-    throw "CANNOT GENERATE SERIALIZE CODE FOR void TYPE: " +
-      prefix + tfield->get_name();
+    throw "CANNOT GENERATE SERIALIZE CODE FOR void TYPE: " + name;
   }
+
+  
   
   if (type->is_struct() || type->is_xception()) {
     generate_serialize_struct(out,
                               (t_struct*)type,
-                              prefix + tfield->get_name());
+                              name);
   } else if (type->is_container()) {
-    generate_serialize_container(out,
-                                 type,
-                                 prefix + tfield->get_name());
+    generate_serialize_container(out, type, name);
   } else if (type->is_base_type() || type->is_enum()) {
 
-    string name = prefix + tfield->get_name();
     indent(out) <<
       "xfer += oprot->";
     
@@ -1809,9 +1864,8 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
     }
     out << endl;
   } else {
-    printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s%s' TYPE '%s'\n",
-           prefix.c_str(),
-           tfield->get_name().c_str(),
+    printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s' TYPE '%s'\n",
+           name.c_str(),
            type_name(type).c_str());
   }
 }
@@ -2000,7 +2054,7 @@ string t_cpp_generator::type_name(t_type* ttype, bool in_typedef, bool arg) {
       return "const " + bname;
     }
   }
-  
+ 
   // Check for a custom overloaded C++ name
   if (ttype->is_container()) {
     string cname;
@@ -2046,7 +2100,11 @@ string t_cpp_generator::type_name(t_type* ttype, bool in_typedef, bool arg) {
   }
 
   if (arg) {
-    return "const " + pname + "&";
+    if (is_complex_type(ttype)) {
+      return "const " + pname + "&";
+    } else {
+      return "const " + pname;
+    }
   } else {
     return pname;
   }
@@ -2087,9 +2145,17 @@ string t_cpp_generator::base_type_name(t_base_type::t_base tbase) {
  * @param ttype The type
  * @return Field declaration, i.e. int x = 0;
  */
-string t_cpp_generator::declare_field(t_field* tfield, bool init) {
+string t_cpp_generator::declare_field(t_field* tfield, bool init, bool pointer, bool constant) {
   // TODO(mcslee): do we ever need to initialize the field?
-  string result = type_name(tfield->get_type()) + " " + tfield->get_name();
+  string result = "";
+  if (constant) {
+    result += "const ";
+  }
+  result += type_name(tfield->get_type());
+  if (pointer) {
+    result += "*";
+  }
+  result += " " + tfield->get_name();
   if (init) {
     t_type* type = tfield->get_type();
     while (type->is_typedef()) {
