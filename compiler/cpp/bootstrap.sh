@@ -2,8 +2,7 @@
 
 ./cleanup.sh
 autoscan
-autoheader
-aclocal -I ./aclocal
+aclocal
 libtoolize --automake
 touch NEWS README AUTHORS ChangeLog
 autoconf

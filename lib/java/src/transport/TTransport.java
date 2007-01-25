@@ -16,6 +16,15 @@ public abstract class TTransport {
   public abstract boolean isOpen();
 
   /**
+   * Is there more data to be read?
+   *
+   * @return True if the remote side is still alive and feeding us
+   */
+  public boolean peek() {
+    return isOpen();
+  }
+
+  /**
    * Opens the transport for reading/writing.
    *
    * @throws TTransportException if the transport could not be opened

@@ -26,7 +26,7 @@ public:
 
   ~Task() {}
     
-  void run() {     
+  void run() {
     try {
       while (processor_->process(input_, output_)) {
         if (!input_->getTransport()->peek()) {
