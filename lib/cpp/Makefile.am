@@ -1,4 +1,4 @@
-lib_LTLIBRARIES = libthrift.la
+lib_LTLIBRARIES = libthrift.la libthriftnb.la
 
 common_cxxflags = -Wall -Isrc $(BOOST_CPPFLAGS) $(EVENT_CPPFLAGS)
 common_ldflags = -Wall $(BOOST_LDFLAGS) $(EVENT_LDFLAGS)
@@ -17,15 +17,18 @@ libthrift_sources = src/concurrency/Mutex.cpp \
                     src/transport/TServerSocket.cpp \
                     src/transport/TTransportUtils.cpp \
                     src/server/TSimpleServer.cpp \
-                    src/server/TThreadPoolServer.cpp \
-                    src/server/TNonblockingServer.cpp
+                    src/server/TThreadPoolServer.cpp
+
+libthriftnb_sources = src/server/TNonblockingServer.cpp
 
 libthrift_la_SOURCES = $(libthrift_sources)
+libthriftnb_la_SOURCES = $(libthriftnb_sources)
 
 libthrift_cxxflags =  $(common_cxxflags)
 libthrift_ldflags =  $(common_ldflags)
 
 libthrift_la_CXXFLAGS =  $(libthrift_cxxflags)
+libthriftnb_la_CXXFLAGS =  $(libthrift_cxxflags)
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \

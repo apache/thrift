@@ -31,8 +31,8 @@ CC     = g++
 LD     = g++
 
 # Compiler flags
-DCFL  = -Wall -O3 -g -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -levent
-LFL   =  -L$(thrift_home)/lib/cpp/.libs -lthrift -levent
+DCFL  = -Wall -O3 -g -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -lthriftnb -levent
+LFL   =  -L$(thrift_home)/lib/cpp/.libs -lthrift -lthriftnb -levent
 CCFL  = -Wall -O3 -I./gen-cpp $(include_flags)
 CFL   = $(CCFL) $(LFL)
 
@@ -60,4 +60,4 @@ small:
 	g++ -c $(CCFL) ./gen-cpp/SmallService.cpp ./gen-cpp/SmallTest_types.cpp
 
 clean:
-	rm -fr TestServer TestClient gen-cpp
+	rm -fr *.o TestServer TestClient gen-cpp
