@@ -24,7 +24,7 @@ include_flags = $(patsubst %,-I%, $(include_paths))
 
 # Tools
 ifndef THRIFT
-THRIFT = ../../compiler/cpp/bin/thrift
+THRIFT = ../../compiler/cpp/thrift
 endif # THRIFT
 
 CC     = g++

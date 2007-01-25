@@ -13,7 +13,7 @@
   </target>
 
   <target name="generate">
-    <exec executable="../../compiler/cpp/bin/thrift">
+    <exec executable="../../compiler/cpp/thrift">
       <arg line="--java ../ThriftTest.thrift" />
     </exec>
   </target>

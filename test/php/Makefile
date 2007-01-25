@@ -7,7 +7,7 @@
 target: all
 
 # Tools
-THRIFT = ../../compiler/cpp/bin/thrift
+THRIFT = ../../compiler/cpp/thrift
 
 all: normal inline
 
