@@ -19,18 +19,18 @@ public:
   class Task;
   
   TThreadPoolServer(shared_ptr<TProcessor> processor,
-		    shared_ptr<TServerTransport> serverTransport,
-		    shared_ptr<TTransportFactory> transportFactory,
+                    shared_ptr<TServerTransport> serverTransport,
+                    shared_ptr<TTransportFactory> transportFactory,
                     shared_ptr<TProtocolFactory> protocolFactory,
-		    shared_ptr<ThreadManager> threadManager);
+                    shared_ptr<ThreadManager> threadManager);
 
   TThreadPoolServer(shared_ptr<TProcessor> processor,
-		    shared_ptr<TServerTransport> serverTransport,
+                    shared_ptr<TServerTransport> serverTransport,
                     shared_ptr<TTransportFactory> inputTransportFactory,
                     shared_ptr<TTransportFactory> outputTransportFactory,
                     shared_ptr<TProtocolFactory> inputProtocolFactory,
                     shared_ptr<TProtocolFactory> outputProtocolFactory, 
-		    shared_ptr<ThreadManager> threadManager);
+                    shared_ptr<ThreadManager> threadManager);
 
   virtual ~TThreadPoolServer();
 
