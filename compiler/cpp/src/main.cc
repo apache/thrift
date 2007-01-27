@@ -26,6 +26,7 @@
 #include "generate/t_java_generator.h"
 #include "generate/t_php_generator.h"
 #include "generate/t_py_generator.h"
+#include "generate/t_rb_generator.h"
 #include "generate/t_xsd_generator.h"
 
 using namespace std;
@@ -109,6 +110,7 @@ char* g_time_str;
  */
 bool gen_cpp = false;
 bool gen_java = false;
+bool gen_rb = false;
 bool gen_py = false;
 bool gen_xsd = false;
 bool gen_php = false;
@@ -521,6 +523,13 @@ void generate(t_program* program) {
       delete py;
     }
 
+    if (gen_rb) {
+      pverbose("Generating Ruby\n");
+      t_rb_generator* rb = new t_rb_generator(program);
+      rb->generate_program();
+      delete rb;
+    }
+
     if (gen_xsd) {
       pverbose("Generating XSD\n");
       t_xsd_generator* xsd = new t_xsd_generator(program);
@@ -584,6 +593,8 @@ int main(int argc, char** argv) {
         gen_phpi = true;
       } else if (strcmp(arg, "-py") == 0) {
         gen_py = true;
+      } else if (strcmp(arg, "-rb") == 0) {
+        gen_rb = true;
       } else if (strcmp(arg, "-xsd") == 0) {
         gen_xsd = true;
       } else if (strcmp(arg, "-I") == 0) {
@@ -606,7 +617,7 @@ int main(int argc, char** argv) {
   }
   
   // You gotta generate something!
-  if (!gen_cpp && !gen_java && !gen_php && !gen_phpi && !gen_py && !gen_xsd) {
+  if (!gen_cpp && !gen_java && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
