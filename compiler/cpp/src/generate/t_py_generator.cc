@@ -376,7 +376,13 @@ void t_py_generator::generate_py_struct_reader(ofstream& out,
       }
       out << "fid == " << (*f_iter)->get_key() << ":" << endl;
       indent_up();
+      indent(out) << "if ftype == " << type_to_enum((*f_iter)->get_type()) << ":" << endl;
+      indent_up();
       generate_deserialize_field(out, *f_iter, "self.");
+      indent_down();
+      out <<
+        indent() << "else:" << endl <<
+        indent() << "  iprot.skip(ftype)" << endl;
       indent_down();
     }
     

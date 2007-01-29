@@ -512,13 +512,22 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
         indent(out) <<
           "case " << (*f_iter)->get_key() << ":" << endl;
         indent_up();
+        indent(out) <<
+          "if (ftype == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
+        indent_up();
+
         if (pointers && !(*f_iter)->get_type()->is_xception()) {
           generate_deserialize_field(out, *f_iter, "(*(this->", "))");
         } else {
           generate_deserialize_field(out, *f_iter, "this->");
         }
         out <<
-          indent() << "this->__isset." << (*f_iter)->get_name() << " = true;" << endl <<
+          indent() << "this->__isset." << (*f_iter)->get_name() << " = true;" << endl;
+        indent_down();
+        out <<
+          indent() << "} else {" << endl <<
+          indent() << "  xfer += iprot->skip(ftype);" << endl <<
+          indent() << "}" << endl <<
           indent() << "break;" << endl;
         indent_down();
       }

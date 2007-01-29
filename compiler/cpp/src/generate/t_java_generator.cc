@@ -427,11 +427,19 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
         indent(out) <<
           "case " << (*f_iter)->get_key() << ":" << endl;
         indent_up();
+        indent(out) <<
+          "if (field.type == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
+        indent_up();
+
         generate_deserialize_field(out, *f_iter, "this.");
         out <<
           indent() << "this.__isset." << (*f_iter)->get_name() << " = true;" << endl;
-        indent(out) <<
-          "break;" << endl;
+        indent_down();
+        out <<
+          indent() << "} else { " << endl <<
+          indent() << "  TProtocolUtil.skip(iprot, field.type);" << endl <<
+          indent() << "}" << endl <<
+          indent() << "break;" << endl;
         indent_down();
       }
       

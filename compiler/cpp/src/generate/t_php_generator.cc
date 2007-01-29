@@ -376,9 +376,20 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
         indent(out) <<
           "case " << (*f_iter)->get_key() << ":" << endl;
         indent_up();
+        indent(out) << "if ($ftype == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
+        indent_up();
         generate_deserialize_field(out, *f_iter, "this->");
-        indent(out) <<
-          "break;" << endl;
+        indent_down();
+        out <<
+          indent() << "} else {" << endl;
+        if (binary_inline_) {
+          indent(out) <<  "  $xfer += TProtocol::skipBinary($input, $ftype);" << endl;
+        } else {
+          indent(out) <<  "  $xfer += $input->skip($ftype);" << endl;
+        }
+        out << 
+          indent() << "}" << endl <<
+          indent() << "break;" << endl;
         indent_down();
       }
       
