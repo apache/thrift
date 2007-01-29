@@ -10,6 +10,7 @@ import com.facebook.thrift.transport.TFramedTransport;
 import com.facebook.thrift.transport.TTransportException;
 import com.facebook.thrift.protocol.TBinaryProtocol;
 
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.ArrayList;
@@ -176,7 +177,7 @@ public class TestClient {
           System.out.print(key + " => " + mapout.get(key));
         }
         System.out.print("})");
-        HashMap<Integer,Integer> mapin = testClient.testMap(mapout);
+        AbstractMap<Integer,Integer> mapin = testClient.testMap(mapout);
         System.out.print(" = {");
         first = true;
         for (int key : mapin.keySet()) {
@@ -285,12 +286,12 @@ public class TestClient {
          * NESTED MAP TEST
          */
         System.out.print("testMapMap(1)");
-        HashMap<Integer,HashMap<Integer,Integer>> mm =
+        AbstractMap<Integer,AbstractMap<Integer,Integer>> mm =
           testClient.testMapMap(1);
         System.out.print(" = {");
         for (int key : mm.keySet()) {
           System.out.print(key + " => {");
-          HashMap<Integer,Integer> m2 = mm.get(key);
+          AbstractMap<Integer,Integer> m2 = mm.get(key);
           for (int k2 : m2.keySet()) {
             System.out.print(k2 + " => " + m2.get(k2) + ", ");
           }
@@ -310,17 +311,17 @@ public class TestClient {
         truck.i64_thing = 8;
         insane.xtructs.add(truck);
         System.out.print("testInsanity()");
-        HashMap<Long,HashMap<Integer,Insanity>> whoa =
+        AbstractMap<Long,AbstractMap<Integer,Insanity>> whoa =
           testClient.testInsanity(insane);
         System.out.print(" = {");
         for (long key : whoa.keySet()) {
-          HashMap<Integer,Insanity> val = whoa.get(key);
+          AbstractMap<Integer,Insanity> val = whoa.get(key);
           System.out.print(key + " => {");
 
           for (int k2 : val.keySet()) {
             Insanity v2 = val.get(k2);
             System.out.print(k2 + " => {");
-            HashMap<Integer, Long> userMap = v2.userMap;
+            AbstractMap<Integer, Long> userMap = v2.userMap;
             System.out.print("{");
             for (int k3 : userMap.keySet()) {
               System.out.print(k3 + " => " + userMap.get(k3) + ", ");

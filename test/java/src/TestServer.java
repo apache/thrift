@@ -14,6 +14,7 @@ import thrift.test.*;
 
 import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -73,7 +74,7 @@ public class TestServer {
       return nest;
     }
   
-    public HashMap<Integer,Integer> testMap(HashMap<Integer,Integer> thing) {
+    public AbstractMap<Integer,Integer> testMap(AbstractMap<Integer,Integer> thing) {
       System.out.print("testMap({");
       boolean first = true;
       for (int key : thing.keySet()) {
@@ -128,10 +129,10 @@ public class TestServer {
       return thing;
     }
 
-    public HashMap<Integer,HashMap<Integer,Integer>> testMapMap(int hello) {
+    public AbstractMap<Integer,AbstractMap<Integer,Integer>> testMapMap(int hello) {
       System.out.print("testMapMap(" + hello + ")\n");
-      HashMap<Integer,HashMap<Integer,Integer>> mapmap =
-        new HashMap<Integer,HashMap<Integer,Integer>>();
+      AbstractMap<Integer,AbstractMap<Integer,Integer>> mapmap =
+        new HashMap<Integer,AbstractMap<Integer,Integer>>();
 
       HashMap<Integer,Integer> pos = new HashMap<Integer,Integer>();
       HashMap<Integer,Integer> neg = new HashMap<Integer,Integer>();
@@ -146,7 +147,7 @@ public class TestServer {
       return mapmap;
     }
 
-    public HashMap<Long, HashMap<Integer,Insanity>> testInsanity(Insanity argument) {
+    public AbstractMap<Long, AbstractMap<Integer,Insanity>> testInsanity(Insanity argument) {
       System.out.print("testInsanity()\n");
     
       Xtruct hello = new Xtruct();
@@ -177,15 +178,15 @@ public class TestServer {
 
       second_map.put(Numberz.SIX, looney);
 
-      HashMap<Long,HashMap<Integer,Insanity>> insane =
-        new HashMap<Long, HashMap<Integer,Insanity>>();
+      AbstractMap<Long,AbstractMap<Integer,Insanity>> insane =
+        new HashMap<Long, AbstractMap<Integer,Insanity>>();
       insane.put((long)1, first_map);
       insane.put((long)2, second_map);
 
       return insane;
     }
 
-    public Xtruct testMulti(byte arg0, int arg1, long arg2, HashMap<Short,String> arg3, int arg4, long arg5) {
+    public Xtruct testMulti(byte arg0, int arg1, long arg2, AbstractMap<Short,String> arg3, int arg4, long arg5) {
       System.out.print("testMulti()\n");
     
       Xtruct hello = new Xtruct();;
