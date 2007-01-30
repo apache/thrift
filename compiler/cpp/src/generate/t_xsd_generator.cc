@@ -27,7 +27,7 @@ void t_xsd_generator::generate_typedef(t_typedef* ttypedef) {
     "<xsd:simpleType name=\"" << ttypedef->get_name() << "\">" << endl;
   indent_up();
   indent(s_xsd_types_) <<
-    "<xs:restriction base=\"" << type_name(ttypedef->get_type()) << "\" />" << endl;
+    "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\" />" << endl;
   indent_down();
   indent(s_xsd_types_) <<
     "</xsd:simpleType>" << endl << endl;
@@ -67,7 +67,7 @@ void t_xsd_generator::generate_element(ostream& out,
                                        string name,
                                        t_type* ttype,
                                        bool optional) {
-  string soptional = optional ? " minoccurs=\"0\" maxOccurs=\"1\"" : "";
+  string soptional = optional ? " minOccurs=\"0\" maxOccurs=\"1\"" : "";
 
   if (ttype->is_void() || ttype->is_list()) {
     indent(out) <<
