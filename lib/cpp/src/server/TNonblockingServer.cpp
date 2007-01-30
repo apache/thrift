@@ -38,7 +38,8 @@ namespace facebook { namespace thrift { namespace server {
 }
 
 void TConnection::workSocket() {
-  int flags;
+  int flags=0, got=0, left=0, sent=0;
+  uint32_t fetch = 0;
 
   switch (socketState_) {
   case SOCKET_RECV:
@@ -59,8 +60,8 @@ void TConnection::workSocket() {
     }
 
     // Read from the socket
-    uint32_t fetch = readWant_ - readBufferPos_;
-    int got = recv(socket_, readBuffer_ + readBufferPos_, fetch, 0);
+    fetch = readWant_ - readBufferPos_;
+    got = recv(socket_, readBuffer_ + readBufferPos_, fetch, 0);
     
     if (got > 0) {
       // Move along in the buffer
@@ -108,8 +109,8 @@ void TConnection::workSocket() {
     flags |= MSG_NOSIGNAL;
     #endif // ifdef MSG_NOSIGNAL
 
-    int left = writeBufferSize_ - writeBufferPos_;
-    int sent = send(socket_, writeBuffer_ + writeBufferPos_, left, flags);
+    left = writeBufferSize_ - writeBufferPos_;
+    sent = send(socket_, writeBuffer_ + writeBufferPos_, left, flags);
 
     if (sent <= 0) {
       // Blocking errors are okay, just move on
@@ -147,6 +148,9 @@ void TConnection::workSocket() {
  * to, or finished receiving the data that it needed to.
  */
 void TConnection::transition() {
+
+  int sz = 0;
+
   // Switch upon the state that we are currently in and move to a new state
   switch (appState_) {
 
@@ -253,7 +257,7 @@ void TConnection::transition() {
 
   case APP_READ_FRAME_SIZE:
     // We just read the request length, deserialize it
-    int sz = *(int32_t*)readBuffer_;
+    sz = *(int32_t*)readBuffer_;
     sz = (int32_t)ntohl(sz);
 
     if (sz <= 0) {
