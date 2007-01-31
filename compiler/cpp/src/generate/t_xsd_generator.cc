@@ -112,7 +112,8 @@ void t_xsd_generator::generate_service(t_service* tservice) {
 
   string ns = program_->get_xsd_namespace();
   if (ns.size() > 0) {
-    ns = " targetNamespace=\"" + ns + "\" xmlns=\"" + ns + "\"";
+    ns = " targetNamespace=\"" + ns + "\" xmlns=\"" + ns + "\" " + 
+      "elementFormDefault=\"qualified\"";
   }
 
   // Print the XSD header
