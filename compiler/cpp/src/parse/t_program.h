@@ -130,6 +130,13 @@ class t_program {
     return java_package_;
   }
 
+  void set_xsd_namespace(std::string xsd_namespace) {
+    xsd_namespace_ = xsd_namespace;
+  }
+
+  const std::string& get_xsd_namespace() const {
+    return xsd_namespace_;
+  }
 
  private:
 
@@ -167,6 +174,9 @@ class t_program {
 
   // Java package
   std::string java_package_;
+
+  // XSD namespace
+  std::string xsd_namespace_;
 
 };
 

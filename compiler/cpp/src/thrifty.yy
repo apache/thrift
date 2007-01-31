@@ -68,6 +68,7 @@ int y_field_val = -1;
 %token tok_java_package
 %token tok_xsd_all
 %token tok_xsd_optional
+%token tok_xsd_namespace
 
 /**
  * Base datatype keywords
@@ -216,6 +217,13 @@ Header:
       pdebug("Header -> tok_java_package tok_identifier");
       if (g_parse_mode == PROGRAM) {
         g_program->set_java_package($2);
+      }
+    }
+| tok_xsd_namespace tok_literal
+    {
+      pdebug("Header -> tok_xsd_namespace tok_literal");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_xsd_namespace($2);
       }
     }
 
