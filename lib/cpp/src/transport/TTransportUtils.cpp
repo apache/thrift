@@ -36,18 +36,19 @@ void TBufferedTransport::write(const uint8_t* buf, uint32_t len) {
     return;
   }
 
-  if (len + wLen_ >= wBufSize_) {
+  uint32_t pos = 0;
+
+  while ((len-pos) + wLen_ >= wBufSize_) {
     uint32_t copy = wBufSize_ - wLen_;
-    memcpy(wBuf_ + wLen_, buf, copy);
+    memcpy(wBuf_ + wLen_, buf + pos, copy);
     transport_->write(wBuf_, wBufSize_);
-    
-    wLen_ = len - copy;
-    if (wLen_ > 0) {
-      memcpy(wBuf_, buf+copy, wLen_);
-    }
-  } else {
-    memcpy(wBuf_+wLen_, buf, len);
-    wLen_ += len;
+    pos += copy;
+    wLen_ = 0;
+  }
+
+  if ((len - pos) > 0) {
+    memcpy(wBuf_ + wLen_, buf + pos, len - pos);
+    wLen_ += len - pos;
   }
 }
 
