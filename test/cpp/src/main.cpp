@@ -6,6 +6,7 @@
 #include <protocol/TBinaryProtocol.h>
 #include <server/TSimpleServer.h>
 #include <server/TThreadPoolServer.h>
+#include <server/TThreadedServer.h>
 #include <transport/TServerSocket.h>
 #include <transport/TSocket.h>
 #include <transport/TTransportUtils.h>
@@ -71,18 +72,18 @@ class Server : public ServiceIf {
     return counts_;
   }
 
-  int8_t echoByte(int8_t arg) {return arg;}
-  int32_t echoI32(int32_t arg) {return arg;}
-  int64_t echoI64(int64_t arg) {return arg;}
-  string echoString(string arg) {
+  int8_t echoByte(const int8_t arg) {return arg;}
+  int32_t echoI32(const int32_t arg) {return arg;}
+  int64_t echoI64(const int64_t arg) {return arg;}
+  void echoString(string& out, const string &arg) {
     if (arg != "hello") {
       T_ERROR_ABORT("WRONG STRING!!!!");
     }
-    return arg;
+    out = arg;
   }
-  vector<int8_t> echoList(vector<int8_t> arg) {return arg;}
-  set<int8_t> echoSet(set<int8_t> arg) {return arg;}
-  map<int8_t, int8_t> echoMap(map<int8_t, int8_t> arg) {return arg;}
+  void echoList(vector<int8_t> &out, const vector<int8_t> &arg) { out = arg; }
+  void echoSet(set<int8_t> &out, const set<int8_t> &arg) { out = arg; }
+  void echoMap(map<int8_t, int8_t> &out, const map<int8_t, int8_t> &arg) { out = arg; }
 
 private:
   count_map counts_;
@@ -179,7 +180,7 @@ public:
     for(size_t ix = 0; ix < _loopCount; ix++) {
       string arg = "hello";
       string result;
-      result =_client->echoString(arg);
+      _client->echoString(result, arg);
       assert(result == arg);
     }
   }
@@ -293,6 +294,8 @@ int main(int argc, char **argv) {
 
       } else if(serverType == "thread-pool") {
 
+      } else if(serverType == "threaded") {
+
       } else {
 
 	throw invalid_argument("Unknown server type "+serverType);
@@ -364,6 +367,10 @@ int main(int argc, char **argv) {
       
       serverThread = threadFactory->newThread(shared_ptr<TServer>(new TSimpleServer(serviceProcessor, serverSocket, transportFactory, protocolFactory)));
       
+    } else if (serverType == "threaded") {
+
+      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TThreadedServer(serviceProcessor, serverSocket, transportFactory, protocolFactory)));
+      
     } else if(serverType == "thread-pool") {
 
       shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
@@ -403,7 +410,7 @@ int main(int argc, char **argv) {
     
       shared_ptr<TSocket> socket(new TSocket("127.0.01", port));
       shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
-      shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket, bufferedSocket));
+      shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket));
       shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
     
       clientThreads.insert(threadFactory->newThread(shared_ptr<ClientThread>(new ClientThread(socket, serviceClient, monitor, threadCount, loopCount, loopType))));
