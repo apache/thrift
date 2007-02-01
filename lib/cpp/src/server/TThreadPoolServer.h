@@ -14,8 +14,7 @@ using namespace facebook::thrift::transport;
 using namespace boost;
 
 class TThreadPoolServer : public TServer {
-public:
-
+ public:
   class Task;
   
   TThreadPoolServer(shared_ptr<TProcessor> processor,
@@ -36,7 +35,7 @@ public:
 
   virtual void serve();
 
-protected:
+ protected:
 
   shared_ptr<ThreadManager> threadManager_;
   

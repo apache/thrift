@@ -17,7 +17,8 @@ libthrift_sources = src/concurrency/Mutex.cpp \
                     src/transport/TServerSocket.cpp \
                     src/transport/TTransportUtils.cpp \
                     src/server/TSimpleServer.cpp \
-                    src/server/TThreadPoolServer.cpp
+                    src/server/TThreadPoolServer.cpp \
+                    src/server/TThreadedServer.cpp
 
 libthriftnb_sources = src/server/TNonblockingServer.cpp
 
@@ -69,6 +70,7 @@ include_server_HEADERS = \
                          src/server/TServer.h \
                          src/server/TSimpleServer.h \
                          src/server/TThreadPoolServer.h \
+                         src/server/TThreadedServer.h \
                          src/server/TNonblockingServer.h
 
 bin_PROGRAMS = concurrency_test
