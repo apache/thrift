@@ -36,9 +36,10 @@ class ThreadManager;
  */
 class ThreadManager {
 
- public:
+ protected:
   ThreadManager() {}
 
+ public:
   virtual ~ThreadManager() {}
 
   /**
