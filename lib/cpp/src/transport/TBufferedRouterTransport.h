@@ -25,7 +25,7 @@ class TBufferedRouterTransport : public TTransport {
     trans_(trans),
     rtrans_(rtrans),
     rBufSize_(512), rPos_(0), rLen_(0),
-    wBufSize_(512), wPos_(0), wLen_(0) {
+    wBufSize_(512), wLen_(0) {
 
     rBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * rBufSize_);
     wBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * wBufSize_);
@@ -35,7 +35,7 @@ class TBufferedRouterTransport : public TTransport {
     trans_(trans),
     rtrans_(rtrans),
     rBufSize_(512), rPos_(0), rLen_(0),
-    wBufSize_(sz), wPos_(0), wLen_(0) {
+    wBufSize_(sz), wLen_(0) {
 
     rBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * rBufSize_);
     wBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * wBufSize_);
@@ -98,7 +98,6 @@ class TBufferedRouterTransport : public TTransport {
 
   uint8_t* wBuf_;
   uint32_t wBufSize_;
-  uint32_t wPos_;
   uint32_t wLen_;
 };
 

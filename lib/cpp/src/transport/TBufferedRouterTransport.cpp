@@ -47,32 +47,26 @@ void TBufferedRouterTransport::write(const uint8_t* buf, uint32_t len) {
     return;
   }
 
-  if (len + wLen_ >= wBufSize_) {
-    uint32_t copy = wBufSize_ - wLen_;
-    memcpy(wBuf_ + wLen_, buf, copy);
-    trans_->write(wBuf_+wPos_, wBufSize_-wPos_);
-    wLen_ += copy;
-    wPos_ = wLen_;
-
-    uint32_t left = len-copy;
-    if (left > 0) {
-      // double the size of the write buffer
-      wBuf_ = (uint8_t *)realloc(wBuf_, sizeof(uint8_t) * wBufSize_ * 2);
-      memcpy(wBuf_ + wLen_, buf+copy, left);
-      wLen_ += left;
-      wBufSize_*=2;
+  // Make the buffer as big as it needs to be
+  if ((len + wLen_) >= wBufSize_) {
+    uint32_t newBufSize = wBufSize_*2;
+    while ((len + wLen_) >= newBufSize) {
+      newBufSize *= 2;
     }
-  } else {
-    memcpy(wBuf_+wLen_, buf, len);
-    wLen_ += len;
+    wBuf_ = (uint8_t *)realloc(wBuf_, sizeof(uint8_t) * newBufSize);
+    wBufSize_ = newBufSize;
   }
+
+  // Copy into the buffer
+  memcpy(wBuf_ + wLen_, buf, len);
+  wLen_ += len;
 }
 
 void TBufferedRouterTransport::flush()  {
   // Write out any data waiting in the write buffer
-  if (wLen_-wPos_ > 0) {
-    trans_->write(wBuf_+wPos_, wLen_-wPos_);
-    wPos_ = wLen_;
+  if (wLen_ > 0) {
+    trans_->write(wBuf_, wLen_);
+    wLen_ = 0;
   }
 
   // Flush the underlying transport
