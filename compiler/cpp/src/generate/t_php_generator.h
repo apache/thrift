@@ -43,7 +43,7 @@ class t_php_generator : public t_oop_generator {
   void generate_xception (t_struct*   txception);
   void generate_service  (t_service*  tservice);
 
-  void print_const_value (t_type* type, t_const_value* value);
+  std::string render_const_value(t_type* type, t_const_value* value);
 
   /**
    * Structs!

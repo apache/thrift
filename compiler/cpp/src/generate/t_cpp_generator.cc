@@ -373,29 +373,53 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   vector<t_field*>::const_iterator m_iter; 
   const vector<t_field*>& members = tstruct->get_members();
   
-  // Default constructor
-  bool init_ctor = false;
   if (!pointers) {
+    // Default constructor
+    indent(out) <<
+      tstruct->get_name() << "()";
+
+    bool init_ctor = false;
+
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = (*m_iter)->get_type();
       while (t->is_typedef()) {
         t = ((t_typedef*)t)->get_type();
       }
-      if (t->is_base_type() &&
-          ((t_base_type*)t)->get_base() != t_base_type::TYPE_STRING) {
+      if (t->is_base_type() || t->is_enum()) {
+        string dval;
+        if (t->is_enum()) {
+          dval += "(" + t->get_name() + ")";
+        }
+        dval += t->is_string() ? "\"\"" : "0";
+        t_const_value* cv = (*m_iter)->get_value();
+        if (cv != NULL) {
+          dval = render_const_value(out, (*m_iter)->get_name(), t, cv);
+        }
         if (!init_ctor) {
           init_ctor = true;
-          indent(out) <<
-            tstruct->get_name() << "() : ";
-          out << (*m_iter)->get_name() << "(0)";
+          out << " : ";
+          out << (*m_iter)->get_name() << "(" << dval << ")";
         } else {
-          out << ", " << (*m_iter)->get_name() << "(0)";
+          out << ", " << (*m_iter)->get_name() << "(" << dval << ")";
         }
       }
     }
-  }
-  if (init_ctor) {
-    out << " {} " << endl;
+    out << " {" << endl;
+    indent_up();
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* t = (*m_iter)->get_type();
+      while (t->is_typedef()) {
+        t = ((t_typedef*)t)->get_type();
+      }
+      if (!t->is_base_type()) {
+        t_const_value* cv = (*m_iter)->get_value();
+        if (cv != NULL) {
+          print_const_value(out, (*m_iter)->get_name(), t, cv);
+        }
+      }
+    }
+    indent_down();
+    indent(out) << "} " << endl;
   }
   
   out <<
@@ -1696,6 +1720,7 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
   string etype = tmp("_etype");
   
   indent(out) <<
+    prefix << ".clear();" << endl <<
     "uint32_t " << size << ";" << endl;
   
   // Declare variables, read header

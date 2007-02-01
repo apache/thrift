@@ -123,8 +123,7 @@ void t_py_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
   
-  indent(f_consts_) << name << " = "; 
-  print_const_value(type, value);
+  indent(f_consts_) << name << " = " << render_const_value(type, value);
   f_consts_ << endl << endl;
 }
 
@@ -133,36 +132,38 @@ void t_py_generator::generate_const(t_const* tconst) {
  * is NOT performed in this function as it is always run beforehand using the
  * validate_types method in main.cc
  */
-void t_py_generator::print_const_value(t_type* type, t_const_value* value) {
+string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
+  std::ostringstream out;
+
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      f_consts_ << "'" << value->get_string() << "'";
+      out << "'" << value->get_string() << "'";
       break;
     case t_base_type::TYPE_BOOL:
-      f_consts_ << (value->get_integer() > 0 ? "True" : "False");
+      out << (value->get_integer() > 0 ? "True" : "False");
       break;
     case t_base_type::TYPE_BYTE:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
-      f_consts_ << value->get_integer();
+      out << value->get_integer();
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        f_consts_ << value->get_integer();
+        out << value->get_integer();
       } else {
-        f_consts_ << value->get_double();
+        out << value->get_double();
       }
       break;
     default:
       throw "compiler error: no const of base type " + tbase;
     }
   } else if (type->is_enum()) {
-    indent(f_consts_) << value->get_integer();
+    indent(out) << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    f_consts_ << type->get_name() << "({" << endl;
+    out << type->get_name() << "({" << endl;
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -178,30 +179,30 @@ void t_py_generator::print_const_value(t_type* type, t_const_value* value) {
       if (field_type == NULL) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
-      f_consts_ << indent();
-      print_const_value(g_type_string, v_iter->first);
-      f_consts_ << " : ";
-      print_const_value(field_type, v_iter->second);
-      f_consts_ << "," << endl;
+      out << indent();
+      out << render_const_value(g_type_string, v_iter->first);
+      out << " : ";
+      out << render_const_value(field_type, v_iter->second);
+      out << "," << endl;
     }
     indent_down();
-    indent(f_consts_) << "})";
+    indent(out) << "})";
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    f_consts_ << "{" << endl;
+    out << "{" << endl;
     indent_up();
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      f_consts_ << indent();
-      print_const_value(ktype, v_iter->first);
-      f_consts_ << " : ";
-      print_const_value(vtype, v_iter->second);
-      f_consts_ << "," << endl;
+      out << indent();
+      out << render_const_value(ktype, v_iter->first);
+      out << " : ";
+      out << render_const_value(vtype, v_iter->second);
+      out << "," << endl;
     }
     indent_down();
-    indent(f_consts_) << "}";
+    indent(out) << "}";
   } else if (type->is_list() || type->is_set()) {
     t_type* etype;
     if (type->is_list()) {
@@ -210,23 +211,25 @@ void t_py_generator::print_const_value(t_type* type, t_const_value* value) {
       etype = ((t_set*)type)->get_elem_type();
     }
     if (type->is_set()) {
-      f_consts_ << "set(";
+      out << "set(";
     }
-    f_consts_ << "[" << endl;
+    out << "[" << endl;
     indent_up();
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      f_consts_ << indent();
-      print_const_value(etype, *v_iter);
-      f_consts_ << "," << endl;
+      out << indent();
+      out << render_const_value(etype, *v_iter);
+      out << "," << endl;
     }
     indent_down();
-    indent(f_consts_) << "]";
+    indent(out) << "]";
     if (type->is_set()) {
-      f_consts_ << ")";
+      out << ")";
     }
   }
+
+  return out.str();
 }
 
 /**
@@ -288,14 +291,9 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
       "pass" <<endl;
   } else {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      if (is_result) {
-        indent(out) <<
-          "self." << (*m_iter)->get_name() << " = None" << endl;
-      } else {
-        // This fills in default values, as opposed to nulls
-        indent(out) <<
-          declare_field(*m_iter, true) << endl;
-      }
+      // This fills in default values, as opposed to nulls
+      indent(out) <<
+        declare_field(*m_iter) << endl;
     }
 
     indent(out) <<
@@ -1393,51 +1391,16 @@ void t_py_generator::generate_serialize_list_element(ofstream &out,
  *
  * @param ttype The type
  */
-string t_py_generator::declare_field(t_field* tfield, bool init, bool obj) {
+string t_py_generator::declare_field(t_field* tfield) {
   string result = "self." + tfield->get_name();
-  if (init) {
-    t_type* type = tfield->get_type();
-    while (type->is_typedef()) {
-      type = ((t_typedef*)type)->get_type();
-    }
-    if (type->is_base_type()) {
-      t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-      switch (tbase) {
-      case t_base_type::TYPE_VOID:
-        break;
-      case t_base_type::TYPE_STRING:
-        result += " = ''";
-        break;
-      case t_base_type::TYPE_BOOL:
-        result += " = False";
-        break;
-      case t_base_type::TYPE_BYTE:
-      case t_base_type::TYPE_I16:
-      case t_base_type::TYPE_I32:
-      case t_base_type::TYPE_I64:
-        result += " = 0";
-        break;
-      case t_base_type::TYPE_DOUBLE:
-        result += " = 0.0";
-        break;
-      default:
-        throw "compiler error: no PHP initializer for base type " + tbase;
-      }
-    } else if (type->is_enum()) {
-      result += " = 0";
-    } else if (type->is_container()) {
-      if (type->is_map()) {
-        result += " = {}";
-      } else {
-        result += " = []";
-      }
-    } else if (type->is_struct() || type->is_xception()) {
-      if (obj) {
-        result += " = " + type_name((t_struct*)type) + "()";
-      } else {
-        result += " = None";
-      }
-    }
+  t_type* type = tfield->get_type();
+  while (type->is_typedef()) {
+    type = ((t_typedef*)type)->get_type();
+  }
+  if (tfield->get_value() != NULL) {
+    result += " = " + render_const_value(type, tfield->get_value());
+  } else {
+    result += " = None";
   }
   return result;
 }

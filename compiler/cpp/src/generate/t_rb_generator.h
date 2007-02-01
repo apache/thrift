@@ -38,7 +38,7 @@ class t_rb_generator : public t_oop_generator {
   void generate_xception (t_struct*   txception);
   void generate_service  (t_service*  tservice);
 
-  void print_const_value (t_type* type, t_const_value* value);
+  std::string render_const_value(t_type* type, t_const_value* value);
 
   /**
    * Struct generation code
@@ -122,7 +122,7 @@ class t_rb_generator : public t_oop_generator {
   std::string rb_autogen_comment();
   std::string rb_imports();
   std::string render_includes();
-  std::string declare_field(t_field* tfield, bool init=false, bool obj=false);
+  std::string declare_field(t_field* tfield);
   std::string type_name(t_type* ttype);
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);

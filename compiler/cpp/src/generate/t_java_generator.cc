@@ -146,23 +146,25 @@ void t_java_generator::generate_consts(std::vector<t_const*> consts) {
  * is NOT performed in this function as it is always run beforehand using the
  * validate_types method in main.cc
  */
-void t_java_generator::print_const_value(ofstream& out, string name, t_type* type, t_const_value* value, bool in_static) {
+void t_java_generator::print_const_value(std::ofstream& out, string name, t_type* type, t_const_value* value, bool in_static, bool defval) {
+
+  indent(out);
+  if (!defval) {
+    out <<
+      (in_static ? "" : "public static final ") <<
+      type_name(type) << " ";
+  }
   if (type->is_base_type()) {
     string v2 = render_const_value(out, name, type, value);
-    indent(out) << "public static final " << type_name(type) << " " << name << " = " << v2 << ";" << endl <<
-      endl;
+    out << name << " = " << v2 << ";" << endl << endl;
   } else if (type->is_enum()) {
-    indent(out) << "public static final int " << name << " = " << value->get_integer() << ";" << endl <<
-      endl;
+    out << name << " = " << value->get_integer() << ";" << endl << endl;
   } else if (type->is_struct() || type->is_xception()) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
-    indent(out) <<
-      (in_static ? "" : "public static final ") <<
-      type_name(type) << " " << name <<
-      " = new " << type_name(type) << "();" << endl;
+    out << name << " = new " << type_name(type) << "();" << endl;
     if (!in_static) {
       indent(out) << "static {" << endl;
       indent_up();
@@ -187,9 +189,7 @@ void t_java_generator::print_const_value(ofstream& out, string name, t_type* typ
     }
     out << endl;
   } else if (type->is_map()) {
-    indent(out) <<
-      (in_static ? "" : "public static final ") <<
-      type_name(type, true, true) << " " << name << " = new " << type_name(type, true, true) << "();" << endl;
+    out << name << " = new " << type_name(type, true, true) << "();" << endl;
     if (!in_static) {
       indent(out) << "static {" << endl;
       indent_up();
@@ -209,9 +209,7 @@ void t_java_generator::print_const_value(ofstream& out, string name, t_type* typ
     }
     out << endl;
   } else if (type->is_list() || type->is_set()) {
-    indent(out) <<
-      (in_static ? "" : "public static final ") <<
-      type_name(type) << " " << name << " = new " << type_name(type) << "();" << endl;
+    out << name << " = new " << type_name(type) << "();" << endl;
     if (!in_static) {
       indent(out) << "static {" << endl;
       indent_up();
@@ -348,7 +346,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   vector<t_field*>::const_iterator m_iter; 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     indent(out) <<
-      "public " << declare_field(*m_iter, true) << endl;
+      "public " << declare_field(*m_iter, false) << endl;
   }
 
   // Inner Isset class
@@ -368,6 +366,22 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
       endl;
   }
   
+  // Default constructor
+  indent(out) <<
+    "public " << tstruct->get_name() << "() {" << endl;
+  indent_up();
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = (*m_iter)->get_type();
+    while (t->is_typedef()) {
+      t = ((t_typedef*)t)->get_type();
+    }
+    if (!t->is_base_type() && (*m_iter)->get_value() != NULL) {
+      print_const_value(out, "this." + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
+    }
+  }
+  indent_down();
+  indent(out) << "}" << endl << endl;
+
   generate_java_struct_reader(out, tstruct);
   if (is_result) {
     generate_java_struct_result_writer(out, tstruct);
@@ -1202,6 +1216,8 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
     obj = tmp("_list");
   }
 
+  indent(out) << prefix << " = new " << type_name(ttype, false, true) << "(); // from me" << endl;
+
   // Declare variables, read header
   if (ttype->is_map()) {
     out <<
@@ -1213,7 +1229,6 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
     out <<
       indent() << "TList " << obj << " = iprot.readListBegin();" << endl;
   }
-
 
   // For loop iterates over elements
   string i = tmp("_i");
@@ -1259,9 +1274,9 @@ void t_java_generator::generate_deserialize_map_element(ofstream& out,
   t_field fval(tmap->get_val_type(), val);
 
   indent(out) <<
-    declare_field(&fkey, true) << endl;
+    declare_field(&fkey) << endl;
   indent(out) <<
-    declare_field(&fval, true) << endl;
+    declare_field(&fval) << endl;
 
   generate_deserialize_field(out, &fkey);
   generate_deserialize_field(out, &fval);
@@ -1597,13 +1612,15 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
     while (ttype->is_typedef()) {
       ttype = ((t_typedef*)ttype)->get_type();
     }
-    if (ttype->is_base_type()) {
+    if (ttype->is_base_type() && tfield->get_value() != NULL) {
+      ofstream dummy;
+      result += " = " + render_const_value(dummy, tfield->get_name(), ttype, tfield->get_value());
+    } else if (ttype->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
       switch (tbase) {
       case t_base_type::TYPE_VOID:
         throw "NO T_VOID CONSTRUCT";
       case t_base_type::TYPE_STRING:
-        // result += " = \"\"";
         result += " = null";
         break;
       case t_base_type::TYPE_BOOL:
@@ -1625,7 +1642,7 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
     } else if (ttype->is_container()) {
       result += " = new " + type_name(ttype, false, true) + "()";
     } else {
-      result += " = null";
+      result += " = new " + type_name(ttype, false, true) + "()";;
     }
   }
   return result + ";";

@@ -40,7 +40,7 @@ class t_java_generator : public t_oop_generator {
   void generate_xception(t_struct*   txception);
   void generate_service (t_service*  tservice);
 
-  void print_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value, bool in_static);
+  void print_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value, bool in_static, bool defval=false);
   std::string render_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
 
   /**
@@ -138,7 +138,7 @@ class t_java_generator : public t_oop_generator {
       ttype->is_container() || 
       ttype->is_struct() ||
       ttype->is_xception() ||
-      (ttype->is_base_type() && (((t_base_type*)ttype)->get_base() == t_base_type::TYPE_STRING));
+      ttype->is_string();
   }
 
 

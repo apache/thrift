@@ -3,6 +3,7 @@
 
 #include <string>
 #include "parse/t_const.h"
+#include "parse/t_field.h"
 
 /**
  * Defined in the flex library
@@ -36,6 +37,11 @@ void failure(const char* fmt, ...);
  * Check constant types
  */
 void validate_const_type(t_const* c);
+
+/**
+ * Check constant types
+ */
+void validate_field_value(t_field* field, t_const_value* cv);
 
 /**
  * Converts a string filename into a thrift program name

@@ -15,12 +15,14 @@ class t_field {
     type_(type),
     name_(name),
     key_(0),
+    value_(NULL),
     xsd_optional_(false) {}
 
   t_field(t_type* type, std::string name, int32_t key) :
     type_(type),
     name_(name),
     key_(key),
+    value_(NULL),
     xsd_optional_(false) {}
 
   ~t_field() {}
@@ -45,10 +47,19 @@ class t_field {
     return xsd_optional_;
   }
 
+  void set_value(t_const_value* value) {
+    value_ = value;
+  }
+
+  t_const_value* get_value() {
+    return value_;
+  }
+
  private:
   t_type* type_;
   std::string name_;
   int32_t key_;
+  t_const_value* value_;
   
   bool xsd_optional_;
 

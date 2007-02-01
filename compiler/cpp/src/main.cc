@@ -415,6 +415,13 @@ void validate_const_type(t_const* c) {
 }
 
 /**
+ * Check the type of a default value assigned to a field.
+ */
+void validate_field_value(t_field* field, t_const_value* cv) {
+  validate_const_rec(field->get_name(), field->get_type(), cv);
+}
+
+/**
  * Parses a program
  */
 void parse(t_program* program, t_program* parent_program) {  

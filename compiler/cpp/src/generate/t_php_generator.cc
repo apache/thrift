@@ -123,7 +123,7 @@ void t_php_generator::generate_const(t_const* tconst) {
   t_const_value* value = tconst->get_value();
   
   f_consts_ << "$GLOBALS['" << program_name_ << "_CONSTANTS']['" << name << "'] = "; 
-  print_const_value(type, value);
+  f_consts_ << render_const_value(type, value);
   f_consts_ << ";" << endl << endl;
 }
 
@@ -132,36 +132,40 @@ void t_php_generator::generate_const(t_const* tconst) {
  * is NOT performed in this function as it is always run beforehand using the
  * validate_types method in main.cc
  */
-void t_php_generator::print_const_value(t_type* type, t_const_value* value) {
+string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
+  std::ostringstream out;
+  while (type->is_typedef()) {
+    type = ((t_typedef*)type)->get_type();
+  }
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      f_consts_ << "'" << value->get_string() << "'";
+      out << "'" << value->get_string() << "'";
       break;
     case t_base_type::TYPE_BOOL:
-      f_consts_ << (value->get_integer() > 0 ? "true" : "false");
+      out << (value->get_integer() > 0 ? "true" : "false");
       break;
     case t_base_type::TYPE_BYTE:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
-      f_consts_ << value->get_integer();
+      out << value->get_integer();
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        f_consts_ << value->get_integer();
+        out << value->get_integer();
       } else {
-        f_consts_ << value->get_double();
+        out << value->get_double();
       }
       break;
     default:
       throw "compiler error: no const of base type " + tbase;
     }
   } else if (type->is_enum()) {
-    indent(f_consts_) << value->get_integer();
+    indent(out) << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    f_consts_ << "new " << php_namespace(type->get_program()) << type->get_name() << "(array(" << endl;
+    out << "new " << php_namespace(type->get_program()) << type->get_name() << "(array(" << endl;
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -177,30 +181,30 @@ void t_php_generator::print_const_value(t_type* type, t_const_value* value) {
       if (field_type == NULL) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
-      f_consts_ << indent();
-      print_const_value(g_type_string, v_iter->first);
-      f_consts_ << " => ";
-      print_const_value(field_type, v_iter->second);
-      f_consts_ << endl;
+      out << indent();
+      out << render_const_value(g_type_string, v_iter->first);
+      out << " => ";
+      out << render_const_value(field_type, v_iter->second);
+      out << endl;
     }
     indent_down();
-    indent(f_consts_) << "))";
+    indent(out) << "))";
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    f_consts_ << "array(" << endl;
+    out << "array(" << endl;
     indent_up();
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      f_consts_ << indent();
-      print_const_value(ktype, v_iter->first);
-      f_consts_ << " => ";
-      print_const_value(vtype, v_iter->second);
-      f_consts_ << "," << endl;
+      out << indent();
+      out << render_const_value(ktype, v_iter->first);
+      out << " => ";
+      out << render_const_value(vtype, v_iter->second);
+      out << "," << endl;
     }
     indent_down();
-    indent(f_consts_) << ")";
+    indent(out) << ")";
   } else if (type->is_list() || type->is_set()) {
     t_type* etype;
     if (type->is_list()) {
@@ -208,21 +212,22 @@ void t_php_generator::print_const_value(t_type* type, t_const_value* value) {
     } else {
       etype = ((t_set*)type)->get_elem_type();
     }
-    f_consts_ << "array(" << endl;
+    out << "array(" << endl;
     indent_up();
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      f_consts_ << indent();
-      print_const_value(etype, *v_iter);
+      out << indent();
+      out << render_const_value(etype, *v_iter);
       if (type->is_set()) {
-        f_consts_ << " => true";
+        out << " => true";
       }
-      f_consts_ << "," << endl;
+      out << "," << endl;
     }
     indent_down();
-    indent(f_consts_) << ")";
+    indent(out) << ")";
   }
+  return out.str();
 }
 
 /**
@@ -273,8 +278,16 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
   indent_up();
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    string dval = "null";
+    t_type* t = (*m_iter)->get_type();
+    while (t->is_typedef()) {
+      t = ((t_typedef*)t)->get_type();
+    }
+    if ((*m_iter)->get_value() != NULL && !(t->is_struct() || t->is_xception())) {
+      dval = render_const_value((*m_iter)->get_type(), (*m_iter)->get_value());
+    }
     indent(out) <<
-      "public $" << (*m_iter)->get_name() << " = null;" << endl;
+      "public $" << (*m_iter)->get_name() << " = " << dval << ";" << endl;
   }
  
   out << endl;
@@ -284,6 +297,17 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
     out <<
       indent() << "public function __construct($vals=null) {" << endl;
     indent_up();
+
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* t = (*m_iter)->get_type();
+      while (t->is_typedef()) {
+        t = ((t_typedef*)t)->get_type();
+      }
+      if ((*m_iter)->get_value() != NULL && (t->is_struct() || t->is_xception())) {
+        indent(out) << "$this->" << (*m_iter)->get_name() << " = " << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
+      }
+    }
+    
     out <<
       indent() << "if (is_array($vals)) {" << endl;
     indent_up();
@@ -821,7 +845,7 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
     "class " << service_name_ << "Rest" << extends_if << " {" << endl;
   indent_up();
   f_service_ <<
-    indent() << "var $impl_;" << endl <<
+    indent() << "private $impl_;" << endl <<
     endl <<
     indent() << "public function __construct($impl) {" << endl <<
     indent() << "  $this->impl_ = $impl;" << endl <<

@@ -123,7 +123,9 @@ int y_field_val = -1;
 %type<ttype>     DefinitionType
 
 %type<tfield>    Field
+%type<iconst>    FieldIdentifier
 %type<ttype>     FieldType
+%type<tconstv>   FieldValue
 %type<tstruct>   FieldList
 
 %type<tenum>     Enum
@@ -575,32 +577,46 @@ FieldList:
     }
 
 Field:
-  tok_int_constant ':' FieldType tok_identifier XsdOptional CommaOrSemicolonOptional
+  FieldIdentifier FieldType tok_identifier FieldValue XsdOptional CommaOrSemicolonOptional
     {
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
-      if ($1 <= 0) {
-        pwarning(1, "Nonpositive value (%d) not allowed as a field key for '%s'.\n", $1, $4);
-        $1 = y_field_val--;
+      if ($1 < 0) {
+        pwarning(2, "No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", $3);
       }
-      $$ = new t_field($3, $4, $1);
+      $$ = new t_field($2, $3, $1);
+      if ($4 != NULL) {
+        validate_field_value($$, $4);
+        $$->set_value($4);
+      }
       $$->set_xsd_optional($5);
     }
-| FieldType tok_identifier XsdOptional CommaOrSemicolonOptional
+
+FieldIdentifier:
+  tok_int_constant ':'
     {
-      pdebug("Field -> FieldType tok_identifier");
-      pwarning(2, "No field key specified for '%s', resulting protocol may have conflicts or not be backwards compatible!\n", $2);
-      $$ = new t_field($1, $2, y_field_val--);
-      $$->set_xsd_optional($3);
-    }
-| FieldType tok_identifier '=' tok_int_constant CommaOrSemicolonOptional
-    {
-      pwarning(1, "Trailing = id notation is deprecated. Use 'Id: Type Name' notation instead"); 
-      pdebug("Field -> FieldType tok_identifier = tok_int_constant");
-      if ($4 <= 0) {
-        pwarning(1, "Nonpositive value (%d) not allowed as a field key for '%s'.\n", $4, $2);
-        $4 = y_field_val--;
+      if ($1 <= 0) {
+        pwarning(1, "Nonpositive value (%d) not allowed as a field key.\n", $1);
+        $1 = y_field_val--;
       }
-      $$ = new t_field($1, $2, $4);
+      $$ = $1;
+    }
+|
+    {
+      $$ = y_field_val--;
+    }
+
+FieldValue:
+  '=' ConstValue
+    {
+      if (g_parse_mode == PROGRAM) {     
+        $$ = $2;
+      } else {
+        $$ = NULL;
+      }
+    }
+|
+    {
+      $$ = NULL;
     }
 
 DefinitionType:
