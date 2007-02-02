@@ -122,7 +122,7 @@ TFileTransport::~TFileTransport() {
 void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool blockUntilFlush) {
   // make sure that event size is valid
   if ( (maxEventSize_ > 0) && (eventLen > maxEventSize_) ) {
-    T_ERROR("msg size is greater than max event size: %lu > %u\n", eventLen, maxEventSize_);
+    T_ERROR("msg size is greater than max event size: %u > %u\n", eventLen, maxEventSize_);
     return;
   }
 
