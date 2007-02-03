@@ -1,6 +1,7 @@
 #ifndef _THRIFT_TRANSPORT_TTRANSPORTEXCEPTION_H_
 #define _THRIFT_TRANSPORT_TTRANSPORTEXCEPTION_H_ 1
 
+#include <boost/lexical_cast.hpp>
 #include <string>
 
 namespace facebook { namespace thrift { namespace transport { 
@@ -52,6 +53,15 @@ class TTransportException : public facebook::thrift::TException {
    */
   TTransportExceptionType getType() {
     return type_;
+  }
+
+  virtual const char* what() const throw() {
+    if (message_.empty()) {
+      return (std::string("Default Transport Exception: ") +
+        boost::lexical_cast<std::string>(type_)).c_str();
+    } else {
+      return message_.c_str();
+    }
   }
  
  protected:

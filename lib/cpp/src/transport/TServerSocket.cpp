@@ -106,7 +106,7 @@ void TServerSocket::listen() {
 }
 
 shared_ptr<TTransport> TServerSocket::acceptImpl() {
-  if (serverSocket_ <= 0) {
+  if (serverSocket_ < 0) {
     throw TTransportException(TTX_NOT_OPEN, "TServerSocket not listening");
   }
 
@@ -120,7 +120,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     perror("TServerSocket::accept()");
     throw TTransportException(TTX_UNKNOWN, "ERROR:" + errno);
   }
-
+  
   shared_ptr<TSocket> client(new TSocket(clientSocket));
   if (sendTimeout_ > 0) {
     client->setSendTimeout(sendTimeout_);
