@@ -34,7 +34,9 @@ public:
         }
       }
     } catch (TTransportException& ttx) {
-      cerr << "TThreadPoolServer client died: " << ttx.what() << endl;
+      // This is reasonably expected, client didn't send a full request so just
+      // ignore him
+      //cerr << "TThreadPoolServer client died: " << ttx.what() << endl;
     } catch (TException& x) {
       cerr << "TThreadPoolServer exception: " << x.what() << endl;
     } catch (...) {

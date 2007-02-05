@@ -36,7 +36,7 @@ static Monitor s_netdb_monitor;
 TSocket::TSocket(string host, int port) : 
   host_(host),
   port_(port),
-  socket_(0),
+  socket_(-1),
   connTimeout_(0),
   sendTimeout_(0),
   recvTimeout_(0),
@@ -50,7 +50,7 @@ TSocket::TSocket(string host, int port) :
 TSocket::TSocket() : 
   host_(""),
   port_(0),
-  socket_(0),
+  socket_(-1),
   connTimeout_(0),
   sendTimeout_(0),
   recvTimeout_(0),
@@ -80,7 +80,7 @@ TSocket::~TSocket() {
 }
 
 bool TSocket::isOpen() {
-  return (socket_ > 0); 
+  return (socket_ >= 0); 
 }
 
 bool TSocket::peek() {
@@ -209,15 +209,15 @@ void TSocket::open() {
 }
 
 void TSocket::close() {
-  if (socket_ > 0) {
+  if (socket_ >= 0) {
     shutdown(socket_, SHUT_RDWR);
     ::close(socket_);
   }
-  socket_ = 0;
+  socket_ = -1;
 }
 
 uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
-  if (socket_ <= 0) {
+  if (socket_ < 0) {
     throw TTransportException(TTX_NOT_OPEN, "Called read on non-open socket");
   }
 
@@ -274,7 +274,7 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
 }
 
 void TSocket::write(const uint8_t* buf, uint32_t len) {
-  if (socket_ <= 0) {
+  if (socket_ < 0) {
     throw TTransportException(TTX_NOT_OPEN, "Called write on non-open socket");
   }
 
@@ -332,7 +332,7 @@ void TSocket::setPort(int port) {
 void TSocket::setLinger(bool on, int linger) {
   lingerOn_ = on;
   lingerVal_ = linger;
-  if (socket_ <= 0) {
+  if (socket_ < 0) {
     return;
   }
 
@@ -345,7 +345,7 @@ void TSocket::setLinger(bool on, int linger) {
 
 void TSocket::setNoDelay(bool noDelay) {
   noDelay_ = noDelay;
-  if (socket_ <= 0) {
+  if (socket_ < 0) {
     return;
   }
 
@@ -365,7 +365,7 @@ void TSocket::setRecvTimeout(int ms) {
   recvTimeout_ = ms;
   recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
   recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
-  if (socket_ <= 0) {
+  if (socket_ < 0) {
     return;
   }
 
@@ -379,7 +379,7 @@ void TSocket::setRecvTimeout(int ms) {
 
 void TSocket::setSendTimeout(int ms) {
   sendTimeout_ = ms;
-  if (socket_ <= 0) {
+  if (socket_ < 0) {
     return;
   }
    

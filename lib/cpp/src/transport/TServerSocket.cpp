@@ -13,14 +13,14 @@ using namespace boost;
 
 TServerSocket::TServerSocket(int port) :
   port_(port),
-  serverSocket_(0),
+  serverSocket_(-1),
   acceptBacklog_(1024),
   sendTimeout_(0),
   recvTimeout_(0) {}
 
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   port_(port),
-  serverSocket_(0),
+  serverSocket_(-1),
   acceptBacklog_(1024),
   sendTimeout_(sendTimeout),
   recvTimeout_(recvTimeout) {}
@@ -116,7 +116,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
                               (struct sockaddr *) &clientAddress,
                               (socklen_t *) &size);
     
-  if (clientSocket <= 0) {
+  if (clientSocket < 0) {
     perror("TServerSocket::accept()");
     throw TTransportException(TTX_UNKNOWN, "ERROR:" + errno);
   }
@@ -132,11 +132,11 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
 }
 
 void TServerSocket::close() {
-  if (serverSocket_ > 0) {
+  if (serverSocket_ >= 0) {
     shutdown(serverSocket_, SHUT_RDWR);
     ::close(serverSocket_);
   }
-  serverSocket_ = 0;
+  serverSocket_ = -1;
 }
 
 }}} // facebook::thrift::transport
