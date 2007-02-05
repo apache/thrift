@@ -4,6 +4,7 @@
 #include <string>
 #include "t_type.h"
 #include "t_struct.h"
+#include "t_doc.h"
 
 /**
  * Representation of a function. Key parts are return type, function name,
@@ -12,7 +13,7 @@
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_function {
+class t_function : public t_doc {
  public:
   t_function(t_type* returntype,
              std::string name,

@@ -55,13 +55,29 @@ class t_field {
     return value_;
   }
 
+  const std::string& get_doc() const {
+    return doc_;
+  }
+
+  bool has_doc() {
+    return has_doc_;
+  }                                                           
+
+  void set_doc(const std::string& doc) {                      
+    doc_ = doc;                                               
+    has_doc_ = true;                                          
+  }                                                           
+
  private:
   t_type* type_;
   std::string name_;
   int32_t key_;
   t_const_value* value_;
-  
+
   bool xsd_optional_;
+
+  std::string doc_;                                           
+  bool has_doc_;                                              
 
 };
 

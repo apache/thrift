@@ -289,6 +289,8 @@ void usage() {
   fprintf(stderr, "  -php        Generate PHP output files\n");
   fprintf(stderr, "  -phpi       Generate PHP inlined files\n");
   fprintf(stderr, "  -py         Generate Python output files\n");
+  fprintf(stderr, "  -rb         Generate Ruby output files\n");
+  fprintf(stderr, "  -xsd        Generate XSD output files\n");
   fprintf(stderr, "  -I dir       Add a directory to the list of directories \n");
   fprintf(stderr, "               searched for include directives\n");
   fprintf(stderr, "  -nowarn     Suppress all compiler warnings (BAD!)\n");

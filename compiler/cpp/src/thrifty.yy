@@ -42,6 +42,7 @@ int y_field_val = -1;
   t_service*     tservice;
   t_function*    tfunction;
   t_field*       tfield;
+  char*          tdoc;
 }
 
 /**
@@ -49,6 +50,7 @@ int y_field_val = -1;
  */
 %token<id>     tok_identifier
 %token<id>     tok_literal
+%token<tdoc>   tok_doctext
 
 /**
  * Constant values
@@ -153,6 +155,8 @@ int y_field_val = -1;
 %type<tbool>     XsdAll
 %type<tbool>     XsdOptional
 %type<id>        CppType
+
+%type<tdoc>      DocTextOptional
 
 %%
 
@@ -312,19 +316,37 @@ TypeDefinition:
     }
 
 Typedef:
-  tok_typedef DefinitionType tok_identifier
+  DocTextOptional tok_typedef DefinitionType tok_identifier 
     {
       pdebug("TypeDef -> tok_typedef DefinitionType tok_identifier");
-      t_typedef *td = new t_typedef(g_program, $2, $3);
+      t_typedef *td = new t_typedef(g_program, $3, $4);
       $$ = td;
+      if ($1 != NULL) {
+        td->set_doc($1);
+      }
     }
 
+DocTextOptional:
+  tok_doctext
+    {
+      pdebug("DocTextOptional -> tok_doctext");
+      $$ = $1;
+    }
+|
+    {
+      $$ = NULL; 
+    }
+    
+
 Enum:
-  tok_enum tok_identifier '{' EnumDefList '}'
+  DocTextOptional tok_enum tok_identifier '{' EnumDefList '}'
     {
       pdebug("Enum -> tok_enum tok_identifier { EnumDefList }");
-      $$ = $4;
-      $$->set_name($2);
+      $$ = $5;
+      $$->set_name($3);
+      if ($1 != NULL) {
+        $$->set_doc($1);
+      }
     }
 
 CommaOrSemicolonOptional:
@@ -349,19 +371,25 @@ EnumDefList:
     }
 
 EnumDef:
-  tok_identifier '=' tok_int_constant CommaOrSemicolonOptional
+  DocTextOptional tok_identifier '=' tok_int_constant CommaOrSemicolonOptional
     {
       pdebug("EnumDef -> tok_identifier = tok_int_constant");
-      if ($3 < 0) {
-        pwarning(1, "Negative value supplied for enum %s.\n", $1);
+      if ($4 < 0) {
+        pwarning(1, "Negative value supplied for enum %s.\n", $2);
       }
-      $$ = new t_enum_value($1, $3);
+      $$ = new t_enum_value($2, $4);
+      if ($1 != NULL) {
+        $$->set_doc($1);
+      }
     }
 |
-  tok_identifier CommaOrSemicolonOptional
+  DocTextOptional tok_identifier CommaOrSemicolonOptional
     {
       pdebug("EnumDef -> tok_identifier");
-      $$ = new t_enum_value($1);
+      $$ = new t_enum_value($2);
+      if ($1 != NULL) {
+        $$->set_doc($1);
+      }
     }
 
 Const:
@@ -455,12 +483,15 @@ ConstMapContents:
     }
 
 Struct:
-  tok_struct tok_identifier XsdAll '{' FieldList '}'
+  DocTextOptional tok_struct tok_identifier XsdAll '{' FieldList '}'
     {
       pdebug("Struct -> tok_struct tok_identifier { FieldList }");
-      $5->set_name($2);
-      $5->set_xsd_all($3);
-      $$ = $5;
+      $6->set_name($3);
+      if ($1 != NULL) {
+        $6->set_doc($1);
+      }
+      $6->set_xsd_all($4);
+      $$ = $6;
       y_field_val = -1;
     }
 
@@ -490,17 +521,25 @@ Xception:
       pdebug("Xception -> tok_xception tok_identifier { FieldList }");
       $4->set_name($2);
       $4->set_xception(true);
+/*
+      if ($4 != NULL) {
+        $5->set_doc($4);
+      }
+*/
       $$ = $4;
       y_field_val = -1;
     }
 
 Service:
-  tok_service tok_identifier Extends '{' FunctionList '}'
+  DocTextOptional tok_service tok_identifier Extends '{' FunctionList '}'
     {
       pdebug("Service -> tok_service tok_identifier { FunctionList }");
-      $$ = $5;
-      $$->set_name($2);
-      $$->set_extends($3);
+      $$ = $6;
+      $$->set_name($3);
+      $$->set_extends($4);
+      if ($1 != NULL) {
+        $$->set_doc($1);
+      }
     }
 
 Extends:
@@ -535,10 +574,13 @@ FunctionList:
     }
 
 Function:
-  Async FunctionType tok_identifier '(' FieldList ')' Throws CommaOrSemicolonOptional
+  DocTextOptional Async FunctionType tok_identifier '(' FieldList ')' Throws CommaOrSemicolonOptional
     {
-      $5->set_name(std::string($3) + "_args");
-      $$ = new t_function($2, $3, $5, $7, $1);
+      $6->set_name(std::string($4) + "_args");
+      $$ = new t_function($3, $4, $6, $8, $2);
+      if ($1 != NULL) {
+        $$->set_doc($1);
+      }
       y_field_val = -1;
     }
 
@@ -577,18 +619,21 @@ FieldList:
     }
 
 Field:
-  FieldIdentifier FieldType tok_identifier FieldValue XsdOptional CommaOrSemicolonOptional
+  DocTextOptional FieldIdentifier FieldType tok_identifier FieldValue XsdOptional CommaOrSemicolonOptional
     {
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
-      if ($1 < 0) {
+      if ($2 < 0) {
         pwarning(2, "No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", $3);
       }
-      $$ = new t_field($2, $3, $1);
-      if ($4 != NULL) {
-        validate_field_value($$, $4);
-        $$->set_value($4);
+      $$ = new t_field($3, $4, $2);
+      if ($5 != NULL) {
+        validate_field_value($$, $5);
+        $$->set_value($5);
       }
-      $$->set_xsd_optional($5);
+      $$->set_xsd_optional($6);
+      if ($1 != NULL) {
+        $$->set_doc($1);
+      }
     }
 
 FieldIdentifier:

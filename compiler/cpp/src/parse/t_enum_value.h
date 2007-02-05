@@ -2,6 +2,7 @@
 #define T_ENUM_VALUE_H
 
 #include <string>
+#include "t_doc.h"
 
 /**
  * A constant. These are used inside of enum definitions. Constants are just
@@ -10,7 +11,7 @@
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_enum_value {
+class t_enum_value : public t_doc {
  public:
   t_enum_value(std::string name) :
     name_(name),

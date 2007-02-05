@@ -2,6 +2,7 @@
 #define T_TYPE_H
 
 #include <string>
+#include "t_doc.h"
 
 class t_program;
 
@@ -14,7 +15,7 @@ class t_program;
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_type {
+class t_type : public t_doc {
  public:
   virtual ~t_type() {}
 
@@ -55,9 +56,10 @@ class t_type {
 
   t_type(std::string name) :
     name_(name) {}
-    
+
   t_program* program_;
   std::string name_;
+
 };
 
 #endif

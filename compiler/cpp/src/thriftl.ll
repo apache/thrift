@@ -40,9 +40,11 @@ whitespace   ([ \t\r\n]*)
 multicomm    ("/*""/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
 comment      ("//"[^\n]*)
 unixcomment  ("#"[^\n]*)
+doctext      ("["(("["[^\]\[]*"]")|[^\]\[])*"]") /* allows one level of nesting */
 symbol       ([:;\,\{\}\(\)\=<>\[\]])
-dliteral      ("\""[^"]*"\"")
-sliteral      ("'"[^']*"'")
+dliteral     ("\""[^"]*"\"")
+sliteral     ("'"[^']*"'")
+
 
 %%
 
@@ -183,5 +185,12 @@ sliteral      ("'"[^']*"'")
   yylval.id[strlen(yylval.id)-1] = '\0';
   return tok_literal;
 }
+
+{doctext} {
+ yylval.id = strdup(yytext + 1);
+ yylval.id[strlen(yylval.id) - 1] = '\0';
+ return tok_doctext;
+}
+
 
 %%
