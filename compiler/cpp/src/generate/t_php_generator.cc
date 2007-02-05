@@ -844,9 +844,14 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
   f_service_ <<
     "class " << service_name_ << "Rest" << extends_if << " {" << endl;
   indent_up();
+
+  if (extends.empty()) {
+    f_service_ <<
+      indent() << "protected $impl_;" << endl <<
+      endl;
+  }
+
   f_service_ <<
-    indent() << "private $impl_;" << endl <<
-    endl <<
     indent() << "public function __construct($impl) {" << endl <<
     indent() << "  $this->impl_ = $impl;" << endl <<
     indent() << "}" << endl <<
@@ -865,8 +870,9 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
       while (atype->is_typedef()) {
         atype = ((t_typedef*)atype)->get_type();
       }
+      string req = "$request['" + (*a_iter)->get_name() + "']";
       f_service_ <<
-        indent() << "$" << (*a_iter)->get_name() << " = $request['" << (*a_iter)->get_name() << "'];" << endl;
+        indent() << "$" << (*a_iter)->get_name() << " = isset(" << req << ") ? " << req << " : null;" << endl;
       if (atype->is_string() &&
           ((t_base_type*)atype)->is_string_list()) {
         f_service_ << 

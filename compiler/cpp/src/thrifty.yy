@@ -71,6 +71,7 @@ int y_field_val = -1;
 %token tok_xsd_all
 %token tok_xsd_optional
 %token tok_xsd_namespace
+%token tok_xsd_attrs
 
 /**
  * Base datatype keywords
@@ -154,6 +155,7 @@ int y_field_val = -1;
 %type<tbool>     Async
 %type<tbool>     XsdAll
 %type<tbool>     XsdOptional
+%type<id>        XsdAttributes
 %type<id>        CppType
 
 %type<tdoc>      DocTextOptional
@@ -515,6 +517,16 @@ XsdOptional:
       $$ = false;
     }
 
+XsdAttributes:
+  tok_xsd_attrs tok_identifier
+    {
+      $$ = $2;
+    }
+|
+    {
+      $$ = NULL;
+    }
+
 Xception:
   tok_xception tok_identifier '{' FieldList '}'
     {
@@ -619,11 +631,11 @@ FieldList:
     }
 
 Field:
-  DocTextOptional FieldIdentifier FieldType tok_identifier FieldValue XsdOptional CommaOrSemicolonOptional
+  DocTextOptional FieldIdentifier FieldType tok_identifier FieldValue XsdOptional XsdAttributes CommaOrSemicolonOptional
     {
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
       if ($2 < 0) {
-        pwarning(2, "No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", $3);
+        pwarning(2, "No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", $4);
       }
       $$ = new t_field($3, $4, $2);
       if ($5 != NULL) {
@@ -633,6 +645,9 @@ Field:
       $$->set_xsd_optional($6);
       if ($1 != NULL) {
         $$->set_doc($1);
+      }
+      if ($7 != NULL) {
+        $$->add_xsd_attr($7);
       }
     }
 

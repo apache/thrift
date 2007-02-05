@@ -39,6 +39,14 @@ class t_field {
     return key_;
   }
 
+  void set_value(t_const_value* value) {
+    value_ = value;
+  }
+
+  t_const_value* get_value() {
+    return value_;
+  }
+
   void set_xsd_optional(bool xsd_optional) {
     xsd_optional_ = xsd_optional;
   }
@@ -47,12 +55,12 @@ class t_field {
     return xsd_optional_;
   }
 
-  void set_value(t_const_value* value) {
-    value_ = value;
+  void add_xsd_attr(std::string attr) {
+    xsd_attrs_.push_back(attr);
   }
 
-  t_const_value* get_value() {
-    return value_;
+  const std::vector<std::string>& get_xsd_attrs() {
+    return xsd_attrs_;
   }
 
   const std::string& get_doc() const {
@@ -75,6 +83,7 @@ class t_field {
   t_const_value* value_;
 
   bool xsd_optional_;
+  std::vector<std::string> xsd_attrs_;
 
   std::string doc_;                                           
   bool has_doc_;                                              
