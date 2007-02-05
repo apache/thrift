@@ -23,7 +23,7 @@ public:
 
   virtual ~TException() throw() {}
 
-  const char* what() const throw() {
+  virtual const char* what() const throw() {
     if (message_.empty()) {
       return "Default TException.";
     } else {
@@ -31,7 +31,7 @@ public:
     }
   }
 
-private:
+protected:
   std::string message_;
 
 };
