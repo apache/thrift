@@ -6,6 +6,7 @@
  *
  * @package thrift.protocol
  * @author Mark Slee <mcslee@facebook.com>
+ * @author Aditya Agarwal <aditya@facebook.com>
  */
 
 /**
@@ -45,43 +46,26 @@ class TMessageType {
 abstract class TProtocol {
 
   /**
-   * Input transport
+   * Underlying transport
    *
    * @var TTransport
    */
-  protected $inputTransport_;
-
-  /**
-   * Output transport
-   *
-   * @var TTransport
-   */
-  protected $outputTransport_;
+  protected $trans_;
 
   /**
    * Constructor
    */
-  protected function __construct($in, $out=null) {
-    $this->inputTransport_ = $in;
-    $this->outputTransport_ = $out ? $out : $in;
+  protected function __construct($trans) {
+    $this->trans_ = $trans;
   }
 
   /**
-   * Accessor for input
+   * Accessor for transport
    *
    * @return TTransport
    */
-  public function getInputTransport() {
-    return $this->inputTransport_;
-  }
-
-  /**
-   * Accessor for output
-   *
-   * @return TTransport
-   */
-  public function getOutputTransport() {
-    return $this->outputTransport_;
+  public function getTransport() {
+    return $this->trans_;
   }
 
   /** 
@@ -373,11 +357,11 @@ abstract class TProtocol {
  */
 interface TProtocolFactory {
   /**
-   * Build input and output protocols from the given transports.
+   * Build a protocol from the base transport
    *
-   * @return array Two elements, (iprot, oprot)
+   * @return TProtcol protocol
    */
-  public function getIOProtocols($itrans, $otrans);
+  public function getProtocol($trans);
 }
     
 

@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 /** For transport operations */
 include_once $GLOBALS['THRIFT_ROOT'].'/transport/TTransport.php';
@@ -11,8 +11,8 @@ include_once $GLOBALS['THRIFT_ROOT'].'/transport/TTransport.php';
  */
 class TBinaryProtocol extends TProtocol {
 
-  public function __construct($in, $out=null) {
-    parent::__construct($in, $out);
+  public function __construct($trans) {
+    parent::__construct($trans);
   }
 
   public function writeMessageBegin($name, $type, $seqid) {
@@ -82,25 +82,25 @@ class TBinaryProtocol extends TProtocol {
 
   public function writeBool($value) {
     $data = pack('c', $value ? 1 : 0);
-    $this->outputTransport_->write($data, 1);
+    $this->trans_->write($data, 1);
     return 1;
   }
 
   public function writeByte($value) {
     $data = pack('c', $value);
-    $this->outputTransport_->write($data, 1);
+    $this->trans_->write($data, 1);
     return 1;
   }
 
   public function writeI16($value) {
     $data = pack('n', $value);
-    $this->outputTransport_->write($data, 2);
+    $this->trans_->write($data, 2);
     return 2;
   }
 
   public function writeI32($value) {
     $data = pack('N', $value);
-    $this->outputTransport_->write($data, 4);
+    $this->trans_->write($data, 4);
     return 4;
   }
 
@@ -136,13 +136,13 @@ class TBinaryProtocol extends TProtocol {
       $data = pack('N2', $hi, $lo);
     }
 
-    $this->outputTransport_->write($data, 8);
+    $this->trans_->write($data, 8);
     return 8;
   }
 
   public function writeDouble($value) {
     $data = pack('d', $value);
-    $this->outputTransport_->write(strrev($data), 8);
+    $this->trans_->write(strrev($data), 8);
     return 8;
   }
 
@@ -150,7 +150,7 @@ class TBinaryProtocol extends TProtocol {
     $len = strlen($value);
     $result = $this->writeI32($len);
     if ($len) {
-      $this->outputTransport_->write($value, $len);
+      $this->trans_->write($value, $len);
     }
     return $result + $len;
   }
@@ -221,21 +221,21 @@ class TBinaryProtocol extends TProtocol {
   }
 
   public function readBool(&$value) {
-    $data = $this->inputTransport_->readAll(1);
+    $data = $this->trans_->readAll(1);
     $arr = unpack('c', $data);
     $value = $arr[1] == 1;
     return 1;
   }
 
   public function readByte(&$value) {
-    $data = $this->inputTransport_->readAll(1);
+    $data = $this->trans_->readAll(1);
     $arr = unpack('c', $data);
     $value = $arr[1];
     return 1;
   }
 
   public function readI16(&$value) {
-    $data = $this->inputTransport_->readAll(2);
+    $data = $this->trans_->readAll(2);
     $arr = unpack('n', $data);
     $value = $arr[1];
     if ($value > 0x7fff) {
@@ -245,7 +245,7 @@ class TBinaryProtocol extends TProtocol {
   }
 
   public function readI32(&$value) {
-    $data = $this->inputTransport_->readAll(4);
+    $data = $this->trans_->readAll(4);
     $arr = unpack('N', $data);
     $value = $arr[1];
     if ($value > 0x7fffffff) {
@@ -255,7 +255,7 @@ class TBinaryProtocol extends TProtocol {
   }
 
   public function readI64(&$value) {
-    $data = $this->inputTransport_->readAll(8);
+    $data = $this->trans_->readAll(8);
 
     $arr = unpack('N2', $data);
     
@@ -315,7 +315,7 @@ class TBinaryProtocol extends TProtocol {
   }
 
   public function readDouble(&$value) {
-    $data = strrev($this->inputTransport_->readAll(8));
+    $data = strrev($this->trans_->readAll(8));
     $arr = unpack('d', $data);
     $value = $arr[1];
     return 8;
@@ -324,7 +324,7 @@ class TBinaryProtocol extends TProtocol {
   public function readString(&$value) {
     $result = $this->readI32($len);
     if ($len) {
-      $value = $this->inputTransport_->readAll($len);
+      $value = $this->trans_->readAll($len);
     } else {
       $value = '';
     }
@@ -336,9 +336,8 @@ class TBinaryProtocol extends TProtocol {
  * Binary Protocol Factory
  */
 class TBinaryProtocolFactory implements TProtocolFactory {
-  public function getIOProtocols($itrans, $otrans) {
-    $prot = new TBinaryProtocol($itrans, $otrans);
-    return array($prot, $prot);
+  public function getProtocol($trans) {
+    return new TBinaryProtocol($trans);
   }
 }
 
