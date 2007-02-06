@@ -326,6 +326,12 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
       endl;
   }
   
+  out <<
+    indent() << "public function getName() {" << endl <<
+    indent() << "  return '" << tstruct->get_name() << "';" << endl <<
+    indent() << "}" << endl <<
+    endl;
+  
   generate_php_struct_reader(out, tstruct);
   generate_php_struct_writer(out, tstruct);
 
@@ -716,7 +722,7 @@ void t_php_generator::generate_process_function(t_service* tservice,
     indent_down();
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ <<
-        indent() << "} catch (" << (*x_iter)->get_type()->get_name() << " $" << (*x_iter)->get_name() << ") {" << endl;
+        indent() << "} catch (" << php_namespace((*x_iter)->get_type()->get_program()) << (*x_iter)->get_type()->get_name() << " $" << (*x_iter)->get_name() << ") {" << endl;
       if (!tfunction->is_async()) {
         indent_up();
         f_service_ <<
