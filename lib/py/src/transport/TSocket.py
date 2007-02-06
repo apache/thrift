@@ -7,14 +7,18 @@ class TSocket(TTransportBase):
 
   def __init__(self, host='localhost', port=9090):
     self.host = host
-    self.port = port
+    self.por t= port
     self.handle = None
 
   def setHandle(self, h):
     self.handle = h
 
   def isOpen(self):
-    return handle != None
+    return self.handle != None
+
+  def setTimeout(self, ms):
+    if (self.handle != None):
+      self.handle.settimeout(ms/1000.00)
 
   def open(self):
     self.handle = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
