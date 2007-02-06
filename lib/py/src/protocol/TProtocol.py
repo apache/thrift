@@ -25,10 +25,8 @@ class TProtocolBase:
 
   """Base class for Thrift protocol driver."""
 
-  def __init__(self, itrans, otrans=None):
-    self.itrans = self.otrans = itrans
-    if otrans != None:
-      self.otrans = otrans
+  def __init__(self, trans):
+    self.trans = trans
 
   def writeMessageBegin(self, name, type, seqid):
     pass
@@ -191,5 +189,5 @@ class TProtocolBase:
       self.readListEnd()
 
 class TProtocolFactory:
-  def getIOProtocols(self, itrans, otrans):
+  def getProtocol(self, trans):
     pass

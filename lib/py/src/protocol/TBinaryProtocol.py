@@ -5,8 +5,8 @@ class TBinaryProtocol(TProtocolBase):
 
   """Binary implementation of the Thrift protocol driver."""
 
-  def __init__(self, itrans, otrans=None):
-    TProtocolBase.__init__(self, itrans, otrans)
+  def __init__(self, trans):
+    TProtocolBase.__init__(self, trans)
 
   def writeMessageBegin(self, name, type, seqid):
     self.writeString(name)
@@ -62,27 +62,27 @@ class TBinaryProtocol(TProtocolBase):
     
   def writeByte(self, byte):
     buff = pack("!b", byte)
-    self.otrans.write(buff)
+    self.trans.write(buff)
 
   def writeI16(self, i16):
     buff = pack("!h", i16)
-    self.otrans.write(buff)
+    self.trans.write(buff)
 
   def writeI32(self, i32):
     buff = pack("!i", i32)
-    self.otrans.write(buff)
+    self.trans.write(buff)
     
   def writeI64(self, i64):
     buff = pack("!q", i64)
-    self.otrans.write(buff)
+    self.trans.write(buff)
 
   def writeDouble(self, dub):
     buff = pack("!d", dub)
-    self.otrans.write(buff)
+    self.trans.write(buff)
 
   def writeString(self, str):
     self.writeI32(len(str))
-    self.otrans.write(str)
+    self.trans.write(str)
 
   def readMessageBegin(self):
     name = self.readString()
@@ -141,36 +141,36 @@ class TBinaryProtocol(TProtocolBase):
     return True
 
   def readByte(self):
-    buff = self.itrans.readAll(1)
+    buff = self.trans.readAll(1)
     val, = unpack('!b', buff)
     return val
 
   def readI16(self):
-    buff = self.itrans.readAll(2)
+    buff = self.trans.readAll(2)
     val, = unpack('!h', buff)
     return val
 
   def readI32(self):
-    buff = self.itrans.readAll(4)
+    buff = self.trans.readAll(4)
     val, = unpack('!i', buff)
     return val
 
   def readI64(self):
-    buff = self.itrans.readAll(8)
+    buff = self.trans.readAll(8)
     val, = unpack('!q', buff)
     return val
 
   def readDouble(self):
-    buff = self.itrans.readAll(8)
+    buff = self.trans.readAll(8)
     val, = unpack('!d', buff)
     return val
 
   def readString(self):
     len = self.readI32()
-    str = self.itrans.readAll(len)
+    str = self.trans.readAll(len)
     return str
 
 class TBinaryProtocolFactory:
-  def getIOProtocols(self, itrans, otrans):
-    prot = TBinaryProtocol(itrans, otrans)
-    return (prot, prot)
+  def getProtocol(self, trans):
+    prot = TBinaryProtocol(trans)
+    return prot

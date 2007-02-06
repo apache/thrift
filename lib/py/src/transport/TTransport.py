@@ -55,16 +55,16 @@ class TTransportFactoryBase:
 
   """Base class for a Transport Factory"""
 
-  def getIOTransports(self, trans):
-    return (trans, trans)
+  def getTransport(self, trans):
+    return trans
 
 class TBufferedTransportFactory:
 
   """Factory transport that builds buffered transports"""
 
-  def getIOTransports(self, trans):
+  def getTransport(self, trans):
     buffered = TBufferedTransport(trans)
-    return (buffered, buffered)
+    return buffered
 
 
 class TBufferedTransport(TTransportBase):
@@ -99,9 +99,9 @@ class TFramedTransportFactory:
 
   """Factory transport that builds framed transports"""
 
-  def getIOTransports(self, trans):
+  def getTransport(self, trans):
     framed = TFramedTransport(trans)
-    return (framed, framed)
+    return framed
 
 
 class TFramedTransport(TTransportBase):

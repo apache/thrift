@@ -11,17 +11,34 @@ class TServer:
 
   """Base interface for a server, which must have a serve method."""
 
-  def __init__(self, processor, serverTransport, transportFactory=None, protocolFactory=None):
+  """ 3 constructors for all servers:
+  1) (processor, serverTransport)
+  2) (processor, serverTransport, transportFactory, protocolFactory)
+  3) (processor, serverTransport,
+      inputTransportFactory, outputTransportFactory,
+      inputProtocolFactory, outputProtocolFactory)"""
+  def __init__(self, *args):
+    print args
+    if (len(args) == 2):
+      self.__initArgs__(args[0], args[1],
+                        TTransport.TTransportFactoryBase(),
+                        TTransport.TTransportFactoryBase(),
+                        TBinaryProtocol.TBinaryProtocolFactory(),
+                        TBinaryProtocol.TBinaryProtocolFactory())
+    elif (len(args) == 4):
+      self.__initArgs__(args[0], args[1], args[2], args[2], args[3], args[3])
+    elif (len(args) == 6):
+      self.__initArgs__(args[0], args[1], args[2], args[3], args[4], args[5])
+
+  def __initArgs__(self, processor, serverTransport,
+                   inputTransportFactory, outputTransportFactory,
+                   inputProtocolFactory, outputProtocolFactory):
     self.processor = processor
     self.serverTransport = serverTransport
-    if transportFactory == None:
-      self.transportFactory = TTransport.TTransportFactoryBase()
-    else:
-      self.transportFactory = transportFactory
-    if protocolFactory == None:
-      self.protocolFactory = TBinaryProtocol.TBinaryProtocolFactory()
-    else:
-      self.protocolFactory = protocolFactory
+    self.inputTransportFactory = inputTransportFactory
+    self.outputTransportFactory = outputTransportFactory
+    self.inputProtocolFactory = inputProtocolFactory
+    self.outputProtocolFactory = outputProtocolFactory
 
   def serve(self):
     pass
@@ -30,15 +47,17 @@ class TSimpleServer(TServer):
 
   """Simple single-threaded server that just pumps around one transport."""
 
-  def __init__(self, processor, serverTransport, transportFactory=None, protocolFactory=None):
-    TServer.__init__(self, processor, serverTransport, transportFactory, protocolFactory)
+  def __init__(self, *args):
+    TServer.__init__(self, *args)
 
   def serve(self):
     self.serverTransport.listen()
     while True:
       client = self.serverTransport.accept()
-      (itrans, otrans) = self.transportFactory.getIOTransports(client)
-      (iprot, oprot) = self.protocolFactory.getIOProtocols(itrans, otrans)
+      itrans = self.inputTransportFactory.getTransport(client)
+      otrans = self.outputTransportFactory.getTransport(client)
+      iprot = self.inputProtocolFactory.getProtocol(itrans)
+      oprot = self.oututProtocolFactory.getProtocol(otrans)
       try:
         while True:
           self.processor.process(iprot, oprot)
@@ -54,8 +73,8 @@ class TThreadedServer(TServer):
 
   """Threaded server that spawns a new thread per each connection."""
 
-  def __init__(self, processor, serverTransport, transportFactory=None, protocolFactory=None):
-    TServer.__init__(self, processor, serverTransport, transportFactory, protocolFactory)
+  def __init__(self, *args):
+    TServer.__init__(self, *args)
 
   def serve(self):
     self.serverTransport.listen()
@@ -68,8 +87,10 @@ class TThreadedServer(TServer):
         print '%s, %s, %s,' % (type(x), x, traceback.format_exc())
 
   def handle(self, client):
-    (itrans, otrans) = self.transportFactory.getIOTransports(client)
-    (iprot, oprot) = self.protocolFactory.getIOProtocols(itrans, otrans)
+    itrans = self.inputTransportFactory.getTransport(client)
+    otrans = self.outputTransportFactory.getTransport(client)
+    iprot = self.inputProtocolFactory.getProtocol(itrans)
+    oprot = self.oututProtocolFactory.getProtocol(otrans)
     try:
       while True:
         self.processor.process(iprot, oprot)
@@ -85,8 +106,8 @@ class TThreadPoolServer(TServer):
 
   """Server with a fixed size pool of threads which service requests."""
 
-  def __init__(self, processor, serverTransport, transportFactory=None, protocolFactory=None):
-    TServer.__init__(self, processor, serverTransport, transportFactory, protocolFactory)
+  def __init__(self, *args):
+    TServer.__init__(self, *args)
     self.clients = Queue.Queue()
     self.threads = 10
 
@@ -105,8 +126,10 @@ class TThreadPoolServer(TServer):
       
   def serveClient(self, client):
     """Process input/output from a client for as long as possible"""
-    (itrans, otrans) = self.transportFactory.getIOTransports(client)
-    (iprot, oprot) = self.protocolFactory.getIOProtocols(itrans, otrans)
+    itrans = self.inputTransportFactory.getTransport(client)
+    otrans = self.outputTransportFactory.getTransport(client)
+    iprot = self.inputProtocolFactory.getProtocol(itrans)
+    oprot = self.oututProtocolFactory.getProtocol(otrans)
     try:
       while True:
         self.processor.process(iprot, oprot)
