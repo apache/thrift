@@ -330,6 +330,147 @@ class TMemoryBuffer : public TTransport {
 
 };
 
+/**
+ * TPipedTransport. This transport allows piping of a request from one 
+ * transport to another either when readEnd() or writeEnd(). The typicAL
+ * use case for this is to log a request or a reply to disk.
+ * The underlying buffer expands to a keep a copy of the entire 
+ * request/response.
+ *
+ * @author Aditya Agarwal <aditya@facebook.com>
+ */
+class TPipedTransport : public TTransport {
+ public:
+  TPipedTransport(boost::shared_ptr<TTransport> srcTrans, 
+                  boost::shared_ptr<TTransport> dstTrans) :
+    srcTrans_(srcTrans),
+    dstTrans_(dstTrans),
+    rBufSize_(512), rPos_(0), rLen_(0),
+    wBufSize_(512), wLen_(0) {
+
+    // default is to to pipe the request when readEnd() is called
+    pipeOnRead_ = true;
+    pipeOnWrite_ = false; 
+
+    rBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * rBufSize_);
+    wBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * wBufSize_);
+  }
+    
+  TPipedTransport(boost::shared_ptr<TTransport> srcTrans, 
+                  boost::shared_ptr<TTransport> dstTrans, 
+                  uint32_t sz) :
+    srcTrans_(srcTrans),
+    dstTrans_(dstTrans),
+    rBufSize_(512), rPos_(0), rLen_(0),
+    wBufSize_(sz), wLen_(0) {
+
+    rBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * rBufSize_);
+    wBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * wBufSize_);
+  }
+
+  ~TPipedTransport() {
+    free(rBuf_);
+    free(wBuf_);
+  }
+
+  bool isOpen() {
+    return srcTrans_->isOpen();
+  }
+  
+  bool peek() {    
+    if (rPos_ >= rLen_) {
+      // Double the size of the underlying buffer if it is full
+      if (rLen_ == rBufSize_) {
+        rBufSize_ *=2;
+        rBuf_ = (uint8_t *)realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
+      }
+    
+      // try to fill up the buffer
+      rLen_ += srcTrans_->read(rBuf_+rPos_, rBufSize_ - rPos_);
+    }
+    return (rLen_ > rPos_);
+  }
+
+
+  void open() {
+    srcTrans_->open();
+  }
+
+  void close() {
+    srcTrans_->close();
+  }
+
+  void setPipeOnRead(bool pipeVal) {
+    pipeOnRead_ = pipeVal;
+  }
+
+  void setPipeOnWrite(bool pipeVal) {
+    pipeOnWrite_ = pipeVal;
+  }
+  
+  uint32_t read(uint8_t* buf, uint32_t len);
+
+  void readEnd() {
+    if (pipeOnRead_) {
+      dstTrans_->write(rBuf_, rLen_);
+    }
+
+    // reset state
+    rLen_ = 0;
+    rPos_ = 0;
+  }
+
+  void write(const uint8_t* buf, uint32_t len);
+
+  void writeEnd() {
+    if (pipeOnWrite_) {
+      dstTrans_->write(wBuf_, wLen_);
+    }
+  }
+
+  void flush();
+
+ protected:
+  boost::shared_ptr<TTransport> srcTrans_;
+  boost::shared_ptr<TTransport> dstTrans_;
+
+  uint8_t* rBuf_;
+  uint32_t rBufSize_;
+  uint32_t rPos_;
+  uint32_t rLen_;
+
+  uint8_t* wBuf_;
+  uint32_t wBufSize_;
+  uint32_t wLen_;
+
+  bool pipeOnRead_;
+  bool pipeOnWrite_;
+};
+
+
+/**
+ * Wraps a transport into a pipedTransport instance.
+ *
+ * @author Aditya Agarwal <aditya@facebook.com>
+ */
+class TPipedTransportFactory : public TTransportFactory {
+ public:
+  TPipedTransportFactory(boost::shared_ptr<TTransport> dstTrans): dstTrans_(dstTrans) {}
+
+  virtual ~TPipedTransportFactory() {}
+
+  /**
+   * Wraps the base transport into a piped transport.
+   */
+  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> srcTrans) {
+    return boost::shared_ptr<TTransport>(new TPipedTransport(srcTrans, dstTrans_));
+  }
+
+ private:
+  boost::shared_ptr<TTransport> dstTrans_;
+};
+
+
 }}} // facebook::thrift::transport
 
 
