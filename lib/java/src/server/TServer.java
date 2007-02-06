@@ -24,14 +24,24 @@ public abstract class TServer {
   protected TServerTransport serverTransport_;
 
   /**
-   * Transport Factory
+   * Input Transport Factory
    */
-  protected TTransportFactory transportFactory_;
+  protected TTransportFactory inputTransportFactory_;
 
   /**
-   * Protocol Factory
+   * Output Transport Factory
    */
-  protected TProtocolFactory protocolFactory_;
+  protected TTransportFactory outputTransportFactory_;
+
+  /**
+   * Input Protocol Factory
+   */
+  protected TProtocolFactory inputProtocolFactory_;
+
+  /**
+   * Output Protocol Factory
+   */
+  protected TProtocolFactory outputProtocolFactory_;
 
   /**
    * Default constructors.
@@ -40,8 +50,10 @@ public abstract class TServer {
   protected TServer(TProcessor processor,
                     TServerTransport serverTransport) {
     this(processor,
-         serverTransport,
+         serverTransport,         
          new TTransportFactory(),
+         new TTransportFactory(),
+         new TBinaryProtocol.Factory(),
          new TBinaryProtocol.Factory());
   }
 
@@ -51,6 +63,8 @@ public abstract class TServer {
     this(processor,
          serverTransport,
          transportFactory,
+         transportFactory,
+         new TBinaryProtocol.Factory(),
          new TBinaryProtocol.Factory());
   }
 
@@ -58,10 +72,26 @@ public abstract class TServer {
                     TServerTransport serverTransport,
                     TTransportFactory transportFactory,
                     TProtocolFactory protocolFactory) {
+    this(processor,
+         serverTransport,
+         transportFactory,
+         transportFactory,
+         protocolFactory,
+         protocolFactory);
+  }
+
+  protected TServer(TProcessor processor,
+                    TServerTransport serverTransport,
+                    TTransportFactory inputTransportFactory,
+                    TTransportFactory outputTransportFactory,
+                    TProtocolFactory inputProtocolFactory,
+                    TProtocolFactory outputProtocolFactory) {
     processor_ = processor;
     serverTransport_ = serverTransport;
-    transportFactory_ = transportFactory;
-    protocolFactory_ = protocolFactory;
+    inputTransportFactory_ = inputTransportFactory;
+    outputTransportFactory_ = outputTransportFactory;
+    inputProtocolFactory_ = inputProtocolFactory;
+    outputProtocolFactory_ = outputProtocolFactory;
   }
   
   /**

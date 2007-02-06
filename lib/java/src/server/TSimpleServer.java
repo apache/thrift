@@ -6,6 +6,7 @@ import com.facebook.thrift.protocol.TProtocol;
 import com.facebook.thrift.protocol.TProtocolFactory;
 import com.facebook.thrift.transport.TServerTransport;
 import com.facebook.thrift.transport.TTransport;
+import com.facebook.thrift.transport.TTransportFactory;
 import com.facebook.thrift.transport.TTransportException;
 
 /**
@@ -20,6 +21,24 @@ public class TSimpleServer extends TServer {
     super(processor, serverTransport);
   }
 
+  public TSimpleServer(TProcessor processor,
+                       TServerTransport serverTransport,
+                       TTransportFactory transportFactory,
+                       TProtocolFactory protocolFactory) {
+    super(processor, serverTransport, transportFactory, protocolFactory);
+  }
+
+  public TSimpleServer(TProcessor processor,
+                       TServerTransport serverTransport,
+                       TTransportFactory inputTransportFactory,
+                       TTransportFactory outputTransportFactory,
+                       TProtocolFactory inputProtocolFactory,
+                       TProtocolFactory outputProtocolFactory) {                       
+    super(processor, serverTransport, 
+          inputTransportFactory, outputTransportFactory,
+          inputProtocolFactory, outputProtocolFactory);
+  }
+
   public void serve() {
     try {
       serverTransport_.listen();
@@ -30,14 +49,18 @@ public class TSimpleServer extends TServer {
 
     while (true) {
       TTransport client = null;
-      TTransport[] iot = null;
-      TProtocol[] iop = null;
+      TTransport inputTransport = null;
+      TTransport outputTransport = null;
+      TProtocol inputProtocol = null;
+      TProtocol outputProtocol = null;
       try {
         client = serverTransport_.accept();
         if (client != null) {
-          iot = transportFactory_.getIOTransports(client);
-          iop = protocolFactory_.getIOProtocols(iot[0], iot[1]);
-          while (processor_.process(iop[0], iop[1]));
+          inputTransport = inputTransportFactory_.getTransport(client);
+          outputTransport = outputTransportFactory_.getTransport(client);
+          inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
+          outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
+          while (processor_.process(inputProtocol, outputProtocol)) {}
         }
       } catch (TTransportException ttx) {
         // Client died, just move on
@@ -47,14 +70,14 @@ public class TSimpleServer extends TServer {
         x.printStackTrace();
       }
 
-      if (iot != null) {
-        if (iot[0] != null) {
-          iot[0].close();
-        }
-        if (iot[1] != null) {
-          iot[1].close();
-        }
+      if (inputTransport != null) {
+        inputTransport.close();
       }
+
+      if (outputTransport != null) {
+        outputTransport.close();
+      }
+
     }
   }
 }

@@ -16,35 +16,22 @@ public abstract class TProtocol {
   private TProtocol() {}
 
   /**
-   * Input transport
+   * Transport
    */ 
-  protected TTransport inputTransport_;
-
-  /**
-   * Output transport
-   */
-  protected TTransport outputTransport_;
+  protected TTransport trans_;
 
   /**
    * Constructor
    */
-  protected TProtocol(TTransport in, TTransport out) {
-    inputTransport_ = in;
-    outputTransport_ = out;
+  protected TProtocol(TTransport trans) {
+    trans_ = trans;
   }
   
   /**
-   * Input accessor
+   * Transport accessor
    */
-  public TTransport getInputTransport() {
-    return inputTransport_;
-  }
-
-  /**
-   * Output accessor
-   */
-  public TTransport getOutputTransport() {
-    return outputTransport_;
+  public TTransport getTransport() {
+    return trans_;
   }
 
   /**

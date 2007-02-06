@@ -14,18 +14,16 @@ public class TBinaryProtocol extends TProtocol {
    * Factory
    */
   public static class Factory implements TProtocolFactory {
-    public TProtocol[] getIOProtocols(TTransport in, TTransport out) {
-      TProtocol[] io = new TProtocol[2];
-      io[0] = io[1] = new TBinaryProtocol(in, out);
-      return io;
+    public TProtocol getProtocol(TTransport trans) {
+      return new TBinaryProtocol(trans);
     }
   }
 
   /**
    * Constructor
    */
-  public TBinaryProtocol(TTransport in, TTransport out) {
-    super(in, out);
+  public TBinaryProtocol(TTransport trans) {
+    super(trans);
   }
 
   public void writeMessageBegin(TMessage message) throws TException {
@@ -80,14 +78,14 @@ public class TBinaryProtocol extends TProtocol {
   private byte [] bout = new byte[1];
   public void writeByte(byte b) throws TException {
     bout[0] = b;
-    outputTransport_.write(bout, 0, 1);
+    trans_.write(bout, 0, 1);
   }
 
   private byte[] i16out = new byte[2];
   public void writeI16(short i16) throws TException {
     i16out[0] = (byte)(0xff & (i16 >> 8));
     i16out[1] = (byte)(0xff & (i16));
-    outputTransport_.write(i16out, 0, 2);
+    trans_.write(i16out, 0, 2);
   }
 
   private byte[] i32out = new byte[4];
@@ -96,7 +94,7 @@ public class TBinaryProtocol extends TProtocol {
     i32out[1] = (byte)(0xff & (i32 >> 16));
     i32out[2] = (byte)(0xff & (i32 >> 8));
     i32out[3] = (byte)(0xff & (i32));
-    outputTransport_.write(i32out, 0, 4);
+    trans_.write(i32out, 0, 4);
   }
 
   private byte[] i64out = new byte[8];
@@ -109,7 +107,7 @@ public class TBinaryProtocol extends TProtocol {
     i64out[5] = (byte)(0xff & (i64 >> 16));
     i64out[6] = (byte)(0xff & (i64 >> 8));
     i64out[7] = (byte)(0xff & (i64));
-    outputTransport_.write(i64out, 0, 8);
+    trans_.write(i64out, 0, 8);
   }
 
   public void writeDouble(double dub) throws TException {
@@ -119,7 +117,7 @@ public class TBinaryProtocol extends TProtocol {
   public void writeString(String str) throws TException {
     byte[] dat = str.getBytes();
     writeI32(dat.length);
-    outputTransport_.write(dat, 0, dat.length);
+    trans_.write(dat, 0, dat.length);
   }
 
   /**
@@ -187,13 +185,13 @@ public class TBinaryProtocol extends TProtocol {
 
   private byte[] bin = new byte[1];
   public byte readByte() throws TException {
-    inputTransport_.readAll(bin, 0, 1);
+    trans_.readAll(bin, 0, 1);
     return bin[0];
   }
 
   private byte[] i16rd = new byte[2];
   public short readI16() throws TException {
-    inputTransport_.readAll(i16rd, 0, 2);
+    trans_.readAll(i16rd, 0, 2);
     return
       (short)
       (((i16rd[0] & 0xff) << 8) |
@@ -202,7 +200,7 @@ public class TBinaryProtocol extends TProtocol {
 
   private byte[] i32rd = new byte[4];
   public int readI32() throws TException {
-    inputTransport_.readAll(i32rd, 0, 4);
+    trans_.readAll(i32rd, 0, 4);
     return
       ((i32rd[0] & 0xff) << 24) |
       ((i32rd[1] & 0xff) << 16) |
@@ -212,7 +210,7 @@ public class TBinaryProtocol extends TProtocol {
  
   private byte[] i64rd = new byte[8];
   public long readI64() throws TException {
-    inputTransport_.readAll(i64rd, 0, 8);
+    trans_.readAll(i64rd, 0, 8);
     return
       ((long)(i64rd[0] & 0xff) << 56) |
       ((long)(i64rd[1] & 0xff) << 48) |
@@ -231,7 +229,7 @@ public class TBinaryProtocol extends TProtocol {
   public String readString() throws TException {
     int size = readI32();
     byte[] buf = new byte[size];
-    inputTransport_.readAll(buf, 0, size);
+    trans_.readAll(buf, 0, size);
     return new String(buf);
   }
 }
