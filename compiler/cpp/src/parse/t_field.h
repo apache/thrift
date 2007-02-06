@@ -16,14 +16,16 @@ class t_field {
     name_(name),
     key_(0),
     value_(NULL),
-    xsd_optional_(false) {}
+    xsd_optional_(false),
+    xsd_nillable_(false) {}
 
   t_field(t_type* type, std::string name, int32_t key) :
     type_(type),
     name_(name),
     key_(key),
     value_(NULL),
-    xsd_optional_(false) {}
+    xsd_optional_(false),
+    xsd_nillable_(false) {}
 
   ~t_field() {}
 
@@ -55,6 +57,14 @@ class t_field {
     return xsd_optional_;
   }
 
+  void set_xsd_nillable(bool xsd_nillable) {
+    xsd_nillable_ = xsd_nillable;
+  }
+
+  bool get_xsd_nillable() const {
+    return xsd_nillable_;
+  }
+
   void add_xsd_attr(std::string attr) {
     xsd_attrs_.push_back(attr);
   }
@@ -83,6 +93,7 @@ class t_field {
   t_const_value* value_;
 
   bool xsd_optional_;
+  bool xsd_nillable_;
   std::vector<std::string> xsd_attrs_;
 
   std::string doc_;                                           

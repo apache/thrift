@@ -70,6 +70,7 @@ int y_field_val = -1;
 %token tok_java_package
 %token tok_xsd_all
 %token tok_xsd_optional
+%token tok_xsd_nillable
 %token tok_xsd_namespace
 %token tok_xsd_attrs
 
@@ -155,6 +156,7 @@ int y_field_val = -1;
 %type<tbool>     Async
 %type<tbool>     XsdAll
 %type<tbool>     XsdOptional
+%type<tbool>     XsdNillable
 %type<id>        XsdAttributes
 %type<id>        CppType
 
@@ -517,6 +519,16 @@ XsdOptional:
       $$ = false;
     }
 
+XsdNillable:
+  tok_xsd_nillable
+    {
+      $$ = true;
+    }
+|
+    {
+      $$ = false;
+    }
+
 XsdAttributes:
   tok_xsd_attrs tok_identifier
     {
@@ -631,7 +643,7 @@ FieldList:
     }
 
 Field:
-  DocTextOptional FieldIdentifier FieldType tok_identifier FieldValue XsdOptional XsdAttributes CommaOrSemicolonOptional
+  DocTextOptional FieldIdentifier FieldType tok_identifier FieldValue XsdOptional XsdNillable XsdAttributes CommaOrSemicolonOptional
     {
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
       if ($2 < 0) {
@@ -643,11 +655,12 @@ Field:
         $$->set_value($5);
       }
       $$->set_xsd_optional($6);
+      $$->set_xsd_nillable($7);
       if ($1 != NULL) {
         $$->set_doc($1);
       }
-      if ($7 != NULL) {
-        $$->add_xsd_attr($7);
+      if ($8 != NULL) {
+        $$->add_xsd_attr($8);
       }
     }
 

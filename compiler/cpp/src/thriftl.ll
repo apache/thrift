@@ -63,6 +63,7 @@ sliteral     ("'"[^']*"'")
 "php_namespace" { return tok_php_namespace; }
 "xsd_all"       { return tok_xsd_all;       }
 "xsd_optional"  { return tok_xsd_optional;  }
+"xsd_nillable"  { return tok_xsd_nillable;  }
 "xsd_namespace" { return tok_xsd_namespace; }
 "xsd_attrs"     { return tok_xsd_attrs;     }
 "include"       { return tok_include;       }

@@ -48,7 +48,7 @@ void t_xsd_generator::generate_struct(t_struct* tstruct) {
   indent_up();
   
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    generate_element(s_xsd_types_, (*m_iter)->get_name(), (*m_iter)->get_type(), (*m_iter)->get_xsd_attrs(), (*m_iter)->get_xsd_optional() || xsd_all);
+    generate_element(s_xsd_types_, (*m_iter)->get_name(), (*m_iter)->get_type(), (*m_iter)->get_xsd_attrs(), (*m_iter)->get_xsd_optional() || xsd_all, (*m_iter)->get_xsd_nillable());
   } 
 
   indent_down();
@@ -68,14 +68,16 @@ void t_xsd_generator::generate_element(ostream& out,
                                        t_type* ttype,
                                        vector<string> attrs,
                                        bool optional,
+                                       bool nillable,
                                        bool list_element) {
   string sminOccurs = (optional || list_element) ? " minOccurs=\"0\"" : "";
   string smaxOccurs = list_element ? " maxOccurs=\"unbounded\"" : "";
   string soptional = sminOccurs + smaxOccurs;
+  string snillable = nillable ? " nillable=\"true\"" : "";
 
   if (ttype->is_void() || ttype->is_list()) {
     indent(out) <<
-      "<xsd:element name=\"" << name << "\"" << soptional << ">" << endl;
+      "<xsd:element name=\"" << name << "\"" << soptional << snillable << ">" << endl;
     indent_up();
     if (attrs.size() == 0 && ttype->is_void()) {
       indent(out) << 
@@ -83,15 +85,8 @@ void t_xsd_generator::generate_element(ostream& out,
     } else {
       indent(out) <<
         "<xsd:complexType>" << endl;
-      indent_up();
-      
-      vector<string>::iterator a_iter;
-      for (a_iter = attrs.begin(); a_iter != attrs.end(); ++a_iter) {
-        indent(out) << "<xsd:attribute name=\"" << (*a_iter) << "\" type=\"xsd:boolean\" />" << endl;
-      }
-      
+      indent_up();    
       if (ttype->is_list()) {
-        indent(out) << "<xsd:attribute name=\"list\" type=\"xsd:boolean\" />" << endl;       
         indent(out) << "<xsd:sequence minOccurs=\"0\" maxOccurs=\"unbounded\">" << endl;
         indent_up();
         string subname;
@@ -102,9 +97,14 @@ void t_xsd_generator::generate_element(ostream& out,
           subname = type_name(subtype);
         }
         f_php_ << "$GLOBALS['" << program_->get_name() << "_xsd_elt_" << name << "'] = '" << subname << "';" << endl;
-        generate_element(out, subname, subtype, vector<string>(), false, true);
+        generate_element(out, subname, subtype, vector<string>(), false, false, true);
         indent_down();
         indent(out) << "</xsd:sequence>" << endl;
+        indent(out) << "<xsd:attribute name=\"list\" type=\"xsd:boolean\" />" << endl;
+      }
+      vector<string>::iterator a_iter;
+      for (a_iter = attrs.begin(); a_iter != attrs.end(); ++a_iter) {
+        indent(out) << "<xsd:attribute name=\"" << (*a_iter) << "\" type=\"xsd:boolean\" />" << endl;
       }
       indent_down();
       indent(out) <<
@@ -116,10 +116,10 @@ void t_xsd_generator::generate_element(ostream& out,
   } else {
     if (attrs.size() == 0) {
       indent(out) <<
-        "<xsd:element name=\"" << name << "\"" << soptional << " type=\"" << type_name(ttype) << "\" />" << endl;
+        "<xsd:element name=\"" << name << "\"" << " type=\"" << type_name(ttype) << "\"" << soptional << snillable << " />" << endl;
     } else {
       // Wow, all this work for a SIMPLE TYPE with attributes?!?!?!
-      indent(out) << "<xsd:element name=\"" << name << "\"" << soptional << ">" << endl;
+      indent(out) << "<xsd:element name=\"" << name << "\"" << soptional << snillable << ">" << endl;
       indent_up();
       indent(out) << "<xsd:complexType>" << endl;
       indent_up();
