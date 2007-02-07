@@ -413,6 +413,7 @@ void t_rb_generator::generate_rb_struct_reader(ofstream& out,
         indent() << "else" << endl <<
         indent() << "  iprot.skip(ftype)" << endl <<
         indent() << "end" << endl;
+      indent_down();
     }
     
     // In the default case we skip the field
@@ -785,7 +786,7 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
   }
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ <<
-      indent() << "@processMap[\"" << (*f_iter)->get_name() << "\"] = Processor.process_" << (*f_iter)->get_name() << endl;
+      indent() << "@processMap['" << (*f_iter)->get_name() << "'] = method(:process_" << (*f_iter)->get_name() << ")" << endl;
   } 
   indent_down();
   indent(f_service_) << "end" << endl << endl;
@@ -805,7 +806,7 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
     indent() << "if (@processMap.has_key?(name))" << endl <<
     indent() << "  @processMap[name].call(seqid, iprot, oprot)" << endl <<
     indent() << "else" << endl <<
-    indent() << "  print 'Unknown function %s' % (name)" << endl <<
+    indent() << "  print \"Unknown function #{name}\"" << endl <<
     indent() << "end" << endl;
 
   // Read end of args field, the T_STOP, and the struct close
@@ -837,11 +838,11 @@ void t_rb_generator::generate_process_function(t_service* tservice,
     "(seqid, iprot, oprot)" << endl;
   indent_up();
 
-  string argsname = tfunction->get_name() + "_args";
-  string resultname = tfunction->get_name() + "_result";
+  string argsname = capitalize(tfunction->get_name()) + "_args";
+  string resultname = capitalize(tfunction->get_name()) + "_result";
 
   f_service_ <<
-    indent() << "args = " << argsname << "()" << endl <<
+    indent() << "args = " << argsname << ".new()" << endl <<
     indent() << "args.read(iprot)" << endl <<
     indent() << "iprot.readMessageEnd()" << endl;
 
@@ -852,7 +853,7 @@ void t_rb_generator::generate_process_function(t_service* tservice,
   // Declare result for non async function
   if (!tfunction->is_async()) {
     f_service_ <<
-      indent() << "result = " << resultname << "()" << endl;
+      indent() << "result = " << resultname << ".new()" << endl;
   }
 
   // Try block for a function with exceptions
