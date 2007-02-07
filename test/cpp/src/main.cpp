@@ -10,7 +10,6 @@
 #include <transport/TServerSocket.h>
 #include <transport/TSocket.h>
 #include <transport/TTransportUtils.h>
-#include <transport/TBufferedRouterTransport.h>
 #include <transport/TFileTransport.h>
 #include <TLogging.h>
 
@@ -358,7 +357,7 @@ int main(int argc, char **argv) {
       fileTransport->setMaxEventSize(1024 * 16);
       
       transportFactory = 
-        shared_ptr<TTransportFactory>(new TBufferedRouterTransportFactory(fileTransport));
+        shared_ptr<TTransportFactory>(new TPipedTransportFactory(fileTransport));
     }
 
     shared_ptr<Thread> serverThread;
