@@ -283,23 +283,26 @@ class TProtocol {
   }
 
   inline shared_ptr<TTransport> getTransport() {
-    return trans_;
+    return ptrans_;
   }
 
   // TODO: remove these two calls, they are for backwards
   // compatibility
   inline shared_ptr<TTransport> getInputTransport() {
-    return trans_;
+    return ptrans_;
   }
   inline shared_ptr<TTransport> getOutputTransport() {
-    return trans_;
+    return ptrans_;
   }
 
  protected:
-  TProtocol(shared_ptr<TTransport> trans):
-    trans_(trans) {}
+  TProtocol(shared_ptr<TTransport> ptrans):
+    ptrans_(ptrans) {
+    trans_ = ptrans.get();
+  }
     
-  shared_ptr<TTransport> trans_;
+  shared_ptr<TTransport> ptrans_;
+  TTransport* trans_;
 
  private:
   TProtocol() {}
