@@ -159,6 +159,6 @@ class TProtocol
 end
 
 class TProtocolFactory
-  def getProtocol(trans); nil end
+  def getProtocol(trans); nil; end
 end
 

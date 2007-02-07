@@ -2,10 +2,14 @@ require 'thrift/transport/ttransport'
 require 'socket'
 
 class TSocket < TTransport
-  def initialize(host, port)
+  def initialize(host='localhost', port=9090)
     @host = host
     @port = port
     @handle = nil
+  end
+
+  def setHandle(handle)
+    @handle = handle
   end
 
   def open()
@@ -13,7 +17,7 @@ class TSocket < TTransport
   end
 
   def isOpen()
-    return @handle != nil
+    return !@handle.nil?
   end
   
   def write(str)
@@ -21,11 +25,16 @@ class TSocket < TTransport
   end
 
   def read(sz)
-    return @handle.recv(sz)
+    data = @handle.recv(sz)
+    if (data.length == 0)
+      raise TTransportException.new("TSocket: Could not read #{sz} bytes from #{@host}:#{@port}")
+    end
+    return data
   end
 
   def close()
     @handle.close() unless @handle.nil?
+    @handle = nil
   end
     
 end
@@ -42,7 +51,10 @@ class TServerSocket < TServerTransport
 
   def accept()
     if (@handle != nil)
-      return @handle.accept()
+      sock = @handle.accept()
+      trans = TSocket.new()
+      trans.setHandle(sock)
+      return trans
     end
     return nil
   end
