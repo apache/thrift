@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 
 $:.push('gen-rb')
-$:.push('../../lib/ruby/lib')
+$:.push('../../lib/rb/lib')
 
 require 'thrift/transport/tsocket'
 require 'thrift/protocol/tbinaryprotocol'
