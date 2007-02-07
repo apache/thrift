@@ -468,11 +468,11 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     endl;
   if (read) {
     out <<
-      indent() << "uint32_t read(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot);" << endl;
+      indent() << "uint32_t read(facebook::thrift::protocol::TProtocol* iprot);" << endl;
   }
   if (write) {
     out <<
-      indent() << "uint32_t write(boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) const;" << endl;
+      indent() << "uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;" << endl;
   }
   out <<
     endl;
@@ -493,7 +493,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
                                              t_struct* tstruct,
                                              bool pointers) {
   indent(out) <<
-    "uint32_t " << tstruct->get_name() << "::read(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot) {" << endl;
+    "uint32_t " << tstruct->get_name() << "::read(facebook::thrift::protocol::TProtocol* iprot) {" << endl;
   indent_up();
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -594,7 +594,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<
-    "uint32_t " << tstruct->get_name() << "::write(boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) const {" << endl;
+    "uint32_t " << tstruct->get_name() << "::write(facebook::thrift::protocol::TProtocol* oprot) const {" << endl;
   indent_up();
 
   out <<
@@ -647,7 +647,7 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<
-    "uint32_t " << tstruct->get_name() << "::write(boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) const {" << endl;
+    "uint32_t " << tstruct->get_name() << "::write(facebook::thrift::protocol::TProtocol* oprot) const {" << endl;
   indent_up();
 
   out <<
@@ -1026,8 +1026,11 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     indent() << service_name_ << "Client(boost::shared_ptr<facebook::thrift::protocol::TProtocol> prot) : " << endl;
   if (extends.empty()) {
     f_header_ <<
-      indent() << "  iprot_(prot)," << endl <<
-      indent() << "  oprot_(prot) {}" << endl;
+      indent() << "  piprot_(prot)," << endl <<
+      indent() << "  poprot_(prot) {" << endl <<
+      indent() << "  iprot_ = prot.get();" << endl <<
+      indent() << "  oprot_ = prot.get();" << endl <<
+      indent() << "}" << endl;
   } else {
     f_header_ <<
       indent() << "  " << extends << "Client(prot, prot) {}" << endl;
@@ -1037,8 +1040,11 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     indent() << service_name_ << "Client(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) : " << endl;
   if (extends.empty()) {
     f_header_ <<
-      indent() << "  iprot_(iprot)," << endl <<
-      indent() << "  oprot_(oprot) {}" << endl;
+      indent() << "  piprot_(iprot)," << endl <<
+      indent() << "  poprot_(oprot) {" << endl <<
+      indent() << "  iprot_ = iprot.get();" << endl <<
+      indent() << "  oprot_ = oprot.get();" << endl <<
+      indent() << "}" << endl;
   } else {
     f_header_ <<
       indent() << "  " << extends << "Client(iprot, oprot) {}" << endl;
@@ -1067,8 +1073,10 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
       " protected:" << endl;
     indent_up();
     f_header_ <<
-      indent() << "boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot_;"  << endl <<
-      indent() << "boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot_;"  << endl;
+      indent() << "boost::shared_ptr<facebook::thrift::protocol::TProtocol> piprot_;"  << endl <<
+      indent() << "boost::shared_ptr<facebook::thrift::protocol::TProtocol> poprot_;"  << endl <<
+      indent() << "facebook::thrift::protocol::TProtocol* iprot_;"  << endl <<
+      indent() << "facebook::thrift::protocol::TProtocol* oprot_;"  << endl;
     indent_down();  
   }
 
@@ -1276,7 +1284,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
   f_header_ <<
     indent() << "boost::shared_ptr<" << service_name_ << "If> iface_;" << endl;
   f_header_ <<
-    indent() << "virtual bool process_fn(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot, std::string& fname, int32_t seqid);" << endl;
+    indent() << "virtual bool process_fn(facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid);" << endl;
   indent_down();
 
   // Process function declarations
@@ -1284,10 +1292,10 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     " private:" << endl;
   indent_up();
   f_header_ <<
-    indent() << "std::map<std::string, void (" << service_name_ << "Processor::*)(int32_t, boost::shared_ptr<facebook::thrift::protocol::TProtocol>, boost::shared_ptr<facebook::thrift::protocol::TProtocol>)> processMap_;" << endl;
+    indent() << "std::map<std::string, void (" << service_name_ << "Processor::*)(int32_t, facebook::thrift::protocol::TProtocol*, facebook::thrift::protocol::TProtocol*)> processMap_;" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_header_) <<
-      "void process_" << (*f_iter)->get_name() << "(int32_t seqid, boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot);" << endl;
+      "void process_" << (*f_iter)->get_name() << "(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);" << endl;
   }
   indent_down();
 
@@ -1322,7 +1330,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     declare_map <<
     indent() << "}" << endl <<
     endl <<
-    indent() << "virtual bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot);" << endl <<
+    indent() << "virtual bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> piprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> poprot);" << endl <<
     indent() << "virtual ~" << service_name_ << "Processor() {}" << endl;
   indent_down();
   f_header_ <<
@@ -1330,11 +1338,13 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
 
   // Generate the server implementation
   f_service_ <<
-    "bool " << service_name_ << "Processor::process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) {" << endl;
+    "bool " << service_name_ << "Processor::process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> piprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> poprot) {" << endl;
   indent_up();
 
   f_service_ <<
     endl <<
+    indent() << "facebook::thrift::protocol::TProtocol* iprot = piprot.get();" << endl <<
+    indent() << "facebook::thrift::protocol::TProtocol* oprot = poprot.get();" << endl <<    
     indent() << "std::string fname;" << endl <<
     indent() << "facebook::thrift::protocol::TMessageType mtype;" << endl <<
     indent() << "int32_t seqid;" << endl <<
@@ -1354,12 +1364,12 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     endl;
 
   f_service_ <<
-    "bool " << service_name_ << "Processor::process_fn(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot, std::string& fname, int32_t seqid) {" << endl;
+    "bool " << service_name_ << "Processor::process_fn(facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid) {" << endl;
   indent_up();
     
   // HOT: member function pointer map
   f_service_ <<
-    indent() << "std::map<std::string, void (" << service_name_ << "Processor::*)(int32_t, boost::shared_ptr<facebook::thrift::protocol::TProtocol>, boost::shared_ptr<facebook::thrift::protocol::TProtocol>)>::iterator pfn;" << endl <<
+    indent() << "std::map<std::string, void (" << service_name_ << "Processor::*)(int32_t, facebook::thrift::protocol::TProtocol*, facebook::thrift::protocol::TProtocol*)>::iterator pfn;" << endl <<
     indent() << "pfn = processMap_.find(fname);" << endl <<
     indent() << "if (pfn == processMap_.end()) {" << endl;
   if (extends.empty()) {
@@ -1434,7 +1444,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   f_service_ <<
     "void " << tservice->get_name() << "Processor::" <<
     "process_" << tfunction->get_name() <<
-    "(int32_t seqid, boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot)" << endl;
+    "(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)" << endl;
   scope_up(f_service_);
 
   string argsname = tservice->get_name() + "_" + tfunction->get_name() + "_args";
