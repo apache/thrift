@@ -145,7 +145,7 @@ class TSocket extends TTransport {
 
     // Connect failed?
     if ($this->handle_ === FALSE) {
-      $error = 'TSocket: Could not connect to '.$this->host_.':'.$this->port_;
+      $error = 'TSocket: Could not connect to '.$this->host_.':'.$this->port_.' ('.$errstr.' ['.$errno.'])';
       if ($this->debug_) {
         call_user_func($this->debugHandler_, $error);
       }
@@ -184,8 +184,14 @@ class TSocket extends TTransport {
     while (TRUE) {
       $buf = @fread($this->handle_, $len);
       if ($buf === FALSE || $buf === '') {
-        throw new Exception('TSocket: Could not read '.$len.' bytes from '.
-                            $this->host_.':'.$this->port_);
+        $md = stream_get_meta_data($this->handle_);
+        if ($md['timed_out']) {
+          throw new Exception('TSocket: timed out reading '.$len.' bytes from '.
+                              $this->host_.':'.$this->port_);
+        } else {
+          throw new Exception('TSocket: Could not read '.$len.' bytes from '.
+                              $this->host_.':'.$this->port_);
+        }
       } else if (($sz = strlen($buf)) < $len) {
         $md = stream_get_meta_data($this->handle_);
         if ($md['timed_out']) {
@@ -214,8 +220,14 @@ class TSocket extends TTransport {
     }
     $data = @fread($this->handle_, $len);
     if ($data === FALSE || $data === '') {
-      throw new Exception('TSocket: Could not read '.$len.' bytes from '.
-                          $this->host_.':'.$this->port_);
+      $md = stream_get_meta_data($this->handle_);
+      if ($md['timed_out']) {
+        throw new Exception('TSocket: timed out reading '.$len.' bytes from '.
+                            $this->host_.':'.$this->port_);
+      } else {
+        throw new Exception('TSocket: Could not read '.$len.' bytes from '.
+                            $this->host_.':'.$this->port_);
+      }
     }
     return $data;
   }
@@ -233,8 +245,14 @@ class TSocket extends TTransport {
     while (!empty($buf)) {
       $got = @fwrite($this->handle_, $buf);
       if ($got === 0 || $got === FALSE) {
-        throw new Exception('TSocket: Could not write '.strlen($buf).' bytes '.
-                            $this->host_.':'.$this->port_);
+        $md = stream_get_meta_data($this->handle_);
+        if ($md['timed_out']) {
+          throw new Exception('TSocket: timed out writing '.$len.' bytes from '.
+                              $this->host_.':'.$this->port_);
+        } else {
+            throw new Exception('TSocket: Could not write '.strlen($buf).' bytes '.
+                                $this->host_.':'.$this->port_);
+        }
       }
       $buf = substr($buf, $got);
     }
