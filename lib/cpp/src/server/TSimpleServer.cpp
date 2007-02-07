@@ -28,8 +28,8 @@ void TSimpleServer::serve() {
   }
 
   // Fetch client from server
-  try {
-    while (true) {
+  while (true) {
+    try {
       client = serverTransport_->accept();
       inputTransport = inputTransportFactory_->getTransport(client);
       outputTransport = outputTransportFactory_->getTransport(client);
@@ -49,12 +49,26 @@ void TSimpleServer::serve() {
       }
       inputTransport->close();
       outputTransport->close();
+      client->close();    
+    } catch (TTransportException& ttx) {
+      inputTransport->close();
+      outputTransport->close();
       client->close();
+      cerr << "TServerTransport died on accept: " << ttx.what() << endl;
+      continue;
+    } catch (TException& tx) {
+      inputTransport->close();
+      outputTransport->close();
+      client->close();
+      cerr << "Some kind of accept exception: " << tx.what() << endl;
+      continue;
+    } catch (string s) {
+      inputTransport->close();
+      outputTransport->close();
+      client->close();
+      cerr << "TThreadPoolServer: Unknown exception: " << s << endl;
+      break;
     }
-  } catch (TTransportException& ttx) {
-    cerr << "TServerTransport died on accept: " << ttx.what() << endl;
-  } catch (TException& tx) {
-    cerr << "Some kind of accept exception: " << tx.what() << endl;
   }
 
   // TODO(mcslee): Could this be a timeout case? Or always the real thing?

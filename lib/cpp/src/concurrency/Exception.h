@@ -2,18 +2,19 @@
 #define _THRIFT_CONCURRENCY_EXCEPTION_H_ 1
 
 #include <exception>
+#include <Thrift.h>
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
-class NoSuchTaskException : public std::exception {};
+class NoSuchTaskException : public facebook::thrift::TException {};
 
-class UncancellableTaskException : public std::exception {};
+class UncancellableTaskException : public facebook::thrift::TException {};
 
-class InvalidArgumentException : public std::exception {};
+class InvalidArgumentException : public facebook::thrift::TException {};
 
-class IllegalStateException : public std::exception {};
+class IllegalStateException : public facebook::thrift::TException {};
 
-class TimedOutException : public std::exception {};
+class TimedOutException : public facebook::thrift::TException {};
 
 }}} // facebook::thrift::concurrency
 

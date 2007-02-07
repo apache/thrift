@@ -102,8 +102,26 @@ void TThreadPoolServer::serve() {
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
       // Add to threadmanager pool
-      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, inputProtocol, outputProtocol)));
+      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, 
+                                                                                          inputProtocol, 
+                                                                                          outputProtocol)));
     } catch (TTransportException& ttx) {
+      inputTransport->close();
+      outputTransport->close();
+      client->close();
+      cerr << "TThreadPoolServer: TServerTransport died on accept: " << ttx.what() << endl;
+      continue;
+    } catch (TException& tx) {
+      inputTransport->close();
+      outputTransport->close();
+      client->close();
+      cerr << "TThreadPoolServer: Caught TException: " << tx.what() << endl;
+      continue;
+    } catch (string s) {
+      inputTransport->close();
+      outputTransport->close();
+      client->close();
+      cerr << "TThreadPoolServer: Unknown exception: " << s << endl;
       break;
     }
   }
