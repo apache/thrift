@@ -66,7 +66,7 @@ void t_xsd_generator::generate_struct(t_struct* tstruct) {
 void t_xsd_generator::generate_element(ostream& out,
                                        string name,
                                        t_type* ttype,
-                                       vector<string> attrs,
+                                       t_struct* attrs,
                                        bool optional,
                                        bool nillable,
                                        bool list_element) {
@@ -79,7 +79,7 @@ void t_xsd_generator::generate_element(ostream& out,
     indent(out) <<
       "<xsd:element name=\"" << name << "\"" << soptional << snillable << ">" << endl;
     indent_up();
-    if (attrs.size() == 0 && ttype->is_void()) {
+    if (attrs == NULL && ttype->is_void()) {
       indent(out) << 
         "<xsd:complexType />" << endl;
     } else {
@@ -97,14 +97,17 @@ void t_xsd_generator::generate_element(ostream& out,
           subname = type_name(subtype);
         }
         f_php_ << "$GLOBALS['" << program_->get_name() << "_xsd_elt_" << name << "'] = '" << subname << "';" << endl;
-        generate_element(out, subname, subtype, vector<string>(), false, false, true);
+        generate_element(out, subname, subtype, NULL, false, false, true);
         indent_down();
         indent(out) << "</xsd:sequence>" << endl;
         indent(out) << "<xsd:attribute name=\"list\" type=\"xsd:boolean\" />" << endl;
       }
-      vector<string>::iterator a_iter;
-      for (a_iter = attrs.begin(); a_iter != attrs.end(); ++a_iter) {
-        indent(out) << "<xsd:attribute name=\"" << (*a_iter) << "\" type=\"xsd:boolean\" />" << endl;
+      if (attrs != NULL) {
+        const vector<t_field*>& members = attrs->get_members();
+        vector<t_field*>::const_iterator a_iter;
+        for (a_iter = members.begin(); a_iter != members.end(); ++a_iter) {
+          indent(out) << "<xsd:attribute name=\"" << (*a_iter)->get_name() << "\" type=\"" << type_name((*a_iter)->get_type()) << "\" />" << endl;
+        }
       }
       indent_down();
       indent(out) <<
@@ -114,7 +117,7 @@ void t_xsd_generator::generate_element(ostream& out,
     indent(out) <<
       "</xsd:element>" << endl;
   } else {
-    if (attrs.size() == 0) {
+    if (attrs == NULL) {
       indent(out) <<
         "<xsd:element name=\"" << name << "\"" << " type=\"" << type_name(ttype) << "\"" << soptional << snillable << " />" << endl;
     } else {
@@ -127,9 +130,10 @@ void t_xsd_generator::generate_element(ostream& out,
       indent_up();
       indent(out) << "<xsd:extension base=\"" << type_name(ttype) << "\">" << endl;
       indent_up();
-      vector<string>::iterator a_iter;
-      for (a_iter = attrs.begin(); a_iter != attrs.end(); ++a_iter) {
-        indent(out) << "<xsd:attribute name=\"" << (*a_iter) << "\" type=\"xsd:boolean\" />" << endl;
+      const vector<t_field*>& members = attrs->get_members();
+      vector<t_field*>::const_iterator a_iter;
+      for (a_iter = members.begin(); a_iter != members.end(); ++a_iter) {
+        indent(out) << "<xsd:attribute name=\"" << (*a_iter)->get_name() << "\" type=\"" << type_name((*a_iter)->get_type()) << "\" />" << endl;
       }
       indent_down();
       indent(out) << "</xsd:extension>" << endl;

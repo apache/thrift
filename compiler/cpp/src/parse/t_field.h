@@ -3,6 +3,9 @@
 
 #include <string>
 
+// Forward declare for xsd_attrs
+class t_struct;
+
 /**
  * Class to represent a field in a thrift structure. A field has a data type,
  * a symbolic name, and a numeric identifier.
@@ -17,7 +20,8 @@ class t_field {
     key_(0),
     value_(NULL),
     xsd_optional_(false),
-    xsd_nillable_(false) {}
+    xsd_nillable_(false),
+    xsd_attrs_(NULL) {}
 
   t_field(t_type* type, std::string name, int32_t key) :
     type_(type),
@@ -25,7 +29,8 @@ class t_field {
     key_(key),
     value_(NULL),
     xsd_optional_(false),
-    xsd_nillable_(false) {}
+    xsd_nillable_(false),
+    xsd_attrs_(NULL) {}
 
   ~t_field() {}
 
@@ -65,11 +70,11 @@ class t_field {
     return xsd_nillable_;
   }
 
-  void add_xsd_attr(std::string attr) {
-    xsd_attrs_.push_back(attr);
+  void set_xsd_attrs(t_struct* xsd_attrs) {
+    xsd_attrs_ = xsd_attrs;
   }
 
-  const std::vector<std::string>& get_xsd_attrs() {
+  t_struct* get_xsd_attrs() {
     return xsd_attrs_;
   }
 
@@ -94,7 +99,7 @@ class t_field {
 
   bool xsd_optional_;
   bool xsd_nillable_;
-  std::vector<std::string> xsd_attrs_;
+  t_struct* xsd_attrs_;
 
   std::string doc_;                                           
   bool has_doc_;                                              

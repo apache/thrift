@@ -157,7 +157,7 @@ int y_field_val = -1;
 %type<tbool>     XsdAll
 %type<tbool>     XsdOptional
 %type<tbool>     XsdNillable
-%type<id>        XsdAttributes
+%type<tstruct>   XsdAttributes
 %type<id>        CppType
 
 %type<tdoc>      DocTextOptional
@@ -530,9 +530,9 @@ XsdNillable:
     }
 
 XsdAttributes:
-  tok_xsd_attrs tok_identifier
+  tok_xsd_attrs '{' FieldList '}'
     {
-      $$ = $2;
+      $$ = $3;
     }
 |
     {
@@ -660,7 +660,7 @@ Field:
         $$->set_doc($1);
       }
       if ($8 != NULL) {
-        $$->add_xsd_attr($8);
+        $$->set_xsd_attrs($8);
       }
     }
 
