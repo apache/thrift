@@ -26,8 +26,23 @@ void t_xsd_generator::generate_typedef(t_typedef* ttypedef) {
   indent(s_xsd_types_) <<
     "<xsd:simpleType name=\"" << ttypedef->get_name() << "\">" << endl;
   indent_up();
-  indent(s_xsd_types_) <<
-    "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\" />" << endl;
+  if (ttypedef->get_type()->is_string() && ((t_base_type*)ttypedef->get_type())->is_string_enum()) {
+    indent(s_xsd_types_) <<
+      "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\">" << endl;
+    indent_up();
+    const vector<string>& values = ((t_base_type*)ttypedef->get_type())->get_string_enum_vals();
+    vector<string>::const_iterator v_iter;
+    for (v_iter = values.begin(); v_iter != values.end(); ++v_iter) {
+      indent(s_xsd_types_) <<
+        "<xsd:enumeration value=\"" << (*v_iter) << "\" />" << endl;
+    }
+    indent_down();
+    indent(s_xsd_types_) <<
+      "</xsd:restriction>" << endl;
+  } else {
+    indent(s_xsd_types_) <<
+      "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\" />" << endl;
+  }
   indent_down();
   indent(s_xsd_types_) <<
     "</xsd:simpleType>" << endl << endl;

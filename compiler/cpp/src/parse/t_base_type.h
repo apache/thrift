@@ -28,7 +28,8 @@ class t_base_type : public t_type {
   t_base_type(std::string name, t_base base) :
     t_type(name),
     base_(base),
-    string_list_(false) {}
+    string_list_(false),
+    string_enum_(false) {}
     
   t_base get_base() const {
     return base_;
@@ -50,13 +51,32 @@ class t_base_type : public t_type {
     return base_ == TYPE_STRING && string_list_;
   }
 
+  void set_string_enum(bool val) {
+    string_enum_ = true;
+  }
+
+  bool is_string_enum() const {
+    return base_ == TYPE_STRING && string_enum_;
+  }
+
+  void add_string_enum_val(std::string val) {
+    string_enum_vals_.push_back(val);
+  }
+
+  const std::vector<std::string>& get_string_enum_vals() const {
+    return string_enum_vals_;
+  }
+
   bool is_base_type() const {
     return true;
   }
     
  private:
   t_base base_;
+
   bool string_list_;
+  bool string_enum_;
+  std::vector<std::string> string_enum_vals_;
 };
 
 #endif

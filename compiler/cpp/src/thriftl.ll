@@ -77,6 +77,7 @@ sliteral     ("'"[^']*"'")
 "double"        { return tok_double;        }
 "string"        { return tok_string;        }
 "slist"         { return tok_slist;         }
+"senum"         { return tok_senum;         }
 "map"           { return tok_map;           }
 "list"          { return tok_list;          }
 "set"           { return tok_set;           }

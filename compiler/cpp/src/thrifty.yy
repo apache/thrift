@@ -33,6 +33,7 @@ int y_field_val = -1;
   double         dconst;
   bool           tbool;
   t_type*        ttype;
+  t_base_type*   tbase;
   t_typedef*     ttypedef;
   t_enum*        tenum;
   t_enum_value*  tenumv;
@@ -82,6 +83,7 @@ int y_field_val = -1;
 %token tok_byte
 %token tok_string
 %token tok_slist
+%token tok_senum
 %token tok_i16
 %token tok_i32
 %token tok_i64
@@ -135,6 +137,10 @@ int y_field_val = -1;
 %type<tenum>     Enum
 %type<tenum>     EnumDefList
 %type<tenumv>    EnumDef
+
+%type<ttypedef>  Senum
+%type<tbase>     SenumDefList
+%type<id>        SenumDef
 
 %type<tconst>    Const
 %type<tconstv>   ConstValue
@@ -304,6 +310,13 @@ TypeDefinition:
         g_program->add_enum($1);
       }
     }
+| Senum
+    {
+      pdebug("TypeDefinition -> Senum");
+      if (g_parse_mode == PROGRAM) {
+        g_program->add_typedef($1);
+      }
+    }
 | Struct
     {
       pdebug("TypeDefinition -> Struct");
@@ -341,6 +354,13 @@ DocTextOptional:
       $$ = NULL; 
     }
     
+CommaOrSemicolonOptional:
+  ','
+    {}
+| ';'
+    {}
+|
+    {}
 
 Enum:
   DocTextOptional tok_enum tok_identifier '{' EnumDefList '}'
@@ -352,14 +372,6 @@ Enum:
         $$->set_doc($1);
       }
     }
-
-CommaOrSemicolonOptional:
-  ','
-    {}
-| ';'
-    {}
-|
-    {}
 
 EnumDefList:
   EnumDefList EnumDef
@@ -394,6 +406,37 @@ EnumDef:
       if ($1 != NULL) {
         $$->set_doc($1);
       }
+    }
+
+Senum:
+  DocTextOptional tok_senum tok_identifier '{' SenumDefList '}'
+    {
+      pdebug("Senum -> tok_senum tok_identifier { SenumDefList }");
+      $$ = new t_typedef(g_program, $5, $3);
+      if ($1 != NULL) {
+        $$->set_doc($1);
+      }
+    }
+
+SenumDefList:
+  SenumDefList SenumDef
+    {
+      pdebug("SenumDefList -> SenumDefList SenumDef");
+      $$ = $1;
+      $$->add_string_enum_val($2);
+    }
+|
+    {
+      pdebug("SenumDefList -> ");
+      $$ = new t_base_type("string", t_base_type::TYPE_STRING);
+      $$->set_string_enum(true);
+    }
+
+SenumDef:
+  tok_literal CommaOrSemicolonOptional
+    {
+      pdebug("SenumDef -> tok_literal");
+      $$ = $1;
     }
 
 Const:
