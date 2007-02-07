@@ -5,9 +5,10 @@ class TSocket(TTransportBase):
 
   """Socket implementation of TTransport base."""
 
+
   def __init__(self, host='localhost', port=9090):
     self.host = host
-    self.por t= port
+    self.port = port
     self.handle = None
 
   def setHandle(self, h):
