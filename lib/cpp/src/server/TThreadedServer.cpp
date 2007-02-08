@@ -102,6 +102,22 @@ void TThreadedServer::serve() {
       thread->start();
 
     } catch (TTransportException& ttx) {
+      inputTransport->close();
+      outputTransport->close();
+      client->close();
+      cerr << "TThreadedServer: TServerTransport died on accept: " << ttx.what() << endl;
+      continue;
+    } catch (TException& tx) {
+      inputTransport->close();
+      outputTransport->close();
+      client->close();
+      cerr << "TThreadedServer: Caught TException: " << tx.what() << endl;
+      continue;
+    } catch (string s) {
+      inputTransport->close();
+      outputTransport->close();
+      client->close();
+      cerr << "TThreadedServer: Unknown exception: " << s << endl;
       break;
     }
   }
