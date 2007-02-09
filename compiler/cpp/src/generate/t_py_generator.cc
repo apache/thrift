@@ -642,7 +642,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       f_service_ <<
         indent() << "args.write(self._oprot)" << endl <<
         indent() << "self._oprot.writeMessageEnd()" << endl <<
-        indent() << "self._oprot.otrans.flush()" << endl;  
+        indent() << "self._oprot.trans.flush()" << endl;  
 
     indent_down();
 
@@ -1005,7 +1005,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
     indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name() << "\", TMessageType.REPLY, seqid)" << endl <<
     indent() << "result.write(oprot)" << endl <<
     indent() << "oprot.writeMessageEnd()" << endl <<
-    indent() << "oprot.otrans.flush()" << endl;
+    indent() << "oprot.trans.flush()" << endl;
 
   // Close function
   indent_down();

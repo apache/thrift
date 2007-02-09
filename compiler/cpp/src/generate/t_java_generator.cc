@@ -808,7 +808,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
     f_service_ <<
       indent() << "args.write(oprot_);" << endl <<
       indent() << "oprot_.writeMessageEnd();" << endl <<
-      indent() << "oprot_.getOutputTransport().flush();" << endl;
+      indent() << "oprot_.getTransport().flush();" << endl;
 
     scope_down(f_service_);
     f_service_ << endl;
@@ -1100,7 +1100,7 @@ void t_java_generator::generate_process_function(t_service* tservice,
     indent() << "oprot.writeMessageBegin(new TMessage(\"" << tfunction->get_name() << "\", TMessageType.REPLY, seqid));" << endl <<
     indent() << "result.write(oprot);" << endl <<
     indent() << "oprot.writeMessageEnd();" << endl <<
-    indent() << "oprot.getOutputTransport().flush();" << endl;
+    indent() << "oprot.getTransport().flush();" << endl;
 
   // Close function
   scope_down(f_service_);

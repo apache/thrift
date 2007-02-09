@@ -758,7 +758,7 @@ void t_php_generator::generate_process_function(t_service* tservice,
     f_service_ <<
       indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', TMessageType::REPLY, $seqid);" << endl <<
       indent() << "$result->write($output);" << endl <<
-      indent() << "$output->getOutputTransport()->flush();" << endl;
+      indent() << "$output->getTransport()->flush();" << endl;
   }
 
   // Close function
@@ -1013,7 +1013,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
         f_service_ <<
           indent() << "$args->write($this->output_);" << endl <<
           indent() << "$this->output_->writeMessageEnd();" << endl <<
-          indent() << "$this->output_->getOutputTransport()->flush();" << endl;
+          indent() << "$this->output_->getTransport()->flush();" << endl;
       }   
       
     scope_down(f_service_);
