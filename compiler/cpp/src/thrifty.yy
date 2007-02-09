@@ -876,9 +876,9 @@ ListType:
     }
 
 CppType:
-  '[' tok_cpp_type tok_literal ']'
+  tok_cpp_type tok_literal
     {
-      $$ = $3;
+      $$ = $2;
     }
 |
     {
