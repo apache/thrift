@@ -75,6 +75,47 @@ typedef struct readState {
 } readState;
  
 /**
+ * TFileTransportBuffer - buffer class used by TFileTransport for queueing up events
+ * to be written to disk.  Should be used in the following way:
+ *  1) Buffer created
+ *  2) Buffer written to (addEvent)
+ *  3) Buffer read from (getNext)
+ *  4) Buffer reset (reset)
+ *  5) Go back to 2, or destroy buffer
+ *
+ * The buffer should never be written to after it is read from, unless it is reset first.
+ * Note: The above rules are enforced mainly for debugging its sole client TFileTransport 
+ *       which uses the buffer in this way.
+ * 
+ * @author James Wang <jwang@facebook.com>
+ */
+class TFileTransportBuffer {
+  public:
+    TFileTransportBuffer(uint32_t size);
+    ~TFileTransportBuffer();
+
+    bool addEvent(eventInfo *event);
+    eventInfo* getNext();
+    void reset();
+    bool isFull();
+    bool isEmpty();
+    
+  private:
+    TFileTransportBuffer(); // should not be used
+
+    enum mode {
+      WRITE,
+      READ
+    };
+    mode bufferMode_;
+
+    uint32_t writePoint_;
+    uint32_t readPoint_;
+    uint32_t size_;
+    eventInfo** buffer_;
+};
+
+/**
  * File implementation of a transport. Reads and writes are done to a 
  * file on disk.
  *
@@ -138,14 +179,13 @@ class TFileTransport : public TTransport {
   }
 
   void setEventBufferSize(uint32_t bufferSize) {    
-    if (bufferSize) {
-      if (buffer_) {
-        delete[] buffer_;
-      }
-      eventBufferSize_ = bufferSize;
-      buffer_ = new eventInfo*[eventBufferSize_];
+    if (bufferAndThreadInitialized_) {
+      perror("Cannot change the buffer size after writer thread started");
+      return;
     }
+    eventBufferSize_ = bufferSize;
   }
+
   uint32_t getEventBufferSize() {
     return eventBufferSize_;
   }
@@ -194,8 +234,8 @@ class TFileTransport : public TTransport {
  private:
   // helper functions for writing to a file
   void enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool blockUntilFlush);
-  void enqueueEvent(eventInfo* toEnqueue, bool blockUntilFlush);
-  eventInfo* dequeueEvent(long long deadline);
+  bool swapEventBuffers(long long deadline);
+  bool initBufferAndWriteThread();
 
   // control for writer thread
   static void* startWriterThread(void* ptr) {
@@ -218,7 +258,6 @@ class TFileTransport : public TTransport {
   // Class variables
   readState readState_;
   uint8_t* readBuff_;
-
   eventInfo* currentEvent_;
 
   uint32_t readBuffSize_;
@@ -231,17 +270,13 @@ class TFileTransport : public TTransport {
   uint32_t chunkSize_;
   static const uint32_t DEFAULT_CHUNK_SIZE = 16 * 1024 * 1024;
 
-  // size of string buffer
+  // size of event buffers
   uint32_t eventBufferSize_;
-  static const uint32_t DEFAULT_EVENT_BUFFER_SIZE = 1024;
+  static const uint32_t DEFAULT_EVENT_BUFFER_SIZE = 10000;
 
-  // circular buffer to hold data in before it is flushed. This is an array of strings. Each
-  // element of the array stores a msg that needs to be written to the file
-  eventInfo** buffer_;
-  
   // max number of microseconds that can pass without flushing
   uint32_t flushMaxUs_;
-  static const uint32_t DEFAULT_FLUSH_MAX_US = 20000;
+  static const uint32_t DEFAULT_FLUSH_MAX_US = 3000000;
 
   // max number of bytes that can be written without flushing
   uint32_t flushMaxBytes_;
@@ -266,33 +301,35 @@ class TFileTransport : public TTransport {
   // writer thread id
   pthread_t writerThreadId_;
 
-  // variables that determine position of head/tail of circular buffer
-  int headPos_, tailPos_;
-
-  // variables indicating whether the buffer is full or empty
-  bool isFull_, isEmpty_;
+  // buffers to hold data before it is flushed. Each element of the buffer stores a msg that 
+  // needs to be written to the file.  The buffers are swapped by the writer thread.
+  TFileTransportBuffer *dequeueBuffer_;
+  TFileTransportBuffer *enqueueBuffer_;
+  
+  // conditions used to block when the buffer is full or empty
   pthread_cond_t notFull_, notEmpty_;
-  bool closing_;
+  volatile bool closing_;
 
   // To keep track of whether the buffer has been flushed
   pthread_cond_t flushed_;
-  bool notFlushed_;
+  volatile bool forceFlush_;
 
-  // Mutex that is grabbed when enqueueing, dequeueing and flushing
-  // from the circular buffer
+  // Mutex that is grabbed when enqueueing and swapping the read/write buffers
   pthread_mutex_t mutex_;
 
   // File information
   string filename_;
   int fd_;
 
+  // Whether the writer thread and buffers have been initialized
+  bool bufferAndThreadInitialized_;
+
   // Offset within the file
   off_t offset_;
 
   // event corruption information
-  uint32_t lastBadChunk;
-  uint32_t numCorruptedEventsinChunk;
-  
+  uint32_t lastBadChunk_;
+  uint32_t numCorruptedEventsInChunk_;
 };
 
 // Exception thrown when EOF is hit
