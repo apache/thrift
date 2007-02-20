@@ -42,7 +42,7 @@ void TServerSocket::listen() {
   if (serverSocket_ == -1) {
     perror("TServerSocket::listen() socket");
     close();
-    throw TTransportException(TTX_NOT_OPEN, "Could not create server socket.");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not create server socket.");
   }
 
   // Set reusaddress to prevent 2MSL delay on accept
@@ -51,7 +51,7 @@ void TServerSocket::listen() {
                        &one, sizeof(one))) {
     perror("TServerSocket::listen() SO_REUSEADDR");
     close();
-    throw TTransportException(TTX_NOT_OPEN, "Could not set SO_REUSEADDR");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_REUSEADDR");
   }
 
   // Defer accept
@@ -60,7 +60,7 @@ void TServerSocket::listen() {
                        &one, sizeof(one))) {
     perror("TServerSocket::listen() TCP_DEFER_ACCEPT");
     close();
-    throw TTransportException(TTX_NOT_OPEN, "Could not set TCP_DEFER_ACCEPT");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not set TCP_DEFER_ACCEPT");
   }
   #endif // #ifdef TCP_DEFER_ACCEPT
 
@@ -70,7 +70,7 @@ void TServerSocket::listen() {
                        &ling, sizeof(ling))) {
     close();
     perror("TServerSocket::listen() SO_LINGER");
-    throw TTransportException(TTX_NOT_OPEN, "Could not set SO_LINGER");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_LINGER");
   }
 
   // TCP Nodelay, speed over bandwidth
@@ -78,7 +78,7 @@ void TServerSocket::listen() {
                        &one, sizeof(one))) {
     close();
     perror("setsockopt TCP_NODELAY");
-    throw TTransportException(TTX_NOT_OPEN, "Could not set TCP_NODELAY");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not set TCP_NODELAY");
   }
 
   // Bind to a port
@@ -92,14 +92,14 @@ void TServerSocket::listen() {
     sprintf(errbuf, "TServerSocket::listen() BIND %d", port_);
     perror(errbuf);
     close();
-    throw TTransportException(TTX_NOT_OPEN, "Could not bind");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not bind");
   }
 
   // Call listen
   if (-1 == ::listen(serverSocket_, acceptBacklog_)) {
     perror("TServerSocket::listen() LISTEN");
     close();
-    throw TTransportException(TTX_NOT_OPEN, "Could not listen");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not listen");
   }
 
   // The socket is now listening!
@@ -107,7 +107,7 @@ void TServerSocket::listen() {
 
 shared_ptr<TTransport> TServerSocket::acceptImpl() {
   if (serverSocket_ < 0) {
-    throw TTransportException(TTX_NOT_OPEN, "TServerSocket not listening");
+    throw TTransportException(TTransportException::NOT_OPEN, "TServerSocket not listening");
   }
 
   struct sockaddr_in clientAddress;
@@ -118,7 +118,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     
   if (clientSocket < 0) {
     perror("TServerSocket::accept()");
-    throw TTransportException(TTX_UNKNOWN, "ERROR:" + errno);
+    throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
   }
   
   shared_ptr<TSocket> client(new TSocket(clientSocket));

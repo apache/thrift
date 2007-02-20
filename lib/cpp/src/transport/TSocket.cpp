@@ -92,7 +92,7 @@ bool TSocket::peek() {
   if (r == -1) {
     perror("TSocket::peek()");
     close();
-    throw TTransportException(TTX_UNKNOWN, "recv() ERROR:" + errno);
+    throw TTransportException(TTransportException::UNKNOWN, "recv() ERROR:" + errno);
   }
   return (r > 0);
 }
@@ -103,7 +103,7 @@ void TSocket::open() {
   if (socket_ == -1) {
     perror("TSocket::open() socket");
     close();
-    throw TTransportException(TTX_NOT_OPEN, "socket() ERROR:" + errno);
+    throw TTransportException(TTransportException::NOT_OPEN, "socket() ERROR:" + errno);
   }
 
   // Send timeout
@@ -135,7 +135,7 @@ void TSocket::open() {
     if (host_entry == NULL) {
       perror("TSocket: dns error: failed call to gethostbyname.");
       close();
-      throw TTransportException(TTX_NOT_OPEN, "gethostbyname() failed");
+      throw TTransportException(TTransportException::NOT_OPEN, "gethostbyname() failed");
     }
     
     addr.sin_port = htons(port_);
@@ -168,7 +168,7 @@ void TSocket::open() {
     char buff[1024];
     sprintf(buff, "TSocket::open() connect %s %d", host_.c_str(), port_);
     perror(buff);
-    throw TTransportException(TTX_NOT_OPEN, "open() ERROR: " + errno);
+    throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
   }
 
   fd_set fds;
@@ -185,22 +185,22 @@ void TSocket::open() {
     if (ret2 == -1) {
       close();
       perror("TSocket::open() getsockopt SO_ERROR");
-      throw TTransportException(TTX_NOT_OPEN, "open() ERROR: " + errno);
+      throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
     }
     if (val == 0) {
       goto done;
     }
     close();
     perror("TSocket::open() SO_ERROR was set");
-    throw TTransportException(TTX_NOT_OPEN, "open() ERROR: " + errno);
+    throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
   } else if (ret == 0) {
     close();
     perror("TSocket::open() timeed out");
-    throw TTransportException(TTX_NOT_OPEN, "open() ERROR: " + errno);   
+    throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);   
   } else {
     close();
     perror("TSocket::open() select error");
-    throw TTransportException(TTX_NOT_OPEN, "open() ERROR: " + errno);
+    throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
   }
 
  done:
@@ -218,7 +218,7 @@ void TSocket::close() {
 
 uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
   if (socket_ < 0) {
-    throw TTransportException(TTX_NOT_OPEN, "Called read on non-open socket");
+    throw TTransportException(TTransportException::NOT_OPEN, "Called read on non-open socket");
   }
 
   uint32_t retries = 0;
@@ -246,21 +246,21 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
 
     // If we disconnect with no linger time
     if (errno == ECONNRESET) {
-      throw TTransportException(TTX_NOT_OPEN, "ECONNRESET");
+      throw TTransportException(TTransportException::NOT_OPEN, "ECONNRESET");
     }
     
     // This ish isn't open
     if (errno == ENOTCONN) {
-      throw TTransportException(TTX_NOT_OPEN, "ENOTCONN");
+      throw TTransportException(TTransportException::NOT_OPEN, "ENOTCONN");
     }
     
     // Timed out!
     if (errno == ETIMEDOUT) {
-      throw TTransportException(TTX_TIMED_OUT, "ETIMEDOUT");
+      throw TTransportException(TTransportException::TIMED_OUT, "ETIMEDOUT");
     }
     
     // Some other error, whatevz
-    throw TTransportException(TTX_UNKNOWN, "ERROR:" + errno);
+    throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
   }
   
   // The remote host has closed the socket
@@ -275,7 +275,7 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
 
 void TSocket::write(const uint8_t* buf, uint32_t len) {
   if (socket_ < 0) {
-    throw TTransportException(TTX_NOT_OPEN, "Called write on non-open socket");
+    throw TTransportException(TTransportException::NOT_OPEN, "Called write on non-open socket");
   }
 
   uint32_t sent = 0;
@@ -296,26 +296,26 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
     if (b < 0) {
       if (errno == EPIPE) {
         close();
-        throw TTransportException(TTX_NOT_OPEN, "EPIPE");
+        throw TTransportException(TTransportException::NOT_OPEN, "EPIPE");
       }
 
       if (errno == ECONNRESET) {
         close();
-        throw TTransportException(TTX_NOT_OPEN, "ECONNRESET");
+        throw TTransportException(TTransportException::NOT_OPEN, "ECONNRESET");
       }
 
       if (errno == ENOTCONN) {
         close();
-        throw TTransportException(TTX_NOT_OPEN, "ENOTCONN");
+        throw TTransportException(TTransportException::NOT_OPEN, "ENOTCONN");
       }
 
       perror("TSocket::write() send < 0");
-      throw TTransportException(TTX_UNKNOWN, "ERROR:" + errno);
+      throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
     }
     
     // Fail on blocked send
     if (b == 0) {
-      throw TTransportException(TTX_NOT_OPEN, "Socket send returned 0.");
+      throw TTransportException(TTransportException::NOT_OPEN, "Socket send returned 0.");
     }
     sent += b;
   }

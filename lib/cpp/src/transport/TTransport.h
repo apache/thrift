@@ -47,14 +47,14 @@ class TTransport {
    * @throws TTransportException if opening failed
    */
   virtual void open() {
-    throw TTransportException(TTX_NOT_OPEN, "Cannot open base TTransport.");
+    throw TTransportException(TTransportException::NOT_OPEN, "Cannot open base TTransport.");
   }
 
   /**
    * Closes the transport.
    */
   virtual void close() {
-    throw TTransportException(TTX_NOT_OPEN, "Cannot close base TTransport.");
+    throw TTransportException(TTransportException::NOT_OPEN, "Cannot close base TTransport.");
   }
 
   /**
@@ -66,7 +66,7 @@ class TTransport {
    * @throws TTransportException If an error occurs
    */
   virtual uint32_t read(uint8_t* buf, uint32_t len) {
-    throw TTransportException(TTX_NOT_OPEN, "Base TTransport cannot read.");
+    throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot read.");
   }
 
   /**
@@ -110,7 +110,7 @@ class TTransport {
    * @throws TTransportException if an error occurs
    */
   virtual void write(const uint8_t* buf, uint32_t len) {
-    throw TTransportException(TTX_NOT_OPEN, "Base TTransport cannot write.");
+    throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot write.");
   }
 
   /**

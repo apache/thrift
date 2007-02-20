@@ -123,9 +123,12 @@ uint32_t TBinaryProtocol::writeDouble(const double dub) {
 
   
 uint32_t TBinaryProtocol::writeString(const string& str) {
-  uint32_t result = writeI32(str.size());
-  trans_->write((uint8_t*)str.data(), str.size());
-  return result + str.size();
+  uint32_t size = str.size();
+  uint32_t result = writeI32((int32_t)size);
+  if (size > 0) {
+    trans_->write((uint8_t*)str.data(), size);
+  }
+  return result + size;
 }
 
 /**
@@ -188,7 +191,11 @@ uint32_t TBinaryProtocol::readMapBegin(TType& keyType,
   result += readByte(v);
   valType = (TType)v;
   result += readI32(sizei);
-  // TODO(mcslee): check for negative size
+  if (sizei < 0) {
+    throw TProtocolException(TProtocolException::NEGATIVE_SIZE);
+  } else if (container_limit_ && sizei > container_limit_) {
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  }
   size = (uint32_t)sizei;
   return result;
 }
@@ -205,7 +212,11 @@ uint32_t TBinaryProtocol::readListBegin(TType& elemType,
   result += readByte(e);
   elemType = (TType)e;
   result += readI32(sizei);
-  // TODO(mcslee): check for negative size
+  if (sizei < 0) {
+    throw TProtocolException(TProtocolException::NEGATIVE_SIZE);
+  } else if (container_limit_ && sizei > container_limit_) {
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  }
   size = (uint32_t)sizei;
   return result;
 }
@@ -222,7 +233,11 @@ uint32_t TBinaryProtocol::readSetBegin(TType& elemType,
   result += readByte(e);
   elemType = (TType)e;
   result += readI32(sizei);
-  // TODO(mcslee): check for negative size
+  if (sizei < 0) {
+    throw TProtocolException(TProtocolException::NEGATIVE_SIZE);
+  } else if (container_limit_ && sizei > container_limit_) {
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  }
   size = (uint32_t)sizei;
   return result;
 }
@@ -290,13 +305,31 @@ uint32_t TBinaryProtocol::readString(string& str) {
   int32_t size;
   result = readI32(size);
 
-  // TODO(mcslee): check for negative size
+  // Catch error cases
+  if (size < 0) {
+    throw TProtocolException(TProtocolException::NEGATIVE_SIZE);
+  }
+  if (string_limit_ > 0 && size > string_limit_) {
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  }
+
+  // Catch empty string case
+  if (size == 0) {
+    str = "";
+    return result;
+  }
 
   // Use the heap here to prevent stack overflow for v. large strings
-  uint8_t *b = new uint8_t[size];
-  trans_->readAll(b, size);
-  str = string((char*)b, size);
-  delete [] b;
+  if (size > string_buf_size_ || string_buf_ == NULL) {
+    string_buf_ = (uint8_t*)realloc(string_buf_, (uint32_t)size);
+    if (string_buf_ == NULL) {
+      string_buf_size_ = 0;
+      throw TProtocolException(TProtocolException::UNKNOWN, "Out of memory in TBinaryProtocol::readString");
+    }
+    string_buf_size_ = size;
+  }
+  trans_->readAll(string_buf_, size);
+  str = string((char*)string_buf_, size);
 
   return result + (uint32_t)size;
 }

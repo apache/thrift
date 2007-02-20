@@ -336,7 +336,7 @@ class TFileTransport : public TTransport {
 class TEOFException : public facebook::thrift::TTransportException {
  public:
   TEOFException():
-    facebook::thrift::TTransportException(TTX_EOF) {};
+    facebook::thrift::TTransportException(TTransportException::END_OF_FILE) {};
 };
 
 

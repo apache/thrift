@@ -2,6 +2,7 @@
 #define _THRIFT_PROTOCOL_TPROTOCOL_H_ 1
 
 #include <transport/TTransport.h>
+#include <protocol/TProtocolException.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -59,7 +60,8 @@ enum TType {
  */
 enum TMessageType {
   T_CALL       = 1,
-  T_REPLY      = 2
+  T_REPLY      = 2,
+  T_EXCEPTION  = 3
 };
 
 /**

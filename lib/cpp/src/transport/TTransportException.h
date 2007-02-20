@@ -7,16 +7,6 @@
 namespace facebook { namespace thrift { namespace transport { 
 
 /**
- * Error codes for the various types of exceptions.
- */
-enum TTransportExceptionType {
-  TTX_UNKNOWN = 0,
-  TTX_NOT_OPEN = 1,
-  TTX_TIMED_OUT = 2,
-  TTX_EOF = 3,
-};
-
-/**
  * Class to encapsulate all the possible types of transport errors that may
  * occur in various transport systems. This provides a sort of generic
  * wrapper around the shitty UNIX E_ error codes that lets a common code
@@ -27,9 +17,19 @@ enum TTransportExceptionType {
  */
 class TTransportException : public facebook::thrift::TException {
  public:
+  /**
+   * Error codes for the various types of exceptions.
+   */
+  enum TTransportExceptionType {
+    UNKNOWN = 0,
+    NOT_OPEN = 1,
+    TIMED_OUT = 2,
+    END_OF_FILE = 3,
+  };
+  
   TTransportException() :
     facebook::thrift::TException(),
-    type_(TTX_UNKNOWN) {}
+    type_(UNKNOWN) {}
 
   TTransportException(TTransportExceptionType type) :
     facebook::thrift::TException(), 
@@ -37,7 +37,7 @@ class TTransportException : public facebook::thrift::TException {
 
   TTransportException(const std::string message) :
     facebook::thrift::TException(message),
-    type_(TTX_UNKNOWN) {}
+    type_(UNKNOWN) {}
 
   TTransportException(TTransportExceptionType type, const std::string message) :
     facebook::thrift::TException(message),

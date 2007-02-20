@@ -5,7 +5,8 @@ common_ldflags = -Wall $(BOOST_LDFLAGS) $(EVENT_LDFLAGS)
 
 # Define the source file for the module
 
-libthrift_sources = src/concurrency/Mutex.cpp \
+libthrift_sources = src/Thrift.cpp \
+                    src/concurrency/Mutex.cpp \
                     src/concurrency/Monitor.cpp \
                     src/concurrency/PosixThreadFactory.cpp \
                     src/concurrency/ThreadManager.cpp \
@@ -51,6 +52,7 @@ include_concurrency_HEADERS = \
 include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = \
                          src/protocol/TBinaryProtocol.h \
+                         src/protocol/TProtocolException.h \
                          src/protocol/TProtocol.h
 
 include_transportdir = $(include_thriftdir)/transport

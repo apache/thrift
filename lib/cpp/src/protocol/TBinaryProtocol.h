@@ -15,12 +15,38 @@ using namespace boost;
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-    class TBinaryProtocol : public TProtocol {
+class TBinaryProtocol : public TProtocol {
  public:
   TBinaryProtocol(shared_ptr<TTransport> trans) :
-    TProtocol(trans) {}
+    TProtocol(trans),
+    string_limit_(0),
+    container_limit_(0),
+    string_buf_(NULL),
+    string_buf_size_(0) {}
 
-  ~TBinaryProtocol() {}
+  TBinaryProtocol(shared_ptr<TTransport> trans,
+                  int32_t string_limit,
+                  int32_t container_limit) :
+    TProtocol(trans),
+    string_limit_(string_limit),
+    container_limit_(container_limit),
+    string_buf_(NULL),
+    string_buf_size_(0) {}
+
+  ~TBinaryProtocol() {
+    if (string_buf_ != NULL) {
+      free(string_buf_);
+      string_buf_size_ = 0;
+    }
+  }
+
+  void setStringSizeLimit(int32_t string_limit) {
+    string_limit_ = string_limit;
+  }
+
+  void setContainerSizeLimit(int32_t container_limit) {
+    container_limit_ = container_limit;
+  }
 
   /**
    * Writing functions.
@@ -126,6 +152,16 @@ using namespace boost;
   uint32_t readDouble(double& dub);
 
   uint32_t readString(std::string& str);
+
+ private:
+  int32_t string_limit_;
+  int32_t container_limit_;
+
+  // Buffer for reading strings, save for the lifetime of the protocol to
+  // avoid memory churn allocating memory on every string read
+  uint8_t* string_buf_;
+  int32_t string_buf_size_;
+
 };
 
 /**
@@ -133,13 +169,32 @@ using namespace boost;
  */
 class TBinaryProtocolFactory : public TProtocolFactory {
  public:
-  TBinaryProtocolFactory() {}
+  TBinaryProtocolFactory() :
+    string_limit_(0),
+    container_limit_(0) {}
+
+  TBinaryProtocolFactory(int32_t string_limit, int32_t container_limit) :
+    string_limit_(string_limit),
+    container_limit_(container_limit) {}
 
   virtual ~TBinaryProtocolFactory() {}
 
-  boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TProtocol>(new TBinaryProtocol(trans));
+  void setStringSizeLimit(int32_t string_limit) {
+    string_limit_ = string_limit;
   }
+
+  void setContainerSizeLimit(int32_t container_limit) {
+    container_limit_ = container_limit;
+  }
+
+  boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) {
+    return boost::shared_ptr<TProtocol>(new TBinaryProtocol(trans, string_limit_, container_limit_));
+  }
+
+ private:
+  int32_t string_limit_;
+  int32_t container_limit_;
+
 };
 
 }}} // facebook::thrift::protocol
