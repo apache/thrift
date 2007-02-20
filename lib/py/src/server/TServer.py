@@ -129,7 +129,7 @@ class TThreadPoolServer(TServer):
     itrans = self.inputTransportFactory.getTransport(client)
     otrans = self.outputTransportFactory.getTransport(client)
     iprot = self.inputProtocolFactory.getProtocol(itrans)
-    oprot = self.oututProtocolFactory.getProtocol(otrans)
+    oprot = self.outputProtocolFactory.getProtocol(otrans)
     try:
       while True:
         self.processor.process(iprot, oprot)
