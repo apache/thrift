@@ -150,6 +150,7 @@ class t_java_generator : public t_oop_generator {
 
   std::string package_name_;
   std::ofstream f_service_;
+  std::string package_dir_;
 };
 
 #endif

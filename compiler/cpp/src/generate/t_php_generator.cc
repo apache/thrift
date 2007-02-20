@@ -664,7 +664,7 @@ void t_php_generator::generate_process_function(t_service* tservice,
                                                 t_function* tfunction) {
   // Open function
   indent(f_service_) <<
-    "private function process_" << tfunction->get_name() <<
+    "protected function process_" << tfunction->get_name() <<
     "($seqid, $input, $output) {" << endl;
   indent_up();
 

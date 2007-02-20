@@ -14,6 +14,21 @@ void t_java_generator::init_generator() {
   // Make output directory
   mkdir(T_JAVA_DIR, S_IREAD | S_IWRITE | S_IEXEC);
   package_name_ = program_->get_java_package();
+
+  string dir = package_name_;
+  string subdir = T_JAVA_DIR;
+  string::size_type loc;
+  while ((loc = dir.find(".")) != string::npos) {
+    subdir = subdir + "/" + dir.substr(0, loc);
+    mkdir(subdir.c_str(), S_IREAD | S_IWRITE | S_IEXEC);
+    dir = dir.substr(loc+1);
+  }
+  if (dir.size() > 0) {
+    subdir = subdir + "/" + dir;
+    mkdir(subdir.c_str(), S_IREAD | S_IWRITE | S_IEXEC);
+  }
+
+  package_dir_ = subdir;
 }
 
 /**
@@ -76,7 +91,7 @@ void t_java_generator::generate_typedef(t_typedef* ttypedef) {}
  */
 void t_java_generator::generate_enum(t_enum* tenum) {
   // Make output file
-  string f_enum_name = string(T_JAVA_DIR)+"/"+(tenum->get_name())+".java";
+  string f_enum_name = package_dir_+"/"+(tenum->get_name())+".java";
   ofstream f_enum;
   f_enum.open(f_enum_name.c_str());
 
@@ -112,7 +127,7 @@ void t_java_generator::generate_enum(t_enum* tenum) {
  * Generates a class that holds all the constants.
  */
 void t_java_generator::generate_consts(std::vector<t_const*> consts) {
-  string f_consts_name = string(T_JAVA_DIR)+"/Constants.java";
+  string f_consts_name = package_dir_+"/Constants.java";
   ofstream f_consts;
   f_consts.open(f_consts_name.c_str());
 
@@ -301,7 +316,7 @@ void t_java_generator::generate_xception(t_struct* txception) {
 void t_java_generator::generate_java_struct(t_struct* tstruct,
                                             bool is_exception) {
   // Make output file
-  string f_struct_name = string(T_JAVA_DIR)+"/"+(tstruct->get_name())+".java";
+  string f_struct_name = package_dir_+"/"+(tstruct->get_name())+".java";
   ofstream f_struct;
   f_struct.open(f_struct_name.c_str());
 
@@ -626,7 +641,7 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
  */
 void t_java_generator::generate_service(t_service* tservice) {
   // Make output file
-  string f_service_name = string(T_JAVA_DIR)+"/"+service_name_+".java";
+  string f_service_name = package_dir_+"/"+service_name_+".java";
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<
