@@ -18,7 +18,6 @@ class TServer:
       inputTransportFactory, outputTransportFactory,
       inputProtocolFactory, outputProtocolFactory)"""
   def __init__(self, *args):
-    print args
     if (len(args) == 2):
       self.__initArgs__(args[0], args[1],
                         TTransport.TTransportFactoryBase(),
