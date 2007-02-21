@@ -82,7 +82,7 @@ public class TServerSocket extends TServerTransport {
   
   protected TSocket acceptImpl() throws TTransportException {
     if (serverSocket_ == null) {
-      throw new TTransportException("No underlying server socket.");
+      throw new TTransportException(TTransportException.NOT_OPEN, "No underlying server socket.");
     }
     try {
       Socket result = serverSocket_.accept();

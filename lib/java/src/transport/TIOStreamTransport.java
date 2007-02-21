@@ -99,12 +99,12 @@ public class TIOStreamTransport extends TTransport {
    */
   public int read(byte[] buf, int off, int len) throws TTransportException {
     if (inputStream_ == null) {
-      throw new TTransportException("Cannot read from null inputStream");
+      throw new TTransportException(TTransportException.NOT_OPEN, "Cannot read from null inputStream");
     }
     try {
       return inputStream_.read(buf, off, len);
     } catch (IOException iox) {
-      throw new TTransportException(iox);
+      throw new TTransportException(TTransportException.UNKNOWN, iox);
     }
   }
 
@@ -113,12 +113,12 @@ public class TIOStreamTransport extends TTransport {
    */
   public void write(byte[] buf, int off, int len) throws TTransportException {
     if (outputStream_ == null) {
-      throw new TTransportException("Cannot write to null outputStream");
+      throw new TTransportException(TTransportException.NOT_OPEN, "Cannot write to null outputStream");
     }
     try {
       outputStream_.write(buf, off, len);
     } catch (IOException iox) {
-      throw new TTransportException(iox);
+      throw new TTransportException(TTransportException.UNKNOWN, iox);
     }
   }
 
@@ -127,12 +127,12 @@ public class TIOStreamTransport extends TTransport {
    */
   public void flush() throws TTransportException {
     if (outputStream_ == null) {
-      throw new TTransportException("Cannot flush null outputStream");
+      throw new TTransportException(TTransportException.NOT_OPEN, "Cannot flush null outputStream");
     }
     try {
       outputStream_.flush();
     } catch (IOException iox) {
-      throw new TTransportException(iox);
+      throw new TTransportException(TTransportException.UNKNOWN, iox);
     }
   }
 }

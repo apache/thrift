@@ -55,7 +55,7 @@ public class TSocket extends TIOStreamTransport {
         outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
       } catch (IOException iox) {
         close();
-        throw new TTransportException(iox);
+        throw new TTransportException(TTransportException.NOT_OPEN, iox);
       }
     }
   }
@@ -139,14 +139,14 @@ public class TSocket extends TIOStreamTransport {
    */
   public void open() throws TTransportException {
     if (isOpen()) {
-      throw new TTransportException("Socket already connected.");
+      throw new TTransportException(TTransportException.ALREADY_OPEN, "Socket already connected.");
     }
 
     if (host_.length() == 0) {
-      throw new TTransportException("Cannot open null host.");
+      throw new TTransportException(TTransportException.NOT_OPEN, "Cannot open null host.");
     }
     if (port_ <= 0) {
-      throw new TTransportException("Cannot open without port.");
+      throw new TTransportException(TTransportException.NOT_OPEN, "Cannot open without port.");
     }
 
     if (socket_ == null) {
@@ -159,7 +159,7 @@ public class TSocket extends TIOStreamTransport {
       outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
     } catch (IOException iox) {
       close();
-      throw new TTransportException(iox);
+      throw new TTransportException(TTransportException.NOT_OPEN, iox);
     }
   }
 

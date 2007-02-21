@@ -20,7 +20,7 @@ public class TApplicationException extends TException {
   public static final int BAD_SEQUENCE_ID = 4;
   public static final int MISSING_RESULT = 5;
 
-  protected int type_ = 0;
+  protected int type_ = UNKNOWN;
 
   public TApplicationException() {
     super();
