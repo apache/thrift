@@ -1183,13 +1183,24 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
         indent() << "facebook::thrift::protocol::TMessageType mtype;" << endl <<
         endl <<
         indent() << "iprot_->readMessageBegin(fname, mtype, rseqid);" << endl <<
-        indent() << "if (mtype != facebook::thrift::protocol::T_REPLY || fname.compare(\"" << (*f_iter)->get_name() << "\") != 0) {" << endl;
-      indent_up();
-        f_service_ <<
-          indent() << "throw facebook::thrift::TException(\"Unexpected message type, name, or id\");" << endl;
-      indent_down();
-
-      f_service_ <<
+        indent() << "if (mtype == facebook::thrift::protocol::T_EXCEPTION) {" << endl <<
+        indent() << "  facebook::thrift::TApplicationException x;" << endl <<
+        indent() << "  x.read(iprot_);" << endl <<
+        indent() << "  iprot_->readMessageEnd();" << endl <<
+        indent() << "  iprot_->getTransport()->readEnd();" << endl <<
+        indent() << "  throw x;" << endl <<
+        indent() << "}" << endl <<
+        indent() << "if (mtype != facebook::thrift::protocol::T_REPLY) {" << endl <<
+        indent() << "  iprot_->skip(facebook::thrift::protocol::T_STRUCT);" << endl <<
+        indent() << "  iprot_->readMessageEnd();" << endl <<
+        indent() << "  iprot_->getTransport()->readEnd();" << endl <<
+        indent() << "  throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);" << endl <<
+        indent() << "}" << endl <<
+        indent() << "if (fname.compare(\"" << (*f_iter)->get_name() << "\") != 0) {" << endl <<
+        indent() << "  iprot_->skip(facebook::thrift::protocol::T_STRUCT);" << endl <<
+        indent() << "  iprot_->readMessageEnd();" << endl <<
+        indent() << "  iprot_->getTransport()->readEnd();" << endl <<
+        indent() << "  throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);" << endl <<
         indent() << "}" << endl;
 
       if (!(*f_iter)->get_returntype()->is_void() &&
@@ -1210,6 +1221,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
       f_service_ <<
         indent() << "result.read(iprot_);" << endl <<
         indent() << "iprot_->readMessageEnd();" << endl <<
+        indent() << "iprot_->getTransport()->readEnd();" << endl <<
         endl;
 
       // Careful, only look for _result if not a void function
@@ -1244,7 +1256,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
           "return;" << endl;
       } else {
         f_service_ <<
-          indent() << "throw facebook::thrift::TException(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+          indent() << "throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
              
       // Close function
@@ -1352,7 +1364,15 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     indent() << "iprot->readMessageBegin(fname, mtype, seqid);" << endl <<
     endl <<
     indent() << "if (mtype != facebook::thrift::protocol::T_CALL) {" << endl <<
-    indent() << "  throw facebook::thrift::TException(\"Unexpected message type\");" << endl <<
+    indent() << "  iprot->skip(facebook::thrift::protocol::T_STRUCT);" << endl <<
+    indent() << "  iprot->readMessageEnd();" << endl <<
+    indent() << "  iprot->getTransport()->readEnd();" << endl <<
+    indent() << "  facebook::thrift::TApplicationException x(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);" << endl <<
+    indent() << "  oprot->writeMessageBegin(fname, facebook::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
+    indent() << "  x.write(oprot);" << endl <<
+    indent() << "  oprot->writeMessageEnd();" << endl <<
+    indent() << "  oprot->getTransport()->flush();" << endl <<
+    indent() << "  return true;" << endl <<
     indent() << "}" << endl <<
     endl <<
     indent() << "return process_fn(iprot, oprot, fname, seqid);" <<
@@ -1374,7 +1394,15 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     indent() << "if (pfn == processMap_.end()) {" << endl;
   if (extends.empty()) {
     f_service_ <<
-      indent() << "  throw facebook::thrift::TException(\"Unknown function name: '\"+fname+\"'\");" << endl;
+      indent() << "  iprot->skip(facebook::thrift::protocol::T_STRUCT);" << endl <<
+      indent() << "  iprot->readMessageEnd();" << endl <<
+      indent() << "  iprot->getTransport()->readEnd();" << endl <<
+      indent() << "  facebook::thrift::TApplicationException x(facebook::thrift::TApplicationException::UNKNOWN_METHOD, \"Invalid method name: '\"+fname+\"'\");" << endl <<
+      indent() << "  oprot->writeMessageBegin(fname, facebook::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
+      indent() << "  x.write(oprot);" << endl <<
+      indent() << "  oprot->writeMessageEnd();" << endl <<
+      indent() << "  oprot->getTransport()->flush();" << endl <<
+      indent() << "  return true;" << endl;
   } else {
     f_service_ <<
       indent() << "  return " << extends << "Processor::process_fn(iprot, oprot, fname, seqid);" << endl;
