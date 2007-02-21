@@ -22,8 +22,11 @@ class TSocket(TTransportBase):
       self.handle.settimeout(ms/1000.00)
 
   def open(self):
-    self.handle = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.handle.connect((self.host, self.port))
+    try:
+      self.handle = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      self.handle.connect((self.host, self.port))
+    except socket.error, e:
+      raise TTransportException(TTransportException.NOT_OPEN, e.message)
 
   def close(self):
     if self.handle != None:
@@ -42,7 +45,7 @@ class TSocket(TTransportBase):
     while sent < have:
       plus = self.handle.send(buff)
       if plus == 0:
-        raise TTransportException('sent 0 bytes')
+        raise TTransportException('TSocket sent 0 bytes')
       sent += plus
       buff = buff[plus:]
 
