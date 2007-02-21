@@ -841,13 +841,18 @@ void t_java_generator::generate_service_client(t_service* tservice) {
         "public " << function_signature(&recv_function) << endl;
       scope_up(f_service_);
            
+      // TODO(mcslee): Message validation here, was the seqid etc ok?
+
       f_service_ <<
         indent() << "TMessage msg = iprot_.readMessageBegin();" << endl <<
+        indent() << "if (msg.type == TMessageType.EXCEPTION) {" << endl <<
+        indent() << "  TApplicationException x = TApplicationException.read(iprot_);" << endl <<
+        indent() << "  iprot_.readMessageEnd();" << endl <<
+        indent() << "  throw x;" << endl <<
+        indent() << "}" << endl <<
         indent() << resultname << " result = new " << resultname << "();" << endl <<
         indent() << "result.read(iprot_);" << endl <<
         indent() << "iprot_.readMessageEnd();" << endl;
-
-      // TODO(mcslee): Message validation here, was the seqid etc ok?
 
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
@@ -873,7 +878,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
           "return;" << endl;
       } else {
         f_service_ <<
-          indent() << "throw new TException(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+          indent() << "throw new TApplicationException(TApplicationException.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
       
       // Close function
@@ -959,12 +964,17 @@ void t_java_generator::generate_service_server(t_service* tservice) {
   f_service_ <<
     indent() << "ProcessFunction fn = processMap_.get(msg.name);" << endl <<
     indent() << "if (fn == null) {" << endl <<
-    indent() << "  System.err.println(\"Unknown function: '\" + msg.name + \"'\");" << endl <<
-    indent() << "} else {" << endl <<
-    indent() << "  fn.process(msg.seqid, iprot, oprot);" << endl <<
-    indent() << "}" << endl;
+    indent() << "  TProtocolUtil.skip(iprot, TType.STRUCT);" << endl <<
+    indent() << "  iprot.readMessageEnd();" << endl <<
+    indent() << "  TApplicationException x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, \"Invalid method name: '\"+msg.name+\"'\");" << endl <<
+    indent() << "  oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));" << endl <<
+    indent() << "  x.write(oprot);" << endl <<
+    indent() << "  oprot.writeMessageEnd();" << endl <<
+    indent() << "  oprot.getTransport().flush();" << endl <<
+    indent() << "  return true;" << endl <<
+    indent() << "}" << endl <<
+    indent() << "fn.process(msg.seqid, iprot, oprot);" << endl;
   
-  // Read end of args field, the T_STOP, and the struct close
   f_service_ <<
     indent() << "return true;" << endl;
 
