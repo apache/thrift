@@ -138,6 +138,8 @@ class t_py_generator : public t_oop_generator {
   std::ofstream f_consts_; 
   std::ofstream f_service_;
 
+  std::string package_dir_;
+
 };
 
 #endif

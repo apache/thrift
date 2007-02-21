@@ -14,13 +14,29 @@ using namespace std;
 void t_py_generator::init_generator() {
   // Make output directory
   mkdir(T_PY_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  package_dir_ = T_PY_DIR;
+  package_dir_ = package_dir_ + "/" + program_name_;
+  mkdir(package_dir_.c_str(), S_IREAD | S_IWRITE | S_IEXEC);
 
   // Make output file
-  string f_types_name = string(T_PY_DIR)+"/"+program_name_+"_types.py";
+  string f_types_name = package_dir_+"/"+"ttypes.py";
   f_types_.open(f_types_name.c_str());
 
-  string f_consts_name = string(T_PY_DIR)+"/"+program_name_+"_constants.py";
+  string f_consts_name = package_dir_+"/"+"constants.py";
   f_consts_.open(f_consts_name.c_str());
+
+  string f_init_name = package_dir_+"/__init__.py";
+  ofstream f_init;
+  f_init.open(f_init_name.c_str());
+  f_init  <<
+    "__all__ = ['ttypes', 'constants'";
+  vector<t_service*> services = program_->get_services();
+  vector<t_service*>::iterator sv_iter;
+  for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
+    f_init << ", '" << (*sv_iter)->get_name() << "'";
+  }
+  f_init << "]" << endl;
+  f_init.close();
 
   // Print header
   f_types_ <<
@@ -31,7 +47,7 @@ void t_py_generator::init_generator() {
   f_consts_ <<
     py_autogen_comment() << endl <<
     py_imports() << endl <<
-    "from " << program_name_ << "_types import *" << endl <<
+    "from ttypes import *" << endl <<
     endl;
 }
 
@@ -42,7 +58,7 @@ string t_py_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   for (size_t i = 0; i < includes.size(); ++i) {
-    result += "import " + includes[i]->get_name() + "_types\n";
+    result += "import " + includes[i]->get_name() + ".ttypes\n";
   }
   if (includes.size() > 0) {
     result += "\n";
@@ -452,7 +468,7 @@ void t_py_generator::generate_py_struct_writer(ofstream& out,
  * @param tservice The service definition
  */
 void t_py_generator::generate_service(t_service* tservice) {
-  string f_service_name = string(T_PY_DIR)+"/"+service_name_+".py";
+  string f_service_name = package_dir_+"/"+service_name_+".py";
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<
@@ -461,11 +477,11 @@ void t_py_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != NULL) {
     f_service_ <<
-      "import " << tservice->get_extends()->get_name() << endl;
+      "import " << tservice->get_extends()->get_program()->get_name() << "." << tservice->get_extends()->get_name() << endl;
   }
 
   f_service_ <<
-    "from " << program_name_ << "_types import *" << endl << 
+    "from ttypes import *" << endl << 
     "from thrift.Thrift import TProcessor" << endl <<
     endl;
 
@@ -714,7 +730,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter; 
 
-  string f_remote_name = string(T_PY_DIR)+"/"+service_name_+"-remote";
+  string f_remote_name = package_dir_+"/"+service_name_+"-remote";
   ofstream f_remote;
   f_remote.open(f_remote_name.c_str());
 
@@ -730,13 +746,13 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
 
   f_remote <<
     "import " << service_name_ << endl <<
-    "from " << program_name_ << "_types import *" << endl << 
+    "from ttypes import *" << endl << 
     endl;
 
   f_remote <<
     "if len(sys.argv) <= 1 or sys.argv[1] == '--help':" << endl <<
     "  print ''" << endl <<
-    "  print 'Usage: ' + sys.argv[0] + ' [-h host:port] [-f[ramed]] function [arg1,[arg2...]]'" << endl <<
+    "  print 'Usage: ' + sys.argv[0] + ' [-h host:port] [-f[ramed]] function [arg1 [arg2...]]'" << endl <<
     "  print ''" << endl <<
     "  print 'Functions:'" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1443,9 +1459,9 @@ string t_py_generator::type_name(t_type* ttype) {
   t_program* program = ttype->get_program();
   if (program != NULL && program != program_) {
     if (ttype->is_service()) {
-      return ttype->get_name();
+      return program->get_name() + "." + ttype->get_name();
     } else {
-      return program->get_name() + "_types." + ttype->get_name();
+      return program->get_name() + ".ttypes." + ttype->get_name();
     }
   }
   return ttype->get_name();
