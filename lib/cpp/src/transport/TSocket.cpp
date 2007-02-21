@@ -98,6 +98,10 @@ bool TSocket::peek() {
 }
 
 void TSocket::open() {
+  if (isOpen()) {
+    throw TTransportException(TTransportException::ALREADY_OPEN);
+  }
+
   // Create socket
   socket_ = socket(AF_INET, SOCK_STREAM, 0);
   if (socket_ == -1) {
