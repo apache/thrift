@@ -25,9 +25,6 @@ using namespace facebook::thrift::transport;
 #define htonll(n) ( (((unsigned long long)htonl(n)) << 32) + htonl(n >> 32) )
 #endif
 
-// Forward declaration for TProtocol
-struct TBuf;
-
 /**
  * Enumerated definition of the types that the Thrift protocol supports.
  * Take special note of the T_END type which is used specifically to mark
