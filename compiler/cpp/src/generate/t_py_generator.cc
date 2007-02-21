@@ -83,7 +83,7 @@ string t_py_generator::py_autogen_comment() {
  */
 string t_py_generator::py_imports() {
   return
-    string("from thrift.protocol.TProtocol import *");
+    string("from thrift.Thrift import *");
 }
 
 /**
@@ -675,10 +675,15 @@ void t_py_generator::generate_service_client(t_service* tservice) {
         indent() << "def " << function_signature(&recv_function) << ":" << endl;
       indent_up();
 
-      f_service_ <<
-        indent() << "(fname, mtype, rseqid) = self._iprot.readMessageBegin()" << endl;
-
       // TODO(mcslee): Validate message reply here, seq ids etc.
+
+      f_service_ <<
+        indent() << "(fname, mtype, rseqid) = self._iprot.readMessageBegin()" << endl <<
+        indent() << "if mtype == TMessageType.EXCEPTION:" << endl <<
+        indent() << "  x = TApplicationException()" << endl <<
+        indent() << "  x.read(self._iprot)" << endl <<
+        indent() << "  self._iprot.readMessageEnd()" << endl <<
+        indent() << "  raise x" << endl;
 
       f_service_ <<
         indent() << "result = " << resultname << "()" << endl <<
@@ -707,7 +712,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
           "return" << endl;
       } else {
         f_service_ <<
-          indent() << "raise Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+          indent() << "raise TApplicationException(TApplicationException.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }     
 
       // Close function
@@ -904,14 +909,21 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   indent_up();
 
   f_service_ <<
-    indent() << "(name, type, seqid)  = iprot.readMessageBegin()" << endl;
+    indent() << "(name, type, seqid) = iprot.readMessageBegin()" << endl;
 
   // TODO(mcslee): validate message
 
   // HOT: dictionary function lookup
   f_service_ <<
     indent() << "if name not in self._processMap:" << endl <<
-    indent() << "  print 'Unknown function %s' % (name)" << endl <<
+    indent() << "  iprot.skip(TType.STRUCT)" << endl <<
+    indent() << "  iprot.readMessageEnd()" << endl <<
+    indent() << "  x = TApplicationException(TApplicationException.UNKNOWN_METHOD, 'Unknown function %s' % (name))" << endl <<
+    indent() << "  oprot.writeMessageBegin(name, TMessageType.EXCEPTION, seqid)" << endl <<
+    indent() << "  x.write(oprot)" << endl <<
+    indent() << "  oprot.writeMessageEnd()" << endl <<
+    indent() << "  oprot.trans.flush()" << endl <<
+    indent() << "  return" << endl <<
     indent() << "else:" << endl <<
     indent() << "  self._processMap[name](self, seqid, iprot, oprot)" << endl;
 
