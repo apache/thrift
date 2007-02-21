@@ -48,7 +48,11 @@ public:
    */
   enum TApplicationExceptionType {
     UNKNOWN = 0,
-    INVALID_METHOD = 1,
+    UNKNOWN_METHOD = 1,
+    INVALID_MESSAGE_TYPE = 2,
+    WRONG_METHOD_NAME = 3,
+    BAD_SEQUENCE_ID = 4,
+    MISSING_RESULT = 5,
   };
 
   TApplicationException() :
