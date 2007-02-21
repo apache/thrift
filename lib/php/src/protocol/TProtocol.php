@@ -9,6 +9,8 @@
  * @author Aditya Agarwal <aditya@facebook.com>
  */
 
+include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
+
 /**
  * Data types that can be sent via Thrift
  */
@@ -38,6 +40,20 @@ class TType {
 class TMessageType {
   const CALL  = 1;
   const REPLY = 2;
+}
+
+/**
+ * Protocol exceptions
+ */
+class TProtocolException extends TException {
+  const UNKNOWN = 0;
+  const INVALID_DATA = 1;
+  const NEGATIVE_SIZE = 2;
+  const SIZE_LIMIT = 3;
+
+  function __construct($message=null, $code=0) {
+    parent::__construct($message, $code);
+  }
 }
 
 /**
