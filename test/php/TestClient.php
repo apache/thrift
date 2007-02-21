@@ -23,7 +23,8 @@ require_once $GLOBALS['THRIFT_ROOT'].'/transport/TSocketPool.php';
 require_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
 
 /** Include the generated code */
-require_once '/home/mcslee/code/projects/thrift/test/php/'.$GEN_DIR.'/ThriftTest.php';
+require_once $GEN_DIR.'/ThriftTest.php';
+require_once $GEN_DIR.'/ThriftTest_types.php';
 
 $host = 'localhost';
 $port = 9090;

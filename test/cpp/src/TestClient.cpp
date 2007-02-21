@@ -102,9 +102,13 @@ int main(int argc, char** argv) {
     /**
      * VOID TEST
      */
-    printf("testVoid()");
-    testClient.testVoid();
-    printf(" = void\n");
+    try {
+      printf("testVoid()");
+      testClient.testVoid();
+      printf(" = void\n");
+    } catch (TApplicationException tax) {
+      printf("%s\n", tax.what());
+    }
     
     /**
      * STRING TEST

@@ -13,6 +13,12 @@ enum Numberz
 
 typedef i64 UserId
 
+struct Bonk
+{
+  1: string message,
+  2: i32 type
+}
+
 struct Xtruct
 {
   1:  string string_thing,

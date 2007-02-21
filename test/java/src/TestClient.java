@@ -3,6 +3,7 @@ package com.facebook.thrift.test;
 // Generated code
 import thrift.test.*;
 
+import com.facebook.thrift.TApplicationException;
 import com.facebook.thrift.transport.TTransport;
 import com.facebook.thrift.transport.TSocket;
 import com.facebook.thrift.transport.THttpClient;
@@ -70,7 +71,7 @@ public class TestClient {
       }
 
       TBinaryProtocol binaryProtocol =
-        new TBinaryProtocol(transport, transport);
+        new TBinaryProtocol(transport);
       ThriftTest.Client testClient =
         new ThriftTest.Client(binaryProtocol);
 
@@ -96,9 +97,13 @@ public class TestClient {
         /**
          * VOID TEST
          */
-        System.out.print("testVoid()");
-        testClient.testVoid();
-        System.out.print(" = void\n");
+        try {
+          System.out.print("testVoid()");
+          testClient.testVoid();
+          System.out.print(" = void\n");
+        } catch (TApplicationException tax) {
+          tax.printStackTrace();
+        }
 
         /**
          * STRING TEST
@@ -303,12 +308,14 @@ public class TestClient {
          * INSANITY TEST
          */
         Insanity insane = new Insanity();
+        insane.userMap = new HashMap<Integer, Long>();
         insane.userMap.put(Numberz.FIVE, (long)5000);
         Xtruct truck = new Xtruct();
         truck.string_thing = "Truck";
         truck.byte_thing = (byte)8;
         truck.i32_thing = 8;
         truck.i64_thing = 8;
+        insane.xtructs = new ArrayList<Xtruct>();
         insane.xtructs.add(truck);
         System.out.print("testInsanity()");
         AbstractMap<Long,AbstractMap<Integer,Insanity>> whoa =
