@@ -735,7 +735,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
   f_remote.open(f_remote_name.c_str());
 
   f_remote <<
-    "#!/usr/bin/python" << endl <<
+    "#!/usr/bin/env python" << endl <<
     py_autogen_comment() << endl <<
     "import sys" << endl <<
     "import pprint" << endl <<
