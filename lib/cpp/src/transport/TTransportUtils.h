@@ -312,6 +312,10 @@ class TMemoryBuffer : public TTransport {
 
   void write(const uint8_t* buf, uint32_t len);
 
+  uint32_t available() {
+    return wPos_ - rPos_;
+  }
+
  private:
   // Data buffer
   uint8_t* buffer_;

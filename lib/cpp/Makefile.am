@@ -13,6 +13,7 @@ libthrift_sources = src/Thrift.cpp \
                     src/concurrency/TimerManager.cpp \
 	            src/protocol/TBinaryProtocol.cpp \
                     src/transport/TFileTransport.cpp \
+                    src/transport/THttpClient.cpp \
                     src/transport/TSocket.cpp \
                     src/transport/TServerSocket.cpp \
                     src/transport/TTransportUtils.cpp \
@@ -60,6 +61,7 @@ include_transport_HEADERS = \
                          src/transport/TFileTransport.h \
                          src/transport/TServerSocket.h \
                          src/transport/TServerTransport.h \
+                         src/transport/THttpClient.h \
                          src/transport/TSocket.h \
                          src/transport/TTransport.h \
                          src/transport/TTransportException.h \

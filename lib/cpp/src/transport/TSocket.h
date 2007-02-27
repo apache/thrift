@@ -40,11 +40,10 @@ class TSocket : public TTransport {
    */
   TSocket(std::string host, int port);
 
-
   /**
    * Destroyes the socket object, closing it if necessary.
    */
-  ~TSocket();
+  virtual ~TSocket();
 
   /**
    * Whether the socket is alive.
@@ -125,8 +124,7 @@ class TSocket : public TTransport {
    */
   void setSendTimeout(int ms);
 
-
- private:
+ protected:
   /**
    * Constructor to create socket from raw UNIX handle. Never called directly
    * but used by the TServerSocket class.

@@ -180,6 +180,9 @@ void TFramedTransport::flush()  {
 uint32_t TMemoryBuffer::read(uint8_t* buf, uint32_t len) {
   // Check avaible data for reading
   uint32_t avail = wPos_ - rPos_;
+  if (avail == 0) {
+    return 0;
+  }
 
   // Device how much to give
   uint32_t give = len;
