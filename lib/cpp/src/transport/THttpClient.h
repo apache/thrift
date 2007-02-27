@@ -40,6 +40,8 @@ class THttpClient : public TTransport {
 
   uint32_t read(uint8_t* buf, uint32_t len);
 
+  void readEnd();
+
   void write(const uint8_t* buf, uint32_t len);
   
   void flush();
@@ -59,27 +61,30 @@ class THttpClient : public TTransport {
 
   bool readHeaders_;
   bool chunked_;
+  bool chunkedDone_;
   uint32_t chunkSize_;
   uint32_t contentLength_;
 
   char* httpBuf_;
-  uint32_t httpBufPos_;
+  uint32_t httpPos_;
+  uint32_t httpBufLen_;
   uint32_t httpBufSize_;
 
   uint32_t readMoreData();
-  char* readLine(char* line, char** next);
+  char* readLine();
 
   void readHeaders();
   void parseHeader(char* header);
   bool parseStatusLine(char* status);
 
   uint32_t readChunked();
+  void readChunkedFooters();
   uint32_t parseChunkSize(char* line);
 
-  char* readContent(char* pos, uint32_t size);
+  uint32_t readContent(uint32_t size);
 
-  char* refill();
-  char* shift(char* pos);
+  void refill();
+  void shift();
 
 };
 

@@ -21,10 +21,12 @@ THttpClient::THttpClient(boost::shared_ptr<TTransport> transport, string host, s
   path_(path),
   readHeaders_(true),
   chunked_(false),
+  chunkedDone_(false),
   chunkSize_(0),
   contentLength_(0),
   httpBuf_(NULL),
-  httpBufPos_(0),
+  httpPos_(0),
+  httpBufLen_(0),
   httpBufSize_(1024) {
   init();
 }
@@ -34,10 +36,12 @@ THttpClient::THttpClient(string host, int port, string path) :
   path_(path),
   readHeaders_(true),
   chunked_(false),
+  chunkedDone_(false),
   chunkSize_(0),
   contentLength_(0),
   httpBuf_(NULL),
-  httpBufPos_(0),
+  httpPos_(0),
+  httpBufLen_(0),
   httpBufSize_(1024) {
   transport_ = boost::shared_ptr<TTransport>(new TSocket(host, port));
   init();
@@ -48,7 +52,7 @@ void THttpClient::init() {
   if (httpBuf_ == NULL) {
     throw TTransportException("Out of memory.");
   }
-  httpBuf_[httpBufPos_] = '\0';
+  httpBuf_[httpBufLen_] = '\0';
 }
 
 THttpClient::~THttpClient() {
@@ -68,6 +72,15 @@ uint32_t THttpClient::read(uint8_t* buf, uint32_t len) {
   return readBuffer_.read(buf, len);
 }
 
+void THttpClient::readEnd() {
+  // Read any pending chunked data (footers etc.)
+  if (chunked_) {
+    while (!chunkedDone_) {
+      readChunked();
+    }
+  }
+}
+
 uint32_t THttpClient::readMoreData() {
   // Get more data!
   refill();
@@ -79,42 +92,35 @@ uint32_t THttpClient::readMoreData() {
   if (chunked_) {
     return readChunked();
   } else {
-    char* read;
-    read = readContent(httpBuf_, contentLength_);
-    shift(read);
-    return contentLength_;
+    return readContent(contentLength_);
   }
 }
 
 uint32_t THttpClient::readChunked() {
   uint32_t length = 0;
-  char* nextLine = httpBuf_;
-  while (true) {
-    char* line = readLine(nextLine, &nextLine);
-    uint32_t chunkSize = parseChunkSize(line);
-    if (chunkSize == 0) {
-      break;
-    }
+
+  char* line = readLine();
+  uint32_t chunkSize = parseChunkSize(line);
+  if (chunkSize == 0) {
+    readChunkedFooters();
+  } else {
     // Read data content
-    nextLine = readContent(nextLine, chunkSize);
-    length += chunkSize;
-
+    length += readContent(chunkSize);
     // Read trailing CRLF after content
-    readLine(nextLine, &nextLine);
+    readLine();
   }
+  return length;
+}
 
-  // Read footer lines until a blank one appears
+void THttpClient::readChunkedFooters() {
+  // End of data, read footer lines until a blank one appears
   while (true) {
-    char* line = readLine(nextLine, &nextLine);
+    char* line = readLine();
     if (strlen(line) == 0) {
+      chunkedDone_ = true;
       break;
     }
   }
-
-  // Shift down whatever we have left in the buf
-  shift(nextLine);
-
-  return length;
 }
 
 uint32_t THttpClient::parseChunkSize(char* line) {
@@ -127,69 +133,67 @@ uint32_t THttpClient::parseChunkSize(char* line) {
   return (uint32_t)size;
 }
 
-char* THttpClient::readContent(char* pos, uint32_t size) {
+uint32_t THttpClient::readContent(uint32_t size) {
   uint32_t need = size;
-
   while (need > 0) {
-    uint32_t avail = httpBufPos_ - (pos - httpBuf_);
+    uint32_t avail = httpBufLen_ - httpPos_;
     if (avail == 0) {
       // We have given all the data, reset position to head of the buffer
-      pos = shift(pos);
-      pos = refill();
+      httpPos_ = 0;
+      httpBufLen_ = 0;
+      refill();
       
       // Now have available however much we read
-      avail = httpBufPos_;
+      avail = httpBufLen_;
     }
     uint32_t give = avail;
     if (need < give) {
       give = need;
     }
-    readBuffer_.write((uint8_t*)pos, give);
-    pos += give;
+    readBuffer_.write((uint8_t*)(httpBuf_+httpPos_), give);
+    httpPos_ += give;
     need -= give;
   }
-  return pos;
+  return size;
 }
   
-char* THttpClient::readLine(char* pos, char** next) {
+char* THttpClient::readLine() {
   while (true) {
     char* eol = NULL;
 
-    // Note, the data we read could have ended right on the CRLF pair
-    if (pos != NULL) {
-      eol = strstr(pos, CRLF);
-    }   
+    eol = strstr(httpBuf_+httpPos_, CRLF);
 
     // No CRLF yet?
     if (eol == NULL) {
       // Shift whatever we have now to front and refill
-      pos = shift(pos);
-      pos = refill();
+      shift();
+      refill();
     } else {
       // Return pointer to next line
       *eol = '\0';
-      *next = eol + CRLF_LEN;
-      return pos;
+      char* line = httpBuf_+httpPos_;
+      httpPos_ = (eol-httpBuf_) + CRLF_LEN;
+      return line;
     }
   }
 
 }
 
-char* THttpClient::shift(char* pos) {
-  if (pos != NULL && httpBufPos_ > (pos - httpBuf_)) {
+void THttpClient::shift() {
+  if (httpBufLen_ > httpPos_) {
     // Shift down remaining data and read more
-    uint32_t length = httpBufPos_ - (pos - httpBuf_);
-    memmove(httpBuf_, pos, length);
-    httpBufPos_ = length;       
+    uint32_t length = httpBufLen_ - httpPos_;
+    memmove(httpBuf_, httpBuf_+httpPos_, length);
+    httpBufLen_ = length;
   } else {
-    httpBufPos_ = 0;
+    httpBufLen_ = 0;
   }
-  httpBuf_[httpBufPos_] = '\0';
-  return httpBuf_;
+  httpPos_ = 0;
+  httpBuf_[httpBufLen_] = '\0';
 }
 
-char* THttpClient::refill() {
-  uint32_t avail = httpBufSize_ - httpBufPos_;
+void THttpClient::refill() {
+  uint32_t avail = httpBufSize_ - httpBufLen_;
   if (avail <= (httpBufSize_ / 4)) {
     httpBufSize_ *= 2;
     httpBuf_ = (char*)realloc(httpBuf_, httpBufSize_+1);
@@ -199,38 +203,33 @@ char* THttpClient::refill() {
   }
       
   // Read more data
-  uint32_t got = transport_->read((uint8_t*)(httpBuf_+httpBufPos_), httpBufSize_-httpBufPos_);
-  httpBufPos_ += got;
-  httpBuf_[httpBufPos_] = '\0';
+  uint32_t got = transport_->read((uint8_t*)(httpBuf_+httpBufLen_), httpBufSize_-httpBufLen_);
+  httpBufLen_ += got;
+  httpBuf_[httpBufLen_] = '\0';
  
   if (got == 0) {
     throw TTransportException("Could not refill buffer");
   }
-
-  return httpBuf_;
 }
 
 void THttpClient::readHeaders() {
   // Initialize headers state variables
   contentLength_ = 0;
   chunked_ = false;
+  chunkedDone_ = false;
   chunkSize_ = 0;
 
   // Control state flow
   bool statusLine = true;
   bool finished = false;
 
-  // Initialize local pos vars
-  char* nextLine = (char*)httpBuf_;
-
   // Loop until headers are finished
   while (true) {
-    char* line = readLine(nextLine, &nextLine);
+    char* line = readLine();
 
     if (strlen(line) == 0) {
       if (finished) {
         readHeaders_ = false;
-        shift(nextLine);
         return;
       } else {
         // Must have been an HTTP 100, keep going for another status line
@@ -251,11 +250,17 @@ bool THttpClient::parseStatusLine(char* status) {
   char* http = status;
 
   char* code = strchr(http, ' ');
+  if (code == NULL) {
+    throw TTransportException(string("Bad Status: ") + status);
+  }
+  
   *code = '\0';
-
   while (*(code++) == ' ');
 
   char* msg = strchr(code, ' ');
+  if (msg == NULL) {
+    throw TTransportException(string("Bad Status: ") + status);
+  }
   *msg = '\0';
 
   if (strcmp(code, "200") == 0) {
@@ -265,7 +270,7 @@ bool THttpClient::parseStatusLine(char* status) {
     // HTTP 100 = continue, just keep reading
     return false;
   } else {
-    throw TTransportException(status);
+    throw TTransportException(string("Bad Status: ") + status);
   }
 }
 
