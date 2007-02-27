@@ -97,7 +97,7 @@ class TApplicationException extends TException {
       $xfer += $output->writeString($this->getMessage());
       $xfer += $output->writeFieldEnd();
     }
-    if ($this->type !== null) {
+    if ($this->getCode()) {
       $xfer += $output->writeFieldBegin('type', TType::I32, 2);
       $xfer += $output->writeI32($this->getCode());
       $xfer += $output->writeFieldEnd();
