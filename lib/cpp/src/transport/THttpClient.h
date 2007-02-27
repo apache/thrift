@@ -67,7 +67,7 @@ class THttpClient : public TTransport {
   uint32_t httpBufSize_;
 
   uint32_t readMoreData();
-  char* readLine(char* line);
+  char* readLine(char* line, char** next);
 
   void readHeaders();
   void parseHeader(char* header);
@@ -78,7 +78,7 @@ class THttpClient : public TTransport {
 
   char* readContent(char* pos, uint32_t size);
 
-  void refill();
+  char* refill();
   char* shift(char* pos);
 
 };
