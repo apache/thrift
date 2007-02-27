@@ -1,1 +1,1 @@
-__all__ = ["TTransport", "TSocket"]
+__all__ = ['TTransport', 'TSocket', 'THttpClient']
