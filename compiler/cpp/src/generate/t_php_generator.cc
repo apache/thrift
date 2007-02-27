@@ -632,15 +632,28 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
       indent() << "$input->readMessageBegin($fname, $mtype, $rseqid);" << endl;
   }
 
-  // TODO(mcslee): validate message 
-
   // HOT: check for method implementation
   f_service_ <<
     indent() << "$methodname = 'process_'.$fname;" << endl << 
-    indent() << "if (!method_exists($this, $methodname)) {" << endl <<
-    indent() << "  throw new Exception('Function '.$fname.' not implemented.');" << endl <<
+    indent() << "if (!method_exists($this, $methodname)) {" << endl;
+  if (binary_inline_) {
+    f_service_ <<
+      indent() << "  throw new Exception('Function '.$fname.' not implemented.');" << endl;
+  } else {
+    f_service_ <<
+      indent() << "  $input->skip(TType::STRUCT);" << endl <<
+      indent() << "  $input->readMessageEnd();" << endl <<
+      indent() << "  $x = new TApplicationException('Function '.$fname.' not implemented.', TApplicationException::UNKNOWN_METHOD);" << endl <<
+      indent() << "  $output->writeMessageBegin($fname, TMessageType::EXCEPTION, $rseqid);" << endl <<
+      indent() << "  $x->write($output);" << endl <<
+      indent() << "  $output->writeMessageEnd();" << endl <<
+      indent() << "  $output->getTransport()->flush();" << endl <<
+      indent() << "  return;" << endl;
+  }
+  f_service_ <<
     indent() << "}" << endl <<
-    indent() << "$this->$methodname($rseqid, $input, $output);" << endl;
+    indent() << "$this->$methodname($rseqid, $input, $output);" << endl <<
+    indent() << "return true;" << endl;
   indent_down();
   f_service_ <<
     indent() << "}" << endl <<
@@ -1047,10 +1060,14 @@ void t_php_generator::generate_service_client(t_service* tservice) {
         generate_deserialize_field(f_service_, &fseqid, "", true);
       } else {
         f_service_ <<
-          indent() << "$this->input_->readMessageBegin($fname, $mtype, $rseqid);" << endl;
+          indent() << "$this->input_->readMessageBegin($fname, $mtype, $rseqid);" << endl <<
+          indent() << "if ($mtype == TMessageType::EXCEPTION) {" << endl <<
+          indent() << "  $x = new TApplicationException();" << endl <<
+          indent() << "  $x->read($input);" << endl <<
+          indent() << "  $input->readMessageEnd();" << endl <<
+          indent() << "  throw $x;" << endl <<
+          indent() << "}" << endl;
       }
-
-      // TODO(mcslee): Validate message reply here
 
       f_service_ <<
         indent() << "$result = new " << resultname << "();" << endl <<
