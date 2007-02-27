@@ -242,7 +242,7 @@ class TSocket extends TTransport {
       stream_set_timeout($this->handle_, 0, $this->sendTimeout_*1000);
       $this->sendTimeoutSet_ = TRUE;
     }
-    while (!empty($buf)) {
+    while (strlen($buf) > 0) {
       $got = @fwrite($this->handle_, $buf);
       if ($got === 0 || $got === FALSE) {
         $md = stream_get_meta_data($this->handle_);

@@ -66,7 +66,7 @@ class TPhpStream extends TTransport {
   }
 
   public function write($buf) {
-    while (!empty($buf)) {
+    while (strlen($buf) > 0) {
       $got = @fwrite($this->outStream_, $buf);
       if ($got === 0 || $got === FALSE) {
         throw new Exception('TPhpStream: Could not write '.strlen($buf).' bytes');

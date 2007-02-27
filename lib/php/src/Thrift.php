@@ -29,6 +29,7 @@ class TType {
 class TMessageType {
   const CALL  = 1;
   const REPLY = 2;
+  const EXCEPTION = 3;
 }
 
 class TException extends Exception {
