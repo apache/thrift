@@ -630,7 +630,8 @@ void TFileTransport::seekToChunk(int32_t chunk) {
     minEndOffset = lseek(fd_, 0, SEEK_END);
   }
   
-  offset_ = lseek(fd_, chunk * chunkSize_, SEEK_SET);  
+  off_t newOffset = off_t(chunk) * chunkSize_;
+  offset_ = lseek(fd_, newOffset, SEEK_SET);  
   readState_.resetAllValues();
   if (offset_ == -1) {
     perror("TFileTransport: lseek error in seekToChunk");
