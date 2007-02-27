@@ -15,7 +15,7 @@ using namespace std;
 static const char* CRLF = "\r\n";
 static const int CRLF_LEN = 2;
 
-  THttpClient::THttpClient(boost::shared_ptr<TTransport> transport, string host, string path) :
+THttpClient::THttpClient(boost::shared_ptr<TTransport> transport, string host, string path) :
   transport_(transport),
   host_(host),
   path_(path),
