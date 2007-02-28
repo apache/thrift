@@ -1,34 +1,25 @@
-Thrift (Thrift IDL and RPC tool)                   Version 1.0  (22 August 2006)
+Thrift (Thrift IDL and RPC tool)
+Version 1.0  (22 August 2006)
 
 Mark Slee (mcslee@facebook.com)
+Aditya Agarwal (aditya@facebook.com)
 Marc Kwiatkowski (marc@facebook.com)
 
 $Header$
 
-Copyright (c) 2006, Facebook, Inc.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Facebook, inc. nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-Copyright (C) 2001-2006  Facebook
+Thrift is distributed under the Thrift open source software license.
+Please see the included LICENSE file.
 
 Introduction
 ============
 
-Thrift is a lightweight, language-independent RPC mechanism.  
+Thrift is a lightweight, language-independent software stack with an
+associated code generation mechanism for RPC.
 
 Requirements
 ============
-Thrift requires Python 2.4 or greater and PLY, the python LALR generator tool, 1.7 or greater.
-See python.org for source and binary distributions for python
-See http://www.dabeaz.com/ply/ply.html for the PLY distribution and documentation 
-
-Thrift requires boost shared pointers from boost-1.33.1 or greater, see http://www.boost.org/libs/smart_ptr/smart_ptr.htm
+Thrift requires boost shared pointers from boost-1.33.1 or greater,
+see http://www.boost.org/libs/smart_ptr/smart_ptr.htm
 
 Resources
 =========
@@ -45,21 +36,25 @@ Thrift was inspired by pillar, a lightweight RPC tool written by Adam D'Angelo
 INSTALLATION
 ============
 
-If you are building from the first time out of the source repository, you will need to generate the configure scripts.  From the top directory, do:
+If you are building from the first time out of the source repository, you will
+need to generate the configure scripts.  From the top directory, do:
 
 	./bootstrap.sh
 
-Once the configure scripts are generated, thrift can be configured.  From the top directory, do:
+Once the configure scripts are generated, thrift can be configured.
+From the top directory, do:
 
 	./configure
 
-You may need to specify the location of the boost files explicitly:   If you installed boost in  /usr/local, you would run configure as follows:
+You may need to specify the location of the boost files explicitly.
+If you installed boost in  /usr/local, you would run configure as follows:
 
 	./configure --with-boost=/usr/local
 
-Note that by default the thrift C++ library is built with no debugging symbols included. If you would like debugging symbols during development work, run:
+Note that by default the thrift C++ library is built with no debugging symbols
+included. If you would like debugging symbols during development work, run:
 
-        ./configure --CFLAGS='-g -O2'
+        ./configure CFLAGS='-g -O2'
 
 Run ./configure --help to see other configuration options
 
@@ -70,5 +65,3 @@ Make thrift
 From the top directory, become superuser and do:
 
 	make install
-
-

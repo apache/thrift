@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import sys
 sys.path.append('./gen-py')
 
-import ThriftTest
-from ThriftTest_types import *
+from ThriftTest import ThriftTest
+from ThriftTest.ttypes import *
 from thrift.transport import TTransport
 from thrift.transport import TSocket
 from thrift.protocol import TBinaryProtocol

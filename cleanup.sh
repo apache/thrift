@@ -4,7 +4,6 @@ subdirs="compiler/cpp lib/cpp lib/php lib/py"
 
 rm -rf \
 AUTHORS \
-COPYING \
 ChangeLog \
 INSTALL \
 Makefile.am \

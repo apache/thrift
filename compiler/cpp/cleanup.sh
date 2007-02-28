@@ -2,7 +2,6 @@
 
 rm -rf \
 AUTHORS \
-COPYING \
 ChangeLog \
 INSTALL \
 Makefile \

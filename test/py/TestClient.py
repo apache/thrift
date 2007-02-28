@@ -1,13 +1,15 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import sys
 sys.path.append('./gen-py')
 
-import ThriftTest
-from ThriftTest_types import *
+from ThriftTest import ThriftTest
+from ThriftTest.ttypes import *
 from thrift.transport import TTransport
 from thrift.transport import TSocket
 from thrift.protocol import TBinaryProtocol
+
+import time
 
 import hotshot
 from hotshot import stats
@@ -16,8 +18,6 @@ prof = None
 # Uncomment if you want to profile this biznizzy
 #prof = hotshot.Profile('hotshot_thrift_stats')
 #prof.start()
-
-import timing
 
 host = 'localhost'
 port = 9090
@@ -55,11 +55,15 @@ client = ThriftTest.Client(protocol)
 transport.open()
 
 # Start debug timing
-timing.start()
+tstart = time.time()
 
-print "testVoid()"
-print client.testVoid()
-
+try:
+  print "testVoid()"
+  print client.testVoid()
+except TApplicationException, x:
+  print x.message
+  print x.type
+  
 print "testString('Python')"
 print client.testString('Python')
 
@@ -97,8 +101,9 @@ try:
 except Xception, x:
   print "Xception (%d, %s)" % (x.errorCode, x.message)
 
-timing.finish()
-print "Total time: %d microsecs" % timing.micro()
+tend = time.time()
+ttotal = (tend-tstart)*1000
+print "Total time: %f ms" % (ttotal)
 
 # Close!
 transport.close()
