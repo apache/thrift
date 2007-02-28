@@ -1,3 +1,9 @@
+// Copyright (c) 2006- Facebook
+// Distributed under the Thrift Software License
+//
+// See accompanying file LICENSE or visit the Thrift site at:
+// http://developers.facebook.com/thrift/
+
 #ifndef _THRIFT_TRANSPORT_TTRANSPORTUTILS_H_
 #define _THRIFT_TRANSPORT_TTRANSPORTUTILS_H_ 1
 
