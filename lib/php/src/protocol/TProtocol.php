@@ -1,6 +1,17 @@
 <?php
 
 /**
+ * Copyright (c) 2006- Facebook
+ * Distributed under the Thrift Software License
+ *
+ * See accompanying file LICENSE or visit the Thrift site at:
+ * http://developers.facebook.com/thrift/
+ *
+ * @package thrift.protocol
+ * @author Mark Slee <mcslee@facebook.com>
+ */
+
+/**
  * Protocol module. Contains all the types and definitions needed to implement
  * a protocol encoder/decoder.
  *

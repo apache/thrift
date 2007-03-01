@@ -1,6 +1,17 @@
 <?php
 
 /**
+ * Copyright (c) 2006- Facebook
+ * Distributed under the Thrift Software License
+ *
+ * See accompanying file LICENSE or visit the Thrift site at:
+ * http://developers.facebook.com/thrift/
+ *
+ * @package thrift.transport
+ * @author Mark Slee <mcslee@facebook.com>
+ */
+
+/**
  * Transport exceptions
  */
 class TTransportException extends TException {

@@ -1,6 +1,17 @@
 <?php
 
 /**
+ * Copyright (c) 2006- Facebook
+ * Distributed under the Thrift Software License
+ *
+ * See accompanying file LICENSE or visit the Thrift site at:
+ * http://developers.facebook.com/thrift/
+ *
+ * @package thrift.transport
+ * @author Mark Slee <mcslee@facebook.com>
+ */
+
+/**
  * Buffered transport. Stores data to an internal buffer that it doesn't
  * actually write out until flush is called. For reading, we do a greedy
  * read and then serve data out of the internal buffer.
