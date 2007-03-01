@@ -14,8 +14,8 @@
 /**
  * Binary implementation of the Thrift protocol.
  *
- * @package thrift.protocol
  * @author Mark Slee <mcslee@facebook.com>
+ * @author Marc Kwiatkowski <marc@facebook.com>
  */
 class TBinaryProtocol extends TProtocol {
 
