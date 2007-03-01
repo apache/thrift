@@ -63,10 +63,16 @@ class ThreadManager {
    */
   virtual void stop() = 0;
 
+  /**
+   * Joins the thread manager. This is the same as stop, except that it will
+   * block until all the workers have finished their work. At that point
+   * the ThreadManager will transition into the STOPPED state.
+   */
   enum STATE {
     UNINITIALIZED,
     STARTING,
     STARTED,
+    JOINING,
     STOPPING,
     STOPPED
   };
