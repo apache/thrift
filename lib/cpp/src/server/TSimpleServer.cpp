@@ -34,7 +34,7 @@ void TSimpleServer::serve() {
   }
 
   // Fetch client from server
-  while (true) {
+  while (!stop_) {
     try {
       client = serverTransport_->accept();
       inputTransport = inputTransportFactory_->getTransport(client);
@@ -77,7 +77,14 @@ void TSimpleServer::serve() {
     }
   }
 
-  // TODO(mcslee): Could this be a timeout case? Or always the real thing?
+  if (stop_) {
+    try {
+      serverTransport_->close();
+    } catch (TTransportException &ttx) {
+      cerr << "TServerTransport failed on close: " << ttx.what() << endl;
+    }
+    stop_ = false;
+  }
 }
 
 }}} // facebook::thrift::server

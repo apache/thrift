@@ -40,10 +40,14 @@ class TThreadPoolServer : public TServer {
   virtual ~TThreadPoolServer();
 
   virtual void serve();
+  
+  virtual void stop() { stop_ = true; }
 
  protected:
 
   shared_ptr<ThreadManager> threadManager_;
+
+  volatile bool stop_;
   
 };
 

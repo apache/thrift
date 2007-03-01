@@ -68,6 +68,8 @@ class ThreadManager {
    * block until all the workers have finished their work. At that point
    * the ThreadManager will transition into the STOPPED state.
    */
+  virtual void join() = 0;
+
   enum STATE {
     UNINITIALIZED,
     STARTING,

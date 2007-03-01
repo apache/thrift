@@ -31,6 +31,8 @@ public:
 
   virtual void serve() = 0;
 
+  virtual void stop() {}
+
   // Allows running the server as a Runnable thread
   virtual void run() {
     serve();

@@ -65,7 +65,8 @@ TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
                                      shared_ptr<TProtocolFactory> protocolFactory,
                                      shared_ptr<ThreadManager> threadManager) :
   TServer(processor, serverTransport, transportFactory, protocolFactory), 
-  threadManager_(threadManager) {}
+  threadManager_(threadManager),
+  stop_(false) {}
 
 TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
                                      shared_ptr<TServerTransport> serverTransport,
@@ -76,13 +77,13 @@ TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
                                      shared_ptr<ThreadManager> threadManager) :
   TServer(processor, serverTransport, inputTransportFactory, outputTransportFactory,
           inputProtocolFactory, outputProtocolFactory),
-  threadManager_(threadManager) {}
+  threadManager_(threadManager),
+  stop_(false) {}
 
 
 TThreadPoolServer::~TThreadPoolServer() {}
 
 void TThreadPoolServer::serve() {
-
   shared_ptr<TTransport> client;
   shared_ptr<TTransport> inputTransport;
   shared_ptr<TTransport> outputTransport;
@@ -97,7 +98,7 @@ void TThreadPoolServer::serve() {
     return;
   }
   
-  while (true) {   
+  while (!stop_) {
     try {
       // Fetch client from server
       client = serverTransport_->accept();
@@ -131,6 +132,18 @@ void TThreadPoolServer::serve() {
       break;
     }
   }
+
+  // If stopped manually, join the existing threads
+  if (stop_) {
+    try {
+      serverTransport_->close();
+      threadManager_->join();
+    } catch (TException &tx) {
+      cerr << "TThreadPoolServer: Exception shutting down: " << tx.what() << endl;
+    }
+  }
+  stop_ = false;
+
 }
 
 }}} // facebook::thrift::server

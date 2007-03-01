@@ -26,7 +26,8 @@ class TSimpleServer : public TServer {
                 shared_ptr<TServerTransport> serverTransport,
                 shared_ptr<TTransportFactory> transportFactory,
                 shared_ptr<TProtocolFactory> protocolFactory) :
-    TServer(processor, serverTransport, transportFactory, protocolFactory) {}
+    TServer(processor, serverTransport, transportFactory, protocolFactory),
+    stop_(false) {}
 
   TSimpleServer(shared_ptr<TProcessor> processor,
                 shared_ptr<TServerTransport> serverTransport,
@@ -36,11 +37,19 @@ class TSimpleServer : public TServer {
                 shared_ptr<TProtocolFactory> outputProtocolFactory):
     TServer(processor, serverTransport, 
             inputTransportFactory, outputTransportFactory,
-            inputProtocolFactory, outputProtocolFactory) {}
+            inputProtocolFactory, outputProtocolFactory),
+    stop_(false) {}
     
   ~TSimpleServer() {}
 
   void serve();
+
+  void stop() {
+    stop_ = true;
+  }
+
+ protected:
+  bool stop_;
 
 };
 
