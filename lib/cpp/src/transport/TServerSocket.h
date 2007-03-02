@@ -33,6 +33,10 @@ class TServerSocket : public TServerTransport {
   void listen();
   void close();
 
+  void interrupt() {
+    interrupt_ = true;
+  }
+
  protected:
   shared_ptr<TTransport> acceptImpl();
 
@@ -42,6 +46,7 @@ class TServerSocket : public TServerTransport {
   int acceptBacklog_;
   int sendTimeout_;
   int recvTimeout_;
+  volatile bool interrupt_;
 };
 
 }}} // facebook::thrift::transport

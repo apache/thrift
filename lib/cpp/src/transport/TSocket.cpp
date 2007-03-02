@@ -157,9 +157,13 @@ void TSocket::open() {
   // Set the socket to be non blocking for connect if a timeout exists
   int flags = fcntl(socket_, F_GETFL, 0); 
   if (connTimeout_ > 0) {
-    fcntl(socket_, F_SETFL, flags | O_NONBLOCK);
+    if (-1 == fcntl(socket_, F_SETFL, flags | O_NONBLOCK)) {
+      throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed");
+    }
   } else {
-    fcntl(socket_, F_SETFL, flags | ~O_NONBLOCK);
+    if (-1 == fcntl(socket_, F_SETFL, flags & ~O_NONBLOCK)) {
+      throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed");
+    }
   }
 
   // Conn timeout

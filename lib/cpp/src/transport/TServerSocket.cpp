@@ -5,8 +5,10 @@
 // http://developers.facebook.com/thrift/
 
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <fcntl.h>
 #include <errno.h>
 
 #include "TSocket.h"
@@ -22,14 +24,16 @@ TServerSocket::TServerSocket(int port) :
   serverSocket_(-1),
   acceptBacklog_(1024),
   sendTimeout_(0),
-  recvTimeout_(0) {}
+  recvTimeout_(0),
+  interrupt_(false) {}
 
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   port_(port),
   serverSocket_(-1),
   acceptBacklog_(1024),
   sendTimeout_(sendTimeout),
-  recvTimeout_(recvTimeout) {}
+  recvTimeout_(recvTimeout),
+  interrupt_(false) {}
 
 TServerSocket::~TServerSocket() {
   close();
@@ -87,6 +91,15 @@ void TServerSocket::listen() {
     throw TTransportException(TTransportException::NOT_OPEN, "Could not set TCP_NODELAY");
   }
 
+  // Set NONBLOCK on the accept socket
+  int flags = fcntl(serverSocket_, F_GETFL, 0);
+  if (flags == -1) {
+    throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed");
+  }
+  if (-1 == fcntl(serverSocket_, F_SETFL, flags | O_NONBLOCK)) {
+    throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed");
+  }
+
   // Bind to a port
   struct sockaddr_in addr;
   memset(&addr, 0, sizeof(addr));
@@ -116,6 +129,37 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     throw TTransportException(TTransportException::NOT_OPEN, "TServerSocket not listening");
   }
 
+  // 200ms timeout on accept
+  struct timeval c = {0, 200000};
+  fd_set fds;
+
+  while (true) {
+    FD_ZERO(&fds);
+    FD_SET(serverSocket_, &fds);
+    int ret = select(serverSocket_+1, &fds, NULL, NULL, &c);
+
+    // Check for interrupt case
+    if (ret == 0 && interrupt_) {
+      interrupt_ = false;
+      throw TTransportException(TTransportException::INTERRUPTED);
+    }
+
+    // Reset interrupt flag no matter what
+    interrupt_ = false;
+
+    if (ret > 0) {
+      break;
+    } else if (ret == 0) {
+      if (errno != EINTR && errno != EAGAIN) {
+        perror("TServerSocket::select() errcode");
+        throw TTransportException(TTransportException::UNKNOWN);
+      }
+    } else {
+      perror("TServerSocket::select() negret");
+      throw TTransportException(TTransportException::UNKNOWN);
+    }
+  }
+
   struct sockaddr_in clientAddress;
   int size = sizeof(clientAddress);
   int clientSocket = ::accept(serverSocket_,
@@ -126,6 +170,17 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     perror("TServerSocket::accept()");
     throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
   }
+
+  // Make sure client socket is blocking
+  int flags = fcntl(clientSocket, F_GETFL, 0);
+  if (flags == -1) {
+    perror("TServerSocket::select() fcntl GETFL");
+    throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
+  }
+  if (-1 == fcntl(clientSocket, F_SETFL, flags & ~O_NONBLOCK)) {
+    perror("TServerSocket::select() fcntl SETFL");
+    throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
+  }
   
   shared_ptr<TSocket> client(new TSocket(clientSocket));
   if (sendTimeout_ > 0) {
@@ -133,7 +188,8 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   }
   if (recvTimeout_ > 0) {
     client->setRecvTimeout(recvTimeout_);
-  }                          
+  }
+  
   return client;
 }
 

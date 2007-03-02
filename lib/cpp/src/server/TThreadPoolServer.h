@@ -41,7 +41,10 @@ class TThreadPoolServer : public TServer {
 
   virtual void serve();
   
-  virtual void stop() { stop_ = true; }
+  virtual void stop() {
+    stop_ = true;
+    serverTransport_->interrupt();
+  }
 
  protected:
 

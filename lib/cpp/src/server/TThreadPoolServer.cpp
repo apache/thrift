@@ -102,6 +102,7 @@ void TThreadPoolServer::serve() {
     try {
       // Fetch client from server
       client = serverTransport_->accept();
+
       // Make IO transports
       inputTransport = inputTransportFactory_->getTransport(client);
       outputTransport = outputTransportFactory_->getTransport(client);
@@ -109,25 +110,26 @@ void TThreadPoolServer::serve() {
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
       // Add to threadmanager pool
-      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, 
-                                                                                          inputProtocol, 
-                                                                                          outputProtocol)));
+      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, inputProtocol, outputProtocol)));
+
     } catch (TTransportException& ttx) {
-      inputTransport->close();
-      outputTransport->close();
-      client->close();
-      cerr << "TThreadPoolServer: TServerTransport died on accept: " << ttx.what() << endl;
+      if (inputTransport.get() != NULL) { inputTransport->close(); }
+      if (outputTransport.get() != NULL) { outputTransport->close(); }
+      if (client.get() != NULL) { client->close(); }
+      if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
+        cerr << "TThreadPoolServer: TServerTransport died on accept: " << ttx.what() << endl;
+      }
       continue;
     } catch (TException& tx) {
-      inputTransport->close();
-      outputTransport->close();
-      client->close();
+      if (inputTransport.get() != NULL) { inputTransport->close(); }
+      if (outputTransport.get() != NULL) { outputTransport->close(); }
+      if (client.get() != NULL) { client->close(); }
       cerr << "TThreadPoolServer: Caught TException: " << tx.what() << endl;
       continue;
     } catch (string s) {
-      inputTransport->close();
-      outputTransport->close();
-      client->close();
+      if (inputTransport.get() != NULL) { inputTransport->close(); }
+      if (outputTransport.get() != NULL) { outputTransport->close(); }
+      if (client.get() != NULL) { client->close(); }
       cerr << "TThreadPoolServer: Unknown exception: " << s << endl;
       break;
     }
@@ -141,8 +143,8 @@ void TThreadPoolServer::serve() {
     } catch (TException &tx) {
       cerr << "TThreadPoolServer: Exception shutting down: " << tx.what() << endl;
     }
+    stop_ = false;
   }
-  stop_ = false;
 
 }
 

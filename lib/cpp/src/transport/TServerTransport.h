@@ -52,6 +52,14 @@ class TServerTransport {
   }
 
   /**
+   * For "smart" TServerTransport implementations that work in a multi
+   * threaded context this can be used to break out of an accept() call.
+   * It is expected that the transport will throw a TTransportException
+   * with the interrupted error code.
+   */
+  virtual void interrupt() {}
+
+  /**
    * Closes this transport such that future calls to accept will do nothing.
    */
   virtual void close() = 0;
