@@ -148,13 +148,13 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     interrupt_ = false;
 
     if (ret > 0) {
+      // Cool, ready to accept
       break;
     } else if (ret == 0) {
-      if (errno != EINTR && errno != EAGAIN) {
-        perror("TServerSocket::select() errcode");
-        throw TTransportException(TTransportException::UNKNOWN);
-      }
+      // Timed out... keep going
+      continue;
     } else {
+      // Bogus, select messed up
       perror("TServerSocket::select() negret");
       throw TTransportException(TTransportException::UNKNOWN);
     }
