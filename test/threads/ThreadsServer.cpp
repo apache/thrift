@@ -23,33 +23,38 @@ class ThreadsTestHandler : virtual public ThreadsTestIf {
     // Your initialization goes here
   }
 
-  void threadOne(const int32_t sleep) {
+  int32_t threadOne(const int32_t sleep) {
     // Your implementation goes here
     printf("threadOne\n");
     go2sleep(1, sleep);
+    return 1;
   }
 
-  void threadTwo(const int32_t sleep) {
+  int32_t threadTwo(const int32_t sleep) {
     // Your implementation goes here
     printf("threadTwo\n");
     go2sleep(2, sleep);
+    return 1;
   }
 
-  void threadThree(const int32_t sleep) {
+  int32_t threadThree(const int32_t sleep) {
     // Your implementation goes here
     printf("threadThree\n");
     go2sleep(3, sleep);
+    return 1;
   }
 
-  void threadFour(const int32_t sleep) {
+  int32_t threadFour(const int32_t sleep) {
     // Your implementation goes here
     printf("threadFour\n");
     go2sleep(4, sleep);
+    return 1;
   }
 
-  void stop() {
+  int32_t stop() {
     printf("stop\n");
     server_->stop();
+    return 1;
   }
 
   void setServer(boost::shared_ptr<TServer> server) {

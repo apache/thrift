@@ -34,13 +34,16 @@ LFL   =  -L$(thrift_home)/lib/cpp/.libs -lthrift
 CCFL  = -Wall -O3 -g -I./gen-cpp $(include_flags)
 CFL   = $(CCFL) $(LFL)
 
-all: server
+all: server client
 
 stubs: ThreadsTest.thrift
 	$(THRIFT) -cpp -py ThreadsTest.thrift
 
 server: stubs
 	g++ -o ThreadsServer $(CFL) ThreadsServer.cpp ./gen-cpp/ThreadsTest.cpp ./gen-cpp/ThreadsTest_types.cpp
+
+client: stubs
+	g++ -o ThreadsClient $(CFL) ThreadsClient.cpp ./gen-cpp/ThreadsTest.cpp ./gen-cpp/ThreadsTest_types.cpp
 
 clean:
 	rm -fr *.o ThreadsServer gen-cpp
