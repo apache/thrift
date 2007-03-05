@@ -46,4 +46,4 @@ client: stubs
 	g++ -o ThreadsClient $(CFL) ThreadsClient.cpp ./gen-cpp/ThreadsTest.cpp ./gen-cpp/ThreadsTest_types.cpp
 
 clean:
-	rm -fr *.o ThreadsServer gen-cpp
+	rm -fr *.o ThreadsServer ThreadsClient gen-cpp gen-py
