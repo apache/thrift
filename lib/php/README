@@ -1,0 +1,38 @@
+Thrift PHP Software Library
+
+Mark Slee (mcslee@facebook.com)
+
+Thrift is distributed under the Thrift open source software license.
+Please see the included LICENSE file.
+
+Using Thrift with PHP
+=====================
+
+Thrift requires PHP 5. Thrift makes as few assumptions about your PHP
+environment as possible while trying to make some more advanced PHP
+features (i.e. APC cacheing using asbolute path URLs) as simple as possible.
+
+To use Thrift in your PHP codebase, take the following steps:
+
+#1) Copy all of thrift/lib/php/src into your PHP codebase
+#2) Set $GLOBALS['THRIFT_ROOT'] to the path you installed Thrift
+#3) include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
+
+Note that #3 must be done before including any other Thrift files.
+If you do not do #2, Thrift.php will set this global for you, but it will be
+done using dirname(__FILE__), which is less efficient than providing the static
+string yourself.
+
+Dependencies
+============
+
+PHP_INT_SIZE
+
+  This built-in signals whether your architecture is 32 or 64 bit and is
+  used by the TBinaryProtocol to properly use pack() and unpack() to
+  serialize data.
+
+apc_fetch(), apc_store()
+
+  APC cache is used by the TSocketPool class. If you do not have APC installed,
+  Thrift will fill in null stub function definitions.

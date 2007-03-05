@@ -1,5 +1,6 @@
 #!/bin/sh
 
+make clean 1>/dev/null 2>/dev/null
 rm -rf \
 AUTHORS \
 ChangeLog \
@@ -8,7 +9,6 @@ Makefile \
 Makefile.in \
 Makefile.orig \
 NEWS \
-README \
 aclocal.m4 \
 autom4te.cache \
 autoscan.log \

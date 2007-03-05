@@ -71,11 +71,14 @@ enum TMessageType {
  * Abstract class for a thrift protocol driver. These are all the methods that
  * a protocol must implement. Essentially, there must be some way of reading
  * and writing all the base types, plus a mechanism for writing out structs
- * with indexed fields. Also notice that all methods are strictly const. This
- * is by design. Protcol impelementations may NOT keep state, because the
- * same TProtocol object may be used simultaneously by multiple threads. This
- * theoretically introduces some limititations into the possible protocol
- * formats, but with the benefit of performance, clarity, and simplicity.
+ * with indexed fields.
+ *
+ * TProtocol objects should not be shared across multiple encoding contexts,
+ * as they may need to maintain internal state in some protocols (i.e. XML).
+ * Note that is is acceptable for the TProtocol module to do its own internal
+ * buffered reads/writes to the underlying TTransport where appropriate (i.e.
+ * when parsing an input XML stream, reading should be batched rather than
+ * looking ahead character by character for a close tag).
  *
  * @author Mark Slee <mcslee@facebook.com>
  */

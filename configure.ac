@@ -8,6 +8,6 @@ AM_INIT_AUTOMAKE
 
 AC_CONFIG_FILES([Makefile])
 
-AC_CONFIG_SUBDIRS([compiler/cpp lib/cpp lib/php lib/py])
+AC_CONFIG_SUBDIRS([compiler/cpp lib/cpp lib/py])
 
 AC_OUTPUT
