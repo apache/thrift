@@ -57,21 +57,21 @@ void TSimpleServer::serve() {
       outputTransport->close();
       client->close();    
     } catch (TTransportException& ttx) {
-      if (inputTransport.get() != NULL) { inputTransport->close(); }
-      if (outputTransport.get() != NULL) { outputTransport->close(); }
-      if (client.get() != NULL) { client->close(); }
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
       cerr << "TServerTransport died on accept: " << ttx.what() << endl;
       continue;
     } catch (TException& tx) {
-      if (inputTransport.get() != NULL) { inputTransport->close(); }
-      if (outputTransport.get() != NULL) { outputTransport->close(); }
-      if (client.get() != NULL) { client->close(); }
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
       cerr << "Some kind of accept exception: " << tx.what() << endl;
       continue;
     } catch (string s) {
-      if (inputTransport.get() != NULL) { inputTransport->close(); }
-      if (outputTransport.get() != NULL) { outputTransport->close(); }
-      if (client.get() != NULL) { client->close(); }
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
       cerr << "TThreadPoolServer: Unknown exception: " << s << endl;
       break;
     }

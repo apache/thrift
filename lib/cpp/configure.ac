@@ -28,6 +28,12 @@ AC_CHECK_FUNCS([strtol])
 
 AC_CHECK_FUNCS([strtoul])
 
+AC_CHECK_FUNCS([memmove])
+
+AC_CHECK_FUNCS([strstr])
+
+AC_CHECK_FUNCS([strchr])
+
 AC_CHECK_HEADERS([arpa/inet.h])
 
 AC_CHECK_HEADERS([fcntl.h])
@@ -99,9 +105,5 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 
 AC_PROG_LIBTOOL
-
-CFLAGS="-g -O2"
-
-CXXFLAGS="-g -O2"
 
 AC_OUTPUT(Makefile)

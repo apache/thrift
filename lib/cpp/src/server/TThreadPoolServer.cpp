@@ -42,7 +42,7 @@ public:
     } catch (TTransportException& ttx) {
       // This is reasonably expected, client didn't send a full request so just
       // ignore him
-      //cerr << "TThreadPoolServer client died: " << ttx.what() << endl;
+      cerr << "TThreadPoolServer client died: " << ttx.what() << endl;
     } catch (TException& x) {
       cerr << "TThreadPoolServer exception: " << x.what() << endl;
     } catch (...) {
@@ -100,6 +100,12 @@ void TThreadPoolServer::serve() {
   
   while (!stop_) {
     try {
+      client.reset();
+      inputTransport.reset();
+      outputTransport.reset();
+      inputProtocol.reset();
+      outputProtocol.reset();
+
       // Fetch client from server
       client = serverTransport_->accept();
 
@@ -113,23 +119,23 @@ void TThreadPoolServer::serve() {
       threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, inputProtocol, outputProtocol)));
 
     } catch (TTransportException& ttx) {
-      if (inputTransport.get() != NULL) { inputTransport->close(); }
-      if (outputTransport.get() != NULL) { outputTransport->close(); }
-      if (client.get() != NULL) { client->close(); }
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
       if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
         cerr << "TThreadPoolServer: TServerTransport died on accept: " << ttx.what() << endl;
       }
       continue;
     } catch (TException& tx) {
-      if (inputTransport.get() != NULL) { inputTransport->close(); }
-      if (outputTransport.get() != NULL) { outputTransport->close(); }
-      if (client.get() != NULL) { client->close(); }
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
       cerr << "TThreadPoolServer: Caught TException: " << tx.what() << endl;
       continue;
     } catch (string s) {
-      if (inputTransport.get() != NULL) { inputTransport->close(); }
-      if (outputTransport.get() != NULL) { outputTransport->close(); }
-      if (client.get() != NULL) { client->close(); }
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
       cerr << "TThreadPoolServer: Unknown exception: " << s << endl;
       break;
     }
