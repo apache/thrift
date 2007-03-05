@@ -15,26 +15,27 @@
 
 namespace facebook { namespace thrift { namespace server { 
 
-using namespace facebook::thrift::transport;
-using namespace facebook::thrift::concurrency;
-using namespace boost;
+using facebook::thrift::TProcessor;
+using facebook::thrift::transport::TServerTransport;
+using facebook::thrift::transport::TTransportFactory;
+using facebook::thrift::concurrency::ThreadFactory;
 
 class TThreadedServer : public TServer {
 
  public:
   class Task;
   
-  TThreadedServer(shared_ptr<TProcessor> processor,
-                  shared_ptr<TServerTransport> serverTransport,
-                  shared_ptr<TTransportFactory> transportFactory,
-                  shared_ptr<TProtocolFactory> protocolFactory);
+  TThreadedServer(boost::shared_ptr<TProcessor> processor,
+                  boost::shared_ptr<TServerTransport> serverTransport,
+                  boost::shared_ptr<TTransportFactory> transportFactory,
+                  boost::shared_ptr<TProtocolFactory> protocolFactory);
 
   virtual ~TThreadedServer();
 
   virtual void serve();
 
  protected:
-  shared_ptr<ThreadFactory> threadFactory_;
+  boost::shared_ptr<ThreadFactory> threadFactory_;
 
 };
 

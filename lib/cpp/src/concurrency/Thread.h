@@ -12,8 +12,6 @@
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
-using namespace boost;
-
 class Thread;
 
 /**
@@ -30,18 +28,18 @@ class Runnable {
 
   /**
    * Gets the thread object that is hosting this runnable object  - can return
-   * an empty shared pointer if no references remain on thet thread  object
+   * an empty boost::shared pointer if no references remain on thet thread  object
    */
-  virtual shared_ptr<Thread> thread() { return thread_.lock(); }
+  virtual boost::shared_ptr<Thread> thread() { return thread_.lock(); }
 
   /**
    * Sets the thread that is executing this object.  This is only meant for
    * use by concrete implementations of Thread.
    */
-  virtual void thread(shared_ptr<Thread> value) { thread_ = value; }
+  virtual void thread(boost::shared_ptr<Thread> value) { thread_ = value; }
 
  private:
-  weak_ptr<Thread> thread_;
+  boost::weak_ptr<Thread> thread_;
 };
 
 /**
@@ -74,13 +72,13 @@ class Thread {
   /**
    * Gets the runnable object this thread is hosting
    */
-  virtual shared_ptr<Runnable> runnable() const { return _runnable; }
+  virtual boost::shared_ptr<Runnable> runnable() const { return _runnable; }
 
  protected:
-  virtual void runnable(shared_ptr<Runnable> value) { _runnable = value; }
+  virtual void runnable(boost::shared_ptr<Runnable> value) { _runnable = value; }
 
  private:
-  shared_ptr<Runnable> _runnable;
+  boost::shared_ptr<Runnable> _runnable;
 };
 
 /**
@@ -91,7 +89,7 @@ class ThreadFactory {
 
  public:
   virtual ~ThreadFactory() {}
-  virtual shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const = 0;
+  virtual boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const = 0;
 };
 
 }}} // facebook::thrift::concurrency

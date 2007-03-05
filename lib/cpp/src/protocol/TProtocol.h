@@ -19,9 +19,7 @@
 
 namespace facebook { namespace thrift { namespace protocol { 
 
-using namespace boost;
-
-using namespace facebook::thrift::transport;
+using facebook::thrift::transport::TTransport;
 
 #if __BYTE_ORDER == __BIG_ENDIAN
 #define ntohll(n) (n)
@@ -290,26 +288,26 @@ class TProtocol {
     }
   }
 
-  inline shared_ptr<TTransport> getTransport() {
+  inline boost::shared_ptr<TTransport> getTransport() {
     return ptrans_;
   }
 
   // TODO: remove these two calls, they are for backwards
   // compatibility
-  inline shared_ptr<TTransport> getInputTransport() {
+  inline boost::shared_ptr<TTransport> getInputTransport() {
     return ptrans_;
   }
-  inline shared_ptr<TTransport> getOutputTransport() {
+  inline boost::shared_ptr<TTransport> getOutputTransport() {
     return ptrans_;
   }
 
  protected:
-  TProtocol(shared_ptr<TTransport> ptrans):
+  TProtocol(boost::shared_ptr<TTransport> ptrans):
     ptrans_(ptrans) {
     trans_ = ptrans.get();
   }
     
-  shared_ptr<TTransport> ptrans_;
+  boost::shared_ptr<TTransport> ptrans_;
   TTransport* trans_;
 
  private:

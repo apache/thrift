@@ -13,9 +13,11 @@
 
 namespace facebook { namespace thrift { namespace server { 
 
+using boost::shared_ptr;
 using namespace std;
 using namespace facebook::thrift;
 using namespace facebook::thrift::concurrency;
+using namespace facebook::thrift::protocol;;
 using namespace facebook::thrift::transport;
 
 class TThreadPoolServer::Task: public Runnable {

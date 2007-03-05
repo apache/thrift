@@ -8,9 +8,14 @@
 #include "transport/TTransportException.h"
 #include <string>
 #include <iostream>
-using namespace std;
 
 namespace facebook { namespace thrift { namespace server { 
+
+using namespace std;
+using namespace facebook::thrift;
+using namespace facebook::thrift::protocol;
+using namespace facebook::thrift::transport;
+using boost::shared_ptr;
 
 /**
  * A simple single-threaded application server. Perfect for unit tests!

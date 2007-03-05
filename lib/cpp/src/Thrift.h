@@ -98,8 +98,8 @@ public:
     }
   }
 
-  uint32_t TApplicationException::read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t TApplicationException::write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t TApplicationException::read(protocol::TProtocol* iprot);
+  uint32_t TApplicationException::write(protocol::TProtocol* oprot) const;
 
 protected:
   /**

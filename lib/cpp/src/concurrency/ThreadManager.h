@@ -13,8 +13,6 @@
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
-using namespace boost;
-
 /**
  * Thread Pool Manager and related classes
  *
@@ -81,9 +79,9 @@ class ThreadManager {
   
   virtual const STATE state() const = 0;
 
-  virtual shared_ptr<ThreadFactory> threadFactory() const = 0;
+  virtual boost::shared_ptr<ThreadFactory> threadFactory() const = 0;
 
-  virtual void threadFactory(shared_ptr<ThreadFactory> value) = 0;
+  virtual void threadFactory(boost::shared_ptr<ThreadFactory> value) = 0;
 
   virtual void addWorker(size_t value=1) = 0;
 
@@ -114,19 +112,19 @@ class ThreadManager {
    *
    * @param value The task to run
    */
-  virtual void add(shared_ptr<Runnable>value) = 0;
+  virtual void add(boost::shared_ptr<Runnable>value) = 0;
 
   /**
    * Removes a pending task
    */
-  virtual void remove(shared_ptr<Runnable> task) = 0;
+  virtual void remove(boost::shared_ptr<Runnable> task) = 0;
 
-  static shared_ptr<ThreadManager> newThreadManager();
+  static boost::shared_ptr<ThreadManager> newThreadManager();
 
   /**
    * Creates a simple thread manager the uses count number of worker threads
    */
-  static shared_ptr<ThreadManager> newSimpleThreadManager(size_t count=4);
+  static boost::shared_ptr<ThreadManager> newSimpleThreadManager(size_t count=4);
 
   class Task;
   

@@ -13,10 +13,6 @@
 
 namespace facebook { namespace thrift { 
 
-using namespace boost;
-
-using namespace facebook::thrift::protocol;
-
 /**
  * A processor is a generic object that acts upon two streams of data, one
  * an input and the other an output. The definition of this object is loose,
@@ -29,10 +25,10 @@ class TProcessor {
  public:
   virtual ~TProcessor() {}
 
-  virtual bool process(shared_ptr<TProtocol> in,
-                       shared_ptr<TProtocol> out) = 0;
+  virtual bool process(boost::shared_ptr<protocol::TProtocol> in,
+                       boost::shared_ptr<protocol::TProtocol> out) = 0;
 
-  bool process(shared_ptr<TProtocol> io) {
+  bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> io) {
     return process(io, io);
   }
 

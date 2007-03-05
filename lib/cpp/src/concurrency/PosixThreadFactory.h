@@ -13,8 +13,6 @@
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
-using namespace boost;
-
 /**
  * A thread factory to create posix threads 
  *
@@ -57,7 +55,7 @@ class PosixThreadFactory : public ThreadFactory {
   PosixThreadFactory(POLICY policy=ROUND_ROBIN, PRIORITY priority=NORMAL, int stackSize=1, bool detached=false);
 
   // From ThreadFactory;
-  shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const;
+  boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const;
 
   /**
    * Sets stack size for created threads
@@ -85,7 +83,7 @@ class PosixThreadFactory : public ThreadFactory {
   
  private:
   class Impl;
-  shared_ptr<Impl> impl_;
+  boost::shared_ptr<Impl> impl_;
 };
 
 }}} // facebook::thrift::concurrency

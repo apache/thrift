@@ -8,16 +8,19 @@
 #include "TTransportUtils.h"
 
 #include <pthread.h>
- #include <sys/time.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
 #include <iostream>
 #include <sys/stat.h>
 
-using namespace std;
-
 namespace facebook { namespace thrift { namespace transport { 
+
+using boost::shared_ptr;
+using namespace std;
+using namespace facebook::thrift::protocol;
+
 
 TFileTransport::TFileTransport(string path)
   : readState_()

@@ -38,7 +38,7 @@ class TServerSocket : public TServerTransport {
   }
 
  protected:
-  shared_ptr<TTransport> acceptImpl();
+  boost::shared_ptr<TTransport> acceptImpl();
 
  private:
   int port_;

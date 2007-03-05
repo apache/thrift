@@ -22,19 +22,19 @@ namespace facebook { namespace thrift { namespace server {
  */
 class TSimpleServer : public TServer {
  public:
-  TSimpleServer(shared_ptr<TProcessor> processor,
-                shared_ptr<TServerTransport> serverTransport,
-                shared_ptr<TTransportFactory> transportFactory,
-                shared_ptr<TProtocolFactory> protocolFactory) :
+  TSimpleServer(boost::shared_ptr<TProcessor> processor,
+                boost::shared_ptr<TServerTransport> serverTransport,
+                boost::shared_ptr<TTransportFactory> transportFactory,
+                boost::shared_ptr<TProtocolFactory> protocolFactory) :
     TServer(processor, serverTransport, transportFactory, protocolFactory),
     stop_(false) {}
 
-  TSimpleServer(shared_ptr<TProcessor> processor,
-                shared_ptr<TServerTransport> serverTransport,
-                shared_ptr<TTransportFactory> inputTransportFactory,
-                shared_ptr<TTransportFactory> outputTransportFactory,
-                shared_ptr<TProtocolFactory> inputProtocolFactory,
-                shared_ptr<TProtocolFactory> outputProtocolFactory):
+  TSimpleServer(boost::shared_ptr<TProcessor> processor,
+                boost::shared_ptr<TServerTransport> serverTransport,
+                boost::shared_ptr<TTransportFactory> inputTransportFactory,
+                boost::shared_ptr<TTransportFactory> outputTransportFactory,
+                boost::shared_ptr<TProtocolFactory> inputProtocolFactory,
+                boost::shared_ptr<TProtocolFactory> outputProtocolFactory):
     TServer(processor, serverTransport, 
             inputTransportFactory, outputTransportFactory,
             inputProtocolFactory, outputProtocolFactory),

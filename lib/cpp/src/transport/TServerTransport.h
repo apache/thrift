@@ -13,8 +13,6 @@
 
 namespace facebook { namespace thrift { namespace transport { 
 
-using namespace boost;
-
 /**
  * Server transport framework. A server needs to have some facility for
  * creating base transports to read/write from.
@@ -43,8 +41,8 @@ class TServerTransport {
    * @return A new TTransport object
    * @throws TTransportException if there is an error
    */
-  shared_ptr<TTransport> accept() {
-    shared_ptr<TTransport> result = acceptImpl();
+  boost::shared_ptr<TTransport> accept() {
+    boost::shared_ptr<TTransport> result = acceptImpl();
     if (result == NULL) {
       throw TTransportException("accept() may not return NULL");
     }
@@ -73,7 +71,7 @@ class TServerTransport {
    * @return A newly allocated TTransport object
    * @throw TTransportException If an error occurs
    */
-  virtual shared_ptr<TTransport> acceptImpl() = 0;
+  virtual boost::shared_ptr<TTransport> acceptImpl() = 0;
 
 };
 

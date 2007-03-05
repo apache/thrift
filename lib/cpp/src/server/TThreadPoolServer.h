@@ -15,27 +15,28 @@
 
 namespace facebook { namespace thrift { namespace server { 
 
-using namespace facebook::thrift::concurrency;
-using namespace facebook::thrift::transport;
-using namespace boost;
+using facebook::thrift::concurrency::ThreadManager;
+using facebook::thrift::protocol::TProtocolFactory;
+using facebook::thrift::transport::TServerTransport;
+using facebook::thrift::transport::TTransportFactory;
 
 class TThreadPoolServer : public TServer {
  public:
   class Task;
   
-  TThreadPoolServer(shared_ptr<TProcessor> processor,
-                    shared_ptr<TServerTransport> serverTransport,
-                    shared_ptr<TTransportFactory> transportFactory,
-                    shared_ptr<TProtocolFactory> protocolFactory,
-                    shared_ptr<ThreadManager> threadManager);
+  TThreadPoolServer(boost::shared_ptr<TProcessor> processor,
+                    boost::shared_ptr<TServerTransport> serverTransport,
+                    boost::shared_ptr<TTransportFactory> transportFactory,
+                    boost::shared_ptr<TProtocolFactory> protocolFactory,
+                    boost::shared_ptr<ThreadManager> threadManager);
 
-  TThreadPoolServer(shared_ptr<TProcessor> processor,
-                    shared_ptr<TServerTransport> serverTransport,
-                    shared_ptr<TTransportFactory> inputTransportFactory,
-                    shared_ptr<TTransportFactory> outputTransportFactory,
-                    shared_ptr<TProtocolFactory> inputProtocolFactory,
-                    shared_ptr<TProtocolFactory> outputProtocolFactory, 
-                    shared_ptr<ThreadManager> threadManager);
+  TThreadPoolServer(boost::shared_ptr<TProcessor> processor,
+                    boost::shared_ptr<TServerTransport> serverTransport,
+                    boost::shared_ptr<TTransportFactory> inputTransportFactory,
+                    boost::shared_ptr<TTransportFactory> outputTransportFactory,
+                    boost::shared_ptr<TProtocolFactory> inputProtocolFactory,
+                    boost::shared_ptr<TProtocolFactory> outputProtocolFactory, 
+                    boost::shared_ptr<ThreadManager> threadManager);
 
   virtual ~TThreadPoolServer();
 
@@ -48,7 +49,7 @@ class TThreadPoolServer : public TServer {
 
  protected:
 
-  shared_ptr<ThreadManager> threadManager_;
+  boost::shared_ptr<ThreadManager> threadManager_;
 
   volatile bool stop_;
   

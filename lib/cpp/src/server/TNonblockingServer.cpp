@@ -15,7 +15,10 @@
 
 namespace facebook { namespace thrift { namespace server { 
 
-  void TConnection::init(int socket, short eventFlags, TNonblockingServer* s) {
+using namespace facebook::thrift::protocol;
+using namespace facebook::thrift::transport;
+
+void TConnection::init(int socket, short eventFlags, TNonblockingServer* s) {
   socket_ = socket;
   server_ = s;
   appState_ = APP_INIT;

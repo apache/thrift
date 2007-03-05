@@ -18,8 +18,8 @@
 
 namespace facebook { namespace thrift { namespace transport { 
 
-using namespace boost;
-using std::string;
+using facebook::thrift::TProcessor;
+using facebook::thrift::protocol::TProtocolFactory;
 
 // Data pertaining to a single event
 typedef struct eventInfo {
@@ -129,7 +129,7 @@ class TFileTransportBuffer {
  */
 class TFileTransport : public TTransport {
  public:
-  TFileTransport(string path);
+  TFileTransport(std::string path);
   ~TFileTransport();
 
   // TODO: what is the correct behaviour for this?
@@ -154,7 +154,7 @@ class TFileTransport : public TTransport {
   uint32_t getCurChunk();
 
   // for changing the output file
-  void resetOutputFile(int fd, string filename, long long offset);
+  void resetOutputFile(int fd, std::string filename, long long offset);
 
   // Setter/Getter functions for user-controllable options
   void setReadBuffSize(uint32_t readBuffSize) {
@@ -324,7 +324,7 @@ class TFileTransport : public TTransport {
   pthread_mutex_t mutex_;
 
   // File information
-  string filename_;
+  std::string filename_;
   int fd_;
 
   // Whether the writer thread and buffers have been initialized
@@ -339,10 +339,10 @@ class TFileTransport : public TTransport {
 };
 
 // Exception thrown when EOF is hit
-class TEOFException : public facebook::thrift::TTransportException {
+ class TEOFException : TTransportException {
  public:
   TEOFException():
-    facebook::thrift::TTransportException(TTransportException::END_OF_FILE) {};
+    TTransportException(TTransportException::END_OF_FILE) {};
 };
 
 
@@ -356,14 +356,14 @@ class TFileProcessor {
    * @param protocolFactory protocol factory
    * @param inputTransport file transport
    */
-  TFileProcessor(shared_ptr<TProcessor> processor,
-                 shared_ptr<TProtocolFactory> protocolFactory,
-                 shared_ptr<TFileTransport> inputTransport);
+  TFileProcessor(boost::shared_ptr<TProcessor> processor,
+                 boost::shared_ptr<TProtocolFactory> protocolFactory,
+                 boost::shared_ptr<TFileTransport> inputTransport);
 
-  TFileProcessor(shared_ptr<TProcessor> processor,
-                 shared_ptr<TProtocolFactory> inputProtocolFactory,
-                 shared_ptr<TProtocolFactory> outputProtocolFactory,
-                 shared_ptr<TFileTransport> inputTransport);
+  TFileProcessor(boost::shared_ptr<TProcessor> processor,
+                 boost::shared_ptr<TProtocolFactory> inputProtocolFactory,
+                 boost::shared_ptr<TProtocolFactory> outputProtocolFactory,
+                 boost::shared_ptr<TFileTransport> inputTransport);
 
   /** 
    * Constructor
@@ -373,10 +373,10 @@ class TFileProcessor {
    * @param inputTransport input file transport
    * @param output output transport
    */    
-  TFileProcessor(shared_ptr<TProcessor> processor,
-                 shared_ptr<TProtocolFactory> protocolFactory,
-                 shared_ptr<TFileTransport> inputTransport,
-                 shared_ptr<TTransport> outputTransport);
+  TFileProcessor(boost::shared_ptr<TProcessor> processor,
+                 boost::shared_ptr<TProtocolFactory> protocolFactory,
+                 boost::shared_ptr<TFileTransport> inputTransport,
+                 boost::shared_ptr<TTransport> outputTransport);
 
   /**
    * processes events from the file
@@ -393,11 +393,11 @@ class TFileProcessor {
   void processChunk();
   
  private:
-  shared_ptr<TProcessor> processor_;
-  shared_ptr<TProtocolFactory> inputProtocolFactory_;
-  shared_ptr<TProtocolFactory> outputProtocolFactory_;
-  shared_ptr<TFileTransport> inputTransport_;
-  shared_ptr<TTransport> outputTransport_;
+  boost::shared_ptr<TProcessor> processor_;
+  boost::shared_ptr<TProtocolFactory> inputProtocolFactory_;
+  boost::shared_ptr<TProtocolFactory> outputProtocolFactory_;
+  boost::shared_ptr<TFileTransport> inputTransport_;
+  boost::shared_ptr<TTransport> outputTransport_;
 };
 
  

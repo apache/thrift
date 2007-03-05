@@ -17,8 +17,6 @@
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
-using namespace boost;
-
 /**
  * Timer Manager 
  * 
@@ -35,9 +33,9 @@ class TimerManager {
 
   virtual ~TimerManager();
 
-  virtual shared_ptr<const ThreadFactory> threadFactory() const;
+  virtual boost::shared_ptr<const ThreadFactory> threadFactory() const;
 
-  virtual void threadFactory(shared_ptr<const ThreadFactory> value);
+  virtual void threadFactory(boost::shared_ptr<const ThreadFactory> value);
 
   /**
    * Starts the timer manager service 
@@ -59,7 +57,7 @@ class TimerManager {
    * @param task The task to execute
    * @param timeout Time in milliseconds to delay before executing task
    */
-  virtual void add(shared_ptr<Runnable> task, long long timeout);
+  virtual void add(boost::shared_ptr<Runnable> task, long long timeout);
 
   /**
    * Adds a task to be executed at some time in the future by a worker thread.
@@ -67,7 +65,7 @@ class TimerManager {
    * @param task The task to execute
    * @param timeout Absolute time in the future to execute task.
    */ 
-  virtual void add(shared_ptr<Runnable> task, const struct timespec& timeout);
+  virtual void add(boost::shared_ptr<Runnable> task, const struct timespec& timeout);
 
   /**
    * Removes a pending task 
@@ -79,7 +77,7 @@ class TimerManager {
    * @throws UncancellableTaskException Specified task is already being
    *                                    executed or has completed execution.
    */
-  virtual void remove(shared_ptr<Runnable> task);
+  virtual void remove(boost::shared_ptr<Runnable> task);
 
   enum STATE {
     UNINITIALIZED,
@@ -92,17 +90,17 @@ class TimerManager {
   virtual const STATE state() const;
 
  private:
-  shared_ptr<const ThreadFactory> threadFactory_;
+  boost::shared_ptr<const ThreadFactory> threadFactory_;
   class Task;
   friend class Task;
-  std::multimap<long long, shared_ptr<Task> > taskMap_;
+  std::multimap<long long, boost::shared_ptr<Task> > taskMap_;
   size_t taskCount_;
   Monitor monitor_;
   STATE state_;
   class Dispatcher;
   friend class Dispatcher;
-  shared_ptr<Dispatcher> dispatcher_;
-  shared_ptr<Thread> dispatcherThread_;
+  boost::shared_ptr<Dispatcher> dispatcher_;
+  boost::shared_ptr<Thread> dispatcherThread_;
 };
 
 }}} // facebook::thrift::concurrency

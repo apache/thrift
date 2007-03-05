@@ -15,6 +15,7 @@
 
 namespace facebook { namespace thrift { namespace concurrency { namespace test {
 
+using boost::shared_ptr;
 using namespace facebook::thrift::concurrency;
 
 /**

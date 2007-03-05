@@ -13,8 +13,6 @@
 
 namespace facebook { namespace thrift { namespace protocol { 
 
-using namespace boost;
-
 /**
  * The default binary protocol for thrift. Writes all data in a very basic
  * binary format, essentially just spitting out the raw bytes.
@@ -23,14 +21,14 @@ using namespace boost;
  */
 class TBinaryProtocol : public TProtocol {
  public:
-  TBinaryProtocol(shared_ptr<TTransport> trans) :
+  TBinaryProtocol(boost::shared_ptr<TTransport> trans) :
     TProtocol(trans),
     string_limit_(0),
     container_limit_(0),
     string_buf_(NULL),
     string_buf_size_(0) {}
 
-  TBinaryProtocol(shared_ptr<TTransport> trans,
+  TBinaryProtocol(boost::shared_ptr<TTransport> trans,
                   int32_t string_limit,
                   int32_t container_limit) :
     TProtocol(trans),

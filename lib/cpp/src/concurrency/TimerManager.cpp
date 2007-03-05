@@ -14,6 +14,8 @@
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
+using boost::shared_ptr;
+
 typedef std::multimap<long long, shared_ptr<TimerManager::Task> >::iterator task_iterator;
 typedef std::pair<task_iterator, task_iterator> task_range;
 
