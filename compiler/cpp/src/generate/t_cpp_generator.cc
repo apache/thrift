@@ -790,11 +790,11 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
     string name_orig = ts->get_name();
 
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_args");
-    generate_struct_definition(f_service_, ts, false);
+    generate_struct_definition(f_header_, ts, false);
     generate_struct_reader(f_service_, ts);
     generate_struct_writer(f_service_, ts);
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_pargs");
-    generate_struct_definition(f_service_, ts, false, true, false, true);
+    generate_struct_definition(f_header_, ts, false, true, false, true);
     generate_struct_writer(f_service_, ts, true);
     ts->set_name(name_orig);
 
@@ -1451,12 +1451,12 @@ void t_cpp_generator::generate_function_helpers(t_service* tservice,
     result.append(*f_iter);
   }
 
-  generate_struct_definition(f_service_, &result, false);
+  generate_struct_definition(f_header_, &result, false);
   generate_struct_reader(f_service_, &result);
   generate_struct_result_writer(f_service_, &result);
 
   result.set_name(tservice->get_name() + "_" + tfunction->get_name() + "_presult");
-  generate_struct_definition(f_service_, &result, false, true, true, false);
+  generate_struct_definition(f_header_, &result, false, true, true, false);
   generate_struct_reader(f_service_, &result, true);
 
 }
