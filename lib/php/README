@@ -1,6 +1,7 @@
 Thrift PHP Software Library
 
-Mark Slee (mcslee@facebook.com)
+Author: Mark Slee (mcslee@facebook.com)
+Last Modified: 2007-Mar-05
 
 Thrift is distributed under the Thrift open source software license.
 Please see the included LICENSE file.
@@ -22,6 +23,16 @@ Note that #3 must be done before including any other Thrift files.
 If you do not do #2, Thrift.php will set this global for you, but it will be
 done using dirname(__FILE__), which is less efficient than providing the static
 string yourself.
+
+When you generate a Thrift package using the compiler, it makes an assumption
+about where your generated code will live. If your file is "MyPackage.thrift",
+the generated files must be installed into:
+
+$GLOBALS['THRIFT_ROOT'].'/packages/MyPackage/';
+
+This allows the code generator to compile your code without any extra flags
+for the target directory names while still allowing your include paths to
+be absolute (if you have an absolute THRIFT_ROOT).
 
 Dependencies
 ============

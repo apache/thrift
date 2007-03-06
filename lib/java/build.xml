@@ -19,8 +19,8 @@
   </target>
 
   <target name="install" depends="dist">
-    <exec executable="sudo">
-      <arg line="install libthrift.jar /usr/local/lib/" />
+    <exec executable="install">
+      <arg line="libthrift.jar /usr/local/lib/" />
     </exec>
   </target>
 

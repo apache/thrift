@@ -1,0 +1,29 @@
+Thrift Java Software Library
+
+Author: Mark Slee (mcslee@facebook.com)
+Last Modified: 2007-Mar-05
+
+Thrift is distributed under the Thrift open source software license.
+Please see the included LICENSE file.
+
+Using Thrift with Java
+======================
+
+The Thrift Java source is not build using the GNU tools, but rather uses
+the Apache Ant build system, which tends to be predominant amongst Java
+developers.
+
+To compile the Java Thrift libraries, simply do the following:
+
+ant
+
+Yep, that's easy. Look for libthrift.jar in the base directory.
+
+To include Thrift in your applications simply add libthrift.jar to your
+classpath, or install if in your default system classpath of choice.
+
+Dependencies
+============
+
+Apache Ant
+http://ant.apache.org/

@@ -1,0 +1,20 @@
+Thrift Python Software Library
+
+Author: Mark Slee (mcslee@facebook.com)
+Last Modified: 2007-Mar-05
+
+Thrift is distributed under the Thrift open source software license.
+Please see the included LICENSE file.
+
+Using Thrift with Python
+========================
+
+Thrift is provided as a set of Python packages. The top level package is
+thrift, and there are subpackages for the protocol, transport, and server
+code. Each package contains modules using standard Thrift naming conventions
+(i.e. TProtocol, TTransport) and implementations in corresponding modules
+(i.e. TSocket).
+
+The Python libraries can be installed manually using the provided setup.py
+file, or automatically using the install hook provided via autoconf/automake.
+To use the latter, become superuser and do make install.

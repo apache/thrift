@@ -67,9 +67,9 @@ More information about Thrift can be obtained on the Thrift webpage at:
 Acknowledgments
 ===============
 
-Thrift was inspired by pillar, a lightweight RPC tool written by Adam D'Angelo
+Thrift was inspired by pillar, a lightweight RPC tool written by Adam D'Angelo.
 
-INSTALLATION
+Installation
 ============
 
 If you are building from the first time out of the source repository, you will
@@ -104,3 +104,7 @@ Make thrift
 From the top directory, become superuser and do:
 
 	make install
+
+Note that some language packages must be installed manually (i.e. Java, Ruby).
+Look for the README file in the lib/<language>/ folder for more details on the
+installation of each language library package.
