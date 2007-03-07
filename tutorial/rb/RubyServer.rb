@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+
+$:.push('../gen-rb')
+
+require 'thrift/transport/tsocket'
+require 'thrift/protocol/tbinaryprotocol'
+require 'thrift/server/tserver'
+
+require 'Calculator'
+require 'shared_types'
+
+class CalculatorHandler
+  include Calculator::Iface
+
+  def initialize()
+    @log = {}
+  end
+
+  def ping()
+    puts "ping()"
+  end
+
+  def add(n1, n2)
+    print "add(", n1, ",", n2, ")\n"
+    return n1 + n2
+  end
+  
+  def calculate(logid, work)
+    print "calculate(", logid, ", {", work.op, ",", work.num1, ",", work.num2,"})\n"
+    if work.op == Operation::ADD
+      val = work.num1 + work.num2
+    elsif work.op == Operation::SUBTRACT
+      val = work.num1 - work.num2
+    elsif work.op == Operation::MULTIPLY
+      val = work.num1 * work.num2
+    elsif work.op == Operation::DIVIDE
+      if work.num2 == 0
+        x = InvalidOperation.new()
+        x.what = work.op
+        x.why = "Cannot divide by 0"
+        raise x
+      end
+      val = work.num1 / work.num2
+    else
+      x = InvalidOperation()
+      x.what = work.op
+      x.why = "Invalid operation"
+      raise x
+    end
+
+    entry = SharedStruct.new()
+    entry.key = logid
+    entry.value = "#{val}"
+    @log[logid] = entry
+
+    return val
+
+  end
+
+  def getStruct(key)
+    print "getStruct(", key, ")\n"
+    return @log[key]
+  end
+
+  def zip()
+    print "zip\n"
+  end
+
+end
+
+handler = CalculatorHandler.new()
+processor = Calculator::Processor.new(handler)
+transport = TServerSocket.new(9090)
+server = TSimpleServer.new(processor, transport)
+
+puts "Starting the server..."
+server.serve()
+puts "done."
