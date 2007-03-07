@@ -34,7 +34,7 @@ class TSocket(TTransportBase):
       self.handle = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       self.handle.connect((self.host, self.port))
     except socket.error, e:
-      raise TTransportException(TTransportException.NOT_OPEN, e.message)
+      raise TTransportException(TTransportException.NOT_OPEN)
 
   def close(self):
     if self.handle != None:
