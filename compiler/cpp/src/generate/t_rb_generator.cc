@@ -576,7 +576,7 @@ void t_rb_generator::generate_service_interface(t_service* tservice) {
 
   if (tservice->get_extends() != NULL) {
     string extends = type_name(tservice->get_extends());
-    indent(f_service_) << "include " << extends  << ".Iface" << endl;
+    indent(f_service_) << "include " << extends  << "::Iface" << endl;
   }
 
   vector<t_function*> functions = tservice->get_functions();
@@ -600,7 +600,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
   string extends_client = "";
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends());
-    extends_client = " < " + extends + ".Client, ";
+    extends_client = " < " + extends + "::Client ";
   }
 
   indent(f_service_) <<
@@ -620,6 +620,9 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       indent() << "    @oprot = oprot" << endl <<
       indent() << "  end" << endl <<
       indent() << "  @seqid = 0" << endl;
+  } else {
+    f_service_ <<
+      indent() << "  super(iprot, oprot)" << endl;
   }
   indent(f_service_) << "end" << endl << endl;
 
@@ -763,7 +766,7 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
   string extends_processor = "";
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends());
-    extends_processor = " < " + extends + ".Processor, ";
+    extends_processor = " < " + extends + "::Processor ";
   }
 
   // Generate the header portion
@@ -783,6 +786,9 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
     f_service_ <<
       indent() << "@handler = handler" << endl <<
       indent() << "@processMap = {}" << endl;
+  } else {
+    f_service_ <<
+      indent() << "super(handler)" << endl;
   }
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ <<
@@ -998,7 +1004,7 @@ void t_rb_generator::generate_deserialize_struct(ofstream &out,
                                                   t_struct* tstruct,
                                                   string prefix) {
   out <<
-    indent() << prefix << " = " << type_name(tstruct) << "()" << endl <<
+    indent() << prefix << " = " << type_name(tstruct) << ".new()" << endl <<
     indent() << prefix << ".read(iprot)" << endl;
 }
 

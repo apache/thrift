@@ -4,6 +4,8 @@ Mark Slee (mcslee@facebook.com)
 Marc Kwiatkowski (marc@facebook.com)
 Aditya Agarwal (aditya@facebook.com)
 
+Last Modified: 2007-Mar-06
+
 Thrift is distributed under the Thrift open source software license.
 Please see the included LICENSE file.
 
@@ -17,9 +19,12 @@ level processing. The code generation system takes a simple definition
 language as its input and generates code across programming languages that
 uses the abstracted stack to build interoperable RPC clients and servers.
 
+Thrift is specifically designed to support non-atomic version changes
+across client and server code.
+
 For more details on Thrift's design and implementation, take a gander at
 the Thrift whitepaper included in this distribution or at the README files
-in a particular subdirectory of interest.
+in your particular subdirectory of interest.
 
 Heirarchy
 =========
@@ -37,13 +42,17 @@ thrift/
     java/
     php/
     py/
-    ruby/
+    rb/
 
   test/
 
     Contains sample Thrift files and test code across the target programming
     languages.
 
+  tutorial/
+
+    Contains a basic tutorial that will teach you how to develop software
+    using Thrift.
 
 Requirements
 ============
@@ -97,7 +106,7 @@ CXXFLAGS option in configure, as such:
 
 Run ./configure --help to see other configuration options
 
-Make thrift 
+Make thrift:
 
 	make
 
@@ -105,6 +114,9 @@ From the top directory, become superuser and do:
 
 	make install
 
-Note that some language packages must be installed manually (i.e. Java, Ruby).
+Note that some language packages must be installed manually using build tools
+better suited to those languages (at the time of this writing, this applies
+to Java, Ruby, PHP).
+
 Look for the README file in the lib/<language>/ folder for more details on the
 installation of each language library package.

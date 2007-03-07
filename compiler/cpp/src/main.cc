@@ -291,8 +291,8 @@ void usage() {
   fprintf(stderr, "  -py         Generate Python output files\n");
   fprintf(stderr, "  -rb         Generate Ruby output files\n");
   fprintf(stderr, "  -xsd        Generate XSD output files\n");
-  fprintf(stderr, "  -I dir       Add a directory to the list of directories \n");
-  fprintf(stderr, "               searched for include directives\n");
+  fprintf(stderr, "  -I dir      Add a directory to the list of directories \n");
+  fprintf(stderr, "                searched for include directives\n");
   fprintf(stderr, "  -nowarn     Suppress all compiler warnings (BAD!)\n");
   fprintf(stderr, "  -strict     Strict compiler warnings on\n");
   fprintf(stderr, "  -v[erbose]  Verbose mode\n");
