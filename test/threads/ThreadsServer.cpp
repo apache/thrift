@@ -4,12 +4,14 @@
 #include "ThreadsTest.h"
 #include <protocol/TBinaryProtocol.h>
 #include <server/TThreadPoolServer.h>
+#include <server/TThreadedServer.h>
 #include <transport/TServerSocket.h>
 #include <transport/TTransportUtils.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/PosixThreadFactory.h>
 
+using boost::shared_ptr;
 using namespace facebook::thrift;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::transport;
@@ -84,23 +86,31 @@ int main(int argc, char **argv) {
   shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
   shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
+  /*
   shared_ptr<ThreadManager> threadManager = 
     ThreadManager::newSimpleThreadManager(10);
   shared_ptr<PosixThreadFactory> threadFactory =
     shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
   threadManager->threadFactory(threadFactory);
   threadManager->start();
-  
-  shared_ptr<TServer> threadPoolServer =
+ 
+  shared_ptr<TServer> server =
     shared_ptr<TServer>(new TThreadPoolServer(processor,
                                               serverTransport,
                                               transportFactory,
                                               protocolFactory,
                                               threadManager));
+  */
 
-  handler->setServer(threadPoolServer);
+  shared_ptr<TServer> server =
+    shared_ptr<TServer>(new TThreadedServer(processor,
+                                            serverTransport,
+                                            transportFactory,
+                                            protocolFactory));
 
-  threadPoolServer->serve();
+  handler->setServer(server);
+
+  server->serve();
 
   fprintf(stderr, "done.\n");
 

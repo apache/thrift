@@ -10,6 +10,7 @@
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/PosixThreadFactory.h>
 
+using boost::shared_ptr;
 using namespace facebook::thrift;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::transport;

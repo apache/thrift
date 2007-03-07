@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 $:.push('gen-rb')
 $:.push('../../lib/rb/lib')
