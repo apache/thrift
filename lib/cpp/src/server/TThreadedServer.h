@@ -9,6 +9,7 @@
 
 #include <server/TServer.h>
 #include <transport/TServerTransport.h>
+#include <concurrency/Monitor.h>
 #include <concurrency/Thread.h>
 
 #include <boost/shared_ptr.hpp>
@@ -18,6 +19,7 @@ namespace facebook { namespace thrift { namespace server {
 using facebook::thrift::TProcessor;
 using facebook::thrift::transport::TServerTransport;
 using facebook::thrift::transport::TTransportFactory;
+using facebook::thrift::concurrency::Monitor;
 using facebook::thrift::concurrency::ThreadFactory;
 
 class TThreadedServer : public TServer {
@@ -34,8 +36,17 @@ class TThreadedServer : public TServer {
 
   virtual void serve();
 
+  void stop() {
+    stop_ = true;
+    serverTransport_->interrupt();
+  }
+
  protected:
   boost::shared_ptr<ThreadFactory> threadFactory_;
+  volatile bool stop_;
+
+  Monitor tasksMonitor_;
+  std::set<Task*> tasks_;
 
 };
 

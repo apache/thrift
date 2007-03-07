@@ -26,9 +26,11 @@ class TThreadedServer::Task: public Runnable {
        
 public:
     
-  Task(shared_ptr<TProcessor> processor,
+  Task(TThreadedServer* server,
+       shared_ptr<TProcessor> processor,
        shared_ptr<TProtocol> input,
        shared_ptr<TProtocol> output) :
+    server_(server),
     processor_(processor),
     input_(input),
     output_(output) {
@@ -52,13 +54,25 @@ public:
     }
     input_->getTransport()->close();
     output_->getTransport()->close();
+    
+    // Remove this task from parent bookkeeping
+    {
+      Synchronized s(server_->tasksMonitor_);
+      server_->tasks_.erase(this);
+      if (server_->tasks_.empty()) {
+        server_->tasksMonitor_.notify();
+      }
+    }
+
   }
 
  private:
+  TThreadedServer* server_;
+  friend class TThreadedServer;
+
   shared_ptr<TProcessor> processor_;
   shared_ptr<TProtocol> input_;
   shared_ptr<TProtocol> output_;
-
 };
 
 
@@ -66,7 +80,8 @@ TThreadedServer::TThreadedServer(shared_ptr<TProcessor> processor,
                                  shared_ptr<TServerTransport> serverTransport,
                                  shared_ptr<TTransportFactory> transportFactory,
                                  shared_ptr<TProtocolFactory> protocolFactory):
-  TServer(processor, serverTransport, transportFactory, protocolFactory) {
+  TServer(processor, serverTransport, transportFactory, protocolFactory),
+  stop_(false) {
   threadFactory_ = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
 }
 
@@ -88,47 +103,86 @@ void TThreadedServer::serve() {
     return;
   }
 
-  while (true) {   
+  while (!stop_) {   
     try {
+      client.reset();
+      inputTransport.reset();
+      outputTransport.reset();
+      inputProtocol.reset();
+      outputProtocol.reset();
+
       // Fetch client from server
       client = serverTransport_->accept();
+
       // Make IO transports
       inputTransport = inputTransportFactory_->getTransport(client);
       outputTransport = outputTransportFactory_->getTransport(client);
       inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
-      TThreadedServer::Task* t = new TThreadedServer::Task(processor_, 
-                                                           inputProtocol,
-                                                           outputProtocol);
+      TThreadedServer::Task* task = new TThreadedServer::Task(this,
+                                                              processor_, 
+                                                              inputProtocol,
+                                                              outputProtocol);
+        
+      // Create a task
+      shared_ptr<Runnable> runnable =
+        shared_ptr<Runnable>(task);
 
       // Create a thread for this task
       shared_ptr<Thread> thread =
-        shared_ptr<Thread>(threadFactory_->newThread(shared_ptr<Runnable>(t)));
+        shared_ptr<Thread>(threadFactory_->newThread(runnable));
       
+      // Insert thread into the set of threads
+      {
+        Synchronized s(tasksMonitor_);
+        tasks_.insert(task);
+      }
+
       // Start the thread!
       thread->start();
 
     } catch (TTransportException& ttx) {
-      inputTransport->close();
-      outputTransport->close();
-      client->close();
-      cerr << "TThreadedServer: TServerTransport died on accept: " << ttx.what() << endl;
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
+      if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
+        cerr << "TThreadedServer: TServerTransport died on accept: " << ttx.what() << endl;
+      }
       continue;
     } catch (TException& tx) {
-      inputTransport->close();
-      outputTransport->close();
-      client->close();
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
       cerr << "TThreadedServer: Caught TException: " << tx.what() << endl;
       continue;
     } catch (string s) {
-      inputTransport->close();
-      outputTransport->close();
-      client->close();
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
       cerr << "TThreadedServer: Unknown exception: " << s << endl;
       break;
     }
   }
+
+  // If stopped manually, make sure to close server transport
+  if (stop_) {
+    try {
+      serverTransport_->close();
+    } catch (TException &tx) {
+      cerr << "TThreadedServer: Exception shutting down: " << tx.what() << endl;
+    }
+    try {
+      Synchronized s(tasksMonitor_);
+      while (!tasks_.empty()) {
+        tasksMonitor_.wait();
+      }
+    } catch (TException &tx) {
+      cerr << "TThreadedServer: Exception joining workers: " << tx.what() << endl;
+    }
+    stop_ = false;
+  }
+
 }
 
 }}} // facebook::thrift::server
