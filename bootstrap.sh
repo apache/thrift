@@ -13,9 +13,9 @@ automake -ac
 for subdir in ${subdirs}; do 
     if [ -x "${subdir}/bootstrap.sh" ]; then 
 	cwd="`pwd`"
-	cd ${subdir}
+	cd "${subdir}"
 	./bootstrap.sh
-	cd ${cwd}
+	cd "${cwd}"
     fi
 done
 

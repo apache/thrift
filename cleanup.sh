@@ -33,8 +33,8 @@ missing
 for subdir in ${subdirs}; do 
     if [ -x "${subdir}/cleanup.sh" ]; then 
 	cwd="`pwd`"
-	cd ${subdir}
+	cd "${subdir}"
 	./cleanup.sh
-	cd ${cwd}
+	cd "${cwd}"
     fi
 done
