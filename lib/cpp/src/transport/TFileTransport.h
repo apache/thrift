@@ -148,7 +148,7 @@ class TFileTransport : public TTransport {
   uint32_t read(uint8_t* buf, uint32_t len);
 
   // log-file specific functions
-  void seekToChunk(int chunk);
+  void seekToChunk(int32_t chunk);
   void seekToEnd();
   uint32_t getNumChunks();
   uint32_t getCurChunk();

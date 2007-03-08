@@ -596,7 +596,7 @@ void TFileTransport::performRecovery() {
       // point and punt on the error 
       readState_.resetState(readState_.lastDispatchPtr_);
       char errorMsg[1024];
-      sprintf(errorMsg, "TFileTransport: log file corrupted at offset:%lu", 
+      sprintf(errorMsg, "TFileTransport: log file corrupted at offset:%llu", 
               offset_ + readState_.lastDispatchPtr_);
       perror(errorMsg);
       throw TTransportException(errorMsg);
