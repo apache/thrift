@@ -33,9 +33,7 @@ class TServerSocket : public TServerTransport {
   void listen();
   void close();
 
-  void interrupt() {
-    interrupt_ = true;
-  }
+  void interrupt();
 
  protected:
   boost::shared_ptr<TTransport> acceptImpl();
@@ -46,7 +44,9 @@ class TServerSocket : public TServerTransport {
   int acceptBacklog_;
   int sendTimeout_;
   int recvTimeout_;
-  volatile bool interrupt_;
+
+  int intSock1_;
+  int intSock2_;
 };
 
 }}} // facebook::thrift::transport

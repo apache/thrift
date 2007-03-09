@@ -25,7 +25,8 @@ TServerSocket::TServerSocket(int port) :
   acceptBacklog_(1024),
   sendTimeout_(0),
   recvTimeout_(0),
-  interrupt_(false) {}
+  intSock1_(-1),
+  intSock2_(-1) {}
 
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   port_(port),
@@ -33,7 +34,8 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   acceptBacklog_(1024),
   sendTimeout_(sendTimeout),
   recvTimeout_(recvTimeout),
-  interrupt_(false) {}
+  intSock1_(-1),
+  intSock2_(-1) {}
 
 TServerSocket::~TServerSocket() {
   close();
@@ -48,6 +50,16 @@ void TServerSocket::setRecvTimeout(int recvTimeout) {
 }
 
 void TServerSocket::listen() {
+  int sv[2];
+  if (-1 == socketpair(AF_LOCAL, SOCK_STREAM, 0, sv)) {
+    perror("TServerSocket::init()");
+    intSock1_ = -1;
+    intSock2_ = -1;
+  } else {
+    intSock1_ = sv[0];
+    intSock2_ = sv[1];
+  }
+
   serverSocket_ = socket(AF_INET, SOCK_STREAM, 0);
   if (serverSocket_ == -1) {
     perror("TServerSocket::listen() socket");
@@ -96,6 +108,7 @@ void TServerSocket::listen() {
   if (flags == -1) {
     throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed");
   }
+
   if (-1 == fcntl(serverSocket_, F_SETFL, flags | O_NONBLOCK)) {
     throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed");
   }
@@ -129,34 +142,35 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     throw TTransportException(TTransportException::NOT_OPEN, "TServerSocket not listening");
   }
 
-  // 200ms timeout on accept
-  struct timeval c = {0, 200000};
   fd_set fds;
 
   while (true) {
     FD_ZERO(&fds);
     FD_SET(serverSocket_, &fds);
-    int ret = select(serverSocket_+1, &fds, NULL, NULL, &c);
-
-    // Check for interrupt case
-    if (ret == 0 && interrupt_) {
-      interrupt_ = false;
-      throw TTransportException(TTransportException::INTERRUPTED);
+    if (intSock2_ >= 0) {
+      FD_SET(intSock2_, &fds);
     }
+    int ret = select(serverSocket_+1, &fds, NULL, NULL, NULL);
 
-    // Reset interrupt flag no matter what
-    interrupt_ = false;
-
-    if (ret > 0) {
-      // Cool, ready to accept
-      break;
-    } else if (ret == 0) {
-      // Timed out... keep going
-      continue;
-    } else {
-      // Bogus, select messed up
-      perror("TServerSocket::select() negret");
+    if (ret < 0) {
+      perror("TServerSocket::acceptImpl() select -1");
       throw TTransportException(TTransportException::UNKNOWN);
+    } else if (ret > 0) {
+      // Check for an interrupt signal
+      if (intSock2_ >= 0 && FD_ISSET(intSock2_, &fds)) {      
+        int8_t buf;
+        if (-1 == recv(intSock2_, &buf, sizeof(int8_t), 0)) {
+          perror("TServerSocket::acceptImpl() interrupt receive");
+        }
+        throw TTransportException(TTransportException::INTERRUPTED);
+      }
+      // Check for the actual server socket being ready
+      if (FD_ISSET(serverSocket_, &fds)) {
+        break;
+      }
+    } else {
+      perror("TServerSocket::acceptImpl() select 0");
+      throw TTransportException(TTransportException::UNKNOWN);      
     }
   }
 
@@ -193,12 +207,29 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   return client;
 }
 
+void TServerSocket::interrupt() {
+  if (intSock1_ >= 0) {
+    int8_t byte = 0;
+    if (-1 == send(intSock1_, &byte, sizeof(int8_t), 0)) {
+      perror("TServerSocket::interrupt()");
+    }
+  }
+}
+
 void TServerSocket::close() {
   if (serverSocket_ >= 0) {
     shutdown(serverSocket_, SHUT_RDWR);
     ::close(serverSocket_);
   }
+  if (intSock1_ >= 0) {
+    ::close(intSock1_);
+  }
+  if (intSock2_ >= 0) {
+    ::close(intSock2_);
+  }
   serverSocket_ = -1;
+  intSock1_ = -1;
+  intSock2_ = -1;
 }
 
 }}} // facebook::thrift::transport
