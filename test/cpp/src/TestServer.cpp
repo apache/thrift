@@ -2,6 +2,7 @@
 #include <concurrency/PosixThreadFactory.h>
 #include <protocol/TBinaryProtocol.h>
 #include <server/TSimpleServer.h>
+#include <server/TThreadedServer.h>
 #include <server/TThreadPoolServer.h>
 #include <server/TNonblockingServer.h>
 #include <transport/TServerSocket.h>
@@ -13,8 +14,10 @@
 #include <sstream>
 
 using namespace std;
+using namespace boost;
 
 using namespace facebook::thrift;
+using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::transport;
 using namespace facebook::thrift::server;
@@ -264,7 +267,7 @@ int main(int argc, char **argv) {
   usage <<
     argv[0] << " [--port=<port number>] [--server-type=<server-type>] [--protocol-type=<protocol-type>] [--workers=<worker-count>]" << endl <<
 
-    "\t\tserver-type\t\ttype of server, \"simple\", \"thread-pool\", or \"nonblocking\".  Default is " << serverType << endl <<
+    "\t\tserver-type\t\ttype of server, \"simple\", \"thread-pool\", \"threaded\", or \"nonblocking\".  Default is " << serverType << endl <<
 
     "\t\tprotocol-type\t\ttype of protocol, \"binary\", \"ascii\", or \"xml\".  Default is " << protocolType << endl <<
 
@@ -300,6 +303,7 @@ int main(int argc, char **argv) {
       serverType = args["server-type"];     
       if (serverType == "simple") {
       } else if (serverType == "thread-pool") {
+      } else if (serverType == "threaded") {
       } else if (serverType == "nonblocking") {
       } else {
 	throw invalid_argument("Unknown server type "+serverType);
@@ -370,6 +374,16 @@ int main(int argc, char **argv) {
 
     printf("Starting the server on port %d...\n", port);
     threadPoolServer.serve();
+
+  } else if (serverType == "threaded") {
+    
+    TThreadedServer threadedServer(testProcessor,
+                                   serverSocket,
+                                   transportFactory,
+                                   protocolFactory);
+
+    printf("Starting the server on port %d...\n", port);
+    threadedServer.serve();
 
   } else if (serverType == "nonblocking") {
 
