@@ -53,6 +53,7 @@ class t_java_generator : public t_oop_generator {
   void generate_java_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_result_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_writer(std::ofstream& out, t_struct* tstruct);
+  void generate_java_struct_tostring(std::ofstream& out, t_struct* tstruct);
 
   void generate_function_helpers(t_function* tfunction);
 

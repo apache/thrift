@@ -403,6 +403,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   } else {
     generate_java_struct_writer(out, tstruct);
   }
+  generate_java_struct_tostring(out, tstruct);
   scope_down(out);
   out << endl;
 }
@@ -548,7 +549,8 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
 
   indent_down();
   out <<
-    indent() << "}" << endl;
+    indent() << "}" << endl <<
+    endl;
 }
 
 /**
@@ -627,6 +629,46 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
   indent_down();
   out <<
     indent() << "}" << endl <<
+    endl;
+}
+
+/**
+ * Generates a toString() method for the given struct
+ *
+ * @param tstruct The struct definition
+ */
+void t_java_generator::generate_java_struct_tostring(ofstream& out,
+                                                     t_struct* tstruct) {
+  out <<
+    indent() << "public String toString() {" << endl;
+  indent_up();
+
+  out <<
+    indent() << "StringBuffer sb = new StringBuffer(\"" << tstruct->get_name() << "(\");" << endl;
+
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+  bool first = true;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if (first) {
+      first = false;
+      indent(out) << "sb.append(\"" << (*f_iter)->get_name() << ":\");" << endl;
+    } else {
+      indent(out) << "sb.append(\"," << (*f_iter)->get_name() << ":\");" << endl;
+    }
+    t_type* ttype = (*f_iter)->get_type();
+    if (ttype->is_xception() || ttype->is_struct()) {
+      indent(out) << "sb.append(this." << (*f_iter)->get_name() << ".toString());" << endl;
+    } else {
+      indent(out) << "sb.append(this." << (*f_iter)->get_name() << ");" << endl;
+    }
+  }
+  out <<
+    indent() << "sb.append(\")\");" << endl <<
+    indent() << "return sb.toString();" << endl;
+
+  indent_down();
+  indent(out) << "}" << endl <<
     endl;
 }
 
