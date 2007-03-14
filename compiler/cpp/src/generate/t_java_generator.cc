@@ -259,7 +259,7 @@ string t_java_generator::render_const_value(ofstream& out, string name, t_type* 
       render << "\"" + value->get_string() + "\"";
       break;
     case t_base_type::TYPE_BOOL:
-      render << ((value->get_integer() > 0) ? "TRUE" : "FALSE");
+      render << ((value->get_integer() > 0) ? "true" : "false");
       break;
     case t_base_type::TYPE_BYTE:
     case t_base_type::TYPE_I16:
