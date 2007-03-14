@@ -40,13 +40,13 @@ class TPhpStream extends TTransport {
     if ($this->read_) {
       $this->inStream_ = @fopen('php://input', 'r');
       if (!is_resource($this->inStream_)) {
-        throw new Exception('TPhpStream: Could not open php://input');
+        throw new TException('TPhpStream: Could not open php://input');
       }
     }
     if ($this->write_) {
       $this->outStream_ = @fopen('php://output', 'w');
       if (!is_resource($this->outStream_)) {
-        throw new Exception('TPhpStream: Could not open php://output');
+        throw new TException('TPhpStream: Could not open php://output');
       }
     }
   }
@@ -71,7 +71,7 @@ class TPhpStream extends TTransport {
   public function read($len) {
     $data = @fread($this->inStream_, $len);
     if (!$data) {
-      throw new Exception('TPhpStream: Could not read '.$len.' bytes');
+      throw new TException('TPhpStream: Could not read '.$len.' bytes');
     }
     return $data;
   }
@@ -80,7 +80,7 @@ class TPhpStream extends TTransport {
     while (strlen($buf) > 0) {
       $got = @fwrite($this->outStream_, $buf);
       if ($got === 0 || $got === FALSE) {
-        throw new Exception('TPhpStream: Could not write '.strlen($buf).' bytes');
+        throw new TException('TPhpStream: Could not write '.strlen($buf).' bytes');
       }
       $buf = substr($buf, $got);
     }

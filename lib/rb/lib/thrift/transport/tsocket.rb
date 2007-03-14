@@ -23,7 +23,11 @@ class TSocket < TTransport
   end
 
   def open()
-    @handle = TCPSocket.new(@host, @port)
+    begin
+      @handle = TCPSocket.new(@host, @port)
+    rescue StandardError
+      raise TTransportException.new(TTransportException::NOT_OPEN, "Could not connect to #{@host}:#{@port}")
+    end
   end
 
   def isOpen()
@@ -31,15 +35,23 @@ class TSocket < TTransport
   end
   
   def write(str)
-    @handle.write(str)
+    begin
+      @handle.write(str)
+    rescue StandardError
+      raise TTransportException.new(TTransportException::NOT_OPEN)
+    end
   end
 
   def read(sz)
-    data = @handle.recv(sz)
-    if (data.length == 0)
-      raise TTransportException.new("TSocket: Could not read #{sz} bytes from #{@host}:#{@port}")
+    begin
+      data = @handle.recv(sz)
+      if (data.length == 0)
+        raise TTransportException.new("TSocket: Could not read #{sz} bytes from #{@host}:#{@port}")
+      end
+      return data
+    rescue StandardError
+      raise TTransportException.new(TTransportException::NOT_OPEN)
     end
-    return data
   end
 
   def close()

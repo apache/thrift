@@ -1,5 +1,6 @@
 #!/bin/sh
 
+make clean 1>/dev/null 2>/dev/null
 rm -rf \
 AUTHORS \
 ChangeLog \

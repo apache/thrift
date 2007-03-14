@@ -705,10 +705,16 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
         indent() << "def " << function_signature(&recv_function) << endl;
       indent_up();
 
-      f_service_ <<
-        indent() << "fname, mtype, rseqid = @iprot.readMessageBegin()" << endl;
-
       // TODO(mcslee): Validate message reply here, seq ids etc.
+
+      f_service_ <<
+        indent() << "fname, mtype, rseqid = @iprot.readMessageBegin()" << endl <<
+        indent() << "if mtype == TMessageType::EXCEPTION" << endl <<
+        indent() << "  x = TApplicationException.new()" << endl <<
+        indent() << "  x.read(@iprot)" << endl <<
+        indent() << "  @iprot.readMessageEnd()" << endl <<
+        indent() << "  raise x" << endl <<
+        indent() << "end" << endl;
 
       f_service_ <<
         indent() << "result = " << resultname << ".new()" << endl <<
@@ -739,7 +745,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
           "return" << endl;
       } else {
         f_service_ <<
-          indent() << "raise StandardError.new('" << (*f_iter)->get_name() << " failed: unknown result')" << endl;
+          indent() << "raise TApplicationException.new(TApplicationException::MISSING_RESULT, '" << (*f_iter)->get_name() << " failed: unknown result')" << endl;
       }     
 
       // Close function
@@ -812,7 +818,14 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
     indent() << "if (@processMap.has_key?(name))" << endl <<
     indent() << "  @processMap[name].call(seqid, iprot, oprot)" << endl <<
     indent() << "else" << endl <<
-    indent() << "  print \"Unknown function #{name}\"" << endl <<
+    indent() << "  iprot.skip(TType::STRUCT)" << endl <<
+    indent() << "  iprot.readMessageEnd()" << endl <<
+    indent() << "  x = TApplicationException.new(TApplicationException::UNKNOWN_METHOD, 'Unknown function '+name)" << endl <<
+    indent() << "  oprot.writeMessageBegin(name, TMessageType::EXCEPTION, seqid)" << endl <<
+    indent() << "  x.write(oprot)" << endl <<
+    indent() << "  oprot.writeMessageEnd()" << endl <<
+    indent() << "  oprot.trans.flush()" << endl <<
+    indent() << "  return" << endl <<
     indent() << "end" << endl;
 
   // Read end of args field, the T_STOP, and the struct close

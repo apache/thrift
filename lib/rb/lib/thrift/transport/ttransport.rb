@@ -8,10 +8,24 @@
 #
 # Author: Mark Slee <mcslee@facebook.com>
 #
-class TTransportException < StandardError
-  def initialize(message)
+
+require 'thrift/thrift'
+
+class TTransportException < TException
+
+  UNKNOWN = 0
+  NOT_OPEN = 1
+  ALREADY_OPEN = 2
+  TIMED_OUT = 3
+  END_OF_FILE = 4
+
+  attr_reader :type
+
+  def initialize(type=UNKNOWN, message=nil)
     super(message)
-  end 
+    @type = type
+  end
+
 end
 
 class TTransport
@@ -54,5 +68,42 @@ class TTransportFactory
     return trans
   end
 end
+  
+class TBufferedTransport < TTransport
+  def initialize(transport)
+    @transport = transport
+    @wbuf = ''
+  end
+  
+  def isOpen()
+    return @transport.isOpen()
+  end
 
-    
+  def open()
+    @transport.open()
+  end
+
+  def close()
+    @transport.close()
+  end
+  
+  def read(sz)
+    return @transport.read(sz)
+  end
+  
+  def write(buf)
+    @wbuf += buf
+  end
+
+  def flush()
+    @transport.write(@wbuf)
+    @transport.flush()
+    @wbuf = ''
+  end
+end
+
+class TBufferedTransportFactory < TTransportFactory
+  def getTransport(transport)
+    return TBufferedTransport.new(transport)
+  end
+end

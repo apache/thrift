@@ -71,7 +71,8 @@ end
 handler = CalculatorHandler.new()
 processor = Calculator::Processor.new(handler)
 transport = TServerSocket.new(9090)
-server = TSimpleServer.new(processor, transport)
+transportFactory = TBufferedTransportFactory.new()
+server = TSimpleServer.new(processor, transport, transportFactory)
 
 puts "Starting the server..."
 server.serve()

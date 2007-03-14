@@ -13,7 +13,6 @@ class TSocket(TTransportBase):
 
   """Socket implementation of TTransport base."""
 
-
   def __init__(self, host='localhost', port=9090):
     self.host = host
     self.port = port
@@ -34,7 +33,7 @@ class TSocket(TTransportBase):
       self.handle = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       self.handle.connect((self.host, self.port))
     except socket.error, e:
-      raise TTransportException(TTransportException.NOT_OPEN)
+      raise TTransportException(TTransportException.NOT_OPEN, 'Could not connect to %s:%d' % (self.host, self.port))
 
   def close(self):
     if self.handle != None:

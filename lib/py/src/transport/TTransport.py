@@ -14,11 +14,11 @@ class TTransportException(TException):
 
   """Custom Transport Exception class"""
 
-  UNKNOWN = 0,
-  NOT_OPEN = 1,
-  ALREADY_OPEN = 2,
-  TIMED_OUT = 3,
-  END_OF_FILE = 4,
+  UNKNOWN = 0
+  NOT_OPEN = 1
+  ALREADY_OPEN = 2
+  TIMED_OUT = 3
+  END_OF_FILE = 4
 
   def __init__(self, type=UNKNOWN, message=None):
     TException.__init__(self, message)

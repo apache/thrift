@@ -221,7 +221,7 @@ class TSocketPool extends TSocket {
             // Successful connection, return now
             return;
 
-          } catch (Exception $x) {
+          } catch (TException $tx) {
             // Connection failed
           }
         }
@@ -268,7 +268,7 @@ class TSocketPool extends TSocket {
     if ($this->debug_) {
       call_user_func($this->debugHandler_, $error);
     }
-    throw new Exception($error);
+    throw new TException($error);
   }
 }
 
