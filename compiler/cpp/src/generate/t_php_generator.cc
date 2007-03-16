@@ -1063,8 +1063,8 @@ void t_php_generator::generate_service_client(t_service* tservice) {
           indent() << "$this->input_->readMessageBegin($fname, $mtype, $rseqid);" << endl <<
           indent() << "if ($mtype == TMessageType::EXCEPTION) {" << endl <<
           indent() << "  $x = new TApplicationException();" << endl <<
-          indent() << "  $x->read($input);" << endl <<
-          indent() << "  $input->readMessageEnd();" << endl <<
+          indent() << "  $x->read($this->input_);" << endl <<
+          indent() << "  $this->input_->readMessageEnd();" << endl <<
           indent() << "  throw $x;" << endl <<
           indent() << "}" << endl;
       }
