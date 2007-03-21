@@ -24,8 +24,9 @@ Sample Code
  * @author Mark Slee <mcslee@facebook.com>
  */
 
-$GLOBALS['THRIFT_ROOT'] = '/your/thrift/root/';
+$GLOBALS['THRIFT_ROOT'] = '/your/thrift/root';
 
+include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
 include_once $GLOBALS['THRIFT_ROOT'].'/packages/Service/Service.php';
 include_once $GLOBALS['THRIFT_ROOT'].'/transport/TPhpStream.php';
 include_once $GLOBALS['THRIFT_ROOT'].'/protocol/TBinaryProtocol.php';
