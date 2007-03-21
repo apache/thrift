@@ -1,0 +1,48 @@
+Thrift PHP/Apache Integration
+
+Author: Mark Slee (mcslee@facebook.com)
+Last Modified: 2007-Mar-20
+
+Thrift is distributed under the Thrift open source software license.
+Please see the included LICENSE file.
+
+Building PHP Thrift Services with Apache
+========================================
+
+Thrift can be embedded in the Apache webserver with PHP installed. Sample
+code is provided below. Note that to make requests to this type of server
+you must use a THttpClient transport.
+
+Sample Code
+===========
+
+<?php
+
+/**
+ * Example of how to build a Thrift server in Apache/PHP
+ *
+ * @author Mark Slee <mcslee@facebook.com>
+ */
+
+$GLOBALS['THRIFT_ROOT'] = '/your/thrift/root/';
+
+include_once $GLOBALS['THRIFT_ROOT'].'/packages/Service/Service.php';
+include_once $GLOBALS['THRIFT_ROOT'].'/transport/TPhpStream.php';
+include_once $GLOBALS['THRIFT_ROOT'].'/protocol/TBinaryProtocol.php';
+
+class ServiceHandler implements ServiceIf {
+  // Implement your interface and methods here
+}
+
+header('Content-Type: application/x-thrift');
+
+$handler = new ServiceHandler();
+$processor = new ServiceProcessor($handler);
+
+// Use the TPhpStream transport to read/write directly from HTTP
+$transport = new TPhpStream(TPhpStream::MODE_R | TPhpStream::MODE_W);
+$protocol = new TBinaryProtocol($transport);
+
+$transport->open();
+$processor->process($protocol, $protocol);
+$transport->close();
