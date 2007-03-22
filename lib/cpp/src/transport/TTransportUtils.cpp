@@ -214,10 +214,11 @@ void TMemoryBuffer::write(const uint8_t* buf, uint32_t len) {
     }
     while (len > avail) {
       bufferSize_ *= 2;
-      buffer_ = (uint8_t*)realloc(buffer_, bufferSize_);
-      if (buffer_ == NULL) {
-        throw TTransportException("Out of memory.");
-      }
+      avail = bufferSize_ - wPos_;
+    }
+    buffer_ = (uint8_t*)realloc(buffer_, bufferSize_);
+    if (buffer_ == NULL) {
+      throw TTransportException("Out of memory.");
     }
   }
 
