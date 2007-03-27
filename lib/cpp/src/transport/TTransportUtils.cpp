@@ -296,4 +296,87 @@ void TPipedTransport::flush()  {
   srcTrans_->flush();
 }
 
+TPipedFileReaderTransport::TPipedFileReaderTransport(boost::shared_ptr<TFileReaderTransport> srcTrans, boost::shared_ptr<TTransport> dstTrans) 
+  : TPipedTransport(srcTrans, dstTrans),
+    srcTrans_(srcTrans) {
+}
+
+TPipedFileReaderTransport::~TPipedFileReaderTransport() {
+}
+
+bool TPipedFileReaderTransport::isOpen() {
+  return TPipedTransport::isOpen();
+}
+
+bool TPipedFileReaderTransport::peek() {
+  return TPipedTransport::peek();
+}
+
+void TPipedFileReaderTransport::open() {
+  TPipedTransport::open();
+}
+
+void TPipedFileReaderTransport::close() {
+  TPipedTransport::close();
+}
+
+uint32_t TPipedFileReaderTransport::read(uint8_t* buf, uint32_t len) {
+  return TPipedTransport::read(buf, len);
+}
+
+uint32_t TPipedFileReaderTransport::readAll(uint8_t* buf, uint32_t len) {
+  uint32_t have = 0;
+  uint32_t get = 0;
+  
+  while (have < len) {
+    get = read(buf+have, len-have);
+    if (get <= 0) {
+      throw TEOFException();
+    }
+    have += get;
+  }
+  
+  return have;
+}
+
+void TPipedFileReaderTransport::readEnd() {
+  TPipedTransport::readEnd();
+}
+
+void TPipedFileReaderTransport::write(const uint8_t* buf, uint32_t len) {
+  TPipedTransport::write(buf, len);
+}
+
+void TPipedFileReaderTransport::writeEnd() {
+  TPipedTransport::writeEnd();
+}
+
+void TPipedFileReaderTransport::flush() {
+  TPipedTransport::flush();
+}
+
+int32_t TPipedFileReaderTransport::getReadTimeout() {
+  return srcTrans_->getReadTimeout();
+}
+
+void TPipedFileReaderTransport::setReadTimeout(int32_t readTimeout) {
+  srcTrans_->setReadTimeout(readTimeout);
+}
+
+uint32_t TPipedFileReaderTransport::getNumChunks() {
+  return srcTrans_->getNumChunks();
+}
+
+uint32_t TPipedFileReaderTransport::getCurChunk() {
+  return srcTrans_->getCurChunk();
+}
+
+void TPipedFileReaderTransport::seekToChunk(int32_t chunk) {
+  srcTrans_->seekToChunk(chunk);
+}
+
+void TPipedFileReaderTransport::seekToEnd() {
+  srcTrans_->seekToEnd();
+}
+
 }}} // facebook::thrift::transport

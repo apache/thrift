@@ -204,27 +204,14 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool bl
   pthread_mutex_unlock(&mutex_);
 }
 
-bool TFileTransport::swapEventBuffers(long long deadline) {
-  //deadline time struc
-  struct timespec ts;
-  if (deadline) {
-    ts.tv_sec = deadline/(1000*1000);
-    ts.tv_nsec = (deadline%(1000*1000))*1000;
-  }
-
-  // wait for the queue to fill up
+bool TFileTransport::swapEventBuffers(struct timespec* deadline) {
   pthread_mutex_lock(&mutex_);
-  while (enqueueBuffer_->isEmpty()) {
-    // do a timed wait on the condition variable
-    if (deadline) {
-      int e = pthread_cond_timedwait(&notEmpty_, &mutex_, &ts);
-      if(e == ETIMEDOUT) {
-        break;
-      }
-    } else {
-      // just wait until the buffer gets an item
-      pthread_cond_wait(&notEmpty_, &mutex_);
-    }
+  if (deadline != NULL) {
+    // if we were handed a deadline time struct, do a timed wait
+    pthread_cond_timedwait(&notEmpty_, &mutex_, deadline);
+  } else {
+    // just wait until the buffer gets an item
+    pthread_cond_wait(&notEmpty_, &mutex_);
   }
 
   bool swapped = false;
@@ -259,7 +246,9 @@ void TFileTransport::writerThread() {
   offset_ = lseek(fd_, 0, SEEK_END);
 
   // Figure out the next time by which a flush must take place
-  long long nextFlush = getCurrentTime() + flushMaxUs_;
+
+  struct timespec ts_next_flush;
+  getNextFlushTime(&ts_next_flush);
   uint32_t unflushed = 0;
 
   while(1) {
@@ -273,7 +262,7 @@ void TFileTransport::writerThread() {
       return;
     }
 
-    if (swapEventBuffers(nextFlush)) {
+    if (swapEventBuffers(&ts_next_flush)) {
       eventInfo* outEvent;
       while (NULL != (outEvent = dequeueBuffer_->getNext())) {
         if (!outEvent) {
@@ -342,14 +331,23 @@ void TFileTransport::writerThread() {
       dequeueBuffer_->reset();
     }
 
+    bool flushTimeElapsed = false;
+    struct timespec current_time;
+    clock_gettime(CLOCK_REALTIME, &current_time);
+
+    if (current_time.tv_sec > ts_next_flush.tv_sec ||
+        (current_time.tv_sec == ts_next_flush.tv_sec && current_time.tv_nsec > ts_next_flush.tv_nsec)) {
+      flushTimeElapsed = true;
+      getNextFlushTime(&ts_next_flush);
+    }
+
     // couple of cases from which a flush could be triggered
-    if ((getCurrentTime() >= nextFlush && unflushed > 0) ||
+    if ((flushTimeElapsed && unflushed > 0) ||
        unflushed > flushMaxBytes_ ||
        forceFlush_) {
 
       // sync (force flush) file to disk
       fsync(fd_);
-      nextFlush = getCurrentTime() + flushMaxUs_;
       unflushed = 0;
 
       // notify anybody waiting for flush completion
@@ -697,13 +695,14 @@ void TFileTransport::openLogFile() {
   offset_ = lseek(fd_, 0, SEEK_CUR);
 }
 
-uint32_t TFileTransport::getCurrentTime() {
-  long long ret;
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  ret = tv.tv_sec;
-  ret = ret*1000*1000 + tv.tv_usec;
-  return ret;
+void TFileTransport::getNextFlushTime(struct timespec* ts_next_flush) {
+  clock_gettime(CLOCK_REALTIME, ts_next_flush);
+  ts_next_flush->tv_nsec += (flushMaxUs_ % 1000000) * 1000;
+  if (ts_next_flush->tv_nsec > 1000000000) {
+    ts_next_flush->tv_nsec -= 1000000000;
+    ts_next_flush->tv_sec += 1;
+  }
+  ts_next_flush->tv_sec += flushMaxUs_ / 1000000;
 }
 
 TFileTransportBuffer::TFileTransportBuffer(uint32_t size)
@@ -773,7 +772,7 @@ bool TFileTransportBuffer::isEmpty() {
 
 TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
                                shared_ptr<TProtocolFactory> protocolFactory,
-                               shared_ptr<TFileTransport> inputTransport):
+                               shared_ptr<TFileReaderTransport> inputTransport):
   processor_(processor), 
   inputProtocolFactory_(protocolFactory), 
   outputProtocolFactory_(protocolFactory), 
@@ -786,7 +785,7 @@ TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
 TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
                                shared_ptr<TProtocolFactory> inputProtocolFactory,
                                shared_ptr<TProtocolFactory> outputProtocolFactory,
-                               shared_ptr<TFileTransport> inputTransport):
+                               shared_ptr<TFileReaderTransport> inputTransport):
   processor_(processor), 
   inputProtocolFactory_(inputProtocolFactory), 
   outputProtocolFactory_(outputProtocolFactory), 
@@ -798,7 +797,7 @@ TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
 
 TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
                                shared_ptr<TProtocolFactory> protocolFactory,
-                               shared_ptr<TFileTransport> inputTransport,
+                               shared_ptr<TFileReaderTransport> inputTransport,
                                shared_ptr<TTransport> outputTransport):
   processor_(processor), 
   inputProtocolFactory_(protocolFactory), 

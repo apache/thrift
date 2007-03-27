@@ -11,7 +11,8 @@ libthrift_sources = src/Thrift.cpp \
                     src/concurrency/PosixThreadFactory.cpp \
                     src/concurrency/ThreadManager.cpp \
                     src/concurrency/TimerManager.cpp \
-	            src/protocol/TBinaryProtocol.cpp \
+                    src/processor/PeekProcessor.cpp \
+                    src/protocol/TBinaryProtocol.cpp \
                     src/transport/TFileTransport.cpp \
                     src/transport/THttpClient.cpp \
                     src/transport/TSocket.cpp \
@@ -34,14 +35,14 @@ libthriftnb_la_CXXFLAGS =  $(libthrift_cxxflags)
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
-			 config.h \
-			 src/Thrift.h \
-			 src/TProcessor.h \
-			 src/TLogging.h
+                         config.h \
+                         src/Thrift.h \
+                         src/TProcessor.h \
+                         src/TLogging.h
 
 include_concurrencydir = $(include_thriftdir)/concurrency
 include_concurrency_HEADERS = \
-			 src/concurrency/Exception.h \
+                         src/concurrency/Exception.h \
                          src/concurrency/Mutex.h \
                          src/concurrency/Monitor.h \
                          src/concurrency/PosixThreadFactory.h \

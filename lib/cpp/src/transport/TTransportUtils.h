@@ -7,7 +7,9 @@
 #ifndef _THRIFT_TRANSPORT_TTRANSPORTUTILS_H_
 #define _THRIFT_TRANSPORT_TTRANSPORTUTILS_H_ 1
 
+#include <string>
 #include <transport/TTransport.h>
+#include <transport/TFileTransport.h>
 
 namespace facebook { namespace thrift { namespace transport { 
 
@@ -349,7 +351,7 @@ class TMemoryBuffer : public TTransport {
  *
  * @author Aditya Agarwal <aditya@facebook.com>
  */
-class TPipedTransport : public TTransport {
+class TPipedTransport : virtual public TTransport {
  public:
   TPipedTransport(boost::shared_ptr<TTransport> srcTrans, 
                   boost::shared_ptr<TTransport> dstTrans) :
@@ -465,8 +467,10 @@ class TPipedTransport : public TTransport {
  */
 class TPipedTransportFactory : public TTransportFactory {
  public:
-  TPipedTransportFactory(boost::shared_ptr<TTransport> dstTrans): dstTrans_(dstTrans) {}
-
+  TPipedTransportFactory() {}
+  TPipedTransportFactory(boost::shared_ptr<TTransport> dstTrans) {
+    initializeTargetTransport(dstTrans);
+  }
   virtual ~TPipedTransportFactory() {}
 
   /**
@@ -476,12 +480,85 @@ class TPipedTransportFactory : public TTransportFactory {
     return boost::shared_ptr<TTransport>(new TPipedTransport(srcTrans, dstTrans_));
   }
 
- private:
+  virtual void initializeTargetTransport(boost::shared_ptr<TTransport> dstTrans) {
+    if (dstTrans_.get() == NULL) {
+      dstTrans_ = dstTrans;
+    } else {
+      throw TException("Target transport already initialized");
+    }
+  }
+
+ protected:
   boost::shared_ptr<TTransport> dstTrans_;
 };
 
+/**
+ * TPipedFileTransport. This is just like a TTransport, except that
+ * it is a templatized class, so that clients who rely on a specific 
+ * TTransport can still access the original transport.
+ *
+ * @author James Wang <jwang@facebook.com>
+ */
+class TPipedFileReaderTransport : public TPipedTransport,
+                                  public TFileReaderTransport {
+ public:
+  TPipedFileReaderTransport(boost::shared_ptr<TFileReaderTransport> srcTrans, boost::shared_ptr<TTransport> dstTrans);
+
+  ~TPipedFileReaderTransport();
+
+  // TTransport functions
+  bool isOpen();
+  bool peek();
+  void open();
+  void close();
+  uint32_t read(uint8_t* buf, uint32_t len);
+  uint32_t readAll(uint8_t* buf, uint32_t len);
+  void readEnd();
+  void write(const uint8_t* buf, uint32_t len);
+  void writeEnd();
+  void flush();
+
+  // TFileReaderTransport functions
+  int32_t getReadTimeout();
+  void setReadTimeout(int32_t readTimeout);
+  uint32_t getNumChunks();
+  uint32_t getCurChunk();
+  void seekToChunk(int32_t chunk);
+  void seekToEnd();
+
+ protected:
+  // shouldn't be used
+  TPipedFileReaderTransport();
+  boost::shared_ptr<TFileReaderTransport> srcTrans_;
+};
+
+/**
+ * Creates a TPipedFileReaderTransport from a filepath and a destination transport
+ *
+ * @author James Wang <jwang@facebook.com>
+ */
+class TPipedFileReaderTransportFactory : public TPipedTransportFactory {
+ public:
+  TPipedFileReaderTransportFactory() {}
+  TPipedFileReaderTransportFactory(boost::shared_ptr<TTransport> dstTrans) 
+    : TPipedTransportFactory(dstTrans)
+  {}
+  virtual ~TPipedFileReaderTransportFactory() {}
+
+  boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> srcTrans) {
+    boost::shared_ptr<TFileReaderTransport> pFileReaderTransport = boost::dynamic_pointer_cast<TFileReaderTransport>(srcTrans);
+    if (pFileReaderTransport.get() != NULL) {
+      return getFileReaderTransport(pFileReaderTransport);
+    } else {
+      return boost::shared_ptr<TTransport>();
+    }
+  }
+
+  boost::shared_ptr<TFileReaderTransport> getFileReaderTransport(boost::shared_ptr<TFileReaderTransport> srcTrans) {
+    return boost::shared_ptr<TFileReaderTransport>(new TPipedFileReaderTransport(srcTrans, dstTrans_));
+  }
+};
 
 }}} // facebook::thrift::transport
-
 
 #endif // #ifndef _THRIFT_TRANSPORT_TTRANSPORTUTILS_H_

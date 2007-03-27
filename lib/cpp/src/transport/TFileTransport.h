@@ -122,12 +122,36 @@ class TFileTransportBuffer {
 };
 
 /**
+ * Abstract interface for transports used to read files
+ */
+class TFileReaderTransport : virtual public TTransport {
+ public:
+  virtual int32_t getReadTimeout() = 0;
+  virtual void setReadTimeout(int32_t readTimeout) = 0;
+
+  virtual uint32_t getNumChunks() = 0;
+  virtual uint32_t getCurChunk() = 0;
+  virtual void seekToChunk(int32_t chunk) = 0;
+  virtual void seekToEnd() = 0;
+};
+
+/**
+ * Abstract interface for transports used to write files
+ */
+class TFileWriterTransport : virtual public TTransport {
+ public:
+  virtual uint32_t getChunkSize() = 0;
+  virtual void setChunkSize(uint32_t chunkSize) = 0;
+};
+
+/**
  * File implementation of a transport. Reads and writes are done to a 
  * file on disk.
  *
  * @author Aditya Agarwal <aditya@facebook.com>
  */
-class TFileTransport : public TTransport {
+class TFileTransport : public TFileReaderTransport,
+                       public TFileWriterTransport {
  public:
   TFileTransport(std::string path);
   ~TFileTransport();
@@ -240,7 +264,7 @@ class TFileTransport : public TTransport {
  private:
   // helper functions for writing to a file
   void enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool blockUntilFlush);
-  bool swapEventBuffers(long long deadline);
+  bool swapEventBuffers(struct timespec* deadline);
   bool initBufferAndWriteThread();
 
   // control for writer thread
@@ -259,7 +283,7 @@ class TFileTransport : public TTransport {
 
   // Utility functions
   void openLogFile();
-  uint32_t getCurrentTime();
+  void getNextFlushTime(struct timespec* ts_next_flush);
 
   // Class variables
   readState readState_;
@@ -358,12 +382,12 @@ class TFileProcessor {
    */
   TFileProcessor(boost::shared_ptr<TProcessor> processor,
                  boost::shared_ptr<TProtocolFactory> protocolFactory,
-                 boost::shared_ptr<TFileTransport> inputTransport);
+                 boost::shared_ptr<TFileReaderTransport> inputTransport);
 
   TFileProcessor(boost::shared_ptr<TProcessor> processor,
                  boost::shared_ptr<TProtocolFactory> inputProtocolFactory,
                  boost::shared_ptr<TProtocolFactory> outputProtocolFactory,
-                 boost::shared_ptr<TFileTransport> inputTransport);
+                 boost::shared_ptr<TFileReaderTransport> inputTransport);
 
   /** 
    * Constructor
@@ -375,7 +399,7 @@ class TFileProcessor {
    */    
   TFileProcessor(boost::shared_ptr<TProcessor> processor,
                  boost::shared_ptr<TProtocolFactory> protocolFactory,
-                 boost::shared_ptr<TFileTransport> inputTransport,
+                 boost::shared_ptr<TFileReaderTransport> inputTransport,
                  boost::shared_ptr<TTransport> outputTransport);
 
   /**
@@ -396,7 +420,7 @@ class TFileProcessor {
   boost::shared_ptr<TProcessor> processor_;
   boost::shared_ptr<TProtocolFactory> inputProtocolFactory_;
   boost::shared_ptr<TProtocolFactory> outputProtocolFactory_;
-  boost::shared_ptr<TFileTransport> inputTransport_;
+  boost::shared_ptr<TFileReaderTransport> inputTransport_;
   boost::shared_ptr<TTransport> outputTransport_;
 };
 
