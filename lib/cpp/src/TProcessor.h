@@ -28,7 +28,7 @@ class TProcessor {
   virtual bool process(boost::shared_ptr<protocol::TProtocol> in,
                        boost::shared_ptr<protocol::TProtocol> out) = 0;
 
-  virtual bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> io) {
+  bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> io) {
     return process(io, io);
   }
 
