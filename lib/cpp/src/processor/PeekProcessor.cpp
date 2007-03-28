@@ -49,9 +49,6 @@ bool PeekProcessor::process(boost::shared_ptr<facebook::thrift::protocol::TProto
   in->readMessageEnd();
   in->getTransport()->readEnd();
 
-  // Done peeking at variables
-  peekEnd();
-
   //
   // All the data is now in memoryBuffer_ and ready to be processed
   //
@@ -62,6 +59,9 @@ bool PeekProcessor::process(boost::shared_ptr<facebook::thrift::protocol::TProto
   memoryBuffer_->getBuffer(&buffer, &size);
   peekBuffer(buffer, size);
   
+  // Done peeking at variables
+  peekEnd();
+
   bool ret = actualProcessor_->process(pipedProtocol_, out);
   memoryBuffer_->resetBuffer();
   return ret;
