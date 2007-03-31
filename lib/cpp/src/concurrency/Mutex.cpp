@@ -20,14 +20,16 @@ namespace facebook { namespace thrift { namespace concurrency {
 class Mutex::impl {
  public:
   impl() : initialized_(false) {
-    assert(pthread_mutex_init(&pthread_mutex_, NULL) == 0);
+    int ret = pthread_mutex_init(&pthread_mutex_, NULL);
+    assert(ret);
     initialized_ = true;
   }
 
   ~impl() {
     if (initialized_) {
       initialized_ = false;
-      assert(pthread_mutex_destroy(&pthread_mutex_) == 0);
+      int ret = pthread_mutex_destroy(&pthread_mutex_);
+      assert(ret);
     }
   }
 

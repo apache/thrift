@@ -32,9 +32,11 @@ class Monitor::Impl {
     condInitialized_(false) {
     
     try {
-      assert(pthread_mutex_init(&pthread_mutex_, NULL) == 0);
+      int ret = pthread_mutex_init(&pthread_mutex_, NULL);
+      assert(ret);
       mutexInitialized_ = true;
-      assert(pthread_cond_init(&pthread_cond_, NULL) == 0);
+      ret = pthread_cond_init(&pthread_cond_, NULL);
+      assert(ret);
       condInitialized_ = true;
     } catch(...) {
       cleanup();
@@ -50,9 +52,11 @@ class Monitor::Impl {
   void wait(long long timeout) const {
 
     // XXX Need to assert that caller owns mutex
-    assert(timeout >= 0LL);
+    bool bret = (timeout >= 0LL);
+    assert(bret);
     if (timeout == 0LL) {
-      assert(pthread_cond_wait(&pthread_cond_, &pthread_mutex_) == 0);
+      int iret = pthread_cond_wait(&pthread_cond_, &pthread_mutex_);
+      assert(iret);
     } else {
       struct timespec abstime;
       long long now = Util::currentTime();
@@ -61,19 +65,22 @@ class Monitor::Impl {
                                           &pthread_mutex_,
                                           &abstime);
       if (result == ETIMEDOUT) {
-	assert(Util::currentTime() >= (now + timeout));
+        bret = (Util::currentTime() >= (now + timeout));
+	assert(bret);
       }
     }
   }
 
   void notify() {
     // XXX Need to assert that caller owns mutex
-    assert(pthread_cond_signal(&pthread_cond_) == 0);
+    int iret = pthread_cond_signal(&pthread_cond_);
+    assert(iret);
   }
 
   void notifyAll() {
     // XXX Need to assert that caller owns mutex
-    assert(pthread_cond_broadcast(&pthread_cond_) == 0);
+    int iret = pthread_cond_broadcast(&pthread_cond_);
+    assert(iret);
   }
 
  private:
@@ -81,12 +88,14 @@ class Monitor::Impl {
   void cleanup() {
     if (mutexInitialized_) {
       mutexInitialized_ = false;
-      assert(pthread_mutex_destroy(&pthread_mutex_) == 0);
+      int iret = pthread_mutex_destroy(&pthread_mutex_);
+      assert(iret);
     }
 
     if (condInitialized_) {
       condInitialized_ = false;
-      assert(pthread_cond_destroy(&pthread_cond_) == 0);
+      int iret = pthread_cond_destroy(&pthread_cond_);
+      assert(iret);
     }
   }
 

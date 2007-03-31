@@ -96,7 +96,8 @@ class TimerManager::Dispatcher: public Runnable {
 	  if (!manager_->taskMap_.empty()) {
             timeout = manager_->taskMap_.begin()->first - now;
 	  }
-          assert((timeout != 0 && manager_->taskCount_ > 0) || (timeout == 0 && manager_->taskCount_ == 0));
+          bool ret = (timeout != 0 && manager_->taskCount_ > 0) || (timeout == 0 && manager_->taskCount_ == 0);
+          assert(ret);
           manager_->monitor_.wait(timeout);
 	  now = Util::currentTime();
 	}
@@ -182,7 +183,8 @@ void TimerManager::start() {
     while (state_ == TimerManager::STARTING) {
       monitor_.wait();
     }
-    assert(state_ != TimerManager::STARTING);
+    bool ret = (state_ != TimerManager::STARTING);
+    assert(ret);
   }
 }
 

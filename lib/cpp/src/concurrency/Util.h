@@ -67,14 +67,16 @@ class Util {
   static const long long currentTime() {
 #if defined(HAVE_CLOCK_GETTIME)
     struct timespec now;
-    assert(clock_gettime(CLOCK_REALTIME, &now) == 0);
+    int ret = clock_gettime(CLOCK_REALTIME, &now);
+    assert(ret);
     return
       (now.tv_sec * MS_PER_S) +
       (now.tv_nsec / NS_PER_MS) +
       (now.tv_nsec % NS_PER_MS >= 500000 ? 1 : 0) ;
 #elif defined(HAVE_GETTIMEOFDAY)
     struct timeval now;
-    assert(gettimeofday(&now, NULL) == 0);
+    int ret = gettimeofday(&now, NULL);
+    assert(ret);
     return
       (((long long)now.tv_sec) * MS_PER_S) +
       (now.tv_usec / MS_PER_S) +
