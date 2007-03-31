@@ -125,7 +125,7 @@ worse yet, nasty segmentation faults). Section 5 details Thrift's versioning
 system.
 
 \textit{Processors.} Finally, we generate code capable of processing data
-streams to accomplish remote procedure call. Section 6 details the generated
+streams to accomplish remote procedure calls. Section 6 details the generated
 code and TProcessor paradigm.
 
 Section 7 discusses implementation details, and Section 8 describes
@@ -181,7 +181,7 @@ C++ template (or Java Generics) style. There are three types available:
 an STL vector, Java ArrayList, or native array in scripting languages. May
 contain duplicates.
 \item \texttt{set<type>} An unordered set of unique elements. Translates into
-an STL set, Java HashSet, or native dictionary in PHP/Python/Ruby.
+an STL set, Java HashSet, or native dictionary in PHP/Python/Ruby. 
 \item \texttt{map<type1,type2>} A map of strictly unique keys to values
 Translates into an STL map, Java HashMap, PHP associative array,
 or Python/Ruby dictionary.
@@ -190,14 +190,14 @@ or Python/Ruby dictionary.
 While defaults are provided, the type mappings are not explicitly fixed. Custom
 code generator directives have been added to substitute custom types in
 destination languages (i.e.
-\texttt{hash\_map}, or Google's sparse hash map can be used in C++). The
+\texttt{hash\_map} or Google's sparse hash map can be used in C++). The
 only requirement is that the custom types support all the necessary iteration
 primitives. Container elements may be of any valid Thrift type, including other
 containers or structs.
 
 \subsection{Structs}
 
-A Thrift struct defines a common objects to be used across languages. A struct
+A Thrift struct defines a common object to be used across languages. A struct
 is essentially equivalent to a class in object oriented programming
 languages. A struct has a set of strongly typed fields, each with a unique
 name identifier. The basic syntax for defining a Thrift struct looks very
@@ -285,7 +285,7 @@ the system. The performance tradeoff incurred by an abstracted I/O layer
 immaterial compared to the cost of actual I/O operations (typically invoking
 system calls).
 
-Fundamentally, generated Thrift code just needs to know how to read and
+Fundamentally, generated Thrift code only needs to know how to read and
 write data. Where the data is going is irrelevant, it may be a socket, a
 segment of shared memory, or a file on the local disk. The Thrift transport
 interface supports the following methods.
@@ -330,11 +330,9 @@ provides a common, simple interface to a TCP/IP stream socket.
 \subsubsection{TFileTransport}
 
 The \texttt{TFileTransport} is an abstraction of an on-disk file to a data
-stream. It allows Thrift data structures to be used as historical log data.
-Essentially, an application developer can use a \texttt{TFileTransport} to
-write out a set of
-requests to a file on disk. Later, this data may be replayed from the log,
-either for post-processing or for recreation and simulation of previous events.
+stream. It can be used to write out a set of incoming thrift request to a file
+on disk. The on-disk data can then be replayed from the log, either for post-processing
+or for recreation and simulation of past events. \texttt(TFileTransport).
 
 \subsubsection{Utilities}
 
@@ -427,7 +425,7 @@ strings. If the protocol interface required reading or writing a list as an
 atomic operation, then the implementation would require a linear pass over the
 entire list before encoding any data. However, if the list can be written
 as iteration is performed, the corresponding read may begin in parallel,
-theoretically offering an end-to-end speedup of $kN - C$, where $N$ is the size
+theoretically offering an end-to-end speedup of $(kN - C)$, where $N$ is the size
 of the list, $k$ the cost factor associated with serializing a single
 element, and $C$ is fixed offset for the delay between data being written
 and becoming available to read.
@@ -806,6 +804,20 @@ we explicitly disallow forward declaration. Two Thrift structs cannot
 each contain an instance of the other. (Since we do not allow \texttt{null}
 struct instances in the generated C++ code, this would actually be impossible.)
 
+\subsection{TFileTransport}
+The \texttt{TFileTransport} logs thrift requests/structs by 
+framing incoming data with its length and writing it to disk. 
+Using a framed on-disk format allows for better error checking and 
+helps with processing a finite number of discrete events. The 
+\texttt{TFileWriterTransport} uses a system of swapping in-memory buffers 
+to ensure good performance while logging large amounts of data. 
+A thrift logfile is split up into chunks of a speficified size and logged messages
+are not allowed to cross chunk boundaries. A message that would cross a chunk 
+boundary will cause padding to be added until the end of the chunk and the 
+first byte of the message is aligned to the beginning of the new chunk.
+Partitioning the file into chunks makes it possible to read and interpret data 
+from a particular point in  the file. 
+
 \section{Conclusions}
 Thrift has enabled Facebook to build scalable backend
 services efficiently by enabling engineers to divide and conquer. Application
@@ -841,7 +853,7 @@ Sawzall paper.
 \acks
 
 Many thanks for feedback on Thrift (and extreme trial by fire) are due to
-Martin Smith, Karl Voskuil, and Yishan Wong.
+Martin Smith, Karl Voskuil and Yishan Wong.
 
 Thrift is a successor to Pillar, a similar system developed
 by Adam D'Angelo, first while at Caltech and continued later at Facebook.
