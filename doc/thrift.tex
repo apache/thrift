@@ -818,6 +818,26 @@ first byte of the message is aligned to the beginning of the new chunk.
 Partitioning the file into chunks makes it possible to read and interpret data 
 from a particular point in  the file. 
 
+\section{Facebook thrift-based services}
+Thrift has been employed in a large number of applications at Facebook, including
+search, logging, mobile, ads and platform. Two specific usages are discussed below.
+
+\subsection{Search}
+Thrift is used as the underlying protocol and transport for the Facebook seach service.
+The multi-language code generation is well suited for search because it allows application
+development in an efficient server side language (C++) and allows the Facebook PHP-based web application
+to make calls to the search service using Thrift PHP libraries. There is also a large
+variety of search stats, deployment and testing functionality that is built on top 
+of the generated python code. In addition to this, the Thrift logfile format is
+used as a redolog for providing real-time search index updates. Thrift has allowed the 
+search team to leverage each language for its strengths and to develop code at a rapid pace. 
+
+\subsection{Logging}
+The Thrift \texttt{TFileTransport} functionality is used for structured logging. Each
+service function definition along with its parameters can be considered to be
+a structured log entry identified by the function name. This log can then be used for 
+a variety of purposes, including inline and offline processing, stats aggregation and as a redolog.
+
 \section{Conclusions}
 Thrift has enabled Facebook to build scalable backend
 services efficiently by enabling engineers to divide and conquer. Application
