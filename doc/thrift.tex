@@ -305,7 +305,8 @@ in batching reads and optionally signaling completion of reading or writing
 chunks of data by the generated code.
 
 In addition to the above
-\texttt{TTransport} interface, there is a \texttt{TServerTransport} interface
+\texttt{TTransport} interface, there is a\\
+\texttt{TServerTransport} interface
 used to accept or create primitive transport objects. Its interface is as
 follows:
 
@@ -331,7 +332,7 @@ provides a common, simple interface to a TCP/IP stream socket.
 \subsubsection{TFileTransport}
 
 The \texttt{TFileTransport} is an abstraction of an on-disk file to a data
-stream. It can be used to write out a set of incoming thrift request to a file
+stream. It can be used to write out a set of incoming Thrift request to a file
 on disk. The on-disk data can then be replayed from the log, either for post-processing
 or for recreation and simulation of past events. \texttt(TFileTransport).
 
@@ -639,7 +640,7 @@ TServer.cpp
  serve()
 \end{verbatim}
 
-From the thrift definition file, we generate the virtual service interface.
+From the Thrift definition file, we generate the virtual service interface.
 A client class is generated, which implements the interface and
 uses two \texttt{TProtocol} instances to perform the I/O operations. The
 generated processor implements the \texttt{TProcessor} interface. The generated
@@ -669,7 +670,7 @@ The layers are appropriately separated such that the server code needs to know
 nothing about any of the transports, encodings, or applications in play. The
 server encapsulates the logic around connection handling, threading, etc.
 while the processor deals with RPC. The only code written by the application
-developer lives in the definitional thrift file and the interface
+developer lives in the definitional Thrift file and the interface
 implementation.
 
 Facebook has deployed multiple \texttt{TServer} implementations, including
@@ -771,156 +772,160 @@ looking for string contents.
 
 \subsection{Servers and Multithreading}
 Thrift services require basic multithreading services to handle simultaneous
-requests from multiple clients.  For the python and java implementations of
-thrift server logic, the multi-thread support provided by those runtimes was more
-than adequate.  For the C++ implementation no standard multithread runtime
-library support exists.  Specifically a robust, lightweight, and portable 
-thread manager and timer class implementation do not exist.  We investigated
-existing implementations, namely {\tt boost::thread}, 
-{\tt boost::threadpool}, {\tt ACE\_Thread\_Manager} and {\tt ACE\_Timer}.  
+requests from multiple clients. For the Python and Java implementations of
+thrift server logic, the multi-thread support provided by those runtimes was
+more than adequate. For the C++ implementation no standard multithread runtime
+library support exists. Specifically a robust, lightweight, and portable 
+thread manager and timer class implementation do not exist. We investigated
+existing implementations, namely \texttt{boost::thread}, 
+\texttt{boost::threadpool}, \texttt{ACE\_Thread\_Manager} and
+\texttt{ACE\_Timer}.  
 
-While {\tt boost::threads \cite{boost.threads} } provides clean, lightweight and
-robust implementations of multi-thread primitives (mutexes, conditions, threads)
- it does not provide a thread manager or timer implementation.  
+While \texttt{boost::threads}\cite{boost.threads}  provides clean,
+lightweight and robust implementations of multi-thread primitives (mutexes,
+conditions, threads) it does not provide a thread manager or timer
+implementation.  
 
-{\tt boost::threadpool \cite{boost.threadpool} } also looked promising but was not
-far enough along for our purposes.  We wanted to limit the dependency on
-thirdparty libraries as much as possible.  Because {\tt boost::threadpool} is not
-a pure template library and requires runtime libraries and because it is not yet
-part of the official boost distribution we felt it was not ready for use in thrift.
-As {\tt boost::threadpool} evolves and especially if it is added to the boost
-distribution we may reconsider our decision not to use it.
+\texttt{boost::threadpool}\cite{boost.threadpool} also looked promising but
+was not far enough along for our purposes. We wanted to limit the dependency on
+thirdparty libraries as much as possible. Because\\
+\texttt{boost::threadpool} is
+not a pure template library and requires runtime libraries and because it is
+not yet part of the official boost distribution we felt it was not ready for
+use in Thrift. As \texttt{boost::threadpool} evolves and especially if it is
+added to the boost distribution we may reconsider our decision not to use it.
 
 ACE has both a thread manager and timer class in addition to multi-thread
-primitives.  The biggest problem with ACE is that it is ACE.  Unlike boost, ACE
-API quality is poor.  Everything in ACE has large numbers of dependencies on
-everything else in ACE - thus forcing developers to throw out standard classes, 
-like STL collection is favor of ACE's homebrewed implementations.  In addition,
-unlike boost, ACE implementations demonstrate little understanding of the power
-and pitfalls of C++ programming and take no advantage of modern templating
-techniques to ensure compile time safety and reasonable compiler error messages.  
-For all these reasons, ACE was rejected.
+primitives. The biggest problem with ACE is that it is ACE. Unlike boost, ACE
+API quality is poor. Everything in ACE has large numbers of dependencies on
+everything else in ACE - thus forcing developers to throw out standard 
+classes, like STL collection is favor of ACE's homebrewed implementations. In
+addition, unlike boost, ACE implementations demonstrate little understanding
+of the power and pitfalls of C++ programming and take no advantage of modern
+templating techniques to ensure compile time safety and reasonable compiler
+error messages. For all these reasons, ACE was rejected.
 
 \subsection{Thread Primitives}
 
-The thrift thread libraries have three components
+The Thrift thread libraries are implemented in the namespace\\
+\texttt{facebook::thrift::concurrency} and have three components:
 \begin{itemize}
-\item \texttt{primitives}
-\item \texttt{thread pool manager}
-\item \texttt{timer manager}
+\item primitives
+\item thread pool manager
+\item timer manager
 \end{itemize}
 
-As mentioned above, we were hesitant to introduce any additional dependencies on 
-thrift.  We decided to use {\tt boost::shared\_ptr} because it is so useful for
-multithreaded application, because it requires no link-time or runtime libraries
-(ie it is a pure template library) and because it is  become part of the C++0X 
-standard.
+As mentioned above, we were hesitant to introduce any additional dependencies
+on Thrift. We decided to use \texttt{boost::shared\_ptr} because it is so 
+useful for multithreaded application, because it requires no link-time or
+runtime libraries (i.e. it is a pure template library) and because it is due
+to become part of the C++0X standard.
 
-We implement standard {\tt Mutex} and {\tt Condition} classes, and a
- {\tt Monitor} class.  The latter is simply a combination of a mutex and 
+We implement standard \texttt{Mutex} and \texttt{Condition} classes, and a
+ \texttt{Monitor} class. The latter is simply a combination of a mutex and 
 condition variable and is analogous to the monitor implementation provided for
-all objects in java.  This is also sometimes referred to as a barrier.  We 
-provide a {\tt Synchronized} guard class to allow java-like synchronized blocks.
-This is just a bit of syntactic sugar, but, like its java counterpart, clearly 
-delimits critical sections of code.  Unlike it's java counterpart, we still have
-the ability to programmatically lock, unlock, block, and signal monitors.
+all objects in Java. This is also sometimes referred to as a barrier. We 
+provide a \texttt{Synchronized} guard class to allow Java-like synchronized blocks.
+This is just a bit of syntactic sugar, but, like its Java counterpart, clearly 
+delimits critical sections of code. Unlike it's Java counterpart, we still
+have the ability to programmatically lock, unlock, block, and signal monitors.
 
 \begin{verbatim}
-  void run() {
-    {Synchronized s(manager->monitor);
-      if (manager->state == TimerManager::STARTING) {
-	manager->state = TimerManager::STARTED;
-	manager->monitor.notifyAll();
-      }
-    }
+void run() {
+ {Synchronized s(manager->monitor);
+  if (manager->state == TimerManager::STARTING) {
+    manager->state = TimerManager::STARTED;
+    manager->monitor.notifyAll();
   }
+ }
+}
 \end{verbatim}
 
-We again borrowed from java the distinction between a thread and a runnable
-class.  A {\tt facebook::thread:Thread} is the actual schedulable object.  The
-{\tt facebook::thread::Runnable} is the logic to execute within the thread. 
-The {\tt Thread} implementation deals with all the platform-specific thread 
+We again borrowed from Java the distinction between a thread and a runnable
+class. A \texttt{Thread} is the actual schedulable object. The
+\texttt{Runnable} is the logic to execute within the thread. 
+The \texttt{Thread} implementation deals with all the platform-specific thread 
 creation and destruction issues, while the {tt Runnable} implementation deals
-with the application-specific per-thread logic. .  The benefit of this approach
+with the application-specific per-thread logic. The benefit of this approach
 is that developers can easily subclass the Runnable class without pulling in 
 platform-specific super-clases.
 
 \subsection{Thread, Runnable, and shared\_ptr}
-We use {\tt boost::shared\_ptr} throughout the {\tt ThreadManager} and
-{\tt TimerManager} implementations to guarantee cleanup of dead objects that can
-be accessed by multiple threads.  For {\tt Thread} class implementations,
-{\tt boost::shared\_ptr} usage requires particular attention to make sure
-{\tt Thread} objects are neither leaked nor dereferenced prematurely while
+We use \texttt{boost::shared\_ptr} throughout the \texttt{ThreadManager} and
+\texttt{TimerManager} implementations to guarantee cleanup of dead objects that can
+be accessed by multiple threads. For \texttt{Thread} class implementations,
+\texttt{boost::shared\_ptr} usage requires particular attention to make sure
+\texttt{Thread} objects are neither leaked nor dereferenced prematurely while
 creating and shutting down threads.
 
-Thread creation requires calling into a C library.  (In our case the POSIX
+Thread creation requires calling into a C library. (In our case the POSIX
 thread library, libhthread, but the same would be true for WIN32 threads).
 Typically, the OS makes few if any guarantees about when a C thread's
-entry-point function, {\tt ThreadMain} will be called.  Therefore, it is
+entry-point function, \texttt{ThreadMain} will be called. Therefore, it is
 possible that our thread create call,
-{\tt facebook::thread::ThreadFactory::newThread()} could return to the caller
-well before that time.  To ensure that the returned {\tt Thread} object is not
+\texttt{ThreadFactory::newThread()} could return to the caller
+well before that time. To ensure that the returned \texttt{Thread} object is not
 prematurely cleaned up if the caller gives up its reference prior to the
-{\tt ThreadMain} call, the {\tt Thread} object makes a weak referenence to
-itself in its {\tt start} method.
+\texttt{ThreadMain} call, the \texttt{Thread} object makes a weak referenence to
+itself in its \texttt{start} method.
 
-With the weak reference in hand the {\tt ThreadMain} function can attempt to get
-a strong reference before entering the {\tt Runnable::run} method of the
-{\tt Runnable} object bound to the {\tt Thread}.  If no strong refereneces to the
-thread obtained between exiting {\tt Thread::start} and entering the C helper
-function,  {\tt ThreadMain}, the weak reference returns null and the function 
+With the weak reference in hand the \texttt{ThreadMain} function can attempt to get
+a strong reference before entering the \texttt{Runnable::run} method of the
+\texttt{Runnable} object bound to the \texttt{Thread}. If no strong refereneces to the
+thread obtained between exiting \texttt{Thread::start} and entering the C helper
+function, \texttt{ThreadMain}, the weak reference returns null and the function 
 exits immediately.
 
-The need for the {\tt Thread} to make a weak reference to itself has a
-significant impact on the API.  Since references are managed through the
-{\tt boost::shared\_ptr} templates, the {\tt Thread} object must have a reference
-to itself wrapped by the same {\tt boost::shared\_ptr} envelope that is returned
-to the caller.  This necessitated use of the factory pattern.
-{\tt ThreadFactory} creates the raw {\tt Thread} object and
+The need for the \texttt{Thread} to make a weak reference to itself has a
+significant impact on the API. Since references are managed through the
+\texttt{boost::shared\_ptr} templates, the \texttt{Thread} object must have a reference
+to itself wrapped by the same \texttt{boost::shared\_ptr} envelope that is returned
+to the caller. This necessitated use of the factory pattern.
+\texttt{ThreadFactory} creates the raw \texttt{Thread} object and
 {tt boost::shared\_ptr} wrapper, and calls a private helper method of the class
-implementing the {\tt Thread} interface (in this case, {\tt PosixThread::weakRef}
+implementing the \texttt{Thread} interface (in this case, \texttt{PosixThread::weakRef}
  to allow it to make add weak reference to itself through the
- {\tt boost::shared\_ptr} envelope.
+ \texttt{boost::shared\_ptr} envelope.
 
-{\tt Thread} and {\tt Runnable} objects reference each other.  A {\tt Runnable}
+\texttt{Thread} and \texttt{Runnable} objects reference each other. A \texttt{Runnable}
 object may need to know which thread it is executing in and a Thread, obviously,
-needs to know what {\tt Runnable} object it is hosting.  This interdependency is
+needs to know what \texttt{Runnable} object it is hosting. This interdependency is
 further complicated because the lifecycle of each object is independent of the
-other.  An application may create a set of {\tt Runnable} object to be used overs
-and over in different threads, or it may create and forget a {\tt Runnable} object
+other. An application may create a set of \texttt{Runnable} object to be used overs
+and over in different threads, or it may create and forget a \texttt{Runnable} object
 once a thread has been created and started for it. 
 
-The {\tt Thread} class takes a {\tt boost::shared\_ptr} reference to the hosted
-{\tt Runnable} object in its contructor, while the {\tt Runnable} class has an
-explicit {\tt thread} method to allow explicit binding of the hosted thread.
-{\tt ThreadFactory::newThread} binds the two objects to each other.
+The \texttt{Thread} class takes a \texttt{boost::shared\_ptr} reference to the hosted
+\texttt{Runnable} object in its contructor, while the \texttt{Runnable} class has an
+explicit \texttt{thread} method to allow explicit binding of the hosted thread.
+\texttt{ThreadFactory::newThread} binds the two objects to each other.
 
 \subsection{ThreadManager}
 
-{\tt facebook::thread::ThreadManager} creates a pool of worker threads and 
+\texttt{ThreadManager} creates a pool of worker threads and 
 allows applications to schedule tasks for execution as free worker threads
-become available.  The {\tt ThreadManager} does not implement dynamic 
+become available. The \texttt{ThreadManager} does not implement dynamic 
 thread pool resizing, but provides primitives so that applications can add
-and remove threads based on load.  This approach was chosen because 
+and remove threads based on load. This approach was chosen because 
 implementing load metrics and thread pool size is very application 
-specific.  For example some applications may want to adjust pool size based
+specific. For example some applications may want to adjust pool size based
 on running-average of work arrival rates that are measured via polled
-samples.  Others may simply wish to react immediately to work-queue
-depth high and low water marks.  Rather than trying to create a complex
+samples. Others may simply wish to react immediately to work-queue
+depth high and low water marks. Rather than trying to create a complex
 API that is abstract enough to capture these different approaches, we 
 simply leave it up to the particular application and provide the 
 primitives to enact the desired policy and sample current status.
 
 \subsection{TimerManager}
 
-{\tt facebook::thread::TimerManager} applows applications to schedule
- {\tt Runnable} object execution at some point in the future.  Its specific task 
-is to allows applications to sample {\tt ThreadManager} load at regular
+\texttt{TimerManager} applows applications to schedule
+ \texttt{Runnable} object execution at some point in the future. Its specific task 
+is to allows applications to sample \texttt{ThreadManager} load at regular
 intervals and make changes to the thread pool size based on application policy.
-Of course, it can be used to generate any number of timer or alarm events.  
+Of course, it can be used to generate any number of timer or alarm events.
 
-The default implementation of {\tt TimerManager} uses a single thread to
-execute expired {\tt Runnable} objects.  Thus, if a timer operation needs to 
+The default implementation of \texttt{TimerManager} uses a single thread to
+execute expired \texttt{Runnable} objects. Thus, if a timer operation needs to 
 do a large amount of work and especially if it needs to do blocking I/O,
 that should be done in a separate thread.
 
@@ -935,7 +940,7 @@ dispatched to the \texttt{TProcessor} object which can read directly from
 the data in memory.
 
 \subsection{Compiler}
-The Thrift compiler is implemented in C++ using standard lex/yacc style
+The Thrift compiler is implemented in C++ using standard lex/yacc
 tokenization and parsing. Though it could have been implemented with fewer
 lines of code in another language (i.e. Python/PLY or ocamlyacc), using C++
 forces explicit definition of the language constructs. Strongly typing the
@@ -956,20 +961,20 @@ each contain an instance of the other. (Since we do not allow \texttt{null}
 struct instances in the generated C++ code, this would actually be impossible.)
 
 \subsection{TFileTransport}
-The \texttt{TFileTransport} logs thrift requests/structs by 
+The \texttt{TFileTransport} logs Thrift requests/structs by 
 framing incoming data with its length and writing it to disk. 
 Using a framed on-disk format allows for better error checking and 
-helps with processing a finite number of discrete events. The 
+helps with processing a finite number of discrete events. The\\
 \texttt{TFileWriterTransport} uses a system of swapping in-memory buffers 
 to ensure good performance while logging large amounts of data. 
-A thrift logfile is split up into chunks of a speficified size and logged messages
+A Thrift logfile is split up into chunks of a speficified size and logged messages
 are not allowed to cross chunk boundaries. A message that would cross a chunk 
 boundary will cause padding to be added until the end of the chunk and the 
 first byte of the message is aligned to the beginning of the new chunk.
 Partitioning the file into chunks makes it possible to read and interpret data 
-from a particular point in  the file. 
+from a particular point in the file. 
 
-\section{Facebook thrift-based services}
+\section{Facebook Thrift Services}
 Thrift has been employed in a large number of applications at Facebook, including
 search, logging, mobile, ads and platform. Two specific usages are discussed below.
 
