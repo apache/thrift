@@ -114,7 +114,6 @@ class PthreadThread: public Thread {
 };
 
 void* PthreadThread::threadMain(void* arg) {
-  // XXX need a lock here when testing thread state
   shared_ptr<PthreadThread> thread = *(shared_ptr<PthreadThread>*)arg;
   delete reinterpret_cast<shared_ptr<PthreadThread>*>(arg);
 
