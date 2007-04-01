@@ -33,10 +33,10 @@ class Monitor::Impl {
     
     try {
       int ret = pthread_mutex_init(&pthread_mutex_, NULL);
-      assert(ret);
+      assert(ret == 0);
       mutexInitialized_ = true;
       ret = pthread_cond_init(&pthread_cond_, NULL);
-      assert(ret);
+      assert(ret == 0);
       condInitialized_ = true;
     } catch(...) {
       cleanup();
@@ -52,11 +52,10 @@ class Monitor::Impl {
   void wait(long long timeout) const {
 
     // XXX Need to assert that caller owns mutex
-    bool bret = (timeout >= 0LL);
-    assert(bret);
+    assert(timeout >= 0LL);
     if (timeout == 0LL) {
       int iret = pthread_cond_wait(&pthread_cond_, &pthread_mutex_);
-      assert(iret);
+      assert(iret == 0);
     } else {
       struct timespec abstime;
       long long now = Util::currentTime();
@@ -65,8 +64,7 @@ class Monitor::Impl {
                                           &pthread_mutex_,
                                           &abstime);
       if (result == ETIMEDOUT) {
-        bret = (Util::currentTime() >= (now + timeout));
-	assert(bret);
+	assert(Util::currentTime() >= (now + timeout));
       }
     }
   }
@@ -74,13 +72,13 @@ class Monitor::Impl {
   void notify() {
     // XXX Need to assert that caller owns mutex
     int iret = pthread_cond_signal(&pthread_cond_);
-    assert(iret);
+    assert(iret == 0);
   }
 
   void notifyAll() {
     // XXX Need to assert that caller owns mutex
     int iret = pthread_cond_broadcast(&pthread_cond_);
-    assert(iret);
+    assert(iret == 0);
   }
 
  private:
@@ -89,13 +87,13 @@ class Monitor::Impl {
     if (mutexInitialized_) {
       mutexInitialized_ = false;
       int iret = pthread_mutex_destroy(&pthread_mutex_);
-      assert(iret);
+      assert(iret == 0);
     }
 
     if (condInitialized_) {
       condInitialized_ = false;
       int iret = pthread_cond_destroy(&pthread_cond_);
-      assert(iret);
+      assert(iret == 0);
     }
   }
 

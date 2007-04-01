@@ -21,7 +21,7 @@ class Mutex::impl {
  public:
   impl() : initialized_(false) {
     int ret = pthread_mutex_init(&pthread_mutex_, NULL);
-    assert(ret);
+    assert(ret == 0);
     initialized_ = true;
   }
 
@@ -29,7 +29,7 @@ class Mutex::impl {
     if (initialized_) {
       initialized_ = false;
       int ret = pthread_mutex_destroy(&pthread_mutex_);
-      assert(ret);
+      assert(ret == 0);
     }
   }
 

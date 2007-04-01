@@ -68,7 +68,7 @@ class Util {
 #if defined(HAVE_CLOCK_GETTIME)
     struct timespec now;
     int ret = clock_gettime(CLOCK_REALTIME, &now);
-    assert(ret);
+    assert(ret == 0);
     return
       (now.tv_sec * MS_PER_S) +
       (now.tv_nsec / NS_PER_MS) +
@@ -76,7 +76,7 @@ class Util {
 #elif defined(HAVE_GETTIMEOFDAY)
     struct timeval now;
     int ret = gettimeofday(&now, NULL);
-    assert(ret);
+    assert(ret == 0);
     return
       (((long long)now.tv_sec) * MS_PER_S) +
       (now.tv_usec / MS_PER_S) +

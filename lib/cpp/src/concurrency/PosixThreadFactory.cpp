@@ -69,31 +69,31 @@ class PthreadThread: public Thread {
 
     pthread_attr_t thread_attr;
     int ret = pthread_attr_init(&thread_attr);
-    assert(ret);
+    assert(ret == 0);
 
     ret = pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_JOINABLE);
-    assert(ret);
+    assert(ret == 0);
 
     // Set thread stack size
     ret = pthread_attr_setstacksize(&thread_attr, MB * stackSize_);
-    assert(ret);
+    assert(ret == 0);
 
     // Set thread policy
     ret = pthread_attr_setschedpolicy(&thread_attr, policy_);
-    assert(ret);
+    assert(ret == 0);
 
     struct sched_param sched_param;
     sched_param.sched_priority = priority_;
 
     // Set thread priority
     ret = pthread_attr_setschedparam(&thread_attr, &sched_param);
-    assert(ret);
+    assert(ret == 0);
 
     // Create reference
     shared_ptr<PthreadThread>* selfRef = new shared_ptr<PthreadThread>();
     *selfRef = self_.lock();
     ret = pthread_create(&pthread_, &thread_attr, threadMain, (void*)selfRef);
-    assert(ret);
+    assert(ret == 0);
   }
 
   void join() {
@@ -108,8 +108,7 @@ class PthreadThread: public Thread {
   void runnable(shared_ptr<Runnable> value) { Thread::runnable(value); }
 
   void weakRef(shared_ptr<PthreadThread> self) {
-    bool ret = (self.get() == this);
-    assert(ret);
+    assert(self.get() == this);
     self_ = weak_ptr<PthreadThread>(self);
   }
 };
