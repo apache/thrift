@@ -891,8 +891,7 @@ implementing the \texttt{Thread} interface (in this case, \texttt{PosixThread::w
 object may need to know which thread it is executing in and a Thread, obviously,
 needs to know what \texttt{Runnable} object it is hosting. This interdependency is
 further complicated because the lifecycle of each object is independent of the
-other. An application may create a set of \texttt{Runnable} object to be used overs
-and over in different threads, or it may create and forget a \texttt{Runnable} object
+other. An application may create a set of \texttt{Runnable} object to be reused in different threads, or it may create and forget a \texttt{Runnable} object
 once a thread has been created and started for it. 
 
 The \texttt{Thread} class takes a \texttt{boost::shared\_ptr} reference to the hosted
