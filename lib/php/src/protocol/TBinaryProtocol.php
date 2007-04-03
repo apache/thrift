@@ -309,13 +309,19 @@ class TBinaryProtocol extends TProtocol {
       }
     } else {
 
+      // Upcast negatives in LSB bit
+      if ($arr[2] & 0x80000000) {
+        $arr[2] = $arr[2] & 0xffffffff;
+      }
+
       // Check for a negative
       if ($arr[1] & 0x80000000) {
-	$arr[1] = $arr[1] ^ 0xFFFFFFFF;
-	$arr[2] = $arr[2] ^ 0xFFFFFFFF;
-	$value = 0 - $arr[1]*4294967296 - $arr[2] - 1;
+        $arr[1] = $arr[1] & 0xffffffff;
+        $arr[1] = $arr[1] ^ 0xffffffff;
+        $arr[2] = $arr[2] ^ 0xffffffff;
+        $value = 0 - $arr[1]*4294967296 - $arr[2] - 1;
       } else {
-	$value = $arr[1]*4294967296 + $arr[2];
+        $value = $arr[1]*4294967296 + $arr[2];
       }
     }
     
