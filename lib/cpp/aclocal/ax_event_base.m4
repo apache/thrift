@@ -70,7 +70,7 @@ if test "x$want_event" = "xyes"; then
 	fi
 
 	if test "$succeeded" != "yes" ; then
-            AC_MSG_ERROR([[We could not detect the event libraries (version $event_lib_version_req_shorten or higher). If you have a staged event library (still not installed) please specify \$EVENT_ROOT in your environment and do not give a PATH to --with-event option.  If you are sure you have event installed, then check your version number looking in <event/version.hpp>. See http://randspringer.de/event for more documentation.]])
+            AC_MSG_ERROR([[We could not detect the event libraries (version $event_lib_version_req_shorten or higher). If you have a staged event library (still not installed) please specify \$EVENT_ROOT in your environment and do not give a PATH to --with-event option.  If you are sure you have event installed, then check your version number looking in <event.h>. See http://www.monkey.org/~provos/libevent/ for more documentation.]])
 	else
             AC_SUBST(EVENT_CPPFLAGS)
 	    AC_SUBST(EVENT_LDFLAGS)
