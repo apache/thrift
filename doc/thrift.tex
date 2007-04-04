@@ -197,7 +197,7 @@ contain duplicates.
 an STL \texttt{set}, Java \texttt{HashSet}, \texttt{set} in Python, or native
 dictionary in PHP/Ruby. 
 \item \texttt{map<type1,type2>} A map of strictly unique keys to values
-Translates into an STL \texttt{map}, Java texttt{HashMap}, PHP associative
+Translates into an STL \texttt{map}, Java \texttt{HashMap}, PHP associative
 array, or Python/Ruby dictionary.
 \end{itemize}
 
@@ -863,7 +863,7 @@ be accessed by multiple threads. For \texttt{Thread} class implementations,
 creating and shutting down threads.
 
 Thread creation requires calling into a C library. (In our case the POSIX
-thread library, \texttt{libthread}, but the same would be true for WIN32 threads).
+thread library, \texttt{libpthread}, but the same would be true for WIN32 threads).
 Typically, the OS makes few, if any, guarantees about when \texttt{ThreadMain}, a C thread's entry-point function, will be called. Therefore, it is
 possible that our thread create call,
 \texttt{ThreadFactory::newThread()} could return to the caller
