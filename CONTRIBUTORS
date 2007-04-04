@@ -1,0 +1,10 @@
+----------------
+Release 20070401
+----------------
+
+Kevin Ko <kevin.s.ko@gmail.com>
+-Fix for unnecessary std::string copy construction in Protocol/Exception
+
+Paul Querna <pquerna@apache.org>
+-Autoconf error message fix for libevent detection
+-clock_gettime implementation for OSX

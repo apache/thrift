@@ -8,7 +8,11 @@
 #include "TTransportUtils.h"
 
 #include <pthread.h>
+#ifndef HAVE_CLOCK_GETTIME
+#include <time.h>
+#else
 #include <sys/time.h>
+#endif
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
@@ -21,6 +25,26 @@ using boost::shared_ptr;
 using namespace std;
 using namespace facebook::thrift::protocol;
 
+#ifndef HAVE_CLOCK_GETTIME
+/**
+ * Fake clock_gettime for systems like darwin
+ *
+ * @author Paul Querna <pquerna@apache.org>
+ */
+#define CLOCK_REALTIME 0 
+static int clock_gettime(int clk_id /*ignored*/, struct timespec *tp) {
+  struct timeval now;
+    
+  int rv = gettimeofday(&now, NULL);
+  if (rv != 0) {
+    return rv;
+  }
+    
+  tp->tv_sec = now.tv_sec;
+  tp->tv_nsec = now.tv_usec * 1000;
+  return 0;
+}
+#endif
 
 TFileTransport::TFileTransport(string path)
   : readState_()
