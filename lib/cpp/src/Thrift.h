@@ -28,7 +28,7 @@ class TException : public std::exception {
 public:
   TException() {}
 
-  TException(const std::string message) :
+  TException(const std::string& message) :
     message_(message) {}
 
   virtual ~TException() throw() {}
@@ -69,12 +69,12 @@ public:
     TException(), 
     type_(type) {}
 
-  TApplicationException(const std::string message) :
+  TApplicationException(const std::string& message) :
     TException(message),
     type_(UNKNOWN) {}
 
   TApplicationException(TApplicationExceptionType type,
-                        const std::string message) :
+                        const std::string& message) :
     TException(message),
     type_(type) {}
 

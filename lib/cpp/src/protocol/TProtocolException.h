@@ -42,11 +42,11 @@ class TProtocolException : public facebook::thrift::TException {
     facebook::thrift::TException(), 
     type_(type) {}
 
-  TProtocolException(const std::string message) :
+  TProtocolException(const std::string& message) :
     facebook::thrift::TException(message),
     type_(UNKNOWN) {}
 
-  TProtocolException(TProtocolExceptionType type, const std::string message) :
+  TProtocolException(TProtocolExceptionType type, const std::string& message) :
     facebook::thrift::TException(message),
     type_(type) {}
 

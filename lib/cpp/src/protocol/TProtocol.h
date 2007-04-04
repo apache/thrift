@@ -88,9 +88,9 @@ class TProtocol {
    * Writing functions.
    */
 
-  virtual uint32_t writeMessageBegin(const std::string name,
-				     const TMessageType messageType,
-				     const int32_t seqid) = 0;
+  virtual uint32_t writeMessageBegin(const std::string& name,
+                                     const TMessageType messageType,
+                                     const int32_t seqid) = 0;
 
   virtual uint32_t writeMessageEnd() = 0;
 

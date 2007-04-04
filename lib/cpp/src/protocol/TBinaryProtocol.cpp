@@ -10,9 +10,9 @@ using std::string;
 
 namespace facebook { namespace thrift { namespace protocol { 
 
-uint32_t TBinaryProtocol::writeMessageBegin(const std::string name,
-					    const TMessageType messageType,
-					    const int32_t seqid) {
+uint32_t TBinaryProtocol::writeMessageBegin(const std::string& name,
+                                            const TMessageType messageType,
+                                            const int32_t seqid) {
   return 
     writeString(name) + 
     writeByte((int8_t)messageType) +

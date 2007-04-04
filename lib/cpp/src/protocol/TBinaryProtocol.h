@@ -56,9 +56,9 @@ class TBinaryProtocol : public TProtocol {
    * Writing functions.
    */
 
-  virtual uint32_t writeMessageBegin(const std::string name,
-				     const TMessageType messageType,
-				     const int32_t seqid);
+  virtual uint32_t writeMessageBegin(const std::string& name,
+                                     const TMessageType messageType,
+                                     const int32_t seqid);
 
   virtual uint32_t writeMessageEnd();
 

@@ -43,11 +43,11 @@ class TTransportException : public facebook::thrift::TException {
     facebook::thrift::TException(), 
     type_(type) {}
 
-  TTransportException(const std::string message) :
+  TTransportException(const std::string& message) :
     facebook::thrift::TException(message),
     type_(UNKNOWN) {}
 
-  TTransportException(TTransportExceptionType type, const std::string message) :
+  TTransportException(TTransportExceptionType type, const std::string& message) :
     facebook::thrift::TException(message),
     type_(type) {}
 
