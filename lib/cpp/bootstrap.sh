@@ -4,7 +4,7 @@
 autoscan
 autoheader
 aclocal -I ./aclocal
-if glibtoolize --version 1 >/dev/null 2>/dev/null; then
+if libtoolize --version 1 >/dev/null 2>/dev/null; then
   libtoolize --automake
 elif glibtoolize --version 1 >/dev/null 2>/dev/null; then
   glibtoolize --automake
