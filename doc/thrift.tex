@@ -852,7 +852,7 @@ The \texttt{Thread} implementation deals with all the platform-specific thread
 creation and destruction issues, while the \texttt{Runnable} implementation deals
 with the application-specific per-thread logic. The benefit of this approach
 is that developers can easily subclass the Runnable class without pulling in 
-platform-specific super-clases.
+platform-specific super-classes.
 
 \subsection{Thread, Runnable, and shared\_ptr}
 We use \texttt{boost::shared\_ptr} throughout the \texttt{ThreadManager} and
