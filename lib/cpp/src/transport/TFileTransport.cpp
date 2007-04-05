@@ -4,6 +4,10 @@
 // See accompanying file LICENSE or visit the Thrift site at:
 // http://developers.facebook.com/thrift/
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "TFileTransport.h"
 #include "TTransportUtils.h"
 
