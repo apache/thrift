@@ -111,7 +111,7 @@ void t_php_generator::generate_enum(t_enum* tenum) {
   }
 
   indent(f_types_) <<
-    "static public __names = array(" << endl;
+    "static public $__names = array(" << endl;
   value = -1;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     if ((*c_iter)->has_value()) {
