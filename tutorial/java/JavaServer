@@ -1,0 +1,2 @@
+#!/bin/sh
+java -cp tutorial.jar:/usr/local/lib/libthrift.jar JavaServer
