@@ -153,7 +153,7 @@ class TFileWriterTransport : virtual public TTransport {
 class TFileTransport : public TFileReaderTransport,
                        public TFileWriterTransport {
  public:
-  TFileTransport(std::string path);
+  TFileTransport(std::string path, bool readOnly=false);
   ~TFileTransport();
 
   // TODO: what is the correct behaviour for this?
@@ -162,10 +162,7 @@ class TFileTransport : public TFileReaderTransport,
     return true;
   }
   
-  void write(const uint8_t* buf, uint32_t len) {
-    enqueueEvent(buf, len, false);
-  }
-  
+  void write(const uint8_t* buf, uint32_t len);
   void flush();
 
   uint32_t readAll(uint8_t* buf, uint32_t len);
@@ -360,6 +357,8 @@ class TFileTransport : public TFileReaderTransport,
   // event corruption information
   uint32_t lastBadChunk_;
   uint32_t numCorruptedEventsInChunk_;
+
+  bool readOnly_;
 };
 
 // Exception thrown when EOF is hit

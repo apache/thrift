@@ -50,7 +50,7 @@ static int clock_gettime(int clk_id /*ignored*/, struct timespec *tp) {
 }
 #endif
 
-TFileTransport::TFileTransport(string path)
+TFileTransport::TFileTransport(string path, bool readOnly)
   : readState_()
   , readBuff_(NULL)
   , currentEvent_(NULL)
@@ -75,6 +75,7 @@ TFileTransport::TFileTransport(string path)
   , offset_(0)
   , lastBadChunk_(0)
   , numCorruptedEventsInChunk_(0)
+  , readOnly_(readOnly)
 {
   // initialize all the condition vars/mutexes
   pthread_mutex_init(&mutex_, NULL);
@@ -173,6 +174,14 @@ bool TFileTransport::initBufferAndWriteThread() {
   bufferAndThreadInitialized_ = true;
 
   return true;
+}
+
+void TFileTransport::write(const uint8_t* buf, uint32_t len) {
+  if (readOnly_) {
+    throw TTransportException("TFileTransport: attempting to write to file opened readonly");
+  }
+
+  enqueueEvent(buf, len, false);
 }
 
 void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool blockUntilFlush) {
@@ -708,8 +717,9 @@ uint32_t TFileTransport::getCurChunk() {
 
 // Utility Functions
 void TFileTransport::openLogFile() {
-  mode_t mode = S_IRUSR| S_IWUSR| S_IRGRP | S_IROTH;
-  fd_ = ::open(filename_.c_str(), O_RDWR | O_CREAT | O_APPEND, mode);
+  mode_t mode = readOnly_ ? S_IRUSR | S_IRGRP | S_IROTH : S_IRUSR | S_IWUSR| S_IRGRP | S_IROTH;
+  int flags = readOnly_ ? O_RDONLY : O_RDWR | O_CREAT | O_APPEND;
+  fd_ = ::open(filename_.c_str(), flags, mode);
 
   // make sure open call was successful
   if(fd_ == -1) {
