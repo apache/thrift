@@ -110,6 +110,22 @@ void t_php_generator::generate_enum(t_enum* tenum) {
       "const " << (*c_iter)->get_name() << " = " << value << ";" << endl;
   }
 
+  indent(f_types_) <<
+    "static public __names = array(" << endl;
+  value = -1;
+  for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+    if ((*c_iter)->has_value()) {
+      value = (*c_iter)->get_value();
+    } else {
+      ++value;
+    }
+
+    indent(f_types_) <<
+      "  " << value << " => '" << (*c_iter)->get_name() << "'," << endl;
+  }
+  indent(f_types_) <<
+    ");" << endl;
+
   indent_down();
   f_types_ << "}" << endl << endl;
 }
