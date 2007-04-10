@@ -30,6 +30,7 @@ using namespace std;
 using namespace facebook::thrift::protocol;
 
 #ifndef HAVE_CLOCK_GETTIME
+
 /**
  * Fake clock_gettime for systems like darwin
  *
@@ -185,6 +186,11 @@ void TFileTransport::write(const uint8_t* buf, uint32_t len) {
 }
 
 void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool blockUntilFlush) {
+  // can't enqueue more events if file is going to close
+  if (closing_) {
+    return;
+  }
+
   // make sure that event size is valid
   if ( (maxEventSize_ > 0) && (eventLen > maxEventSize_) ) {
     T_ERROR("msg size is greater than max event size: %u > %u\n", eventLen, maxEventSize_);
@@ -291,12 +297,16 @@ void TFileTransport::writerThread() {
   while(1) {
     // this will only be true when the destructor is being invoked
     if(closing_) {
-      if(-1 == ::close(fd_)) {
-        perror("TFileTransport: error in close");
-        throw TTransportException("TFileTransport: error in file close");
+      // empty out both the buffers
+      if (enqueueBuffer_->isEmpty() && dequeueBuffer_->isEmpty()) {
+        if(-1 == ::close(fd_)) {
+          perror("TFileTransport: error in close");
+          throw TTransportException("TFileTransport: error in file close");
+        }
+        fd_ = 0;
+        pthread_exit(NULL);
+        return;
       }
-      fd_ = 0;
-      return;
     }
 
     if (swapEventBuffers(&ts_next_flush)) {
@@ -395,6 +405,10 @@ void TFileTransport::writerThread() {
 }
 
 void TFileTransport::flush() {
+  // file must be open for writing for any flushing to take place
+  if (writerThreadId_ <= 0) {
+    return;
+  }
   // wait for flush to take place
   pthread_mutex_lock(&mutex_);
 
