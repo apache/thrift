@@ -163,6 +163,9 @@ public class TestServer {
       goodbye.i64_thing = (long)4;
 
       Insanity crazy = new Insanity();
+      crazy.userMap = new HashMap<Integer, Long>();
+      crazy.xtructs = new ArrayList<Xtruct>();
+
       crazy.userMap.put(Numberz.EIGHT, (long)8);
       crazy.xtructs.add(goodbye);
 
