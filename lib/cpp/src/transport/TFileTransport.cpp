@@ -114,6 +114,9 @@ void TFileTransport::resetOutputFile(int fd, string filename, long long offset) 
 TFileTransport::~TFileTransport() {
   // flush the buffer if a writer thread is active
   if (writerThreadId_ > 0) {
+    // reduce the flush timeout so that closing is quicker
+    setFlushMaxUs(300*1000);
+
     // flush output buffer
     flush();
 
@@ -296,13 +299,15 @@ void TFileTransport::writerThread() {
 
   while(1) {
     // this will only be true when the destructor is being invoked
-    if(closing_) {
+    if(closing_) {      
       // empty out both the buffers
       if (enqueueBuffer_->isEmpty() && dequeueBuffer_->isEmpty()) {
         if(-1 == ::close(fd_)) {
           perror("TFileTransport: error in close");
           throw TTransportException("TFileTransport: error in file close");
         }
+        // just be safe and sync to disk
+        fsync(fd_);
         fd_ = 0;
         pthread_exit(NULL);
         return;
