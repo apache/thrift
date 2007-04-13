@@ -37,6 +37,8 @@ class PeekProcessor : public facebook::thrift::TProcessor {
 
   boost::shared_ptr<facebook::thrift::transport::TTransport> getPipedTransport(boost::shared_ptr<facebook::thrift::transport::TTransport> in);
 
+  void setTargetTransport(boost::shared_ptr<facebook::thrift::transport::TTransport> targetTransport);
+
   virtual bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> in, 
                        boost::shared_ptr<facebook::thrift::protocol::TProtocol> out);
 
@@ -54,6 +56,7 @@ class PeekProcessor : public facebook::thrift::TProcessor {
   boost::shared_ptr<facebook::thrift::protocol::TProtocol> pipedProtocol_;
   boost::shared_ptr<facebook::thrift::transport::TPipedTransportFactory> transportFactory_;
   boost::shared_ptr<facebook::thrift::transport::TMemoryBuffer> memoryBuffer_;
+  boost::shared_ptr<facebook::thrift::transport::TTransport> targetTransport_;
 };
 
 }}} // facebook::thrift::processor

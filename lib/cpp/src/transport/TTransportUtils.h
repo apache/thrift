@@ -425,6 +425,7 @@ class TPipedTransport : virtual public TTransport {
   void readEnd() {
     if (pipeOnRead_) {
       dstTrans_->write(rBuf_, rLen_);
+      dstTrans_->flush();
     }
 
     // reset state
@@ -437,10 +438,15 @@ class TPipedTransport : virtual public TTransport {
   void writeEnd() {
     if (pipeOnWrite_) {
       dstTrans_->write(wBuf_, wLen_);
+      dstTrans_->flush();
     }
   }
 
   void flush();
+
+  boost::shared_ptr<TTransport> getTargetTransport() {
+    return dstTrans_;
+  } 
 
  protected:
   boost::shared_ptr<TTransport> srcTrans_;
