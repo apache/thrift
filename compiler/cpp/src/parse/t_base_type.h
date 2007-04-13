@@ -48,7 +48,15 @@ class t_base_type : public t_type {
   }
 
   bool is_string_list() const {
-    return base_ == TYPE_STRING && string_list_;
+    return (base_ == TYPE_STRING) && string_list_;
+  }
+
+  void set_binary(bool val) {
+    binary_ = val;
+  }
+  
+  bool is_binary() const {
+    return (base_ == TYPE_STRING) && binary_;
   }
 
   void set_string_enum(bool val) {
@@ -75,6 +83,7 @@ class t_base_type : public t_type {
   t_base base_;
 
   bool string_list_;
+  bool binary_;
   bool string_enum_;
   std::vector<std::string> string_enum_vals_;
 };

@@ -1220,7 +1220,11 @@ void t_java_generator::generate_deserialize_field(ofstream& out,
           name;
         break;
       case t_base_type::TYPE_STRING:        
-        out << "readString();";
+        if (((t_base_type*)type)->is_binary()) {
+          out << "readBinary();";
+        } else {
+          out << "readString();";
+        }
         break;
       case t_base_type::TYPE_BOOL:
         out << "readBool();";
@@ -1431,7 +1435,11 @@ void t_java_generator::generate_serialize_field(ofstream& out,
           "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        out << "writeString(" << name << ");";
+        if (((t_base_type*)type)->is_binary()) {
+          out << "writeBinary(" << name << ");";
+        } else {
+          out << "writeString(" << name << ");";
+        }
         break;
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ");";
@@ -1602,7 +1610,7 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   }
 
   if (ttype->is_base_type()) {
-    return base_type_name(((t_base_type*)ttype)->get_base(), in_container);
+    return base_type_name((t_base_type*)ttype, in_container);
   } else if (ttype->is_enum()) {
     return (in_container ? "Integer" : "int");
   } else if (ttype->is_map()) {
@@ -1642,13 +1650,19 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
  * @param tbase The base type
  * @param container Is it going in a Java container?
  */
-string t_java_generator::base_type_name(t_base_type::t_base tbase,
+string t_java_generator::base_type_name(t_base_type* type,
                                         bool in_container) {
+  t_base_type::t_base tbase = type->get_base();
+
   switch (tbase) {
   case t_base_type::TYPE_VOID:
     return "void";
   case t_base_type::TYPE_STRING:
-    return "String";
+    if (type->is_binary()) {
+      return "byte[]";
+    } else {
+      return "String";
+    }
   case t_base_type::TYPE_BOOL:
     return "boolean";
   case t_base_type::TYPE_BYTE:

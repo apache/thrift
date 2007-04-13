@@ -42,6 +42,7 @@ t_program* g_program;
 
 t_type* g_type_void;
 t_type* g_type_string;
+t_type* g_type_binary;
 t_type* g_type_slist;
 t_type* g_type_bool;
 t_type* g_type_byte;
@@ -644,6 +645,8 @@ int main(int argc, char** argv) {
   // Initialize global types
   g_type_void   = new t_base_type("void",   t_base_type::TYPE_VOID);
   g_type_string = new t_base_type("string", t_base_type::TYPE_STRING);
+  g_type_binary = new t_base_type("string", t_base_type::TYPE_STRING);
+  ((t_base_type*)g_type_binary)->set_binary(true);
   g_type_slist  = new t_base_type("string", t_base_type::TYPE_STRING);
   ((t_base_type*)g_type_slist)->set_string_list(true);
   g_type_bool   = new t_base_type("bool",   t_base_type::TYPE_BOOL);

@@ -126,6 +126,11 @@ public class TBinaryProtocol extends TProtocol {
     trans_.write(dat, 0, dat.length);
   }
 
+  public void writeBinary(byte[] bin) throws TException {
+    writeI32(bin.length);
+    trans_.write(bin, 0, bin.length);
+  }
+
   /**
    * Reading methods.
    */
@@ -238,4 +243,12 @@ public class TBinaryProtocol extends TProtocol {
     trans_.readAll(buf, 0, size);
     return new String(buf);
   }
+
+  public byte[] readBinary() throws TException {
+    int size = readI32();
+    byte[] buf = new byte[size];
+    trans_.readAll(buf, 0, size);
+    return buf;
+  }
+
 }

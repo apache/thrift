@@ -84,6 +84,8 @@ public abstract class TProtocol {
 
   public abstract void writeString(String str) throws TException;
 
+  public abstract void writeBinary(byte[] bin) throws TException;
+
   /**
    * Reading methods.
    */
@@ -125,5 +127,7 @@ public abstract class TProtocol {
   public abstract double readDouble() throws TException;
 
   public abstract String readString() throws TException;
+
+  public abstract byte[] readBinary() throws TException;
 
 }
