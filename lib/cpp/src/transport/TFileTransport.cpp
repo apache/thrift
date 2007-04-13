@@ -20,6 +20,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
 #include <iostream>
 #include <sys/stat.h>
 

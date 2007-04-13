@@ -7,8 +7,14 @@
 #ifndef _THRIFT_THRIFT_H_
 #define _THRIFT_THRIFT_H_ 1
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <netinet/in.h>
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
 #include <string>
 #include <map>
 #include <list>

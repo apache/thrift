@@ -7,14 +7,25 @@
 #ifndef _THRIFT_LOGGING_H
 #define _THRIFT_LOGGING_H 1
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /**
  * Contains utility macros for debugging and logging.
  *
  * @author Aditya Agarwal
  */
 
+#ifndef HAVE_CLOCK_GETTIME
 #include <time.h>
+#else
+#include <sys/time.h>
+#endif
+
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 
 /**
  * T_GLOBAL_DEBUGGING_LEVEL = 0: all debugging turned off, debug macros undefined

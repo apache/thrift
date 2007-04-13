@@ -2,6 +2,14 @@
 Release 20070401
 ----------------
 
+David Reiss <dreiss@stanford.edu>
+-strings.h include fix for bzero
+-endianness fixes on TBinaryProtocol double serialization
+-improved ntohll,htonll implementation
+
+Dan Li <dto@dev.java.net>
+-Java TestServer and Tutorial Fixes
+
 Kevin Ko <kevin.s.ko@gmail.com>
 -Fix for unnecessary std::string copy construction in Protocol/Exception
 

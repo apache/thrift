@@ -54,6 +54,8 @@ AC_CHECK_HEADERS([sys/time.h])
 
 AC_CHECK_HEADERS([unistd.h])
 
+AC_CHECK_HEADERS([endian.h])
+
 AC_C_INLINE
 
 AX_BOOST_BASE([1.33.1])

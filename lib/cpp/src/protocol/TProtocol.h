@@ -21,12 +21,24 @@ namespace facebook { namespace thrift { namespace protocol {
 
 using facebook::thrift::transport::TTransport;
 
+#ifdef HAVE_ENDIAN_H
+#include <endian.h>
+#endif
+
 #if __BYTE_ORDER == __BIG_ENDIAN
-#define ntohll(n) (n)
-#define htonll(n) (n)
-#else
-#define ntohll(n) ( (((unsigned long long)ntohl(n)) << 32) + ntohl(n >> 32) )
-#define htonll(n) ( (((unsigned long long)htonl(n)) << 32) + htonl(n >> 32) )
+# define ntohll(n) (n)
+# define htonll(n) (n)
+#elif __BYTE_ORDER == __LITTLE_ENDIAN
+# if defined(__GNUC__) && defined(__GLIBC__)
+#  include <byteswap.h>
+#  define ntohll(n) bswap_64(n)
+#  define htonll(n) bswap_64(n)
+# else /* GNUC & GLIBC */
+#  define ntohll(n) ( (((unsigned long long)ntohl(n)) << 32) + ntohl(n >> 32) )
+#  define htonll(n) ( (((unsigned long long)htonl(n)) << 32) + htonl(n >> 32) )
+# endif /* GNUC & GLIBC */
+#else /* __BYTE_ORDER */
+# error "Can't define htonll or ntohll!"
 #endif
 
 /**
