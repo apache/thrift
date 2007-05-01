@@ -37,7 +37,7 @@ void t_php_generator::init_generator() {
 }
 
 /**
- * Prints standard java imports
+ * Prints standard php includes
  */
 string t_php_generator::php_includes() {
   return
