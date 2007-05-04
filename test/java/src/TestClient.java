@@ -71,7 +71,7 @@ public class TestClient {
       }
 
       TBinaryProtocol binaryProtocol =
-        new TBinaryProtocol(transport);
+        new TBinaryProtocol(transport, false, false);
       ThriftTest.Client testClient =
         new ThriftTest.Client(binaryProtocol);
 
@@ -330,15 +330,19 @@ public class TestClient {
             System.out.print(k2 + " => {");
             AbstractMap<Integer, Long> userMap = v2.userMap;
             System.out.print("{");
-            for (int k3 : userMap.keySet()) {
-              System.out.print(k3 + " => " + userMap.get(k3) + ", ");
+            if (userMap != null) {
+              for (int k3 : userMap.keySet()) {
+                System.out.print(k3 + " => " + userMap.get(k3) + ", ");
+              }
             }
             System.out.print("}, ");
 
             ArrayList<Xtruct> xtructs = v2.xtructs;
             System.out.print("{");
-            for (Xtruct x : xtructs) {
-              System.out.print("{" + "\"" + x.string_thing + "\", " + x.byte_thing + ", " + x.i32_thing + ", "+ x.i64_thing + "}, ");
+            if (xtructs != null) {
+              for (Xtruct x : xtructs) {
+                System.out.print("{" + "\"" + x.string_thing + "\", " + x.byte_thing + ", " + x.i32_thing + ", "+ x.i64_thing + "}, ");
+              }
             }
             System.out.print("}");
 
