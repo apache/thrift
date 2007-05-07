@@ -362,7 +362,7 @@ class TFileTransport : public TFileReaderTransport,
 };
 
 // Exception thrown when EOF is hit
- class TEOFException : TTransportException {
+class TEOFException : public TTransportException {
  public:
   TEOFException():
     TTransportException(TTransportException::END_OF_FILE) {};
