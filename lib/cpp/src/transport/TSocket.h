@@ -68,7 +68,7 @@ class TSocket : public TTransport {
    *
    * @throws TTransportException If the socket could not connect
    */
-  void open();
+  virtual void open();
 
   /**
    * Shuts down communications on the socket.
