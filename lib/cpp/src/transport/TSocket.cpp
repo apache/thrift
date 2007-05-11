@@ -274,7 +274,9 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
     }
     
     // Some other error, whatevz
-    throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
+    char buff[1024];
+    sprintf(buff, "ERROR errno: %d", errno);
+    throw TTransportException(TTransportException::UNKNOWN, buff);
   }
   
   // The remote host has closed the socket
