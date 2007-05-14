@@ -25,6 +25,8 @@ TServerSocket::TServerSocket(int port) :
   acceptBacklog_(1024),
   sendTimeout_(0),
   recvTimeout_(0),
+  retryLimit_(0),
+  retryDelay_(0),
   intSock1_(-1),
   intSock2_(-1) {}
 
@@ -34,6 +36,8 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   acceptBacklog_(1024),
   sendTimeout_(sendTimeout),
   recvTimeout_(recvTimeout),
+  retryLimit_(0),
+  retryDelay_(0),
   intSock1_(-1),
   intSock2_(-1) {}
 
@@ -47,6 +51,14 @@ void TServerSocket::setSendTimeout(int sendTimeout) {
 
 void TServerSocket::setRecvTimeout(int recvTimeout) {
   recvTimeout_ = recvTimeout;
+}
+
+void TServerSocket::setRetryLimit(int retryLimit) {
+  retryLimit_ = retryLimit;
+}
+
+void TServerSocket::setRetryDelay(int retryDelay) {
+  retryDelay_ = retryDelay;
 }
 
 void TServerSocket::listen() {
@@ -113,13 +125,26 @@ void TServerSocket::listen() {
     throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed");
   }
 
-  // Bind to a port
+  // prepare the port information
   struct sockaddr_in addr;
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port_);
   addr.sin_addr.s_addr = INADDR_ANY;
-  if (-1 == bind(serverSocket_, (struct sockaddr *)&addr, sizeof(addr))) {
+  
+  // we may want to try to bind more than once, since SO_REUSEADDR doesn't 
+  // always seem to work. The client can configure the retry variables.
+  int retries = 0;
+  do {
+    if (0 == bind(serverSocket_, (struct sockaddr *)&addr, sizeof(addr))) {
+      break;
+    }
+
+    // use short circuit evaluation here to only sleep if we need to
+  } while ((retries++ < retryLimit_) && (sleep(retryDelay_) == 0));
+
+  // throw an error if we failed to bind properly
+  if (retries > retryLimit_) {
     char errbuf[1024];
     sprintf(errbuf, "TServerSocket::listen() BIND %d", port_);
     perror(errbuf);
@@ -203,7 +228,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   if (recvTimeout_ > 0) {
     client->setRecvTimeout(recvTimeout_);
   }
-  
+
   return client;
 }
 
