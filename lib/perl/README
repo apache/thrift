@@ -1,0 +1,38 @@
+Thrift Perl Software Library
+
+Author: T Jake Luciani (jakers@gmail.com)
+Last Modified: 2007-Apr-28
+
+Thrift is distributed under the Thrift open source software license.
+Please see the included LICENSE file.
+
+Using Thrift with Perl
+=====================
+
+Thrift requires Perl >= 5.6.0
+
+Exceptions are thrown with die so be sure to wrap eval{} statments
+around any code that contains exceptions.
+
+The 64bit Integers work only upto 2^42 on my machine :-?
+Math::BigInt is probably needed.
+
+The only other issue I have with this implementation is the lack of
+strict accessor methods, for example: to set a struct with variable
+foo you must assign it via hash key:
+
+my $x = new StructWithFoo();
+$x->{foo} = "bar";
+
+rather than:
+
+$x->foo("bar");
+
+Please see tutoral and test dirs for examples...
+
+Dependencies
+============
+
+Bit::Vector - comes with modern perl installations.
+
+
