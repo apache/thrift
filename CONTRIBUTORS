@@ -1,6 +1,9 @@
 ----------------
-Release 20070401
+Release 200705xx
 ----------------
+
+Jake Luciani <jakers@gmail.com>
+-Perl code generation, libraries, test code
 
 David Reiss <dreiss@stanford.edu>
 -strings.h include fix for bzero
@@ -16,3 +19,7 @@ Kevin Ko <kevin.s.ko@gmail.com>
 Paul Querna <pquerna@apache.org>
 -Autoconf error message fix for libevent detection
 -clock_gettime implementation for OSX
+
+----------------
+Release 20070401
+----------------
