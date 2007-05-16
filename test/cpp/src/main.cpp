@@ -26,6 +26,7 @@ using __gnu_cxx::hash_map;
 using __gnu_cxx::hash;
 
 using namespace std;
+using namespace boost;
 
 using namespace facebook::thrift;
 using namespace facebook::thrift::protocol;
