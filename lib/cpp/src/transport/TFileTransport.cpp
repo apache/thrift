@@ -99,7 +99,7 @@ void TFileTransport::resetOutputFile(int fd, string filename, long long offset) 
     // flush any events in the queue
     flush();
     fprintf(stderr, "error, current file (%s) not closed\n", filename_.c_str());
-    if(-1 == ::close(fd_)) {
+    if (-1 == ::close(fd_)) {
       perror("TFileTransport: error in file close");
       throw TTransportException("TFileTransport: error in file close");
     }
@@ -305,7 +305,7 @@ void TFileTransport::writerThread() {
     if(closing_) {      
       // empty out both the buffers
       if (enqueueBuffer_->isEmpty() && dequeueBuffer_->isEmpty()) {
-        if(-1 == ::close(fd_)) {
+        if (-1 == ::close(fd_)) {
           perror("TFileTransport: error in close");
           throw TTransportException("TFileTransport: error in file close");
         }
@@ -353,17 +353,17 @@ void TFileTransport::writerThread() {
             // sanity check
             if (padding <= 0) {
               T_DEBUG("Padding is empty, skipping event");
-            continue;
+              continue;
             }
             if (padding > (int32_t)chunkSize_) {
               T_DEBUG("padding is larger than chunk size, skipping event");
-            continue;
+              continue;
             }
             uint8_t zeros[padding];
             bzero(zeros, padding);
-            //        T_DEBUG_L(1, "Adding padding of %u bytes at %lu (to reach chunk %lld)", 
-            //        padding, offset_, chunk2);
-            if(-1 == ::write(fd_, zeros, padding)) {
+            //T_DEBUG_L(1, "Adding padding of %u bytes at %lu (to reach chunk %lld)", 
+            //padding, offset_, chunk2);
+            if (-1 == ::write(fd_, zeros, padding)) {
               perror("TFileTransport: error while padding zeros");
               throw TTransportException("TFileTransport: error while padding zeros");
             }
@@ -373,8 +373,8 @@ void TFileTransport::writerThread() {
         }
 
         // write the dequeued event to the file
-        if(outEvent->eventSize_ > 0) {
-          if(-1 == ::write(fd_, outEvent->eventBuff_, outEvent->eventSize_)) {
+        if (outEvent->eventSize_ > 0) {
+          if (-1 == ::write(fd_, outEvent->eventBuff_, outEvent->eventSize_)) {
             perror("TFileTransport: error while writing event");
             throw TTransportException("TFileTransport: error while writing event");
           }
@@ -890,7 +890,7 @@ void TFileProcessor::process(uint32_t numEvents, bool tail) {
       if (!tail) {
         break;
       }
-    } catch (TException te) {
+    } catch (TException &te) {
       cerr << te.what() << endl;
       break;
     }
@@ -919,7 +919,7 @@ void TFileProcessor::processChunk() {
       }
     } catch (TEOFException& teof) {
       break;
-    } catch (TException te) {
+    } catch (TException &te) {
       cerr << te.what() << endl;
       break;
     }
