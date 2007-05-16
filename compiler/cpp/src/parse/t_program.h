@@ -38,7 +38,7 @@
 class t_program {
  public:
   t_program(std::string path, std::string name) :
-    path_(path), 
+    path_(path),
     name_(name) {
     scope_ = new t_scope();
   }
@@ -49,7 +49,7 @@ class t_program {
     scope_ = new t_scope();
   }
 
-  // Path accessor   
+  // Path accessor
   const std::string& get_path() const { return path_; }
 
   // Name accessor
@@ -139,6 +139,14 @@ class t_program {
     return xsd_namespace_;
   }
 
+  void set_perl_namespace(std::string perl_namespace) {
+    perl_namespace_ = perl_namespace;
+  }
+
+  const std::string& get_perl_namespace() const {
+    return perl_namespace_;
+  }
+
  private:
 
   // File path
@@ -178,6 +186,9 @@ class t_program {
 
   // XSD namespace
   std::string xsd_namespace_;
+
+  // Perl namespace
+  std::string perl_namespace_;
 
 };
 

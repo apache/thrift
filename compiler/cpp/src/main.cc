@@ -28,6 +28,7 @@
 #include "generate/t_py_generator.h"
 #include "generate/t_rb_generator.h"
 #include "generate/t_xsd_generator.h"
+#include "generate/t_perl_generator.h"
 
 using namespace std;
 
@@ -116,6 +117,7 @@ bool gen_py = false;
 bool gen_xsd = false;
 bool gen_php = false;
 bool gen_phpi = false;
+bool gen_perl = false;
 bool gen_recurse = false;
 
 /**
@@ -196,7 +198,7 @@ void pwarning(int level, char* fmt, ...) {
  * @param fmt C format string followed by additional arguments
  */
 void failure(const char* fmt, ...) {
-  va_list args; 
+  va_list args;
   fprintf(stderr, "[FAILURE:%s:%d] ", g_curpath.c_str(), yylineno);
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
@@ -244,8 +246,8 @@ string include_file(string filename) {
       pwarning(0, "Cannot open include file %s\n", filename.c_str());
       return std::string();
     }
-  
-    // Stat this files
+
+    // Stat this file
     struct stat finfo;
     if (stat(rp, &finfo) == 0) {
       return rp;
@@ -254,18 +256,18 @@ string include_file(string filename) {
     // new search path with current dir global
     vector<string> sp = g_incl_searchpath;
     sp.insert(sp.begin(), g_curdir);
-   
+
     // iterate through paths
     vector<string>::iterator it;
     for (it = sp.begin(); it != sp.end(); it++) {
       string sfilename = *(it) + "/" + filename;
-      
+
       // Realpath!
       char rp[PATH_MAX];
       if (realpath(sfilename.c_str(), rp) == NULL) {
         continue;
       }
-  
+
       // Stat this files
       struct stat finfo;
       if (stat(rp, &finfo) == 0) {
@@ -273,7 +275,7 @@ string include_file(string filename) {
       }
     }
   }
-  
+
   // Uh oh
   pwarning(0, "Could not find include file %s\n", filename.c_str());
   return std::string();
@@ -292,6 +294,7 @@ void usage() {
   fprintf(stderr, "  -py         Generate Python output files\n");
   fprintf(stderr, "  -rb         Generate Ruby output files\n");
   fprintf(stderr, "  -xsd        Generate XSD output files\n");
+  fprintf(stderr, "  -perl       Generate Perl output files\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories \n");
   fprintf(stderr, "                searched for include directives\n");
   fprintf(stderr, "  -nowarn     Suppress all compiler warnings (BAD!)\n");
@@ -394,7 +397,7 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       validate_const_rec(name + "<key>", k_type, v_iter->first);
       validate_const_rec(name + "<val>", v_type, v_iter->second);
-    }    
+    }
   } else if (type->is_list() || type->is_set()) {
     t_type* e_type;
     if (type->is_list()) {
@@ -427,10 +430,10 @@ void validate_field_value(t_field* field, t_const_value* cv) {
 /**
  * Parses a program
  */
-void parse(t_program* program, t_program* parent_program) {  
+void parse(t_program* program, t_program* parent_program) {
   // Get scope file path
   string path = program->get_path();
-  
+
   // Set current dir global, which is used in the include_file function
   g_curdir = directory_name(path);
   g_curpath = path;
@@ -443,7 +446,7 @@ void parse(t_program* program, t_program* parent_program) {
 
   // Create new scope and scan for includes
   pverbose("Scanning %s for includes\n", path.c_str());
-  g_parse_mode = INCLUDES; 
+  g_parse_mode = INCLUDES;
   g_program = program;
   g_scope = program->scope();
   try {
@@ -547,6 +550,13 @@ void generate(t_program* program) {
       delete xsd;
     }
 
+    if (gen_perl) {
+      pverbose("Generating PERL\n");
+      t_perl_generator* perl = new t_perl_generator(program);
+      perl->generate_program();
+      delete perl;
+    }
+
   } catch (string s) {
     printf("Error: %s\n", s.c_str());
   } catch (const char* exc) {
@@ -607,6 +617,8 @@ int main(int argc, char** argv) {
         gen_rb = true;
       } else if (strcmp(arg, "-xsd") == 0) {
         gen_xsd = true;
+      } else if (strcmp(arg, "-perl") == 0) {
+        gen_perl = true;
       } else if (strcmp(arg, "-I") == 0) {
         // An argument of "-I\ asdf" is invalid and has unknown results
         arg = argv[++i];
@@ -625,9 +637,9 @@ int main(int argc, char** argv) {
       arg = strtok(NULL, " ");
     }
   }
-  
+
   // You gotta generate something!
-  if (!gen_cpp && !gen_java && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd) {
+  if (!gen_cpp && !gen_java && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
