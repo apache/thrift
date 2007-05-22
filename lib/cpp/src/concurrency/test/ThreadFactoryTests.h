@@ -4,6 +4,7 @@
 // See accompanying file LICENSE or visit the Thrift site at:
 // http://developers.facebook.com/thrift/
 
+#include <config.h>
 #include <concurrency/Thread.h>
 #include <concurrency/PosixThreadFactory.h>
 #include <concurrency/Monitor.h>
@@ -19,7 +20,7 @@ using boost::shared_ptr;
 using namespace facebook::thrift::concurrency;
 
 /**
- * ThreadManagerTests class 
+ * ThreadManagerTests class
  *
  * @author marc
  * @version $Id:$
@@ -29,7 +30,7 @@ class ThreadFactoryTests {
 public:
 
   static const double ERROR;
-  
+
   class Task: public Runnable {
 
   public:
@@ -65,20 +66,20 @@ public:
    * Reap N threads
    */
   class ReapNTask: public Runnable {
-    
+
    public:
-    
+
     ReapNTask(Monitor& monitor, int& activeCount) :
       _monitor(monitor),
       _count(activeCount) {}
-      
+
     void run() {
       Synchronized s(_monitor);
-      
+
       _count--;
-      
+
       //std::cout << "\t\t\tthread count: " << _count << std::endl;
-      
+
       if (_count == 0) {
         _monitor.notify();
       }
@@ -128,7 +129,7 @@ public:
   class SynchStartTask: public Runnable {
 
    public:
-    
+
     enum STATE {
       UNINITIALIZED,
       STARTING,
@@ -171,9 +172,9 @@ public:
   bool synchStartTest() {
 
     Monitor monitor;
-    
+
     SynchStartTask::STATE state = SynchStartTask::UNINITIALIZED;
-    
+
     shared_ptr<SynchStartTask> task = shared_ptr<SynchStartTask>(new SynchStartTask(monitor, state));
 
     PosixThreadFactory threadFactory =  PosixThreadFactory();
@@ -199,7 +200,10 @@ public:
     {
       Synchronized s(monitor);
 
-      monitor.wait(100);
+      try {
+          monitor.wait(100);
+      } catch(TimedOutException& e) {
+      }
 
       if (state == SynchStartTask::STARTED) {
 
@@ -207,7 +211,7 @@ public:
 
 	monitor.notify();
       }
-      
+
       while (state == SynchStartTask::STOPPING) {
 	monitor.wait();
       }
@@ -233,7 +237,10 @@ public:
     for (size_t ix = 0; ix < count; ix++) {
       {
         Synchronized s(monitor);
-	monitor.wait(timeout);
+        try {
+            monitor.wait(timeout);
+        } catch(TimedOutException& e) {
+        }
       }
     }
 

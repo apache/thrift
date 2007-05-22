@@ -7,7 +7,9 @@
 #ifndef _THRIFT_CONCURRENCY_MONITOR_H_
 #define _THRIFT_CONCURRENCY_MONITOR_H_ 1
 
-namespace facebook { namespace thrift { namespace concurrency { 
+#include "Exception.h"
+
+namespace facebook { namespace thrift { namespace concurrency {
 
 /**
  * A monitor is a combination mutex and condition-event.  Waiting and
@@ -50,7 +52,7 @@ class Monitor {
 
 class Synchronized {
  public:
-  
+
  Synchronized(const Monitor& value) :
    monitor_(value) {
    monitor_.lock();

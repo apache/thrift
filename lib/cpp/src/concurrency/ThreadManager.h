@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include "Thread.h"
 
-namespace facebook { namespace thrift { namespace concurrency { 
+namespace facebook { namespace thrift { namespace concurrency {
 
 /**
  * Thread Pool Manager and related classes
@@ -56,7 +56,7 @@ class ThreadManager {
    * Stops the thread manager. Aborts all remaining unprocessed task, shuts
    * down all created worker threads, and realeases all allocated resources.
    * This method blocks for all worker threads to complete, thus it can
-   * potentially block forever if a worker thread is running a task that 
+   * potentially block forever if a worker thread is running a task that
    * won't terminate.
    */
   virtual void stop() = 0;
@@ -76,7 +76,7 @@ class ThreadManager {
     STOPPING,
     STOPPED
   };
-  
+
   virtual const STATE state() const = 0;
 
   virtual boost::shared_ptr<ThreadFactory> threadFactory() const = 0;
@@ -108,11 +108,26 @@ class ThreadManager {
   virtual size_t totalTaskCount() const = 0;
 
   /**
-   * Adds a task to be execued at some time in the future by a worker thread.
-   *
-   * @param value The task to run
+   * Gets the maximum pending task count.  0 indicates no maximum
    */
-  virtual void add(boost::shared_ptr<Runnable>value) = 0;
+  virtual size_t pendingTaskCountMax() const = 0;
+
+  /**
+   * Adds a task to be executed at some time in the future by a worker thread.
+   *
+   * This method will block if pendingTaskCountMax() in not zero and pendingTaskCount()
+   * is greater than or equalt to pendingTaskCountMax().  If this method is called in the
+   * context of a ThreadManager worker thread it will throw a
+   * TooManyPendingTasksException
+   *
+   * @param task  The task to queue for execution
+   *
+   * @param timeout Time to wait in milliseconds to add a task when a pending-task-count
+   * is specified
+   *
+   * @throws TooManyPendingTasksException Pending task count exceeds max pending task count
+   */
+  virtual void add(boost::shared_ptr<Runnable>task, long long timeout=0LL) = 0;
 
   /**
    * Removes a pending task
@@ -122,12 +137,14 @@ class ThreadManager {
   static boost::shared_ptr<ThreadManager> newThreadManager();
 
   /**
-   * Creates a simple thread manager the uses count number of worker threads
+   * Creates a simple thread manager the uses count number of worker threads and has
+   * a pendingTaskCountMax maximum pending tasks. The default, 0, specified no limit
+   * on pending tasks
    */
-  static boost::shared_ptr<ThreadManager> newSimpleThreadManager(size_t count=4);
+  static boost::shared_ptr<ThreadManager> newSimpleThreadManager(size_t count=4, size_t pendingTaskCountMax=0);
 
   class Task;
-  
+
   class Worker;
 
   class Impl;

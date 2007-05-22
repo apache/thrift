@@ -4,8 +4,8 @@
 // See accompanying file LICENSE or visit the Thrift site at:
 // http://developers.facebook.com/thrift/
 
-#include "Monitor.h" 
-#include "Exception.h" 
+#include "Monitor.h"
+#include "Exception.h"
 #include "Util.h"
 
 #include <assert.h>
@@ -15,11 +15,11 @@
 
 #include <pthread.h>
 
-namespace facebook { namespace thrift { namespace concurrency { 
+namespace facebook { namespace thrift { namespace concurrency {
 
 /**
  * Monitor implementation using the POSIX pthread library
- * 
+ *
  * @author marc
  * @version $Id:$
  */
@@ -30,16 +30,18 @@ class Monitor::Impl {
   Impl() :
     mutexInitialized_(false),
     condInitialized_(false) {
-    
-    try {
-      int ret = pthread_mutex_init(&pthread_mutex_, NULL);
-      assert(ret == 0);
+
+    if(pthread_mutex_init(&pthread_mutex_, NULL) == 0) {
       mutexInitialized_ = true;
-      ret = pthread_cond_init(&pthread_cond_, NULL);
-      assert(ret == 0);
-      condInitialized_ = true;
-    } catch(...) {
+
+      if(pthread_cond_init(&pthread_cond_, NULL) == 0) {
+        condInitialized_ = true;
+      }
+    }
+
+    if(!mutexInitialized_ || !condInitialized_) {
       cleanup();
+      throw SystemResourceException();
     }
   }
 
@@ -65,6 +67,7 @@ class Monitor::Impl {
                                           &abstime);
       if (result == ETIMEDOUT) {
 	assert(Util::currentTime() >= (now + timeout));
+        throw TimedOutException();
       }
     }
   }

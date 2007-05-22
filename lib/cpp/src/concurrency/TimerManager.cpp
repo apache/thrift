@@ -97,7 +97,9 @@ class TimerManager::Dispatcher: public Runnable {
             timeout = manager_->taskMap_.begin()->first - now;
 	  }
           assert((timeout != 0 && manager_->taskCount_ > 0) || (timeout == 0 && manager_->taskCount_ == 0));
-          manager_->monitor_.wait(timeout);
+          try {
+              manager_->monitor_.wait(timeout);
+          } catch(TimedOutException& e) {}
 	  now = Util::currentTime();
 	}
 	

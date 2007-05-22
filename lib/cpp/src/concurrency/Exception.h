@@ -10,7 +10,7 @@
 #include <exception>
 #include <Thrift.h>
 
-namespace facebook { namespace thrift { namespace concurrency { 
+namespace facebook { namespace thrift { namespace concurrency {
 
 class NoSuchTaskException : public facebook::thrift::TException {};
 
@@ -21,6 +21,16 @@ class InvalidArgumentException : public facebook::thrift::TException {};
 class IllegalStateException : public facebook::thrift::TException {};
 
 class TimedOutException : public facebook::thrift::TException {};
+
+class TooManyPendingTasksException : public facebook::thrift::TException {};
+
+class SystemResourceException : public facebook::thrift::TException {
+public:
+    SystemResourceException() {}
+
+    SystemResourceException(const std::string& message) :
+        TException(message) {}
+};
 
 }}} // facebook::thrift::concurrency
 

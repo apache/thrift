@@ -68,7 +68,7 @@ TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
                                      shared_ptr<ThreadManager> threadManager) :
   TServer(processor, serverTransport, transportFactory, protocolFactory), 
   threadManager_(threadManager),
-  stop_(false) {}
+  stop_(false), timeout_(0) {}
 
 TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
                                      shared_ptr<TServerTransport> serverTransport,
@@ -80,7 +80,7 @@ TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
   TServer(processor, serverTransport, inputTransportFactory, outputTransportFactory,
           inputProtocolFactory, outputProtocolFactory),
   threadManager_(threadManager),
-  stop_(false) {}
+  stop_(false), timeout_(0) {}
 
 
 TThreadPoolServer::~TThreadPoolServer() {}
@@ -118,7 +118,7 @@ void TThreadPoolServer::serve() {
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
       // Add to threadmanager pool
-      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, inputProtocol, outputProtocol)));
+      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, inputProtocol, outputProtocol)), timeout_);
 
     } catch (TTransportException& ttx) {
       if (inputTransport != NULL) { inputTransport->close(); }
@@ -155,5 +155,8 @@ void TThreadPoolServer::serve() {
   }
 
 }
+
+long long TThreadPoolServer::timeout() const {return timeout_;}
+void TThreadPoolServer::timeout(long long value) {timeout_ = value;}
 
 }}} // facebook::thrift::server

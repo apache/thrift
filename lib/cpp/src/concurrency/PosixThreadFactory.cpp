@@ -5,6 +5,7 @@
 // http://developers.facebook.com/thrift/
 
 #include "PosixThreadFactory.h"
+#include "Exception.h"
 
 #include <assert.h>
 #include <pthread.h>
@@ -18,7 +19,7 @@ namespace facebook { namespace thrift { namespace concurrency {
 using namespace boost;
 
 /**
- * The POSIX thread class. 
+ * The POSIX thread class.
  *
  * @author marc
  * @version $Id:$
@@ -47,10 +48,10 @@ class PthreadThread: public Thread {
   weak_ptr<PthreadThread> self_;
 
  public:
-  
-  PthreadThread(int policy, int priority, int stackSize, shared_ptr<Runnable> runnable) : 
+
+  PthreadThread(int policy, int priority, int stackSize, shared_ptr<Runnable> runnable) :
     pthread_(0),
-    state_(uninitialized), 
+    state_(uninitialized),
     policy_(policy),
     priority_(priority),
     stackSize_(stackSize) {
@@ -68,32 +69,39 @@ class PthreadThread: public Thread {
     state_ = starting;
 
     pthread_attr_t thread_attr;
-    int ret = pthread_attr_init(&thread_attr);
-    assert(ret == 0);
+    if(pthread_attr_init(&thread_attr) != 0) {
+        throw SystemResourceException("pthread_attr_init failed");
+    }
 
-    ret = pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_JOINABLE);
-    assert(ret == 0);
+    if(pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_JOINABLE) != 0) {
+        throw SystemResourceException("pthread_attr_setdetachstate failed");
+    }
 
     // Set thread stack size
-    ret = pthread_attr_setstacksize(&thread_attr, MB * stackSize_);
-    assert(ret == 0);
+    if(pthread_attr_setstacksize(&thread_attr, MB * stackSize_) != 0) {
+        throw SystemResourceException("pthread_attr_setstacksize failed");
+    }
 
     // Set thread policy
-    ret = pthread_attr_setschedpolicy(&thread_attr, policy_);
-    assert(ret == 0);
+    if(pthread_attr_setschedpolicy(&thread_attr, policy_) != 0) {
+        throw SystemResourceException("pthread_attr_setschedpolicy failed");
+    }
 
     struct sched_param sched_param;
     sched_param.sched_priority = priority_;
 
     // Set thread priority
-    ret = pthread_attr_setschedparam(&thread_attr, &sched_param);
-    assert(ret == 0);
+    if(pthread_attr_setschedparam(&thread_attr, &sched_param) != 0) {
+        throw SystemResourceException("pthread_attr_setschedparam failed");
+    }
 
     // Create reference
     shared_ptr<PthreadThread>* selfRef = new shared_ptr<PthreadThread>();
     *selfRef = self_.lock();
-    ret = pthread_create(&pthread_, &thread_attr, threadMain, (void*)selfRef);
-    assert(ret == 0);
+
+    if(pthread_create(&pthread_, &thread_attr, threadMain, (void*)selfRef) != 0) {
+        throw SystemResourceException("pthread_create failed");
+    }
   }
 
   void join() {
@@ -101,6 +109,10 @@ class PthreadThread: public Thread {
       void* ignore;
       pthread_join(pthread_, &ignore);
     }
+  }
+
+  id_t id() {
+    return pthread_;
   }
 
   shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
@@ -130,7 +142,7 @@ void* PthreadThread::threadMain(void* arg) {
   if (thread->state_ != stopping && thread->state_ != stopped) {
     thread->state_ = stopping;
   }
-    
+
   return (void*)0;
 }
 
@@ -187,14 +199,14 @@ class PosixThreadFactory::Impl {
 
  public:
 
-  Impl(POLICY policy, PRIORITY priority, int stackSize, bool detached) : 
+  Impl(POLICY policy, PRIORITY priority, int stackSize, bool detached) :
     policy_(policy),
     priority_(priority),
     stackSize_(stackSize),
     detached_(detached) {}
 
   /**
-   * Creates a new POSIX thread to run the runnable object 
+   * Creates a new POSIX thread to run the runnable object
    *
    * @param runnable A runnable object
    */
@@ -211,6 +223,8 @@ class PosixThreadFactory::Impl {
 
   PRIORITY priority() const { return priority_; }
 
+  Thread::id_t currentThreadId() const {return pthread_self();}
+
   /**
    * Sets priority.
    *
@@ -220,7 +234,7 @@ class PosixThreadFactory::Impl {
   void priority(PRIORITY value) { priority_ = value; }
 };
 
-PosixThreadFactory::PosixThreadFactory(POLICY policy, PRIORITY priority, int stackSize, bool detached) : 
+PosixThreadFactory::PosixThreadFactory(POLICY policy, PRIORITY priority, int stackSize, bool detached) :
   impl_(new PosixThreadFactory::Impl(policy, priority, stackSize, detached)) {}
 
 shared_ptr<Thread> PosixThreadFactory::newThread(shared_ptr<Runnable> runnable) const { return impl_->newThread(runnable); }
@@ -232,5 +246,7 @@ void PosixThreadFactory::stackSize(int value) { impl_->stackSize(value); }
 PosixThreadFactory::PRIORITY PosixThreadFactory::priority() const { return impl_->priority(); }
 
 void PosixThreadFactory::priority(PosixThreadFactory::PRIORITY value) { impl_->priority(value); }
+
+Thread::id_t PosixThreadFactory::currentThreadId() const {return impl_->currentThreadId();}
 
 }}} // facebook::thrift::concurrency

@@ -41,6 +41,9 @@ class TThreadPoolServer : public TServer {
   virtual ~TThreadPoolServer();
 
   virtual void serve();
+
+  virtual long long timeout() const;
+  virtual void timeout(long long value);
   
   virtual void stop() {
     stop_ = true;
@@ -52,6 +55,8 @@ class TThreadPoolServer : public TServer {
   boost::shared_ptr<ThreadManager> threadManager_;
 
   volatile bool stop_;
+
+  volatile long long timeout_;
   
 };
 
