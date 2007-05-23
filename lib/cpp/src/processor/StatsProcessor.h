@@ -74,7 +74,7 @@ public:
     return true;
   }
 
-  const std::map<std::string, long long>& get_frequency_map() {
+  const std::map<std::string, int64_t>& get_frequency_map() {
     return frequency_map_;
   }
 
@@ -241,7 +241,7 @@ protected:
   }
 
   boost::shared_ptr<facebook::thrift::protocol::TProtocol> piprot_;
-  std::map<std::string, long long> frequency_map_;
+  std::map<std::string, int64_t> frequency_map_;
 
   bool print_;
   bool frequency_;

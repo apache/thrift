@@ -36,7 +36,7 @@ public:
 
   public:
 
-    Task(Monitor& monitor, size_t& count, long long timeout) :
+    Task(Monitor& monitor, size_t& count, int64_t timeout) :
       _monitor(monitor),
       _count(count),
       _timeout(timeout),
@@ -78,9 +78,9 @@ public:
 
     Monitor& _monitor;
     size_t& _count;
-    long long _timeout;
-    long long _startTime;
-    long long _endTime;
+    int64_t _timeout;
+    int64_t _startTime;
+    int64_t _endTime;
     bool _done;
     Monitor _sleep;
   };
@@ -90,7 +90,7 @@ public:
    * completes. Verify that all tasks completed and that thread manager cleans
    * up properly on delete.
    */
-  bool loadTest(size_t count=100, long long timeout=100LL, size_t workerCount=4) {
+  bool loadTest(size_t count=100, int64_t timeout=100LL, size_t workerCount=4) {
 
     Monitor monitor;
 
@@ -113,7 +113,7 @@ public:
       tasks.insert(shared_ptr<ThreadManagerTests::Task>(new ThreadManagerTests::Task(monitor, activeCount, timeout)));
     }
 
-    long long time00 = Util::currentTime();
+    int64_t time00 = Util::currentTime();
 
     for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
 
@@ -129,20 +129,20 @@ public:
       }
     }
 
-    long long time01 = Util::currentTime();
+    int64_t time01 = Util::currentTime();
 
-    long long firstTime = 9223372036854775807LL;
-    long long lastTime = 0;
+    int64_t firstTime = 9223372036854775807LL;
+    int64_t lastTime = 0;
 
     double averageTime = 0;
-    long long minTime = 9223372036854775807LL;
-    long long maxTime = 0;
+    int64_t minTime = 9223372036854775807LL;
+    int64_t maxTime = 0;
 
     for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
 
       shared_ptr<ThreadManagerTests::Task> task = *ix;
 
-      long long delta = task->_endTime - task->_startTime;
+      int64_t delta = task->_endTime - task->_startTime;
 
       assert(delta > 0);
 
@@ -222,7 +222,7 @@ public:
    * Block test.  Create pendingTaskCountMax tasks.  Verify that we block adding the
    * pendingTaskCountMax + 1th task.  Verify that we unblock when a task completes */
 
-  bool blockTest(long long timeout=100LL, size_t workerCount=2) {
+  bool blockTest(int64_t timeout=100LL, size_t workerCount=2) {
 
     bool success = false;
 

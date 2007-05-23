@@ -57,7 +57,7 @@ class TimerManager {
    * @param task The task to execute
    * @param timeout Time in milliseconds to delay before executing task
    */
-  virtual void add(boost::shared_ptr<Runnable> task, long long timeout);
+  virtual void add(boost::shared_ptr<Runnable> task, int64_t timeout);
 
   /**
    * Adds a task to be executed at some time in the future by a worker thread.
@@ -93,7 +93,7 @@ class TimerManager {
   boost::shared_ptr<const ThreadFactory> threadFactory_;
   class Task;
   friend class Task;
-  std::multimap<long long, boost::shared_ptr<Task> > taskMap_;
+  std::multimap<int64_t, boost::shared_ptr<Task> > taskMap_;
   size_t taskCount_;
   Monitor monitor_;
   STATE state_;

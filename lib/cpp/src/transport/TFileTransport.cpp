@@ -90,7 +90,7 @@ TFileTransport::TFileTransport(string path, bool readOnly)
   openLogFile();
 }
 
-void TFileTransport::resetOutputFile(int fd, string filename, long long offset) {
+void TFileTransport::resetOutputFile(int fd, string filename, int64_t offset) {
   filename_ = filename;
   offset_ = offset;
 
@@ -326,13 +326,13 @@ void TFileTransport::writerThread() {
         }
 
         // sanity check on event
-        if ( (maxEventSize_ > 0) && (outEvent->eventSize_ > maxEventSize_)) {
+        if ((maxEventSize_ > 0) && (outEvent->eventSize_ > maxEventSize_)) {
           T_ERROR("msg size is greater than max event size: %u > %u\n", outEvent->eventSize_, maxEventSize_);
           continue;
         }
 
         // If chunking is required, then make sure that msg does not cross chunk boundary
-        if( (outEvent->eventSize_ > 0) && (chunkSize_ != 0)) {
+        if ((outEvent->eventSize_ > 0) && (chunkSize_ != 0)) {
 
           // event size must be less than chunk size
           if(outEvent->eventSize_ > chunkSize_) {
@@ -341,11 +341,11 @@ void TFileTransport::writerThread() {
             continue;
           }
 
-          long long chunk1 = offset_/chunkSize_;
-          long long chunk2 = (offset_ + outEvent->eventSize_ - 1)/chunkSize_;
+          int64_t chunk1 = offset_/chunkSize_;
+          int64_t chunk2 = (offset_ + outEvent->eventSize_ - 1)/chunkSize_;
           
           // if adding this event will cross a chunk boundary, pad the chunk with zeros
-          if(chunk1 != chunk2) {
+          if (chunk1 != chunk2) {
             // refetch the offset to keep in sync
             offset_ = lseek(fd_, 0, SEEK_CUR);
             int32_t padding = (int32_t)(chunk2*chunkSize_ - offset_);

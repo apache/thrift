@@ -53,8 +53,8 @@ int main(int argc, char** argv) {
 
     std::cout << "\t\tUtil minimum time" << std::endl;
 
-    long long time00 = Util::currentTime();
-    long long time01 = Util::currentTime();
+    int64_t time00 = Util::currentTime();
+    int64_t time01 = Util::currentTime();
 
     std::cout << "\t\t\tMinimum time: " << time01 - time00 << "ms" << std::endl;
 
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
 
       size_t taskCount = 100000;
 
-      long long delay = 10LL;
+      int64_t delay = 10LL;
 
       std::cout << "\t\tThreadManager load test: worker count: " << workerCount << " task count: " << taskCount << " delay: " << delay << std::endl;
 
@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
 
       size_t tasksPerWorker = 1000;
 
-      long long delay = 10LL;
+      int64_t delay = 10LL;
 
       for (size_t workerCount = minWorkerCount; workerCount < maxWorkerCount; workerCount*= 2) {
 

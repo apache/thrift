@@ -228,11 +228,11 @@ public:
 
   /** See how accurate monitor timeout is. */
 
-  bool monitorTimeoutTest(size_t count=1000, long long timeout=10) {
+  bool monitorTimeoutTest(size_t count=1000, int64_t timeout=10) {
 
     Monitor monitor;
 
-    long long startTime = Util::currentTime();
+    int64_t startTime = Util::currentTime();
 
     for (size_t ix = 0; ix < count; ix++) {
       {
@@ -244,7 +244,7 @@ public:
       }
     }
 
-    long long endTime = Util::currentTime();
+    int64_t endTime = Util::currentTime();
 
     double error = ((endTime - startTime) - (count * timeout)) / (double)(count * timeout);
 

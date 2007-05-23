@@ -55,7 +55,7 @@ class Thread {
 
  public:
 
-  typedef unsigned long long id_t;
+  typedef uint64_t id_t;
 
   virtual ~Thread() {};
 

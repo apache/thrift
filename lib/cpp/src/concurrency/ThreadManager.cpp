@@ -100,7 +100,7 @@ class ThreadManager::Impl : public ThreadManager  {
 
   bool canSleep();
 
-  void add(shared_ptr<Runnable> value, long long timeout);
+  void add(shared_ptr<Runnable> value, int64_t timeout);
 
   void remove(shared_ptr<Runnable> task);
 
@@ -412,7 +412,7 @@ void ThreadManager::Impl::removeWorker(size_t value) {
     return idMap_.find(id) == idMap_.end();
   }
 
-  void ThreadManager::Impl::add(shared_ptr<Runnable> value, long long timeout) {
+  void ThreadManager::Impl::add(shared_ptr<Runnable> value, int64_t timeout) {
     Synchronized s(monitor_);
 
     if (state_ != ThreadManager::STARTED) {

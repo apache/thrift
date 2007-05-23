@@ -16,7 +16,7 @@ namespace facebook { namespace thrift { namespace concurrency {
 
 using boost::shared_ptr;
 
-typedef std::multimap<long long, shared_ptr<TimerManager::Task> >::iterator task_iterator;
+typedef std::multimap<int64_t, shared_ptr<TimerManager::Task> >::iterator task_iterator;
 typedef std::pair<task_iterator, task_iterator> task_range;
 
 /**
@@ -89,10 +89,10 @@ class TimerManager::Dispatcher: public Runnable {
       {
         Synchronized s(manager_->monitor_);
 	task_iterator expiredTaskEnd;
-	long long now = Util::currentTime();
+	int64_t now = Util::currentTime();
 	while (manager_->state_ == TimerManager::STARTED && 
                (expiredTaskEnd = manager_->taskMap_.upper_bound(now)) == manager_->taskMap_.begin()) {
-	  long long timeout = 0LL;
+	  int64_t timeout = 0LL;
 	  if (!manager_->taskMap_.empty()) {
             timeout = manager_->taskMap_.begin()->first - now;
 	  }
@@ -229,8 +229,8 @@ size_t TimerManager::taskCount() const {
   return taskCount_;
 }
       
-void TimerManager::add(shared_ptr<Runnable> task, long long timeout) {
-  long long now = Util::currentTime();
+void TimerManager::add(shared_ptr<Runnable> task, int64_t timeout) {
+  int64_t now = Util::currentTime();
   timeout += now;
 
   {
@@ -240,7 +240,7 @@ void TimerManager::add(shared_ptr<Runnable> task, long long timeout) {
     }
 
     taskCount_++;
-    taskMap_.insert(std::pair<long long, shared_ptr<Task> >(timeout, shared_ptr<Task>(new Task(task))));
+    taskMap_.insert(std::pair<int64_t, shared_ptr<Task> >(timeout, shared_ptr<Task>(new Task(task))));
 
     // If the task map was empty, or if we have an expiration that is earlier
     // than any previously seen, kick the dispatcher so it can update its
@@ -253,10 +253,10 @@ void TimerManager::add(shared_ptr<Runnable> task, long long timeout) {
 
 void TimerManager::add(shared_ptr<Runnable> task, const struct timespec& value) {
 
-  long long expiration;
+  int64_t expiration;
   Util::toMilliseconds(expiration, value);
 
-  long long now = Util::currentTime();
+  int64_t now = Util::currentTime();
 
   if (expiration < now) {
     throw  InvalidArgumentException();

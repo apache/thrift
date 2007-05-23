@@ -156,7 +156,12 @@ void TThreadPoolServer::serve() {
 
 }
 
-long long TThreadPoolServer::timeout() const {return timeout_;}
-void TThreadPoolServer::timeout(long long value) {timeout_ = value;}
+int64_t TThreadPoolServer::getTimeout() const {
+  return timeout_;
+}
+
+void TThreadPoolServer::setTimeout(int64_t value) {
+  timeout_ = value;
+}
 
 }}} // facebook::thrift::server

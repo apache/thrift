@@ -31,7 +31,7 @@ class TimerManagerTests {
   class Task: public Runnable {
    public:
     
-    Task(Monitor& monitor, long long timeout) : 
+    Task(Monitor& monitor, int64_t timeout) : 
       _timeout(timeout),
       _startTime(Util::currentTime()),
       _monitor(monitor),
@@ -46,7 +46,7 @@ class TimerManagerTests {
 
       // Figure out error percentage
 
-      long long delta = _endTime - _startTime;
+      int64_t delta = _endTime - _startTime;
 
 
       delta = delta > _timeout ?  delta - _timeout : _timeout - delta;
@@ -66,9 +66,9 @@ class TimerManagerTests {
       }
     }  
 
-    long long _timeout;
-    long long _startTime;
-    long long _endTime;
+    int64_t _timeout;
+    int64_t _startTime;
+    int64_t _endTime;
     Monitor& _monitor;
     bool _success;
     bool _done;
@@ -80,7 +80,7 @@ class TimerManagerTests {
    * properly clean up itself and the remaining orphaned timeout task when the
    * manager goes out of scope and its destructor is called.
    */
-  bool test00(long long timeout=1000LL) {
+  bool test00(int64_t timeout=1000LL) {
 
     shared_ptr<TimerManagerTests::Task> orphanTask = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, 10 * timeout));
 

@@ -34,9 +34,9 @@ namespace facebook { namespace thrift { namespace concurrency {
  */
 class Util {
 
-  static const long long NS_PER_S = 1000000000LL;
-  static const long long MS_PER_S = 1000LL;
-  static const long long NS_PER_MS = 1000000LL;
+  static const int64_t NS_PER_S = 1000000000LL;
+  static const int64_t MS_PER_S = 1000LL;
+  static const int64_t NS_PER_MS = 1000000LL;
 
  public:
 
@@ -46,7 +46,7 @@ class Util {
    * @param struct timespec& result
    * @param time or duration in milliseconds
    */
-  static void toTimespec(struct timespec& result, long long value) {
+  static void toTimespec(struct timespec& result, int64_t value) {
     result.tv_sec = value / MS_PER_S; // ms to s   
     result.tv_nsec = (value % MS_PER_S) * NS_PER_MS; // ms to ns
   }
@@ -54,7 +54,7 @@ class Util {
   /**
    * Converts timespec to milliseconds
    */
-  static const void toMilliseconds(long long& result, const struct timespec& value) {
+  static const void toMilliseconds(int64_t& result, const struct timespec& value) {
     result =
       (value.tv_sec * MS_PER_S) +
       (value.tv_nsec / NS_PER_MS) +
@@ -64,7 +64,7 @@ class Util {
   /**
    * Get current time as milliseconds from epoch
    */
-  static const long long currentTime() {
+  static const int64_t currentTime() {
 #if defined(HAVE_CLOCK_GETTIME)
     struct timespec now;
     int ret = clock_gettime(CLOCK_REALTIME, &now);
@@ -78,7 +78,7 @@ class Util {
     int ret = gettimeofday(&now, NULL);
     assert(ret == 0);
     return
-      (((long long)now.tv_sec) * MS_PER_S) +
+      (((int64_t)now.tv_sec) * MS_PER_S) +
       (now.tv_usec / MS_PER_S) +
       (now.tv_usec % MS_PER_S >= 500 ? 1 : 0);
 #endif // defined(HAVE_GETTIMEDAY)

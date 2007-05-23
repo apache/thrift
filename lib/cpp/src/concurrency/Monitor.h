@@ -37,7 +37,7 @@ class Monitor {
 
   virtual void unlock() const;
 
-  virtual void wait(long long timeout=0LL) const;
+  virtual void wait(int64_t timeout=0LL) const;
 
   virtual void notify() const;
 

@@ -51,7 +51,7 @@ class Monitor::Impl {
 
   void unlock() const { pthread_mutex_unlock(&pthread_mutex_); }
 
-  void wait(long long timeout) const {
+  void wait(int64_t timeout) const {
 
     // XXX Need to assert that caller owns mutex
     assert(timeout >= 0LL);
@@ -60,7 +60,7 @@ class Monitor::Impl {
       assert(iret == 0);
     } else {
       struct timespec abstime;
-      long long now = Util::currentTime();
+      int64_t now = Util::currentTime();
       Util::toTimespec(abstime, now + timeout);
       int result = pthread_cond_timedwait(&pthread_cond_,
                                           &pthread_mutex_,
@@ -114,7 +114,7 @@ void Monitor::lock() const { impl_->lock(); }
 
 void Monitor::unlock() const { impl_->unlock(); }
 
-void Monitor::wait(long long timeout) const { impl_->wait(timeout); }
+void Monitor::wait(int64_t timeout) const { impl_->wait(timeout); }
 
 void Monitor::notify() const { impl_->notify(); }
 

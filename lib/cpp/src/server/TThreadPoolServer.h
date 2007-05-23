@@ -42,8 +42,9 @@ class TThreadPoolServer : public TServer {
 
   virtual void serve();
 
-  virtual long long timeout() const;
-  virtual void timeout(long long value);
+  virtual int64_t getTimeout() const;
+
+  virtual void setTimeout(int64_t value);
   
   virtual void stop() {
     stop_ = true;
@@ -56,7 +57,7 @@ class TThreadPoolServer : public TServer {
 
   volatile bool stop_;
 
-  volatile long long timeout_;
+  volatile int64_t timeout_;
   
 };
 
