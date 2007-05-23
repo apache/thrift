@@ -69,38 +69,38 @@ class PthreadThread: public Thread {
     state_ = starting;
 
     pthread_attr_t thread_attr;
-    if(pthread_attr_init(&thread_attr) != 0) {
+    if (pthread_attr_init(&thread_attr) != 0) {
         throw SystemResourceException("pthread_attr_init failed");
     }
 
-    if(pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_JOINABLE) != 0) {
-        throw SystemResourceException("pthread_attr_setdetachstate failed");
+    if (pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_JOINABLE) != 0) {
+      throw SystemResourceException("pthread_attr_setdetachstate failed");
     }
 
     // Set thread stack size
-    if(pthread_attr_setstacksize(&thread_attr, MB * stackSize_) != 0) {
-        throw SystemResourceException("pthread_attr_setstacksize failed");
+    if (pthread_attr_setstacksize(&thread_attr, MB * stackSize_) != 0) {
+      throw SystemResourceException("pthread_attr_setstacksize failed");
     }
 
     // Set thread policy
-    if(pthread_attr_setschedpolicy(&thread_attr, policy_) != 0) {
-        throw SystemResourceException("pthread_attr_setschedpolicy failed");
+    if (pthread_attr_setschedpolicy(&thread_attr, policy_) != 0) {
+      throw SystemResourceException("pthread_attr_setschedpolicy failed");
     }
 
     struct sched_param sched_param;
     sched_param.sched_priority = priority_;
 
     // Set thread priority
-    if(pthread_attr_setschedparam(&thread_attr, &sched_param) != 0) {
-        throw SystemResourceException("pthread_attr_setschedparam failed");
+    if (pthread_attr_setschedparam(&thread_attr, &sched_param) != 0) {
+      throw SystemResourceException("pthread_attr_setschedparam failed");
     }
 
     // Create reference
     shared_ptr<PthreadThread>* selfRef = new shared_ptr<PthreadThread>();
     *selfRef = self_.lock();
 
-    if(pthread_create(&pthread_, &thread_attr, threadMain, (void*)selfRef) != 0) {
-        throw SystemResourceException("pthread_create failed");
+    if (pthread_create(&pthread_, &thread_attr, threadMain, (void*)selfRef) != 0) {
+      throw SystemResourceException("pthread_create failed");
     }
   }
 
@@ -223,7 +223,7 @@ class PosixThreadFactory::Impl {
 
   PRIORITY priority() const { return priority_; }
 
-  Thread::id_t currentThreadId() const {return pthread_self();}
+  Thread::id_t currentThreadId() const { return pthread_self(); }
 
   /**
    * Sets priority.
@@ -247,6 +247,6 @@ PosixThreadFactory::PRIORITY PosixThreadFactory::priority() const { return impl_
 
 void PosixThreadFactory::priority(PosixThreadFactory::PRIORITY value) { impl_->priority(value); }
 
-Thread::id_t PosixThreadFactory::currentThreadId() const {return impl_->currentThreadId();}
+Thread::id_t PosixThreadFactory::currentThreadId() const { return impl_->currentThreadId(); }
 
 }}} // facebook::thrift::concurrency

@@ -58,7 +58,7 @@ class PosixThreadFactory : public ThreadFactory {
   boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const;
 
   // From ThreadFactory;
-    Thread::id_t currentThreadId() const;
+  Thread::id_t currentThreadId() const;
 
   /**
    * Sets stack size for created threads

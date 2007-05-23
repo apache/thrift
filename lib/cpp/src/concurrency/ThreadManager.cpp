@@ -248,8 +248,8 @@ class ThreadManager::Worker: public Runnable {
 
             /* If we have a pending task max and we just dropped below it, wakeup any
                thread that might be blocked on add. */
-            if(manager_->pendingTaskCountMax_ != 0 &&
-               manager_->tasks_.size() == manager_->pendingTaskCountMax_ - 1) {
+            if (manager_->pendingTaskCountMax_ != 0 &&
+                manager_->tasks_.size() == manager_->pendingTaskCountMax_ - 1) {
               manager_->workerMonitor_.notify();
             }
 	  }
@@ -419,11 +419,11 @@ void ThreadManager::Impl::removeWorker(size_t value) {
       throw IllegalStateException();
     }
 
-    if(pendingTaskCountMax_ > 0 && (tasks_.size() >= pendingTaskCountMax_)) {
+    if (pendingTaskCountMax_ > 0 && (tasks_.size() >= pendingTaskCountMax_)) {
 
-      if(canSleep()) {
+      if (canSleep()) {
 
-        while(pendingTaskCountMax_ > 0 && tasks_.size() >= pendingTaskCountMax_) {
+        while (pendingTaskCountMax_ > 0 && tasks_.size() >= pendingTaskCountMax_) {
           monitor_.wait(timeout);
         }
       } else {
@@ -449,7 +449,7 @@ void ThreadManager::Impl::remove(shared_ptr<Runnable> task) {
 
 class SimpleThreadManager : public ThreadManager::Impl {
 
-public:
+ public:
   SimpleThreadManager(size_t workerCount=4, size_t pendingTaskCountMax=0) :
     workerCount_(workerCount),
     pendingTaskCountMax_(pendingTaskCountMax),
@@ -462,7 +462,7 @@ public:
     addWorker(workerCount_);
   }
 
-private:
+ private:
   const size_t workerCount_;
   const size_t pendingTaskCountMax_;
   bool firstTime_;

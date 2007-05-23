@@ -31,15 +31,15 @@ class Monitor::Impl {
     mutexInitialized_(false),
     condInitialized_(false) {
 
-    if(pthread_mutex_init(&pthread_mutex_, NULL) == 0) {
+    if (pthread_mutex_init(&pthread_mutex_, NULL) == 0) {
       mutexInitialized_ = true;
 
-      if(pthread_cond_init(&pthread_cond_, NULL) == 0) {
+      if (pthread_cond_init(&pthread_cond_, NULL) == 0) {
         condInitialized_ = true;
       }
     }
 
-    if(!mutexInitialized_ || !condInitialized_) {
+    if (!mutexInitialized_ || !condInitialized_) {
       cleanup();
       throw SystemResourceException();
     }
@@ -66,7 +66,7 @@ class Monitor::Impl {
                                           &pthread_mutex_,
                                           &abstime);
       if (result == ETIMEDOUT) {
-	assert(Util::currentTime() >= (now + timeout));
+        assert(Util::currentTime() >= (now + timeout));
         throw TimedOutException();
       }
     }
