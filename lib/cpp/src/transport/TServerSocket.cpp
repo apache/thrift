@@ -182,7 +182,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
 
     if (ret < 0) {
       // error cases
-      if (error == EINTR && (numEintrs++ < maxEintrs)) {
+      if (errno == EINTR && (numEintrs++ < maxEintrs)) {
         // EINTR needs to be handled manually and we can tolerate 
         // a certain number
         continue;
