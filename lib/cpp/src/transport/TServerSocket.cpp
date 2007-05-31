@@ -169,6 +169,9 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
 
   fd_set fds;
 
+  int maxEintrs = 5;
+  int numEintrs = 0;
+
   while (true) {
     FD_ZERO(&fds);
     FD_SET(serverSocket_, &fds);
@@ -178,6 +181,12 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     int ret = select(serverSocket_+1, &fds, NULL, NULL, NULL);
 
     if (ret < 0) {
+      // error cases
+      if (error == EINTR && (numEintrs++ < maxEintrs)) {
+        // EINTR needs to be handled manually and we can tolerate 
+        // a certain number
+        continue;
+      }
       perror("TServerSocket::acceptImpl() select -1");
       throw TTransportException(TTransportException::UNKNOWN);
     } else if (ret > 0) {
@@ -228,7 +237,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   if (recvTimeout_ > 0) {
     client->setRecvTimeout(recvTimeout_);
   }
-
+  
   return client;
 }
 
