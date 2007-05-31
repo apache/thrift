@@ -8,6 +8,7 @@ package com.facebook.thrift.server;
 
 import com.facebook.thrift.TException;
 import com.facebook.thrift.TProcessor;
+import com.facebook.thrift.TProcessorFactory;
 import com.facebook.thrift.protocol.TProtocol;
 import com.facebook.thrift.protocol.TProtocolFactory;
 import com.facebook.thrift.protocol.TBinaryProtocol;
@@ -47,6 +48,14 @@ public class TThreadPoolServer extends TServer {
          new Options());
   }
 
+  public TThreadPoolServer(TProcessorFactory processorFactory,
+          TServerTransport serverTransport) {
+    this(processorFactory, serverTransport, 
+         new TTransportFactory(), new TTransportFactory(),
+         new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
+         new Options());
+  }
+
   public TThreadPoolServer(TProcessor processor,
                            TServerTransport serverTransport,
                            TTransportFactory transportFactory,
@@ -56,15 +65,39 @@ public class TThreadPoolServer extends TServer {
          protocolFactory, protocolFactory,
          new Options());
   }
+
+  public TThreadPoolServer(TProcessorFactory processorFactory,
+          TServerTransport serverTransport,
+          TTransportFactory transportFactory,
+          TProtocolFactory protocolFactory) {
+    this(processorFactory, serverTransport, 
+         transportFactory, transportFactory,
+         protocolFactory, protocolFactory,
+         new Options());
+  }
+
   
   public TThreadPoolServer(TProcessor processor,
+          TServerTransport serverTransport,
+          TTransportFactory inputTransportFactory,
+          TTransportFactory outputTransportFactory,
+          TProtocolFactory inputProtocolFactory,
+          TProtocolFactory outputProtocolFactory,
+          Options options) {
+    this(new TProcessorFactory(processor), serverTransport,
+         inputTransportFactory, outputTransportFactory,
+         inputProtocolFactory, outputProtocolFactory,
+         options);
+  }
+  
+  public TThreadPoolServer(TProcessorFactory processorFactory,
                            TServerTransport serverTransport,
                            TTransportFactory inputTransportFactory,
                            TTransportFactory outputTransportFactory,
                            TProtocolFactory inputProtocolFactory,
                            TProtocolFactory outputProtocolFactory,
                            Options options) {
-    super(processor, serverTransport, 
+    super(processorFactory, serverTransport, 
           inputTransportFactory, outputTransportFactory,
           inputProtocolFactory, outputProtocolFactory);
 
@@ -122,16 +155,18 @@ public class TThreadPoolServer extends TServer {
      * Loops on processing a client forever
      */
     public void run() {
+      TProcessor processor = null;
       TTransport inputTransport = null;
       TTransport outputTransport = null;
       TProtocol inputProtocol = null;
       TProtocol outputProtocol = null;
       try {
+        processor = processorFactory_.getProcessor(client_);
         inputTransport = inputTransportFactory_.getTransport(client_);
         outputTransport = outputTransportFactory_.getTransport(client_);
         inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
         outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
-        while (processor_.process(inputProtocol, outputProtocol)) {}
+        while (processor.process(inputProtocol, outputProtocol)) {}
       } catch (TTransportException ttx) {
         // Assume the client died and continue silently
       } catch (TException tx) {

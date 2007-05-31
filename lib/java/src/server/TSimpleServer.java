@@ -8,6 +8,7 @@ package com.facebook.thrift.server;
 
 import com.facebook.thrift.TException;
 import com.facebook.thrift.TProcessor;
+import com.facebook.thrift.TProcessorFactory;
 import com.facebook.thrift.protocol.TProtocol;
 import com.facebook.thrift.protocol.TProtocolFactory;
 import com.facebook.thrift.transport.TServerTransport;
@@ -24,14 +25,14 @@ public class TSimpleServer extends TServer {
 
   public TSimpleServer(TProcessor processor,
                        TServerTransport serverTransport) {
-    super(processor, serverTransport);
+    super(new TProcessorFactory(processor), serverTransport);
   }
 
   public TSimpleServer(TProcessor processor,
                        TServerTransport serverTransport,
                        TTransportFactory transportFactory,
                        TProtocolFactory protocolFactory) {
-    super(processor, serverTransport, transportFactory, protocolFactory);
+    super(new TProcessorFactory(processor), serverTransport, transportFactory, protocolFactory);
   }
 
   public TSimpleServer(TProcessor processor,
@@ -40,11 +41,35 @@ public class TSimpleServer extends TServer {
                        TTransportFactory outputTransportFactory,
                        TProtocolFactory inputProtocolFactory,
                        TProtocolFactory outputProtocolFactory) {                       
-    super(processor, serverTransport, 
+    super(new TProcessorFactory(processor), serverTransport, 
           inputTransportFactory, outputTransportFactory,
           inputProtocolFactory, outputProtocolFactory);
   }
 
+  public TSimpleServer(TProcessorFactory processorFactory,
+          TServerTransport serverTransport) {
+    super(processorFactory, serverTransport);
+  }
+
+  public TSimpleServer(TProcessorFactory processorFactory,
+          TServerTransport serverTransport,
+          TTransportFactory transportFactory,
+          TProtocolFactory protocolFactory) {
+    super(processorFactory, serverTransport, transportFactory, protocolFactory);
+  }
+
+  public TSimpleServer(TProcessorFactory processorFactory,
+          TServerTransport serverTransport,
+          TTransportFactory inputTransportFactory,
+          TTransportFactory outputTransportFactory,
+          TProtocolFactory inputProtocolFactory,
+          TProtocolFactory outputProtocolFactory) {                       
+    super(processorFactory, serverTransport, 
+          inputTransportFactory, outputTransportFactory,
+          inputProtocolFactory, outputProtocolFactory);
+  }
+ 
+  
   public void serve() {
     try {
       serverTransport_.listen();
@@ -55,6 +80,7 @@ public class TSimpleServer extends TServer {
 
     while (true) {
       TTransport client = null;
+      TProcessor processor = null;
       TTransport inputTransport = null;
       TTransport outputTransport = null;
       TProtocol inputProtocol = null;
@@ -62,11 +88,12 @@ public class TSimpleServer extends TServer {
       try {
         client = serverTransport_.accept();
         if (client != null) {
+          processor = processorFactory_.getProcessor(client);
           inputTransport = inputTransportFactory_.getTransport(client);
           outputTransport = outputTransportFactory_.getTransport(client);
           inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
           outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
-          while (processor_.process(inputProtocol, outputProtocol)) {}
+          while (processor.process(inputProtocol, outputProtocol)) {}
         }
       } catch (TTransportException ttx) {
         // Client died, just move on

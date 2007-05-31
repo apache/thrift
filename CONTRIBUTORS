@@ -2,6 +2,9 @@
 Release 200705xx
 ----------------
 
+Simon Forman <sforman@gmail.com>
+-TProcessorFactory abstraction for Java servers
+
 Jake Luciani <jakers@gmail.com>
 -Perl code generation, libraries, test code
 
