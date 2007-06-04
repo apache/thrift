@@ -46,35 +46,49 @@ class PthreadThread: public Thread {
   int priority_;
   int stackSize_;
   weak_ptr<PthreadThread> self_;
+  bool detached_;
 
  public:
 
-  PthreadThread(int policy, int priority, int stackSize, shared_ptr<Runnable> runnable) :
+  PthreadThread(int policy, int priority, int stackSize, bool detached, shared_ptr<Runnable> runnable) :
     pthread_(0),
     state_(uninitialized),
     policy_(policy),
     priority_(priority),
-    stackSize_(stackSize) {
+    stackSize_(stackSize),
+    detached_(detached) {
 
     this->Thread::runnable(runnable);
   }
 
-  ~PthreadThread() {}
+  ~PthreadThread() {
+    /* Nothing references this thread, if is is not detached, do a join
+       now, otherwise the thread-id and, possibly, other resources will 
+       be leaked. */
+    if(!detached_) {
+      try {
+        join();
+      } catch(...) {
+        // We're really hosed. 
+      }
+    }
+  }
 
   void start() {
     if (state_ != uninitialized) {
       return;
     }
 
-    state_ = starting;
-
     pthread_attr_t thread_attr;
     if (pthread_attr_init(&thread_attr) != 0) {
         throw SystemResourceException("pthread_attr_init failed");
     }
 
-    if (pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_JOINABLE) != 0) {
-      throw SystemResourceException("pthread_attr_setdetachstate failed");
+    if(pthread_attr_setdetachstate(&thread_attr, 
+                                   detached_ ? 
+                                   PTHREAD_CREATE_DETACHED : 
+                                   PTHREAD_CREATE_JOINABLE) != 0) {
+        throw SystemResourceException("pthread_attr_setdetachstate failed");
     }
 
     // Set thread stack size
@@ -99,20 +113,23 @@ class PthreadThread: public Thread {
     shared_ptr<PthreadThread>* selfRef = new shared_ptr<PthreadThread>();
     *selfRef = self_.lock();
 
+    state_ = starting;
+
     if (pthread_create(&pthread_, &thread_attr, threadMain, (void*)selfRef) != 0) {
       throw SystemResourceException("pthread_create failed");
     }
   }
 
   void join() {
-    if (state_ != stopped) {
+    if (!detached_ && state_ != uninitialized) {
       void* ignore;
       pthread_join(pthread_, &ignore);
+      detached_ = true;
     }
   }
 
   id_t id() {
-    return pthread_;
+    return static_cast<id_t>(pthread_);
   }
 
   shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
@@ -211,7 +228,7 @@ class PosixThreadFactory::Impl {
    * @param runnable A runnable object
    */
   shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const {
-    shared_ptr<PthreadThread> result = shared_ptr<PthreadThread>(new PthreadThread(toPthreadPolicy(policy_), toPthreadPriority(policy_, priority_), stackSize_, runnable));
+    shared_ptr<PthreadThread> result = shared_ptr<PthreadThread>(new PthreadThread(toPthreadPolicy(policy_), toPthreadPriority(policy_, priority_), stackSize_, detached_, runnable));
     result->weakRef(result);
     runnable->thread(result);
     return result;
@@ -223,7 +240,7 @@ class PosixThreadFactory::Impl {
 
   PRIORITY priority() const { return priority_; }
 
-  Thread::id_t currentThreadId() const { return pthread_self(); }
+  Thread::id_t currentThreadId() const {return static_cast<id_t>(pthread_self());}
 
   /**
    * Sets priority.

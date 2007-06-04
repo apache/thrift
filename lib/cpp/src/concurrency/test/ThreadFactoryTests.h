@@ -47,7 +47,7 @@ public:
    */
   bool helloWorldTest() {
 
-    PosixThreadFactory threadFactory =  PosixThreadFactory();
+    PosixThreadFactory threadFactory = PosixThreadFactory();
 
     shared_ptr<Task> task = shared_ptr<Task>(new ThreadFactoryTests::Task());
 
@@ -90,35 +90,52 @@ public:
     int& _count;
   };
 
-  bool reapNThreads(int count=10) {
-
-    Monitor* monitor = new Monitor();
-
-    int* activeCount  = new int(count);
+  bool reapNThreads(int loop=1, int count=10) {
 
     PosixThreadFactory threadFactory =  PosixThreadFactory();
 
-    std::set<shared_ptr<Thread> > threads;
+    Monitor* monitor = new Monitor();
 
-    for (int ix = 0; ix < count; ix++) {
-      threads.insert(threadFactory.newThread(shared_ptr<Runnable>(new ReapNTask(*monitor, *activeCount))));
-    }
+    for(int lix = 0; lix < loop; lix++) {
 
-    for (std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
+      int* activeCount  = new int(count);
 
-      (*thread)->start();
-    }
+      std::set<shared_ptr<Thread> > threads;
 
+      int tix;
 
-    {
-      Synchronized s(*monitor);
-      while (*activeCount > 0) {
-	monitor->wait(1000);
+      for (tix = 0; tix < count; tix++) {
+        try {
+          threads.insert(threadFactory.newThread(shared_ptr<Runnable>(new ReapNTask(*monitor, *activeCount))));
+        } catch(SystemResourceException& e) {
+          std::cout << "\t\t\tfailed to create " << lix * count + tix << " thread " << e.what() << std::endl;
+          throw e;
+        }
       }
-    }
+      
+      tix = 0;
+      for (std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); tix++, ++thread) {
 
-    for (std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
-      threads.erase(*thread);
+        try {
+          (*thread)->start();
+        } catch(SystemResourceException& e) {
+          std::cout << "\t\t\tfailed to start  " << lix * count + tix << " thread " << e.what() << std::endl;
+          throw e;
+        }
+      }
+      
+      {
+        Synchronized s(*monitor);
+        while (*activeCount > 0) {
+          monitor->wait(1000);
+        }
+      }
+      
+      for (std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
+        threads.erase(*thread);
+      }
+
+      std::cout << "\t\t\treaped " << lix * count << " threads" << std::endl;
     }
 
     std::cout << "\t\t\tSuccess!" << std::endl;

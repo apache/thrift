@@ -52,6 +52,25 @@ class PosixThreadFactory : public ThreadFactory {
     DECREMENT = 8
   };
 
+  /** 
+   * Posix thread (pthread) factory.  All threads created by a factory are reference-counted 
+   * via boost::shared_ptr and boost::weak_ptr.  The factory guarantees that threads and 
+   * the Runnable tasks they host will be properly cleaned up once the last strong reference
+   * to both is given up.
+   *
+   * Threads are created with the specified policy, priority, stack-size and detachable-mode
+   * detached means the thread is free-running and will release all system resources the 
+   * when it completes.  A detachable thread is not joinable.  The join method 
+   * of a detachable thread will return immediately with no error.  
+   *
+   * Joinable threads will detach themselves iff they were not explicitly joined and
+   * there are no remaining strong references to the thread.  This guarantees that
+   * joinnable threads don't leak resources even when the application neglects to 
+   * call join explicitly.
+   *
+   * By default threads are joinable.
+   */
+
   PosixThreadFactory(POLICY policy=ROUND_ROBIN, PRIORITY priority=NORMAL, int stackSize=1, bool detached=false);
 
   // From ThreadFactory;

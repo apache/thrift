@@ -40,8 +40,6 @@ class TimerManager::Task : public Runnable {
     state_(WAITING) {}
   
   ~Task() {
-    //debug
-    std::cerr << "TimerManager::Task.dtor[" << this << "]" << std::endl; 
   }
   
   void run() {
@@ -64,10 +62,7 @@ class TimerManager::Dispatcher: public Runnable {
   Dispatcher(TimerManager* manager) : 
     manager_(manager) {}
   
-  ~Dispatcher() {
-    // debug
-    std::cerr << "Dispatcher::dtor[" << this << "]" << std::endl;
-  }
+  ~Dispatcher() {}
   
   /**
    * Dispatcher entry point
@@ -148,13 +143,11 @@ TimerManager::~TimerManager() {
 
   // If we haven't been explicitly stopped, do so now.  We don't need to grab
   // the monitor here, since stop already takes care of reentrancy.
-  std::cerr << "TimerManager::dtor[" << this << "]" << std::endl;
   
   if (state_ != STOPPED) {
     try {
       stop();
     } catch(...) {
-      std::cerr << "TimerManager::dtor[" << this << "] uhoh " << std::endl;
       throw;
       // uhoh
     }
