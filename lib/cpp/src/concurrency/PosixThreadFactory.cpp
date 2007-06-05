@@ -63,13 +63,13 @@ class PthreadThread: public Thread {
 
   ~PthreadThread() {
     /* Nothing references this thread, if is is not detached, do a join
-       now, otherwise the thread-id and, possibly, other resources will 
+       now, otherwise the thread-id and, possibly, other resources will
        be leaked. */
     if(!detached_) {
       try {
         join();
       } catch(...) {
-        // We're really hosed. 
+        // We're really hosed.
       }
     }
   }
@@ -84,9 +84,9 @@ class PthreadThread: public Thread {
         throw SystemResourceException("pthread_attr_init failed");
     }
 
-    if(pthread_attr_setdetachstate(&thread_attr, 
-                                   detached_ ? 
-                                   PTHREAD_CREATE_DETACHED : 
+    if(pthread_attr_setdetachstate(&thread_attr,
+                                   detached_ ?
+                                   PTHREAD_CREATE_DETACHED :
                                    PTHREAD_CREATE_JOINABLE) != 0) {
         throw SystemResourceException("pthread_attr_setdetachstate failed");
     }
@@ -123,12 +123,18 @@ class PthreadThread: public Thread {
   void join() {
     if (!detached_ && state_ != uninitialized) {
       void* ignore;
-      pthread_join(pthread_, &ignore);
-      detached_ = true;
+      /* XXX
+         If join fails it is most likely due to the fact
+         that the last reference was the thread itself and cannot
+         join.  This results in leaked threads and will eventually
+         cause the process to run out of thread resources.
+         We're beyond the point of throwing an exception.  Not clear how
+         best to handle this. */
+      detached_ = pthread_join(pthread_, &ignore) == 0;
     }
   }
 
-  id_t id() {
+  id_t getId() {
     return static_cast<id_t>(pthread_);
   }
 
@@ -234,13 +240,11 @@ class PosixThreadFactory::Impl {
     return result;
   }
 
-  int stackSize() const { return stackSize_; }
+  int getStackSize() const { return stackSize_; }
 
-  void stackSize(int value) { stackSize_ = value; }
+  void setStackSize(int value) { stackSize_ = value; }
 
-  PRIORITY priority() const { return priority_; }
-
-  Thread::id_t currentThreadId() const {return static_cast<id_t>(pthread_self());}
+  PRIORITY getPriority() const { return priority_; }
 
   /**
    * Sets priority.
@@ -248,7 +252,14 @@ class PosixThreadFactory::Impl {
    *  XXX
    *  Need to handle incremental priorities properly.
    */
-  void priority(PRIORITY value) { priority_ = value; }
+  void setPriority(PRIORITY value) { priority_ = value; }
+
+  bool isDetached() const { return detached_; }
+
+  void setDetached(bool value) { detached_ = value; }
+
+  Thread::id_t getCurrentThreadId() const {return static_cast<id_t>(pthread_self());}
+
 };
 
 PosixThreadFactory::PosixThreadFactory(POLICY policy, PRIORITY priority, int stackSize, bool detached) :
@@ -256,14 +267,18 @@ PosixThreadFactory::PosixThreadFactory(POLICY policy, PRIORITY priority, int sta
 
 shared_ptr<Thread> PosixThreadFactory::newThread(shared_ptr<Runnable> runnable) const { return impl_->newThread(runnable); }
 
-int PosixThreadFactory::stackSize() const { return impl_->stackSize(); }
+int PosixThreadFactory::getStackSize() const { return impl_->getStackSize(); }
 
-void PosixThreadFactory::stackSize(int value) { impl_->stackSize(value); }
+void PosixThreadFactory::setStackSize(int value) { impl_->setStackSize(value); }
 
-PosixThreadFactory::PRIORITY PosixThreadFactory::priority() const { return impl_->priority(); }
+PosixThreadFactory::PRIORITY PosixThreadFactory::getPriority() const { return impl_->getPriority(); }
 
-void PosixThreadFactory::priority(PosixThreadFactory::PRIORITY value) { impl_->priority(value); }
+void PosixThreadFactory::setPriority(PosixThreadFactory::PRIORITY value) { impl_->setPriority(value); }
 
-Thread::id_t PosixThreadFactory::currentThreadId() const { return impl_->currentThreadId(); }
+bool PosixThreadFactory::isDetached() const { return impl_->isDetached(); }
+
+void PosixThreadFactory::setDetached(bool value) { impl_->setDetached(value); }
+
+Thread::id_t PosixThreadFactory::getCurrentThreadId() const { return impl_->getCurrentThreadId(); }
 
 }}} // facebook::thrift::concurrency

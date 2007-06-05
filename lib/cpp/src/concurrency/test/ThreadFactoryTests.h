@@ -112,7 +112,7 @@ public:
           throw e;
         }
       }
-      
+
       tix = 0;
       for (std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); tix++, ++thread) {
 
@@ -123,14 +123,14 @@ public:
           throw e;
         }
       }
-      
+
       {
         Synchronized s(*monitor);
         while (*activeCount > 0) {
           monitor->wait(1000);
         }
       }
-      
+
       for (std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
         threads.erase(*thread);
       }
@@ -273,6 +273,67 @@ public:
     bool success = error < ThreadFactoryTests::ERROR;
 
     std::cout << "\t\t\t" << (success ? "Success" : "Failure") << "! expected time: " << count * timeout << "ms elapsed time: "<< endTime - startTime << "ms error%: " << error * 100.0 << std::endl;
+
+    return success;
+  }
+
+
+  class FloodTask : public Runnable {
+  public:
+
+    FloodTask(const size_t id) :_id(id) {}
+    ~FloodTask(){
+      if(_id % 1000 == 0) {
+        std::cout << "\t\tthread " << _id << " done" << std::endl;
+      }
+    }
+
+    void run(){
+      if(_id % 1000 == 0) {
+        std::cout << "\t\tthread " << _id << " started" << std::endl;
+      }
+
+      usleep(1);
+    }
+    const size_t _id;
+  };
+
+  void foo(PosixThreadFactory *tf) {
+  }
+
+  bool floodNTest(size_t loop=1, size_t count=100000) {
+
+    bool success = false;
+
+    for(size_t lix = 0; lix < loop; lix++) {
+
+      PosixThreadFactory threadFactory = PosixThreadFactory();
+      threadFactory.setDetached(true);
+
+        for(size_t tix = 0; tix < count; tix++) {
+
+          try {
+
+            shared_ptr<FloodTask> task(new FloodTask(lix * count + tix ));
+
+            shared_ptr<Thread> thread = threadFactory.newThread(task);
+
+            thread->start();
+
+            usleep(1);
+
+          } catch (TException& e) {
+
+            std::cout << "\t\t\tfailed to start  " << lix * count + tix << " thread " << e.what() << std::endl;
+
+            return success;
+          }
+        }
+
+        std::cout << "\t\t\tflooded " << (lix + 1) * count << " threads" << std::endl;
+
+        success = true;
+    }
 
     return success;
   }

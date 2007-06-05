@@ -33,10 +33,16 @@ int main(int argc, char** argv) {
     std::cout << "ThreadFactory tests..." << std::endl;
 
     size_t count =  1000;
+    size_t floodLoops =  1;
+    size_t floodCount =  100000;
 
     std::cout << "\t\tThreadFactory reap N threads test: N = " << count << std::endl;
 
     assert(threadFactoryTests.reapNThreads(count));
+
+    std::cout << "\t\tThreadFactory floodN threads test: N = " << floodCount << std::endl;
+
+    assert(threadFactoryTests.floodNTest(floodLoops, floodCount));
 
     std::cout << "\t\tThreadFactory synchronous start test" << std::endl;
 
@@ -134,4 +140,3 @@ int main(int argc, char** argv) {
     }
   }
 }
-

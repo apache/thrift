@@ -308,7 +308,7 @@ class ThreadManager::Worker: public Runnable {
     shared_ptr<ThreadManager::Worker> worker = dynamic_pointer_cast<ThreadManager::Worker, Runnable>((*ix)->runnable());
     worker->state_ = ThreadManager::Worker::STARTING;
     (*ix)->start();
-    idMap_.insert(std::pair<const Thread::id_t, shared_ptr<Thread> >((*ix)->id(), *ix));
+    idMap_.insert(std::pair<const Thread::id_t, shared_ptr<Thread> >((*ix)->getId(), *ix));
   }
 
   {
@@ -400,7 +400,7 @@ void ThreadManager::Impl::removeWorker(size_t value) {
 
     for (std::set<shared_ptr<Thread> >::iterator ix = deadWorkers_.begin(); ix != deadWorkers_.end(); ix++) {
       workers_.erase(*ix);
-      idMap_.erase((*ix)->id());
+      idMap_.erase((*ix)->getId());
     }
 
     deadWorkers_.clear();
@@ -408,7 +408,7 @@ void ThreadManager::Impl::removeWorker(size_t value) {
 }
 
   bool ThreadManager::Impl::canSleep() {
-    const Thread::id_t id = threadFactory_->currentThreadId();
+    const Thread::id_t id = threadFactory_->getCurrentThreadId();
     return idMap_.find(id) == idMap_.end();
   }
 

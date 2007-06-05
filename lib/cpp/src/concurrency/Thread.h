@@ -75,7 +75,7 @@ class Thread {
   /**
    * Gets the thread's platform-specific ID
    */
-  virtual id_t id() = 0;
+  virtual id_t getId() = 0;
 
   /**
    * Gets the runnable object this thread is hosting
@@ -104,7 +104,7 @@ class ThreadFactory {
 
   static const Thread::id_t unknown_thread_id;
 
-  virtual Thread::id_t currentThreadId() const = 0;
+  virtual Thread::id_t getCurrentThreadId() const = 0;
 };
 
 }}} // facebook::thrift::concurrency

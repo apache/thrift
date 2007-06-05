@@ -100,7 +100,7 @@ public:
 
     shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
 
-    threadFactory->priority(PosixThreadFactory::HIGHEST);
+    threadFactory->setPriority(PosixThreadFactory::HIGHEST);
 
     threadManager->threadFactory(threadFactory);
 
@@ -239,7 +239,7 @@ public:
 
       shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
 
-      threadFactory->priority(PosixThreadFactory::HIGHEST);
+      threadFactory->setPriority(PosixThreadFactory::HIGHEST);
 
       threadManager->threadFactory(threadFactory);
 
