@@ -62,7 +62,7 @@ void TConnection::workSocket() {
       }
       readBuffer_ = (uint8_t*)realloc(readBuffer_, readBufferSize_);
       if (readBuffer_ == NULL) {
-        perror("TConnection::workSocket() realloc");
+        GlobalOutput("TConnection::workSocket() realloc");
         close();
         return;
       }
@@ -91,7 +91,7 @@ void TConnection::workSocket() {
       }
 
       if (errno != ECONNRESET) {
-        perror("TConnection::workSocket() recv -1");
+        GlobalOutput("TConnection::workSocket() recv -1");
       }
     }
 
@@ -127,7 +127,7 @@ void TConnection::workSocket() {
         return;
       }
       if (errno != EPIPE) {
-        perror("TConnection::workSocket() send -1");
+        GlobalOutput("TConnection::workSocket() send -1");
       }
       close();
       return;
@@ -302,7 +302,7 @@ void TConnection::setFlags(short eventFlags) {
   // Delete a previously existing event
   if (eventFlags_ != 0) {
     if (event_del(&event_) == -1) {
-      perror("TConnection::setFlags event_del");
+      GlobalOutput("TConnection::setFlags event_del");
       return;
     }
   }
@@ -341,7 +341,7 @@ void TConnection::setFlags(short eventFlags) {
 
   // Add the event
   if (event_add(&event_, 0) == -1) {
-    perror("TConnection::setFlags(): coult not event_add");
+    GlobalOutput("TConnection::setFlags(): coult not event_add");
   }
 }
 
@@ -351,7 +351,7 @@ void TConnection::setFlags(short eventFlags) {
 void TConnection::close() {
   // Delete the registered libevent
   if (event_del(&event_) == -1) {
-    perror("TConnection::close() event_del");
+    GlobalOutput("TConnection::close() event_del");
   }
 
   // Close the socket
@@ -415,7 +415,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
     int flags;
     if ((flags = fcntl(clientSocket, F_GETFL, 0)) < 0 ||
         fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK) < 0) {
-      perror("thriftServerEventHandler: set O_NONBLOCK");
+      GlobalOutput("thriftServerEventHandler: set O_NONBLOCK");
       close(clientSocket);
       return;
     }
@@ -438,7 +438,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
   // Done looping accept, now we have to make sure the error is due to
   // blocking. Any other error is a problem
   if (errno != EAGAIN && errno != EWOULDBLOCK) {
-    perror("thriftServerEventHandler: accept()");
+    GlobalOutput("thriftServerEventHandler: accept()");
   }
 }
 
@@ -459,7 +459,7 @@ void TNonblockingServer::serve() {
   // Create the server socket
   serverSocket_ = socket(AF_INET, SOCK_STREAM, 0);
   if (serverSocket_ == -1) {
-    perror("TNonblockingServer::serve() socket() -1");
+    GlobalOutput("TNonblockingServer::serve() socket() -1");
     return;
   }
 
@@ -467,7 +467,7 @@ void TNonblockingServer::serve() {
   int flags;
   if ((flags = fcntl(serverSocket_, F_GETFL, 0)) < 0 ||
       fcntl(serverSocket_, F_SETFL, flags | O_NONBLOCK) < 0) {
-    perror("TNonblockingServer::serve() O_NONBLOCK");
+    GlobalOutput("TNonblockingServer::serve() O_NONBLOCK");
     ::close(serverSocket_);
     return;
   }
@@ -496,13 +496,13 @@ void TNonblockingServer::serve() {
   addr.sin_addr.s_addr = INADDR_ANY;
 
   if (bind(serverSocket_, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-    perror("TNonblockingServer::serve() bind");
+    GlobalOutput("TNonblockingServer::serve() bind");
     close(serverSocket_);
     return;
   }
 
   if (listen(serverSocket_, LISTEN_BACKLOG) == -1) {
-    perror("TNonblockingServer::serve() listen");
+    GlobalOutput("TNonblockingServer::serve() listen");
     close(serverSocket_);
     return;
   }
@@ -517,7 +517,7 @@ void TNonblockingServer::serve() {
 
   // Add the event and start up the server
   if (event_add(&serverEvent, 0) == -1) {
-    perror("TNonblockingServer::serve(): coult not event_add");
+    GlobalOutput("TNonblockingServer::serve(): coult not event_add");
     return;
   }
 

@@ -28,7 +28,7 @@ TSocketPool::TSocketPool(const vector<string> &hosts,
   alwaysTryLast_(true)
 {
   if (hosts.size() != ports.size()) {
-    perror("TSocketPool::TSocketPool: hosts.size != ports.size");
+    GlobalOutput("TSocketPool::TSocketPool: hosts.size != ports.size");
     throw TTransportException(TTransportException::BAD_ARGS);
   }
 
@@ -94,7 +94,7 @@ void TSocketPool::open() {
     }
   }
 
-  perror("TSocketPool::open: all connections failed");
+  GlobalOutput("TSocketPool::open: all connections failed");
   throw TTransportException(TTransportException::NOT_OPEN);
 }
 

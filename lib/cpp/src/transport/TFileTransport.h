@@ -207,7 +207,7 @@ class TFileTransport : public TFileReaderTransport,
 
   void setEventBufferSize(uint32_t bufferSize) {    
     if (bufferAndThreadInitialized_) {
-      perror("Cannot change the buffer size after writer thread started");
+      GlobalOutput("Cannot change the buffer size after writer thread started");
       return;
     }
     eventBufferSize_ = bufferSize;

@@ -96,7 +96,7 @@ bool TSocket::peek() {
   uint8_t buf;
   int r = recv(socket_, &buf, 1, MSG_PEEK);
   if (r == -1) {
-    perror("TSocket::peek()");
+    GlobalOutput("TSocket::peek()");
     close();
     throw TTransportException(TTransportException::UNKNOWN, "recv() ERROR:" + errno);
   }
@@ -111,7 +111,7 @@ void TSocket::open() {
   // Create socket
   socket_ = socket(AF_INET, SOCK_STREAM, 0);
   if (socket_ == -1) {
-    perror("TSocket::open() socket");
+    GlobalOutput("TSocket::open() socket");
     close();
     throw TTransportException(TTransportException::NOT_OPEN, "socket() ERROR:" + errno);
   }
@@ -143,7 +143,7 @@ void TSocket::open() {
     struct hostent *host_entry = gethostbyname(host_.c_str());
     
     if (host_entry == NULL) {
-      perror("TSocket: dns error: failed call to gethostbyname.");
+      GlobalOutput("TSocket: dns error: failed call to gethostbyname.");
       close();
       throw TTransportException(TTransportException::NOT_OPEN, "gethostbyname() failed");
     }
@@ -181,7 +181,7 @@ void TSocket::open() {
     close();
     char buff[1024];
     sprintf(buff, "TSocket::open() connect %s %d", host_.c_str(), port_);
-    perror(buff);
+    GlobalOutput(buff);
     throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
   }
 
@@ -198,22 +198,22 @@ void TSocket::open() {
     int ret2 = getsockopt(socket_, SOL_SOCKET, SO_ERROR, (void *)&val, &lon);
     if (ret2 == -1) {
       close();
-      perror("TSocket::open() getsockopt SO_ERROR");
+      GlobalOutput("TSocket::open() getsockopt SO_ERROR");
       throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
     }
     if (val == 0) {
       goto done;
     }
     close();
-    perror("TSocket::open() SO_ERROR was set");
+    GlobalOutput("TSocket::open() SO_ERROR was set");
     throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
   } else if (ret == 0) {
     close();
-    perror("TSocket::open() timeed out");
+    GlobalOutput("TSocket::open() timeed out");
     throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);   
   } else {
     close();
-    perror("TSocket::open() select error");
+    GlobalOutput("TSocket::open() select error");
     throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
   }
 
@@ -285,7 +285,7 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
     }
     
     // Now it's not a try again case, but a real probblez
-    perror("TSocket::read()");
+    GlobalOutput("TSocket::read()");
 
     // If we disconnect with no linger time
     if (errno == ECONNRESET) {
@@ -354,7 +354,7 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
         throw TTransportException(TTransportException::NOT_OPEN, "ENOTCONN");
       }
 
-      perror("TSocket::write() send < 0");
+      GlobalOutput("TSocket::write() send < 0");
       throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
     }
     
@@ -384,7 +384,7 @@ void TSocket::setLinger(bool on, int linger) {
   struct linger l = {(lingerOn_ ? 1 : 0), lingerVal_};
   int ret = setsockopt(socket_, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
   if (ret == -1) {
-    perror("TSocket::setLinger()");
+    GlobalOutput("TSocket::setLinger()");
   }
 }
 
@@ -398,7 +398,7 @@ void TSocket::setNoDelay(bool noDelay) {
   int v = noDelay_ ? 1 : 0;
   int ret = setsockopt(socket_, IPPROTO_TCP, TCP_NODELAY, &v, sizeof(v));
   if (ret == -1) {
-    perror("TSocket::setNoDelay()");
+    GlobalOutput("TSocket::setNoDelay()");
   }
 }
 
@@ -418,7 +418,7 @@ void TSocket::setRecvTimeout(int ms) {
   struct timeval r = recvTimeval_;
   int ret = setsockopt(socket_, SOL_SOCKET, SO_RCVTIMEO, &r, sizeof(r));
   if (ret == -1) {
-    perror("TSocket::setRecvTimeout()");
+    GlobalOutput("TSocket::setRecvTimeout()");
   }
 }
 
@@ -432,7 +432,7 @@ void TSocket::setSendTimeout(int ms) {
                       (int)((sendTimeout_%1000)*1000)};
   int ret = setsockopt(socket_, SOL_SOCKET, SO_SNDTIMEO, &s, sizeof(s));
   if (ret == -1) {
-    perror("TSocket::setSendTimeout()");
+    GlobalOutput("TSocket::setSendTimeout()");
   }
 }
 

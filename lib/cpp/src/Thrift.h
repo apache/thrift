@@ -26,6 +26,24 @@
 
 namespace facebook { namespace thrift {
 
+class TOutput{
+public:
+  TOutput() : f_(perror) {}
+
+  inline void setOutputFunction(void (*function)(const char *)){
+    f_ = function;
+  }
+
+  inline void operator()(const char *message){
+    f_(message);
+  }
+
+private:
+  void (*f_)(const char *);
+};
+
+extern TOutput GlobalOutput;
+
 namespace protocol {
   class TProtocol;
 }

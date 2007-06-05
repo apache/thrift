@@ -9,6 +9,8 @@
 
 namespace facebook { namespace thrift {
 
+TOutput GlobalOutput;
+
 uint32_t TApplicationException::read(facebook::thrift::protocol::TProtocol* iprot) {
   uint32_t xfer = 0;
   std::string fname;
