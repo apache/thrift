@@ -68,8 +68,8 @@ void TServerSocket::listen() {
     intSock1_ = -1;
     intSock2_ = -1;
   } else {
-    intSock1_ = sv[0];
-    intSock2_ = sv[1];
+    intSock1_ = sv[1];
+    intSock2_ = sv[0];
   }
 
   serverSocket_ = socket(AF_INET, SOCK_STREAM, 0);

@@ -1,5 +1,5 @@
 # Makefile for Thrift test project.
-# 
+#
 # Author:
 #   Marc Kwiatkowski <marc@facebook.com>
 #   Aditya Agarwal   <aditya@facebook.com>
@@ -18,8 +18,8 @@ endif #boost_home
 target: all
 
 include_paths = $(thrift_home)/lib/cpp/src \
-		$(thrift_home)/lib/cpp \
-		$(boost_home)
+                $(thrift_home)/lib/cpp \
+                $(boost_home)
 
 include_flags = $(patsubst %,-I%, $(include_paths))
 
@@ -32,15 +32,21 @@ CC     = g++
 LD     = g++
 
 # Compiler flags
-DCFL  = -Wall -O3 -g -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -levent
-CFL   = -Wall -O3 -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -levent
+DCFL  = -Wall -O3 -g -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -lthriftnb -levent
+CFL   = -Wall -O3 -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -lthriftnb -levent
 
-all: stress-test
+all: stress-test stress-test-nb
 
-debug: stress-test-debug
+debug: stress-test-debug stress-test-debug-nb
 
 stubs: ../StressTest.thrift
 	$(THRIFT) --cpp --php ../StressTest.thrift
+
+stress-test-debug-nb: stubs
+	g++ -o stress-test-nb $(DCFL) src/nb-main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
+
+stress-test-nb: stubs
+	g++ -o stress-test-nb $(CFL) src/nb-main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
 
 stress-test-debug: stubs
 	g++ -o stress-test $(DCFL) src/main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
@@ -49,4 +55,4 @@ stress-test: stubs
 	g++ -o stress-test $(CFL) src/main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
 
 clean:
-	rm -fr stress-test gen-cpp
+	rm -fr stress-test stress-test-nb gen-cpp
