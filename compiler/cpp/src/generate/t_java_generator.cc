@@ -650,7 +650,7 @@ void t_java_generator::generate_java_struct_tostring(ofstream& out,
   indent_up();
 
   out <<
-    indent() << "StringBuffer sb = new StringBuffer(\"" << tstruct->get_name() << "(\");" << endl;
+    indent() << "StringBuilder sb = new StringBuilder(\"" << tstruct->get_name() << "(\");" << endl;
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -1293,19 +1293,22 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
     obj = tmp("_list");
   }
 
-  indent(out) << prefix << " = new " << type_name(ttype, false, true) << "(); // from me" << endl;
-
   // Declare variables, read header
   if (ttype->is_map()) {
-    out <<
-      indent() << "TMap " << obj << " = iprot.readMapBegin();" << endl;
+    indent(out) << "TMap " << obj << " = iprot.readMapBegin();" << endl;
   } else if (ttype->is_set()) {
-    out <<
-      indent() << "TSet " << obj << " = iprot.readSetBegin();" << endl;
+    indent(out) << "TSet " << obj << " = iprot.readSetBegin();" << endl;
   } else if (ttype->is_list()) {
-    out <<
-      indent() << "TList " << obj << " = iprot.readListBegin();" << endl;
+    indent(out) << "TList " << obj << " = iprot.readListBegin();" << endl;
   }
+
+  indent(out)
+    << prefix << " = new " << type_name(ttype, false, true) 
+    // size the collection correctly
+    << "(" 
+    << (ttype->is_list() ? "" : "2*" )
+    << obj << ".size"
+    << ");" << endl;
 
   // For loop iterates over elements
   string i = tmp("_i");
