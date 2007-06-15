@@ -71,7 +71,8 @@ class TNonblockingServer : public TServer {
     TServer(processor),
     serverSocket_(0),
     port_(port),
-    frameResponses_(true) {}
+    frameResponses_(true),
+    threadPoolProcessing_(false) {}
 
   TNonblockingServer(boost::shared_ptr<TProcessor> processor, 
                      boost::shared_ptr<TProtocolFactory> protocolFactory,
