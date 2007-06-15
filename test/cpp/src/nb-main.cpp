@@ -16,6 +16,7 @@
 
 #include "Service.h"
 
+#include <unistd.h>
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
@@ -67,16 +68,8 @@ class Server : public ServiceIf {
 
   void echoVoid() {
     count("echoVoid");
-
-    //Sleep to simulate work
-    struct timeval  time_struct;
-    time_struct.tv_sec = 0;
-    time_struct.tv_usec = 5000;
-
-    select( (int) NULL, (fd_set *)NULL, (fd_set *)NULL,(fd_set *)NULL, &time_struct );
-
-
-
+    // Sleep to simulate work
+    usleep(5000);
     return;
   }
 
@@ -149,7 +142,7 @@ public:
 
       _workerCount--;
 
-      if(_workerCount == 0) {
+      if (_workerCount == 0) {
 
         _monitor.notify();
       }
@@ -157,13 +150,13 @@ public:
   }
 
   void loopEchoVoid() {
-    for(size_t ix = 0; ix < _loopCount; ix++) {
+    for (size_t ix = 0; ix < _loopCount; ix++) {
       _client->echoVoid();
     }
   }
 
   void loopEchoByte() {
-    for(size_t ix = 0; ix < _loopCount; ix++) {
+    for (size_t ix = 0; ix < _loopCount; ix++) {
       int8_t arg = 1;
       int8_t result;
       result =_client->echoByte(arg);
@@ -172,7 +165,7 @@ public:
   }
 
   void loopEchoI32() {
-    for(size_t ix = 0; ix < _loopCount; ix++) {
+    for (size_t ix = 0; ix < _loopCount; ix++) {
       int32_t arg = 1;
       int32_t result;
       result =_client->echoI32(arg);
@@ -181,7 +174,7 @@ public:
   }
 
   void loopEchoI64() {
-    for(size_t ix = 0; ix < _loopCount; ix++) {
+    for (size_t ix = 0; ix < _loopCount; ix++) {
       int64_t arg = 1;
       int64_t result;
       result =_client->echoI64(arg);
@@ -190,7 +183,7 @@ public:
   }
 
   void loopEchoString() {
-    for(size_t ix = 0; ix < _loopCount; ix++) {
+    for (size_t ix = 0; ix < _loopCount; ix++) {
       string arg = "hello";
       string result;
       _client->echoString(result, arg);
@@ -245,17 +238,17 @@ int main(int argc, char **argv) {
 
   map<string, string>  args;
 
-  for(int ix = 1; ix < argc; ix++) {
+  for (int ix = 1; ix < argc; ix++) {
 
     string arg(argv[ix]);
 
-    if(arg.compare(0,2, "--") == 0) {
+    if (arg.compare(0,2, "--") == 0) {
 
       size_t end = arg.find_first_of("=", 2);
 
       string key = string(arg, 2, end - 2);
 
-      if(end != string::npos) {
+      if (end != string::npos) {
         args[key] = string(arg, end + 1);
       } else {
         args[key] = "true";
@@ -267,44 +260,44 @@ int main(int argc, char **argv) {
 
   try {
 
-    if(!args["clients"].empty()) {
+    if (!args["clients"].empty()) {
       clientCount = atoi(args["clients"].c_str());
     }
 
-    if(!args["help"].empty()) {
+    if (!args["help"].empty()) {
       cerr << usage.str();
       return 0;
     }
 
-    if(!args["loop"].empty()) {
+    if (!args["loop"].empty()) {
       loopCount = atoi(args["loop"].c_str());
     }
 
-    if(!args["call"].empty()) {
+    if (!args["call"].empty()) {
       callName = args["call"];
     }
 
-    if(!args["port"].empty()) {
+    if (!args["port"].empty()) {
       port = atoi(args["port"].c_str());
     }
 
-    if(!args["server"].empty()) {
+    if (!args["server"].empty()) {
       runServer = args["server"] == "true";
     }
 
-    if(!args["log-request"].empty()) {
+    if (!args["log-request"].empty()) {
       logRequests = args["log-request"] == "true";
     }
 
-    if(!args["replay-request"].empty()) {
+    if (!args["replay-request"].empty()) {
       replayRequests = args["replay-request"] == "true";
     }
 
-    if(!args["server-type"].empty()) {
+    if (!args["server-type"].empty()) {
       serverType = args["server-type"];
     }
 
-    if(!args["workers"].empty()) {
+    if (!args["workers"].empty()) {
       workerCount = atoi(args["workers"].c_str());
     }
 
@@ -340,7 +333,7 @@ int main(int argc, char **argv) {
   }
 
 
-  if(runServer) {
+  if (runServer) {
 
     shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
 
@@ -362,11 +355,11 @@ int main(int argc, char **argv) {
 
     shared_ptr<Thread> serverThread;
 
-    if(serverType == "simple") {
+    if (serverType == "simple") {
 
-      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TNonblockingServer(serviceProcessor, protocolFactory,port)));
+      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TNonblockingServer(serviceProcessor, protocolFactory, port)));
 
-    } else if(serverType == "thread-pool") {
+    } else if (serverType == "thread-pool") {
 
       shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
 
@@ -393,14 +386,14 @@ int main(int argc, char **argv) {
 
     set<shared_ptr<Thread> > clientThreads;
 
-    if(callName == "echoVoid") { loopType = T_VOID;}
-    else if(callName == "echoByte") { loopType = T_BYTE;}
-    else if(callName == "echoI32") { loopType = T_I32;}
-    else if(callName == "echoI64") { loopType = T_I64;}
-    else if(callName == "echoString") { loopType = T_STRING;}
+    if (callName == "echoVoid") { loopType = T_VOID;}
+    else if (callName == "echoByte") { loopType = T_BYTE;}
+    else if (callName == "echoI32") { loopType = T_I32;}
+    else if (callName == "echoI64") { loopType = T_I64;}
+    else if (callName == "echoString") { loopType = T_STRING;}
     else {throw invalid_argument("Unknown service call "+callName);}
 
-    for(size_t ix = 0; ix < clientCount; ix++) {
+    for (size_t ix = 0; ix < clientCount; ix++) {
 
       shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
       shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
@@ -410,7 +403,7 @@ int main(int argc, char **argv) {
       clientThreads.insert(threadFactory->newThread(shared_ptr<ClientThread>(new ClientThread(socket, serviceClient, monitor, threadCount, loopCount, loopType))));
     }
 
-    for(std::set<shared_ptr<Thread> >::const_iterator thread = clientThreads.begin(); thread != clientThreads.end(); thread++) {
+    for (std::set<shared_ptr<Thread> >::const_iterator thread = clientThreads.begin(); thread != clientThreads.end(); thread++) {
       (*thread)->start();
     }
 
@@ -440,7 +433,7 @@ int main(int argc, char **argv) {
     long long minTime = 9223372036854775807LL;
     long long maxTime = 0;
 
-    for(set<shared_ptr<Thread> >::iterator ix = clientThreads.begin(); ix != clientThreads.end(); ix++) {
+    for (set<shared_ptr<Thread> >::iterator ix = clientThreads.begin(); ix != clientThreads.end(); ix++) {
 
       shared_ptr<ClientThread> client = dynamic_pointer_cast<ClientThread>((*ix)->runnable());
 
@@ -448,19 +441,19 @@ int main(int argc, char **argv) {
 
       assert(delta > 0);
 
-      if(client->_startTime < firstTime) {
+      if (client->_startTime < firstTime) {
         firstTime = client->_startTime;
       }
 
-      if(client->_endTime > lastTime) {
+      if (client->_endTime > lastTime) {
         lastTime = client->_endTime;
       }
 
-      if(delta < minTime) {
+      if (delta < minTime) {
         minTime = delta;
       }
 
-      if(delta > maxTime) {
+      if (delta > maxTime) {
         maxTime = delta;
       }
 
