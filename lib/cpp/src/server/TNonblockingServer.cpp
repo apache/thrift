@@ -603,6 +603,11 @@ void TNonblockingServer::serve() {
     return;
   }
 
+  // Run pre-serve callback function if we have one
+  if (preServeCallback_) {
+    preServeCallback_(preServeCallbackArg_);
+  }
+
   // Run libevent engine, never returns, invokes calls to eventHandler
   event_loop(0);
 }

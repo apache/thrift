@@ -63,6 +63,11 @@ class TNonblockingServer : public TServer {
    */
   std::stack<TConnection*> connectionStack_;
 
+  // Pointer to optional function called after opening the listen socket and
+  // before running the event loop, along with its argument data
+  void (*preServeCallback_)(void*);
+  void* preServeCallbackArg_;
+
   void handleEvent(int fd, short which);
 
  public:
@@ -72,7 +77,9 @@ class TNonblockingServer : public TServer {
     serverSocket_(0),
     port_(port),
     frameResponses_(true),
-    threadPoolProcessing_(false) {}
+    threadPoolProcessing_(false),
+    preServeCallback_(NULL),
+    preServeCallbackArg_(NULL) {}
 
   TNonblockingServer(boost::shared_ptr<TProcessor> processor, 
                      boost::shared_ptr<TProtocolFactory> protocolFactory,
@@ -82,7 +89,9 @@ class TNonblockingServer : public TServer {
     serverSocket_(0),
     port_(port),
     frameResponses_(true),
-    threadManager_(threadManager) {
+    threadManager_(threadManager), 
+    preServeCallback_(NULL),
+    preServeCallbackArg_(NULL) {
     setInputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
     setOutputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
     setInputProtocolFactory(protocolFactory);
@@ -101,7 +110,9 @@ class TNonblockingServer : public TServer {
     serverSocket_(0),
     port_(port),
     frameResponses_(true),
-    threadManager_(threadManager) {
+    threadManager_(threadManager),
+    preServeCallback_(NULL),
+    preServeCallbackArg_(NULL) {
     setInputTransportFactory(inputTransportFactory);
     setOutputTransportFactory(outputTransportFactory);
     setInputProtocolFactory(inputProtocolFactory);
@@ -141,6 +152,12 @@ class TNonblockingServer : public TServer {
   }
 
   void serve();
+
+  void setPreServeCallback(void(*fn_ptr)(void*), void* arg = NULL) {
+    preServeCallback_ = fn_ptr;
+    preServeCallbackArg_ = arg;
+  }
+
 };
 
 /**
