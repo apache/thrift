@@ -31,7 +31,8 @@ class TProtocolException : public facebook::thrift::TException {
     UNKNOWN = 0,
     INVALID_DATA = 1,
     NEGATIVE_SIZE = 2,
-    SIZE_LIMIT = 3
+    SIZE_LIMIT = 3,
+    BAD_VERSION = 4,
   };
 
   TProtocolException() :

@@ -58,6 +58,15 @@ public class TThreadPoolServer extends TServer {
 
   public TThreadPoolServer(TProcessor processor,
                            TServerTransport serverTransport,
+                           TProtocolFactory protocolFactory) {
+    this(processor, serverTransport,
+         new TTransportFactory(), new TTransportFactory(),
+         protocolFactory, protocolFactory,
+         new Options());
+  }
+
+  public TThreadPoolServer(TProcessor processor,
+                           TServerTransport serverTransport,
                            TTransportFactory transportFactory,
                            TProtocolFactory protocolFactory) {
     this(processor, serverTransport, 

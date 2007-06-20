@@ -19,6 +19,7 @@ public class TProtocolException extends TException {
   public static final int INVALID_DATA = 1;
   public static final int NEGATIVE_SIZE = 2;
   public static final int SIZE_LIMIT = 3;
+  public static final int BAD_VERSION = 4;
 
   protected int type_ = UNKNOWN;
 

@@ -20,20 +20,30 @@ namespace facebook { namespace thrift { namespace protocol {
  * @author Mark Slee <mcslee@facebook.com>
  */
 class TBinaryProtocol : public TProtocol {
+ protected:
+  static const int32_t VERSION_MASK = 0xffff0000;
+  static const int32_t VERSION_1 = 0x80010000;
+
  public:
   TBinaryProtocol(boost::shared_ptr<TTransport> trans) :
     TProtocol(trans),
     string_limit_(0),
     container_limit_(0),
+    strict_read_(false),
+    strict_write_(true),
     string_buf_(NULL),
     string_buf_size_(0) {}
 
   TBinaryProtocol(boost::shared_ptr<TTransport> trans,
                   int32_t string_limit,
-                  int32_t container_limit) :
+                  int32_t container_limit,
+                  bool strict_read,
+                  bool strict_write) :
     TProtocol(trans),
     string_limit_(string_limit),
     container_limit_(container_limit),
+    strict_read_(strict_read),
+    strict_write_(strict_write),
     string_buf_(NULL),
     string_buf_size_(0) {}
 
@@ -50,6 +60,11 @@ class TBinaryProtocol : public TProtocol {
 
   void setContainerSizeLimit(int32_t container_limit) {
     container_limit_ = container_limit;
+  }
+
+  void setStrict(bool strict_read, bool strict_write) {
+    strict_read_ = strict_read;
+    strict_write_ = strict_write;
   }
 
   /**
@@ -157,9 +172,16 @@ class TBinaryProtocol : public TProtocol {
 
   uint32_t readString(std::string& str);
 
+ protected:
+  uint32_t readStringBody(std::string& str, int32_t sz);
+
  private:
   int32_t string_limit_;
   int32_t container_limit_;
+
+  // Enforce presence of version identifier
+  bool strict_read_;
+  bool strict_write_;
 
   // Buffer for reading strings, save for the lifetime of the protocol to
   // avoid memory churn allocating memory on every string read
@@ -175,11 +197,15 @@ class TBinaryProtocolFactory : public TProtocolFactory {
  public:
   TBinaryProtocolFactory() :
     string_limit_(0),
-    container_limit_(0) {}
+    container_limit_(0),
+    strict_read_(false),
+    strict_write_(true) {}
 
-  TBinaryProtocolFactory(int32_t string_limit, int32_t container_limit) :
+  TBinaryProtocolFactory(int32_t string_limit, int32_t container_limit, bool strict_read, bool strict_write) :
     string_limit_(string_limit),
-    container_limit_(container_limit) {}
+    container_limit_(container_limit),
+    strict_read_(strict_read),
+    strict_write_(strict_write) {}
 
   virtual ~TBinaryProtocolFactory() {}
 
@@ -191,13 +217,20 @@ class TBinaryProtocolFactory : public TProtocolFactory {
     container_limit_ = container_limit;
   }
 
+  void setStrict(bool strict_read, bool strict_write) {
+    strict_read_ = strict_read;
+    strict_write_ = strict_write;
+  }
+
   boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TProtocol>(new TBinaryProtocol(trans, string_limit_, container_limit_));
+    return boost::shared_ptr<TProtocol>(new TBinaryProtocol(trans, string_limit_, container_limit_, strict_read_, strict_write_));
   }
 
  private:
   int32_t string_limit_;
   int32_t container_limit_;
+  bool strict_read_;
+  bool strict_write_;
 
 };
 

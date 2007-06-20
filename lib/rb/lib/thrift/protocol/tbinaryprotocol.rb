@@ -11,13 +11,17 @@
 require 'thrift/protocol/tprotocol'
 
 class TBinaryProtocol < TProtocol
+
+  VERSION_MASK = 0xffff0000
+  VERSION_1 = 0x80010000
+
   def initialize(trans)
     super(trans)
   end
 
   def writeMessageBegin(name, type, seqid)
+    writeI32(VERSION_1 & type)
     writeString(name)
-    writeByte(type)
     writeI32(seqid)
   end
 
@@ -82,8 +86,12 @@ class TBinaryProtocol < TProtocol
   end
 
   def readMessageBegin()
+    version = readI32()
+    if (version & VERSION_MASK != VERSION_1)
+      raise TProtocolException.new(TProtocolException::BAD_VERSION, 'Missing version identifier')
+    end
+    type = version & 0x000000ff
     name = readString()
-    type = readByte()
     seqid = readI32()
     return name, type, seqid
   end

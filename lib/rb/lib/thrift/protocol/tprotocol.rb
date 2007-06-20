@@ -11,6 +11,23 @@
 
 require 'thrift/thrift'
 
+class TProtocolException < TException
+
+  UNKNOWN = 0
+  INVALID_DATA = 1
+  NEGATIVE_SIZE = 2
+  SIZE_LIMIT = 3
+  BAD_VERSION = 4
+
+  attr_reader :type
+
+  def initialize(type=UNKNOWN, message=nil)
+    super(message)
+    @type = type
+  end
+
+end
+
 class TProtocol
   
   attr_reader :trans

@@ -19,15 +19,31 @@
  */
 class TBinaryProtocol extends TProtocol {
 
-  public function __construct($trans) {
+  const VERSION_MASK = 0xffff0000;
+  const VERSION_1 = 0x80010000;
+
+  private $strictRead_ = false;
+  private $strictWrite_ = true;
+
+  public function __construct($trans, $strictRead=false, $strictWrite=true) {
     parent::__construct($trans);
+    $this->strictRead_ = $strictRead;
+    $this->strictWrite_ = $strictWrite;
   }
 
   public function writeMessageBegin($name, $type, $seqid) {
-    return 
-      $this->writeString($name) +
-      $this->writeByte($type) +
-      $this->writeI32($seqid);
+    if ($this->strictWrite_) {
+      $version = self::VERSION_1 | $type;
+      return
+        $this->writeI32($version) +
+        $this->writeString($name) +
+        $this->writeI32($seqid);
+    } else {
+      return 
+        $this->writeString($name) +
+        $this->writeByte($type) +
+        $this->writeI32($seqid);
+    }
   }
 
   public function writeMessageEnd() {
@@ -50,7 +66,7 @@ class TBinaryProtocol extends TProtocol {
 
   public function writeFieldEnd() {
     return 0;
-  } 
+  }
 
   public function writeFieldStop() {
     return
@@ -115,29 +131,29 @@ class TBinaryProtocol extends TProtocol {
   public function writeI64($value) {
     // If we are on a 32bit architecture we have to explicitly deal with
     // 64-bit twos-complement arithmetic since PHP wants to treat all ints
-    // as signed and any int over 2^31 - 1 as a float   
+    // as signed and any int over 2^31 - 1 as a float
     if (PHP_INT_SIZE == 4) {
       $neg = $value < 0;
 
       if ($neg) {
-	$value *= -1;
+        $value *= -1;
       }
-   
+
       $hi = (int)($value / 4294967296);
       $lo = (int)$value;
-    
+
       if ($neg) {
-	$hi = ~$hi;
-	$lo = ~$lo;
-	if (($lo & (int)0xffffffff) == (int)0xffffffff) {
-	  $lo = 0;
-	  $hi++;
-	} else {
-	  $lo++;
-	}
+        $hi = ~$hi;
+        $lo = ~$lo;
+        if (($lo & (int)0xffffffff) == (int)0xffffffff) {
+          $lo = 0;
+          $hi++;
+        } else {
+          $lo++;
+        }
       }
       $data = pack('N2', $hi, $lo);
-    
+
     } else {
       $hi = $value >> 32;
       $lo = $value & 0xFFFFFFFF;
@@ -164,10 +180,29 @@ class TBinaryProtocol extends TProtocol {
   }
 
   public function readMessageBegin(&$name, &$type, &$seqid) {
-    return 
-      $this->readString($name) +
-      $this->readByte($type) +
-      $this->readI32($seqid);
+    $result = $this->readI32($sz);
+    if ($sz < 0) {
+      $version = $sz & self::VERSION_MASK;
+      if ($version != self::VERSION_1) {
+        throw new TProtocolException('Bad version identifier: '.$sz, TProtocolException::BAD_VERSION);
+      }
+      $type = $sz & 0x000000ff;
+      $result +=
+        $this->readString($name) +
+        $this->readI32($seqid);
+    } else {
+      if ($this->strictRead_) {
+        throw new TProtocolException('No version identifier, old protocol client?', TProtocolException::BAD_VERSION);
+      } else {
+        // Handle pre-versioned input
+        $name = $this->trans_->readAll($sz);
+        $result += 
+          $sz +
+          $this->readByte($type) +
+          $this->readI32($seqid);
+      }
+    }
+    return $result;
   }
 
   public function readMessageEnd() {
@@ -266,7 +301,7 @@ class TBinaryProtocol extends TProtocol {
     $data = $this->trans_->readAll(8);
 
     $arr = unpack('N2', $data);
-    
+
     // If we are on a 32bit architecture we have to explicitly deal with
     // 64-bit twos-complement arithmetic since PHP wants to treat all ints
     // as signed and any int over 2^31 - 1 as a float
@@ -350,8 +385,16 @@ class TBinaryProtocol extends TProtocol {
  * Binary Protocol Factory
  */
 class TBinaryProtocolFactory implements TProtocolFactory {
+  private $strictRead_ = false;
+  private $strictWrite_ = false;
+
+  public function __construct($strictRead=false, $strictWrite=false) {
+    $this->strictRead_ = $strictRead;
+    $this->strictWrite_ = $strictWrite;
+  } 
+
   public function getProtocol($trans) {
-    return new TBinaryProtocol($trans);
+    return new TBinaryProtocol($trans, $this->strictRead, $this->strictWrite);
   }
 }
 

@@ -26,7 +26,7 @@ use constant UNKNOWN       => 0;
 use constant INVALID_DATA  => 1;
 use constant NEGATIVE_SIZE => 2;
 use constant SIZE_LIMIT    => 3;
-
+use constant BAD_VERSION   => 4;
 
 sub new {
     my $classname = shift;

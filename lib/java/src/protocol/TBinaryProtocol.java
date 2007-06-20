@@ -16,12 +16,30 @@ import com.facebook.thrift.transport.TTransport;
  */
 public class TBinaryProtocol extends TProtocol {
 
+  protected static final int VERSION_MASK = 0xffff0000;
+  protected static final int VERSION_1 = 0x80010000;
+
+  protected boolean strictRead_ = false;
+  protected boolean strictWrite_ = true;
+
   /**
    * Factory
    */
   public static class Factory implements TProtocolFactory {
+    protected boolean strictRead_ = false;
+    protected boolean strictWrite_ = true;
+    
+    public Factory() {
+      this(false, false);
+    }
+
+    public Factory(boolean strictRead, boolean strictWrite) {
+      strictRead_ = strictRead;
+      strictWrite_ = strictWrite;
+    }
+
     public TProtocol getProtocol(TTransport trans) {
-      return new TBinaryProtocol(trans);
+      return new TBinaryProtocol(trans, strictRead_, strictWrite_);
     }
   }
 
@@ -29,13 +47,27 @@ public class TBinaryProtocol extends TProtocol {
    * Constructor
    */
   public TBinaryProtocol(TTransport trans) {
-    super(trans);
+    this(trans, false, false);
   }
 
+  public TBinaryProtocol(TTransport trans, boolean strictRead, boolean strictWrite) {
+    super(trans);
+    strictRead_ = strictRead;
+    strictWrite_ = strictWrite;
+  }
+
+
   public void writeMessageBegin(TMessage message) throws TException {
-    writeString(message.name);
-    writeByte(message.type);
-    writeI32(message.seqid);
+    if (strictWrite_) {
+      int version = VERSION_1 | message.type;
+      writeI32(version);
+      writeString(message.name);
+      writeI32(message.seqid);
+    } else {
+      writeString(message.name);
+      writeByte(message.type);
+      writeI32(message.seqid);
+    }
   }
 
   public void writeMessageEnd() {}
@@ -137,9 +169,24 @@ public class TBinaryProtocol extends TProtocol {
 
   public TMessage readMessageBegin() throws TException {
     TMessage message = new TMessage();
-    message.name = readString();
-    message.type = readByte();
-    message.seqid = readI32();
+
+    int size = readI32();
+    if (size < 0) {
+      int version = size & VERSION_MASK;
+      if (version != VERSION_1) {
+        throw new TProtocolException(TProtocolException.BAD_VERSION, "Bad version in readMessageBegin");
+      }
+      message.type = (byte)(version & 0x000000ff);
+      message.name = readString();
+      message.seqid = readI32();
+    } else {
+      if (strictRead_) {
+        throw new TProtocolException(TProtocolException.BAD_VERSION, "Missing version in readMessageBegin, old client?");
+      }
+      message.name = readStringBody(size);
+      message.type = readByte();
+      message.seqid = readI32();
+    }
     return message;
   }
 
@@ -239,6 +286,10 @@ public class TBinaryProtocol extends TProtocol {
 
   public String readString() throws TException {
     int size = readI32();
+    return readStringBody(size);
+  }
+
+  public String readStringBody(int size) throws TException {
     byte[] buf = new byte[size];
     trans_.readAll(buf, 0, size);
     return new String(buf);

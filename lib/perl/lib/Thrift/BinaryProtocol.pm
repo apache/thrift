@@ -26,6 +26,9 @@ use Bit::Vector;
 package Thrift::BinaryProtocol;
 use base('Thrift::Protocol');
 
+use constant VERSION_MASK   => 0xffff0000;
+use constant VERSION_1      => 0x80010000;
+
 sub new
 {
     my $classname = shift;
@@ -41,8 +44,8 @@ sub writeMessageBegin
     my ($name, $type, $seqid) = @_;
 
     return
+        $self->writeI32(VERSION_1 | $type) +
         $self->writeString($name) +
-        $self->writeByte($type) +
         $self->writeI32($seqid);
 }
 
@@ -224,9 +227,15 @@ sub readMessageBegin
     my $self = shift;
     my ($name, $type, $seqid) = @_;
 
+    my $version = 0;
+    my $result = $self->readI32($version);
+    if ($version & VERSION_MASK != VERSION_1) {
+      die new Thrift::TException('Missing version identifier')
+    }
+    $$type = $version & 0x000000ff;
     return
+        $result +
         $self->readString($name) +
-        $self->readByte($type) +
         $self->readI32($seqid);
 }
 
