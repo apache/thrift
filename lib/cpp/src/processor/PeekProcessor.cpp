@@ -63,6 +63,7 @@ bool PeekProcessor::process(boost::shared_ptr<TProtocol> in,
 
     // Peek at the variable
     peek(in, ftype, fid);
+    in->readFieldEnd();
   }
   in->readMessageEnd();
   in->getTransport()->readEnd();
