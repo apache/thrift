@@ -23,7 +23,7 @@ class TBinaryProtocol(TProtocolBase):
 
   def writeMessageBegin(self, name, type, seqid):
     if self.strictWrite:
-      self.writeI32(VERSION_1 | type)
+      self.writeI32(TBinaryProtocol.VERSION_1 | type)
       self.writeString(name)
       self.writeI32(seqid)
     else:
@@ -105,8 +105,8 @@ class TBinaryProtocol(TProtocolBase):
   def readMessageBegin(self):
     sz = self.readI32()
     if sz < 0:
-      version = sz & VERSION_MASK
-      if version != VERSION_1:
+      version = sz & TBinaryProtocol.VERSION_MASK
+      if version != TBinaryProtocol.VERSION_1:
         raise TProtocolException(TProtocolException.BAD_VERSION, 'Bad version in readMessageBegin: %d' % (sz))
       type = version & 0x000000ff
       name = self.readString()
