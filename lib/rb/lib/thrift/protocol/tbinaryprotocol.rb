@@ -20,7 +20,7 @@ class TBinaryProtocol < TProtocol
   end
 
   def writeMessageBegin(name, type, seqid)
-    writeI32(VERSION_1 & type)
+    writeI32(VERSION_1 | type)
     writeString(name)
     writeI32(seqid)
   end
