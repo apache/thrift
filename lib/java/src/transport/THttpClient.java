@@ -50,7 +50,16 @@ public class THttpClient extends TTransport {
 
   public void open() {}
 
-  public void close() {}
+  public void close() {
+    if (null != inputStream_) {
+      try {
+        inputStream_.close();
+      } catch (IOException ioe) {
+        ;
+      }
+      inputStream_ = null;
+    }
+  }
 
   public boolean isOpen() {
     return true;
