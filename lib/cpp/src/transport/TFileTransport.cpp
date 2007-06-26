@@ -751,8 +751,8 @@ void TFileTransport::openLogFile() {
     throw TTransportException(errorMsg);
   }
 
-  // opening the file in append mode causes offset_t to be at the end
-  offset_ = lseek(fd_, 0, SEEK_CUR);
+  // seek to the end of the file
+  offset_ = lseek(fd_, 0, SEEK_END);
 }
 
 void TFileTransport::getNextFlushTime(struct timespec* ts_next_flush) {
