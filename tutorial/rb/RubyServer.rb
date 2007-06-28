@@ -42,7 +42,7 @@ class CalculatorHandler
       end
       val = work.num1 / work.num2
     else
-      x = InvalidOperation()
+      x = InvalidOperation.new()
       x.what = work.op
       x.why = "Invalid operation"
       raise x
