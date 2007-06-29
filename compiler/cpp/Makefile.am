@@ -14,7 +14,8 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_py_generator.cc \
                  src/generate/t_rb_generator.cc \
                  src/generate/t_xsd_generator.cc \
-                 src/generate/t_perl_generator.cc
+                 src/generate/t_perl_generator.cc \
+                 src/generate/t_erl_generator.cc
 
 thrift_CXXFLAGS = -Wall -Isrc
 thrift_LDFLAGS = -Wall

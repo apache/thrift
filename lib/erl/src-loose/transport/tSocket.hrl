@@ -1,0 +1,1 @@
+-record(tSocket, {host, port, handle}).
