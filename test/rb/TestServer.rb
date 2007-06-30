@@ -60,6 +60,16 @@ class TestHandler
     return thing
   end
 
+  def testNest(thing)
+    print "testNest(#{thing})\n"
+    puts "  i32_thing: #{thing.i32_thing}"
+    puts "  with struct: "
+    %w{ string_thing byte_thing i32_thing }.each do |t|
+      puts "    #{t}: #{thing.struct_thing.send(t)}"
+    end
+    return thing
+  end
+
 end
 
 handler = TestHandler.new()

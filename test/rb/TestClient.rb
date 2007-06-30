@@ -26,6 +26,10 @@ puts c.testMap({1 => 1, 2 => 2, 3 => 3})
 puts c.testList([1,2,3,4,5])
 puts c.testSet({1 => true, 2 => true, 3 => true})
 
+struct = Xtruct.new({'string_thing' => 'hi!', 'i32_thing' => 4 })
+puts c.testStruct(struct)
+puts c.testNest(Xtruct2.new({'struct_thing' => struct, 'i32_thing' => 10}))
+
 s.close()
 
 
