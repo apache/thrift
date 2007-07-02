@@ -27,8 +27,8 @@ end
 
 class TSimpleServer < TServer
 
-  def initialize(processor, serverTransport, transportFactory=nil, procotolFactory=nil)
-    super(processor, serverTransport, transportFactory, procotolFactory)
+  def initialize(processor, serverTransport, transportFactory=nil, protocolFactory=nil)
+    super(processor, serverTransport, transportFactory, protocolFactory)
   end
 
   def serve()
