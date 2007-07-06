@@ -98,22 +98,20 @@ bool TSocket::peek() {
   if (r == -1) {
     GlobalOutput("TSocket::peek()");
     close();
-    throw TTransportException(TTransportException::UNKNOWN, "recv() ERROR:" + errno);
+    throw TTransportException(TTransportException::UNKNOWN, std::string("recv() ERROR:") + sys_errlist[errno]);
   }
   return (r > 0);
 }
 
-void TSocket::open() {
+void TSocket::openConnection(struct addrinfo *res) {
   if (isOpen()) {
     throw TTransportException(TTransportException::ALREADY_OPEN);
   }
-
-  // Create socket
-  socket_ = socket(AF_INET, SOCK_STREAM, 0);
+  
+  socket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   if (socket_ == -1) {
     GlobalOutput("TSocket::open() socket");
-    close();
-    throw TTransportException(TTransportException::NOT_OPEN, "socket() ERROR:" + errno);
+    throw TTransportException(TTransportException::NOT_OPEN, std::string("socket() ERROR:") + sys_errlist[errno]);
   }
 
   // Send timeout
@@ -132,28 +130,6 @@ void TSocket::open() {
   // No delay
   setNoDelay(noDelay_);
 
-  // Lookup the hostname
-  struct sockaddr_in addr;
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port_);
-
-  {
-    // Scope lock on host entry lookup
-    Synchronized s(s_netdb_monitor);
-    struct hostent *host_entry = gethostbyname(host_.c_str());
-    
-    if (host_entry == NULL) {
-      GlobalOutput("TSocket: dns error: failed call to gethostbyname.");
-      close();
-      throw TTransportException(TTransportException::NOT_OPEN, "gethostbyname() failed");
-    }
-    
-    addr.sin_port = htons(port_);
-    memcpy(&addr.sin_addr.s_addr,
-           host_entry->h_addr_list[0],
-           host_entry->h_length);
-  }
-
   // Set the socket to be non blocking for connect if a timeout exists
   int flags = fcntl(socket_, F_GETFL, 0); 
   if (connTimeout_ > 0) {
@@ -171,18 +147,17 @@ void TSocket::open() {
                       (int)((connTimeout_%1000)*1000)};
    
   // Connect the socket
-  int ret = connect(socket_, (struct sockaddr *)&addr, sizeof(addr));
+  int ret = connect(socket_, res->ai_addr, res->ai_addrlen);
   
   if (ret == 0) {
     goto done;
   }
 
   if (errno != EINPROGRESS) {
-    close();
     char buff[1024];
     sprintf(buff, "TSocket::open() connect %s %d", host_.c_str(), port_);
     GlobalOutput(buff);
-    throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
+    throw TTransportException(TTransportException::NOT_OPEN, std::string("open() ERROR: ") + sys_errlist[errno]);
   }
 
   fd_set fds;
@@ -197,29 +172,72 @@ void TSocket::open() {
     lon = sizeof(int);
     int ret2 = getsockopt(socket_, SOL_SOCKET, SO_ERROR, (void *)&val, &lon);
     if (ret2 == -1) {
-      close();
       GlobalOutput("TSocket::open() getsockopt SO_ERROR");
-      throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
+      throw TTransportException(TTransportException::NOT_OPEN, std::string("open() ERROR: ") + sys_errlist[errno]);
     }
     if (val == 0) {
       goto done;
     }
-    close();
     GlobalOutput("TSocket::open() SO_ERROR was set");
-    throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
+    throw TTransportException(TTransportException::NOT_OPEN, std::string("open() ERROR: ") + sys_errlist[errno]);
   } else if (ret == 0) {
-    close();
     GlobalOutput("TSocket::open() timeed out");
-    throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);   
+    throw TTransportException(TTransportException::NOT_OPEN, std::string("open() ERROR: ") + sys_errlist[errno]);   
   } else {
-    close();
     GlobalOutput("TSocket::open() select error");
-    throw TTransportException(TTransportException::NOT_OPEN, "open() ERROR: " + errno);
+    throw TTransportException(TTransportException::NOT_OPEN, std::string("open() ERROR: ") + sys_errlist[errno]);
   }
 
  done:
   // Set socket back to normal mode (blocking)
   fcntl(socket_, F_SETFL, flags);
+}
+
+void TSocket::open() {
+  if (isOpen()) {
+    throw TTransportException(TTransportException::ALREADY_OPEN);
+  }
+
+  // Validate port number
+  if (port_ < 0 || port_ > 65536) {
+    throw TTransportException(TTransportException::NOT_OPEN, "Specified port is invalid");
+  }
+
+  struct addrinfo hints, *res, *res0;
+  int error;
+  char port[sizeof("65536") + 1];
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = PF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
+  sprintf(port, "%d", port_);
+  
+  {
+    // Scope lock on host entry lookup
+    Synchronized s(s_netdb_monitor);
+    error = getaddrinfo(host_.c_str(), port, &hints, &res0);
+  }
+  if (error) {
+    fprintf(stderr, "getaddrinfo %d: %s\n", error, gai_strerror(error));
+    close();
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not resolve host for client socket.");
+  }
+  
+  // Cycle through all the returned addresses until one
+  // connects or push the exception up.
+  for (res = res0; res; res = res->ai_next) {
+    try {
+      openConnection(res);
+      break;
+    } catch (TTransportException& ttx) {
+      if (res->ai_next) {
+        close();
+      } else {
+        close();
+        throw;
+      }
+    }
+  }
 }
 
 void TSocket::close() {
@@ -355,7 +373,7 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
       }
 
       GlobalOutput("TSocket::write() send < 0");
-      throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
+      throw TTransportException(TTransportException::UNKNOWN, std::string("ERROR:") + sys_errlist[errno]);
     }
     
     // Fail on blocked send

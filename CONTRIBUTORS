@@ -2,6 +2,12 @@
 Release 200705xx
 ----------------
 
+Paul Saab <ps@powerset.com>
+-IPv6 support for TSocket in C++/Python
+
+Kevin Clark <kevin@powerset.com>
+-Significant overhaul of Ruby code generation and servers
+
 Simon Forman <sforman@gmail.com>
 -TProcessorFactory abstraction for Java servers
 

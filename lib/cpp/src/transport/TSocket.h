@@ -144,6 +144,9 @@ class TSocket : public TTransport {
    */
   TSocket(int socket);
 
+  /** connect, called by open */
+  void openConnection(struct addrinfo *res);
+
   /** Host to connect to */
   std::string host_;
 

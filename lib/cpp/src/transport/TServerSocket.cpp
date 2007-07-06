@@ -8,6 +8,7 @@
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <netdb.h>
 #include <fcntl.h>
 #include <errno.h>
 
@@ -72,7 +73,31 @@ void TServerSocket::listen() {
     intSock2_ = sv[0];
   }
 
-  serverSocket_ = socket(AF_INET, SOCK_STREAM, 0);
+  struct addrinfo hints, *res, *res0;
+  int error;
+  char port[sizeof("65536") + 1];
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = PF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
+  sprintf(port, "%d", port_);
+
+  // Wildcard address
+  error = getaddrinfo(NULL, port, &hints, &res0);
+  if (error) {
+    fprintf(stderr, "getaddrinfo %d: %s\n", error, gai_strerror(error));
+    close();
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not resolve host for server socket.");
+  }
+
+  // Pick the ipv6 address first since ipv4 addresses can be mapped
+  // into ipv6 space.
+  for (res = res0; res; res = res->ai_next) {
+    if (res->ai_family == AF_INET6 || res->ai_next == NULL)
+      break;
+  }
+  
+  serverSocket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   if (serverSocket_ == -1) {
     GlobalOutput("TServerSocket::listen() socket");
     close();
@@ -126,23 +151,20 @@ void TServerSocket::listen() {
   }
 
   // prepare the port information
-  struct sockaddr_in addr;
-  memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port_);
-  addr.sin_addr.s_addr = INADDR_ANY;
-  
   // we may want to try to bind more than once, since SO_REUSEADDR doesn't 
   // always seem to work. The client can configure the retry variables.
   int retries = 0;
   do {
-    if (0 == bind(serverSocket_, (struct sockaddr *)&addr, sizeof(addr))) {
+    if (0 == bind(serverSocket_, res->ai_addr, res->ai_addrlen)) {
       break;
     }
 
     // use short circuit evaluation here to only sleep if we need to
   } while ((retries++ < retryLimit_) && (sleep(retryDelay_) == 0));
 
+  // free addrinfo
+  freeaddrinfo(res0);
+  
   // throw an error if we failed to bind properly
   if (retries > retryLimit_) {
     char errbuf[1024];
@@ -208,7 +230,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     }
   }
 
-  struct sockaddr_in clientAddress;
+  struct sockaddr_storage clientAddress;
   int size = sizeof(clientAddress);
   int clientSocket = ::accept(serverSocket_,
                               (struct sockaddr *) &clientAddress,
@@ -216,18 +238,18 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     
   if (clientSocket < 0) {
     GlobalOutput("TServerSocket::accept()");
-    throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
+    throw TTransportException(TTransportException::UNKNOWN, std::string("ERROR:") + sys_errlist[errno]);
   }
 
   // Make sure client socket is blocking
   int flags = fcntl(clientSocket, F_GETFL, 0);
   if (flags == -1) {
     GlobalOutput("TServerSocket::select() fcntl GETFL");
-    throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
+    throw TTransportException(TTransportException::UNKNOWN, std::string("ERROR:") + sys_errlist[errno]);
   }
   if (-1 == fcntl(clientSocket, F_SETFL, flags & ~O_NONBLOCK)) {
     GlobalOutput("TServerSocket::select() fcntl SETFL");
-    throw TTransportException(TTransportException::UNKNOWN, "ERROR:" + errno);
+    throw TTransportException(TTransportException::UNKNOWN, std::string("ERROR:") + sys_errlist[errno]);
   }
   
   shared_ptr<TSocket> client(new TSocket(clientSocket));
