@@ -10,6 +10,8 @@ AM_INIT_AUTOMAKE
 
 AC_CHECK_HEADERS([stddef.h])
 
+AX_BOOST_BASE([1.33.1])
+
 AC_CHECK_FUNCS([mkdir])
 
 AC_CHECK_FUNCS([realpath])

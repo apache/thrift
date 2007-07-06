@@ -114,6 +114,56 @@ class TProtocol
   
   def readString(); nil; end
   
+  def write_field(name, type, fid, value)
+    writeFieldBegin(name, type, fid)
+    write_type(type, value)
+    writeFieldEnd
+  end
+  
+  def write_type(type, value)
+    case type
+    when TType::BOOL
+      writeBool(value)
+    when TType::BYTE
+      writeByte(value)
+    when TType::DOUBLE
+      writeDouble(value)
+    when TType::I16
+      writeI16(value)
+    when TType::I32
+      writeI32(value)
+    when TType::I64
+      writeI64(value)
+    when TType::STRING
+      writeString(value)
+    when TType::STRUCT
+      value.write(self)
+    else
+      raise NotImplementedError
+    end
+  end
+  
+  def read_type(type)
+    case type
+    when TType::BOOL
+      readBool
+    when TType::BYTE
+      readByte
+    when TType::DOUBLE
+      readDouble
+    when TType::I16
+      readI16
+    when TType::I32
+      readI32
+    when TType::I64
+      readI64
+    when TType::STRING
+      readString
+    else
+      raise NotImplementedError
+    end
+  end
+  
   def skip(type)
     if type === TType::STOP
       nil

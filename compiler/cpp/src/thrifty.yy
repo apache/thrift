@@ -79,6 +79,7 @@ int y_field_val = -1;
 %token tok_xsd_nillable
 %token tok_xsd_namespace
 %token tok_xsd_attrs
+%token tok_ruby_namespace
 
 /**
  * Base datatype keywords
@@ -232,6 +233,13 @@ Header:
       pdebug("Header -> tok_php_namespace tok_identifier");
       if (g_parse_mode == PROGRAM) {
         g_program->set_php_namespace($2);
+      }
+    }
+| tok_ruby_namespace tok_identifier
+    {
+      pdebug("Header -> tok_ruby_namespace tok_identifier");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_ruby_namespace($2);
       }
     }
 | tok_java_package tok_identifier

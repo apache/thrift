@@ -33,12 +33,15 @@ void t_rb_generator::init_generator() {
     rb_autogen_comment() << endl <<
     rb_imports() << endl <<
     render_includes() << endl;
+    begin_namespace(f_types_, ruby_modules(program_));
   
   f_consts_ <<
     rb_autogen_comment() << endl <<
     rb_imports() << endl <<
     "require '" << program_name_ << "_types'" << endl <<
     endl;
+    begin_namespace(f_consts_, ruby_modules(program_));
+    
 }
 
 /**
@@ -81,6 +84,8 @@ string t_rb_generator::rb_imports() {
  */
 void t_rb_generator::close_generator() {
   // Close types file
+  end_namespace(f_types_, ruby_modules(program_));
+  end_namespace(f_consts_, ruby_modules(program_));
   f_types_.close();
   f_consts_.close();
 }
@@ -99,7 +104,7 @@ void t_rb_generator::generate_typedef(t_typedef* ttypedef) {}
  * @param tenum The enumeration
  */
 void t_rb_generator::generate_enum(t_enum* tenum) {
-  f_types_ <<
+  indent(f_types_) <<
     "module " << tenum->get_name() << endl;
   indent_up();
   
@@ -123,9 +128,8 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
   }
 
   indent_down();
-  f_types_ <<
-    "end" << endl <<
-    endl;
+  indent(f_types_) <<
+    "end" << endl << endl;
 }
 
 /**
@@ -254,7 +258,7 @@ string t_rb_generator::render_const_value(t_type* type, t_const_value* value) {
  * Generates a ruby struct
  */
 void t_rb_generator::generate_struct(t_struct* tstruct) {
-  generate_rb_struct(tstruct, false);
+  generate_rb_struct(f_types_, tstruct, false);
 }
 
 /**
@@ -264,231 +268,108 @@ void t_rb_generator::generate_struct(t_struct* tstruct) {
  * @param txception The struct definition
  */
 void t_rb_generator::generate_xception(t_struct* txception) {
-  generate_rb_struct(txception, true);  
+  generate_rb_struct(f_types_, txception, true);
 }
 
 /**
  * Generates a ruby struct
  */
-void t_rb_generator::generate_rb_struct(t_struct* tstruct,
-                                        bool is_exception) {
-  generate_rb_struct_definition(f_types_, tstruct, is_exception);
-}
-
-/**
- * Generates a struct definition for a thrift data type. This is nothing in PHP
- * where the objects are all just associative arrays (unless of course we
- * decide to start using objects for them...)
- *
- * @param tstruct The struct definition
- */
-void t_rb_generator::generate_rb_struct_definition(ofstream& out,
-                                                   t_struct* tstruct,
-                                                   bool is_exception,
-                                                   bool is_result) {
-  const vector<t_field*>& members = tstruct->get_members();
-  vector<t_field*>::const_iterator m_iter; 
-
-  indent(out) <<
-    "class " << type_name(tstruct);
+void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, bool is_exception = false) {
+  indent(out) << "class " << type_name(tstruct);
   if (is_exception) {
     out << " < StandardError";
   }
-  out << endl;
-  indent_up();
-
-  out << endl;
-
-  if (members.size() > 0) {
-    indent(out) << "attr_writer ";
-    bool first = true;
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      if (first) {
-        first = false;
-      } else {
-        out << ", ";
-      }
-      out << ":" << (*m_iter)->get_name();
-    }
-    out << endl;
-    indent(out) << "attr_reader ";
-    first = true;
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      if (first) {
-        first = false;
-      } else {
-        out << ", ";
-      }
-      out << ":" << (*m_iter)->get_name();
-    }
-    out << endl;
-    out << endl;
-  }
-
-  out <<
-    indent() << "def initialize(d=nil)" << endl;
-  indent_up();
-
-  if (members.size() > 0) {
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      if ((*m_iter)->get_value() != NULL) {
-        indent(out) << declare_field(*m_iter) << endl;
-      }
-    }
-    indent(out) <<
-      "if (d != nil)" << endl;
-    indent_up();
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out <<
-        indent() << "if (d.has_key?('" << (*m_iter)->get_name() << "'))" << endl <<
-        indent() << "  @" << (*m_iter)->get_name() << " = d['" << (*m_iter)->get_name() << "']" << endl <<
-        indent() << "end" << endl;
-    }
-    indent_down();
-    indent(out) << "end" << endl;
-  }
+  out  << endl;
   
-  indent_down();
-  indent(out) << "end" << endl;
- 
-  out << endl;
-
-  generate_rb_struct_reader(out, tstruct);
-  generate_rb_struct_writer(out, tstruct);
+  indent_up();
+  indent(out) << "include ThriftStruct" << endl;
+  
+  generate_accessors(out, tstruct);
+  generate_field_defns(out, tstruct);
 
   indent_down();
   indent(out) << "end" << endl << endl;
 }
 
-/**
- * Generates the read method for a struct
- */
-void t_rb_generator::generate_rb_struct_reader(ofstream& out,
-                                                t_struct* tstruct) {
-  const vector<t_field*>& fields = tstruct->get_members();
-  vector<t_field*>::const_iterator f_iter;
-
-  indent(out) <<
-    "def read(iprot)" << endl;
-  indent_up();
+void t_rb_generator::generate_accessors(std::ofstream& out, t_struct* tstruct) {
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
     
-  indent(out) <<
-    "iprot.readStructBegin()" << endl;   
-
-  // Loop over reading in fields
-  indent(out) <<
-    "while true" << endl;
-    indent_up();
-    
-    // Read beginning field marker
-    indent(out) <<
-      "fname, ftype, fid = iprot.readFieldBegin()" << endl;
-
-    // Check for field STOP marker and break
-    indent(out) <<
-      "if (ftype === TType::STOP)" << endl;
-    indent_up();
-    indent(out) <<
-      "break" << endl;
-    indent_down();
-    if (fields.size() > 0) {
-      indent(out) <<
-        "end" << endl;
-    }
-  
-    // Switch statement on the field we are reading
-    bool first = true;
-    
-    // Generate deserialization code for known cases
-    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-      if (first) {
-        first = false;
-        out <<
-          indent() << "if ";
-      } else {
-        out <<
-          indent() << "elsif ";
+  if (members.size() > 0) {
+    indent(out) << "attr_accessor ";
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      if (m_iter != members.begin()) {
+        out << ", ";
       }
-      out << "(fid == " << (*f_iter)->get_key() << ")" << endl;
-      indent_up();
-      indent(out) << "if (ftype === " << type_to_enum((*f_iter)->get_type()) << ")" << endl;
-      indent_up();
-      generate_deserialize_field(out, *f_iter, "@");
-      indent_down();
-      out <<
-        indent() << "else" << endl <<
-        indent() << "  iprot.skip(ftype)" << endl <<
-        indent() << "end" << endl;
-      indent_down();
+      out << ":" << (*m_iter)->get_name();
     }
-    
-    // In the default case we skip the field
-    out <<
-      indent() << "else" << endl <<
-      indent() << "  iprot.skip(ftype)" << endl <<
-      indent() << "end" << endl; 
-      
-    // Read field end marker
-    indent(out) <<
-      "iprot.readFieldEnd()" << endl;
-    
-    indent_down();
-    indent(out) << "end" << endl;
-
-    indent(out) <<
-      "iprot.readStructEnd()" << endl;
-
-    indent_down();
-    indent(out) << "end" << endl;
-  out << endl;
+    out << endl;
+  }
 }
 
-void t_rb_generator::generate_rb_struct_writer(ofstream& out,
-                                               t_struct* tstruct) {
-  string name = tstruct->get_name();
+void t_rb_generator::generate_field_defns(std::ofstream& out, t_struct* tstruct) {
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
-
-  indent(out) <<
-    "def write(oprot)" << endl;
-  indent_up();
   
-  indent(out) <<
-    "oprot.writeStructBegin('" << name << "')" << endl;
-
+  indent(out) << "FIELDS = {" << endl;
+  indent_up();
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    // Write field header
-    indent(out) <<
-      "if (@" << (*f_iter)->get_name() << " != nil)" << endl;
+    if (f_iter != fields.begin()) {
+      out << "," << endl;
+    }
+    
+    indent(out) << 
+      (*f_iter)->get_key() << " => ";
+    
+    generate_field_data(out, (*f_iter)->get_type(), (*f_iter)->get_name());
+  }
+  indent_down();
+  out << endl;
+  indent(out) << "}" << endl;
+}
+
+void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type, const std::string& field_name = "") {
+  // Begin this field's defn
+  out << "{:type => " << type_to_enum(field_type);
+    
+  if (!field_name.empty())
+    out << ", :name => '" << field_name << "'";
+   
+   if (! field_type->is_base_type()) {
+     if (field_type->is_struct()) {
+       out << ", :class => " << type_name(((t_struct*)field_type));
+     } else if (field_type->is_list()) {
+       out << ", :element => ";
+       generate_field_data(out, ((t_list*)field_type)->get_elem_type());
+     } else if (field_type->is_map()) {
+       out << ", :key => ";
+       generate_field_data(out, ((t_map*)field_type)->get_key_type());
+       out << ", :value => ";
+       generate_field_data(out, ((t_map*)field_type)->get_val_type());
+     } else if (field_type->is_set()) {
+       out << ", :element => ";
+       generate_field_data(out, ((t_set*)field_type)->get_elem_type());
+     }
+   }
+   
+   // End of this field's defn
+   out << "}";
+}
+
+void t_rb_generator::begin_namespace(std::ofstream& out, vector<std::string> modules) {
+  for (vector<std::string>::iterator m_iter = modules.begin(); m_iter != modules.end(); ++m_iter) {
+    indent(out) << "module " << *m_iter << endl;
     indent_up();
-    indent(out) <<
-      "oprot.writeFieldBegin(" <<
-      "'" << (*f_iter)->get_name() << "', " <<
-      type_to_enum((*f_iter)->get_type()) << ", " <<
-      (*f_iter)->get_key() << ")" << endl;
+  }
+}
 
-    // Write field contents
-    generate_serialize_field(out, *f_iter, "@");
-
-    // Write field closer
-    indent(out) <<
-      "oprot.writeFieldEnd()" << endl;
-
+void t_rb_generator::end_namespace(std::ofstream& out, vector<std::string> modules) {
+  for (vector<std::string>::reverse_iterator m_iter = modules.rbegin(); m_iter != modules.rend(); ++m_iter) {
     indent_down();
     indent(out) << "end" << endl;
   }
-
-  // Write the struct map
-  out <<
-    indent() << "oprot.writeFieldStop()" << endl <<
-    indent() << "oprot.writeStructEnd()" << endl;
-
-  indent_down();
-  indent(out) << "end" << endl;
-
-  out <<
-    endl;
 }
+
 
 /**
  * Generates a thrift service.
@@ -513,18 +394,21 @@ void t_rb_generator::generate_service(t_service* tservice) {
     "require '" << program_name_ << "_types'" << endl << 
     endl;
 
-  f_service_ << "module " << tservice->get_name() << endl;
+  begin_namespace(f_service_, ruby_modules(tservice->get_program()));
+
+  indent(f_service_) << "module " << tservice->get_name() << endl;
   indent_up();
 
   // Generate the three main parts of the service (well, two for now in PHP)
-  generate_service_interface(tservice);
   generate_service_client(tservice);
   generate_service_server(tservice);
   generate_service_helpers(tservice);
 
   indent_down();
-  f_service_ << "end" << endl <<
+  indent(f_service_) << "end" << endl <<
     endl;
+    
+  end_namespace(f_service_, ruby_modules(tservice->get_program()));
 
   // Close service file
   f_service_.close();
@@ -544,7 +428,7 @@ void t_rb_generator::generate_service_helpers(t_service* tservice) {
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
-    generate_rb_struct_definition(f_service_, ts, false);
+    generate_rb_struct(f_service_, ts);
     generate_rb_function_helpers(*f_iter);
   }
 }
@@ -567,33 +451,7 @@ void t_rb_generator::generate_rb_function_helpers(t_function* tfunction) {
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     result.append(*f_iter);
   }
-  generate_rb_struct_definition(f_service_, &result, false, true);
-}
-
-/**
- * Generates a service interface definition.
- *
- * @param tservice The service to generate a header definition for
- */
-void t_rb_generator::generate_service_interface(t_service* tservice) {
-  f_service_ <<
-    indent() << "module Iface" << endl;
-  indent_up();
-
-  if (tservice->get_extends() != NULL) {
-    string extends = type_name(tservice->get_extends());
-    indent(f_service_) << "include " << extends  << "::Iface" << endl;
-  }
-
-  vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    f_service_ <<
-      indent() << "def " << function_signature(*f_iter) << "" << endl <<
-      indent() << "end" << endl << endl;
-  }
-  indent_down();
-  indent(f_service_) << "end" << endl << endl;
+  generate_rb_struct(f_service_, &result);
 }
 
 /**
@@ -614,24 +472,8 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
   indent_up();
 
   indent(f_service_) <<
-    "include Iface" << endl << endl;
+    "include ThriftClient" << endl << endl;
   
-  // Constructor function
-  f_service_ <<
-    indent() << "def initialize(iprot, oprot=nil)" << endl;
-  if (extends.empty()) {
-    f_service_ <<
-      indent() << "  @iprot = @oprot = iprot" << endl <<
-      indent() << "  if (oprot != nil)" << endl <<
-      indent() << "    @oprot = oprot" << endl <<
-      indent() << "  end" << endl <<
-      indent() << "  @seqid = 0" << endl;
-  } else {
-    f_service_ <<
-      indent() << "  super(iprot, oprot)" << endl;
-  }
-  indent(f_service_) << "end" << endl << endl;
-
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;    
@@ -677,23 +519,13 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
 
       std::string argsname = capitalize((*f_iter)->get_name() + "_args");
 
-      // Serialize the request header
-      f_service_ <<
-        indent() << "@oprot.writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType::CALL, @seqid)" << endl;
-      
-      f_service_ <<
-        indent() << "args = " << argsname << ".new()" << endl;
-      
+      indent(f_service_) << "send_message('" << funname << "', " << argsname;
+
       for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-        f_service_ <<
-          indent() << "args." << (*fld_iter)->get_name() << " = " << (*fld_iter)->get_name() << endl;
-      }
-           
-      // Write to the stream
-      f_service_ <<
-        indent() << "args.write(@oprot)" << endl <<
-        indent() << "@oprot.writeMessageEnd()" << endl <<
-        indent() << "@oprot.trans.flush()" << endl;  
+        f_service_ << ", :" << (*fld_iter)->get_name() << " => " << (*fld_iter)->get_name();
+      }        
+      
+      f_service_ << ")" << endl;
 
     indent_down();
     indent(f_service_) << "end" << endl;
@@ -714,35 +546,21 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       // TODO(mcslee): Validate message reply here, seq ids etc.
 
       f_service_ <<
-        indent() << "fname, mtype, rseqid = @iprot.readMessageBegin()" << endl <<
-        indent() << "if mtype == TMessageType::EXCEPTION" << endl <<
-        indent() << "  x = TApplicationException.new()" << endl <<
-        indent() << "  x.read(@iprot)" << endl <<
-        indent() << "  @iprot.readMessageEnd()" << endl <<
-        indent() << "  raise x" << endl <<
-        indent() << "end" << endl;
-
-      f_service_ <<
-        indent() << "result = " << resultname << ".new()" << endl <<
-        indent() << "result.read(@iprot)" << endl <<
-        indent() << "@iprot.readMessageEnd()" << endl;
-
+        indent() << "result = receive_message(" << resultname << ")" << endl;
+      
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ <<
-          indent() << "if result.success != nil" << endl <<
-          indent() << "  return result.success" << endl <<
-          indent() << "end" << endl;          
+          indent() << "return result.success unless result.success.nil?" << endl;          
       }
 
       t_struct* xs = (*f_iter)->get_xceptions();
       const std::vector<t_field*>& xceptions = xs->get_members();
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        f_service_ <<
-          indent() << "if result." << (*x_iter)->get_name() << " != nil" << endl <<
-          indent() << "  raise result." << (*x_iter)->get_name() << "" << endl <<
-          indent() << "end" << endl;
+        indent(f_service_) <<
+          "raise result." << (*x_iter)->get_name() << 
+            " unless result." << (*x_iter)->get_name() << ".nil?" << endl;
       }
 
       // Careful, only return _result if not a void function
@@ -787,59 +605,8 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
   indent_up();
 
   f_service_ <<
-    indent() << "include Iface" << endl <<
     indent() << "include TProcessor" << endl <<
     endl;
-
-  indent(f_service_) <<
-    "def initialize(handler)" << endl;
-  indent_up();
-  if (extends.empty()) {
-    f_service_ <<
-      indent() << "@handler = handler" << endl <<
-      indent() << "@processMap = {}" << endl;
-  } else {
-    f_service_ <<
-      indent() << "super(handler)" << endl;
-  }
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    f_service_ <<
-      indent() << "@processMap['" << (*f_iter)->get_name() << "'] = method(:process_" << (*f_iter)->get_name() << ")" << endl;
-  } 
-  indent_down();
-  indent(f_service_) << "end" << endl << endl;
- 
-  // Generate the server implementation
-  indent(f_service_) <<
-    "def process(iprot, oprot)" << endl;
-  indent_up();
-
-  f_service_ <<
-    indent() << "name, type, seqid  = iprot.readMessageBegin()" << endl;
-
-  // TODO(mcslee): validate message
-
-  // HOT: dictionary function lookup
-  f_service_ <<
-    indent() << "if (@processMap.has_key?(name))" << endl <<
-    indent() << "  @processMap[name].call(seqid, iprot, oprot)" << endl <<
-    indent() << "else" << endl <<
-    indent() << "  iprot.skip(TType::STRUCT)" << endl <<
-    indent() << "  iprot.readMessageEnd()" << endl <<
-    indent() << "  x = TApplicationException.new(TApplicationException::UNKNOWN_METHOD, 'Unknown function '+name)" << endl <<
-    indent() << "  oprot.writeMessageBegin(name, TMessageType::EXCEPTION, seqid)" << endl <<
-    indent() << "  x.write(oprot)" << endl <<
-    indent() << "  oprot.writeMessageEnd()" << endl <<
-    indent() << "  oprot.trans.flush()" << endl <<
-    indent() << "  return" << endl <<
-    indent() << "end" << endl;
-
-  // Read end of args field, the T_STOP, and the struct close
-  f_service_ <<
-    indent() << "return true" << endl;
-
-  indent_down();
-  indent(f_service_) << "end" << endl << endl;
 
   // Generate the process subfunctions
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -867,9 +634,7 @@ void t_rb_generator::generate_process_function(t_service* tservice,
   string resultname = capitalize(tfunction->get_name()) + "_result";
 
   f_service_ <<
-    indent() << "args = " << argsname << ".new()" << endl <<
-    indent() << "args.read(iprot)" << endl <<
-    indent() << "iprot.readMessageEnd()" << endl;
+    indent() << "args = read_args(iprot, " << argsname << ")" << endl;
 
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
@@ -935,393 +700,11 @@ void t_rb_generator::generate_process_function(t_service* tservice,
   }
 
   f_service_ <<
-    indent() << "oprot.writeMessageBegin('" << tfunction->get_name() << "', TMessageType::REPLY, seqid)" << endl <<
-    indent() << "result.write(oprot)" << endl <<
-    indent() << "oprot.writeMessageEnd()" << endl <<
-    indent() << "oprot.trans.flush()" << endl;
+    indent() << "write_result(result, oprot, '" << tfunction->get_name() << "', seqid)" << endl;
 
   // Close function
   indent_down();
   indent(f_service_) << "end" << endl << endl;
-}
-
-/**
- * Deserializes a field of any type.
- */
-void t_rb_generator::generate_deserialize_field(ofstream &out,
-                                                t_field* tfield,
-                                                string prefix,
-                                                bool inclass) {
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
-
-  if (type->is_void()) {
-    throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " +
-      prefix + tfield->get_name();
-  }
-
-  string name = prefix + tfield->get_name();
-
-  if (type->is_struct() || type->is_xception()) {
-    generate_deserialize_struct(out,
-                                (t_struct*)type,
-                                 name);
-  } else if (type->is_container()) {
-    generate_deserialize_container(out, type, name);
-  } else if (type->is_base_type() || type->is_enum()) {
-    indent(out) <<
-      name << " = iprot.";
-    
-    if (type->is_base_type()) {
-      t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-      switch (tbase) {
-      case t_base_type::TYPE_VOID:
-        throw "compiler error: cannot serialize void field in a struct: " +
-          name;
-        break;
-      case t_base_type::TYPE_STRING:        
-        out << "readString();";
-        break;
-      case t_base_type::TYPE_BOOL:
-        out << "readBool();";
-        break;
-      case t_base_type::TYPE_BYTE:
-        out << "readByte();";
-        break;
-      case t_base_type::TYPE_I16:
-        out << "readI16();";
-        break;
-      case t_base_type::TYPE_I32:
-        out << "readI32();";
-        break;
-      case t_base_type::TYPE_I64:
-        out << "readI64();";
-        break;
-      case t_base_type::TYPE_DOUBLE:
-        out << "readDouble();";
-        break;
-      default:
-        throw "compiler error: no PHP name for base type " + tbase;
-      }
-    } else if (type->is_enum()) {
-      out << "readI32();";
-    }
-    out << endl;
-
-  } else {
-    printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
-           tfield->get_name().c_str(), type->get_name().c_str());
-  }  
-}
-
-/**
- * Generates an unserializer for a struct, calling read()
- */
-void t_rb_generator::generate_deserialize_struct(ofstream &out,
-                                                  t_struct* tstruct,
-                                                  string prefix) {
-  out <<
-    indent() << prefix << " = " << type_name(tstruct) << ".new()" << endl <<
-    indent() << prefix << ".read(iprot)" << endl;
-}
-
-/**
- * Serialize a container by writing out the header followed by
- * data and then a footer.
- */
-void t_rb_generator::generate_deserialize_container(ofstream &out,
-                                                    t_type* ttype,
-                                                    string prefix) {
-  string size = tmp("_size");
-  string ktype = tmp("_ktype");
-  string vtype = tmp("_vtype");
-  string etype = tmp("_etype");
-  
-  t_field fsize(g_type_i32, size);
-  t_field fktype(g_type_byte, ktype);
-  t_field fvtype(g_type_byte, vtype);
-  t_field fetype(g_type_byte, etype);
-
-  // Declare variables, read header
-  if (ttype->is_map()) {
-    out <<
-      indent() << prefix << " = {}" << endl <<
-      indent() << "(" << ktype << ", " << vtype << ", " << size << " ) = iprot.readMapBegin() " << endl;
-  } else if (ttype->is_set()) {
-    out <<
-      indent() << prefix << " = {}" << endl <<
-      indent() << "(" << etype << ", " << size << ") = iprot.readSetBegin()" << endl;
-  } else if (ttype->is_list()) {
-    out <<
-      indent() << prefix << " = []" << endl <<
-      indent() << "(" << etype << ", " << size << ") = iprot.readListBegin()" << endl;
-  }
-
-  // For loop iterates over elements
-  string i = tmp("_i");
-  indent(out) <<
-    "for " << i << " in (1.." << size << ")" << endl;
-  
-    indent_up();
-    
-    if (ttype->is_map()) {
-      generate_deserialize_map_element(out, (t_map*)ttype, prefix);
-    } else if (ttype->is_set()) {
-      generate_deserialize_set_element(out, (t_set*)ttype, prefix);
-    } else if (ttype->is_list()) {
-      generate_deserialize_list_element(out, (t_list*)ttype, prefix);
-    }
-    
-    indent_down();
-  indent(out) << "end" << endl;
-
-  // Read container end
-  if (ttype->is_map()) {
-    indent(out) << "iprot.readMapEnd()" << endl;
-  } else if (ttype->is_set()) {
-    indent(out) << "iprot.readSetEnd()" << endl;
-  } else if (ttype->is_list()) {
-    indent(out) << "iprot.readListEnd()" << endl;
-  }
-}
-
-
-/**
- * Generates code to deserialize a map
- */
-void t_rb_generator::generate_deserialize_map_element(ofstream &out,
-                                                       t_map* tmap,
-                                                       string prefix) {
-  string key = tmp("_key");
-  string val = tmp("_val");
-  t_field fkey(tmap->get_key_type(), key);
-  t_field fval(tmap->get_val_type(), val);
-
-  generate_deserialize_field(out, &fkey);
-  generate_deserialize_field(out, &fval);
-
-  indent(out) <<
-    prefix << "[" << key << "] = " << val << endl;
-}
-
-/**
- * Write a set element
- */
-void t_rb_generator::generate_deserialize_set_element(ofstream &out,
-                                                       t_set* tset,
-                                                       string prefix) {
-  string elem = tmp("_elem");
-  t_field felem(tset->get_elem_type(), elem);
-
-  generate_deserialize_field(out, &felem);
-
-  indent(out) <<
-    prefix << "[" << elem << "] = true" << endl;
-}
-
-/**
- * Write a list element
- */
-void t_rb_generator::generate_deserialize_list_element(ofstream &out,
-                                                        t_list* tlist,
-                                                        string prefix) {
-  string elem = tmp("_elem");
-  t_field felem(tlist->get_elem_type(), elem);
-
-  generate_deserialize_field(out, &felem);
-
-  indent(out) <<
-    prefix << ".push(" << elem << ")" << endl;
-}
-
-
-/**
- * Serializes a field of any type.
- *
- * @param tfield The field to serialize
- * @param prefix Name to prepend to field name
- */
-void t_rb_generator::generate_serialize_field(ofstream &out,
-                                               t_field* tfield,
-                                               string prefix) {
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
-
-  // Do nothing for void types
-  if (type->is_void()) {
-    throw "CANNOT GENERATE SERIALIZE CODE FOR void TYPE: " +
-      prefix + tfield->get_name();
-  }
-  
-  if (type->is_struct() || type->is_xception()) {
-    generate_serialize_struct(out,
-                              (t_struct*)type,
-                              prefix + tfield->get_name());
-  } else if (type->is_container()) {
-    generate_serialize_container(out,
-                                 type,
-                                 prefix + tfield->get_name());
-  } else if (type->is_base_type() || type->is_enum()) {
-
-    string name = prefix + tfield->get_name();
-
-    indent(out) <<
-      "oprot.";
-    
-    if (type->is_base_type()) {
-      t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-      switch (tbase) {
-      case t_base_type::TYPE_VOID:
-        throw
-          "compiler error: cannot serialize void field in a struct: " + name;
-        break;
-      case t_base_type::TYPE_STRING:
-        out << "writeString(" << name << ")";
-        break;
-      case t_base_type::TYPE_BOOL:
-        out << "writeBool(" << name << ")";
-        break;
-      case t_base_type::TYPE_BYTE:
-        out << "writeByte(" << name << ")";
-        break;
-      case t_base_type::TYPE_I16:
-        out << "writeI16(" << name << ")";
-        break;
-      case t_base_type::TYPE_I32:
-        out << "writeI32(" << name << ")";
-        break;
-      case t_base_type::TYPE_I64:
-        out << "writeI64(" << name << ")";
-        break;
-      case t_base_type::TYPE_DOUBLE:
-        out << "writeDouble(" << name << ")";
-        break;
-      default:
-        throw "compiler error: no PHP name for base type " + tbase;
-      }
-    } else if (type->is_enum()) {
-      out << "writeI32(" << name << ")";
-    }
-    out << endl;
-  } else {
-    printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s%s' TYPE '%s'\n",
-           prefix.c_str(),
-           tfield->get_name().c_str(),
-           type->get_name().c_str());
-  }
-}
-
-/**
- * Serializes all the members of a struct.
- *
- * @param tstruct The struct to serialize
- * @param prefix  String prefix to attach to all fields
- */
-void t_rb_generator::generate_serialize_struct(ofstream &out,
-                                               t_struct* tstruct,
-                                               string prefix) {
-  indent(out) <<
-    prefix << ".write(oprot)" << endl;
-}
-
-void t_rb_generator::generate_serialize_container(ofstream &out,
-                                                  t_type* ttype,
-                                                  string prefix) {
-  if (ttype->is_map()) {
-    indent(out) <<
-      "oprot.writeMapBegin(" <<
-      type_to_enum(((t_map*)ttype)->get_key_type()) << ", " <<
-      type_to_enum(((t_map*)ttype)->get_val_type()) << ", " <<
-      prefix << ".length)" << endl;
-  } else if (ttype->is_set()) {
-    indent(out) <<
-      "oprot.writeSetBegin(" <<
-      type_to_enum(((t_set*)ttype)->get_elem_type()) << ", " <<
-      prefix << ".length)" << endl;
-  } else if (ttype->is_list()) {
-    indent(out) <<
-      "oprot.writeListBegin(" <<
-      type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " <<
-      prefix << ".length)" << endl;
-  }
-
-  if (ttype->is_map()) {
-    string kiter = tmp("kiter");
-    string viter = tmp("viter");
-    indent(out) << 
-      prefix << ".each do |" << kiter << ", " << viter << "|" << endl;
-    indent_up();
-    generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
-    indent_down();
-    indent(out) << "end" << endl;
-  } else if (ttype->is_set()) {
-    string iter = tmp("iter");
-    string t = tmp("true");
-    indent(out) << 
-      prefix << ".each do |" << iter << ", " << t << "|" << endl;
-    indent_up();
-    generate_serialize_set_element(out, (t_set*)ttype, iter);
-    indent_down();
-    indent(out) << "end" << endl;
-  } else if (ttype->is_list()) {
-    string iter = tmp("iter");
-    indent(out) << 
-      prefix << ".each do |" << iter << "|" << endl;
-    indent_up();
-    generate_serialize_list_element(out, (t_list*)ttype, iter);
-    indent_down();
-    indent(out) << "end" << endl;
-  }
-    
-  if (ttype->is_map()) {
-    indent(out) <<
-      "oprot.writeMapEnd()" << endl;
-  } else if (ttype->is_set()) {
-    indent(out) <<
-      "oprot.writeSetEnd()" << endl;
-  } else if (ttype->is_list()) {
-    indent(out) <<
-      "oprot.writeListEnd()" << endl;
-  }
-}
-
-/**
- * Serializes the members of a map.
- *
- */
-void t_rb_generator::generate_serialize_map_element(ofstream &out,
-                                                     t_map* tmap,
-                                                     string kiter,
-                                                     string viter) {
-  t_field kfield(tmap->get_key_type(), kiter);
-  generate_serialize_field(out, &kfield, "");
-
-  t_field vfield(tmap->get_val_type(), viter);
-  generate_serialize_field(out, &vfield, "");
-}
-
-/**
- * Serializes the members of a set.
- */
-void t_rb_generator::generate_serialize_set_element(ofstream &out,
-                                                     t_set* tset,
-                                                     string iter) {
-  t_field efield(tset->get_elem_type(), iter);
-  generate_serialize_field(out, &efield, "");
-}
-
-/**
- * Serializes the members of a list.
- */
-void t_rb_generator::generate_serialize_list_element(ofstream &out,
-                                                      t_list* tlist,
-                                                      string iter) {
-  t_field efield(tlist->get_elem_type(), iter);
-  generate_serialize_field(out, &efield, "");
 }
 
 /**

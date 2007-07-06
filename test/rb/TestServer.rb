@@ -9,8 +9,6 @@ require 'thrift/server/tserver'
 require 'ThriftTest'
 
 class TestHandler
-  include ThriftTest::Iface
-  
   def testVoid()
     print "testVoid()\n"
   end
@@ -42,6 +40,7 @@ class TestHandler
 
   def testStruct(thing)
     print "testStruct(#{thing})\n"
+    print "  with attrs: #{thing.string_thing}, #{thing.byte_thing}, #{thing.i32_thing}"
     return thing
   end
 
@@ -69,11 +68,33 @@ class TestHandler
     end
     return thing
   end
+  
+  def testNest(thing)
+    print "testNest(#{thing})\n"
+    puts "  i32_thing: #{thing.i32_thing}"
+    puts "  with struct: "
+    %w{ string_thing byte_thing i32_thing }.each do |t|
+      puts "    #{t}: #{thing.struct_thing.send(t)}"
+    end
+    return thing
+  end
+  
+  def testInsanity(thing)
+    puts "insanity:"
+    puts "  #{thing.inspect}"
+    num, uid = thing.userMap.find { true }
+    return {uid => {num => thing}}
+  end
+
+  def testMapMap(thing)
+    puts "got: #{thing}"
+    return {thing => {thing => thing}}
+  end
 
 end
 
 handler = TestHandler.new()
-processor = ThriftTest::Processor.new(handler)
+processor = Thrift::Test::ThriftTest::Processor.new(handler)
 transport = TServerSocket.new(9090)
 server = TSimpleServer.new(processor, transport)
 server.serve()

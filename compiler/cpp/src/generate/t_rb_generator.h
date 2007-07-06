@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <boost/tokenizer.hpp>
 
 #include "t_oop_generator.h"
 
@@ -37,12 +38,12 @@ class t_rb_generator : public t_oop_generator {
    * Program-level generation functions
    */
 
-  void generate_typedef  (t_typedef*  ttypedef);
-  void generate_enum     (t_enum*     tenum);
-  void generate_const    (t_const*    tconst);
-  void generate_struct   (t_struct*   tstruct);
-  void generate_xception (t_struct*   txception);
-  void generate_service  (t_service*  tservice);
+  void generate_typedef     (t_typedef*  ttypedef);
+  void generate_enum        (t_enum*     tenum);
+  void generate_const       (t_const*    tconst);
+  void generate_struct      (t_struct*   tstruct);
+  void generate_xception    (t_struct*   txception);
+  void generate_service     (t_service*  tservice);
 
   std::string render_const_value(t_type* type, t_const_value* value);
 
@@ -50,11 +51,13 @@ class t_rb_generator : public t_oop_generator {
    * Struct generation code
    */
 
-  void generate_rb_struct(t_struct* tstruct, bool is_exception);
-  void generate_rb_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool is_result=false);
+  void generate_rb_struct(std::ofstream& out, t_struct* tstruct, bool is_exception);
   void generate_rb_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_rb_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_rb_function_helpers(t_function* tfunction);
+  void generate_accessors   (std::ofstream& out, t_struct* tstruct);
+  void generate_field_defns (std::ofstream& out, t_struct* tstruct);
+  void generate_field_data  (std::ofstream& out, t_type* field_type, const std::string& field_name);
 
   /**
    * Service-level generation functions
@@ -137,6 +140,26 @@ class t_rb_generator : public t_oop_generator {
     in[0] = toupper(in[0]);
     return in;
   }
+  
+  std::string ruby_namespace(t_program* p) {
+    std::string ns = p->get_ruby_namespace();
+    return ns.size() ? ns : "";
+  }
+  
+  std::vector<std::string> ruby_modules(t_program* p) {
+    std::string ns = p->get_ruby_namespace();
+    boost::tokenizer<> tok(ns);
+    std::vector<std::string> modules;
+    
+    for(boost::tokenizer<>::iterator beg=tok.begin(); beg != tok.end(); ++beg) {
+      modules.push_back(*beg);
+    }
+    
+    return modules;
+  }
+  
+  void begin_namespace(std::ofstream&, std::vector<std::string>);
+  void end_namespace(std::ofstream&, std::vector<std::string>);
 
  private:
 

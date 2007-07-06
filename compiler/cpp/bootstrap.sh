@@ -2,7 +2,7 @@
 
 ./cleanup.sh
 autoscan
-aclocal
+aclocal -I ../../lib/cpp/aclocal
 libtoolize --automake
 touch NEWS README AUTHORS ChangeLog
 autoconf

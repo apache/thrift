@@ -17,8 +17,8 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_perl_generator.cc \
                  src/generate/t_erl_generator.cc
 
-thrift_CXXFLAGS = -Wall -Isrc
-thrift_LDFLAGS = -Wall
+thrift_CXXFLAGS = -Wall -Isrc $(BOOST_CPPFLAGS)
+thrift_LDFLAGS = -Wall $(BOOST_LDFLAGS)
 
 thrift_LDADD = @LEXLIB@
 

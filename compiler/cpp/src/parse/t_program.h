@@ -145,6 +145,14 @@ class t_program {
     return xsd_namespace_;
   }
 
+  void set_ruby_namespace(std::string ruby_namespace) {
+    ruby_namespace_ = ruby_namespace;
+  }
+  
+  const std::string& get_ruby_namespace() const {
+    return ruby_namespace_;
+  }
+
   void set_perl_namespace(std::string perl_namespace) {
     perl_namespace_ = perl_namespace;
   }
@@ -192,6 +200,9 @@ class t_program {
 
   // XSD namespace
   std::string xsd_namespace_;
+
+  // Ruby namespace
+  std::string ruby_namespace_;
 
   // Perl namespace
   std::string perl_namespace_;

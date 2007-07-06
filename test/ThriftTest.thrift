@@ -1,5 +1,6 @@
 java_package thrift.test
 cpp_namespace thrift.test
+ruby_namespace Thrift.Test
 
 enum Numberz
 {
