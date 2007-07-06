@@ -581,7 +581,9 @@ void t_php_generator::generate_service(t_service* tservice) {
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_interface(tservice);
-  generate_service_rest(tservice);
+  if (rest_) {
+    generate_service_rest(tservice);
+  }
   generate_service_client(tservice);
   generate_service_helpers(tservice);
   generate_service_processor(tservice);

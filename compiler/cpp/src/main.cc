@@ -124,6 +124,7 @@ bool gen_py = false;
 bool gen_xsd = false;
 bool gen_php = false;
 bool gen_phpi = false;
+bool gen_rest = false;
 bool gen_perl = false;
 bool gen_erl = false;
 bool gen_recurse = false;
@@ -526,14 +527,14 @@ void generate(t_program* program) {
 
     if (gen_php) {
       pverbose("Generating PHP\n");
-      t_php_generator* php = new t_php_generator(program, false);
+      t_php_generator* php = new t_php_generator(program, false, gen_rest);
       php->generate_program();
       delete php;
     }
 
     if (gen_phpi) {
       pverbose("Generating PHP-inline\n");
-      t_php_generator* phpi = new t_php_generator(program, true);
+      t_php_generator* phpi = new t_php_generator(program, true, gen_rest);
       phpi->generate_program();
       delete phpi;
     }
@@ -627,6 +628,8 @@ int main(int argc, char** argv) {
         gen_php = true;
       } else if (strcmp(arg, "-phpi") == 0) {
         gen_phpi = true;
+      } else if (strcmp(arg, "-rest") == 0) {
+        gen_rest = true;
       } else if (strcmp(arg, "-py") == 0) {
         gen_py = true;
       } else if (strcmp(arg, "-rb") == 0) {

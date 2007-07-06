@@ -21,9 +21,10 @@
  */
 class t_php_generator : public t_oop_generator {
  public:
-  t_php_generator(t_program* program, bool binary_inline=false) :
+  t_php_generator(t_program* program, bool binary_inline=false, bool rest=false) :
     t_oop_generator(program),
-    binary_inline_(binary_inline) {
+    binary_inline_(binary_inline),
+    rest_(rest) {
     if (binary_inline_) {
       T_PHP_DIR = "gen-phpi";
     } else {
@@ -160,6 +161,11 @@ class t_php_generator : public t_oop_generator {
    * Generate protocol-independent template? Or Binary inline code?
    */
   bool binary_inline_;
+
+  /**
+   * Generate a REST handler class
+   */
+  bool rest_;
 
 };
 
