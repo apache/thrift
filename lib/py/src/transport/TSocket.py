@@ -30,8 +30,17 @@ class TSocket(TTransportBase):
 
   def open(self):
     try:
-      self.handle = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      self.handle.connect((self.host, self.port))
+      res0 = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+      for res in res0:
+        self.handle = socket.socket(res[0], res[1])
+        try:
+          self.handle.connect(res[4])
+        except socket.error, e:
+          if res is not res0[-1]:
+            continue
+          else:
+            raise e
+        break
     except socket.error, e:
       raise TTransportException(TTransportException.NOT_OPEN, 'Could not connect to %s:%d' % (self.host, self.port))
 
@@ -68,11 +77,16 @@ class TServerSocket(TServerTransportBase):
     self.handle = None
  
   def listen(self):
-    self.handle = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    res0 = socket.getaddrinfo(None, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+    for res in res0:
+      if res[0] is socket.AF_INET6 or res is res0[-1]:
+        break
+
+    self.handle = socket.socket(res[0], res[1])
     self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     if hasattr(self.handle, 'set_timeout'):
       self.handle.set_timeout(None)
-    self.handle.bind(('', self.port))
+    self.handle.bind(res[4])
     self.handle.listen(128)
 
   def accept(self):
