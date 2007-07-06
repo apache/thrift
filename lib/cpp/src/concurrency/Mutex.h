@@ -27,12 +27,33 @@ class Mutex {
   impl* impl_;
 };
 
-class MutexMonitor {
+class ReadWriteMutex {
+public:
+  ReadWriteMutex();
+  virtual ~ReadWriteMutex() {}
+
+  // these get the lock and block until it is done successfully
+  virtual void acquireRead() const;
+  virtual void acquireWrite() const;
+
+  // these attempt to get the lock, returning false immediately if they fail
+  virtual bool attemptRead() const;
+  virtual bool attemptWrite() const;
+
+  // this releases both read and write locks
+  virtual void release() const;
+   
+private:
+  class impl;
+  impl* impl_;
+};
+
+class Guard{
  public: 
-  MutexMonitor(const Mutex& value) : mutex_(value) {
+  Guard(const Mutex& value) : mutex_(value) {
     mutex_.lock();
   }
-  ~MutexMonitor() {
+  ~Guard() {
     mutex_.unlock();
   }
 
