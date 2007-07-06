@@ -57,15 +57,17 @@ uint32_t TBinaryProtocol::writeMessageBegin(const std::string& name,
                                             const int32_t seqid) {
   if (strict_write_) {
     int32_t version = (VERSION_1) | ((int32_t)messageType);
-    return
-      writeI32(version) +
-      writeString(name) +
-      writeI32(seqid);
+    uint32_t wsize = 0;
+    wsize += writeI32(version);
+    wsize += writeString(name);
+    wsize += writeI32(seqid);
+    return wsize;
   } else {
-    return 
-      writeString(name) + 
-      writeByte((int8_t)messageType) +
-      writeI32(seqid);
+    uint32_t wsize = 0;
+    wsize += writeString(name);
+    wsize += writeByte((int8_t)messageType);
+    wsize += writeI32(seqid);
+    return wsize;
   }
 }
 
@@ -84,9 +86,10 @@ uint32_t TBinaryProtocol::writeStructEnd() {
 uint32_t TBinaryProtocol::writeFieldBegin(const string& name,
                                           const TType fieldType,
                                           const int16_t fieldId) {
-  return
-    writeByte((int8_t)fieldType) +
-    writeI16(fieldId);
+  uint32_t wsize = 0;
+  wsize += writeByte((int8_t)fieldType);
+  wsize += writeI16(fieldId);
+  return wsize;
 }
 
 uint32_t TBinaryProtocol::writeFieldEnd() {
@@ -101,10 +104,11 @@ uint32_t TBinaryProtocol::writeFieldStop() {
 uint32_t TBinaryProtocol::writeMapBegin(const TType keyType,
                                         const TType valType,
                                         const uint32_t size) {
-  return
-    writeByte((int8_t)keyType) +
-    writeByte((int8_t)valType) +
-    writeI32((int32_t)size);
+  uint32_t wsize = 0;
+  wsize += writeByte((int8_t)keyType);
+  wsize += writeByte((int8_t)valType);
+  wsize += writeI32((int32_t)size);
+  return wsize;
 }
 
 uint32_t TBinaryProtocol::writeMapEnd() {
@@ -113,9 +117,10 @@ uint32_t TBinaryProtocol::writeMapEnd() {
 
 uint32_t TBinaryProtocol::writeListBegin(const TType elemType,
                                          const uint32_t size) {
-  return
-    writeByte((int8_t) elemType) +
-    writeI32((int32_t)size);
+  uint32_t wsize = 0;
+  wsize += writeByte((int8_t) elemType);
+  wsize += writeI32((int32_t)size);
+  return wsize;
 }
 
 uint32_t TBinaryProtocol::writeListEnd() {
@@ -124,9 +129,11 @@ uint32_t TBinaryProtocol::writeListEnd() {
 
 uint32_t TBinaryProtocol::writeSetBegin(const TType elemType,
                                         const uint32_t size) {
+  uint32_t wsize = 0;
   return
-    writeByte((int8_t)elemType) +
-    writeI32((int32_t)size);
+  wsize += writeByte((int8_t)elemType);
+  wsize += writeI32((int32_t)size);
+  return wsize;
 }
 
 uint32_t TBinaryProtocol::writeSetEnd() {

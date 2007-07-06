@@ -237,5 +237,3 @@ class TBinaryProtocolFactory : public TProtocolFactory {
 }}} // facebook::thrift::protocol
 
 #endif // #ifndef _THRIFT_PROTOCOL_TBINARYPROTOCOL_H_
-
-
