@@ -48,7 +48,7 @@ private:
   impl* impl_;
 };
 
-class Guard{
+class Guard {
  public: 
   Guard(const Mutex& value) : mutex_(value) {
     mutex_.lock();

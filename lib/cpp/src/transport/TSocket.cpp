@@ -249,10 +249,14 @@ void TSocket::open() {
         close();
       } else {
         close();
+        freeaddrinfo(res0); // cleanup on failure
         throw;
       }
     }
   }
+
+  // Free address structure memory
+  freeaddrinfo(res0);
 }
 
 void TSocket::close() {
