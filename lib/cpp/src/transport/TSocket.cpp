@@ -98,7 +98,9 @@ bool TSocket::peek() {
   if (r == -1) {
     GlobalOutput("TSocket::peek()");
     close();
-    throw TTransportException(TTransportException::UNKNOWN, std::string("recv() ERROR:") + sys_errlist[errno]);
+    char b_error[1024];
+    strerror_r(errno, b_error, sizeof(b_error));
+    throw TTransportException(TTransportException::UNKNOWN, string("recv() ERROR:") + b_error);
   }
   return (r > 0);
 }
@@ -111,7 +113,9 @@ void TSocket::openConnection(struct addrinfo *res) {
   socket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   if (socket_ == -1) {
     GlobalOutput("TSocket::open() socket");
-    throw TTransportException(TTransportException::NOT_OPEN, std::string("socket() ERROR:") + sys_errlist[errno]);
+    char b_error[1024];
+    strerror_r(errno, b_error, sizeof(b_error));
+    throw TTransportException(TTransportException::NOT_OPEN, string("socket() ERROR:") + b_error);
   }
 
   // Send timeout
@@ -155,9 +159,12 @@ void TSocket::openConnection(struct addrinfo *res) {
 
   if (errno != EINPROGRESS) {
     char buff[1024];
-    sprintf(buff, "TSocket::open() connect %s %d", host_.c_str(), port_);
     GlobalOutput(buff);
-    throw TTransportException(TTransportException::NOT_OPEN, std::string("open() ERROR: ") + sys_errlist[errno]);
+    sprintf(buff, "TSocket::open() connect %s %d", host_.c_str(), port_);
+    
+    char b_error[1024];
+    strerror_r(errno, b_error, sizeof(b_error));
+    throw TTransportException(TTransportException::NOT_OPEN, string("open() ERROR: ") + b_error);
   }
 
   fd_set fds;
@@ -173,19 +180,27 @@ void TSocket::openConnection(struct addrinfo *res) {
     int ret2 = getsockopt(socket_, SOL_SOCKET, SO_ERROR, (void *)&val, &lon);
     if (ret2 == -1) {
       GlobalOutput("TSocket::open() getsockopt SO_ERROR");
-      throw TTransportException(TTransportException::NOT_OPEN, std::string("open() ERROR: ") + sys_errlist[errno]);
+      char b_error[1024];
+      strerror_r(errno, b_error, sizeof(b_error));
+      throw TTransportException(TTransportException::NOT_OPEN, string("open() ERROR: ") + b_error);
     }
     if (val == 0) {
       goto done;
     }
     GlobalOutput("TSocket::open() SO_ERROR was set");
-    throw TTransportException(TTransportException::NOT_OPEN, std::string("open() ERROR: ") + sys_errlist[errno]);
+    char b_error[1024];
+    strerror_r(errno, b_error, sizeof(b_error));
+    throw TTransportException(TTransportException::NOT_OPEN, string("open() ERROR: ") + b_error);
   } else if (ret == 0) {
     GlobalOutput("TSocket::open() timeed out");
-    throw TTransportException(TTransportException::NOT_OPEN, std::string("open() ERROR: ") + sys_errlist[errno]);   
+    char b_error[1024];
+    strerror_r(errno, b_error, sizeof(b_error));
+    throw TTransportException(TTransportException::NOT_OPEN, string("open() ERROR: ") + b_error);   
   } else {
     GlobalOutput("TSocket::open() select error");
-    throw TTransportException(TTransportException::NOT_OPEN, std::string("open() ERROR: ") + sys_errlist[errno]);
+    char b_error[1024];
+    strerror_r(errno, b_error, sizeof(b_error));
+    throw TTransportException(TTransportException::NOT_OPEN, string("open() ERROR: ") + b_error);
   }
 
  done:
@@ -373,7 +388,9 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
       }
 
       GlobalOutput("TSocket::write() send < 0");
-      throw TTransportException(TTransportException::UNKNOWN, std::string("ERROR:") + sys_errlist[errno]);
+      char b_error[1024];
+      strerror_r(errno, b_error, sizeof(b_error));
+      throw TTransportException(TTransportException::UNKNOWN, string("ERROR:") + b_error);
     }
     
     // Fail on blocked send

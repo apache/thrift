@@ -18,6 +18,7 @@
 
 namespace facebook { namespace thrift { namespace transport { 
 
+using namespace std;
 using namespace boost;
 
 TServerSocket::TServerSocket(int port) :
@@ -238,18 +239,24 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     
   if (clientSocket < 0) {
     GlobalOutput("TServerSocket::accept()");
-    throw TTransportException(TTransportException::UNKNOWN, std::string("ERROR:") + sys_errlist[errno]);
+    char b_error[1024];
+    strerror_r(errno, b_error, sizeof(b_error));
+    throw TTransportException(TTransportException::UNKNOWN, string("ERROR:") + b_error);
   }
 
   // Make sure client socket is blocking
   int flags = fcntl(clientSocket, F_GETFL, 0);
   if (flags == -1) {
     GlobalOutput("TServerSocket::select() fcntl GETFL");
-    throw TTransportException(TTransportException::UNKNOWN, std::string("ERROR:") + sys_errlist[errno]);
+    char b_error[1024];
+    strerror_r(errno, b_error, sizeof(b_error));
+    throw TTransportException(TTransportException::UNKNOWN, string("ERROR:") + b_error);
   }
   if (-1 == fcntl(clientSocket, F_SETFL, flags & ~O_NONBLOCK)) {
     GlobalOutput("TServerSocket::select() fcntl SETFL");
-    throw TTransportException(TTransportException::UNKNOWN, std::string("ERROR:") + sys_errlist[errno]);
+    char b_error[1024];
+    strerror_r(errno, b_error, sizeof(b_error));
+    throw TTransportException(TTransportException::UNKNOWN, string("ERROR:") + b_error);
   }
   
   shared_ptr<TSocket> client(new TSocket(clientSocket));
