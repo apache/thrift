@@ -130,7 +130,6 @@ uint32_t TBinaryProtocol::writeListEnd() {
 uint32_t TBinaryProtocol::writeSetBegin(const TType elemType,
                                         const uint32_t size) {
   uint32_t wsize = 0;
-  return
   wsize += writeByte((int8_t)elemType);
   wsize += writeI32((int32_t)size);
   return wsize;
