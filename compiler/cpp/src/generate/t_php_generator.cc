@@ -913,9 +913,10 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
       while (atype->is_typedef()) {
         atype = ((t_typedef*)atype)->get_type();
       }
+      string cast = type_to_cast(atype);
       string req = "$request['" + (*a_iter)->get_name() + "']";
       f_service_ <<
-        indent() << "$" << (*a_iter)->get_name() << " = isset(" << req << ") ? " << req << " : null;" << endl;
+        indent() << "$" << (*a_iter)->get_name() << " = isset(" << req << ") ? " << cast << req << " : null;" << endl;
       if (atype->is_string() &&
           ((t_base_type*)atype)->is_string_list()) {
         f_service_ << 
@@ -1794,6 +1795,33 @@ string t_php_generator::argument_list(t_struct* tstruct) {
     result += "$" + (*f_iter)->get_name();
   }
   return result;
+}
+
+/**
+ * Gets a typecast string for a particular type.
+ */
+string t_php_generator::type_to_cast(t_type* type) {
+  if (type->is_base_type()) {
+    t_base_type* btype = (t_base_type*)type;
+    switch (btype->get_base()) {
+    case t_base_type::TYPE_BOOL:
+      return "(bool)";
+    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      return "(int)";
+    case t_base_type::TYPE_DOUBLE:
+      return "(double)";
+    case t_base_type::TYPE_STRING:
+      return "(string)";
+    default:
+      return "";
+    }
+  } else if (type->is_enum()) {
+    return "(int)";
+  }
+  return "";
 }
 
 /**

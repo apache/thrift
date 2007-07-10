@@ -135,6 +135,7 @@ class t_php_generator : public t_oop_generator {
   std::string declare_field(t_field* tfield, bool init=false, bool obj=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);
+  std::string type_to_cast(t_type* ttype);
   std::string type_to_enum(t_type* ttype);
 
   std::string php_namespace(t_program* p) {
