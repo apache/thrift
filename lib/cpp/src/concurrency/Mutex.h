@@ -61,6 +61,22 @@ class Guard {
   const Mutex& mutex_;
 };
 
+class RWGuard {
+  public: 
+    RWGuard(const ReadWriteMutex& value, bool write = 0) : rw_mutex_(value) {
+      if (write) {
+        rw_mutex_.acquireWrite();
+      }	else {
+        rw_mutex_.acquireRead();
+      }	
+    }  
+    ~RWGuard() {
+      rw_mutex_.release();
+    }  
+  private: 
+    const ReadWriteMutex rw_mutex_;
+};  
+
 
 }}} // facebook::thrift::concurrency
 
