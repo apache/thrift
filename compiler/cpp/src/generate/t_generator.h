@@ -118,6 +118,17 @@ class t_generator {
   std::ostream& indent(std::ostream &os) {
     return os << indent();
   }
+  /**
+   * Capitalization helpers
+   */
+  std::string capitalize(std::string in) {
+    in[0] = toupper(in[0]);
+    return in;
+  }
+  std::string decapitalize(std::string in) {
+    in[0] = tolower(in[0]);
+    return in;
+  }
 
  protected:
   /**

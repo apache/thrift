@@ -4,27 +4,26 @@
 // See accompanying file LICENSE or visit the Thrift site at:
 // http://developers.facebook.com/thrift/
 
-#ifndef T_RB_GENERATOR_H
-#define T_RB_GENERATOR_H
+#ifndef T_OCAML_GENERATOR_H
+#define T_OCAML_GENERATOR_H
 
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <boost/tokenizer.hpp>
 
 #include "t_oop_generator.h"
 
-#define T_RB_DIR "gen-rb"
+#define T_OCAML_DIR "gen-ocaml"
 
 /**
- * Ruby code generator.
+ * OCaml code generator.
  *
- * @author Mark Slee <mcslee@facebook.com>
+ * @author Iain Proctor <iproctor@facebook.com>
  */
-class t_rb_generator : public t_oop_generator {
+class t_ocaml_generator : public t_oop_generator {
  public:
-  t_rb_generator(t_program* program) :
+  t_ocaml_generator(t_program* program) :
     t_oop_generator(program) {}
 
   /**
@@ -37,13 +36,13 @@ class t_rb_generator : public t_oop_generator {
   /**
    * Program-level generation functions
    */
-
-  void generate_typedef     (t_typedef*  ttypedef);
-  void generate_enum        (t_enum*     tenum);
-  void generate_const       (t_const*    tconst);
-  void generate_struct      (t_struct*   tstruct);
-  void generate_xception    (t_struct*   txception);
-  void generate_service     (t_service*  tservice);
+  void generate_program  ();
+  void generate_typedef  (t_typedef*  ttypedef);
+  void generate_enum     (t_enum*     tenum);
+  void generate_const    (t_const*    tconst);
+  void generate_struct   (t_struct*   tstruct);
+  void generate_xception (t_struct*   txception);
+  void generate_service  (t_service*  tservice);
 
   std::string render_const_value(t_type* type, t_const_value* value);
 
@@ -51,13 +50,12 @@ class t_rb_generator : public t_oop_generator {
    * Struct generation code
    */
 
-  void generate_rb_struct(std::ofstream& out, t_struct* tstruct, bool is_exception);
-  void generate_rb_struct_reader(std::ofstream& out, t_struct* tstruct);
-  void generate_rb_struct_writer(std::ofstream& out, t_struct* tstruct);
-  void generate_rb_function_helpers(t_function* tfunction);
-  void generate_accessors   (std::ofstream& out, t_struct* tstruct);
-  void generate_field_defns (std::ofstream& out, t_struct* tstruct);
-  void generate_field_data  (std::ofstream& out, t_type* field_type, const std::string& field_name);
+  void generate_ocaml_struct(t_struct* tstruct, bool is_exception);
+  void generate_ocaml_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false);
+  void generate_ocaml_struct_sig(std::ofstream& out, t_struct* tstruct, bool is_exception);
+  void generate_ocaml_struct_reader(std::ofstream& out, t_struct* tstruct);
+  void generate_ocaml_struct_writer(std::ofstream& out, t_struct* tstruct);
+  void generate_ocaml_function_helpers(t_function* tfunction);
 
   /**
    * Service-level generation functions
@@ -74,33 +72,28 @@ class t_rb_generator : public t_oop_generator {
    */
 
   void generate_deserialize_field        (std::ofstream &out,
-                                          t_field*    tfield, 
-                                          std::string prefix="",
-                                          bool inclass=false);
+                                          t_field*    tfield,
+                                          std::string prefix);
   
   void generate_deserialize_struct       (std::ofstream &out,
-                                          t_struct*   tstruct,
-                                          std::string prefix="");
+                                          t_struct*   tstruct);
   
   void generate_deserialize_container    (std::ofstream &out,
-                                          t_type*     ttype,
-                                          std::string prefix="");
+                                          t_type*     ttype);
   
   void generate_deserialize_set_element  (std::ofstream &out,
-                                          t_set*      tset,
-                                          std::string prefix="");
+                                          t_set*      tset);
 
-  void generate_deserialize_map_element  (std::ofstream &out,
-                                          t_map*      tmap,
-                                          std::string prefix="");
 
   void generate_deserialize_list_element (std::ofstream &out,
                                           t_list*     tlist,
                                           std::string prefix="");
+  void generate_deserialize_type          (std::ofstream &out,
+                                           t_type* type);
 
   void generate_serialize_field          (std::ofstream &out,
                                           t_field*    tfield,
-                                          std::string prefix="");
+                                          std::string name= "");
 
   void generate_serialize_struct         (std::ofstream &out,
                                           t_struct*   tstruct,
@@ -127,36 +120,15 @@ class t_rb_generator : public t_oop_generator {
    * Helper rendering functions
    */
 
-  std::string rb_autogen_comment();
-  std::string rb_imports();
-  std::string render_includes();
-  std::string declare_field(t_field* tfield);
+  std::string ocaml_autogen_comment();
+  std::string ocaml_imports();
   std::string type_name(t_type* ttype);
   std::string function_signature(t_function* tfunction, std::string prefix="");
+  std::string function_type(t_function* tfunc, bool method=false, bool options = false);
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
+  std::string render_ocaml_type(t_type* type);
 
-
-  
-  std::string ruby_namespace(t_program* p) {
-    std::string ns = p->get_ruby_namespace();
-    return ns.size() ? ns : "";
-  }
-  
-  std::vector<std::string> ruby_modules(t_program* p) {
-    std::string ns = p->get_ruby_namespace();
-    boost::tokenizer<> tok(ns);
-    std::vector<std::string> modules;
-    
-    for(boost::tokenizer<>::iterator beg=tok.begin(); beg != tok.end(); ++beg) {
-      modules.push_back(*beg);
-    }
-    
-    return modules;
-  }
-  
-  void begin_namespace(std::ofstream&, std::vector<std::string>);
-  void end_namespace(std::ofstream&, std::vector<std::string>);
 
  private:
 
@@ -165,8 +137,11 @@ class t_rb_generator : public t_oop_generator {
    */
 
   std::ofstream f_types_;
-  std::ofstream f_consts_; 
+  std::ofstream f_consts_;
   std::ofstream f_service_;
+
+  std::ofstream f_types_i_;
+  std::ofstream f_service_i_;
 
 };
 

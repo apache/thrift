@@ -35,6 +35,7 @@
 #include "generate/t_rb_generator.h"
 #include "generate/t_xsd_generator.h"
 #include "generate/t_perl_generator.h"
+#include "generate/t_ocaml_generator.h"
 #include "generate/t_erl_generator.h"
 
 using namespace std;
@@ -126,6 +127,7 @@ bool gen_php = false;
 bool gen_phpi = false;
 bool gen_rest = false;
 bool gen_perl = false;
+bool gen_ocaml = false;
 bool gen_erl = false;
 bool gen_recurse = false;
 
@@ -304,6 +306,7 @@ void usage() {
   fprintf(stderr, "  -rb         Generate Ruby output files\n");
   fprintf(stderr, "  -xsd        Generate XSD output files\n");
   fprintf(stderr, "  -perl       Generate Perl output files\n");
+  fprintf(stderr, "  -ocaml      Generate OCaml output files\n");
   fprintf(stderr, "  -erl        Generate Erlang output files\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories \n");
   fprintf(stderr, "                searched for include directives\n");
@@ -567,12 +570,20 @@ void generate(t_program* program) {
       delete perl;
     }
 
+    if (gen_ocaml) {
+      pverbose("Generating OCaml\n");
+      t_ocaml_generator* ocaml = new t_ocaml_generator(program);
+      ocaml->generate_program();
+      delete ocaml;
+    }
+
     if (gen_erl) {
       pverbose("Generating Erlang\n");
       t_erl_generator* erl = new t_erl_generator(program);
       erl->generate_program();
       delete erl;
     }
+
 
   } catch (string s) {
     printf("Error: %s\n", s.c_str());
@@ -638,6 +649,8 @@ int main(int argc, char** argv) {
         gen_xsd = true;
       } else if (strcmp(arg, "-perl") == 0) {
         gen_perl = true;
+      } else if (strcmp(arg, "-ocaml") == 0) {
+        gen_ocaml = true;
       } else if (strcmp(arg, "-erl") == 0) {
         gen_erl = true;
       } else if (strcmp(arg, "-I") == 0) {
@@ -660,7 +673,7 @@ int main(int argc, char** argv) {
   }
 
   // You gotta generate something!
-  if (!gen_cpp && !gen_java && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl) {
+  if (!gen_cpp && !gen_java && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_ocaml && !gen_erl) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }

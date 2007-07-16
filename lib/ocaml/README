@@ -1,0 +1,68 @@
+Library
+-------
+The library abstract classes, exceptions, and general use functions are mostly jammed in Thrift.ml (an exception being TServer). Implementations live in their own files. I'm on the fence about whether it should be done with objects or modules/functors. Right now they are objects. TBinaryProtocol and TSocket are implemented. TServer and TSimpleServer classes are there, but the fastest route to a binary protocol socket server is to use TServer.run_basic_server which uses OCaml's own server abstraction. To that end, there is TChannelTransport which is a transport class parametrized on input and output channels that does nothing but wrap up the input and output functions.
+
+A note on making the library: Running make should create native and bytecode libraries.
+
+
+Struct format
+-------------
+Structs are turned into classes. The fields are all option types and are initially None. Write is a method, but reading is done by a separate function (since there is no such thing as a static class). I'm still arguing with myself about whether structs should be put in their own modules along with this read function.
+
+
+enum format
+-----------
+Enums are put in their own module along with functions to_i and of_i which convert the ocaml types into ints. For example:
+
+enum Numberz
+{
+  ONE = 1,
+  TWO,
+  THREE,
+  FIVE = 5,
+  SIX,
+  EIGHT = 8
+}
+
+==>
+
+module Numbers =
+struct
+type t =
+| ONE
+| TWO
+| THREE
+| FIVE
+| SIX
+| EIGHT
+
+let of_i = ...
+let to_i = ...
+end
+
+typedef format
+--------------
+Typedef turns into the type declaration:
+typedef i64 UserId
+
+==>
+
+type userid Int64.t
+
+exception format
+----------------
+Exceptions are kind of ugly since the exception structs can't be thrown directly. They also have this exception type which has the name BLAHBLAH_exn. For example, for an exception Xception you get:
+
+exception Xception_exn of xception
+
+list format
+-----------
+Lists are turned into OCaml native lists
+
+Map/Set formats
+---------------
+These are both turned into Hashtbl.t's.
+
+Services
+--------
+The client is a class "client" parametrized on input and output protocols. The processor is a class parametrized on a handler. A handler is a class inheriting the iface abstract class. Unlike other implementations, client does not implement iface since iface functions must take option arguments so as to deal with the case where a client does not send all the arguments.
