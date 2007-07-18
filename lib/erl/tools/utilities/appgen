@@ -1,0 +1,69 @@
+#!/bin/sh
+
+
+if [ $# -ne 2 ];then
+	echo ""
+	echo "usage: $0 <appname> <prefix>"
+	echo ""
+	echo "appname is the title of the application to be generated"
+	echo "prefix is the prefix that will be appended to all files in"
+	echo "the application due to erlangs lack of a package structure.  The prefix"
+	echo "is typicaly the first letter of each word in the name of the application"
+	echo ""
+	echo "example: $0 chat_server cs"
+	echo ""
+	exit 1
+fi
+
+APP_NAME=$1
+APP_NAME_UPPER_CASE=$(echo $APP_NAME | tr a-z A-Z)
+PREFIX=$2
+
+cd ../.appgen
+echo `pwd`
+
+cp -r blank_app $APP_NAME
+cp -r blank_app_rel "$APP_NAME"_rel
+
+cd "$APP_NAME"_rel
+ls blank_app* | ../rename.sh blank_app $APP_NAME
+cd ..
+
+# The base directory of the release
+./substitute.sh %%APP_NAME%% $APP_NAME "$APP_NAME"_rel/"$APP_NAME"_rel.rel.src
+
+
+cd $APP_NAME/src
+ls ba* | ../../rename.sh ba $PREFIX
+ls blank_app* | ../../rename.sh blank_app $APP_NAME
+cd -
+
+# The base directory of the application
+./substitute.sh %%APP_NAME_UPPER_CASE%% $APP_NAME_UPPER_CASE $APP_NAME/Makefile
+./substitute.sh %%APP_NAME_UPPER_CASE%% $APP_NAME_UPPER_CASE $APP_NAME/vsn.mk
+
+# The src directory of the application
+./substitute.sh %%APP_NAME%% $APP_NAME $APP_NAME/src/Makefile
+./substitute.sh %%APP_NAME_UPPER_CASE%% $APP_NAME_UPPER_CASE $APP_NAME/src/Makefile
+./substitute.sh %%PFX%% $PREFIX $APP_NAME/src/Makefile
+
+./substitute.sh %%APP_NAME%% $APP_NAME $APP_NAME/src/"$APP_NAME".erl
+./substitute.sh %%PFX%% $PREFIX $APP_NAME/src/"$APP_NAME".erl
+./substitute.sh %%PFX%% $PREFIX $APP_NAME/src/"$PREFIX"_sup.erl
+./substitute.sh %%APP_NAME%% $APP_NAME $APP_NAME/src/"$PREFIX"_sup.erl
+./substitute.sh %%PFX%% $PREFIX $APP_NAME/src/"$PREFIX"_server.erl
+./substitute.sh %%APP_NAME%% $APP_NAME $APP_NAME/src/"$PREFIX"_server.erl
+
+# include directory
+mv $APP_NAME/include/blank_app.hrl $APP_NAME/include/"$APP_NAME".hrl
+
+find $APP_NAME -name ".svn" | xargs rm -r
+mv $APP_NAME ../../lib
+mv "$APP_NAME"_rel ../../release
+
+echo ""
+echo "$APP_NAME has been generated and placed under lib/$APP_NAME"
+echo $APP_NAME"_rel has been generated and placed under release/$APP_NAME""_rel"
+echo ""
+
+cd ../utilities

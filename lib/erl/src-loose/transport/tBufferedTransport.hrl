@@ -1,1 +1,0 @@
--record(tBufferedTransport, {transport, wbuf}).

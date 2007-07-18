@@ -1,0 +1,68 @@
+Much more information on these topics can be found at www.erlware.org
+
+
+Building the tree
+=================
+
+To build, type make, it should all work from there. 
+
+NOTE** if your system has erlang installed in a directory other than /usr/local/lib/erlang
+then you must set the environment variable ERL_RUN_TOP to that directory. For example
+if you have erlang installed in /home/jdoe/erlang then you should 
+export ERL_RUN_TOP=/home/jdoe/erlang
+
+
+Creating a new application
+==========================
+
+A new application can be created by using the appgen utility in otp/tools/utilities.
+This utility will create a basic OTP app framework under the otp/lib directory and
+an OTP release under the otp/release directory.  
+
+usage: appgen <appname> <prefix> 
+
+Appname is the name of the application that you would like to create.  The prefix is 
+usually the first letter of each word in the appname.  This prefix is to avoid name
+clashes between applications included in a release (Erlang does not have packages).
+
+example usage: appgen my_app ma
+
+which results in 
+
+otp/lib/my_app & otp/release/my_app_rel
+
+Running a release
+=================
+
+Your release should contain all that you need to run your application.  If your application
+depends on any applications that are supplied outside of this build tree or OTP itself then
+they may be added to the <appname>_rel.rel.src file.  If the extra applications are present
+in this build tree then they will be found by the make process and included in the final 
+release.
+
+To run a release there are two options: "local" and installed. The local version can be found
+in the otp/release/<appname>_rel/local directory which is added by the make process.  This 
+should be used during development to run your release interactively via an Erlang shell.
+To run a release in local mode cd into the "local" directory and run <appname>_rel.sh.
+
+The second way to run a release is to install it and run it as a daemon.  This is used for 
+applications in a production setting.  To do this you need to first run make & make install
+from the <appname>_rel directory.  This will place a complete production ready versioned 
+release in the /usr/local/lib/ directory under <appname>_rel.  To run an installed release
+cd to /usr/local/lib/<appname>_rel/release/<rel_vsn> and run <appname>_rel.sh.  
+
+In the case where you want to create a production ready release on one machine and then deploy it
+on multiple identical machines you may create a production tar archive.  To do this run 
+make & make tar from the otp/release/<appname>_rel/ directory. This will create a tar file conataining 
+the release name and version number in the file name.  This tar can be shipped to its destination and 
+untarred.  Within the untarred directory there is a shell script entitled install.sh.  Running this
+script will install the release by default in /usr/local/lib/<appname>_rel.  An optional argument
+can be provided that will direct the installation to a different directory.
+
+Example install.sh /opt/lib 
+
+This will install the release in /opt/lib/<appname>_rel
+  
+
+ 
+

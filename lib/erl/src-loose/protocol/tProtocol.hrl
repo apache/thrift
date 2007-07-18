@@ -1,1 +1,0 @@
--record(tProtocol, {trans}).

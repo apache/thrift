@@ -1,0 +1,10 @@
+tutorial client
+
+find TODO(cpiro)s
+make all methods effectful, remove the special casing (optionally, implement monads for Erlang)
+
+inheritance
+
+test suites
+
+undisgustify codegen

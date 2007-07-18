@@ -1,0 +1,14 @@
+%%% -*- mode:erlang -*-
+{release, 
+ {"thrift_rel", "1.0"},
+ erts,
+ [
+  kernel,
+  stdlib,
+  sasl,
+  fslib,
+  gas,
+  thrift
+ ]
+}. 
+
