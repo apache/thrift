@@ -1765,7 +1765,7 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
   
   indent(out) <<
     prefix << ".clear();" << endl <<
-    "uint32_t " << size << ";" << endl;
+    indent() << "uint32_t " << size << ";" << endl;
   
   // Declare variables, read header
   if (ttype->is_map()) {
