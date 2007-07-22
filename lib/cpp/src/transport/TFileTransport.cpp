@@ -742,6 +742,7 @@ void TFileTransport::openLogFile() {
   mode_t mode = readOnly_ ? S_IRUSR | S_IRGRP | S_IROTH : S_IRUSR | S_IWUSR| S_IRGRP | S_IROTH;
   int flags = readOnly_ ? O_RDONLY : O_RDWR | O_CREAT | O_APPEND;
   fd_ = ::open(filename_.c_str(), flags, mode);
+  offset_ = 0;
 
   // make sure open call was successful
   if(fd_ == -1) {
@@ -750,9 +751,6 @@ void TFileTransport::openLogFile() {
     GlobalOutput(errorMsg);
     throw TTransportException(errorMsg);
   }
-
-  // seek to the end of the file
-  offset_ = lseek(fd_, 0, SEEK_END);
 }
 
 void TFileTransport::getNextFlushTime(struct timespec* ts_next_flush) {
