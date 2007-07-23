@@ -292,7 +292,7 @@ void TFileTransport::writerThread() {
   }
 
   // set the offset to the correct value (EOF)
-  offset_ = lseek(fd_, 0, SEEK_END);
+  seekToEnd();
 
   // Figure out the next time by which a flush must take place
 
@@ -751,6 +751,9 @@ void TFileTransport::openLogFile() {
     GlobalOutput(errorMsg);
     throw TTransportException(errorMsg);
   }
+
+  // TODO: Remove this once Aditya fixes search problems
+  seekToEnd();
 }
 
 void TFileTransport::getNextFlushTime(struct timespec* ts_next_flush) {
