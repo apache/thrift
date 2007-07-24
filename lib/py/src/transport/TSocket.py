@@ -27,6 +27,8 @@ class TSocket(TTransportBase):
   def setTimeout(self, ms):
     if (self.handle != None):
       self.handle.settimeout(ms/1000.00)
+    else:
+      raise TTransportException(TTransportException.NOT_OPEN, 'No handle yet in TSocket')
 
   def open(self):
     try:
