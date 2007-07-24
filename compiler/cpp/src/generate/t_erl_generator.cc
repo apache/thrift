@@ -494,6 +494,10 @@ void t_erl_generator::generate_erl_struct_writer(ostream& out,
  * @param tservice The service definition
  */
 void t_erl_generator::generate_service(t_service* tservice) {
+  // somehow this point is reached before the constructor and it's not downcased yet
+  // ...awesome
+  service_name_[0] = tolower(service_name_[0]);
+
   string f_service_hrl_name = string(T_ERL_DIR)+"/"+service_name_+".hrl";
   string f_service_name = string(T_ERL_DIR)+"/"+service_name_+".erl";
   f_service_file_.open(f_service_name.c_str());
