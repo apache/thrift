@@ -18,7 +18,11 @@
 class t_erl_generator : public t_oop_generator {
  public:
   t_erl_generator(t_program* program) :
-    t_oop_generator(program) {}
+    t_oop_generator(program) 
+  {
+    program_name_[0] = tolower(program_name_[0]);
+    service_name_[0] = tolower(service_name_[0]);
+  }
 
   /**
    * Init and close methods
@@ -140,18 +144,8 @@ class t_erl_generator : public t_oop_generator {
 
  private:
 
-  bool export_lines_first_;
-  std::ostringstream export_lines_;
-
-  bool export_types_lines_first_;
-  std::ostringstream export_types_lines_;
-
-  // f_types_
-  // f_consts_
-  // f_service_
-
   /**
-   * File streams
+   * add function to export list
    */
 
   void export_function(t_function* tfunction, std::string prefix="");
@@ -159,6 +153,27 @@ class t_erl_generator : public t_oop_generator {
 
   void export_types_function(t_function* tfunction, std::string prefix="");
   void export_types_string(std::string name, int num);
+
+  /**
+   * write out headers and footers for hrl files
+   */
+  
+  void hrl_header(std::ostream& out, std::string name);
+  void hrl_footer(std::ostream& out, std::string name); 
+
+  /**
+   * stuff to spit out at the top of generated files
+   */
+
+  bool export_lines_first_;
+  std::ostringstream export_lines_;
+
+  bool export_types_lines_first_;
+  std::ostringstream export_types_lines_;
+
+  /**
+   * File streams
+   */
 
   std::ostringstream f_types_;
   std::ofstream f_types_file_;
