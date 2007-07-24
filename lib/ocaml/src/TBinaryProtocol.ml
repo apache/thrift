@@ -11,13 +11,12 @@ let vt = P.t_type_of_i
 
 
 let comp_int b n = 
-  let s = ref 0 in
-  let sb = Sys.word_size - 8*n in
+  let s = ref 0l in
+  let sb = 32 - 8*n in
     for i=0 to (n-1) do
-      s:=!s lor ((int_of_char b.[i]) lsl (8*(n-1-i)))
+      s:= Int32.logor !s (Int32.shift_left (Int32.of_int (int_of_char b.[i])) (8*(n-1-i)))
     done;
-    s:=(!s lsl sb) asr sb;
-    !s
+    Int32.to_int (Int32.shift_right (Int32.shift_left !s sb) sb)
 
 let comp_int64 b n =
   let s = ref 0L in
@@ -25,6 +24,9 @@ let comp_int64 b n =
       s:=Int64.logor !s (Int64.shift_left (Int64.of_int (int_of_char b.[i])) (8*(n-1-i)))
     done;
     !s
+
+let version_mask = 0xffff0000
+let version_1 = 0x80010000
 
 class t trans =
 object (self)
@@ -61,8 +63,8 @@ object (self)
       trans#write s 0 n
   method writeBinary a = self#writeString a
   method writeMessageBegin (n,t,s) =
+    self#writeI32 (version_1 lor (P.message_type_to_i t));
     self#writeString n;
-    self#writeByte (P.message_type_to_i t);
     self#writeI32 s
   method writeMessageEnd = ()
   method writeStructBegin s = ()
@@ -109,9 +111,14 @@ object (self)
       buf
   method readBinary = self#readString
   method readMessageBegin =
-    let s = self#readString in
-    let mt = P.message_type_of_i (self#readByte) in
-      (s,mt, self#readI32)
+    let ver = self#readI32 in
+      if (ver land version_mask != version_1) then
+        (print_int ver;
+        raise (P.TProtocolExn (P.BAD_VERSION, "Missing version identifier")))
+      else
+        let s = self#readString in
+        let mt = P.message_type_of_i (ver land 0xFF) in
+          (s,mt, self#readI32)
   method readMessageEnd = ()
   method readStructBegin =
     ""

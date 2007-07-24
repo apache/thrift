@@ -252,6 +252,15 @@ struct
   object
     method virtual getProtocol : Transport.t -> t
   end
+
+  type exn_type =
+      | UNKNOWN
+      | INVALID_DATA
+      | NEGATIVE_SIZE
+      | SIZE_LIMIT
+      | BAD_VERSION
+
+  exception TProtocolExn of exn_type * string;;
            
 end;;   
 
