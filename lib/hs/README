@@ -1,0 +1,22 @@
+Haskell Thrift Bindings
+
+Running: you need -fglasgow-exts.
+
+Enums: become haskell data types. Use fromEnum to get out the int value.
+
+Structs: become records. Field labels are ugly, of the form f_STRUCTNAME_FIELDNAME. All fields are Maybe types.
+
+Exceptions: identical to structs. Throw them with throwDyn. Catch them with catchDyn.
+
+Client: just a bunch of functions. You may have to import a bunch of client files to deal with inheritance.
+
+Interface: You should only have to import the last one in the chain of inheritors. To make an interface, declare a label:
+data MyIface = MyIface
+and then declare it an instance of each iface class, starting with the superest class and proceding down (all the while defining the methods).
+Then pass your label to process as the handler.
+
+Processor: Just a function that takes a handler label, protocols. It calls the superclasses process if there is a superclass.
+
+
+Note: Protocols implement flush as well as transports and do not have a getTransport method. This is because I couldn't get getTransport to typecheck. Shrug.
+

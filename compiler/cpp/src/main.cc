@@ -37,6 +37,7 @@
 #include "generate/t_perl_generator.h"
 #include "generate/t_ocaml_generator.h"
 #include "generate/t_erl_generator.h"
+#include "generate/t_hs_generator.h"
 
 using namespace std;
 
@@ -129,6 +130,7 @@ bool gen_rest = false;
 bool gen_perl = false;
 bool gen_ocaml = false;
 bool gen_erl = false;
+bool gen_hs = false;
 bool gen_recurse = false;
 
 /**
@@ -308,6 +310,7 @@ void usage() {
   fprintf(stderr, "  -perl       Generate Perl output files\n");
   fprintf(stderr, "  -ocaml      Generate OCaml output files\n");
   fprintf(stderr, "  -erl        Generate Erlang output files\n");
+  fprintf(stderr, "  -hs         Generate Haskell output files\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories \n");
   fprintf(stderr, "                searched for include directives\n");
   fprintf(stderr, "  -nowarn     Suppress all compiler warnings (BAD!)\n");
@@ -583,7 +586,12 @@ void generate(t_program* program) {
       erl->generate_program();
       delete erl;
     }
-
+    if (gen_hs) {
+      pverbose("Generating Haskell\n");
+      t_hs_generator* hs = new t_hs_generator(program);
+      hs->generate_program();
+      delete hs;
+    }
 
   } catch (string s) {
     printf("Error: %s\n", s.c_str());
@@ -653,6 +661,8 @@ int main(int argc, char** argv) {
         gen_ocaml = true;
       } else if (strcmp(arg, "-erl") == 0) {
         gen_erl = true;
+      } else if (strcmp(arg, "-hs") == 0) {
+        gen_hs = true;
       } else if (strcmp(arg, "-I") == 0) {
         // An argument of "-I\ asdf" is invalid and has unknown results
         arg = argv[++i];
@@ -673,7 +683,7 @@ int main(int argc, char** argv) {
   }
 
   // You gotta generate something!
-  if (!gen_cpp && !gen_java && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_ocaml && !gen_erl) {
+  if (!gen_cpp && !gen_java && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_ocaml && !gen_erl && !gen_hs) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
