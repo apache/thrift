@@ -334,26 +334,26 @@ void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type,
     
   if (!field_name.empty())
     out << ", :name => '" << field_name << "'";
+
+  if (! field_type->is_base_type()) {
+    if (field_type->is_struct() || field_type->is_xception()) {
+      out << ", :class => " << type_name(((t_struct*)field_type));
+    } else if (field_type->is_list()) {
+      out << ", :element => ";
+      generate_field_data(out, ((t_list*)field_type)->get_elem_type());
+    } else if (field_type->is_map()) {
+      out << ", :key => ";
+      generate_field_data(out, ((t_map*)field_type)->get_key_type());
+      out << ", :value => ";
+      generate_field_data(out, ((t_map*)field_type)->get_val_type());
+    } else if (field_type->is_set()) {
+      out << ", :element => ";
+      generate_field_data(out, ((t_set*)field_type)->get_elem_type());
+    }
+  }
    
-   if (! field_type->is_base_type()) {
-     if (field_type->is_struct()) {
-       out << ", :class => " << type_name(((t_struct*)field_type));
-     } else if (field_type->is_list()) {
-       out << ", :element => ";
-       generate_field_data(out, ((t_list*)field_type)->get_elem_type());
-     } else if (field_type->is_map()) {
-       out << ", :key => ";
-       generate_field_data(out, ((t_map*)field_type)->get_key_type());
-       out << ", :value => ";
-       generate_field_data(out, ((t_map*)field_type)->get_val_type());
-     } else if (field_type->is_set()) {
-       out << ", :element => ";
-       generate_field_data(out, ((t_set*)field_type)->get_elem_type());
-     }
-   }
-   
-   // End of this field's defn
-   out << "}";
+  // End of this field's defn
+  out << "}";
 }
 
 void t_rb_generator::begin_namespace(std::ofstream& out, vector<std::string> modules) {
