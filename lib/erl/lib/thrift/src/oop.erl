@@ -88,7 +88,7 @@ call(Obj, Method) ->
 
 call_loop(Obj, Method, Args, TryModule, TriedRev, FirstObj) ->
     try
-	%% io:format("call_loop~n ~p~n ~p~n ~p~n ~p~n ~n", [Obj, Method, Args, TryModule]),
+       %% io:format("call_loop~n ~p~n ~p~n ~p~n ~p~n ~n", [inspect(Obj), Method, Args, TryModule]),
 	apply(TryModule, Method, Args)
     catch
 	error:Kind when Kind == undef; Kind == function_clause ->

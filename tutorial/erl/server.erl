@@ -9,34 +9,38 @@
 
 -include("calculator.hrl").
 
--export([start/0, stop/1, ping/0, add/2, calculate/2, getStruct/1, zip/0]).
+
+-export([start/0, start/1, stop/1, ping/0, add/2, calculate/2, getStruct/1, zip/0]).
 
 ping() ->
     io:format("ping()~n",[]),
-    {ok, nil}.
+    nil.
 
 add(N1, N2) ->
     io:format("add(~p,~p)~n",[N1,N2]),
-    {ok, N1+N2}.
+    N1+N2.
 
 calculate(Logid, Work) ->
     { Op, Num1, Num2 } = { Work#work.op, Work#work.num1, Work#work.num2 },
     io:format("calculate(~p, {~p,~p,~p})~n", [Logid, Op, Num1, Num2]),
     case Op of
-        ?ADD      -> {ok, Num1 + Num2};
-	?SUBTRACT -> {ok, Num1 - Num2};
-	?MULTIPLY -> {ok, Num1 * Num2};
-	?DIVIDE ->
-	    if 	Num2 == 0 -> {error, #invalidOperation{what=Op, why="Cannot divide by 0"}};
-		true      -> {ok, Num1 / Num2}
-	    end;
-	true ->
-	    {error, #invalidOperation{what=Op, why="Invalid operation"}}
+        ?tutorial_ADD      -> Num1 + Num2;
+	?tutorial_SUBTRACT -> Num1 - Num2;
+	?tutorial_MULTIPLY -> Num1 * Num2;
+
+	?tutorial_DIVIDE when Num2 == 0 ->
+	    throw(#invalidOperation{what=Op, why="Cannot divide by 0"});
+	?tutorial_DIVIDE ->
+	    Num1 div Num2;
+
+	_Else ->
+	    throw(#invalidOperation{what=Op, why="Invalid operation"})
+
     end.
 
 getStruct(Key) ->
     io:format("getStruct(~p)~n", [Key]),
-    {ok, get(Key)}.
+    #sharedStruct{key=Key, value="RARG"}.
 
 zip() ->
     io:format("zip~n").
@@ -44,9 +48,11 @@ zip() ->
 %%
 
 start() ->
-    Handler   = ?MODULE, % cpiro: or generated handler?
+    start(9090).
+
+start(Port) ->
+    Handler   = ?MODULE,
     Processor = calculator,
-    Port      = 9090,
 
     TF = tBufferedTransportFactory:new(),
     PF = tBinaryProtocolFactory:new(),
@@ -63,4 +69,3 @@ start() ->
 stop(Server) ->
     ?C0(Server, stop),
     ok.
-
