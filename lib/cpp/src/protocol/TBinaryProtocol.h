@@ -127,8 +127,8 @@ class TBinaryProtocol : public TProtocol {
 
 
   uint32_t readMessageBegin(std::string& name,
-			    TMessageType& messageType,
-			    int32_t& seqid);
+                            TMessageType& messageType,
+                            int32_t& seqid);
 
   uint32_t readMessageEnd();
 
@@ -137,14 +137,14 @@ class TBinaryProtocol : public TProtocol {
   uint32_t readStructEnd();
 
   uint32_t readFieldBegin(std::string& name,
-			  TType& fieldType,
-			  int16_t& fieldId);
+                          TType& fieldType,
+                          int16_t& fieldId);
   
   uint32_t readFieldEnd();
  
   uint32_t readMapBegin(TType& keyType,
-			TType& valType,
-			uint32_t& size);
+                        TType& valType,
+                        uint32_t& size);
 
   uint32_t readMapEnd();
 
@@ -154,7 +154,7 @@ class TBinaryProtocol : public TProtocol {
   uint32_t readListEnd();
 
   uint32_t readSetBegin(TType& elemType,
-			uint32_t& size);
+                        uint32_t& size);
 
   uint32_t readSetEnd();
 

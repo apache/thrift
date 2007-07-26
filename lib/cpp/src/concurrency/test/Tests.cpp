@@ -129,13 +129,13 @@ int main(int argc, char** argv) {
 
       for (size_t workerCount = minWorkerCount; workerCount < maxWorkerCount; workerCount*= 2) {
 
-	size_t taskCount = workerCount * tasksPerWorker;
+        size_t taskCount = workerCount * tasksPerWorker;
 
-	std::cout << "\t\tThreadManager load test: worker count: " << workerCount << " task count: " << taskCount << " delay: " << delay << std::endl;
+        std::cout << "\t\tThreadManager load test: worker count: " << workerCount << " task count: " << taskCount << " delay: " << delay << std::endl;
 
-	ThreadManagerTests threadManagerTests;
+        ThreadManagerTests threadManagerTests;
 
-	threadManagerTests.loadTest(taskCount, delay, workerCount);
+        threadManagerTests.loadTest(taskCount, delay, workerCount);
       }
     }
   }

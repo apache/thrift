@@ -202,8 +202,8 @@ class ThreadManager::Worker: public Runnable {
       Synchronized s(manager_->monitor_);
       active = manager_->workerCount_ < manager_->workerMaxCount_;
       if (active) {
-	manager_->workerCount_++;
-	notifyManager = manager_->workerCount_ == manager_->workerMaxCount_;
+        manager_->workerCount_++;
+        notifyManager = manager_->workerCount_ == manager_->workerMaxCount_;
       }
     }
 
@@ -227,24 +227,24 @@ class ThreadManager::Worker: public Runnable {
        */
       {
         Synchronized s(manager_->monitor_);
-	active = isActive();
+        active = isActive();
 
-	while (active && manager_->tasks_.empty()) {
+        while (active && manager_->tasks_.empty()) {
           manager_->idleCount_++;
           idle_ = true;
           manager_->monitor_.wait();
           active = isActive();
           idle_ = false;
           manager_->idleCount_--;
-	}
+        }
 
-	if (active) {
+        if (active) {
           if (!manager_->tasks_.empty()) {
             task = manager_->tasks_.front();
             manager_->tasks_.pop();
             if (task->state_ == ThreadManager::Task::WAITING) {
               task->state_ = ThreadManager::Task::EXECUTING;
-	    }
+            }
 
             /* If we have a pending task max and we just dropped below it, wakeup any
                thread that might be blocked on add. */
@@ -252,22 +252,22 @@ class ThreadManager::Worker: public Runnable {
                 manager_->tasks_.size() == manager_->pendingTaskCountMax_ - 1) {
               manager_->workerMonitor_.notify();
             }
-	  }
-	} else {
-	  idle_ = true;
-	  manager_->workerCount_--;
+          }
+        } else {
+          idle_ = true;
+          manager_->workerCount_--;
           notifyManager = (manager_->workerCount_ == manager_->workerMaxCount_);
-	}
+        }
       }
 
       if (task != NULL) {
-	if (task->state_ == ThreadManager::Task::EXECUTING) {
-	  try {
+        if (task->state_ == ThreadManager::Task::EXECUTING) {
+          try {
             task->run();
           } catch(...) {
             // XXX need to log this
-	  }
-	}
+          }
+        }
       }
     }
 
@@ -384,7 +384,7 @@ void ThreadManager::Impl::removeWorker(size_t value) {
 
     if (idleCount_ < value) {
       for (size_t ix = 0; ix < idleCount_; ix++) {
-	monitor_.notify();
+        monitor_.notify();
       }
     } else {
       monitor_.notifyAll();

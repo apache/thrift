@@ -65,14 +65,14 @@ public:
       {
         Synchronized s(_monitor);
 
-	// std::cout << "Thread " << _count << " completed " << std::endl;
+        // std::cout << "Thread " << _count << " completed " << std::endl;
 
-	_count--;
+        _count--;
 
-	if (_count == 0) {
+        if (_count == 0) {
 
-	  _monitor.notify();
-	}
+          _monitor.notify();
+        }
       }
     }
 
@@ -117,7 +117,7 @@ public:
 
     for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
 
-	threadManager->add(*ix);
+        threadManager->add(*ix);
     }
 
     {
@@ -125,7 +125,7 @@ public:
 
       while(activeCount > 0) {
 
-	monitor.wait();
+        monitor.wait();
       }
     }
 
@@ -147,19 +147,19 @@ public:
       assert(delta > 0);
 
       if (task->_startTime < firstTime) {
-	firstTime = task->_startTime;
+        firstTime = task->_startTime;
       }
 
       if (task->_endTime > lastTime) {
-	lastTime = task->_endTime;
+        lastTime = task->_endTime;
       }
 
       if (delta < minTime) {
-	minTime = delta;
+        minTime = delta;
       }
 
       if (delta > maxTime) {
-	maxTime = delta;
+        maxTime = delta;
       }
 
       averageTime+= delta;
@@ -258,7 +258,7 @@ public:
       }
 
       for (std::set<shared_ptr<ThreadManagerTests::BlockTask> >::iterator ix = tasks.begin(); ix != tasks.end(); ix++) {
-	threadManager->add(*ix);
+        threadManager->add(*ix);
       }
 
       if(!(success = (threadManager->totalTaskCount() == pendingTaskMaxCount + workerCount))) {

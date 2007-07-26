@@ -193,8 +193,8 @@ uint32_t TBinaryProtocol::writeString(const string& str) {
  */
 
 uint32_t TBinaryProtocol::readMessageBegin(std::string& name,
-					   TMessageType& messageType,
-					   int32_t& seqid) {
+                                           TMessageType& messageType,
+                                           int32_t& seqid) {
   uint32_t result = 0;
   int32_t sz;
   result += readI32(sz);

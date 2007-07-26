@@ -27,4 +27,6 @@ install-sh \
 libtool \
 ltmain.sh \
 Makefile.in \
-missing
+missing \
+config.hin~ \
+stamp-h1

@@ -162,22 +162,22 @@ public:
     void run() {
       {
         Synchronized s(_monitor);
-	if (_state == SynchStartTask::STARTING) {
-	  _state = SynchStartTask::STARTED;
-	  _monitor.notify();
-	}
+        if (_state == SynchStartTask::STARTING) {
+          _state = SynchStartTask::STARTED;
+          _monitor.notify();
+        }
       }
 
       {
         Synchronized s(_monitor);
         while (_state == SynchStartTask::STARTED) {
-	  _monitor.wait();
-	}
+          _monitor.wait();
+        }
 
-	if (_state == SynchStartTask::STOPPING) {
+        if (_state == SynchStartTask::STOPPING) {
           _state = SynchStartTask::STOPPED;
           _monitor.notifyAll();
-	}
+        }
       }
     }
 
@@ -208,7 +208,7 @@ public:
     {
       Synchronized s(monitor);
       while (state == SynchStartTask::STARTING) {
-	monitor.wait();
+        monitor.wait();
       }
     }
 
@@ -224,13 +224,13 @@ public:
 
       if (state == SynchStartTask::STARTED) {
 
-	state = SynchStartTask::STOPPING;
+        state = SynchStartTask::STOPPING;
 
-	monitor.notify();
+        monitor.notify();
       }
 
       while (state == SynchStartTask::STOPPING) {
-	monitor.wait();
+        monitor.wait();
       }
     }
 

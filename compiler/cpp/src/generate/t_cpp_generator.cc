@@ -424,8 +424,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
         }
       }
     }
-    indent_down();
-    indent(out) << "} " << endl;
+    scope_down(out);
   }
   
   out <<
@@ -527,7 +526,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
     
     // Check for field STOP marker
     out <<
-      indent() << "if (ftype == facebook::thrift::protocol::T_STOP) { " << endl <<
+      indent() << "if (ftype == facebook::thrift::protocol::T_STOP) {" << endl <<
       indent() << "  break;" << endl <<
       indent() << "}" << endl;
     
@@ -820,7 +819,7 @@ void t_cpp_generator::generate_service_interface(t_service* tservice) {
   }
   f_header_ <<
     "class " << service_name_ << "If" << extends << " {" << endl <<
-    " public: " << endl;
+    " public:" << endl;
   indent_up(); 
   f_header_ <<
     indent() << "virtual ~" << service_name_ << "If() {}" << endl;
@@ -832,7 +831,7 @@ void t_cpp_generator::generate_service_interface(t_service* tservice) {
   }
   indent_down();
   f_header_ <<
-    "}; " << endl << endl;
+    "};" << endl << endl;
 }
 
 /**
@@ -847,7 +846,7 @@ void t_cpp_generator::generate_service_null(t_service* tservice) {
   }
   f_header_ <<
     "class " << service_name_ << "Null : virtual public " << service_name_ << "If" << extends << " {" << endl <<
-    " public: " << endl;
+    " public:" << endl;
   indent_up(); 
   f_header_ <<
     indent() << "virtual ~" << service_name_ << "Null() {}" << endl;
@@ -878,7 +877,7 @@ void t_cpp_generator::generate_service_null(t_service* tservice) {
   }
   indent_down();
   f_header_ <<
-    "}; " << endl << endl;
+    "};" << endl << endl;
 }
 
 
@@ -908,7 +907,7 @@ void t_cpp_generator::generate_service_multiface(t_service* tservice) {
     "class " << service_name_ << "Multiface : " <<
     "virtual public " << service_name_ << "If" <<
     extends_multiface << " {" << endl <<
-    " public: " << endl;
+    " public:" << endl;
   indent_up();
   f_header_ << 
     indent() << service_name_ << "Multiface(" << list_type << "& ifaces) : ifaces_(ifaces) {" << endl;
@@ -931,7 +930,7 @@ void t_cpp_generator::generate_service_multiface(t_service* tservice) {
   f_header_ <<
     indent() << list_type << " ifaces_;" << endl <<
     indent() << service_name_ << "Multiface() {}" << endl <<
-    indent() << "void add(boost::shared_ptr<" << service_name_ << "If> iface) { " << endl;
+    indent() << "void add(boost::shared_ptr<" << service_name_ << "If> iface) {" << endl;
   if (!extends.empty()) {
     f_header_ <<
       indent() << "  " << extends << "Multiface::add(iface);" << endl;
@@ -1029,7 +1028,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
 
   indent_up();
   f_header_ <<
-    indent() << service_name_ << "Client(boost::shared_ptr<facebook::thrift::protocol::TProtocol> prot) : " << endl;
+    indent() << service_name_ << "Client(boost::shared_ptr<facebook::thrift::protocol::TProtocol> prot) :" << endl;
   if (extends.empty()) {
     f_header_ <<
       indent() << "  piprot_(prot)," << endl <<
@@ -1043,7 +1042,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
   }
 
   f_header_ <<
-    indent() << service_name_ << "Client(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) : " << endl;
+    indent() << service_name_ << "Client(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) :" << endl;
   if (extends.empty()) {
     f_header_ <<
       indent() << "  piprot_(iprot)," << endl <<
@@ -1334,7 +1333,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
   indent_down();
 
   f_header_ << 
-    " public: " << endl <<
+    " public:" << endl <<
     indent() << service_name_ << "Processor(boost::shared_ptr<" << service_name_ << "If> iface) :" << endl;
   if (extends.empty()) {
     f_header_ <<
@@ -2080,15 +2079,18 @@ string t_cpp_generator::namespace_open(string ns) {
     return "";
   }
   string result = "";
+  string separator = "";
   string::size_type loc;
   while ((loc = ns.find(".")) != string::npos) {
+    result += separator;
     result += "namespace ";
     result += ns.substr(0, loc);
-    result += " { ";
+    result += " {";
+    separator = " ";
     ns = ns.substr(loc+1);
   }
   if (ns.size() > 0) {
-    result += "namespace " + ns + " { ";
+    result += separator + "namespace " + ns + " {";
   }
   return result;
 }

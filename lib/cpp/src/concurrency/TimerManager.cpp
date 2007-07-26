@@ -74,8 +74,8 @@ class TimerManager::Dispatcher: public Runnable {
     {
       Synchronized s(manager_->monitor_);
       if (manager_->state_ == TimerManager::STARTING) {
-	manager_->state_ = TimerManager::STARTED;
-	manager_->monitor_.notifyAll();
+        manager_->state_ = TimerManager::STARTED;
+        manager_->monitor_.notifyAll();
       }
     }
 
@@ -83,32 +83,32 @@ class TimerManager::Dispatcher: public Runnable {
       std::set<shared_ptr<TimerManager::Task> > expiredTasks;
       {
         Synchronized s(manager_->monitor_);
-	task_iterator expiredTaskEnd;
-	int64_t now = Util::currentTime();
-	while (manager_->state_ == TimerManager::STARTED && 
+        task_iterator expiredTaskEnd;
+        int64_t now = Util::currentTime();
+        while (manager_->state_ == TimerManager::STARTED && 
                (expiredTaskEnd = manager_->taskMap_.upper_bound(now)) == manager_->taskMap_.begin()) {
-	  int64_t timeout = 0LL;
-	  if (!manager_->taskMap_.empty()) {
+          int64_t timeout = 0LL;
+          if (!manager_->taskMap_.empty()) {
             timeout = manager_->taskMap_.begin()->first - now;
-	  }
+          }
           assert((timeout != 0 && manager_->taskCount_ > 0) || (timeout == 0 && manager_->taskCount_ == 0));
           try {
             manager_->monitor_.wait(timeout);
           } catch (TimedOutException &e) {}
-	  now = Util::currentTime();
-	}
-	
-	if (manager_->state_ == TimerManager::STARTED) {
+          now = Util::currentTime();
+        }
+        
+        if (manager_->state_ == TimerManager::STARTED) {
           for (task_iterator ix = manager_->taskMap_.begin(); ix != expiredTaskEnd; ix++) {
-	    shared_ptr<TimerManager::Task> task = ix->second;
+            shared_ptr<TimerManager::Task> task = ix->second;
             expiredTasks.insert(task);
-	    if (task->state_ == TimerManager::Task::WAITING) {
-	      task->state_ = TimerManager::Task::EXECUTING;
-	    }
+            if (task->state_ == TimerManager::Task::WAITING) {
+              task->state_ = TimerManager::Task::EXECUTING;
+            }
             manager_->taskCount_--;
-	  }
+          }
           manager_->taskMap_.erase(manager_->taskMap_.begin(), expiredTaskEnd);
-	}
+        }
       }
       
       for (std::set<shared_ptr<Task> >::iterator ix =  expiredTasks.begin(); ix != expiredTasks.end(); ix++) {
@@ -120,8 +120,8 @@ class TimerManager::Dispatcher: public Runnable {
     {
       Synchronized s(manager_->monitor_);
       if (manager_->state_ == TimerManager::STOPPING) {
-	manager_->state_ = TimerManager::STOPPED; 
-	manager_->monitor_.notify();
+        manager_->state_ = TimerManager::STOPPED; 
+        manager_->monitor_.notify();
       }
     }
     return;

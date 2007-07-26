@@ -35,8 +35,8 @@ class TWriteOnlyProtocol : public TProtocol {
    */
 
   uint32_t readMessageBegin(std::string& name,
-			    TMessageType& messageType,
-			    int32_t& seqid) {
+                            TMessageType& messageType,
+                            int32_t& seqid) {
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
         subclass_ + " does not support reading (yet).");
   }
@@ -57,8 +57,8 @@ class TWriteOnlyProtocol : public TProtocol {
   }
 
   uint32_t readFieldBegin(std::string& name,
-			  TType& fieldType,
-			  int16_t& fieldId) {
+                          TType& fieldType,
+                          int16_t& fieldId) {
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
         subclass_ + " does not support reading (yet).");
   }
@@ -69,8 +69,8 @@ class TWriteOnlyProtocol : public TProtocol {
   }
  
   uint32_t readMapBegin(TType& keyType,
-			TType& valType,
-			uint32_t& size) {
+                        TType& valType,
+                        uint32_t& size) {
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
         subclass_ + " does not support reading (yet).");
   }
@@ -92,7 +92,7 @@ class TWriteOnlyProtocol : public TProtocol {
   }
 
   uint32_t readSetBegin(TType& elemType,
-			uint32_t& size) {
+                        uint32_t& size) {
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
         subclass_ + " does not support reading (yet).");
   }

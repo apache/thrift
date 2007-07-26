@@ -54,7 +54,7 @@ class TimerManagerTests {
       float error = delta / _timeout;
 
       if(error < ERROR) {
-	_success = true;
+        _success = true;
       }
       
       _done = true;
@@ -62,7 +62,7 @@ class TimerManagerTests {
       std::cout << "\t\t\tTimerManagerTests::Task[" << this << "] done" << std::endl; //debug      
 
       {Synchronized s(_monitor);
-	_monitor.notifyAll();
+        _monitor.notifyAll();
       }
     }  
 
@@ -99,11 +99,11 @@ class TimerManagerTests {
       {
         Synchronized s(_monitor);
 
-	timerManager.add(orphanTask, 10 * timeout);
+        timerManager.add(orphanTask, 10 * timeout);
 
-	timerManager.add(task, timeout);
+        timerManager.add(task, timeout);
 
-	_monitor.wait();
+        _monitor.wait();
       }
 
       assert(task->_done);

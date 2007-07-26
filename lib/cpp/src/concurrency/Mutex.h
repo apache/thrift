@@ -66,9 +66,9 @@ class RWGuard {
     RWGuard(const ReadWriteMutex& value, bool write = 0) : rw_mutex_(value) {
       if (write) {
         rw_mutex_.acquireWrite();
-      }	else {
+      } else {
         rw_mutex_.acquireRead();
-      }	
+      }
     }  
     ~RWGuard() {
       rw_mutex_.release();

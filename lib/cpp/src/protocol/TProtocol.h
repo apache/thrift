@@ -122,26 +122,26 @@ class TProtocol {
   virtual uint32_t writeStructEnd() = 0;
   
   virtual uint32_t writeFieldBegin(const std::string& name,
-				   const TType fieldType,
-				   const int16_t fieldId) = 0;
+                                   const TType fieldType,
+                                   const int16_t fieldId) = 0;
 
   virtual uint32_t writeFieldEnd() = 0;
 
   virtual uint32_t writeFieldStop() = 0;
                                       
   virtual uint32_t writeMapBegin(const TType keyType,
-				 const TType valType,
-				 const uint32_t size) = 0;
+                                 const TType valType,
+                                 const uint32_t size) = 0;
 
   virtual uint32_t writeMapEnd() = 0;
   
   virtual uint32_t writeListBegin(const TType elemType,
-				  const uint32_t size) = 0;
+                                  const uint32_t size) = 0;
 
   virtual uint32_t writeListEnd() = 0;
 
   virtual uint32_t writeSetBegin(const TType elemType,
-				 const uint32_t size) = 0;
+                                 const uint32_t size) = 0;
 
   virtual uint32_t writeSetEnd() = 0;
 
@@ -164,8 +164,8 @@ class TProtocol {
    */
 
   virtual uint32_t readMessageBegin(std::string& name,
-				    TMessageType& messageType,
-				    int32_t& seqid) = 0;
+                                    TMessageType& messageType,
+                                    int32_t& seqid) = 0;
   
   virtual uint32_t readMessageEnd() = 0;
 
@@ -174,24 +174,24 @@ class TProtocol {
   virtual uint32_t readStructEnd() = 0;
 
   virtual uint32_t readFieldBegin(std::string& name,
-				  TType& fieldType,
-				  int16_t& fieldId) = 0;
+                                  TType& fieldType,
+                                  int16_t& fieldId) = 0;
   
   virtual uint32_t readFieldEnd() = 0;
  
   virtual uint32_t readMapBegin(TType& keyType,
-				TType& valType,
-				uint32_t& size) = 0;
+                                TType& valType,
+                                uint32_t& size) = 0;
 
   virtual uint32_t readMapEnd() = 0;
 
   virtual uint32_t readListBegin(TType& elemType,
-				 uint32_t& size) = 0;
+                                 uint32_t& size) = 0;
 
   virtual uint32_t readListEnd() = 0;
 
   virtual uint32_t readSetBegin(TType& elemType,
-				uint32_t& size) = 0;
+                                uint32_t& size) = 0;
 
   virtual uint32_t readSetEnd() = 0;
 
