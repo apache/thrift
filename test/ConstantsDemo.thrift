@@ -5,6 +5,13 @@ struct thing {
   2: i32 goodbye
 }
 
+enum constants {
+  ONE = 1,
+  TWO = 2
+}
+
+const map<i32,string> GEN_ENUM_NAMES = {ONE : "HOWDY", TWO: PARTNER}
+
 const i32 hex_const = 0x0001F
 
 const i32 GEN_ME = -3523553

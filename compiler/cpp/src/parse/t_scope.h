@@ -41,6 +41,14 @@ class t_scope {
     return services_[name];
   }
 
+  void add_constant(std::string name, t_const* constant) {
+    constants_[name] = constant;
+  }
+
+  t_const* get_constant(std::string name) {
+    return constants_[name];
+  }
+
   void print() {
     std::map<std::string, t_type*>::iterator iter;
     for (iter = types_.begin(); iter != types_.end(); ++iter) {
@@ -54,6 +62,9 @@ class t_scope {
   
   // Map of names to types
   std::map<std::string, t_type*> types_;
+
+  // Map of names to constants
+  std::map<std::string, t_const*> constants_;
 
   // Map of names to services
   std::map<std::string, t_service*> services_; 

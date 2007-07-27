@@ -411,6 +411,12 @@ EnumDef:
       if ($1 != NULL) {
         $$->set_doc($1);
       }
+      if (g_parse_mode == PROGRAM) {
+        g_scope->add_constant($2, new t_const(g_type_i32, $2, new t_const_value($4)));
+        if (g_parent_scope != NULL) {
+          g_parent_scope->add_constant(g_parent_prefix + $2, new t_const(g_type_i32, $2, new t_const_value($4)));
+        }
+      }
     }
 |
   DocTextOptional tok_identifier CommaOrSemicolonOptional
@@ -460,6 +466,12 @@ Const:
       if (g_parse_mode == PROGRAM) {
         $$ = new t_const($2, $3, $5);
         validate_const_type($$);
+
+        g_scope->add_constant($3, $$);
+        if (g_parent_scope != NULL) {
+          g_parent_scope->add_constant(g_parent_prefix + $3, $$);
+        }
+
       } else {
         $$ = NULL;
       }
@@ -481,14 +493,20 @@ ConstValue:
 | tok_literal
     {
       pdebug("ConstValue => tok_literal");
-      $$ = new t_const_value();
-      $$->set_string($1);
+      $$ = new t_const_value($1);
     }
 | tok_identifier
     {
       pdebug("ConstValue => tok_identifier");
-      $$ = new t_const_value();
-      $$->set_string($1);
+      t_const* constant = g_scope->get_constant($1);
+      if (constant != NULL) {
+        $$ = constant->get_value();
+      } else {
+        if (g_parse_mode == PROGRAM) {
+          pwarning(1, "Constant strings should be quoted: %s\n", $1);
+        }
+        $$ = new t_const_value($1);
+      }
     }
 | ConstList
     {
@@ -602,11 +620,6 @@ Xception:
       pdebug("Xception -> tok_xception tok_identifier { FieldList }");
       $4->set_name($2);
       $4->set_xception(true);
-/*
-      if ($4 != NULL) {
-        $5->set_doc($4);
-      }
-*/
       $$ = $4;
       y_field_val = -1;
     }

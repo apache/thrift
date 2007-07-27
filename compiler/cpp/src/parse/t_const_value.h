@@ -30,6 +30,14 @@ class t_const_value {
 
   t_const_value() {}
 
+  t_const_value(int val) {
+    set_integer(val);
+  }
+
+  t_const_value(std::string val) {
+    set_string(val);
+  }
+
   void set_string(std::string val) {
     valType_ = CV_STRING;
     stringVal_ = val;
