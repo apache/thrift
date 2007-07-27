@@ -495,8 +495,12 @@ void parse(t_program* program, t_program* parent_program) {
   }
   pverbose("Parsing %s for types\n", path.c_str());
   yylineno = 1;
-  if (yyparse() != 0) {
-    failure("Parser error during types pass.");
+  try {
+    if (yyparse() != 0) {
+      failure("Parser error during types pass.");
+    }
+  } catch (string x) {
+    failure(x.c_str());
   }
   fclose(yyin);
 }
