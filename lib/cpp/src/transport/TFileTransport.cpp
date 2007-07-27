@@ -752,8 +752,6 @@ void TFileTransport::openLogFile() {
     throw TTransportException(errorMsg);
   }
 
-  // TODO: Remove this once Aditya fixes search problems
-  seekToEnd();
 }
 
 void TFileTransport::getNextFlushTime(struct timespec* ts_next_flush) {
