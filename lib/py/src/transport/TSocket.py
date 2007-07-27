@@ -32,7 +32,7 @@ class TSocket(TTransportBase):
 
   def open(self):
     try:
-      res0 = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+      res0 = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)
       for res in res0:
         self.handle = socket.socket(res[0], res[1])
         try:
