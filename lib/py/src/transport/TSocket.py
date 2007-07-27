@@ -32,7 +32,7 @@ class TSocket(TTransportBase):
 
   def open(self):
     try:
-      res0 = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)
+      res0 = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM)
       for res in res0:
         self.handle = socket.socket(res[0], res[1])
         try:
@@ -79,7 +79,7 @@ class TServerSocket(TServerTransportBase):
     self.handle = None
  
   def listen(self):
-    res0 = socket.getaddrinfo(None, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+    res0 = socket.getaddrinfo(None, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)
     for res in res0:
       if res[0] is socket.AF_INET6 or res is res0[-1]:
         break
