@@ -186,9 +186,12 @@ int y_field_val = -1;
  */
 
 Program:
-  HeaderList DefinitionList
+  DocTextOptional HeaderList DefinitionList
     {
       pdebug("Program -> Headers DefinitionList");
+      if ($1 != NULL) {
+        g_program->set_doc($1);
+      }
     }
 
 HeaderList:

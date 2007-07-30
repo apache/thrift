@@ -14,6 +14,7 @@
 // For program_name()
 #include "main.h"
 
+#include "t_doc.h"
 #include "t_scope.h"
 #include "t_base_type.h"
 #include "t_typedef.h"
@@ -41,7 +42,7 @@
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_program {
+class t_program : public t_doc {
  public:
   t_program(std::string path, std::string name) :
     path_(path),

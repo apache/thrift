@@ -433,9 +433,13 @@ static bool dump_docs = false;
 
 /**
  * Dumps docstrings to stdout
- * Only works for typedefs
+ * Only works for typedefs and whole program
  */
 void dump_docstrings(t_program* program) {
+  string progdoc = g_program->get_doc();
+  if (!progdoc.empty()) {
+    printf("Whole program doc:\n%s\n", progdoc.c_str());
+  }
   const vector<t_typedef*>& typedefs = program->get_typedefs();
   vector<t_typedef*>::const_iterator t_iter;
   for (t_iter = typedefs.begin(); t_iter != typedefs.end(); ++t_iter) {

@@ -15,6 +15,8 @@
 class t_doc {
 
  public:
+  t_doc() : has_doc_(false) {}
+
   void set_doc(const std::string& doc) {
     doc_ = doc;
     has_doc_ = true;

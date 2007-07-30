@@ -1,3 +1,9 @@
+/**
+ * Program doctext.
+ *
+ * Seriously, this is the documentation for this whole program.
+ */
+
 java_package thrift.test
 cpp_namespace thrift.test
 
@@ -67,6 +73,10 @@ exception Xception2 {
   2: Xtruct struct_thing
 }
  
+/* C1 */
+/** Doc */
+/* C2 */
+/* C3 */
 struct EmptyStruct {}
 
 struct OneField {
@@ -211,3 +221,11 @@ typedef i32 TrailingWhitespace
  * }
  */
 typedef i32 BigDog
+
+/**
+*
+*
+*/
+typedef i32 TotallyDegenerate
+
+/* THE END */
