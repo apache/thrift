@@ -361,7 +361,7 @@ DocTextOptional:
   tok_doctext
     {
       pdebug("DocTextOptional -> tok_doctext");
-      $$ = $1;
+      $$ = clean_up_doctext($1);
     }
 |
     {

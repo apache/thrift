@@ -65,6 +65,11 @@ std::string directory_name(std::string filename);
 std::string include_file(std::string filename);
 
 /**
+ * Cleans up text commonly found in doxygen-like comments
+ */
+char* clean_up_doctext(char* doctext);
+
+/**
  * Flex utilities
  */
 

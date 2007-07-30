@@ -45,10 +45,11 @@ hexconstant  ("0x"[0-9A-Fa-f]+)
 dubconstant  ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
 identifier   ([a-zA-Z_][\.a-zA-Z_0-9]*)
 whitespace   ([ \t\r\n]*)
-multicomm    ("/*""/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
+sillycomm    ("/*""*"*"*/")
+multicomm    ("/*"[^*]"/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
+doctext      ("/**"([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
 comment      ("//"[^\n]*)
 unixcomment  ("#"[^\n]*)
-doctext      ("["(("["[^\]\[]*"]")|[^\]\[])*"]") /* allows one level of nesting */
 symbol       ([:;\,\{\}\(\)\=<>\[\]])
 dliteral     ("\""[^"]*"\"")
 sliteral     ("'"[^']*"'")
@@ -57,6 +58,7 @@ sliteral     ("'"[^']*"'")
 %%
 
 {whitespace}  { /* do nothing */ }
+{sillycomm}   { /* do nothing */ }
 {multicomm}   { /* do nothing */ }
 {comment}     { /* do nothing */ }
 {unixcomment} { /* do nothing */ }
@@ -200,8 +202,8 @@ sliteral     ("'"[^']*"'")
 }
 
 {doctext} {
- yylval.id = strdup(yytext + 1);
- yylval.id[strlen(yylval.id) - 1] = '\0';
+ yylval.id = strdup(yytext + 3);
+ yylval.id[strlen(yylval.id) - 2] = '\0';
  return tok_doctext;
 }
 
