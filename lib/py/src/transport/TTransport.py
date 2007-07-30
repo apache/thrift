@@ -112,6 +112,40 @@ class TBufferedTransport(TTransportBase):
     self.__trans.flush()
     self.__buf = StringIO()
 
+class TMemoryBuffer(TTransportBase):
+  """Wraps a string object as a TTransport"""
+
+  def __init__(self, value=None):
+    """value -- a value to read from for stringio
+
+    If value is set, this will be a transport for reading,
+    otherwise, it is for writing"""
+    if value is not None:
+      self._buffer = StringIO(value)
+    else:
+      self._buffer = StringIO()
+
+  def isOpen(self):
+    return not self._buffer.closed
+
+  def open(self):
+    pass
+
+  def close(self):
+    self._buffer.close()
+
+  def read(self, sz):
+    return self._buffer.read(sz)
+
+  def write(self, buf):
+    self._buffer.write(buf)
+
+  def flush(self):
+    pass
+
+  def getvalue(self):
+    return self._buffer.getvalue()
+
 class TFramedTransportFactory:
 
   """Factory transport that builds framed transports"""
