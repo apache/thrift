@@ -8,6 +8,7 @@
 
 -include("oop.hrl").
 -include("thrift.hrl").
+-include("tApplicationException.hrl").
 -include("transport/tTransportException.hrl").
 -include("transport/tServerSocket.hrl").
 -include("transport/tErlAcceptor.hrl").
@@ -100,10 +101,14 @@ accept(This, ListenSocket, GP, Handler) ->
     end.
 
 receive_loop(This, Processor, Iprot, Oprot) ->
-    try
-	Value = ?R2(Processor, process, Iprot, Oprot),
-	?INFO(req_processed, {Value}),
-	receive_loop(This, Processor, Iprot, Oprot)
+    try ?R2(Processor, process, Iprot, Oprot) of
+	{error, TAE} when is_record(TAE, tApplicationException),
+	                  TAE#tApplicationException.type == ?tApplicationException_HANDLER_ERROR ->
+	    ?ERROR("handler returned an error: ~p", [oop:get(TAE, message)]),
+	    receive_loop(This, Processor, Iprot, Oprot);
+	Value ->
+	    ?INFO(req_processed, {Value}),
+	    receive_loop(This, Processor, Iprot, Oprot)
     catch
 	%% the following clause must be last because we might reexit
 	%% cpiro: breaks if it's a subclass of tTransportException

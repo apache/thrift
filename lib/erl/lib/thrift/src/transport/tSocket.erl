@@ -15,7 +15,7 @@
 
 -behavior(oop).
 
--export([attr/4, super/0, inspect/1, catches/2]).
+-export([attr/4, super/0, inspect/1]).
 
 -export([new/0, new/1, new/2, 
 	 effectful_setHandle/2, effectful_open/1, 
