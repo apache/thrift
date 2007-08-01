@@ -6,9 +6,10 @@
 
 -module(oop).
 
--export([get/2, set/3, call/2, call/3, inspect/1, start_new/2]).
+-export([get/2, set/3, call/2, call/3, inspect/1, start_new/2, is_object/1, class/1]).
 -export([behaviour_info/1]).
 
+-include("thrift.hrl").
 -include("oop.hrl").
 
 %%%
@@ -77,8 +78,19 @@ get_superobject(Obj) ->
 	    none
     end.
 
+is_object(Obj) when is_tuple(Obj) ->
+    try
+	(?CLASS(Obj)):super(), %% if it's an object its first element will be a class name, and it'll have super/0
+	true
+    catch
+	error:Kind when Kind == undef; Kind == function_clause ->
+	    false
+    end;
+is_object(_) ->
+    false.
+
 call(Obj, Method, ArgsProper) ->
-    %% io:format("call called: Obj=~p Method=~p ArgsProper=~p~n", [oop:inspect(Obj), Method, ArgsProper]),
+    %% error_logger:info_msg("call called: Obj=~p Method=~p ArgsProper=~p", [inspect(Obj), Method, ArgsProper]),
     Args = [Obj|ArgsProper], %% prepend This to args
     TryModule = ?CLASS(Obj),
     call_loop(Obj, Method, Args, TryModule, [], Obj).
@@ -88,7 +100,7 @@ call(Obj, Method) ->
 
 call_loop(Obj, Method, Args, TryModule, TriedRev, FirstObj) ->
     try
-       %% io:format("call_loop~n ~p~n ~p~n ~p~n ~p~n ~n", [inspect(Obj), Method, Args, TryModule]),
+	%% error_logger:info_msg("call_loop~n ~p~n ~p~n ~p~n ~p", [inspect(Obj), Method, Args, TryModule]),
 	apply(TryModule, Method, Args)
     catch
 	error:Kind when Kind == undef; Kind == function_clause ->
@@ -121,26 +133,52 @@ call_loop(Obj, Method, Args, TryModule, TriedRev, FirstObj) ->
 	    end
     end.
     
+class(Obj) when is_tuple(Obj) ->
+    case is_object(Obj) of
+	true ->
+	    ?CLASS(Obj);
+	false ->
+	    none
+    end;
+class(_) ->
+    none.
+
+%% careful: not robust against records beginning with a class name
+%% (note: we can't just guard with is_record(?CLASS(Obj), Obj) since we
+%% can't/really really shouldn't require all record definitions in this file
 inspect(Obj) ->
-    DeepList = inspect_loop(Obj, "#<"),
-    lists:flatten(DeepList).
+    try
+	case is_object(Obj) of
+	    true ->
+		DeepList = inspect_loop(Obj, "#<"),
+		lists:flatten(DeepList);
+	    false ->
+		thrift_utils:sformat("~p", [Obj])
+	end
+    catch
+	_:E ->
+	    thrift_utils:sformat("INSPECT_ERROR(~p) ~p", [E, Obj])
+
+	    %% TODO(cpiro): bring this back once we're done testing:
+	    %% _:E -> thrift_utils:sformat("~p", [Obj])
+    end.
 
 inspect_loop(Obj, Str) ->
-    New = 
-	atom_to_list(?CLASS(Obj)) ++
-	": " ++
-	(?CLASS(Obj)):inspect(Obj),
-    
+    Class   = ?CLASS(Obj),
+    Inspect = Class:inspect(Obj),
+    Current = atom_to_list(Class) ++ ": " ++ Inspect,
+
     case get_superobject(Obj) of
 	{ ok, Superobj } ->
-	    inspect_loop(Superobj, Str ++ New ++ " | ");
+	    inspect_loop(Superobj, Str ++ Current ++ " | ");
 	none ->
-	    Str ++ New ++ ">"
+	    Str ++ Current ++ ">"
     end.
-    
+
 %% TODO: voids take only ok as return? 
+start_new(none=Resv, _) ->
+    error_logger:format("can't instantiate ~p: class name is a reserved word", [Resv]),
+    error;
 start_new(Class, Args) ->
-    case gen_server:start_link(thrift_oop_server, {Class, Args}, []) of
-	{ok, Pid} ->
-	    Pid
-    end.
+    {ok, Pid} = gen_server:start_link(thrift_oop_server, {Class, Args}, []),
+    Pid.

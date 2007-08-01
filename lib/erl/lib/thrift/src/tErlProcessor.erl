@@ -6,6 +6,7 @@
 
 -module(tErlProcessor).
 
+-include("thrift.hrl").
 -include("oop.hrl").
 -include("tErlProcessor.hrl").
 
@@ -58,5 +59,5 @@ new(GP, Handler) ->
 process(This, Iprot, Oprot) ->
     GP      = oop:get(This, generatedProcessor),
     Handler = oop:get(This, handler),
-    
+
     apply(GP, process, [Handler, Iprot, Oprot]).

@@ -764,6 +764,7 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
 	indent() << "    throw(X);" << endl <<
 	indent() << "  true ->" << endl <<
 	indent() << "    Result = " << resultname << "_read(Iprot)," << endl <<
+	indent() << "    Result, % suppress unused warnings" << endl <<
 	indent() << "    ?R0(Iprot, readMessageEnd)," << endl <<
 	indent() << "    if % time to figure out retval" << endl;
 
@@ -960,6 +961,9 @@ void t_erl_generator::generate_process_function(t_service* tservice,
   const std::vector<t_field*>& fields = arg_struct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
+  indent(f_service_) << "try" << endl;
+  indent_up();
+
   indent(f_service_) << "Result = ";
   if (xceptions.size() > 0) {
     f_service_ << "try" << endl;
@@ -1004,18 +1008,46 @@ void t_erl_generator::generate_process_function(t_service* tservice,
   }
   indent(f_service_) << "end," << endl;
 
-  if (tfunction->is_async()) { 
-    indent(f_service_) << "% async, write nothing" << endl;
-  } else {
+  if (!tfunction->is_async()) {
     f_service_ <<
       indent() << "?R3(Oprot, writeMessageBegin, \"" << tfunction->get_name() << "\", ?tMessageType_REPLY, Seqid)," << endl <<
-      indent() << tfunction->get_name() << "_result_write(Result, Oprot)," << endl <<
-      indent() << "?R0(Oprot, writeMessageEnd)," << endl <<
+      indent() << tfunction->get_name() << "_result_write(Result, Oprot)," << endl;
+  }
+  indent(f_service_) << "Result" << endl;
+  indent_down();
+
+  // catch errors in the handler
+  indent(f_service_) << "catch" << endl <<
+    indent() << "  _:Kind when Kind == undef; Kind == function_clause ->" << endl <<
+    indent() << "    X = tApplicationException:new(?tApplicationException_HANDLER_ERROR, \"Handler doesn't implement "
+		     << tfunction->get_name() <<"\")," << endl <<
+
+    indent() << "    ?R3(Oprot, writeMessageBegin, \"" << tfunction->get_name() << "\", ?tMessageType_EXCEPTION, Seqid)," << endl <<
+    indent() << "    tApplicationException:write(X, Oprot)," << endl <<
+    indent() << "    {error, X};" << endl <<
+    indent() << "  _:_Kind ->" << endl <<
+    indent() << "    X = tApplicationException:new(?tApplicationException_HANDLER_ERROR, \"Unknown handler error in " 
+		     << tfunction->get_name() << "\")," << endl <<
+
+    indent() << "    ?R3(Oprot, writeMessageBegin, \"" << tfunction->get_name() << "\", ?tMessageType_EXCEPTION, Seqid)," << endl <<
+    indent() << "    tApplicationException:write(X, Oprot)," << endl <<
+    indent() << "    {error, X}" << endl;
+
+  // 'after' block if we're expecting a result written
+  if (!tfunction->is_async()) {
+    f_service_ <<
+      indent() << "after" << endl;
+
+    indent_up();
+
+    indent(f_service_) << "?R0(Oprot, writeMessageEnd)," << endl <<
       indent() << "Trans = ?R1(Oprot, get, trans)," << endl <<
-      indent() << "?R0(Trans, effectful_flush)," << endl;
+      indent() << "?R0(Trans, effectful_flush)" << endl;
+
+    indent_down();
   }
   
-  indent(f_service_) << "Result." << endl << endl;
+  indent(f_service_) << "end." << endl;
 
   indent_down();
 }

@@ -1,10 +1,36 @@
+make thrift a proper OTP application
+ * app-wide configuration (do DNS lookups?)
+ * default protocols / transports (forget this factory business)
+ * factor for elegance
+
 tutorial client
 
 find TODO(cpiro)s
 make all methods effectful, remove the special casing (optionally, implement monads for Erlang)
 
-inheritance
+change objects from {record_tag, ...} to {oop_object, {record_tag, ...}, other_useful_stuff}
+so 1) we know exactly what's an object (can write is_object/1) e.g.
+      is the tuple {tTransportException, ...} an object or a tuple that happens to start with that atom?
+      we can't check this using is_record/2 without include every header file
+      also, this makes it easy to pick objects out of deep tuples
+   2) we can build more functionality into oop later if need be
+      carry around the class/superclasses so is_a(Object, ClassOrSuperclass) is easy
+   3) maybe hack up io:format and friends to run objects through oop:inspect automatically
 
 test suites
 
+move as much as possible out of thrift_logger
+
+make thrift_logger 100% robust
+
+thrift_logger detects term width?
+
 undisgustify codegen
+
+move away from thrift_oop_server shim to straight-up gen_servers
+
+move away from Factories
+
+move away from ?L0, ?M0, and friends ... make calls in oop
+better/worse yet, make an absyn transformer and introduce some slick syntax to make it less painful and more obvious what's going on
+ONLY IF our gentle nudging away from oop and thrift_oop_server isn't good enough

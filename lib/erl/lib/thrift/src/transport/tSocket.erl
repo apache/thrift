@@ -15,7 +15,7 @@
 
 -behavior(oop).
 
--export([attr/4, super/0, inspect/1]).
+-export([attr/4, super/0, inspect/1, catches/2]).
 
 -export([new/0, new/1, new/2, 
 	 effectful_setHandle/2, effectful_open/1, 
@@ -91,7 +91,7 @@ write(This, Str) ->
     Handle = oop:get(This, handle),
     Val = gen_tcp:send(Handle, Str),
 
-    %% io:format("WRITE |~p|(~p)~n", [Str,Val]),
+    %% error_logger:info_msg("WRITE |~p| (~p)", [Str,Val]),
     
     case Val of
 	{error, _} ->
@@ -110,8 +110,6 @@ read(This, Sz) ->
 	{ok, Data} ->
 	    Data;
 	{error, Error} ->
-	    io:format("in tSocket:read/2: gen_tcp:recv(~p, ~p) => {error, ~p}~n",
-		      [Handle, Sz, Error]),
 	    exit(tTransportException:new(?tTransportException_NOT_OPEN, "in tSocket:read/2: gen_tcp:recv"))
 	end.
 	    
@@ -123,4 +121,3 @@ effectful_close(This) ->
 	    gen_tcp:close(Handle),
 	    {ok, oop:set(This, handle, nil)}
     end.
-

@@ -4,6 +4,11 @@
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
+-define(ERROR(F, D),
+	error_logger:format(F, D)).
+-define(INFO(Type, Report),
+	error_logger:info_report({thrift_info, Type}, Report)).
+
 % local (same process)
 -define(L0(Method), oop:call(This, Method, [])).
 -define(L1(Method, Arg1), oop:call(This, Method, [Arg1])).

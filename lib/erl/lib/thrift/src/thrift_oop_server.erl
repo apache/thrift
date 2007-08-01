@@ -72,21 +72,16 @@ stop() ->
 %%          {stop, Reason}
 %%--------------------------------------------------------------------
 
-unparenth(Args) ->
-    Args.
-
 init({Class, Args}) ->
     process_flag(trap_exit, true),
-    if 
-	true -> % lists:member(Class, Class:interface(subclasses)) ->
-	    io:format("oop_server init: ~p := ~p:new(~p)~n", [self(), Class, unparenth(Args)]),
-	    State = apply(Class, new, Args), % TODO(cpiro): try catch?
-	    io:format("              =>~p~n", [oop:inspect(State)]),
-	    {ok, State}
-
-	%% true ->			       %%
-	%%     {stop, invalid_subclass}	       %%
+    try
+	State = apply(Class, new, Args),
+	?INFO(oop_new, {Args, Class, State}),
+	{ok, State}
+    catch
+	E -> {stop, {new_failed, E}}
     end;
+
 init(_) ->
     {stop, invalid_params}.
 
@@ -126,8 +121,8 @@ handle_cast({Method, Args}, State) ->
 ). 
 
 handle_either(Type, Request, From, State) ->
-    %% io:format("~p: ~p~n", [?SERVER, oop:inspect(State)]),    
-    %% io:format("    handle_call(Request=~p, From=~p, State)~n", [Request, From]),
+    %% error_logger:info_msg("~p: ~p", [?SERVER, oop:inspect(State)]),
+    %% error_logger:info_msg("handle_call(Request=~p, From=~p, State)", [Request, From]),
 
     case Request of 
 	{get, [Field]} ->
@@ -138,11 +133,14 @@ handle_either(Type, Request, From, State) ->
 	    State1 = oop:set(State, Field, Value),
 	    ?REPLY(Value, State1);
 
+	{class, []} ->
+	    ?REPLY(?CLASS(State), State);
+
 	{Method, Args} ->
 	    handle_method(Type, State, Method, Args);
 
 	_ ->
-	    io:format("    ERROR: Request = ~p nomatch {Method, Args}~n", [Request]),
+	    error_logger:format("no match for Request = ~p", [Request]),
 	    %% {stop, server_error, State} 
 	    {reply, server_error, State}
     end.
@@ -160,8 +158,8 @@ handle_method(Type, State, Method, Args) ->
 	
 	{true, _MalformedReturn} ->
 	    %% TODO(cpiro): bad match -- remove when we're done converting
-	    io:format("    ERROR: oop:call(effectful_*,..,..) malformed return value ~p~n", 
-		      [_MalformedReturn]),
+	    error_logger:format("oop:call(effectful_*,..,..) malformed return value ~p", 
+				[_MalformedReturn]),
 	    %% {stop, server_error, State} 
 	    {noreply, State};
 	
@@ -177,18 +175,23 @@ handle_method(Type, State, Method, Args) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %%--------------------------------------------------------------------
 handle_info({'EXIT', Pid, Except} = All, State) ->
-    case catch oop:call(State, catches, [Pid, Except]) of
-	{'EXIT', MM} when element(1,MM) == missing_method ->
-	    io:format("UNHANDLED ~p by ~p!~n", [All, self()]),
-	    %% not caught
+    Result = try
+	oop:call(State, catches, [Pid, Except])
+    catch
+	exit:{missing_method, _} ->
+	    unhandled
+    end,
+
+    case Result of
+	unhandled ->
+	    error_logger:format("unhandled exit ~p", [All]),
 	    {stop, All, State};
-	_IsCaught ->
-	    %% caught and handled
+	_WasHandled ->
 	    {noreply, State}
     end;
-	
+
 handle_info(Info, State) ->
-    io:format("~p infoED!: ~p~n", [self(), Info]),
+    error_logger:info_msg("~p", [Info]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -197,7 +200,7 @@ handle_info(Info, State) ->
 %% Returns: any (ignored by gen_server)
 %%--------------------------------------------------------------------
 terminate(Reason, State) ->
-    io:format("~p terminated!: ~p~n", [self(), Reason]),
+    %%error_logger:format("~p terminated!: ~p", [self(), Reason]),
     ok.
 
 %%--------------------------------------------------------------------

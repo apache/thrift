@@ -69,13 +69,18 @@ effectful_serve(This) ->
     %% listen
     case gen_tcp:listen(Port, Options) of 
 	{ok, ListenSocket} ->
+	    ?INFO(server_listening, {Port}),
 
 	    This1 = oop:set(This, listenSocket, ListenSocket),
 
 	    %% spawn acceptor
 	    {_Acceptor, This2} = effectful_new_acceptor(This1),
 
-	    {ok, This2}
+	    {ok, This2};
+
+	{error, eaddrinuse} ->
+	    error_logger:format("couldn't bind port ~p, address in use", [Port]),
+	    {{error, eaddrinuse}, This} %% state before the accept
     end.
 
 effectful_new_acceptor(This) ->
@@ -96,7 +101,7 @@ effectful_new_acceptor(This) ->
 
     {Acceptor, This1}.
 
-catches(This, Pid, acceptor_done) ->
+catches(_This, _Pid, normal) ->
     ok.
 
 %% %% The current acceptor has died, wait a little and try again						       %%

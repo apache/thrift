@@ -70,7 +70,7 @@ readAll_loop(This, Sz, Buff, Have) ->
 	    %% possibly discarding less than Length bytes of data when 
 	    %% the socket gets closed from the other side.
 
-	    %% io:format("READ |~p|~n", [Chunk]),
+	    %% error_logger:info_msg("READ |~p|", [Chunk]),
 
 	    Have1 = Have + (Sz-Have), % length(Chunk)
 	    Buff1 = Buff ++ Chunk, % TODO: ++ efficiency?

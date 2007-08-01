@@ -4,6 +4,9 @@
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
+%%% NOTE: tSimpleServer's design isn't compatible with our concurrency model.
+%%% It won't work in principle, and certainly not in practice.  YMMV.
+
 -module(tSimpleServer).
 
 -include("oop.hrl").
@@ -46,6 +49,7 @@ inspect(_This) ->
 
 new(Handler, Processor, ServerTransport, TransportFactory, ProtocolFactory) ->
     Super = (super()):new(Handler, Processor, ServerTransport, TransportFactory, ProtocolFactory),
+    error_logger:warning_msg("tSimpleServer has an incompatable design and doesn't work.  Promise."),
     #?MODULE{super=Super}.
 
 new(Handler, Processor, ServerTransport) ->
@@ -57,13 +61,14 @@ new(Handler, Processor, ServerTransport, TransportFactory) ->
 %
 
 serve(This) ->
+    exit(tSimpleServer_doesnt_work),
     ST = oop:get(This, serverTransport),
     ?R0(ST, effectful_listen),
 
     serve_loop(This).
 
 serve_loop(This) ->
-    io:format("~nready.~n", []),
+    error_logger:info_msg("ready.", []),
 
     ST     = oop:get(This, serverTransport),
     Client = ?RT0(ST, accept, infinity),
@@ -74,7 +79,7 @@ serve_loop(This) ->
     PF     = oop:get(This, protocolFactory),
     Prot   = ?F1(PF, getProtocol, Trans), %% cpiro: OPAQUE!! Prot = start_new(tBinaryProtocol, [Trans])
 
-    io:format("client accept()ed~n", []),
+    error_logger:info_msg("client accept()ed", []),
 
     serve_loop_loop(This, Prot), % giggle loop?
 
@@ -88,16 +93,16 @@ serve_loop_loop(This, Prot) ->
 	    Handler   = oop:get(This, handler),
 	    Processor = oop:get(This, processor),
 	    Val = apply(Processor, process, [Handler, Prot, Prot]), %% TODO(cpiro): make processor a gen_server instance
-	    io:format("request processed: rv=~p~n", [Val]),
+	    error_logger:info_msg("request processed: rv=~p", [Val]),
 	    loop
 	catch 
 	    %% TODO(cpiro) case when is_record(...) to pick out our exception
 	    %% records vs. normal erlang throws
 	    E when is_record(E, tTransportException) ->
-		io:format("tTransportException (normal-ish?)~n", []),
+		error_logger:info_msg("tTransportException (normal-ish?)", []),
 		close;
 	    F ->
-		io:format("EXCEPTION: ~p~n", [F]),
+		error_logger:info_msg("EXCEPTION: ~p", [F]),
 		close
 	end,
     case Next of 
