@@ -71,7 +71,7 @@ class PosixThreadFactory : public ThreadFactory {
    * By default threads are joinable.
    */
 
-  PosixThreadFactory(POLICY policy=ROUND_ROBIN, PRIORITY priority=NORMAL, int stackSize=1, bool detached=false);
+  PosixThreadFactory(POLICY policy=ROUND_ROBIN, PRIORITY priority=NORMAL, int stackSize=1, bool detached=true);
 
   // From ThreadFactory;
   boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const;
