@@ -63,12 +63,7 @@ class PosixThreadFactory : public ThreadFactory {
    * when it completes.  A detachable thread is not joinable.  The join method
    * of a detachable thread will return immediately with no error.
    *
-   * Joinable threads will detach themselves iff they were not explicitly joined and
-   * there are no remaining strong references to the thread.  This guarantees that
-   * joinnable threads don't leak resources even when the application neglects to
-   * call join explicitly.
-   *
-   * By default threads are joinable.
+   * By default threads are not joinable.
    */
 
   PosixThreadFactory(POLICY policy=ROUND_ROBIN, PRIORITY priority=NORMAL, int stackSize=1, bool detached=true);

@@ -423,7 +423,7 @@ void TConnection::setFlags(short eventFlags) {
 
   // Add the event
   if (event_add(&event_, 0) == -1) {
-    GlobalOutput("TConnection::setFlags(): coult not event_add");
+    GlobalOutput("TConnection::setFlags(): could not event_add");
   }
 }
 
