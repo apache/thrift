@@ -60,4 +60,4 @@ process(This, Iprot, Oprot) ->
     GP      = oop:get(This, generatedProcessor),
     Handler = oop:get(This, handler),
 
-    apply(GP, process, [Handler, Iprot, Oprot]).
+    GP:process(Handler, Iprot, Oprot).

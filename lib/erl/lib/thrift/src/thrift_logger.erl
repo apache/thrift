@@ -138,7 +138,8 @@ handle_event1({What, _Gleader, {Pid, Format, Data}}, State) when is_list(Format)
 	    [Pid, LastMessage, Obj, Reason] = Data,
 
 	    %% TODO: move as much logic as possible out of thrift_logger
-	    Ignore = error /= thrift_utils:unnest_record(Reason, tTransportException),
+	    Ignore = (is_tuple(Reason) andalso size(Reason) >= 1 andalso element(1, Reason) == timeout)
+		orelse error /= thrift_utils:unnest_record(Reason, tTransportException),
 
 	    case Ignore of
 		true ->
@@ -215,6 +216,9 @@ handle_thrift_info(req_processed, {Value}, State) ->
 
 handle_thrift_info(conn_accepted, {AddrString}, State) ->
     sformat("connection accepted from ~s", [AddrString]);
+
+handle_thrift_info(conn_timeout, {AddrString}, State) ->
+    sformat("connection timed out from ~s", [AddrString]);
 
 handle_thrift_info(conn_closed, {AddrString}, State) ->
     sformat("connection closed from ~s", [AddrString]);

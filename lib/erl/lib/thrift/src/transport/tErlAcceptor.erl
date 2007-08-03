@@ -89,10 +89,14 @@ accept(This, ListenSocket, GP, Handler) ->
 	    %% start_new(, ...)
 	    Processor = oop:start_new(tErlProcessor, [GP, Handler]), %% TODO
 
-	    receive_loop(This, Processor, Prot, Prot),
-	    
-	    ?INFO(conn_closed, {AddrString}),
-
+	    case receive_loop(This, Processor, Prot, Prot) of
+		conn_timeout ->
+		    ?INFO(conn_timeout, {AddrString});
+		conn_closed ->
+		    ?INFO(conn_closed, {AddrString});
+		{Class, Else} ->
+		    ?ERROR("unhandled ~p in tErlAcceptor: ~p", [Class, Else])
+	    end,
 	    exit(normal);
 
 	Else ->
@@ -110,15 +114,19 @@ receive_loop(This, Processor, Iprot, Oprot) ->
 	    ?INFO(req_processed, {Value}),
 	    receive_loop(This, Processor, Iprot, Oprot)
     catch
-	%% the following clause must be last because we might reexit
+	exit:{timeout, _} ->
+	    conn_timeout;
+
+	%% the following clause must be last
+	%% cpiro: would be best to implement an is_a/2 guard BIF
 	%% cpiro: breaks if it's a subclass of tTransportException
 	%% since unnest_record knows nothing about oop
-	exit:Else ->
+	Class:Else ->
 	    case thrift_utils:unnest_record(Else, tTransportException) of
 		{ok, TTE} when TTE#tTransportException.type == ?tTransportException_NOT_OPEN ->
-		    ok; %% will exit to tErlAcceptor
+		    conn_closed;
 		_ ->
-		    exit(Else) %% shouldn't have caught it in the first place
+		    {Class, Else}
 	    end
     end.
 
