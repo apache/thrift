@@ -66,6 +66,8 @@ if version >= 508 || !exists("did_thrift_syn_inits")
   HiLink thriftNumber Number
   HiLink thriftSpecial Special
   HiLink thriftStructure Structure
+
+  delcommand HiLink
 endif
 
 let b:currenct_syntax = "thrift"
