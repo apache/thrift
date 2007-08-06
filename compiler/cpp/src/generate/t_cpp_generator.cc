@@ -327,7 +327,7 @@ string t_cpp_generator::render_const_value(ofstream& out, string name, t_type* t
       throw "compiler error: no const of base type " + tbase;
     }
   } else if (type->is_enum()) {
-    render << value->get_integer();
+    render << "(" << type->get_name() << ")" << value->get_integer();
   } else {
     string t = tmp("tmp");
     indent(out) << type_name(type) << " " << t << ";" << endl;
@@ -391,7 +391,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       while (t->is_typedef()) {
         t = ((t_typedef*)t)->get_type();
       }
-      if (t->is_base_type() || t->is_enum()) {
+      if (t->is_base_type()) {
         string dval;
         if (t->is_enum()) {
           dval += "(" + t->get_name() + ")";
@@ -412,6 +412,8 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     }
     out << " {" << endl;
     indent_up();
+    // TODO(dreiss): When everything else in Thrift is perfect,
+    // do more of these in the initializer list.
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = (*m_iter)->get_type();
       while (t->is_typedef()) {
@@ -1613,6 +1615,8 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
     "using namespace facebook::thrift::protocol;" << endl <<
     "using namespace facebook::thrift::transport;" << endl <<
     "using namespace facebook::thrift::server;" << endl <<
+    endl <<
+    "using boost::shared_ptr;" << endl <<
     endl;
   
   if (!ns.empty()) {

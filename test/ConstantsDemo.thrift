@@ -10,7 +10,11 @@ enum constants {
   TWO = 2
 }
 
-const map<i32,string> GEN_ENUM_NAMES = {ONE : "HOWDY", TWO: PARTNER}
+struct thing2 {
+  1: constants val = TWO
+}
+
+const map<constants,string> GEN_ENUM_NAMES = {ONE : "HOWDY", TWO: PARTNER}
 
 const i32 hex_const = 0x0001F
 
