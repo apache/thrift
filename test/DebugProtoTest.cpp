@@ -38,7 +38,9 @@ int main() {
   n.my_ooe.integer64 = 64;
   n.my_ooe.double_precision = (std::sqrt(5)+1)/2;
   n.my_ooe.some_characters  = ":R (me going \"rrrr\")";
-  n.my_ooe.zomg_unicode     = "IDN Homograph Attack";
+  n.my_ooe.zomg_unicode     = "\xd3\x80\xe2\x85\xae\xce\x9d\x20"
+                              "\xd0\x9d\xce\xbf\xe2\x85\xbf\xd0\xbe\xc9\xa1\xd0\xb3\xd0\xb0\xcf\x81\xe2\x84\x8e"
+                              "\x20\xce\x91\x74\x74\xce\xb1\xe2\x85\xbd\xce\xba\xc7\x83\xe2\x80\xbc";
   n.my_bonk.type    = 31337;
   n.my_bonk.message = "I am a bonk... xor!";
 
