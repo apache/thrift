@@ -23,7 +23,7 @@ int main() {
   ooe.a_bite    = 0xd6;
   ooe.integer16 = 27000;
   ooe.integer32 = 1<<24;
-  ooe.integer64 = 6000000000;
+  ooe.integer64 = (uint64_t)6000 * 1000 * 1000;
   ooe.double_precision = M_PI;
   ooe.some_characters  = "Debug THIS!";
   ooe.zomg_unicode     = "\xd7\n\a\t";
