@@ -102,6 +102,14 @@ end;;
 let h = new test_handler in
 let proc = new ThriftTest.processor h in
 let port = 9090 in
-  TServer.run_basic_server proc port;;
+let pf = new TBinaryProtocol.factory in
+let server = new TThreadedServer.t 
+  proc 
+  (new TServerSocket.t port) 
+  (new Transport.factory) 
+  pf 
+  pf 
+in
+  server#serve
                                              
                                  

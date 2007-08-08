@@ -1,24 +1,19 @@
 open Thrift
 module S = TServer
 
-class t pf st itf otf ipf opf =
+class t pf st tf ipf opf =
 object
-  inherit S.t pf st itf otf ipf opf
+  inherit S.t pf st tf ipf opf
   method serve =
     try
       st#listen;
       let c = st#accept in
-      let proc = pf#getProcessor c in
-      let itrans = itf#getTransport c in
-      let otrans = try
-          otf#getTransport c
-        with e -> itrans#close; raise e
-      in
-      let inp = ipf#getProtocol itrans in
-      let op = opf#getProtocol otrans in
+      let trans = tf#getTransport c in
+      let inp = ipf#getProtocol trans in
+      let op = opf#getProtocol trans in
         try
-          while (proc#process inp op) do () done;
-          itrans#close; otrans#close
-        with e -> itrans#close; otrans#close; raise e
+          while (pf#process inp op) do () done;
+          trans#close
+        with e -> trans#close; raise e
     with _ -> ()
 end

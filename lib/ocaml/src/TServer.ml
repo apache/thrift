@@ -1,21 +1,15 @@
 open Thrift
 
 class virtual t
-    (pf : Processor.factory) 
+    (pf : Processor.t) 
     (st : Transport.server_t)
-    (itf : Transport.factory)
-    (otf : Transport.factory)
+    (tf : Transport.factory)
     (ipf : Protocol.factory)
     (opf : Protocol.factory)=
 object
-  val processorFactory = pf
-  val serverTransport = st
-  val inputTransportFactory = itf
-  val outputTransportFactory = otf
-  val inputProtocolFactory = ipf
-  val outputProtocolFactory = opf
   method virtual serve : unit
 end;;
+
 
 
 let run_basic_server proc port =
