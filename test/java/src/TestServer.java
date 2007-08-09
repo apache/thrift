@@ -253,7 +253,7 @@ public class TestServer {
 
       // Protocol factory
       TProtocolFactory tProtocolFactory =
-        new TBinaryProtocol.Factory(true, true);
+        new TBinaryProtocol.Factory();
 
       TServer serverEngine;
 
