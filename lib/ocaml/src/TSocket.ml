@@ -9,23 +9,28 @@ object (self)
   method isOpen = chans != None
   method opn = 
     try
-      chans <- Some(Unix.open_connection (Unix.ADDR_INET ((Unix.inet_addr_of_string host),port)))
+      let addr = (let {Unix.h_addr_list=x} = Unix.gethostbyname host in x.(0)) in
+        chans <- Some(Unix.open_connection (Unix.ADDR_INET (addr,port)))
     with _ -> 
-      T.raise_TTransportExn 
-        ("Could not connect to "^host^":"^(string_of_int port)) 
-        T.NOT_OPEN
-  method close = match chans with None -> () | Some(inc,_) -> (Unix.shutdown_connection inc; chans <- None)
+      raise (T.E (T.NOT_OPEN, ("TSocket: Could not connect to "^host^":"^(string_of_int port))))
+
+  method close = 
+    match chans with 
+        None -> () 
+      | Some(inc,out) -> (Unix.shutdown_connection inc; 
+                          close_in inc;  
+                          chans <- None)
   method read buf off len = match chans with
-      None -> T.raise_TTransportExn "Socket not open" T.NOT_OPEN
+      None -> raise (T.E (T.NOT_OPEN, "TSocket: Socket not open"))
     | Some(i,o) -> 
         try 
           really_input i buf off len; len
-        with _ -> T.raise_TTransportExn ("TSocket: Could not read "^(string_of_int len)^" from "^host^":"^(string_of_int port)) T.UNKNOWN
+        with _ -> raise (T.E (T.UNKNOWN, ("TSocket: Could not read "^(string_of_int len)^" from "^host^":"^(string_of_int port))))
   method write buf off len = match chans with 
-      None -> T.raise_TTransportExn "Socket not open" T.NOT_OPEN
+      None -> raise (T.E (T.NOT_OPEN, "TSocket: Socket not open"))
     | Some(i,o) -> output o buf off len
   method flush = match chans with
-      None -> T.raise_TTransportExn "Socket not open" T.NOT_OPEN
+      None -> raise (T.E (T.NOT_OPEN, "TSocket: Socket not open"))
     | Some(i,o) -> flush o
 end
         

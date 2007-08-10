@@ -11,11 +11,12 @@ object
       Unix.listen s 256
   method close =
     match sock with
-        Some s -> Unix.shutdown s Unix.SHUTDOWN_ALL; Unix.close s; sock <- None
+        Some s -> Unix.shutdown s Unix.SHUTDOWN_ALL; Unix.close s; 
+          sock <- None
       | _ -> ()
   method acceptImpl =
     match sock with
         Some s -> let (fd,_) = Unix.accept s in
                     new TChannelTransport.t (Unix.in_channel_of_descr fd,Unix.out_channel_of_descr fd)
-      | _ -> Transport.raise_TTransportExn "ServerSocket: Not listening but tried to accept" Transport.NOT_OPEN
+      | _ -> raise (Transport.E (Transport.NOT_OPEN,"TServerSocket: Not listening but tried to accept"))
 end

@@ -9,11 +9,6 @@ object
   method set_message s = message <- s
 end;;
 
-exception TExn of t_exn;;
-
-
-
-
 module Transport =
 struct
   type exn_type = 
@@ -23,19 +18,7 @@ struct
       | TIMED_OUT
       | END_OF_FILE;;
 
-  class exn =
-  object
-    inherit t_exn
-    val mutable typ = UNKNOWN
-      method get_type = typ
-      method set_type t = typ <- t
-  end
-  exception TTransportExn of exn
-  let raise_TTransportExn message typ =
-    let e = new exn in
-      e#set_message message;
-      e#set_type typ;
-      raise (TTransportExn e)
+  exception E of exn_type * string
 
   class virtual t =
   object (self)
@@ -49,10 +32,7 @@ struct
         while !got < len do
           ret := self#read buf (off+(!got)) (len - (!got));
           if !ret <= 0 then
-            let e = new exn in
-              e#set_message "Cannot read. Remote side has closed.";
-              raise (TTransportExn e)
-          else ();
+            raise (E (UNKNOWN, "Cannot read. Remote side has closed."));
           got := !got + !ret
         done;
         !got
@@ -260,7 +240,7 @@ struct
       | SIZE_LIMIT
       | BAD_VERSION
 
-  exception TProtocolExn of exn_type * string;;
+  exception E of exn_type * string;;
            
 end;;   
 
@@ -280,7 +260,7 @@ struct
 end
 
 
-
+(* Ugly *)
 module Application_Exn =
 struct
   type typ=
@@ -336,7 +316,7 @@ struct
   let read (iprot : Protocol.t) =
     let msg = ref "" in
     let typ = ref 0 in
-      iprot#readStructBegin;
+      ignore iprot#readStructBegin;
       (try 
            while true do
              let (name,ft,id) =iprot#readFieldBegin in

@@ -114,7 +114,7 @@ object (self)
     let ver = self#readI32 in
       if (ver land version_mask != version_1) then
         (print_int ver;
-        raise (P.TProtocolExn (P.BAD_VERSION, "Missing version identifier")))
+        raise (P.E (P.BAD_VERSION, "Missing version identifier")))
       else
         let s = self#readString in
         let mt = P.message_type_of_i (ver land 0xFF) in

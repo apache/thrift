@@ -2,6 +2,6 @@ SOURCES = Thrift.ml TBinaryProtocol.ml TSocket.ml TChannelTransport.ml TServer.m
 RESULT = thrift
 LIBS = unix threads
 THREADS = yes
-all: native-code-library byte-code-library top
+all: native-code-library debug-code-library top
 OCAMLMAKEFILE = ../OCamlMakefile
 include $(OCAMLMAKEFILE)

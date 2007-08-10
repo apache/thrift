@@ -17,8 +17,7 @@ let run_basic_server proc port =
                            let trans = new TChannelTransport.t (inp,out) in
                            let proto = new TBinaryProtocol.t (trans :> Transport.t) in
                              try
-                               while proc#process proto proto do () done;
-                               ()
+                               while proc#process proto proto do () done; ()
                              with e -> ()) (Unix.ADDR_INET (Unix.inet_addr_of_string "127.0.0.1",port))
 
 
