@@ -10,6 +10,15 @@
 
 -include("thrift_logger.hrl").
 
+%% TODO(cpiro): either
+%% make exceptions know whether they need to be displayed
+%% or not exit with tExecptions for non-errors
+%% or "register" tExceptions with the logger (I LIKE!)
+%% ... we shouldn't need to build any specifics in here
+-include("thrift.hrl").
+-include("oop.hrl").
+-include("transport/tTransportException.hrl").
+
 %% gen_event callbacks
 -export([init/1, handle_event/2, handle_call/2, 
          handle_info/2, terminate/2, code_change/3]).
@@ -138,8 +147,20 @@ handle_event1({What, _Gleader, {Pid, Format, Data}}, State) when is_list(Format)
 	    [Pid, LastMessage, Obj, Reason] = Data,
 
 	    %% TODO: move as much logic as possible out of thrift_logger
-	    Ignore = (is_tuple(Reason) andalso size(Reason) >= 1 andalso element(1, Reason) == timeout)
-		orelse error /= thrift_utils:unnest_record(Reason, tTransportException),
+	    Ignore =
+		begin
+		    is_tuple(Reason) andalso
+			size(Reason) >= 1 andalso element(1, Reason) == timeout
+		end
+		orelse
+		begin
+		    case thrift_utils:unnest_record(Reason, tTransportException) of
+			error -> false;
+			{ok, TTE} ->
+			    oop:get(TTE, type) == ?tTransportException_NOT_OPEN andalso
+				oop:get(TTE, message) == "in tSocket:read/2: gen_tcp:recv"
+		    end
+		end,
 
 	    case Ignore of
 		true ->
