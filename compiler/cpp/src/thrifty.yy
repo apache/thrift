@@ -175,7 +175,7 @@ int y_field_val = -1;
 %type<tstruct>   XsdAttributes
 %type<id>        CppType
 
-%type<dtext>     DocTextOptional
+%type<dtext>     CaptureDocText
 
 %%
 
@@ -188,16 +188,41 @@ int y_field_val = -1;
  */
 
 Program:
-  DocTextOptional HeaderList DefinitionList
+  HeaderList DefinitionList
     {
       pdebug("Program -> Headers DefinitionList");
+      /*
+      TODO(dreiss): Decide whether full-program doctext is worth the trouble.
       if ($1 != NULL) {
         g_program->set_doc($1);
       }
+      */
+      clear_doctext();
     }
 
+CaptureDocText:
+    {
+      if (g_parse_mode == PROGRAM) {
+        $$ = g_doctext; 
+        g_doctext = NULL;
+      }
+      else {
+        $$ = NULL;
+      }
+    }
+
+/* TODO(dreiss): Try to DestroyDocText in all sorts or random places. */
+DestroyDocText:
+    {
+      if (g_parse_mode == PROGRAM) {
+        clear_doctext();
+      }
+    }
+
+/* We have to DestroyDocText here, otherwise it catches the doctext
+   on the first real element. */
 HeaderList:
-  HeaderList Header
+  HeaderList DestroyDocText Header
     {
       pdebug("HeaderList -> HeaderList Header");
     }
@@ -275,7 +300,7 @@ Include:
     }
 
 DefinitionList:
-  DefinitionList DocTextOptional Definition
+  DefinitionList CaptureDocText Definition
     {
       pdebug("DefinitionList -> DefinitionList Definition");
       if ($2 != NULL && $3 != NULL) {
@@ -365,17 +390,6 @@ Typedef:
       $$ = td;
     }
 
-DocTextOptional:
-  tok_doctext
-    {
-      pdebug("DocTextOptional -> tok_doctext");
-      $$ = clean_up_doctext($1);
-    }
-|
-    {
-      $$ = NULL; 
-    }
-    
 CommaOrSemicolonOptional:
   ','
     {}
@@ -406,7 +420,7 @@ EnumDefList:
     }
 
 EnumDef:
-  DocTextOptional tok_identifier '=' tok_int_constant CommaOrSemicolonOptional
+  CaptureDocText tok_identifier '=' tok_int_constant CommaOrSemicolonOptional
     {
       pdebug("EnumDef -> tok_identifier = tok_int_constant");
       if ($4 < 0) {
@@ -424,7 +438,7 @@ EnumDef:
       }
     }
 |
-  DocTextOptional tok_identifier CommaOrSemicolonOptional
+  CaptureDocText tok_identifier CommaOrSemicolonOptional
     {
       pdebug("EnumDef -> tok_identifier");
       $$ = new t_enum_value($2);
@@ -664,7 +678,7 @@ FunctionList:
     }
 
 Function:
-  DocTextOptional Async FunctionType tok_identifier '(' FieldList ')' Throws CommaOrSemicolonOptional
+  CaptureDocText Async FunctionType tok_identifier '(' FieldList ')' Throws CommaOrSemicolonOptional
     {
       $6->set_name(std::string($4) + "_args");
       $$ = new t_function($3, $4, $6, $8, $2);
@@ -709,7 +723,7 @@ FieldList:
     }
 
 Field:
-  DocTextOptional FieldIdentifier FieldType tok_identifier FieldValue XsdOptional XsdNillable XsdAttributes CommaOrSemicolonOptional
+  CaptureDocText FieldIdentifier FieldType tok_identifier FieldValue XsdOptional XsdNillable XsdAttributes CommaOrSemicolonOptional
     {
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
       if ($2 < 0) {

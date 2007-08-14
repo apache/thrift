@@ -87,4 +87,14 @@ extern PARSE_MODE g_parse_mode;
  */
 extern char* g_time_str;
 
+/**
+ * The last parsed doctext comment.
+ */
+extern char* g_doctext;
+
+/**
+ * The location of the last parsed doctext comment.
+ */
+extern int g_doctext_lineno;
+
 #endif

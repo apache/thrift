@@ -125,17 +125,6 @@ service ThriftTest
   /* So you think you've got this all worked, out eh? */
   map<UserId, map<Numberz,Insanity>> testInsanity(1: Insanity argument),
 
-  /* Multiple parameters */
-  
-  Xtruct	testMulti(byte arg0, i32 arg1, i64 arg2, map<i16, string> arg3, Numberz arg4, UserId arg5),
-
-  /* Exception specifier */
-
-  void testException(string arg) throws(Xception err1),
-
-  /* Multiple exceptions specifier */
-
-  Xtruct testMultiException(string arg0, string arg1) throws(Xception err1, Xception2 err2)
 }
 
 /// This style of Doxy-comment doesn't work.

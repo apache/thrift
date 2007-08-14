@@ -117,6 +117,16 @@ int g_verbose = 0;
 char* g_time_str;
 
 /**
+ * The last parsed doctext comment.
+ */
+char* g_doctext;
+
+/**
+ * The location of the last parsed doctext comment.
+ */
+int g_doctext_lineno;
+
+/**
  * Flags to control code generation
  */
 bool gen_cpp = false;
@@ -292,6 +302,18 @@ string include_file(string filename) {
   // Uh oh
   pwarning(0, "Could not find include file %s\n", filename.c_str());
   return std::string();
+}
+
+/**
+ * Clears any previously stored doctext string.
+ * Also prints a warning if we are discarding information.
+ */
+void clear_doctext() {
+  if (g_doctext != NULL) {
+    pwarning(2, "Uncaptured doctext at on line %d.", g_doctext_lineno);
+  }
+  free(g_doctext);
+  g_doctext = NULL;
 }
 
 /**

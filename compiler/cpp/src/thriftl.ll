@@ -16,6 +16,7 @@
 %{
 
 #include "main.h"
+#include "globals.h"
 #include "parse/t_program.h"
 
 /**
@@ -202,9 +203,15 @@ sliteral     ("'"[^']*"'")
 }
 
 {doctext} {
- yylval.id = strdup(yytext + 3);
- yylval.id[strlen(yylval.id) - 2] = '\0';
- return tok_doctext;
+ /* This does not show up in the parse tree. */
+ /* Rather, the parser will grab it out of the global. */
+  if (g_parse_mode == PROGRAM) {
+    clear_doctext();
+    g_doctext = strdup(yytext + 3);
+    g_doctext[strlen(g_doctext) - 2] = '\0';
+    g_doctext = clean_up_doctext(g_doctext);
+    g_doctext_lineno = yylineno;
+  }
 }
 
 
