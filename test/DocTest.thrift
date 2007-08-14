@@ -45,6 +45,14 @@ struct Xtruct
   11: i64    i64_thing
 }
 
+/**
+ * You can document constants now too.  Yeehaw!
+ */
+const i32 INT32CONSTANT = 9853
+const i16 INT16CONSTANT = 1616
+/** Everyone get in on the docu-action! */
+const map<string,string> MAPCONSTANT = {'hello':'world', 'goodnight':'moon'}
+
 struct Xtruct2
 {
   1: byte   byte_thing,

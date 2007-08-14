@@ -18,7 +18,7 @@
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_const {
+class t_const : public t_doc {
  public:
   t_const(t_type* type, std::string name, t_const_value* value) :
     type_(type),

@@ -433,10 +433,11 @@ static bool dump_docs = false;
 
 /**
  * Dumps docstrings to stdout
- * Only works for typedefs and whole program
+ * Only works for top-level definitions and the whole program doc
+ * (i.e., not enum constants, struct fields, or functions.
  */
 void dump_docstrings(t_program* program) {
-  string progdoc = g_program->get_doc();
+  string progdoc = program->get_doc();
   if (!progdoc.empty()) {
     printf("Whole program doc:\n%s\n", progdoc.c_str());
   }
@@ -445,7 +446,47 @@ void dump_docstrings(t_program* program) {
   for (t_iter = typedefs.begin(); t_iter != typedefs.end(); ++t_iter) {
     t_typedef* td = *t_iter;
     if (td->has_doc()) {
-      printf("%s:\n%s\n", td->get_name().c_str(), td->get_doc().c_str());
+      printf("typedef %s:\n%s\n", td->get_name().c_str(), td->get_doc().c_str());
+    }
+  }
+  const vector<t_enum*>& enums = program->get_enums();
+  vector<t_enum*>::const_iterator e_iter;
+  for (e_iter = enums.begin(); e_iter != enums.end(); ++e_iter) {
+    t_enum* en = *e_iter;
+    if (en->has_doc()) {
+      printf("enum %s:\n%s\n", en->get_name().c_str(), en->get_doc().c_str());
+    }
+  }
+  const vector<t_const*>& consts = program->get_consts();
+  vector<t_const*>::const_iterator c_iter;
+  for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+    t_const* co = *c_iter;
+    if (co->has_doc()) {
+      printf("const %s:\n%s\n", co->get_name().c_str(), co->get_doc().c_str());
+    }
+  }
+  const vector<t_struct*>& structs = program->get_structs();
+  vector<t_struct*>::const_iterator s_iter;
+  for (s_iter = structs.begin(); s_iter != structs.end(); ++s_iter) {
+    t_struct* st = *s_iter;
+    if (st->has_doc()) {
+      printf("struct %s:\n%s\n", st->get_name().c_str(), st->get_doc().c_str());
+    }
+  }
+  const vector<t_struct*>& xceptions = program->get_xceptions();
+  vector<t_struct*>::const_iterator x_iter;
+  for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+    t_struct* xn = *x_iter;
+    if (xn->has_doc()) {
+      printf("xception %s:\n%s\n", xn->get_name().c_str(), xn->get_doc().c_str());
+    }
+  }
+  const vector<t_service*>& services = program->get_services();
+  vector<t_service*>::const_iterator v_iter;
+  for (v_iter = services.begin(); v_iter != services.end(); ++v_iter) {
+    t_service* sv = *v_iter;
+    if (sv->has_doc()) {
+      printf("service %s:\n%s\n", sv->get_name().c_str(), sv->get_doc().c_str());
     }
   }
 }

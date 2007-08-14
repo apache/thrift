@@ -37,6 +37,7 @@ int y_field_val = -1;
   int            iconst;
   double         dconst;
   bool           tbool;
+  t_doc*         tdoc;
   t_type*        ttype;
   t_base_type*   tbase;
   t_typedef*     ttypedef;
@@ -48,7 +49,7 @@ int y_field_val = -1;
   t_service*     tservice;
   t_function*    tfunction;
   t_field*       tfield;
-  char*          tdoc;
+  char*          dtext;
 }
 
 /**
@@ -56,7 +57,7 @@ int y_field_val = -1;
  */
 %token<id>     tok_identifier
 %token<id>     tok_literal
-%token<tdoc>   tok_doctext
+%token<dtext>  tok_doctext
 
 /**
  * Constant values
@@ -130,6 +131,7 @@ int y_field_val = -1;
 %type<ttype>     SetType
 %type<ttype>     ListType
 
+%type<tdoc>      Definition
 %type<ttype>     TypeDefinition
 
 %type<ttypedef>  Typedef
@@ -173,7 +175,7 @@ int y_field_val = -1;
 %type<tstruct>   XsdAttributes
 %type<id>        CppType
 
-%type<tdoc>      DocTextOptional
+%type<dtext>     DocTextOptional
 
 %%
 
@@ -273,9 +275,12 @@ Include:
     }
 
 DefinitionList:
-  DefinitionList Definition
+  DefinitionList DocTextOptional Definition
     {
       pdebug("DefinitionList -> DefinitionList Definition");
+      if ($2 != NULL && $3 != NULL) {
+        $3->set_doc($2);
+      }
     }
 |
     {
@@ -289,6 +294,7 @@ Definition:
       if (g_parse_mode == PROGRAM) {
         g_program->add_const($1);
       }    
+      $$ = $1;
     }
 | TypeDefinition
     {
@@ -299,6 +305,7 @@ Definition:
           g_parent_scope->add_type(g_parent_prefix + $1->get_name(), $1);
         }
       }
+      $$ = $1;
     }
 | Service
     {
@@ -310,6 +317,7 @@ Definition:
         }
         g_program->add_service($1);
       }
+      $$ = $1;
     }
 
 TypeDefinition:
@@ -350,14 +358,11 @@ TypeDefinition:
     }
 
 Typedef:
-  DocTextOptional tok_typedef DefinitionType tok_identifier 
+  tok_typedef DefinitionType tok_identifier 
     {
       pdebug("TypeDef -> tok_typedef DefinitionType tok_identifier");
-      t_typedef *td = new t_typedef(g_program, $3, $4);
+      t_typedef *td = new t_typedef(g_program, $2, $3);
       $$ = td;
-      if ($1 != NULL) {
-        td->set_doc($1);
-      }
     }
 
 DocTextOptional:
@@ -380,14 +385,11 @@ CommaOrSemicolonOptional:
     {}
 
 Enum:
-  DocTextOptional tok_enum tok_identifier '{' EnumDefList '}'
+  tok_enum tok_identifier '{' EnumDefList '}'
     {
       pdebug("Enum -> tok_enum tok_identifier { EnumDefList }");
-      $$ = $5;
-      $$->set_name($3);
-      if ($1 != NULL) {
-        $$->set_doc($1);
-      }
+      $$ = $4;
+      $$->set_name($2);
     }
 
 EnumDefList:
@@ -432,13 +434,10 @@ EnumDef:
     }
 
 Senum:
-  DocTextOptional tok_senum tok_identifier '{' SenumDefList '}'
+  tok_senum tok_identifier '{' SenumDefList '}'
     {
       pdebug("Senum -> tok_senum tok_identifier { SenumDefList }");
-      $$ = new t_typedef(g_program, $5, $3);
-      if ($1 != NULL) {
-        $$->set_doc($1);
-      }
+      $$ = new t_typedef(g_program, $4, $2);
     }
 
 SenumDefList:
@@ -565,15 +564,12 @@ ConstMapContents:
     }
 
 Struct:
-  DocTextOptional tok_struct tok_identifier XsdAll '{' FieldList '}'
+  tok_struct tok_identifier XsdAll '{' FieldList '}'
     {
       pdebug("Struct -> tok_struct tok_identifier { FieldList }");
-      $6->set_name($3);
-      if ($1 != NULL) {
-        $6->set_doc($1);
-      }
-      $6->set_xsd_all($4);
-      $$ = $6;
+      $5->set_name($2);
+      $5->set_xsd_all($3);
+      $$ = $5;
       y_field_val = -1;
     }
 
@@ -628,15 +624,12 @@ Xception:
     }
 
 Service:
-  DocTextOptional tok_service tok_identifier Extends '{' FunctionList '}'
+  tok_service tok_identifier Extends '{' FunctionList '}'
     {
       pdebug("Service -> tok_service tok_identifier { FunctionList }");
-      $$ = $6;
-      $$->set_name($3);
-      $$->set_extends($4);
-      if ($1 != NULL) {
-        $$->set_doc($1);
-      }
+      $$ = $5;
+      $$->set_name($2);
+      $$->set_extends($3);
     }
 
 Extends:
