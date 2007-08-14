@@ -439,17 +439,26 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       declare_field(*m_iter, false, pointers && !(*m_iter)->get_type()->is_xception(), !read) << endl;
   }
   
-  // Isset struct has boolean fields
-  if (members.size() > 0 && (!pointers || read)) {
+  // Isset struct has boolean fields, but only for non-required fields.
+  bool has_nonrequired_fields = false;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    if ((*m_iter)->get_req() != t_field::REQUIRED)
+      has_nonrequired_fields = true;
+  }
+
+  if (has_nonrequired_fields && (!pointers || read)) {
     out <<
       endl <<
-      indent() <<"struct __isset {" << endl;
+      indent() << "struct __isset {" << endl;
     indent_up();
       
       indent(out) <<
         "__isset() : ";
       bool first = true;
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        if ((*m_iter)->get_req() == t_field::REQUIRED) {
+          continue;
+        }
         if (first) {
           first = false;
           out <<
@@ -462,8 +471,10 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       out << " {}" << endl;
       
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        indent(out) <<
-          "bool " << (*m_iter)->get_name() << ";" << endl;
+        if ((*m_iter)->get_req() != t_field::REQUIRED) {
+          indent(out) <<
+            "bool " << (*m_iter)->get_name() << ";" << endl;
+        }
       }
 
     indent_down();
@@ -471,8 +482,40 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       "} __isset;" << endl;  
   }
 
-  out <<
-    endl;
+  out << endl;
+
+  if (!pointers) {
+    // Generate an equality testing operator.  Make it inline since the compiler
+    // will do a better job than we would when deciding whether to inline it.
+    out <<
+      indent() << "bool operator == (const " << tstruct->get_name() << " & rhs) const" << endl;
+    scope_up(out);
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      // Most existing Thrift code does not use isset or optional/required,
+      // so we treat "default" fields as required.
+      if ((*m_iter)->get_req() != t_field::OPTIONAL) {
+        out <<
+          indent() << "if (!(" << (*m_iter)->get_name()
+                   << " == rhs." << (*m_iter)->get_name() << "))" << endl <<
+          indent() << "  return false;" << endl;
+      } else {
+        out <<
+          indent() << "if (__isset." << (*m_iter)->get_name()
+                   << " != rhs.__isset." << (*m_iter)->get_name() << ")" << endl <<
+          indent() << "  return false;" << endl <<
+          indent() << "else if (__isset." << (*m_iter)->get_name() << " && !("
+                   << (*m_iter)->get_name() << " == rhs." << (*m_iter)->get_name()
+                   << "))" << endl <<
+          indent() << "  return false;" << endl;
+      }
+    }
+    indent(out) << "return true;" << endl;
+    scope_down(out);
+    out <<
+      indent() << "bool operator != (const " << tstruct->get_name() << " &rhs) const {" << endl <<
+      indent() << "  return !(*this == rhs);" << endl <<
+      indent() << "}" << endl << endl;
+  }
   if (read) {
     out <<
       indent() << "uint32_t read(facebook::thrift::protocol::TProtocol* iprot);" << endl;
@@ -481,8 +524,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     out <<
       indent() << "uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;" << endl;
   }
-  out <<
-    endl;
+  out << endl;
 
   indent_down(); 
   indent(out) <<
@@ -515,7 +557,17 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
     indent() << "int16_t fid;" << endl <<
     endl <<
     indent() << "xfer += iprot->readStructBegin(fname);" << endl <<
+    endl <<
+    indent() << "using facebook::thrift::protocol::TProtocolException;" << endl <<
     endl;
+
+  // Required variables aren't in __isset, so we need tmp vars to check them.
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if ((*f_iter)->get_req() == t_field::REQUIRED)
+      indent(out) << "bool isset_" << (*f_iter)->get_name() << " = false;" << endl;
+  }
+  out << endl;
+  
   
   // Loop over reading in fields
   indent(out) <<
@@ -547,17 +599,33 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
           "if (ftype == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
         indent_up();
 
+        const char *isset_prefix =
+          ((*f_iter)->get_req() != t_field::REQUIRED) ? "this->__isset." : "isset_";
+
+#if 0
+        // This code throws an exception if the same field is encountered twice.
+        // We've decided to leave it out for performance reasons.
+        // TODO(dreiss): Generate this code and "if" it out to make it easier
+        // for people recompiling thrift to include it.
+        out <<
+          indent() << "if (" << isset_prefix << (*f_iter)->get_name() << ")" << endl <<
+          indent() << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << endl;
+#endif
+
         if (pointers && !(*f_iter)->get_type()->is_xception()) {
           generate_deserialize_field(out, *f_iter, "(*(this->", "))");
         } else {
           generate_deserialize_field(out, *f_iter, "this->");
         }
         out <<
-          indent() << "this->__isset." << (*f_iter)->get_name() << " = true;" << endl;
+          indent() << isset_prefix << (*f_iter)->get_name() << " = true;" << endl;
         indent_down();
         out <<
           indent() << "} else {" << endl <<
           indent() << "  xfer += iprot->skip(ftype);" << endl <<
+          // TODO(dreiss): Make this an option when thrift structs
+          // have a common base class.
+          // indent() << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << endl <<
           indent() << "}" << endl <<
           indent() << "break;" << endl;
         indent_down();
@@ -579,8 +647,20 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
 
   out <<
     endl <<
-    indent() << "xfer += iprot->readStructEnd();" << endl <<
-    indent() <<"return xfer;" << endl;
+    indent() << "xfer += iprot->readStructEnd();" << endl;
+
+  // Throw if any required fields are missing.
+  // We do this after reading the struct end so that
+  // there might possibly be a chance of continuing.
+  out << endl;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if ((*f_iter)->get_req() == t_field::REQUIRED)
+      out <<
+        indent() << "if (!isset_" << (*f_iter)->get_name() << ')' << endl <<
+        indent() << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << endl;
+  }
+
+  indent(out) << "return xfer;" << endl;
 
   indent_down();
   indent(out) <<
@@ -610,6 +690,10 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
   indent(out) <<
     "xfer += oprot->writeStructBegin(\"" << name << "\");" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if ((*f_iter)->get_req() == t_field::OPTIONAL) {
+      indent(out) << "if (this->__isset." << (*f_iter)->get_name() << ") {" << endl;
+      indent_up();
+    }
     // Write field header
     out <<
       indent() << "xfer += oprot->writeFieldBegin(" <<
@@ -625,7 +709,12 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
     // Write field closer
     indent(out) <<
       "xfer += oprot->writeFieldEnd();" << endl;
+    if ((*f_iter)->get_req() == t_field::OPTIONAL) {
+      indent_down();
+      indent(out) << '}' << endl;
+    }
   }
+
   // Write the struct map
   out <<
     indent() << "xfer += oprot->writeFieldStop();" << endl <<

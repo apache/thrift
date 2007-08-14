@@ -50,6 +50,7 @@ int y_field_val = -1;
   t_function*    tfunction;
   t_field*       tfield;
   char*          dtext;
+  t_field::e_req ereq;
 }
 
 /**
@@ -120,6 +121,8 @@ int y_field_val = -1;
 %token tok_service
 %token tok_enum
 %token tok_const
+%token tok_required
+%token tok_optional
 
 /**
  * Grammar nodes
@@ -139,6 +142,7 @@ int y_field_val = -1;
 
 %type<tfield>    Field
 %type<iconst>    FieldIdentifier
+%type<ereq>      FieldRequiredness
 %type<ttype>     FieldType
 %type<tconstv>   FieldValue
 %type<tstruct>   FieldList
@@ -723,24 +727,25 @@ FieldList:
     }
 
 Field:
-  CaptureDocText FieldIdentifier FieldType tok_identifier FieldValue XsdOptional XsdNillable XsdAttributes CommaOrSemicolonOptional
+  CaptureDocText FieldIdentifier FieldRequiredness FieldType tok_identifier FieldValue XsdOptional XsdNillable XsdAttributes CommaOrSemicolonOptional
     {
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
       if ($2 < 0) {
-        pwarning(2, "No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", $4);
+        pwarning(2, "No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", $5);
       }
-      $$ = new t_field($3, $4, $2);
-      if ($5 != NULL) {
-        validate_field_value($$, $5);
-        $$->set_value($5);
+      $$ = new t_field($4, $5, $2);
+      $$->set_req($3);
+      if ($6 != NULL) {
+        validate_field_value($$, $6);
+        $$->set_value($6);
       }
-      $$->set_xsd_optional($6);
-      $$->set_xsd_nillable($7);
+      $$->set_xsd_optional($7);
+      $$->set_xsd_nillable($8);
       if ($1 != NULL) {
         $$->set_doc($1);
       }
-      if ($8 != NULL) {
-        $$->set_xsd_attrs($8);
+      if ($9 != NULL) {
+        $$->set_xsd_attrs($9);
       }
     }
 
@@ -756,6 +761,20 @@ FieldIdentifier:
 |
     {
       $$ = y_field_val--;
+    }
+
+FieldRequiredness:
+  tok_required
+    {
+      $$ = t_field::REQUIRED;
+    }
+| tok_optional
+    {
+      $$ = t_field::OPTIONAL;
+    }
+|
+    {
+      $$ = t_field::OPT_IN_REQ_OUT;
     }
 
 FieldValue:

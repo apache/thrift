@@ -33,6 +33,7 @@ class t_field {
     type_(type),
     name_(name),
     key_(key),
+    req_(OPT_IN_REQ_OUT),
     value_(NULL),
     xsd_optional_(false),
     xsd_nillable_(false),
@@ -50,6 +51,20 @@ class t_field {
 
   int32_t get_key() const {
     return key_;
+  }
+
+  enum e_req {
+    REQUIRED,
+    OPTIONAL,
+    OPT_IN_REQ_OUT
+  };
+
+  void set_req(e_req req) {
+    req_ = req;
+  }
+
+  e_req get_req() const {
+    return req_;
   }
 
   void set_value(t_const_value* value) {
@@ -101,6 +116,7 @@ class t_field {
   t_type* type_;
   std::string name_;
   int32_t key_;
+  e_req req_;
   t_const_value* value_;
 
   bool xsd_optional_;

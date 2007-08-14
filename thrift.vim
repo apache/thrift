@@ -30,10 +30,10 @@ syn region thriftStringDouble matchgroup=None start=+"+  end=+"+
 syn match thriftNumber "-\=\<\d\+\>" contained
 
 " Keywords
-syn keyword thriftKeyword namespace cpp_namespace cpp_include
-syn keyword thriftKeyword cpp_type java_package include const
-syn keyword thriftBasicTypes void bool byte i16 i32 i64 double string
-
+syn keyword thriftKeyword namespace cpp_namespace java_package php_namespace ruby_namespace
+syn keyword thriftKeyword xsd_all xsd_optional xsd_nillable xsd_namespace xsd_attrs
+syn keyword thriftKeyword include cpp_include cpp_type const optional required
+syn keyword thriftBasicTypes void bool byte i16 i32 i64 double string binary
 syn keyword thriftStructure map list set struct typedef exception enum throws
 
 " Special

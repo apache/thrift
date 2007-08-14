@@ -103,6 +103,8 @@ sliteral     ("'"[^']*"'")
 "service"        { return tok_service;        }
 "enum"           { return tok_enum;           }
 "const"          { return tok_const;          }
+"required"       { return tok_required;       }
+"optional"       { return tok_optional;       }
 
 "abstract" { thrift_reserved_keyword(yytext); }
 "and" { thrift_reserved_keyword(yytext); }
