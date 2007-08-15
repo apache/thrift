@@ -387,10 +387,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     bool init_ctor = false;
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      t_type* t = (*m_iter)->get_type();
-      while (t->is_typedef()) {
-        t = ((t_typedef*)t)->get_type();
-      }
+      t_type* t = get_true_type((*m_iter)->get_type());
       if (t->is_base_type()) {
         string dval;
         if (t->is_enum()) {

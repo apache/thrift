@@ -118,6 +118,7 @@ class t_generator {
   std::ostream& indent(std::ostream &os) {
     return os << indent();
   }
+
   /**
    * Capitalization helpers
    */
@@ -128,6 +129,16 @@ class t_generator {
   std::string decapitalize(std::string in) {
     in[0] = tolower(in[0]);
     return in;
+  }
+
+  /**
+   * Get the true type behind a series of typedefs.
+   */
+  static t_type* get_true_type(t_type* type) {
+    while (type->is_typedef()) {
+      type = ((t_typedef*)type)->get_type();
+    }
+    return type;
   }
 
  protected:
