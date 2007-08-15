@@ -20,6 +20,7 @@ class Mutex {
   Mutex();
   virtual ~Mutex() {}
   virtual void lock() const;
+  virtual bool trylock() const;
   virtual void unlock() const;
 
  private:

@@ -35,6 +35,8 @@ class Mutex::impl {
 
   void lock() const { pthread_mutex_lock(&pthread_mutex_); }
 
+  bool trylock() const { return (0 == pthread_mutex_trylock(&pthread_mutex_)); }
+
   void unlock() const { pthread_mutex_unlock(&pthread_mutex_); }
 
  private:
@@ -45,6 +47,8 @@ class Mutex::impl {
 Mutex::Mutex() : impl_(new Mutex::impl()) {}
 
 void Mutex::lock() const { impl_->lock(); }
+
+bool Mutex::trylock() const { return impl_->trylock(); }
 
 void Mutex::unlock() const { impl_->unlock(); }
 
