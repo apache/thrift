@@ -12,9 +12,9 @@ use Thrift::Socket;
 use Thrift::BufferedTransport;
 
 use SharedService;
-use shared_types;
 use Calculator;
-use tutorial_types;
+use shared::Types;
+use tutorial::Types;
 
 use Data::Dumper;
 

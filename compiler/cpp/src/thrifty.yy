@@ -75,6 +75,7 @@ int y_field_val = -1;
 %token tok_cpp_include
 %token tok_cpp_type
 %token tok_php_namespace
+%token tok_perl_package
 %token tok_java_package
 %token tok_xsd_all
 %token tok_xsd_optional
@@ -107,7 +108,7 @@ int y_field_val = -1;
 
 /**
  * Function modifiers
- */ 
+ */
 %token tok_async
 
 /**
@@ -209,8 +210,7 @@ CaptureDocText:
       if (g_parse_mode == PROGRAM) {
         $$ = g_doctext; 
         g_doctext = NULL;
-      }
-      else {
+      } else {
         $$ = NULL;
       }
     }
@@ -269,6 +269,13 @@ Header:
         g_program->set_php_namespace($2);
       }
     }
+| tok_perl_package tok_identifier
+    {
+      pdebug("Header -> tok_perl_namespace tok_identifier");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_perl_package($2);
+      }
+    }
 | tok_ruby_namespace tok_identifier
     {
       pdebug("Header -> tok_ruby_namespace tok_identifier");
@@ -294,7 +301,7 @@ Header:
 Include:
   tok_include tok_literal
     {
-      pdebug("Include -> tok_include tok_literal");     
+      pdebug("Include -> tok_include tok_literal");
       if (g_parse_mode == INCLUDES) {
         std::string path = include_file(std::string($2));
         if (!path.empty()) {
@@ -379,7 +386,7 @@ TypeDefinition:
       }
     }
 | Xception
-    { 
+    {
       pdebug("TypeDefinition -> Xception");
       if (g_parse_mode == PROGRAM) {
         g_program->add_xception($1);
@@ -536,7 +543,7 @@ ConstValue:
 | ConstMap
     {
       pdebug("ConstValue => ConstMap");
-      $$ = $1; 
+      $$ = $1;
     }
 
 ConstList:
@@ -780,7 +787,7 @@ FieldRequiredness:
 FieldValue:
   '=' ConstValue
     {
-      if (g_parse_mode == PROGRAM) {     
+      if (g_parse_mode == PROGRAM) {
         $$ = $2;
       } else {
         $$ = NULL;

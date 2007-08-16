@@ -141,8 +141,8 @@ class t_perl_generator : public t_oop_generator {
   }
 
   std::string perl_namespace(t_program* p) {
-    std::string ns = p->get_perl_namespace();
-    return ""; //ns.size() ? (ns + "::") : "";
+    std::string ns = p->get_perl_package();
+    return ns.empty() ? ns : (ns + "::");
   }
 
  private:

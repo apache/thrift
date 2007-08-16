@@ -1,6 +1,7 @@
 java_package thrift.test
 cpp_namespace thrift.test
 ruby_namespace Thrift.Test
+perl_package ThriftTest
 
 enum Numberz
 {
@@ -50,7 +51,7 @@ exception Xception2 {
   1: i32 errorCode,
   2: Xtruct struct_thing
 }
- 
+
 struct EmptyStruct {}
 
 struct OneField {
@@ -79,8 +80,7 @@ service ThriftTest
   map<UserId, map<Numberz,Insanity>> testInsanity(1: Insanity argument),
 
   /* Multiple parameters */
-  
-  Xtruct	testMulti(byte arg0, i32 arg1, i64 arg2, map<i16, string> arg3, Numberz arg4, UserId arg5),
+  Xtruct testMulti(byte arg0, i32 arg1, i64 arg2, map<i16, string> arg3, Numberz arg4, UserId arg5),
 
   /* Exception specifier */
 

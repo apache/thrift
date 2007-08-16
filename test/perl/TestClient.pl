@@ -7,7 +7,7 @@ use Data::Dumper;
 use Time::HiRes qw(gettimeofday);
 
 use lib '../../lib/perl/lib';
-use lib 'gen-perl';
+use lib '../gen-perl';
 
 use Thrift;
 use Thrift::BinaryProtocol;
@@ -15,7 +15,7 @@ use Thrift::Socket;
 use Thrift::BufferedTransport;
 
 use ThriftTest;
-use ThriftTest_types;
+use ThriftTest::Types;
 
 $|++;
 

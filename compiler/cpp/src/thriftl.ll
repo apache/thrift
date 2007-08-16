@@ -8,7 +8,7 @@
 
 /**
  * Thrift scanner.
- * 
+ *
  * Tokenizes a thrift definition file.
  * @author Mark Slee <mcslee@facebook.com>
  */
@@ -35,9 +35,9 @@ void thrift_reserved_keyword(char* keyword) {
 /**
  * Provides the yylineno global, useful for debugging output
  */
-%option lex-compat 	
+%option lex-compat
 
-/** 
+/**
  * Helper definitions, comments, constants, and whatnot
  */
 
@@ -72,6 +72,7 @@ sliteral     ("'"[^']*"'")
 "cpp_type"       { return tok_cpp_type;       }
 "java_package"   { return tok_java_package;   }
 "php_namespace"  { return tok_php_namespace;  }
+"perl_package"   { return tok_perl_package;   }
 "ruby_namespace" { return tok_ruby_namespace; }
 "xsd_all"        { return tok_xsd_all;        }
 "xsd_optional"   { return tok_xsd_optional;   }

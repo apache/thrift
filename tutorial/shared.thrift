@@ -7,6 +7,7 @@
 
 cpp_namespace shared
 java_package shared
+perl_package shared
 
 struct SharedStruct {
   1: i32 key

@@ -149,17 +149,17 @@ class t_program : public t_doc {
   void set_ruby_namespace(std::string ruby_namespace) {
     ruby_namespace_ = ruby_namespace;
   }
-  
+
   const std::string& get_ruby_namespace() const {
     return ruby_namespace_;
   }
 
-  void set_perl_namespace(std::string perl_namespace) {
-    perl_namespace_ = perl_namespace;
+  void set_perl_package(std::string perl_package) {
+    perl_package_ = perl_package;
   }
 
-  const std::string& get_perl_namespace() const {
-    return perl_namespace_;
+  const std::string& get_perl_package() const {
+    return perl_package_;
   }
 
  private:
@@ -206,7 +206,7 @@ class t_program : public t_doc {
   std::string ruby_namespace_;
 
   // Perl namespace
-  std::string perl_namespace_;
+  std::string perl_package_;
 
 };
 

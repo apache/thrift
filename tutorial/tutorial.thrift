@@ -47,6 +47,7 @@ include "shared.thrift"
 cpp_namespace tutorial
 java_package tutorial
 php_namespace tutorial
+perl_package tutorial
 
 /**
  * Thrift lets you do typedefs to get pretty names for your types. Standard
