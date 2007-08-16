@@ -750,8 +750,10 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     py_autogen_comment() << endl <<
     "import sys" << endl <<
     "import pprint" << endl <<
+    "from urlparse import urlparse" << endl <<
     "from thrift.transport import TTransport" << endl <<
     "from thrift.transport import TSocket" << endl <<
+    "from thrift.transport import THttpClient" << endl <<
     "from thrift.protocol import TBinaryProtocol" << endl <<
     endl;
 
@@ -763,7 +765,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
   f_remote <<
     "if len(sys.argv) <= 1 or sys.argv[1] == '--help':" << endl <<
     "  print ''" << endl <<
-    "  print 'Usage: ' + sys.argv[0] + ' [-h host:port] [-f[ramed]] function [arg1 [arg2...]]'" << endl <<
+    "  print 'Usage: ' + sys.argv[0] + ' [-h host:port] [-u url] [-f[ramed]] function [arg1 [arg2...]]'" << endl <<
     "  print ''" << endl <<
     "  print 'Functions:'" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -794,14 +796,28 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     "pp = pprint.PrettyPrinter(indent = 2)" << endl <<
     "host = 'localhost'" << endl <<
     "port = 9090" << endl <<
+    "uri = ''" << endl <<
     "framed = False" << endl <<
+    "http = False" << endl <<
     "argi = 1" << endl <<
     endl <<
-    "if sys.argv[1] == '-h':" << endl <<
-    "  parts = sys.argv[2].split(':') " << endl <<
+    "if sys.argv[argi] == '-h':" << endl <<
+    "  parts = sys.argv[argi+1].split(':') " << endl <<
     "  host = parts[0]" << endl <<
     "  port = int(parts[1])" << endl <<
-    "  argi = 3" << endl <<
+    "  argi += 2" << endl <<
+    endl <<
+    "if sys.argv[argi] == '-u':" << endl <<
+    "  url = urlparse(sys.argv[argi+1])" << endl <<
+    "  parts = url[1].split(':') " << endl <<
+    "  host = parts[0]" << endl <<
+    "  if len(parts) > 1:" << endl <<
+    "    port = int(parts[1])" << endl <<
+    "  else:" << endl <<
+    "    port = 80" << endl <<
+    "  uri = url[2]" << endl <<
+    "  http = True" << endl <<
+    "  argi += 2" << endl <<
     endl <<
     "if sys.argv[argi] == '-f' or sys.argv[argi] == '-framed':" << endl <<
     "  framed = True" << endl <<
@@ -810,11 +826,14 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     "cmd = sys.argv[argi]" << endl <<
     "args = sys.argv[argi+1:]" << endl <<
     endl <<
-    "socket = TSocket.TSocket(host, port)" << endl <<
-    "if framed:" << endl <<
-    "  transport = TTransport.TFramedTransport(socket)" << endl <<
+    "if http:" << endl <<
+    "  transport = THttpClient.THttpClient(host, port, uri)" << endl <<
     "else:" << endl <<
-    "  transport = TTransport.TBufferedTransport(socket)" << endl <<
+    "  socket = TSocket.TSocket(host, port)" << endl <<
+    "  if framed:" << endl <<
+    "    transport = TTransport.TFramedTransport(socket)" << endl <<
+    "  else:" << endl <<
+    "    transport = TTransport.TBufferedTransport(socket)" << endl <<
     "protocol = TBinaryProtocol.TBinaryProtocol(transport)" << endl <<
     "client = " << service_name_ << ".Client(protocol)" << endl <<
     "transport.open()" << endl <<
