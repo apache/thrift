@@ -228,7 +228,7 @@ sub readMessageBegin
     my ($name, $type, $seqid) = @_;
 
     my $version = 0;
-    my $result = $self->readI32($version);
+    my $result = $self->readI32(\$version);
     if ($version & VERSION_MASK != VERSION_1) {
       die new Thrift::TException('Missing version identifier')
     }
