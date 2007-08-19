@@ -8,6 +8,7 @@
 #define _THRIFT_TRANSPORT_TTRANSPORTUTILS_H_ 1
 
 #include <string>
+#include <sstream>
 #include <transport/TTransport.h>
 #include <transport/TFileTransport.h>
 
@@ -330,22 +331,80 @@ class TMemoryBuffer : public TTransport {
     return wPos_ - rPos_;
   }
 
- private:
+ protected:
   // Data buffer
   uint8_t* buffer_;
   
   // Allocated buffer size
   uint32_t bufferSize_;
 
+  // Is this object the owner of the buffer?
+  bool owner_;
+
+ private: 
   // Where the write is at
   uint32_t wPos_;
   
   // Where the reader is at
   uint32_t rPos_;
 
-  // Is this object the owner of the buffer?
-  bool owner_;
 
+};
+
+/**
+ * A string buffer is a tranpsort that simply reads from and writes to a 
+ * string. Anytime you call write on it, the data is serialized
+ * into the underlying buffer, you can call getString() to get the serialized
+ * string.  Before you call read, you should call resetString(data) to set the 
+ * underlying buffer, you can then call read to get the 
+ * de-serialized data structure. 
+ *
+ * The string buffer is inherited from the memory buffer 
+ * Thus, buffers are allocated using C constructs malloc,realloc, and the size
+ * doubles as necessary.
+ *
+ * @author Yun-Fang Juan <yunfang@facebook.com>
+ */
+
+class TStringBuffer : public TMemoryBuffer {
+ public: 
+  TStringBuffer() : TMemoryBuffer() {};
+
+  TStringBuffer(const std::string& inputString) : TMemoryBuffer() {
+    resetString(inputString);  
+  };
+
+  //destructor. basically the same as TMemoryBuffer
+  ~TStringBuffer() { 
+    if (owner_) {
+      if (buffer_ != NULL) {
+        free(buffer_);
+        buffer_ = NULL;
+      }
+    }
+  }  
+
+  //from buffer to string
+  std::string getString() {
+    std::stringstream ss;
+    ss.write((char*)buffer_, bufferSize_);
+    return ss.str();
+  };
+
+  //from string to buffer
+  void resetString(const std::string& inputString) {
+    char* data;
+    std::stringstream ss;
+    bufferSize_ = inputString.size();
+
+    ss.str(inputString);
+    data = (char*)malloc(bufferSize_);
+    ss.read(data, bufferSize_);
+
+    resetBuffer((uint8_t*)data, bufferSize_);
+    //set the owner_ to true so the buffer_ will be freed later on
+    owner_ = true; 
+  };
 };
 
 /**
