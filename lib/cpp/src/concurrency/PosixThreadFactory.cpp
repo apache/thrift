@@ -135,7 +135,8 @@ class PthreadThread: public Thread {
   }
 
   id_t getId() {
-    return reinterpret_cast<id_t>(pthread_);
+    // TODO(dreiss): Stop using C-style casts.
+    return (id_t)pthread_;
   }
 
   shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
@@ -258,7 +259,10 @@ class PosixThreadFactory::Impl {
 
   void setDetached(bool value) { detached_ = value; }
 
-  Thread::id_t getCurrentThreadId() const {return reinterpret_cast<id_t>(pthread_self());}
+  Thread::id_t getCurrentThreadId() const {
+    // TODO(dreiss): Stop using C-style casts.
+    return (id_t)pthread_self();
+  }
 
 };
 
