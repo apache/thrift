@@ -8,7 +8,7 @@
 #define _THRIFT_TRANSPORT_TTRANSPORTUTILS_H_ 1
 
 #include <string>
-#include <sstream>
+#include <algorithm>
 #include <transport/TTransport.h>
 #include <transport/TFileTransport.h>
 
@@ -242,43 +242,59 @@ class TFramedTransport : public TTransport {
  * @author Mark Slee <mcslee@facebook.com>
  */
 class TMemoryBuffer : public TTransport {
- public:
-  TMemoryBuffer() {
-    owner_ = true;
-    bufferSize_ = 1024;
-    buffer_ = (uint8_t*)malloc(bufferSize_);
-    if (buffer_ == NULL) {
-      throw TTransportException("Out of memory");
+ private:
+
+  // Common initialization done by all constructors.
+  void initCommon(uint8_t* buf, uint32_t size, bool owner, uint32_t wPos) {
+    if (buf == NULL) {
+      assert(owner);
+      buf = (uint8_t*)malloc(size);
+      if (buf == NULL) {
+        throw TTransportException("Out of memory");
+      }
     }
-    wPos_ = 0;
+
+    buffer_ = buf;
+    bufferSize_ = size;
+    owner_ = owner;
+    wPos_ = wPos;
     rPos_ = 0;
+  }
+
+ public:
+  static const uint32_t defaultSize = 1024;
+
+  TMemoryBuffer() {
+    initCommon(NULL, defaultSize, true, 0);
   }
 
   TMemoryBuffer(uint32_t sz) {
-    owner_ = true;
-    bufferSize_ = sz;
-    buffer_ = (uint8_t*)malloc(bufferSize_);
-    if (buffer_ == NULL) {
-      throw TTransportException("Out of memory");
-    }
-    wPos_ = 0;
-    rPos_ = 0;
+    initCommon(NULL, sz, true, 0);
   }
 
-  TMemoryBuffer(uint8_t* buf, int sz) {
-    owner_ = false;
-    buffer_ = buf;
-    bufferSize_ = sz;
-    wPos_ = sz;
-    rPos_ = 0;
+  // transferOwnership should be true if you want TMemoryBuffer to call free(buf).
+  TMemoryBuffer(uint8_t* buf, int sz, bool transferOwnership = false) {
+    initCommon(buf, sz, transferOwnership, sz);
+  }
+
+  // copy should be true if you want TMemoryBuffer to make a copy of the string.
+  // If you set copy to false, the string must not be destroyed before you are
+  // done with the TMemoryBuffer.
+  TMemoryBuffer(const std::string& str, bool copy = false) {
+    if (copy) {
+      initCommon(NULL, str.length(), true, 0);
+      this->write(reinterpret_cast<const uint8_t*>(str.data()), str.length());
+    } else {
+      // This first argument should be equivalent to the following:
+      // const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(str.data()))
+      initCommon((uint8_t*)str.data(), str.length(), false, str.length());
+    }
   }
 
   ~TMemoryBuffer() {
     if (owner_) {
-      if (buffer_ != NULL) {
-        free(buffer_);
-        buffer_ = NULL;
-      }
+      free(buffer_);
+      buffer_ = NULL;
     }
   }
 
@@ -299,25 +315,55 @@ class TMemoryBuffer : public TTransport {
     *sz = wPos_;
   }
 
+  std::string getBufferAsString() {
+    return std::string((char*)buffer_, (std::string::size_type)bufferSize_);
+  }
+
+  void appendBufferToString(std::string& str) {
+    str.append((char*)buffer_, bufferSize_);
+  }
+
   void resetBuffer() {
     wPos_ = 0;
     rPos_ = 0;
   }
 
-  void resetBuffer(uint8_t* buf, uint32_t sz) {
+  // transferOwnership should be true if you want TMemoryBuffer to call free(buf).
+  void resetBuffer(uint8_t* buf, uint32_t sz, bool transferOwnership = false) {
     if (owner_) {
-      if (buffer_ != NULL) {
-        free(buffer_);
-      }
+      free(buffer_);
     }
-    owner_ = false;
+    owner_ = donate;
     buffer_ = buf;
     bufferSize_ = sz;
     wPos_ = sz;
     rPos_ = 0;
   }
 
+  // See the constructor that takes a string.
+  void resetFromString(const std::string& str, bool copy = false) {
+    if (copy) {
+      uint8_t* buf = (uint8_t*)malloc(str.length());
+      if (buf == NULL) {
+        throw TTransportException("Out of memory");
+      }
+      std::copy(str.begin(), str.end(), buf);
+      resetBuffer(buf, str.length(), true);
+    } else {
+      // See the above comment about const_cast.
+      resetBuffer((uint8_t*)str.data(), str.length(), false);
+    }
+  }
+
   uint32_t read(uint8_t* buf, uint32_t len);
+
+  std::string readAsString(uint32_t len) {
+    std::string str;
+    (void)readAppendToString(str, len);
+    return str;
+  }
+
+  uint32_t readAppendToString(std::string& str, uint32_t len);
 
   void readEnd() {
     if (rPos_ == wPos_) {
@@ -331,80 +377,22 @@ class TMemoryBuffer : public TTransport {
     return wPos_ - rPos_;
   }
 
- protected:
+ private: 
   // Data buffer
   uint8_t* buffer_;
   
   // Allocated buffer size
   uint32_t bufferSize_;
 
-  // Is this object the owner of the buffer?
-  bool owner_;
-
- private: 
   // Where the write is at
   uint32_t wPos_;
   
   // Where the reader is at
   uint32_t rPos_;
 
+  // Is this object the owner of the buffer?
+  bool owner_;
 
-};
-
-/**
- * A string buffer is a tranpsort that simply reads from and writes to a 
- * string. Anytime you call write on it, the data is serialized
- * into the underlying buffer, you can call getString() to get the serialized
- * string.  Before you call read, you should call resetString(data) to set the 
- * underlying buffer, you can then call read to get the 
- * de-serialized data structure. 
- *
- * The string buffer is inherited from the memory buffer 
- * Thus, buffers are allocated using C constructs malloc,realloc, and the size
- * doubles as necessary.
- *
- * @author Yun-Fang Juan <yunfang@facebook.com>
- */
-
-class TStringBuffer : public TMemoryBuffer {
- public: 
-  TStringBuffer() : TMemoryBuffer() {};
-
-  TStringBuffer(const std::string& inputString) : TMemoryBuffer() {
-    resetString(inputString);  
-  };
-
-  //destructor. basically the same as TMemoryBuffer
-  ~TStringBuffer() { 
-    if (owner_) {
-      if (buffer_ != NULL) {
-        free(buffer_);
-        buffer_ = NULL;
-      }
-    }
-  }  
-
-  //from buffer to string
-  std::string getString() {
-    std::stringstream ss;
-    ss.write((char*)buffer_, bufferSize_);
-    return ss.str();
-  };
-
-  //from string to buffer
-  void resetString(const std::string& inputString) {
-    char* data;
-    std::stringstream ss;
-    bufferSize_ = inputString.size();
-
-    ss.str(inputString);
-    data = (char*)malloc(bufferSize_);
-    ss.read(data, bufferSize_);
-
-    resetBuffer((uint8_t*)data, bufferSize_);
-    //set the owner_ to true so the buffer_ will be freed later on
-    owner_ = true; 
-  };
 };
 
 /**

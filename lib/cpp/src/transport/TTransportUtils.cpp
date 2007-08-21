@@ -190,7 +190,7 @@ uint32_t TMemoryBuffer::read(uint8_t* buf, uint32_t len) {
     return 0;
   }
 
-  // Device how much to give
+  // Decide how much to give
   uint32_t give = len;
   if (avail < len) {
     give = avail;
@@ -198,6 +198,27 @@ uint32_t TMemoryBuffer::read(uint8_t* buf, uint32_t len) {
 
   // Copy into buffer and increment rPos_
   memcpy(buf, buffer_ + rPos_, give);
+  rPos_ += give;
+  
+  return give;
+}
+
+uint32_t TMemoryBuffer::readAppendToString(std::string& str, uint32_t len) {
+  // Check avaible data for reading
+  uint32_t avail = wPos_ - rPos_;
+  if (avail == 0) {
+    return 0;
+  }
+
+  // Device how much to give
+  uint32_t give = len;
+  if (avail < len) {
+    give = avail;
+  }
+
+  // Reserve memory, copy into string, and increment rPos_
+  str.reserve(str.length()+give);
+  str.append((char*)buffer_ + rPos_, give);
   rPos_ += give;
   
   return give;

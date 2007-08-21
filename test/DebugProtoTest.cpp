@@ -1,6 +1,6 @@
 /*
 thrift -cpp DebugProtoTest.thrift
-g++ -Wall -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
+g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
   DebugProtoTest.cpp gen-cpp/DebugProtoTest_types.cpp \
   ../lib/cpp/.libs/libthrift.a -o DebugProtoTest
 ./DebugProtoTest
