@@ -239,25 +239,22 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
                               (socklen_t *) &size);
     
   if (clientSocket < 0) {
+    int errno_copy = errno;
     GlobalOutput("TServerSocket::accept()");
-    char b_error[1024];
-    strerror_r(errno, b_error, sizeof(b_error));
-    throw TTransportException(TTransportException::UNKNOWN, string("ERROR:") + b_error);
+    throw TTransportException(TTransportException::UNKNOWN, "accept()", errno_copy);
   }
 
   // Make sure client socket is blocking
   int flags = fcntl(clientSocket, F_GETFL, 0);
   if (flags == -1) {
+    int errno_copy = errno;
     GlobalOutput("TServerSocket::select() fcntl GETFL");
-    char b_error[1024];
-    strerror_r(errno, b_error, sizeof(b_error));
-    throw TTransportException(TTransportException::UNKNOWN, string("ERROR:") + b_error);
+    throw TTransportException(TTransportException::UNKNOWN, "fcntl(F_GETFL)", errno_copy);
   }
   if (-1 == fcntl(clientSocket, F_SETFL, flags & ~O_NONBLOCK)) {
+    int errno_copy = errno;
     GlobalOutput("TServerSocket::select() fcntl SETFL");
-    char b_error[1024];
-    strerror_r(errno, b_error, sizeof(b_error));
-    throw TTransportException(TTransportException::UNKNOWN, string("ERROR:") + b_error);
+    throw TTransportException(TTransportException::UNKNOWN, "fcntl(F_SETFL)", errno_copy);
   }
   
   shared_ptr<TSocket> client(new TSocket(clientSocket));

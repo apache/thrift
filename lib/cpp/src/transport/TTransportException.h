@@ -9,6 +9,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <string>
+#include <Thrift.h>
 
 namespace facebook { namespace thrift { namespace transport { 
 
@@ -52,6 +53,12 @@ class TTransportException : public facebook::thrift::TException {
     facebook::thrift::TException(message),
     type_(type) {}
 
+  TTransportException(TTransportExceptionType type,
+                      const std::string& message,
+                      int errno_copy) :
+    facebook::thrift::TException(message + ": " + strerror_s(errno_copy)),
+    type_(type) {}
+
   virtual ~TTransportException() throw() {}
 
   /**
@@ -74,6 +81,9 @@ class TTransportException : public facebook::thrift::TException {
   }
  
  protected:
+  /** Just like strerror_r but returns a C++ string object. */
+  std::string strerror_s(int errno_copy);
+
   /** Error code */
   TTransportExceptionType type_;
 

@@ -97,11 +97,9 @@ bool TSocket::peek() {
   uint8_t buf;
   int r = recv(socket_, &buf, 1, MSG_PEEK);
   if (r == -1) {
+    int errno_copy = errno;
     GlobalOutput("TSocket::peek()");
-    close();
-    char b_error[1024];
-    strerror_r(errno, b_error, sizeof(b_error));
-    throw TTransportException(TTransportException::UNKNOWN, string("recv() ERROR:") + b_error);
+    throw TTransportException(TTransportException::UNKNOWN, "recv()", errno_copy);
   }
   return (r > 0);
 }
@@ -113,10 +111,9 @@ void TSocket::openConnection(struct addrinfo *res) {
   
   socket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   if (socket_ == -1) {
+    int errno_copy = errno;
     GlobalOutput("TSocket::open() socket");
-    char b_error[1024];
-    strerror_r(errno, b_error, sizeof(b_error));
-    throw TTransportException(TTransportException::NOT_OPEN, string("socket() ERROR:") + b_error);
+    throw TTransportException(TTransportException::NOT_OPEN, "socket()", errno_copy);
   }
 
   // Send timeout
@@ -159,13 +156,12 @@ void TSocket::openConnection(struct addrinfo *res) {
   }
 
   if (errno != EINPROGRESS) {
+    int errno_copy = errno;
     char buff[1024];
-    GlobalOutput(buff);
     sprintf(buff, "TSocket::open() connect %s %d", host_.c_str(), port_);
+    GlobalOutput(buff);
     
-    char b_error[1024];
-    strerror_r(errno, b_error, sizeof(b_error));
-    throw TTransportException(TTransportException::NOT_OPEN, string("open() ERROR: ") + b_error);
+    throw TTransportException(TTransportException::NOT_OPEN, "connect()", errno_copy);
   }
 
   fd_set fds;
@@ -180,28 +176,24 @@ void TSocket::openConnection(struct addrinfo *res) {
     lon = sizeof(int);
     int ret2 = getsockopt(socket_, SOL_SOCKET, SO_ERROR, (void *)&val, &lon);
     if (ret2 == -1) {
+      int errno_copy = errno;
       GlobalOutput("TSocket::open() getsockopt SO_ERROR");
-      char b_error[1024];
-      strerror_r(errno, b_error, sizeof(b_error));
-      throw TTransportException(TTransportException::NOT_OPEN, string("open() ERROR: ") + b_error);
+      throw TTransportException(TTransportException::NOT_OPEN, "open()", errno_copy);
     }
     if (val == 0) {
       goto done;
     }
+    int errno_copy = errno;
     GlobalOutput("TSocket::open() SO_ERROR was set");
-    char b_error[1024];
-    strerror_r(errno, b_error, sizeof(b_error));
-    throw TTransportException(TTransportException::NOT_OPEN, string("open() ERROR: ") + b_error);
+    throw TTransportException(TTransportException::NOT_OPEN, "open()", errno_copy);
   } else if (ret == 0) {
-    GlobalOutput("TSocket::open() timeed out");
-    char b_error[1024];
-    strerror_r(errno, b_error, sizeof(b_error));
-    throw TTransportException(TTransportException::NOT_OPEN, string("open() ERROR: ") + b_error);   
+    int errno_copy = errno;
+    GlobalOutput("TSocket::open() timed out");
+    throw TTransportException(TTransportException::NOT_OPEN, "open()", errno_copy);
   } else {
+    int errno_copy = errno;
     GlobalOutput("TSocket::open() select error");
-    char b_error[1024];
-    strerror_r(errno, b_error, sizeof(b_error));
-    throw TTransportException(TTransportException::NOT_OPEN, string("open() ERROR: ") + b_error);
+    throw TTransportException(TTransportException::NOT_OPEN, "open()", errno_copy);
   }
 
  done:
@@ -377,25 +369,15 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
 
     // Fail on a send error
     if (b < 0) {
-      if (errno == EPIPE) {
+      if (errno == EPIPE || errno == ECONNRESET || errno == ENOTCONN) {
+        int errno_copy = errno;
         close();
-        throw TTransportException(TTransportException::NOT_OPEN, "EPIPE");
+        throw TTransportException(TTransportException::NOT_OPEN, "send()", errno_copy);
       }
 
-      if (errno == ECONNRESET) {
-        close();
-        throw TTransportException(TTransportException::NOT_OPEN, "ECONNRESET");
-      }
-
-      if (errno == ENOTCONN) {
-        close();
-        throw TTransportException(TTransportException::NOT_OPEN, "ENOTCONN");
-      }
-
+      int errno_copy = errno;
       GlobalOutput("TSocket::write() send < 0");
-      char b_error[1024];
-      strerror_r(errno, b_error, sizeof(b_error));
-      throw TTransportException(TTransportException::UNKNOWN, string("ERROR:") + b_error);
+      throw TTransportException(TTransportException::UNKNOWN, "send", errno_copy);
     }
     
     // Fail on blocked send

@@ -14,6 +14,7 @@ libthrift_sources = src/Thrift.cpp \
                     src/processor/PeekProcessor.cpp \
                     src/protocol/TBinaryProtocol.cpp \
                     src/protocol/TDebugProtocol.cpp \
+										src/transport/TTransportException.cpp \
                     src/transport/TFileTransport.cpp \
                     src/transport/THttpClient.cpp \
                     src/transport/TSocket.cpp \

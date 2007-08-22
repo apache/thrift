@@ -13,6 +13,9 @@
 #include <stdexcept>
 #include <sstream>
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 using namespace std;
 using namespace boost;
 
@@ -48,7 +51,7 @@ class TestHandler : public ThriftTestIf {
   }
 
   int64_t testI64(const int64_t thing) {
-    printf("testI64(%ld)\n", thing);
+    printf("testI64(%"PRId64")\n", thing);
     return thing;
   }
 
@@ -58,13 +61,13 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testStruct(Xtruct& out, const Xtruct &thing) {
-    printf("testStruct({\"%s\", %d, %d, %ld})\n", thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing);
+    printf("testStruct({\"%s\", %d, %d, %"PRId64"})\n", thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing);
     out = thing;
   }
 
   void testNest(Xtruct2& out, const Xtruct2& nest) {
     const Xtruct &thing = nest.struct_thing;
-    printf("testNest({%d, {\"%s\", %d, %d, %ld}, %d})\n", (int)nest.byte_thing, thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing, nest.i32_thing);
+    printf("testNest({%d, {\"%s\", %d, %d, %"PRId64"}, %d})\n", (int)nest.byte_thing, thing.string_thing.c_str(), (int)thing.byte_thing, thing.i32_thing, thing.i64_thing, nest.i32_thing);
     out = nest;
   }
 
@@ -122,7 +125,7 @@ class TestHandler : public ThriftTestIf {
   }
 
   UserId testTypedef(const UserId thing) {
-    printf("testTypedef(%ld)\n", thing);
+    printf("testTypedef(%"PRId64")\n", thing);
     return thing;
   }
 
@@ -179,7 +182,7 @@ class TestHandler : public ThriftTestIf {
     printf(" = {");
     map<UserId, map<Numberz,Insanity> >::const_iterator i_iter;
     for (i_iter = insane.begin(); i_iter != insane.end(); ++i_iter) {
-      printf("%ld => {", i_iter->first);
+      printf("%"PRId64" => {", i_iter->first);
       map<Numberz,Insanity>::const_iterator i2_iter;
       for (i2_iter = i_iter->second.begin();
            i2_iter != i_iter->second.end();
@@ -189,7 +192,7 @@ class TestHandler : public ThriftTestIf {
         map<Numberz, UserId>::const_iterator um;
         printf("{");
         for (um = userMap.begin(); um != userMap.end(); ++um) {
-          printf("%d => %ld, ", um->first, um->second);
+          printf("%d => %"PRId64", ", um->first, um->second);
         }
         printf("}, ");
 
@@ -197,7 +200,7 @@ class TestHandler : public ThriftTestIf {
         vector<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
-          printf("{\"%s\", %d, %d, %ld}, ", x->string_thing.c_str(), (int)x->byte_thing, x->i32_thing, x->i64_thing);
+          printf("{\"%s\", %d, %d, %"PRId64"}, ", x->string_thing.c_str(), (int)x->byte_thing, x->i32_thing, x->i64_thing);
         }
         printf("}");
 
