@@ -333,7 +333,7 @@ class TMemoryBuffer : public TTransport {
     if (owner_) {
       free(buffer_);
     }
-    owner_ = donate;
+    owner_ = transferOwnership;
     buffer_ = buf;
     bufferSize_ = sz;
     wPos_ = sz;
