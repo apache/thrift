@@ -16,7 +16,8 @@
 
 namespace facebook { namespace thrift { namespace concurrency {
 
-using namespace boost;
+using boost::shared_ptr;
+using boost::weak_ptr;
 
 /**
  * The POSIX thread class.

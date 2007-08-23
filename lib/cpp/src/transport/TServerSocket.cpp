@@ -20,7 +20,7 @@
 namespace facebook { namespace thrift { namespace transport { 
 
 using namespace std;
-using namespace boost;
+using boost::shared_ptr;
 
 TServerSocket::TServerSocket(int port) :
   port_(port),

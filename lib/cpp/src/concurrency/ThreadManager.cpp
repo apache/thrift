@@ -20,7 +20,8 @@
 
 namespace facebook { namespace thrift { namespace concurrency {
 
-using namespace boost;
+using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 
 /**
  * ThreadManager class
