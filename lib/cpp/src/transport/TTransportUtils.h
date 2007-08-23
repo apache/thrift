@@ -246,7 +246,7 @@ class TMemoryBuffer : public TTransport {
 
   // Common initialization done by all constructors.
   void initCommon(uint8_t* buf, uint32_t size, bool owner, uint32_t wPos) {
-    if (buf == NULL) {
+    if (buf == NULL && size != 0) {
       assert(owner);
       buf = (uint8_t*)malloc(size);
       if (buf == NULL) {
@@ -316,10 +316,16 @@ class TMemoryBuffer : public TTransport {
   }
 
   std::string getBufferAsString() {
+    if (buffer_ == NULL) {
+      return "";
+    }
     return std::string((char*)buffer_, (std::string::size_type)bufferSize_);
   }
 
   void appendBufferToString(std::string& str) {
+    if (buffer_ == NULL) {
+      return;
+    }
     str.append((char*)buffer_, bufferSize_);
   }
 

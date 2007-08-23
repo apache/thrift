@@ -204,6 +204,11 @@ uint32_t TMemoryBuffer::read(uint8_t* buf, uint32_t len) {
 }
 
 uint32_t TMemoryBuffer::readAppendToString(std::string& str, uint32_t len) {
+  // Don't get some stupid assertion failure.
+  if (buffer_ == NULL) {
+    return 0;
+  }
+
   // Check avaible data for reading
   uint32_t avail = wPos_ - rPos_;
   if (avail == 0) {
