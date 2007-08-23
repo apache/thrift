@@ -319,7 +319,7 @@ class TMemoryBuffer : public TTransport {
     if (buffer_ == NULL) {
       return "";
     }
-    return std::string((char*)buffer_, (std::string::size_type)bufferSize_);
+    return std::string((char*)buffer_, (std::string::size_type)wPos_);
   }
 
   void appendBufferToString(std::string& str) {
