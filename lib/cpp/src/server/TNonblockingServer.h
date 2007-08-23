@@ -267,6 +267,11 @@ class TConnection {
     setFlags(EV_WRITE | EV_PERSIST);
   }
 
+  // Set socket idle
+  void setIdle() {
+    setFlags(0);
+  }
+
   // Set event flags
   void setFlags(short eventFlags);
 

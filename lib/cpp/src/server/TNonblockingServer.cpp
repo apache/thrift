@@ -118,7 +118,7 @@ void TConnection::workSocket() {
     // Read from the socket
     fetch = readWant_ - readBufferPos_;
     got = recv(socket_, readBuffer_ + readBufferPos_, fetch, 0);
-    
+   
     if (got > 0) {
       // Move along in the buffer
       readBufferPos_ += got;
@@ -215,7 +215,7 @@ void TConnection::transition() {
     // and get back some data from the dispatch function
     inputTransport_->resetBuffer(readBuffer_, readBufferPos_);
     outputTransport_->resetBuffer();
-  
+    
     if (server_->isThreadPoolProcessing()) {
       // We are setting up a Task to do this work and we will wait on it
       int sv[2];
@@ -242,6 +242,11 @@ void TConnection::transition() {
           return;
         }
         server_->addTask(task);
+
+        // Set this connection idle so that libevent doesn't process more
+        // data on it while we're still waiting for the threadmanager to
+        // finish this task
+        setIdle();
         return;
       }
     } else {
@@ -262,6 +267,9 @@ void TConnection::transition() {
         return;
       }
     }
+
+    // Intentionally fall through here, the call to process has written into
+    // the writeBuffer_
 
   case APP_WAIT_TASK:
     // We have now finished processing a task and the result has been written
@@ -391,6 +399,11 @@ void TConnection::setFlags(short eventFlags) {
 
   // Update in memory structure
   eventFlags_ = eventFlags;
+
+  // Do not call event_set if there are no flags
+  if (!eventFlags_) {
+    return;
+  }
 
   /**
    * event_set:
