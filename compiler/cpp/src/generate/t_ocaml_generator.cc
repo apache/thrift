@@ -1045,9 +1045,7 @@ void t_ocaml_generator::generate_deserialize_field(ofstream &out,
  */
 void t_ocaml_generator::generate_deserialize_type(ofstream &out,
                                                    t_type* type){
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  type = get_true_type(type);
 
   if (type->is_void()) {
     throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE";
@@ -1185,10 +1183,7 @@ void t_ocaml_generator::generate_deserialize_container(ofstream &out,
 void t_ocaml_generator::generate_serialize_field(ofstream &out,
                                                  t_field* tfield,
                                                  string name) {
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  t_type* type = get_true_type(tfield->get_type());
 
   // Do nothing for void types
   if (type->is_void()) {
@@ -1433,9 +1428,7 @@ string t_ocaml_generator::type_name(t_type* ttype) {
  * Converts the parse type to a Protocol.t_type enum
  */
 string t_ocaml_generator::type_to_enum(t_type* type) {
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  type = get_true_type(type);
   
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
@@ -1476,9 +1469,7 @@ string t_ocaml_generator::type_to_enum(t_type* type) {
  * Converts the parse type to an ocaml type
  */
 string t_ocaml_generator::render_ocaml_type(t_type* type) {
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  type = get_true_type(type);
   
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();

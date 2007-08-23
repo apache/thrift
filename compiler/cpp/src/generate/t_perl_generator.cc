@@ -121,9 +121,7 @@ void t_perl_generator::generate_const(t_const* tconst) {
 string t_perl_generator::render_const_value(t_type* type, t_const_value* value) {
   std::ostringstream out;
 
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  type = get_true_type(type);
 
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
@@ -266,10 +264,7 @@ void t_perl_generator::generate_perl_struct_definition(ofstream& out,
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string dval = "undef";
-    t_type* t = (*m_iter)->get_type();
-    while (t->is_typedef()) {
-      t = ((t_typedef*)t)->get_type();
-    }
+    t_type* t = get_true_type((*m_iter)->get_type());
     if ((*m_iter)->get_value() != NULL && !(t->is_struct() || t->is_xception())) {
       dval = render_const_value((*m_iter)->get_type(), (*m_iter)->get_value());
     }
@@ -281,10 +276,7 @@ void t_perl_generator::generate_perl_struct_definition(ofstream& out,
   if (members.size() > 0) {
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      t_type* t = (*m_iter)->get_type();
-      while (t->is_typedef()) {
-        t = ((t_typedef*)t)->get_type();
-      }
+      t_type* t = get_true_type((*m_iter)->get_type());
       if ((*m_iter)->get_value() != NULL && (t->is_struct() || t->is_xception())) {
         indent(out) << "$self->{" << (*m_iter)->get_name() << "} = " << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
       }
@@ -810,10 +802,7 @@ void t_perl_generator::generate_service_rest(t_service* tservice) {
     const vector<t_field*>& args = (*f_iter)->get_arglist()->get_members();
     vector<t_field*>::const_iterator a_iter;
     for (a_iter = args.begin(); a_iter != args.end(); ++a_iter) {
-      t_type* atype = (*a_iter)->get_type();
-      while (atype->is_typedef()) {
-        atype = ((t_typedef*)atype)->get_type();
-      }
+      t_type* atype = get_true_type((*a_iter)->get_type());
       string req = "$request->{'" + (*a_iter)->get_name() + "'}";
       f_service_ <<
         indent() << "my $" << (*a_iter)->get_name() << " = (" << req << ") ? " << req << " : undef;" << endl;
@@ -1036,10 +1025,7 @@ void t_perl_generator::generate_deserialize_field(ofstream &out,
                                                   t_field* tfield,
                                                   string prefix,
                                                   bool inclass) {
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  t_type* type = get_true_type(tfield->get_type());
 
   if (type->is_void()) {
     throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " +
@@ -1261,10 +1247,7 @@ void t_perl_generator::generate_deserialize_list_element(ofstream &out,
 void t_perl_generator::generate_serialize_field(ofstream &out,
                                                 t_field* tfield,
                                                 string prefix) {
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  t_type* type = get_true_type(tfield->get_type());
 
   // Do nothing for void types
   if (type->is_void()) {
@@ -1466,10 +1449,7 @@ void t_perl_generator::generate_serialize_list_element(ofstream &out,
 string t_perl_generator::declare_field(t_field* tfield, bool init, bool obj) {
   string result = "my $" + tfield->get_name();
   if (init) {
-    t_type* type = tfield->get_type();
-    while (type->is_typedef()) {
-      type = ((t_typedef*)type)->get_type();
-    }
+    t_type* type = get_true_type(tfield->get_type());
     if (type->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
       switch (tbase) {
@@ -1557,9 +1537,7 @@ string t_perl_generator::argument_list(t_struct* tstruct) {
  * Converts the parse type to a C++ enum string for the given type.
  */
 string t_perl_generator ::type_to_enum(t_type* type) {
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  type = get_true_type(type);
 
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();

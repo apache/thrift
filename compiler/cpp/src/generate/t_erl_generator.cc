@@ -1059,10 +1059,7 @@ void t_erl_generator::generate_deserialize_field(ostream &out,
                                                 t_field* tfield,
                                                 string prefix,
                                                 bool inclass) {
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  t_type* type = get_true_type(tfield->get_type());
 
   if (type->is_void()) {
     throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " +
@@ -1268,10 +1265,7 @@ void t_erl_generator::generate_deserialize_list_element(ostream &out, // TODO
 void t_erl_generator::generate_serialize_field(ostream &out, 
                                                t_field* tfield,
                                                string prefix) {
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  t_type* type = get_true_type(tfield->get_type());
 
   // Do nothing for void types
   if (type->is_void()) {
@@ -1454,10 +1448,7 @@ void t_erl_generator::generate_serialize_list_element(ostream &out,
  */
 string t_erl_generator::declare_field(t_field* tfield) {  // TODO
   string result = "@" + tfield->get_name();
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  t_type* type = get_true_type(tfield->get_type());
   if (tfield->get_value() != NULL) {
     result += " = " + render_const_value(type, tfield->get_value());
   } else {
@@ -1562,9 +1553,7 @@ string t_erl_generator::type_name(t_type* ttype) {
  * Converts the parse type to a Erlang "type" (macro for int constants)
  */
 string t_erl_generator::type_to_enum(t_type* type) {
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  type = get_true_type(type);
   
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();

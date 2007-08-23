@@ -412,10 +412,8 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     // TODO(dreiss): When everything else in Thrift is perfect,
     // do more of these in the initializer list.
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      t_type* t = (*m_iter)->get_type();
-      while (t->is_typedef()) {
-        t = ((t_typedef*)t)->get_type();
-      }
+      t_type* t = get_true_type((*m_iter)->get_type());
+
       if (!t->is_base_type()) {
         t_const_value* cv = (*m_iter)->get_value();
         if (cv != NULL) {
@@ -1767,10 +1765,7 @@ void t_cpp_generator::generate_deserialize_field(ofstream& out,
                                                  t_field* tfield,
                                                  string prefix,
                                                  string suffix) {
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  t_type* type = get_true_type(tfield->get_type());
 
   if (type->is_void()) {
     throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " +
@@ -1970,10 +1965,7 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
                                                t_field* tfield,
                                                string prefix,
                                                string suffix) {
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  t_type* type = get_true_type(tfield->get_type());
 
   string name = prefix + tfield->get_name() + suffix;
 
@@ -2327,10 +2319,7 @@ string t_cpp_generator::declare_field(t_field* tfield, bool init, bool pointer, 
   }
   result += " " + tfield->get_name();
   if (init) {
-    t_type* type = tfield->get_type();
-    while (type->is_typedef()) {
-      type = ((t_typedef*)type)->get_type();
-    }
+    t_type* type = get_true_type(tfield->get_type());
 
     if (type->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
@@ -2416,9 +2405,7 @@ string t_cpp_generator::argument_list(t_struct* tstruct) {
  * @return String of C++ code to definition of that type constant
  */
 string t_cpp_generator::type_to_enum(t_type* type) {
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  type = get_true_type(type);
   
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();

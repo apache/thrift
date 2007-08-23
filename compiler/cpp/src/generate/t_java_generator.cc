@@ -392,10 +392,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     "public " << tstruct->get_name() << "() {" << endl;
   indent_up();
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    t_type* t = (*m_iter)->get_type();
-    while (t->is_typedef()) {
-      t = ((t_typedef*)t)->get_type();
-    }
+    t_type* t = get_true_type((*m_iter)->get_type());
     if (!t->is_base_type() && (*m_iter)->get_value() != NULL) {
       print_const_value(out, "this." + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
     }
@@ -1195,10 +1192,7 @@ void t_java_generator::generate_process_function(t_service* tservice,
 void t_java_generator::generate_deserialize_field(ofstream& out,
                                                   t_field* tfield,
                                                   string prefix) {
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  t_type* type = get_true_type(tfield->get_type());
 
   if (type->is_void()) {
     throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " +
@@ -1411,10 +1405,7 @@ void t_java_generator::generate_deserialize_list_element(ofstream& out,
 void t_java_generator::generate_serialize_field(ofstream& out,
                                                 t_field* tfield,
                                                 string prefix) {
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  t_type* type = get_true_type(tfield->get_type());
 
   // Do nothing for void types
   if (type->is_void()) {
@@ -1614,9 +1605,7 @@ void t_java_generator::generate_serialize_list_element(ofstream& out,
  */
 string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_init) {
   // In Java typedefs are just resolved to their real type
-  while (ttype->is_typedef()) {
-    ttype = ((t_typedef*)ttype)->get_type();
-  }
+  ttype = get_true_type(ttype);
 
   if (ttype->is_base_type()) {
     return base_type_name((t_base_type*)ttype, in_container);
@@ -1698,10 +1687,7 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
   // TODO(mcslee): do we ever need to initialize the field?
   string result = type_name(tfield->get_type()) + " " + tfield->get_name();
   if (init) {
-    t_type* ttype = tfield->get_type();
-    while (ttype->is_typedef()) {
-      ttype = ((t_typedef*)ttype)->get_type();
-    }
+    t_type* ttype = get_true_type(tfield->get_type());
     if (ttype->is_base_type() && tfield->get_value() != NULL) {
       ofstream dummy;
       result += " = " + render_const_value(dummy, tfield->get_name(), ttype, tfield->get_value());
@@ -1783,9 +1769,7 @@ string t_java_generator::argument_list(t_struct* tstruct) {
  * Converts the parse type to a C++ enum string for the given type.
  */
 string t_java_generator::type_to_enum(t_type* type) {
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  type = get_true_type(type);
   
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();

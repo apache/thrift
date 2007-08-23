@@ -714,10 +714,7 @@ void t_rb_generator::generate_process_function(t_service* tservice,
  */
 string t_rb_generator::declare_field(t_field* tfield) {
   string result = "@" + tfield->get_name();
-  t_type* type = tfield->get_type();
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  t_type* type = get_true_type(tfield->get_type());
   if (tfield->get_value() != NULL) {
     result += " = " + render_const_value(type, tfield->get_value());
   } else {
@@ -781,9 +778,7 @@ string t_rb_generator::type_name(t_type* ttype) {
  * Converts the parse type to a Ruby tyoe
  */
 string t_rb_generator::type_to_enum(t_type* type) {
-  while (type->is_typedef()) {
-    type = ((t_typedef*)type)->get_type();
-  }
+  type = get_true_type(type);
   
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
