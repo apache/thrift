@@ -114,7 +114,7 @@ void TFramedTransport::readFrame() {
   sz = (int32_t)ntohl(sz);
 
   if (sz < 0) {
-    throw new TTransportException("Frame size has negative value");
+    throw TTransportException("Frame size has negative value");
   }
 
   // Read the frame payload, reset markers
