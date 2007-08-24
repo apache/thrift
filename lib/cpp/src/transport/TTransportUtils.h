@@ -326,7 +326,7 @@ class TMemoryBuffer : public TTransport {
     if (buffer_ == NULL) {
       return;
     }
-    str.append((char*)buffer_, bufferSize_);
+    str.append((char*)buffer_, wPos_);
   }
 
   void resetBuffer() {
