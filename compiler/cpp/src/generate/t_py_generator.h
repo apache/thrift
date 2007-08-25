@@ -72,18 +72,18 @@ class t_py_generator : public t_oop_generator {
    */
 
   void generate_deserialize_field        (std::ofstream &out,
-                                          t_field*    tfield, 
+                                          t_field*    tfield,
                                           std::string prefix="",
                                           bool inclass=false);
-  
+
   void generate_deserialize_struct       (std::ofstream &out,
                                           t_struct*   tstruct,
                                           std::string prefix="");
-  
+
   void generate_deserialize_container    (std::ofstream &out,
                                           t_type*     ttype,
                                           std::string prefix="");
-  
+
   void generate_deserialize_set_element  (std::ofstream &out,
                                           t_set*      tset,
                                           std::string prefix="");
@@ -133,6 +133,7 @@ class t_py_generator : public t_oop_generator {
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
+  std::string type_to_spec_args(t_type* ttype);
 
  private:
 
@@ -141,7 +142,7 @@ class t_py_generator : public t_oop_generator {
    */
 
   std::ofstream f_types_;
-  std::ofstream f_consts_; 
+  std::ofstream f_consts_;
   std::ofstream f_service_;
 
   std::string package_dir_;

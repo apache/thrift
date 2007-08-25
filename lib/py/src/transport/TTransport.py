@@ -55,6 +55,34 @@ class TTransportBase:
   def flush(self):
     pass
 
+# This class should be thought of as an interface.
+class CReadableTransport:
+  """base class for transports that are readable from C"""
+
+  # TODO(dreiss): Think about changing this interface to allow us to use
+  #               a (Python, not c) StringIO instead, because it allows
+  #               you to write after reading.
+
+  # NOTE: This is a classic class, so properties will NOT work
+  #       correctly for setting.
+  @property
+  def cstringio_buf(self):
+    """A cStringIO buffer that contains the current chunk we are reading."""
+    pass
+
+  def cstringio_refill(self, partialread, reqlen):
+    """Refills cstringio_buf.
+
+    Returns the currently used buffer (which can but need not be the same as
+    the old cstringio_buf). partialread is what the C code has read from the
+    buffer, and should be inserted into the buffer before any more reads.  The
+    return value must be a new, not borrowed reference.  Something along the
+    lines of self._buf should be fine.
+
+    If reqlen bytes can't be read, throw EOFError.
+    """
+    pass
+
 class TServerTransportBase:
 
   """Base class for Thrift server transports."""
@@ -112,8 +140,14 @@ class TBufferedTransport(TTransportBase):
     self.__trans.flush()
     self.__buf = StringIO()
 
-class TMemoryBuffer(TTransportBase):
-  """Wraps a string object as a TTransport"""
+class TMemoryBuffer(TTransportBase, CReadableTransport):
+  """Wraps a cStringIO object as a TTransport.
+
+  NOTE: Unlike the C++ version of this class, you cannot write to it
+        then immediately read from it.  If you want to read from a
+        TMemoryBuffer, you must either pass a string to the constructor.
+  TODO(dreiss): Make this work like the C++ version.
+  """
 
   def __init__(self, value=None):
     """value -- a value to read from for stringio
@@ -145,6 +179,15 @@ class TMemoryBuffer(TTransportBase):
 
   def getvalue(self):
     return self._buffer.getvalue()
+
+  # Implement the CReadableTransport interface.
+  @property
+  def cstringio_buf(self):
+    return self._buffer
+
+  def cstringio_refill(self, partialread, reqlen):
+    # only one shot at reading...
+    raise EOFException()
 
 class TFramedTransportFactory:
 
@@ -193,7 +236,7 @@ class TFramedTransport(TTransportBase):
     buff = self.__trans.readAll(4)
     sz, = unpack('!i', buff)
     self.__rbuf = self.__trans.readAll(sz)
-  
+
   def write(self, buf):
     if self.__wbuf == None:
       return self.__trans.write(buf)

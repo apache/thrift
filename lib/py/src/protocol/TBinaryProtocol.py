@@ -77,7 +77,7 @@ class TBinaryProtocol(TProtocolBase):
       self.writeByte(1)
     else:
       self.writeByte(0)
-    
+
   def writeByte(self, byte):
     buff = pack("!b", byte)
     self.trans.write(buff)
@@ -89,7 +89,7 @@ class TBinaryProtocol(TProtocolBase):
   def writeI32(self, i32):
     buff = pack("!i", i32)
     self.trans.write(buff)
-    
+
   def writeI64(self, i64):
     buff = pack("!q", i64)
     self.trans.write(buff)
@@ -199,6 +199,7 @@ class TBinaryProtocol(TProtocolBase):
     str = self.trans.readAll(len)
     return str
 
+
 class TBinaryProtocolFactory:
   def __init__(self, strictRead=False, strictWrite=True):
     self.strictRead = strictRead
@@ -207,3 +208,32 @@ class TBinaryProtocolFactory:
   def getProtocol(self, trans):
     prot = TBinaryProtocol(trans, self.strictRead, self.strictWrite)
     return prot
+
+
+class TBinaryProtocolAccelerated(TBinaryProtocol):
+
+  """C-Accelerated version of TBinaryProtocol.
+
+  This class does not override any of TBinaryProtocol's methods,
+  but the generated code recognizes it directly and will call into
+  our C module to do the encoding, bypassing this object entirely.
+  We inherit from TBinaryProtocol so that the normal TBinaryProtocol
+  encoding can happen if the fastbinary module doesn't work for some
+  reason.  (TODO(dreiss): Make this happen sanely.)
+
+  In order to take advantage of the C module, just use
+  TBinaryProtocolAccelerated instead of TBinaryProtocol.
+
+  NOTE:  This code was contributed by an external developer.
+         The internal Thrift team has reviewed and tested it,
+         but we cannot guarantee that it is production-ready.
+         Please feel free to report bugs and/or success stories
+         to the public mailing list.
+  """
+
+  pass
+
+
+class TBinaryProtocolAcceleratedFactory:
+  def getProtocol(self, trans):
+    return TBinaryProtocolAccelerated(trans)

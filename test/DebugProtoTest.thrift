@@ -36,3 +36,30 @@ struct HolyMoley {
   2: set<list<string>> contain,
   3: map<string,list<Bonk>> bonks,
 }
+
+struct Backwards {
+  2: i32 first_tag2,
+  1: i32 second_tag1,
+}
+
+struct Empty {
+}
+
+struct Wrapper {
+  1: Empty foo
+}
+
+struct RandomStuff {
+  1: i32 a,
+  2: i32 b,
+  3: i32 c,
+  4: i32 d,
+  5: list<i32> myintlist,
+  6: map<i32,Wrapper> maps,
+  7: i64 bigint,
+  8: double triple,
+}
+
+service Srv {
+  i32 Janky(i32 arg)
+}

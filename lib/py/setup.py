@@ -6,7 +6,11 @@
 # See accompanying file LICENSE or visit the Thrift site at:
 # http://developers.facebook.com/thrift/
 
-from distutils.core import setup
+from distutils.core import setup, Extension
+
+fastbinarymod = Extension('thrift.protocol.fastbinary',
+                          sources = ['src/protocol/fastbinary.c'],
+                          )
 
 setup(name = 'Thrift',
       version = '1.0',
@@ -16,5 +20,6 @@ setup(name = 'Thrift',
       url = 'http://code.facebook.com/thrift',
       packages = ['thrift', 'thrift.protocol', 'thrift.transport', 'thrift.server'],
       package_dir = {'thrift' : 'src'},
+      ext_modules = [fastbinarymod],
       )
 
