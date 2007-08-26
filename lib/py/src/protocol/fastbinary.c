@@ -73,6 +73,11 @@ typedef enum TType {
 #define INT_CONV_ERROR_OCCURRED(v) ( ((v) == -1) && PyErr_Occurred() )
 #define CHECK_RANGE(v, min, max) ( ((v) <= (max)) && ((v) >= (min)) )
 
+// Py_ssize_t was not defined before Python 2.5
+#if (PY_VERSION_HEX < 0x02050000)
+typedef int Py_ssize_t;
+#endif
+
 /**
  * A cache of the spec_args for a set or list,
  * so we don't have to keep calling PyTuple_GET_ITEM.
