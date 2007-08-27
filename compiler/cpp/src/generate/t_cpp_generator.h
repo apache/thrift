@@ -70,9 +70,13 @@ class t_cpp_generator : public t_oop_generator {
   void generate_service_helpers   (t_service* tservice);
   void generate_service_client    (t_service* tservice);
   void generate_service_processor (t_service* tservice);
-  void generate_service_skeleton  (t_service*  tservice);
+  void generate_service_skeleton  (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
   void generate_function_helpers  (t_service* tservice, t_function* tfunction);
+
+  void generate_service_limited_reflector(t_service* tservice);
+  bool generate_type_limited_reflection(t_type* ttype, std::string target);
+  bool generate_simple_type_limited_reflection(std::ostream& out, t_type* ttype, std::string target);
 
   /**
    * Serialization constructs

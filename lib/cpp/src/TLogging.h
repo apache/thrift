@@ -4,8 +4,8 @@
 // See accompanying file LICENSE or visit the Thrift site at:
 // http://developers.facebook.com/thrift/
 
-#ifndef _THRIFT_LOGGING_H
-#define _THRIFT_LOGGING_H 1
+#ifndef _THRIFT_TLOGGING_H_
+#define _THRIFT_TLOGGING_H_ 1
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -148,4 +148,4 @@
   #define T_LOG_OPER(format_string,...)
 #endif
 
-#endif	// _THRIFT_LOGGING_H
+#endif // #ifndef _THRIFT_TLOGGING_H_

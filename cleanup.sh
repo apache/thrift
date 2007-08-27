@@ -28,7 +28,8 @@ install-sh \
 .libs \
 libtool \
 ltmain.sh \
-missing
+missing \
+if/gen-*
 
 for subdir in ${subdirs}; do 
     if [ -x "${subdir}/cleanup.sh" ]; then 

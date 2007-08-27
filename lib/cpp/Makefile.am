@@ -6,6 +6,7 @@ common_ldflags = -Wall $(BOOST_LDFLAGS) $(EVENT_LDFLAGS)
 # Define the source file for the module
 
 libthrift_sources = src/Thrift.cpp \
+                    src/reflection_limited_types.cpp \
                     src/concurrency/Mutex.cpp \
                     src/concurrency/Monitor.cpp \
                     src/concurrency/PosixThreadFactory.cpp \
@@ -40,6 +41,7 @@ include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
                          config.h \
                          src/Thrift.h \
+                         src/reflection_limited_types.h \
                          src/TProcessor.h \
                          src/TLogging.h
 
