@@ -33,6 +33,11 @@ class t_map : public t_container {
     return true;
   }
 
+  virtual std::string get_fingerprint_material() const {
+    return "map<" + key_type_->get_fingerprint_material() +
+      "," + val_type_->get_fingerprint_material() + ">";
+  }
+
  private:
   t_type* key_type_;
   t_type* val_type_;

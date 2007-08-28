@@ -514,6 +514,27 @@ void dump_docstrings(t_program* program) {
 }
 
 /**
+ * Call generate_fingerprint for every structure.
+ */
+void generate_all_fingerprints(t_program* program) {
+  const vector<t_struct*>& structs = program->get_structs();
+  vector<t_struct*>::const_iterator s_iter;
+  for (s_iter = structs.begin(); s_iter != structs.end(); ++s_iter) {
+    t_struct* st = *s_iter;
+    st->generate_fingerprint();
+  }
+
+  // If you want to generate fingerprints for implicit structures, start here.
+  /*
+  const vector<t_service*>& services = program->get_services();
+  vector<t_service*>::const_iterator v_iter;
+  for (v_iter = services.begin(); v_iter != services.end(); ++v_iter) {
+    t_service* sv = *v_iter;
+  }
+  */
+}
+
+/**
  * Diplays the usage message and then exits with an error code.
  */
 void usage() {
@@ -739,6 +760,9 @@ void generate(t_program* program) {
   // Generate code!
   try {
     pverbose("Program: %s\n", program->get_path().c_str());
+
+    // Compute fingerprints.
+    generate_all_fingerprints(program);
 
     if (gen_cpp) {
       pverbose("Generating C++\n");

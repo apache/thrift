@@ -377,6 +377,20 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     endl;
   indent_up();
 
+  // Put the fingerprint up top for all to see.
+  if (tstruct->has_fingerprint()) {
+    out <<
+      indent() << "static char* ascii_fingerprint = \"" <<
+        tstruct->get_ascii_fingerprint() << "\";" << endl <<
+      indent() << "static char binary_fingerprint[] = {";
+    char* comma = "";
+    for (int i = 0; i < t_struct::fingerprint_len; i++) {
+      out << comma << "0x" << t_struct::byte_to_hex(tstruct->get_binary_fingerprint()[i]);
+      comma = ",";
+    }
+    out << "};" << endl << endl;
+  }
+
   // Get members
   vector<t_field*>::const_iterator m_iter; 
   const vector<t_field*>& members = tstruct->get_members();

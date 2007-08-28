@@ -36,6 +36,10 @@ class t_enum : public t_type {
     return true;
   }
 
+  virtual std::string get_fingerprint_material() const {
+    return "enum";
+  }
+
  private:
   std::vector<t_enum_value*> constants_;
 };

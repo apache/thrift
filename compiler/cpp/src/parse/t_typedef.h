@@ -39,6 +39,10 @@ class t_typedef : public t_type {
     return true;
   }
 
+  virtual std::string get_fingerprint_material() const {
+    return type_->get_fingerprint_material();
+  }
+
  private:
   t_type* type_;
   std::string symbolic_;

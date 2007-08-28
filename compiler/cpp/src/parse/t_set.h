@@ -27,6 +27,10 @@ class t_set : public t_container {
     return true;
   }
 
+  virtual std::string get_fingerprint_material() const {
+    return "set<" + elem_type_->get_fingerprint_material() + ">";
+  }
+
  private:
   t_type* elem_type_;
 };

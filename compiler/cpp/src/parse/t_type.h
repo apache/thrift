@@ -50,6 +50,11 @@ class t_type : public t_doc {
     return program_;
   }
 
+  // Return a string that uniquely identifies this type
+  // from any other thrift type in the world, as far as
+  // TDenseProtocol is concerned.
+  virtual std::string get_fingerprint_material() const = 0;
+
  protected:
   t_type() {}
 

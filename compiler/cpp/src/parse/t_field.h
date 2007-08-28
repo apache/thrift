@@ -8,6 +8,7 @@
 #define T_FIELD_H
 
 #include <string>
+#include <boost/lexical_cast.hpp>
 
 // Forward declare for xsd_attrs
 class t_struct;
@@ -111,6 +112,14 @@ class t_field {
     doc_ = doc;                                               
     has_doc_ = true;                                          
   }                                                           
+
+  // This is not the same function as t_type::get_fingerprint_material,
+  // but it does the same thing.
+  std::string get_fingerprint_material() const {
+    return boost::lexical_cast<std::string>(key_) + ":" +
+      (req_ == OPTIONAL ? "opt-" : "") +
+      type_->get_fingerprint_material();
+  }
 
  private:
   t_type* type_;

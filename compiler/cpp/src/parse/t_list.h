@@ -27,6 +27,10 @@ class t_list : public t_container {
     return true;
   }
 
+  virtual std::string get_fingerprint_material() const {
+    return "list<" + elem_type_->get_fingerprint_material() + ">";
+  }
+
  private:
   t_type* elem_type_;
 };
