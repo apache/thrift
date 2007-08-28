@@ -349,6 +349,7 @@ string t_cpp_generator::render_const_value(ofstream& out, string name, t_type* t
  */
 void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) {
   generate_struct_definition(f_types_, tstruct, is_exception);
+  generate_struct_fingerprint(f_types_impl_, tstruct, true);
   generate_struct_reader(f_types_impl_, tstruct);
   generate_struct_writer(f_types_impl_, tstruct);
 }
@@ -378,18 +379,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   indent_up();
 
   // Put the fingerprint up top for all to see.
-  if (tstruct->has_fingerprint()) {
-    out <<
-      indent() << "static char* ascii_fingerprint = \"" <<
-        tstruct->get_ascii_fingerprint() << "\";" << endl <<
-      indent() << "static char binary_fingerprint[] = {";
-    char* comma = "";
-    for (int i = 0; i < t_struct::fingerprint_len; i++) {
-      out << comma << "0x" << t_struct::byte_to_hex(tstruct->get_binary_fingerprint()[i]);
-      comma = ",";
-    }
-    out << "};" << endl << endl;
-  }
+  generate_struct_fingerprint(out, tstruct, false);
 
   // Get members
   vector<t_field*>::const_iterator m_iter; 
@@ -541,6 +531,42 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   indent(out) <<
     "};" << endl <<
     endl;
+}
+
+/**
+ * Writes the fingerprint of a struct to either the header or implementation.
+ *
+ * @param out Output stream
+ * @param tstruct The struct
+ */
+void t_cpp_generator::generate_struct_fingerprint(ofstream& out,
+                                                  t_struct* tstruct,
+                                                  bool is_definition) {
+  string stat, nspace, comment;
+  if (is_definition) {
+    stat = "";
+    nspace = tstruct->get_name() + "::";
+    comment = " ";
+  } else {
+    stat = "static ";
+    nspace = "";
+    comment = "; // ";
+  }
+
+  if (tstruct->has_fingerprint()) {
+    out <<
+      indent() << stat << "char* " << nspace
+        << "ascii_fingerprint" << comment << "= \"" <<
+        tstruct->get_ascii_fingerprint() << "\";" << endl <<
+      indent() << stat << "char " << nspace <<
+        "binary_fingerprint[" << t_struct::fingerprint_len << "]" << comment << "= {";
+    char* comma = "";
+    for (int i = 0; i < t_struct::fingerprint_len; i++) {
+      out << comma << "0x" << t_struct::byte_to_hex(tstruct->get_binary_fingerprint()[i]);
+      comma = ",";
+    }
+    out << "};" << endl << endl;
+  }
 }
 
 /**

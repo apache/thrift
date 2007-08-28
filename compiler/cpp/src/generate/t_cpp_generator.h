@@ -56,6 +56,7 @@ class t_cpp_generator : public t_oop_generator {
   std::string render_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
 
   void generate_struct_definition    (std::ofstream& out, t_struct* tstruct, bool is_exception=false, bool pointers=false, bool read=true, bool write=true);
+  void generate_struct_fingerprint   (std::ofstream& out, t_struct* tstruct, bool is_definition);
   void generate_struct_reader        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
   void generate_struct_writer        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
   void generate_struct_result_writer (std::ofstream& out, t_struct* tstruct, bool pointers=false);
