@@ -281,7 +281,7 @@ string t_java_generator::render_const_value(ofstream& out, string name, t_type* 
       }
       break;
     default:
-      throw "compiler error: no const of base type " + tbase;
+      throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
     render << value->get_integer();
@@ -1245,7 +1245,7 @@ void t_java_generator::generate_deserialize_field(ofstream& out,
         out << "readDouble();";
         break;
       default:
-        throw "compiler error: no Java name for base type " + tbase;
+        throw "compiler error: no Java name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "readI32();";
@@ -1460,7 +1460,7 @@ void t_java_generator::generate_serialize_field(ofstream& out,
         out << "writeDouble(" << name << ");";
         break;
       default:
-        throw "compiler error: no Java name for base type " + tbase;
+        throw "compiler error: no Java name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "writeI32(" << name << ");";
@@ -1674,7 +1674,7 @@ string t_java_generator::base_type_name(t_base_type* type,
   case t_base_type::TYPE_DOUBLE:
     return (in_container ? "Double" : "double");
   default:
-    throw "compiler error: no C++ name for base type " + tbase;
+    throw "compiler error: no C++ name for base type " + t_base_type::t_base_name(tbase);
   }
 }
 

@@ -176,7 +176,7 @@ string t_rb_generator::render_const_value(t_type* type, t_const_value* value) {
       }
       break;
     default:
-      throw "compiler error: no const of base type " + tbase;
+      throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
     indent(out) << value->get_integer();

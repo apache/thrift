@@ -239,7 +239,7 @@ string t_ocaml_generator::render_const_value(t_type* type, t_const_value* value)
       }
       break;
     default:
-      throw "compiler error: no const of base type " + tbase;
+      throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
     t_enum* tenum = (t_enum*)type;
@@ -1086,7 +1086,7 @@ void t_ocaml_generator::generate_deserialize_type(ofstream &out,
       out << "readDouble";
       break;
     default:
-      throw "compiler error: no PHP name for base type " + tbase;
+      throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
     string ename = capitalize(type->get_name());
@@ -1238,7 +1238,7 @@ void t_ocaml_generator::generate_serialize_field(ofstream &out,
         out << "writeDouble(" << name << ")";
         break;
       default:
-        throw "compiler error: no ocaml name for base type " + tbase;
+        throw "compiler error: no ocaml name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       string ename = capitalize(type->get_name());

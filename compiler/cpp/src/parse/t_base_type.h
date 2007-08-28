@@ -87,17 +87,24 @@ class t_base_type : public t_type {
   }
 
   virtual std::string get_fingerprint_material() const {
-    switch (base_) {
-      case TYPE_VOID   : return   "void"; break;
-      case TYPE_STRING : return "string"; break;
-      case TYPE_BOOL   : return   "bool"; break;
-      case TYPE_BYTE   : return   "byte"; break;
-      case TYPE_I16    : return    "i16"; break;
-      case TYPE_I32    : return    "i32"; break;
-      case TYPE_I64    : return    "164"; break;
-      case TYPE_DOUBLE : return "double"; break;
-      default:
-        throw "BUG: Can't get fingerprint material for this base type.";
+    std::string rv = t_base_name(base_);
+    if (rv == "(unknown)") {
+      throw "BUG: Can't get fingerprint material for this base type.";
+    }
+    return rv;
+  }
+
+  static std::string t_base_name(t_base tbase) {
+    switch (tbase) {
+      case TYPE_VOID   : return      "void"; break;
+      case TYPE_STRING : return    "string"; break;
+      case TYPE_BOOL   : return      "bool"; break;
+      case TYPE_BYTE   : return      "byte"; break;
+      case TYPE_I16    : return       "i16"; break;
+      case TYPE_I32    : return       "i32"; break;
+      case TYPE_I64    : return       "164"; break;
+      case TYPE_DOUBLE : return    "double"; break;
+      default          : return "(unknown)"; break;
     }
   }
 

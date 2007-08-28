@@ -146,7 +146,7 @@ string t_perl_generator::render_const_value(t_type* type, t_const_value* value) 
       }
       break;
     default:
-      throw "compiler error: no const of base type " + tbase;
+      throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
     out << value->get_integer();
@@ -1078,7 +1078,7 @@ void t_perl_generator::generate_deserialize_field(ofstream &out,
         out << "readDouble(\\$" << name << ");";
         break;
       default:
-        throw "compiler error: no PERL name for base type " + tbase;
+        throw "compiler error: no PERL name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "readI32(\\$" << name << ");";
@@ -1303,7 +1303,7 @@ void t_perl_generator::generate_serialize_field(ofstream &out,
         out << "writeDouble($" << name << ");";
         break;
       default:
-        throw "compiler error: no PERL name for base type " + tbase;
+        throw "compiler error: no PERL name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "writeI32($" << name << ");";
@@ -1471,7 +1471,7 @@ string t_perl_generator::declare_field(t_field* tfield, bool init, bool obj) {
         result += " = 0.0";
         break;
       default:
-        throw "compiler error: no PERL initializer for base type " + tbase;
+        throw "compiler error: no PERL initializer for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       result += " = 0";

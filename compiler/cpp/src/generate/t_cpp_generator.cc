@@ -326,7 +326,7 @@ string t_cpp_generator::render_const_value(ofstream& out, string name, t_type* t
       }
       break;
     default:
-      throw "compiler error: no const of base type " + tbase;
+      throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
     render << "(" << type_name(type) << ")" << value->get_integer();
@@ -2000,7 +2000,7 @@ void t_cpp_generator::generate_deserialize_field(ofstream& out,
       out << "readDouble(" << name << ");";
       break;
     default:
-      throw "compiler error: no C++ reader for base type " + tbase + name;
+      throw "compiler error: no C++ reader for base type " + t_base_type::t_base_name(tbase) + name;
     }
     out <<
       endl;
@@ -2208,7 +2208,7 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
         out << "writeDouble(" << name << ");";
         break;
       default:
-        throw "compiler error: no C++ writer for base type " + tbase + name;
+        throw "compiler error: no C++ writer for base type " + t_base_type::t_base_name(tbase) + name;
       }
     } else if (type->is_enum()) {
       out << "writeI32((int32_t)" << name << ");";
@@ -2489,7 +2489,7 @@ string t_cpp_generator::base_type_name(t_base_type::t_base tbase) {
   case t_base_type::TYPE_DOUBLE:
     return "double";
   default:
-    throw "compiler error: no C++ base type name for base type " + tbase;
+    throw "compiler error: no C++ base type name for base type " + t_base_type::t_base_name(tbase);
   }
 }
 
@@ -2534,7 +2534,7 @@ string t_cpp_generator::declare_field(t_field* tfield, bool init, bool pointer, 
         result += " = (double)0";
         break;
       default:
-        throw "compiler error: no C++ initializer for base type " + tbase;
+        throw "compiler error: no C++ initializer for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       result += " = (" + type_name(type) + ")0";

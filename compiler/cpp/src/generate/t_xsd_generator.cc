@@ -265,6 +265,6 @@ string t_xsd_generator::base_type_name(t_base_type::t_base tbase) {
   case t_base_type::TYPE_DOUBLE:
     return "decimal";
   default:
-    throw "compiler error: no C++ base type name for base type " + tbase;
+    throw "compiler error: no C++ base type name for base type " + t_base_type::t_base_name(tbase);
   }
 }

@@ -614,7 +614,7 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
       }
       break;
     default:
-      throw "compiler error: no const of base type " + tbase + name;
+      throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase) + name;
     }
   } else if (type->is_enum()) {
     if (value->get_type() != t_const_value::CV_INTEGER) {
