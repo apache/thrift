@@ -1,6 +1,6 @@
 #!/bin/sh
 
-subdirs="compiler/cpp lib/cpp lib/py"
+subdirs="compiler/cpp lib/cpp lib/py if"
 
 rm -rf \
 AUTHORS \

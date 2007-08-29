@@ -1,6 +1,6 @@
 #!/bin/sh
 
-subdirs="compiler/cpp lib/cpp lib/py"
+subdirs="compiler/cpp lib/cpp lib/py if"
 
 ./cleanup.sh
 echo "SUBDIRS = ${subdirs}" > Makefile.am
