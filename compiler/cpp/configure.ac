@@ -12,6 +12,8 @@ AC_CHECK_HEADERS([stddef.h])
 
 AX_BOOST_BASE([1.33.1])
 
+AC_CHECK_FUNCS([memset])
+
 AC_CHECK_FUNCS([mkdir])
 
 AC_CHECK_FUNCS([realpath])
@@ -27,6 +29,8 @@ AC_FUNC_STAT
 AC_FUNC_VPRINTF
 
 AC_TYPE_SIZE_T
+
+AC_C_INLINE
 
 AC_C_CONST
 
