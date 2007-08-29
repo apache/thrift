@@ -102,9 +102,13 @@ CXXFLAGS option in configure, as such:
 
         ./configure CXXFLAGS='-g -O2'
         ./configure CFLAGS='-g -O2'
-        ./configure CPPFLAGS='-g -O2'
+        ./configure CPPFLAGS='-DDEBUG_MY_FEATURE'
 
 Run ./configure --help to see other configuration options
+
+Please be aware that the Python library will ignore the --prefix option
+and just install wherever Python's distutils puts it (usually along
+the lines of /usr/lib/pythonX.Y/site-packages/).  DESTDIR is respected.
 
 Make thrift:
 
