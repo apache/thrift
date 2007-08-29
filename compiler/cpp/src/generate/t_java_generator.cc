@@ -400,6 +400,34 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   indent_down();
   indent(out) << "}" << endl << endl;
 
+  
+  // Full constructor for all fields
+  if (!members.empty()) {
+    indent(out) <<
+      "public " << tstruct->get_name() << "(" << endl;
+    indent_up();  
+    for (m_iter = members.begin(); m_iter != members.end(); ) {
+      indent(out) << type_name((*m_iter)->get_type()) << " " <<
+        (*m_iter)->get_name();
+      ++m_iter;
+      if (m_iter != members.end()) {
+        out << "," << endl;
+      }
+    }
+    out << ")" << endl;
+    indent_down();
+    indent(out) << "{" << endl;
+    indent_up();
+    indent(out) << "this();" << endl;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      indent(out) << "this." << (*m_iter)->get_name() << " = " <<
+        (*m_iter)->get_name() << ";" << endl;
+    }
+    indent_down();
+    indent(out) << "}" << endl << endl;
+  }
+
+
   generate_java_struct_reader(out, tstruct);
   if (is_result) {
     generate_java_struct_result_writer(out, tstruct);
@@ -1137,7 +1165,7 @@ void t_java_generator::generate_process_function(t_service* tservice,
     indent_down();
     f_service_ << indent() << "}";
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-      f_service_ << " catch (" << (*x_iter)->get_type()->get_name() << " " << (*x_iter)->get_name() << ") {" << endl;
+      f_service_ << " catch (" << type_name((*x_iter)->get_type(), false, false) << " " << (*x_iter)->get_name() << ") {" << endl;
       if (!tfunction->is_async()) {
         indent_up();
         f_service_ <<
@@ -1739,7 +1767,7 @@ string t_java_generator::function_signature(t_function* tfunction,
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
   for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-    result += (*x_iter)->get_type()->get_name() + ", ";
+    result += type_name((*x_iter)->get_type(), false, false) + ", ";
   }
   result += "TException";
   return result;
