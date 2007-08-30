@@ -15,6 +15,7 @@
 
 cpp_namespace facebook.thrift.reflection.limited
 java_package com.facebook.thrift.reflection.limited
+py_module thrift.reflection.limited
 
 enum TTypeTag {
   T_VOID   = 1,

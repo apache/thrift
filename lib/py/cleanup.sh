@@ -11,6 +11,7 @@ NEWS \
 aclocal.m4 \
 autom4te.cache \
 autoscan.log \
+build \
 config.guess \
 config.h \
 config.hin \
