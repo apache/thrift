@@ -72,9 +72,6 @@ class t_type : public t_doc {
     MD5Init(&ctx);
     MD5Update(&ctx, (unsigned char*)(material.data()), material.size());
     MD5Final(fingerprint_, &ctx);
-    //std::cout << get_name() << std::endl;
-    //std::cout << material << std::endl;
-    //std::cout << get_ascii_fingerprint() << std::endl << std::endl;
   }
 
   bool has_fingerprint() const {

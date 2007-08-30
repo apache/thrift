@@ -77,7 +77,7 @@ class t_struct : public t_type {
     std::string rv = "{";
     std::vector<t_field*>::const_iterator m_iter;
     for (m_iter = members_.begin(); m_iter != members_.end(); ++m_iter) {
-      rv += (**m_iter).get_fingerprint_material();
+      rv += (*m_iter)->get_fingerprint_material();
       rv += ";";
     }
     rv += "}";
@@ -88,7 +88,7 @@ class t_struct : public t_type {
     t_type::generate_fingerprint();
     std::vector<t_field*>::const_iterator m_iter;
     for (m_iter = members_.begin(); m_iter != members_.end(); ++m_iter) {
-      (**m_iter).get_type()->generate_fingerprint();
+      (*m_iter)->get_type()->generate_fingerprint();
     }
   }
 
