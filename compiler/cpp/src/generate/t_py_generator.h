@@ -12,7 +12,7 @@
 #include <iostream>
 #include <vector>
 
-#include "t_oop_generator.h"
+#include "t_generator.h"
 
 #define T_PY_DIR "gen-py"
 
@@ -21,10 +21,10 @@
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_py_generator : public t_oop_generator {
+class t_py_generator : public t_generator {
  public:
   t_py_generator(t_program* program) :
-    t_oop_generator(program) {}
+    t_generator(program) {}
 
   /**
    * Init and close methods
@@ -134,6 +134,14 @@ class t_py_generator : public t_oop_generator {
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
+
+  static std::string get_real_py_module(const t_program* program) {
+    std::string real_module = program->get_py_module();
+    if (real_module.empty()) {
+      return program->get_name();
+    }
+    return real_module;
+  }
 
  private:
 

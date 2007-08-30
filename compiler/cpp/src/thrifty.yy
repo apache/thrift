@@ -75,6 +75,7 @@ int y_field_val = -1;
 %token tok_cpp_include
 %token tok_cpp_type
 %token tok_php_namespace
+%token tok_py_module
 %token tok_perl_package
 %token tok_java_package
 %token tok_xsd_all
@@ -267,6 +268,13 @@ Header:
       pdebug("Header -> tok_php_namespace tok_identifier");
       if (g_parse_mode == PROGRAM) {
         g_program->set_php_namespace($2);
+      }
+    }
+| tok_py_module tok_identifier
+    {
+      pdebug("Header -> tok_py_module tok_identifier");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_py_module($2);
       }
     }
 | tok_perl_package tok_identifier

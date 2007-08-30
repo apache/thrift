@@ -20,10 +20,27 @@ using namespace std;
  */
 void t_py_generator::init_generator() {
   // Make output directory
-  mkdir(T_PY_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  string module = get_real_py_module(program_);
   package_dir_ = T_PY_DIR;
-  package_dir_ = package_dir_ + "/" + program_name_;
-  mkdir(package_dir_.c_str(), S_IREAD | S_IWRITE | S_IEXEC);
+  while (true) {
+    // TODO: Do better error checking here.
+    mkdir(package_dir_.c_str(), S_IREAD | S_IWRITE | S_IEXEC);
+    std::ofstream init_py((package_dir_+"/__init__.py").c_str());
+    init_py.close();
+    if (module.empty()) {
+      break;
+    }
+    string::size_type pos = module.find('.');
+    if (pos == string::npos) {
+      package_dir_ += "/";
+      package_dir_ += module;
+      module.clear();
+    } else {
+      package_dir_ += "/";
+      package_dir_ += module.substr(0, pos);
+      module.erase(0, pos+1);
+    }
+  }
 
   // Make output file
   string f_types_name = package_dir_+"/"+"ttypes.py";
@@ -52,7 +69,7 @@ void t_py_generator::init_generator() {
     render_includes() << endl <<
     "from thrift.transport import TTransport" << endl <<
     "from thrift.protocol import fastbinary" << endl <<
-    "from thrift.protocol import TBinaryProtocol" << endl;
+    "from thrift.protocol import TBinaryProtocol" << endl << endl << endl;
 
   f_consts_ <<
     py_autogen_comment() << endl <<
@@ -68,7 +85,7 @@ string t_py_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   for (size_t i = 0; i < includes.size(); ++i) {
-    result += "import " + includes[i]->get_name() + ".ttypes\n";
+    result += "import " + get_real_py_module(includes[i]) + ".ttypes\n";
   }
   if (includes.size() > 0) {
     result += "\n";
@@ -590,7 +607,8 @@ void t_py_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != NULL) {
     f_service_ <<
-      "import " << tservice->get_extends()->get_program()->get_name() << "." << tservice->get_extends()->get_name() << endl;
+      "import " << get_real_py_module(tservice->get_extends()->get_program()) <<
+      "." << tservice->get_extends()->get_name() << endl;
   }
 
   f_service_ <<
@@ -1597,9 +1615,9 @@ string t_py_generator::type_name(t_type* ttype) {
   t_program* program = ttype->get_program();
   if (program != NULL && program != program_) {
     if (ttype->is_service()) {
-      return program->get_name() + "." + ttype->get_name();
+      return get_real_py_module(program) + "." + ttype->get_name();
     } else {
-      return program->get_name() + ".ttypes." + ttype->get_name();
+      return get_real_py_module(program) + ".ttypes." + ttype->get_name();
     }
   }
   return ttype->get_name();

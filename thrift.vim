@@ -30,7 +30,7 @@ syn region thriftStringDouble matchgroup=None start=+"+  end=+"+
 syn match thriftNumber "-\=\<\d\+\>" contained
 
 " Keywords
-syn keyword thriftKeyword namespace cpp_namespace java_package php_namespace ruby_namespace perl_package
+syn keyword thriftKeyword namespace cpp_namespace java_package php_namespace ruby_namespace py_module perl_package
 syn keyword thriftKeyword xsd_all xsd_optional xsd_nillable xsd_namespace xsd_attrs
 syn keyword thriftKeyword include cpp_include cpp_type const optional required
 syn keyword thriftBasicTypes void bool byte i16 i32 i64 double string binary

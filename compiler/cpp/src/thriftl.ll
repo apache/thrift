@@ -72,6 +72,7 @@ sliteral     ("'"[^']*"'")
 "cpp_type"       { return tok_cpp_type;       }
 "java_package"   { return tok_java_package;   }
 "php_namespace"  { return tok_php_namespace;  }
+"py_module"      { return tok_py_module;      }
 "perl_package"   { return tok_perl_package;   }
 "ruby_namespace" { return tok_ruby_namespace; }
 "xsd_all"        { return tok_xsd_all;        }
