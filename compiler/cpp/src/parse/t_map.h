@@ -38,6 +38,12 @@ class t_map : public t_container {
       "," + val_type_->get_fingerprint_material() + ">";
   }
 
+  virtual void generate_fingerprint() {
+    t_type::generate_fingerprint();
+    key_type_->generate_fingerprint();
+    val_type_->generate_fingerprint();
+  }
+
  private:
   t_type* key_type_;
   t_type* val_type_;

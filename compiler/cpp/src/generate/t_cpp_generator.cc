@@ -559,9 +559,9 @@ void t_cpp_generator::generate_struct_fingerprint(ofstream& out,
         << "ascii_fingerprint" << comment << "= \"" <<
         tstruct->get_ascii_fingerprint() << "\";" << endl <<
       indent() << stat << "char " << nspace <<
-        "binary_fingerprint[" << t_struct::fingerprint_len << "]" << comment << "= {";
+        "binary_fingerprint[" << t_type::fingerprint_len << "]" << comment << "= {";
     char* comma = "";
-    for (int i = 0; i < t_struct::fingerprint_len; i++) {
+    for (int i = 0; i < t_type::fingerprint_len; i++) {
       out << comma << "0x" << t_struct::byte_to_hex(tstruct->get_binary_fingerprint()[i]);
       comma = ",";
     }

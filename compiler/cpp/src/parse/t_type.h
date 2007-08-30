@@ -10,6 +10,9 @@
 #include <string>
 #include "t_doc.h"
 
+// What's worse?  This, or making a src/parse/non_inlined.cc?
+#include "md5.h"
+
 class t_program;
 
 /**
@@ -50,10 +53,68 @@ class t_type : public t_doc {
     return program_;
   }
 
+
   // Return a string that uniquely identifies this type
   // from any other thrift type in the world, as far as
   // TDenseProtocol is concerned.
+  // We don't cache this, which is a little sloppy,
+  // but the compiler is so fast that it doesn't really matter.
   virtual std::string get_fingerprint_material() const = 0;
+
+  // Fingerprint should change whenever (and only when)
+  // the encoding via TDenseProtocol changes.
+  static const int fingerprint_len = 16;
+
+  // Call this before trying get_*_fingerprint().
+  virtual void generate_fingerprint() {
+    std::string material = get_fingerprint_material();
+    MD5_CTX ctx;
+    MD5Init(&ctx);
+    MD5Update(&ctx, (unsigned char*)(material.data()), material.size());
+    MD5Final(fingerprint_, &ctx);
+    //std::cout << get_name() << std::endl;
+    //std::cout << material << std::endl;
+    //std::cout << get_ascii_fingerprint() << std::endl << std::endl;
+  }
+
+  bool has_fingerprint() const {
+    for (int i = 0; i < fingerprint_len; i++) {
+      if (fingerprint_[i] != 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  const uint8_t* get_binary_fingerprint() const {
+    return fingerprint_;
+  }
+
+  std::string get_ascii_fingerprint() const {
+    std::string rv;
+    const uint8_t* fp = get_binary_fingerprint();
+    for (int i = 0; i < fingerprint_len; i++) {
+      rv += byte_to_hex(fp[i]);
+    }
+    return rv;
+  }
+
+  // This function will break (maybe badly) unless 0 <= num <= 16.
+  static char nybble_to_xdigit(int num) {
+    if (num < 10) {
+      return '0' + num;
+    } else {
+      return 'A' + num - 10;
+    }
+  }
+
+  static std::string byte_to_hex(uint8_t byte) {
+    std::string rv;
+    rv += nybble_to_xdigit(byte >> 4);
+    rv += nybble_to_xdigit(byte & 0x0f);
+    return rv;
+  }
+
 
  protected:
   t_type() {}
@@ -71,6 +132,7 @@ class t_type : public t_doc {
   t_program* program_;
   std::string name_;
 
+  uint8_t fingerprint_[fingerprint_len];
 };
 
 #endif
