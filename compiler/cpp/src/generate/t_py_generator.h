@@ -128,6 +128,7 @@ class t_py_generator : public t_generator {
   std::string py_autogen_comment();
   std::string py_imports();
   std::string render_includes();
+  std::string render_fastbinary_includes();
   std::string declare_field(t_field* tfield);
   std::string type_name(t_type* ttype);
   std::string function_signature(t_function* tfunction, std::string prefix="");

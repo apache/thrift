@@ -67,9 +67,8 @@ void t_py_generator::init_generator() {
     py_autogen_comment() << endl <<
     py_imports() << endl <<
     render_includes() << endl <<
-    "from thrift.transport import TTransport" << endl <<
-    "from thrift.protocol import fastbinary" << endl <<
-    "from thrift.protocol import TBinaryProtocol" << endl << endl << endl;
+    render_fastbinary_includes() <<
+    endl << endl;
 
   f_consts_ <<
     py_autogen_comment() << endl <<
@@ -91,6 +90,19 @@ string t_py_generator::render_includes() {
     result += "\n";
   }
   return result;
+}
+
+/**
+ * Renders all the imports necessary to use the accelerated TBinaryProtocol
+ */
+string t_py_generator::render_fastbinary_includes() {
+  return
+    "from thrift.transport import TTransport\n"
+    "from thrift.protocol import TBinaryProtocol\n"
+    "try:\n"
+    "  from thrift.protocol import fastbinary\n"
+    "except:\n"
+    "  fastbinary = None\n";
 }
 
 /**
@@ -361,6 +373,10 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
      TODO(dreiss): Consider making this work for structs with negative tags.
   */
 
+  // TODO(dreiss): Look into generating an empty tuple instead of None
+  // for structures with no members.
+  // TODO(dreiss): Test encoding of structs where some inner structs
+  // don't have thrift_spec.
   if (sorted_members.empty() || (sorted_members[0]->get_key() >= 0)) {
     indent(out) << "thrift_spec = (" << endl;
     indent_up();
@@ -386,7 +402,10 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
 
     indent_down();
     indent(out) << ")" << endl << endl;
+  } else {
+    indent(out) << "thrift_spec = None" << endl;
   }
+
 
   out <<
     indent() << "def __init__(self, d=None):" << endl;
@@ -466,7 +485,9 @@ void t_py_generator::generate_py_struct_reader(ofstream& out,
 
   indent(out) <<
     "if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated "
-    "and isinstance(iprot.trans, TTransport.CReadableTransport):" << endl;
+    "and isinstance(iprot.trans, TTransport.CReadableTransport) "
+    "and self.thrift_spec is not None "
+    "and fastbinary is not None:" << endl;
   indent_up();
 
   indent(out) <<
@@ -549,7 +570,9 @@ void t_py_generator::generate_py_struct_writer(ofstream& out,
   indent_up();
 
   indent(out) <<
-    "if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated:" << endl;
+    "if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated "
+    "and self.thrift_spec is not None "
+    "and fastbinary is not None:" << endl;
   indent_up();
 
   indent(out) <<
@@ -614,10 +637,8 @@ void t_py_generator::generate_service(t_service* tservice) {
   f_service_ <<
     "from ttypes import *" << endl <<
     "from thrift.Thrift import TProcessor" << endl <<
-    "from thrift.transport import TTransport" << endl <<
-    "from thrift.protocol import fastbinary" << endl <<
-    "from thrift.protocol import TBinaryProtocol" << endl <<
-    endl;
+    render_fastbinary_includes() <<
+    endl << endl;
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_interface(tservice);

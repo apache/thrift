@@ -7,8 +7,11 @@
 from thrift.Thrift import *
 
 from thrift.transport import TTransport
-from thrift.protocol import fastbinary
 from thrift.protocol import TBinaryProtocol
+try:
+  from thrift.protocol import fastbinary
+except:
+  fastbinary = None
 
 
 class TTypeTag:
@@ -45,7 +48,7 @@ class SimpleType:
         self.name = d['name']
 
   def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
       fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
       return
     iprot.readStructBegin()
@@ -69,7 +72,7 @@ class SimpleType:
     iprot.readStructEnd()
 
   def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated:
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('SimpleType')
@@ -118,7 +121,7 @@ class ContainerType:
         self.subtype2 = d['subtype2']
 
   def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
       fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
       return
     iprot.readStructBegin()
@@ -149,7 +152,7 @@ class ContainerType:
     iprot.readStructEnd()
 
   def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated:
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('ContainerType')
@@ -202,7 +205,7 @@ class ThriftType:
         self.container_type = d['container_type']
 
   def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
       fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
       return
     iprot.readStructBegin()
@@ -233,7 +236,7 @@ class ThriftType:
     iprot.readStructEnd()
 
   def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated:
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('ThriftType')
@@ -286,7 +289,7 @@ class Argument:
         self.type = d['type']
 
   def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
       fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
       return
     iprot.readStructBegin()
@@ -316,7 +319,7 @@ class Argument:
     iprot.readStructEnd()
 
   def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated:
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('Argument')
@@ -369,7 +372,7 @@ class Method:
         self.arguments = d['arguments']
 
   def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
       fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
       return
     iprot.readStructBegin()
@@ -405,7 +408,7 @@ class Method:
     iprot.readStructEnd()
 
   def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated:
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('Method')
@@ -461,7 +464,7 @@ class Service:
         self.fully_reflected = d['fully_reflected']
 
   def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
       fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
       return
     iprot.readStructBegin()
@@ -496,7 +499,7 @@ class Service:
     iprot.readStructEnd()
 
   def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated:
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('Service')

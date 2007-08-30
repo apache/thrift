@@ -219,7 +219,7 @@ class TBinaryProtocolAccelerated(TBinaryProtocol):
   our C module to do the encoding, bypassing this object entirely.
   We inherit from TBinaryProtocol so that the normal TBinaryProtocol
   encoding can happen if the fastbinary module doesn't work for some
-  reason.  (TODO(dreiss): Make this happen sanely.)
+  reason.  (TODO(dreiss): Make this happen sanely in more cases.)
 
   In order to take advantage of the C module, just use
   TBinaryProtocolAccelerated instead of TBinaryProtocol.
