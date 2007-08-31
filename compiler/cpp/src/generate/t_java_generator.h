@@ -16,6 +16,7 @@
 
 // TODO(mcslee: Paramaterize the output dir
 #define T_JAVA_DIR "gen-java"
+#define T_JAVABEAN_DIR "gen-javabean"
 
 /**
  * Java code generator.
@@ -24,8 +25,9 @@
  */
 class t_java_generator : public t_oop_generator {
  public:
-  t_java_generator(t_program* program) :
-    t_oop_generator(program) {}
+  t_java_generator(t_program* program, bool bean_style=false) :
+    t_oop_generator(program),
+    bean_style_(bean_style) {}
 
   /**
    * Init and close methods
@@ -60,6 +62,7 @@ class t_java_generator : public t_oop_generator {
   void generate_java_struct_result_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_tostring(std::ofstream& out, t_struct* tstruct);
+  void generate_java_bean_boilerplate(std::ofstream& out, t_struct* tstruct);
 
   void generate_function_helpers(t_function* tfunction);
 
@@ -156,6 +159,9 @@ class t_java_generator : public t_oop_generator {
   std::string package_name_;
   std::ofstream f_service_;
   std::string package_dir_;
+
+  bool bean_style_;
+
 };
 
 #endif

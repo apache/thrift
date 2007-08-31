@@ -18,11 +18,12 @@ using namespace std;
  */
 void t_java_generator::init_generator() {
   // Make output directory
-  mkdir(T_JAVA_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  const char* java_dir = bean_style_ ? T_JAVABEAN_DIR : T_JAVA_DIR;
+  mkdir(java_dir, S_IREAD | S_IWRITE | S_IEXEC);
   package_name_ = program_->get_java_package();
 
   string dir = package_name_;
-  string subdir = T_JAVA_DIR;
+  string subdir = java_dir;
   string::size_type loc;
   while ((loc = dir.find(".")) != string::npos) {
     subdir = subdir + "/" + dir.substr(0, loc);
@@ -362,12 +363,16 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   
   scope_up(out);
 
-  // Members are public
+  // Members are public for -java, private for -javabean
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter; 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    indent(out) <<
-      "public " << declare_field(*m_iter, false) << endl;
+    if (bean_style_) {
+      indent(out) << "private ";
+    } else {
+      indent(out) << "public ";
+    }
+    out << declare_field(*m_iter, false) << endl;
   }
 
   // Inner Isset class
@@ -400,7 +405,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   indent_down();
   indent(out) << "}" << endl << endl;
 
-  
+
   // Full constructor for all fields
   if (!members.empty()) {
     indent(out) <<
@@ -422,12 +427,15 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       indent(out) << "this." << (*m_iter)->get_name() << " = " <<
         (*m_iter)->get_name() << ";" << endl;
+      indent(out) << "this.__isset." << (*m_iter)->get_name() << " = true;" << endl;
     }
     indent_down();
     indent(out) << "}" << endl << endl;
   }
 
-
+  if (bean_style_) {
+    generate_java_bean_boilerplate(out, tstruct);
+  }
   generate_java_struct_reader(out, tstruct);
   if (is_result) {
     generate_java_struct_result_writer(out, tstruct);
@@ -661,6 +669,113 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
   out <<
     indent() << "}" << endl <<
     endl;
+}
+
+/**
+ * Generates a set of Java Bean boilerplate functions (setters, getters, etc.)
+ * for the given struct.
+ *
+ * @param tstruct The struct definition
+ */
+void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
+                                                      t_struct* tstruct) {
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field* field = *f_iter;
+    t_type* type = get_true_type(field->get_type());
+    std::string field_name = field->get_name();
+    std::string cap_name = field_name;
+    cap_name[0] = toupper(cap_name[0]);
+
+    if (type->is_set() || type->is_list()) {
+
+      t_type* element_type;
+      if (type->is_set()) {
+        element_type = ((t_set*)type)->get_elem_type();
+      } else {
+        element_type = ((t_list*)type)->get_elem_type();
+      }
+
+      // Iterator getter for sets and lists
+      indent(out) << "public java.util.Iterator get" << cap_name << "() {" <<
+        endl;
+      indent_up();
+      indent(out) << "return (this." << field_name << " == null) ? null : " << 
+        "this." << field_name << ".iterator();" << endl;
+      indent_down();
+      indent(out) << "}" << endl << endl;
+
+      // Add to set or list, create if the set/list is null
+      indent(out) << "public void addTo" << cap_name << "(" <<
+        type_name(element_type) <<
+        " elem) {" << endl;
+      indent_up();
+      indent(out) << "if (this." << field_name << " == null) {" << endl;
+      indent_up();
+      indent(out) << "this." << field_name << " = new " << type_name(type) <<
+        "();" << endl;
+      indent_down();
+      indent(out) << "}" << endl;
+      indent(out) << "this." << field_name << ".add(elem);" << endl;
+      indent(out) << "this.__isset." << field_name << " = true;" << endl;
+      indent_down();
+      indent(out) << "}" << endl << endl;
+
+    } else if (type->is_map()) {
+      // Put to map
+      t_type* key_type = ((t_map*)type)->get_key_type();
+      t_type* val_type = ((t_map*)type)->get_val_type();
+      indent(out) << "public void putTo" << cap_name << "(" <<
+        type_name(key_type) << " key, " <<
+        type_name(val_type) << " val) {" << endl;
+      indent_up();
+      indent(out) << "if (this." << field_name << " == null) {" << endl;
+      indent_up();
+      indent(out) << "this." << field_name << " = new " <<
+        type_name(type, false, true) << "();" << endl;
+      indent_down();
+      indent(out) << "}" << endl;
+      indent(out) << "this." << field_name << ".put(key, val);" << endl;
+      indent(out) << "this.__isset." << field_name << " = true;" << endl;
+      indent_down();
+      indent(out) << "}" << endl << endl;
+    }
+
+    // Simple getter
+    indent(out) << "public " << type_name(type);
+    if (type->is_base_type() &&
+        ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
+      out << " is";
+    } else {
+      out << " get";
+    }
+    out << cap_name << "() {" << endl;
+    indent_up();
+    indent(out) << "return this." << field_name << ";" << endl;
+    indent_down();
+    indent(out) << "}" << endl << endl;
+
+    // Simple setter
+    indent(out) << "public void set" << cap_name << "(" << type_name(type) <<
+      " " << field_name << ") {" << endl;
+    indent_up();
+    indent(out) << "this." << field_name << " = " << field_name << ";" <<
+      endl;
+    indent(out) << "this.__isset." << field_name << " = true;" << endl;
+    indent_down();
+    indent(out) << "}" << endl << endl;
+
+    // Unsetter
+    indent(out) << "public void unset" << cap_name << "() {" << endl;
+    indent_up();
+    if (type->is_container() || type->is_struct() || type->is_xception()) {
+      indent(out) << "this." << field_name << " = null;" << endl;
+    }
+    indent(out) << "this.__isset." << field_name << " = false;" << endl;
+    indent_down();
+    indent(out) << "}" << endl << endl;
+  }
 }
 
 /**

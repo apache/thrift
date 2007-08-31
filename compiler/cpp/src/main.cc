@@ -131,6 +131,7 @@ int g_doctext_lineno;
  */
 bool gen_cpp = false;
 bool gen_java = false;
+bool gen_javabean = false;
 bool gen_rb = false;
 bool gen_py = false;
 bool gen_xsd = false;
@@ -542,6 +543,7 @@ void usage() {
   fprintf(stderr, "Options:\n");
   fprintf(stderr, "  -cpp        Generate C++ output files\n");
   fprintf(stderr, "  -java       Generate Java output files\n");
+  fprintf(stderr, "  -javabean   Generate Java bean-style output files\n");
   fprintf(stderr, "  -php        Generate PHP output files\n");
   fprintf(stderr, "  -phpi       Generate PHP inlined files\n");
   fprintf(stderr, "  -py         Generate Python output files\n");
@@ -773,7 +775,14 @@ void generate(t_program* program) {
 
     if (gen_java) {
       pverbose("Generating Java\n");
-      t_java_generator* java = new t_java_generator(program);
+      t_java_generator* java = new t_java_generator(program, false);
+      java->generate_program();
+      delete java;
+    }
+
+    if (gen_javabean) {
+      pverbose("Generating Java Beans\n");
+      t_java_generator* java = new t_java_generator(program, true);
       java->generate_program();
       delete java;
     }
@@ -891,6 +900,8 @@ int main(int argc, char** argv) {
         gen_recurse = true;
       } else if (strcmp(arg, "-cpp") == 0) {
         gen_cpp = true;
+      } else if (strcmp(arg, "-javabean") == 0) {
+        gen_javabean = true;
       } else if (strcmp(arg, "-java") == 0) {
         gen_java = true;
       } else if (strcmp(arg, "-php") == 0) {
@@ -933,7 +944,7 @@ int main(int argc, char** argv) {
   }
 
   // You gotta generate something!
-  if (!gen_cpp && !gen_java && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_ocaml && !gen_erl && !gen_hs) {
+  if (!gen_cpp && !gen_java && !gen_javabean && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_ocaml && !gen_erl && !gen_hs) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
