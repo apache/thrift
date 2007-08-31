@@ -380,7 +380,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     out <<
       endl <<
       indent() << "public final Isset __isset = new Isset();" << endl <<
-      indent() << "public final class Isset {" << endl;
+      indent() << "public static final class Isset {" << endl;
     indent_up();
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         indent(out) <<
@@ -461,10 +461,10 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  // Declare stack tmp variables
+  // Declare stack tmp variables and read struct header
   out <<
     indent() << "TField field;" << endl <<
-    indent() << "TStruct struct = iprot.readStructBegin();" << endl;
+    indent() << "iprot.readStructBegin();" << endl;
   
   // Loop over reading in fields
   indent(out) <<
@@ -550,11 +550,12 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  out <<
-    indent() << "TStruct struct = new TStruct(\"" << name << "\");" << endl <<
-    indent() << "TField field = new TField();" << endl <<
-    indent() << "oprot.writeStructBegin(struct);" << endl;
+  indent(out) << "TStruct struct = new TStruct(\"" << name << "\");" << endl;
+  indent(out) << "oprot.writeStructBegin(struct);" << endl;
 
+  if (!fields.empty()) {
+    indent(out) << "TField field = new TField();" << endl;
+  }
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     bool null_allowed = type_can_be_null((*f_iter)->get_type());
     if (null_allowed) {
@@ -610,11 +611,12 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  out <<
-    indent() << "TStruct struct = new TStruct(\"" << name << "\");" << endl <<
-    indent() << "TField field = new TField();" << endl <<
-    indent() << "oprot.writeStructBegin(struct);" << endl;
+  indent(out) << "TStruct struct = new TStruct(\"" << name << "\");" << endl;
+  indent(out) << "oprot.writeStructBegin(struct);" << endl;
 
+  if (!fields.empty()) {
+    indent(out) << "TField field = new TField();" << endl;
+  }
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
