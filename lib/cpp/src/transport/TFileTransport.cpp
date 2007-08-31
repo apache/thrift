@@ -499,6 +499,7 @@ bool TFileTransport::readEvent() {
       // read error
       if (readState_.bufferLen_ == -1) {
         readState_.resetAllValues();
+        currentEvent_ = NULL;
         GlobalOutput("TFileTransport: error while reading from file");
         throw TTransportException("TFileTransport: error while reading from file");
       } else if (readState_.bufferLen_ == 0) {  // EOF
@@ -509,11 +510,13 @@ bool TFileTransport::readEvent() {
         } else if (readTimeout_ == NO_TAIL_READ_TIMEOUT) {
           // reset state
           readState_.resetState(0);
+          currentEvent_ = NULL;
           return false;
         } else if (readTimeout_ > 0) {
           // timeout already expired once
           if (readTries > 0) {
             readState_.resetState(0);
+            currentEvent_ = NULL;
             return false;
           } else {
             usleep(readTimeout_ * 1000);
@@ -652,6 +655,7 @@ void TFileTransport::performRecovery() {
       // pretty hosed at this stage, rewind the file back to the last successful 
       // point and punt on the error 
       readState_.resetState(readState_.lastDispatchPtr_);
+      currentEvent_ = NULL;
       char errorMsg[1024];
       sprintf(errorMsg, "TFileTransport: log file corrupted at offset: %lu", 
               offset_ + readState_.lastDispatchPtr_);
@@ -699,6 +703,7 @@ void TFileTransport::seekToChunk(int32_t chunk) {
   off_t newOffset = off_t(chunk) * chunkSize_;
   offset_ = lseek(fd_, newOffset, SEEK_SET);  
   readState_.resetAllValues();
+  currentEvent_ = NULL;
   if (offset_ == -1) {
     GlobalOutput("TFileTransport: lseek error in seekToChunk");
     throw TTransportException("TFileTransport: lseek error in seekToChunk");
