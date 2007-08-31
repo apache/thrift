@@ -329,13 +329,16 @@ void t_rb_generator::generate_field_defns(std::ofstream& out, t_struct* tstruct)
 }
 
 void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type, const std::string& field_name = "") {
+  field_type = get_true_type(field_type);
+
   // Begin this field's defn
   out << "{:type => " << type_to_enum(field_type);
     
-  if (!field_name.empty())
+  if (!field_name.empty()) {
     out << ", :name => '" << field_name << "'";
+  }
 
-  if (! field_type->is_base_type()) {
+  if (!field_type->is_base_type()) {
     if (field_type->is_struct() || field_type->is_xception()) {
       out << ", :class => " << type_name(((t_struct*)field_type));
     } else if (field_type->is_list()) {
