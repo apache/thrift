@@ -12,10 +12,9 @@ libthrift_sources = src/Thrift.cpp \
                     src/concurrency/PosixThreadFactory.cpp \
                     src/concurrency/ThreadManager.cpp \
                     src/concurrency/TimerManager.cpp \
-                    src/processor/PeekProcessor.cpp \
                     src/protocol/TBinaryProtocol.cpp \
                     src/protocol/TDebugProtocol.cpp \
-										src/transport/TTransportException.cpp \
+		    src/transport/TTransportException.cpp \
                     src/transport/TFileTransport.cpp \
                     src/transport/THttpClient.cpp \
                     src/transport/TSocket.cpp \
@@ -24,7 +23,9 @@ libthrift_sources = src/Thrift.cpp \
                     src/transport/TTransportUtils.cpp \
                     src/server/TSimpleServer.cpp \
                     src/server/TThreadPoolServer.cpp \
-                    src/server/TThreadedServer.cpp
+                    src/server/TThreadedServer.cpp \
+                    src/processor/PeekProcessor.cpp
+
 
 libthriftnb_sources = src/server/TNonblockingServer.cpp
 
@@ -83,6 +84,11 @@ include_server_HEADERS = \
                          src/server/TThreadPoolServer.h \
                          src/server/TThreadedServer.h \
                          src/server/TNonblockingServer.h
+
+include_processordir = $(include_thriftdir)/processor
+include_processor_HEADERS = \
+                         src/processor/PeekProcessor.h \
+                         src/processor/StatsProcessor.h
 
 bin_PROGRAMS = concurrency_test
 
