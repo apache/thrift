@@ -448,7 +448,7 @@ uint32_t TFileTransport::readAll(uint8_t* buf, uint32_t len) {
 uint32_t TFileTransport::read(uint8_t* buf, uint32_t len) {
   // check if there an event is ready to be read
   if (!currentEvent_) {
-    readEvent();
+    currentEvent_ = readEvent();
   }
   
   // did not manage to read an event from the file. This could have happened
@@ -467,7 +467,7 @@ uint32_t TFileTransport::read(uint8_t* buf, uint32_t len) {
              remaining);
     }
     delete(currentEvent_);
-    currentEvent_ = 0;
+    currentEvent_ = NULL;
     return remaining;
   }
   
@@ -477,7 +477,7 @@ uint32_t TFileTransport::read(uint8_t* buf, uint32_t len) {
   return len;
 }
 
-bool TFileTransport::readEvent() {
+eventInfo* TFileTransport::readEvent() {
   int readTries = 0;
 
   if (!readBuff_) {
@@ -499,7 +499,6 @@ bool TFileTransport::readEvent() {
       // read error
       if (readState_.bufferLen_ == -1) {
         readState_.resetAllValues();
-        currentEvent_ = NULL;
         GlobalOutput("TFileTransport: error while reading from file");
         throw TTransportException("TFileTransport: error while reading from file");
       } else if (readState_.bufferLen_ == 0) {  // EOF
@@ -510,14 +509,12 @@ bool TFileTransport::readEvent() {
         } else if (readTimeout_ == NO_TAIL_READ_TIMEOUT) {
           // reset state
           readState_.resetState(0);
-          currentEvent_ = NULL;
-          return false;
+          return NULL;
         } else if (readTimeout_ > 0) {
           // timeout already expired once
           if (readTries > 0) {
             readState_.resetState(0);
-            currentEvent_ = NULL;
-            return false;
+            return NULL;
           } else {
             usleep(readTimeout_ * 1000);
             readTries++;
@@ -587,14 +584,14 @@ bool TFileTransport::readEvent() {
         // check if the event has been read in full
         if (readState_.event_->eventBuffPos_ == readState_.event_->eventSize_) {
           // set the completed event to the current event
-          currentEvent_ = readState_.event_;
-          currentEvent_->eventBuffPos_ = 0;
+          eventInfo* completeEvent = readState_.event_;
+          completeEvent->eventBuffPos_ = 0;
           
-          readState_.event_ = 0;
+          readState_.event_ = NULL;
           readState_.resetState(readState_.bufferPtr_);
           
           // exit criteria
-          return true;
+          return completeEvent;
         }
       }
     }

@@ -272,7 +272,7 @@ class TFileTransport : public TFileReaderTransport,
   void writerThread();
 
   // helper functions for reading from a file
-  bool readEvent();
+  eventInfo* readEvent();
 
   // event corruption-related functions
   bool isEventCorrupted();
