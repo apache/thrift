@@ -142,6 +142,7 @@ bool gen_perl = false;
 bool gen_ocaml = false;
 bool gen_erl = false;
 bool gen_hs = false;
+bool gen_dense = false;
 bool gen_recurse = false;
 
 /**
@@ -525,6 +526,13 @@ void generate_all_fingerprints(t_program* program) {
     st->generate_fingerprint();
   }
 
+  const vector<t_struct*>& xceptions = program->get_xceptions();
+  vector<t_struct*>::const_iterator x_iter;
+  for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+    t_struct* st = *x_iter;
+    st->generate_fingerprint();
+  }
+
   // If you want to generate fingerprints for implicit structures, start here.
   /*
   const vector<t_service*>& services = program->get_services();
@@ -553,8 +561,10 @@ void usage() {
   fprintf(stderr, "  -ocaml      Generate OCaml output files\n");
   fprintf(stderr, "  -erl        Generate Erlang output files\n");
   fprintf(stderr, "  -hs         Generate Haskell output files\n");
-  fprintf(stderr, "  -I dir      Add a directory to the list of directories \n");
+  fprintf(stderr, "  -I dir      Add a directory to the list of directories\n");
   fprintf(stderr, "                searched for include directives\n");
+  fprintf(stderr, "  -dense      Generate metadata for TDenseProtocol (C++)\n");
+  fprintf(stderr, "  -rest       Generate PHP REST processors (with -php)\n");
   fprintf(stderr, "  -nowarn     Suppress all compiler warnings (BAD!)\n");
   fprintf(stderr, "  -strict     Strict compiler warnings on\n");
   fprintf(stderr, "  -v[erbose]  Verbose mode\n");
@@ -768,7 +778,7 @@ void generate(t_program* program) {
 
     if (gen_cpp) {
       pverbose("Generating C++\n");
-      t_cpp_generator* cpp = new t_cpp_generator(program);
+      t_cpp_generator* cpp = new t_cpp_generator(program, gen_dense);
       cpp->generate_program();
       delete cpp;
     }
@@ -898,6 +908,8 @@ int main(int argc, char** argv) {
         g_verbose = 1;
       } else if (strcmp(arg, "-r") == 0 || strcmp(arg, "-recurse") == 0 ) {
         gen_recurse = true;
+      } else if (strcmp(arg, "-dense") == 0) {
+        gen_dense = true;
       } else if (strcmp(arg, "-cpp") == 0) {
         gen_cpp = true;
       } else if (strcmp(arg, "-javabean") == 0) {

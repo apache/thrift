@@ -134,6 +134,12 @@ protected:
 };
 
 
+// Forward declare this structure used by TDenseProtocol
+namespace reflection { namespace local {
+struct TypeSpec;
+}}
+
+
 }} // facebook::thrift
 
 #endif // #ifndef _THRIFT_THRIFT_H_

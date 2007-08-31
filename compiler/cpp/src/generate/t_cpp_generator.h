@@ -24,8 +24,9 @@
  */
 class t_cpp_generator : public t_oop_generator {
  public:
-  t_cpp_generator(t_program* program) :
-    t_oop_generator(program) {}
+  t_cpp_generator(t_program* program, bool gen_dense) :
+    t_oop_generator(program),
+    gen_dense_(gen_dense) {}
 
   /**
    * Init and close methods
@@ -146,6 +147,10 @@ class t_cpp_generator : public t_oop_generator {
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
+  std::string local_reflection_name(const char*, t_type* ttype);
+
+  // This handles checking gen_dense_ and checking for duplicates.
+  void generate_local_reflection(std::ofstream& out, t_type* ttype, bool is_definition);
 
   bool is_complex_type(t_type* ttype) {
     ttype = get_true_type(ttype);
@@ -158,6 +163,11 @@ class t_cpp_generator : public t_oop_generator {
   }
 
  private:
+
+  /**
+   * True iff we should generate local reflection metadata for TDenseProtocol.
+   */
+  bool gen_dense_;
 
   /**
    * Strings for namespace, computed once up front then used directly
@@ -175,6 +185,11 @@ class t_cpp_generator : public t_oop_generator {
   std::ofstream f_types_impl_;
   std::ofstream f_header_;
   std::ofstream f_service_;
+
+  /**
+   * When generating local reflections, make sure we don't generate duplicates.
+   */
+  std::set<std::string> reflected_fingerprints_;
 };
 
 #endif

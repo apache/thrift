@@ -4,7 +4,8 @@
 // See accompanying file LICENSE or visit the Thrift site at:
 // http://developers.facebook.com/thrift/
 
-#include <stdlib.h>
+#include <cstdlib>
+#include <cassert>
 #include <sys/stat.h>
 #include <sstream>
 #include <boost/lexical_cast.hpp>
@@ -39,7 +40,7 @@ void t_cpp_generator::init_generator() {
     "#ifndef " << program_name_ << "_TYPES_H" << endl <<
     "#define " << program_name_ << "_TYPES_H" << endl <<
     endl;
-  
+
   // Include base types
   f_types_ <<
     "#include <Thrift.h>" << endl <<
@@ -64,11 +65,19 @@ void t_cpp_generator::init_generator() {
   }
   f_types_ <<
     endl;
-  
+
   // Include the types file
   f_types_impl_ <<
     "#include \"" << program_name_ << "_types.h\"" << endl <<
     endl;
+
+  // If we are generating local reflection metadata, we need to include
+  // the definition of TypeSpec.
+  if (gen_dense_) {
+    f_types_impl_ <<
+      "#include <TReflectionLocal.h>" << endl <<
+      endl;
+  }
 
   // Open namespace
   ns_open_ = namespace_open(program_->get_cpp_namespace());
@@ -97,7 +106,7 @@ void t_cpp_generator::close_generator() {
   // Close ifndef
   f_types_ <<
     "#endif" << endl;
- 
+
   // Close output file
   f_types_.close();
   f_types_impl_.close();
@@ -199,7 +208,7 @@ void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
   }
   indent_down();
   f_consts <<
-    "};" << endl;  
+    "};" << endl;
 
   f_consts_impl <<
     "const " << program_name_ << "Constants g_" << program_name_ << "_constants;" << endl <<
@@ -350,6 +359,8 @@ string t_cpp_generator::render_const_value(ofstream& out, string name, t_type* t
 void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) {
   generate_struct_definition(f_types_, tstruct, is_exception);
   generate_struct_fingerprint(f_types_impl_, tstruct, true);
+  generate_local_reflection(f_types_, tstruct, false);
+  generate_local_reflection(f_types_impl_, tstruct, true);
   generate_struct_reader(f_types_impl_, tstruct);
   generate_struct_writer(f_types_impl_, tstruct);
 }
@@ -382,9 +393,9 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   generate_struct_fingerprint(out, tstruct, false);
 
   // Get members
-  vector<t_field*>::const_iterator m_iter; 
+  vector<t_field*>::const_iterator m_iter;
   const vector<t_field*>& members = tstruct->get_members();
-  
+
   if (!pointers) {
     // Default constructor
     indent(out) <<
@@ -429,7 +440,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     }
     scope_down(out);
   }
-  
+
   out <<
     endl <<
     indent() << "virtual ~" << tstruct->get_name() << "() throw() {}" << endl << endl;
@@ -439,7 +450,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     indent(out) <<
       declare_field(*m_iter, false, pointers && !(*m_iter)->get_type()->is_xception(), !read) << endl;
   }
-  
+
   // Isset struct has boolean fields, but only for non-required fields.
   bool has_nonrequired_fields = false;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -452,7 +463,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       endl <<
       indent() << "struct __isset {" << endl;
     indent_up();
-      
+
       indent(out) <<
         "__isset() : ";
       bool first = true;
@@ -470,7 +481,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
         }
       }
       out << " {}" << endl;
-      
+
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         if ((*m_iter)->get_req() != t_field::REQUIRED) {
           indent(out) <<
@@ -480,7 +491,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
 
     indent_down();
     indent(out) <<
-      "} __isset;" << endl;  
+      "} __isset;" << endl;
   }
 
   out << endl;
@@ -527,7 +538,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   }
   out << endl;
 
-  indent_down(); 
+  indent_down();
   indent(out) <<
     "};" << endl <<
     endl;
@@ -570,6 +581,106 @@ void t_cpp_generator::generate_struct_fingerprint(ofstream& out,
 }
 
 /**
+ * Writes the local reflection of a type (either declaration or definition).
+ */
+void t_cpp_generator::generate_local_reflection(std::ofstream& out,
+                                                t_type* ttype,
+                                                bool is_definition) {
+  if (!gen_dense_) {
+    return;
+  }
+  ttype = get_true_type(ttype);
+  assert(ttype->has_fingerprint());
+  string key = ttype->get_ascii_fingerprint() + (is_definition ? "-defn" : "-decl");
+  // Note that we have generated this fingerprint.  If we already did, bail out.
+  if (!reflected_fingerprints_.insert(key).second) {
+    return;
+  }
+  // Let each program handle its own structures.
+  if (ttype->get_program() != NULL && ttype->get_program() != program_) {
+    return;
+  }
+
+  // Do dependencies.
+  if (ttype->is_list()) {
+    generate_local_reflection(out, ((t_list*)ttype)->get_elem_type(), is_definition);
+  } else if (ttype->is_set()) {
+    generate_local_reflection(out, ((t_set*)ttype)->get_elem_type(), is_definition);
+  } else if (ttype->is_map()) {
+    generate_local_reflection(out, ((t_map*)ttype)->get_key_type(), is_definition);
+    generate_local_reflection(out, ((t_map*)ttype)->get_val_type(), is_definition);
+  } else if (ttype->is_struct() || ttype->is_xception()) {
+    const vector<t_field*>& members = ((t_struct*)ttype)->get_members();
+    vector<t_field*>::const_iterator m_iter;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      generate_local_reflection(out, (**m_iter).get_type(), is_definition);
+    }
+
+    // For definitions of structures, do the arrays of tags and field specs also.
+    if (is_definition) {
+      indent(out) << "int16_t " << local_reflection_name("ftags", ttype) <<"[] = {" << endl;
+      indent_up();
+      indent(out);
+      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        out << (*m_iter)->get_key() << ", ";
+      }
+      indent_down();
+      out << endl << "};" << endl;
+
+      out <<
+        indent() << "facebook::thrift::reflection::local::TypeSpec*" << endl <<
+        indent() << local_reflection_name("specs", ttype) <<"[] = {" << endl;
+      indent_up();
+      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        indent(out) << "&" <<
+          local_reflection_name("typespec", (*m_iter)->get_type()) << "," << endl;
+      }
+      indent_down();
+      indent(out) << "};" << endl;
+    }
+  }
+
+  out <<
+    indent() << "// " << ttype->get_fingerprint_material() << endl <<
+    indent() << (is_definition ? "" : "extern ") <<
+      "facebook::thrift::reflection::local::TypeSpec" << endl <<
+      local_reflection_name("typespec", ttype) <<
+      (is_definition ? "(" : ";") << endl;
+
+  if (!is_definition) {
+    out << endl;
+    return;
+  }
+
+  indent_up();
+
+  indent(out) << type_to_enum(ttype);
+
+  if (ttype->is_struct()) {
+    out << "," << endl <<
+      indent() << ((t_struct*)ttype)->get_members().size() << "," << endl <<
+      indent() << local_reflection_name("ftags", ttype) << "," << endl <<
+      indent() << local_reflection_name("specs", ttype);
+  } else if (ttype->is_list()) {
+    out << "," << endl <<
+      indent() << "&" << local_reflection_name("typespec", ((t_list*)ttype)->get_elem_type()) << "," << endl <<
+      indent() << "NULL";
+  } else if (ttype->is_set()) {
+    out << "," << endl <<
+      indent() << "&" << local_reflection_name("typespec", ((t_set*)ttype)->get_elem_type()) << "," << endl <<
+      indent() << "NULL";
+  } else if (ttype->is_map()) {
+    out << "," << endl <<
+      indent() << "&" << local_reflection_name("typespec", ((t_map*)ttype)->get_key_type()) << "," << endl <<
+      indent() << "&" << local_reflection_name("typespec", ((t_map*)ttype)->get_val_type());
+  }
+
+  out << ");" << endl << endl;
+
+  indent_down();
+}
+
+/**
  * Makes a helper function to gen a struct reader.
  *
  * @param out Stream to write to
@@ -587,7 +698,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
 
   // Declare stack tmp variables
   out <<
-    endl << 
+    endl <<
     indent() << "uint32_t xfer = 0;" << endl <<
     indent() << "std::string fname;" << endl <<
     indent() << "facebook::thrift::protocol::TType ftype;" << endl <<
@@ -604,29 +715,29 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
       indent(out) << "bool isset_" << (*f_iter)->get_name() << " = false;" << endl;
   }
   out << endl;
-  
-  
+
+
   // Loop over reading in fields
   indent(out) <<
     "while (true)" << endl;
     scope_up(out);
-    
+
     // Read beginning field marker
     indent(out) <<
       "xfer += iprot->readFieldBegin(fname, ftype, fid);" << endl;
-    
+
     // Check for field STOP marker
     out <<
       indent() << "if (ftype == facebook::thrift::protocol::T_STOP) {" << endl <<
       indent() << "  break;" << endl <<
       indent() << "}" << endl;
-    
+
     // Switch statement on the field we are reading
     indent(out) <<
       "switch (fid)" << endl;
 
       scope_up(out);
-    
+
       // Generate deserialization code for known cases
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         indent(out) <<
@@ -667,13 +778,13 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
           indent() << "break;" << endl;
         indent_down();
       }
-      
+
       // In the default case we skip the field
       out <<
         indent() << "default:" << endl <<
         indent() << "  xfer += iprot->skip(ftype);" << endl <<
         indent() << "  break;" << endl;
-      
+
       scope_down(out);
 
     // Read field end marker
@@ -795,7 +906,7 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
       first = false;
-      out << 
+      out <<
         endl <<
         indent() << "if ";
     } else {
@@ -804,7 +915,7 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
     }
 
     out << "(this->__isset." << (*f_iter)->get_name() << ") {" << endl;
-    
+
     indent_up();
 
     // Write field header
@@ -849,7 +960,7 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
  */
 void t_cpp_generator::generate_service(t_service* tservice) {
   string svcname = tservice->get_name();
-  
+
   // Make output files
   string f_header_name = string(T_CPP_DIR)+"/"+svcname+".h";
   f_header_.open(f_header_name.c_str());
@@ -880,7 +991,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   f_service_ <<
     autogen_comment();
   f_service_ <<
-    "#include \"" << svcname << ".h\"" << endl << 
+    "#include \"" << svcname << ".h\"" << endl <<
     endl <<
     ns_open_ << endl <<
     endl;
@@ -917,7 +1028,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
  */
 void t_cpp_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
+  vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
     string name_orig = ts->get_name();
@@ -950,7 +1061,7 @@ void t_cpp_generator::generate_service_interface(t_service* tservice) {
   f_header_ <<
     "class " << service_name_ << "If" << extends << " {" << endl <<
     " public:" << endl;
-  indent_up(); 
+  indent_up();
   f_header_ <<
     indent() << "virtual ~" << service_name_ << "If() {}" << endl;
 
@@ -968,7 +1079,7 @@ void t_cpp_generator::generate_service_interface(t_service* tservice) {
   //scope_down(f_header_);
 
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
+  vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_header_ <<
       indent() << "virtual " << function_signature(*f_iter) << " = 0;" << endl;
@@ -991,11 +1102,11 @@ void t_cpp_generator::generate_service_null(t_service* tservice) {
   f_header_ <<
     "class " << service_name_ << "Null : virtual public " << service_name_ << "If" << extends << " {" << endl <<
     " public:" << endl;
-  indent_up(); 
+  indent_up();
   f_header_ <<
     indent() << "virtual ~" << service_name_ << "Null() {}" << endl;
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
+  vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_header_ <<
       indent() << function_signature(*f_iter) << " {" << endl;
@@ -1035,7 +1146,7 @@ void t_cpp_generator::generate_service_null(t_service* tservice) {
 void t_cpp_generator::generate_service_multiface(t_service* tservice) {
   // Generate the dispatch methods
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
+  vector<t_function*>::iterator f_iter;
 
   string extends = "";
   string extends_multiface = "";
@@ -1053,7 +1164,7 @@ void t_cpp_generator::generate_service_multiface(t_service* tservice) {
     extends_multiface << " {" << endl <<
     " public:" << endl;
   indent_up();
-  f_header_ << 
+  f_header_ <<
     indent() << service_name_ << "Multiface(" << list_type << "& ifaces) : ifaces_(ifaces) {" << endl;
   if (!extends.empty()) {
     f_header_ <<
@@ -1137,7 +1248,7 @@ void t_cpp_generator::generate_service_multiface(t_service* tservice) {
 
     f_header_ <<
       indent() << "}" << endl;
-    
+
     indent_down();
     f_header_ <<
       indent() << "}" << endl <<
@@ -1168,7 +1279,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     "class " << service_name_ << "Client : " <<
     "virtual public " << service_name_ << "If" <<
     extends_client << " {" << endl <<
-    " public:" << endl; 
+    " public:" << endl;
 
   indent_up();
   f_header_ <<
@@ -1200,7 +1311,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
   }
 
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::const_iterator f_iter; 
+  vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_function send_function(g_type_void,
                              string("send_") + (*f_iter)->get_name(),
@@ -1216,7 +1327,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     }
   }
   indent_down();
-  
+
   if (extends.empty()) {
     f_header_ <<
       " protected:" << endl;
@@ -1226,13 +1337,13 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
       indent() << "boost::shared_ptr<facebook::thrift::protocol::TProtocol> poprot_;"  << endl <<
       indent() << "facebook::thrift::protocol::TProtocol* iprot_;"  << endl <<
       indent() << "facebook::thrift::protocol::TProtocol* oprot_;"  << endl;
-    indent_down();  
+    indent_down();
   }
 
   f_header_ <<
     "};" << endl <<
     endl;
-  
+
   string scope = service_name_ + "Client::";
 
   // Generate client method implementations
@@ -1248,7 +1359,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
 
     // Get the struct of function call params
     t_struct* arg_struct = (*f_iter)->get_arglist();
-    
+
     // Declare the function arguments
     const vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator fld_iter;
@@ -1299,18 +1410,18 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
       indent() << "oprot_->writeMessageBegin(\"" << (*f_iter)->get_name() << "\", facebook::thrift::protocol::T_CALL, cseqid);" << endl <<
       endl <<
       indent() << argsname << " args;" << endl;
-    
+
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ <<
         indent() << "args." << (*fld_iter)->get_name() << " = &" << (*fld_iter)->get_name() << ";" << endl;
     }
-      
+
     f_service_ <<
       indent() << "args.write(oprot_);" << endl <<
       endl <<
       indent() << "oprot_->writeMessageEnd();" << endl <<
       indent() << "oprot_->getTransport()->flush();" << endl;
-       
+
     scope_down(f_service_);
     f_service_ << endl;
 
@@ -1407,7 +1518,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
         f_service_ <<
           indent() << "throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
-             
+
       // Close function
       scope_down(f_service_);
       f_service_ << endl;
@@ -1423,7 +1534,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
 void t_cpp_generator::generate_service_processor(t_service* tservice) {
   // Generate the dispatch methods
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
+  vector<t_function*>::iterator f_iter;
 
   string extends = "";
   string extends_processor = "";
@@ -1435,7 +1546,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
   // Generate the header portion
   f_header_ <<
     "class " << service_name_ << "Processor : " <<
-    "virtual public facebook::thrift::TProcessor" << 
+    "virtual public facebook::thrift::TProcessor" <<
     extends_processor << " {" << endl;
 
   // Protected data members
@@ -1476,7 +1587,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
   }
   indent_down();
 
-  f_header_ << 
+  f_header_ <<
     " public:" << endl <<
     indent() << service_name_ << "Processor(boost::shared_ptr<" << service_name_ << "If> iface) :" << endl;
   if (extends.empty()) {
@@ -1505,7 +1616,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
   f_service_ <<
     endl <<
     indent() << "facebook::thrift::protocol::TProtocol* iprot = piprot.get();" << endl <<
-    indent() << "facebook::thrift::protocol::TProtocol* oprot = poprot.get();" << endl <<    
+    indent() << "facebook::thrift::protocol::TProtocol* oprot = poprot.get();" << endl <<
     indent() << "std::string fname;" << endl <<
     indent() << "facebook::thrift::protocol::TMessageType mtype;" << endl <<
     indent() << "int32_t seqid;" << endl <<
@@ -1535,7 +1646,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
   f_service_ <<
     "bool " << service_name_ << "Processor::process_fn(facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid) {" << endl;
   indent_up();
-    
+
   // HOT: member function pointer map
   f_service_ <<
     indent() << "std::map<std::string, void (" << service_name_ << "Processor::*)(int32_t, facebook::thrift::protocol::TProtocol*, facebook::thrift::protocol::TProtocol*)>::iterator pfn;" << endl <<
@@ -1559,7 +1670,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
   f_service_ <<
     indent() << "} else {" << endl <<
     indent() << "  (this->*(pfn->second))(seqid, iprot, oprot);" << endl <<
-    indent() << "}" << endl;  
+    indent() << "}" << endl;
 
   // Read end of args field, the T_STOP, and the struct close
   f_service_ <<
@@ -1722,7 +1833,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     indent() << "oprot->writeMessageEnd();" << endl <<
     indent() << "oprot->getTransport()->flush();" << endl <<
     indent() << "oprot->getTransport()->writeEnd();" << endl;
-    
+
   // Close function
   scope_down(f_service_);
   f_service_ << endl;
@@ -1895,7 +2006,7 @@ void t_cpp_generator::generate_service_limited_reflector(t_service* tservice) {
  */
 void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
   string svcname = tservice->get_name();
-  
+
   // Service implementation file includes
   string f_skeleton_name = string(T_CPP_DIR)+"/"+svcname+"_server.skeleton.cpp";
 
@@ -1907,7 +2018,7 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
     "// This autogenerated skeleton file illustrates how to build a server." << endl <<
     "// You should copy it to another filename to avoid overwriting it." << endl <<
     endl <<
-    "#include \"" << svcname << ".h\"" << endl << 
+    "#include \"" << svcname << ".h\"" << endl <<
     "#include <protocol/TBinaryProtocol.h>" << endl <<
     "#include <server/TSimpleServer.h>" << endl <<
     "#include <transport/TServerSocket.h>" << endl <<
@@ -1920,7 +2031,7 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
     endl <<
     "using boost::shared_ptr;" << endl <<
     endl;
-  
+
   if (!ns.empty()) {
     f_skeleton <<
       "using namespace " << string(ns, 0, ns.size()-2) << ";" << endl <<
@@ -1971,7 +2082,7 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
   f_skeleton <<
     "}" << endl <<
     endl;
-  
+
   // Close the files
   f_skeleton.close();
 }
@@ -2059,16 +2170,16 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
                                                      t_type* ttype,
                                                      string prefix) {
   scope_up(out);
-  
+
   string size = tmp("_size");
   string ktype = tmp("_ktype");
   string vtype = tmp("_vtype");
   string etype = tmp("_etype");
-  
+
   indent(out) <<
     prefix << ".clear();" << endl <<
     indent() << "uint32_t " << size << ";" << endl;
-  
+
   // Declare variables, read header
   if (ttype->is_map()) {
     out <<
@@ -2094,9 +2205,9 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
   out <<
     indent() << "uint32_t " << i << ";" << endl <<
     indent() << "for (" << i << " = 0; " << i << " < " << size << "; ++" << i << ")" << endl;
-  
+
     scope_up(out);
-    
+
     if (ttype->is_map()) {
       generate_deserialize_map_element(out, (t_map*)ttype, prefix);
     } else if (ttype->is_set()) {
@@ -2104,7 +2215,7 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
     } else if (ttype->is_list()) {
       generate_deserialize_list_element(out, (t_list*)ttype, prefix);
     }
-    
+
     scope_down(out);
 
   // Read container end
@@ -2192,8 +2303,8 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
     throw "CANNOT GENERATE SERIALIZE CODE FOR void TYPE: " + name;
   }
 
-  
-  
+
+
   if (type->is_struct() || type->is_xception()) {
     generate_serialize_struct(out,
                               (t_struct*)type,
@@ -2204,7 +2315,7 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
 
     indent(out) <<
       "xfer += oprot->";
-    
+
     if (type->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
       switch (tbase) {
@@ -2264,7 +2375,7 @@ void t_cpp_generator::generate_serialize_container(ofstream& out,
                                                    t_type* ttype,
                                                    string prefix) {
   scope_up(out);
-  
+
   if (ttype->is_map()) {
     indent(out) <<
       "xfer += oprot->writeMapBegin(" <<
@@ -2296,7 +2407,7 @@ void t_cpp_generator::generate_serialize_container(ofstream& out,
       generate_serialize_list_element(out, (t_list*)ttype, iter);
     }
   scope_down(out);
-    
+
   if (ttype->is_map()) {
     indent(out) <<
       "xfer += oprot->writeMapEnd();" << endl;
@@ -2308,7 +2419,7 @@ void t_cpp_generator::generate_serialize_container(ofstream& out,
       "xfer += oprot->writeListEnd();" << endl;
   }
 
-  scope_down(out);  
+  scope_down(out);
 }
 
 /**
@@ -2365,7 +2476,7 @@ string t_cpp_generator::namespace_prefix(string ns) {
   if (ns.size() > 0) {
     result += ns + "::";
   }
-  return result;  
+  return result;
 }
 
 /**
@@ -2434,7 +2545,7 @@ string t_cpp_generator::type_name(t_type* ttype, bool in_typedef, bool arg) {
       return "const " + bname;
     }
   }
- 
+
   // Check for a custom overloaded C++ name
   if (ttype->is_container()) {
     string cname;
@@ -2454,7 +2565,7 @@ string t_cpp_generator::type_name(t_type* ttype, bool in_typedef, bool arg) {
       t_list* tlist = (t_list*) ttype;
       cname = "std::vector<" + type_name(tlist->get_elem_type(), in_typedef) + "> ";
     }
-    
+
     if (arg) {
       return "const " + cname + "&";
     } else {
@@ -2471,7 +2582,7 @@ string t_cpp_generator::type_name(t_type* ttype, bool in_typedef, bool arg) {
   string pname;
   t_program* program = ttype->get_program();
   if (program != NULL && program != program_) {
-    pname = 
+    pname =
       class_prefix +
       namespace_prefix(program->get_cpp_namespace()) +
       ttype->get_name();
@@ -2624,7 +2735,7 @@ string t_cpp_generator::argument_list(t_struct* tstruct) {
  */
 string t_cpp_generator::type_to_enum(t_type* type) {
   type = get_true_type(type);
-  
+
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
@@ -2660,4 +2771,41 @@ string t_cpp_generator::type_to_enum(t_type* type) {
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
+}
+
+/**
+ * Returns the symbol name of the local reflection of a type.
+ */
+string t_cpp_generator::local_reflection_name(const char* prefix, t_type* ttype) {
+  ttype = get_true_type(ttype);
+
+  // We have to use the program name as part of the identifier because
+  // if two thrift "programs" are compiled into one actual program
+  // you would get a symbol collison if they both defined list<i32>.
+  // trlo = Thrift Reflection LOcal.
+  string prog;
+  string name;
+
+  // TODO(dreiss): Would it be better to pregenerate the base types
+  //               and put them in Thrift.{h,cpp} ?
+
+  if (ttype->is_base_type()) {
+    //name = ttype->get_name();
+    prog = program_->get_name();
+    name = ttype->get_ascii_fingerprint();
+  } else if (ttype->is_enum()) {
+    //name = "enum";
+    prog = program_->get_name();
+    name = ttype->get_ascii_fingerprint();
+  } else if (ttype->is_container()) {
+    prog = program_->get_name();
+    name = ttype->get_ascii_fingerprint();
+  } else {
+    assert(ttype->is_struct() || ttype->is_xception());
+    assert(ttype->get_program() != NULL);
+    prog = ttype->get_program()->get_name();
+    name = ttype->get_ascii_fingerprint();
+  }
+
+  return string() + "trlo_" + prefix + "_" + prog + "_" + name;
 }
