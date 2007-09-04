@@ -445,6 +445,13 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     endl <<
     indent() << "virtual ~" << tstruct->get_name() << "() throw() {}" << endl << endl;
 
+  // Pointer to this structure's reflection local typespec.
+  if (gen_dense_) {
+    indent(out) <<
+      "static facebook::thrift::reflection::local::TypeSpec* local_reflection;" <<
+      endl << endl;
+  }
+
   // Declare all fields
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     indent(out) <<
@@ -610,22 +617,32 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
     generate_local_reflection(out, ((t_map*)ttype)->get_key_type(), is_definition);
     generate_local_reflection(out, ((t_map*)ttype)->get_val_type(), is_definition);
   } else if (ttype->is_struct() || ttype->is_xception()) {
+    // Hacky hacky.  For efficiency and convenience, we need a dummy "T_STOP"
+    // type at the end of our typespec array.  Unfortunately, there is no
+    // T_STOP type, so we use the global void type, and special case it when
+    // generating its typespec.
+
     const vector<t_field*>& members = ((t_struct*)ttype)->get_members();
     vector<t_field*>::const_iterator m_iter;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       generate_local_reflection(out, (**m_iter).get_type(), is_definition);
     }
+    generate_local_reflection(out, g_type_void, is_definition);
 
-    // For definitions of structures, do the arrays of tags and field specs also.
+    // For definitions of structures, do the arrays of metas and field specs also.
     if (is_definition) {
-      indent(out) << "int16_t " << local_reflection_name("ftags", ttype) <<"[] = {" << endl;
+      out <<
+        indent() << "facebook::thrift::reflection::local::FieldMeta" << endl <<
+        indent() << local_reflection_name("metas", ttype) <<"[] = {" << endl;
       indent_up();
-      indent(out);
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        out << (*m_iter)->get_key() << ", ";
+        indent(out) << "{ " << (*m_iter)->get_key() << ", " <<
+          (((*m_iter)->get_req() == t_field::OPTIONAL) ? "true" : "false") <<
+          " }," << endl;
       }
+      // Zero for the T_STOP marker.
+      indent(out) << "{ 0, false }" << endl << "};" << endl;
       indent_down();
-      out << endl << "};" << endl;
 
       out <<
         indent() << "facebook::thrift::reflection::local::TypeSpec*" << endl <<
@@ -635,6 +652,8 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
         indent(out) << "&" <<
           local_reflection_name("typespec", (*m_iter)->get_type()) << "," << endl;
       }
+      indent(out) << "&" <<
+        local_reflection_name("typespec", g_type_void) << "," << endl;
       indent_down();
       indent(out) << "};" << endl;
     }
@@ -654,12 +673,16 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
 
   indent_up();
 
-  indent(out) << type_to_enum(ttype);
+  if (ttype->is_void()) {
+    indent(out) << "facebook::thrift::protocol::T_STOP";
+  } else {
+    indent(out) << type_to_enum(ttype);
+  }
 
   if (ttype->is_struct()) {
     out << "," << endl <<
       indent() << ((t_struct*)ttype)->get_members().size() << "," << endl <<
-      indent() << local_reflection_name("ftags", ttype) << "," << endl <<
+      indent() << local_reflection_name("metas", ttype) << "," << endl <<
       indent() << local_reflection_name("specs", ttype);
   } else if (ttype->is_list()) {
     out << "," << endl <<
@@ -678,6 +701,16 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
   out << ");" << endl << endl;
 
   indent_down();
+
+  // If this is a struct and we are in the implementaion file,
+  // also set the class's static pointer to its reflection.
+  if (ttype->is_struct() && is_definition) {
+    indent(out) <<
+      "facebook::thrift::reflection::local::TypeSpec* " <<
+        ttype->get_name() << "::local_reflection = " << endl <<
+      indent() << "  &" << local_reflection_name("typespec", ttype) << ";" <<
+      endl << endl;
+  }
 }
 
 /**

@@ -533,6 +533,8 @@ void generate_all_fingerprints(t_program* program) {
     st->generate_fingerprint();
   }
 
+  g_type_void->generate_fingerprint();
+
   // If you want to generate fingerprints for implicit structures, start here.
   /*
   const vector<t_service*>& services = program->get_services();

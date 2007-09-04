@@ -21,13 +21,21 @@ using facebook::thrift::protocol::TType;
  * @author David Reiss <dreiss@facebook.com>
  */
 
+struct FieldMeta {
+  int16_t tags;
+  bool is_optional;
+};
+
 struct TypeSpec {
   // Use an anonymous union here so we can fit two TypeSpecs in one cache line.
   union {
     struct {
       // Use parallel arrays here for denser packing (of the arrays).
-      int16_t*   ftags;
+      FieldMeta* metas;
       TypeSpec** specs;
+      // n_fields is only used for debugging, but it should only add
+      // a minimimal amount to the effective size of this structure
+      // because of alignment restrictions.
       int        n_fields;
     } tstruct;
     struct {
@@ -47,11 +55,11 @@ struct TypeSpec {
 
   TypeSpec(TType ttype) : ttype(ttype) {}
 
-  TypeSpec(TType ttype, int n_fields, int16_t* ftags, TypeSpec** specs) :
+  TypeSpec(TType ttype, int n_fields, FieldMeta* metas, TypeSpec** specs) :
     ttype(ttype)
   {
     tstruct.n_fields = n_fields;
-    tstruct.ftags = ftags;
+    tstruct.metas = metas;
     tstruct.specs = specs;
   }
 
