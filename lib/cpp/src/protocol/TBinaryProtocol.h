@@ -23,6 +23,7 @@ class TBinaryProtocol : public TProtocol {
  protected:
   static const int32_t VERSION_MASK = 0xffff0000;
   static const int32_t VERSION_1 = 0x80010000;
+  // VERSION_2 (0x80020000)  is taken by TDenseProtocol.
 
  public:
   TBinaryProtocol(boost::shared_ptr<TTransport> trans) :
@@ -175,7 +176,6 @@ class TBinaryProtocol : public TProtocol {
  protected:
   uint32_t readStringBody(std::string& str, int32_t sz);
 
- private:
   int32_t string_limit_;
   int32_t container_limit_;
 

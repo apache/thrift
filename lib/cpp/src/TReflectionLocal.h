@@ -22,7 +22,7 @@ using facebook::thrift::protocol::TType;
  */
 
 struct FieldMeta {
-  int16_t tags;
+  int16_t tag;
   bool is_optional;
 };
 

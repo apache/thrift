@@ -14,7 +14,8 @@ libthrift_sources = src/Thrift.cpp \
                     src/concurrency/TimerManager.cpp \
                     src/protocol/TBinaryProtocol.cpp \
                     src/protocol/TDebugProtocol.cpp \
-		    src/transport/TTransportException.cpp \
+                    src/protocol/TDenseProtocol.cpp \
+                    src/transport/TTransportException.cpp \
                     src/transport/TFileTransport.cpp \
                     src/transport/THttpClient.cpp \
                     src/transport/TSocket.cpp \
@@ -60,6 +61,7 @@ include_concurrency_HEADERS = \
 include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = \
                          src/protocol/TBinaryProtocol.h \
+                         src/protocol/TDenseProtocol.cpp \
                          src/protocol/TDebugProtocol.h \
                          src/protocol/TOneWayProtocol.h \
                          src/protocol/TProtocolException.h \
