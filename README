@@ -108,7 +108,9 @@ Run ./configure --help to see other configuration options
 
 Please be aware that the Python library will ignore the --prefix option
 and just install wherever Python's distutils puts it (usually along
-the lines of /usr/lib/pythonX.Y/site-packages/).  DESTDIR is respected.
+the lines of /usr/lib/pythonX.Y/site-packages/).  If you need to control
+where the Python modules are installed, set the PY_PREFIX variable.
+(DESTDIR is respected for Python and C++.)
 
 Make thrift:
 
