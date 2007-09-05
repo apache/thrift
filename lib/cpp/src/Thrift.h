@@ -28,7 +28,7 @@ namespace facebook { namespace thrift {
 
 class TOutput{
 public:
-  TOutput() : f_(perror) {}
+  TOutput() : f_(&perrorTimeWrapper) {}
 
   inline void setOutputFunction(void (*function)(const char *)){
     f_ = function;
@@ -38,6 +38,15 @@ public:
     f_(message);
   }
 
+  inline static void perrorTimeWrapper(const char* msg) {
+    time_t now;
+    char dbgtime[25];
+    time(&now);
+    ctime_r(&now, dbgtime);
+    dbgtime[24] = 0;
+    fprintf(stderr, "%s ", dbgtime);
+    perror(msg);
+  }
 private:
   void (*f_)(const char *);
 };

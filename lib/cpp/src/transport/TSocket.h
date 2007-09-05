@@ -137,6 +137,9 @@ class TSocket : public TTransport {
    */
   void setMaxRecvRetries(int maxRecvRetries);
 
+  /** get socket information */
+  std::string getSocketInfo();
+
  protected:
   /**
    * Constructor to create socket from raw UNIX handle. Never called directly
@@ -179,6 +182,7 @@ class TSocket : public TTransport {
 
   /** Recv timeout timeval */
   struct timeval recvTimeval_;
+
 };
 
 }}} // facebook::thrift::transport

@@ -86,7 +86,7 @@ TSocket::~TSocket() {
   close();
 }
 
-bool TSocket::isOpen() {
+bool TSocket::isOpen() {  
   return (socket_ >= 0); 
 }
 
@@ -98,7 +98,8 @@ bool TSocket::peek() {
   int r = recv(socket_, &buf, 1, MSG_PEEK);
   if (r == -1) {
     int errno_copy = errno;
-    GlobalOutput("TSocket::peek()");
+    string errStr = "TSocket::peek() " + getSocketInfo();
+    GlobalOutput(errStr.c_str());
     throw TTransportException(TTransportException::UNKNOWN, "recv()", errno_copy);
   }
   return (r > 0);
@@ -108,11 +109,12 @@ void TSocket::openConnection(struct addrinfo *res) {
   if (isOpen()) {
     throw TTransportException(TTransportException::ALREADY_OPEN);
   }
-  
+
   socket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   if (socket_ == -1) {
     int errno_copy = errno;
-    GlobalOutput("TSocket::open() socket");
+    string errStr = "TSocket::open() socket " + getSocketInfo();
+    GlobalOutput(errStr.c_str());
     throw TTransportException(TTransportException::NOT_OPEN, "socket()", errno_copy);
   }
 
@@ -157,10 +159,8 @@ void TSocket::openConnection(struct addrinfo *res) {
 
   if (errno != EINPROGRESS) {
     int errno_copy = errno;
-    char buff[1024];
-    sprintf(buff, "TSocket::open() connect %s %d", host_.c_str(), port_);
-    GlobalOutput(buff);
-    
+    string errStr = "TSocket::open() connect " + getSocketInfo();
+    GlobalOutput(errStr.c_str());
     throw TTransportException(TTransportException::NOT_OPEN, "connect()", errno_copy);
   }
 
@@ -177,22 +177,26 @@ void TSocket::openConnection(struct addrinfo *res) {
     int ret2 = getsockopt(socket_, SOL_SOCKET, SO_ERROR, (void *)&val, &lon);
     if (ret2 == -1) {
       int errno_copy = errno;
-      GlobalOutput("TSocket::open() getsockopt SO_ERROR");
+      string errStr = "TSocket::open() getsockopt SO_ERROR " + getSocketInfo();
+      GlobalOutput(errStr.c_str());
       throw TTransportException(TTransportException::NOT_OPEN, "open()", errno_copy);
     }
     if (val == 0) {
       goto done;
     }
     int errno_copy = errno;
-    GlobalOutput("TSocket::open() SO_ERROR was set");
+    string errStr = "TSocket::open() SO_ERROR was set " + getSocketInfo();
+    GlobalOutput(errStr.c_str());
     throw TTransportException(TTransportException::NOT_OPEN, "open()", errno_copy);
   } else if (ret == 0) {
     int errno_copy = errno;
-    GlobalOutput("TSocket::open() timed out");
+    string errStr = "TSocket::open() timed out " + getSocketInfo();
+    GlobalOutput(errStr.c_str());
     throw TTransportException(TTransportException::NOT_OPEN, "open()", errno_copy);
   } else {
     int errno_copy = errno;
-    GlobalOutput("TSocket::open() select error");
+    string errStr = "TSocket::open() select error " + getSocketInfo();
+    GlobalOutput(errStr.c_str());
     throw TTransportException(TTransportException::NOT_OPEN, "open()", errno_copy);
   }
 
@@ -315,7 +319,8 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
     }
     
     // Now it's not a try again case, but a real probblez
-    GlobalOutput("TSocket::read()");
+    string errStr = "TSocket::read() " + getSocketInfo();
+    GlobalOutput(errStr.c_str());
 
     // If we disconnect with no linger time
     if (errno == ECONNRESET) {
@@ -376,7 +381,8 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
       }
 
       int errno_copy = errno;
-      GlobalOutput("TSocket::write() send < 0");
+      string errStr = "TSocket::write() send < 0 " + getSocketInfo();
+      GlobalOutput(errStr.c_str());
       throw TTransportException(TTransportException::UNKNOWN, "send", errno_copy);
     }
     
@@ -406,7 +412,8 @@ void TSocket::setLinger(bool on, int linger) {
   struct linger l = {(lingerOn_ ? 1 : 0), lingerVal_};
   int ret = setsockopt(socket_, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
   if (ret == -1) {
-    GlobalOutput("TSocket::setLinger()");
+    string errStr = "TSocket::setLinger() " + getSocketInfo();
+    GlobalOutput(errStr.c_str());
   }
 }
 
@@ -420,7 +427,8 @@ void TSocket::setNoDelay(bool noDelay) {
   int v = noDelay_ ? 1 : 0;
   int ret = setsockopt(socket_, IPPROTO_TCP, TCP_NODELAY, &v, sizeof(v));
   if (ret == -1) {
-    GlobalOutput("TSocket::setNoDelay()");
+    string errStr = "TSocket::setNoDelay() " + getSocketInfo();
+    GlobalOutput(errStr.c_str());
   }
 }
 
@@ -440,7 +448,8 @@ void TSocket::setRecvTimeout(int ms) {
   struct timeval r = recvTimeval_;
   int ret = setsockopt(socket_, SOL_SOCKET, SO_RCVTIMEO, &r, sizeof(r));
   if (ret == -1) {
-    GlobalOutput("TSocket::setRecvTimeout()");
+    string errStr = "TSocket::setRecvTimeout() " + getSocketInfo();
+    GlobalOutput(errStr.c_str());
   }
 }
 
@@ -454,12 +463,19 @@ void TSocket::setSendTimeout(int ms) {
                       (int)((sendTimeout_%1000)*1000)};
   int ret = setsockopt(socket_, SOL_SOCKET, SO_SNDTIMEO, &s, sizeof(s));
   if (ret == -1) {
-    GlobalOutput("TSocket::setSendTimeout()");
+    string errStr = "TSocket::setSendTimeout() " + getSocketInfo();
+    GlobalOutput(errStr.c_str());
   }
 }
 
 void TSocket::setMaxRecvRetries(int maxRecvRetries) {
   maxRecvRetries_ = maxRecvRetries;
+}
+
+string TSocket::getSocketInfo() {
+  std::ostringstream oss;
+  oss << "<Host: " << host_ << " Port: " << port_ << ">";
+  return oss.str();
 }
 
 }}} // facebook::thrift::transport
