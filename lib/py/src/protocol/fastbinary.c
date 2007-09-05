@@ -608,7 +608,7 @@ static bool readBytes(DecodeBuffer* input, char** output, int len) {
 
     // using building functions as this is a rare codepath
     newiobuf = PyObject_CallFunction(
-        input->refill_callable, "s#i", *output, len, read, NULL);
+        input->refill_callable, "s#i", *output, read, len, NULL);
     if (newiobuf == NULL) {
       return false;
     }

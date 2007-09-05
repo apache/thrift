@@ -112,13 +112,16 @@ class TBufferedTransportFactory:
     return buffered
 
 
-class TBufferedTransport(TTransportBase):
+class TBufferedTransport(TTransportBase,CReadableTransport):
 
   """Class that wraps another transport and buffers its I/O."""
 
+  DEFAULT_BUFFER = 4096
+
   def __init__(self, trans):
     self.__trans = trans
-    self.__buf = StringIO()
+    self.__wbuf = StringIO()
+    self.__rbuf = StringIO("")
 
   def isOpen(self):
     return self.__trans.isOpen()
@@ -130,15 +133,38 @@ class TBufferedTransport(TTransportBase):
     return self.__trans.close()
 
   def read(self, sz):
-    return self.__trans.read(sz)
+    ret = self.__rbuf.read(sz)
+    if len(ret) != 0:
+      return ret
+
+    self.__rbuf = StringIO(self.__trans.read(max(sz, self.DEFAULT_BUFFER)))
+    return self.__rbuf.read(sz)
 
   def write(self, buf):
-    self.__buf.write(buf)
+    self.__wbuf.write(buf)
 
   def flush(self):
-    self.__trans.write(self.__buf.getvalue())
+    self.__trans.write(self.__wbuf.getvalue())
     self.__trans.flush()
-    self.__buf = StringIO()
+    self.__wbuf = StringIO()
+
+  # Implement the CReadableTransport interface.
+  @property
+  def cstringio_buf(self):
+    return self.__rbuf
+
+  def cstringio_refill(self, partialread, reqlen):
+    retstring = partialread
+    if reqlen < self.DEFAULT_BUFFER:
+      # try to make a read of as much as we can.
+      retstring += self.__trans.read(self.DEFAULT_BUFFER)
+
+    # but make sure we do read reqlen bytes.
+    if len(retstring) < reqlen:
+      retstring += self.__trans.readAll(reqlen - len(retstring))
+
+    self.__rbuf = StringIO(retstring)
+    return self.__rbuf
 
 class TMemoryBuffer(TTransportBase, CReadableTransport):
   """Wraps a cStringIO object as a TTransport.

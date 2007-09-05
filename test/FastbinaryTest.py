@@ -79,6 +79,10 @@ rs.maps = {1:Wrapper({"foo":Empty()}),2:Wrapper({"foo":Empty()})}
 rs.bigint = 124523452435L
 rs.triple = 3.14
 
+# make sure this splits two buffers in a buffered protocol
+rshuge = RandomStuff()
+rshuge.myintlist=range(10000)
+
 my_zero = Srv.Janky_result({"arg":5})
 my_nega = Srv.Janky_args({"success":6})
 
@@ -98,9 +102,22 @@ def checkWrite(o):
 def checkRead(o):
   prot = TBinaryProtocol.TBinaryProtocol(TTransport.TMemoryBuffer())
   o.write(prot)
+
+  slow_version_binary = prot.trans.getvalue()
+  
   prot = TBinaryProtocol.TBinaryProtocolAccelerated(
-           TTransport.TMemoryBuffer(
-             prot.trans.getvalue()))
+           TTransport.TMemoryBuffer(slow_version_binary))
+  c = o.__class__()
+  c.read(prot)
+  if c != o:
+    print "copy: "
+    pprint(eval(repr(c)))
+    print "orig: "
+    pprint(eval(repr(o)))
+
+  prot = TBinaryProtocol.TBinaryProtocolAccelerated(
+           TTransport.TBufferedTransport(
+             TTransport.TMemoryBuffer(slow_version_binary)))
   c = o.__class__()
   c.read(prot)
   if c != o:
@@ -117,6 +134,8 @@ def doTest():
   checkRead(no_set)
   checkWrite(rs)
   checkRead(rs)
+  checkWrite(rshuge)
+  checkRead(rshuge)
   checkWrite(my_zero)
   checkRead(my_zero)
   checkRead(Backwards({"first_tag2":4, "second_tag1":2}))
