@@ -30,7 +30,7 @@ namespace facebook { namespace thrift { namespace protocol {
 class TDenseProtocol : public TBinaryProtocol {
  protected:
   static const int32_t VERSION_MASK = 0xffff0000;
-  // VERSION_2 (0x80010000)  is taken by TBinaryProtocol.
+  // VERSION_1 (0x80010000)  is taken by TBinaryProtocol.
   static const int32_t VERSION_2 = 0x80020000;
 
  public:
@@ -131,23 +131,11 @@ class TDenseProtocol : public TBinaryProtocol {
    */
   inline uint32_t subWriteI32(const int32_t i32);
 
+  inline uint32_t subWriteString(const std::string& str);
+
   uint32_t subWriteBool(const bool value) {
     return TBinaryProtocol::writeBool(value);
   }
-
-#if 0
-  // Use this version when subWriteI32 is moved in here.
-  uint32_t subWriteString(const std::string& str) {
-    uint32_t size = str.size();
-    uint32_t xfer = subWriteI32((int32_t)size);
-    if (size > 0) {
-      trans_->write((uint8_t*)str.data(), size);
-    }
-    return xfer + size;
-  }
-#else
-  inline uint32_t subWriteString(const std::string& str);
-#endif
 
 
   /*
@@ -204,27 +192,24 @@ class TDenseProtocol : public TBinaryProtocol {
   /*
    * Helper reading functions (don't do state transitions).
    */
-  uint32_t subReadI32(int32_t& i32) {
-    return TBinaryProtocol::readI32(i32);
-  }
+  inline uint32_t subReadI32(int32_t& i32);
+
+  inline uint32_t subReadString(std::string& str);
 
   uint32_t subReadBool(bool& value) {
     return TBinaryProtocol::readBool(value);
   }
-
-  uint32_t subReadString(std::string& str) {
-    uint32_t xfer;
-    int32_t size;
-    xfer = subReadI32(size);
-    return xfer + readStringBody(str, size);
-  }
-
 
 
  private:
 
   inline void checkTType(const TType ttype);
   inline void stateTransition();
+
+  // Read and write variable-length integers.
+  // Uses the same technique as the MIDI file format.
+  inline uint32_t vliRead(uint64_t& vli);
+  inline uint32_t vliWrite(uint64_t vli);
 
   TypeSpec* type_spec_;
 

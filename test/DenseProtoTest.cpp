@@ -6,11 +6,29 @@ g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
 ./DenseProtoTest
 */
 
+// I do this to reach into the guts of TDenseProtocol.  Sorry.
+#define private public
+#define inline
+
+#undef NDEBUG
+#include <cassert>
 #include <iostream>
 #include <cmath>
 #include "gen-cpp/DebugProtoTest_types.h"
 #include <protocol/TDenseProtocol.h>
 #include <transport/TTransportUtils.h>
+
+
+// Can't use memcmp here.  GCC is too smart.
+bool my_memeq(const char* str1, const char* str2, int len) {
+  for (int i = 0; i < len; i++) {
+    if (str1[i] != str2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 
 int main() {
   using std::cout;
@@ -102,6 +120,45 @@ int main() {
   hm2.read(proto.get());
 
   assert(hm == hm2);
+
+
+  // Let's test out the variable-length ints, shall we?
+  uint64_t vli;
+  #define checkout(i, c) { \
+    buffer->resetBuffer(); \
+    proto->vliWrite(i); \
+    assert(my_memeq(buffer->getBufferAsString().data(), c, sizeof(c)-1)); \
+    proto->vliRead(vli); \
+    assert(vli == i); \
+  }
+
+  checkout(0x00000000, "\x00");
+  checkout(0x00000040, "\x40");
+  checkout(0x0000007F, "\x7F");
+  checkout(0x00000080, "\x81\x00");
+  checkout(0x00002000, "\xC0\x00");
+  checkout(0x00003FFF, "\xFF\x7F");
+  checkout(0x00004000, "\x81\x80\x00");
+  checkout(0x00100000, "\xC0\x80\x00");
+  checkout(0x001FFFFF, "\xFF\xFF\x7F");
+  checkout(0x00200000, "\x81\x80\x80\x00");
+  checkout(0x08000000, "\xC0\x80\x80\x00");
+  checkout(0x0FFFFFFF, "\xFF\xFF\xFF\x7F");
+  checkout(0x10000000, "\x81\x80\x80\x80\x00");
+  checkout(0x20000000, "\x82\x80\x80\x80\x00");
+  checkout(0x1FFFFFFF, "\x81\xFF\xFF\xFF\x7F");
+  checkout(0xFFFFFFFF, "\x8F\xFF\xFF\xFF\x7F");
+
+  checkout(0x0000000100000000ull, "\x90\x80\x80\x80\x00");
+  checkout(0x0000000200000000ull, "\xA0\x80\x80\x80\x00");
+  checkout(0x0000000300000000ull, "\xB0\x80\x80\x80\x00");
+  checkout(0x0000000700000000ull, "\xF0\x80\x80\x80\x00");
+  checkout(0x00000007F0000000ull, "\xFF\x80\x80\x80\x00");
+  checkout(0x00000007FFFFFFFFull, "\xFF\xFF\xFF\xFF\x7F");
+  checkout(0x0000000800000000ull, "\x81\x80\x80\x80\x80\x00");
+  checkout(0x1FFFFFFFFFFFFFFFull, "\x9F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F");
+  checkout(0x7FFFFFFFFFFFFFFFull, "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F");
+  checkout(0xFFFFFFFFFFFFFFFFull, "\x81\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F");
 
 
   return 0;
