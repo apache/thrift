@@ -59,6 +59,26 @@ void TBufferedTransport::write(const uint8_t* buf, uint32_t len) {
   }
 }
 
+bool TBufferedTransport::borrow(uint8_t* buf, uint32_t len) {
+  // Don't try to be clever with shifting buffers.
+  // If we have enough data, give it, otherwise
+  // let the protcol use its slow path.
+  if (rLen_-rPos_ >= len) {
+    memcpy(buf, rBuf_+rPos_, len);
+    return true;
+  }
+  return false;
+}
+
+void TBufferedTransport::consume(uint32_t len) {
+  if (rLen_-rPos_ >= len) {
+    rPos_ += len;
+  } else {
+    throw TTransportException(TTransportException::BAD_ARGS,
+                              "consume did not follow a borrow.");
+  }
+}
+
 void TBufferedTransport::flush()  {
   // Write out any data waiting in the write buffer
   if (wLen_ > 0) {
@@ -183,6 +203,26 @@ void TFramedTransport::flush()  {
   transport_->flush();
 }
 
+bool TFramedTransport::borrow(uint8_t* buf, uint32_t len) {
+  // Don't try to be clever with shifting buffers.
+  // If we have enough data, give it, otherwise
+  // let the protcol use its slow path.
+  if (read_ && (rLen_-rPos_ >= len)) {
+    memcpy(buf, rBuf_+rPos_, len);
+    return true;
+  }
+  return false;
+}
+
+void TFramedTransport::consume(uint32_t len) {
+  if (rLen_-rPos_ >= len) {
+    rPos_ += len;
+  } else {
+    throw TTransportException(TTransportException::BAD_ARGS,
+                              "consume did not follow a borrow.");
+  }
+}
+
 uint32_t TMemoryBuffer::read(uint8_t* buf, uint32_t len) {
   // Check avaible data for reading
   uint32_t avail = wPos_ - rPos_;
@@ -251,6 +291,26 @@ void TMemoryBuffer::write(const uint8_t* buf, uint32_t len) {
   // Copy into the buffer and increment wPos_
   memcpy(buffer_ + wPos_, buf, len);
   wPos_ += len;
+}
+
+bool TMemoryBuffer::borrow(uint8_t* buf, uint32_t len) {
+  // Don't try to be clever with shifting buffers.
+  // If we have enough data, give it, otherwise
+  // let the protcol use its slow path.
+  if (wPos_-rPos_ >= len) {
+    memcpy(buf, buffer_ + rPos_, len);
+    return true;
+  }
+  return false;
+}
+
+void TMemoryBuffer::consume(uint32_t len) {
+  if (wPos_-rPos_ >= len) {
+    rPos_ += len;
+  } else {
+    throw TTransportException(TTransportException::BAD_ARGS,
+                              "consume did not follow a borrow.");
+  }
 }
 
 uint32_t TPipedTransport::read(uint8_t* buf, uint32_t len) {

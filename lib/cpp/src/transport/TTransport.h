@@ -66,7 +66,7 @@ class TTransport {
   /**
    * Attempt to read up to the specified number of bytes into the string.
    *
-   * @param s     Reference to the location to append the read data
+   * @param buf  Reference to the location to write the data
    * @param len  How many bytes to read
    * @return How many bytes were actually read
    * @throws TTransportException If an error occurs
@@ -112,7 +112,7 @@ class TTransport {
   /**
    * Writes the string in its entirety to the buffer.
    *
-   * @param s The string to write out
+   * @param buf  The data to write out
    * @throws TTransportException if an error occurs
    */
   virtual void write(const uint8_t* buf, uint32_t len) {
@@ -137,6 +137,37 @@ class TTransport {
    * @throws TTransportException if an error occurs
    */
   virtual void flush() {}
+
+  /**
+   * Attempts to copy len bytes from the transport into buf.  Does not consume
+   * the bytes read (i.e.: a later read will return the same data).  This
+   * method is meant to support protocols that need to read variable-length
+   * fields.  They can attempt to borrow the maximum amount of data that they
+   * will need, then consume (see next method) what they actually use.  Some
+   * transports will not support this method and others will fail occasionally,
+   * so protocols must be prepared to use read if borrow fails.
+   *
+   * @oaram buf  The buffer to store the data
+   * @param len  How much data to borrow
+   * @return true if the requested data has been borrowed, false otherwise
+   * @throws TTransportException if an error occurs
+   */
+  virtual bool borrow(uint8_t* buf, uint32_t len) {
+    return false;
+  }
+
+  /**
+   * Remove len bytes from the transport.  This should always follow a borrow
+   * of at least len bytes, and should always succeed.
+   * TODO(dreiss): Is there any transport that could borrow but fail to
+   * consume, or that would require a buffer to dump the consumed data?
+   *
+   * @param len  How many bytes to consume
+   * @throws TTransportException If an error occurs
+   */
+  virtual void consume(uint32_t len) {
+    throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot consume.");
+  }
 
  protected:
   /**

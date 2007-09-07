@@ -105,6 +105,10 @@ class TBufferedTransport : public TTransport {
 
   void flush();
 
+  bool borrow(uint8_t* buf, uint32_t len);
+
+  void consume(uint32_t len);
+
  protected:
   boost::shared_ptr<TTransport> transport_;
   uint8_t* rBuf_;
@@ -212,6 +216,10 @@ class TFramedTransport : public TTransport {
   void write(const uint8_t* buf, uint32_t len);
 
   void flush();
+
+  bool borrow(uint8_t* buf, uint32_t len);
+
+  void consume(uint32_t len);
 
  protected:
   boost::shared_ptr<TTransport> transport_;
@@ -382,6 +390,10 @@ class TMemoryBuffer : public TTransport {
   uint32_t available() {
     return wPos_ - rPos_;
   }
+
+  bool borrow(uint8_t* buf, uint32_t len);
+
+  void consume(uint32_t len);
 
  private: 
   // Data buffer
