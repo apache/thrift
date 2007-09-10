@@ -25,6 +25,7 @@
  * assigned starting from -1 and working their way down.
  */
 int y_field_val = -1;
+int g_arglist = 0;
 
 %}
 
@@ -665,12 +666,22 @@ Xception:
     }
 
 Service:
-  tok_service tok_identifier Extends '{' FunctionList '}'
+  tok_service tok_identifier Extends '{' FlagArgs FunctionList UnflagArgs '}'
     {
       pdebug("Service -> tok_service tok_identifier { FunctionList }");
-      $$ = $5;
+      $$ = $6;
       $$->set_name($2);
       $$->set_extends($3);
+    }
+
+FlagArgs:
+    {
+       g_arglist = 1;
+    }
+
+UnflagArgs:
+    {
+       g_arglist = 0;
     }
 
 Extends:
@@ -789,11 +800,25 @@ FieldIdentifier:
 FieldRequiredness:
   tok_required
     {
-      $$ = t_field::REQUIRED;
+      if (g_arglist) {
+        if (g_parse_mode == PROGRAM) {
+          pwarning(1, "required keyword is ignored in argument lists.\n");
+        }
+        $$ = t_field::OPT_IN_REQ_OUT;
+      } else {
+        $$ = t_field::REQUIRED;
+      }
     }
 | tok_optional
     {
-      $$ = t_field::OPTIONAL;
+      if (g_arglist) {
+        if (g_parse_mode == PROGRAM) {
+          pwarning(1, "optional keyword is ignored in argument lists.\n");
+        }
+        $$ = t_field::OPT_IN_REQ_OUT;
+      } else {
+        $$ = t_field::OPTIONAL;
+      }
     }
 |
     {
