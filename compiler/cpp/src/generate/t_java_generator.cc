@@ -354,6 +354,8 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
                                                        bool is_exception,
                                                        bool in_class,
                                                        bool is_result) {
+  generate_java_doc(out, tstruct);
+
   indent(out) <<
     "public " << (in_class ? "static " : "") << "class " << tstruct->get_name() << " ";
   
@@ -881,14 +883,16 @@ void t_java_generator::generate_service_interface(t_service* tservice) {
     extends_iface = " extends " + extends + ".Iface";
   }
 
-  f_service_ <<
-    indent() << "public interface Iface" << extends_iface << " {" << endl;
+  generate_java_doc(f_service_, tservice);
+  f_service_ << indent() << "public interface Iface" << extends_iface <<
+    " {" << endl << endl;
   indent_up();
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter; 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    indent(f_service_) <<
-      "public " << function_signature(*f_iter) << ";" << endl;
+    generate_java_doc(f_service_, *f_iter);
+    indent(f_service_) << "public " << function_signature(*f_iter) << ";" <<
+      endl << endl;
   }
   indent_down();
   f_service_ <<
@@ -1960,4 +1964,23 @@ string t_java_generator::type_to_enum(t_type* type) {
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
+}
+
+/**
+ * Emits a JavaDoc comment if the provided object has a doc in Thrift
+ */
+void t_java_generator::generate_java_doc(ofstream &out,
+                                         t_doc* tdoc) {
+  if (tdoc->has_doc()) {
+    indent(out) << "/**" << endl;
+    stringstream docs(tdoc->get_doc(), ios_base::in);
+    while (!docs.eof()) {
+      char line[1024];
+      docs.getline(line, 1024);
+      if (strlen(line) > 0 || !docs.eof()) {  // skip the empty last line
+        indent(out) << " * " << line << endl;
+      }
+    }
+    indent(out) << " */" << endl;
+  }
 }

@@ -125,6 +125,10 @@ class t_java_generator : public t_oop_generator {
                                           t_list*     tlist,
                                           std::string iter);
 
+  void generate_java_doc                 (std::ofstream& out,
+                                          t_doc*     tdoc);
+
+
   /**
    * Helper rendering functions
    */
