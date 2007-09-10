@@ -84,6 +84,7 @@ int y_field_val = -1;
 %token tok_xsd_namespace
 %token tok_xsd_attrs
 %token tok_ruby_namespace
+%token tok_cocoa_prefix
 
 /**
  * Base datatype keywords
@@ -296,6 +297,13 @@ Header:
       pdebug("Header -> tok_java_package tok_identifier");
       if (g_parse_mode == PROGRAM) {
         g_program->set_java_package($2);
+      }
+    }
+| tok_cocoa_prefix tok_identifier
+    {
+      pdebug("Header -> tok_cocoa_prefix tok_identifier");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_cocoa_prefix($2);
       }
     }
 | tok_xsd_namespace tok_literal

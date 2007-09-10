@@ -18,7 +18,8 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_perl_generator.cc \
                  src/generate/t_ocaml_generator.cc \
                  src/generate/t_erl_generator.cc \
-                 src/generate/t_hs_generator.cc 
+                 src/generate/t_hs_generator.cc \
+                 src/generate/t_cocoa_generator.cc 
 
 thrift_CXXFLAGS = -Wall -Isrc $(BOOST_CPPFLAGS)
 thrift_LDFLAGS = -Wall $(BOOST_LDFLAGS)
