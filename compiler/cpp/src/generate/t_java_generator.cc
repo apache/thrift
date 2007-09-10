@@ -360,6 +360,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   if (is_exception) {
     out << "extends Exception ";
   }
+  out << "implements java.io.Serializable ";
   
   scope_up(out);
 
@@ -690,6 +691,16 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     std::string cap_name = field_name;
     cap_name[0] = toupper(cap_name[0]);
 
+    if (type->is_container()) {
+      // Method to return the size of the collection
+      indent(out) << "public int get" << cap_name << "Size() {" << endl;
+      indent_up();
+      indent(out) << "return (this." << field_name << " == null) ? 0 : " << 
+        "this." << field_name << ".size();" << endl;
+      indent_down();
+      indent(out) << "}" << endl << endl;
+    }
+
     if (type->is_set() || type->is_list()) {
 
       t_type* element_type;
@@ -700,8 +711,8 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       }
 
       // Iterator getter for sets and lists
-      indent(out) << "public java.util.Iterator get" << cap_name << "() {" <<
-        endl;
+      indent(out) << "public java.util.Iterator<" <<
+        type_name(element_type) <<  "> get" << cap_name << "Iterator() {" << endl;
       indent_up();
       indent(out) << "return (this." << field_name << " == null) ? null : " << 
         "this." << field_name << ".iterator();" << endl;
