@@ -40,3 +40,12 @@ struct Complex {
   5: required Simple req_simp;
   6: optional Simple opt_simp;
 }
+
+struct ManyOpt {
+  1: optional i32 opt1;
+  2: optional i32 opt2;
+  3: optional i32 opt3;
+  4:          i32 def4;
+  5: optional i32 opt5;
+  6: optional i32 opt6;
+}

@@ -149,8 +149,9 @@ class t_cpp_generator : public t_oop_generator {
   std::string type_to_enum(t_type* ttype);
   std::string local_reflection_name(const char*, t_type* ttype);
 
-  // This handles checking gen_dense_ and checking for duplicates.
+  // These handles checking gen_dense_ and checking for duplicates.
   void generate_local_reflection(std::ofstream& out, t_type* ttype, bool is_definition);
+  void generate_local_reflection_pointer(std::ofstream& out, t_type* ttype);
 
   bool is_complex_type(t_type* ttype) {
     ttype = get_true_type(ttype);

@@ -12,12 +12,29 @@
 namespace facebook { namespace thrift { namespace protocol {
 
 /**
- * The dense protocol is designed to use as little space as possible.
- *
  * !!!WARNING!!!
  * This class is still highly experimental.  Incompatible changes
  * WILL be made to it without notice.  DO NOT USE IT YET unless
  * you are coordinating your testing with the author.
+ *
+ * The dense protocol is designed to use as little space as possible.
+ *
+ * There are two types of dense protocol instances.  Standalone instances
+ * are not used for RPC and just encoded and decode structures of 
+ * a predetermined type.  Non-standalone instances are used for RPC.
+ * Currently, only standalone instances exist.
+ *
+ * To use a standalone dense protocol object, you must set the type_spec
+ * property (either in the constructor, or with setTypeSpec) to the local
+ * reflection TypeSpec of the structures you will write to (or read from) the
+ * protocol instance.
+ *
+ * BEST PRACTICES:
+ * - Never use optional for primitives or containers.
+ * - Only use optional for structures if they are very big and very rarely set.
+ * - All integers are variable-length, so you can use i64 without bloating.
+ * - NEVER EVER change the struct definitions IN ANY WAY without either
+ *   changing your cache keys or talking to dreiss.
  *
  * TODO(dreiss): New class write with old meta.
  *
@@ -35,34 +52,18 @@ class TDenseProtocol : public TBinaryProtocol {
 
  public:
   typedef facebook::thrift::reflection::local::TypeSpec TypeSpec;
+  static const int FP_PREFIX_LEN;
 
+  /**
+   * @param tran       The transport to use.
+   * @param type_spec  The TypeSpec of the structures using this protocol.
+   */
   TDenseProtocol(boost::shared_ptr<TTransport> trans,
                  TypeSpec* type_spec = NULL) :
     TBinaryProtocol(trans),
-    type_spec_(type_spec) {
-      vli_save_16 = 0;
-      vli_save_32 = 0;
-      vli_save_64 = 0;
-      vli_save_sub = 0;
-      negs = 0;
-    }
-
-  TDenseProtocol(boost::shared_ptr<TTransport> trans,
-                  TypeSpec* type_spec,
-                  int32_t string_limit,
-                  int32_t container_limit) :
-    TBinaryProtocol(trans,
-                    string_limit,
-                    container_limit,
-                    true,
-                    true),
-    type_spec_(type_spec) {
-      vli_save_16 = 0;
-      vli_save_32 = 0;
-      vli_save_64 = 0;
-      vli_save_sub = 0;
-      negs = 0;
-    }
+    type_spec_(type_spec),
+    standalone_(true)
+  {}
 
   void setTypeSpec(TypeSpec* type_spec) {
     type_spec_ = type_spec;
@@ -203,14 +204,24 @@ class TDenseProtocol : public TBinaryProtocol {
 
  private:
 
+  // Implementation functions, documented in the .cpp.
   inline void checkTType(const TType ttype);
   inline void stateTransition();
 
   // Read and write variable-length integers.
   // Uses the same technique as the MIDI file format.
-  inline uint32_t vliRead(uint64_t& vli);
-  inline uint32_t vliWrite(uint64_t vli);
+  inline uint32_t vlqRead(uint64_t& vlq);
+  inline uint32_t vlqWrite(uint64_t vlq);
 
+  // Called before throwing an exception to make the object reusable.
+  void resetState() {
+    ts_stack_.clear();
+    idx_stack_.clear();
+    mkv_stack_.clear();
+  }
+
+  // TypeSpec of the top-level structure to write,
+  // for standalone protocol objects.
   TypeSpec* type_spec_;
 
   std::vector<TypeSpec*> ts_stack_;   // TypeSpec stack.
@@ -218,13 +229,8 @@ class TDenseProtocol : public TBinaryProtocol {
   std::vector<bool>      mkv_stack_;  // Map Key/Vlue stack.
                                       // True = key, False = value.
 
-  // XXX Remove these when wire format is finalized.
- public:
-  int vli_save_16;
-  int vli_save_32;
-  int vli_save_64;
-  int vli_save_sub;
-  int negs;
+  // True iff this is a standalone instance (no RPC).
+  bool standalone_;
 };
 
 }}} // facebook::thrift::protocol

@@ -361,6 +361,7 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   generate_struct_fingerprint(f_types_impl_, tstruct, true);
   generate_local_reflection(f_types_, tstruct, false);
   generate_local_reflection(f_types_impl_, tstruct, true);
+  generate_local_reflection_pointer(f_types_impl_, tstruct);
   generate_struct_reader(f_types_impl_, tstruct);
   generate_struct_writer(f_types_impl_, tstruct);
 }
@@ -576,7 +577,7 @@ void t_cpp_generator::generate_struct_fingerprint(ofstream& out,
       indent() << stat << "char* " << nspace
         << "ascii_fingerprint" << comment << "= \"" <<
         tstruct->get_ascii_fingerprint() << "\";" << endl <<
-      indent() << stat << "char " << nspace <<
+      indent() << stat << "uint8_t " << nspace <<
         "binary_fingerprint[" << t_type::fingerprint_len << "]" << comment << "= {";
     char* comma = "";
     for (int i = 0; i < t_type::fingerprint_len; i++) {
@@ -681,7 +682,7 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
 
   if (ttype->is_struct()) {
     out << "," << endl <<
-      indent() << ((t_struct*)ttype)->get_members().size() << "," << endl <<
+      indent() << type_name(ttype) << "::binary_fingerprint," << endl <<
       indent() << local_reflection_name("metas", ttype) << "," << endl <<
       indent() << local_reflection_name("specs", ttype);
   } else if (ttype->is_list()) {
@@ -701,16 +702,22 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
   out << ");" << endl << endl;
 
   indent_down();
+}
 
-  // If this is a struct and we are in the implementaion file,
-  // also set the class's static pointer to its reflection.
-  if (ttype->is_struct() && is_definition) {
-    indent(out) <<
-      "facebook::thrift::reflection::local::TypeSpec* " <<
-        ttype->get_name() << "::local_reflection = " << endl <<
-      indent() << "  &" << local_reflection_name("typespec", ttype) << ";" <<
-      endl << endl;
+/**
+ * Writes the structure's static pointer to its local reflection typespec
+ * into the implementation file.
+ */
+void t_cpp_generator::generate_local_reflection_pointer(std::ofstream& out,
+                                                        t_type* ttype) {
+  if (!gen_dense_) {
+    return;
   }
+  indent(out) <<
+    "facebook::thrift::reflection::local::TypeSpec* " <<
+      ttype->get_name() << "::local_reflection = " << endl <<
+    indent() << "  &" << local_reflection_name("typespec", ttype) << ";" <<
+    endl << endl;
 }
 
 /**
