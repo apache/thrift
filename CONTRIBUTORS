@@ -2,6 +2,22 @@
 Release 200705xx
 ----------------
 
+Dave Engberg <engberg@gmail.com>
+-JavaBean/JavaDoc enhancements
+
+Andrew McGeachie <geech@evernote.com>
+-Cocoa/Objective-C support
+
+Ben Maurer <bmaurer@andrew.cmu.edu>
+-Python performance enhancements, fastbinary support
+
+Andrew Lutomirski <andy@luto.us>
+-Added optional/required keywords for C++ objects
+-Added comparison operators for C++ structs
+
+Johan Oskarsson <johan@oksarsson.nu>
+-Java findbugs compliance fixes
+
 Paul Saab <ps@powerset.com>
 -IPv6 support for TSocket in C++/Python
 
