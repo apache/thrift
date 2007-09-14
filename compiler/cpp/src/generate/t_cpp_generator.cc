@@ -1460,7 +1460,8 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
       indent() << "args.write(oprot_);" << endl <<
       endl <<
       indent() << "oprot_->writeMessageEnd();" << endl <<
-      indent() << "oprot_->getTransport()->flush();" << endl;
+      indent() << "oprot_->getTransport()->flush();" << endl <<
+      indent() << "oprot_->getTransport()->writeEnd();" << endl;
 
     scope_down(f_service_);
     f_service_ << endl;
@@ -1672,6 +1673,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     indent() << "  x.write(oprot);" << endl <<
     indent() << "  oprot->writeMessageEnd();" << endl <<
     indent() << "  oprot->getTransport()->flush();" << endl <<
+    indent() << "  oprot->getTransport()->writeEnd();" << endl <<
     indent() << "  return true;" << endl <<
     indent() << "}" << endl <<
     endl <<
@@ -1702,6 +1704,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
       indent() << "  x.write(oprot);" << endl <<
       indent() << "  oprot->writeMessageEnd();" << endl <<
       indent() << "  oprot->getTransport()->flush();" << endl <<
+      indent() << "  oprot->getTransport()->writeEnd();" << endl <<
       indent() << "  return true;" << endl;
   } else {
     f_service_ <<
