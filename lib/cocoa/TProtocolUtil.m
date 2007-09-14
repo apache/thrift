@@ -27,10 +27,10 @@
     [protocol readString];
     break;
   case TType_STRUCT:
-    [protocol readStructBeginWithName: NULL];
+    [protocol readStructBeginReturningName: NULL];
     while (true) {
       int fieldType;
-      [protocol readFieldBeginWithName: nil type: &fieldType fieldID: nil];
+      [protocol readFieldBeginReturningName: nil type: &fieldType fieldID: nil];
       if (fieldType == TType_STOP) {
         break;
       }
@@ -44,7 +44,7 @@
     int keyType;
     int valueType;
     int size;
-    [protocol readMapBeginWithKeyType: &keyType valueType: &valueType size: &size];
+    [protocol readMapBeginReturningKeyType: &keyType valueType: &valueType size: &size];
     int i;
     for (i = 0; i < size; i++) {
       [TProtocolUtil skipType: keyType onProtocol: protocol];
@@ -57,7 +57,7 @@
     {
       int elemType;
       int size;
-      [protocol readSetBeginWithElementType: &elemType size: &size];
+      [protocol readSetBeginReturningElementType: &elemType size: &size];
       int i;
       for (i = 0; i < size; i++) {
         [TProtocolUtil skipType: elemType onProtocol: protocol];
@@ -69,7 +69,7 @@
     {
       int elemType;
       int size;
-      [protocol readListBeginWithElementType: &elemType size: &size];
+      [protocol readListBeginReturningElementType: &elemType size: &size];
       int i;
       for (i = 0; i < size; i++) {
         [TProtocolUtil skipType: elemType onProtocol: protocol];

@@ -1,3 +1,6 @@
+#import "TException.h"
+#import "TProtocol.h"
+
 enum {
   TApplicationException_UNKNOWN = 0,
   TApplicationException_UNKNOWN_METHOD = 1,
@@ -8,12 +11,13 @@ enum {
 };
 
 // FIXME
-@interface TApplicationException : NSException {
+@interface TApplicationException : TException {
+  int mType;
 }
 
 + (TApplicationException *) read: (id <TProtocol>) protocol;
 
 + (TApplicationException *) exceptionWithType: (int) type
-                                      message: (NSString *) message;
+                                       reason: (NSString *) message;
 
 @end

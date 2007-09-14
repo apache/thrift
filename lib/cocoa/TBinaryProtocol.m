@@ -1,4 +1,5 @@
 #import "TBinaryProtocol.h"
+#import "TProtocolException.h"
 
 int32_t VERSION_1 = 0x80010000;
 int32_t VERSION_MASK = 0xffff0000;
@@ -38,17 +39,15 @@ int32_t VERSION_MASK = 0xffff0000;
 }
 
 
-- (void) readMessageBeginWithName: (NSString **) name
-                             type: (int *) type
-                       sequenceID: (int *) sequenceID
+- (void) readMessageBeginReturningName: (NSString **) name
+                                  type: (int *) type
+                            sequenceID: (int *) sequenceID
 {
   int size = [self readI32];
   if (size < 0) {
     int version = size & VERSION_MASK;
     if (version != VERSION_1) {
-      @throw [NSException exceptionWithName: @"TProtocolException"
-                          reason: @"Bad version in readMessageBegin"
-                          userInfo: nil];
+      @throw [TProtocolException exceptionWithName: @"Bad version in readMessageBegin"];
     }
     if (type != NULL) {
       *type = version & 0x00FF;
@@ -63,9 +62,7 @@ int32_t VERSION_MASK = 0xffff0000;
     }
   } else {
     if (mStrictRead) {
-      @throw [NSException exceptionWithName: @"TProtocolException"
-                          reason: @"Missing version in readMessageBegin, old client?"
-                          userInfo: nil];
+      @throw [TProtocolException exceptionWithName: @"Missing version in readMessageBegin, old client?"];
     }
     NSString * messageName = [self readStringBody: size];
     if (name != NULL) {
@@ -86,7 +83,7 @@ int32_t VERSION_MASK = 0xffff0000;
 - (void) readMessageEnd {}
 
 
-- (void) readStructBeginWithName: (NSString **) name
+- (void) readStructBeginReturningName: (NSString **) name
 {
   if (name != NULL) {
     *name = nil;
@@ -97,9 +94,9 @@ int32_t VERSION_MASK = 0xffff0000;
 - (void) readStructEnd {}
 
 
-- (void) readFieldBeginWithName: (NSString **) name
-                           type: (int *) fieldType
-                        fieldID: (int *) fieldID
+- (void) readFieldBeginReturningName: (NSString **) name
+                                type: (int *) fieldType
+                             fieldID: (int *) fieldID
 {
   if (name != NULL) {
     *name = nil;
@@ -189,19 +186,19 @@ int32_t VERSION_MASK = 0xffff0000;
   int32_t size = [self readI32];
   uint8_t * buff = malloc(size);
   if (buff == NULL) {
-    @throw [NSException exceptionWithName: @"Out of memory" 
-                        reason: [NSString stringWithFormat: @"Unable to allocate %d bytes trying to read binary data.",
-                                          size]
-                        userInfo: nil];
+    @throw [TProtocolException 
+             exceptionWithName: @"Out of memory" 
+             reason: [NSString stringWithFormat: @"Unable to allocate %d bytes trying to read binary data.",
+                               size]];
   }
   [mTransport readAll: buff offset: 0 length: size];
   return [NSData dataWithBytesNoCopy: buff length: size];
 }
 
 
-- (void) readMapBeginWithKeyType: (int *) keyType
-                       valueType: (int *) valueType
-                            size: (int *) size
+- (void) readMapBeginReturningKeyType: (int *) keyType
+                            valueType: (int *) valueType
+                                 size: (int *) size
 {
   int kt = [self readByte];
   int vt = [self readByte];
@@ -220,8 +217,8 @@ int32_t VERSION_MASK = 0xffff0000;
 - (void) readMapEnd {}
 
 
-- (void) readSetBeginWithElementType: (int *) elementType
-                                size: (int *) size
+- (void) readSetBeginReturningElementType: (int *) elementType
+                                     size: (int *) size
 {
   int et = [self readByte];
   int s = [self readI32];
@@ -237,8 +234,8 @@ int32_t VERSION_MASK = 0xffff0000;
 - (void) readSetEnd {}
 
 
-- (void) readListBeginWithElementType: (int *) elementType
-                                 size: (int *) size
+- (void) readListBeginReturningElementType: (int *) elementType
+                                      size: (int *) size
 {
   int et = [self readByte];
   int s = [self readI32];

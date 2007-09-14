@@ -3,7 +3,13 @@
 @interface TException : NSException {
 }
 
-- (id) initWithType: (int) type
-            message: (NSString *) message;
++ (id) exceptionWithName: (NSString *) name;
+
++ (id) exceptionWithName: (NSString *) name
+                  reason: (NSString *) reason;
+
++ (id) exceptionWithName: (NSString *) name
+                  reason: (NSString *) reason
+                   error: (NSError *) error;
 
 @end

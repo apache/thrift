@@ -55,21 +55,21 @@ class t_cocoa_generator : public t_oop_generator {
   void generate_cocoa_struct_interface(std::ofstream& out, t_struct* tstruct, bool is_xception=false);
   void generate_cocoa_struct_implementation(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool is_result=false);
   void generate_cocoa_struct_initializer_signature(std::ofstream& out,
-                                                  t_struct* tstruct);
+                                                   t_struct* tstruct);
   void generate_cocoa_struct_field_accessor_declarations(std::ofstream& out,
-                                                        t_struct* tstruct,
-                                                        bool is_exception);
+                                                         t_struct* tstruct,
+                                                         bool is_exception);
   void generate_cocoa_struct_field_accessor_implementations(std::ofstream& out,
-                                                           t_struct* tstruct,
-                                                           bool is_exception);
+                                                            t_struct* tstruct,
+                                                            bool is_exception);
   void generate_cocoa_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_result_writer(std::ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_description(std::ofstream& out, t_struct* tstruct);
-
+  
   std::string function_result_helper_struct_type(t_function* tfunction);
   void generate_function_helpers(t_function* tfunction);
-
+  
   /**
    * Service-level generation functions
    */

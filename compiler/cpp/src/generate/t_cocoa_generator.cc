@@ -66,13 +66,22 @@ string t_cocoa_generator::cocoa_imports() {
  * @return List of imports necessary for thrift runtime
  */
 string t_cocoa_generator::cocoa_thrift_imports() {
-  return
-    string() +
+  string result = string() +
     "#import <TProtocol.h>\n" +
     "#import <TApplicationException.h>\n" +
     "#import <TProtocolUtil.h>\n" +
     "\n";
+
+  // Include other Thrift includes
+  const vector<t_program*>& includes = program_->get_includes();
+  for (size_t i = 0; i < includes.size(); ++i) {
+    result += "#import \"" + includes[i]->get_name() + ".h\"" + "\n";
+  }
+  result += "\n";
+
+  return result;
 }
+
 
 /**
  * Finish up generation.
@@ -276,6 +285,11 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream &out,
   }
   out << endl;
 
+  // read and write
+  out << "- (void) read: (id <TProtocol>) inProtocol;" << endl;
+  out << "- (void) write: (id <TProtocol>) outProtocol;" << endl;
+  out << endl;
+
   // getters and setters
   generate_cocoa_struct_field_accessor_declarations(out, tstruct, is_exception);
 
@@ -430,7 +444,7 @@ void t_cocoa_generator::generate_cocoa_struct_reader(ofstream& out,
   indent(out) << "int fieldID;" << endl;
   out << endl;
 
-  indent(out) << "[inProtocol readStructBeginWithName: NULL];" << endl;
+  indent(out) << "[inProtocol readStructBeginReturningName: NULL];" << endl;
   
   // Loop over reading in fields
   indent(out) <<
@@ -439,7 +453,7 @@ void t_cocoa_generator::generate_cocoa_struct_reader(ofstream& out,
     
     // Read beginning field marker
     indent(out) <<
-      "[inProtocol readFieldBeginWithName: &fieldName type: &fieldType fieldID: &fieldID];" << endl;
+      "[inProtocol readFieldBeginReturningName: &fieldName type: &fieldType fieldID: &fieldID];" << endl;
     
     // Check for field STOP marker and break
     indent(out) <<
@@ -525,6 +539,9 @@ void t_cocoa_generator::generate_cocoa_struct_writer(ofstream& out,
     indent() << "[outProtocol writeStructBeginWithName: @\"" << name << "\"];" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    out <<
+      indent() << "if (__" << (*f_iter)->get_name() << "_isset) {" << endl;
+    indent_up();
     bool null_allowed = type_can_be_null((*f_iter)->get_type());
     if (null_allowed) {
       out <<
@@ -544,9 +561,9 @@ void t_cocoa_generator::generate_cocoa_struct_writer(ofstream& out,
       "[outProtocol writeFieldEnd];" << endl;
     
     if (null_allowed) {
-      indent_down();
-      indent(out) << "}" << endl;
+      scope_down(out);
     }
+    scope_down(out);
   }
   // Write the struct map
   out <<
@@ -950,7 +967,7 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
       // check for an exception
       out <<
         indent() << "int msgType = 0;" << endl <<
-        indent() << "[inProtocol readMessageBeginWithName: nil type: &msgType sequenceID: NULL];" << endl <<
+        indent() << "[inProtocol readMessageBeginReturningName: nil type: &msgType sequenceID: NULL];" << endl <<
         indent() << "if (msgType == TMessageType_EXCEPTION) {" << endl <<
         indent() << "  TApplicationException * x = [TApplicationException read: inProtocol];" << endl <<
         indent() << "  [inProtocol readMessageEnd];" << endl <<
@@ -990,7 +1007,7 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
       } else {
         out <<
           indent() << "@throw [TApplicationException exceptionWithType: TApplicationException_MISSING_RESULT" << endl <<
-          indent() << "                                        message: @\"" << (*f_iter)->get_name() << " failed: unknown result\"];" << endl;
+          indent() << "                                         reason: @\"" << (*f_iter)->get_name() << " failed: unknown result\"];" << endl;
       }
       
       // Close function
@@ -1130,18 +1147,18 @@ void t_cocoa_generator::generate_deserialize_container(ofstream& out,
   // Declare variables, read header
   if (ttype->is_map()) {
     indent(out) 
-      << "[inProtocol readMapBeginWithKeyType: NULL valueType: NULL size: &" <<
+      << "[inProtocol readMapBeginReturningKeyType: NULL valueType: NULL size: &" <<
       size << "];" << endl;
     indent(out) << "NSMutableDictionary * " << fieldName << 
       " = [[NSMutableDictionary alloc] initWithCapacity: " << size << "];" << endl;
   } else if (ttype->is_set()) {
     indent(out) 
-      << "[inProtocol readSetBeginWithElementType: NULL size: &" << size << "];" << endl;
+      << "[inProtocol readSetBeginReturningElementType: NULL size: &" << size << "];" << endl;
     indent(out) << "NSMutableSet * " << fieldName << 
       " = [[NSMutableSet alloc] initWithCapacity: " << size << "];" << endl;
   } else if (ttype->is_list()) {
     indent(out) 
-      << "[inProtocol readListBeginWithElementType: NULL size: &" << size << "];" << endl;
+      << "[inProtocol readListBeginReturningElementType: NULL size: &" << size << "];" << endl;
     indent(out) << "NSMutableArray * " << fieldName << 
       " = [[NSMutableArray alloc] initWithCapacity: " << size << "];" << endl;
   }

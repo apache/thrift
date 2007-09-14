@@ -30,17 +30,17 @@ enum {
 
 - (id <TTransport>) transport;
 
-- (void) readMessageBeginWithName: (NSString **) name
-                             type: (int *) type
-                       sequenceID: (int *) sequenceID;
+- (void) readMessageBeginReturningName: (NSString **) name
+                                  type: (int *) type
+                            sequenceID: (int *) sequenceID;
 - (void) readMessageEnd;
 
-- (void) readStructBeginWithName: (NSString **) name;
+- (void) readStructBeginReturningName: (NSString **) name;
 - (void) readStructEnd;
 
-- (void) readFieldBeginWithName: (NSString **) name
-                           type: (int *) fieldType
-                        fieldID: (int *) fieldID;
+- (void) readFieldBeginReturningName: (NSString **) name
+                                type: (int *) fieldType
+                             fieldID: (int *) fieldID;
 - (void) readFieldEnd;
 
 - (NSString *) readString;
@@ -59,19 +59,19 @@ enum {
 
 - (NSData *) readBinary;
 
-- (void) readMapBeginWithKeyType: (int *) keyType
-                       valueType: (int *) valueType
-                            size: (int *) size;
+- (void) readMapBeginReturningKeyType: (int *) keyType
+                            valueType: (int *) valueType
+                                 size: (int *) size;
 - (void) readMapEnd;
 
 
-- (void) readSetBeginWithElementType: (int *) elementType
-                                size: (int *) size;
+- (void) readSetBeginReturningElementType: (int *) elementType
+                                     size: (int *) size;
 - (void) readSetEnd;
 
 
-- (void) readListBeginWithElementType: (int *) elementType
-                                 size: (int *) size;
+- (void) readListBeginReturningElementType: (int *) elementType
+                                      size: (int *) size;
 - (void) readListEnd;
 
 
@@ -98,6 +98,8 @@ enum {
 - (void) writeString: (NSString *) value;
 
 - (void) writeDouble: (double) value;
+
+- (void) writeBool: (BOOL) value;
 
 - (void) writeBinary: (NSData *) data;
 
