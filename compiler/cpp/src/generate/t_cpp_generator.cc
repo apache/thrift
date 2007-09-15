@@ -1799,11 +1799,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   }
 
   // Try block for functions with exceptions
-  if (xceptions.size() > 0) {
-    f_service_ <<
-      indent() << "try {" << endl;
-    indent_up();
-  }
+  f_service_ <<
+    indent() << "try {" << endl;
+  indent_up();
 
   // Generate the function call
   t_struct* arg_struct = tfunction->get_arglist();
@@ -1839,9 +1837,10 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << "result.__isset.success = true;" << endl;
   }
 
-  if (!tfunction->is_async() && xceptions.size() > 0) {
-    indent_down();
-    f_service_ << indent() << "}";
+  indent_down();
+  f_service_ << indent() << "}";
+
+  if (!tfunction->is_async()) {
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ << " catch (" << (*x_iter)->get_type()->get_name() << " &" << (*x_iter)->get_name() << ") {" << endl;
       if (!tfunction->is_async()) {
@@ -1855,8 +1854,23 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         f_service_ << "}";
       }
     }
-    f_service_ << endl;
   }
+
+  f_service_ << " catch (const std::exception& e) {" << endl;
+
+  if (!tfunction->is_async()) {
+    indent_up();
+    f_service_ << 
+      indent() << "facebook::thrift::TApplicationException x(e.what());" << endl <<
+      indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() << "\", facebook::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
+      indent() << "x.write(oprot);" << endl <<
+      indent() << "oprot->writeMessageEnd();" << endl <<
+      indent() << "oprot->getTransport()->flush();" << endl <<
+      indent() << "oprot->getTransport()->writeEnd();" << endl <<
+      indent() << "return;" << endl;
+    indent_down();
+  }
+  f_service_ << indent() << "}" << endl;
 
   // Shortcut out here for async functions
   if (tfunction->is_async()) {
