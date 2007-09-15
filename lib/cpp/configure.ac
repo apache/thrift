@@ -70,6 +70,19 @@ AX_BOOST_BASE([1.33.1])
 
 AX_EVENT_BASE([1.2.0])
 
+AX_LIB_ZLIB([1.2.3])
+if test "$success" = "no"; then
+  AC_MSG_ERROR([
+    Thrift currently requires zlib 1.2.3 or greater in order to build.
+    You should use your system's package management software to install
+    zlib.  (Make sure to install the development package.)  If that
+    doesn't work, you can get zlib from http://www.zlib.net/.  If you
+    already have zlib installed somewhere other than /usr, /usr/local,
+    /opt, or /opt/zlib, you can run configure with the --with-zlib=DIR
+    argument to specify its location for the configure script.
+  ])
+fi
+
 AC_CHECK_LIB(pthread, pthread_create)
 
 AC_CHECK_LIB(rt, sched_get_priority_min)

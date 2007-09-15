@@ -1,4 +1,4 @@
-lib_LTLIBRARIES = libthrift.la libthriftnb.la
+lib_LTLIBRARIES = libthrift.la libthriftnb.la libthriftz.la
 
 common_cxxflags = -Wall -Isrc $(BOOST_CPPFLAGS) $(EVENT_CPPFLAGS)
 common_ldflags = -Wall $(BOOST_LDFLAGS) $(EVENT_LDFLAGS)
@@ -30,14 +30,18 @@ libthrift_sources = src/Thrift.cpp \
 
 libthriftnb_sources = src/server/TNonblockingServer.cpp
 
+libthriftz_sources = src/transport/TZlibTransport.cpp
+
 libthrift_la_SOURCES = $(libthrift_sources)
 libthriftnb_la_SOURCES = $(libthriftnb_sources)
+libthriftz_la_SOURCES = $(libthriftz_sources)
 
 libthrift_cxxflags =  $(common_cxxflags)
 libthrift_ldflags =  $(common_ldflags)
 
 libthrift_la_CXXFLAGS =  $(libthrift_cxxflags)
 libthriftnb_la_CXXFLAGS =  $(libthrift_cxxflags)
+libthriftz_la_CXXFLAGS =  $(libthrift_cxxflags)
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
@@ -77,7 +81,8 @@ include_transport_HEADERS = \
                          src/transport/TSocketPool.h \
                          src/transport/TTransport.h \
                          src/transport/TTransportException.h \
-                         src/transport/TTransportUtils.h
+                         src/transport/TTransportUtils.h \
+                         src/transport/TZlibTransport.h
 
 include_serverdir = $(include_thriftdir)/server
 include_server_HEADERS = \
