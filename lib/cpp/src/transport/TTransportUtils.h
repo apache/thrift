@@ -415,7 +415,7 @@ class TMemoryBuffer : public TTransport {
 
 /**
  * TPipedTransport. This transport allows piping of a request from one 
- * transport to another either when readEnd() or writeEnd(). The typicAL
+ * transport to another either when readEnd() or writeEnd(). The typical
  * use case for this is to log a request or a reply to disk.
  * The underlying buffer expands to a keep a copy of the entire 
  * request/response.
