@@ -8,8 +8,9 @@
 
 from SCons.Builder import Builder
 
-def scons_env(env):
-  cppbuild = Builder(action = 'thrift --cpp $SOURCE')
+def scons_env(env, add=''):
+  lstr = 'thrift --cpp ' + add + ' $SOURCE'
+  cppbuild = Builder(action = lstr)
   env.Append(BUILDERS = {'ThriftCpp' : cppbuild})
 
 def gen_cpp(env, dir, file):
