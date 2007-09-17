@@ -8,6 +8,7 @@
 #define T_TYPE_H
 
 #include <string>
+#include <cstring>
 #include "t_doc.h"
 
 // What's worse?  This, or making a src/parse/non_inlined.cc?
@@ -114,17 +115,28 @@ class t_type : public t_doc {
 
 
  protected:
-  t_type() {}
+  t_type() {
+    memset(fingerprint_, 0, sizeof(fingerprint_));
+  }
 
   t_type(t_program* program) :
-    program_(program) {}
+    program_(program)
+  {
+    memset(fingerprint_, 0, sizeof(fingerprint_));
+  }
 
   t_type(t_program* program, std::string name) :
     program_(program),
-    name_(name) {}
+    name_(name)
+  {
+    memset(fingerprint_, 0, sizeof(fingerprint_));
+  }
 
   t_type(std::string name) :
-    name_(name) {}
+    name_(name)
+  {
+    memset(fingerprint_, 0, sizeof(fingerprint_));
+  }
 
   t_program* program_;
   std::string name_;

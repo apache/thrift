@@ -9,7 +9,6 @@
 
 #include <vector>
 #include <string>
-#include <cstring>
 
 #include "t_type.h"
 #include "t_field.h"
@@ -28,18 +27,12 @@ class t_struct : public t_type {
   t_struct(t_program* program) :
     t_type(program),
     is_xception_(false),
-    xsd_all_(false)
-  {
-    memset(fingerprint_, 0, sizeof(fingerprint_));
-  }
+    xsd_all_(false) {}
 
   t_struct(t_program* program, const std::string& name) :
     t_type(program, name),
     is_xception_(false),
-    xsd_all_(false)
-  {
-    memset(fingerprint_, 0, sizeof(fingerprint_));
-  }
+    xsd_all_(false) {}
 
   void set_name(const std::string& name) {
     name_ = name;

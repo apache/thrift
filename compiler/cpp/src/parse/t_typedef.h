@@ -43,6 +43,13 @@ class t_typedef : public t_type {
     return type_->get_fingerprint_material();
   }
 
+  virtual void generate_fingerprint() {
+    t_type::generate_fingerprint();
+    if (!type_->has_fingerprint()) {
+      type_->generate_fingerprint();
+    }
+  }
+
  private:
   t_type* type_;
   std::string symbolic_;
