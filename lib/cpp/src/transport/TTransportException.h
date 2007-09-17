@@ -34,7 +34,9 @@ class TTransportException : public facebook::thrift::TException {
     TIMED_OUT = 3,
     END_OF_FILE = 4,
     INTERRUPTED = 5,
-    BAD_ARGS = 6
+    BAD_ARGS = 6,
+    CORRUPTED_DATA = 7,
+    INTERNAL_ERROR = 8,
   };
   
   TTransportException() :

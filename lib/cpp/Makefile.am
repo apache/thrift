@@ -4,11 +4,14 @@ lib_LTLIBRARIES = libthrift.la
 if AMX_HAVE_LIBEVENT
 lib_LTLIBRARIES += libthriftnb.la
 endif
+if AMX_HAVE_ZLIB
+lib_LTLIBRARIES += libthriftz.la
+endif
 
 common_cxxflags = -Wall -Isrc $(BOOST_CPPFLAGS)
 common_ldflags = -Wall $(BOOST_LDFLAGS)
 
-# Define the source file for the module
+# Define the source files for the module
 
 libthrift_la_SOURCES = src/Thrift.cpp \
                        src/reflection_limited_types.cpp \
@@ -32,11 +35,21 @@ libthrift_la_SOURCES = src/Thrift.cpp \
                        src/server/TThreadedServer.cpp \
                        src/processor/PeekProcessor.cpp
 
-
 libthriftnb_la_SOURCES = src/server/TNonblockingServer.cpp
 
+libthriftz_la_SOURCES = src/transport/TZlibTransport.cpp
+
+
+# Flags for the various libraries
+
 libthrift_la_CXXFLAGS =  $(common_cxxflags)
-libthriftnb_la_CXXFLAGS =  $(common_cxxflags) $(LIBEVENT_CPPFLAGS)
+
+libthriftnb_la_CXXFLAGS =  $(common_cxxflags)
+libthriftnb_la_CPPFLAGS =  $(LIBEVENT_CPPFLAGS)
+
+libthriftz_la_CXXFLAGS =  $(common_cxxflags)
+libthriftz_la_CPPFLAGS =  $(ZLIB_CPPFLAGS)
+
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
@@ -76,7 +89,8 @@ include_transport_HEADERS = \
                          src/transport/TSocketPool.h \
                          src/transport/TTransport.h \
                          src/transport/TTransportException.h \
-                         src/transport/TTransportUtils.h
+                         src/transport/TTransportUtils.h \
+                         src/transport/TZlibTransport.h
 
 include_serverdir = $(include_thriftdir)/server
 include_server_HEADERS = \

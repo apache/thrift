@@ -1,6 +1,6 @@
 dnl @synopsis AX_LIB_EVENT([MINIMUM-VERSION])
 dnl
-dnl Test for the libz library of a particular version (or newer).
+dnl Test for the libevent library of a particular version (or newer).
 dnl
 dnl If no path to the installed libevent is given, the macro will first try
 dnl using no -I or -L flags, then searches under /usr, /usr/local, /opt,

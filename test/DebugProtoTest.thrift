@@ -73,3 +73,12 @@ service PartiallyReflectable {
   OneOfEach refl1(1: list<Bonk> arg1),
   OneOfEach refl2(2: list<string> arg1, 1: Bonk arg2);
 }
+
+// The only purpose of this thing is to increase the size of the generated code
+// so that ZlibTest has more highly compressible data to play with.
+struct BlowUp {
+  1: map<list<i32>,set<map<i32,string>>> b1;
+  2: map<list<i32>,set<map<i32,string>>> b2;
+  3: map<list<i32>,set<map<i32,string>>> b3;
+  4: map<list<i32>,set<map<i32,string>>> b4;
+}

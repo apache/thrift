@@ -71,6 +71,9 @@ AX_BOOST_BASE([1.33.1])
 AX_LIB_EVENT([1.0])
 AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$success" = "yes"])
 
+AX_LIB_ZLIB([1.2.3])
+AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$success" = "yes"])
+
 AC_CHECK_LIB(pthread, pthread_create)
 
 AC_CHECK_LIB(rt, sched_get_priority_min)

@@ -26,8 +26,8 @@
 
 namespace facebook { namespace thrift {
 
-class TOutput{
-public:
+class TOutput {
+ public:
   TOutput() : f_(&perrorTimeWrapper) {}
 
   inline void setOutputFunction(void (*function)(const char *)){
@@ -47,7 +47,7 @@ public:
     fprintf(stderr, "%s ", dbgtime);
     perror(msg);
   }
-private:
+ private:
   void (*f_)(const char *);
 };
 
@@ -58,7 +58,7 @@ namespace protocol {
 }
 
 class TException : public std::exception {
-public:
+ public:
   TException() {}
 
   TException(const std::string& message) :
@@ -74,13 +74,13 @@ public:
     }
   }
 
-protected:
+ protected:
   std::string message_;
 
 };
 
 class TApplicationException : public TException {
-public:
+ public:
 
   /**
    * Error codes for the various types of exceptions.
@@ -134,7 +134,7 @@ public:
   uint32_t read(protocol::TProtocol* iprot);
   uint32_t write(protocol::TProtocol* oprot) const;
 
-protected:
+ protected:
   /**
    * Error code
    */
