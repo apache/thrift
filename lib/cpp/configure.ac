@@ -68,7 +68,8 @@ AC_C_INLINE
 
 AX_BOOST_BASE([1.33.1])
 
-AX_EVENT_BASE([1.2.0])
+AX_LIB_EVENT([1.0])
+AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$success" = "yes"])
 
 AC_CHECK_LIB(pthread, pthread_create)
 

@@ -1,43 +1,42 @@
-lib_LTLIBRARIES = libthrift.la libthriftnb.la
+lib_LTLIBRARIES = libthrift.la
+## We only build the extra libraries if we have the dependencies,
+## but we install all of the headers unconditionally.
+if AMX_HAVE_LIBEVENT
+lib_LTLIBRARIES += libthriftnb.la
+endif
 
-common_cxxflags = -Wall -Isrc $(BOOST_CPPFLAGS) $(EVENT_CPPFLAGS)
-common_ldflags = -Wall $(BOOST_LDFLAGS) $(EVENT_LDFLAGS)
+common_cxxflags = -Wall -Isrc $(BOOST_CPPFLAGS)
+common_ldflags = -Wall $(BOOST_LDFLAGS)
 
 # Define the source file for the module
 
-libthrift_sources = src/Thrift.cpp \
-                    src/reflection_limited_types.cpp \
-                    src/concurrency/Mutex.cpp \
-                    src/concurrency/Monitor.cpp \
-                    src/concurrency/PosixThreadFactory.cpp \
-                    src/concurrency/ThreadManager.cpp \
-                    src/concurrency/TimerManager.cpp \
-                    src/protocol/TBinaryProtocol.cpp \
-                    src/protocol/TDebugProtocol.cpp \
-                    src/protocol/TDenseProtocol.cpp \
-                    src/transport/TTransportException.cpp \
-                    src/transport/TFileTransport.cpp \
-                    src/transport/THttpClient.cpp \
-                    src/transport/TSocket.cpp \
-                    src/transport/TSocketPool.cpp \
-                    src/transport/TServerSocket.cpp \
-                    src/transport/TTransportUtils.cpp \
-                    src/server/TSimpleServer.cpp \
-                    src/server/TThreadPoolServer.cpp \
-                    src/server/TThreadedServer.cpp \
-                    src/processor/PeekProcessor.cpp
+libthrift_la_SOURCES = src/Thrift.cpp \
+                       src/reflection_limited_types.cpp \
+                       src/concurrency/Mutex.cpp \
+                       src/concurrency/Monitor.cpp \
+                       src/concurrency/PosixThreadFactory.cpp \
+                       src/concurrency/ThreadManager.cpp \
+                       src/concurrency/TimerManager.cpp \
+                       src/protocol/TBinaryProtocol.cpp \
+                       src/protocol/TDebugProtocol.cpp \
+                       src/protocol/TDenseProtocol.cpp \
+                       src/transport/TTransportException.cpp \
+                       src/transport/TFileTransport.cpp \
+                       src/transport/THttpClient.cpp \
+                       src/transport/TSocket.cpp \
+                       src/transport/TSocketPool.cpp \
+                       src/transport/TServerSocket.cpp \
+                       src/transport/TTransportUtils.cpp \
+                       src/server/TSimpleServer.cpp \
+                       src/server/TThreadPoolServer.cpp \
+                       src/server/TThreadedServer.cpp \
+                       src/processor/PeekProcessor.cpp
 
 
-libthriftnb_sources = src/server/TNonblockingServer.cpp
+libthriftnb_la_SOURCES = src/server/TNonblockingServer.cpp
 
-libthrift_la_SOURCES = $(libthrift_sources)
-libthriftnb_la_SOURCES = $(libthriftnb_sources)
-
-libthrift_cxxflags =  $(common_cxxflags)
-libthrift_ldflags =  $(common_ldflags)
-
-libthrift_la_CXXFLAGS =  $(libthrift_cxxflags)
-libthriftnb_la_CXXFLAGS =  $(libthrift_cxxflags)
+libthrift_la_CXXFLAGS =  $(common_cxxflags)
+libthriftnb_la_CXXFLAGS =  $(common_cxxflags) $(LIBEVENT_CPPFLAGS)
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
