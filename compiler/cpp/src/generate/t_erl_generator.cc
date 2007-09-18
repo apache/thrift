@@ -890,7 +890,7 @@ void t_erl_generator::generate_service_server(t_service* tservice) {
 
   indent(f_service_) << "  _ -> % unknown function" << endl;
   if (tservice->get_extends() != NULL) {
-    indent(f_service_) << "    " << extends << ":proc(Name,_Type,Seqid,HandlerModule, Iprot, Oprot)" << endl;
+    indent(f_service_) << "    " << extends << "_thrift:proc(Name,_Type,Seqid,HandlerModule, Iprot, Oprot)" << endl;
   } else {
     f_service_ <<
       indent() << "    ?R1(Iprot, skip, ?tType_STRUCT)," << endl <<
