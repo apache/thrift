@@ -3,7 +3,6 @@
 subdirs="compiler/cpp lib/cpp lib/py if"
 
 ./cleanup.sh
-echo "SUBDIRS = ${subdirs}" > Makefile.am
 
 aclocal
 touch NEWS README AUTHORS ChangeLog

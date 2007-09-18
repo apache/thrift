@@ -6,3 +6,5 @@ DESTDIR ?= /
 #$(PYTHON) setup.py install --prefix=$(prefix) --root=$(DESTDIR) $(PYTHON_SETUPUTIL_ARGS)
 install-exec-hook:
 	$(PYTHON) setup.py install --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
+
+EXTRA_DIST = bootstrap.sh cleanup.sh setup.py LICENSE src

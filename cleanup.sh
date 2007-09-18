@@ -6,11 +6,9 @@ rm -rf \
 AUTHORS \
 ChangeLog \
 INSTALL \
-Makefile.am \
 Makefile \
 Makefile.in \
 Makefile.orig \
-NEWS \
 aclocal.m4 \
 autom4te.cache \
 autoscan.log \
@@ -29,6 +27,7 @@ install-sh \
 libtool \
 ltmain.sh \
 missing \
+ylwrap \
 if/gen-*
 
 for subdir in ${subdirs}; do 

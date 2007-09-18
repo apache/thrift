@@ -19,12 +19,48 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_ocaml_generator.cc \
                  src/generate/t_erl_generator.cc \
                  src/generate/t_hs_generator.cc \
-                 src/generate/t_cocoa_generator.cc 
+                 src/generate/t_cocoa_generator.cc \
+								 src/globals.h \
+								 src/main.h \
+								 src/md5.h \
+								 src/parse/t_doc.h \
+								 src/parse/t_type.h \
+								 src/parse/t_base_type.h \
+								 src/parse/t_enum.h \
+								 src/parse/t_enum_value.h \
+								 src/parse/t_typedef.h \
+								 src/parse/t_container.h \
+								 src/parse/t_list.h \
+								 src/parse/t_set.h \
+								 src/parse/t_map.h \
+								 src/parse/t_struct.h \
+								 src/parse/t_field.h \
+								 src/parse/t_service.h \
+								 src/parse/t_function.h \
+								 src/parse/t_program.h \
+								 src/parse/t_scope.h \
+								 src/parse/t_const.h \
+								 src/parse/t_const_value.h \
+								 src/generate/t_generator.h \
+								 src/generate/t_oop_generator.h \
+								 src/generate/t_cpp_generator.h \
+								 src/generate/t_java_generator.h \
+								 src/generate/t_php_generator.h \
+								 src/generate/t_py_generator.h \
+								 src/generate/t_rb_generator.h \
+								 src/generate/t_xsd_generator.h \
+								 src/generate/t_perl_generator.h \
+								 src/generate/t_ocaml_generator.h \
+								 src/generate/t_erl_generator.h \
+								 src/generate/t_hs_generator.h \
+								 src/generate/t_cocoa_generator.h
 
 thrift_CXXFLAGS = -Wall -Isrc $(BOOST_CPPFLAGS)
 thrift_LDFLAGS = -Wall $(BOOST_LDFLAGS)
 
 thrift_LDADD = @LEXLIB@
+
+EXTRA_DIST = bootstrap.sh cleanup.sh LICENSE
 
 clean-local:
 	rm -rf thriftl.cc thrifty.cc thrifty.h

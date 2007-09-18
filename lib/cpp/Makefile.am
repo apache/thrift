@@ -1,3 +1,5 @@
+ACLOCAL_AMFLAGS = -I ./aclocal
+
 lib_LTLIBRARIES = libthrift.la
 ## We only build the extra libraries if we have the dependencies,
 ## but we install all of the headers unconditionally.
@@ -55,6 +57,7 @@ include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
                          config.h \
                          src/Thrift.h \
+												 src/TReflectionLocal.h \
                          src/reflection_limited_types.h \
                          src/TProcessor.h \
                          src/TLogging.h
@@ -73,7 +76,7 @@ include_concurrency_HEADERS = \
 include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = \
                          src/protocol/TBinaryProtocol.h \
-                         src/protocol/TDenseProtocol.cpp \
+                         src/protocol/TDenseProtocol.h \
                          src/protocol/TDebugProtocol.h \
                          src/protocol/TOneWayProtocol.h \
                          src/protocol/TProtocolException.h \
@@ -105,7 +108,7 @@ include_processor_HEADERS = \
                          src/processor/PeekProcessor.h \
                          src/processor/StatsProcessor.h
 
-bin_PROGRAMS = concurrency_test
+noinst_PROGRAMS = concurrency_test
 
 concurrency_test_SOURCES = src/concurrency/test/Tests.cpp \
                            src/concurrency/test/ThreadFactoryTests.h \
@@ -116,3 +119,5 @@ concurrency_test_LDADD = libthrift.la
 
 concurrency_test_CXXFLAGS =  $(common_cxxflags)
 concurrency_test_LDFLAGS =  $(common_ldflags)
+
+EXTRA_DIST = bootstrap.sh cleanup.sh LICENSE

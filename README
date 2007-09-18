@@ -63,6 +63,9 @@ http://www.boost.org/libs/smart_ptr/smart_ptr.htm
 Some portions of Thrift also depend upon libevent, see:
 http://monkey.org/~provos/libevent/
 
+Some portions of Thrift also depend upon zlib, see:
+http://www.zlib.net/
+
 These libraries are open source and may be freely obtained, but they are not
 provided as a part of this distribution.
 
@@ -82,7 +85,8 @@ Installation
 ============
 
 If you are building from the first time out of the source repository, you will
-need to generate the configure scripts.  From the top directory, do:
+need to generate the configure scripts.  (This is not necessary if you
+downloaded a tarball.)  From the top directory, do:
 
 	./bootstrap.sh
 
