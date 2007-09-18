@@ -1,17 +1,17 @@
 # $Id: Makefile,v 1.3 2004/08/13 16:35:59 mlogan Exp $
 #
-include ../../../build/otp.mk
-include ../../../build/colors.mk
-include ../../../build/buildtargets.mk
+include ../build/otp.mk
+include ../build/colors.mk
+include ../build/buildtargets.mk
 
 # ----------------------------------------------------
 # Application version
 # ----------------------------------------------------
 
 include ../vsn.mk
-APP_NAME=%%APP_NAME%%
-PFX=%%PFX%%
-VSN=$(%%APP_NAME_UPPER_CASE%%_VSN)
+APP_NAME=thrift
+PFX=thrift
+VSN=$(THRIFT_VSN)
 
 # ----------------------------------------------------
 # Install directory specification
@@ -25,8 +25,8 @@ INSTALL_DST = $(ERLANG_OTP)/lib/$(APP_NAME)-$(VSN)
 # ----------------------------------------------------
 
 
-MODULES = $(shell ls *.erl | sed s/.erl//)
-MODULES_COMMA = $(shell ls *.erl | sed s/\\.erl/,/)
+MODULES = $(shell find -name \*.erl | sed s:^\\./:: | sed s/\\.erl//)
+MODULES_STRING_LIST = $(shell find -name \*.erl | sed s:^\\./:\": | sed s/\\.erl/\",/)
 
 HRL_FILES=
 INTERNAL_HRL_FILES= $(APP_NAME).hrl
@@ -61,7 +61,7 @@ ERL_COMPILE_FLAGS += -I../include -I../../fslib/include -I../../system_status/in
 all debug opt: $(EBIN) $(TARGET_FILES) 
 
 #$(EBIN)/rm_logger.beam: $(APP_NAME).hrl
-include ../../../build/docs.mk
+include ../build/docs.mk
 
 # Note: In the open-source build clean must not destroy the preloaded
 # beam files.
@@ -82,7 +82,7 @@ $(APP_TARGET): $(APP_SRC) ../vsn.mk $(BEAMS)
 	sed -e 's;%VSN%;$(VSN);' \
 		-e 's;%PFX%;$(PFX);' \
 		-e 's;%APP_NAME%;$(APP_NAME);' \
-		-e 's;%MODULES%;%MODULES%$(MODULES_COMMA);' \
+		-e 's;%MODULES%;%MODULES%$(MODULES_STRING_LIST);' \
 		$< > $<".tmp" 
 	sed -e 's/%MODULES%\(.*\),/\1/' \
 		$<".tmp" > $@ 

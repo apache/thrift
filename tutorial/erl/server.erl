@@ -8,7 +8,7 @@
 -include("server/tErlServer.hrl").
 -include("transport/tErlAcceptor.hrl").
 
--include("calculator.hrl").
+-include("calculator_thrift.hrl").
 
 -export([start/0, start/1, stop/1, ping/0, add/2, calculate/2, getStruct/1, zip/0]).
 
@@ -62,7 +62,7 @@ start(Port) ->
       }]),
 
     Handler   = ?MODULE,
-    Processor = calculator,
+    Processor = calculator_thrift,
 
     TF = tBufferedTransportFactory:new(),
     PF = tBinaryProtocolFactory:new(),

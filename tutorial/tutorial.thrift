@@ -1,4 +1,4 @@
-#!/usr/local/bin/thrift -cpp -java -py -php -rb -perl -xsd -r
+#!/usr/local/bin/thrift -cpp -java -py -php -rb -perl -erl -xsd -r
 #
 # Thrift Tutorial
 # Mark Slee (mcslee@facebook.com)
