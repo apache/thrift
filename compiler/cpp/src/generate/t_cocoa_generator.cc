@@ -928,15 +928,24 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
     const vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator fld_iter;
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      string fieldName = (*fld_iter)->get_name();
+      if (type_can_be_null((*fld_iter)->get_type())) {
+        out << indent() << "if (" << fieldName << " != nil)";
+        scope_up(out);
+      }
       out <<
-        indent() << "[outProtocol writeFieldBeginWithName: @\"" << (*fld_iter)->get_name() << "\""
+        indent() << "[outProtocol writeFieldBeginWithName: @\"" << fieldName << "\""
         " type: " << type_to_enum((*fld_iter)->get_type()) <<
         " fieldID: " << (*fld_iter)->get_key() << "];" << endl;
 
-      generate_serialize_field(out, *fld_iter, (*fld_iter)->get_name());
+      generate_serialize_field(out, *fld_iter, fieldName);
 
       out <<
         indent() << "[outProtocol writeFieldEnd];" << endl;
+
+      if (type_can_be_null((*fld_iter)->get_type())) {
+        scope_down(out);
+      }
     }
 
     out <<

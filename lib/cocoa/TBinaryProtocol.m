@@ -24,6 +24,13 @@ int32_t VERSION_MASK = 0xffff0000;
 }
 
 
+- (void) dealloc
+{
+  [mTransport release];
+  [super dealloc];
+}
+
+
 - (id <TTransport>) transport
 {
   return mTransport;
@@ -332,12 +339,18 @@ int32_t VERSION_MASK = 0xffff0000;
   [self writeI64: *((int64_t *) &value)];
 }
 
+
 - (void) writeString: (NSString *) value
 {
-  const char * utf8Bytes = [value UTF8String];
-  size_t length = strlen(utf8Bytes);
-  [self writeI32: length];
-  [mTransport write: (uint8_t *) utf8Bytes offset: 0 length: length];
+  if (value != nil) {
+    const char * utf8Bytes = [value UTF8String];
+    size_t length = strlen(utf8Bytes);
+    [self writeI32: length];
+    [mTransport write: (uint8_t *) utf8Bytes offset: 0 length: length];
+  } else {
+    // instead of crashing when we get null, let's write out a zero length string
+    [self writeI32: 0];
+  }
 }
 
 
