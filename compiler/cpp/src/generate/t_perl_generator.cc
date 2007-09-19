@@ -256,6 +256,23 @@ void t_perl_generator::generate_perl_struct_definition(ofstream& out,
     out << "use base('Thrift::TException');\n";
   }
 
+  //Create simple acessor methods
+  out << "use base('Class::Accessor');\n";
+
+  if (members.size() > 0) {
+      out << perl_namespace(tstruct->get_program()) << tstruct->get_name() <<"->mk_accessors( qw( ";
+      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+          t_type* t = get_true_type((*m_iter)->get_type());
+          if (!t->is_xception()) {
+              out << (*m_iter)->get_name() << " ";
+          }
+      }
+
+      out << ") );\n";
+  }
+
+
+  // new()
   out << "sub new {\n";
   indent_up();
   out << "my $classname = shift;\n";

@@ -1,7 +1,7 @@
 Thrift Perl Software Library
 
-Author: T Jake Luciani (jakers@gmail.com)
-Last Modified: 2007-Apr-28
+Author: T Jake Luciani (jake@3.rdrail.net)
+Last Modified: 2007-Sep-18
 
 Thrift is distributed under the Thrift open source software license.
 Please see the included LICENSE file.
@@ -17,22 +17,11 @@ around any code that contains exceptions.
 The 64bit Integers work only upto 2^42 on my machine :-?
 Math::BigInt is probably needed.
 
-The only other issue I have with this implementation is the lack of
-strict accessor methods, for example: to set a struct with variable
-foo you must assign it via hash key:
-
-my $x = new StructWithFoo();
-$x->{foo} = "bar";
-
-rather than:
-
-$x->foo("bar");
-
 Please see tutoral and test dirs for examples...
 
 Dependencies
 ============
 
-Bit::Vector - comes with modern perl installations.
-
+Bit::Vector     - comes with modern perl installations.
+Class::Accessor
 

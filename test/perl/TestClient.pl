@@ -83,33 +83,33 @@ print(" = $dub\n");
 # STRUCT TEST
 #
 print("testStruct({\"Zero\", 1, -3, -5})");
-my $out = new Xtruct();
-$out->{string_thing} = "Zero";
-$out->{byte_thing} = 1;
-$out->{i32_thing} = -3;
-$out->{i64_thing} = -5;
+my $out = new ThriftTest::Xtruct();
+$out->string_thing("Zero");
+$out->byte_thing(1);
+$out->i32_thing(-3);
+$out->i64_thing(-5);
 my $in = $testClient->testStruct($out);
-print(" = {\"".$in->{string_thing}."\", ".
-        $in->{byte_thing}.", ".
-        $in->{i32_thing}.", ".
-        $in->{i64_thing}."}\n");
+print(" = {\"".$in->string_thing."\", ".
+        $in->byte_thing.", ".
+        $in->i32_thing.", ".
+        $in->i64_thing."}\n");
 
 #
 # NESTED STRUCT TEST
 #
 print("testNest({1, {\"Zero\", 1, -3, -5}, 5}");
-my $out2 = new Xtruct2();
-$out2->{byte_thing} = 1;
-$out2->{struct_thing} = $out;
-$out2->{i32_thing} = 5;
+my $out2 = new ThriftTest::Xtruct2();
+$out2->byte_thing(1);
+$out2->struct_thing($out);
+$out2->i32_thing(5);
 my $in2 = $testClient->testNest($out2);
-$in = $in2->{struct_thing};
-print(" = {".$in2->{byte_thing}.", {\"".
-      $in->{string_thing}."\", ".
-      $in->{byte_thing}.", ".
-      $in->{i32_thing}.", ".
-      $in->{i64_thing}."}, ".
-      $in2->{i32_thing}."}\n");
+$in = $in2->struct_thing;
+print(" = {".$in2->byte_thing.", {\"".
+      $in->string_thing."\", ".
+      $in->byte_thing.", ".
+      $in->i32_thing.", ".
+      $in->i64_thing."}, ".
+      $in2->i32_thing."}\n");
 
 #
 # MAP TEST
@@ -221,13 +221,13 @@ print("}\n");
 #
 # INSANITY TEST
 #
-my $insane = new Insanity();
+my $insane = new ThriftTest::Insanity();
 $insane->{userMap}->{Numberz::FIVE} = 5000;
-my $truck = new Xtruct();
-$truck->{string_thing} = "Truck";
-$truck->{byte_thing} = 8;
-$truck->{i32_thing} = 8;
-$truck->{i64_thing} = 8;
+my $truck = new ThriftTest::Xtruct();
+$truck->string_thing("Truck");
+$truck->byte_thing(8);
+$truck->i32_thing(8);
+$truck->i64_thing(8);
 push(@{$insane->{xtructs}}, $truck);
 
 print("testInsanity()");
@@ -269,7 +269,7 @@ print("testException('Xception')");
 eval {
     $testClient->testException('Xception');
     print("  void\nFAILURE\n");
-}; if($@ && $@->UNIVERSAL::isa('Xception')) {
+}; if($@ && $@->UNIVERSAL::isa('ThriftTest::Xception')) {
     print(' caught xception '.$@->{errorCode}.': '.$@->{message}."\n");
 }
 
