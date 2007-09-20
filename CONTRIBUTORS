@@ -45,6 +45,11 @@ Paul Querna <pquerna@apache.org>
 -Autoconf error message fix for libevent detection
 -clock_gettime implementation for OSX
 
+Andrew Bosworth <bosworth@post.harvard.edu>
+- ReadWriteMutex
+- Mutex memory leak fix
+- added callback to redirect logging
+
 ----------------
 Release 20070401
 ----------------

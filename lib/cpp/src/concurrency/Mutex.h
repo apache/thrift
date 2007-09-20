@@ -18,7 +18,7 @@ namespace facebook { namespace thrift { namespace concurrency {
 class Mutex {
  public:
   Mutex();
-  virtual ~Mutex() {}
+  virtual ~Mutex();
   virtual void lock() const;
   virtual bool trylock() const;
   virtual void unlock() const;
@@ -31,7 +31,7 @@ class Mutex {
 class ReadWriteMutex {
 public:
   ReadWriteMutex();
-  virtual ~ReadWriteMutex() {}
+  virtual ~ReadWriteMutex();
 
   // these get the lock and block until it is done successfully
   virtual void acquireRead() const;
