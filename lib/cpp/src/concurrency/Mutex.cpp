@@ -46,8 +46,6 @@ class Mutex::impl {
 
 Mutex::Mutex() : impl_(new Mutex::impl()) {}
 
-Mutex::~Mutex() { delete impl_; }
-
 void Mutex::lock() const { impl_->lock(); }
 
 bool Mutex::trylock() const { return impl_->trylock(); }
@@ -92,8 +90,6 @@ private:
 };
 
 ReadWriteMutex::ReadWriteMutex() : impl_(new ReadWriteMutex::impl()) {}
-
-ReadWriteMutex::~ReadWriteMutex() { delete impl_; }
 
 void ReadWriteMutex::acquireRead() const { impl_->acquireRead(); }
 

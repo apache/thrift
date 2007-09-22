@@ -7,6 +7,9 @@
 #ifndef _THRIFT_CONCURRENCY_MUTEX_H_
 #define _THRIFT_CONCURRENCY_MUTEX_H_ 1
 
+#include <boost/shared_ptr.hpp>
+using boost::shared_ptr;
+
 namespace facebook { namespace thrift { namespace concurrency { 
 
 /**
@@ -18,20 +21,21 @@ namespace facebook { namespace thrift { namespace concurrency {
 class Mutex {
  public:
   Mutex();
-  virtual ~Mutex();
+  virtual ~Mutex() {}
   virtual void lock() const;
   virtual bool trylock() const;
   virtual void unlock() const;
 
  private:
+
   class impl;
-  impl* impl_;
+  shared_ptr<impl> impl_;
 };
 
 class ReadWriteMutex {
 public:
   ReadWriteMutex();
-  virtual ~ReadWriteMutex();
+  virtual ~ReadWriteMutex() {}
 
   // these get the lock and block until it is done successfully
   virtual void acquireRead() const;
@@ -45,8 +49,9 @@ public:
   virtual void release() const;
    
 private:
+
   class impl;
-  impl* impl_;
+  shared_ptr<impl> impl_;
 };
 
 class Guard {
@@ -75,7 +80,7 @@ class RWGuard {
       rw_mutex_.release();
     }  
   private: 
-    const ReadWriteMutex rw_mutex_;
+    const ReadWriteMutex& rw_mutex_;
 };  
 
 
