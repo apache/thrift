@@ -30,4 +30,16 @@
 }
 
 
+- (NSString *) description
+{
+  NSMutableString * result = [NSMutableString stringWithString: [self name]];
+  [result appendFormat: @": %@", [self reason]];
+  if ([self userInfo] != nil) {
+    [result appendFormat: @"\n  userInfo = %@", [self userInfo]];
+  }
+  
+  return result;
+}
+
+
 @end

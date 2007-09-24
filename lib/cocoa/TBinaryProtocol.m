@@ -5,6 +5,26 @@ int32_t VERSION_1 = 0x80010000;
 int32_t VERSION_MASK = 0xffff0000;
 
 
+static TBinaryProtocolFactory * gSharedFactory = nil;
+
+@implementation TBinaryProtocolFactory 
+
++ (TBinaryProtocolFactory *) sharedFactory {
+  if (gSharedFactory == nil) {
+    gSharedFactory = [[TBinaryProtocolFactory alloc] init];
+  }
+  
+  return gSharedFactory;
+}
+
+- (TBinaryProtocol *) newProtocolOnTransport: (id <TTransport>) transport {
+  return [[[TBinaryProtocol alloc] initWithTransport: transport] autorelease];
+}
+
+@end
+
+
+
 @implementation TBinaryProtocol
 
 - (id) initWithTransport: (id <TTransport>) transport
@@ -54,7 +74,8 @@ int32_t VERSION_MASK = 0xffff0000;
   if (size < 0) {
     int version = size & VERSION_MASK;
     if (version != VERSION_1) {
-      @throw [TProtocolException exceptionWithName: @"Bad version in readMessageBegin"];
+      @throw [TProtocolException exceptionWithName: @"TProtocolException"
+                                 reason: @"Bad version in readMessageBegin"];
     }
     if (type != NULL) {
       *type = version & 0x00FF;
@@ -69,7 +90,8 @@ int32_t VERSION_MASK = 0xffff0000;
     }
   } else {
     if (mStrictRead) {
-      @throw [TProtocolException exceptionWithName: @"Missing version in readMessageBegin, old client?"];
+      @throw [TProtocolException exceptionWithName: @"TProtocolException"
+                                 reason: @"Missing version in readMessageBegin, old client?"];
     }
     NSString * messageName = [self readStringBody: size];
     if (name != NULL) {
@@ -194,8 +216,8 @@ int32_t VERSION_MASK = 0xffff0000;
   uint8_t * buff = malloc(size);
   if (buff == NULL) {
     @throw [TProtocolException 
-             exceptionWithName: @"Out of memory" 
-             reason: [NSString stringWithFormat: @"Unable to allocate %d bytes trying to read binary data.",
+             exceptionWithName: @"TProtocolException"
+             reason: [NSString stringWithFormat: @"Out of memory.  Unable to allocate %d bytes trying to read binary data.",
                                size]];
   }
   [mTransport readAll: buff offset: 0 length: size];
@@ -348,7 +370,8 @@ int32_t VERSION_MASK = 0xffff0000;
     [self writeI32: length];
     [mTransport write: (uint8_t *) utf8Bytes offset: 0 length: length];
   } else {
-    // instead of crashing when we get null, let's write out a zero length string
+    // instead of crashing when we get null, let's write out a zero
+    // length string
     [self writeI32: 0];
   }
 }

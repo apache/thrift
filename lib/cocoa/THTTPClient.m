@@ -39,6 +39,7 @@
   [mURL release];
   [mRequest release];
   [mRequestData release];
+  [mResponseData release];
   [super dealloc];
 }
 
@@ -75,19 +76,20 @@
   [mRequestData setLength: 0];
 
   if (responseData == nil) {
-    @throw [TTransportException exceptionWithName: @"Could not make HTTP request"
-                                reason: @"unknown"
+    @throw [TTransportException exceptionWithName: @"TTransportException"
+                                reason: @"Could not make HTTP request"
                                 error: error];
   }
   if (![response isKindOfClass: [NSHTTPURLResponse class]]) {
-    @throw [TTransportException exceptionWithName: @"Unexpected NSURLResponse type"];
+    @throw [TTransportException exceptionWithName: @"TTransportException"
+                                           reason: @"Unexpected NSURLResponse type"];
   }
 
   NSHTTPURLResponse * httpResponse = (NSHTTPURLResponse *) response;
   if ([httpResponse statusCode] != 200) {
-    @throw [TTransportException exceptionWithName: 
-                                  [NSString stringWithFormat: @"Bad response from HTTP server: %d", 
-                                            [httpResponse statusCode]]];
+    @throw [TTransportException exceptionWithName: @"TTransportException"
+                                           reason: [NSString stringWithFormat: @"Bad response from HTTP server: %d", 
+                                                    [httpResponse statusCode]]];
   }
                                 
   // phew!

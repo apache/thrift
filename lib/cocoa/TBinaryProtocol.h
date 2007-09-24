@@ -1,5 +1,7 @@
 #import "TProtocol.h"
 #import "TTransport.h"
+#import "TProtocolFactory.h"
+
 
 @interface TBinaryProtocol : NSObject <TProtocol> {
   id <TTransport> mTransport;
@@ -14,3 +16,13 @@
              strictWrite: (BOOL) strictWrite;
 
 @end;
+
+
+@interface TBinaryProtocolFactory : NSObject <TProtocolFactory> {
+}
+
++ (TBinaryProtocolFactory *) sharedFactory;
+
+- (TBinaryProtocol *) newProtocolOnTransport: (id <TTransport>) transport;
+
+@end
