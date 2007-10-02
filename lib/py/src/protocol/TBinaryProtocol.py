@@ -13,8 +13,17 @@ class TBinaryProtocol(TProtocolBase):
 
   """Binary implementation of the Thrift protocol driver."""
 
-  VERSION_MASK = 0xffff0000
-  VERSION_1 = 0x80010000
+  # NastyHaxx. Python 2.4+ on 32-bit machines forces hex constants to be
+  # positive, converting this into a long. If we hardcode the int value
+  # instead it'll stay in 32 bit-land.
+
+  # VERSION_MASK = 0xffff0000
+  VERSION_MASK = -65536
+
+  # VERSION_1 = 0x80010000
+  VERSION_1 = -2147418112
+
+  TYPE_MASK = 0x000000ff
 
   def __init__(self, trans, strictRead=False, strictWrite=True):
     TProtocolBase.__init__(self, trans)
@@ -108,7 +117,7 @@ class TBinaryProtocol(TProtocolBase):
       version = sz & TBinaryProtocol.VERSION_MASK
       if version != TBinaryProtocol.VERSION_1:
         raise TProtocolException(TProtocolException.BAD_VERSION, 'Bad version in readMessageBegin: %d' % (sz))
-      type = version & 0x000000ff
+      type = sz & TBinaryProtocol.TYPE_MASK
       name = self.readString()
       seqid = self.readI32()
     else:
