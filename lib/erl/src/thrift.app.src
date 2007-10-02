@@ -35,7 +35,7 @@
   {env, []},
 
   % The Module and Args used to start this application.
-  {mod, {%APP_NAME%, []}}
+  {mod, {thrift_app, []}}
  ]
 }.
 
