@@ -23,30 +23,37 @@ public class TProtocolUtil {
     case TType.BOOL:
       {
         prot.readBool();
+        break;
       }
     case TType.BYTE:
       {
         prot.readByte();
+        break;
       }
     case TType.I16:
       {
         prot.readI16();
+        break;
       }
     case TType.I32:
       {
         prot.readI32();
+        break;
       }
     case TType.I64:
       {
         prot.readI64();
+        break;
       }
     case TType.DOUBLE:
       {
         prot.readDouble();
+        break;
       }
     case TType.STRING:
       {
         prot.readString();
+        break;
       }
     case TType.STRUCT:
       {
@@ -60,6 +67,7 @@ public class TProtocolUtil {
           prot.readFieldEnd();
         }
         prot.readStructEnd();
+        break;
       }
     case TType.MAP:
       {
@@ -69,6 +77,7 @@ public class TProtocolUtil {
           skip(prot, map.valueType);
         }
         prot.readMapEnd();
+        break;
       }
     case TType.SET:
       {        
@@ -77,6 +86,7 @@ public class TProtocolUtil {
           skip(prot, set.elemType);
         }
         prot.readSetEnd();
+        break;
       }
     case TType.LIST:
       {
@@ -85,9 +95,10 @@ public class TProtocolUtil {
           skip(prot, list.elemType);
         }
         prot.readListEnd();
+        break;
       }
     default:
-      return;
+      break;
     }
   }
 }
