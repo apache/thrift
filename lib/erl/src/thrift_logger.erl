@@ -140,7 +140,7 @@ handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
     end.
 
 %%
-handle_event1({What, _Gleader, {Pid, Format, Data}}, State) when is_list(Format) ->
+handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format) ->
     Symbol = case What of
 	error       -> "!!";
 	warning_msg -> "**";
