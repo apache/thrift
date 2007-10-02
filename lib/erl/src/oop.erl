@@ -63,6 +63,7 @@ set(Obj, Field, Value) -> %% TODO: could be tail-recursive
 		    ?NOATTR_SET
 	    end
     end.
+    
 
 %%% C++                   <-> Erlang
 %%% classes                   modules

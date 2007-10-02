@@ -17,8 +17,8 @@
 
 -export([attr/4, super/0, inspect/1]).
 
--export([new/0, new/1, new/2,
-	 effectful_setHandle/2, effectful_open/1,
+-export([new/0, new/1, new/2, 
+	 effectful_setHandle/2, effectful_open/1, 
 	 isOpen/1, write/2, read/2, effectful_close/1]).
 
 %%%
@@ -91,9 +91,6 @@ write(This, Str) ->
     Handle = oop:get(This, handle),
     Val = gen_tcp:send(Handle, Str),
 
-    %% DEBUG
-    %% error_logger:info_msg("tSocket: wrote ~p~n", [Str]),
-
     %% error_logger:info_msg("WRITE |~p| (~p)", [Str,Val]),
     
     case Val of
@@ -111,8 +108,6 @@ read(This, Sz) ->
 	    Port = oop:get(This, port),
 	    throw(tTransportException:new(?tTransportException_UNKNOWN, "TSocket: Could not read " ++ Sz ++ "bytes from " ++ Host ++ ":" ++ Port));
 	{ok, Data} ->
-	    %% DEBUG
-	    %% io:format("tSocket: read ~p~n", [Data]),
 	    Data;
 	{error, Error} ->
 	    exit(tTransportException:new(?tTransportException_NOT_OPEN, "in tSocket:read/2: gen_tcp:recv"))

@@ -67,7 +67,6 @@ include ../build/docs.mk
 # beam files.
 clean:
 	rm -f $(TARGET_FILES)
-	rm -f *~
 	rm -f core
 	rm -rf $(EBIN)
 	rm -rf *html
