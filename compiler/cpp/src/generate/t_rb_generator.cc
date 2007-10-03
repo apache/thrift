@@ -105,7 +105,7 @@ void t_rb_generator::generate_typedef(t_typedef* ttypedef) {}
  */
 void t_rb_generator::generate_enum(t_enum* tenum) {
   indent(f_types_) <<
-    "module " << tenum->get_name() << endl;
+    "module " << capitalize(tenum->get_name()) << endl;
   indent_up();
   
   vector<t_enum_value*> constants = tenum->get_constants();
