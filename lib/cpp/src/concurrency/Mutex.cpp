@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <pthread.h>
 
+using boost::shared_ptr;
+
 namespace facebook { namespace thrift { namespace concurrency { 
 
 /** 

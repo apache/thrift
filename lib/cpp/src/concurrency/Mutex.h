@@ -8,7 +8,6 @@
 #define _THRIFT_CONCURRENCY_MUTEX_H_ 1
 
 #include <boost/shared_ptr.hpp>
-using boost::shared_ptr;
 
 namespace facebook { namespace thrift { namespace concurrency { 
 
@@ -29,7 +28,7 @@ class Mutex {
  private:
 
   class impl;
-  shared_ptr<impl> impl_;
+  boost::shared_ptr<impl> impl_;
 };
 
 class ReadWriteMutex {
@@ -51,7 +50,7 @@ public:
 private:
 
   class impl;
-  shared_ptr<impl> impl_;
+  boost::shared_ptr<impl> impl_;
 };
 
 class Guard {
