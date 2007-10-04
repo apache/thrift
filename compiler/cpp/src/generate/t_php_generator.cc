@@ -912,7 +912,16 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
           ((t_base_type*)atype)->is_string_list()) {
         f_service_ << 
           indent() << "$" << (*a_iter)->get_name() << " = explode(',', $" << (*a_iter)->get_name() << ");" << endl;
-      }      
+      } else if (atype->is_map()) {
+        f_service_ << 
+          indent() << "$" << (*a_iter)->get_name() << " = json_decode($" << (*a_iter)->get_name() << ", true);" << endl;
+      } else if (atype->is_list()) {
+        f_service_ << 
+          indent() << "$" << (*a_iter)->get_name() << " = explode(',', $" << (*a_iter)->get_name() << ");" << endl;
+      } else if (atype->is_set()) {
+        f_service_ << 
+          indent() << "$" << (*a_iter)->get_name() << " = array_fill_keys(explode(',', $" << (*a_iter)->get_name() << "), 1);" << endl;
+      }
     }
     f_service_ <<
       indent() << "return $this->impl_->" << (*f_iter)->get_name() << "(" << argument_list((*f_iter)->get_arglist()) << ");" << endl;
