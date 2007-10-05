@@ -1,4 +1,8 @@
 DESTDIR ?= /
+EXTRA_DIST = bootstrap.sh cleanup.sh setup.py LICENSE src
+
+all:
+	$(PYTHON) setup.py build
 
 # We're ignoring prefix here because site-packages seems to be
 # the equivalent of /usr/local/lib in Python land.
@@ -7,4 +11,6 @@ DESTDIR ?= /
 install-exec-hook:
 	$(PYTHON) setup.py install --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
 
-EXTRA_DIST = bootstrap.sh cleanup.sh setup.py LICENSE src
+clean-generic:
+	rm -rf build
+

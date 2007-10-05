@@ -90,6 +90,8 @@ class TThreadedServer(TServer):
         client = self.serverTransport.accept()
         t = threading.Thread(target = self.handle, args=(client,))
         t.start()
+      except KeyboardInterrupt:
+        raise
       except Exception, x:
         print '%s, %s, %s,' % (type(x), x, traceback.format_exc())
 

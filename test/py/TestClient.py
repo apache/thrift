@@ -1,116 +1,102 @@
 #!/usr/bin/env python
 
-import sys
-sys.path.append('./gen-py')
+import sys, glob
+sys.path.insert(0, './gen-py')
+sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
 
 from ThriftTest import ThriftTest
 from ThriftTest.ttypes import *
 from thrift.transport import TTransport
 from thrift.transport import TSocket
 from thrift.protocol import TBinaryProtocol
-
+import unittest
 import time
+from optparse import OptionParser
 
-import hotshot
-from hotshot import stats
-prof = None
 
-# Uncomment if you want to profile this biznizzy
-#prof = hotshot.Profile('hotshot_thrift_stats')
-#prof.start()
+parser = OptionParser()
+    
+parser.add_option("--port", type="int", dest="port", default=9090)
+parser.add_option("--host", type="string", dest="host", default='localhost')
+parser.add_option("--framed-input", action="store_true", dest="framed_input")
+parser.add_option("--framed-output", action="store_false", dest="framed_output")
 
-host = 'localhost'
-port = 9090
-framed = False
-framedInput = True
-argi = 1
+(options, args) = parser.parse_args()
 
-# Parse args
-while argi < len(sys.argv):
-  if sys.argv[argi] == '-h':
-    parts = sys.argv[argi+1].split(':') 
-    host = parts[0]
-    port = int(parts[1])
-    argi += 1
-  elif sys.argv[argi] == '-f' or sys.argv[argi] == '-framed':
-    framed = True
-  elif sys.argv[argi] == '-fo':
-    framed = True
-    framedInput = False
-  argi += 1
-
-# Make socket
-socket = TSocket.TSocket(host, port)
-
-# Frame or buffer depending upon args
-if framed:
-  transport = TTransport.TFramedTransport(socket, framedInput, True)
-else:
-  transport = TTransport.TBufferedTransport(socket)
-
-protocol = TBinaryProtocol.TBinaryProtocol(transport)
-client = ThriftTest.Client(protocol)
-
-# Connect!
-transport.open()
-
-# Start debug timing
-tstart = time.time()
-
-try:
-  print "testVoid()"
-  print client.testVoid()
-except TApplicationException, x:
-  print x.message
-  print x.type
+class AbstractTest(unittest.TestCase):
   
-print "testString('Python')"
-print client.testString('Python')
+  def setUp(self):
+    global options
+    
+    socket = TSocket.TSocket(options.host, options.port)
+    
+    # Frame or buffer depending upon args
+    if options.framed_input or options.framed_output:
+      self.transport = TTransport.TFramedTransport(socket, options.framed_input, options.framed_output)
+    else:
+      self.transport = TTransport.TBufferedTransport(socket)
 
-print "testByte(63)"
-print client.testByte(63)
+    self.transport.open()
+    
+    protocol = self.protocol_factory.getProtocol(self.transport)
+    self.client = ThriftTest.Client(protocol)
+    
+  def tearDown(self):
+    # Close!
+    self.transport.close()
 
-print "testI32(-1)"
-print client.testI32(-1)
+  def testVoid(self):
+    self.client.testVoid()
+    
+  def testString(self):
+    self.assertEqual(self.client.testString('Python'), 'Python')
 
-print "testI32(0)"
-print client.testI32(0)
+  def testByte(self):
+    self.assertEqual(self.client.testByte(63), 63)
 
-print "testI64(-34359738368)"
-print client.testI64(-34359738368)
+  def testI32(self):
+    self.assertEqual(self.client.testI32(-1), -1)
+    self.assertEqual(self.client.testI32(0), 0)
 
-print "testDouble(-5.235098235)"
-print client.testDouble(-5.235098235)
+  def testI64(self):
+    self.assertEqual(self.client.testI64(-34359738368), -34359738368)
 
-print "testStruct({Zero, 1, -3, -5})"
-x = Xtruct()
-x.string_thing = "Zero"
-x.byte_thing = 1
-x.i32_thing = -3
-x.i64_thing = -5
-x = client.testStruct(x)
-print "{%s, %d, %d, %d}" % (x.string_thing, x.byte_thing, x.i32_thing, x.i64_thing)
+  def testDouble(self):
+    self.assertEqual(self.client.testDouble(-5.235098235), -5.235098235)
 
-print "testException('Safe')"
-print client.testException('Safe')
+  def testStruct(self):
+    x = Xtruct()
+    x.string_thing = "Zero"
+    x.byte_thing = 1
+    x.i32_thing = -3
+    x.i64_thing = -5
+    y = self.client.testStruct(x)
 
-try:
-  print "textException('Xception')"
-  print client.testException('Xception')
+    self.assertEqual(y.string_thing, "Zero")
+    self.assertEqual(y.byte_thing, 1)
+    self.assertEqual(y.i32_thing, -3)
+    self.assertEqual(y.i64_thing, -5)
 
-except Xception, x:
-  print "Xception (%d, %s)" % (x.errorCode, x.message)
+  def testException(self):
+    self.client.testException('Safe')
+    try:
+      self.client.testException('Xception')
+      self.fail("should have gotten exception")
+    except Xception, x:
+      self.assertEqual(x.errorCode, 1001)
+      self.assertEqual(x.message, 'Xception')
 
-tend = time.time()
-ttotal = (tend-tstart)*1000
-print "Total time: %f ms" % (ttotal)
+class NormalBinaryTest(AbstractTest):
+  protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
 
-# Close!
-transport.close()
+class AcceleratedBinaryTest(AbstractTest):
+  protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory()
 
-# Profiler output
-if prof != None:
-  prof.stop()
-  prof.close()
-  s = stats.load('hotshot_thrift_stats')
-  s.sort_stats('time').print_stats()
+suite = unittest.TestSuite()
+loader = unittest.TestLoader()
+
+suite.addTest(loader.loadTestsFromTestCase(NormalBinaryTest))
+suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
+
+testRunner = unittest.TextTestRunner(verbosity=2)
+testRunner.run(suite)
