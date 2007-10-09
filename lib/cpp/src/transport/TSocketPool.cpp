@@ -33,7 +33,7 @@ TSocketPool::TSocketPool(const vector<string> &hosts,
   }
 
   for (unsigned int i = 0; i < hosts.size(); ++i) {
-    servers_.push_back(pair<string, int>(hosts[i], ports[i]));
+    addServer(hosts[i], ports[i]);
   }
 }
 
@@ -47,8 +47,22 @@ TSocketPool::TSocketPool(const vector<pair<string, int> > servers) : TSocket(),
 {
 }
 
+TSocketPool::TSocketPool(const string& host, int port) : TSocket(),
+  numRetries_(1),
+  retryInterval_(60),
+  maxConsecutiveFailures_(1),
+  randomize_(true),
+  alwaysTryLast_(true)
+{
+  addServer(host, port);
+}
+
 TSocketPool::~TSocketPool() {
   close();
+}
+
+void TSocketPool::addServer(const string& host, int port) {
+  servers_.push_back(pair<string, int>(host, port));
 }
 
 void TSocketPool::setNumRetries(int numRetries) {

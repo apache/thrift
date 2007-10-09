@@ -37,9 +37,22 @@ class TSocketPool : public TSocket {
    TSocketPool(const std::vector<std::pair<std::string, int> > servers);
 
    /**
+    * Socket pool constructor
+    *
+    * @param host single host
+    * @param port single port
+    */
+   TSocketPool(const std::string& host, int port);
+
+   /**
     * Destroyes the socket object, closing it if necessary.
     */
    virtual ~TSocketPool();
+
+   /**
+    * Add a server to the pool
+    */
+   void addServer(const std::string& host, int port);
 
    /**
     * Sets how many times to keep retrying a host in the connect function.
