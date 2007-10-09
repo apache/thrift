@@ -362,7 +362,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   if (is_exception) {
     out << "extends Exception ";
   }
-  out << "implements java.io.Serializable ";
+  out << "implements TBase, java.io.Serializable ";
   
   scope_up(out);
 
