@@ -1531,13 +1531,6 @@ string t_erl_generator::argument_list(t_struct* tstruct) {
 
 string t_erl_generator::type_name(t_type* ttype) {
   string prefix = "";
-  t_program* program = ttype->get_program();
-  if (program != NULL && program != program_) {
-    if (!ttype->is_service()) {
-      prefix = program->get_name() + "_types."; // TODO
-    }
-  }
-
   string name = ttype->get_name();
 
   if (ttype->is_struct() || ttype->is_xception() || ttype->is_service()) {
