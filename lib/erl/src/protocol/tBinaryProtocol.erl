@@ -113,28 +113,28 @@ writeBool(This, Bool) ->
 
 writeByte(This, Byte) ->
     Trans = oop:get(This, trans),
-    ?R1(Trans, write, binary_to_list(<<Byte:8/big>>)).
+    ?R1(Trans, effectful_write, binary_to_list(<<Byte:8/big>>)).
 
 writeI16(This, I16) ->
     Trans = oop:get(This, trans),
-    ?R1(Trans, write, binary_to_list(<<I16:16/big>>)).
+    ?R1(Trans, effectful_write, binary_to_list(<<I16:16/big>>)).
 
 writeI32(This, I32) ->
     Trans = oop:get(This, trans),
-    ?R1(Trans, write, binary_to_list(<<I32:32/big>>)).
+    ?R1(Trans, effectful_write, binary_to_list(<<I32:32/big>>)).
 
 writeI64(This, I64) ->
     Trans = oop:get(This, trans),
-    ?R1(Trans, write, binary_to_list(<<I64:64/big>>)).
+    ?R1(Trans, effectful_write, binary_to_list(<<I64:64/big>>)).
 
 writeDouble(This, Double) ->
     Trans = oop:get(This, trans),
-    ?R1(Trans, write, binary_to_list(<<Double:64/big>>)).
+    ?R1(Trans, effectful_write, binary_to_list(<<Double:64/big>>)).
 
 writeString(This, Str) ->
     Trans = oop:get(This, trans),
     ?L1(writeI32, length(Str)),
-    ?R1(Trans, write, Str).
+    ?R1(Trans, effectful_write, Str).
 
 %
 

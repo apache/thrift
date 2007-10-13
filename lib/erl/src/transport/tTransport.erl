@@ -50,12 +50,13 @@ new() ->
 %%% instance methods
 %%%
 
+e() ->
+    exit('tTransport is abstract').
 
-
-isOpen(_This) -> nil.
-open(_This) -> nil.
-close(_This) -> nil.
-read(_This, _Sz) -> nil.
+isOpen(_This)    -> e(), nil.
+open(_This)      -> e(), nil.
+close(_This)     -> e(), nil.
+read(_This, _Sz) -> e(), nil.
 
 readAll(This, Sz) ->
     readAll_loop(This, Sz, "", 0).
@@ -80,6 +81,7 @@ readAll_loop(This, Sz, Buff, Have) ->
     end.
 
 effectful_write(This, _Buf) ->
+    e(),
     {nil, This}.
 
 effectful_flush(This) ->

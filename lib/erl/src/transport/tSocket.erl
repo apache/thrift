@@ -19,7 +19,7 @@
 
 -export([new/0, new/1, new/2,
 	 effectful_setHandle/2, effectful_open/1,
-	 isOpen/1, write/2, read/2, effectful_close/1]).
+	 isOpen/1, effectful_write/2, read/2, effectful_close/1]).
 
 %%%
 %%% define attributes
@@ -87,7 +87,7 @@ effectful_open(This) ->
 isOpen(This) ->
     oop:get(This, handle) /= nil.
 
-write(This, Str) ->
+effectful_write(This, Str) ->
     Handle = oop:get(This, handle),
     Val = gen_tcp:send(Handle, Str),
 
@@ -100,7 +100,7 @@ write(This, Str) ->
 	{error, _} ->
 	    throw(tTransportException:new(?tTransportException_NOT_OPEN, "in write"));
 	ok ->
-	    ok
+	    {ok, This}
     end.
 
 read(This, Sz) ->

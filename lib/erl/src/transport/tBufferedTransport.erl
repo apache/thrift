@@ -39,7 +39,7 @@ super() ->
 %%% inspect(This) -> string()
 
 inspect(This) ->
-    ?FORMAT_ATTR(transport) ++
+    ?FORMAT_ATTR(transport) ++ ", " ++
     ?FORMAT_ATTR(wbuf).
 
 %%%

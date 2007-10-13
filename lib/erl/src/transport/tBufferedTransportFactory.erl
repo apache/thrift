@@ -51,4 +51,4 @@ new() ->
 %%%
 
 getTransport(_This, Trans) ->
-    gen_server:start_link(tBufferedTransport, {new, [Trans]}).
+    oop:start_new(tBufferedTransport, [Trans]).
