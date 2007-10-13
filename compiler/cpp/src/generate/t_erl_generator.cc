@@ -709,8 +709,8 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
 
       // Serialize the request header
       f_service_ <<
-	indent() << "Oprot = oop:get(This, oprot)," << endl <<
-	indent() << "Seqid = oop:get(This, seqid)," << endl <<
+	indent() << "Oprot = This#" << service_name_ << ".oprot," << endl <<
+	indent() << "Seqid = This#" << service_name_ << ".seqid," << endl <<
 	indent() << "?R3(Oprot, writeMessageBegin, \"" << (*f_iter)->get_name() << "\", ?tMessageType_CALL, Seqid)," << endl <<
 	indent() << "Args = #" << (*f_iter)->get_name() << "_args{";
 
@@ -752,7 +752,7 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
       // TODO(mcslee): Validate message reply here, seq ids etc.
 
       f_service_ <<
-	indent() << "Iprot = oop:get(This, iprot)," << endl <<
+	indent() << "Iprot = This#" << service_name_ << ".iprot," << endl <<
 	indent() << "{ _Fname, Mtype, _Rseqid } = ?R0(Iprot, readMessageBegin)," << endl <<
 	indent() << "if" << endl <<
 	indent() << "  Mtype == ?tMessageType_EXCEPTION ->" << endl <<
