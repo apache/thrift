@@ -140,6 +140,8 @@ handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
     end.
 
 %%
+-define(GS_TERM_FORMAT, "** Generic server ~p terminating \n** Last message in was ~p~n** When Server state == ~p~n** Reason for termination == ~n** ~p~n").
+
 handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format) ->
     Symbol = case What of
 	error       -> "!!";
@@ -148,11 +150,8 @@ handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format)
 	_Else       -> "??"
     end,
 
-    case Format of
-	"** Generic server ~p terminating \n** Last message in was ~p~n** When Server state == ~p~n** Reason for termination == ~n** ~p~n" ->
-	    %% v- Pid is a pattern match, not a bind
-	    [Ref, LastMessage, Obj, Reason] = Data,
-
+    case {Format, Data} of
+	{?GS_TERM_FORMAT, [Ref, LastMessage, Obj, Reason]} ->
 	    %% TODO: move as much logic as possible out of thrift_logger
 	    Ignore =
 		begin
@@ -177,7 +176,10 @@ handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format)
 		    Message = sformat(Format1, [LastMessage, oop:inspect(Obj), oop:inspect(Reason)]), %% TODO(cpiro): hope Reason is an object?
 		    handle_event2(Symbol, Ref, "", Message, State)
 	    end;
-	_ ->
+	{?GS_TERM_FORMAT, _Dta} ->
+	    Message = sformat("DATA DIDN'T MATCH: ~p~n", [Data]) ++ sformat(Format, Data),
+	    handle_event2(Symbol, Ref, "", Message, State);
+	{_Fmt, _Dta} ->
 	    Message = sformat(Format, Data),
 	    handle_event2(Symbol, Ref, "", Message, State)
     end,
