@@ -59,7 +59,7 @@ struct TypeSpec {
   }
 
   TypeSpec(TType ttype,
-           uint8_t* fingerprint,
+           const uint8_t* fingerprint,
            FieldMeta* metas,
            TypeSpec** specs) :
     ttype(ttype)

@@ -574,10 +574,10 @@ void t_cpp_generator::generate_struct_fingerprint(ofstream& out,
 
   if (tstruct->has_fingerprint()) {
     out <<
-      indent() << stat << "char* " << nspace
+      indent() << stat << "const char* " << nspace
         << "ascii_fingerprint" << comment << "= \"" <<
         tstruct->get_ascii_fingerprint() << "\";" << endl <<
-      indent() << stat << "uint8_t " << nspace <<
+      indent() << stat << "const uint8_t " << nspace <<
         "binary_fingerprint[" << t_type::fingerprint_len << "]" << comment << "= {";
     char* comma = "";
     for (int i = 0; i < t_type::fingerprint_len; i++) {
