@@ -71,6 +71,8 @@ init([]) ->
       {term_width, 80},
       {force_one_line, false},
       {omit, []},
+      {omit_fmt, []},
+      {show_pid, false},
       {gen_server_messages, true},
       {lookup, false}
     ], %% configuration before we try loading from file
@@ -98,14 +100,18 @@ handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
 	    _  -> sformat("~p ", [Type])
 	end,
 
-    Banner     = sformat("~s ~p ~s", [Symbol, Pid, Type1]),
-    BannerLen  = length(Banner),
-    {Output, OutputSafe} = 
-	try %% there's no way to see if Message is a string? just try
-	    {sformat("~s", [Message]),
-	     sformat("~s", [MessageSafe])}
-	catch X -> why_doesnt_this_work
-	end,
+    Banner =
+        case ?CONFIG(show_pid) of
+            true ->
+                sformat("~s ~s ~s", [Symbol, Pid, Type1]);
+            false ->
+                sformat("~s~i ~s", [Symbol, Pid, Type1])
+        end,
+    BannerLen = length(Banner),
+
+    %% there's no way to see if Message is a string? just try
+    Output = sformat("~s", [Message]),
+    OutputSafe = sformat("~s", [MessageSafe]),
 
     Length =
 	case (length(OutputSafe) + BannerLen) < ?CONFIG(term_width) of
@@ -179,9 +185,14 @@ handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format)
 	{?GS_TERM_FORMAT, _Dta} ->
 	    Message = sformat("DATA DIDN'T MATCH: ~p~n", [Data]) ++ sformat(Format, Data),
 	    handle_event2(Symbol, Ref, "", Message, State);
-	{_Fmt, _Dta} ->
-	    Message = sformat(Format, Data),
-	    handle_event2(Symbol, Ref, "", Message, State)
+	{_, _} ->
+	    case lists:member(Format, ?CONFIG(omit_fmt)) of
+		false ->
+		    Message = sformat(Format, Data),
+		    handle_event2(Symbol, Ref, "", Message, State);
+		true ->
+		    ok
+	    end
     end,
     {ok, State};
 
@@ -194,22 +205,20 @@ handle_event1({What, _Gleader, {Pid, Type, Report}}, State) ->
     end,
 
     case Type of
-	{thrift_info, TI} ->
-	    %% should we show it?
-	    case not lists:member(TI, ?CONFIG(omit)) of
-		true ->
-		    Message = handle_thrift_info(TI, Report, State),
-		    handle_event2(Symbol, Pid, "", Message, State);
-		false ->
-		    ok
-	    end;
-	crash_report ->
-	    %% [Cruft|_] = Report,									      %%
-	    %% {value, {_, Reason}} = lists:keysearch(error_info, 1, Cruft),				      %%
-	    %% {value, {_, {_, _, [_,_,_,_, Obj, []]}}} = lists:keysearch(initial_call, 1, Cruft),	      %%
-	    %% sformat("state == ~s~nreason ==~s", [oop:inspect(Obj), oop:inspect(Reason)]),	      %%
-	    ok;
-	progress ->
+        crash_report ->
+            case do_print_crash_report(Report) of
+                true ->
+                    io:format("~~~~ crash report: '~p'~n", [Report]);
+                false ->
+                    ok
+            end;
+%% 	crash_report ->
+%% 	    [Cruft|_] = Report,
+%% 	    {value, {_, Reason}} = lists:keysearch(error_info, 1, Cruft),
+%% 	    {value, {_, {_, _, [_,_,_,_, Obj, []]}}} = lists:keysearch(initial_call, 1, Cruft),
+%% 	    sformat("state == ~s~nreason ==~s", [oop:inspect(Obj), oop:inspect(Reason)]),
+%% 	    ok;
+        progress ->
 	    ok;
 
 	_ ->
@@ -231,30 +240,6 @@ handle_event(Event, State) ->
 		   [E, Event, State, erlang:get_stacktrace()]),
 	    {ok, State}
     end.
-
-%% thrift info handlers
-handle_thrift_info(oop_new, {Args, Class, Object}, State) ->
-    %% arg Class can't come first! Then it'd look like a Class object
-    L = io_lib:format("~p:new(~s) = ~s", [Class, thrift_utils:unbrack(Args), oop:inspect(Object)]),
-    lists:flatten(L);
-
-handle_thrift_info(server_listening, {Port}, State) ->
-    sformat("server listening on port ~p", [Port]);
-
-handle_thrift_info(req_processed, {Value}, State) ->
-    sformat("request: ~p", [Value]);
-
-handle_thrift_info(conn_accepted, {AddrString}, State) ->
-    sformat("connection accepted from ~s", [AddrString]);
-
-handle_thrift_info(conn_timeout, {AddrString}, State) ->
-    sformat("connection timed out from ~s", [AddrString]);
-
-handle_thrift_info(conn_closed, {AddrString}, State) ->
-    sformat("connection closed from ~s", [AddrString]);
-
-handle_thrift_info(Else, Report, State) ->
-    sformat("~p ~s", [Else, oop:inspect(Report)]).
 
 %%--------------------------------------------------------------------
 %% @spec handle_call(Request, State) -> {ok, Reply, State} |
@@ -347,4 +332,17 @@ config(Item, State) ->
 	    V;
 	Else ->
 	    ?ERROR("config for ~p is unavailable: ~p", [Item, Else])
+    end.
+
+do_print_crash_report(Report) ->
+    case Report of
+        [[_,_,{error_info, XXX}|_] | _]  ->
+            case thrift_utils:first_item(XXX) of
+                tTransportException ->
+                    false;
+                _ ->
+                    true
+            end;
+        _ ->
+            true
     end.

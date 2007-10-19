@@ -35,18 +35,17 @@ unbrack(List) ->
     List1 = sformat("~w", [List]),
     string:substr(List1, 2, length(List1)-2).
 
-first_item(DeepTuple) ->
-    case is_tuple(DeepTuple) of
-	true  -> first_item(element(1, DeepTuple));
-	false -> DeepTuple
-    end.
+first_item(DeepTuple) when is_tuple(DeepTuple) ->
+    first_item(element(1, DeepTuple));
+first_item(NotTuple) ->
+    NotTuple.
 
 unnest_record(Term, RecordTag) ->
     case is_record(Term, RecordTag) of
-	true ->
-	    {ok, Term};
-	false when is_tuple(Term) ->
-	    unnest_record(element(1, Term), RecordTag);
-	_ ->
-	    error
+        true ->
+            {ok, Term};
+        false when is_tuple(Term) ->
+            unnest_record(element(1, Term), RecordTag);
+        _ ->
+            error
     end.

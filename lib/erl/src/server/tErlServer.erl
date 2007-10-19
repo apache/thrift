@@ -69,7 +69,7 @@ effectful_serve(This) ->
     %% listen
     case gen_tcp:listen(Port, Options) of 
 	{ok, ListenSocket} ->
-	    ?INFO(server_listening, {Port}),
+	    ?INFO("thrift server listening on port ~p", [Port]),
 
 	    This1 = oop:set(This, listenSocket, ListenSocket),
 
@@ -79,7 +79,7 @@ effectful_serve(This) ->
 	    {ok, This2};
 
 	{error, eaddrinuse} ->
-	    error_logger:format("couldn't bind port ~p, address in use", [Port]),
+	    ?ERROR("thrift couldn't bind port ~p, address in use", [Port]),
 	    {{error, eaddrinuse}, This} %% state before the accept
     end.
 
@@ -111,7 +111,7 @@ catches(_This, _Pid, normal) ->
 %%     {noreply,State};												       %%
 
 %% terminate(Reason, State) ->											       %%
-%%     error_logger:info_msg( "Terminating error: ~p~n", [Reason]), % added					       %%
+%%     ?INFO( "Terminating error: ~p~n", [Reason]), % added	                 				       %%
 %%     gen_tcp:close(State#state.listen_socket),								       %%
 %%     ok.													       %%
 %% 														       %%

@@ -72,7 +72,7 @@ accept(This, ListenSocket, GP, Handler) ->
 	    ?C0(ServerPid, effectful_new_acceptor), %% cast to create new acceptor
 
 	    AddrString = render_addr(Socket),
-	    ?INFO(conn_accepted, {AddrString}),
+	    ?INFO("thrift connection accepted from ~s", [AddrString]),
 
 	    %% start_new(tSocket, [])
 	    Client = oop:start_new(tSocket, []),
@@ -91,9 +91,9 @@ accept(This, ListenSocket, GP, Handler) ->
 
 	    case receive_loop(This, Processor, Prot, Prot) of
 		conn_timeout ->
-		    ?INFO(conn_timeout, {AddrString});
+		    ?INFO("thrift connection timed out from ~s", [AddrString]);
 		conn_closed ->
-		    ?INFO(conn_closed, {AddrString});
+		    ?INFO("thrift connection closed from ~s", [AddrString]);
 		{Class, Else} ->
 		    ?ERROR("unhandled ~p in tErlAcceptor: ~p", [Class, Else])
 	    end,
@@ -108,10 +108,10 @@ receive_loop(This, Processor, Iprot, Oprot) ->
     try ?R2(Processor, process, Iprot, Oprot) of
 	{error, TAE} when is_record(TAE, tApplicationException),
 	                  TAE#tApplicationException.type == ?tApplicationException_HANDLER_ERROR ->
-	    ?ERROR("handler returned an error: ~p", [oop:get(TAE, message)]),
+	    ?ERROR("thrift handler returned an error: ~p", [oop:get(TAE, message)]),
 	    receive_loop(This, Processor, Iprot, Oprot);
 	Value ->
-	    ?INFO(req_processed, {Value}),
+	    ?INFO("thrift request: ~p", [Value]),
 	    receive_loop(This, Processor, Iprot, Oprot)
     catch
 	exit:{timeout, _} ->

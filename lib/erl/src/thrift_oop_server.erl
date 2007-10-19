@@ -76,7 +76,7 @@ init({Class, Args}) ->
     process_flag(trap_exit, true),
     try
 	State = apply(Class, new, Args),
-	?INFO(oop_new, {Args, Class, State}),
+	?INFO("thrift ~p:new(~s) = ~s", [Class, thrift_utils:unbrack(Args), oop:inspect(State)]),
 	{ok, State}
     catch
 	E -> {stop, {new_failed, E}}

@@ -9,8 +9,8 @@
 -define(ERROR(F, D),
 	error_logger:format(F, D)).
 
--define(INFO(Type, Report),
-	error_logger:info_report({thrift_info, Type}, Report)).
+-define(INFO(F, D),
+	error_logger:info_msg(F, D)).
 
 -include("thrift_macros.hrl").
 -include("thrift_constants.hrl").
