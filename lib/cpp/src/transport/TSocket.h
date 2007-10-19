@@ -87,6 +87,20 @@ class TSocket : public TTransport {
   void write(const uint8_t* buf, uint32_t len);
 
   /**
+   * Get the host that the socket is connected to
+   *
+   * @return string host identifier
+   */
+  std::string getHost();
+
+  /**
+   * Get the port that the socket is connected to
+   *
+   * @return int port number
+   */
+  int getPort();
+
+  /**
    * Set the host that socket will connect to
    *
    * @param host host identifier

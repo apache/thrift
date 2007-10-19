@@ -394,6 +394,14 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
   }
 }
 
+std::string TSocket::getHost() {
+  return host_;
+}
+
+int TSocket::getPort() {
+  return port_;
+}
+
 void TSocket::setHost(string host) {
   host_ = host;
 }
