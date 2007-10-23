@@ -32,10 +32,15 @@
 
   % configuration parameters similar to those in the config file specified
   % on the command line. can be fetched with gas:get_env
-  {env, []},
+  {env, [
+    {term_width, 110},
+    {force_one_line, false},
+    {omit_fmt, ["thrift ~p:new(~s) = ~s"]},
+    {gen_server_messages, true},
+    {lookup, false}                 % DNS
+  ]},
 
   % The Module and Args used to start this application.
   {mod, {thrift_app, []}}
  ]
 }.
-

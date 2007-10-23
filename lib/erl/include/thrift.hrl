@@ -4,8 +4,6 @@
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
--define(CONFIG_FILE, filename:join("conf", "thrift.conf")).
-
 -define(ERROR(F, D),
 	error_logger:format(F, D)).
 

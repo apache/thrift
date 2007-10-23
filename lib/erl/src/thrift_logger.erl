@@ -8,10 +8,6 @@
 
 -behaviour(gen_event).
 
--record(state, {config}).
-
--define(CONFIG(Item), config(Item, State)).
-
 %% TODO(cpiro): either
 %% make exceptions know whether they need to be displayed
 %% or not exit with tExecptions for non-errors
@@ -25,12 +21,12 @@
 -export([init/1, handle_event/2, handle_call/2, 
          handle_info/2, terminate/2, code_change/3]).
 
--export([install/0, install/1, reconfig/0, reconfig/1]).
+-export([install/0]).
+
+-record(state, {}).
 
 %% ensure the regular logger is out and ours is in
 install() ->
-    install([]).
-install(Config) ->
     %% remove loggers
     io:format("starting logger~n"),
     lists:foreach(fun(Logger) ->
@@ -44,16 +40,7 @@ install(Config) ->
 
     gen_event:add_handler(error_logger, ?MODULE, []),
 
-    reconfig(Config),
-
     ok.
-
-%% load our config file and amend the given stuff
-reconfig() ->
-    reconfig([]).
-
-reconfig(Config) ->
-    gen_event:call(error_logger, ?MODULE, {reconfig, Config}).
 
 %%====================================================================
 %% gen_event callbacks
@@ -67,17 +54,7 @@ reconfig(Config) ->
 %% @end 
 %%--------------------------------------------------------------------
 init([]) ->
-    BootConfig = [
-      {term_width, 80},
-      {force_one_line, false},
-      {omit, []},
-      {omit_fmt, []},
-      {show_pid, false},
-      {gen_server_messages, true},
-      {lookup, false}
-    ], %% configuration before we try loading from file
-
-    State = #state{config=BootConfig},
+    State = #state{},
     {ok, State}.
 
 %%--------------------------------------------------------------------
@@ -101,7 +78,7 @@ handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
 	end,
 
     Banner =
-        case ?CONFIG(show_pid) of
+        case config(show_pid) of
             true ->
                 sformat("~s ~s ~s", [Symbol, Pid, Type1]);
             false ->
@@ -114,7 +91,7 @@ handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
     OutputSafe = sformat("~s", [MessageSafe]),
 
     Length =
-	case (length(OutputSafe) + BannerLen) < ?CONFIG(term_width) of
+	case (length(OutputSafe) + BannerLen) < config(term_width) of
 	    true  -> short;
 	    false -> long
 	end,
@@ -125,7 +102,7 @@ handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
 	    false -> multiline
 	end,
 
-    case { ?CONFIG(force_one_line), Length, OneLine } of
+    case { config(force_one_line), Length, OneLine } of
 	%% one line and short ... print as is
 	{_, short, oneliner} ->
 	    format("~s~s~n", [Banner, OutputSafe]);
@@ -133,7 +110,7 @@ handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
 	%% too long ... squash to one
 	{true, long, _} ->
 	    O = Banner ++ OutputSafe,
-	    Format = sformat("~~~ps >~n", [?CONFIG(term_width)-2]), % e.g. "~80s >~n"
+	    Format = sformat("~~~ps >~n", [config(term_width)-2]), % e.g. "~80s >~n"
 	    format(Format, [O]);
 
 	%% short but multiline... collapse to one
@@ -186,7 +163,7 @@ handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format)
 	    Message = sformat("DATA DIDN'T MATCH: ~p~n", [Data]) ++ sformat(Format, Data),
 	    handle_event2(Symbol, Ref, "", Message, State);
 	{_, _} ->
-	    case lists:member(Format, ?CONFIG(omit_fmt)) of
+	    case lists:member(Format, config(omit_fmt)) of
 		false ->
 		    Message = sformat(Format, Data),
 		    handle_event2(Symbol, Ref, "", Message, State);
@@ -253,11 +230,6 @@ handle_event(Event, State) ->
 %% handler to handle the request.
 %% @end 
 %%--------------------------------------------------------------------
-handle_call({reconfig, Amendments}, State) ->
-    {OkOrError, State1} = reconfig1(State, Amendments),
-    format(".. reconfig was ~p~n", [OkOrError]),
-    {ok, OkOrError, State1};
-    
 handle_call(_Request, State) ->
     Reply = ok,
     {ok, Reply, State}.
@@ -313,26 +285,8 @@ format(Format, Data) ->
 sformat(Format, Data) ->
     thrift_utils:sformat(Format, Data).
 
-reconfig1(State, Amendments) ->
-    case thrift:config(thrift_logger) of
-	{value, Config} ->
-	    Config1     = lists:keysort(1, Config),
-	    Amendments1 = lists:keysort(1, Amendments),
-	    Config2     = lists:keymerge(1, Amendments1, Config1),
-
-	    State1 = State#state{config=Config2},
-	    {ok, State1};
-	_ -> 
-	    {error, State}
-    end.
-
-config(Item, State) ->
-    case thrift:config(Item, State#state.config) of
-	{value, V} ->
-	    V;
-	Else ->
-	    ?ERROR("config for ~p is unavailable: ~p", [Item, Else])
-    end.
+config(Item) ->
+    thrift:config(Item).
 
 do_print_crash_report(Report) ->
     case Report of
