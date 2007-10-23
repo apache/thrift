@@ -776,10 +776,10 @@ void t_php_generator::generate_process_function(t_service* tservice,
   // Serialize the request header
   if (binary_inline_) {
     f_service_ <<
-      indent() << "$buff = '';" << endl <<
+      indent() << "$buff = pack('N', (0x80010000 | TMessageType::REPLY)); " << endl <<
       indent() << "$buff .= pack('N', strlen('" << tfunction->get_name() << "'));" << endl <<
       indent() << "$buff .= '" << tfunction->get_name() << "';" << endl <<
-      indent() << "$buff .= pack('cN', TMessageType::REPLY, $seqid);" << endl <<
+      indent() << "$buff .= pack('N', $seqid);" << endl <<
       indent() << "$result->write($buff);" << endl <<
       indent() << "$output->write($buff);" << endl <<
       indent() << "$output->flush();" << endl;
@@ -1024,10 +1024,10 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       // Serialize the request header
       if (binary_inline_) {
         f_service_ <<
-          indent() << "$buff = '';" << endl <<
+          indent() << "$buff = pack('N', (0x80010000 | TMessageType::CALL));" << endl <<
           indent() << "$buff .= pack('N', strlen('" << funname << "'));" << endl <<
           indent() << "$buff .= '" << funname << "';" << endl <<
-          indent() << "$buff .= pack('cN', TMessageType::CALL, $this->seqid_);" << endl;
+          indent() << "$buff .= pack('N', $this->seqid_);" << endl;
       } else {
         f_service_ <<
           indent() << "$this->output_->writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType::CALL, $this->seqid_);" << endl;
@@ -1078,10 +1078,14 @@ void t_php_generator::generate_service_client(t_service* tservice) {
 
       if (binary_inline_) {
         t_field ffname(g_type_string, "fname");
-        t_field fmtype(g_type_byte, "mtype");
         t_field fseqid(g_type_i32, "rseqid");
+        f_service_ <<
+          indent() << "$ver = unpack('N', $this->input_->readAll(4));" << endl <<
+          indent() << "$ver = $ver[1];" << endl <<
+          indent() << "$mtype = $ver & 0xff;" << endl <<
+          indent() << "$ver = $ver & 0xffff0000;" << endl <<
+          indent() << "if ($ver != 0x80010000) throw new TProtocolException('Bad version identifier: '.$ver, TProtocolException::BAD_VERSION);" << endl;
         generate_deserialize_field(f_service_, &ffname, "", true);
-        generate_deserialize_field(f_service_, &fmtype, "", true);
         generate_deserialize_field(f_service_, &fseqid, "", true);
       } else {
         f_service_ <<
@@ -1168,7 +1172,7 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
   } else if (type->is_base_type() || type->is_enum()) {
 
     if (binary_inline_) {
-      std::string itrans = "$input";
+      std::string itrans = (inclass ? "$this->input_" : "$input");
 
       if (type->is_base_type()) {
         t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
