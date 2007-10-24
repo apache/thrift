@@ -566,6 +566,11 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
         indent() << "if (this." << (*f_iter)->get_name() << " != null) {" << endl;
       indent_up();
     }
+    bool optional = bean_style_ && (*f_iter)->get_req() == t_field::OPTIONAL;
+    if (optional) {
+      out <<
+        indent() << "if (this.__isset." << (*f_iter)->get_name() << ") {" << endl;
+    }
 
     out <<
       indent() << "field.name = \"" << (*f_iter)->get_name() << "\";" << endl <<
@@ -580,6 +585,10 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
     indent(out) <<
       "oprot.writeFieldEnd();" << endl;
     
+    if (optional) {
+      indent_down();
+      indent(out) << "}" << endl;
+    }
     if (null_allowed) {
       indent_down();
       indent(out) << "}" << endl;
