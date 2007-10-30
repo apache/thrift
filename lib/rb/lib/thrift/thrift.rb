@@ -206,7 +206,7 @@ module ThriftStruct
   def write(oprot)
     oprot.writeStructBegin(self.class.name)
     each_field do |fid, type, name|
-      if (value = instance_variable_get("@#{name}"))
+      if ((value = instance_variable_get("@#{name}")) != nil)
         if is_container? type
           oprot.writeFieldBegin(name, type, fid)
           write_container(oprot, value, fields[fid])
