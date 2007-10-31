@@ -102,7 +102,7 @@ class t_base_type : public t_type {
       case TYPE_BYTE   : return      "byte"; break;
       case TYPE_I16    : return       "i16"; break;
       case TYPE_I32    : return       "i32"; break;
-      case TYPE_I64    : return       "164"; break;
+      case TYPE_I64    : return       "i64"; break;
       case TYPE_DOUBLE : return    "double"; break;
       default          : return "(unknown)"; break;
     }

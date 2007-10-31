@@ -1167,131 +1167,153 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
     generate_deserialize_struct(out,
                                 (t_struct*)type,
                                  name);
-  } else if (type->is_container()) {
-    generate_deserialize_container(out, type, name);
-  } else if (type->is_base_type() || type->is_enum()) {
-
-    if (binary_inline_) {
-      std::string itrans = (inclass ? "$this->input_" : "$input");
-
-      if (type->is_base_type()) {
-        t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-        switch (tbase) {
-        case t_base_type::TYPE_VOID:
-          throw "compiler error: cannot serialize void field in a struct: " +
-            name;
-          break;
-        case t_base_type::TYPE_STRING:
-          out <<
-            indent() << "$len = unpack('N', " << itrans << "->readAll(4));" << endl <<
-            indent() << "$len = $len[1];" << endl <<
-            indent() << "if ($len > 0x7fffffff) {" << endl <<
-            indent() << "  $len = 0 - (($len - 1) ^ 0xffffffff);" << endl <<
-            indent() << "}" << endl <<
-            indent() << "$" << name << " = " << itrans << "->readAll($len);" << endl;
-          break;
-        case t_base_type::TYPE_BOOL:
-          out <<
-            indent() << "$" << name << " = unpack('c', " << itrans << "->readAll(1));" << endl <<
-            indent() << "$" << name << " = (bool)$" << name << "[1];" << endl;
-          break;
-        case t_base_type::TYPE_BYTE:
-          out <<
-            indent() << "$" << name << " = unpack('c', " << itrans << "->readAll(1));" << endl <<
-            indent() << "$" << name << " = $" << name << "[1];" << endl;
-          break;
-        case t_base_type::TYPE_I16:
-          out <<
-            indent() << "$val = unpack('n', " << itrans << "->readAll(2));" << endl <<
-            indent() << "$val = $val[1];" << endl <<
-            indent() << "if ($val > 0x7fff) {" << endl <<
-            indent() << "  $val = 0 - (($val - 1) ^ 0xffff);" << endl <<
-            indent() << "}" << endl <<
-            indent() << "$" << name << " = $val;" << endl;
-          break;
-        case t_base_type::TYPE_I32:
-          out <<
-            indent() << "$val = unpack('N', " << itrans << "->readAll(4));" << endl <<
-            indent() << "$val = $val[1];" << endl <<
-            indent() << "if ($val > 0x7fffffff) {" << endl <<
-            indent() << "  $val = 0 - (($val - 1) ^ 0xffffffff);" << endl <<
-            indent() << "}" << endl <<
-            indent() << "$" << name << " = $val;" << endl;
-          break;
-        case t_base_type::TYPE_I64:
-          out <<
-            indent() << "$arr = unpack('N2', " << itrans << "->readAll(8));" << endl <<
-            indent() << "if ($arr[1] & 0x80000000) {" << endl <<
-            indent() << "  $arr[1] = $arr[1] ^ 0xFFFFFFFF;" << endl <<
-            indent() << "  $arr[2] = $arr[2] ^ 0xFFFFFFFF;" << endl <<
-            indent() << "  $" << name << " = 0 - $arr[1]*4294967296 - $arr[2] - 1;" << endl <<
-            indent() << "} else {" << endl <<
-            indent() << "  $" << name << " = $arr[1]*4294967296 + $arr[2];" << endl <<
-            indent() << "}" << endl;
-          break;
-        case t_base_type::TYPE_DOUBLE:
-          out <<
-            indent() << "$arr = unpack('d', strrev(" << itrans << "->readAll(8)));" << endl <<
-            indent() << "$" << name << " = $arr[1];" << endl;
-          break;
-        default:
-          throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase) + tfield->get_name();
-        }
-      } else if (type->is_enum()) {
-          out <<
-            indent() << "$val = unpack('N', " << itrans << "->readAll(4));" << endl <<
-            indent() << "$val = $val[1];" << endl <<
-            indent() << "if ($val > 0x7fffffff) {" << endl <<
-            indent() << "  $val = 0 - (($val - 1) ^ 0xffffffff);" << endl <<
-            indent() << "}" << endl <<
-            indent() << "$" << name << " = $val;" << endl;
-      }
-    } else {
-
-      indent(out) <<
-        "$xfer += $input->";
-      
-      if (type->is_base_type()) {
-        t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
-        switch (tbase) {
-        case t_base_type::TYPE_VOID:
-          throw "compiler error: cannot serialize void field in a struct: " +
-            name;
-          break;
-        case t_base_type::TYPE_STRING:        
-          out << "readString($" << name << ");";
-          break;
-        case t_base_type::TYPE_BOOL:
-          out << "readBool($" << name << ");";
-          break;
-        case t_base_type::TYPE_BYTE:
-          out << "readByte($" << name << ");";
-          break;
-        case t_base_type::TYPE_I16:
-          out << "readI16($" << name << ");";
-          break;
-        case t_base_type::TYPE_I32:
-          out << "readI32($" << name << ");";
-          break;
-        case t_base_type::TYPE_I64:
-          out << "readI64($" << name << ");";
-          break;
-        case t_base_type::TYPE_DOUBLE:
-          out << "readDouble($" << name << ");";
-          break;
-        default:
-          throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase);
-        }
-      } else if (type->is_enum()) {
-        out << "readI32($" << name << ");";
-      }
-      out << endl;
-    }
-
   } else {
-    printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
-           tfield->get_name().c_str(), type->get_name().c_str());
-  }  
+
+    if (type->is_container()) {
+      generate_deserialize_container(out, type, name);
+    } else if (type->is_base_type() || type->is_enum()) {
+
+      out << indent() << "if (is_a($input,'TBinaryProtocolAccelerated') && function_exists('thrift_protocol_binary_deserialize')) {" << endl;
+      indent_up();
+      string ttype_name;
+      if (type->is_enum()) {
+        ttype_name = "I32";
+      } else {
+        ttype_name = t_base_type::t_base_name(static_cast<t_base_type*>(type)->get_base());
+        for (size_t _s = 0; _s < ttype_name.size(); ++_s) {
+          ttype_name[_s] = toupper(ttype_name[_s]);
+        }
+      }
+
+      out << indent() << "$" << name << " = thrift_protocol_binary_deserialize(TType::" << ttype_name  << ", $input);" << endl;
+      indent_down();
+      out << indent() << "} else {" << endl;
+      indent_up();
+    
+
+      if (binary_inline_) {
+        std::string itrans = (inclass ? "$this->input_" : "$input");
+
+        if (type->is_base_type()) {
+          t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+          switch (tbase) {
+          case t_base_type::TYPE_VOID:
+            throw "compiler error: cannot serialize void field in a struct: " +
+              name;
+            break;
+          case t_base_type::TYPE_STRING:
+            out <<
+              indent() << "$len = unpack('N', " << itrans << "->readAll(4));" << endl <<
+              indent() << "$len = $len[1];" << endl <<
+              indent() << "if ($len > 0x7fffffff) {" << endl <<
+              indent() << "  $len = 0 - (($len - 1) ^ 0xffffffff);" << endl <<
+              indent() << "}" << endl <<
+              indent() << "$" << name << " = " << itrans << "->readAll($len);" << endl;
+            break;
+          case t_base_type::TYPE_BOOL:
+            out <<
+              indent() << "$" << name << " = unpack('c', " << itrans << "->readAll(1));" << endl <<
+              indent() << "$" << name << " = (bool)$" << name << "[1];" << endl;
+            break;
+          case t_base_type::TYPE_BYTE:
+            out <<
+              indent() << "$" << name << " = unpack('c', " << itrans << "->readAll(1));" << endl <<
+              indent() << "$" << name << " = $" << name << "[1];" << endl;
+            break;
+          case t_base_type::TYPE_I16:
+            out <<
+              indent() << "$val = unpack('n', " << itrans << "->readAll(2));" << endl <<
+              indent() << "$val = $val[1];" << endl <<
+              indent() << "if ($val > 0x7fff) {" << endl <<
+              indent() << "  $val = 0 - (($val - 1) ^ 0xffff);" << endl <<
+              indent() << "}" << endl <<
+              indent() << "$" << name << " = $val;" << endl;
+            break;
+          case t_base_type::TYPE_I32:
+            out <<
+              indent() << "$val = unpack('N', " << itrans << "->readAll(4));" << endl <<
+              indent() << "$val = $val[1];" << endl <<
+              indent() << "if ($val > 0x7fffffff) {" << endl <<
+              indent() << "  $val = 0 - (($val - 1) ^ 0xffffffff);" << endl <<
+              indent() << "}" << endl <<
+              indent() << "$" << name << " = $val;" << endl;
+            break;
+          case t_base_type::TYPE_I64:
+            out <<
+              indent() << "$arr = unpack('N2', " << itrans << "->readAll(8));" << endl <<
+              indent() << "if ($arr[1] & 0x80000000) {" << endl <<
+              indent() << "  $arr[1] = $arr[1] ^ 0xFFFFFFFF;" << endl <<
+              indent() << "  $arr[2] = $arr[2] ^ 0xFFFFFFFF;" << endl <<
+              indent() << "  $" << name << " = 0 - $arr[1]*4294967296 - $arr[2] - 1;" << endl <<
+              indent() << "} else {" << endl <<
+              indent() << "  $" << name << " = $arr[1]*4294967296 + $arr[2];" << endl <<
+              indent() << "}" << endl;
+            break;
+          case t_base_type::TYPE_DOUBLE:
+            out <<
+              indent() << "$arr = unpack('d', strrev(" << itrans << "->readAll(8)));" << endl <<
+              indent() << "$" << name << " = $arr[1];" << endl;
+            break;
+          default:
+            throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase) + tfield->get_name();
+          }
+        } else if (type->is_enum()) {
+            out <<
+              indent() << "$val = unpack('N', " << itrans << "->readAll(4));" << endl <<
+              indent() << "$val = $val[1];" << endl <<
+              indent() << "if ($val > 0x7fffffff) {" << endl <<
+              indent() << "  $val = 0 - (($val - 1) ^ 0xffffffff);" << endl <<
+              indent() << "}" << endl <<
+              indent() << "$" << name << " = $val;" << endl;
+        }
+      } else {
+
+        indent(out) <<
+          "$xfer += $input->";
+        
+        if (type->is_base_type()) {
+          t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+          switch (tbase) {
+          case t_base_type::TYPE_VOID:
+            throw "compiler error: cannot serialize void field in a struct: " +
+              name;
+            break;
+          case t_base_type::TYPE_STRING:        
+            out << "readString($" << name << ");";
+            break;
+          case t_base_type::TYPE_BOOL:
+            out << "readBool($" << name << ");";
+            break;
+          case t_base_type::TYPE_BYTE:
+            out << "readByte($" << name << ");";
+            break;
+          case t_base_type::TYPE_I16:
+            out << "readI16($" << name << ");";
+            break;
+          case t_base_type::TYPE_I32:
+            out << "readI32($" << name << ");";
+            break;
+          case t_base_type::TYPE_I64:
+            out << "readI64($" << name << ");";
+            break;
+          case t_base_type::TYPE_DOUBLE:
+            out << "readDouble($" << name << ");";
+            break;
+          default:
+            throw "compiler error: no PHP name for base type " + t_base_type::t_base_name(tbase);
+          }
+        } else if (type->is_enum()) {
+          out << "readI32($" << name << ");";
+        }
+        out << endl;
+      }
+      out << indent() << "}" << endl;
+      indent_down();
+    } else {
+      printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
+             tfield->get_name().c_str(), type->get_name().c_str());
+    }
+  }
 }
 
 /**
@@ -1311,6 +1333,28 @@ void t_php_generator::generate_deserialize_struct(ofstream &out,
 void t_php_generator::generate_deserialize_container(ofstream &out,
                                                      t_type* ttype,
                                                      string prefix) {
+  out << indent() << "if (is_a($input, 'TBinaryProtocolAccelerated') && function_exists('thrift_protocol_binary_deserialize'))" << endl;
+  scope_up(out);
+
+  string ttype_name;
+  t_type* tvaluetype = NULL;
+  if (ttype->is_map()) {
+    ttype_name = "MAP";
+    tvaluetype = reinterpret_cast<t_map*>(ttype)->get_val_type();
+  } else if (ttype->is_set()) {
+    ttype_name = "SET";
+    tvaluetype = reinterpret_cast<t_set*>(ttype)->get_elem_type();
+  } else if (ttype->is_list()) {
+    ttype_name = "LST";
+    tvaluetype = reinterpret_cast<t_list*>(ttype)->get_elem_type();
+  }
+  if (tvaluetype->is_struct()) {
+    out << indent() << "$" << prefix << " = thrift_protocol_binary_deserialize(TType::" << ttype_name << ", $input, '" << tvaluetype->get_name() << "');" << endl;
+  } else {
+    out << indent() << "$" << prefix << " = thrift_protocol_binary_deserialize(TType::" << ttype_name << ", $input);" << endl;
+  }
+  scope_down(out);
+  out << indent() << "else" << endl;
   scope_up(out);
   
   string size = tmp("_size");
