@@ -8,8 +8,6 @@
 
 #include "t_oop_generator.h"
 
-#define T_ERL_DIR "gen-erl"
-
 /**
  * Erlang code generator.
  *
@@ -22,6 +20,7 @@ class t_erl_generator : public t_oop_generator {
   {
     program_name_[0] = tolower(program_name_[0]);
     service_name_[0] = tolower(service_name_[0]);
+    out_dir_base_ = "gen-erl";
   }
 
   /**

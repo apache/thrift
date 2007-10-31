@@ -21,7 +21,7 @@ using namespace std;
 void t_py_generator::init_generator() {
   // Make output directory
   string module = get_real_py_module(program_);
-  package_dir_ = T_PY_DIR;
+  package_dir_ = get_out_dir();
   while (true) {
     // TODO: Do better error checking here.
     mkdir(package_dir_.c_str(), S_IREAD | S_IWRITE | S_IEXEC);

@@ -18,19 +18,19 @@ using namespace std;
  */
 void t_perl_generator::init_generator() {
   // Make output directory
-  mkdir(T_PERL_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
 
-  string outdir(T_PERL_DIR);
+  string outdir = get_out_dir();
   std::string ns = program_->get_perl_package();
   if (ns.length() > 0) {
-    outdir += "/" + ns;
+    outdir += ns + "/";
     mkdir(outdir.c_str(), S_IREAD | S_IWRITE | S_IEXEC);
   }
 
   // Make output file
-  string f_types_name = outdir+"/Types.pm";
+  string f_types_name = outdir+"Types.pm";
   f_types_.open(f_types_name.c_str());
-  string f_consts_name = outdir+"/Constants.pm";
+  string f_consts_name = outdir+"Constants.pm";
   f_consts_.open(f_consts_name.c_str());
 
   // Print header
@@ -465,7 +465,7 @@ void t_perl_generator::generate_perl_struct_writer(ofstream& out,
  * @param tservice The service definition
  */
 void t_perl_generator::generate_service(t_service* tservice) {
-  string f_service_name = string(T_PERL_DIR)+"/"+service_name_+".pm";
+  string f_service_name = get_out_dir()+service_name_+".pm";
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<

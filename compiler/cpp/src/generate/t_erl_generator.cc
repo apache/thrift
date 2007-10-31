@@ -20,15 +20,15 @@ using namespace std;
  */
 void t_erl_generator::init_generator() {
   // Make output directory
-  mkdir(T_ERL_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
 
   // setup export lines
   export_lines_first_ = true;
   export_types_lines_first_ = true;
 
   // types files
-  string f_types_name = string(T_ERL_DIR)+"/"+program_name_+"_types.erl";
-  string f_types_hrl_name = string(T_ERL_DIR)+"/"+program_name_+"_types.hrl";
+  string f_types_name = get_out_dir()+program_name_+"_types.erl";
+  string f_types_hrl_name = get_out_dir()+program_name_+"_types.hrl";
 
   f_types_file_.open(f_types_name.c_str());
   f_types_hrl_file_.open(f_types_hrl_name.c_str());
@@ -47,7 +47,7 @@ void t_erl_generator::init_generator() {
   f_types_hrl_file_ << render_includes() << endl;
 
   // consts file
-  string f_consts_name = string(T_ERL_DIR)+"/"+program_name_+"_constants.hrl";
+  string f_consts_name = get_out_dir()+program_name_+"_constants.hrl";
   f_consts_.open(f_consts_name.c_str());
 
   f_consts_ <<
@@ -511,8 +511,8 @@ void t_erl_generator::generate_service(t_service* tservice) {
   // ...awesome
   service_name_[0] = tolower(service_name_[0]);
 
-  string f_service_hrl_name = string(T_ERL_DIR)+"/"+service_name_+"_thrift.hrl";
-  string f_service_name = string(T_ERL_DIR)+"/"+service_name_+"_thrift.erl";
+  string f_service_hrl_name = get_out_dir()+service_name_+"_thrift.hrl";
+  string f_service_name = get_out_dir()+service_name_+"_thrift.erl";
   f_service_file_.open(f_service_name.c_str());
   f_service_hrl_.open(f_service_hrl_name.c_str());
 

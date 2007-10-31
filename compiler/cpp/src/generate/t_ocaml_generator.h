@@ -14,8 +14,6 @@
 
 #include "t_oop_generator.h"
 
-#define T_OCAML_DIR "gen-ocaml"
-
 /**
  * OCaml code generator.
  *
@@ -24,7 +22,9 @@
 class t_ocaml_generator : public t_oop_generator {
  public:
   t_ocaml_generator(t_program* program) :
-    t_oop_generator(program) {}
+    t_oop_generator(program) {
+    out_dir_base_ = "gen-ocaml";
+  }
 
   /**
    * Init and close methods

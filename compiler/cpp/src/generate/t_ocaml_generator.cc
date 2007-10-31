@@ -72,15 +72,15 @@ void t_ocaml_generator::generate_program() {
  */
 void t_ocaml_generator::init_generator() {
   // Make output directory
-  mkdir(T_OCAML_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
 
   // Make output file
-  string f_types_name = string(T_OCAML_DIR)+"/"+program_name_+"_types.ml";
+  string f_types_name = get_out_dir()+program_name_+"_types.ml";
   f_types_.open(f_types_name.c_str());
-  string f_types_i_name = string(T_OCAML_DIR)+"/"+program_name_+"_types.mli";
+  string f_types_i_name = get_out_dir()+program_name_+"_types.mli";
   f_types_i_.open(f_types_i_name.c_str());
 
-  string f_consts_name = string(T_OCAML_DIR)+"/"+program_name_+"_consts.ml";
+  string f_consts_name = get_out_dir()+program_name_+"_consts.ml";
   f_consts_.open(f_consts_name.c_str());
 
   // Print header
@@ -557,9 +557,9 @@ void t_ocaml_generator::generate_ocaml_struct_writer(ofstream& out,
  * @param tservice The service definition
  */
 void t_ocaml_generator::generate_service(t_service* tservice) {
-  string f_service_name = string(T_OCAML_DIR)+"/"+capitalize(service_name_)+".ml";
+  string f_service_name = get_out_dir()+capitalize(service_name_)+".ml";
   f_service_.open(f_service_name.c_str());
-  string f_service_i_name = string(T_OCAML_DIR)+"/"+capitalize(service_name_)+".mli";
+  string f_service_i_name = get_out_dir()+capitalize(service_name_)+".mli";
   f_service_i_.open(f_service_i_name.c_str());
 
   f_service_ <<

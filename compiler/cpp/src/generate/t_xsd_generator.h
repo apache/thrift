@@ -12,9 +12,6 @@
 #include <sstream>
 #include "t_generator.h"
 
-// TODO(mcslee): Paramaterize the output dir
-#define T_XSD_DIR "gen-xsd"
-
 /**
  * XSD generator, creates an XSD for the base types etc.
  *
@@ -23,7 +20,9 @@
 class t_xsd_generator : public t_generator {
  public:
   t_xsd_generator(t_program* program) :
-    t_generator(program) {}
+    t_generator(program) {
+    out_dir_base_ = "gen-xsd";
+  }
 
   virtual ~t_xsd_generator() {}
 

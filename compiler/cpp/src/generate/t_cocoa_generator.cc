@@ -16,12 +16,12 @@ using namespace std;
  */
 void t_cocoa_generator::init_generator() {
   // Make output directory
-  mkdir(T_COCOA_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
   cocoa_prefix_ = program_->get_cocoa_prefix();
 
   // we have a .h header file...
   string f_header_name = program_name_+".h";
-  string f_header_fullname = string(T_COCOA_DIR)+"/"+f_header_name;
+  string f_header_fullname = get_out_dir()+f_header_name;
   f_header_.open(f_header_fullname.c_str());
 
   f_header_ << 
@@ -33,7 +33,7 @@ void t_cocoa_generator::init_generator() {
     cocoa_thrift_imports();
 
   // ...and a .m implementation file
-  string f_impl_name = string(T_COCOA_DIR)+"/"+program_name_+".m";
+  string f_impl_name = get_out_dir()+program_name_+".m";
   f_impl_.open(f_impl_name.c_str());
 
   f_impl_ << 

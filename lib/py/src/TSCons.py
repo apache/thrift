@@ -6,10 +6,12 @@
 # See accompanying file LICENSE or visit the Thrift site at:
 # http://developers.facebook.com/thrift/
 
+from os import path
 from SCons.Builder import Builder
 
 def scons_env(env, add=''):
-  lstr = 'thrift --cpp ' + add + ' $SOURCE'
+  opath = path.dirname(path.abspath('$TARGET'))
+  lstr = 'thrift --cpp -o ' + opath + ' ' + add + ' $SOURCE'
   cppbuild = Builder(action = lstr)
   env.Append(BUILDERS = {'ThriftCpp' : cppbuild})
 

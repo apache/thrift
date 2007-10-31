@@ -15,8 +15,6 @@
 
 #include "t_oop_generator.h"
 
-#define T_RB_DIR "gen-rb"
-
 /**
  * Ruby code generator.
  *
@@ -25,7 +23,10 @@
 class t_rb_generator : public t_oop_generator {
  public:
   t_rb_generator(t_program* program) :
-    t_oop_generator(program) {}
+    t_oop_generator(program) {
+
+    out_dir_base_ = "gen-rb";
+  }
 
   /**
    * Init and close methods

@@ -12,10 +12,10 @@ using namespace std;
 
 void t_xsd_generator::init_generator() {
   // Make output directory
-  mkdir(T_XSD_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
 
   // Make output file
-  string f_php_name = string(T_XSD_DIR)+"/"+program_->get_name()+"_xsd.php";
+  string f_php_name = get_out_dir()+program_->get_name()+"_xsd.php";
   f_php_.open(f_php_name.c_str());
 
   f_php_ <<
@@ -170,7 +170,7 @@ void t_xsd_generator::generate_element(ostream& out,
 
 void t_xsd_generator::generate_service(t_service* tservice) {
   // Make output file
-  string f_xsd_name = string(T_XSD_DIR)+"/"+tservice->get_name()+".xsd";
+  string f_xsd_name = get_out_dir()+tservice->get_name()+".xsd";
   f_xsd_.open(f_xsd_name.c_str());
 
   string ns = program_->get_xsd_namespace();

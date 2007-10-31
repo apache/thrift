@@ -20,13 +20,13 @@ using namespace std;
  */
 void t_cpp_generator::init_generator() {
   // Make output directory
-  mkdir(T_CPP_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
 
   // Make output file
-  string f_types_name = string(T_CPP_DIR)+"/"+program_name_+"_types.h";
+  string f_types_name = get_out_dir()+program_name_+"_types.h";
   f_types_.open(f_types_name.c_str());
 
-  string f_types_impl_name = string(T_CPP_DIR)+"/"+program_name_+"_types.cpp";
+  string f_types_impl_name = get_out_dir()+program_name_+"_types.cpp";
   f_types_impl_.open(f_types_impl_name.c_str());
 
   // Print header
@@ -163,11 +163,11 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
  * Generates a class that holds all the constants.
  */
 void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
-  string f_consts_name = string(T_CPP_DIR)+"/"+program_name_+"_constants.h";
+  string f_consts_name = get_out_dir()+program_name_+"_constants.h";
   ofstream f_consts;
   f_consts.open(f_consts_name.c_str());
 
-  string f_consts_impl_name = string(T_CPP_DIR)+"/"+program_name_+"_constants.cpp";
+  string f_consts_impl_name = get_out_dir()+program_name_+"_constants.cpp";
   ofstream f_consts_impl;
   f_consts_impl.open(f_consts_impl_name.c_str());
 
@@ -1002,7 +1002,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   string svcname = tservice->get_name();
 
   // Make output files
-  string f_header_name = string(T_CPP_DIR)+"/"+svcname+".h";
+  string f_header_name = get_out_dir()+svcname+".h";
   f_header_.open(f_header_name.c_str());
 
   // Print header file includes
@@ -1026,7 +1026,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     endl;
 
   // Service implementation file includes
-  string f_service_name = string(T_CPP_DIR)+"/"+svcname+".cpp";
+  string f_service_name = get_out_dir()+svcname+".cpp";
   f_service_.open(f_service_name.c_str());
   f_service_ <<
     autogen_comment();
@@ -2065,7 +2065,7 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
   string svcname = tservice->get_name();
 
   // Service implementation file includes
-  string f_skeleton_name = string(T_CPP_DIR)+"/"+svcname+"_server.skeleton.cpp";
+  string f_skeleton_name = get_out_dir()+svcname+"_server.skeleton.cpp";
 
   string ns = namespace_prefix(tservice->get_program()->get_cpp_namespace());
 

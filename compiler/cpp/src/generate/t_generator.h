@@ -79,6 +79,13 @@ class t_generator {
   }
 
   /**
+   * Get the current output directory
+   */
+  virtual std::string get_out_dir() const {
+    return program_->get_out_path() + out_dir_base_ + "/";
+  }
+
+  /**
    * Creates a unique temporary variable name, which is just "name" with a
    * number appended to it (i.e. name35)
    */
@@ -158,6 +165,11 @@ class t_generator {
    * generated.
    */
   std::string service_name_;
+
+  /**
+   * Output type-specifc directory name ("gen-*")
+   */
+  std::string out_dir_base_;
 
  private:
   /**

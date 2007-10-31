@@ -14,8 +14,6 @@
 
 #include "t_oop_generator.h"
 
-#define T_HS_DIR "gen-hs"
-
 /**
  * Haskell code generator.
  *
@@ -24,7 +22,10 @@
 class t_hs_generator : public t_oop_generator {
  public:
   t_hs_generator(t_program* program) :
-    t_oop_generator(program) {}
+    t_oop_generator(program) {
+
+    out_dir_base_ = "gen-hs";
+  }
 
   /**
    * Init and close methods

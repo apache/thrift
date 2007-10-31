@@ -14,8 +14,6 @@
 
 #include "t_generator.h"
 
-#define T_PY_DIR "gen-py"
-
 /**
  * Python code generator.
  *
@@ -24,7 +22,9 @@
 class t_py_generator : public t_generator {
  public:
   t_py_generator(t_program* program) :
-    t_generator(program) {}
+    t_generator(program) {
+    out_dir_base_ = "gen-py";
+  }
 
   /**
    * Init and close methods

@@ -14,9 +14,6 @@
 
 #include "t_oop_generator.h"
 
-// TODO(mcslee): Paramaterize the output dir
-#define T_CPP_DIR "gen-cpp"
-
 /**
  * C++ code generator. This is legitimacy incarnate.
  *
@@ -26,7 +23,10 @@ class t_cpp_generator : public t_oop_generator {
  public:
   t_cpp_generator(t_program* program, bool gen_dense) :
     t_oop_generator(program),
-    gen_dense_(gen_dense) {}
+    gen_dense_(gen_dense) {
+
+    out_dir_base_ = "gen-cpp";
+  }
 
   /**
    * Init and close methods

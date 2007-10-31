@@ -46,18 +46,23 @@ class t_program : public t_doc {
  public:
   t_program(std::string path, std::string name) :
     path_(path),
-    name_(name) {
+    name_(name),
+    out_path_("./") {
     scope_ = new t_scope();
   }
 
   t_program(std::string path) :
-    path_(path) {
+    path_(path),
+    out_path_("./") {
     name_ = program_name(path);
     scope_ = new t_scope();
   }
 
   // Path accessor
   const std::string& get_path() const { return path_; }
+
+  // Output path accessor
+  const std::string& get_out_path() const { return out_path_; }
 
   // Name accessor
   const std::string& get_name() const { return name_; }
@@ -83,6 +88,15 @@ class t_program : public t_doc {
 
   // Programs to include
   const std::vector<t_program*>& get_includes() const { return includes_; }
+
+  void set_out_path(std::string out_path) {
+    out_path_ = out_path;
+    // Ensure that it ends with a trailing '/' (or '\' for windows machines)
+    char c = out_path_.at(out_path_.size() - 1);
+    if (!(c == '/' || c == '\\')) {
+      out_path_.push_back('/');
+    }
+  }
 
   // Scoping and namespacing
   void set_namespace(std::string name) {
@@ -185,6 +199,9 @@ class t_program : public t_doc {
 
   // Name
   std::string name_;
+
+  // Output directory
+  std::string out_path_;
 
   // Namespace
   std::string namespace_;

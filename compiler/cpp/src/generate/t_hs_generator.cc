@@ -72,15 +72,15 @@ void t_hs_generator::generate_program() {
  */
 void t_hs_generator::init_generator() {
   // Make output directory
-  mkdir(T_HS_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
 
   // Make output file
 
   string pname = capitalize(program_name_);
-  string f_types_name = string(T_HS_DIR)+"/"+pname+"_Types.hs";
+  string f_types_name = get_out_dir()+pname+"_Types.hs";
   f_types_.open(f_types_name.c_str());
 
-  string f_consts_name = string(T_HS_DIR)+"/"+pname+"_Consts.hs";
+  string f_consts_name = get_out_dir()+pname+"_Consts.hs";
   f_consts_.open(f_consts_name.c_str());
 
   // Print header
@@ -509,7 +509,7 @@ void t_hs_generator::generate_hs_struct_writer(ofstream& out,
  * @param tservice The service definition
  */
 void t_hs_generator::generate_service(t_service* tservice) {
-  string f_service_name = string(T_HS_DIR)+"/"+capitalize(service_name_)+".hs";
+  string f_service_name = get_out_dir()+capitalize(service_name_)+".hs";
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<
@@ -586,7 +586,7 @@ void t_hs_generator::generate_hs_function_helpers(t_function* tfunction) {
  * @param tservice The service to generate a header definition for
  */
 void t_hs_generator::generate_service_interface(t_service* tservice) {
-  string f_iface_name = string(T_HS_DIR)+"/"+capitalize(service_name_)+"_Iface.hs";
+  string f_iface_name = get_out_dir()+capitalize(service_name_)+"_Iface.hs";
   f_iface_.open(f_iface_name.c_str());
   indent(f_iface_) << "module " << capitalize(service_name_) << "_Iface where" << endl;
 
@@ -623,7 +623,7 @@ void t_hs_generator::generate_service_interface(t_service* tservice) {
  * @param tservice The service to generate a server for.
  */
 void t_hs_generator::generate_service_client(t_service* tservice) {
-  string f_client_name = string(T_HS_DIR)+"/"+capitalize(service_name_)+"_Client.hs";
+  string f_client_name = get_out_dir()+capitalize(service_name_)+"_Client.hs";
   f_client_.open(f_client_name.c_str());
 
   vector<t_function*> functions = tservice->get_functions();

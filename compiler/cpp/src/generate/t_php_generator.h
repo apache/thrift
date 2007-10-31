@@ -25,11 +25,7 @@ class t_php_generator : public t_oop_generator {
     t_oop_generator(program),
     binary_inline_(binary_inline),
     rest_(rest) {
-    if (binary_inline_) {
-      T_PHP_DIR = "gen-phpi";
-    } else {
-      T_PHP_DIR = "gen-php";
-    }
+    out_dir_base_ = (binary_inline_ ? "gen-phpi" : "gen-php");
   }
   
   /**
@@ -144,11 +140,6 @@ class t_php_generator : public t_oop_generator {
   }
 
  private:
-
-  /**
-   * Output directory
-   */
-  char* T_PHP_DIR;
 
   /**
    * File streams

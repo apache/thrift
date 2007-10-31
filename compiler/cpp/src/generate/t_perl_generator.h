@@ -23,7 +23,8 @@ class t_perl_generator : public t_oop_generator {
  public:
   t_perl_generator(t_program* program) :
     t_oop_generator(program) {
-    T_PERL_DIR = "gen-perl";
+    
+    out_dir_base_ = "gen-perl";
   }
 
   /**
@@ -146,11 +147,6 @@ class t_perl_generator : public t_oop_generator {
   }
 
  private:
-
-  /**
-   * Output directory
-   */
-  char* T_PERL_DIR;
 
   /**
    * File streams

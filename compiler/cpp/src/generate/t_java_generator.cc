@@ -18,12 +18,11 @@ using namespace std;
  */
 void t_java_generator::init_generator() {
   // Make output directory
-  const char* java_dir = bean_style_ ? T_JAVABEAN_DIR : T_JAVA_DIR;
-  mkdir(java_dir, S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
   package_name_ = program_->get_java_package();
 
   string dir = package_name_;
-  string subdir = java_dir;
+  string subdir = get_out_dir();
   string::size_type loc;
   while ((loc = dir.find(".")) != string::npos) {
     subdir = subdir + "/" + dir.substr(0, loc);

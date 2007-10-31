@@ -19,13 +19,13 @@ using namespace std;
  */
 void t_rb_generator::init_generator() {
   // Make output directory
-  mkdir(T_RB_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
 
   // Make output file
-  string f_types_name = string(T_RB_DIR)+"/"+program_name_+"_types.rb";
+  string f_types_name = get_out_dir()+program_name_+"_types.rb";
   f_types_.open(f_types_name.c_str());
 
-  string f_consts_name = string(T_RB_DIR)+"/"+program_name_+"_constants.rb";
+  string f_consts_name = get_out_dir()+program_name_+"_constants.rb";
   f_consts_.open(f_consts_name.c_str());
 
   // Print header
@@ -380,7 +380,7 @@ void t_rb_generator::end_namespace(std::ofstream& out, vector<std::string> modul
  * @param tservice The service definition
  */
 void t_rb_generator::generate_service(t_service* tservice) {
-  string f_service_name = string(T_RB_DIR)+"/"+service_name_+".rb";
+  string f_service_name = get_out_dir()+service_name_+".rb";
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<

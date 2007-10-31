@@ -14,10 +14,6 @@
 
 #include "t_oop_generator.h"
 
-// TODO(mcslee: Paramaterize the output dir
-#define T_JAVA_DIR "gen-java"
-#define T_JAVABEAN_DIR "gen-javabean"
-
 /**
  * Java code generator.
  *
@@ -27,7 +23,11 @@ class t_java_generator : public t_oop_generator {
  public:
   t_java_generator(t_program* program, bool bean_style=false) :
     t_oop_generator(program),
-    bean_style_(bean_style) {}
+    bean_style_(bean_style) {
+
+    out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
+  }
+
 
   /**
    * Init and close methods

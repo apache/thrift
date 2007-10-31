@@ -21,6 +21,7 @@
 #include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 // Careful: must include globals first for extern definitions
 #include "globals.h"
@@ -566,6 +567,8 @@ void usage() {
   fprintf(stderr, "  -ocaml      Generate OCaml output files\n");
   fprintf(stderr, "  -hs         Generate Haskell output files\n");
   fprintf(stderr, "  -cocoa      Generate Cocoa/Objective-C output files\n");
+  fprintf(stderr, "  -o dir      Set the output directory for gen-* packages\n");
+  fprintf(stderr, "               (default: current directory)\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories\n");
   fprintf(stderr, "                searched for include directives\n");
   fprintf(stderr, "  -dense      Generate metadata for TDenseProtocol (C++)\n");
@@ -770,6 +773,9 @@ void generate(t_program* program) {
   if (gen_recurse) {
     const vector<t_program*>& includes = program->get_includes();
     for (size_t i = 0; i < includes.size(); ++i) {
+      // Propogate output path from parent to child programs
+      includes[i]->set_out_path(program->get_out_path());
+    
       generate(includes[i]);
     }
   }
@@ -889,6 +895,7 @@ void generate(t_program* program) {
  */
 int main(int argc, char** argv) {
   int i;
+  std::string out_path;
 
   // Setup time string
   time_t now = time(NULL);
@@ -960,6 +967,22 @@ int main(int argc, char** argv) {
           usage();
         }
         g_incl_searchpath.push_back(arg);
+      } else if (strcmp(arg, "-o") == 0) {
+        arg = argv[++i];
+        if (arg == NULL) {
+          fprintf(stderr, "-o: missing output directory");
+          usage();
+        } 
+        out_path = arg;
+        struct stat sb;
+        if (stat(out_path.c_str(), &sb) < 0) {
+          fprintf(stderr, "Output directory %s is unusable: %s\n", out_path.c_str(), strerror(errno));
+          return -1;
+        }
+        if (! S_ISDIR(sb.st_mode)) {
+          fprintf(stderr, "Output directory %s exists but is not a directory\n", out_path.c_str());
+          return -1;
+        }
       } else {
         fprintf(stderr, "!!! Unrecognized option: %s\n", arg);
         usage();
@@ -985,6 +1008,9 @@ int main(int argc, char** argv) {
 
   // Instance of the global parse tree
   t_program* program = new t_program(input_file);
+  if (out_path.size()) {
+    program->set_out_path(out_path);
+  }
 
   // Initialize global types
   g_type_void   = new t_base_type("void",   t_base_type::TYPE_VOID);
