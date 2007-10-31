@@ -417,7 +417,7 @@ void t_erl_generator::generate_erl_struct_reader(ostream& out,
 
   // Generate deserialization code for known cases
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    out << indent() << "(Fid == " << (*f_iter)->get_key() << ") and (Ftype == "
+    out << indent() << "(Fid == " << (*f_iter)->get_key() << ") andalso (Ftype == "
 	<< type_to_enum((*f_iter)->get_type()) << ") ->" << endl;
 
     indent_up();
