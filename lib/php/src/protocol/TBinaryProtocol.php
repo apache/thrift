@@ -1,4 +1,5 @@
 <?php
+include_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
 
 /**
  * Copyright (c) 2006- Facebook
@@ -395,6 +396,21 @@ class TBinaryProtocolFactory implements TProtocolFactory {
 
   public function getProtocol($trans) {
     return new TBinaryProtocol($trans, $this->strictRead, $this->strictWrite);
+  }
+}
+
+/**
+ * Accelerated binary protocol: used in conjunction with the thrift_protocol
+ * extension for faster deserialization
+ */
+class TBinaryProtocolAccelerated extends TBinaryProtocol {
+  public function __construct($trans, $strictRead=false, $strictWrite=true) {
+    // If the transport doesn't implement putBack, wrap it in a
+    // TBufferedTransport (which does)
+    if (!method_exists($trans, 'putBack')) {
+      $trans = new TBufferedTransport($trans);
+    } 
+    parent::__construct($trans, $strictRead, $strictWrite);
   }
 }
 

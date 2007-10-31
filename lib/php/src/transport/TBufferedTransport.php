@@ -77,24 +77,28 @@ class TBufferedTransport extends TTransport {
     $this->transport_->close();
   }
 
-  public function readAll($len) {
-    return $this->transport_->readAll($len);
+  public function putBack($data) {
+    if (empty($this->rBuf_)) {
+      $this->rBuf_ = $data;
+    }
+    else {
+      $this->rBuf_ = ($data . $this->rBuf_);
+    }
   }
   
   public function read($len) {
-    // Methinks PHP is already buffering these for us
-    return $this->transport_->read($len);
+    if (empty($this->rBuf_)){
+      $this->rBuf_ = $this->transport_->read($this->rBufSize_);
+    }
 
-    if (strlen($this->rBuf_) >= $len) {
-      $ret = substr($this->rBuf_, 0, $len);
-      $this->rBuf_ = substr($this->rBuf_, $len);
+    if (strlen($this->rBuf_) <= $len) {
+      $ret = $this->rBuf_;
+      $this->rBuf_ = '';
       return $ret;
     }
 
-    $this->rBuf_ .= $this->transport_->read($this->rBufSize_);
-    $give = min(strlen($this->rBuf_), $len);
-    $ret = substr($this->rBuf_, 0, $give);
-    $this->rBuf_ = substr($this->rBuf_, $give);
+    $ret = substr($this->rBuf_, 0, $len);
+    $this->rBuf_ = substr($this->rBuf_, $len);
     return $ret;
   }
 
@@ -111,6 +115,7 @@ class TBufferedTransport extends TTransport {
       $this->transport_->write($this->wBuf_);
       $this->wBuf_ = '';
     }
+    $this->transport_->flush();
   }
 
 }

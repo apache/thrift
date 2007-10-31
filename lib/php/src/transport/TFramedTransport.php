@@ -94,7 +94,7 @@ class TFramedTransport extends TTransport {
     }
 
     // Just return full buff
-    if ($len > strlen($this->rBuf_)) {
+    if ($len >= strlen($this->rBuf_)) {
       $out = $this->rBuf_;
       $this->rBuf_ = null;
       return $out;
@@ -104,6 +104,20 @@ class TFramedTransport extends TTransport {
     $out = substr($this->rBuf_, 0, $len);
     $this->rBuf_ = substr($this->rBuf_, $len);
     return $out;
+  }
+
+  /**
+   * Put previously read data back into the buffer
+   *
+   * @param string $data data to return
+   */
+  public function putBack($data) {
+    if (empty($this->rBuf_)) {
+      $this->rBuf_ = $data;
+    }
+    else {
+      $this->rBuf_ = ($data . $this->rBuf_);
+    }
   }
 
   /**
