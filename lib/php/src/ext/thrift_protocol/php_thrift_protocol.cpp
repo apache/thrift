@@ -69,6 +69,7 @@ public:
     ZVAL_STRING(&gettransport, "getTransport", 0);
     MAKE_STD_ZVAL(t);
     ZVAL_NULL(t);
+    TSRMLS_FETCH();
     call_user_function(EG(function_table), &p, &gettransport, t, 0, NULL TSRMLS_CC);
   }
 
@@ -90,6 +91,8 @@ public:
       zval *args[1];
       MAKE_STD_ZVAL(args[0]);
       ZVAL_STRINGL(args[0], newbuf, buffer_remaining, 0);
+
+      TSRMLS_FETCH();
 
       zval ret;
       call_user_function(EG(function_table), &t, &putbackfn, &ret, 1, args TSRMLS_CC);
@@ -128,6 +131,8 @@ protected:
     MAKE_STD_ZVAL(args[0]);
     ZVAL_LONG(args[0], buffer_size);
 
+    TSRMLS_FETCH();
+
     call_user_function(EG(function_table), &t, &funcname, &retval, 1, args TSRMLS_CC);
     zval_ptr_dtor(args);
 
@@ -150,8 +155,9 @@ protected:
 
 // Does not call the ctor on the object, all fields will be NULL
 void createObject(char* obj_typename, zval* return_value) {
+  TSRMLS_FETCH();
   size_t obj_typename_len = strlen(obj_typename);
-  zend_class_entry* ce = zend_fetch_class(obj_typename, obj_typename_len, ZEND_FETCH_CLASS_DEFAULT TSRMLS_DC);
+  zend_class_entry* ce = zend_fetch_class(obj_typename, obj_typename_len, ZEND_FETCH_CLASS_DEFAULT TSRMLS_CC);
   if (! ce) {
     php_error_docref(NULL TSRMLS_CC, E_ERROR, "Class %s does not exist", obj_typename);
     RETURN_NULL();
@@ -178,6 +184,7 @@ void binary_deserialize(long thrift_typeID, PHPTransport& transport, zval* retur
       zval funcname;
       ZVAL_STRING(&funcname, "read", 0);
       transport.put_back(); // return our buffer to the userland T{Framed,Buffered}Transport for reading the field headers and such
+      TSRMLS_FETCH();
       call_user_function(EG(function_table), &return_value, &funcname, &retval, 1, args TSRMLS_CC);
       zval_dtor(&retval);
       return;
@@ -306,6 +313,7 @@ void binary_deserialize(long thrift_typeID, PHPTransport& transport, zval* retur
       return;
     }
     default:
+      TSRMLS_FETCH();
       php_error_docref(NULL TSRMLS_CC, E_ERROR, "Unknown thrift typeID %ld", thrift_typeID);
       RETURN_NULL();
   };
