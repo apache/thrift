@@ -16,7 +16,7 @@ using namespace std;
  */
 void t_cocoa_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
   cocoa_prefix_ = program_->get_cocoa_prefix();
 
   // we have a .h header file...

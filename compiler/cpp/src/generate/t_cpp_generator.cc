@@ -20,7 +20,7 @@ using namespace std;
  */
 void t_cpp_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
   // Make output file
   string f_types_name = get_out_dir()+program_name_+"_types.h";

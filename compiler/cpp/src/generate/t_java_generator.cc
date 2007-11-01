@@ -18,7 +18,7 @@ using namespace std;
  */
 void t_java_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
   package_name_ = program_->get_java_package();
 
   string dir = package_name_;
@@ -26,12 +26,12 @@ void t_java_generator::init_generator() {
   string::size_type loc;
   while ((loc = dir.find(".")) != string::npos) {
     subdir = subdir + "/" + dir.substr(0, loc);
-    mkdir(subdir.c_str(), S_IREAD | S_IWRITE | S_IEXEC);
+    mkdir(subdir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     dir = dir.substr(loc+1);
   }
   if (dir.size() > 0) {
     subdir = subdir + "/" + dir;
-    mkdir(subdir.c_str(), S_IREAD | S_IWRITE | S_IEXEC);
+    mkdir(subdir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
   }
 
   package_dir_ = subdir;

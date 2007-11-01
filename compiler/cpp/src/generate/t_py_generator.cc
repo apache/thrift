@@ -24,7 +24,7 @@ void t_py_generator::init_generator() {
   package_dir_ = get_out_dir();
   while (true) {
     // TODO: Do better error checking here.
-    mkdir(package_dir_.c_str(), S_IREAD | S_IWRITE | S_IEXEC);
+    mkdir(package_dir_.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     std::ofstream init_py((package_dir_+"/__init__.py").c_str());
     init_py.close();
     if (module.empty()) {

@@ -72,7 +72,7 @@ void t_hs_generator::generate_program() {
  */
 void t_hs_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IREAD | S_IWRITE | S_IEXEC);
+  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
   // Make output file
 
