@@ -232,10 +232,10 @@ void binary_deserialize(long thrift_typeID, PHPTransport& transport, zval* retur
       uint32_t size;
       transport.readBytes(&size, 4);
       size = ntohl(size);
-      if (! size) { RETURN_NULL(); }
       char* strbuf = (char*) emalloc(size + 1);
-      if (! strbuf) { RETURN_NULL(); }
-      transport.readBytes(strbuf, size);
+      if (size) {
+        transport.readBytes(strbuf, size);
+      }
       strbuf[size] = '\0';
       ZVAL_STRINGL(return_value, strbuf, size, 0);
       return;
