@@ -153,7 +153,7 @@ public class TBinaryProtocol extends TProtocol {
   }
 
   public void writeString(String str) throws TException {
-    byte[] dat = str.getBytes();
+    byte[] dat = str.getBytes("UTF-8");
     writeI32(dat.length);
     trans_.write(dat, 0, dat.length);
   }
@@ -292,7 +292,7 @@ public class TBinaryProtocol extends TProtocol {
   public String readStringBody(int size) throws TException {
     byte[] buf = new byte[size];
     trans_.readAll(buf, 0, size);
-    return new String(buf);
+    return new String(buf, "UTF-8");
   }
 
   public byte[] readBinary() throws TException {
