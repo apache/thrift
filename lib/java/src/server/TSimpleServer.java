@@ -23,6 +23,8 @@ import com.facebook.thrift.transport.TTransportException;
  */
 public class TSimpleServer extends TServer {
 
+  private boolean stopped_ = false;
+
   public TSimpleServer(TProcessor processor,
                        TServerTransport serverTransport) {
     super(new TProcessorFactory(processor), serverTransport);
@@ -71,6 +73,7 @@ public class TSimpleServer extends TServer {
  
   
   public void serve() {
+    stopped_ = false;
     try {
       serverTransport_.listen();
     } catch (TTransportException ttx) {
@@ -78,7 +81,7 @@ public class TSimpleServer extends TServer {
       return;
     }
 
-    while (true) {
+    while (!stopped_) {
       TTransport client = null;
       TProcessor processor = null;
       TTransport inputTransport = null;
@@ -98,9 +101,13 @@ public class TSimpleServer extends TServer {
       } catch (TTransportException ttx) {
         // Client died, just move on
       } catch (TException tx) {
-        tx.printStackTrace();
+        if (!stopped_) {
+          tx.printStackTrace();
+        }
       } catch (Exception x) {
-        x.printStackTrace();
+        if (!stopped_) {
+          x.printStackTrace();
+        }
       }
 
       if (inputTransport != null) {
@@ -112,5 +119,10 @@ public class TSimpleServer extends TServer {
       }
 
     }
+  }
+
+  public void stop() {
+    stopped_ = true;
+    serverTransport_.interrupt();
   }
 }

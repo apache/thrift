@@ -112,4 +112,10 @@ public class TServerSocket extends TServerTransport {
     }
   }
 
+  public void interrupt() {
+    // The thread-safeness of this is dubious, but Java documentation suggests
+    // that it is safe to do this from a different thread context
+    close();
+  }
+
 }

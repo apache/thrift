@@ -34,10 +34,18 @@ public class TThreadPoolServer extends TServer {
   // Executor service for handling client connections
   private ExecutorService executorService_;
 
+  // Flag for stopping the server
+  private volatile boolean stopped_;
+
+  // Server options
+  private Options options_;
+
   // Customizable server options
   public static class Options {
     public int minWorkerThreads = 5;
     public int maxWorkerThreads = Integer.MAX_VALUE;
+    public int stopTimeoutVal = 60;
+    public TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
   }
 
   public TThreadPoolServer(TProcessor processor,
@@ -120,6 +128,8 @@ public class TThreadPoolServer extends TServer {
                                               60,
                                               TimeUnit.SECONDS,
                                               executorQueue);
+
+    options_ = options;
   }
 
 
@@ -131,17 +141,33 @@ public class TThreadPoolServer extends TServer {
       return;
     }
 
-    while (true) {
+    stopped_ = false;
+    while (!stopped_) {
       int failureCount = 0;
       try {
         TTransport client = serverTransport_.accept();
         WorkerProcess wp = new WorkerProcess(client);
         executorService_.execute(wp);
       } catch (TTransportException ttx) {
-        ++failureCount;
-        ttx.printStackTrace();
+        if (!stopped_) {
+          ++failureCount;
+          ttx.printStackTrace();
+        }
       }     
     }
+
+    executorService_.shutdown();
+    try {
+      executorService_.awaitTermination(options_.stopTimeoutVal,
+                                        options_.stopTimeoutUnit);
+    } catch (InterruptedException ix) {
+      // Ignore and more on
+    }
+  }
+
+  public void stop() {
+    stopped_ = true;
+    serverTransport_.interrupt();
   }
 
   private class WorkerProcess implements Runnable {
