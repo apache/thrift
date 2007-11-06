@@ -96,6 +96,7 @@ class TBufferedTransport : public TTransport {
   }
 
   void close() {
+    flush();
     transport_->close();
   }
 
@@ -208,6 +209,7 @@ class TFramedTransport : public TTransport {
   }
 
   void close() {
+    flush();
     transport_->close();
   }
  
