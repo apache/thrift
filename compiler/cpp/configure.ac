@@ -20,6 +20,8 @@ AC_CHECK_FUNCS([realpath])
 
 AC_CHECK_FUNCS([strdup])
 
+AC_CHECK_FUNCS([strerror])
+
 AC_FUNC_MALLOC
 
 AC_FUNC_REALLOC
