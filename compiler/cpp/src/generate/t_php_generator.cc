@@ -32,6 +32,14 @@ void t_php_generator::init_generator() {
     autogen_comment() <<
     php_includes();
 
+  // Include other Thrift includes
+  const vector<t_program*>& includes = program_->get_includes();
+  for (size_t i = 0; i < includes.size(); ++i) {
+    f_types_ <<
+      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + includes[i]->get_name() << "_types.php';" << endl;
+  }
+  f_types_ << endl;
+
   // Print header
   f_consts_ <<
     "<?php" << endl <<
@@ -78,7 +86,7 @@ void t_php_generator::generate_typedef(t_typedef* ttypedef) {}
 void t_php_generator::generate_enum(t_enum* tenum) {
   f_types_ <<
     "$GLOBALS['" << php_namespace(tenum->get_program()) << "E_" << tenum->get_name() << "'] = array(" << endl;
-  
+
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
   int value = -1;
@@ -103,7 +111,7 @@ void t_php_generator::generate_enum(t_enum* tenum) {
   f_types_ <<
     "final class " << php_namespace(tenum->get_program()) << tenum->get_name() << " {" << endl;
   indent_up();
-  
+
   value = -1;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     if ((*c_iter)->has_value()) {
@@ -143,8 +151,8 @@ void t_php_generator::generate_const(t_const* tconst) {
   t_type* type = tconst->get_type();
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
-  
-  f_consts_ << "$GLOBALS['" << program_name_ << "_CONSTANTS']['" << name << "'] = "; 
+
+  f_consts_ << "$GLOBALS['" << program_name_ << "_CONSTANTS']['" << name << "'] = ";
   f_consts_ << render_const_value(type, value);
   f_consts_ << ";" << endl << endl;
 }
@@ -264,7 +272,7 @@ void t_php_generator::generate_struct(t_struct* tstruct) {
  * @param txception The struct definition
  */
 void t_php_generator::generate_xception(t_struct* txception) {
-  generate_php_struct(txception, true);  
+  generate_php_struct(txception, true);
 }
 
 /**
@@ -286,7 +294,7 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
                                                      t_struct* tstruct,
                                                      bool is_exception) {
   const vector<t_field*>& members = tstruct->get_members();
-  vector<t_field*>::const_iterator m_iter; 
+  vector<t_field*>::const_iterator m_iter;
 
   out <<
     "class " << php_namespace(tstruct->get_program()) << tstruct->get_name();
@@ -306,7 +314,7 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
     indent(out) <<
       "public $" << (*m_iter)->get_name() << " = " << dval << ";" << endl;
   }
- 
+
   out << endl;
 
   // Generate constructor from array
@@ -321,7 +329,7 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
         indent(out) << "$this->" << (*m_iter)->get_name() << " = " << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
       }
     }
-    
+
     out <<
       indent() << "if (is_array($vals)) {" << endl;
     indent_up();
@@ -339,13 +347,13 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
       indent() << "}" << endl <<
       endl;
   }
-  
+
   out <<
     indent() << "public function getName() {" << endl <<
     indent() << "  return '" << tstruct->get_name() << "';" << endl <<
     indent() << "}" << endl <<
     endl;
-  
+
   generate_php_struct_reader(out, tstruct);
   generate_php_struct_writer(out, tstruct);
 
@@ -376,7 +384,7 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
   // Declare stack tmp variables
   if (!binary_inline_) {
     indent(out) <<
-      "$xfer += $input->readStructBegin($fname);" << endl;   
+      "$xfer += $input->readStructBegin($fname);" << endl;
   }
 
   // Loop over reading in fields
@@ -384,7 +392,7 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
     "while (true)" << endl;
 
     scope_up(out);
-    
+
     // Read beginning field marker
     if (binary_inline_) {
       t_field fftype(g_type_byte, "ftype");
@@ -393,7 +401,7 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
       out <<
         indent() << "if ($ftype == TType::STOP) {" << endl <<
         indent() << "  break;" << endl <<
-        indent() << "}" << endl;      
+        indent() << "}" << endl;
       generate_deserialize_field(out, &ffid);
     } else {
       indent(out) <<
@@ -407,14 +415,14 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
       indent_down();
       indent(out) <<
         "}" << endl;
-    }   
-   
+    }
+
     // Switch statement on the field we are reading
     indent(out) <<
       "switch ($fid)" << endl;
 
       scope_up(out);
-    
+
       // Generate deserialization code for known cases
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         indent(out) <<
@@ -431,12 +439,12 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
         } else {
           indent(out) <<  "  $xfer += $input->skip($ftype);" << endl;
         }
-        out << 
+        out <<
           indent() << "}" << endl <<
           indent() << "break;" << endl;
         indent_down();
       }
-      
+
       // In the default case we skip the field
       indent(out) <<  "default:" << endl;
       if (binary_inline_) {
@@ -445,17 +453,17 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
         indent(out) <<  "  $xfer += $input->skip($ftype);" << endl;
       }
       indent(out) <<  "  break;" << endl;
-      
+
       scope_down(out);
-      
+
     if (!binary_inline_) {
       // Read field end marker
       indent(out) <<
         "$xfer += $input->readFieldEnd();" << endl;
     }
-    
+
     scope_down(out);
-    
+
   if (!binary_inline_) {
     indent(out) <<
       "$xfer += $input->readStructEnd();" << endl;
@@ -487,7 +495,7 @@ void t_php_generator::generate_php_struct_writer(ofstream& out,
       "public function write($output) {" << endl;
   }
   indent_up();
-  
+
   indent(out) <<
     "$xfer = 0;" << endl;
 
@@ -496,7 +504,7 @@ void t_php_generator::generate_php_struct_writer(ofstream& out,
       "$xfer += $output->writeStructBegin('" << name << "');" << endl;
   }
 
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {   
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     out <<
       indent() << "if ($this->" << (*f_iter)->get_name() << " !== null) {" << endl;
     indent_up();
@@ -567,7 +575,7 @@ void t_php_generator::generate_service(t_service* tservice) {
     f_service_ <<
       "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << tservice->get_extends()->get_program()->get_name() << "/" << tservice->get_extends()->get_name() << ".php';" << endl;
   }
-  
+
   f_service_ <<
     endl;
 
@@ -579,7 +587,7 @@ void t_php_generator::generate_service(t_service* tservice) {
   generate_service_client(tservice);
   generate_service_helpers(tservice);
   generate_service_processor(tservice);
-  
+
   // Close service file
   f_service_ << "?>" << endl;
   f_service_.close();
@@ -593,7 +601,7 @@ void t_php_generator::generate_service(t_service* tservice) {
 void t_php_generator::generate_service_processor(t_service* tservice) {
   // Generate the dispatch methods
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
+  vector<t_function*>::iterator f_iter;
 
   string extends = "";
   string extends_processor = "";
@@ -650,7 +658,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
 
   // HOT: check for method implementation
   f_service_ <<
-    indent() << "$methodname = 'process_'.$fname;" << endl << 
+    indent() << "$methodname = 'process_'.$fname;" << endl <<
     indent() << "if (!method_exists($this, $methodname)) {" << endl;
   if (binary_inline_) {
     f_service_ <<
@@ -724,7 +732,7 @@ void t_php_generator::generate_process_function(t_service* tservice,
       indent() << "try {" << endl;
     indent_up();
   }
- 
+
   // Generate the function call
   t_struct* arg_struct = tfunction->get_arglist();
   const std::vector<t_field*>& fields = arg_struct->get_members();
@@ -858,7 +866,7 @@ void t_php_generator::generate_service_interface(t_service* tservice) {
     "interface " << service_name_ << "If" << extends_if << " {" << endl;
   indent_up();
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
+  vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_service_) <<
       "public function " << function_signature(*f_iter) << ";" << endl;
@@ -895,7 +903,7 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
     endl;
 
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
+  vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_service_) <<
       "public function " << (*f_iter)->get_name() << "($request) {" << endl;
@@ -910,16 +918,16 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
         indent() << "$" << (*a_iter)->get_name() << " = isset(" << req << ") ? " << cast << req << " : null;" << endl;
       if (atype->is_string() &&
           ((t_base_type*)atype)->is_string_list()) {
-        f_service_ << 
+        f_service_ <<
           indent() << "$" << (*a_iter)->get_name() << " = explode(',', $" << (*a_iter)->get_name() << ");" << endl;
       } else if (atype->is_map() || atype->is_list()) {
-        f_service_ << 
+        f_service_ <<
           indent() << "$" << (*a_iter)->get_name() << " = json_decode($" << (*a_iter)->get_name() << ", true);" << endl;
       } else if (atype->is_set()) {
-        f_service_ << 
+        f_service_ <<
           indent() << "$" << (*a_iter)->get_name() << " = array_fill_keys(json_decode($" << (*a_iter)->get_name() << ", true), 1);" << endl;
       } else if (atype->is_struct() || atype->is_xception()) {
-        f_service_ << 
+        f_service_ <<
           indent() << "$" << (*a_iter)->get_name() << " = new " << php_namespace(atype->get_program()) << atype->get_name() << "(json_decode($" << (*a_iter)->get_name() << ", true));" << endl;
       }
     }
@@ -932,7 +940,7 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
   }
   indent_down();
   f_service_ <<
-    "}" << endl << endl; 
+    "}" << endl << endl;
 }
 
 /**
@@ -975,11 +983,11 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       indent() << "  $this->output_ = $output ? $output : $input;" << endl;
   }
   f_service_ <<
-    indent() << "}" << endl << endl;   
+    indent() << "}" << endl << endl;
 
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::const_iterator f_iter;    
+  vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const vector<t_field*>& fields = arg_struct->get_members();
@@ -1017,7 +1025,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
 
     indent(f_service_) <<
       "public function send_" << function_signature(*f_iter) << endl;
-    scope_up(f_service_);  
+    scope_up(f_service_);
 
       std::string argsname = php_namespace(tservice->get_program()) + service_name_ + "_" + (*f_iter)->get_name() + "_args";
 
@@ -1032,17 +1040,17 @@ void t_php_generator::generate_service_client(t_service* tservice) {
         f_service_ <<
           indent() << "$this->output_->writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType::CALL, $this->seqid_);" << endl;
       }
-      
+
       f_service_ <<
         indent() << "$args = new " << argsname << "();" << endl;
-      
+
       for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
         f_service_ <<
           indent() << "$args->" << (*fld_iter)->get_name() << " = $" << (*fld_iter)->get_name() << ";" << endl;
       }
-           
+
       // Write to the stream
-      if (binary_inline_) { 
+      if (binary_inline_) {
         f_service_ <<
           indent() << "$args->write($buff);" << endl <<
           indent() << "$this->output_->write($buff);" << endl <<
@@ -1052,15 +1060,15 @@ void t_php_generator::generate_service_client(t_service* tservice) {
           indent() << "$args->write($this->output_);" << endl <<
           indent() << "$this->output_->writeMessageEnd();" << endl <<
           indent() << "$this->output_->getTransport()->flush();" << endl;
-      }   
-      
+      }
+
     scope_down(f_service_);
-      
+
 
     if (!(*f_iter)->is_async()) {
       std::string resultname = php_namespace(tservice->get_program()) + service_name_ + "_" + (*f_iter)->get_name() + "_result";
       t_struct noargs(program_);
-      
+
       t_function recv_function((*f_iter)->get_returntype(),
                                string("recv_") + (*f_iter)->get_name(),
                                &noargs);
@@ -1133,13 +1141,13 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       } else {
         f_service_ <<
           indent() << "throw new Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
-      }     
+      }
 
     // Close function
     scope_down(f_service_);
     f_service_ << endl;
 
-    }   
+    }
   }
 
   indent_down();
@@ -1189,7 +1197,7 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
       indent_down();
       out << indent() << "} else {" << endl;
       indent_up();
-    
+
 
       if (binary_inline_) {
         std::string itrans = (inclass ? "$this->input_" : "$input");
@@ -1270,7 +1278,7 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
 
         indent(out) <<
           "$xfer += $input->";
-        
+
         if (type->is_base_type()) {
           t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
           switch (tbase) {
@@ -1278,7 +1286,7 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
             throw "compiler error: cannot serialize void field in a struct: " +
               name;
             break;
-          case t_base_type::TYPE_STRING:        
+          case t_base_type::TYPE_STRING:
             out << "readString($" << name << ");";
             break;
           case t_base_type::TYPE_BOOL:
@@ -1356,12 +1364,12 @@ void t_php_generator::generate_deserialize_container(ofstream &out,
   scope_down(out);
   out << indent() << "else" << endl;
   scope_up(out);
-  
+
   string size = tmp("_size");
   string ktype = tmp("_ktype");
   string vtype = tmp("_vtype");
   string etype = tmp("_etype");
-  
+
   t_field fsize(g_type_i32, size);
   t_field fktype(g_type_byte, ktype);
   t_field fvtype(g_type_byte, vtype);
@@ -1370,7 +1378,7 @@ void t_php_generator::generate_deserialize_container(ofstream &out,
   out <<
     indent() << "$" << prefix << " = array();" << endl <<
     indent() << "$" << size << " = 0;" << endl;
-  
+
   // Declare variables, read header
   if (ttype->is_map()) {
     out <<
@@ -1412,9 +1420,9 @@ void t_php_generator::generate_deserialize_container(ofstream &out,
   indent(out) <<
     "for ($" <<
     i << " = 0; $" << i << " < $" << size << "; ++$" << i << ")" << endl;
-  
+
     scope_up(out);
-    
+
     if (ttype->is_map()) {
       generate_deserialize_map_element(out, (t_map*)ttype, prefix);
     } else if (ttype->is_set()) {
@@ -1422,7 +1430,7 @@ void t_php_generator::generate_deserialize_container(ofstream &out,
     } else if (ttype->is_list()) {
       generate_deserialize_list_element(out, (t_list*)ttype, prefix);
     }
-    
+
     scope_down(out);
 
   if (!binary_inline_) {
@@ -1510,7 +1518,7 @@ void t_php_generator::generate_serialize_field(ofstream &out,
     throw "CANNOT GENERATE SERIALIZE CODE FOR void TYPE: " +
       prefix + tfield->get_name();
   }
-  
+
   if (type->is_struct() || type->is_xception()) {
     generate_serialize_struct(out,
                               (t_struct*)type,
@@ -1553,11 +1561,11 @@ void t_php_generator::generate_serialize_field(ofstream &out,
             indent() << "$output .= pack('N', $" << name << ");" << endl;
           break;
         case t_base_type::TYPE_I64:
-          out << 
+          out <<
             indent() << "$output .= pack('N2', $" << name << " >> 32, $" << name << " & 0xFFFFFFFF);" << endl;
           break;
         case t_base_type::TYPE_DOUBLE:
-          out << 
+          out <<
             indent() << "$output .= strrev(pack('d', $" << name << "));" << endl;
           break;
         default:
@@ -1571,7 +1579,7 @@ void t_php_generator::generate_serialize_field(ofstream &out,
 
       indent(out) <<
         "$xfer += $output->";
-      
+
       if (type->is_base_type()) {
         t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
         switch (tbase) {
@@ -1626,7 +1634,7 @@ void t_php_generator::generate_serialize_struct(ofstream &out,
                                                 t_struct* tstruct,
                                                 string prefix) {
   indent(out) <<
-    "$xfer += $" << prefix << "->write($output);" << endl; 
+    "$xfer += $" << prefix << "->write($output);" << endl;
 }
 
 /**
@@ -1636,7 +1644,7 @@ void t_php_generator::generate_serialize_container(ofstream &out,
                                                    t_type* ttype,
                                                    string prefix) {
   scope_up(out);
-  
+
   if (ttype->is_map()) {
     if (binary_inline_) {
       out <<
@@ -1681,28 +1689,28 @@ void t_php_generator::generate_serialize_container(ofstream &out,
     if (ttype->is_map()) {
       string kiter = tmp("kiter");
       string viter = tmp("viter");
-      indent(out) << 
+      indent(out) <<
         "foreach ($" << prefix << " as " <<
         "$" << kiter << " => $" << viter << ")" << endl;
-      scope_up(out);     
+      scope_up(out);
       generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
       scope_down(out);
     } else if (ttype->is_set()) {
       string iter = tmp("iter");
-      indent(out) << 
+      indent(out) <<
         "foreach ($" << prefix << " as $" << iter << " => $true)" << endl;
       scope_up(out);
       generate_serialize_set_element(out, (t_set*)ttype, iter);
       scope_down(out);
     } else if (ttype->is_list()) {
       string iter = tmp("iter");
-      indent(out) << 
+      indent(out) <<
         "foreach ($" << prefix << " as $" << iter << ")" << endl;
       scope_up(out);
       generate_serialize_list_element(out, (t_list*)ttype, iter);
       scope_down(out);
     }
-    
+
     scope_down(out);
 
   if (!binary_inline_) {
@@ -1717,8 +1725,8 @@ void t_php_generator::generate_serialize_container(ofstream &out,
         "$output->writeListEnd();" << endl;
     }
   }
- 
-  scope_down(out);  
+
+  scope_down(out);
 }
 
 /**
@@ -1868,7 +1876,7 @@ string t_php_generator::type_to_cast(t_type* type) {
  */
 string t_php_generator ::type_to_enum(t_type* type) {
   type = get_true_type(type);
-  
+
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
