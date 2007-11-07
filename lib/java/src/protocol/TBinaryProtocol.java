@@ -8,6 +8,7 @@ package com.facebook.thrift.protocol;
 
 import com.facebook.thrift.TException;
 import com.facebook.thrift.transport.TTransport;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Binary protocol implementation for thrift.
@@ -28,7 +29,7 @@ public class TBinaryProtocol extends TProtocol {
   public static class Factory implements TProtocolFactory {
     protected boolean strictRead_ = false;
     protected boolean strictWrite_ = true;
-    
+
     public Factory() {
       this(false, false);
     }
@@ -153,9 +154,13 @@ public class TBinaryProtocol extends TProtocol {
   }
 
   public void writeString(String str) throws TException {
-    byte[] dat = str.getBytes("UTF-8");
-    writeI32(dat.length);
-    trans_.write(dat, 0, dat.length);
+    try {
+      byte[] dat = str.getBytes("UTF-8");
+      writeI32(dat.length);
+      trans_.write(dat, 0, dat.length);
+    } catch (UnsupportedEncodingException uex) {
+      throw new TException("JVM DOES NOT SUPPORT UTF-8");
+    }
   }
 
   public void writeBinary(byte[] bin) throws TException {
@@ -206,9 +211,9 @@ public class TBinaryProtocol extends TProtocol {
     }
     return field;
   }
-  
+
   public void readFieldEnd() {}
- 
+
   public TMap readMapBegin() throws TException {
     TMap map = new TMap();
     map.keyType = readByte();
@@ -265,7 +270,7 @@ public class TBinaryProtocol extends TProtocol {
       ((i32rd[2] & 0xff) <<  8) |
       ((i32rd[3] & 0xff));
   }
- 
+
   private byte[] i64rd = new byte[8];
   public long readI64() throws TException {
     trans_.readAll(i64rd, 0, 8);
@@ -290,9 +295,13 @@ public class TBinaryProtocol extends TProtocol {
   }
 
   public String readStringBody(int size) throws TException {
-    byte[] buf = new byte[size];
-    trans_.readAll(buf, 0, size);
-    return new String(buf, "UTF-8");
+    try {
+      byte[] buf = new byte[size];
+      trans_.readAll(buf, 0, size);
+      return new String(buf, "UTF-8");
+    } catch (UnsupportedEncodingException uex) {
+      throw new TException("JVM DOES NOT SUPPORT UTF-8");
+    }
   }
 
   public byte[] readBinary() throws TException {
