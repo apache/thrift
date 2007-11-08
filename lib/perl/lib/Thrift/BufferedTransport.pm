@@ -73,18 +73,6 @@ sub read
 
     # Methinks Perl is already buffering these for us
     return $self->{transport}->read($len);
-
-    if (length($self->{rBuf}) >= $len) {
-        $ret = substr($self->{rBuf}, 0, $len);
-        $self->{rBuf} = substr($self->rBuf_, $len);
-        return $ret;
-    }
-
-    $self->{rBuf} .= $self->{transport}->read($self->{rBufSize});
-    my $give = min(length($self->{rBuf}), $len);
-    $ret = substr($self->{rBuf}, 0, $give);
-    $self->{rBuf} = substr($self->{rBuf}, $give);
-    return $ret;
 }
 
 sub write
@@ -107,6 +95,7 @@ sub flush
         $self->{transport}->write($self->{wBuf});
         $self->{wBuf} = '';
     }
+    $self->{transport}->flush();
 }
 
 

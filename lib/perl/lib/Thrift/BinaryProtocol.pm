@@ -229,14 +229,22 @@ sub readMessageBegin
 
     my $version = 0;
     my $result = $self->readI32(\$version);
-    if ($version & VERSION_MASK != VERSION_1) {
-      die new Thrift::TException('Missing version identifier')
-    }
-    $$type = $version & 0x000000ff;
-    return
-        $result +
-        $self->readString($name) +
+    if (($version & VERSION_MASK) > 0) {
+      if (($version & VERSION_MASK) != VERSION_1) {
+        die new Thrift::TException('Missing version identifier')
+      }
+      $$type = $version & 0x000000ff;
+      return
+          $result +
+          $self->readString($name) +
+          $self->readI32($seqid);
+    } else { # old client support code
+      return
+        $result + 
+        $self->readStringBody($name, $version) + # version here holds the size of the string
+        $self->readByte($type) +
         $self->readI32($seqid);
+    }
 }
 
 sub readMessageEnd
@@ -434,6 +442,21 @@ sub readString
     }
 
     return $result + $len;
+}
+
+sub readStringBody
+{
+    my $self  = shift;
+    my $value = shift;
+    my $len   = shift;
+
+    if ($len) {
+      $$value = $self->{trans}->readAll($len);
+    } else {
+      $$value = '';
+    }
+
+    return $len;
 }
 
 #
