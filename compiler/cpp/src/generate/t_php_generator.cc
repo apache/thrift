@@ -35,8 +35,9 @@ void t_php_generator::init_generator() {
   // Include other Thrift includes
   const vector<t_program*>& includes = program_->get_includes();
   for (size_t i = 0; i < includes.size(); ++i) {
+    string package = includes[i]->get_name();
     f_types_ <<
-      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + includes[i]->get_name() << "_types.php';" << endl;
+      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << package << "/" << package << "_types.php';" << endl;
   }
   f_types_ << endl;
 
@@ -283,6 +284,76 @@ void t_php_generator::generate_php_struct(t_struct* tstruct,
   generate_php_struct_definition(f_types_, tstruct, is_exception);
 }
 
+void t_php_generator::generate_php_type_spec(ofstream& out,
+                                             t_type* t) {
+  t = get_true_type(t);
+  indent(out) << "'type' => " << type_to_enum(t) << "," << endl;
+
+  if (t->is_base_type() || t->is_enum()) {
+    // Noop, type is all we need
+  } else if (t->is_struct() || t->is_xception()) {
+    indent(out) << "'class' => '" << t->get_name() <<"'," << endl;
+  } else if (t->is_map()) {
+    t_type* ktype = get_true_type(((t_map*)t)->get_key_type());
+    t_type* vtype = get_true_type(((t_map*)t)->get_val_type());
+    indent(out) << "'ktype' => " << type_to_enum(ktype) << "," << endl;
+    indent(out) << "'vtype' => " << type_to_enum(vtype) << "," << endl;
+    indent(out) << "'key' => array(" << endl;
+    indent_up();
+    generate_php_type_spec(out, ktype);
+    indent_down();
+    indent(out) << ")," << endl;
+    indent(out) << "'val' => array(" << endl;
+    indent_up();
+    generate_php_type_spec(out, vtype);
+    indent(out) << ")," << endl;
+    indent_down();
+  } else if (t->is_list() || t->is_set()) {
+    t_type* etype;
+    if (t->is_list()) {
+      etype = get_true_type(((t_list*)t)->get_elem_type());
+    } else {
+      etype = get_true_type(((t_set*)t)->get_elem_type());
+    }
+    indent(out) << "'etype' => " << type_to_enum(etype) <<"," << endl;
+    indent(out) << "'elem' => array(" << endl;
+    indent_up();
+    generate_php_type_spec(out, etype);
+    indent(out) << ")," << endl;
+    indent_down();
+  } else {
+    throw "compiler error: no type for php struct spec field";
+  }
+
+}
+
+/**
+ * Generates the struct specification structure, which fully qualifies enough
+ * type information to generalize serialization routines.
+ */
+void t_php_generator::generate_php_struct_spec(ofstream& out,
+                                               t_struct* tstruct) {
+  indent(out) << "static $_TSPEC = array(" << endl;
+  indent_up();
+
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
+    indent(out) << (*m_iter)->get_key() << " => array(" << endl;
+    indent_up();
+    out <<
+      indent() << "'var' => '" << (*m_iter)->get_name() << "'," << endl;
+    generate_php_type_spec(out, t);
+    indent(out) << ")," << endl;
+    indent_down();
+  }
+
+  indent_down();
+  indent(out) << "  );" << endl;
+}
+
+
 /**
  * Generates a struct definition for a thrift data type. This is nothing in PHP
  * where the objects are all just associative arrays (unless of course we
@@ -299,11 +370,15 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
   out <<
     "class " << php_namespace(tstruct->get_program()) << tstruct->get_name();
   if (is_exception) {
-    out << " extends Exception";
+    out << " extends TException";
+  } else {
+    out << " extends TBase";
   }
   out <<
     " {" << endl;
   indent_up();
+
+  generate_php_struct_spec(out, tstruct);
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string dval = "null";
@@ -331,21 +406,12 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
     }
 
     out <<
-      indent() << "if (is_array($vals)) {" << endl;
-    indent_up();
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out <<
-        indent() << "if (isset($vals['" << (*m_iter)->get_name() << "'])) {" << endl <<
-        indent() << "  $this->" << (*m_iter)->get_name() << " = $vals['" << (*m_iter)->get_name() << "'];" << endl <<
-        indent() << "}" << endl;
-    }
-    indent_down();
-    out <<
+      indent() << "if (is_array($vals)) {" << endl <<
+      indent() << "  parent::construct(self::$_TSPEC, $vals);" << endl <<
       indent() << "}" << endl;
-    indent_down();
-    out <<
-      indent() << "}" << endl <<
-      endl;
+    scope_down(out);
+
+    out << endl;
   }
 
   out <<
@@ -372,8 +438,13 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<
-    "public function read($input) " << endl;
+    "public function read($input)" << endl;
   scope_up(out);
+
+  // TODO(mcslee): Testing this new jonx!
+  indent(out) << "return $this->_read('" << tstruct->get_name() << "', self::$_TSPEC, $input);" << endl;
+  scope_down(out);
+  return;
 
   out <<
     indent() << "$xfer = 0;" << endl <<
@@ -496,6 +567,11 @@ void t_php_generator::generate_php_struct_writer(ofstream& out,
   }
   indent_up();
 
+  // TODO(mcslee): Testing this new j0nx
+  indent(out) << "return $this->_write('" << tstruct->get_name() << "', self::$_TSPEC, $output);" << endl;
+  scope_down(out);
+  return;
+
   indent(out) <<
     "$xfer = 0;" << endl;
 
@@ -586,7 +662,9 @@ void t_php_generator::generate_service(t_service* tservice) {
   }
   generate_service_client(tservice);
   generate_service_helpers(tservice);
-  generate_service_processor(tservice);
+  if (phps_) {
+    generate_service_processor(tservice);
+  }
 
   // Close service file
   f_service_ << "?>" << endl;
@@ -914,8 +992,13 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
       t_type* atype = get_true_type((*a_iter)->get_type());
       string cast = type_to_cast(atype);
       string req = "$request['" + (*a_iter)->get_name() + "']";
-      f_service_ <<
-        indent() << "$" << (*a_iter)->get_name() << " = isset(" << req << ") ? " << cast << req << " : null;" << endl;
+      if (atype->is_bool()) {
+        f_service_ <<
+          indent() << "$" << (*a_iter)->get_name() << " = " << cast << "(!empty(" << req << ") && (" << req << " !== 'false'));" << endl;
+      } else {
+        f_service_ <<
+          indent() << "$" << (*a_iter)->get_name() << " = isset(" << req << ") ? " << cast << req << " : null;" << endl;
+      }
       if (atype->is_string() &&
           ((t_base_type*)atype)->is_string_list()) {
         f_service_ <<

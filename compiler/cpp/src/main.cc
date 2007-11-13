@@ -139,6 +139,7 @@ bool gen_py = false;
 bool gen_xsd = false;
 bool gen_php = false;
 bool gen_phpi = false;
+bool gen_phps = true;
 bool gen_rest = false;
 bool gen_perl = false;
 bool gen_erl = false;
@@ -559,6 +560,8 @@ void usage() {
   fprintf(stderr, "  -javabean   Generate Java bean-style output files\n");
   fprintf(stderr, "  -php        Generate PHP output files\n");
   fprintf(stderr, "  -phpi       Generate PHP inlined files\n");
+  fprintf(stderr, "  -phps       Generate PHP server stubs (with -php)\n");
+  fprintf(stderr, "  -phpl       Generate PHP-lite (with -php)\n");
   fprintf(stderr, "  -py         Generate Python output files\n");
   fprintf(stderr, "  -rb         Generate Ruby output files\n");
   fprintf(stderr, "  -xsd        Generate XSD output files\n");
@@ -775,7 +778,7 @@ void generate(t_program* program) {
     for (size_t i = 0; i < includes.size(); ++i) {
       // Propogate output path from parent to child programs
       includes[i]->set_out_path(program->get_out_path());
-    
+
       generate(includes[i]);
     }
   }
@@ -810,7 +813,7 @@ void generate(t_program* program) {
 
     if (gen_php) {
       pverbose("Generating PHP\n");
-      t_php_generator* php = new t_php_generator(program, false, gen_rest);
+      t_php_generator* php = new t_php_generator(program, false, gen_rest, gen_phps);
       php->generate_program();
       delete php;
     }
@@ -940,6 +943,16 @@ int main(int argc, char** argv) {
         gen_php = true;
       } else if (strcmp(arg, "-phpi") == 0) {
         gen_phpi = true;
+      } else if (strcmp(arg, "-phps") == 0) {
+        if (!gen_php) {
+          gen_php = true;
+        }
+        gen_phps = true;
+      } else if (strcmp(arg, "-phpl") == 0) {
+        if (!gen_php) {
+          gen_php = true;
+        }
+        gen_phps = false;
       } else if (strcmp(arg, "-rest") == 0) {
         gen_rest = true;
       } else if (strcmp(arg, "-py") == 0) {
@@ -972,7 +985,7 @@ int main(int argc, char** argv) {
         if (arg == NULL) {
           fprintf(stderr, "-o: missing output directory");
           usage();
-        } 
+        }
         out_path = arg;
         struct stat sb;
         if (stat(out_path.c_str(), &sb) < 0) {

@@ -37,7 +37,7 @@ class t_base_type : public t_type {
     base_(base),
     string_list_(false),
     string_enum_(false) {}
-    
+
   t_base get_base() const {
     return base_;
   }
@@ -49,7 +49,11 @@ class t_base_type : public t_type {
   bool is_string() const {
     return base_ == TYPE_STRING;
   }
-  
+
+  bool is_bool() const {
+    return base_ == TYPE_BOOL;
+  }
+
   void set_string_list(bool val) {
     string_list_ = val;
   }
@@ -61,7 +65,7 @@ class t_base_type : public t_type {
   void set_binary(bool val) {
     binary_ = val;
   }
-  
+
   bool is_binary() const {
     return (base_ == TYPE_STRING) && binary_;
   }

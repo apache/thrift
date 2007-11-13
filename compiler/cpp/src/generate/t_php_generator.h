@@ -21,13 +21,14 @@
  */
 class t_php_generator : public t_oop_generator {
  public:
-  t_php_generator(t_program* program, bool binary_inline=false, bool rest=false) :
+  t_php_generator(t_program* program, bool binary_inline=false, bool rest=false, bool phps=false) :
     t_oop_generator(program),
     binary_inline_(binary_inline),
-    rest_(rest) {
+    rest_(rest),
+    phps_(phps) {
     out_dir_base_ = (binary_inline_ ? "gen-phpi" : "gen-php");
   }
-  
+
   /**
    * Init and close methods
    */
@@ -58,6 +59,9 @@ class t_php_generator : public t_oop_generator {
   void generate_php_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_php_function_helpers(t_function* tfunction);
 
+  void generate_php_type_spec(std::ofstream &out, t_type* t);
+  void generate_php_struct_spec(std::ofstream &out, t_struct* tstruct);
+
   /**
    * Service-level generation functions
    */
@@ -74,18 +78,18 @@ class t_php_generator : public t_oop_generator {
    */
 
   void generate_deserialize_field        (std::ofstream &out,
-                                          t_field*    tfield, 
+                                          t_field*    tfield,
                                           std::string prefix="",
                                           bool inclass=false);
-  
+
   void generate_deserialize_struct       (std::ofstream &out,
                                           t_struct*   tstruct,
                                           std::string prefix="");
-  
+
   void generate_deserialize_container    (std::ofstream &out,
                                           t_type*     ttype,
                                           std::string prefix="");
-  
+
   void generate_deserialize_set_element  (std::ofstream &out,
                                           t_set*      tset,
                                           std::string prefix="");
@@ -158,6 +162,11 @@ class t_php_generator : public t_oop_generator {
    * Generate a REST handler class
    */
   bool rest_;
+
+  /**
+   * Generate stubs for a PHP server
+   */
+  bool phps_;
 
 };
 

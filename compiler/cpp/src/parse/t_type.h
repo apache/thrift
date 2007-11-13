@@ -40,6 +40,7 @@ class t_type : public t_doc {
   virtual bool is_void()      const { return false; }
   virtual bool is_base_type() const { return false; }
   virtual bool is_string()    const { return false; }
+  virtual bool is_bool()      const { return false; }
   virtual bool is_typedef()   const { return false; }
   virtual bool is_enum()      const { return false; }
   virtual bool is_struct()    const { return false; }

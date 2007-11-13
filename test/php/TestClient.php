@@ -22,9 +22,17 @@ require_once $GLOBALS['THRIFT_ROOT'].'/transport/TSocketPool.php';
 /** Include the socket layer */
 require_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
 
+echo '==============================='."\n";
+echo ' SAFE TO IGNORE THESE IN TEST'."\n";
+echo '==============================='."\n";
+
 /** Include the generated code */
 require_once $GEN_DIR.'/ThriftTest.php';
 require_once $GEN_DIR.'/ThriftTest_types.php';
+
+echo '==============================='."\n";
+echo ' END OF SAFE ERRORS SECTION'."\n";
+echo '==============================='."\n\n";
 
 $host = 'localhost';
 $port = 9090;
@@ -70,7 +78,7 @@ print_r(" = void\n");
 print_r("testString(\"Test\")");
 $s = $testClient->testString("Test");
 print_r(" = \"$s\"\n");
-   
+
 /**
  * BYTE TEST
  */
@@ -296,7 +304,7 @@ foreach ($whoa as $key => $val) {
       }
     }
     print_r("}, ");
-    
+
     $xtructs = $v2->xtructs;
     print_r("{");
     if (is_array($xtructs)) {
@@ -306,7 +314,7 @@ foreach ($whoa as $key => $val) {
       }
     }
     print_r("}");
-    
+
     print_r("}, ");
   }
   print_r("}, ");

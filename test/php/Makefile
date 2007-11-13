@@ -1,5 +1,5 @@
 # Makefile for Thrift test project.
-# 
+#
 # Author:
 #   Mark Slee <mcslee@facebook.com>
 
@@ -16,7 +16,7 @@ normal: stubs
 inline: stubs-inline
 
 stubs: ../ThriftTest.thrift
-	$(THRIFT) --php ../ThriftTest.thrift
+	$(THRIFT) --phpl ../ThriftTest.thrift
 
 stubs-inline: ../ThriftTest.thrift
 	$(THRIFT) --phpi ../ThriftTest.thrift
