@@ -292,7 +292,7 @@ void t_php_generator::generate_php_type_spec(ofstream& out,
   if (t->is_base_type() || t->is_enum()) {
     // Noop, type is all we need
   } else if (t->is_struct() || t->is_xception()) {
-    indent(out) << "'class' => '" << t->get_name() <<"'," << endl;
+    indent(out) << "'class' => '" << php_namespace(t->get_program()) << t->get_name() <<"'," << endl;
   } else if (t->is_map()) {
     t_type* ktype = get_true_type(((t_map*)t)->get_key_type());
     t_type* vtype = get_true_type(((t_map*)t)->get_val_type());
