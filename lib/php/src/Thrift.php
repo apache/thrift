@@ -225,7 +225,7 @@ class TException extends Exception {
           } else {
             if (isset(TBase::$tmethod[$ftype])) {
               $func = 'read'.TBase::$tmethod[$ftype];
-              $xter += $input->$func($this->$var);
+              $xfer += $input->$func($this->$var);
             } else {
               switch ($ftype) {
               case TType::STRUCT:
@@ -368,7 +368,7 @@ class TException extends Exception {
         $xfer += $output->writeFieldBegin($var, $ftype, $fid);
         if (isset(TBase::$tmethod[$ftype])) {
           $func = 'write'.TBase::$tmethod[$ftype];
-          $xter += $output->$func($this->$var);
+          $xfer += $output->$func($this->$var);
         } else {
           switch ($ftype) {
           case TType::STRUCT:
@@ -572,7 +572,7 @@ abstract class TBase {
           } else {
             if (isset(TBase::$tmethod[$ftype])) {
               $func = 'read'.TBase::$tmethod[$ftype];
-              $xter += $input->$func($this->$var);
+              $xfer += $input->$func($this->$var);
             } else {
               switch ($ftype) {
               case TType::STRUCT:
@@ -715,7 +715,7 @@ abstract class TBase {
         $xfer += $output->writeFieldBegin($var, $ftype, $fid);
         if (isset(TBase::$tmethod[$ftype])) {
           $func = 'write'.TBase::$tmethod[$ftype];
-          $xter += $output->$func($this->$var);
+          $xfer += $output->$func($this->$var);
         } else {
           switch ($ftype) {
           case TType::STRUCT:
