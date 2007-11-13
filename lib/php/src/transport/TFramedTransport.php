@@ -89,7 +89,7 @@ class TFramedTransport extends TTransport {
       return $this->transport_->read($len);
     }
 
-    if (empty($this->rBuf_)) {
+    if (strlen($this->rBuf_) === 0) {
       $this->readFrame();
     }
 
@@ -99,7 +99,7 @@ class TFramedTransport extends TTransport {
       $this->rBuf_ = null;
       return $out;
     }
-    
+
     // Return substr
     $out = substr($this->rBuf_, 0, $len);
     $this->rBuf_ = substr($this->rBuf_, $len);
@@ -112,10 +112,9 @@ class TFramedTransport extends TTransport {
    * @param string $data data to return
    */
   public function putBack($data) {
-    if (empty($this->rBuf_)) {
+    if (strlen($this->rBuf_) === 0) {
       $this->rBuf_ = $data;
-    }
-    else {
+    } else {
       $this->rBuf_ = ($data . $this->rBuf_);
     }
   }

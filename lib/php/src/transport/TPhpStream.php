@@ -50,7 +50,7 @@ class TPhpStream extends TTransport {
       }
     }
   }
-  
+
   public function close() {
     if ($this->read_) {
       @fclose($this->inStream_);

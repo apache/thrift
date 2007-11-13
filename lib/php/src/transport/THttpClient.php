@@ -159,7 +159,7 @@ class THttpClient extends TTransport {
                      'User-Agent: PHP/THttpClient',
                      'Content-Type: application/x-thrift',
                      'Content-Length: '.strlen($this->buf_));
-  
+
     $options = array('method' => 'POST',
                      'header' => implode("\r\n", $headers),
                      'max_redirects' => 1,

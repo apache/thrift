@@ -104,6 +104,18 @@ class TSocketPool extends TSocket {
   }
 
   /**
+   * Add a server to the pool
+   *
+   * This function does not prevent you from adding a duplicate server entry.
+   *
+   * @param string $host hostname or IP
+   * @param int $port port
+   */
+  public function addServer($host, $port) {
+    $this->servers_[] = array('host' => $host, 'port' => $port);
+  }
+
+  /**
    * Sets how many time to keep retrying a host in the connect function.
    *
    * @param int $numRetries
@@ -206,7 +218,7 @@ class TSocketPool extends TSocket {
         // Set underlying TSocket params to this one
         $this->host_ = $host;
         $this->port_ = $port;
-          
+
         // Try up to numRetries_ connections per server
         for ($attempt = 0; $attempt < $this->numRetries_; $attempt++) {
           try {

@@ -78,16 +78,15 @@ class TBufferedTransport extends TTransport {
   }
 
   public function putBack($data) {
-    if (empty($this->rBuf_)) {
+    if (strlen($this->rBuf_) === 0) {
       $this->rBuf_ = $data;
-    }
-    else {
+    } else {
       $this->rBuf_ = ($data . $this->rBuf_);
     }
   }
-  
+
   public function read($len) {
-    if (empty($this->rBuf_)){
+    if (strlen($this->rBuf_) === 0) {
       $this->rBuf_ = $this->transport_->read($this->rBufSize_);
     }
 
@@ -111,7 +110,7 @@ class TBufferedTransport extends TTransport {
   }
 
   public function flush() {
-    if (!empty($this->wBuf_)) {
+    if (strlen($this->wBuf_) > 0) {
       $this->transport_->write($this->wBuf_);
       $this->wBuf_ = '';
     }

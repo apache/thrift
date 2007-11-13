@@ -28,7 +28,7 @@ class TSocket extends TTransport {
 
   /**
    * Remote hostname
-   * 
+   *
    * @var string
    */
   protected $host_ = 'localhost';
@@ -128,6 +128,24 @@ class TSocket extends TTransport {
   }
 
   /**
+   * Get the host that this socket is connected to
+   *
+   * @return string host
+   */
+  public function getHost() {
+    return $this->host_;
+  }
+
+  /**
+   * Get the remote port that this socket is connected to
+   *
+   * @return int port
+   */
+  public function getPort() {
+    return $this->port_;
+  }
+
+  /**
    * Tests whether this is open
    *
    * @return bool true if the socket is open
@@ -140,6 +158,7 @@ class TSocket extends TTransport {
    * Connects the socket.
    */
   public function open() {
+
     if ($this->persist_) {
       $this->handle_ = @pfsockopen($this->host_,
                                    $this->port_,
@@ -162,7 +181,7 @@ class TSocket extends TTransport {
       }
       throw new TException($error);
     }
-    
+
     stream_set_timeout($this->handle_, 0, $this->sendTimeout_*1000);
     $this->sendTimeoutSet_ = TRUE;
   }
@@ -176,7 +195,7 @@ class TSocket extends TTransport {
       $this->handle_ = null;
     }
   }
-  
+
   /**
    * Uses stream get contents to do the reading
    *
