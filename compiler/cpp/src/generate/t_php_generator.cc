@@ -407,7 +407,7 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
 
     out <<
       indent() << "if (is_array($vals)) {" << endl <<
-      indent() << "  parent::construct(self::$_TSPEC, $vals);" << endl <<
+      indent() << "  parent::__construct(self::$_TSPEC, $vals);" << endl <<
       indent() << "}" << endl;
     scope_down(out);
 
