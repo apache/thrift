@@ -333,7 +333,10 @@ void t_php_generator::generate_php_type_spec(ofstream& out,
  */
 void t_php_generator::generate_php_struct_spec(ofstream& out,
                                                t_struct* tstruct) {
-  indent(out) << "static $_TSPEC = array(" << endl;
+  indent(out) << "if (!isset(self::$_TSPEC)) {" << endl;
+  indent_up();
+
+  indent(out) << "self::$_TSPEC = array(" << endl;
   indent_up();
 
   const vector<t_field*>& members = tstruct->get_members();
@@ -351,6 +354,8 @@ void t_php_generator::generate_php_struct_spec(ofstream& out,
 
   indent_down();
   indent(out) << "  );" << endl;
+  indent_down();
+  indent(out) << "}" << endl;
 }
 
 
@@ -378,7 +383,7 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
     " {" << endl;
   indent_up();
 
-  generate_php_struct_spec(out, tstruct);
+  indent(out) << "static $_TSPEC;" << endl << endl;
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string dval = "null";
@@ -397,6 +402,8 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
     out <<
       indent() << "public function __construct($vals=null) {" << endl;
     indent_up();
+
+    generate_php_struct_spec(out, tstruct);
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
