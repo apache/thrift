@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -30,11 +30,11 @@
 ?DEFINE_ATTR(serverPid);
 ?DEFINE_ATTR(transportFactory);
 ?DEFINE_ATTR(protocolFactory).
-   
+
 %%%
 %%% behavior callbacks
 %%%
- 
+
 %%% super() -> SuperModule = atom()
 %%%             |  none
 
@@ -54,11 +54,11 @@ inspect(This) ->
 
 new(ServerPid, TF, PF) ->
     Super = (super()):new(),
-    #?MODULE{super = Super, 
-	     serverPid = ServerPid,
-	     transportFactory = TF,
-	     protocolFactory = PF
-	    }.
+    #?MODULE{super = Super,
+             serverPid = ServerPid,
+             transportFactory = TF,
+             protocolFactory = PF
+            }.
 
 %%%
 %%% instance methods
@@ -68,66 +68,66 @@ accept(This, ListenSocket, GP, Handler) ->
     ServerPid = oop:get(This, serverPid),
 
     case catch gen_tcp:accept(ListenSocket) of
-	{ok, Socket} ->
-	    ?C0(ServerPid, effectful_new_acceptor), %% cast to create new acceptor
+        {ok, Socket} ->
+            ?C0(ServerPid, effectful_new_acceptor), %% cast to create new acceptor
 
-	    AddrString = render_addr(Socket),
-	    ?INFO("thrift connection accepted from ~s", [AddrString]),
+            AddrString = render_addr(Socket),
+            ?INFO("thrift connection accepted from ~s", [AddrString]),
 
-	    %% start_new(tSocket, [])
-	    Client = oop:start_new(tSocket, []),
-	    ?R1(Client, effectful_setHandle, Socket), %% TODO(cpiro): should we just let this be a param to the constructor?
+            %% start_new(tSocket, [])
+            Client = oop:start_new(tSocket, []),
+            ?R1(Client, effectful_setHandle, Socket), %% TODO(cpiro): should we just let this be a param to the constructor?
 
-	    %% cpiro: OPAQUE!! Trans = Client
-	    TF      = oop:get(This, transportFactory),
-	    Trans   = ?F1(TF, getTransport, Client), 
+            %% cpiro: OPAQUE!! Trans = Client
+            TF      = oop:get(This, transportFactory),
+            Trans   = ?F1(TF, getTransport, Client),
 
-	    %% cpiro: OPAQUE!! Prot = start_new(tBinaryProtocol, [Trans])
-	    PF      = oop:get(This, protocolFactory),
-	    Prot    = ?F1(PF, getProtocol, Trans), 
+            %% cpiro: OPAQUE!! Prot = start_new(tBinaryProtocol, [Trans])
+            PF      = oop:get(This, protocolFactory),
+            Prot    = ?F1(PF, getProtocol, Trans),
 
-	    %% start_new(, ...)
-	    Processor = oop:start_new(tErlProcessor, [GP, Handler]), %% TODO
+            %% start_new(, ...)
+            Processor = oop:start_new(tErlProcessor, [GP, Handler]), %% TODO
 
-	    case receive_loop(This, Processor, Prot, Prot) of
-		conn_timeout ->
-		    ?INFO("thrift connection timed out from ~s", [AddrString]);
-		conn_closed ->
-		    ?INFO("thrift connection closed from ~s", [AddrString]);
-		{Class, Else} ->
-		    ?ERROR("unhandled ~p in tErlAcceptor: ~p", [Class, Else])
-	    end,
-	    exit(normal);
+            case receive_loop(This, Processor, Prot, Prot) of
+                conn_timeout ->
+                    ?INFO("thrift connection timed out from ~s", [AddrString]);
+                conn_closed ->
+                    ?INFO("thrift connection closed from ~s", [AddrString]);
+                {Class, Else} ->
+                    ?ERROR("unhandled ~p in tErlAcceptor: ~p", [Class, Else])
+            end,
+            exit(normal);
 
-	Else ->
-	    R = thrift_utils:sformat("accept() failed: ~p", [Else]),
-	    exit(tTransportException:new(R))
+        Else ->
+            R = thrift_utils:sformat("accept() failed: ~p", [Else]),
+            exit(tTransportException:new(R))
     end.
 
 receive_loop(This, Processor, Iprot, Oprot) ->
     try ?R2(Processor, process, Iprot, Oprot) of
-	{error, TAE} when is_record(TAE, tApplicationException),
-	                  TAE#tApplicationException.type == ?tApplicationException_HANDLER_ERROR ->
-	    ?ERROR("thrift handler returned an error: ~p", [oop:get(TAE, message)]),
-	    receive_loop(This, Processor, Iprot, Oprot);
-	Value ->
-	    ?INFO("thrift request: ~p", [Value]),
-	    receive_loop(This, Processor, Iprot, Oprot)
+        {error, TAE} when is_record(TAE, tApplicationException),
+                          TAE#tApplicationException.type == ?tApplicationException_HANDLER_ERROR ->
+            ?ERROR("thrift handler returned an error: ~p", [oop:get(TAE, message)]),
+            receive_loop(This, Processor, Iprot, Oprot);
+        Value ->
+            ?INFO("thrift request: ~p", [Value]),
+            receive_loop(This, Processor, Iprot, Oprot)
     catch
-	exit:{timeout, _} ->
-	    conn_timeout;
+        exit:{timeout, _} ->
+            conn_timeout;
 
-	%% the following clause must be last
-	%% cpiro: would be best to implement an is_a/2 guard BIF
-	%% cpiro: breaks if it's a subclass of tTransportException
-	%% since unnest_record knows nothing about oop
-	Class:Else ->
-	    case thrift_utils:unnest_record(Else, tTransportException) of
-		{ok, TTE} when TTE#tTransportException.type == ?tTransportException_NOT_OPEN ->
-		    conn_closed;
-		_ ->
-		    {Class, Else}
-	    end
+        %% the following clause must be last
+        %% cpiro: would be best to implement an is_a/2 guard BIF
+        %% cpiro: breaks if it's a subclass of tTransportException
+        %% since unnest_record knows nothing about oop
+        Class:Else ->
+            case thrift_utils:unnest_record(Else, tTransportException) of
+                {ok, TTE} when TTE#tTransportException.type == ?tTransportException_NOT_OPEN ->
+                    conn_closed;
+                _ ->
+                    {Class, Else}
+            end
     end.
 
 %% helper functions
@@ -140,14 +140,14 @@ render_addr(Socket) ->
     {ok, {Peer, Port}} = inet:peername(Socket),
 
     case Peer of
-	_ when DoLookup ->
-	    case catch inet:gethostbyaddr(Peer) of
-		{ok, Hostent} ->
-		    thrift_utils:sformat("~s:~p", [Hostent#hostent.h_name, Port]);
-		_ ->
-		    "??"
-	    end;
+        _ when DoLookup ->
+            case catch inet:gethostbyaddr(Peer) of
+                {ok, Hostent} ->
+                    thrift_utils:sformat("~s:~p", [Hostent#hostent.h_name, Port]);
+                _ ->
+                    "??"
+            end;
 
-	{A,B,C,D} when not DoLookup ->
-	    thrift_utils:sformat("~p.~p.~p.~p:~p", [A,B,C,D,Port])
+        {A,B,C,D} when not DoLookup ->
+            thrift_utils:sformat("~p.~p.~p.~p:~p", [A,B,C,D,Port])
     end.
