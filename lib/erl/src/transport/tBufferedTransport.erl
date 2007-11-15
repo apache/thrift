@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -15,7 +15,7 @@
 
 -export([attr/4, super/0, inspect/1]).
 
--export([new/1, isOpen/1, open/1, close/1, read/2, effectful_write/2, effectful_flush/1]).
+-export([new/1, isOpen/1, effectful_open/1, effectful_close/1, read/2, effectful_write/2, effectful_flush/1]).
 
 %%%
 %%% define attributes
@@ -25,11 +25,11 @@
 ?DEFINE_ATTR(super);
 ?DEFINE_ATTR(transport);
 ?DEFINE_ATTR(wbuf).
-   
+
 %%%
 %%% behavior callbacks
 %%%
- 
+
 %%% super() -> SuperModule = atom()
 %%%             |  none
 
@@ -58,13 +58,15 @@ isOpen(This) ->
     Transport = oop:get(This, transport),
     ?R0(Transport, isOpen).
 
-open(This) ->
+effectful_open(This) ->
     Transport = oop:get(This, transport),
-    ?R0(Transport, open).
+    ?R0(Transport, effectful_open),
+    {ok, This}.
 
-close(This) ->
+effectful_close(This) ->
     Transport = oop:get(This, transport),
-    ?R0(Transport, close).
+    ?R0(Transport, effectful_close),
+    {ok, This}.
 
 read(This, Sz) ->
     Transport = oop:get(This, transport),
@@ -77,7 +79,7 @@ effectful_write(This, Buf) -> % be sure to rebind This to the retval
 
 effectful_flush(This) ->
     Wbuf = oop:get(This, wbuf),
-    Transport = oop:get(This, transport),    
+    Transport = oop:get(This, transport),
     ?R1(Transport, effectful_write, Wbuf),
     ?R0(Transport, effectful_flush),
     This1 = oop:set(This, wbuf, ""),
