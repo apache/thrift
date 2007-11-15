@@ -86,7 +86,8 @@ call(Obj, Func) ->
     call(Obj, Func, []).
 
 call(Obj, Func, ArgsProper) ->
-    ?INFO("oop:call called: Obj=~p Func=~p ArgsProper=~p", [inspect(Obj), Func, ArgsProper]),
+    %% this is WAY too expensive
+    %% ?INFO("oop:call called: Obj=~p Func=~p ArgsProper=~p", [inspect(Obj), Func, ArgsProper]),
     case call1(Obj, Func, ArgsProper) of
         {ok, Value}       -> Value;
         {error, Kind, S1} -> error(Kind, S1)

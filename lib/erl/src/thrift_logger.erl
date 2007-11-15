@@ -131,7 +131,13 @@ handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
 %%
 
 handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format) ->
-    Symbol = symbol(What),
+    Symbol =
+        case What of
+            error       -> "!!";
+            warning_msg -> "**";
+            info_msg    -> "..";
+            _Else       -> "??"
+        end,
 
     case {Format, Data} of
         {?GS_TERM_FORMAT, [Ref, LastMessage, Obj, Reason]} ->
@@ -174,7 +180,13 @@ handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format)
     {ok, State};
 
 handle_event1({What, _Gleader, {Pid, Type, Report}}, State) ->
-    Symbol = symbol(What),
+    Symbol =
+        case What of
+            error_report   -> "!!";
+            warning_report -> "**";
+            info_report    -> "..";
+            _Else          -> "??"
+        end,
 
     case Type of
         crash_report ->
@@ -271,11 +283,6 @@ sformat(Format, Data) ->
 config(Item) ->
     thrift:config(Item).
 
-symbol(error_report)   -> "!!";
-symbol(warning_report) -> "**";
-symbol(info_report)    -> "..";
-symbol(_Else)          -> "??".
-
 print_crash_report(Report) ->
     case Report of
         [[_,_,{error_info, XX}|_] | _]  ->
@@ -283,7 +290,7 @@ print_crash_report(Report) ->
                 tTransportException ->
                     ok;
                 _ ->
-                    io:format("~~~~ crash report: ~P~n", [XX, 2])
+                    io:format("~~~~ crash report: ~P~n", [XX, 3])
             end;
         _ ->
             io:format("~~~~ crash report (?): ~p~n", [Report])
