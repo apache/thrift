@@ -686,16 +686,12 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
     }
     f_service_ << ")," << endl;
 
-    if (!(*f_iter)->is_async()) {
-      f_service_ << indent();
-      if (!(*f_iter)->get_returntype()->is_void()) {
-        f_service_ << "";
-      }
-      f_service_ <<
-        "recv_" << funname << "(This)," << endl;
+    if ((*f_iter)->is_async()) {
+      f_service_ << indent() << "ok." << endl;
+    } else {
+      f_service_ << indent() << "recv_" << funname << "(This)." << endl;
     }
 
-    indent(f_service_) << "ok." << endl;
     indent_down();
     f_service_ << endl;
 
