@@ -433,7 +433,7 @@ void t_erl_generator::generate_erl_struct_reader(ostream& out,
 
   // In the default case we skip the field
   out <<
-    indent() << "true -> " << endl <<
+    indent() << "true ->" << endl <<
     indent() << "  ?R1(Iprot, skip, Ftype)," << endl <<
     indent() << "  ?R0(Iprot, readFieldEnd)," << endl <<
     indent() << "  " << type_name(tstruct) << "_read_loop(Iprot, Str)" << endl;
@@ -692,7 +692,7 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
         f_service_ << "";
       }
       f_service_ <<
-        "recv_" << funname << "(This), " << endl;
+        "recv_" << funname << "(This)," << endl;
     }
 
     indent(f_service_) << "ok." << endl;
@@ -758,7 +758,7 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
         indent() << "  Mtype == ?tMessageType_EXCEPTION ->" << endl <<
         indent() << "    X = tApplicationException:new()," << endl <<
         indent() << "    tApplicationException:read(X, Iprot)," << endl <<
-        indent() << "    ?R0(Iprot, readMessageEnd), " << endl <<
+        indent() << "    ?R0(Iprot, readMessageEnd)," << endl <<
         indent() << "    throw(X);" << endl <<
         indent() << "  true ->" << endl <<
         indent() << "    Result = " << resultname << "_read(Iprot)," << endl <<
@@ -794,7 +794,7 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
           indent() << "    end" << endl;
       } else {
         f_service_ <<
-          indent() << "      true -> " << endl <<
+          indent() << "      true ->" << endl <<
           indent() << "        throw(tApplicationException:new(?tApplicationException_MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\"))" << endl <<
           indent() << "    end" << endl;
       }
