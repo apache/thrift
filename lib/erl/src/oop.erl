@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -48,7 +48,7 @@ behaviour_info(_) ->
 
 %% TODO: voids take only ok as return?
 start_new(none=Resv, _) ->
-    error_logger:format("can't instantiate ~p: class name is a reserved word", [Resv]),
+    ?ERROR("can't instantiate ~p: class name is a reserved word", [Resv]),
     error;
 start_new(Class, Args) ->
     {ok, Pid} = gen_server:start_link(thrift_oop_server, {Class, Args}, []),
@@ -65,12 +65,12 @@ set(Obj, Field, Value) -> %% TODO: could be tail-recursive
         {ok, V} -> V;
         undef   ->
             case get_superobject(Obj) of
-		{ ok, Superobj } ->
-		    Superobj1 = set(Superobj, Field, Value),
+                { ok, Superobj } ->
+                    Superobj1 = set(Superobj, Field, Value),
                     Module:attr(Obj, set, super, Superobj1);
-		undef ->
-		    error(missing_attr_set, Field, Obj)
-	    end
+                undef ->
+                    error(missing_attr_set, Field, Obj)
+            end
     end.
 
 %%
@@ -86,7 +86,7 @@ call(Obj, Func) ->
     call(Obj, Func, []).
 
 call(Obj, Func, ArgsProper) ->
-    %% error_logger:info_msg("call called: Obj=~p Func=~p ArgsProper=~p", [inspect(Obj), Func, ArgsProper]),
+    ?INFO("oop:call called: Obj=~p Func=~p ArgsProper=~p", [inspect(Obj), Func, ArgsProper]),
     case call1(Obj, Func, ArgsProper) of
         {ok, Value}       -> Value;
         {error, Kind, S1} -> error(Kind, S1)
@@ -104,42 +104,42 @@ call1(Obj, Func, ArgsProper) ->
     call1(S).
 
 call1(S = #cstate{obj=Obj, module=Module, func=Func, args=Args}) ->
-    %% error_logger:info_msg("call1~n obj=~p~n MFA=~p, ~p, ~p", [inspect(Obj), Module, Func, Args]),
+    %% ?INFO("call1~n obj=~p~n MFA=~p, ~p, ~p", [inspect(Obj), Module, Func, Args]),
     %% io:format("call ~p~n", [Module]),
     case apply_if_defined(Module, Func, Args) of
-	{ok, Value} -> {ok, Value};
-	undef       -> call1_try_super(S)
+        {ok, Value} -> {ok, Value};
+        undef       -> call1_try_super(S)
     end.
 
 call1_try_super(S = #cstate{func=attr, module=Module, tried=Tried}) ->
     case Module:super() of
-	none       -> {error, missing_attr, S};
-	Superclass -> call1_try_super_attr(Superclass, S)
+        none       -> {error, missing_attr, S};
+        Superclass -> call1_try_super_attr(Superclass, S)
     end;
 call1_try_super(S = #cstate{func=Func, module=Module, tried=Tried}) ->
     case Module:super() of
-	none       -> {error, missing_method, S};
-	Superclass ->
+        none       -> {error, missing_method, S};
+        Superclass ->
             S1 = S#cstate{
-                        module = Superclass,
-                        tried  = [Module|Tried]
-                       },
-	    call1(S1)
-	end.
+                   module = Superclass,
+                   tried  = [Module|Tried]
+                  },
+            call1(S1)
+    end.
 
 call1_try_super_attr(Superclass, S = #cstate{obj=Obj, module=Module, args=Args, tried=Tried}) ->
     %% look for attrs in the "super object"
     case get_superobject(Obj) of
         undef -> {error, missing_superobj, S};
-	{ok, Superobj} when Module == ?CLASS(Obj) ->
-	    %% replace This with Superobj
-	    S1 = S#cstate{
-		   obj    = Superobj,
-		   args   = [Superobj|tl(Args)],
-		   module = Superclass,
-		   tried  = [Module|Tried]
-		  },
-	    call1(S1)
+        {ok, Superobj} when Module == ?CLASS(Obj) ->
+            %% replace This with Superobj
+            S1 = S#cstate{
+                   obj    = Superobj,
+                   args   = [Superobj|tl(Args)],
+                   module = Superclass,
+                   tried  = [Module|Tried]
+                  },
+            call1(S1)
     end.
 
 %% careful: not robust against records beginning with a class name
@@ -147,19 +147,19 @@ call1_try_super_attr(Superclass, S = #cstate{obj=Obj, module=Module, args=Args, 
 %% can't/really really shouldn't require all record definitions in this file
 inspect(Obj) ->
     try
-	case is_object(Obj) of
-	    true ->
-		DeepList = inspect1(Obj, "#<"),
-		lists:flatten(DeepList);
-	    false ->
-		thrift_utils:sformat("~p", [Obj])
-	end
+        case is_object(Obj) of
+            true ->
+                DeepList = inspect1(Obj, "#<"),
+                lists:flatten(DeepList);
+            false ->
+                thrift_utils:sformat("~p", [Obj])
+        end
     catch
-	_:E ->
-	    thrift_utils:sformat("INSPECT_ERROR(~p) ~p", [E, Obj])
+        _:E ->
+            thrift_utils:sformat("INSPECT_ERROR(~p) ~p", [E, Obj])
 
-	    %% TODO(cpiro): bring this back once we're done testing:
-	    %% _:E -> thrift_utils:sformat("~p", [Obj])
+            %% TODO(cpiro): bring this back once we're done testing:
+            %% _:E -> thrift_utils:sformat("~p", [Obj])
     end.
 
 inspect1(Obj, Str) ->
@@ -168,10 +168,10 @@ inspect1(Obj, Str) ->
     Current = atom_to_list(Class) ++ ": " ++ Inspect,
 
     case get_superobject(Obj) of
-	{ok, Superobj} ->
-	    inspect1(Superobj, Str ++ Current ++ " | ");
-	undef ->
-	    Str ++ Current ++ ">"
+        {ok, Superobj} ->
+            inspect1(Superobj, Str ++ Current ++ " | ");
+        undef ->
+            Str ++ Current ++ ">"
     end.
 
 %% class(Obj) -> atom() = Class
@@ -208,15 +208,15 @@ apply_if_defined({M,F,A} = MFA) ->
         %% io:format("apply ~p ~p ~p~n", [M,F,A]),
         {ok, apply(M, F, A)}
     catch
-	error:Kind when Kind == undef; Kind == function_clause ->
-	    case erlang:get_stacktrace() of
-		%% the first stack call should match MFA when `apply' fails because the function is undefined
-		%% they won't match if the function is currently running and an error happens in the middle
-		[MFA|_] -> undef;           % trapped successfully
-		ST ->
+        error:Kind when Kind == undef; Kind == function_clause ->
+            case erlang:get_stacktrace() of
+                %% the first stack call should match MFA when `apply' fails because the function is undefined
+                %% they won't match if the function is currently running and an error happens in the middle
+                [MFA|_] -> undef;           % trapped successfully
+                ST ->
                     io:format("DONIT THE EXIT THING ~p~n", [Kind]),
                     exit({Kind, ST}) % some unrelated error, re-exit
-	    end
+            end
     end.
 
 get_superobject(Obj) ->
