@@ -224,9 +224,9 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
       }
 
       if (first) {
-	first = false;
+        first = false;
       } else {
-	out << ",";
+        out << ",";
       }
       out << v_iter->first->get_string();
       out << " = ";
@@ -245,13 +245,13 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     out << "dict:from_list([";
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       if (first) {
-	first=false;
+        first=false;
       } else {
-	out << ",";
+        out << ",";
       }
       out << "("
-	  << render_const_value(ktype, v_iter->first)  << ","
-	  << render_const_value(vtype, v_iter->second) << ")";
+          << render_const_value(ktype, v_iter->first)  << ","
+          << render_const_value(vtype, v_iter->second) << ")";
     }
     out << "])";
 
@@ -265,9 +265,9 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     out << "sets:from_list([";
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       if (first) {
-	first=false;
+        first=false;
       } else {
-	out << ",";
+        out << ",";
       }
       out << "(" << render_const_value(etype, *v_iter) << ",true)";
     }
@@ -283,9 +283,9 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       if (first) {
-	first=false;
+        first=false;
       } else {
-	out << ",";
+        out << ",";
       }
       out << render_const_value(etype, *v_iter);
     }
@@ -315,7 +315,7 @@ void t_erl_generator::generate_xception(t_struct* txception) {
  * Generates a struct
  */
 void t_erl_generator::generate_erl_struct(t_struct* tstruct,
-                                        bool is_exception) {
+                                          bool is_exception) {
   generate_erl_struct_definition(f_types_, f_types_hrl_file_, tstruct, is_exception);
 }
 
@@ -325,10 +325,10 @@ void t_erl_generator::generate_erl_struct(t_struct* tstruct,
  * @param tstruct The struct definition
  */
 void t_erl_generator::generate_erl_struct_definition(ostream& out,
-						     ostream& hrl_out,
-                                                   t_struct* tstruct,
-                                                   bool is_exception,
-                                                   bool is_result)
+                                                     ostream& hrl_out,
+                                                     t_struct* tstruct,
+                                                     bool is_exception,
+                                                     bool is_result)
 {
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
@@ -373,7 +373,7 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out,
  * Generates the read method for a struct
  */
 void t_erl_generator::generate_erl_struct_reader(ostream& out,
-                                                t_struct* tstruct) {
+                                                 t_struct* tstruct) {
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
@@ -417,17 +417,17 @@ void t_erl_generator::generate_erl_struct_reader(ostream& out,
 
   // Generate deserialization code for known cases
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    out << indent() << "(Fid == " << (*f_iter)->get_key() << ") andalso (Ftype == "
-	<< type_to_enum((*f_iter)->get_type()) << ") ->" << endl;
+    out << indent() << "(Fid == " << (*f_iter)->get_key() << ") and (Ftype == "
+        << type_to_enum((*f_iter)->get_type()) << ") ->" << endl;
 
     indent_up();
     generate_deserialize_field(out, *f_iter, "Val");
 
     out << indent() << "?R0(Iprot, readFieldEnd)," << endl
-	<< indent() << type_name(tstruct) << "_read_loop(Iprot, "
-	<< "Str#" << type_name(tstruct)
-	<< "{" << (*f_iter)->get_name()
-	<< "=Val});" << endl;
+        << indent() << type_name(tstruct) << "_read_loop(Iprot, "
+        << "Str#" << type_name(tstruct)
+        << "{" << (*f_iter)->get_name()
+        << "=Val});" << endl;
     indent_down();
   }
 
@@ -446,7 +446,7 @@ void t_erl_generator::generate_erl_struct_reader(ostream& out,
 }
 
 void t_erl_generator::generate_erl_struct_writer(ostream& out,
-                                               t_struct* tstruct) {
+                                                 t_struct* tstruct) {
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -672,28 +672,28 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
 
     indent_up();
 
-      indent(f_service_) <<
-        "send_" << funname << "(This";
+    indent(f_service_) <<
+      "send_" << funname << "(This";
 
-      //bool first = true;
-      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-	//        if (first) {
-	//          first = false;
-	//        } else {
-          f_service_ << ", ";
-	  //        }
-	  f_service_ << capitalize((*fld_iter)->get_name());
-      }
-      f_service_ << ")," << endl;
+    //bool first = true;
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      //        if (first) {
+      //          first = false;
+      //        } else {
+      f_service_ << ", ";
+      //        }
+      f_service_ << capitalize((*fld_iter)->get_name());
+    }
+    f_service_ << ")," << endl;
 
-      if (!(*f_iter)->is_async()) {
-        f_service_ << indent();
-        if (!(*f_iter)->get_returntype()->is_void()) {
-          f_service_ << "";
-        }
-        f_service_ <<
-          "recv_" << funname << "(This), " << endl;
+    if (!(*f_iter)->is_async()) {
+      f_service_ << indent();
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        f_service_ << "";
       }
+      f_service_ <<
+        "recv_" << funname << "(This), " << endl;
+    }
 
     indent(f_service_) << "ok." << endl;
     indent_down();
@@ -705,31 +705,31 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
       "send_" << function_signature(*f_iter) << " ->" << endl;
     indent_up();
 
-      std::string argsname = capitalize((*f_iter)->get_name() + "_args");
+    std::string argsname = capitalize((*f_iter)->get_name() + "_args");
 
-      // Serialize the request header
-      f_service_ <<
-	indent() << "Oprot = This#" << service_name_ << ".oprot," << endl <<
-	indent() << "Seqid = This#" << service_name_ << ".seqid," << endl <<
-	indent() << "?R3(Oprot, writeMessageBegin, \"" << (*f_iter)->get_name() << "\", ?tMessageType_CALL, Seqid)," << endl <<
-	indent() << "Args = #" << (*f_iter)->get_name() << "_args{";
+    // Serialize the request header
+    f_service_ <<
+      indent() << "Oprot = This#" << service_name_ << ".oprot," << endl <<
+      indent() << "Seqid = This#" << service_name_ << ".seqid," << endl <<
+      indent() << "?R3(Oprot, writeMessageBegin, \"" << (*f_iter)->get_name() << "\", ?tMessageType_CALL, Seqid)," << endl <<
+      indent() << "Args = #" << (*f_iter)->get_name() << "_args{";
 
-      bool first = true;
-      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-	f_service_ << (first ? first = false, "" : ", ")
-		   << (*fld_iter)->get_name()
-		   << "=" << capitalize((*fld_iter)->get_name());
-      }
-      f_service_ << "}," << endl;
+    bool first = true;
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      f_service_ << (first ? first = false, "" : ", ")
+                 << (*fld_iter)->get_name()
+                 << "=" << capitalize((*fld_iter)->get_name());
+    }
+    f_service_ << "}," << endl;
 
-      indent(f_service_) << (*f_iter)->get_name() << "_args_write(Args, Oprot)," << endl;
+    indent(f_service_) << (*f_iter)->get_name() << "_args_write(Args, Oprot)," << endl;
 
-      // Write to the stream
-      f_service_ <<
-        indent() << "?R0(Oprot, writeMessageEnd)," << endl <<
-	indent() << "Trans = ?R1(Oprot, get, trans)," << endl <<
-	indent() << "?R0(Trans, effectful_flush)," << endl <<
-        indent() << "ok." << endl;
+    // Write to the stream
+    f_service_ <<
+      indent() << "?R0(Oprot, writeMessageEnd)," << endl <<
+      indent() << "Trans = ?R1(Oprot, get, trans)," << endl <<
+      indent() << "?R0(Trans, effectful_flush)," << endl <<
+      indent() << "ok." << endl;
 
     indent_down();
 
@@ -752,19 +752,19 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
       // TODO(mcslee): Validate message reply here, seq ids etc.
 
       f_service_ <<
-	indent() << "Iprot = This#" << service_name_ << ".iprot," << endl <<
-	indent() << "{ _Fname, Mtype, _Rseqid } = ?R0(Iprot, readMessageBegin)," << endl <<
-	indent() << "if" << endl <<
-	indent() << "  Mtype == ?tMessageType_EXCEPTION ->" << endl <<
-	indent() << "    X = tApplicationException:new()," << endl <<
-	indent() << "    tApplicationException:read(X, Iprot)," << endl <<
-	indent() << "    ?R0(Iprot, readMessageEnd), " << endl <<
-	indent() << "    throw(X);" << endl <<
-	indent() << "  true ->" << endl <<
-	indent() << "    Result = " << resultname << "_read(Iprot)," << endl <<
-	indent() << "    Result, % suppress unused warnings" << endl <<
-	indent() << "    ?R0(Iprot, readMessageEnd)," << endl <<
-	indent() << "    if % time to figure out retval" << endl;
+        indent() << "Iprot = This#" << service_name_ << ".iprot," << endl <<
+        indent() << "{ _Fname, Mtype, _Rseqid } = ?R0(Iprot, readMessageBegin)," << endl <<
+        indent() << "if" << endl <<
+        indent() << "  Mtype == ?tMessageType_EXCEPTION ->" << endl <<
+        indent() << "    X = tApplicationException:new()," << endl <<
+        indent() << "    tApplicationException:read(X, Iprot)," << endl <<
+        indent() << "    ?R0(Iprot, readMessageEnd), " << endl <<
+        indent() << "    throw(X);" << endl <<
+        indent() << "  true ->" << endl <<
+        indent() << "    Result = " << resultname << "_read(Iprot)," << endl <<
+        indent() << "    Result, % suppress unused warnings" << endl <<
+        indent() << "    ?R0(Iprot, readMessageEnd)," << endl <<
+        indent() << "    if % time to figure out retval" << endl;
 
       // WATCH cpiro
       // Careful, only return _result if not a void function
@@ -773,9 +773,9 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
 
       std::string result = "Result#"+resultname+".";
       if (!(*f_iter)->get_returntype()->is_void()) {
-	f_service_ <<
-	  indent() << "      " << result << "success /= nil ->" << endl <<
-	  indent() << "        " << result << "success;" << endl;
+        f_service_ <<
+          indent() << "      " << result << "success /= nil ->" << endl <<
+          indent() << "        " << result << "success;" << endl;
       }
 
       t_struct* xs = (*f_iter)->get_xceptions(); // TODO(cpiro)
@@ -790,13 +790,13 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
       // Careful, only return _result if not a void function
       if ((*f_iter)->get_returntype()->is_void()) {
         f_service_ <<
-	  indent() << "      true -> nil" << endl <<
-	  indent() << "    end" << endl;
+          indent() << "      true -> nil" << endl <<
+          indent() << "    end" << endl;
       } else {
         f_service_ <<
           indent() << "      true -> " << endl <<
-	  indent() << "        throw(tApplicationException:new(?tApplicationException_MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\"))" << endl <<
-	  indent() << "    end" << endl;
+          indent() << "        throw(tApplicationException:new(?tApplicationException_MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\"))" << endl <<
+          indent() << "    end" << endl;
       }
 
       // Close function
@@ -840,23 +840,23 @@ void t_erl_generator::generate_service_server(t_service* tservice) {
   //    endl;
 
   /*
-  indent(f_service_) <<
+    indent(f_service_) <<
     "def initialize(handler)" << endl;
-  indent_up();
-  if (extends.empty()) {
+    indent_up();
+    if (extends.empty()) {
     f_service_ <<
-      indent() << "@handler = handler" << endl <<
-      indent() << "@processMap = {}" << endl;
-  } else {
+    indent() << "@handler = handler" << endl <<
+    indent() << "@processMap = {}" << endl;
+    } else {
     f_service_ <<
-      indent() << "super(handler)" << endl;
-  }
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    indent() << "super(handler)" << endl;
+    }
+    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ <<
-      indent() << "@processMap['" << (*f_iter)->get_name() << "'] = method(:process_" << (*f_iter)->get_name() << ")" << endl;
-  }
-  indent_down();
-  indent(f_service_) << "end" << endl << endl;
+    indent() << "@processMap['" << (*f_iter)->get_name() << "'] = method(:process_" << (*f_iter)->get_name() << ")" << endl;
+    }
+    indent_down();
+    indent(f_service_) << "end" << endl << endl;
   */
 
   export_string("process", 3);
@@ -922,7 +922,7 @@ void t_erl_generator::generate_service_server(t_service* tservice) {
  * @param tfunction The function to write a dispatcher for
  */
 void t_erl_generator::generate_process_function(t_service* tservice,
-						t_function* tfunction) {
+                                                t_function* tfunction) {
 
   string name = "process_" + tfunction->get_name();
 
@@ -1018,14 +1018,14 @@ void t_erl_generator::generate_process_function(t_service* tservice,
   indent(f_service_) << "catch" << endl <<
     indent() << "  _:Kind when Kind == undef; Kind == function_clause ->" << endl <<
     indent() << "    X = tApplicationException:new(?tApplicationException_HANDLER_ERROR, \"Handler doesn't implement "
-		     << tfunction->get_name() <<"\")," << endl <<
+                     << tfunction->get_name() <<"\")," << endl <<
 
     indent() << "    ?R3(Oprot, writeMessageBegin, \"" << tfunction->get_name() << "\", ?tMessageType_EXCEPTION, Seqid)," << endl <<
     indent() << "    tApplicationException:write(X, Oprot)," << endl <<
     indent() << "    {error, X};" << endl <<
     indent() << "  _:_Kind ->" << endl <<
     indent() << "    X = tApplicationException:new(?tApplicationException_HANDLER_ERROR, \"Unknown handler error in "
-		     << tfunction->get_name() << "\")," << endl <<
+                     << tfunction->get_name() << "\")," << endl <<
 
     indent() << "    ?R3(Oprot, writeMessageBegin, \"" << tfunction->get_name() << "\", ?tMessageType_EXCEPTION, Seqid)," << endl <<
     indent() << "    tApplicationException:write(X, Oprot)," << endl <<
@@ -1054,9 +1054,9 @@ void t_erl_generator::generate_process_function(t_service* tservice,
  * Deserializes a field of any type.
  */
 void t_erl_generator::generate_deserialize_field(ostream &out,
-                                                t_field* tfield,
-                                                string prefix,
-                                                bool inclass) {
+                                                 t_field* tfield,
+                                                 string prefix,
+                                                 bool inclass) {
   t_type* type = get_true_type(tfield->get_type());
 
   if (type->is_void()) {
@@ -1069,7 +1069,7 @@ void t_erl_generator::generate_deserialize_field(ostream &out,
   if (type->is_struct() || type->is_xception()) {
     generate_deserialize_struct(out,
                                 (t_struct*)type,
-                                 name);
+                                name);
   } else if (type->is_container()) {
     generate_deserialize_container(out, type, name);
   } else if (type->is_base_type() || type->is_enum()) {
@@ -1121,7 +1121,7 @@ void t_erl_generator::generate_deserialize_field(ostream &out,
 /**
  * Generates an unserializer for a struct, calling read()
  */
- void t_erl_generator::generate_deserialize_struct(ostream &out,
+void t_erl_generator::generate_deserialize_struct(ostream &out,
                                                   t_struct* tstruct,
                                                   string prefix) {
   out <<
@@ -1133,8 +1133,8 @@ void t_erl_generator::generate_deserialize_field(ostream &out,
  * data and then a footer.
  */
 void t_erl_generator::generate_deserialize_container(ostream &out,
-                                                    t_type* ttype,
-                                                    string prefix) {
+                                                     t_type* ttype,
+                                                     string prefix) {
   string size = tmp("_size");
   string ktype = tmp("_ktype");
   string vtype = tmp("_vtype");
@@ -1201,7 +1201,7 @@ void t_erl_generator::generate_deserialize_container(ostream &out,
     out << indent() << "end)," << endl;
     indent_down();
     out << indent() << "?R0(Iprot,readListEnd)," << endl;
- }
+  }
 }
 
 
@@ -1336,14 +1336,14 @@ void t_erl_generator::generate_serialize_field(ostream &out,
  * @param prefix  String prefix to attach to all fields
  */
 void t_erl_generator::generate_serialize_struct(ostream &out,
-                                               t_struct* tstruct,
-                                               string prefix) {
+                                                t_struct* tstruct,
+                                                string prefix) {
   indent(out) << tstruct->get_program()->get_name() << "_types:" <<  uncapitalize(tstruct->get_name()) << "_write(" << prefix << ", Oprot)," << endl;
 }
 
 void t_erl_generator::generate_serialize_container(ostream &out, // TODO
-                                                  t_type* ttype,
-                                                  string prefix) {
+                                                   t_type* ttype,
+                                                   string prefix) {
   if (ttype->is_map()) {
     indent(out) <<
       "?R3(Oprot, writeMapBegin, " <<
@@ -1481,12 +1481,12 @@ void t_erl_generator::export_string(string name, int num) {
 }
 
 void t_erl_generator::export_types_function(t_function* tfunction,
-                                           string prefix) {
+                                            string prefix) {
 
   export_types_string(prefix + tfunction->get_name(),
-	 1 // This
-	 + ((tfunction->get_arglist())->get_members()).size()
-	 );
+                      1 // This
+                      + ((tfunction->get_arglist())->get_members()).size()
+                      );
 }
 
 void t_erl_generator::export_types_string(string name, int num) {
@@ -1499,12 +1499,12 @@ void t_erl_generator::export_types_string(string name, int num) {
 }
 
 void t_erl_generator::export_function(t_function* tfunction,
-                                           string prefix) {
+                                      string prefix) {
 
   export_string(prefix + tfunction->get_name(),
-	 1 // This
-	 + ((tfunction->get_arglist())->get_members()).size()
-	 );
+                1 // This
+                + ((tfunction->get_arglist())->get_members()).size()
+                );
 }
 
 
