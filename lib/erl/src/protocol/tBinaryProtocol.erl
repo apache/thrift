@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -25,16 +25,16 @@
   writeListBegin/3,
   writeSetBegin/3,
 
-  writeBool/2, writeByte/2, writeI16/2, writeI32/2, 
-  writeI64/2, writeDouble/2, writeString/2, 
+  writeBool/2, writeByte/2, writeI16/2, writeI32/2,
+  writeI64/2, writeDouble/2, writeString/2,
 
-  readMessageBegin/1, 
-  readFieldBegin/1, 
-  readMapBegin/1, 
-  readListBegin/1, 
-  readSetBegin/1, 
+  readMessageBegin/1,
+  readFieldBegin/1,
+  readMapBegin/1,
+  readListBegin/1,
+  readSetBegin/1,
 
-  readBool/1, readByte/1, readI16/1, readI32/1, 
+  readBool/1, readByte/1, readI16/1, readI32/1,
   readI64/1, readDouble/1, readString/1
 ]).
 
@@ -44,11 +44,11 @@
 %%%
 
 ?DEFINE_ATTR(super).
-   
+
 %%%
 %%% behavior callbacks
 %%%
- 
+
 %%% super() -> SuperModule = atom()
 %%%             |  none
 
@@ -106,9 +106,9 @@ writeSetBegin(This, Etype, Size) ->
 %
 
 writeBool(This, Bool) ->
-    case Bool of 
-	true  -> ?L1(writeByte, 1);
-	false -> ?L1(writeByte, 0)
+    case Bool of
+        true  -> ?L1(writeByte, 1);
+        false -> ?L1(writeByte, 0)
     end.
 
 writeByte(This, Byte) ->
@@ -140,11 +140,11 @@ writeString(This, Str) ->
 
 readMessageBegin(This) ->
     Version = ?L0(readI32),
-    if 
-	(Version band ?VERSION_MASK) /= ?VERSION_1 ->
-	    throw(tProtocolException:new(?tProtocolException_BAD_VERSION,
-					 "Missing version identifier"));
-	true -> ok
+    if
+        (Version band ?VERSION_MASK) /= ?VERSION_1 ->
+            throw(tProtocolException:new(?tProtocolException_BAD_VERSION,
+                                         "Missing version identifier"));
+        true -> ok
     end,
     Type = Version band 16#000000ff,
     Name  = ?L0(readString),
@@ -153,12 +153,12 @@ readMessageBegin(This) ->
 
 readFieldBegin(This) ->
     Type = ?L0(readByte),
-    case Type of 
-	?tType_STOP ->
-	    { nil, Type, 0 }; % WATCH
-	_ ->
-	    Id = ?L0(readI16),
-	    { nil, Type, Id }
+    case Type of
+        ?tType_STOP ->
+            { nil, Type, 0 }; % WATCH
+        _ ->
+            Id = ?L0(readI16),
+            { nil, Type, Id }
     end.
 
 readMapBegin(This) ->
