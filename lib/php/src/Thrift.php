@@ -220,7 +220,7 @@ class TException extends Exception {
         if ($ftype == $fspec['type']) {
           $xfer = 0;
           if ($fast_binary) {
-            $class = isset($fspec['class']) ? $fspec['class'] : null;
+            $class = isset($fspec['class']) ? $fspec['class'] : '';
             $this->$var = thrift_protocol_binary_deserialize($ftype, $input, $class);
           } else {
             if (isset(TBase::$tmethod[$ftype])) {
@@ -567,7 +567,7 @@ abstract class TBase {
         if ($ftype == $fspec['type']) {
           $xfer = 0;
           if ($fast_binary) {
-            $class = isset($fspec['class']) ? $fspec['class'] : null;
+            $class = isset($fspec['class']) ? $fspec['class'] : '';
             $this->$var = thrift_protocol_binary_deserialize($ftype, $input, $class);
           } else {
             if (isset(TBase::$tmethod[$ftype])) {
