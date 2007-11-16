@@ -398,28 +398,27 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
   out << endl;
 
   // Generate constructor from array
+  string param = (members.size() > 0) ? "$vals=null" : "";
+  out <<
+    indent() << "public function __construct(" << param << ") {" << endl;
+  indent_up();
+
+  generate_php_struct_spec(out, tstruct);
+
   if (members.size() > 0) {
-    out <<
-      indent() << "public function __construct($vals=null) {" << endl;
-    indent_up();
-
-    generate_php_struct_spec(out, tstruct);
-
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
       if ((*m_iter)->get_value() != NULL && (t->is_struct() || t->is_xception())) {
         indent(out) << "$this->" << (*m_iter)->get_name() << " = " << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
       }
     }
-
     out <<
       indent() << "if (is_array($vals)) {" << endl <<
       indent() << "  parent::__construct(self::$_TSPEC, $vals);" << endl <<
       indent() << "}" << endl;
-    scope_down(out);
-
-    out << endl;
   }
+  scope_down(out);
+  out << endl;
 
   out <<
     indent() << "public function getName() {" << endl <<
