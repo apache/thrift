@@ -251,7 +251,7 @@ void t_cpp_generator::print_const_value(ofstream& out, string name, t_type* type
     indent(out) << name << " = " << v2 << ";" << endl <<
       endl;
   } else if (type->is_enum()) {
-    indent(out) << name << " = (" << type->get_name() << ")" << value->get_integer() << ";" << endl <<
+    indent(out) << name << " = (" << type_name(type) << ")" << value->get_integer() << ";" << endl <<
       endl;
   } else if (type->is_struct() || type->is_xception()) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
@@ -409,7 +409,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       if (t->is_base_type()) {
         string dval;
         if (t->is_enum()) {
-          dval += "(" + t->get_name() + ")";
+          dval += "(" + type_name(t) + ")";
         }
         dval += t->is_string() ? "\"\"" : "0";
         t_const_value* cv = (*m_iter)->get_value();
@@ -1860,7 +1860,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
 
   if (!tfunction->is_async()) {
     indent_up();
-    f_service_ << 
+    f_service_ <<
       indent() << "facebook::thrift::TApplicationException x(e.what());" << endl <<
       indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() << "\", facebook::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
       indent() << "x.write(oprot);" << endl <<
@@ -2203,7 +2203,7 @@ void t_cpp_generator::generate_deserialize_field(ofstream& out,
     out <<
       indent() << "int32_t " << t << ";" << endl <<
       indent() << "xfer += iprot->readI32(" << t << ");" << endl <<
-      indent() << name << " = (" << type->get_name() << ")" << t << ";" << endl;
+      indent() << name << " = (" << type_name(type) << ")" << t << ";" << endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
            tfield->get_name().c_str(), type_name(type).c_str());
