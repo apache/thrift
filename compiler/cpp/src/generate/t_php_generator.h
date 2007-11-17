@@ -21,11 +21,16 @@
  */
 class t_php_generator : public t_oop_generator {
  public:
-  t_php_generator(t_program* program, bool binary_inline=false, bool rest=false, bool phps=false) :
+  t_php_generator(t_program* program,
+                  bool binary_inline=false,
+                  bool rest=false,
+                  bool phps=false,
+                  bool autoload=false) :
     t_oop_generator(program),
     binary_inline_(binary_inline),
     rest_(rest),
-    phps_(phps) {
+    phps_(phps),
+    autoload_(autoload) {
     out_dir_base_ = (binary_inline_ ? "gen-phpi" : "gen-php");
   }
 
@@ -55,6 +60,7 @@ class t_php_generator : public t_oop_generator {
 
   void generate_php_struct(t_struct* tstruct, bool is_exception);
   void generate_php_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false);
+  void _generate_php_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false);
   void generate_php_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_php_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_php_function_helpers(t_function* tfunction);
@@ -70,6 +76,7 @@ class t_php_generator : public t_oop_generator {
   void generate_service_interface (t_service* tservice);
   void generate_service_rest      (t_service* tservice);
   void generate_service_client    (t_service* tservice);
+  void _generate_service_client   (std::ofstream &out, t_service* tservice);
   void generate_service_processor (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
 
@@ -167,6 +174,11 @@ class t_php_generator : public t_oop_generator {
    * Generate stubs for a PHP server
    */
   bool phps_;
+
+  /**
+   * Generate PHP code that uses autoload
+   */
+  bool autoload_;
 
 };
 

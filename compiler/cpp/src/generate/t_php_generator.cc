@@ -359,6 +359,28 @@ void t_php_generator::generate_php_struct_spec(ofstream& out,
 }
 
 
+void t_php_generator::generate_php_struct_definition(ofstream& out,
+                                                     t_struct* tstruct,
+                                                     bool is_exception) {
+  if (autoload_) {
+    // Make output file
+    ofstream autoload_out;
+    string f_struct = program_name_+"."+(tstruct->get_name())+".php";
+    string f_struct_name = get_out_dir()+f_struct;
+    autoload_out.open(f_struct_name.c_str());
+    autoload_out << "<?php" << endl;
+    _generate_php_struct_definition(autoload_out, tstruct, is_exception);
+    autoload_out << endl << "?>" << endl;
+    autoload_out.close();
+
+    f_types_ <<
+      "$GLOBALS['THRIFT_AUTOLOAD']['" << php_namespace(tstruct->get_program()) << tstruct->get_name() << "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
+
+  } else {
+    _generate_php_struct_definition(out, tstruct, is_exception);
+  }
+}
+
 /**
  * Generates a struct definition for a thrift data type. This is nothing in PHP
  * where the objects are all just associative arrays (unless of course we
@@ -366,7 +388,7 @@ void t_php_generator::generate_php_struct_spec(ofstream& out,
  *
  * @param tstruct The struct definition
  */
-void t_php_generator::generate_php_struct_definition(ofstream& out,
+void t_php_generator::_generate_php_struct_definition(ofstream& out,
                                                      t_struct* tstruct,
                                                      bool is_exception) {
   const vector<t_field*>& members = tstruct->get_members();
@@ -1032,12 +1054,32 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
     "}" << endl << endl;
 }
 
+void t_php_generator::generate_service_client(t_service* tservice) {
+  if (autoload_) {
+    // Make output file
+    ofstream autoload_out;
+    string f_struct = program_name_+"."+(tservice->get_name())+".client.php";
+    string f_struct_name = get_out_dir()+f_struct;
+    autoload_out.open(f_struct_name.c_str());
+    autoload_out << "<?php" << endl;
+    _generate_service_client(autoload_out, tservice);
+    autoload_out << endl << "?>" << endl;
+    autoload_out.close();
+
+    f_service_ <<
+      "$GLOBALS['THRIFT_AUTOLOAD']['" << service_name_ << "Client" << "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
+
+  } else {
+    _generate_service_client(f_service_, tservice);
+  }
+}
+
 /**
  * Generates a service client definition.
  *
  * @param tservice The service to generate a server for.
  */
-void t_php_generator::generate_service_client(t_service* tservice) {
+void t_php_generator::_generate_service_client(ofstream& out, t_service* tservice) {
   string extends = "";
   string extends_client = "";
   if (tservice->get_extends() != NULL) {
@@ -1045,33 +1087,33 @@ void t_php_generator::generate_service_client(t_service* tservice) {
     extends_client = " extends " + extends + "Client";
   }
 
-  f_service_ <<
+  out <<
     "class " << service_name_ << "Client" << extends_client << " implements " << service_name_ << "If {" << endl;
   indent_up();
 
   // Private members
   if (extends.empty()) {
-    f_service_ <<
+    out <<
       indent() << "protected $input_ = null;" << endl <<
       indent() << "protected $output_ = null;" << endl <<
       endl;
-    f_service_ <<
+    out <<
       indent() << "protected $seqid_ = 0;" << endl <<
       endl;
   }
 
   // Constructor function
-  f_service_ <<
+  out <<
     indent() << "public function __construct($input, $output=null) {" << endl;
   if (!extends.empty()) {
-    f_service_ <<
+    out <<
       indent() << "  parent::__construct($input, $output);" << endl;
   } else {
-    f_service_ <<
+    out <<
       indent() << "  $this->input_ = $input;" << endl <<
       indent() << "  $this->output_ = $output ? $output : $input;" << endl;
   }
-  f_service_ <<
+  out <<
     indent() << "}" << endl << endl;
 
   // Generate client method implementations
@@ -1084,10 +1126,10 @@ void t_php_generator::generate_service_client(t_service* tservice) {
     string funname = (*f_iter)->get_name();
 
     // Open function
-    indent(f_service_) <<
+    indent(out) <<
       "public function " << function_signature(*f_iter) << endl;
-    scope_up(f_service_);
-      indent(f_service_) <<
+    scope_up(out);
+      indent(out) <<
         "$this->send_" << funname << "(";
 
       bool first = true;
@@ -1095,63 +1137,63 @@ void t_php_generator::generate_service_client(t_service* tservice) {
         if (first) {
           first = false;
         } else {
-          f_service_ << ", ";
+          out << ", ";
         }
-        f_service_ << "$" << (*fld_iter)->get_name();
+        out << "$" << (*fld_iter)->get_name();
       }
-      f_service_ << ");" << endl;
+      out << ");" << endl;
 
       if (!(*f_iter)->is_async()) {
-        f_service_ << indent();
+        out << indent();
         if (!(*f_iter)->get_returntype()->is_void()) {
-          f_service_ << "return ";
+          out << "return ";
         }
-        f_service_ <<
+        out <<
           "$this->recv_" << funname << "();" << endl;
       }
-    scope_down(f_service_);
-    f_service_ << endl;
+    scope_down(out);
+    out << endl;
 
-    indent(f_service_) <<
+    indent(out) <<
       "public function send_" << function_signature(*f_iter) << endl;
-    scope_up(f_service_);
+    scope_up(out);
 
       std::string argsname = php_namespace(tservice->get_program()) + service_name_ + "_" + (*f_iter)->get_name() + "_args";
 
       // Serialize the request header
       if (binary_inline_) {
-        f_service_ <<
+        out <<
           indent() << "$buff = pack('N', (0x80010000 | TMessageType::CALL));" << endl <<
           indent() << "$buff .= pack('N', strlen('" << funname << "'));" << endl <<
           indent() << "$buff .= '" << funname << "';" << endl <<
           indent() << "$buff .= pack('N', $this->seqid_);" << endl;
       } else {
-        f_service_ <<
+        out <<
           indent() << "$this->output_->writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType::CALL, $this->seqid_);" << endl;
       }
 
-      f_service_ <<
+      out <<
         indent() << "$args = new " << argsname << "();" << endl;
 
       for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-        f_service_ <<
+        out <<
           indent() << "$args->" << (*fld_iter)->get_name() << " = $" << (*fld_iter)->get_name() << ";" << endl;
       }
 
       // Write to the stream
       if (binary_inline_) {
-        f_service_ <<
+        out <<
           indent() << "$args->write($buff);" << endl <<
           indent() << "$this->output_->write($buff);" << endl <<
           indent() << "$this->output_->flush();" << endl;
       } else {
-        f_service_ <<
+        out <<
           indent() << "$args->write($this->output_);" << endl <<
           indent() << "$this->output_->writeMessageEnd();" << endl <<
           indent() << "$this->output_->getTransport()->flush();" << endl;
       }
 
-    scope_down(f_service_);
+    scope_down(out);
 
 
     if (!(*f_iter)->is_async()) {
@@ -1162,12 +1204,12 @@ void t_php_generator::generate_service_client(t_service* tservice) {
                                string("recv_") + (*f_iter)->get_name(),
                                &noargs);
       // Open function
-      f_service_ <<
+      out <<
         endl <<
         indent() << "public function " << function_signature(&recv_function) << endl;
-      scope_up(f_service_);
+      scope_up(out);
 
-      f_service_ <<
+      out <<
         indent() << "$rseqid = 0;" << endl <<
         indent() << "$fname = null;" << endl <<
         indent() << "$mtype = 0;" << endl <<
@@ -1176,16 +1218,16 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       if (binary_inline_) {
         t_field ffname(g_type_string, "fname");
         t_field fseqid(g_type_i32, "rseqid");
-        f_service_ <<
+        out <<
           indent() << "$ver = unpack('N', $this->input_->readAll(4));" << endl <<
           indent() << "$ver = $ver[1];" << endl <<
           indent() << "$mtype = $ver & 0xff;" << endl <<
           indent() << "$ver = $ver & 0xffff0000;" << endl <<
           indent() << "if ($ver != 0x80010000) throw new TProtocolException('Bad version identifier: '.$ver, TProtocolException::BAD_VERSION);" << endl;
-        generate_deserialize_field(f_service_, &ffname, "", true);
-        generate_deserialize_field(f_service_, &fseqid, "", true);
+        generate_deserialize_field(out, &ffname, "", true);
+        generate_deserialize_field(out, &fseqid, "", true);
       } else {
-        f_service_ <<
+        out <<
           indent() << "$this->input_->readMessageBegin($fname, $mtype, $rseqid);" << endl <<
           indent() << "if ($mtype == TMessageType::EXCEPTION) {" << endl <<
           indent() << "  $x = new TApplicationException();" << endl <<
@@ -1195,19 +1237,19 @@ void t_php_generator::generate_service_client(t_service* tservice) {
           indent() << "}" << endl;
       }
 
-      f_service_ <<
+      out <<
         indent() << "$result = new " << resultname << "();" << endl <<
         indent() << "$result->read($this->input_);" << endl;
 
       if (!binary_inline_) {
-        f_service_ <<
+        out <<
           indent() << "$this->input_->readMessageEnd();" << endl <<
           endl;
       }
 
       // Careful, only return result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
-        f_service_ <<
+        out <<
           indent() << "if ($result->success !== null) {" << endl <<
           indent() << "  return $result->success;" << endl <<
           indent() << "}" << endl;
@@ -1217,7 +1259,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       const std::vector<t_field*>& xceptions = xs->get_members();
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        f_service_ <<
+        out <<
           indent() << "if ($result->" << (*x_iter)->get_name() << " !== null) {" << endl <<
           indent() << "  throw $result->" << (*x_iter)->get_name() << ";" << endl <<
           indent() << "}" << endl;
@@ -1225,22 +1267,22 @@ void t_php_generator::generate_service_client(t_service* tservice) {
 
       // Careful, only return _result if not a void function
       if ((*f_iter)->get_returntype()->is_void()) {
-        indent(f_service_) <<
+        indent(out) <<
           "return;" << endl;
       } else {
-        f_service_ <<
+        out <<
           indent() << "throw new Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
 
     // Close function
-    scope_down(f_service_);
-    f_service_ << endl;
+    scope_down(out);
+    out << endl;
 
     }
   }
 
   indent_down();
-  f_service_ <<
+  out <<
     "}" << endl << endl;
 }
 

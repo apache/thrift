@@ -140,6 +140,7 @@ bool gen_xsd = false;
 bool gen_php = false;
 bool gen_phpi = false;
 bool gen_phps = true;
+bool gen_phpa = false;
 bool gen_rest = false;
 bool gen_perl = false;
 bool gen_erl = false;
@@ -562,6 +563,7 @@ void usage() {
   fprintf(stderr, "  -phpi       Generate PHP inlined files\n");
   fprintf(stderr, "  -phps       Generate PHP server stubs (with -php)\n");
   fprintf(stderr, "  -phpl       Generate PHP-lite (with -php)\n");
+  fprintf(stderr, "  -phpa       Generate PHP with autoload (with -php)\n");
   fprintf(stderr, "  -py         Generate Python output files\n");
   fprintf(stderr, "  -rb         Generate Ruby output files\n");
   fprintf(stderr, "  -xsd        Generate XSD output files\n");
@@ -813,7 +815,7 @@ void generate(t_program* program) {
 
     if (gen_php) {
       pverbose("Generating PHP\n");
-      t_php_generator* php = new t_php_generator(program, false, gen_rest, gen_phps);
+      t_php_generator* php = new t_php_generator(program, false, gen_rest, gen_phps, gen_phpa);
       php->generate_program();
       delete php;
     }
@@ -953,6 +955,12 @@ int main(int argc, char** argv) {
           gen_php = true;
         }
         gen_phps = false;
+      } else if (strcmp(arg, "-phpa") == 0) {
+        if (!gen_php) {
+          gen_php = true;
+          gen_phps = false;
+        }
+        gen_phpa = true;
       } else if (strcmp(arg, "-rest") == 0) {
         gen_rest = true;
       } else if (strcmp(arg, "-py") == 0) {
