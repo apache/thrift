@@ -85,6 +85,33 @@ class TBufferedTransport extends TTransport {
     }
   }
 
+  /**
+   * The reason that we customize readAll here is that the majority of PHP
+   * streams are already internally buffered by PHP. The socket stream, for
+   * example, buffers internally and blocks if you call read with $len greater
+   * than the amount of data available, unlike recv() in C.
+   *
+   * Therefore, use the readAll method of the wrapped transport inside
+   * the buffered readAll.
+   */
+  public function readAll($len) {
+    $have = strlen($this->rBuf_);
+    if ($have == 0) {
+      $data = $this->transport_->readAll($len);
+    } else if ($have < $len) {
+      $data = $this->rBuf_;
+      $this->rBuf_ = '';
+      $data .= $this->transport_->readAll($len - $have);
+    } else if ($have == $len) {
+      $data = $this->rBuf_;
+      $this->rBuf_ = '';
+    } else if ($have > $len) {
+      $data = substr($this->rBuf_, 0, $len);
+      $this->rBuf_ = substr($this->rBuf_, $len);
+    }
+    return $data;
+  }
+
   public function read($len) {
     if (strlen($this->rBuf_) === 0) {
       $this->rBuf_ = $this->transport_->read($this->rBufSize_);
