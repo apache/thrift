@@ -136,14 +136,13 @@ writeString(This, Str) ->
     ?L1(writeI32, length(Str)),
     ?R1(Trans, effectful_write, Str).
 
-%
+%%
 
 readMessageBegin(This) ->
     Version = ?L0(readI32),
     if
         (Version band ?VERSION_MASK) /= ?VERSION_1 ->
-            throw(tProtocolException:new(?tProtocolException_BAD_VERSION,
-                                         "Missing version identifier"));
+            tException:throw(tProtocolException, [?tProtocolException_BAD_VERSION, "Missing version identifier"]);
         true -> ok
     end,
     Type = Version band 16#000000ff,
@@ -177,7 +176,7 @@ readSetBegin(This) ->
     Size  = ?L0(readI32),
     { Etype, Size }.
 
-%
+%%
 
 readBool(This) ->
     Byte = ?L0(readByte),

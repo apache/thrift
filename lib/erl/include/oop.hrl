@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -16,10 +16,10 @@
 %%% convenience for implementing inspect/1
 %%% e.g. -> "foo=5"
 -define(FORMAT_ATTR(Attr),
-	io_lib:write_atom(Attr) ++ "=" ++ io_lib:print(?ATTR(Attr))
+        io_lib:write_atom(Attr) ++ "=" ++ io_lib:print(?ATTR(Attr))
 ).
 
--define(ATTR_DUMMY, 
-	attr(dummy, dummy, dummy, dummy) ->
-	       throw(dummy_attr_used)
+-define(ATTR_DUMMY,
+        attr(dummy, dummy, dummy, dummy) ->
+               exit(dummy_attr_used)
 ).

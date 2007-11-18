@@ -10,6 +10,7 @@
 -include("thrift.hrl").
 -include("tApplicationException.hrl").
 -include("transport/tTransportException.hrl").
+-include("protocol/tProtocolException.hrl").
 -include("transport/tServerSocket.hrl").
 -include("transport/tErlAcceptor.hrl").
 
@@ -69,14 +70,13 @@ accept(This, ListenSocket, GP, Handler) ->
 
     case catch gen_tcp:accept(ListenSocket) of
         {ok, Socket} ->
-            ?C0(ServerPid, effectful_new_acceptor), %% cast to create new acceptor
+            ?C0(ServerPid, effectful_new_acceptor), % cast to create new acceptor
 
             AddrString = render_addr(Socket),
             ?INFO("thrift connection accepted from ~s", [AddrString]),
 
-            %% start_new(tSocket, [])
             Client = oop:start_new(tSocket, []),
-            ?R1(Client, effectful_setHandle, Socket), %% TODO(cpiro): should we just let this be a param to the constructor?
+            ?R1(Client, effectful_setHandle, Socket),
 
             %% cpiro: OPAQUE!! Trans = Client
             TF      = oop:get(This, transportFactory),
@@ -87,47 +87,66 @@ accept(This, ListenSocket, GP, Handler) ->
             Prot    = ?F1(PF, getProtocol, Trans),
 
             %% start_new(, ...)
-            Processor = oop:start_new(tErlProcessor, [GP, Handler]), %% TODO
+            Processor = oop:start_new(tErlProcessor, [GP, Handler]),
 
-            case receive_loop(This, Processor, Prot, Prot) of
-                conn_timeout ->
+            try
+                receive_loop(This, Processor, Prot, Prot)
+            catch
+                exit:{timeout, _} ->
                     ?INFO("thrift connection timed out from ~s", [AddrString]);
-                conn_closed ->
-                    ?INFO("thrift connection closed from ~s", [AddrString]);
-                {Class, Else} ->
-                    ?ERROR("unhandled ~p in tErlAcceptor: ~p", [Class, Else])
+
+                %% cpiro: i think the extra entry on the stack is always from receive_loop
+                %% the below case shouldn't happen then?  if we move this catch inside
+                %% we'll probably need this case and not the next one
+
+                %% exit:{thrift_exception, E} ->
+                %%     handle_exception(E, AddrString, no2);
+
+                exit:{{thrift_exception, E}, Stack1} ->
+                    handle_exception(E, AddrString, Stack1);
+
+                Class:Else ->
+                    ?ERROR("some other error ~p in tErlAcceptor: ~p", [Class, Else])
             end,
             exit(normal);
 
         Else ->
             R = thrift_utils:sformat("accept() failed: ~p", [Else]),
-            exit(tTransportException:new(R))
+            tException:throw(tTransportException, [R])
     end.
 
+
+handle_exception(E, AddrString, Stack1) ->
+    case tException:read(E) of
+        none -> % not a tException
+            ?ERROR("not really a tException: ~p", [exit, E]);
+
+        {tProtocolException, ?tProtocolException_BAD_VERSION, _} ->
+            ?INFO("thrift missing version from ~s", [AddrString]);
+
+        {tTransportException, ?tTransportException_NOT_OPEN, _} ->
+            ?INFO("thrift connection closed from ~s", [AddrString]);
+
+        _ ->
+            Where = "thrift tErlAcceptor caught a tException",
+            ?ERROR("~s", [tException:inspect_with_backtrace(E, Where, Stack1)])
+    end.
+
+%% always calls itself ... only way to escape is through an exit
 receive_loop(This, Processor, Iprot, Oprot) ->
-    try ?R2(Processor, process, Iprot, Oprot) of
-        {error, TAE} when is_record(TAE, tApplicationException),
-                          TAE#tApplicationException.type == ?tApplicationException_HANDLER_ERROR ->
-            ?ERROR("thrift handler returned an error: ~p", [oop:get(TAE, message)]),
+    case ?R2(Processor, process, Iprot, Oprot) of
+        {error, Reason} ->
+            case tException:read(Reason) of
+                none ->
+                    ?ERROR("thrift handler returned something weird: {error, ~p}", [Reason]);
+                _ ->
+                    Where = "thrift processor/handler caught a tException",
+                    ?ERROR("~s", [tException:inspect_with_backtrace(Reason, Where)])
+            end,
             receive_loop(This, Processor, Iprot, Oprot);
         Value ->
             ?INFO("thrift request: ~p", [Value]),
             receive_loop(This, Processor, Iprot, Oprot)
-    catch
-        exit:{timeout, _} ->
-            conn_timeout;
-
-        %% the following clause must be last
-        %% cpiro: would be best to implement an is_a/2 guard BIF
-        %% cpiro: breaks if it's a subclass of tTransportException
-        %% since unnest_record knows nothing about oop
-        Class:Else ->
-            case thrift_utils:unnest_record(Else, tTransportException) of
-                {ok, TTE} when TTE#tTransportException.type == ?tTransportException_NOT_OPEN ->
-                    conn_closed;
-                _ ->
-                    {Class, Else}
-            end
     end.
 
 %% helper functions

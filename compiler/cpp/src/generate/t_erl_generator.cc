@@ -717,7 +717,6 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
                  << "=" << capitalize((*fld_iter)->get_name());
     }
     f_service_ << "}," << endl;
-
     indent(f_service_) << (*f_iter)->get_name() << "_args_write(Args, Oprot)," << endl;
 
     // Write to the stream

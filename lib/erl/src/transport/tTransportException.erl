@@ -22,8 +22,7 @@
 %%% 'super' is required unless ?MODULE is a base class
 %%%
 
-?DEFINE_ATTR(super);
-?DEFINE_ATTR(type).
+?DEFINE_ATTR(super).
 
 %%%
 %%% behavior callbacks
@@ -38,15 +37,15 @@ super() ->
 %%% inspect(This) -> string()
 
 inspect(This) ->
-    ?FORMAT_ATTR(type).
+    "".
 
 %%%
 %%% class methods
 %%%
 
 new(Type, Message) ->
-    Super = (super()):new(Message),
-    #?MODULE{super=Super, type=Type}.
+    Super = (super()):new(Type, Message),
+    #?MODULE{super=Super}.
 
 new() ->
     new(?tTransportException_UNKNOWN, undefined).

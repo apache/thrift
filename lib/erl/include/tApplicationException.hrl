@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -13,4 +13,4 @@
 -define(tApplicationException_MISSING_RESULT, 5).
 -define(tApplicationException_HANDLER_ERROR, 6).
 
--record(tApplicationException, {super, type}).
+-record(tApplicationException, {super}).

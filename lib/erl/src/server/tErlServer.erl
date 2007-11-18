@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -16,7 +16,7 @@
 
 -export([attr/4, super/0, inspect/1]).
 
--export([new/6, new/5, new/4, effectful_serve/1, effectful_new_acceptor/1, catches/3]).
+-export([new/6, new/5, new/4, effectful_serve/1, effectful_new_acceptor/1]).
 
 %%%
 %%% define attributes
@@ -27,11 +27,11 @@
 ?DEFINE_ATTR(acceptor);
 ?DEFINE_ATTR(listenSocket);
 ?DEFINE_ATTR(port).
-   
+
 %%%
 %%% behavior callbacks
 %%%
- 
+
 %%% super() -> SuperModule = atom()
 %%%             |  none
 
@@ -67,20 +67,20 @@ effectful_serve(This) ->
     Options = [binary, {packet, 0}, {active, false}],
 
     %% listen
-    case gen_tcp:listen(Port, Options) of 
-	{ok, ListenSocket} ->
-	    ?INFO("thrift server listening on port ~p", [Port]),
+    case gen_tcp:listen(Port, Options) of
+        {ok, ListenSocket} ->
+            ?INFO("thrift server listening on port ~p", [Port]),
 
-	    This1 = oop:set(This, listenSocket, ListenSocket),
+            This1 = oop:set(This, listenSocket, ListenSocket),
 
-	    %% spawn acceptor
-	    {_Acceptor, This2} = effectful_new_acceptor(This1),
+            %% spawn acceptor
+            {_Acceptor, This2} = effectful_new_acceptor(This1),
 
-	    {ok, This2};
+            {ok, This2};
 
-	{error, eaddrinuse} ->
-	    ?ERROR("thrift couldn't bind port ~p, address in use", [Port]),
-	    {{error, eaddrinuse}, This} %% state before the accept
+        {error, eaddrinuse} ->
+            ?ERROR("thrift couldn't bind port ~p, address in use", [Port]),
+            {{error, eaddrinuse}, This} %% state before the accept
     end.
 
 effectful_new_acceptor(This) ->
@@ -100,18 +100,3 @@ effectful_new_acceptor(This) ->
     This1 = oop:set(This, acceptor, Acceptor),
 
     {Acceptor, This1}.
-
-catches(_This, _Pid, normal) ->
-    ok.
-
-%% %% The current acceptor has died, wait a little and try again						       %%
-%% handle_info({'EXIT', Pid, _Abnormal}, #state{acceptor=Pid} = State) ->					       %%
-%%     timer:sleep(2000),											       %%
-%%     iserve_socket:start_link(self(), State#state.listen_socket, State#state.port),				       %%
-%%     {noreply,State};												       %%
-
-%% terminate(Reason, State) ->											       %%
-%%     ?INFO( "Terminating error: ~p~n", [Reason]), % added	                 				       %%
-%%     gen_tcp:close(State#state.listen_socket),								       %%
-%%     ok.													       %%
-%% 														       %%

@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -22,13 +22,12 @@
 %%% 'super' is required unless ?MODULE is a base class
 %%%
 
-?DEFINE_ATTR(super);
-?DEFINE_ATTR(type).
-   
+?DEFINE_ATTR(super).
+
 %%%
 %%% behavior callbacks
 %%%
- 
+
 %%% super() -> SuperModule = atom()
 %%%             |  none
 
@@ -38,15 +37,15 @@ super() ->
 %%% inspect(This) -> string()
 
 inspect(This) ->
-    ?FORMAT_ATTR(type).
+    "".
 
 %%%
 %%% class methods
 %%%
 
 new(Type, Message) ->
-    Super = (super()):new(Message),
-    #?MODULE{super=Super, type=Type}.
+    Super = (super()):new(Type, Message),
+    #?MODULE{super=Super}.
 
 new() ->
     new(?tProtocolException_UNKNOWN, undefined).

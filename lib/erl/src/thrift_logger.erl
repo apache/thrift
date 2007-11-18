@@ -8,14 +8,8 @@
 
 -behaviour(gen_event).
 
-%% TODO(cpiro): either
-%% make exceptions know whether they need to be displayed
-%% or not exit with tExecptions for non-errors
-%% or "register" tExceptions with the logger (I LIKE!)
-%% ... we shouldn't need to build any specifics in here
 -include("thrift.hrl").
 -include("oop.hrl").
--include("transport/tTransportException.hrl").
 
 %% gen_event callbacks
 -export([init/1, handle_event/2, handle_call/2,
@@ -29,9 +23,10 @@
 
 -define(GS_TERM_FORMAT, "** Generic server ~p terminating \n** Last message in was ~p~n** When Server state == ~p~n** Reason for termination == ~n** ~p~n").
 
-%%
+%%%
+%%% ensure the regular logger is out and ours is in
+%%%
 
-%% ensure the regular logger is out and ours is in
 install() ->
     %% remove loggers
     io:format("starting logger~n"),
@@ -48,32 +43,18 @@ install() ->
 
     ok.
 
-%%====================================================================
-%% gen_event callbacks
-%%====================================================================
-%%--------------------------------------------------------------------
-%% @spec init(Args) -> {ok, State}.
-%%
-%% @doc
-%% Whenever a new event handler is added to an event manager,
-%% this function is called to initialize the event handler.
-%% @end
-%%--------------------------------------------------------------------
+%%%
+%%% init
+%%%
+
 init([]) ->
     State = #state{},
     {ok, State}.
 
-%%--------------------------------------------------------------------
-%% @spec  handle_event(Event, State) -> {ok, State} |
-%%                               {swap_handler, Args1, State1, Mod2, Args2} |
-%%                               remove_handler.
-%%
-%% @doc
-%% Whenever an event manager receives an event sent using
-%% gen_event:notify/2 or gen_event:sync_notify/2, this function is called for
-%% each installed event handler to handle the event.
-%% @end
-%%--------------------------------------------------------------------
+%%%
+%%% handle_event
+%%%
+
 handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
     {ok, MessageSafe, NL} = regexp:gsub(Message, "[\n]+", " "), % collapse whitespace to one space
 
@@ -140,31 +121,14 @@ handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format)
         end,
 
     case {Format, Data} of
-        {?GS_TERM_FORMAT, [Ref, LastMessage, Obj, Reason]} ->
-            %% TODO: move as much logic as possible out of thrift_logger
-            Ignore =
-                begin
-                    is_tuple(Reason) andalso
-                        size(Reason) >= 1 andalso element(1, Reason) == timeout
-                end
-                orelse
-                begin
-                    case thrift_utils:unnest_record(Reason, tTransportException) of
-                        error -> false;
-                        {ok, TTE} ->
-                            oop:get(TTE, type) == ?tTransportException_NOT_OPEN andalso
-                                oop:get(TTE, message) == "in tSocket:read/2: gen_tcp:recv"
-                    end
-                end,
+        {?GS_TERM_FORMAT, [Ref, LastMessage, Obj, {Kind, E}]} when Kind == timeout; Kind == thrift_exception ->
+            ok;
 
-            case Ignore of
-                true ->
-                    ok;
-                false ->
-                    Format1 = "** gen_server terminating in message ~p~n** State  = ~s~n** Reason = ~s~n",
-                    Message = sformat(Format1, [LastMessage, oop:inspect(Obj), oop:inspect(Reason)]), %% TODO(cpiro): hope Reason is an object?
-                    handle_event2(Symbol, Ref, "", Message, State)
-            end;
+        {?GS_TERM_FORMAT, [Ref, LastMessage, Obj, Reason]} ->
+            Format1 = "** gen_server terminating in message ~p~n** State  = ~s~n** Reason = ~p~n",
+            Message = sformat(Format1, [LastMessage, oop:inspect(Obj), Reason]),
+            handle_event2(Symbol, Ref, "", Message, State);
+
         {?GS_TERM_FORMAT, _Dta} ->
             Message = sformat("DATA DIDN'T MATCH: ~p~n", [Data]) ++ sformat(Format, Data),
             handle_event2(Symbol, Ref, "", Message, State);
@@ -213,58 +177,23 @@ handle_event(Event, State) ->
             {ok, State}
     end.
 
-%%--------------------------------------------------------------------
-%% @spec handle_call(Request, State) -> {ok, Reply, State} |
-%%                                {swap_handler, Reply, Args1, State1,
-%%                                  Mod2, Args2} |
-%%                                {remove_handler, Reply}.
-%%
-%% @doc
-%% Whenever an event manager receives a request sent using
-%% gen_event:call/3,4, this function is called for the specified event
-%% handler to handle the request.
-%% @end
-%%--------------------------------------------------------------------
+%%%
+%%% call, info, terminate, code_change
+%%%
+
 handle_call(_Request, State) ->
     Reply = ok,
     {ok, Reply, State}.
 
-%%--------------------------------------------------------------------
-%% @spec handle_info(Info, State) -> {ok, State} |
-%%                             {swap_handler, Args1, State1, Mod2, Args2} |
-%%                              remove_handler.
-%%
-%% @doc
-%% This function is called for each installed event handler when
-%% an event manager receives any other message than an event or a synchronous
-%% request (or a system message).
-%% @end
-%%--------------------------------------------------------------------
 handle_info(_Info, State) ->
     {ok, State}.
 
-%%--------------------------------------------------------------------
-%% @spec terminate(Reason, State) -> void().
-%%
-%% @doc
-%% Whenever an event handler is deleted from an event manager,
-%% this function is called. It should be the opposite of Module:init/1 and
-%% do any necessary cleaning up.
-%% @end
-%%--------------------------------------------------------------------
 terminate(normal, _State) ->
     ok;
 terminate(Reason, _State) ->
     format("*****************~n~n  frick, error logger terminating: ~p~n~n*****************~n~n", [Reason]),
     ok.
 
-%%--------------------------------------------------------------------
-%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}.
-%%
-%% @doc
-%% Convert process state when code is changed
-%% @end
-%%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
@@ -285,13 +214,10 @@ config(Item) ->
 
 print_crash_report(Report) ->
     case Report of
-        [[_,_,{error_info, XX}|_] | _]  ->
-            case thrift_utils:first_item(XX) of
-                tTransportException ->
-                    ok;
-                _ ->
-                    io:format("~~~~ crash report: ~P~n", [XX, 3])
-            end;
+        [[_,_,{error_info, {thrift_exception, _}}|_] | _]  ->
+            ok;
+        [[_,_,{error_info, {timeout, _}}|_] | _]  ->
+            ok;
         _ ->
-            io:format("~~~~ crash report (?): ~p~n", [Report])
+            io:format("~~~~ crash report: ~w~n", [Report])
     end.

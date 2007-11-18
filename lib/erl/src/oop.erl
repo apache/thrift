@@ -14,7 +14,7 @@
 
 -module(oop).
 
--export([start_new/2, get/2, set/3, call/2, call/3, inspect/1, class/1, is_object/1]).
+-export([start_new/2, get/2, set/3, call/2, call/3, inspect/1, class/1, is_object/1, is_a/2]).
 -export([call1/3]). %% only for thrift_oop_server ... don't use it
 -export([behaviour_info/1]).
 
@@ -65,7 +65,7 @@ set(Obj, Field, Value) -> %% TODO: could be tail-recursive
         {ok, V} -> V;
         undef   ->
             case get_superobject(Obj) of
-                { ok, Superobj } ->
+                {ok, Superobj} ->
                     Superobj1 = set(Superobj, Field, Value),
                     Module:attr(Obj, set, super, Superobj1);
                 undef ->
@@ -180,10 +180,29 @@ inspect1(Obj, Str) ->
 class(Obj) when is_tuple(Obj) ->
     %% if it's an object its first element will be a class name, and it'll have super/0
     case apply_if_defined(?CLASS(Obj), super, []) of
-        {ok, V} -> V;
+        {ok, _} -> ?CLASS(Obj);
         undef   -> none
     end;
 class(_)    -> none.
+
+%% is_a relationship
+is_a(Obj, Class) ->
+    %% ?INFO("is_a ~p ~p", [Obj, Class]),
+    case is_object(Obj) of
+        true ->
+            is_a1(Obj, Class);
+        false ->
+            false
+    end.
+is_a1(Obj, Class) when Class == ?CLASS(Obj) ->
+    true;
+is_a1(Obj, Class) ->
+    case get_superobject(Obj) of
+        undef ->
+            false;
+        {ok, SuperObj} ->
+            is_a1(SuperObj, Class)
+    end.
 
 %% is the tuple/record an object?
 %% is_object(Obj) = bool()
@@ -209,7 +228,7 @@ apply_if_defined({M,F,A} = MFA) ->
         %% io:format("apply ~p ~p ~p~n", [M,F,A]),
         {ok, apply(M, F, A)}
     catch
-        error:Kind when Kind == undef; Kind == function_clause ->
+        _:Kind when Kind == undef; Kind == function_clause ->
             case erlang:get_stacktrace() of
                 %% the first stack call should match MFA when `apply' fails because the function is undefined
                 %% they won't match if the function is currently running and an error happens in the middle

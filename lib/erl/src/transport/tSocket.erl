@@ -75,10 +75,8 @@ effectful_open(This) ->
 
     case gen_tcp:connect(Host, Port, Options) of
         {error, _} ->
-            exit(tTransportException:new(
-                   ?tTransportException_NOT_OPEN,
-                   "Could not connect to " ++ Host ++ ":" ++ Port)
-                );
+            tException:throw(tTransportException,
+                             [?tTransportException_NOT_OPEN, "Could not connect to " ++ Host ++ ":" ++ Port]);
         {ok, Socket} ->
             effectful_setHandle(This, Socket)
     end.
@@ -97,7 +95,7 @@ effectful_write(This, Str) ->
 
     case Val of
         {error, _} ->
-            throw(tTransportException:new(?tTransportException_NOT_OPEN, "in write"));
+            tException:throw(tTransportException, [?tTransportException_NOT_OPEN, "in write"]);
         ok ->
             {ok, This}
     end.
@@ -108,13 +106,13 @@ read(This, Sz) ->
         {ok, []} ->
             Host = oop:get(This, host),
             Port = oop:get(This, port),
-            throw(tTransportException:new(?tTransportException_UNKNOWN, "TSocket: Could not read " ++ Sz ++ "bytes from " ++ Host ++ ":" ++ Port));
+            tException:throw(tTransportException, [?tTransportException_UNKNOWN, "TSocket: Could not read " ++ Sz ++ "bytes from " ++ Host ++ ":" ++ Port]);
         {ok, Data} ->
             %% DEBUG
             ?INFO("tSocket: read ~p", [Data]),
             Data;
         {error, Error} ->
-            exit(tTransportException:new(?tTransportException_NOT_OPEN, "in tSocket:read/2: gen_tcp:recv"))
+            tException:throw(tTransportException, [?tTransportException_NOT_OPEN, "in tSocket:read/2: gen_tcp:recv"])
     end.
 
 effectful_close(This) ->

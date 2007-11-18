@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -29,7 +29,7 @@ init([Port, Handler, Processor]) ->
     Args = [SF, Port, Handler, Processor, ST, TF, PF],
 
     ThriftServer = {thrift_server, {?MODULE, thrift_start_link, Args},
-		    permanent, 2000, worker, ThriftModules},
+                    permanent, 2000, worker, ThriftModules},
 
     {ok, {{one_for_one, 10, 1}, [ThriftServer]}}.
 
