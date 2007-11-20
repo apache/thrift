@@ -48,7 +48,7 @@ class TestHandler
     print "testMap(#{thing})\n"
     return thing
   end
-    
+
   def testSet(thing)
     print "testSet(#{thing})\n"
     return thing
@@ -68,17 +68,7 @@ class TestHandler
     end
     return thing
   end
-  
-  def testNest(thing)
-    print "testNest(#{thing})\n"
-    puts "  i32_thing: #{thing.i32_thing}"
-    puts "  with struct: "
-    %w{ string_thing byte_thing i32_thing }.each do |t|
-      puts "    #{t}: #{thing.struct_thing.send(t)}"
-    end
-    return thing
-  end
-  
+
   def testInsanity(thing)
     puts "insanity:"
     puts "  #{thing.inspect}"
@@ -89,6 +79,16 @@ class TestHandler
   def testMapMap(thing)
     puts "got: #{thing}"
     return {thing => {thing => thing}}
+  end
+
+  def testEnum(thing)
+    puts "testEnum(#{thing})"
+    return thing
+  end
+
+  def testTypedef(thing)
+    puts "testTypedef(#{thing})"
+    return thing
   end
 
 end
