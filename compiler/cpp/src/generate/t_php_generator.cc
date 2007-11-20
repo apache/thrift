@@ -23,8 +23,6 @@ void t_php_generator::init_generator() {
   // Make output file
   string f_types_name = get_out_dir()+program_name_+"_types.php";
   f_types_.open(f_types_name.c_str());
-  string f_consts_name = get_out_dir()+program_name_+"_constants.php";
-  f_consts_.open(f_consts_name.c_str());
 
   // Print header
   f_types_ <<
@@ -42,13 +40,17 @@ void t_php_generator::init_generator() {
   f_types_ << endl;
 
   // Print header
-  f_consts_ <<
-    "<?php" << endl <<
-    autogen_comment() <<
-    "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + program_name_ + "/" + program_name_ + "_types.php';" << endl <<
-    endl <<
-    "$GLOBALS['" << program_name_ << "_CONSTANTS'] = array(); " << endl <<
-    endl;
+  if (!program_->get_consts().empty()) {
+    string f_consts_name = get_out_dir()+program_name_+"_constants.php";
+    f_consts_.open(f_consts_name.c_str());
+    f_consts_ <<
+      "<?php" << endl <<
+      autogen_comment() <<
+      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + program_name_ + "/" + program_name_ + "_types.php';" << endl <<
+      endl <<
+      "$GLOBALS['" << program_name_ << "_CONSTANTS'] = array(); " << endl <<
+      endl;
+  }
 }
 
 /**
@@ -67,8 +69,10 @@ void t_php_generator::close_generator() {
   f_types_ << "?>" << endl;
   f_types_.close();
 
-  f_consts_ << "?>" << endl;
-  f_consts_.close();
+  if (!program_->get_consts().empty()) {
+    f_consts_ << "?>" << endl;
+    f_consts_.close();
+  }
 }
 
 /**
