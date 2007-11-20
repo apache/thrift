@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <netdb.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
@@ -551,8 +552,31 @@ void TNonblockingServer::serve() {
           event_get_version(),
           event_get_method());
 
+  struct addrinfo hints, *res, *res0;
+  int error;
+  char port[sizeof("65536") + 1];
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = PF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
+  sprintf(port, "%d", port_);
+
+  // Wildcard address
+  error = getaddrinfo(NULL, port, &hints, &res0);
+  if (error) {
+    GlobalOutput("TNonblockingServer::serve() getaddrinfo");
+    return;
+  }
+
+  // Pick the ipv6 address first since ipv4 addresses can be mapped
+  // into ipv6 space.
+  for (res = res0; res; res = res->ai_next) {
+    if (res->ai_family == AF_INET6 || res->ai_next == NULL)
+      break;
+  }
+
   // Create the server socket
-  serverSocket_ = socket(AF_INET, SOCK_STREAM, 0);
+  serverSocket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   if (serverSocket_ == -1) {
     GlobalOutput("TNonblockingServer::serve() socket() -1");
     return;
@@ -585,12 +609,7 @@ void TNonblockingServer::serve() {
   setsockopt(serverSocket_, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
   #endif
 
-  struct sockaddr_in addr;
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port_);
-  addr.sin_addr.s_addr = INADDR_ANY;
-
-  if (bind(serverSocket_, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+  if (bind(serverSocket_, res->ai_addr, res->ai_addrlen) == -1) {
     GlobalOutput("TNonblockingServer::serve() bind");
     close(serverSocket_);
     return;
