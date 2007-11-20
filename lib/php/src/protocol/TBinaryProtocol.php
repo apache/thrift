@@ -40,7 +40,7 @@ class TBinaryProtocol extends TProtocol {
         $this->writeString($name) +
         $this->writeI32($seqid);
     } else {
-      return 
+      return
         $this->writeString($name) +
         $this->writeByte($type) +
         $this->writeI32($seqid);
@@ -183,8 +183,8 @@ class TBinaryProtocol extends TProtocol {
   public function readMessageBegin(&$name, &$type, &$seqid) {
     $result = $this->readI32($sz);
     if ($sz < 0) {
-      $version = $sz & self::VERSION_MASK;
-      if ($version != self::VERSION_1) {
+      $version = (int) ($sz & self::VERSION_MASK);
+      if ($version != (int) self::VERSION_1) {
         throw new TProtocolException('Bad version identifier: '.$sz, TProtocolException::BAD_VERSION);
       }
       $type = $sz & 0x000000ff;
@@ -197,7 +197,7 @@ class TBinaryProtocol extends TProtocol {
       } else {
         // Handle pre-versioned input
         $name = $this->trans_->readAll($sz);
-        $result += 
+        $result +=
           $sz +
           $this->readByte($type) +
           $this->readI32($seqid);
@@ -311,7 +311,7 @@ class TBinaryProtocol extends TProtocol {
       $hi = $arr[1];
       $lo = $arr[2];
       $isNeg = $hi  < 0;
-    
+
       // Check for a negative
       if ($isNeg) {
 	$hi = ~$hi & (int)0xffffffff;
@@ -327,17 +327,17 @@ class TBinaryProtocol extends TProtocol {
 
       // Force 32bit words in excess of 2G to pe positive - we deal wigh sign
       // explicitly below
-      
+
       if ($hi & (int)0x80000000) {
 	$hi &= (int)0x7fffffff;
 	$hi += 0x80000000;
       }
-      
+
       if ($lo & (int)0x80000000) {
 	$lo &= (int)0x7fffffff;
 	$lo += 0x80000000;
       }
-    
+
       $value = $hi * 4294967296 + $lo;
 
       if ($isNeg) {
@@ -360,7 +360,7 @@ class TBinaryProtocol extends TProtocol {
         $value = $arr[1]*4294967296 + $arr[2];
       }
     }
-    
+
     return 8;
   }
 
@@ -392,7 +392,7 @@ class TBinaryProtocolFactory implements TProtocolFactory {
   public function __construct($strictRead=false, $strictWrite=false) {
     $this->strictRead_ = $strictRead;
     $this->strictWrite_ = $strictWrite;
-  } 
+  }
 
   public function getProtocol($trans) {
     return new TBinaryProtocol($trans, $this->strictRead, $this->strictWrite);
@@ -409,7 +409,7 @@ class TBinaryProtocolAccelerated extends TBinaryProtocol {
     // TBufferedTransport (which does)
     if (!method_exists($trans, 'putBack')) {
       $trans = new TBufferedTransport($trans);
-    } 
+    }
     parent::__construct($trans, $strictRead, $strictWrite);
   }
 }
