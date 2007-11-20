@@ -31,7 +31,7 @@ public class TBinaryProtocol extends TProtocol {
     protected boolean strictWrite_ = true;
 
     public Factory() {
-      this(false, false);
+      this(false, true);
     }
 
     public Factory(boolean strictRead, boolean strictWrite) {
@@ -48,7 +48,7 @@ public class TBinaryProtocol extends TProtocol {
    * Constructor
    */
   public TBinaryProtocol(TTransport trans) {
-    this(trans, false, false);
+    this(trans, false, true);
   }
 
   public TBinaryProtocol(TTransport trans, boolean strictRead, boolean strictWrite) {
