@@ -2,6 +2,7 @@
 #import "TSocketServer.h"
 #import "TNSFileHandleTransport.h"
 #import "TProtocol.h"
+#import "TTransportException.h"
 
 
 @implementation TSocketServer
@@ -17,19 +18,28 @@
   mProcessor = [processor retain];
   
   // create a socket
-  mServerSocket = [[NSSocketPort alloc] initWithTCPPort: 8081];
-  // wrap it in a file handle so we can get messages from it
-  mSocketFileHandle = [[NSFileHandle alloc] initWithFileDescriptor: [mServerSocket socket]
-                                            closeOnDealloc: YES];
+  mServerSocket = [[NSSocketPort alloc] initWithTCPPort: port];
+  // FIXME - move this separate start method and add method to close
+  // and cleanup any open ports
+  
+  if (mServerSocket == nil) {
+    NSLog(@"Unable to listen on TCP port %d", port);
+  } else {
+    NSLog(@"Listening on TCP port %d", port);
 
-  // register for notifications of accepted incoming connections
-  [[NSNotificationCenter defaultCenter] addObserver: self 
-                                        selector: @selector(connectionAccepted:) 
-                                        name: NSFileHandleConnectionAcceptedNotification
-                                        object: mSocketFileHandle];
-
-  // tell socket to listen
-  [mSocketFileHandle acceptConnectionInBackgroundAndNotify];
+    // wrap it in a file handle so we can get messages from it
+    mSocketFileHandle = [[NSFileHandle alloc] initWithFileDescriptor: [mServerSocket socket]
+                                                      closeOnDealloc: YES];
+    
+    // register for notifications of accepted incoming connections
+    [[NSNotificationCenter defaultCenter] addObserver: self 
+                                             selector: @selector(connectionAccepted:) 
+                                                 name: NSFileHandleConnectionAcceptedNotification
+                                               object: mSocketFileHandle];
+    
+    // tell socket to listen
+    [mSocketFileHandle acceptConnectionInBackgroundAndNotify];
+  }
   
   return self;
 }
@@ -45,7 +55,7 @@
 }
 
 
-- (void) connentionAccepted: (NSNotification *) aNotification
+- (void) connectionAccepted: (NSNotification *) aNotification
 {
   NSFileHandle * socket = [[aNotification userInfo] objectForKey: NSFileHandleNotificationFileHandleItem];
   
@@ -67,7 +77,12 @@
   id <TProtocol> inProtocol = [mInputProtocolFactory newProtocolOnTransport: transport];
   id <TProtocol> outProtocol = [mOutputProtocolFactory newProtocolOnTransport: transport];
   
-  while ([mProcessor processOnInputProtocol: inProtocol outputProtocol: outProtocol]);
+  @try {
+    while ([mProcessor processOnInputProtocol: inProtocol outputProtocol: outProtocol]);
+  }
+  @catch (TTransportException * te) {
+    NSLog(@"%@", te);
+  }
   
   [pool release];
 }

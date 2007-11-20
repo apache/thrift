@@ -6,6 +6,8 @@
 - (id) initWithType: (int) type
              reason: (NSString *) reason
 {
+  mType = type;
+
   NSString * name;
   switch (type) {
   case TApplicationException_UNKNOWN_METHOD:
@@ -40,6 +42,8 @@
   int fieldType;
   int fieldID;
 
+  [protocol readStructBeginReturningName: NULL];
+
   while (true) {
     [protocol readFieldBeginReturningName: NULL
               type: &fieldType
@@ -71,6 +75,29 @@
   [protocol readStructEnd];
 
   return [TApplicationException exceptionWithType: type reason: reason];
+}
+
+
+- (void) write: (id <TProtocol>) protocol
+{
+  [protocol writeStructBeginWithName: @"TApplicationException"];
+
+  if ([self reason] != nil) {
+    [protocol writeFieldBeginWithName: @"message"
+                 type: TType_STRING
+                 fieldID: 1];
+    [protocol writeString: [self reason]];
+    [protocol writeFieldEnd];
+  }
+
+  [protocol writeFieldBeginWithName: @"type"
+               type: TType_I32
+               fieldID: 2];
+  [protocol writeI32: mType];
+  [protocol writeFieldEnd];
+
+  [protocol writeFieldStop];
+  [protocol writeStructEnd];
 }
 
 

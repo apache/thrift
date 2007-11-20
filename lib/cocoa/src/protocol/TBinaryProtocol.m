@@ -44,6 +44,18 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 }
 
 
+- (int32_t) messageSizeLimit
+{
+  return mMessageSizeLimit;
+}
+
+
+- (void) setMessageSizeLimit: (int32_t) sizeLimit
+{
+  mMessageSizeLimit = sizeLimit;
+}
+
+
 - (void) dealloc
 {
   [mTransport release];
@@ -70,7 +82,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
                                   type: (int *) type
                             sequenceID: (int *) sequenceID
 {
-  int size = [self readI32];
+  int32_t size = [self readI32];
   if (size < 0) {
     int version = size & VERSION_MASK;
     if (version != VERSION_1) {
@@ -92,6 +104,12 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
     if (mStrictRead) {
       @throw [TProtocolException exceptionWithName: @"TProtocolException"
                                  reason: @"Missing version in readMessageBegin, old client?"];
+    }
+    if ([self messageSizeLimit] > 0 && size > [self messageSizeLimit]) {
+      @throw [TProtocolException exceptionWithName: @"TProtocolException"
+                                            reason: [NSString stringWithFormat: @"Message too big.  Size limit is: %d Message size is: %d",
+                                                     mMessageSizeLimit,
+                                                     size]];      
     }
     NSString * messageName = [self readStringBody: size];
     if (name != NULL) {

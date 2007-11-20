@@ -14,5 +14,7 @@
 - (id) initWithURL: (NSURL *) aURL 
            timeout: (int) timeout;
 
+- (void) setURL: (NSURL *) aURL;
+
 @end
 

@@ -17,6 +17,8 @@ enum {
 
 + (TApplicationException *) read: (id <TProtocol>) protocol;
 
+- (void) write: (id <TProtocol>) protocol;
+
 + (TApplicationException *) exceptionWithType: (int) type
                                        reason: (NSString *) message;
 

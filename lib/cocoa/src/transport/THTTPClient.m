@@ -3,11 +3,13 @@
 
 @implementation THTTPClient
 
-- (id) initWithURL: (NSURL *) aURL
-{
-  self = [super init];
-  mURL = [aURL retain];
 
+- (void) setupRequest
+{
+  if (mRequest != nil) {
+    [mRequest release];
+  }
+  
   // set up our request object that we'll use for each request
   mRequest = [[NSMutableURLRequest alloc] initWithURL: mURL];
   [mRequest setHTTPMethod: @"POST"];
@@ -15,6 +17,15 @@
   [mRequest setValue: @"application/x-thrift" forHTTPHeaderField: @"Accept"];
   [mRequest setValue: @"Cocoa/THTTPClient" forHTTPHeaderField: @"User-Agent"];
   [mRequest setCachePolicy: NSURLRequestReloadIgnoringCacheData];
+}
+
+
+- (id) initWithURL: (NSURL *) aURL
+{
+  self = [super init];
+  mURL = [aURL retain];
+
+  [self setupRequest];
 
   // create our request data buffer
   mRequestData = [[NSMutableData alloc] initWithCapacity: 1024];
@@ -31,6 +42,16 @@
   [mRequest setTimeoutInterval: timeout];
 
   return self;
+}
+
+
+- (void) setURL: (NSURL *) aURL
+{
+  [aURL retain];
+  [mURL release];
+  mURL = aURL;
+  
+  [self setupRequest];
 }
 
 

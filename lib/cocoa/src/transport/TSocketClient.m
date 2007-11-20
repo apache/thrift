@@ -14,7 +14,11 @@
             inputStream: &input 
             outputStream: &output];
 
-  return [super initWithInputStream: input outputStream: output];
+  self = [super initWithInputStream: input outputStream: output];
+  [input open];
+  [output open];
+  
+  return self;
 }
 
 

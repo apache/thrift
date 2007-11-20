@@ -1,4 +1,6 @@
 #import "TNSStreamTransport.h"
+#import "TTransportException.h"
+
 
 @implementation TNSStreamTransport
 
@@ -29,9 +31,7 @@
   while (got < len) {
     ret = [mInput read: buf+off+got maxLength: len-got];
     if (ret <= 0) {
-      @throw [NSException exceptionWithName: @"TTransportException"
-                          reason: @"Cannot read. Remote side has closed."
-                          userInfo: nil];
+      @throw [TTransportException exceptionWithReason: @"Cannot read. Remote side has closed."];
     }
     got += ret;
   }
@@ -39,23 +39,17 @@
 }
 
 
+// FIXME:geech:20071019 - make this write all
 - (void) write: (uint8_t *) data offset: (unsigned int) offset length: (unsigned int) length
 {
   int result = [mOutput write: data+offset maxLength: length];
   if (result == -1) {
-    NSDictionary * errorInfo = [NSDictionary dictionaryWithObject: [mOutput streamError]
-                                             forKey: @"error"];
-    @throw [NSException exceptionWithName: @"TTransportException"
-                        reason: [NSString stringWithFormat: @"Error writing to transport output stream (%@).", [mOutput streamError]]
-                                 userInfo: errorInfo];
+    @throw [TTransportException exceptionWithReason: @"Error writing to transport output stream."
+                                              error: [mOutput streamError]];
   } else if (result == 0) {
-    @throw [NSException exceptionWithName: @"TTransportException"
-                        reason: @"End of output stream."
-                        userInfo: nil];
+    @throw [TTransportException exceptionWithReason: @"End of output stream."];
   } else if (result != length) {
-    @throw [NSException exceptionWithName: @"TTransportException"
-                        reason: @"Output stream did not write all of our data."
-                        userInfo: nil];
+    @throw [TTransportException exceptionWithReason: @"Output stream did not write all of our data."];
   }
 } 
 

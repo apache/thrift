@@ -1,5 +1,6 @@
 
 #import "TNSFileHandleTransport.h"
+#import "TTransportException.h"
 
 
 @implementation TNSFileHandleTransport
@@ -36,9 +37,8 @@
   while (got < len) {
     NSData * d = [mInputFileHandle readDataOfLength: len-got];
     if ([d length] == 0) {
-      @throw [NSException exceptionWithName: @"TTransportException"
-                                     reason: @"Cannot read. No more data."
-                                   userInfo: nil];
+      @throw [TTransportException exceptionWithName: @"TTransportException"
+                                  reason: @"Cannot read. No more data."];
     }
     [d getBytes: buf+got];
     got += [d length];
@@ -62,7 +62,7 @@
 
 - (void) flush
 {
-  [mOutputFileHandle synchronizeFile];  // ?
+
 }
 
 @end

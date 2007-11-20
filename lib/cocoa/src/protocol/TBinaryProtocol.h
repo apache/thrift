@@ -7,6 +7,7 @@
   id <TTransport> mTransport;
   BOOL mStrictRead;
   BOOL mStrictWrite;
+  int32_t mMessageSizeLimit;
 }
 
 - (id) initWithTransport: (id <TTransport>) transport;
@@ -14,6 +15,9 @@
 - (id) initWithTransport: (id <TTransport>) transport 
               strictRead: (BOOL) strictRead
              strictWrite: (BOOL) strictWrite;
+
+- (int32_t) messageSizeLimit;
+- (void) setMessageSizeLimit: (int32_t) sizeLimit;
 
 @end;
 
