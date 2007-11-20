@@ -40,6 +40,7 @@
 #include "generate/t_ocaml_generator.h"
 #include "generate/t_hs_generator.h"
 #include "generate/t_cocoa_generator.h"
+#include "generate/t_st_generator.h"
 
 using namespace std;
 
@@ -147,6 +148,7 @@ bool gen_erl = false;
 bool gen_ocaml = false;
 bool gen_hs = false;
 bool gen_cocoa = false;
+bool gen_st = false;
 bool gen_dense = false;
 bool gen_recurse = false;
 
@@ -572,6 +574,7 @@ void usage() {
   fprintf(stderr, "  -ocaml      Generate OCaml output files\n");
   fprintf(stderr, "  -hs         Generate Haskell output files\n");
   fprintf(stderr, "  -cocoa      Generate Cocoa/Objective-C output files\n");
+  fprintf(stderr, "  -st         Generate Squeak/Smalltalk output files\n");
   fprintf(stderr, "  -o dir      Set the output directory for gen-* packages\n");
   fprintf(stderr, "               (default: current directory)\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories\n");
@@ -883,6 +886,13 @@ void generate(t_program* program) {
       delete cocoa;
     }
 
+    if (gen_st) {
+      pverbose("Generating Smalltalk/Squeak\n");
+      t_st_generator* st = new t_st_generator(program);
+      st->generate_program();
+      delete st;
+    }
+
     if (dump_docs) {
       dump_docstrings(program);
     }
@@ -979,6 +989,8 @@ int main(int argc, char** argv) {
         gen_hs = true;
       } else if (strcmp(arg, "-cocoa") == 0) {
         gen_cocoa = true;
+      } else if (strcmp(arg, "-st") == 0) {
+        gen_st = true;
       } else if (strcmp(arg, "-I") == 0) {
         // An argument of "-I\ asdf" is invalid and has unknown results
         arg = argv[++i];
@@ -1015,7 +1027,7 @@ int main(int argc, char** argv) {
   }
 
   // You gotta generate something!
-  if (!gen_cpp && !gen_java && !gen_javabean && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_ocaml && !gen_hs && !gen_cocoa) {
+  if (!gen_cpp && !gen_java && !gen_javabean && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_ocaml && !gen_hs && !gen_cocoa && !gen_st) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }

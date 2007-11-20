@@ -1,0 +1,11 @@
+Author: Patrick Collison <patrick@collison.ie>
+Last updated Nov 2007
+
+To get started, just file in thrift.st with Squeak, and run something like:
+
+sock := TSocket new host: 'localhost'; port: 9090; open.
+prot := TBinaryProtocol new transport: sock.
+calc := CalculatorClient new inProtocol: prot.
+calc addNum1: 10 num2: 15
+
+Tested in Squeak 3.7, but should work fine with anything later.
