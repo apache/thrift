@@ -192,6 +192,14 @@ class t_program : public t_doc {
     return cocoa_prefix_;
   }
 
+  void set_smalltalk_category(std::string smalltalk_category) {
+    smalltalk_category_ = smalltalk_category;
+  }
+
+  const std::string& get_smalltalk_category() const {
+    return smalltalk_category_;
+  }
+
  private:
 
   // File path
@@ -247,6 +255,8 @@ class t_program : public t_doc {
   // Cocoa/Objective-C naming prefix
   std::string cocoa_prefix_;
 
+  // Smalltalk category
+  std::string smalltalk_category_;
 
 };
 

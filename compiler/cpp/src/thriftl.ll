@@ -41,139 +41,141 @@ void thrift_reserved_keyword(char* keyword) {
  * Helper definitions, comments, constants, and whatnot
  */
 
-intconstant  ([+-]?[0-9]+)
-hexconstant  ("0x"[0-9A-Fa-f]+)
-dubconstant  ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
-identifier   ([a-zA-Z_][\.a-zA-Z_0-9]*)
-whitespace   ([ \t\r\n]*)
-sillycomm    ("/*""*"*"*/")
-multicomm    ("/*"[^*]"/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
-doctext      ("/**"([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
-comment      ("//"[^\n]*)
-unixcomment  ("#"[^\n]*)
-symbol       ([:;\,\{\}\(\)\=<>\[\]])
-dliteral     ("\""[^"]*"\"")
-sliteral     ("'"[^']*"'")
+intconstant   ([+-]?[0-9]+)
+hexconstant   ("0x"[0-9A-Fa-f]+)
+dubconstant   ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
+identifier    ([a-zA-Z_][\.a-zA-Z_0-9]*)
+whitespace    ([ \t\r\n]*)
+sillycomm     ("/*""*"*"*/")
+multicomm     ("/*"[^*]"/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
+doctext       ("/**"([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
+comment       ("//"[^\n]*)
+unixcomment   ("#"[^\n]*)
+symbol        ([:;\,\{\}\(\)\=<>\[\]])
+dliteral      ("\""[^"]*"\"")
+sliteral      ("'"[^']*"'")
+st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
 
 
 %%
 
-{whitespace}  { /* do nothing */ }
-{sillycomm}   { /* do nothing */ }
-{multicomm}   { /* do nothing */ }
-{comment}     { /* do nothing */ }
-{unixcomment} { /* do nothing */ }
+{whitespace}         { /* do nothing */                 }
+{sillycomm}          { /* do nothing */                 }
+{multicomm}          { /* do nothing */                 }
+{comment}            { /* do nothing */                 }
+{unixcomment}        { /* do nothing */                 }
 
-{symbol}      { return yytext[0]; }
+{symbol}             { return yytext[0];                }
 
-"namespace"      { return tok_namespace;      }
-"cpp_namespace"  { return tok_cpp_namespace;  }
-"cpp_include"    { return tok_cpp_include;    }
-"cpp_type"       { return tok_cpp_type;       }
-"java_package"   { return tok_java_package;   }
-"cocoa_prefix"   { return tok_cocoa_prefix;   }
-"php_namespace"  { return tok_php_namespace;  }
-"py_module"      { return tok_py_module;      }
-"perl_package"   { return tok_perl_package;   }
-"ruby_namespace" { return tok_ruby_namespace; }
-"xsd_all"        { return tok_xsd_all;        }
-"xsd_optional"   { return tok_xsd_optional;   }
-"xsd_nillable"   { return tok_xsd_nillable;   }
-"xsd_namespace"  { return tok_xsd_namespace;  }
-"xsd_attrs"      { return tok_xsd_attrs;      }
-"include"        { return tok_include;        }
+"namespace"          { return tok_namespace;            }
+"cpp_namespace"      { return tok_cpp_namespace;        }
+"cpp_include"        { return tok_cpp_include;          }
+"cpp_type"           { return tok_cpp_type;             }
+"java_package"       { return tok_java_package;         }
+"cocoa_prefix"       { return tok_cocoa_prefix;         }
+"php_namespace"      { return tok_php_namespace;        }
+"py_module"          { return tok_py_module;            }
+"perl_package"       { return tok_perl_package;         }
+"ruby_namespace"     { return tok_ruby_namespace;       }
+"smalltalk_category" { return tok_smalltalk_category;   }
+"xsd_all"            { return tok_xsd_all;              }
+"xsd_optional"       { return tok_xsd_optional;         }
+"xsd_nillable"       { return tok_xsd_nillable;         }
+"xsd_namespace"      { return tok_xsd_namespace;        }
+"xsd_attrs"          { return tok_xsd_attrs;            }
+"include"            { return tok_include;              }
+"void"               { return tok_void;                 }
+"bool"               { return tok_bool;                 }
+"byte"               { return tok_byte;                 }
+"i16"                { return tok_i16;                  }
+"i32"                { return tok_i32;                  }
+"i64"                { return tok_i64;                  }
+"double"             { return tok_double;               }
+"string"             { return tok_string;               }
+"binary"             { return tok_binary;               }
+"slist"              { return tok_slist;                }
+"senum"              { return tok_senum;                }
+"map"                { return tok_map;                  }
+"list"               { return tok_list;                 }
+"set"                { return tok_set;                  }
+"async"              { return tok_async;                }
+"typedef"            { return tok_typedef;              }
+"struct"             { return tok_struct;               }
+"exception"          { return tok_xception;             }
+"extends"            { return tok_extends;              }
+"throws"             { return tok_throws;               }
+"service"            { return tok_service;              }
+"enum"               { return tok_enum;                 }
+"const"              { return tok_const;                }
+"required"           { return tok_required;             }
+"optional"           { return tok_optional;             }
 
-"void"           { return tok_void;           }
-"bool"           { return tok_bool;           }
-"byte"           { return tok_byte;           }
-"i16"            { return tok_i16;            }
-"i32"            { return tok_i32;            }
-"i64"            { return tok_i64;            }
-"double"         { return tok_double;         }
-"string"         { return tok_string;         }
-"binary"         { return tok_binary;         }
-"slist"          { return tok_slist;          }
-"senum"          { return tok_senum;          }
-"map"            { return tok_map;            }
-"list"           { return tok_list;           }
-"set"            { return tok_set;            }
-"async"          { return tok_async;          }
-"typedef"        { return tok_typedef;        }
-"struct"         { return tok_struct;         }
-"exception"      { return tok_xception;       }
-"extends"        { return tok_extends;        }
-"throws"         { return tok_throws;         }
-"service"        { return tok_service;        }
-"enum"           { return tok_enum;           }
-"const"          { return tok_const;          }
-"required"       { return tok_required;       }
-"optional"       { return tok_optional;       }
 
-"abstract" { thrift_reserved_keyword(yytext); }
-"and" { thrift_reserved_keyword(yytext); }
-"as" { thrift_reserved_keyword(yytext); }
-"assert" { thrift_reserved_keyword(yytext); }
-"break" { thrift_reserved_keyword(yytext); }
-"case" { thrift_reserved_keyword(yytext); }
-"class" { thrift_reserved_keyword(yytext); }
-"continue" { thrift_reserved_keyword(yytext); }
-"declare" { thrift_reserved_keyword(yytext); }
-"def" { thrift_reserved_keyword(yytext); }
-"default" { thrift_reserved_keyword(yytext); }
-"del" { thrift_reserved_keyword(yytext); }
-"delete" { thrift_reserved_keyword(yytext); }
-"do" { thrift_reserved_keyword(yytext); }
-"elif" { thrift_reserved_keyword(yytext); }
-"else" { thrift_reserved_keyword(yytext); }
-"elseif" { thrift_reserved_keyword(yytext); }
-"except" { thrift_reserved_keyword(yytext); }
-"exec" { thrift_reserved_keyword(yytext); }
-"false" { thrift_reserved_keyword(yytext); }
-"final" { thrift_reserved_keyword(yytext); }
-"finally" { thrift_reserved_keyword(yytext); }
-"float" { thrift_reserved_keyword(yytext); }
-"for" { thrift_reserved_keyword(yytext); }
-"foreach" { thrift_reserved_keyword(yytext); }
-"function" { thrift_reserved_keyword(yytext); }
-"global" { thrift_reserved_keyword(yytext); }
-"goto" { thrift_reserved_keyword(yytext); }
-"if" { thrift_reserved_keyword(yytext); }
-"implements" { thrift_reserved_keyword(yytext); }
-"import" { thrift_reserved_keyword(yytext); }
-"in" { thrift_reserved_keyword(yytext); }
-"inline" { thrift_reserved_keyword(yytext); }
-"instanceof" { thrift_reserved_keyword(yytext); }
-"interface" { thrift_reserved_keyword(yytext); }
-"is" { thrift_reserved_keyword(yytext); }
-"lambda" { thrift_reserved_keyword(yytext); }
-"native" { thrift_reserved_keyword(yytext); }
-"new" { thrift_reserved_keyword(yytext); }
-"not" { thrift_reserved_keyword(yytext); }
-"or" { thrift_reserved_keyword(yytext); }
-"pass" { thrift_reserved_keyword(yytext); }
-"public" { thrift_reserved_keyword(yytext); }
-"print" { thrift_reserved_keyword(yytext); }
-"private" { thrift_reserved_keyword(yytext); }
-"protected" { thrift_reserved_keyword(yytext); }
-"raise" { thrift_reserved_keyword(yytext); }
-"return" { thrift_reserved_keyword(yytext); }
-"sizeof" { thrift_reserved_keyword(yytext); }
-"static" { thrift_reserved_keyword(yytext); }
-"switch" { thrift_reserved_keyword(yytext); }
-"synchronized" { thrift_reserved_keyword(yytext); }
-"this" { thrift_reserved_keyword(yytext); }
-"throw" { thrift_reserved_keyword(yytext); }
-"transient" { thrift_reserved_keyword(yytext); }
-"true" { thrift_reserved_keyword(yytext); }
-"try" { thrift_reserved_keyword(yytext); }
-"unsigned" { thrift_reserved_keyword(yytext); }
-"var" { thrift_reserved_keyword(yytext); }
-"virtual" { thrift_reserved_keyword(yytext); }
-"volatile" { thrift_reserved_keyword(yytext); }
-"while" { thrift_reserved_keyword(yytext); }
-"with" { thrift_reserved_keyword(yytext); }
-"union" { thrift_reserved_keyword(yytext); }
-"yield" { thrift_reserved_keyword(yytext); }
+"abstract"           { thrift_reserved_keyword(yytext); }
+"and"                { thrift_reserved_keyword(yytext); }
+"as"                 { thrift_reserved_keyword(yytext); }
+"assert"             { thrift_reserved_keyword(yytext); }
+"break"              { thrift_reserved_keyword(yytext); }
+"case"               { thrift_reserved_keyword(yytext); }
+"class"              { thrift_reserved_keyword(yytext); }
+"continue"           { thrift_reserved_keyword(yytext); }
+"declare"            { thrift_reserved_keyword(yytext); }
+"def"                { thrift_reserved_keyword(yytext); }
+"default"            { thrift_reserved_keyword(yytext); }
+"del"                { thrift_reserved_keyword(yytext); }
+"delete"             { thrift_reserved_keyword(yytext); }
+"do"                 { thrift_reserved_keyword(yytext); }
+"elif"               { thrift_reserved_keyword(yytext); }
+"else"               { thrift_reserved_keyword(yytext); }
+"elseif"             { thrift_reserved_keyword(yytext); }
+"except"             { thrift_reserved_keyword(yytext); }
+"exec"               { thrift_reserved_keyword(yytext); }
+"false"              { thrift_reserved_keyword(yytext); }
+"final"              { thrift_reserved_keyword(yytext); }
+"finally"            { thrift_reserved_keyword(yytext); }
+"float"              { thrift_reserved_keyword(yytext); }
+"for"                { thrift_reserved_keyword(yytext); }
+"foreach"            { thrift_reserved_keyword(yytext); }
+"function"           { thrift_reserved_keyword(yytext); }
+"global"             { thrift_reserved_keyword(yytext); }
+"goto"               { thrift_reserved_keyword(yytext); }
+"if"                 { thrift_reserved_keyword(yytext); }
+"implements"         { thrift_reserved_keyword(yytext); }
+"import"             { thrift_reserved_keyword(yytext); }
+"in"                 { thrift_reserved_keyword(yytext); }
+"inline"             { thrift_reserved_keyword(yytext); }
+"instanceof"         { thrift_reserved_keyword(yytext); }
+"interface"          { thrift_reserved_keyword(yytext); }
+"is"                 { thrift_reserved_keyword(yytext); }
+"lambda"             { thrift_reserved_keyword(yytext); }
+"native"             { thrift_reserved_keyword(yytext); }
+"new"                { thrift_reserved_keyword(yytext); }
+"not"                { thrift_reserved_keyword(yytext); }
+"or"                 { thrift_reserved_keyword(yytext); }
+"pass"               { thrift_reserved_keyword(yytext); }
+"public"             { thrift_reserved_keyword(yytext); }
+"print"              { thrift_reserved_keyword(yytext); }
+"private"            { thrift_reserved_keyword(yytext); }
+"protected"          { thrift_reserved_keyword(yytext); }
+"raise"              { thrift_reserved_keyword(yytext); }
+"return"             { thrift_reserved_keyword(yytext); }
+"sizeof"             { thrift_reserved_keyword(yytext); }
+"static"             { thrift_reserved_keyword(yytext); }
+"switch"             { thrift_reserved_keyword(yytext); }
+"synchronized"       { thrift_reserved_keyword(yytext); }
+"this"               { thrift_reserved_keyword(yytext); }
+"throw"              { thrift_reserved_keyword(yytext); }
+"transient"          { thrift_reserved_keyword(yytext); }
+"true"               { thrift_reserved_keyword(yytext); }
+"try"                { thrift_reserved_keyword(yytext); }
+"unsigned"           { thrift_reserved_keyword(yytext); }
+"var"                { thrift_reserved_keyword(yytext); }
+"virtual"            { thrift_reserved_keyword(yytext); }
+"volatile"           { thrift_reserved_keyword(yytext); }
+"while"              { thrift_reserved_keyword(yytext); }
+"with"               { thrift_reserved_keyword(yytext); }
+"union"              { thrift_reserved_keyword(yytext); }
+"yield"              { thrift_reserved_keyword(yytext); }
 
 {intconstant} {
   yylval.iconst = atoi(yytext);
@@ -193,6 +195,11 @@ sliteral     ("'"[^']*"'")
 {identifier} {
   yylval.id = strdup(yytext);
   return tok_identifier;
+}
+
+{st_identifier} {
+  yylval.id = strdup(yytext);
+  return tok_st_identifier;
 }
 
 {dliteral} {

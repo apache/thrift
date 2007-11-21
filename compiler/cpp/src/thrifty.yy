@@ -60,6 +60,7 @@ int g_arglist = 0;
 %token<id>     tok_identifier
 %token<id>     tok_literal
 %token<dtext>  tok_doctext
+%token<id>     tok_st_identifier
 
 /**
  * Constant values
@@ -85,6 +86,7 @@ int g_arglist = 0;
 %token tok_xsd_namespace
 %token tok_xsd_attrs
 %token tok_ruby_namespace
+%token tok_smalltalk_category
 %token tok_cocoa_prefix
 
 /**
@@ -211,7 +213,7 @@ Program:
 CaptureDocText:
     {
       if (g_parse_mode == PROGRAM) {
-        $$ = g_doctext; 
+        $$ = g_doctext;
         g_doctext = NULL;
       } else {
         $$ = NULL;
@@ -293,6 +295,13 @@ Header:
         g_program->set_ruby_namespace($2);
       }
     }
+| tok_smalltalk_category tok_st_identifier
+    {
+      pdebug("Header -> tok_smalltalk_category tok_st_identifier");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_smalltalk_category($2);
+      }
+    }
 | tok_java_package tok_identifier
     {
       pdebug("Header -> tok_java_package tok_identifier");
@@ -346,7 +355,7 @@ Definition:
       pdebug("Definition -> Const");
       if (g_parse_mode == PROGRAM) {
         g_program->add_const($1);
-      }    
+      }
       $$ = $1;
     }
 | TypeDefinition
@@ -411,7 +420,7 @@ TypeDefinition:
     }
 
 Typedef:
-  tok_typedef DefinitionType tok_identifier 
+  tok_typedef DefinitionType tok_identifier
     {
       pdebug("TypeDef -> tok_typedef DefinitionType tok_identifier");
       t_typedef *td = new t_typedef(g_program, $2, $3);

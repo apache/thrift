@@ -74,8 +74,12 @@ void t_st_generator::generate_force_consts() {
 
 void t_st_generator::close_generator() {
   generate_force_consts();
-
   f_.close();
+}
+
+string t_st_generator::generated_category() {
+  string cat = program_->get_smalltalk_category();
+  return cat.size() ? cat : "Generated-" + class_name();
 }
 
 /**
@@ -91,7 +95,7 @@ void t_st_generator::st_class_def(std::ofstream &out, string name) {
   out << indent() << "instanceVariableNames: ''" << endl <<
     indent() << "classVariableNames: ''" << endl <<
     indent() << "poolDictionaries: ''" << endl <<
-    indent() << "category: 'Thrift-Generated-" << class_name() << "'!" << endl << endl;
+    indent() << "category: '" << generated_category() << "'!" << endl << endl;
 }
 
 void t_st_generator::st_method(std::ofstream &out, string cls, string name) {
@@ -346,7 +350,7 @@ void t_st_generator::generate_st_struct(std::ofstream& out, t_struct* tstruct, b
   out << "'\n" <<
     "\tclassVariableNames: ''\n" <<
     "\tpoolDictionaries: ''\n" <<
-    "\tcategory: 'Thrift-Generated-" << class_name() << "'!\n\n";
+    "\tcategory: '" << generated_category() << "'!\n\n";
 
   generate_accessors(out, tstruct);
 }
@@ -378,8 +382,10 @@ void t_st_generator::generate_accessors(std::ofstream& out, t_struct* tstruct) {
 
   if (members.size() > 0) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-			st_accessors(out, capitalize(type_name(tstruct)), sanitize((*m_iter)->get_name()),
-									 a_type((*m_iter)->get_type()));
+      st_accessors(out,
+                   capitalize(type_name(tstruct)),
+                   sanitize((*m_iter)->get_name()),
+                   a_type((*m_iter)->get_type()));
     }
     out << endl;
   }
@@ -547,14 +553,14 @@ string t_st_generator::struct_writer(t_struct *tstruct, string sname) {
   indent_up();
 
   for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-		bool optional = (*fld_iter)->get_req() == t_field::OPTIONAL;
+    bool optional = (*fld_iter)->get_req() == t_field::OPTIONAL;
     string fname = (*fld_iter)->get_name();
-		string accessor = sname + " " + sanitize(fname);
+    string accessor = sname + " " + sanitize(fname);
 
-		if (optional) {
-			out << indent() << accessor << " ifNotNil: [" << endl;
-			indent_up();
-		}
+    if (optional) {
+      out << indent() << accessor << " ifNotNil: [" << endl;
+      indent_up();
+    }
 
     out << indent() << "oprot writeFieldBegin: (TField new name: '" << fname <<
       "'; type: " << type_to_enum((*fld_iter)->get_type()) <<
@@ -563,15 +569,15 @@ string t_st_generator::struct_writer(t_struct *tstruct, string sname) {
     out << indent() << write_val((*fld_iter)->get_type(), accessor) << "." << endl <<
       indent() << "oprot writeFieldEnd";
 
-		if(optional) {
-			out << "]";
-			indent_down();
-		}
+    if (optional) {
+      out << "]";
+      indent_down();
+    }
 
-		out << "." << endl;
+    out << "." << endl;
   }
 
-	out << indent() << "oprot writeFieldStop; writeStructEnd] value";
+  out << indent() << "oprot writeFieldStop; writeStructEnd] value";
   indent_down();
 
   return out.str();
@@ -585,8 +591,9 @@ string t_st_generator::struct_reader(t_struct *tstruct, string clsName = "") {
   string desc = temp_name();
   string found = temp_name();
 
-  if(clsName.size() == 0)
+  if (clsName.size() == 0) {
     clsName = tstruct->get_name();
+  }
 
   out << "[|" << desc << " " << val << "|" << endl;
   indent_up();
@@ -606,48 +613,48 @@ string t_st_generator::struct_reader(t_struct *tstruct, string clsName = "") {
 
     out << indent() << found << " := true." << endl <<
       indent() << val << " " << sanitize((*fld_iter)->get_name()) << ": " <<
-        read_val((*fld_iter)->get_type());
+      read_val((*fld_iter)->get_type());
     indent_down();
 
-		out << "]." << endl;
+    out << "]." << endl;
   }
 
   out << indent() << found << " ifNil: [iprot skip: " << desc << " type]]." << endl;
   indent_down();
 
   out << indent() << "oprot readStructEnd." << endl <<
-		indent() << val << "] value";
+    indent() << val << "] value";
   indent_down();
 
   return out.str();
 }
 
 string t_st_generator::write_val(t_type *t, string fname) {
-	t = get_true_type(t);
+  t = get_true_type(t);
 
-  if(t->is_base_type()) {
-	  t_base_type::t_base tbase = ((t_base_type*) t)->get_base();
-		switch(tbase) {
-	    case t_base_type::TYPE_DOUBLE:
-				return "iprot writeDouble: " + fname + " asFloat";
-				break;
-			case t_base_type::TYPE_BYTE:
-	    case t_base_type::TYPE_I16:
-	    case t_base_type::TYPE_I32:
-	    case t_base_type::TYPE_I64:
-				return "iprot write" + capitalize(type_name(t)) + ": " + fname + " asInteger";
-			default:
-				return "iprot write" + capitalize(type_name(t)) + ": " + fname;
-		}
-  } else if(t->is_map()) {
+  if (t->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*) t)->get_base();
+    switch(tbase) {
+    case t_base_type::TYPE_DOUBLE:
+      return "iprot writeDouble: " + fname + " asFloat";
+      break;
+    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      return "iprot write" + capitalize(type_name(t)) + ": " + fname + " asInteger";
+    default:
+      return "iprot write" + capitalize(type_name(t)) + ": " + fname;
+    }
+  } else if (t->is_map()) {
     return map_writer((t_map*) t, fname);
-  } else if(t->is_struct() || t->is_xception()) {
+  } else if (t->is_struct() || t->is_xception()) {
     return struct_writer((t_struct*) t, fname);
-  } else if(t->is_list()) {
+  } else if (t->is_list()) {
     return list_writer((t_list*) t, fname);
-  } else if(t->is_set()) {
+  } else if (t->is_set()) {
     return set_writer((t_set*) t, fname);
-  } else if(t->is_enum()) {
+  } else if (t->is_enum()) {
     return "iprot writeI32: " + fname;
   } else {
     throw "Sorry, I don't know how to write this: " + type_name(t);
@@ -655,19 +662,19 @@ string t_st_generator::write_val(t_type *t, string fname) {
 }
 
 string t_st_generator::read_val(t_type *t) {
-	t = get_true_type(t);
+  t = get_true_type(t);
 
-  if(t->is_base_type()) {
+  if (t->is_base_type()) {
     return "iprot read" + capitalize(type_name(t));
-  } else if(t->is_map()) {
+  } else if (t->is_map()) {
     return map_reader((t_map*) t);
-  } else if(t->is_struct() || t->is_xception()) {
+  } else if (t->is_struct() || t->is_xception()) {
     return struct_reader((t_struct*) t);
-  } else if(t->is_list()) {
+  } else if (t->is_list()) {
     return list_reader((t_list*) t);
-  } else if(t->is_set()) {
+  } else if (t->is_set()) {
     return set_reader((t_set*) t);
-  } else if(t->is_enum()) {
+  } else if (t->is_enum()) {
     return "iprot readI32";
   } else {
     throw "Sorry, I don't know how to read this: " + type_name(t);
@@ -744,21 +751,22 @@ void t_st_generator::generate_recv_method(t_function* function) {
 }
 
 string t_st_generator::function_types_comment(t_function* fn) {
-	std::ostringstream out;
+  std::ostringstream out;
   const vector<t_field*>& fields = fn->get_arglist()->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-	out << "\"";
+  out << "\"";
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-		out << (*f_iter)->get_name() << ": " << type_name((*f_iter)->get_type());
-		if((f_iter + 1) != fields.end())
-			out << ", ";
-	}
+    out << (*f_iter)->get_name() << ": " << type_name((*f_iter)->get_type());
+    if ((f_iter + 1) != fields.end()) {
+      out << ", ";
+    }
+  }
 
-	out << "\"";
+  out << "\"";
 
-	return out.str();
+  return out.str();
 }
 
 /**
@@ -781,44 +789,47 @@ void t_st_generator::generate_service_client(t_service* tservice) {
     "\tinstanceVariableNames: ''\n" <<
     "\tclassVariableNames: ''\n" <<
     "\tpoolDictionaries: ''\n" <<
-    "\tcategory: 'ThriftGenerated-" << class_name() << "'!\n\n";
+    "\tcategory: '" << generated_category() << "'!\n\n";
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     string funname = (*f_iter)->get_name();
     string signature = function_signature(*f_iter);
 
     st_method(f_, client_class_name(), signature);
-		f_ << function_types_comment(*f_iter) << endl <<
-   		indent() << "self send" << capitalize(signature) << "." << endl;
+    f_ << function_types_comment(*f_iter) << endl <<
+      indent() << "self send" << capitalize(signature) << "." << endl;
 
-    if(!(*f_iter)->is_async())
+    if (!(*f_iter)->is_async()) {
       f_ << indent() << "^ self recv" << capitalize(funname) << " success " << endl;
+    }
 
     st_close_method(f_);
 
     generate_send_method(*f_iter);
-    if(!(*f_iter)->is_async()) generate_recv_method(*f_iter);
+    if (!(*f_iter)->is_async()) {
+      generate_recv_method(*f_iter);
+    }
   }
 }
 
 string t_st_generator::sanitize(string s) {
-	std::ostringstream out;
-	bool underscore = false;
+  std::ostringstream out;
+  bool underscore = false;
 
-	for(unsigned int i = 0; i < s.size(); i++) {
-		if(s[i] == '_') {
-			underscore = true;
-			continue;
-		}
-		if(underscore) {
-			out << (char) toupper(s[i]);
-			underscore = false;
-			continue;
-		}
-		out << s[i];
-	}
+  for (unsigned int i = 0; i < s.size(); i++) {
+    if (s[i] == '_') {
+      underscore = true;
+      continue;
+    }
+    if (underscore) {
+      out << (char) toupper(s[i]);
+      underscore = false;
+      continue;
+    }
+    out << s[i];
+  }
 
-	return out.str();
+  return out.str();
 }
 
 /**
@@ -878,7 +889,7 @@ string t_st_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_VOID:
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
-        return "TType string";
+      return "TType string";
     case t_base_type::TYPE_BOOL:
       return "TType bool";
     case t_base_type::TYPE_BYTE:

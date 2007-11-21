@@ -111,6 +111,7 @@ class t_st_generator : public t_oop_generator {
 	std::string a_type(t_type* type);
   bool is_vowel(char c);
   std::string temp_name();
+  std::string generated_category();
 
  private:
 
