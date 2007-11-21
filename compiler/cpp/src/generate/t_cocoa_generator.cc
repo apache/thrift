@@ -486,7 +486,7 @@ void t_cocoa_generator::generate_cocoa_struct_reader(ofstream& out,
         // is now retaining it
         if (type_can_be_null((*f_iter)->get_type())) {
           // deserialized strings are autorelease, so don't release them
-          if (!((*f_iter)->get_type()->is_string())) {
+          if (!(get_true_type((*f_iter)->get_type())->is_string())) {
             indent(out) << "[fieldValue release];" << endl;
           }
         }
