@@ -15,7 +15,7 @@
 #include <errno.h>
 #include <assert.h>
 
-namespace facebook { namespace thrift { namespace server { 
+namespace facebook { namespace thrift { namespace server {
 
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::transport;
@@ -46,7 +46,7 @@ class TConnection::Task: public Runnable {
     } catch (...) {
       cerr << "TThreadedServer uncaught exception." << endl;
     }
-    
+
     // Signal completion back to the libevent thread via a socketpair
     int8_t b = 0;
     if (-1 == send(taskHandle_, &b, sizeof(int8_t), 0)) {
@@ -79,7 +79,7 @@ void TConnection::init(int socket, short eventFlags, TNonblockingServer* s) {
 
   socketState_ = SOCKET_RECV;
   appState_ = APP_INIT;
-  
+
   taskHandle_ = -1;
 
   // Set flags, which also registers the event
@@ -119,14 +119,14 @@ void TConnection::workSocket() {
     // Read from the socket
     fetch = readWant_ - readBufferPos_;
     got = recv(socket_, readBuffer_ + readBufferPos_, fetch, 0);
-   
+
     if (got > 0) {
       // Move along in the buffer
       readBufferPos_ += got;
 
       // Check that we did not overdo it
       assert(readBufferPos_ <= readWant_);
-    
+
       // We are done reading, move onto the next state
       if (readBufferPos_ == readWant_) {
         transition();
@@ -145,7 +145,7 @@ void TConnection::workSocket() {
 
     // Whenever we get down here it means a remote disconnect
     close();
-    
+
     return;
 
   case SOCKET_SEND:
@@ -154,7 +154,7 @@ void TConnection::workSocket() {
 
     // If there is no data to send, then let us move on
     if (writeBufferPos_ == writeBufferSize_) {
-      fprintf(stderr, "WARNING: Send state with no data to send\n");
+      GlobalOutput("WARNING: Send state with no data to send\n");
       transition();
       return;
     }
@@ -186,7 +186,7 @@ void TConnection::workSocket() {
     // Did we overdo it?
     assert(writeBufferPos_ <= writeBufferSize_);
 
-    // We are  done!
+    // We are done!
     if (writeBufferPos_ == writeBufferSize_) {
       transition();
     }
@@ -216,7 +216,7 @@ void TConnection::transition() {
     // and get back some data from the dispatch function
     inputTransport_->resetBuffer(readBuffer_, readBufferPos_);
     outputTransport_->resetBuffer();
-    
+
     if (server_->isThreadPoolProcessing()) {
       // We are setting up a Task to do this work and we will wait on it
       int sv[2];
@@ -230,12 +230,18 @@ void TConnection::transition() {
                                                inputProtocol_,
                                                outputProtocol_,
                                                sv[1]));
+        // The application is now waiting on the task to finish
         appState_ = APP_WAIT_TASK;
+
+        // Create an event to be notified when the task finishes
         event_set(&taskEvent_,
                   taskHandle_ = sv[0],
                   EV_READ,
                   TConnection::taskHandler,
                   this);
+
+        // Attach to the base
+        event_base_set(server_->getEventBase(), &taskEvent_);
 
         // Add the event and start up the server
         if (-1 == event_add(&taskEvent_, 0)) {
@@ -260,7 +266,7 @@ void TConnection::transition() {
         return;
       } catch (TException &x) {
         fprintf(stderr, "TException: Server::process() %s\n", x.what());
-        close();     
+        close();
         return;
       } catch (...) {
         fprintf(stderr, "Server::process() unknown exception\n");
@@ -434,6 +440,7 @@ void TConnection::setFlags(short eventFlags) {
    * its own ev.
    */
   event_set(&event_, socket_, eventFlags_, TConnection::eventHandler, this);
+  event_base_set(server_->getEventBase(), &event_);
 
   // Add the event
   if (event_add(&event_, 0) == -1) {
@@ -493,15 +500,15 @@ void TNonblockingServer::returnConnection(TConnection* connection) {
 void TNonblockingServer::handleEvent(int fd, short which) {
   // Make sure that libevent didn't fuck up the socket handles
   assert(fd == serverSocket_);
-  
+
   // Server socket accepted a new connection
   socklen_t addrLen;
   struct sockaddr addr;
-  addrLen = sizeof(addr);   
-  
+  addrLen = sizeof(addr);
+
   // Going to accept a new client socket
   int clientSocket;
-  
+
   // Accept as many new clients as possible, even though libevent signaled only
   // one, this helps us to avoid having to go back into the libevent engine so
   // many times
@@ -530,7 +537,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
     // Put this client connection into the proper state
     clientConnection->transition();
   }
-  
+
   // Done looping accept, now we have to make sure the error is due to
   // blocking. Any other error is a problem
   if (errno != EAGAIN && errno != EWOULDBLOCK) {
@@ -539,21 +546,13 @@ void TNonblockingServer::handleEvent(int fd, short which) {
 }
 
 /**
- * Main workhorse function, starts up the server listening on a port and
- * loops over the libevent handler.
+ * Creates a socket to listen on and binds it to the local port.
  */
-void TNonblockingServer::serve() {
-  // Initialize libevent
-  event_init();
-
-  // Print some libevent stats
-  fprintf(stderr,
-          "libevent %s method %s\n",
-          event_get_version(),
-          event_get_method());
-
+void TNonblockingServer::listenSocket() {
+  int s;
   struct addrinfo hints, *res, *res0;
   int error;
+
   char port[sizeof("65536") + 1];
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = PF_UNSPEC;
@@ -576,64 +575,105 @@ void TNonblockingServer::serve() {
   }
 
   // Create the server socket
-  serverSocket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-  if (serverSocket_ == -1) {
-    GlobalOutput("TNonblockingServer::serve() socket() -1");
-    return;
+  s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+  if (s == -1) {
+    freeaddrinfo(res0);
+    throw TException("TNonblockingServer::serve() socket() -1");
   }
 
+  int one = 1;
+
+  // Set reuseaddr to avoid 2MSL delay on server restart
+  setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+
+  if (bind(s, res->ai_addr, res->ai_addrlen) == -1) {
+    close(s);
+    freeaddrinfo(res0);
+    throw TException("TNonblockingServer::serve() bind");
+  }
+
+  // Done with the addr info
+  freeaddrinfo(res0);
+
+  // Set up this file descriptor for listening
+  listenSocket(s);
+}
+
+/**
+ * Takes a socket created by listenSocket() and sets various options on it
+ * to prepare for use in the server.
+ */
+void TNonblockingServer::listenSocket(int s) {
   // Set socket to nonblocking mode
   int flags;
-  if ((flags = fcntl(serverSocket_, F_GETFL, 0)) < 0 ||
-      fcntl(serverSocket_, F_SETFL, flags | O_NONBLOCK) < 0) {
-    GlobalOutput("TNonblockingServer::serve() O_NONBLOCK");
-    ::close(serverSocket_);
-    return;
+  if ((flags = fcntl(s, F_GETFL, 0)) < 0 ||
+      fcntl(s, F_SETFL, flags | O_NONBLOCK) < 0) {
+    close(s);
+    throw TException("TNonblockingServer::serve() O_NONBLOCK");
   }
 
   int one = 1;
   struct linger ling = {0, 0};
-  
-  // Set reuseaddr to avoid 2MSL delay on server restart
-  setsockopt(serverSocket_, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 
   // Keepalive to ensure full result flushing
-  setsockopt(serverSocket_, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
+  setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
 
   // Turn linger off to avoid hung sockets
-  setsockopt(serverSocket_, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
+  setsockopt(s, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
 
   // Set TCP nodelay if available, MAC OS X Hack
   // See http://lists.danga.com/pipermail/memcached/2005-March/001240.html
   #ifndef TCP_NOPUSH
-  setsockopt(serverSocket_, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
+  setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
   #endif
 
-  if (bind(serverSocket_, res->ai_addr, res->ai_addrlen) == -1) {
-    GlobalOutput("TNonblockingServer::serve() bind");
-    close(serverSocket_);
-    return;
+  if (listen(s, LISTEN_BACKLOG) == -1) {
+    close(s);
+    throw TException("TNonblockingServer::serve() listen");
   }
 
-  if (listen(serverSocket_, LISTEN_BACKLOG) == -1) {
-    GlobalOutput("TNonblockingServer::serve() listen");
-    close(serverSocket_);
-    return;
-  }
+  // Cool, this socket is good to go, set it as the serverSocket_
+  serverSocket_ = s;
+}
+
+/**
+ * Register the core libevent events onto the proper base.
+ */
+void TNonblockingServer::registerEvents(event_base* base) {
+  assert(serverSocket_ != -1);
+  assert(!eventBase_);
+  eventBase_ = base;
+
+  // Print some libevent stats
+  fprintf(stderr,
+          "libevent %s method %s\n",
+          event_get_version(),
+          event_get_method());
 
   // Register the server event
-  struct event serverEvent;
-  event_set(&serverEvent,
+  event_set(&serverEvent_,
             serverSocket_,
             EV_READ | EV_PERSIST,
             TNonblockingServer::eventHandler,
             this);
+  event_base_set(eventBase_, &serverEvent_);
 
   // Add the event and start up the server
-  if (-1 == event_add(&serverEvent, 0)) {
-    GlobalOutput("TNonblockingServer::serve(): coult not event_add");
-    return;
+  if (-1 == event_add(&serverEvent_, 0)) {
+    throw TException("TNonblockingServer::serve(): coult not event_add");
   }
+}
+
+/**
+ * Main workhorse function, starts up the server listening on a port and
+ * loops over the libevent handler.
+ */
+void TNonblockingServer::serve() {
+  // Init socket
+  listenSocket();
+
+  // Initialize libevent core
+  registerEvents(static_cast<event_base*>(event_init()));
 
   // Run pre-serve callback function if we have one
   if (preServeCallback_) {
@@ -641,7 +681,7 @@ void TNonblockingServer::serve() {
   }
 
   // Run libevent engine, never returns, invokes calls to eventHandler
-  event_loop(0);
+  event_base_loop(eventBase_, 0);
 }
 
 }}} // facebook::thrift::server

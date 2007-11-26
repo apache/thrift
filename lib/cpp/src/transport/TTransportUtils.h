@@ -12,14 +12,14 @@
 #include <transport/TTransport.h>
 #include <transport/TFileTransport.h>
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 /**
  * The null transport is a dummy transport that doesn't actually do anything.
  * It's sort of an analogy to /dev/null, you can never read anything from it
  * and it will let you write anything you want to it, though it won't actually
  * go anywhere.
- * 
+ *
  * @author Mark Slee <mcslee@facebook.com>
  */
 class TNullTransport : public TTransport {
@@ -82,8 +82,8 @@ class TBufferedTransport : public TTransport {
   bool isOpen() {
     return transport_->isOpen();
   }
-  
-  bool peek() {    
+
+  bool peek() {
     if (rPos_ >= rLen_) {
       rLen_ = transport_->read(rBuf_, rBufSize_);
       rPos_ = 0;
@@ -101,7 +101,7 @@ class TBufferedTransport : public TTransport {
   }
 
   uint32_t read(uint8_t* buf, uint32_t len);
-  
+
   void write(const uint8_t* buf, uint32_t len);
 
   void flush();
@@ -192,7 +192,7 @@ class TFramedTransport : public TTransport {
   void setWrite(bool write) {
     write_ = write;
   }
- 
+
   void open() {
     transport_->open();
   }
@@ -209,10 +209,12 @@ class TFramedTransport : public TTransport {
   }
 
   void close() {
-    flush();
+    if (wLen_ > 0) {
+      flush();
+    }
     transport_->close();
   }
- 
+
   uint32_t read(uint8_t* buf, uint32_t len);
 
   void write(const uint8_t* buf, uint32_t len);
@@ -397,16 +399,16 @@ class TMemoryBuffer : public TTransport {
 
   void consume(uint32_t len);
 
- private: 
+ private:
   // Data buffer
   uint8_t* buffer_;
-  
+
   // Allocated buffer size
   uint32_t bufferSize_;
 
   // Where the write is at
   uint32_t wPos_;
-  
+
   // Where the reader is at
   uint32_t rPos_;
 
@@ -416,17 +418,17 @@ class TMemoryBuffer : public TTransport {
 };
 
 /**
- * TPipedTransport. This transport allows piping of a request from one 
+ * TPipedTransport. This transport allows piping of a request from one
  * transport to another either when readEnd() or writeEnd(). The typical
  * use case for this is to log a request or a reply to disk.
- * The underlying buffer expands to a keep a copy of the entire 
+ * The underlying buffer expands to a keep a copy of the entire
  * request/response.
  *
  * @author Aditya Agarwal <aditya@facebook.com>
  */
 class TPipedTransport : virtual public TTransport {
  public:
-  TPipedTransport(boost::shared_ptr<TTransport> srcTrans, 
+  TPipedTransport(boost::shared_ptr<TTransport> srcTrans,
                   boost::shared_ptr<TTransport> dstTrans) :
     srcTrans_(srcTrans),
     dstTrans_(dstTrans),
@@ -435,14 +437,14 @@ class TPipedTransport : virtual public TTransport {
 
     // default is to to pipe the request when readEnd() is called
     pipeOnRead_ = true;
-    pipeOnWrite_ = false; 
+    pipeOnWrite_ = false;
 
     rBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * rBufSize_);
     wBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * wBufSize_);
   }
-    
-  TPipedTransport(boost::shared_ptr<TTransport> srcTrans, 
-                  boost::shared_ptr<TTransport> dstTrans, 
+
+  TPipedTransport(boost::shared_ptr<TTransport> srcTrans,
+                  boost::shared_ptr<TTransport> dstTrans,
                   uint32_t sz) :
     srcTrans_(srcTrans),
     dstTrans_(dstTrans),
@@ -461,15 +463,15 @@ class TPipedTransport : virtual public TTransport {
   bool isOpen() {
     return srcTrans_->isOpen();
   }
-  
-  bool peek() {    
+
+  bool peek() {
     if (rPos_ >= rLen_) {
       // Double the size of the underlying buffer if it is full
       if (rLen_ == rBufSize_) {
         rBufSize_ *=2;
         rBuf_ = (uint8_t *)realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
       }
-    
+
       // try to fill up the buffer
       rLen_ += srcTrans_->read(rBuf_+rPos_, rBufSize_ - rPos_);
     }
@@ -492,7 +494,7 @@ class TPipedTransport : virtual public TTransport {
   void setPipeOnWrite(bool pipeVal) {
     pipeOnWrite_ = pipeVal;
   }
-  
+
   uint32_t read(uint8_t* buf, uint32_t len);
 
   void readEnd() {
@@ -522,7 +524,7 @@ class TPipedTransport : virtual public TTransport {
 
   boost::shared_ptr<TTransport> getTargetTransport() {
     return dstTrans_;
-  } 
+  }
 
  protected:
   boost::shared_ptr<TTransport> srcTrans_;
@@ -576,7 +578,7 @@ class TPipedTransportFactory : public TTransportFactory {
 
 /**
  * TPipedFileTransport. This is just like a TTransport, except that
- * it is a templatized class, so that clients who rely on a specific 
+ * it is a templatized class, so that clients who rely on a specific
  * TTransport can still access the original transport.
  *
  * @author James Wang <jwang@facebook.com>
@@ -622,7 +624,7 @@ class TPipedFileReaderTransport : public TPipedTransport,
 class TPipedFileReaderTransportFactory : public TPipedTransportFactory {
  public:
   TPipedFileReaderTransportFactory() {}
-  TPipedFileReaderTransportFactory(boost::shared_ptr<TTransport> dstTrans) 
+  TPipedFileReaderTransportFactory(boost::shared_ptr<TTransport> dstTrans)
     : TPipedTransportFactory(dstTrans)
   {}
   virtual ~TPipedFileReaderTransportFactory() {}

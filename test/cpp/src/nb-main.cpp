@@ -61,7 +61,7 @@ class Server : public ServiceIf {
   Server() {}
 
   void count(const char* method) {
-    MutexMonitor m(lock_);
+    Guard m(lock_);
     int ct = counts_[method];
     counts_[method] = ++ct;
   }
@@ -74,7 +74,7 @@ class Server : public ServiceIf {
   }
 
   count_map getCount() {
-    MutexMonitor m(lock_);
+    Guard m(lock_);
     return counts_;
   }
 
@@ -354,10 +354,12 @@ int main(int argc, char **argv) {
     }
 
     shared_ptr<Thread> serverThread;
+    shared_ptr<Thread> serverThread2;
 
     if (serverType == "simple") {
 
       serverThread = threadFactory->newThread(shared_ptr<TServer>(new TNonblockingServer(serviceProcessor, protocolFactory, port)));
+      serverThread2 = threadFactory->newThread(shared_ptr<TServer>(new TNonblockingServer(serviceProcessor, protocolFactory, port+1)));
 
     } else if (serverType == "thread-pool") {
 
@@ -366,17 +368,21 @@ int main(int argc, char **argv) {
       threadManager->threadFactory(threadFactory);
       threadManager->start();
       serverThread = threadFactory->newThread(shared_ptr<TServer>(new TNonblockingServer(serviceProcessor, protocolFactory, port, threadManager)));
+      serverThread2 = threadFactory->newThread(shared_ptr<TServer>(new TNonblockingServer(serviceProcessor, protocolFactory, port+1, threadManager)));
     }
 
-    cerr << "Starting the server on port " << port << endl;
+    cerr << "Starting the server on port " << port << " and " << (port + 1) << endl;
     serverThread->start();
+    serverThread2->start();
 
     // If we aren't running clients, just wait forever for external clients
 
     if (clientCount == 0) {
       serverThread->join();
+      serverThread2->join();
     }
   }
+  sleep(1);
 
   if (clientCount > 0) {
 
@@ -395,7 +401,7 @@ int main(int argc, char **argv) {
 
     for (size_t ix = 0; ix < clientCount; ix++) {
 
-      shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
+      shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port + (ix % 2)));
       shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
       shared_ptr<TProtocol> protocol(new TBinaryProtocol(framedSocket));
       shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
