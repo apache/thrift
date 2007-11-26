@@ -47,6 +47,10 @@ class TTransportBase:
       chunk = self.read(sz-have)
       have += len(chunk)
       buff += chunk
+
+      if len(chunk) == 0:
+        raise EOFError()
+
     return buff
 
   def write(self, buf):
@@ -213,7 +217,7 @@ class TMemoryBuffer(TTransportBase, CReadableTransport):
 
   def cstringio_refill(self, partialread, reqlen):
     # only one shot at reading...
-    raise EOFException()
+    raise EOFError()
 
 class TFramedTransportFactory:
 

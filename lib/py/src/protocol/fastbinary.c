@@ -684,6 +684,9 @@ static double readDouble(DecodeBuffer* input) {
 static bool
 checkTypeByte(DecodeBuffer* input, TType expected) {
   TType got = readByte(input);
+  if (INT_CONV_ERROR_OCCURRED(got)) {
+    return false;
+  }
 
   if (expected != got) {
     PyErr_SetString(PyExc_TypeError, "got wrong ttype while reading field");
@@ -829,11 +832,16 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq) {
     StructItemSpec parsedspec;
 
     type = readByte(input);
+    if (type == -1) {
+      return false;
+    }
     if (type == T_STOP) {
       break;
     }
     tag = readI16(input);
-
+    if (INT_CONV_ERROR_OCCURRED(tag)) {
+      return false;
+    }
     if (tag >= 0 && tag < spec_seq_len) {
       item_spec = PyTuple_GET_ITEM(spec_seq, tag);
     } else {
