@@ -4,12 +4,14 @@ package com.facebook.thrift.test;
 import thrift.test.*;
 
 import com.facebook.thrift.TApplicationException;
+import com.facebook.thrift.TSerializer;
 import com.facebook.thrift.transport.TTransport;
 import com.facebook.thrift.transport.TSocket;
 import com.facebook.thrift.transport.THttpClient;
 import com.facebook.thrift.transport.TFramedTransport;
 import com.facebook.thrift.transport.TTransportException;
 import com.facebook.thrift.protocol.TBinaryProtocol;
+import com.facebook.thrift.protocol.TJSONProtocol;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
@@ -39,7 +41,7 @@ public class TestClient {
           if (args[i].equals("-h")) {
             String[] hostport = (args[++i]).split(":");
             host = hostport[0];
-            port = Integer.valueOf(hostport[1]);            
+            port = Integer.valueOf(hostport[1]);
           } else if (args[i].equals("-f") || args[i].equals("-framed")) {
             framed = true;
           } else if (args[i].equals("-fo")) {
@@ -54,9 +56,9 @@ public class TestClient {
       } catch (Exception x) {
         x.printStackTrace();
       }
-      
+
       TTransport transport;
-      
+
       if (url != null) {
         transport = new THttpClient(url);
       } else {
@@ -74,6 +76,7 @@ public class TestClient {
         new TBinaryProtocol(transport);
       ThriftTest.Client testClient =
         new ThriftTest.Client(binaryProtocol);
+      Insanity insane = new Insanity();
 
       long timeMin = 0;
       long timeMax = 0;
@@ -93,7 +96,7 @@ public class TestClient {
         }
 
         long start = System.nanoTime();
-    
+
         /**
          * VOID TEST
          */
@@ -118,7 +121,7 @@ public class TestClient {
         System.out.print("testByte(1)");
         byte i8 = testClient.testByte((byte)1);
         System.out.print(" = " + i8 + "\n");
-  
+
         /**
          * I32 TEST
          */
@@ -307,7 +310,7 @@ public class TestClient {
         /**
          * INSANITY TEST
          */
-        Insanity insane = new Insanity();
+        insane = new Insanity();
         insane.userMap = new HashMap<Integer, Long>();
         insane.userMap.put(Numberz.FIVE, (long)5000);
         Xtruct truck = new Xtruct();
@@ -369,14 +372,18 @@ public class TestClient {
       }
 
       long timeAvg = timeTot / numTests;
-      
+
       System.out.println("Min time: " + timeMin/1000 + "us");
       System.out.println("Max time: " + timeMax/1000 + "us");
       System.out.println("Avg time: " + timeAvg/1000 + "us");
-            
+
+      String json = (new TSerializer(new TJSONProtocol.Factory())).toString(insane);
+
+      System.out.println("\nFor good meausre here is some JSON:\n" + json);
+
     } catch (Exception x) {
       x.printStackTrace();
-    }  
+    }
 
   }
 

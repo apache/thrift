@@ -56,7 +56,7 @@ public abstract class TTransport {
     throws TTransportException;
 
   /**
-   * Guarantees that all of len bytes are 
+   * Guarantees that all of len bytes are
    *
    * @param buf Array to read into
    * @param off Index to start reading at
@@ -79,6 +79,16 @@ public abstract class TTransport {
   }
 
   /**
+   * Writes the buffer to the output
+   *
+   * @param buf The output data buffer
+   * @throws TTransportException if an error occurs writing data
+   */
+  public void write(byte[] buf) throws TTransportException {
+    write(buf, 0, buf.length);
+  }
+
+  /**
    * Writes up to len bytes from the buffer.
    *
    * @param buf The output data buffer
@@ -94,6 +104,6 @@ public abstract class TTransport {
    *
    * @throws TTransportException if there was an error writing out data.
    */
-  public void flush() 
+  public void flush()
     throws TTransportException {}
 }
