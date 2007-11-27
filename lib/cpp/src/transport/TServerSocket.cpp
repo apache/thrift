@@ -17,7 +17,7 @@
 #include "TServerSocket.h"
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 using namespace std;
 using boost::shared_ptr;
@@ -81,7 +81,7 @@ void TServerSocket::listen() {
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = PF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE;
+  hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
   sprintf(port, "%d", port_);
 
   // Wildcard address
@@ -98,7 +98,7 @@ void TServerSocket::listen() {
     if (res->ai_family == AF_INET6 || res->ai_next == NULL)
       break;
   }
-  
+
   serverSocket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   if (serverSocket_ == -1) {
     GlobalOutput("TServerSocket::listen() socket");
@@ -153,7 +153,7 @@ void TServerSocket::listen() {
   }
 
   // prepare the port information
-  // we may want to try to bind more than once, since SO_REUSEADDR doesn't 
+  // we may want to try to bind more than once, since SO_REUSEADDR doesn't
   // always seem to work. The client can configure the retry variables.
   int retries = 0;
   do {
@@ -166,7 +166,7 @@ void TServerSocket::listen() {
 
   // free addrinfo
   freeaddrinfo(res0);
-  
+
   // throw an error if we failed to bind properly
   if (retries > retryLimit_) {
     char errbuf[1024];
@@ -207,7 +207,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     if (ret < 0) {
       // error cases
       if (errno == EINTR && (numEintrs++ < maxEintrs)) {
-        // EINTR needs to be handled manually and we can tolerate 
+        // EINTR needs to be handled manually and we can tolerate
         // a certain number
         continue;
       }
@@ -215,7 +215,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
       throw TTransportException(TTransportException::UNKNOWN);
     } else if (ret > 0) {
       // Check for an interrupt signal
-      if (intSock2_ >= 0 && FD_ISSET(intSock2_, &fds)) {      
+      if (intSock2_ >= 0 && FD_ISSET(intSock2_, &fds)) {
         int8_t buf;
         if (-1 == recv(intSock2_, &buf, sizeof(int8_t), 0)) {
           GlobalOutput("TServerSocket::acceptImpl() interrupt receive");
@@ -228,7 +228,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
       }
     } else {
       GlobalOutput("TServerSocket::acceptImpl() select 0");
-      throw TTransportException(TTransportException::UNKNOWN);      
+      throw TTransportException(TTransportException::UNKNOWN);
     }
   }
 
@@ -237,7 +237,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   int clientSocket = ::accept(serverSocket_,
                               (struct sockaddr *) &clientAddress,
                               (socklen_t *) &size);
-    
+
   if (clientSocket < 0) {
     int errno_copy = errno;
     GlobalOutput("TServerSocket::accept()");
@@ -256,7 +256,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     GlobalOutput("TServerSocket::select() fcntl SETFL");
     throw TTransportException(TTransportException::UNKNOWN, "fcntl(F_SETFL)", errno_copy);
   }
-  
+
   shared_ptr<TSocket> client(new TSocket(clientSocket));
   if (sendTimeout_ > 0) {
     client->setSendTimeout(sendTimeout_);
@@ -264,7 +264,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   if (recvTimeout_ > 0) {
     client->setRecvTimeout(recvTimeout_);
   }
-  
+
   return client;
 }
 

@@ -20,7 +20,7 @@
 #include "TSocket.h"
 #include "TTransportException.h"
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 using namespace std;
 using namespace facebook::thrift::concurrency;
@@ -37,7 +37,7 @@ uint32_t g_socket_syscalls = 0;
 // Mutex to protect syscalls to netdb
 static Monitor s_netdb_monitor;
 
-TSocket::TSocket(string host, int port) : 
+TSocket::TSocket(string host, int port) :
   host_(host),
   port_(port),
   socket_(-1),
@@ -52,7 +52,7 @@ TSocket::TSocket(string host, int port) :
   recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
 }
 
-TSocket::TSocket() : 
+TSocket::TSocket() :
   host_(""),
   port_(0),
   socket_(-1),
@@ -81,13 +81,13 @@ TSocket::TSocket(int socket) :
   recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
   recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
 }
-  
+
 TSocket::~TSocket() {
   close();
 }
 
-bool TSocket::isOpen() {  
-  return (socket_ >= 0); 
+bool TSocket::isOpen() {
+  return (socket_ >= 0);
 }
 
 bool TSocket::peek() {
@@ -135,7 +135,7 @@ void TSocket::openConnection(struct addrinfo *res) {
   setNoDelay(noDelay_);
 
   // Set the socket to be non blocking for connect if a timeout exists
-  int flags = fcntl(socket_, F_GETFL, 0); 
+  int flags = fcntl(socket_, F_GETFL, 0);
   if (connTimeout_ > 0) {
     if (-1 == fcntl(socket_, F_SETFL, flags | O_NONBLOCK)) {
       throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed");
@@ -149,10 +149,10 @@ void TSocket::openConnection(struct addrinfo *res) {
   // Conn timeout
   struct timeval c = {(int)(connTimeout_/1000),
                       (int)((connTimeout_%1000)*1000)};
-   
+
   // Connect the socket
   int ret = connect(socket_, res->ai_addr, res->ai_addrlen);
-  
+
   if (ret == 0) {
     goto done;
   }
@@ -221,9 +221,9 @@ void TSocket::open() {
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = PF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE;
+  hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
   sprintf(port, "%d", port_);
-  
+
   {
     // Scope lock on host entry lookup
     Synchronized s(s_netdb_monitor);
@@ -234,7 +234,7 @@ void TSocket::open() {
     close();
     throw TTransportException(TTransportException::NOT_OPEN, "Could not resolve host for client socket.");
   }
-  
+
   // Cycle through all the returned addresses until one
   // connects or push the exception up.
   for (res = res0; res; res = res->ai_next) {
@@ -277,13 +277,13 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
   // EAGAIN is taken to indicate an out of resources error.
   uint32_t eagainThresholdMicros = 0;
   if (recvTimeout_) {
-    // if a readTimeout is specified along with a max number of recv retries, then 
+    // if a readTimeout is specified along with a max number of recv retries, then
     // the threshold will ensure that the read timeout is not exceeded even in the
     // case of resource errors
     eagainThresholdMicros = (recvTimeout_*1000)/ ((maxRecvRetries_>0) ? maxRecvRetries_ : 2);
   }
 
- try_again:  
+ try_again:
   // Read from the socket
   struct timeval begin;
   gettimeofday(&begin, NULL);
@@ -295,7 +295,7 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
   ++g_socket_syscalls;
 
   // Check for error on read
-  if (got < 0) {   
+  if (got < 0) {
     if (errno == EAGAIN) {
       // check if this is the lack of resources or timeout case
       if (!eagainThresholdMicros || (readElapsedMicros < eagainThresholdMicros)) {
@@ -303,21 +303,21 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
           usleep(50);
           goto try_again;
         } else {
-          throw TTransportException(TTransportException::TIMED_OUT, 
+          throw TTransportException(TTransportException::TIMED_OUT,
                                     "EAGAIN (unavailable resources)");
         }
       } else {
         // infer that timeout has been hit
-        throw TTransportException(TTransportException::TIMED_OUT, 
+        throw TTransportException(TTransportException::TIMED_OUT,
                                   "EAGAIN (timed out)");
       }
     }
-    
+
     // If interrupted, try again
     if (errno == EINTR && retries++ < maxRecvRetries_) {
       goto try_again;
     }
-    
+
     // Now it's not a try again case, but a real probblez
     string errStr = "TSocket::read() " + getSocketInfo();
     GlobalOutput(errStr.c_str());
@@ -326,29 +326,29 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
     if (errno == ECONNRESET) {
       throw TTransportException(TTransportException::NOT_OPEN, "ECONNRESET");
     }
-    
+
     // This ish isn't open
     if (errno == ENOTCONN) {
       throw TTransportException(TTransportException::NOT_OPEN, "ENOTCONN");
     }
-    
+
     // Timed out!
     if (errno == ETIMEDOUT) {
       throw TTransportException(TTransportException::TIMED_OUT, "ETIMEDOUT");
     }
-    
+
     // Some other error, whatevz
     char buff[1024];
     sprintf(buff, "ERROR errno: %d", errno);
     throw TTransportException(TTransportException::UNKNOWN, buff);
   }
-  
+
   // The remote host has closed the socket
   if (got == 0) {
     close();
     return 0;
   }
-  
+
   // Pack data into string
   return got;
 }
@@ -359,7 +359,7 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
   }
 
   uint32_t sent = 0;
-    
+
   while (sent < len) {
 
     int flags = 0;
@@ -385,7 +385,7 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
       GlobalOutput(errStr.c_str());
       throw TTransportException(TTransportException::UNKNOWN, "send", errno_copy);
     }
-    
+
     // Fail on blocked send
     if (b == 0) {
       throw TTransportException(TTransportException::NOT_OPEN, "Socket send returned 0.");
@@ -466,7 +466,7 @@ void TSocket::setSendTimeout(int ms) {
   if (socket_ < 0) {
     return;
   }
-   
+
   struct timeval s = {(int)(sendTimeout_/1000),
                       (int)((sendTimeout_%1000)*1000)};
   int ret = setsockopt(socket_, SOL_SOCKET, SO_SNDTIMEO, &s, sizeof(s));
