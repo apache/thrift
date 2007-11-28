@@ -205,10 +205,6 @@ class TException extends Exception {
     $ftype = 0;
     $fid = 0;
     $xfer += $input->readStructBegin($fname);
-    $fast_binary = (bool)
-      is_a($input, 'TBinaryProtocolAccelerated') &&
-      function_exists('thrift_protocol_binary_deserialize');
-
     while (true) {
       $xfer += $input->readFieldBegin($fname, $ftype, $fid);
       if ($ftype == TType::STOP) {
@@ -219,30 +215,25 @@ class TException extends Exception {
         $var = $fspec['var'];
         if ($ftype == $fspec['type']) {
           $xfer = 0;
-          if ($fast_binary) {
-            $class = isset($fspec['class']) ? $fspec['class'] : '';
-            $this->$var = thrift_protocol_binary_deserialize($ftype, $input, $class);
+          if (isset(TBase::$tmethod[$ftype])) {
+            $func = 'read'.TBase::$tmethod[$ftype];
+            $xfer += $input->$func($this->$var);
           } else {
-            if (isset(TBase::$tmethod[$ftype])) {
-              $func = 'read'.TBase::$tmethod[$ftype];
-              $xfer += $input->$func($this->$var);
-            } else {
-              switch ($ftype) {
-              case TType::STRUCT:
-                $class = $fspec['class'];
-                $this->$var = new $class();
-                $xfer += $this->$var->read($input);
-                break;
-              case TType::MAP:
-                $xfer += $this->_readMap($this->$var, $fspec, $input);
-                break;
-              case TType::LST:
-                $xfer += $this->_readList($this->$var, $fspec, $input, false);
-                break;
-              case TType::SET:
-                $xfer += $this->_readList($this->$var, $fspec, $input, true);
-                break;
-              }
+            switch ($ftype) {
+            case TType::STRUCT:
+              $class = $fspec['class'];
+              $this->$var = new $class();
+              $xfer += $this->$var->read($input);
+              break;
+            case TType::MAP:
+              $xfer += $this->_readMap($this->$var, $fspec, $input);
+              break;
+            case TType::LST:
+              $xfer += $this->_readList($this->$var, $fspec, $input, false);
+              break;
+            case TType::SET:
+              $xfer += $this->_readList($this->$var, $fspec, $input, true);
+              break;
             }
           }
         } else {
@@ -552,10 +543,6 @@ abstract class TBase {
     $ftype = 0;
     $fid = 0;
     $xfer += $input->readStructBegin($fname);
-    $fast_binary = (bool)
-      is_a($input, 'TBinaryProtocolAccelerated') &&
-      function_exists('thrift_protocol_binary_deserialize');
-
     while (true) {
       $xfer += $input->readFieldBegin($fname, $ftype, $fid);
       if ($ftype == TType::STOP) {
@@ -566,30 +553,25 @@ abstract class TBase {
         $var = $fspec['var'];
         if ($ftype == $fspec['type']) {
           $xfer = 0;
-          if ($fast_binary) {
-            $class = isset($fspec['class']) ? $fspec['class'] : '';
-            $this->$var = thrift_protocol_binary_deserialize($ftype, $input, $class);
+          if (isset(TBase::$tmethod[$ftype])) {
+            $func = 'read'.TBase::$tmethod[$ftype];
+            $xfer += $input->$func($this->$var);
           } else {
-            if (isset(TBase::$tmethod[$ftype])) {
-              $func = 'read'.TBase::$tmethod[$ftype];
-              $xfer += $input->$func($this->$var);
-            } else {
-              switch ($ftype) {
-              case TType::STRUCT:
-                $class = $fspec['class'];
-                $this->$var = new $class();
-                $xfer += $this->$var->read($input);
-                break;
-              case TType::MAP:
-                $xfer += $this->_readMap($this->$var, $fspec, $input);
-                break;
-              case TType::LST:
-                $xfer += $this->_readList($this->$var, $fspec, $input, false);
-                break;
-              case TType::SET:
-                $xfer += $this->_readList($this->$var, $fspec, $input, true);
-                break;
-              }
+            switch ($ftype) {
+            case TType::STRUCT:
+              $class = $fspec['class'];
+              $this->$var = new $class();
+              $xfer += $this->$var->read($input);
+              break;
+            case TType::MAP:
+              $xfer += $this->_readMap($this->$var, $fspec, $input);
+              break;
+            case TType::LST:
+              $xfer += $this->_readList($this->$var, $fspec, $input, false);
+              break;
+            case TType::SET:
+              $xfer += $this->_readList($this->$var, $fspec, $input, true);
+              break;
             }
           }
         } else {
