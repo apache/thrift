@@ -137,6 +137,12 @@ class t_generator {
     in[0] = tolower(in[0]);
     return in;
   }
+  std::string lowercase(std::string in) {
+    for (size_t i = 0; i < in.size(); ++i) {
+      in[i] = tolower(in[i]);
+    }
+    return in;
+  }
 
   /**
    * Get the true type behind a series of typedefs.

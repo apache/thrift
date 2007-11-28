@@ -378,7 +378,7 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
     autoload_out.close();
 
     f_types_ <<
-      "$GLOBALS['THRIFT_AUTOLOAD']['" << php_namespace(tstruct->get_program()) << tstruct->get_name() << "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
+      "$GLOBALS['THRIFT_AUTOLOAD']['" << lowercase(php_namespace(tstruct->get_program()) + tstruct->get_name()) << "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
 
   } else {
     _generate_php_struct_definition(out, tstruct, is_exception);
@@ -444,8 +444,20 @@ void t_php_generator::_generate_php_struct_definition(ofstream& out,
         }
       }
       out <<
-        indent() << "if (is_array($vals)) {" << endl <<
-        indent() << "  parent::__construct(self::$_TSPEC, $vals);" << endl <<
+        indent() << "if (is_array($vals)) {" << endl;
+      indent_up();
+      if (oop_) {
+        out << indent() << "parent::construct(self::$_TSPEC, $vals);" << endl;
+      } else {
+        for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+          out <<
+            indent() << "if (isset($vals['" << (*m_iter)->get_name() << "'])) {" << endl <<
+            indent() << "  $this->" << (*m_iter)->get_name() << " = $vals['" << (*m_iter)->get_name() << "'];" << endl <<
+            indent() << "}" << endl;
+        }
+      }
+      indent_down();
+      out <<
         indent() << "}" << endl;
     }
     scope_down(out);
@@ -1079,7 +1091,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
     autoload_out.close();
 
     f_service_ <<
-      "$GLOBALS['THRIFT_AUTOLOAD']['" << service_name_ << "Client" << "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
+      "$GLOBALS['THRIFT_AUTOLOAD']['" << lowercase(service_name_ + "Client") << "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
 
   } else {
     _generate_service_client(f_service_, tservice);
