@@ -29,4 +29,7 @@ ltmain.sh \
 Makefile.in \
 missing \
 config.hin~ \
-stamp-h1
+stamp-h1 \
+thrift.pc \
+thrift-nb.pc \
+thrift-z.pc

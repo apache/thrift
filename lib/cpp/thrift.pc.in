@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: Thrift
+Description: Thrift C++ API
+Version: @VERSION@
+Libs: -L${libdir} -lthrift
+Cflags: -I${includedir}/thrift

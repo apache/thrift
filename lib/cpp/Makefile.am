@@ -1,13 +1,19 @@
 ACLOCAL_AMFLAGS = -I ./aclocal
 
+pkgconfigdir = $(libdir)/pkgconfig
+
 lib_LTLIBRARIES = libthrift.la
+pkgconfig_DATA = thrift.pc
+
 ## We only build the extra libraries if we have the dependencies,
 ## but we install all of the headers unconditionally.
 if AMX_HAVE_LIBEVENT
 lib_LTLIBRARIES += libthriftnb.la
+pkgconfig_DATA += thrift-nb.pc
 endif
 if AMX_HAVE_ZLIB
 lib_LTLIBRARIES += libthriftz.la
+pkgconfig_DATA += thrift-z.pc
 endif
 
 common_cxxflags = -Wall -Isrc $(BOOST_CPPFLAGS)
@@ -71,7 +77,7 @@ include_concurrency_HEADERS = \
                          src/concurrency/Thread.h \
                          src/concurrency/ThreadManager.h \
                          src/concurrency/TimerManager.h \
-                         src/concurrency/Util.h 
+                         src/concurrency/Util.h
 
 include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = \
@@ -120,4 +126,10 @@ concurrency_test_LDADD = libthrift.la
 concurrency_test_CXXFLAGS =  $(common_cxxflags)
 concurrency_test_LDFLAGS =  $(common_ldflags)
 
-EXTRA_DIST = bootstrap.sh cleanup.sh LICENSE
+EXTRA_DIST =
+	bootstrap.sh \
+	cleanup.sh \
+	LICENSE \
+	thrift-nb.pc.in \
+	thrift.pc.in \
+	thrift-z.pc.in

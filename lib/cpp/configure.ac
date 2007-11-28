@@ -1,6 +1,6 @@
 AC_PREREQ(2.59)
 
-AC_INIT(thriftcpp, 1.0)
+AC_INIT(thriftcpp, [20070917])
 
 AC_CONFIG_SRCDIR(src/Thrift.h)
 
@@ -120,4 +120,9 @@ AC_PROG_LIBTOOL
 
 AC_PROG_MAKE_SET
 
-AC_OUTPUT(Makefile)
+AC_OUTPUT([
+        Makefile
+        thrift-nb.pc
+        thrift.pc
+        thrift-z.pc
+])
