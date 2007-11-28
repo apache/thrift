@@ -85,6 +85,17 @@ class t_struct : public t_type {
     }
   }
 
+  bool validate_field(t_field* field) {
+    int key = field->get_key();
+    std::vector<t_field*>::const_iterator m_iter;
+    for (m_iter = members_.begin(); m_iter != members_.end(); ++m_iter) {
+      if ((*m_iter)->get_key() == key) {
+        return false;
+      }
+    }
+    return true;
+  }
+
  private:
 
   std::vector<t_field*> members_;

@@ -761,6 +761,10 @@ FieldList:
     {
       pdebug("FieldList -> FieldList , Field");
       $$ = $1;
+      if (!($$->validate_field($2))) {
+        yyerror("Field identifier %d for \"%s\" has already been used", $2->get_key(), $2->get_name().c_str());
+        exit(1);
+      }
       $$->append($2);
     }
 |

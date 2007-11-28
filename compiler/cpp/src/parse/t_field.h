@@ -106,12 +106,12 @@ class t_field {
 
   bool has_doc() {
     return has_doc_;
-  }                                                           
+  }
 
-  void set_doc(const std::string& doc) {                      
-    doc_ = doc;                                               
-    has_doc_ = true;                                          
-  }                                                           
+  void set_doc(const std::string& doc) {
+    doc_ = doc;
+    has_doc_ = true;
+  }
 
   // This is not the same function as t_type::get_fingerprint_material,
   // but it does the same thing.
@@ -132,8 +132,8 @@ class t_field {
   bool xsd_nillable_;
   t_struct* xsd_attrs_;
 
-  std::string doc_;                                           
-  bool has_doc_;                                              
+  std::string doc_;
+  bool has_doc_;
 
 };
 
