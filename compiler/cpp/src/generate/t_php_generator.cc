@@ -402,14 +402,16 @@ void t_php_generator::_generate_php_struct_definition(ofstream& out,
     "class " << php_namespace(tstruct->get_program()) << tstruct->get_name();
   if (is_exception) {
     out << " extends TException";
-  } else {
+  } else if (oop_) {
     out << " extends TBase";
   }
   out <<
     " {" << endl;
   indent_up();
 
-  indent(out) << "static $_TSPEC;" << endl << endl;
+  if (oop_) {
+    indent(out) << "static $_TSPEC;" << endl << endl;
+  }
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string dval = "null";
@@ -424,27 +426,31 @@ void t_php_generator::_generate_php_struct_definition(ofstream& out,
   out << endl;
 
   // Generate constructor from array
-  string param = (members.size() > 0) ? "$vals=null" : "";
-  out <<
-    indent() << "public function __construct(" << param << ") {" << endl;
-  indent_up();
-
-  generate_php_struct_spec(out, tstruct);
-
-  if (members.size() > 0) {
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      t_type* t = get_true_type((*m_iter)->get_type());
-      if ((*m_iter)->get_value() != NULL && (t->is_struct() || t->is_xception())) {
-        indent(out) << "$this->" << (*m_iter)->get_name() << " = " << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
-      }
-    }
+  if (oop_ || members.size() > 0) {
+    string param = (members.size() > 0) ? "$vals=null" : "";
     out <<
-      indent() << "if (is_array($vals)) {" << endl <<
-      indent() << "  parent::__construct(self::$_TSPEC, $vals);" << endl <<
-      indent() << "}" << endl;
+      indent() << "public function __construct(" << param << ") {" << endl;
+    indent_up();
+
+    if (oop_) {
+      generate_php_struct_spec(out, tstruct);
+    }
+
+    if (members.size() > 0) {
+      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        t_type* t = get_true_type((*m_iter)->get_type());
+        if ((*m_iter)->get_value() != NULL && (t->is_struct() || t->is_xception())) {
+          indent(out) << "$this->" << (*m_iter)->get_name() << " = " << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
+        }
+      }
+      out <<
+        indent() << "if (is_array($vals)) {" << endl <<
+        indent() << "  parent::__construct(self::$_TSPEC, $vals);" << endl <<
+        indent() << "}" << endl;
+    }
+    scope_down(out);
+    out << endl;
   }
-  scope_down(out);
-  out << endl;
 
   out <<
     indent() << "public function getName() {" << endl <<
@@ -473,10 +479,11 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
     "public function read($input)" << endl;
   scope_up(out);
 
-  // TODO(mcslee): Testing this new jonx!
-  indent(out) << "return $this->_read('" << tstruct->get_name() << "', self::$_TSPEC, $input);" << endl;
-  scope_down(out);
-  return;
+  if (oop_) {
+    indent(out) << "return $this->_read('" << tstruct->get_name() << "', self::$_TSPEC, $input);" << endl;
+    scope_down(out);
+    return;
+  }
 
   out <<
     indent() << "$xfer = 0;" << endl <<
@@ -599,10 +606,11 @@ void t_php_generator::generate_php_struct_writer(ofstream& out,
   }
   indent_up();
 
-  // TODO(mcslee): Testing this new j0nx
-  indent(out) << "return $this->_write('" << tstruct->get_name() << "', self::$_TSPEC, $output);" << endl;
-  scope_down(out);
-  return;
+  if (oop_) {
+    indent(out) << "return $this->_write('" << tstruct->get_name() << "', self::$_TSPEC, $output);" << endl;
+    scope_down(out);
+    return;
+  }
 
   indent(out) <<
     "$xfer = 0;" << endl;

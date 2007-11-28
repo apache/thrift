@@ -25,12 +25,14 @@ class t_php_generator : public t_oop_generator {
                   bool binary_inline=false,
                   bool rest=false,
                   bool phps=false,
-                  bool autoload=false) :
+                  bool autoload=false,
+                  bool oop=false) :
     t_oop_generator(program),
     binary_inline_(binary_inline),
     rest_(rest),
     phps_(phps),
-    autoload_(autoload) {
+    autoload_(autoload),
+    oop_(oop) {
     out_dir_base_ = (binary_inline_ ? "gen-phpi" : "gen-php");
   }
 
@@ -179,6 +181,11 @@ class t_php_generator : public t_oop_generator {
    * Generate PHP code that uses autoload
    */
   bool autoload_;
+
+  /**
+   * Whether to use OOP base class TBase
+   */
+  bool oop_;
 
 };
 
