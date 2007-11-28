@@ -448,13 +448,13 @@ abstract class TBase {
           $xfer += $key->read($input);
           break;
         case TType::MAP:
-          $xfer += $this->_readMap($elem, $kspec, $input);
+          $xfer += $this->_readMap($key, $kspec, $input);
           break;
         case TType::LST:
-          $xfer += $this->_readList($elem, $kspec, $input, false);
+          $xfer += $this->_readList($key, $kspec, $input, false);
           break;
         case TType::SET:
-          $xfer += $this->_readList($elem, $kspec, $input, true);
+          $xfer += $this->_readList($key, $kspec, $input, true);
           break;
         }
       }
@@ -513,13 +513,13 @@ abstract class TBase {
           $xfer += $elem->read($input);
           break;
         case TType::MAP:
-          $xfer += $this->_readMap($key, $espec, $input);
+          $xfer += $this->_readMap($elem, $espec, $input);
           break;
         case TType::LST:
-          $xfer += $this->_readList($key, $espec, $input, false);
+          $xfer += $this->_readList($elem, $espec, $input, false);
           break;
         case TType::SET:
-          $xfer += $this->_readList($key, $espec, $input, true);
+          $xfer += $this->_readList($elem, $espec, $input, true);
           break;
         }
       }
