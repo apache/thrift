@@ -13,7 +13,7 @@
 #include "TTransport.h"
 #include "TServerSocket.h"
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 /**
  * TCP Socket implementation of the TTransport interface.
@@ -37,7 +37,7 @@ class TSocket : public TTransport {
    *
    */
   TSocket();
-  
+
   /**
    * Constructs a new socket. Note that this does NOT actually connect the
    * socket.
@@ -126,7 +126,7 @@ class TSocket : public TTransport {
    * Whether to enable/disable Nagle's algorithm.
    *
    * @param noDelay Whether or not to disable the algorithm.
-   * @return 
+   * @return
    */
   void setNoDelay(bool noDelay);
 
@@ -151,8 +151,26 @@ class TSocket : public TTransport {
    */
   void setMaxRecvRetries(int maxRecvRetries);
 
-  /** get socket information */
+  /**
+   * Get socket information formated as a string <Host: x Port: x>
+   */
   std::string getSocketInfo();
+
+  /**
+   * Returns the DNS name of the host to which the socket is connected
+   */
+  std::string getPeerHost();
+
+  /**
+   * Returns the address of the host to which the socket is connected
+   */
+  std::string getPeerAddress();
+
+  /**
+   * Returns the port of the host to which the socket is connected
+   **/
+  int getPeerPort();
+
 
  protected:
   /**
@@ -166,6 +184,15 @@ class TSocket : public TTransport {
 
   /** Host to connect to */
   std::string host_;
+
+  /** Peer hostname */
+  std::string peerHost_;
+
+  /** Peer address */
+  std::string peerAddress_;
+
+  /** Peer port */
+  int peerPort_;
 
   /** Port number to connect on */
   int port_;
@@ -184,7 +211,7 @@ class TSocket : public TTransport {
 
   /** Linger on */
   bool lingerOn_;
-  
+
   /** Linger val */
   int lingerVal_;
 

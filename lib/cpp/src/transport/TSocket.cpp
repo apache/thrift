@@ -486,4 +486,65 @@ string TSocket::getSocketInfo() {
   return oss.str();
 }
 
+std::string TSocket::getPeerHost() {
+  if (peerHost_.empty()) {
+    struct sockaddr_storage addr;
+    socklen_t addrLen = sizeof(addr);
+
+    if (socket_ < 0) {
+      return host_;
+    }
+
+    int rv = getpeername(socket_, (sockaddr*) &addr, &addrLen);
+
+    if (rv != 0) {
+      return peerHost_;
+    }
+
+    char clienthost[NI_MAXHOST];
+    char clientservice[NI_MAXSERV];
+
+    getnameinfo((sockaddr*) &addr, addrLen,
+                clienthost, sizeof(clienthost),
+                clientservice, sizeof(clientservice), 0);
+
+    peerHost_ = clienthost;
+  }
+  return peerHost_;
+}
+
+std::string TSocket::getPeerAddress() {
+  if (peerAddress_.empty()) {
+    struct sockaddr_storage addr;
+    socklen_t addrLen = sizeof(addr);
+
+    if (socket_ < 0) {
+      return peerAddress_;
+    }
+
+    int rv = getpeername(socket_, (sockaddr*) &addr, &addrLen);
+
+    if (rv != 0) {
+      return peerAddress_;
+    }
+
+    char clienthost[NI_MAXHOST];
+    char clientservice[NI_MAXSERV];
+
+    getnameinfo((sockaddr*) &addr, addrLen,
+                clienthost, sizeof(clienthost),
+                clientservice, sizeof(clientservice),
+                NI_NUMERICHOST|NI_NUMERICSERV);
+
+    peerAddress_ = clienthost;
+    peerPort_ = std::atoi(clientservice);
+  }
+  return peerAddress_;
+}
+
+int TSocket::getPeerPort() {
+  getPeerAddress();
+  return peerPort_;
+}
+
 }}} // facebook::thrift::transport

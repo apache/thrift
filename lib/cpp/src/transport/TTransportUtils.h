@@ -110,6 +110,10 @@ class TBufferedTransport : public TTransport {
 
   void consume(uint32_t len);
 
+  boost::shared_ptr<TTransport> getUnderlyingTransport() {
+    return transport_;
+  }
+
  protected:
   boost::shared_ptr<TTransport> transport_;
   uint8_t* rBuf_;
@@ -225,6 +229,10 @@ class TFramedTransport : public TTransport {
 
   void consume(uint32_t len);
 
+  boost::shared_ptr<TTransport> getUnderlyingTransport() {
+    return transport_;
+  }
+
  protected:
   boost::shared_ptr<TTransport> transport_;
   uint8_t* rBuf_;
@@ -242,6 +250,27 @@ class TFramedTransport : public TTransport {
    */
   void readFrame();
 };
+
+/**
+ * Wraps a transport into a framed one.
+ *
+ * @author Dave Simpson <dave@powerset.com>
+ */
+class TFramedTransportFactory : public TTransportFactory {
+ public:
+  TFramedTransportFactory() {}
+
+  virtual ~TFramedTransportFactory() {}
+
+  /**
+   * Wraps the transport into a framed one.
+   */
+  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
+    return boost::shared_ptr<TTransport>(new TFramedTransport(trans));
+  }
+
+};
+
 
 /**
  * A memory buffer is a tranpsort that simply reads from and writes to an
