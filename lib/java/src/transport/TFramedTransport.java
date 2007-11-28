@@ -9,6 +9,8 @@ package com.facebook.thrift.transport;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
+import com.facebook.thrift.TByteArrayOutputStream;
+
 /**
  * Socket implementation of the TTransport interface. To be commented soon!
  *
@@ -22,29 +24,11 @@ public class TFramedTransport extends TTransport {
   private TTransport transport_ = null;
 
   /**
-   * Class that allows access to the underlying buf without doing deep
-   * copies on it.
-   */
-  private static class MyByteArrayOutputStream extends ByteArrayOutputStream {
-    public MyByteArrayOutputStream(int size) {
-      super(size);
-    }
-
-    public byte[] get() {
-      return buf;
-    }
-
-    public int len() {
-      return count;
-    }
-  }
-
-  /**
    * Buffer for output
    */
-  private final MyByteArrayOutputStream writeBuffer_ =
-    new MyByteArrayOutputStream(1024);
-  
+  private final TByteArrayOutputStream writeBuffer_ =
+    new TByteArrayOutputStream(1024);
+
   /**
    * Buffer for input
    */
@@ -59,7 +43,7 @@ public class TFramedTransport extends TTransport {
    * Whether to frame output
    */
   private boolean frameWrite_ = true;
-  
+
   /**
    * Constructor wraps around another tranpsort
    */
@@ -135,7 +119,7 @@ public class TFramedTransport extends TTransport {
     }
     writeBuffer_.write(buf, off, len);
   }
-  
+
   public void flush() throws TTransportException {
     if (!frameWrite_) {
       transport_.flush();

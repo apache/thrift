@@ -6,8 +6,10 @@
 
 package com.facebook.thrift.protocol;
 
+import com.facebook.thrift.TByteArrayOutputStream;
 import com.facebook.thrift.TException;
 import com.facebook.thrift.transport.TTransport;
+import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Stack;
 
@@ -30,11 +32,11 @@ public class TJSONProtocol extends TProtocol {
 
   public static final byte[] COMMA = new byte[] {','};
   public static final byte[] COLON = new byte[] {':'};
-  public static final byte[] QUOTE = new byte[] {'"'};
   public static final byte[] LBRACE = new byte[] {'{'};
   public static final byte[] RBRACE = new byte[] {'}'};
   public static final byte[] LBRACKET = new byte[] {'['};
   public static final byte[] RBRACKET = new byte[] {']'};
+  public static final char QUOTE = '"';
 
   protected class Context {
     protected void write() throws TException {}
@@ -208,26 +210,55 @@ public class TJSONProtocol extends TProtocol {
 
   public void writeString(String str) throws TException {
     writeContext_.write();
-    trans_.write(QUOTE);
-
     int length = str.length();
-    StringBuffer escape = new StringBuffer(length);
-    char c;
+    StringBuffer escape = new StringBuffer(length + 16);
+    escape.append(QUOTE);
     for (int i = 0; i < length; ++i) {
-      c = str.charAt(i);
+      char c = str.charAt(i);
       switch (c) {
       case '"':
       case '\\':
         escape.append('\\');
         escape.append(c);
         break;
+      case '\b':
+        escape.append('\\');
+        escape.append('b');
+        break;
+      case '\f':
+        escape.append('\\');
+        escape.append('f');
+        break;
+      case '\n':
+        escape.append('\\');
+        escape.append('n');
+        break;
+      case '\r':
+        escape.append('\\');
+        escape.append('r');
+        break;
+      case '\t':
+        escape.append('\\');
+        escape.append('t');
+        break;
       default:
-        escape.append(c);
+        // Control characeters! According to JSON RFC u0020 (space)
+        if (c < ' ') {
+          String hex = Integer.toHexString(c);
+          escape.append('\\');
+          escape.append('u');
+          for (int j = 4; j > hex.length(); --j) {
+            escape.append('0');
+          }
+          escape.append(hex);
+        } else {
+          escape.append(c);
+        }
         break;
       }
     }
+    escape.append(QUOTE);
     _writeStringData(escape.toString());
-    trans_.write(QUOTE);
   }
 
   public void writeBinary(byte[] bin) throws TException {
