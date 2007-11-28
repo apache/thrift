@@ -9,7 +9,7 @@
 #include <string>
 #include <iostream>
 
-namespace facebook { namespace thrift { namespace server { 
+namespace facebook { namespace thrift { namespace server {
 
 using namespace std;
 using namespace facebook::thrift;
@@ -38,6 +38,11 @@ void TSimpleServer::serve() {
     return;
   }
 
+  // Run the preServe event
+  if (eventHandler_ != NULL) {
+    eventHandler_->preServe();
+  }
+
   // Fetch client from server
   while (!stop_) {
     try {
@@ -46,6 +51,9 @@ void TSimpleServer::serve() {
       outputTransport = outputTransportFactory_->getTransport(client);
       inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
+      if (eventHandler_ != NULL) {
+        eventHandler_->clientBegin(inputProtocol, outputProtocol);
+      }
       try {
         while (processor_->process(inputProtocol, outputProtocol)) {
           // Peek ahead, is the remote side closed?
@@ -58,9 +66,12 @@ void TSimpleServer::serve() {
       } catch (TException& tx) {
         cerr << "TSimpleServer exception: " << tx.what() << endl;
       }
+      if (eventHandler_ != NULL) {
+        eventHandler_->clientEnd(inputProtocol, outputProtocol);
+      }
       inputTransport->close();
       outputTransport->close();
-      client->close();    
+      client->close();
     } catch (TTransportException& ttx) {
       if (inputTransport != NULL) { inputTransport->close(); }
       if (outputTransport != NULL) { outputTransport->close(); }

@@ -13,7 +13,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-namespace facebook { namespace thrift { namespace server { 
+namespace facebook { namespace thrift { namespace server {
 
 using boost::shared_ptr;
 using namespace std;
@@ -23,10 +23,10 @@ using namespace facebook::thrift::transport;
 using namespace facebook::thrift::concurrency;
 
 class TThreadedServer::Task: public Runnable {
-       
+
 public:
-    
-  Task(TThreadedServer* server,
+
+  Task(TThreadedServer& server,
        shared_ptr<TProcessor> processor,
        shared_ptr<TProtocol> input,
        shared_ptr<TProtocol> output) :
@@ -37,8 +37,13 @@ public:
   }
 
   ~Task() {}
-    
+
   void run() {
+    boost::shared_ptr<TServerEventHandler> eventHandler =
+      server_.getEventHandler();
+    if (eventHandler != NULL) {
+      eventHandler->clientBegin(input_, output_);
+    }
     try {
       while (processor_->process(input_, output_)) {
         if (!input_->getTransport()->peek()) {
@@ -52,22 +57,25 @@ public:
     } catch (...) {
       cerr << "TThreadedServer uncaught exception." << endl;
     }
+    if (eventHandler != NULL) {
+      eventHandler->clientEnd(input_, output_);
+    }
     input_->getTransport()->close();
     output_->getTransport()->close();
-    
+
     // Remove this task from parent bookkeeping
     {
-      Synchronized s(server_->tasksMonitor_);
-      server_->tasks_.erase(this);
-      if (server_->tasks_.empty()) {
-        server_->tasksMonitor_.notify();
+      Synchronized s(server_.tasksMonitor_);
+      server_.tasks_.erase(this);
+      if (server_.tasks_.empty()) {
+        server_.tasksMonitor_.notify();
       }
     }
 
   }
 
  private:
-  TThreadedServer* server_;
+  TThreadedServer& server_;
   friend class TThreadedServer;
 
   shared_ptr<TProcessor> processor_;
@@ -103,7 +111,12 @@ void TThreadedServer::serve() {
     return;
   }
 
-  while (!stop_) {   
+  // Run the preServe event
+  if (eventHandler_ != NULL) {
+    eventHandler_->preServe();
+  }
+
+  while (!stop_) {
     try {
       client.reset();
       inputTransport.reset();
@@ -120,11 +133,11 @@ void TThreadedServer::serve() {
       inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
-      TThreadedServer::Task* task = new TThreadedServer::Task(this,
-                                                              processor_, 
+      TThreadedServer::Task* task = new TThreadedServer::Task(*this,
+                                                              processor_,
                                                               inputProtocol,
                                                               outputProtocol);
-        
+
       // Create a task
       shared_ptr<Runnable> runnable =
         shared_ptr<Runnable>(task);
@@ -132,7 +145,7 @@ void TThreadedServer::serve() {
       // Create a thread for this task
       shared_ptr<Thread> thread =
         shared_ptr<Thread>(threadFactory_->newThread(runnable));
-      
+
       // Insert thread into the set of threads
       {
         Synchronized s(tasksMonitor_);

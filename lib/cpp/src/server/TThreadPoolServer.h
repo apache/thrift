@@ -13,7 +13,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace server { 
+namespace facebook { namespace thrift { namespace server {
 
 using facebook::thrift::concurrency::ThreadManager;
 using facebook::thrift::protocol::TProtocolFactory;
@@ -23,7 +23,7 @@ using facebook::thrift::transport::TTransportFactory;
 class TThreadPoolServer : public TServer {
  public:
   class Task;
-  
+
   TThreadPoolServer(boost::shared_ptr<TProcessor> processor,
                     boost::shared_ptr<TServerTransport> serverTransport,
                     boost::shared_ptr<TTransportFactory> transportFactory,
@@ -35,7 +35,7 @@ class TThreadPoolServer : public TServer {
                     boost::shared_ptr<TTransportFactory> inputTransportFactory,
                     boost::shared_ptr<TTransportFactory> outputTransportFactory,
                     boost::shared_ptr<TProtocolFactory> inputProtocolFactory,
-                    boost::shared_ptr<TProtocolFactory> outputProtocolFactory, 
+                    boost::shared_ptr<TProtocolFactory> outputProtocolFactory,
                     boost::shared_ptr<ThreadManager> threadManager);
 
   virtual ~TThreadPoolServer();
@@ -45,7 +45,7 @@ class TThreadPoolServer : public TServer {
   virtual int64_t getTimeout() const;
 
   virtual void setTimeout(int64_t value);
-  
+
   virtual void stop() {
     stop_ = true;
     serverTransport_->interrupt();
@@ -58,7 +58,7 @@ class TThreadPoolServer : public TServer {
   volatile bool stop_;
 
   volatile int64_t timeout_;
-  
+
 };
 
 }}} // facebook::thrift::server

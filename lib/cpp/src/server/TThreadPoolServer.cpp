@@ -11,7 +11,7 @@
 #include <string>
 #include <iostream>
 
-namespace facebook { namespace thrift { namespace server { 
+namespace facebook { namespace thrift { namespace server {
 
 using boost::shared_ptr;
 using namespace std;
@@ -20,21 +20,28 @@ using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::protocol;;
 using namespace facebook::thrift::transport;
 
-class TThreadPoolServer::Task: public Runnable {
-       
+class TThreadPoolServer::Task : public Runnable {
+
 public:
-    
-  Task(shared_ptr<TProcessor> processor,
+
+  Task(TThreadPoolServer &server,
+       shared_ptr<TProcessor> processor,
        shared_ptr<TProtocol> input,
        shared_ptr<TProtocol> output) :
+    server_(server),
     processor_(processor),
     input_(input),
     output_(output) {
   }
 
   ~Task() {}
-    
+
   void run() {
+    boost::shared_ptr<TServerEventHandler> eventHandler =
+      server_.getEventHandler();
+    if (eventHandler != NULL) {
+      eventHandler->clientBegin(input_, output_);
+    }
     try {
       while (processor_->process(input_, output_)) {
         if (!input_->getTransport()->peek()) {
@@ -50,23 +57,27 @@ public:
     } catch (...) {
       cerr << "TThreadPoolServer uncaught exception." << endl;
     }
+    if (eventHandler != NULL) {
+      eventHandler->clientEnd(input_, output_);
+    }
     input_->getTransport()->close();
     output_->getTransport()->close();
   }
 
  private:
+  TServer& server_;
   shared_ptr<TProcessor> processor_;
   shared_ptr<TProtocol> input_;
   shared_ptr<TProtocol> output_;
 
 };
-  
+
 TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
                                      shared_ptr<TServerTransport> serverTransport,
                                      shared_ptr<TTransportFactory> transportFactory,
                                      shared_ptr<TProtocolFactory> protocolFactory,
                                      shared_ptr<ThreadManager> threadManager) :
-  TServer(processor, serverTransport, transportFactory, protocolFactory), 
+  TServer(processor, serverTransport, transportFactory, protocolFactory),
   threadManager_(threadManager),
   stop_(false), timeout_(0) {}
 
@@ -75,7 +86,7 @@ TThreadPoolServer::TThreadPoolServer(shared_ptr<TProcessor> processor,
                                      shared_ptr<TTransportFactory> inputTransportFactory,
                                      shared_ptr<TTransportFactory> outputTransportFactory,
                                      shared_ptr<TProtocolFactory> inputProtocolFactory,
-                                     shared_ptr<TProtocolFactory> outputProtocolFactory, 
+                                     shared_ptr<TProtocolFactory> outputProtocolFactory,
                                      shared_ptr<ThreadManager> threadManager) :
   TServer(processor, serverTransport, inputTransportFactory, outputTransportFactory,
           inputProtocolFactory, outputProtocolFactory),
@@ -99,7 +110,12 @@ void TThreadPoolServer::serve() {
     cerr << "TThreadPoolServer::run() listen(): " << ttx.what() << endl;
     return;
   }
-  
+
+  // Run the preServe event
+  if (eventHandler_ != NULL) {
+    eventHandler_->preServe();
+  }
+
   while (!stop_) {
     try {
       client.reset();
@@ -118,7 +134,7 @@ void TThreadPoolServer::serve() {
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
       // Add to threadmanager pool
-      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(processor_, inputProtocol, outputProtocol)), timeout_);
+      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(*this, processor_, inputProtocol, outputProtocol)), timeout_);
 
     } catch (TTransportException& ttx) {
       if (inputTransport != NULL) { inputTransport->close(); }

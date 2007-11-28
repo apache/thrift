@@ -675,9 +675,9 @@ void TNonblockingServer::serve() {
   // Initialize libevent core
   registerEvents(static_cast<event_base*>(event_init()));
 
-  // Run pre-serve callback function if we have one
-  if (preServeCallback_) {
-    preServeCallback_(preServeCallbackArg_);
+  // Run the preServe event
+  if (eventHandler_ != NULL) {
+    eventHandler_->preServe();
   }
 
   // Run libevent engine, never returns, invokes calls to eventHandler

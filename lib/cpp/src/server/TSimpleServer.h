@@ -10,7 +10,7 @@
 #include "server/TServer.h"
 #include "transport/TServerTransport.h"
 
-namespace facebook { namespace thrift { namespace server { 
+namespace facebook { namespace thrift { namespace server {
 
 /**
  * This is the most basic simple server. It is single-threaded and runs a
@@ -35,11 +35,11 @@ class TSimpleServer : public TServer {
                 boost::shared_ptr<TTransportFactory> outputTransportFactory,
                 boost::shared_ptr<TProtocolFactory> inputProtocolFactory,
                 boost::shared_ptr<TProtocolFactory> outputProtocolFactory):
-    TServer(processor, serverTransport, 
+    TServer(processor, serverTransport,
             inputTransportFactory, outputTransportFactory,
             inputProtocolFactory, outputProtocolFactory),
     stop_(false) {}
-    
+
   ~TSimpleServer() {}
 
   void serve();

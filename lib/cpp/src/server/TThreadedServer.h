@@ -14,7 +14,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace server { 
+namespace facebook { namespace thrift { namespace server {
 
 using facebook::thrift::TProcessor;
 using facebook::thrift::transport::TServerTransport;
@@ -26,7 +26,7 @@ class TThreadedServer : public TServer {
 
  public:
   class Task;
-  
+
   TThreadedServer(boost::shared_ptr<TProcessor> processor,
                   boost::shared_ptr<TServerTransport> serverTransport,
                   boost::shared_ptr<TTransportFactory> transportFactory,

@@ -14,14 +14,53 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace server { 
+namespace facebook { namespace thrift { namespace server {
 
 using facebook::thrift::TProcessor;
 using facebook::thrift::protocol::TBinaryProtocolFactory;
+using facebook::thrift::protocol::TProtocol;
 using facebook::thrift::protocol::TProtocolFactory;
 using facebook::thrift::transport::TServerTransport;
 using facebook::thrift::transport::TTransport;
 using facebook::thrift::transport::TTransportFactory;
+
+/**
+ * Virtual interface class that can handle events from the server core. To
+ * use this you should subclass it and implement the methods that you care
+ * about. Your subclass can also store local data that you may care about,
+ * such as additional "arguments" to these methods (stored in the object
+ * instance's state).
+ */
+class TServerEventHandler {
+ public:
+
+  virtual ~TServerEventHandler() {}
+
+  /**
+   * Called before the server begins.
+   */
+  virtual void preServe() {}
+
+  /**
+   * Called when a new client has connected and is about to being processing.
+   */
+  virtual void clientBegin(boost::shared_ptr<TProtocol> input,
+                           boost::shared_ptr<TProtocol> output) {}
+
+  /**
+   * Called when a client has finished making requests.
+   */
+  virtual void clientEnd(boost::shared_ptr<TProtocol> input,
+                         boost::shared_ptr<TProtocol> output) {}
+
+ protected:
+
+  /**
+   * Prevent direct instantiation.
+   */
+  TServerEventHandler() {}
+
+};
 
 /**
  * Thrift server.
@@ -29,7 +68,8 @@ using facebook::thrift::transport::TTransportFactory;
  * @author Mark Slee <mcslee@facebook.com>
  */
 class TServer : public concurrency::Runnable {
-public:
+ public:
+
   virtual ~TServer() {}
 
   virtual void serve() = 0;
@@ -40,7 +80,7 @@ public:
   virtual void run() {
     serve();
   }
-  
+
   boost::shared_ptr<TProcessor> getProcessor() {
     return processor_;
   }
@@ -56,13 +96,17 @@ public:
   boost::shared_ptr<TTransportFactory> getOutputTransportFactory() {
     return outputTransportFactory_;
   }
-  
+
   boost::shared_ptr<TProtocolFactory> getInputProtocolFactory() {
     return inputProtocolFactory_;
   }
 
   boost::shared_ptr<TProtocolFactory> getOutputProtocolFactory() {
     return outputProtocolFactory_;
+  }
+
+  boost::shared_ptr<TServerEventHandler> getEventHandler() {
+    return eventHandler_;
   }
 
 protected:
@@ -108,7 +152,7 @@ protected:
     inputProtocolFactory_(inputProtocolFactory),
     outputProtocolFactory_(outputProtocolFactory) {}
 
- 
+
   // Class variables
   boost::shared_ptr<TProcessor> processor_;
   boost::shared_ptr<TServerTransport> serverTransport_;
@@ -118,6 +162,8 @@ protected:
 
   boost::shared_ptr<TProtocolFactory> inputProtocolFactory_;
   boost::shared_ptr<TProtocolFactory> outputProtocolFactory_;
+
+  boost::shared_ptr<TServerEventHandler> eventHandler_;
 
   void setInputTransportFactory(boost::shared_ptr<TTransportFactory> inputTransportFactory) {
     inputTransportFactory_ = inputTransportFactory;
@@ -135,8 +181,12 @@ protected:
     outputProtocolFactory_ = outputProtocolFactory;
   }
 
+  void setServerEventHandler(boost::shared_ptr<TServerEventHandler> eventHandler) {
+    eventHandler_ = eventHandler;
+  }
+
 };
-  
+
 }}} // facebook::thrift::server
 
 #endif // #ifndef _THRIFT_SERVER_TSERVER_H_
