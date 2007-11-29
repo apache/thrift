@@ -12,6 +12,8 @@ import java.io.IOException;
 
 import java.net.URL;
 import java.net.HttpURLConnection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * HTTP implementation of the TTransport interface. Used for working with a
@@ -32,6 +34,8 @@ public class THttpClient extends TTransport {
 
   private int readTimeout_ = 0;
 
+  private Map<String,String> customHeaders_ = null;
+
   public THttpClient(String url) throws TTransportException {
     try {
       url_ = new URL(url);
@@ -46,6 +50,17 @@ public class THttpClient extends TTransport {
 
   public void setReadTimeout(int timeout) {
     readTimeout_ = timeout;
+  }
+
+  public void setCustomHeaders(Map<String,String> headers) {
+    customHeaders_ = headers;
+  }
+
+  public void setCustomHeader(String key, String value) {
+    if (customHeaders_ == null) {
+      customHeaders_ = new HashMap<String, String>();
+    }
+    customHeaders_.put(key, value);
   }
 
   public void open() {}
@@ -86,7 +101,7 @@ public class THttpClient extends TTransport {
 
   public void flush() throws TTransportException {
     // Extract request and reset buffer
-    byte[] data = requestBuffer_.toByteArray(); 
+    byte[] data = requestBuffer_.toByteArray();
     requestBuffer_.reset();
 
     try {
@@ -106,6 +121,11 @@ public class THttpClient extends TTransport {
       connection.setRequestProperty("Content-Type", "application/x-thrift");
       connection.setRequestProperty("Accept", "application/x-thrift");
       connection.setRequestProperty("User-Agent", "Java/THttpClient");
+      if (customHeaders_ != null) {
+        for (Map.Entry<String, String> header : customHeaders_.entrySet()) {
+          connection.setRequestProperty(header.getKey(), header.getValue());
+        }
+      }
       connection.setDoOutput(true);
       connection.connect();
       connection.getOutputStream().write(data);
@@ -120,6 +140,6 @@ public class THttpClient extends TTransport {
 
     } catch (IOException iox) {
       throw new TTransportException(iox);
-    } 
+    }
   }
 }
