@@ -165,6 +165,7 @@ protected:
 
   boost::shared_ptr<TServerEventHandler> eventHandler_;
 
+public:
   void setInputTransportFactory(boost::shared_ptr<TTransportFactory> inputTransportFactory) {
     inputTransportFactory_ = inputTransportFactory;
   }
