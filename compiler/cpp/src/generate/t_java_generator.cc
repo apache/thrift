@@ -1537,7 +1537,7 @@ void t_java_generator::generate_deserialize_set_element(ofstream& out,
   t_field felem(tset->get_elem_type(), elem);
 
   indent(out) <<
-    declare_field(&felem, true) << endl;
+    declare_field(&felem) << endl;
 
   generate_deserialize_field(out, &felem);
 
