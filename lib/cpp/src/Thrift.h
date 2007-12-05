@@ -125,7 +125,15 @@ class TApplicationException : public TException {
 
   virtual const char* what() const throw() {
     if (message_.empty()) {
-      return "Default TApplicationException.";
+      switch (type_) {
+        case UNKNOWN_METHOD: return "Unknown method";
+        case INVALID_MESSAGE_TYPE: return "Invalid message type";
+        case WRONG_METHOD_NAME: return "Wrong method name";
+        case BAD_SEQUENCE_ID: return "Bad sequence identifier";
+        case MISSING_RESULT: return "Missing result";
+
+        default: return "Default TApplicationException.";
+      };
     } else {
       return message_.c_str();
     }
