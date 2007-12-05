@@ -23,7 +23,6 @@
 namespace facebook { namespace thrift { namespace transport {
 
 using namespace std;
-using namespace facebook::thrift::concurrency;
 
 // Global var to track total socket sys calls
 uint32_t g_socket_syscalls = 0;
@@ -33,9 +32,6 @@ uint32_t g_socket_syscalls = 0;
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-
-// Mutex to protect syscalls to netdb
-static Monitor s_netdb_monitor;
 
 TSocket::TSocket(string host, int port) :
   host_(host),
@@ -224,11 +220,8 @@ void TSocket::open() {
   hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
   sprintf(port, "%d", port_);
 
-  {
-    // Scope lock on host entry lookup
-    Synchronized s(s_netdb_monitor);
-    error = getaddrinfo(host_.c_str(), port, &hints, &res0);
-  }
+  error = getaddrinfo(host_.c_str(), port, &hints, &res0);
+
   if (error) {
     fprintf(stderr, "getaddrinfo %d: %s\n", error, gai_strerror(error));
     close();
