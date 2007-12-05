@@ -52,14 +52,14 @@ module TProcessor
       return
     end
   end
-  
+
   def read_args(iprot, args_class)
     args = args_class.new
     args.read(iprot)
     iprot.readMessageEnd
     args
   end
-  
+
   def write_result(result, oprot, name, seqid)
     oprot.writeMessageBegin(name, TMessageType::REPLY, seqid)
     result.write(oprot)
@@ -85,7 +85,7 @@ class TApplicationException < TException
   WRONG_METHOD_NAME = 3
   BAD_SEQUENCE_ID = 4
   MISSING_RESULT = 5
-  
+
   attr_reader :type
 
   def initialize(type=UNKNOWN, message=nil)
@@ -155,7 +155,7 @@ module ThriftClient
     @oprot.writeMessageEnd()
     @oprot.trans.flush()
   end
-  
+
   def receive_message(result_klass)
     fname, mtype, rseqid = @iprot.readMessageBegin()
     handle_exception(mtype)
@@ -164,7 +164,7 @@ module ThriftClient
     @iprot.readMessageEnd()
     return result
   end
-  
+
   def handle_exception(mtype)
     if mtype == TMessageType::EXCEPTION
       x = TApplicationException.new()
@@ -181,17 +181,17 @@ module ThriftStruct
       instance_variable_set("@#{name}", d[name.to_s])
     end
   end
-  
-  def fields
+
+  def struct_fields
     self.class.const_get(:FIELDS)
   end
-  
+
   def each_field
-    fields.each do |fid, data|
+    struct_fields.each do |fid, data|
       yield fid, data[:type], data[:name]
     end
   end
-  
+
   def read(iprot)
     iprot.readStructBegin()
     loop do
@@ -202,14 +202,14 @@ module ThriftStruct
     end
     iprot.readStructEnd()
   end
-  
+
   def write(oprot)
     oprot.writeStructBegin(self.class.name)
     each_field do |fid, type, name|
       if ((value = instance_variable_get("@#{name}")) != nil)
         if is_container? type
           oprot.writeFieldBegin(name, type, fid)
-          write_container(oprot, value, fields[fid])
+          write_container(oprot, value, struct_fields[fid])
           oprot.writeFieldEnd
         else
           oprot.write_field(name, type, fid, value)
@@ -218,12 +218,12 @@ module ThriftStruct
     end
     oprot.writeFieldStop()
     oprot.writeStructEnd()
-  end  
-  
+  end
+
   protected
-  
+
   def handle_message(iprot, fid, ftype)
-    field = fields[fid]
+    field = struct_fields[fid]
     if field && field[:type] == ftype
       value = read_field(iprot, field)
       instance_variable_set("@#{field[:name]}", value)
@@ -231,7 +231,7 @@ module ThriftStruct
       iprot.skip(ftype)
     end
   end
-  
+
   def read_field(iprot, field = {})
     if field[:type] == TType::STRUCT
       value = field[:class].new
@@ -264,7 +264,7 @@ module ThriftStruct
     end
     value
   end
-  
+
   def write_data(oprot, value, field)
     if is_container? field[:type]
       write_container(oprot, value, field)
@@ -272,7 +272,7 @@ module ThriftStruct
       oprot.write_type(field[:type], value)
     end
   end
-  
+
   def write_container(oprot, value, field = {})
     if field[:type] == TType::MAP
       oprot.writeMapBegin(field[:key][:type], field[:value][:type], value.size)
@@ -297,13 +297,13 @@ module ThriftStruct
       raise "Not a container type: #{field[:type]}"
     end
   end
-  
+
   def is_container?(type)
     [TType::LIST, TType::MAP, TType::SET].include? type
   end
-  
+
   def field_info(field)
-    { :type => field[:type], 
+    { :type => field[:type],
       :class => field[:class],
       :key => field[:key],
       :value => field[:value],

@@ -33,7 +33,7 @@ class TSocket < TTransport
   def isOpen()
     return !@handle.nil?
   end
-  
+
   def write(str)
     begin
       @handle.write(str)
@@ -58,7 +58,7 @@ class TSocket < TTransport
     @handle.close() unless @handle.nil?
     @handle = nil
   end
-    
+
 end
 
 class TServerSocket < TServerTransport
@@ -80,7 +80,7 @@ class TServerSocket < TServerTransport
     end
     return nil
   end
-   
+
   def close()
    @handle.close() unless @handle.nil?
   end
