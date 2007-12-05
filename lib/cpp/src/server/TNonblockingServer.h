@@ -109,7 +109,8 @@ class TNonblockingServer : public TServer {
     serverSocket_(0),
     port_(port),
     frameResponses_(true),
-    threadManager_(threadManager) {
+    threadManager_(threadManager),
+    eventBase_(NULL) {
     setInputTransportFactory(inputTransportFactory);
     setOutputTransportFactory(outputTransportFactory);
     setInputProtocolFactory(inputProtocolFactory);
