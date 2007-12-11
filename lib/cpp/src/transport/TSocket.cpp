@@ -438,12 +438,20 @@ void TSocket::setConnTimeout(int ms) {
 }
 
 void TSocket::setRecvTimeout(int ms) {
+  if (ms < 0) {
+    char errBuf[512];
+    sprintf(errBuf, "TSocket::setRecvTimeout with negative input: %d\n", ms);
+    GlobalOutput(errBuf);
+    return;
+  }
   recvTimeout_ = ms;
-  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
-  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
+
   if (socket_ < 0) {
     return;
   }
+
+  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
+  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
 
   // Copy because select may modify
   struct timeval r = recvTimeval_;
@@ -455,7 +463,14 @@ void TSocket::setRecvTimeout(int ms) {
 }
 
 void TSocket::setSendTimeout(int ms) {
+  if (ms < 0) {
+    char errBuf[512];
+    sprintf(errBuf, "TSocket::setSendTimeout with negative input: %d\n", ms);
+    GlobalOutput(errBuf);
+    return;
+  }
   sendTimeout_ = ms;
+
   if (socket_ < 0) {
     return;
   }
