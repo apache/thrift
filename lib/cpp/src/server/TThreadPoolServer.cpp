@@ -54,6 +54,8 @@ public:
       //cerr << "TThreadPoolServer client died: " << ttx.what() << endl;
     } catch (TException& x) {
       cerr << "TThreadPoolServer exception: " << x.what() << endl;
+    } catch (std::exception &x) {
+      cerr << "TThreadPoolServer, std::exception: " << x.what() << endl;
     } catch (...) {
       cerr << "TThreadPoolServer uncaught exception." << endl;
     }
