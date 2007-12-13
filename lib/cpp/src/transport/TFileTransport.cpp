@@ -12,10 +12,10 @@
 #include "TTransportUtils.h"
 
 #include <pthread.h>
-#ifndef HAVE_CLOCK_GETTIME
-#include <time.h>
-#else
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#else
+#include <time.h>
 #endif
 #include <fcntl.h>
 #include <errno.h>
@@ -26,7 +26,7 @@
 #include <iostream>
 #include <sys/stat.h>
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 using boost::shared_ptr;
 using namespace std;
@@ -39,15 +39,15 @@ using namespace facebook::thrift::protocol;
  *
  * @author Paul Querna <pquerna@apache.org>
  */
-#define CLOCK_REALTIME 0 
+#define CLOCK_REALTIME 0
 static int clock_gettime(int clk_id /*ignored*/, struct timespec *tp) {
   struct timeval now;
-    
+
   int rv = gettimeofday(&now, NULL);
   if (rv != 0) {
     return rv;
   }
-    
+
   tp->tv_sec = now.tv_sec;
   tp->tv_nsec = now.tv_usec * 1000;
   return 0;
@@ -126,10 +126,10 @@ TFileTransport::~TFileTransport() {
     // set state to closing
     closing_ = true;
 
-    // TODO: make sure event queue is empty 
+    // TODO: make sure event queue is empty
     // currently only the write buffer is flushed
-    // we dont actually wait until the queue is empty. This shouldn't be a big 
-    // deal in the common case because writing is quick 
+    // we dont actually wait until the queue is empty. This shouldn't be a big
+    // deal in the common case because writing is quick
 
     pthread_join(writerThreadId_, NULL);
     writerThreadId_ = 0;
@@ -248,7 +248,7 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool bl
   }
 
   // this really should be a loop where it makes sure it got flushed
-  // because condition variables can get triggered by the os for no reason 
+  // because condition variables can get triggered by the os for no reason
   // it is probably a non-factor for the time being
   pthread_mutex_unlock(&mutex_);
 }
@@ -310,7 +310,7 @@ void TFileTransport::writerThread() {
 
   while(1) {
     // this will only be true when the destructor is being invoked
-    if(closing_) {      
+    if(closing_) {
       // empty out both the buffers
       if (enqueueBuffer_->isEmpty() && dequeueBuffer_->isEmpty()) {
         if (-1 == ::close(fd_)) {
@@ -351,7 +351,7 @@ void TFileTransport::writerThread() {
 
           int64_t chunk1 = offset_/chunkSize_;
           int64_t chunk2 = (offset_ + outEvent->eventSize_ - 1)/chunkSize_;
-          
+
           // if adding this event will cross a chunk boundary, pad the chunk with zeros
           if (chunk1 != chunk2) {
             // refetch the offset to keep in sync
@@ -430,7 +430,7 @@ void TFileTransport::flush() {
 uint32_t TFileTransport::readAll(uint8_t* buf, uint32_t len) {
   uint32_t have = 0;
   uint32_t get = 0;
-  
+
   while (have < len) {
     get = read(buf+have, len-have);
     if (get <= 0) {
@@ -438,7 +438,7 @@ uint32_t TFileTransport::readAll(uint8_t* buf, uint32_t len) {
     }
     have += get;
   }
-  
+
   return have;
 }
 
@@ -447,7 +447,7 @@ uint32_t TFileTransport::read(uint8_t* buf, uint32_t len) {
   if (!currentEvent_) {
     currentEvent_ = readEvent();
   }
-  
+
   // did not manage to read an event from the file. This could have happened
   // if the timeout expired or there was some other error
   if (!currentEvent_) {
@@ -459,15 +459,15 @@ uint32_t TFileTransport::read(uint8_t* buf, uint32_t len) {
   if (remaining <= (int32_t)len) {
     // copy over anything thats remaining
     if (remaining > 0) {
-      memcpy(buf, 
-             currentEvent_->eventBuff_ + currentEvent_->eventBuffPos_, 
+      memcpy(buf,
+             currentEvent_->eventBuff_ + currentEvent_->eventBuffPos_,
              remaining);
     }
     delete(currentEvent_);
     currentEvent_ = NULL;
     return remaining;
   }
-  
+
   // read as much as possible
   memcpy(buf, currentEvent_->eventBuff_ + currentEvent_->eventBuffPos_, len);
   currentEvent_->eventBuffPos_ += len;
@@ -478,7 +478,7 @@ eventInfo* TFileTransport::readEvent() {
   int readTries = 0;
 
   if (!readBuff_) {
-    readBuff_ = new uint8_t[readBuffSize_];    
+    readBuff_ = new uint8_t[readBuffSize_];
   }
 
   while (1) {
@@ -520,14 +520,14 @@ eventInfo* TFileTransport::readEvent() {
         }
       }
     }
-    
+
     readTries = 0;
 
     // attempt to read an event from the buffer
     while(readState_.bufferPtr_ < readState_.bufferLen_) {
       if (readState_.readingSize_) {
         if(readState_.eventSizeBuffPos_ == 0) {
-          if ( (offset_ + readState_.bufferPtr_)/chunkSize_ != 
+          if ( (offset_ + readState_.bufferPtr_)/chunkSize_ !=
                ((offset_ + readState_.bufferPtr_ + 3)/chunkSize_)) {
             // skip one byte towards chunk boundary
             //            T_DEBUG_L(1, "Skipping a byte");
@@ -536,7 +536,7 @@ eventInfo* TFileTransport::readEvent() {
           }
         }
 
-        readState_.eventSizeBuff_[readState_.eventSizeBuffPos_++] = 
+        readState_.eventSizeBuff_[readState_.eventSizeBuffPos_++] =
           readBuff_[readState_.bufferPtr_++];
         if (readState_.eventSizeBuffPos_ == 4) {
           // 0 length event indicates padding
@@ -570,29 +570,29 @@ eventInfo* TFileTransport::readEvent() {
                                 readState_.event_->eventSize_ - readState_.event_->eventBuffPos_);
 
         // copy data from read buffer into event buffer
-        memcpy(readState_.event_->eventBuff_ + readState_.event_->eventBuffPos_, 
+        memcpy(readState_.event_->eventBuff_ + readState_.event_->eventBuffPos_,
                readBuff_ + readState_.bufferPtr_,
                reclaimBuffer);
-        
+
         // increment position ptrs
         readState_.event_->eventBuffPos_ += reclaimBuffer;
         readState_.bufferPtr_ += reclaimBuffer;
-        
+
         // check if the event has been read in full
         if (readState_.event_->eventBuffPos_ == readState_.event_->eventSize_) {
           // set the completed event to the current event
           eventInfo* completeEvent = readState_.event_;
           completeEvent->eventBuffPos_ = 0;
-          
+
           readState_.event_ = NULL;
           readState_.resetState(readState_.bufferPtr_);
-          
+
           // exit criteria
           return completeEvent;
         }
       }
     }
-        
+
   }
 }
 
@@ -606,7 +606,7 @@ bool TFileTransport::isEventCorrupted() {
   } else if (readState_.event_->eventSize_ > chunkSize_) {
     // 2. Event size is larger than chunk size
     T_ERROR("Read corrupt event. Event size(%u) greater than chunk size (%u)",
-               readState_.event_->eventSize_, chunkSize_);            
+               readState_.event_->eventSize_, chunkSize_);
     return true;
   } else if( ((offset_ + readState_.bufferPtr_ - 4)/chunkSize_) !=
              ((offset_ + readState_.bufferPtr_ + readState_.event_->eventSize_ - 1)/chunkSize_) ) {
@@ -620,7 +620,7 @@ bool TFileTransport::isEventCorrupted() {
 }
 
 void TFileTransport::performRecovery() {
-  // perform some kickass recovery 
+  // perform some kickass recovery
   uint32_t curChunk = getCurChunk();
   if (lastBadChunk_ == curChunk) {
     numCorruptedEventsInChunk_++;
@@ -628,7 +628,7 @@ void TFileTransport::performRecovery() {
     lastBadChunk_ = curChunk;
     numCorruptedEventsInChunk_ = 1;
   }
-          
+
   if (numCorruptedEventsInChunk_ < maxCorruptedEvents_) {
     // maybe there was an error in reading the file from disk
     // seek to the beginning of chunk and try again
@@ -646,12 +646,12 @@ void TFileTransport::performRecovery() {
       }
       seekToChunk(curChunk + 1);
     } else {
-      // pretty hosed at this stage, rewind the file back to the last successful 
-      // point and punt on the error 
+      // pretty hosed at this stage, rewind the file back to the last successful
+      // point and punt on the error
       readState_.resetState(readState_.lastDispatchPtr_);
       currentEvent_ = NULL;
       char errorMsg[1024];
-      sprintf(errorMsg, "TFileTransport: log file corrupted at offset: %lu", 
+      sprintf(errorMsg, "TFileTransport: log file corrupted at offset: %lu",
               offset_ + readState_.lastDispatchPtr_);
       GlobalOutput(errorMsg);
       throw TTransportException(errorMsg);
@@ -664,7 +664,7 @@ void TFileTransport::seekToChunk(int32_t chunk) {
   if (fd_ <= 0) {
     throw TTransportException("File not open");
   }
- 
+
   int32_t numChunks = getNumChunks();
 
   // file is empty, seeking to chunk is pointless
@@ -682,7 +682,7 @@ void TFileTransport::seekToChunk(int32_t chunk) {
     T_DEBUG("Incorrect value for reverse seek. Seeking to beginning...", chunk)
     chunk = 0;
   }
-  
+
   // cannot seek past EOF
   bool seekToEnd = false;
   uint32_t minEndOffset = 0;
@@ -693,9 +693,9 @@ void TFileTransport::seekToChunk(int32_t chunk) {
     // this is the min offset to process events till
     minEndOffset = lseek(fd_, 0, SEEK_END);
   }
-  
+
   off_t newOffset = off_t(chunk) * chunkSize_;
-  offset_ = lseek(fd_, newOffset, SEEK_SET);  
+  offset_ = lseek(fd_, newOffset, SEEK_SET);
   readState_.resetAllValues();
   currentEvent_ = NULL;
   if (offset_ == -1) {
@@ -726,10 +726,10 @@ uint32_t TFileTransport::getNumChunks() {
   fstat(fd_, &f_info);
   if (f_info.st_size > 0) {
     return ((f_info.st_size)/chunkSize_) + 1;
-  } 
+  }
 
   // empty file has no chunks
-  return 0;  
+  return 0;
 }
 
 uint32_t TFileTransport::getCurChunk() {
@@ -831,9 +831,9 @@ bool TFileTransportBuffer::isEmpty() {
 TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
                                shared_ptr<TProtocolFactory> protocolFactory,
                                shared_ptr<TFileReaderTransport> inputTransport):
-  processor_(processor), 
-  inputProtocolFactory_(protocolFactory), 
-  outputProtocolFactory_(protocolFactory), 
+  processor_(processor),
+  inputProtocolFactory_(protocolFactory),
+  outputProtocolFactory_(protocolFactory),
   inputTransport_(inputTransport) {
 
   // default the output transport to a null transport (common case)
@@ -844,9 +844,9 @@ TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
                                shared_ptr<TProtocolFactory> inputProtocolFactory,
                                shared_ptr<TProtocolFactory> outputProtocolFactory,
                                shared_ptr<TFileReaderTransport> inputTransport):
-  processor_(processor), 
-  inputProtocolFactory_(inputProtocolFactory), 
-  outputProtocolFactory_(outputProtocolFactory), 
+  processor_(processor),
+  inputProtocolFactory_(inputProtocolFactory),
+  outputProtocolFactory_(outputProtocolFactory),
   inputTransport_(inputTransport) {
 
   // default the output transport to a null transport (common case)
@@ -857,10 +857,10 @@ TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
                                shared_ptr<TProtocolFactory> protocolFactory,
                                shared_ptr<TFileReaderTransport> inputTransport,
                                shared_ptr<TTransport> outputTransport):
-  processor_(processor), 
-  inputProtocolFactory_(protocolFactory), 
-  outputProtocolFactory_(protocolFactory), 
-  inputTransport_(inputTransport), 
+  processor_(processor),
+  inputProtocolFactory_(protocolFactory),
+  outputProtocolFactory_(protocolFactory),
+  inputTransport_(inputTransport),
   outputTransport_(outputTransport) {};
 
 void TFileProcessor::process(uint32_t numEvents, bool tail) {
@@ -872,7 +872,7 @@ void TFileProcessor::process(uint32_t numEvents, bool tail) {
   if (tail) {
     // save old read timeout so it can be restored
     inputTransport_->setReadTimeout(TFileTransport::TAIL_READ_TIMEOUT);
-  } 
+  }
 
   uint32_t numProcessed = 0;
   while(1) {
@@ -897,7 +897,7 @@ void TFileProcessor::process(uint32_t numEvents, bool tail) {
   // restore old read timeout
   if (tail) {
     inputTransport_->setReadTimeout(oldReadTimeout);
-  }  
+  }
 
 }
 
