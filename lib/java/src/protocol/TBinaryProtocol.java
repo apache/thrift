@@ -8,6 +8,8 @@ package com.facebook.thrift.protocol;
 
 import com.facebook.thrift.TException;
 import com.facebook.thrift.transport.TTransport;
+import com.facebook.thrift.transport.TTransportException;
+
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -23,6 +25,9 @@ public class TBinaryProtocol extends TProtocol {
   protected boolean strictRead_ = false;
   protected boolean strictWrite_ = true;
 
+  protected int readLength_;
+  protected boolean checkReadLength_ = false;
+  
   /**
    * Factory
    */
@@ -56,7 +61,6 @@ public class TBinaryProtocol extends TProtocol {
     strictRead_ = strictRead;
     strictWrite_ = strictWrite;
   }
-
 
   public void writeMessageBegin(TMessage message) throws TException {
     if (strictWrite_) {
@@ -248,13 +252,13 @@ public class TBinaryProtocol extends TProtocol {
 
   private byte[] bin = new byte[1];
   public byte readByte() throws TException {
-    trans_.readAll(bin, 0, 1);
+    readAll(bin, 0, 1);
     return bin[0];
   }
 
   private byte[] i16rd = new byte[2];
   public short readI16() throws TException {
-    trans_.readAll(i16rd, 0, 2);
+    readAll(i16rd, 0, 2);
     return
       (short)
       (((i16rd[0] & 0xff) << 8) |
@@ -263,7 +267,7 @@ public class TBinaryProtocol extends TProtocol {
 
   private byte[] i32rd = new byte[4];
   public int readI32() throws TException {
-    trans_.readAll(i32rd, 0, 4);
+    readAll(i32rd, 0, 4);
     return
       ((i32rd[0] & 0xff) << 24) |
       ((i32rd[1] & 0xff) << 16) |
@@ -273,7 +277,7 @@ public class TBinaryProtocol extends TProtocol {
 
   private byte[] i64rd = new byte[8];
   public long readI64() throws TException {
-    trans_.readAll(i64rd, 0, 8);
+    readAll(i64rd, 0, 8);
     return
       ((long)(i64rd[0] & 0xff) << 56) |
       ((long)(i64rd[1] & 0xff) << 48) |
@@ -296,6 +300,7 @@ public class TBinaryProtocol extends TProtocol {
 
   public String readStringBody(int size) throws TException {
     try {
+      checkReadLength(size);
       byte[] buf = new byte[size];
       trans_.readAll(buf, 0, size);
       return new String(buf, "UTF-8");
@@ -306,9 +311,29 @@ public class TBinaryProtocol extends TProtocol {
 
   public byte[] readBinary() throws TException {
     int size = readI32();
+    checkReadLength(size);
     byte[] buf = new byte[size];
     trans_.readAll(buf, 0, size);
     return buf;
   }
 
+  private int readAll(byte[] buf, int off, int len) throws TException {
+    checkReadLength(len);
+    return trans_.readAll(buf, off, len);
+  }
+  
+  public void setReadLength(int readLength) {
+    readLength_ = readLength;
+    checkReadLength_ = true;
+  }
+
+  protected void checkReadLength(int length) throws TException {
+    if (checkReadLength_) {
+      readLength_ -= length;
+      if (readLength_ < 0) {
+        throw new TException("Message length exceeded: " + length);
+      }
+    }
+  }
+  
 }
