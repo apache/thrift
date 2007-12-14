@@ -66,8 +66,15 @@ class TProtocolException : public facebook::thrift::TException {
 
   virtual const char* what() const throw() {
     if (message_.empty()) {
-      return (std::string("Default Protocol Exception: ") +
-        boost::lexical_cast<std::string>(type_)).c_str();
+      switch (type_) {
+        case UNKNOWN         : return "TProtocolException: Unknown protocol exception";
+        case INVALID_DATA    : return "TProtocolException: Invalid data";
+        case NEGATIVE_SIZE   : return "TProtocolException: Negative size";
+        case SIZE_LIMIT      : return "TProtocolException: Exceeded size limit";
+        case BAD_VERSION     : return "TProtocolException: Invalid version";
+        case NOT_IMPLEMENTED : return "TProtocolException: Not implemented";
+        default              : return "TProtocolException: (Invalid exception type)";
+      }
     } else {
       return message_.c_str();
     }

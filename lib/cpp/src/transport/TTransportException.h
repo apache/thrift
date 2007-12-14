@@ -75,8 +75,18 @@ class TTransportException : public facebook::thrift::TException {
 
   virtual const char* what() const throw() {
     if (message_.empty()) {
-      return (std::string("Default Transport Exception: ") +
-        boost::lexical_cast<std::string>(type_)).c_str();
+      switch (type_) {
+        case UNKNOWN        : return "TTransportException: Unknown transport exception";
+        case NOT_OPEN       : return "TTransportException: Transport not open";
+        case ALREADY_OPEN   : return "TTransportException: Transport already open";
+        case TIMED_OUT      : return "TTransportException: Timed out";
+        case END_OF_FILE    : return "TTransportException: End of file";
+        case INTERRUPTED    : return "TTransportException: Interrupted";
+        case BAD_ARGS       : return "TTransportException: Invalid arguments";
+        case CORRUPTED_DATA : return "TTransportException: Corrupted Data";
+        case INTERNAL_ERROR : return "TTransportException: Internal error";
+        default             : return "TTransportException: (Invalid exception type)";
+      }
     } else {
       return message_.c_str();
     }
