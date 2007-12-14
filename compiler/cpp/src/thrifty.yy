@@ -87,6 +87,7 @@ int g_arglist = 0;
 %token tok_xsd_attrs
 %token tok_ruby_namespace
 %token tok_smalltalk_category
+%token tok_smalltalk_prefix
 %token tok_cocoa_prefix
 
 /**
@@ -300,6 +301,13 @@ Header:
       pdebug("Header -> tok_smalltalk_category tok_st_identifier");
       if (g_parse_mode == PROGRAM) {
         g_program->set_smalltalk_category($2);
+      }
+    }
+| tok_smalltalk_prefix tok_identifier
+    {
+      pdebug("Header -> tok_smalltalk_prefix tok_identifier");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_smalltalk_prefix($2);
       }
     }
 | tok_java_package tok_identifier

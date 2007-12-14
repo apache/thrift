@@ -47,6 +47,13 @@ string t_st_generator::class_name() {
   return capitalize(program_name_);
 }
 
+string t_st_generator::prefix(string class_name) {
+  string prefix = program_->get_smalltalk_prefix();
+  string name = capitalize(class_name);
+  name = prefix.empty() ? name : (prefix + name);
+  return name;
+}
+
 string t_st_generator::client_class_name() {
   return capitalize(service_name_) + "Client";
 }
@@ -64,11 +71,11 @@ string t_st_generator::st_autogen_comment() {
 }
 
 void t_st_generator::generate_force_consts() {
-  f_ << class_name() << " enums keysAndValuesDo: [:k :v | " <<
-    class_name() << " enums at: k put: v value].!" << endl;
+  f_ << prefix(class_name()) << " enums keysAndValuesDo: [:k :v | " <<
+    prefix(class_name()) << " enums at: k put: v value].!" << endl;
 
-  f_ << class_name() << " constants keysAndValuesDo: [:k :v | " <<
-    class_name() << " constants at: k put: v value].!" << endl;
+  f_ << prefix(class_name()) << " constants keysAndValuesDo: [:k :v | " <<
+    prefix(class_name()) << " constants at: k put: v value].!" << endl;
 
 }
 
@@ -90,7 +97,7 @@ string t_st_generator::generated_category() {
 void t_st_generator::generate_typedef(t_typedef* ttypedef) {}
 
 void t_st_generator::st_class_def(std::ofstream &out, string name) {
-  out << "Object subclass: #" << capitalize(name) << endl;
+  out << "Object subclass: #" << prefix(name) << endl;
   indent_up();
   out << indent() << "instanceVariableNames: ''" << endl <<
     indent() << "classVariableNames: ''" << endl <<
@@ -119,7 +126,7 @@ void t_st_generator::st_method(std::ofstream &out, string cls, string name, stri
   tinfo = localtime(&rawtime);
   strftime(timestr, 50, "%m/%d/%Y %H:%M", tinfo);
 
-  out << "!" << capitalize(cls) <<
+  out << "!" << prefix(cls) <<
     " methodsFor: '"+category+"' stamp: 'thrift " << timestr << "'!\n" <<
     name << endl;
 
@@ -150,14 +157,14 @@ void t_st_generator::st_accessors(std::ofstream &out, string cls, string name, s
 }
 
 void t_st_generator::generate_class_side_definition() {
-  f_ << class_name() << " class" << endl <<
+  f_ << prefix(class_name()) << " class" << endl <<
     "\tinstanceVariableNames: 'constants enums'!" << endl << endl;
 
   st_accessors(f_, class_name() + " class", "enums");
   st_accessors(f_, class_name() + " class", "constants");
 
-  f_ << class_name() << " enums: Dictionary new!" << endl;
-  f_ << class_name() << " constants: Dictionary new!" << endl;
+  f_ << prefix(class_name()) << " enums: Dictionary new!" << endl;
+  f_ << prefix(class_name()) << " constants: Dictionary new!" << endl;
 
   f_ << endl;
 }
@@ -171,7 +178,7 @@ void t_st_generator::generate_class_side_definition() {
 void t_st_generator::generate_enum(t_enum* tenum) {
   string cls_name = program_name_ + capitalize(tenum->get_name());
 
-  f_ << class_name() << " enums at: '" << tenum->get_name() << "' put: [" <<
+  f_ << prefix(class_name()) << " enums at: '" << tenum->get_name() << "' put: [" <<
     "(Dictionary new " << endl;
 
   vector<t_enum_value*> constants = tenum->get_constants();
@@ -198,7 +205,7 @@ void t_st_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
 
-  f_ << class_name() << " constants at: '" << name << "' put: [" <<
+  f_ << prefix(class_name()) << " constants at: '" << name << "' put: [" <<
     render_const_value(type, value) << "]!" << endl << endl;
 }
 
@@ -337,7 +344,7 @@ void t_st_generator::generate_st_struct(std::ofstream& out, t_struct* tstruct, b
   else
     out << "Object";
 
-  out << " subclass: #" << capitalize(type_name(tstruct)) << endl <<
+  out << " subclass: #" << prefix(type_name(tstruct)) << endl <<
     "\tinstanceVariableNames: '";
 
   if (members.size() > 0) {
@@ -598,9 +605,10 @@ string t_st_generator::struct_reader(t_struct *tstruct, string clsName = "") {
   out << "[|" << desc << " " << val << "|" << endl;
   indent_up();
 
-  out << indent() << val << " := " <<
-    capitalize(clsName) << " new." << endl;
-
+  //This is nasty, but without it we'll break things by prefixing TResult.
+  string name = ((capitalize(clsName) == "TResult") ? capitalize(clsName) : prefix(clsName));
+  out << indent() << val << " := " << name << " new." << endl;
+    
   out << indent() << "iprot readStructBegin." << endl <<
     indent() << "[" << desc << " := iprot readFieldBegin." << endl <<
     indent() << desc << " type = TType stop] whileFalse: [|" << found << "|" << endl;
@@ -785,7 +793,7 @@ void t_st_generator::generate_service_client(t_service* tservice) {
     extends_client = extends + "Client";
   }
 
-  f_ << extends_client << " subclass: #" << client_class_name() << endl <<
+  f_ << extends_client << " subclass: #" << prefix(client_class_name()) << endl <<
     "\tinstanceVariableNames: ''\n" <<
     "\tclassVariableNames: ''\n" <<
     "\tpoolDictionaries: ''\n" <<

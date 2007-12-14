@@ -200,6 +200,14 @@ class t_program : public t_doc {
     return smalltalk_category_;
   }
 
+  void set_smalltalk_prefix(std::string smalltalk_prefix) {
+    smalltalk_prefix_ = smalltalk_prefix;
+  }
+  
+  const std::string& get_smalltalk_prefix() const {
+    return smalltalk_prefix_;
+  }
+
  private:
 
   // File path
@@ -257,7 +265,8 @@ class t_program : public t_doc {
 
   // Smalltalk category
   std::string smalltalk_category_;
-
+  // Smalltalk prefix
+  std::string smalltalk_prefix_;
 };
 
 #endif

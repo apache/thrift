@@ -99,16 +99,17 @@ class t_st_generator : public t_oop_generator {
 
   std::string class_name();
   std::string client_class_name();
+  std::string prefix(std::string name);
   std::string declare_field(t_field* tfield);
-	std::string sanitize(std::string s);
+  std::string sanitize(std::string s);
   std::string type_name(t_type* ttype);
 
-	std::string function_signature(t_function* tfunction);
+  std::string function_signature(t_function* tfunction);
   std::string argument_list(t_struct* tstruct);
-	std::string function_types_comment(t_function* fn);
+  std::string function_types_comment(t_function* fn);
 
   std::string type_to_enum(t_type* ttype);
-	std::string a_type(t_type* type);
+  std::string a_type(t_type* type);
   bool is_vowel(char c);
   std::string temp_name();
   std::string generated_category();

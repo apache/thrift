@@ -78,6 +78,7 @@ st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
 "perl_package"       { return tok_perl_package;         }
 "ruby_namespace"     { return tok_ruby_namespace;       }
 "smalltalk_category" { return tok_smalltalk_category;   }
+"smalltalk_prefix"   { return tok_smalltalk_prefix;     }
 "xsd_all"            { return tok_xsd_all;              }
 "xsd_optional"       { return tok_xsd_optional;         }
 "xsd_nillable"       { return tok_xsd_nillable;         }
