@@ -13,11 +13,21 @@ class TSocket(TTransportBase):
 
   """Socket implementation of TTransport base."""
 
-  def __init__(self, host='localhost', port=9090):
+  def __init__(self, host='localhost', port=9090, unix_socket=None):
+    """Initialize a TSocket
+
+    @param host(str)  The host to connect to.
+    @param port(int)  The (TCP) port to connect to.
+    @param unix_socket(str)  The filename of a unix socket to connect to.
+                             (host and port will be ignored.)
+    """
+
     self.host = host
     self.port = port
     self.handle = None
-
+    self._unix_socket = unix_socket
+    self._timeout = None
+    
   def setHandle(self, h):
     self.handle = h
 
@@ -25,16 +35,26 @@ class TSocket(TTransportBase):
     return self.handle != None
 
   def setTimeout(self, ms):
-    if (self.handle != None):
-      self.handle.settimeout(ms/1000.00)
+    if ms is None:
+      self._timeout = None
     else:
-      raise TTransportException(TTransportException.NOT_OPEN, 'No handle yet in TSocket')
+      self._timeout = ms/1000.0
+    
+    if (self.handle != None):
+      self.handle.settimeout(self._timeout)
 
+  def _resolveAddr(self):
+    if self._unix_socket is not None:
+      return [(socket.AF_UNIX, socket.SOCK_STREAM, None, None, self._unix_socket)]
+    else:
+      return socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
+    
   def open(self):
     try:
-      res0 = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
+      res0 = self._resolveAddr()
       for res in res0:
         self.handle = socket.socket(res[0], res[1])
+        self.handle.settimeout(self._timeout)
         try:
           self.handle.connect(res[4])
         except socket.error, e:
