@@ -1,3 +1,10 @@
+Patrick Collison <patrick@collison.ie>
+-Smalltalk bindings.
+
+Dave Simpson <dave@powerset.com>
+-Better support for connection tracking in the C++ server.
+-Miscellaneous fixes.
+
 Igor Afanasyev <afan@evernote.com>
 -Perl HttpClient and bugfixes
 
