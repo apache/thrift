@@ -185,7 +185,7 @@ public class TBinaryProtocol extends TProtocol {
       if (version != VERSION_1) {
         throw new TProtocolException(TProtocolException.BAD_VERSION, "Bad version in readMessageBegin");
       }
-      message.type = (byte)(version & 0x000000ff);
+      message.type = (byte)(size & 0x000000ff);
       message.name = readString();
       message.seqid = readI32();
     } else {
