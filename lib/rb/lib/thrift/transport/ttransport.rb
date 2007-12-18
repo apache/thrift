@@ -140,7 +140,7 @@ class TFramedTransport < TTransport
     end
 
     if (@rbuf.length == 0)
-      self.readFrame
+      readFrame
     end
 
     # return full buf
