@@ -400,7 +400,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   indent_up();
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = get_true_type((*m_iter)->get_type());
-    if (!t->is_base_type() && (*m_iter)->get_value() != NULL) {
+    if ((*m_iter)->get_value() != NULL) {
       print_const_value(out, "this." + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
     }
   }
