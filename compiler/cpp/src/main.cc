@@ -133,10 +133,12 @@ int g_doctext_lineno;
  * Flags to control code generation
  */
 bool gen_cpp = false;
+bool gen_dense = false;
 bool gen_java = false;
 bool gen_javabean = false;
 bool gen_rb = false;
 bool gen_py = false;
+bool gen_py_newstyle = false;
 bool gen_xsd = false;
 bool gen_php = false;
 bool gen_phpi = false;
@@ -150,7 +152,6 @@ bool gen_ocaml = false;
 bool gen_hs = false;
 bool gen_cocoa = false;
 bool gen_st = false;
-bool gen_dense = false;
 bool gen_recurse = false;
 
 /**
@@ -569,6 +570,7 @@ void usage() {
   fprintf(stderr, "  -phpa       Generate PHP with autoload (with -php)\n");
   fprintf(stderr, "  -phpo       Generate PHP with object oriented subclasses (with -php)\n");
   fprintf(stderr, "  -py         Generate Python output files\n");
+  fprintf(stderr, "  -pyns       Generate Python new-style classes (with -py)\n");
   fprintf(stderr, "  -rb         Generate Ruby output files\n");
   fprintf(stderr, "  -xsd        Generate XSD output files\n");
   fprintf(stderr, "  -perl       Generate Perl output files\n");
@@ -834,7 +836,7 @@ void generate(t_program* program) {
 
     if (gen_py) {
       pverbose("Generating Python\n");
-      t_py_generator* py = new t_py_generator(program);
+      t_py_generator* py = new t_py_generator(program, gen_py_newstyle);
       py->generate_program();
       delete py;
     }
@@ -958,30 +960,25 @@ int main(int argc, char** argv) {
       } else if (strcmp(arg, "-phpi") == 0) {
         gen_phpi = true;
       } else if (strcmp(arg, "-phps") == 0) {
-        if (!gen_php) {
-          gen_php = true;
-        }
+        gen_php = true;
         gen_phps = true;
       } else if (strcmp(arg, "-phpl") == 0) {
-        if (!gen_php) {
-          gen_php = true;
-        }
+        gen_php = true;
         gen_phps = false;
       } else if (strcmp(arg, "-phpa") == 0) {
-        if (!gen_php) {
-          gen_php = true;
-          gen_phps = false;
-        }
+        gen_php = true;
+        gen_phps = false;
         gen_phpa = true;
       } else if (strcmp(arg, "-phpo") == 0) {
-        if (!gen_php) {
-          gen_php = true;
-        }
+        gen_php = true;
         gen_phpo = true;
       } else if (strcmp(arg, "-rest") == 0) {
         gen_rest = true;
       } else if (strcmp(arg, "-py") == 0) {
         gen_py = true;
+      } else if (strcmp(arg, "-pyns") == 0) {
+        gen_py = true;
+        gen_py_newstyle = true;
       } else if (strcmp(arg, "-rb") == 0) {
         gen_rb = true;
       } else if (strcmp(arg, "-xsd") == 0) {

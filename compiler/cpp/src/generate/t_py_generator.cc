@@ -149,7 +149,9 @@ void t_py_generator::generate_typedef(t_typedef* ttypedef) {}
  */
 void t_py_generator::generate_enum(t_enum* tenum) {
   f_types_ <<
-    "class " << tenum->get_name() << ":" << endl;
+    "class " << tenum->get_name() <<
+    (gen_newstyle_ ? "(object)" : "") <<
+    ":" << endl;
   indent_up();
 
   vector<t_enum_value*> constants = tenum->get_constants();
@@ -326,9 +328,7 @@ struct FieldKeyCompare {
 };
 
 /**
- * Generates a struct definition for a thrift data type. This is nothing in PHP
- * where the objects are all just associative arrays (unless of course we
- * decide to start using objects for them...)
+ * Generates a struct definition for a thrift data type.
  *
  * @param tstruct The struct definition
  */
@@ -346,6 +346,8 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
     "class " << tstruct->get_name();
   if (is_exception) {
     out << "(Exception)";
+  } else if (gen_newstyle_) {
+    out << "(object)";
   }
   out <<
     ":" << endl;

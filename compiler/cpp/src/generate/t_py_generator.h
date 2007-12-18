@@ -21,8 +21,10 @@
  */
 class t_py_generator : public t_generator {
  public:
-  t_py_generator(t_program* program) :
-    t_generator(program) {
+  t_py_generator(t_program* program, bool gen_newstyle) :
+    t_generator(program),
+    gen_newstyle_(gen_newstyle) {
+
     out_dir_base_ = "gen-py";
   }
 
@@ -145,6 +147,11 @@ class t_py_generator : public t_generator {
   }
 
  private:
+
+  /**
+   * True iff we should generate new-style classes.
+   */
+  bool gen_newstyle_;
 
   /**
    * File streams
