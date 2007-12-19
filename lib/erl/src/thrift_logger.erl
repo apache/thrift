@@ -214,10 +214,19 @@ config(Item) ->
 
 print_crash_report(Report) ->
     case Report of
+        %% for R12B0
+        [[_, _, {error_info, {exit, {thrift_exception, _}, _}} | _] | _] ->
+            ok;
+        [[_, _, {error_info, {exit, {timeout, _}, _}} | _] | _]  ->
+            ok;
+
+        %% for R11B5
         [[_,_,{error_info, {thrift_exception, _}}|_] | _]  ->
             ok;
         [[_,_,{error_info, {timeout, _}}|_] | _]  ->
             ok;
+
+        %% else
         _ ->
             io:format("~~~~ crash report: ~w~n", [Report])
     end.
