@@ -83,6 +83,12 @@ class RWGuard {
 };  
 
 
+// A little hack to prevent someone from trying to do "Guard(m);"
+// Sorry for polluting the global namespace, but I think it's worth it.
+#define Guard(m) incorrect_use_of_Guard(m)
+#define RWGuard(m) incorrect_use_of_RWGuard(m)
+
+
 }}} // facebook::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_MUTEX_H_
