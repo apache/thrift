@@ -39,6 +39,12 @@ class TProtocolException extends TException {
  * Protocol base class module.
  */
 abstract class TProtocol {
+  // The below may seem silly, but it is to get around the problem that the
+  // "instanceof" operator can only take in a T_VARIABLE and not a T_STRING
+  // or T_CONSTANT_ENCAPSED_STRING. Using "is_a()" instead of "instanceof" is
+  // a workaround but is deprecated in PHP5. This is used in the generated
+  // deserialization code.
+  static $TBINARYPROTOCOLACCELERATED = 'TBinaryProtocolAccelerated';
 
   /**
    * Underlying transport
@@ -63,7 +69,7 @@ abstract class TProtocol {
     return $this->trans_;
   }
 
-  /** 
+  /**
    * Writes the message header
    *
    * @param string $name Function name
@@ -112,19 +118,19 @@ abstract class TProtocol {
   public abstract function writeMapBegin($keyType, $valType, $size);
 
   public abstract function writeMapEnd();
-  
+
   public abstract function writeListBegin($elemType, $size);
-  
+
   public abstract function writeListEnd();
 
   public abstract function writeSetBegin($elemType, $size);
 
   public abstract function writeSetEnd();
-  
+
   public abstract function writeBool($bool);
 
   public abstract function writeByte($byte);
-  
+
   public abstract function writeI16($i16);
 
   public abstract function writeI32($i32);
@@ -150,7 +156,7 @@ abstract class TProtocol {
   public abstract function readMessageEnd();
 
   public abstract function readStructBegin(&$name);
-  
+
   public abstract function readStructEnd();
 
   public abstract function readFieldBegin(&$name, &$fieldType, &$fieldId);
@@ -162,17 +168,17 @@ abstract class TProtocol {
   public abstract function readMapEnd();
 
   public abstract function readListBegin(&$elemType, &$size);
-  
+
   public abstract function readListEnd();
 
   public abstract function readSetBegin(&$elemType, &$size);
-  
+
   public abstract function readSetEnd();
 
   public abstract function readBool(&$bool);
-  
+
   public abstract function readByte(&$byte);
-  
+
   public abstract function readI16(&$i16);
 
   public abstract function readI32(&$i32);
@@ -343,7 +349,7 @@ abstract class TProtocol {
       }
     default:
       return 0;
-    }   
+    }
   }
 }
 
@@ -358,6 +364,6 @@ interface TProtocolFactory {
    */
   public function getProtocol($trans);
 }
-    
+
 
 ?>

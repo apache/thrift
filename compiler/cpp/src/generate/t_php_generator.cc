@@ -1336,7 +1336,7 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
       generate_deserialize_container(out, type, name);
     } else if (type->is_base_type() || type->is_enum()) {
 
-      out << indent() << "if (is_a($input,'TBinaryProtocolAccelerated') && function_exists('thrift_protocol_binary_deserialize')) {" << endl;
+      out << indent() << "if (($input instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_binary_deserialize')) {" << endl;
       indent_up();
       string ttype_name;
       if (type->is_enum()) {
@@ -1496,7 +1496,7 @@ void t_php_generator::generate_deserialize_struct(ofstream &out,
 void t_php_generator::generate_deserialize_container(ofstream &out,
                                                      t_type* ttype,
                                                      string prefix) {
-  out << indent() << "if (is_a($input, 'TBinaryProtocolAccelerated') && function_exists('thrift_protocol_binary_deserialize'))" << endl;
+  out << indent() << "if (($input instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_binary_deserialize'))" << endl;
   scope_up(out);
 
   string ttype_name;
