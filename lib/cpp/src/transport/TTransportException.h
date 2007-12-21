@@ -69,7 +69,7 @@ class TTransportException : public facebook::thrift::TException {
    *
    * @return Error code
    */
-  TTransportExceptionType getType() {
+  TTransportExceptionType getType() const throw() {
     return type_;
   }
 
