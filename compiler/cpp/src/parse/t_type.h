@@ -29,7 +29,7 @@ class t_type : public t_doc {
  public:
   virtual ~t_type() {}
 
-  virtual void set_name(std::string name) {
+  virtual void set_name(const std::string& name) {
     name_ = name;
   }
 
