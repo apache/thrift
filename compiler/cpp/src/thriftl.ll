@@ -114,6 +114,7 @@ st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
 
 "abstract"           { thrift_reserved_keyword(yytext); }
 "and"                { thrift_reserved_keyword(yytext); }
+"args"               { thrift_reserved_keyword(yytext); }
 "as"                 { thrift_reserved_keyword(yytext); }
 "assert"             { thrift_reserved_keyword(yytext); }
 "break"              { thrift_reserved_keyword(yytext); }
