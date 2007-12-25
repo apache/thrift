@@ -421,9 +421,7 @@ void ThreadManager::Impl::removeWorker(size_t value) {
     }
 
     if (pendingTaskCountMax_ > 0 && (tasks_.size() >= pendingTaskCountMax_)) {
-
-      if (canSleep()) {
-
+      if (canSleep() && timeout >= 0) {
         while (pendingTaskCountMax_ > 0 && tasks_.size() >= pendingTaskCountMax_) {
           monitor_.wait(timeout);
         }

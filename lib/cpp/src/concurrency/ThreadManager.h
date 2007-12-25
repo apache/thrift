@@ -123,7 +123,9 @@ class ThreadManager {
    * @param task  The task to queue for execution
    *
    * @param timeout Time to wait in milliseconds to add a task when a pending-task-count
-   * is specified
+   * is specified. Specific cases:
+   * timeout = 0  : Wait forever to queue task.
+   * timeout = -1 : Return immediately if pending task count exceeds specified max
    *
    * @throws TooManyPendingTasksException Pending task count exceeds max pending task count
    */
