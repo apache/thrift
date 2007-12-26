@@ -15,6 +15,9 @@ require 5.6.0;
 use strict;
 use warnings;
 
+use utf8;
+use Encode;
+
 use Thrift;
 use Thrift::Protocol;
 
@@ -209,9 +212,14 @@ sub writeString{
     my $self = shift;
     my $value= shift;
 
+    if( utf8::is_utf8($value) ){
+        $value = Encode::encode_utf8($value);
+    }
+
     my $len = length($value);
 
     my $result = $self->writeI32($len);
+
     if ($len) {
         $self->{trans}->write($value,$len);
     }
@@ -240,7 +248,7 @@ sub readMessageBegin
           $self->readI32($seqid);
     } else { # old client support code
       return
-        $result + 
+        $result +
         $self->readStringBody($name, $version) + # version here holds the size of the string
         $self->readByte($type) +
         $self->readI32($seqid);
