@@ -417,7 +417,7 @@ void t_erl_generator::generate_erl_struct_reader(ostream& out,
 
   // Generate deserialization code for known cases
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    out << indent() << "(Fid == " << (*f_iter)->get_key() << ") and (Ftype == "
+    out << indent() << "(Fid == " << (*f_iter)->get_key() << "), (Ftype == "
         << type_to_enum((*f_iter)->get_type()) << ") ->" << endl;
 
     indent_up();
@@ -698,7 +698,7 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
     export_function(*f_iter, "send_");
 
     indent(f_service_) <<
-      "send_" << function_signature(*f_iter) << " ->" << endl;
+      function_signature(*f_iter, "send_") << " ->" << endl;
     indent_up();
 
     std::string argsname = capitalize((*f_iter)->get_name() + "_args");
@@ -708,7 +708,7 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
       indent() << "Oprot = This#" << service_name_ << ".oprot," << endl <<
       indent() << "Seqid = This#" << service_name_ << ".seqid," << endl <<
       indent() << "?R3(Oprot, writeMessageBegin, \"" << (*f_iter)->get_name() << "\", ?tMessageType_CALL, Seqid)," << endl <<
-      indent() << "Args = #" << (*f_iter)->get_name() << "_args{";
+      indent() << "Args = #" << uncapitalize(funname) << "_args{";
 
     bool first = true;
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
@@ -717,7 +717,7 @@ void t_erl_generator::generate_service_client(t_service* tservice) {
                  << "=" << capitalize((*fld_iter)->get_name());
     }
     f_service_ << "}," << endl;
-    indent(f_service_) << (*f_iter)->get_name() << "_args_write(Args, Oprot)," << endl;
+    indent(f_service_) << uncapitalize(funname) << "_args_write(Args, Oprot)," << endl;
 
     // Write to the stream
     f_service_ <<
@@ -932,8 +932,9 @@ void t_erl_generator::generate_process_function(t_service* tservice,
   f_service_ <<
     indent() << "Seqid, Oprot, % suppress unused warnings" << endl;
 
-  string argsname = tfunction->get_name() + "_args";
-  string resultname = tfunction->get_name() + "_result";
+  string ucfunname  = uncapitalize(tfunction->get_name());
+  string argsname   = ucfunname + "_args";
+  string resultname = ucfunname + "_result";
 
   f_service_ <<
     indent() << "_Args = " << argsname << "_read(Iprot)," << endl <<
@@ -969,7 +970,7 @@ void t_erl_generator::generate_process_function(t_service* tservice,
   if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
     f_service_<< "Res = ";
   }
-  f_service_ << "HandlerModule:" << tfunction->get_name() << "(";
+  f_service_ << "HandlerModule:" << atomize(tfunction->get_name()) << "(";
 
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -978,7 +979,7 @@ void t_erl_generator::generate_process_function(t_service* tservice,
     } else {
       f_service_ << ", ";
     }
-    f_service_ << "_Args#" << tfunction->get_name() << "_args." << (*f_iter)->get_name();
+    f_service_ << "_Args#" << argsname << "." << (*f_iter)->get_name();
   }
   f_service_ << ")," << endl;
   if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
@@ -1004,7 +1005,7 @@ void t_erl_generator::generate_process_function(t_service* tservice,
   if (!tfunction->is_async()) {
     f_service_ <<
       indent() << "?R3(Oprot, writeMessageBegin, \"" << tfunction->get_name() << "\", ?tMessageType_REPLY, Seqid)," << endl <<
-      indent() << tfunction->get_name() << "_result_write(Result, Oprot)," << endl;
+      indent() << ucfunname << "_result_write(Result, Oprot)," << endl;
   }
   indent(f_service_) << "Result" << endl;
   indent_down();
@@ -1459,7 +1460,7 @@ string t_erl_generator::declare_field(t_field* tfield) {  // TODO
 string t_erl_generator::function_signature(t_function* tfunction,
                                            string prefix) {
   return
-    prefix + tfunction->get_name() +
+    atomize(prefix + tfunction->get_name()) +
     "(This" +  capitalize(argument_list(tfunction->get_arglist())) + ")";
 }
 
@@ -1472,7 +1473,8 @@ void t_erl_generator::export_string(string name, int num) {
   } else {
     export_lines_ << ", ";
   }
-  export_lines_ << name << "/" << num;
+
+  export_lines_ << atomize(name) << "/" << num;
 }
 
 void t_erl_generator::export_types_function(t_function* tfunction,

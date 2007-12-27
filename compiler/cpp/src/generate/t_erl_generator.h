@@ -16,7 +16,7 @@
 class t_erl_generator : public t_oop_generator {
  public:
   t_erl_generator(t_program* program) :
-    t_oop_generator(program) 
+    t_oop_generator(program)
   {
     program_name_[0] = tolower(program_name_[0]);
     service_name_[0] = tolower(service_name_[0]);
@@ -68,18 +68,18 @@ class t_erl_generator : public t_oop_generator {
    */
 
   void generate_deserialize_field        (std::ostream &out,
-                                          t_field*    tfield, 
+                                          t_field*    tfield,
                                           std::string prefix="",
                                           bool inclass=false);
-  
+
   void generate_deserialize_struct       (std::ostream &out,
                                           t_struct*   tstruct,
                                           std::string prefix="");
-  
+
   void generate_deserialize_container    (std::ostream &out,
                                           t_type*     ttype,
                                           std::string prefix="");
-  
+
   void generate_deserialize_set_element  (std::ostream &out,
                                           t_set*      tset,
                                           std::string prefix="");
@@ -141,6 +141,14 @@ class t_erl_generator : public t_oop_generator {
     return in;
   }
 
+  std::string atomize(std::string in) {
+    if (isupper(in[0])) {
+      return "'" + in + "'";
+    } else {
+      return in;
+    }
+  }
+
  private:
 
   /**
@@ -156,9 +164,9 @@ class t_erl_generator : public t_oop_generator {
   /**
    * write out headers and footers for hrl files
    */
-  
+
   void hrl_header(std::ostream& out, std::string name);
-  void hrl_footer(std::ostream& out, std::string name); 
+  void hrl_footer(std::ostream& out, std::string name);
 
   /**
    * stuff to spit out at the top of generated files
@@ -178,7 +186,7 @@ class t_erl_generator : public t_oop_generator {
   std::ofstream f_types_file_;
   std::ofstream f_types_hrl_file_;
 
-  std::ofstream f_consts_; 
+  std::ofstream f_consts_;
   std::ostringstream f_service_;
   std::ofstream f_service_file_;
   std::ofstream f_service_hrl_;
