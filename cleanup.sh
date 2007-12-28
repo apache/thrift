@@ -32,9 +32,9 @@ if/gen-*
 
 for subdir in ${subdirs}; do 
     if [ -x "${subdir}/cleanup.sh" ]; then 
-	cwd="`pwd`"
-	cd "${subdir}"
-	./cleanup.sh
-	cd "${cwd}"
+      cwd="`pwd`"
+      cd "${subdir}"
+      ./cleanup.sh
+      cd "${cwd}"
     fi
 done

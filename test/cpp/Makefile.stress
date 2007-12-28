@@ -19,6 +19,7 @@ target: all
 
 include_paths = $(thrift_home)/lib/cpp/src \
                 $(thrift_home)/lib/cpp \
+                $(thrift_home)/ \
                 $(boost_home)
 
 include_flags = $(patsubst %,-I%, $(include_paths))

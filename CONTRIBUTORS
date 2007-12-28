@@ -1,3 +1,6 @@
+Ben Maurer <bmaurer@andrew.cmu.edu>
+-Restructuring the way Autoconf is used.
+
 Patrick Collison <patrick@collison.ie>
 -Smalltalk bindings.
 

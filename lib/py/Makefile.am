@@ -1,5 +1,5 @@
 DESTDIR ?= /
-EXTRA_DIST = bootstrap.sh cleanup.sh setup.py LICENSE src
+EXTRA_DIST = setup.py src
 
 all:
 	$(PYTHON) setup.py build

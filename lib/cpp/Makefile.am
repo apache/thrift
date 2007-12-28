@@ -61,7 +61,7 @@ libthriftz_la_CPPFLAGS =  $(ZLIB_CPPFLAGS)
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
-                         config.h \
+                         $(top_srcdir)/config.h \
                          src/Thrift.h \
 												 src/TReflectionLocal.h \
                          src/reflection_limited_types.h \
@@ -126,10 +126,8 @@ concurrency_test_LDADD = libthrift.la
 concurrency_test_CXXFLAGS =  $(common_cxxflags)
 concurrency_test_LDFLAGS =  $(common_ldflags)
 
-EXTRA_DIST =
-	bootstrap.sh \
-	cleanup.sh \
-	LICENSE \
+EXTRA_DIST = \
+	README \
 	thrift-nb.pc.in \
 	thrift.pc.in \
 	thrift-z.pc.in

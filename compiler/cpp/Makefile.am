@@ -20,7 +20,7 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_erl_generator.cc \
                  src/generate/t_hs_generator.cc \
                  src/generate/t_cocoa_generator.cc \
-                 src/generate/t_st_generator.cc	\
+                 src/generate/t_st_generator.cc \
                  src/globals.h \
                  src/main.h \
                  src/md5.h \
@@ -57,12 +57,12 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_cocoa_generator.h \
                  src/generate/t_st_generator.h
 
-thrift_CXXFLAGS = -Wall -Isrc $(BOOST_CPPFLAGS)
+thrift_CXXFLAGS = -Wall -I$(srcdir)/src $(BOOST_CPPFLAGS)
 thrift_LDFLAGS = -Wall $(BOOST_LDFLAGS)
 
 thrift_LDADD = @LEXLIB@
 
-EXTRA_DIST = bootstrap.sh cleanup.sh LICENSE
+EXTRA_DIST = README
 
 clean-local:
 	rm -rf thriftl.cc thrifty.cc thrifty.h

@@ -1,20 +1,28 @@
 #!/bin/sh
 
-subdirs="compiler/cpp lib/cpp lib/py if"
+subdirs=" if"
 
 ./cleanup.sh
 
-aclocal
-touch NEWS README AUTHORS ChangeLog
-autoconf
-automake -ac
+autoscan || exit 1
+autoheader || exit 1
+aclocal -I ./aclocal || exit 1
+
+if libtoolize --version 1 >/dev/null 2>/dev/null; then
+  libtoolize --automake || exit 1
+elif glibtoolize --version 1 >/dev/null 2>/dev/null; then
+  glibtoolize --automake || exit 1
+fi
+
+autoconf || exit 1
+automake -ac --add-missing --foreign || exit 1
 
 for subdir in ${subdirs}; do 
     if [ -x "${subdir}/bootstrap.sh" ]; then 
-	cwd="`pwd`"
-	cd "${subdir}"
-	./bootstrap.sh
-	cd "${cwd}"
+      cwd="`pwd`"
+      cd "${subdir}"
+      ./bootstrap.sh
+      cd "${cwd}"
     fi
 done
 

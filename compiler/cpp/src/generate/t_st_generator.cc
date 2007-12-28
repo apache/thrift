@@ -371,14 +371,14 @@ bool t_st_generator::is_vowel(char c) {
 }
 
 string t_st_generator::a_type(t_type* type) {
-	string prefix;
+  string prefix;
 
-	if (is_vowel(type_name(type)[0]))
+  if (is_vowel(type_name(type)[0]))
     prefix = "an";
   else
     prefix = "a";
 
-	return prefix + capitalize(type_name(type));
+  return prefix + capitalize(type_name(type));
 }
 
 void t_st_generator::generate_accessors(std::ofstream& out, t_struct* tstruct) {
@@ -456,7 +456,7 @@ string t_st_generator::map_reader(t_map *tmap) {
 
   out << "]." << endl <<
     indent() << "iprot readMapEnd." << endl <<
-	indent() << val << "] value";
+  indent() << val << "] value";
   indent_down();
 
   return out.str();
@@ -500,7 +500,7 @@ string t_st_generator::list_reader(t_list *tlist) {
 
   out << "]." << endl <<
     indent() << "iprot readListEnd." << endl <<
-	indent() << val << "] value";
+  indent() << val << "] value";
   indent_down();
 
   return out.str();
@@ -544,7 +544,7 @@ string t_st_generator::set_reader(t_set *tset) {
 
   out << "]." << endl <<
     indent() << "iprot readSetEnd." << endl <<
-	indent() << val << "] value";
+  indent() << val << "] value";
   indent_down();
 
   return out.str();
@@ -749,7 +749,7 @@ void t_st_generator::generate_recv_method(t_function* function) {
   st_method(f_, client_class_name(), "recv" + capitalize(funname));
   f_ << "| f msg res | " << endl <<
     indent() << "msg := oprot readMessageBegin." << endl <<
-		indent() << "self validateRemoteMessage: msg." << endl <<
+    indent() << "self validateRemoteMessage: msg." << endl <<
     indent() << "res := " << struct_reader(&result) << "." << endl <<
     indent() << "oprot readMessageEnd." << endl <<
     indent() << "oprot transport flush." << endl <<
