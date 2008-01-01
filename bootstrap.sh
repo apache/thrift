@@ -14,7 +14,7 @@ elif glibtoolize --version 1 >/dev/null 2>/dev/null; then
   glibtoolize --automake || exit 1
 fi
 
-autoconf || exit 1
+autoconf
 automake -ac --add-missing --foreign || exit 1
 
 for subdir in ${subdirs}; do 
