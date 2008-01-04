@@ -7,21 +7,20 @@
   % The version of the applicaton
   {vsn, "%VSN%"},
 
-  % All modules used by the application. 
-  {modules,
-   [
-	%MODULES%
+  % All modules used by the application.
+  {modules, [
+       %MODULES%
    ]},
 
   % All of the registered names the application uses. This can be ignored.
   {registered, []},
 
   % Applications that are to be started prior to this one. This can be ignored
-  % leave it alone unless you understand it well and let the .rel files in 
-  % your release handle this. 
+  % leave it alone unless you understand it well and let the .rel files in
+  % your release handle this.
   {applications,
    [
-    kernel, 
+    kernel,
     stdlib
    ]},
 
@@ -37,6 +36,7 @@
     {force_one_line, false},
     {omit_fmt, ["thrift ~p:new(~s) = ~s"]},
     {gen_server_messages, true},
+    {show_pid, true},
     {lookup, false}                 % DNS
   ]},
 
