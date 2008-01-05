@@ -56,9 +56,8 @@ public:
       cerr << "TThreadPoolServer exception: " << x.what() << endl;
     } catch (std::exception &x) {
       cerr << "TThreadPoolServer, std::exception: " << x.what() << endl;
-    } catch (...) {
-      cerr << "TThreadPoolServer uncaught exception." << endl;
     }
+
     if (eventHandler != NULL) {
       eventHandler->clientEnd(input_, output_);
     }
