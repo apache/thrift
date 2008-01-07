@@ -10,8 +10,6 @@ require 'Calculator'
 require 'shared_types'
 
 class CalculatorHandler
-  include Calculator::Iface
-
   def initialize()
     @log = {}
   end
@@ -24,7 +22,7 @@ class CalculatorHandler
     print "add(", n1, ",", n2, ")\n"
     return n1 + n2
   end
-  
+
   def calculate(logid, work)
     print "calculate(", logid, ", {", work.op, ",", work.num1, ",", work.num2,"})\n"
     if work.op == Operation::ADD
