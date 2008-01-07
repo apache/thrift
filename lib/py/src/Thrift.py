@@ -60,6 +60,22 @@ class TApplicationException(TException):
     TException.__init__(self, message)
     self.type = type
 
+  def __str__(self):
+    if self.message:
+      return self.message
+    elif self.type == UNKNOWN_METHOD:
+      return 'Unknown method'
+    elif self.type == INVALID_MESSAGE_TYPE:
+      return 'Invalid message type'
+    elif self.type == WRONG_METHOD_NAME:
+      return 'Wrong method name'
+    elif self.type == BAD_SEQUENCE_ID:
+      return 'Bad sequence ID'
+    elif self.type == MISSING_RESULT:
+      return 'Missing result'
+    else:
+      return 'Default (unknown) TApplicationException'
+
   def read(self, iprot):
     iprot.readStructBegin()
     while True:
