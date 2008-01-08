@@ -71,7 +71,8 @@ effectful_setHandle(This, Handle) ->
 effectful_open(This) ->
     Host = oop:get(This, host),
     Port = oop:get(This, port),
-    Options = [binary, {packet, 0}, {active, false}],
+    Options = [binary, {packet, 0}, {active, false}, {reuseaddr, true},
+               {nodelay, true}],
 
     case gen_tcp:connect(Host, Port, Options) of
         {error, _} ->
