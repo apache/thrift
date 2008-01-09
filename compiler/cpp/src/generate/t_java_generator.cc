@@ -1830,7 +1830,7 @@ string t_java_generator::base_type_name(t_base_type* type,
       return "String";
     }
   case t_base_type::TYPE_BOOL:
-    return "boolean";
+    return (in_container ? "Boolean" : "boolean");
   case t_base_type::TYPE_BYTE:
     return "byte";
   case t_base_type::TYPE_I16:
