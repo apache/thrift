@@ -9,10 +9,14 @@ target: all
 # Tools
 THRIFT = ../../compiler/cpp/thrift
 
-all: stubs
+all: stubs tests
 
-stubs: ../ThriftTest.thrift
+stubs: ../ThriftTest.thrift ../SmallTest.thrift
 	$(THRIFT) --rb ../ThriftTest.thrift
+	$(THRIFT) --rb ../SmallTest.thrift
+
+tests: stubs
+	ruby TestSuite.rb
 
 clean:
 	rm -fr gen-rb

@@ -177,8 +177,8 @@ end
 
 module ThriftStruct
   def initialize(d={})
-    each_field do |fid, type, name|
-      instance_variable_set("@#{name}", d[name.to_s])
+    each_field do |fid, type, name, default|
+      instance_variable_set("@#{name}", d[name.to_s] || default)
     end
   end
 
@@ -188,7 +188,7 @@ module ThriftStruct
 
   def each_field
     struct_fields.each do |fid, data|
-      yield fid, data[:type], data[:name]
+      yield fid, data[:type], data[:name], data[:default]
     end
   end
 

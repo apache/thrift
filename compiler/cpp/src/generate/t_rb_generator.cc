@@ -34,14 +34,14 @@ void t_rb_generator::init_generator() {
     rb_imports() << endl <<
     render_includes() << endl;
     begin_namespace(f_types_, ruby_modules(program_));
-  
+
   f_consts_ <<
     rb_autogen_comment() << endl <<
     rb_imports() << endl <<
     "require '" << program_name_ << "_types'" << endl <<
     endl;
     begin_namespace(f_consts_, ruby_modules(program_));
-    
+
 }
 
 /**
@@ -107,7 +107,7 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
   indent(f_types_) <<
     "module " << capitalize(tenum->get_name()) << endl;
   indent_up();
-  
+
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
   int value = -1;
@@ -117,12 +117,12 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
     } else {
       ++value;
     }
-    
+
     // Ruby class constants have to be capitalized... omg i am so on the fence
     // about languages strictly enforcing capitalization why can't we just all
     // agree and play nice.
     string name = capitalize((*c_iter)->get_name());
-    
+
     f_types_ <<
       indent() << name << " = " << value << endl;
   }
@@ -139,7 +139,7 @@ void t_rb_generator::generate_const(t_const* tconst) {
   t_type* type = tconst->get_type();
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
-  
+
   name[0] = toupper(name[0]);
 
   indent(f_consts_) << name << " = " << render_const_value(type, value);
@@ -181,7 +181,7 @@ string t_rb_generator::render_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_enum()) {
     indent(out) << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    out << type->get_name() << "({" << endl;
+    out << type->get_name() << ".new({" << endl;
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -280,10 +280,10 @@ void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, b
     out << " < StandardError";
   }
   out  << endl;
-  
+
   indent_up();
   indent(out) << "include ThriftStruct" << endl;
-  
+
   generate_accessors(out, tstruct);
   generate_field_defns(out, tstruct);
 
@@ -294,7 +294,7 @@ void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, b
 void t_rb_generator::generate_accessors(std::ofstream& out, t_struct* tstruct) {
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
-    
+
   if (members.size() > 0) {
     indent(out) << "attr_accessor ";
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -310,32 +310,37 @@ void t_rb_generator::generate_accessors(std::ofstream& out, t_struct* tstruct) {
 void t_rb_generator::generate_field_defns(std::ofstream& out, t_struct* tstruct) {
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
-  
+
   indent(out) << "FIELDS = {" << endl;
   indent_up();
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (f_iter != fields.begin()) {
       out << "," << endl;
     }
-    
-    indent(out) << 
+
+    indent(out) <<
       (*f_iter)->get_key() << " => ";
-    
-    generate_field_data(out, (*f_iter)->get_type(), (*f_iter)->get_name());
+
+    generate_field_data(out, (*f_iter)->get_type(), (*f_iter)->get_name(), (*f_iter)->get_value());
   }
   indent_down();
   out << endl;
   indent(out) << "}" << endl;
 }
 
-void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type, const std::string& field_name = "") {
+void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type,
+    const std::string& field_name = "", t_const_value* field_value = NULL) {
   field_type = get_true_type(field_type);
 
   // Begin this field's defn
   out << "{:type => " << type_to_enum(field_type);
-    
+
   if (!field_name.empty()) {
     out << ", :name => '" << field_name << "'";
+  }
+
+  if (field_value != NULL) {
+    out << ", :default => " << render_const_value(field_type, field_value);
   }
 
   if (!field_type->is_base_type()) {
@@ -354,7 +359,7 @@ void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type,
       generate_field_data(out, ((t_set*)field_type)->get_elem_type());
     }
   }
-   
+
   // End of this field's defn
   out << "}";
 }
@@ -394,7 +399,7 @@ void t_rb_generator::generate_service(t_service* tservice) {
 
   f_service_ <<
     "require 'thrift/thrift'" << endl <<
-    "require '" << program_name_ << "_types'" << endl << 
+    "require '" << program_name_ << "_types'" << endl <<
     endl;
 
   begin_namespace(f_service_, ruby_modules(tservice->get_program()));
@@ -410,7 +415,7 @@ void t_rb_generator::generate_service(t_service* tservice) {
   indent_down();
   indent(f_service_) << "end" << endl <<
     endl;
-    
+
   end_namespace(f_service_, ruby_modules(tservice->get_program()));
 
   // Close service file
@@ -476,10 +481,10 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
 
   indent(f_service_) <<
     "include ThriftClient" << endl << endl;
-  
+
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::const_iterator f_iter;    
+  vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const vector<t_field*>& fields = arg_struct->get_members();
@@ -526,8 +531,8 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
 
       for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
         f_service_ << ", :" << (*fld_iter)->get_name() << " => " << (*fld_iter)->get_name();
-      }        
-      
+      }
+
       f_service_ << ")" << endl;
 
     indent_down();
@@ -536,7 +541,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
     if (!(*f_iter)->is_async()) {
       std::string resultname = capitalize((*f_iter)->get_name() + "_result");
       t_struct noargs(program_);
-      
+
       t_function recv_function((*f_iter)->get_returntype(),
                                string("recv_") + (*f_iter)->get_name(),
                                &noargs);
@@ -550,11 +555,11 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
 
       f_service_ <<
         indent() << "result = receive_message(" << resultname << ")" << endl;
-      
+
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ <<
-          indent() << "return result.success unless result.success.nil?" << endl;          
+          indent() << "return result.success unless result.success.nil?" << endl;
       }
 
       t_struct* xs = (*f_iter)->get_xceptions();
@@ -562,7 +567,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         indent(f_service_) <<
-          "raise result." << (*x_iter)->get_name() << 
+          "raise result." << (*x_iter)->get_name() <<
             " unless result." << (*x_iter)->get_name() << ".nil?" << endl;
       }
 
@@ -573,12 +578,12 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       } else {
         f_service_ <<
           indent() << "raise TApplicationException.new(TApplicationException::MISSING_RESULT, '" << (*f_iter)->get_name() << " failed: unknown result')" << endl;
-      }     
+      }
 
       // Close function
       indent_down();
       indent(f_service_) << "end" << endl << endl;
-    }      
+    }
   }
 
   indent_down();
@@ -593,7 +598,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
 void t_rb_generator::generate_service_server(t_service* tservice) {
   // Generate the dispatch methods
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
+  vector<t_function*>::iterator f_iter;
 
   string extends = "";
   string extends_processor = "";
@@ -655,7 +660,7 @@ void t_rb_generator::generate_process_function(t_service* tservice,
       indent() << "begin" << endl;
     indent_up();
   }
- 
+
   // Generate the function call
   t_struct* arg_struct = tfunction->get_arglist();
   const std::vector<t_field*>& fields = arg_struct->get_members();
@@ -711,22 +716,6 @@ void t_rb_generator::generate_process_function(t_service* tservice,
 }
 
 /**
- * Declares a field, which may include initialization as necessary.
- *
- * @param ttype The type
- */
-string t_rb_generator::declare_field(t_field* tfield) {
-  string result = "@" + tfield->get_name();
-  t_type* type = get_true_type(tfield->get_type());
-  if (tfield->get_value() != NULL) {
-    result += " = " + render_const_value(type, tfield->get_value());
-  } else {
-    result += " = nil";
-  }
-  return result;
-}
-
-/**
  * Renders a function signature of the form 'type name(args)'
  *
  * @param tfunction Function definition
@@ -776,7 +765,7 @@ string t_rb_generator::type_name(t_type* ttype) {
  */
 string t_rb_generator::type_to_enum(t_type* type) {
   type = get_true_type(type);
-  
+
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {

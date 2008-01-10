@@ -58,7 +58,7 @@ class t_rb_generator : public t_oop_generator {
   void generate_rb_function_helpers(t_function* tfunction);
   void generate_accessors   (std::ofstream& out, t_struct* tstruct);
   void generate_field_defns (std::ofstream& out, t_struct* tstruct);
-  void generate_field_data  (std::ofstream& out, t_type* field_type, const std::string& field_name);
+  void generate_field_data  (std::ofstream& out, t_type* field_type, const std::string& field_name, t_const_value* field_value);
 
   /**
    * Service-level generation functions
