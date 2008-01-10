@@ -18,14 +18,14 @@ import com.facebook.thrift.transport.TTransportException;
 import com.facebook.thrift.transport.TTransportFactory;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 
 /**
  * Server which uses Java's built in ThreadPool management to spawn off
- * a worker pool that 
+ * a worker pool that
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
@@ -50,7 +50,7 @@ public class TThreadPoolServer extends TServer {
 
   public TThreadPoolServer(TProcessor processor,
                            TServerTransport serverTransport) {
-    this(processor, serverTransport, 
+    this(processor, serverTransport,
          new TTransportFactory(), new TTransportFactory(),
          new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
          new Options());
@@ -58,7 +58,7 @@ public class TThreadPoolServer extends TServer {
 
   public TThreadPoolServer(TProcessorFactory processorFactory,
           TServerTransport serverTransport) {
-    this(processorFactory, serverTransport, 
+    this(processorFactory, serverTransport,
          new TTransportFactory(), new TTransportFactory(),
          new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
          new Options());
@@ -77,7 +77,7 @@ public class TThreadPoolServer extends TServer {
                            TServerTransport serverTransport,
                            TTransportFactory transportFactory,
                            TProtocolFactory protocolFactory) {
-    this(processor, serverTransport, 
+    this(processor, serverTransport,
          transportFactory, transportFactory,
          protocolFactory, protocolFactory,
          new Options());
@@ -87,13 +87,13 @@ public class TThreadPoolServer extends TServer {
           TServerTransport serverTransport,
           TTransportFactory transportFactory,
           TProtocolFactory protocolFactory) {
-    this(processorFactory, serverTransport, 
+    this(processorFactory, serverTransport,
          transportFactory, transportFactory,
          protocolFactory, protocolFactory,
          new Options());
   }
 
-  
+
   public TThreadPoolServer(TProcessor processor,
           TServerTransport serverTransport,
           TTransportFactory inputTransportFactory,
@@ -106,7 +106,7 @@ public class TThreadPoolServer extends TServer {
          inputProtocolFactory, outputProtocolFactory,
          options);
   }
-  
+
   public TThreadPoolServer(TProcessorFactory processorFactory,
                            TServerTransport serverTransport,
                            TTransportFactory inputTransportFactory,
@@ -114,14 +114,14 @@ public class TThreadPoolServer extends TServer {
                            TProtocolFactory inputProtocolFactory,
                            TProtocolFactory outputProtocolFactory,
                            Options options) {
-    super(processorFactory, serverTransport, 
+    super(processorFactory, serverTransport,
           inputTransportFactory, outputTransportFactory,
           inputProtocolFactory, outputProtocolFactory);
 
     executorService_ = null;
 
-    LinkedBlockingQueue<Runnable> executorQueue =
-      new LinkedBlockingQueue<Runnable>();
+    SynchronousQueue<Runnable> executorQueue =
+      new SynchronousQueue<Runnable>();
 
     executorService_ = new ThreadPoolExecutor(options.minWorkerThreads,
                                               options.maxWorkerThreads,
@@ -153,7 +153,7 @@ public class TThreadPoolServer extends TServer {
           ++failureCount;
           ttx.printStackTrace();
         }
-      }     
+      }
     }
 
     executorService_.shutdown();
