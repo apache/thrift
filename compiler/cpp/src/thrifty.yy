@@ -89,6 +89,7 @@ int g_arglist = 0;
 %token tok_smalltalk_category
 %token tok_smalltalk_prefix
 %token tok_cocoa_prefix
+%token tok_csharp_namespace
 
 /**
  * Base datatype keywords
@@ -331,6 +332,13 @@ Header:
         g_program->set_xsd_namespace($2);
       }
     }
+| tok_csharp_namespace tok_identifier
+   {
+     pdebug("Header -> tok_csharp_package tok_identifier");
+     if (g_parse_mode == PROGRAM) {
+       g_program->set_csharp_namespace($2);
+     }
+   }
 
 Include:
   tok_include tok_literal

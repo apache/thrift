@@ -13,6 +13,8 @@ Igor Afanasyev <afan@evernote.com>
 
 Todd Berman <tberman@imeem.com>
 - MinGW port of the compiler.
+- C# bindings.
+- MS build task.
 
 ----------------
 Release 20070917

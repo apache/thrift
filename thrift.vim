@@ -31,7 +31,8 @@ syn match thriftNumber "-\=\<\d\+\>" contained
 
 " Keywords
 syn keyword thriftKeyword namespace cpp_namespace java_package cocoa_prefix
-syn keyword php_namespace ruby_namespace py_module perl_package
+syn keyword thriftKeyword csharp_namespace smalltalk_category smalltalk_prefix
+syn keyword thriftKeyword php_namespace ruby_namespace py_module perl_package
 syn keyword thriftKeyword xsd_all xsd_optional xsd_nillable xsd_namespace xsd_attrs
 syn keyword thriftKeyword include cpp_include cpp_type const optional required
 syn keyword thriftBasicTypes void bool byte i16 i32 i64 double string binary

@@ -21,6 +21,7 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_hs_generator.cc \
                  src/generate/t_cocoa_generator.cc \
                  src/generate/t_st_generator.cc \
+                 src/generate/t_csharp_generator.cc \
                  src/globals.h \
                  src/main.h \
                  src/platform.h \
@@ -56,7 +57,8 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_erl_generator.h \
                  src/generate/t_hs_generator.h \
                  src/generate/t_cocoa_generator.h \
-                 src/generate/t_st_generator.h
+                 src/generate/t_st_generator.h \
+                 src/generate/t_csharp_generator.h
 
 thrift_CXXFLAGS = -Wall -I$(srcdir)/src $(BOOST_CPPFLAGS)
 thrift_LDFLAGS = -Wall $(BOOST_LDFLAGS)
