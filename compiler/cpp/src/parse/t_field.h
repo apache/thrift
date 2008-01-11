@@ -34,7 +34,7 @@ class t_field {
     type_(type),
     name_(name),
     key_(key),
-    req_(OPT_IN_REQ_OUT),
+    req_(T_OPT_IN_REQ_OUT),
     value_(NULL),
     xsd_optional_(false),
     xsd_nillable_(false),
@@ -55,9 +55,9 @@ class t_field {
   }
 
   enum e_req {
-    REQUIRED,
-    OPTIONAL,
-    OPT_IN_REQ_OUT
+    T_REQUIRED,
+    T_OPTIONAL,
+    T_OPT_IN_REQ_OUT,
   };
 
   void set_req(e_req req) {
@@ -117,7 +117,7 @@ class t_field {
   // but it does the same thing.
   std::string get_fingerprint_material() const {
     return boost::lexical_cast<std::string>(key_) + ":" +
-      (req_ == OPTIONAL ? "opt-" : "") +
+      ((req_ == T_OPTIONAL) ? "opt-" : "") +
       type_->get_fingerprint_material();
   }
 

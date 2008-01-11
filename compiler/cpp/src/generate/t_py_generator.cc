@@ -10,6 +10,7 @@
 #include <sstream>
 #include <algorithm>
 #include "t_py_generator.h"
+#include "platform.h"
 using namespace std;
 
 /**
@@ -24,7 +25,7 @@ void t_py_generator::init_generator() {
   package_dir_ = get_out_dir();
   while (true) {
     // TODO: Do better error checking here.
-    mkdir(package_dir_.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    MKDIR(package_dir_.c_str());
     std::ofstream init_py((package_dir_+"/__init__.py").c_str());
     init_py.close();
     if (module.empty()) {
@@ -1030,13 +1031,16 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
 
   // Make file executable, love that bitwise OR action
   chmod(f_remote_name.c_str(),
-        S_IRUSR |
-        S_IWUSR |
-        S_IXUSR |
-        S_IRGRP |
-        S_IXGRP |
-        S_IROTH |
-        S_IXOTH);
+          S_IRUSR
+        | S_IWUSR
+        | S_IXUSR
+#ifndef MINGW
+        | S_IRGRP
+        | S_IXGRP
+        | S_IROTH
+        | S_IXOTH
+#endif
+		);
 }
 
 /**

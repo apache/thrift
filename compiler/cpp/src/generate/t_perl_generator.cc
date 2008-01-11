@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sstream>
 #include "t_perl_generator.h"
+#include "platform.h"
 using namespace std;
 
 /**
@@ -18,13 +19,13 @@ using namespace std;
  */
 void t_perl_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+  MKDIR(get_out_dir().c_str());
 
   string outdir = get_out_dir();
   std::string ns = program_->get_perl_package();
   if (ns.length() > 0) {
     outdir += ns + "/";
-    mkdir(outdir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    MKDIR(outdir.c_str());
   }
 
   // Make output file

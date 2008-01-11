@@ -11,6 +11,9 @@ Dave Simpson <dave@powerset.com>
 Igor Afanasyev <afan@evernote.com>
 -Perl HttpClient and bugfixes
 
+Todd Berman <tberman@imeem.com>
+- MinGW port of the compiler.
+
 ----------------
 Release 20070917
 ----------------

@@ -10,6 +10,7 @@
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 #include "t_cpp_generator.h"
+#include "platform.h"
 using namespace std;
 
 /**
@@ -20,7 +21,7 @@ using namespace std;
  */
 void t_cpp_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+  MKDIR(get_out_dir().c_str());
 
   // Make output file
   string f_types_name = get_out_dir()+program_name_+"_types.h";
@@ -462,7 +463,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   // Isset struct has boolean fields, but only for non-required fields.
   bool has_nonrequired_fields = false;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    if ((*m_iter)->get_req() != t_field::REQUIRED)
+    if ((*m_iter)->get_req() != t_field::T_REQUIRED)
       has_nonrequired_fields = true;
   }
 
@@ -476,7 +477,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
         "__isset() : ";
       bool first = true;
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        if ((*m_iter)->get_req() == t_field::REQUIRED) {
+        if ((*m_iter)->get_req() == t_field::T_REQUIRED) {
           continue;
         }
         if (first) {
@@ -491,7 +492,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       out << " {}" << endl;
 
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        if ((*m_iter)->get_req() != t_field::REQUIRED) {
+        if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
           indent(out) <<
             "bool " << (*m_iter)->get_name() << ";" << endl;
         }
@@ -513,7 +514,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       // Most existing Thrift code does not use isset or optional/required,
       // so we treat "default" fields as required.
-      if ((*m_iter)->get_req() != t_field::OPTIONAL) {
+      if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
         out <<
           indent() << "if (!(" << (*m_iter)->get_name()
                    << " == rhs." << (*m_iter)->get_name() << "))" << endl <<
@@ -638,7 +639,7 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
       indent_up();
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         indent(out) << "{ " << (*m_iter)->get_key() << ", " <<
-          (((*m_iter)->get_req() == t_field::OPTIONAL) ? "true" : "false") <<
+          (((*m_iter)->get_req() == t_field::T_OPTIONAL) ? "true" : "false") <<
           " }," << endl;
       }
       // Zero for the T_STOP marker.
@@ -751,7 +752,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
 
   // Required variables aren't in __isset, so we need tmp vars to check them.
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if ((*f_iter)->get_req() == t_field::REQUIRED)
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED)
       indent(out) << "bool isset_" << (*f_iter)->get_name() << " = false;" << endl;
   }
   out << endl;
@@ -788,7 +789,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
         indent_up();
 
         const char *isset_prefix =
-          ((*f_iter)->get_req() != t_field::REQUIRED) ? "this->__isset." : "isset_";
+          ((*f_iter)->get_req() != t_field::T_REQUIRED) ? "this->__isset." : "isset_";
 
 #if 0
         // This code throws an exception if the same field is encountered twice.
@@ -842,7 +843,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
   // there might possibly be a chance of continuing.
   out << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if ((*f_iter)->get_req() == t_field::REQUIRED)
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED)
       out <<
         indent() << "if (!isset_" << (*f_iter)->get_name() << ')' << endl <<
         indent() << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << endl;
@@ -878,7 +879,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
   indent(out) <<
     "xfer += oprot->writeStructBegin(\"" << name << "\");" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if ((*f_iter)->get_req() == t_field::OPTIONAL) {
+    if ((*f_iter)->get_req() == t_field::T_OPTIONAL) {
       indent(out) << "if (this->__isset." << (*f_iter)->get_name() << ") {" << endl;
       indent_up();
     }
@@ -897,7 +898,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
     // Write field closer
     indent(out) <<
       "xfer += oprot->writeFieldEnd();" << endl;
-    if ((*f_iter)->get_req() == t_field::OPTIONAL) {
+    if ((*f_iter)->get_req() == t_field::T_OPTIONAL) {
       indent_down();
       indent(out) << '}' << endl;
     }

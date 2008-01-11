@@ -825,9 +825,9 @@ FieldRequiredness:
         if (g_parse_mode == PROGRAM) {
           pwarning(1, "required keyword is ignored in argument lists.\n");
         }
-        $$ = t_field::OPT_IN_REQ_OUT;
+        $$ = t_field::T_OPT_IN_REQ_OUT;
       } else {
-        $$ = t_field::REQUIRED;
+        $$ = t_field::T_REQUIRED;
       }
     }
 | tok_optional
@@ -836,14 +836,14 @@ FieldRequiredness:
         if (g_parse_mode == PROGRAM) {
           pwarning(1, "optional keyword is ignored in argument lists.\n");
         }
-        $$ = t_field::OPT_IN_REQ_OUT;
+        $$ = t_field::T_OPT_IN_REQ_OUT;
       } else {
-        $$ = t_field::OPTIONAL;
+        $$ = t_field::T_OPTIONAL;
       }
     }
 |
     {
-      $$ = t_field::OPT_IN_REQ_OUT;
+      $$ = t_field::T_OPT_IN_REQ_OUT;
     }
 
 FieldValue:

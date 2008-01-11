@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sstream>
 #include "t_st_generator.h"
+#include "platform.h"
 using namespace std;
 
 /**
@@ -21,7 +22,7 @@ using namespace std;
  */
 void t_st_generator::init_generator() {
   // Make output directory
-  mkdir(T_ST_DIR, S_IREAD | S_IWRITE | S_IEXEC);
+  MKDIR(T_ST_DIR);
 
   temporary_var = 0;
 
@@ -560,7 +561,7 @@ string t_st_generator::struct_writer(t_struct *tstruct, string sname) {
   indent_up();
 
   for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-    bool optional = (*fld_iter)->get_req() == t_field::OPTIONAL;
+    bool optional = (*fld_iter)->get_req() == t_field::T_OPTIONAL;
     string fname = (*fld_iter)->get_name();
     string accessor = sname + " " + sanitize(fname);
 

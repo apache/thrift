@@ -23,6 +23,11 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#ifdef MINGW
+# include <windows.h> /* for GetFullPathName */
+# include <limits.h>
+#endif
+
 // Careful: must include globals first for extern definitions
 #include "globals.h"
 
@@ -155,6 +160,28 @@ bool gen_st = false;
 bool gen_recurse = false;
 
 /**
+ * MinGW doesn't have realpath, so use fallback implementation in that case,
+ * otherwise this just calls through to realpath
+ */
+char *saferealpath(const char *path, char *resolved_path) {
+#ifdef MINGW
+  char buf[MAX_PATH];
+  char* basename;
+  DWORD len = GetFullPathName(path, MAX_PATH, buf, &basename);
+  if (len == 0 || len > MAX_PATH - 1){
+    strcpy(resolved_path, path);
+  } else {
+    CharLowerBuff(buf, len);
+    strcpy(resolved_path, buf);
+  }
+  return resolved_path;
+#else
+  return realpath(path, resolved_path);
+#endif
+}
+
+
+/**
  * Report an error to the user. This is called yyerror for historical
  * reasons (lex and yacc expect the error reporting routine to be called
  * this). Call this function to report any errors to the user.
@@ -276,7 +303,7 @@ string include_file(string filename) {
   if (filename[0] == '/') {
     // Realpath!
     char rp[PATH_MAX];
-    if (realpath(filename.c_str(), rp) == NULL) {
+    if (saferealpath(filename.c_str(), rp) == NULL) {
       pwarning(0, "Cannot open include file %s\n", filename.c_str());
       return std::string();
     }
@@ -298,7 +325,7 @@ string include_file(string filename) {
 
       // Realpath!
       char rp[PATH_MAX];
-      if (realpath(sfilename.c_str(), rp) == NULL) {
+      if (saferealpath(sfilename.c_str(), rp) == NULL) {
         continue;
       }
 
@@ -754,7 +781,7 @@ void parse(t_program* program, t_program* parent_program) {
     parse(*iter, program);
   }
 
-  // Parse the program the file
+  // Parse the program file
   g_parse_mode = PROGRAM;
   g_program = program;
   g_scope = program->scope();
@@ -1011,6 +1038,16 @@ int main(int argc, char** argv) {
           usage();
         }
         out_path = arg;
+
+#ifdef MINGW
+        //strip out trailing \ on Windows
+        int last = out_path.length()-1;
+        if (out_path[last] == '\\')
+        {
+          out_path.erase(last);
+        }
+#endif
+
         struct stat sb;
         if (stat(out_path.c_str(), &sb) < 0) {
           fprintf(stderr, "Output directory %s is unusable: %s\n", out_path.c_str(), strerror(errno));
@@ -1038,8 +1075,8 @@ int main(int argc, char** argv) {
 
   // Real-pathify it
   char rp[PATH_MAX];
-  if (realpath(argv[i], rp) == NULL) {
-    failure("Could not open input file: %s", argv[i]);
+  if (saferealpath(argv[i], rp) == NULL) {
+    failure("Could not open input file with realpath: %s", argv[i]);
   }
   string input_file(rp);
 

@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sstream>
 #include "t_rb_generator.h"
+#include "platform.h"
 using namespace std;
 
 /**
@@ -19,7 +20,7 @@ using namespace std;
  */
 void t_rb_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+  MKDIR(get_out_dir().c_str());
 
   // Make output file
   string f_types_name = get_out_dir()+program_name_+"_types.rb";

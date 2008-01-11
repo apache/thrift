@@ -8,11 +8,12 @@
 #include <sys/stat.h>
 #include <sstream>
 #include "t_xsd_generator.h"
+#include "platform.h"
 using namespace std;
 
 void t_xsd_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+  MKDIR(get_out_dir().c_str());
 
   // Make output file
   string f_php_name = get_out_dir()+program_->get_name()+"_xsd.php";

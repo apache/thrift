@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sstream>
 #include "t_cocoa_generator.h"
+#include "platform.h"
 using namespace std;
 
 /**
@@ -16,7 +17,7 @@ using namespace std;
  */
 void t_cocoa_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+  MKDIR(get_out_dir().c_str());
   cocoa_prefix_ = program_->get_cocoa_prefix();
 
   // we have a .h header file...

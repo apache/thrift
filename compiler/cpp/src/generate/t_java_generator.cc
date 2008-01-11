@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sstream>
 #include "t_java_generator.h"
+#include "platform.h"
 using namespace std;
 
 /**
@@ -18,7 +19,7 @@ using namespace std;
  */
 void t_java_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+  MKDIR(get_out_dir().c_str());
   package_name_ = program_->get_java_package();
 
   string dir = package_name_;
@@ -26,12 +27,12 @@ void t_java_generator::init_generator() {
   string::size_type loc;
   while ((loc = dir.find(".")) != string::npos) {
     subdir = subdir + "/" + dir.substr(0, loc);
-    mkdir(subdir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    MKDIR(subdir.c_str());
     dir = dir.substr(loc+1);
   }
   if (dir.size() > 0) {
     subdir = subdir + "/" + dir;
-    mkdir(subdir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    MKDIR(subdir.c_str());
   }
 
   package_dir_ = subdir;
@@ -565,7 +566,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
         indent() << "if (this." << (*f_iter)->get_name() << " != null) {" << endl;
       indent_up();
     }
-    bool optional = bean_style_ && (*f_iter)->get_req() == t_field::OPTIONAL;
+    bool optional = bean_style_ && (*f_iter)->get_req() == t_field::T_OPTIONAL;
     if (optional) {
       out <<
         indent() << "if (this.__isset." << (*f_iter)->get_name() << ") {" << endl;

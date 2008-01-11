@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sstream>
 #include "t_hs_generator.h"
+#include "platform.h"
 using namespace std;
 
 /*
@@ -72,7 +73,7 @@ void t_hs_generator::generate_program() {
  */
 void t_hs_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+  MKDIR(get_out_dir().c_str());
 
   // Make output file
 
