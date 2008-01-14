@@ -67,7 +67,7 @@ handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
     Banner =
         case config(show_pid) of
             true ->
-                sformat("~s ~s ~s", [Symbol, Pid, Type1]);
+                sformat("~s ~p ~s", [Symbol, Pid, Type1]);
             false ->
                 sformat("~s~i ~s", [Symbol, Pid, Type1])
         end,
