@@ -76,14 +76,17 @@ class t_program : public t_doc {
   const std::vector<t_const*>&   get_consts()    const { return consts_;    }
   const std::vector<t_struct*>&  get_structs()   const { return structs_;   }
   const std::vector<t_struct*>&  get_xceptions() const { return xceptions_; }
+  const std::vector<t_struct*>&  get_objects()   const { return objects_;   }
   const std::vector<t_service*>& get_services()  const { return services_;  }
 
   // Program elements
   void add_typedef  (t_typedef* td) { typedefs_.push_back(td);  }
   void add_enum     (t_enum*    te) { enums_.push_back(te);     }
   void add_const    (t_const*   tc) { consts_.push_back(tc);    }
-  void add_struct   (t_struct*  ts) { structs_.push_back(ts);   }
-  void add_xception (t_struct*  tx) { xceptions_.push_back(tx); }
+  void add_struct   (t_struct*  ts) { objects_.push_back(ts);
+                                      structs_.push_back(ts);   }
+  void add_xception (t_struct*  tx) { objects_.push_back(tx);
+                                      xceptions_.push_back(tx); }
   void add_service  (t_service* ts) { services_.push_back(ts);  }
 
   // Programs to include
@@ -211,7 +214,7 @@ class t_program : public t_doc {
   void set_smalltalk_prefix(std::string smalltalk_prefix) {
     smalltalk_prefix_ = smalltalk_prefix;
   }
-  
+
   const std::string& get_smalltalk_prefix() const {
     return smalltalk_prefix_;
   }
@@ -240,6 +243,7 @@ class t_program : public t_doc {
   std::vector<t_typedef*> typedefs_;
   std::vector<t_enum*>    enums_;
   std::vector<t_const*>   consts_;
+  std::vector<t_struct*>  objects_;
   std::vector<t_struct*>  structs_;
   std::vector<t_struct*>  xceptions_;
   std::vector<t_service*> services_;

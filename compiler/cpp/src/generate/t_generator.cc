@@ -37,18 +37,15 @@ void t_generator::generate_program() {
   vector<t_const*> consts = program_->get_consts();
   generate_consts(consts);
 
-  // Generate structs
-  vector<t_struct*> structs = program_->get_structs();
-  vector<t_struct*>::iterator st_iter;
-  for (st_iter = structs.begin(); st_iter != structs.end(); ++st_iter) {
-    generate_struct(*st_iter);
-  }
-
-  // Generate xceptions
-  vector<t_struct*> xceptions = program_->get_xceptions();
-  vector<t_struct*>::iterator x_iter;
-  for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-    generate_xception(*x_iter);
+  // Generate structs and exceptions in declared order
+  vector<t_struct*> objects = program_->get_objects();
+  vector<t_struct*>::iterator o_iter;
+  for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
+    if ((*o_iter)->is_xception()) {
+      generate_xception(*o_iter);
+    } else {
+      generate_struct(*o_iter);
+    }
   }
 
   // Generate services
