@@ -1,7 +1,6 @@
 -module(server).
 
 -include("thrift.hrl").
--include("thrift_logger.hrl").
 -include("transport/tSocket.hrl").
 -include("protocol/tBinaryProtocol.hrl").
 
@@ -38,7 +37,6 @@ calculate(Logid, Work) ->
 
 	_Else ->
 	    throw(#invalidOperation{what=Op, why="Invalid operation"})
-
     end.
 
 getStruct(Key) ->
@@ -55,11 +53,7 @@ start() ->
     start(9090).
 
 start(Port) ->
-    thrift_logger:install([#thrift_logger_state{
-       force_one_line = false,         %% should we collapse all errors to one line?
-       term_width = 110,               %% if so, crop output at this width
-       omit = [oop_new, req_processed] %% don't show these kinds of infos
-      }]),
+    thrift:start(),
 
     Handler   = ?MODULE,
     Processor = calculator_thrift,
