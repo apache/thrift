@@ -18,6 +18,7 @@ import com.facebook.thrift.transport.TTransportException;
 import com.facebook.thrift.transport.TTransportFactory;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -52,16 +53,14 @@ public class TThreadPoolServer extends TServer {
                            TServerTransport serverTransport) {
     this(processor, serverTransport,
          new TTransportFactory(), new TTransportFactory(),
-         new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
-         new Options());
+         new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory());
   }
 
   public TThreadPoolServer(TProcessorFactory processorFactory,
-          TServerTransport serverTransport) {
+                           TServerTransport serverTransport) {
     this(processorFactory, serverTransport,
          new TTransportFactory(), new TTransportFactory(),
-         new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
-         new Options());
+         new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory());
   }
 
   public TThreadPoolServer(TProcessor processor,
@@ -69,8 +68,7 @@ public class TThreadPoolServer extends TServer {
                            TProtocolFactory protocolFactory) {
     this(processor, serverTransport,
          new TTransportFactory(), new TTransportFactory(),
-         protocolFactory, protocolFactory,
-         new Options());
+         protocolFactory, protocolFactory);
   }
 
   public TThreadPoolServer(TProcessor processor,
@@ -79,20 +77,41 @@ public class TThreadPoolServer extends TServer {
                            TProtocolFactory protocolFactory) {
     this(processor, serverTransport,
          transportFactory, transportFactory,
-         protocolFactory, protocolFactory,
-         new Options());
+         protocolFactory, protocolFactory);
   }
 
   public TThreadPoolServer(TProcessorFactory processorFactory,
-          TServerTransport serverTransport,
-          TTransportFactory transportFactory,
-          TProtocolFactory protocolFactory) {
+                           TServerTransport serverTransport,
+                           TTransportFactory transportFactory,
+                           TProtocolFactory protocolFactory) {
     this(processorFactory, serverTransport,
          transportFactory, transportFactory,
-         protocolFactory, protocolFactory,
-         new Options());
+         protocolFactory, protocolFactory);
   }
 
+  public TThreadPoolServer(TProcessor processor,
+                           TServerTransport serverTransport,
+                           TTransportFactory inputTransportFactory,
+                           TTransportFactory outputTransportFactory,
+                           TProtocolFactory inputProtocolFactory,
+                           TProtocolFactory outputProtocolFactory) {
+    this(new TProcessorFactory(processor), serverTransport,
+         inputTransportFactory, outputTransportFactory,
+         inputProtocolFactory, outputProtocolFactory);
+  }
+
+  public TThreadPoolServer(TProcessorFactory processorFactory,
+                           TServerTransport serverTransport,
+                           TTransportFactory inputTransportFactory,
+                           TTransportFactory outputTransportFactory,
+                           TProtocolFactory inputProtocolFactory,
+                           TProtocolFactory outputProtocolFactory) {
+    super(processorFactory, serverTransport,
+          inputTransportFactory, outputTransportFactory,
+          inputProtocolFactory, outputProtocolFactory);
+    options_ = new Options();
+    executorService_ = Executors.newCachedThreadPool();
+  }
 
   public TThreadPoolServer(TProcessor processor,
           TServerTransport serverTransport,
