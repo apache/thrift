@@ -12,9 +12,9 @@ Igor Afanasyev <afan@evernote.com>
 -Perl HttpClient and bugfixes
 
 Todd Berman <tberman@imeem.com>
-- MinGW port of the compiler.
-- C# bindings.
-- MS build task.
+-MinGW port of the compiler.
+-C# bindings.
+-MS build task.
 
 ----------------
 Release 20070917
