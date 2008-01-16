@@ -1,7 +1,6 @@
 #!/bin/sh
 
-subdirs="compiler/cpp lib/cpp lib/py if"
-
+make distclean >/dev/null 2>&1
 rm -rf \
 AUTHORS \
 ChangeLog \
@@ -15,6 +14,7 @@ autoscan.log \
 config.guess \
 config.h \
 config.hin \
+config.hin~ \
 config.log \
 config.status \
 config.sub \
@@ -28,13 +28,9 @@ libtool \
 ltmain.sh \
 missing \
 ylwrap \
-if/gen-*
-
-for subdir in ${subdirs}; do 
-    if [ -x "${subdir}/cleanup.sh" ]; then 
-      cwd="`pwd`"
-      cd "${subdir}"
-      ./cleanup.sh
-      cd "${cwd}"
-    fi
-done
+if/gen-* \
+compiler/cpp/Makefile.in \
+if/Makefile.in \
+lib/Makefile.in \
+lib/cpp/Makefile.in \
+lib/py/Makefile.in
