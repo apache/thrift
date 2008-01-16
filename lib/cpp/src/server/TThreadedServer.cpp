@@ -51,17 +51,30 @@ public:
         }
       }
     } catch (TTransportException& ttx) {
-      cerr << "TThreadedServer client died: " << ttx.what() << endl;
+      string errStr = string("TThreadedServer client died: ") + ttx.what();
+      GlobalOutput(errStr.c_str());
     } catch (TException& x) {
-      cerr << "TThreadedServer exception: " << x.what() << endl;
+      string errStr = string("TThreadedServer exception: ") + x.what();
+      GlobalOutput(errStr.c_str());
     } catch (...) {
-      cerr << "TThreadedServer uncaught exception." << endl;
+      GlobalOutput("TThreadedServer uncaught exception.");
     }
     if (eventHandler != NULL) {
       eventHandler->clientEnd(input_, output_);
     }
-    input_->getTransport()->close();
-    output_->getTransport()->close();
+
+    try {
+      input_->getTransport()->close();
+    } catch (TTransportException& ttx) {
+      string errStr = string("TThreadedServer input close failed: ") + ttx.what();
+      GlobalOutput(errStr.c_str());
+    }
+    try {
+      output_->getTransport()->close();
+    } catch (TTransportException& ttx) {
+      string errStr = string("TThreadedServer output close failed: ") + ttx.what();
+      GlobalOutput(errStr.c_str());
+    }
 
     // Remove this task from parent bookkeeping
     {
@@ -107,7 +120,8 @@ void TThreadedServer::serve() {
     // Start the server listening
     serverTransport_->listen();
   } catch (TTransportException& ttx) {
-    cerr << "TThreadedServer::run() listen(): " << ttx.what() << endl;
+    string errStr = string("TThreadedServer::run() listen(): ") +ttx.what();
+    GlobalOutput(errStr.c_str());
     return;
   }
 
@@ -160,20 +174,23 @@ void TThreadedServer::serve() {
       if (outputTransport != NULL) { outputTransport->close(); }
       if (client != NULL) { client->close(); }
       if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
-        cerr << "TThreadedServer: TServerTransport died on accept: " << ttx.what() << endl;
+        string errStr = string("TThreadedServer: TServerTransport died on accept: ") + ttx.what();
+        GlobalOutput(errStr.c_str());
       }
       continue;
     } catch (TException& tx) {
       if (inputTransport != NULL) { inputTransport->close(); }
       if (outputTransport != NULL) { outputTransport->close(); }
       if (client != NULL) { client->close(); }
-      cerr << "TThreadedServer: Caught TException: " << tx.what() << endl;
+      string errStr = string("TThreadedServer: Caught TException: ") + tx.what();
+      GlobalOutput(errStr.c_str());
       continue;
     } catch (string s) {
       if (inputTransport != NULL) { inputTransport->close(); }
       if (outputTransport != NULL) { outputTransport->close(); }
       if (client != NULL) { client->close(); }
-      cerr << "TThreadedServer: Unknown exception: " << s << endl;
+      string errStr = "TThreadedServer: Unknown exception: " + s;
+      GlobalOutput(errStr.c_str());
       break;
     }
   }
@@ -183,7 +200,8 @@ void TThreadedServer::serve() {
     try {
       serverTransport_->close();
     } catch (TException &tx) {
-      cerr << "TThreadedServer: Exception shutting down: " << tx.what() << endl;
+      string errStr = string("TThreadedServer: Exception shutting down: ") + tx.what();
+      GlobalOutput(errStr.c_str());
     }
     try {
       Synchronized s(tasksMonitor_);
@@ -191,7 +209,8 @@ void TThreadedServer::serve() {
         tasksMonitor_.wait();
       }
     } catch (TException &tx) {
-      cerr << "TThreadedServer: Exception joining workers: " << tx.what() << endl;
+      string errStr = string("TThreadedServer: Exception joining workers: ") + tx.what();
+      GlobalOutput(errStr.c_str());
     }
     stop_ = false;
   }

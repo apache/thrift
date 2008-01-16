@@ -51,18 +51,33 @@ public:
     } catch (TTransportException& ttx) {
       // This is reasonably expected, client didn't send a full request so just
       // ignore him
-      //cerr << "TThreadPoolServer client died: " << ttx.what() << endl;
+      // string errStr = string("TThreadPoolServer client died: ") + ttx.what();
+      // GlobalOutput(errStr.c_str());
     } catch (TException& x) {
-      cerr << "TThreadPoolServer exception: " << x.what() << endl;
+      string errStr = string("TThreadPoolServer exception: ") + x.what();
+      GlobalOutput(errStr.c_str());
     } catch (std::exception &x) {
-      cerr << "TThreadPoolServer, std::exception: " << x.what() << endl;
+      string errStr = string("TThreadPoolServer, std::exception: ") + x.what();
+      GlobalOutput(errStr.c_str());
     }
 
     if (eventHandler != NULL) {
       eventHandler->clientEnd(input_, output_);
     }
-    input_->getTransport()->close();
-    output_->getTransport()->close();
+
+    try {
+      input_->getTransport()->close();
+    } catch (TTransportException& ttx) {
+      string errStr = string("TThreadPoolServer input close failed: ") + ttx.what();
+      GlobalOutput(errStr.c_str());
+    }
+    try {
+      output_->getTransport()->close();
+    } catch (TTransportException& ttx) {
+      string errStr = string("TThreadPoolServer output close failed: ") + ttx.what();
+      GlobalOutput(errStr.c_str());
+    }
+
   }
 
  private:
@@ -108,7 +123,8 @@ void TThreadPoolServer::serve() {
     // Start the server listening
     serverTransport_->listen();
   } catch (TTransportException& ttx) {
-    cerr << "TThreadPoolServer::run() listen(): " << ttx.what() << endl;
+    string errStr = string("TThreadPoolServer::run() listen(): ") + ttx.what();
+    GlobalOutput(errStr.c_str());
     return;
   }
 
@@ -142,20 +158,23 @@ void TThreadPoolServer::serve() {
       if (outputTransport != NULL) { outputTransport->close(); }
       if (client != NULL) { client->close(); }
       if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
-        cerr << "TThreadPoolServer: TServerTransport died on accept: " << ttx.what() << endl;
+        string errStr = string("TThreadPoolServer: TServerTransport died on accept: ") + ttx.what();
+        GlobalOutput(errStr.c_str());
       }
       continue;
     } catch (TException& tx) {
       if (inputTransport != NULL) { inputTransport->close(); }
       if (outputTransport != NULL) { outputTransport->close(); }
       if (client != NULL) { client->close(); }
-      cerr << "TThreadPoolServer: Caught TException: " << tx.what() << endl;
+      string errStr = string("TThreadPoolServer: Caught TException: ") + tx.what();
+      GlobalOutput(errStr.c_str());
       continue;
     } catch (string s) {
       if (inputTransport != NULL) { inputTransport->close(); }
       if (outputTransport != NULL) { outputTransport->close(); }
       if (client != NULL) { client->close(); }
-      cerr << "TThreadPoolServer: Unknown exception: " << s << endl;
+      string errStr = "TThreadPoolServer: Unknown exception: " + s;
+      GlobalOutput(errStr.c_str());
       break;
     }
   }
@@ -166,7 +185,8 @@ void TThreadPoolServer::serve() {
       serverTransport_->close();
       threadManager_->join();
     } catch (TException &tx) {
-      cerr << "TThreadPoolServer: Exception shutting down: " << tx.what() << endl;
+      string errStr = string("TThreadPoolServer: Exception shutting down: ") + tx.what();
+      GlobalOutput(errStr.c_str());
     }
     stop_ = false;
   }
