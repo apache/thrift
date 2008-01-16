@@ -38,6 +38,8 @@ class t_generator {
    */
   void generate_program();
 
+  const t_program* get_program() const { return program_; }
+
  protected:
 
   /**

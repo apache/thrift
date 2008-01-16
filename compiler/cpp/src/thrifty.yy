@@ -347,7 +347,7 @@ Include:
       if (g_parse_mode == INCLUDES) {
         std::string path = include_file(std::string($2));
         if (!path.empty()) {
-          g_program->add_include(path);
+          g_program->add_include(path, std::string($2));
         }
       }
     }

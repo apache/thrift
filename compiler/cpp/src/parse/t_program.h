@@ -70,6 +70,9 @@ class t_program : public t_doc {
   // Namespace
   const std::string& get_namespace() const { return namespace_; }
 
+  // Include prefix accessor
+  const std::string& get_include_prefix() const { return include_prefix_; }
+
   // Accessors for program elements
   const std::vector<t_typedef*>& get_typedefs()  const { return typedefs_;  }
   const std::vector<t_enum*>&    get_enums()     const { return enums_;     }
@@ -113,12 +116,33 @@ class t_program : public t_doc {
 
   // Includes
 
-  void add_include(std::string path) {
-    includes_.push_back(new t_program(path));
+  void add_include(std::string path, std::string include_site) {
+    t_program* program = new t_program(path);
+
+    // include prefix for this program is the site at which it was included
+    // (minus the filename)
+    std::string include_prefix;
+    std::string::size_type last_slash = std::string::npos;
+    if ((last_slash = include_site.rfind("/")) != std::string::npos) {
+      include_prefix = include_site.substr(0, last_slash);
+    }
+
+    program->set_include_prefix(include_prefix);
+    includes_.push_back(program);
   }
 
   std::vector<t_program*>& get_includes() {
     return includes_;
+  }
+
+  void set_include_prefix(std::string include_prefix) {
+    include_prefix_ = include_prefix;
+
+    // this is intended to be a directory; add a trailing slash if necessary
+    int len = include_prefix_.size();
+    if (len > 0 && include_prefix_[len - 1] != '/') {
+      include_prefix_ += '/';
+    }
   }
 
   // Language specific namespace / packaging
@@ -235,6 +259,9 @@ class t_program : public t_doc {
 
   // Included programs
   std::vector<t_program*> includes_;
+
+  // Include prefix for this program, if any
+  std::string include_prefix_;
 
   // Identifier lookup scope
   t_scope* scope_;

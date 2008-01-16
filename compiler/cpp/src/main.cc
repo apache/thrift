@@ -106,6 +106,12 @@ string g_curpath;
 vector<string> g_incl_searchpath;
 
 /**
+ * Should C++ include statements use path prefixes for other thrift-generated
+ * header files
+ */
+bool g_cpp_use_include_prefix = false;
+
+/**
  * Global debug state
  */
 int g_debug = 0;
@@ -613,6 +619,8 @@ void usage() {
   fprintf(stderr, "               (default: current directory)\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories\n");
   fprintf(stderr, "                searched for include directives\n");
+  fprintf(stderr, "  -cpp_use_include_prefix\n");
+  fprintf(stderr, "              Make C++ include statements use path prefixes\n");
   fprintf(stderr, "  -dense      Generate metadata for TDenseProtocol (C++)\n");
   fprintf(stderr, "  -rest       Generate PHP REST processors (with -php)\n");
   fprintf(stderr, "  -nowarn     Suppress all compiler warnings (BAD!)\n");
@@ -832,6 +840,7 @@ void generate(t_program* program) {
     if (gen_cpp) {
       pverbose("Generating C++\n");
       t_cpp_generator* cpp = new t_cpp_generator(program, gen_dense);
+      cpp->set_use_include_prefix(g_cpp_use_include_prefix);
       cpp->generate_program();
       delete cpp;
     }
@@ -933,7 +942,7 @@ void generate(t_program* program) {
       csharp->generate_program();
       delete csharp;
     }
-	
+
     if (dump_docs) {
       dump_docstrings(program);
     }
@@ -1034,6 +1043,8 @@ int main(int argc, char** argv) {
         gen_st = true;
       } else if (strcmp(arg, "-csharp") == 0) {
         gen_csharp = true;
+      } else if (strcmp(arg, "-cpp_use_include_prefix") == 0) {
+        g_cpp_use_include_prefix = true;
       } else if (strcmp(arg, "-I") == 0) {
         // An argument of "-I\ asdf" is invalid and has unknown results
         arg = argv[++i];
@@ -1096,6 +1107,18 @@ int main(int argc, char** argv) {
   t_program* program = new t_program(input_file);
   if (out_path.size()) {
     program->set_out_path(out_path);
+  }
+  if (g_cpp_use_include_prefix) {
+    // infer this from the filename passed in
+    string input_filename = argv[i];
+    string include_prefix;
+
+    string::size_type last_slash = string::npos;
+    if ((last_slash = input_filename.rfind("/")) != string::npos) {
+      include_prefix = input_filename.substr(0, last_slash);
+    }
+
+    program->set_include_prefix(include_prefix);
   }
 
   // Initialize global types
