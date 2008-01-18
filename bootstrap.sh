@@ -1,6 +1,5 @@
 #!/bin/sh
 
-##
 
 subdirs=" if"
 
