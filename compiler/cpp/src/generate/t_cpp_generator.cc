@@ -286,17 +286,16 @@ void t_cpp_generator::print_const_value(ofstream& out, string name, t_type* type
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       string key = render_const_value(out, name, ktype, v_iter->first);
       string val = render_const_value(out, name, vtype, v_iter->second);
-      indent(out) << name << "[" << key << "] = " << val << ";" << endl;
+      indent(out) << name << ".insert(std::make_pair(" << key << ", " << val << "));" << endl;
     }
     out << endl;
   } else if (type->is_list()) {
     t_type* etype = ((t_list*)type)->get_elem_type();
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
-    int i = 0;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       string val = render_const_value(out, name, etype, *v_iter);
-      indent(out) << name << "[" << (i++) << "] = " << val << ";" << endl;
+      indent(out) << name << ".push_back(" << val << ");" << endl;
     }
     out << endl;
   } else if (type->is_set()) {
