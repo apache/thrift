@@ -50,4 +50,72 @@ class TSimpleServer < TServer
 
 end
 
+begin
+  require 'fastthread'
+rescue LoadError
+  require 'thread'
+end
+
+class TThreadedServer < TServer
+  def serve()
+    begin
+      @serverTransport.listen()
+      while (true)
+        client = @serverTransport.accept()
+        trans = @transportFactory.getTransport(client)
+        prot = @protocolFactory.getProtocol(trans)
+        Thread.new(prot, trans) do |p, t|
+          begin
+            while (true)
+              @processor.process(p, p)
+            end
+          rescue TTransportException, TProtocolException => e
+          ensure
+            t.close()
+          end
+        end
+      end
+    ensure
+      @serverTransport.close()
+    end
+  end
+end
+
+class TThreadPoolServer < TServer
+  def initialize(processor, serverTransport, transportFactory=nil, protocolFactory=nil, num=20)
+    super(processor, serverTransport, transportFactory, protocolFactory)
+    @q = SizedQueue.new(num)
+  end
+
+  def serve()
+    @serverTransport.listen()
+
+    begin
+      while (true)
+        @q.push(:token)
+        Thread.new do
+          begin
+            while (true)
+              client = @serverTransport.accept()
+              trans = @transportFactory.getTransport(client)
+              prot = @protocolFactory.getProtocol(trans)
+              begin
+                while (true)
+                  @processor.process(prot, prot)
+                end
+              rescue TTransportException, TProtocolException => e
+              ensure
+                trans.close()
+              end
+            end
+          ensure
+            @q.pop() # thread died!
+          end
+        end
+      end
+    ensure
+      @serverTransport.close()
+    end
+  end
+end
 
