@@ -175,6 +175,11 @@ namespace ThriftMSBuildTask
 				p.StartInfo.RedirectStandardOutput = false;
 				p.Start();
 				p.WaitForExit();
+				if (p.ExitCode != 0)
+				{
+					LogMessage("thrift.exe failed to compile " + thriftFile, MessageImportance.High);
+					return false;
+				}
 			}
 
 			Csc csc = new Csc();
