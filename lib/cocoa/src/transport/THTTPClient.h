@@ -7,11 +7,14 @@
   NSMutableData * mRequestData;
   NSData * mResponseData;
   int mResponseDataOffset;
+  NSString * mUserAgent;
+  int mTimeout;
 }
 
 - (id) initWithURL: (NSURL *) aURL;
 
 - (id) initWithURL: (NSURL *) aURL 
+         userAgent: (NSString *) userAgent
            timeout: (int) timeout;
 
 - (void) setURL: (NSURL *) aURL;

@@ -15,32 +15,48 @@
   [mRequest setHTTPMethod: @"POST"];
   [mRequest setValue: @"application/x-thrift" forHTTPHeaderField: @"Content-Type"];
   [mRequest setValue: @"application/x-thrift" forHTTPHeaderField: @"Accept"];
-  [mRequest setValue: @"Cocoa/THTTPClient" forHTTPHeaderField: @"User-Agent"];
+
+  NSString * userAgent = mUserAgent;
+  if (!userAgent) {
+    userAgent = @"Cocoa/THTTPClient";
+  }
+  [mRequest setValue: userAgent forHTTPHeaderField: @"User-Agent"];
+
   [mRequest setCachePolicy: NSURLRequestReloadIgnoringCacheData];
+  if (mTimeout) {
+    [mRequest setTimeoutInterval: mTimeout];
+  }
 }
 
 
 - (id) initWithURL: (NSURL *) aURL
 {
+  return [self initWithURL: aURL
+                 userAgent: nil
+                   timeout: 0];
+}
+
+
+- (id) initWithURL: (NSURL *) aURL 
+         userAgent: (NSString *) userAgent
+           timeout: (int) timeout
+{
   self = [super init];
+  if (!self) {
+    return nil;
+  }
+  
+  mTimeout = timeout;
+  if (userAgent) {
+    mUserAgent = [userAgent retain];
+  }
   mURL = [aURL retain];
 
   [self setupRequest];
 
   // create our request data buffer
   mRequestData = [[NSMutableData alloc] initWithCapacity: 1024];
-
-  return self;
-}
-
-
-- (id) initWithURL: (NSURL *) aURL 
-           timeout: (int) timeout
-{
-  self = [self initWithURL: aURL];
-
-  [mRequest setTimeoutInterval: timeout];
-
+    
   return self;
 }
 
@@ -58,6 +74,7 @@
 - (void) dealloc
 {
   [mURL release];
+  [mUserAgent release];
   [mRequest release];
   [mRequestData release];
   [mResponseData release];
