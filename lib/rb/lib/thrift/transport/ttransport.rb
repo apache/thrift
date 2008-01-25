@@ -43,7 +43,7 @@ class TTransport
     while (have < sz)
       chunk = read(sz - have)
       have += chunk.length
-      buff += chunk
+      buff << chunk
     end
     return buff
   end
@@ -92,7 +92,7 @@ class TBufferedTransport < TTransport
   end
 
   def write(buf)
-    @wbuf += buf
+    @wbuf << buf
   end
 
   def flush()
@@ -167,7 +167,7 @@ class TFramedTransport < TTransport
       buf = buf.slice(0,sz)
     end
 
-    @wbuf += buf
+    @wbuf << buf
 
   end
 
@@ -181,7 +181,7 @@ class TFramedTransport < TTransport
     end
 
     out = [@wbuf.length].pack('N')
-    out += @wbuf
+    out << @wbuf
     @transport.write(out)
     @transport.flush
     @wbuf = ''
@@ -260,7 +260,7 @@ class TMemoryBuffer < TTransport
   end
 
   def write(wbuf)
-    @buf  += wbuf
+    @buf  << wbuf
     @wpos += wbuf.length()
   end
 
