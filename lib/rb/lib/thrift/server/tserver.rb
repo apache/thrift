@@ -41,10 +41,11 @@ class TSimpleServer < TServer
         while (true)
           @processor.process(prot, prot)
         end
-      rescue TTransportException => ttx
+      rescue TTransportException, TProtocolException => ttx
         print ttx,"\n"
+      ensure
+        trans.close()
       end
-      trans.close()
     end
   end
 
