@@ -42,7 +42,7 @@ class TSimpleServer < TServer
           @processor.process(prot, prot)
         end
       rescue TTransportException, TProtocolException => ttx
-        print ttx,"\n"
+        #print ttx,"\n"
       ensure
         trans.close()
       end
