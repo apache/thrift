@@ -32,23 +32,26 @@ class TSimpleServer < TServer
   end
 
   def serve()
-    @serverTransport.listen()
-    while (true)
-      client = @serverTransport.accept()
-      trans = @transportFactory.getTransport(client)
-      prot = @protocolFactory.getProtocol(trans)
-      begin
-        while (true)
-          @processor.process(prot, prot)
+    begin
+      @serverTransport.listen()
+      while (true)
+        client = @serverTransport.accept()
+        trans = @transportFactory.getTransport(client)
+        prot = @protocolFactory.getProtocol(trans)
+        begin
+          while (true)
+            @processor.process(prot, prot)
+          end
+        rescue TTransportException, TProtocolException => ttx
+          #print ttx,"\n"
+        ensure
+          trans.close()
         end
-      rescue TTransportException, TProtocolException => ttx
-        #print ttx,"\n"
-      ensure
-        trans.close()
       end
+    ensure
+      @serverTransport.close()
     end
   end
-
 end
 
 begin
