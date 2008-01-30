@@ -72,9 +72,9 @@ read(This, Sz) ->
     Transport = oop:get(This, transport),
     ?R1(Transport, read, Sz).
 
-effectful_write(This, Buf) -> % be sure to rebind This to the retval
+effectful_write(This, Data) -> % be sure to rebind This to the retval
     Wbuf = oop:get(This, wbuf),
-    This1 = oop:set(This, wbuf, Wbuf++Buf), % TODO: ++ efficiency?
+    This1 = oop:set(This, wbuf, [Wbuf, Data]), % build an iolist()
     {ok, This1}.
 
 effectful_flush(This) ->
@@ -82,5 +82,5 @@ effectful_flush(This) ->
     Transport = oop:get(This, transport),
     ?R1(Transport, effectful_write, Wbuf),
     ?R0(Transport, effectful_flush),
-    This1 = oop:set(This, wbuf, ""),
+    This1 = oop:set(This, wbuf, []),
     {ok, This1}.

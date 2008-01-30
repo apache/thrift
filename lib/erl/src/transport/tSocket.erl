@@ -85,16 +85,10 @@ effectful_open(This) ->
 isOpen(This) ->
     oop:get(This, handle) /= nil.
 
-effectful_write(This, Str) ->
+effectful_write(This, Data) ->
     Handle = oop:get(This, handle),
-    Val = gen_tcp:send(Handle, Str),
 
-    %% DEBUG
-    %% error_logger:info_msg("tSocket: wrote ~p~n", [Str]),
-
-    %% error_logger:info_msg("WRITE |~p| (~p)", [Str,Val]),
-
-    case Val of
+    case gen_tcp:send(Handle, Data) of
         {error, _} ->
             tException:throw(tTransportException, [?tTransportException_NOT_OPEN, "in write"]);
         ok ->

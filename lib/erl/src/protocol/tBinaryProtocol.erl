@@ -105,36 +105,41 @@ writeSetBegin(This, Etype, Size) ->
 
 %
 
-writeBool(This, Bool) ->
-    case Bool of
-        true  -> ?L1(writeByte, 1);
-        false -> ?L1(writeByte, 0)
-    end.
+writeBool(This, true) ->
+    ?L1(writeByte, 1);
+writeBool(This, false) ->
+    ?L1(writeByte, 0).
 
-writeByte(This, Byte) ->
+writeByte(This, Byte) when is_integer(Byte) ->
     Trans = oop:get(This, trans),
-    ?R1(Trans, effectful_write, binary_to_list(<<Byte:8/big>>)).
+    ?R1(Trans, effectful_write, <<Byte:8/big>>).
 
-writeI16(This, I16) ->
+writeI16(This, I16) when is_integer(I16) ->
     Trans = oop:get(This, trans),
-    ?R1(Trans, effectful_write, binary_to_list(<<I16:16/big>>)).
+    ?R1(Trans, effectful_write, <<I16:16/big>>).
 
-writeI32(This, I32) ->
+writeI32(This, I32) when is_integer(I32) ->
     Trans = oop:get(This, trans),
-    ?R1(Trans, effectful_write, binary_to_list(<<I32:32/big>>)).
+    ?R1(Trans, effectful_write, <<I32:32/big>>).
 
-writeI64(This, I64) ->
+writeI64(This, I64) when is_integer(I64) ->
     Trans = oop:get(This, trans),
-    ?R1(Trans, effectful_write, binary_to_list(<<I64:64/big>>)).
+    ?R1(Trans, effectful_write, <<I64:64/big>>).
 
-writeDouble(This, Double) ->
+writeDouble(This, Double) when is_float(Double) ->
     Trans = oop:get(This, trans),
-    ?R1(Trans, effectful_write, binary_to_list(<<Double:64/big>>)).
+    ?R1(Trans, effectful_write, <<Double:64/big>>).
 
-writeString(This, Str) ->
+writeString(This, Str) when is_list(Str) -> % [char()] or iolist()
     Trans = oop:get(This, trans),
-    ?L1(writeI32, length(Str)),
-    ?R1(Trans, effectful_write, Str).
+    Data = list_to_binary(Str),
+    ?L1(writeI32, size(Data)),
+    ?R1(Trans, effectful_write, Data);
+
+writeString(This, Binary) when is_binary(Binary) ->
+    Trans = oop:get(This, trans),
+    ?L1(writeI32, size(Binary)),
+    ?R1(Trans, effectful_write, Binary).
 
 %%
 
