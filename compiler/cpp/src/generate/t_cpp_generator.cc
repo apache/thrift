@@ -70,7 +70,7 @@ void t_cpp_generator::init_generator() {
 
   // Include the types file
   f_types_impl_ <<
-    "#include \"" << get_include_prefix(*get_program()) << program_name_ << 
+    "#include \"" << get_include_prefix(*get_program()) << program_name_ <<
     "_types.h\"" << endl <<
     endl;
 
@@ -185,14 +185,14 @@ void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
     "#ifndef " << program_name_ << "_CONSTANTS_H" << endl <<
     "#define " << program_name_ << "_CONSTANTS_H" << endl <<
     endl <<
-    "#include \"" << get_include_prefix(*get_program()) << program_name_ << 
+    "#include \"" << get_include_prefix(*get_program()) << program_name_ <<
     "_types.h\"" << endl <<
     endl <<
     ns_open_ << endl <<
     endl;
 
   f_consts_impl <<
-    "#include \"" << get_include_prefix(*get_program()) << program_name_ << 
+    "#include \"" << get_include_prefix(*get_program()) << program_name_ <<
     "_constants.h\"" << endl <<
     endl <<
     ns_open_ << endl <<
@@ -2308,14 +2308,14 @@ void t_cpp_generator::generate_deserialize_map_element(ofstream& out,
   t_field fval(tmap->get_val_type(), val);
 
   out <<
-    indent() << declare_field(&fkey) << endl <<
-    indent() << declare_field(&fval) << endl;
+    indent() << declare_field(&fkey) << endl;
 
   generate_deserialize_field(out, &fkey);
-  generate_deserialize_field(out, &fval);
-
   indent(out) <<
-    prefix << ".insert(std::make_pair(" << key << ", " << val << "));" << endl;
+    declare_field(&fval, false, false, false, true) << " = " <<
+    prefix << "[" << key << "];" << endl;
+
+  generate_deserialize_field(out, &fval);
 }
 
 void t_cpp_generator::generate_deserialize_set_element(ofstream& out,
@@ -2701,7 +2701,7 @@ string t_cpp_generator::base_type_name(t_base_type::t_base tbase) {
  * @param ttype The type
  * @return Field declaration, i.e. int x = 0;
  */
-string t_cpp_generator::declare_field(t_field* tfield, bool init, bool pointer, bool constant) {
+string t_cpp_generator::declare_field(t_field* tfield, bool init, bool pointer, bool constant, bool reference) {
   // TODO(mcslee): do we ever need to initialize the field?
   string result = "";
   if (constant) {
@@ -2710,6 +2710,9 @@ string t_cpp_generator::declare_field(t_field* tfield, bool init, bool pointer, 
   result += type_name(tfield->get_type());
   if (pointer) {
     result += "*";
+  }
+  if (reference) {
+    result += "&";
   }
   result += " " + tfield->get_name();
   if (init) {
@@ -2742,7 +2745,10 @@ string t_cpp_generator::declare_field(t_field* tfield, bool init, bool pointer, 
       result += " = (" + type_name(type) + ")0";
     }
   }
-  return result + ";";
+  if (!reference) {
+    result += ";";
+  }
+  return result;
 }
 
 /**
@@ -2887,6 +2893,6 @@ string t_cpp_generator::get_include_prefix(const t_program& program) const {
   if ((last_slash = include_prefix.rfind("/")) != string::npos) {
     return include_prefix.substr(0, last_slash) + "/" + out_dir_base_ + "/";
   }
-  
+
   return "";
 }

@@ -86,18 +86,18 @@ class t_cpp_generator : public t_oop_generator {
    */
 
   void generate_deserialize_field        (std::ofstream& out,
-                                          t_field*    tfield, 
+                                          t_field*    tfield,
                                           std::string prefix="",
                                           std::string suffix="");
-  
+
   void generate_deserialize_struct       (std::ofstream& out,
                                           t_struct*   tstruct,
                                           std::string prefix="");
-  
+
   void generate_deserialize_container    (std::ofstream& out,
                                           t_type*     ttype,
                                           std::string prefix="");
-  
+
   void generate_deserialize_set_element  (std::ofstream& out,
                                           t_set*      tset,
                                           std::string prefix="");
@@ -144,7 +144,7 @@ class t_cpp_generator : public t_oop_generator {
   std::string namespace_close(std::string ns);
   std::string type_name(t_type* ttype, bool in_typedef=false, bool arg=false);
   std::string base_type_name(t_base_type::t_base tbase);
-  std::string declare_field(t_field* tfield, bool init=false, bool pointer=false, bool constant=false);
+  std::string declare_field(t_field* tfield, bool init=false, bool pointer=false, bool constant=false, bool reference=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
@@ -158,7 +158,7 @@ class t_cpp_generator : public t_oop_generator {
     ttype = get_true_type(ttype);
 
     return
-      ttype->is_container() || 
+      ttype->is_container() ||
       ttype->is_struct() ||
       ttype->is_xception() ||
       (ttype->is_base_type() && (((t_base_type*)ttype)->get_base() == t_base_type::TYPE_STRING));
