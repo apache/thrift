@@ -2241,6 +2241,9 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
   string vtype = tmp("_vtype");
   string etype = tmp("_etype");
 
+  t_container* tcontainer = (t_container*)ttype;
+  bool use_push = tcontainer->has_cpp_name();
+
   indent(out) <<
     prefix << ".clear();" << endl <<
     indent() << "uint32_t " << size << ";" << endl;
@@ -2261,8 +2264,10 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
     out <<
       indent() << "facebook::thrift::protocol::TType " << etype << ";" << endl <<
       indent() << "iprot->readListBegin(" <<
-      etype << ", " << size << ");" << endl <<
-      indent() << prefix << ".resize(" << size << ");";
+      etype << ", " << size << ");" << endl;
+    if (!use_push) {
+      indent(out) << prefix << ".resize(" << size << ");" << endl;
+    }
   }
 
 
@@ -2279,7 +2284,7 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
     } else if (ttype->is_set()) {
       generate_deserialize_set_element(out, (t_set*)ttype, prefix);
     } else if (ttype->is_list()) {
-      generate_deserialize_list_element(out, (t_list*)ttype, prefix, i);
+      generate_deserialize_list_element(out, (t_list*)ttype, prefix, use_push, i);
     }
 
     scope_down(out);
@@ -2337,9 +2342,18 @@ void t_cpp_generator::generate_deserialize_set_element(ofstream& out,
 void t_cpp_generator::generate_deserialize_list_element(ofstream& out,
                                                         t_list* tlist,
                                                         string prefix,
+                                                        bool use_push,
                                                         string index) {
-  t_field felem(tlist->get_elem_type(), prefix + "[" + index + "]");
-  generate_deserialize_field(out, &felem);
+  if (use_push) {
+    string elem = tmp("_elem");
+    t_field felem(tlist->get_elem_type(), elem);
+    indent(out) << declare_field(&felem) << endl;
+    generate_deserialize_field(out, &felem);
+    indent(out) << prefix << ".push_back(" << elem << ";" << endl;
+  } else {
+    t_field felem(tlist->get_elem_type(), prefix + "[" + index + "]");
+    generate_deserialize_field(out, &felem);
+  }
 }
 
 
