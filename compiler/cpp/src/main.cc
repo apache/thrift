@@ -754,6 +754,20 @@ void validate_field_value(t_field* field, t_const_value* cv) {
 }
 
 /**
+ * Check that all the elements of a throws block are actually exceptions.
+ */
+bool validate_throws(t_struct* throws) {
+  const vector<t_field*>& members = throws->get_members();
+  vector<t_field*>::const_iterator m_iter;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    if (!(*m_iter)->get_type()->is_xception()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Parses a program
  */
 void parse(t_program* program, t_program* parent_program) {

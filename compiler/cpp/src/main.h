@@ -50,6 +50,11 @@ void validate_const_type(t_const* c);
 void validate_field_value(t_field* field, t_const_value* cv);
 
 /**
+ * Check members of a throws block
+ */
+bool validate_throws(t_struct* throws);
+
+/**
  * Converts a string filename into a thrift program name
  */
 std::string program_name(std::string filename);
