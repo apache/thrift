@@ -108,7 +108,8 @@ class t_cpp_generator : public t_oop_generator {
 
   void generate_deserialize_list_element (std::ofstream& out,
                                           t_list*     tlist,
-                                          std::string prefix="");
+                                          std::string prefix,
+                                          std::string index);
 
   void generate_serialize_field          (std::ofstream& out,
                                           t_field*    tfield,

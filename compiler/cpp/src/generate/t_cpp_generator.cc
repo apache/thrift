@@ -2261,7 +2261,8 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
     out <<
       indent() << "facebook::thrift::protocol::TType " << etype << ";" << endl <<
       indent() << "iprot->readListBegin(" <<
-                   etype << ", " << size << ");" << endl;
+      etype << ", " << size << ");" << endl <<
+      indent() << prefix << ".resize(" << size << ");";
   }
 
 
@@ -2278,7 +2279,7 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
     } else if (ttype->is_set()) {
       generate_deserialize_set_element(out, (t_set*)ttype, prefix);
     } else if (ttype->is_list()) {
-      generate_deserialize_list_element(out, (t_list*)ttype, prefix);
+      generate_deserialize_list_element(out, (t_list*)ttype, prefix, i);
     }
 
     scope_down(out);
@@ -2335,17 +2336,10 @@ void t_cpp_generator::generate_deserialize_set_element(ofstream& out,
 
 void t_cpp_generator::generate_deserialize_list_element(ofstream& out,
                                                         t_list* tlist,
-                                                        string prefix) {
-  string elem = tmp("_elem");
-  t_field felem(tlist->get_elem_type(), elem);
-
-  indent(out) <<
-    declare_field(&felem) << endl;
-
+                                                        string prefix,
+                                                        string index) {
+  t_field felem(tlist->get_elem_type(), prefix + "[" + index + "]");
   generate_deserialize_field(out, &felem);
-
-  indent(out) <<
-    prefix << ".push_back(" << elem << ");" << endl;
 }
 
 
