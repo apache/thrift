@@ -766,7 +766,7 @@ Throws:
     {
       pdebug("Throws -> tok_throws ( FieldList )");
       $$ = $3;
-      if (!validate_throws($$)) {
+      if (g_parse_mode == PROGRAM && !validate_throws($$)) {
         yyerror("Throws clause may not contain non-exception types");
         exit(1);
       }
