@@ -60,14 +60,42 @@ void TBufferedTransport::write(const uint8_t* buf, uint32_t len) {
 }
 
 const uint8_t* TBufferedTransport::borrow(uint8_t* buf, uint32_t* len) {
-  // Don't try to be clever with shifting buffers.
-  // If we have enough data, give a pointer to it,
-  // otherwise let the protcol use its slow path.
-  if (rLen_-rPos_ >= *len) {
+  // The number of additional bytes we need from the underlying transport.
+  // Could be zero or negative.
+  uint32_t need = *len - (rLen_-rPos_);
+
+  // If we have enough data, just hand over a pointer.
+  if (need <= 0) {
     *len = rLen_-rPos_;
     return rBuf_+rPos_;
   }
-  return NULL;
+
+  // If the request is bigger than our buffer, we are hosed.
+  if (*len > rBufSize_) {
+    return NULL;
+  }
+
+  // If we have less than half our buffer available,
+  // or we need more space than is in the buffer,
+  // shift the data we have down to the start.
+  if ((rLen_ > rBufSize_/2) || (rLen_+need > rBufSize_)) {
+    memmove(rBuf_, rBuf_+rPos_, rLen_-rPos_);
+    rLen_ -= rPos_;
+    rPos_ = 0;
+  }
+
+  // First try to fill up the buffer.
+  uint32_t got = transport_->read(rBuf_+rLen_, rBufSize_-rLen_);
+  rLen_ += got;
+  need -= got;
+
+  // If that fails, readAll until we get what we need.
+  if (need > 0) {
+    rLen_ += transport_->readAll(rBuf_+rLen_, need);
+  }
+
+  *len = rLen_-rPos_;
+  return rBuf_+rPos_;
 }
 
 void TBufferedTransport::consume(uint32_t len) {

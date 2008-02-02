@@ -106,6 +106,17 @@ class TBufferedTransport : public TTransport {
 
   void flush();
 
+  /**
+   * The following behavior is currently implemented by TBufferedTransport,
+   * but that may change in a future version:
+   * 1/ If len is at most rBufSize_, borrow will never return NULL.
+   *    Depending on the underlying transport, it could throw an exception
+   *    or hang forever.
+   * 2/ Some borrow requests may copy bytes internally.  However,
+   *    if len is at most rBufSize_/2, none of the copied bytes
+   *    will ever have to be copied again.  For optimial performance,
+   *    stay under this limit.
+   */
   const uint8_t* borrow(uint8_t* buf, uint32_t* len);
 
   void consume(uint32_t len);
