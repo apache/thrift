@@ -139,21 +139,31 @@ class TTransport {
   virtual void flush() {}
 
   /**
-   * Attempts to copy len bytes from the transport into buf.  Does not consume
-   * the bytes read (i.e.: a later read will return the same data).  This
-   * method is meant to support protocols that need to read variable-length
-   * fields.  They can attempt to borrow the maximum amount of data that they
-   * will need, then consume (see next method) what they actually use.  Some
-   * transports will not support this method and others will fail occasionally,
-   * so protocols must be prepared to use read if borrow fails.
+   * Attempts to return a pointer to \c len bytes, possibly copied into \c buf.
+   * Does not consume the bytes read (i.e.: a later read will return the same
+   * data).  This method is meant to support protocols that need to read
+   * variable-length fields.  They can attempt to borrow the maximum amount of
+   * data that they will need, then consume (see next method) what they
+   * actually use.  Some transports will not support this method and others
+   * will fail occasionally, so protocols must be prepared to use read if
+   * borrow fails.
    *
-   * @oaram buf  The buffer to store the data
-   * @param len  How much data to borrow
-   * @return true if the requested data has been borrowed, false otherwise
+   * @oaram buf  A buffer where the data can be stored if needed.
+   *             If borrow doesn't return buf, then the contents of
+   *             buf after the call are undefined.
+   * @param len  *len should initially contain the number of bytes to borrow.
+   *             If borrow succeeds, *len will contain the number of bytes
+   *             available in the returned pointer.  This will be at least
+   *             what was requested, but may be more if borrow returns
+   *             a pointer to an internal buffer, rather than buf.
+   *             If borrow fails, the contents of *len are undefined.
+   * @return If the borrow succeeds, return a pointer to the borrowed data.
+   *         This might be equal to \c buf, or it might be a pointer into
+   *         the transport's internal buffers.
    * @throws TTransportException if an error occurs
    */
-  virtual bool borrow(uint8_t* buf, uint32_t len) {
-    return false;
+  virtual const uint8_t* borrow(uint8_t* buf, uint32_t* len) {
+    return NULL;
   }
 
   /**

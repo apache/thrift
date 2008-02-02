@@ -150,7 +150,7 @@ class TZlibTransport : public TTransport {
 
   void flush();
 
-  bool borrow(uint8_t* buf, uint32_t len);
+  const uint8_t* borrow(uint8_t* buf, uint32_t* len);
 
   void consume(uint32_t len);
 

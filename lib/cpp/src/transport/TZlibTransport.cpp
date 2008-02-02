@@ -234,15 +234,15 @@ void TZlibTransport::flushToZlib(const uint8_t* buf, int len, bool finish) {
   }
 }
 
-bool TZlibTransport::borrow(uint8_t* buf, uint32_t len) {
+const uint8_t* TZlibTransport::borrow(uint8_t* buf, uint32_t* len) {
   // Don't try to be clever with shifting buffers.
-  // If we have enough data, give it, otherwise
-  // let the protcol use its slow path.
+  // If we have enough data, give a pointer to it,
+  // otherwise let the protcol use its slow path.
   if (readAvail() >= (int)len) {
-    memcpy(buf, urbuf_ + urpos_, len);
-    return true;
+    *len = (uint32_t)readAvail();
+    return urbuf_ + urpos_;
   }
-  return false;
+  return NULL;
 }
 
 void TZlibTransport::consume(uint32_t len) {

@@ -59,15 +59,15 @@ void TBufferedTransport::write(const uint8_t* buf, uint32_t len) {
   }
 }
 
-bool TBufferedTransport::borrow(uint8_t* buf, uint32_t len) {
+const uint8_t* TBufferedTransport::borrow(uint8_t* buf, uint32_t* len) {
   // Don't try to be clever with shifting buffers.
-  // If we have enough data, give it, otherwise
-  // let the protcol use its slow path.
-  if (rLen_-rPos_ >= len) {
-    memcpy(buf, rBuf_+rPos_, len);
-    return true;
+  // If we have enough data, give a pointer to it,
+  // otherwise let the protcol use its slow path.
+  if (rLen_-rPos_ >= *len) {
+    *len = rLen_-rPos_;
+    return rBuf_+rPos_;
   }
-  return false;
+  return NULL;
 }
 
 void TBufferedTransport::consume(uint32_t len) {
@@ -203,15 +203,15 @@ void TFramedTransport::flush()  {
   transport_->flush();
 }
 
-bool TFramedTransport::borrow(uint8_t* buf, uint32_t len) {
+const uint8_t* TFramedTransport::borrow(uint8_t* buf, uint32_t* len) {
   // Don't try to be clever with shifting buffers.
-  // If we have enough data, give it, otherwise
-  // let the protcol use its slow path.
-  if (read_ && (rLen_-rPos_ >= len)) {
-    memcpy(buf, rBuf_+rPos_, len);
-    return true;
+  // If we have enough data, give a pointer to it,
+  // otherwise let the protcol use its slow path.
+  if (read_ && (rLen_-rPos_ >= *len)) {
+    *len = rLen_-rPos_;
+    return rBuf_+rPos_;
   }
-  return false;
+  return NULL;
 }
 
 void TFramedTransport::consume(uint32_t len) {
@@ -293,15 +293,12 @@ void TMemoryBuffer::write(const uint8_t* buf, uint32_t len) {
   wPos_ += len;
 }
 
-bool TMemoryBuffer::borrow(uint8_t* buf, uint32_t len) {
-  // Don't try to be clever with shifting buffers.
-  // If we have enough data, give it, otherwise
-  // let the protcol use its slow path.
-  if (wPos_-rPos_ >= len) {
-    memcpy(buf, buffer_ + rPos_, len);
-    return true;
+const uint8_t* TMemoryBuffer::borrow(uint8_t* buf, uint32_t* len) {
+  if (wPos_-rPos_ >= *len) {
+    *len = wPos_-rPos_;
+    return buffer_ + rPos_;
   }
-  return false;
+  return NULL;
 }
 
 void TMemoryBuffer::consume(uint32_t len) {

@@ -106,7 +106,7 @@ class TBufferedTransport : public TTransport {
 
   void flush();
 
-  bool borrow(uint8_t* buf, uint32_t len);
+  const uint8_t* borrow(uint8_t* buf, uint32_t* len);
 
   void consume(uint32_t len);
 
@@ -225,7 +225,7 @@ class TFramedTransport : public TTransport {
 
   void flush();
 
-  bool borrow(uint8_t* buf, uint32_t len);
+  const uint8_t* borrow(uint8_t* buf, uint32_t* len);
 
   void consume(uint32_t len);
 
@@ -424,7 +424,7 @@ class TMemoryBuffer : public TTransport {
     return wPos_ - rPos_;
   }
 
-  bool borrow(uint8_t* buf, uint32_t len);
+  const uint8_t* borrow(uint8_t* buf, uint32_t* len);
 
   void consume(uint32_t len);
 

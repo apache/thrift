@@ -180,12 +180,13 @@ inline uint32_t TDenseProtocol::vlqRead(uint64_t& vlq) {
   uint32_t used = 0;
   uint64_t val = 0;
   uint8_t buf[10];  // 64 bits / (7 bits/byte) = 10 bytes.
-  bool borrowed = trans_->borrow(buf, sizeof(buf));
+  uint32_t buf_size = sizeof(buf);
+  const uint8_t* borrowed = trans_->borrow(buf, &buf_size);
 
   // Fast path.  TODO(dreiss): Make it faster.
-  if (borrowed) {
+  if (borrowed != NULL) {
     while (true) {
-      uint8_t byte = buf[used];
+      uint8_t byte = borrowed[used];
       used++;
       val = (val << 7) | (byte & 0x7f);
       if (!(byte & 0x80)) {
