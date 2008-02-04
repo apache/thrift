@@ -238,7 +238,7 @@ const uint8_t* TZlibTransport::borrow(uint8_t* buf, uint32_t* len) {
   // Don't try to be clever with shifting buffers.
   // If we have enough data, give a pointer to it,
   // otherwise let the protcol use its slow path.
-  if (readAvail() >= (int)len) {
+  if (readAvail() >= (int)*len) {
     *len = (uint32_t)readAvail();
     return urbuf_ + urpos_;
   }
