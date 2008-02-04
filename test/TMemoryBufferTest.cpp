@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     shared_ptr<TMemoryBuffer> strBuffer2(new TMemoryBuffer());
     shared_ptr<TBinaryProtocol> binaryProtcol2(new TBinaryProtocol(strBuffer2));
 
-    strBuffer2->resetFromString(serialized);
+    strBuffer2->resetBuffer((uint8_t*)serialized.data(), serialized.length());
     thrift::test::Xtruct a2;
     a2.read(binaryProtcol2.get());
 
@@ -46,10 +46,10 @@ int main(int argc, char** argv) {
     using std::string;
     using std::cout;
     using std::endl;
-    
+
     string* str1 = new string("abcd1234");
     const char* data1 = str1->data();
-    TMemoryBuffer buf(*str1, true);
+    TMemoryBuffer buf((uint8_t*)str1->data(), str1->length(), TMemoryBuffer::COPY);
     delete str1;
     string* str2 = new string("plsreuse");
     bool obj_reuse = (str1 == str2);
@@ -65,4 +65,30 @@ int main(int argc, char** argv) {
     assert(str3 == "wxyzabcd");
     assert(str4 == "67891234");
   }
+
+  {
+    using facebook::thrift::transport::TTransportException;
+    using facebook::thrift::transport::TMemoryBuffer;
+    using std::string;
+
+    char data[] = "foo\0bar";
+
+    TMemoryBuffer buf1((uint8_t*)data, 7, TMemoryBuffer::OBSERVE);
+    string str = buf1.getBufferAsString();
+    assert(str.length() == 7);
+    buf1.resetBuffer();
+    try {
+      buf1.write((const uint8_t*)"foo", 3);
+      assert(false);
+    } catch (TTransportException& ex) {}
+
+    TMemoryBuffer buf2((uint8_t*)data, 7, TMemoryBuffer::COPY);
+    try {
+      buf2.write((const uint8_t*)"bar", 3);
+    } catch (TTransportException& ex) {
+      assert(false);
+    }
+  }
+
+
 }

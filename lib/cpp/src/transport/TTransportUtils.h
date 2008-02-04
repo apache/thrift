@@ -292,6 +292,7 @@ class TFramedTransportFactory : public TTransportFactory {
  * doubles as necessary.
  *
  * @author Mark Slee <mcslee@facebook.com>
+ * @author David Reiss <dreiss@facebook.com>
  */
 class TMemoryBuffer : public TTransport {
  private:
@@ -316,30 +317,78 @@ class TMemoryBuffer : public TTransport {
  public:
   static const uint32_t defaultSize = 1024;
 
+  /**
+   * This enum specifies how a TMemoryBuffer should treat
+   * memory passed to it via constructors or resetBuffer.
+   *
+   * OBSERVE:
+   *   TMemoryBuffer will simply store a pointer to the memory.
+   *   It is the callers responsibility to ensure that the pointer
+   *   remains valid for the lifetime of the TMemoryBuffer,
+   *   and that it is properly cleaned up.
+   *   Note that no data can be written to observed buffers.
+   *
+   * COPY:
+   *   TMemoryBuffer will make an internal copy of the buffer.
+   *   The caller has no responsibilities.
+   *
+   * TAKE_OWNERSHIP:
+   *   TMemoryBuffer will become the "owner" of the buffer,
+   *   and will be responsible for freeing it.
+   *   The membory must have been allocated with malloc.
+   */
+  enum MemoryPolicy {
+    OBSERVE = 1,
+    COPY = 2,
+    TAKE_OWNERSHIP = 3,
+  };
+
+  /**
+   * Construct a TMemoryBuffer with a default-sized buffer,
+   * owned by the TMemoryBuffer object.
+   */
   TMemoryBuffer() {
     initCommon(NULL, defaultSize, true, 0);
   }
 
+  /**
+   * Construct a TMemoryBuffer with a buffer of a specified size,
+   * owned by the TMemoryBuffer object.
+   *
+   * @param sz  The initial size of the buffer.
+   */
   TMemoryBuffer(uint32_t sz) {
     initCommon(NULL, sz, true, 0);
   }
 
-  // transferOwnership should be true if you want TMemoryBuffer to call free(buf).
-  TMemoryBuffer(uint8_t* buf, int sz, bool transferOwnership = false) {
-    initCommon(buf, sz, transferOwnership, sz);
-  }
+  /**
+   * Construct a TMemoryBuffer with buf as its initial contents.
+   *
+   * @param buf    The initial contents of the buffer.
+   *               Note that, while buf is a non-const pointer,
+   *               TMemoryBuffer will not write to it if policy == OBSERVE,
+   *               so it is safe to const_cast<uint8_t*>(whatever).
+   * @param sz     The size of @c buf.
+   * @param policy See @link MemoryPolicy @endlink .
+   */
+  TMemoryBuffer(uint8_t* buf, uint32_t sz, MemoryPolicy policy = OBSERVE) {
+    if (buf == NULL && sz != 0) {
+      throw TTransportException(TTransportException::BAD_ARGS,
+                                "TMemoryBuffer given null buffer with non-zero size.");
+    }
 
-  // copy should be true if you want TMemoryBuffer to make a copy of the string.
-  // If you set copy to false, the string must not be destroyed before you are
-  // done with the TMemoryBuffer.
-  TMemoryBuffer(const std::string& str, bool copy = false) {
-    if (copy) {
-      initCommon(NULL, str.length(), true, 0);
-      this->write(reinterpret_cast<const uint8_t*>(str.data()), str.length());
-    } else {
-      // This first argument should be equivalent to the following:
-      // const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(str.data()))
-      initCommon((uint8_t*)str.data(), str.length(), false, str.length());
+    switch (policy) {
+      case OBSERVE:
+      case TAKE_OWNERSHIP:
+        initCommon(buf, sz, policy == TAKE_OWNERSHIP, sz);
+        break;
+      case COPY:
+        initCommon(NULL, sz, true, 0);
+        this->write(buf, sz);
+        break;
+      default:
+        throw TTransportException(TTransportException::BAD_ARGS,
+                                  "Invalid MemoryPolicy for TMemoryBuffer");
     }
   }
 
@@ -362,6 +411,7 @@ class TMemoryBuffer : public TTransport {
 
   void close() {}
 
+  // TODO(dreiss): Make bufPtr const.
   void getBuffer(uint8_t** bufPtr, uint32_t* sz) {
     *bufPtr = buffer_;
     *sz = wPos_;
@@ -384,33 +434,31 @@ class TMemoryBuffer : public TTransport {
   void resetBuffer() {
     wPos_ = 0;
     rPos_ = 0;
+    // It isn't safe to write into a buffer we don't own.
+    if (!owner_) {
+      bufferSize_ = 0;
+    }
   }
 
-  // transferOwnership should be true if you want TMemoryBuffer to call free(buf).
-  void resetBuffer(uint8_t* buf, uint32_t sz, bool transferOwnership = false) {
-    if (owner_) {
-      free(buffer_);
-    }
-    owner_ = transferOwnership;
-    buffer_ = buf;
-    bufferSize_ = sz;
-    wPos_ = sz;
-    rPos_ = 0;
-  }
+  /// See constructor documentation.
+  void resetBuffer(uint8_t* buf, uint32_t sz, MemoryPolicy policy = OBSERVE) {
+    // Use a variant of the copy-and-swap trick for assignment operators.
+    // This is sub-optimal in terms of performance for two reasons:
+    //   1/ The constructing and swapping of the (small) values
+    //      in the temporary object takes some time, and is not necessary.
+    //   2/ If policy == COPY, we allocate the new buffer before
+    //      freeing the old one, precluding the possibility of
+    //      reusing that memory.
+    // I doubt that either of these problems could be optimized away,
+    // but the second is probably no a common case, and the first is minor.
+    // I don't expect resetBuffer to be a common operation, so I'm willing to
+    // bite the performance bullet to make the method this simple.
 
-  // See the constructor that takes a string.
-  void resetFromString(const std::string& str, bool copy = false) {
-    if (copy) {
-      uint8_t* buf = (uint8_t*)malloc(str.length());
-      if (buf == NULL) {
-        throw TTransportException("Out of memory");
-      }
-      std::copy(str.begin(), str.end(), buf);
-      resetBuffer(buf, str.length(), true);
-    } else {
-      // See the above comment about const_cast.
-      resetBuffer((uint8_t*)str.data(), str.length(), false);
-    }
+    // Construct the new buffer.
+    TMemoryBuffer new_buffer(buf, sz, policy);
+    // Move it into ourself.
+    this->swap(new_buffer);
+    // Our old self gets destroyed.
   }
 
   uint32_t read(uint8_t* buf, uint32_t len);
@@ -439,6 +487,14 @@ class TMemoryBuffer : public TTransport {
 
   void consume(uint32_t len);
 
+  void swap(TMemoryBuffer& that) {
+    using std::swap;
+    swap(buffer_,     that.buffer_);
+    swap(bufferSize_, that.bufferSize_);
+    swap(wPos_,       that.wPos_);
+    swap(owner_,      that.owner_);
+  }
+
  private:
   // Data buffer
   uint8_t* buffer_;
@@ -455,6 +511,8 @@ class TMemoryBuffer : public TTransport {
   // Is this object the owner of the buffer?
   bool owner_;
 
+  // Don't forget to update constrctors, initCommon, and swap if
+  // you add new members.
 };
 
 /**
