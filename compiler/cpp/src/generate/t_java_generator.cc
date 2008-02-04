@@ -383,7 +383,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     out <<
       endl <<
       indent() << "public final Isset __isset = new Isset();" << endl <<
-      indent() << "public static final class Isset {" << endl;
+      indent() << "public static final class Isset implements java.io.Serializable {" << endl;
     indent_up();
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         indent(out) <<
