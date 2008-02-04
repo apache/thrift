@@ -1,3 +1,9 @@
+Nitay <nitayj@gmail.com>
+-Support for "make check".
+
+William Morgan <w@adap.tv>
+-Miscellaneous Ruby improvements.
+
 Ben Maurer <bmaurer@andrew.cmu.edu>
 -Restructuring the way Autoconf is used.
 
