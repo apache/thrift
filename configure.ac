@@ -106,6 +106,7 @@ AC_CONFIG_FILES([
   lib/cpp/thrift-z.pc
   lib/py/Makefile
   if/Makefile
+  test/Makefile
 ])
 
 AC_OUTPUT

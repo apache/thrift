@@ -1,14 +1,3 @@
-/*
-../compiler/cpp/thrift -cpp DebugProtoTest.thrift
-../compiler/cpp/thrift -cpp StressTest.thrift
-g++ -Wall -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
-  ReflectionTest.cpp \
-  gen-cpp/StressTest_types.cpp gen-cpp/DebugProtoTest_types.cpp \
-  gen-cpp/Service.cpp gen-cpp/PartiallyReflectable.cpp \
-  ../lib/cpp/.libs/libthrift.a -o ReflectionTest
-./ReflectionTest
-*/
-
 #include <iostream>
 #include "gen-cpp/PartiallyReflectable.h"
 #include "gen-cpp/Service.h"

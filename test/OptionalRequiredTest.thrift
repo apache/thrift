@@ -1,11 +1,3 @@
-/*
-../compiler/cpp/thrift -cpp OptionalRequiredTest.thrift
-g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
-  OptionalRequiredTest.cpp gen-cpp/OptionalRequiredTest_types.cpp \
-  ../lib/cpp/.libs/libthrift.a -o OptionalRequiredTest
-./OptionalRequiredTest
-*/
-
 cpp_namespace thrift.test
 
 struct OldSchool {

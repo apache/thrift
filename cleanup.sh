@@ -33,4 +33,5 @@ compiler/cpp/Makefile.in \
 if/Makefile.in \
 lib/Makefile.in \
 lib/cpp/Makefile.in \
-lib/py/Makefile.in
+lib/py/Makefile.in \
+test/Makefile.in
