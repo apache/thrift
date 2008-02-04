@@ -57,7 +57,7 @@ class Server : public ServiceIf {
   Server() {}
 
   void count(const char* method) {
-    MutexMonitor m(lock_);
+    Guard m(lock_);
     int ct = counts_[method];
     counts_[method] = ++ct;
   }
@@ -68,7 +68,7 @@ class Server : public ServiceIf {
   }
 
   count_map getCount() {
-    MutexMonitor m(lock_);
+    Guard m(lock_);
     return counts_;
   }
 
