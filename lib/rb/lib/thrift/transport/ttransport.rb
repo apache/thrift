@@ -210,8 +210,8 @@ class TMemoryBuffer < TTransport
   def initialize(sz=1024)
     @buf = ''
     @sz  = sz
-    wpos = 0
-    rpos = 0
+    @wpos = 0
+    @rpos = 0
   end
 
   def isOpen
@@ -225,7 +225,7 @@ class TMemoryBuffer < TTransport
   end
 
   def peek
-    return rpos < wpos
+    return @rpos < @wpos
   end
 
   def getBuffer
