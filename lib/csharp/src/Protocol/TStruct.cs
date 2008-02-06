@@ -15,12 +15,8 @@ using System.Text;
 
 namespace Thrift.Protocol
 {
-	public class TStruct
+	public struct TStruct
 	{
-		public TStruct()
-		{
-		}
-
 		public TStruct(string name)
 		{
 			Name = name;

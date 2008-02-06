@@ -16,12 +16,8 @@ using System.Text;
 
 namespace Thrift.Protocol
 {
-	public class TField
+	public struct TField
 	{
-		public TField()
-		{
-		}
-
 		public TField(string name, TType type, short id)
 		{
 			Name = name;

@@ -321,12 +321,12 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
   if (members.size() > 0) {
     out <<
       endl <<
-      indent() << "public Isset __isset = new Isset();" << endl <<
-      indent() << "public sealed class Isset {" << endl;
+      indent() << "public Isset __isset;" << endl <<
+      indent() << "public struct Isset {" << endl;
     indent_up();
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       indent(out) <<
-        "public bool " << (*m_iter)->get_name() << " = false;" << endl;
+        "public bool " << (*m_iter)->get_name() << ";" << endl;
     }
 
     indent_down();
@@ -593,7 +593,7 @@ void t_csharp_generator::generate_csharp_struct_tostring(ofstream& out, t_struct
     t_type* ttype = (*f_iter)->get_type();
     if (ttype->is_xception() || ttype->is_struct()) {
       indent(out) <<
-        "sb.Append(this." << (*f_iter)->get_name() << ".ToString());" << endl;
+        "sb.Append(this." << (*f_iter)->get_name() << "== null ? \"<null>\" : "<< "this." << (*f_iter)->get_name() << ".ToString());" << endl;
     } else {
       indent(out) <<
         "sb.Append(this." << (*f_iter)->get_name() << ");" << endl;
@@ -1384,7 +1384,7 @@ string t_csharp_generator::type_name(t_type* ttype, bool in_container, bool in_i
   }
 
   if (ttype->is_base_type()) {
-    return base_type_name(((t_base_type*)ttype)->get_base(), in_container);
+    return base_type_name((t_base_type*)ttype, in_container);
   } else if (ttype->is_map()) {
     t_map *tmap = (t_map*) ttype;
     return "Dictionary<" + type_name(tmap->get_key_type(), true) +

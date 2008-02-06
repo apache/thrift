@@ -16,12 +16,8 @@ using System.Text;
 
 namespace Thrift.Protocol
 {
-	public class TMessage
+	public struct TMessage
 	{
-		public TMessage()
-		{
-		}
-
 		public TMessage(string name, TMessageType type, int seqid)
 		{
 			Name = name;

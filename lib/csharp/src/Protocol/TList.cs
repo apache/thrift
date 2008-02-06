@@ -16,12 +16,8 @@ using System.Text;
 
 namespace Thrift.Protocol
 {
-	public class TList
+	public struct TList
 	{
-		public TList()
-		{
-		}
-
 		public TList(TType elementType, int count)
 		{
 			ElementType = elementType;

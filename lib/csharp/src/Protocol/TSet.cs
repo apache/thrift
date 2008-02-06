@@ -16,12 +16,8 @@ using System.Text;
 
 namespace Thrift.Protocol
 {
-	public class TSet
+	public struct TSet
 	{
-		public TSet()
-		{
-		}
-
 		public TSet(TType elementType, int count)
 		{
 			ElementType = elementType;

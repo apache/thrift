@@ -16,12 +16,8 @@ using System.Text;
 
 namespace Thrift.Protocol
 {
-	public class TMap
+	public struct TMap
 	{
-		public TMap()
-		{
-		}
-
 		public TMap(TType keyType, TType valueType, int count)
 		{
 			KeyType = keyType;
