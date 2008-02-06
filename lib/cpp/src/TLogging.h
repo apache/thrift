@@ -29,37 +29,37 @@
 
 /**
  * T_GLOBAL_DEBUGGING_LEVEL = 0: all debugging turned off, debug macros undefined
- * T_GLOBAL_DEBUGGING_LEVEL = 1: all debugging turned on  
+ * T_GLOBAL_DEBUGGING_LEVEL = 1: all debugging turned on
  */
 #define T_GLOBAL_DEBUGGING_LEVEL 0
 
 
 /**
  * T_GLOBAL_LOGGING_LEVEL = 0: all logging turned off, logging macros undefined
- * T_GLOBAL_LOGGING_LEVEL = 1: all logging turned on  
+ * T_GLOBAL_LOGGING_LEVEL = 1: all logging turned on
  */
 #define T_GLOBAL_LOGGING_LEVEL   1
 
 
-/** 
+/**
  * Standard wrapper around fprintf what will prefix the file name and line
  * number to the line. Uses T_GLOBAL_DEBUGGING_LEVEL to control whether it is
  * turned on or off.
  *
- * @param format_string 
+ * @param format_string
  */
 #if T_GLOBAL_DEBUGGING_LEVEL > 0
   #define T_DEBUG(format_string,...)                                        \
     if (T_GLOBAL_DEBUGGING_LEVEL > 0) {                                     \
       fprintf(stderr,"[%s,%d] " #format_string " \n", __FILE__, __LINE__,##__VA_ARGS__); \
-  } 
+  }
 #else
   #define T_DEBUG(format_string,...)
 #endif
 
 
-/** 
- * analagous to T_DEBUG but also prints the time 
+/**
+ * analagous to T_DEBUG but also prints the time
  *
  * @param string  format_string input: printf style format string
  */
@@ -80,7 +80,7 @@
 #endif
 
 
-/** 
+/**
  * analagous to T_DEBUG but uses input level to determine whether or not the string
  * should be logged.
  *
@@ -93,7 +93,7 @@
   }
 
 
-/** 
+/**
  * Explicit error logging. Prints time, file name and line number
  *
  * @param string  format_string input: printf style format string
@@ -109,7 +109,7 @@
   }
 
 
-/** 
+/**
  * Analagous to T_ERROR, additionally aborting the process.
  * WARNING: macro calls abort(), ending program execution
  *
@@ -127,7 +127,7 @@
   }
 
 
-/** 
+/**
  * Log input message
  *
  * @param string  format_string input: printf style format string
@@ -143,7 +143,7 @@
         dbgtime[24] = '\0';                                                   \
         fprintf(stderr,"[%s] " #format_string " \n", dbgtime,##__VA_ARGS__);  \
       }                                                                       \
-    } 
+    }
 #else
   #define T_LOG_OPER(format_string,...)
 #endif

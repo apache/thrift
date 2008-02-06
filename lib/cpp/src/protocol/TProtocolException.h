@@ -10,7 +10,7 @@
 #include <boost/lexical_cast.hpp>
 #include <string>
 
-namespace facebook { namespace thrift { namespace protocol { 
+namespace facebook { namespace thrift { namespace protocol {
 
 /**
  * Class to encapsulate all the possible types of protocol errors that may
@@ -41,7 +41,7 @@ class TProtocolException : public facebook::thrift::TException {
     type_(UNKNOWN) {}
 
   TProtocolException(TProtocolExceptionType type) :
-    facebook::thrift::TException(), 
+    facebook::thrift::TException(),
     type_(type) {}
 
   TProtocolException(const std::string& message) :
@@ -81,11 +81,11 @@ class TProtocolException : public facebook::thrift::TException {
   }
 
  protected:
-  /** 
+  /**
    * Error code
    */
   TProtocolExceptionType type_;
- 
+
 };
 
 }}} // facebook::thrift::protocol

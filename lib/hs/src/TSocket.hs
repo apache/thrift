@@ -11,15 +11,15 @@ instance TTransport TSocket where
                   Just _ -> True
                   Nothing -> False
     topen a = do h <- connectTo (host a) (PortNumber (port a))
-                 return $ (a{chan = Just h}) 
-    tclose a = case chan a of 
+                 return $ (a{chan = Just h})
+    tclose a = case chan a of
                  Just h -> do hClose h
                               return $ a{chan=Nothing}
                  Nothing -> return a
     tread a 0 = return []
-    tread a n = case chan a of 
+    tread a n = case chan a of
                   Just h -> handle (\e -> throwDyn (TransportExn "TSocket: Could not read." TE_UNKNOWN))
-                      (do c <- hGetChar h 
+                      (do c <- hGetChar h
                           l <- tread a (n-1)
                           return $ c:l)
                   Nothing -> return []

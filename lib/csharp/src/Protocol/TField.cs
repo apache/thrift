@@ -2,7 +2,7 @@
 //  TField.cs
 //
 //  Begin:  Aug 19, 2007
-//  Authors: 
+//  Authors:
 //		Todd Berman <tberman@imeem.com>
 //
 //  Distributed under the Thrift Software License

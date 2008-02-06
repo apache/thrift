@@ -49,9 +49,9 @@ void t_csharp_generator::end_csharp_namespace(ofstream& out) {
 string t_csharp_generator::csharp_type_usings() {
   return string() +
     "using System;\n" +
-    "using System.Collections;\n" + 
+    "using System.Collections;\n" +
     "using System.Collections.Generic;\n" +
-    "using System.Text;\n" + 
+    "using System.Text;\n" +
     "using Thrift;\n";
 }
 
@@ -95,7 +95,7 @@ void t_csharp_generator::generate_enum(t_enum* tenum) {
   }
 
   scope_down(f_enum);
-  
+
   end_csharp_namespace(f_enum);
 
   f_enum.close();
@@ -332,7 +332,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
     indent_down();
     indent(out) << "}" << endl << endl;
   }
-  
+
   indent(out) <<
     "public " << tstruct->get_name() << "() {" << endl;
   indent_up();
@@ -376,7 +376,7 @@ void t_csharp_generator::generate_csharp_struct_reader(ofstream& out, t_struct* 
   indent(out) <<
     "TField field;" << endl <<
     indent() << "TStruct struc = iprot.ReadStructBegin();" << endl;
-  
+
   indent(out) <<
     "while (true)" << endl;
   scope_up(out);
@@ -1070,7 +1070,7 @@ void t_csharp_generator::generate_deserialize_field(ofstream& out, t_field* tfie
   } else if (type->is_base_type() || type->is_enum()) {
     indent(out) <<
       name << " = ";
-    
+
     if (type->is_enum())
     {
       out << "(" << type_name(type, false, true) << ")";
@@ -1157,7 +1157,7 @@ void t_csharp_generator::generate_deserialize_container(ofstream& out, t_type* t
   indent(out) <<
     "for( int " << i << " = 0; " << i << " < " << obj << ".Count" << "; " << "++" << i << ")" << endl;
   scope_up(out);
-  
+
   if (ttype->is_map()) {
     generate_deserialize_map_element(out, (t_map*)ttype, prefix);
   } else if (ttype->is_set()) {

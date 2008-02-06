@@ -10,7 +10,7 @@ let tv = P.t_type_to_i
 let vt = P.t_type_of_i
 
 
-let comp_int b n = 
+let comp_int b n =
   let s = ref 0l in
   let sb = 32 - 8*n in
     for i=0 to (n-1) do
@@ -32,7 +32,7 @@ class t trans =
 object (self)
   inherit P.t trans
   val ibyte = String.create 8
-  method writeBool b = 
+  method writeBool b =
     ibyte.[0] <- char_of_int (if b then 1 else 0);
     trans#write ibyte 0 1
   method writeByte i =
@@ -88,7 +88,7 @@ object (self)
     self#writeByte (tv t);
     self#writeI32 s
   method writeSetEnd = ()
-  method readByte = 
+  method readByte =
     ignore (trans#readAll ibyte 0 1);
     (comp_int ibyte 1)
   method readI16 =
@@ -124,7 +124,7 @@ object (self)
     ""
   method readStructEnd = ()
   method readFieldBegin =
-    let t = (vt (self#readByte)) 
+    let t = (vt (self#readByte))
     in
       if t != P.T_STOP then
         ("",t,self#readI16)

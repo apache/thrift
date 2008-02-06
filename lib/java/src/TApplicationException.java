@@ -59,21 +59,21 @@ public class TApplicationException extends TException {
 
     while (true) {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == TType.STOP) {
         break;
       }
       switch (field.id) {
       case 1:
         if (field.type == TType.STRING) {
           message = iprot.readString();
-        } else { 
+        } else {
           TProtocolUtil.skip(iprot, field.type);
         }
         break;
       case 2:
         if (field.type == TType.I32) {
           type = iprot.readI32();
-        } else { 
+        } else {
           TProtocolUtil.skip(iprot, field.type);
         }
         break;

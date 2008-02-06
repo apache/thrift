@@ -24,7 +24,7 @@ const Hello WHOA = {'simple' : 532}
 exception Goodbye {
   1: i32 simple,
   2: map<i32,i32> complex,
-  3: map<i32, map<i32,i32>> complexer,  
+  3: map<i32, map<i32,i32>> complexer,
 }
 
 service SmallService {

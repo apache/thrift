@@ -148,7 +148,7 @@ protected:
   size_t buffer_remaining;
   size_t buffer_size;
 
-  zval* p; 
+  zval* p;
   zval* t;
   zval funcname;
 };
@@ -161,7 +161,7 @@ void createObject(char* obj_typename, zval* return_value) {
   if (! ce) {
     php_error_docref(NULL TSRMLS_CC, E_ERROR, "Class %s does not exist", obj_typename);
     RETURN_NULL();
-  } 
+  }
 
   object_and_properties_init(return_value, ce, NULL);
 }
@@ -173,7 +173,7 @@ void binary_deserialize(long thrift_typeID, PHPTransport& transport, zval* retur
     case T_STOP:
     case T_VOID:
       RETURN_NULL();
-      return; 
+      return;
     case T_STRUCT: {
       assert(structType);
       createObject(structType, return_value);
@@ -195,10 +195,10 @@ void binary_deserialize(long thrift_typeID, PHPTransport& transport, zval* retur
       RETURN_BOOL(c != 0);
     }
   //case T_I08: // same numeric value as T_BYTE
-    case T_BYTE: { 
+    case T_BYTE: {
       uint8_t c;
       transport.readBytes(&c, 1);
-      RETURN_LONG(c); 
+      RETURN_LONG(c);
     }
     case T_I16: {
       uint16_t c;
@@ -338,7 +338,7 @@ PHP_FUNCTION(thrift_protocol_binary_deserialize) {
     efree(args);
     RETURN_NULL();
   }
- 
+
   char* structType = NULL;
   if (argc >= 3) {
     if (Z_TYPE_PP(args[2]) == IS_STRING) {

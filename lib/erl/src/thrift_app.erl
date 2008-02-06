@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -15,7 +15,7 @@
 %%% behavior definition
 %%%
 
-start(_Type, _StartArgs) ->  
+start(_Type, _StartArgs) ->
     io:format("starting thrift~n"),
     thrift_logger:install(),
     {ok, Sup} = thrift_app_sup:start_link(),

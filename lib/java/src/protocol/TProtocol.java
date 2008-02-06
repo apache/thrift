@@ -23,7 +23,7 @@ public abstract class TProtocol {
 
   /**
    * Transport
-   */ 
+   */
   protected TTransport trans_;
 
   /**
@@ -32,7 +32,7 @@ public abstract class TProtocol {
   protected TProtocol(TTransport trans) {
     trans_ = trans;
   }
-  
+
   /**
    * Transport accessor
    */
@@ -47,7 +47,7 @@ public abstract class TProtocol {
   public abstract void writeMessageBegin(TMessage message) throws TException;
 
   public abstract void writeMessageEnd() throws TException;
-  
+
   public abstract void writeStructBegin(TStruct struct) throws TException;
 
   public abstract void writeStructEnd() throws TException;
@@ -99,9 +99,9 @@ public abstract class TProtocol {
   public abstract void readStructEnd() throws TException;
 
   public abstract TField readFieldBegin() throws TException;
-  
+
   public abstract void readFieldEnd() throws TException;
- 
+
   public abstract TMap readMapBegin() throws TException;
 
   public abstract void readMapEnd() throws TException;
@@ -121,7 +121,7 @@ public abstract class TProtocol {
   public abstract short readI16() throws TException;
 
   public abstract int readI32() throws TException;
- 
+
   public abstract long readI64() throws TException;
 
   public abstract double readDouble() throws TException;

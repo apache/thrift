@@ -56,7 +56,7 @@ public abstract class TServer {
   protected TServer(TProcessorFactory processorFactory,
                     TServerTransport serverTransport) {
     this(processorFactory,
-         serverTransport,         
+         serverTransport,
          new TTransportFactory(),
          new TTransportFactory(),
          new TBinaryProtocol.Factory(),
@@ -99,7 +99,7 @@ public abstract class TServer {
     inputProtocolFactory_ = inputProtocolFactory;
     outputProtocolFactory_ = outputProtocolFactory;
   }
-  
+
   /**
    * The run method fires up the server and gets things going.
    */

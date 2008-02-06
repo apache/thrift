@@ -75,7 +75,7 @@ class t_const_value {
 
   const std::map<t_const_value*, t_const_value*>& get_map() const {
     return mapVal_;
-  } 
+  }
 
   void set_list() {
     valType_ = CV_LIST;

@@ -17,7 +17,7 @@ namespace facebook { namespace thrift { namespace concurrency { namespace test {
 using namespace facebook::thrift::concurrency;
 
 /**
- * ThreadManagerTests class 
+ * ThreadManagerTests class
  *
  * @author marc
  * @version $Id:$
@@ -30,8 +30,8 @@ class TimerManagerTests {
 
   class Task: public Runnable {
    public:
-    
-    Task(Monitor& monitor, int64_t timeout) : 
+
+    Task(Monitor& monitor, int64_t timeout) :
       _timeout(timeout),
       _startTime(Util::currentTime()),
       _monitor(monitor),
@@ -56,15 +56,15 @@ class TimerManagerTests {
       if(error < ERROR) {
         _success = true;
       }
-      
+
       _done = true;
 
-      std::cout << "\t\t\tTimerManagerTests::Task[" << this << "] done" << std::endl; //debug      
+      std::cout << "\t\t\tTimerManagerTests::Task[" << this << "] done" << std::endl; //debug
 
       {Synchronized s(_monitor);
         _monitor.notifyAll();
       }
-    }  
+    }
 
     int64_t _timeout;
     int64_t _startTime;
@@ -87,11 +87,11 @@ class TimerManagerTests {
     {
 
       TimerManager timerManager;
-      
+
       timerManager.threadFactory(shared_ptr<PosixThreadFactory>(new PosixThreadFactory()));
-      
+
       timerManager.start();
-      
+
       assert(timerManager.state() == TimerManager::STARTED);
 
       shared_ptr<TimerManagerTests::Task> task = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, timeout));
@@ -125,6 +125,6 @@ class TimerManagerTests {
 };
 
 const double TimerManagerTests::ERROR = .20;
-  
+
 }}}} // facebook::thrift::concurrency
 

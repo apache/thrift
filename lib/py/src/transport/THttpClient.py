@@ -28,7 +28,7 @@ class THttpClient(TTransportBase):
   def close(self):
     self.__http.close()
     self.__http = None
-    
+
   def isOpen(self):
     return self.__http != None
 

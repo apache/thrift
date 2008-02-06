@@ -10,7 +10,7 @@ instance TTransport TChannelTrans where
     topen a = return a
     tclose a = return a
     tread a 0 = return []
-    tread (TChannelTrans h) i = Prelude.catch 
+    tread (TChannelTrans h) i = Prelude.catch
                                  (do c <- hGetChar h
                                      t <- tread (TChannelTrans h) (i-1)
                                      return $ c:t)

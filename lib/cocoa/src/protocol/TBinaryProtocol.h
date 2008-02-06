@@ -12,7 +12,7 @@
 
 - (id) initWithTransport: (id <TTransport>) transport;
 
-- (id) initWithTransport: (id <TTransport>) transport 
+- (id) initWithTransport: (id <TTransport>) transport
               strictRead: (BOOL) strictRead
              strictWrite: (BOOL) strictWrite;
 

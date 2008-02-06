@@ -49,7 +49,7 @@ public class Service implements java.io.Serializable {
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == TType.STOP) {
         break;
       }
       switch (field.id)
@@ -58,7 +58,7 @@ public class Service implements java.io.Serializable {
           if (field.type == TType.STRING) {
             this.name = iprot.readString();
             this.__isset.name = true;
-          } else { 
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -77,7 +77,7 @@ public class Service implements java.io.Serializable {
               iprot.readListEnd();
             }
             this.__isset.methods = true;
-          } else { 
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -85,7 +85,7 @@ public class Service implements java.io.Serializable {
           if (field.type == TType.BOOL) {
             this.fully_reflected = iprot.readBool();
             this.__isset.fully_reflected = true;
-          } else { 
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;

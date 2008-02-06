@@ -20,7 +20,7 @@ namespace facebook { namespace thrift { namespace protocol {
  * The dense protocol is designed to use as little space as possible.
  *
  * There are two types of dense protocol instances.  Standalone instances
- * are not used for RPC and just encoded and decode structures of 
+ * are not used for RPC and just encoded and decode structures of
  * a predetermined type.  Non-standalone instances are used for RPC.
  * Currently, only standalone instances exist.
  *

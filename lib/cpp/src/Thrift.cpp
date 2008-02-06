@@ -21,7 +21,7 @@ uint32_t TApplicationException::read(facebook::thrift::protocol::TProtocol* ipro
 
   while (true) {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) { 
+    if (ftype == facebook::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid) {

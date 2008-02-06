@@ -16,7 +16,7 @@ from thrift.server import TServer
 class CalculatorHandler:
   def __init__(self):
     self.log = {}
-    
+
   def ping(self):
     print 'ping()'
 
@@ -26,7 +26,7 @@ class CalculatorHandler:
 
   def calculate(self, logid, work):
     print 'calculate(%d, %s)' % (logid, work.__str__())
-    
+
     if work.op == Operation.ADD:
       val = work.num1 + work.num2
     elif work.op == Operation.SUBTRACT:
@@ -59,7 +59,7 @@ class CalculatorHandler:
 
   def zip(self):
     print 'zip()'
-    
+
 handler = CalculatorHandler()
 processor = Calculator.Processor(handler)
 transport = TSocket.TServerSocket(9090)

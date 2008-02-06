@@ -14,7 +14,7 @@ class TestSmallService < Test::Unit::TestCase
 
     assert_kind_of(Hello, hello)
     assert_nil(hello.complexer)
-    
+
     assert_equal(hello.simple, 53)
     assert_equal(hello.words, 'words')
 

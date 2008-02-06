@@ -24,7 +24,7 @@ public class TSocket extends TIOStreamTransport {
    * Wrapped Socket object
    */
   private Socket socket_ = null;
-  
+
   /**
    * Remote host
    */

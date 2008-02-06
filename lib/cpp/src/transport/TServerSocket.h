@@ -10,7 +10,7 @@
 #include "TServerTransport.h"
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 class TSocket;
 

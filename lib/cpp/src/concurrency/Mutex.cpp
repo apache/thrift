@@ -11,9 +11,9 @@
 
 using boost::shared_ptr;
 
-namespace facebook { namespace thrift { namespace concurrency { 
+namespace facebook { namespace thrift { namespace concurrency {
 
-/** 
+/**
  * Implementation of Mutex class using POSIX mutex
  *
  * @author marc
@@ -54,7 +54,7 @@ bool Mutex::trylock() const { return impl_->trylock(); }
 
 void Mutex::unlock() const { impl_->unlock(); }
 
-/** 
+/**
  * Implementation of ReadWriteMutex class using POSIX rw lock
  *
  * @author boz
@@ -86,7 +86,7 @@ public:
 
   void release() const { pthread_rwlock_unlock(&rw_lock_); }
 
-private: 
+private:
   mutable pthread_rwlock_t rw_lock_;
   mutable bool initialized_;
 };

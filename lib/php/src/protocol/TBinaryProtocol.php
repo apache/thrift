@@ -314,34 +314,34 @@ class TBinaryProtocol extends TProtocol {
 
       // Check for a negative
       if ($isNeg) {
-	$hi = ~$hi & (int)0xffffffff;
-	$lo = ~$lo & (int)0xffffffff;
+        $hi = ~$hi & (int)0xffffffff;
+        $lo = ~$lo & (int)0xffffffff;
 
-	if ($lo == (int)0xffffffff) {
-	  $hi++;
-	  $lo = 0;
-	} else {
-	  $lo++;
-	}
+        if ($lo == (int)0xffffffff) {
+          $hi++;
+          $lo = 0;
+        } else {
+          $lo++;
+        }
       }
 
       // Force 32bit words in excess of 2G to pe positive - we deal wigh sign
       // explicitly below
 
       if ($hi & (int)0x80000000) {
-	$hi &= (int)0x7fffffff;
-	$hi += 0x80000000;
+        $hi &= (int)0x7fffffff;
+        $hi += 0x80000000;
       }
 
       if ($lo & (int)0x80000000) {
-	$lo &= (int)0x7fffffff;
-	$lo += 0x80000000;
+        $lo &= (int)0x7fffffff;
+        $lo += 0x80000000;
       }
 
       $value = $hi * 4294967296 + $lo;
 
       if ($isNeg) {
-	$value = 0 - $value;
+        $value = 0 - $value;
       }
     } else {
 

@@ -59,7 +59,7 @@ class t_scope {
   }
 
  private:
-  
+
   // Map of names to types
   std::map<std::string, t_type*> types_;
 
@@ -67,8 +67,8 @@ class t_scope {
   std::map<std::string, t_const*> constants_;
 
   // Map of names to services
-  std::map<std::string, t_service*> services_; 
- 
+  std::map<std::string, t_service*> services_;
+
 };
 
 #endif

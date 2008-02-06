@@ -104,7 +104,7 @@ def checkRead(o):
   o.write(prot)
 
   slow_version_binary = prot.trans.getvalue()
-  
+
   prot = TBinaryProtocol.TBinaryProtocolAccelerated(
            TTransport.TMemoryBuffer(slow_version_binary))
   c = o.__class__()

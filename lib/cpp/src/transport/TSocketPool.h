@@ -10,7 +10,7 @@
 #include <vector>
 #include "TSocket.h"
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 /**
  * TCP Socket implementation of the TTransport interface.

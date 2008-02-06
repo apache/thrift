@@ -7,7 +7,7 @@
 #include "THttpClient.h"
 #include "TSocket.h"
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 using namespace std;
 
@@ -148,7 +148,7 @@ uint32_t THttpClient::readContent(uint32_t size) {
       httpPos_ = 0;
       httpBufLen_ = 0;
       refill();
-      
+
       // Now have available however much we read
       avail = httpBufLen_;
     }
@@ -162,7 +162,7 @@ uint32_t THttpClient::readContent(uint32_t size) {
   }
   return size;
 }
-  
+
 char* THttpClient::readLine() {
   while (true) {
     char* eol = NULL;
@@ -207,12 +207,12 @@ void THttpClient::refill() {
       throw TTransportException("Out of memory.");
     }
   }
-      
+
   // Read more data
   uint32_t got = transport_->read((uint8_t*)(httpBuf_+httpBufLen_), httpBufSize_-httpBufLen_);
   httpBufLen_ += got;
   httpBuf_[httpBufLen_] = '\0';
- 
+
   if (got == 0) {
     throw TTransportException("Could not refill buffer");
   }
@@ -249,7 +249,7 @@ void THttpClient::readHeaders() {
         parseHeader(line);
       }
     }
-  }  
+  }
 }
 
 bool THttpClient::parseStatusLine(char* status) {
@@ -259,7 +259,7 @@ bool THttpClient::parseStatusLine(char* status) {
   if (code == NULL) {
     throw TTransportException(string("Bad Status: ") + status);
   }
-  
+
   *code = '\0';
   while (*(code++) == ' ');
 

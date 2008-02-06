@@ -1,6 +1,6 @@
 # for testing erlang files directly. The set up for a
-# this type of test would be 
-# files to test reside in lib/<app_name>/src and the test files which are 
+# this type of test would be
+# files to test reside in lib/<app_name>/src and the test files which are
 # just plain erlang code reside in lib/<app_name>/test
 #
 # This color codes emitted while the tests run assume that you are using
@@ -25,5 +25,5 @@ test:
 			echo $${MY_LRED:-$(LRED)}"$$d Test Failed"; \
 		fi; \
 		echo -n $(OFF)$(NO_COLOR); \
-        done  
+	done
 

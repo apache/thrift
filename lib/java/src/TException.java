@@ -19,7 +19,7 @@ public class TException extends Exception {
   public TException(String message) {
     super(message);
   }
- 
+
   public TException(Throwable cause) {
     super(cause);
   }

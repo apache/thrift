@@ -11,7 +11,7 @@ object
       Unix.listen s 256
   method close =
     match sock with
-        Some s -> Unix.shutdown s Unix.SHUTDOWN_ALL; Unix.close s; 
+        Some s -> Unix.shutdown s Unix.SHUTDOWN_ALL; Unix.close s;
           sock <- None
       | _ -> ()
   method acceptImpl =

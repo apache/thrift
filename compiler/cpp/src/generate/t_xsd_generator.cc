@@ -56,10 +56,10 @@ void t_xsd_generator::generate_typedef(t_typedef* ttypedef) {
 }
 
 void t_xsd_generator::generate_struct(t_struct* tstruct) {
-  vector<t_field*>::const_iterator m_iter; 
+  vector<t_field*>::const_iterator m_iter;
   const vector<t_field*>& members = tstruct->get_members();
   bool xsd_all = tstruct->get_xsd_all();
-  
+
   indent(s_xsd_types_) << "<xsd:complexType name=\"" << tstruct->get_name() << "\">" << endl;
   indent_up();
   if (xsd_all) {
@@ -68,10 +68,10 @@ void t_xsd_generator::generate_struct(t_struct* tstruct) {
     indent(s_xsd_types_) << "<xsd:sequence>" << endl;
   }
   indent_up();
-  
+
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_element(s_xsd_types_, (*m_iter)->get_name(), (*m_iter)->get_type(), (*m_iter)->get_xsd_attrs(), (*m_iter)->get_xsd_optional() || xsd_all, (*m_iter)->get_xsd_nillable());
-  } 
+  }
 
   indent_down();
   if (xsd_all) {
@@ -102,12 +102,12 @@ void t_xsd_generator::generate_element(ostream& out,
       "<xsd:element name=\"" << name << "\"" << soptional << snillable << ">" << endl;
     indent_up();
     if (attrs == NULL && ttype->is_void()) {
-      indent(out) << 
+      indent(out) <<
         "<xsd:complexType />" << endl;
     } else {
       indent(out) <<
         "<xsd:complexType>" << endl;
-      indent_up();    
+      indent_up();
       if (ttype->is_list()) {
         indent(out) << "<xsd:sequence minOccurs=\"0\" maxOccurs=\"unbounded\">" << endl;
         indent_up();
@@ -176,7 +176,7 @@ void t_xsd_generator::generate_service(t_service* tservice) {
 
   string ns = program_->get_xsd_namespace();
   if (ns.size() > 0) {
-    ns = " targetNamespace=\"" + ns + "\" xmlns=\"" + ns + "\" " + 
+    ns = " targetNamespace=\"" + ns + "\" xmlns=\"" + ns + "\" " +
       "elementFormDefault=\"qualified\"";
   }
 
@@ -196,7 +196,7 @@ void t_xsd_generator::generate_service(t_service* tservice) {
 
   // List the elements that you might actually get
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter; 
+  vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     string elemname = (*f_iter)->get_name() + "_response";
     t_type* returntype = (*f_iter)->get_returntype();
@@ -237,7 +237,7 @@ string t_xsd_generator::type_name(t_type* ttype) {
   if (ttype->is_struct() || ttype->is_xception()) {
     return ttype->get_name();
   }
-  
+
   return "container";
 }
 

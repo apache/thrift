@@ -25,7 +25,7 @@ uint64_t now()
 {
   long long ret;
   struct timeval tv;
-  
+
   gettimeofday(&tv, NULL);
   ret = tv.tv_sec;
   ret = ret*1000*1000 + tv.tv_usec;
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
   shared_ptr<TTransport> transport;
 
   shared_ptr<TSocket> socket(new TSocket(host, port));
-  
+
   if (framed) {
     shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
     framedSocket->setRead(frameInput);
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
   uint64_t time_min = 0;
   uint64_t time_max = 0;
   uint64_t time_tot = 0;
- 
+
   int test = 0;
   for (test = 0; test < numTests; ++test) {
 
@@ -94,14 +94,14 @@ int main(int argc, char** argv) {
       printf("Connect failed: %s\n", ttx.what());
       continue;
     }
-    
+
     /**
      * CONNECT TEST
      */
     printf("Test #%d, connect %s:%d\n", test+1, host.c_str(), port);
 
     uint64_t start = now();
-    
+
     /**
      * VOID TEST
      */
@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
     } catch (TApplicationException tax) {
       printf("%s\n", tax.what());
     }
-    
+
     /**
      * STRING TEST
      */
@@ -120,14 +120,14 @@ int main(int argc, char** argv) {
     string s;
     testClient.testString(s, "Test");
     printf(" = \"%s\"\n", s.c_str());
-   
+
     /**
      * BYTE TEST
      */
     printf("testByte(1)");
     uint8_t u8 = testClient.testByte(1);
     printf(" = %d\n", (int)u8);
- 
+
     /**
      * I32 TEST
      */
@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
     printf("testDouble(-5.2098523)");
     double dub = testClient.testDouble(-5.2098523);
     printf(" = %lf\n", dub);
-    
+
     /**
      * STRUCT TEST
      */
@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
            (int)in.byte_thing,
            in.i32_thing,
            in.i64_thing);
-    
+
     /**
      * NESTED STRUCT TEST
      */
@@ -183,7 +183,7 @@ int main(int argc, char** argv) {
            (int)in.byte_thing,
            in.i32_thing,
            in.i64_thing,
-           in2.i32_thing);   
+           in2.i32_thing);
 
     /**
      * MAP TEST
@@ -387,11 +387,11 @@ int main(int argc, char** argv) {
       printf("testClient.testException(\"Xception\") =>");
       testClient.testException("Xception");
       printf("  void\nFAILURE\n");
-      
+
     } catch(Xception& e) {
       printf("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
     }
-    
+
     try {
       printf("testClient.testException(\"success\") =>");
       testClient.testException("success");
@@ -399,9 +399,9 @@ int main(int argc, char** argv) {
     } catch(...) {
       printf("  exception\nFAILURE\n");
     }
-    
+
     /* test multi exception */
-    
+
     try {
       printf("testClient.testMultiException(\"Xception\", \"test 1\") =>");
       Xtruct result;
@@ -416,11 +416,11 @@ int main(int argc, char** argv) {
       Xtruct result;
       testClient.testMultiException(result, "Xception2", "test 2");
       printf("  result\nFAILURE\n");
-      
+
     } catch(Xception2& e) {
       printf("  {%u, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing.c_str());
     }
-    
+
     try {
       printf("testClient.testMultiException(\"success\", \"test 3\") =>");
       Xtruct result;
@@ -429,12 +429,12 @@ int main(int argc, char** argv) {
     } catch(...) {
       printf("  exception\nFAILURE\n");
     }
-    
+
     uint64_t stop = now();
     uint64_t tot = stop-start;
 
     printf("Total time: %"PRIu64" us\n", stop-start);
-    
+
     time_tot += tot;
     if (time_min == 0 || tot < time_min) {
       time_min = tot;

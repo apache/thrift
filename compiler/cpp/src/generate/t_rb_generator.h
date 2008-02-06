@@ -77,18 +77,18 @@ class t_rb_generator : public t_oop_generator {
    */
 
   void generate_deserialize_field        (std::ofstream &out,
-                                          t_field*    tfield, 
+                                          t_field*    tfield,
                                           std::string prefix="",
                                           bool inclass=false);
-  
+
   void generate_deserialize_struct       (std::ofstream &out,
                                           t_struct*   tstruct,
                                           std::string prefix="");
-  
+
   void generate_deserialize_container    (std::ofstream &out,
                                           t_type*     ttype,
                                           std::string prefix="");
-  
+
   void generate_deserialize_set_element  (std::ofstream &out,
                                           t_set*      tset,
                                           std::string prefix="");
@@ -140,24 +140,24 @@ class t_rb_generator : public t_oop_generator {
   std::string type_to_enum(t_type* ttype);
 
 
-  
+
   std::string ruby_namespace(t_program* p) {
     std::string ns = p->get_ruby_namespace();
     return ns.size() ? ns : "";
   }
-  
+
   std::vector<std::string> ruby_modules(t_program* p) {
     std::string ns = p->get_ruby_namespace();
     boost::tokenizer<> tok(ns);
     std::vector<std::string> modules;
-    
+
     for(boost::tokenizer<>::iterator beg=tok.begin(); beg != tok.end(); ++beg) {
       modules.push_back(*beg);
     }
-    
+
     return modules;
   }
-  
+
   void begin_namespace(std::ofstream&, std::vector<std::string>);
   void end_namespace(std::ofstream&, std::vector<std::string>);
 
@@ -168,7 +168,7 @@ class t_rb_generator : public t_oop_generator {
    */
 
   std::ofstream f_types_;
-  std::ofstream f_consts_; 
+  std::ofstream f_consts_;
   std::ofstream f_service_;
 
 };

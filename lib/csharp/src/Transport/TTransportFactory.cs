@@ -2,7 +2,7 @@
 //  TTransportFactory.cs
 //
 //  Begin:  Dec 3, 2007
-//  Authors: 
+//  Authors:
 //		Will Palmeri <wpalmeri@imeem.com>
 //
 //  Copyright (C) 2007 imeem, inc. <http://www.imeem.com>

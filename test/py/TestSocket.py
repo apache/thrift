@@ -31,7 +31,7 @@ class TimeoutTest(unittest.TestCase):
 
     def testConnectTimeout(self):
         starttime = time.time()
-        
+
         try:
             leaky = []
             for i in xrange(100):
@@ -44,7 +44,7 @@ class TimeoutTest(unittest.TestCase):
 
     def testWriteTimeout(self):
         starttime = time.time()
-        
+
         try:
             socket = TSocket.TSocket('localhost', self.port)
             socket.setTimeout(10)
@@ -52,10 +52,10 @@ class TimeoutTest(unittest.TestCase):
             lsock = self.listen_sock.accept()
             while True:
                 socket.write("hi" * 100)
-            
+
         except:
             assert time.time() - starttime < 5.0
-            
+
 suite = unittest.TestSuite()
 loader = unittest.TestLoader()
 

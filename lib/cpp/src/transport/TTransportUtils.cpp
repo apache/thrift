@@ -8,7 +8,7 @@
 
 using std::string;
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 uint32_t TBufferedTransport::read(uint8_t* buf, uint32_t len) {
   uint32_t need = len;
@@ -20,12 +20,12 @@ uint32_t TBufferedTransport::read(uint8_t* buf, uint32_t len) {
       memcpy(buf, rBuf_+rPos_, rLen_-rPos_);
       need -= rLen_-rPos_;
       buf += rLen_-rPos_;
-    }    
+    }
     // Get more from underlying transport up to buffer size
     rLen_ = transport_->read(rBuf_, rBufSize_);
     rPos_ = 0;
   }
-  
+
   // Hand over whatever we have
   uint32_t give = need;
   if (rLen_-rPos_ < give) {
@@ -137,7 +137,7 @@ uint32_t TFramedTransport::read(uint8_t* buf, uint32_t len) {
     // Read another chunk
     readFrame();
   }
-  
+
   // Hand over whatever we have
   uint32_t give = need;
   if (rLen_-rPos_ < give) {
@@ -196,7 +196,7 @@ void TFramedTransport::write(const uint8_t* buf, uint32_t len) {
 
     // Copy the old buffer to the new one
     memcpy(wBuf2, wBuf_, wLen_);
-   
+
     // Now point buf to the new one
     delete [] wBuf_;
     wBuf_ = wBuf2;
@@ -218,7 +218,7 @@ void TFramedTransport::flush()  {
   sz = (int32_t)htonl(sz);
 
   transport_->write((const uint8_t*)&sz, 4);
-  
+
   // Write frame body
   if (wLen_ > 0) {
     transport_->write(wBuf_, wLen_);
@@ -267,7 +267,7 @@ uint32_t TMemoryBuffer::read(uint8_t* buf, uint32_t len) {
   // Copy into buffer and increment rPos_
   memcpy(buf, buffer_ + rPos_, give);
   rPos_ += give;
-  
+
   return give;
 }
 
@@ -293,7 +293,7 @@ uint32_t TMemoryBuffer::readAppendToString(std::string& str, uint32_t len) {
   str.reserve(str.length()+give);
   str.append((char*)buffer_ + rPos_, give);
   rPos_ += give;
-  
+
   return give;
 }
 
@@ -340,7 +340,7 @@ void TMemoryBuffer::consume(uint32_t len) {
 
 uint32_t TPipedTransport::read(uint8_t* buf, uint32_t len) {
   uint32_t need = len;
-  
+
   // We don't have enough data yet
   if (rLen_-rPos_ < need) {
     // Copy out whatever we have
@@ -356,7 +356,7 @@ uint32_t TPipedTransport::read(uint8_t* buf, uint32_t len) {
       rBufSize_ *=2;
       rBuf_ = (uint8_t *)realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
     }
-    
+
     // try to fill up the buffer
     rLen_ += srcTrans_->read(rBuf_+rPos_, rBufSize_ - rPos_);
   }
@@ -407,7 +407,7 @@ void TPipedTransport::flush()  {
   srcTrans_->flush();
 }
 
-TPipedFileReaderTransport::TPipedFileReaderTransport(boost::shared_ptr<TFileReaderTransport> srcTrans, boost::shared_ptr<TTransport> dstTrans) 
+TPipedFileReaderTransport::TPipedFileReaderTransport(boost::shared_ptr<TFileReaderTransport> srcTrans, boost::shared_ptr<TTransport> dstTrans)
   : TPipedTransport(srcTrans, dstTrans),
     srcTrans_(srcTrans) {
 }
@@ -438,7 +438,7 @@ uint32_t TPipedFileReaderTransport::read(uint8_t* buf, uint32_t len) {
 uint32_t TPipedFileReaderTransport::readAll(uint8_t* buf, uint32_t len) {
   uint32_t have = 0;
   uint32_t get = 0;
-  
+
   while (have < len) {
     get = read(buf+have, len-have);
     if (get <= 0) {
@@ -446,7 +446,7 @@ uint32_t TPipedFileReaderTransport::readAll(uint8_t* buf, uint32_t len) {
     }
     have += get;
   }
-  
+
   return have;
 }
 

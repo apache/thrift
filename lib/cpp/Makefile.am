@@ -63,7 +63,7 @@ include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
                          $(top_srcdir)/config.h \
                          src/Thrift.h \
-												 src/TReflectionLocal.h \
+                         src/TReflectionLocal.h \
                          src/reflection_limited_types.h \
                          src/TProcessor.h \
                          src/TLogging.h
@@ -127,7 +127,7 @@ concurrency_test_CXXFLAGS =  $(common_cxxflags)
 concurrency_test_LDFLAGS =  $(common_ldflags)
 
 EXTRA_DIST = \
-	README \
-	thrift-nb.pc.in \
-	thrift.pc.in \
-	thrift-z.pc.in
+             README \
+             thrift-nb.pc.in \
+             thrift.pc.in \
+             thrift-z.pc.in

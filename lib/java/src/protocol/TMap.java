@@ -13,7 +13,7 @@ package com.facebook.thrift.protocol;
  */
 public class TMap {
   public TMap() {}
-  
+
   public TMap(byte k, byte v, int s) {
     keyType = k;
     valueType = v;

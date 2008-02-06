@@ -29,7 +29,7 @@ class TProtocolException < TException
 end
 
 class TProtocol
-  
+
   attr_reader :trans
 
   def initialize(trans)
@@ -39,87 +39,87 @@ class TProtocol
   def writeMessageBegin(name, type, seqid); nil; end
 
   def writeMessageEnd; nil; end
-  
+
   def writeStructBegin(name); nil; end
-  
+
   def writeStructEnd(); nil; end
-  
+
   def writeFieldBegin(name, type, id); nil; end
-  
+
   def writeFieldEnd(); nil; end
-  
+
   def writeFieldStop(); nil; end
 
   def writeMapBegin(ktype, vtype, size); nil; end
-  
+
   def writeMapEnd(); nil; end
 
   def writeListBegin(etype, size); nil; end
-  
+
   def writeListEnd(); nil; end
-  
+
   def writeSetBegin(etype, size); nil; end
 
   def writeSetEnd(); nil; end
-  
+
   def writeBool(bool); nil; end
-  
+
   def writeByte(byte); nil; end
-  
+
   def writeI16(i16); nil; end
-  
+
   def writeI32(i32); nil; end
-  
+
   def writeI64(i64); nil; end
-  
+
   def writeDouble(dub); nil; end
-  
+
   def writeString(str); nil; end
-  
+
   def readMessageBegin(); nil; end
-  
+
   def readMessageEnd(); nil; end
-  
+
   def readStructBegin(); nil; end
-  
+
   def readStructEnd(); nil; end
-  
+
   def readFieldBegin(); nil; end
-  
+
   def readFieldEnd(); nil; end
-  
+
   def readMapBegin(); nil; end
-  
+
   def readMapEnd(); nil; end
-  
+
   def readListBegin(); nil; end
-  
+
   def readListEnd(); nil; end
 
   def readSetBegin(); nil; end
-  
+
   def readSetEnd(); nil; end
-  
+
   def readBool(); nil; end
-  
+
   def readByte(); nil; end
 
   def readI16(); nil; end
-  
+
   def readI32(); nil; end
-  
+
   def readI64(); nil; end
-  
+
   def readDouble(); nil; end
-  
+
   def readString(); nil; end
-  
+
   def write_field(name, type, fid, value)
     writeFieldBegin(name, type, fid)
     write_type(type, value)
     writeFieldEnd
   end
-  
+
   def write_type(type, value)
     case type
     when TType::BOOL
@@ -142,7 +142,7 @@ class TProtocol
       raise NotImplementedError
     end
   end
-  
+
   def read_type(type)
     case type
     when TType::BOOL
@@ -163,7 +163,7 @@ class TProtocol
       raise NotImplementedError
     end
   end
-  
+
   def skip(type)
     if type === TType::STOP
       nil

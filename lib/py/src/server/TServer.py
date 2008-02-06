@@ -132,7 +132,7 @@ class TThreadPoolServer(TServer):
         self.serveClient(client)
       except Exception, x:
         print '%s, %s, %s' % (type(x), x, traceback.format_exc())
-      
+
   def serveClient(self, client):
     """Process input/output from a client for as long as possible"""
     itrans = self.inputTransportFactory.getTransport(client)
@@ -158,7 +158,7 @@ class TThreadPoolServer(TServer):
         t.start()
       except Exception, x:
         print '%s, %s, %s,' % (type(x), x, traceback.format_exc())
-    
+
     # Pump the socket for clients
     self.serverTransport.listen()
     while True:

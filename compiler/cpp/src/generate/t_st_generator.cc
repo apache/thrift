@@ -609,7 +609,7 @@ string t_st_generator::struct_reader(t_struct *tstruct, string clsName = "") {
   //This is nasty, but without it we'll break things by prefixing TResult.
   string name = ((capitalize(clsName) == "TResult") ? capitalize(clsName) : prefix(clsName));
   out << indent() << val << " := " << name << " new." << endl;
-    
+
   out << indent() << "iprot readStructBegin." << endl <<
     indent() << "[" << desc << " := iprot readFieldBegin." << endl <<
     indent() << desc << " type = TType stop] whileFalse: [|" << found << "|" << endl;

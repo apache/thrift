@@ -12,7 +12,7 @@
 #include <iostream>
 #include <set>
 
-namespace facebook { namespace thrift { namespace concurrency { 
+namespace facebook { namespace thrift { namespace concurrency {
 
 using boost::shared_ptr;
 
@@ -38,10 +38,10 @@ class TimerManager::Task : public Runnable {
   Task(shared_ptr<Runnable> runnable) :
     runnable_(runnable),
     state_(WAITING) {}
-  
+
   ~Task() {
   }
-  
+
   void run() {
     if (state_ == EXECUTING) {
       runnable_->run();
@@ -59,11 +59,11 @@ class TimerManager::Task : public Runnable {
 class TimerManager::Dispatcher: public Runnable {
 
  public:
-  Dispatcher(TimerManager* manager) : 
+  Dispatcher(TimerManager* manager) :
     manager_(manager) {}
-  
+
   ~Dispatcher() {}
-  
+
   /**
    * Dispatcher entry point
    *
@@ -85,7 +85,7 @@ class TimerManager::Dispatcher: public Runnable {
         Synchronized s(manager_->monitor_);
         task_iterator expiredTaskEnd;
         int64_t now = Util::currentTime();
-        while (manager_->state_ == TimerManager::STARTED && 
+        while (manager_->state_ == TimerManager::STARTED &&
                (expiredTaskEnd = manager_->taskMap_.upper_bound(now)) == manager_->taskMap_.begin()) {
           int64_t timeout = 0LL;
           if (!manager_->taskMap_.empty()) {
@@ -97,7 +97,7 @@ class TimerManager::Dispatcher: public Runnable {
           } catch (TimedOutException &e) {}
           now = Util::currentTime();
         }
-        
+
         if (manager_->state_ == TimerManager::STARTED) {
           for (task_iterator ix = manager_->taskMap_.begin(); ix != expiredTaskEnd; ix++) {
             shared_ptr<TimerManager::Task> task = ix->second;
@@ -110,17 +110,17 @@ class TimerManager::Dispatcher: public Runnable {
           manager_->taskMap_.erase(manager_->taskMap_.begin(), expiredTaskEnd);
         }
       }
-      
+
       for (std::set<shared_ptr<Task> >::iterator ix =  expiredTasks.begin(); ix != expiredTasks.end(); ix++) {
         (*ix)->run();
       }
-      
+
     } while (manager_->state_ == TimerManager::STARTED);
 
     {
       Synchronized s(manager_->monitor_);
       if (manager_->state_ == TimerManager::STOPPING) {
-        manager_->state_ = TimerManager::STOPPED; 
+        manager_->state_ = TimerManager::STOPPED;
         manager_->monitor_.notify();
       }
     }
@@ -143,7 +143,7 @@ TimerManager::~TimerManager() {
 
   // If we haven't been explicitly stopped, do so now.  We don't need to grab
   // the monitor here, since stop already takes care of reentrancy.
-  
+
   if (state_ != STOPPED) {
     try {
       stop();
@@ -203,31 +203,31 @@ void TimerManager::stop() {
       taskMap_.erase(ix);
     }
 
-    // Remove dispatcher's reference to us. 
+    // Remove dispatcher's reference to us.
     dispatcher_->manager_ = NULL;
   }
 }
 
 shared_ptr<const ThreadFactory> TimerManager::threadFactory() const {
-  Synchronized s(monitor_); 
+  Synchronized s(monitor_);
   return threadFactory_;
 }
-      
+
 void TimerManager::threadFactory(shared_ptr<const ThreadFactory>  value) {
-  Synchronized s(monitor_); 
+  Synchronized s(monitor_);
   threadFactory_ = value;
 }
 
 size_t TimerManager::taskCount() const {
   return taskCount_;
 }
-      
+
 void TimerManager::add(shared_ptr<Runnable> task, int64_t timeout) {
   int64_t now = Util::currentTime();
   timeout += now;
 
   {
-    Synchronized s(monitor_); 
+    Synchronized s(monitor_);
     if (state_ != TimerManager::STARTED) {
       throw IllegalStateException();
     }
@@ -260,7 +260,7 @@ void TimerManager::add(shared_ptr<Runnable> task, const struct timespec& value) 
 
 
 void TimerManager::remove(shared_ptr<Runnable> task) {
-  Synchronized s(monitor_); 
+  Synchronized s(monitor_);
   if (state_ != TimerManager::STARTED) {
     throw IllegalStateException();
   }

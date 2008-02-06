@@ -7,7 +7,7 @@
   NSSocketPort * mServerSocket;
   NSFileHandle * mSocketFileHandle;
   id <TProtocolFactory> mInputProtocolFactory;
-  id <TProtocolFactory> mOutputProtocolFactory;  
+  id <TProtocolFactory> mOutputProtocolFactory;
   id <TProcessor> mProcessor;
 }
 

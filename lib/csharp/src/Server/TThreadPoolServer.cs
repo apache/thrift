@@ -2,7 +2,7 @@
 //  TThreadPoolServer.cs
 //
 //  Begin:  Dec 3, 2007
-//  Authors: 
+//  Authors:
 //		Will Palmeri <wpalmeri@imeem.com>
 //
 //  Distributed under the Thrift Software License
@@ -115,7 +115,7 @@ namespace Thrift.Server
 				outputTransport = outputTransportFactory.GetTransport(client);
 				inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
 				outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
-				while (processor.Process(inputProtocol, outputProtocol)) 
+				while (processor.Process(inputProtocol, outputProtocol))
 				{
 					//keep processing requests until client disconnects
 				}

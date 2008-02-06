@@ -24,7 +24,7 @@ public class TestServer {
   public static class TestHandler implements ThriftTest.Iface {
 
     public TestHandler() {}
-  
+
     public void testVoid() {
       System.out.print("testVoid()\n");
     }
@@ -53,7 +53,7 @@ public class TestServer {
       System.out.print("testDouble(" + thing + ")\n");
       return thing;
     }
-  
+
     public Xtruct testStruct(Xtruct thing) {
       System.out.print("testStruct({" +
                        "\"" + thing.string_thing + "\", " +
@@ -62,7 +62,7 @@ public class TestServer {
                        thing.i64_thing + "})\n");
       return thing;
     }
-  
+
     public Xtruct2 testNest(Xtruct2 nest) {
       Xtruct thing = nest.struct_thing;
       System.out.print("testNest({" +
@@ -74,7 +74,7 @@ public class TestServer {
                        nest.i32_thing + "})\n");
       return nest;
     }
-  
+
     public AbstractMap<Integer,Integer> testMap(AbstractMap<Integer,Integer> thing) {
       System.out.print("testMap({");
       boolean first = true;
@@ -150,7 +150,7 @@ public class TestServer {
 
     public AbstractMap<Long, AbstractMap<Integer,Insanity>> testInsanity(Insanity argument) {
       System.out.print("testInsanity()\n");
-    
+
       Xtruct hello = new Xtruct();
       hello.string_thing = "Hello2";
       hello.byte_thing = 2;
@@ -192,7 +192,7 @@ public class TestServer {
 
     public Xtruct testMulti(byte arg0, int arg1, long arg2, AbstractMap<Short,String> arg3, int arg4, long arg5) {
       System.out.print("testMulti()\n");
-    
+
       Xtruct hello = new Xtruct();;
       hello.string_thing = "Hello2";
       hello.byte_thing = arg0;
@@ -226,7 +226,7 @@ public class TestServer {
         x.struct_thing.string_thing = "This is an Xception2";
         throw x;
       }
-     
+
       Xtruct result = new Xtruct();
       result.string_thing = arg1;
       return result;
@@ -240,7 +240,7 @@ public class TestServer {
       if (args.length > 1) {
         port = Integer.valueOf(args[0]);
       }
-      
+
       // Processor
       TestHandler testHandler =
         new TestHandler();

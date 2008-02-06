@@ -87,10 +87,10 @@ class SimpleType:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
+  def __str__(self):
     return str(self.__dict__)
 
-  def __repr__(self): 
+  def __repr__(self):
     return repr(self.__dict__)
 
   def __eq__(self, other):
@@ -171,10 +171,10 @@ class ContainerType:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
+  def __str__(self):
     return str(self.__dict__)
 
-  def __repr__(self): 
+  def __repr__(self):
     return repr(self.__dict__)
 
   def __eq__(self, other):
@@ -255,10 +255,10 @@ class ThriftType:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
+  def __str__(self):
     return str(self.__dict__)
 
-  def __repr__(self): 
+  def __repr__(self):
     return repr(self.__dict__)
 
   def __eq__(self, other):
@@ -338,10 +338,10 @@ class Argument:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
+  def __str__(self):
     return str(self.__dict__)
 
-  def __repr__(self): 
+  def __repr__(self):
     return repr(self.__dict__)
 
   def __eq__(self, other):
@@ -430,10 +430,10 @@ class Method:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
+  def __str__(self):
     return str(self.__dict__)
 
-  def __repr__(self): 
+  def __repr__(self):
     return repr(self.__dict__)
 
   def __eq__(self, other):
@@ -521,10 +521,10 @@ class Service:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
+  def __str__(self):
     return str(self.__dict__)
 
-  def __repr__(self): 
+  def __repr__(self):
     return repr(self.__dict__)
 
   def __eq__(self, other):

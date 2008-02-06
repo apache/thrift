@@ -20,7 +20,7 @@ class TServer
     @transportFactory = transportFactory ? transportFactory : TTransportFactory.new()
     @protocolFactory = protocolFactory ? protocolFactory : TBinaryProtocolFactory.new()
   end
-  
+
   def serve(); nil; end
 
 end

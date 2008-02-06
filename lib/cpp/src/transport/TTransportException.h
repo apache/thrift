@@ -11,7 +11,7 @@
 #include <string>
 #include <Thrift.h>
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 /**
  * Class to encapsulate all the possible types of transport errors that may
@@ -38,13 +38,13 @@ class TTransportException : public facebook::thrift::TException {
     CORRUPTED_DATA = 7,
     INTERNAL_ERROR = 8,
   };
-  
+
   TTransportException() :
     facebook::thrift::TException(),
     type_(UNKNOWN) {}
 
   TTransportException(TTransportExceptionType type) :
-    facebook::thrift::TException(), 
+    facebook::thrift::TException(),
     type_(type) {}
 
   TTransportException(const std::string& message) :
@@ -91,7 +91,7 @@ class TTransportException : public facebook::thrift::TException {
       return message_.c_str();
     }
   }
- 
+
  protected:
   /** Just like strerror_r but returns a C++ string object. */
   std::string strerror_s(int errno_copy);

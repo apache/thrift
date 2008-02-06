@@ -12,7 +12,7 @@
 #include <protocol/TProtocol.h>
 #include <TProcessor.h>
 
-namespace facebook { namespace thrift { namespace processor { 
+namespace facebook { namespace thrift { namespace processor {
 
 /*
  * Class for keeping track of function call statistics and printing them if desired
@@ -21,7 +21,7 @@ namespace facebook { namespace thrift { namespace processor {
  */
 class StatsProcessor : public facebook::thrift::TProcessor {
 public:
-  StatsProcessor(bool print, bool frequency) 
+  StatsProcessor(bool print, bool frequency)
     : print_(print),
       frequency_(frequency)
   {}
@@ -128,14 +128,14 @@ protected:
         break;
       case facebook::thrift::protocol::T_DOUBLE:
         {
-          double dub; 
+          double dub;
           piprot_->readDouble(dub);
           if (print_) {
             printf("%f", dub);
           }
         }
         break;
-      case facebook::thrift::protocol::T_STRING: 
+      case facebook::thrift::protocol::T_STRING:
         {
           std::string str;
           piprot_->readString(str);
@@ -144,7 +144,7 @@ protected:
           }
         }
         break;
-      case facebook::thrift::protocol::T_STRUCT: 
+      case facebook::thrift::protocol::T_STRUCT:
         {
           std::string name;
           int16_t fid;

@@ -2,7 +2,7 @@ Library
 -------
 The library abstract classes, exceptions, and general use functions
 are mostly jammed in Thrift.ml (an exception being
-TServer). 
+TServer).
 
 Generally, classes are used, however they are often put in their own
 module along with other relevant types and functions. The classes
@@ -24,7 +24,7 @@ class). The class type is t and is in a module with the name of the
 struct.
 
 
-enum format 
+enum format
 -----------
 Enums are put in their own module along with
 functions to_i and of_i which convert the ocaml types into ints. For

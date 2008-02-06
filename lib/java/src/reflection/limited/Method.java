@@ -49,7 +49,7 @@ public class Method implements java.io.Serializable {
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == TType.STOP) {
         break;
       }
       switch (field.id)
@@ -58,7 +58,7 @@ public class Method implements java.io.Serializable {
           if (field.type == TType.STRING) {
             this.name = iprot.readString();
             this.__isset.name = true;
-          } else { 
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -67,7 +67,7 @@ public class Method implements java.io.Serializable {
             this.return_type = new ThriftType();
             this.return_type.read(iprot);
             this.__isset.return_type = true;
-          } else { 
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -86,7 +86,7 @@ public class Method implements java.io.Serializable {
               iprot.readListEnd();
             }
             this.__isset.arguments = true;
-          } else { 
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;

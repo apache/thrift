@@ -65,10 +65,10 @@ class t_cocoa_generator : public t_oop_generator {
   void generate_cocoa_struct_result_writer(std::ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_description(std::ofstream& out, t_struct* tstruct);
-  
+
   std::string function_result_helper_struct_type(t_function* tfunction);
   void generate_function_helpers(t_function* tfunction);
-  
+
   /**
    * Service-level generation functions
    */
@@ -86,17 +86,17 @@ class t_cocoa_generator : public t_oop_generator {
    */
 
   void generate_deserialize_field        (std::ofstream& out,
-                                          t_field*    tfield, 
+                                          t_field*    tfield,
                                           std::string fieldName);
-  
+
   void generate_deserialize_struct       (std::ofstream& out,
                                           t_struct*   tstruct,
                                           std::string prefix="");
-  
+
   void generate_deserialize_container    (std::ofstream& out,
                                           t_type*     ttype,
                                           std::string prefix="");
-  
+
   void generate_deserialize_set_element  (std::ofstream& out,
                                           t_set*      tset,
                                           std::string prefix="");
@@ -157,7 +157,7 @@ class t_cocoa_generator : public t_oop_generator {
     ttype = get_true_type(ttype);
 
     return
-      ttype->is_container() || 
+      ttype->is_container() ||
       ttype->is_struct() ||
       ttype->is_xception() ||
       ttype->is_string();

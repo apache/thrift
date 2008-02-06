@@ -2,7 +2,7 @@ exception Break;;
 exception Thrift_error;;
 exception Field_empty of string;;
 
-class t_exn = 
+class t_exn =
 object
   val mutable message = ""
   method get_message = message
@@ -11,7 +11,7 @@ end;;
 
 module Transport =
 struct
-  type exn_type = 
+  type exn_type =
       | UNKNOWN
       | NOT_OPEN
       | ALREADY_OPEN
@@ -52,31 +52,31 @@ struct
     method virtual close : unit
     method virtual acceptImpl : t
   end
-        
+
 end;;
 
 
 
 module Protocol =
 struct
-  type t_type =   
-      | T_STOP     
-      | T_VOID     
+  type t_type =
+      | T_STOP
+      | T_VOID
       | T_BOOL
       | T_BYTE
-      | T_I08 
-      | T_I16 
-      | T_I32 
-      | T_U64 
-      | T_I64 
-      | T_DOUBLE 
-      | T_STRING 
-      | T_UTF7   
-      | T_STRUCT    
-      | T_MAP       
-      | T_SET       
-      | T_LIST      
-      | T_UTF8      
+      | T_I08
+      | T_I16
+      | T_I32
+      | T_U64
+      | T_I64
+      | T_DOUBLE
+      | T_STRING
+      | T_UTF7
+      | T_STRUCT
+      | T_MAP
+      | T_SET
+      | T_LIST
+      | T_UTF8
       | T_UTF16
 
   let t_type_to_i = function
@@ -98,25 +98,25 @@ struct
     | T_LIST       -> 15
     | T_UTF8       -> 16
     | T_UTF16      -> 17
-        
+
   let t_type_of_i = function
-      0 -> T_STOP      
-    | 1 -> T_VOID      
+      0 -> T_STOP
+    | 1 -> T_VOID
     | 2 -> T_BOOL
     | 3 ->  T_BYTE
-    | 6-> T_I16       
-    | 8 -> T_I32      
-    | 9 -> T_U64      
-    | 10 -> T_I64     
-    | 4 -> T_DOUBLE   
+    | 6-> T_I16
+    | 8 -> T_I32
+    | 9 -> T_U64
+    | 10 -> T_I64
+    | 4 -> T_DOUBLE
     | 11 -> T_STRING
     | 12 -> T_STRUCT
-    | 13 -> T_MAP   
-    | 14 -> T_SET   
-    | 15 -> T_LIST  
-    | 16 -> T_UTF8  
+    | 13 -> T_MAP
+    | 14 -> T_SET
+    | 15 -> T_LIST
+    | 16 -> T_UTF8
     | 17 -> T_UTF16
-    | _ -> raise Thrift_error 
+    | _ -> raise Thrift_error
 
   type message_type =
     | CALL
@@ -128,7 +128,7 @@ struct
     | REPLY -> 2
     | EXCEPTION -> 3
 
-  let message_type_of_i = function 
+  let message_type_of_i = function
     | 1 -> CALL
     | 2 -> REPLY
     | 3 -> EXCEPTION
@@ -182,7 +182,7 @@ struct
     method virtual readString : string
     method virtual readBinary : string
         (* skippage *)
-    method skip typ = 
+    method skip typ =
       match typ with
         | T_STOP -> ()
         | T_VOID -> ()
@@ -192,7 +192,7 @@ struct
         | T_I16 -> ignore self#readI16
         | T_I32 -> ignore self#readI32
         | T_U64
-        | T_I64 -> ignore self#readI64 
+        | T_I64 -> ignore self#readI64
         | T_DOUBLE -> ignore self#readDouble
         | T_STRING -> ignore self#readString
         | T_UTF7 -> ()
@@ -202,7 +202,7 @@ struct
                                      let (_,t,_) = self#readFieldBegin in
                                        if t = T_STOP then
                                          raise Break
-                                       else 
+                                       else
                                          (self#skip t;
                                           self#readFieldEnd)
                                    done
@@ -241,8 +241,8 @@ struct
       | BAD_VERSION
 
   exception E of exn_type * string;;
-           
-end;;   
+
+end;;
 
 
 module Processor =
@@ -251,10 +251,10 @@ struct
   object
     method virtual process : Protocol.t -> Protocol.t -> bool
   end;;
-  
+
   class factory (processor : t) =
   object
-    val processor_ = processor 
+    val processor_ = processor
     method getProcessor (trans : Transport.t) = processor_
   end;;
 end
@@ -306,18 +306,18 @@ struct
       oprot#writeFieldStop;
       oprot#writeStructEnd
   end;;
-  
+
   let create typ msg =
     let e = new t in
       e#set_type typ;
     e#set_message msg;
     e
-      
+
   let read (iprot : Protocol.t) =
     let msg = ref "" in
     let typ = ref 0 in
       ignore iprot#readStructBegin;
-      (try 
+      (try
            while true do
              let (name,ft,id) =iprot#readFieldBegin in
                if ft = Protocol.T_STOP then
@@ -341,6 +341,6 @@ struct
         e#set_type (typ_of_i !typ);
         e#set_message !msg;
         e;;
-  
+
   exception E of t
 end;;

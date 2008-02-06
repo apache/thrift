@@ -17,10 +17,10 @@ ERLANGDEV_GROUP=erlangdev
 
 # ERL_TOP is root of Erlang source tree
 # ERL_RUN_TOP is root of Erlang target tree (some Ericsson Makefiles use $ROOT)
-# ERLANG_OTP is target root for Erlang code 
+# ERLANG_OTP is target root for Erlang code
 # - see sasl/systools reference manual page; grep "TEST"
 
-# OS_TYPE is FreeBSD, NetBSD, OpenBSD, Linux, SCO_SV, SunOS. 
+# OS_TYPE is FreeBSD, NetBSD, OpenBSD, Linux, SCO_SV, SunOS.
 OS_TYPE=${shell uname}
 
 # MHOST is the host where this Makefile runs.
@@ -36,11 +36,11 @@ endif
 # Edit to reflect local environment.
 # ifeq (${OS_TYPE},Linux)
 # ERL_RUN_TOP=/usr/local/lib/erlang
-#  Note* ERL_RUN_TOP can be determined by starting an 
+#  Note* ERL_RUN_TOP can be determined by starting an
 #        erlang shell and typing code:root_dir().
 # ERL_TOP=a symbolic link to the actual source top, which changes from version to version
-#  Note* ERL_TOP is the directory where the erlang 
-#        source files reside. Make sure to run ./configure there. 
+#  Note* ERL_TOP is the directory where the erlang
+#        source files reside. Make sure to run ./configure there.
 # TARGET=i686-pc-linux-gnu
 #  Note* Target can be found in $ERL_TOP/erts
 # endif
@@ -72,7 +72,7 @@ ifeq (${OS_TYPE},SunOS)
     LD=/usr/ccs/bin/ld
     RANLIB=/usr/ccs/bin/ranlib
 
-CFLAGS+=-Wall -pedantic -ansi -O 
+CFLAGS+=-Wall -pedantic -ansi -O
 CORE=*.core
 endif
 

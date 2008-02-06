@@ -13,7 +13,7 @@
 #include <transport/TTransportUtils.h>
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace processor { 
+namespace facebook { namespace thrift { namespace processor {
 
 /*
  * Class for peeking at the raw data that is being processed by another processor
@@ -22,7 +22,7 @@ namespace facebook { namespace thrift { namespace processor {
  * @author James Wang <jwang@facebook.com>
  */
 class PeekProcessor : public facebook::thrift::TProcessor {
-  
+
  public:
   PeekProcessor();
   virtual ~PeekProcessor();
@@ -39,14 +39,14 @@ class PeekProcessor : public facebook::thrift::TProcessor {
 
   void setTargetTransport(boost::shared_ptr<facebook::thrift::transport::TTransport> targetTransport);
 
-  virtual bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> in, 
+  virtual bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> in,
                        boost::shared_ptr<facebook::thrift::protocol::TProtocol> out);
 
   // The following three functions can be overloaded by child classes to
   // achieve desired peeking behavior
   virtual void peekName(const std::string& fname);
   virtual void peekBuffer(uint8_t* buffer, uint32_t size);
-  virtual void peek(boost::shared_ptr<facebook::thrift::protocol::TProtocol> in, 
+  virtual void peek(boost::shared_ptr<facebook::thrift::protocol::TProtocol> in,
                     facebook::thrift::protocol::TType ftype,
                     int16_t fid);
   virtual void peekEnd();

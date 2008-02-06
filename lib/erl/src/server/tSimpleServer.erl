@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -27,11 +27,11 @@
 %%%
 
 ?DEFINE_ATTR(super).
-   
+
 %%%
 %%% behavior callbacks
 %%%
- 
+
 %%% super() -> SuperModule = atom()
 %%%             |  none
 
@@ -86,16 +86,16 @@ serve_loop(This) ->
     ?R0(Trans, effectful_close),
 
     serve_loop(This).
-    
+
 serve_loop_loop(This, Prot) ->
-    Next = 
+    Next =
 	try
 	    Handler   = oop:get(This, handler),
 	    Processor = oop:get(This, processor),
 	    Val = apply(Processor, process, [Handler, Prot, Prot]), %% TODO(cpiro): make processor a gen_server instance
 	    error_logger:info_msg("request processed: rv=~p", [Val]),
 	    loop
-	catch 
+	catch
 	    %% TODO(cpiro) case when is_record(...) to pick out our exception
 	    %% records vs. normal erlang throws
 	    E when is_record(E, tTransportException) ->
@@ -105,7 +105,7 @@ serve_loop_loop(This, Prot) ->
 		error_logger:info_msg("EXCEPTION: ~p", [F]),
 		close
 	end,
-    case Next of 
+    case Next of
 	loop -> serve_loop_loop(This, Prot);
 	close -> ok
     end.

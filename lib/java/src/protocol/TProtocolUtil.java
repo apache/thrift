@@ -80,7 +80,7 @@ public class TProtocolUtil {
         break;
       }
     case TType.SET:
-      {        
+      {
         TSet set = prot.readSetBegin();
         for (int i = 0; i < set.size; i++) {
           skip(prot, set.elemType);

@@ -1,5 +1,5 @@
 # Makefile for Thrift test project.
-# 
+#
 # Author:
 #   Mark Slee <mcslee@facebook.com>
 

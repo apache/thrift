@@ -12,7 +12,7 @@
 
 struct z_stream_s;
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 class TZlibTransportException : public TTransportException {
  public:
@@ -135,7 +135,7 @@ class TZlibTransport : public TTransport {
   ~TZlibTransport();
 
   bool isOpen();
-  
+
   void open() {
     transport_->open();
   }
@@ -145,7 +145,7 @@ class TZlibTransport : public TTransport {
   }
 
   uint32_t read(uint8_t* buf, uint32_t len);
-  
+
   void write(const uint8_t* buf, uint32_t len);
 
   void flush();

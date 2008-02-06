@@ -27,7 +27,7 @@ public class TBinaryProtocol extends TProtocol {
 
   protected int readLength_;
   protected boolean checkReadLength_ = false;
-  
+
   /**
    * Factory
    */
@@ -321,7 +321,7 @@ public class TBinaryProtocol extends TProtocol {
     checkReadLength(len);
     return trans_.readAll(buf, off, len);
   }
-  
+
   public void setReadLength(int readLength) {
     readLength_ = readLength;
     checkReadLength_ = true;
@@ -335,5 +335,5 @@ public class TBinaryProtocol extends TProtocol {
       }
     }
   }
-  
+
 }

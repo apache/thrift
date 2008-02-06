@@ -30,10 +30,10 @@ sub new
     my $classname = shift;
     my $url       = shift || 'http://localhost:9090';
     my $debugHandler = shift;
-    
+
     my $out = IO::String->new;
     binmode($out);
-    
+
     my $self = {
         url          => $url,
         out          => $out,
@@ -111,9 +111,9 @@ sub readAll
 {
     my $self = shift;
     my $len  = shift;
-    
+
     my $buf = $self->read($len);
-    
+
     if (!defined($buf)) {
       die new Thrift::TException('TSocket: Could not read '.$len.' bytes from input buffer');
     }
@@ -127,9 +127,9 @@ sub read
 {
     my $self = shift;
     my $len  = shift;
-    
+
     my $buf;
-    
+
     my $in = $self->{in};
 
     if (!defined($in)) {
@@ -170,20 +170,20 @@ sub flush
     $ua->default_header('Accept' => 'application/x-thrift');
     $ua->default_header('Content-Type' => 'application/x-thrift');
     $ua->cookie_jar({}); # hash to remember cookies between redirects
-    
+
     my $out = $self->{out};
     $out->setpos(0); # rewind
     my $buf = join('', <$out>);
-      
+
     my $request = new HTTP::Request(POST => $self->{url}, undef, $buf);
     my $response = $ua->request($request);
     my $content_ref = $response->content_ref;
-    
+
     my $in = IO::String->new($content_ref);
     binmode($in);
     $self->{in} = $in;
     $in->setpos(0); # rewind
-    
+
     # reset write buffer
     $out = IO::String->new;
     binmode($out);

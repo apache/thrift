@@ -7,7 +7,7 @@ import signal
 
 serverproc = subprocess.Popen([sys.executable, "TestServer.py"])
 try:
-    
+
     ret = subprocess.call([sys.executable, "TestClient.py"])
     if ret != 0:
         raise Exception("subprocess failed")

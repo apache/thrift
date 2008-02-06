@@ -34,19 +34,19 @@ class t_enum_value : public t_doc {
   const std::string& get_name() {
     return name_;
   }
-  
+
   bool has_value() {
     return has_value_;
   }
-  
+
   int get_value() {
     return value_;
   }
-  
+
  private:
   std::string name_;
   bool has_value_;
   int value_;
-};  
+};
 
 #endif

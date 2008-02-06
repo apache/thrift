@@ -90,13 +90,13 @@ int main(int argc, char **argv) {
   shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
   /*
-  shared_ptr<ThreadManager> threadManager = 
+  shared_ptr<ThreadManager> threadManager =
     ThreadManager::newSimpleThreadManager(10);
   shared_ptr<PosixThreadFactory> threadFactory =
     shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
   threadManager->threadFactory(threadFactory);
   threadManager->start();
- 
+
   shared_ptr<TServer> server =
     shared_ptr<TServer>(new TThreadPoolServer(processor,
                                               serverTransport,

@@ -9,7 +9,7 @@
 
 #include "TProtocol.h"
 
-namespace facebook { namespace thrift { namespace protocol { 
+namespace facebook { namespace thrift { namespace protocol {
 
 /**
  * Abstract class for implementing a protocol that can only be written,
@@ -62,12 +62,12 @@ class TWriteOnlyProtocol : public TProtocol {
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
         subclass_ + " does not support reading (yet).");
   }
-  
+
   uint32_t readFieldEnd() {
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
         subclass_ + " does not support reading (yet).");
   }
- 
+
   uint32_t readMapBegin(TType& keyType,
                         TType& valType,
                         uint32_t& size) {
@@ -85,7 +85,7 @@ class TWriteOnlyProtocol : public TProtocol {
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
         subclass_ + " does not support reading (yet).");
   }
-  
+
   uint32_t readListEnd() {
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
         subclass_ + " does not support reading (yet).");

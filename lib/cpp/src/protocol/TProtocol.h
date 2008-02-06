@@ -17,7 +17,7 @@
 #include <string>
 #include <map>
 
-namespace facebook { namespace thrift { namespace protocol { 
+namespace facebook { namespace thrift { namespace protocol {
 
 using facebook::thrift::transport::TTransport;
 
@@ -118,9 +118,9 @@ class TProtocol {
 
 
   virtual uint32_t writeStructBegin(const std::string& name) = 0;
-  
+
   virtual uint32_t writeStructEnd() = 0;
-  
+
   virtual uint32_t writeFieldBegin(const std::string& name,
                                    const TType fieldType,
                                    const int16_t fieldId) = 0;
@@ -128,13 +128,13 @@ class TProtocol {
   virtual uint32_t writeFieldEnd() = 0;
 
   virtual uint32_t writeFieldStop() = 0;
-                                      
+
   virtual uint32_t writeMapBegin(const TType keyType,
                                  const TType valType,
                                  const uint32_t size) = 0;
 
   virtual uint32_t writeMapEnd() = 0;
-  
+
   virtual uint32_t writeListBegin(const TType elemType,
                                   const uint32_t size) = 0;
 
@@ -166,7 +166,7 @@ class TProtocol {
   virtual uint32_t readMessageBegin(std::string& name,
                                     TMessageType& messageType,
                                     int32_t& seqid) = 0;
-  
+
   virtual uint32_t readMessageEnd() = 0;
 
   virtual uint32_t readStructBegin(std::string& name) = 0;
@@ -176,9 +176,9 @@ class TProtocol {
   virtual uint32_t readFieldBegin(std::string& name,
                                   TType& fieldType,
                                   int16_t& fieldId) = 0;
-  
+
   virtual uint32_t readFieldEnd() = 0;
- 
+
   virtual uint32_t readMapBegin(TType& keyType,
                                 TType& valType,
                                 uint32_t& size) = 0;
@@ -328,7 +328,7 @@ class TProtocol {
     ptrans_(ptrans) {
     trans_ = ptrans.get();
   }
-    
+
   boost::shared_ptr<TTransport> ptrans_;
   TTransport* trans_;
 

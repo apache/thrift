@@ -9,7 +9,7 @@ require 'Calculator'
 
 begin
   port = ARGV[0] || 9090
-  
+
   transport = TBufferedTransport.new(TSocket.new('localhost', port))
   protocol = TBinaryProtocol.new(transport)
   client = Calculator::Client.new(protocol)

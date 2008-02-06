@@ -99,7 +99,7 @@ class TApplicationException : public TException {
     type_(UNKNOWN) {}
 
   TApplicationException(TApplicationExceptionType type) :
-    TException(), 
+    TException(),
     type_(type) {}
 
   TApplicationException(const std::string& message) :

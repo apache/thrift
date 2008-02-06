@@ -23,7 +23,7 @@ class t_perl_generator : public t_oop_generator {
  public:
   t_perl_generator(t_program* program) :
     t_oop_generator(program) {
-    
+
     out_dir_base_ = "gen-perl";
   }
 

@@ -37,7 +37,7 @@
   if ([self userInfo] != nil) {
     [result appendFormat: @"\n  userInfo = %@", [self userInfo]];
   }
-  
+
   return result;
 }
 

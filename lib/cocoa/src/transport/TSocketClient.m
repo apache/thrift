@@ -8,16 +8,16 @@
 {
   NSInputStream * input = nil;
   NSOutputStream * output = nil;
-  
+
   [NSStream getStreamsToHost: [NSHost hostWithName: hostname]
             port: port
-            inputStream: &input 
+            inputStream: &input
             outputStream: &output];
 
   self = [super initWithInputStream: input outputStream: output];
   [input open];
   [output open];
-  
+
   return self;
 }
 

@@ -17,8 +17,8 @@ import java.util.ArrayList;
 public class JavaClient {
   public static void main(String [] args) {
     try {
-   
-      TTransport transport = new TSocket("localhost", 9090); 
+
+      TTransport transport = new TSocket("localhost", 9090);
       TProtocol protocol = new TBinaryProtocol(transport);
       Calculator.Client client = new Calculator.Client(protocol);
 
@@ -51,12 +51,12 @@ public class JavaClient {
       } catch (InvalidOperation io) {
         System.out.println("Invalid operation: " + io.why);
       }
-      
+
       SharedStruct log = client.getStruct(1);
       System.out.println("Check log: " + log.value);
 
       transport.close();
-                  
+
     } catch (TException x) {
       x.printStackTrace();
     }

@@ -51,7 +51,7 @@
   } else if (result != length) {
     @throw [TTransportException exceptionWithReason: @"Output stream did not write all of our data."];
   }
-} 
+}
 
 - (void) flush
 {

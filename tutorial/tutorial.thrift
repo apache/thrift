@@ -98,7 +98,7 @@ exception InvalidOperation {
  * and can optionally inherit from another service using the extends keyword.
  */
 service Calculator extends shared.SharedService {
-  
+
   /**
    * A method definition looks like C code. It has a return type, arguments,
    * and optionally a list of exceptions that it may throw. Note that argument

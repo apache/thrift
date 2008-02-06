@@ -49,7 +49,7 @@ public class ThriftType implements java.io.Serializable {
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == TType.STOP) {
         break;
       }
       switch (field.id)
@@ -58,7 +58,7 @@ public class ThriftType implements java.io.Serializable {
           if (field.type == TType.BOOL) {
             this.is_container = iprot.readBool();
             this.__isset.is_container = true;
-          } else { 
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -67,7 +67,7 @@ public class ThriftType implements java.io.Serializable {
             this.simple_type = new SimpleType();
             this.simple_type.read(iprot);
             this.__isset.simple_type = true;
-          } else { 
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -76,7 +76,7 @@ public class ThriftType implements java.io.Serializable {
             this.container_type = new ContainerType();
             this.container_type.read(iprot);
             this.__isset.container_type = true;
-          } else { 
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;

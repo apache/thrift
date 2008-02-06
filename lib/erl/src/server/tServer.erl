@@ -1,6 +1,6 @@
 %%% Copyright (c) 2007- Facebook
 %%% Distributed under the Thrift Software License
-%%% 
+%%%
 %%% See accompanying file LICENSE or visit the Thrift site at:
 %%% http://developers.facebook.com/thrift/
 
@@ -29,11 +29,11 @@
 ?DEFINE_ATTR(serverTransport);
 ?DEFINE_ATTR(transportFactory);
 ?DEFINE_ATTR(protocolFactory).
-   
+
 %%%
 %%% behavior callbacks
 %%%
- 
+
 %%% super() -> SuperModule = atom()
 %%%             |  none
 
@@ -58,17 +58,17 @@ new(Handler, Processor, ServerTransport, TransportFactory, ProtocolFactory) ->
 
 	     %% much ado about nothing but
 	     %% subclasses pass nil too
-	     transportFactory = 
+	     transportFactory =
 	     case TransportFactory of
 		 nil -> tTransportFactory:new();
 		 _   -> TransportFactory
 	     end,
-	     
-	     protocolFactory = 
+	
+	     protocolFactory =
 	     case ProtocolFactory of
 		 nil -> tBinaryProtocolFactory:new();
 		 _   -> ProtocolFactory
-	     end     
+	     end
 }.
 
 new(Handler, Processor, ServerTransport) ->

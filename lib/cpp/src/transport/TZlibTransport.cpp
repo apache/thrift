@@ -11,7 +11,7 @@
 
 using std::string;
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 // Don't call this outside of the constructor.
 void TZlibTransport::initZlib() {

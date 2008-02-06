@@ -26,10 +26,10 @@ int main(int argc, char** argv) {
 
   try {
     transport->open();
-    
+
     client.ping();
     printf("ping()\n");
-    
+
     int32_t sum = client.add(1,1);
     printf("1+1=%d\n", sum);
 
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
     work.num2 = 10;
     int32_t diff = client.calculate(1, work);
     printf("15-10=%d\n", diff);
-    
+
     // Note that C++ uses return by reference for complex types to avoid
     // costly copy construction
     SharedStruct ss;

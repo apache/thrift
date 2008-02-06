@@ -11,7 +11,7 @@
 #include "TTransportException.h"
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 /**
  * Server transport framework. A server needs to have some facility for

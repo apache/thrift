@@ -21,16 +21,16 @@ class InvalidArgumentException : public facebook::thrift::TException {};
 class IllegalStateException : public facebook::thrift::TException {};
 
 class TimedOutException : public facebook::thrift::TException {
-public:                                            
+public:
   TimedOutException():TException("TimedOutException"){};
-  TimedOutException(const std::string& message ) : 
+  TimedOutException(const std::string& message ) :
     TException(message) {}
 };
 
 class TooManyPendingTasksException : public facebook::thrift::TException {
-public:                                            
+public:
   TooManyPendingTasksException():TException("TooManyPendingTasksException"){};
-  TooManyPendingTasksException(const std::string& message ) : 
+  TooManyPendingTasksException(const std::string& message ) :
     TException(message) {}
 };
 

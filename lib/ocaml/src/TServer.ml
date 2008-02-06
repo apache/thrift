@@ -1,7 +1,7 @@
 open Thrift
 
 class virtual t
-    (pf : Processor.t) 
+    (pf : Processor.t)
     (st : Transport.server_t)
     (tf : Transport.factory)
     (ipf : Protocol.factory)

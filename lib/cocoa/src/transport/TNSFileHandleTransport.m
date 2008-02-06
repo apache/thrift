@@ -16,10 +16,10 @@
               outputFileHandle: (NSFileHandle *) outputFileHandle
 {
   self = [super init];
-  
+
   mInputFileHandle = [inputFileHandle retain];
   mOutputFileHandle = [outputFileHandle retain];
-  
+
   return self;
 }
 
@@ -49,16 +49,16 @@
 
 - (void) write: (uint8_t *) data offset: (unsigned int) offset length: (unsigned int) length
 {
-  NSData * dataObject = [[NSData alloc] initWithBytesNoCopy: data+offset 
+  NSData * dataObject = [[NSData alloc] initWithBytesNoCopy: data+offset
                                                      length: length
                                                freeWhenDone: NO];
- 
+
   [mOutputFileHandle writeData: dataObject];
 
-  
+
   [dataObject release];
 }
-  
+
 
 - (void) flush
 {

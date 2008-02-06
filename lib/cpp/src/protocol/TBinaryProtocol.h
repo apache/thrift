@@ -11,7 +11,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace protocol { 
+namespace facebook { namespace thrift { namespace protocol {
 
 /**
  * The default binary protocol for thrift. Writes all data in a very basic
@@ -90,7 +90,7 @@ class TBinaryProtocol : public TProtocol {
   uint32_t writeFieldEnd();
 
   uint32_t writeFieldStop();
-                                       
+
   uint32_t writeMapBegin(const TType keyType,
                          const TType valType,
                          const uint32_t size);
@@ -140,9 +140,9 @@ class TBinaryProtocol : public TProtocol {
   uint32_t readFieldBegin(std::string& name,
                           TType& fieldType,
                           int16_t& fieldId);
-  
+
   uint32_t readFieldEnd();
- 
+
   uint32_t readMapBegin(TType& keyType,
                         TType& valType,
                         uint32_t& size);
@@ -151,7 +151,7 @@ class TBinaryProtocol : public TProtocol {
 
   uint32_t readListBegin(TType& elemType,
                          uint32_t& size);
-  
+
   uint32_t readListEnd();
 
   uint32_t readSetBegin(TType& elemType,

@@ -9,7 +9,7 @@
 
 #include <transport/TTransportUtils.h>
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 /**
  * HTTP client implementation of the thrift transport. This was irritating
@@ -35,8 +35,8 @@ class THttpClient : public TTransport {
   bool isOpen() {
     return transport_->isOpen();
   }
-  
-  bool peek() {    
+
+  bool peek() {
     return transport_->peek();
   }
 
@@ -49,7 +49,7 @@ class THttpClient : public TTransport {
   void readEnd();
 
   void write(const uint8_t* buf, uint32_t len);
-  
+
   void flush();
 
  private:

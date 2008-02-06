@@ -1040,7 +1040,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
         | S_IROTH
         | S_IXOTH
 #endif
-		);
+  );
 }
 
 /**

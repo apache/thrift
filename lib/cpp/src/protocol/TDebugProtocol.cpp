@@ -25,7 +25,7 @@ static string byte_to_hex(const uint8_t byte) {
 }
 
 
-namespace facebook { namespace thrift { namespace protocol { 
+namespace facebook { namespace thrift { namespace protocol {
 
 string TDebugProtocol::fieldTypeName(TType type) {
   switch (type) {
@@ -171,7 +171,7 @@ uint32_t TDebugProtocol::writeFieldBegin(const string& name,
 
   return writeIndented(
       id_str + ": " +
-      name + " (" + 
+      name + " (" +
       fieldTypeName(fieldType) + ") = ");
 }
 
@@ -183,8 +183,8 @@ uint32_t TDebugProtocol::writeFieldEnd() {
 uint32_t TDebugProtocol::writeFieldStop() {
   return 0;
     //writeIndented("***STOP***\n");
-}  
-                               
+}
+
 uint32_t TDebugProtocol::writeMapBegin(const TType keyType,
                                        const TType valType,
                                        const uint32_t size) {
@@ -273,12 +273,12 @@ uint32_t TDebugProtocol::writeI32(const int32_t i32) {
 uint32_t TDebugProtocol::writeI64(const int64_t i64) {
   return writeItem(boost::lexical_cast<string>(i64));
 }
-  
+
 uint32_t TDebugProtocol::writeDouble(const double dub) {
   return writeItem(boost::lexical_cast<string>(dub));
 }
 
-  
+
 uint32_t TDebugProtocol::writeString(const string& str) {
   // XXX Raw/UTF-8?
 

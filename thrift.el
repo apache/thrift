@@ -92,7 +92,7 @@
     (modify-syntax-entry ?\n "> b" thrift-mode-syntax-table)
     thrift-mode-syntax-table)
   "Syntax table for thrift-mode")
- 
+
 (defun thrift-mode ()
   "Mode for editing Thrift files"
   (interactive)

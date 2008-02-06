@@ -17,7 +17,7 @@
 #include <sys/time.h>
 #endif // defined(HAVE_CLOCK_GETTIME)
 
-namespace facebook { namespace thrift { namespace concurrency { 
+namespace facebook { namespace thrift { namespace concurrency {
 
 /**
  * Utility methods
@@ -26,7 +26,7 @@ namespace facebook { namespace thrift { namespace concurrency {
  * and other common platform-dependent concurrency operations.
  * It should not be included in API headers for other concurrency library
  * headers, since it will, by definition, pull in all sorts of horrid
- * platform dependent crap.  Rather it should be inluded directly in 
+ * platform dependent crap.  Rather it should be inluded directly in
  * concurrency library implementation source.
  *
  * @author marc
@@ -47,7 +47,7 @@ class Util {
    * @param time or duration in milliseconds
    */
   static void toTimespec(struct timespec& result, int64_t value) {
-    result.tv_sec = value / MS_PER_S; // ms to s   
+    result.tv_sec = value / MS_PER_S; // ms to s
     result.tv_nsec = (value % MS_PER_S) * NS_PER_MS; // ms to ns
   }
 

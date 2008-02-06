@@ -42,8 +42,8 @@ public class TSimpleServer extends TServer {
                        TTransportFactory inputTransportFactory,
                        TTransportFactory outputTransportFactory,
                        TProtocolFactory inputProtocolFactory,
-                       TProtocolFactory outputProtocolFactory) {                       
-    super(new TProcessorFactory(processor), serverTransport, 
+                       TProtocolFactory outputProtocolFactory) {
+    super(new TProcessorFactory(processor), serverTransport,
           inputTransportFactory, outputTransportFactory,
           inputProtocolFactory, outputProtocolFactory);
   }
@@ -65,13 +65,13 @@ public class TSimpleServer extends TServer {
           TTransportFactory inputTransportFactory,
           TTransportFactory outputTransportFactory,
           TProtocolFactory inputProtocolFactory,
-          TProtocolFactory outputProtocolFactory) {                       
-    super(processorFactory, serverTransport, 
+          TProtocolFactory outputProtocolFactory) {
+    super(processorFactory, serverTransport,
           inputTransportFactory, outputTransportFactory,
           inputProtocolFactory, outputProtocolFactory);
   }
- 
-  
+
+
   public void serve() {
     stopped_ = false;
     try {

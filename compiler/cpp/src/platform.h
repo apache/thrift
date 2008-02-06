@@ -4,7 +4,7 @@
 // http://developers.facebook.com/thrift/
 
 /**
- * define for mkdir,since the method signature 
+ * define for mkdir,since the method signature
  * is different for the non-POSIX MinGW
  */
 

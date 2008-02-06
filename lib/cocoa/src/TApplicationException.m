@@ -48,21 +48,21 @@
     [protocol readFieldBeginReturningName: NULL
               type: &fieldType
               fieldID: &fieldID];
-    if (fieldType == TType_STOP) { 
+    if (fieldType == TType_STOP) {
       break;
     }
     switch (fieldID) {
     case 1:
       if (fieldType == TType_STRING) {
         reason = [protocol readString];
-      } else { 
+      } else {
         [TProtocolUtil skipType: fieldType onProtocol: protocol];
       }
       break;
     case 2:
       if (fieldType == TType_I32) {
         type = [protocol readI32];
-      } else { 
+      } else {
         [TProtocolUtil skipType: fieldType onProtocol: protocol];
       }
       break;

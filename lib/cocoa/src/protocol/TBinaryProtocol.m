@@ -7,13 +7,13 @@ int32_t VERSION_MASK = 0xffff0000;
 
 static TBinaryProtocolFactory * gSharedFactory = nil;
 
-@implementation TBinaryProtocolFactory 
+@implementation TBinaryProtocolFactory
 
 + (TBinaryProtocolFactory *) sharedFactory {
   if (gSharedFactory == nil) {
     gSharedFactory = [[TBinaryProtocolFactory alloc] init];
   }
-  
+
   return gSharedFactory;
 }
 
@@ -32,7 +32,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
   return [self initWithTransport: transport strictRead: NO strictWrite: NO];
 }
 
-- (id) initWithTransport: (id <TTransport>) transport 
+- (id) initWithTransport: (id <TTransport>) transport
               strictRead: (BOOL) strictRead
              strictWrite: (BOOL) strictWrite
 {
@@ -109,7 +109,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
       @throw [TProtocolException exceptionWithName: @"TProtocolException"
                                             reason: [NSString stringWithFormat: @"Message too big.  Size limit is: %d Message size is: %d",
                                                      mMessageSizeLimit,
-                                                     size]];      
+                                                     size]];
     }
     NSString * messageName = [self readStringBody: size];
     if (name != NULL) {
@@ -151,7 +151,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
   int ft = [self readByte];
   if (fieldType != NULL) {
     *fieldType = ft;
-  }    
+  }
   if (ft != TType_STOP) {
     int fid = [self readI16];
     if (fieldID != NULL) {
@@ -233,7 +233,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
   int32_t size = [self readI32];
   uint8_t * buff = malloc(size);
   if (buff == NULL) {
-    @throw [TProtocolException 
+    @throw [TProtocolException
              exceptionWithName: @"TProtocolException"
              reason: [NSString stringWithFormat: @"Out of memory.  Unable to allocate %d bytes trying to read binary data.",
                                size]];
@@ -395,7 +395,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 }
 
 
-- (void) writeBinary: (NSData *) data 
+- (void) writeBinary: (NSData *) data
 {
   [self writeI32: [data length]];
   [mTransport write: [data bytes] offset: 0 length: [data length]];

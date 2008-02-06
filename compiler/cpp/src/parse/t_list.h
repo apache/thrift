@@ -22,7 +22,7 @@ class t_list : public t_container {
   t_type* get_elem_type() const {
     return elem_type_;
   }
-  
+
   bool is_list() const {
     return true;
   }

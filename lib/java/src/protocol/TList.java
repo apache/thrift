@@ -13,7 +13,7 @@ package com.facebook.thrift.protocol;
  */
 public class TList {
   public TList() {}
-  
+
   public TList(byte t, int s) {
     elemType = t;
     size = s;

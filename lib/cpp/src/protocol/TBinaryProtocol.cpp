@@ -25,7 +25,7 @@ static inline To bitwise_cast(From from) {
   //return *reinterpret_cast<To*>(&from);  // BAD!!!
   //return *static_cast<To*>(static_cast<void*>(&from));  // BAD!!!
   //return *(To*)(void*)&from;  // BAD!!!
-  
+
   // Super clean and paritally blessed by section 3.9 of the standard.
   //unsigned char c[sizeof(from)];
   //memcpy(c, &from, sizeof(from));
@@ -50,7 +50,7 @@ static inline To bitwise_cast(From from) {
 }
 
 
-namespace facebook { namespace thrift { namespace protocol { 
+namespace facebook { namespace thrift { namespace protocol {
 
 uint32_t TBinaryProtocol::writeMessageBegin(const std::string& name,
                                             const TMessageType messageType,
@@ -99,8 +99,8 @@ uint32_t TBinaryProtocol::writeFieldEnd() {
 uint32_t TBinaryProtocol::writeFieldStop() {
   return
     writeByte((int8_t)T_STOP);
-}  
-                               
+}
+
 uint32_t TBinaryProtocol::writeMapBegin(const TType keyType,
                                         const TType valType,
                                         const uint32_t size) {
@@ -167,7 +167,7 @@ uint32_t TBinaryProtocol::writeI64(const int64_t i64) {
   trans_->write((uint8_t*)&net, 8);
   return 8;
 }
-  
+
 uint32_t TBinaryProtocol::writeDouble(const double dub) {
   BOOST_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
   BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
@@ -178,7 +178,7 @@ uint32_t TBinaryProtocol::writeDouble(const double dub) {
   return 8;
 }
 
-  
+
 uint32_t TBinaryProtocol::writeString(const string& str) {
   uint32_t size = str.size();
   uint32_t result = writeI32((int32_t)size);
@@ -250,11 +250,11 @@ uint32_t TBinaryProtocol::readFieldBegin(string& name,
   result += readI16(fieldId);
   return result;
 }
-  
+
 uint32_t TBinaryProtocol::readFieldEnd() {
   return 0;
 }
- 
+
 uint32_t TBinaryProtocol::readMapBegin(TType& keyType,
                                        TType& valType,
                                        uint32_t& size) {

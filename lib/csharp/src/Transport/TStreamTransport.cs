@@ -2,7 +2,7 @@
 //  TStreamTransport.cs
 //
 //  Begin:  Aug 19, 2007
-//  Authors: 
+//  Authors:
 //		Todd Berman <tberman@imeem.com>
 //
 //  Copyright (C) 2007 imeem, inc. <http://www.imeem.com>

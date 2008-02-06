@@ -14,7 +14,7 @@
 
 #include <transport/TTransportUtils.h>
 
-namespace facebook { namespace thrift { namespace protocol { 
+namespace facebook { namespace thrift { namespace protocol {
 
 /*
 
@@ -73,7 +73,7 @@ class TDebugProtocol : public TWriteOnlyProtocol {
   uint32_t writeFieldEnd();
 
   uint32_t writeFieldStop();
-                                       
+
   uint32_t writeMapBegin(const TType keyType,
                          const TType valType,
                          const uint32_t size);
@@ -140,7 +140,7 @@ class TDebugProtocolFactory : public TProtocolFactory {
 }}} // facebook::thrift::protocol
 
 
-namespace facebook { namespace thrift { 
+namespace facebook { namespace thrift {
 
 template<typename ThriftStruct>
 std::string ThriftDebugString(const ThriftStruct& ts) {

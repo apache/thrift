@@ -659,7 +659,7 @@ module FileOperations
   def ruby(*args)
     command config('rubyprog'), *args
   end
-  
+
   def make(task = nil)
     command(*[config('makeprog'), task].compact)
   end
@@ -722,7 +722,7 @@ module HookScriptAPI
   def srcdirectory?(path)
     File.dir?(srcfile(path))
   end
-  
+
   def srcfile?(path)
     File.file?(srcfile(path))
   end
@@ -826,7 +826,7 @@ class ToplevelInstaller
       __send__ "exec_#{task}"
     end
   end
-  
+
   def run_metaconfigs
     @config.load_script "#{@ardir}/metaconfig"
   end
@@ -1404,7 +1404,7 @@ class Installer
   end
 
   # picked up many entries from cvs-1.11.1/src/ignore.c
-  JUNK_FILES = %w( 
+  JUNK_FILES = %w(
     core RCSLOG tags TAGS .make.state
     .nse_depinfo #* .#* cvslog.* ,* .del-* *.olb
     *~ *.old *.bak *.BAK *.orig *.rej _$* *$

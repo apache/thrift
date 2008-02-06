@@ -12,7 +12,7 @@
 using std::string;
 using boost::lexical_cast;
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 string TTransportException::strerror_s(int errno_copy) {
 #ifndef HAVE_STRERROR_R

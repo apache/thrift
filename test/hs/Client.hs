@@ -26,4 +26,4 @@ main = do to <- topen t
           print =<< testSet ps (Set.fromList [1,2,3,4,5])
           print =<< testStruct ps (Xtruct (Just "hi") (Just 4) (Just 5) Nothing)
           tclose to
-          
+

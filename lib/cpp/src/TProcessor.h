@@ -11,7 +11,7 @@
 #include <protocol/TProtocol.h>
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { 
+namespace facebook { namespace thrift {
 
 /**
  * A processor is a generic object that acts upon two streams of data, one

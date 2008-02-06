@@ -29,7 +29,7 @@ enum Numberz
 }
 
 /** This is how you would do a typedef doc */
-typedef i64 UserId 
+typedef i64 UserId
 
 /** And this is where you would document a struct */
 struct Xtruct
@@ -68,7 +68,7 @@ struct Insanity
   1: map<Numberz, UserId> userMap,
 
   /** And this is doc for field 2 */
-  2: list<Xtruct> xtructs 
+  2: list<Xtruct> xtructs
 }
 
 exception Xception {
@@ -80,7 +80,7 @@ exception Xception2 {
   1: i32 errorCode,
   2: Xtruct struct_thing
 }
- 
+
 /* C1 */
 /** Doc */
 /* C2 */

@@ -11,11 +11,11 @@ module TBinaryProtocol (TBinaryProtocol(..)) where
 
     version_mask = 0xffff0000
     version_1 = 0x80010000;
-    
+
     getByte i b= 255 .&. (shiftR i (8*b))
     getBytes i 0 = []
     getBytes i n = (toEnum (getByte i (n-1)) :: Char):(getBytes i (n-1))
-    
+
     floatBits :: Double -> Word64
     floatBits (D# d#) = W64# (unsafeCoerce# d#)
 
@@ -44,7 +44,7 @@ module TBinaryProtocol (TBinaryProtocol(..)) where
                                                                twrite tr s
                        writeBinary = writeString
                        writeMessageBegin (TBinaryProtocol tr) (n,t,s) = do writeI32 (TBinaryProtocol tr) (version_1 .|. (fromEnum t))
-                                                                           writeString (TBinaryProtocol tr) n                                                                           
+                                                                           writeString (TBinaryProtocol tr) n
                                                                            writeI32 (TBinaryProtocol tr) s
                        writeMessageEnd (TBinaryProtocol tr) = return ()
                        writeStructBegin (TBinaryProtocol tr) s = return ()
@@ -81,7 +81,7 @@ module TBinaryProtocol (TBinaryProtocol(..)) where
                                                                   if (ver .&. version_mask /= version_1) then
                                                                       throwDyn (ProtocolExn PE_BAD_VERSION "Missing version identifier")
                                                                       else do
-                                                                        s <- readString (TBinaryProtocol tr)                                                                  
+                                                                        s <- readString (TBinaryProtocol tr)
                                                                         sz <- readI32 (TBinaryProtocol tr)
                                                                         return (s,toEnum (ver .&. 0xFF) :: Message_type,fromIntegral sz :: Int)
                        readMessageEnd (TBinaryProtocol tr) = return ()
@@ -106,5 +106,5 @@ module TBinaryProtocol (TBinaryProtocol(..)) where
                        readSetEnd = readListEnd
                        pflush (TBinaryProtocol tr) = tflush tr
 
-                                                           
+
 

@@ -146,7 +146,7 @@ class TestHandler : public ThriftTestIf {
 
   void testInsanity(map<UserId, map<Numberz,Insanity> > &insane, const Insanity &argument) {
     printf("testInsanity()\n");
-    
+
     Xtruct hello;
     hello.string_thing = "Hello2";
     hello.byte_thing = 2;
@@ -210,12 +210,12 @@ class TestHandler : public ThriftTestIf {
     }
     printf("}\n");
 
-    
+
   }
 
   void testMulti(Xtruct &hello, const int8_t arg0, const int32_t arg1, const int64_t arg2, const std::map<int16_t, std::string>  &arg3, const Numberz arg4, const UserId arg5) {
     printf("testMulti()\n");
-    
+
     hello.string_thing = "Hello2";
     hello.byte_thing = arg0;
     hello.i32_thing = arg1;
@@ -235,7 +235,7 @@ class TestHandler : public ThriftTestIf {
       return;
     }
   }
-  
+
   void testMultiException(Xtruct &result, const std::string &arg0, const std::string &arg1) throw(Xception, Xception2) {
 
     printf("testMultiException(%s, %s)\n", arg0.c_str(), arg1.c_str());
@@ -275,9 +275,9 @@ int main(int argc, char **argv) {
     "\t\tprotocol-type\t\ttype of protocol, \"binary\", \"ascii\", or \"xml\".  Default is " << protocolType << endl <<
 
     "\t\tworkers\t\tNumber of thread pools workers.  Only valid for thread-pool server type.  Default is " << workerCount << endl;
-    
+
   map<string, string>  args;
-  
+
   for (int ix = 1; ix < argc; ix++) {
     string arg(argv[ix]);
     if (arg.compare(0,2, "--") == 0) {
@@ -303,7 +303,7 @@ int main(int argc, char **argv) {
     }
 
     if (!args["server-type"].empty()) {
-      serverType = args["server-type"];     
+      serverType = args["server-type"];
       if (serverType == "simple") {
       } else if (serverType == "thread-pool") {
       } else if (serverType == "threaded") {
@@ -323,7 +323,7 @@ int main(int argc, char **argv) {
       } else {
 	throw invalid_argument("Unknown protocol type "+protocolType);
       }
-    } 
+    }
 
     if (!args["workers"].empty()) {
       workerCount = atoi(args["workers"].c_str());
@@ -379,7 +379,7 @@ int main(int argc, char **argv) {
     threadPoolServer.serve();
 
   } else if (serverType == "threaded") {
-    
+
     TThreadedServer threadedServer(testProcessor,
                                    serverSocket,
                                    transportFactory,

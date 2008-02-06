@@ -1,7 +1,7 @@
 open Thrift
 
-class t 
-  (pf : Processor.t) 
+class t
+  (pf : Processor.t)
   (st : Transport.server_t)
   (tf : Transport.factory)
   (ipf : Protocol.factory)
@@ -12,8 +12,8 @@ object
     st#listen;
     while true do
       let tr = tf#getTransport (st#accept) in
-        ignore (Thread.create 
-          (fun _ ->          
+        ignore (Thread.create
+          (fun _ ->
              let ip = ipf#getProtocol tr in
              let op = opf#getProtocol tr in
                try
@@ -23,4 +23,4 @@ object
                with _ -> ()) ())
     done
 end
-      
+

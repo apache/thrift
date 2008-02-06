@@ -9,7 +9,7 @@
   if (mRequest != nil) {
     [mRequest release];
   }
-  
+
   // set up our request object that we'll use for each request
   mRequest = [[NSMutableURLRequest alloc] initWithURL: mURL];
   [mRequest setHTTPMethod: @"POST"];
@@ -37,7 +37,7 @@
 }
 
 
-- (id) initWithURL: (NSURL *) aURL 
+- (id) initWithURL: (NSURL *) aURL
          userAgent: (NSString *) userAgent
            timeout: (int) timeout
 {
@@ -45,7 +45,7 @@
   if (!self) {
     return nil;
   }
-  
+
   mTimeout = timeout;
   if (userAgent) {
     mUserAgent = [userAgent retain];
@@ -56,7 +56,7 @@
 
   // create our request data buffer
   mRequestData = [[NSMutableData alloc] initWithCapacity: 1024];
-    
+
   return self;
 }
 
@@ -66,7 +66,7 @@
   [aURL retain];
   [mURL release];
   mURL = aURL;
-  
+
   [self setupRequest];
 }
 
@@ -108,7 +108,7 @@
   // make the HTTP request
   NSURLResponse * response;
   NSError * error;
-  NSData * responseData = 
+  NSData * responseData =
     [NSURLConnection sendSynchronousRequest: mRequest returningResponse: &response error: &error];
 
   [mRequestData setLength: 0];
@@ -126,10 +126,10 @@
   NSHTTPURLResponse * httpResponse = (NSHTTPURLResponse *) response;
   if ([httpResponse statusCode] != 200) {
     @throw [TTransportException exceptionWithName: @"TTransportException"
-                                           reason: [NSString stringWithFormat: @"Bad response from HTTP server: %d", 
+                                           reason: [NSString stringWithFormat: @"Bad response from HTTP server: %d",
                                                     [httpResponse statusCode]]];
   }
-                                
+
   // phew!
   [mResponseData release];
   mResponseData = [responseData retain];

@@ -18,8 +18,8 @@ fi
 autoconf
 automake -ac --add-missing --foreign || exit 1
 
-for subdir in ${subdirs}; do 
-    if [ -x "${subdir}/bootstrap.sh" ]; then 
+for subdir in ${subdirs}; do
+    if [ -x "${subdir}/bootstrap.sh" ]; then
       cwd="`pwd`"
       cd "${subdir}"
       ./bootstrap.sh

@@ -126,7 +126,7 @@ class TestThrift < Test::Unit::TestCase
   def test_insane
     insane = Thrift::Test::Insanity.new({
       'userMap' => { Thrift::Test::Numberz::ONE => 44 },
-      'xtructs' => [get_struct, 
+      'xtructs' => [get_struct,
         Thrift::Test::Xtruct.new({
           'string_thing' => 'hi again',
           'i32_thing' => 12

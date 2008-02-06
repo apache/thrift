@@ -9,7 +9,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace concurrency { 
+namespace facebook { namespace thrift { namespace concurrency {
 
 /**
  * A simple mutex class
@@ -46,7 +46,7 @@ public:
 
   // this releases both read and write locks
   virtual void release() const;
-   
+
 private:
 
   class impl;
@@ -54,7 +54,7 @@ private:
 };
 
 class Guard {
- public: 
+ public:
   Guard(const Mutex& value) : mutex_(value) {
     mutex_.lock();
   }
@@ -67,20 +67,20 @@ class Guard {
 };
 
 class RWGuard {
-  public: 
+  public:
     RWGuard(const ReadWriteMutex& value, bool write = 0) : rw_mutex_(value) {
       if (write) {
         rw_mutex_.acquireWrite();
       } else {
         rw_mutex_.acquireRead();
       }
-    }  
+    }
     ~RWGuard() {
       rw_mutex_.release();
-    }  
-  private: 
+    }
+  private:
     const ReadWriteMutex& rw_mutex_;
-};  
+};
 
 
 // A little hack to prevent someone from trying to do "Guard(m);"

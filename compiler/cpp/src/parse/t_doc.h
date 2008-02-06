@@ -21,15 +21,15 @@ class t_doc {
     doc_ = doc;
     has_doc_ = true;
   }
-  
+
   const std::string& get_doc() const {
     return doc_;
   }
-  
+
   bool has_doc() {
     return has_doc_;
   }
-  
+
  private:
   std::string doc_;
   bool has_doc_;

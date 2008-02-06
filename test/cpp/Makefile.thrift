@@ -1,5 +1,5 @@
 # Makefile for Thrift test project.
-# 
+#
 # Author:
 #   Mark Slee <mcslee@facebook.com>
 
@@ -44,7 +44,7 @@ stubs: ../ThriftTest.thrift
 	$(THRIFT) --cpp ../ThriftTest.thrift
 
 server-debug: stubs
-	g++ -o TestServer $(DCFL) src/TestServer.cpp ./gen-cpp/ThriftTest.cpp ./gen-cpp/ThriftTest_types.cpp 
+	g++ -o TestServer $(DCFL) src/TestServer.cpp ./gen-cpp/ThriftTest.cpp ./gen-cpp/ThriftTest_types.cpp
 
 client-debug: stubs
 	g++ -o TestClient $(DCFL) src/TestClient.cpp ./gen-cpp/ThriftTest.cpp ./gen-cpp/ThriftTest_types.cpp

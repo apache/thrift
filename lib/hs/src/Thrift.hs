@@ -33,25 +33,25 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
                        return ret
                        else do r <- treadAll a (len-rl)
                                return (ret++r)
-            
-  
-  data T_type = T_STOP 
-              | T_VOID     
+
+
+  data T_type = T_STOP
+              | T_VOID
               | T_BOOL
               | T_BYTE
-              | T_I08 
-              | T_I16 
-              | T_I32 
-              | T_U64 
-              | T_I64 
-              | T_DOUBLE 
-              | T_STRING 
-              | T_UTF7   
-              | T_STRUCT    
-              | T_MAP       
-              | T_SET       
-              | T_LIST      
-              | T_UTF8      
+              | T_I08
+              | T_I16
+              | T_I32
+              | T_U64
+              | T_I64
+              | T_DOUBLE
+              | T_STRING
+              | T_UTF7
+              | T_STRUCT
+              | T_MAP
+              | T_SET
+              | T_LIST
+              | T_UTF8
               | T_UTF16
               | T_UNKNOWN
                 deriving (Eq)
@@ -75,49 +75,49 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
                      T_LIST       -> 15
                      T_UTF8       -> 16
                      T_UTF16      -> 17
-                     T_UNKNOWN    -> -1                       
-      toEnum t = case t of 
-                   0 -> T_STOP      
-                   1 -> T_VOID      
+                     T_UNKNOWN    -> -1
+      toEnum t = case t of
+                   0 -> T_STOP
+                   1 -> T_VOID
                    2 -> T_BOOL
                    3 -> T_BYTE
-                   6->  T_I16       
-                   8 -> T_I32      
-                   9 -> T_U64      
-                   10 -> T_I64     
-                   4 -> T_DOUBLE   
+                   6->  T_I16
+                   8 -> T_I32
+                   9 -> T_U64
+                   10 -> T_I64
+                   4 -> T_DOUBLE
                    11 -> T_STRING
                    12 -> T_STRUCT
-                   13 -> T_MAP   
-                   14 -> T_SET   
-                   15 -> T_LIST  
-                   16 -> T_UTF8  
+                   13 -> T_MAP
+                   14 -> T_SET
+                   15 -> T_LIST
+                   16 -> T_UTF8
                    17 -> T_UTF16
                    _ -> T_UNKNOWN
-  
-  
+
+
   data Message_type = M_CALL
                     | M_REPLY
                     | M_EXCEPTION
                     | M_UNKNOWN
                       deriving Eq
   instance Enum Message_type where
-                      
+
       fromEnum t = case t of
                      M_CALL -> 1
                      M_REPLY -> 2
                      M_EXCEPTION -> 3
                      M_UNKNOWN -> -1
-                          
+
       toEnum t = case t of
                    1 -> M_CALL
                    2 -> M_REPLY
                    3 -> M_EXCEPTION
                    _ -> M_UNKNOWN
-  
-  
-  
-  
+
+
+
+
   class Protocol a where
       pflush ::  a -> IO ()
       writeMessageBegin :: a -> ([Char],Message_type,Int) -> IO ()
@@ -221,9 +221,9 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
                        T_UTF8       -> return ()
                        T_UTF16      -> return ()
                        T_UNKNOWN    -> return ()
-  
-  
-  data PE_type = PE_UNKNOWN      
+
+
+  data PE_type = PE_UNKNOWN
                | PE_INVALID_DATA
                | PE_NEGATIVE_SIZE
                | PE_SIZE_LIMIT
@@ -231,7 +231,7 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
                  deriving (Eq, Data, Typeable)
 
   data ProtocolExn = ProtocolExn PE_type [Char] deriving (Typeable, Data)
-  
+
   data AE_type = AE_UNKNOWN
                | AE_UNKNOWN_METHOD
                | AE_INVALID_MESSAGE_TYPE
@@ -239,7 +239,7 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
                | AE_BAD_SEQUENCE_ID
                | AE_MISSING_RESULT
                  deriving (Eq, Data, Typeable)
-  
+
   instance Enum AE_type where
       toEnum i = case i of
                    0 -> AE_UNKNOWN
@@ -256,9 +256,9 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
                      AE_WRONG_METHOD_NAME -> 3
                      AE_BAD_SEQUENCE_ID -> 4
                      AE_MISSING_RESULT -> 5
-  
+
   data AppExn = AppExn {ae_type :: AE_type, ae_message :: [Char]} deriving (Typeable, Data)
-  
+
   readAppExnFields pt rec = do (n,ft,id) <- readFieldBegin pt
                                if ft == T_STOP then return rec
                                       else
@@ -276,13 +276,13 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
                                           _ -> do skip pt ft
                                                   readFieldEnd pt
                                                   readAppExnFields pt rec
-  
+
   readAppExn pt = do readStructBegin pt
                      rec <- readAppExnFields pt (AppExn {ae_type = undefined, ae_message = undefined})
                      readStructEnd pt
                      return rec
-  
-  
+
+
   writeAppExn pt ae = do writeStructBegin pt "TApplicationException"
                          if ae_message ae /= "" then
                              do writeFieldBegin pt ("message",T_STRING,1)
@@ -295,4 +295,4 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
                          writeFieldStop pt
                          writeStructEnd pt
 
-                                          
+

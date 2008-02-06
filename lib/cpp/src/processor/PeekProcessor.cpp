@@ -4,7 +4,7 @@ using namespace facebook::thrift::transport;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift;
 
-namespace facebook { namespace thrift { namespace processor { 
+namespace facebook { namespace thrift { namespace processor {
 
 PeekProcessor::PeekProcessor() {
   memoryBuffer_.reset(new TMemoryBuffer());
@@ -38,7 +38,7 @@ void PeekProcessor::setTargetTransport(boost::shared_ptr<TTransport> targetTrans
   }
 }
 
-bool PeekProcessor::process(boost::shared_ptr<TProtocol> in, 
+bool PeekProcessor::process(boost::shared_ptr<TProtocol> in,
                             boost::shared_ptr<TProtocol> out) {
 
   std::string fname;
@@ -77,7 +77,7 @@ bool PeekProcessor::process(boost::shared_ptr<TProtocol> in,
   uint32_t size;
   memoryBuffer_->getBuffer(&buffer, &size);
   peekBuffer(buffer, size);
-  
+
   // Done peeking at variables
   peekEnd();
 
@@ -92,7 +92,7 @@ void PeekProcessor::peekName(const std::string& fname) {
 void PeekProcessor::peekBuffer(uint8_t* buffer, uint32_t size) {
 }
 
-void PeekProcessor::peek(boost::shared_ptr<TProtocol> in, 
+void PeekProcessor::peek(boost::shared_ptr<TProtocol> in,
                          TType ftype,
                          int16_t fid) {
   in->skip(ftype);

@@ -27,7 +27,7 @@ class TSocket(TTransportBase):
     self.handle = None
     self._unix_socket = unix_socket
     self._timeout = None
-    
+
   def setHandle(self, h):
     self.handle = h
 
@@ -39,7 +39,7 @@ class TSocket(TTransportBase):
       self._timeout = None
     else:
       self._timeout = ms/1000.0
-    
+
     if (self.handle != None):
       self.handle.settimeout(self._timeout)
 
@@ -48,7 +48,7 @@ class TSocket(TTransportBase):
       return [(socket.AF_UNIX, socket.SOCK_STREAM, None, None, self._unix_socket)]
     else:
       return socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
-    
+
   def open(self):
     try:
       res0 = self._resolveAddr()

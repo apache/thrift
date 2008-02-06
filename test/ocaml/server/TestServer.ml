@@ -24,7 +24,7 @@ object (self)
   method testList x = p "testList(---)\n"; (sod x)
   method testEnum x = p "testEnum(---)\n"; (sod x)
   method testTypedef x = p "testTypedef(---)\n"; (sod x)
-  method testMapMap x = p "testMapMap(%d)\n" (sod x); 
+  method testMapMap x = p "testMapMap(%d)\n" (sod x);
     let mm = Hashtbl.create 3 in
     let pos = Hashtbl.create 7 in
     let neg = Hashtbl.create 7 in
@@ -63,7 +63,7 @@ object (self)
       Hashtbl.add insane 1L firstmap;
       Hashtbl.add insane 2L secondmap;
       insane
-  method testMulti a0 a1 a2 a3 a4 a5 = 
+  method testMulti a0 a1 a2 a3 a4 a5 =
     p "testMulti()\n";
     let hello = new xtruct in
       hello#set_string_thing "Hello2";
@@ -103,13 +103,13 @@ let h = new test_handler in
 let proc = new ThriftTest.processor h in
 let port = 9090 in
 let pf = new TBinaryProtocol.factory in
-let server = new TThreadedServer.t 
-  proc 
-  (new TServerSocket.t port) 
-  (new Transport.factory) 
-  pf 
-  pf 
+let server = new TThreadedServer.t
+  proc
+  (new TServerSocket.t port)
+  (new Transport.factory)
+  pf
+  pf
 in
   server#serve
-                                             
-                                 
+
+

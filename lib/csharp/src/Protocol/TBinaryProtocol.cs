@@ -2,7 +2,7 @@
 //  TBinaryProtocol.cs
 //
 //  Begin:  Aug 19, 2007
-//  Authors: 
+//  Authors:
 //		Todd Berman <tberman@imeem.com>
 //		Will Palmeri <will@imeem.com>
 //

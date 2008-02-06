@@ -18,7 +18,7 @@ import java.net.SocketException;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TServerSocket extends TServerTransport {
-  
+
   /**
    * Underlying serversocket object
    */
@@ -85,7 +85,7 @@ public class TServerSocket extends TServerTransport {
       }
     }
   }
-  
+
   protected TSocket acceptImpl() throws TTransportException {
     if (serverSocket_ == null) {
       throw new TTransportException(TTransportException.NOT_OPEN, "No underlying server socket.");

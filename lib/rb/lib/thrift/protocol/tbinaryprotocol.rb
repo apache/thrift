@@ -29,7 +29,7 @@ class TBinaryProtocol < TProtocol
     writeByte(type)
     writeI16(id)
   end
-  
+
   def writeFieldStop()
     writeByte(TType::STOP)
   end
@@ -39,17 +39,17 @@ class TBinaryProtocol < TProtocol
     writeByte(vtype)
     writeI32(size)
   end
-  
+
   def writeListBegin(etype, size)
     writeByte(etype)
     writeI32(size)
   end
-  
+
   def writeSetBegin(etype, size)
     writeByte(etype)
     writeI32(size)
   end
-  
+
   def writeBool(bool)
     if (bool)
       writeByte(1)
@@ -69,7 +69,7 @@ class TBinaryProtocol < TProtocol
   def writeI32(i32)
     trans.write([i32].pack('N'))
   end
-  
+
   def writeI64(i64)
     hi = i64 >> 32
     lo = i64 & 0xffffffff
@@ -79,7 +79,7 @@ class TBinaryProtocol < TProtocol
   def writeDouble(dub)
     trans.write([dub].pack('G'))
   end
-  
+
   def writeString(str)
     writeI32(str.length)
     trans.write(str)
@@ -95,7 +95,7 @@ class TBinaryProtocol < TProtocol
     seqid = readI32()
     return name, type, seqid
   end
-  
+
   def readFieldBegin()
     type = readByte()
     if (type === TType::STOP)
@@ -104,7 +104,7 @@ class TBinaryProtocol < TProtocol
     id = readI16()
     return nil, type, id
   end
-  
+
   def readMapBegin()
     ktype = readByte()
     vtype = readByte()
@@ -122,8 +122,8 @@ class TBinaryProtocol < TProtocol
     etype = readByte()
     size = readI32()
     return etype, size
-  end  
-  
+  end
+
   def readBool()
     byte = readByte()
     return byte != 0
@@ -146,7 +146,7 @@ class TBinaryProtocol < TProtocol
     end
     return val
   end
-  
+
   def readI32()
     dat = trans.readAll(4)
     val, = dat.unpack('N')

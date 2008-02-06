@@ -15,13 +15,13 @@
 #include <map>
 #include <time.h>
 
-namespace facebook { namespace thrift { namespace concurrency { 
+namespace facebook { namespace thrift { namespace concurrency {
 
 /**
- * Timer Manager 
- * 
+ * Timer Manager
+ *
  * This class dispatches timer tasks when they fall due.
- *  
+ *
  * @author marc
  * @version $Id:$
  */
@@ -38,7 +38,7 @@ class TimerManager {
   virtual void threadFactory(boost::shared_ptr<const ThreadFactory> value);
 
   /**
-   * Starts the timer manager service 
+   * Starts the timer manager service
    *
    * @throws IllegalArgumentException Missing thread factory attribute
    */
@@ -53,7 +53,7 @@ class TimerManager {
 
   /**
    * Adds a task to be executed at some time in the future by a worker thread.
-   * 
+   *
    * @param task The task to execute
    * @param timeout Time in milliseconds to delay before executing task
    */
@@ -61,14 +61,14 @@ class TimerManager {
 
   /**
    * Adds a task to be executed at some time in the future by a worker thread.
-   * 
+   *
    * @param task The task to execute
    * @param timeout Absolute time in the future to execute task.
-   */ 
+   */
   virtual void add(boost::shared_ptr<Runnable> task, const struct timespec& timeout);
 
   /**
-   * Removes a pending task 
+   * Removes a pending task
    *
    * @throws NoSuchTaskException Specified task doesn't exist. It was either
    *                             processed already or this call was made for a
@@ -86,7 +86,7 @@ class TimerManager {
     STOPPING,
     STOPPED
   };
-  
+
   virtual const STATE state() const;
 
  private:

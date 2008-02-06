@@ -11,7 +11,7 @@
 #
 # 5> code:which(acca_inets).
 # "/home/martin/work/otp/releases/<app>/../../acca/ebin/<app>.beam"
-# 
+#
 # 8> beam_lib:version(code:which(<app>)).
 # {ok,{<app>,['$Id: beamver,v 1.1.1.1 2003/06/13 21:43:21 mlogan Exp $ ']}}
 

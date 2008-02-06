@@ -2,7 +2,7 @@
 //  TSimpleServer.cs
 //
 //  Begin:  Dec 3, 2007
-//  Authors: 
+//  Authors:
 //		Will Palmeri <wpalmeri@imeem.com>
 //
 //  Distributed under the Thrift Software License

@@ -44,7 +44,7 @@ public class SimpleType implements java.io.Serializable {
     while (true)
     {
       field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) { 
+      if (field.type == TType.STOP) {
         break;
       }
       switch (field.id)
@@ -53,7 +53,7 @@ public class SimpleType implements java.io.Serializable {
           if (field.type == TType.I32) {
             this.ttype = iprot.readI32();
             this.__isset.ttype = true;
-          } else { 
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -61,7 +61,7 @@ public class SimpleType implements java.io.Serializable {
           if (field.type == TType.STRING) {
             this.name = iprot.readString();
             this.__isset.name = true;
-          } else { 
+          } else {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;

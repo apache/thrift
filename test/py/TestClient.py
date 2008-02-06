@@ -15,7 +15,7 @@ from optparse import OptionParser
 
 
 parser = OptionParser()
-    
+
 parser.add_option("--port", type="int", dest="port", default=9090)
 parser.add_option("--host", type="string", dest="host", default='localhost')
 parser.add_option("--framed-input", action="store_true", dest="framed_input")
@@ -24,12 +24,12 @@ parser.add_option("--framed-output", action="store_false", dest="framed_output")
 (options, args) = parser.parse_args()
 
 class AbstractTest(unittest.TestCase):
-  
+
   def setUp(self):
     global options
-    
+
     socket = TSocket.TSocket(options.host, options.port)
-    
+
     # Frame or buffer depending upon args
     if options.framed_input or options.framed_output:
       self.transport = TTransport.TFramedTransport(socket, options.framed_input, options.framed_output)
@@ -37,17 +37,17 @@ class AbstractTest(unittest.TestCase):
       self.transport = TTransport.TBufferedTransport(socket)
 
     self.transport.open()
-    
+
     protocol = self.protocol_factory.getProtocol(self.transport)
     self.client = ThriftTest.Client(protocol)
-    
+
   def tearDown(self):
     # Close!
     self.transport.close()
 
   def testVoid(self):
     self.client.testVoid()
-    
+
   def testString(self):
     self.assertEqual(self.client.testString('Python'), 'Python')
 

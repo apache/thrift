@@ -55,7 +55,7 @@ public class TIOStreamTransport extends TTransport {
    *
    * @param is Input stream to read from
    * @param os Output stream to read from
-   */ 
+   */
   public TIOStreamTransport(InputStream is, OutputStream os) {
     inputStream_ = is;
     outputStream_ = os;

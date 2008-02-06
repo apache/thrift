@@ -12,7 +12,7 @@
 #include <transport/TTransportException.h>
 #include <string>
 
-namespace facebook { namespace thrift { namespace transport { 
+namespace facebook { namespace thrift { namespace transport {
 
 /**
  * Generic interface for a method of transporting data. A TTransport may be
@@ -86,7 +86,7 @@ class TTransport {
   virtual uint32_t readAll(uint8_t* buf, uint32_t len) {
     uint32_t have = 0;
     uint32_t get = 0;
-    
+
     while (have < len) {
       get = read(buf+have, len-have);
       if (get <= 0) {
@@ -94,12 +94,12 @@ class TTransport {
       }
       have += get;
     }
-    
+
     return have;
   }
 
   /**
-   * Called when read is completed. 
+   * Called when read is completed.
    * This can be over-ridden to perform a transport-specific action
    * e.g. logging the request to a file
    *
@@ -120,7 +120,7 @@ class TTransport {
   }
 
   /**
-   * Called when write is completed. 
+   * Called when write is completed.
    * This can be over-ridden to perform a transport-specific action
    * at the end of a request.
    *
