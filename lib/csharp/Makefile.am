@@ -35,3 +35,9 @@ Thrift.dll: $(THRIFTCODE)
 
 clean-local:
 	$(RM) Thrift.dll
+
+EXTRA_DIST = \
+             $(THRIFTCODE) \
+             ThriftMSBuildTask \
+             src/Thrift.csproj \
+             src/Thrift.sln

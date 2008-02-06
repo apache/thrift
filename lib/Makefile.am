@@ -14,4 +14,5 @@ EXTRA_DIST = \
   ocaml \
   perl  \
   php   \
-  rb
+  rb    \
+  st
