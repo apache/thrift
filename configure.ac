@@ -34,6 +34,10 @@ AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$success" = "yes"])
 AX_LIB_ZLIB([1.2.3])
 AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$success" = "yes"])
 
+PKG_CHECK_MODULES(MONO, mono >= 1.2.6, have_mono=yes, have_mono=no)
+AM_CONDITIONAL(ENABLE_MONO, [test "$have_mono" = "yes"])
+
+
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
@@ -104,6 +108,7 @@ AC_CONFIG_FILES([
   lib/cpp/thrift.pc
   lib/cpp/thrift-nb.pc
   lib/cpp/thrift-z.pc
+  lib/csharp/Makefile
   lib/py/Makefile
   if/Makefile
   test/Makefile

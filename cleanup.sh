@@ -34,4 +34,5 @@ if/Makefile.in \
 lib/Makefile.in \
 lib/cpp/Makefile.in \
 lib/py/Makefile.in \
+lib/csharp/Makefile.in \
 test/Makefile.in
