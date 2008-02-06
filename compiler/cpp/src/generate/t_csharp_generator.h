@@ -68,7 +68,7 @@ class t_csharp_generator : public t_oop_generator
     std::string csharp_thrift_usings();
 
     std::string type_name(t_type* ttype, bool in_countainer=false, bool in_init=false);
-    std::string base_type_name(t_base_type::t_base tbase, bool in_container=false);
+    std::string base_type_name(t_base_type* tbase, bool in_container=false);
     std::string declare_field(t_field* tfield, bool init=false);
     std::string function_signature(t_function* tfunction, std::string prefix="");
     std::string argument_list(t_struct* tstruct);

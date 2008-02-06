@@ -1085,7 +1085,11 @@ void t_csharp_generator::generate_deserialize_field(ofstream& out, t_field* tfie
           throw "compiler error: cannot serialize void field in a struct: " + name;
           break;
         case t_base_type::TYPE_STRING:
-          out << "ReadString();";
+          if (((t_base_type*)type)->is_binary()) {
+             out << "ReadBinary();";
+          } else {
+            out << "ReadString();";
+          }
           break;
         case t_base_type::TYPE_BOOL:
           out << "ReadBool();";
@@ -1247,7 +1251,12 @@ void t_csharp_generator::generate_serialize_field(ofstream& out, t_field* tfield
           throw "compiler error: cannot serialize void field in a struct: " + name;
           break;
         case t_base_type::TYPE_STRING:
-          out << "WriteString(" << name << ");";
+          if (((t_base_type*)type)->is_binary()) {
+            out << "WriteBinary(";
+          } else {
+            out << "WriteString(";
+          }
+          out << name << ");";
           break;
         case t_base_type::TYPE_BOOL:
           out << "WriteBool(" << name << ");";
@@ -1399,12 +1408,16 @@ string t_csharp_generator::type_name(t_type* ttype, bool in_container, bool in_i
   return ttype->get_name();
 }
 
-string t_csharp_generator::base_type_name(t_base_type::t_base tbase, bool in_container) {
-  switch (tbase) {
+string t_csharp_generator::base_type_name(t_base_type* tbase, bool in_container) {
+  switch (tbase->get_base()) {
     case t_base_type::TYPE_VOID:
       return "void";
     case t_base_type::TYPE_STRING:
-      return "string";
+      if (tbase->is_binary()) {
+        return "byte[]";
+      } else {
+        return "string";
+      }
     case t_base_type::TYPE_BOOL:
       return "bool";
     case t_base_type::TYPE_BYTE:
@@ -1418,7 +1431,7 @@ string t_csharp_generator::base_type_name(t_base_type::t_base tbase, bool in_con
     case t_base_type::TYPE_DOUBLE:
       return "double";
     default:
-      throw "compiler error: no C# name for base type " + tbase;
+      throw "compiler error: no C# name for base type " + tbase->get_base();
   }
 }
 

@@ -41,7 +41,8 @@ namespace Thrift.Protocol
 					prot.ReadDouble();
 					break;
 				case TType.String:
-					prot.ReadString();
+					// Don't try to decode the string, just skip it.
+					prot.ReadBinary();
 					break;
 				case TType.Struct:
 					prot.ReadStructBegin();

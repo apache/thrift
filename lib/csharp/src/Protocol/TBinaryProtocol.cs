@@ -195,9 +195,8 @@ namespace Thrift.Protocol
 			WriteI64(BitConverter.DoubleToInt64Bits(d));
 		}
 
-		public override void WriteString(string s)
+		public override void WriteBinary(byte[] b)
 		{
-			byte[] b = Encoding.UTF8.GetBytes(s);
 			WriteI32(b.Length);
 			trans.Write(b, 0, b.Length);
 		}
@@ -361,13 +360,15 @@ namespace Thrift.Protocol
 			}
 		}
 
-		public override string ReadString()
+		public override byte[] ReadBinary()
 		{
 			int size = ReadI32();
-			return ReadStringBody(size);
+			CheckReadLength(size);
+			byte[] buf = new byte[size];
+			trans.ReadAll(buf, 0, size);
+			return buf;
 		}
-
-		public string ReadStringBody(int size)
+		private  string ReadStringBody(int size)
 		{
 			CheckReadLength(size);
 			byte[] buf = new byte[size];
