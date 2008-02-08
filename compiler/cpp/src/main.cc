@@ -560,7 +560,7 @@ void dump_docstrings(t_program* program) {
 }
 
 /**
- * Call generate_fingerprint for every structure.
+ * Call generate_fingerprint for every structure and enum.
  */
 void generate_all_fingerprints(t_program* program) {
   const vector<t_struct*>& structs = program->get_structs();
@@ -575,6 +575,13 @@ void generate_all_fingerprints(t_program* program) {
   for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
     t_struct* st = *x_iter;
     st->generate_fingerprint();
+  }
+
+  const vector<t_enum*>& enums = program->get_enums();
+  vector<t_enum*>::const_iterator e_iter;
+  for (e_iter = enums.begin(); e_iter != enums.end(); ++e_iter) {
+    t_enum* e = *e_iter;
+    e->generate_fingerprint();
   }
 
   g_type_void->generate_fingerprint();

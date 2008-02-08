@@ -160,6 +160,9 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
     endl <<
     "};" << endl <<
     endl;
+
+  generate_local_reflection(f_types_, tenum, false);
+  generate_local_reflection(f_types_impl_, tenum, true);
 }
 
 /**
@@ -2869,12 +2872,11 @@ string t_cpp_generator::local_reflection_name(const char* prefix, t_type* ttype)
   //               and put them in Thrift.{h,cpp} ?
 
   if (ttype->is_base_type()) {
-    //name = ttype->get_name();
     prog = program_->get_name();
     name = ttype->get_ascii_fingerprint();
   } else if (ttype->is_enum()) {
-    //name = "enum";
-    prog = program_->get_name();
+    assert(ttype->get_program() != NULL);
+    prog = ttype->get_program()->get_name();
     name = ttype->get_ascii_fingerprint();
   } else if (ttype->is_container()) {
     prog = program_->get_name();
