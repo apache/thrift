@@ -13,9 +13,11 @@ import com.facebook.thrift.transport.TTransportException;
 import com.facebook.thrift.protocol.TBinaryProtocol;
 import com.facebook.thrift.protocol.TJSONProtocol;
 
-import java.util.AbstractMap;
+import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
 import java.util.ArrayList;
 
 /**
@@ -170,7 +172,7 @@ public class TestClient {
         /**
          * MAP TEST
          */
-        HashMap<Integer,Integer> mapout = new HashMap<Integer,Integer>();
+        Map<Integer,Integer> mapout = new HashMap<Integer,Integer>();
         for (int i = 0; i < 5; ++i) {
           mapout.put(i, i-10);
         }
@@ -185,7 +187,7 @@ public class TestClient {
           System.out.print(key + " => " + mapout.get(key));
         }
         System.out.print("})");
-        AbstractMap<Integer,Integer> mapin = testClient.testMap(mapout);
+        Map<Integer,Integer> mapin = testClient.testMap(mapout);
         System.out.print(" = {");
         first = true;
         for (int key : mapin.keySet()) {
@@ -201,7 +203,7 @@ public class TestClient {
         /**
          * SET TEST
          */
-        HashSet<Integer> setout = new HashSet<Integer>();
+        Set<Integer> setout = new HashSet<Integer>();
         for (int i = -2; i < 3; ++i) {
           setout.add(i);
         }
@@ -216,7 +218,7 @@ public class TestClient {
           System.out.print(elem);
         }
         System.out.print("})");
-        HashSet<Integer> setin = testClient.testSet(setout);
+        Set<Integer> setin = testClient.testSet(setout);
         System.out.print(" = {");
         first = true;
         for (int elem : setin) {
@@ -232,7 +234,7 @@ public class TestClient {
         /**
          * LIST TEST
          */
-        ArrayList<Integer> listout = new ArrayList<Integer>();
+        List<Integer> listout = new ArrayList<Integer>();
         for (int i = -2; i < 3; ++i) {
           listout.add(i);
         }
@@ -247,7 +249,7 @@ public class TestClient {
           System.out.print(elem);
         }
         System.out.print("})");
-        ArrayList<Integer> listin = testClient.testList(listout);
+        List<Integer> listin = testClient.testList(listout);
         System.out.print(" = {");
         first = true;
         for (int elem : listin) {
@@ -294,12 +296,12 @@ public class TestClient {
          * NESTED MAP TEST
          */
         System.out.print("testMapMap(1)");
-        AbstractMap<Integer,AbstractMap<Integer,Integer>> mm =
+        Map<Integer,Map<Integer,Integer>> mm =
           testClient.testMapMap(1);
         System.out.print(" = {");
         for (int key : mm.keySet()) {
           System.out.print(key + " => {");
-          AbstractMap<Integer,Integer> m2 = mm.get(key);
+          Map<Integer,Integer> m2 = mm.get(key);
           for (int k2 : m2.keySet()) {
             System.out.print(k2 + " => " + m2.get(k2) + ", ");
           }
@@ -321,17 +323,17 @@ public class TestClient {
         insane.xtructs = new ArrayList<Xtruct>();
         insane.xtructs.add(truck);
         System.out.print("testInsanity()");
-        AbstractMap<Long,AbstractMap<Integer,Insanity>> whoa =
+        Map<Long,Map<Integer,Insanity>> whoa =
           testClient.testInsanity(insane);
         System.out.print(" = {");
         for (long key : whoa.keySet()) {
-          AbstractMap<Integer,Insanity> val = whoa.get(key);
+          Map<Integer,Insanity> val = whoa.get(key);
           System.out.print(key + " => {");
 
           for (int k2 : val.keySet()) {
             Insanity v2 = val.get(k2);
             System.out.print(k2 + " => {");
-            AbstractMap<Integer, Long> userMap = v2.userMap;
+            Map<Integer, Long> userMap = v2.userMap;
             System.out.print("{");
             if (userMap != null) {
               for (int k3 : userMap.keySet()) {
@@ -340,7 +342,7 @@ public class TestClient {
             }
             System.out.print("}, ");
 
-            ArrayList<Xtruct> xtructs = v2.xtructs;
+            List<Xtruct> xtructs = v2.xtructs;
             System.out.print("{");
             if (xtructs != null) {
               for (Xtruct x : xtructs) {

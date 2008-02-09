@@ -14,9 +14,11 @@ import com.facebook.thrift.transport.TServerTransport;
 import thrift.test.*;
 
 import java.net.ServerSocket;
+import java.util.List;
 import java.util.ArrayList;
-import java.util.AbstractMap;
+import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.HashSet;
 
 public class TestServer {
@@ -75,7 +77,7 @@ public class TestServer {
       return nest;
     }
 
-    public AbstractMap<Integer,Integer> testMap(AbstractMap<Integer,Integer> thing) {
+    public Map<Integer,Integer> testMap(Map<Integer,Integer> thing) {
       System.out.print("testMap({");
       boolean first = true;
       for (int key : thing.keySet()) {
@@ -90,7 +92,7 @@ public class TestServer {
       return thing;
     }
 
-    public HashSet<Integer> testSet(HashSet<Integer> thing) {
+    public Set<Integer> testSet(Set<Integer> thing) {
       System.out.print("testSet({");
       boolean first = true;
       for (int elem : thing) {
@@ -105,7 +107,7 @@ public class TestServer {
       return thing;
     }
 
-    public ArrayList<Integer> testList(ArrayList<Integer> thing) {
+    public List<Integer> testList(List<Integer> thing) {
       System.out.print("testList({");
       boolean first = true;
       for (int elem : thing) {
@@ -130,10 +132,10 @@ public class TestServer {
       return thing;
     }
 
-    public AbstractMap<Integer,AbstractMap<Integer,Integer>> testMapMap(int hello) {
+    public Map<Integer,Map<Integer,Integer>> testMapMap(int hello) {
       System.out.print("testMapMap(" + hello + ")\n");
-      AbstractMap<Integer,AbstractMap<Integer,Integer>> mapmap =
-        new HashMap<Integer,AbstractMap<Integer,Integer>>();
+      Map<Integer,Map<Integer,Integer>> mapmap =
+        new HashMap<Integer,Map<Integer,Integer>>();
 
       HashMap<Integer,Integer> pos = new HashMap<Integer,Integer>();
       HashMap<Integer,Integer> neg = new HashMap<Integer,Integer>();
@@ -148,7 +150,7 @@ public class TestServer {
       return mapmap;
     }
 
-    public AbstractMap<Long, AbstractMap<Integer,Insanity>> testInsanity(Insanity argument) {
+    public Map<Long, Map<Integer,Insanity>> testInsanity(Insanity argument) {
       System.out.print("testInsanity()\n");
 
       Xtruct hello = new Xtruct();
@@ -182,15 +184,15 @@ public class TestServer {
 
       second_map.put(Numberz.SIX, looney);
 
-      AbstractMap<Long,AbstractMap<Integer,Insanity>> insane =
-        new HashMap<Long, AbstractMap<Integer,Insanity>>();
+      Map<Long,Map<Integer,Insanity>> insane =
+        new HashMap<Long, Map<Integer,Insanity>>();
       insane.put((long)1, first_map);
       insane.put((long)2, second_map);
 
       return insane;
     }
 
-    public Xtruct testMulti(byte arg0, int arg1, long arg2, AbstractMap<Short,String> arg3, int arg4, long arg5) {
+    public Xtruct testMulti(byte arg0, int arg1, long arg2, Map<Short,String> arg3, int arg4, long arg5) {
       System.out.print("testMulti()\n");
 
       Xtruct hello = new Xtruct();;

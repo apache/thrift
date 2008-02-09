@@ -58,9 +58,11 @@ string t_java_generator::java_package() {
 string t_java_generator::java_type_imports() {
   return
     string() +
+    "import java.util.List;\n" +
     "import java.util.ArrayList;\n" +
-    "import java.util.AbstractMap;\n" +
+    "import java.util.Map;\n" +
     "import java.util.HashMap;\n" +
+    "import java.util.Set;\n" +
     "import java.util.HashSet;\n" +
     "import com.facebook.thrift.*;\n\n";
 }
@@ -1775,6 +1777,7 @@ void t_java_generator::generate_serialize_list_element(ofstream& out,
 string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_init) {
   // In Java typedefs are just resolved to their real type
   ttype = get_true_type(ttype);
+  string prefix;
 
   if (ttype->is_base_type()) {
     return base_type_name((t_base_type*)ttype, in_container);
@@ -1782,21 +1785,30 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
     return (in_container ? "Integer" : "int");
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*) ttype;
-    string prefix;
     if (in_init) {
       prefix = "HashMap";
     } else {
-      prefix = "AbstractMap";
+      prefix = "Map";
     }
     return prefix + "<" +
       type_name(tmap->get_key_type(), true) + "," +
       type_name(tmap->get_val_type(), true) + ">";
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*) ttype;
-    return "HashSet<" + type_name(tset->get_elem_type(), true) + ">";
+    if (in_init) {
+      prefix = "HashSet<";
+    } else {
+      prefix = "Set<";
+    }
+    return prefix + type_name(tset->get_elem_type(), true) + ">";
   } else if (ttype->is_list()) {
     t_list* tlist = (t_list*) ttype;
-    return "ArrayList<" + type_name(tlist->get_elem_type(), true) + ">";
+    if (in_init) {
+      prefix = "ArrayList<";
+    } else {
+      prefix = "List<";
+    }
+    return prefix + type_name(tlist->get_elem_type(), true) + ">";
   }
 
   // Check for namespacing
