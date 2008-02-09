@@ -310,13 +310,13 @@ class TConnection {
   void transition();
 
   // Handler wrapper
-  static void eventHandler(int fd, short which, void* v) {
+  static void eventHandler(int fd, short /* which */, void* v) {
     assert(fd == ((TConnection*)v)->socket_);
     ((TConnection*)v)->workSocket();
   }
 
   // Handler wrapper for task block
-  static void taskHandler(int fd, short which, void* v) {
+  static void taskHandler(int fd, short /* which */, void* v) {
     assert(fd == ((TConnection*)v)->taskHandle_);
     if (-1 == ::close(((TConnection*)v)->taskHandle_)) {
       GlobalOutput("TConnection::taskHandler close handle failed, resource leak");

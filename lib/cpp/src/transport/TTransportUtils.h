@@ -34,7 +34,7 @@ class TNullTransport : public TTransport {
 
   void open() {}
 
-  void write(const uint8_t* buf, uint32_t len) {
+  void write(const uint8_t* /* buf */, uint32_t /* len */) {
     return;
   }
 

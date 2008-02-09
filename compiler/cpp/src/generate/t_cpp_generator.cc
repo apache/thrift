@@ -515,7 +515,8 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     // Generate an equality testing operator.  Make it inline since the compiler
     // will do a better job than we would when deciding whether to inline it.
     out <<
-      indent() << "bool operator == (const " << tstruct->get_name() << " & rhs) const" << endl;
+      indent() << "bool operator == (const " << tstruct->get_name() << " & " <<
+      (members.size() > 0 ? "rhs" : "/* rhs */") << ") const" << endl;
     scope_up(out);
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       // Most existing Thrift code does not use isset or optional/required,
@@ -1160,7 +1161,7 @@ void t_cpp_generator::generate_service_null(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_header_ <<
-      indent() << function_signature(*f_iter) << " {" << endl;
+      indent() << function_signature(*f_iter, "", false) << " {" << endl;
     indent_up();
     t_type* returntype = (*f_iter)->get_returntype();
     if (returntype->is_void()) {
@@ -2769,7 +2770,8 @@ string t_cpp_generator::declare_field(t_field* tfield, bool init, bool pointer, 
  * @return String of rendered function definition
  */
 string t_cpp_generator::function_signature(t_function* tfunction,
-                                           string prefix) {
+                                           string prefix,
+                                           bool name_params) {
   t_type* ttype = tfunction->get_returntype();
   t_struct* arglist = tfunction->get_arglist();
 
@@ -2777,12 +2779,12 @@ string t_cpp_generator::function_signature(t_function* tfunction,
     bool empty = arglist->get_members().size() == 0;
     return
       "void " + prefix + tfunction->get_name() +
-      "(" + type_name(ttype) + "& _return" +
-      (empty ? "" : (", " + argument_list(arglist))) + ")";
+      "(" + type_name(ttype) + (name_params ? "& _return" : "& /* _return */") +
+      (empty ? "" : (", " + argument_list(arglist, name_params))) + ")";
   } else {
     return
       type_name(ttype) + " " + prefix + tfunction->get_name() +
-      "(" + argument_list(arglist) + ")";
+      "(" + argument_list(arglist, name_params) + ")";
   }
 }
 
@@ -2792,7 +2794,7 @@ string t_cpp_generator::function_signature(t_function* tfunction,
  * @param tstruct The struct definition
  * @return Comma sepearated list of all field names in that struct
  */
-string t_cpp_generator::argument_list(t_struct* tstruct) {
+string t_cpp_generator::argument_list(t_struct* tstruct, bool name_params) {
   string result = "";
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -2804,7 +2806,8 @@ string t_cpp_generator::argument_list(t_struct* tstruct) {
     } else {
       result += ", ";
     }
-    result += type_name((*f_iter)->get_type(), false, true) + " " + (*f_iter)->get_name();
+    result += type_name((*f_iter)->get_type(), false, true) + " " +
+      (name_params ? (*f_iter)->get_name() : "/* " + (*f_iter)->get_name() + " */");
   }
   return result;
 }

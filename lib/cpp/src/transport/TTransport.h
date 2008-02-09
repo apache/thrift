@@ -71,7 +71,7 @@ class TTransport {
    * @return How many bytes were actually read
    * @throws TTransportException If an error occurs
    */
-  virtual uint32_t read(uint8_t* buf, uint32_t len) {
+  virtual uint32_t read(uint8_t* /* buf */, uint32_t /* len */) {
     throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot read.");
   }
 
@@ -115,7 +115,7 @@ class TTransport {
    * @param buf  The data to write out
    * @throws TTransportException if an error occurs
    */
-  virtual void write(const uint8_t* buf, uint32_t len) {
+  virtual void write(const uint8_t* /* buf */, uint32_t /* len */) {
     throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot write.");
   }
 
@@ -162,7 +162,7 @@ class TTransport {
    *         the transport's internal buffers.
    * @throws TTransportException if an error occurs
    */
-  virtual const uint8_t* borrow(uint8_t* buf, uint32_t* len) {
+  virtual const uint8_t* borrow(uint8_t* /* buf */, uint32_t* /* len */) {
     return NULL;
   }
 
@@ -175,7 +175,7 @@ class TTransport {
    * @param len  How many bytes to consume
    * @throws TTransportException If an error occurs
    */
-  virtual void consume(uint32_t len) {
+  virtual void consume(uint32_t /* len */) {
     throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot consume.");
   }
 

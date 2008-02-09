@@ -7,7 +7,9 @@
 #ifndef _THRIFT_CONCURRENCY_UTIL_H_
 #define _THRIFT_CONCURRENCY_UTIL_H_ 1
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include <assert.h>
 #include <stddef.h>

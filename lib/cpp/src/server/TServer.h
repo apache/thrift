@@ -44,14 +44,14 @@ class TServerEventHandler {
   /**
    * Called when a new client has connected and is about to being processing.
    */
-  virtual void clientBegin(boost::shared_ptr<TProtocol> input,
-                           boost::shared_ptr<TProtocol> output) {}
+  virtual void clientBegin(boost::shared_ptr<TProtocol> /* input */,
+                           boost::shared_ptr<TProtocol> /* output */) {}
 
   /**
    * Called when a client has finished making requests.
    */
-  virtual void clientEnd(boost::shared_ptr<TProtocol> input,
-                         boost::shared_ptr<TProtocol> output) {}
+  virtual void clientEnd(boost::shared_ptr<TProtocol> /* input */,
+                         boost::shared_ptr<TProtocol> /* output */) {}
 
  protected:
 

@@ -147,8 +147,8 @@ class t_cpp_generator : public t_oop_generator {
   std::string type_name(t_type* ttype, bool in_typedef=false, bool arg=false);
   std::string base_type_name(t_base_type::t_base tbase);
   std::string declare_field(t_field* tfield, bool init=false, bool pointer=false, bool constant=false, bool reference=false);
-  std::string function_signature(t_function* tfunction, std::string prefix="");
-  std::string argument_list(t_struct* tstruct);
+  std::string function_signature(t_function* tfunction, std::string prefix="", bool name_params=true);
+  std::string argument_list(t_struct* tstruct, bool name_params=true);
   std::string type_to_enum(t_type* ttype);
   std::string local_reflection_name(const char*, t_type* ttype);
 
