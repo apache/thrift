@@ -972,6 +972,23 @@ void t_java_generator::generate_service_client(t_service* tservice) {
       endl <<
       indent() << "protected int seqid_;" << endl <<
       endl;
+
+    indent(f_service_) <<
+      "public TProtocol getInputProtocol()" << endl;
+    scope_up(f_service_);
+    indent(f_service_) <<
+      "return this.iprot_;" << endl;
+    scope_down(f_service_);
+    f_service_ << endl;
+
+    indent(f_service_) <<
+      "public TProtocol getOutputProtocol()" << endl;
+    scope_up(f_service_);
+    indent(f_service_) <<
+      "return this.oprot_;" << endl;
+    scope_down(f_service_);
+    f_service_ << endl;
+
   }
 
   // Generate client method implementations
