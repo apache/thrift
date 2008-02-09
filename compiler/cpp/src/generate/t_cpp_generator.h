@@ -150,7 +150,7 @@ class t_cpp_generator : public t_oop_generator {
   std::string function_signature(t_function* tfunction, std::string prefix="", bool name_params=true);
   std::string argument_list(t_struct* tstruct, bool name_params=true);
   std::string type_to_enum(t_type* ttype);
-  std::string local_reflection_name(const char*, t_type* ttype);
+  std::string local_reflection_name(const char*, t_type* ttype, bool external=false);
 
   // These handles checking gen_dense_ and checking for duplicates.
   void generate_local_reflection(std::ofstream& out, t_type* ttype, bool is_definition);

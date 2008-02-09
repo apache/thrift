@@ -659,7 +659,7 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
       indent_up();
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         indent(out) << "&" <<
-          local_reflection_name("typespec", (*m_iter)->get_type()) << "," << endl;
+          local_reflection_name("typespec", (*m_iter)->get_type(), true) << "," << endl;
       }
       indent(out) << "&" <<
         local_reflection_name("typespec", g_type_void) << "," << endl;
@@ -2861,7 +2861,7 @@ string t_cpp_generator::type_to_enum(t_type* type) {
 /**
  * Returns the symbol name of the local reflection of a type.
  */
-string t_cpp_generator::local_reflection_name(const char* prefix, t_type* ttype) {
+string t_cpp_generator::local_reflection_name(const char* prefix, t_type* ttype, bool external) {
   ttype = get_true_type(ttype);
 
   // We have to use the program name as part of the identifier because
@@ -2870,6 +2870,7 @@ string t_cpp_generator::local_reflection_name(const char* prefix, t_type* ttype)
   // trlo = Thrift Reflection LOcal.
   string prog;
   string name;
+  string nspace;
 
   // TODO(dreiss): Would it be better to pregenerate the base types
   //               and put them in Thrift.{h,cpp} ?
@@ -2891,7 +2892,13 @@ string t_cpp_generator::local_reflection_name(const char* prefix, t_type* ttype)
     name = ttype->get_ascii_fingerprint();
   }
 
-  return string() + "trlo_" + prefix + "_" + prog + "_" + name;
+  if (external &&
+      ttype->get_program() != NULL &&
+      ttype->get_program() != program_) {
+    nspace = namespace_prefix(ttype->get_program()->get_cpp_namespace());
+  }
+
+  return nspace + "trlo_" + prefix + "_" + prog + "_" + name;
 }
 
 string t_cpp_generator::get_include_prefix(const t_program& program) const {
