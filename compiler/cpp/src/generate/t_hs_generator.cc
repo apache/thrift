@@ -706,7 +706,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
     // Write to the stream
     f_client_ <<
       indent() << "writeMessageEnd op" << endl <<
-      indent() << "pflush op" << endl;
+      indent() << "tflush (getTransport op)" << endl;
 
     indent_down();
 
@@ -818,7 +818,7 @@ void t_hs_generator::generate_service_server(t_service* tservice) {
     indent(f_service_) << "writeMessageBegin oprot (name,M_EXCEPTION,seqid)" << endl;
     indent(f_service_) << "writeAppExn oprot (AppExn AE_UNKNOWN_METHOD (\"Unknown function \" ++ name))" << endl;
     indent(f_service_) << "writeMessageEnd oprot" << endl;
-    indent(f_service_) << "pflush oprot" << endl;
+    indent(f_service_) << "tflush (getTransport oprot)" << endl;
     indent_down();
   }
   indent_down();
@@ -940,7 +940,7 @@ void t_hs_generator::generate_process_function(t_service* tservice,
     indent() << "writeMessageBegin oprot (\"" << tfunction->get_name() << "\", M_REPLY, seqid);" << endl <<
     indent() << "write_"<<resultname<<" oprot res" << endl <<
     indent() << "writeMessageEnd oprot" << endl <<
-    indent() << "pflush oprot" << endl;
+    indent() << "tflush (getTransport oprot)" << endl;
 
   // Close function
   indent_down();

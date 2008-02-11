@@ -119,52 +119,52 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
 
 
   class Protocol a where
-      pflush ::  a -> IO ()
-      writeMessageBegin :: a -> ([Char],Message_type,Int) -> IO ()
-      writeMessageEnd :: a -> IO ()
-      writeStructBegin :: a -> [Char] -> IO ()
-      writeStructEnd :: a -> IO ()
-      writeFieldBegin :: a -> ([Char], T_type,Int) -> IO ()
-      writeFieldEnd :: a -> IO ()
-      writeFieldStop :: a -> IO ()
-      writeMapBegin :: a -> (T_type,T_type,Int) -> IO ()
-      writeMapEnd :: a -> IO ()
-      writeListBegin :: a -> (T_type,Int) -> IO ()
-      writeListEnd :: a -> IO ()
-      writeSetBegin :: a -> (T_type,Int) -> IO ()
-      writeSetEnd :: a -> IO ()
-      writeBool :: a -> Bool -> IO ()
-      writeByte :: a -> Int -> IO ()
-      writeI16 :: a -> Int -> IO ()
-      writeI32 :: a -> Int -> IO ()
-      writeI64 :: a -> Int -> IO ()
-      writeDouble :: a -> Double -> IO ()
-      writeString :: a -> [Char] -> IO ()
-      writeBinary :: a -> [Char] -> IO ()
-      readMessageBegin :: a -> IO ([Char],Message_type,Int)
-      readMessageEnd :: a -> IO ()
-      readStructBegin :: a -> IO [Char]
-      readStructEnd :: a -> IO ()
-      readFieldBegin :: a -> IO ([Char],T_type,Int)
-      readFieldEnd :: a -> IO ()
-      readMapBegin :: a -> IO (T_type,T_type,Int)
-      readMapEnd :: a -> IO ()
-      readListBegin :: a -> IO (T_type,Int)
-      readListEnd :: a -> IO ()
-      readSetBegin :: a -> IO (T_type,Int)
-      readSetEnd :: a -> IO ()
-      readBool :: a -> IO Bool
-      readByte :: a -> IO Int
-      readI16 :: a -> IO Int
-      readI32 :: a -> IO Int
-      readI64 :: a -> IO Int
-      readDouble :: a -> IO Double
-      readString :: a -> IO [Char]
-      readBinary :: a -> IO [Char]
-      skipFields :: a -> IO ()
-      skipMapEntries :: a -> Int -> T_type -> T_type -> IO ()
-      skipSetEntries :: a -> Int -> T_type -> IO ()
-      skip :: a -> T_type -> IO ()
+      getTransport :: TTransport t => a t -> t
+      writeMessageBegin :: TTransport t => a t -> ([Char],Message_type,Int) -> IO ()
+      writeMessageEnd :: TTransport t => a t -> IO ()
+      writeStructBegin :: TTransport t => a t -> [Char] -> IO ()
+      writeStructEnd :: TTransport t => a t -> IO ()
+      writeFieldBegin :: TTransport t => a t -> ([Char], T_type,Int) -> IO ()
+      writeFieldEnd :: TTransport t => a t -> IO ()
+      writeFieldStop :: TTransport t => a t -> IO ()
+      writeMapBegin :: TTransport t => a t -> (T_type,T_type,Int) -> IO ()
+      writeMapEnd :: TTransport t => a t -> IO ()
+      writeListBegin :: TTransport t => a t -> (T_type,Int) -> IO ()
+      writeListEnd :: TTransport t => a t -> IO ()
+      writeSetBegin :: TTransport t => a t -> (T_type,Int) -> IO ()
+      writeSetEnd :: TTransport t => a t -> IO ()
+      writeBool :: TTransport t => a t -> Bool -> IO ()
+      writeByte :: TTransport t => a t -> Int -> IO ()
+      writeI16 :: TTransport t => a t -> Int -> IO ()
+      writeI32 :: TTransport t => a t -> Int -> IO ()
+      writeI64 :: TTransport t => a t -> Int -> IO ()
+      writeDouble :: TTransport t => a t -> Double -> IO ()
+      writeString :: TTransport t => a t -> [Char] -> IO ()
+      writeBinary :: TTransport t => a t -> [Char] -> IO ()
+      readMessageBegin :: TTransport t => a t -> IO ([Char],Message_type,Int)
+      readMessageEnd :: TTransport t => a t -> IO ()
+      readStructBegin :: TTransport t => a t -> IO [Char]
+      readStructEnd :: TTransport t => a t -> IO ()
+      readFieldBegin :: TTransport t => a t -> IO ([Char],T_type,Int)
+      readFieldEnd :: TTransport t => a t -> IO ()
+      readMapBegin :: TTransport t => a t -> IO (T_type,T_type,Int)
+      readMapEnd :: TTransport t => a t -> IO ()
+      readListBegin :: TTransport t => a t -> IO (T_type,Int)
+      readListEnd :: TTransport t => a t -> IO ()
+      readSetBegin :: TTransport t => a t -> IO (T_type,Int)
+      readSetEnd :: TTransport t => a t -> IO ()
+      readBool :: TTransport t => a t -> IO Bool
+      readByte :: TTransport t => a t -> IO Int
+      readI16 :: TTransport t => a t -> IO Int
+      readI32 :: TTransport t => a t -> IO Int
+      readI64 :: TTransport t => a t -> IO Int
+      readDouble :: TTransport t => a t -> IO Double
+      readString :: TTransport t => a t -> IO [Char]
+      readBinary :: TTransport t => a t -> IO [Char]
+      skipFields :: TTransport t => a t -> IO ()
+      skipMapEntries :: TTransport t => a t -> Int -> T_type -> T_type -> IO ()
+      skipSetEntries :: TTransport t => a t -> Int -> T_type -> IO ()
+      skip :: TTransport t => a t -> T_type -> IO ()
       skipFields a = do (_,ty,_) <- readFieldBegin a
                         if ty == T_STOP then
                               return ()

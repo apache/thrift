@@ -17,6 +17,3 @@ Then pass your label to process as the handler.
 
 Processor: Just a function that takes a handler label, protocols. It calls the superclasses process if there is a superclass.
 
-
-Note: Protocols implement flush as well as transports and do not have a getTransport method. This is because I couldn't get getTransport to typecheck. Shrug.
-
