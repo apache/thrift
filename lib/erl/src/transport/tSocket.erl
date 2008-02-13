@@ -77,7 +77,8 @@ effectful_open(This) ->
     case gen_tcp:connect(Host, Port, Options) of
         {error, _} ->
             tException:throw(tTransportException,
-                             [?tTransportException_NOT_OPEN, "Could not connect to " ++ Host ++ ":" ++ Port]);
+                             [?tTransportException_NOT_OPEN, "Could not connect to " ++ Host ++ ":"
+                              ++ integer_to_list(Port)]);
         {ok, Socket} ->
             effectful_setHandle(This, Socket)
     end.
