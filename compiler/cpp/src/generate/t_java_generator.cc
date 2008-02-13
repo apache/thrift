@@ -188,7 +188,7 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
-    out << name << " = new " << type_name(type) << "();" << endl;
+    out << name << " = new " << type_name(type, false, true) << "();" << endl;
     if (!in_static) {
       indent(out) << "static {" << endl;
       indent_up();
@@ -213,7 +213,7 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
     }
     out << endl;
   } else if (type->is_map()) {
-    out << name << " = new " << type_name(type, true, true) << "();" << endl;
+    out << name << " = new " << type_name(type, false, true) << "();" << endl;
     if (!in_static) {
       indent(out) << "static {" << endl;
       indent_up();
@@ -233,7 +233,7 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
     }
     out << endl;
   } else if (type->is_list() || type->is_set()) {
-    out << name << " = new " << type_name(type) << "();" << endl;
+    out << name << " = new " << type_name(type, false, true) << "();" << endl;
     if (!in_static) {
       indent(out) << "static {" << endl;
       indent_up();
@@ -739,7 +739,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       indent_up();
       indent(out) << "if (this." << field_name << " == null) {" << endl;
       indent_up();
-      indent(out) << "this." << field_name << " = new " << type_name(type) <<
+      indent(out) << "this." << field_name << " = new " << type_name(type, false, true) <<
         "();" << endl;
       indent_down();
       indent(out) << "}" << endl;
