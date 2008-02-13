@@ -499,6 +499,10 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
   }
 
   out <<
+    indent() << "$bin_accel = ($input instanceof TProtocol::$TBINARYPROTOCOLACCELERATED)"
+             << " && function_exists('thrift_protocol_binary_deserialize');" << endl;
+
+  out <<
     indent() << "$xfer = 0;" << endl <<
     indent() << "$fname = null;" << endl <<
     indent() << "$ftype = 0;" << endl <<
@@ -1337,7 +1341,7 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
       generate_deserialize_container(out, type, name);
     } else if (type->is_base_type() || type->is_enum()) {
 
-      out << indent() << "if (($input instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_binary_deserialize')) {" << endl;
+      out << indent() << "if ($bin_accel) {" << endl;
       indent_up();
       string ttype_name;
       if (type->is_enum()) {
@@ -1471,8 +1475,8 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
         }
         out << endl;
       }
-      out << indent() << "}" << endl;
       indent_down();
+      out << indent() << "}" << endl;
     } else {
       printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
              tfield->get_name().c_str(), type->get_name().c_str());
@@ -1497,7 +1501,7 @@ void t_php_generator::generate_deserialize_struct(ofstream &out,
 void t_php_generator::generate_deserialize_container(ofstream &out,
                                                      t_type* ttype,
                                                      string prefix) {
-  out << indent() << "if (($input instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_binary_deserialize'))" << endl;
+  out << indent() << "if ($bin_accel)" << endl;
   scope_up(out);
 
   string ttype_name;
