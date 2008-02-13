@@ -70,7 +70,7 @@ class TPhpStream extends TTransport {
 
   public function read($len) {
     $data = @fread($this->inStream_, $len);
-    if (!$data) {
+    if ($data === FALSE || $data === '') {
       throw new TException('TPhpStream: Could not read '.$len.' bytes');
     }
     return $data;
