@@ -806,7 +806,7 @@ skip(DecodeBuffer* input, TType type) {
 
   }
 
-  return false;
+  return true;
 
 #undef SKIPBYTES
 }
@@ -851,6 +851,8 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq) {
     if (item_spec == Py_None) {
       if (!skip(input, type)) {
         return false;
+      } else {
+        continue;
       }
     }
 
