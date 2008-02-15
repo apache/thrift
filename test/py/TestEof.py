@@ -92,10 +92,11 @@ class TestEof(unittest.TestCase):
     self.eofTestHelper(TBinaryProtocol.TBinaryProtocolAcceleratedFactory())
     self.eofTestHelperStress(TBinaryProtocol.TBinaryProtocolAcceleratedFactory())
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
+def suite():
+  suite = unittest.TestSuite()
+  loader = unittest.TestLoader()
+  suite.addTest(loader.loadTestsFromTestCase(TestEof))
+  return suite
 
-suite.addTest(loader.loadTestsFromTestCase(TestEof))
-
-testRunner = unittest.TextTestRunner(verbosity=2)
-testRunner.run(suite)
+if __name__ == "__main__":
+  unittest.main(defaultTest="suite", testRunner=unittest.TextTestRunner(verbosity=2))

@@ -121,6 +121,7 @@ AC_CONFIG_FILES([
   lib/py/Makefile
   if/Makefile
   test/Makefile
+  test/py/Makefile
 ])
 
 AC_OUTPUT

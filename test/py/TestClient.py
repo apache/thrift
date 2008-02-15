@@ -92,11 +92,13 @@ class NormalBinaryTest(AbstractTest):
 class AcceleratedBinaryTest(AbstractTest):
   protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory()
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
+def suite():
+  suite = unittest.TestSuite()
+  loader = unittest.TestLoader()
 
-suite.addTest(loader.loadTestsFromTestCase(NormalBinaryTest))
-suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
+  suite.addTest(loader.loadTestsFromTestCase(NormalBinaryTest))
+  suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
+  return suite
 
-testRunner = unittest.TextTestRunner(verbosity=2)
-testRunner.run(suite)
+if __name__ == "__main__":
+  unittest.main(defaultTest="suite", testRunner=unittest.TextTestRunner(verbosity=2))

@@ -1,3 +1,5 @@
+SUBDIRS = py
+
 check_PROGRAMS = \
 	DebugProtoTest \
 	OptionalRequiredTest \
