@@ -104,6 +104,8 @@ class TDebugProtocol : public TWriteOnlyProtocol {
 
   uint32_t writeString(const std::string& str);
 
+  uint32_t writeBinary(const std::string& str);
+
 
  private:
   void indentUp();

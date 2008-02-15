@@ -439,6 +439,10 @@ uint32_t TDenseProtocol::writeString(const std::string& str) {
   return subWriteString(str);
 }
 
+uint32_t TDenseProtocol::writeBinary(const std::string& str) {
+  return TDenseProtocol::writeString(str);
+}
+
 inline uint32_t TDenseProtocol::subWriteI32(const int32_t i32) {
   return vlqWrite(i32);
 }
@@ -716,6 +720,10 @@ uint32_t TDenseProtocol::readString(std::string& str) {
   checkTType(T_STRING);
   stateTransition();
   return subReadString(str);
+}
+
+uint32_t TDenseProtocol::readBinary(std::string& str) {
+  return TDenseProtocol::readString(str);
 }
 
 uint32_t TDenseProtocol::subReadI32(int32_t& i32) {

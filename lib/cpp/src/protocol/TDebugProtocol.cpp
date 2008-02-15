@@ -312,4 +312,8 @@ uint32_t TDebugProtocol::writeString(const string& str) {
   return writeItem(output);
 }
 
+uint32_t TDebugProtocol::writeBinary(const string& str) {
+  return TDebugProtocol::writeString(str);
+}
+
 }}} // facebook::thrift::protocol

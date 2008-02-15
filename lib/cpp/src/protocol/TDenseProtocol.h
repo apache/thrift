@@ -126,6 +126,8 @@ class TDenseProtocol : public TBinaryProtocol {
 
   virtual uint32_t writeString(const std::string& str);
 
+  virtual uint32_t writeBinary(const std::string& str);
+
 
   /*
    * Helper writing functions (don't do state transitions).
@@ -189,6 +191,7 @@ class TDenseProtocol : public TBinaryProtocol {
 
   uint32_t readString(std::string& str);
 
+  uint32_t readBinary(std::string& str);
 
   /*
    * Helper reading functions (don't do state transitions).

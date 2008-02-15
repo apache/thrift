@@ -159,6 +159,8 @@ class TProtocol {
 
   virtual uint32_t writeString(const std::string& str) = 0;
 
+  virtual uint32_t writeBinary(const std::string& str) = 0;
+
   /**
    * Reading functions
    */
@@ -209,6 +211,8 @@ class TProtocol {
 
   virtual uint32_t readString(std::string& str) = 0;
 
+  virtual uint32_t readBinary(std::string& str) = 0;
+
   /**
    * Method to arbitrarily skip over data.
    */
@@ -247,7 +251,7 @@ class TProtocol {
     case T_STRING:
       {
         std::string str;
-        return readString(str);
+        return readBinary(str);
       }
     case T_STRUCT:
       {

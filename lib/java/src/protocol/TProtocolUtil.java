@@ -52,7 +52,7 @@ public class TProtocolUtil {
       }
     case TType.STRING:
       {
-        prot.readString();
+        prot.readBinary();
         break;
       }
     case TType.STRUCT:

@@ -137,6 +137,10 @@ class TWriteOnlyProtocol : public TProtocol {
         subclass_ + " does not support reading (yet).");
   }
 
+  uint32_t readBinary(std::string& str) {
+    throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
+        subclass_ + " does not support reading (yet).");
+  }
 
  private:
   std::string subclass_;

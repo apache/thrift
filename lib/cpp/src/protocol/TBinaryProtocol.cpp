@@ -188,6 +188,10 @@ uint32_t TBinaryProtocol::writeString(const string& str) {
   return result + size;
 }
 
+uint32_t TBinaryProtocol::writeBinary(const string& str) {
+  return TBinaryProtocol::writeString(str);
+}
+
 /**
  * Reading functions
  */
@@ -377,6 +381,10 @@ uint32_t TBinaryProtocol::readString(string& str) {
   int32_t size;
   result = readI32(size);
   return result + readStringBody(str, size);
+}
+
+uint32_t TBinaryProtocol::readBinary(string& str) {
+  return TBinaryProtocol::readString(str);
 }
 
 uint32_t TBinaryProtocol::readStringBody(string& str, int32_t size) {
