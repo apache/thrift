@@ -443,6 +443,22 @@ int main(int argc, char** argv) {
         }
     }
 
+    /**
+     * redo a simple test after the async to make sure we aren't "off by one" --
+     * if the server treated async void like normal void, this next test will
+     * fail since it will get the void confirmation rather than the correct
+     * result. In this circumstance, the client will throw the exception:
+     *
+     *   TApplicationException: Wrong method namea
+     */
+    /**
+     * I32 TEST
+     */
+    printf("re-test testI32(-1)");
+    i32 = testClient.testI32(-1);
+    printf(" = %d\n", i32);
+
+
     uint64_t stop = now();
     uint64_t tot = stop-start;
 
