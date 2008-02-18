@@ -255,6 +255,12 @@ class TestHandler : public ThriftTestIf {
       return;
     }
   }
+
+  void testAsync(int sleepFor) {
+    printf("testAsync(%d): Sleeping...\n", sleepFor);
+    sleep(sleepFor);
+    printf("testAsync(%d): done sleeping!\n", sleepFor);
+  }
 };
 
 int main(int argc, char **argv) {

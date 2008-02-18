@@ -90,6 +90,9 @@ service ThriftTest
   /* Multiple exceptions specifier */
 
   Xtruct testMultiException(string arg0, string arg1) throws(Xception err1, Xception2 err2)
+
+  /* Test async void */
+  async void testAsync(1:i32 secondsToSleep)
 }
 
 service SecondService

@@ -234,6 +234,17 @@ public class TestServer {
       return result;
     }
 
+    public void testAsync(int sleepFor) {
+      System.out.println("testAsync(" + Integer.toString(sleepFor) +
+                         ") => sleeping...");
+      try {
+        Thread.sleep(sleepFor * 1000);
+        System.out.println("Done sleeping!");
+      } catch (InterruptedException ie) {
+        throw new RuntimeException(ie);
+      }
+    }
+
   } // class TestHandler
 
   public static void main(String [] args) {

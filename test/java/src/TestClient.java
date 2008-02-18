@@ -357,6 +357,22 @@ public class TestClient {
         }
         System.out.print("}\n");
 
+        // Test async
+        System.out.print("testAsync(3)...");
+        long startAsync = System.nanoTime();
+        testClient.testAsync(3);
+        long asyncElapsedMillis = (System.nanoTime() - startAsync) / 1000000;
+        if (asyncElapsedMillis > 200) {
+          throw new Exception("Async test failed: took " +
+                              Long.toString(asyncElapsedMillis) +
+                              "ms");
+        } else {
+          System.out.println("Success - took " +
+                             Long.toString(asyncElapsedMillis) +
+                             "ms");
+        }
+
+
         long stop = System.nanoTime();
         long tot = stop-start;
 

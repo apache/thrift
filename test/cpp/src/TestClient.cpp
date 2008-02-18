@@ -430,6 +430,19 @@ int main(int argc, char** argv) {
       printf("  exception\nFAILURE\n");
     }
 
+    /* test async void */
+    {
+        printf("testClient.testAsync(3) =>");
+        uint64_t startAsync = now();
+        testClient.testAsync(3);
+        uint64_t elapsed = now() - startAsync;
+        if (elapsed > 200 * 1000) { // 0.2 seconds
+            printf("  FAILURE - took %.2f ms\n", (double)elapsed/1000.0);
+        } else {
+            printf("  success - took %.2f ms\n", (double)elapsed/1000.0);
+        }
+    }
+
     uint64_t stop = now();
     uint64_t tot = stop-start;
 
