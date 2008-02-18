@@ -2,6 +2,7 @@ SUBDIRS = py
 
 check_PROGRAMS = \
 	DebugProtoTest \
+	JSONProtoTest \
 	OptionalRequiredTest \
 	ReflectionTest
 
@@ -19,6 +20,16 @@ DebugProtoTest_SOURCES = \
 DebugProtoTest_LDADD = \
 	$(top_srcdir)/lib/cpp/libthrift.la
 
+
+#
+# JSONProtoTest
+#
+JSONProtoTest_SOURCES = \
+	gen-cpp/DebugProtoTest_types.cpp \
+	JSONProtoTest.cpp
+
+JSONProtoTest_LDADD = \
+	$(top_srcdir)/lib/cpp/libthrift.la
 
 #
 # OptionalRequiredTest
