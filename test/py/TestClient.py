@@ -86,6 +86,13 @@ class AbstractTest(unittest.TestCase):
       self.assertEqual(x.errorCode, 1001)
       self.assertEqual(x.message, 'Xception')
 
+  def testAsync(self):
+    start = time.time()
+    self.client.testAsync(2)
+    end = time.time()
+    self.assertTrue(end - start < 0.2,
+                    "async sleep took %f sec" % (end - start))
+
 class NormalBinaryTest(AbstractTest):
   protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
 

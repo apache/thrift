@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, glob
+import sys, glob, time
 sys.path.insert(0, './gen-py')
 sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
 
@@ -51,6 +51,11 @@ class TestHandler:
       x.errorCode = 1001
       x.message = str
       raise x
+
+  def testAsync(self, seconds):
+    print 'testAsync(%d) => sleeping...' % seconds
+    time.sleep(seconds)
+    print 'done sleeping'
 
 handler = TestHandler()
 processor = ThriftTest.Processor(handler)
