@@ -7,6 +7,7 @@
 #ifndef _THRIFT_TRANSPORT_TTRANSPORTUTILS_H_
 #define _THRIFT_TRANSPORT_TTRANSPORTUTILS_H_ 1
 
+#include <cstdlib>
 #include <string>
 #include <algorithm>
 #include <transport/TTransport.h>
@@ -301,7 +302,7 @@ class TMemoryBuffer : public TTransport {
   void initCommon(uint8_t* buf, uint32_t size, bool owner, uint32_t wPos) {
     if (buf == NULL && size != 0) {
       assert(owner);
-      buf = (uint8_t*)malloc(size);
+      buf = (uint8_t*)std::malloc(size);
       if (buf == NULL) {
         throw TTransportException("Out of memory");
       }
@@ -394,7 +395,7 @@ class TMemoryBuffer : public TTransport {
 
   ~TMemoryBuffer() {
     if (owner_) {
-      free(buffer_);
+      std::free(buffer_);
       buffer_ = NULL;
     }
   }
@@ -537,8 +538,8 @@ class TPipedTransport : virtual public TTransport {
     pipeOnRead_ = true;
     pipeOnWrite_ = false;
 
-    rBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * rBufSize_);
-    wBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * wBufSize_);
+    rBuf_ = (uint8_t*) std::malloc(sizeof(uint8_t) * rBufSize_);
+    wBuf_ = (uint8_t*) std::malloc(sizeof(uint8_t) * wBufSize_);
   }
 
   TPipedTransport(boost::shared_ptr<TTransport> srcTrans,
@@ -549,13 +550,13 @@ class TPipedTransport : virtual public TTransport {
     rBufSize_(512), rPos_(0), rLen_(0),
     wBufSize_(sz), wLen_(0) {
 
-    rBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * rBufSize_);
-    wBuf_ = (uint8_t*) malloc(sizeof(uint8_t) * wBufSize_);
+    rBuf_ = (uint8_t*) std::malloc(sizeof(uint8_t) * rBufSize_);
+    wBuf_ = (uint8_t*) std::malloc(sizeof(uint8_t) * wBufSize_);
   }
 
   ~TPipedTransport() {
-    free(rBuf_);
-    free(wBuf_);
+    std::free(rBuf_);
+    std::free(wBuf_);
   }
 
   bool isOpen() {
@@ -567,7 +568,7 @@ class TPipedTransport : virtual public TTransport {
       // Double the size of the underlying buffer if it is full
       if (rLen_ == rBufSize_) {
         rBufSize_ *=2;
-        rBuf_ = (uint8_t *)realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
+        rBuf_ = (uint8_t *)std::realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
       }
 
       // try to fill up the buffer

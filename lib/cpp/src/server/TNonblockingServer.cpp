@@ -108,7 +108,7 @@ void TConnection::workSocket() {
       while (readWant_ > readBufferSize_) {
         readBufferSize_ *= 2;
       }
-      readBuffer_ = (uint8_t*)realloc(readBuffer_, readBufferSize_);
+      readBuffer_ = (uint8_t*)std::realloc(readBuffer_, readBufferSize_);
       if (readBuffer_ == NULL) {
         GlobalOutput("TConnection::workSocket() realloc");
         close();

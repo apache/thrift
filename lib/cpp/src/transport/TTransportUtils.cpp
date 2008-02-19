@@ -310,7 +310,7 @@ void TMemoryBuffer::write(const uint8_t* buf, uint32_t len) {
       bufferSize_ *= 2;
       avail = bufferSize_ - wPos_;
     }
-    buffer_ = (uint8_t*)realloc(buffer_, bufferSize_);
+    buffer_ = (uint8_t*)std::realloc(buffer_, bufferSize_);
     if (buffer_ == NULL) {
       throw TTransportException("Out of memory.");
     }
@@ -354,7 +354,7 @@ uint32_t TPipedTransport::read(uint8_t* buf, uint32_t len) {
     // Double the size of the underlying buffer if it is full
     if (rLen_ == rBufSize_) {
       rBufSize_ *=2;
-      rBuf_ = (uint8_t *)realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
+      rBuf_ = (uint8_t *)std::realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
     }
 
     // try to fill up the buffer
@@ -387,7 +387,7 @@ void TPipedTransport::write(const uint8_t* buf, uint32_t len) {
     while ((len + wLen_) >= newBufSize) {
       newBufSize *= 2;
     }
-    wBuf_ = (uint8_t *)realloc(wBuf_, sizeof(uint8_t) * newBufSize);
+    wBuf_ = (uint8_t *)std::realloc(wBuf_, sizeof(uint8_t) * newBufSize);
     wBufSize_ = newBufSize;
   }
 

@@ -4,6 +4,8 @@
 // See accompanying file LICENSE or visit the Thrift site at:
 // http://developers.facebook.com/thrift/
 
+#include <cstdlib>
+
 #include "THttpClient.h"
 #include "TSocket.h"
 
@@ -54,7 +56,7 @@ THttpClient::THttpClient(string host, int port, string path) :
 }
 
 void THttpClient::init() {
-  httpBuf_ = (char*)malloc(httpBufSize_+1);
+  httpBuf_ = (char*)std::malloc(httpBufSize_+1);
   if (httpBuf_ == NULL) {
     throw TTransportException("Out of memory.");
   }
@@ -63,7 +65,7 @@ void THttpClient::init() {
 
 THttpClient::~THttpClient() {
   if (httpBuf_ != NULL) {
-    free(httpBuf_);
+    std::free(httpBuf_);
   }
 }
 
@@ -202,7 +204,7 @@ void THttpClient::refill() {
   uint32_t avail = httpBufSize_ - httpBufLen_;
   if (avail <= (httpBufSize_ / 4)) {
     httpBufSize_ *= 2;
-    httpBuf_ = (char*)realloc(httpBuf_, httpBufSize_+1);
+    httpBuf_ = (char*)std::realloc(httpBuf_, httpBufSize_+1);
     if (httpBuf_ == NULL) {
       throw TTransportException("Out of memory.");
     }

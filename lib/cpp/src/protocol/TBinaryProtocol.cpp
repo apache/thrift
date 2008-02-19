@@ -406,7 +406,7 @@ uint32_t TBinaryProtocol::readStringBody(string& str, int32_t size) {
 
   // Use the heap here to prevent stack overflow for v. large strings
   if (size > string_buf_size_ || string_buf_ == NULL) {
-    string_buf_ = (uint8_t*)realloc(string_buf_, (uint32_t)size);
+    string_buf_ = (uint8_t*)std::realloc(string_buf_, (uint32_t)size);
     if (string_buf_ == NULL) {
       string_buf_size_ = 0;
       throw TProtocolException(TProtocolException::UNKNOWN, "Out of memory in TBinaryProtocol::readString");

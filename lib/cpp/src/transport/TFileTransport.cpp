@@ -23,6 +23,7 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
+#include <cstdlib>
 #include <iostream>
 #include <sys/stat.h>
 
@@ -209,7 +210,7 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool bl
   }
 
   eventInfo* toEnqueue = new eventInfo();
-  toEnqueue->eventBuff_ = (uint8_t *)malloc((sizeof(uint8_t) * eventLen) + 4);
+  toEnqueue->eventBuff_ = (uint8_t *)std::malloc((sizeof(uint8_t) * eventLen) + 4);
   // first 4 bytes is the event length
   memcpy(toEnqueue->eventBuff_, (void*)(&eventLen), 4);
   // actual event contents

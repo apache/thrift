@@ -50,7 +50,7 @@ class TBinaryProtocol : public TProtocol {
 
   ~TBinaryProtocol() {
     if (string_buf_ != NULL) {
-      free(string_buf_);
+      std::free(string_buf_);
       string_buf_size_ = 0;
     }
   }
