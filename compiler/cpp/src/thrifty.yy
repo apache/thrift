@@ -69,7 +69,7 @@ int g_arglist = 0;
 %token<dconst> tok_dub_constant
 
 /**
- * Header keywoards
+ * Header keywords
  */
 %token tok_include
 %token tok_namespace
