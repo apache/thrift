@@ -36,5 +36,10 @@ init([Port, Handler, Processor]) ->
 thrift_start_link(SF = tErlServer, Port, Hnd, Pr, ST, TF, PF) ->
     Args = [Port, Hnd, Pr, ST, TF:new(), PF:new()],
     Pid = oop:start_new(SF, Args),
-    ?R0(Pid, effectful_serve),
+    case ?R0(Pid, effectful_serve) of
+        ok ->
+            ok;
+        {error, eaddrinuse} ->
+            exit(eaddrinuse)
+    end,
     {ok, Pid}.
