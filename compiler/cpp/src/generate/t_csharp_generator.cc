@@ -1399,7 +1399,7 @@ string t_csharp_generator::type_name(t_type* ttype, bool in_container, bool in_i
 
   t_program* program = ttype->get_program();
   if (program != NULL && program != program_) {
-    string ns = program->get_java_package();
+    string ns = program->get_csharp_namespace();
     if (!ns.empty()) {
       return ns + "." + ttype->get_name();
     }
