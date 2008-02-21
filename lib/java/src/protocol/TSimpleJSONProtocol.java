@@ -16,17 +16,21 @@ import java.util.Stack;
 /**
  * JSON protocol implementation for thrift.
  *
+ * This protocol is write-only and produces a simple output format
+ * suitable for parsing by scripting languages.  It should not be
+ * confused with the full-featured TJSONProtocol.
+ *
  * @author Joydeep Sen Sarma <jssarma@facebook.com>
  * @author Mark Slee <mcslee@facebook.com>
  */
-public class TJSONProtocol extends TProtocol {
+public class TSimpleJSONProtocol extends TProtocol {
 
   /**
    * Factory
    */
   public static class Factory implements TProtocolFactory {
     public TProtocol getProtocol(TTransport trans) {
-      return new TJSONProtocol(trans);
+      return new TSimpleJSONProtocol(trans);
     }
   }
 
@@ -99,7 +103,7 @@ public class TJSONProtocol extends TProtocol {
   /**
    * Constructor
    */
-  public TJSONProtocol(TTransport trans) {
+  public TSimpleJSONProtocol(TTransport trans) {
     super(trans);
   }
 
