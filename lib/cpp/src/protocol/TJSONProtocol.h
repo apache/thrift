@@ -20,7 +20,8 @@ class TJSONContext;
 /**
  * JSON protocol for Thrift.
  *
- * This protocol provides for protocol which uses JSON as the wire-format.
+ * Implements a protocol which uses JSON as the wire-format.
+ *
  * Thrift types are represented as described below:
  *
  * 1. Every Thrift integer type is represented as a JSON number.
@@ -245,10 +246,44 @@ class TJSONProtocol : public TProtocol {
 
   uint32_t readBinary(std::string& str);
 
+  class LookaheadReader {
+
+   public:
+
+    LookaheadReader(TTransport &trans) :
+      trans_(&trans),
+      hasData_(false) {
+    }
+
+    uint8_t read() {
+      if (hasData_) {
+        hasData_ = false;
+      }
+      else {
+        trans_->readAll(&data_, 1);
+      }
+      return data_;
+    }
+
+    uint8_t peek() {
+      if (!hasData_) {
+        trans_->readAll(&data_, 1);
+      }
+      hasData_ = true;
+      return data_;
+    }
+
+   private:
+    TTransport *trans_;
+    bool hasData_;
+    uint8_t data_;
+  };
+
  private:
 
   std::stack<boost::shared_ptr<TJSONContext> > contexts_;
   boost::shared_ptr<TJSONContext> context_;
+  LookaheadReader reader_;
 };
 
 /**

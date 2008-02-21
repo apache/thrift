@@ -81,46 +81,48 @@ static const std::string &getTypeNameForTypeID(TType typeID) {
 
 static TType getTypeIDForTypeName(const std::string &name) {
   TType result = T_STOP; // Sentinel value
-  switch (name[0]) {
-  case 'd':
-    result = T_DOUBLE;
-    break;
-  case 'i':
-    switch (name[1]) {
-    case '8':
-      result = T_BYTE;
+  if (name.length() > 0) {
+    switch (name[0]) {
+    case 'd':
+      result = T_DOUBLE;
       break;
-    case '1':
-      result = T_I16;
+    case 'i':
+      switch (name[1]) {
+      case '8':
+        result = T_BYTE;
+        break;
+      case '1':
+        result = T_I16;
+        break;
+      case '3':
+        result = T_I32;
+        break;
+      case '6':
+        result = T_I64;
+        break;
+      }
       break;
-    case '3':
-      result = T_I32;
+    case 'l':
+      result = T_LIST;
       break;
-    case '6':
-      result = T_I64;
+    case 'm':
+      result = T_MAP;
+      break;
+    case 'r':
+      result = T_STRUCT;
+      break;
+    case 's':
+      if (name[1] == 't') {
+        result = T_STRING;
+      }
+      else if (name[1] == 'e') {
+        result = T_SET;
+      }
+      break;
+    case 't':
+      result = T_BOOL;
       break;
     }
-    break;
-  case 'l':
-    result = T_LIST;
-    break;
-  case 'm':
-    result = T_MAP;
-    break;
-  case 'r':
-    result = T_STRUCT;
-    break;
-  case 's':
-    if (name[1] == 't') {
-      result = T_STRING;
-    }
-    else if (name[1] == 'e') {
-      result = T_SET;
-    }
-    break;
-  case 't':
-    result = T_BOOL;
-    break;
   }
   if (result == T_STOP) {
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
@@ -159,29 +161,16 @@ const static uint8_t kEscapeCharVals[7] = {
 // Read 1 character from the transport trans and verify that it is the
 // expected character ch.
 // Throw a protocol exception if it is not.
-static uint32_t readSyntaxChar(TTransport &trans, uint8_t ch) {
-  uint8_t b[1];
-  trans.readAll(b, 1);
-  if (b[0] != ch) {
+static uint32_t readSyntaxChar(TJSONProtocol::LookaheadReader &reader,
+                               uint8_t ch) {
+  uint8_t ch2 = reader.read();
+  if (ch2 != ch) {
     throw TProtocolException(TProtocolException::INVALID_DATA,
                              "Expected \'" + std::string((char *)&ch, 1) +
-                             "\'; got \'" + std::string((char *)b, 1) +
+                             "\'; got \'" + std::string((char *)&ch2, 1) +
                              "\'.");
   }
   return 1;
-}
-
-// Borrow 1 byte from the transport trans and return the value read
-// Throw a transport exception if the byte cannot be borrowed
-static uint8_t borrowByte(TTransport &trans) {
-  uint8_t b[1];
-  uint32_t len = 1;
-  const uint8_t *buf =  trans.borrow(b, &len);
-  if (!buf || !len) {
-    throw TTransportException(TTransportException::UNKNOWN,
-                              "Could not borrow 1 byte from transport.");
-  }
-  return *buf;
 }
 
 // Return the integer value of a hex character ch.
@@ -237,7 +226,7 @@ static bool isJSONNumeric(uint8_t ch) {
 
 
 /**
- * Class to serve as base JSON context and base class for other context
+ * Class to serve as base JSON context and as base class for other context
  * implementations
  */
 class TJSONContext {
@@ -258,7 +247,7 @@ class TJSONContext {
   /**
    * Read context data from the transport. Default is to do nothing.
    */
-  virtual uint32_t read(TTransport &trans) {
+  virtual uint32_t read(TJSONProtocol::LookaheadReader &reader) {
     return 0;
   };
 
@@ -294,7 +283,7 @@ public:
     }
   }
 
-  uint32_t read(TTransport &trans) {
+  uint32_t read(TJSONProtocol::LookaheadReader &reader) {
     if (first_) {
       first_ = false;
       colon_ = true;
@@ -303,7 +292,7 @@ public:
     else {
       uint8_t ch = (colon_ ? kJSONPairSeparator : kJSONElemSeparator);
       colon_ = !colon_;
-      return readSyntaxChar(trans, ch);
+      return readSyntaxChar(reader, ch);
     }
   }
 
@@ -338,13 +327,13 @@ public:
     }
   }
 
-  uint32_t read(TTransport &trans) {
+  uint32_t read(TJSONProtocol::LookaheadReader &reader) {
     if (first_) {
       first_ = false;
       return 0;
     }
     else {
-      return readSyntaxChar(trans, kJSONElemSeparator);
+      return readSyntaxChar(reader, kJSONElemSeparator);
     }
   }
 
@@ -355,7 +344,8 @@ public:
 
 TJSONProtocol::TJSONProtocol(boost::shared_ptr<TTransport> ptrans) :
   TProtocol(ptrans),
-  context_(new TJSONContext()) {
+  context_(new TJSONContext()),
+  reader_(*ptrans) {
 }
 
 TJSONProtocol::~TJSONProtocol() {}
@@ -624,7 +614,7 @@ uint32_t TJSONProtocol::writeBool(const bool value) {
 }
 
 uint32_t TJSONProtocol::writeByte(const int8_t byte) {
-  // writeByte() must be handled properly becuase boost::lexical cast sees
+  // writeByte() must be handled specially becuase boost::lexical cast sees
   // int8_t as a text type instead of an integer type
   return writeJSONInteger((int16_t)byte);
 }
@@ -657,9 +647,9 @@ uint32_t TJSONProtocol::writeBinary(const std::string& str) {
    * Reading functions
    */
 
-// Reads 1 byte and verifires that it matches ch.
+// Reads 1 byte and verifies that it matches ch.
 uint32_t TJSONProtocol::readJSONSyntaxChar(uint8_t ch) {
-  return readSyntaxChar(*trans_, ch);
+  return readSyntaxChar(reader_, ch);
 }
 
 // Decodes the four hex parts of a JSON escaped string character and returns
@@ -668,37 +658,40 @@ uint32_t TJSONProtocol::readJSONEscapeChar(uint8_t *out) {
   uint8_t b[2];
   readJSONSyntaxChar(kJSONZeroChar);
   readJSONSyntaxChar(kJSONZeroChar);
-  trans_->readAll(b, 2);
+  b[0] = reader_.read();
+  b[1] = reader_.read();
   *out = (hexVal(b[0]) << 4) + hexVal(b[1]);
   return 4;
 }
 
 // Decodes a JSON string, including unescaping, and returns the string via str
 uint32_t TJSONProtocol::readJSONString(std::string &str, bool skipContext) {
-  uint32_t result = (skipContext ? 0 : context_->read(*trans_));
+  uint32_t result = (skipContext ? 0 : context_->read(reader_));
   result += readJSONSyntaxChar(kJSONStringDelimiter);
-  uint8_t b[1];
+  uint8_t ch;
   while (true) {
-    result += trans_->readAll(b, 1);
-    if (b[0] == kJSONStringDelimiter) {
+    ch = reader_.read();
+    ++result;
+    if (ch == kJSONStringDelimiter) {
       break;
     }
-    if (b[0] == kJSONBackslash) {
-      result += trans_->readAll(b, 1);
-      if (b[0] == kJSONEscapeChar) {
-        result += readJSONEscapeChar(&b[0]);
+    if (ch == kJSONBackslash) {
+      ch = reader_.read();
+      ++result;
+      if (ch == kJSONEscapeChar) {
+        result += readJSONEscapeChar(&ch);
       }
       else {
-        size_t pos = kEscapeChars.find(b[0]);
+        size_t pos = kEscapeChars.find(ch);
         if (pos == std::string::npos) {
           throw TProtocolException(TProtocolException::INVALID_DATA,
                                    "Expected control char, got '" +
-                                     std::string((char *)b, 1) + "'.");
+                                   std::string((const char *)&ch, 1)  + "'.");
         }
-        b[0] = kEscapeCharVals[pos];
+        ch = kEscapeCharVals[pos];
       }
     }
-    str += b[0];
+    str += ch;
   }
   return result;
 }
@@ -729,11 +722,11 @@ uint32_t TJSONProtocol::readJSONBase64(std::string &str) {
 uint32_t TJSONProtocol::readJSONNumericChars(std::string &str) {
   uint32_t result = 0;
   while (true) {
-    uint8_t ch = borrowByte(*trans_);
+    uint8_t ch = reader_.peek();
     if (!isJSONNumeric(ch)) {
       break;
     }
-    trans_->consume(1);
+    reader_.read();
     str += ch;
     ++result;
   }
@@ -744,7 +737,7 @@ uint32_t TJSONProtocol::readJSONNumericChars(std::string &str) {
 // returning them via num
 template <typename NumberType>
 uint32_t TJSONProtocol::readJSONInteger(NumberType &num) {
-  uint32_t result = context_->read(*trans_);
+  uint32_t result = context_->read(reader_);
   if (context_->escapeNum()) {
     result += readJSONSyntaxChar(kJSONStringDelimiter);
   }
@@ -766,9 +759,9 @@ uint32_t TJSONProtocol::readJSONInteger(NumberType &num) {
 
 // Reads a JSON number or string and interprets it as a double.
 uint32_t TJSONProtocol::readJSONDouble(double &num) {
-  uint32_t result = context_->read(*trans_);
+  uint32_t result = context_->read(reader_);
   std::string str;
-  if (borrowByte(*trans_) == kJSONStringDelimiter) {
+  if (reader_.peek() == kJSONStringDelimiter) {
     result += readJSONString(str, true);
     // Check for NaN, Infinity and -Infinity
     if (str == kThriftNan) {
@@ -815,7 +808,7 @@ uint32_t TJSONProtocol::readJSONDouble(double &num) {
 }
 
 uint32_t TJSONProtocol::readJSONObjectStart() {
-  uint32_t result = context_->read(*trans_);
+  uint32_t result = context_->read(reader_);
   result += readJSONSyntaxChar(kJSONObjectStart);
   pushContext(boost::shared_ptr<TJSONContext>(new JSONPairContext()));
   return result;
@@ -828,7 +821,7 @@ uint32_t TJSONProtocol::readJSONObjectEnd() {
 }
 
 uint32_t TJSONProtocol::readJSONArrayStart() {
-  uint32_t result = context_->read(*trans_);
+  uint32_t result = context_->read(reader_);
   result += readJSONSyntaxChar(kJSONArrayStart);
   pushContext(boost::shared_ptr<TJSONContext>(new JSONListContext()));
   return result;
@@ -844,7 +837,6 @@ uint32_t TJSONProtocol::readMessageBegin(std::string& name,
                                          TMessageType& messageType,
                                          int32_t& seqid) {
   uint32_t result = readJSONArrayStart();
-  std::string tmpStr;
   uint64_t tmpVal = 0;
   result += readJSONInteger(tmpVal);
   if (tmpVal != kThriftVersion1) {
@@ -874,16 +866,10 @@ uint32_t TJSONProtocol::readStructEnd() {
 uint32_t TJSONProtocol::readFieldBegin(std::string& name,
                                        TType& fieldType,
                                        int16_t& fieldId) {
-  // Check if we hit the end of the list
-  uint8_t b[1];
-  uint32_t len = 1;
-  const uint8_t * buf = trans_->borrow(b, &len);
-  if (!buf || !len) {
-    throw TTransportException(TTransportException::UNKNOWN,
-                              "Could not borrow 1 byte from transport.");
-  }
   uint32_t result = 0;
-  if (buf[0] == kJSONObjectEnd) {
+  // Check if we hit the end of the list
+  uint8_t ch = reader_.peek();
+  if (ch == kJSONObjectEnd) {
     fieldType = facebook::thrift::protocol::T_STOP;
   }
   else {
