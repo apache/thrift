@@ -39,6 +39,11 @@ AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$success" = "yes"])
 PKG_CHECK_MODULES(MONO, mono >= 1.2.6, have_mono=yes, have_mono=no)
 AM_CONDITIONAL(ENABLE_MONO, [test "$have_mono" = "yes"])
 
+AC_PATH_PROG([ANT], [ant])
+AX_PROG_JAVAC
+AX_PROG_JAVA
+AM_CONDITIONAL([ENABLE_JAVA],
+               [test -n "$ANT" -a -n "$JAVA" -a -n "$JAVAC"])
 
 AC_C_CONST
 AC_C_INLINE
@@ -119,6 +124,7 @@ AC_CONFIG_FILES([
   lib/cpp/thrift-nb.pc
   lib/cpp/thrift-z.pc
   lib/csharp/Makefile
+  lib/java/Makefile
   lib/py/Makefile
   if/Makefile
   test/Makefile
