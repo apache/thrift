@@ -1,5 +1,9 @@
 SUBDIRS = py
 
+if ENABLE_JAVA
+SUBDIRS += java
+endif
+
 check_PROGRAMS = \
 	DebugProtoTest \
 	JSONProtoTest \

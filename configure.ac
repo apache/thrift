@@ -129,6 +129,7 @@ AC_CONFIG_FILES([
   if/Makefile
   test/Makefile
   test/py/Makefile
+  test/java/Makefile
 ])
 
 AC_OUTPUT
