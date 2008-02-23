@@ -1,8 +1,5 @@
 #!/bin/sh
 
-
-subdirs=" if"
-
 ./cleanup.sh
 
 autoscan || exit 1
@@ -17,13 +14,3 @@ fi
 
 autoconf
 automake -ac --add-missing --foreign || exit 1
-
-for subdir in ${subdirs}; do
-    if [ -x "${subdir}/bootstrap.sh" ]; then
-      cwd="`pwd`"
-      cd "${subdir}"
-      ./bootstrap.sh
-      cd "${cwd}"
-    fi
-done
-

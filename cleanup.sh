@@ -1,6 +1,10 @@
 #!/bin/sh
 
+topsrcdir="`dirname $0`"
+cd "$topsrcdir"
+
 make distclean >/dev/null 2>&1
+find . -name Makefile.in -exec rm -f {} \;
 rm -rf \
 AUTHORS \
 ChangeLog \
@@ -28,12 +32,4 @@ libtool \
 ltmain.sh \
 missing \
 ylwrap \
-if/gen-* \
-compiler/cpp/Makefile.in \
-if/Makefile.in \
-lib/Makefile.in \
-lib/cpp/Makefile.in \
-lib/py/Makefile.in \
-lib/csharp/Makefile.in \
-test/Makefile.in \
-test/py/Makefile.in
+if/gen-*
