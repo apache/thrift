@@ -28,7 +28,7 @@ THRIFTCODE= \
 
 CSC=gmcs -langversion:linq
 
-all: Thrift.dll
+all-local: Thrift.dll
 
 Thrift.dll: $(THRIFTCODE)
 	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library

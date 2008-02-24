@@ -1,4 +1,4 @@
-all:
+all-local:
 	$(ANT)
 
 install-exec-hook:

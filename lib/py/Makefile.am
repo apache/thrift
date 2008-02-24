@@ -1,7 +1,7 @@
 DESTDIR ?= /
 EXTRA_DIST = setup.py src
 
-all:
+all-local:
 	$(PYTHON) setup.py build
 
 # We're ignoring prefix here because site-packages seems to be
