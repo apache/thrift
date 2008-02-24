@@ -14,3 +14,4 @@ install-exec-hook:
 clean-generic:
 	rm -rf build
 
+check-local: all
