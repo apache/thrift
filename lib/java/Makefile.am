@@ -4,7 +4,7 @@ all:
 install-exec-hook:
 	$(ANT) install
 
-clean-generic:
+clean-local:
 	$(ANT) clean
 
 check-local: all

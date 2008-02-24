@@ -81,4 +81,4 @@ INCLUDES = \
 AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 
 clean-local:
-	rm -rf gen-cpp
+	$(RM) -r gen-cpp

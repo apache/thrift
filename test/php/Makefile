@@ -22,4 +22,4 @@ stubs-inline: ../ThriftTest.thrift
 	$(THRIFT) --phpi ../ThriftTest.thrift
 
 clean:
-	rm -fr gen-php gen-phpi
+	$(RM) -r gen-php gen-phpi

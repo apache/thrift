@@ -1,6 +1,6 @@
 check:
 	$(ANT) test
 
-clean-generic:
+clean-local:
 	$(ANT) clean
 

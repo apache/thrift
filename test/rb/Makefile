@@ -19,4 +19,4 @@ tests: stubs
 	ruby TestSuite.rb
 
 clean:
-	rm -fr gen-rb
+	$(RM) -r gen-rb

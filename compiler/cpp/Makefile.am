@@ -68,4 +68,4 @@ thrift_LDADD = @LEXLIB@
 EXTRA_DIST = README
 
 clean-local:
-	rm -rf thriftl.cc thrifty.cc thrifty.h
+	$(RM) thriftl.cc thrifty.cc thrifty.h

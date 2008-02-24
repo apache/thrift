@@ -24,4 +24,4 @@ gen-py/ThriftTest/__init__.py: ../ThriftTest.thrift
 	$(THRIFT) -py $<
 
 clean-local:
-	-rm -rf gen-py
+	$(RM) -r gen-py

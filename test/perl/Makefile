@@ -13,4 +13,4 @@ all: ../ThriftTest.thrift
 	$(THRIFT) -perl ../ThriftTest.thrift
 
 clean:
-	rm -fr gen-perl
+	$(RM) -r gen-perl

@@ -13,4 +13,4 @@ client: CppClient.cpp
 	g++ -o CppClient -I${THRIFT_DIR} -I${BOOST_DIR}  -I../gen-cpp -L${LIB_DIR} -lthrift CppClient.cpp ${GEN_SRC}
 
 clean:
-	rm -fr CppClient CppServer
+	$(RM) -r CppClient CppServer
