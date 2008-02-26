@@ -152,21 +152,6 @@ receive_loop(This, Processor, Iprot, Oprot) ->
 %% helper functions
 
 %% @param Socket the socket in question
-%% TODO(cpiro): there probably needs to be a switch for DoLookup somewhere prominent and outside the lib,
-%% probably at the "application" level
 render_addr(Socket) ->
-    DoLookup = true,
-    {ok, {Peer, Port}} = inet:peername(Socket),
-
-    case Peer of
-        _ when DoLookup ->
-            case catch inet:gethostbyaddr(Peer) of
-                {ok, Hostent} ->
-                    thrift_utils:sformat("~s:~p", [Hostent#hostent.h_name, Port]);
-                _ ->
-                    "??"
-            end;
-
-        {A,B,C,D} when not DoLookup ->
-            thrift_utils:sformat("~p.~p.~p.~p:~p", [A,B,C,D,Port])
-    end.
+    {ok, {{A,B,C,D}, Port}} = inet:peername(Socket),
+    thrift_utils:sformat("~p.~p.~p.~p:~p", [A,B,C,D,Port]).
