@@ -188,6 +188,14 @@ public:
 
 };
 
+/**
+ * Helper function to increase the max file descriptors limit
+ * for the current process and all of its children.
+ * By default, tries to increase it to as much as 2^24.
+ */
+ int increase_max_fds(int max_fds=(1<<24));
+
+
 }}} // facebook::thrift::server
 
 #endif // #ifndef _THRIFT_SERVER_TSERVER_H_
