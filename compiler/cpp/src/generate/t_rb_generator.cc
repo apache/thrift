@@ -318,9 +318,9 @@ void t_rb_generator::generate_rb_simple_exception_constructor(std::ofstream& out
     vector<t_field*>::const_iterator m_iter = members.begin();
 
     if ((*m_iter)->get_type()->is_string()) {
-      indent(out) << "def initialize(message)" << endl;
+      indent(out) << "def initialize(message=nil)" << endl;
       indent_up();
-      indent(out) << "super(message)" << endl;
+      indent(out) << "super()" << endl;
       indent(out) << "self." << (*m_iter)->get_name() << " = message" << endl;
       indent_down();
       indent(out) << "end" << endl << endl;
