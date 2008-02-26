@@ -71,9 +71,15 @@ effectful_setHandle(This, Handle) ->
 effectful_open(This) ->
     Host = oop:get(This, host),
     Port = oop:get(This, port),
-    Options = [binary, {packet, 0}, {active, false}, {reuseaddr, true},
-               {nodelay, true}],
-
+    Options = [binary, {packet, 0},
+               {active, false},
+               {reuseaddr, true},
+               {nodelay, true},
+               {send_timeout, case application:get_env(thrift, socket_send_timeout) of
+                                  Millis when is_integer(Millis), Millis > 0 -> Millis;
+                                  _Else -> 5000
+                              end}
+              ],
     case gen_tcp:connect(Host, Port, Options) of
         {error, _} ->
             tException:throw(tTransportException,
@@ -90,7 +96,11 @@ effectful_write(This, Data) ->
     Handle = oop:get(This, handle),
 
     case gen_tcp:send(Handle, Data) of
+        {error,timeout} ->
+            effectful_close(This),
+            tException:throw(tTransportException, [?tTransportException_NOT_OPEN, "in write"]);
         {error, _} ->
+            effectful_close(This),
             tException:throw(tTransportException, [?tTransportException_NOT_OPEN, "in write"]);
         ok ->
             {ok, This}
