@@ -288,27 +288,12 @@ void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, b
   if (is_exception) {
     generate_rb_simple_exception_constructor(out, tstruct);
   }
-  else {
-    generate_rb_simple_constructor(out, tstruct);
-  }
 
   generate_accessors(out, tstruct);
   generate_field_defns(out, tstruct);
 
   indent_down();
   indent(out) << "end" << endl << endl;
-}
-
-void t_rb_generator::generate_rb_simple_constructor(std::ofstream& out, t_struct* tstruct) {
-  const vector<t_field*>& members = tstruct->get_members();
-
-  if (members.size() > 0) {
-    indent(out) << "def initialize(opts={})" << endl;
-    indent_up();
-    indent(out) << "opts.each { |k, v| send(\"#{k}=\", v) }" << endl;
-    indent_down();
-    indent(out) << "end" << endl << endl;
-  }
 }
 
 void t_rb_generator::generate_rb_simple_exception_constructor(std::ofstream& out, t_struct* tstruct) {
