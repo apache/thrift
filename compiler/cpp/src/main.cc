@@ -635,6 +635,21 @@ void usage() {
   fprintf(stderr, "  -v[erbose]  Verbose mode\n");
   fprintf(stderr, "  -r[ecurse]  Also generate included files\n");
   fprintf(stderr, "  -debug      Parse debug trace to stdout\n");
+  fprintf(stderr, "  --gen STR   Generate code with a dynamically-registered generator.\n");
+  fprintf(stderr, "                STR has the form language[:key1=val1[,key2,[key3=val3]]].\n");
+  fprintf(stderr, "                Keys and values are options passed to the generator.\n");
+  fprintf(stderr, "                Many options will not require values.\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Available generators (and options):\n");
+
+  t_generator_registry::gen_map_t gen_map = t_generator_registry::get_generator_map();
+  t_generator_registry::gen_map_t::iterator iter;
+  for (iter = gen_map.begin(); iter != gen_map.end(); ++iter) {
+    fprintf(stderr, "  %s (%s):\n",
+        iter->second->get_short_name().c_str(),
+        iter->second->get_long_name().c_str());
+    fprintf(stderr, "%s", iter->second->get_documentation().c_str());
+  }
   exit(1);
 }
 
@@ -839,7 +854,7 @@ void parse(t_program* program, t_program* parent_program) {
 /**
  * Generate code
  */
-void generate(t_program* program) {
+void generate(t_program* program, const vector<string>& generator_strings) {
   // Oooohh, recursive code generation, hot!!
   if (gen_recurse) {
     const vector<t_program*>& includes = program->get_includes();
@@ -847,7 +862,7 @@ void generate(t_program* program) {
       // Propogate output path from parent to child programs
       includes[i]->set_out_path(program->get_out_path());
 
-      generate(includes[i]);
+      generate(includes[i], generator_strings);
     }
   }
 
@@ -967,6 +982,19 @@ void generate(t_program* program) {
     if (dump_docs) {
       dump_docstrings(program);
     }
+
+    vector<string>::const_iterator iter;
+    for (iter = generator_strings.begin(); iter != generator_strings.end(); ++iter) {
+      t_generator* generator = t_generator_registry::get_generator(program, *iter);
+
+      if (generator == NULL) {
+        pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
+      } else {
+        pverbose("Generating \"%s\"\n", iter->c_str());
+        generator->generate_program();
+      }
+    }
+
   } catch (string s) {
     printf("Error: %s\n", s.c_str());
   } catch (const char* exc) {
@@ -993,6 +1021,8 @@ int main(int argc, char** argv) {
     usage();
   }
 
+  vector<string> generator_strings;
+
   // Set the current path to a dummy value to make warning messages clearer.
   g_curpath = "arguments";
 
@@ -1017,6 +1047,13 @@ int main(int argc, char** argv) {
         g_verbose = 1;
       } else if (strcmp(arg, "-r") == 0 || strcmp(arg, "-recurse") == 0 ) {
         gen_recurse = true;
+      } else if (strcmp(arg, "-gen") == 0) {
+        arg = argv[++i];
+        if (arg == NULL) {
+          fprintf(stderr, "!!! Missing generator specification");
+          usage();
+        }
+        generator_strings.push_back(arg);
       } else if (strcmp(arg, "-dense") == 0) {
         gen_dense = true;
       } else if (strcmp(arg, "-cpp") == 0) {
@@ -1115,7 +1152,7 @@ int main(int argc, char** argv) {
   }
 
   // You gotta generate something!
-  if (!gen_cpp && !gen_java && !gen_javabean && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_ocaml && !gen_hs && !gen_cocoa && !gen_st && !gen_csharp) {
+  if (!gen_cpp && !gen_java && !gen_javabean && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_ocaml && !gen_hs && !gen_cocoa && !gen_st && !gen_csharp && generator_strings.empty()) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
@@ -1170,7 +1207,7 @@ int main(int argc, char** argv) {
   yylineno = 1;
 
   // Generate it!
-  generate(program);
+  generate(program, generator_strings);
 
   // Clean up. Who am I kidding... this program probably orphans heap memory
   // all over the place, but who cares because it is about to exit and it is
