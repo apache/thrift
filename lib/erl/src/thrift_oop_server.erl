@@ -121,7 +121,7 @@ handle_exception(E, Stack) ->
         {true, _} -> % good
             E1 = tException:add_backtrace_element(E, Stack),
             exit({thrift_exception, E1});
-        false -> % shit
+        {false, _} -> % shit
             ?ERROR("exception wasn't really a tException ~p", [E]),
             exit(bum)
     end.
