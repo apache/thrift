@@ -128,7 +128,7 @@ writeI64(This, I64) when is_integer(I64) ->
 
 writeDouble(This, Double) when is_float(Double) ->
     Trans = oop:get(This, trans),
-    ?R1(Trans, effectful_write, <<Double:64/big>>).
+    ?R1(Trans, effectful_write, <<Double:64/float-big>>).
 
 writeString(This, Str) when is_list(Str) -> % [char()] or iolist()
     Trans = oop:get(This, trans),
