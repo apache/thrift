@@ -76,7 +76,7 @@ effectful_open(This) ->
                {reuseaddr, true},
                {nodelay, true},
                {send_timeout, case application:get_env(thrift, socket_send_timeout) of
-                                  Millis when is_integer(Millis), Millis > 0 -> Millis;
+                                  {ok, Millis} when is_integer(Millis), Millis > 0 -> Millis;
                                   _Else -> 5000
                               end}
               ],
