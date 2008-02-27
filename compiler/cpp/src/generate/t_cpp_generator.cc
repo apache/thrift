@@ -41,6 +41,9 @@ class t_cpp_generator : public t_oop_generator {
     iter = parsed_options.find("include_prefix");
     use_include_prefix_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("reflection_limited");
+    gen_reflection_limited_ = (iter != parsed_options.end());
+
     out_dir_base_ = "gen-cpp";
   }
 
@@ -191,6 +194,11 @@ class t_cpp_generator : public t_oop_generator {
    * empty string if no include prefix should be used.
    */
   std::string get_include_prefix(const t_program& program) const;
+
+  /**
+   * True iff we should generate limited reflectors for services.
+   */
+  bool gen_reflection_limited_;
 
   /**
    * True iff we should generate local reflection metadata for TDenseProtocol.
@@ -1316,7 +1324,9 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
     generate_function_helpers(tservice, *f_iter);
   }
 
-  generate_service_limited_reflector(tservice);
+  if (gen_reflection_limited_) {
+    generate_service_limited_reflector(tservice);
+  }
 }
 
 /**
