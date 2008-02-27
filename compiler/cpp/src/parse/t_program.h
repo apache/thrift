@@ -176,14 +176,6 @@ class t_program : public t_doc {
     return php_namespace_;
   }
 
-  void set_java_package(std::string java_package) {
-    java_package_ = java_package;
-  }
-
-  const std::string& get_java_package() const {
-    return java_package_;
-  }
-
   void set_csharp_namespace(std::string csharp_namespace) {
     csharp_namespace_ = csharp_namespace;
   }
@@ -288,9 +280,6 @@ class t_program : public t_doc {
 
   // PHP namespace
   std::string php_namespace_;
-
-  // Java package
-  std::string java_package_;
 
   // XSD namespace
   std::string xsd_namespace_;

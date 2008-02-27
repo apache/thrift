@@ -45,7 +45,7 @@ include "shared.thrift"
  * target languages.
  */
 namespace cpp tutorial
-java_package tutorial
+namespace java tutorial
 php_namespace tutorial
 perl_package tutorial
 smalltalk_category Thrift-Tutorial

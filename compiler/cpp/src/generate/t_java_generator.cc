@@ -189,7 +189,7 @@ class t_java_generator : public t_oop_generator {
 void t_java_generator::init_generator() {
   // Make output directory
   MKDIR(get_out_dir().c_str());
-  package_name_ = program_->get_java_package();
+  package_name_ = program_->get_namespace("java");
 
   string dir = package_name_;
   string subdir = get_out_dir();
@@ -2000,7 +2000,7 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   // Check for namespacing
   t_program* program = ttype->get_program();
   if (program != NULL && program != program_) {
-    string package = program->get_java_package();
+    string package = program->get_namespace("java");
     if (!package.empty()) {
       return package + "." + ttype->get_name();
     }

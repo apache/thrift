@@ -30,7 +30,7 @@ syn region thriftStringDouble matchgroup=None start=+"+  end=+"+
 syn match thriftNumber "-\=\<\d\+\>" contained
 
 " Keywords
-syn keyword thriftKeyword namespace java_package cocoa_prefix
+syn keyword thriftKeyword namespace cocoa_prefix
 syn keyword thriftKeyword csharp_namespace smalltalk_category smalltalk_prefix
 syn keyword thriftKeyword php_namespace ruby_namespace py_module perl_package
 syn keyword thriftKeyword xsd_all xsd_optional xsd_nillable xsd_namespace xsd_attrs

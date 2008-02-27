@@ -4,7 +4,7 @@
  * Seriously, this is the documentation for this whole program.
  */
 
-java_package thrift.test
+namespace java thrift.test
 namespace cpp thrift.test
 
 // C++ comment
