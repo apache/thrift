@@ -276,8 +276,13 @@ void t_cpp_generator::init_generator() {
   // Include custom headers
   const vector<string>& cpp_includes = program_->get_cpp_includes();
   for (size_t i = 0; i < cpp_includes.size(); ++i) {
-    f_types_ <<
-      "#include \"" << cpp_includes[i] << "\"" << endl;
+    if (cpp_includes[i][0] == '<') {
+      f_types_ <<
+        "#include " << cpp_includes[i] << endl;
+    } else {
+      f_types_ <<
+        "#include \"" << cpp_includes[i] << "\"" << endl;
+    }
   }
   f_types_ <<
     endl;
