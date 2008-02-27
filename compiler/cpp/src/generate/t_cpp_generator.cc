@@ -770,6 +770,13 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       indent() << "bool operator != (const " << tstruct->get_name() << " &rhs) const {" << endl <<
       indent() << "  return !(*this == rhs);" << endl <<
       indent() << "}" << endl << endl;
+
+    // Generate the declaration of a less-than operator.  This must be
+    // implemented by the application developer if they wish to use it.  (They
+    // will get a link error if they try to use it without an implementation.)
+    out <<
+      indent() << "bool operator < (const "
+               << tstruct->get_name() << " & ) const;" << endl << endl;
   }
   if (read) {
     out <<
