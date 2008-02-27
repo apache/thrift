@@ -19,7 +19,7 @@
 
 %%
 
--record(state, {}).
+-record(state, {omit_formats=gb_sets:empty()}).
 
 -define(GS_TERM_FORMAT, "** Generic server ~p terminating \n** Last message in was ~p~n** When Server state == ~p~n** Reason for termination == ~n** ~p~n").
 
@@ -48,7 +48,8 @@ install() ->
 %%%
 
 init([]) ->
-    State = #state{},
+    OmitFormats = gb_sets:from_list(config(omit_fmt)),
+    State = #state{omit_formats = OmitFormats},
     {ok, State}.
 
 %%%
@@ -121,7 +122,8 @@ bin_trim(Bin) when is_binary(Bin), size(Bin) > 100 ->
 bin_trim(Term) ->
     Term.
 
-handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format) ->
+handle_event1({What, _Gleader, {Ref, Format, Data}}, State = #state{omit_formats=OmitFormats})
+  when is_list(Format) ->
     Symbol =
         case What of
             error       -> "!!";
@@ -144,12 +146,12 @@ handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format)
             Message = sformat("DATA DIDN'T MATCH: ~p~n", [TrimData]) ++ sformat(Format, TrimData),
             handle_event2(Symbol, Ref, "", Message, State);
         {_, _} ->
-            case lists:member(Format, config(omit_fmt)) of
+            case gb_sets:is_member(Format, OmitFormats) of
+                true  ->
+                    ok;
                 false ->
                     Message = sformat(Format, bin_trim(Data)),
-                    handle_event2(Symbol, Ref, "", Message, State);
-                true ->
-                    ok
+                    handle_event2(Symbol, Ref, "", Message, State)
             end
     end,
     {ok, State};
