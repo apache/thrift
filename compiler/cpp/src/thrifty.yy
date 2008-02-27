@@ -247,12 +247,11 @@ Header:
     {
       pdebug("Header -> Include");
     }
-| tok_namespace tok_identifier
+| tok_namespace tok_identifier tok_identifier
     {
-      pwarning(1, "'namespace' is deprecated. Use 'cpp_namespace' and/or 'java_package' instead");
+      pdebug("Header -> tok_namespace tok_identifier tok_identifier");
       if (g_parse_mode == PROGRAM) {
-        g_program->set_cpp_namespace($2);
-        g_program->set_java_package($2);
+        g_program->set_namespace($2, $3);
       }
     }
 | tok_cpp_namespace tok_identifier

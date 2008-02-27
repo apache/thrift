@@ -145,6 +145,19 @@ class t_program : public t_doc {
     }
   }
 
+  // Language neutral namespace / packaging
+  void set_namespace(std::string language, std::string name_space) {
+    namespaces_[language] = name_space;
+  }
+
+  std::string get_namespace(std::string language) const {
+    std::map<std::string, std::string>::const_iterator iter = namespaces_.find(language);
+    if (iter == namespaces_.end()) {
+      return std::string();
+    }
+    return iter->second;
+  }
+
   // Language specific namespace / packaging
 
   void set_cpp_namespace(std::string cpp_namespace) {
@@ -274,6 +287,9 @@ class t_program : public t_doc {
   std::vector<t_struct*>  structs_;
   std::vector<t_struct*>  xceptions_;
   std::vector<t_service*> services_;
+
+  // Dynamic namespaces
+  std::map<std::string, std::string> namespaces_;
 
   // C++ namespace
   std::string cpp_namespace_;
