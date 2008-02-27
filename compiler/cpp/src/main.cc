@@ -993,6 +993,9 @@ int main(int argc, char** argv) {
     usage();
   }
 
+  // Set the current path to a dummy value to make warning messages clearer.
+  g_curpath = "arguments";
+
   // Hacky parameter handling... I didn't feel like using a library sorry!
   for (i = 1; i < argc-1; i++) {
     char* arg;
@@ -1158,6 +1161,13 @@ int main(int argc, char** argv) {
 
   // Parse it!
   parse(program, NULL);
+
+  // The current path is not really relevant when we are doing generation.
+  // Reset the variable to make warning messages clearer.
+  g_curpath = "generation";
+  // Reset yylineno for the heck of it.  Use 1 instead of 0 because
+  // That is what shows up during argument parsing.
+  yylineno = 1;
 
   // Generate it!
   generate(program);
