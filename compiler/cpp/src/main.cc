@@ -1160,18 +1160,18 @@ int main(int argc, char** argv) {
   if (out_path.size()) {
     program->set_out_path(out_path);
   }
-  if (g_cpp_use_include_prefix) {
-    // infer this from the filename passed in
-    string input_filename = argv[i];
-    string include_prefix;
 
-    string::size_type last_slash = string::npos;
-    if ((last_slash = input_filename.rfind("/")) != string::npos) {
-      include_prefix = input_filename.substr(0, last_slash);
-    }
+  // Compute the cpp include prefix.
+  // infer this from the filename passed in
+  string input_filename = argv[i];
+  string include_prefix;
 
-    program->set_include_prefix(include_prefix);
+  string::size_type last_slash = string::npos;
+  if ((last_slash = input_filename.rfind("/")) != string::npos) {
+    include_prefix = input_filename.substr(0, last_slash);
   }
+
+  program->set_include_prefix(include_prefix);
 
   // Initialize global types
   g_type_void   = new t_base_type("void",   t_base_type::TYPE_VOID);
