@@ -21,9 +21,16 @@
  */
 class t_java_generator : public t_oop_generator {
  public:
-  t_java_generator(t_program* program, bool bean_style=false) :
-    t_oop_generator(program),
-    bean_style_(bean_style) {
+  t_java_generator(
+      t_program* program,
+      const std::map<std::string, std::string>& parsed_options,
+      const std::string& option_string)
+    : t_oop_generator(program)
+  {
+    std::map<std::string, std::string>::const_iterator iter;
+
+    iter = parsed_options.find("beans");
+    bean_style_ = (iter != parsed_options.end());
 
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
   }

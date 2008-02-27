@@ -2022,3 +2022,8 @@ void t_java_generator::generate_java_doc(ofstream &out,
     indent(out) << " */" << endl;
   }
 }
+
+
+THRIFT_REGISTER_GENERATOR(java, "Java",
+"    beans:           Generate bean-style output files.\n"
+);

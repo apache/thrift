@@ -34,7 +34,6 @@
 #include "main.h"
 #include "parse/t_program.h"
 #include "parse/t_scope.h"
-#include "generate/t_java_generator.h"
 #include "generate/t_php_generator.h"
 #include "generate/t_py_generator.h"
 #include "generate/t_rb_generator.h"
@@ -601,8 +600,6 @@ void generate_all_fingerprints(t_program* program) {
 void usage() {
   fprintf(stderr, "Usage: thrift [options] file\n");
   fprintf(stderr, "Options:\n");
-  fprintf(stderr, "  -java       Generate Java output files\n");
-  fprintf(stderr, "  -javabean   Generate Java bean-style output files\n");
   fprintf(stderr, "  -php        Generate PHP output files\n");
   fprintf(stderr, "  -phpi       Generate PHP inlined files\n");
   fprintf(stderr, "  -phps       Generate PHP server stubs (with -php)\n");
@@ -867,20 +864,6 @@ void generate(t_program* program, const vector<string>& generator_strings) {
 
     // Compute fingerprints.
     generate_all_fingerprints(program);
-
-    if (gen_java) {
-      pverbose("Generating Java\n");
-      t_java_generator* java = new t_java_generator(program, false);
-      java->generate_program();
-      delete java;
-    }
-
-    if (gen_javabean) {
-      pverbose("Generating Java Beans\n");
-      t_java_generator* java = new t_java_generator(program, true);
-      java->generate_program();
-      delete java;
-    }
 
     if (gen_php) {
       pverbose("Generating PHP\n");
@@ -1150,8 +1133,17 @@ int main(int argc, char** argv) {
     }
     generator_strings.push_back(gen_string);
   }
+  if (gen_java) {
+    pwarning(1, "-java is deprecated.  Use --gen java");
+    generator_strings.push_back("java");
+  }
+  if (gen_javabean) {
+    pwarning(1, "-javabean is deprecated.  Use --gen java:beans");
+    generator_strings.push_back("java:beans");
+  }
+
   // You gotta generate something!
-  if (!gen_java && !gen_javabean && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_ocaml && !gen_hs && !gen_cocoa && !gen_st && !gen_csharp && generator_strings.empty()) {
+  if (!gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_ocaml && !gen_hs && !gen_cocoa && !gen_st && !gen_csharp && generator_strings.empty()) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
