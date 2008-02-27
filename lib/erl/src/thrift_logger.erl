@@ -15,7 +15,7 @@
 -export([init/1, handle_event/2, handle_call/2,
          handle_info/2, terminate/2, code_change/3]).
 
--export([install/0]).
+-export([install/0, bin_trim/1]).
 
 %%
 
@@ -112,8 +112,12 @@ handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
 
 %%
 
-bin_trim(L) when is_list(L) ->
-    lists:map(fun bin_trim/1, L);
+bin_trim([]) ->
+    [];
+bin_trim([H|T]) ->
+    [bin_trim(H) | bin_trim(T)];
+bin_trim({}) ->
+    {};
 bin_trim(T) when is_tuple(T) ->
     list_to_tuple(bin_trim(tuple_to_list(T)));
 bin_trim(Bin) when is_binary(Bin), size(Bin) > 100 ->
