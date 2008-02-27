@@ -112,7 +112,10 @@ read(This, Sz) ->
         {ok, []} ->
             Host = oop:get(This, host),
             Port = oop:get(This, port),
-            tException:throw(tTransportException, [?tTransportException_UNKNOWN, "TSocket: Could not read " ++ Sz ++ "bytes from " ++ Host ++ ":" ++ Port]);
+            tException:throw(tTransportException,
+                             [?tTransportException_UNKNOWN,
+                              "TSocket: Could not read " ++ integer_to_list(Sz) ++
+                              "bytes from " ++ Host ++ ":" ++ integer_to_list(Port)]);
         {ok, Data} ->
             %% DEBUG
             ?INFO("tSocket: read ~p", [Data]),
