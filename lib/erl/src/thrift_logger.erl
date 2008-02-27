@@ -111,6 +111,16 @@ handle_event2(Symbol, Pid, Type, Message, State) -> % Message must be a string
 
 %%
 
+bin_trim(L) when is_list(L) ->
+    lists:map(fun bin_trim/1, L);
+bin_trim(T) when is_tuple(T) ->
+    list_to_tuple(bin_trim(tuple_to_list(T)));
+bin_trim(Bin) when is_binary(Bin), size(Bin) > 100 ->
+    {Bin1,Rest} = split_binary(Bin, 100),
+    Bin1;
+bin_trim(Term) ->
+    Term.
+
 handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format) ->
     Symbol =
         case What of
@@ -126,16 +136,17 @@ handle_event1({What, _Gleader, {Ref, Format, Data}}, State) when is_list(Format)
 
         {?GS_TERM_FORMAT, [Ref, LastMessage, Obj, Reason]} ->
             Format1 = "** gen_server terminating in message ~p~n** State  = ~s~n** Reason = ~p~n",
-            Message = sformat(Format1, [LastMessage, oop:inspect(Obj), Reason]),
+            Message = sformat(Format1, [LastMessage, bin_trim(oop:inspect(Obj)), Reason]),
             handle_event2(Symbol, Ref, "", Message, State);
 
         {?GS_TERM_FORMAT, _Dta} ->
-            Message = sformat("DATA DIDN'T MATCH: ~p~n", [Data]) ++ sformat(Format, Data),
+            TrimData = bin_trim(Data),
+            Message = sformat("DATA DIDN'T MATCH: ~p~n", [TrimData]) ++ sformat(Format, TrimData),
             handle_event2(Symbol, Ref, "", Message, State);
         {_, _} ->
             case lists:member(Format, config(omit_fmt)) of
                 false ->
-                    Message = sformat(Format, Data),
+                    Message = sformat(Format, bin_trim(Data)),
                     handle_event2(Symbol, Ref, "", Message, State);
                 true ->
                     ok
