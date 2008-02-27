@@ -1,4 +1,4 @@
-cpp_namespace test.stress
+namespace cpp test.stress
 
 service Service {
 

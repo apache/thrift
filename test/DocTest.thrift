@@ -5,7 +5,7 @@
  */
 
 java_package thrift.test
-cpp_namespace thrift.test
+namespace cpp thrift.test
 
 // C++ comment
 /* c style comment */

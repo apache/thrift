@@ -1,4 +1,4 @@
-cpp_namespace thrift.test
+namespace cpp thrift.test
 
 struct Doubles {
  1: double nan,

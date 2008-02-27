@@ -254,11 +254,13 @@ Header:
         g_program->set_namespace($2, $3);
       }
     }
+/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
 | tok_cpp_namespace tok_identifier
     {
+      pwarning(1, "'cpp_namespace' is deprecated. Use 'namespace cpp' instead");
       pdebug("Header -> tok_cpp_namespace tok_identifier");
       if (g_parse_mode == PROGRAM) {
-        g_program->set_cpp_namespace($2);
+        g_program->set_namespace("cpp", $2);
       }
     }
 | tok_cpp_include tok_literal

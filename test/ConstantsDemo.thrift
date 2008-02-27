@@ -1,4 +1,4 @@
-cpp_namespace yozone
+namespace cpp yozone
 
 struct thing {
   1: i32 hello,

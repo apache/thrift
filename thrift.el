@@ -10,7 +10,7 @@
 (defconst thrift-font-lock-keywords
   (list
    '("#.*$" . font-lock-comment-face)  ;; perl style comments
-   '("\\<\\(include\\|struct\\|exception\\|typedef\\|cpp_namespace\\|java_package\\|cocoa_prefix\\|csharp_namespace\\|php_namespace\\|ruby_namespace\\|py_module\\|perl_package\\|smalltalk_category\\|smalltalk_prefix\\|const\\|enum\\|service\\|extends\\|void\\|async\\|throws\\|optional\\|required\\)\\>" . font-lock-keyword-face)  ;; keywords
+   '("\\<\\(include\\|struct\\|exception\\|typedef\\|java_package\\|cocoa_prefix\\|csharp_namespace\\|php_namespace\\|ruby_namespace\\|py_module\\|perl_package\\|smalltalk_category\\|smalltalk_prefix\\|const\\|enum\\|service\\|extends\\|void\\|async\\|throws\\|optional\\|required\\)\\>" . font-lock-keyword-face)  ;; keywords
    '("\\<\\(bool\\|byte\\|i16\\|i32\\|i64\\|double\\|string\\|binary\\|map\\|list\\|set\\)\\>" . font-lock-type-face)  ;; built-in types
    '("\\<\\([0-9]+\\)\\>" . font-lock-variable-name-face)   ;; ordinals
    '("\\<\\(\\w+\\)\\s-*(" (1 font-lock-function-name-face))  ;; functions

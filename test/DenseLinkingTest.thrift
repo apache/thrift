@@ -14,7 +14,7 @@ If I messed up the naming of the reflection local typespecs,
 then compiling this should give errors because of doubly defined symbols.
 */
 
-cpp_namespace thrift.test
+namespace cpp thrift.test
 
 struct OneOfEachZZ {
   1: bool im_true,

@@ -1,4 +1,4 @@
-cpp_namespace thrift.test
+namespace cpp thrift.test
 
 struct OldSchool {
   1: i16    im_int;

@@ -297,8 +297,8 @@ void t_cpp_generator::init_generator() {
   }
 
   // Open namespace
-  ns_open_ = namespace_open(program_->get_cpp_namespace());
-  ns_close_ = namespace_close(program_->get_cpp_namespace());
+  ns_open_ = namespace_open(program_->get_namespace("cpp"));
+  ns_close_ = namespace_close(program_->get_namespace("cpp"));
 
   f_types_ <<
     ns_open_ << endl <<
@@ -2293,7 +2293,7 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
   // Service implementation file includes
   string f_skeleton_name = get_out_dir()+svcname+"_server.skeleton.cpp";
 
-  string ns = namespace_prefix(tservice->get_program()->get_cpp_namespace());
+  string ns = namespace_prefix(tservice->get_program()->get_namespace("cpp"));
 
   ofstream f_skeleton;
   f_skeleton.open(f_skeleton_name.c_str());
@@ -2885,7 +2885,7 @@ string t_cpp_generator::type_name(t_type* ttype, bool in_typedef, bool arg) {
   if (program != NULL && program != program_) {
     pname =
       class_prefix +
-      namespace_prefix(program->get_cpp_namespace()) +
+      namespace_prefix(program->get_namespace("cpp")) +
       ttype->get_name();
   } else {
     pname = class_prefix + ttype->get_name();
@@ -3119,7 +3119,7 @@ string t_cpp_generator::local_reflection_name(const char* prefix, t_type* ttype,
   if (external &&
       ttype->get_program() != NULL &&
       ttype->get_program() != program_) {
-    nspace = namespace_prefix(ttype->get_program()->get_cpp_namespace());
+    nspace = namespace_prefix(ttype->get_program()->get_namespace("cpp"));
   }
 
   return nspace + "trlo_" + prefix + "_" + prog + "_" + name;

@@ -1,5 +1,5 @@
 java_package thrift.test
-cpp_namespace thrift.test
+namespace cpp thrift.test
 ruby_namespace Thrift.Test
 perl_package ThriftTest
 csharp_namespace Thrift.Test

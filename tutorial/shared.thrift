@@ -5,7 +5,7 @@
  * these definitions.
  */
 
-cpp_namespace shared
+namespace cpp shared
 java_package shared
 perl_package shared
 

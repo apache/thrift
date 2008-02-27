@@ -160,14 +160,6 @@ class t_program : public t_doc {
 
   // Language specific namespace / packaging
 
-  void set_cpp_namespace(std::string cpp_namespace) {
-    cpp_namespace_ = cpp_namespace;
-  }
-
-  const std::string& get_cpp_namespace() const {
-    return cpp_namespace_;
-  }
-
   void add_cpp_include(std::string path) {
     cpp_includes_.push_back(path);
   }
@@ -290,9 +282,6 @@ class t_program : public t_doc {
 
   // Dynamic namespaces
   std::map<std::string, std::string> namespaces_;
-
-  // C++ namespace
-  std::string cpp_namespace_;
 
   // C++ extra includes
   std::vector<std::string> cpp_includes_;
