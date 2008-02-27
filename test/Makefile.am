@@ -66,13 +66,13 @@ ReflectionTest_LDADD = \
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
 gen-cpp/DebugProtoTest_types.cpp gen-cpp/PartiallyReflectable.cpp: DebugProtoTest.thrift
-	$(THRIFT) -cpp $<
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/OptionalRequiredTest_types.cpp: OptionalRequiredTest.thrift
-	$(THRIFT) -cpp $<
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: StressTest.thrift
-	$(THRIFT) -cpp $<
+	$(THRIFT) --gen cpp $<
 
 
 INCLUDES = \

@@ -14,7 +14,7 @@
 
   <target name="generate">
     <exec executable="../../compiler/cpp/thrift">
-      <arg line="--java ../ThriftTest.thrift" />
+      <arg line="--gen java ../ThriftTest.thrift" />
     </exec>
   </target>
 
