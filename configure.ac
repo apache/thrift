@@ -113,6 +113,9 @@ AC_CHECK_FUNCS([strstr])
 AC_CHECK_FUNCS([strtol])
 AC_CHECK_FUNCS([sqrt])
 
+AX_THRIFT_GEN(cpp, [C++], yes)
+AM_CONDITIONAL([THRIFT_GEN_cpp], [test "$ax_thrift_gen_cpp" = "yes"])
+
 AC_CONFIG_HEADERS(config.h:config.hin)
 
 AC_CONFIG_FILES([

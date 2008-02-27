@@ -9,7 +9,6 @@ thrift_SOURCES = src/thrifty.yy \
                  src/main.cc \
                  src/md5c.c \
                  src/generate/t_generator.cc \
-                 src/generate/t_cpp_generator.cc \
                  src/generate/t_java_generator.cc \
                  src/generate/t_php_generator.cc \
                  src/generate/t_py_generator.cc \
@@ -57,6 +56,10 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_cocoa_generator.h \
                  src/generate/t_st_generator.h \
                  src/generate/t_csharp_generator.h
+
+if THRIFT_GEN_cpp
+thrift_SOURCES += src/generate/t_cpp_generator.cc
+endif
 
 thrift_CXXFLAGS = -Wall -I$(srcdir)/src $(BOOST_CPPFLAGS)
 thrift_LDFLAGS = -Wall $(BOOST_LDFLAGS)
