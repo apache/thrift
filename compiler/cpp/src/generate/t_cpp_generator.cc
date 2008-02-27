@@ -2926,3 +2926,9 @@ string t_cpp_generator::get_include_prefix(const t_program& program) const {
 
   return "";
 }
+
+
+THRIFT_REGISTER_GENERATOR(cpp, "C++",
+"    dense:           Generate type specifications for the dense protocol.\n"
+"    include_prefix:  Use full include paths in generated files.\n"
+);

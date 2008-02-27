@@ -34,7 +34,6 @@
 #include "main.h"
 #include "parse/t_program.h"
 #include "parse/t_scope.h"
-#include "generate/t_cpp_generator.h"
 #include "generate/t_java_generator.h"
 #include "generate/t_php_generator.h"
 #include "generate/t_py_generator.h"
@@ -602,7 +601,6 @@ void generate_all_fingerprints(t_program* program) {
 void usage() {
   fprintf(stderr, "Usage: thrift [options] file\n");
   fprintf(stderr, "Options:\n");
-  fprintf(stderr, "  -cpp        Generate C++ output files\n");
   fprintf(stderr, "  -java       Generate Java output files\n");
   fprintf(stderr, "  -javabean   Generate Java bean-style output files\n");
   fprintf(stderr, "  -php        Generate PHP output files\n");
@@ -626,9 +624,6 @@ void usage() {
   fprintf(stderr, "               (default: current directory)\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories\n");
   fprintf(stderr, "                searched for include directives\n");
-  fprintf(stderr, "  -cpp_use_include_prefix\n");
-  fprintf(stderr, "              Make C++ include statements use path prefixes\n");
-  fprintf(stderr, "  -dense      Generate metadata for TDenseProtocol (C++)\n");
   fprintf(stderr, "  -rest       Generate PHP REST processors (with -php)\n");
   fprintf(stderr, "  -nowarn     Suppress all compiler warnings (BAD!)\n");
   fprintf(stderr, "  -strict     Strict compiler warnings on\n");
@@ -872,14 +867,6 @@ void generate(t_program* program, const vector<string>& generator_strings) {
 
     // Compute fingerprints.
     generate_all_fingerprints(program);
-
-    if (gen_cpp) {
-      pverbose("Generating C++\n");
-      t_cpp_generator* cpp = new t_cpp_generator(program, gen_dense);
-      cpp->set_use_include_prefix(g_cpp_use_include_prefix);
-      cpp->generate_program();
-      delete cpp;
-    }
 
     if (gen_java) {
       pverbose("Generating Java\n");
@@ -1151,8 +1138,20 @@ int main(int argc, char** argv) {
     }
   }
 
+  // TODO(dreiss): Delete these when everyone is using the new hotness.
+  if (gen_cpp) {
+    pwarning(1, "-cpp is deprecated.  Use --gen cpp");
+    string gen_string = "cpp:";
+    if (gen_dense) {
+      gen_string.append("dense,");
+    }
+    if (g_cpp_use_include_prefix) {
+      gen_string.append("include_prefix,");
+    }
+    generator_strings.push_back(gen_string);
+  }
   // You gotta generate something!
-  if (!gen_cpp && !gen_java && !gen_javabean && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_ocaml && !gen_hs && !gen_cocoa && !gen_st && !gen_csharp && generator_strings.empty()) {
+  if (!gen_java && !gen_javabean && !gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_ocaml && !gen_hs && !gen_cocoa && !gen_st && !gen_csharp && generator_strings.empty()) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }

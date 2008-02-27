@@ -21,10 +21,19 @@
  */
 class t_cpp_generator : public t_oop_generator {
  public:
-  t_cpp_generator(t_program* program, bool gen_dense) :
-    t_oop_generator(program),
-    gen_dense_(gen_dense),
-    use_include_prefix_(false) {
+  t_cpp_generator(
+      t_program* program,
+      const std::map<std::string, std::string>& parsed_options,
+      const std::string& option_string)
+    : t_oop_generator(program)
+  {
+    std::map<std::string, std::string>::const_iterator iter;
+
+    iter = parsed_options.find("dense");
+    gen_dense_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("include_prefix");
+    use_include_prefix_ = (iter != parsed_options.end());
 
     out_dir_base_ = "gen-cpp";
   }
