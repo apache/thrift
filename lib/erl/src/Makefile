@@ -52,7 +52,8 @@ WEB_TARGET=/var/yaws/www/$(APP_NAME)
 # ----------------------------------------------------
 
 ERL_FLAGS +=
-ERL_COMPILE_FLAGS += -I../include -I../../fslib/include -I../../system_status/include
+ERL_INCLUDE = -I../include -I../../fslib/include -I../../system_status/include
+ERL_COMPILE_FLAGS += $(ERL_INCLUDE)
 
 # ----------------------------------------------------
 # Targets
@@ -74,6 +75,9 @@ clean:
 
 $(EBIN):
 	mkdir $(EBIN)
+
+dialyzer: $(TARGET_FILES)
+	dialyzer --src -r . $(ERL_INCLUDE)
 
 # ----------------------------------------------------
 # Special Build Targets
