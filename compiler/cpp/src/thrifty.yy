@@ -315,7 +315,7 @@ Header:
 /* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
 | tok_java_package tok_identifier
     {
-      pwarning(1, "'cpp_namespace' is deprecated. Use 'namespace cpp' instead");
+      pwarning(1, "'java package' is deprecated. Use 'namespace java' instead");
       pdebug("Header -> tok_java_package tok_identifier");
       if (g_parse_mode == PROGRAM) {
         g_program->set_namespace("java", $2);
