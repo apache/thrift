@@ -669,6 +669,7 @@ uint32_t TJSONProtocol::readJSONString(std::string &str, bool skipContext) {
   uint32_t result = (skipContext ? 0 : context_->read(reader_));
   result += readJSONSyntaxChar(kJSONStringDelimiter);
   uint8_t ch;
+  str.clear();
   while (true) {
     ch = reader_.read();
     ++result;
@@ -702,6 +703,7 @@ uint32_t TJSONProtocol::readJSONBase64(std::string &str) {
   uint32_t result = readJSONString(tmp);
   uint8_t *b = (uint8_t *)tmp.c_str();
   uint32_t len = tmp.length();
+  str.clear();
   while (len >= 4) {
     base64_decode(b, 4);
     str.append((const char *)b, 3);
@@ -721,6 +723,7 @@ uint32_t TJSONProtocol::readJSONBase64(std::string &str) {
 // a valid JSON numeric character.
 uint32_t TJSONProtocol::readJSONNumericChars(std::string &str) {
   uint32_t result = 0;
+  str.clear();
   while (true) {
     uint8_t ch = reader_.peek();
     if (!isJSONNumeric(ch)) {
