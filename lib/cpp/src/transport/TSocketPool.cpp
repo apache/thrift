@@ -121,6 +121,9 @@ void TSocketPool::open() {
     bool retryIntervalPassed = (server.lastFailTime_ == 0);
     bool isLastServer = alwaysTryLast_ ? (i == (numServers - 1)) : false;
 
+    host_ = server.host_;
+    port_ = server.port_;
+
     if (server.lastFailTime_ > 0) {
       // The server was marked as down, so check if enough time has elapsed to retry
       int elapsedTime = time(NULL) - server.lastFailTime_;
