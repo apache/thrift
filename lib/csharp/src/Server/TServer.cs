@@ -103,6 +103,8 @@ namespace Thrift.Server
 		 * The run method fires up the server and gets things going.
 		 */
 		public abstract void Serve();
+
+		public abstract void Stop();
 	}
 }
 

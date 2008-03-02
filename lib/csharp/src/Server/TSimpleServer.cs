@@ -22,6 +22,7 @@ namespace Thrift.Server
 	/// </summary>
 	class TSimpleServer : TServer
 	{
+		private bool stop = false;
 		public TSimpleServer(TProcessor processor,
 						  TServerTransport serverTransport)
 			:base(processor, serverTransport, new TTransportFactory(), new TTransportFactory(), new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory())
@@ -65,7 +66,7 @@ namespace Thrift.Server
 				return;
 			}
 
-			while (true)
+			while (!stop)
 			{
 				TTransport client = null;
 				TTransport inputTransport = null;
@@ -103,6 +104,24 @@ namespace Thrift.Server
 					outputTransport.Close();
 				}
 			}
+
+			if (stop)
+			{
+				try
+				{
+					serverTransport.Close();
+				}
+				catch (TTransportException ttx)
+				{
+					Console.Error.WriteLine("TServerTrasnport failed on close: " + ttx.Message);
+				}
+				stop = false;
+			}
+		}
+
+		public override void Stop()
+		{
+			stop = true;
 		}
 	}
 }

@@ -25,6 +25,7 @@ namespace Thrift.Server
 	{
 		private const int DEFAULT_MIN_THREADS = 10;
 		private const int DEFAULT_MAX_THREADS = 100;
+		private volatile bool stop = false;
 
 		public TThreadPoolServer(TProcessor processor, TServerTransport serverTransport)
 			:this(processor, serverTransport,
@@ -81,7 +82,7 @@ namespace Thrift.Server
 				return;
 			}
 
-			while (true)
+			while (!stop)
 			{
 				int failureCount = 0;
 				try
@@ -95,6 +96,25 @@ namespace Thrift.Server
 					Console.Error.WriteLine(ttx);
 				}
 			}
+
+			if (stop)
+			{
+				try
+				{
+					serverTransport.Close();
+				}
+				catch (TTransportException ttx)
+				{
+					Console.Error.WriteLine("TServerTrasnport failed on close: " + ttx.Message);
+				}
+				stop = false;
+			}
+		}
+
+
+		public override void Stop()
+		{
+			stop = true;
 		}
 
 		/// <summary>
