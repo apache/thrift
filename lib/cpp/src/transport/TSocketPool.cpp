@@ -57,7 +57,7 @@ TSocketPool::TSocketPool(const vector<string> &hosts,
   }
 }
 
-TSocketPool::TSocketPool(const vector<pair<string, int> > servers) : TSocket(),
+TSocketPool::TSocketPool(const std::vector<pair<string, int> >& servers) : TSocket(),
   numRetries_(1),
   retryInterval_(60),
   maxConsecutiveFailures_(1),
@@ -67,6 +67,16 @@ TSocketPool::TSocketPool(const vector<pair<string, int> > servers) : TSocket(),
   for (unsigned i = 0; i < servers.size(); ++i) {
     addServer(servers[i].first, servers[i].second);
   }
+}
+
+TSocketPool::TSocketPool(const std::vector<TSocketPoolServer>& servers) : TSocket(),
+  servers_(servers),
+  numRetries_(1),
+  retryInterval_(60),
+  maxConsecutiveFailures_(1),
+  randomize_(true),
+  alwaysTryLast_(true)
+{
 }
 
 TSocketPool::TSocketPool(const string& host, int port) : TSocket(),
@@ -85,6 +95,10 @@ TSocketPool::~TSocketPool() {
 
 void TSocketPool::addServer(const string& host, int port) {
   servers_.push_back(TSocketPoolServer(host, port));
+}
+
+std::vector<TSocketPoolServer> TSocketPool::getServers() {
+  return servers_;
 }
 
 void TSocketPool::setNumRetries(int numRetries) {

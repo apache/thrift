@@ -65,7 +65,14 @@ class TSocketPool : public TSocket {
     *
     * @param servers list of pairs of host name and port
     */
-   TSocketPool(const std::vector<std::pair<std::string, int> > servers);
+   TSocketPool(const std::vector<std::pair<std::string, int> >& servers);
+
+   /**
+    * Socket pool constructor
+    *
+    * @param servers list of TSocketPoolServers
+    */
+   TSocketPool(const std::vector<TSocketPoolServer>& servers);
 
    /**
     * Socket pool constructor
@@ -84,6 +91,12 @@ class TSocketPool : public TSocket {
     * Add a server to the pool
     */
    void addServer(const std::string& host, int port);
+
+
+   /**
+    * Get list of servers in this pool
+    */
+   std::vector<TSocketPoolServer> getServers();
 
    /**
     * Sets how many times to keep retrying a host in the connect function.
