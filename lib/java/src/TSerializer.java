@@ -40,8 +40,6 @@ public class TSerializer {
 
   /**
    * Create a new TSerializer that uses the TBinaryProtocol by default.
-   *
-   * @param protocolFactory Factory to create a protocol
    */
   public TSerializer() {
     this(new TBinaryProtocol.Factory());
