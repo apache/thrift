@@ -1,4 +1,5 @@
 namespace cpp thrift.test
+namespace java thrift.test
 
 struct OldSchool {
   1: i16    im_int;
@@ -40,4 +41,13 @@ struct ManyOpt {
   4:          i32 def4;
   5: optional i32 opt5;
   6: optional i32 opt6;
+}
+
+struct JavaTestHelper {
+  1: required i32    req_int;
+  2: optional i32    opt_int;
+  3: required string req_obj;
+  4: optional string opt_obj;
+  5: required binary req_bin;
+  6: optional binary opt_bin;
 }

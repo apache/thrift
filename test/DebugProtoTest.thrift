@@ -1,4 +1,5 @@
 namespace cpp thrift.test
+namespace java thrift.test
 
 struct Doubles {
  1: double nan,

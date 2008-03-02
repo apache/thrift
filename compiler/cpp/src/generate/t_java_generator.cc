@@ -69,6 +69,7 @@ class t_java_generator : public t_oop_generator {
   void generate_java_struct(t_struct* tstruct, bool is_exception);
 
   void generate_java_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool in_class=false, bool is_result=false);
+  void generate_java_struct_equality(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_result_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_writer(std::ofstream& out, t_struct* tstruct);
@@ -610,6 +611,9 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   if (bean_style_) {
     generate_java_bean_boilerplate(out, tstruct);
   }
+
+  generate_java_struct_equality(out, tstruct);
+
   generate_java_struct_reader(out, tstruct);
   if (is_result) {
     generate_java_struct_result_writer(out, tstruct);
@@ -617,6 +621,98 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     generate_java_struct_writer(out, tstruct);
   }
   generate_java_struct_tostring(out, tstruct);
+  scope_down(out);
+  out << endl;
+}
+
+/**
+ * Generates equals methods and a hashCode method for a structure.
+ *
+ * @param tstruct The struct definition
+ */
+void t_java_generator::generate_java_struct_equality(ofstream& out,
+                                                     t_struct* tstruct) {
+  out <<
+    indent() << "public boolean equals(Object that) {" << endl;
+  indent_up();
+  out <<
+    indent() << "if (that == null)" << endl <<
+    indent() << "  return false;" << endl <<
+    indent() << "if (that instanceof " << tstruct->get_name() << ")" << endl <<
+    indent() << "  return this.equals((" << tstruct->get_name() << ")that);" << endl <<
+    indent() << "return false;" << endl;
+  scope_down(out);
+  out << endl;
+
+  out <<
+    indent() << "public boolean equals(" << tstruct->get_name() << " that) {" << endl;
+  indent_up();
+  out <<
+    indent() << "if (that == null)" << endl <<
+    indent() << "  return false;" << endl;
+
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    out << endl;
+
+    t_type* t = get_true_type((*m_iter)->get_type());
+    // Most existing Thrift code does not use isset or optional/required,
+    // so we treat "default" fields as required.
+    bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
+    bool can_be_null = type_can_be_null(t);
+    string name = (*m_iter)->get_name();
+
+    string this_present = "true";
+    string that_present = "true";
+    string unequal;
+
+    if (is_optional) {
+      this_present += " && (this.__isset." + name + ")";
+      that_present += " && (that.__isset." + name + ")";
+    }
+    if (can_be_null) {
+      this_present += " && (this." + name + " != null)";
+      that_present += " && (that." + name + " != null)";
+    }
+
+    out <<
+      indent() << "boolean this_present_" << name << " = "
+               << this_present << ";" << endl <<
+      indent() << "boolean that_present_" << name << " = "
+               << that_present << ";" << endl <<
+      indent() << "if (" << "this_present_" << name
+               << " || that_present_" << name << ") {" << endl;
+    indent_up();
+    out <<
+      indent() << "if (!(" << "this_present_" << name
+               << " && that_present_" << name << "))" << endl <<
+      indent() << "  return false;" << endl;
+
+    if (t->is_base_type() && ((t_base_type*)t)->is_binary()) {
+      unequal = "!java.util.Arrays.equals(this." + name + ", that." + name + ")";
+    } else if (can_be_null) {
+      unequal = "!this." + name + ".equals(that." + name + ")";
+    } else {
+      unequal = "this." + name + " != that." + name;
+    }
+
+    out <<
+      indent() << "if (" << unequal << ")" << endl <<
+      indent() << "  return false;" << endl;
+
+    scope_down(out);
+  }
+  out << endl;
+  indent(out) << "return true;" << endl;
+  scope_down(out);
+  out << endl;
+
+  out <<
+    indent() << "public int hashCode() {" << endl;
+  indent_up();
+  out <<
+    indent() << "return 0;" << endl;
   scope_down(out);
   out << endl;
 }
