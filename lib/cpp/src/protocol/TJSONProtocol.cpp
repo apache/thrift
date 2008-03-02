@@ -81,7 +81,7 @@ static const std::string &getTypeNameForTypeID(TType typeID) {
 
 static TType getTypeIDForTypeName(const std::string &name) {
   TType result = T_STOP; // Sentinel value
-  if (name.length() > 0) {
+  if (name.length() > 1) {
     switch (name[0]) {
     case 'd':
       result = T_DOUBLE;
