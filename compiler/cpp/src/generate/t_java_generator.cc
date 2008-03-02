@@ -36,6 +36,9 @@ class t_java_generator : public t_oop_generator {
     iter = parsed_options.find("beans");
     bean_style_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("hashcode");
+    gen_hash_code_ = (iter != parsed_options.end());
+
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
   }
 
@@ -177,6 +180,7 @@ class t_java_generator : public t_oop_generator {
   std::string package_dir_;
 
   bool bean_style_;
+  bool gen_hash_code_;
 
 };
 
@@ -226,6 +230,11 @@ string t_java_generator::java_package() {
  * @return List of imports for Java types that are used in here
  */
 string t_java_generator::java_type_imports() {
+  string hash_builder;
+  if (gen_hash_code_) {
+    hash_builder = "import org.apache.commons.lang.builder.HashCodeBuilder;\n";
+  }
+
   return
     string() +
     "import java.util.List;\n" +
@@ -234,6 +243,7 @@ string t_java_generator::java_type_imports() {
     "import java.util.HashMap;\n" +
     "import java.util.Set;\n" +
     "import java.util.HashSet;\n" +
+    hash_builder +
     "import com.facebook.thrift.*;\n\n";
 }
 
@@ -708,13 +718,54 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
   scope_down(out);
   out << endl;
 
-  out <<
-    indent() << "public int hashCode() {" << endl;
-  indent_up();
-  out <<
-    indent() << "return 0;" << endl;
-  scope_down(out);
-  out << endl;
+  if (gen_hash_code_) {
+    out <<
+      indent() << "public int hashCode() {" << endl;
+    indent_up();
+
+    out <<
+      indent() << "HashCodeBuilder builder = new HashCodeBuilder();" << endl;
+
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      out << endl;
+
+      t_type* t = get_true_type((*m_iter)->get_type());
+      bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
+      bool can_be_null = type_can_be_null(t);
+      string name = (*m_iter)->get_name();
+
+      string present = "true";
+
+      if (is_optional) {
+        present += " && (__isset." + name + ")";
+      }
+      if (can_be_null) {
+        present += " && (" + name + " != null)";
+      }
+
+      out <<
+        indent() << "boolean present_" << name << " = "
+                 << present << ";" << endl <<
+        indent() << "builder.append(present_" << name << ");" << endl <<
+        indent() << "if (present_" << name << ")" << endl <<
+        indent() << "  builder.append(" << name << ");" << endl;
+    }
+
+    out << endl;
+    out <<
+      indent() << "return builder.toHashCode();" << endl;
+    scope_down(out);
+    out << endl;
+
+  } else {
+    out <<
+      indent() << "public int hashCode() {" << endl;
+    indent_up();
+    out <<
+      indent() << "return 0;" << endl;
+    scope_down(out);
+    out << endl;
+  }
 }
 
 /**
@@ -2291,4 +2342,5 @@ void t_java_generator::generate_java_doc(ofstream &out,
 
 THRIFT_REGISTER_GENERATOR(java, "Java",
 "    beans:           Generate bean-style output files.\n"
+" hashcode:           Generate quality hashCode methods.\n"
 );
