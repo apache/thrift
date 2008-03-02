@@ -1,9 +1,11 @@
 dnl @synopsis AX_THRIFT_GEN(SHORT_LANGUAGE, LONG_LANGUAGE, DEFAULT)
+dnl @synopsis AX_THRIFT_LIB(SHORT_LANGUAGE, LONG_LANGUAGE, DEFAULT)
 dnl
 dnl Allow a particular language generator to be disabled.
+dnl Allow a particular language library to be disabled.
 dnl
-dnl This macro has poor error handling and is poorly documented.
-dnl It is intended only for internal use by the Thrift compiler.
+dnl These macros have poor error handling and are poorly documented.
+dnl They are intended only for internal use by the Thrift compiler.
 dnl
 dnl @author David Reiss <dreiss@facebook.com>
 dnl @version 2008-02-20
@@ -19,4 +21,15 @@ AC_DEFUN([AX_THRIFT_GEN],
           dnl I'd like to run the AM_CONDITIONAL here, but automake likes
           dnl all AM_CONDITIONALs to be nice and explicit in configure.ac.
           dnl AM_CONDITIONAL([THRIFT_GEN_$1], [test "$ax_thrift_gen_$1" = "yes"])
+         ])
+
+AC_DEFUN([AX_THRIFT_LIB],
+         [
+          AC_ARG_WITH($1,
+                      AC_HELP_STRING([--with-$1], [build the $2 library @<:@default=$3@:>@]),
+                      [with_$1="$withval"],
+                      [with_$1=$3]
+                      )
+          dnl What we do here is going to vary from library to library,
+          dnl so we can't really generalize (yet!).
          ])
