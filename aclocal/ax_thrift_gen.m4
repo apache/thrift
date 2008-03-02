@@ -12,7 +12,7 @@ dnl @license AllPermissive
 AC_DEFUN([AX_THRIFT_GEN],
          [
           AC_ARG_ENABLE([gen-$1],
-                        AC_HELP_STRING([--enable-gen-$1], [Enable the $2 compiler.  Default is $3]),
+                        AC_HELP_STRING([--enable-gen-$1], [enable the $2 compiler @<:@default=$3@:>@]),
                         [ax_thrift_gen_$1="$enableval"],
                         [ax_thrift_gen_$1=$3]
                         )
