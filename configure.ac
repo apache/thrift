@@ -36,7 +36,10 @@ AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$success" = "yes"])
 AX_LIB_ZLIB([1.2.3])
 AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$success" = "yes"])
 
-PKG_CHECK_MODULES(MONO, mono >= 1.2.6, have_mono=yes, have_mono=no)
+AX_THRIFT_LIB(csharp, [C#], yes)
+if test "$with_csharp" = "yes";  then
+  PKG_CHECK_MODULES(MONO, mono >= 1.2.6, have_mono=yes, have_mono=no)
+fi
 AM_CONDITIONAL(ENABLE_MONO, [test "$have_mono" = "yes"])
 
 AX_THRIFT_LIB(java, [Java], yes)
