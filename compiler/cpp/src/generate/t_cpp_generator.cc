@@ -1403,16 +1403,14 @@ void t_cpp_generator::generate_service_null(t_service* tservice) {
     if (returntype->is_void()) {
       f_header_ <<
         indent() << "return;" << endl;
+    } else if (is_complex_type(returntype)) {
+      f_header_ <<
+        indent() << "return;" << endl;
     } else {
-      if (is_complex_type(returntype)) {
-        f_header_ <<
-          indent() << "return;" << endl;
-      } else {
-        t_field returnfield(returntype, "_return");
-        f_header_ <<
-          indent() << declare_field(&returnfield, true) << endl <<
-          indent() << "return _return;" << endl;
-      }
+      t_field returnfield(returntype, "_return");
+      f_header_ <<
+        indent() << declare_field(&returnfield, true) << endl <<
+        indent() << "return _return;" << endl;
     }
     indent_down();
     f_header_ <<
