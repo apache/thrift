@@ -10,6 +10,10 @@ if ENABLE_JAVA
 SUBDIRS += java
 endif
 
+if ENABLE_ERLANG
+SUBDIRS += erl
+endif
+
 EXTRA_DIST = \
   cocoa \
   erl   \
