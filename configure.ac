@@ -10,7 +10,7 @@ AC_ARG_VAR([PY_PREFIX], [Prefix for installing Python modules.
                          (Normal --prefix is ignored for Python because
                          Python has different conventions.)
                          Default = "/usr"])
-AS_IF([test "x$PY_PREFIX" == x], [PY_PREFIX="/usr"])
+AS_IF([test "x$PY_PREFIX" = x], [PY_PREFIX="/usr"])
 
 AM_PATH_PYTHON(2.4,, :)
 
