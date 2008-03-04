@@ -23,8 +23,8 @@ class TBinaryProtocol extends TProtocol {
   const VERSION_MASK = 0xffff0000;
   const VERSION_1 = 0x80010000;
 
-  private $strictRead_ = false;
-  private $strictWrite_ = true;
+  protected $strictRead_ = false;
+  protected $strictWrite_ = true;
 
   public function __construct($trans, $strictRead=false, $strictWrite=true) {
     parent::__construct($trans);
@@ -411,6 +411,12 @@ class TBinaryProtocolAccelerated extends TBinaryProtocol {
       $trans = new TBufferedTransport($trans);
     }
     parent::__construct($trans, $strictRead, $strictWrite);
+  }
+  public function isStrictRead() {
+    return $this->strictRead_;
+  }
+  public function isStrictWrite() {
+    return $this->strictWrite_;
   }
 }
 

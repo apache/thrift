@@ -410,9 +410,7 @@ void t_php_generator::_generate_php_struct_definition(ofstream& out,
     " {" << endl;
   indent_up();
 
-  if (oop_) {
-    indent(out) << "static $_TSPEC;" << endl << endl;
-  }
+  indent(out) << "static $_TSPEC;" << endl << endl;
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string dval = "null";
@@ -427,43 +425,39 @@ void t_php_generator::_generate_php_struct_definition(ofstream& out,
   out << endl;
 
   // Generate constructor from array
-  if (oop_ || members.size() > 0) {
-    string param = (members.size() > 0) ? "$vals=null" : "";
+  string param = (members.size() > 0) ? "$vals=null" : "";
+  out <<
+    indent() << "public function __construct(" << param << ") {" << endl;
+  indent_up();
+
+  generate_php_struct_spec(out, tstruct);
+
+  if (members.size() > 0) {
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* t = get_true_type((*m_iter)->get_type());
+      if ((*m_iter)->get_value() != NULL && (t->is_struct() || t->is_xception())) {
+        indent(out) << "$this->" << (*m_iter)->get_name() << " = " << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
+      }
+    }
     out <<
-      indent() << "public function __construct(" << param << ") {" << endl;
+      indent() << "if (is_array($vals)) {" << endl;
     indent_up();
-
     if (oop_) {
-      generate_php_struct_spec(out, tstruct);
-    }
-
-    if (members.size() > 0) {
+      out << indent() << "parent::construct(self::$_TSPEC, $vals);" << endl;
+    } else {
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        t_type* t = get_true_type((*m_iter)->get_type());
-        if ((*m_iter)->get_value() != NULL && (t->is_struct() || t->is_xception())) {
-          indent(out) << "$this->" << (*m_iter)->get_name() << " = " << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
-        }
+        out <<
+          indent() << "if (isset($vals['" << (*m_iter)->get_name() << "'])) {" << endl <<
+          indent() << "  $this->" << (*m_iter)->get_name() << " = $vals['" << (*m_iter)->get_name() << "'];" << endl <<
+          indent() << "}" << endl;
       }
-      out <<
-        indent() << "if (is_array($vals)) {" << endl;
-      indent_up();
-      if (oop_) {
-        out << indent() << "parent::construct(self::$_TSPEC, $vals);" << endl;
-      } else {
-        for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-          out <<
-            indent() << "if (isset($vals['" << (*m_iter)->get_name() << "'])) {" << endl <<
-            indent() << "  $this->" << (*m_iter)->get_name() << " = $vals['" << (*m_iter)->get_name() << "'];" << endl <<
-            indent() << "}" << endl;
-        }
-      }
-      indent_down();
-      out <<
-        indent() << "}" << endl;
     }
-    scope_down(out);
-    out << endl;
+    indent_down();
+    out <<
+      indent() << "}" << endl;
   }
+  scope_down(out);
+  out << endl;
 
   out <<
     indent() << "public function getName() {" << endl <<
@@ -497,10 +491,6 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
     scope_down(out);
     return;
   }
-
-  out <<
-    indent() << "$bin_accel = ($input instanceof TProtocol::$TBINARYPROTOCOLACCELERATED)"
-             << " && function_exists('thrift_protocol_binary_deserialize');" << endl;
 
   out <<
     indent() << "$xfer = 0;" << endl <<
@@ -1189,6 +1179,29 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
 
       std::string argsname = php_namespace(tservice->get_program()) + service_name_ + "_" + (*f_iter)->get_name() + "_args";
 
+      out <<
+        indent() << "$args = new " << argsname << "();" << endl;
+
+      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+        out <<
+          indent() << "$args->" << (*fld_iter)->get_name() << " = $" << (*fld_iter)->get_name() << ";" << endl;
+      }
+
+      out <<
+        indent() << "$bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');" << endl;
+
+      out <<
+        indent() << "if ($bin_accel)" << endl;
+      scope_up(out);
+
+      out <<
+        indent() << "thrift_protocol_write_binary($this->output_, '" << (*f_iter)->get_name() << "', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());" << endl;
+
+      scope_down(out);
+      out <<
+        indent() << "else" << endl;
+      scope_up(out);
+
       // Serialize the request header
       if (binary_inline_) {
         out <<
@@ -1199,14 +1212,6 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
       } else {
         out <<
           indent() << "$this->output_->writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType::CALL, $this->seqid_);" << endl;
-      }
-
-      out <<
-        indent() << "$args = new " << argsname << "();" << endl;
-
-      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-        out <<
-          indent() << "$args->" << (*fld_iter)->get_name() << " = $" << (*fld_iter)->get_name() << ";" << endl;
       }
 
       // Write to the stream
@@ -1224,6 +1229,8 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
 
     scope_down(out);
 
+    scope_down(out);
+
 
     if (!(*f_iter)->is_async()) {
       std::string resultname = php_namespace(tservice->get_program()) + service_name_ + "_" + (*f_iter)->get_name() + "_result";
@@ -1236,6 +1243,16 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
       out <<
         endl <<
         indent() << "public function " << function_signature(&recv_function) << endl;
+      scope_up(out);
+
+      out <<
+        indent() << "$bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED)"
+                 << " && function_exists('thrift_protocol_read_binary');" << endl;
+
+      out <<
+        indent() << "if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, '" << resultname << "', $this->input_->isStrictRead());" << endl;
+      out <<
+        indent() << "else" << endl;
       scope_up(out);
 
       out <<
@@ -1269,6 +1286,8 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
       out <<
         indent() << "$result = new " << resultname << "();" << endl <<
         indent() << "$result->read($this->input_);" << endl;
+
+      scope_down(out);
 
       if (!binary_inline_) {
         out <<
@@ -1340,24 +1359,6 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
     if (type->is_container()) {
       generate_deserialize_container(out, type, name);
     } else if (type->is_base_type() || type->is_enum()) {
-
-      out << indent() << "if ($bin_accel) {" << endl;
-      indent_up();
-      string ttype_name;
-      if (type->is_enum()) {
-        ttype_name = "I32";
-      } else {
-        ttype_name = t_base_type::t_base_name(static_cast<t_base_type*>(type)->get_base());
-        for (size_t _s = 0; _s < ttype_name.size(); ++_s) {
-          ttype_name[_s] = toupper(ttype_name[_s]);
-        }
-      }
-
-      out << indent() << "$" << name << " = thrift_protocol_binary_deserialize(TType::" << ttype_name  << ", $input);" << endl;
-      indent_down();
-      out << indent() << "} else {" << endl;
-      indent_up();
-
 
       if (binary_inline_) {
         std::string itrans = (inclass ? "$this->input_" : "$input");
@@ -1475,8 +1476,6 @@ void t_php_generator::generate_deserialize_field(ofstream &out,
         }
         out << endl;
       }
-      indent_down();
-      out << indent() << "}" << endl;
     } else {
       printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
              tfield->get_name().c_str(), type->get_name().c_str());
@@ -1501,30 +1500,6 @@ void t_php_generator::generate_deserialize_struct(ofstream &out,
 void t_php_generator::generate_deserialize_container(ofstream &out,
                                                      t_type* ttype,
                                                      string prefix) {
-  out << indent() << "if ($bin_accel)" << endl;
-  scope_up(out);
-
-  string ttype_name;
-  t_type* tvaluetype = NULL;
-  if (ttype->is_map()) {
-    ttype_name = "MAP";
-    tvaluetype = reinterpret_cast<t_map*>(ttype)->get_val_type();
-  } else if (ttype->is_set()) {
-    ttype_name = "SET";
-    tvaluetype = reinterpret_cast<t_set*>(ttype)->get_elem_type();
-  } else if (ttype->is_list()) {
-    ttype_name = "LST";
-    tvaluetype = reinterpret_cast<t_list*>(ttype)->get_elem_type();
-  }
-  if (tvaluetype->is_struct()) {
-    out << indent() << "$" << prefix << " = thrift_protocol_binary_deserialize(TType::" << ttype_name << ", $input, '" << tvaluetype->get_name() << "');" << endl;
-  } else {
-    out << indent() << "$" << prefix << " = thrift_protocol_binary_deserialize(TType::" << ttype_name << ", $input);" << endl;
-  }
-  scope_down(out);
-  out << indent() << "else" << endl;
-  scope_up(out);
-
   string size = tmp("_size");
   string ktype = tmp("_ktype");
   string vtype = tmp("_vtype");
@@ -1603,8 +1578,6 @@ void t_php_generator::generate_deserialize_container(ofstream &out,
       indent(out) << "$xfer += $input->readListEnd();" << endl;
     }
   }
-
-  scope_down(out);
 }
 
 
