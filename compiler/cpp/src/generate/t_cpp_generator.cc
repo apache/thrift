@@ -1353,18 +1353,20 @@ void t_cpp_generator::generate_service_interface(t_service* tservice) {
   f_header_ <<
     indent() << "virtual ~" << service_name_ << "If() {}" << endl;
 
-  f_header_ <<
-    indent() << "static void getStaticLimitedReflection" <<
-    "(facebook::thrift::reflection::limited::Service & _return);" << endl;
-  // TODO(dreiss): Uncomment and test this if we decide we need
-  // a virtual function with this effect.
-  //f_header_ <<
-  //  indent() << "virtual void getVirtualLimitedReflection" <<
-  //  "(facebook::thrift::reflection::limited::Service & _return) ";
-  //scope_up(f_header_);
-  //f_header_ <<
-  //  indent() << "getStaticLimitedReflection(_return);" << endl;
-  //scope_down(f_header_);
+  if (gen_reflection_limited_) {
+    f_header_ <<
+      indent() << "static void getStaticLimitedReflection" <<
+      "(facebook::thrift::reflection::limited::Service & _return);" << endl;
+    // TODO(dreiss): Uncomment and test this if we decide we need
+    // a virtual function with this effect.
+    //f_header_ <<
+    //  indent() << "virtual void getVirtualLimitedReflection" <<
+    //  "(facebook::thrift::reflection::limited::Service & _return) ";
+    //scope_up(f_header_);
+    //f_header_ <<
+    //  indent() << "getStaticLimitedReflection(_return);" << endl;
+    //scope_down(f_header_);
+  }
 
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
