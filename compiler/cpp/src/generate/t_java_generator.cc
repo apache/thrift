@@ -2342,5 +2342,5 @@ void t_java_generator::generate_java_doc(ofstream &out,
 
 THRIFT_REGISTER_GENERATOR(java, "Java",
 "    beans:           Generate bean-style output files.\n"
-" hashcode:           Generate quality hashCode methods.\n"
+"    hashcode:        Generate quality hashCode methods.\n"
 );
