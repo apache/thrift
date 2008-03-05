@@ -40,11 +40,11 @@ class TConnection::Task: public Runnable {
         }
       }
     } catch (TTransportException& ttx) {
-      cerr << "TThreadedServer client died: " << ttx.what() << endl;
+      cerr << "TNonblockingServer client died: " << ttx.what() << endl;
     } catch (TException& x) {
-      cerr << "TThreadedServer exception: " << x.what() << endl;
+      cerr << "TNonblockingServer exception: " << x.what() << endl;
     } catch (...) {
-      cerr << "TThreadedServer uncaught exception." << endl;
+      cerr << "TNonblockingServer uncaught exception." << endl;
     }
 
     // Signal completion back to the libevent thread via a socketpair
@@ -355,7 +355,7 @@ void TConnection::transition() {
 
     // Register read event
     setRead();
-
+   
     // Try to work the socket right away
     // workSocket();
 
@@ -495,7 +495,8 @@ void TNonblockingServer::returnConnection(TConnection* connection) {
 }
 
 /**
- * Server socket had something happen
+ * Server socket had something happen.  We accept all waiting client
+ * connections on fd and assign TConnection objects to handle those requests.
  */
 void TNonblockingServer::handleEvent(int fd, short which) {
   // Make sure that libevent didn't fuck up the socket handles
