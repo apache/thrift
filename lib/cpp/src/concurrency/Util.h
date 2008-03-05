@@ -37,13 +37,16 @@ namespace facebook { namespace thrift { namespace concurrency {
 class Util {
 
   static const int64_t NS_PER_S = 1000000000LL;
+  static const int64_t US_PER_S = 1000000LL;
   static const int64_t MS_PER_S = 1000LL;
-  static const int64_t NS_PER_MS = 1000000LL;
+
+  static const int64_t NS_PER_MS = NS_PER_S / MS_PER_S;
+  static const int64_t US_PER_MS = US_PER_S / MS_PER_S;
 
  public:
 
   /**
-   * Converts timespec to milliseconds
+   * Converts millisecond timestamp into a timespec struct
    *
    * @param struct timespec& result
    * @param time or duration in milliseconds
@@ -53,37 +56,52 @@ class Util {
     result.tv_nsec = (value % MS_PER_S) * NS_PER_MS; // ms to ns
   }
 
+  static void toTimeval(struct timeval& result, int64_t value) {
+    result.tv_sec = value / MS_PER_S; // ms to s
+    result.tv_usec = (value % MS_PER_S) * US_PER_MS; // ms to us
+  }
+
   /**
-   * Converts timespec to milliseconds
+   * Converts struct timespec to milliseconds
    */
   static const void toMilliseconds(int64_t& result, const struct timespec& value) {
-    result =
-      (value.tv_sec * MS_PER_S) +
-      (value.tv_nsec / NS_PER_MS) +
-      (value.tv_nsec % NS_PER_MS >= 500000 ? 1 : 0);
+    result = (value.tv_sec * MS_PER_S) + (value.tv_nsec / NS_PER_MS);
+    // round up -- int64_t cast is to avoid a compiler error for some GCCs
+    if (int64_t(value.tv_nsec) % NS_PER_MS >= (NS_PER_MS / 2)) {
+      ++result;
+    }
+  }
+
+  /**
+   * Converts struct timeval to milliseconds
+   */
+  static const void toMilliseconds(int64_t& result, const struct timeval& value) {
+    result = (value.tv_sec * MS_PER_S) + (value.tv_usec / US_PER_MS);
+    // round up -- int64_t cast is to avoid a compiler error for some GCCs
+    if (int64_t(value.tv_usec) % US_PER_MS >= (US_PER_MS / 2)) {
+      ++result;
+    }
   }
 
   /**
    * Get current time as milliseconds from epoch
    */
   static const int64_t currentTime() {
+    int64_t result;
+
 #if defined(HAVE_CLOCK_GETTIME)
     struct timespec now;
     int ret = clock_gettime(CLOCK_REALTIME, &now);
     assert(ret == 0);
-    return
-      (now.tv_sec * MS_PER_S) +
-      (now.tv_nsec / NS_PER_MS) +
-      (now.tv_nsec % NS_PER_MS >= 500000 ? 1 : 0) ;
+    toMilliseconds(result, now);
 #elif defined(HAVE_GETTIMEOFDAY)
     struct timeval now;
     int ret = gettimeofday(&now, NULL);
     assert(ret == 0);
-    return
-      (((int64_t)now.tv_sec) * MS_PER_S) +
-      (now.tv_usec / MS_PER_S) +
-      (now.tv_usec % MS_PER_S >= 500 ? 1 : 0);
+    toMilliseconds(result, now);
 #endif // defined(HAVE_GETTIMEDAY)
+
+    return result;
   }
 
 };
