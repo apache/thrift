@@ -315,6 +315,9 @@ class TMemoryBuffer : public TTransport {
     rPos_ = 0;
   }
 
+  // make sure there's at least 'len' bytes available for writing
+  void ensureCanWrite(uint32_t len);
+
  public:
   static const uint32_t defaultSize = 1024;
 
@@ -480,7 +483,7 @@ class TMemoryBuffer : public TTransport {
 
   void write(const uint8_t* buf, uint32_t len);
 
-  uint32_t available() {
+  uint32_t available() const {
     return wPos_ - rPos_;
   }
 
@@ -495,6 +498,20 @@ class TMemoryBuffer : public TTransport {
     swap(wPos_,       that.wPos_);
     swap(owner_,      that.owner_);
   }
+
+  // Returns a pointer to where the client can write data to append to
+  // the TMemoryBuffer, and ensures the buffer is big enough to accomodate a
+  // write of the provided length.  The returned pointer is very convenient for
+  // passing to read(), recv(), or similar. You must call wroteBytes() as soon
+  // as data is written or the buffer will not be aware that data has changed.
+  uint8_t* getWritePtr(uint32_t len) {
+    ensureCanWrite(len);
+    return buffer_ + wPos_;
+  }
+
+  // Informs the buffer that the client has written 'len' bytes into storage
+  // that had been provided by getWritePtr().
+  void wroteBytes(uint32_t len);
 
  private:
   // Data buffer

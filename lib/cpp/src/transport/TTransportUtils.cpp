@@ -297,27 +297,41 @@ uint32_t TMemoryBuffer::readAppendToString(std::string& str, uint32_t len) {
   return give;
 }
 
-void TMemoryBuffer::write(const uint8_t* buf, uint32_t len) {
+void TMemoryBuffer::ensureCanWrite(uint32_t len) {
   // Check available space
   uint32_t avail = bufferSize_ - wPos_;
-
-  // Grow the buffer
-  if (len > avail) {
-    if (!owner_) {
-      throw TTransportException("Insufficient space in external MemoryBuffer");
-    }
-    while (len > avail) {
-      bufferSize_ *= 2;
-      avail = bufferSize_ - wPos_;
-    }
-    buffer_ = (uint8_t*)std::realloc(buffer_, bufferSize_);
-    if (buffer_ == NULL) {
-      throw TTransportException("Out of memory.");
-    }
+  if (len <= avail) {
+    return;
   }
+
+  if (!owner_) {
+    throw TTransportException("Insufficient space in external MemoryBuffer");
+  }
+
+  // Grow the buffer as necessary
+  while (len > avail) {
+    bufferSize_ *= 2;
+    avail = bufferSize_ - wPos_;
+  }
+  buffer_ = (uint8_t*)std::realloc(buffer_, bufferSize_);
+  if (buffer_ == NULL) {
+    throw TTransportException("Out of memory.");
+  }
+}
+
+void TMemoryBuffer::write(const uint8_t* buf, uint32_t len) {
+  ensureCanWrite(len);
 
   // Copy into the buffer and increment wPos_
   memcpy(buffer_ + wPos_, buf, len);
+  wPos_ += len;
+}
+
+void TMemoryBuffer::wroteBytes(uint32_t len) {
+  uint32_t avail = bufferSize_ - wPos_;
+  if (len > avail) {
+    throw TTransportException("Client wrote more bytes than size of buffer.");
+  }
   wPos_ += len;
 }
 
