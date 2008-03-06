@@ -391,7 +391,7 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
         RETURN_NULL();
       }
       TSRMLS_FETCH();
-      zval* spec = zend_read_static_property(zend_get_class_entry(return_value TSRMLS_CC), "_TSPEC", 6, false);
+      zval* spec = zend_read_static_property(zend_get_class_entry(return_value TSRMLS_CC), "_TSPEC", 6, false TSRMLS_CC);
       if (Z_TYPE_P(spec) != IS_ARRAY) {
         char errbuf[128];
         snprintf(errbuf, 128, "spec for %s is wrong type: %d\n", structType, Z_TYPE_P(spec));
@@ -681,7 +681,7 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
       return;
     case T_STRUCT: {
       TSRMLS_FETCH();
-      zval* spec = zend_read_static_property(zend_get_class_entry(*value TSRMLS_CC), "_TSPEC", 6, false);
+      zval* spec = zend_read_static_property(zend_get_class_entry(*value TSRMLS_CC), "_TSPEC", 6, false TSRMLS_CC);
       binary_serialize_spec(*value, transport, Z_ARRVAL_P(spec));
     } return;
     case T_BOOL:
@@ -870,7 +870,7 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
       transport.writeI32(seqID);
     }
 
-    zval* spec = zend_read_static_property(zend_get_class_entry(request_struct TSRMLS_CC), "_TSPEC", 6, false);
+    zval* spec = zend_read_static_property(zend_get_class_entry(request_struct TSRMLS_CC), "_TSPEC", 6, false TSRMLS_CC);
     binary_serialize_spec(request_struct, transport, Z_ARRVAL_P(spec));
   } catch (const PHPExceptionWrapper& ex) {
     zend_throw_exception_object(ex TSRMLS_CC);
@@ -937,13 +937,13 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
       zval* ex;
       MAKE_STD_ZVAL(ex);
       createObject("TApplicationException", ex);
-      zval* spec = zend_read_static_property(zend_get_class_entry(ex TSRMLS_CC), "_TSPEC", 6, false);
+      zval* spec = zend_read_static_property(zend_get_class_entry(ex TSRMLS_CC), "_TSPEC", 6, false TSRMLS_CC);
       binary_deserialize_spec(ex, transport, Z_ARRVAL_P(spec));
       throw PHPExceptionWrapper(ex);
     }
 
     createObject(obj_typename, return_value);
-    zval* spec = zend_read_static_property(zend_get_class_entry(return_value TSRMLS_CC), "_TSPEC", 6, false);
+    zval* spec = zend_read_static_property(zend_get_class_entry(return_value TSRMLS_CC), "_TSPEC", 6, false TSRMLS_CC);
     binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec));
   } catch (const PHPExceptionWrapper& ex) {
     zend_throw_exception_object(ex TSRMLS_CC);
