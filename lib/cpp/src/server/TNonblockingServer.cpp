@@ -355,7 +355,7 @@ void TConnection::transition() {
 
     // Register read event
     setRead();
-   
+
     // Try to work the socket right away
     // workSocket();
 
