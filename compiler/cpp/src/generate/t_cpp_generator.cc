@@ -1598,6 +1598,17 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
       indent() << "  " << extends << "Client(iprot, oprot) {}" << endl;
   }
 
+  // Generate getters for the protocols.
+  f_header_ <<
+    indent() << "boost::shared_ptr<facebook::thrift::protocol::TProtocol> getInputProtocol() {" << endl <<
+    indent() << "  return piprot_;" << endl <<
+    indent() << "}" << endl;
+
+  f_header_ <<
+    indent() << "boost::shared_ptr<facebook::thrift::protocol::TProtocol> getOutputProtocol() {" << endl <<
+    indent() << "  return poprot_;" << endl <<
+    indent() << "}" << endl;
+
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
