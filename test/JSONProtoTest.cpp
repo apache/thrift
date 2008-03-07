@@ -104,6 +104,10 @@ int main() {
 
   assert(hm == hm2);
 
+  hm2.big[0].a_bite = 0xFF;
+
+  assert(hm != hm2);
+
   Doubles dub;
   dub.nan = HUGE_VAL/HUGE_VAL;
   dub.inf = HUGE_VAL;
@@ -114,6 +118,23 @@ int main() {
   dub.zero = 0.0;
   dub.negzero = -0.0;
   cout << facebook::thrift::ThriftJSONString(dub) << endl << endl;
+
+  cout << "Testing base" << endl;
+
+  Base64 base;
+  base.a = 123;
+  base.b1 = "1";
+  base.b2 = "12";
+  base.b3 = "123";
+  base.b4 = "1234";
+  base.b5 = "12345";
+  base.b6 = "123456";
+
+  base.write(proto.get());
+  Base64 base2;
+  base2.read(proto.get());
+
+  assert(base == base2);
 
   return 0;
 }

@@ -65,6 +65,16 @@ struct RandomStuff {
   8: double triple,
 }
 
+struct Base64 {
+  1: i32 a,
+  2: binary b1,
+  3: binary b2,
+  4: binary b3,
+  5: binary b4,
+  6: binary b5,
+  7: binary b6,
+}
+
 service Srv {
   i32 Janky(i32 arg)
 }
