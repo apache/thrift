@@ -6,6 +6,7 @@
   <property name="gen" location="gen-java" />
   <property name="build" location="build" />
   <property name="cpath" location="../../lib/java/libthrift.jar:/usr/share/java/commons-lang-2.3.jar" />
+  <property name="testjar" location="thrifttest.jar" />
 
   <target name="init">
     <tstamp />
@@ -22,6 +23,9 @@
     <exec executable="../../compiler/cpp/thrift">
       <arg line="--gen java:hashcode ../OptionalRequiredTest.thrift" />
     </exec>
+    <exec executable="../../compiler/cpp/thrift">
+      <arg line="--gen java ../DebugProtoTest.thrift" />
+    </exec>
   </target>
 
   <target name="compileonly">
@@ -30,12 +34,16 @@
   </target>
 
   <target name="compile" depends="init,generate,compileonly">
-    <jar jarfile="thrifttest.jar" basedir="${build}"/>
+    <jar jarfile="${testjar}" basedir="${build}"/>
   </target>
 
   <target name="test" depends="compile">
-    <java classname="com.facebook.thrift.test.IdentityTest" classpath="${cpath}:./thrifttest.jar"/>
-    <java classname="com.facebook.thrift.test.EqualityTest" classpath="${cpath}:./thrifttest.jar"/>
+    <java classname="com.facebook.thrift.test.JSONProtoTest"
+      classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
+    <java classname="com.facebook.thrift.test.IdentityTest"
+      classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
+    <java classname="com.facebook.thrift.test.EqualityTest"
+      classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
   </target>
 
   <target name="clean">
