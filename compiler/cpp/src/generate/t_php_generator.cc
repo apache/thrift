@@ -1287,13 +1287,12 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
         indent() << "$result = new " << resultname << "();" << endl <<
         indent() << "$result->read($this->input_);" << endl;
 
-      scope_down(out);
-
       if (!binary_inline_) {
         out <<
-          indent() << "$this->input_->readMessageEnd();" << endl <<
-          endl;
+          indent() << "$this->input_->readMessageEnd();" << endl;
       }
+
+      scope_down(out);
 
       // Careful, only return result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
