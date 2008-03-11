@@ -13,6 +13,7 @@ compiler/cpp/thrifty.cc
 compiler/cpp/thrifty.h
 config.*
 configure
+configure.lineno
 configure.scan
 depcomp
 if/Makefile
@@ -61,3 +62,4 @@ test/java/thrifttest.jar
 test/py/Makefile
 test/py/Makefile.in
 test/py/gen-py
+ylwrap
