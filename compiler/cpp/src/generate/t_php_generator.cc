@@ -49,7 +49,7 @@ void t_php_generator::init_generator() {
       autogen_comment() <<
       "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + program_name_ + "/" + program_name_ + "_types.php';" << endl <<
       endl <<
-      "$GLOBALS['" << program_name_ << "_CONSTANTS'] = array(); " << endl <<
+      "$GLOBALS['" << program_name_ << "_CONSTANTS'] = array();" << endl <<
       endl;
   }
 }
