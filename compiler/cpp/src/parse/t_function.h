@@ -41,7 +41,12 @@ class t_function : public t_doc {
     name_(name),
     arglist_(arglist),
     xceptions_(xceptions),
-    async_(async) {}
+    async_(async)
+  {
+    if (async_ && !xceptions_->get_members().empty()) {
+      throw std::string("Async methods can't throw exceptions.");
+    }
+  }
 
   ~t_function() {}
 
