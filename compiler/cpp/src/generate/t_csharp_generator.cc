@@ -710,8 +710,18 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     f_service_ <<
       indent() << "protected TProtocol iprot_;" << endl <<
       indent() << "protected TProtocol oprot_;" << endl <<
-      endl <<
       indent() << "protected int seqid_;" << endl << endl;
+
+    f_service_ << indent() << "public TProtocol InputProtocol" << endl;
+    scope_up(f_service_);
+    indent(f_service_) << "get { return iprot_; }" << endl;
+    scope_down(f_service_);
+
+    f_service_ << indent() << "public TProtocol OutputProtocol" << endl;
+    scope_up(f_service_);
+    indent(f_service_) << "get { return oprot_; }" << endl;
+    scope_down(f_service_);
+    f_service_ << endl << endl;
   }
 
   vector<t_function*> functions = tservice->get_functions();
