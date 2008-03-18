@@ -453,35 +453,36 @@ void t_csharp_generator::generate_csharp_struct_writer(ofstream& out, t_struct* 
   indent(out) <<
     "TStruct struc = new TStruct(\"" << name << "\");" << endl;
   indent(out) <<
-    "TField field = new TField();" << endl;
-  indent(out) <<
     "oprot.WriteStructBegin(struc);" << endl;
 
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    bool null_allowed = type_can_be_null((*f_iter)->get_type());
-    if (null_allowed) {
+  if (fields.size() > 0) {
+    indent(out) << "TField field = new TField();" << endl;
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      bool null_allowed = type_can_be_null((*f_iter)->get_type());
+      if (null_allowed) {
+        indent(out) <<
+          "if (this." << (*f_iter)->get_name() << " != null) {" << endl;
+        indent_up();
+      }
+
       indent(out) <<
-        "if (this." << (*f_iter)->get_name() << " != null) {" << endl;
-      indent_up();
-    }
+        "field.Name = \"" << (*f_iter)->get_name() << "\";" << endl;
+      indent(out) <<
+        "field.Type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl;
+      indent(out) <<
+        "field.ID = " << (*f_iter)->get_key() << ";" << endl;
+      indent(out) <<
+        "oprot.WriteFieldBegin(field);" << endl;
 
-    indent(out) <<
-      "field.Name = \"" << (*f_iter)->get_name() << "\";" << endl;
-    indent(out) <<
-      "field.Type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl;
-    indent(out) <<
-      "field.ID = " << (*f_iter)->get_key() << ";" << endl;
-    indent(out) <<
-      "oprot.WriteFieldBegin(field);" << endl;
+      generate_serialize_field(out, *f_iter, "this.");
 
-    generate_serialize_field(out, *f_iter, "this.");
+      indent(out) <<
+        "oprot.WriteFieldEnd();" << endl;
 
-    indent(out) <<
-      "oprot.WriteFieldEnd();" << endl;
-
-    if (null_allowed) {
-      indent_down();
-      indent(out) << "}" << endl;
+      if (null_allowed) {
+        indent_down();
+        indent(out) << "}" << endl;
+      }
     }
   }
 
@@ -508,53 +509,54 @@ void t_csharp_generator::generate_csharp_struct_result_writer(ofstream& out, t_s
   indent(out) <<
     "TStruct struc = new TStruct(\"" << name << "\");" << endl;
   indent(out) <<
-    "TField field = new TField();" << endl;
-  indent(out) <<
     "oprot.WriteStructBegin(struc);" << endl;
 
-  bool first = true;
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if (first) {
-      first = false;
-      out <<
-        endl << indent() << "if ";
-    } else {
-      out <<
-        " else if ";
-    }
+  if (fields.size() > 0) {
+    indent(out) << "TField field = new TField();" << endl;
+    bool first = true;
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      if (first) {
+        first = false;
+        out <<
+          endl << indent() << "if ";
+      } else {
+        out <<
+          " else if ";
+      }
 
-    out <<
-      "(this.__isset." << (*f_iter)->get_name() << ") {" << endl;
-    indent_up();
-
-    bool null_allowed = type_can_be_null((*f_iter)->get_type());
-    if (null_allowed) {
-      indent(out) <<
-        "if (this." << (*f_iter)->get_name() << " != null) {" << endl;
+      out <<
+        "(this.__isset." << (*f_iter)->get_name() << ") {" << endl;
       indent_up();
-    }
 
-    indent(out) <<
-      "field.Name = \"" << (*f_iter)->get_name() << "\";" << endl;
-    indent(out) <<
-      "field.Type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl;
-    indent(out) <<
-      "field.ID = " << (*f_iter)->get_key() << ";" << endl;
-    indent(out) <<
-      "oprot.WriteFieldBegin(field);" << endl;
+      bool null_allowed = type_can_be_null((*f_iter)->get_type());
+      if (null_allowed) {
+        indent(out) <<
+          "if (this." << (*f_iter)->get_name() << " != null) {" << endl;
+        indent_up();
+      }
 
-    generate_serialize_field(out, *f_iter, "this.");
+      indent(out) <<
+        "field.Name = \"" << (*f_iter)->get_name() << "\";" << endl;
+      indent(out) <<
+        "field.Type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl;
+      indent(out) <<
+        "field.ID = " << (*f_iter)->get_key() << ";" << endl;
+      indent(out) <<
+        "oprot.WriteFieldBegin(field);" << endl;
 
-    indent(out) <<
-      "oprot.WriteFieldEnd();" << endl;
+      generate_serialize_field(out, *f_iter, "this.");
 
-    if (null_allowed) {
+      indent(out) <<
+        "oprot.WriteFieldEnd();" << endl;
+
+      if (null_allowed) {
+        indent_down();
+        indent(out) << "}" << endl;
+      }
+
       indent_down();
-      indent(out) << "}" << endl;
+      indent(out) << "}";
     }
-
-    indent_down();
-    indent(out) << "}";
   }
 
   out <<
