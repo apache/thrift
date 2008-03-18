@@ -13,6 +13,8 @@ namespace facebook { namespace thrift { namespace transport {
 
 using namespace std;
 
+using boost::shared_ptr;
+
 /**
  * TSocketPoolServer implementation
  *
@@ -27,7 +29,7 @@ TSocketPoolServer::TSocketPoolServer()
 /**
  * Constructor for TSocketPool server
  */
-TSocketPoolServer::TSocketPoolServer(const std::string &host, int port)
+TSocketPoolServer::TSocketPoolServer(const string &host, int port)
   : host_(host),
     port_(port),
     lastFailTime_(0),
@@ -38,6 +40,14 @@ TSocketPoolServer::TSocketPoolServer(const std::string &host, int port)
  *
  * @author Jason Sobel <jsobel@facebook.com>
  */
+
+TSocketPool::TSocketPool() : TSocket(),
+  numRetries_(1),
+  retryInterval_(60),
+  maxConsecutiveFailures_(1),
+  randomize_(true),
+  alwaysTryLast_(true) {
+}
 
 TSocketPool::TSocketPool(const vector<string> &hosts,
                          const vector<int> &ports) : TSocket(),
@@ -57,7 +67,7 @@ TSocketPool::TSocketPool(const vector<string> &hosts,
   }
 }
 
-TSocketPool::TSocketPool(const std::vector<pair<string, int> >& servers) : TSocket(),
+TSocketPool::TSocketPool(const vector<pair<string, int> >& servers) : TSocket(),
   numRetries_(1),
   retryInterval_(60),
   maxConsecutiveFailures_(1),
@@ -69,7 +79,7 @@ TSocketPool::TSocketPool(const std::vector<pair<string, int> >& servers) : TSock
   }
 }
 
-TSocketPool::TSocketPool(const std::vector<TSocketPoolServer>& servers) : TSocket(),
+TSocketPool::TSocketPool(const vector< shared_ptr<TSocketPoolServer> >& servers) : TSocket(),
   servers_(servers),
   numRetries_(1),
   retryInterval_(60),
@@ -94,11 +104,15 @@ TSocketPool::~TSocketPool() {
 }
 
 void TSocketPool::addServer(const string& host, int port) {
-  servers_.push_back(TSocketPoolServer(host, port));
+  servers_.push_back(shared_ptr<TSocketPoolServer>(new TSocketPoolServer(host, port)));
 }
 
-std::vector<TSocketPoolServer> TSocketPool::getServers() {
-  return servers_;
+void TSocketPool::setServers(const vector< shared_ptr<TSocketPoolServer> >& servers) {
+  servers_ = servers;
+}
+
+void TSocketPool::getServers(vector< shared_ptr<TSocketPoolServer> >& servers) {
+  servers = servers_;
 }
 
 void TSocketPool::setNumRetries(int numRetries) {
@@ -125,13 +139,13 @@ void TSocketPool::setAlwaysTryLast(bool alwaysTryLast) {
 /* TODO: without apc we ignore a lot of functionality from the php version */
 void TSocketPool::open() {
   if (randomize_) {
-    std::random_shuffle(servers_.begin(), servers_.end());
+    random_shuffle(servers_.begin(), servers_.end());
   }
 
   unsigned int numServers = servers_.size();
   for (unsigned int i = 0; i < numServers; ++i) {
 
-    TSocketPoolServer &server = servers_[i];
+    TSocketPoolServer &server = *(servers_[i]);
     bool retryIntervalPassed = (server.lastFailTime_ == 0);
     bool isLastServer = alwaysTryLast_ ? (i == (numServers - 1)) : false;
 
@@ -162,13 +176,13 @@ void TSocketPool::open() {
           // connection failed
         }
       }
-    }
 
-    ++server.consecutiveFailures_;
-    if (server.consecutiveFailures_ > maxConsecutiveFailures_) {
-      // Mark server as down
-      server.consecutiveFailures_ = 0;
-      server.lastFailTime_ = time(NULL);
+      ++server.consecutiveFailures_;
+      if (server.consecutiveFailures_ > maxConsecutiveFailures_) {
+        // Mark server as down
+        server.consecutiveFailures_ = 0;
+        server.lastFailTime_ = time(NULL);
+      }
     }
   }
 

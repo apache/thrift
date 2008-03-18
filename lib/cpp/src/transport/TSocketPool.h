@@ -51,6 +51,12 @@ class TSocketPoolServer {
 class TSocketPool : public TSocket {
 
  public:
+
+   /**
+    * Socket pool constructor
+    */
+   TSocketPool();
+
    /**
     * Socket pool constructor
     *
@@ -72,7 +78,7 @@ class TSocketPool : public TSocket {
     *
     * @param servers list of TSocketPoolServers
     */
-   TSocketPool(const std::vector<TSocketPoolServer>& servers);
+  TSocketPool(const std::vector< boost::shared_ptr<TSocketPoolServer> >& servers);
 
    /**
     * Socket pool constructor
@@ -92,11 +98,15 @@ class TSocketPool : public TSocket {
     */
    void addServer(const std::string& host, int port);
 
+   /**
+    * Set list of servers in this pool
+    */
+  void setServers(const std::vector< boost::shared_ptr<TSocketPoolServer> >& servers);
 
    /**
     * Get list of servers in this pool
     */
-   std::vector<TSocketPoolServer> getServers();
+  void getServers(std::vector< boost::shared_ptr<TSocketPoolServer> >& servers);
 
    /**
     * Sets how many times to keep retrying a host in the connect function.
@@ -131,7 +141,7 @@ class TSocketPool : public TSocket {
  protected:
 
    /** List of servers to connect to */
-   std::vector<TSocketPoolServer> servers_;
+  std::vector< boost::shared_ptr<TSocketPoolServer> > servers_;
 
    /** How many times to retry each host in connect */
    int numRetries_;
