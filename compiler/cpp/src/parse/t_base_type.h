@@ -36,7 +36,8 @@ class t_base_type : public t_type {
     t_type(name),
     base_(base),
     string_list_(false),
-    string_enum_(false) {}
+    binary_(false),
+    string_enum_(false){}
 
   t_base get_base() const {
     return base_;
