@@ -144,11 +144,18 @@ namespace ThriftMSBuildTask
 			if (File.Exists(lastBuildPath))
 			{
 				string lastComp = File.ReadAllText(lastBuildPath);
-
-				if (lastComp == lastWrite)
+				//don't recompile if the thrift library has been updated since lastComp
+				FileInfo f = new FileInfo(ThriftLibrary.ItemSpec);
+				string thriftLibTime = f.LastWriteTimeUtc.ToFileTimeUtc().ToString();
+				if (lastComp.CompareTo(thriftLibTime) < 0)
+				{
+					//new thrift library, do a compile
+					lastWrite = thriftLibTime;
+				}
+				else if (lastComp == lastWrite || (lastComp == thriftLibTime && lastComp.CompareTo(lastWrite) > 0))
 				{
 					//the .thrift dir hasn't been written to since last compilation, don't need to do anything
-					LogMessage("ThriftImpl up-to-date", MessageImportance.Normal);
+					LogMessage("ThriftImpl up-to-date", MessageImportance.High);
 					return true;
 				}
 			}
@@ -160,9 +167,13 @@ namespace ThriftMSBuildTask
 			string genDir = Path.Combine(thriftDir, "gen-csharp");
 			if (Directory.Exists(genDir))
 			{
-				Directory.Delete(genDir, true);
+				try
+				{
+					Directory.Delete(genDir, true);
+				}
+				catch { /*eh i tried, just over-write now*/}
 			}
-			
+
 			//run the thrift executable to generate C#
 			foreach (string thriftFile in Directory.GetFiles(defDir, "*.thrift"))
 			{
@@ -175,6 +186,11 @@ namespace ThriftMSBuildTask
 				p.StartInfo.RedirectStandardOutput = false;
 				p.Start();
 				p.WaitForExit();
+				if (p.ExitCode != 0)
+				{
+					LogMessage("thrift.exe failed to compile " + thriftFile, MessageImportance.High);
+					return false;
+				}
 				if (p.ExitCode != 0)
 				{
 					LogMessage("thrift.exe failed to compile " + thriftFile, MessageImportance.High);
