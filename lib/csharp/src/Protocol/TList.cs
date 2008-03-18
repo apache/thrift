@@ -19,6 +19,7 @@ namespace Thrift.Protocol
 	public struct TList
 	{
 		public TList(TType elementType, int count)
+			:this()
 		{
 			ElementType = elementType;
 			Count = count;

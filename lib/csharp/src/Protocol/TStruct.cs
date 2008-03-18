@@ -18,6 +18,7 @@ namespace Thrift.Protocol
 	public struct TStruct
 	{
 		public TStruct(string name)
+			:this()
 		{
 			Name = name;
 		}

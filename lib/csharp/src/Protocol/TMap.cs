@@ -19,6 +19,7 @@ namespace Thrift.Protocol
 	public struct TMap
 	{
 		public TMap(TType keyType, TType valueType, int count)
+			:this()
 		{
 			KeyType = keyType;
 			ValueType = valueType;

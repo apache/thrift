@@ -19,6 +19,7 @@ namespace Thrift.Protocol
 	public struct TSet
 	{
 		public TSet(TType elementType, int count)
+			:this()
 		{
 			ElementType = elementType;
 			Count = count;

@@ -19,6 +19,7 @@ namespace Thrift.Protocol
 	public struct TMessage
 	{
 		public TMessage(string name, TMessageType type, int seqid)
+			:this()
 		{
 			Name = name;
 			Type = type;

@@ -19,6 +19,7 @@ namespace Thrift.Protocol
 	public struct TField
 	{
 		public TField(string name, TType type, short id)
+			:this()
 		{
 			Name = name;
 			Type = type;
