@@ -443,7 +443,7 @@ void t_php_generator::_generate_php_struct_definition(ofstream& out,
       indent() << "if (is_array($vals)) {" << endl;
     indent_up();
     if (oop_) {
-      out << indent() << "parent::construct(self::$_TSPEC, $vals);" << endl;
+      out << indent() << "parent::__construct(self::$_TSPEC, $vals);" << endl;
     } else {
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         out <<
