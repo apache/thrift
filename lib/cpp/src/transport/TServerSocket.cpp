@@ -30,6 +30,8 @@ TServerSocket::TServerSocket(int port) :
   recvTimeout_(0),
   retryLimit_(0),
   retryDelay_(0),
+  tcpSendBuffer_(0),
+  tcpRecvBuffer_(0),
   intSock1_(-1),
   intSock2_(-1) {}
 
@@ -41,6 +43,8 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   recvTimeout_(recvTimeout),
   retryLimit_(0),
   retryDelay_(0),
+  tcpSendBuffer_(0),
+  tcpRecvBuffer_(0),
   intSock1_(-1),
   intSock2_(-1) {}
 
@@ -62,6 +66,14 @@ void TServerSocket::setRetryLimit(int retryLimit) {
 
 void TServerSocket::setRetryDelay(int retryDelay) {
   retryDelay_ = retryDelay;
+}
+
+void TServerSocket::setTcpSendBuffer(int tcpSendBuffer) {
+  tcpSendBuffer_ = tcpSendBuffer;
+}
+
+void TServerSocket::setTcpRecvBuffer(int tcpRecvBuffer) {
+  tcpRecvBuffer_ = tcpRecvBuffer;
 }
 
 void TServerSocket::listen() {
@@ -113,6 +125,25 @@ void TServerSocket::listen() {
     GlobalOutput("TServerSocket::listen() SO_REUSEADDR");
     close();
     throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_REUSEADDR");
+  }
+
+  // Set TCP buffer sizes
+  if (tcpSendBuffer_ > 0) {
+    if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_SNDBUF,
+                         &tcpSendBuffer_, sizeof(tcpSendBuffer_))) {
+      GlobalOutput("TServerSocket::listen() SO_SNDBUF");
+      close();
+      throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_SNDBUF");
+    }
+  }
+
+  if (tcpRecvBuffer_ > 0) {
+    if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_RCVBUF,
+                         &tcpRecvBuffer_, sizeof(tcpRecvBuffer_))) {
+      GlobalOutput("TServerSocket::listen() SO_RCVBUF");
+      close();
+      throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_RCVBUF");
+    }
   }
 
   // Defer accept

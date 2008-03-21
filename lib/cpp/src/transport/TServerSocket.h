@@ -33,6 +33,9 @@ class TServerSocket : public TServerTransport {
   void setRetryLimit(int retryLimit);
   void setRetryDelay(int retryDelay);
 
+  void setTcpSendBuffer(int tcpSendBuffer);
+  void setTcpRecvBuffer(int tcpRecvBuffer);
+
   void listen();
   void close();
 
@@ -49,6 +52,8 @@ class TServerSocket : public TServerTransport {
   int recvTimeout_;
   int retryLimit_;
   int retryDelay_;
+  int tcpSendBuffer_;
+  int tcpRecvBuffer_;
 
   int intSock1_;
   int intSock2_;
