@@ -1970,12 +1970,8 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
       indent() << "  return " << extends << "Processor::process_fn(iprot, oprot, fname, seqid);" << endl;
   }
   f_service_ <<
-    indent() << "} else {" << endl <<
-    indent() << "  (this->*(pfn->second))(seqid, iprot, oprot);" << endl <<
-    indent() << "}" << endl;
-
-  // Read end of args field, the T_STOP, and the struct close
-  f_service_ <<
+    indent() << "}" << endl <<
+    indent() << "(this->*(pfn->second))(seqid, iprot, oprot);" << endl <<
     indent() << "return true;" << endl;
 
   indent_down();
