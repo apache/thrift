@@ -41,8 +41,10 @@ void t_perl_generator::init_generator() {
 
   // Print header
   f_consts_ <<
-    autogen_comment() <<
-    endl;
+      autogen_comment() <<
+      "package "<<( ns.empty() ? "" : ns+"::")<<"Constants;"<<endl<<
+      perl_includes() <<
+      endl;
 }
 
 /**
@@ -189,7 +191,7 @@ string t_perl_generator::render_const_value(t_type* type, t_const_value* value) 
       out << "," << endl;
     }
 
-    out << ")";
+    out << "}";
   } else if (type->is_list() || type->is_set()) {
     t_type* etype;
     if (type->is_list()) {
