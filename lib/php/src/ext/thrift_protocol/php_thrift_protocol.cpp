@@ -681,6 +681,9 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
       return;
     case T_STRUCT: {
       TSRMLS_FETCH();
+      if (Z_TYPE_PP(value) != IS_OBJECT) {
+        throw_tprotocolexception("Attempt to send non-object type as a T_STRUCT", INVALID_DATA);
+      }
       zval* spec = zend_read_static_property(zend_get_class_entry(*value TSRMLS_CC), "_TSPEC", 6, false TSRMLS_CC);
       binary_serialize_spec(*value, transport, Z_ARRVAL_P(spec));
     } return;
