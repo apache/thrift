@@ -1,30 +1,42 @@
-dnl @synopsis AX_BOOST([MINIMUM-VERSION])
-dnl
-dnl Test for the Boost C++ libraries of a particular version (or newer)
-dnl
-dnl If no path to the installed boost library is given the macro
-dnl searchs under /usr, /usr/local, and /opt, and evaluates the
-dnl $BOOST_ROOT environment variable. Further documentation is
-dnl available at <http://randspringer.de/boost/index.html>.
-dnl
-dnl This macro calls:
-dnl
-dnl   AC_SUBST(BOOST_CPPFLAGS) / AC_SUBST(BOOST_LDFLAGS)
-dnl
-dnl And sets:
-dnl
-dnl   HAVE_BOOST
-dnl
-dnl @category InstalledPackages
-dnl @category Cxx
-dnl @author Thomas Porschberg <thomas@randspringer.de>
-dnl @version 2006-06-15
-dnl @license AllPermissive
+##### http://autoconf-archive.cryp.to/ax_boost_base.html
+#
+# SYNOPSIS
+#
+#   AX_BOOST_BASE([MINIMUM-VERSION])
+#
+# DESCRIPTION
+#
+#   Test for the Boost C++ libraries of a particular version (or newer)
+#
+#   If no path to the installed boost library is given the macro
+#   searchs under /usr, /usr/local, /opt and /opt/local and evaluates
+#   the $BOOST_ROOT environment variable. Further documentation is
+#   available at <http://randspringer.de/boost/index.html>.
+#
+#   This macro calls:
+#
+#     AC_SUBST(BOOST_CPPFLAGS) / AC_SUBST(BOOST_LDFLAGS)
+#
+#   And sets:
+#
+#     HAVE_BOOST
+#
+# LAST MODIFICATION
+#
+#   2007-07-28
+#
+# COPYLEFT
+#
+#   Copyright (c) 2007 Thomas Porschberg <thomas@randspringer.de>
+#
+#   Copying and distribution of this file, with or without
+#   modification, are permitted in any medium without royalty provided
+#   the copyright notice and this notice are preserved.
 
 AC_DEFUN([AX_BOOST_BASE],
 [
 AC_ARG_WITH([boost],
-	AS_HELP_STRING([--with-boost@<:@=DIR@:>@], [use boost (default is yes) - it is possible to specify an alternate root directory for boost]),
+	AS_HELP_STRING([--with-boost@<:@=DIR@:>@], [use boost (default is yes) - it is possible to specify the root directory for boost (optional)]),
 	[
     if test "$withval" = "no"; then
 		want_boost="no"
@@ -32,7 +44,7 @@ AC_ARG_WITH([boost],
         want_boost="yes"
         ac_boost_path=""
     else
-        want_boost="yes"
+	    want_boost="yes"
         ac_boost_path="$withval"
 	fi
     ],
@@ -58,7 +70,7 @@ if test "x$want_boost" = "xyes"; then
 		BOOST_LDFLAGS="-L$ac_boost_path/lib"
 		BOOST_CPPFLAGS="-I$ac_boost_path/include"
 	else
-		for ac_boost_path_tmp in /usr /usr/local /opt ; do
+		for ac_boost_path_tmp in /usr /usr/local /opt /opt/local ; do
 			if test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
 				BOOST_LDFLAGS="-L$ac_boost_path_tmp/lib"
 				BOOST_CPPFLAGS="-I$ac_boost_path_tmp/include"
@@ -112,7 +124,7 @@ if test "x$want_boost" = "xyes"; then
 				done
 			fi
 		else
-			for ac_boost_path in /usr /usr/local /opt ; do
+			for ac_boost_path in /usr /usr/local /opt /opt/local ; do
 				if test -d "$ac_boost_path" && test -r "$ac_boost_path"; then
 					for i in `ls -d $ac_boost_path/include/boost-* 2>/dev/null`; do
 						_version_tmp=`echo $i | sed "s#$ac_boost_path##" | sed 's/\/include\/boost-//' | sed 's/_/./'`
