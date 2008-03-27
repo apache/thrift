@@ -1549,3 +1549,6 @@ string t_csharp_generator::type_to_enum(t_type* type) {
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
+
+
+THRIFT_REGISTER_GENERATOR(csharp, "C#", "");

@@ -41,7 +41,6 @@
 #include "generate/t_xsd_generator.h"
 #include "generate/t_perl_generator.h"
 #include "generate/t_erl_generator.h"
-#include "generate/t_csharp_generator.h"
 
 using namespace std;
 
@@ -609,7 +608,6 @@ void usage() {
   fprintf(stderr, "  -xsd        Generate XSD output files\n");
   fprintf(stderr, "  -perl       Generate Perl output files\n");
   fprintf(stderr, "  -erl        Generate Erlang output files\n");
-  fprintf(stderr, "  -csharp     Generate C# output files\n");
   fprintf(stderr, "  -o dir      Set the output directory for gen-* packages\n");
   fprintf(stderr, "               (default: current directory)\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories\n");
@@ -907,13 +905,6 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       delete erl;
     }
 
-    if (gen_csharp) {
-      pverbose("Generating C#\n");
-      t_csharp_generator* csharp = new t_csharp_generator(program);
-      csharp->generate_program();
-      delete csharp;
-    }
-
     if (dump_docs) {
       dump_docstrings(program);
     }
@@ -1107,6 +1098,10 @@ int main(int argc, char** argv) {
     pwarning(1, "-javabean is deprecated.  Use --gen java:beans");
     generator_strings.push_back("java:beans");
   }
+  if (gen_csharp) {
+    pwarning(1, "-csharp is deprecated.  Use --gen csharp");
+    generator_strings.push_back("csharp");
+  }
   if (gen_cocoa) {
     pwarning(1, "-cocoa is deprecated.  Use --gen cocoa");
     generator_strings.push_back("cocoa");
@@ -1125,7 +1120,7 @@ int main(int argc, char** argv) {
   }
 
   // You gotta generate something!
-  if (!gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_csharp && generator_strings.empty()) {
+  if (!gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && generator_strings.empty()) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
