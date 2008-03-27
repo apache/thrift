@@ -17,7 +17,6 @@
 using namespace std;
 
 
-
 /**
  * Java code generator.
  *
