@@ -962,6 +962,7 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       } else {
         pverbose("Generating \"%s\"\n", iter->c_str());
         generator->generate_program();
+        delete generator;
       }
     }
 
