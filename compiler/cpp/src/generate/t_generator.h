@@ -34,9 +34,9 @@ class t_generator {
   /**
    * Framework generator method that iterates over all the parts of a program
    * and performs general actions. This is implemented by the base class and
-   * should not be overwritten in the subclasses.
+   * should not normally be overwritten in the subclasses.
    */
-  void generate_program();
+  virtual void generate_program();
 
   const t_program* get_program() const { return program_; }
 
