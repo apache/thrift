@@ -1334,3 +1334,6 @@ string t_hs_generator::render_hs_type(t_type* type) {
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
+
+
+THRIFT_REGISTER_GENERATOR(hs, "Haskell", "");

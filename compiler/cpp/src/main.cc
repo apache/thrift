@@ -41,7 +41,6 @@
 #include "generate/t_xsd_generator.h"
 #include "generate/t_perl_generator.h"
 #include "generate/t_erl_generator.h"
-#include "generate/t_hs_generator.h"
 #include "generate/t_cocoa_generator.h"
 #include "generate/t_st_generator.h"
 #include "generate/t_csharp_generator.h"
@@ -612,7 +611,6 @@ void usage() {
   fprintf(stderr, "  -xsd        Generate XSD output files\n");
   fprintf(stderr, "  -perl       Generate Perl output files\n");
   fprintf(stderr, "  -erl        Generate Erlang output files\n");
-  fprintf(stderr, "  -hs         Generate Haskell output files\n");
   fprintf(stderr, "  -cocoa      Generate Cocoa/Objective-C output files\n");
   fprintf(stderr, "  -csharp     Generate C# output files\n");
   fprintf(stderr, "  -st         Generate Squeak/Smalltalk output files\n");
@@ -913,13 +911,6 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       delete erl;
     }
 
-    if (gen_hs) {
-      pverbose("Generating Haskell\n");
-      t_hs_generator* hs = new t_hs_generator(program);
-      hs->generate_program();
-      delete hs;
-    }
-
     if (gen_cocoa) {
       pverbose("Generating Cocoa/Objective-C\n");
       t_cocoa_generator* cocoa = new t_cocoa_generator(program);
@@ -1138,9 +1129,13 @@ int main(int argc, char** argv) {
     pwarning(1, "-ocaml is deprecated.  Use --gen ocaml");
     generator_strings.push_back("ocaml");
   }
+  if (gen_hs) {
+    pwarning(1, "-hs is deprecated.  Use --gen hs");
+    generator_strings.push_back("hs");
+  }
 
   // You gotta generate something!
-  if (!gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_hs && !gen_cocoa && !gen_st && !gen_csharp && generator_strings.empty()) {
+  if (!gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_cocoa && !gen_st && !gen_csharp && generator_strings.empty()) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
