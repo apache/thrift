@@ -184,14 +184,6 @@ class t_program : public t_doc {
     return xsd_namespace_;
   }
 
-  void set_ruby_namespace(std::string ruby_namespace) {
-    ruby_namespace_ = ruby_namespace;
-  }
-
-  const std::string& get_ruby_namespace() const {
-    return ruby_namespace_;
-  }
-
   void set_perl_package(std::string perl_package) {
     perl_package_ = perl_package;
   }
@@ -243,9 +235,6 @@ class t_program : public t_doc {
 
   // XSD namespace
   std::string xsd_namespace_;
-
-  // Ruby namespace
-  std::string ruby_namespace_;
 
   // Perl namespace
   std::string perl_package_;

@@ -151,7 +151,7 @@ class t_rb_generator : public t_oop_generator {
 
 
   std::vector<std::string> ruby_modules(t_program* p) {
-    std::string ns = p->get_ruby_namespace();
+    std::string ns = p->get_namespace("rb");
     boost::tokenizer<> tok(ns);
     std::vector<std::string> modules;
 

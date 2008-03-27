@@ -293,11 +293,13 @@ Header:
         g_program->set_perl_package($2);
       }
     }
+/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
 | tok_ruby_namespace tok_identifier
     {
+      pwarning(1, "'ruby_namespace' is deprecated. Use 'namespace rb' instead");
       pdebug("Header -> tok_ruby_namespace tok_identifier");
       if (g_parse_mode == PROGRAM) {
-        g_program->set_ruby_namespace($2);
+        g_program->set_namespace("rb", $2);
       }
     }
 /* TODO(dreiss): Get rid of this once everyone is using the new hotness. */

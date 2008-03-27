@@ -1,6 +1,6 @@
 namespace java thrift.test
 namespace cpp thrift.test
-ruby_namespace Thrift.Test
+namespace rb Thrift.Test
 perl_package ThriftTest
 namespace csharp Thrift.Test
 
