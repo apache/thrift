@@ -10,7 +10,6 @@ thrift_SOURCES = src/thrifty.yy \
                  src/md5c.c \
                  src/generate/t_generator.cc \
                  src/generate/t_php_generator.cc \
-                 src/generate/t_py_generator.cc \
                  src/generate/t_rb_generator.cc \
                  src/generate/t_xsd_generator.cc \
                  src/generate/t_perl_generator.cc \
@@ -53,6 +52,9 @@ thrift_SOURCES += src/generate/t_java_generator.cc
 endif
 if THRIFT_GEN_csharp
 thrift_SOURCES += src/generate/t_csharp_generator.cc
+endif
+if THRIFT_GEN_py
+thrift_SOURCES += src/generate/t_py_generator.cc
 endif
 if THRIFT_GEN_cocoa
 thrift_SOURCES += src/generate/t_cocoa_generator.cc
