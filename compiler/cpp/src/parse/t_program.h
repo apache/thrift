@@ -216,14 +216,6 @@ class t_program : public t_doc {
     return perl_package_;
   }
 
-  void set_cocoa_prefix(std::string cocoa_prefix) {
-    cocoa_prefix_ = cocoa_prefix;
-  }
-
-  const std::string& get_cocoa_prefix() const {
-    return cocoa_prefix_;
-  }
-
  private:
 
   // File path
@@ -276,8 +268,6 @@ class t_program : public t_doc {
 
   // Perl namespace
   std::string perl_package_;
-  // Cocoa/Objective-C naming prefix
-  std::string cocoa_prefix_;
 
 
   // C# namespace

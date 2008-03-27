@@ -325,11 +325,13 @@ Header:
         g_program->set_namespace("java", $2);
       }
     }
+/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
 | tok_cocoa_prefix tok_identifier
     {
+      pwarning(1, "'cocoa_prefix' is deprecated. Use 'namespace cocoa' instead");
       pdebug("Header -> tok_cocoa_prefix tok_identifier");
       if (g_parse_mode == PROGRAM) {
-        g_program->set_cocoa_prefix($2);
+        g_program->set_namespace("cocoa", $2);
       }
     }
 | tok_xsd_namespace tok_literal

@@ -192,7 +192,7 @@ class t_cocoa_generator : public t_oop_generator {
 void t_cocoa_generator::init_generator() {
   // Make output directory
   MKDIR(get_out_dir().c_str());
-  cocoa_prefix_ = program_->get_cocoa_prefix();
+  cocoa_prefix_ = program_->get_namespace("cocoa");
 
   // we have a .h header file...
   string f_header_name = program_name_+".h";
@@ -1734,7 +1734,7 @@ string t_cocoa_generator::type_name(t_type* ttype, bool class_ref) {
     // Check for prefix
     t_program* program = ttype->get_program();
     if (program != NULL) {
-      result = program->get_cocoa_prefix() + ttype->get_name();
+      result = program->get_namespace("cocoa") + ttype->get_name();
     } else {
       result = ttype->get_name();
     }
