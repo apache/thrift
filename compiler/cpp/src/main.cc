@@ -36,7 +36,6 @@
 #include "parse/t_program.h"
 #include "parse/t_scope.h"
 #include "generate/t_php_generator.h"
-#include "generate/t_py_generator.h"
 #include "generate/t_rb_generator.h"
 #include "generate/t_xsd_generator.h"
 #include "generate/t_perl_generator.h"
@@ -602,8 +601,6 @@ void usage() {
   fprintf(stderr, "  -phpl       Generate PHP-lite (with -php)\n");
   fprintf(stderr, "  -phpa       Generate PHP with autoload (with -php)\n");
   fprintf(stderr, "  -phpo       Generate PHP with object oriented subclasses (with -php)\n");
-  fprintf(stderr, "  -py         Generate Python output files\n");
-  fprintf(stderr, "  -pyns       Generate Python new-style classes (with -py)\n");
   fprintf(stderr, "  -rb         Generate Ruby output files\n");
   fprintf(stderr, "  -xsd        Generate XSD output files\n");
   fprintf(stderr, "  -perl       Generate Perl output files\n");
@@ -870,13 +867,6 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       delete phpi;
     }
 
-    if (gen_py) {
-      pverbose("Generating Python\n");
-      t_py_generator* py = new t_py_generator(program, gen_py_newstyle);
-      py->generate_program();
-      delete py;
-    }
-
     if (gen_rb) {
       pverbose("Generating Ruby\n");
       t_rb_generator* rb = new t_rb_generator(program);
@@ -1102,6 +1092,10 @@ int main(int argc, char** argv) {
     pwarning(1, "-csharp is deprecated.  Use --gen csharp");
     generator_strings.push_back("csharp");
   }
+  if (gen_py) {
+    pwarning(1, "-py is deprecated.  Use --gen py");
+    generator_strings.push_back("py");
+  }
   if (gen_cocoa) {
     pwarning(1, "-cocoa is deprecated.  Use --gen cocoa");
     generator_strings.push_back("cocoa");
@@ -1120,7 +1114,7 @@ int main(int argc, char** argv) {
   }
 
   // You gotta generate something!
-  if (!gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && generator_strings.empty()) {
+  if (!gen_php && !gen_phpi && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && generator_strings.empty()) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }

@@ -1724,3 +1724,8 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
 
   throw "INVALID TYPE IN type_to_spec_args: " + ttype->get_name();
 }
+
+
+THRIFT_REGISTER_GENERATOR(py, "Python",
+"    new_style:       Generate new-style classes.\n"
+);

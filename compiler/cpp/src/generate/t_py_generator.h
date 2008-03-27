@@ -21,9 +21,16 @@
  */
 class t_py_generator : public t_generator {
  public:
-  t_py_generator(t_program* program, bool gen_newstyle) :
-    t_generator(program),
-    gen_newstyle_(gen_newstyle) {
+  t_py_generator(
+      t_program* program,
+      const std::map<std::string, std::string>& parsed_options,
+      const std::string& option_string)
+    : t_generator(program)
+  {
+    std::map<std::string, std::string>::const_iterator iter;
+
+    iter = parsed_options.find("new_style");
+    gen_newstyle_ = (iter != parsed_options.end());
 
     out_dir_base_ = "gen-py";
   }
