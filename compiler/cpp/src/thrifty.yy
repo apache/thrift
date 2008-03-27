@@ -343,7 +343,7 @@ Header:
     }
 | tok_csharp_namespace tok_identifier
    {
-     pdebug("Header -> tok_csharp_package tok_identifier");
+     pdebug("Header -> tok_csharp_namespace tok_identifier");
      if (g_parse_mode == PROGRAM) {
        g_program->set_csharp_namespace($2);
      }
