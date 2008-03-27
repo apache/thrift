@@ -164,7 +164,7 @@ sub flush
 {
     my $self = shift;
 
-    my $ua = LWP::UserAgent->new('timeout' => $self->{sendTimeout},
+    my $ua = LWP::UserAgent->new('timeout' => ($self->{sendTimeout} / 1000),
       'agent' => 'Perl/THttpClient'
      );
     $ua->default_header('Accept' => 'application/x-thrift');

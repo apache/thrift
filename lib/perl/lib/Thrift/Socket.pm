@@ -139,7 +139,7 @@ sub readAll
     while (1) {
 
         #check for timeout
-        my @sockets = $self->{handle}->can_read( $self->{recvTimeout} );
+        my @sockets = $self->{handle}->can_read( $self->{recvTimeout} / 1000 );
 
         if(@sockets == 0){
             die new Thrift::TException('TSocket: timed out reading '.$len.' bytes from '.
@@ -179,7 +179,7 @@ sub read
     my $len  = shift;
 
     #check for timeout
-    my @sockets = $self->{handle}->can_read( $self->{sendTimeout} );
+    my @sockets = $self->{handle}->can_read( $self->{sendTimeout} / 1000 );
 
     if(@sockets == 0){
         die new Thrift::TException('TSocket: timed out reading '.$len.' bytes from '.
@@ -217,7 +217,7 @@ sub write
 
 
         #check for timeout
-        my @sockets = $self->{handle}->can_write( $self->{recvTimeout} );
+        my @sockets = $self->{handle}->can_write( $self->{recvTimeout} / 1000 );
 
         if(@sockets == 0){
             die new Thrift::TException('TSocket: timed out writing to bytes from '.
