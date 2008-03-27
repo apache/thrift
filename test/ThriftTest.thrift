@@ -2,7 +2,7 @@ namespace java thrift.test
 namespace cpp thrift.test
 ruby_namespace Thrift.Test
 perl_package ThriftTest
-csharp_namespace Thrift.Test
+namespace csharp Thrift.Test
 
 enum Numberz
 {

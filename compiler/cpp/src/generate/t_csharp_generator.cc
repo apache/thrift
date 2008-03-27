@@ -103,7 +103,7 @@ class t_csharp_generator : public t_oop_generator
 
 void t_csharp_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
-  namespace_name_ = program_->get_csharp_namespace();
+  namespace_name_ = program_->get_namespace("csharp");
 
   string dir = namespace_name_;
   string subdir = get_out_dir().c_str();
@@ -1501,7 +1501,7 @@ string t_csharp_generator::type_name(t_type* ttype, bool in_container, bool in_i
 
   t_program* program = ttype->get_program();
   if (program != NULL && program != program_) {
-    string ns = program->get_csharp_namespace();
+    string ns = program->get_namespace("csharp");
     if (!ns.empty()) {
       return ns + "." + ttype->get_name();
     }

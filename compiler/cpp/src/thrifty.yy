@@ -341,11 +341,13 @@ Header:
         g_program->set_xsd_namespace($2);
       }
     }
+/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
 | tok_csharp_namespace tok_identifier
    {
+     pwarning(1, "'csharp_namespace' is deprecated. Use 'namespace csharp' instead");
      pdebug("Header -> tok_csharp_namespace tok_identifier");
      if (g_parse_mode == PROGRAM) {
-       g_program->set_csharp_namespace($2);
+       g_program->set_namespace("csharp", $2);
      }
    }
 

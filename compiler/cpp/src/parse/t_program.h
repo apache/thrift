@@ -176,14 +176,6 @@ class t_program : public t_doc {
     return php_namespace_;
   }
 
-  void set_csharp_namespace(std::string csharp_namespace) {
-    csharp_namespace_ = csharp_namespace;
-  }
-
-  const std::string& get_csharp_namespace() const {
-    return csharp_namespace_;
-  }
-
   void set_xsd_namespace(std::string xsd_namespace) {
     xsd_namespace_ = xsd_namespace;
   }
@@ -269,9 +261,6 @@ class t_program : public t_doc {
   // Perl namespace
   std::string perl_package_;
 
-
-  // C# namespace
-  std::string csharp_namespace_;
 };
 
 #endif
