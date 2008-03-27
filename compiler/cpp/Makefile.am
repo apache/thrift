@@ -16,7 +16,6 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_perl_generator.cc \
                  src/generate/t_erl_generator.cc \
                  src/generate/t_cocoa_generator.cc \
-                 src/generate/t_st_generator.cc \
                  src/generate/t_csharp_generator.cc \
                  src/globals.h \
                  src/main.h \
@@ -56,6 +55,9 @@ thrift_SOURCES += src/generate/t_cpp_generator.cc
 endif
 if THRIFT_GEN_java
 thrift_SOURCES += src/generate/t_java_generator.cc
+endif
+if THRIFT_GEN_st
+thrift_SOURCES += src/generate/t_st_generator.cc
 endif
 if THRIFT_GEN_ocaml
 thrift_SOURCES += src/generate/t_ocaml_generator.cc
