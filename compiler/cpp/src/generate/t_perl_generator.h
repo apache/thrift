@@ -22,9 +22,12 @@
  */
 class t_perl_generator : public t_oop_generator {
  public:
-  t_perl_generator(t_program* program) :
-    t_oop_generator(program) {
-
+  t_perl_generator(
+      t_program* program,
+      const std::map<std::string, std::string>& parsed_options,
+      const std::string& option_string)
+    : t_oop_generator(program)
+  {
     out_dir_base_ = "gen-perl";
   }
 
