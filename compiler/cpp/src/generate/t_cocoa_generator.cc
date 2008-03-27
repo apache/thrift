@@ -1867,3 +1867,6 @@ string t_cocoa_generator::format_string_for_type(t_type* type) {
 string t_cocoa_generator::call_field_setter(t_field* tfield, string fieldName) {
   return "[self set" + capitalize(tfield->get_name()) + ": " + fieldName + "];";
 }
+
+
+THRIFT_REGISTER_GENERATOR(cocoa, "Cocoa", "");
