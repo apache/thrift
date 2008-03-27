@@ -49,7 +49,6 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_rb_generator.h \
                  src/generate/t_xsd_generator.h \
                  src/generate/t_perl_generator.h \
-                 src/generate/t_ocaml_generator.h \
                  src/generate/t_erl_generator.h \
                  src/generate/t_hs_generator.h \
                  src/generate/t_cocoa_generator.h \
