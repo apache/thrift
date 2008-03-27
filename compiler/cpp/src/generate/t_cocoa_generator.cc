@@ -91,7 +91,7 @@ void t_cocoa_generator::close_generator()
 {
   // stick our constants declarations at the end of the header file
   // since they refer to things we are defining.
-  f_header_ << constants_declarations_;
+  f_header_ << constants_declarations_ << endl;
 }
 
 /**
