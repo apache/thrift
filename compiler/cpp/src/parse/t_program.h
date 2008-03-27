@@ -192,14 +192,6 @@ class t_program : public t_doc {
     return ruby_namespace_;
   }
 
-  void set_py_module(std::string py_module) {
-    py_module_ = py_module;
-  }
-
-  const std::string& get_py_module() const {
-    return py_module_;
-  }
-
   void set_perl_package(std::string perl_package) {
     perl_package_ = perl_package;
   }
@@ -254,9 +246,6 @@ class t_program : public t_doc {
 
   // Ruby namespace
   std::string ruby_namespace_;
-
-  // Python namespace
-  std::string py_module_;
 
   // Perl namespace
   std::string perl_package_;

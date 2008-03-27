@@ -151,7 +151,7 @@ class t_py_generator : public t_generator {
   std::string type_to_spec_args(t_type* ttype);
 
   static std::string get_real_py_module(const t_program* program) {
-    std::string real_module = program->get_py_module();
+    std::string real_module = program->get_namespace("py");
     if (real_module.empty()) {
       return program->get_name();
     }

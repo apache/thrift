@@ -277,11 +277,13 @@ Header:
         g_program->set_php_namespace($2);
       }
     }
+/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
 | tok_py_module tok_identifier
     {
+      pwarning(1, "'py_module' is deprecated. Use 'namespace py' instead");
       pdebug("Header -> tok_py_module tok_identifier");
       if (g_parse_mode == PROGRAM) {
-        g_program->set_py_module($2);
+        g_program->set_namespace("py", $2);
       }
     }
 | tok_perl_package tok_identifier
