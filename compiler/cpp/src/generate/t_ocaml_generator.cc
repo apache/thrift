@@ -1510,3 +1510,6 @@ string t_ocaml_generator::render_ocaml_type(t_type* type) {
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
+
+
+THRIFT_REGISTER_GENERATOR(ocaml, "OCaml", "");
