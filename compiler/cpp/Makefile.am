@@ -47,7 +47,6 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_xsd_generator.h \
                  src/generate/t_perl_generator.h \
                  src/generate/t_erl_generator.h \
-                 src/generate/t_cocoa_generator.h \
                  src/generate/t_csharp_generator.h
 
 if THRIFT_GEN_cpp
