@@ -286,11 +286,13 @@ Header:
         g_program->set_namespace("py", $2);
       }
     }
+/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
 | tok_perl_package tok_identifier
     {
+      pwarning(1, "'perl_package' is deprecated. Use 'namespace perl' instead");
       pdebug("Header -> tok_perl_namespace tok_identifier");
       if (g_parse_mode == PROGRAM) {
-        g_program->set_perl_package($2);
+        g_program->set_namespace("perl", $2);
       }
     }
 /* TODO(dreiss): Get rid of this once everyone is using the new hotness. */

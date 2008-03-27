@@ -184,14 +184,6 @@ class t_program : public t_doc {
     return xsd_namespace_;
   }
 
-  void set_perl_package(std::string perl_package) {
-    perl_package_ = perl_package;
-  }
-
-  const std::string& get_perl_package() const {
-    return perl_package_;
-  }
-
  private:
 
   // File path
@@ -235,9 +227,6 @@ class t_program : public t_doc {
 
   // XSD namespace
   std::string xsd_namespace_;
-
-  // Perl namespace
-  std::string perl_package_;
 
 };
 
