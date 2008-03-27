@@ -14,7 +14,6 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_rb_generator.cc \
                  src/generate/t_xsd_generator.cc \
                  src/generate/t_perl_generator.cc \
-                 src/generate/t_ocaml_generator.cc \
                  src/generate/t_erl_generator.cc \
                  src/generate/t_hs_generator.cc \
                  src/generate/t_cocoa_generator.cc \
@@ -60,6 +59,9 @@ thrift_SOURCES += src/generate/t_cpp_generator.cc
 endif
 if THRIFT_GEN_java
 thrift_SOURCES += src/generate/t_java_generator.cc
+endif
+if THRIFT_GEN_ocaml
+thrift_SOURCES += src/generate/t_ocaml_generator.cc
 endif
 
 thrift_CXXFLAGS = -Wall -I$(srcdir)/src $(BOOST_CPPFLAGS)

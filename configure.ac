@@ -130,6 +130,8 @@ AX_THRIFT_GEN(cpp, [C++], yes)
 AM_CONDITIONAL([THRIFT_GEN_cpp], [test "$ax_thrift_gen_cpp" = "yes"])
 AX_THRIFT_GEN(java, [Java], yes)
 AM_CONDITIONAL([THRIFT_GEN_java], [test "$ax_thrift_gen_java" = "yes"])
+AX_THRIFT_GEN(ocaml, [OCaml], yes)
+AM_CONDITIONAL([THRIFT_GEN_ocaml], [test "$ax_thrift_gen_ocaml" = "yes"])
 
 AC_CONFIG_HEADERS(config.h:config.hin)
 
