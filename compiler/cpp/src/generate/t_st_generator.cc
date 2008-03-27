@@ -22,12 +22,12 @@ using namespace std;
  */
 void t_st_generator::init_generator() {
   // Make output directory
-  MKDIR(T_ST_DIR);
+  MKDIR(get_out_dir().c_str());
 
   temporary_var = 0;
 
   // Make output file
-  string f_name = string(T_ST_DIR)+"/"+program_name_+".st";
+  string f_name = get_out_dir()+"/"+program_name_+".st";
   f_.open(f_name.c_str());
 
   // Print header

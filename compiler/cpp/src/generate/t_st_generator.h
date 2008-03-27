@@ -17,8 +17,6 @@
 
 #include "t_oop_generator.h"
 
-#define T_ST_DIR "gen-st"
-
 /**
  * Smalltalk code generator.
  *
@@ -27,7 +25,9 @@
 class t_st_generator : public t_oop_generator {
  public:
   t_st_generator(t_program* program) :
-    t_oop_generator(program) {}
+    t_oop_generator(program) {
+    out_dir_base_ = "gen-st";
+  }
 
   /**
    * Init and close methods
