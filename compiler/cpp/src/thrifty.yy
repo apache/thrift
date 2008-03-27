@@ -298,18 +298,22 @@ Header:
         g_program->set_ruby_namespace($2);
       }
     }
+/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
 | tok_smalltalk_category tok_st_identifier
     {
+      pwarning(1, "'smalltalk_category' is deprecated. Use 'namespace smalltalk.category' instead");
       pdebug("Header -> tok_smalltalk_category tok_st_identifier");
       if (g_parse_mode == PROGRAM) {
-        g_program->set_smalltalk_category($2);
+        g_program->set_namespace("smalltalk.category", $2);
       }
     }
+/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
 | tok_smalltalk_prefix tok_identifier
     {
+      pwarning(1, "'smalltalk_prefix' is deprecated. Use 'namespace smalltalk.prefix' instead");
       pdebug("Header -> tok_smalltalk_prefix tok_identifier");
       if (g_parse_mode == PROGRAM) {
-        g_program->set_smalltalk_prefix($2);
+        g_program->set_namespace("smalltalk.prefix", $2);
       }
     }
 /* TODO(dreiss): Get rid of this once everyone is using the new hotness. */

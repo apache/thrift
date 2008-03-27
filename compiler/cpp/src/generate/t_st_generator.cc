@@ -169,7 +169,7 @@ string t_st_generator::class_name() {
 }
 
 string t_st_generator::prefix(string class_name) {
-  string prefix = program_->get_smalltalk_prefix();
+  string prefix = program_->get_namespace("smalltalk.prefix");
   string name = capitalize(class_name);
   name = prefix.empty() ? name : (prefix + name);
   return name;
@@ -206,7 +206,14 @@ void t_st_generator::close_generator() {
 }
 
 string t_st_generator::generated_category() {
-  string cat = program_->get_smalltalk_category();
+  string cat = program_->get_namespace("smalltalk.category");
+  // For compatibility with the Thrift grammar, the category must
+  // be punctuated by dots.  Replaces them with dashes here.
+  for (string::iterator iter = cat.begin(); iter != cat.end(); ++iter) {
+    if (*iter == '.') {
+      *iter = '-';
+    }
+  }
   return cat.size() ? cat : "Generated-" + class_name();
 }
 

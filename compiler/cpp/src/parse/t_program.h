@@ -224,22 +224,6 @@ class t_program : public t_doc {
     return cocoa_prefix_;
   }
 
-  void set_smalltalk_category(std::string smalltalk_category) {
-    smalltalk_category_ = smalltalk_category;
-  }
-
-  const std::string& get_smalltalk_category() const {
-    return smalltalk_category_;
-  }
-
-  void set_smalltalk_prefix(std::string smalltalk_prefix) {
-    smalltalk_prefix_ = smalltalk_prefix;
-  }
-
-  const std::string& get_smalltalk_prefix() const {
-    return smalltalk_prefix_;
-  }
-
  private:
 
   // File path
@@ -292,14 +276,9 @@ class t_program : public t_doc {
 
   // Perl namespace
   std::string perl_package_;
-
   // Cocoa/Objective-C naming prefix
   std::string cocoa_prefix_;
 
-  // Smalltalk category
-  std::string smalltalk_category_;
-  // Smalltalk prefix
-  std::string smalltalk_prefix_;
 
   // C# namespace
   std::string csharp_namespace_;
