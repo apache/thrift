@@ -15,6 +15,7 @@
  * @author Mark Slee <mcslee@facebook.com>
  */
 
+#include <cassert>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
