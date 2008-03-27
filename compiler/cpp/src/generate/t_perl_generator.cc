@@ -22,10 +22,12 @@ void t_perl_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
 
   string outdir = get_out_dir();
-  std::string ns = program_->get_perl_package();
-  if (ns.length() > 0) {
-    outdir += ns + "/";
-    MKDIR(outdir.c_str());
+  std::list<std::string> dirs;
+  perl_namespace_dirs(program_, dirs);
+  std::list<std::string>::iterator it;
+  for (it = dirs.begin(); it != dirs.end(); it++) {
+      outdir += *it + "/";
+      MKDIR(outdir.c_str());
   }
 
   // Make output file
@@ -42,7 +44,7 @@ void t_perl_generator::init_generator() {
   // Print header
   f_consts_ <<
       autogen_comment() <<
-      "package "<<( ns.empty() ? "" : ns+"::")<<"Constants;"<<endl<<
+      "package "<< perl_namespace(program_) <<"Constants;"<<endl<<
       perl_includes() <<
       endl;
 }

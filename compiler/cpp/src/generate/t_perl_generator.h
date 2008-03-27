@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <list>
 
 #include "t_oop_generator.h"
 
@@ -141,9 +142,40 @@ class t_perl_generator : public t_oop_generator {
       "#\n";
   }
 
+  void perl_namespace_dirs(t_program* p, std::list<std::string>& dirs) {
+      std::string ns = p->get_perl_package();
+      std::string::size_type loc;
+
+      if (ns.size() > 0) {
+        while ((loc = ns.find(".")) != std::string::npos) {
+          dirs.push_back(ns.substr(0, loc));
+          ns = ns.substr(loc+1);
+        }
+      }
+
+      if (ns.size() > 0) {
+          dirs.push_back(ns);
+      }
+  }
+
   std::string perl_namespace(t_program* p) {
     std::string ns = p->get_perl_package();
-    return ns.empty() ? ns : (ns + "::");
+    std::string result = "";
+    std::string::size_type loc;
+
+    if (ns.size() > 0) {
+      while ((loc = ns.find(".")) != std::string::npos) {
+        result += ns.substr(0, loc);
+        result += "::";
+        ns = ns.substr(loc+1);
+      }
+
+      if (ns.size() > 0) {
+        result += ns + "::";
+      }
+    }
+
+    return result;
   }
 
  private:
