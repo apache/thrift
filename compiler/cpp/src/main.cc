@@ -42,7 +42,6 @@
 #include "generate/t_perl_generator.h"
 #include "generate/t_erl_generator.h"
 #include "generate/t_cocoa_generator.h"
-#include "generate/t_st_generator.h"
 #include "generate/t_csharp_generator.h"
 
 using namespace std;
@@ -613,7 +612,6 @@ void usage() {
   fprintf(stderr, "  -erl        Generate Erlang output files\n");
   fprintf(stderr, "  -cocoa      Generate Cocoa/Objective-C output files\n");
   fprintf(stderr, "  -csharp     Generate C# output files\n");
-  fprintf(stderr, "  -st         Generate Squeak/Smalltalk output files\n");
   fprintf(stderr, "  -o dir      Set the output directory for gen-* packages\n");
   fprintf(stderr, "               (default: current directory)\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories\n");
@@ -918,13 +916,6 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       delete cocoa;
     }
 
-    if (gen_st) {
-      pverbose("Generating Smalltalk/Squeak\n");
-      t_st_generator* st = new t_st_generator(program);
-      st->generate_program();
-      delete st;
-    }
-
     if (gen_csharp) {
       pverbose("Generating C#\n");
       t_csharp_generator* csharp = new t_csharp_generator(program);
@@ -1125,6 +1116,10 @@ int main(int argc, char** argv) {
     pwarning(1, "-javabean is deprecated.  Use --gen java:beans");
     generator_strings.push_back("java:beans");
   }
+  if (gen_st) {
+    pwarning(1, "-st is deprecated.  Use --gen st");
+    generator_strings.push_back("st");
+  }
   if (gen_ocaml) {
     pwarning(1, "-ocaml is deprecated.  Use --gen ocaml");
     generator_strings.push_back("ocaml");
@@ -1135,7 +1130,7 @@ int main(int argc, char** argv) {
   }
 
   // You gotta generate something!
-  if (!gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_cocoa && !gen_st && !gen_csharp && generator_strings.empty()) {
+  if (!gen_php && !gen_phpi && !gen_py && !gen_rb && !gen_xsd && !gen_perl && !gen_erl && !gen_cocoa && !gen_csharp && generator_strings.empty()) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
