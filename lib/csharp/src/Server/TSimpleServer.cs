@@ -85,7 +85,7 @@ namespace Thrift.Server
 						while (processor.Process(inputProtocol, outputProtocol)) { }
 					}
 				}
-				catch (TTransportException ttx)
+				catch (TTransportException)
 				{
 					// Client died, just move on
 				}

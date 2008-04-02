@@ -140,7 +140,7 @@ namespace Thrift.Server
 					//keep processing requests until client disconnects
 				}
 			}
-			catch (TTransportException ttx)
+			catch (TTransportException)
 			{
 				// Assume the client died and continue silently
 			}

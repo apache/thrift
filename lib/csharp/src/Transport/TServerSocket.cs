@@ -70,7 +70,7 @@ namespace Thrift.Transport
 				// Make server socket
 				server = new TcpListener(System.Net.IPAddress.Any, this.port);
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
 				server = null;
 				throw new TTransportException("Could not create ServerSocket on port " + port + ".");
