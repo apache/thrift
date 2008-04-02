@@ -116,7 +116,9 @@ class t_type : public t_doc {
 
 
  protected:
-  t_type() {
+  t_type() :
+    program_(NULL)
+  {
     memset(fingerprint_, 0, sizeof(fingerprint_));
   }
 
@@ -134,6 +136,7 @@ class t_type : public t_doc {
   }
 
   t_type(std::string name) :
+    program_(NULL),
     name_(name)
   {
     memset(fingerprint_, 0, sizeof(fingerprint_));
