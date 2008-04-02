@@ -39,7 +39,6 @@ namespace Thrift
 		public static TApplicationException Read(TProtocol iprot)
 		{
 			TField field;
-			TStruct struc = iprot.ReadStructBegin();
 
 			string message = null;
 			ExceptionType type = ExceptionType.Unknown;
