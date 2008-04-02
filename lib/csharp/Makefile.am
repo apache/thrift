@@ -26,7 +26,7 @@ THRIFTCODE= \
             src/TApplicationException.cs
 
 
-CSC=gmcs -langversion:linq
+CSC=gmcs
 
 all-local: Thrift.dll
 
