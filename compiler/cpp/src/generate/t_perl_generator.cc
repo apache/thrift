@@ -229,10 +229,10 @@ void t_perl_generator::init_generator() {
 
   // Print header
   f_consts_ <<
-      autogen_comment() <<
-      "package "<< perl_namespace(program_) <<"Constants;"<<endl<<
-      perl_includes() <<
-      endl;
+    autogen_comment() <<
+    "package "<< perl_namespace(program_) <<"Constants;"<<endl<<
+    perl_includes() <<
+    endl;
 }
 
 /**
