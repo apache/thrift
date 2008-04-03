@@ -791,6 +791,23 @@ debug-code-nolink:	$(PRE_TARGETS)
 				OCAMLLDFLAGS="-g $(OCAMLLDFLAGS)"
 dcnl:	debug-code-nolink
 
+# generates byte-code with debugging information (native code)
+debug-native-code:	$(PRE_TARGETS)
+			$(QUIET)$(MAKE) -r -f $(OCAMLMAKEFILE) $(NCRESULT) \
+				REAL_RESULT="$(NCRESULT)" make_deps=yes \
+				REAL_OCAMLC="$(OCAMLOPT)" \
+				OCAMLFLAGS="-g $(OCAMLFLAGS)" \
+				OCAMLLDFLAGS="-g $(OCAMLLDFLAGS)"
+dnc:	debug-native-code
+
+debug-native-code-nolink:	$(PRE_TARGETS)
+			$(QUIET)$(MAKE) -r -f $(OCAMLMAKEFILE) nolink \
+				REAL_RESULT="$(NCRESULT)" make_deps=yes \
+				REAL_OCAMLC="$(OCAMLOPT)" \
+				OCAMLFLAGS="-g $(OCAMLFLAGS)" \
+				OCAMLLDFLAGS="-g $(OCAMLLDFLAGS)"
+dncnl:	debug-native-code-nolink
+
 # generates byte-code libraries with debugging information
 debug-code-library:	$(PRE_TARGETS)
 			$(QUIET)$(MAKE) -r -f $(OCAMLMAKEFILE) \
@@ -800,6 +817,17 @@ debug-code-library:	$(PRE_TARGETS)
 				OCAMLFLAGS="-g $(OCAMLFLAGS)" \
 				OCAMLLDFLAGS="-g $(OCAMLLDFLAGS)"
 dcl:	debug-code-library
+
+# generates byte-code libraries with debugging information (native code)
+debug-native-code-library:	$(PRE_TARGETS)
+			$(QUIET)$(MAKE) -r -f $(OCAMLMAKEFILE) \
+				$(RES_CLIB) $(NCRESULT).cma \
+				REAL_RESULT="$(NCRESULT)" make_deps=yes \
+				REAL_OCAMLC="$(OCAMLOPT)" \
+				CREATE_LIB=yes \
+				OCAMLFLAGS="-g $(OCAMLFLAGS)" \
+				OCAMLLDFLAGS="-g $(OCAMLLDFLAGS)"
+dncl:	debug-native-code-library
 
 # generates byte-code for profiling
 profiling-byte-code:		$(PRE_TARGETS)
@@ -931,14 +959,14 @@ $(LIB_PACK_NAME).cmi $(LIB_PACK_NAME).cmo: $(REAL_IMPL_INTF)
 			$(REAL_OCAMLFIND) $(REAL_OCAMLC) -pack -o $(LIB_PACK_NAME).cmo $(OCAMLLDFLAGS) $(REAL_IMPL)
 else
 $(LIB_PACK_NAME).cmi $(LIB_PACK_NAME).cmx: $(REAL_IMPL_INTF)
-			$(REAL_OCAMLFIND) $(REAL_OCAMLC) -pack -o $(LIB_PACK_NAME).cmx  $(OCAMLLDFLAGS) $(REAL_IMPL)
+			$(REAL_OCAMLFIND) $(OCAMLOPT) -pack -o $(LIB_PACK_NAME).cmx  $(OCAMLLDFLAGS) $(REAL_IMPL)
 endif
 
 $(RESULT).cma:		$(LIB_PACK_NAME).cmi $(LIB_PACK_NAME).cmo $(MAKEDLL) $(EXTRADEPS) $(RESULTDEPS)
 			$(REAL_OCAMLFIND) $(REAL_OCAMLC) -a $(ALL_LDFLAGS) $(OBJS_LIBS) -o $@ $(LIB_PACK_NAME).cmo
 
 $(RESULT).cmxa $(RESULT).$(EXT_LIB):	$(LIB_PACK_NAME).cmi $(LIB_PACK_NAME).cmx $(EXTRADEPS) $(RESULTDEPS)
-			$(REAL_OCAMLFIND) $(OCAMLOPT) -a $(ALL_LDFLAGS) $(OBJS_LIBS) -o $@ $(LIB_PACK_NAME).cmx
+			$(REAL_OCAMLFIND) $(OCAMLOPT) -a $(filter-out -custom, $(ALL_LDFLAGS)) $(OBJS_LIBS) -o $@ $(LIB_PACK_NAME).cmx
 endif
 
 $(RES_CLIB): 		$(OBJ_LINK)
@@ -1139,6 +1167,20 @@ subprojs: $(SUBPROJS:%=subproj_%)
 libinstall:	all
 	$(QUIET)printf "\nInstalling library with ocamlfind\n"
 	$(OCAMLFIND) install $(OCAMLFIND_INSTFLAGS) $(RESULT) META $(LIBINSTALL_FILES)
+	$(QUIET)printf "\nInstallation successful.\n"
+
+.PHONY: libinstall-byte-code
+libinstall-byte-code:	all
+	$(QUIET)printf "\nInstalling byte-code library with ocamlfind\n"
+	$(OCAMLFIND) install $(OCAMLFIND_INSTFLAGS) $(RESULT) META \
+	  $(filter-out $(RESULT).$(EXT_LIB) $(RESULT).cmxa, $(LIBINSTALL_FILES))
+	$(QUIET)printf "\nInstallation successful.\n"
+
+.PHONY: libinstall-native-code
+libinstall-native-code:	all
+	$(QUIET)printf "\nInstalling native-code library with ocamlfind\n"
+	$(OCAMLFIND) install $(OCAMLFIND_INSTFLAGS) $(RESULT) META \
+	  $(filter-out $(DLLSONAME) $(RESULT).cma, $(LIBINSTALL_FILES))
 	$(QUIET)printf "\nInstallation successful.\n"
 
 .PHONY: libuninstall
