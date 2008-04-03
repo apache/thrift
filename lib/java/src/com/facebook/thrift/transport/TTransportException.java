@@ -15,6 +15,8 @@ import com.facebook.thrift.TException;
  */
 public class TTransportException extends TException {
 
+  private static final long serialVersionUID = 1L;
+
   public static final int UNKNOWN = 0;
   public static final int NOT_OPEN = 1;
   public static final int ALREADY_OPEN = 2;

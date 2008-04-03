@@ -15,6 +15,8 @@ import com.facebook.thrift.TException;
  */
 public class TProtocolException extends TException {
 
+
+  private static final long serialVersionUID = 1L;
   public static final int UNKNOWN = 0;
   public static final int INVALID_DATA = 1;
   public static final int NEGATIVE_SIZE = 2;

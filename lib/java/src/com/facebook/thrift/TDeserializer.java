@@ -10,10 +10,8 @@ import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 
 import com.facebook.thrift.protocol.TBinaryProtocol;
-import com.facebook.thrift.protocol.TProtocol;
 import com.facebook.thrift.protocol.TProtocolFactory;
 import com.facebook.thrift.transport.TIOStreamTransport;
-import com.facebook.thrift.transport.TTransport;
 
 /**
  * Generic utility for easily deserializing objects from a byte array or Java

@@ -19,6 +19,8 @@ import com.facebook.thrift.protocol.TType;
  */
 public class TApplicationException extends TException {
 
+  private static final long serialVersionUID = 1L;
+
   public static final int UNKNOWN = 0;
   public static final int UNKNOWN_METHOD = 1;
   public static final int INVALID_MESSAGE_TYPE = 2;
@@ -52,7 +54,7 @@ public class TApplicationException extends TException {
 
   public static TApplicationException read(TProtocol iprot) throws TException {
     TField field;
-    TStruct struct = iprot.readStructBegin();
+    iprot.readStructBegin();
 
     String message = null;
     int type = UNKNOWN;

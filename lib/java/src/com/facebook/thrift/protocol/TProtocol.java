@@ -19,6 +19,7 @@ public abstract class TProtocol {
   /**
    * Prevent direct instantiation
    */
+  @SuppressWarnings("unused")
   private TProtocol() {}
 
   /**

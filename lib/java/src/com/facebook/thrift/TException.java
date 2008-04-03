@@ -12,6 +12,9 @@ package com.facebook.thrift;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TException extends Exception {
+
+  private static final long serialVersionUID = 1L;
+
   public TException() {
     super();
   }

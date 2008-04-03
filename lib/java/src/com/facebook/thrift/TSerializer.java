@@ -13,7 +13,6 @@ import com.facebook.thrift.protocol.TBinaryProtocol;
 import com.facebook.thrift.protocol.TProtocol;
 import com.facebook.thrift.protocol.TProtocolFactory;
 import com.facebook.thrift.transport.TIOStreamTransport;
-import com.facebook.thrift.transport.TTransport;
 
 /**
  * Generic utility for easily serializing objects into a byte array or Java

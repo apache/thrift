@@ -6,11 +6,10 @@
 
 package com.facebook.thrift.protocol;
 
+import java.io.UnsupportedEncodingException;
+
 import com.facebook.thrift.TException;
 import com.facebook.thrift.transport.TTransport;
-import com.facebook.thrift.transport.TTransportException;
-
-import java.io.UnsupportedEncodingException;
 
 /**
  * Binary protocol implementation for thrift.

@@ -7,7 +7,6 @@
 package com.facebook.thrift.transport;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 
 import com.facebook.thrift.TByteArrayOutputStream;
 
