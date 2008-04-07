@@ -8,7 +8,7 @@ int main() {
   using std::endl;
 
   facebook::thrift::reflection::limited::Service srv1;
-  thrift::test::PartiallyReflectableIf::getStaticLimitedReflection(srv1);
+  thrift::test::debug::PartiallyReflectableIf::getStaticLimitedReflection(srv1);
   cout << facebook::thrift::ThriftDebugString(srv1) << endl << endl;
 
   facebook::thrift::reflection::limited::Service srv2;

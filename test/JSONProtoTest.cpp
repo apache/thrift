@@ -7,7 +7,7 @@
 int main() {
   using std::cout;
   using std::endl;
-  using namespace thrift::test;
+  using namespace thrift::test::debug;
   using facebook::thrift::transport::TMemoryBuffer;
   using facebook::thrift::protocol::TJSONProtocol;
 

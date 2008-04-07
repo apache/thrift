@@ -40,7 +40,7 @@ int main() {
   using std::cout;
   using std::endl;
   using boost::shared_ptr;
-  using namespace thrift::test;
+  using namespace thrift::test::debug;
   using namespace facebook::thrift::transport;
   using namespace facebook::thrift::protocol;
 

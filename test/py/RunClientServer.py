@@ -5,10 +5,13 @@ import sys
 import os
 import signal
 
-serverproc = subprocess.Popen([sys.executable, "TestServer.py"])
+def relfile(fname):
+    return os.path.join(os.path.dirname(__file__), fname)
+
+serverproc = subprocess.Popen([sys.executable, relfile("TestServer.py")])
 try:
 
-    ret = subprocess.call([sys.executable, "TestClient.py"])
+    ret = subprocess.call([sys.executable, relfile("TestClient.py")])
     if ret != 0:
         raise Exception("subprocess failed")
 finally:

@@ -120,3 +120,13 @@ struct VersioningTestV2 {
        11: string newstring,
        12: i32 end_in_both
 }
+
+struct ListTypeVersioningV1 {
+       1: list<i32> myints;
+       2: string hello;
+}
+
+struct ListTypeVersioningV2 {
+       1: list<string> strings;
+       2: string hello;
+}

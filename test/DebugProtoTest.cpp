@@ -6,7 +6,7 @@
 int main() {
   using std::cout;
   using std::endl;
-  using namespace thrift::test;
+  using namespace thrift::test::debug;
 
 
   OneOfEach ooe;

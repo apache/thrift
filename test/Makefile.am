@@ -4,61 +4,77 @@ if ENABLE_JAVA
 SUBDIRS += java
 endif
 
+noinst_LTLIBRARIES = libtestgencpp.la
+libtestgencpp_la_SOURCES = \
+	gen-cpp/DebugProtoTest_types.cpp \
+	gen-cpp/OptionalRequiredTest_types.cpp \
+	gen-cpp/DebugProtoTest_types.cpp \
+	gen-cpp/PartiallyReflectable.cpp \
+	gen-cpp/Service.cpp \
+	gen-cpp/StressTest_types.cpp \
+	gen-cpp/SecondService.cpp \
+	gen-cpp/ThriftTest_constants.cpp \
+	gen-cpp/ThriftTest.cpp \
+	gen-cpp/ThriftTest_types.cpp
+
+libtestgencpp_la_LIBADD = $(top_srcdir)/lib/cpp/libthrift.la
+
+noinst_PROGRAMS = Benchmark
+
+Benchmark_SOURCES = \
+	Benchmark.cpp
+
+Benchmark_LDADD = libtestgencpp.la
+
 check_PROGRAMS = \
 	DebugProtoTest \
 	JSONProtoTest \
 	OptionalRequiredTest \
-	ReflectionTest
+	ReflectionTest \
+	UnitTests
 
 TESTS = \
 	$(check_PROGRAMS)
 
+UnitTests_SOURCES = \
+	UnitTestMain.cpp \
+	TMemoryBufferTest.cpp
+
+UnitTests_LDADD = libtestgencpp.la
 
 #
 # DebugProtoTest
 #
 DebugProtoTest_SOURCES = \
-	gen-cpp/DebugProtoTest_types.cpp \
 	DebugProtoTest.cpp
 
-DebugProtoTest_LDADD = \
-	$(top_srcdir)/lib/cpp/libthrift.la
+DebugProtoTest_LDADD = libtestgencpp.la
 
 
 #
 # JSONProtoTest
 #
 JSONProtoTest_SOURCES = \
-	gen-cpp/DebugProtoTest_types.cpp \
 	JSONProtoTest.cpp
 
-JSONProtoTest_LDADD = \
-	$(top_srcdir)/lib/cpp/libthrift.la
+JSONProtoTest_LDADD = libtestgencpp.la
 
 #
 # OptionalRequiredTest
 #
 OptionalRequiredTest_SOURCES = \
-	gen-cpp/OptionalRequiredTest_types.cpp \
 	OptionalRequiredTest.cpp
 
-OptionalRequiredTest_LDADD = \
-	$(top_srcdir)/lib/cpp/libthrift.la
+OptionalRequiredTest_LDADD = libtestgencpp.la
 
 
 #
 # ReflectionTest
 #
 ReflectionTest_SOURCES = \
-	gen-cpp/DebugProtoTest_types.cpp \
-	gen-cpp/PartiallyReflectable.cpp \
-	gen-cpp/Service.cpp \
-	gen-cpp/StressTest_types.cpp \
 	ReflectionTest.cpp
 
-ReflectionTest_LDADD = \
-	$(top_srcdir)/lib/cpp/libthrift.la
-
+ReflectionTest_LDADD = libtestgencpp.la
 
 #
 # Common thrift code generation rules
@@ -74,6 +90,8 @@ gen-cpp/OptionalRequiredTest_types.cpp: OptionalRequiredTest.thrift
 gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: StressTest.thrift
 	$(THRIFT) --gen cpp:dense,reflection_limited $<
 
+gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp: ThriftTest.thrift
+	$(THRIFT) --gen cpp:dense,reflection_limited $<
 
 INCLUDES = \
 	-I$(top_srcdir)/lib/cpp/src

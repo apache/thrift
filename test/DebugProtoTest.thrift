@@ -1,4 +1,4 @@
-namespace cpp thrift.test
+namespace cpp thrift.test.debug
 namespace java thrift.test
 
 struct Doubles {
