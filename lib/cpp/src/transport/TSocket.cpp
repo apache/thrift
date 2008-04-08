@@ -6,7 +6,7 @@
 
 #include <config.h>
 #include <sys/socket.h>
-#include <sys/select.h>
+#include <sys/poll.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -142,10 +142,6 @@ void TSocket::openConnection(struct addrinfo *res) {
     }
   }
 
-  // Conn timeout
-  struct timeval c = {(int)(connTimeout_/1000),
-                      (int)((connTimeout_%1000)*1000)};
-
   // Connect the socket
   int ret = connect(socket_, res->ai_addr, res->ai_addrlen);
 
@@ -160,10 +156,12 @@ void TSocket::openConnection(struct addrinfo *res) {
     throw TTransportException(TTransportException::NOT_OPEN, "connect()", errno_copy);
   }
 
-  fd_set fds;
-  FD_ZERO(&fds);
-  FD_SET(socket_, &fds);
-  ret = select(socket_+1, NULL, &fds, NULL, &c);
+
+  struct pollfd fds[1];
+  memset(fds, 0 , sizeof(fds));
+  fds[0].fd = socket_;
+  fds[0].events = POLLOUT;
+  ret = poll(fds, 1, connTimeout_);
 
   if (ret > 0) {
     // Ensure connected
@@ -191,7 +189,7 @@ void TSocket::openConnection(struct addrinfo *res) {
     throw TTransportException(TTransportException::NOT_OPEN, "open()", errno_copy);
   } else {
     int errno_copy = errno;
-    string errStr = "TSocket::open() select error " + getSocketInfo();
+    string errStr = "TSocket::open() poll error " + getSocketInfo();
     GlobalOutput(errStr.c_str());
     throw TTransportException(TTransportException::NOT_OPEN, "open()", errno_copy);
   }
@@ -453,7 +451,7 @@ void TSocket::setRecvTimeout(int ms) {
   recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
   recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
 
-  // Copy because select may modify
+  // Copy because poll may modify
   struct timeval r = recvTimeval_;
   int ret = setsockopt(socket_, SOL_SOCKET, SO_RCVTIMEO, &r, sizeof(r));
   if (ret == -1) {
