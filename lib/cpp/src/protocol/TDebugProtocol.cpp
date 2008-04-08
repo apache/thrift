@@ -282,9 +282,15 @@ uint32_t TDebugProtocol::writeDouble(const double dub) {
 uint32_t TDebugProtocol::writeString(const string& str) {
   // XXX Raw/UTF-8?
 
+  string to_show = str;
+  if (to_show.length() > (string::size_type)string_limit_) {
+    to_show = str.substr(0, string_prefix_size_);
+    to_show += "[...](" + boost::lexical_cast<string>(str.length()) + ")";
+  }
+
   string output = "\"";
 
-  for (string::const_iterator it = str.begin(); it != str.end(); ++it) {
+  for (string::const_iterator it = to_show.begin(); it != to_show.end(); ++it) {
     if (*it == '\\') {
       output += "\\";
     } else if (*it == '"') {
@@ -313,6 +319,7 @@ uint32_t TDebugProtocol::writeString(const string& str) {
 }
 
 uint32_t TDebugProtocol::writeBinary(const string& str) {
+  // XXX Hex?
   return TDebugProtocol::writeString(str);
 }
 

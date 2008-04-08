@@ -50,8 +50,21 @@ class TDebugProtocol : public TWriteOnlyProtocol {
  public:
   TDebugProtocol(boost::shared_ptr<TTransport> trans)
     : TWriteOnlyProtocol(trans, "TDebugProtocol")
+    , string_limit_(DEFAULT_STRING_LIMIT)
+    , string_prefix_size_(DEFAULT_STRING_PREFIX_SIZE)
   {
     write_state_.push_back(UNINIT);
+  }
+
+  static const int32_t DEFAULT_STRING_LIMIT = 256;
+  static const int32_t DEFAULT_STRING_PREFIX_SIZE = 16;
+
+  void setStringSizeLimit(int32_t string_limit) {
+    string_limit_ = string_limit;
+  }
+
+  void setStringPrefixSize(int32_t string_prefix_size) {
+    string_prefix_size_ = string_prefix_size;
   }
 
 
@@ -117,6 +130,9 @@ class TDebugProtocol : public TWriteOnlyProtocol {
   uint32_t writeItem(const std::string& str);
 
   static std::string fieldTypeName(TType type);
+
+  int32_t string_limit_;
+  int32_t string_prefix_size_;
 
   std::string indent_str_;
   static const int indent_inc = 2;
