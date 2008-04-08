@@ -28,6 +28,7 @@ Benchmark_LDADD = libtestgencpp.la
 
 check_PROGRAMS = \
 	TFDTransportTest \
+	TPipedTransportTest \
 	DebugProtoTest \
 	JSONProtoTest \
 	OptionalRequiredTest \
@@ -50,6 +51,16 @@ TFDTransportTest_SOURCES = \
 	TFDTransportTest.cpp
 
 TFDTransportTest_LDADD = \
+	$(top_srcdir)/lib/cpp/libthrift.la
+
+
+#
+# TPipedTransportTest
+#
+TPipedTransportTest_SOURCES = \
+	TPipedTransportTest.cpp
+
+TPipedTransportTest_LDADD = \
 	$(top_srcdir)/lib/cpp/libthrift.la
 
 #

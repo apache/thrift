@@ -616,15 +616,18 @@ class TPipedTransport : virtual public TTransport {
   void readEnd() {
 
     if (pipeOnRead_) {
-      dstTrans_->write(rBuf_, rLen_);
+      dstTrans_->write(rBuf_, rPos_);
       dstTrans_->flush();
     }
 
     srcTrans_->readEnd();
 
-    // reset state
-    rLen_ = 0;
+    // If requests are being pipelined, copy down our read-ahead data,
+    // then reset our state.
+    int read_ahead = rLen_ - rPos_;
+    memcpy(rBuf_, rBuf_ + rPos_, read_ahead);
     rPos_ = 0;
+    rLen_ = read_ahead;
   }
 
   void write(const uint8_t* buf, uint32_t len);
