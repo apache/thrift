@@ -300,14 +300,13 @@ uint32_t TDebugProtocol::writeString(const string& str) {
 
   for (string::const_iterator it = to_show.begin(); it != to_show.end(); ++it) {
     if (*it == '\\') {
-      output += "\\";
+      output += "\\\\";
     } else if (*it == '"') {
       output += "\\\"";
     } else if (std::isprint(*it)) {
       output += *it;
     } else {
       switch (*it) {
-        case '\"': output += "\\\""; break;
         case '\a': output += "\\a"; break;
         case '\b': output += "\\b"; break;
         case '\f': output += "\\f"; break;
