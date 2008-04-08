@@ -5,7 +5,7 @@
 // http://developers.facebook.com/thrift/
 
 #include <sys/socket.h>
-#include <sys/select.h>
+#include <sys/poll.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -246,18 +246,20 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     throw TTransportException(TTransportException::NOT_OPEN, "TServerSocket not listening");
   }
 
-  fd_set fds;
+  struct pollfd fds[2];
 
   int maxEintrs = 5;
   int numEintrs = 0;
 
   while (true) {
-    FD_ZERO(&fds);
-    FD_SET(serverSocket_, &fds);
+    memset(fds, 0 , sizeof(fds));
+    fds[0].fd = serverSocket_;
+    fds[0].events = POLLIN;
     if (intSock2_ >= 0) {
-      FD_SET(intSock2_, &fds);
+      fds[1].fd = intSock2_;
+      fds[1].fd = POLLIN;
     }
-    int ret = select(serverSocket_+1, &fds, NULL, NULL, NULL);
+    int ret = poll(fds, 2, -1);
 
     if (ret < 0) {
       // error cases
@@ -272,7 +274,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
       throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
     } else if (ret > 0) {
       // Check for an interrupt signal
-      if (intSock2_ >= 0 && FD_ISSET(intSock2_, &fds)) {
+      if (intSock2_ >= 0 && (fds[1].revents & POLLIN)) {
         int8_t buf;
         if (-1 == recv(intSock2_, &buf, sizeof(int8_t), 0)) {
           int errno_copy = errno;
@@ -283,11 +285,11 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
       }
 
       // Check for the actual server socket being ready
-      if (FD_ISSET(serverSocket_, &fds)) {
+      if (fds[0].revents & POLLIN) {
         break;
       }
     } else {
-      GlobalOutput("TServerSocket::acceptImpl() select 0");
+      GlobalOutput("TServerSocket::acceptImpl() poll 0");
       throw TTransportException(TTransportException::UNKNOWN);
     }
   }
