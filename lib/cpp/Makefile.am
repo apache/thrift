@@ -34,6 +34,7 @@ libthrift_la_SOURCES = src/Thrift.cpp \
                        src/protocol/TJSONProtocol.cpp \
                        src/protocol/TBase64Utils.cpp \
                        src/transport/TTransportException.cpp \
+                       src/transport/TFDTransport.cpp \
                        src/transport/TFileTransport.cpp \
                        src/transport/THttpClient.cpp \
                        src/transport/TSocket.cpp \
@@ -94,6 +95,7 @@ include_protocol_HEADERS = \
 
 include_transportdir = $(include_thriftdir)/transport
 include_transport_HEADERS = \
+                         src/transport/TFDTransport.h \
                          src/transport/TFileTransport.h \
                          src/transport/TServerSocket.h \
                          src/transport/TServerTransport.h \

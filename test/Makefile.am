@@ -27,6 +27,7 @@ Benchmark_SOURCES = \
 Benchmark_LDADD = libtestgencpp.la
 
 check_PROGRAMS = \
+	TFDTransportTest \
 	DebugProtoTest \
 	JSONProtoTest \
 	OptionalRequiredTest \
@@ -41,6 +42,15 @@ UnitTests_SOURCES = \
 	TMemoryBufferTest.cpp
 
 UnitTests_LDADD = libtestgencpp.la
+
+#
+# TFDTransportTest
+#
+TFDTransportTest_SOURCES = \
+	TFDTransportTest.cpp
+
+TFDTransportTest_LDADD = \
+	$(top_srcdir)/lib/cpp/libthrift.la
 
 #
 # DebugProtoTest
