@@ -88,6 +88,7 @@ include_protocol_HEADERS = \
                          src/protocol/TDenseProtocol.h \
                          src/protocol/TDebugProtocol.h \
                          src/protocol/TOneWayProtocol.h \
+                         src/protocol/TProtocolTap.h \
                          src/protocol/TProtocolException.h \
                          src/protocol/TProtocol.h
 
