@@ -135,13 +135,21 @@ uint32_t TDebugProtocol::writeItem(const std::string& str) {
 uint32_t TDebugProtocol::writeMessageBegin(const std::string& name,
                                            const TMessageType messageType,
                                            const int32_t seqid) {
-  throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
-      "TDebugProtocol does not support messages (yet).");
+  string mtype;
+  switch (messageType) {
+    case T_CALL      : mtype = "call"  ; break;
+    case T_REPLY     : mtype = "reply" ; break;
+    case T_EXCEPTION : mtype = "exn"   ; break;
+  }
+
+  uint32_t size = writeIndented("(" + mtype + ") " + name + "(");
+  indentUp();
+  return size;
 }
 
 uint32_t TDebugProtocol::writeMessageEnd() {
-  throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
-      "TDebugProtocol does not support messages (yet).");
+  indentDown();
+  return writeIndented(")\n");
 }
 
 uint32_t TDebugProtocol::writeStructBegin(const string& name) {
