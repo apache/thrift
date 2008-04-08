@@ -21,6 +21,8 @@
 #include <set>
 #include <vector>
 #include <exception>
+#include <string>
+#include <boost/lexical_cast.hpp>
 
 #include "TLogging.h"
 
@@ -28,7 +30,7 @@ namespace facebook { namespace thrift {
 
 class TOutput {
  public:
-  TOutput() : f_(&perrorTimeWrapper) {}
+  TOutput() : f_(&errorTimeWrapper) {}
 
   inline void setOutputFunction(void (*function)(const char *)){
     f_ = function;
@@ -38,15 +40,18 @@ class TOutput {
     f_(message);
   }
 
-  inline static void perrorTimeWrapper(const char* msg) {
+  inline static void errorTimeWrapper(const char* msg) {
     time_t now;
     char dbgtime[25];
     time(&now);
     ctime_r(&now, dbgtime);
     dbgtime[24] = 0;
-    fprintf(stderr, "%s ", dbgtime);
-    perror(msg);
+    fprintf(stderr, "Thrift: %s %s\n", dbgtime, msg);
   }
+
+  /** Just like strerror_r but returns a C++ string object. */
+  static std::string strerror_s(int errno_copy);
+
  private:
   void (*f_)(const char *);
 };

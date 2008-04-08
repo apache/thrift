@@ -12,6 +12,8 @@
 #include <transport/TTransportUtils.h>
 #include <concurrency/ThreadManager.h>
 #include <stack>
+#include <string>
+#include <errno.h>
 #include <cstdlib>
 #include <event.h>
 
@@ -320,7 +322,8 @@ class TConnection {
   static void taskHandler(int fd, short /* which */, void* v) {
     assert(fd == ((TConnection*)v)->taskHandle_);
     if (-1 == ::close(((TConnection*)v)->taskHandle_)) {
-      GlobalOutput("TConnection::taskHandler close handle failed, resource leak");
+      std::string errStr = "TConnection::taskHandler close handle failed, resource leak " + TOutput::strerror_s(errno);
+      GlobalOutput(errStr.c_str());
     }
     ((TConnection*)v)->transition();
   }

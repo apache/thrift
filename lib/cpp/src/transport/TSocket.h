@@ -223,7 +223,6 @@ class TSocket : public TTransport {
 
   /** Recv timeout timeval */
   struct timeval recvTimeval_;
-
 };
 
 }}} // facebook::thrift::transport

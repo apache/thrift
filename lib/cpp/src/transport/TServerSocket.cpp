@@ -79,7 +79,9 @@ void TServerSocket::setTcpRecvBuffer(int tcpRecvBuffer) {
 void TServerSocket::listen() {
   int sv[2];
   if (-1 == socketpair(AF_LOCAL, SOCK_STREAM, 0, sv)) {
-    GlobalOutput("TServerSocket::init()");
+    int errno_copy = errno;
+    string errStr = "TServerSocket::listen() socketpair() " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
     intSock1_ = -1;
     intSock2_ = -1;
   } else {
@@ -113,36 +115,44 @@ void TServerSocket::listen() {
 
   serverSocket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   if (serverSocket_ == -1) {
-    GlobalOutput("TServerSocket::listen() socket");
+    int errno_copy = errno;
+    string errStr = "TServerSocket::listen() socket() " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
     close();
-    throw TTransportException(TTransportException::NOT_OPEN, "Could not create server socket.");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not create server socket.", errno_copy);
   }
 
   // Set reusaddress to prevent 2MSL delay on accept
   int one = 1;
   if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_REUSEADDR,
                        &one, sizeof(one))) {
-    GlobalOutput("TServerSocket::listen() SO_REUSEADDR");
+    int errno_copy = errno;
+    string errStr = "TServerSocket::listen() setsockopt() SO_REUSEADDR " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
     close();
-    throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_REUSEADDR");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_REUSEADDR", errno_copy);
   }
 
   // Set TCP buffer sizes
   if (tcpSendBuffer_ > 0) {
     if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_SNDBUF,
                          &tcpSendBuffer_, sizeof(tcpSendBuffer_))) {
-      GlobalOutput("TServerSocket::listen() SO_SNDBUF");
+      int errno_copy = errno;
+      string errStr = "TServerSocket::listen() setsockopt() SO_SNDBUF " + TOutput::strerror_s(errno_copy);
+      GlobalOutput(errStr.c_str());
       close();
-      throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_SNDBUF");
+      throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_SNDBUF", errno_copy);
     }
   }
 
   if (tcpRecvBuffer_ > 0) {
     if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_RCVBUF,
                          &tcpRecvBuffer_, sizeof(tcpRecvBuffer_))) {
-      GlobalOutput("TServerSocket::listen() SO_RCVBUF");
+      int errno_copy = errno;
+      string errStr = "TServerSocket::listen() setsockopt() SO_RCVBUF " + TOutput::strerror_s(errno_copy);
+      GlobalOutput(errStr.c_str());
       close();
-      throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_RCVBUF");
+      throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_RCVBUF", errno_copy);
     }
   }
 
@@ -150,9 +160,11 @@ void TServerSocket::listen() {
   #ifdef TCP_DEFER_ACCEPT
   if (-1 == setsockopt(serverSocket_, SOL_SOCKET, TCP_DEFER_ACCEPT,
                        &one, sizeof(one))) {
-    GlobalOutput("TServerSocket::listen() TCP_DEFER_ACCEPT");
+    int errno_copy = errno;
+    string errStr = "TServerSocket::listen() setsockopt() TCP_DEFER_ACCEPT " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
     close();
-    throw TTransportException(TTransportException::NOT_OPEN, "Could not set TCP_DEFER_ACCEPT");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not set TCP_DEFER_ACCEPT", errno_copy);
   }
   #endif // #ifdef TCP_DEFER_ACCEPT
 
@@ -160,27 +172,37 @@ void TServerSocket::listen() {
   struct linger ling = {0, 0};
   if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_LINGER,
                        &ling, sizeof(ling))) {
+    int errno_copy = errno;
+    string errStr = "TServerSocket::listen() setsockopt() SO_LINGER " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
     close();
-    GlobalOutput("TServerSocket::listen() SO_LINGER");
-    throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_LINGER");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_LINGER", errno_copy);
   }
 
   // TCP Nodelay, speed over bandwidth
   if (-1 == setsockopt(serverSocket_, IPPROTO_TCP, TCP_NODELAY,
                        &one, sizeof(one))) {
+    int errno_copy = errno;
+    string errStr = "TServerSocket::listen() setsockopt() TCP_NODELAY " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
     close();
-    GlobalOutput("setsockopt TCP_NODELAY");
-    throw TTransportException(TTransportException::NOT_OPEN, "Could not set TCP_NODELAY");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not set TCP_NODELAY", errno_copy);
   }
 
   // Set NONBLOCK on the accept socket
   int flags = fcntl(serverSocket_, F_GETFL, 0);
   if (flags == -1) {
-    throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed");
+    int errno_copy = errno;
+    string errStr = "TServerSocket::listen() fcntl() F_GETFL " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
+    throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed", errno_copy);
   }
 
   if (-1 == fcntl(serverSocket_, F_SETFL, flags | O_NONBLOCK)) {
-    throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed");
+    int errno_copy = errno;
+    string errStr = "TServerSocket::listen() fcntl() O_NONBLOCK " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
+    throw TTransportException(TTransportException::NOT_OPEN, "fcntl() failed", errno_copy);
   }
 
   // prepare the port information
@@ -209,9 +231,11 @@ void TServerSocket::listen() {
 
   // Call listen
   if (-1 == ::listen(serverSocket_, acceptBacklog_)) {
-    GlobalOutput("TServerSocket::listen() LISTEN");
+    int errno_copy = errno;
+    string errStr = "TServerSocket::listen() listen() " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
     close();
-    throw TTransportException(TTransportException::NOT_OPEN, "Could not listen");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not listen", errno_copy);
   }
 
   // The socket is now listening!
@@ -242,17 +266,22 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
         // a certain number
         continue;
       }
-      GlobalOutput("TServerSocket::acceptImpl() select -1");
-      throw TTransportException(TTransportException::UNKNOWN);
+      int errno_copy = errno;
+      string errStr = "TServerSocket::acceptImpl() poll() " + TOutput::strerror_s(errno_copy);
+      GlobalOutput(errStr.c_str());
+      throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
     } else if (ret > 0) {
       // Check for an interrupt signal
       if (intSock2_ >= 0 && FD_ISSET(intSock2_, &fds)) {
         int8_t buf;
         if (-1 == recv(intSock2_, &buf, sizeof(int8_t), 0)) {
-          GlobalOutput("TServerSocket::acceptImpl() interrupt receive");
+          int errno_copy = errno;
+          string errStr = "TServerSocket::acceptImpl() recv() interrupt " + TOutput::strerror_s(errno_copy);
+          GlobalOutput(errStr.c_str());
         }
         throw TTransportException(TTransportException::INTERRUPTED);
       }
+
       // Check for the actual server socket being ready
       if (FD_ISSET(serverSocket_, &fds)) {
         break;
@@ -271,7 +300,8 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
 
   if (clientSocket < 0) {
     int errno_copy = errno;
-    GlobalOutput("TServerSocket::accept()");
+    string errStr = "TServerSocket::acceptImpl() ::accept() " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
     throw TTransportException(TTransportException::UNKNOWN, "accept()", errno_copy);
   }
 
@@ -279,12 +309,15 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   int flags = fcntl(clientSocket, F_GETFL, 0);
   if (flags == -1) {
     int errno_copy = errno;
-    GlobalOutput("TServerSocket::select() fcntl GETFL");
+    string errStr = "TServerSocket::acceptImpl() fcntl() F_GETFL " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
     throw TTransportException(TTransportException::UNKNOWN, "fcntl(F_GETFL)", errno_copy);
   }
+
   if (-1 == fcntl(clientSocket, F_SETFL, flags & ~O_NONBLOCK)) {
     int errno_copy = errno;
-    GlobalOutput("TServerSocket::select() fcntl SETFL");
+    string errStr = "TServerSocket::acceptImpl() fcntl() F_SETFL ~O_NONBLOCK " + TOutput::strerror_s(errno_copy);
+    GlobalOutput(errStr.c_str());
     throw TTransportException(TTransportException::UNKNOWN, "fcntl(F_SETFL)", errno_copy);
   }
 
@@ -303,7 +336,9 @@ void TServerSocket::interrupt() {
   if (intSock1_ >= 0) {
     int8_t byte = 0;
     if (-1 == send(intSock1_, &byte, sizeof(int8_t), 0)) {
-      GlobalOutput("TServerSocket::interrupt()");
+      int errno_copy = errno;
+      string errStr = "TServerSocket::interrupt() send() " + TOutput::strerror_s(errno_copy);
+      GlobalOutput(errStr.c_str());
     }
   }
 }
