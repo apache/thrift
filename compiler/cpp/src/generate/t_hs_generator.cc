@@ -868,7 +868,8 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
         indent() << "(fname, mtype, rseqid) <- readMessageBegin ip" << endl;
       f_client_ <<
         indent() << "if mtype == M_EXCEPTION then do" << endl <<
-        indent() << "  x <- readAppExn ip" << endl;
+        indent() << "  x <- readAppExn ip" << endl <<
+        indent() << "  readMessageEnd ip" << endl;
       f_client_ <<
         indent() << "  throwDyn x" << endl;
       f_client_ <<

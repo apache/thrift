@@ -916,7 +916,8 @@ void t_ocaml_generator::generate_service_client(t_service* tservice) {
         indent() << "  let x = Application_Exn.read iprot in" << endl;
       indent_up();
       f_service_ <<
-        indent() << "  raise (Application_Exn.E x)" << endl;
+        indent() << "  (iprot#readMessageEnd;" <<
+        indent() << "   raise (Application_Exn.E x))" << endl;
       indent_down();
       f_service_ <<
         indent() << "else ());" << endl;
