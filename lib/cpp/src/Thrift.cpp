@@ -5,6 +5,7 @@
 // http://developers.facebook.com/thrift/
 
 #include <Thrift.h>
+#include <boost/lexical_cast.hpp>
 #include <protocol/TProtocol.h>
 
 namespace facebook { namespace thrift {
@@ -13,7 +14,7 @@ TOutput GlobalOutput;
 
 std::string TOutput::strerror_s(int errno_copy) {
 #ifndef HAVE_STRERROR_R
-  return "errno = " + lexical_cast<string>(errno_copy);
+  return "errno = " + boost::lexical_cast<string>(errno_copy);
 #else  // HAVE_STRERROR_R
 
   char b_errbuf[1024] = { '\0' };
@@ -25,7 +26,7 @@ std::string TOutput::strerror_s(int errno_copy) {
   if (rv == -1) {
     // strerror_r failed.  omgwtfbbq.
     return "XSI-compliant strerror_r() failed with errno = " +
-      lexical_cast<string>(errno_copy);
+      boost::lexical_cast<std::string>(errno_copy);
   }
 #endif
   // Can anyone prove that explicit cast is probably not necessary

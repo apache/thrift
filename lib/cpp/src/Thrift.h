@@ -22,7 +22,6 @@
 #include <vector>
 #include <exception>
 #include <string>
-#include <boost/lexical_cast.hpp>
 
 #include "TLogging.h"
 

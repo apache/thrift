@@ -7,6 +7,7 @@
 #include "TJSONProtocol.h"
 
 #include <math.h>
+#include <boost/lexical_cast.hpp>
 #include "TBase64Utils.h"
 #include <transport/TTransportException.h>
 
