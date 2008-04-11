@@ -55,7 +55,6 @@ AX_THRIFT_LIB(erlang, [Erlang], yes)
 if test "$with_erlang" = "yes";  then
   AC_PATH_PROG([ERLC], [erlc])
 fi
-
 AM_CONDITIONAL(ENABLE_ERLANG, [test -n "$ERLC"])
 
 AC_C_CONST
