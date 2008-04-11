@@ -75,6 +75,19 @@ zend_module_entry thrift_protocol_module_entry = {
 ZEND_GET_MODULE(thrift_protocol)
 #endif
 
+class PHPExceptionWrapper : public std::exception {
+public:
+  PHPExceptionWrapper(zval* _ex) throw() : ex(_ex) {
+    snprintf(_what, 40, "PHP exception zval=%p", ex);
+  }
+  const char* what() const throw() { return _what; }
+  ~PHPExceptionWrapper() throw() {}
+  operator zval*() const throw() { return const_cast<zval*>(ex); } // Zend API doesn't do 'const'...
+protected:
+  zval* ex;
+  char _what[40];
+} ;
+
 class PHPTransport {
 public:
   zval* protocol() { return p; }
@@ -198,6 +211,11 @@ protected:
     call_user_function(EG(function_table), &t, &writefn, &ret, 1, args TSRMLS_CC);
     zval_ptr_dtor(args);
     zval_dtor(&ret);
+    if (EG(exception)) {
+      zval* ex = EG(exception);
+      EG(exception) = NULL;
+      throw PHPExceptionWrapper(ex);
+    }
   }
 };
 
@@ -306,6 +324,13 @@ protected:
     call_user_function(EG(function_table), &t, &funcname, &retval, 1, args TSRMLS_CC);
     zval_ptr_dtor(args);
 
+    if (EG(exception)) {
+      zval_dtor(&retval);
+      zval* ex = EG(exception);
+      EG(exception) = NULL;
+      throw PHPExceptionWrapper(ex);
+    }
+
     buffer_used = Z_STRLEN(retval);
     memcpy(buffer, Z_STRVAL(retval), buffer_used);
     zval_dtor(&retval);
@@ -336,19 +361,6 @@ void createObject(char* obj_typename, zval* return_value, int nargs = 0, zval* a
   zend_call_method(&return_value, ce, &constructor, NULL, 0, &ctor_rv, nargs, arg1, arg2 TSRMLS_CC);
   zval_ptr_dtor(&ctor_rv);
 }
-
-class PHPExceptionWrapper : public std::exception {
-public:
-  PHPExceptionWrapper(zval* _ex) throw() : ex(_ex) {
-    snprintf(_what, 40, "PHP exception zval=%p", ex);
-  }
-  const char* what() const throw() { return _what; }
-  ~PHPExceptionWrapper() throw() {}
-  operator zval*() const throw() { return const_cast<zval*>(ex); } // Zend API doesn't do 'const'...
-protected:
-  zval* ex;
-  char _what[40];
-} ;
 
 void throw_tprotocolexception(char* what, long errorcode) {
   TSRMLS_FETCH();
