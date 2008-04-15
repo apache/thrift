@@ -5,6 +5,7 @@
 // http://developers.facebook.com/thrift/
 
 #include <cassert>
+#include <cstring>
 #include <algorithm>
 #include <transport/TZlibTransport.h>
 #include <zlib.h>

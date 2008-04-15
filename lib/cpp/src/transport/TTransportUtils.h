@@ -8,6 +8,7 @@
 #define _THRIFT_TRANSPORT_TTRANSPORTUTILS_H_ 1
 
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <algorithm>
 #include <transport/TTransport.h>

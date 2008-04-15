@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string>
+#include <algorithm>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>

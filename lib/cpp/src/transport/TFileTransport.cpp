@@ -24,6 +24,7 @@
 #include <strings.h>
 #endif
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <sys/stat.h>
 
