@@ -257,7 +257,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     fds[0].events = POLLIN;
     if (intSock2_ >= 0) {
       fds[1].fd = intSock2_;
-      fds[1].fd = POLLIN;
+      fds[1].events = POLLIN;
     }
     int ret = poll(fds, 2, -1);
 
