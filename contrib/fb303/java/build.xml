@@ -57,6 +57,5 @@
     <delete dir="${build.dir}/classes/com"/>
     <delete dir="${build.dir}/lib"/>
     <delete dir="${build.dir}"/>
-    <delete dir="${dist.dir}"/>
   </target>
 </project>
