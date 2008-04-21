@@ -1,3 +1,5 @@
+EXTRA_DIST = build.xml src LICENSE
+
 all-local:
 	$(ANT)
 
