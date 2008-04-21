@@ -1,26 +1,29 @@
+Chad Walters <chad@powerset.com>
+-TJSONProtocol for C++ and Java
+
 Nitay <nitayj@gmail.com>
--Support for "make check".
+-Support for "make check"
 
 William Morgan <w@adap.tv>
--Miscellaneous Ruby improvements.
+-Miscellaneous Ruby improvements
 
 Ben Maurer <bmaurer@andrew.cmu.edu>
--Restructuring the way Autoconf is used.
+-Restructuring the way Autoconf is used
 
 Patrick Collison <patrick@collison.ie>
--Smalltalk bindings.
+-Smalltalk bindings
 
 Dave Simpson <dave@powerset.com>
--Better support for connection tracking in the C++ server.
--Miscellaneous fixes.
+-Better support for connection tracking in the C++ server
+-Miscellaneous fixes
 
 Igor Afanasyev <afan@evernote.com>
 -Perl HttpClient and bugfixes
 
 Todd Berman <tberman@imeem.com>
--MinGW port of the compiler.
--C# bindings.
--MS build task.
+-MinGW port of the compiler
+-C# bindings
+-MS build task
 
 ----------------
 Release 20070917

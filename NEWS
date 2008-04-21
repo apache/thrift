@@ -1,3 +1,32 @@
+Release Notes for Thrift 20080411
+
+.equals and .hashCode() for Java scturcts (developed by dreiss).
+
+Improvments to the C++ TSocketPool (developed by akhil).
+
+PHP (de)serialization extension (developed by dweatherford).
+
+Add fb303 to contrib (developed by Facebook).
+
+TJSONProtocol for C++ and Java (contributed by Chad Walters of Powerset).
+
+Support for "make check" and better tests (contributed by Nitay).
+
+Smalltalk support (contributed by Patrick Collison).
+
+Dave Simpson <dave@powerset.com>
+Better support for connection tracking in the C++ server (contributed by
+Dave Simpson of Powerset).
+
+Perl HttpClient (contributed by Igor Afanasyev of Evernote).
+
+C# support (contributed by Todd Berman of imeem).
+
+MinGW port of the compiler (contributed by Todd Berman of imeem).
+
+Tons of small improvements and bug fixes.
+
+
 Release Notes for Thrift 20070917
 
 TBinaryProtocol now includes a protocol version number in messaged.
