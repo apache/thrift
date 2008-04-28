@@ -150,7 +150,7 @@ TFileTransport::~TFileTransport() {
   }
 
   if (readBuff_) {
-    delete readBuff_;
+    delete[] readBuff_;
     readBuff_ = NULL;
   }
 
