@@ -6,6 +6,7 @@
 #include "gen-cpp/DebugProtoTest_types.h"
 #include <time.h>
 #include "../lib/cpp/src/protocol/TDebugProtocol.h"
+#include <sys/time.h>
 
 class Timer {
 public:
