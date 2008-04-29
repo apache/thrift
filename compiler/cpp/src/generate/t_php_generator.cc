@@ -1058,7 +1058,9 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
           indent() << "$" << (*a_iter)->get_name() << " = array_fill_keys(json_decode($" << (*a_iter)->get_name() << ", true), 1);" << endl;
       } else if (atype->is_struct() || atype->is_xception()) {
         f_service_ <<
-          indent() << "$" << (*a_iter)->get_name() << " = new " << php_namespace(atype->get_program()) << atype->get_name() << "(json_decode($" << (*a_iter)->get_name() << ", true));" << endl;
+          indent() << "if ($" << (*a_iter)->get_name() << " !== null) {" << endl <<
+          indent() << "  $" << (*a_iter)->get_name() << " = new " << php_namespace(atype->get_program()) << atype->get_name() << "(json_decode($" << (*a_iter)->get_name() << ", true));" << endl <<
+          indent() << "}" << endl;
       }
     }
     f_service_ <<
