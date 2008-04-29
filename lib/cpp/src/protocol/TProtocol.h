@@ -117,11 +117,11 @@ class TProtocol {
   virtual uint32_t writeMessageEnd() = 0;
 
 
-  virtual uint32_t writeStructBegin(const std::string& name) = 0;
+  virtual uint32_t writeStructBegin(const char* name) = 0;
 
   virtual uint32_t writeStructEnd() = 0;
 
-  virtual uint32_t writeFieldBegin(const std::string& name,
+  virtual uint32_t writeFieldBegin(const char* name,
                                    const TType fieldType,
                                    const int16_t fieldId) = 0;
 

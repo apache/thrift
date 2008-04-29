@@ -183,7 +183,7 @@ class TReadOnlyProtocol : public TProtocol {
   }
 
 
-  uint32_t writeStructBegin(const std::string& name) {
+  uint32_t writeStructBegin(const char* name) {
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
         subclass_ + " does not support writing (yet).");
   }
@@ -193,7 +193,7 @@ class TReadOnlyProtocol : public TProtocol {
         subclass_ + " does not support writing (yet).");
   }
 
-  uint32_t writeFieldBegin(const std::string& name,
+  uint32_t writeFieldBegin(const char* name,
                            const TType fieldType,
                            const int16_t fieldId) {
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,

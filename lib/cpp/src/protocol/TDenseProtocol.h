@@ -84,11 +84,11 @@ class TDenseProtocol : public TBinaryProtocol {
   virtual uint32_t writeMessageEnd();
 
 
-  virtual uint32_t writeStructBegin(const std::string& name);
+  virtual uint32_t writeStructBegin(const char* name);
 
   virtual uint32_t writeStructEnd();
 
-  virtual uint32_t writeFieldBegin(const std::string& name,
+  virtual uint32_t writeFieldBegin(const char* name,
                                    const TType fieldType,
                                    const int16_t fieldId);
 

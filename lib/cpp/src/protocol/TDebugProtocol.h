@@ -75,11 +75,11 @@ class TDebugProtocol : public TWriteOnlyProtocol {
   virtual uint32_t writeMessageEnd();
 
 
-  uint32_t writeStructBegin(const std::string& name);
+  uint32_t writeStructBegin(const char* name);
 
   uint32_t writeStructEnd();
 
-  uint32_t writeFieldBegin(const std::string& name,
+  uint32_t writeFieldBegin(const char* name,
                            const TType fieldType,
                            const int16_t fieldId);
 

@@ -75,7 +75,7 @@ uint32_t TBinaryProtocol::writeMessageEnd() {
   return 0;
 }
 
-uint32_t TBinaryProtocol::writeStructBegin(const string& name) {
+uint32_t TBinaryProtocol::writeStructBegin(const char* name) {
   return 0;
 }
 
@@ -83,7 +83,7 @@ uint32_t TBinaryProtocol::writeStructEnd() {
   return 0;
 }
 
-uint32_t TBinaryProtocol::writeFieldBegin(const string& name,
+uint32_t TBinaryProtocol::writeFieldBegin(const char* name,
                                           const TType fieldType,
                                           const int16_t fieldId) {
   uint32_t wsize = 0;

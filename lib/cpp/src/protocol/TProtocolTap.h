@@ -45,7 +45,7 @@ class TProtocolTap : public TReadOnlyProtocol {
 
   virtual uint32_t readStructBegin(std::string& name) {
     uint32_t rv = source_->readStructBegin(name);
-    sink_->writeStructBegin(name);
+    sink_->writeStructBegin(name.c_str());
     return rv;
   }
 
@@ -62,7 +62,7 @@ class TProtocolTap : public TReadOnlyProtocol {
     if (fieldType == T_STOP) {
       sink_->writeFieldStop();
     } else {
-      sink_->writeFieldBegin(name, fieldType, fieldId);
+      sink_->writeFieldBegin(name.c_str(), fieldType, fieldId);
     }
     return rv;
   }

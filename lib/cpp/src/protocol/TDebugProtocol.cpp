@@ -152,10 +152,10 @@ uint32_t TDebugProtocol::writeMessageEnd() {
   return writeIndented(")\n");
 }
 
-uint32_t TDebugProtocol::writeStructBegin(const string& name) {
+uint32_t TDebugProtocol::writeStructBegin(const char* name) {
   uint32_t size = 0;
   size += startItem();
-  size += writePlain(name + " {\n");
+  size += writePlain(string(name) + " {\n");
   indentUp();
   write_state_.push_back(STRUCT);
   return size;
@@ -170,7 +170,7 @@ uint32_t TDebugProtocol::writeStructEnd() {
   return size;
 }
 
-uint32_t TDebugProtocol::writeFieldBegin(const string& name,
+uint32_t TDebugProtocol::writeFieldBegin(const char* name,
                                          const TType fieldType,
                                          const int16_t fieldId) {
   // sprintf(id_str, "%02d", fieldId);
