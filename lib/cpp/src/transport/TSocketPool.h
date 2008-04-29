@@ -36,6 +36,9 @@ class TSocketPoolServer {
   // Port to connect on
   int port_;
 
+  // Socket for the server
+  int socket_;
+
   // Last time connecting to this server failed
   int lastFailTime_;
 
@@ -138,10 +141,20 @@ class TSocketPool : public TSocket {
     */
    void open();
 
+   /*
+    * Closes the UNIX socket
+    */
+   void close();
+
  protected:
+
+  void setCurrentServer(const boost::shared_ptr<TSocketPoolServer> &server);
 
    /** List of servers to connect to */
   std::vector< boost::shared_ptr<TSocketPoolServer> > servers_;
+
+  /** Current server */
+  boost::shared_ptr<TSocketPoolServer> currentServer_;
 
    /** How many times to retry each host in connect */
    int numRetries_;

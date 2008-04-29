@@ -64,6 +64,9 @@ class TNonblockingServer : public TServer {
   // Event struct, for use with eventBase_
   struct event serverEvent_;
 
+  // Number of TConnection object we've created
+  size_t numTConnections_;
+
   /**
    * This is a stack of all the objects that have been created but that
    * are NOT currently in use. When we close a connection, we place it on this
@@ -82,7 +85,8 @@ class TNonblockingServer : public TServer {
     port_(port),
     frameResponses_(true),
     threadPoolProcessing_(false),
-    eventBase_(NULL) {}
+    eventBase_(NULL),
+    numTConnections_(0) {}
 
   TNonblockingServer(boost::shared_ptr<TProcessor> processor,
                      boost::shared_ptr<TProtocolFactory> protocolFactory,
@@ -93,7 +97,8 @@ class TNonblockingServer : public TServer {
     port_(port),
     frameResponses_(true),
     threadManager_(threadManager),
-    eventBase_(NULL) {
+    eventBase_(NULL),
+    numTConnections_(0) {
     setInputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
     setOutputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
     setInputProtocolFactory(protocolFactory);
@@ -113,7 +118,8 @@ class TNonblockingServer : public TServer {
     port_(port),
     frameResponses_(true),
     threadManager_(threadManager),
-    eventBase_(NULL) {
+    eventBase_(NULL),
+    numTConnections_(0) {
     setInputTransportFactory(inputTransportFactory);
     setOutputTransportFactory(outputTransportFactory);
     setInputProtocolFactory(inputProtocolFactory);
@@ -126,6 +132,10 @@ class TNonblockingServer : public TServer {
   void setThreadManager(boost::shared_ptr<ThreadManager> threadManager) {
     threadManager_ = threadManager;
     threadPoolProcessing_ = (threadManager != NULL);
+  }
+
+  boost::shared_ptr<ThreadManager> getThreadManager() {
+    return threadManager_;
   }
 
   bool isThreadPoolProcessing() const {
@@ -148,6 +158,18 @@ class TNonblockingServer : public TServer {
     return eventBase_;
   }
 
+  void incrementNumConnections(size_t incr=1) {
+    numTConnections_ += incr;
+  }
+
+  size_t getNumConnections() {
+    return numTConnections_;
+  }
+
+  size_t getNumIdleConnections() {
+    return connectionStack_.size();
+  }
+
   TConnection* createConnection(int socket, short flags);
 
   void returnConnection(TConnection* connection);
@@ -163,7 +185,6 @@ class TNonblockingServer : public TServer {
   void registerEvents(event_base* base);
 
   void serve();
-
 };
 
 /**
@@ -304,6 +325,11 @@ class TConnection {
     outputTransport_ = boost::shared_ptr<TMemoryBuffer>(new TMemoryBuffer());
 
     init(socket, eventFlags, s);
+    server_->incrementNumConnections();
+  }
+
+  ~TConnection() {
+    server_->incrementNumConnections(-1);
   }
 
   // Initialize

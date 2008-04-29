@@ -23,6 +23,7 @@ using boost::shared_ptr;
 TSocketPoolServer::TSocketPoolServer()
   : host_(""),
     port_(0),
+    socket_(-1),
     lastFailTime_(0),
     consecutiveFailures_(0) {}
 
@@ -32,6 +33,7 @@ TSocketPoolServer::TSocketPoolServer()
 TSocketPoolServer::TSocketPoolServer(const string &host, int port)
   : host_(host),
     port_(port),
+    socket_(-1),
     lastFailTime_(0),
     consecutiveFailures_(0) {}
 
@@ -100,7 +102,12 @@ TSocketPool::TSocketPool(const string& host, int port) : TSocket(),
 }
 
 TSocketPool::~TSocketPool() {
-  close();
+  vector< shared_ptr<TSocketPoolServer> >::const_iterator iter = servers_.begin();
+  vector< shared_ptr<TSocketPoolServer> >::const_iterator iterEnd = servers_.end();
+  for (; iter != iterEnd; ++iter) {
+    setCurrentServer(*iter);
+    TSocketPool::close();
+  }
 }
 
 void TSocketPool::addServer(const string& host, int port) {
@@ -136,6 +143,13 @@ void TSocketPool::setAlwaysTryLast(bool alwaysTryLast) {
   alwaysTryLast_ = alwaysTryLast;
 }
 
+void TSocketPool::setCurrentServer(const shared_ptr<TSocketPoolServer> &server) {
+  currentServer_ = server;
+  host_ = server->host_;
+  port_ = server->port_;
+  socket_ = server->socket_;
+}
+
 /* TODO: without apc we ignore a lot of functionality from the php version */
 void TSocketPool::open() {
   if (randomize_) {
@@ -145,16 +159,21 @@ void TSocketPool::open() {
   unsigned int numServers = servers_.size();
   for (unsigned int i = 0; i < numServers; ++i) {
 
-    TSocketPoolServer &server = *(servers_[i]);
-    bool retryIntervalPassed = (server.lastFailTime_ == 0);
+    shared_ptr<TSocketPoolServer> &server = servers_[i];
+    bool retryIntervalPassed = (server->lastFailTime_ == 0);
     bool isLastServer = alwaysTryLast_ ? (i == (numServers - 1)) : false;
 
-    host_ = server.host_;
-    port_ = server.port_;
+    // Impersonate the server socket
+    setCurrentServer(server);
 
-    if (server.lastFailTime_ > 0) {
+    if (isOpen()) {
+      // already open means we're done
+      return;
+    }
+
+    if (server->lastFailTime_ > 0) {
       // The server was marked as down, so check if enough time has elapsed to retry
-      int elapsedTime = time(NULL) - server.lastFailTime_;
+      int elapsedTime = time(NULL) - server->lastFailTime_;
       if (elapsedTime > retryInterval_) {
         retryIntervalPassed = true;
       }
@@ -165,29 +184,41 @@ void TSocketPool::open() {
         try {
           TSocket::open();
 
+          // Copy over the opened socket so that we can keep it persistent
+          server->socket_ = socket_;
+
           // reset lastFailTime_ is required
-          if (server.lastFailTime_) {
-            server.lastFailTime_ = 0;
+          if (server->lastFailTime_) {
+            server->lastFailTime_ = 0;
           }
 
           // success
           return;
         } catch (TException e) {
+          string errStr = "TSocketPool::open failed "+getSocketInfo()+": "+e.what();
+          GlobalOutput(errStr.c_str());
           // connection failed
         }
       }
 
-      ++server.consecutiveFailures_;
-      if (server.consecutiveFailures_ > maxConsecutiveFailures_) {
+      ++server->consecutiveFailures_;
+      if (server->consecutiveFailures_ > maxConsecutiveFailures_) {
         // Mark server as down
-        server.consecutiveFailures_ = 0;
-        server.lastFailTime_ = time(NULL);
+        server->consecutiveFailures_ = 0;
+        server->lastFailTime_ = time(NULL);
       }
     }
   }
 
   GlobalOutput("TSocketPool::open: all connections failed");
   throw TTransportException(TTransportException::NOT_OPEN);
+}
+
+void TSocketPool::close() {
+  if (isOpen()) {
+    TSocket::close();
+    currentServer_->socket_ = -1;
+  }
 }
 
 }}} // facebook::thrift::transport
