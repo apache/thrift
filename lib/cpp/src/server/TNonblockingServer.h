@@ -158,8 +158,12 @@ class TNonblockingServer : public TServer {
     return eventBase_;
   }
 
-  void incrementNumConnections(size_t incr=1) {
-    numTConnections_ += incr;
+  void incrementNumConnections() {
+    ++numTConnections_;
+  }
+
+  void decrementNumConnections() {
+    --numTConnections_;
   }
 
   size_t getNumConnections() {
@@ -329,7 +333,7 @@ class TConnection {
   }
 
   ~TConnection() {
-    server_->incrementNumConnections(-1);
+    server_->decrementNumConnections();
   }
 
   // Initialize
