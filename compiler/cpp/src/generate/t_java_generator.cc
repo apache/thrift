@@ -1143,7 +1143,6 @@ void t_java_generator::generate_java_struct_tostring(ofstream& out,
     } else {
       indent(out) << "sb.append(\"," << (*f_iter)->get_name() << ":\");" << endl;
     }
-    t_type* ttype = (*f_iter)->get_type();
     indent(out) << "sb.append(this." << (*f_iter)->get_name() << ");" << endl;
   }
   out <<
