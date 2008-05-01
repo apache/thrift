@@ -12,7 +12,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/lexical_cast.hpp>
 #include <sys/stat.h>
 
 #include "platform.h"
