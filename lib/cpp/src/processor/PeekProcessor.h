@@ -11,6 +11,7 @@
 #include <TProcessor.h>
 #include <transport/TTransport.h>
 #include <transport/TTransportUtils.h>
+#include <transport/TBufferTransports.h>
 #include <boost/shared_ptr.hpp>
 
 namespace facebook { namespace thrift { namespace processor {

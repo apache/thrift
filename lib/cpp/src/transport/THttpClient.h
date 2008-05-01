@@ -7,7 +7,7 @@
 #ifndef _THRIFT_TRANSPORT_THTTPCLIENT_H_
 #define _THRIFT_TRANSPORT_THTTPCLIENT_H_ 1
 
-#include <transport/TTransportUtils.h>
+#include <transport/TBufferTransports.h>
 
 namespace facebook { namespace thrift { namespace transport {
 

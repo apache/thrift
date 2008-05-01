@@ -2,7 +2,7 @@
 #include <iostream>
 #include <climits>
 #include <cassert>
-#include <transport/TTransportUtils.h>
+#include <transport/TBufferTransports.h>
 #include <protocol/TBinaryProtocol.h>
 #include "gen-cpp/ThriftTest_types.h"
 

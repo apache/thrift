@@ -8,7 +8,6 @@
 #define _THRIFT_PROTOCOL_TJSONPROTOCOL_H_ 1
 
 #include "TProtocol.h"
-#include <transport/TTransportUtils.h>
 
 #include <stack>
 
@@ -302,6 +301,9 @@ class TJSONProtocolFactory {
 
 }}} // facebook::thrift::protocol
 
+
+// TODO(dreiss): Move part of ThriftJSONString into a .cpp file and remove this.
+#include <transport/TBufferTransports.h>
 
 namespace facebook { namespace thrift {
 

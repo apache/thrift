@@ -12,8 +12,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <transport/TTransportUtils.h>
-
 namespace facebook { namespace thrift { namespace protocol {
 
 /*
@@ -157,6 +155,9 @@ class TDebugProtocolFactory : public TProtocolFactory {
 
 }}} // facebook::thrift::protocol
 
+
+// TODO(dreiss): Move (part of) ThriftDebugString into a .cpp file and remove this.
+#include <transport/TBufferTransports.h>
 
 namespace facebook { namespace thrift {
 

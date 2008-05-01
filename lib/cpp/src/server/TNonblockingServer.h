@@ -9,7 +9,7 @@
 
 #include <Thrift.h>
 #include <server/TServer.h>
-#include <transport/TTransportUtils.h>
+#include <transport/TBufferTransports.h>
 #include <concurrency/ThreadManager.h>
 #include <stack>
 #include <string>

@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <transport/TTransportUtils.h>
+#include <transport/TBufferTransports.h>
 #include <transport/TFDTransport.h>
 #include <protocol/TBinaryProtocol.h>
 #include <protocol/TDebugProtocol.h>

@@ -40,7 +40,8 @@ TESTS = \
 
 UnitTests_SOURCES = \
 	UnitTestMain.cpp \
-	TMemoryBufferTest.cpp
+	TMemoryBufferTest.cpp \
+	TBufferBaseTest.cpp
 
 UnitTests_LDADD = libtestgencpp.la
 

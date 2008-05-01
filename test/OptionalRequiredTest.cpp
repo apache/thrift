@@ -3,7 +3,7 @@
 #include <iostream>
 #include <protocol/TDebugProtocol.h>
 #include <protocol/TBinaryProtocol.h>
-#include <transport/TTransportUtils.h>
+#include <transport/TBufferTransports.h>
 #include "gen-cpp/OptionalRequiredTest_types.h"
 
 using std::cout;

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cmath>
-#include <transport/TTransportUtils.h>
+#include <transport/TBufferTransports.h>
 #include <protocol/TJSONProtocol.h>
 #include "gen-cpp/DebugProtoTest_types.h"
 

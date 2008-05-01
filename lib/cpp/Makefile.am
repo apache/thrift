@@ -41,6 +41,7 @@ libthrift_la_SOURCES = src/Thrift.cpp \
                        src/transport/TSocketPool.cpp \
                        src/transport/TServerSocket.cpp \
                        src/transport/TTransportUtils.cpp \
+                       src/transport/TBufferTransports.cpp \
                        src/server/TServer.cpp \
                        src/server/TSimpleServer.cpp \
                        src/server/TThreadPoolServer.cpp \
@@ -107,6 +108,7 @@ include_transport_HEADERS = \
                          src/transport/TTransport.h \
                          src/transport/TTransportException.h \
                          src/transport/TTransportUtils.h \
+                         src/transport/TBufferTransports.h \
                          src/transport/TZlibTransport.h
 
 include_serverdir = $(include_thriftdir)/server

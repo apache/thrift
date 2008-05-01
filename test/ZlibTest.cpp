@@ -11,7 +11,7 @@ g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
 #include <cassert>
 #include <fstream>
 #include <iostream>
-#include <transport/TTransportUtils.h>
+#include <transport/TBufferTransports.h>
 #include <transport/TZlibTransport.h>
 
 

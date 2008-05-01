@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <Thrift.h>
 #include <transport/TTransportUtils.h>
+#include <transport/TBufferTransports.h>
 using namespace std;
 using boost::shared_ptr;
 using facebook::thrift::transport::TTransportException;
