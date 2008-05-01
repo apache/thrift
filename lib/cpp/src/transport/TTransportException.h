@@ -7,7 +7,6 @@
 #ifndef _THRIFT_TRANSPORT_TTRANSPORTEXCEPTION_H_
 #define _THRIFT_TRANSPORT_TTRANSPORTEXCEPTION_H_ 1
 
-#include <boost/lexical_cast.hpp>
 #include <string>
 #include <Thrift.h>
 

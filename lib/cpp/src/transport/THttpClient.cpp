@@ -5,6 +5,7 @@
 // http://developers.facebook.com/thrift/
 
 #include <cstdlib>
+#include <sstream>
 
 #include "THttpClient.h"
 #include "TSocket.h"

@@ -7,7 +7,6 @@
 #ifndef _THRIFT_PROTOCOL_TPROTOCOLEXCEPTION_H_
 #define _THRIFT_PROTOCOL_TPROTOCOLEXCEPTION_H_ 1
 
-#include <boost/lexical_cast.hpp>
 #include <string>
 
 namespace facebook { namespace thrift { namespace protocol {
