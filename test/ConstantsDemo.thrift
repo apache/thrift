@@ -14,6 +14,9 @@ struct thing2 {
   1: constants val = TWO
 }
 
+typedef i32 myIntType
+const myIntType myInt = 3
+
 const map<constants,string> GEN_ENUM_NAMES = {ONE : "HOWDY", TWO: PARTNER}
 
 const i32 hex_const = 0x0001F

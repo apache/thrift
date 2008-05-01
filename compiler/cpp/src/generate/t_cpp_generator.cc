@@ -481,6 +481,7 @@ void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
  * validate_types method in main.cc
  */
 void t_cpp_generator::print_const_value(ofstream& out, string name, t_type* type, t_const_value* value) {
+  type = get_true_type(type);
   if (type->is_base_type()) {
     string v2 = render_const_value(out, name, type, value);
     indent(out) << name << " = " << v2 << ";" << endl <<
@@ -537,6 +538,8 @@ void t_cpp_generator::print_const_value(ofstream& out, string name, t_type* type
       indent(out) << name << ".insert(" << val << ");" << endl;
     }
     out << endl;
+  } else {
+    throw "INVALID TYPE IN print_const_value: " + type->get_name();
   }
 }
 

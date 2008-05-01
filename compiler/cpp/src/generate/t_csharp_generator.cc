@@ -290,6 +290,7 @@ void t_csharp_generator::print_const_constructor(std::ofstream& out, std::vector
 
 //it seems like all that methods that call this are using in_static to be the opposite of what it would imply
 bool t_csharp_generator::print_const_value(std::ofstream& out, string name, t_type* type, t_const_value* value, bool in_static, bool defval, bool needtype) {
+  type = get_true_type(type);
   indent(out);
   bool need_static_construction = !in_static;
   if (!defval || needtype) {
@@ -310,6 +311,8 @@ bool t_csharp_generator::print_const_value(std::ofstream& out, string name, t_ty
     out << name << " = new " << type_name(type, true, true) << "();" << endl;
   } else if (type->is_list() || type->is_set()) {
     out << name << " = new " << type_name(type) << "();" << endl;
+  } else {
+    throw "compiler error: no const of type " + type->get_name();
   }
 
   if (defval && !type->is_base_type() && !type->is_enum()) {

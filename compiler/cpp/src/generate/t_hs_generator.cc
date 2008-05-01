@@ -351,6 +351,7 @@ void t_hs_generator::generate_const(t_const* tconst) {
  * validate_types method in main.cc
  */
 string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
+  type = get_true_type(type);
   std::ostringstream out;
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
@@ -462,6 +463,8 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
       out << val;
     }
     out << "])";
+  } else {
+    throw "CANNOT GENERATE CONSTANT FOR TYPE: " + type->get_name();
   }
   return out.str();
 }

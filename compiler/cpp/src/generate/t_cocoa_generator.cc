@@ -1788,6 +1788,7 @@ string t_cocoa_generator::render_const_value(string name,
                                              t_type* type,
                                              t_const_value* value,
                                              bool containerize_it) {
+  type = get_true_type(type);
   std::ostringstream render;
 
   if (type->is_base_type()) {

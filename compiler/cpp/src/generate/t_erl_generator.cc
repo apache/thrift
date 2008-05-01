@@ -175,6 +175,7 @@ void t_erl_generator::generate_const(t_const* tconst) {
  * validate_types method in main.cc
  */
 string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
+  type = get_true_type(type);
   std::ostringstream out;
 
   if (type->is_base_type()) {
@@ -291,6 +292,8 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
       out << render_const_value(etype, *v_iter);
     }
     out << "]";
+  } else {
+    throw "CANNOT GENERATE CONSTANT FOR TYPE: " + type->get_name();
   }
   return out.str();
 }
