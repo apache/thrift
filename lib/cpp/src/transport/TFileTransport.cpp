@@ -734,8 +734,17 @@ uint32_t TFileTransport::getNumChunks() {
   if (fd_ <= 0) {
     return 0;
   }
+
   struct stat f_info;
-  fstat(fd_, &f_info);
+  int rv = fstat(fd_, &f_info);
+
+  if (rv < 0) {
+    int errno_copy = errno;
+    throw TTransportException(TTransportException::UNKNOWN,
+                              "TFileTransport::getNumChunks() (fstat)",
+                              errno_copy);
+  }
+
   if (f_info.st_size > 0) {
     return ((f_info.st_size)/chunkSize_) + 1;
   }
