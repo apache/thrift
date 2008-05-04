@@ -7,7 +7,7 @@ thrift_OBJDIR = obj
 thrift_SOURCES = src/thrifty.yy \
                  src/thriftl.ll \
                  src/main.cc \
-                 src/md5c.c \
+                 src/md5.c \
                  src/generate/t_generator.cc \
                  src/generate/t_php_generator.cc \
                  src/generate/t_xsd_generator.cc \

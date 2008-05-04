@@ -70,10 +70,10 @@ class t_type : public t_doc {
   // Call this before trying get_*_fingerprint().
   virtual void generate_fingerprint() {
     std::string material = get_fingerprint_material();
-    MD5_CTX ctx;
-    MD5Init(&ctx);
-    MD5Update(&ctx, (unsigned char*)(material.data()), material.size());
-    MD5Final(fingerprint_, &ctx);
+    md5_state_t ctx;
+    md5_init(&ctx);
+    md5_append(&ctx, (md5_byte_t*)(material.data()), (int)material.size());
+    md5_finish(&ctx, (md5_byte_t*)fingerprint_);
   }
 
   bool has_fingerprint() const {
