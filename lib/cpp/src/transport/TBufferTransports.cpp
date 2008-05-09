@@ -230,8 +230,10 @@ void TFramedTransport::flush()  {
   sz_nbo = (int32_t)htonl((uint32_t)(sz_hbo));
   memcpy(wBuf_.get(), (uint8_t*)&sz_nbo, sizeof(sz_nbo));
 
-  // Write size and frame body.
-  transport_->write(wBuf_.get(), sizeof(sz_nbo)+sz_hbo);
+  if (sz_hbo > 0) {
+    // Write size and frame body.
+    transport_->write(wBuf_.get(), sizeof(sz_nbo)+sz_hbo);
+  }
 
   // Reset our pointers.
   wBase_ = wBuf_.get();
