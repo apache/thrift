@@ -101,7 +101,7 @@ const uint8_t* TBufferedTransport::borrowSlow(uint8_t* buf, uint32_t* len) {
   // The number of bytes of data we have already.
   uint32_t have = rBound_ - rBase_;
   // The number of additional bytes we need from the underlying transport.
-  uint32_t need = *len - have;
+  int32_t need = *len - have;
   // The space from the start of the buffer to the end of our data.
   uint32_t offset = rBound_ - rBuf_.get();
   assert(need > 0);
