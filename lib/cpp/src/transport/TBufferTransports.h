@@ -4,8 +4,8 @@
 // See accompanying file LICENSE or visit the Thrift site at:
 // http://developers.facebook.com/thrift/
 
-#ifndef _THRIFT_TRANSPORT_TDOUBLEBUFFERS_H_
-#define _THRIFT_TRANSPORT_TDOUBLEBUFFERS_H_ 1
+#ifndef _THRIFT_TRANSPORT_TBUFFERTRANSPORTS_H_
+#define _THRIFT_TRANSPORT_TBUFFERTRANSPORTS_H_ 1
 
 #include "boost/scoped_array.hpp"
 
@@ -105,7 +105,7 @@ class TBufferBase : public TTransport {
   /// Slow path read.
   virtual uint32_t readSlow(uint8_t* buf, uint32_t len) = 0;
 
-  /// Slow path read.
+  /// Slow path write.
   virtual void writeSlow(const uint8_t* buf, uint32_t len) = 0;
 
   /**
@@ -135,7 +135,7 @@ class TBufferBase : public TTransport {
     rBound_ = buf+len;
   }
 
-  /// Convenience mutator for setting the read buffer.
+  /// Convenience mutator for setting the write buffer.
   void setWriteBuffer(uint8_t* buf, uint32_t len) {
     wBase_ = buf;
     wBound_ = buf+len;
@@ -661,4 +661,4 @@ class TMemoryBuffer : public TBufferBase {
 
 }}} // facebook::thrift::transport
 
-#endif // #ifndef _THRIFT_TRANSPORT_TDOUBLEBUFFERS_H_
+#endif // #ifndef _THRIFT_TRANSPORT_TBUFFERTRANSPORTS_H_
