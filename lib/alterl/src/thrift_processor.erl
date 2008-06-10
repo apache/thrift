@@ -51,15 +51,24 @@ handle_function(State = #state{in_protocol = IProto,
                           [Function, Params, Micro/1000.0]),
     
     ReplyType = Service:function_info(Function, reply_type),
+    StructName = atom_to_list(Function) ++ "_result",
     
     case Result of
-        {reply, Reply} -> 
-            StructName = atom_to_list(Function) ++ "_result",
-            thrift_protocol:write(OProto, #protocol_message_begin{
-                            name = StructName,
-                            type = ?tMessageType_REPLY,
-                            seqid = 0}),
-            thrift_protocol:write(OProto, {{struct, [{0, ReplyType}]}, {StructName, Reply}}),
-            thrift_protocol:write(OProto, message_end)
+        {reply, ReplyData} -> 
+            Reply = {{struct, [{0, ReplyType}]}, {StructName, ReplyData}},
+            ok = send_reply(OProto, Function, Reply);
+
+        ok when ReplyType == {struct, []} ->
+            ok = send_reply(OProto, Function, {ReplyType, {StructName}})
     end,
+    ok.
+
+
+send_reply(OProto, Function, Reply) ->
+    ok = thrift_protocol:write(OProto, #protocol_message_begin{
+                                 name = atom_to_list(Function),
+                                 type = ?tMessageType_REPLY,
+                                 seqid = 0}),
+    ok = thrift_protocol:write(OProto, Reply),
+    ok = thrift_protocol:write(OProto, message_end),
     ok.
