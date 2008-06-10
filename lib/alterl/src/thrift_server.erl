@@ -19,7 +19,6 @@
 -define(SERVER, ?MODULE).
 
 -record(state, {listen_socket, acceptor, service}).
--record(handler, {module}).
 
 %%====================================================================
 %% API
@@ -42,8 +41,7 @@ start_link(Port, Service, HandlerModule) when is_integer(Port), is_atom(HandlerM
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init({Port, Service, HandlerModule}) ->
-    Handler = #handler{module = HandlerModule},
+init({Port, Service, Handler}) ->
     {ok, Socket} = gen_tcp:listen(Port,
                                   [binary,
                                    {packet, 0},
@@ -109,7 +107,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 
 acceptor(ListenSocket, Service, Handler)
-  when is_port(ListenSocket), is_record(Handler, handler) ->
+  when is_port(ListenSocket), is_atom(Handler) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
     error_logger:info_msg("Accepted client"),
 
