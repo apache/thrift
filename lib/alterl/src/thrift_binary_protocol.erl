@@ -214,7 +214,8 @@ read(This, double) ->
 
 read(This, string) ->
     {ok, Sz}  = read(This, i32),
-    read(This, Sz);
+    {ok, Bin} = read(This, Sz),
+    {ok, binary_to_list(Bin)};
 
 read(This, Len) when is_integer(Len), Len >= 0 ->
     thrift_transport:read(This#binary_protocol.transport, Len).

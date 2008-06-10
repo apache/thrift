@@ -29,7 +29,7 @@ loop(State = #state{in_protocol = IProto,
     case thrift_protocol:read(IProto, message_begin) of
         #protocol_message_begin{name = Function,
                                 type = ?tMessageType_CALL} ->
-            ok= handle_function(State, list_to_atom(binary_to_list(Function))),
+            ok= handle_function(State, list_to_atom(Function)),
             loop(State);
         {error, closed} ->
             error_logger:info_msg("Client disconnected~n"),
