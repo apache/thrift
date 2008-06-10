@@ -29,43 +29,12 @@ loop(State = #state{in_protocol = IProto,
     case thrift_protocol:read(IProto, message_begin) of
         #protocol_message_begin{name = Function,
                                 type = ?tMessageType_CALL} ->
-            ok = handle_function(State, list_to_atom(binary_to_list(Function))),
+            ok= handle_function(State, list_to_atom(binary_to_list(Function))),
             loop(State);
         {error, closed} ->
-            error_logger:info_msg("Processor finished~n"),
+            error_logger:info_msg("Client disconnected~n"),
             ok
     end.
-
-%handle_function(State = #state{in_protocol = IProto,
-%                               out_protocol = OProto},
-%                add) ->
-%    io:format("Reading struct~n"),
-%    {ok, Struct} = thrift_protocol:read(IProto,
-%                  {struct, [{1, i32},
-%                            {2, i32}]}),
-%    io:format("Struct: ~p~n", [Struct]),
-    
-%    {A, B} = Struct,
-
-%    thrift_protocol:write(OProto, #protocol_message_begin{
-%                            name = "addResult",
-%                            type = ?tMessageType_REPLY,
-%                            seqid = 0}),
-%    thrift_protocol:write(OProto, {{struct, [{0, i32}]},
-%                                   {A + B}}),
-%    thrift_protocol:write(OProto, message_end);
-
-%handle_function(State = #state{in_protocol = IProto,
-%                               out_protocol = OProto},
-%                complexTest) ->
-%    io:format("Reading struct~n"),
-%    Struct = thrift_protocol:read(
-%               IProto,
-%               {struct, [{1, {struct,
-%                              [{1, {list, i32}},
-%                               {2, {map, string, {struct, [{1, i16}]}}}]}}]}),
-    
-%    io:format("Struct: ~p~n", [Struct]);
 
 
 handle_function(State = #state{in_protocol = IProto,
@@ -76,17 +45,21 @@ handle_function(State = #state{in_protocol = IProto,
     InParams = Service:function_info(Function, params_type),
 
     {ok, Params} = thrift_protocol:read(IProto, InParams),
-    Result = Handler:handle_function(Function, Params),
+
+    {Micro, Result} = timer:tc(Handler, handle_function, [Function, Params]),
+    error_logger:info_msg("Processed ~p(~p) in ~.4fms~n",
+                          [Function, Params, Micro/1000.0]),
     
     ReplyType = Service:function_info(Function, reply_type),
     
     case Result of
         {reply, Reply} -> 
+            StructName = atom_to_list(Function) ++ "_result",
             thrift_protocol:write(OProto, #protocol_message_begin{
-                            name = atom_to_list(Function) ++ "_result",
+                            name = StructName,
                             type = ?tMessageType_REPLY,
                             seqid = 0}),
-            thrift_protocol:write(OProto, {{struct, [{0, ReplyType}]}, {Reply}}),
+            thrift_protocol:write(OProto, {{struct, [{0, ReplyType}]}, {StructName, Reply}}),
             thrift_protocol:write(OProto, message_end)
     end,
     ok.

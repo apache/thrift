@@ -75,6 +75,14 @@ read(IProto, {struct, Structure}) when is_list(Structure) ->
             end || Index <- lists:seq(1, length(Structure))],
     {ok, list_to_tuple(List)};
 
+read(IProto, {struct, {Module, StructureName}}) when is_atom(Module),
+                                                     is_atom(StructureName) ->
+    case read(IProto, Module:struct_info(StructureName)) of
+        {ok, StructureElems} ->
+            {ok, list_to_tuple([StructureName | tuple_to_list(StructureElems)])};
+        Else -> Else
+    end;
+
 read(IProto, {list, Type}) ->
     #protocol_list_begin{etype = EType, size = Size} =
         read(IProto, list_begin),
@@ -217,11 +225,20 @@ skip_list_loop(Proto, Map = #protocol_list_begin{etype = Etype,
 %% Description: 
 %%--------------------------------------------------------------------
 write(Proto, {{struct, StructDef}, Data})
-  when is_list(StructDef), is_tuple(Data), length(StructDef) == size(Data) ->
-    ok = write(Proto, #protocol_struct_begin{}),
-    ok = struct_write_loop(Proto, StructDef, tuple_to_list(Data)),
+  when is_list(StructDef), is_tuple(Data), length(StructDef) == size(Data) - 1 ->
+
+    [StructName | Elems] = tuple_to_list(Data),
+    ok = write(Proto, #protocol_struct_begin{name = StructName}),
+    ok = struct_write_loop(Proto, StructDef, Elems),
     ok = write(Proto, struct_end),
     ok;
+
+write(Proto, {{struct, {Module, StructureName}}, Data})
+  when is_atom(Module),
+       is_atom(StructureName),
+       element(1, Data) =:= StructureName ->
+    StructType = Module:struct_info(StructureName),
+    write(Proto, {Module:struct_info(StructureName), Data});
 
 write(Proto, {{list, Type}, Data})
   when is_list(Data) ->
