@@ -632,6 +632,22 @@ void t_php_generator::generate_php_struct_writer(ofstream& out,
       indent() << "if ($this->" << (*f_iter)->get_name() << " !== null) {" << endl;
     indent_up();
 
+    t_type* type = get_true_type((*f_iter)->get_type());
+    string expect;
+    if (type->is_container()) {
+      expect = "array";
+    } else if (type->is_struct()) {
+      expect = "object";
+    }
+    if (!expect.empty()) {
+      out <<
+        indent() << "if (!is_" << expect << "($this->" << (*f_iter)->get_name() << ")) {" << endl;
+      indent_up();
+      out <<
+        indent() << "throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);" << endl;
+      scope_down(out);
+    }
+
     // Write field header
     if (binary_inline_) {
       out <<
