@@ -773,5 +773,5 @@ std::string t_alterl_generator::generate_type_term(t_type* type,
 }
 
 std::string t_alterl_generator::type_module(t_type* ttype) {
-  return ttype->get_program()->get_name() + "_types";
+  return uncapitalize(ttype->get_program()->get_name()) + "_types";
 }
