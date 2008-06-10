@@ -85,7 +85,7 @@ write(This, #protocol_set_begin{
 
 write(This, set_end) -> ok;
 
-write(This, struct_begin) -> ok;
+write(This, #protocol_struct_begin{}) -> ok;
 write(This, struct_end) -> ok;
 
 
@@ -126,7 +126,8 @@ read(This, message_begin) ->
             #protocol_message_begin{name = Name,
                                     type = Type,
                                     seqid = SeqId};
-        Err = {error, closed} -> Err
+        Err = {error, closed} -> Err;
+        Err = {error, ebadf}  -> Err
     end;
 
 read(This, message_end) -> ok;
@@ -140,7 +141,7 @@ read(This, field_begin) ->
             #protocol_field_begin{type = Type,
                                   id = 0}; % TODO(todd) 0 or undefined?
         {ok, Type} ->
-            Id = read(This, i16),
+            {ok, Id} = read(This, i16),
             #protocol_field_begin{type = Type,
                                   id = Id}
     end;

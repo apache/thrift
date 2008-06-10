@@ -26,39 +26,45 @@ init(IProt, OProt, Service, Handler) ->
 
 loop(State = #state{in_protocol = IProto,
                     out_protocol = OProto}) ->
-    MessageBegin = thrift_protocol:read(IProto, message_begin),
-    io:format("Got message begin: ~p~n", [MessageBegin]),
-
-    [ok, ok, ok, ok] = [thrift_protocol:read(IProto, X)
-                    || X <- [struct_begin, field_stop, struct_end, message_end]],
-    io:format("Read everything okay!"),
-
-    Packets =
-        [
-         #protocol_message_begin{name = "getServiceStatus",
-                                 type = ?tMessageType_REPLY,
-                                 seqid = 0},
-         struct_begin,
-         #protocol_field_begin{name = "success",
-                               type = ?tType_MAP,
-                               id = 0},
-         #protocol_map_begin{ktype = ?tType_STRING,
-                             vtype = ?tType_STRING,
-                             size  = 2},
-         {string, "Hello"},
-         {string, "World"},
-         {string, "foo"},
-         {string, "bar"},
-         field_stop,
-         map_end,
-         field_end,
-         field_stop,
-         struct_end,
-         message_end
-         ],
-               
-    Results = [thrift_protocol:write(OProto, Packet) || Packet <- Packets],
-    receive
-        _ ->
-            loop(State)
+    case thrift_protocol:read(IProto, message_begin) of
+        #protocol_message_begin{name = Function,
+                                type = ?tMessageType_CALL} ->
+            ok = handle_function(State, list_to_atom(binary_to_list(Function))),
+            loop(State);
+        {error, closed} ->
+            error_logger:info_msg("Processor finished~n"),
+            ok
     end.
+
+handle_function(State = #state{in_protocol = IProto,
+                               out_protocol = OProto},
+                add) ->
+    io:format("Reading struct~n"),
+    {ok, Struct} = thrift_protocol:read(IProto,
+                  {struct, [{1, i32},
+                            {2, i32}]}),
+    io:format("Struct: ~p~n", [Struct]),
+    
+    {A, B} = Struct,
+
+    thrift_protocol:write(OProto, #protocol_message_begin{
+                            name = "addResult",
+                            type = ?tMessageType_REPLY,
+                            seqid = 0}),
+    thrift_protocol:write(OProto, {{struct, [{0, i32}]},
+                                   {A + B}}),
+    thrift_protocol:write(OProto, message_end);
+
+handle_function(State = #state{in_protocol = IProto,
+                               out_protocol = OProto},
+                complexTest) ->
+    io:format("Reading struct~n"),
+    Struct = thrift_protocol:read(
+               IProto,
+               {struct, [{1, {struct,
+                              [{1, {list, i32}},
+                               {2, {map, string, {struct, [{1, i16}]}}}]}}]}),
+    
+    io:format("Struct: ~p~n", [Struct]).
+
+
