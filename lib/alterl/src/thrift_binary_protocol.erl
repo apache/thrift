@@ -94,19 +94,19 @@ write(This, {bool, true})  -> write(This, {byte, 1});
 write(This, {bool, false}) -> write(This, {byte, 0});
 
 write(This, {byte, Byte}) ->
-    write(This, <<Byte:8/big>>);
+    write(This, <<Byte:8/big-signed>>);
 
 write(This, {i16, I16}) ->
-    write(This, <<I16:16/big>>);
+    write(This, <<I16:16/big-signed>>);
 
 write(This, {i32, I32}) ->
-    write(This, <<I32:32/big>>);
+    write(This, <<I32:32/big-signed>>);
 
-write(This, {i63, I64}) ->
-    write(This, <<I64:64/big>>);
+write(This, {i64, I64}) ->
+    write(This, <<I64:64/big-signed>>);
 
 write(This, {double, Double}) ->
-    write(This, <<Double:64/big>>);
+    write(This, <<Double:64/big-signed-float>>);
 
 write(This, {string, Str}) when is_list(Str) ->
     write(This, {i32, length(Str)}),
