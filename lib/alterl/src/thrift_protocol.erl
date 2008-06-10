@@ -59,9 +59,14 @@ term_to_typeid({list, _}) -> ?tType_LIST.
 %% Structure is like:
 %%    [{Fid, Type}, ...]
 read(IProto, {struct, Structure}) when is_list(Structure) ->
+    IndexList = case length(Structure) of
+                    N when N > 0 -> lists:seq(1, N);
+                    _ -> []
+                end,
+
     SWithIndices = [{Fid, {Type, Index}} ||
                        {{Fid, Type}, Index} <-
-                           lists:zip(Structure, lists:seq(1, length(Structure)))],
+                           lists:zip(Structure, IndexList)],
     % Fid -> {Type, Index}
     SDict = dict:from_list(SWithIndices),
 
@@ -72,7 +77,7 @@ read(IProto, {struct, Structure}) when is_list(Structure) ->
     List = [case dict:find(Index, RDict) of
                 {ok, Val} -> Val;
                 error     -> undefined
-            end || Index <- lists:seq(1, length(Structure))],
+            end || Index <- IndexList],
     {ok, list_to_tuple(List)};
 
 read(IProto, {struct, {Module, StructureName}}) when is_atom(Module),
@@ -87,7 +92,7 @@ read(IProto, {list, Type}) ->
     #protocol_list_begin{etype = EType, size = Size} =
         read(IProto, list_begin),
     List = [Result || {ok, Result} <- 
-                          [read(IProto, Type) || _X <- lists:seq(1, Size)]],
+                          [read(IProto, Type) || _X <- lists:duplicate(Size, 0)]],
     ok = read(IProto, list_end),
     {ok, List};
 
@@ -97,7 +102,7 @@ read(IProto, {map, KeyType, ValType}) ->
 
     List = [{Key, Val} || {{ok, Key}, {ok, Val}} <- 
                               [{read(IProto, KeyType),
-                                read(IProto, ValType)} || _X <- lists:seq(1, Size)]],
+                                read(IProto, ValType)} || _X <- lists:duplicate(Size, 0)]],
     ok = read(IProto, map_end),
     {ok, dict:from_list(List)};
 
@@ -106,7 +111,7 @@ read(IProto, {set, Type}) ->
                         size = Size} =
         read(IProto, set_begin),
     List = [Result || {ok, Result} <- 
-                          [read(IProto, Type) || _X <- lists:seq(1, Size)]],
+                          [read(IProto, Type) || _X <- lists:duplicate(Size, 0)]],
     ok = read(IProto, set_end),
     {ok, sets:from_list(List)};
 
