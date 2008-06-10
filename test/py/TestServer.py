@@ -51,6 +51,8 @@ class TestHandler:
       x.errorCode = 1001
       x.message = str
       raise x
+    elif str == "throw_undeclared":
+      raise ValueError("foo")
 
   def testAsync(self, seconds):
     print 'testAsync(%d) => sleeping...' % seconds
@@ -62,5 +64,8 @@ processor = ThriftTest.Processor(handler)
 transport = TSocket.TServerSocket(9090)
 tfactory = TTransport.TBufferedTransportFactory()
 pfactory = TBinaryProtocol.TBinaryProtocolFactory()
-server = TServer.TThreadedServer(processor, transport, tfactory, pfactory)
+
+ServerClass = getattr(TServer, sys.argv[1])
+
+server = ServerClass(processor, transport, tfactory, pfactory)
 server.serve()

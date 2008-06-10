@@ -170,7 +170,6 @@ class TThreadPoolServer(TServer):
         print '%s, %s, %s' % (type(x), x, traceback.format_exc())
 
 
-
 class TForkingServer(TServer):
 
   """A Thrift server that forks a new process for each request"""
@@ -191,6 +190,13 @@ class TForkingServer(TServer):
     self.children = []
 
   def serve(self):
+    def try_close(file):
+      try:
+        file.close()
+      except IOError, e:
+        print '%s, %s, %s' % (type(e), e, traceback.format_exc())
+
+
     self.serverTransport.listen()
     while True:
       client = self.serverTransport.accept()
@@ -202,6 +208,12 @@ class TForkingServer(TServer):
           self.children.append(pid)
           self.collect_children()
 
+          # Parent must close socket or the connection may not get
+          # closed promptly
+          itrans = self.inputTransportFactory.getTransport(client)
+          otrans = self.outputTransportFactory.getTransport(client)
+          try_close(itrans)
+          try_close(otrans)
         else:
           itrans = self.inputTransportFactory.getTransport(client)
           otrans = self.outputTransportFactory.getTransport(client)
@@ -209,30 +221,25 @@ class TForkingServer(TServer):
           iprot = self.inputProtocolFactory.getProtocol(itrans)
           oprot = self.outputProtocolFactory.getProtocol(otrans)
 
+          ecode = 0
           try:
             while True:
               self.processor.process(iprot, oprot)
           except TTransport.TTransportException, tx:
             pass
           except Exception, e:
-            print '%s, %s, %s' % (type(x), x, traceback.format_exc())
-            os._exit(1)
+            print '%s, %s, %s' % (type(e), e, traceback.format_exc())
+            ecode = 1
+          finally:
+            try_close(itrans)
+            try_close(otrans)
 
-          def try_close(file):
-            try:
-              file.close()
-            except IOError, e:
-              print '%s, %s, %s' % (type(x), x, traceback.format_exc())
-
-          try_close(itrans)
-          try_close(otrans)
-          os._exit(0)
+          os._exit(ecode)
 
       except TTransport.TTransportException, tx:
         pass
       except Exception, x:
         print '%s, %s, %s' % (type(x), x, traceback.format_exc())
-
 
 
   def collect_children(self):

@@ -86,6 +86,12 @@ class AbstractTest(unittest.TestCase):
       self.assertEqual(x.errorCode, 1001)
       self.assertEqual(x.message, 'Xception')
 
+    try:
+      self.client.testException("throw_undeclared")
+      self.fail("should have thrown exception")
+    except Exception: # type is undefined
+      pass
+
   def testAsync(self):
     start = time.time()
     self.client.testAsync(2)
