@@ -10,7 +10,7 @@ SRCDIR=src
 ALL_INCLUDEDIR=$(GEN_INCLUDEDIR) $(INCLUDEDIR) ../../lib/erl/include
 INCLUDEFLAGS=$(patsubst %,-I%, ${ALL_INCLUDEDIR})
 
-MODULES = test_server
+MODULES = stress_server test_server
 
 INCLUDES = 
 TARGETS = $(patsubst %,${TARGETDIR}/%.beam,${MODULES})
@@ -18,12 +18,14 @@ HEADERS = $(patsubst %,${INCLUDEDIR}/%.hrl,${INCLUDES})
 
 all: ${GEN_TARGETDIR}/ ${TARGETS}
 
-RPCFILE = ../ThriftTest.thrift
+TEST_RPCFILE = ../ThriftTest.thrift
+STRESS_RPCFILE = ../StressTest.thrift
 THRIFT = ../../compiler/cpp/thrift
 
 ${GENDIR}/: ${RPCFILE}
 	rm -rf ${GENDIR}
-	${THRIFT} -alterl ${RPCFILE}
+	${THRIFT} -alterl ${TEST_RPCFILE}
+	${THRIFT} -alterl ${STRESS_RPCFILE}
 	mkdir -p ${GEN_INCLUDEDIR}
 	mkdir -p ${GEN_SRCDIR}
 	mkdir -p ${GEN_TARGETDIR}
