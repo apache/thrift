@@ -315,6 +315,10 @@ void t_java_generator::generate_enum(t_enum* tenum) {
  * Generates a class that holds all the constants.
  */
 void t_java_generator::generate_consts(std::vector<t_const*> consts) {
+  if (consts.empty()) {
+    return;
+  }
+
   string f_consts_name = package_dir_+"/Constants.java";
   ofstream f_consts;
   f_consts.open(f_consts_name.c_str());
