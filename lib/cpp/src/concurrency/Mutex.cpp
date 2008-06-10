@@ -21,9 +21,8 @@ namespace facebook { namespace thrift { namespace concurrency {
  */
 class Mutex::impl {
  public:
-  impl() : initialized_(false) {
-    int ret = pthread_mutex_init(&pthread_mutex_, NULL);
-    assert(ret == 0);
+  impl(Initializer init) : initialized_(false) {
+    init(&pthread_mutex_);
     initialized_ = true;
   }
 
@@ -46,13 +45,56 @@ class Mutex::impl {
   mutable bool initialized_;
 };
 
-Mutex::Mutex() : impl_(new Mutex::impl()) {}
+Mutex::Mutex(Initializer init) : impl_(new Mutex::impl(init)) {}
 
 void Mutex::lock() const { impl_->lock(); }
 
 bool Mutex::trylock() const { return impl_->trylock(); }
 
 void Mutex::unlock() const { impl_->unlock(); }
+
+void Mutex::DEFAULT_INITIALIZER(void* arg) {
+  pthread_mutex_t* pthread_mutex = (pthread_mutex_t*)arg;
+  int ret = pthread_mutex_init(pthread_mutex, NULL);
+  assert(ret == 0);
+}
+
+static void init_with_kind(pthread_mutex_t* mutex, int kind) {
+  pthread_mutexattr_t mutexattr;
+  int ret = pthread_mutexattr_init(&mutexattr);
+  assert(ret == 0);
+
+  // Apparently, this can fail.  Should we really be aborting?
+  ret = pthread_mutexattr_settype(&mutexattr, kind);
+  assert(ret == 0);
+
+  ret = pthread_mutex_init(mutex, &mutexattr);
+  assert(ret == 0);
+
+  ret = pthread_mutexattr_destroy(&mutexattr);
+  assert(ret == 0);
+}
+
+#ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
+void Mutex::ADAPTIVE_INITIALIZER(void* arg) {
+  // From mysql source: mysys/my_thr_init.c
+  // Set mutex type to "fast" a.k.a "adaptive"
+  //
+  // In this case the thread may steal the mutex from some other thread
+  // that is waiting for the same mutex. This will save us some
+  // context switches but may cause a thread to 'starve forever' while
+  // waiting for the mutex (not likely if the code within the mutex is
+  // short).
+  init_with_kind((pthread_mutex_t*)arg, PTHREAD_MUTEX_ADAPTIVE_NP);
+}
+#endif
+
+#ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
+void Mutex::RECURSIVE_INITIALIZER(void* arg) {
+  init_with_kind((pthread_mutex_t*)arg, PTHREAD_MUTEX_RECURSIVE_NP);
+}
+#endif
+
 
 /**
  * Implementation of ReadWriteMutex class using POSIX rw lock

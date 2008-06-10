@@ -19,11 +19,21 @@ namespace facebook { namespace thrift { namespace concurrency {
  */
 class Mutex {
  public:
-  Mutex();
+  typedef void (*Initializer)(void*);
+
+  Mutex(Initializer init = DEFAULT_INITIALIZER);
   virtual ~Mutex() {}
   virtual void lock() const;
   virtual bool trylock() const;
   virtual void unlock() const;
+
+  static void DEFAULT_INITIALIZER(void*);
+#ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
+  static void ADAPTIVE_INITIALIZER(void*);
+#endif
+#ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
+  static void RECURSIVE_INITIALIZER(void*);
+#endif
 
  private:
 
