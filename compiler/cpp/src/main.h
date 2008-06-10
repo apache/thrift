@@ -22,17 +22,17 @@ int yyparse(void);
 /**
  * Expected to be defined by Flex/Bison
  */
-void yyerror(char* fmt, ...);
+void yyerror(const char* fmt, ...);
 
 /**
  * Parse debugging output, used to print helpful info
  */
-void pdebug(char* fmt, ...);
+void pdebug(const char* fmt, ...);
 
 /**
  * Parser warning
  */
-void pwarning(int level, char* fmt, ...);
+void pwarning(int level, const char* fmt, ...);
 
 /**
  * Failure!

@@ -189,7 +189,7 @@ char *saferealpath(const char *path, char *resolved_path) {
  *
  * @param fmt C format string followed by additional arguments
  */
-void yyerror(char* fmt, ...) {
+void yyerror(const char* fmt, ...) {
   va_list args;
   fprintf(stderr,
           "[ERROR:%s:%d] (last token was '%s')\n",
@@ -209,7 +209,7 @@ void yyerror(char* fmt, ...) {
  *
  * @param fmt C format string followed by additional arguments
  */
-void pdebug(char* fmt, ...) {
+void pdebug(const char* fmt, ...) {
   if (g_debug == 0) {
     return;
   }
@@ -226,7 +226,7 @@ void pdebug(char* fmt, ...) {
  *
  * @param fmt C format string followed by additional arguments
  */
-void pverbose(char* fmt, ...) {
+void pverbose(const char* fmt, ...) {
   if (g_verbose == 0) {
     return;
   }
@@ -241,7 +241,7 @@ void pverbose(char* fmt, ...) {
  *
  * @param fmt C format string followed by additional arguments
  */
-void pwarning(int level, char* fmt, ...) {
+void pwarning(int level, const char* fmt, ...) {
   if (g_warn < level) {
     return;
   }
