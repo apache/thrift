@@ -401,6 +401,11 @@ void t_alterl_generator::generate_service(t_service* tservice) {
   f_service_file_.open(f_service_name.c_str());
   f_service_hrl_.open(f_service_hrl_name.c_str());
 
+  // Reset service text aggregating stream streams
+  f_service_.str("");
+  export_lines_.str("");
+  export_lines_first_ = true;
+
   hrl_header(f_service_hrl_, service_name_);
 
   if (tservice->get_extends() != NULL) {
