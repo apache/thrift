@@ -168,6 +168,14 @@ void TServerSocket::listen() {
   }
   #endif // #ifdef TCP_DEFER_ACCEPT
 
+  #ifdef IPV6_V6ONLY
+  int zero = 0;
+  if (-1 == setsockopt(serverSocket_, IPPROTO_IPV6, IPV6_V6ONLY, 
+                        &zero, sizeof(zero))) {
+    GlobalOutput("TServerSocket::listen() IPV6_V6ONLY");
+  }
+  #endif // #ifdef IPV6_V6ONLY
+
   // Turn linger off, don't want to block on calls to close
   struct linger ling = {0, 0};
   if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_LINGER,

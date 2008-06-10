@@ -590,6 +590,14 @@ void TNonblockingServer::listenSocket() {
     throw TException("TNonblockingServer::serve() socket() -1");
   }
 
+  #ifdef IPV6_V6ONLY
+  int zero = 0;
+  if (-1 == setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &zero, sizeof(zero))) {
+    GlobalOutput("TServerSocket::listen() IPV6_V6ONLY");
+  }
+  #endif // #ifdef IPV6_V6ONLY
+
+
   int one = 1;
 
   // Set reuseaddr to avoid 2MSL delay on server restart
