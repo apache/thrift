@@ -950,7 +950,7 @@ int main(int argc, char** argv) {
       } else if (strcmp(arg, "-gen") == 0) {
         arg = argv[++i];
         if (arg == NULL) {
-          fprintf(stderr, "!!! Missing generator specification");
+          fprintf(stderr, "!!! Missing generator specification\n");
           usage();
         }
         generator_strings.push_back(arg);
@@ -1011,14 +1011,14 @@ int main(int argc, char** argv) {
         arg = argv[++i];
 
         if (arg == NULL) {
-          fprintf(stderr, "!!! Missing Include directory");
+          fprintf(stderr, "!!! Missing Include directory\n");
           usage();
         }
         g_incl_searchpath.push_back(arg);
       } else if (strcmp(arg, "-o") == 0) {
         arg = argv[++i];
         if (arg == NULL) {
-          fprintf(stderr, "-o: missing output directory");
+          fprintf(stderr, "-o: missing output directory\n");
           usage();
         }
         out_path = arg;
