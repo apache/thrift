@@ -1112,6 +1112,10 @@ int main(int argc, char** argv) {
 
   // Real-pathify it
   char rp[PATH_MAX];
+  if (argv[i] == NULL) {
+    fprintf(stderr, "!!! Missing file name\n");
+    usage();
+  }
   if (saferealpath(argv[i], rp) == NULL) {
     failure("Could not open input file with realpath: %s", argv[i]);
   }
