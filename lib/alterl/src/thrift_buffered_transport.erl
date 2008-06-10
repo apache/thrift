@@ -1,24 +1,35 @@
 %%%-------------------------------------------------------------------
-%%% File    : thrift_server.erl
+%%% File    : thrift_buffered_transport.erl
 %%% Author  :  <todd@lipcon.org>
-%%% Description : 
+%%% Description : Buffered transport for thrift
 %%%
-%%% Created : 28 Jan 2008 by  <todd@lipcon.org>
+%%% Created : 30 Jan 2008 by  <todd@lipcon.org>
 %%%-------------------------------------------------------------------
--module(thrift_server).
+-module(thrift_buffered_transport).
 
 -behaviour(gen_server).
+-behaviour(thrift_transport).
 
 %% API
--export([start_link/3]).
+-export([new/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--define(SERVER, ?MODULE).
+%% thrift_transport callbacks
+-export([write/2, read/2, flush/1]).
 
--record(state, {listen_socket, acceptor, service}).
+-record(state, {
+          % The wrapped transport
+          wrapped,
+
+          % a list of binaries which will be concatenated and sent during
+          % a flush.
+          %
+          % *** THIS LIST IS STORED IN REVERSE ORDER!!! ***
+          %
+          buffer}).
 
 %%====================================================================
 %% API
@@ -27,8 +38,43 @@
 %% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
 %% Description: Starts the server
 %%--------------------------------------------------------------------
-start_link(Port, Service, HandlerModule) when is_integer(Port), is_atom(HandlerModule) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, {Port, Service, HandlerModule}, []).
+new(WrappedTransport) ->
+    case gen_server:start_link(?MODULE, [WrappedTransport], []) of
+        {ok, Pid} ->
+            thrift_transport:new(?MODULE, Pid);
+        Else ->
+            Else
+    end.
+
+
+
+%%--------------------------------------------------------------------
+%% Function: write(Transport, Data) -> ok
+%% 
+%% Data = binary()
+%%
+%% Description: Writes data into the buffer
+%%--------------------------------------------------------------------
+write(Transport, Data) when is_binary(Data) ->
+    gen_server:call(Transport, {write, Data}).
+
+%%--------------------------------------------------------------------
+%% Function: flush(Transpor) -> ok
+%%
+%% Description: Flushes the buffer through to the wrapped transport
+%%--------------------------------------------------------------------
+flush(Transport) ->
+    gen_server:call(Transport, {flush}).
+
+%%--------------------------------------------------------------------
+%% Function: Read(Transport, Len) -> {ok, Data}
+%% 
+%% Data = binary()
+%%
+%% Description: Reads data through from the wrapped transoprt
+%%--------------------------------------------------------------------
+read(Transport, Len) when is_integer(Len) ->
+    gen_server:call(Transport, {read, Len}).
 
 %%====================================================================
 %% gen_server callbacks
@@ -41,17 +87,9 @@ start_link(Port, Service, HandlerModule) when is_integer(Port), is_atom(HandlerM
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init({Port, Service, Handler}) ->
-    {ok, Socket} = gen_tcp:listen(Port,
-                                  [binary,
-                                   {packet, 0},
-                                   {active, false},
-                                   {nodelay, true},
-                                   {reuseaddr, true}]),
-    Acceptor = spawn_link(fun () -> acceptor(Socket, Service, Handler) end),
-    {ok, #state{listen_socket = Socket,
-                acceptor = Acceptor,
-                service = Service}}.
+init([Wrapped]) ->
+    {ok, #state{wrapped = Wrapped,
+                buffer = []}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -62,9 +100,19 @@ init({Port, Service, Handler}) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
+handle_call({write, Data}, _From, State = #state{buffer = Buffer}) ->
+    {reply, ok, State#state{buffer = [Data | Buffer]}};
+
+handle_call({read, Len}, _From, State = #state{wrapped = Wrapped}) ->
+    Response = thrift_transport:read(Wrapped, Len),
+    {reply, Response, State};
+
+handle_call({flush}, _From, State = #state{buffer = Buffer,
+                                           wrapped = Wrapped}) ->
+    Concat = concat_binary(lists:reverse(Buffer)),
+    Response = thrift_transport:write(Wrapped, Concat),
+    % todo(todd) - flush wrapped transport here?
+    {reply, Response, State#state{buffer = []}}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -99,26 +147,8 @@ terminate(_Reason, _State) ->
 %% Description: Convert process state when code is changed
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
-    State#state.acceptor ! refresh,
     {ok, State}.
 
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-
-acceptor(ListenSocket, Service, Handler)
-  when is_port(ListenSocket), is_atom(Handler) ->
-    {ok, Socket} = gen_tcp:accept(ListenSocket),
-    error_logger:info_msg("Accepted client"),
-
-    {ok, SocketTransport} = thrift_socket_transport:new(Socket),
-    {ok, BufferedTransport} = thrift_buffered_transport:new(SocketTransport),
-    {ok, Protocol} = thrift_binary_protocol:new(BufferedTransport),
-
-    thrift_processor:start(Protocol, Protocol, Service, Handler),
-    receive
-        refresh ->
-            error_logger:info_msg("Acceptor refreshing~n"),
-            ?MODULE:acceptor(ListenSocket, Service, Handler)
-    after 0      -> acceptor(ListenSocket, Service, Handler)
-    end.

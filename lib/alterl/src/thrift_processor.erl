@@ -123,6 +123,7 @@ send_reply(OProto, Function, ReplyMessageType, Reply) ->
                                  seqid = 0}),
     ok = thrift_protocol:write(OProto, Reply),
     ok = thrift_protocol:write(OProto, message_end),
+    ok = thrift_protocol:flush_transport(OProto),
     ok.
 
 

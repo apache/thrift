@@ -4,12 +4,14 @@
 
          new/2,
          write/2,
-         read/2
+         read/2,
+         flush/1
         ]).
 
 behaviour_info(callbacks) ->
     [{write/2,
-      read/2}];
+      read/2,
+      flush/1}];
 behaviour_info(_Else) -> undefined.
 
 
@@ -27,3 +29,6 @@ write(Transport, Data) when is_binary(Data) ->
 read(Transport, Len) when is_integer(Len) ->
     Module = Transport#transport.module,
     Module:read(Transport#transport.data, Len).
+
+flush(#transport{module = Module, data = Data}) ->
+    Module:flush(Data).

@@ -4,7 +4,7 @@
 
 -export([new/1,
          
-         write/2, read/2]).
+         write/2, read/2, flush/1]).
 
 -record(data, {socket}).
 
@@ -16,3 +16,7 @@ write(#data{socket = Socket}, Data) when is_binary(Data) ->
 
 read(#data{socket = Socket}, Len) when is_integer(Len), Len >= 0 ->
     gen_tcp:recv(Socket, Len).
+
+% We can't really flush - everything is flushed when we write
+flush(_) ->
+     ok.
