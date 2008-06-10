@@ -535,10 +535,7 @@ void t_alterl_generator::generate_function_info(t_service* tservice,
   indent(f_service_) <<
     "function_info(" << name_atom << ", exceptions) ->" << endl;
   indent_up();
-
-  // TODO(todd) exceptions here are probably broken
-  indent(f_service_) << generate_type_term(xs, false) << ";" << endl;
-
+  indent(f_service_) << generate_type_term(xs, true) << ";" << endl;
   indent_down();
 
   // function_info(Function, is_async):
