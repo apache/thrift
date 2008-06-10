@@ -7,6 +7,10 @@
 #include "PosixThreadFactory.h"
 #include "Exception.h"
 
+#if GOOGLE_PERFTOOLS_REGISTER_THREAD
+#  include <google/profiler.h>
+#endif
+
 #include <assert.h>
 #include <pthread.h>
 
@@ -161,6 +165,10 @@ void* PthreadThread::threadMain(void* arg) {
   if (thread->state_ != starting) {
     return (void*)0;
   }
+
+#if GOOGLE_PERFTOOLS_REGISTER_THREAD
+  ProfilerRegisterThread();
+#endif
 
   thread->state_ = starting;
   thread->runnable()->run();
