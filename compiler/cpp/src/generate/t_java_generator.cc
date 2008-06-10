@@ -1044,7 +1044,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
 
       // Iterator getter for sets and lists
       indent(out) << "public java.util.Iterator<" <<
-        type_name(element_type) <<  "> get" << cap_name << "Iterator() {" << endl;
+        type_name(element_type, true, false) <<  "> get" << cap_name << "Iterator() {" << endl;
       indent_up();
       indent(out) << "return (this." << field_name << " == null) ? null : " <<
         "this." << field_name << ".iterator();" << endl;
