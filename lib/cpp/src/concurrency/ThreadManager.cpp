@@ -251,7 +251,7 @@ class ThreadManager::Worker: public Runnable {
                thread that might be blocked on add. */
             if (manager_->pendingTaskCountMax_ != 0 &&
                 manager_->tasks_.size() == manager_->pendingTaskCountMax_ - 1) {
-              manager_->workerMonitor_.notify();
+              manager_->monitor_.notify();
             }
           }
         } else {
