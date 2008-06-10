@@ -384,7 +384,15 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
       string val = render_const_value(out, name, field_type, v_iter->second);
-      indent(out) << name << "." << v_iter->first->get_string() << " = " << val << ";" << endl;
+      indent(out) << name << ".";
+      if (bean_style_) {
+        std::string cap_name = v_iter->first->get_string();
+        cap_name[0] = toupper(cap_name[0]);
+        out << "set" << cap_name << "(" << val << ")";
+      } else {
+        out << v_iter->first->get_string() << " = " << val;
+      }
+      out << ";" << endl;
       indent(out) << name << ".__isset." << v_iter->first->get_string() << " = true;" << endl;
     }
     if (!in_static) {
