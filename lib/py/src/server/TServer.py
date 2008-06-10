@@ -6,6 +6,7 @@
 # See accompanying file LICENSE or visit the Thrift site at:
 # http://developers.facebook.com/thrift/
 
+import logging
 import sys
 import os
 import traceback
@@ -72,7 +73,7 @@ class TSimpleServer(TServer):
       except TTransport.TTransportException, tx:
         pass
       except Exception, x:
-        print '%s, %s, %s' % (type(x), x, traceback.format_exc())
+        logging.exception(x)
 
       itrans.close()
       otrans.close()
@@ -94,7 +95,7 @@ class TThreadedServer(TServer):
       except KeyboardInterrupt:
         raise
       except Exception, x:
-        print '%s, %s, %s,' % (type(x), x, traceback.format_exc())
+        logging.exception(x)
 
   def handle(self, client):
     itrans = self.inputTransportFactory.getTransport(client)
@@ -107,7 +108,7 @@ class TThreadedServer(TServer):
     except TTransport.TTransportException, tx:
       pass
     except Exception, x:
-      print '%s, %s, %s' % (type(x), x, traceback.format_exc())
+      logging.exception(x)
 
     itrans.close()
     otrans.close()
@@ -132,7 +133,7 @@ class TThreadPoolServer(TServer):
         client = self.clients.get()
         self.serveClient(client)
       except Exception, x:
-        print '%s, %s, %s' % (type(x), x, traceback.format_exc())
+        logging.exception(x)
 
   def serveClient(self, client):
     """Process input/output from a client for as long as possible"""
@@ -146,7 +147,7 @@ class TThreadPoolServer(TServer):
     except TTransport.TTransportException, tx:
       pass
     except Exception, x:
-      print '%s, %s, %s' % (type(x), x, traceback.format_exc())
+      logging.exception(x)
 
     itrans.close()
     otrans.close()
@@ -158,7 +159,7 @@ class TThreadPoolServer(TServer):
         t = threading.Thread(target = self.serveThread)
         t.start()
       except Exception, x:
-        print '%s, %s, %s,' % (type(x), x, traceback.format_exc())
+        logging.exception(x)
 
     # Pump the socket for clients
     self.serverTransport.listen()
@@ -167,7 +168,7 @@ class TThreadPoolServer(TServer):
         client = self.serverTransport.accept()
         self.clients.put(client)
       except Exception, x:
-        print '%s, %s, %s' % (type(x), x, traceback.format_exc())
+        logging.exception(x)
 
 
 class TForkingServer(TServer):
@@ -194,7 +195,7 @@ class TForkingServer(TServer):
       try:
         file.close()
       except IOError, e:
-        print '%s, %s, %s' % (type(e), e, traceback.format_exc())
+        logging.warning(e, exc_info=True)
 
 
     self.serverTransport.listen()
@@ -228,7 +229,7 @@ class TForkingServer(TServer):
           except TTransport.TTransportException, tx:
             pass
           except Exception, e:
-            print '%s, %s, %s' % (type(e), e, traceback.format_exc())
+            logging.exception(e)
             ecode = 1
           finally:
             try_close(itrans)
@@ -239,7 +240,7 @@ class TForkingServer(TServer):
       except TTransport.TTransportException, tx:
         pass
       except Exception, x:
-        print '%s, %s, %s' % (type(x), x, traceback.format_exc())
+        logging.exception(x)
 
 
   def collect_children(self):
