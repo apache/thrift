@@ -28,12 +28,8 @@ class Mutex {
   virtual void unlock() const;
 
   static void DEFAULT_INITIALIZER(void*);
-#ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
   static void ADAPTIVE_INITIALIZER(void*);
-#endif
-#ifdef PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
   static void RECURSIVE_INITIALIZER(void*);
-#endif
 
  private:
 
