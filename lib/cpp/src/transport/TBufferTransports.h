@@ -7,6 +7,7 @@
 #ifndef _THRIFT_TRANSPORT_TBUFFERTRANSPORTS_H_
 #define _THRIFT_TRANSPORT_TBUFFERTRANSPORTS_H_ 1
 
+#include <cstring>
 #include "boost/scoped_array.hpp"
 
 #include <transport/TTransport.h>
@@ -48,7 +49,7 @@ class TBufferBase : public TTransport {
   uint32_t read(uint8_t* buf, uint32_t len) {
     uint8_t* new_rBase = rBase_ + len;
     if (TDB_LIKELY(new_rBase <= rBound_)) {
-      memcpy(buf, rBase_, len);
+      std::memcpy(buf, rBase_, len);
       rBase_ = new_rBase;
       return len;
     }
@@ -67,7 +68,7 @@ class TBufferBase : public TTransport {
   void write(const uint8_t* buf, uint32_t len) {
     uint8_t* new_wBase = wBase_ + len;
     if (TDB_LIKELY(new_wBase <= wBound_)) {
-      memcpy(wBase_, buf, len);
+      std::memcpy(wBase_, buf, len);
       wBase_ = new_wBase;
       return;
     }
