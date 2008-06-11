@@ -148,4 +148,8 @@ handle_function(testMultiException, {Arg0, Arg1}) ->
                                     #xtruct{string_thing = "This is an Xception2"}});
         _ ->
             {reply, #xtruct{string_thing = Arg1}}
-    end.
+    end;
+
+handle_function(testAsync, {Seconds}) ->
+    timer:sleep(1000 * Seconds),
+    ok.

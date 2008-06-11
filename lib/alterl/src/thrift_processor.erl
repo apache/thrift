@@ -73,7 +73,11 @@ handle_success(State = #state{out_protocol = OProto,
             ok = send_reply(OProto, Function, ?tMessageType_REPLY, Reply);
 
         ok when ReplyType == {struct, []} ->
-            ok = send_reply(OProto, Function, ?tMessageType_REPLY, {ReplyType, {StructName}})
+            ok = send_reply(OProto, Function, ?tMessageType_REPLY, {ReplyType, {StructName}});
+        
+        ok when ReplyType == async_void ->
+            % no reply for async void
+            ok
     end,
     ok.
 
