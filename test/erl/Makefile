@@ -7,7 +7,7 @@ INCLUDEDIR=include
 TARGETDIR=ebin
 SRCDIR=src
 
-ALL_INCLUDEDIR=$(GEN_INCLUDEDIR) $(INCLUDEDIR) ../../lib/erl/include
+ALL_INCLUDEDIR=$(GEN_INCLUDEDIR) $(INCLUDEDIR) ../../lib/alterl/include
 INCLUDEFLAGS=$(patsubst %,-I%, ${ALL_INCLUDEDIR})
 
 MODULES = stress_server test_server

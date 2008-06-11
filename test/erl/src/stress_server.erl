@@ -1,8 +1,7 @@
 -module(stress_server).
 
--include("thrift.hrl").
 
--export([start_link/1, old_start_link/1,
+-export([start_link/1,
 
          handle_function/2,
 
@@ -19,24 +18,6 @@
 start_link(Port) ->
     thrift_server:start_link(Port, service_thrift, ?MODULE).
 
-% Start the server with the old style bindings
-old_start_link(Port) ->
-    Handler   = ?MODULE,
-    Processor = service_thrift,
-
-    TF = tBufferedTransportFactory:new(),
-    PF = tBinaryProtocolFactory:new(),
-
-    ServerTransport = tErlAcceptor,
-    ServerFlavor    = tErlServer,
-
-    Server = oop:start_new(ServerFlavor, [Port, Handler, Processor, ServerTransport, TF, PF]),
-
-    case ?R0(Server, effectful_serve) of
-	ok    -> Server;
-	Error -> Error
-    end.
-    
 
 handle_function(Function, Args) ->
     case apply(?MODULE, Function, tuple_to_list(Args)) of
