@@ -24,10 +24,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <limits.h>
 
 #ifdef MINGW
 # include <windows.h> /* for GetFullPathName */
-# include <limits.h>
 #endif
 
 // Careful: must include globals first for extern definitions
