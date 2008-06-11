@@ -88,8 +88,6 @@ read(Transport, Len) when is_integer(Len) ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([Wrapped]) ->
-    %% TODO(cpiro): need to trap exits here so when transport exits
-    %% normally from under our feet we exit normally
     {ok, #framed_transport{wrapped = Wrapped,
                            read_buffer = [],
                            write_buffer = []}}.
