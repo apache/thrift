@@ -27,7 +27,7 @@ write(#data{socket = Socket}, Data)
   when is_binary(Data) ->
     gen_tcp:send(Socket, Data).
 
-read(D = #data{socket=Socket, recv_timeout=Timeout}, Len)
+read(#data{socket=Socket, recv_timeout=Timeout}, Len)
   when is_integer(Len), Len >= 0 ->
     gen_tcp:recv(Socket, Len, Timeout).
 
@@ -36,5 +36,4 @@ flush(_) ->
     ok.
 
 close(#data{socket = Socket}) ->
-    gen_tcp:close(Socket),
-    exit(normal).
+    gen_tcp:close(Socket).
