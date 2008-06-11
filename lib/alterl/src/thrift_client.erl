@@ -24,7 +24,8 @@
                 strict_read = true,
                 strict_write = true,
                 framed = false,
-                connect_timeout = infinity
+                connect_timeout = infinity,
+                sockopts = []
                }).
 
 %%====================================================================
@@ -37,8 +38,9 @@
 start_link(Host, Port, Service) ->
     start_link(Host, Port, Service, []).
 
-start_link(Host, Port, Service, Options) when is_integer(Port), is_atom(Service), is_list(Options) ->
-    case gen_server:start_link(?MODULE, [Host, Port, Service, Options], []) of
+start_link(Host, Port, Service, Options)
+  when is_integer(Port), is_atom(Service), is_list(Options) ->
+    case gen_server:start_link(?MODULE, [Options], []) of
         {ok, Pid} ->
             case gen_server:call(Pid, {connect, Host, Port, Service}) of
                 ok ->
@@ -72,7 +74,7 @@ close(Client) when is_pid(Client) ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init([_Host, _Port, _Service, Options]) ->
+init([Options]) ->
     State = parse_options(Options, #state{}),
     {ok, State}.
 
@@ -84,6 +86,8 @@ parse_options([{strict_write, Bool} | Rest], State) when is_boolean(Bool) ->
     parse_options(Rest, State#state{strict_write=Bool});
 parse_options([{framed, Bool} | Rest], State) when is_boolean(Bool) ->
     parse_options(Rest, State#state{framed=Bool});
+parse_options([{sockopts, OptList} | Rest], State) when is_list(OptList) ->
+    parse_options(Rest, State#state{sockopts=OptList});
 parse_options([{connect_timeout, TO} | Rest], State) when TO =:= infinity; is_integer(TO) ->
     parse_options(Rest, State#state{connect_timeout=TO}).
 
@@ -96,12 +100,15 @@ parse_options([{connect_timeout, TO} | Rest], State) when TO =:= infinity; is_in
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call({connect, Host, Port, Service}, _From, State = #state{connect_timeout=Timeout}) ->
+handle_call({connect, Host, Port, Service}, _From,
+            State = #state{connect_timeout=Timeout,
+                           sockopts=SockOpts}) ->
     Options = [binary,
                {packet, 0},
                {active, false},
-               {nodelay, true}],
-
+               {nodelay, true}
+               | SockOpts
+              ],
     case catch gen_tcp:connect(Host, Port, Options, Timeout) of
         {ok, Sock} ->
             {ok, Transport} = thrift_socket_transport:new(Sock),

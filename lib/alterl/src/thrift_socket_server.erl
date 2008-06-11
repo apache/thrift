@@ -107,7 +107,7 @@ init(State=#thrift_socket_server{ip=Ip, port=Port}) ->
     BaseOpts = [binary,
 		{reuseaddr, true},
 		{packet, 0},
-		{backlog, 30},
+		{backlog, 4096},
 		{recbuf, 8192},
 		{active, false}],
     Opts = case Ip of
