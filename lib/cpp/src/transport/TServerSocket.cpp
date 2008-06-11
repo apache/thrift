@@ -4,6 +4,7 @@
 // See accompanying file LICENSE or visit the Thrift site at:
 // http://developers.facebook.com/thrift/
 
+#include <cstring>
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <sys/types.h>
@@ -92,7 +93,7 @@ void TServerSocket::listen() {
   struct addrinfo hints, *res, *res0;
   int error;
   char port[sizeof("65536") + 1];
-  memset(&hints, 0, sizeof(hints));
+  std::memset(&hints, 0, sizeof(hints));
   hints.ai_family = PF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
@@ -260,7 +261,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   int numEintrs = 0;
 
   while (true) {
-    memset(fds, 0 , sizeof(fds));
+    std::memset(fds, 0 , sizeof(fds));
     fds[0].fd = serverSocket_;
     fds[0].events = POLLIN;
     if (intSock2_ >= 0) {

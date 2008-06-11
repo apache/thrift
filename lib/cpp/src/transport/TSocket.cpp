@@ -5,6 +5,8 @@
 // http://developers.facebook.com/thrift/
 
 #include <config.h>
+#include <cstring>
+#include <sstream>
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <sys/types.h>
@@ -15,7 +17,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sstream>
 
 #include "concurrency/Monitor.h"
 #include "TSocket.h"
@@ -166,7 +167,7 @@ void TSocket::openConnection(struct addrinfo *res) {
 
 
   struct pollfd fds[1];
-  memset(fds, 0 , sizeof(fds));
+  std::memset(fds, 0 , sizeof(fds));
   fds[0].fd = socket_;
   fds[0].events = POLLOUT;
   ret = poll(fds, 1, connTimeout_);
@@ -223,7 +224,7 @@ void TSocket::open() {
   res0 = NULL;
   int error;
   char port[sizeof("65536")];
-  memset(&hints, 0, sizeof(hints));
+  std::memset(&hints, 0, sizeof(hints));
   hints.ai_family = PF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
