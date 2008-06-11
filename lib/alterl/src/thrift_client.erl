@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/3, call/3]).
+-export([start_link/3, call/3, close/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -39,6 +39,9 @@ call(Client, Function, Args)
         R = {error, _} -> R;
         {exception, Exception} -> throw(Exception)
     end.
+
+close(Client) when is_pid(Client) ->
+    gen_server:call(Client, close).
 
 %%====================================================================
 %% gen_server callbacks
@@ -93,8 +96,10 @@ handle_call({call, Function, Args}, _From, State = #state{service = Service,
                 end
         end,
 
-    {reply, Result, State}.
+    {reply, Result, State};
 
+handle_call(close, _From, State = #state{protocol = Protocol}) ->
+    {stop, shutdown, ok, State}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -121,7 +126,8 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(_Reason, State = #state{protocol = Protocol}) ->
+    thrift_protocol:close_transport(Protocol),
     ok.
 
 %%--------------------------------------------------------------------
