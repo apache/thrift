@@ -152,7 +152,7 @@ write(This, Data) ->
 %%
 
 read(This, message_begin) ->
-    case read(This, i32) of
+    case read(This, ui32) of
         {ok, Sz} when Sz band ?VERSION_MASK =:= ?VERSION_1 ->
             %% we're at version 1
             {ok, Name}  = read(This, string),
@@ -250,6 +250,15 @@ read(This, i16) ->
 read(This, i32) ->
     case read(This, 4) of
         {ok, <<Val:32/integer-signed-big, _/binary>>} -> {ok, Val};
+        Else -> Else
+    end;
+
+%% unsigned ints aren't used by thrift itself, but it's used for the parsing
+%% of the packet version header. Without this special function BEAM works fine
+%% but hipe thinks it received a bad version header.
+read(This, ui32) ->
+    case read(This, 4) of
+        {ok, <<Val:32/integer-unsigned-big, _/binary>>} -> {ok, Val};
         Else -> Else
     end;
 
