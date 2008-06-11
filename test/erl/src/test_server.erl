@@ -82,12 +82,12 @@ handle_function(testMapMap, {Hello}) ->
     {reply, MapMap};
 
 handle_function(testInsanity, {Insanity}) when is_record(Insanity, insanity) ->
-    Hello = #xtruct{string_thing = "Hello2",
+    Hello = #xtruct{string_thing = <<"Hello2">>,
                     byte_thing = 2,
                     i32_thing = 2,
                     i64_thing = 2},
 
-    Goodbye = #xtruct{string_thing = "Goodbye4",
+    Goodbye = #xtruct{string_thing = <<"Goodbye4">>,
                       byte_thing = 4,
                       i32_thing = 4,
                       i64_thing = 4},
@@ -121,7 +121,7 @@ handle_function(testMulti, Args = {Arg0, Arg1, Arg2, _Arg3, Arg4, Arg5})
        is_integer(Arg5) ->
 
     io:format("testMulti(~p)~n", [Args]),
-    {reply, #xtruct{string_thing = "Hello2",
+    {reply, #xtruct{string_thing = <<"Hello2">>,
                     byte_thing = Arg0,
                     i32_thing = Arg1,
                     i64_thing = Arg2}};
@@ -129,9 +129,9 @@ handle_function(testMulti, Args = {Arg0, Arg1, Arg2, _Arg3, Arg4, Arg5})
 handle_function(testException, {String}) when is_binary(String) ->
     io:format("testException(~p)~n", [String]),
     case String of
-        "Xception" ->
+        <<"Xception">> ->
             throw(#xception{errorCode = 1001,
-                            message = "This is an Xception"});
+                            message = <<"This is an Xception">>});
         _ ->
             ok
     end;
@@ -139,13 +139,13 @@ handle_function(testException, {String}) when is_binary(String) ->
 handle_function(testMultiException, {Arg0, Arg1}) ->
     io:format("testMultiException(~p, ~p)~n", [Arg0, Arg1]),
     case Arg0 of
-        "Xception" ->
+        <<"Xception">> ->
             throw(#xception{errorCode = 1001,
-                                   message = "This is an Xception"});
-        "Xception2" ->
+                                   message = <<"This is an Xception">>});
+        <<"Xception2">> ->
             throw(#xception2{errorCode = 2002,
                                     struct_thing =
-                                    #xtruct{string_thing = "This is an Xception2"}});
+                                    #xtruct{string_thing = <<"This is an Xception2">>}});
         _ ->
             {reply, #xtruct{string_thing = Arg1}}
     end;
