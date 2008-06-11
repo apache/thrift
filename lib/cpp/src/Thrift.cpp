@@ -5,6 +5,7 @@
 // http://developers.facebook.com/thrift/
 
 #include <Thrift.h>
+#include <cstring>
 #include <boost/lexical_cast.hpp>
 #include <protocol/TProtocol.h>
 
