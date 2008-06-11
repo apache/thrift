@@ -32,7 +32,6 @@
         }).
 
 start(State=#thrift_socket_server{}) ->
-    io:format("~p~n", [State]),
     start_server(State);
 start(Options) ->
     start(parse_options(Options)).
@@ -96,7 +95,6 @@ parse_options([{max, Max} | Rest], State) ->
     parse_options(Rest, State#thrift_socket_server{max=MaxInt}).
 
 start_server(State=#thrift_socket_server{name=Name}) ->
-    io:format("starting~n"),
     case Name of
 	undefined ->
 	    gen_server:start_link(?MODULE, State, []);
