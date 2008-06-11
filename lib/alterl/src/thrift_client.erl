@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/2, start_link/3, start_link/4, call/3, close/1]).
+-export([start_link/2, start_link/3, start_link/4, call/3, send_call/3, close/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -93,6 +93,14 @@ call(Client, Function, Args)
         {exception, Exception} -> throw(Exception)
     end.
 
+%% Sends a function call but does not read the result. This is useful
+%% if you're trying to log non-async function calls to write-only
+%% transports like thrift_disk_log_transport.
+send_call(Client, Function, Args)
+  when is_pid(Client), is_atom(Function), is_list(Args) ->
+    gen_server:call(Client, {send_call, Function, Args}).
+
+
 close(Client) when is_pid(Client) ->
     gen_server:cast(Client, close).
 
@@ -129,26 +137,42 @@ handle_call({connect, ProtocolFactory}, _From,
             {stop, normal, Error, State}
     end;
 
-handle_call({call, Function, Args}, _From, State = #state{service = Service,
-                                                          protocol = Protocol,
-                                                          seqid = SeqId}) ->
-    Result =
-        try
-            ok = send_function_call(State, Function, Args),
-            receive_function_result(State, Function)
-        catch
-            throw:{return, Return} ->
-                Return;
-            error:function_clause ->
-                ST = erlang:get_stacktrace(),
-                case hd(ST) of
-                    {Service, function_info, [Function, _]} ->
-                        {error, {no_function, Function}};
-                    _ -> throw({error, {function_clause, ST}})
-                end
-        end,
+handle_call({call, Function, Args}, _From, State = #state{service = Service}) ->
+    Result = catch_function_exceptions(
+               fun() ->
+                       ok = send_function_call(State, Function, Args),
+                       receive_function_result(State, Function)
+               end,
+               Service),
+    {reply, Result, State};
 
+
+handle_call({send_call, Function, Args}, _From, State = #state{service = Service}) ->
+    Result = catch_function_exceptions(
+               fun() ->
+                       send_function_call(State, Function, Args)
+               end,
+               Service),
     {reply, Result, State}.
+
+
+%% Helper function that catches exceptions thrown by sending or receiving
+%% a function and returns the correct response for call or send_only above.
+catch_function_exceptions(Fun, Service) ->
+    try
+        Fun()
+    catch
+        throw:{return, Return} ->
+            Return;
+          error:function_clause ->
+            ST = erlang:get_stacktrace(),
+            case hd(ST) of
+                {Service, function_info, [Function, _]} ->
+                    {error, {no_function, Function}};
+                _ -> throw({error, {function_clause, ST}})
+            end
+    end.
+
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
