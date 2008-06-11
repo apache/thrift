@@ -21,7 +21,5 @@ flush(_) ->
     ok.
 
 close(#data{socket = Socket}) ->
-    error_logger:info_msg("Close called, socket ~p", [Socket])
-%%     gen_tcp:close(Socket),
-%%    exit(normal)
-    .
+    gen_tcp:close(Socket),
+    exit(protocol_closed).

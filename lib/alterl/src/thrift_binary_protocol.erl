@@ -32,7 +32,6 @@ flush_transport(#binary_protocol{transport = Transport}) ->
     thrift_transport:flush(Transport).
 
 close_transport(#binary_protocol{transport = Transport}) ->
-    thrift_transport:flush(Transport),
     thrift_transport:close(Transport).
 
 %%%

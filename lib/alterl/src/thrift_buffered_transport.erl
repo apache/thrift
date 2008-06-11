@@ -66,9 +66,9 @@ flush(Transport) ->
     gen_server:call(Transport, flush).
 
 %%--------------------------------------------------------------------
-%% Function: flush(Transport) -> ok
+%% Function: close(Transport) -> ok
 %%
-%% Description: Flushes the buffer through to the wrapped transport
+%% Description: Closes the transport and the wrapped transport
 %%--------------------------------------------------------------------
 close(Transport) ->
     gen_server:call(Transport, close).
@@ -123,15 +123,9 @@ handle_call(flush, _From, State = #state{buffer = Buffer,
 
 handle_call(close, _From, State = #state{buffer  = Buffer,
                                          wrapped = Wrapped}) ->
-    case Buffer of
-        []   -> ok;
-        Data ->
-            thrift_transport:write(Wrapped, concat_binary(lists:reverse(Buffer))),
-            thrift_transport:flush(Wrapped)
-    end,
+    thrift_transport:write(Wrapped, concat_binary(lists:reverse(Buffer))),
     thrift_transport:close(Wrapped),
-    {reply, ok, State}. % TEST ONLY
-%%     {stop, normal, State}.
+    {reply, ok, State}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |

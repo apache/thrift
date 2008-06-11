@@ -25,7 +25,6 @@ init({Server, ProtoGen, Service, Handler}) when is_function(ProtoGen, 0) ->
 
 loop(State = #thrift_processor{in_protocol  = IProto,
                                out_protocol = OProto}) ->
-    error_logger:info_msg("loop: ~p", [State]),
     case thrift_protocol:read(IProto, message_begin) of
         #protocol_message_begin{name = Function,
                                 type = ?tMessageType_CALL} ->
@@ -46,9 +45,7 @@ handle_function(State=#thrift_processor{in_protocol = IProto,
     {ok, Params} = thrift_protocol:read(IProto, InParams),
 
     try
-        error_logger:info_msg("calling: ~p(~p)", [Function, Params]),
         Result = Handler:handle_function(Function, Params),
-        error_logger:info_msg("result: ~p", [Result]),
         %% {Micro, Result} = better_timer(Handler, handle_function, [Function, Params]),
         %% error_logger:info_msg("Processed ~p(~p) in ~.4fms~n",
         %%                       [Function, Params, Micro/1000.0]),
@@ -168,4 +165,6 @@ send_reply(OProto, Function, ReplyMessageType, Reply) ->
     ok.
 
 after_reply(OProto) ->
-    ok = thrift_protocol:close_transport(OProto).
+    ok = thrift_protocol:flush_transport(OProto)
+    %%     ok = thrift_protocol:close_transport(OProto)
+    .
