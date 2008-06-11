@@ -178,6 +178,7 @@ read(This, message_begin) ->
                                     seqid = SeqId};
 
         Err = {error, closed} -> Err;
+        Err = {error, timeout}-> Err;
         Err = {error, ebadf}  -> Err
     end;
 

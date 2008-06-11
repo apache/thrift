@@ -31,7 +31,7 @@ read(#data{socket=Socket, recv_timeout=Timeout}, Len)
   when is_integer(Len), Len >= 0 ->
     case gen_tcp:recv(Socket, Len, Timeout) of
         Err = {error, timeout} ->
-            error_logger:error_msg("read timeout for conn with ~p", [inet:peername(Socket)]),
+            error_logger:info_msg("read timeout: peer conn ~p", [inet:peername(Socket)]),
             gen_tcp:close(Socket),
             Err;
         Data -> Data
