@@ -6,6 +6,7 @@
 
 #include "TBinaryProtocol.h"
 
+#include <limits>
 #include <boost/static_assert.hpp>
 
 using std::string;
