@@ -176,11 +176,22 @@ public class TThreadPoolServer extends TServer {
     }
 
     executorService_.shutdown();
-    try {
-      executorService_.awaitTermination(options_.stopTimeoutVal,
-                                        options_.stopTimeoutUnit);
-    } catch (InterruptedException ix) {
-      // Ignore and more on
+
+    // Loop until awaitTermination finally does return without a interrupted
+    // exception. If we don't do this, then we'll shut down prematurely. We want
+    // to let the executorService clear it's task queue, closing client sockets
+    // appropriately.
+    long timeoutMS = options_.stopTimeoutUnit.toMillis(options_.stopTimeoutVal);
+    long now = System.currentTimeMillis();
+    while (timeoutMS >= 0) {
+      try {
+        executorService_.awaitTermination(timeoutMS, TimeUnit.MILLISECONDS);
+        break;
+      } catch (InterruptedException ix) {
+        long newnow = System.currentTimeMillis();
+        timeoutMS -= (newnow - now);
+        now = newnow;
+      }
     }
   }
 
@@ -220,7 +231,9 @@ public class TThreadPoolServer extends TServer {
         outputTransport = outputTransportFactory_.getTransport(client_);
         inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
         outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
-        while (processor.process(inputProtocol, outputProtocol)) {}
+        // we check stopped_ first to make sure we're not supposed to be shutting
+        // down. this is necessary for graceful shutdown.
+        while (!stopped_ && processor.process(inputProtocol, outputProtocol)) {}
       } catch (TTransportException ttx) {
         // Assume the client died and continue silently
       } catch (TException tx) {
