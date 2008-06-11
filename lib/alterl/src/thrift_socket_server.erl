@@ -155,7 +155,7 @@ new_acceptor(State=#thrift_socket_server{max=0}) ->
 new_acceptor(State=#thrift_socket_server{acceptor=OldPid, listen=Listen,service=Service, handler=Handler}) ->
     Pid = proc_lib:spawn_link(?MODULE, acceptor_loop,
                               [{self(), Listen, Service, Handler}]),
-    error_logger:info_msg("Spawning new acceptor: ~p => ~p", [OldPid, Pid]),
+%%     error_logger:info_msg("Spawning new acceptor: ~p => ~p", [OldPid, Pid]),
     State#thrift_socket_server{acceptor=Pid}.
 
 acceptor_loop({Server, Listen, Service, Handler})

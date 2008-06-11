@@ -41,7 +41,7 @@
 new(WrappedTransport) ->
     case gen_server:start_link(?MODULE, [WrappedTransport], []) of
         {ok, Pid} ->
-            io:format("buffered transport ~p wrapping ~p", [Pid, WrappedTransport]),
+%%             io:format("buffered transport ~p wrapping ~p", [Pid, WrappedTransport]),
             thrift_transport:new(?MODULE, Pid);
         Else ->
             Else
