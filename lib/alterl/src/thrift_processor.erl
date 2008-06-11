@@ -63,9 +63,10 @@ handle_function_catch(State = #thrift_processor{service = Service},
 
     case {ErrType, ErrData} of
         _ when IsAsync ->
+            Stack = erlang:get_stacktrace(),
             error_logger:warning_msg(
               "async void ~p threw error which must be ignored: ~p",
-              [Function, {ErrType, ErrData}]),
+              [Function, {ErrType, ErrData, Stack}]),
             ok;
 
         {throw, Exception} when is_tuple(Exception), size(Exception) > 0 ->

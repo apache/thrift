@@ -132,8 +132,8 @@ read(This, message_begin) ->
             Type = Version band 16#000000ff,
             {ok, Name}  = read(This, string),
             {ok, SeqId} = read(This, i32),
-            #protocol_message_begin{name = Name,
-                                    type = Type,
+            #protocol_message_begin{name  = binary_to_list(Name),
+                                    type  = Type,
                                     seqid = SeqId};
         Err = {error, closed} -> Err;
         Err = {error, ebadf}  -> Err
@@ -221,10 +221,10 @@ read(This, double) ->
         Else -> Else
     end;
 
+% returns a binary directly, call binary_to_list if necessary
 read(This, string) ->
     {ok, Sz}  = read(This, i32),
-    {ok, Bin} = read(This, Sz),
-    {ok, binary_to_list(Bin)};
+    {ok, Bin} = read(This, Sz);
 
 read(This, Len) when is_integer(Len), Len >= 0 ->
     thrift_transport:read(This#binary_protocol.transport, Len).
