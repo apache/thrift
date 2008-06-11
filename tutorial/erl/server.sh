@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ERL_THRIFT=../../lib/alterl
+ERL_THRIFT=../../lib/erl
 
 if ! [ -d ${ERL_THRIFT}/ebin ]; then
     echo "Please build the Thrift library by running \`make' in ${ERL_THRIFT}"

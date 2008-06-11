@@ -21,7 +21,7 @@ if/Makefile.in
 install-sh
 lib/Makefile
 lib/Makefile.in
-lib/alterl/ebin
+lib/erl/ebin
 lib/cpp/.deps
 lib/cpp/.libs
 lib/cpp/Makefile

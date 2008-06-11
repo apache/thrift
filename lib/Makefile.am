@@ -11,7 +11,7 @@ SUBDIRS += java
 endif
 
 if ENABLE_ERLANG
-SUBDIRS += alterl
+SUBDIRS += erl
 endif
 
 EXTRA_DIST = \

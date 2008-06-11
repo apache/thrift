@@ -1,5 +1,5 @@
-#ifndef T_ALTERL_GENERATOR_H
-#define T_ALTERL_GENERATOR_H
+#ifndef T_ERL_GENERATOR_H
+#define T_ERL_GENERATOR_H
 
 #include <string>
 #include <fstream>
@@ -13,9 +13,9 @@
  *
  * @author
  */
-class t_alterl_generator : public t_generator {
+class t_erl_generator : public t_generator {
  public:
-  t_alterl_generator(t_program* program) :
+  t_erl_generator(t_program* program) :
     t_generator(program)
   {
     program_name_[0] = tolower(program_name_[0]);
