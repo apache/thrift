@@ -122,11 +122,14 @@ handle_unknown_exception(State, Function, Exception) ->
                                    Exception}).
 
 handle_error(#state{out_protocol = OProto}, Function, Error) ->
+    Stack = erlang:get_stacktrace(),
+    error_logger:error_msg("~p had an error: ~p~n", [Function, {Error, Stack}]),
+    
     Message =
         case application:get_env(thrift, exceptions_include_traces) of
             {ok, true} ->
                 lists:flatten(io_lib:format("An error occurred: ~p~n",
-                                            [{Error, erlang:get_stacktrace()}]));
+                                            [{Error, Stack}]));
             _ ->
                 "An unknown handler error occurred."
         end,
