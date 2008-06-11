@@ -29,7 +29,13 @@ write(#data{socket = Socket}, Data) ->
 
 read(#data{socket=Socket, recv_timeout=Timeout}, Len)
   when is_integer(Len), Len >= 0 ->
-    gen_tcp:recv(Socket, Len, Timeout).
+    case gen_tcp:recv(Socket, Len, Timeout) of
+        Err = {error, timeout} ->
+            error_logger:error_msg("read timeout for conn with ~p", [inet:peername(Socket)]),
+            gen_tcp:close(Socket),
+            Err;
+        Data -> Data
+    end.
 
 %% We can't really flush - everything is flushed when we write
 flush(_) ->

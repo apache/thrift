@@ -30,6 +30,9 @@ loop(State = #thrift_processor{in_protocol  = IProto,
                                 type = ?tMessageType_CALL} ->
             ok = handle_function(State, list_to_atom(Function)),
             loop(State);
+        {error, timeout} ->
+            thrift_protocol:close_transport(OProto),
+            ok;
         {error, closed} ->
             %% error_logger:info_msg("Client disconnected~n"),
             thrift_protocol:close_transport(OProto),
