@@ -52,13 +52,14 @@ WEB_TARGET=/var/yaws/www/$(APP_NAME)
 # ----------------------------------------------------
 
 ERL_FLAGS +=
-ERL_COMPILE_FLAGS += -I../include -I../../fslib/include -I../../system_status/include 
+ERL_INCLUDE = -I../include -I../../fslib/include -I../../system_status/include
+ERL_COMPILE_FLAGS += $(ERL_INCLUDE)
 
 # ----------------------------------------------------
 # Targets
 # ----------------------------------------------------
 
-all debug opt: $(EBIN) $(TARGET_FILES) 
+all debug opt: $(EBIN) $(TARGET_FILES)
 
 #$(EBIN)/rm_logger.beam: $(APP_NAME).hrl
 include ../build/docs.mk
@@ -75,6 +76,9 @@ clean:
 $(EBIN):
 	mkdir $(EBIN)
 
+dialyzer: $(TARGET_FILES)
+	dialyzer --src -r . $(ERL_INCLUDE)
+
 # ----------------------------------------------------
 # Special Build Targets
 # ----------------------------------------------------
@@ -84,24 +88,23 @@ $(APP_TARGET): $(APP_SRC) ../vsn.mk $(BEAMS)
 		-e 's;%PFX%;$(PFX);' \
 		-e 's;%APP_NAME%;$(APP_NAME);' \
 		-e 's;%MODULES%;%MODULES%$(MODULES_STRING_LIST);' \
-		$< > $<".tmp" 
+		$< > $<".tmp"
 	sed -e 's/%MODULES%\(.*\),/\1/' \
-		$<".tmp" > $@ 
+		$<".tmp" > $@
 	rm $<".tmp"
-
 
 $(APPUP_TARGET): $(APPUP_SRC) ../vsn.mk
 	sed -e 's;%VSN%;$(VSN);' $< > $@
 
-$(WEB_TARGET): ../markup/* 
-	rm -rf $(WEB_TARGET) 
-	mkdir $(WEB_TARGET) 
+$(WEB_TARGET): ../markup/*
+	rm -rf $(WEB_TARGET)
+	mkdir $(WEB_TARGET)
 	cp -r ../markup/ $(WEB_TARGET)
 	cp -r ../skins/ $(WEB_TARGET)
 
 # ----------------------------------------------------
 # Install Target
-# ---------------------------------------------------- 
+# ----------------------------------------------------
 
 install: all $(WEB_TARGET)
 #	$(INSTALL_DIR) $(INSTALL_DST)/src
