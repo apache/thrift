@@ -170,7 +170,7 @@ void TServerSocket::listen() {
 
   #ifdef IPV6_V6ONLY
   int zero = 0;
-  if (-1 == setsockopt(serverSocket_, IPPROTO_IPV6, IPV6_V6ONLY, 
+  if (-1 == setsockopt(serverSocket_, IPPROTO_IPV6, IPV6_V6ONLY,
                         &zero, sizeof(zero))) {
     GlobalOutput("TServerSocket::listen() IPV6_V6ONLY");
   }

@@ -308,4 +308,4 @@ new_protocol_factory(TransportFactory, Options) ->
                    {strict_write, ParsedOpts#tbp_opts.strict_write}])
         end,
     {ok, F}.
-    
+

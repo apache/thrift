@@ -460,7 +460,7 @@ void t_alterl_generator::generate_service_helpers(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_erl_function_helpers(*f_iter);
   }
-  f_service_    << "struct_info('i am a dummy struct') -> undefined." << endl; 
+  f_service_    << "struct_info('i am a dummy struct') -> undefined." << endl;
 }
 
 /**
@@ -701,7 +701,7 @@ std::string t_alterl_generator::generate_type_term(t_type* type,
                                                    bool expand_structs) {
     type = get_true_type(type);
 
-    
+
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
@@ -761,12 +761,12 @@ std::string t_alterl_generator::generate_type_term(t_type* type,
 
   } else if (type->is_set()) {
     t_type *elem_type = ((t_set*)type)->get_elem_type();
-    
+
     return "{set, " + generate_type_term(elem_type, false) + "}";
 
   } else if (type->is_list()) {
     t_type *elem_type = ((t_list*)type)->get_elem_type();
-    
+
     return "{list, " + generate_type_term(elem_type, false) + "}";
   }
 

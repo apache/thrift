@@ -16,7 +16,7 @@
 class t_alterl_generator : public t_generator {
  public:
   t_alterl_generator(t_program* program) :
-    t_generator(program) 
+    t_generator(program)
   {
     program_name_[0] = tolower(program_name_[0]);
     service_name_[0] = tolower(service_name_[0]);
@@ -103,9 +103,9 @@ class t_alterl_generator : public t_generator {
   /**
    * write out headers and footers for hrl files
    */
-  
+
   void hrl_header(std::ostream& out, std::string name);
-  void hrl_footer(std::ostream& out, std::string name); 
+  void hrl_footer(std::ostream& out, std::string name);
 
   /**
    * stuff to spit out at the top of generated files
@@ -125,7 +125,7 @@ class t_alterl_generator : public t_generator {
   std::ofstream f_types_file_;
   std::ofstream f_types_hrl_file_;
 
-  std::ofstream f_consts_; 
+  std::ofstream f_consts_;
   std::ostringstream f_service_;
   std::ofstream f_service_file_;
   std::ofstream f_service_hrl_;
