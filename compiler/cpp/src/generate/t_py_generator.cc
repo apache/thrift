@@ -614,10 +614,10 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   // Printing utilities so that on the command line thrift
   // structs look pretty like dictionaries
   out <<
-    indent() << "def __str__(self): " << endl <<
+    indent() << "def __str__(self):" << endl <<
     indent() << "  return str(self.__dict__)" << endl <<
     endl <<
-    indent() << "def __repr__(self): " << endl <<
+    indent() << "def __repr__(self):" << endl <<
     indent() << "  return repr(self.__dict__)" << endl <<
     endl;
 
