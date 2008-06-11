@@ -33,7 +33,7 @@ loop(State = #state{in_protocol = IProto,
             loop(State);
         {error, closed} ->
             % error_logger:info_msg("Client disconnected~n"),
-            ok
+            exit(protocol_closed)
     end.
 
 handle_function(State = #state{in_protocol = IProto,
