@@ -38,7 +38,7 @@ AX_THRIFT_LIB(csharp, [C#], yes)
 if test "$with_csharp" = "yes";  then
   PKG_CHECK_MODULES(MONO, mono >= 1.2.6, have_mono=yes, have_mono=no)
 fi
-AM_CONDITIONAL(ENABLE_MONO, [test "$have_mono" = "yes"])
+AM_CONDITIONAL(WITH_MONO, [test "$have_mono" = "yes"])
 
 AX_THRIFT_LIB(java, [Java], yes)
 if test "$with_java" = "yes";  then
@@ -46,20 +46,20 @@ if test "$with_java" = "yes";  then
   AX_PROG_JAVAC
   AX_PROG_JAVA
 fi
-AM_CONDITIONAL([ENABLE_JAVA],
+AM_CONDITIONAL([WITH_JAVA],
                [test -n "$ANT" -a -n "$JAVA" -a -n "$JAVAC"])
 
 AX_THRIFT_LIB(erlang, [Erlang], yes)
 if test "$with_erlang" = "yes";  then
   AC_PATH_PROG([ERLC], [erlc])
 fi
-AM_CONDITIONAL(ENABLE_ERLANG, [test -n "$ERLC"])
+AM_CONDITIONAL(WITH_ERLANG, [test -n "$ERLC"])
 
 AX_THRIFT_LIB(py, [Python], yes)
 if test "$with_py" = "yes";  then
   AM_PATH_PYTHON(2.4,, :)
 fi
-AM_CONDITIONAL(ENABLE_PYTHON, [test -n "$PYTHON" -a "$PYTHON" != ":"])
+AM_CONDITIONAL(WITH_PYTHON, [test -n "$PYTHON" -a "$PYTHON" != ":"])
 
 AC_C_CONST
 AC_C_INLINE

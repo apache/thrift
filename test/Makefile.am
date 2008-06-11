@@ -1,10 +1,10 @@
 SUBDIRS =
 
-if ENABLE_JAVA
+if WITH_JAVA
 SUBDIRS += java
 endif
 
-if ENABLE_PYTHON
+if WITH_PYTHON
 SUBDIRS += py
 endif
 
