@@ -27,7 +27,9 @@
 	 max=2048,
 	 ip=any,
 	 listen=null,
-	 acceptor=null}).
+	 acceptor=null,
+         socket_opts=[{recv_timeout, 500}]
+        }).
 
 start(State=#thrift_socket_server{}) ->
     io:format("~p~n", [State]),
@@ -78,6 +80,8 @@ parse_options([{ip, Ip} | Rest], State) ->
 		       IpTuple
 	       end,
     parse_options(Rest, State#thrift_socket_server{ip=ParsedIp});
+parse_options([{socket_opts, L} | Rest], State) when is_list(L), length(L) > 0 ->
+    parse_options(Rest, State#thrift_socket_server{socket_opts=L});
 parse_options([{handler, Handler} | Rest], State) ->
     parse_options(Rest, State#thrift_socket_server{handler=Handler});
 parse_options([{service, Service} | Rest], State) ->
@@ -152,19 +156,22 @@ gen_tcp_listen(Port, Opts, State) ->
 new_acceptor(State=#thrift_socket_server{max=0}) ->
     error_logger:error_msg("Not accepting new connections"),
     State#thrift_socket_server{acceptor=null};
-new_acceptor(State=#thrift_socket_server{acceptor=OldPid, listen=Listen,service=Service, handler=Handler}) ->
+new_acceptor(State=#thrift_socket_server{acceptor=OldPid, listen=Listen,
+                                         service=Service, handler=Handler,
+                                         socket_opts=Opts
+                                        }) ->
     Pid = proc_lib:spawn_link(?MODULE, acceptor_loop,
-                              [{self(), Listen, Service, Handler}]),
+                              [{self(), Listen, Service, Handler, Opts}]),
 %%     error_logger:info_msg("Spawning new acceptor: ~p => ~p", [OldPid, Pid]),
     State#thrift_socket_server{acceptor=Pid}.
 
-acceptor_loop({Server, Listen, Service, Handler})
-  when is_pid(Server) ->
-    case catch gen_tcp:accept(Listen) of
+acceptor_loop({Server, Listen, Service, Handler, SocketOpts})
+  when is_pid(Server), is_list(SocketOpts) ->
+    case catch gen_tcp:accept(Listen) of % infiinite timeout
 	{ok, Socket} ->
 	    gen_server:cast(Server, {accepted, self()}),
             ProtoGen = fun() ->
-                               {ok, SocketTransport}   = thrift_socket_transport:new(Socket),
+                               {ok, SocketTransport}   = thrift_socket_transport:new(Socket, SocketOpts),
                                {ok, BufferedTransport} = thrift_buffered_transport:new(SocketTransport),
                                {ok, Protocol}          = thrift_binary_protocol:new(BufferedTransport),
                                {ok, IProt=Protocol, OProt=Protocol}

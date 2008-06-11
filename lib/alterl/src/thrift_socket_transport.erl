@@ -3,18 +3,33 @@
 -behaviour(thrift_transport).
 
 -export([new/1,
+         new/2,
          write/2, read/2, flush/1, close/1]).
 
--record(data, {socket}).
+-record(data, {socket,
+               recv_timeout=infinity}).
 
 new(Socket) ->
-    thrift_transport:new(?MODULE, #data{socket = Socket}).
+    new(Socket, []).
 
-write(#data{socket = Socket}, Data) when is_binary(Data) ->
+new(Socket, Opts) when is_list(Opts) ->
+    State =
+        case lists:keysearch(recv_timeout, 1, Opts) of
+            {value, {recv_timeout, Timeout}}
+            when is_integer(Timeout), Timeout > 0 ->
+                #data{socket=Socket, recv_timeout=Timeout};
+            _ ->
+                #data{socket=Socket}
+        end,
+    thrift_transport:new(?MODULE, State).
+
+write(#data{socket = Socket}, Data)
+  when is_binary(Data) ->
     gen_tcp:send(Socket, Data).
 
-read(#data{socket = Socket}, Len) when is_integer(Len), Len >= 0 ->
-    gen_tcp:recv(Socket, Len).
+read(D = #data{socket=Socket, recv_timeout=Timeout}, Len)
+  when is_integer(Len), Len >= 0 ->
+    gen_tcp:recv(Socket, Len, Timeout).
 
 %% We can't really flush - everything is flushed when we write
 flush(_) ->
