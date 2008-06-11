@@ -35,8 +35,8 @@ enum TTypeTag {
 class SimpleType {
  public:
 
-  static char* ascii_fingerprint; // = "19B5240589E680301A7E32DF3971EFBE";
-  static char binary_fingerprint[16]; // = {0x19,0xB5,0x24,0x05,0x89,0xE6,0x80,0x30,0x1A,0x7E,0x32,0xDF,0x39,0x71,0xEF,0xBE};
+  static const char* ascii_fingerprint; // = "19B5240589E680301A7E32DF3971EFBE";
+  static const uint8_t binary_fingerprint[16]; // = {0x19,0xB5,0x24,0x05,0x89,0xE6,0x80,0x30,0x1A,0x7E,0x32,0xDF,0x39,0x71,0xEF,0xBE};
 
   SimpleType() : name("") {
   }
@@ -64,6 +64,8 @@ class SimpleType {
     return !(*this == rhs);
   }
 
+  bool operator < (const SimpleType & ) const;
+
   uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
   uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
 
@@ -72,8 +74,8 @@ class SimpleType {
 class ContainerType {
  public:
 
-  static char* ascii_fingerprint; // = "654FA6EFFF8242F4C2A604B970686634";
-  static char binary_fingerprint[16]; // = {0x65,0x4F,0xA6,0xEF,0xFF,0x82,0x42,0xF4,0xC2,0xA6,0x04,0xB9,0x70,0x68,0x66,0x34};
+  static const char* ascii_fingerprint; // = "654FA6EFFF8242F4C2A604B970686634";
+  static const uint8_t binary_fingerprint[16]; // = {0x65,0x4F,0xA6,0xEF,0xFF,0x82,0x42,0xF4,0xC2,0xA6,0x04,0xB9,0x70,0x68,0x66,0x34};
 
   ContainerType() {
   }
@@ -107,6 +109,8 @@ class ContainerType {
     return !(*this == rhs);
   }
 
+  bool operator < (const ContainerType & ) const;
+
   uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
   uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
 
@@ -115,8 +119,8 @@ class ContainerType {
 class ThriftType {
  public:
 
-  static char* ascii_fingerprint; // = "76BC1CC759001D7D85FEE75C4F183062";
-  static char binary_fingerprint[16]; // = {0x76,0xBC,0x1C,0xC7,0x59,0x00,0x1D,0x7D,0x85,0xFE,0xE7,0x5C,0x4F,0x18,0x30,0x62};
+  static const char* ascii_fingerprint; // = "76BC1CC759001D7D85FEE75C4F183062";
+  static const uint8_t binary_fingerprint[16]; // = {0x76,0xBC,0x1C,0xC7,0x59,0x00,0x1D,0x7D,0x85,0xFE,0xE7,0x5C,0x4F,0x18,0x30,0x62};
 
   ThriftType() : is_container(0) {
   }
@@ -152,6 +156,8 @@ class ThriftType {
     return !(*this == rhs);
   }
 
+  bool operator < (const ThriftType & ) const;
+
   uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
   uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
 
@@ -160,8 +166,8 @@ class ThriftType {
 class Argument {
  public:
 
-  static char* ascii_fingerprint; // = "8C45506BE0EFBB22FB19FA40DDCECB3F";
-  static char binary_fingerprint[16]; // = {0x8C,0x45,0x50,0x6B,0xE0,0xEF,0xBB,0x22,0xFB,0x19,0xFA,0x40,0xDD,0xCE,0xCB,0x3F};
+  static const char* ascii_fingerprint; // = "8C45506BE0EFBB22FB19FA40DDCECB3F";
+  static const uint8_t binary_fingerprint[16]; // = {0x8C,0x45,0x50,0x6B,0xE0,0xEF,0xBB,0x22,0xFB,0x19,0xFA,0x40,0xDD,0xCE,0xCB,0x3F};
 
   Argument() : key(0), name("") {
   }
@@ -193,6 +199,8 @@ class Argument {
     return !(*this == rhs);
   }
 
+  bool operator < (const Argument & ) const;
+
   uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
   uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
 
@@ -201,8 +209,8 @@ class Argument {
 class Method {
  public:
 
-  static char* ascii_fingerprint; // = "E6573428C492D24C84A19432D39A17B0";
-  static char binary_fingerprint[16]; // = {0xE6,0x57,0x34,0x28,0xC4,0x92,0xD2,0x4C,0x84,0xA1,0x94,0x32,0xD3,0x9A,0x17,0xB0};
+  static const char* ascii_fingerprint; // = "E6573428C492D24C84A19432D39A17B0";
+  static const uint8_t binary_fingerprint[16]; // = {0xE6,0x57,0x34,0x28,0xC4,0x92,0xD2,0x4C,0x84,0xA1,0x94,0x32,0xD3,0x9A,0x17,0xB0};
 
   Method() : name("") {
   }
@@ -234,6 +242,8 @@ class Method {
     return !(*this == rhs);
   }
 
+  bool operator < (const Method & ) const;
+
   uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
   uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
 
@@ -242,8 +252,8 @@ class Method {
 class Service {
  public:
 
-  static char* ascii_fingerprint; // = "4673B0777B701D9B02A7A74CEC7908A7";
-  static char binary_fingerprint[16]; // = {0x46,0x73,0xB0,0x77,0x7B,0x70,0x1D,0x9B,0x02,0xA7,0xA7,0x4C,0xEC,0x79,0x08,0xA7};
+  static const char* ascii_fingerprint; // = "4673B0777B701D9B02A7A74CEC7908A7";
+  static const uint8_t binary_fingerprint[16]; // = {0x46,0x73,0xB0,0x77,0x7B,0x70,0x1D,0x9B,0x02,0xA7,0xA7,0x4C,0xEC,0x79,0x08,0xA7};
 
   Service() : name(""), fully_reflected(0) {
   }
@@ -274,6 +284,8 @@ class Service {
   bool operator != (const Service &rhs) const {
     return !(*this == rhs);
   }
+
+  bool operator < (const Service & ) const;
 
   uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
   uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
