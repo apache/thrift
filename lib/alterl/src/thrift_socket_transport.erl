@@ -4,7 +4,9 @@
 
 -export([new/1,
          new/2,
-         write/2, read/2, flush/1, close/1]).
+         write/2, read/2, flush/1, close/1,
+
+         new_connector/3]).
 
 -record(data, {socket,
                recv_timeout=infinity}).
@@ -43,3 +45,41 @@ flush(_) ->
 
 close(#data{socket = Socket}) ->
     gen_tcp:close(Socket).
+
+
+%%%% CONNECTOR GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%
+%% Generates a "connector" function - a fun which returns a Protocol instance.
+%% This can be passed to thrift_client:start_link in order to connect to a
+%% server over a socket.
+%%
+new_connector(Host, Port, Options) ->
+    ConnectTimeout = proplists:get_value(connect_timeout, Options, infinity),
+    InSockOpts     = proplists:get_value(sockopts, Options, []),
+    Framed         = proplists:get_value(framed, Options, false),
+    StrictRead     = proplists:get_value(strict_read, Options, true),
+    StrictWrite    = proplists:get_value(strict_write, Options, true),
+
+    F = fun() ->
+                SockOpts = [binary,
+                            {packet, 0},
+                            {active, false},
+                            {nodelay, true} |
+                            InSockOpts],
+                case catch gen_tcp:connect(Host, Port, SockOpts, ConnectTimeout) of
+                    {ok, Sock} ->
+                        {ok, Transport} = thrift_socket_transport:new(Sock),
+                        {ok, BufTransport} =
+                            case Framed of
+                                true  -> thrift_framed_transport:new(Transport);
+                                false -> thrift_buffered_transport:new(Transport)
+                            end,
+                        thrift_binary_protocol:new(BufTransport,
+                                                   [{strict_read,  StrictRead},
+                                                    {strict_write, StrictWrite}]);
+                    Error  ->
+                        Error
+                end
+        end,
+    {ok, F}.
