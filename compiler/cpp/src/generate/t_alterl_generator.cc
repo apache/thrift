@@ -490,6 +490,15 @@ void t_alterl_generator::generate_service_interface(t_service* tservice) {
     generate_function_info(tservice, *f_iter);
   }
 
+  // Inheritance - pass unknown functions to base class
+  if (tservice->get_extends() != NULL) {
+      indent(f_service_) << "function_info(Function, InfoType) ->" << endl;
+      indent_up();
+      indent(f_service_) << uncapitalize(tservice->get_extends()->get_name())
+                         << "_thrift:function_info(Function, InfoType);" << endl;
+      indent_down();
+  }
+
   // Dummy function_info so we don't worry about the ;s
   indent(f_service_) << "function_info(xxx, dummy) -> dummy." << endl;
 
