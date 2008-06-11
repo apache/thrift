@@ -93,13 +93,16 @@ call(Client, Function, Args)
         {exception, Exception} -> throw(Exception)
     end.
 
+cast(Client, Function, Args)
+  when is_pid(Client), is_atom(Function), is_list(Args) ->
+    gen_server:cast(Client, {call, Function, Args}).
+
 %% Sends a function call but does not read the result. This is useful
 %% if you're trying to log non-async function calls to write-only
 %% transports like thrift_disk_log_transport.
 send_call(Client, Function, Args)
   when is_pid(Client), is_atom(Function), is_list(Args) ->
     gen_server:call(Client, {send_call, Function, Args}).
-
 
 close(Client) when is_pid(Client) ->
     gen_server:cast(Client, close).
@@ -180,6 +183,20 @@ catch_function_exceptions(Fun, Service) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
+handle_cast({call, Function, Args}, State = #state{service = Service,
+                                                   protocol = Protocol,
+                                                   seqid = SeqId}) ->
+    _Result =
+        try
+            ok = send_function_call(State, Function, Args),
+            receive_function_result(State, Function)
+        catch
+            Class:Reason ->
+                error_logger:error_msg("error ignored in handle_cast({cast,...},...): ~p:~p~n", [Class, Reason])
+        end,
+
+    {noreply, State};
+
 handle_cast(close, State=#state{protocol = Protocol}) ->
 %%     error_logger:info_msg("thrift_client ~p received close", [self()]),
     {stop,normal,State};
