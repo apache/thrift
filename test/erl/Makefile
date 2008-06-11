@@ -39,6 +39,7 @@ ${GEN_TARGETDIR}/: ${GENDIR}/
 	erlc ${INCLUDEFLAGS} -o ${GEN_TARGETDIR} ${GEN_SRCDIR}/*.erl
 
 $(TARGETS): ${TARGETDIR}/%.beam: ${SRCDIR}/%.erl ${GEN_INCLUDEDIR}/ ${HEADERS}
+	mkdir -p ${TARGETDIR}
 	erlc ${INCLUDEFLAGS} -o ${TARGETDIR} $<
 
 clean:
