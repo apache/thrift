@@ -193,14 +193,12 @@ handle_reply(State = #state{protocol = Proto,
              ReplyType) ->
     {struct, ExceptionFields} = Service:function_info(Function, exceptions),
     ReplyStructDef = {struct, [{0, ReplyType}] ++ ExceptionFields},
-    io:format("RSD: ~p~n", [ReplyStructDef]),
     {ok, Reply} = thrift_protocol:read(Proto, ReplyStructDef),
     ReplyList = tuple_to_list(Reply),
     true = length(ReplyList) == length(ExceptionFields) + 1,
     ExceptionVals = tl(ReplyList),
     Thrown = [X || X <- ExceptionVals,
                    X =/= undefined],
-    io:format("RL: ~p~nEV:~p~n", [ReplyList, ExceptionVals]),
     Result =
         case Thrown of
             [] when ReplyType == {struct, []} ->
