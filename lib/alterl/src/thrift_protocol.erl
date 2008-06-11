@@ -80,13 +80,10 @@ read(IProto, {struct, Structure}) when is_list(Structure) ->
 
 
     ok = read(IProto, struct_begin),
-    RDict = read_struct_loop(IProto, SDict, dict:new()),
+    RTuple0 = erlang:make_tuple(length(Structure), undefined),
 
-    List = [case dict:find(Index, RDict) of
-                {ok, Val} -> Val;
-                error     -> undefined
-            end || Index <- IndexList],
-    {ok, list_to_tuple(List)};
+    RTuple1 = read_struct_loop(IProto, SDict, RTuple0),
+    {ok, RTuple1};
 
 read(IProto, {struct, {Module, StructureName}}) when is_atom(Module),
                                                      is_atom(StructureName) ->
@@ -127,25 +124,25 @@ read(#protocol{module = Module,
                data = ModuleData}, ProtocolType) ->
     Module:read(ModuleData, ProtocolType).
 
-read_struct_loop(IProto, SDict, RDict) ->
+read_struct_loop(IProto, SDict, RTuple) ->
     #protocol_field_begin{type = FType, id = Fid, name = Name} =
         thrift_protocol:read(IProto, field_begin),
     case {FType, Fid} of
         {?tType_STOP, _} ->
-            RDict;
+            RTuple;
         _Else ->
             case dict:find(Fid, SDict) of
                 {ok, {Type, Index}} ->
                     {ok, Val} = read(IProto, Type),
                     thrift_protocol:read(IProto, field_end),
-                    NewRDict = dict:store(Index, Val, RDict),
-                    read_struct_loop(IProto, SDict, NewRDict);
+                    NewRTuple = setelement(Index, RTuple, Val),
+                    read_struct_loop(IProto, SDict, NewRTuple);
                 _Else2 ->
                     error_logger:info_msg("Skipping fid ~p~n", [Fid]),
                     FTypeAtom = thrift_protocol:typeid_to_atom(FType),
                     thrift_protocol:skip(IProto, FTypeAtom),
                     read(IProto, field_end),
-                    read_struct_loop(IProto, SDict, RDict)
+                    read_struct_loop(IProto, SDict, RTuple)
             end
     end.
 
