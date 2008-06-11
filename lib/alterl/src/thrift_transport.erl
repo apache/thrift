@@ -1,22 +1,20 @@
 -module(thrift_transport).
 
--export([behaviour_info/1,
+-export([behaviour_info/1]).
 
-         new/2,
+-export([new/2,
          write/2,
          read/2,
          flush/1
         ]).
 
 behaviour_info(callbacks) ->
-    [{write/2,
-      read/2,
-      flush/1}];
-behaviour_info(_Else) -> undefined.
-
+    [{read, 2},
+     {write, 2},
+     {flush, 1}
+    ].
 
 -record(transport, { module, data }).
-
 
 new(Module, Data) when is_atom(Module) ->
     {ok, #transport{module = Module,
