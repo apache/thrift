@@ -222,12 +222,17 @@ class TestHandler : public ThriftTestIf {
     hello.i64_thing = (int64_t)arg2;
   }
 
-  void testException(const std::string &arg) throw(Xception) {
+  void testException(const std::string &arg)
+    throw(Xception, facebook::thrift::TException)
+  {
     printf("testException(%s)\n", arg.c_str());
     if (arg.compare("Xception") == 0) {
       Xception e;
       e.errorCode = 1001;
       e.message = "This is an Xception";
+      throw e;
+    } else if (arg.compare("ApplicationException") == 0) {
+      facebook::thrift::TException e;
       throw e;
     } else {
       Xtruct result;

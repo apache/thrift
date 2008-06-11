@@ -212,5 +212,12 @@ handle_reply(State = #state{protocol = Proto,
     Result.
                      
 
-handle_application_exception(_State) ->
-    not_yet_impl.
+handle_application_exception(State = #state{protocol = Proto}) ->
+    {ok, Exception} = thrift_protocol:read(Proto,
+                                           ?TApplicationException_Structure),
+    ok = thrift_protocol:read(Proto, message_end),
+    XRecord = list_to_tuple(
+                ['TApplicationException' | tuple_to_list(Exception)]),
+    io:format("X: ~p~n", [XRecord]),
+    true = is_record(XRecord, 'TApplicationException'),
+    {exception, XRecord}.
