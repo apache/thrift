@@ -11,7 +11,7 @@
 -behaviour(thrift_transport).
 
 %% API
--export([new/1]).
+-export([new/1, new_transport_factory/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -38,6 +38,8 @@ new(WrappedTransport) ->
         Else ->
             Else
     end.
+
+
 
 %%--------------------------------------------------------------------
 %% Function: write(Transport, Data) -> ok
@@ -157,3 +159,10 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+%%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+new_transport_factory(WrapFactory) ->
+    F = fun() ->
+                {ok, Wrapped} = WrapFactory(),
+                new(Wrapped)
+        end,
+    {ok, F}.
