@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/3, call/3, close/1]).
+-export([start_link/3, start_link/4, call/3, close/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -29,8 +29,11 @@
 %% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
 %% Description: Starts the server
 %%--------------------------------------------------------------------
-start_link(Host, Port, Service) when is_integer(Port), is_atom(Service) ->
-    gen_server:start_link(?MODULE, [Host, Port, Service], []).
+start_link(Host, Port, Service) ->
+    start_link(Host, Port, Service, _Timeout = infinity).
+
+start_link(Host, Port, Service, Timeout) when is_integer(Port), is_atom(Service) ->
+    gen_server:start_link(?MODULE, [Host, Port, Service, Timeout], []).
 
 call(Client, Function, Args)
   when is_pid(Client), is_atom(Function), is_list(Args) ->
@@ -55,12 +58,17 @@ close(Client) when is_pid(Client) ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([Host, Port, Service]) ->
+    init([Host, Port, Service, infinity]);
+
+init([Host, Port, Service, Timeout]) ->
     {ok, Sock} = gen_tcp:connect(Host, Port,
                                  [binary,
                                   {packet, 0},
                                   {active, false},
                                   {nodelay, true}
-                                 ]),
+                                 ],
+                                Timeout),
+
     {ok, Transport}    = thrift_socket_transport:new(Sock),
     {ok, BufTransport} = thrift_buffered_transport:new(Transport),
     {ok, Protocol}     = thrift_binary_protocol:new(BufTransport),
