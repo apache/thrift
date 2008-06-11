@@ -59,11 +59,6 @@ class TestHandler:
     time.sleep(seconds)
     print 'done sleeping'
 
-  def testAsync(self, seconds):
-    print 'testAsync(%d) => sleeping...' % seconds
-    time.sleep(seconds)
-    print 'done sleeping'
-
 handler = TestHandler()
 processor = ThriftTest.Processor(handler)
 transport = TSocket.TServerSocket(9090)

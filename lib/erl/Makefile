@@ -8,3 +8,11 @@ all clean docs:
 
 install: all
 	echo 'No install target, sorry.'
+
+check: all
+
+distclean: clean
+
+# Hack to make "make dist" work.
+# This should not work, but it appears to.
+distdir:

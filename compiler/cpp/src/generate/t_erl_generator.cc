@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sstream>
 #include "t_erl_generator.h"
+#include "platform.h"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ using namespace std;
  */
 void t_erl_generator::init_generator() {
   // Make output directory
-  mkdir(get_out_dir().c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+  MKDIR(get_out_dir().c_str());
 
   // setup export lines
   export_lines_first_ = true;
@@ -174,6 +175,7 @@ void t_erl_generator::generate_const(t_const* tconst) {
  * validate_types method in main.cc
  */
 string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
+  type = get_true_type(type);
   std::ostringstream out;
 
   if (type->is_base_type()) {
@@ -290,6 +292,8 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
       out << render_const_value(etype, *v_iter);
     }
     out << "]";
+  } else {
+    throw "CANNOT GENERATE CONSTANT FOR TYPE: " + type->get_name();
   }
   return out.str();
 }
