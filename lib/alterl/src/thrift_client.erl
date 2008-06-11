@@ -38,7 +38,17 @@ start_link(Host, Port, Service) ->
     start_link(Host, Port, Service, []).
 
 start_link(Host, Port, Service, Options) when is_integer(Port), is_atom(Service), is_list(Options) ->
-    gen_server:start_link(?MODULE, [Host, Port, Service, Options], []).
+    case gen_server:start_link(?MODULE, [Host, Port, Service, Options], []) of
+        {ok, Pid} ->
+            case gen_server:call(Pid, {connect, Host, Port, Service}) of
+                ok ->
+                    {ok, Pid};
+                Error ->
+                    Error
+            end;
+        Else ->
+            Else
+    end.
 
 call(Client, Function, Args)
   when is_pid(Client), is_atom(Function), is_list(Args) ->
@@ -62,33 +72,9 @@ close(Client) when is_pid(Client) ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init([Host, Port, Service, Options]) ->
+init([_Host, _Port, _Service, Options]) ->
     State = parse_options(Options, #state{}),
-
-    TcpOptions = [binary,
-                  {packet, 0},
-                  {active, false},
-                  {nodelay, true}],
-    TcpTimeout = State#state.connect_timeout,
-
-    case catch gen_tcp:connect(Host, Port, TcpOptions, TcpTimeout) of
-        {ok, Sock} ->
-            {ok, Transport} = thrift_socket_transport:new(Sock),
-            {ok, BufTransport} =
-                case State#state.framed of
-                    true  -> thrift_framed_transport:new(Transport);
-                    false -> thrift_buffered_transport:new(Transport)
-                end,
-            {ok, Protocol} = thrift_binary_protocol:new(BufTransport,
-                                                        [{strict_read,  State#state.strict_read},
-                                                         {strict_write, State#state.strict_write}]),
-
-            {ok, State#state{service  = Service,
-                             protocol = Protocol,
-                             seqid    = 0}};
-        Error ->
-            {stop, Error}
-    end.
+    {ok, State}.
 
 parse_options([], State) ->
     State;
@@ -110,6 +96,31 @@ parse_options([{connect_timeout, TO} | Rest], State) when TO =:= infinity; is_in
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
+handle_call({connect, Host, Port, Service}, _From, State = #state{connect_timeout=Timeout}) ->
+    Options = [binary,
+               {packet, 0},
+               {active, false},
+               {nodelay, true}],
+
+    case catch gen_tcp:connect(Host, Port, Options, Timeout) of
+        {ok, Sock} ->
+            {ok, Transport} = thrift_socket_transport:new(Sock),
+            {ok, BufTransport} =
+                case State#state.framed of
+                    true  -> thrift_framed_transport:new(Transport);
+                    false -> thrift_buffered_transport:new(Transport)
+                end,
+            {ok, Protocol} = thrift_binary_protocol:new(BufTransport,
+                                                        [{strict_read,  State#state.strict_read},
+                                                         {strict_write, State#state.strict_write}]),
+
+            {reply, ok, State#state{service  = Service,
+                                    protocol = Protocol,
+                                    seqid    = 0}};
+        Error ->
+            {stop, normal, Error, State}
+    end;
+
 handle_call({call, Function, Args}, _From, State = #state{service = Service,
                                                           protocol = Protocol,
                                                           seqid = SeqId}) ->
@@ -159,8 +170,9 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(Reason, State = #state{protocol = Protocol}) ->
-%%     error_logger:info_msg("thrift_client ~p terminating due to ~p", [self(), Reason]),
+terminate(Reason, State = #state{protocol=undefined}) ->
+    ok;
+terminate(Reason, State = #state{protocol=Protocol}) ->
     thrift_protocol:close_transport(Protocol),
     ok.
 
