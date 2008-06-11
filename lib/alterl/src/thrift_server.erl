@@ -10,7 +10,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/3]).
+-export([start_link/3, stop/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -29,6 +29,15 @@
 %%--------------------------------------------------------------------
 start_link(Port, Service, HandlerModule) when is_integer(Port), is_atom(HandlerModule) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, {Port, Service, HandlerModule}, []).
+
+
+%%--------------------------------------------------------------------
+%% Function: stop(Pid) -> ok, {error, Reason}
+%% Description: Stops the server.
+%%--------------------------------------------------------------------
+stop(Pid) when is_pid(Pid) ->
+    gen_server:call(Pid, stop).
+
 
 %%====================================================================
 %% gen_server callbacks
@@ -62,9 +71,9 @@ init({Port, Service, Handler}) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
+handle_call(stop, _From, State) ->
+    State#state.acceptor ! stop,
+    {stop, stopped, ok, State}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -119,6 +128,8 @@ acceptor(ListenSocket, Service, Handler)
     receive
         refresh ->
             error_logger:info_msg("Acceptor refreshing~n"),
-            ?MODULE:acceptor(ListenSocket, Service, Handler)
+            ?MODULE:acceptor(ListenSocket, Service, Handler);
+        stop ->
+            ok
     after 0      -> acceptor(ListenSocket, Service, Handler)
     end.
