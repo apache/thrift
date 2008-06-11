@@ -1,6 +1,5 @@
 SUBDIRS = \
-  cpp \
-  py
+  cpp
 
 if ENABLE_MONO
 SUBDIRS += csharp
@@ -8,6 +7,10 @@ endif
 
 if ENABLE_JAVA
 SUBDIRS += java
+endif
+
+if ENABLE_PYTHON
+SUBDIRS += py
 endif
 
 if ENABLE_ERLANG

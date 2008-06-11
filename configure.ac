@@ -12,8 +12,6 @@ AC_ARG_VAR([PY_PREFIX], [Prefix for installing Python modules.
                          Default = "/usr"])
 AS_IF([test "x$PY_PREFIX" = x], [PY_PREFIX="/usr"])
 
-AM_PATH_PYTHON(2.4,, :)
-
 
 AC_PROG_CC
 AC_PROG_CPP
@@ -56,6 +54,12 @@ if test "$with_erlang" = "yes";  then
   AC_PATH_PROG([ERLC], [erlc])
 fi
 AM_CONDITIONAL(ENABLE_ERLANG, [test -n "$ERLC"])
+
+AX_THRIFT_LIB(py, [Python], yes)
+if test "$with_py" = "yes";  then
+  AM_PATH_PYTHON(2.4,, :)
+fi
+AM_CONDITIONAL(ENABLE_PYTHON, [test -n "$PYTHON" -a "$PYTHON" != ":"])
 
 AC_C_CONST
 AC_C_INLINE

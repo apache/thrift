@@ -1,7 +1,11 @@
-SUBDIRS = py
+SUBDIRS =
 
 if ENABLE_JAVA
 SUBDIRS += java
+endif
+
+if ENABLE_PYTHON
+SUBDIRS += py
 endif
 
 noinst_LTLIBRARIES = libtestgencpp.la
