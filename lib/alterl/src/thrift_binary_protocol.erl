@@ -15,7 +15,9 @@
          read/2,
          write/2,
          flush_transport/1,
-         close_transport/1
+         close_transport/1,
+
+         new_protocol_factory/2
         ]).
 
 -record(binary_protocol, {transport,
@@ -271,3 +273,30 @@ read(This, string) ->
 read(This, 0) -> {ok, <<>>};
 read(This, Len) when is_integer(Len), Len >= 0 ->
     thrift_transport:read(This#binary_protocol.transport, Len).
+
+
+%%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-record(tbp_opts, {strict_read = true,
+                   strict_write = true}).
+
+parse_factory_options([], Opts) ->
+    Opts;
+parse_factory_options([{strict_read, Bool} | Rest], Opts) when is_boolean(Bool) ->
+    parse_factory_options(Rest, Opts#tbp_opts{strict_read=Bool});
+parse_factory_options([{strict_write, Bool} | Rest], Opts) when is_boolean(Bool) ->
+    parse_factory_options(Rest, Opts#tbp_opts{strict_write=Bool}).
+
+
+%% returns a (fun() -> thrift_protocol())
+new_protocol_factory(TransportFactory, Options) ->
+    ParsedOpts = parse_factory_options(Options, #tbp_opts{}),
+    F = fun() ->
+                {ok, Transport} = TransportFactory(),
+                thrift_binary_protocol:new(
+                  Transport,
+                  [{strict_read,  ParsedOpts#tbp_opts.strict_read},
+                   {strict_write, ParsedOpts#tbp_opts.strict_write}])
+        end,
+    {ok, F}.
+    

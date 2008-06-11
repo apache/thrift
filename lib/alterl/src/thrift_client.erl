@@ -32,11 +32,43 @@
 start_link(Host, Port, Service) when is_integer(Port), is_atom(Service) ->
     start_link(Host, Port, Service, []).
 
-%% Backwards-compatible starter for the usual case of socket transports
+
+%%
+%% Splits client options into protocol options and transport options
+%%
+%% split_options([Options...]) -> {ProtocolOptions, TransportOptions}
+%%
+split_options(Options) ->
+    split_options(Options, [], []).
+
+split_options([], ProtoIn, TransIn) ->
+    {ProtoIn, TransIn};
+
+split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
+  when OptKey =:= strict_read;
+       OptKey =:= strict_write ->
+    split_options(Rest, [Opt | ProtoIn], TransIn);
+
+split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
+  when OptKey =:= framed;
+       OptKey =:= connect_timeout;
+       OptKey =:= sockopts ->
+    split_options(Rest, ProtoIn, [Opt | TransIn]).
+
+
+%% Backwards-compatible starter for the common-case of socket transports
 start_link(Host, Port, Service, Options)
   when is_integer(Port), is_atom(Service), is_list(Options) ->
-    {ok, ProtocolFactory} = thrift_socket_transport:new_protocol_factory(Host, Port, Options),
+    {ProtoOpts, TransOpts} = split_options(Options),
+
+    {ok, TransportFactory} =
+        thrift_socket_transport:new_transport_factory(Host, Port, TransOpts),
+
+    {ok, ProtocolFactory} = thrift_binary_protocol:new_protocol_factory(
+                              TransportFactory, ProtoOpts),
+
     start_link(ProtocolFactory, Service).
+
 
 %% ProtocolFactory :: fun() -> thrift_protocol()
 start_link(ProtocolFactory, Service)

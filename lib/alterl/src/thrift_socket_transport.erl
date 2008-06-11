@@ -6,7 +6,7 @@
          new/2,
          write/2, read/2, flush/1, close/1,
 
-         new_protocol_factory/3]).
+         new_transport_factory/3]).
 
 -record(data, {socket,
                recv_timeout=infinity}).
@@ -56,16 +56,10 @@ close(#data{socket = Socket}) ->
 %% operation instead of O(n^2)
 -record(factory_opts, {connect_timeout = infinity,
                        sockopts = [],
-                       framed = false,
-                       strict_read = true,
-                       strict_write = true}).
+                       framed = false}).
 
 parse_factory_options([], Opts) ->
     Opts;
-parse_factory_options([{strict_read, Bool} | Rest], Opts) when is_boolean(Bool) ->
-    parse_factory_options(Rest, Opts#factory_opts{strict_read=Bool});
-parse_factory_options([{strict_write, Bool} | Rest], Opts) when is_boolean(Bool) ->
-    parse_factory_options(Rest, Opts#factory_opts{strict_write=Bool});
 parse_factory_options([{framed, Bool} | Rest], Opts) when is_boolean(Bool) ->
     parse_factory_options(Rest, Opts#factory_opts{framed=Bool});
 parse_factory_options([{sockopts, OptList} | Rest], Opts) when is_list(OptList) ->
@@ -73,12 +67,14 @@ parse_factory_options([{sockopts, OptList} | Rest], Opts) when is_list(OptList) 
 parse_factory_options([{connect_timeout, TO} | Rest], Opts) when TO =:= infinity; is_integer(TO) ->
     parse_factory_options(Rest, Opts#factory_opts{connect_timeout=TO}).
 
+
 %%
-%% Generates a "protocol factory" function - a fun which returns a Protocol instance.
-%% This can be passed to thrift_client:start_link in order to connect to a
-%% server over a socket.
+%% Generates a "transport factory" function - a fun which returns a thrift_transport()
+%% instance.
+%% This can be passed into a protocol factory to generate a connection to a
+%% thrift server over a socket.
 %%
-new_protocol_factory(Host, Port, Options) ->
+new_transport_factory(Host, Port, Options) ->
     ParsedOpts = parse_factory_options(Options, #factory_opts{}),
 
     F = fun() ->
@@ -96,10 +92,7 @@ new_protocol_factory(Host, Port, Options) ->
                                 true  -> thrift_framed_transport:new(Transport);
                                 false -> thrift_buffered_transport:new(Transport)
                             end,
-                        thrift_binary_protocol:new(
-                          BufTransport,
-                          [{strict_read,  ParsedOpts#factory_opts.strict_read},
-                           {strict_write, ParsedOpts#factory_opts.strict_write}]);
+                        {ok, BufTransport};
                     Error  ->
                         Error
                 end
