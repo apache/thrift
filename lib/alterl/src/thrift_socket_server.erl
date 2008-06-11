@@ -227,7 +227,7 @@ handle_info({'EXIT', _LoopPid, Reason},
 	    State=#thrift_socket_server{acceptor=Pid, max=Max}) ->
     case Reason of
 	normal -> ok;
-        protocol_closed -> ok;
+        shutdown -> ok;
 	_ -> error_logger:error_report({?MODULE, ?LINE,
                                         {child_error, Reason, erlang:get_stacktrace()}})
     end,
