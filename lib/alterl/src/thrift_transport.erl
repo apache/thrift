@@ -16,7 +16,7 @@ behaviour_info(callbacks) ->
      {close, 1}
     ].
 
--record(transport, { module, data }).
+-record(transport, {module, data}).
 
 new(Module, Data) when is_atom(Module) ->
     {ok, #transport{module = Module,

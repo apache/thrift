@@ -41,7 +41,6 @@
 new(WrappedTransport) ->
     case gen_server:start_link(?MODULE, [WrappedTransport], []) of
         {ok, Pid} ->
-%%             io:format("buffered transport ~p wrapping ~p", [Pid, WrappedTransport]),
             thrift_transport:new(?MODULE, Pid);
         Else ->
             Else
@@ -121,11 +120,11 @@ handle_call(flush, _From, State = #state{buffer = Buffer,
     thrift_transport:flush(Wrapped),
     {reply, Response, State#state{buffer = []}};
 
-handle_call(close, _From, State = #state{buffer  = Buffer,
+handle_call(close, From, State = #state{buffer  = Buffer,
                                          wrapped = Wrapped}) ->
     thrift_transport:write(Wrapped, concat_binary(lists:reverse(Buffer))),
-    thrift_transport:close(Wrapped),
-    {reply, ok, State}.
+    Close=thrift_transport:close(Wrapped),
+    {stop, shutdown, Close, State}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |

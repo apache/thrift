@@ -28,11 +28,12 @@ loop(State = #thrift_processor{in_protocol  = IProto,
     case thrift_protocol:read(IProto, message_begin) of
         #protocol_message_begin{name = Function,
                                 type = ?tMessageType_CALL} ->
-            ok=handle_function(State, list_to_atom(Function)),
+            ok = handle_function(State, list_to_atom(Function)),
             loop(State);
         {error, closed} ->
             %% error_logger:info_msg("Client disconnected~n"),
-            exit(protocol_closed)
+            thrift_protocol:close_transport(OProto),
+            exit(shutdown)
     end.
 
 handle_function(State=#thrift_processor{in_protocol = IProto,
@@ -52,7 +53,6 @@ handle_function(State=#thrift_processor{in_protocol = IProto,
         handle_success(State, Function, Result)
     catch
         Type:Data ->
-            error_logger:info_msg("handle_function oh noes: ~p ~p", [Type, Data]),
             handle_function_catch(State, Function, Type, Data)
     end,
     after_reply(OProto).

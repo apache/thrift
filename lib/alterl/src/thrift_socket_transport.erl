@@ -37,4 +37,4 @@ flush(_) ->
 
 close(#data{socket = Socket}) ->
     gen_tcp:close(Socket),
-    exit(protocol_closed).
+    exit(normal).
