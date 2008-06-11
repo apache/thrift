@@ -168,4 +168,4 @@ start_processor(Socket, Service, Handler) ->
                        {ok, Protocol, Protocol}
                end,
 
-    thrift_processor:start(ProtoGen, Service, Handler).
+    spawn(thrift_processor, init, [{Server, ProtoGen, Service, Handler}]).
