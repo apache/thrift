@@ -71,7 +71,7 @@ init([Host, Port, Service, Options]) ->
                   {nodelay, true}],
     TcpTimeout = State#state.connect_timeout,
 
-    case gen_tcp:connect(Host, Port, TcpOptions, TcpTimeout) of
+    case catch gen_tcp:connect(Host, Port, TcpOptions, TcpTimeout) of
         {ok, Sock} ->
             {ok, Transport} = thrift_socket_transport:new(Sock),
             {ok, BufTransport} =
@@ -80,8 +80,8 @@ init([Host, Port, Service, Options]) ->
                     false -> thrift_buffered_transport:new(Transport)
                 end,
             {ok, Protocol} = thrift_binary_protocol:new(BufTransport,
-                                 [{strict_read,  State#state.strict_read},
-                                  {strict_write, State#state.strict_write}]),
+                                                        [{strict_read,  State#state.strict_read},
+                                                         {strict_write, State#state.strict_write}]),
 
             {ok, State#state{service  = Service,
                              protocol = Protocol,
