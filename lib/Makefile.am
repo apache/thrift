@@ -11,12 +11,11 @@ SUBDIRS += java
 endif
 
 if ENABLE_ERLANG
-SUBDIRS += erl
+SUBDIRS += alterl
 endif
 
 EXTRA_DIST = \
   cocoa \
-  erl   \
   hs    \
   ocaml \
   perl  \

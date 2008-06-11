@@ -11,7 +11,6 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_generator.cc \
                  src/generate/t_php_generator.cc \
                  src/generate/t_xsd_generator.cc \
-                 src/generate/t_erl_generator.cc \
                  src/generate/t_alterl_generator.cc \
                  src/globals.h \
                  src/main.h \
@@ -39,7 +38,6 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_oop_generator.h \
                  src/generate/t_php_generator.h \
                  src/generate/t_xsd_generator.h \
-                 src/generate/t_erl_generator.h \
                  src/generate/t_alterl_generator.h
 
 if THRIFT_GEN_cpp

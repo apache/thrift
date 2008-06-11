@@ -38,7 +38,6 @@
 #include "parse/t_scope.h"
 #include "generate/t_php_generator.h"
 #include "generate/t_xsd_generator.h"
-#include "generate/t_erl_generator.h"
 #include "generate/t_alterl_generator.h"
 
 using namespace std;
@@ -152,7 +151,6 @@ bool gen_phpa = false;
 bool gen_phpo = false;
 bool gen_rest = false;
 bool gen_perl = false;
-bool gen_erl = false;
 bool gen_alterl = false;
 bool gen_ocaml = false;
 bool gen_hs = false;
@@ -603,7 +601,6 @@ void usage() {
   fprintf(stderr, "  -phpa       Generate PHP with autoload (with -php)\n");
   fprintf(stderr, "  -phpo       Generate PHP with object oriented subclasses (with -php)\n");
   fprintf(stderr, "  -xsd        Generate XSD output files\n");
-  fprintf(stderr, "  -erl        Generate Erlang output files\n");
   fprintf(stderr, "  -alterl     Generate Alternative Erlang output files\n");
   fprintf(stderr, "  -o dir      Set the output directory for gen-* packages\n");
   fprintf(stderr, "               (default: current directory)\n");
@@ -874,13 +871,6 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       delete xsd;
     }
 
-    if (gen_erl) {
-      pverbose("Generating Erlang\n");
-      t_erl_generator* erl = new t_erl_generator(program);
-      erl->generate_program();
-      delete erl;
-    }
-
     if (gen_alterl) {
       pverbose("Generating Alternative Erlang\n");
       t_alterl_generator* alterl = new t_alterl_generator(program);
@@ -1002,8 +992,6 @@ int main(int argc, char** argv) {
         gen_xsd = true;
       } else if (strcmp(arg, "-perl") == 0) {
         gen_perl = true;
-      } else if (strcmp(arg, "-erl") == 0) {
-        gen_erl = true;
       } else if (strcmp(arg, "-alterl") == 0) {
         gen_alterl = true;
       } else if (strcmp(arg, "-ocaml") == 0) {
@@ -1117,7 +1105,7 @@ int main(int argc, char** argv) {
   }
 
   // You gotta generate something!
-  if (!gen_php && !gen_phpi && !gen_xsd && !gen_erl && !gen_alterl && generator_strings.empty()) {
+  if (!gen_php && !gen_phpi && !gen_xsd && !gen_alterl && generator_strings.empty()) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
