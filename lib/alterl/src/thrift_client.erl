@@ -65,27 +65,30 @@ close(Client) when is_pid(Client) ->
 init([Host, Port, Service, Options]) ->
     State = parse_options(Options, #state{}),
 
-    {ok, Sock} = gen_tcp:connect(Host, Port,
-                                 [binary,
-                                  {packet, 0},
-                                  {active, false},
-                                  {nodelay, true}
-                                 ],
-                                State#state.connect_timeout),
+    TcpOptions = [binary,
+                  {packet, 0},
+                  {active, false},
+                  {nodelay, true}],
+    TcpTimeout = State#state.connect_timeout,
 
-    {ok, Transport} = thrift_socket_transport:new(Sock),
-    {ok, BufTransport} =
-        case State#state.framed of
-            true  -> thrift_framed_transport:new(Transport);
-            false -> thrift_buffered_transport:new(Transport)
-        end,
-    {ok, Protocol} = thrift_binary_protocol:new(BufTransport,
-                         [{strict_read,  State#state.strict_read},
-                          {strict_write, State#state.strict_write}]),
+    case gen_tcp:connect(Host, Port, TcpOptions, TcpTimeout) of
+        {ok, Sock} ->
+            {ok, Transport} = thrift_socket_transport:new(Sock),
+            {ok, BufTransport} =
+                case State#state.framed of
+                    true  -> thrift_framed_transport:new(Transport);
+                    false -> thrift_buffered_transport:new(Transport)
+                end,
+            {ok, Protocol} = thrift_binary_protocol:new(BufTransport,
+                                 [{strict_read,  State#state.strict_read},
+                                  {strict_write, State#state.strict_write}]),
 
-    {ok, State#state{service  = Service,
-                     protocol = Protocol,
-                     seqid    = 0}}.
+            {ok, State#state{service  = Service,
+                             protocol = Protocol,
+                             seqid    = 0}};
+        Error ->
+            {stop, Error}
+    end.
 
 parse_options([], State) ->
     State;

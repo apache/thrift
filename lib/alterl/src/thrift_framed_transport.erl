@@ -119,7 +119,7 @@ handle_call({read, Len}, _From, State = #framed_transport{wrapped = Wrapped,
                 %% then read the data
                 {ok, Bin} =
                     thrift_transport:read(Wrapped, FrameLen),
-                {Bin, size(Bin)};
+                {Bin, erlang:byte_size(Bin)};
             Sz ->
                 {RBuf, Sz}
         end,
