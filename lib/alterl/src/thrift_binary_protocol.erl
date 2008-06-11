@@ -115,6 +115,10 @@ write(This, {string, Str}) when is_list(Str) ->
     write(This, {i32, length(Str)}),
     write(This, list_to_binary(Str));
 
+write(This, {string, Bin}) when is_binary(Bin) ->
+    write(This, {i32, size(Bin)}),
+    write(This, Bin);
+
 write(This, Binary) when is_binary(Binary) ->
     thrift_transport:write(This#binary_protocol.transport, Binary).
 
@@ -176,7 +180,7 @@ read(This, set_end) -> ok;
 
 read(This, field_stop) ->
     {ok, ?tType_STOP} =  read(This, byte),
-    ok;    
+    ok;
 
 %%
 
