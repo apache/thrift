@@ -15,4 +15,4 @@ fi
 
 erlc -I ${ERL_THRIFT}/include -I ../gen-erl -o ../gen-erl ../gen-erl/*.erl  &&
   erlc -I ${ERL_THRIFT}/include -I ../gen-erl *.erl &&
-  erl +K true -pa ${ERL_THRIFT}/ebin -pa ../gen-erl -config server.config
+  erl +K true -pa ${ERL_THRIFT}/ebin -pa ../gen-erl 
