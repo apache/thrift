@@ -269,5 +269,6 @@ read(This, string) ->
     {ok, Sz}  = read(This, i32),
     {ok, Bin} = read(This, Sz);
 
+read(This, 0) -> {ok, <<>>};
 read(This, Len) when is_integer(Len), Len >= 0 ->
     thrift_transport:read(This#binary_protocol.transport, Len).

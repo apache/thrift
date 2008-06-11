@@ -103,7 +103,7 @@ start_server(State=#thrift_socket_server{name=Name}) ->
     end.
 
 init(State=#thrift_socket_server{ip=Ip, port=Port}) ->
-    process_flag(trap_exit, true), %% only temporary
+    process_flag(trap_exit, true),
     BaseOpts = [binary,
 		{reuseaddr, true},
 		{packet, 0},
@@ -165,7 +165,7 @@ new_acceptor(State=#thrift_socket_server{acceptor=OldPid, listen=Listen,
 
 acceptor_loop({Server, Listen, Service, Handler, SocketOpts})
   when is_pid(Server), is_list(SocketOpts) ->
-    case catch gen_tcp:accept(Listen) of % infiinite timeout
+    case catch gen_tcp:accept(Listen) of % infinite timeout
 	{ok, Socket} ->
 	    gen_server:cast(Server, {accepted, self()}),
             ProtoGen = fun() ->
