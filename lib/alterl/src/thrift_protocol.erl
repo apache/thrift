@@ -3,6 +3,7 @@
 -export([new/2,
          write/2,
          read/2,
+         read/3,
          skip/2,
          flush_transport/1,
          close_transport/1,
@@ -66,9 +67,14 @@ term_to_typeid({list, _}) -> ?tType_LIST.
 
 %% Structure is like:
 %%    [{Fid, Type}, ...]
-read(IProto, {struct, Structure}) when is_list(Structure) ->
+read(IProto, {struct, Structure}, Tag)
+  when is_list(Structure), is_atom(Tag) ->
+
+    % If we want a tagged tuple, we need to offset all the tuple indices
+    % by 1 to avoid overwriting the tag.
+    Offset = if Tag =/= undefined -> 1; true -> 0 end,
     IndexList = case length(Structure) of
-                    N when N > 0 -> lists:seq(1, N);
+                    N when N > 0 -> lists:seq(1 + Offset, N + Offset);
                     _ -> []
                 end,
 
@@ -78,20 +84,21 @@ read(IProto, {struct, Structure}) when is_list(Structure) ->
     % Fid -> {Type, Index}
     SDict = dict:from_list(SWithIndices),
 
-
     ok = read(IProto, struct_begin),
-    RTuple0 = erlang:make_tuple(length(Structure), undefined),
+    RTuple0 = erlang:make_tuple(length(Structure) + Offset, undefined),
+    RTuple1 = if Tag =/= undefined -> setelement(1, RTuple0, Tag);
+                 true              -> RTuple0
+              end,
 
-    RTuple1 = read_struct_loop(IProto, SDict, RTuple0),
-    {ok, RTuple1};
+    RTuple2 = read_struct_loop(IProto, SDict, RTuple1),
+    {ok, RTuple2}.
 
 read(IProto, {struct, {Module, StructureName}}) when is_atom(Module),
                                                      is_atom(StructureName) ->
-    case read(IProto, Module:struct_info(StructureName)) of
-        {ok, StructureElems} ->
-            {ok, list_to_tuple([StructureName | tuple_to_list(StructureElems)])};
-        Else -> Else
-    end;
+    read(IProto, Module:struct_info(StructureName), StructureName);
+
+read(IProto, S={struct, Structure}) when is_list(Structure) ->
+    read(IProto, S, undefined);
 
 read(IProto, {list, Type}) ->
     #protocol_list_begin{etype = EType, size = Size} =
