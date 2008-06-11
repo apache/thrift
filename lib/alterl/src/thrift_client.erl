@@ -32,7 +32,6 @@
 start_link(Host, Port, Service) when is_integer(Port), is_atom(Service) ->
     gen_server:start_link(?MODULE, [Host, Port, Service], []).
 
-
 call(Client, Function, Args)
   when is_pid(Client), is_atom(Function), is_list(Args) ->
     case gen_server:call(Client, {call, Function, Args}) of
@@ -40,9 +39,6 @@ call(Client, Function, Args)
         R = {error, _} -> R;
         {exception, Exception} -> throw(Exception)
     end.
-            
-    
-
 
 %%====================================================================
 %% gen_server callbacks
@@ -60,10 +56,11 @@ init([Host, Port, Service]) ->
                                  [binary,
                                   {packet, 0},
                                   {active, false},
-                                  {nodelay, true}]),
-    {ok, Transport} = thrift_socket_transport:new(Sock),
+                                  {nodelay, true}
+                                 ]),
+    {ok, Transport}    = thrift_socket_transport:new(Sock),
     {ok, BufTransport} = thrift_buffered_transport:new(Transport),
-    {ok, Protocol} = thrift_binary_protocol:new(BufTransport),
+    {ok, Protocol}     = thrift_binary_protocol:new(BufTransport),
     {ok, #state{service  = Service,
                 protocol = Protocol,
                 seqid    = 0}}.
@@ -95,7 +92,7 @@ handle_call({call, Function, Args}, _From, State = #state{service = Service,
                     _ -> throw({error, {function_clause, ST}})
                 end
         end,
-    
+
     {reply, Result, State}.
 
 
@@ -159,7 +156,6 @@ send_function_call(#state{protocol = Proto,
     thrift_protocol:flush_transport(Proto),
     ok.
 
-
 receive_function_result(State = #state{protocol = Proto,
                                        service = Service},
                         Function) ->
@@ -178,10 +174,10 @@ read_result(State = #state{protocol = Proto,
     case thrift_protocol:read(Proto, message_begin) of
         #protocol_message_begin{seqid = RetSeqId} when RetSeqId =/= SeqId ->
             {error, {bad_seq_id, SeqId}};
-        
+
         #protocol_message_begin{type = ?tMessageType_EXCEPTION} ->
             handle_application_exception(State);
-        
+
         #protocol_message_begin{type = ?tMessageType_REPLY} ->
             handle_reply(State, Function, ReplyType)
     end.
@@ -210,7 +206,7 @@ handle_reply(State = #state{protocol = Proto,
         end,
     ok = thrift_protocol:read(Proto, message_end),
     Result.
-                     
+
 
 handle_application_exception(State = #state{protocol = Proto}) ->
     {ok, Exception} = thrift_protocol:read(Proto,

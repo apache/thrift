@@ -5,10 +5,10 @@
          read/2,
          skip/2,
          flush_transport/1,
+         typeid_to_atom/1
+        ]).
 
-         typeid_to_atom/1,
-
-         behaviour_info/1]).
+-export([behaviour_info/1]).
 
 -include("thrift_constants.hrl").
 -include("thrift_protocol.hrl").
@@ -23,11 +23,9 @@ behaviour_info(callbacks) ->
     ];
 behaviour_info(_Else) -> undefined.
 
-
 new(Module, Data) when is_atom(Module) ->
     {ok, #protocol{module = Module,
                    data = Data}}.
-
 
 flush_transport(#protocol{module = Module,
                           data = Data}) ->
@@ -46,7 +44,6 @@ typeid_to_atom(?tType_STRUCT) -> struct;
 typeid_to_atom(?tType_MAP) -> map;
 typeid_to_atom(?tType_SET) -> set;
 typeid_to_atom(?tType_LIST) -> list.
-    
 
 term_to_typeid(void) -> ?tType_VOID;
 term_to_typeid(bool) -> ?tType_BOOL;
@@ -60,7 +57,6 @@ term_to_typeid({struct, _}) -> ?tType_STRUCT;
 term_to_typeid({map, _, _}) -> ?tType_MAP;
 term_to_typeid({set, _}) -> ?tType_SET;
 term_to_typeid({list, _}) -> ?tType_LIST.
-
 
 %% Structure is like:
 %%    [{Fid, Type}, ...]
@@ -97,7 +93,7 @@ read(IProto, {struct, {Module, StructureName}}) when is_atom(Module),
 read(IProto, {list, Type}) ->
     #protocol_list_begin{etype = EType, size = Size} =
         read(IProto, list_begin),
-    List = [Result || {ok, Result} <- 
+    List = [Result || {ok, Result} <-
                           [read(IProto, Type) || _X <- lists:duplicate(Size, 0)]],
     ok = read(IProto, list_end),
     {ok, List};
@@ -106,7 +102,7 @@ read(IProto, {map, KeyType, ValType}) ->
     #protocol_map_begin{size = Size} =
         read(IProto, map_begin),
 
-    List = [{Key, Val} || {{ok, Key}, {ok, Val}} <- 
+    List = [{Key, Val} || {{ok, Key}, {ok, Val}} <-
                               [{read(IProto, KeyType),
                                 read(IProto, ValType)} || _X <- lists:duplicate(Size, 0)]],
     ok = read(IProto, map_end),
@@ -116,7 +112,7 @@ read(IProto, {set, Type}) ->
     #protocol_set_begin{etype = _EType,
                         size = Size} =
         read(IProto, set_begin),
-    List = [Result || {ok, Result} <- 
+    List = [Result || {ok, Result} <-
                           [read(IProto, Type) || _X <- lists:duplicate(Size, 0)]],
     ok = read(IProto, set_end),
     {ok, sets:from_list(List)};
@@ -166,7 +162,7 @@ skip(Proto, set) ->
 skip(Proto, list) ->
     List = read(Proto, list_begin),
     ok = skip_list_loop(Proto, List),
-    ok = read(Proto, list_end);    
+    ok = read(Proto, list_end);
 
 skip(Proto, Type) when is_atom(Type) ->
     _Ignore = read(Proto, Type),
@@ -219,7 +215,7 @@ skip_list_loop(Proto, Map = #protocol_list_begin{etype = Etype,
 
 %%--------------------------------------------------------------------
 %% Function: write(OProto, {Type, Data}) -> ok
-%% 
+%%
 %% Type = {struct, StructDef} |
 %%        {list, Type} |
 %%        {map, KeyType, ValType} |
@@ -233,7 +229,7 @@ skip_list_loop(Proto, Map = #protocol_list_begin{etype = Etype,
 %%       | set()    -- for set
 %%       | term()   -- for base types
 %%
-%% Description: 
+%% Description:
 %%--------------------------------------------------------------------
 write(Proto, {{struct, StructDef}, Data})
   when is_list(StructDef), is_tuple(Data), length(StructDef) == size(Data) - 1 ->
@@ -266,40 +262,39 @@ write(Proto, {{list, Type}, Data})
     ok;
 
 write(Proto, {{map, KeyType, ValType}, Data}) ->
-    DataList = dict:to_list(Data),
     ok = write(Proto,
                #protocol_map_begin{
                  ktype = term_to_typeid(KeyType),
                  vtype = term_to_typeid(ValType),
-                 size = length(DataList)
-                 }),
-    lists:foreach(fun({KeyData, ValData}) ->
-                          ok = write(Proto, {KeyType, KeyData}),
-                          ok = write(Proto, {ValType, ValData})
-                  end,
-                  DataList),
+                 size  = dict:size(Data)
+                }),
+    dict:fold(fun(KeyData, ValData, _Acc) ->
+                      ok = write(Proto, {KeyType, KeyData}),
+                      ok = write(Proto, {ValType, ValData})
+              end,
+              _AccO = ok,
+              Data),
     ok = write(Proto, map_end),
     ok;
 
 write(Proto, {{set, Type}, Data}) ->
     true = sets:is_set(Data),
-    DataList = sets:to_list(Data),
     ok = write(Proto,
                #protocol_set_begin{
                  etype = term_to_typeid(Type),
-                 size = length(DataList)
-                 }),
-    lists:foreach(fun(Elem) ->
-                          ok = write(Proto, {Type, Elem})
-                  end,
-                  DataList),
+                 size  = sets:size(Data)
+                }),
+    sets:fold(fun(Elem, _Acc) ->
+                      ok = write(Proto, {Type, Elem})
+              end,
+              _Acc0 = ok,
+              Data),
     ok = write(Proto, set_end),
     ok;
 
 write(#protocol{module = Module,
                 data = ModuleData}, Data) ->
     Module:write(ModuleData, Data).
-
 
 struct_write_loop(Proto, [{Fid, Type} | RestStructDef], [Data | RestData]) ->
     case Data of
