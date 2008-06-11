@@ -120,11 +120,15 @@ acceptor(ListenSocket, Service, Handler)
     {ok, Socket} = gen_tcp:accept(ListenSocket),
     error_logger:info_msg("Accepted client"),
 
-    {ok, SocketTransport} = thrift_socket_transport:new(Socket),
-    {ok, BufferedTransport} = thrift_buffered_transport:new(SocketTransport),
-    {ok, Protocol} = thrift_binary_protocol:new(BufferedTransport),
 
-    thrift_processor:start(Protocol, Protocol, Service, Handler),
+    ProtoGen = fun() ->
+                       {ok, SocketTransport} = thrift_socket_transport:new(Socket),
+                       {ok, BufferedTransport} = thrift_buffered_transport:new(SocketTransport),
+                       {ok, Protocol} = thrift_binary_protocol:new(BufferedTransport),
+                       {ok, Protocol, Protocol}
+               end,
+
+    thrift_processor:start(ProtoGen, Service, Handler),
     receive
         refresh ->
             error_logger:info_msg("Acceptor refreshing~n"),

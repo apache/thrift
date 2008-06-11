@@ -7,17 +7,18 @@
 %%%-------------------------------------------------------------------
 -module(thrift_processor).
 
--export([start/4,init/4]).
+-export([start/3,init/3]).
 
 -include("thrift_constants.hrl").
 -include("thrift_protocol.hrl").
 
 -record(state, {handler, in_protocol, out_protocol, service}).
 
-start(IProt, OProt, Service, Handler) ->
-    spawn(thrift_processor, init, [IProt, OProt, Service, Handler]).
+start(ProtocolGenerator, Service, Handler) when is_function(ProtocolGenerator, 0) ->
+    spawn(thrift_processor, init, [ProtocolGenerator, Service, Handler]).
 
-init(IProt, OProt, Service, Handler) ->
+init(ProtocolGenerator, Service, Handler) ->
+    {ok, IProt, OProt} = ProtocolGenerator(),
     io:format("Processor started~n"),
     loop(#state{in_protocol = IProt,
                 out_protocol = OProt,
