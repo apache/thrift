@@ -118,8 +118,7 @@ code_change(_OldVsn, State, _Extra) ->
 acceptor(ListenSocket, Service, Handler)
   when is_port(ListenSocket), is_atom(Handler) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
-    error_logger:info_msg("Accepted client"),
-
+%    error_logger:info_msg("Accepted client"),
 
     ProtoGen = fun() ->
                        {ok, SocketTransport} = thrift_socket_transport:new(Socket),

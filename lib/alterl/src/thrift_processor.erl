@@ -19,7 +19,6 @@ start(ProtocolGenerator, Service, Handler) when is_function(ProtocolGenerator, 0
 
 init(ProtocolGenerator, Service, Handler) ->
     {ok, IProt, OProt} = ProtocolGenerator(),
-    io:format("Processor started~n"),
     loop(#state{in_protocol = IProt,
                 out_protocol = OProt,
                 service = Service,
@@ -33,7 +32,7 @@ loop(State = #state{in_protocol = IProto,
             ok= handle_function(State, list_to_atom(Function)),
             loop(State);
         {error, closed} ->
-            error_logger:info_msg("Client disconnected~n"),
+            % error_logger:info_msg("Client disconnected~n"),
             ok
     end.
 
@@ -49,8 +48,8 @@ handle_function(State = #state{in_protocol = IProto,
 
     try
         {Micro, Result} = better_timer(Handler, handle_function, [Function, Params]),
-        error_logger:info_msg("Processed ~p(~p) in ~.4fms~n",
-                              [Function, Params, Micro/1000.0]),
+        % error_logger:info_msg("Processed ~p(~p) in ~.4fms~n",
+        %                       [Function, Params, Micro/1000.0]),
         handle_success(State, Function, Result)
     catch
         throw:Exception when is_tuple(Exception), size(Exception) > 0 ->
