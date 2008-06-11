@@ -495,12 +495,12 @@ void t_alterl_generator::generate_service_interface(t_service* tservice) {
       indent(f_service_) << "function_info(Function, InfoType) ->" << endl;
       indent_up();
       indent(f_service_) << uncapitalize(tservice->get_extends()->get_name())
-                         << "_thrift:function_info(Function, InfoType);" << endl;
+                         << "_thrift:function_info(Function, InfoType)." << endl;
       indent_down();
+  } else {
+      // Dummy function_info so we don't worry about the ;s
+      indent(f_service_) << "function_info(xxx, dummy) -> dummy." << endl;
   }
-
-  // Dummy function_info so we don't worry about the ;s
-  indent(f_service_) << "function_info(xxx, dummy) -> dummy." << endl;
 
   indent(f_service_) << endl;
 }
