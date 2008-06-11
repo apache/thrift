@@ -11,22 +11,37 @@
 -include("thrift_constants.hrl").
 -include("thrift_protocol.hrl").
 
--export([new/1,
+-export([new/1, new/2,
          read/2,
          write/2,
          flush_transport/1,
          close_transport/1
-]).
+        ]).
 
--record(binary_protocol, {transport}).
-
+-record(binary_protocol, {transport,
+                          strict_read=true,
+                          strict_write=true
+                         }).
 
 -define(VERSION_MASK, 16#FFFF0000).
 -define(VERSION_1, 16#80010000).
-
+-define(TYPE_MASK, 16#000000ff).
 
 new(Transport) ->
-    thrift_protocol:new(?MODULE, #binary_protocol{transport = Transport}).
+    new(Transport, _Options = []).
+
+new(Transport, Options) ->
+    State  = #binary_protocol{transport = Transport},
+    State1 = parse_options(Options, State),
+    thrift_protocol:new(?MODULE, State1).
+
+parse_options([], State) ->
+    State;
+parse_options([{strict_read, Bool} | Rest], State) when is_boolean(Bool) ->
+    parse_options(Rest, State#binary_protocol{strict_read=Bool});
+parse_options([{strict_write, Bool} | Rest], State) when is_boolean(Bool) ->
+    parse_options(Rest, State#binary_protocol{strict_write=Bool}).
+
 
 flush_transport(#binary_protocol{transport = Transport}) ->
     thrift_transport:flush(Transport).
@@ -42,9 +57,16 @@ write(This, #protocol_message_begin{
         name = Name,
         type = Type,
         seqid = Seqid}) ->
-    write(This, {i32, ?VERSION_1 bor Type}),
-    write(This, {string, Name}),
-    write(This, {i32, Seqid}),
+    case This#binary_protocol.strict_write of
+        true ->
+            write(This, {i32, ?VERSION_1 bor Type}),
+            write(This, {string, Name}),
+            write(This, {i32, Seqid});
+        false ->
+            write(This, {string, Name}),
+            write(This, {byte, Type}),
+            write(This, {i32, Seqid})
+    end,
     ok;
 
 write(This, message_end) -> ok;
@@ -121,20 +143,40 @@ write(This, {string, Bin}) when is_binary(Bin) ->
     write(This, {i32, size(Bin)}),
     write(This, Bin);
 
-write(This, Binary) when is_binary(Binary) ->
-    thrift_transport:write(This#binary_protocol.transport, Binary).
+%% Data :: iolist()
+write(This, Data) ->
+    thrift_transport:write(This#binary_protocol.transport, Data).
 
 %%
 
 read(This, message_begin) ->
     case read(This, i32) of
-        {ok, Version} when Version band ?VERSION_MASK == ?VERSION_1 ->
-            Type = Version band 16#000000ff,
+        {ok, Sz} when Sz band ?VERSION_MASK =:= ?VERSION_1 ->
+            %% we're at version 1
             {ok, Name}  = read(This, string),
+            Type        = Sz band ?TYPE_MASK,
             {ok, SeqId} = read(This, i32),
             #protocol_message_begin{name  = binary_to_list(Name),
                                     type  = Type,
                                     seqid = SeqId};
+
+        {ok, Sz} when Sz < 0 ->
+            %% there's a version number but it's unexpected
+            {error, {bad_binary_protocol_version, Sz}};
+
+        {ok, Sz} when This#binary_protocol.strict_read =:= true ->
+            %% strict_read is true and there's no version header; that's an error
+            {error, no_binary_protocol_version};
+
+        {ok, Sz} when This#binary_protocol.strict_read =:= false ->
+            %% strict_read is false, so just read the old way
+            {ok, Name}  = read(This, Sz),
+            {ok, Type}  = read(This, byte),
+            {ok, SeqId} = read(This, i32),
+            #protocol_message_begin{name  = binary_to_list(Name),
+                                    type  = Type,
+                                    seqid = SeqId};
+
         Err = {error, closed} -> Err;
         Err = {error, ebadf}  -> Err
     end;

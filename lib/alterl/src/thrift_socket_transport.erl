@@ -23,8 +23,8 @@ new(Socket, Opts) when is_list(Opts) ->
         end,
     thrift_transport:new(?MODULE, State).
 
-write(#data{socket = Socket}, Data)
-  when is_binary(Data) ->
+%% Data :: iolist()
+write(#data{socket = Socket}, Data) ->
     gen_tcp:send(Socket, Data).
 
 read(#data{socket=Socket, recv_timeout=Timeout}, Len)

@@ -22,7 +22,8 @@ new(Module, Data) when is_atom(Module) ->
     {ok, #transport{module = Module,
                     data = Data}}.
 
-write(Transport, Data) when is_binary(Data) ->
+%% Data :: iolist()
+write(Transport, Data) ->
     Module = Transport#transport.module,
     Module:write(Transport#transport.data, Data).
 

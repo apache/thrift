@@ -20,7 +20,12 @@
 -include("thrift_constants.hrl").
 -include("thrift_protocol.hrl").
 
--record(state, {service, protocol, seqid}).
+-record(state, {service, protocol, seqid,
+                strict_read = true,
+                strict_write = true,
+                framed = false,
+                connect_timeout = infinity
+               }).
 
 %%====================================================================
 %% API
@@ -30,10 +35,10 @@
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 start_link(Host, Port, Service) ->
-    start_link(Host, Port, Service, _Timeout = infinity).
+    start_link(Host, Port, Service, []).
 
-start_link(Host, Port, Service, Timeout) when is_integer(Port), is_atom(Service) ->
-    gen_server:start_link(?MODULE, [Host, Port, Service, Timeout], []).
+start_link(Host, Port, Service, Options) when is_integer(Port), is_atom(Service), is_list(Options) ->
+    gen_server:start_link(?MODULE, [Host, Port, Service, Options], []).
 
 call(Client, Function, Args)
   when is_pid(Client), is_atom(Function), is_list(Args) ->
@@ -57,24 +62,41 @@ close(Client) when is_pid(Client) ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init([Host, Port, Service]) ->
-    init([Host, Port, Service, infinity]);
+init([Host, Port, Service, Options]) ->
+    State = parse_options(Options, #state{}),
 
-init([Host, Port, Service, Timeout]) ->
     {ok, Sock} = gen_tcp:connect(Host, Port,
                                  [binary,
                                   {packet, 0},
                                   {active, false},
                                   {nodelay, true}
                                  ],
-                                Timeout),
+                                State#state.connect_timeout),
 
-    {ok, Transport}    = thrift_socket_transport:new(Sock),
-    {ok, BufTransport} = thrift_buffered_transport:new(Transport),
-    {ok, Protocol}     = thrift_binary_protocol:new(BufTransport),
-    {ok, #state{service  = Service,
-                protocol = Protocol,
-                seqid    = 0}}.
+    {ok, Transport} = thrift_socket_transport:new(Sock),
+    {ok, BufTransport} =
+        case State#state.framed of
+            true  -> thrift_framed_transport:new(Transport);
+            false -> thrift_buffered_transport:new(Transport)
+        end,
+    {ok, Protocol} = thrift_binary_protocol:new(BufTransport,
+                         [{strict_read,  State#state.strict_read},
+                          {strict_write, State#state.strict_write}]),
+
+    {ok, State#state{service  = Service,
+                     protocol = Protocol,
+                     seqid    = 0}}.
+
+parse_options([], State) ->
+    State;
+parse_options([{strict_read, Bool} | Rest], State) when is_boolean(Bool) ->
+    parse_options(Rest, State#state{strict_read=Bool});
+parse_options([{strict_write, Bool} | Rest], State) when is_boolean(Bool) ->
+    parse_options(Rest, State#state{strict_write=Bool});
+parse_options([{framed, Bool} | Rest], State) when is_boolean(Bool) ->
+    parse_options(Rest, State#state{framed=Bool});
+parse_options([{connect_timeout, TO} | Rest], State) when TO =:= infinity; is_integer(TO) ->
+    parse_options(Rest, State#state{connect_timeout=TO}).
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |

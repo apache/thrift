@@ -1,11 +1,11 @@
 %%%-------------------------------------------------------------------
-%%% File    : thrift_buffered_transport.erl
-%%% Author  :  <todd@lipcon.org>
-%%% Description : Buffered transport for thrift
+%%% File    : thrift_framed_transport.erl
+%%% Author  : <cpiro@facebook.com>
+%%% Description : Framed transport for thrift
 %%%
-%%% Created : 30 Jan 2008 by  <todd@lipcon.org>
+%%% Created : 12 Mar 2008 by <cpiro@facebook.com>
 %%%-------------------------------------------------------------------
--module(thrift_buffered_transport).
+-module(thrift_framed_transport).
 
 -behaviour(gen_server).
 -behaviour(thrift_transport).
@@ -20,9 +20,10 @@
 %% thrift_transport callbacks
 -export([write/2, read/2, flush/1, close/1]).
 
--record(buffered_transport, {wrapped, % a thrift_transport
-                             write_buffer % iolist()
-                            }).
+-record(framed_transport, {wrapped, % a thrift_transport
+                           read_buffer, % iolist()
+                           write_buffer % iolist()
+                          }).
 
 %%====================================================================
 %% API
@@ -89,8 +90,9 @@ read(Transport, Len) when is_integer(Len) ->
 init([Wrapped]) ->
     %% TODO(cpiro): need to trap exits here so when transport exits
     %% normally from under our feet we exit normally
-    {ok, #buffered_transport{wrapped = Wrapped,
-                             write_buffer = []}}.
+    {ok, #framed_transport{wrapped = Wrapped,
+                           read_buffer = [],
+                           write_buffer = []}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -101,18 +103,39 @@ init([Wrapped]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call({write, Data}, _From, State = #buffered_transport{write_buffer = WBuf}) ->
-    {reply, ok, State#buffered_transport{write_buffer = [WBuf, Data]}};
+handle_call({write, Data}, _From, State = #framed_transport{write_buffer = WBuf}) ->
+    {reply, ok, State#framed_transport{write_buffer = [WBuf, Data]}};
 
-handle_call({read, Len}, _From, State = #buffered_transport{wrapped = Wrapped}) ->
-    Response = thrift_transport:read(Wrapped, Len),
-    {reply, Response, State};
+handle_call({read, Len}, _From, State = #framed_transport{wrapped = Wrapped,
+                                                          read_buffer = RBuf}) ->
+    {RBuf1, RBuf1Size} =
+        %% if the read buffer is empty, read another frame
+        %% otherwise, just read from what's left in the buffer
+        case iolist_size(RBuf) of
+            0 ->
+                %% read the frame length
+                {ok, <<FrameLen:32/integer-signed-big, _/binary>>} =
+                    thrift_transport:read(Wrapped, 4),
+                %% then read the data
+                {ok, Bin} =
+                    thrift_transport:read(Wrapped, FrameLen),
+                {Bin, size(Bin)};
+            Sz ->
+                {RBuf, Sz}
+        end,
 
-handle_call(flush, _From, State = #buffered_transport{write_buffer = WBuf,
-                                                      wrapped = Wrapped}) ->
-    Response = thrift_transport:write(Wrapped, WBuf),
-    thrift_transport:flush(Wrapped),
-    {reply, Response, State#buffered_transport{write_buffer = []}}.
+    %% pull off Give bytes, return them to the user, leave the rest in the buffer
+    Give = min(RBuf1Size, Len),
+    <<Data:Give/binary, RBuf2/binary>> = iolist_to_binary(RBuf1),
+
+    Response = {ok, Data},
+    State1 = State#framed_transport{read_buffer=RBuf2},
+
+    {reply, Response, State1};
+
+handle_call(flush, _From, State) ->
+    {Response, State1} = do_flush(State),
+    {reply, Response, State1}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -120,13 +143,12 @@ handle_call(flush, _From, State = #buffered_transport{write_buffer = WBuf,
 %%                                      {stop, Reason, State}
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
-handle_cast(close, State = #buffered_transport{write_buffer = WBuf,
-                                               wrapped = Wrapped}) ->
-    thrift_transport:write(Wrapped, WBuf),
+handle_cast(close, State) ->
+    {_, State1} = do_flush(State),
     %% Wrapped is closed by terminate/2
-    %%  error_logger:info_msg("thrift_buffered_transport ~p: closing", [self()]),
+    %%  error_logger:info_msg("thrift_framed_transport ~p: closing", [self()]),
     {stop, normal, State};
-handle_cast(Msg, State=#buffered_transport{}) ->
+handle_cast(Msg, State=#framed_transport{}) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -145,7 +167,7 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(_Reason, State = #buffered_transport{wrapped=Wrapped}) ->
+terminate(_Reason, State = #framed_transport{wrapped=Wrapped}) ->
     thrift_transport:close(Wrapped),
     ok.
 
@@ -159,3 +181,18 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+do_flush(State = #framed_transport{write_buffer = Buffer,
+                                   wrapped = Wrapped}) ->
+    FrameLen = iolist_size(Buffer),
+    Data     = [<<FrameLen:32/integer-signed-big>>, Buffer],
+
+    Response = thrift_transport:write(Wrapped, Data),
+
+    thrift_transport:flush(Wrapped),
+
+    State1 = State#framed_transport{write_buffer = []},
+    {Response, State1}.
+
+min(A,B) when A<B -> A;
+min(_,B)          -> B.
+
