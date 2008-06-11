@@ -5,6 +5,7 @@
          read/2,
          skip/2,
          flush_transport/1,
+         close_transport/1,
          typeid_to_atom/1
         ]).
 
@@ -19,7 +20,8 @@ behaviour_info(callbacks) ->
     [
      {read, 2},
      {write, 2},
-     {flush_transport, 1}
+     {flush_transport, 1},
+     {close_transport, 1}
     ];
 behaviour_info(_Else) -> undefined.
 
@@ -30,6 +32,10 @@ new(Module, Data) when is_atom(Module) ->
 flush_transport(#protocol{module = Module,
                           data = Data}) ->
     Module:flush_transport(Data).
+
+close_transport(#protocol{module = Module,
+                          data = Data}) ->
+    Module:close_transport(Data).
 
 typeid_to_atom(?tType_STOP) -> field_stop;
 typeid_to_atom(?tType_VOID) -> void;

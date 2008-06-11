@@ -18,7 +18,7 @@
          terminate/2, code_change/3]).
 
 %% thrift_transport callbacks
--export([write/2, read/2, flush/1]).
+-export([write/2, read/2, flush/1, close/1]).
 
 -record(state, {
           % The wrapped transport
@@ -41,6 +41,7 @@
 new(WrappedTransport) ->
     case gen_server:start_link(?MODULE, [WrappedTransport], []) of
         {ok, Pid} ->
+            io:format("buffered transport ~p wrapping ~p", [Pid, WrappedTransport]),
             thrift_transport:new(?MODULE, Pid);
         Else ->
             Else
@@ -57,12 +58,20 @@ write(Transport, Data) when is_binary(Data) ->
     gen_server:call(Transport, {write, Data}).
 
 %%--------------------------------------------------------------------
-%% Function: flush(Transpor) -> ok
+%% Function: flush(Transport) -> ok
 %%
 %% Description: Flushes the buffer through to the wrapped transport
 %%--------------------------------------------------------------------
 flush(Transport) ->
-    gen_server:call(Transport, {flush}).
+    gen_server:call(Transport, flush).
+
+%%--------------------------------------------------------------------
+%% Function: flush(Transport) -> ok
+%%
+%% Description: Flushes the buffer through to the wrapped transport
+%%--------------------------------------------------------------------
+close(Transport) ->
+    gen_server:call(Transport, close).
 
 %%--------------------------------------------------------------------
 %% Function: Read(Transport, Len) -> {ok, Data}
@@ -105,12 +114,24 @@ handle_call({read, Len}, _From, State = #state{wrapped = Wrapped}) ->
     Response = thrift_transport:read(Wrapped, Len),
     {reply, Response, State};
 
-handle_call({flush}, _From, State = #state{buffer = Buffer,
-                                           wrapped = Wrapped}) ->
-    Concat = concat_binary(lists:reverse(Buffer)),
+handle_call(flush, _From, State = #state{buffer = Buffer,
+                                         wrapped = Wrapped}) ->
+    Concat   = concat_binary(lists:reverse(Buffer)),
     Response = thrift_transport:write(Wrapped, Concat),
-    % todo(todd) - flush wrapped transport here?
-    {reply, Response, State#state{buffer = []}}.
+    thrift_transport:flush(Wrapped),
+    {reply, Response, State#state{buffer = []}};
+
+handle_call(close, _From, State = #state{buffer  = Buffer,
+                                         wrapped = Wrapped}) ->
+    case Buffer of
+        []   -> ok;
+        Data ->
+            thrift_transport:write(Wrapped, concat_binary(lists:reverse(Buffer))),
+            thrift_transport:flush(Wrapped)
+    end,
+    thrift_transport:close(Wrapped),
+    {reply, ok, State}. % TEST ONLY
+%%     {stop, normal, State}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -118,7 +139,7 @@ handle_call({flush}, _From, State = #state{buffer = Buffer,
 %%                                      {stop, Reason, State}
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
-handle_cast(_Msg, State) ->
+handle_cast(Msg, State=#state{}) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------

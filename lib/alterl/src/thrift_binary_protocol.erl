@@ -14,7 +14,8 @@
 -export([new/1,
          read/2,
          write/2,
-         flush_transport/1
+         flush_transport/1,
+         close_transport/1
 ]).
 
 -record(binary_protocol, {transport}).
@@ -29,6 +30,10 @@ new(Transport) ->
 
 flush_transport(#binary_protocol{transport = Transport}) ->
     thrift_transport:flush(Transport).
+
+close_transport(#binary_protocol{transport = Transport}) ->
+    thrift_transport:flush(Transport),
+    thrift_transport:close(Transport).
 
 %%%
 %%% instance methods

@@ -6,57 +6,61 @@
 %%% Created : 28 Jan 2008 by  <todd@lipcon.org>
 %%%-------------------------------------------------------------------
 -module(thrift_processor).
+-author('todd@lipcon.org').
+-author('eletuchy@facebook.com').
 
--export([start/3,init/3]).
+-export([init/1]).
 
 -include("thrift_constants.hrl").
 -include("thrift_protocol.hrl").
 
--record(state, {handler, in_protocol, out_protocol, service}).
+-record(thrift_processor, {handler, in_protocol, out_protocol, service}).
 
-start(ProtocolGenerator, Service, Handler) when is_function(ProtocolGenerator, 0) ->
-    spawn(thrift_processor, init, [ProtocolGenerator, Service, Handler]).
+init({Server, ProtoGen, Service, Handler}) when is_function(ProtoGen, 0) ->
+    {ok, IProt, OProt} = ProtoGen(),
+    loop(#thrift_processor{in_protocol = IProt,
+                           out_protocol = OProt,
+                           service = Service,
+                           handler = Handler}).
 
-init(ProtocolGenerator, Service, Handler) ->
-    {ok, IProt, OProt} = ProtocolGenerator(),
-    loop(#state{in_protocol = IProt,
-                out_protocol = OProt,
-                service = Service,
-                handler = Handler}).
-
-loop(State = #state{in_protocol = IProto,
-                    out_protocol = OProto}) ->
+loop(State = #thrift_processor{in_protocol  = IProto,
+                               out_protocol = OProto}) ->
+    error_logger:info_msg("loop: ~p", [State]),
     case thrift_protocol:read(IProto, message_begin) of
         #protocol_message_begin{name = Function,
                                 type = ?tMessageType_CALL} ->
-            ok= handle_function(State, list_to_atom(Function)),
+            ok=handle_function(State, list_to_atom(Function)),
             loop(State);
         {error, closed} ->
-            % error_logger:info_msg("Client disconnected~n"),
+            %% error_logger:info_msg("Client disconnected~n"),
             exit(protocol_closed)
     end.
 
-handle_function(State = #state{in_protocol = IProto,
-                               out_protocol = OProto,
-                               handler = Handler,
-                               service = Service},
+handle_function(State=#thrift_processor{in_protocol = IProto,
+                                        out_protocol = OProto,
+                                        handler = Handler,
+                                        service = Service},
                 Function) ->
     InParams = Service:function_info(Function, params_type),
 
     {ok, Params} = thrift_protocol:read(IProto, InParams),
 
     try
+        error_logger:info_msg("calling: ~p(~p)", [Function, Params]),
         Result = Handler:handle_function(Function, Params),
-        % {Micro, Result} = better_timer(Handler, handle_function, [Function, Params]),
-        % error_logger:info_msg("Processed ~p(~p) in ~.4fms~n",
-        %                       [Function, Params, Micro/1000.0]),
+        error_logger:info_msg("result: ~p", [Result]),
+        %% {Micro, Result} = better_timer(Handler, handle_function, [Function, Params]),
+        %% error_logger:info_msg("Processed ~p(~p) in ~.4fms~n",
+        %%                       [Function, Params, Micro/1000.0]),
         handle_success(State, Function, Result)
     catch
         Type:Data ->
+            error_logger:info_msg("handle_function oh noes: ~p ~p", [Type, Data]),
             handle_function_catch(State, Function, Type, Data)
-    end.
+    end,
+    after_reply(OProto).
 
-handle_function_catch(State = #state{service = Service},
+handle_function_catch(State = #thrift_processor{service = Service},
                       Function, ErrType, ErrData) ->
     IsAsync = Service:function_info(Function, reply_type) =:= async_void,
 
@@ -76,42 +80,41 @@ handle_function_catch(State = #state{service = Service},
             ok = handle_error(State, Function, Error)
     end.
 
-handle_success(State = #state{out_protocol = OProto,
-                              service = Service},
+handle_success(State = #thrift_processor{out_protocol = OProto,
+                                         service = Service},
                Function,
                Result) ->
     ReplyType  = Service:function_info(Function, reply_type),
     StructName = atom_to_list(Function) ++ "_result",
 
-    case Result of
-        {reply, ReplyData} ->
-            Reply = {{struct, [{0, ReplyType}]}, {StructName, ReplyData}},
-            ok = send_reply(OProto, Function, ?tMessageType_REPLY, Reply);
+    ok = case Result of
+             {reply, ReplyData} ->
+                 Reply = {{struct, [{0, ReplyType}]}, {StructName, ReplyData}},
+                 send_reply(OProto, Function, ?tMessageType_REPLY, Reply);
 
-        ok when ReplyType == {struct, []} ->
-            ok = send_reply(OProto, Function, ?tMessageType_REPLY, {ReplyType, {StructName}});
+             ok when ReplyType == {struct, []} ->
+                 send_reply(OProto, Function, ?tMessageType_REPLY, {ReplyType, {StructName}});
 
-        ok when ReplyType == async_void ->
-            % no reply for async void
-            ok
-    end,
-    ok.
+             ok when ReplyType == async_void ->
+                 %% no reply for async void
+                 ok
+         end.
 
-handle_exception(State = #state{out_protocol = OProto,
-                                service = Service},
+handle_exception(State = #thrift_processor{out_protocol = OProto,
+                                           service = Service},
                  Function,
                  Exception) ->
     ExceptionType = element(1, Exception),
-    % Fetch a structure like {struct, [{-2, {struct, {Module, Type}}},
-    %                                  {-3, {struct, {Module, Type}}}]}
+    %% Fetch a structure like {struct, [{-2, {struct, {Module, Type}}},
+    %%                                  {-3, {struct, {Module, Type}}}]}
 
     ReplySpec = Service:function_info(Function, exceptions),
     {struct, XInfo} = ReplySpec,
 
     true = is_list(XInfo),
 
-    % Assuming we had a type1 exception, we'd get: [undefined, Exception, undefined]
-    % e.g.: [{-1, type0}, {-2, type1}, {-3, type2}]
+    %% Assuming we had a type1 exception, we'd get: [undefined, Exception, undefined]
+    %% e.g.: [{-1, type0}, {-2, type1}, {-3, type2}]
     ExceptionList = [case Type of
                          ExceptionType -> Exception;
                          _ -> undefined
@@ -120,7 +123,7 @@ handle_exception(State = #state{out_protocol = OProto,
 
     ExceptionTuple = list_to_tuple([Function | ExceptionList]),
 
-    % Make sure we got at least one defined
+                                                % Make sure we got at least one defined
     case lists:all(fun(X) -> X =:= undefined end, ExceptionList) of
         true ->
             ok = handle_unknown_exception(State, Function, Exception);
@@ -129,14 +132,14 @@ handle_exception(State = #state{out_protocol = OProto,
     end.
 
 %%
-% Called when an exception has been explicitly thrown by the service, but it was
-% not one of the exceptions that was defined for the function.
+%% Called when an exception has been explicitly thrown by the service, but it was
+%% not one of the exceptions that was defined for the function.
 %%
 handle_unknown_exception(State, Function, Exception) ->
     handle_error(State, Function, {exception_not_declared_as_thrown,
                                    Exception}).
 
-handle_error(#state{out_protocol = OProto}, Function, Error) ->
+handle_error(#thrift_processor{out_protocol = OProto}, Function, Error) ->
     Stack = erlang:get_stacktrace(),
     error_logger:error_msg("~p had an error: ~p~n", [Function, {Error, Stack}]),
 
@@ -154,7 +157,6 @@ handle_error(#state{out_protocol = OProto}, Function, Error) ->
                 type = ?TApplicationException_UNKNOWN}},
     send_reply(OProto, Function, ?tMessageType_EXCEPTION, Reply).
 
-
 send_reply(OProto, Function, ReplyMessageType, Reply) ->
     ok = thrift_protocol:write(OProto, #protocol_message_begin{
                                  name = atom_to_list(Function),
@@ -165,13 +167,5 @@ send_reply(OProto, Function, ReplyMessageType, Reply) ->
     ok = thrift_protocol:flush_transport(OProto),
     ok.
 
-
-%%
-% This is the same as timer:tc except that timer:tc appears to catch
-% exceptions when it shouldn't!
-%%
-better_timer(Module, Function, Args) ->
-    T1 = erlang:now(),
-    Result = apply(Module, Function, Args),
-    T2 = erlang:now(),
-    {timer:now_diff(T2, T1), Result}.
+after_reply(OProto) ->
+    ok = thrift_protocol:close_transport(OProto).
