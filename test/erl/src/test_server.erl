@@ -12,7 +12,7 @@ handle_function(testVoid, {}) ->
     io:format("testVoid~n"),
     ok;
 
-handle_function(testString, {S}) when is_list(S) ->
+handle_function(testString, {S}) when is_binary(S) ->
     io:format("testString: ~p~n", [S]),
     {reply, S};
 
@@ -37,7 +37,7 @@ handle_function(testStruct,
                                  byte_thing = Byte,
                                  i32_thing = I32,
                                  i64_thing = I64}})
-when is_list(String),
+when is_binary(String),
      is_integer(Byte),
      is_integer(I32),
      is_integer(I64) ->
@@ -126,7 +126,7 @@ handle_function(testMulti, Args = {Arg0, Arg1, Arg2, _Arg3, Arg4, Arg5})
                     i32_thing = Arg1,
                     i64_thing = Arg2}};
 
-handle_function(testException, {String}) when is_list(String) ->
+handle_function(testException, {String}) when is_binary(String) ->
     io:format("testException(~p)~n", [String]),
     case String of
         "Xception" ->
