@@ -55,7 +55,9 @@ handle_function(State = #state{in_protocol = IProto,
         throw:Exception when is_tuple(Exception), size(Exception) > 0 ->
             error_logger:warning_msg("~p threw exception: ~p~n", [Function, Exception]),
             handle_exception(State, Function, Exception),
-            ok % we still want to accept more requests from this client
+            ok;   % we still want to accept more requests from this client
+        error:Error ->
+            ok = handle_error(State, Function, Error)
     end.
 
 handle_success(State = #state{out_protocol = OProto,
@@ -111,9 +113,28 @@ handle_exception(State = #state{out_protocol = OProto,
             ok = send_reply(OProto, Function, ?tMessageType_REPLY, {ReplySpec, ExceptionTuple})
     end.
 
+%%
+% Called when an exception has been explicitly thrown by the service, but it was
+% not one of the exceptions that was defined for the function.
+%%
 handle_unknown_exception(State, Function, Exception) ->
-    io:format("Unknown exception!~n"),
-    ok.
+    handle_error(State, Function, {exception_not_declared_as_thrown,
+                                   Exception}).
+
+handle_error(#state{out_protocol = OProto}, Function, Error) ->
+    Message =
+        case application:get_env(thrift, exceptions_include_traces) of
+            {ok, true} ->
+                lists:flatten(io_lib:format("An error occurred: ~p~n",
+                                            [{Error, erlang:get_stacktrace()}]));
+            _ ->
+                "An unknown handler error occurred."
+        end,
+    Reply = {?TApplicationException_Structure,
+             #'TApplicationException'{
+                message = Message,
+                type = ?TApplicationException_UNKNOWN}},
+    send_reply(OProto, Function, ?tMessageType_EXCEPTION, Reply).
 
 
 send_reply(OProto, Function, ReplyMessageType, Reply) ->

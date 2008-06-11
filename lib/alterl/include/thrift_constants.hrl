@@ -23,3 +23,18 @@
 -define(tMessageType_CALL, 1).
 -define(tMessageType_REPLY, 2).
 -define(tMessageType_EXCEPTION, 3).
+
+% TApplicationException
+-define(TApplicationException_Structure,
+        {struct, [{1, string},
+                  {2, i32}]}).
+
+-record('TApplicationException', {message, type}).
+
+-define(TApplicationException_UNKNOWN, 0).
+-define(TApplicationException_UNKNOWN_METHOD, 1).
+-define(TApplicationException_INVALID_MESSAGE_TYPE, 2).
+-define(TApplicationException_WRONG_METHOD_NAME, 3).
+-define(TApplicationException_BAD_SEQUENCE_ID, 4).
+-define(TApplicationException_MISSING_RESULT, 5).
+
