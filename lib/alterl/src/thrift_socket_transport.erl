@@ -6,7 +6,7 @@
          new/2,
          write/2, read/2, flush/1, close/1,
 
-         new_connector/3]).
+         new_protocol_factory/3]).
 
 -record(data, {socket,
                recv_timeout=infinity}).
@@ -47,14 +47,14 @@ close(#data{socket = Socket}) ->
     gen_tcp:close(Socket).
 
 
-%%%% CONNECTOR GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%
-%% Generates a "connector" function - a fun which returns a Protocol instance.
+%% Generates a "protocol factory" function - a fun which returns a Protocol instance.
 %% This can be passed to thrift_client:start_link in order to connect to a
 %% server over a socket.
 %%
-new_connector(Host, Port, Options) ->
+new_protocol_factory(Host, Port, Options) ->
     ConnectTimeout = proplists:get_value(connect_timeout, Options, infinity),
     InSockOpts     = proplists:get_value(sockopts, Options, []),
     Framed         = proplists:get_value(framed, Options, false),

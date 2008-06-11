@@ -35,15 +35,15 @@ start_link(Host, Port, Service) when is_integer(Port), is_atom(Service) ->
 %% Backwards-compatible starter for the usual case of socket transports
 start_link(Host, Port, Service, Options)
   when is_integer(Port), is_atom(Service), is_list(Options) ->
-    {ok, Connector} = thrift_socket_transport:new_connector(Host, Port, Options),
-    start_link(Connector, Service).
+    {ok, ProtocolFactory} = thrift_socket_transport:new_protocol_factory(Host, Port, Options),
+    start_link(ProtocolFactory, Service).
 
-%% Connector :: fun() -> thrift_protocol()
-start_link(Connector, Service)
-  when is_function(Connector), is_atom(Service) ->
+%% ProtocolFactory :: fun() -> thrift_protocol()
+start_link(ProtocolFactory, Service)
+  when is_function(ProtocolFactory), is_atom(Service) ->
     case gen_server:start_link(?MODULE, [Service], []) of
         {ok, Pid} ->
-            case gen_server:call(Pid, {connect, Connector}) of
+            case gen_server:call(Pid, {connect, ProtocolFactory}) of
                 ok ->
                     {ok, Pid};
                 Error ->
@@ -87,9 +87,9 @@ init([Service]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call({connect, Connector}, _From,
+handle_call({connect, ProtocolFactory}, _From,
             State = #state{service = Service}) ->
-    case Connector() of
+    case ProtocolFactory() of
         {ok, Protocol} ->
             {reply, ok, State#state{protocol = Protocol,
                                     seqid = 0}};
