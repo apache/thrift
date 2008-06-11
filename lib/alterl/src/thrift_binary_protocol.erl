@@ -91,8 +91,6 @@ write(This, set_end) -> ok;
 write(This, #protocol_struct_begin{}) -> ok;
 write(This, struct_end) -> ok;
 
-
-
 write(This, {bool, true})  -> write(This, {byte, 1});
 write(This, {bool, false}) -> write(This, {byte, 0});
 

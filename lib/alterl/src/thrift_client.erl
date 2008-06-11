@@ -141,10 +141,10 @@ send_function_call(#state{protocol = Proto,
                    Args) ->
     Params = Service:function_info(Function, params_type),
     {struct, PList} = Params,
-    case length(PList) of
-        N when N =/= length(Args) ->
+    if
+        length(PList) =/= length(Args) ->
             throw({return, {error, {bad_args, Function, Args}}});
-        _ -> ok
+        true -> ok
     end,
 
     Begin = #protocol_message_begin{name = atom_to_list(Function),
@@ -181,7 +181,6 @@ read_result(State = #state{protocol = Proto,
         #protocol_message_begin{type = ?tMessageType_REPLY} ->
             handle_reply(State, Function, ReplyType)
     end.
-
 
 handle_reply(State = #state{protocol = Proto,
                             service = Service},
