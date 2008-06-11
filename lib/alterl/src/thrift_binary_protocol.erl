@@ -190,8 +190,7 @@ read(This, struct_end) -> ok;
 read(This, field_begin) ->
     case read(This, byte) of
         {ok, Type = ?tType_STOP} ->
-            #protocol_field_begin{type = Type,
-                                  id = 0}; % TODO(todd) 0 or undefined?
+            #protocol_field_begin{type = Type};
         {ok, Type} ->
             {ok, Id} = read(This, i16),
             #protocol_field_begin{type = Type,
