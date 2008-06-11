@@ -1,7 +1,7 @@
 %%%-------------------------------------------------------------------
 %%% File    : thrift_processor.erl
 %%% Author  :  <todd@lipcon.org>
-%%% Description : 
+%%% Description :
 %%%
 %%% Created : 28 Jan 2008 by  <todd@lipcon.org>
 %%%-------------------------------------------------------------------
@@ -36,7 +36,6 @@ loop(State = #state{in_protocol = IProto,
             ok
     end.
 
-
 handle_function(State = #state{in_protocol = IProto,
                                out_protocol = OProto,
                                handler = Handler,
@@ -47,7 +46,8 @@ handle_function(State = #state{in_protocol = IProto,
     {ok, Params} = thrift_protocol:read(IProto, InParams),
 
     try
-        {Micro, Result} = better_timer(Handler, handle_function, [Function, Params]),
+        Result = Handler:handle_function(Function, Params),
+        % {Micro, Result} = better_timer(Handler, handle_function, [Function, Params]),
         % error_logger:info_msg("Processed ~p(~p) in ~.4fms~n",
         %                       [Function, Params, Micro/1000.0]),
         handle_success(State, Function, Result)
@@ -80,17 +80,17 @@ handle_success(State = #state{out_protocol = OProto,
                               service = Service},
                Function,
                Result) ->
-    ReplyType = Service:function_info(Function, reply_type),
+    ReplyType  = Service:function_info(Function, reply_type),
     StructName = atom_to_list(Function) ++ "_result",
-    
+
     case Result of
-        {reply, ReplyData} -> 
+        {reply, ReplyData} ->
             Reply = {{struct, [{0, ReplyType}]}, {StructName, ReplyData}},
             ok = send_reply(OProto, Function, ?tMessageType_REPLY, Reply);
 
         ok when ReplyType == {struct, []} ->
             ok = send_reply(OProto, Function, ?tMessageType_REPLY, {ReplyType, {StructName}});
-        
+
         ok when ReplyType == async_void ->
             % no reply for async void
             ok
@@ -109,22 +109,17 @@ handle_exception(State = #state{out_protocol = OProto,
     {struct, XInfo} = ReplySpec,
 
     true = is_list(XInfo),
-    
-    % e.g.: [{-1, type0}, {-2, type1}, {-3, type2}]
-    XPairs = [{Fid, Type} || {Fid, {struct, {_Module, Type}}} <- XInfo],
 
-    Mapper = fun({Fid, Type}) ->
-                     case Type of
-                         ExceptionType ->
-                             Exception;
-                         _ ->
-                             undefined
+    % Assuming we had a type1 exception, we'd get: [undefined, Exception, undefined]
+    % e.g.: [{-1, type0}, {-2, type1}, {-3, type2}]
+    ExceptionList = [case Type of
+                         ExceptionType -> Exception;
+                         _ -> undefined
                      end
-             end,
-    % Assuming we had a type1 exception, we get: [undefined, Exception, undefined]
-    ExceptionList = lists:map(Mapper, XPairs),
+                     || {_Fid, {struct, {_Module, Type}}} <- XInfo],
+
     ExceptionTuple = list_to_tuple([Function | ExceptionList]),
-    
+
     % Make sure we got at least one defined
     case lists:all(fun(X) -> X =:= undefined end, ExceptionList) of
         true ->
@@ -144,7 +139,7 @@ handle_unknown_exception(State, Function, Exception) ->
 handle_error(#state{out_protocol = OProto}, Function, Error) ->
     Stack = erlang:get_stacktrace(),
     error_logger:error_msg("~p had an error: ~p~n", [Function, {Error, Stack}]),
-    
+
     Message =
         case application:get_env(thrift, exceptions_include_traces) of
             {ok, true} ->

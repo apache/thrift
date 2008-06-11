@@ -46,11 +46,9 @@ new(WrappedTransport) ->
             Else
     end.
 
-
-
 %%--------------------------------------------------------------------
 %% Function: write(Transport, Data) -> ok
-%% 
+%%
 %% Data = binary()
 %%
 %% Description: Writes data into the buffer
@@ -68,7 +66,7 @@ flush(Transport) ->
 
 %%--------------------------------------------------------------------
 %% Function: Read(Transport, Len) -> {ok, Data}
-%% 
+%%
 %% Data = binary()
 %%
 %% Description: Reads data through from the wrapped transoprt

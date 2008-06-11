@@ -1,7 +1,7 @@
 %%%-------------------------------------------------------------------
 %%% File    : thrift_server.erl
 %%% Author  :  <todd@lipcon.org>
-%%% Description : 
+%%% Description :
 %%%
 %%% Created : 28 Jan 2008 by  <todd@lipcon.org>
 %%%-------------------------------------------------------------------
@@ -29,7 +29,6 @@
 %%--------------------------------------------------------------------
 start_link(Port, Service, HandlerModule) when is_integer(Port), is_atom(HandlerModule) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, {Port, Service, HandlerModule}, []).
-
 
 %%--------------------------------------------------------------------
 %% Function: stop(Pid) -> ok, {error, Reason}
@@ -157,8 +156,6 @@ set_sockopt(ListenSocket, ClientSocket) ->
             Error
     end.
 
-
-
 start_processor(Socket, Service, Handler) ->
     Server = self(),
 
@@ -170,5 +167,5 @@ start_processor(Socket, Service, Handler) ->
                        {ok, Protocol} = thrift_binary_protocol:new(BufferedTransport),
                        {ok, Protocol, Protocol}
                end,
-    
+
     thrift_processor:start(ProtoGen, Service, Handler).
