@@ -24,4 +24,5 @@ EXTRA_DIST = \
   perl  \
   php   \
   rb    \
+  erl   \
   st
