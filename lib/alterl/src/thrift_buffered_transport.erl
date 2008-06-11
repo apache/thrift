@@ -20,16 +20,13 @@
 %% thrift_transport callbacks
 -export([write/2, read/2, flush/1, close/1]).
 
--record(state, {
-          % The wrapped transport
-          wrapped,
-
-          % a list of binaries which will be concatenated and sent during
-          % a flush.
-          %
-          % *** THIS LIST IS STORED IN REVERSE ORDER!!! ***
-          %
-          buffer}).
+-record(buffered_transport, {wrapped, % a thrift_transport
+                             buffer
+                             %% a list of binaries which will be concatenated and sent during
+                             %% a flush.
+                             %%
+                             %% *** THIS LIST IS STORED IN REVERSE ORDER!!! ***
+                            }).
 
 %%====================================================================
 %% API
@@ -70,7 +67,7 @@ flush(Transport) ->
 %% Description: Closes the transport and the wrapped transport
 %%--------------------------------------------------------------------
 close(Transport) ->
-    gen_server:call(Transport, close).
+    gen_server:cast(Transport, close).
 
 %%--------------------------------------------------------------------
 %% Function: Read(Transport, Len) -> {ok, Data}
@@ -96,8 +93,8 @@ read(Transport, Len) when is_integer(Len) ->
 init([Wrapped]) ->
     %% TODO(cpiro): need to trap exits here so when transport exits
     %% normally from under our feet we exit normally
-    {ok, #state{wrapped = Wrapped,
-                buffer = []}}.
+    {ok, #buffered_transport{wrapped = Wrapped,
+                             buffer = []}}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -108,25 +105,19 @@ init([Wrapped]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
-handle_call({write, Data}, _From, State = #state{buffer = Buffer}) ->
-    {reply, ok, State#state{buffer = [Data | Buffer]}};
+handle_call({write, Data}, _From, State = #buffered_transport{buffer = Buffer}) ->
+    {reply, ok, State#buffered_transport{buffer = [Data | Buffer]}};
 
-handle_call({read, Len}, _From, State = #state{wrapped = Wrapped}) ->
+handle_call({read, Len}, _From, State = #buffered_transport{wrapped = Wrapped}) ->
     Response = thrift_transport:read(Wrapped, Len),
     {reply, Response, State};
 
-handle_call(flush, _From, State = #state{buffer = Buffer,
-                                         wrapped = Wrapped}) ->
+handle_call(flush, _From, State = #buffered_transport{buffer = Buffer,
+                                                      wrapped = Wrapped}) ->
     Concat   = concat_binary(lists:reverse(Buffer)),
     Response = thrift_transport:write(Wrapped, Concat),
     thrift_transport:flush(Wrapped),
-    {reply, Response, State#state{buffer = []}};
-
-handle_call(close, _From, State = #state{buffer  = Buffer,
-                                         wrapped = Wrapped}) ->
-    thrift_transport:write(Wrapped, concat_binary(lists:reverse(Buffer))),
-    Close=thrift_transport:close(Wrapped),
-    {stop, shutdown, Close, State}.
+    {reply, Response, State#buffered_transport{buffer = []}}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -134,7 +125,13 @@ handle_call(close, _From, State = #state{buffer  = Buffer,
 %%                                      {stop, Reason, State}
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
-handle_cast(Msg, State=#state{}) ->
+handle_cast(close, State = #buffered_transport{buffer = Buffer,
+                                               wrapped = Wrapped}) ->
+    thrift_transport:write(Wrapped, concat_binary(lists:reverse(Buffer))),
+    %% Wrapped is closed by terminate/2
+    %%  error_logger:info_msg("thrift_buffered_transport ~p: closing", [self()]),
+    {stop, normal, State};
+handle_cast(Msg, State=#buffered_transport{}) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -153,7 +150,8 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(_Reason, State = #buffered_transport{wrapped=Wrapped}) ->
+    thrift_transport:close(Wrapped),
     ok.
 
 %%--------------------------------------------------------------------

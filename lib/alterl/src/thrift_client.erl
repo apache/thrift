@@ -44,7 +44,7 @@ call(Client, Function, Args)
     end.
 
 close(Client) when is_pid(Client) ->
-    gen_server:call(Client, close).
+    gen_server:cast(Client, close).
 
 %%====================================================================
 %% gen_server callbacks
@@ -104,10 +104,7 @@ handle_call({call, Function, Args}, _From, State = #state{service = Service,
                 end
         end,
 
-    {reply, Result, State};
-
-handle_call(close, _From, State = #state{protocol = Protocol}) ->
-    {stop, shutdown, ok, State}.
+    {reply, Result, State}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |
@@ -115,6 +112,9 @@ handle_call(close, _From, State = #state{protocol = Protocol}) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
+handle_cast(close, State=#state{protocol = Protocol}) ->
+%%     error_logger:info_msg("thrift_client ~p received close", [self()]),
+    {stop,normal,State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -134,7 +134,8 @@ handle_info(_Info, State) ->
 %% cleaning up. When it returns, the gen_server terminates with Reason.
 %% The return value is ignored.
 %%--------------------------------------------------------------------
-terminate(_Reason, State = #state{protocol = Protocol}) ->
+terminate(Reason, State = #state{protocol = Protocol}) ->
+%%     error_logger:info_msg("thrift_client ~p terminating due to ~p", [self(), Reason]),
     thrift_protocol:close_transport(Protocol),
     ok.
 
