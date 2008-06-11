@@ -120,7 +120,7 @@ handle_call(flush, _From, State = #state{buffer = Buffer,
     thrift_transport:flush(Wrapped),
     {reply, Response, State#state{buffer = []}};
 
-handle_call(close, From, State = #state{buffer  = Buffer,
+handle_call(close, _From, State = #state{buffer  = Buffer,
                                          wrapped = Wrapped}) ->
     thrift_transport:write(Wrapped, concat_binary(lists:reverse(Buffer))),
     Close=thrift_transport:close(Wrapped),
