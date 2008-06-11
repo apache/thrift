@@ -52,11 +52,27 @@ handle_function(State = #state{in_protocol = IProto,
         %                       [Function, Params, Micro/1000.0]),
         handle_success(State, Function, Result)
     catch
-        throw:Exception when is_tuple(Exception), size(Exception) > 0 ->
+        Type:Data ->
+            handle_function_catch(State, Function, Type, Data)
+    end.
+
+handle_function_catch(State = #state{service = Service},
+                      Function, ErrType, ErrData) ->
+    IsAsync = Service:function_info(Function, reply_type) =:= async_void,
+
+    case {ErrType, ErrData} of
+        _ when IsAsync ->
+            error_logger:warning_msg(
+              "async void ~p threw error which must be ignored: ~p",
+              [Function, {ErrType, ErrData}]),
+            ok;
+
+        {throw, Exception} when is_tuple(Exception), size(Exception) > 0 ->
             error_logger:warning_msg("~p threw exception: ~p~n", [Function, Exception]),
             handle_exception(State, Function, Exception),
             ok;   % we still want to accept more requests from this client
-        error:Error ->
+
+        {error, Error} ->
             ok = handle_error(State, Function, Error)
     end.
 
