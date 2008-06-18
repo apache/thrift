@@ -37,15 +37,13 @@ class ThriftStructSpec < Spec::ExampleGroup
   end
 
   it "should not share default values between instances" do
-    pending do
-      begin
-        struct = Foo.new
-        struct.ints << 17
-        Foo.new.ints.should == [1,2,2,3]
-      ensure
-        # ensure no leakage to other tests
-        Foo::FIELDS[4][:default] = [1,2,2,3]
-      end
+    begin
+      struct = Foo.new
+      struct.ints << 17
+      Foo.new.ints.should == [1,2,2,3]
+    ensure
+      # ensure no leakage to other tests
+      Foo::FIELDS[4][:default] = [1,2,2,3]
     end
   end
 

@@ -4,7 +4,7 @@ module Thrift
   module Struct
     def initialize(d={})
       each_field do |fid, type, name, default|
-        instance_variable_set("@#{name}", d[name.to_s] || d[name.intern] || default)
+        instance_variable_set("@#{name}", d[name.to_s] || d[name.intern] || (default.dup rescue default))
       end
     end
 
