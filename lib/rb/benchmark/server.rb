@@ -54,6 +54,6 @@ host, port, serverklass = ARGV
 
 Server.start_server(host, port.to_i, resolve_const(serverklass))
 
-Marshal.load(STDIN)
+Marshal.load(STDIN) # wait until we're instructed to shut down
 
 Server.shutdown
