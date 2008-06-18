@@ -1,15 +1,15 @@
 require File.dirname(__FILE__) + '/spec_helper'
 
-module Thrift
+class ThriftSpec < Spec::ExampleGroup
+  include Thrift
+
   describe Exception do
     it "should have an accessible message" do
       e = Exception.new("test message")
       e.message.should == "test message"
     end
   end
-end
 
-module Thrift
   describe ApplicationException do
     it "should inherit from Thrift::Exception" do
       ApplicationException.superclass.should == Exception
