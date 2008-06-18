@@ -150,4 +150,10 @@ class ThriftStructSpec < Spec::ExampleGroup
     struct.complex = {5 => {"foo" => 1.23}}
     struct.write(prot)
   end
+
+  it "should raise an exception if presented with an unknown container" do
+    # yeah this is silly, but I'm going for code coverage here
+    struct = Foo.new
+    lambda { struct.send :write_container, nil, nil, {:type => "foo"} }.should raise_error(StandardError, "Not a container type: foo")
+  end
 end
