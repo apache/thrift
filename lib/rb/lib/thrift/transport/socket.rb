@@ -63,15 +63,22 @@ module Thrift
   deprecate_class! :TSocket => Socket
 
   class ServerSocket < ServerTransport
-    def initialize(port)
-      @port = port
+    # call-seq: initialize(host = nil, port)
+    def initialize(host_or_port, port = nil)
+      if port
+        @host = host_or_port
+        @port = port
+      else
+        @host = nil
+        @port = host_or_port
+      end
       @handle = nil
     end
 
     attr_reader :handle
 
     def listen
-      @handle = TCPServer.new(nil, @port)
+      @handle = TCPServer.new(@host, @port)
     end
 
     def accept

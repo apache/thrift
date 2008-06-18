@@ -89,6 +89,12 @@ class ThriftSocketSpec < Spec::ExampleGroup
       @socket.handle.should be_an_instance_of(TCPServer)
     end
 
+    it "should accept an optional host argument" do
+      @socket = ServerSocket.new('localhost', 1234)
+      TCPServer.should_receive(:new).with('localhost', 1234)
+      @socket.listen
+    end
+
     it "should create a Thrift::Socket to wrap accepted sockets" do
       handle = mock("TCPServer")
       TCPServer.should_receive(:new).with(nil, 1234).and_return(handle)
