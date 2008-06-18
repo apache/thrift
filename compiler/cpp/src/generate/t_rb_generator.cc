@@ -243,7 +243,7 @@ string t_rb_generator::rb_autogen_comment() {
  */
 string t_rb_generator::rb_imports() {
   return
-    string("require 'thrift/protocol/tprotocol'");
+    string("require 'thrift/protocol'");
 }
 
 /**
@@ -595,7 +595,7 @@ void t_rb_generator::generate_service(t_service* tservice) {
   }
 
   f_service_ <<
-    "require 'thrift/thrift'" << endl <<
+    "require 'thrift'" << endl <<
     "require '" << program_name_ << "_types'" << endl <<
     endl;
 
