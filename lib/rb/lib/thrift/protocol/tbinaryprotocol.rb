@@ -183,7 +183,9 @@ module Thrift
   end
 end
 
-TBinaryProtocol = Thrift::BinaryProtocol
+if Thrift::DEPRECATION
+  TBinaryProtocol = Thrift::BinaryProtocol
+end
 
 class TBinaryProtocolFactory < TProtocolFactory
   def getProtocol(trans)
