@@ -112,4 +112,12 @@ class ThriftSpec < Spec::ExampleGroup
       e.write(prot)
     end
   end
+
+  describe ProtocolException do
+    it "should have an accessible type" do
+      prot = ProtocolException.new(ProtocolException::SIZE_LIMIT, "message")
+      prot.type.should == ProtocolException::SIZE_LIMIT
+      prot.message.should == "message"
+    end
+  end
 end
