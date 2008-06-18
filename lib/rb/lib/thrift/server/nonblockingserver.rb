@@ -139,6 +139,7 @@ module Thrift
         @buffers[fd] << fd.readpartial(1048576)
         frame = slice_frame!(@buffers[fd])
         if frame
+          @logger.debug "#{self} is processing a frame"
           @worker_queue.push [:frame, fd, frame]
         end
       end
