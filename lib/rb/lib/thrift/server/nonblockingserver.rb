@@ -136,12 +136,7 @@ module Thrift
       end
 
       def read_connection(fd)
-        buffer = ''
-        begin
-          buffer << fd.read_nonblock(4096) while true
-        rescue Errno::EAGAIN, EOFError
-          @buffers[fd] << buffer
-        end
+        @buffers[fd] << fd.readpartial(1048576)
         frame = slice_frame!(@buffers[fd])
         if frame
           @worker_queue.push [:frame, fd, frame]
@@ -167,13 +162,12 @@ module Thrift
 
       def read_signals
         # clear the signal pipe
-        begin
-          @signal_pipes[0].read_nonblock(1024) while true
-        rescue Errno::EAGAIN
-        end
+        # note that since read_nonblock is broken in jruby,
+        # we can only read up to a set number of signals at once
+        sigstr = @signal_pipes[0].readpartial(1024)
         # now read the signals
         begin
-          loop do
+          sigstr.length.times do
             signal, obj = @signal_queue.pop(true)
             case signal
             when :connection
@@ -185,6 +179,10 @@ module Thrift
           end
         rescue ThreadError
           # out of signals
+          # note that in a perfect world this would never happen, since we're
+          # only reading the number of signals pushed on the pipe, but given the lack
+          # of locks, in theory we could clear the pipe/queue while a new signal is being
+          # placed on the pipe, at which point our next read_signals would hit this error
         end
       end
 

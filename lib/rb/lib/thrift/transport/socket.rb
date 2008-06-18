@@ -42,10 +42,10 @@ module Thrift
       end
     end
 
-    def read(sz, nonblock=false)
+    def read(sz, partial=false)
       begin
-        if nonblock
-          data = @handle.read_nonblock(sz)
+        if partial
+          data = @handle.readpartial(sz)
         else
           data = @handle.read(sz)
         end
@@ -63,7 +63,7 @@ module Thrift
       data
     end
 
-    def read_nonblock(sz)
+    def readpartial(sz)
       read(sz, true)
     end
 

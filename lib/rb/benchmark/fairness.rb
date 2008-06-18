@@ -142,7 +142,7 @@ class BenchmarkManager
       next if rd.nil?
       rd.each do |fd|
         begin
-          @buffers[fd] << fd.read_nonblock(4096)
+          @buffers[fd] << fd.readpartial(4096)
         rescue EOFError
           @pool.delete fd
         end
