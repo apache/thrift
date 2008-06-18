@@ -1,8 +1,7 @@
 require File.join(File.dirname(__FILE__), '../test_helper')
 
-require 'thrift/transport/tsocket'
-require 'thrift/protocol/tbinaryprotocol'
-require 'thrift/server/tserver'
+require 'thrift'
+require 'thrift/protocol/binaryprotocol'
 require 'ThriftTest'
 
 class TestHandler
@@ -47,14 +46,14 @@ class TestThrift < Test::Unit::TestCase
       # Initialize the server
       @handler   = TestHandler.new()
       @processor = Thrift::Test::ThriftTest::Processor.new(@handler)
-      @transport = TServerSocket.new(9090)
-      @server    = TThreadedServer.new(@processor, @transport)
+      @transport = Thrift::ServerSocket.new(9090)
+      @server    = Thrift::ThreadedServer.new(@processor, @transport)
 
       @thread    = Thread.new { @server.serve }
 
       # And the Client
-      @socket   = TSocket.new('localhost', 9090)
-      @protocol = TBinaryProtocol.new(@socket)
+      @socket   = Thrift::Socket.new('localhost', 9090)
+      @protocol = Thrift::BinaryProtocol.new(@socket)
       @client   = Thrift::Test::ThriftTest::Client.new(@protocol)
       @socket.open
     end
