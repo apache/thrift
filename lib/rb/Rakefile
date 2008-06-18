@@ -20,8 +20,22 @@ task :test do
   sh 'make', '-C', File.dirname(__FILE__) + "/../../test/rb"
 end
 
-task :'gen-rb' do
-  thrift = '../../compiler/cpp/thrift'
+desc 'Compile the .thrift files for the specs'
+task :'gen-rb' => [:'gen-rb-spec', :'gen-rb-benchmark']
+
+THRIFT = '../../compiler/cpp/thrift'
+
+task :'gen-rb-spec' do
   dir = File.dirname(__FILE__) + '/spec'
-  sh thrift, '--gen', 'rb', '-o', dir, "#{dir}/ThriftSpec.thrift"
+  sh THRIFT, '--gen', 'rb', '-o', dir, "#{dir}/ThriftSpec.thrift"
+end
+
+task :'gen-rb-benchmark' do
+  dir = File.dirname(__FILE__) + '/benchmark'
+  sh THRIFT, '--gen', 'rb', '-o', dir, "#{dir}/Benchmark.thrift"
+end
+
+desc 'Run benchmarking of NonblockingServer'
+task :benchmark do
+  ruby 'benchmark/fairness.rb'
 end
