@@ -30,7 +30,7 @@ module Thrift
     end
 
     def open?
-      return !@handle.nil?
+      !@handle.nil?
     end
 
     def write(str)
@@ -50,7 +50,7 @@ module Thrift
       if (data.length == 0)
         raise TransportException.new(TransportException::UNKNOWN, "Socket: Could not read #{sz} bytes from #{@host}:#{@port}")
       end
-      return data
+      data
     end
 
     def close
@@ -71,17 +71,17 @@ module Thrift
     end
 
     def accept
-      if (@handle != nil)
+      unless @handle.nil?
         sock = @handle.accept
         trans = Socket.new
         trans.set_handle(sock)
-        return trans
+        trans
       end
-      return nil
     end
 
     def close
      @handle.close unless @handle.nil?
+     @handle = nil
     end
   end
   deprecate_class! :TServerSocket => ServerSocket
