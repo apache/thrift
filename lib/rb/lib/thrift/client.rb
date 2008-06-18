@@ -7,22 +7,22 @@ module Thrift
     end
 
     def send_message(name, args_class, args = {})
-      @oprot.writeMessageBegin(name, MessageTypes::CALL, @seqid)
+      @oprot.write_message_begin(name, MessageTypes::CALL, @seqid)
       data = args_class.new
       args.each do |k, v|
         data.send("#{k.to_s}=", v)
       end
       data.write(@oprot)
-      @oprot.writeMessageEnd()
+      @oprot.write_message_end()
       @oprot.trans.flush()
     end
 
     def receive_message(result_klass)
-      fname, mtype, rseqid = @iprot.readMessageBegin()
+      fname, mtype, rseqid = @iprot.read_message_begin()
       handle_exception(mtype)
       result = result_klass.new
       result.read(@iprot)
-      @iprot.readMessageEnd()
+      @iprot.read_message_end()
       return result
     end
 
@@ -30,7 +30,7 @@ module Thrift
       if mtype == MessageTypes::EXCEPTION
         x = ApplicationException.new()
         x.read(@iprot)
-        @iprot.readMessageEnd()
+        @iprot.read_message_end()
         raise x
       end
     end

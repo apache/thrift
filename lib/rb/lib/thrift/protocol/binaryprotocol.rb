@@ -18,38 +18,38 @@ module Thrift
       super(trans)
     end
 
-    def writeMessageBegin(name, type, seqid)
+    def write_message_begin(name, type, seqid)
       writeI32(VERSION_1 | type)
       writeString(name)
       writeI32(seqid)
     end
 
-    def writeFieldBegin(name, type, id)
+    def write_field_begin(name, type, id)
       writeByte(type)
       writeI16(id)
     end
 
-    def writeFieldStop()
+    def write_field_stop()
       writeByte(Thrift::Types::STOP)
     end
 
-    def writeMapBegin(ktype, vtype, size)
+    def write_map_begin(ktype, vtype, size)
       writeByte(ktype)
       writeByte(vtype)
       writeI32(size)
     end
 
-    def writeListBegin(etype, size)
+    def write_list_begin(etype, size)
       writeByte(etype)
       writeI32(size)
     end
 
-    def writeSetBegin(etype, size)
+    def write_set_begin(etype, size)
       writeByte(etype)
       writeI32(size)
     end
 
-    def writeBool(bool)
+    def write_bool(bool)
       if (bool)
         writeByte(1)
       else
@@ -57,34 +57,34 @@ module Thrift
       end
     end
 
-    def writeByte(byte)
+    def write_byte(byte)
       trans.write([byte].pack('n')[1..1])
     end
 
-    def writeI16(i16)
+    def write_i16(i16)
       trans.write([i16].pack('n'))
     end
 
-    def writeI32(i32)
+    def write_i32(i32)
       trans.write([i32].pack('N'))
     end
 
-    def writeI64(i64)
+    def write_i64(i64)
       hi = i64 >> 32
       lo = i64 & 0xffffffff
       trans.write([hi, lo].pack('N2'))
     end
 
-    def writeDouble(dub)
+    def write_double(dub)
       trans.write([dub].pack('G'))
     end
 
-    def writeString(str)
+    def write_string(str)
       writeI32(str.length)
       trans.write(str)
     end
 
-    def readMessageBegin()
+    def read_message_begin()
       version = readI32()
       if (version & VERSION_MASK != VERSION_1)
         raise ProtocolException.new(ProtocolException::BAD_VERSION, 'Missing version identifier')
@@ -95,7 +95,7 @@ module Thrift
       return name, type, seqid
     end
 
-    def readFieldBegin()
+    def read_field_begin()
       type = readByte()
       if (type === Types::STOP)
         return nil, type, 0
@@ -104,31 +104,31 @@ module Thrift
       return nil, type, id
     end
 
-    def readMapBegin()
+    def read_map_begin()
       ktype = readByte()
       vtype = readByte()
       size = readI32()
       return ktype, vtype, size
     end
 
-    def readListBegin()
+    def read_list_begin()
       etype = readByte()
       size = readI32()
       return etype, size
     end
 
-    def readSetBegin()
+    def read_set_begin()
       etype = readByte()
       size = readI32()
       return etype, size
     end
 
-    def readBool()
+    def read_bool()
       byte = readByte()
       return byte != 0
     end
 
-    def readByte()
+    def read_byte()
       dat = trans.readAll(1)
       val = dat[0]
       if (val > 0x7f)
@@ -137,7 +137,7 @@ module Thrift
       return val
     end
 
-    def readI16()
+    def read_i16()
       dat = trans.readAll(2)
       val, = dat.unpack('n')
       if (val > 0x7fff)
@@ -146,7 +146,7 @@ module Thrift
       return val
     end
 
-    def readI32()
+    def read_i32()
       dat = trans.readAll(4)
       val, = dat.unpack('N')
       if (val > 0x7fffffff)
@@ -155,7 +155,7 @@ module Thrift
       return val
     end
 
-    def readI64()
+    def read_i64()
       dat = trans.readAll(8)
       hi, lo = dat.unpack('N2')
       if (hi > 0x7fffffff)
@@ -167,13 +167,13 @@ module Thrift
       end
     end
 
-    def readDouble()
+    def read_double()
       dat = trans.readAll(8)
       val, = dat.unpack('G')
       return val
     end
 
-    def readString()
+    def read_string()
       sz = readI32()
       dat = trans.readAll(sz)
       return dat

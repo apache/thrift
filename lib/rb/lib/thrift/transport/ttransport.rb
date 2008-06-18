@@ -29,7 +29,9 @@ end
 # TTransport is basically an abstract class, but isn't raising NotImplementedError
 # TODO: Think about if this is the right thing - Kevin Clark - 3/27/08
 class TTransport
-  def is_open?; end
+  def open?; end
+  deprecate! :isOpen => :open?
+  deprecate! :is_open? => :open?
 
   def open; end
 
@@ -49,22 +51,11 @@ class TTransport
     
     buff
   end
+  deprecate! :readAll => :read_all
   
   def write(buf); end
 
   def flush; end
-  
-  ################
-  ## Deprecated
-  ################
-  
-  def isOpen
-    is_open?
-  end
-  
-  def readAll(sz)
-    read_all sz
-  end
 end
 
 class TServerTransport

@@ -17,31 +17,31 @@ module Thrift
     end
 
     def read(iprot)
-      iprot.readStructBegin()
+      iprot.read_struct_begin()
       loop do
-        fname, ftype, fid = iprot.readFieldBegin()
+        fname, ftype, fid = iprot.read_field_begin()
         break if (ftype === Types::STOP)
         handle_message(iprot, fid, ftype)
-        iprot.readFieldEnd()
+        iprot.read_field_end()
       end
-      iprot.readStructEnd()
+      iprot.read_struct_end()
     end
 
     def write(oprot)
-      oprot.writeStructBegin(self.class.name)
+      oprot.write_struct_begin(self.class.name)
       each_field do |fid, type, name|
         if ((value = instance_variable_get("@#{name}")) != nil)
           if is_container? type
-            oprot.writeFieldBegin(name, type, fid)
+            oprot.write_field_begin(name, type, fid)
             write_container(oprot, value, struct_fields[fid])
-            oprot.writeFieldEnd
+            oprot.write_field_end
           else
             oprot.write_field(name, type, fid, value)
           end
         end
       end
-      oprot.writeFieldStop()
-      oprot.writeStructEnd()
+      oprot.write_field_stop()
+      oprot.write_struct_end()
     end
 
     protected
@@ -99,24 +99,24 @@ module Thrift
 
     def write_container(oprot, value, field = {})
       if field[:type] == Types::MAP
-        oprot.writeMapBegin(field[:key][:type], field[:value][:type], value.size)
+        oprot.write_map_begin(field[:key][:type], field[:value][:type], value.size)
         value.each do |k, v|
           write_data(oprot, k, field[:key])
           write_data(oprot, v, field[:value])
         end
-        oprot.writeMapEnd
+        oprot.write_map_end
       elsif field[:type] == Types::LIST
-        oprot.writeListBegin(field[:element][:type], value.size)
+        oprot.write_list_begin(field[:element][:type], value.size)
         value.each do |elem|
           write_data(oprot, elem, field[:element])
         end
-        oprot.writeListEnd
+        oprot.write_list_end
       elsif field[:type] == Types::SET
-        oprot.writeSetBegin(field[:element][:type], value.size)
+        oprot.write_set_begin(field[:element][:type], value.size)
         value.each do |k, v|
           write_data(oprot, k, field[:element])
         end
-        oprot.writeSetEnd
+        oprot.write_set_end
       else
         raise "Not a container type: #{field[:type]}"
       end
