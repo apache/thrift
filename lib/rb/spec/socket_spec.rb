@@ -97,5 +97,9 @@ class ThriftSocketSpec < Spec::ExampleGroup
       handle.should_receive(:close)
       @socket.close
     end
+
+    it "should return nil when accepting if there is no handle" do
+      @socket.accept.should be_nil
+    end
   end
 end
