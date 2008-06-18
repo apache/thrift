@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 $:.push('../gen-rb')
+$:.unshift '../../lib/rb/lib'
 
 require 'thrift/transport/tsocket'
 require 'thrift/protocol/tbinaryprotocol'
