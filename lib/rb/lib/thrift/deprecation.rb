@@ -31,6 +31,42 @@ class Module
   end
 end
 
+module Thrift::DeprecationProxy
+  def self.new(obj)
+    Class.new(obj) do
+      klass = self
+      @@self = klass
+      @@obj = obj
+      instance_methods.sort.reject { |x| [:__id__,:__send__].include? x.to_sym }.each do |sym|
+        undef_method sym
+      end
+      def method_missing(sym, *args, &block)
+        @@obj.instance_method(sym).bind(self).call(*args, &block)
+      end
+      (class << self;self;end).class_eval do
+        @@self = klass
+        @@obj = obj
+        @@warned = false
+        instance_methods.sort.reject { |x| [:__id__,:__send__].include? x.to_sym }.each do |sym|
+          undef_method sym
+        end
+        def method_missing(sym, *args, &block)
+          unless @@warned
+            STDERR.puts "Warning: class #{@@obj.inspect} is deprecated"
+            STDERR.puts "  from #{caller.first}"
+            @@warned = true
+          end
+          if @@self.__id__ == self.__id__
+            @@obj.send sym, *args, &block
+          else
+            @@obj.method(sym).unbind.bind(self).call(*args, &block)
+          end
+        end
+      end
+    end
+  end
+end
+
 module Kernel
   # Provides an alternate name for the class for deprecation purposes
   # Example:
@@ -39,13 +75,10 @@ module Kernel
   # at the moment this only works for creating top-level constants
   # if necessary, this can be extended to take something like :'Thrift::TBinaryProtocol'
   # alternately, Module can be extended with a similar method
-  #
-  # another idea is to not make the old name a pointer to the new, but rather
-  # a pointer to a proxy class that logs deprecation warnings and forwards methods
   def deprecate_class!(klasses)
     return unless Thrift::DEPRECATION
     klasses.each_pair do |old, new|
-      Object.const_set old, new
+      Object.const_set old, Thrift::DeprecationProxy.new(new)
     end
   end
 end

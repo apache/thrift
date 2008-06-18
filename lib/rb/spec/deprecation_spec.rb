@@ -168,6 +168,12 @@ end
 describe "deprecate_class!" do
   it_should_behave_like "deprecation"
 
+  def stub_stderr(callstr, offset=1)
+    STDERR.should_receive(:puts).with("Warning: class #{callstr} is deprecated")
+    line = caller.first[/\d+$/].to_i + offset
+    STDERR.should_receive(:puts).with("  from #{__FILE__}:#{line}")
+  end
+
   it "should create a new global constant that points to the old one" do
     begin
       klass = Class.new do
@@ -176,6 +182,7 @@ describe "deprecate_class!" do
         end
       end
       deprecate_class! :DeprecationSpecOldClass => klass
+      stub_stderr(klass)
       ::DeprecationSpecOldClass.should eql(klass)
       ::DeprecationSpecOldClass.new.foo.should == "foo"
     ensure
@@ -194,8 +201,30 @@ describe "deprecate_class!" do
         end
         deprecate_class! :DeprecationSpecOldClass => klass
       end
+      stub_stderr(klass)
       ::DeprecationSpecOldClass.should eql(klass)
       ::DeprecationSpecOldClass.new.foo.should == "foo"
+    ensure
+      Object.send :remove_const, :DeprecationSpecOldClass if Object.const_defined? :DeprecationSpecOldClass
+    end
+  end
+
+  it "should not prevent the deprecated class from being a superclass" do
+    begin
+      klass = Class.new do
+        def foo
+          "foo"
+        end
+      end
+      deprecate_class! :DeprecationSpecOldClass => klass
+      subklass = Class.new(::DeprecationSpecOldClass) do
+        def foo
+          "subclass #{super}"
+        end
+      end
+      stub_stderr(klass)
+      subklass.superclass.should eql(klass)
+      subklass.new.foo.should == "subclass foo"
     ensure
       Object.send :remove_const, :DeprecationSpecOldClass if Object.const_defined? :DeprecationSpecOldClass
     end
