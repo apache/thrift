@@ -29,6 +29,8 @@ class Server
     return if @serverclass == Object
     args = (File.basename(@interpreter) == "jruby" ? "-J-server" : "")
     @pipe = IO.popen("#{@interpreter} #{args} #{File.dirname(__FILE__)}/server.rb #{@host} #{@port} #{@serverclass.name}", "r+")
+    Marshal.load(@pipe) # wait until the server has started
+    sleep 0.2 # give the server time to actually start spawning sockets
   end
 
   def shutdown
@@ -230,8 +232,6 @@ args[:interpreter] = ENV['THRIFT_SERVER_INTERPRETER'] || ENV['THRIFT_INTERPRETER
 args[:class] = resolve_const(ENV['THRIFT_SERVER']) || Thrift::NonblockingServer
 server = Server.new(args)
 server.start
-
-sleep 0.2 # give the server time to start
 
 args = { :num_processes => 40, :clients_per_process => 5, :host => HOST, :port => PORT }
 args[:interpreter] = ENV['THRIFT_CLIENT_INTERPRETER'] || ENV['THRIFT_INTERPRETER'] || "ruby"

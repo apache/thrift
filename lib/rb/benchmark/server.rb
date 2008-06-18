@@ -50,6 +50,10 @@ def resolve_const(const)
   const and const.split('::').inject(Object) { |k,c| k.const_get(c) }
 end
 
+# let our host know that the interpreter has started
+# ideally we'd wait until the server was serving, but we don't have a hook for that
+Marshal.dump(:started, STDOUT)
+
 host, port, serverklass = ARGV
 
 Server.start_server(host, port.to_i, resolve_const(serverklass))
