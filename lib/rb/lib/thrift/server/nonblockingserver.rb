@@ -25,14 +25,17 @@ module Thrift
 
       begin
         loop do
+          break if @serverTransport.closed?
+          rd, = select([@serverTransport], nil, nil, 0.1)
+          next if rd.nil?
           socket = @serverTransport.accept
           @logger.debug "Accepted socket: #{socket.inspect}"
           @io_manager.add_connection socket
         end
       rescue IOError => e
-        # we must be shutting down
-        @logger.info "#{self} is shutting down, goodbye"
       end
+      # we must be shutting down
+      @logger.info "#{self} is shutting down, goodbye"
     ensure
       @transport_semaphore.synchronize do
         @serverTransport.close

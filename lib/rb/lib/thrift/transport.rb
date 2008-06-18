@@ -62,6 +62,8 @@ module Thrift
     def accept; nil; end
 
     def close; nil; end
+
+    def closed?; nil; end
   end
   deprecate_class! :TServerTransport => ServerTransport
 

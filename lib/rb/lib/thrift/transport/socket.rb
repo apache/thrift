@@ -110,6 +110,12 @@ module Thrift
      @handle.close unless @handle.nil? or @handle.closed?
      @handle = nil
     end
+
+    def closed?
+      @handle.nil? or @handle.closed?
+    end
+
+    alias to_io handle
   end
   deprecate_class! :TServerSocket => ServerSocket
 end

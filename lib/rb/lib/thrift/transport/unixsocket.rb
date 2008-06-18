@@ -47,5 +47,11 @@ module Thrift
         File.delete(@path)
       end
     end
+
+    def closed?
+      @handle.nil? or @handle.closed?
+    end
+
+    alias to_io handle
   end
 end

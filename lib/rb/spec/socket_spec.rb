@@ -69,5 +69,19 @@ class ThriftSocketSpec < Spec::ExampleGroup
     it "should return nil when accepting if there is no handle" do
       @socket.accept.should be_nil
     end
+
+    it "should return true for closed? when appropriate" do
+      handle = mock("TCPServer", :closed? => false)
+      TCPServer.stub!(:new).and_return(handle)
+      @socket.listen
+      @socket.should_not be_closed
+      handle.stub!(:close)
+      @socket.close
+      @socket.should be_closed
+      @socket.listen
+      @socket.should_not be_closed
+      handle.stub!(:closed?).and_return(true)
+      @socket.should be_closed
+    end
   end
 end
