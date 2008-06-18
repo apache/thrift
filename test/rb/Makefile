@@ -9,13 +9,13 @@ target: all
 # Tools
 THRIFT = ../../compiler/cpp/thrift
 
-all: stubs tests
+all: stubs check
 
 stubs: ../ThriftTest.thrift ../SmallTest.thrift
 	$(THRIFT) --gen rb ../ThriftTest.thrift
 	$(THRIFT) --gen rb ../SmallTest.thrift
 
-tests: stubs
+check: stubs
 	ruby test_suite.rb
 
 clean:
