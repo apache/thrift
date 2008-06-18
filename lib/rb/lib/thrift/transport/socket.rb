@@ -35,6 +35,8 @@ module Thrift
       begin
         @handle.write(str)
       rescue StandardError
+        @handle.close
+        @handle = nil
         raise TransportException.new(TransportException::NOT_OPEN)
       end
     end
@@ -47,6 +49,8 @@ module Thrift
           data = @handle.read(sz)
         end
       rescue StandardError => e
+        @handle.close
+        @handle = nil
         raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
       if (data.nil? or data.length == 0)
