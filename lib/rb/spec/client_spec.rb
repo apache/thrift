@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/spec_helper'
 
-class ThriftSpec < Spec::ExampleGroup
+class ThriftClientSpec < Spec::ExampleGroup
   include Thrift
 
   class ClientSpec
@@ -12,7 +12,7 @@ class ThriftSpec < Spec::ExampleGroup
     @client = ClientSpec.new(@prot)
   end
 
-  describe "Client" do
+  describe Client do
     it "should re-use iprot for oprot if not otherwise specified" do
       @client.instance_variable_get(:'@iprot').should eql(@prot)
       @client.instance_variable_get(:'@oprot').should eql(@prot)

@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/spec_helper'
 
-class ThriftSpec < Spec::ExampleGroup
+class ThriftProcessorSpec < Spec::ExampleGroup
   include Thrift
 
   class ProcessorSpec

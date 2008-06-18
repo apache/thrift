@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require 'thrift/protocol/binaryprotocol'
 
-class ThriftSpec < Spec::ExampleGroup
+class ThriftBinaryProtocolSpec < Spec::ExampleGroup
   include Thrift
 
   describe BinaryProtocol do
