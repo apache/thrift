@@ -1,6 +1,11 @@
 require 'rubygems'
 require 'spec'
 
+# turn on deprecation so we can test it
+module Thrift
+  DEPRECATION = true
+end
+
 require File.dirname(__FILE__) + '/../lib/thrift'
 
 class Object
