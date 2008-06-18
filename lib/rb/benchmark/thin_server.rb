@@ -21,5 +21,6 @@ handler = BenchmarkHandler.new
 processor = ThriftBenchmark::BenchmarkService::Processor.new(handler)
 transport = Thrift::ServerSocket.new(HOST, PORT)
 transportFactory = Thrift::FramedTransportFactory.new
-Thrift::NonblockingServer.new(processor, transport, transportFactory).serve
-
+logger = Logger.new(STDERR)
+logger.level = Logger::DEBUG
+Thrift::NonblockingServer.new(processor, transport, transportFactory, nil, 20, logger).serve
