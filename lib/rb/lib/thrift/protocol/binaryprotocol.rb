@@ -46,15 +46,11 @@ module Thrift
     end
 
     def write_bool(bool)
-      if (bool)
-        write_byte(1)
-      else
-        write_byte(0)
-      end
+      write_byte(bool ? 1 : 0)
     end
 
     def write_byte(byte)
-      trans.write([byte].pack('n')[1..1])
+      trans.write([byte].pack('c'))
     end
 
     def write_i16(i16)
@@ -88,40 +84,41 @@ module Thrift
       type = version & 0x000000ff
       name = read_string
       seqid = read_i32
-      return name, type, seqid
+      [name, type, seqid]
     end
 
     def read_field_begin
       type = read_byte
-      if (type === Types::STOP)
-        return nil, type, 0
+      if (type == Types::STOP)
+        [nil, type, 0]
+      else
+        id = read_i16
+        [nil, type, id]
       end
-      id = read_i16
-      return nil, type, id
     end
 
     def read_map_begin
       ktype = read_byte
       vtype = read_byte
       size = read_i32
-      return ktype, vtype, size
+      [ktype, vtype, size]
     end
 
     def read_list_begin
       etype = read_byte
       size = read_i32
-      return etype, size
+      [etype, size]
     end
 
     def read_set_begin
       etype = read_byte
       size = read_i32
-      return etype, size
+      [etype, size]
     end
 
     def read_bool
       byte = read_byte
-      return byte != 0
+      byte != 0
     end
 
     def read_byte
@@ -130,7 +127,7 @@ module Thrift
       if (val > 0x7f)
         val = 0 - ((val - 1) ^ 0xff)
       end
-      return val
+      val
     end
 
     def read_i16
@@ -139,7 +136,7 @@ module Thrift
       if (val > 0x7fff)
         val = 0 - ((val - 1) ^ 0xffff)
       end
-      return val
+      val
     end
 
     def read_i32
@@ -148,31 +145,31 @@ module Thrift
       if (val > 0x7fffffff)
         val = 0 - ((val - 1) ^ 0xffffffff)
       end
-      return val
+      val
     end
 
     def read_i64
       dat = trans.read_all(8)
       hi, lo = dat.unpack('N2')
       if (hi > 0x7fffffff)
-        hi = hi ^ 0xffffffff
-        lo = lo ^ 0xffffffff
-        return 0 - hi*4294967296 - lo - 1
+        hi ^= 0xffffffff
+        lo ^= 0xffffffff
+        0 - (hi << 32) - lo - 1
       else
-        return hi*4294967296 + lo
+        (hi << 32) + lo
       end
     end
 
     def read_double
       dat = trans.read_all(8)
-      val, = dat.unpack('G')
-      return val
+      val = dat.unpack('G').first
+      val
     end
 
     def read_string
       sz = read_i32
       dat = trans.read_all(sz)
-      return dat
+      dat
     end
 
   end

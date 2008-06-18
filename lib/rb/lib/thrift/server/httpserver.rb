@@ -14,15 +14,15 @@ module Thrift
       end
 
       def process(request, response)
-        unless request.params["REQUEST_METHOD"] == "POST"
-          response.start(404) { } # better way?
-          return
-        end
-        response.start(200) do |head, out|
-          head["Content-Type"] = "application/x-thrift"
-          transport = IOStreamTransport.new request.body, out
-          protocol = @protocol_factory.get_protocol transport
-          @processor.process protocol, protocol
+        if request.params["REQUEST_METHOD"] == "POST"
+          response.start(200) do |head, out|
+            head["Content-Type"] = "application/x-thrift"
+            transport = IOStreamTransport.new request.body, out
+            protocol = @protocol_factory.get_protocol transport
+            @processor.process protocol, protocol
+          end
+        else
+          response.start(404) { }
         end
       end
     end

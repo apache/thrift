@@ -8,16 +8,16 @@ module Thrift
       name, type, seqid  = iprot.read_message_begin
       if respond_to?("process_#{name}")
         send("process_#{name}", seqid, iprot, oprot)
-        return true
+        true
       else
         iprot.skip(Types::STRUCT)
         iprot.read_message_end
         x = ApplicationException.new(ApplicationException::UNKNOWN_METHOD, 'Unknown function '+name)
         oprot.write_message_begin(name, MessageTypes::EXCEPTION, seqid)
-          x.write(oprot)
+        x.write(oprot)
         oprot.write_message_end
         oprot.trans.flush
-        return
+        false
       end
     end
 

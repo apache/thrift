@@ -206,48 +206,46 @@ module Thrift
     end
 
     def skip(type)
-      if type === Types::STOP
+      case type
+      when Types::STOP
         nil
-      elsif type === Types::BOOL
+      when Types::BOOL
         read_bool
-      elsif type === Types::BYTE
+      when Types::BYTE
         read_byte
-      elsif type === Types::I16
+      when Types::I16
         read_i16
-      elsif type === Types::I32
+      when Types::I32
         read_i32
-      elsif type === Types::I64
+      when Types::I64
         read_i64
-      elsif type === Types::DOUBLE
+      when Types::DOUBLE
         read_double
-      elsif type === Types::STRING
+      when Types::STRING
         read_string
-      elsif type === Types::STRUCT
+      when Types::STRUCT
         read_struct_begin
         while true
           name, type, id = read_field_begin
-          if type === Types::STOP
-            break
-          else
-            skip(type)
-            read_field_end
-          end
-        end  
+          break if type == Types::STOP
+          skip(type)
+          read_field_end
+        end
         read_struct_end
-      elsif type === Types::MAP
+      when Types::MAP
         ktype, vtype, size = read_map_begin
         size.times do
           skip(ktype)
           skip(vtype)
         end
         read_map_end
-      elsif type === Types::SET
+      when Types::SET
         etype, size = read_set_begin
         size.times do
           skip(etype)
         end
         read_set_end
-      elsif type === Types::LIST
+      when Types::LIST
         etype, size = read_list_begin
         size.times do
           skip(etype)

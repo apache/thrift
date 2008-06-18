@@ -23,7 +23,7 @@ module Thrift
       result = result_klass.new
       result.read(@iprot)
       @iprot.read_message_end
-      return result
+      result
     end
 
     def handle_exception(mtype)

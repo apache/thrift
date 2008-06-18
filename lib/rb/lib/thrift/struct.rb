@@ -22,7 +22,7 @@ module Thrift
       iprot.read_struct_begin
       loop do
         fname, ftype, fid = iprot.read_field_begin
-        break if (ftype === Types::STOP)
+        break if (ftype == Types::STOP)
         handle_message(iprot, fid, ftype)
         iprot.read_field_end
       end
@@ -32,7 +32,7 @@ module Thrift
     def write(oprot)
       oprot.write_struct_begin(self.class.name)
       each_field do |fid, type, name|
-        if ((value = instance_variable_get("@#{name}")) != nil)
+        unless (value = instance_variable_get("@#{name}")).nil?
           if is_container? type
             oprot.write_field_begin(name, type, fid)
             write_container(oprot, value, struct_fields[fid])
@@ -58,7 +58,7 @@ module Thrift
 
     def handle_message(iprot, fid, ftype)
       field = struct_fields[fid]
-      if field && field[:type] == ftype
+      if field and field[:type] == ftype
         value = read_field(iprot, field)
         instance_variable_set("@#{field[:name]}", value)
       else
@@ -67,10 +67,11 @@ module Thrift
     end
 
     def read_field(iprot, field = {})
-      if field[:type] == Types::STRUCT
+      case field[:type]
+      when Types::STRUCT
         value = field[:class].new
         value.read(iprot)
-      elsif field[:type] == Types::MAP
+      when Types::MAP
         key_type, val_type, size = iprot.read_map_begin
         value = {}
         size.times do
@@ -79,13 +80,13 @@ module Thrift
           value[k] = v
         end
         iprot.read_map_end
-      elsif field[:type] == Types::LIST
+      when Types::LIST
         e_type, size = iprot.read_list_begin
         value = Array.new(size) do |n|
           read_field(iprot, field_info(field[:element]))
         end
         iprot.read_list_end
-      elsif field[:type] == Types::SET
+      when Types::SET
         e_type, size = iprot.read_set_begin
         value = Set.new
         size.times do
@@ -108,20 +109,21 @@ module Thrift
     end
 
     def write_container(oprot, value, field = {})
-      if field[:type] == Types::MAP
+      case field[:type]
+      when Types::MAP
         oprot.write_map_begin(field[:key][:type], field[:value][:type], value.size)
         value.each do |k, v|
           write_data(oprot, k, field[:key])
           write_data(oprot, v, field[:value])
         end
         oprot.write_map_end
-      elsif field[:type] == Types::LIST
+      when Types::LIST
         oprot.write_list_begin(field[:element][:type], value.size)
         value.each do |elem|
           write_data(oprot, elem, field[:element])
         end
         oprot.write_list_end
-      elsif field[:type] == Types::SET
+      when Types::SET
         oprot.write_set_begin(field[:element][:type], value.size)
         value.each do |v,| # the , is to preserve compatibility with the old Hash-style sets
           write_data(oprot, v, field[:element])

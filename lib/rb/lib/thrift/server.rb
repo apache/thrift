@@ -31,16 +31,15 @@ module Thrift
     def serve
       begin
         @serverTransport.listen
-        while (true)
+        loop do
           client = @serverTransport.accept
           trans = @transportFactory.get_transport(client)
           prot = @protocolFactory.get_protocol(trans)
           begin
-            while (true)
+            loop do
               @processor.process(prot, prot)
             end
-          rescue Thrift::TransportException, Thrift::ProtocolException => ttx
-            #print ttx,"\n"
+          rescue Thrift::TransportException, Thrift::ProtocolException
           ensure
             trans.close
           end
@@ -64,16 +63,16 @@ module Thrift
     def serve
       begin
         @serverTransport.listen
-        while (true)
+        loop do
           client = @serverTransport.accept
           trans = @transportFactory.get_transport(client)
           prot = @protocolFactory.get_protocol(trans)
           Thread.new(prot, trans) do |p, t|
             begin
-              while (true)
+              loop do
                 @processor.process(p, p)
               end
-            rescue Thrift::TransportException, Thrift::ProtocolException => e
+            rescue Thrift::TransportException, Thrift::ProtocolException
             ensure
               t.close
             end
@@ -109,16 +108,16 @@ module Thrift
       @serverTransport.listen
 
       begin
-        while (true)
+        loop do
           @thread_q.push(:token)
           Thread.new do
             begin
-              while (true)
+              loop do
                 client = @serverTransport.accept
                 trans = @transportFactory.get_transport(client)
                 prot = @protocolFactory.get_protocol(trans)
                 begin
-                  while (true)
+                  loop do
                     @processor.process(prot, prot)
                   end
                 rescue Thrift::TransportException, Thrift::ProtocolException => e

@@ -38,16 +38,14 @@ module Thrift
     def read(sz); end
 
     def read_all(size)
-      buff = ''
-      have = 0
+      buf = ''
     
-      while (have < size)
-        chunk = read(size - have)
-        have += chunk.length
-        buff << chunk
+      while (buf.length < size)
+        chunk = read(size - buf.length)
+        buf << chunk
       end
     
-      buff
+      buf
     end
     deprecate! :readAll => :read_all
   
@@ -137,41 +135,22 @@ module Thrift
     end
 
     def read(sz)
-      if !@read
-        return @transport.read(sz)
-      end
+      return @transport.read(sz) unless @read
 
-      if (sz <= 0)
-        return ''
-      end
+      return '' if sz <= 0
 
-      if (@rbuf.length == 0)
-        read_frame
-      end
+      read_frame if @rbuf.empty?
 
       # return full buf
-      if (sz > @rbuf.length)
-        out = @rbuf
-        @rbuf = ''
-        return out
-      end
-
-      # Return substr
-      out = @rbuf.slice(0, sz)
-      @rbuf = @rbuf.slice(sz, @rbuf.length)
-      return out
+      out = @rbuf.slice(0...sz)
+      @rbuf = @rbuf.slice(sz..-1) || ''
+      out
     end
 
     def write(buf,sz=nil)
-      if !@write
-        return @transport.write(buf);
-      end
+      return @transport.write(buf) unless @write
 
-      if (sz != nil && sz < buf.length)
-        buf = buf.slice(0,sz)
-      end
-
-      @wbuf << buf
+      @wbuf << (sz ? buf[0...sz] : buf)
     end
 
     #
@@ -179,9 +158,7 @@ module Thrift
     # followed by the actual data.
     #
     def flush
-      if !@write
-        return @transport.flush
-      end
+      return @transport.flush unless @write
 
       out = [@wbuf.length].pack('N')
       out << @wbuf
@@ -193,9 +170,7 @@ module Thrift
     private
 
     def read_frame
-      buf  = @transport.read_all(4)
-      val  = buf.unpack('N')
-      sz   = val[0]
+      sz = @transport.read_all(4).unpack('N').first
 
       @rbuf = @transport.read_all(sz)
     end
