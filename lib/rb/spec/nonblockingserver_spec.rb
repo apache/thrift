@@ -1,6 +1,5 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require 'thrift/server/nonblockingserver'
-$:.unshift File.dirname(__FILE__) + '/gen-rb'
 require 'NonblockingService'
 
 class ThriftNonblockingServerSpec < Spec::ExampleGroup
