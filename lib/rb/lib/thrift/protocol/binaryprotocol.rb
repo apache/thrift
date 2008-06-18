@@ -184,7 +184,7 @@ module Thrift
 
   class BinaryProtocolFactory < ProtocolFactory
     def get_protocol(trans)
-      return TBinaryProtocol.new(trans)
+      return Thrift::BinaryProtocol.new(trans)
     end
   end
   deprecate_class! :TBinaryProtocolFactory => BinaryProtocolFactory

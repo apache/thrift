@@ -39,7 +39,7 @@ module Thrift
             while (true)
               @processor.process(prot, prot)
             end
-          rescue TTransportException, Thrift::ProtocolException => ttx
+          rescue Thrift::TransportException, Thrift::ProtocolException => ttx
             #print ttx,"\n"
           ensure
             trans.close()
@@ -73,7 +73,7 @@ module Thrift
               while (true)
                 @processor.process(p, p)
               end
-            rescue TTransportException, Thrift::ProtocolException => e
+            rescue Thrift::TransportException, Thrift::ProtocolException => e
             ensure
               t.close()
             end
@@ -120,7 +120,7 @@ module Thrift
                   while (true)
                     @processor.process(prot, prot)
                   end
-                rescue TTransportException, Thrift::ProtocolException => e
+                rescue Thrift::TransportException, Thrift::ProtocolException => e
                 ensure
                   trans.close()
                 end
