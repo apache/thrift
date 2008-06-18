@@ -71,12 +71,19 @@ class ThriftBinaryProtocolSpec < Spec::ExampleGroup
       # byte is small enough, let's check -128..127
       (-128..127).each do |i|
         @trans.should_receive(:write).with([i].pack('c')).ordered
-      end
-      (-128..127).each do |i|
         @prot.write_byte(i)
       end
-      # now try out of signed range
-      lambda { @prot.write_byte(224) }.should raise_error(RangeError)
+      (-128..127).each do |i|
+      end
+      # handing it numbers out of signed range should clip
+      @trans.rspec_verify
+      @trans.rspec_clear
+      (128..255).each do |i|
+        @trans.should_receive(:write).with([i].pack('c')).ordered
+        @prot.write_byte(i)
+      end
+      # and lastly, a Bignum is going to error out
+      lambda { @prot.write_byte(2**65) }.should raise_error(RangeError)
     end
 
     it "should write an i16" do
@@ -92,8 +99,11 @@ class ThriftBinaryProtocolSpec < Spec::ExampleGroup
       [-2**15, -1024, 17, 0, -10000, 1723, 2**15-1].each do |i|
         @prot.write_i16(i)
       end
-      # and try something out of signed range
-      lambda { @prot.write_i16(2**15 + 5) }.should raise_error(RangeError)
+      # and try something out of signed range, it should clip
+      @trans.should_receive(:write).with("\200\005").ordered
+      @prot.write_i16(2**15 + 5)
+      # a Bignum should error
+      lambda { @prot.write_i16(2**65) }.should raise_error(RangeError)
     end
 
     it "should write an i32" do
@@ -110,8 +120,10 @@ class ThriftBinaryProtocolSpec < Spec::ExampleGroup
       [-2**31, -123123, -2532, -3, 0, 2351235, 12331, 2**31-1].each do |i|
         @prot.write_i32(i)
       end
-      # try something out of signed range
-      lambda { @prot.write_i32(2 ** 31 + 5) }.should raise_error(RangeError)
+      # try something out of signed range, it should clip
+      @trans.should_receive(:write).with("\200\000\000\005").ordered
+      @prot.write_i32(2 ** 31 + 5)
+      lambda { @prot.write_i32(2 ** 65 + 5) }.should raise_error(RangeError)
     end
 
     it "should write an i64" do
@@ -129,8 +141,10 @@ class ThriftBinaryProtocolSpec < Spec::ExampleGroup
       [-2**63, -12356123612323, -23512351, -234, 0, 1231, 2351236, 12361236213, 2**63-1].each do |i|
         @prot.write_i64(i)
       end
-      # try something out of signed range
-      lambda { @prot.write_i64(2 ** 63 + 5) }.should raise_error(RangeError)
+      # try something out of signed range, it should clip
+      @trans.should_receive(:write).with("\200\000\000\000\000\000\000\005").ordered
+      @prot.write_i64(2**63 + 5)
+      lambda { @prot.write_i64(2 ** 65 + 5) }.should raise_error(RangeError)
     end
 
     it "should write a double" do

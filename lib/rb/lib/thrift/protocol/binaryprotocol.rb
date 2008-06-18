@@ -54,23 +54,18 @@ module Thrift
     end
 
     def write_byte(byte)
-      # yes, -128..255. This covers signed byte min -> unsigned byte max
-      raise RangeError.new("#{byte} too large to fit in a byte") unless (-128..127).include? byte
       trans.write([byte].pack('n')[1..1])
     end
 
     def write_i16(i16)
-      raise RangeError.new("#{i16} too large to fit in an i16") unless ((-2**15)..(2**15-1)).include? i16
       trans.write([i16].pack('n'))
     end
 
     def write_i32(i32)
-      raise RangeError.new("#{i32} too large to fit in an i32") unless ((-2**31)..(2**31-1)).include? i32
       trans.write([i32].pack('N'))
     end
 
     def write_i64(i64)
-      raise RangeError.new("#{i64} too large to fit in an i32") unless ((-2**63)..(2**63-1)).include? i64
       hi = i64 >> 32
       lo = i64 & 0xffffffff
       trans.write([hi, lo].pack('N2'))
