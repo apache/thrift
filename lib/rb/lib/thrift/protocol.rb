@@ -233,20 +233,20 @@ module Thrift
         read_struct_end
       elsif type === Types::MAP
         ktype, vtype, size = read_map_begin
-        for i in 1..size
+        size.times do
           skip(ktype)
           skip(vtype)
         end
         read_map_end
       elsif type === Types::SET
         etype, size = read_set_begin
-        for i in 1..size
+        size.times do
           skip(etype)
         end
         read_set_end
       elsif type === Types::LIST
         etype, size = read_list_begin
-        for i in 1..size
+        size.times do
           skip(etype)
         end
         read_list_end
