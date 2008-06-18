@@ -44,34 +44,34 @@ module Thrift
     def write_struct_begin(name); nil; end
     deprecate! :writeStructBegin => :write_struct_begin
 
-    def write_struct_end(); nil; end
+    def write_struct_end; nil; end
     deprecate! :writeStructEnd => :write_struct_end
 
     def write_field_begin(name, type, id); nil; end
     deprecate! :writeFieldBegin => :write_field_begin
 
-    def write_field_end(); nil; end
+    def write_field_end; nil; end
     deprecate! :writeFieldEnd => :write_field_end
 
-    def write_field_stop(); nil; end
+    def write_field_stop; nil; end
     deprecate! :writeFieldStop => :write_field_stop
 
     def write_map_begin(ktype, vtype, size); nil; end
     deprecate! :writeMapBegin => :write_map_begin
 
-    def write_map_end(); nil; end
+    def write_map_end; nil; end
     deprecate! :writeMapEnd => :write_map_end
 
     def write_list_begin(etype, size); nil; end
     deprecate! :writeListBegin => :write_list_begin
 
-    def write_list_end(); nil; end
+    def write_list_end; nil; end
     deprecate! :writeListEnd => :write_list_end
 
     def write_set_begin(etype, size); nil; end
     deprecate! :writeSetBegin => :write_set_begin
 
-    def write_set_end(); nil; end
+    def write_set_end; nil; end
     deprecate! :writeSetEnd => :write_set_end
 
     def write_bool(bool); nil; end
@@ -95,61 +95,61 @@ module Thrift
     def write_string(str); nil; end
     deprecate! :writeString => :write_string
 
-    def read_message_begin(); nil; end
+    def read_message_begin; nil; end
     deprecate! :readMessageBegin => :read_message_begin
 
-    def read_message_end(); nil; end
+    def read_message_end; nil; end
     deprecate! :readMessageEnd => :read_message_end
 
-    def read_struct_begin(); nil; end
+    def read_struct_begin; nil; end
     deprecate! :readStructBegin => :read_struct_begin
 
-    def read_struct_end(); nil; end
+    def read_struct_end; nil; end
     deprecate! :readStructEnd => :read_struct_end
 
-    def read_field_begin(); nil; end
+    def read_field_begin; nil; end
     deprecate! :readFieldBegin => :read_field_begin
 
-    def read_field_end(); nil; end
+    def read_field_end; nil; end
     deprecate! :readFieldEnd => :read_field_end
 
-    def read_map_begin(); nil; end
+    def read_map_begin; nil; end
     deprecate! :readMapBegin => :read_map_begin
 
-    def read_map_end(); nil; end
+    def read_map_end; nil; end
     deprecate! :readMapEnd => :read_map_end
 
-    def read_list_begin(); nil; end
+    def read_list_begin; nil; end
     deprecate! :readListBegin => :read_list_begin
 
-    def read_list_end(); nil; end
+    def read_list_end; nil; end
     deprecate! :readListEnd => :read_list_end
 
-    def read_set_begin(); nil; end
+    def read_set_begin; nil; end
     deprecate! :readSetBegin => :read_set_begin
 
-    def read_set_end(); nil; end
+    def read_set_end; nil; end
     deprecate! :readSetEnd => :read_set_end
 
-    def read_bool(); nil; end
+    def read_bool; nil; end
     deprecate! :readBool => :read_bool
 
-    def read_byte(); nil; end
+    def read_byte; nil; end
     deprecate! :readByte => :read_byte
 
-    def read_i16(); nil; end
+    def read_i16; nil; end
     deprecate! :readI16 => :read_i16
 
-    def read_i32(); nil; end
+    def read_i32; nil; end
     deprecate! :readI32 => :read_i32
 
-    def read_i64(); nil; end
+    def read_i64; nil; end
     deprecate! :readI64 => :read_i64
 
-    def read_double(); nil; end
+    def read_double; nil; end
     deprecate! :readDouble => :read_double
 
-    def read_string(); nil; end
+    def read_string; nil; end
     deprecate! :readString => :read_string
 
     def write_field(name, type, fid, value)
@@ -206,50 +206,50 @@ module Thrift
       if type === Types::STOP
         nil
       elsif type === Types::BOOL
-        read_bool()
+        read_bool
       elsif type === Types::BYTE
-        read_byte()
+        read_byte
       elsif type === Types::I16
-        read_i16()
+        read_i16
       elsif type === Types::I32
-        read_i32()
+        read_i32
       elsif type === Types::I64
-        read_i64()
+        read_i64
       elsif type === Types::DOUBLE
-        read_double()
+        read_double
       elsif type === Types::STRING
-        read_string()
+        read_string
       elsif type === Types::STRUCT
-        read_struct_begin()
+        read_struct_begin
         while true
-          name, type, id = read_field_begin()
+          name, type, id = read_field_begin
           if type === Types::STOP
             break
           else
             skip(type)
-            read_field_end()
+            read_field_end
           end
-          read_struct_end()
-        end
+        end  
+        read_struct_end
       elsif type === Types::MAP
-        ktype, vtype, size = read_map_begin()
+        ktype, vtype, size = read_map_begin
         for i in 1..size
           skip(ktype)
           skip(vtype)
         end
-        read_map_end()
+        read_map_end
       elsif type === Types::SET
-        etype, size = read_set_begin()
+        etype, size = read_set_begin
         for i in 1..size
           skip(etype)
         end
-        read_set_end()
+        read_set_end
       elsif type === Types::LIST
-        etype, size = read_list_begin()
+        etype, size = read_list_begin
         for i in 1..size
           skip(etype)
         end
-        read_list_end()
+        read_list_end
       end
     end
 
