@@ -239,7 +239,8 @@ args[:class] = resolve_const(ENV['THRIFT_SERVER']) || Thrift::NonblockingServer
 server = Server.new(args)
 server.start
 
-args = { :num_processes => 40, :host => HOST, :port => PORT }
+args = { :host => HOST, :port => PORT }
+args[:num_processes] = (ENV['THRIFT_NUM_PROCESSES'] || 40).to_i
 args[:clients_per_process] = (ENV['THRIFT_NUM_CLIENTS'] || 5).to_i
 args[:calls_per_client] = (ENV['THRIFT_NUM_CALLS'] || 50).to_i
 args[:interpreter] = ENV['THRIFT_CLIENT_INTERPRETER'] || ENV['THRIFT_INTERPRETER'] || "ruby"
