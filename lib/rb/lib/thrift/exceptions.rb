@@ -1,7 +1,7 @@
 module Thrift
   class Exception < StandardError
     def initialize(message)
-      super(message)
+      super
       @message = message
     end
 
@@ -21,7 +21,7 @@ module Thrift
     attr_reader :type
 
     def initialize(type=UNKNOWN, message=nil)
-      super(message)
+      super
       @type = type
     end
 

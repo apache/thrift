@@ -10,6 +10,10 @@ class Module
   # Wraps the given methods to print a warning and call the real method
   # Example:
   #   deprecate! :readAll => :read_all
+  #--
+  # Yeah, this is ugly, passing a string to module_eval, but unfortunately
+  # using a block removes the ability to pass blocks to the defined method
+  # and breaks spec
   def deprecate!(methods)
     return unless Thrift::DEPRECATION
     methods.each_pair do |old, new|
