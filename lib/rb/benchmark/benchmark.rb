@@ -5,7 +5,7 @@ require 'thrift/server/nonblockingserver'
 require 'thrift/transport/unixsocket'
 require 'stringio'
 
-HOST = 'localhost'
+HOST = '127.0.0.1'
 PORT = 42587
 
 ###############
