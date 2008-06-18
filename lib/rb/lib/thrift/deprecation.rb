@@ -9,6 +9,7 @@ class Module
   # Example:
   #   deprecate! :readAll => :read_all
   def deprecate!(methods)
+    return unless Thrift::DEPRECATION
     methods.each_pair do |old, new|
       module_eval <<-EOF
         def #{old}(*args, &block)
@@ -35,6 +36,7 @@ module Kernel
   # another idea is to not make the old name a pointer to the new, but rather
   # a pointer to a proxy class that logs deprecation warnings and forwards methods
   def deprecate_class!(klasses)
+    return unless Thrift::DEPRECATION
     klasses.each_pair do |old, new|
       Object.const_set old, new
     end

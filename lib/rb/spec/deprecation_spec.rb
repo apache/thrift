@@ -1,6 +1,23 @@
 require File.dirname(__FILE__) + '/spec_helper'
 
+shared_examples_for "deprecation" do
+  before(:all) do
+    # ensure deprecation is turned on
+    Thrift.send :remove_const, :DEPRECATION
+    Thrift.const_set :DEPRECATION, true
+  end
+
+  after(:all) do
+    # now turn it off again
+    # no other specs should want it
+    Thrift.send :remove_const, :DEPRECATION
+    Thrift.const_set :DEPRECATION, false
+  end
+end
+
 describe 'deprecate!' do
+  it_should_behave_like "deprecation"
+
   def stub_stderr(callstr)
     STDERR.should_receive(:puts).with("Warning: calling deprecated method #{callstr}")
   end
@@ -135,6 +152,8 @@ describe 'deprecate!' do
 end
 
 describe "deprecate_class!" do
+  it_should_behave_like "deprecation"
+
   it "should create a new global constant that points to the old one" do
     begin
       klass = Class.new do
@@ -146,7 +165,7 @@ describe "deprecate_class!" do
       DeprecationSpecOldClass.should eql(klass)
       DeprecationSpecOldClass.new.foo.should == "foo"
     ensure
-      Object.send :remove_const, :DeprecationSpecOldClass
+      Object.send :remove_const, :DeprecationSpecOldClass if Object.const_defined? :DeprecationSpecOldClass
     end
   end
 end
