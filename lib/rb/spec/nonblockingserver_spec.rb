@@ -142,7 +142,7 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
             when :hello
               result << client.greeting(true) # ignore result
             when :sleep
-              client.sleep(0.5)
+              client.sleep(args[0] || 0.5)
               result << :slept
             when :shutdown
               client.shutdown
@@ -227,11 +227,12 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
     it "should kill active messages when they don't expire while shutting down" do
       result = Queue.new
       client = setup_client_thread(result)
-      client << :block
+      client << [:sleep, 10]
       sleep 0.1 # start processing the client's message
       @server.shutdown(1)
       @catch_exceptions = true
       @server_thread.join(3).should_not be_nil
+      result.should be_empty
     end
 
     it "should allow shutting down in response to a message" do
