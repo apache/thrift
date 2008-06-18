@@ -66,6 +66,15 @@ class ThriftSocketSpec < Spec::ExampleGroup
       @handle.should_receive(:recv).with(17).and_return("test data")
       @socket.read(17).should == "test data"
     end
+
+    it "should declare itself as closed when it has an error" do
+      TCPSocket.should_receive(:new).and_return(@handle)
+      @socket.open
+      @handle.should_receive(:write).with("fail").and_raise(StandardError)
+      @socket.should be_open
+      lambda { @socket.write("fail") }.should raise_error
+      @socket.should_not be_open
+    end
   end
 
   describe ServerSocket do
