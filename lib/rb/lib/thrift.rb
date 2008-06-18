@@ -18,13 +18,13 @@ require 'thrift/types'
 TType = Thrift::Types
 TMessageType = Thrift::MessageTypes
 
-require 'thrift/tprocessor'
+require 'thrift/processor'
 TProcessor = Thrift::Processor
 
-require 'thrift/thrift_client'
+require 'thrift/client'
 ThriftClient = Thrift::Client
 
-require 'thrift/thrift_struct'
+require 'thrift/struct'
 ThriftStruct = Thrift::Struct
 
 require 'thrift/protocol/tprotocol'
