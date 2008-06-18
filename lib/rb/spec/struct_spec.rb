@@ -1,5 +1,6 @@
 require File.dirname(__FILE__) + '/spec_helper'
-require File.dirname(__FILE__) + "/gen-rb/ThriftSpec_types"
+$:.unshift File.dirname(__FILE__) + "/gen-rb"
+require "ThriftSpec_types"
 
 class ThriftStructSpec < Spec::ExampleGroup
   include Thrift

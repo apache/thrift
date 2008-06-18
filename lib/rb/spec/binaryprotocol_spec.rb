@@ -294,7 +294,7 @@ class ThriftBinaryProtocolSpec < Spec::ExampleGroup
 
   describe BinaryProtocolFactory do
     it "should create a BinaryProtocol" do
-      BinaryProtocolFactory.new.get_protocol(mock("MockTransport")).should be_instance_of BinaryProtocol
+      BinaryProtocolFactory.new.get_protocol(mock("MockTransport")).should be_instance_of(BinaryProtocol)
     end
   end
 end
