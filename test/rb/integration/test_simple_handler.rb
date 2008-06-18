@@ -33,7 +33,7 @@ class TestHandler
   end
 
   def testException(thing)
-    raise Thrift::Test::Xception, 'error'
+    raise Thrift::Test::Xception, :message => 'error'
   end
 
 end
