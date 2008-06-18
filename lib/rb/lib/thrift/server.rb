@@ -15,11 +15,11 @@ module Thrift
     def initialize(processor, serverTransport, transportFactory=nil, protocolFactory=nil)
       @processor = processor
       @serverTransport = serverTransport
-      @transportFactory = transportFactory ? transportFactory : Thrift::TransportFactory.new()
-      @protocolFactory = protocolFactory ? protocolFactory : Thrift::BinaryProtocolFactory.new()
+      @transportFactory = transportFactory ? transportFactory : Thrift::TransportFactory.new
+      @protocolFactory = protocolFactory ? protocolFactory : Thrift::BinaryProtocolFactory.new
     end
 
-    def serve(); nil; end
+    def serve; nil; end
   end
   deprecate_class! :TServer => Server
 
@@ -28,11 +28,11 @@ module Thrift
       super(processor, serverTransport, transportFactory, protocolFactory)
     end
 
-    def serve()
+    def serve
       begin
-        @serverTransport.listen()
+        @serverTransport.listen
         while (true)
-          client = @serverTransport.accept()
+          client = @serverTransport.accept
           trans = @transportFactory.get_transport(client)
           prot = @protocolFactory.get_protocol(trans)
           begin
@@ -42,11 +42,11 @@ module Thrift
           rescue Thrift::TransportException, Thrift::ProtocolException => ttx
             #print ttx,"\n"
           ensure
-            trans.close()
+            trans.close
           end
         end
       ensure
-        @serverTransport.close()
+        @serverTransport.close
       end
     end
   end
@@ -61,11 +61,11 @@ end
 
 module Thrift
   class ThreadedServer < Server
-    def serve()
+    def serve
       begin
-        @serverTransport.listen()
+        @serverTransport.listen
         while (true)
-          client = @serverTransport.accept()
+          client = @serverTransport.accept
           trans = @transportFactory.get_transport(client)
           prot = @protocolFactory.get_protocol(trans)
           Thread.new(prot, trans) do |p, t|
@@ -75,12 +75,12 @@ module Thrift
               end
             rescue Thrift::TransportException, Thrift::ProtocolException => e
             ensure
-              t.close()
+              t.close
             end
           end
         end
       ensure
-        @serverTransport.close()
+        @serverTransport.close
       end
     end
   end
@@ -105,7 +105,7 @@ module Thrift
     ## exceptions that happen in worker threads simply cause that thread
     ## to die and another to be spawned in its place.
     def serve
-      @serverTransport.listen()
+      @serverTransport.listen
 
       begin
         while (true)
@@ -113,7 +113,7 @@ module Thrift
           Thread.new do
             begin
               while (true)
-                client = @serverTransport.accept()
+                client = @serverTransport.accept
                 trans = @transportFactory.get_transport(client)
                 prot = @protocolFactory.get_protocol(trans)
                 begin
@@ -122,18 +122,18 @@ module Thrift
                   end
                 rescue Thrift::TransportException, Thrift::ProtocolException => e
                 ensure
-                  trans.close()
+                  trans.close
                 end
               end
             rescue Exception => e
               @exception_q.push(e)
             ensure
-              @thread_q.pop() # thread died!
+              @thread_q.pop # thread died!
             end
           end
         end
       ensure
-        @serverTransport.close()
+        @serverTransport.close
       end
     end
   end
