@@ -1,161 +1,269 @@
 require 'thrift/server'
-require 'sync'
-# thrift/server already imports fastthread/thread
+require 'logger'
+require 'thread'
 
 module Thrift
   # this class expects to always use a FramedTransport for reading messages
-  #--
-  # this isn't very pretty, but we're working around the fact that FramedTransport
-  # and the processors are all written in a synchronous manner.
-  # So lets read data off the wire ourselves, check if we have a full frame, and
-  # only then hand it to the transport to parse
-  #
-  # we inherit from ThreadPoolServer for the initialize/rescuable_serve methods
-  class NonblockingServer < ThreadPoolServer
-    def initialize(processor, serverTransport, transportFactory=nil, protocolFactory=nil, num=20)
-      super
-      @sync = Sync.new
+  class NonblockingServer < Server
+    def initialize(processor, serverTransport, transportFactory=nil, protocolFactory=nil, num=20, logger = nil)
+      super(processor, serverTransport, transportFactory, protocolFactory)
+      @num_threads = num
+      if logger.nil?
+        @logger = Logger.new(STDERR)
+        @logger.level = Logger::WARN
+      else
+        @logger = logger
+      end
+      @shutdown_semaphore = Mutex.new
     end
 
     def serve
-      @server_thread = Thread.current
+      @logger.info "Starting #{self}"
       @serverTransport.listen
+      @io_manager = start_io_manager
 
       begin
-        connections = {}
-        running_connections = {}
-        # the swapping_connections stuff is to ensure the thread doesn't
-        # put the connection back into the regular list, then have the server
-        # thread process it again, then have the first thread remove it from
-        # the running_connections list
-        swapping_connections = {}
-        thread_group = ThreadGroup.new
         loop do
-          break if @shutdown
-          handles = [@serverTransport.handle]
-          @sync.synchronize(Sync::SH) do
-            handles.concat connections.keys
-          end
-          rd, = select(handles)
-          next if rd.nil?
-          rd.each do |socket|
-            if socket == @serverTransport.handle
-              client = @serverTransport.accept
-              buffer = ''
-              outtrans = @transportFactory.get_transport(client)
-              outprot = @protocolFactory.get_protocol(outtrans)
-              @sync.synchronize(Sync::EX) do
-                connections[client.handle] = [client, buffer, outtrans, outprot]
-              end
-            else
-              client, buffer, outtrans, outprot = nil # for scope
-              @sync.synchronize(Sync::SH) do
-                client, buffer, outtrans, outprot = connections[socket]
-              end
-              if socket.eof?
-                client.close
-                @sync.synchronize(Sync::EX) do
-                  connections.delete(socket)
-                end
-              else
-                buffer << client.read(4096, true)
-                if has_full_frame?(buffer)
-                  @sync.synchronize(Sync::EX) do
-                    running_connections[socket] = connections.delete(socket)
-                  end
-                  @thread_q.push :token
-                  t = Thread.new(Thread.current) do |master|
-                    begin
-                      membuf = MemoryBuffer.new(buffer)
-                      intrans = @transportFactory.get_transport(membuf)
-                      inprot = @protocolFactory.get_protocol(intrans)
-                      @processor.process(inprot, outprot)
-                      if @shutdown
-                        client.close
-                        @sync.synchronize(Sync::EX) do
-                          running_connections.delete(socket)
-                        end
-                      else
-                        @sync.synchronize(Sync::EX) do
-                          swapping_connections[socket] = running_connections.delete(socket)
-                        end
-                      end
-                    rescue => e
-                      outtrans.close
-                      @exception_q.push e
-                    ensure
-                      should_wakeup = false
-                      @sync.synchronize(Sync::EX) do
-                        running_connections.delete(socket)
-                        if swapping_connections.include? socket
-                          connections[socket] = swapping_connections.delete(socket)
-                          should_wakeup = true
-                        end
-                      end
-                      master.wakeup if should_wakeup
-                      intrans.close
-                      @thread_q.pop
-                    end
-                  end
-                  thread_group.add t
-                end
-              end
-            end
-          end
+          socket = @serverTransport.accept
+          @logger.debug "Accepted socket: #{socket.inspect}"
+          @io_manager.add_connection socket
         end
-        if @shutdown
-          @serverTransport.close
-          handles = []
-          @sync.synchronize(Sync::SH) do
-            handles = connections
-            handles.merge! running_connections
-            handles.merge! swapping_connections
-          end
-          handles.values.each do |client, buffer, outtrans, outprot|
-            # can't close completely or we'll break active messages
-            # but lets at least stop accepting input
-            client.handle.close_read
-          end
-          start = Time.now.to_f
-          until thread_group.list.empty?
-            if @shutdown_timeout
-              now = Time.now.to_f
-              cur_timeout = @shutdown_timeout - (now - start)
-              break if cur_timeout <= 0
-              thread_group.list.first.join(cur_timeout)
-            else
-              thread_group.list.first.join
-            end
-          end
-          thread_group.list.each { |t| t.kill } if @shutdown_kill
-          # now kill connections completely if they still exists
-          handles.values.each do |client, buffer, outtrans, outprot|
-            client.close
-          end
-        end
-      ensure
-        @serverTransport.close
+      rescue IOError => e
+        # we must be shutting down
+        @logger.info "#{self} is shutting down, goodbye"
       end
+    ensure
+      @serverTransport.close
+      @io_manager.ensure_closed unless @io_manager.nil?
     end
 
-    # Stop accepting new messages and wait for active messages to finish
-    # If the given timeout passes without the active messages finishing,
-    # control will exit from #serve and leave the remaining threads active.
-    # If you pass true for kill, the remaining threads will be reaped instead.
-    # A false timeout means wait indefinitely
-    def shutdown(timeout = nil, kill = false)
-      @shutdown_timeout = timeout
-      @shutdown_kill = kill
-      @shutdown = true
-      @server_thread.wakeup
+    def shutdown(timeout = 0, block = true)
+      @shutdown_semaphore.synchronize do
+        return if @is_shutdown
+        @is_shutdown = true
+      end
+      # nonblocking is intended for calling from within a Handler
+      # but we can't change the order of operations here, so lets thread
+      shutdown_proc = lambda do
+        @io_manager.shutdown(timeout)
+        @serverTransport.close # this will break the accept loop
+      end
+      if block
+        shutdown_proc.call
+      else
+        Thread.new &shutdown_proc
+      end
     end
 
     private
 
-    def has_full_frame?(buf)
-      return no unless buf.length >= 4
-      size = buf.unpack('N').first
-      size + 4 <= buf.length
+    def start_io_manager
+      iom = IOManager.new(@processor, @serverTransport, @transportFactory, @protocolFactory, @num_threads, @logger)
+      iom.spawn
+      iom
+    end
+
+    class IOManager # :nodoc:
+      def initialize(processor, serverTransport, transportFactory, protocolFactory, num, logger)
+        @processor = processor
+        @serverTransport = serverTransport
+        @transportFactory = transportFactory
+        @protocolFactory = protocolFactory
+        @num_threads = num
+        @logger = logger
+        @connections = []
+        @buffers = Hash.new { |h,k| h[k] = '' }
+        @signal_queue = Queue.new
+        @signal_pipes = IO.pipe
+        @signal_pipes[1].sync = true
+        @worker_queue = Queue.new
+        @shutdown_queue = Queue.new
+      end
+
+      def add_connection(socket)
+        signal [:connection, socket]
+      end
+
+      def spawn
+        @iom_thread = Thread.new do
+          @logger.debug "Starting #{self}"
+          run
+        end
+      end
+
+      def shutdown(timeout = 0)
+        @logger.debug "#{self} is shutting down workers"
+        @worker_queue.clear
+        @num_threads.times { @worker_queue.push [:shutdown] }
+        signal [:shutdown, timeout]
+        @shutdown_queue.pop
+        @signal_pipes[0].close
+        @signal_pipes[1].close
+        @logger.debug "#{self} is shutting down, goodbye"
+      end
+
+      def ensure_closed
+        kill_worker_threads if @worker_threads
+        @iom_thread.kill
+      end
+
+      private
+
+      def run
+        spin_worker_threads
+
+        loop do
+          rd, = select([@signal_pipes[0], *@connections])
+          if rd.delete @signal_pipes[0]
+            break if read_signals == :shutdown
+          end
+          rd.each do |fd|
+            if fd.handle.eof?
+              remove_connection fd
+            else
+              read_connection fd
+            end
+          end
+        end
+        join_worker_threads(@shutdown_timeout)
+      ensure
+        @shutdown_queue.push :shutdown
+      end
+
+      def read_connection(fd)
+        buffer = ''
+        begin
+          buffer << fd.read_nonblock(4096) while true
+        rescue Errno::EAGAIN, EOFError
+          @buffers[fd] << buffer
+        end
+        frame = slice_frame!(@buffers[fd])
+        if frame
+          @worker_queue.push [:frame, fd, frame]
+        end
+      end
+
+      def spin_worker_threads
+        @logger.debug "#{self} is spinning up worker threads"
+        @worker_threads = []
+        @num_threads.times do
+          @worker_threads << spin_thread
+        end
+      end
+
+      def spin_thread
+        Worker.new(@processor, @transportFactory, @protocolFactory, @logger, @worker_queue).spawn
+      end
+
+      def signal(msg)
+        @signal_queue << msg
+        @signal_pipes[1].write " "
+      end
+
+      def read_signals
+        # clear the signal pipe
+        begin
+          @signal_pipes[0].read_nonblock(1024) while true
+        rescue Errno::EAGAIN
+        end
+        # now read the signals
+        begin
+          loop do
+            signal, obj = @signal_queue.pop(true)
+            case signal
+            when :connection
+              @connections << obj
+            when :shutdown
+              @shutdown_timeout = obj
+              return :shutdown
+            end
+          end
+        rescue ThreadError
+          # out of signals
+        end
+      end
+
+      def remove_connection(fd)
+        # don't explicitly close it, a thread may still be writing to it
+        @connections.delete fd
+        @buffers.delete fd
+      end
+
+      def join_worker_threads(shutdown_timeout)
+        start = Time.now
+        @worker_threads.each do |t|
+          if shutdown_timeout > 0
+            timeout = Time.now - (start + shutdown_timeout)
+            break if timeout <= 0
+            t.join(timeout)
+          else
+            t.join
+          end
+        end
+        kill_worker_threads
+      end
+
+      def kill_worker_threads
+        @worker_threads.each do |t|
+          t.kill if t.status
+        end
+        @worker_threads.clear
+      end
+
+      def slice_frame!(buf)
+        if buf.length >= 4
+          size = buf.unpack('N').first
+          if buf.length >= size + 4
+            buf.slice!(0, size + 4)
+          else
+            nil
+          end
+        else
+          nil
+        end
+      end
+
+      class Worker # :nodoc:
+        def initialize(processor, transportFactory, protocolFactory, logger, queue)
+          @processor = processor
+          @transportFactory = transportFactory
+          @protocolFactory = protocolFactory
+          @logger = logger
+          @queue = queue
+        end
+
+        def spawn
+          Thread.new do
+            @logger.debug "#{self} is spawning"
+            run
+          end
+        end
+
+        private
+
+        def run
+          loop do
+            cmd, *args = @queue.pop
+            case cmd
+            when :shutdown
+              @logger.debug "#{self} is shutting down, goodbye"
+              break
+            when :frame
+              fd, frame = args
+              begin
+                otrans = @transportFactory.get_transport(fd)
+                oprot = @protocolFactory.get_protocol(otrans)
+                membuf = MemoryBuffer.new(frame)
+                itrans = @transportFactory.get_transport(membuf)
+                iprot = @protocolFactory.get_protocol(itrans)
+                @processor.process(iprot, oprot)
+              rescue => e
+                @logger.error "#{Thread.current.inspect} raised error: #{e.inspect}\n#{e.backtrace.join("\n")}"
+              end
+            end
+          end
+        end
+      end
     end
   end
 end
