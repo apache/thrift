@@ -99,6 +99,7 @@ module Thrift
     ## continue to run while the exception is being handled.)
     def rescuable_serve
       Thread.new { serve } unless @running
+      @running = true
       raise @exception_q.pop
     end
 
