@@ -137,6 +137,10 @@ class ThriftTransportSpec < Spec::ExampleGroup
       ftrans.read(16).should == "a frame"
     end
 
+    it "should return nothing if asked for <= 0" do
+      FramedTransport.new(@trans).read(-2).should == ""
+    end
+
     it "should pull a new frame when the first is exhausted" do
       frame = "this is a frame"
       frame2 = "yet another frame"
@@ -157,6 +161,15 @@ class ThriftTransportSpec < Spec::ExampleGroup
       ftrans.write("foo")
       ftrans.write("bar")
       ftrans.write("this is a frame")
+    end
+
+    it "should write slices of the buffer" do
+      ftrans = FramedTransport.new(@trans)
+      ftrans.write("foobar", 3)
+      ftrans.write("barfoo", 1)
+      @trans.stub!(:flush)
+      @trans.should_receive(:write).with("\000\000\000\004foob")
+      ftrans.flush
     end
 
     it "should flush frames with a 4-byte header" do
