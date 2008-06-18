@@ -13,6 +13,14 @@ shared_examples_for "deprecation" do
     Thrift.send :remove_const, :DEPRECATION
     Thrift.const_set :DEPRECATION, false
   end
+
+  def ensure_const_removed(name, &block)
+    begin
+      block.call
+    ensure
+      Object.send :remove_const, name if Object.const_defined? name
+    end
+  end
 end
 
 describe 'deprecate!' do
@@ -175,7 +183,7 @@ describe "deprecate_class!" do
   end
 
   it "should create a new global constant that points to the old one" do
-    begin
+    ensure_const_removed :DeprecationSpecOldClass do
       klass = Class.new do
         def foo
           "foo"
@@ -185,15 +193,13 @@ describe "deprecate_class!" do
       stub_stderr(klass)
       ::DeprecationSpecOldClass.should eql(klass)
       ::DeprecationSpecOldClass.new.foo.should == "foo"
-    ensure
-      Object.send :remove_const, :DeprecationSpecOldClass if Object.const_defined? :DeprecationSpecOldClass
     end
   end
 
   it "should create a global constant even from inside a module" do
-    begin
+    ensure_const_removed :DeprecationSpecOldClass do
       klass = nil #define scoping
-      mod = Module.new do
+      Module.new do
         klass = Class.new do
           def foo
             "foo"
@@ -204,13 +210,11 @@ describe "deprecate_class!" do
       stub_stderr(klass)
       ::DeprecationSpecOldClass.should eql(klass)
       ::DeprecationSpecOldClass.new.foo.should == "foo"
-    ensure
-      Object.send :remove_const, :DeprecationSpecOldClass if Object.const_defined? :DeprecationSpecOldClass
     end
   end
 
   it "should not prevent the deprecated class from being a superclass" do
-    begin
+    ensure_const_removed :DeprecationSpecOldClass do
       klass = Class.new do
         def foo
           "foo"
@@ -225,8 +229,96 @@ describe "deprecate_class!" do
       stub_stderr(klass)
       subklass.superclass.should eql(klass)
       subklass.new.foo.should == "subclass foo"
-    ensure
-      Object.send :remove_const, :DeprecationSpecOldClass if Object.const_defined? :DeprecationSpecOldClass
+    end
+  end
+end
+
+describe "deprecate_module!" do
+  it_should_behave_like "deprecation"
+
+  def stub_stderr(callstr, offset=1)
+    STDERR.should_receive(:puts).with("Warning: module #{callstr} is deprecated")
+    line = caller.first[/\d+$/].to_i + offset
+    STDERR.should_receive(:puts).with("  from #{__FILE__}:#{line}")
+  end
+
+  it "should create a new global constant that points to the old one" do
+    ensure_const_removed :DeprecationSpecOldModule do
+      mod = Module.new do
+        def self.foo
+          "foo"
+        end
+      end
+      deprecate_module! :DeprecationSpecOldModule => mod
+      stub_stderr(mod)
+      ::DeprecationSpecOldModule.should eql(mod)
+      ::DeprecationSpecOldModule.foo.should == "foo"
+    end
+  end
+
+  it "should create a global constant even from inside a module" do
+    ensure_const_removed :DeprecationSpecOldModule do
+      mod = nil # scoping
+      Module.new do
+        mod = Module.new do
+          def self.foo
+            "foo"
+          end
+        end
+        deprecate_module! :DeprecationSpecOldModule => mod
+      end
+      stub_stderr(mod)
+      ::DeprecationSpecOldModule.should eql(mod)
+      ::DeprecationSpecOldModule.foo.should == "foo"
+    end
+  end
+
+  it "should work for modules that extend themselves" do
+    ensure_const_removed :DeprecationSpecOldModule do
+      mod = Module.new do
+        extend self
+        def foo
+          "foo"
+        end
+      end
+      deprecate_module! :DeprecationSpecOldModule => mod
+      stub_stderr(mod)
+      ::DeprecationSpecOldModule.should eql(mod)
+      ::DeprecationSpecOldModule.foo.should == "foo"
+    end
+  end
+
+  it "should work for modules included in other modules" do
+    ensure_const_removed :DeprecationSpecOldModule do
+      mod = Module.new do
+        def foo
+          "foo"
+        end
+      end
+      deprecate_module! :DeprecationSpecOldModule => mod
+      mod2 = Module.new do
+        class << self
+          include ::DeprecationSpecOldModule
+        end
+      end
+      stub_stderr(mod)
+      mod2.foo.should == "foo"
+    end
+  end
+
+  it "should work for modules included in classes" do
+    ensure_const_removed :DeprecationSpecOldModule do
+      mod = Module.new do
+        def foo
+          "foo"
+        end
+      end
+      deprecate_module! :DeprecationSpecOldModule => mod
+      klass = Class.new do
+        include ::DeprecationSpecOldModule
+      end
+      stub_stderr(mod)
+      klass.new.foo.should == "foo"
     end
   end
 end
