@@ -269,3 +269,18 @@ class TMemoryBuffer < TTransport
   def flush
   end
 end
+
+## Very very simple implementation of wrapping two objects, one with a #read
+## method and one with a #write method, into a transport for thrift.
+##
+## Assumes both objects are open, remain open, don't require flushing, etc.
+class TIOStreamTransport < TTransport
+  def initialize input, output
+    @input = input
+    @output = output
+  end
+
+  def isOpen(); true end
+  def read(sz); @input.read(sz) end
+  def write(buf); @output.write(buf) end
+end
