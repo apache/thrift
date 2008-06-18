@@ -53,6 +53,7 @@ end
 # let our host know that the interpreter has started
 # ideally we'd wait until the server was serving, but we don't have a hook for that
 Marshal.dump(:started, STDOUT)
+STDOUT.flush
 
 host, port, serverklass = ARGV
 
