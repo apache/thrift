@@ -26,46 +26,46 @@ module Thrift
     end
 
     def read(iprot)
-      iprot.readStructBegin()
+      iprot.read_struct_begin()
       while true
-        fname, ftype, fid = iprot.readFieldBegin()
+        fname, ftype, fid = iprot.read_field_begin()
         if (ftype === Types::STOP)
           break
         end
         if (fid == 1)
           if (ftype === Types::STRING)
-            @message = iprot.readString();
+            @message = iprot.read_string();
           else
             iprot.skip(ftype)
           end
         elsif (fid == 2)
           if (ftype === Types::I32)
-            @type = iprot.readI32();
+            @type = iprot.read_i32();
           else
             iprot.skip(ftype)
           end
         else
           iprot.skip(ftype)
         end
-        iprot.readFieldEnd()
+        iprot.read_field_end()
       end
-      iprot.readStructEnd()
+      iprot.read_struct_end()
     end
 
     def write(oprot)
-      oprot.writeStructBegin('Thrift::ApplicationException')
+      oprot.write_struct_begin('Thrift::ApplicationException')
       if (@message != nil)
-        oprot.writeFieldBegin('message', Types::STRING, 1)
-        oprot.writeString(@message)
-        oprot.writeFieldEnd()
+        oprot.write_field_begin('message', Types::STRING, 1)
+        oprot.write_string(@message)
+        oprot.write_field_end()
       end
       if (@type != nil)
-        oprot.writeFieldBegin('type', Types::I32, 2)
-        oprot.writeI32(@type)
-        oprot.writeFieldEnd()
+        oprot.write_field_begin('type', Types::I32, 2)
+        oprot.write_i32(@type)
+        oprot.write_field_end()
       end
-      oprot.writeFieldStop()
-      oprot.writeStructEnd()
+      oprot.write_field_stop()
+      oprot.write_struct_end()
     end
 
   end
