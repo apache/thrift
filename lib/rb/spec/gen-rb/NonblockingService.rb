@@ -43,12 +43,12 @@ require 'ThriftSpec_types'
             raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'block failed: unknown result')
           end
 
-          def unblock()
-            send_unblock()
+          def unblock(n)
+            send_unblock(n)
           end
 
-          def send_unblock()
-            send_message('unblock', Unblock_args)
+          def send_unblock(n)
+            send_message('unblock', Unblock_args, :n => n)
           end
           def shutdown()
             send_shutdown()
@@ -92,7 +92,7 @@ require 'ThriftSpec_types'
 
           def process_unblock(seqid, iprot, oprot)
             args = read_args(iprot, Unblock_args)
-            @handler.unblock()
+            @handler.unblock(args.n)
             return
           end
 
@@ -146,8 +146,9 @@ require 'ThriftSpec_types'
 
         class Unblock_args
           include Thrift::Struct
+          Thrift::Struct.field_accessor self, :n
           FIELDS = {
-
+            1 => {:type => Thrift::Types::I32, :name => 'n'}
           }
         end
 

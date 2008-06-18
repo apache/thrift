@@ -25,8 +25,8 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
       @queue.pop
     end
 
-    def unblock
-      @queue.num_waiting.times { @queue.push true }
+    def unblock(n)
+      n.times { @queue.push true }
     end
 
     def sleep(time)
@@ -72,12 +72,25 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
     end
   end
 
+  class SpecServerSocket < ServerSocket
+    def initialize(host, port, queue)
+      super(host, port)
+      @queue = queue
+    end
+
+    def listen
+      super
+      @queue.push :listen
+    end
+  end
+
   describe Thrift::NonblockingServer do
     before(:each) do
       @port = 43251
       handler = Handler.new
       processor = NonblockingService::Processor.new(handler)
-      @transport = ServerSocket.new('localhost', @port)
+      queue = Queue.new
+      @transport = SpecServerSocket.new('localhost', @port, queue)
       transportFactory = FramedTransportFactory.new
       logger = Logger.new(STDERR)
       logger.level = Logger::WARN
@@ -92,7 +105,7 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
           master_thread.raise e
         end
       end
-      Thread.pass
+      queue.pop
 
       @clients = []
       @catch_exceptions = false
@@ -119,12 +132,13 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
       Thread.new do
         begin
           client = setup_client
-          while (msg = queue.pop)
+          while (cmd = queue.pop)
+            msg, *args = cmd
             case msg
             when :block
               result << client.block
             when :unblock
-              client.unblock
+              client.unblock(args.first)
             when :hello
               result << client.greeting(true) # ignore result
             when :sleep
@@ -154,9 +168,17 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
     it "should handle concurrent clients" do
       queue = Queue.new
       trans_queue = Queue.new
-      4.times { Thread.new { queue.push setup_client(trans_queue).block } }
+      4.times do
+        Thread.new(Thread.current) do |main_thread|
+          begin
+            queue.push setup_client(trans_queue).block
+          rescue => e
+            main_thread.raise e
+          end
+        end
+      end
       4.times { trans_queue.pop }
-      setup_client.unblock
+      setup_client.unblock(4)
       4.times { queue.pop.should be_true }
     end
 
@@ -175,7 +197,7 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
       queues[6] << :hello
       3.times { result.pop.should == Hello.new }
       client.greeting(true).should == Hello.new
-      queues[5] << :unblock
+      queues[5] << [:unblock, 4]
       4.times { result.pop.should be_true }
       queues[2] << :hello
       result.pop.should == Hello.new
