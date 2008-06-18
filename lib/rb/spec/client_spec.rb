@@ -34,6 +34,19 @@ class ThriftSpec < Spec::ExampleGroup
       @client.send_message('testMessage', klass, :foo => 'foo', :bar => 42)
     end
 
+    it "should increment the sequence id when sending messages" do
+      pending "it seems sequence ids are completely ignored right now" do
+        @prot.should_receive(:write_message_begin).with('testMessage',  MessageTypes::CALL, 0).ordered
+        @prot.should_receive(:write_message_begin).with('testMessage2', MessageTypes::CALL, 1).ordered
+        @prot.should_receive(:write_message_begin).with('testMessage3', MessageTypes::CALL, 2).ordered
+        @prot.stub!(:write_message_end)
+        @prot.stub!(:trans).and_return stub_everything("trans")
+        @client.send_message('testMessage', stub_everything("args class"))
+        @client.send_message('testMessage2', stub_everything("args class"))
+        @client.send_message('testMessage3', stub_everything("args class"))
+      end
+    end
+
     it "should receive a test message" do
       @prot.should_receive(:read_message_begin).and_return [nil, MessageTypes::CALL, 0]
       @prot.should_receive(:read_message_end)
