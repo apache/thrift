@@ -31,74 +31,91 @@ class Module
   end
 end
 
-module Thrift::DeprecationProxy
+module Thrift::DeprecationProxy # :nodoc:
+  # there's a really weird bug in Ruby where class variables behave wrong
+  # when used in a Class.new or #class_eval rather than in a class foo block.
+  CLASS_MAPPING = {}
+  MODULE_MAPPING = {}
   def self.new_class(obj, name)
-    Class.new(obj) do
+    klass = Class.new(obj) do
       klass = self
-      @@self = klass
-      @@obj = obj
       instance_methods.sort.reject { |x| [:__id__,:__send__].include? x.to_sym }.each do |sym|
         undef_method sym
       end
+      define_method :__thrift_deprecation_proxy_klass do
+        klass
+      end
       def method_missing(sym, *args, &block)
-        @@obj.instance_method(sym).bind(self).call(*args, &block)
+        klass = __thrift_deprecation_proxy_klass
+        obj, name, warned = CLASS_MAPPING[klass.__id__]
+        obj.instance_method(sym).bind(self).call(*args, &block)
       end
       (class << self;self;end).class_eval do
-        @@self = klass
-        @@obj = obj
-        @@name = name
-        @@warned = false
         instance_methods.sort.reject { |x| [:__id__,:__send__].include? x.to_sym }.each do |sym|
           undef_method sym
         end
+        define_method :__thrift_deprecation_proxy_klass do
+          klass
+        end
         def method_missing(sym, *args, &block)
-          unless @@warned
-            STDERR.puts "Warning: class #{@@name} is deprecated"
+          klass = __thrift_deprecation_proxy_klass
+          obj, name, warned = CLASS_MAPPING[klass.__id__]
+          unless warned
+            STDERR.puts "Warning: class #{name} is deprecated"
             STDERR.puts "  from #{caller.first}"
-            @@warned = true
+            CLASS_MAPPING[__thrift_deprecation_proxy_klass.__id__][2] = true
           end
-          if @@self.__id__ == self.__id__
-            @@obj.send sym, *args, &block
+          if klass.__id__ == self.__id__
+            obj.send sym, *args, &block
           else
-            @@obj.method(sym).unbind.bind(self).call(*args, &block)
+            obj.method(sym).unbind.bind(self).call(*args, &block)
           end
         end
       end
     end
+    CLASS_MAPPING[klass.__id__] = [obj, name, false]
+    klass
   end
   def self.new_module(obj, name)
-    Module.new do
-      @@obj = obj
-      @@warned = false
-      @@name = name
+    mod = Module.new do
       include obj
       instance_methods.sort.reject { |x| [:__id__,:__send__].include? x.to_sym }.each do |sym|
         undef_method sym
       end
+      define_method :__thrift_deprecation_proxy_module do
+        mod
+      end
       def method_missing(sym, *args, &block)
-        unless @@warned
-          STDERR.puts "Warning: module #{@@name} is deprecated"
+        mod = __thrift_deprecation_proxy_module
+        obj, name, warned = MODULE_MAPPING[mod.__id__]
+        unless warned
+          STDERR.puts "Warning: module #{name} is deprecated"
           STDERR.puts "  from #{caller.first}"
-          @@warned = true
+          MODULE_MAPPING[mod.__id__][2] = true
         end
-        @@obj.instance_method(sym).bind(self).call(*args, &block)
+        obj.instance_method(sym).bind(self).call(*args, &block)
       end
       (class << self;self;end).class_eval do
-        @@obj = obj
-        @@warned = false
         instance_methods.sort.reject { |x| [:__id__,:__send__].include? x.to_sym }.each do |sym|
           undef_method sym
         end
+        define_method :__thrift_deprecation_proxy_module do
+          mod
+        end
         def method_missing(sym, *args, &block)
-          unless @@warned
-            STDERR.puts "Warning: module #{@@name} is deprecated"
+          mod = __thrift_deprecation_proxy_module
+          obj, name, warned = MODULE_MAPPING[mod.__id__]
+          unless warned
+            STDERR.puts "Warning: module #{name} is deprecated"
             STDERR.puts "  from #{caller.first}"
-            @@warned = true
+            MODULE_MAPPING[mod.__id__][2] = true
           end
-          @@obj.send sym, *args, &block
+          obj.send sym, *args, &block
         end
       end
     end
+    MODULE_MAPPING[mod.__id__] = [obj, name, false]
+    mod
   end
 end
 

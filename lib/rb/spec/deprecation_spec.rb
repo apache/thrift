@@ -176,8 +176,8 @@ end
 describe "deprecate_class!" do
   it_should_behave_like "deprecation"
 
-  def stub_stderr(callstr, offset=1)
-    STDERR.should_receive(:puts).with("Warning: class #{callstr} is deprecated")
+  def stub_stderr(klass, offset=1)
+    STDERR.should_receive(:puts).with("Warning: class #{klass} is deprecated")
     line = caller.first[/\d+$/].to_i + offset
     STDERR.should_receive(:puts).with("  from #{__FILE__}:#{line}")
   end
@@ -259,8 +259,8 @@ end
 describe "deprecate_module!" do
   it_should_behave_like "deprecation"
 
-  def stub_stderr(callstr, offset=1)
-    STDERR.should_receive(:puts).with("Warning: module #{callstr} is deprecated")
+  def stub_stderr(mod, offset=1)
+    STDERR.should_receive(:puts).with("Warning: module #{mod} is deprecated")
     line = caller.first[/\d+$/].to_i + offset
     STDERR.should_receive(:puts).with("  from #{__FILE__}:#{line}")
   end
@@ -342,6 +342,29 @@ describe "deprecate_module!" do
       end
       stub_stderr(:DeprecationSpecOldModule)
       klass.new.foo.should == "foo"
+    end
+  end
+
+  it "should not bleed info between deprecations" do
+    ensure_const_removed :DeprecationSpecOldModule do
+      ensure_const_removed :DeprecationSpecOldModule2 do
+        mod = Module.new do
+          def self.foo
+            "foo"
+          end
+        end
+        deprecate_module! :DeprecationSpecOldModule => mod
+        mod2 = Module.new do
+          def self.bar
+            "bar"
+          end
+        end
+        deprecate_module! :DeprecationSpecOldModule2 => mod2
+        stub_stderr(:DeprecationSpecOldModule)
+        ::DeprecationSpecOldModule.foo.should == "foo"
+        stub_stderr(:DeprecationSpecOldModule2)
+        ::DeprecationSpecOldModule2.bar.should == "bar"
+      end
     end
   end
 end
