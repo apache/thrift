@@ -38,4 +38,12 @@ module SpecNamespace
       }
     end
 
+    class BoolStruct
+      include Thrift::Struct
+      attr_accessor :yesno
+      FIELDS = {
+        1 => {:type => Thrift::Types::BOOL, :name => 'yesno', :default => true}
+      }
+    end
+
   end

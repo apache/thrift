@@ -47,6 +47,11 @@ class ThriftStructSpec < Spec::ExampleGroup
     end
   end
 
+  it "should properly initialize boolean values" do
+    struct = BoolStruct.new(:yesno => false)
+    struct.yesno.should be_false
+  end
+
   it "should have proper == semantics" do
     Foo.new.should_not == Hello.new
     Foo.new.should == Foo.new

@@ -12,3 +12,7 @@ struct Foo {
   5: map<i32, map<string, double>> complex,
   6: set<i16> shorts = [5, 17, 239]
 }
+
+struct BoolStruct {
+  1: bool yesno = 1
+}
