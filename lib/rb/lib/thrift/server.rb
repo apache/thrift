@@ -125,7 +125,7 @@ module Thrift
                   trans.close
                 end
               end
-            rescue Exception => e
+            rescue => e
               @exception_q.push(e)
             ensure
               @thread_q.pop # thread died!
