@@ -124,7 +124,7 @@ module Thrift
     end
 
     def open?
-      return @transport.open?
+      @transport.open?
     end
 
     def open
