@@ -272,4 +272,10 @@ class ThriftSpec < Spec::ExampleGroup
       @prot.read_string.should == str
     end
   end
+
+  describe BinaryProtocolFactory do
+    it "should create a BinaryProtocol" do
+      BinaryProtocolFactory.new.get_protocol(mock("MockTransport")).should be_instance_of BinaryProtocol
+    end
+  end
 end
