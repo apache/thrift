@@ -65,7 +65,7 @@ class BenchmarkManager
     puts "Spawning benchmark processes..."
     @num_processes.times do
       spawn
-      sleep 0.05 # space out spawns
+      sleep 0.01 # space out spawns
     end
     collect_output
     @benchmark_end = Time.now # we know the procs are done here
