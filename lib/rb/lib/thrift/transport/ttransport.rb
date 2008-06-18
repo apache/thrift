@@ -275,12 +275,12 @@ end
 ##
 ## Assumes both objects are open, remain open, don't require flushing, etc.
 class TIOStreamTransport < TTransport
-  def initialize input, output
+  def initialize(input, output)
     @input = input
     @output = output
   end
 
-  def isOpen(); true end
+  def isOpen; true end
   def read(sz); @input.read(sz) end
   def write(buf); @output.write(buf) end
 end

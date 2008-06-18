@@ -9,12 +9,12 @@ require 'mongrel'
 ## Sticks a service on a URL, using mongrel to do the HTTP work
 class TSimpleMongrelHTTPServer
   class Handler < Mongrel::HttpHandler
-    def initialize processor, protocol_factory
+    def initialize(processor, protocol_factory)
       @processor = processor
       @protocol_factory = protocol_factory
     end
 
-    def process request, response
+    def process(request, response)
       unless request.params["REQUEST_METHOD"] == "POST"
         response.start(404) { } # better way?
         return
@@ -28,7 +28,7 @@ class TSimpleMongrelHTTPServer
     end
   end
 
-  def initialize processor, opts={}
+  def initialize(processor, opts={})
     port = opts[:port] || 80
     ip = opts[:ip] || "0.0.0.0"
     path = opts[:path] || ""
