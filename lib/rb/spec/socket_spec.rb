@@ -5,7 +5,7 @@ class ThriftSocketSpec < Spec::ExampleGroup
 
   before(:each) do
     @socket = Socket.new
-    @handle = mock("Handle")
+    @handle = mock("Handle", :closed? => false)
     @handle.stub!(:close)
   end
 
@@ -107,7 +107,7 @@ class ThriftSocketSpec < Spec::ExampleGroup
     end
 
     it "should close the handle when closed" do
-      handle = mock("TCPServer")
+      handle = mock("TCPServer", :closed? => false)
       TCPServer.should_receive(:new).with(nil, 1234).and_return(handle)
       @socket.listen
       handle.should_receive(:close)

@@ -48,8 +48,11 @@ module Thrift
         else
           data = @handle.read(sz)
         end
+      rescue Errno::EAGAIN => e
+        # let our parent know that the nonblock read failed
+        raise e
       rescue StandardError => e
-        @handle.close
+        @handle.close unless @handle.closed?
         @handle = nil
         raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
@@ -59,9 +62,17 @@ module Thrift
       data
     end
 
+    def read_nonblock(sz)
+      read(sz, true)
+    end
+
     def close
-      @handle.close unless @handle.nil?
+      @handle.close unless @handle.nil? or @handle.closed?
       @handle = nil
+    end
+
+    def to_io
+      @handle
     end
   end
   deprecate_class! :TSocket => Socket
@@ -95,7 +106,7 @@ module Thrift
     end
 
     def close
-     @handle.close unless @handle.nil?
+     @handle.close unless @handle.nil? or @handle.closed?
      @handle = nil
     end
   end
