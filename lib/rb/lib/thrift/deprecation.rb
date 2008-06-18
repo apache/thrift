@@ -1,9 +1,7 @@
 # provide a backwards-compatible wrapper API and deprecate it
 
 module Thrift
-  unless const_defined?(:DEPRECATION)
-    DEPRECATION = true
-  end
+  DEPRECATION = true unless const_defined?(:DEPRECATION)
 end
 
 class Module
