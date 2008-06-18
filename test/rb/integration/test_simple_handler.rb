@@ -1,17 +1,43 @@
-#!/usr/bin/env ruby
-
-$:.push('gen-rb')
-$:.push('../../lib/rb/lib')
+require File.join(File.dirname(__FILE__), '../test_helper')
 
 require 'thrift/transport/tsocket'
 require 'thrift/protocol/tbinaryprotocol'
 require 'thrift/server/tserver'
 require 'ThriftTest'
-require 'TestHandler'
 
-require 'rubygems'
-require 'test/unit'
+class TestHandler
+  [:testString, :testByte, :testI32, :testI64, :testDouble,
+   :testStruct, :testMap, :testSet, :testList, :testNest,
+   :testEnum, :testTypedef].each do |meth|
 
+    define_method(meth) do |thing|
+      thing
+    end
+
+  end
+
+  def testInsanity(thing)
+    num, uid = thing.userMap.find { true }
+    return {uid => {num => thing}}
+  end
+
+  def testMapMap(thing)
+    return {thing => {thing => thing}}
+  end
+
+  def testEnum(thing)
+    return thing
+  end
+
+  def testTypedef(thing)
+    return thing
+  end
+
+  def testException(thing)
+    raise Thrift::Test::Xception, 'error'
+  end
+
+end
 class TestThrift < Test::Unit::TestCase
 
   @@INIT = nil

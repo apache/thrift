@@ -16,7 +16,7 @@ stubs: ../ThriftTest.thrift ../SmallTest.thrift
 	$(THRIFT) --gen rb ../SmallTest.thrift
 
 tests: stubs
-	ruby TestSuite.rb
+	ruby test_suite.rb
 
 clean:
 	$(RM) -r gen-rb

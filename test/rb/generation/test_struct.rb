@@ -1,15 +1,9 @@
-#!/usr/bin/env ruby
-
-$:.push('gen-rb')
-$:.push('../../lib/rb/lib')
-
+require File.join(File.dirname(__FILE__), '../test_helper')
 require 'SmallService'
-require 'rubygems'
-require 'test/unit'
 
-class TestSmallService < Test::Unit::TestCase
+class TestStructGeneration < Test::Unit::TestCase
 
-  def test_default_value
+  def test_default_values
     hello = Hello.new
 
     assert_kind_of(Hello, hello)

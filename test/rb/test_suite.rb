@@ -1,0 +1,1 @@
+Dir["{core,generation,integration}/**/*"].each {|f| require f }
