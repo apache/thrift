@@ -75,13 +75,14 @@ class ThriftProtocolSpec < Spec::ExampleGroup
       @prot.should_receive(:read_i64).ordered
       @prot.should_receive(:read_double).ordered
       @prot.should_receive(:read_string).ordered
-      @prot.read_type(Types::BOOL)
-      @prot.read_type(Types::BYTE)
-      @prot.read_type(Types::I16)
-      @prot.read_type(Types::I32)
-      @prot.read_type(Types::I64)
-      @prot.read_type(Types::DOUBLE)
-      @prot.read_type(Types::STRING)
+      @prot.skip(Types::BOOL)
+      @prot.skip(Types::BYTE)
+      @prot.skip(Types::I16)
+      @prot.skip(Types::I32)
+      @prot.skip(Types::I64)
+      @prot.skip(Types::DOUBLE)
+      @prot.skip(Types::STRING)
+      @prot.skip(Types::STOP) # should do absolutely nothing
     end
 
     it "should skip structs" do
