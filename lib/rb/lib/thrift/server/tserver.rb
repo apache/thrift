@@ -88,15 +88,27 @@ end
 class TThreadPoolServer < TServer
   def initialize(processor, serverTransport, transportFactory=nil, protocolFactory=nil, num=20)
     super(processor, serverTransport, transportFactory, protocolFactory)
-    @q = SizedQueue.new(num)
+    @thread_q = SizedQueue.new(num)
+    @exception_q = Queue.new
+    @running = false
   end
 
-  def serve()
+  ## exceptions that happen in worker threads will be relayed here and
+  ## must be caught. 'retry' can be used to continue. (threads will
+  ## continue to run while the exception is being handled.)
+  def rescuable_serve
+    Thread.new { serve } unless @running
+    raise @exception_q.pop
+  end
+
+  ## exceptions that happen in worker threads simply cause that thread
+  ## to die and another to be spawned in its place.
+  def serve
     @serverTransport.listen()
 
     begin
       while (true)
-        @q.push(:token)
+        @thread_q.push(:token)
         Thread.new do
           begin
             while (true)
@@ -112,8 +124,10 @@ class TThreadPoolServer < TServer
                 trans.close()
               end
             end
+          rescue Exception => e
+            @exception_q.push(e)
           ensure
-            @q.pop() # thread died!
+            @thread_q.pop() # thread died!
           end
         end
       end
