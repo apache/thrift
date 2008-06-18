@@ -44,6 +44,14 @@ module Thrift
       oprot.write_struct_end()
     end
 
+    def ==(other)
+      return false unless other.is_a?(self.class)
+      each_field do |fid, type, name, default|
+        return false unless self.instance_variable_get("@#{name}") == other.instance_variable_get("@#{name}")
+      end
+      true
+    end
+
     protected
 
     def handle_message(iprot, fid, ftype)
@@ -77,10 +85,10 @@ module Thrift
         iprot.read_list_end
       elsif field[:type] == Types::SET
         e_type, size = iprot.read_set_begin
-        value = {}
+        value = Set.new
         size.times do
           element = read_field(iprot, field_info(field[:element]))
-          value[element] = true
+          value << element
         end
         iprot.read_set_end
       else

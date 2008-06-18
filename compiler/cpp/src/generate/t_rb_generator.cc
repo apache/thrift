@@ -397,7 +397,7 @@ string t_rb_generator::render_const_value(t_type* type, t_const_value* value) {
       etype = ((t_set*)type)->get_elem_type();
     }
     if (type->is_set()) {
-      out << "{";
+      out << "Set.new([";
     } else {
       out << "[" << endl;
     }
@@ -407,14 +407,11 @@ string t_rb_generator::render_const_value(t_type* type, t_const_value* value) {
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       out << indent();
       out << render_const_value(etype, *v_iter);
-      if (type->is_set()) {
-        out << " => true";
-      }
       out << "," << endl;
     }
     indent_down();
     if (type->is_set()) {
-      indent(out) << "}";
+      indent(out) << "])";
     } else {
       indent(out) << "]";
     }

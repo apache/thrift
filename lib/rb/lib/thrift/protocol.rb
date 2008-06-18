@@ -8,6 +8,9 @@
 # Author: Mark Slee <mcslee@facebook.com>
 #
 
+# this require is to make generated struct definitions happy
+require 'set'
+
 module Thrift
   class ProtocolException < Exception
 
