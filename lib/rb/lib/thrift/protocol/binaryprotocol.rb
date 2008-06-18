@@ -19,41 +19,41 @@ module Thrift
     end
 
     def write_message_begin(name, type, seqid)
-      writeI32(VERSION_1 | type)
-      writeString(name)
-      writeI32(seqid)
+      write_i32(VERSION_1 | type)
+      write_string(name)
+      write_i32(seqid)
     end
 
     def write_field_begin(name, type, id)
-      writeByte(type)
-      writeI16(id)
+      write_byte(type)
+      write_i16(id)
     end
 
     def write_field_stop()
-      writeByte(Thrift::Types::STOP)
+      write_byte(Thrift::Types::STOP)
     end
 
     def write_map_begin(ktype, vtype, size)
-      writeByte(ktype)
-      writeByte(vtype)
-      writeI32(size)
+      write_byte(ktype)
+      write_byte(vtype)
+      write_i32(size)
     end
 
     def write_list_begin(etype, size)
-      writeByte(etype)
-      writeI32(size)
+      write_byte(etype)
+      write_i32(size)
     end
 
     def write_set_begin(etype, size)
-      writeByte(etype)
-      writeI32(size)
+      write_byte(etype)
+      write_i32(size)
     end
 
     def write_bool(bool)
       if (bool)
-        writeByte(1)
+        write_byte(1)
       else
-        writeByte(0)
+        write_byte(0)
       end
     end
 
@@ -80,56 +80,56 @@ module Thrift
     end
 
     def write_string(str)
-      writeI32(str.length)
+      write_i32(str.length)
       trans.write(str)
     end
 
     def read_message_begin()
-      version = readI32()
+      version = read_i32()
       if (version & VERSION_MASK != VERSION_1)
         raise ProtocolException.new(ProtocolException::BAD_VERSION, 'Missing version identifier')
       end
       type = version & 0x000000ff
-      name = readString()
-      seqid = readI32()
+      name = read_string()
+      seqid = read_i32()
       return name, type, seqid
     end
 
     def read_field_begin()
-      type = readByte()
+      type = read_byte()
       if (type === Types::STOP)
         return nil, type, 0
       end
-      id = readI16()
+      id = read_i16()
       return nil, type, id
     end
 
     def read_map_begin()
-      ktype = readByte()
-      vtype = readByte()
-      size = readI32()
+      ktype = read_byte()
+      vtype = read_byte()
+      size = read_i32()
       return ktype, vtype, size
     end
 
     def read_list_begin()
-      etype = readByte()
-      size = readI32()
+      etype = read_byte()
+      size = read_i32()
       return etype, size
     end
 
     def read_set_begin()
-      etype = readByte()
-      size = readI32()
+      etype = read_byte()
+      size = read_i32()
       return etype, size
     end
 
     def read_bool()
-      byte = readByte()
+      byte = read_byte()
       return byte != 0
     end
 
     def read_byte()
-      dat = trans.readAll(1)
+      dat = trans.read_all(1)
       val = dat[0]
       if (val > 0x7f)
         val = 0 - ((val - 1) ^ 0xff)
@@ -138,7 +138,7 @@ module Thrift
     end
 
     def read_i16()
-      dat = trans.readAll(2)
+      dat = trans.read_all(2)
       val, = dat.unpack('n')
       if (val > 0x7fff)
         val = 0 - ((val - 1) ^ 0xffff)
@@ -147,7 +147,7 @@ module Thrift
     end
 
     def read_i32()
-      dat = trans.readAll(4)
+      dat = trans.read_all(4)
       val, = dat.unpack('N')
       if (val > 0x7fffffff)
         val = 0 - ((val - 1) ^ 0xffffffff)
@@ -156,7 +156,7 @@ module Thrift
     end
 
     def read_i64()
-      dat = trans.readAll(8)
+      dat = trans.read_all(8)
       hi, lo = dat.unpack('N2')
       if (hi > 0x7fffffff)
         hi = hi ^ 0xffffffff
@@ -168,14 +168,14 @@ module Thrift
     end
 
     def read_double()
-      dat = trans.readAll(8)
+      dat = trans.read_all(8)
       val, = dat.unpack('G')
       return val
     end
 
     def read_string()
-      sz = readI32()
-      dat = trans.readAll(sz)
+      sz = read_i32()
+      dat = trans.read_all(sz)
       return dat
     end
 
@@ -184,7 +184,7 @@ module Thrift
 end
 
 class TBinaryProtocolFactory < TProtocolFactory
-  def getProtocol(trans)
+  def get_protocol(trans)
     return TBinaryProtocol.new(trans)
   end
 end

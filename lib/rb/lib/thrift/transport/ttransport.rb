@@ -68,9 +68,10 @@ class TServerTransport
 end
 
 class TTransportFactory
-  def getTransport(trans)
+  def get_transport(trans)
     return trans
   end
+  deprecate! :getTransport => :get_transport
 end
 
 class TBufferedTransport < TTransport
@@ -79,8 +80,8 @@ class TBufferedTransport < TTransport
     @wbuf = ''
   end
 
-  def isOpen()
-    return @transport.isOpen()
+  def open?()
+    return @transport.open?()
   end
 
   def open()
@@ -107,7 +108,7 @@ class TBufferedTransport < TTransport
 end
 
 class TBufferedTransportFactory < TTransportFactory
-  def getTransport(transport)
+  def get_transport(transport)
     return TBufferedTransport.new(transport)
   end
 end
@@ -194,18 +195,18 @@ class TFramedTransport < TTransport
   private
 
   def read_frame
-    buf  = @transport.readAll(4)
+    buf  = @transport.read_all(4)
     val  = buf.unpack('N')
     sz   = val[0]
 
-    @rbuf = @transport.readAll(sz)
+    @rbuf = @transport.read_all(sz)
   end
 
 end
 
 
 class TFramedTransportFactory < TTransportFactory
-  def getTransport(transport)
+  def get_transport(transport)
     return TFramedTransport.new(transport)
   end
 end
@@ -282,7 +283,7 @@ class TIOStreamTransport < TTransport
     @output = output
   end
 
-  def isOpen; true end
+  def open?; true end
   def read(sz); @input.read(sz) end
   def write(buf); @output.write(buf) end
 end

@@ -13,7 +13,7 @@ class THttpClient < TTransport
     @outbuf = ""
   end
 
-  def isOpen; true end
+  def open?; true end
   def read(sz); @inbuf.read sz end
   def write(buf); @outbuf << buf end
   def flush

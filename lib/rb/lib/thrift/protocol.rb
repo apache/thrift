@@ -258,5 +258,6 @@ module Thrift
 end
 
 class TProtocolFactory
-  def getProtocol(trans); nil; end
+  def get_protocol(trans); nil; end
+  deprecate! :getProtocol => :get_protocol
 end

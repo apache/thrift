@@ -22,7 +22,7 @@ class TSimpleMongrelHTTPServer
       response.start(200) do |head, out|
         head["Content-Type"] = "application/x-thrift"
         transport = TIOStreamTransport.new request.body, out
-        protocol = @protocol_factory.getProtocol transport
+        protocol = @protocol_factory.get_protocol transport
         @processor.process protocol, protocol
       end
     end

@@ -61,28 +61,28 @@ module Thrift
         value = field[:class].new
         value.read(iprot)
       elsif field[:type] == Types::MAP
-        key_type, val_type, size = iprot.readMapBegin
+        key_type, val_type, size = iprot.read_map_begin
         value = {}
         size.times do
           k = read_field(iprot, field_info(field[:key]))
           v = read_field(iprot, field_info(field[:value]))
           value[k] = v
         end
-        iprot.readMapEnd
+        iprot.read_map_end
       elsif field[:type] == Types::LIST
-        e_type, size = iprot.readListBegin
+        e_type, size = iprot.read_list_begin
         value = Array.new(size) do |n|
           read_field(iprot, field_info(field[:element]))
         end
-        iprot.readListEnd
+        iprot.read_list_end
       elsif field[:type] == Types::SET
-        e_type, size = iprot.readSetBegin
+        e_type, size = iprot.read_set_begin
         value = {}
         size.times do
           element = read_field(iprot, field_info(field[:element]))
           value[element] = true
         end
-        iprot.readSetEnd
+        iprot.read_set_end
       else
         value = iprot.read_type(field[:type])
       end

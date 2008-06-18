@@ -36,8 +36,8 @@ class TSimpleServer < TServer
       @serverTransport.listen()
       while (true)
         client = @serverTransport.accept()
-        trans = @transportFactory.getTransport(client)
-        prot = @protocolFactory.getProtocol(trans)
+        trans = @transportFactory.get_transport(client)
+        prot = @protocolFactory.get_protocol(trans)
         begin
           while (true)
             @processor.process(prot, prot)
@@ -66,8 +66,8 @@ class TThreadedServer < TServer
       @serverTransport.listen()
       while (true)
         client = @serverTransport.accept()
-        trans = @transportFactory.getTransport(client)
-        prot = @protocolFactory.getProtocol(trans)
+        trans = @transportFactory.get_transport(client)
+        prot = @protocolFactory.get_protocol(trans)
         Thread.new(prot, trans) do |p, t|
           begin
             while (true)
@@ -113,8 +113,8 @@ class TThreadPoolServer < TServer
           begin
             while (true)
               client = @serverTransport.accept()
-              trans = @transportFactory.getTransport(client)
-              prot = @protocolFactory.getProtocol(trans)
+              trans = @transportFactory.get_transport(client)
+              prot = @protocolFactory.get_protocol(trans)
               begin
                 while (true)
                   @processor.process(prot, prot)

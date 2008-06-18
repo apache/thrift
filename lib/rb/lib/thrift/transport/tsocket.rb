@@ -18,7 +18,7 @@ class TSocket < TTransport
     @handle = nil
   end
 
-  def setHandle(handle)
+  def set_handle(handle)
     @handle = handle
   end
 
@@ -30,7 +30,7 @@ class TSocket < TTransport
     end
   end
 
-  def isOpen()
+  def open?()
     return !@handle.nil?
   end
 
@@ -75,7 +75,7 @@ class TServerSocket < TServerTransport
     if (@handle != nil)
       sock = @handle.accept()
       trans = TSocket.new()
-      trans.setHandle(sock)
+      trans.set_handle(sock)
       return trans
     end
     return nil
