@@ -48,11 +48,9 @@ module Thrift
   deprecate_class! :TSimpleServer => SimpleServer
 end
 
-begin
-  require 'fastthread'
-rescue LoadError
-  require 'thread'
-end
+# do *not* use fastthread
+# it has a bug that triggers on NonblockingServer
+require 'thread'
 
 module Thrift
   class ThreadedServer < Server
