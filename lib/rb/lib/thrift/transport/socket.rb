@@ -14,6 +14,7 @@ module Thrift
     def initialize(host='localhost', port=9090)
       @host = host
       @port = port
+      @desc = "#{host}:#{port}"
       @handle = nil
     end
 
@@ -23,7 +24,7 @@ module Thrift
       begin
         @handle = TCPSocket.new(@host, @port)
       rescue StandardError
-        raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@host}:#{@port}")
+        raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}")
       end
     end
 
@@ -57,7 +58,7 @@ module Thrift
         raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
       if (data.nil? or data.length == 0)
-        raise TransportException.new(TransportException::UNKNOWN, "Socket: Could not read #{sz} bytes from #{@host}:#{@port}")
+        raise TransportException.new(TransportException::UNKNOWN, "Socket: Could not read #{sz} bytes from #{@desc}")
       end
       data
     end

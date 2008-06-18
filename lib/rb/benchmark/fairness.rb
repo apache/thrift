@@ -2,6 +2,7 @@ require 'rubygems'
 $:.unshift File.dirname(__FILE__) + '/../lib'
 require 'thrift'
 require 'thrift/server/nonblockingserver'
+require 'thrift/transport/unixsocket'
 $:.unshift File.dirname(__FILE__) + "/gen-rb"
 require 'BenchmarkService'
 require 'thread'
@@ -29,10 +30,10 @@ module Server
     end
   end
 
-  def self.start_server(serverClass)
+  def self.start_server(serverClass, trans = nil)
     handler = BenchmarkHandler.new
     processor = ThriftBenchmark::BenchmarkService::Processor.new(handler)
-    transport = ServerSocket.new(HOST, PORT)
+    transport = trans || ServerSocket.new(HOST, PORT)
     transportFactory = FramedTransportFactory.new
     args = [processor, transport, transportFactory, nil, 20]
     if serverClass == NonblockingServer
@@ -60,24 +61,13 @@ module Server
   end
 end
 
-module Client
-  include Thrift
-
-  def self.start_client(&block)
-    transport = FramedTransport.new(Socket.new(HOST, PORT))
-    protocol = BinaryProtocol.new(transport)
-    client = ThriftBenchmark::BenchmarkService::Client.new(protocol)
-    # transport.open
-    Thread.new do
-      block.call(client, transport)
-    end
-  end
-end
-
 class BenchmarkManager
   def initialize(opts)
-    @host = opts.fetch(:host, 'localhost')
-    @port = opts.fetch(:port)
+    @socket = opts.fetch(:socket) do
+      @host = opts.fetch(:host, 'localhost')
+      @port = opts.fetch(:port)
+      nil
+    end
     @num_processes = opts.fetch(:num_processes, 40)
     @clients_per_process = opts.fetch(:clients_per_process, 10)
     @calls_per_client = opts.fetch(:calls_per_client, 50)
@@ -104,7 +94,12 @@ class BenchmarkManager
       STDIN.close
       rd.close
       @clients_per_process.times do
-        transport = Thrift::FramedTransport.new(Thrift::Socket.new(@host, @port))
+        if @socket
+          socket = Thrift::UNIXSocket.new(@socket)
+        else
+          socket = Thrift::Socket.new(@host, @port)
+        end
+        transport = Thrift::FramedTransport.new(socket)
         protocol = Thrift::BinaryProtocol.new(transport)
         client = ThriftBenchmark::BenchmarkService::Client.new(protocol)
         begin
@@ -126,6 +121,14 @@ class BenchmarkManager
     wr.close
     @pool << rd
     pid
+  end
+
+  def socket_class
+    if @socket
+      Thrift::UNIXSocket
+    else
+      Thrift::Socket
+    end
   end
 
   def collect_output
@@ -208,6 +211,7 @@ class BenchmarkManager
     puts
     tabulate "%d",
              [["Server class", "%s"], Server.class],
+             [["Socket class", "%s"], socket_class],
              ["Number of processes", @num_processes],
              ["Clients per process", @clients_per_process],
              ["Calls per client", @calls_per_client],
@@ -219,7 +223,7 @@ class BenchmarkManager
              ["Average time per client (%d calls)" % @calls_per_client, @report[:avg_clients]],
              ["Total time for all calls", @report[:total_calls]],
              ["Real time for benchmarking", @report[:total_benchmark_time]],
-             ["Longest call time", @report[:longest_call]],
+             ["Shortest call time", @report[:longest_call]],
              ["Longest client time (%d calls)" % @calls_per_client, @report[:longest_client]]
   end
 
@@ -240,10 +244,20 @@ end
 
 puts "Starting server..."
 serverklass = resolve_const(ENV['THRIFT_SERVER']) || Thrift::NonblockingServer
-Server.start_server(serverklass)
+servertrans = nil
+if ENV['THRIFT_SOCKET']
+  servertrans = Thrift::UNIXServerSocket.new(ENV['THRIFT_SOCKET'])
+end
+Server.start_server(serverklass, servertrans)
 
 sleep 0.2 # give the server time to start
 
-BenchmarkManager.new(:host => HOST, :port => PORT, :num_processes => 40, :clients_per_process => 5).run
+args = { :num_processes => 40, :clients_per_process => 5 }
+if ENV['THRIFT_SOCKET']
+  args[:socket] = ENV['THRIFT_SOCKET']
+else
+  args.merge!(:host => HOST, :port => PORT)
+end
+BenchmarkManager.new(args).run
 
 Server.shutdown
