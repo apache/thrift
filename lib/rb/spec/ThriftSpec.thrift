@@ -16,3 +16,11 @@ struct Foo {
 struct BoolStruct {
   1: bool yesno = 1
 }
+
+service NonblockingService {
+  Hello greeting(1:bool english)
+  bool block()
+  async void unblock()
+  async void shutdown()
+  void sleep(1:double seconds)
+}
