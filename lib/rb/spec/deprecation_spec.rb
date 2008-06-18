@@ -176,8 +176,26 @@ describe "deprecate_class!" do
         end
       end
       deprecate_class! :DeprecationSpecOldClass => klass
-      DeprecationSpecOldClass.should eql(klass)
-      DeprecationSpecOldClass.new.foo.should == "foo"
+      ::DeprecationSpecOldClass.should eql(klass)
+      ::DeprecationSpecOldClass.new.foo.should == "foo"
+    ensure
+      Object.send :remove_const, :DeprecationSpecOldClass if Object.const_defined? :DeprecationSpecOldClass
+    end
+  end
+
+  it "should create a global constant even from inside a module" do
+    begin
+      klass = nil #define scoping
+      mod = Module.new do
+        klass = Class.new do
+          def foo
+            "foo"
+          end
+        end
+        deprecate_class! :DeprecationSpecOldClass => klass
+      end
+      ::DeprecationSpecOldClass.should eql(klass)
+      ::DeprecationSpecOldClass.new.foo.should == "foo"
     ensure
       Object.send :remove_const, :DeprecationSpecOldClass if Object.const_defined? :DeprecationSpecOldClass
     end

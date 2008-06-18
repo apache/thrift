@@ -134,5 +134,5 @@ module Thrift
         :element => field[:element] }
     end
   end
-    deprecate_class! :ThriftStruct => Struct
+  deprecate_class! :ThriftStruct => Struct
 end
