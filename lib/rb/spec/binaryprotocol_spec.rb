@@ -77,7 +77,6 @@ class ThriftBinaryProtocolSpec < Spec::ExampleGroup
       end
       # handing it numbers out of signed range should clip
       @trans.rspec_verify
-      @trans.rspec_clear
       (128..255).each do |i|
         @trans.should_receive(:write).with([i].pack('c')).ordered
         @prot.write_byte(i)
