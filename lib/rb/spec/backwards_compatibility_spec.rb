@@ -102,13 +102,32 @@ context "Backwards compatibility" do
         :getTransport => :get_transport
       }
     }
+    STDERR.stub!(:puts) # stub the deprecation warnings
     mapping.each_pair do |klass, methods|
+      # save these so they can be used after being mocked up
+      defn_method = klass.method(:define_method)
+      inst_method = klass.method(:instance_method)
       methods.each_pair do |oldmeth, newmeth|
-        # at the moment there's no way to introspect the deprecated methods
-        # to make sure they point to the new ones
-        # so let's just make sure both old and new methods exist
+        # ensure that calling the old method will call the new method
+        # and then redefine the old method to be the new one
         klass.should be_method_defined(oldmeth)
         klass.should be_method_defined(newmeth)
+        orig_method = inst_method.call(:initialize)
+        defn_method.call(:initialize, proc {} ) # stub out initialize
+        begin
+          mockmeth = mock("UnboundMethod: #{newmeth}")
+          mockmeth.should_receive(:bind).and_return do
+            mock("Method: #{newmeth}").tee do |meth|
+              meth.should_receive(:call)
+            end
+          end
+          klass.should_receive(:instance_method).with(newmeth).twice.and_return(mockmeth)
+          klass.should_receive(:define_method).with(oldmeth, mockmeth)
+          klass.new.send oldmeth
+          klass.rspec_verify
+        ensure
+          defn_method.call(:initialize, orig_method)
+        end
       end
     end
   end
