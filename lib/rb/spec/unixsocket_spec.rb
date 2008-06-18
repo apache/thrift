@@ -50,6 +50,16 @@ class ThriftUNIXSocketSpec < Spec::ExampleGroup
       UNIXServer.should_receive(:new).with(@path).and_return(handle)
       @socket.listen
       handle.should_receive(:close)
+      File.stub!(:delete)
+      @socket.close
+    end
+
+    it "should delete the socket when closed" do
+      handle = mock("UNIXServer", :closed? => false)
+      UNIXServer.should_receive(:new).with(@path).and_return(handle)
+      @socket.listen
+      handle.stub!(:close)
+      File.should_receive(:delete).with(@path)
       @socket.close
     end
 
