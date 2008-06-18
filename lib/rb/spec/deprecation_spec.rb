@@ -231,6 +231,29 @@ describe "deprecate_class!" do
       subklass.new.foo.should == "subclass foo"
     end
   end
+
+  it "should not bleed info between deprecations" do
+    ensure_const_removed :DeprecationSpecOldClass do
+      ensure_const_removed :DeprecationSpecOldClass2 do
+        klass = Class.new do
+          def foo
+            "foo"
+          end
+        end
+        deprecate_class! :DeprecationSpecOldClass => klass
+        klass2 = Class.new do
+          def bar
+            "bar"
+          end
+        end
+        deprecate_class! :DeprecationSpecOldClass2 => klass2
+        stub_stderr(:DeprecationSpecOldClass)
+        ::DeprecationSpecOldClass.new.foo.should == "foo"
+        stub_stderr(:DeprecationSpecOldClass2)
+        ::DeprecationSpecOldClass2.new.bar.should == "bar"
+      end
+    end
+  end
 end
 
 describe "deprecate_module!" do
