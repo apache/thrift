@@ -197,7 +197,7 @@ module Thrift
         start = Time.now
         @worker_threads.each do |t|
           if shutdown_timeout > 0
-            timeout = Time.now - (start + shutdown_timeout)
+            timeout = (start + shutdown_timeout) - Time.now
             break if timeout <= 0
             t.join(timeout)
           else
