@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # Copyright (c) 2006- Facebook
 # Distributed under the Thrift Software License
 #
@@ -46,13 +44,13 @@ module Thrift
     def read(sz)
       begin
         data = @handle.recv(sz)
-        if (data.length == 0)
-          raise TransportException.new("Socket: Could not read #{sz} bytes from #{@host}:#{@port}")
-        end
-        return data
       rescue StandardError
         raise TransportException.new(TransportException::NOT_OPEN)
       end
+      if (data.length == 0)
+        raise TransportException.new(TransportException::UNKNOWN, "Socket: Could not read #{sz} bytes from #{@host}:#{@port}")
+      end
+      return data
     end
 
     def close
