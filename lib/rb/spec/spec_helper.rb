@@ -21,3 +21,9 @@ class Object
     self
   end
 end
+
+Spec::Runner.configure do |configuration|
+  configuration.before(:each) do
+    Thrift.type_checking = true
+  end
+end
