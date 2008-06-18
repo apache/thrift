@@ -19,18 +19,23 @@ class Client
       protocol = Thrift::BinaryProtocol.new(transport)
       client = ThriftBenchmark::BenchmarkService::Client.new(protocol)
       begin
+        start = Time.now
         transport.open
+        Marshal.dump [:start, start], STDOUT
       rescue
         Marshal.dump [:connection_failure, Time.now], STDOUT
       else
-        Marshal.dump [:start, Time.now], STDOUT
-        @calls_per_client.times do
-          Marshal.dump [:call_start, Time.now], STDOUT
-          client.fibonacci(15)
-          Marshal.dump [:call_end, Time.now], STDOUT
+        begin
+          @calls_per_client.times do
+            Marshal.dump [:call_start, Time.now], STDOUT
+            client.fibonacci(15)
+            Marshal.dump [:call_end, Time.now], STDOUT
+          end
+          transport.close
+          Marshal.dump [:end, Time.now], STDOUT
+        rescue Thrift::TransportException
+          Marshal.dump [:connection_error, Time.now], STDOUT
         end
-        transport.close
-        Marshal.dump [:end, Time.now], STDOUT
       end
     end
   end

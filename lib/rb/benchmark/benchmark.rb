@@ -125,6 +125,7 @@ class BenchmarkManager
     call_times = []
     client_times = []
     connection_failures = []
+    connection_errors = []
     shortest_call = 0
     shortest_client = 0
     longest_call = 0
@@ -151,6 +152,8 @@ class BenchmarkManager
           cur_client = nil
         when :connection_failure
           connection_failures << time
+        when :connection_error
+          connection_errors << time
         end
       end
     end
@@ -160,6 +163,7 @@ class BenchmarkManager
     @report[:total_clients] = client_times.inject(0.0) { |a,t| a += t }
     @report[:avg_clients] = @report[:total_clients] / client_times.size
     @report[:connection_failures] = connection_failures.size
+    @report[:connection_errors] = connection_errors.size
     @report[:shortest_call] = shortest_call
     @report[:shortest_client] = shortest_client
     @report[:longest_call] = longest_call
@@ -183,7 +187,8 @@ class BenchmarkManager
     puts
     failures = (@report[:connection_failures] > 0)
     tabulate fmt,
-             [["Connection failures", "%d", *(failures ? [[:red, :bold]] : [])], @report[:connection_failures]],
+             [["Connection failures", "%d", [:red, :bold]], @report[:connection_failures]],
+             [["Connection errors", "%d", [:red, :bold]], @report[:connection_errors]],
              ["Average time per call", @report[:avg_calls]],
              ["Average time per client (%d calls)" % @calls_per_client, @report[:avg_clients]],
              ["Total time for all calls", @report[:total_calls]],
@@ -214,7 +219,7 @@ class BenchmarkManager
       f = fmt
       l, f, c = l if Array === l
       fmtstr = "%-#{label_width+1}s #{f}"
-      if STDOUT.tty? and c
+      if STDOUT.tty? and c and v.to_i > 0
         fmtstr = "\e[#{[*c].map { |x| ANSI[x] } * ";"}m" + fmtstr + "\e[#{ANSI[:reset]}m"
       end
       puts fmtstr % [l+":", v]
