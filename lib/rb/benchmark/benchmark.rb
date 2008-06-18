@@ -27,7 +27,8 @@ class Server
 
   def start
     return if @serverclass == Object
-    @pipe = IO.popen("#{@interpreter} #{File.dirname(__FILE__)}/server.rb #{@host} #{@port} #{@serverclass.name}", "r+")
+    args = (File.basename(@interpreter) == "jruby" ? "-J-server" : "")
+    @pipe = IO.popen("#{@interpreter} #{args} #{File.dirname(__FILE__)}/server.rb #{@host} #{@port} #{@serverclass.name}", "r+")
   end
 
   def shutdown
@@ -122,6 +123,8 @@ class BenchmarkManager
     call_times = []
     client_times = []
     connection_failures = []
+    shortest_call = 0
+    shortest_client = 0
     longest_call = 0
     longest_client = 0
     @output.each do |logs|
@@ -136,11 +139,13 @@ class BenchmarkManager
           delta = time - cur_call
           call_times << delta
           longest_call = delta unless longest_call > delta
+          shortest_call = delta if shortest_call == 0 or delta < shortest_call
           cur_call = nil
         when :end
           delta = time - cur_client
           client_times << delta
           longest_client = delta unless longest_client > delta
+          shortest_client = delta if shortest_client == 0 or delta < shortest_client
           cur_client = nil
         when :connection_failure
           connection_failures << time
@@ -153,6 +158,8 @@ class BenchmarkManager
     @report[:total_clients] = client_times.inject(0.0) { |a,t| a += t }
     @report[:avg_clients] = @report[:total_clients] / client_times.size
     @report[:connection_failures] = connection_failures.size
+    @report[:shortest_call] = shortest_call
+    @report[:shortest_client] = shortest_client
     @report[:longest_call] = longest_call
     @report[:longest_client] = longest_client
     @report[:total_benchmark_time] = @benchmark_end - @benchmark_start
@@ -179,7 +186,9 @@ class BenchmarkManager
              ["Average time per client (%d calls)" % @calls_per_client, @report[:avg_clients]],
              ["Total time for all calls", @report[:total_calls]],
              ["Real time for benchmarking", @report[:total_benchmark_time]],
-             ["Shortest call time", @report[:longest_call]],
+             ["Shortest call time", @report[:shortest_call]],
+             ["Longest call time", @report[:longest_call]],
+             ["Shortest client time (%d calls)" % @calls_per_client, @report[:shortest_client]],
              ["Longest client time (%d calls)" % @calls_per_client, @report[:longest_client]]
   end
 
