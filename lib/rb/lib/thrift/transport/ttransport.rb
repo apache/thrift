@@ -29,15 +29,15 @@ class TTransportException < TException
 end
 
 # TTransport is basically an abstract class, but isn't raising NotImplementedError
-# TODO: Fix this - Kevin Clark - 3/27/08
+# TODO: Think about if this is the right thing - Kevin Clark - 3/27/08
 class TTransport
-  def isOpen(); nil; end
+  def isOpen; end
 
-  def open(); nil; end
+  def open; end
 
-  def close(); nil; end
+  def close; end
 
-  def read(sz); nil; end
+  def read(sz); end
 
   def readAll(sz)
     buff = ''
@@ -50,9 +50,9 @@ class TTransport
     return buff
   end
 
-  def write(buf); nil; end
+  def write(buf); end
 
-  def flush(); nil; end
+  def flush; end
 
 end
 
