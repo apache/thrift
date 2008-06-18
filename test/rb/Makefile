@@ -12,8 +12,8 @@ THRIFT = ../../compiler/cpp/thrift
 all: stubs tests
 
 stubs: ../ThriftTest.thrift ../SmallTest.thrift
-	$(THRIFT) --rb ../ThriftTest.thrift
-	$(THRIFT) --rb ../SmallTest.thrift
+	$(THRIFT) --gen rb ../ThriftTest.thrift
+	$(THRIFT) --gen rb ../SmallTest.thrift
 
 tests: stubs
 	ruby TestSuite.rb
