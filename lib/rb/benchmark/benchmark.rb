@@ -236,10 +236,14 @@ puts "Starting server..."
 args = {}
 args[:interpreter] = ENV['THRIFT_SERVER_INTERPRETER'] || ENV['THRIFT_INTERPRETER'] || "ruby"
 args[:class] = resolve_const(ENV['THRIFT_SERVER']) || Thrift::NonblockingServer
+args[:host] = ENV['THRIFT_HOST'] || HOST
+args[:port] = (ENV['THRIFT_PORT'] || PORT).to_i
 server = Server.new(args)
 server.start
 
-args = { :host => HOST, :port => PORT }
+args = {}
+args[:host] = ENV['THRIFT_HOST'] || HOST
+args[:port] = (ENV['THRIFT_PORT'] || PORT).to_i
 args[:num_processes] = (ENV['THRIFT_NUM_PROCESSES'] || 40).to_i
 args[:clients_per_process] = (ENV['THRIFT_NUM_CLIENTS'] || 5).to_i
 args[:calls_per_client] = (ENV['THRIFT_NUM_CALLS'] || 50).to_i
