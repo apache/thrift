@@ -176,10 +176,24 @@ end
 describe "deprecate_class!" do
   it_should_behave_like "deprecation"
 
-  def stub_stderr(klass, offset=1)
+  def stub_stderr_jruby(klass)
+    return if RUBY_PLATFORM != "java"
+    stub_stderr(klass, nil, caller.first)
+  end
+
+  def stub_stderr_mri(klass, offset=1)
+    return if RUBY_PLATFORM == "java"
+    stub_stderr(klass, offset, caller.first)
+  end
+
+  def stub_stderr(klass, offset=1, called=nil)
     STDERR.should_receive(:puts).with("Warning: class #{klass} is deprecated")
-    line = caller.first[/\d+$/].to_i + offset
-    STDERR.should_receive(:puts).with("  from #{__FILE__}:#{line}")
+    if offset
+      line = (called || caller.first)[/\d+$/].to_i + offset
+      STDERR.should_receive(:puts).with("  from #{__FILE__}:#{line}")
+    else
+      STDERR.should_receive(:puts).with(/^  from #{Regexp.escape(__FILE__)}:/)
+    end
   end
 
   it "should create a new global constant that points to the old one" do
@@ -221,12 +235,13 @@ describe "deprecate_class!" do
         end
       end
       deprecate_class! :DeprecationSpecOldClass => klass
+      stub_stderr_jruby(:DeprecationSpecOldClass)
       subklass = Class.new(::DeprecationSpecOldClass) do
         def foo
           "subclass #{super}"
         end
       end
-      stub_stderr(:DeprecationSpecOldClass)
+      stub_stderr_mri(:DeprecationSpecOldClass)
       subklass.superclass.should eql(klass)
       subklass.new.foo.should == "subclass foo"
     end
@@ -259,10 +274,24 @@ end
 describe "deprecate_module!" do
   it_should_behave_like "deprecation"
 
-  def stub_stderr(mod, offset=1)
+  def stub_stderr_jruby(mod)
+    return if RUBY_PLATFORM != "java"
+    stub_stderr(mod, nil, caller.first)
+  end
+
+  def stub_stderr_mri(mod, offset=1)
+    return if RUBY_PLATFORM == "java"
+    stub_stderr(mod, offset, caller.first)
+  end
+
+  def stub_stderr(mod, offset=1, called=nil)
     STDERR.should_receive(:puts).with("Warning: module #{mod} is deprecated")
-    line = caller.first[/\d+$/].to_i + offset
-    STDERR.should_receive(:puts).with("  from #{__FILE__}:#{line}")
+    if offset
+      line = (called || caller.first)[/\d+$/].to_i + offset
+      STDERR.should_receive(:puts).with("  from #{__FILE__}:#{line}")
+    else
+      STDERR.should_receive(:puts).with(/^  from #{Regexp.escape(__FILE__)}:/)
+    end
   end
 
   it "should create a new global constant that points to the old one" do
@@ -319,12 +348,13 @@ describe "deprecate_module!" do
         end
       end
       deprecate_module! :DeprecationSpecOldModule => mod
+      stub_stderr_jruby(:DeprecationSpecOldModule)
       mod2 = Module.new do
         class << self
           include ::DeprecationSpecOldModule
         end
       end
-      stub_stderr(:DeprecationSpecOldModule)
+      stub_stderr_mri(:DeprecationSpecOldModule)
       mod2.foo.should == "foo"
     end
   end
@@ -337,10 +367,11 @@ describe "deprecate_module!" do
         end
       end
       deprecate_module! :DeprecationSpecOldModule => mod
+      stub_stderr_jruby(:DeprecationSpecOldModule)
       klass = Class.new do
         include ::DeprecationSpecOldModule
       end
-      stub_stderr(:DeprecationSpecOldModule)
+      stub_stderr_mri(:DeprecationSpecOldModule)
       klass.new.foo.should == "foo"
     end
   end
