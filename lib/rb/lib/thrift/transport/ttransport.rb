@@ -28,6 +28,8 @@ class TTransportException < TException
 
 end
 
+# TTransport is basically an abstract class, but isn't raising NotImplementedError
+# TODO: Fix this - Kevin Clark - 3/27/08
 class TTransport
   def isOpen(); nil; end
 
