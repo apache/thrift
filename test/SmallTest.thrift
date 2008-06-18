@@ -1,4 +1,6 @@
 
+ruby_namespace TestNamespace
+
 struct Goodbyez {
   1: i32 val = 325;
 }

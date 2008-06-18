@@ -4,15 +4,15 @@ require 'SmallService'
 class TestStructGeneration < Test::Unit::TestCase
 
   def test_default_values
-    hello = Hello.new
+    hello = TestNamespace::Hello.new
 
-    assert_kind_of(Hello, hello)
+    assert_kind_of(TestNamespace::Hello, hello)
     assert_nil(hello.complexer)
 
     assert_equal(hello.simple, 53)
     assert_equal(hello.words, 'words')
 
-    assert_kind_of(Goodbyez, hello.thinz)
+    assert_kind_of(TestNamespace::Goodbyez, hello.thinz)
     assert_equal(hello.thinz.val, 36632)
 
     assert_kind_of(Hash, hello.complex)
@@ -20,7 +20,7 @@ class TestStructGeneration < Test::Unit::TestCase
   end
 
   def test_goodbyez
-    assert_equal(Goodbyez.new.val, 325)
+    assert_equal(TestNamespace::Goodbyez.new.val, 325)
   end
 
 end
