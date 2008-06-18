@@ -141,10 +141,7 @@ module Thrift
 
       read_frame if @rbuf.empty?
 
-      # return full buf
-      out = @rbuf.slice(0...sz)
-      @rbuf = @rbuf.slice(sz..-1) || ''
-      out
+      @rbuf.slice!(0, sz)
     end
 
     def write(buf,sz=nil)
@@ -172,7 +169,7 @@ module Thrift
     def read_frame
       sz = @transport.read_all(4).unpack('N').first
 
-      @rbuf = @transport.read_all(sz)
+      @rbuf = @transport.read_all(sz).dup # protect against later #slice!
     end
   end
   deprecate_class! :TFramedTransport => FramedTransport
@@ -185,11 +182,8 @@ module Thrift
   deprecate_class! :TFramedTransportFactory => FramedTransportFactory
 
   class MemoryBuffer < Transport
-    def initialize(sz=1024)
+    def initialize
       @buf = ''
-      @sz  = sz
-      @wpos = 0
-      @rpos = 0
     end
 
     def open?
@@ -203,39 +197,23 @@ module Thrift
     end
 
     def peek
-      return @rpos < @wpos
+      not @buf.empty?
     end
 
     def reset_buffer(new_buf = '')
-       @buf  = new_buf
-       @sz   = new_buf.length
-       @wpos = new_buf.length
-       @rpos = 0
+      @buf.replace new_buf
     end
 
     def available
-      return @wpos - @rpos
+      @buf.length
     end
 
     def read(len)
-      avail = available
-
-      return '' if avail == 0
-
-      #how much to give
-      give = len
-      give = avail if avail < len
-
-      ret = @buf.slice(@rpos,give)
-
-      @rpos += give;
-
-      return ret;
+      @buf.slice!(0, len)
     end
 
     def write(wbuf)
-      @buf  << wbuf
-      @wpos += wbuf.length
+      @buf << wbuf
     end
 
     def flush
