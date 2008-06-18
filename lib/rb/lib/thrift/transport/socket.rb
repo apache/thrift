@@ -47,7 +47,7 @@ module Thrift
       begin
         data = @handle.recv(sz)
         if (data.length == 0)
-          raise TransportException.new("TSocket: Could not read #{sz} bytes from #{@host}:#{@port}")
+          raise TransportException.new("Socket: Could not read #{sz} bytes from #{@host}:#{@port}")
         end
         return data
       rescue StandardError
@@ -69,7 +69,7 @@ module Thrift
     end
 
     def listen()
-      @handle = TCPserver.new(nil, @port)
+      @handle = TCPServer.new(nil, @port)
     end
 
     def accept()
