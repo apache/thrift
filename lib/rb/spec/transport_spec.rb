@@ -122,14 +122,14 @@ class ThriftTransportSpec < Spec::ExampleGroup
 
     it "should return a full frame if asked for >= the frame's length" do
       frame = "this is a frame"
-      @trans.should_receive(:read_all).with(4).and_return([frame.length].pack('N'))
+      @trans.should_receive(:read_all).with(4).and_return("\000\000\000\017")
       @trans.should_receive(:read_all).with(frame.length).and_return(frame)
       FramedTransport.new(@trans).read(frame.length + 10).should == frame
     end
 
     it "should return slices of the frame when asked for < the frame's length" do
       frame = "this is a frame"
-      @trans.should_receive(:read_all).with(4).and_return([frame.length].pack('N'))
+      @trans.should_receive(:read_all).with(4).and_return("\000\000\000\017")
       @trans.should_receive(:read_all).with(frame.length).and_return(frame)
       ftrans = FramedTransport.new(@trans)
       ftrans.read(4).should == "this"
@@ -140,8 +140,7 @@ class ThriftTransportSpec < Spec::ExampleGroup
     it "should pull a new frame when the first is exhausted" do
       frame = "this is a frame"
       frame2 = "yet another frame"
-      @trans.should_receive(:read_all).with(4).and_return([frame.length].pack('N'),
-                                                         [frame2.length].pack('N'))
+      @trans.should_receive(:read_all).with(4).and_return("\000\000\000\017", "\000\000\000\021")
       @trans.should_receive(:read_all).with(frame.length).and_return(frame)
       @trans.should_receive(:read_all).with(frame2.length).and_return(frame2)
       ftrans = FramedTransport.new(@trans)
@@ -162,10 +161,7 @@ class ThriftTransportSpec < Spec::ExampleGroup
 
     it "should flush frames with a 4-byte header" do
       ftrans = FramedTransport.new(@trans)
-      frame = "one/two/three/this is a frame"
-      out = [frame.length].pack('N')
-      out << frame
-      @trans.should_receive(:write).with(out).ordered
+      @trans.should_receive(:write).with("\000\000\000\035one/two/three/this is a frame").ordered
       @trans.should_receive(:flush).ordered
       ftrans.write("one/")
       ftrans.write("two/")
@@ -176,10 +172,7 @@ class ThriftTransportSpec < Spec::ExampleGroup
 
     it "should not flush the same buffered data twice" do
       ftrans = FramedTransport.new(@trans)
-      frame = "foo/bar"
-      out = [frame.length].pack('N')
-      out << frame
-      @trans.should_receive(:write).with(out)
+      @trans.should_receive(:write).with("\000\000\000\007foo/bar")
       @trans.stub!(:flush)
       ftrans.write("foo")
       ftrans.write("/bar")
