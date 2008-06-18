@@ -9,8 +9,6 @@
 # Author: Mark Slee <mcslee@facebook.com>
 #
 
-require 'thrift/thrift'
-
 class TTransportException < Thrift::Exception
 
   UNKNOWN = 0

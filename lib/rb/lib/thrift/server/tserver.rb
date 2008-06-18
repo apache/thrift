@@ -8,9 +8,9 @@
 #
 # Author: Mark Slee <mcslee@facebook.com>
 #
-require('thrift/protocol/tprotocol')
-require('thrift/protocol/tbinaryprotocol')
-require('thrift/transport/ttransport')
+require 'thrift/protocol/tprotocol'
+require 'thrift/protocol/tbinaryprotocol'
+require 'thrift/transport/ttransport'
 
 class TServer
 
