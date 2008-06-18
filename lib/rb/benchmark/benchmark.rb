@@ -26,7 +26,7 @@ class Server
   end
 
   def start
-    return if @class == Object
+    return if @serverclass == Object
     @pipe = IO.popen("#{@interpreter} #{File.dirname(__FILE__)}/server.rb #{@host} #{@port} #{@serverclass.name}", "r+")
   end
 
@@ -163,7 +163,7 @@ class BenchmarkManager
     fmt = "%.4f seconds"
     puts
     tabulate "%d",
-             [["Server class", "%s"], @server.serverclass],
+             [["Server class", "%s"], @server.serverclass == Object ? "" : @server.serverclass],
              [["Server interpreter", "%s"], @server.interpreter],
              [["Client interpreter", "%s"], @interpreter],
              [["Socket class", "%s"], socket_class],
@@ -172,8 +172,9 @@ class BenchmarkManager
              ["Calls per client", @calls_per_client],
              [["Using fastthread", "%s"], @report[:fastthread] ? "yes" : "no"]
     puts
+    failures = (@report[:connection_failures] > 0)
     tabulate fmt,
-             [["Connection failures", "%d"], @report[:connection_failures]],
+             [["Connection failures", "%d", *(failures ? [[:red, :bold]] : [])], @report[:connection_failures]],
              ["Average time per call", @report[:avg_calls]],
              ["Average time per client (%d calls)" % @calls_per_client, @report[:avg_clients]],
              ["Total time for all calls", @report[:total_calls]],
@@ -182,13 +183,30 @@ class BenchmarkManager
              ["Longest client time (%d calls)" % @calls_per_client, @report[:longest_client]]
   end
 
+  ANSI = {
+    :reset => 0,
+    :bold => 1,
+    :black => 30,
+    :red => 31,
+    :green => 32,
+    :yellow => 33,
+    :blue => 34,
+    :magenta => 35,
+    :cyan => 36,
+    :white => 37
+  }
+
   def tabulate(fmt, *labels_and_values)
     labels = labels_and_values.map { |(l,)| Array === l ? l.first : l }
     label_width = labels.inject(0) { |w,l| l.size > w ? l.size : w }
     labels_and_values.each do |(l,v)|
       f = fmt
-      l, f = l if Array === l
-      puts "%-#{label_width+1}s #{f}" % [l+":", v]
+      l, f, c = l if Array === l
+      fmtstr = "%-#{label_width+1}s #{f}"
+      if STDOUT.tty? and c
+        fmtstr = "\e[#{[*c].map { |x| ANSI[x] } * ";"}m" + fmtstr + "\e[#{ANSI[:reset]}m"
+      end
+      puts fmtstr % [l+":", v]
     end
   end
 end
