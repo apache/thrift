@@ -151,6 +151,18 @@ describe 'deprecate!' do
     stub_stderr("#{klass.inspect}#old")
     klass.new.old.should == "new 2"
   end
+
+  it "should call the forwarded method in the same context as the original" do
+    klass = Class.new do
+      def myself
+        self
+      end
+      deprecate! :me => :myself
+    end
+    inst = klass.new
+    stub_stderr("#{klass.inspect}#me")
+    inst.me.should eql(inst.myself)
+  end
 end
 
 describe "deprecate_class!" do
