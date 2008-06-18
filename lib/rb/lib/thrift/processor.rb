@@ -35,5 +35,5 @@ module Thrift
       oprot.trans.flush()
     end
   end
-  deprecate_class! :TProcessor => Processor
+  deprecate_module! :TProcessor => Processor
 end

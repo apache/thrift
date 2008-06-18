@@ -14,12 +14,12 @@ module Thrift
     SET = 14
     LIST = 15
   end
-  deprecate_class! :TType => Types
+  deprecate_module! :TType => Types
 
   module MessageTypes
     CALL = 1
     REPLY = 2
     EXCEPTION = 3
   end
-  deprecate_class! :TMessageType => MessageTypes
+  deprecate_module! :TMessageType => MessageTypes
 end
