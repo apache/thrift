@@ -7,6 +7,7 @@ module Thrift
 
     attr_reader :message
   end
+  deprecate_class! :TException => Exception
 
   class ApplicationException < Exception
 
@@ -68,4 +69,5 @@ module Thrift
     end
 
   end
+  deprecate_class! :TApplicationException => ApplicationException
 end

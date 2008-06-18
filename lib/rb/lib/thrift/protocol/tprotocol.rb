@@ -26,6 +26,7 @@ module Thrift
     end
 
   end
+  deprecate_class! :TProtocolException => ProtocolException
 
   class Protocol
 
@@ -215,6 +216,7 @@ module Thrift
     end
 
   end
+  deprecate_class! :TProtocol => Protocol
 end
 
 class TProtocolFactory

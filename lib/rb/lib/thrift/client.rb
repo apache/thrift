@@ -35,4 +35,5 @@ module Thrift
       end
     end
   end
+  deprecate_class! :ThriftClient => Client
 end

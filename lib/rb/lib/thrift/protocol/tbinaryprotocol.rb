@@ -181,10 +181,7 @@ module Thrift
     end
 
   end
-end
-
-if Thrift::DEPRECATION
-  TBinaryProtocol = Thrift::BinaryProtocol
+  deprecate_class! :TBinaryProtocol => BinaryProtocol
 end
 
 class TBinaryProtocolFactory < TProtocolFactory

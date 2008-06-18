@@ -42,14 +42,3 @@ module Kernel
     end
   end
 end
-
-# TProtocol = Thrift::Protocol
-# TProtocolException = Thrift::ProtocolException
-# ThriftStruct = Thrift::Struct
-# ThriftClient = Thrift::Client
-# TProcessor = Thrift::Processor
-# TType = Thrift::Types
-# TMessageType = Thrift::MessageTypes
-# TException = Thrift::Exception
-# TApplicationException = Thrift::ApplicationException
-# TBinaryProtocol = Thrift::BinaryProtocol
