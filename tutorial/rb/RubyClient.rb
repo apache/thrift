@@ -3,16 +3,16 @@
 $:.push('../gen-rb')
 $:.unshift '../../lib/rb/lib'
 
-require 'thrift/transport/tsocket'
-require 'thrift/protocol/tbinaryprotocol'
+require 'thrift'
+require 'thrift/protocol/binaryprotocol'
 
 require 'Calculator'
 
 begin
   port = ARGV[0] || 9090
 
-  transport = TBufferedTransport.new(TSocket.new('localhost', port))
-  protocol = TBinaryProtocol.new(transport)
+  transport = Thrift::BufferedTransport.new(Thrift::Socket.new('localhost', port))
+  protocol = Thrift::BinaryProtocol.new(transport)
   client = Calculator::Client.new(protocol)
 
   transport.open()
