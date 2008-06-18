@@ -175,7 +175,12 @@ class ThriftBinaryProtocolSpec < Spec::ExampleGroup
       @prot.read_message_begin.should == ['testMessage', MessageTypes::REPLY, 42]
     end
 
-    # message header is a noop
+    it "should raise an exception if the message header has the wrong version" do
+      @prot.should_receive(:read_i32).and_return(42)
+      lambda { @prot.read_message_begin }.should raise_error(ProtocolException, 'Missing version identifier') { |e| e.type == ProtocolException::BAD_VERSION }
+    end
+
+    # message footer is a noop
 
     it "should read a field header" do
       @prot.should_receive(:read_byte).ordered.and_return(Types::STRING)
