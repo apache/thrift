@@ -163,4 +163,11 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
     @server.shutdown(1, true)
     @server_thread.join(3).should_not be_nil
   end
+
+  it "should allow shutting down in response to a message" do
+    client = setup_client
+    client.greeting(true).should == Hello.new
+    client.shutdown
+    @server_thread.join(2).should_not be_nil
+  end
 end
