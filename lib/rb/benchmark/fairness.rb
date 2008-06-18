@@ -31,6 +31,7 @@ module Server
   end
 
   def self.start_server(serverClass, trans = nil)
+    return if serverClass == Object
     handler = BenchmarkHandler.new
     processor = ThriftBenchmark::BenchmarkService::Processor.new(handler)
     transport = trans || ServerSocket.new(HOST, PORT)
@@ -49,6 +50,7 @@ module Server
   end
 
   def self.shutdown
+    return if @server.nil?
     if @server.respond_to? :shutdown
       @server.shutdown
     else
