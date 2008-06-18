@@ -4,11 +4,17 @@ class ThriftSpec < Spec::ExampleGroup
   include Thrift
 
   before(:each) do
-    @prot = Protocol.new(mock("MockTransport"))
+    @trans = mock("MockTransport")
+    @prot = Protocol.new(@trans)
   end
 
   describe Protocol do
     # most of the methods are stubs, so we can ignore them
+
+    it "should make trans accessible" do
+      @prot.trans.should eql(@trans)
+    end
+
     it "should write out a field nicely" do
       @prot.should_receive(:write_field_begin).with('field', 'type', 'fid').ordered
       @prot.should_receive(:write_type).with('type', 'value').ordered
@@ -93,6 +99,37 @@ class ThriftSpec < Spec::ExampleGroup
       @prot.should_receive(:read_field_end).exactly(3).times
       @prot.should_receive(:read_struct_end).ordered
       real_skip.call(Types::STRUCT)
+    end
+
+    it "should skip maps" do
+      real_skip = @prot.method(:skip)
+      @prot.should_receive(:read_map_begin).ordered.and_return([Types::STRING, Types::STRUCT, 7])
+      @prot.should_receive(:skip).ordered.exactly(14).times # once per key and once per value
+      @prot.should_receive(:read_map_end).ordered
+      real_skip.call(Types::MAP)
+    end
+
+    it "should skip sets" do
+      real_skip = @prot.method(:skip)
+      @prot.should_receive(:read_set_begin).ordered.and_return([Types::I64, 9])
+      @prot.should_receive(:skip).with(Types::I64).ordered.exactly(9).times
+      @prot.should_receive(:read_set_end)
+      real_skip.call(Types::SET)
+    end
+
+    it "should skip lists" do
+      real_skip = @prot.method(:skip)
+      @prot.should_receive(:read_list_begin).ordered.and_return([Types::DOUBLE, 11])
+      @prot.should_receive(:skip).with(Types::DOUBLE).ordered.exactly(11).times
+      @prot.should_receive(:read_list_end)
+      real_skip.call(Types::LIST)
+    end
+  end
+
+  describe ProtocolFactory do
+    it "should return nil" do
+      # returning nil since Protocol is just an abstract class
+      ProtocolFactory.new.get_protocol(mock("MockTransport")).should be_nil
     end
   end
 end
