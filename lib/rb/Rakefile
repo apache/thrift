@@ -37,5 +37,5 @@ end
 
 desc 'Run benchmarking of NonblockingServer'
 task :benchmark do
-  ruby 'benchmark/fairness.rb'
+  ruby 'benchmark/benchmark.rb'
 end
