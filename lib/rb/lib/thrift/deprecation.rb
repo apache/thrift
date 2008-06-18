@@ -17,6 +17,7 @@ class Module
         def #{old}(*args, &block)
           old, new = #{[old,new].inspect}
           STDERR.puts "Warning: calling deprecated method \#{self.is_a?(Module) ? "\#{self}." : "\#{self.class}#"}\#{old}"
+          STDERR.puts "  from \#{caller.first}"
           target = (self.is_a?(Module) ? (class << self;self;end) : self.class)
           target.send :define_method, old, target.instance_method(new) # unwrap
           target.instance_method(new).bind(self).call(*args, &block)

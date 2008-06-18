@@ -18,8 +18,10 @@ end
 describe 'deprecate!' do
   it_should_behave_like "deprecation"
 
-  def stub_stderr(callstr)
+  def stub_stderr(callstr, offset=1)
     STDERR.should_receive(:puts).with("Warning: calling deprecated method #{callstr}")
+    line = caller.first[/\d+$/].to_i + offset
+    STDERR.should_receive(:puts).with("  from #{__FILE__}:#{line}")
   end
 
   it "should work for Module methods" do
@@ -95,8 +97,8 @@ describe 'deprecate!' do
       end
       deprecate! :old1 => :new1, :old2 => :new2
     end
-    stub_stderr("#{klass.inspect}#old1").ordered
-    stub_stderr("#{klass.inspect}#old2").ordered
+    stub_stderr("#{klass.inspect}#old1", 3).ordered
+    stub_stderr("#{klass.inspect}#old2", 3).ordered
     inst = klass.new
     inst.old1.should == "new 1"
     inst.old2.should == "new 2"
