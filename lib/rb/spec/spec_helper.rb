@@ -3,6 +3,10 @@ require 'rubygems'
 gem 'rspec', '>= 1.1.4'
 require 'spec'
 
+# pretend we already loaded fastthread, otherwise the nonblockingserver_spec
+# will get screwed up
+# $" << 'fastthread.bundle'
+
 # turn on deprecation so we can test it
 module Thrift
   DEPRECATION = true
