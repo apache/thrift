@@ -30,7 +30,7 @@ class Server
     args = (File.basename(@interpreter) == "jruby" ? "-J-server" : "")
     @pipe = IO.popen("#{@interpreter} #{args} #{File.dirname(__FILE__)}/server.rb #{@host} #{@port} #{@serverclass.name}", "r+")
     Marshal.load(@pipe) # wait until the server has started
-    sleep 0.2 # give the server time to actually start spawning sockets
+    sleep 0.4 # give the server time to actually start spawning sockets
   end
 
   def shutdown
@@ -57,6 +57,7 @@ class BenchmarkManager
     @calls_per_client = opts.fetch(:calls_per_client, 50)
     @interpreter = opts.fetch(:interpreter, "ruby")
     @server = server
+    @log_exceptions = opts.fetch(:log_exceptions, false)
   end
 
   def run
@@ -65,7 +66,7 @@ class BenchmarkManager
     puts "Spawning benchmark processes..."
     @num_processes.times do
       spawn
-      sleep 0.01 # space out spawns
+      sleep 0.02 # space out spawns
     end
     collect_output
     @benchmark_end = Time.now # we know the procs are done here
@@ -75,7 +76,7 @@ class BenchmarkManager
   end
 
   def spawn
-    pipe = IO.popen("#{@interpreter} #{File.dirname(__FILE__)}/client.rb #{@host} #{@port} #{@clients_per_process} #{@calls_per_client}")
+    pipe = IO.popen("#{@interpreter} #{File.dirname(__FILE__)}/client.rb #{"-log-exceptions" if @log_exceptions} #{@host} #{@port} #{@clients_per_process} #{@calls_per_client}")
     @pool << pipe
   end
 
@@ -238,8 +239,11 @@ args[:class] = resolve_const(ENV['THRIFT_SERVER']) || Thrift::NonblockingServer
 server = Server.new(args)
 server.start
 
-args = { :num_processes => 40, :clients_per_process => 5, :host => HOST, :port => PORT }
+args = { :num_processes => 40, :host => HOST, :port => PORT }
+args[:clients_per_process] = (ENV['THRIFT_NUM_CLIENTS'] || 5).to_i
+args[:calls_per_client] = (ENV['THRIFT_NUM_CALLS'] || 50).to_i
 args[:interpreter] = ENV['THRIFT_CLIENT_INTERPRETER'] || ENV['THRIFT_INTERPRETER'] || "ruby"
+args[:log_exceptions] = !!ENV['THRIFT_LOG_EXCEPTIONS']
 BenchmarkManager.new(args, server).run
 
 server.shutdown
