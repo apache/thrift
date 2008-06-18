@@ -24,10 +24,6 @@ module Thrift
   deprecate_class! :TServer => Server
 
   class SimpleServer < Server
-    def initialize(processor, serverTransport, transportFactory=nil, protocolFactory=nil)
-      super(processor, serverTransport, transportFactory, protocolFactory)
-    end
-
     def serve
       begin
         @serverTransport.listen
