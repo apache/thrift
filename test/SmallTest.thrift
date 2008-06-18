@@ -1,5 +1,5 @@
 
-ruby_namespace TestNamespace
+namespace rb TestNamespace
 
 struct Goodbyez {
   1: i32 val = 325;
