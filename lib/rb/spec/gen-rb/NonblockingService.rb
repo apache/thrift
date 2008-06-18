@@ -115,7 +115,7 @@ require 'ThriftSpec_types'
 
         class Greeting_args
           include Thrift::Struct
-          attr_accessor :english
+          Thrift::Struct.field_accessor self, :english
           FIELDS = {
             1 => {:type => Thrift::Types::BOOL, :name => 'english'}
           }
@@ -123,7 +123,7 @@ require 'ThriftSpec_types'
 
         class Greeting_result
           include Thrift::Struct
-          attr_accessor :success
+          Thrift::Struct.field_accessor self, :success
           FIELDS = {
             0 => {:type => Thrift::Types::STRUCT, :name => 'success', :class => Hello}
           }
@@ -138,7 +138,7 @@ require 'ThriftSpec_types'
 
         class Block_result
           include Thrift::Struct
-          attr_accessor :success
+          Thrift::Struct.field_accessor self, :success
           FIELDS = {
             0 => {:type => Thrift::Types::BOOL, :name => 'success'}
           }
@@ -174,7 +174,7 @@ require 'ThriftSpec_types'
 
         class Sleep_args
           include Thrift::Struct
-          attr_accessor :seconds
+          Thrift::Struct.field_accessor self, :seconds
           FIELDS = {
             1 => {:type => Thrift::Types::DOUBLE, :name => 'seconds'}
           }

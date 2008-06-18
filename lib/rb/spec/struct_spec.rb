@@ -174,5 +174,30 @@ class ThriftStructSpec < Spec::ExampleGroup
       struct = Foo.new
       lambda { struct.send :write_container, nil, nil, {:type => "foo"} }.should raise_error(StandardError, "Not a container type: foo")
     end
+
+    it "should support optional type-checking in Thrift::Struct.new" do
+      Thrift.type_checking = true
+      begin
+        lambda { Hello.new(:greeting => 3) }.should raise_error(TypeError, "Expected Types::STRING, received Fixnum")
+      ensure
+        Thrift.type_checking = false
+      end
+      lambda { Hello.new(:greeting => 3) }.should_not raise_error(TypeError)
+    end
+
+    it "should support optional type-checking in field accessors" do
+      Thrift.type_checking = true
+      begin
+        hello = Hello.new
+        lambda { hello.greeting = 3 }.should raise_error(TypeError, "Expected Types::STRING, received Fixnum")
+      ensure
+        Thrift.type_checking = false
+      end
+      lambda { hello.greeting = 3 }.should_not raise_error(TypeError)
+    end
+
+    it "should raise an exception when unknown types are given to Thrift::Struct.new" do
+      lambda { Hello.new(:fish => 'salmon') }.should raise_error(Exception, "Unknown arguments given to SpecNamespace::Hello.new")
+    end
   end
 end

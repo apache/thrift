@@ -46,7 +46,7 @@ require 'Benchmark_types'
 
         class Fibonacci_args
           include Thrift::Struct
-          attr_accessor :n
+          Thrift::Struct.field_accessor self, :n
           FIELDS = {
             1 => {:type => Thrift::Types::BYTE, :name => 'n'}
           }
@@ -54,7 +54,7 @@ require 'Benchmark_types'
 
         class Fibonacci_result
           include Thrift::Struct
-          attr_accessor :success
+          Thrift::Struct.field_accessor self, :success
           FIELDS = {
             0 => {:type => Thrift::Types::I32, :name => 'success'}
           }

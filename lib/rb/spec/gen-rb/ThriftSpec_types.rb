@@ -9,7 +9,7 @@ require 'thrift/protocol'
 module SpecNamespace
     class Hello
       include Thrift::Struct
-      attr_accessor :greeting
+      Thrift::Struct.field_accessor self, :greeting
       FIELDS = {
         1 => {:type => Thrift::Types::STRING, :name => 'greeting', :default => 'hello world'}
       }
@@ -17,7 +17,7 @@ module SpecNamespace
 
     class Foo
       include Thrift::Struct
-      attr_accessor :simple, :words, :hello, :ints, :complex, :shorts
+      Thrift::Struct.field_accessor self, :simple, :words, :hello, :ints, :complex, :shorts
       FIELDS = {
         1 => {:type => Thrift::Types::I32, :name => 'simple', :default => 53},
         2 => {:type => Thrift::Types::STRING, :name => 'words', :default => 'words'},
@@ -40,7 +40,7 @@ module SpecNamespace
 
     class BoolStruct
       include Thrift::Struct
-      attr_accessor :yesno
+      Thrift::Struct.field_accessor self, :yesno
       FIELDS = {
         1 => {:type => Thrift::Types::BOOL, :name => 'yesno', :default => true}
       }

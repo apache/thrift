@@ -1,11 +1,15 @@
+require 'thrift/types'
 require 'set'
 
 module Thrift
   module Struct
     def initialize(d={})
       each_field do |fid, type, name, default|
-        instance_variable_set("@#{name}", d.fetch(name.to_s) { d.fetch(name.to_sym) { default.dup rescue default } })
+        value = d.delete(name.to_s) { d.delete(name.to_sym) { default.dup rescue default } }
+        Thrift.check_type(value, type)
+        instance_variable_set("@#{name}", value)
       end
+      raise Exception, "Unknown arguments given to #{self.class}.new" unless d.empty?
     end
 
     def struct_fields
@@ -52,6 +56,16 @@ module Thrift
         return false unless self.instance_variable_get("@#{name}") == other.instance_variable_get("@#{name}")
       end
       true
+    end
+
+    def self.field_accessor(klass, *fields)
+      fields.each do |field|
+        klass.send :attr_reader, field
+        klass.send :define_method, "#{field}=" do |value|
+          Thrift.check_type(value, klass::FIELDS.values.find { |f| f[:name].to_s == field.to_s }[:type] )
+          instance_variable_set("@#{field}", value)
+        end
+      end
     end
 
     protected

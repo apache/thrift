@@ -490,12 +490,9 @@ void t_rb_generator::generate_accessors(std::ofstream& out, t_struct* tstruct) {
   vector<t_field*>::const_iterator m_iter;
 
   if (members.size() > 0) {
-    indent(out) << "attr_accessor ";
+    indent(out) << "Thrift::Struct.field_accessor self";
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      if (m_iter != members.begin()) {
-        out << ", ";
-      }
-      out << ":" << (*m_iter)->get_name();
+      out << ", :" << (*m_iter)->get_name();
     }
     out << endl;
   }
