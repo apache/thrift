@@ -20,7 +20,7 @@ module Thrift
         end
         response.start(200) do |head, out|
           head["Content-Type"] = "application/x-thrift"
-          transport = TIOStreamTransport.new request.body, out
+          transport = IOStreamTransport.new request.body, out
           protocol = @protocol_factory.get_protocol transport
           @processor.process protocol, protocol
         end
@@ -31,7 +31,7 @@ module Thrift
       port = opts[:port] || 80
       ip = opts[:ip] || "0.0.0.0"
       path = opts[:path] || ""
-      protocol_factory = opts[:protocol_factory] || TBinaryProtocolFactory.new
+      protocol_factory = opts[:protocol_factory] || BinaryProtocolFactory.new
       @server = Mongrel::HttpServer.new ip, port
       @server.register "/#{path}", Handler.new(processor, protocol_factory)
     end
