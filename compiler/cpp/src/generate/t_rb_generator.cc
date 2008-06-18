@@ -452,7 +452,7 @@ void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, b
   out  << endl;
 
   indent_up();
-  indent(out) << "include ThriftStruct" << endl;
+  indent(out) << "include Thrift::Struct" << endl;
 
   if (is_exception) {
     generate_rb_simple_exception_constructor(out, tstruct);
@@ -677,7 +677,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
   indent_up();
 
   indent(f_service_) <<
-    "include ThriftClient" << endl << endl;
+    "include Thrift::Client" << endl << endl;
 
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
@@ -774,7 +774,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
           "return" << endl;
       } else {
         f_service_ <<
-          indent() << "raise TApplicationException.new(TApplicationException::MISSING_RESULT, '" << (*f_iter)->get_name() << " failed: unknown result')" << endl;
+          indent() << "raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, '" << (*f_iter)->get_name() << " failed: unknown result')" << endl;
       }
 
       // Close function
@@ -810,7 +810,7 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
   indent_up();
 
   f_service_ <<
-    indent() << "include TProcessor" << endl <<
+    indent() << "include Thrift::Processor" << endl <<
     endl;
 
   // Generate the process subfunctions
@@ -969,30 +969,30 @@ string t_rb_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_VOID:
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
-      return "TType::STRING";
+      return "Thrift::Types::STRING";
     case t_base_type::TYPE_BOOL:
-      return "TType::BOOL";
+      return "Thrift::Types::BOOL";
     case t_base_type::TYPE_BYTE:
-      return "TType::BYTE";
+      return "Thrift::Types::BYTE";
     case t_base_type::TYPE_I16:
-      return "TType::I16";
+      return "Thrift::Types::I16";
     case t_base_type::TYPE_I32:
-      return "TType::I32";
+      return "Thrift::Types::I32";
     case t_base_type::TYPE_I64:
-      return "TType::I64";
+      return "Thrift::Types::I64";
     case t_base_type::TYPE_DOUBLE:
-      return "TType::DOUBLE";
+      return "Thrift::Types::DOUBLE";
     }
   } else if (type->is_enum()) {
-    return "TType::I32";
+    return "Thrift::Types::I32";
   } else if (type->is_struct() || type->is_xception()) {
-    return "TType::STRUCT";
+    return "Thrift::Types::STRUCT";
   } else if (type->is_map()) {
-    return "TType::MAP";
+    return "Thrift::Types::MAP";
   } else if (type->is_set()) {
-    return "TType::SET";
+    return "Thrift::Types::SET";
   } else if (type->is_list()) {
-    return "TType::LIST";
+    return "Thrift::Types::LIST";
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();

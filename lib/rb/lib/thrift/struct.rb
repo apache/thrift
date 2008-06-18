@@ -20,7 +20,7 @@ module Thrift
       iprot.readStructBegin()
       loop do
         fname, ftype, fid = iprot.readFieldBegin()
-        break if (ftype === TType::STOP)
+        break if (ftype === Types::STOP)
         handle_message(iprot, fid, ftype)
         iprot.readFieldEnd()
       end
@@ -57,10 +57,10 @@ module Thrift
     end
 
     def read_field(iprot, field = {})
-      if field[:type] == TType::STRUCT
+      if field[:type] == Types::STRUCT
         value = field[:class].new
         value.read(iprot)
-      elsif field[:type] == TType::MAP
+      elsif field[:type] == Types::MAP
         key_type, val_type, size = iprot.readMapBegin
         value = {}
         size.times do
@@ -69,13 +69,13 @@ module Thrift
           value[k] = v
         end
         iprot.readMapEnd
-      elsif field[:type] == TType::LIST
+      elsif field[:type] == Types::LIST
         e_type, size = iprot.readListBegin
         value = Array.new(size) do |n|
           read_field(iprot, field_info(field[:element]))
         end
         iprot.readListEnd
-      elsif field[:type] == TType::SET
+      elsif field[:type] == Types::SET
         e_type, size = iprot.readSetBegin
         value = {}
         size.times do
@@ -98,20 +98,20 @@ module Thrift
     end
 
     def write_container(oprot, value, field = {})
-      if field[:type] == TType::MAP
+      if field[:type] == Types::MAP
         oprot.writeMapBegin(field[:key][:type], field[:value][:type], value.size)
         value.each do |k, v|
           write_data(oprot, k, field[:key])
           write_data(oprot, v, field[:value])
         end
         oprot.writeMapEnd
-      elsif field[:type] == TType::LIST
+      elsif field[:type] == Types::LIST
         oprot.writeListBegin(field[:element][:type], value.size)
         value.each do |elem|
           write_data(oprot, elem, field[:element])
         end
         oprot.writeListEnd
-      elsif field[:type] == TType::SET
+      elsif field[:type] == Types::SET
         oprot.writeSetBegin(field[:element][:type], value.size)
         value.each do |k, v|
           write_data(oprot, k, field[:element])
@@ -123,7 +123,7 @@ module Thrift
     end
 
     def is_container?(type)
-      [TType::LIST, TType::MAP, TType::SET].include? type
+      [Types::LIST, Types::MAP, Types::SET].include? type
     end
 
     def field_info(field)

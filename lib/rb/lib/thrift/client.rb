@@ -7,7 +7,7 @@ module Thrift
     end
 
     def send_message(name, args_class, args = {})
-      @oprot.writeMessageBegin(name, TMessageType::CALL, @seqid)
+      @oprot.writeMessageBegin(name, MessageTypes::CALL, @seqid)
       data = args_class.new
       args.each do |k, v|
         data.send("#{k.to_s}=", v)
@@ -27,8 +27,8 @@ module Thrift
     end
 
     def handle_exception(mtype)
-      if mtype == TMessageType::EXCEPTION
-        x = TApplicationException.new()
+      if mtype == MessageTypes::EXCEPTION
+        x = ApplicationException.new()
         x.read(@iprot)
         @iprot.readMessageEnd()
         raise x

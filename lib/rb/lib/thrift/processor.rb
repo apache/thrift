@@ -10,10 +10,10 @@ module Thrift
         send("process_#{name}", seqid, iprot, oprot)
         return true
       else
-        iprot.skip(TType::STRUCT)
+        iprot.skip(Types::STRUCT)
         iprot.readMessageEnd()
-        x = TApplicationException.new(TApplicationException::UNKNOWN_METHOD, 'Unknown function '+name)
-        oprot.writeMessageBegin(name, TMessageType::EXCEPTION, seqid)
+        x = ApplicationException.new(ApplicationException::UNKNOWN_METHOD, 'Unknown function '+name)
+        oprot.writeMessageBegin(name, MessageTypes::EXCEPTION, seqid)
           x.write(oprot)
         oprot.writeMessageEnd()
         oprot.trans.flush()
@@ -29,7 +29,7 @@ module Thrift
     end
 
     def write_result(result, oprot, name, seqid)
-      oprot.writeMessageBegin(name, TMessageType::REPLY, seqid)
+      oprot.writeMessageBegin(name, MessageTypes::REPLY, seqid)
       result.write(oprot)
       oprot.writeMessageEnd()
       oprot.trans.flush()

@@ -28,17 +28,17 @@ module Thrift
       iprot.readStructBegin()
       while true
         fname, ftype, fid = iprot.readFieldBegin()
-        if (ftype === TType::STOP)
+        if (ftype === Types::STOP)
           break
         end
         if (fid == 1)
-          if (ftype === TType::STRING)
+          if (ftype === Types::STRING)
             @message = iprot.readString();
           else
             iprot.skip(ftype)
           end
         elsif (fid == 2)
-          if (ftype === TType::I32)
+          if (ftype === Types::I32)
             @type = iprot.readI32();
           else
             iprot.skip(ftype)
@@ -52,14 +52,14 @@ module Thrift
     end
 
     def write(oprot)
-      oprot.writeStructBegin('TApplicationException')
+      oprot.writeStructBegin('Thrift::ApplicationException')
       if (@message != nil)
-        oprot.writeFieldBegin('message', TType::STRING, 1)
+        oprot.writeFieldBegin('message', Types::STRING, 1)
         oprot.writeString(@message)
         oprot.writeFieldEnd()
       end
       if (@type != nil)
-        oprot.writeFieldBegin('type', TType::I32, 2)
+        oprot.writeFieldBegin('type', Types::I32, 2)
         oprot.writeI32(@type)
         oprot.writeFieldEnd()
       end

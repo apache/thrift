@@ -2,8 +2,8 @@
 
 $:.push('../gen-rb')
 
-require 'thrift/transport/tsocket.rb'
-require 'thrift/protocol/tbinaryprotocol.rb'
+require 'thrift/transport/tsocket'
+require 'thrift/protocol/tbinaryprotocol'
 
 require 'Calculator'
 
@@ -51,6 +51,6 @@ begin
 
   transport.close()
 
-rescue TException => tx
-  print 'TException: ', tx.message, "\n"
+rescue Thrift::Exception => tx
+  print 'Thrift::Exception: ', tx.message, "\n"
 end

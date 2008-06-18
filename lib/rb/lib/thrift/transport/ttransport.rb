@@ -11,7 +11,7 @@
 
 require 'thrift/thrift'
 
-class TTransportException < TException
+class TTransportException < Thrift::Exception
 
   UNKNOWN = 0
   NOT_OPEN = 1

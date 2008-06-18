@@ -28,6 +28,8 @@ require 'thrift/struct'
 ThriftStruct = Thrift::Struct
 
 require 'thrift/protocol/tprotocol'
+TProtocol = Thrift::Protocol
+TProtocolException = Thrift::ProtocolException
 
 require 'thrift/transport/tsocket'
 require 'thrift/transport/ttransport'

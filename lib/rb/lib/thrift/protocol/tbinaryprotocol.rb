@@ -10,7 +10,7 @@
 #
 require 'thrift/protocol/tprotocol'
 
-class TBinaryProtocol < TProtocol
+class TBinaryProtocol < Thrift::Protocol
 
   VERSION_MASK = 0xffff0000
   VERSION_1 = 0x80010000
@@ -31,7 +31,7 @@ class TBinaryProtocol < TProtocol
   end
 
   def writeFieldStop()
-    writeByte(TType::STOP)
+    writeByte(Thrift::Types::STOP)
   end
 
   def writeMapBegin(ktype, vtype, size)
@@ -88,7 +88,7 @@ class TBinaryProtocol < TProtocol
   def readMessageBegin()
     version = readI32()
     if (version & VERSION_MASK != VERSION_1)
-      raise TProtocolException.new(TProtocolException::BAD_VERSION, 'Missing version identifier')
+      raise Thrift::ProtocolException.new(Thrift::ProtocolException::BAD_VERSION, 'Missing version identifier')
     end
     type = version & 0x000000ff
     name = readString()
@@ -98,7 +98,7 @@ class TBinaryProtocol < TProtocol
 
   def readFieldBegin()
     type = readByte()
-    if (type === TType::STOP)
+    if (type === Thrift::Types::STOP)
       return nil, type, 0
     end
     id = readI16()

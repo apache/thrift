@@ -42,7 +42,7 @@ class TSimpleServer < TServer
           while (true)
             @processor.process(prot, prot)
           end
-        rescue TTransportException, TProtocolException => ttx
+        rescue TTransportException, Thrift::ProtocolException => ttx
           #print ttx,"\n"
         ensure
           trans.close()
@@ -73,7 +73,7 @@ class TThreadedServer < TServer
             while (true)
               @processor.process(p, p)
             end
-          rescue TTransportException, TProtocolException => e
+          rescue TTransportException, Thrift::ProtocolException => e
           ensure
             t.close()
           end
@@ -119,7 +119,7 @@ class TThreadPoolServer < TServer
                 while (true)
                   @processor.process(prot, prot)
                 end
-              rescue TTransportException, TProtocolException => e
+              rescue TTransportException, Thrift::ProtocolException => e
               ensure
                 trans.close()
               end
