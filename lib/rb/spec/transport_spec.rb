@@ -196,4 +196,68 @@ class ThriftTransportSpec < Spec::ExampleGroup
       FramedTransportFactory.new.get_transport(trans)
     end
   end
+
+  describe MemoryBuffer do
+    before(:each) do
+      @buffer = MemoryBuffer.new
+    end
+
+    it "should always remain open" do
+      @buffer.should be_open
+      @buffer.close
+      @buffer.should be_open
+    end
+
+    it "should respond to peek and available" do
+      @buffer.write "some data"
+      @buffer.peek.should be_true
+      @buffer.available.should == 9
+      @buffer.read(4)
+      @buffer.peek.should be_true
+      @buffer.available.should == 5
+      @buffer.read(16)
+      @buffer.peek.should be_false
+      @buffer.available.should == 0
+    end
+
+    it "should be able to reset the buffer" do
+      @buffer.write "test data"
+      @buffer.reset_buffer("foobar")
+      @buffer.available.should == 6
+      @buffer.read(10).should == "foobar"
+      @buffer.reset_buffer
+      @buffer.available.should == 0
+    end
+
+    it "should return from read what was given in write" do
+      @buffer.write "test data"
+      @buffer.read(4).should == "test"
+      @buffer.read(10).should == " data"
+      @buffer.read(10).should == ""
+      @buffer.write "foo"
+      @buffer.write " bar"
+      @buffer.read(10).should == "foo bar"
+    end
+  end
+
+  describe IOStreamTransport do
+    before(:each) do
+      @input = mock("Input")
+      @output = mock("Output")
+      @trans = IOStreamTransport.new(@input, @output)
+    end
+
+    it "should always be open" do
+      @trans.should be_open
+      @trans.close
+      @trans.should be_open
+    end
+
+    it "should pass through read/write to input/output" do
+      @input.should_receive(:read).with(17).and_return("+ read")
+      @output.should_receive(:write).with("foobar").and_return("+ write")
+      @trans.read(17).should == "+ read"
+      @trans.write("foobar").should == "+ write"
+    end
+  end
 end
