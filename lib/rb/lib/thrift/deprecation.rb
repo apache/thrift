@@ -32,7 +32,7 @@ class Module
 end
 
 module Thrift::DeprecationProxy
-  def self.new_class(obj)
+  def self.new_class(obj, name)
     Class.new(obj) do
       klass = self
       @@self = klass
@@ -46,13 +46,14 @@ module Thrift::DeprecationProxy
       (class << self;self;end).class_eval do
         @@self = klass
         @@obj = obj
+        @@name = name
         @@warned = false
         instance_methods.sort.reject { |x| [:__id__,:__send__].include? x.to_sym }.each do |sym|
           undef_method sym
         end
         def method_missing(sym, *args, &block)
           unless @@warned
-            STDERR.puts "Warning: class #{@@obj.inspect} is deprecated"
+            STDERR.puts "Warning: class #{@@name} is deprecated"
             STDERR.puts "  from #{caller.first}"
             @@warned = true
           end
@@ -65,17 +66,21 @@ module Thrift::DeprecationProxy
       end
     end
   end
-  def self.new_module(obj)
+  def self.new_module(obj, name)
     Module.new do
       @@obj = obj
-      @warned = false
+      @@warned = false
+      @@name = name
       include obj
       instance_methods.sort.reject { |x| [:__id__,:__send__].include? x.to_sym }.each do |sym|
         undef_method sym
       end
       def method_missing(sym, *args, &block)
-        STDERR.puts "Warning: module #{@@obj.inspect} is deprecated"
-        STDERR.puts "  from #{caller.first}"
+        unless @@warned
+          STDERR.puts "Warning: module #{@@name} is deprecated"
+          STDERR.puts "  from #{caller.first}"
+          @@warned = true
+        end
         @@obj.instance_method(sym).bind(self).call(*args, &block)
       end
       (class << self;self;end).class_eval do
@@ -86,7 +91,7 @@ module Thrift::DeprecationProxy
         end
         def method_missing(sym, *args, &block)
           unless @@warned
-            STDERR.puts "Warning: module #{@@obj.inspect} is deprecated"
+            STDERR.puts "Warning: module #{@@name} is deprecated"
             STDERR.puts "  from #{caller.first}"
             @@warned = true
           end
@@ -108,7 +113,8 @@ module Kernel
   def deprecate_class!(klasses)
     return unless Thrift::DEPRECATION
     klasses.each_pair do |old, new|
-      Object.const_set old, Thrift::DeprecationProxy.new_class(new)
+      raise "deprecate_class! expected Class, called with #{new}" unless new.is_a? Class
+      Object.const_set old, Thrift::DeprecationProxy.new_class(new, old)
     end
   end
 
@@ -116,7 +122,7 @@ module Kernel
   def deprecate_module!(modules)
     return unless Thrift::DEPRECATION
     modules.each_pair do |old, new|
-      Object.const_set old, Thrift::DeprecationProxy.new_module(new)
+      Object.const_set old, Thrift::DeprecationProxy.new_module(new, old)
     end
   end
 end

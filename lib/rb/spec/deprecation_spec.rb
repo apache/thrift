@@ -190,7 +190,7 @@ describe "deprecate_class!" do
         end
       end
       deprecate_class! :DeprecationSpecOldClass => klass
-      stub_stderr(klass)
+      stub_stderr(:DeprecationSpecOldClass)
       ::DeprecationSpecOldClass.should eql(klass)
       ::DeprecationSpecOldClass.new.foo.should == "foo"
     end
@@ -207,7 +207,7 @@ describe "deprecate_class!" do
         end
         deprecate_class! :DeprecationSpecOldClass => klass
       end
-      stub_stderr(klass)
+      stub_stderr(:DeprecationSpecOldClass)
       ::DeprecationSpecOldClass.should eql(klass)
       ::DeprecationSpecOldClass.new.foo.should == "foo"
     end
@@ -226,7 +226,7 @@ describe "deprecate_class!" do
           "subclass #{super}"
         end
       end
-      stub_stderr(klass)
+      stub_stderr(:DeprecationSpecOldClass)
       subklass.superclass.should eql(klass)
       subklass.new.foo.should == "subclass foo"
     end
@@ -250,7 +250,7 @@ describe "deprecate_module!" do
         end
       end
       deprecate_module! :DeprecationSpecOldModule => mod
-      stub_stderr(mod)
+      stub_stderr(:DeprecationSpecOldModule)
       ::DeprecationSpecOldModule.should eql(mod)
       ::DeprecationSpecOldModule.foo.should == "foo"
     end
@@ -267,7 +267,7 @@ describe "deprecate_module!" do
         end
         deprecate_module! :DeprecationSpecOldModule => mod
       end
-      stub_stderr(mod)
+      stub_stderr(:DeprecationSpecOldModule)
       ::DeprecationSpecOldModule.should eql(mod)
       ::DeprecationSpecOldModule.foo.should == "foo"
     end
@@ -282,7 +282,7 @@ describe "deprecate_module!" do
         end
       end
       deprecate_module! :DeprecationSpecOldModule => mod
-      stub_stderr(mod)
+      stub_stderr(:DeprecationSpecOldModule)
       ::DeprecationSpecOldModule.should eql(mod)
       ::DeprecationSpecOldModule.foo.should == "foo"
     end
@@ -301,7 +301,7 @@ describe "deprecate_module!" do
           include ::DeprecationSpecOldModule
         end
       end
-      stub_stderr(mod)
+      stub_stderr(:DeprecationSpecOldModule)
       mod2.foo.should == "foo"
     end
   end
@@ -317,7 +317,7 @@ describe "deprecate_module!" do
       klass = Class.new do
         include ::DeprecationSpecOldModule
       end
-      stub_stderr(mod)
+      stub_stderr(:DeprecationSpecOldModule)
       klass.new.foo.should == "foo"
     end
   end
