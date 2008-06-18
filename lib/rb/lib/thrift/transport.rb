@@ -231,10 +231,6 @@ module Thrift
       return @rpos < @wpos
     end
 
-    def get_buffer
-      return @buf
-    end
-
     def reset_buffer(new_buf = '')
        @buf  = new_buf
        @sz   = new_buf.length
