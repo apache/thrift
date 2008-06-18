@@ -114,9 +114,9 @@ class TestThrift < Test::Unit::TestCase
   end
 
   def test_set
-    val = {1 => true, 2 => true, 3 => true}
-    assert_equal(@client.testSet(val), val)
-    assert_kind_of(Hash, @client.testSet(val))
+    val = Set.new([1, 2, 3])
+    assert_equal(val, @client.testSet(val))
+    assert_kind_of(Set, @client.testSet(val))
   end
 
   def get_struct

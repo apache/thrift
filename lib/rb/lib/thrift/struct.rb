@@ -1,3 +1,5 @@
+require 'set'
+
 module Thrift
   module Struct
     def initialize(d={})
@@ -121,8 +123,8 @@ module Thrift
         oprot.write_list_end
       elsif field[:type] == Types::SET
         oprot.write_set_begin(field[:element][:type], value.size)
-        value.each do |k, v|
-          write_data(oprot, k, field[:element])
+        value.each do |v,| # the , is to preserve compatibility with the old Hash-style sets
+          write_data(oprot, v, field[:element])
         end
         oprot.write_set_end
       else
