@@ -122,8 +122,8 @@ class TFramedTransport < TTransport
     @write     = write
   end
 
-  def isOpen()
-    return @transport.isOpen
+  def open?()
+    return @transport.open?
   end
 
   def open()
@@ -144,7 +144,7 @@ class TFramedTransport < TTransport
     end
 
     if (@rbuf.length == 0)
-      readFrame
+      read_frame
     end
 
     # return full buf
@@ -193,7 +193,7 @@ class TFramedTransport < TTransport
 
   private
 
-  def readFrame
+  def read_frame
     buf  = @transport.readAll(4)
     val  = buf.unpack('N')
     sz   = val[0]
@@ -218,7 +218,7 @@ class TMemoryBuffer < TTransport
     @rpos = 0
   end
 
-  def isOpen
+  def open?
     return 1
   end
 
@@ -232,11 +232,11 @@ class TMemoryBuffer < TTransport
     return @rpos < @wpos
   end
 
-  def getBuffer
+  def get_buffer
     return @buf
   end
 
-  def resetBuffer(new_buf = '')
+  def reset_buffer(new_buf = '')
      @buf  = new_buf
      @sz   = new_buf.length
      @wpos = new_buf.length
