@@ -26,6 +26,10 @@ class ThriftTransportSpec < Spec::ExampleGroup
         Transport.method_defined?(sym).should be_true
       end
     end
+
+    it "should alias << to write" do
+      Transport.instance_method(:<<).should == Transport.instance_method(:write)
+    end
   end
 
   describe ServerTransport do
@@ -208,6 +212,13 @@ class ThriftTransportSpec < Spec::ExampleGroup
       @buffer = MemoryBuffer.new
     end
 
+    it "should accept a buffer on input and use it directly" do
+      s = "this is a test"
+      @buffer = MemoryBuffer.new(s)
+      @buffer.read(4).should == "this"
+      s.should == " is a test"
+    end
+
     it "should always remain open" do
       @buffer.should be_open
       @buffer.close
@@ -233,6 +244,15 @@ class ThriftTransportSpec < Spec::ExampleGroup
       @buffer.read(10).should == "foobar"
       @buffer.reset_buffer
       @buffer.available.should == 0
+    end
+
+    it "should copy the given string whne resetting the buffer" do
+      s = "this is a test"
+      @buffer.reset_buffer(s)
+      @buffer.available.should == 14
+      @buffer.read(10)
+      @buffer.available.should == 4
+      s.should == "this is a test"
     end
 
     it "should return from read what was given in write" do

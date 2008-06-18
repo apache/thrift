@@ -29,9 +29,9 @@ class ThriftSocketSpec < Spec::ExampleGroup
       TCPSocket.should_receive(:new).and_return(@handle)
       @socket.open
       @socket.should be_open
-      @socket.set_handle nil
+      @socket.handle = nil
       @socket.should_not be_open
-      @socket.set_handle @handle
+      @socket.handle = @handle
       @handle.should_receive(:close)
       @socket.close
       @socket.should_not be_open
@@ -85,8 +85,8 @@ class ThriftSocketSpec < Spec::ExampleGroup
     end
 
     it "should create a handle when calling listen" do
-      TCPServer.should_receive(:new).with(nil, 1234)
       @socket.listen
+      @socket.handle.should be_an_instance_of(TCPServer)
     end
 
     it "should create a Thrift::Socket to wrap accepted sockets" do
@@ -97,7 +97,7 @@ class ThriftSocketSpec < Spec::ExampleGroup
       handle.should_receive(:accept).and_return(sock)
       trans = mock("Socket")
       Socket.should_receive(:new).and_return(trans)
-      trans.should_receive(:set_handle).with(sock)
+      trans.should_receive(:handle=).with(sock)
       @socket.accept.should == trans
     end
 

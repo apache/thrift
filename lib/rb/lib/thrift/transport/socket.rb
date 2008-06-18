@@ -17,9 +17,7 @@ module Thrift
       @handle = nil
     end
 
-    def set_handle(handle)
-      @handle = handle
-    end
+    attr_accessor :handle
 
     def open
       begin
@@ -66,6 +64,8 @@ module Thrift
       @handle = nil
     end
 
+    attr_reader :handle
+
     def listen
       @handle = TCPServer.new(nil, @port)
     end
@@ -74,7 +74,7 @@ module Thrift
       unless @handle.nil?
         sock = @handle.accept
         trans = Socket.new
-        trans.set_handle(sock)
+        trans.handle = sock
         trans
       end
     end

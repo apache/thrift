@@ -50,6 +50,7 @@ module Thrift
     deprecate! :readAll => :read_all
   
     def write(buf); end
+    alias_method :<<, :write
 
     def flush; end
   end
@@ -182,8 +183,12 @@ module Thrift
   deprecate_class! :TFramedTransportFactory => FramedTransportFactory
 
   class MemoryBuffer < Transport
-    def initialize
-      @buf = ''
+    # If you pass a string to this, you should #dup that string
+    # unless you want it to be modified by #read and #write
+    #--
+    # yes this behavior is intentional
+    def initialize(buffer = nil)
+      @buf = buffer || ''
     end
 
     def open?
@@ -200,6 +205,7 @@ module Thrift
       not @buf.empty?
     end
 
+    # this method does not use the passed object directly but copies it
     def reset_buffer(new_buf = '')
       @buf.replace new_buf
     end
