@@ -15,6 +15,7 @@ module Thrift
         @logger = logger
       end
       @shutdown_semaphore = Mutex.new
+      @transport_semaphore = Mutex.new
     end
 
     def serve
@@ -33,7 +34,9 @@ module Thrift
         @logger.info "#{self} is shutting down, goodbye"
       end
     ensure
-      @serverTransport.close
+      @transport_semaphore.synchronize do
+        @serverTransport.close
+      end
       @io_manager.ensure_closed unless @io_manager.nil?
     end
 
@@ -46,7 +49,9 @@ module Thrift
       # but we can't change the order of operations here, so lets thread
       shutdown_proc = lambda do
         @io_manager.shutdown(timeout)
-        @serverTransport.close # this will break the accept loop
+        @transport_semaphore.synchronize do
+          @serverTransport.close # this will break the accept loop
+        end
       end
       if block
         shutdown_proc.call
