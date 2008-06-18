@@ -11,10 +11,21 @@
 $:.unshift File.dirname(__FILE__)
 
 require 'thrift/exceptions'
+TException = Thrift::Exception
+TApplicationException = Thrift::ApplicationException
+
 require 'thrift/types'
+TType = Thrift::Types
+TMessageType = Thrift::MessageTypes
+
 require 'thrift/tprocessor'
+TProcessor = Thrift::Processor
+
 require 'thrift/thrift_client'
+ThriftClient = Thrift::Client
+
 require 'thrift/thrift_struct'
+ThriftStruct = Thrift::Struct
 
 require 'thrift/protocol/tprotocol'
 
