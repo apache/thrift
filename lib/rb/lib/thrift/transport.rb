@@ -58,11 +58,11 @@ module Thrift
   deprecate_class! :TTransport => Transport
 
   class ServerTransport
-    def listen(); nil; end
+    def listen; nil; end
 
-    def accept(); nil; end
+    def accept; nil; end
 
-    def close(); nil; end
+    def close; nil; end
   end
   deprecate_class! :TServerTransport => ServerTransport
 
@@ -80,16 +80,16 @@ module Thrift
       @wbuf = ''
     end
 
-    def open?()
-      return @transport.open?()
+    def open?
+      return @transport.open?
     end
 
-    def open()
-      @transport.open()
+    def open
+      @transport.open
     end
 
-    def close()
-      @transport.close()
+    def close
+      @transport.close
     end
 
     def read(sz)
@@ -100,9 +100,9 @@ module Thrift
       @wbuf << buf
     end
 
-    def flush()
+    def flush
       @transport.write(@wbuf)
-      @transport.flush()
+      @transport.flush
       @wbuf = ''
     end
   end
@@ -124,15 +124,15 @@ module Thrift
       @write     = write
     end
 
-    def open?()
+    def open?
       return @transport.open?
     end
 
-    def open()
+    def open
       @transport.open
     end
 
-    def close()
+    def close
       @transport.close
     end
 
@@ -243,7 +243,7 @@ module Thrift
     end
 
     def read(len)
-      avail = available()
+      avail = available
 
       return '' if avail == 0
 
@@ -260,7 +260,7 @@ module Thrift
 
     def write(wbuf)
       @buf  << wbuf
-      @wpos += wbuf.length()
+      @wpos += wbuf.length
     end
 
     def flush
