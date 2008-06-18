@@ -39,13 +39,17 @@ module Thrift
       end
     end
 
-    def read(sz)
+    def read(sz, nonblock=false)
       begin
-        data = @handle.recv(sz)
-      rescue StandardError
-        raise TransportException.new(TransportException::NOT_OPEN)
+        if nonblock
+          data = @handle.read_nonblock(sz)
+        else
+          data = @handle.read(sz)
+        end
+      rescue StandardError => e
+        raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
-      if (data.length == 0)
+      if (data.nil? or data.length == 0)
         raise TransportException.new(TransportException::UNKNOWN, "Socket: Could not read #{sz} bytes from #{@host}:#{@port}")
       end
       data

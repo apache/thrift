@@ -49,21 +49,21 @@ class ThriftSocketSpec < Spec::ExampleGroup
     it "should raise an error when it cannot read from the handle" do
       TCPSocket.should_receive(:new).and_return(@handle)
       @socket.open
-      @handle.should_receive(:recv).with(17).and_raise(StandardError)
+      @handle.should_receive(:read).with(17).and_raise(StandardError)
       lambda { @socket.read(17) }.should raise_error(TransportException) { |e| e.type.should == TransportException::NOT_OPEN }
     end
 
     it "should raise an error when it reads no data from the handle" do
       TCPSocket.should_receive(:new).and_return(@handle)
       @socket.open
-      @handle.should_receive(:recv).with(17).and_return("")
+      @handle.should_receive(:read).with(17).and_return("")
       lambda { @socket.read(17) }.should raise_error(TransportException, "Socket: Could not read 17 bytes from localhost:9090")
     end
 
     it "should return the data read when reading from the handle works" do
       TCPSocket.should_receive(:new).and_return(@handle)
       @socket.open
-      @handle.should_receive(:recv).with(17).and_return("test data")
+      @handle.should_receive(:read).with(17).and_return("test data")
       @socket.read(17).should == "test data"
     end
 
