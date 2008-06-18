@@ -17,8 +17,11 @@ Spec::Rake::SpecTask.new("rcov_spec") do |t|
 end
 
 task :test do
-  fork do
-    exec 'make', '-C', File.dirname(__FILE__) + "/../../test/rb"
-  end
-  Process.wait
+  sh 'make', '-C', File.dirname(__FILE__) + "/../../test/rb"
+end
+
+task :'gen-rb' do
+  thrift = '../../compiler/cpp/thrift'
+  dir = File.dirname(__FILE__) + '/spec'
+  sh thrift, '--gen', 'rb', '-o', dir, "#{dir}/ThriftSpec.thrift"
 end
