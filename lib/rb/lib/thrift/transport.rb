@@ -218,7 +218,7 @@ module Thrift
     end
 
     def open?
-      return 1
+      return true
     end
 
     def open
