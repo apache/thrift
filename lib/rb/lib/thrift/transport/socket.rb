@@ -23,7 +23,7 @@ module Thrift
       @handle = handle
     end
 
-    def open()
+    def open
       begin
         @handle = TCPSocket.new(@host, @port)
       rescue StandardError
@@ -31,7 +31,7 @@ module Thrift
       end
     end
 
-    def open?()
+    def open?
       return !@handle.nil?
     end
 
@@ -55,8 +55,8 @@ module Thrift
       end
     end
 
-    def close()
-      @handle.close() unless @handle.nil?
+    def close
+      @handle.close unless @handle.nil?
       @handle = nil
     end
   end
@@ -68,22 +68,22 @@ module Thrift
       @handle = nil
     end
 
-    def listen()
+    def listen
       @handle = TCPServer.new(nil, @port)
     end
 
-    def accept()
+    def accept
       if (@handle != nil)
-        sock = @handle.accept()
-        trans = Socket.new()
+        sock = @handle.accept
+        trans = Socket.new
         trans.set_handle(sock)
         return trans
       end
       return nil
     end
 
-    def close()
-     @handle.close() unless @handle.nil?
+    def close
+     @handle.close unless @handle.nil?
     end
   end
   deprecate_class! :TServerSocket => ServerSocket

@@ -19,14 +19,14 @@ module Thrift
     end
 
     def read(iprot)
-      iprot.read_struct_begin()
+      iprot.read_struct_begin
       loop do
-        fname, ftype, fid = iprot.read_field_begin()
+        fname, ftype, fid = iprot.read_field_begin
         break if (ftype === Types::STOP)
         handle_message(iprot, fid, ftype)
-        iprot.read_field_end()
+        iprot.read_field_end
       end
-      iprot.read_struct_end()
+      iprot.read_struct_end
     end
 
     def write(oprot)
@@ -42,8 +42,8 @@ module Thrift
           end
         end
       end
-      oprot.write_field_stop()
-      oprot.write_struct_end()
+      oprot.write_field_stop
+      oprot.write_struct_end
     end
 
     def ==(other)

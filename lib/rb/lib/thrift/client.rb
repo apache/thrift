@@ -13,24 +13,24 @@ module Thrift
         data.send("#{k.to_s}=", v)
       end
       data.write(@oprot)
-      @oprot.write_message_end()
-      @oprot.trans.flush()
+      @oprot.write_message_end
+      @oprot.trans.flush
     end
 
     def receive_message(result_klass)
-      fname, mtype, rseqid = @iprot.read_message_begin()
+      fname, mtype, rseqid = @iprot.read_message_begin
       handle_exception(mtype)
       result = result_klass.new
       result.read(@iprot)
-      @iprot.read_message_end()
+      @iprot.read_message_end
       return result
     end
 
     def handle_exception(mtype)
       if mtype == MessageTypes::EXCEPTION
-        x = ApplicationException.new()
+        x = ApplicationException.new
         x.read(@iprot)
-        @iprot.read_message_end()
+        @iprot.read_message_end
         raise x
       end
     end
