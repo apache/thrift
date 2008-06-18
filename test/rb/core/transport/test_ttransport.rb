@@ -18,8 +18,8 @@ class TestTTransport < Test::Unit::TestCase
     @trans = TTransport.new
   end
   
-  def test_isOpen
-    assert_nil @trans.isOpen
+  def test_is_open?
+    assert_nil @trans.is_open?
   end
   
   def test_open
@@ -39,7 +39,7 @@ class TestTTransport < Test::Unit::TestCase
   # It _looks_ like read isn't guarenteed to return the length
   # you ask for and readAll is. This means our test needs to check
   # for blocking. -- Kevin Clark 3/27/08
-  def test_readAll
+  def test_read_all
     # Implements read
     t = DummyTransport.new("hello")
     assert_equal "hello", t.readAll(5)
@@ -51,5 +51,21 @@ class TestTTransport < Test::Unit::TestCase
   
   def test_flush
     assert_nil @trans.flush
+  end
+end
+
+class TestTTransportDeprecation < Test::Unit::TestCase
+  def setup
+    @trans = TTransport.new
+  end
+  
+  def test_isOpen
+    assert_nil @trans.isOpen
+  end
+    
+  def test_readAll
+    # Implements read
+    t = DummyTransport.new("hello")
+    assert_equal "hello", t.readAll(5)
   end
 end

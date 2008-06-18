@@ -31,7 +31,7 @@ end
 # TTransport is basically an abstract class, but isn't raising NotImplementedError
 # TODO: Think about if this is the right thing - Kevin Clark - 3/27/08
 class TTransport
-  def isOpen; end
+  def is_open?; end
 
   def open; end
 
@@ -39,21 +39,34 @@ class TTransport
 
   def read(sz); end
 
-  def readAll(sz)
+  def read_all(size)
     buff = ''
     have = 0
-    while (have < sz)
-      chunk = read(sz - have)
+    
+    while (have < size)
+      chunk = read(size - have)
       have += chunk.length
       buff << chunk
     end
-    return buff
+    
+    buff
   end
-
+  
   def write(buf); end
 
   def flush; end
-
+  
+  ################
+  ## Deprecated
+  ################
+  
+  def isOpen
+    is_open?
+  end
+  
+  def readAll(sz)
+    read_all sz
+  end
 end
 
 class TServerTransport
