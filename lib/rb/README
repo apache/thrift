@@ -1,29 +1,30 @@
 Thrift Ruby Software Library
+    by Kevin Ballard, Kevin Clark, Mark Slee
+    http://incubator.apache.org/thrift/
 
-Author: Mark Slee (mcslee@facebook.com)
-Last Modified: 2007-Mar-05
+== DESCRIPTION:
 
-Thrift is distributed under the Thrift open source software license.
+Thrift is a strongly-typed language-agnostic RPC system.
+This library is the ruby implementation for both clients and servers.
+
+== INSTALL:
+
+  $ gem install thrift
+
+== CAVEATS:
+
+This library provides the client and server implementations of thrift.
+It does <em>not</em> provide the compiler for the .thrift files. To compile
+.thrift files into language-specific implementations, please download the full
+thrift software package.
+
+== USAGE:
+
+This section should get written by someone with the time and inclination.
+In the meantime, look at existing code, such as the benchmark or the tutorial
+in the full thrift distribution.
+
+== LICENSE:
+
+Thrift is distributed under the Apache Software License.
 Please see the included LICENSE file.
-
-Using Thrift with Ruby
-======================
-
-Okay, I'll be honest. I learned Ruby by implementing the Thrift library in
-Ruby and writing the code generator at the same time. I am not a trendy
-web 2.0 programmer. Shit, I don't even know Rails. So if you care about Ruby
-you will probably find that this is currently the least robust Thrift library
-implementation. But there's plenty of time to improve it...
-
-The source code for the Ruby library is designed for installation with the
-Python-esque setup.rb utility, which is included here and redistributable
-under the GPL license.
-
-To install the Thrift Ruby libraries, become superuser and do:
-
-ruby setup.rb config
-ruby setup.rb setup
-ruby setup.rb install
-
-Alternatively, if you know more about Ruby than me, you can improve the build
-and installation process and contribute them back to this project. Wicked.
