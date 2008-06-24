@@ -177,12 +177,12 @@ describe "deprecate_class!" do
   it_should_behave_like "deprecation"
 
   def stub_stderr_jruby(klass)
-    return if RUBY_PLATFORM != "java"
+    return unless defined? JRUBY_VERSION
     stub_stderr(klass, nil, caller.first)
   end
 
   def stub_stderr_mri(klass, offset=1)
-    return if RUBY_PLATFORM == "java"
+    return if defined? JRUBY_VERSION
     stub_stderr(klass, offset, caller.first)
   end
 
@@ -300,12 +300,12 @@ describe "deprecate_module!" do
   it_should_behave_like "deprecation"
 
   def stub_stderr_jruby(mod)
-    return if RUBY_PLATFORM != "java"
+    return unless defined? JRUBY_VERSION
     stub_stderr(mod, nil, caller.first)
   end
 
   def stub_stderr_mri(mod, offset=1)
-    return if RUBY_PLATFORM == "java"
+    return if defined? JRUBY_VERSION
     stub_stderr(mod, offset, caller.first)
   end
 
