@@ -9,7 +9,7 @@ module Thrift
         Thrift.check_type(value, type)
         instance_variable_set("@#{name}", value)
       end
-      raise Exception, "Unknown arguments given to #{self.class}.new" unless d.empty?
+      raise Exception, "Unknown keys given to #{self.class}.new: #{d.keys.join(", ")}" unless d.empty?
     end
 
     def struct_fields
