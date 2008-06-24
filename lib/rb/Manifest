@@ -37,7 +37,6 @@ LICENSE
 Manifest
 Rakefile
 README
-setup.rb
 spec/backwards_compatibility_spec.rb
 spec/binaryprotocol_spec.rb
 spec/client_spec.rb
