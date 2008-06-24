@@ -581,6 +581,7 @@ void t_rb_generator::generate_service(t_service* tservice) {
 
   f_service_ <<
     rb_autogen_comment() << endl <<
+    "require 'thrift'" << endl <<
     rb_imports() << endl;
 
   if (tservice->get_extends() != NULL) {
@@ -589,7 +590,6 @@ void t_rb_generator::generate_service(t_service* tservice) {
   }
 
   f_service_ <<
-    "require 'thrift'" << endl <<
     "require '" << program_name_ << "_types'" << endl <<
     endl;
 

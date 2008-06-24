@@ -4,8 +4,8 @@
 # DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 #
 
-require 'thrift/protocol'
 require 'thrift'
+require 'thrift/protocol'
 require 'Benchmark_types'
 
     module ThriftBenchmark
