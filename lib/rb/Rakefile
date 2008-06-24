@@ -45,3 +45,17 @@ desc 'Run benchmarking of NonblockingServer'
 task :benchmark do
   ruby 'benchmark/benchmark.rb'
 end
+
+
+begin
+  require 'echoe'
+
+  Echoe.new('thrift') do |p|
+    p.author = ['Kevin Ballard', 'Kevin Clark', 'Mark Slee']
+    p.email = ['kevin@sb.org', 'kevin.clark@gmail.com', 'mcslee@facebook.com']
+    p.summary = "Ruby libraries for Thrift (a language-agnostic RPC system)"
+    p.url = "http://incubator.apache.org/thrift/"
+    p.include_rakefile = true
+  end
+rescue LoadError
+end
