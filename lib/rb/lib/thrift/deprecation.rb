@@ -35,17 +35,19 @@ module Thrift::DeprecationProxy # :nodoc:
   CLASS_MAPPING = {}
   MODULE_MAPPING = {}
   def self.new_class(obj, name)
+    klass_id = CLASS_MAPPING.size
+    CLASS_MAPPING[klass_id] = [obj, name, true]
     klass = Class.new(obj) do
       klass = self
       instance_methods.sort.reject { |x| [:__id__,:__send__].include? x.to_sym }.each do |sym|
         undef_method sym
       end
-      define_method :__thrift_deprecation_proxy_klass do
-        klass
+      define_method :__thrift_deprecation_proxy_klass_id do
+        klass_id
       end
       def method_missing(sym, *args, &block)
-        klass = __thrift_deprecation_proxy_klass
-        obj, name, warned = CLASS_MAPPING[klass.__id__]
+        klass_id = __thrift_deprecation_proxy_klass_id
+        obj, name, warned = CLASS_MAPPING[klass_id]
         obj.instance_method(sym).bind(self).call(*args, &block)
       end
       (class << self;self;end).class_eval do
@@ -53,15 +55,15 @@ module Thrift::DeprecationProxy # :nodoc:
           undef_method sym
         end
         define_method :__thrift_deprecation_proxy_klass do
-          klass
+          [klass, klass_id]
         end
         def method_missing(sym, *args, &block)
-          klass = __thrift_deprecation_proxy_klass
-          obj, name, warned = CLASS_MAPPING[klass.__id__]
+          klass, klass_id = __thrift_deprecation_proxy_klass
+          obj, name, warned = CLASS_MAPPING[klass_id]
           unless warned
             STDERR.puts "Warning: class #{name} is deprecated"
             STDERR.puts "  from #{caller.first}"
-            CLASS_MAPPING[__thrift_deprecation_proxy_klass.__id__][2] = true
+            CLASS_MAPPING[klass_id][2] = true
           end
           if klass.__id__ == self.__id__
             obj.send sym, *args, &block
@@ -71,25 +73,27 @@ module Thrift::DeprecationProxy # :nodoc:
         end
       end
     end
-    CLASS_MAPPING[klass.__id__] = [obj, name, false]
+    CLASS_MAPPING[klass_id][2] = false
     klass
   end
   def self.new_module(obj, name)
+    mod_id = MODULE_MAPPING.size
+    MODULE_MAPPING[mod_id] = [obj, name, true]
     mod = Module.new do
       include obj
       instance_methods.sort.reject { |x| [:__id__,:__send__].include? x.to_sym }.each do |sym|
         undef_method sym
       end
-      define_method :__thrift_deprecation_proxy_module do
-        mod
+      define_method :__thrift_deprecation_proxy_module_id do
+        mod_id
       end
       def method_missing(sym, *args, &block)
-        mod = __thrift_deprecation_proxy_module
-        obj, name, warned = MODULE_MAPPING[mod.__id__]
+        mod_id = __thrift_deprecation_proxy_module_id
+        obj, name, warned = MODULE_MAPPING[mod_id]
         unless warned
           STDERR.puts "Warning: module #{name} is deprecated"
           STDERR.puts "  from #{caller.first}"
-          MODULE_MAPPING[mod.__id__][2] = true
+          MODULE_MAPPING[mod_id][2] = true
         end
         obj.instance_method(sym).bind(self).call(*args, &block)
       end
@@ -97,22 +101,22 @@ module Thrift::DeprecationProxy # :nodoc:
         instance_methods.sort.reject { |x| [:__id__,:__send__].include? x.to_sym }.each do |sym|
           undef_method sym
         end
-        define_method :__thrift_deprecation_proxy_module do
-          mod
+        define_method :__thrift_deprecation_proxy_module_id do
+          mod_id
         end
         def method_missing(sym, *args, &block)
-          mod = __thrift_deprecation_proxy_module
-          obj, name, warned = MODULE_MAPPING[mod.__id__]
+          mod_id = __thrift_deprecation_proxy_module_id
+          obj, name, warned = MODULE_MAPPING[mod_id]
           unless warned
             STDERR.puts "Warning: module #{name} is deprecated"
             STDERR.puts "  from #{caller.first}"
-            MODULE_MAPPING[mod.__id__][2] = true
+            MODULE_MAPPING[mod_id][2] = true
           end
           obj.send sym, *args, &block
         end
       end
     end
-    MODULE_MAPPING[mod.__id__] = [obj, name, false]
+    MODULE_MAPPING[mod_id][2] = false
     mod
   end
 end

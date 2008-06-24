@@ -269,6 +269,31 @@ describe "deprecate_class!" do
       end
     end
   end
+
+  it "should work when Object.inherited calls a method on self" do
+    ensure_const_removed :DeprecationSpecOldClass do
+      old_inherited = Object.method(:inherited)
+      begin
+        (class << Object;self;end).class_eval do
+          define_method :inherited do |cls|
+            cls.inspect
+            old_inherited.call(cls)
+          end
+        end
+        klass = Class.new do
+          def foo
+            "foo"
+          end
+        end
+        STDERR.should_receive(:puts).exactly(0).times
+        lambda { deprecate_class! :DeprecationSpecOldClass => klass }.should_not raise_error
+      ensure
+        (class << Object;self;end).class_eval do
+          define_method :inherited, old_inherited
+        end
+      end
+    end
+  end
 end
 
 describe "deprecate_module!" do
