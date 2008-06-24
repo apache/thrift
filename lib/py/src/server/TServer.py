@@ -224,13 +224,14 @@ class TForkingServer(TServer):
 
           ecode = 0
           try:
-            while True:
-              self.processor.process(iprot, oprot)
-          except TTransport.TTransportException, tx:
-            pass
-          except Exception, e:
-            logging.exception(e)
-            ecode = 1
+            try:
+              while True:
+                self.processor.process(iprot, oprot)
+            except TTransport.TTransportException, tx:
+              pass
+            except Exception, e:
+              logging.exception(e)
+              ecode = 1
           finally:
             try_close(itrans)
             try_close(otrans)
