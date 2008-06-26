@@ -29,10 +29,11 @@ module Thrift
     end
 
     def open?
-      !@handle.nil?
+      !@handle.nil? and !@handle.closed?
     end
 
     def write(str)
+      raise IOError, "closed stream" unless open?
       begin
         @handle.write(str)
       rescue StandardError
@@ -43,6 +44,7 @@ module Thrift
     end
 
     def read(sz, partial=false)
+      raise IOError, "closed stream" unless open?
       begin
         if partial
           data = @handle.readpartial(sz)

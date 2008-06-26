@@ -49,4 +49,12 @@ shared_examples_for "a socket" do
     lambda { @socket.write("fail") }.should raise_error
     @socket.should_not be_open
   end
+
+  it "should raise an error when the stream is closed" do
+    @socket.open
+    @handle.stub!(:closed?).and_return(true)
+    @socket.should_not be_open
+    lambda { @socket.write("fail") }.should raise_error(IOError, "closed stream")
+    lambda { @socket.read(10) }.should raise_error(IOError, "closed stream")
+  end
 end
