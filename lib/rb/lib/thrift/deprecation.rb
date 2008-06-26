@@ -62,7 +62,7 @@ module Thrift::DeprecationProxy # :nodoc:
           obj, name, warned = CLASS_MAPPING[klass_id]
           unless warned
             STDERR.puts "Warning: class #{name} is deprecated"
-            STDERR.puts "  from #{caller.first}"
+            STDERR.puts "  from #{Thrift::DeprecationProxy.process_caller(caller)}"
             CLASS_MAPPING[klass_id][2] = true
           end
           if klass.__id__ == self.__id__
@@ -92,7 +92,7 @@ module Thrift::DeprecationProxy # :nodoc:
         obj, name, warned = MODULE_MAPPING[mod_id]
         unless warned
           STDERR.puts "Warning: module #{name} is deprecated"
-          STDERR.puts "  from #{caller.first}"
+          STDERR.puts "  from #{Thrift::DeprecationProxy.process_caller(caller)}"
           MODULE_MAPPING[mod_id][2] = true
         end
         obj.instance_method(sym).bind(self).call(*args, &block)
@@ -109,7 +109,7 @@ module Thrift::DeprecationProxy # :nodoc:
           obj, name, warned = MODULE_MAPPING[mod_id]
           unless warned
             STDERR.puts "Warning: module #{name} is deprecated"
-            STDERR.puts "  from #{caller.first}"
+            STDERR.puts "  from #{Thrift::DeprecationProxy.process_caller(caller)}"
             MODULE_MAPPING[mod_id][2] = true
           end
           obj.send sym, *args, &block
@@ -118,6 +118,10 @@ module Thrift::DeprecationProxy # :nodoc:
     end
     MODULE_MAPPING[mod_id][2] = false
     mod
+  end
+  def self.process_caller(stack)
+    dir = File.dirname(__FILE__)
+    stack.find { |frame| frame[0,dir.size] != dir }
   end
 end
 

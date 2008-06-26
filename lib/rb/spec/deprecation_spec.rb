@@ -311,12 +311,14 @@ describe "deprecate_module!" do
 
   def stub_stderr(mod, offset=1, called=nil)
     STDERR.should_receive(:puts).with("Warning: module #{mod} is deprecated")
+    source = Regexp.escape(__FILE__) + ":"
     if offset
       line = (called || caller.first)[/\d+$/].to_i + offset
-      STDERR.should_receive(:puts).with("  from #{__FILE__}:#{line}")
+      source += Regexp.escape(line.to_s)
     else
-      STDERR.should_receive(:puts).with(/^  from #{Regexp.escape(__FILE__)}:/)
+      source += "\d+"
     end
+    STDERR.should_receive(:puts).with(/^  from #{source}(?::in `[^']+')?$/)
   end
 
   it "should create a new global constant that points to the old one" do
@@ -422,5 +424,16 @@ describe "deprecate_module!" do
         ::DeprecationSpecOldModule2.bar.should == "bar"
       end
     end
+  end
+
+  it "should skip thrift library code when printing caller" do
+    klass = Class.new do
+      include ThriftStruct
+      FIELDS = {
+        1 => {:name => "foo", :type => Thrift::Types::STRING}
+      }
+    end
+    stub_stderr('ThriftStruct')
+    klass.new(:foo => "foo")
   end
 end
