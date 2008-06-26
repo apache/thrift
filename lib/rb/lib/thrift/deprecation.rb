@@ -123,6 +123,10 @@ module Thrift::DeprecationProxy # :nodoc:
     dir = File.dirname(__FILE__)
     stack.find { |frame| frame[0,dir.size] != dir }
   end
+  def self.reset_deprecation_warnings
+    CLASS_MAPPING.each { |k,v| v[2] = false }
+    MODULE_MAPPING.each { |k,v| v[2] = false }
+  end
 end
 
 module Kernel

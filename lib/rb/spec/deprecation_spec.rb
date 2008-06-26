@@ -14,6 +14,10 @@ shared_examples_for "deprecation" do
     Thrift.const_set :DEPRECATION, false
   end
 
+  before(:each) do
+    Thrift::DeprecationProxy.reset_deprecation_warnings
+  end
+
   def ensure_const_removed(name, &block)
     begin
       block.call

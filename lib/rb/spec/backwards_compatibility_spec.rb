@@ -5,6 +5,7 @@ require 'thrift/transport/httpclient'
 
 context "Backwards compatibility" do
   specify "old class names should map to new classes" do
+    Thrift::DeprecationProxy.reset_deprecation_warnings
     # use an Array because a Hash will call #hash and trigger deprecation warnings
     klasses = [
       [:module, :ThriftClient,               Thrift::Client],
