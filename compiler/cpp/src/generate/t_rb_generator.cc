@@ -205,7 +205,7 @@ void t_rb_generator::init_generator() {
   f_consts_ <<
     rb_autogen_comment() << endl <<
     rb_imports() << endl <<
-    "require '" << program_name_ << "_types'" << endl <<
+    "require File.dirname(__FILE__) + '/" << program_name_ << "_types'" << endl <<
     endl;
     begin_namespace(f_consts_, ruby_modules(program_));
 
@@ -218,7 +218,7 @@ string t_rb_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   for (size_t i = 0; i < includes.size(); ++i) {
-    result += "require '" + includes[i]->get_name() + "_types'\n";
+    result += "require File.dirname(__FILE__) + '/" + includes[i]->get_name() + "_types'\n";
   }
   if (includes.size() > 0) {
     result += "\n";
@@ -590,7 +590,7 @@ void t_rb_generator::generate_service(t_service* tservice) {
   }
 
   f_service_ <<
-    "require '" << program_name_ << "_types'" << endl <<
+    "require File.dirname(__FILE__) + '/" << program_name_ << "_types'" << endl <<
     endl;
 
   begin_namespace(f_service_, ruby_modules(tservice->get_program()));

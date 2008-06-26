@@ -6,7 +6,7 @@
 
 require 'thrift'
 require 'thrift/protocol'
-require 'Benchmark_types'
+require File.dirname(__FILE__) + '/Benchmark_types'
 
     module ThriftBenchmark
       module BenchmarkService

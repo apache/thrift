@@ -5,7 +5,7 @@
 #
 
 require 'thrift/protocol'
-require 'ThriftSpec_types'
+require File.dirname(__FILE__) + '/ThriftSpec_types'
 
   module SpecNamespace
 end

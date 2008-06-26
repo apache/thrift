@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require 'thrift/serializer'
-require 'ThriftSpec_types'
+require File.dirname(__FILE__) + '/gen-rb/ThriftSpec_types'
 
 class ThriftSerializerSpec < Spec::ExampleGroup
   include Thrift
