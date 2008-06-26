@@ -52,6 +52,7 @@ class ThriftTransportSpec < Spec::ExampleGroup
       trans = mock("Transport")
       trans.should_receive(:open?).ordered.and_return("+ open?")
       trans.should_receive(:open).ordered.and_return("+ open")
+      trans.should_receive(:flush).ordered # from the close
       trans.should_receive(:close).ordered.and_return("+ close")
       trans.should_receive(:read).with(217).ordered.and_return("+ read")
       btrans = BufferedTransport.new(trans)
@@ -81,7 +82,22 @@ class ThriftTransportSpec < Spec::ExampleGroup
       trans.should_receive(:write).with("one/two/three/")
       trans.stub!(:flush)
       btrans.flush
-      trans.should_receive(:write).with("")
+      # Nothing to flush with no data
+      btrans.flush
+    end
+    
+    it "should flush on close" do
+      trans = mock("Transport")
+      trans.should_receive(:close)
+      btrans = BufferedTransport.new(trans)
+      btrans.should_receive(:flush)
+      btrans.close
+    end
+    
+    it "should not write to socket if there's no data" do
+      trans = mock("Transport")
+      trans.should_receive(:flush)
+      btrans = BufferedTransport.new(trans)
       btrans.flush
     end
   end

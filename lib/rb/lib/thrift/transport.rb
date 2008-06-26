@@ -90,6 +90,7 @@ module Thrift
     end
 
     def close
+      flush
       @transport.close
     end
 
@@ -102,9 +103,12 @@ module Thrift
     end
 
     def flush
-      @transport.write(@wbuf)
+      if @wbuf != ''
+        @transport.write(@wbuf)
+        @wbuf = ''
+      end
+      
       @transport.flush
-      @wbuf = ''
     end
   end
   deprecate_class! :TBufferedTransport => BufferedTransport
