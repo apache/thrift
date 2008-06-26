@@ -58,4 +58,10 @@ begin
     p.include_rakefile = true
   end
 rescue LoadError
+  [:install, :package].each do |t|
+    desc "Stub for #{t}"
+    task t do
+      fail "The Echoe gem is required for this task"
+    end
+  end
 end
