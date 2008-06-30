@@ -12,7 +12,7 @@ if test -d .svn ; then
 elif test -d .git ; then
   SHA1=`git rev-list --max-count=1 --grep='^git-svn-id:' HEAD`
   REVISION=`git cat-file commit $SHA1 | sed -ne 's/^git-svn-id:[^@]*@\([0-9][0-9]*\).*/r\1/p'`
-  OFFSET=`git rev-list ^$SHA1 HEAD | wc -l`
+  OFFSET=`git rev-list ^$SHA1 HEAD | wc -l | tr -d ' '`
   if test $OFFSET != 0 ; then
     REVISION="$REVISION-$OFFSET-`git rev-parse --verify HEAD | cut -c 1-7`"
   fi
