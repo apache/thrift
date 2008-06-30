@@ -220,6 +220,10 @@ void TConnection::transition() {
     // and get back some data from the dispatch function
     inputTransport_->resetBuffer(readBuffer_, readBufferPos_);
     outputTransport_->resetBuffer();
+    // Prepend four bytes of blank space to the buffer so we can
+    // write the frame size there later.
+    outputTransport_->getWritePtr(4);
+    outputTransport_->wroteBytes(4);
 
     if (server_->isThreadPoolProcessing()) {
       // We are setting up a Task to do this work and we will wait on it
@@ -293,7 +297,7 @@ void TConnection::transition() {
 
     // If the function call generated return data, then move into the send
     // state and get going
-    if (writeBufferSize_ > 0) {
+    if (writeBufferSize_ > 4) {
 
       // Move into write state
       writeBufferPos_ = 0;
@@ -301,16 +305,15 @@ void TConnection::transition() {
 
       if (server_->getFrameResponses()) {
         // Put the frame size into the write buffer
-        appState_ = APP_SEND_FRAME_SIZE;
-        frameSize_ = (int32_t)htonl(writeBufferSize_);
-        writeBuffer_ = (uint8_t*)&frameSize_;
-        writeBufferSize_ = 4;
+        int32_t frameSize = (int32_t)htonl(writeBufferSize_ - 4);
+        memcpy(writeBuffer_, &frameSize, 4);
       } else {
         // Go straight into sending the result, do not frame it
-        appState_ = APP_SEND_RESULT;
+        writeBufferPos_ = 4;
       }
 
       // Socket into write mode
+      appState_ = APP_SEND_RESULT;
       setWrite();
 
       // Try to work the socket immediately
@@ -322,21 +325,6 @@ void TConnection::transition() {
     // In this case, the request was asynchronous and we should fall through
     // right back into the read frame header state
     goto LABEL_APP_INIT;
-
-  case APP_SEND_FRAME_SIZE:
-
-    // Refetch the result of the operation since we put the frame size into
-    // writeBuffer_
-    outputTransport_->getBuffer(&writeBuffer_, &writeBufferSize_);
-    writeBufferPos_ = 0;
-
-    // Now in send result state
-    appState_ = APP_SEND_RESULT;
-
-    // Go to work on the socket right away, probably still writeable
-    // workSocket();
-
-    return;
 
   case APP_SEND_RESULT:
 

@@ -211,7 +211,6 @@ enum TAppState {
   APP_READ_FRAME_SIZE,
   APP_READ_REQUEST,
   APP_WAIT_TASK,
-  APP_SEND_FRAME_SIZE,
   APP_SEND_RESULT
 };
 
@@ -262,9 +261,6 @@ class TConnection {
 
   // How far through writing are we?
   uint32_t writeBufferPos_;
-
-  // Frame size
-  int32_t frameSize_;
 
   // Task handle
   int taskHandle_;
