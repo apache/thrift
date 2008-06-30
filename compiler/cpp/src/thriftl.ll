@@ -15,6 +15,8 @@
 
 %{
 
+#include <errno.h>
+
 #include "main.h"
 #include "globals.h"
 #include "parse/t_program.h"
@@ -27,6 +29,11 @@
 
 void thrift_reserved_keyword(char* keyword) {
   yyerror("Cannot use reserved language keyword: \"%s\"\n", keyword);
+  exit(1);
+}
+
+void integer_overflow(char* text) {
+  yyerror("This integer is too big: \"%s\"\n", text);
   exit(1);
 }
 
@@ -181,12 +188,20 @@ st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
 "yield"              { thrift_reserved_keyword(yytext); }
 
 {intconstant} {
-  yylval.iconst = atoi(yytext);
+  errno = 0;
+  yylval.iconst = strtoll(yytext, NULL, 10);
+  if (errno == ERANGE) {
+    integer_overflow(yytext);
+  }
   return tok_int_constant;
 }
 
 {hexconstant} {
-  sscanf(yytext+2, "%x", &yylval.iconst);
+  errno = 0;
+  yylval.iconst = strtoll(yytext+2, NULL, 16);
+  if (errno == ERANGE) {
+    integer_overflow(yytext);
+  }
   return tok_int_constant;
 }
 

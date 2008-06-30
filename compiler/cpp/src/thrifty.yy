@@ -13,7 +13,10 @@
  * @author Mark Slee <mcslee@facebook.com>
  */
 
+#define __STDC_LIMIT_MACROS
+#define __STDC_FORMAT_MACROS
 #include <stdio.h>
+#include <inttypes.h>
 #include "main.h"
 #include "globals.h"
 #include "parse/t_program.h"
@@ -35,7 +38,7 @@ int g_arglist = 0;
  */
 %union {
   char*          id;
-  int            iconst;
+  int64_t        iconst;
   double         dconst;
   bool           tbool;
   t_doc*         tdoc;
@@ -496,6 +499,9 @@ EnumDef:
       if ($4 < 0) {
         pwarning(1, "Negative value supplied for enum %s.\n", $2);
       }
+      if ($4 > INT_MAX) {
+        pwarning(1, "64-bit value supplied for enum %s.\n", $2);
+      }
       $$ = new t_enum_value($2, $4);
       if ($1 != NULL) {
         $$->set_doc($1);
@@ -569,6 +575,9 @@ ConstValue:
       pdebug("ConstValue => tok_int_constant");
       $$ = new t_const_value();
       $$->set_integer($1);
+      if ($1 < INT32_MIN || $1 > INT32_MAX) {
+        pwarning(1, "64-bit constant \"%"PRIi64"\" may not work in all languages.\n", $1);
+      }
     }
 | tok_dub_constant
     {

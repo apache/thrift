@@ -8,6 +8,7 @@
 #define T_CONST_VALUE_H
 
 #include "t_const.h"
+#include <stdint.h>
 #include <map>
 #include <vector>
 
@@ -30,7 +31,7 @@ class t_const_value {
 
   t_const_value() {}
 
-  t_const_value(int val) {
+  t_const_value(int64_t val) {
     set_integer(val);
   }
 
@@ -47,12 +48,12 @@ class t_const_value {
     return stringVal_;
   }
 
-  void set_integer(int val) {
+  void set_integer(int64_t val) {
     valType_ = CV_INTEGER;
     intVal_ = val;
   }
 
-  int get_integer() const {
+  int64_t get_integer() const {
     return intVal_;
   }
 
@@ -97,7 +98,7 @@ class t_const_value {
   std::map<t_const_value*, t_const_value*> mapVal_;
   std::vector<t_const_value*> listVal_;
   std::string stringVal_;
-  int intVal_;
+  int64_t intVal_;
   double doubleVal_;
 
   t_const_value_type valType_;
