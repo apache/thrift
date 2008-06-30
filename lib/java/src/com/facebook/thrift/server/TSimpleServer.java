@@ -6,6 +6,9 @@
 
 package com.facebook.thrift.server;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.facebook.thrift.TException;
 import com.facebook.thrift.TProcessor;
 import com.facebook.thrift.TProcessorFactory;
@@ -22,6 +25,8 @@ import com.facebook.thrift.transport.TTransportException;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TSimpleServer extends TServer {
+
+  private static final Logger LOGGER = Logger.getLogger(TSimpleServer.class.getName());
 
   private boolean stopped_ = false;
 
@@ -77,7 +82,7 @@ public class TSimpleServer extends TServer {
     try {
       serverTransport_.listen();
     } catch (TTransportException ttx) {
-      ttx.printStackTrace();
+      LOGGER.log(Level.SEVERE, "Error occurred during listening.", ttx);
       return;
     }
 
@@ -102,11 +107,11 @@ public class TSimpleServer extends TServer {
         // Client died, just move on
       } catch (TException tx) {
         if (!stopped_) {
-          tx.printStackTrace();
+          LOGGER.log(Level.SEVERE, "Thrift error occurred during processing of message.", tx);
         }
       } catch (Exception x) {
         if (!stopped_) {
-          x.printStackTrace();
+          LOGGER.log(Level.SEVERE, "Error occurred during processing of message.", x);
         }
       }
 

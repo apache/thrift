@@ -11,6 +11,8 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Wrapper around ServerSocket for Thrift.
@@ -18,6 +20,8 @@ import java.net.SocketException;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TServerSocket extends TServerTransport {
+
+  private static final Logger LOGGER = Logger.getLogger(TServerSocket.class.getName());
 
   /**
    * Underlying serversocket object
@@ -81,7 +85,7 @@ public class TServerSocket extends TServerTransport {
       try {
         serverSocket_.setSoTimeout(0);
       } catch (SocketException sx) {
-        sx.printStackTrace();
+        LOGGER.log(Level.WARNING, "Could not set socket timeout.", sx);
       }
     }
   }
@@ -105,8 +109,7 @@ public class TServerSocket extends TServerTransport {
       try {
         serverSocket_.close();
       } catch (IOException iox) {
-        System.err.println("WARNING: Could not close server socket: " +
-                           iox.getMessage());
+        LOGGER.log(Level.WARNING, "Could not close server socket.", iox);
       }
       serverSocket_ = null;
     }

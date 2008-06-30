@@ -9,6 +9,8 @@ package com.facebook.thrift.transport;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This is the most commonly used base transport. It takes an InputStream
@@ -19,6 +21,8 @@ import java.io.OutputStream;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TIOStreamTransport extends TTransport {
+
+  private static final Logger LOGGER = Logger.getLogger(TIOStreamTransport.class.getName());
 
   /** Underlying inputStream */
   protected InputStream inputStream_ = null;
@@ -84,8 +88,7 @@ public class TIOStreamTransport extends TTransport {
       try {
         inputStream_.close();
       } catch (IOException iox) {
-        System.err.println("WARNING: Error closing input stream: " +
-                           iox.getMessage());
+        LOGGER.log(Level.WARNING, "Error closing input stream.", iox);
       }
       inputStream_ = null;
     }
@@ -93,8 +96,7 @@ public class TIOStreamTransport extends TTransport {
       try {
         outputStream_.close();
       } catch (IOException iox) {
-        System.err.println("WARNING: Error closing output stream: " +
-                           iox.getMessage());
+        LOGGER.log(Level.WARNING, "Error closing output stream.", iox);
       }
       outputStream_ = null;
     }

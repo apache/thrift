@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Socket implementation of the TTransport interface. To be commented soon!
@@ -19,6 +21,8 @@ import java.net.SocketException;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TSocket extends TIOStreamTransport {
+
+  private static final Logger LOGGER = Logger.getLogger(TSocket.class.getName());
 
   /**
    * Wrapped Socket object
@@ -52,7 +56,7 @@ public class TSocket extends TIOStreamTransport {
       socket_.setSoLinger(false, 0);
       socket_.setTcpNoDelay(true);
     } catch (SocketException sx) {
-      sx.printStackTrace();
+      LOGGER.log(Level.WARNING, "Could not configure socket.", sx);
     }
 
     if (isOpen()) {
@@ -102,7 +106,7 @@ public class TSocket extends TIOStreamTransport {
       socket_.setTcpNoDelay(true);
       socket_.setSoTimeout(timeout_);
     } catch (SocketException sx) {
-      sx.printStackTrace();
+      LOGGER.log(Level.WARNING, "Could not configure socket.", sx);
     }
   }
 
@@ -116,7 +120,7 @@ public class TSocket extends TIOStreamTransport {
     try {
       socket_.setSoTimeout(timeout);
     } catch (SocketException sx) {
-      sx.printStackTrace();
+      LOGGER.log(Level.WARNING, "Could not set socket timeout.", sx);
     }
   }
 
@@ -181,8 +185,7 @@ public class TSocket extends TIOStreamTransport {
       try {
         socket_.close();
       } catch (IOException iox) {
-        System.err.println("WARNING: exception closing socket: " +
-                           iox.getMessage());
+        LOGGER.log(Level.WARNING, "Could not close socket.", iox);
       }
       socket_ = null;
     }
