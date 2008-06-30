@@ -555,7 +555,7 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Write_Read ) {
           write_offset += dist[d1][write_index];
           flush_size += dist[d1][write_index];
           write_index++;
-          if (rand()%prob == 0) {
+          if (flush_size > 0 && rand()%prob == 0) {
             flush_sizes.push_back(flush_size);
             flush_size = 0;
             trans.flush();
@@ -584,6 +584,37 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Write_Read ) {
       }
     }
   }
+}
+
+BOOST_AUTO_TEST_CASE( test_FramedTransport_Empty_Flush ) {
+  init_data();
+
+  string output1("\x00\x00\x00\x01""a", 5);
+  string output2("\x00\x00\x00\x01""a\x00\x00\x00\x02""bc", 11);
+
+  shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  TFramedTransport trans(buffer);
+
+  BOOST_CHECK_EQUAL(buffer->getBufferAsString(), "");
+  trans.flush();
+  BOOST_CHECK_EQUAL(buffer->getBufferAsString(), "");
+  trans.flush();
+  trans.flush();
+  BOOST_CHECK_EQUAL(buffer->getBufferAsString(), "");
+  trans.write((const uint8_t*)"a", 1);
+  BOOST_CHECK_EQUAL(buffer->getBufferAsString(), "");
+  trans.flush();
+  BOOST_CHECK_EQUAL(buffer->getBufferAsString(), output1);
+  trans.flush();
+  trans.flush();
+  BOOST_CHECK_EQUAL(buffer->getBufferAsString(), output1);
+  trans.write((const uint8_t*)"bc", 2);
+  BOOST_CHECK_EQUAL(buffer->getBufferAsString(), output1);
+  trans.flush();
+  BOOST_CHECK_EQUAL(buffer->getBufferAsString(), output2);
+  trans.flush();
+  trans.flush();
+  BOOST_CHECK_EQUAL(buffer->getBufferAsString(), output2);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
