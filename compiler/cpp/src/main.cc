@@ -40,6 +40,8 @@
 #include "generate/t_xsd_generator.h"
 #include "generate/t_erl_generator.h"
 
+#include "version.h"
+
 using namespace std;
 
 /**
@@ -589,11 +591,19 @@ void generate_all_fingerprints(t_program* program) {
 }
 
 /**
+ * Prints the version number
+ */
+void version() {
+  printf("Thrift version %s-%s\n", THRIFT_VERSION, THRIFT_REVISION);
+}
+
+/**
  * Diplays the usage message and then exits with an error code.
  */
 void usage() {
   fprintf(stderr, "Usage: thrift [options] file\n");
   fprintf(stderr, "Options:\n");
+  fprintf(stderr, "  -version    Print the compiler version\n");
   fprintf(stderr, "  -php        Generate PHP output files\n");
   fprintf(stderr, "  -phpi       Generate PHP inlined files\n");
   fprintf(stderr, "  -phps       Generate PHP server stubs (with -php)\n");
@@ -937,7 +947,10 @@ int main(int argc, char** argv) {
         ++arg;
       }
 
-      if (strcmp(arg, "-debug") == 0) {
+      if (strcmp(arg, "-version") == 0) {
+        version();
+        exit(1);
+      } else if (strcmp(arg, "-debug") == 0) {
         g_debug = 1;
       } else if (strcmp(arg, "-nowarn") == 0) {
         g_warn = 0;
@@ -1049,6 +1062,12 @@ int main(int argc, char** argv) {
       // Tokenize more
       arg = strtok(NULL, " ");
     }
+  }
+
+  // if you're asking for version, you have a right not to pass a file
+  if (strcmp(argv[argc-1], "-version") == 0) {
+    version();
+    exit(1);
   }
 
   // TODO(dreiss): Delete these when everyone is using the new hotness.
