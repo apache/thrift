@@ -56,7 +56,7 @@ public abstract class TTransport {
     throws TTransportException;
 
   /**
-   * Guarantees that all of len bytes are
+   * Guarantees that all of len bytes are actually read off the transport.
    *
    * @param buf Array to read into
    * @param off Index to start reading at
@@ -71,7 +71,7 @@ public abstract class TTransport {
     while (got < len) {
       ret = read(buf, off+got, len-got);
       if (ret <= 0) {
-        throw new TTransportException("Cannot read. Remote side has closed.");
+        throw new TTransportException("Cannot read. Remote side has closed. Tried to read " + len + " bytes, but only got " + got + " bytes.");
       }
       got += ret;
     }

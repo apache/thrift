@@ -38,6 +38,8 @@ public class TestClient {
       boolean framedInput = true;
       boolean framedOutput = true;
 
+      int socketTimeout = 1000;
+
       try {
         for (int i = 0; i < args.length; ++i) {
           if (args[i].equals("-h")) {
@@ -53,6 +55,8 @@ public class TestClient {
             url = args[++i];
           } else if (args[i].equals("-n")) {
             numTests = Integer.valueOf(args[++i]);
+          } else if (args[i].equals("-timeout")) {
+            socketTimeout = Integer.valueOf(args[++i]);
           }
         }
       } catch (Exception x) {
@@ -65,7 +69,7 @@ public class TestClient {
         transport = new THttpClient(url);
       } else {
         TSocket socket = new TSocket(host, port);
-        socket.setTimeout(1000);
+        socket.setTimeout(socketTimeout);
         transport = socket;
         if (framed) {
           transport = new TFramedTransport(transport,

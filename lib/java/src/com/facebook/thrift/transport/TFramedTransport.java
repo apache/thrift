@@ -43,6 +43,15 @@ public class TFramedTransport extends TTransport {
    */
   private boolean frameWrite_ = true;
 
+  public static class Factory extends TTransportFactory {
+    public Factory() {
+    }
+
+    public TTransport getTransport(TTransport base) {
+      return new TFramedTransport(base);
+    }
+  }
+
   /**
    * Constructor wraps around another tranpsort
    */
