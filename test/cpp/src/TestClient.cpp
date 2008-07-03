@@ -37,7 +37,6 @@ int main(int argc, char** argv) {
   int port = 9090;
   int numTests = 1;
   bool framed = false;
-  bool frameInput = true;
 
   for (int i = 0; i < argc; ++i) {
     if (strcmp(argv[i], "-h") == 0) {
@@ -53,9 +52,6 @@ int main(int argc, char** argv) {
       numTests = atoi(argv[++i]);
     } else if (strcmp(argv[i], "-f") == 0) {
       framed = true;
-    } else if (strcmp(argv[i], "-fo") == 0) {
-      framed = true;
-      frameInput = false;
     }
   }
 
@@ -66,13 +62,7 @@ int main(int argc, char** argv) {
 
   if (framed) {
     shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
-    framedSocket->setRead(frameInput);
     transport = framedSocket;
-    if (frameInput) {
-      printf("Using bi-directional framed transport mode\n");
-    } else {
-      printf("Using framed output only mode\n");
-    }
   } else {
     shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
     transport = bufferedSocket;

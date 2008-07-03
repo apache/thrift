@@ -297,20 +297,16 @@ void TConnection::transition() {
 
     // If the function call generated return data, then move into the send
     // state and get going
+    // 4 bytes were reserved for frame size
     if (writeBufferSize_ > 4) {
 
       // Move into write state
       writeBufferPos_ = 0;
       socketState_ = SOCKET_SEND;
 
-      if (server_->getFrameResponses()) {
-        // Put the frame size into the write buffer
-        int32_t frameSize = (int32_t)htonl(writeBufferSize_ - 4);
-        memcpy(writeBuffer_, &frameSize, 4);
-      } else {
-        // Go straight into sending the result, do not frame it
-        writeBufferPos_ = 4;
-      }
+      // Put the frame size into the write buffer
+      int32_t frameSize = (int32_t)htonl(writeBufferSize_ - 4);
+      memcpy(writeBuffer_, &frameSize, 4);
 
       // Socket into write mode
       appState_ = APP_SEND_RESULT;

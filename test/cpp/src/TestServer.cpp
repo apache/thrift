@@ -274,7 +274,6 @@ int main(int argc, char **argv) {
   string serverType = "simple";
   string protocolType = "binary";
   size_t workerCount = 4;
-  bool frameOutput = true;
 
   ostringstream usage;
 
@@ -307,10 +306,6 @@ int main(int argc, char **argv) {
 
     if (!args["port"].empty()) {
       port = atoi(args["port"].c_str());
-    }
-
-    if (!args["noframe"].empty()) {
-      frameOutput = false;
     }
 
     if (!args["server-type"].empty()) {
@@ -400,18 +395,9 @@ int main(int argc, char **argv) {
     threadedServer.serve();
 
   } else if (serverType == "nonblocking") {
-
     TNonblockingServer nonblockingServer(testProcessor, port);
-    nonblockingServer.setFrameResponses(frameOutput);
-    if (frameOutput) {
-      printf("Using framed output mode\n");
-    } else {
-      printf("Using non-framed output mode\n");
-    }
-
     printf("Starting the nonblocking server on port %d...\n", port);
     nonblockingServer.serve();
-
   }
 
   printf("done.\n");
