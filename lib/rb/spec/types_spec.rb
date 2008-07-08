@@ -47,6 +47,7 @@ class ThriftTypesSpec < Spec::ExampleGroup
     end
 
     it "should be disabled when Thrift.type_checking = false" do
+      pending "disabled, parents should check Thrift.type_checking"
       Thrift.type_checking = false
       lambda { Thrift.check_type(3, Types::STRING) }.should_not raise_error(TypeError)
     end

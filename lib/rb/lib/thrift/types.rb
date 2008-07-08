@@ -26,7 +26,7 @@ module Thrift
   end
 
   def self.check_type(value, type)
-    return unless Thrift.type_checking and not value.nil?
+    return if value.nil?
     klasses = case type
               when Types::VOID
                 NilClass
