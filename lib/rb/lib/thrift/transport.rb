@@ -76,9 +76,12 @@ module Thrift
   deprecate_class! :TTransportFactory => TransportFactory
 
   class BufferedTransport < Transport
+    DEFAULT_BUFFER = 4096
+    
     def initialize(transport)
       @transport = transport
       @wbuf = ''
+      @rbuf = ''
     end
 
     def open?
@@ -95,7 +98,13 @@ module Thrift
     end
 
     def read(sz)
-      return @transport.read(sz)
+      ret = @rbuf.slice!(0...sz) 
+      if ret.length == 0
+        @rbuf = @transport.read([sz, DEFAULT_BUFFER].max) 
+        @rbuf.slice!(0...sz) 
+      else 
+        ret 
+      end
     end
 
     def write(buf)
@@ -109,6 +118,25 @@ module Thrift
       end
       
       @transport.flush
+    end
+
+    def borrow(requested_length = 0)
+      # $stderr.puts "#{Time.now.to_f} Have #{@rbuf.length} asking for #{requested_length.inspect}"
+      return @rbuf if @rbuf.length > requested_length
+      
+      if @rbuf.length < DEFAULT_BUFFER
+        @rbuf << @transport.read([requested_length, DEFAULT_BUFFER].max)
+      end
+      
+      if @rbuf.length < requested_length
+        @rbuf << @transport.read_all(requested_length - @rbuf.length)
+      end
+    
+      @rbuf
+    end
+    
+    def consume!(size)
+      @rbuf.slice!(0...size)
     end
   end
   deprecate_class! :TBufferedTransport => BufferedTransport
@@ -229,6 +257,23 @@ module Thrift
     end
 
     def flush
+    end
+
+    # For fast binary protocol access
+    def borrow(size = nil)
+      if size.nil?
+        @buf[0..-1]
+      else
+        if size > @buf.length
+          raise EOFError # Memory buffers only get one shot.
+        else
+          @buf[0..size]
+        end
+      end
+    end
+
+    def consume!(size)
+      @buf.slice!(0, size)
     end
   end
   deprecate_class! :TMemoryBuffer => MemoryBuffer

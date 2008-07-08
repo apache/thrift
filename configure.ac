@@ -61,6 +61,12 @@ if test "$with_py" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_PYTHON, [test -n "$PYTHON" -a "$PYTHON" != ":"])
 
+AX_THRIFT_LIB(ruby, [Ruby], yes)
+if test "$with_ruby" = "yes"; then
+  AC_PATH_PROG([RUBY], [ruby])
+fi
+AM_CONDITIONAL(ENABLE_RUBY, [test -n "$RUBY"])
+
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
@@ -165,10 +171,12 @@ AC_CONFIG_FILES([
   lib/csharp/Makefile
   lib/java/Makefile
   lib/py/Makefile
+  lib/rb/Makefile
   if/Makefile
   test/Makefile
   test/py/Makefile
   test/java/Makefile
+  test/rb/Makefile
 ])
 
 AC_OUTPUT

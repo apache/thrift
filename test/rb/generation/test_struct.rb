@@ -17,6 +17,9 @@ class TestStructGeneration < Test::Unit::TestCase
 
     assert_kind_of(Hash, hello.complex)
     assert_equal(hello.complex, { 6243 => 632, 2355 => 532, 23 => 532})
+    
+    bool_passer = TestNamespace::BoolPasser.new(:value => false)
+    assert_equal false, bool_passer.value
   end
 
   def test_goodbyez

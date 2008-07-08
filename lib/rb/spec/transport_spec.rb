@@ -48,18 +48,26 @@ class ThriftTransportSpec < Spec::ExampleGroup
   end
 
   describe BufferedTransport do
-    it "should pass through everything but write/flush" do
+    it "should pass through everything but write/flush/read" do
       trans = mock("Transport")
       trans.should_receive(:open?).ordered.and_return("+ open?")
       trans.should_receive(:open).ordered.and_return("+ open")
       trans.should_receive(:flush).ordered # from the close
       trans.should_receive(:close).ordered.and_return("+ close")
-      trans.should_receive(:read).with(217).ordered.and_return("+ read")
       btrans = BufferedTransport.new(trans)
       btrans.open?.should == "+ open?"
       btrans.open.should == "+ open"
       btrans.close.should == "+ close"
-      btrans.read(217).should == "+ read"
+    end
+    
+    it "should buffer reads in chunks of #{BufferedTransport::DEFAULT_BUFFER}" do
+      trans = mock("Transport")
+      trans.should_receive(:read).with(BufferedTransport::DEFAULT_BUFFER).and_return("lorum ipsum dolor emet")
+      btrans = BufferedTransport.new(trans)
+      btrans.read(6).should == "lorum "
+      btrans.read(6).should == "ipsum "
+      btrans.read(6).should == "dolor "
+      btrans.read(6).should == "emet"
     end
 
     it "should buffer writes and send them on flush" do

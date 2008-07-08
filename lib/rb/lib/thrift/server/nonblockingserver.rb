@@ -72,6 +72,8 @@ module Thrift
     end
 
     class IOManager # :nodoc:
+      DEFAULT_BUFFER = 2**20
+      
       def initialize(processor, serverTransport, transportFactory, protocolFactory, num, logger)
         @processor = processor
         @serverTransport = serverTransport
@@ -116,7 +118,7 @@ module Thrift
       end
 
       private
-
+      
       def run
         spin_worker_threads
 
@@ -139,7 +141,7 @@ module Thrift
       end
 
       def read_connection(fd)
-        @buffers[fd] << fd.readpartial(1048576)
+        @buffers[fd] << fd.read(DEFAULT_BUFFER)
         frame = slice_frame!(@buffers[fd])
         if frame
           @logger.debug "#{self} is processing a frame"

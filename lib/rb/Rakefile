@@ -23,7 +23,7 @@ task :test do
   # ensure this is a full thrift checkout and not a tarball of the ruby libs
   cmd = 'head -1 ../../README 2>/dev/null | grep Thrift >/dev/null 2>/dev/null'
   system(cmd) or fail "rake test requires a full thrift checkout"
-  sh 'make', '-C', File.dirname(__FILE__) + "/../../test/rb"
+  sh 'make', '-C', File.dirname(__FILE__) + "/../../test/rb", "check"
 end
 
 desc 'Compile the .thrift files for the specs'
@@ -56,6 +56,15 @@ begin
     p.summary = "Ruby libraries for Thrift (a language-agnostic RPC system)"
     p.url = "http://incubator.apache.org/thrift/"
     p.include_rakefile = true
+  end
+
+  task :install => [:check_site_lib]
+
+  require 'rbconfig'
+  task :check_site_lib do
+    if File.exist?(File.join(Config::CONFIG['sitelibdir'], 'thrift.rb'))
+      fail "thrift is already installed in site_ruby"
+    end
   end
 rescue LoadError
   [:install, :package].each do |t|

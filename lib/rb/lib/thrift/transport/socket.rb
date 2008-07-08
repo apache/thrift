@@ -43,17 +43,11 @@ module Thrift
       end
     end
 
-    def read(sz, partial=false)
+    def read(sz)
       raise IOError, "closed stream" unless open?
+
       begin
-        if partial
-          data = @handle.readpartial(sz)
-        else
-          data = @handle.read(sz)
-        end
-      rescue Errno::EAGAIN => e
-        # let our parent know that the nonblock read failed
-        raise e
+        data = @handle.readpartial(sz)
       rescue StandardError => e
         @handle.close unless @handle.closed?
         @handle = nil
@@ -63,10 +57,6 @@ module Thrift
         raise TransportException.new(TransportException::UNKNOWN, "Socket: Could not read #{sz} bytes from #{@desc}")
       end
       data
-    end
-
-    def readpartial(sz)
-      read(sz, true)
     end
 
     def close

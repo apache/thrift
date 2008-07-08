@@ -26,19 +26,13 @@ shared_examples_for "a socket" do
 
   it "should raise an error when it cannot read from the handle" do
     @socket.open
-    @handle.should_receive(:read).with(17).and_raise(StandardError)
+    @handle.should_receive(:readpartial).with(17).and_raise(StandardError)
     lambda { @socket.read(17) }.should raise_error(Thrift::TransportException) { |e| e.type.should == Thrift::TransportException::NOT_OPEN }
-  end
-
-  it "should raise an error when it reads no data from the handle" do
-    @socket.open
-    @handle.should_receive(:read).with(17).and_return("")
-    lambda { @socket.read(17) }.should raise_error(Thrift::TransportException, "Socket: Could not read 17 bytes from #{@socket.instance_variable_get("@desc")}")
   end
 
   it "should return the data read when reading from the handle works" do
     @socket.open
-    @handle.should_receive(:read).with(17).and_return("test data")
+    @handle.should_receive(:readpartial).with(17).and_return("test data")
     @socket.read(17).should == "test data"
   end
 

@@ -1,1 +1,1 @@
-Dir["{core,generation,integration}/**/*.rb"].each {|f| require f }
+Dir["{core,generation}/**/*.rb"].each {|f| require f }

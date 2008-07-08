@@ -8,6 +8,10 @@ if WITH_PYTHON
 SUBDIRS += py
 endif
 
+if ENABLE_RUBY
+SUBDIRS += rb
+endif
+
 noinst_LTLIBRARIES = libtestgencpp.la
 libtestgencpp_la_SOURCES = \
 	gen-cpp/DebugProtoTest_types.cpp \

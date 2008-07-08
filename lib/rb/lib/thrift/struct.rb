@@ -23,31 +23,41 @@ module Thrift
     end
 
     def read(iprot)
-      iprot.read_struct_begin
-      loop do
-        fname, ftype, fid = iprot.read_field_begin
-        break if (ftype == Types::STOP)
-        handle_message(iprot, fid, ftype)
-        iprot.read_field_end
+      # TODO(kevinclark): Make sure transport is C readable
+      if iprot.respond_to?(:decode_binary)
+        iprot.decode_binary(self, iprot.trans)
+      else
+        iprot.read_struct_begin
+        loop do
+          fname, ftype, fid = iprot.read_field_begin
+          break if (ftype == Types::STOP)
+          handle_message(iprot, fid, ftype)
+          iprot.read_field_end
+        end
+        iprot.read_struct_end
       end
-      iprot.read_struct_end
     end
 
     def write(oprot)
-      oprot.write_struct_begin(self.class.name)
-      each_field do |fid, type, name|
-        unless (value = instance_variable_get("@#{name}")).nil?
-          if is_container? type
-            oprot.write_field_begin(name, type, fid)
-            write_container(oprot, value, struct_fields[fid])
-            oprot.write_field_end
-          else
-            oprot.write_field(name, type, fid, value)
+      if oprot.respond_to?(:encode_binary)
+        # TODO(kevinclark): Clean this so I don't have to access the transport.
+        oprot.trans.write oprot.encode_binary(self)
+      else
+        oprot.write_struct_begin(self.class.name)
+        each_field do |fid, type, name|
+          unless (value = instance_variable_get("@#{name}")).nil?
+            if is_container? type
+              oprot.write_field_begin(name, type, fid)
+              write_container(oprot, value, struct_fields[fid])
+              oprot.write_field_end
+            else
+              oprot.write_field(name, type, fid, value)
+            end
           end
         end
+        oprot.write_field_stop
+        oprot.write_struct_end
       end
-      oprot.write_field_stop
-      oprot.write_struct_end
     end
 
     def ==(other)

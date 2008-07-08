@@ -11,6 +11,10 @@ senum Thinger {
   "ASDFLJASDF"
 }
 
+struct BoolPasser {
+  1: bool value = 1
+}
+
 struct Hello {
   1: i32 simple = 53,
   2: map<i32,i32> complex = {23:532, 6243:632, 2355:532},
