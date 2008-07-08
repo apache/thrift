@@ -240,7 +240,8 @@ class ThriftTransportSpec < Spec::ExampleGroup
       s = "this is a test"
       @buffer = MemoryBuffer.new(s)
       @buffer.read(4).should == "this"
-      s.should == " is a test"
+      s.slice!(-4..-1)
+      @buffer.read(@buffer.available).should == " is a "
     end
 
     it "should always remain open" do
