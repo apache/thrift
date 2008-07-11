@@ -356,7 +356,7 @@ void TConnection::transition() {
     sz = (int32_t)ntohl(sz);
 
     if (sz <= 0) {
-      fprintf(stderr, "TConnection:transition() Negative frame size %d, remote side not using TFramedTransport?", sz);
+      fprintf(stderr, "TConnection:transition() Negative frame size %d, remote side not using TFramedTransport?\n", sz);
       close();
       return;
     }
@@ -520,7 +520,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
 
     // Fail fast if we could not create a TConnection object
     if (clientConnection == NULL) {
-      fprintf(stderr, "thriftServerEventHandler: failed TConnection factory");
+      fprintf(stderr, "thriftServerEventHandler: failed TConnection factory\n");
       close(clientSocket);
       return;
     }
