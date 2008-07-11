@@ -7,17 +7,11 @@
 #ifndef _THRIFT_CONCURRENCY_UTIL_H_
 #define _THRIFT_CONCURRENCY_UTIL_H_ 1
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <assert.h>
 #include <stddef.h>
-#if defined(HAVE_CLOCK_GETTIME)
+#include <stdint.h>
 #include <time.h>
-#else // defined(HAVE_CLOCK_GETTIME)
 #include <sys/time.h>
-#endif // defined(HAVE_CLOCK_GETTIME)
 
 namespace facebook { namespace thrift { namespace concurrency {
 
@@ -86,24 +80,7 @@ class Util {
   /**
    * Get current time as milliseconds from epoch
    */
-  static const int64_t currentTime() {
-    int64_t result;
-
-#if defined(HAVE_CLOCK_GETTIME)
-    struct timespec now;
-    int ret = clock_gettime(CLOCK_REALTIME, &now);
-    assert(ret == 0);
-    toMilliseconds(result, now);
-#elif defined(HAVE_GETTIMEOFDAY)
-    struct timeval now;
-    int ret = gettimeofday(&now, NULL);
-    assert(ret == 0);
-    toMilliseconds(result, now);
-#endif // defined(HAVE_GETTIMEDAY)
-
-    return result;
-  }
-
+  static const int64_t currentTime();
 };
 
 }}} // facebook::thrift::concurrency
