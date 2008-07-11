@@ -12,6 +12,11 @@ AC_ARG_VAR([PY_PREFIX], [Prefix for installing Python modules.
                          Default = "/usr"])
 AS_IF([test "x$PY_PREFIX" = x], [PY_PREFIX="/usr"])
 
+AC_ARG_VAR([JAVA_PREFIX], [Prefix for installing the Java lib jar.
+                           (Normal --prefix is ignored for Java because
+                           Java has different conevntions.)
+                           Default = "/usr/local/lib"])
+AS_IF([test "x$JAVA_PREFIX" = x], [JAVA_PREFIX="/usr/local/lib"])
 
 AC_PROG_CC
 AC_PROG_CPP

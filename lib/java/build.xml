@@ -4,6 +4,7 @@
 
   <property name="src" location="src" />
   <property name="build" location="build" />
+  <property name="install.path" value="/usr/local/lib" />
 
   <target name="init">
     <tstamp />
@@ -20,7 +21,7 @@
 
   <target name="install" depends="dist">
     <exec executable="install">
-      <arg line="libthrift.jar /usr/local/lib/" />
+      <arg line="libthrift.jar ${install.path}" />
     </exec>
   </target>
 
