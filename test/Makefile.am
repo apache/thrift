@@ -8,7 +8,7 @@ if WITH_PYTHON
 SUBDIRS += py
 endif
 
-if ENABLE_RUBY
+if WITH_RUBY
 SUBDIRS += rb
 endif
 

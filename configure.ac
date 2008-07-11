@@ -70,7 +70,7 @@ AX_THRIFT_LIB(ruby, [Ruby], yes)
 if test "$with_ruby" = "yes"; then
   AC_PATH_PROG([RUBY], [ruby])
 fi
-AM_CONDITIONAL(ENABLE_RUBY, [test -n "$RUBY"])
+AM_CONDITIONAL(WITH_RUBY, [test -n "$RUBY"])
 
 AC_C_CONST
 AC_C_INLINE

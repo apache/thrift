@@ -17,7 +17,7 @@ if WITH_ERLANG
 SUBDIRS += erl
 endif
 
-if ENABLE_RUBY
+if WITH_RUBY
 SUBDIRS += rb
 endif
 
