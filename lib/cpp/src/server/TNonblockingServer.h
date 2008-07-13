@@ -334,8 +334,7 @@ class TConnection {
   static void taskHandler(int fd, short /* which */, void* v) {
     assert(fd == ((TConnection*)v)->taskHandle_);
     if (-1 == ::close(((TConnection*)v)->taskHandle_)) {
-      std::string errStr = "TConnection::taskHandler close handle failed, resource leak " + TOutput::strerror_s(errno);
-      GlobalOutput(errStr.c_str());
+      GlobalOutput.perror("TConnection::taskHandler close handle failed, resource leak ", errno);
     }
     ((TConnection*)v)->transition();
   }

@@ -50,12 +50,10 @@ class TConnection::Task: public Runnable {
     // Signal completion back to the libevent thread via a socketpair
     int8_t b = 0;
     if (-1 == send(taskHandle_, &b, sizeof(int8_t), 0)) {
-      string errStr = "TNonblockingServer::Task: send "  + TOutput::strerror_s(errno);
-      GlobalOutput(errStr.c_str());
+      GlobalOutput.perror("TNonblockingServer::Task: send ", errno);
     }
     if (-1 == ::close(taskHandle_)) {
-      string errStr = "TNonblockingServer::Task: close, possible resource leak "  + TOutput::strerror_s(errno);
-      GlobalOutput(errStr.c_str());
+      GlobalOutput.perror("TNonblockingServer::Task: close, possible resource leak ", errno);
     }
   }
 
@@ -141,8 +139,7 @@ void TConnection::workSocket() {
       }
 
       if (errno != ECONNRESET) {
-        string errStr = "TConnection::workSocket() recv -1 "  + TOutput::strerror_s(errno);
-        GlobalOutput(errStr.c_str());
+        GlobalOutput.perror("TConnection::workSocket() recv -1 ", errno);
       }
     }
 
@@ -178,8 +175,7 @@ void TConnection::workSocket() {
         return;
       }
       if (errno != EPIPE) {
-        string errStr = "TConnection::workSocket() send -1 "  + TOutput::strerror_s(errno);
-        GlobalOutput(errStr.c_str());
+        GlobalOutput.perror("TConnection::workSocket() send -1 ", errno);
       }
       close();
       return;
@@ -198,7 +194,7 @@ void TConnection::workSocket() {
     return;
 
   default:
-    fprintf(stderr, "Shit Got Ill. Socket State %d\n", socketState_);
+    GlobalOutput.printf("Shit Got Ill. Socket State %d", socketState_);
     assert(0);
   }
 }
@@ -229,8 +225,7 @@ void TConnection::transition() {
       // We are setting up a Task to do this work and we will wait on it
       int sv[2];
       if (-1 == socketpair(AF_LOCAL, SOCK_STREAM, 0, sv)) {
-        string errStr = "TConnection::socketpair() failed "  + TOutput::strerror_s(errno);
-        GlobalOutput(errStr.c_str());
+        GlobalOutput.perror("TConnection::socketpair() failed ", errno);
         // Now we will fall through to the APP_WAIT_TASK block with no response
       } else {
         // Create task and dispatch to the thread manager
@@ -270,15 +265,15 @@ void TConnection::transition() {
         // Invoke the processor
         server_->getProcessor()->process(inputProtocol_, outputProtocol_);
       } catch (TTransportException &ttx) {
-        fprintf(stderr, "TTransportException: Server::process() %s\n", ttx.what());
+        GlobalOutput.printf("TTransportException: Server::process() %s", ttx.what());
         close();
         return;
       } catch (TException &x) {
-        fprintf(stderr, "TException: Server::process() %s\n", x.what());
+        GlobalOutput.printf("TException: Server::process() %s", x.what());
         close();
         return;
       } catch (...) {
-        fprintf(stderr, "Server::process() unknown exception\n");
+        GlobalOutput.printf("Server::process() unknown exception");
         close();
         return;
       }
@@ -356,7 +351,7 @@ void TConnection::transition() {
     sz = (int32_t)ntohl(sz);
 
     if (sz <= 0) {
-      fprintf(stderr, "TConnection:transition() Negative frame size %d, remote side not using TFramedTransport?\n", sz);
+      GlobalOutput.printf("TConnection:transition() Negative frame size %d, remote side not using TFramedTransport?", sz);
       close();
       return;
     }
@@ -374,7 +369,7 @@ void TConnection::transition() {
     return;
 
   default:
-    fprintf(stderr, "Totally Fucked. Application State %d\n", appState_);
+    GlobalOutput.printf("Totally Fucked. Application State %d", appState_);
     assert(0);
   }
 }
@@ -508,8 +503,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
     int flags;
     if ((flags = fcntl(clientSocket, F_GETFL, 0)) < 0 ||
         fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK) < 0) {
-      string errStr = "thriftServerEventHandler: set O_NONBLOCK (fcntl) "  + TOutput::strerror_s(errno);
-      GlobalOutput(errStr.c_str());
+      GlobalOutput.perror("thriftServerEventHandler: set O_NONBLOCK (fcntl) ", errno);
       close(clientSocket);
       return;
     }
@@ -520,7 +514,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
 
     // Fail fast if we could not create a TConnection object
     if (clientConnection == NULL) {
-      fprintf(stderr, "thriftServerEventHandler: failed TConnection factory\n");
+      GlobalOutput.printf("thriftServerEventHandler: failed TConnection factory");
       close(clientSocket);
       return;
     }
@@ -532,8 +526,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
   // Done looping accept, now we have to make sure the error is due to
   // blocking. Any other error is a problem
   if (errno != EAGAIN && errno != EWOULDBLOCK) {
-    string errStr = "thriftServerEventHandler: accept() "  + TOutput::strerror_s(errno);
-    GlobalOutput(errStr.c_str());
+    GlobalOutput.perror("thriftServerEventHandler: accept() ", errno);
   }
 }
 
@@ -646,8 +639,7 @@ void TNonblockingServer::registerEvents(event_base* base) {
   eventBase_ = base;
 
   // Print some libevent stats
-  fprintf(stderr,
-          "libevent %s method %s\n",
+  GlobalOutput.printf("libevent %s method %s",
           event_get_version(),
           event_get_method());
 

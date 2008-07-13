@@ -8,10 +8,49 @@
 #include <cstring>
 #include <boost/lexical_cast.hpp>
 #include <protocol/TProtocol.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 namespace facebook { namespace thrift {
 
 TOutput GlobalOutput;
+
+void TOutput::printf(const char *message, ...) {
+  // Try to reduce heap usage, even if printf is called rarely.
+  static const int STACK_BUF_SIZE = 256;
+  char stack_buf[STACK_BUF_SIZE];
+  va_list ap;
+
+  va_start(ap, message);
+  int need = vsnprintf(stack_buf, STACK_BUF_SIZE, message, ap);
+  va_end(ap);
+
+  if (need < STACK_BUF_SIZE) {
+    f_(stack_buf);
+    return;
+  }
+
+  char *heap_buf = (char*)malloc((need+1) * sizeof(char));
+  if (heap_buf == NULL) {
+    // Malloc failed.  We might as well print the stack buffer.
+    f_(stack_buf);
+    return;
+  }
+
+  va_start(ap, message);
+  int rval = vsnprintf(heap_buf, need+1, message, ap);
+  va_end(ap);
+  // TODO(shigin): inform user
+  if (rval != -1) {
+    f_(heap_buf);
+  }
+  free(heap_buf);
+}
+
+void TOutput::perror(const char *message, int errno_copy) {
+  std::string out = message + strerror_s(errno_copy);
+  f_(out.c_str());
+}
 
 std::string TOutput::strerror_s(int errno_copy) {
 #ifndef HAVE_STRERROR_R

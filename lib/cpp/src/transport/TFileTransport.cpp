@@ -100,11 +100,10 @@ void TFileTransport::resetOutputFile(int fd, string filename, int64_t offset) {
   if (fd_ > 0) {
     // flush any events in the queue
     flush();
-    fprintf(stderr, "error, current file (%s) not closed\n", filename_.c_str());
+    GlobalOutput.printf("error, current file (%s) not closed", filename_.c_str());
     if (-1 == ::close(fd_)) {
       int errno_copy = errno;
-      string errStr = "TFileTransport: resetOutputFile() ::close() " + TOutput::strerror_s(errno_copy);
-      GlobalOutput(errStr.c_str());
+      GlobalOutput.perror("TFileTransport: resetOutputFile() ::close() ", errno_copy);
       throw TTransportException(TTransportException::UNKNOWN, "TFileTransport: error in file close", errno_copy);
     }
   }
@@ -162,9 +161,7 @@ TFileTransport::~TFileTransport() {
   // close logfile
   if (fd_ > 0) {
     if(-1 == ::close(fd_)) {
-      int errno_copy = errno;
-      string errStr = "TFileTransport: ~TFileTransport() ::close() " + TOutput::strerror_s(errno_copy);
-      GlobalOutput(errStr.c_str());
+      GlobalOutput.perror("TFileTransport: ~TFileTransport() ::close() ", errno);
     }
   }
 }
@@ -321,8 +318,7 @@ void TFileTransport::writerThread() {
       if (enqueueBuffer_->isEmpty() && dequeueBuffer_->isEmpty()) {
         if (-1 == ::close(fd_)) {
           int errno_copy = errno;
-          string errStr = "TFileTransport: writerThread() ::close() " + TOutput::strerror_s(errno_copy);
-          GlobalOutput(errStr.c_str());
+          GlobalOutput.perror("TFileTransport: writerThread() ::close() ", errno_copy);
           throw TTransportException(TTransportException::UNKNOWN, "TFileTransport: error in file close", errno_copy);
         }
         // just be safe and sync to disk
@@ -370,8 +366,7 @@ void TFileTransport::writerThread() {
             bzero(zeros, padding);
             if (-1 == ::write(fd_, zeros, padding)) {
               int errno_copy = errno;
-              string errStr = "TFileTransport: writerThread() error while padding zeros " + TOutput::strerror_s(errno_copy);
-              GlobalOutput(errStr.c_str());
+              GlobalOutput.perror("TFileTransport: writerThread() error while padding zeros ", errno_copy);
               throw TTransportException(TTransportException::UNKNOWN, "TFileTransport: error while padding zeros", errno_copy);
             }
             unflushed += padding;
@@ -383,8 +378,7 @@ void TFileTransport::writerThread() {
         if (outEvent->eventSize_ > 0) {
           if (-1 == ::write(fd_, outEvent->eventBuff_, outEvent->eventSize_)) {
             int errno_copy = errno;
-            string errStr = "TFileTransport: error while writing event " + TOutput::strerror_s(errno_copy);
-            GlobalOutput(errStr.c_str());
+            GlobalOutput.perror("TFileTransport: error while writing event ", errno_copy);
             throw TTransportException(TTransportException::UNKNOWN, "TFileTransport: error while writing event", errno_copy);
           }
 
@@ -767,9 +761,8 @@ void TFileTransport::openLogFile() {
   // make sure open call was successful
   if(fd_ == -1) {
     int errno_copy = errno;
-    string errStr = "TFileTransport: openLogFile() ::open() file: " + filename_ + TOutput::strerror_s(errno_copy);
-    GlobalOutput(errStr.c_str());
-    throw TTransportException(TTransportException::NOT_OPEN, errStr, errno_copy);
+    GlobalOutput.perror("TFileTransport: openLogFile() ::open() file: " + filename_, errno_copy);
+    throw TTransportException(TTransportException::NOT_OPEN, filename_, errno_copy);
   }
 
 }
