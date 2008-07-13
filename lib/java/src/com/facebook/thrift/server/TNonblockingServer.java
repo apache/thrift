@@ -423,6 +423,8 @@ public class TNonblockingServer extends TServer {
     private static final int WRITING = 6;
     // another thread wants this framebuffer to go back to reading
     private static final int AWAITING_REGISTER_READ = 7;
+    // we want our transport and selection key invalidated in the selector thread
+    private static final int AWAITING_CLOSE = 8;
 
     //
     // Instance variables
@@ -548,6 +550,9 @@ public class TNonblockingServer extends TServer {
         state_ = WRITING;
       } else if (state_ == AWAITING_REGISTER_READ) {
         prepareRead();
+      } else if (state_ == AWAITING_CLOSE){
+        close();
+        selectionKey_.cancel();
       } else {
         LOGGER.severe(
           "changeSelectInterest was called, but state is invalid ("
@@ -607,9 +612,15 @@ public class TNonblockingServer extends TServer {
       try {
         processorFactory_.getProcessor(inTrans).process(inProt, outProt);
         responseReady();
+        return;
       } catch (TException te) {
         LOGGER.log(Level.WARNING, "Exception while invoking!", te);
+      } catch (Exception e) {
+        LOGGER.log(Level.SEVERE, "Unexpected exception while invoking!", e);
       }
+      // This will only be reached when there is an exception.
+      state_ = AWAITING_CLOSE;
+      requestSelectInterestChange();
     }
 
     /**
