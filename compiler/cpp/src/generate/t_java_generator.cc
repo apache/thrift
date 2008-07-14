@@ -35,6 +35,9 @@ class t_java_generator : public t_oop_generator {
     iter = parsed_options.find("beans");
     bean_style_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("nocamel");
+    nocamel_style_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("hashcode");
     gen_hash_code_ = (iter != parsed_options.end());
 
@@ -179,6 +182,7 @@ class t_java_generator : public t_oop_generator {
   std::string package_dir_;
 
   bool bean_style_;
+  bool nocamel_style_;
   bool gen_hash_code_;
 
 };
@@ -391,7 +395,11 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
       indent(out) << name << ".";
       if (bean_style_) {
         std::string cap_name = v_iter->first->get_string();
-        cap_name[0] = toupper(cap_name[0]);
+        if (nocamel_style_) {
+          cap_name = "_" + cap_name;
+        } else {
+          cap_name[0] = toupper(cap_name[0]);
+        }
         out << "set" << cap_name << "(" << val << ")";
       } else {
         out << v_iter->first->get_string() << " = " << val;
@@ -1033,7 +1041,11 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     t_type* type = get_true_type(field->get_type());
     std::string field_name = field->get_name();
     std::string cap_name = field_name;
-    cap_name[0] = toupper(cap_name[0]);
+    if (nocamel_style_) {
+      cap_name = "_" + cap_name;
+    } else {
+      cap_name[0] = toupper(cap_name[0]);
+    }
 
     if (type->is_container()) {
       // Method to return the size of the collection
@@ -2352,5 +2364,6 @@ void t_java_generator::generate_java_doc(ofstream &out,
 
 THRIFT_REGISTER_GENERATOR(java, "Java",
 "    beans:           Generate bean-style output files.\n"
+"    nocamel:         Do not use CamelCase field accessors with beans.\n"
 "    hashcode:        Generate quality hashCode methods.\n"
 );
