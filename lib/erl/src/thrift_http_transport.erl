@@ -146,18 +146,24 @@ do_flush(State = #http_transport{host = Host,
                                  read_buffer = Rbuf,
                                  write_buffer = Wbuf,
                                  http_options = HttpOptions}) ->
-    {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Body}} =
-      http:request(post,
-                   {"http://" ++ Host ++ Path,
-                    [{"User-Agent", "Erlang/thrift_http_transport"}],
-                    "application/x-thrift",
-                    iolist_to_binary(Wbuf)},
-                   HttpOptions,
-                   [{body_format, binary}]),
+    case iolist_to_binary(Wbuf) of ->
+        <<>> ->
+            %% Don't bother flushing empty buffers.
+            {ok, State};
+        WBinary ->
+            {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Body}} =
+              http:request(post,
+                           {"http://" ++ Host ++ Path,
+                            [{"User-Agent", "Erlang/thrift_http_transport"}],
+                            "application/x-thrift",
+                            WBinary},
+                           HttpOptions,
+                           [{body_format, binary}]),
 
-    State1 = State#http_transport{read_buffer = [Rbuf, Body],
-                                  write_buffer = []},
-    {ok, State1}.
+            State1 = State#http_transport{read_buffer = [Rbuf, Body],
+                                          write_buffer = []},
+            {ok, State1}
+    end.
 
 min(A,B) when A<B -> A;
 min(_,B)          -> B.
