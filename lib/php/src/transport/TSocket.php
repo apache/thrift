@@ -277,7 +277,7 @@ class TSocket extends TTransport {
       if ($got === 0 || $got === FALSE) {
         $md = stream_get_meta_data($this->handle_);
         if ($md['timed_out']) {
-          throw new TException('TSocket: timed out writing '.$len.' bytes from '.
+          throw new TException('TSocket: timed out writing '.strlen($buf).' bytes from '.
                                $this->host_.':'.$this->port_);
         } else {
             throw new TException('TSocket: Could not write '.strlen($buf).' bytes '.
