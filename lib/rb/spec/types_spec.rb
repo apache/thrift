@@ -16,31 +16,40 @@ class ThriftTypesSpec < Spec::ExampleGroup
       Thrift.type_checking = true
       begin
         # lambda { Thrift.check_type(nil, Types::STOP) }.should raise_error(TypeError)
-        lambda { Thrift.check_type(3, Types::STOP) }.should raise_error(TypeError)
-        lambda { Thrift.check_type(nil, Types::VOID) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type(3, Types::VOID) }.should raise_error(TypeError)
-        lambda { Thrift.check_type(true, Types::BOOL) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type(3, Types::BOOL) }.should raise_error(TypeError)
-        # lambda { Thrift.check_type(nil, Types::BOOL) }.should raise_error(TypeError)
-        lambda { Thrift.check_type(42, Types::BYTE) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type(42, Types::I16) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type(42, Types::I32) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type(42, Types::I64) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type(3.14, Types::I32) }.should raise_error(TypeError)
-        lambda { Thrift.check_type(3.14, Types::DOUBLE) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type(3, Types::DOUBLE) }.should raise_error(TypeError)
-        lambda { Thrift.check_type("3", Types::STRING) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type(3, Types::STRING) }.should raise_error(TypeError)
+        lambda { Thrift.check_type(3, Types::STOP, :foo) }.should raise_error(TypeError)
+        lambda { Thrift.check_type(nil, Types::VOID, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type(3, Types::VOID, :foo) }.should raise_error(TypeError)
+        lambda { Thrift.check_type(true, Types::BOOL, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type(3, Types::BOOL, :foo) }.should raise_error(TypeError)
+        # lambda { Thrift.check_type(nil, Types::BOOL, :foo) }.should raise_error(TypeError)
+        lambda { Thrift.check_type(42, Types::BYTE, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type(42, Types::I16, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type(42, Types::I32, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type(42, Types::I64, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type(3.14, Types::I32, :foo) }.should raise_error(TypeError)
+        lambda { Thrift.check_type(3.14, Types::DOUBLE, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type(3, Types::DOUBLE, :foo) }.should raise_error(TypeError)
+        lambda { Thrift.check_type("3", Types::STRING, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type(3, Types::STRING, :foo) }.should raise_error(TypeError)
         hello = SpecNamespace::Hello.new
-        lambda { Thrift.check_type(hello, Types::STRUCT) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type("foo", Types::STRUCT) }.should raise_error(TypeError)
-        lambda { Thrift.check_type({:foo => 1}, Types::MAP) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type([1], Types::MAP) }.should raise_error(TypeError)
-        lambda { Thrift.check_type([1], Types::LIST) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type({:foo => 1}, Types::LIST) }.should raise_error(TypeError)
-        lambda { Thrift.check_type(Set.new([1,2]), Types::SET) }.should_not raise_error(TypeError)
-        lambda { Thrift.check_type([1,2], Types::SET) }.should raise_error(TypeError)
-        lambda { Thrift.check_type({:foo => true}, Types::SET) }.should raise_error(TypeError)
+        lambda { Thrift.check_type(hello, Types::STRUCT, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type("foo", Types::STRUCT, :foo) }.should raise_error(TypeError)
+        lambda { Thrift.check_type({:foo => 1}, Types::MAP, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type([1], Types::MAP, :foo) }.should raise_error(TypeError)
+        lambda { Thrift.check_type([1], Types::LIST, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type({:foo => 1}, Types::LIST, :foo) }.should raise_error(TypeError)
+        lambda { Thrift.check_type(Set.new([1,2]), Types::SET, :foo) }.should_not raise_error(TypeError)
+        lambda { Thrift.check_type([1,2], Types::SET, :foo) }.should raise_error(TypeError)
+        lambda { Thrift.check_type({:foo => true}, Types::SET, :foo) }.should raise_error(TypeError)
+      ensure
+        Thrift.type_checking = false
+      end
+    end
+
+    it "should give the TypeError a readable message" do
+      Thrift.type_checking = true
+      begin
+        lambda { Thrift.check_type(3, Types::STRING, :foo) }.should raise_error(TypeError, "Expected Types::STRING, received Fixnum for field foo")
       ensure
         Thrift.type_checking = false
       end

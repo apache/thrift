@@ -6,7 +6,7 @@ module Thrift
     def initialize(d={})
       each_field do |fid, type, name, default|
         value = d.delete(name.to_s) { d.delete(name.to_sym) { default.dup rescue default } }
-        Thrift.check_type(value, type) if Thrift.type_checking
+        Thrift.check_type(value, type, name) if Thrift.type_checking
         instance_variable_set("@#{name}", value)
       end
       raise Exception, "Unknown keys given to #{self.class}.new: #{d.keys.join(", ")}" unless d.empty?
@@ -72,7 +72,7 @@ module Thrift
       fields.each do |field|
         klass.send :attr_reader, field
         klass.send :define_method, "#{field}=" do |value|
-          Thrift.check_type(value, klass::FIELDS.values.find { |f| f[:name].to_s == field.to_s }[:type] ) if Thrift.type_checking
+          Thrift.check_type(value, klass::FIELDS.values.find { |f| f[:name].to_s == field.to_s }[:type], field) if Thrift.type_checking
           instance_variable_set("@#{field}", value)
         end
       end

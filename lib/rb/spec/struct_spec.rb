@@ -177,7 +177,7 @@ class ThriftStructSpec < Spec::ExampleGroup
     it "should support optional type-checking in Thrift::Struct.new" do
       Thrift.type_checking = true
       begin
-        lambda { Hello.new(:greeting => 3) }.should raise_error(TypeError, "Expected Types::STRING, received Fixnum")
+        lambda { Hello.new(:greeting => 3) }.should raise_error(TypeError, "Expected Types::STRING, received Fixnum for field greeting")
       ensure
         Thrift.type_checking = false
       end
@@ -188,7 +188,7 @@ class ThriftStructSpec < Spec::ExampleGroup
       Thrift.type_checking = true
       begin
         hello = Hello.new
-        lambda { hello.greeting = 3 }.should raise_error(TypeError, "Expected Types::STRING, received Fixnum")
+        lambda { hello.greeting = 3 }.should raise_error(TypeError, "Expected Types::STRING, received Fixnum for field greeting")
       ensure
         Thrift.type_checking = false
       end

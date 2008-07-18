@@ -25,7 +25,7 @@ module Thrift
   class TypeError < Exception
   end
 
-  def self.check_type(value, type)
+  def self.check_type(value, type, name)
     return if value.nil?
     klasses = case type
               when Types::VOID
@@ -48,7 +48,7 @@ module Thrift
                 Array
               end
     valid = klasses && [*klasses].any? { |klass| klass === value }
-    raise TypeError, "Expected #{type_name(type)}, received #{value.class}" unless valid
+    raise TypeError, "Expected #{type_name(type)}, received #{value.class} for field #{name}" unless valid
   end
 
   def self.type_name(type)
