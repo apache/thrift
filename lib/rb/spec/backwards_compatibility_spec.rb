@@ -12,6 +12,7 @@ context "Backwards compatibility" do
       [:class,  :TException,                 Thrift::Exception],
       [:class,  :TApplicationException,      Thrift::ApplicationException],
       [:module, :TProcessor,                 Thrift::Processor],
+      [:class,  :TProtocolException,         Thrift::ProtocolException],
       [:class,  :TProtocol,                  Thrift::Protocol],
       [:class,  :TProtocolFactory,           Thrift::ProtocolFactory],
       [:class,  :TBinaryProtocol,            Thrift::BinaryProtocol],
