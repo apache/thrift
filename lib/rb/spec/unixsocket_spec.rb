@@ -20,6 +20,11 @@ class ThriftUNIXSocketSpec < Spec::ExampleGroup
       ::UNIXSocket.should_receive(:new).and_raise(StandardError)
       lambda { @socket.open }.should raise_error(Thrift::TransportException) { |e| e.type.should == Thrift::TransportException::NOT_OPEN }
     end
+
+    it "should accept an optional timeout" do
+      ::UNIXSocket.stub!(:new)
+      UNIXSocket.new(@path, 5).timeout.should == 5
+    end
   end
 
   describe UNIXServerSocket do

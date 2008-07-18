@@ -28,6 +28,11 @@ class ThriftSocketSpec < Spec::ExampleGroup
       TCPSocket.should_receive(:new).with('my.domain', 1234)
       Socket.new('my.domain', 1234).open
     end
+
+    it "should accept an optional timeout" do
+      TCPSocket.stub!(:new)
+      Socket.new('localhost', 8080, 5).timeout.should == 5
+    end
   end
 
   describe ServerSocket do

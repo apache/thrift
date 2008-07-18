@@ -11,14 +11,15 @@ require 'socket'
 
 module Thrift
   class Socket < Transport
-    def initialize(host='localhost', port=9090)
+    def initialize(host='localhost', port=9090, timeout=nil)
       @host = host
       @port = port
+      @timeout = timeout
       @desc = "#{host}:#{port}"
       @handle = nil
     end
 
-    attr_accessor :handle
+    attr_accessor :handle, :timeout
 
     def open
       begin
@@ -35,11 +36,31 @@ module Thrift
     def write(str)
       raise IOError, "closed stream" unless open?
       begin
-        @handle.write(str)
-      rescue StandardError
+        if @timeout.nil? or @timeout == 0
+          @handle.write(str)
+        else
+          len = 0
+          start = Time.now
+          while Time.now - start < @timeout
+            rd, wr, = IO.select(nil, [@handle], nil, @timeout)
+            if wr and not wr.empty?
+              len += @handle.write_nonblock(str[len..-1])
+              break if len >= str.length
+            end
+          end
+          if len < str.length
+            raise TransportException.new(TransportException::TIMED_OUT, "Socket: Timed out writing #{str.length} bytes to #{@desc}")
+          else
+            len
+          end
+        end
+      rescue TransportException => e
+        # pass this on
+        raise e
+      rescue StandardError => e
         @handle.close
         @handle = nil
-        raise TransportException.new(TransportException::NOT_OPEN)
+        raise TransportException.new(TransportException::NOT_OPEN, e.message)
       end
     end
 
@@ -47,7 +68,26 @@ module Thrift
       raise IOError, "closed stream" unless open?
 
       begin
-        data = @handle.readpartial(sz)
+        if @timeout.nil? or @timeout == 0
+          data = @handle.readpartial(sz)
+        else
+          # it's possible to interrupt select for something other than the timeout
+          # so we need to ensure we've waited long enough
+          start = Time.now
+          rd = nil # scoping
+          loop do
+            rd, = IO.select([@handle], nil, nil, @timeout)
+            break if (rd and not rd.empty?) or Time.now - start >= @timeout
+          end
+          if rd.nil? or rd.empty?
+            raise TransportException.new(TransportException::TIMED_OUT, "Socket: Timed out reading #{sz} bytes from #{@desc}")
+          else
+            data = @handle.readpartial(sz)
+          end
+        end
+      rescue TransportException => e
+        # don't let this get caught by the StandardError handler
+        raise e
       rescue StandardError => e
         @handle.close unless @handle.closed?
         @handle = nil

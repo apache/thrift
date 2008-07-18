@@ -51,4 +51,35 @@ shared_examples_for "a socket" do
     lambda { @socket.write("fail") }.should raise_error(IOError, "closed stream")
     lambda { @socket.read(10) }.should raise_error(IOError, "closed stream")
   end
+
+  it "should support the timeout accessor for read" do
+    @socket.timeout = 3
+    @socket.open
+    IO.should_receive(:select).with([@handle], nil, nil, 3).and_return([[@handle], [], []])
+    @handle.should_receive(:readpartial).with(17).and_return("test data")
+    @socket.read(17).should == "test data"
+  end
+
+  it "should support the timeout accessor for write" do
+    @socket.timeout = 3
+    @socket.open
+    IO.should_receive(:select).with(nil, [@handle], nil, 3).twice.and_return([[], [@handle], []])
+    @handle.should_receive(:write_nonblock).with("test data").and_return(4)
+    @handle.should_receive(:write_nonblock).with(" data").and_return(5)
+    @socket.write("test data").should == 9
+  end
+
+  it "should raise an error when read times out" do
+    @socket.timeout = 0.5
+    @socket.open
+    IO.should_receive(:select).with([@handle], nil, nil, 0.5).at_least(1).times.and_return(nil)
+    lambda { @socket.read(17) }.should raise_error(Thrift::TransportException) { |e| e.type.should == Thrift::TransportException::TIMED_OUT }
+  end
+
+  it "should raise an error when write times out" do
+    @socket.timeout = 0.5
+    @socket.open
+    IO.should_receive(:select).with(nil, [@handle], nil, 0.5).any_number_of_times.and_return(nil)
+    lambda { @socket.write("test data") }.should raise_error(Thrift::TransportException) { |e| e.type.should == Thrift::TransportException::TIMED_OUT }
+  end
 end

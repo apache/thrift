@@ -3,8 +3,9 @@ require 'socket'
 
 module Thrift
   class UNIXSocket < Socket
-    def initialize(path)
+    def initialize(path, timeout=nil)
       @path = path
+      @timeout = timeout
       @desc = @path # for read()'s error
       @handle = nil
     end
