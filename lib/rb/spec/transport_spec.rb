@@ -293,15 +293,20 @@ class ThriftTransportSpec < Spec::ExampleGroup
 
   describe IOStreamTransport do
     before(:each) do
-      @input = mock("Input")
-      @output = mock("Output")
+      @input = mock("Input", :closed? => false)
+      @output = mock("Output", :closed? => false)
       @trans = IOStreamTransport.new(@input, @output)
     end
 
-    it "should always be open" do
+    it "should be open as long as both input or output are open" do
       @trans.should be_open
-      @trans.close
+      @input.stub!(:closed?).and_return(true)
       @trans.should be_open
+      @input.stub!(:closed?).and_return(false)
+      @output.stub!(:closed?).and_return(true)
+      @trans.should be_open
+      @input.stub!(:closed?).and_return(true)
+      @trans.should_not be_open
     end
 
     it "should pass through read/write to input/output" do
@@ -309,6 +314,12 @@ class ThriftTransportSpec < Spec::ExampleGroup
       @output.should_receive(:write).with("foobar").and_return("+ write")
       @trans.read(17).should == "+ read"
       @trans.write("foobar").should == "+ write"
+    end
+
+    it "should close both input and output when closed" do
+      @input.should_receive(:close)
+      @output.should_receive(:close)
+      @trans.close
     end
   end
 end
