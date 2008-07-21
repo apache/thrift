@@ -1,5 +1,3 @@
-#!/usr/local/bin/thrift -php -java -cpp -py
-
 // NOTICE!!!
 // DO NOT FORGET to run regen.sh if you change this file
 // (or if you change the compiler).
