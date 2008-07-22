@@ -146,7 +146,7 @@ do_flush(State = #http_transport{host = Host,
                                  read_buffer = Rbuf,
                                  write_buffer = Wbuf,
                                  http_options = HttpOptions}) ->
-    case iolist_to_binary(Wbuf) of ->
+    case iolist_to_binary(Wbuf) of
         <<>> ->
             %% Don't bother flushing empty buffers.
             {ok, State};
