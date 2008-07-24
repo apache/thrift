@@ -195,7 +195,7 @@ class TBufferedTransport : public TBufferBase {
   TBufferedTransport(boost::shared_ptr<TTransport> transport, uint32_t rsz, uint32_t wsz)
     : transport_(transport)
     , rBufSize_(rsz)
-    , wBufSize_(rsz)
+    , wBufSize_(wsz)
     , rBuf_(new uint8_t[rBufSize_])
     , wBuf_(new uint8_t[wBufSize_])
   {
