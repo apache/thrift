@@ -9,6 +9,8 @@ require 'spec'
 
 # turn on deprecation so we can test it
 module Thrift
+  # squelch any warnings if we happen to get required twice
+  remove_const(:DEPRECATION) if const_defined? :DEPRECATION
   DEPRECATION = true
 end
 
