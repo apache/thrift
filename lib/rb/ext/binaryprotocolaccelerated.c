@@ -1181,9 +1181,9 @@ static VALUE tbpa_read_message_begin(VALUE self) {
   }
   
   if ((version & VERSION_MASK) != VERSION_1) {
-    VALUE tprotocol_exception = rb_const_get(rb_cObject, rb_intern("TProtocolException"));
+    VALUE tprotocol_exception = rb_const_get(m_thrift, rb_intern("ProtocolException"));
     VALUE exception = rb_funcall(tprotocol_exception, rb_intern("new"), 2, rb_const_get(tprotocol_exception, rb_intern("BAD_VERSION")), rb_str_new2("Missing version identifier"));
-    rb_raise(exception, "");
+    rb_exc_raise(exception);
   }
   
   type = version & 0x000000ff;
