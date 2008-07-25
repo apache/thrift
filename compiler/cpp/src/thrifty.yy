@@ -17,6 +17,7 @@
 #define __STDC_FORMAT_MACROS
 #include <stdio.h>
 #include <inttypes.h>
+#include <limits.h>
 #include "main.h"
 #include "globals.h"
 #include "parse/t_program.h"
