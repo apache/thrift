@@ -70,6 +70,16 @@ class ThriftBinaryProtocolAcceleratedSpec < Spec::ExampleGroup
 \000\005words\f\000\003\v\000\001\000\000\000\rhello, world!\000\000")
       @prot.decode_binary(SpecNamespace::Foo.new, trans).should == SpecNamespace::Foo.new
     end
+
+    it "should encode a string with null bytes in it" do
+      foo = SpecNamespace::Hello.new(:greeting => "Hello\000World!")
+      @prot.encode_binary(foo).should == "\v\000\001\000\000\000\fHello\000World!\000"
+    end
+
+    it "should decode a string with null bytes in it" do
+      trans = Thrift::MemoryBuffer.new("\v\000\001\000\000\000\fHello\000World!\000")
+      @prot.decode_binary(SpecNamespace::Hello.new, trans).should == SpecNamespace::Hello.new(:greeting => "Hello\000World!")
+    end
   end
 
   describe BinaryProtocolAcceleratedFactory do

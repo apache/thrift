@@ -259,10 +259,9 @@ static void write_double(VALUE buf, double dub) {
   write_i64(buf, transfer.t);
 }
 
-static void write_string(VALUE buf, char* str) {
-  int32_t len = strlen(str);
+static void write_string(VALUE buf, char* str, size_t len) {
   write_i32(buf, len);
-  rb_str_buf_cat2(buf, str);
+  rb_str_buf_cat(buf, str, len);
 }
 
 // Some functions macro'd out because they're nops for the binary protocol
@@ -473,7 +472,7 @@ static void binary_encoding(VALUE buf, VALUE obj, int type) {
       break;
 
     case T_STR:
-      write_string(buf, StringValuePtr(obj));
+      write_string(buf, StringValuePtr(obj), RSTRING(obj)->len);
       break;
           
     case T_STRCT: {
