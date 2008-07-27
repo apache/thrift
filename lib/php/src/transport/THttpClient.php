@@ -41,6 +41,13 @@ class THttpClient extends TTransport {
   protected $uri_;
 
   /**
+   * The scheme to use for the request, i.e. http, https
+   *
+   * @var string
+   */
+  protected $scheme_;
+
+  /**
    * Buffer for the HTTP request data
    *
    * @var string
@@ -68,10 +75,11 @@ class THttpClient extends TTransport {
    * @param int    $port
    * @param string $uri
    */
-  public function __construct($host, $port=80, $uri='') {
+  public function __construct($host, $port=80, $uri='', $scheme = 'http') {
     if ((strlen($uri) > 0) && ($uri{0} != '/')) {
       $uri = '/'.$uri;
     }
+    $this->scheme_ = $scheme;
     $this->host_ = $host;
     $this->port_ = $port;
     $this->uri_ = $uri;
@@ -170,7 +178,7 @@ class THttpClient extends TTransport {
     $this->buf_ = '';
 
     $contextid = stream_context_create(array('http' => $options));
-    $this->handle_ = @fopen('http://'.$host.$this->uri_, 'r', false, $contextid);
+    $this->handle_ = @fopen($this->scheme_.'://'.$host.$this->uri_, 'r', false, $contextid);
 
     // Connect failed?
     if ($this->handle_ === FALSE) {
