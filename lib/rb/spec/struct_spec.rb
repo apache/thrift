@@ -5,11 +5,12 @@ class ThriftStructSpec < Spec::ExampleGroup
   include Thrift
   include SpecNamespace
 
-  class OldStruct
+  class Xception < Thrift::Exception
     include Thrift::Struct
-    attr_accessor :set
+    attr_accessor :message, :code
     FIELDS = {
-      1 => {:type => Thrift::Types::SET, :name => 'val', :default => {:foo => true, :bar => true}}
+      1 => {:type => Thrift::Types::STRING, :name => 'message'},
+      2 => {:type => Thrift::Types::I32, :name => 'code', :default => 1}
     }
   end
 
@@ -198,6 +199,41 @@ class ThriftStructSpec < Spec::ExampleGroup
     it "should raise an exception when unknown types are given to Thrift::Struct.new" do
       lambda { Hello.new(:fish => 'salmon') }.should raise_error(Exception, "Unknown keys given to SpecNamespace::Hello.new: fish")
       lambda { Hello.new(:foo => 'bar', :baz => 'blah', :greeting => 'Good day') }.should raise_error(Exception, /^Unknown keys given to SpecNamespace::Hello.new: (foo, baz|baz, foo)$/)
+    end
+
+    it "should support `raise Xception, 'message'` for Exception structs" do
+      begin
+        raise Xception, "something happened"
+      rescue Thrift::Exception => e
+        e.message.should == "something happened"
+        e.code.should == 1
+        # ensure it gets serialized properly, this is the really important part
+        prot = mock("Protocol")
+        prot.should_receive(:write_struct_begin).with("ThriftStructSpec::Xception")
+        prot.should_receive(:write_struct_end)
+        prot.should_receive(:write_field).with('message', Types::STRING, 1, "something happened")
+        prot.should_receive(:write_field).with('code', Types::I32, 2, 1)
+        prot.should_receive(:write_field_stop)
+
+        e.write(prot)
+      end
+    end
+
+    it "should support the regular initializer for exception structs" do
+      begin
+        raise Xception, :message => "something happened", :code => 5
+      rescue Thrift::Exception => e
+        e.message.should == "something happened"
+        e.code.should == 5
+        prot = mock("Protocol")
+        prot.should_receive(:write_struct_begin).with("ThriftStructSpec::Xception")
+        prot.should_receive(:write_struct_end)
+        prot.should_receive(:write_field).with('message', Types::STRING, 1, "something happened")
+        prot.should_receive(:write_field).with('code', Types::I32, 2, 5)
+        prot.should_receive(:write_field_stop)
+
+        e.write(prot)
+      end
     end
   end
 end

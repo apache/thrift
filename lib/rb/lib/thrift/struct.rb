@@ -80,6 +80,32 @@ module Thrift
 
     protected
 
+    def self.append_features(mod)
+      if mod.ancestors.include? ::Exception
+        mod.send :class_variable_set, :'@@__thrift_struct_real_initialize', mod.instance_method(:initialize)
+        super
+        # set up our custom initializer so `raise Xception, 'message'` works
+        mod.send :define_method, :struct_initialize, mod.instance_method(:initialize)
+        mod.send :define_method, :initialize, mod.instance_method(:exception_initialize)
+      else
+        super
+      end
+    end
+
+    def exception_initialize(*args, &block)
+      if args.size == 1 and args.first.is_a? Hash
+        # looks like it's a regular Struct initialize
+        method(:struct_initialize).call(args.first)
+      else
+        # call the Struct initializer first with no args
+        # this will set our field default values
+        method(:struct_initialize).call()
+        # now give it to the exception
+        self.class.send(:class_variable_get, :'@@__thrift_struct_real_initialize').bind(self).call(*args, &block)
+        # self.class.instance_method(:initialize).bind(self).call(*args, &block)
+      end
+    end
+
     def handle_message(iprot, fid, ftype)
       field = struct_fields[fid]
       if field and field[:type] == ftype
