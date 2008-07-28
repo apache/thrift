@@ -12,7 +12,12 @@ module Thrift
       args.each do |k, v|
         data.send("#{k.to_s}=", v)
       end
-      data.write(@oprot)
+      begin
+        data.write(@oprot)
+      rescue StandardError => e
+        @oprot.trans.close
+        raise e
+      end
       @oprot.write_message_end
       @oprot.trans.flush
     end

@@ -65,5 +65,17 @@ class ThriftClientSpec < Spec::ExampleGroup
       end
       lambda { @client.receive_message(nil) }.should raise_error(StandardError)
     end
+
+    it "should close the transport if an error occurs while sending a message" do
+      @prot.stub!(:write_message_begin)
+      @prot.should_not_receive(:write_message_end)
+      mock_args = mock("#<TestMessage_args:mock>")
+      mock_args.should_receive(:write).with(@prot).and_raise(StandardError)
+      trans = mock("MockTransport")
+      @prot.stub!(:trans).and_return(trans)
+      trans.should_receive(:close)
+      klass = mock("TestMessage_args", :new => mock_args)
+      lambda { @client.send_message("testMessage", klass) }.should raise_error(StandardError)
+    end
   end
 end
