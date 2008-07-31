@@ -5,10 +5,23 @@
 # http://developers.facebook.com/thrift/
 
 from TTransport import *
+import os
+import errno
 import socket
 
-class TSocket(TTransportBase):
+class TSocketBase(TTransportBase):
+  def _resolveAddr(self):
+    if self._unix_socket is not None:
+      return [(socket.AF_UNIX, socket.SOCK_STREAM, None, None, self._unix_socket)]
+    else:
+      return socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
 
+  def close(self):
+    if self.handle:
+      self.handle.close()
+      self.handle = None
+
+class TSocket(TSocketBase):
   """Socket implementation of TTransport base."""
 
   def __init__(self, host='localhost', port=9090, unix_socket=None):
@@ -41,12 +54,6 @@ class TSocket(TTransportBase):
     if (self.handle != None):
       self.handle.settimeout(self._timeout)
 
-  def _resolveAddr(self):
-    if self._unix_socket is not None:
-      return [(socket.AF_UNIX, socket.SOCK_STREAM, None, None, self._unix_socket)]
-    else:
-      return socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
-
   def open(self):
     try:
       res0 = self._resolveAddr()
@@ -62,12 +69,11 @@ class TSocket(TTransportBase):
             raise e
         break
     except socket.error, e:
-      raise TTransportException(TTransportException.NOT_OPEN, 'Could not connect to %s:%d' % (self.host, self.port))
-
-  def close(self):
-    if self.handle != None:
-      self.handle.close()
-      self.handle = None
+      if self._unix_socket:
+        message = 'Could not connect to socket %s' % self._unix_socket
+      else:
+        message = 'Could not connect to %s:%d' % (self.host, self.port)
+      raise TTransportException(TTransportException.NOT_OPEN, message)
 
   def read(self, sz):
     buff = self.handle.recv(sz)
@@ -88,19 +94,31 @@ class TSocket(TTransportBase):
   def flush(self):
     pass
 
-class TServerSocket(TServerTransportBase):
-
+class TServerSocket(TServerTransportBase, TSocketBase):
   """Socket implementation of TServerTransport base."""
 
-  def __init__(self, port):
+  def __init__(self, port=9090, unix_socket=None):
+    self.host = None
     self.port = port
+    self._unix_socket = unix_socket
     self.handle = None
 
   def listen(self):
-    res0 = socket.getaddrinfo(None, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
+    res0 = self._resolveAddr()
     for res in res0:
       if res[0] is socket.AF_INET6 or res is res0[-1]:
         break
+
+    # We need remove the old unix socket if the file exists and
+    # nobody is listening on it.
+    if self._unix_socket:
+      tmp = socket.socket(res[0], res[1])
+      try:
+        tmp.connect(res[4])
+      except socket.error, err:
+        eno, message = err.args
+        if eno == errno.ECONNREFUSED:
+          os.unlink(res[4])
 
     self.handle = socket.socket(res[0], res[1])
     self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -110,11 +128,7 @@ class TServerSocket(TServerTransportBase):
     self.handle.listen(128)
 
   def accept(self):
-    (client, addr) = self.handle.accept()
+    client, addr = self.handle.accept()
     result = TSocket()
     result.setHandle(client)
     return result
-
-  def close(self):
-    self.handle.close()
-    self.handle = None
