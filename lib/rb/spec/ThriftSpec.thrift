@@ -17,6 +17,20 @@ struct BoolStruct {
   1: bool yesno = 1
 }
 
+struct SimpleList {
+  1: list<bool> bools,
+  2: list<byte> bytes,
+  3: list<i16> i16s,
+  4: list<i32> i32s,
+  5: list<i64> i64s,
+  6: list<double> doubles,
+  7: list<string> strings,
+  8: list<map<i16, i16>> maps,
+  9: list<list<i16>> lists,
+  10: list<set<i16>> sets,
+  11: list<Hello> hellos
+}
+
 service NonblockingService {
   Hello greeting(1:bool english)
   bool block()

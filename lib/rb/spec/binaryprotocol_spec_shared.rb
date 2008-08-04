@@ -63,6 +63,11 @@ shared_examples_for 'a binary protocol' do
     @prot.write_bool(false)
   end
 
+  it "should treat a nil bool as false" do
+    @prot.should_receive(:write_byte).with(0)
+    @prot.write_bool(nil)
+  end
+
   it "should write a byte" do
     # byte is small enough, let's check -128..127
     (-128..127).each do |i|
@@ -79,6 +84,10 @@ shared_examples_for 'a binary protocol' do
     end
     # and lastly, a Bignum is going to error out
     lambda { @prot.write_byte(2**65) }.should raise_error(RangeError)
+  end
+
+  it "should error gracefully when trying to write a nil byte" do
+    lambda { @prot.write_byte(nil) }.should raise_error
   end
 
   it "should write an i16" do
@@ -101,6 +110,10 @@ shared_examples_for 'a binary protocol' do
     # lambda { @prot.write_i16(2**65) }.should raise_error(RangeError)
   end
 
+  it "should error gracefully when trying to write a nil i16" do
+    lambda { @prot.write_i16(nil) }.should raise_error
+  end
+
   it "should write an i32" do
     # try a random scattering of values
     # include the signed i32 minimum/maximum
@@ -119,6 +132,10 @@ shared_examples_for 'a binary protocol' do
     @trans.should_receive(:write).with("\200\000\000\005").ordered
     @prot.write_i32(2 ** 31 + 5)
     # lambda { @prot.write_i32(2 ** 65 + 5) }.should raise_error(RangeError)
+  end
+
+  it "should error gracefully when trying to write a nil i32" do
+    lambda { @prot.write_i32(nil) }.should raise_error
   end
 
   it "should write an i64" do
@@ -142,6 +159,10 @@ shared_examples_for 'a binary protocol' do
     # lambda { @prot.write_i64(2 ** 65 + 5) }.should raise_error(RangeError)
   end
 
+  it "should error gracefully when trying to write a nil i64" do
+    lambda { @prot.write_i64(nil) }.should raise_error
+  end
+
   it "should write a double" do
     # try a random scattering of values, including min/max
     @trans.should_receive(:write).with([Float::MIN].pack('G')).ordered
@@ -157,11 +178,19 @@ shared_examples_for 'a binary protocol' do
     end
   end
 
+  it "should error gracefully when trying to write a nil double" do
+    lambda { @prot.write_double(nil) }.should raise_error
+  end
+
   it "should write a string" do
     str = "hello world"
     @prot.should_receive(:write_i32).with(str.length).ordered
     @trans.should_receive(:write).with(str).ordered
     @prot.write_string(str)
+  end
+
+  it "should error gracefully when trying to write a nil string" do
+    lambda { @prot.write_string(nil) }.should raise_error
   end
 
   # message footer is a noop

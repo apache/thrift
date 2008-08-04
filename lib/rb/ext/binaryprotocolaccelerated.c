@@ -186,7 +186,7 @@ static field_spec* parse_field_spec(VALUE field_data) {
 
   spec->type = type;
   
-  if (Qnil != name) {
+  if (!NIL_P(name)) {
     spec->name = StringValuePtr(name);
   } else {
     spec->name = NULL;
@@ -317,6 +317,8 @@ static void write_container(VALUE buf, VALUE value, field_spec* spec) {
       VALUE keys;
       VALUE key;
       VALUE val;
+
+      Check_Type(value, T_HASH);
       
       keys = rb_funcall(value, keys_id, 0);
       
@@ -347,14 +349,17 @@ static void write_container(VALUE buf, VALUE value, field_spec* spec) {
     }
     
     case T_LIST: {
+      Check_Type(value, T_ARRAY);
+
       sz = RARRAY(value)->len;
       
       write_list_begin(buf, spec->data.element->type, sz);
       for (i = 0; i < sz; ++i) {
+        VALUE val = rb_ary_entry(value, i);
         if (IS_CONTAINER(spec->data.element->type)) {
-          write_container(buf, rb_ary_entry(value, i), spec->data.element);
+          write_container(buf, val, spec->data.element);
         } else {
-          binary_encoding(buf, rb_ary_entry(value, i), spec->data.element->type);
+          binary_encoding(buf, val, spec->data.element->type);
         }
       }
       write_list_end(buf);
@@ -380,10 +385,11 @@ static void write_container(VALUE buf, VALUE value, field_spec* spec) {
       write_set_begin(buf, spec->data.element->type, sz);
       
       for (i = 0; i < sz; i++) {
+        VALUE val = rb_ary_entry(items, i);
         if (IS_CONTAINER(spec->data.element->type)) {
-          write_container(buf, rb_ary_entry(items, i), spec->data.element);
+          write_container(buf, val, spec->data.element);
         } else {
-          binary_encoding(buf, rb_ary_entry(items, i), spec->data.element->type);
+          binary_encoding(buf, val, spec->data.element->type);
         }
       }
       
@@ -409,7 +415,7 @@ static int encode_field(VALUE fid, VALUE data, VALUE ary) {
   
   VALUE value = rb_ivar_get(obj, rb_intern(name_buf));
   
-  if (Qnil == value) {
+  if (NIL_P(value)) {
     free_field_spec(spec);
     return 0;
   }
@@ -471,9 +477,12 @@ static void binary_encoding(VALUE buf, VALUE obj, int type) {
       write_double(buf, NUM2DBL(obj));
       break;
 
-    case T_STR:
-      write_string(buf, StringValuePtr(obj), RSTRING(obj)->len);
+    case T_STR: {
+      // make sure to call StringValuePtr before calling RSTRING
+      char *ptr = StringValuePtr(obj);
+      write_string(buf, ptr, RSTRING(obj)->len);
       break;
+    }
           
     case T_STRCT: {
       // rb_hash_foreach has to take args as a ruby array
