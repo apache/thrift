@@ -199,6 +199,17 @@ module Thrift
       @wbuf = ''
     end
 
+    def borrow(requested_length = 0)
+      read_frame if @rbuf.empty?
+      # there isn't any more coming, so if it's not enough, it's an error.
+      raise EOFError if requested_length > @rbuf.size
+      @rbuf
+    end
+    
+    def consume!(size)
+      @rbuf.slice!(0...size)
+    end
+
     private
 
     def read_frame

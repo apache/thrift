@@ -221,6 +221,40 @@ class ThriftTransportSpec < Spec::ExampleGroup
       @trans.should_receive(:write).with("\000\000\000\000")
       ftrans.flush
     end
+    
+    it "should refill its buffer when borrow is called and it is empty" do
+      ftrans = FramedTransport.new(@trans)
+      @trans.should_receive(:read_all).with(4).and_return([10].pack("N"))
+      @trans.should_receive(:read_all).with(10).and_return("1234567890")
+      ftrans.borrow(10).should == "1234567890"
+    end
+    
+    it "should not consume any data when borrow is called" do
+      ftrans = FramedTransport.new(@trans)
+      @trans.should_receive(:read_all).with(4).and_return([10].pack("N"))
+      @trans.should_receive(:read_all).with(10).and_return("1234567890")
+      ftrans.borrow(10).should == "1234567890"
+      ftrans.borrow(10).should == "1234567890"
+    end
+    
+    it "should remove data from the buffer when consume! is called" do
+      ftrans = FramedTransport.new(@trans)
+      @trans.should_receive(:read_all).with(4).ordered.and_return([10].pack("N"))
+      @trans.should_receive(:read_all).with(10).ordered.and_return("1234567890")
+      ftrans.borrow(5).should == "1234567890"
+      ftrans.consume!(5).should == "12345"
+      ftrans.borrow(5).should == "67890"
+    end
+    
+    it "should raise an EOFError when it is out of data and borrow is called" do
+      ftrans = FramedTransport.new(@trans)
+      @trans.should_receive(:read_all).with(4).ordered.and_return([10].pack("N"), [0].pack("N"))
+      @trans.should_receive(:read_all).with(10).ordered.and_return("1234567890")
+      @trans.should_receive(:read_all).with(0).ordered.and_return("")
+      ftrans.borrow(10).should == "1234567890"
+      ftrans.consume!(10).should == "1234567890"
+      lambda {ftrans.borrow(10)}.should raise_error(EOFError)
+    end
   end
 
   describe FramedTransportFactory do
