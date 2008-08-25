@@ -197,8 +197,7 @@ class ThriftStructSpec < Spec::ExampleGroup
     end
 
     it "should raise an exception when unknown types are given to Thrift::Struct.new" do
-      lambda { Hello.new(:fish => 'salmon') }.should raise_error(Exception, "Unknown keys given to SpecNamespace::Hello.new: fish")
-      lambda { Hello.new(:foo => 'bar', :baz => 'blah', :greeting => 'Good day') }.should raise_error(Exception, /^Unknown keys given to SpecNamespace::Hello.new: (foo, baz|baz, foo)$/)
+      lambda { Hello.new(:fish => 'salmon') }.should raise_error(Exception, "Unknown key given to SpecNamespace::Hello.new: fish")
     end
 
     it "should support `raise Xception, 'message'` for Exception structs" do

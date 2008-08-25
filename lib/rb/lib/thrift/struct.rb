@@ -4,12 +4,51 @@ require 'set'
 module Thrift
   module Struct
     def initialize(d={})
-      each_field do |fid, type, name, default|
-        value = d.delete(name.to_s) { d.delete(name.to_sym) { default.dup rescue default } }
-        Thrift.check_type(value, struct_fields[fid], name) if Thrift.type_checking
+      # get a copy of the default values to work on, removing defaults in favor of arguments
+      fields_with_defaults = fields_with_default_values.dup
+      d.each_key do |name|
+        fields_with_defaults.delete(name.to_s)
+      end
+      
+      # assign all the user-specified arguments
+      d.each do |name, value|
+        unless name_to_id(name.to_s)
+          raise Exception, "Unknown key given to #{self.class}.new: #{name}"
+        end
+        Thrift.check_type(value, struct_fields[name_to_id(name.to_s)], name) if Thrift.type_checking
         instance_variable_set("@#{name}", value)
       end
-      raise Exception, "Unknown keys given to #{self.class}.new: #{d.keys.join(", ")}" unless d.empty?
+      
+      # assign all the default values
+      fields_with_defaults.each do |name, default_value|
+        instance_variable_set("@#{name}", (default_value.dup rescue default_value))
+      end
+    end
+
+    def fields_with_default_values
+      fields_with_default_values = self.class.instance_variable_get("@fields_with_default_values")
+      unless fields_with_default_values
+        fields_with_default_values = {}
+        struct_fields.each do |fid, field_def|
+          if field_def[:default]
+            fields_with_default_values[field_def[:name]] = field_def[:default]
+          end
+        end
+        self.class.instance_variable_set("@fields_with_default_values", fields_with_default_values)
+      end
+      fields_with_default_values
+    end
+
+    def name_to_id(name)
+      names_to_ids = self.class.instance_variable_get("@names_to_ids")
+      unless names_to_ids
+        names_to_ids = {}
+        struct_fields.each do |fid, field_def|
+          names_to_ids[field_def[:name]] = fid
+        end
+        self.class.instance_variable_set("@names_to_ids", names_to_ids)
+      end
+      names_to_ids[name]
     end
 
     def struct_fields
