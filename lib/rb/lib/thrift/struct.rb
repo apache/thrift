@@ -57,8 +57,19 @@ module Thrift
 
     def each_field
       struct_fields.each do |fid, data|
-        yield fid, data[:type], data[:name], data[:default]
+        yield fid, data[:type], data[:name], data[:default], data[:optional]
       end
+    end
+
+    def inspect(skip_optional_nulls = true)
+      fields = []
+      each_field do |fid, type, name, default, optional|
+        value = instance_variable_get("@#{name}")
+        unless skip_optional_nulls && optional && value.nil?
+          fields << "#{name}:#{value.inspect}"
+        end
+      end
+      "<#{self.class} #{fields.join(", ")}>"
     end
 
     def read(iprot)

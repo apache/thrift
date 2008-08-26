@@ -69,7 +69,7 @@ class t_rb_generator : public t_oop_generator {
   void generate_rb_simple_exception_constructor(std::ofstream& out, t_struct* tstruct);
   void generate_accessors   (std::ofstream& out, t_struct* tstruct);
   void generate_field_defns (std::ofstream& out, t_struct* tstruct);
-  void generate_field_data  (std::ofstream& out, t_type* field_type, const std::string& field_name, t_const_value* field_value);
+  void generate_field_data  (std::ofstream& out, t_type* field_type, const std::string& field_name, t_const_value* field_value, bool optional);
 
   /**
    * Service-level generation functions
@@ -512,7 +512,8 @@ void t_rb_generator::generate_field_defns(std::ofstream& out, t_struct* tstruct)
     indent(out) <<
       (*f_iter)->get_key() << " => ";
 
-    generate_field_data(out, (*f_iter)->get_type(), (*f_iter)->get_name(), (*f_iter)->get_value());
+    generate_field_data(out, (*f_iter)->get_type(), (*f_iter)->get_name(), (*f_iter)->get_value(), 
+      (*f_iter)->get_req() == t_field::T_OPTIONAL);
   }
   indent_down();
   out << endl;
@@ -520,7 +521,7 @@ void t_rb_generator::generate_field_defns(std::ofstream& out, t_struct* tstruct)
 }
 
 void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type,
-    const std::string& field_name = "", t_const_value* field_value = NULL) {
+    const std::string& field_name = "", t_const_value* field_value = NULL, bool optional = false) {
   field_type = get_true_type(field_type);
 
   // Begin this field's defn
@@ -549,6 +550,10 @@ void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type,
       out << ", :element => ";
       generate_field_data(out, ((t_set*)field_type)->get_elem_type());
     }
+  }
+  
+  if(optional) {
+    out << ", :optional => true";
   }
 
   // End of this field's defn

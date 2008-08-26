@@ -17,7 +17,7 @@ module SpecNamespace
 
     class Foo
       include Thrift::Struct
-      Thrift::Struct.field_accessor self, :simple, :words, :hello, :ints, :complex, :shorts
+      Thrift::Struct.field_accessor self, :simple, :words, :hello, :ints, :complex, :shorts, :opt_string
       FIELDS = {
         1 => {:type => Thrift::Types::I32, :name => 'simple', :default => 53},
         2 => {:type => Thrift::Types::STRING, :name => 'words', :default => 'words'},
@@ -34,7 +34,8 @@ module SpecNamespace
         6 => {:type => Thrift::Types::SET, :name => 'shorts', :default => Set.new([          5,
           17,
           239,
-        ]), :element => {:type => Thrift::Types::I16}}
+        ]), :element => {:type => Thrift::Types::I16}},
+        7 => {:type => Thrift::Types::STRING, :name => 'opt_string', :optional => true}
       }
     end
 
