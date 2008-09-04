@@ -33,16 +33,6 @@ public class TFramedTransport extends TTransport {
    */
   private ByteArrayInputStream readBuffer_ = null;
 
-  /**
-   * Whether to frame input
-   */
-  private boolean frameRead_ = true;
-
-  /**
-   * Whether to frame output
-   */
-  private boolean frameWrite_ = true;
-
   public static class Factory extends TTransportFactory {
     public Factory() {
     }
@@ -56,24 +46,7 @@ public class TFramedTransport extends TTransport {
    * Constructor wraps around another tranpsort
    */
   public TFramedTransport(TTransport transport) {
-    this(transport, true, true);
-  }
-
-  /**
-   * Constructor wraps around another tranpsort
-   */
-  public TFramedTransport(TTransport transport, boolean in, boolean out) {
     transport_ = transport;
-    frameRead_ = in;
-    frameWrite_ = out;
-  }
-
-  public void setFrameRead(boolean frameRead) {
-    frameRead_ = frameRead;
-  }
-
-  public void setFrameWrite(boolean frameWrite) {
-    frameWrite_ = frameWrite;
   }
 
   public void open() throws TTransportException {
@@ -89,10 +62,6 @@ public class TFramedTransport extends TTransport {
   }
 
   public int read(byte[] buf, int off, int len) throws TTransportException {
-    if (!frameRead_) {
-      return transport_.read(buf, off, len);
-    }
-
     if (readBuffer_ != null) {
       int got = readBuffer_.read(buf, off, len);
       if (got > 0) {
@@ -121,19 +90,10 @@ public class TFramedTransport extends TTransport {
   }
 
   public void write(byte[] buf, int off, int len) throws TTransportException {
-    if (!frameWrite_) {
-      transport_.write(buf, off, len);
-      return;
-    }
     writeBuffer_.write(buf, off, len);
   }
 
   public void flush() throws TTransportException {
-    if (!frameWrite_) {
-      transport_.flush();
-      return;
-    }
-
     byte[] buf = writeBuffer_.get();
     int len = writeBuffer_.len();
     writeBuffer_.reset();
