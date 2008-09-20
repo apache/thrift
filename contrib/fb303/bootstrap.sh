@@ -2,7 +2,7 @@
 
 
 # To be safe include -I flag
-aclocal
+aclocal -I ./aclocal
 automake -a
 autoconf
 ./configure --config-cache $*

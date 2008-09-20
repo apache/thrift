@@ -29,5 +29,9 @@ CANNOT use functionality that is NOT in fb303.
 Yes. fb303 is distributed under the Thrift Software License. See the
 LICENSE file for more details.
 
+* Installation *
+fb303 is configured/built/installed similar to Thrift.  See the README
+in the Thrift root directory for more information.
+
 * Who wrote this README? *
 mcslee@facebook.com

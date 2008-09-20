@@ -151,17 +151,21 @@ def fb_status_string(status_enum):
         return "WARNING"
 
 
-def main(port, command):
+def main():
+
+    # parse command line options
+    parser = OptionParser()
+    commands=["stop","counters","status","reload","version","name","alive"]
+
+    parser.add_option("-c", "--command", dest="command", help="execute this API",
+                      choices=commands, default="status")
+    parser.add_option("-p","--port",dest="port",help="the service's port",
+                      default=9082)
+
+    (options, args) = parser.parse_args()
     status = service_ctrl(options.command, options.port)
     sys.exit(status)
 
 
-# parse command line options
-parser = OptionParser()
-parser.add_option("-c", "--command", dest="command", help="execute this API", choices=["stop","counters","status","reload","version","name","alive"],
-                  default="status")
-parser.add_option("-p","--port",dest="port",help="the service's port", default=9082)
-
-(options, args) = parser.parse_args()
-
-main(options.port, options.command)
+if __name__ == '__main__':
+    main()

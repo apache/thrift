@@ -26,6 +26,11 @@ AC_PREFIX_DEFAULT([/usr/local])
 # To change the current default you must change bootstrap.sh.
 FB_WITH_EXTERNAL_PATH([`pwd`])
 
+AC_ARG_VAR([PY_PREFIX], [Prefix for installing Python modules.
+                         (Normal --prefix is ignored for Python because
+                         Python has different conventions.)
+                         Default = "/usr"])
+AS_IF([test "x$PY_PREFIX" = x], [PY_PREFIX="/usr"])
 
 ##########################################################################
 # User Configurable
@@ -46,7 +51,9 @@ FB_ENABLE_DEFAULT_STATIC
 
 # Example: sets $(thrift_home) variable with default path set to /usr/local.
 FB_WITH_PATH([thrift_home], [thriftpath], [/usr/local])
-FB_WITH_PATH([boost_home], [boostpath], [/usr/local/boost])
+
+# Require boost 1.33.1 or later
+AX_BOOST_BASE([1.33.1])
 
 # Generates Makefile from Makefile.am. Modify when new subdirs are added.
 # Change Makefile.am also to add subdirectly.

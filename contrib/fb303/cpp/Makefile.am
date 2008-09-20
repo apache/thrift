@@ -5,7 +5,6 @@
 
 # User specified path variables set in configure.ac.
 # thrift_home
-# boost_home
 #
 THRIFT = $(thrift_home)/bin/thrift
 
@@ -20,7 +19,8 @@ endif
 
 AM_CPPFLAGS = -I..
 AM_CPPFLAGS += -Igen-cpp
-AM_CPPFLAGS += -I$(thrift_home)/include/thrift -I$(boost_home)/include/boost-1_33_1
+AM_CPPFLAGS += -I$(thrift_home)/include/thrift 
+AM_CPPFLAGS += $(BOOST_CPPFLAGS)
 AM_CPPFLAGS += $(FB_CPPFLAGS) $(DEBUG_CPPFLAGS)
 
 # GENERATE BUILD RULES
