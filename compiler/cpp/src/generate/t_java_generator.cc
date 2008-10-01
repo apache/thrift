@@ -1049,7 +1049,14 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
 
     if (type->is_container()) {
       // Method to return the size of the collection
-      indent(out) << "public int get" << cap_name << "Size() {" << endl;
+      indent(out) << "public int get" << cap_name;
+      if (nocamel_style_) {
+        out << "_size";
+      } else {
+        out << "Size";
+      }
+      out << "() {" << endl;
+
       indent_up();
       indent(out) << "return (this." << field_name << " == null) ? 0 : " <<
         "this." << field_name << ".size();" << endl;
@@ -1068,7 +1075,13 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
 
       // Iterator getter for sets and lists
       indent(out) << "public java.util.Iterator<" <<
-        type_name(element_type, true, false) <<  "> get" << cap_name << "Iterator() {" << endl;
+        type_name(element_type, true, false) <<  "> get" << cap_name;
+      if (nocamel_style_) {
+        out << "_iterator() {" << endl;
+      } else {
+        out << "Iterator() {" << endl;
+      }
+
       indent_up();
       indent(out) << "return (this." << field_name << " == null) ? null : " <<
         "this." << field_name << ".iterator();" << endl;
@@ -1076,9 +1089,14 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       indent(out) << "}" << endl << endl;
 
       // Add to set or list, create if the set/list is null
-      indent(out) << "public void addTo" << cap_name << "(" <<
-        type_name(element_type) <<
-        " elem) {" << endl;
+      indent(out);
+      if (nocamel_style_) {
+        out << "public void add_to";
+      } else {
+        out << "public void addTo";
+      }
+      out << cap_name << "(" << type_name(element_type) << " elem) {" << endl;
+
       indent_up();
       indent(out) << "if (this." << field_name << " == null) {" << endl;
       indent_up();
@@ -1095,9 +1113,16 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       // Put to map
       t_type* key_type = ((t_map*)type)->get_key_type();
       t_type* val_type = ((t_map*)type)->get_val_type();
-      indent(out) << "public void putTo" << cap_name << "(" <<
-        type_name(key_type) << " key, " <<
-        type_name(val_type) << " val) {" << endl;
+
+      indent(out);
+      if (nocamel_style_) {
+        out << "public void put_to";
+      } else {
+        out << "public void putTo";
+      }
+      out << cap_name << "(" << type_name(key_type) << " key, "
+        << type_name(val_type) << " val) {" << endl;
+
       indent_up();
       indent(out) << "if (this." << field_name << " == null) {" << endl;
       indent_up();
