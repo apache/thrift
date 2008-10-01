@@ -1191,18 +1191,25 @@ void t_java_generator::generate_java_struct_tostring(ofstream& out,
 
   out <<
     indent() << "StringBuilder sb = new StringBuilder(\"" << tstruct->get_name() << "(\");" << endl;
+  out << indent() << "boolean first = true;" << endl << endl;
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
-  bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if (first) {
-      first = false;
-      indent(out) << "sb.append(\"" << (*f_iter)->get_name() << ":\");" << endl;
-    } else {
-      indent(out) << "sb.append(\"," << (*f_iter)->get_name() << ":\");" << endl;
+    if((*f_iter)->get_req() == t_field::T_OPTIONAL) {
+      indent(out) << "if (__isset." << (*f_iter)->get_name() << ") {" << endl;
+      indent_up();
     }
+
+    indent(out) << "if (!first) sb.append(\", \");" << endl;
+    indent(out) << "sb.append(\"" << (*f_iter)->get_name() << ":\");" << endl;
     indent(out) << "sb.append(this." << (*f_iter)->get_name() << ");" << endl;
+    indent(out) << "first = false;" << endl;
+
+    if((*f_iter)->get_req() == t_field::T_OPTIONAL) {
+      indent_down();
+      indent(out) << "}" << endl;
+    }
   }
   out <<
     indent() << "sb.append(\")\");" << endl <<
