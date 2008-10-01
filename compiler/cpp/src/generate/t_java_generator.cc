@@ -1131,7 +1131,13 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     indent_up();
     indent(out) << "this." << field_name << " = " << field_name << ";" <<
       endl;
-    indent(out) << "this.__isset." << field_name << " = true;" << endl;
+    // if the type isn't nullable, then the setter can't have been an unset in disguise.
+    if ((type->is_base_type() && !type->is_string()) || type->is_enum() ) {
+      indent(out) << "this.__isset." << field_name << " = true;" << endl;
+    } else {
+      indent(out) << "this.__isset." << field_name << " = (" << field_name << " != null);" << endl;
+    }
+
     indent_down();
     indent(out) << "}" << endl << endl;
 
