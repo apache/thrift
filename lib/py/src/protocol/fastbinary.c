@@ -419,7 +419,7 @@ output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs) {
 
   case T_MAP: {
     PyObject *k, *v;
-    int pos = 0;
+    Py_ssize_t pos = 0;
     Py_ssize_t len;
 
     MapTypeArgs parsedargs;
