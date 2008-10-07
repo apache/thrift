@@ -318,6 +318,8 @@ public class TNonblockingServer extends TServer {
           } else if (key.isWritable()) {
             // deal with writes
             handleWrite(key);
+          } else {
+            LOGGER.log(Level.WARNING, "Unexpected state in select! " + key.interestOps());
           }
         }
       } catch (IOException e) {
@@ -343,9 +345,10 @@ public class TNonblockingServer extends TServer {
      */
     private void handleAccept() throws IOException {
       SelectionKey clientKey = null;
+      TNonblockingTransport client = null;
       try {
         // accept the connection
-        TNonblockingTransport client = (TNonblockingTransport)serverTransport.accept();
+        client = (TNonblockingTransport)serverTransport.accept();
         clientKey = client.registerSelector(selector, SelectionKey.OP_READ);
 
         // add this key to the map
@@ -353,9 +356,10 @@ public class TNonblockingServer extends TServer {
         clientKey.attach(frameBuffer);
       } catch (TTransportException tte) {
         // something went wrong accepting.
-        cleanupSelectionkey(clientKey);
         LOGGER.log(Level.WARNING, "Exception trying to accept!", tte);
         tte.printStackTrace();
+        if (clientKey != null) cleanupSelectionkey(clientKey);
+        if (client != null) client.close();
       }
     }
 
