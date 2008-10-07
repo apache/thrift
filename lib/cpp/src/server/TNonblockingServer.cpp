@@ -258,7 +258,7 @@ void TConnection::transition() {
           server_->addTask(task);
         } catch (IllegalStateException & ise) {
           // The ThreadManager is not ready to handle any more tasks (it's probably shutting down).
-          GlobalOutput.printf(stderr, "IllegalStateException: Server::process() %s", ise.what());
+          GlobalOutput.printf("IllegalStateException: Server::process() %s", ise.what());
           close();
         }
 
