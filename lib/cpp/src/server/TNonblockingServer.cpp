@@ -5,6 +5,7 @@
 // http://developers.facebook.com/thrift/
 
 #include "TNonblockingServer.h"
+#include <concurrency/Exception.h>
 
 #include <iostream>
 #include <sys/socket.h>
@@ -19,6 +20,7 @@ namespace facebook { namespace thrift { namespace server {
 
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::transport;
+using namespace facebook::thrift::concurrency;
 using namespace std;
 
 class TConnection::Task: public Runnable {
@@ -252,7 +254,13 @@ void TConnection::transition() {
           GlobalOutput("TNonblockingServer::serve(): coult not event_add");
           return;
         }
-        server_->addTask(task);
+        try {
+          server_->addTask(task);
+        } catch (IllegalStateException & ise) {
+          // The ThreadManager is not ready to handle any more tasks (it's probably shutting down).
+          GlobalOutput.printf(stderr, "IllegalStateException: Server::process() %s", ise.what());
+          close();
+        }
 
         // Set this connection idle so that libevent doesn't process more
         // data on it while we're still waiting for the threadmanager to
