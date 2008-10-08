@@ -635,7 +635,13 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       indent(out) << "this." << (*m_iter)->get_name() << " = " <<
         (*m_iter)->get_name() << ";" << endl;
-      indent(out) << "this.__isset." << (*m_iter)->get_name() << " = true;" << endl;
+      indent(out) << "this.__isset." << (*m_iter)->get_name() << " = ";
+      if (type_can_be_null((*m_iter)->get_type())) {
+        out << "(" << (*m_iter)->get_name() << " != null)";
+      } else {
+        out << "true";
+      }
+      out << ";" << endl;
     }
     indent_down();
     indent(out) << "}" << endl << endl;
