@@ -146,9 +146,11 @@ class TBufferedTransport(TTransportBase,CReadableTransport):
     self.__wbuf.write(buf)
 
   def flush(self):
-    self.__trans.write(self.__wbuf.getvalue())
-    self.__trans.flush()
+    out = self.__wbuf.getvalue()
+    # reset wbuf before write/flush to preserve state on underlying failure
     self.__wbuf = StringIO()
+    self.__trans.write(out)
+    self.__trans.flush()
 
   # Implement the CReadableTransport interface.
   @property
@@ -275,6 +277,8 @@ class TFramedTransport(TTransportBase):
       return self.__trans.flush()
     wout = self.__wbuf.getvalue()
     wsz = len(wout)
+    # reset wbuf before write/flush to preserve state on underlying failure
+    self.__wbuf = StringIO()
     # N.B.: Doing this string concatenation is WAY cheaper than making
     # two separate calls to the underlying socket object. Socket writes in
     # Python turn out to be REALLY expensive, but it seems to do a pretty
@@ -282,4 +286,3 @@ class TFramedTransport(TTransportBase):
     buf = pack("!i", wsz) + wout
     self.__trans.write(buf)
     self.__trans.flush()
-    self.__wbuf = StringIO()
