@@ -158,9 +158,13 @@ class TFramedTransport extends TTransport {
 
     $out = pack('N', strlen($this->wBuf_));
     $out .= $this->wBuf_;
+
+    // Note that we clear the internal wBuf_ prior to the underlying write
+    // to ensure we're in a sane state (i.e. internal buffer cleaned)
+    // if the underlying write throws up an exception
+    $this->wBuf_ = '';
     $this->transport_->write($out);
     $this->transport_->flush();
-    $this->wBuf_ = '';
   }
 
 }
