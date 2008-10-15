@@ -1,6 +1,7 @@
 require 'thrift/transport'
 
 require 'net/http'
+require 'net/https'
 require 'uri'
 require 'stringio'
 
@@ -17,7 +18,9 @@ module Thrift
     def write(buf); @outbuf << buf end
     def flush
       http = Net::HTTP.new @url.host, @url.port
-      resp, data = http.post(@url.path, @outbuf)
+      http.use_ssl = @url.scheme == "https"
+      headers = { 'Content-Type' => 'application/x-thrift' }
+      resp, data = http.post(@url.path, @outbuf, headers)
       @inbuf = StringIO.new data
       @outbuf = ""
     end
