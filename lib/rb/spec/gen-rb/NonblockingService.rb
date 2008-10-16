@@ -115,22 +115,27 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
 
         class Greeting_args
           include Thrift::Struct
+          ENGLISH = 1
+
           Thrift::Struct.field_accessor self, :english
           FIELDS = {
-            1 => {:type => Thrift::Types::BOOL, :name => 'english'}
+            ENGLISH => {:type => Thrift::Types::BOOL, :name => 'english'}
           }
         end
 
         class Greeting_result
           include Thrift::Struct
+          SUCCESS = 0
+
           Thrift::Struct.field_accessor self, :success
           FIELDS = {
-            0 => {:type => Thrift::Types::STRUCT, :name => 'success', :class => Hello}
+            SUCCESS => {:type => Thrift::Types::STRUCT, :name => 'success', :class => Hello}
           }
         end
 
         class Block_args
           include Thrift::Struct
+
           FIELDS = {
 
           }
@@ -138,22 +143,27 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
 
         class Block_result
           include Thrift::Struct
+          SUCCESS = 0
+
           Thrift::Struct.field_accessor self, :success
           FIELDS = {
-            0 => {:type => Thrift::Types::BOOL, :name => 'success'}
+            SUCCESS => {:type => Thrift::Types::BOOL, :name => 'success'}
           }
         end
 
         class Unblock_args
           include Thrift::Struct
+          N = 1
+
           Thrift::Struct.field_accessor self, :n
           FIELDS = {
-            1 => {:type => Thrift::Types::I32, :name => 'n'}
+            N => {:type => Thrift::Types::I32, :name => 'n'}
           }
         end
 
         class Unblock_result
           include Thrift::Struct
+
           FIELDS = {
 
           }
@@ -161,6 +171,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
 
         class Shutdown_args
           include Thrift::Struct
+
           FIELDS = {
 
           }
@@ -168,6 +179,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
 
         class Shutdown_result
           include Thrift::Struct
+
           FIELDS = {
 
           }
@@ -175,14 +187,17 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
 
         class Sleep_args
           include Thrift::Struct
+          SECONDS = 1
+
           Thrift::Struct.field_accessor self, :seconds
           FIELDS = {
-            1 => {:type => Thrift::Types::DOUBLE, :name => 'seconds'}
+            SECONDS => {:type => Thrift::Types::DOUBLE, :name => 'seconds'}
           }
         end
 
         class Sleep_result
           include Thrift::Struct
+
           FIELDS = {
 
           }

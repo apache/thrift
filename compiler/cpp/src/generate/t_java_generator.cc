@@ -44,12 +44,6 @@ class t_java_generator : public t_oop_generator {
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
   }
 
-  string upcase_string(string original) {
-    std::transform(original.begin(), original.end(), original.begin(), (int(*)(int)) toupper);
-    return original;
-  }
-
-
   /**
    * Init and close methods
    */
