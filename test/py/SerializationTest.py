@@ -48,13 +48,13 @@ class AbstractTest(unittest.TestCase):
 
   def testForwards(self):
       obj = self._deserialize(VersioningTestV2, self._serialize(self.v1obj))
-      assert obj.begin_in_both == self.v1obj.begin_in_both
-      assert obj.end_in_both == self.v1obj.end_in_both
+      self.assertEquals(obj.begin_in_both, self.v1obj.begin_in_both)
+      self.assertEquals(obj.end_in_both, self.v1obj.end_in_both)
 
   def testBackwards(self):
       obj = self._deserialize(VersioningTestV1, self._serialize(self.v2obj))
-      assert obj.begin_in_both == self.v2obj.begin_in_both
-      assert obj.end_in_both == self.v2obj.end_in_both
+      self.assertEquals(obj.begin_in_both, self.v2obj.begin_in_both)
+      self.assertEquals(obj.end_in_both, self.v2obj.end_in_both)
 
 
 class NormalBinaryTest(AbstractTest):
