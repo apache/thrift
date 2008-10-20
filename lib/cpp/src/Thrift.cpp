@@ -54,7 +54,7 @@ void TOutput::perror(const char *message, int errno_copy) {
 
 std::string TOutput::strerror_s(int errno_copy) {
 #ifndef HAVE_STRERROR_R
-  return "errno = " + boost::lexical_cast<string>(errno_copy);
+  return "errno = " + boost::lexical_cast<std::string>(errno_copy);
 #else  // HAVE_STRERROR_R
 
   char b_errbuf[1024] = { '\0' };
