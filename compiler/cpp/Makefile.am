@@ -71,6 +71,9 @@ endif
 if THRIFT_GEN_hs
 thrift_SOURCES += src/generate/t_hs_generator.cc
 endif
+if THRIFT_GEN_html
+thrift_SOURCES += src/generate/t_html_generator.cc
+endif
 
 thrift_CXXFLAGS = -Wall -I$(srcdir)/src $(BOOST_CPPFLAGS)
 thrift_LDFLAGS = -Wall $(BOOST_LDFLAGS)
