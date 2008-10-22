@@ -10,6 +10,8 @@
 #include "globals.h"
 #include "t_generator.h"
 
+#include <algorithm>
+
 /**
  * Class with utility methods shared across common object oriented languages.
  * Specifically, most of this stuff is for C++/Java.
