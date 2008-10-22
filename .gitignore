@@ -11,6 +11,7 @@
 /compiler/cpp/thriftl.cc
 /compiler/cpp/thrifty.cc
 /compiler/cpp/thrifty.h
+/compiler/cpp/version.h
 /config.*
 /configure
 /configure.lineno
@@ -40,6 +41,8 @@
 /lib/py/Makefile
 /lib/py/Makefile.in
 /lib/py/build
+/lib/rb/Makefile
+/lib/rb/Makefile.in
 /libtool
 /ltmain.sh
 /missing
@@ -47,8 +50,14 @@
 /test/.deps
 /test/.libs
 /test/*.o
+/test/*.la
+/test/*.lo
+/test/Benchmark
 /test/DebugProtoTest
 /test/JSONProtoTest
+/test/TFDTransportTest
+/test/TPipedTransportTest
+/test/UnitTests
 /test/Makefile
 /test/Makefile.in
 /test/OptionalRequiredTest
@@ -63,4 +72,6 @@
 /test/py/Makefile
 /test/py/Makefile.in
 /test/py/gen-py
+/test/rb/Makefile
+/test/rb/Makefile.in
 /ylwrap
