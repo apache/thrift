@@ -34,11 +34,6 @@ def service_ctrl(
                          TBinaryProtocolFactory
     """
 
-    # Only root should be able to run these scripts, although we could relax this for some of the operations.
-    if os.getuid() != 0:
-        print "requires root."
-        return 4
-
     if command in ["status"]:
         try:
             status = fb303_wrapper('status', port, trans_factory, prot_factory)
@@ -55,15 +50,6 @@ def service_ctrl(
                 return 3
         except:
             print "Failed to get status"
-            return 3
-
-    # async commands
-    if command in ["stop","reload"]:
-        try:
-            fb303_wrapper(command, port, trans_factory, prot_factory)
-            return 0
-        except:
-            print "failed to tell the service to ", command
             return 3
 
     # scalar commands
@@ -86,6 +72,31 @@ def service_ctrl(
         except:
             print "failed to get counters"
             return 3
+
+
+    # Only root should be able to run the following commands
+    if os.getuid() == 0:
+        # async commands
+        if command in ["stop","reload"] :
+            try:
+                fb303_wrapper(command, port, trans_factory, prot_factory)
+                return 0
+            except:
+                print "failed to tell the service to ", command
+                return 3
+    else:
+        if command in ["stop","reload"]:
+            print "root privileges are required to stop or reload the service."
+            return 4
+
+    print "The following commands are available:"
+    for command in ["counters","name","version","alive","status"]:
+        print "\t%s" % command
+    print "The following commands are available for users with root privileges:"
+    for command in ["stop","reload"]:
+        print "\t%s" % command
+
+
 
     return 0;
 
