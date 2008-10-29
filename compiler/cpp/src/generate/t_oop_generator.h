@@ -7,6 +7,11 @@
 #ifndef T_OOP_GENERATOR_H
 #define T_OOP_GENERATOR_H
 
+#include <sstream>
+#include <string>
+#include <fstream>
+#include <iostream>
+
 #include "globals.h"
 #include "t_generator.h"
 
@@ -40,6 +45,23 @@ class t_oop_generator : public t_generator {
   std::string upcase_string(std::string original) {
     std::transform(original.begin(), original.end(), original.begin(), (int(*)(int)) toupper);
     return original;
+  }
+
+  void generate_docstring_comment(std::ofstream& out,
+                                  std::string comment_start,
+                                  std::string line_prefix,
+                                  std::string contents,
+                                  std::string comment_end) {
+    if (comment_start != "") indent(out) << comment_start;
+    std::stringstream docs(contents, std::ios_base::in);
+    while (!docs.eof()) {
+      char line[1024];
+      docs.getline(line, 1024);
+      if (strlen(line) > 0 || !docs.eof()) {  // skip the empty last line
+        indent(out) << line_prefix << line << std::endl;
+      }
+    }
+    if (comment_end != "") indent(out) << comment_end;
   }
 
   /**

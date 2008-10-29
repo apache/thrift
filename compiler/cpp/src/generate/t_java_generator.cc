@@ -580,6 +580,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     if (bean_style_) {
       indent(out) << "private ";
     } else {
+      generate_java_doc(out, *m_iter);
       indent(out) << "public ";
     }
     out << declare_field(*m_iter, false) << endl;
@@ -1235,6 +1236,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     }
 
     // Simple getter
+    generate_java_doc(out, field);
     indent(out) << "public " << type_name(type);
     if (type->is_base_type() &&
         ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
@@ -1249,6 +1251,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     indent(out) << "}" << endl << endl;
 
     // Simple setter
+    generate_java_doc(out, field);
     indent(out) << "public void set" << cap_name << "(" << type_name(type) <<
       " " << field_name << ") {" << endl;
     indent_up();
@@ -2484,16 +2487,10 @@ string t_java_generator::type_to_enum(t_type* type) {
 void t_java_generator::generate_java_doc(ofstream &out,
                                          t_doc* tdoc) {
   if (tdoc->has_doc()) {
-    indent(out) << "/**" << endl;
-    stringstream docs(tdoc->get_doc(), ios_base::in);
-    while (!docs.eof()) {
-      char line[1024];
-      docs.getline(line, 1024);
-      if (strlen(line) > 0 || !docs.eof()) {  // skip the empty last line
-        indent(out) << " * " << line << endl;
-      }
-    }
-    indent(out) << " */" << endl;
+    generate_docstring_comment(out,
+      "/**\n",
+      " * ", tdoc->get_doc(),
+      " */\n");
   }
 }
 
