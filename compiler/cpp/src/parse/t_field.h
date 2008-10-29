@@ -10,6 +10,8 @@
 #include <string>
 #include <boost/lexical_cast.hpp>
 
+#include "t_doc.h"
+
 // Forward declare for xsd_attrs
 class t_struct;
 
@@ -19,7 +21,7 @@ class t_struct;
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class t_field {
+class t_field : public t_doc {
  public:
   t_field(t_type* type, std::string name) :
     type_(type),
@@ -100,19 +102,6 @@ class t_field {
     return xsd_attrs_;
   }
 
-  const std::string& get_doc() const {
-    return doc_;
-  }
-
-  bool has_doc() {
-    return has_doc_;
-  }
-
-  void set_doc(const std::string& doc) {
-    doc_ = doc;
-    has_doc_ = true;
-  }
-
   // This is not the same function as t_type::get_fingerprint_material,
   // but it does the same thing.
   std::string get_fingerprint_material() const {
@@ -131,9 +120,6 @@ class t_field {
   bool xsd_optional_;
   bool xsd_nillable_;
   t_struct* xsd_attrs_;
-
-  std::string doc_;
-  bool has_doc_;
 
 };
 
