@@ -6,22 +6,31 @@ module Thrift
     def initialize(d={})
       # get a copy of the default values to work on, removing defaults in favor of arguments
       fields_with_defaults = fields_with_default_values.dup
-      d.each_key do |name|
-        fields_with_defaults.delete(name.to_s)
+      
+      # check if the defaults is empty, or if there are no parameters for this 
+      # instantiation, and if so, don't bother overriding defaults.
+      unless fields_with_defaults.empty? || d.empty?
+        d.each_key do |name|
+          fields_with_defaults.delete(name.to_s)
+        end
       end
       
       # assign all the user-specified arguments
-      d.each do |name, value|
-        unless name_to_id(name.to_s)
-          raise Exception, "Unknown key given to #{self.class}.new: #{name}"
+      unless d.empty?
+        d.each do |name, value|
+          unless name_to_id(name.to_s)
+            raise Exception, "Unknown key given to #{self.class}.new: #{name}"
+          end
+          Thrift.check_type(value, struct_fields[name_to_id(name.to_s)], name) if Thrift.type_checking
+          instance_variable_set("@#{name}", value)
         end
-        Thrift.check_type(value, struct_fields[name_to_id(name.to_s)], name) if Thrift.type_checking
-        instance_variable_set("@#{name}", value)
       end
       
       # assign all the default values
-      fields_with_defaults.each do |name, default_value|
-        instance_variable_set("@#{name}", (default_value.dup rescue default_value))
+      unless fields_with_defaults.empty?
+        fields_with_defaults.each do |name, default_value|
+          instance_variable_set("@#{name}", (default_value.dup rescue default_value))
+        end
       end
     end
 
