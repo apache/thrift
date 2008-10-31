@@ -136,6 +136,9 @@ class t_rb_generator : public t_oop_generator {
                                           t_list*     tlist,
                                           std::string iter);
 
+  void generate_rdoc                     (std::ofstream& out, 
+                                          t_doc* tdoc);
+
   /**
    * Helper rendering functions
    */
@@ -443,11 +446,12 @@ void t_rb_generator::generate_xception(t_struct* txception) {
  * Generates a ruby struct
  */
 void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, bool is_exception = false) {
+  generate_rdoc(out, tstruct);
   indent(out) << "class " << type_name(tstruct);
   if (is_exception) {
     out << " < StandardError";
   }
-  out  << endl;
+  out << endl;
 
   indent_up();
   indent(out) << "include Thrift::Struct" << endl;
@@ -523,6 +527,9 @@ void t_rb_generator::generate_field_defns(std::ofstream& out, t_struct* tstruct)
     if (f_iter != fields.begin()) {
       out << "," << endl;
     }
+
+    // generate the field docstrings within the FIELDS constant. no real better place...
+    generate_rdoc(out, *f_iter);
 
     indent(out) <<
       upcase_string((*f_iter)->get_name()) << " => ";
@@ -1012,5 +1019,12 @@ string t_rb_generator::type_to_enum(t_type* type) {
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
 
+
+void t_rb_generator::generate_rdoc(std::ofstream& out, t_doc* tdoc) {
+  if (tdoc->has_doc()) {
+    generate_docstring_comment(out,
+      "", "# ", tdoc->get_doc(), "");
+  }
+}
 
 THRIFT_REGISTER_GENERATOR(rb, "Ruby", "");
