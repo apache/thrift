@@ -15,24 +15,29 @@ from optparse import OptionParser
 
 
 parser = OptionParser()
+parser.set_defaults(framed=False, verbose=1, host='localhost', port=9090)
+parser.add_option("--port", type="int", dest="port",
+    help="connect to server at port")
+parser.add_option("--host", type="string", dest="host",
+    help="connect to server")
+parser.add_option("--framed", action="store_true", dest="framed",
+    help="use framed transport")
+parser.add_option('-v', '--verbose', action="store_const", 
+    dest="verbose", const=2,
+    help="verbose output")
+parser.add_option('-q', '--quiet', action="store_const", 
+    dest="verbose", const=0,
+    help="minimal output")
 
-parser.add_option("--port", type="int", dest="port", default=9090)
-parser.add_option("--host", type="string", dest="host", default='localhost')
-parser.add_option("--framed-input", action="store_true", dest="framed_input")
-parser.add_option("--framed-output", action="store_false", dest="framed_output")
-
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 
 class AbstractTest(unittest.TestCase):
-
   def setUp(self):
-    global options
-
     socket = TSocket.TSocket(options.host, options.port)
 
     # Frame or buffer depending upon args
-    if options.framed_input or options.framed_output:
-      self.transport = TTransport.TFramedTransport(socket, options.framed_input, options.framed_output)
+    if options.framed:
+      self.transport = TTransport.TFramedTransport(socket)
     else:
       self.transport = TTransport.TBufferedTransport(socket)
 
@@ -113,5 +118,13 @@ def suite():
   suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
   return suite
 
+class OwnArgsTestProgram(unittest.TestProgram):
+    def parseArgs(self, argv):
+        if args:
+            self.testNames = args
+        else:
+            self.testNames = (self.defaultTest,)
+        self.createTests()
+
 if __name__ == "__main__":
-  unittest.main(defaultTest="suite", testRunner=unittest.TextTestRunner(verbosity=2))
+  OwnArgsTestProgram(defaultTest="suite", testRunner=unittest.TextTestRunner(verbosity=2))

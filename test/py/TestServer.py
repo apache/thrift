@@ -9,7 +9,7 @@ from ThriftTest.ttypes import *
 from thrift.transport import TTransport
 from thrift.transport import TSocket
 from thrift.protocol import TBinaryProtocol
-from thrift.server import TServer
+from thrift.server import TServer, TNonblockingServer
 
 class TestHandler:
 
@@ -59,13 +59,33 @@ class TestHandler:
     time.sleep(seconds)
     print 'done sleeping'
 
+  def testNest(self, thing):
+    return thing
+
+  def testMap(self, thing):
+    return thing
+
+  def testSet(self, thing):
+    return thing
+
+  def testList(self, thing):
+    return thing
+
+  def testEnum(self, thing):
+    return thing
+
+  def testTypedef(self, thing):
+    return thing
+
 handler = TestHandler()
 processor = ThriftTest.Processor(handler)
 transport = TSocket.TServerSocket(9090)
 tfactory = TTransport.TBufferedTransportFactory()
 pfactory = TBinaryProtocol.TBinaryProtocolFactory()
 
-ServerClass = getattr(TServer, sys.argv[1])
-
-server = ServerClass(processor, transport, tfactory, pfactory)
+if sys.argv[1] == "TNonblockingServer":
+  server = TNonblockingServer.TNonblockingServer(processor, transport)
+else:
+  ServerClass = getattr(TServer, sys.argv[1])
+  server = ServerClass(processor, transport, tfactory, pfactory)
 server.serve()
