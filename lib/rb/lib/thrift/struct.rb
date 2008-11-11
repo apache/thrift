@@ -82,6 +82,7 @@ module Thrift
     end
 
     def read(iprot)
+      validate
       # TODO(kevinclark): Make sure transport is C readable
       if iprot.respond_to?(:decode_binary)
         iprot.decode_binary(self, iprot.trans)
@@ -98,6 +99,7 @@ module Thrift
     end
 
     def write(oprot)
+      validate
       if oprot.respond_to?(:encode_binary)
         # TODO(kevinclark): Clean this so I don't have to access the transport.
         oprot.trans.write oprot.encode_binary(self)

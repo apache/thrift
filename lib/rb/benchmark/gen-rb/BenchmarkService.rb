@@ -52,6 +52,9 @@ require File.dirname(__FILE__) + '/Benchmark_types'
           FIELDS = {
             N => {:type => Thrift::Types::BYTE, :name => 'n'}
           }
+          def validate
+          end
+
         end
 
         class Fibonacci_result
@@ -62,6 +65,9 @@ require File.dirname(__FILE__) + '/Benchmark_types'
           FIELDS = {
             SUCCESS => {:type => Thrift::Types::I32, :name => 'success'}
           }
+          def validate
+          end
+
         end
 
       end

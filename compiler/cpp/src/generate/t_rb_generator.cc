@@ -62,8 +62,7 @@ class t_rb_generator : public t_oop_generator {
    */
 
   void generate_rb_struct(std::ofstream& out, t_struct* tstruct, bool is_exception);
-  void generate_rb_struct_reader(std::ofstream& out, t_struct* tstruct);
-  void generate_rb_struct_writer(std::ofstream& out, t_struct* tstruct);
+  void generate_rb_struct_required_validator(std::ofstream& out, t_struct* tstruct);
   void generate_rb_function_helpers(t_function* tfunction);
   void generate_rb_simple_constructor(std::ofstream& out, t_struct* tstruct);
   void generate_rb_simple_exception_constructor(std::ofstream& out, t_struct* tstruct);
@@ -463,7 +462,8 @@ void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, b
   generate_field_constants(out, tstruct);
   generate_accessors(out, tstruct);
   generate_field_defns(out, tstruct);
-
+  generate_rb_struct_required_validator(out, tstruct);
+  
   indent_down();
   indent(out) << "end" << endl << endl;
 }
@@ -1025,6 +1025,32 @@ void t_rb_generator::generate_rdoc(std::ofstream& out, t_doc* tdoc) {
     generate_docstring_comment(out,
       "", "# ", tdoc->get_doc(), "");
   }
+}
+
+void t_rb_generator::generate_rb_struct_required_validator(std::ofstream& out, 
+                                                           t_struct* tstruct) {
+  indent(out) << "def validate" << endl;
+  indent_up();
+  
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field* field = (*f_iter);
+    if (field->get_req() == t_field::T_REQUIRED) {
+      indent(out) << "raise Thrift::ProtocolException.new(Thrift::ProtocolException::UNKNOWN, 'Required field " << field->get_name() << " is unset!')";
+      if (field->get_type()->is_bool()) {
+        out << " if @" << field->get_name() << ".nil?";
+      } else {
+        out << " unless @" << field->get_name();
+      }
+      out << endl;
+    }
+  }  
+  
+  indent_down();
+  indent(out) << "end" << endl << endl;
+  
 }
 
 THRIFT_REGISTER_GENERATOR(rb, "Ruby", "");

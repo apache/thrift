@@ -15,6 +15,9 @@ module SpecNamespace
       FIELDS = {
         GREETING => {:type => Thrift::Types::STRING, :name => 'greeting', :default => 'hello world'}
       }
+      def validate
+      end
+
     end
 
     class Foo
@@ -47,6 +50,9 @@ module SpecNamespace
         ]), :element => {:type => Thrift::Types::I16}},
         OPT_STRING => {:type => Thrift::Types::STRING, :name => 'opt_string', :optional => true}
       }
+      def validate
+      end
+
     end
 
     class BoolStruct
@@ -57,6 +63,9 @@ module SpecNamespace
       FIELDS = {
         YESNO => {:type => Thrift::Types::BOOL, :name => 'yesno', :default => true}
       }
+      def validate
+      end
+
     end
 
     class SimpleList

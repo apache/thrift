@@ -121,6 +121,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
             ENGLISH => {:type => Thrift::Types::BOOL, :name => 'english'}
           }
+          def validate
+          end
+
         end
 
         class Greeting_result
@@ -131,6 +134,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
             SUCCESS => {:type => Thrift::Types::STRUCT, :name => 'success', :class => Hello}
           }
+          def validate
+          end
+
         end
 
         class Block_args
@@ -139,6 +145,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
 
           }
+          def validate
+          end
+
         end
 
         class Block_result
@@ -149,6 +158,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
             SUCCESS => {:type => Thrift::Types::BOOL, :name => 'success'}
           }
+          def validate
+          end
+
         end
 
         class Unblock_args
@@ -159,6 +171,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
             N => {:type => Thrift::Types::I32, :name => 'n'}
           }
+          def validate
+          end
+
         end
 
         class Unblock_result
@@ -167,6 +182,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
 
           }
+          def validate
+          end
+
         end
 
         class Shutdown_args
@@ -175,6 +193,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
 
           }
+          def validate
+          end
+
         end
 
         class Shutdown_result
@@ -183,6 +204,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
 
           }
+          def validate
+          end
+
         end
 
         class Sleep_args
@@ -193,6 +217,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
             SECONDS => {:type => Thrift::Types::DOUBLE, :name => 'seconds'}
           }
+          def validate
+          end
+
         end
 
         class Sleep_result
@@ -201,6 +228,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
 
           }
+          def validate
+          end
+
         end
 
       end
