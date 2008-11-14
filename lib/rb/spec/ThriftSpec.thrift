@@ -32,6 +32,11 @@ struct SimpleList {
   11: list<Hello> hellos
 }
 
+exception Xception {
+  1: string message,
+  2: i32 code = 1
+}
+
 service NonblockingService {
   Hello greeting(1:bool english)
   bool block()

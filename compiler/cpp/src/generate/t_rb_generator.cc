@@ -448,7 +448,7 @@ void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, b
   generate_rdoc(out, tstruct);
   indent(out) << "class " << type_name(tstruct);
   if (is_exception) {
-    out << " < StandardError";
+    out << " < Thrift::Exception";
   }
   out << endl;
 

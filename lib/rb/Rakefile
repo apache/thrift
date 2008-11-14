@@ -4,7 +4,7 @@ require 'spec/rake/spectask'
 
 THRIFT = '../../compiler/cpp/thrift'
 
-task :default => [:spec, :test]
+task :default => [:'gen-rb', :spec, :test]
 
 Spec::Rake::SpecTask.new do |t|
   t.spec_files = FileList['spec/**/*_spec.rb']

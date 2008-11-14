@@ -96,6 +96,24 @@ module SpecNamespace
         SETS => {:type => Thrift::Types::LIST, :name => 'sets', :element => {:type => Thrift::Types::SET, :element => {:type => Thrift::Types::I16}}},
         HELLOS => {:type => Thrift::Types::LIST, :name => 'hellos', :element => {:type => Thrift::Types::STRUCT, :class => Hello}}
       }
+      def validate
+      end
+
+    end
+
+    class Xception < Thrift::Exception
+      include Thrift::Struct
+      MESSAGE = 1
+      CODE = 2
+
+      Thrift::Struct.field_accessor self, :message, :code
+      FIELDS = {
+        MESSAGE => {:type => Thrift::Types::STRING, :name => 'message'},
+        CODE => {:type => Thrift::Types::I32, :name => 'code', :default => 1}
+      }
+      def validate
+      end
+
     end
 
   end

@@ -5,15 +5,6 @@ class ThriftStructSpec < Spec::ExampleGroup
   include Thrift
   include SpecNamespace
 
-  class Xception < Thrift::Exception
-    include Thrift::Struct
-    attr_accessor :message, :code
-    FIELDS = {
-      1 => {:type => Thrift::Types::STRING, :name => 'message'},
-      2 => {:type => Thrift::Types::I32, :name => 'code', :default => 1}
-    }
-  end
-
   describe Struct do
     it "should iterate over all fields properly" do
       fields = {}
@@ -209,7 +200,7 @@ class ThriftStructSpec < Spec::ExampleGroup
         e.code.should == 1
         # ensure it gets serialized properly, this is the really important part
         prot = mock("Protocol")
-        prot.should_receive(:write_struct_begin).with("ThriftStructSpec::Xception")
+        prot.should_receive(:write_struct_begin).with("SpecNamespace::Xception")
         prot.should_receive(:write_struct_end)
         prot.should_receive(:write_field).with('message', Types::STRING, 1, "something happened")
         prot.should_receive(:write_field).with('code', Types::I32, 2, 1)
@@ -226,7 +217,7 @@ class ThriftStructSpec < Spec::ExampleGroup
         e.message.should == "something happened"
         e.code.should == 5
         prot = mock("Protocol")
-        prot.should_receive(:write_struct_begin).with("ThriftStructSpec::Xception")
+        prot.should_receive(:write_struct_begin).with("SpecNamespace::Xception")
         prot.should_receive(:write_struct_end)
         prot.should_receive(:write_field).with('message', Types::STRING, 1, "something happened")
         prot.should_receive(:write_field).with('code', Types::I32, 2, 5)
