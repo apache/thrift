@@ -82,7 +82,6 @@ module Thrift
     end
 
     def read(iprot)
-      validate
       # TODO(kevinclark): Make sure transport is C readable
       if iprot.respond_to?(:decode_binary)
         iprot.decode_binary(self, iprot.trans)
@@ -96,6 +95,7 @@ module Thrift
         end
         iprot.read_struct_end
       end
+      validate
     end
 
     def write(oprot)
