@@ -83,7 +83,7 @@ thrift_LDADD = @LEXLIB@
 EXTRA_DIST = README
 
 clean-local:
-	$(RM) thriftl.cc thrifty.cc thrifty.h
+	$(RM) thriftl.cc thrifty.cc thrifty.h version.h
 
 src/main.cc: version.h
 
