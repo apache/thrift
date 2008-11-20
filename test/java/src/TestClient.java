@@ -35,8 +35,6 @@ public class TestClient {
       String url = null;
       int numTests = 1;
       boolean framed = false;
-      boolean framedInput = true;
-      boolean framedOutput = true;
 
       int socketTimeout = 1000;
 
@@ -48,9 +46,6 @@ public class TestClient {
             port = Integer.valueOf(hostport[1]);
           } else if (args[i].equals("-f") || args[i].equals("-framed")) {
             framed = true;
-          } else if (args[i].equals("-fo")) {
-            framed = true;
-            framedInput = false;
           } else if (args[i].equals("-u")) {
             url = args[++i];
           } else if (args[i].equals("-n")) {
@@ -72,9 +67,7 @@ public class TestClient {
         socket.setTimeout(socketTimeout);
         transport = socket;
         if (framed) {
-          transport = new TFramedTransport(transport,
-                                           framedInput,
-                                           framedOutput);
+          transport = new TFramedTransport(transport);
         }
       }
 
