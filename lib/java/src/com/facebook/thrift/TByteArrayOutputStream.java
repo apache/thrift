@@ -19,6 +19,11 @@ public class TByteArrayOutputStream extends ByteArrayOutputStream {
     super(size);
   }
 
+  public TByteArrayOutputStream() {
+    super();
+  }
+
+
   public byte[] get() {
     return buf;
   }
