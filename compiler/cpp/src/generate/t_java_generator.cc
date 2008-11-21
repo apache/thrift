@@ -885,6 +885,17 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
     out <<
       indent() << "iprot.readStructEnd();" << endl;
 
+    // check to make sure all required fields are set
+    out << endl << indent() << "// check for required fields" << endl;
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+        out <<
+          indent() << "if (!__isset." << (*f_iter)->get_name() << ") {" << endl <<
+          indent() << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' was not found in serialized data!\");" << endl <<
+          indent() << "}" << endl;
+      }
+    }
+
   indent_down();
   out <<
     indent() << "}" << endl <<
@@ -905,6 +916,28 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
+
+  // check for required fields
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field* field = (*f_iter);
+    if (field->get_req() == t_field::T_REQUIRED) {
+      if (bean_style_) {
+        indent(out) << "if (!__isset." << field->get_name() << ") {" << endl;
+        indent(out) << "  throw new TProtocolException(\"Required field '" << field->get_name() << "' was not present!\");" << endl;
+        indent(out) << "}" << endl;
+      } else {
+        if (type_can_be_null(field->get_type())) {
+          indent(out) << "if (" << field->get_name() << " == null) {" << endl;
+          indent(out) << "  throw new TProtocolException(\"Required field '" << field->get_name() << "' was not present!\");" << endl;
+          indent(out) << "}" << endl;
+        } else {
+          indent(out) << "// alas, we cannot check '" << field->get_name() << "' because it's a primitive and you chose the non-beans generator." << endl;
+        }
+      }
+    }
+  }
+
+  out << endl << endl;
 
   indent(out) << "TStruct struct = new TStruct(\"" << name << "\");" << endl;
   indent(out) << "oprot.writeStructBegin(struct);" << endl;
