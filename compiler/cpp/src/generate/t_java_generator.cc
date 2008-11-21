@@ -923,6 +923,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
     if (optional) {
       out <<
         indent() << "if (this.__isset." << (*f_iter)->get_name() << ") {" << endl;
+      indent_up();
     }
 
     out <<
