@@ -1303,9 +1303,24 @@ void t_java_generator::generate_java_struct_tostring(ofstream& out,
       indent_up();
     }
 
+    t_field* field = (*f_iter);
+
     indent(out) << "if (!first) sb.append(\", \");" << endl;
     indent(out) << "sb.append(\"" << (*f_iter)->get_name() << ":\");" << endl;
-    indent(out) << "sb.append(this." << (*f_iter)->get_name() << ");" << endl;
+    if (field->get_type()->is_base_type() && ((t_base_type*)(field->get_type()))->is_binary()) {
+      indent(out) << "if (" << field->get_name() << " == null) { " << endl;
+      indent(out) << "  sb.append(\"null\");" << endl;
+      indent(out) << "} else {" << endl;
+      indent(out) << "  int __" << field->get_name() << "_size = Math.min(this." << field->get_name() << ".length, 128);" << endl;
+      indent(out) << "  for (int i = 0; i < __" << field->get_name() << "_size; i++) {" << endl;
+      indent(out) << "    if (i != 0) sb.append(\" \");" << endl;
+      indent(out) << "    sb.append(Integer.toHexString(this." << field->get_name() << "[i]).length() > 1 ? Integer.toHexString(this." << field->get_name() << "[i]).substring(Integer.toHexString(this." << field->get_name() << "[i]).length() - 2).toUpperCase() : \"0\" + Integer.toHexString(this." << field->get_name() << "[i]).toUpperCase());" <<endl;
+      indent(out) << "  }" << endl;
+      indent(out) << "  if (this." << field->get_name() << ".length > 128) sb.append(\" ...\");" << endl;
+      indent(out) << "}" << endl;
+    } else {
+      indent(out) << "sb.append(this." << (*f_iter)->get_name() << ");" << endl;
+    }
     indent(out) << "first = false;" << endl;
 
     if((*f_iter)->get_req() == t_field::T_OPTIONAL) {
