@@ -37,7 +37,7 @@ CFL   = $(CCFL) $(LFL)
 all: server client
 
 stubs: ThreadsTest.thrift
-	$(THRIFT) -cpp -py ThreadsTest.thrift
+	$(THRIFT) --gen cpp --gen py ThreadsTest.thrift
 
 server: stubs
 	g++ -o ThreadsServer $(CFL) ThreadsServer.cpp ./gen-cpp/ThreadsTest.cpp ./gen-cpp/ThreadsTest_types.cpp

@@ -21,7 +21,7 @@ TESTS= $(py_unit_tests)
 
 
 gen-py/ThriftTest/__init__.py: ../ThriftTest.thrift
-	$(THRIFT) -py $<
+	$(THRIFT) --gen py $<
 
 clean-local:
 	$(RM) -r gen-py

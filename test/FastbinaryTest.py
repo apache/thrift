@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 r"""
-thrift -py DebugProtoTest.thrift
+thrift --gen py DebugProtoTest.thrift
 ./FastbinaryTest.py
 """
 
