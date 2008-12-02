@@ -139,9 +139,8 @@ class PthreadThread: public Thread {
     }
   }
 
-  id_t getId() {
-    // TODO(dreiss): Stop using C-style casts.
-    return (id_t)pthread_;
+  Thread::id_t getId() {
+    return (Thread::id_t)pthread_;
   }
 
   shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
