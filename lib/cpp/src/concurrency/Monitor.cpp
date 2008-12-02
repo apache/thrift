@@ -66,7 +66,9 @@ class Monitor::Impl {
                                           &pthread_mutex_,
                                           &abstime);
       if (result == ETIMEDOUT) {
-        assert(Util::currentTime() >= (now + timeout));
+        // pthread_cond_timedwait has been observed to return early on
+        // various platforms, so comment out this assert.
+        //assert(Util::currentTime() >= (now + timeout));
         throw TimedOutException();
       }
     }
