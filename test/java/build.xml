@@ -46,6 +46,8 @@
       classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
     <java classname="com.facebook.thrift.test.ToStringTest"
       classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
+    <java classname="com.facebook.thrift.test.DeepCopyTest"
+      classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
   </target>
 
   <target name="clean">

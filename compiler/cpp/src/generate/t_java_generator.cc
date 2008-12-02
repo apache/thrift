@@ -147,6 +147,8 @@ class t_java_generator : public t_oop_generator {
   void generate_java_doc                 (std::ofstream& out,
                                           t_doc*     tdoc);
 
+  void generate_deep_copy_container(std::ofstream& out, std::string source_name_p1, std::string source_name_p2, std::string result_name, t_type* type);
+  void generate_deep_copy_non_container(std::ofstream& out, std::string source_name, t_type* type);
 
   /**
    * Helper rendering functions
@@ -569,7 +571,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   if (is_exception) {
     out << "extends Exception ";
   }
-  out << "implements TBase, java.io.Serializable ";
+  out << "implements TBase, java.io.Serializable, Cloneable ";
 
   scope_up(out);
 
@@ -619,8 +621,8 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   indent(out) << "}" << endl << endl;
 
 
-  // Full constructor for all fields
   if (!members.empty()) {
+    // Full constructor for all fields
     indent(out) <<
       "public " << tstruct->get_name() << "(" << endl;
     indent_up();
@@ -651,6 +653,49 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     indent_down();
     indent(out) << "}" << endl << endl;
   }
+
+  // copy constructor
+  indent(out) << "/**" << endl;
+  indent(out) << " * Performs a deep copy on <i>other</i>." << endl;
+  indent(out) << " */" << endl;
+  indent(out) << "public " << tstruct->get_name() << "(" << tstruct->get_name() << " other) {" << endl;
+  indent_up();
+
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_field* field = (*m_iter);
+    std::string field_name = field->get_name();
+    t_type* type = field->get_type();
+
+    indent(out) << "__isset." << field_name << " = other.__isset." << field_name << ";" << endl;
+
+    if (type_can_be_null(type)) {
+      indent(out) << "if (other." << field_name << " != null) {" << endl;
+      indent_up();
+    }
+
+    if (type->is_container()) {
+      generate_deep_copy_container(out, "other", field_name, "__this__" + field_name, type);
+      indent(out) << "this." << field_name << " = __this__" << field_name << ";" << endl;
+    } else {
+      indent(out) << "this." << field_name << " = ";
+      generate_deep_copy_non_container(out, "other." + field_name, type);
+      out << ";" << endl;
+    }
+
+    if (type_can_be_null(type)) {
+      indent_down();
+      indent(out) << "}" << endl;
+    }
+  }
+
+  indent_down();
+  indent(out) << "}" << endl << endl;
+
+  // clone method, so that you can deep copy an object when you don't know its class.
+  indent(out) << "public " << tstruct->get_name() << " clone() {" << endl;
+  indent(out) << "  return new " << tstruct->get_name() << "(this);" << endl;
+  indent(out) << "}" << endl << endl;
+
 
   if (bean_style_) {
     generate_java_bean_boilerplate(out, tstruct);
@@ -2540,6 +2585,101 @@ void t_java_generator::generate_java_doc(ofstream &out,
       "/**\n",
       " * ", tdoc->get_doc(),
       " */\n");
+  }
+}
+
+void t_java_generator::generate_deep_copy_container(ofstream &out, std::string source_name_p1, std::string source_name_p2,
+                                                    std::string result_name, t_type* type) {
+
+  t_container* container = (t_container*)type;
+  std::string source_name;
+  if (source_name_p2 == "")
+      source_name = source_name_p1;
+  else
+      source_name = source_name_p1 + "." + source_name_p2;
+
+  indent(out) << type_name(type, true, false) << " " << result_name << " = new " << type_name(container, false, true) << "();" << endl;
+
+  std::string iterator_element_name = source_name_p1 + "_element";
+  std::string result_element_name = result_name + "_copy";
+
+  if(container->is_map()) {
+    t_type* key_type = ((t_map*)container)->get_key_type();
+    t_type* val_type = ((t_map*)container)->get_val_type();
+
+    indent(out) <<
+      "for (Map.Entry<" << type_name(key_type, true, false) << ", " << type_name(val_type, true, false) << "> " << iterator_element_name << " : " << source_name << ".entrySet()) {" << endl;
+    indent_up();
+
+    out << endl;
+
+    indent(out) << type_name(key_type, true, false) << " " << iterator_element_name << "_key = " << iterator_element_name << ".getKey();" << endl;
+    indent(out) << type_name(val_type, true, false) << " " << iterator_element_name << "_value = " << iterator_element_name << ".getValue();" << endl;
+
+    out << endl;
+
+    if (key_type->is_container()) {
+      generate_deep_copy_container(out, iterator_element_name + "_key", "", result_element_name + "_key", key_type);
+    } else {
+      indent(out) << type_name(key_type, true, false) << " " << result_element_name << "_key = ";
+      generate_deep_copy_non_container(out, iterator_element_name + "_key", key_type);
+      out << ";" << endl;
+    }
+
+    out << endl;
+
+    if (val_type->is_container()) {
+      generate_deep_copy_container(out, iterator_element_name + "_value", "", result_element_name + "_value", val_type);
+    } else {
+      indent(out) << type_name(val_type, true, false) << " " << result_element_name << "_value = ";
+      generate_deep_copy_non_container(out, iterator_element_name + "_value", val_type);
+      out << ";" << endl;
+    }
+
+    out << endl;
+
+    indent(out) << result_name << ".put(" << result_element_name << "_key, " << result_element_name << "_value);" << endl;
+
+    indent_down();
+    indent(out) << "}" << endl;
+
+  } else {
+    t_type* elem_type;
+
+    if (container->is_set()) {
+      elem_type = ((t_set*)container)->get_elem_type();
+    } else {
+      elem_type = ((t_list*)container)->get_elem_type();
+    }
+
+    indent(out)
+      << "for (" << type_name(elem_type, true, false) << " " << iterator_element_name << " : " << source_name << ") {" << endl;
+
+    indent_up();
+
+    if (elem_type->is_container()) {
+      // recursive deep copy
+      generate_deep_copy_container(out, iterator_element_name, "", result_element_name, elem_type);
+      indent(out) << result_name << ".add(" << result_element_name << ");" << endl;
+    } else {
+      // iterative copy
+      indent(out) << result_name << ".add(";
+      generate_deep_copy_non_container(out, iterator_element_name, elem_type);
+      out << ");" << endl;
+    }
+
+    indent_down();
+
+    indent(out) << "}" << endl;
+
+  }
+}
+
+void t_java_generator::generate_deep_copy_non_container(ofstream& out, std::string source_name, t_type* type) {
+  if (type->is_base_type() || type->is_enum() || type->is_typedef()) {
+    out << source_name;
+  } else {
+    out << "new " << type_name(type, true, true) << "(" << source_name << ")";
   }
 }
 
