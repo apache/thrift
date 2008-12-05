@@ -26,13 +26,13 @@ class TProtocolException : public facebook::thrift::TException {
   /**
    * Error codes for the various types of exceptions.
    */
-  enum TProtocolExceptionType {
-    UNKNOWN = 0,
-    INVALID_DATA = 1,
-    NEGATIVE_SIZE = 2,
-    SIZE_LIMIT = 3,
-    BAD_VERSION = 4,
-    NOT_IMPLEMENTED = 5,
+  enum TProtocolExceptionType
+  { UNKNOWN = 0
+  , INVALID_DATA = 1
+  , NEGATIVE_SIZE = 2
+  , SIZE_LIMIT = 3
+  , BAD_VERSION = 4
+  , NOT_IMPLEMENTED = 5
   };
 
   TProtocolException() :

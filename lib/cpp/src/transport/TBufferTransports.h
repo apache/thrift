@@ -453,10 +453,10 @@ class TMemoryBuffer : public TBufferBase {
    *   and will be responsible for freeing it.
    *   The membory must have been allocated with malloc.
    */
-  enum MemoryPolicy {
-    OBSERVE = 1,
-    COPY = 2,
-    TAKE_OWNERSHIP = 3,
+  enum MemoryPolicy
+  { OBSERVE = 1
+  , COPY = 2
+  , TAKE_OWNERSHIP = 3
   };
 
   /**

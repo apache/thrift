@@ -26,16 +26,16 @@ class TTransportException : public facebook::thrift::TException {
   /**
    * Error codes for the various types of exceptions.
    */
-  enum TTransportExceptionType {
-    UNKNOWN = 0,
-    NOT_OPEN = 1,
-    ALREADY_OPEN = 2,
-    TIMED_OUT = 3,
-    END_OF_FILE = 4,
-    INTERRUPTED = 5,
-    BAD_ARGS = 6,
-    CORRUPTED_DATA = 7,
-    INTERNAL_ERROR = 8,
+  enum TTransportExceptionType
+  { UNKNOWN = 0
+  , NOT_OPEN = 1
+  , ALREADY_OPEN = 2
+  , TIMED_OUT = 3
+  , END_OF_FILE = 4
+  , INTERRUPTED = 5
+  , BAD_ARGS = 6
+  , CORRUPTED_DATA = 7
+  , INTERNAL_ERROR = 8
   };
 
   TTransportException() :

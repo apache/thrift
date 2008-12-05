@@ -36,13 +36,13 @@ Complaints are not. :R
  */
 class TDebugProtocol : public TWriteOnlyProtocol {
  private:
-  enum write_state_t {
-    UNINIT,
-    STRUCT,
-    LIST,
-    SET,
-    MAP_KEY,
-    MAP_VALUE,
+  enum write_state_t
+  { UNINIT
+  , STRUCT
+  , LIST
+  , SET
+  , MAP_KEY
+  , MAP_VALUE
   };
 
  public:

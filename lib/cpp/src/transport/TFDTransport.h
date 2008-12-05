@@ -22,9 +22,9 @@ namespace facebook { namespace thrift { namespace transport {
  */
 class TFDTransport : public TTransport {
  public:
-  enum ClosePolicy {
-    NO_CLOSE_ON_DESTROY = 0,
-    CLOSE_ON_DESTROY = 1,
+  enum ClosePolicy
+  { NO_CLOSE_ON_DESTROY = 0
+  , CLOSE_ON_DESTROY = 1
   };
 
   TFDTransport(int fd, ClosePolicy close_policy = NO_CLOSE_ON_DESTROY)
