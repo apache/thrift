@@ -60,6 +60,8 @@ module Thrift
       value.each do |el|
         check_type(el, field[:element], "#{name}.element", false)
       end
+    when Types::STRUCT
+      raise TypeError, "Expected #{field[:class]}, received #{value.class} for field #{name}" unless field[:class] == value.class
     end
   end
 

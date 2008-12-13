@@ -37,7 +37,7 @@ class ThriftTypesSpec < Spec::ExampleGroup
       lambda { Thrift.check_type("3",            {:type => Types::STRING}, :foo) }.should_not raise_error(TypeError)
       lambda { Thrift.check_type(3,              {:type => Types::STRING}, :foo) }.should raise_error(TypeError)
       hello = SpecNamespace::Hello.new
-      lambda { Thrift.check_type(hello,          {:type => Types::STRUCT}, :foo) }.should_not raise_error(TypeError)
+      lambda { Thrift.check_type(hello,          {:type => Types::STRUCT, :class => SpecNamespace::Hello}, :foo) }.should_not raise_error(TypeError)
       lambda { Thrift.check_type("foo",          {:type => Types::STRUCT}, :foo) }.should raise_error(TypeError)
       lambda { Thrift.check_type({:foo => 1},    {:type => Types::MAP},    :foo) }.should_not raise_error(TypeError)
       lambda { Thrift.check_type([1],            {:type => Types::MAP},    :foo) }.should raise_error(TypeError)
@@ -74,6 +74,9 @@ class ThriftTypesSpec < Spec::ExampleGroup
       lambda { Thrift.check_type(Set.new([1, 2]), field, :foo) }.should_not raise_error(TypeError)
       lambda { Thrift.check_type(Set.new([1, nil, 2]), field, :foo) }.should raise_error(TypeError)
       lambda { Thrift.check_type(Set.new([1, 2.3, 2]), field, :foo) }.should raise_error(TypeError)
+      
+      field = {:type => Types::STRUCT, :class => SpecNamespace::Hello}
+      lambda { Thrift.check_type(SpecNamespace::BoolStruct, field, :foo) }.should raise_error(TypeError)
     end
 
     it "should give the TypeError a readable message" do
