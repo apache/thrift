@@ -478,10 +478,16 @@ string t_java_generator::render_const_value(ofstream& out, string name, t_type* 
       render << ((value->get_integer() > 0) ? "true" : "false");
       break;
     case t_base_type::TYPE_BYTE:
+      render << "(byte)" << value->get_integer();
+      break;
     case t_base_type::TYPE_I16:
+      render << "(short)" << value->get_integer();
+      break;
     case t_base_type::TYPE_I32:
-    case t_base_type::TYPE_I64:
       render << value->get_integer();
+      break;
+    case t_base_type::TYPE_I64:
+      render << value->get_integer() << "L";
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {

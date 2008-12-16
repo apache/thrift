@@ -15,15 +15,18 @@ struct Doubles {
 struct OneOfEach {
   1: bool im_true,
   2: bool im_false,
-  3: byte a_bite,
-  4: i16 integer16,
+  3: byte a_bite = 200,
+  4: i16 integer16 = 33000,
   5: i32 integer32,
-  6: i64 integer64,
+  6: i64 integer64 = 10000000000,
   7: double double_precision,
   8: string some_characters,
   9: string zomg_unicode,
   10: bool what_who,
   11: binary base64,
+  12: list<byte> byte_list = [1, 2, 3],
+  13: list<i16> i16_list = [1,2,3],
+  14: list<i64> i64_list = [1,2,3]
 }
 
 struct Bonk {
