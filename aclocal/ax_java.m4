@@ -3,39 +3,33 @@ dnl The following commonly available Java macros converted to AX prefix
 dnl in support of proper thrift/autoconf extension naming rules
 dnl
 
-divert(-1)
-
-autoconf M4 macros for Java programs
-Copyright Stephane Bortzmeyer <bortzmeyer@pasteur.fr>, 1999
-Released under the GPL licence
-
-A sample configure.in is at the end of this file. Each macro is
-documented by comments before its definition. Here is a summary:
-
-AX_PROG_JAVAC: finds a Java compiler
-AX_PROG_JAVA: finds a Java virtual machine
-AX_CHECK_CLASS: finds if we have the given class (beware of CLASSPATH!)
-AX_CHECK_RQRD_CLASS: finds if we have the given class and stops otherwise
-
-divert(0)
+dnl autoconf M4 macros for Java programs
+dnl Copyright Stephane Bortzmeyer <bortzmeyer@pasteur.fr>, 1999
+dnl Released under the GPL licence
+dnl
+dnl A sample configure.in is at the end of this file. Each macro is
+dnl documented by comments before its definition. Here is a summary:
+dnl
+dnl AX_PROG_JAVAC: finds a Java compiler
+dnl AX_PROG_JAVA: finds a Java virtual machine
+dnl AX_CHECK_CLASS: finds if we have the given class (beware of CLASSPATH!)
+dnl AX_CHECK_RQRD_CLASS: finds if we have the given class and stops otherwise
 
 
-divert(-1)
-AX_PROG_JAVAC tests an existing Java compiler. It uses the environment
-variable JAVAC then tests in sequence various common Java compilers. For
-political reasons, it starts with the free ones.
-If you want to force a specific compiler:
- - at the configure.in level, set JAVAC=yourcompiler before calling 
-   AX_PROG_JAVAC
- - at the configure level, setenv JAVAC
-You can use the JAVAC variable in your Makefile.in, with @JAVAC@.
-
-*Warning*: its success or failure can depend on a proper setting of the
-CLASSPATH env. variable.
-
-TODO: allow to exclude compilers (rationale: most Java programs cannot compile
-with some compilers like guavac).
-divert(0)
+dnl AX_PROG_JAVAC tests an existing Java compiler. It uses the environment
+dnl variable JAVAC then tests in sequence various common Java compilers. For
+dnl political reasons, it starts with the free ones.
+dnl If you want to force a specific compiler:
+dnl  - at the configure.in level, set JAVAC=yourcompiler before calling 
+dnl    AX_PROG_JAVAC
+dnl  - at the configure level, setenv JAVAC
+dnl You can use the JAVAC variable in your Makefile.in, with @JAVAC@.
+dnl
+dnl *Warning*: its success or failure can depend on a proper setting of the
+dnl CLASSPATH env. variable.
+dnl
+dnl TODO: allow to exclude compilers (rationale: most Java programs cannot compile
+dnl with some compilers like guavac).
 
 AC_DEFUN([AX_PROG_JAVAC],[
 test -z "$JAVAC" && AC_CHECK_PROGS(JAVAC, "gcj -C" guavac jikes javac)
@@ -44,26 +38,24 @@ AX_PROG_JAVAC_WORKS
 ])
 
 
-divert(-1)
-AX_PROG_JAVA tests an existing Java virtual machine. It uses the 
-environment variable JAVA then tests in sequence various common Java 
-virtual machines. For political reasons, it starts with the free ones.
-You *must* call [AX_PROG_JAVAC] before.
-If you want to force a specific VM:
- - at the configure.in level, set JAVA=yourvm before calling AX_PROG_JAVA
- - at the configure level, setenv JAVA
-You can use the JAVA variable in your Makefile.in, with @JAVA@.
-
-*Warning*: its success or failure can depend on a proper setting of the
-CLASSPATH env. variable.
-
-TODO: allow to exclude virtual machines (rationale: most Java programs 
-cannot run with some VM like kaffe).
-
-TODO: allow to call this macro without [AX_PROG_JAVAC] before, using a
-class included uuencoded as an here document and uudecoded on the fly
-(check uudecode first) (rationale: a Java package can have no sources).
-divert(0)
+dnl AX_PROG_JAVA tests an existing Java virtual machine. It uses the 
+dnl environment variable JAVA then tests in sequence various common Java 
+dnl virtual machines. For political reasons, it starts with the free ones.
+dnl You *must* call [AX_PROG_JAVAC] before.
+dnl If you want to force a specific VM:
+dnl  - at the configure.in level, set JAVA=yourvm before calling AX_PROG_JAVA
+dnl  - at the configure level, setenv JAVA
+dnl You can use the JAVA variable in your Makefile.in, with @JAVA@.
+dnl
+dnl *Warning*: its success or failure can depend on a proper setting of the
+dnl CLASSPATH env. variable.
+dnl
+dnl TODO: allow to exclude virtual machines (rationale: most Java programs 
+dnl cannot run with some VM like kaffe).
+dnl
+dnl TODO: allow to call this macro without [AX_PROG_JAVAC] before, using a
+dnl class included uuencoded as an here document and uudecoded on the fly
+dnl (check uudecode first) (rationale: a Java package can have no sources).
 
 AC_DEFUN([AX_PROG_JAVA],[
 test -z "$JAVA" && AC_CHECK_PROGS(JAVA, kaffe java)
@@ -72,13 +64,11 @@ AX_PROG_JAVA_WORKS
 ])
 
 
-divert(-1)
-AX_CHECK_CLASS tests the existence of a given Java class, either in
-a jar or in a '.class' file. 
-
-*Warning*: its success or failure can depend on a proper setting of the
-CLASSPATH env. variable.
-divert(0)
+dnl AX_CHECK_CLASS tests the existence of a given Java class, either in
+dnl a jar or in a '.class' file. 
+dnl
+dnl *Warning*: its success or failure can depend on a proper setting of the
+dnl CLASSPATH env. variable.
 
 AC_DEFUN([AX_CHECK_CLASS],[
 CLASS=$1
@@ -103,13 +93,11 @@ rm -f $JAVA_TEST
 ])
 
 
-divert(-1)
-AX_CHECK_RQRD_CLASS tests the existence of a given Java class, either in
-a jar or in a '.class' file and fails if it doesn't exist.
-
-*Warning*: its success or failure can depend on a proper setting of the
-CLASSPATH env. variable.
-divert(0)
+dnl AX_CHECK_RQRD_CLASS tests the existence of a given Java class, either in
+dnl a jar or in a '.class' file and fails if it doesn't exist.
+dnl
+dnl *Warning*: its success or failure can depend on a proper setting of the
+dnl CLASSPATH env. variable.
 
 AC_DEFUN([AX_CHECK_RQRD_CLASS],[
 CLASS=`echo $1|sed 's/\./_/g'`
@@ -120,10 +108,8 @@ fi
 ])
 
 
-divert(-1)
-AX_CHECK_CLASSPATH just displays the CLASSPATH, for the edification
-of the user.
-divert(0)
+dnl AX_CHECK_CLASSPATH just displays the CLASSPATH, for the edification
+dnl of the user.
 
 AC_DEFUN([AX_CHECK_CLASSPATH],[
 if test -z "$CLASSPATH"; then
@@ -134,9 +120,7 @@ fi
 ])
 
 
-divert(-1)
-Internal use
-divert(0)
+dnl Internal use
 
 AC_DEFUN([AX_PROG_JAVA_WORKS],[
 echo -n "Testing if $JAVA works... "
@@ -165,9 +149,7 @@ rm -f $JAVA_TEST $CLASS_TEST
 )
 
 
-divert(-1)
-Internal use
-divert(0)
+dnl Internal use
 
 AC_DEFUN([AX_PROG_JAVAC_WORKS],[
 echo -n "Testing if $JAVAC works... "
@@ -189,36 +171,31 @@ rm -f $JAVA_TEST $CLASS_TEST
 
 
 
-divert(-1)
-TODO: add a AX_CHECK_JAVA_SOURCE where the user can give a complete
-Java source to compile or to compile and run.
-divert(0)
+dnl TODO: add a AX_CHECK_JAVA_SOURCE where the user can give a complete
+dnl Java source to compile or to compile and run.
 
 
 
-divert(-1)
-dnl This is a sample configure.in
-dnl Process this file with autoconf to produce a configure script.
-dnl Drop the [] around the macro names
-
-[
-
-AC_INIT(UnTag.java)
-
-dnl Checks for programs.
-AX_CHECK_CLASSPATH
-AX_PROG_JAVAC
-AX_PROG_JAVA
-
-dnl Checks for classes
-AX_CHECK_RQRD_CLASS(org.xml.sax.Parser)
-AX_CHECK_RQRD_CLASS(com.jclark.xml.sax.Driver)
-
-AC_OUTPUT(Makefile)
-
-]
-
-divert(0)
+dnl dnl This is a sample configure.in
+dnl dnl Process this file with autoconf to produce a configure script.
+dnl dnl Drop the [] around the macro names
+dnl
+dnl [
+dnl
+dnl AC_INIT(UnTag.java)
+dnl
+dnl dnl Checks for programs.
+dnl AX_CHECK_CLASSPATH
+dnl AX_PROG_JAVAC
+dnl AX_PROG_JAVA
+dnl
+dnl dnl Checks for classes
+dnl AX_CHECK_RQRD_CLASS(org.xml.sax.Parser)
+dnl AX_CHECK_RQRD_CLASS(com.jclark.xml.sax.Driver)
+dnl
+dnl AC_OUTPUT(Makefile)
+dnl
+dnl ]
 
 
 dnl @synopsis AX_CHECK_JUNIT
