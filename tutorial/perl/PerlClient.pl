@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -11,8 +11,8 @@ use Thrift::BinaryProtocol;
 use Thrift::Socket;
 use Thrift::BufferedTransport;
 
-use SharedService;
-use Calculator;
+use shared::SharedService;
+use tutorial::Calculator;
 use shared::Types;
 use tutorial::Types;
 
@@ -21,7 +21,7 @@ use Data::Dumper;
 my $socket    = new Thrift::Socket('localhost',9090);
 my $transport = new Thrift::BufferedTransport($socket,1024,1024);
 my $protocol  = new Thrift::BinaryProtocol($transport);
-my $client    = new CalculatorClient($protocol);
+my $client    = new tutorial::CalculatorClient($protocol);
 
 
 eval{
@@ -36,7 +36,7 @@ eval{
 
     my $work = new tutorial::Work();
 
-    $work->op(Operation::DIVIDE);
+    $work->op(tutorial::Operation::DIVIDE);
     $work->num1(1);
     $work->num2(0);
 
@@ -47,7 +47,7 @@ eval{
         warn "InvalidOperation: ".Dumper($@);
     }
 
-    $work->op(Operation::SUBTRACT);
+    $work->op(tutorial::Operation::SUBTRACT);
     $work->num1(15);
     $work->num2(10);
     my $diff = $client->calculate(1, $work);

@@ -10,7 +10,7 @@ target: all
 THRIFT = ../../compiler/cpp/thrift
 
 all: ../ThriftTest.thrift
-	$(THRIFT) -perl ../ThriftTest.thrift
+	$(THRIFT) --gen perl ../ThriftTest.thrift
 
 clean:
 	$(RM) -r gen-perl
