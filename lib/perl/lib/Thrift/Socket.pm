@@ -84,7 +84,11 @@ sub isOpen
 {
     my $self = shift;
 
-    return $self->{handle}->handles->[0]->connected;
+    if( defined $self->{handle} ){
+        return ($self->{handle}->handles())[0]->connected;
+    }
+
+    return 0;
 }
 
 #
@@ -120,7 +124,9 @@ sub close
 {
     my $self = shift;
 
-    close( ($self->{handle}->handles())[0] );
+    if( defined $self->{handle} ){
+        close( ($self->{handle}->handles())[0] );
+    }
 }
 
 #
@@ -134,6 +140,8 @@ sub readAll
     my $self = shift;
     my $len  = shift;
 
+
+    return unless defined $self->{handle};
 
     my $pre = "";
     while (1) {
@@ -178,6 +186,8 @@ sub read
     my $self = shift;
     my $len  = shift;
 
+    return unless defined $self->{handle};
+
     #check for timeout
     my @sockets = $self->{handle}->can_read( $self->{sendTimeout} / 1000 );
 
@@ -213,6 +223,8 @@ sub write
     my $buf  = shift;
 
 
+    return unless defined $self->{handle};
+
     while (length($buf) > 0) {
 
 
@@ -243,6 +255,9 @@ sub write
 sub flush
 {
     my $self = shift;
+
+    return unless defined $self->{handle};
+
     my $ret  = ($self->{handle}->handles())[0]->flush;
 }
 
