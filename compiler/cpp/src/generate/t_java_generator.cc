@@ -85,6 +85,7 @@ class t_java_generator : public t_oop_generator {
   void generate_java_bean_boilerplate(std::ofstream& out, t_struct* tstruct);
 
   void generate_function_helpers(t_function* tfunction);
+  std::string get_cap_name(std::string name);
 
   void generate_service_interface (t_service* tservice);
   void generate_service_helpers   (t_service* tservice);
@@ -400,12 +401,7 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
       string val = render_const_value(out, name, field_type, v_iter->second);
       indent(out) << name << ".";
       if (bean_style_) {
-        std::string cap_name = v_iter->first->get_string();
-        if (nocamel_style_) {
-          cap_name = "_" + cap_name;
-        } else {
-          cap_name[0] = toupper(cap_name[0]);
-        }
+        std::string cap_name = get_cap_name(v_iter->first->get_string());
         out << "set" << cap_name << "(" << val << ")";
       } else {
         out << v_iter->first->get_string() << " = " << val;
@@ -1164,12 +1160,7 @@ void t_java_generator::generate_generic_field_getters_setters(std::ofstream& out
     t_field* field = *f_iter;
     t_type* type = get_true_type(field->get_type());
     std::string field_name = field->get_name();
-    std::string cap_name = field_name;
-    if (nocamel_style_) {
-      cap_name = "_" + cap_name;
-    } else {
-      cap_name[0] = toupper(cap_name[0]);
-    }
+    std::string cap_name = get_cap_name(field_name);
 
     indent_up();
     generate_reflection_setters(setter_stream, type, field_name, cap_name);
@@ -1228,22 +1219,12 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     t_field* field = *f_iter;
     t_type* type = get_true_type(field->get_type());
     std::string field_name = field->get_name();
-    std::string cap_name = field_name;
-    if (nocamel_style_) {
-      cap_name = "_" + cap_name;
-    } else {
-      cap_name[0] = toupper(cap_name[0]);
-    }
+    std::string cap_name = get_cap_name(field_name);
 
     if (type->is_container()) {
       // Method to return the size of the collection
       indent(out) << "public int get" << cap_name;
-      if (nocamel_style_) {
-        out << "_size";
-      } else {
-        out << "Size";
-      }
-      out << "() {" << endl;
+      out << get_cap_name("size() {") << endl;
 
       indent_up();
       indent(out) << "return (this." << field_name << " == null) ? 0 : " <<
@@ -1264,11 +1245,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       // Iterator getter for sets and lists
       indent(out) << "public java.util.Iterator<" <<
         type_name(element_type, true, false) <<  "> get" << cap_name;
-      if (nocamel_style_) {
-        out << "_iterator() {" << endl;
-      } else {
-        out << "Iterator() {" << endl;
-      }
+      out << get_cap_name("iterator() {") << endl;
 
       indent_up();
       indent(out) << "return (this." << field_name << " == null) ? null : " <<
@@ -1278,11 +1255,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
 
       // Add to set or list, create if the set/list is null
       indent(out);
-      if (nocamel_style_) {
-        out << "public void add_to";
-      } else {
-        out << "public void addTo";
-      }
+      out << "public void add" << get_cap_name("to");
       out << cap_name << "(" << type_name(element_type) << " elem) {" << endl;
 
       indent_up();
@@ -1303,11 +1276,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       t_type* val_type = ((t_map*)type)->get_val_type();
 
       indent(out);
-      if (nocamel_style_) {
-        out << "public void put_to";
-      } else {
-        out << "public void putTo";
-      }
+      out << "public void put" << get_cap_name("to");
       out << cap_name << "(" << type_name(key_type) << " key, "
         << type_name(val_type) << " val) {" << endl;
 
@@ -2608,6 +2577,18 @@ string t_java_generator::type_to_enum(t_type* type) {
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
+}
+
+/**
+ * Applies the correct style to a string based on the value of nocamel_style_
+ */
+std::string t_java_generator::get_cap_name(std::string name){
+  if (nocamel_style_) {
+    return "_" + name;
+  } else {
+    name[0] = toupper(name[0]);
+    return name;
+  }
 }
 
 /**
