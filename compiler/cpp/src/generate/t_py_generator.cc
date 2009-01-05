@@ -614,11 +614,10 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   // Printing utilities so that on the command line thrift
   // structs look pretty like dictionaries
   out <<
-    indent() << "def __str__(self):" << endl <<
-    indent() << "  return str(self.__dict__)" << endl <<
-    endl <<
     indent() << "def __repr__(self):" << endl <<
-    indent() << "  return repr(self.__dict__)" << endl <<
+    indent() << "  L = ['%s=%r' % (key, value)" << endl <<
+    indent() << "    for key, value in self.__dict__.iteritems()]" << endl <<
+    indent() << "  return '%s(%s)' % (self.__class__.__name__, ', '.join(L))" << endl <<
     endl;
 
   // Equality and inequality methods that compare by value
