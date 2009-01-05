@@ -490,7 +490,7 @@ string t_java_generator::render_const_value(ofstream& out, string name, t_type* 
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        render << value->get_integer();
+        render << "(double)" << value->get_integer();
       } else {
         render << value->get_double();
       }
