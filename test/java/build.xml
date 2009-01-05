@@ -4,6 +4,7 @@
 
   <property name="src" location="src" />
   <property name="gen" location="gen-java" />
+  <property name="genbean" location="gen-javabean" />
   <property name="build" location="build" />
   <property name="cpath" location="../../lib/java/libthrift.jar:/usr/share/java/commons-lang-2.3.jar" />
   <property name="testjar" location="thrifttest.jar" />
@@ -24,12 +25,13 @@
       <arg line="--gen java:hashcode ../OptionalRequiredTest.thrift" />
     </exec>
     <exec executable="../../compiler/cpp/thrift">
-      <arg line="--gen java ../DebugProtoTest.thrift" />
+      <arg line="--gen java:beans,nocamel ../JavaBeansTest.thrift" />
     </exec>
   </target>
 
   <target name="compileonly">
     <javac debug="true" srcdir="${gen}" destdir="${build}" classpath="${cpath}" />
+    <javac debug="true" srcdir="${genbean}" destdir="${build}" classpath="${cpath}" />
     <javac debug="true" srcdir="${src}" destdir="${build}" classpath="${cpath}:${gen}" />
   </target>
 
@@ -48,10 +50,13 @@
       classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
     <java classname="com.facebook.thrift.test.DeepCopyTest"
       classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
+    <java classname="com.facebook.thrift.test.JavaBeansTest"
+      classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
   </target>
 
   <target name="clean">
     <delete dir="gen-java" />
+    <delete dir="gen-javabean" />
     <delete dir="${build}" />
     <delete file="thrifttest.jar" />
   </target>

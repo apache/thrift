@@ -82,6 +82,7 @@ class t_java_generator : public t_oop_generator {
   void generate_reflection_setters(std::ostringstream& out, t_type* type, std::string field_name, std::string cap_name);
   void generate_reflection_getters(std::ostringstream& out, t_type* type, std::string field_name, std::string cap_name);
   void generate_generic_field_getters_setters(std::ofstream& out, t_struct* tstruct);
+  void generate_generic_isset_method(std::ofstream& out, t_struct* tstruct);
   void generate_java_bean_boilerplate(std::ofstream& out, t_struct* tstruct);
 
   void generate_function_helpers(t_function* tfunction);
@@ -706,6 +707,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   if (bean_style_) {
     generate_java_bean_boilerplate(out, tstruct);
     generate_generic_field_getters_setters(out, tstruct);
+    generate_generic_isset_method(out, tstruct);
   }
 
   generate_java_struct_equality(out, tstruct);
@@ -1203,7 +1205,33 @@ void t_java_generator::generate_generic_field_getters_setters(std::ofstream& out
   indent(out) << "}" << endl << endl;
 }
 
+// Creates a generic isSet method that takes the field number as argument
+void t_java_generator::generate_generic_isset_method(std::ofstream& out, t_struct* tstruct){
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
 
+  // create the isSet method
+  indent(out) << "// Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise" << endl;
+  indent(out) << "public boolean isSet(int fieldID) {" << endl;
+  indent_up();
+  indent(out) << "switch (fieldID) {" << endl;
+
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field* field = *f_iter;
+    indent(out) << "case " << upcase_string(field->get_name()) << ":" << endl;
+    indent_up();
+    indent(out) << "return this.__isset." << field->get_name() << ";" << endl;
+    indent_down();
+  }
+
+  indent(out) << "default:" << endl;
+  indent(out) << "  throw new IllegalArgumentException(\"Field \" + fieldID + \" doesn't exist!\");" << endl;
+
+  indent(out) << "}" << endl;
+
+  indent_down();
+  indent(out) << "}" << endl << endl;
+}
 
 /**
  * Generates a set of Java Bean boilerplate functions (setters, getters, etc.)
@@ -1332,6 +1360,14 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       indent(out) << "this." << field_name << " = null;" << endl;
     }
     indent(out) << "this.__isset." << field_name << " = false;" << endl;
+    indent_down();
+    indent(out) << "}" << endl << endl;
+
+    // isSet method
+    indent(out) << "// Returns true if field " << field_name << " is set (has been asigned a value) and false otherwise" << endl;
+    indent(out) << "public boolean is" << get_cap_name("set") << cap_name << "() {" << endl;
+    indent_up();
+    indent(out) << "return this.__isset." << field_name << ";" << endl;
     indent_down();
     indent(out) << "}" << endl << endl;
   }
