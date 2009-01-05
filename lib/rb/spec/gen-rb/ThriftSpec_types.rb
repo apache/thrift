@@ -13,7 +13,7 @@ module SpecNamespace
 
       Thrift::Struct.field_accessor self, :greeting
       FIELDS = {
-        GREETING => {:type => Thrift::Types::STRING, :name => 'greeting', :default => 'hello world'}
+        GREETING => {:type => Thrift::Types::STRING, :name => 'greeting', :default => %q"hello world"}
       }
       def validate
       end
@@ -33,10 +33,10 @@ module SpecNamespace
       Thrift::Struct.field_accessor self, :simple, :words, :hello, :ints, :complex, :shorts, :opt_string
       FIELDS = {
         SIMPLE => {:type => Thrift::Types::I32, :name => 'simple', :default => 53},
-        WORDS => {:type => Thrift::Types::STRING, :name => 'words', :default => 'words'},
+        WORDS => {:type => Thrift::Types::STRING, :name => 'words', :default => %q"words"},
         HELLO => {:type => Thrift::Types::STRUCT, :name => 'hello', :default => Hello.new({
-          'greeting' => 'hello, world!',
-        }), :class => Hello},
+          %q"greeting" => %q"hello, world!",
+        }), :class => SpecNamespace::Hello},
         INTS => {:type => Thrift::Types::LIST, :name => 'ints', :default => [
           1,
           2,
@@ -94,7 +94,7 @@ module SpecNamespace
         MAPS => {:type => Thrift::Types::LIST, :name => 'maps', :element => {:type => Thrift::Types::MAP, :key => {:type => Thrift::Types::I16}, :value => {:type => Thrift::Types::I16}}},
         LISTS => {:type => Thrift::Types::LIST, :name => 'lists', :element => {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::I16}}},
         SETS => {:type => Thrift::Types::LIST, :name => 'sets', :element => {:type => Thrift::Types::SET, :element => {:type => Thrift::Types::I16}}},
-        HELLOS => {:type => Thrift::Types::LIST, :name => 'hellos', :element => {:type => Thrift::Types::STRUCT, :class => Hello}}
+        HELLOS => {:type => Thrift::Types::LIST, :name => 'hellos', :element => {:type => Thrift::Types::STRUCT, :class => SpecNamespace::Hello}}
       }
       def validate
       end

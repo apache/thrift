@@ -132,7 +132,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
 
           Thrift::Struct.field_accessor self, :success
           FIELDS = {
-            SUCCESS => {:type => Thrift::Types::STRUCT, :name => 'success', :class => Hello}
+            SUCCESS => {:type => Thrift::Types::STRUCT, :name => 'success', :class => SpecNamespace::Hello}
           }
           def validate
           end

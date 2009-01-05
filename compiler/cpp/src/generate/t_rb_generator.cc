@@ -147,6 +147,7 @@ class t_rb_generator : public t_oop_generator {
   std::string render_includes();
   std::string declare_field(t_field* tfield);
   std::string type_name(t_type* ttype);
+  std::string full_type_name(t_type* ttype);
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
@@ -328,7 +329,7 @@ string t_rb_generator::render_const_value(t_type* type, t_const_value* value) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      out << "'" << value->get_string() << "'";
+      out << "%q\"" << value->get_string() << '"';
       break;
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "true" : "false");
@@ -559,7 +560,7 @@ void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type,
 
   if (!field_type->is_base_type()) {
     if (field_type->is_struct() || field_type->is_xception()) {
-      out << ", :class => " << type_name(((t_struct*)field_type));
+      out << ", :class => " << full_type_name((t_struct*)field_type);
     } else if (field_type->is_list()) {
       out << ", :element => ";
       generate_field_data(out, ((t_list*)field_type)->get_elem_type());
@@ -905,7 +906,7 @@ void t_rb_generator::generate_process_function(t_service* tservice,
     indent_down();
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ <<
-        indent() << "rescue " << (*x_iter)->get_type()->get_name() << " => " << (*x_iter)->get_name() << endl;
+        indent() << "rescue " << full_type_name((*x_iter)->get_type()) << " => " << (*x_iter)->get_name() << endl;
       if (!tfunction->is_async()) {
         indent_up();
         f_service_ <<
@@ -976,6 +977,16 @@ string t_rb_generator::type_name(t_type* ttype) {
   }
 
   return prefix + name;
+}
+
+string t_rb_generator::full_type_name(t_type* ttype) {
+  string prefix = "";
+  vector<std::string> modules = ruby_modules(ttype->get_program());
+  for (vector<std::string>::iterator m_iter = modules.begin();
+       m_iter != modules.end(); ++m_iter) {
+    prefix += *m_iter + "::";
+  }
+  return prefix + type_name(ttype);
 }
 
 /**
