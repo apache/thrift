@@ -78,6 +78,7 @@ class t_java_generator : public t_oop_generator {
   void generate_java_struct_result_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_tostring(std::ofstream& out, t_struct* tstruct);
+  void generate_java_meta_data_map(std::ofstream& out, t_struct* tstruct);
   void generate_reflection_setters(std::ostringstream& out, t_type* type, std::string field_name, std::string cap_name);
   void generate_reflection_getters(std::ostringstream& out, t_type* type, std::string field_name, std::string cap_name);
   void generate_generic_field_getters_setters(std::ofstream& out, t_struct* tstruct);
@@ -250,6 +251,7 @@ string t_java_generator::java_type_imports() {
     "import java.util.HashMap;\n" +
     "import java.util.Set;\n" +
     "import java.util.HashSet;\n" +
+    "import java.util.Collections;\n" +
     hash_builder +
     "import com.facebook.thrift.*;\n\n";
 }
@@ -612,6 +614,8 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
       indent() << "}" << endl <<
       endl;
   }
+
+  generate_java_meta_data_map(out, tstruct);
 
   // Default constructor
   indent(out) <<
@@ -1419,6 +1423,31 @@ void t_java_generator::generate_java_struct_tostring(ofstream& out,
   indent_down();
   indent(out) << "}" << endl <<
     endl;
+}
+
+/**
+ * Generates a static map with meta data to store information such as fieldID to
+ * fieldName mapping
+ *
+ * @param tstruct The struct definition
+ */
+void t_java_generator::generate_java_meta_data_map(ofstream& out,
+                                                   t_struct* tstruct) {
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  // Static Map with fieldID -> FieldMetaData mappings
+  indent(out) << "public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{" << endl;
+
+  // Populate map
+  indent_up();
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field* field = *f_iter;
+    std::string field_name = field->get_name();
+    indent(out) << "put(" << upcase_string(field_name) << ", new FieldMetaData(\"" << field_name << "\"));" << endl;
+  }
+  indent_down();
+  indent(out) << "}});" << endl << endl;
 }
 
 
