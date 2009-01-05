@@ -129,6 +129,15 @@ module Thrift
       true
     end
 
+    def eql?(other)
+      self.class == other.class && self == other
+    end
+
+    # for the time being, we're ok with a naive hash. this could definitely be improved upon.
+    def hash
+      0
+    end
+
     def self.field_accessor(klass, *fields)
       fields.each do |field|
         klass.send :attr_reader, field
