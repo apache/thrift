@@ -148,7 +148,7 @@ class t_java_generator : public t_oop_generator {
                                           t_doc*     tdoc);
 
   void generate_deep_copy_container(std::ofstream& out, std::string source_name_p1, std::string source_name_p2, std::string result_name, t_type* type);
-  void generate_deep_copy_non_container(std::ofstream& out, std::string source_name, t_type* type);
+  void generate_deep_copy_non_container(std::ofstream& out, std::string source_name, std::string dest_name, t_type* type);
 
   /**
    * Helper rendering functions
@@ -684,7 +684,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
       indent(out) << "this." << field_name << " = __this__" << field_name << ";" << endl;
     } else {
       indent(out) << "this." << field_name << " = ";
-      generate_deep_copy_non_container(out, "other." + field_name, type);
+      generate_deep_copy_non_container(out, "other." + field_name, field_name, type);
       out << ";" << endl;
     }
 
@@ -2628,7 +2628,7 @@ void t_java_generator::generate_deep_copy_container(ofstream &out, std::string s
       generate_deep_copy_container(out, iterator_element_name + "_key", "", result_element_name + "_key", key_type);
     } else {
       indent(out) << type_name(key_type, true, false) << " " << result_element_name << "_key = ";
-      generate_deep_copy_non_container(out, iterator_element_name + "_key", key_type);
+      generate_deep_copy_non_container(out, iterator_element_name + "_key", result_element_name + "_key", key_type);
       out << ";" << endl;
     }
 
@@ -2638,7 +2638,7 @@ void t_java_generator::generate_deep_copy_container(ofstream &out, std::string s
       generate_deep_copy_container(out, iterator_element_name + "_value", "", result_element_name + "_value", val_type);
     } else {
       indent(out) << type_name(val_type, true, false) << " " << result_element_name << "_value = ";
-      generate_deep_copy_non_container(out, iterator_element_name + "_value", val_type);
+      generate_deep_copy_non_container(out, iterator_element_name + "_value", result_element_name + "_value", val_type);
       out << ";" << endl;
     }
 
@@ -2669,9 +2669,17 @@ void t_java_generator::generate_deep_copy_container(ofstream &out, std::string s
       indent(out) << result_name << ".add(" << result_element_name << ");" << endl;
     } else {
       // iterative copy
-      indent(out) << result_name << ".add(";
-      generate_deep_copy_non_container(out, iterator_element_name, elem_type);
-      out << ");" << endl;
+      if(((t_base_type*)elem_type)->is_binary()){
+        indent(out) << "byte[] temp_binary_element = ";
+        generate_deep_copy_non_container(out, iterator_element_name, "temp_binary_element", elem_type);
+        out << ";" << endl;
+        indent(out) << result_name << ".add(temp_binary_element);" << endl;
+      }
+      else{
+        indent(out) << result_name << ".add(";
+        generate_deep_copy_non_container(out, iterator_element_name, result_name, elem_type);
+        out << ");" << endl;
+      }
     }
 
     indent_down();
@@ -2681,9 +2689,16 @@ void t_java_generator::generate_deep_copy_container(ofstream &out, std::string s
   }
 }
 
-void t_java_generator::generate_deep_copy_non_container(ofstream& out, std::string source_name, t_type* type) {
+void t_java_generator::generate_deep_copy_non_container(ofstream& out, std::string source_name, std::string dest_name, t_type* type) {
   if (type->is_base_type() || type->is_enum() || type->is_typedef()) {
-    out << source_name;
+    // binary fields need to be copied with System.arraycopy
+    if (((t_base_type*)type)->is_binary()){
+      out << "new byte[" << source_name << ".length];" << endl;
+      indent(out) << "System.arraycopy(" << source_name << ", 0, " << dest_name << ", 0, " << source_name << ".length)";
+    }
+    // everything else can be copied directly
+    else
+      out << source_name;
   } else {
     out << "new " << type_name(type, true, true) << "(" << source_name << ")";
   }

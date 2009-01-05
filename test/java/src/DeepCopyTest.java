@@ -37,6 +37,7 @@ public class DeepCopyTest {
     ooe.double_precision = Math.PI;
     ooe.some_characters = "JSON THIS! \"\1";
     ooe.zomg_unicode = new String(kUnicodeBytes, "UTF-8");
+    ooe.base64 = "string to bytes".getBytes();
 
     Nesting n = new Nesting(new Bonk(), new OneOfEach());
     n.my_ooe.integer16 = 16;
@@ -104,11 +105,15 @@ public class DeepCopyTest {
     if (!hmCopy.equals(hmCopy2))
       throw new RuntimeException("copy constructor generated incorrect copy");
 
+    hm.big.get(0).base64[0]++; // change binary value in original object
+    if (hm.equals(hmCopy2)) // make sure the change didn't propagate to the copied object
+      throw new RuntimeException("Binary field not copied correctly!");
+    hm.big.get(0).base64[0]--; // undo change
+
     hmCopy2.bonks.get("nothing").get(1).message = "What else?";
 
     if (hm.equals(hmCopy2))
       throw new RuntimeException("A deep copy was not done!");
 
-    //System.out.println("DeepCopyTest passed!");
   }
 }
