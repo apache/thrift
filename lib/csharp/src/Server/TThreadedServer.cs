@@ -1,7 +1,7 @@
 //
 //  TThreadPoolServer.cs
 //
-//  Begin:  Dec 3, 2007
+//  Begin:  Apr 21, 2008
 //  Authors:
 //		Will Palmeri <wpalmeri@imeem.com>
 //
@@ -19,69 +19,73 @@ using Thrift.Transport;
 namespace Thrift.Server
 {
 	/// <summary>
-	/// Server that uses C# built-in ThreadPool to spawn threads when handling requests
+	/// Server that uses C# threads (as opposed to the ThreadPool) when handling requests
 	/// </summary>
-	public class TThreadPoolServer : TServer
+	public class TThreadedServer : TServer
 	{
-		private const int DEFAULT_MIN_THREADS = 10;
 		private const int DEFAULT_MAX_THREADS = 100;
 		private volatile bool stop = false;
+		private readonly int maxThreads;
 
-		public TThreadPoolServer(TProcessor processor, TServerTransport serverTransport)
-			:this(processor, serverTransport,
-				 new TTransportFactory(), new TTransportFactory(),
-				 new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
-				 DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, DefaultLogDelegate)
-		{
-		}
+		private Queue<TTransport> clientQueue;
+		private HashSet<Thread> clientThreads;
+		private object clientLock;
+		private Thread workerThread;
 
-		public TThreadPoolServer(TProcessor processor, TServerTransport serverTransport, LogDelegate logDelegate)
+		public TThreadedServer(TProcessor processor, TServerTransport serverTransport)
 			: this(processor, serverTransport,
 				 new TTransportFactory(), new TTransportFactory(),
 				 new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
-				 DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, logDelegate)
+				 DEFAULT_MAX_THREADS, DefaultLogDelegate)
+		{
+		}
+
+		public TThreadedServer(TProcessor processor, TServerTransport serverTransport, LogDelegate logDelegate)
+			: this(processor, serverTransport,
+				 new TTransportFactory(), new TTransportFactory(),
+				 new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
+				 DEFAULT_MAX_THREADS, logDelegate)
 		{
 		}
 
 
-		public TThreadPoolServer(TProcessor processor,
+		public TThreadedServer(TProcessor processor,
 								 TServerTransport serverTransport,
 								 TTransportFactory transportFactory,
 								 TProtocolFactory protocolFactory)
-			:this(processor, serverTransport,
+			: this(processor, serverTransport,
 				 transportFactory, transportFactory,
 				 protocolFactory, protocolFactory,
-				 DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, DefaultLogDelegate)
+				 DEFAULT_MAX_THREADS, DefaultLogDelegate)
 		{
 		}
 
-		public TThreadPoolServer(TProcessor processor,
+		public TThreadedServer(TProcessor processor,
 								 TServerTransport serverTransport,
 								 TTransportFactory inputTransportFactory,
 								 TTransportFactory outputTransportFactory,
 								 TProtocolFactory inputProtocolFactory,
 								 TProtocolFactory outputProtocolFactory,
-								 int minThreadPoolThreads, int maxThreadPoolThreads, LogDelegate logDel)
-			:base(processor, serverTransport, inputTransportFactory, outputTransportFactory,
+								 int maxThreads, LogDelegate logDel)
+			: base(processor, serverTransport, inputTransportFactory, outputTransportFactory,
 				  inputProtocolFactory, outputProtocolFactory, logDel)
 		{
-			if (!ThreadPool.SetMinThreads(minThreadPoolThreads, minThreadPoolThreads))
-			{
-				throw new Exception("Error: could not SetMinThreads in ThreadPool");
-			}
-			if (!ThreadPool.SetMaxThreads(maxThreadPoolThreads, maxThreadPoolThreads))
-			{
-				throw new Exception("Error: could not SetMaxThreads in ThreadPool");
-			}
+			this.maxThreads = maxThreads;
+			clientQueue = new Queue<TTransport>();
+			clientLock = new object();
+			clientThreads = new HashSet<Thread>();
 		}
 
 		/// <summary>
-		/// Use new ThreadPool thread for each new client connection
+		/// Use new Thread for each new client connection. block until numConnections < maxTHreads
 		/// </summary>
 		public override void Serve()
 		{
 			try
 			{
+				//start worker thread
+				workerThread = new Thread(new ThreadStart(Execute));
+				workerThread.Start();
 				serverTransport.Listen();
 			}
 			catch (TTransportException ttx)
@@ -96,13 +100,17 @@ namespace Thrift.Server
 				try
 				{
 					TTransport client = serverTransport.Accept();
-					ThreadPool.QueueUserWorkItem(this.Execute, client);
+					lock (clientLock)
+					{
+						clientQueue.Enqueue(client);
+						Monitor.Pulse(clientLock);
+					}
 				}
 				catch (TTransportException ttx)
 				{
 					if (stop)
 					{
-						logDelegate("TThreadPoolServer was shutting down, caught " + ttx.GetType().Name);
+						logDelegate("TThreadPoolServer was shutting down, caught " + ttx);
 					}
 					else
 					{
@@ -121,7 +129,7 @@ namespace Thrift.Server
 				}
 				catch (TTransportException ttx)
 				{
-					logDelegate("TServerTransport failed on close: " + ttx.Message);
+					logDelegate("TServeTransport failed on close: " + ttx.Message);
 				}
 				stop = false;
 			}
@@ -132,9 +140,37 @@ namespace Thrift.Server
 		/// threadContext will be a TTransport instance
 		/// </summary>
 		/// <param name="threadContext"></param>
-		private void Execute(Object threadContext)
+		private void Execute()
 		{
-			TTransport client = (TTransport)threadContext;
+			while (!stop)
+			{
+				TTransport client;
+				Thread t;
+				lock (clientLock)
+				{
+					//don't dequeue if too many connections
+					while (clientThreads.Count >= maxThreads)
+					{
+						Monitor.Wait(clientLock);
+					}
+
+					while (clientQueue.Count == 0)
+					{
+						Monitor.Wait(clientLock);
+					}
+
+					client = clientQueue.Dequeue();
+					t = new Thread(new ParameterizedThreadStart(ClientWorker));
+					clientThreads.Add(t);
+				}
+				//start processing requests from client on new thread
+				t.Start(client);
+			}
+		}
+
+		private void ClientWorker(Object context)
+		{
+			TTransport client = (TTransport)context;
 			TTransport inputTransport = null;
 			TTransport outputTransport = null;
 			TProtocol inputProtocol = null;
@@ -152,10 +188,7 @@ namespace Thrift.Server
 			}
 			catch (TTransportException)
 			{
-				// Assume the client died and continue silently
-				//Console.WriteLine(ttx);
 			}
-			
 			catch (Exception x)
 			{
 				logDelegate("Error: " + x);
@@ -169,12 +202,25 @@ namespace Thrift.Server
 			{
 				outputTransport.Close();
 			}
+
+			lock (clientLock)
+			{
+				clientThreads.Remove(Thread.CurrentThread);
+				Monitor.Pulse(clientLock);
+			}
+			return;
 		}
 
 		public override void Stop()
 		{
 			stop = true;
 			serverTransport.Close();
+			//clean up all the threads myself
+			workerThread.Abort();
+			foreach (Thread t in clientThreads)
+			{
+				t.Abort();
+			}
 		}
 	}
 }

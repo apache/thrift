@@ -34,6 +34,11 @@ namespace Thrift.Transport
 		private int clientTimeout = 0;
 
 		/**
+		 * Whether or not to wrap new TSocket connections in buffers
+		 */
+		private bool useBufferedSockets = false;
+
+		/**
 		 * Creates a server socket from underlying socket object
 		 */
 		public TServerSocket(TcpListener listener)
@@ -62,9 +67,15 @@ namespace Thrift.Transport
 		 * Creates just a port listening server socket
 		 */
 		public TServerSocket(int port, int clientTimeout)
+			:this(port, clientTimeout, false)
+		{
+		}
+
+		public TServerSocket(int port, int clientTimeout, bool useBufferedSockets)
 		{
 			this.port = port;
 			this.clientTimeout = clientTimeout;
+			this.useBufferedSockets = useBufferedSockets;
 			try
 			{
 				// Make server socket
@@ -88,7 +99,7 @@ namespace Thrift.Transport
 				}
 				catch (SocketException sx)
 				{
-					Console.Error.WriteLine(sx);
+					throw new TTransportException("Could not accept on listening socket: " + sx.Message);
 				}
 			}
 		}
@@ -104,7 +115,15 @@ namespace Thrift.Transport
 				TcpClient result = server.AcceptTcpClient();
 				TSocket result2 = new TSocket(result);
 				result2.Timeout = clientTimeout;
-				return result2;
+				if (useBufferedSockets)
+				{
+					TBufferedTransport result3 = new TBufferedTransport(result2);
+					return result3;
+				}
+				else
+				{
+					return result2;
+				}
 			}
 			catch (Exception ex)
 			{
@@ -122,7 +141,7 @@ namespace Thrift.Transport
 				}
 				catch (Exception ex)
 				{
-					Console.Error.WriteLine("WARNING: Could not close server socket: " + ex);
+					throw new TTransportException("WARNING: Could not close server socket: " + ex);
 				}
 				server = null;
 			}

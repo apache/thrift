@@ -69,6 +69,22 @@ namespace Thrift.Transport
 			}
 		}
 
+		public string Host
+		{
+			get
+			{
+				return host;
+			}
+		}
+
+		public int Port
+		{
+			get
+			{
+				return port;
+			}
+		}
+
 		public override bool IsOpen
 		{
 			get

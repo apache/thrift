@@ -31,6 +31,16 @@ namespace Thrift.Transport
 			this.outputStream = outputStream;
 		}
 
+		public Stream OutputStream
+		{
+			get { return outputStream; }
+		}
+
+		public Stream InputStream
+		{
+			get { return inputStream; }
+		}
+
 		public override bool IsOpen
 		{
 			get { return true; }

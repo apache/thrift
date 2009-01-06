@@ -59,11 +59,13 @@
     <Compile Include="Protocol\TSet.cs" />
     <Compile Include="Protocol\TStruct.cs" />
     <Compile Include="Protocol\TType.cs" />
+    <Compile Include="Server\TThreadedServer.cs" />
     <Compile Include="Server\TServer.cs" />
     <Compile Include="Server\TSimpleServer.cs" />
     <Compile Include="Server\TThreadPoolServer.cs" />
     <Compile Include="TApplicationException.cs" />
     <Compile Include="TProcessor.cs" />
+    <Compile Include="Transport\TBufferedTransport.cs" />
     <Compile Include="Transport\TServerSocket.cs" />
     <Compile Include="Transport\TServerTransport.cs" />
     <Compile Include="Transport\TSocket.cs" />

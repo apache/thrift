@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ThriftMSBuildTask")]
+[assembly: AssemblyTitle("ThriftTest")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ThriftMSBuildTask")]
+[assembly: AssemblyProduct("ThriftTest")]
 [assembly: AssemblyCopyright("Copyright © 2009 The Apache Software Foundation")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("5095e09d-7b95-4be1-b250-e1c1db1c485e")]
+[assembly: Guid("f41b193b-f1ab-48ee-8843-f88e43084e26")]
 
 // Version information for an assembly consists of the following four values:
 //

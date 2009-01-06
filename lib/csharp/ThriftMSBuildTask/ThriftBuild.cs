@@ -180,7 +180,7 @@ namespace ThriftMSBuildTask
 				LogMessage("Generating code for: " + thriftFile, MessageImportance.Normal);
 				Process p = new Process();
 				p.StartInfo.FileName = SafePath(ThriftExecutable.ItemSpec);
-				p.StartInfo.Arguments = "-csharp -o " + SafePath(thriftDir) + " -r " + thriftFile;
+				p.StartInfo.Arguments = "--gen csharp -o " + SafePath(thriftDir) + " -r " + thriftFile;
 				p.StartInfo.UseShellExecute = false;
 				p.StartInfo.CreateNoWindow = true;
 				p.StartInfo.RedirectStandardOutput = false;
