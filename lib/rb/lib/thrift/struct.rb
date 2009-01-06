@@ -60,6 +60,8 @@ module Thrift
       names_to_ids[name]
     end
 
+    # Obsoleted by THRIFT-246, which generates this method inline
+    # TODO: Should be removed at some point. -- Kevin Clark
     def struct_fields
       self.class.const_get(:FIELDS)
     end

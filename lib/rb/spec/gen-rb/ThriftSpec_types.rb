@@ -15,6 +15,9 @@ module SpecNamespace
       FIELDS = {
         GREETING => {:type => Thrift::Types::STRING, :name => 'greeting', :default => %q"hello world"}
       }
+
+      def struct_fields; FIELDS; end
+
       def validate
       end
 
@@ -50,6 +53,9 @@ module SpecNamespace
         ]), :element => {:type => Thrift::Types::I16}},
         OPT_STRING => {:type => Thrift::Types::STRING, :name => 'opt_string', :optional => true}
       }
+
+      def struct_fields; FIELDS; end
+
       def validate
       end
 
@@ -63,6 +69,9 @@ module SpecNamespace
       FIELDS = {
         YESNO => {:type => Thrift::Types::BOOL, :name => 'yesno', :default => true}
       }
+
+      def struct_fields; FIELDS; end
+
       def validate
       end
 
@@ -96,6 +105,9 @@ module SpecNamespace
         SETS => {:type => Thrift::Types::LIST, :name => 'sets', :element => {:type => Thrift::Types::SET, :element => {:type => Thrift::Types::I16}}},
         HELLOS => {:type => Thrift::Types::LIST, :name => 'hellos', :element => {:type => Thrift::Types::STRUCT, :class => SpecNamespace::Hello}}
       }
+
+      def struct_fields; FIELDS; end
+
       def validate
       end
 
@@ -111,6 +123,9 @@ module SpecNamespace
         MESSAGE => {:type => Thrift::Types::STRING, :name => 'message'},
         CODE => {:type => Thrift::Types::I32, :name => 'code', :default => 1}
       }
+
+      def struct_fields; FIELDS; end
+
       def validate
       end
 

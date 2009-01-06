@@ -52,6 +52,9 @@ require File.dirname(__FILE__) + '/Benchmark_types'
           FIELDS = {
             N => {:type => Thrift::Types::BYTE, :name => 'n'}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -65,6 +68,9 @@ require File.dirname(__FILE__) + '/Benchmark_types'
           FIELDS = {
             SUCCESS => {:type => Thrift::Types::I32, :name => 'success'}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 

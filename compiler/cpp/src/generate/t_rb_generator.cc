@@ -540,7 +540,10 @@ void t_rb_generator::generate_field_defns(std::ofstream& out, t_struct* tstruct)
   }
   indent_down();
   out << endl;
-  indent(out) << "}" << endl;
+  indent(out) << "}" << endl << endl;
+  
+  indent(out) << "def struct_fields; FIELDS; end" << endl << endl;
+  
 }
 
 void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type,

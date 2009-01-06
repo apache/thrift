@@ -121,6 +121,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
             ENGLISH => {:type => Thrift::Types::BOOL, :name => 'english'}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -134,6 +137,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
             SUCCESS => {:type => Thrift::Types::STRUCT, :name => 'success', :class => SpecNamespace::Hello}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -145,6 +151,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
 
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -158,6 +167,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
             SUCCESS => {:type => Thrift::Types::BOOL, :name => 'success'}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -171,6 +183,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
             N => {:type => Thrift::Types::I32, :name => 'n'}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -182,6 +197,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
 
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -193,6 +211,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
 
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -204,6 +225,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
 
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -217,6 +241,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
             SECONDS => {:type => Thrift::Types::DOUBLE, :name => 'seconds'}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -228,6 +255,9 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
           FIELDS = {
 
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
