@@ -1023,7 +1023,8 @@ void t_csharp_generator::generate_service_server(t_service* tservice) {
     indent() << "TMessage msg = iprot.ReadMessageBegin();" << endl;
 
   f_service_ <<
-    indent() << "ProcessFunction fn = processMap_[msg.Name];" << endl <<
+    indent() << "ProcessFunction fn;" << endl <<
+    indent() << "processMap_.TryGetValue(msg.Name, out fn);" << endl <<
     indent() << "if (fn == null) {" << endl <<
     indent() << "  TProtocolUtil.Skip(iprot, TType.Struct);" << endl <<
     indent() << "  iprot.ReadMessageEnd();" << endl <<
