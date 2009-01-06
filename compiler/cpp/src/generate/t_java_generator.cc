@@ -150,6 +150,9 @@ class t_java_generator : public t_oop_generator {
   void generate_java_doc                 (std::ofstream& out,
                                           t_doc*     tdoc);
 
+  void generate_java_doc                 (std::ofstream& out,
+                                          t_function* tdoc);
+
   void generate_deep_copy_container(std::ofstream& out, std::string source_name_p1, std::string source_name_p2, std::string result_name, t_type* type);
   void generate_deep_copy_non_container(std::ofstream& out, std::string source_name, std::string dest_name, t_type* type);
 
@@ -2636,6 +2639,30 @@ void t_java_generator::generate_java_doc(ofstream &out,
     generate_docstring_comment(out,
       "/**\n",
       " * ", tdoc->get_doc(),
+      " */\n");
+  }
+}
+
+/**
+ * Emits a JavaDoc comment if the provided function object has a doc in Thrift
+ */
+void t_java_generator::generate_java_doc(ofstream &out,
+                                         t_function* tfunction) {
+  if (tfunction->has_doc()) {
+    stringstream ss;
+    ss << tfunction->get_doc();
+    const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
+    vector<t_field*>::const_iterator p_iter;
+    for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
+      t_field* p = *p_iter;
+      ss << "\n@param " << p->get_name();
+      if (p->has_doc()) {
+        ss << " " << p->get_doc();
+      }
+    }
+    generate_docstring_comment(out,
+      "/**\n",
+      " * ", ss.str(),
       " */\n");
   }
 }
