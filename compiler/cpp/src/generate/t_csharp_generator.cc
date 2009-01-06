@@ -387,18 +387,18 @@ void t_csharp_generator::generate_csharp_struct(t_struct* tstruct, bool is_excep
 
 void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_struct* tstruct, bool is_exception, bool in_class, bool is_result) {
 
-  if (!in_class)
-  {
+  if (!in_class) {
     start_csharp_namespace(out);
   }
 
   out << endl;
   indent(out) << "[Serializable]" << endl;
-  indent(out) << "public class " << tstruct->get_name() << " ";
+  indent(out) << "public class " << tstruct->get_name() << " : ";
 
   if (is_exception) {
-    out << ": Exception ";
+    out << "Exception, ";
   }
+  out << "TBase";
 
   out << endl;
 

@@ -46,6 +46,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Protocol\TBase.cs" />
     <Compile Include="Protocol\TBinaryProtocol.cs" />
     <Compile Include="Protocol\TField.cs" />
     <Compile Include="Protocol\TList.cs" />
