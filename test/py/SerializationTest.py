@@ -14,25 +14,25 @@ import time
 class AbstractTest(unittest.TestCase):
 
   def setUp(self):
-      self.v1obj = VersioningTestV1(d=dict(
+      self.v1obj = VersioningTestV1(
           begin_in_both=12345,
           end_in_both=54321,
-          ))
+          )
 
-      self.v2obj = VersioningTestV2(d=dict(
+      self.v2obj = VersioningTestV2(
           begin_in_both=12345,
           newint=1,
           newbyte=2,
           newshort=3,
           newlong=4,
           newdouble=5.0,
-          newstruct=Bonk(d=dict(message="Hello!", type=123)),
+          newstruct=Bonk(message="Hello!", type=123),
           newlist=[7,8,9],
           newset=[42,1,8],
           newmap={1:2,2:3},
           newstring="Hola!",
           end_in_both=54321,
-          ))
+          )
 
   def _serialize(self, obj):
       trans = TTransport.TMemoryBuffer()

@@ -143,7 +143,8 @@ class t_py_generator : public t_generator {
   std::string py_imports();
   std::string render_includes();
   std::string render_fastbinary_includes();
-  std::string declare_field(t_field* tfield);
+  std::string declare_argument(t_field* tfield);
+  std::string render_field_default_value(t_field* tfield);
   std::string type_name(t_type* ttype);
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);
@@ -387,7 +388,7 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_enum()) {
     indent(out) << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    out << type->get_name() << "({" << endl;
+    out << type->get_name() << "(**{" << endl;
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -563,7 +564,7 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
             << type_to_enum((*m_iter)->get_type()) << ", "
             << "'" << (*m_iter)->get_name() << "'" << ", "
             << type_to_spec_args((*m_iter)->get_type()) << ", "
-            << "None" << ", "
+            << render_field_default_value(*m_iter) << ", "
             << "),"
             << " # " << sorted_keys_pos
             << endl;
@@ -578,35 +579,37 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   }
 
 
-  out <<
-    indent() << "def __init__(self, d=None):" << endl;
-  indent_up();
+  if (members.size() > 0) {
+    out <<
+      indent() << "def __init__(self,";
 
-  if (members.size() == 0) {
-    indent(out) <<
-      "pass" <<endl;
-  } else {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       // This fills in default values, as opposed to nulls
-      indent(out) <<
-        declare_field(*m_iter) << endl;
+      out << " " << declare_argument(*m_iter) << ",";
     }
 
-    indent(out) <<
-      "if isinstance(d, dict):" << endl;
+    out << "):" << endl;
+
     indent_up();
+
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out <<
-        indent() << "if '" << (*m_iter)->get_name() << "' in d:" << endl <<
-        indent() << "  self." << (*m_iter)->get_name() << " = d['" << (*m_iter)->get_name() << "']" << endl;
+      // Initialize fields
+      t_type* type = (*m_iter)->get_type();
+      if (!type->is_base_type() && !type->is_enum() && (*m_iter)->get_value() != NULL) {
+        indent(out) <<
+          "if " << (*m_iter)->get_name() << " is " << "self.thrift_spec[" <<
+            (*m_iter)->get_key() << "][4]:" << endl;
+        indent(out) << "  " << (*m_iter)->get_name() << " = " <<
+          render_field_default_value(*m_iter) << endl;
+      }
+      indent(out) <<
+        "self." << (*m_iter)->get_name() << " = " << (*m_iter)->get_name() << endl;
     }
+
     indent_down();
+
+    out << endl;
   }
-
-  indent_down();
-
-  out << endl;
-
 
   generate_py_struct_reader(out, tstruct);
   generate_py_struct_writer(out, tstruct);
@@ -1756,19 +1759,34 @@ void t_py_generator::generate_serialize_list_element(ofstream &out,
 }
 
 /**
- * Declares a field, which may include initialization as necessary.
+ * Declares an argument, which may include initialization as necessary.
  *
- * @param ttype The type
+ * @param tfield The field
  */
-string t_py_generator::declare_field(t_field* tfield) {
-  string result = "self." + tfield->get_name();
+string t_py_generator::declare_argument(t_field* tfield) {
+  std::ostringstream result;
+  result << tfield->get_name() << "=";
+  if (tfield->get_value() != NULL) {
+    result << "thrift_spec[" <<
+      tfield->get_key() << "][4]";
+  } else {
+    result << "None";
+  }
+  return result.str();
+}
+
+/**
+ * Renders a field default value, returns None otherwise.
+ *
+ * @param tfield The field
+ */
+string t_py_generator::render_field_default_value(t_field* tfield) {
   t_type* type = get_true_type(tfield->get_type());
   if (tfield->get_value() != NULL) {
-    result += " = " + render_const_value(type, tfield->get_value());
+    return render_const_value(type, tfield->get_value());
   } else {
-    result += " = None";
+    return "None";
   }
-  return result;
 }
 
 /**
