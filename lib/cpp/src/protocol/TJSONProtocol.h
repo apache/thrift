@@ -288,7 +288,7 @@ class TJSONProtocol : public TProtocol {
 /**
  * Constructs input and output protocol objects given transports.
  */
-class TJSONProtocolFactory {
+class TJSONProtocolFactory : public TProtocolFactory {
  public:
   TJSONProtocolFactory() {}
 
