@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import com.facebook.thrift.*;
+import org.apache.thrift.*;
 
-import com.facebook.thrift.protocol.*;
-import com.facebook.thrift.transport.*;
+import org.apache.thrift.protocol.*;
+import org.apache.thrift.transport.*;
 
 public class FacebookService {
 
@@ -27,7 +27,7 @@ public class FacebookService {
     public String getOption(String key) throws TException;
     public AbstractMap<String,String> getOptions() throws TException;
     public long aliveSince() throws TException;
-    public com.facebook.thrift.reflection.limited.Service getLimitedReflection() throws TException;
+    public org.apache.thrift.reflection.limited.Service getLimitedReflection() throws TException;
     public void reinitialize() throws TException;
     public void shutdown() throws TException;
   }
@@ -370,7 +370,7 @@ public class FacebookService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "aliveSince failed: unknown result");
     }
 
-    public com.facebook.thrift.reflection.limited.Service getLimitedReflection() throws TException
+    public org.apache.thrift.reflection.limited.Service getLimitedReflection() throws TException
     {
       send_getLimitedReflection();
       return recv_getLimitedReflection();
@@ -385,7 +385,7 @@ public class FacebookService {
       oprot_.getTransport().flush();
     }
 
-    public com.facebook.thrift.reflection.limited.Service recv_getLimitedReflection() throws TException
+    public org.apache.thrift.reflection.limited.Service recv_getLimitedReflection() throws TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1906,7 +1906,7 @@ public class FacebookService {
   }
 
   public static class getLimitedReflection_result   {
-    public com.facebook.thrift.reflection.limited.Service success;
+    public org.apache.thrift.reflection.limited.Service success;
 
     public final Isset __isset = new Isset();
     public final class Isset {
@@ -1929,7 +1929,7 @@ public class FacebookService {
         {
           case 0:
             if (field.type == TType.STRUCT) {
-              this.success = new com.facebook.thrift.reflection.limited.Service();
+              this.success = new org.apache.thrift.reflection.limited.Service();
               this.success.read(iprot);
               this.__isset.success = true;
             } else { 

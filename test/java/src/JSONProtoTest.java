@@ -1,10 +1,10 @@
-package com.facebook.thrift.test;
+package org.apache.thrift.test;
 
 // Generated code
 import thrift.test.*;
 
-import com.facebook.thrift.transport.TMemoryBuffer;
-import com.facebook.thrift.protocol.TJSONProtocol;
+import org.apache.thrift.transport.TMemoryBuffer;
+import org.apache.thrift.protocol.TJSONProtocol;
 
 import java.util.Map;
 import java.util.HashMap;

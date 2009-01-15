@@ -1,2 +1,2 @@
 #!/bin/bash -v
-java -server -Xmx256m -cp thrifttest.jar:../../lib/java/libthrift.jar com.facebook.thrift.test.TestNonblockingServer $*
+java -server -Xmx256m -cp thrifttest.jar:../../lib/java/libthrift.jar org.apache.thrift.test.TestNonblockingServer $*

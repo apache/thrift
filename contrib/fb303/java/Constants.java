@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import com.facebook.thrift.*;
+import org.apache.thrift.*;
 
 public class Constants {
 

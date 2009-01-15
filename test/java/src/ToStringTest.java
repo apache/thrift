@@ -1,4 +1,4 @@
-package com.facebook.thrift.test;
+package org.apache.thrift.test;
 
 import thrift.test.*;
 

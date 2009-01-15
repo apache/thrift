@@ -1,9 +1,9 @@
 
-package com.facebook.thrift.test;
+package org.apache.thrift.test;
 
-import com.facebook.thrift.TDeserializer;
-import com.facebook.thrift.TSerializer;
-import com.facebook.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.TSerializer;
+import org.apache.thrift.protocol.TBinaryProtocol;
 import thrift.test.*;
 import java.util.ArrayList;
 import java.util.HashMap;

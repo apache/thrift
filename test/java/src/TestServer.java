@@ -1,14 +1,14 @@
-package com.facebook.thrift.test;
+package org.apache.thrift.test;
 
-import com.facebook.thrift.TException;
-import com.facebook.thrift.protocol.TBinaryProtocol;
-import com.facebook.thrift.protocol.TProtocol;
-import com.facebook.thrift.protocol.TProtocolFactory;
-import com.facebook.thrift.server.TServer;
-import com.facebook.thrift.server.TSimpleServer;
-import com.facebook.thrift.server.TThreadPoolServer;
-import com.facebook.thrift.transport.TServerSocket;
-import com.facebook.thrift.transport.TServerTransport;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.server.TThreadPoolServer;
+import org.apache.thrift.transport.TServerSocket;
+import org.apache.thrift.transport.TServerTransport;
 
 // Generated code
 import thrift.test.*;

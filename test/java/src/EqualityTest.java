@@ -22,7 +22,7 @@ with open(os.path.join(os.path.dirname(sys.argv[0]), 'EqualityTest.java'), 'w') 
   print >> out, "*""/"
 
   print >> out, r'''
-package com.facebook.thrift.test;
+package org.apache.thrift.test;
 
 // Generated code
 import thrift.test.*;
@@ -84,7 +84,7 @@ public class EqualityTest {
 '''
 */
 
-package com.facebook.thrift.test;
+package org.apache.thrift.test;
 
 // Generated code
 import thrift.test.*;

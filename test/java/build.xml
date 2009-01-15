@@ -40,17 +40,17 @@
   </target>
 
   <target name="test" depends="compile">
-    <java classname="com.facebook.thrift.test.JSONProtoTest"
+    <java classname="org.apache.thrift.test.JSONProtoTest"
       classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
-    <java classname="com.facebook.thrift.test.IdentityTest"
+    <java classname="org.apache.thrift.test.IdentityTest"
       classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
-    <java classname="com.facebook.thrift.test.EqualityTest"
+    <java classname="org.apache.thrift.test.EqualityTest"
       classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
-    <java classname="com.facebook.thrift.test.ToStringTest"
+    <java classname="org.apache.thrift.test.ToStringTest"
       classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
-    <java classname="com.facebook.thrift.test.DeepCopyTest"
+    <java classname="org.apache.thrift.test.DeepCopyTest"
       classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
-    <java classname="com.facebook.thrift.test.JavaBeansTest"
+    <java classname="org.apache.thrift.test.JavaBeansTest"
       classpath="${cpath}:${testjar}:${gen}" failonerror="true" />
   </target>
 

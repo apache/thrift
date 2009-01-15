@@ -83,8 +83,8 @@ public abstract class FacebookBase implements FacebookService.Iface {
     return "";
   }
 
-  public com.facebook.thrift.reflection.limited.Service getLimitedReflection() {
-    return new com.facebook.thrift.reflection.limited.Service();
+  public org.apache.thrift.reflection.limited.Service getLimitedReflection() {
+    return new org.apache.thrift.reflection.limited.Service();
   }
 
   public void reinitialize() {}

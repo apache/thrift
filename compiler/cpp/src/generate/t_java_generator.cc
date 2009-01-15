@@ -228,7 +228,7 @@ void t_java_generator::init_generator() {
 /**
  * Packages the generated file
  *
- * @return String of the package, i.e. "package com.facebook.thriftdemo;"
+ * @return String of the package, i.e. "package org.apache.thriftdemo;"
  */
 string t_java_generator::java_package() {
   if (!package_name_.empty()) {
@@ -258,7 +258,7 @@ string t_java_generator::java_type_imports() {
     "import java.util.HashSet;\n" +
     "import java.util.Collections;\n" +
     hash_builder +
-    "import com.facebook.thrift.*;\n\n";
+    "import org.apache.thrift.*;\n\n";
 }
 
 /**
@@ -269,8 +269,8 @@ string t_java_generator::java_type_imports() {
 string t_java_generator::java_thrift_imports() {
   return
     string() +
-    "import com.facebook.thrift.protocol.*;\n" +
-    "import com.facebook.thrift.transport.*;\n\n";
+    "import org.apache.thrift.protocol.*;\n" +
+    "import org.apache.thrift.transport.*;\n\n";
 }
 
 /**

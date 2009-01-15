@@ -1,12 +1,12 @@
-package com.facebook.thrift.test;
+package org.apache.thrift.test;
 
 // Generated code
 import thrift.test.*;
 
-import com.facebook.thrift.TSerializer;
-import com.facebook.thrift.TDeserializer;
-import com.facebook.thrift.protocol.TBinaryProtocol;
-import com.facebook.thrift.protocol.TSimpleJSONProtocol;
+import org.apache.thrift.TSerializer;
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TSimpleJSONProtocol;
 
 import java.util.Map;
 import java.util.HashMap;
