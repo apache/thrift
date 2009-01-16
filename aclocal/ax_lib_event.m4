@@ -141,7 +141,7 @@ AC_DEFUN([AX_LIB_EVENT],
             if test -n "$ax_libevent_path"; then
               AX_LIB_EVENT_DO_CHECK
             else
-              for ax_libevent_path in "" /usr /usr/local /opt /opt/libevent "$LIBEVENT_ROOT" ; do
+              for ax_libevent_path in "" /usr /usr/local /opt /opt/local /opt/libevent "$LIBEVENT_ROOT" ; do
                 AX_LIB_EVENT_DO_CHECK
                 if test "$success" = "yes"; then
                   break;
