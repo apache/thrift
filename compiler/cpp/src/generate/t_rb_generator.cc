@@ -297,6 +297,18 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
     f_types_ <<
       indent() << name << " = " << value << endl;
   }
+  
+  // Create a set with valid values for this enum
+  indent(f_types_) << "VALID_VALUES = Set.new([";
+  bool first = true;
+  for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+    // Populate the set
+    if ((*c_iter)->has_value()){
+      first ? first = false: f_types_ << ", ";
+      f_types_ << capitalize((*c_iter)->get_name());
+    }          
+  }
+  f_types_ << "]).freeze" << endl;
 
   indent_down();
   indent(f_types_) <<
@@ -1059,6 +1071,19 @@ void t_rb_generator::generate_rb_struct_required_validator(std::ofstream& out,
         out << " unless @" << field->get_name();
       }
       out << endl;
+    }
+  }
+  
+  // if field is an enum, check that its value is valid
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field* field = (*f_iter);
+        
+    if (field->get_type()->is_enum()){      
+      indent(out) << "unless @" << field->get_name() << ".nil? || " << field->get_type()->get_name() << "::VALID_VALUES.include?(@" << field->get_name() << ")" << endl;      
+      indent_up();
+      indent(out) << "raise Thrift::ProtocolException.new(Thrift::ProtocolException::UNKNOWN, 'Invalid value of field " << field->get_name() << "!')" << endl;  
+      indent_down();
+      indent(out) << "end" << endl;
     }
   }  
   
