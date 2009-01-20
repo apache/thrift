@@ -75,6 +75,7 @@ class t_java_generator : public t_oop_generator {
   void generate_java_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool in_class=false, bool is_result=false);
   void generate_java_struct_equality(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_reader(std::ofstream& out, t_struct* tstruct);
+  void generate_java_validator(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_result_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_tostring(std::ofstream& out, t_struct* tstruct);
@@ -302,6 +303,12 @@ void t_java_generator::generate_enum(t_enum* tenum) {
   f_enum <<
     autogen_comment() <<
     java_package() << endl;
+  
+  // Add java imports
+  f_enum << string() +
+    "import java.util.Set;\n" +
+    "import java.util.HashSet;\n" +
+    "import java.util.Collections;\n" << endl;
 
   f_enum <<
     "public class " << tenum->get_name() << " ";
@@ -321,6 +328,18 @@ void t_java_generator::generate_enum(t_enum* tenum) {
       "public static final int " << (*c_iter)->get_name() <<
       " = " << value << ";" << endl;
   }
+  
+  // Create a static Set with all valid values for this enum
+  f_enum << endl;
+  indent(f_enum) << "public static final Set<Integer> VALID_VALUES = Collections.unmodifiableSet(new HashSet<Integer>(){{" << endl;
+  indent_up();
+  for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+    // populate set 
+    if ((*c_iter)->has_value())
+      indent(f_enum) << "add(" << (*c_iter)->get_value() << ");" << endl;
+  }
+  indent_down();
+  indent(f_enum) << "}});" << endl;
 
   scope_down(f_enum);
   f_enum.close();
@@ -597,7 +616,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
 
     indent(out) << "public static final int " << upcase_string((*m_iter)->get_name()) << " = " << (*m_iter)->get_key() << ";" << endl;
   }
-
+  
   // Inner Isset class
   if (members.size() > 0) {
     out <<
@@ -722,6 +741,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     generate_java_struct_writer(out, tstruct);
   }
   generate_java_struct_tostring(out, tstruct);
+  generate_java_validator(out, tstruct);
   scope_down(out);
   out << endl;
 }
@@ -939,23 +959,78 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
     scope_down(out);
 
     out <<
-      indent() << "iprot.readStructEnd();" << endl;
-
-    // check to make sure all required fields are set
-    out << endl << indent() << "// check for required fields" << endl;
-    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-      if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
-        out <<
-          indent() << "if (!__isset." << (*f_iter)->get_name() << ") {" << endl <<
-          indent() << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' was not found in serialized data!\");" << endl <<
-          indent() << "}" << endl;
+      indent() << "iprot.readStructEnd();" << endl << endl;
+    
+    // in non-beans style, check for required fields of primitive type
+    // (which can be checked here but no in the general validate method)
+    if (!bean_style_){
+      out << endl << indent() << "// check for required fields of primitive type, which can't be checked in the validate method" << endl;
+      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        if ((*f_iter)->get_req() == t_field::T_REQUIRED && !type_can_be_null((*f_iter)->get_type())) {
+          out <<
+            indent() << "if (!__isset." << (*f_iter)->get_name() << ") {" << endl <<
+            indent() << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' was not found in serialized data!\");" << endl <<
+            indent() << "}" << endl;
+        }
       }
     }
+
+    // performs various checks (e.g. check that all required fields are set)
+    indent(out) << "validate();" << endl;
 
   indent_down();
   out <<
     indent() << "}" << endl <<
     endl;
+}
+
+// generates java method to perform various checks
+// (e.g. check that all required fields are set)
+void t_java_generator::generate_java_validator(ofstream& out,
+                                                   t_struct* tstruct){
+  indent(out) << "public void validate() throws TException {" << endl;
+  indent_up();  
+  
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+  
+  out << indent() << "// check for required fields" << endl;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      if (bean_style_) {
+        out <<
+          indent() << "if (!__isset." << (*f_iter)->get_name() << ") {" << endl <<
+          indent() << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' is unset!\");" << endl <<
+          indent() << "}" << endl << endl;
+      } else{
+        if (type_can_be_null((*f_iter)->get_type())) {
+          indent(out) << "if (" << (*f_iter)->get_name() << " == null) {" << endl;
+          indent(out) << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' was not present!\");" << endl;
+          indent(out) << "}" << endl;
+        } else {
+          indent(out) << "// alas, we cannot check '" << (*f_iter)->get_name() << "' because it's a primitive and you chose the non-beans generator." << endl;
+        }
+      }      
+    }
+  }
+  
+  // check that fields of type enum have valid values
+  out << indent() << "// check that fields of type enum have valid values" << endl;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field* field = (*f_iter);
+    
+    // if field is an enum, check that its value is valid
+    if (field->get_type()->is_enum()){      
+      indent(out) << "if (__isset." << field->get_name() << " && !" << field->get_type()->get_name() << ".VALID_VALUES.contains(" << field->get_name() << ")){" << endl;
+      indent_up();
+      indent(out) << "throw new TProtocolException(\"Invalid value of field '" << field->get_name() << "'!\");" << endl;
+      indent_down();
+      indent(out) << "}" << endl;
+    } 
+  }  
+  
+  indent_down();
+  indent(out) << "}" << endl << endl;
 }
 
 /**
@@ -973,27 +1048,8 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  // check for required fields
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    t_field* field = (*f_iter);
-    if (field->get_req() == t_field::T_REQUIRED) {
-      if (bean_style_) {
-        indent(out) << "if (!__isset." << field->get_name() << ") {" << endl;
-        indent(out) << "  throw new TProtocolException(\"Required field '" << field->get_name() << "' was not present!\");" << endl;
-        indent(out) << "}" << endl;
-      } else {
-        if (type_can_be_null(field->get_type())) {
-          indent(out) << "if (" << field->get_name() << " == null) {" << endl;
-          indent(out) << "  throw new TProtocolException(\"Required field '" << field->get_name() << "' was not present!\");" << endl;
-          indent(out) << "}" << endl;
-        } else {
-          indent(out) << "// alas, we cannot check '" << field->get_name() << "' because it's a primitive and you chose the non-beans generator." << endl;
-        }
-      }
-    }
-  }
-
-  out << endl << endl;
+  // performs various checks (e.g. check that all required fields are set)
+  indent(out) << "validate();" << endl << endl;
 
   indent(out) << "TStruct struct = new TStruct(\"" << name << "\");" << endl;
   indent(out) << "oprot.writeStructBegin(struct);" << endl;
