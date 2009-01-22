@@ -13,7 +13,7 @@ import org.apache.thrift.protocol.TProtocol;
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-public interface TBase  {
+public interface TBase extends Cloneable {
 
   /**
    * Reads the TObject from the given input protocol.
