@@ -25,7 +25,7 @@ class CalculatorHandler:
     return n1+n2
 
   def calculate(self, logid, work):
-    print 'calculate(%d, %s)' % (logid, work.__str__())
+    print 'calculate(%d, %r)' % (logid, work)
 
     if work.op == Operation.ADD:
       val = work.num1 + work.num2

@@ -44,7 +44,7 @@ try:
     quotient = client.calculate(1, work)
     print 'Whoa? You know how to divide by zero?'
   except InvalidOperation, io:
-    print 'InvalidOperation: %s' % (io.__str__())
+    print 'InvalidOperation: %r' % io
 
   work.op = Operation.SUBTRACT
   work.num1 = 15
