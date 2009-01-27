@@ -721,6 +721,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   indent(out) << "}" << endl << endl;
 
   // clone method, so that you can deep copy an object when you don't know its class.
+  indent(out) << "@Override" << endl;
   indent(out) << "public " << tstruct->get_name() << " clone() {" << endl;
   indent(out) << "  return new " << tstruct->get_name() << "(this);" << endl;
   indent(out) << "}" << endl << endl;
@@ -753,7 +754,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
  */
 void t_java_generator::generate_java_struct_equality(ofstream& out,
                                                      t_struct* tstruct) {
-  out <<
+  out << indent() << "@Override" << endl <<
     indent() << "public boolean equals(Object that) {" << endl;
   indent_up();
   out <<
@@ -830,7 +831,7 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
   out << endl;
 
   if (gen_hash_code_) {
-    out <<
+    out << indent() << "@Override" << endl <<
       indent() << "public int hashCode() {" << endl;
     indent_up();
 
@@ -1439,7 +1440,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
  */
 void t_java_generator::generate_java_struct_tostring(ofstream& out,
                                                      t_struct* tstruct) {
-  out <<
+  out << indent() << "@Override" << endl <<
     indent() << "public String toString() {" << endl;
   indent_up();
 
