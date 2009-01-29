@@ -12,3 +12,5 @@ clean-local:
 	$$ANT clean
 
 check-local: all
+	$(ANT) test
+

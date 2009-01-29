@@ -1,9 +1,5 @@
 SUBDIRS =
 
-if WITH_JAVA
-SUBDIRS += java
-endif
-
 if WITH_PYTHON
 SUBDIRS += py
 endif
@@ -23,7 +19,8 @@ libtestgencpp_la_SOURCES = \
 	gen-cpp/SecondService.cpp \
 	gen-cpp/ThriftTest_constants.cpp \
 	gen-cpp/ThriftTest.cpp \
-	gen-cpp/ThriftTest_types.cpp
+	gen-cpp/ThriftTest_types.cpp \
+	ThriftTest_extras.cpp
 
 libtestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 
