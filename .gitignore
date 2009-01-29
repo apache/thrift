@@ -37,6 +37,8 @@
 /lib/java/Makefile
 /lib/java/Makefile.in
 /lib/java/build
+/lib/java/gen-java
+/lib/java/gen-javabean
 /lib/java/libthrift.jar
 /lib/py/Makefile
 /lib/py/Makefile.in
