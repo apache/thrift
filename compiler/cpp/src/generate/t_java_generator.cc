@@ -643,7 +643,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   // Static initializer to populate global class to struct metadata map
   indent(out) << "static {" << endl;
   indent_up();
-  indent(out) << "FieldMetaData.addStructMetaDataMap(" << tstruct->get_name() << ".class, metaDataMap);" << endl;
+  indent(out) << "FieldMetaData.addStructMetaDataMap(" << type_name(tstruct) << ".class, metaDataMap);" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
 
@@ -1578,7 +1578,7 @@ void t_java_generator::generate_field_value_meta_data(std::ofstream& out, t_type
   indent_up();
   indent_up();
   if (type->is_struct()){
-    indent(out) << "new StructMetaData(TType.STRUCT, " << type->get_name() << ".class";
+    indent(out) << "new StructMetaData(TType.STRUCT, " << type_name(type) << ".class";
   } else if (type->is_container()){
     if (type->is_list()){
       indent(out) << "new ListMetaData(TType.LIST, ";
