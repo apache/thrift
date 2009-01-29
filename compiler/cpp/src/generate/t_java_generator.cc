@@ -2467,10 +2467,11 @@ void t_java_generator::generate_serialize_container(ofstream& out,
   string iter = tmp("_iter");
   if (ttype->is_map()) {
     indent(out) <<
-      "for (" <<
-      type_name(((t_map*)ttype)->get_key_type()) << " " << iter <<
+      "for (Map.Entry<" <<
+      type_name(((t_map*)ttype)->get_key_type(), true, false) << ", " <<
+      type_name(((t_map*)ttype)->get_val_type(), true, false) << "> " << iter <<
       " : " <<
-      prefix << ".keySet())";
+      prefix << ".entrySet())";
   } else if (ttype->is_set()) {
     indent(out) <<
       "for (" <<
@@ -2518,9 +2519,9 @@ void t_java_generator::generate_serialize_map_element(ofstream& out,
                                                       t_map* tmap,
                                                       string iter,
                                                       string map) {
-  t_field kfield(tmap->get_key_type(), iter);
+  t_field kfield(tmap->get_key_type(), iter + ".getKey()");
   generate_serialize_field(out, &kfield, "");
-  t_field vfield(tmap->get_val_type(), map + ".get(" + iter + ")");
+  t_field vfield(tmap->get_val_type(), iter + ".getValue()");
   generate_serialize_field(out, &vfield, "");
 }
 
