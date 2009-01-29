@@ -974,14 +974,14 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
       indent() << "iprot.readStructEnd();" << endl << endl;
     
     // in non-beans style, check for required fields of primitive type
-    // (which can be checked here but no in the general validate method)
+    // (which can be checked here but not in the general validate method)
     if (!bean_style_){
       out << endl << indent() << "// check for required fields of primitive type, which can't be checked in the validate method" << endl;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_req() == t_field::T_REQUIRED && !type_can_be_null((*f_iter)->get_type())) {
           out <<
             indent() << "if (!__isset." << (*f_iter)->get_name() << ") {" << endl <<
-            indent() << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' was not found in serialized data!\");" << endl <<
+            indent() << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' was not found in serialized data! Struct: \" + toString());" << endl <<
             indent() << "}" << endl;
         }
       }
@@ -1012,12 +1012,12 @@ void t_java_generator::generate_java_validator(ofstream& out,
       if (bean_style_) {
         out <<
           indent() << "if (!__isset." << (*f_iter)->get_name() << ") {" << endl <<
-          indent() << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' is unset!\");" << endl <<
+          indent() << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' is unset! Struct:\" + toString());" << endl <<
           indent() << "}" << endl << endl;
       } else{
         if (type_can_be_null((*f_iter)->get_type())) {
           indent(out) << "if (" << (*f_iter)->get_name() << " == null) {" << endl;
-          indent(out) << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' was not present!\");" << endl;
+          indent(out) << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' was not present! Struct: \" + toString());" << endl;
           indent(out) << "}" << endl;
         } else {
           indent(out) << "// alas, we cannot check '" << (*f_iter)->get_name() << "' because it's a primitive and you chose the non-beans generator." << endl;
