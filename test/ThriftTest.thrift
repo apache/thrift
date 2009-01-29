@@ -43,6 +43,12 @@ struct Insanity
   2: list<Xtruct> xtructs
 }
 
+struct CrazyNesting {
+  1: string string_field,
+  2: optional set<Insanity> set_field,
+  3: required list< map<set<i32>,map<i32,set<list<map<Insanity,string>>>>>> list_field
+}
+
 exception Xception {
   1: i32 errorCode,
   2: string message

@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <sys/stat.h>
+#include <stdexcept>
 
 #include "platform.h"
 #include "t_oop_generator.h"
@@ -80,6 +81,8 @@ class t_java_generator : public t_oop_generator {
   void generate_java_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_tostring(std::ofstream& out, t_struct* tstruct);
   void generate_java_meta_data_map(std::ofstream& out, t_struct* tstruct);
+  void generate_field_value_meta_data(std::ofstream& out, t_type* type);
+  std::string get_java_type_string(t_type* type);
   void generate_reflection_setters(std::ostringstream& out, t_type* type, std::string field_name, std::string cap_name);
   void generate_reflection_getters(std::ostringstream& out, t_type* type, std::string field_name, std::string cap_name);
   void generate_generic_field_getters_setters(std::ofstream& out, t_struct* tstruct);
@@ -259,7 +262,8 @@ string t_java_generator::java_type_imports() {
     "import java.util.HashSet;\n" +
     "import java.util.Collections;\n" +
     hash_builder +
-    "import org.apache.thrift.*;\n\n";
+    "import org.apache.thrift.*;\n" +
+    "import org.apache.thrift.meta_data.*;\n\n";
 }
 
 /**
@@ -635,6 +639,13 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   }
 
   generate_java_meta_data_map(out, tstruct);
+  
+  // Static initializer to populate global class to struct metadata map
+  indent(out) << "static {" << endl;
+  indent_up();
+  indent(out) << "FieldMetaData.addStructMetaDataMap(" << tstruct->get_name() << ".class, metaDataMap);" << endl;
+  indent_down();
+  indent(out) << "}" << endl << endl;
 
   // Default constructor
   indent(out) <<
@@ -1509,10 +1520,88 @@ void t_java_generator::generate_java_meta_data_map(ofstream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = *f_iter;
     std::string field_name = field->get_name();
-    indent(out) << "put(" << upcase_string(field_name) << ", new FieldMetaData(\"" << field_name << "\"));" << endl;
+    indent(out) << "put(" << upcase_string(field_name) << ", new FieldMetaData(\"" << field_name << "\", ";
+
+    // Set field requirement type (required, optional, etc.)
+    if (field->get_req() == t_field::T_REQUIRED) {
+      out << "TFieldRequirementType.REQUIRED, ";
+    } else if (field->get_req() == t_field::T_OPTIONAL) {
+      out << "TFieldRequirementType.OPTIONAL, ";
+    } else {
+      out << "TFieldRequirementType.DEFAULT, ";
+    }
+
+    // Create value meta data    
+    generate_field_value_meta_data(out, field->get_type());
+    out  << "));" << endl;
   }
   indent_down();
   indent(out) << "}});" << endl << endl;
+}
+
+/** 
+ * Returns a string with the java representation of the given thrift type
+ * (e.g. for the type struct it returns "TType.STRUCT")
+ */
+std::string t_java_generator::get_java_type_string(t_type* type) {
+  if (type->is_list()){
+    return "TType.LIST";
+  } else if (type->is_map()) {
+    return "TType.MAP";
+  } else if (type->is_set()) {
+    return "TType.SET";
+  } else if (type->is_struct() || type->is_xception()) {
+    return "TType.STRUCT";
+  } else if (type->is_enum()) {
+    return "TType.I32";
+  } else if (type->is_typedef()) {
+    return get_java_type_string(((t_typedef*)type)->get_type());
+  } else if (type->is_base_type()) {
+    switch (((t_base_type*)type)->get_base()) {
+      case t_base_type::TYPE_VOID   : return      "TType.VOID"; break;
+      case t_base_type::TYPE_STRING : return    "TType.STRING"; break;
+      case t_base_type::TYPE_BOOL   : return      "TType.BOOL"; break;
+      case t_base_type::TYPE_BYTE   : return      "TType.BYTE"; break;
+      case t_base_type::TYPE_I16    : return       "TType.I16"; break;
+      case t_base_type::TYPE_I32    : return       "TType.I32"; break;
+      case t_base_type::TYPE_I64    : return       "TType.I64"; break;
+      case t_base_type::TYPE_DOUBLE : return    "TType.DOUBLE"; break;
+      default : throw std::runtime_error("Unknown thrift type \"" + type->get_name() + "\" passed to t_java_generator::get_java_type_string!"); break; // This should never happen!
+    }
+  } else {
+    throw std::runtime_error("Unknown thrift type \"" + type->get_name() + "\" passed to t_java_generator::get_java_type_string!"); // This should never happen!
+  }
+}
+
+void t_java_generator::generate_field_value_meta_data(std::ofstream& out, t_type* type){
+  out << endl;
+  indent_up();
+  indent_up();
+  if (type->is_struct()){
+    indent(out) << "new StructMetaData(TType.STRUCT, " << type->get_name() << ".class";
+  } else if (type->is_container()){
+    if (type->is_list()){
+      indent(out) << "new ListMetaData(TType.LIST, ";
+      t_type* elem_type = ((t_list*)type)->get_elem_type();    
+      generate_field_value_meta_data(out, elem_type);   
+    } else if (type->is_set()){
+      indent(out) << "new SetMetaData(TType.SET, ";
+      t_type* elem_type = ((t_list*)type)->get_elem_type();    
+      generate_field_value_meta_data(out, elem_type); 
+    } else{ // map
+      indent(out) << "new MapMetaData(TType.MAP, ";
+      t_type* key_type = ((t_map*)type)->get_key_type();
+      t_type* val_type = ((t_map*)type)->get_val_type();
+      generate_field_value_meta_data(out, key_type);
+      out << ", ";
+      generate_field_value_meta_data(out, val_type);
+    }
+  } else {
+    indent(out) << "new FieldValueMetaData(" << get_java_type_string(type);
+  }
+  out << ")";
+  indent_down();
+  indent_down();
 }
 
 

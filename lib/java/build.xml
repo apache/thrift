@@ -61,6 +61,8 @@
       classpath="${cpath}:${build.test}" failonerror="true" />
     <java classname="org.apache.thrift.test.DeepCopyTest"
       classpath="${cpath}:${build.test}" failonerror="true" />
+    <java classname="org.apache.thrift.test.MetaDataTest"
+      classpath="${cpath}:${build.test}" failonerror="true" />
     <java classname="org.apache.thrift.test.JavaBeansTest"
       classpath="${cpath}:${build.test}" failonerror="true" />
   </target>
