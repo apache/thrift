@@ -2,13 +2,25 @@
 
   <description>Thrift Build File</description>
 
+  <property name="gen" location="gen-java" />
+  <property name="genbean" location="gen-javabean" />
+
   <property name="src" location="src" />
   <property name="build" location="build" />
   <property name="install.path" value="/usr/local/lib" />
+  <property name="src.test" location="test" />
+  <property name="build.test" location="${build}/test" />
 
+  <property name="test.thrift.home" location="../../test"/>
+
+  <property file="${user.home}/.thrift-build.properties" />
+  
+  <property name="cpath" location="libthrift.jar:${thrift.extra.cpath}" />
+  
   <target name="init">
     <tstamp />
     <mkdir dir="${build}"/>
+    <mkdir dir="${build.test}" />
   </target>
 
   <target name="compile" depends="init">
@@ -27,7 +39,46 @@
 
   <target name="clean">
     <delete dir="${build}" />
+    <delete dir="${gen}"/>
+    <delete dir="${genbean}"/>
     <delete file="libthrift.jar" />
   </target>
+
+  <target name="compile-test" description="Build the test suite classes" depends="generate,dist">
+    <javac debug="true" srcdir="${gen}" destdir="${build.test}" classpath="${cpath}" />
+    <javac debug="true" srcdir="${genbean}" destdir="${build.test}" classpath="${cpath}" />
+    <javac debug="true" srcdir="${src.test}" destdir="${build.test}" classpath="${cpath}:${gen}" />
+  </target>
+
+  <target name="test" description="Run the full test suite" depends="compile-test">
+    <java classname="org.apache.thrift.test.JSONProtoTest"
+      classpath="${cpath}:${build.test}" failonerror="true" />
+    <java classname="org.apache.thrift.test.IdentityTest"
+      classpath="${cpath}:${build.test}" failonerror="true" />
+    <java classname="org.apache.thrift.test.EqualityTest"
+      classpath="${cpath}:${build.test}" failonerror="true" />
+    <java classname="org.apache.thrift.test.ToStringTest"
+      classpath="${cpath}:${build.test}" failonerror="true" />
+    <java classname="org.apache.thrift.test.DeepCopyTest"
+      classpath="${cpath}:${build.test}" failonerror="true" />
+    <java classname="org.apache.thrift.test.JavaBeansTest"
+      classpath="${cpath}:${build.test}" failonerror="true" />
+  </target>
+
+  <target name="generate">
+    <exec executable="../../compiler/cpp/thrift">
+      <arg line="--gen java:hashcode ${test.thrift.home}/ThriftTest.thrift" />
+    </exec>
+    <exec executable="../../compiler/cpp/thrift">
+      <arg line="--gen java:hashcode ${test.thrift.home}/DebugProtoTest.thrift" />
+    </exec>
+    <exec executable="../../compiler/cpp/thrift">
+      <arg line="--gen java:hashcode ${test.thrift.home}/OptionalRequiredTest.thrift" />
+    </exec>
+    <exec executable="../../compiler/cpp/thrift">
+      <arg line="--gen java:beans,nocamel ${test.thrift.home}/JavaBeansTest.thrift" />
+    </exec>
+  </target>
+
 
 </project>
