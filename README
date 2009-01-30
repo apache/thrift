@@ -1,13 +1,9 @@
-Thrift (Thrift IDL and RPC tool)
+Apache Thrift (an Apache Incubator project)
 
-Mark Slee (mcslee@facebook.com)
-Marc Kwiatkowski (marc@facebook.com)
-Aditya Agarwal (aditya@facebook.com)
+Last Modified: 2009-Jan-30
 
-Last Modified: 2007-Mar-06
-
-Thrift is distributed under the Thrift open source software license.
-Please see the included LICENSE file.
+Thrift is distributed under the Apache License, v2.0. Please see the
+included LICENSE file.
 
 Introduction
 ============
@@ -74,12 +70,13 @@ Resources
 
 More information about Thrift can be obtained on the Thrift webpage at:
 
-     http://developers.facebook.com/thrift
+     http://incubator.apache.org/thrift
 
 Acknowledgments
 ===============
 
-Thrift was inspired by pillar, a lightweight RPC tool written by Adam D'Angelo.
+Thrift was inspired by pillar, a lightweight RPC tool written by Adam D'Angelo,
+and also by Google's protocol buffers.
 
 Installation
 ============
