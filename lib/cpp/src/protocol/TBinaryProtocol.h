@@ -11,7 +11,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace protocol {
+namespace apache { namespace thrift { namespace protocol {
 
 /**
  * The default binary protocol for thrift. Writes all data in a very basic
@@ -237,6 +237,6 @@ class TBinaryProtocolFactory : public TProtocolFactory {
 
 };
 
-}}} // facebook::thrift::protocol
+}}} // apache::thrift::protocol
 
 #endif // #ifndef _THRIFT_PROTOCOL_TBINARYPROTOCOL_H_

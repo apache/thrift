@@ -14,10 +14,10 @@
 #include <iostream>
 #include <set>
 
-namespace facebook { namespace thrift { namespace concurrency { namespace test {
+namespace apache { namespace thrift { namespace concurrency { namespace test {
 
 using boost::shared_ptr;
-using namespace facebook::thrift::concurrency;
+using namespace apache::thrift::concurrency;
 
 /**
  * ThreadManagerTests class
@@ -341,5 +341,5 @@ public:
 
 const double ThreadFactoryTests::ERROR = .20;
 
-}}}} // facebook::thrift::concurrency::test
+}}}} // apache::thrift::concurrency::test
 

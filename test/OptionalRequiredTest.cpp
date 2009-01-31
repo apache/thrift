@@ -11,9 +11,9 @@ using std::endl;
 using std::map;
 using std::string;
 using namespace thrift::test;
-using namespace facebook::thrift;
-using namespace facebook::thrift::transport;
-using namespace facebook::thrift::protocol;
+using namespace apache::thrift;
+using namespace apache::thrift::transport;
+using namespace apache::thrift::protocol;
 
 
 /*

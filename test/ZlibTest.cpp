@@ -147,7 +147,7 @@ unsigned int dist[][5000] = {
 int main() {
   using namespace std;
   using namespace boost;
-  using namespace facebook::thrift::transport;
+  using namespace apache::thrift::transport;
 
   char *file_names[] = {
     // Highly compressible.

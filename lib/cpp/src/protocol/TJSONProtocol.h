@@ -11,7 +11,7 @@
 
 #include <stack>
 
-namespace facebook { namespace thrift { namespace protocol {
+namespace apache { namespace thrift { namespace protocol {
 
 // Forward declaration
 class TJSONContext;
@@ -299,18 +299,18 @@ class TJSONProtocolFactory : public TProtocolFactory {
   }
 };
 
-}}} // facebook::thrift::protocol
+}}} // apache::thrift::protocol
 
 
 // TODO(dreiss): Move part of ThriftJSONString into a .cpp file and remove this.
 #include <transport/TBufferTransports.h>
 
-namespace facebook { namespace thrift {
+namespace apache { namespace thrift {
 
 template<typename ThriftStruct>
   std::string ThriftJSONString(const ThriftStruct& ts) {
-  using namespace facebook::thrift::transport;
-  using namespace facebook::thrift::protocol;
+  using namespace apache::thrift::transport;
+  using namespace apache::thrift::protocol;
   TMemoryBuffer* buffer = new TMemoryBuffer;
   boost::shared_ptr<TTransport> trans(buffer);
   TJSONProtocol protocol(trans);
@@ -323,6 +323,6 @@ template<typename ThriftStruct>
   return std::string((char*)buf, (unsigned int)size);
 }
 
-}} // facebook::thrift
+}} // apache::thrift
 
 #endif // #define _THRIFT_PROTOCOL_TJSONPROTOCOL_H_ 1

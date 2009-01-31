@@ -15,7 +15,7 @@
 
 #include <pthread.h>
 
-namespace facebook { namespace thrift { namespace concurrency {
+namespace apache { namespace thrift { namespace concurrency {
 
 /**
  * Monitor implementation using the POSIX pthread library
@@ -122,4 +122,4 @@ void Monitor::notify() const { impl_->notify(); }
 
 void Monitor::notifyAll() const { impl_->notifyAll(); }
 
-}}} // facebook::thrift::concurrency
+}}} // apache::thrift::concurrency

@@ -19,9 +19,9 @@
  * @author David Reiss <dreiss@facebook.com>
  */
 
-namespace facebook { namespace thrift { namespace reflection { namespace local {
+namespace apache { namespace thrift { namespace reflection { namespace local {
 
-using facebook::thrift::protocol::TType;
+using apache::thrift::protocol::TType;
 
 // We include this many bytes of the structure's fingerprint when serializing
 // a top-level structure.  Long enough to make collisions unlikely, short
@@ -79,6 +79,6 @@ struct TypeSpec {
 
 };
 
-}}}} // facebook::thrift::reflection::local
+}}}} // apache::thrift::reflection::local
 
 #endif // #ifndef _THRIFT_TREFLECTIONLOCAL_H_

@@ -10,7 +10,7 @@
 #include "TServerTransport.h"
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 class TSocket;
 
@@ -59,6 +59,6 @@ class TServerSocket : public TServerTransport {
   int intSock2_;
 };
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_

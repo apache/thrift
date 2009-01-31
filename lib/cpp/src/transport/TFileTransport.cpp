@@ -28,11 +28,11 @@
 #include <iostream>
 #include <sys/stat.h>
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 using boost::shared_ptr;
 using namespace std;
-using namespace facebook::thrift::protocol;
+using namespace apache::thrift::protocol;
 
 #ifndef HAVE_CLOCK_GETTIME
 
@@ -938,4 +938,4 @@ void TFileProcessor::processChunk() {
   }
 }
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport

@@ -10,7 +10,7 @@
 
 using std::string;
 
-namespace facebook { namespace thrift { namespace protocol {
+namespace apache { namespace thrift { namespace protocol {
 
 
 static const uint8_t *kBase64EncodeTable = (const uint8_t *)
@@ -63,4 +63,4 @@ void base64_decode(uint8_t *buf, uint32_t len) {
 }
 
 
-}}} // facebook::thrift::protocol
+}}} // apache::thrift::protocol

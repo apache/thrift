@@ -8,7 +8,7 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-namespace facebook { namespace thrift { namespace server {
+namespace apache { namespace thrift { namespace server {
 
 int increase_max_fds(int max_fds=(1<<24))  {
   struct rlimit fdmaxrl;
@@ -22,4 +22,4 @@ int increase_max_fds(int max_fds=(1<<24))  {
   return  fdmaxrl.rlim_cur;
 }
 
-}}} // facebook::thrift::server
+}}} // apache::thrift::server

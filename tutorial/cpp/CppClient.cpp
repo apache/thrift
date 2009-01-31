@@ -9,9 +9,9 @@
 #include "../gen-cpp/Calculator.h"
 
 using namespace std;
-using namespace facebook::thrift;
-using namespace facebook::thrift::protocol;
-using namespace facebook::thrift::transport;
+using namespace apache::thrift;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
 
 using namespace tutorial;
 using namespace shared;

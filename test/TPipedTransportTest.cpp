@@ -5,9 +5,9 @@
 #include <transport/TBufferTransports.h>
 using namespace std;
 using boost::shared_ptr;
-using facebook::thrift::transport::TTransportException;
-using facebook::thrift::transport::TPipedTransport;
-using facebook::thrift::transport::TMemoryBuffer;
+using apache::thrift::transport::TTransportException;
+using apache::thrift::transport::TPipedTransport;
+using apache::thrift::transport::TMemoryBuffer;
 
 int main() {
   shared_ptr<TMemoryBuffer> underlying(new TMemoryBuffer);

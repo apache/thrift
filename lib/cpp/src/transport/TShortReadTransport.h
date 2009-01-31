@@ -11,7 +11,7 @@
 
 #include <transport/TTransport.h>
 
-namespace facebook { namespace thrift { namespace transport { namespace test {
+namespace apache { namespace thrift { namespace transport { namespace test {
 
 /**
  * This class is only meant for testing.  It wraps another transport.
@@ -79,6 +79,6 @@ class TShortReadTransport : public TTransport {
   double fullProb_;
 };
 
-}}}} // facebook::thrift::transport::test
+}}}} // apache::thrift::transport::test
 
 #endif // #ifndef _THRIFT_TRANSPORT_TSHORTREADTRANSPORT_H_

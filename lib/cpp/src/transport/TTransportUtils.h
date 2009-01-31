@@ -16,7 +16,7 @@
 #include <transport/TBufferTransports.h>
 #include <transport/TFileTransport.h>
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 /**
  * The null transport is a dummy transport that doesn't actually do anything.
@@ -274,6 +274,6 @@ class TPipedFileReaderTransportFactory : public TPipedTransportFactory {
   }
 };
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TTRANSPORTUTILS_H_

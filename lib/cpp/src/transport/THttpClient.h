@@ -9,7 +9,7 @@
 
 #include <transport/TBufferTransports.h>
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 /**
  * HTTP client implementation of the thrift transport. This was irritating
@@ -94,6 +94,6 @@ class THttpClient : public TTransport {
 
 };
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_THTTPCLIENT_H_

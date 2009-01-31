@@ -10,7 +10,7 @@
 #include <tr1/functional>
 #include "thrift/lib/cpp/concurrency/Thread.h"
 
-namespace facebook { namespace thrift { namespace concurrency {
+namespace apache { namespace thrift { namespace concurrency {
 
 /**
  * Convenient implementation of Runnable that will execute arbitrary callbacks.
@@ -60,6 +60,6 @@ class FunctionRunner : public Runnable {
   VoidFunc func_;
 };
 
-}}} // facebook::thrift::concurrency
+}}} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_FUNCTION_RUNNER_H

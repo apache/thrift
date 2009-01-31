@@ -13,14 +13,14 @@
 #include <pthread.h>
 #include <unistd.h>
 
-namespace facebook { namespace thrift { namespace server {
+namespace apache { namespace thrift { namespace server {
 
 using boost::shared_ptr;
 using namespace std;
-using namespace facebook::thrift;
-using namespace facebook::thrift::protocol;
-using namespace facebook::thrift::transport;
-using namespace facebook::thrift::concurrency;
+using namespace apache::thrift;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
+using namespace apache::thrift::concurrency;
 
 class TThreadedServer::Task: public Runnable {
 
@@ -217,4 +217,4 @@ void TThreadedServer::serve() {
 
 }
 
-}}} // facebook::thrift::server
+}}} // apache::thrift::server

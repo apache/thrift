@@ -13,7 +13,7 @@
 
 using namespace std;
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 void TFDTransport::close() {
   if (!isOpen()) {
@@ -61,4 +61,4 @@ void TFDTransport::write(const uint8_t* buf, uint32_t len) {
   }
 }
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport

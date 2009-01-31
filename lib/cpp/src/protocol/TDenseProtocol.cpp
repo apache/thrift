@@ -104,10 +104,10 @@ using std::string;
 #define UNLIKELY(val) (val)
 #endif
 
-namespace facebook { namespace thrift { namespace protocol {
+namespace apache { namespace thrift { namespace protocol {
 
 const int TDenseProtocol::FP_PREFIX_LEN =
-  facebook::thrift::reflection::local::FP_PREFIX_LEN;
+  apache::thrift::reflection::local::FP_PREFIX_LEN;
 
 // Top TypeSpec.  TypeSpec of the structure being encoded.
 #define TTS  (ts_stack_.back())  // type = TypeSpec*
@@ -746,4 +746,4 @@ uint32_t TDenseProtocol::subReadString(std::string& str) {
   return xfer + readStringBody(str, size);
 }
 
-}}} // facebook::thrift::protocol
+}}} // apache::thrift::protocol

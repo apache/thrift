@@ -13,12 +13,12 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace server {
+namespace apache { namespace thrift { namespace server {
 
-using facebook::thrift::concurrency::ThreadManager;
-using facebook::thrift::protocol::TProtocolFactory;
-using facebook::thrift::transport::TServerTransport;
-using facebook::thrift::transport::TTransportFactory;
+using apache::thrift::concurrency::ThreadManager;
+using apache::thrift::protocol::TProtocolFactory;
+using apache::thrift::transport::TServerTransport;
+using apache::thrift::transport::TTransportFactory;
 
 class TThreadPoolServer : public TServer {
  public:
@@ -61,6 +61,6 @@ class TThreadPoolServer : public TServer {
 
 };
 
-}}} // facebook::thrift::server
+}}} // apache::thrift::server
 
 #endif // #ifndef _THRIFT_SERVER_TTHREADPOOLSERVER_H_

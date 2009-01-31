@@ -9,7 +9,7 @@
 
 #include "TSocketPool.h"
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 using namespace std;
 
@@ -221,4 +221,4 @@ void TSocketPool::close() {
   }
 }
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport

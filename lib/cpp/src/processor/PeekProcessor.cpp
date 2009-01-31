@@ -1,10 +1,10 @@
 #include "PeekProcessor.h"
 
-using namespace facebook::thrift::transport;
-using namespace facebook::thrift::protocol;
-using namespace facebook::thrift;
+using namespace apache::thrift::transport;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift;
 
-namespace facebook { namespace thrift { namespace processor {
+namespace apache { namespace thrift { namespace processor {
 
 PeekProcessor::PeekProcessor() {
   memoryBuffer_.reset(new TMemoryBuffer());

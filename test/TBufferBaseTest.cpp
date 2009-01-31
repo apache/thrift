@@ -6,10 +6,10 @@
 
 using std::string;
 using boost::shared_ptr;
-using facebook::thrift::transport::TMemoryBuffer;
-using facebook::thrift::transport::TBufferedTransport;
-using facebook::thrift::transport::TFramedTransport;
-using facebook::thrift::transport::test::TShortReadTransport;
+using apache::thrift::transport::TMemoryBuffer;
+using apache::thrift::transport::TBufferedTransport;
+using apache::thrift::transport::TFramedTransport;
+using apache::thrift::transport::test::TShortReadTransport;
 
 #define foreach BOOST_FOREACH
 

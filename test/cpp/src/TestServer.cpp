@@ -19,11 +19,11 @@
 using namespace std;
 using namespace boost;
 
-using namespace facebook::thrift;
-using namespace facebook::thrift::concurrency;
-using namespace facebook::thrift::protocol;
-using namespace facebook::thrift::transport;
-using namespace facebook::thrift::server;
+using namespace apache::thrift;
+using namespace apache::thrift::concurrency;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
+using namespace apache::thrift::server;
 
 using namespace thrift::test;
 
@@ -223,7 +223,7 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testException(const std::string &arg)
-    throw(Xception, facebook::thrift::TException)
+    throw(Xception, apache::thrift::TException)
   {
     printf("testException(%s)\n", arg.c_str());
     if (arg.compare("Xception") == 0) {
@@ -232,7 +232,7 @@ class TestHandler : public ThriftTestIf {
       e.message = arg;
       throw e;
     } else if (arg.compare("ApplicationException") == 0) {
-      facebook::thrift::TException e;
+      apache::thrift::TException e;
       throw e;
     } else {
       Xtruct result;

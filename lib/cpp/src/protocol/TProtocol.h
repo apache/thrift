@@ -17,9 +17,9 @@
 #include <string>
 #include <map>
 
-namespace facebook { namespace thrift { namespace protocol {
+namespace apache { namespace thrift { namespace protocol {
 
-using facebook::thrift::transport::TTransport;
+using apache::thrift::transport::TTransport;
 
 #ifdef HAVE_ENDIAN_H
 #include <endian.h>
@@ -352,6 +352,6 @@ class TProtocolFactory {
   virtual boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) = 0;
 };
 
-}}} // facebook::thrift::protocol
+}}} // apache::thrift::protocol
 
 #endif // #define _THRIFT_PROTOCOL_TPROTOCOL_H_ 1

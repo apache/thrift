@@ -16,11 +16,11 @@
 #include <errno.h>
 #include <assert.h>
 
-namespace facebook { namespace thrift { namespace server {
+namespace apache { namespace thrift { namespace server {
 
-using namespace facebook::thrift::protocol;
-using namespace facebook::thrift::transport;
-using namespace facebook::thrift::concurrency;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
+using namespace apache::thrift::concurrency;
 using namespace std;
 
 class TConnection::Task: public Runnable {
@@ -685,4 +685,4 @@ void TNonblockingServer::serve() {
   event_base_loop(eventBase_, 0);
 }
 
-}}} // facebook::thrift::server
+}}} // apache::thrift::server

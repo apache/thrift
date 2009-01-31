@@ -14,15 +14,15 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace server {
+namespace apache { namespace thrift { namespace server {
 
-using facebook::thrift::TProcessor;
-using facebook::thrift::protocol::TBinaryProtocolFactory;
-using facebook::thrift::protocol::TProtocol;
-using facebook::thrift::protocol::TProtocolFactory;
-using facebook::thrift::transport::TServerTransport;
-using facebook::thrift::transport::TTransport;
-using facebook::thrift::transport::TTransportFactory;
+using apache::thrift::TProcessor;
+using apache::thrift::protocol::TBinaryProtocolFactory;
+using apache::thrift::protocol::TProtocol;
+using apache::thrift::protocol::TProtocolFactory;
+using apache::thrift::transport::TServerTransport;
+using apache::thrift::transport::TTransport;
+using apache::thrift::transport::TTransportFactory;
 
 /**
  * Virtual interface class that can handle events from the server core. To
@@ -196,6 +196,6 @@ public:
  int increase_max_fds(int max_fds=(1<<24));
 
 
-}}} // facebook::thrift::server
+}}} // apache::thrift::server
 
 #endif // #ifndef _THRIFT_SERVER_TSERVER_H_

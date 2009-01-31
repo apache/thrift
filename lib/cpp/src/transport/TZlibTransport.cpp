@@ -12,7 +12,7 @@
 
 using std::string;
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 // Don't call this outside of the constructor.
 void TZlibTransport::initZlib() {
@@ -283,4 +283,4 @@ void TZlibTransport::verifyChecksum() {
 }
 
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport

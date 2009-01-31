@@ -13,7 +13,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-namespace facebook { namespace thrift { namespace concurrency {
+namespace apache { namespace thrift { namespace concurrency {
 
 /**
  * Utility methods
@@ -83,6 +83,6 @@ class Util {
   static const int64_t currentTime();
 };
 
-}}} // facebook::thrift::concurrency
+}}} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_UTIL_H_

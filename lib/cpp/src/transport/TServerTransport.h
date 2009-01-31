@@ -11,7 +11,7 @@
 #include "TTransportException.h"
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 /**
  * Server transport framework. A server needs to have some facility for
@@ -75,6 +75,6 @@ class TServerTransport {
 
 };
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TSERVERTRANSPORT_H_

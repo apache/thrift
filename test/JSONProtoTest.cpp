@@ -8,8 +8,8 @@ int main() {
   using std::cout;
   using std::endl;
   using namespace thrift::test::debug;
-  using facebook::thrift::transport::TMemoryBuffer;
-  using facebook::thrift::protocol::TJSONProtocol;
+  using apache::thrift::transport::TMemoryBuffer;
+  using apache::thrift::protocol::TJSONProtocol;
 
   OneOfEach ooe;
   ooe.im_true   = true;
@@ -22,7 +22,7 @@ int main() {
   ooe.some_characters  = "JSON THIS! \"\1";
   ooe.zomg_unicode     = "\xd7\n\a\t";
   ooe.base64 = "\1\2\3\255";
-  cout << facebook::thrift::ThriftJSONString(ooe) << endl << endl;
+  cout << apache::thrift::ThriftJSONString(ooe) << endl << endl;
 
 
   Nesting n;
@@ -38,7 +38,7 @@ int main() {
   n.my_bonk.type    = 31337;
   n.my_bonk.message = "I am a bonk... xor!";
 
-  cout << facebook::thrift::ThriftJSONString(n) << endl << endl;
+  cout << apache::thrift::ThriftJSONString(n) << endl << endl;
 
 
   HolyMoley hm;
@@ -81,7 +81,7 @@ int main() {
   stage2.back().message = "nevermore";
   hm.bonks["poe"] = stage2;
 
-  cout << facebook::thrift::ThriftJSONString(hm) << endl << endl;
+  cout << apache::thrift::ThriftJSONString(hm) << endl << endl;
 
   boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
   boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
@@ -117,7 +117,7 @@ int main() {
   dub.small = 1E-305;
   dub.zero = 0.0;
   dub.negzero = -0.0;
-  cout << facebook::thrift::ThriftJSONString(dub) << endl << endl;
+  cout << apache::thrift::ThriftJSONString(dub) << endl << endl;
 
   cout << "Testing base" << endl;
 

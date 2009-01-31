@@ -12,7 +12,7 @@
 
 struct z_stream_s;
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 class TZlibTransportException : public TTransportException {
  public:
@@ -202,6 +202,6 @@ class TZlibTransport : public TTransport {
   struct z_stream_s* wstream_;
 };
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TZLIBTRANSPORT_H_

@@ -2,8 +2,8 @@
 #include <stdexcept>
 #include <Thrift.h>
 #include <transport/TFDTransport.h>
-using facebook::thrift::transport::TTransportException;
-using facebook::thrift::transport::TFDTransport;
+using apache::thrift::transport::TTransportException;
+using apache::thrift::transport::TFDTransport;
 
 class DummyException : std::exception {
 };

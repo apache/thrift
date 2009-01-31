@@ -11,14 +11,14 @@
 #include <string>
 #include <iostream>
 
-namespace facebook { namespace thrift { namespace server {
+namespace apache { namespace thrift { namespace server {
 
 using boost::shared_ptr;
 using namespace std;
-using namespace facebook::thrift;
-using namespace facebook::thrift::concurrency;
-using namespace facebook::thrift::protocol;;
-using namespace facebook::thrift::transport;
+using namespace apache::thrift;
+using namespace apache::thrift::concurrency;
+using namespace apache::thrift::protocol;;
+using namespace apache::thrift::transport;
 
 class TThreadPoolServer::Task : public Runnable {
 
@@ -201,4 +201,4 @@ void TThreadPoolServer::setTimeout(int64_t value) {
   timeout_ = value;
 }
 
-}}} // facebook::thrift::server
+}}} // apache::thrift::server

@@ -24,7 +24,7 @@
 
 #include "TLogging.h"
 
-namespace facebook { namespace thrift {
+namespace apache { namespace thrift {
 
 class TOutput {
  public:
@@ -171,6 +171,6 @@ struct TypeSpec;
 }}
 
 
-}} // facebook::thrift
+}} // apache::thrift
 
 #endif // #ifndef _THRIFT_THRIFT_H_

@@ -9,7 +9,7 @@
 
 #include "TBinaryProtocol.h"
 
-namespace facebook { namespace thrift { namespace protocol {
+namespace apache { namespace thrift { namespace protocol {
 
 /**
  * !!!WARNING!!!
@@ -51,7 +51,7 @@ class TDenseProtocol : public TBinaryProtocol {
   static const int32_t VERSION_2 = 0x80020000;
 
  public:
-  typedef facebook::thrift::reflection::local::TypeSpec TypeSpec;
+  typedef apache::thrift::reflection::local::TypeSpec TypeSpec;
   static const int FP_PREFIX_LEN;
 
   /**
@@ -236,6 +236,6 @@ class TDenseProtocol : public TBinaryProtocol {
   bool standalone_;
 };
 
-}}} // facebook::thrift::protocol
+}}} // apache::thrift::protocol
 
 #endif // #ifndef _THRIFT_PROTOCOL_TDENSEPROTOCOL_H_

@@ -9,7 +9,7 @@
 
 #include <string>
 
-namespace facebook { namespace thrift { namespace protocol {
+namespace apache { namespace thrift { namespace protocol {
 
 /**
  * Class to encapsulate all the possible types of protocol errors that may
@@ -20,7 +20,7 @@ namespace facebook { namespace thrift { namespace protocol {
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class TProtocolException : public facebook::thrift::TException {
+class TProtocolException : public apache::thrift::TException {
  public:
 
   /**
@@ -36,19 +36,19 @@ class TProtocolException : public facebook::thrift::TException {
   };
 
   TProtocolException() :
-    facebook::thrift::TException(),
+    apache::thrift::TException(),
     type_(UNKNOWN) {}
 
   TProtocolException(TProtocolExceptionType type) :
-    facebook::thrift::TException(),
+    apache::thrift::TException(),
     type_(type) {}
 
   TProtocolException(const std::string& message) :
-    facebook::thrift::TException(message),
+    apache::thrift::TException(message),
     type_(UNKNOWN) {}
 
   TProtocolException(TProtocolExceptionType type, const std::string& message) :
-    facebook::thrift::TException(message),
+    apache::thrift::TException(message),
     type_(type) {}
 
   virtual ~TProtocolException() throw() {}
@@ -87,6 +87,6 @@ class TProtocolException : public facebook::thrift::TException {
 
 };
 
-}}} // facebook::thrift::protocol
+}}} // apache::thrift::protocol
 
 #endif // #ifndef _THRIFT_PROTOCOL_TPROTOCOLEXCEPTION_H_

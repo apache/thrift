@@ -11,7 +11,7 @@
 #include <protocol/TProtocol.h>
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift {
+namespace apache { namespace thrift {
 
 /**
  * A processor is a generic object that acts upon two streams of data, one
@@ -28,7 +28,7 @@ class TProcessor {
   virtual bool process(boost::shared_ptr<protocol::TProtocol> in,
                        boost::shared_ptr<protocol::TProtocol> out) = 0;
 
-  bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> io) {
+  bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> io) {
     return process(io, io);
   }
 
@@ -36,6 +36,6 @@ class TProcessor {
   TProcessor() {}
 };
 
-}} // facebook::thrift
+}} // apache::thrift
 
 #endif // #ifndef _THRIFT_PROCESSOR_H_

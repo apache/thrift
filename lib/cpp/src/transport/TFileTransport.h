@@ -16,10 +16,10 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
-using facebook::thrift::TProcessor;
-using facebook::thrift::protocol::TProtocolFactory;
+using apache::thrift::TProcessor;
+using apache::thrift::protocol::TProtocolFactory;
 
 // Data pertaining to a single event
 typedef struct eventInfo {
@@ -424,6 +424,6 @@ class TFileProcessor {
 };
 
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport
 
 #endif // _THRIFT_TRANSPORT_TFILETRANSPORT_H_

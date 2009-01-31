@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include "Thread.h"
 
-namespace facebook { namespace thrift { namespace concurrency {
+namespace apache { namespace thrift { namespace concurrency {
 
 /**
  * Thread Pool Manager and related classes
@@ -152,6 +152,6 @@ class ThreadManager {
   class Impl;
 };
 
-}}} // facebook::thrift::concurrency
+}}} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_THREADMANAGER_H_

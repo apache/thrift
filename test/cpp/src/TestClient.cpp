@@ -13,9 +13,9 @@
 
 using namespace boost;
 using namespace std;
-using namespace facebook::thrift;
-using namespace facebook::thrift::protocol;
-using namespace facebook::thrift::transport;
+using namespace apache::thrift;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
 using namespace thrift::test;
 
 //extern uint32_t g_socket_syscalls;

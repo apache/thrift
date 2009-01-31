@@ -11,11 +11,11 @@
 #include <thrift/concurrency/PosixThreadFactory.h>
 
 using boost::shared_ptr;
-using namespace facebook::thrift;
-using namespace facebook::thrift::protocol;
-using namespace facebook::thrift::transport;
-using namespace facebook::thrift::server;
-using namespace facebook::thrift::concurrency;
+using namespace apache::thrift;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
+using namespace apache::thrift::server;
+using namespace apache::thrift::concurrency;
 
 int main(int argc, char **argv) {
   int port = 9090;

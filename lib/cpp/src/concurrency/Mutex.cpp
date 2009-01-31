@@ -11,7 +11,7 @@
 
 using boost::shared_ptr;
 
-namespace facebook { namespace thrift { namespace concurrency {
+namespace apache { namespace thrift { namespace concurrency {
 
 /**
  * Implementation of Mutex class using POSIX mutex
@@ -145,5 +145,5 @@ bool ReadWriteMutex::attemptWrite() const { return impl_->attemptWrite(); }
 
 void ReadWriteMutex::release() const { impl_->release(); }
 
-}}} // facebook::thrift::concurrency
+}}} // apache::thrift::concurrency
 

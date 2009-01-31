@@ -17,12 +17,12 @@
 #include <cstdlib>
 #include <event.h>
 
-namespace facebook { namespace thrift { namespace server {
+namespace apache { namespace thrift { namespace server {
 
-using facebook::thrift::transport::TMemoryBuffer;
-using facebook::thrift::protocol::TProtocol;
-using facebook::thrift::concurrency::Runnable;
-using facebook::thrift::concurrency::ThreadManager;
+using apache::thrift::transport::TMemoryBuffer;
+using apache::thrift::protocol::TProtocol;
+using apache::thrift::concurrency::Runnable;
+using apache::thrift::concurrency::ThreadManager;
 
 // Forward declaration of class
 class TConnection;
@@ -300,7 +300,7 @@ class TConnection {
   TConnection(int socket, short eventFlags, TNonblockingServer *s) {
     readBuffer_ = (uint8_t*)std::malloc(1024);
     if (readBuffer_ == NULL) {
-      throw new facebook::thrift::TException("Out of memory.");
+      throw new apache::thrift::TException("Out of memory.");
     }
     readBufferSize_ = 1024;
 
@@ -341,6 +341,6 @@ class TConnection {
 
 };
 
-}}} // facebook::thrift::server
+}}} // apache::thrift::server
 
 #endif // #ifndef _THRIFT_SERVER_TSIMPLESERVER_H_

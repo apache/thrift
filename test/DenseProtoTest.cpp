@@ -41,8 +41,8 @@ int main() {
   using std::endl;
   using boost::shared_ptr;
   using namespace thrift::test::debug;
-  using namespace facebook::thrift::transport;
-  using namespace facebook::thrift::protocol;
+  using namespace apache::thrift::transport;
+  using namespace apache::thrift::protocol;
 
 
   OneOfEach ooe;
@@ -56,7 +56,7 @@ int main() {
   ooe.some_characters  = "Debug THIS!";
   ooe.zomg_unicode     = "\xd7\n\a\t";
 
-  //cout << facebook::thrift::ThriftDebugString(ooe) << endl << endl;
+  //cout << apache::thrift::ThriftDebugString(ooe) << endl << endl;
 
 
   Nesting n;
@@ -72,7 +72,7 @@ int main() {
   n.my_bonk.type    = 31337;
   n.my_bonk.message = "I am a bonk... xor!";
 
-  //cout << facebook::thrift::ThriftDebugString(n) << endl << endl;
+  //cout << apache::thrift::ThriftDebugString(n) << endl << endl;
 
 
   HolyMoley hm;
@@ -115,7 +115,7 @@ int main() {
   stage2.back().message = "nevermore";
   hm.bonks["poe"] = stage2;
 
-  //cout << facebook::thrift::ThriftDebugString(hm) << endl << endl;
+  //cout << apache::thrift::ThriftDebugString(hm) << endl << endl;
 
   shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
   shared_ptr<TDenseProtocol> proto(new TDenseProtocol(buffer));

@@ -11,7 +11,7 @@
 
 using std::string;
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 
 uint32_t TBufferedTransport::readSlow(uint8_t* buf, uint32_t len) {
@@ -354,4 +354,4 @@ const uint8_t* TMemoryBuffer::borrowSlow(uint8_t* buf, uint32_t* len) {
   return NULL;
 }
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport

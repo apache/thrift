@@ -12,7 +12,7 @@
 #include <transport/TTransportException.h>
 #include <string>
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 /**
  * Generic interface for a method of transporting data. A TTransport may be
@@ -208,6 +208,6 @@ class TTransportFactory {
 
 };
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TTRANSPORT_H_

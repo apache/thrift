@@ -51,7 +51,7 @@ static inline To bitwise_cast(From from) {
 }
 
 
-namespace facebook { namespace thrift { namespace protocol {
+namespace apache { namespace thrift { namespace protocol {
 
 uint32_t TBinaryProtocol::writeMessageBegin(const std::string& name,
                                             const TMessageType messageType,
@@ -419,4 +419,4 @@ uint32_t TBinaryProtocol::readStringBody(string& str, int32_t size) {
   return (uint32_t)size;
 }
 
-}}} // facebook::thrift::protocol
+}}} // apache::thrift::protocol

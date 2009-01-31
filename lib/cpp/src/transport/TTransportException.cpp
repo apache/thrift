@@ -12,7 +12,7 @@
 using std::string;
 using boost::lexical_cast;
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport
 

@@ -12,9 +12,9 @@
 #include <assert.h>
 #include <iostream>
 
-namespace facebook { namespace thrift { namespace concurrency { namespace test {
+namespace apache { namespace thrift { namespace concurrency { namespace test {
 
-using namespace facebook::thrift::concurrency;
+using namespace apache::thrift::concurrency;
 
 /**
  * ThreadManagerTests class
@@ -126,5 +126,5 @@ class TimerManagerTests {
 
 const double TimerManagerTests::ERROR = .20;
 
-}}}} // facebook::thrift::concurrency
+}}}} // apache::thrift::concurrency
 

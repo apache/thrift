@@ -8,7 +8,7 @@
 
 using std::string;
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 uint32_t TPipedTransport::read(uint8_t* buf, uint32_t len) {
   uint32_t need = len;
@@ -162,4 +162,4 @@ void TPipedFileReaderTransport::seekToEnd() {
   srcTrans_->seekToEnd();
 }
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport

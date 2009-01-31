@@ -20,7 +20,7 @@
 #define TDB_UNLIKELY(val) (val)
 #endif
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 
 /**
@@ -660,6 +660,6 @@ class TMemoryBuffer : public TBufferBase {
   // you add new members.
 };
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TBUFFERTRANSPORTS_H_

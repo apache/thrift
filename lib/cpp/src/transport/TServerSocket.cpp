@@ -18,7 +18,7 @@
 #include "TServerSocket.h"
 #include <boost/shared_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 using namespace std;
 using boost::shared_ptr;
@@ -350,4 +350,4 @@ void TServerSocket::close() {
   intSock2_ = -1;
 }
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport

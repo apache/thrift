@@ -10,7 +10,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace concurrency {
+namespace apache { namespace thrift { namespace concurrency {
 
 class Thread;
 
@@ -49,7 +49,7 @@ class Runnable {
  * is difficult to abstract across platforms and is left for platform-specific
  * ThreadFactory implemtations to deal with
  *
- * @see facebook::thrift::concurrency::ThreadFactory)
+ * @see apache::thrift::concurrency::ThreadFactory)
  */
 class Thread {
 
@@ -107,6 +107,6 @@ class ThreadFactory {
   virtual Thread::id_t getCurrentThreadId() const = 0;
 };
 
-}}} // facebook::thrift::concurrency
+}}} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_THREAD_H_

@@ -12,14 +12,14 @@
 #include <protocol/TProtocol.h>
 #include <TProcessor.h>
 
-namespace facebook { namespace thrift { namespace processor {
+namespace apache { namespace thrift { namespace processor {
 
 /*
  * Class for keeping track of function call statistics and printing them if desired
  *
  * @author James Wang <jwang@facebook.com>
  */
-class StatsProcessor : public facebook::thrift::TProcessor {
+class StatsProcessor : public apache::thrift::TProcessor {
 public:
   StatsProcessor(bool print, bool frequency)
     : print_(print),
@@ -27,20 +27,20 @@ public:
   {}
   virtual ~StatsProcessor() {};
 
-  virtual bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> piprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> poprot) {
+  virtual bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot) {
 
     piprot_ = piprot;
 
     std::string fname;
-    facebook::thrift::protocol::TMessageType mtype;
+    apache::thrift::protocol::TMessageType mtype;
     int32_t seqid;
 
     piprot_->readMessageBegin(fname, mtype, seqid);
-    if (mtype != facebook::thrift::protocol::T_CALL) {
+    if (mtype != apache::thrift::protocol::T_CALL) {
       if (print_) {
         printf("Unknown message type\n");
       }
-      throw facebook::thrift::TException("Unexpected message type");
+      throw apache::thrift::TException("Unexpected message type");
     }
     if (print_) {
       printf("%s (", fname.c_str());
@@ -53,12 +53,12 @@ public:
       }
     }
 
-    facebook::thrift::protocol::TType ftype;
+    apache::thrift::protocol::TType ftype;
     int16_t fid;
 
     while (true) {
       piprot_->readFieldBegin(fname, ftype, fid);
-      if (ftype == facebook::thrift::protocol::T_STOP) {
+      if (ftype == apache::thrift::protocol::T_STOP) {
         break;
       }
 
@@ -79,9 +79,9 @@ public:
   }
 
 protected:
-  void printAndPassToBuffer(facebook::thrift::protocol::TType ftype) {
+  void printAndPassToBuffer(apache::thrift::protocol::TType ftype) {
     switch (ftype) {
-      case facebook::thrift::protocol::T_BOOL:
+      case apache::thrift::protocol::T_BOOL:
         {
           bool boolv;
           piprot_->readBool(boolv);
@@ -90,7 +90,7 @@ protected:
           }
         }
         break;
-      case facebook::thrift::protocol::T_BYTE:
+      case apache::thrift::protocol::T_BYTE:
         {
           int8_t bytev;
           piprot_->readByte(bytev);
@@ -99,7 +99,7 @@ protected:
           }
         }
         break;
-      case facebook::thrift::protocol::T_I16:
+      case apache::thrift::protocol::T_I16:
         {
           int16_t i16;
           piprot_->readI16(i16);
@@ -108,7 +108,7 @@ protected:
           }
         }
         break;
-      case facebook::thrift::protocol::T_I32:
+      case apache::thrift::protocol::T_I32:
         {
           int32_t i32;
           piprot_->readI32(i32);
@@ -117,7 +117,7 @@ protected:
           }
         }
         break;
-      case facebook::thrift::protocol::T_I64:
+      case apache::thrift::protocol::T_I64:
         {
           int64_t i64;
           piprot_->readI64(i64);
@@ -126,7 +126,7 @@ protected:
           }
         }
         break;
-      case facebook::thrift::protocol::T_DOUBLE:
+      case apache::thrift::protocol::T_DOUBLE:
         {
           double dub;
           piprot_->readDouble(dub);
@@ -135,7 +135,7 @@ protected:
           }
         }
         break;
-      case facebook::thrift::protocol::T_STRING:
+      case apache::thrift::protocol::T_STRING:
         {
           std::string str;
           piprot_->readString(str);
@@ -144,18 +144,18 @@ protected:
           }
         }
         break;
-      case facebook::thrift::protocol::T_STRUCT:
+      case apache::thrift::protocol::T_STRUCT:
         {
           std::string name;
           int16_t fid;
-          facebook::thrift::protocol::TType ftype;
+          apache::thrift::protocol::TType ftype;
           piprot_->readStructBegin(name);
           if (print_) {
             printf("<");
           }
           while (true) {
             piprot_->readFieldBegin(name, ftype, fid);
-            if (ftype == facebook::thrift::protocol::T_STOP) {
+            if (ftype == apache::thrift::protocol::T_STOP) {
               break;
             }
             printAndPassToBuffer(ftype);
@@ -170,10 +170,10 @@ protected:
           }
         }
         break;
-      case facebook::thrift::protocol::T_MAP:
+      case apache::thrift::protocol::T_MAP:
         {
-          facebook::thrift::protocol::TType keyType;
-          facebook::thrift::protocol::TType valType;
+          apache::thrift::protocol::TType keyType;
+          apache::thrift::protocol::TType valType;
           uint32_t i, size;
           piprot_->readMapBegin(keyType, valType, size);
           if (print_) {
@@ -195,9 +195,9 @@ protected:
           }
         }
         break;
-      case facebook::thrift::protocol::T_SET:
+      case apache::thrift::protocol::T_SET:
         {
-          facebook::thrift::protocol::TType elemType;
+          apache::thrift::protocol::TType elemType;
           uint32_t i, size;
           piprot_->readSetBegin(elemType, size);
           if (print_) {
@@ -215,9 +215,9 @@ protected:
           }
         }
         break;
-      case facebook::thrift::protocol::T_LIST:
+      case apache::thrift::protocol::T_LIST:
         {
-          facebook::thrift::protocol::TType elemType;
+          apache::thrift::protocol::TType elemType;
           uint32_t i, size;
           piprot_->readListBegin(elemType, size);
           if (print_) {
@@ -240,13 +240,13 @@ protected:
     }
   }
 
-  boost::shared_ptr<facebook::thrift::protocol::TProtocol> piprot_;
+  boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot_;
   std::map<std::string, int64_t> frequency_map_;
 
   bool print_;
   bool frequency_;
 };
 
-}}} // facebook::thrift::processor
+}}} // apache::thrift::processor
 
 #endif

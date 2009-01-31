@@ -16,7 +16,7 @@
 #include <sys/time.h>
 #endif // defined(HAVE_CLOCK_GETTIME)
 
-namespace facebook { namespace thrift { namespace concurrency {
+namespace apache { namespace thrift { namespace concurrency {
 
 const int64_t Util::currentTime() {
   int64_t result;
@@ -39,4 +39,4 @@ const int64_t Util::currentTime() {
 }
 
 
-}}} // facebook::thrift::concurrency
+}}} // apache::thrift::concurrency

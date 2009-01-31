@@ -13,7 +13,7 @@
 
 
 
-namespace facebook { namespace thrift { namespace reflection { namespace limited {
+namespace apache { namespace thrift { namespace reflection { namespace limited {
 
 enum TTypeTag {
   T_VOID = 1,
@@ -66,8 +66,8 @@ class SimpleType {
 
   bool operator < (const SimpleType & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -111,8 +111,8 @@ class ContainerType {
 
   bool operator < (const ContainerType & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -158,8 +158,8 @@ class ThriftType {
 
   bool operator < (const ThriftType & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -201,8 +201,8 @@ class Argument {
 
   bool operator < (const Argument & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -244,8 +244,8 @@ class Method {
 
   bool operator < (const Method & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -287,8 +287,8 @@ class Service {
 
   bool operator < (const Service & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 

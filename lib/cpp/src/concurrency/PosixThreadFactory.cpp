@@ -18,7 +18,7 @@
 
 #include <boost/weak_ptr.hpp>
 
-namespace facebook { namespace thrift { namespace concurrency {
+namespace apache { namespace thrift { namespace concurrency {
 
 using boost::shared_ptr;
 using boost::weak_ptr;
@@ -293,4 +293,4 @@ void PosixThreadFactory::setDetached(bool value) { impl_->setDetached(value); }
 
 Thread::id_t PosixThreadFactory::getCurrentThreadId() const { return impl_->getCurrentThreadId(); }
 
-}}} // facebook::thrift::concurrency
+}}} // apache::thrift::concurrency

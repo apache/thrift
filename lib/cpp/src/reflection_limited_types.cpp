@@ -5,33 +5,33 @@
  */
 #include "reflection_limited_types.h"
 
-namespace facebook { namespace thrift { namespace reflection { namespace limited {
+namespace apache { namespace thrift { namespace reflection { namespace limited {
 
 const char* SimpleType::ascii_fingerprint = "19B5240589E680301A7E32DF3971EFBE";
 const uint8_t SimpleType::binary_fingerprint[16] = {0x19,0xB5,0x24,0x05,0x89,0xE6,0x80,0x30,0x1A,0x7E,0x32,0xDF,0x39,0x71,0xEF,0xBE};
 
-uint32_t SimpleType::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t SimpleType::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_I32) {
+        if (ftype == apache::thrift::protocol::T_I32) {
           int32_t ecast0;
           xfer += iprot->readI32(ecast0);
           this->ttype = (TTypeTag)ecast0;
@@ -41,7 +41,7 @@ uint32_t SimpleType::read(facebook::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -60,13 +60,13 @@ uint32_t SimpleType::read(facebook::thrift::protocol::TProtocol* iprot) {
   return xfer;
 }
 
-uint32_t SimpleType::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t SimpleType::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("SimpleType");
-  xfer += oprot->writeFieldBegin("ttype", facebook::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeFieldBegin("ttype", apache::thrift::protocol::T_I32, 1);
   xfer += oprot->writeI32((int32_t)this->ttype);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -77,28 +77,28 @@ uint32_t SimpleType::write(facebook::thrift::protocol::TProtocol* oprot) const {
 const char* ContainerType::ascii_fingerprint = "654FA6EFFF8242F4C2A604B970686634";
 const uint8_t ContainerType::binary_fingerprint[16] = {0x65,0x4F,0xA6,0xEF,0xFF,0x82,0x42,0xF4,0xC2,0xA6,0x04,0xB9,0x70,0x68,0x66,0x34};
 
-uint32_t ContainerType::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ContainerType::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_I32) {
+        if (ftype == apache::thrift::protocol::T_I32) {
           int32_t ecast1;
           xfer += iprot->readI32(ecast1);
           this->ttype = (TTypeTag)ecast1;
@@ -108,7 +108,7 @@ uint32_t ContainerType::read(facebook::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->subtype1.read(iprot);
           this->__isset.subtype1 = true;
         } else {
@@ -116,7 +116,7 @@ uint32_t ContainerType::read(facebook::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 3:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->subtype2.read(iprot);
           this->__isset.subtype2 = true;
         } else {
@@ -135,17 +135,17 @@ uint32_t ContainerType::read(facebook::thrift::protocol::TProtocol* iprot) {
   return xfer;
 }
 
-uint32_t ContainerType::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ContainerType::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ContainerType");
-  xfer += oprot->writeFieldBegin("ttype", facebook::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeFieldBegin("ttype", apache::thrift::protocol::T_I32, 1);
   xfer += oprot->writeI32((int32_t)this->ttype);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("subtype1", facebook::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("subtype1", apache::thrift::protocol::T_STRUCT, 2);
   xfer += this->subtype1.write(oprot);
   xfer += oprot->writeFieldEnd();
   if (this->__isset.subtype2) {
-    xfer += oprot->writeFieldBegin("subtype2", facebook::thrift::protocol::T_STRUCT, 3);
+    xfer += oprot->writeFieldBegin("subtype2", apache::thrift::protocol::T_STRUCT, 3);
     xfer += this->subtype2.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -157,28 +157,28 @@ uint32_t ContainerType::write(facebook::thrift::protocol::TProtocol* oprot) cons
 const char* ThriftType::ascii_fingerprint = "76BC1CC759001D7D85FEE75C4F183062";
 const uint8_t ThriftType::binary_fingerprint[16] = {0x76,0xBC,0x1C,0xC7,0x59,0x00,0x1D,0x7D,0x85,0xFE,0xE7,0x5C,0x4F,0x18,0x30,0x62};
 
-uint32_t ThriftType::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ThriftType::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_BOOL) {
+        if (ftype == apache::thrift::protocol::T_BOOL) {
           xfer += iprot->readBool(this->is_container);
           this->__isset.is_container = true;
         } else {
@@ -186,7 +186,7 @@ uint32_t ThriftType::read(facebook::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->simple_type.read(iprot);
           this->__isset.simple_type = true;
         } else {
@@ -194,7 +194,7 @@ uint32_t ThriftType::read(facebook::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 3:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->container_type.read(iprot);
           this->__isset.container_type = true;
         } else {
@@ -213,19 +213,19 @@ uint32_t ThriftType::read(facebook::thrift::protocol::TProtocol* iprot) {
   return xfer;
 }
 
-uint32_t ThriftType::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ThriftType::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ThriftType");
-  xfer += oprot->writeFieldBegin("is_container", facebook::thrift::protocol::T_BOOL, 1);
+  xfer += oprot->writeFieldBegin("is_container", apache::thrift::protocol::T_BOOL, 1);
   xfer += oprot->writeBool(this->is_container);
   xfer += oprot->writeFieldEnd();
   if (this->__isset.simple_type) {
-    xfer += oprot->writeFieldBegin("simple_type", facebook::thrift::protocol::T_STRUCT, 2);
+    xfer += oprot->writeFieldBegin("simple_type", apache::thrift::protocol::T_STRUCT, 2);
     xfer += this->simple_type.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   if (this->__isset.container_type) {
-    xfer += oprot->writeFieldBegin("container_type", facebook::thrift::protocol::T_STRUCT, 3);
+    xfer += oprot->writeFieldBegin("container_type", apache::thrift::protocol::T_STRUCT, 3);
     xfer += this->container_type.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -237,28 +237,28 @@ uint32_t ThriftType::write(facebook::thrift::protocol::TProtocol* oprot) const {
 const char* Argument::ascii_fingerprint = "8C45506BE0EFBB22FB19FA40DDCECB3F";
 const uint8_t Argument::binary_fingerprint[16] = {0x8C,0x45,0x50,0x6B,0xE0,0xEF,0xBB,0x22,0xFB,0x19,0xFA,0x40,0xDD,0xCE,0xCB,0x3F};
 
-uint32_t Argument::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t Argument::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_I16) {
+        if (ftype == apache::thrift::protocol::T_I16) {
           xfer += iprot->readI16(this->key);
           this->__isset.key = true;
         } else {
@@ -266,7 +266,7 @@ uint32_t Argument::read(facebook::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -274,7 +274,7 @@ uint32_t Argument::read(facebook::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 3:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->type.read(iprot);
           this->__isset.type = true;
         } else {
@@ -293,16 +293,16 @@ uint32_t Argument::read(facebook::thrift::protocol::TProtocol* iprot) {
   return xfer;
 }
 
-uint32_t Argument::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t Argument::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("Argument");
-  xfer += oprot->writeFieldBegin("key", facebook::thrift::protocol::T_I16, 1);
+  xfer += oprot->writeFieldBegin("key", apache::thrift::protocol::T_I16, 1);
   xfer += oprot->writeI16(this->key);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("type", facebook::thrift::protocol::T_STRUCT, 3);
+  xfer += oprot->writeFieldBegin("type", apache::thrift::protocol::T_STRUCT, 3);
   xfer += this->type.write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -313,28 +313,28 @@ uint32_t Argument::write(facebook::thrift::protocol::TProtocol* oprot) const {
 const char* Method::ascii_fingerprint = "E6573428C492D24C84A19432D39A17B0";
 const uint8_t Method::binary_fingerprint[16] = {0xE6,0x57,0x34,0x28,0xC4,0x92,0xD2,0x4C,0x84,0xA1,0x94,0x32,0xD3,0x9A,0x17,0xB0};
 
-uint32_t Method::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t Method::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -342,7 +342,7 @@ uint32_t Method::read(facebook::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->return_type.read(iprot);
           this->__isset.return_type = true;
         } else {
@@ -350,11 +350,11 @@ uint32_t Method::read(facebook::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 3:
-        if (ftype == facebook::thrift::protocol::T_LIST) {
+        if (ftype == apache::thrift::protocol::T_LIST) {
           {
             this->arguments.clear();
             uint32_t _size2;
-            facebook::thrift::protocol::TType _etype5;
+            apache::thrift::protocol::TType _etype5;
             iprot->readListBegin(_etype5, _size2);
             this->arguments.resize(_size2);
             uint32_t _i6;
@@ -381,18 +381,18 @@ uint32_t Method::read(facebook::thrift::protocol::TProtocol* iprot) {
   return xfer;
 }
 
-uint32_t Method::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t Method::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("Method");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("return_type", facebook::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("return_type", apache::thrift::protocol::T_STRUCT, 2);
   xfer += this->return_type.write(oprot);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("arguments", facebook::thrift::protocol::T_LIST, 3);
+  xfer += oprot->writeFieldBegin("arguments", apache::thrift::protocol::T_LIST, 3);
   {
-    xfer += oprot->writeListBegin(facebook::thrift::protocol::T_STRUCT, this->arguments.size());
+    xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, this->arguments.size());
     std::vector<Argument> ::const_iterator _iter7;
     for (_iter7 = this->arguments.begin(); _iter7 != this->arguments.end(); ++_iter7)
     {
@@ -409,28 +409,28 @@ uint32_t Method::write(facebook::thrift::protocol::TProtocol* oprot) const {
 const char* Service::ascii_fingerprint = "4673B0777B701D9B02A7A74CEC7908A7";
 const uint8_t Service::binary_fingerprint[16] = {0x46,0x73,0xB0,0x77,0x7B,0x70,0x1D,0x9B,0x02,0xA7,0xA7,0x4C,0xEC,0x79,0x08,0xA7};
 
-uint32_t Service::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t Service::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -438,11 +438,11 @@ uint32_t Service::read(facebook::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_LIST) {
+        if (ftype == apache::thrift::protocol::T_LIST) {
           {
             this->methods.clear();
             uint32_t _size8;
-            facebook::thrift::protocol::TType _etype11;
+            apache::thrift::protocol::TType _etype11;
             iprot->readListBegin(_etype11, _size8);
             this->methods.resize(_size8);
             uint32_t _i12;
@@ -458,7 +458,7 @@ uint32_t Service::read(facebook::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 3:
-        if (ftype == facebook::thrift::protocol::T_BOOL) {
+        if (ftype == apache::thrift::protocol::T_BOOL) {
           xfer += iprot->readBool(this->fully_reflected);
           this->__isset.fully_reflected = true;
         } else {
@@ -477,15 +477,15 @@ uint32_t Service::read(facebook::thrift::protocol::TProtocol* iprot) {
   return xfer;
 }
 
-uint32_t Service::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t Service::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("Service");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("methods", facebook::thrift::protocol::T_LIST, 2);
+  xfer += oprot->writeFieldBegin("methods", apache::thrift::protocol::T_LIST, 2);
   {
-    xfer += oprot->writeListBegin(facebook::thrift::protocol::T_STRUCT, this->methods.size());
+    xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, this->methods.size());
     std::vector<Method> ::const_iterator _iter13;
     for (_iter13 = this->methods.begin(); _iter13 != this->methods.end(); ++_iter13)
     {
@@ -494,7 +494,7 @@ uint32_t Service::write(facebook::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeListEnd();
   }
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("fully_reflected", facebook::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeFieldBegin("fully_reflected", apache::thrift::protocol::T_BOOL, 3);
   xfer += oprot->writeBool(this->fully_reflected);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();

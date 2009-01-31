@@ -10,7 +10,7 @@
 #include <string>
 #include <Thrift.h>
 
-namespace facebook { namespace thrift { namespace transport {
+namespace apache { namespace thrift { namespace transport {
 
 /**
  * Class to encapsulate all the possible types of transport errors that may
@@ -21,7 +21,7 @@ namespace facebook { namespace thrift { namespace transport {
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-class TTransportException : public facebook::thrift::TException {
+class TTransportException : public apache::thrift::TException {
  public:
   /**
    * Error codes for the various types of exceptions.
@@ -39,25 +39,25 @@ class TTransportException : public facebook::thrift::TException {
   };
 
   TTransportException() :
-    facebook::thrift::TException(),
+    apache::thrift::TException(),
     type_(UNKNOWN) {}
 
   TTransportException(TTransportExceptionType type) :
-    facebook::thrift::TException(),
+    apache::thrift::TException(),
     type_(type) {}
 
   TTransportException(const std::string& message) :
-    facebook::thrift::TException(message),
+    apache::thrift::TException(message),
     type_(UNKNOWN) {}
 
   TTransportException(TTransportExceptionType type, const std::string& message) :
-    facebook::thrift::TException(message),
+    apache::thrift::TException(message),
     type_(type) {}
 
   TTransportException(TTransportExceptionType type,
                       const std::string& message,
                       int errno_copy) :
-    facebook::thrift::TException(message + ": " + TOutput::strerror_s(errno_copy)),
+    apache::thrift::TException(message + ": " + TOutput::strerror_s(errno_copy)),
     type_(type) {}
 
   virtual ~TTransportException() throw() {}
@@ -100,6 +100,6 @@ class TTransportException : public facebook::thrift::TException {
 
 };
 
-}}} // facebook::thrift::transport
+}}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TTRANSPORTEXCEPTION_H_

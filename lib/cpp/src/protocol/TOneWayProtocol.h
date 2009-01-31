@@ -9,7 +9,7 @@
 
 #include "TProtocol.h"
 
-namespace facebook { namespace thrift { namespace protocol {
+namespace apache { namespace thrift { namespace protocol {
 
 /**
  * Abstract class for implementing a protocol that can only be written,
@@ -288,6 +288,6 @@ class TReadOnlyProtocol : public TProtocol {
   std::string subclass_;
 };
 
-}}} // facebook::thrift::protocol
+}}} // apache::thrift::protocol
 
 #endif // #ifndef _THRIFT_PROTOCOL_TBINARYPROTOCOL_H_

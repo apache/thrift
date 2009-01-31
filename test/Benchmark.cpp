@@ -32,8 +32,8 @@ public:
 int main() {
   using namespace std;
   using namespace thrift::test::debug;
-  using namespace facebook::thrift::transport;
-  using namespace facebook::thrift::protocol;
+  using namespace apache::thrift::transport;
+  using namespace apache::thrift::protocol;
   using namespace boost;
 
   OneOfEach ooe;
@@ -79,7 +79,7 @@ int main() {
       TBinaryProtocol prot(buf2);
       ooe2.read(&prot);
 
-      //cout << facebook::thrift::ThriftDebugString(ooe2) << endl << endl;
+      //cout << apache::thrift::ThriftDebugString(ooe2) << endl << endl;
     }
     cout << " Read: " << num / (1000 * timer.frame()) << " kHz" << endl;
   }
