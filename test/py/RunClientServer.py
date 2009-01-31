@@ -19,6 +19,8 @@ def runTest(server_class):
         argv = [sys.executable, relfile("TestClient.py")]
         if server_class in FRAMED:
             argv.append('--framed')
+        if server_class == 'THttpServer':
+            argv.append('--http=/')
         ret = subprocess.call(argv)
         if ret != 0:
             raise Exception("subprocess failed")
@@ -29,5 +31,11 @@ def runTest(server_class):
     # wait for shutdown
     time.sleep(1)
 
-map(runTest, ["TForkingServer", "TThreadPoolServer",
-              "TThreadedServer", "TSimpleServer", "TNonblockingServer"])
+map(runTest, [
+  "TSimpleServer",
+  "TThreadedServer",
+  "TThreadPoolServer",
+  "TForkingServer",
+  "TNonblockingServer",
+  "THttpServer",
+  ])
