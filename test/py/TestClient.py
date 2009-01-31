@@ -99,7 +99,7 @@ class AbstractTest(unittest.TestCase):
 
   def testAsync(self):
     start = time.time()
-    self.client.testAsync(2)
+    self.client.testAsync(0.5)
     end = time.time()
     self.assertTrue(end - start < 0.2,
                     "async sleep took %f sec" % (end - start))
