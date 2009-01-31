@@ -64,12 +64,49 @@ class AcceleratedBinaryTest(AbstractTest):
   protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory()
 
 
+class AcceleratedFramedTest(unittest.TestCase):
+  def testSplit(self):
+    """Test FramedTransport and BinaryProtocolAccelerated
+
+    Tests that TBinaryProtocolAccelerated and TFramedTransport
+    play nicely together when a read spans a frame"""
+
+    protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory()
+    bigstring = "".join(chr(byte) for byte in range(ord("a"), ord("z")+1))
+
+    databuf = TTransport.TMemoryBuffer()
+    prot = protocol_factory.getProtocol(databuf)
+    prot.writeI32(42)
+    prot.writeString(bigstring)
+    prot.writeI16(24)
+    data = databuf.getvalue()
+    cutpoint = len(data)/2
+    parts = [ data[:cutpoint], data[cutpoint:] ]
+
+    framed_buffer = TTransport.TMemoryBuffer()
+    framed_writer = TTransport.TFramedTransport(framed_buffer)
+    for part in parts:
+      framed_writer.write(part)
+      framed_writer.flush()
+    self.assertEquals(len(framed_buffer.getvalue()), len(data) + 8)
+
+    # Recreate framed_buffer so we can read from it.
+    framed_buffer = TTransport.TMemoryBuffer(framed_buffer.getvalue())
+    framed_reader = TTransport.TFramedTransport(framed_buffer)
+    prot = protocol_factory.getProtocol(framed_reader)
+    self.assertEqual(prot.readI32(), 42)
+    self.assertEqual(prot.readString(), bigstring)
+    self.assertEqual(prot.readI16(), 24)
+
+
+
 def suite():
   suite = unittest.TestSuite()
   loader = unittest.TestLoader()
 
   suite.addTest(loader.loadTestsFromTestCase(NormalBinaryTest))
   suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
+  suite.addTest(loader.loadTestsFromTestCase(AcceleratedFramedTest))
   return suite
 
 if __name__ == "__main__":

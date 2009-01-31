@@ -228,7 +228,7 @@ class TFramedTransportFactory:
     return framed
 
 
-class TFramedTransport(TTransportBase):
+class TFramedTransport(TTransportBase, CReadableTransport):
 
   """Class that wraps another transport and frames its I/O when writing."""
 
@@ -274,3 +274,18 @@ class TFramedTransport(TTransportBase):
     buf = pack("!i", wsz) + wout
     self.__trans.write(buf)
     self.__trans.flush()
+
+  # Implement the CReadableTransport interface.
+  @property
+  def cstringio_buf(self):
+    return self.__rbuf
+
+  def cstringio_refill(self, prefix, reqlen):
+    # self.__rbuf will already be empty here because fastbinary doesn't
+    # ask for a refill until the previous buffer is empty.  Therefore,
+    # we can start reading new frames immediately.
+    while len(prefix) < reqlen:
+      readFrame()
+      prefix += self.__rbuf.getvalue()
+    self.__rbuf = StringIO(prefix)
+    return self.__rbuf
