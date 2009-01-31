@@ -24,7 +24,7 @@ namespace Thrift.Transport
 	/// </summary>
 	public class TTransportFactory
 	{
-		public TTransport GetTransport(TTransport trans)
+		public virtual TTransport GetTransport(TTransport trans)
 		{
 			return trans;
 		}
