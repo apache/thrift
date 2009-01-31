@@ -1,0 +1,33 @@
+[if-any includes]Includes:[for includes]
+  [includes][end]
+
+[end][if-any namespaces]Namespaces:[for namespaces]
+  [namespaces.lang] [namespaces.namespace][end]
+
+[end][if-any cpp_includes]C++ Includes:[for cpp_includes]
+  [cpp_includes][end]
+
+[end][if-any php_namespace]PHP Namespace: [php_namespace]
+[end][if-any xsd_namespace]XSD Namespace: [xsd_namespace]
+[end][if-any consts]Constants:[for consts]
+  [consts.ident] [consts.field_type.serializer] = [consts.value.cvalue][end]
+
+[end][if-any typedefs]Typedefs:[for typedefs]
+  [typedefs.ident] => [typedefs.field_type.serializer][end]
+
+[end][if-any enums]Enums:[for enums]
+  [enums.ident] {[for enums.values]
+    [enums.values.ident] = [enums.values.value],[end]
+  }[end]
+
+[end][if-any structs]Structs:[for structs]
+  [structs.ident] {[for structs.fields]
+    [structs.fields.field_id]: [structs.fields.field_type.serializer] [structs.fields.ident],[end]
+  }[end]
+
+[end][if-any exceptions]Exceptions:[for exceptions]
+  [exceptions.ident][end]
+
+[end][if-any services]Services:[for services]
+  [services.ident][end]
+[end]

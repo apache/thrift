@@ -1,0 +1,3 @@
+[is ctype "map"]{[for value][value.key.cvalue]: [value.value.cvalue],[end]}[#
+#][else][is ctype "list"][[][for value][value.cvalue],[end]][#
+#][else][value.tvalue][end][end]

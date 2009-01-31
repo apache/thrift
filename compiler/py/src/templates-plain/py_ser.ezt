@@ -1,0 +1,6 @@
+[is ident.tvalue "map"]map<[map_from.serializer],[map_to.serializer]>[#
+][else][is ident.tvalue "set"]set<[set_of.serializer]>[#
+][else][is ident.tvalue "list"]list<[list_of.serializer]>[#
+][else][if-any values]string {[for values][values],[end]}[#
+][else][ident.tvalue][#
+][end][end][end][end]
