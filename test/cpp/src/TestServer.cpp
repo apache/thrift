@@ -229,7 +229,7 @@ class TestHandler : public ThriftTestIf {
     if (arg.compare("Xception") == 0) {
       Xception e;
       e.errorCode = 1001;
-      e.message = "This is an Xception";
+      e.message = arg;
       throw e;
     } else if (arg.compare("ApplicationException") == 0) {
       facebook::thrift::TException e;
