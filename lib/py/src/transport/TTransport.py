@@ -234,7 +234,7 @@ class TFramedTransport(TTransportBase):
 
   def __init__(self, trans,):
     self.__trans = trans
-    self.__rbuf = ''
+    self.__rbuf = StringIO()
     self.__wbuf = StringIO()
 
   def isOpen(self):
@@ -247,17 +247,17 @@ class TFramedTransport(TTransportBase):
     return self.__trans.close()
 
   def read(self, sz):
-    if len(self.__rbuf) == 0:
-      self.readFrame()
-    give = min(len(self.__rbuf), sz)
-    buff = self.__rbuf[0:give]
-    self.__rbuf = self.__rbuf[give:]
-    return buff
+    ret = self.__rbuf.read(sz)
+    if len(ret) != 0:
+      return ret
+
+    self.readFrame()
+    return self.__rbuf.read(sz)
 
   def readFrame(self):
     buff = self.__trans.readAll(4)
     sz, = unpack('!i', buff)
-    self.__rbuf = self.__trans.readAll(sz)
+    self.__rbuf = StringIO(self.__trans.readAll(sz))
 
   def write(self, buf):
     self.__wbuf.write(buf)
