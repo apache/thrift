@@ -232,16 +232,10 @@ class TFramedTransport(TTransportBase):
 
   """Class that wraps another transport and frames its I/O when writing."""
 
-  def __init__(self, trans, read=True, write=True):
+  def __init__(self, trans,):
     self.__trans = trans
-    if read:
-      self.__rbuf = ''
-    else:
-      self.__rbuf = None
-    if write:
-      self.__wbuf = StringIO()
-    else:
-      self.__wbuf = None
+    self.__rbuf = ''
+    self.__wbuf = StringIO()
 
   def isOpen(self):
     return self.__trans.isOpen()
@@ -253,8 +247,6 @@ class TFramedTransport(TTransportBase):
     return self.__trans.close()
 
   def read(self, sz):
-    if self.__rbuf == None:
-      return self.__trans.read(sz)
     if len(self.__rbuf) == 0:
       self.readFrame()
     give = min(len(self.__rbuf), sz)
@@ -268,13 +260,9 @@ class TFramedTransport(TTransportBase):
     self.__rbuf = self.__trans.readAll(sz)
 
   def write(self, buf):
-    if self.__wbuf == None:
-      return self.__trans.write(buf)
     self.__wbuf.write(buf)
 
   def flush(self):
-    if self.__wbuf == None:
-      return self.__trans.flush()
     wout = self.__wbuf.getvalue()
     wsz = len(wout)
     # reset wbuf before write/flush to preserve state on underlying failure
