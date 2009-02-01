@@ -66,6 +66,12 @@ if test "$with_py" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_PYTHON, [test -n "$PYTHON" -a "$PYTHON" != ":"])
 
+AX_THRIFT_LIB(perl, [Perl], yes)
+if test "$with_perl" = "yes"; then
+  AC_PATH_PROG([PERL], [perl])
+fi
+AM_CONDITIONAL(WITH_PERL, [test -n "$PERL"])
+
 AX_THRIFT_LIB(ruby, [Ruby], yes)
 if test "$with_ruby" = "yes"; then
   AC_PATH_PROG([RUBY], [ruby])
@@ -177,6 +183,8 @@ AC_CONFIG_FILES([
   lib/cpp/thrift-z.pc
   lib/csharp/Makefile
   lib/java/Makefile
+  lib/perl/Makefile
+  lib/perl/test/Makefile
   lib/py/Makefile
   lib/rb/Makefile
   if/Makefile
