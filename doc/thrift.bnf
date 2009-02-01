@@ -48,11 +48,11 @@ of a function, or an exception.
     <field-name> ::= STRING
 
     <field-type> ::= T_BOOL | T_BYTE | T_I8 | T_I16 | T_I32 | T_I64 | T_DOUBLE
-                     | T_STRING | T_STRUCT | T_MAP | T_SET | T_LIST
+                     | T_STRING | T_BINARY | T_STRUCT | T_MAP | T_SET | T_LIST
 
       <field-id> ::= I16
 
-    <field-data> ::= I8 | I16 | I32 | I64 | DOUBLE | STRING |
+    <field-data> ::= I8 | I16 | I32 | I64 | DOUBLE | STRING | BINARY
                      <struct> | <map> | <list> | <set>
 
            <map> ::= <map-begin> <field-datum>* <map-end>

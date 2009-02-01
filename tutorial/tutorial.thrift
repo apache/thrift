@@ -21,6 +21,7 @@
  *  i64         Signed 64-bit integer
  *  double      64-bit floating point value
  *  string      String
+ *  binary      Blob (byte array)
  *  map<t1,t2>  Map from one type to another
  *  list<t1>    Ordered list of one type
  *  set<t1>     Set of unique elements of one type
