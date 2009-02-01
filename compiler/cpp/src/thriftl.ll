@@ -141,7 +141,6 @@ st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
 "except"             { thrift_reserved_keyword(yytext); }
 "exec"               { thrift_reserved_keyword(yytext); }
 "false"              { thrift_reserved_keyword(yytext); }
-"final"              { thrift_reserved_keyword(yytext); }
 "finally"            { thrift_reserved_keyword(yytext); }
 "float"              { thrift_reserved_keyword(yytext); }
 "for"                { thrift_reserved_keyword(yytext); }

@@ -680,9 +680,11 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     scope_down(out);
   }
 
-  out <<
-    endl <<
-    indent() << "virtual ~" << tstruct->get_name() << "() throw() {}" << endl << endl;
+  if (tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
+    out <<
+      endl <<
+      indent() << "virtual ~" << tstruct->get_name() << "() throw() {}" << endl << endl;
+  }
 
   // Pointer to this structure's reflection local typespec.
   if (gen_dense_) {

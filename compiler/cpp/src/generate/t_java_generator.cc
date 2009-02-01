@@ -596,8 +596,11 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
                                                        bool is_result) {
   generate_java_doc(out, tstruct);
 
+  bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
+
   indent(out) <<
-    "public " << (in_class ? "static " : "") << "class " << tstruct->get_name() << " ";
+    "public " << (is_final ? "final " : "") <<
+     (in_class ? "static " : "") << "class " << tstruct->get_name() << " ";
 
   if (is_exception) {
     out << "extends Exception ";
