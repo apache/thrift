@@ -299,6 +299,8 @@ void t_html_generator::generate_css() {
   f_out_ <<
     "div.definition { border: 1px solid gray; margin: 10px; padding: 10px; }" << endl;
   f_out_ <<
+    "div.extends { margin: -0.5em 0 1em 5em }" << endl;
+  f_out_ <<
     "table { border: 1px solid grey; border-collapse: collapse; }" << endl;
   f_out_ <<
     "td { border: 1px solid grey; padding: 1px 6px; vertical-align: top; }" << endl;
@@ -367,6 +369,8 @@ int t_html_generator::print_type(t_type* ttype) {
       f_out_ << "Struct_";
     } else if (ttype->is_enum()) {
       f_out_ << "Enum_";
+    } else if (ttype->is_service()) {
+      f_out_ << "Svc_";
     }
     f_out_ << type_name << "\">";
     len = type_name.size();
@@ -552,6 +556,12 @@ void t_html_generator::generate_xception(t_struct* txception) {
 void t_html_generator::generate_service(t_service* tservice) {
   f_out_ << "<h3 id=\"Svc_" << service_name_ << "\">Service: "
 	 << service_name_ << "</h3>" << endl;
+
+  if (tservice->get_extends()) {
+    f_out_ << "<div class=\"extends\"><em>extends</em> ";
+    print_type(tservice->get_extends());
+    f_out_ << "</div>\n";
+  }
   print_doc(tservice);
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator fn_iter = functions.begin();
