@@ -15,7 +15,10 @@ module Thrift
     VERSION_1 = 0x80010000
 
     def write_message_begin(name, type, seqid)
-      write_i32(VERSION_1 | type)
+      # this is necessary because we added (needed) bounds checking to 
+      # write_i32, and 0x80010000 is too big for that.
+      write_i16(VERSION_1 >> 16)
+      write_i16(type)
       write_string(name)
       write_i32(seqid)
     end
@@ -58,6 +61,7 @@ module Thrift
     end
 
     def write_i32(i32)
+      raise RangeError if i32 < -2**31 || i32 >= 2**31
       trans.write([i32].pack('N'))
     end
 

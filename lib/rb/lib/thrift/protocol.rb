@@ -38,6 +38,11 @@ module Thrift
       @trans = trans
     end
 
+    def native?
+      puts "wrong method is being called!"
+      false
+    end
+
     def write_message_begin(name, type, seqid); nil; end
     deprecate! :writeMessageBegin => :write_message_begin
 

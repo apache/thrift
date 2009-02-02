@@ -31,3 +31,5 @@ Spec::Runner.configure do |configuration|
     Thrift.type_checking = true
   end
 end
+
+require "thrift_native"

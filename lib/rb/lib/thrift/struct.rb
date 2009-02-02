@@ -102,10 +102,10 @@ module Thrift
 
     def write(oprot)
       validate
-      if oprot.respond_to?(:encode_binary)
-        # TODO(kevinclark): Clean this so I don't have to access the transport.
-        oprot.trans.write oprot.encode_binary(self)
-      else
+      # if oprot.respond_to?(:encode_binary)
+      #   # TODO(kevinclark): Clean this so I don't have to access the transport.
+      #   oprot.trans.write oprot.encode_binary(self)
+      # else
         oprot.write_struct_begin(self.class.name)
         each_field do |fid, type, name|
           unless (value = instance_variable_get("@#{name}")).nil?
@@ -120,7 +120,7 @@ module Thrift
         end
         oprot.write_field_stop
         oprot.write_struct_end
-      end
+      # end
     end
 
     def ==(other)

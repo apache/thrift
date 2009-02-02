@@ -7,3 +7,8 @@ require 'thrift/processor'
 require 'thrift/exceptions'
 require 'thrift/client'
 require 'thrift/struct'
+begin
+  require "thrift_native"
+rescue
+  puts "Could not load thrift_native libraries. Using pure ruby version."
+end

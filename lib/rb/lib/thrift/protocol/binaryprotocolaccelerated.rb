@@ -1,5 +1,5 @@
 require 'thrift/protocol/binaryprotocol'
-require 'binaryprotocolaccelerated'
+require 'thrift_native'
 
 =begin
 The only change required for a transport to support TBinaryProtocolAccelerated is to implement 2 methods:
