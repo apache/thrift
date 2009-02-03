@@ -173,7 +173,7 @@ module Thrift
         # this will set our field default values
         method(:struct_initialize).call()
         # now give it to the exception
-        self.class.send(:class_variable_get, :'@@__thrift_struct_real_initialize').bind(self).call(*args, &block)
+        self.class.send(:class_variable_get, :'@@__thrift_struct_real_initialize').bind(self).call(*args, &block) if args.size > 0
         # self.class.instance_method(:initialize).bind(self).call(*args, &block)
       end
     end
