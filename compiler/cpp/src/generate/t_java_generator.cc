@@ -740,12 +740,9 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   indent(out) << "  return new " << tstruct->get_name() << "(this);" << endl;
   indent(out) << "}" << endl << endl;
 
-
-  if (bean_style_) {
-    generate_java_bean_boilerplate(out, tstruct);
-    generate_generic_field_getters_setters(out, tstruct);
-    generate_generic_isset_method(out, tstruct);
-  }
+  generate_java_bean_boilerplate(out, tstruct);
+  generate_generic_field_getters_setters(out, tstruct);
+  generate_generic_isset_method(out, tstruct);
 
   generate_java_struct_equality(out, tstruct);
 
