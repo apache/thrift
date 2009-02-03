@@ -1,4 +1,5 @@
 THRIFTCODE= \
+            src/Protocol/TBase.cs \
             src/Protocol/TProtocolException.cs \
             src/Protocol/TProtocolFactory.cs \
             src/Protocol/TList.cs \
@@ -12,6 +13,7 @@ THRIFTCODE= \
             src/Protocol/TMessage.cs \
             src/Protocol/TStruct.cs \
             src/Protocol/TBinaryProtocol.cs \
+            src/Server/TThreadedServer.cs \
             src/Server/TThreadPoolServer.cs \
             src/Server/TSimpleServer.cs \
             src/Server/TServer.cs \
