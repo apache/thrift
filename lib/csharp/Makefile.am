@@ -31,7 +31,7 @@ CSC=gmcs
 all-local: Thrift.dll
 
 Thrift.dll: $(THRIFTCODE)
-	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library
+	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library /langversion:linq
 
 clean-local:
 	$(RM) Thrift.dll
