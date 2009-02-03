@@ -15,6 +15,7 @@ THRIFTCODE= \
             src/Server/TThreadPoolServer.cs \
             src/Server/TSimpleServer.cs \
             src/Server/TServer.cs \
+            src/Transport/TBufferedTransport.cs \
             src/Transport/TTransport.cs \
             src/Transport/TSocket.cs \
             src/Transport/TTransportException.cs \
