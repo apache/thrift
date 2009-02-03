@@ -1,5 +1,6 @@
 #include <ruby.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <constants.h>
 #include <struct.h>
 

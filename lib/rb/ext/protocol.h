@@ -1,2 +1,1 @@
-
 void Init_protocol();

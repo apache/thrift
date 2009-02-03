@@ -1,6 +1,27 @@
-
 #include <struct.h>
 #include <constants.h>
+
+#ifndef HAVE_STRLCPY
+
+static
+size_t
+strlcpy (char *dst, const char *src, size_t dst_sz)
+{
+    size_t n;
+
+    for (n = 0; n < dst_sz; n++) {
+      if ((*dst++ = *src++) == '\0')
+        break;
+    }
+
+    if (n < dst_sz)
+      return n;
+    if (n > 0)
+      *(dst - 1) = '\0';
+    return n + strlen (src);
+}
+
+#endif
 
 static native_proto_method_table *mt;
 
