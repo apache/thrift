@@ -466,7 +466,7 @@ void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, b
   out << endl;
 
   indent_up();
-  indent(out) << "include Thrift::Struct" << endl;
+  indent(out) << "include ::Thrift::Struct" << endl;
 
   if (is_exception) {
     generate_rb_simple_exception_constructor(out, tstruct);
@@ -714,7 +714,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
   indent_up();
 
   indent(f_service_) <<
-    "include Thrift::Client" << endl << endl;
+    "include ::Thrift::Client" << endl << endl;
 
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
@@ -847,7 +847,7 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
   indent_up();
 
   f_service_ <<
-    indent() << "include Thrift::Processor" << endl <<
+    indent() << "include ::Thrift::Processor" << endl <<
     endl;
 
   // Generate the process subfunctions
