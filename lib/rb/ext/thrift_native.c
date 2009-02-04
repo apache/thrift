@@ -73,6 +73,8 @@ ID native_qmark_method_id;
 // constant ids
 ID fields_const_id;
 ID transport_ivar_id;
+ID strict_read_ivar_id;
+ID strict_write_ivar_id;
 
 // cached symbols
 VALUE type_sym;
@@ -153,6 +155,8 @@ void Init_thrift_native() {
   // constant ids
   fields_const_id = rb_intern("FIELDS");
   transport_ivar_id = rb_intern("@trans");
+  strict_read_ivar_id = rb_intern("@strict_read");
+  strict_write_ivar_id = rb_intern("@strict_write");  
   
   // cached symbols
   type_sym = ID2SYM(rb_intern("type"));

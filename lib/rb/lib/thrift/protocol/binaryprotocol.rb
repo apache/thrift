@@ -13,14 +13,29 @@ module Thrift
   class BinaryProtocol < Protocol
     VERSION_MASK = 0xffff0000
     VERSION_1 = 0x80010000
+    TYPE_MASK = 0x000000ff
+    
+    attr_reader :strict_read, :strict_write
+
+    def initialize(trans, strict_read=true, strict_write=true)
+      super(trans)
+      @strict_read = strict_read
+      @strict_write = strict_write
+    end
 
     def write_message_begin(name, type, seqid)
       # this is necessary because we added (needed) bounds checking to 
       # write_i32, and 0x80010000 is too big for that.
-      write_i16(VERSION_1 >> 16)
-      write_i16(type)
-      write_string(name)
-      write_i32(seqid)
+      if strict_write
+        write_i16(VERSION_1 >> 16)
+        write_i16(type)
+        write_string(name)
+        write_i32(seqid)
+      else
+        write_string(name)
+        write_byte(type)
+        write_i32(seqid)
+      end
     end
 
     def write_field_begin(name, type, id)
@@ -82,13 +97,23 @@ module Thrift
 
     def read_message_begin
       version = read_i32
-      if (version & VERSION_MASK != VERSION_1)
-        raise ProtocolException.new(ProtocolException::BAD_VERSION, 'Missing version identifier')
+      if version < 0
+        if (version & VERSION_MASK != VERSION_1)
+          raise ProtocolException.new(ProtocolException::BAD_VERSION, 'Missing version identifier')
+        end
+        type = version & TYPE_MASK
+        name = read_string
+        seqid = read_i32
+        [name, type, seqid]
+      else
+        if strict_read
+          raise ProtocolException.new(ProtocolException::BAD_VERSION, 'No version identifier, old protocol client?')
+        end
+        name = trans.read_all(version)
+        type = read_byte
+        seqid = read_i32
+        [name, type, seqid]
       end
-      type = version & 0x000000ff
-      name = read_string
-      seqid = read_i32
-      [name, type, seqid]
     end
 
     def read_field_begin

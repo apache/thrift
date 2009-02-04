@@ -6,15 +6,37 @@ shared_examples_for 'a binary protocol' do
     @prot = protocol_class.new(@trans)
   end
 
-  it "should define the proper VERSION_1 and VERSION_MASK" do
+  it "should define the proper VERSION_1, VERSION_MASK AND TYPE_MASK" do
     protocol_class.const_get(:VERSION_MASK).should == 0xffff0000
     protocol_class.const_get(:VERSION_1).should == 0x80010000
+    protocol_class.const_get(:TYPE_MASK).should == 0x000000ff
   end
+
+  it "should make strict_read readable" do
+    @prot.strict_read.should eql(true)
+  end
+
+  it "should make strict_write readable" do
+    @prot.strict_write.should eql(true)
+  end    
 
   it "should write the message header" do
     @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
     @trans.read(1000).should == [protocol_class.const_get(:VERSION_1) | Thrift::MessageTypes::CALL, "testMessage".size, "testMessage", 17].pack("NNa11N")
   end
+  
+  it "should write the message header without version when writes are not strict" do
+    @prot = protocol_class.new(@trans, true, false) # no strict write
+    @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
+    @trans.read(1000).should == "\000\000\000\vtestMessage\001\000\000\000\021"
+  end
+  
+  it "should write the message header with a version when writes are strict" do
+    @prot = protocol_class.new(@trans) # strict write
+    @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
+    @trans.read(1000).should == "\200\001\000\001\000\000\000\vtestMessage\000\000\000\021"
+  end
+  
 
   # message footer is a noop
 
