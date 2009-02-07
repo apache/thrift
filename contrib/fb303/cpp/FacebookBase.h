@@ -18,9 +18,9 @@
 
 namespace facebook { namespace fb303 {
 
-using facebook::thrift::concurrency::Mutex;
-using facebook::thrift::concurrency::ReadWriteMutex;
-using facebook::thrift::server::TServer;
+using apache::thrift::concurrency::Mutex;
+using apache::thrift::concurrency::ReadWriteMutex;
+using apache::thrift::server::TServer;
 
 struct ReadWriteInt : ReadWriteMutex {int64_t value;};
 struct ReadWriteCounterMap : ReadWriteMutex,

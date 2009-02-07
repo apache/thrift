@@ -7,7 +7,7 @@
 #include "FacebookBase.h"
 
 using namespace facebook::fb303;
-using facebook::thrift::concurrency::Guard;
+using apache::thrift::concurrency::Guard;
 
 FacebookBase::FacebookBase(std::string name) :
   name_(name) {
