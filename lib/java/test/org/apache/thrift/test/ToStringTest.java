@@ -62,7 +62,7 @@ public class ToStringTest {
     } 
 
     object.req_bin = new byte[] {};
-    object.__isset.opt_bin = true;
+    object.setOpt_binIsSet(true);
 
 
     if (!object.toString().equals(

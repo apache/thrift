@@ -59,8 +59,9 @@ public class EqualityTest {
             print >> out, "    rhs = new JavaTestHelper();"
             print >> out, "    lhs." + option + "_" + type, "=", vals[type][0] + ";"
             print >> out, "    rhs." + option + "_" + type, "=", vals[type][0 if equal else 1] + ";"
-            if (is_set[0]): print >> out, "    lhs.__isset." + option + "_" + type, "= true;"
-            if (is_set[1]): print >> out, "    rhs.__isset." + option + "_" + type, "= true;"
+            isset_setter = "set" + option[0].upper() + option[1:] + "_" + type + "IsSet"
+            if (is_set[0]): print >> out, "    lhs." + isset_setter + "(true);"
+            if (is_set[1]): print >> out, "    rhs." + isset_setter + "(true);"
             if (is_null[0]): print >> out, "    lhs." + option + "_" + type, "= null;"
             if (is_null[1]): print >> out, "    rhs." + option + "_" + type, "= null;"
             this_present = not is_null[0] and (option == 'req' or is_set[0])
@@ -121,7 +122,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_int = 1;
     rhs.req_int = 1;
-    rhs.__isset.req_int = true;
+    rhs.setReq_intIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -133,7 +134,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_int = 1;
     rhs.req_int = 2;
-    rhs.__isset.req_int = true;
+    rhs.setReq_intIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -143,7 +144,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_int = 1;
     rhs.req_int = 1;
-    lhs.__isset.req_int = true;
+    lhs.setReq_intIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -155,7 +156,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_int = 1;
     rhs.req_int = 2;
-    lhs.__isset.req_int = true;
+    lhs.setReq_intIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -165,8 +166,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_int = 1;
     rhs.req_int = 1;
-    lhs.__isset.req_int = true;
-    rhs.__isset.req_int = true;
+    lhs.setReq_intIsSet(true);
+    rhs.setReq_intIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -178,8 +179,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_int = 1;
     rhs.req_int = 2;
-    lhs.__isset.req_int = true;
-    rhs.__isset.req_int = true;
+    lhs.setReq_intIsSet(true);
+    rhs.setReq_intIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -211,7 +212,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_int = 1;
     rhs.opt_int = 1;
-    rhs.__isset.opt_int = true;
+    rhs.setOpt_intIsSet(true);
     // this_present = False
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -221,7 +222,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_int = 1;
     rhs.opt_int = 2;
-    rhs.__isset.opt_int = true;
+    rhs.setOpt_intIsSet(true);
     // this_present = False
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -231,7 +232,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_int = 1;
     rhs.opt_int = 1;
-    lhs.__isset.opt_int = true;
+    lhs.setOpt_intIsSet(true);
     // this_present = True
     // that_present = False
     if (lhs.equals(rhs) != false)
@@ -241,7 +242,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_int = 1;
     rhs.opt_int = 2;
-    lhs.__isset.opt_int = true;
+    lhs.setOpt_intIsSet(true);
     // this_present = True
     // that_present = False
     if (lhs.equals(rhs) != false)
@@ -251,8 +252,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_int = 1;
     rhs.opt_int = 1;
-    lhs.__isset.opt_int = true;
-    rhs.__isset.opt_int = true;
+    lhs.setOpt_intIsSet(true);
+    rhs.setOpt_intIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -264,8 +265,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_int = 1;
     rhs.opt_int = 2;
-    lhs.__isset.opt_int = true;
-    rhs.__isset.opt_int = true;
+    lhs.setOpt_intIsSet(true);
+    rhs.setOpt_intIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -301,7 +302,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    rhs.__isset.req_obj = true;
+    rhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     rhs.req_obj = null;
     // this_present = False
@@ -315,7 +316,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    rhs.__isset.req_obj = true;
+    rhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     rhs.req_obj = null;
     // this_present = False
@@ -329,7 +330,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    lhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     rhs.req_obj = null;
     // this_present = False
@@ -343,7 +344,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    lhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     rhs.req_obj = null;
     // this_present = False
@@ -357,8 +358,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    lhs.__isset.req_obj = true;
-    rhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
+    rhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     rhs.req_obj = null;
     // this_present = False
@@ -372,8 +373,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    lhs.__isset.req_obj = true;
-    rhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
+    rhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     rhs.req_obj = null;
     // this_present = False
@@ -407,7 +408,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    rhs.__isset.req_obj = true;
+    rhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     // this_present = False
     // that_present = True
@@ -418,7 +419,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    rhs.__isset.req_obj = true;
+    rhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     // this_present = False
     // that_present = True
@@ -429,7 +430,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    lhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     // this_present = False
     // that_present = True
@@ -440,7 +441,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    lhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     // this_present = False
     // that_present = True
@@ -451,8 +452,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    lhs.__isset.req_obj = true;
-    rhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
+    rhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     // this_present = False
     // that_present = True
@@ -463,8 +464,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    lhs.__isset.req_obj = true;
-    rhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
+    rhs.setReq_objIsSet(true);
     lhs.req_obj = null;
     // this_present = False
     // that_present = True
@@ -495,7 +496,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    rhs.__isset.req_obj = true;
+    rhs.setReq_objIsSet(true);
     rhs.req_obj = null;
     // this_present = True
     // that_present = False
@@ -506,7 +507,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    rhs.__isset.req_obj = true;
+    rhs.setReq_objIsSet(true);
     rhs.req_obj = null;
     // this_present = True
     // that_present = False
@@ -517,7 +518,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    lhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
     rhs.req_obj = null;
     // this_present = True
     // that_present = False
@@ -528,7 +529,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    lhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
     rhs.req_obj = null;
     // this_present = True
     // that_present = False
@@ -539,8 +540,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    lhs.__isset.req_obj = true;
-    rhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
+    rhs.setReq_objIsSet(true);
     rhs.req_obj = null;
     // this_present = True
     // that_present = False
@@ -551,8 +552,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    lhs.__isset.req_obj = true;
-    rhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
+    rhs.setReq_objIsSet(true);
     rhs.req_obj = null;
     // this_present = True
     // that_present = False
@@ -583,7 +584,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    rhs.__isset.req_obj = true;
+    rhs.setReq_objIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -595,7 +596,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    rhs.__isset.req_obj = true;
+    rhs.setReq_objIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -605,7 +606,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    lhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -617,7 +618,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    lhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -627,8 +628,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "foo";
-    lhs.__isset.req_obj = true;
-    rhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
+    rhs.setReq_objIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -640,8 +641,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_obj = "foo";
     rhs.req_obj = "bar";
-    lhs.__isset.req_obj = true;
-    rhs.__isset.req_obj = true;
+    lhs.setReq_objIsSet(true);
+    rhs.setReq_objIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -677,7 +678,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    rhs.__isset.opt_obj = true;
+    rhs.setOpt_objIsSet(true);
     lhs.opt_obj = null;
     rhs.opt_obj = null;
     // this_present = False
@@ -691,7 +692,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "bar";
-    rhs.__isset.opt_obj = true;
+    rhs.setOpt_objIsSet(true);
     lhs.opt_obj = null;
     rhs.opt_obj = null;
     // this_present = False
@@ -705,7 +706,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    lhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
     lhs.opt_obj = null;
     rhs.opt_obj = null;
     // this_present = False
@@ -719,7 +720,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "bar";
-    lhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
     lhs.opt_obj = null;
     rhs.opt_obj = null;
     // this_present = False
@@ -733,8 +734,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    lhs.__isset.opt_obj = true;
-    rhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
+    rhs.setOpt_objIsSet(true);
     lhs.opt_obj = null;
     rhs.opt_obj = null;
     // this_present = False
@@ -748,8 +749,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "bar";
-    lhs.__isset.opt_obj = true;
-    rhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
+    rhs.setOpt_objIsSet(true);
     lhs.opt_obj = null;
     rhs.opt_obj = null;
     // this_present = False
@@ -787,7 +788,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    rhs.__isset.opt_obj = true;
+    rhs.setOpt_objIsSet(true);
     lhs.opt_obj = null;
     // this_present = False
     // that_present = True
@@ -798,7 +799,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "bar";
-    rhs.__isset.opt_obj = true;
+    rhs.setOpt_objIsSet(true);
     lhs.opt_obj = null;
     // this_present = False
     // that_present = True
@@ -809,20 +810,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    lhs.__isset.opt_obj = true;
-    lhs.opt_obj = null;
-    // this_present = False
-    // that_present = False
-    if (lhs.equals(rhs) != true)
-      throw new RuntimeException("Failure");
-    if (lhs.hashCode() != rhs.hashCode())
-      throw new RuntimeException("Failure");
-
-    lhs = new JavaTestHelper();
-    rhs = new JavaTestHelper();
-    lhs.opt_obj = "foo";
-    rhs.opt_obj = "bar";
-    lhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
     lhs.opt_obj = null;
     // this_present = False
     // that_present = False
@@ -834,9 +822,22 @@ public class EqualityTest {
     lhs = new JavaTestHelper();
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
+    rhs.opt_obj = "bar";
+    lhs.setOpt_objIsSet(true);
+    lhs.opt_obj = null;
+    // this_present = False
+    // that_present = False
+    if (lhs.equals(rhs) != true)
+      throw new RuntimeException("Failure");
+    if (lhs.hashCode() != rhs.hashCode())
+      throw new RuntimeException("Failure");
+
+    lhs = new JavaTestHelper();
+    rhs = new JavaTestHelper();
+    lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    lhs.__isset.opt_obj = true;
-    rhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
+    rhs.setOpt_objIsSet(true);
     lhs.opt_obj = null;
     // this_present = False
     // that_present = True
@@ -847,8 +848,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "bar";
-    lhs.__isset.opt_obj = true;
-    rhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
+    rhs.setOpt_objIsSet(true);
     lhs.opt_obj = null;
     // this_present = False
     // that_present = True
@@ -883,7 +884,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    rhs.__isset.opt_obj = true;
+    rhs.setOpt_objIsSet(true);
     rhs.opt_obj = null;
     // this_present = False
     // that_present = False
@@ -896,7 +897,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "bar";
-    rhs.__isset.opt_obj = true;
+    rhs.setOpt_objIsSet(true);
     rhs.opt_obj = null;
     // this_present = False
     // that_present = False
@@ -909,7 +910,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    lhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
     rhs.opt_obj = null;
     // this_present = True
     // that_present = False
@@ -920,7 +921,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "bar";
-    lhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
     rhs.opt_obj = null;
     // this_present = True
     // that_present = False
@@ -931,8 +932,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    lhs.__isset.opt_obj = true;
-    rhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
+    rhs.setOpt_objIsSet(true);
     rhs.opt_obj = null;
     // this_present = True
     // that_present = False
@@ -943,8 +944,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "bar";
-    lhs.__isset.opt_obj = true;
-    rhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
+    rhs.setOpt_objIsSet(true);
     rhs.opt_obj = null;
     // this_present = True
     // that_present = False
@@ -977,7 +978,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    rhs.__isset.opt_obj = true;
+    rhs.setOpt_objIsSet(true);
     // this_present = False
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -987,7 +988,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "bar";
-    rhs.__isset.opt_obj = true;
+    rhs.setOpt_objIsSet(true);
     // this_present = False
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -997,7 +998,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    lhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
     // this_present = True
     // that_present = False
     if (lhs.equals(rhs) != false)
@@ -1007,7 +1008,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "bar";
-    lhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
     // this_present = True
     // that_present = False
     if (lhs.equals(rhs) != false)
@@ -1017,8 +1018,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "foo";
-    lhs.__isset.opt_obj = true;
-    rhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
+    rhs.setOpt_objIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -1030,8 +1031,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_obj = "foo";
     rhs.opt_obj = "bar";
-    lhs.__isset.opt_obj = true;
-    rhs.__isset.opt_obj = true;
+    lhs.setOpt_objIsSet(true);
+    rhs.setOpt_objIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -1067,7 +1068,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    rhs.__isset.req_bin = true;
+    rhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     rhs.req_bin = null;
     // this_present = False
@@ -1081,7 +1082,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    rhs.__isset.req_bin = true;
+    rhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     rhs.req_bin = null;
     // this_present = False
@@ -1095,7 +1096,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    lhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     rhs.req_bin = null;
     // this_present = False
@@ -1109,7 +1110,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    lhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     rhs.req_bin = null;
     // this_present = False
@@ -1123,8 +1124,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    lhs.__isset.req_bin = true;
-    rhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
+    rhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     rhs.req_bin = null;
     // this_present = False
@@ -1138,8 +1139,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    lhs.__isset.req_bin = true;
-    rhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
+    rhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     rhs.req_bin = null;
     // this_present = False
@@ -1173,7 +1174,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    rhs.__isset.req_bin = true;
+    rhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     // this_present = False
     // that_present = True
@@ -1184,7 +1185,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    rhs.__isset.req_bin = true;
+    rhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     // this_present = False
     // that_present = True
@@ -1195,7 +1196,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    lhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     // this_present = False
     // that_present = True
@@ -1206,7 +1207,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    lhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     // this_present = False
     // that_present = True
@@ -1217,8 +1218,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    lhs.__isset.req_bin = true;
-    rhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
+    rhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     // this_present = False
     // that_present = True
@@ -1229,8 +1230,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    lhs.__isset.req_bin = true;
-    rhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
+    rhs.setReq_binIsSet(true);
     lhs.req_bin = null;
     // this_present = False
     // that_present = True
@@ -1261,7 +1262,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    rhs.__isset.req_bin = true;
+    rhs.setReq_binIsSet(true);
     rhs.req_bin = null;
     // this_present = True
     // that_present = False
@@ -1272,7 +1273,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    rhs.__isset.req_bin = true;
+    rhs.setReq_binIsSet(true);
     rhs.req_bin = null;
     // this_present = True
     // that_present = False
@@ -1283,7 +1284,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    lhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
     rhs.req_bin = null;
     // this_present = True
     // that_present = False
@@ -1294,7 +1295,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    lhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
     rhs.req_bin = null;
     // this_present = True
     // that_present = False
@@ -1305,8 +1306,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    lhs.__isset.req_bin = true;
-    rhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
+    rhs.setReq_binIsSet(true);
     rhs.req_bin = null;
     // this_present = True
     // that_present = False
@@ -1317,8 +1318,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    lhs.__isset.req_bin = true;
-    rhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
+    rhs.setReq_binIsSet(true);
     rhs.req_bin = null;
     // this_present = True
     // that_present = False
@@ -1349,7 +1350,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    rhs.__isset.req_bin = true;
+    rhs.setReq_binIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -1361,7 +1362,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    rhs.__isset.req_bin = true;
+    rhs.setReq_binIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -1371,7 +1372,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    lhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -1383,7 +1384,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    lhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -1393,8 +1394,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{1,2};
-    lhs.__isset.req_bin = true;
-    rhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
+    rhs.setReq_binIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -1406,8 +1407,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.req_bin = new byte[]{1,2};
     rhs.req_bin = new byte[]{3,4};
-    lhs.__isset.req_bin = true;
-    rhs.__isset.req_bin = true;
+    lhs.setReq_binIsSet(true);
+    rhs.setReq_binIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -1443,7 +1444,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{1,2};
-    rhs.__isset.opt_bin = true;
+    rhs.setOpt_binIsSet(true);
     lhs.opt_bin = null;
     rhs.opt_bin = null;
     // this_present = False
@@ -1457,7 +1458,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{3,4};
-    rhs.__isset.opt_bin = true;
+    rhs.setOpt_binIsSet(true);
     lhs.opt_bin = null;
     rhs.opt_bin = null;
     // this_present = False
@@ -1471,7 +1472,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{1,2};
-    lhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
     lhs.opt_bin = null;
     rhs.opt_bin = null;
     // this_present = False
@@ -1485,7 +1486,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{3,4};
-    lhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
     lhs.opt_bin = null;
     rhs.opt_bin = null;
     // this_present = False
@@ -1499,8 +1500,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{1,2};
-    lhs.__isset.opt_bin = true;
-    rhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
+    rhs.setOpt_binIsSet(true);
     lhs.opt_bin = null;
     rhs.opt_bin = null;
     // this_present = False
@@ -1514,8 +1515,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{3,4};
-    lhs.__isset.opt_bin = true;
-    rhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
+    rhs.setOpt_binIsSet(true);
     lhs.opt_bin = null;
     rhs.opt_bin = null;
     // this_present = False
@@ -1553,56 +1554,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{1,2};
-    rhs.__isset.opt_bin = true;
-    lhs.opt_bin = null;
-    // this_present = False
-    // that_present = True
-    if (lhs.equals(rhs) != false)
-      throw new RuntimeException("Failure");
-
-    lhs = new JavaTestHelper();
-    rhs = new JavaTestHelper();
-    lhs.opt_bin = new byte[]{1,2};
-    rhs.opt_bin = new byte[]{3,4};
-    rhs.__isset.opt_bin = true;
-    lhs.opt_bin = null;
-    // this_present = False
-    // that_present = True
-    if (lhs.equals(rhs) != false)
-      throw new RuntimeException("Failure");
-
-    lhs = new JavaTestHelper();
-    rhs = new JavaTestHelper();
-    lhs.opt_bin = new byte[]{1,2};
-    rhs.opt_bin = new byte[]{1,2};
-    lhs.__isset.opt_bin = true;
-    lhs.opt_bin = null;
-    // this_present = False
-    // that_present = False
-    if (lhs.equals(rhs) != true)
-      throw new RuntimeException("Failure");
-    if (lhs.hashCode() != rhs.hashCode())
-      throw new RuntimeException("Failure");
-
-    lhs = new JavaTestHelper();
-    rhs = new JavaTestHelper();
-    lhs.opt_bin = new byte[]{1,2};
-    rhs.opt_bin = new byte[]{3,4};
-    lhs.__isset.opt_bin = true;
-    lhs.opt_bin = null;
-    // this_present = False
-    // that_present = False
-    if (lhs.equals(rhs) != true)
-      throw new RuntimeException("Failure");
-    if (lhs.hashCode() != rhs.hashCode())
-      throw new RuntimeException("Failure");
-
-    lhs = new JavaTestHelper();
-    rhs = new JavaTestHelper();
-    lhs.opt_bin = new byte[]{1,2};
-    rhs.opt_bin = new byte[]{1,2};
-    lhs.__isset.opt_bin = true;
-    rhs.__isset.opt_bin = true;
+    rhs.setOpt_binIsSet(true);
     lhs.opt_bin = null;
     // this_present = False
     // that_present = True
@@ -1613,8 +1565,57 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{3,4};
-    lhs.__isset.opt_bin = true;
-    rhs.__isset.opt_bin = true;
+    rhs.setOpt_binIsSet(true);
+    lhs.opt_bin = null;
+    // this_present = False
+    // that_present = True
+    if (lhs.equals(rhs) != false)
+      throw new RuntimeException("Failure");
+
+    lhs = new JavaTestHelper();
+    rhs = new JavaTestHelper();
+    lhs.opt_bin = new byte[]{1,2};
+    rhs.opt_bin = new byte[]{1,2};
+    lhs.setOpt_binIsSet(true);
+    lhs.opt_bin = null;
+    // this_present = False
+    // that_present = False
+    if (lhs.equals(rhs) != true)
+      throw new RuntimeException("Failure");
+    if (lhs.hashCode() != rhs.hashCode())
+      throw new RuntimeException("Failure");
+
+    lhs = new JavaTestHelper();
+    rhs = new JavaTestHelper();
+    lhs.opt_bin = new byte[]{1,2};
+    rhs.opt_bin = new byte[]{3,4};
+    lhs.setOpt_binIsSet(true);
+    lhs.opt_bin = null;
+    // this_present = False
+    // that_present = False
+    if (lhs.equals(rhs) != true)
+      throw new RuntimeException("Failure");
+    if (lhs.hashCode() != rhs.hashCode())
+      throw new RuntimeException("Failure");
+
+    lhs = new JavaTestHelper();
+    rhs = new JavaTestHelper();
+    lhs.opt_bin = new byte[]{1,2};
+    rhs.opt_bin = new byte[]{1,2};
+    lhs.setOpt_binIsSet(true);
+    rhs.setOpt_binIsSet(true);
+    lhs.opt_bin = null;
+    // this_present = False
+    // that_present = True
+    if (lhs.equals(rhs) != false)
+      throw new RuntimeException("Failure");
+
+    lhs = new JavaTestHelper();
+    rhs = new JavaTestHelper();
+    lhs.opt_bin = new byte[]{1,2};
+    rhs.opt_bin = new byte[]{3,4};
+    lhs.setOpt_binIsSet(true);
+    rhs.setOpt_binIsSet(true);
     lhs.opt_bin = null;
     // this_present = False
     // that_present = True
@@ -1649,7 +1650,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{1,2};
-    rhs.__isset.opt_bin = true;
+    rhs.setOpt_binIsSet(true);
     rhs.opt_bin = null;
     // this_present = False
     // that_present = False
@@ -1662,7 +1663,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{3,4};
-    rhs.__isset.opt_bin = true;
+    rhs.setOpt_binIsSet(true);
     rhs.opt_bin = null;
     // this_present = False
     // that_present = False
@@ -1675,7 +1676,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{1,2};
-    lhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
     rhs.opt_bin = null;
     // this_present = True
     // that_present = False
@@ -1686,7 +1687,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{3,4};
-    lhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
     rhs.opt_bin = null;
     // this_present = True
     // that_present = False
@@ -1697,8 +1698,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{1,2};
-    lhs.__isset.opt_bin = true;
-    rhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
+    rhs.setOpt_binIsSet(true);
     rhs.opt_bin = null;
     // this_present = True
     // that_present = False
@@ -1709,8 +1710,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{3,4};
-    lhs.__isset.opt_bin = true;
-    rhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
+    rhs.setOpt_binIsSet(true);
     rhs.opt_bin = null;
     // this_present = True
     // that_present = False
@@ -1743,7 +1744,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{1,2};
-    rhs.__isset.opt_bin = true;
+    rhs.setOpt_binIsSet(true);
     // this_present = False
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -1753,7 +1754,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{3,4};
-    rhs.__isset.opt_bin = true;
+    rhs.setOpt_binIsSet(true);
     // this_present = False
     // that_present = True
     if (lhs.equals(rhs) != false)
@@ -1763,7 +1764,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{1,2};
-    lhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
     // this_present = True
     // that_present = False
     if (lhs.equals(rhs) != false)
@@ -1773,7 +1774,7 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{3,4};
-    lhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
     // this_present = True
     // that_present = False
     if (lhs.equals(rhs) != false)
@@ -1783,8 +1784,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{1,2};
-    lhs.__isset.opt_bin = true;
-    rhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
+    rhs.setOpt_binIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != true)
@@ -1796,8 +1797,8 @@ public class EqualityTest {
     rhs = new JavaTestHelper();
     lhs.opt_bin = new byte[]{1,2};
     rhs.opt_bin = new byte[]{3,4};
-    lhs.__isset.opt_bin = true;
-    rhs.__isset.opt_bin = true;
+    lhs.setOpt_binIsSet(true);
+    rhs.setOpt_binIsSet(true);
     // this_present = True
     // that_present = True
     if (lhs.equals(rhs) != false)
