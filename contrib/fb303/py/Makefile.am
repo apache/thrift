@@ -4,6 +4,8 @@ EXTRA_DIST = setup.py src
 all:
 
 all-local:
+	$(thrift_home)/bin/thrift --gen py $(top_srcdir)/if/fb303.thrift
+	mv gen-py/fb303/* fb303
 	$(PYTHON) setup.py build
 
 # We're ignoring prefix here because site-packages seems to be
