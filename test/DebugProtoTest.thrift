@@ -82,6 +82,10 @@ service Srv {
   i32 Janky(i32 arg)
 }
 
+service Inherited extends Srv {
+  i32 identity(i32 arg)
+}
+
 service EmptyService {}
 
 // The only purpose of this thing is to increase the size of the generated code

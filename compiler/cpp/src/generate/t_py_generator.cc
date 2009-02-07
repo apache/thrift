@@ -1832,12 +1832,11 @@ string t_py_generator::argument_list(t_struct* tstruct) {
 
 string t_py_generator::type_name(t_type* ttype) {
   t_program* program = ttype->get_program();
+  if (ttype->is_service()) {
+    return get_real_py_module(program) + "." + ttype->get_name();
+  }
   if (program != NULL && program != program_) {
-    if (ttype->is_service()) {
-      return get_real_py_module(program) + "." + ttype->get_name();
-    } else {
-      return get_real_py_module(program) + ".ttypes." + ttype->get_name();
-    }
+    return get_real_py_module(program) + ".ttypes." + ttype->get_name();
   }
   return ttype->get_name();
 }
