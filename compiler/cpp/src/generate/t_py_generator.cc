@@ -890,6 +890,11 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
       indent() << "def " << function_signature(*f_iter) << ":" << endl <<
       indent() << "  pass" << endl << endl;
   }
+  if (functions.empty()) {
+    f_service_ <<
+      indent() << "pass" << endl;
+  }
+
   indent_down();
   f_service_ <<
     endl;

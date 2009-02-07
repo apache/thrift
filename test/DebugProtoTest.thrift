@@ -82,6 +82,8 @@ service Srv {
   i32 Janky(i32 arg)
 }
 
+service EmptyService {}
+
 // The only purpose of this thing is to increase the size of the generated code
 // so that ZlibTest has more highly compressible data to play with.
 struct BlowUp {
