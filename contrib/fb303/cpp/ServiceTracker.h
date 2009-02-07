@@ -87,7 +87,7 @@
 #include <map>
 #include <boost/shared_ptr.hpp>
 
-#include "thrift/concurrency/Mutex.h"
+#include "concurrency/Mutex.h"
 
 
 namespace facebook { namespace thrift { namespace concurrency {
