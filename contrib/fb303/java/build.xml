@@ -27,8 +27,13 @@
   <target name="thriftbuild">
     <echo>generating thrift fb303 files</echo>
     <exec executable="${thrift_home}/bin/thrift"  failonerror="true">
-      <arg line="--gen java -I ${thrift_home}/share/  -o ${build.dir} ${src.dir}/../if/fb303.thrift" />
+      <arg line="--gen java -o ${src.dir} ${src.dir}/../if/fb303.thrift" />
     </exec>
+    <move todir="${src.dir}">
+      <fileset dir="${src.dir}/gen-java/com/facebook/fb303">
+        <include name="**/*.java"/>
+      </fileset>
+    </move>
   </target>
 
   <!-- compile the base and thrift generated code and jar them -->
