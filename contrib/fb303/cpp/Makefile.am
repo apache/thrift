@@ -54,7 +54,7 @@ $(eval $(call thrift_template,.,../if/fb303.thrift,-I $(thrift_home)/share  --ge
 include_fb303dir = $(includedir)/thrift/fb303
 include_fb303_HEADERS = FacebookBase.h ServiceTracker.h gen-cpp/FacebookService.h gen-cpp/fb303_constants.h gen-cpp/fb303_types.h
 
-include_fb303ifdir = $(thrift_home)/share/fb303/if
+include_fb303ifdir = $(prefix)/share/fb303/if
 include_fb303if_HEADERS = ../if/fb303.thrift
 
 BUILT_SOURCES = thriftstyle
