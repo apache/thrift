@@ -22,7 +22,6 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(srcdir)/src
 # Define the source files for the module
 
 libthrift_la_SOURCES = src/Thrift.cpp \
-                       src/reflection_limited_types.cpp \
                        src/concurrency/Mutex.cpp \
                        src/concurrency/Monitor.cpp \
                        src/concurrency/PosixThreadFactory.cpp \
@@ -64,7 +63,6 @@ include_thrift_HEADERS = \
                          $(top_builddir)/config.h \
                          src/Thrift.h \
                          src/TReflectionLocal.h \
-                         src/reflection_limited_types.h \
                          src/TProcessor.h \
                          src/TLogging.h
 

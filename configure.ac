@@ -187,7 +187,6 @@ AC_CONFIG_FILES([
   lib/perl/test/Makefile
   lib/py/Makefile
   lib/rb/Makefile
-  if/Makefile
   test/Makefile
   test/py/Makefile
   test/rb/Makefile

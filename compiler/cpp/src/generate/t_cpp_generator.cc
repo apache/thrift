@@ -40,9 +40,6 @@ class t_cpp_generator : public t_oop_generator {
     iter = parsed_options.find("include_prefix");
     use_include_prefix_ = (iter != parsed_options.end());
 
-    iter = parsed_options.find("reflection_limited");
-    gen_reflection_limited_ = (iter != parsed_options.end());
-
     out_dir_base_ = "gen-cpp";
   }
 
@@ -93,10 +90,6 @@ class t_cpp_generator : public t_oop_generator {
   void generate_service_skeleton  (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
   void generate_function_helpers  (t_service* tservice, t_function* tfunction);
-
-  void generate_service_limited_reflector(t_service* tservice);
-  bool generate_type_limited_reflection(t_type* ttype, std::string target);
-  bool generate_simple_type_limited_reflection(std::ostream& out, t_type* ttype, std::string target);
 
   /**
    * Serialization constructs
@@ -195,11 +188,6 @@ class t_cpp_generator : public t_oop_generator {
   std::string get_include_prefix(const t_program& program) const;
 
   /**
-   * True iff we should generate limited reflectors for services.
-   */
-  bool gen_reflection_limited_;
-
-  /**
    * True iff we should generate local reflection metadata for TDenseProtocol.
    */
   bool gen_dense_;
@@ -266,7 +254,6 @@ void t_cpp_generator::init_generator() {
   // Include base types
   f_types_ <<
     "#include <Thrift.h>" << endl <<
-    "#include <reflection_limited_types.h>" << endl <<
     "#include <protocol/TProtocol.h>" << endl <<
     "#include <transport/TTransport.h>" << endl <<
     endl;
@@ -1336,10 +1323,6 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
 
     generate_function_helpers(tservice, *f_iter);
   }
-
-  if (gen_reflection_limited_) {
-    generate_service_limited_reflector(tservice);
-  }
 }
 
 /**
@@ -1358,21 +1341,6 @@ void t_cpp_generator::generate_service_interface(t_service* tservice) {
   indent_up();
   f_header_ <<
     indent() << "virtual ~" << service_name_ << "If() {}" << endl;
-
-  if (gen_reflection_limited_) {
-    f_header_ <<
-      indent() << "static void getStaticLimitedReflection" <<
-      "(apache::thrift::reflection::limited::Service & _return);" << endl;
-    // TODO(dreiss): Uncomment and test this if we decide we need
-    // a virtual function with this effect.
-    //f_header_ <<
-    //  indent() << "virtual void getVirtualLimitedReflection" <<
-    //  "(apache::thrift::reflection::limited::Service & _return) ";
-    //scope_up(f_header_);
-    //f_header_ <<
-    //  indent() << "getStaticLimitedReflection(_return);" << endl;
-    //scope_down(f_header_);
-  }
 
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
@@ -2151,166 +2119,6 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     indent() << "oprot->writeMessageEnd();" << endl <<
     indent() << "oprot->getTransport()->flush();" << endl <<
     indent() << "oprot->getTransport()->writeEnd();" << endl;
-
-  // Close function
-  scope_down(f_service_);
-  f_service_ << endl;
-}
-
-/**
- * Helper function for generate_service_limited_reflector.
- * Generates a reflection of a single simple type.
- *
- * @param ttype  The type to reflect
- * @param target  The name of the lvalue to reflect onto
- * @return  true iff the type really is simple
- *
- * Note: don't let this function output anything unless it is going to return true.
- */
-bool t_cpp_generator::generate_simple_type_limited_reflection(ostream & out, t_type* ttype, string target) {
-  if (ttype->is_base_type()) {
-    string type;
-    switch (((t_base_type*)ttype)->get_base()) {
-      case t_base_type::TYPE_VOID   : type = "T_VOID;"   ; break;
-      case t_base_type::TYPE_STRING : type = "T_STRING;" ; break;
-      case t_base_type::TYPE_BOOL   : type = "T_BOOL;"   ; break;
-      case t_base_type::TYPE_BYTE   : type = "T_BYTE;"   ; break;
-      case t_base_type::TYPE_I16    : type = "T_I16;"    ; break;
-      case t_base_type::TYPE_I32    : type = "T_I32;"    ; break;
-      case t_base_type::TYPE_I64    : type = "T_I64;"    ; break;
-      case t_base_type::TYPE_DOUBLE : type = "T_DOUBLE;" ; break;
-      default: return false;
-    }
-    out << indent() << target << ".ttype = " << type << endl;
-    return true;
-  }
-
-  if (ttype->is_enum()) {
-    out <<
-      indent() << target << ".ttype = T_ENUM;" << endl <<
-      indent() << target << ".name = \"" << ttype->get_name() << "\";" << endl;
-  }
-
-  if (ttype->is_struct()) {
-    out <<
-      indent() << target << ".ttype = T_STRUCT;" << endl <<
-      indent() << target << ".name = \"" << ttype->get_name() << "\";" << endl;
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Helper function for generate_service_limited_reflector.
- * Generates a reflection of a single type.
- *
- * @param ttype  The type to reflect
- * @param target  The name of the lvalue to reflect onto
- */
-bool t_cpp_generator::generate_type_limited_reflection(t_type* ttype, string target) {
-  bool is_simple = generate_simple_type_limited_reflection(f_service_, ttype, target + ".simple_type");
-  if (is_simple) {
-    f_service_ <<
-      indent() << target << ".is_container = false;" << endl <<
-      indent() << target << ".__isset.simple_type = true;" << endl;
-    return true;
-  }
-
-  ostringstream out;
-
-  out <<
-    indent() << target << ".is_container = true;" << endl <<
-    indent() << target << ".__isset.container_type = true;" << endl <<
-    indent() << target << ".container_type.ttype = ";
-
-  if (ttype->is_list()) out << "T_LIST;" << endl;
-  if (ttype->is_set())  out << "T_SET;"  << endl;
-  if (ttype->is_map())  out << "T_MAP;"  << endl;
-
-  bool reflected = false;
-
-  if (ttype->is_list()) {
-    reflected = generate_simple_type_limited_reflection(
-        out, ((t_list*)ttype)->get_elem_type(), target + ".container_type.subtype1");
-  }
-  if (ttype->is_set()) {
-    reflected = generate_simple_type_limited_reflection(
-        out, ((t_set*)ttype)->get_elem_type(), target + ".container_type.subtype1");
-  }
-  if (ttype->is_map()) {
-    reflected =
-      generate_simple_type_limited_reflection(
-        out, ((t_map*)ttype)->get_key_type(), target + ".container_type.subtype1")
-      &&
-      generate_simple_type_limited_reflection(
-        out, ((t_map*)ttype)->get_val_type(), target + ".container_type.subtype2");
-    out << indent() << target << ".container_type.__isset.subtype2 = true;" << endl;
-  }
-
-  if (reflected) {
-    f_service_ << out.str();
-    return true;
-  } else {
-    f_service_ <<
-      indent() << target << ".is_container = false;" << endl <<
-      indent() << target << ".__isset.simple_type = true;" << endl;
-    f_service_ << indent() << target << ".simple_type.ttype = T_NOT_REFLECTED;" << endl;
-    return false;
-  }
-}
-
-/**
- * Generates a service reflector definition.
- * This uses thrift::reflection::limited.
- *
- * @param tservice The service to write a reflector for
- */
-void t_cpp_generator::generate_service_limited_reflector(t_service* tservice) {
-  // Open function
-  f_service_ <<
-    indent() << "void " << tservice->get_name() << "If::getStaticLimitedReflection" <<
-    "(apache::thrift::reflection::limited::Service & _return) ";
-  scope_up(f_service_);
-
-  f_service_ << indent() << "using namespace apache::thrift::reflection::limited;" << endl;
-
-  f_service_ << indent() << "_return.name = \"" << tservice->get_name() << "\";" << endl;
-  f_service_ << indent() << "_return.fully_reflected = true;" << endl;
-
-  bool all_reflectable = true;
-  bool one_reflectable;
-
-  const vector<t_function*> & funcs = tservice->get_functions();
-  vector<t_function*>::const_iterator f_iter;
-  for (f_iter = funcs.begin(); f_iter != funcs.end(); ++f_iter) {
-
-    f_service_ << indent() << "_return.methods.resize(_return.methods.size() + 1);" << endl;
-    f_service_ << indent() << "_return.methods.back().name = \"" << (*f_iter)->get_name() << "\";" << endl;
-    one_reflectable = generate_type_limited_reflection(
-        (*f_iter)->get_returntype(), "_return.methods.back().return_type");
-    all_reflectable = all_reflectable && one_reflectable;
-
-    t_struct* arglist = (*f_iter)->get_arglist();
-    const vector<t_field*> & args = arglist->get_members();
-    vector<t_field*>::const_iterator a_iter;
-    for (a_iter = args.begin(); a_iter != args.end(); ++a_iter) {
-      f_service_ <<
-        indent() << "_return.methods.back().arguments.resize("
-          "_return.methods.back().arguments.size() + 1);" << endl <<
-        indent() << "_return.methods.back().arguments.back().name = \"" <<
-          (*a_iter)->get_name() << "\";" << endl <<
-        indent() << "_return.methods.back().arguments.back().key = " <<
-          (*a_iter)->get_key() << ";" << endl;
-      one_reflectable = generate_type_limited_reflection(
-          (*a_iter)->get_type(), "_return.methods.back().arguments.back().type");
-      all_reflectable = all_reflectable && one_reflectable;
-    }
-  }
-
-  if (!all_reflectable) {
-    f_service_ << indent() << "_return.fully_reflected = false;" << endl;
-  }
 
   // Close function
   scope_down(f_service_);

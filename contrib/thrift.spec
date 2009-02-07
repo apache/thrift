@@ -44,7 +44,6 @@ Objective Caml, and Haskell.
 %files
 %defattr(-,root,root)
 %{_bindir}/thrift
-%{_datadir}/thrift/if/reflection_limited.thrift
 
 
 %package lib-cpp
