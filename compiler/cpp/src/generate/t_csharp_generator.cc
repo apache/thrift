@@ -478,7 +478,7 @@ void t_csharp_generator::generate_csharp_struct_reader(ofstream& out, t_struct* 
 
   indent(out) <<
     "TField field;" << endl <<
-    indent() << "TStruct struc = iprot.ReadStructBegin();" << endl;
+    indent() << "iprot.ReadStructBegin();" << endl;
 
   indent(out) <<
     "while (true)" << endl;
@@ -1138,7 +1138,7 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
     indent_down();
     f_service_ << indent() << "}";
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-      f_service_ << " catch (" << (*x_iter)->get_type()->get_name() << " " << (*x_iter)->get_name() << ") {" << endl;
+      f_service_ << " catch (" << type_name((*x_iter)->get_type(), false, false) << " " << (*x_iter)->get_name() << ") {" << endl;
       if (!tfunction->is_async()) {
         indent_up();
         f_service_ <<
