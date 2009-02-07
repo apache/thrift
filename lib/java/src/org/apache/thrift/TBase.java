@@ -28,14 +28,14 @@ public interface TBase extends Cloneable {
    * @param oprot Output protocol
    */
   public void write(TProtocol oprot) throws TException;
-  
+
   /**
    * Check if a field is currently set or unset.
    *
    * @param fieldId The field's id tag as found in the IDL.
    */
   public boolean isSet(int fieldId);
-  
+
   /**
    * Get a field's value by id. Primitive types will be wrapped in the 
    * appropriate "boxed" types.
@@ -43,7 +43,7 @@ public interface TBase extends Cloneable {
    * @param fieldId The field's id tag as found in the IDL.
    */
   public Object getFieldValue(int fieldId);
-  
+
   /**
    * Set a field's value by id. Primitive types must be "boxed" in the 
    * appropriate object wrapper type.

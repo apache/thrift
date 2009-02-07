@@ -628,8 +628,8 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   if (members.size() > 0) {
     out <<
       endl <<
-      indent() << "public final Isset __isset = new Isset();" << endl <<
-      indent() << "public static final class Isset implements java.io.Serializable {" << endl;
+      indent() << "private final Isset __isset = new Isset();" << endl <<
+      indent() << "private static final class Isset implements java.io.Serializable {" << endl;
     indent_up();
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         indent(out) <<
@@ -1441,6 +1441,14 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     indent(out) << "return this.__isset." << field_name << ";" << endl;
     indent_down();
     indent(out) << "}" << endl << endl;
+    
+    if(!bean_style_) {
+      indent(out) << "public void set" << cap_name << get_cap_name("isSet") << "(boolean value) {" << endl;
+      indent_up();
+      indent(out) << "this.__isset." << field_name << " = value;" << endl;
+      indent_down();
+      indent(out) << "}"; 
+    }
   }
 }
 
