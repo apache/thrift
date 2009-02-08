@@ -11,8 +11,10 @@ package org.apache.thrift.protocol;
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-public class TMessage {
-  public TMessage() {}
+public final class TMessage {
+  public TMessage() {
+    this("", TType.STOP, 0);
+  }
 
   public TMessage(String n, byte t, int s) {
     name = n;
@@ -20,7 +22,7 @@ public class TMessage {
     seqid = s;
   }
 
-  public String name = "";
-  public byte type;
-  public int seqid;
+  public final String name;
+  public final byte type;
+  public final int seqid;
 }

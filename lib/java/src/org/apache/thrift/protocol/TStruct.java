@@ -11,12 +11,14 @@ package org.apache.thrift.protocol;
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-public class TStruct {
-  public TStruct() {}
+public final class TStruct {
+  public TStruct() {
+    this("");
+  }
 
   public TStruct(String n) {
     name = n;
   }
 
-  public String name = "";
+  public final String name;
 }

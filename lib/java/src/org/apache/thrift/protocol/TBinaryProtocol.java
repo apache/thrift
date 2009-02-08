@@ -17,6 +17,7 @@ import org.apache.thrift.transport.TTransport;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TBinaryProtocol extends TProtocol {
+  private static final TStruct ANONYMOUS_STRUCT = new TStruct();
 
   protected static final int VERSION_MASK = 0xffff0000;
   protected static final int VERSION_1 = 0x80010000;
@@ -176,71 +177,51 @@ public class TBinaryProtocol extends TProtocol {
    */
 
   public TMessage readMessageBegin() throws TException {
-    TMessage message = new TMessage();
-
     int size = readI32();
     if (size < 0) {
       int version = size & VERSION_MASK;
       if (version != VERSION_1) {
         throw new TProtocolException(TProtocolException.BAD_VERSION, "Bad version in readMessageBegin");
       }
-      message.type = (byte)(size & 0x000000ff);
-      message.name = readString();
-      message.seqid = readI32();
+      return new TMessage(readString(), (byte)(size & 0x000000ff), readI32());
     } else {
       if (strictRead_) {
         throw new TProtocolException(TProtocolException.BAD_VERSION, "Missing version in readMessageBegin, old client?");
       }
-      message.name = readStringBody(size);
-      message.type = readByte();
-      message.seqid = readI32();
+      return new TMessage(readStringBody(size), readByte(), readI32());
     }
-    return message;
   }
 
   public void readMessageEnd() {}
 
   public TStruct readStructBegin() {
-    return new TStruct();
+    return ANONYMOUS_STRUCT;
   }
 
   public void readStructEnd() {}
 
   public TField readFieldBegin() throws TException {
-    TField field = new TField();
-    field.type = readByte();
-    if (field.type != TType.STOP) {
-      field.id = readI16();
-    }
-    return field;
+    byte type = readByte();
+    short id = type == TType.STOP ? 0 : readI16();
+    return new TField("", type, id);
   }
 
   public void readFieldEnd() {}
 
   public TMap readMapBegin() throws TException {
-    TMap map = new TMap();
-    map.keyType = readByte();
-    map.valueType = readByte();
-    map.size = readI32();
-    return map;
+    return new TMap(readByte(), readByte(), readI32());
   }
 
   public void readMapEnd() {}
 
   public TList readListBegin() throws TException {
-    TList list = new TList();
-    list.elemType = readByte();
-    list.size = readI32();
-    return list;
+    return new TList(readByte(), readI32());
   }
 
   public void readListEnd() {}
 
   public TSet readSetBegin() throws TException {
-    TSet set = new TSet();
-    set.elemType = readByte();
-    set.size = readI32();
-    return set;
+    return new TSet(readByte(), readI32());
   }
 
   public void readSetEnd() {}

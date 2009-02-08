@@ -41,6 +41,13 @@ public class TSimpleJSONProtocol extends TProtocol {
   public static final byte[] RBRACKET = new byte[] {']'};
   public static final char QUOTE = '"';
 
+  private static final TStruct ANONYMOUS_STRUCT = new TStruct();
+  private static final TField ANONYMOUS_FIELD = new TField();
+  private static final TMessage EMPTY_MESSAGE = new TMessage();
+  private static final TSet EMPTY_SET = new TSet();
+  private static final TList EMPTY_LIST = new TList();
+  private static final TMap EMPTY_MAP = new TMap();
+
   protected class Context {
     protected void write() throws TException {}
   }
@@ -278,48 +285,43 @@ public class TSimpleJSONProtocol extends TProtocol {
    */
 
   public TMessage readMessageBegin() throws TException {
-    TMessage message = new TMessage();
     // TODO(mcslee): implement
-    return message;
+    return EMPTY_MESSAGE;
   }
 
   public void readMessageEnd() {}
 
   public TStruct readStructBegin() {
     // TODO(mcslee): implement
-    return new TStruct();
+    return ANONYMOUS_STRUCT;
   }
 
   public void readStructEnd() {}
 
   public TField readFieldBegin() throws TException {
-    TField field = new TField();
     // TODO(mcslee): implement
-    return field;
+    return ANONYMOUS_FIELD;
   }
 
   public void readFieldEnd() {}
 
   public TMap readMapBegin() throws TException {
-    TMap map = new TMap();
     // TODO(mcslee): implement
-    return map;
+    return EMPTY_MAP;
   }
 
   public void readMapEnd() {}
 
   public TList readListBegin() throws TException {
-    TList list = new TList();
     // TODO(mcslee): implement
-    return list;
+    return EMPTY_LIST;
   }
 
   public void readListEnd() {}
 
   public TSet readSetBegin() throws TException {
-    TSet set = new TSet();
     // TODO(mcslee): implement
-    return set;
+    return EMPTY_SET;
   }
 
   public void readSetEnd() {}

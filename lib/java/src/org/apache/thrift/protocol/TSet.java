@@ -11,14 +11,16 @@ package org.apache.thrift.protocol;
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-public class TSet {
-  public TSet() {}
+public final class TSet {
+  public TSet() {
+    this(TType.STOP, 0);
+  }
 
   public TSet(byte t, int s) {
     elemType = t;
     size = s;
   }
 
-  public byte elemType = TType.STOP;
-  public int  size     = 0;
+  public final byte elemType;
+  public final int  size;
 }

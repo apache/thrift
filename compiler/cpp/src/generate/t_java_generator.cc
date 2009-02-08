@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <cctype>
 
 #include <sys/stat.h>
 #include <stdexcept>
@@ -184,6 +185,7 @@ class t_java_generator : public t_oop_generator {
       ttype->is_string();
   }
 
+  std::string constant_name(std::string name);
 
  private:
 
@@ -609,9 +611,23 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
 
   scope_up(out);
 
+  indent(out) <<
+    "private static final TStruct STRUCT_DESC = new TStruct(\"" << tstruct->get_name() << "\");" << endl;
+
   // Members are public for -java, private for -javabean
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
+
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    indent(out) <<
+      "private static final TField " << constant_name((*m_iter)->get_name()) <<
+      "_FIELD_DESC = new TField(\"" << (*m_iter)->get_name() << "\", " <<
+      type_to_enum((*m_iter)->get_type()) << ", " <<
+      "(short)" << (*m_iter)->get_key() << ");" << endl;
+  }
+
+  out << endl;
+
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     if (bean_style_) {
       indent(out) << "private ";
@@ -1063,12 +1079,8 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
   // performs various checks (e.g. check that all required fields are set)
   indent(out) << "validate();" << endl << endl;
 
-  indent(out) << "TStruct struct = new TStruct(\"" << name << "\");" << endl;
-  indent(out) << "oprot.writeStructBegin(struct);" << endl;
+  indent(out) << "oprot.writeStructBegin(STRUCT_DESC);" << endl;
 
-  if (!fields.empty()) {
-    indent(out) << "TField field = new TField();" << endl;
-  }
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     bool null_allowed = type_can_be_null((*f_iter)->get_type());
     if (null_allowed) {
@@ -1083,11 +1095,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
       indent_up();
     }
 
-    out <<
-      indent() << "field.name = \"" << (*f_iter)->get_name() << "\";" << endl <<
-      indent() << "field.type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl <<
-      indent() << "field.id = " << upcase_string((*f_iter)->get_name()) << ";" << endl <<
-      indent() << "oprot.writeFieldBegin(field);" << endl;
+    indent(out) << "oprot.writeFieldBegin(" << constant_name((*f_iter)->get_name()) << "_FIELD_DESC);" << endl;
 
     // Write field contents
     generate_serialize_field(out, *f_iter, "this.");
@@ -1134,12 +1142,8 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  indent(out) << "TStruct struct = new TStruct(\"" << name << "\");" << endl;
-  indent(out) << "oprot.writeStructBegin(struct);" << endl;
+  indent(out) << "oprot.writeStructBegin(STRUCT_DESC);" << endl;
 
-  if (!fields.empty()) {
-    indent(out) << "TField field = new TField();" << endl;
-  }
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
@@ -1163,11 +1167,7 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
       indent_up();
     }
 
-    out <<
-      indent() << "field.name = \"" << (*f_iter)->get_name() << "\";" << endl <<
-      indent() << "field.type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl <<
-      indent() << "field.id = " << upcase_string((*f_iter)->get_name()) << ";" << endl <<
-      indent() << "oprot.writeFieldBegin(field);" << endl;
+    indent(out) << "oprot.writeFieldBegin(" << constant_name((*f_iter)->get_name()) << "_FIELD_DESC);" << endl;
 
     // Write field contents
     generate_serialize_field(out, *f_iter, "this.");
@@ -2343,7 +2343,7 @@ void t_java_generator::generate_deserialize_list_element(ofstream& out,
   t_field felem(tlist->get_elem_type(), elem);
 
   indent(out) <<
-    declare_field(&felem, true) << endl;
+    declare_field(&felem) << endl;
 
   generate_deserialize_field(out, &felem);
 
@@ -2783,6 +2783,28 @@ std::string t_java_generator::get_cap_name(std::string name){
     name[0] = toupper(name[0]);
     return name;
   }
+}
+
+string t_java_generator::constant_name(string name) {
+  string constant_name;
+
+  bool is_first = true;
+  bool was_previous_char_upper = false;
+  for (string::iterator iter = name.begin(); iter != name.end(); ++iter) {
+    string::value_type character = (*iter);
+
+    bool is_upper = isupper(character);
+
+    if (is_upper && !is_first && !was_previous_char_upper) {
+      constant_name += '_';
+    }
+    constant_name += toupper(character);
+
+    is_first = false;
+    was_previous_char_upper = is_upper;
+  }
+
+  return constant_name;
 }
 
 /**

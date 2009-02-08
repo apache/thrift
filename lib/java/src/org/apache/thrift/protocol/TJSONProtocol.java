@@ -76,6 +76,8 @@ public class TJSONProtocol extends TProtocol {
   private static final byte[] NAME_LIST = new byte[] {'l','s','t'};
   private static final byte[] NAME_SET = new byte[] {'s','e','t'};
 
+  private static final TStruct ANONYMOUS_STRUCT = new TStruct();
+
   private static final byte[] getTypeNameForTypeID(byte typeID)
     throws TException {
     switch (typeID) {
@@ -769,21 +771,21 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public TMessage readMessageBegin() throws TException {
-    TMessage message = new TMessage();
     readJSONArrayStart();
     if (readJSONInteger() != VERSION) {
       throw new TProtocolException(TProtocolException.BAD_VERSION,
                                    "Message contained bad version.");
     }
+    String name;
     try {
-      message.name = readJSONString(false).toString("UTF-8");
+      name = readJSONString(false).toString("UTF-8");
     }
     catch (UnsupportedEncodingException ex) {
       throw new TException("JVM DOES NOT SUPPORT UTF-8");
     }
-    message.type = (byte) readJSONInteger();
-    message.seqid = (int) readJSONInteger();
-    return message;
+    byte type = (byte) readJSONInteger();
+    int seqid = (int) readJSONInteger();
+    return new TMessage(name, type, seqid);
   }
 
   @Override
@@ -794,7 +796,7 @@ public class TJSONProtocol extends TProtocol {
   @Override
   public TStruct readStructBegin() throws TException {
     readJSONObjectStart();
-    return new TStruct();
+    return ANONYMOUS_STRUCT;
   }
 
   @Override
@@ -804,17 +806,18 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public TField readFieldBegin() throws TException {
-    TField field = new TField();
     byte ch = reader_.peek();
+    byte type;
+    short id = 0;
     if (ch == RBRACE[0]) {
-      field.type = TType.STOP;
+      type = TType.STOP;
     }
     else {
-      field.id = (short) readJSONInteger();
+      id = (short) readJSONInteger();
       readJSONObjectStart();
-      field.type = getTypeIDForTypeName(readJSONString(false).get());
+      type = getTypeIDForTypeName(readJSONString(false).get());
     }
-    return field;
+    return new TField("", type, id);
   }
 
   @Override
@@ -824,13 +827,12 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public TMap readMapBegin() throws TException {
-    TMap map = new TMap();
     readJSONArrayStart();
-    map.keyType = getTypeIDForTypeName(readJSONString(false).get());
-    map.valueType = getTypeIDForTypeName(readJSONString(false).get());
-    map.size = (int)readJSONInteger();
+    byte keyType = getTypeIDForTypeName(readJSONString(false).get());
+    byte valueType = getTypeIDForTypeName(readJSONString(false).get());
+    int size = (int)readJSONInteger();
     readJSONObjectStart();
-    return map;
+    return new TMap(keyType, valueType, size);
   }
 
   @Override
@@ -841,11 +843,10 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public TList readListBegin() throws TException {
-    TList list = new TList();
     readJSONArrayStart();
-    list.elemType = getTypeIDForTypeName(readJSONString(false).get());
-    list.size = (int)readJSONInteger();
-    return list;
+    byte elemType = getTypeIDForTypeName(readJSONString(false).get());
+    int size = (int)readJSONInteger();
+    return new TList(elemType, size);
   }
 
   @Override
@@ -855,11 +856,10 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public TSet readSetBegin() throws TException {
-    TSet set = new TSet();
     readJSONArrayStart();
-    set.elemType = getTypeIDForTypeName(readJSONString(false).get());
-    set.size = (int)readJSONInteger();
-    return set;
+    byte elemType = getTypeIDForTypeName(readJSONString(false).get());
+    int size = (int)readJSONInteger();
+    return new TSet(elemType, size);
   }
 
   @Override

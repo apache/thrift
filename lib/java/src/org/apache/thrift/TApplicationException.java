@@ -19,6 +19,10 @@ import org.apache.thrift.protocol.TType;
  */
 public class TApplicationException extends TException {
 
+  private static final TStruct TAPPLICATION_EXCEPTION_STRUCT = new TStruct("TApplicationException");
+  private static final TField MESSAGE_FIELD = new TField("message", TType.STRING, (short)1);
+  private static final TField TYPE_FIELD = new TField("type", TType.I32, (short)2);
+
   private static final long serialVersionUID = 1L;
 
   public static final int UNKNOWN = 0;
@@ -91,25 +95,16 @@ public class TApplicationException extends TException {
   }
 
   public void write(TProtocol oprot) throws TException {
-    TStruct struct = new TStruct("TApplicationException");
-    TField field = new TField();
-    oprot.writeStructBegin(struct);
+    oprot.writeStructBegin(TAPPLICATION_EXCEPTION_STRUCT);
     if (getMessage() != null) {
-      field.name = "message";
-      field.type = TType.STRING;
-      field.id = 1;
-      oprot.writeFieldBegin(field);
+      oprot.writeFieldBegin(MESSAGE_FIELD);
       oprot.writeString(getMessage());
       oprot.writeFieldEnd();
     }
-    field.name = "type";
-    field.type = TType.I32;
-    field.id = 2;
-    oprot.writeFieldBegin(field);
+    oprot.writeFieldBegin(TYPE_FIELD);
     oprot.writeI32(type_);
     oprot.writeFieldEnd();
     oprot.writeFieldStop();
     oprot.writeStructEnd();
-
   }
 }

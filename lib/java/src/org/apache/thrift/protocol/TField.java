@@ -12,7 +12,9 @@ package org.apache.thrift.protocol;
  * @author Mark Slee <mcslee@facebook.com>
  */
 public class TField {
-  public TField() {}
+  public TField() {
+    this("", TType.STOP, (short)0);
+  }
 
   public TField(String n, byte t, short i) {
     name = n;
@@ -20,7 +22,7 @@ public class TField {
     id = i;
   }
 
-  public String name = "";
-  public byte   type = TType.STOP;
-  public short  id   = 0;
+  public final String name;
+  public final byte   type;
+  public final short  id;
 }

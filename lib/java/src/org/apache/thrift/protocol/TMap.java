@@ -11,8 +11,10 @@ package org.apache.thrift.protocol;
  *
  * @author Mark Slee <mcslee@facebook.com>
  */
-public class TMap {
-  public TMap() {}
+public final class TMap {
+  public TMap() {
+    this(TType.STOP, TType.STOP, 0);
+  }
 
   public TMap(byte k, byte v, int s) {
     keyType = k;
@@ -20,7 +22,7 @@ public class TMap {
     size = s;
   }
 
-  public byte  keyType   = TType.STOP;
-  public byte  valueType = TType.STOP;
-  public int   size      = 0;
+  public final byte  keyType;
+  public final byte  valueType;
+  public final int   size;
 }
