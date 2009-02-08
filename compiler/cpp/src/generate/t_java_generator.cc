@@ -1447,7 +1447,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       indent_up();
       indent(out) << "this.__isset." << field_name << " = value;" << endl;
       indent_down();
-      indent(out) << "}"; 
+      indent(out) << "}" << endl << endl; 
     }
   }
 }
