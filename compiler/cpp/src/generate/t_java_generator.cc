@@ -861,13 +861,11 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
   scope_down(out);
   out << endl;
 
+  out << indent() << "@Override" << endl <<
+    indent() << "public int hashCode() {" << endl;
+  indent_up();
   if (gen_hash_code_) {
-    out << indent() << "@Override" << endl <<
-      indent() << "public int hashCode() {" << endl;
-    indent_up();
-
-    out <<
-      indent() << "HashCodeBuilder builder = new HashCodeBuilder();" << endl;
+    indent(out) << "HashCodeBuilder builder = new HashCodeBuilder();" << endl;
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       out << endl;
@@ -895,20 +893,12 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
     }
 
     out << endl;
-    out <<
-      indent() << "return builder.toHashCode();" << endl;
-    scope_down(out);
-    out << endl;
-
+    indent(out) << "return builder.toHashCode();" << endl;
   } else {
-    out <<
-      indent() << "public int hashCode() {" << endl;
-    indent_up();
-    out <<
-      indent() << "return 0;" << endl;
-    scope_down(out);
-    out << endl;
+    indent(out) << "return 0;" << endl;
   }
+  indent_down();
+  indent(out) << "}" << endl << endl;
 }
 
 /**
