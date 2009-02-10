@@ -314,7 +314,8 @@ void t_java_generator::generate_enum(t_enum* tenum) {
   f_enum << string() +
     "import java.util.Set;\n" +
     "import java.util.HashSet;\n" +
-    "import java.util.Collections;\n" << endl;
+    "import java.util.Collections;\n" +
+    "import org.apache.thrift.IntRangeSet;\n"<< endl;
 
   f_enum <<
     "public class " << tenum->get_name() << " ";
@@ -337,15 +338,18 @@ void t_java_generator::generate_enum(t_enum* tenum) {
   
   // Create a static Set with all valid values for this enum
   f_enum << endl;
-  indent(f_enum) << "public static final Set<Integer> VALID_VALUES = Collections.unmodifiableSet(new HashSet<Integer>(){{" << endl;
+  indent(f_enum) << "public static final IntRangeSet VALID_VALUES = new IntRangeSet(";
   indent_up();
+  bool first = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    // populate set 
-    if ((*c_iter)->has_value())
-      indent(f_enum) << "add(" << (*c_iter)->get_value() << ");" << endl;
+    // populate set
+    if ((*c_iter)->has_value()) {
+      f_enum << (first ? "" : ", ") << (*c_iter)->get_name();
+      first = false;
+    }
   }
   indent_down();
-  indent(f_enum) << "}});" << endl;
+  f_enum << ");" << endl;
 
   scope_down(f_enum);
   f_enum.close();
