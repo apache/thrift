@@ -213,6 +213,12 @@ class TProtocol {
 
   virtual uint32_t readBinary(std::string& str) = 0;
 
+  uint32_t readBool(std::vector<bool>::reference ref) {
+    bool value;
+    uint32_t rv = readBool(value);
+    ref = value;
+  }
+
   /**
    * Method to arbitrarily skip over data.
    */
