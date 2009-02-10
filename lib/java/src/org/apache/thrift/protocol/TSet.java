@@ -21,6 +21,10 @@ public final class TSet {
     size = s;
   }
 
+  public TSet(TList list) {
+    this(list.elemType, list.size);
+  }
+
   public final byte elemType;
   public final int  size;
 }

@@ -25,4 +25,12 @@ public final class TMessage {
   public final String name;
   public final byte type;
   public final int seqid;
+
+  public String toString() {
+    return "<TMessage name:'" + name + "' type: " + type + " seqid:" + seqid + ">";
+  }
+  
+  public boolean equals(TMessage other) {
+    return name.equals(other.name) && type == other.type && seqid == other.seqid;
+  }
 }

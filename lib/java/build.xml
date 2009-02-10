@@ -10,13 +10,12 @@
   <property name="install.path" value="/usr/local/lib" />
   <property name="src.test" location="test" />
   <property name="build.test" location="${build}/test" />
-
   <property name="test.thrift.home" location="../../test"/>
 
   <property file="${user.home}/.thrift-build.properties" />
-  
+
   <property name="cpath" location="libthrift.jar:${thrift.extra.cpath}" />
-  
+
   <target name="init">
     <tstamp />
     <mkdir dir="${build}"/>
@@ -24,7 +23,7 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac srcdir="${src}" destdir="${build}" source="1.5" />
+    <javac srcdir="${src}" destdir="${build}" source="1.5" debug="true"/>
   </target>
 
   <target name="dist" depends="compile">
@@ -52,6 +51,8 @@
 
   <target name="test" description="Run the full test suite" depends="compile-test">
     <java classname="org.apache.thrift.test.JSONProtoTest"
+      classpath="${cpath}:${build.test}" failonerror="true" />
+    <java classname="org.apache.thrift.test.TCompactProtocolTest"
       classpath="${cpath}:${build.test}" failonerror="true" />
     <java classname="org.apache.thrift.test.IdentityTest"
       classpath="${cpath}:${build.test}" failonerror="true" />
@@ -81,6 +82,5 @@
       <arg line="--gen java:beans,nocamel ${test.thrift.home}/JavaBeansTest.thrift" />
     </exec>
   </target>
-
 
 </project>

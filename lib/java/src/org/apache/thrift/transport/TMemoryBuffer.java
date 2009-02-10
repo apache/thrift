@@ -64,10 +64,23 @@ public class TMemoryBuffer extends TTransport {
     return arr_.toString(enc);
   }
 
+  public String inspect() {
+    String buf = "";
+    byte[] bytes = arr_.toByteArray();
+    for (int i = 0; i < bytes.length; i++) {
+      buf += (pos_ == i ? "==>" : "" ) + Integer.toHexString(bytes[i] & 0xff) + " ";
+    }
+    return buf;
+  }
+
   // The contents of the buffer
   private TByteArrayOutputStream arr_;
 
   // Position to read next byte from
   private int pos_;
+  
+  public int length() {
+    return arr_.size();
+  }
 }
 

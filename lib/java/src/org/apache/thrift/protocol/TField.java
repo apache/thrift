@@ -25,4 +25,12 @@ public class TField {
   public final String name;
   public final byte   type;
   public final short  id;
+
+  public String toString() {
+    return "<TField name:'" + name + "' type:" + type + " field-id:" + id + ">";
+  }
+
+  public boolean equals(TField otherField) {
+    return type == otherField.type && id == otherField.id;
+  }
 }
