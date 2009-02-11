@@ -14,8 +14,10 @@ check-local:
 install-exec-local: Makefile-perl.mk
 	$(MAKE) -f Makefile-perl.mk install DESTDIR=$(DESTDIR)/
 
-clean-local: Makefile-perl.mk
-	$(MAKE) -f Makefile-perl.mk clean
+clean-local:
+	if test -f Makefile-perl.mk ; then \
+		$(MAKE) -f Makefile-perl.mk clean ; \
+	fi
 	rm -f Makefile-perl.mk.old
 
 EXTRA_DIST = MANIFEST \
