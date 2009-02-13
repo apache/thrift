@@ -1,4 +1,5 @@
 THRIFTCODE= \
+            src/Collections/THashSet.cs \
             src/Protocol/TBase.cs \
             src/Protocol/TProtocolException.cs \
             src/Protocol/TProtocolFactory.cs \
@@ -31,10 +32,14 @@ THRIFTCODE= \
 
 CSC=gmcs
 
+if NET_2_0
+MONO_DEFINES=/d:NET_2_0
+endif
+
 all-local: Thrift.dll
 
 Thrift.dll: $(THRIFTCODE)
-	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library /langversion:linq
+	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library $(MONO_DEFINES)
 
 clean-local:
 	$(RM) Thrift.dll

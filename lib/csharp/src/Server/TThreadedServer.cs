@@ -11,8 +11,8 @@
 //  http://developers.facebook.com/thrift/using
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
+using Thrift.Collections;
 using Thrift.Protocol;
 using Thrift.Transport;
 
@@ -28,7 +28,7 @@ namespace Thrift.Server
 		private readonly int maxThreads;
 
 		private Queue<TTransport> clientQueue;
-		private HashSet<Thread> clientThreads;
+		private THashSet<Thread> clientThreads;
 		private object clientLock;
 		private Thread workerThread;
 
@@ -73,7 +73,7 @@ namespace Thrift.Server
 			this.maxThreads = maxThreads;
 			clientQueue = new Queue<TTransport>();
 			clientLock = new object();
-			clientThreads = new HashSet<Thread>();
+			clientThreads = new THashSet<Thread>();
 		}
 
 		/// <summary>

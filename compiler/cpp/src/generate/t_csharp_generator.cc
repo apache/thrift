@@ -145,7 +145,8 @@ string t_csharp_generator::csharp_type_usings() {
     "using System.Collections.Generic;\n" +
     "using System.Text;\n" +
     "using System.IO;\n" +
-    "using Thrift;\n";
+    "using Thrift;\n" +
+    "using Thrift.Collections;\n";
 }
 
 string t_csharp_generator::csharp_thrift_usings() {
@@ -1534,7 +1535,7 @@ string t_csharp_generator::type_name(t_type* ttype, bool in_container, bool in_i
       ", " + type_name(tmap->get_val_type(), true) + ">";
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*) ttype;
-    return "HashSet<" + type_name(tset->get_elem_type(), true) + ">";
+    return "THashSet<" + type_name(tset->get_elem_type(), true) + ">";
   } else if (ttype->is_list()) {
     t_list* tlist = (t_list*) ttype;
     return "List<" + type_name(tlist->get_elem_type(), true) + ">";

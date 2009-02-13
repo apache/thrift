@@ -11,7 +11,6 @@
 //  http://developers.facebook.com/thrift/using
 
 using System;
-using System.Collections.Generic;
 using Thrift.Protocol;
 using Thrift.Transport;
 using System.IO;

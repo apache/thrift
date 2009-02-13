@@ -51,17 +51,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data.DataSetExtensions">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
     <Reference Include="ThriftImpl, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>.\ThriftImpl.dll</HintPath>
@@ -117,6 +106,6 @@ $(ProjectDir)\..\..\..\compiler\cpp\thrift.exe -csharp -o $(ProjectDir) $(Projec
 
 cd $(ProjectDir)
 
-C:\Windows\Microsoft.NET\Framework\v3.5\Csc.exe /t:library /out:.\ThriftImpl.dll /recurse:.\gen-csharp\* /reference:$(ProjectDir)..\..\..\lib\csharp\src\bin\Debug\Thrift.dll</PreBuildEvent>
+$(MSBuildToolsPath)\Csc.exe /t:library /out:.\ThriftImpl.dll /recurse:.\gen-csharp\* /reference:$(ProjectDir)..\..\..\lib\csharp\src\bin\Debug\Thrift.dll</PreBuildEvent>
   </PropertyGroup>
 </Project>

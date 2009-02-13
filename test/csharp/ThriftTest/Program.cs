@@ -4,8 +4,6 @@
 // http://developers.facebook.com/thrift/
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Thrift.Transport;
 using Thrift.Protocol;
 using Thrift.Test; //generated code

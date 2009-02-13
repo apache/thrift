@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-
+using System.Threading;
+using Thrift.Collections;
 using Thrift.Protocol;
 using Thrift.Transport;
 using Thrift.Test;
-using System.Threading;
 
 namespace Test
 {
@@ -247,7 +246,7 @@ namespace Test
 			Console.WriteLine("}");
 
 			//set
-			HashSet<int> setout = new HashSet<int>();
+			THashSet<int> setout = new THashSet<int>();
 			for (int j = -2; j < 3; j++)
 			{
 				setout.Add(j);
@@ -268,7 +267,7 @@ namespace Test
 			}
 			Console.Write("})");
 
-			HashSet<int> setin = client.testSet(setout);
+			THashSet<int> setin = client.testSet(setout);
 
 			Console.Write(" = {");
 			first = true;

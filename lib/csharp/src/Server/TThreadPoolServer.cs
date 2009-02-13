@@ -10,8 +10,6 @@
 //  See accompanying file LICENSE or visit the Thrift site at:
 //  http://developers.facebook.com/thrift/using
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using Thrift.Protocol;
 using Thrift.Transport;

@@ -18,30 +18,34 @@ namespace Thrift.Protocol
 {
 	public struct TField
 	{
+		private string name;
+		private TType type;
+		private short id;
+
 		public TField(string name, TType type, short id)
 			:this()
 		{
-			Name = name;
-			Type = type;
-			ID = id;
+			this.name = name;
+			this.type = type;
+			this.id = id;
 		}
 
 		public string Name
 		{
-			get;
-			set;
+			get { return name; }
+			set { name = value; }
 		}
 
 		public TType Type
 		{
-			get;
-			set;
+			get { return type; }
+			set { type = value; }
 		}
 
 		public short ID
 		{
-			get;
-			set;
+			get { return id; }
+			set { id = value; }
 		}
 	}
 }

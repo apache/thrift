@@ -4,9 +4,8 @@
 // http://developers.facebook.com/thrift/
 using System;
 using System.Collections.Generic;
-using System.Text;
+using Thrift.Collections;
 using Thrift.Test; //generated code
-
 using Thrift.Transport;
 using Thrift.Protocol;
 using Thrift.Server;
@@ -99,7 +98,7 @@ namespace Test
 				return thing;
 			}
 
-			public HashSet<int> testSet(HashSet<int> thing)
+			public THashSet<int> testSet(THashSet<int> thing)
 			{
 				Console.WriteLine("testSet({");
 				bool first = true;
@@ -305,10 +304,13 @@ namespace Test
 				TServer serverEngine;
 
 				// Simple Server
-				// serverEngine = new TSimpleServer(testProcessor, tServerSocket);
+				serverEngine = new TSimpleServer(testProcessor, tServerSocket);
 
 				// ThreadPool Server
-				serverEngine = new TThreadPoolServer(testProcessor, tServerSocket);
+				// serverEngine = new TThreadPoolServer(testProcessor, tServerSocket);
+
+				// Threaded Server
+				// serverEngine = new TThreadedServer(testProcessor, tServerSocket);
 
 				testHandler.server = serverEngine;
 

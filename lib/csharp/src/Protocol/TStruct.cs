@@ -17,16 +17,18 @@ namespace Thrift.Protocol
 {
 	public struct TStruct
 	{
+		private string name;
+
 		public TStruct(string name)
 			:this()
 		{
-			Name = name;
+			this.name = name;
 		}
 
 		public string Name
 		{
-			get;
-			set;
+			get { return name; }
+			set { name = value; }
 		}
 	}
 }

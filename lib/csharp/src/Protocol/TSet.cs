@@ -18,23 +18,26 @@ namespace Thrift.Protocol
 {
 	public struct TSet
 	{
+		private TType elementType;
+		private int count;
+
 		public TSet(TType elementType, int count)
 			:this()
 		{
-			ElementType = elementType;
-			Count = count;
+			this.elementType = elementType;
+			this.count = count;
 		}
 
 		public TType ElementType
 		{
-			get;
-			set;
+			get { return elementType; }
+			set { elementType = value; }
 		}
 
 		public int Count
 		{
-			get;
-			set;
+			get { return count; }
+			set { count = value; }
 		}
 	}
 }

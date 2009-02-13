@@ -8,8 +8,6 @@
 //  Copyright (C) 2007 imeem, inc. <http://www.imeem.com>
 //  All rights reserved.
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Thrift.Transport
 {

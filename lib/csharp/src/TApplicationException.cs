@@ -11,8 +11,6 @@
 //  http://developers.facebook.com/thrift/using
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Thrift.Protocol;
 
 namespace Thrift
