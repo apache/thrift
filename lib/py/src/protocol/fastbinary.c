@@ -50,6 +50,16 @@ typedef enum TType {
   T_UTF16      = 17
 } TType;
 
+#ifndef __BYTE_ORDER
+# if defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
+#  define __BYTE_ORDER BYTE_ORDER
+#  define __LITTLE_ENDIAN LITTLE_ENDIAN
+#  define __BIG_ENDIAN BIG_ENDIAN
+# else
+#  error "Cannot determine endianness"
+# endif
+#endif
+
 // Same comment as the enum.  Sorry.
 #if __BYTE_ORDER == __BIG_ENDIAN
 # define ntohll(n) (n)
