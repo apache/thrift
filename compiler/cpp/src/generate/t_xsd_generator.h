@@ -19,8 +19,12 @@
  */
 class t_xsd_generator : public t_generator {
  public:
-  t_xsd_generator(t_program* program) :
-    t_generator(program) {
+  t_xsd_generator(
+      t_program* program,
+      const std::map<std::string, std::string>& parsed_options,
+      const std::string& option_string)
+    : t_generator(program)
+  {
     out_dir_base_ = "gen-xsd";
   }
 

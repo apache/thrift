@@ -269,3 +269,5 @@ string t_xsd_generator::base_type_name(t_base_type::t_base tbase) {
     throw "compiler error: no C++ base type name for base type " + t_base_type::t_base_name(tbase);
   }
 }
+
+THRIFT_REGISTER_GENERATOR(xsd, "XSD", "");

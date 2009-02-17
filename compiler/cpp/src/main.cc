@@ -38,7 +38,6 @@
 #include "parse/t_scope.h"
 #include "generate/t_generator.h"
 #include "generate/t_php_generator.h"
-#include "generate/t_xsd_generator.h"
 
 #include "version.h"
 
@@ -610,7 +609,6 @@ void usage() {
   fprintf(stderr, "  -phpl       Generate PHP-lite (with -php)\n");
   fprintf(stderr, "  -phpa       Generate PHP with autoload (with -php)\n");
   fprintf(stderr, "  -phpo       Generate PHP with object oriented subclasses (with -php)\n");
-  fprintf(stderr, "  -xsd        Generate XSD output files\n");
   fprintf(stderr, "  -o dir      Set the output directory for gen-* packages\n");
   fprintf(stderr, "               (default: current directory)\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories\n");
@@ -873,13 +871,6 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       delete phpi;
     }
 
-    if (gen_xsd) {
-      pverbose("Generating XSD\n");
-      t_xsd_generator* xsd = new t_xsd_generator(program);
-      xsd->generate_program();
-      delete xsd;
-    }
-
     if (dump_docs) {
       dump_docstrings(program);
     }
@@ -1118,9 +1109,13 @@ int main(int argc, char** argv) {
     pwarning(1, "-hs is deprecated.  Use --gen hs");
     generator_strings.push_back("hs");
   }
+  if (gen_xsd) {
+    pwarning(1, "-xsd is deprecated.  Use --gen xsd");
+    generator_strings.push_back("xsd");
+  }
 
   // You gotta generate something!
-  if (!gen_php && !gen_phpi && !gen_xsd && generator_strings.empty()) {
+  if (!gen_php && !gen_phpi && generator_strings.empty()) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }
