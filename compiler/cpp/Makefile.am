@@ -38,8 +38,7 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_generator.h \
                  src/generate/t_oop_generator.h \
                  src/generate/t_php_generator.h \
-                 src/generate/t_xsd_generator.h \
-                 src/generate/t_erl_generator.h
+                 src/generate/t_xsd_generator.h
 
 if THRIFT_GEN_cpp
 thrift_SOURCES += src/generate/t_cpp_generator.cc
