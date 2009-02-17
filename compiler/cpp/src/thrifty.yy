@@ -350,11 +350,13 @@ Header:
         g_program->set_namespace("cocoa", $2);
       }
     }
+/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
 | tok_xsd_namespace tok_literal
     {
+      pwarning(1, "'xsd_namespace' is deprecated. Use 'namespace xsd' instead");
       pdebug("Header -> tok_xsd_namespace tok_literal");
       if (g_parse_mode == PROGRAM) {
-        g_program->set_xsd_namespace($2);
+        g_program->set_namespace("cocoa", $2);
       }
     }
 /* TODO(dreiss): Get rid of this once everyone is using the new hotness. */

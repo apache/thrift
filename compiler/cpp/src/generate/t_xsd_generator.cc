@@ -243,7 +243,7 @@ void t_xsd_generator::generate_service(t_service* tservice) {
   string f_xsd_name = get_out_dir()+tservice->get_name()+".xsd";
   f_xsd_.open(f_xsd_name.c_str());
 
-  string ns = program_->get_xsd_namespace();
+  string ns = program_->get_namespace("xsd");
   if (ns.size() > 0) {
     ns = " targetNamespace=\"" + ns + "\" xmlns=\"" + ns + "\" " +
       "elementFormDefault=\"qualified\"";
