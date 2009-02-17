@@ -36,6 +36,7 @@
 #include "main.h"
 #include "parse/t_program.h"
 #include "parse/t_scope.h"
+#include "generate/t_generator.h"
 #include "generate/t_php_generator.h"
 #include "generate/t_xsd_generator.h"
 #include "generate/t_erl_generator.h"
