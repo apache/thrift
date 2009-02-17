@@ -168,14 +168,6 @@ class t_program : public t_doc {
     return cpp_includes_;
   }
 
-  void set_php_namespace(std::string php_namespace) {
-    php_namespace_ = php_namespace;
-  }
-
-  const std::string& get_php_namespace() const {
-    return php_namespace_;
-  }
-
  private:
 
   // File path
@@ -213,9 +205,6 @@ class t_program : public t_doc {
 
   // C++ extra includes
   std::vector<std::string> cpp_includes_;
-
-  // PHP namespace
-  std::string php_namespace_;
 
 };
 

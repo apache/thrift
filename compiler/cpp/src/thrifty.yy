@@ -282,9 +282,10 @@ Header:
     }
 | tok_php_namespace tok_identifier
     {
+      pwarning(1, "'php_namespace' is deprecated. Use 'namespace php' instead");
       pdebug("Header -> tok_php_namespace tok_identifier");
       if (g_parse_mode == PROGRAM) {
-        g_program->set_php_namespace($2);
+        g_program->set_namespace("php", $2);
       }
     }
 /* TODO(dreiss): Get rid of this once everyone is using the new hotness. */

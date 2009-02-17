@@ -166,7 +166,7 @@ class t_php_generator : public t_oop_generator {
   std::string type_to_enum(t_type* ttype);
 
   std::string php_namespace(t_program* p) {
-    std::string ns = p->get_php_namespace();
+    std::string ns = p->get_namespace("php");
     return ns.size() ? (ns + "_") : "";
   }
 

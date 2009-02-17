@@ -47,7 +47,7 @@ include "shared.thrift"
  */
 namespace cpp tutorial
 namespace java tutorial
-php_namespace tutorial
+namespace php tutorial
 namespace perl tutorial
 namespace smalltalk.category Thrift.Tutorial
 

@@ -31,7 +31,6 @@ syn match thriftNumber "-\=\<\d\+\>" contained
 
 " Keywords
 syn keyword thriftKeyword namespace
-syn keyword thriftKeyword php_namespace
 syn keyword thriftKeyword xsd_all xsd_optional xsd_nillable xsd_attrs
 syn keyword thriftKeyword include cpp_include cpp_type const optional required
 syn keyword thriftBasicTypes void bool byte i16 i32 i64 double string binary
