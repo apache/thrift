@@ -20,7 +20,7 @@
  * __autoload function to something else and then do:
  * $GLOBALS['AUTOLOAD_HOOKS'][] = 'my_autoload_func';
  *
- * Generate this code using the -phpa Thrift generator flag.
+ * Generate this code using the --gen php:autoload Thrift generator flag.
  */
 
 $GLOBALS['THRIFT_AUTOLOAD'] = array();

@@ -21,18 +21,33 @@
  */
 class t_php_generator : public t_oop_generator {
  public:
-  t_php_generator(t_program* program,
-                  bool binary_inline=false,
-                  bool rest=false,
-                  bool phps=false,
-                  bool autoload=false,
-                  bool oop=false) :
-    t_oop_generator(program),
-    binary_inline_(binary_inline),
-    rest_(rest),
-    phps_(phps),
-    autoload_(autoload),
-    oop_(oop) {
+  t_php_generator(
+      t_program* program,
+      const std::map<std::string, std::string>& parsed_options,
+      const std::string& option_string)
+    : t_oop_generator(program)
+  {
+    std::map<std::string, std::string>::const_iterator iter;
+
+    iter = parsed_options.find("inlined");
+    binary_inline_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("rest");
+    rest_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("server");
+    phps_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("autoload");
+    autoload_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("oop");
+    oop_ = (iter != parsed_options.end());
+
+    if (oop_ && binary_inline_) {
+      throw "oop and inlined are mutually exclusive.";
+    }
+
     out_dir_base_ = (binary_inline_ ? "gen-phpi" : "gen-php");
   }
 

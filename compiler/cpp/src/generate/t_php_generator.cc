@@ -2061,3 +2061,11 @@ string t_php_generator ::type_to_enum(t_type* type) {
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
+
+THRIFT_REGISTER_GENERATOR(php, "PHP",
+"    inlined:         Generate PHP inlined files\n"
+"    server:          Generate PHP server stubs\n"
+"    autoload:        Generate PHP with autoload\n"
+"    oop:             Generate PHP with object oriented subclasses\n"
+"    rest:            Generate PHP REST processors\n"
+);
