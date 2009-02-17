@@ -39,7 +39,6 @@
 #include "generate/t_generator.h"
 #include "generate/t_php_generator.h"
 #include "generate/t_xsd_generator.h"
-#include "generate/t_erl_generator.h"
 
 #include "version.h"
 
@@ -612,7 +611,6 @@ void usage() {
   fprintf(stderr, "  -phpa       Generate PHP with autoload (with -php)\n");
   fprintf(stderr, "  -phpo       Generate PHP with object oriented subclasses (with -php)\n");
   fprintf(stderr, "  -xsd        Generate XSD output files\n");
-  fprintf(stderr, "  -erl        Generate Erlang output files\n");
   fprintf(stderr, "  -o dir      Set the output directory for gen-* packages\n");
   fprintf(stderr, "               (default: current directory)\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories\n");
@@ -882,13 +880,6 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       delete xsd;
     }
 
-    if (gen_erl) {
-      pverbose("Generating Erlang\n");
-      t_erl_generator* erl = new t_erl_generator(program);
-      erl->generate_program();
-      delete erl;
-    }
-
     if (dump_docs) {
       dump_docstrings(program);
     }
@@ -1111,6 +1102,10 @@ int main(int argc, char** argv) {
     pwarning(1, "-cocoa is deprecated.  Use --gen cocoa");
     generator_strings.push_back("cocoa");
   }
+  if (gen_erl) {
+    pwarning(1, "-erl is deprecated.  Use --gen erl");
+    generator_strings.push_back("erl");
+  }
   if (gen_st) {
     pwarning(1, "-st is deprecated.  Use --gen st");
     generator_strings.push_back("st");
@@ -1125,7 +1120,7 @@ int main(int argc, char** argv) {
   }
 
   // You gotta generate something!
-  if (!gen_php && !gen_phpi && !gen_xsd && !gen_erl && generator_strings.empty()) {
+  if (!gen_php && !gen_phpi && !gen_xsd && generator_strings.empty()) {
     fprintf(stderr, "!!! No output language(s) specified\n\n");
     usage();
   }

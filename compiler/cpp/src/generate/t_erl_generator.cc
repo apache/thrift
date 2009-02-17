@@ -781,3 +781,5 @@ std::string t_erl_generator::generate_type_term(t_type* type,
 std::string t_erl_generator::type_module(t_type* ttype) {
   return uncapitalize(ttype->get_program()->get_name()) + "_types";
 }
+
+THRIFT_REGISTER_GENERATOR(erl, "Erlang", "");
