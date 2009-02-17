@@ -12,7 +12,6 @@ thrift_SOURCES = src/thrifty.yy \
                  src/generate/t_generator.cc \
                  src/generate/t_php_generator.cc \
                  src/generate/t_xsd_generator.cc \
-                 src/generate/t_erl_generator.cc \
                  src/globals.h \
                  src/main.h \
                  src/platform.h \
@@ -57,6 +56,9 @@ thrift_SOURCES += src/generate/t_rb_generator.cc
 endif
 if THRIFT_GEN_perl
 thrift_SOURCES += src/generate/t_perl_generator.cc
+endif
+if THRIFT_GEN_erl
+thrift_SOURCES += src/generate/t_erl_generator.cc
 endif
 if THRIFT_GEN_cocoa
 thrift_SOURCES += src/generate/t_cocoa_generator.cc
