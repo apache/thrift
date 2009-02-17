@@ -1,6 +1,6 @@
 /*
-../compiler/cpp/thrift -cpp -dense DebugProtoTest.thrift
-../compiler/cpp/thrift -cpp -dense OptionalRequiredTest.thrift
+../compiler/cpp/thrift --gen cpp:dense DebugProtoTest.thrift
+../compiler/cpp/thrift --gen cpp:dense OptionalRequiredTest.thrift
 g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
   gen-cpp/OptionalRequiredTest_types.cpp \
   gen-cpp/DebugProtoTest_types.cpp \

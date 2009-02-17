@@ -9,7 +9,7 @@ from SCons.Builder import Builder
 
 def scons_env(env, add=''):
   opath = path.dirname(path.abspath('$TARGET'))
-  lstr = 'thrift --cpp -o ' + opath + ' ' + add + ' $SOURCE'
+  lstr = 'thrift --gen cpp -o ' + opath + ' ' + add + ' $SOURCE'
   cppbuild = Builder(action = lstr)
   env.Append(BUILDERS = {'ThriftCpp' : cppbuild})
 

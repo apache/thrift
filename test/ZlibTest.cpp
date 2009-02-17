@@ -1,5 +1,5 @@
 /*
-thrift -cpp DebugProtoTest.thrift
+thrift --gen cpp DebugProtoTest.thrift
 g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
   ZlibTest.cpp \
   ../lib/cpp/.libs/libthriftz.a ../lib/cpp/.libs/libthrift.a \

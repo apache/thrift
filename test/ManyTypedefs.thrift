@@ -3,9 +3,9 @@
 /*
 rm -rf gen-* orig-*
 mkdir old new
-thrift -cpp -java -php -phpi -py -rb -xsd -perl -ocaml -erl -hs -strict ManyTypedefs.thrift
+thrift --gen cpp --gen java --gen php --gen phpi --gen py --gen rb --gen xsd --gen perl --gen ocaml --gen erl --gen hs --strict ManyTypedefs.thrift
 mv gen-* old
-../compiler/cpp/thrift -cpp -java -php -phpi -py -rb -xsd -perl -ocaml -erl -hs -strict ManyTypedefs.thrift
+../compiler/cpp/thrift --gen cpp --gen java --gen php --gen phpi --gen py --gen rb --gen xsd --gen perl --gen ocaml --gen erl --gen hs --strict ManyTypedefs.thrift
 mv gen-* new
 diff -ur old new
 rm -rf old new

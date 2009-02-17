@@ -1,6 +1,6 @@
 /*
-../compiler/cpp/thrift -cpp -dense DebugProtoTest.thrift
-../compiler/cpp/thrift -cpp -dense DenseLinkingTest.thrift
+../compiler/cpp/thrift -gen cpp:dense DebugProtoTest.thrift
+../compiler/cpp/thrift -gen cpp:dense DenseLinkingTest.thrift
 g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
   DebugProtoTest.cpp gen-cpp/DebugProtoTest_types.cpp \
   gen-cpp/DenseLinkingTest_types.cpp \

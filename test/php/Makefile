@@ -16,10 +16,10 @@ normal: stubs
 inline: stubs-inline
 
 stubs: ../ThriftTest.thrift
-	$(THRIFT) --phpl ../ThriftTest.thrift
+	$(THRIFT) --gen php ../ThriftTest.thrift
 
 stubs-inline: ../ThriftTest.thrift
-	$(THRIFT) --phpi ../ThriftTest.thrift
+	$(THRIFT) --gen php:inlined ../ThriftTest.thrift
 
 clean:
 	$(RM) -r gen-php gen-phpi

@@ -24,8 +24,8 @@ THRIFT = ../../compiler/cpp/thrift
 
 ${GENDIR}/: ${RPCFILE}
 	rm -rf ${GENDIR}
-	${THRIFT} -erl ${TEST_RPCFILE}
-	${THRIFT} -erl ${STRESS_RPCFILE}
+	${THRIFT} --gen erl ${TEST_RPCFILE}
+	${THRIFT} --gen erl ${STRESS_RPCFILE}
 	mkdir -p ${GEN_INCLUDEDIR}
 	mkdir -p ${GEN_SRCDIR}
 	mkdir -p ${GEN_TARGETDIR}

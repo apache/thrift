@@ -41,7 +41,7 @@ all: stress-test stress-test-nb
 debug: stress-test-debug stress-test-debug-nb
 
 stubs: ../StressTest.thrift
-	$(THRIFT) --cpp --php ../StressTest.thrift
+	$(THRIFT) --gen cpp --gen php ../StressTest.thrift
 
 stress-test-debug-nb: stubs
 	g++ -o stress-test-nb $(DCFL) src/nb-main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
