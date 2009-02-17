@@ -172,6 +172,8 @@ AX_THRIFT_GEN(ocaml, [OCaml], yes)
 AM_CONDITIONAL([THRIFT_GEN_ocaml], [test "$ax_thrift_gen_ocaml" = "yes"])
 AX_THRIFT_GEN(hs, [Haskell], yes)
 AM_CONDITIONAL([THRIFT_GEN_hs], [test "$ax_thrift_gen_hs" = "yes"])
+AX_THRIFT_GEN(xsd, [XSD], yes)
+AM_CONDITIONAL([THRIFT_GEN_xsd], [test "$ax_thrift_gen_xsd" = "yes"])
 AX_THRIFT_GEN(html, [HTML], yes)
 AM_CONDITIONAL([THRIFT_GEN_html], [test "$ax_thrift_gen_html" = "yes"])
 

@@ -11,7 +11,6 @@ thrift_SOURCES = src/thrifty.yy \
                  src/md5.c \
                  src/generate/t_generator.cc \
                  src/generate/t_php_generator.cc \
-                 src/generate/t_xsd_generator.cc \
                  src/globals.h \
                  src/main.h \
                  src/platform.h \
@@ -70,6 +69,9 @@ thrift_SOURCES += src/generate/t_ocaml_generator.cc
 endif
 if THRIFT_GEN_hs
 thrift_SOURCES += src/generate/t_hs_generator.cc
+endif
+if THRIFT_GEN_xsd
+thrift_SOURCES += src/generate/t_xsd_generator.cc
 endif
 if THRIFT_GEN_html
 thrift_SOURCES += src/generate/t_html_generator.cc
