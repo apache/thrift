@@ -66,7 +66,7 @@ public class ToStringTest {
 
 
     if (!object.toString().equals(
-        "JavaTestHelper(req_int:0, req_obj:, req_bin:, opt_bin:null)")) {
+        "JavaTestHelper(req_int:0, req_obj:, req_bin:)")) {
       throw new RuntimeException();
     } 
   }

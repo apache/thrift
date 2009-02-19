@@ -92,7 +92,9 @@ class t_java_generator : public t_oop_generator {
 
   void generate_function_helpers(t_function* tfunction);
   std::string get_cap_name(std::string name);
-
+  std::string generate_isset_check(t_field* field);
+  void generate_isset_set(ofstream& out, t_field* field);
+  
   void generate_service_interface (t_service* tservice);
   void generate_service_helpers   (t_service* tservice);
   void generate_service_client    (t_service* tservice);
@@ -652,8 +654,10 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
       indent() << "private static final class Isset implements java.io.Serializable {" << endl;
     indent_up();
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        indent(out) <<
-          "public boolean " << (*m_iter)->get_name() << " = false;" <<  endl;
+        if (!type_can_be_null((*m_iter)->get_type())){
+          indent(out) <<
+            "public boolean " << (*m_iter)->get_name() << " = false;" <<  endl;
+        }
       }
     indent_down();
     out <<
@@ -705,13 +709,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       indent(out) << "this." << (*m_iter)->get_name() << " = " <<
         (*m_iter)->get_name() << ";" << endl;
-      indent(out) << "this.__isset." << (*m_iter)->get_name() << " = ";
-      if (type_can_be_null((*m_iter)->get_type())) {
-        out << "(" << (*m_iter)->get_name() << " != null)";
-      } else {
-        out << "true";
-      }
-      out << ";" << endl;
+      generate_isset_set(out, (*m_iter));
     }
     indent_down();
     indent(out) << "}" << endl << endl;
@@ -728,11 +726,14 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     t_field* field = (*m_iter);
     std::string field_name = field->get_name();
     t_type* type = field->get_type();
+    bool can_be_null = type_can_be_null(type);
 
-    indent(out) << "__isset." << field_name << " = other.__isset." << field_name << ";" << endl;
+    if (!can_be_null) {
+      indent(out) << "__isset." << field_name << " = other.__isset." << field_name << ";" << endl;
+    }
 
-    if (type_can_be_null(type)) {
-      indent(out) << "if (other." << field_name << " != null) {" << endl;
+    if (can_be_null) {
+      indent(out) << "if (other." << generate_isset_check(field) << ") {" << endl;
       indent_up();
     }
 
@@ -745,7 +746,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
       out << ";" << endl;
     }
 
-    if (type_can_be_null(type)) {
+    if (can_be_null) {
       indent_down();
       indent(out) << "}" << endl;
     }
@@ -820,13 +821,9 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
     string that_present = "true";
     string unequal;
 
-    if (is_optional) {
-      this_present += " && (this.__isset." + name + ")";
-      that_present += " && (that.__isset." + name + ")";
-    }
-    if (can_be_null) {
-      this_present += " && (this." + name + " != null)";
-      that_present += " && (that." + name + " != null)";
+    if (is_optional || can_be_null) {
+      this_present += " && this." + generate_isset_check(*m_iter);
+      that_present += " && that." + generate_isset_check(*m_iter);
     }
 
     out <<
@@ -877,11 +874,8 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
 
       string present = "true";
 
-      if (is_optional) {
-        present += " && (__isset." + name + ")";
-      }
-      if (can_be_null) {
-        present += " && (" + name + " != null)";
+      if (is_optional || can_be_null) {
+        present += " && (" + generate_isset_check(*m_iter) + ")";
       }
 
       out <<
@@ -955,8 +949,7 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
         indent_up();
 
         generate_deserialize_field(out, *f_iter, "this.");
-        out <<
-          indent() << "this.__isset." << (*f_iter)->get_name() << " = true;" << endl;
+        generate_isset_set(out, *f_iter);
         indent_down();
         out <<
           indent() << "} else { " << endl <<
@@ -1084,8 +1077,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
     }
     bool optional = bean_style_ && (*f_iter)->get_req() == t_field::T_OPTIONAL;
     if (optional) {
-      out <<
-        indent() << "if (this.__isset." << (*f_iter)->get_name() << ") {" << endl;
+      indent(out) << "if (" << generate_isset_check((*f_iter)) << ") {" << endl;
       indent_up();
     }
 
@@ -1146,21 +1138,13 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
         endl <<
         indent() << "if ";
     } else {
-      out <<
-        " else if ";
+      out << " else if ";
     }
 
-    out <<
-      "(this.__isset." << (*f_iter)->get_name() << ") {" << endl;
+    out << "(this." << generate_isset_check(*f_iter) << ") {" << endl;
+
     indent_up();
-
-    bool null_allowed = type_can_be_null((*f_iter)->get_type());
-    if (null_allowed) {
-      out <<
-        indent() << "if (this." << (*f_iter)->get_name() << " != null) {" << endl;
-      indent_up();
-    }
-
+    
     indent(out) << "oprot.writeFieldBegin(" << constant_name((*f_iter)->get_name()) << "_FIELD_DESC);" << endl;
 
     // Write field contents
@@ -1169,11 +1153,6 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
     // Write field closer
     indent(out) <<
       "oprot.writeFieldEnd();" << endl;
-
-    if (null_allowed) {
-      indent_down();
-      indent(out) << "}" << endl;
-    }
 
     indent_down();
     indent(out) << "}";
@@ -1285,7 +1264,7 @@ void t_java_generator::generate_generic_isset_method(std::ofstream& out, t_struc
     t_field* field = *f_iter;
     indent(out) << "case " << upcase_string(field->get_name()) << ":" << endl;
     indent_up();
-    indent(out) << "return this.__isset." << field->get_name() << ";" << endl;
+    indent(out) << "return " << generate_isset_check(field) << ";" << endl;
     indent_down();
   }
 
@@ -1359,7 +1338,6 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       indent_down();
       indent(out) << "}" << endl;
       indent(out) << "this." << field_name << ".add(elem);" << endl;
-      indent(out) << "this.__isset." << field_name << " = true;" << endl;
       indent_down();
       indent(out) << "}" << endl << endl;
 
@@ -1381,7 +1359,6 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       indent_down();
       indent(out) << "}" << endl;
       indent(out) << "this." << field_name << ".put(key, val);" << endl;
-      indent(out) << "this.__isset." << field_name << " = true;" << endl;
       indent_down();
       indent(out) << "}" << endl << endl;
     }
@@ -1408,12 +1385,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     indent_up();
     indent(out) << "this." << field_name << " = " << field_name << ";" <<
       endl;
-    // if the type isn't nullable, then the setter can't have been an unset in disguise.
-    if ((type->is_base_type() && !type->is_string()) || type->is_enum() ) {
-      indent(out) << "this.__isset." << field_name << " = true;" << endl;
-    } else {
-      indent(out) << "this.__isset." << field_name << " = (" << field_name << " != null);" << endl;
-    }
+    generate_isset_set(out, field);
 
     indent_down();
     indent(out) << "}" << endl << endl;
@@ -1421,10 +1393,11 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     // Unsetter
     indent(out) << "public void unset" << cap_name << "() {" << endl;
     indent_up();
-    if (type->is_container() || type->is_struct() || type->is_xception()) {
+    if (type_can_be_null(type)) {
       indent(out) << "this." << field_name << " = null;" << endl;
+    } else {
+      indent(out) << "this.__isset." << field_name << " = false;" << endl;
     }
-    indent(out) << "this.__isset." << field_name << " = false;" << endl;
     indent_down();
     indent(out) << "}" << endl << endl;
 
@@ -1432,14 +1405,24 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     indent(out) << "// Returns true if field " << field_name << " is set (has been asigned a value) and false otherwise" << endl;
     indent(out) << "public boolean is" << get_cap_name("set") << cap_name << "() {" << endl;
     indent_up();
-    indent(out) << "return this.__isset." << field_name << ";" << endl;
+    if (type_can_be_null(type)) {
+      indent(out) << "return this." << field_name << " != null;" << endl;
+    } else {
+      indent(out) << "return this.__isset." << field_name << ";" << endl;
+    }
     indent_down();
     indent(out) << "}" << endl << endl;
     
     if(!bean_style_) {
       indent(out) << "public void set" << cap_name << get_cap_name("isSet") << "(boolean value) {" << endl;
       indent_up();
-      indent(out) << "this.__isset." << field_name << " = value;" << endl;
+      if (type_can_be_null(type)) {
+        indent(out) << "if (!value) {" << endl;
+        indent(out) << "  this." << field_name << " = null;" << endl;
+        indent(out) << "}" << endl;
+      } else {
+        indent(out) << "this.__isset." << field_name << " = value;" << endl;
+      }
       indent_down();
       indent(out) << "}" << endl << endl; 
     }
@@ -1463,36 +1446,50 @@ void t_java_generator::generate_java_struct_tostring(ofstream& out,
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
+  bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if((*f_iter)->get_req() == t_field::T_OPTIONAL) {
-      indent(out) << "if (__isset." << (*f_iter)->get_name() << ") {" << endl;
+    bool could_be_unset = (*f_iter)->get_req() == t_field::T_OPTIONAL;
+    if(could_be_unset) {
+      indent(out) << "if (" << generate_isset_check(*f_iter) << ") {" << endl;
       indent_up();
     }
 
     t_field* field = (*f_iter);
 
-    indent(out) << "if (!first) sb.append(\", \");" << endl;
+    if (!first) {
+      indent(out) << "if (!first) sb.append(\", \");" << endl;
+    }
     indent(out) << "sb.append(\"" << (*f_iter)->get_name() << ":\");" << endl;
-    if (field->get_type()->is_base_type() && ((t_base_type*)(field->get_type()))->is_binary()) {
-      indent(out) << "if (" << field->get_name() << " == null) { " << endl;
+    bool can_be_null = type_can_be_null(field->get_type());
+    if (can_be_null) {
+      indent(out) << "if (this." << (*f_iter)->get_name() << " == null) {" << endl;
       indent(out) << "  sb.append(\"null\");" << endl;
       indent(out) << "} else {" << endl;
+      indent_up();
+    }
+    
+    if (field->get_type()->is_base_type() && ((t_base_type*)(field->get_type()))->is_binary()) {
       indent(out) << "  int __" << field->get_name() << "_size = Math.min(this." << field->get_name() << ".length, 128);" << endl;
       indent(out) << "  for (int i = 0; i < __" << field->get_name() << "_size; i++) {" << endl;
       indent(out) << "    if (i != 0) sb.append(\" \");" << endl;
       indent(out) << "    sb.append(Integer.toHexString(this." << field->get_name() << "[i]).length() > 1 ? Integer.toHexString(this." << field->get_name() << "[i]).substring(Integer.toHexString(this." << field->get_name() << "[i]).length() - 2).toUpperCase() : \"0\" + Integer.toHexString(this." << field->get_name() << "[i]).toUpperCase());" <<endl;
       indent(out) << "  }" << endl;
       indent(out) << "  if (this." << field->get_name() << ".length > 128) sb.append(\" ...\");" << endl;
-      indent(out) << "}" << endl;
     } else {
       indent(out) << "sb.append(this." << (*f_iter)->get_name() << ");" << endl;
     }
-    indent(out) << "first = false;" << endl;
-
-    if((*f_iter)->get_req() == t_field::T_OPTIONAL) {
+    
+    if (can_be_null) {
       indent_down();
       indent(out) << "}" << endl;
     }
+    indent(out) << "first = false;" << endl;
+
+    if(could_be_unset) {
+      indent_down();
+      indent(out) << "}" << endl;
+    }
+    first = false;
   }
   out <<
     indent() << "sb.append(\")\");" << endl <<
@@ -1852,7 +1849,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ <<
-          indent() << "if (result.__isset.success) {" << endl <<
+          indent() << "if (result.isSetSuccess()) {" << endl <<
           indent() << "  return result.success;" << endl <<
           indent() << "}" << endl;
       }
@@ -1862,7 +1859,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
-          indent() << "if (result.__isset." << (*x_iter)->get_name() << ") {" << endl <<
+          indent() << "if (result." << (*x_iter)->get_name() << " != null) {" << endl <<
           indent() << "  throw result." << (*x_iter)->get_name() << ";" << endl <<
           indent() << "}" << endl;
       }
@@ -2078,7 +2075,7 @@ void t_java_generator::generate_process_function(t_service* tservice,
   f_service_ << ");" << endl;
 
   // Set isset on success field
-  if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
+  if (!tfunction->is_async() && !tfunction->get_returntype()->is_void() && !type_can_be_null(tfunction->get_returntype())) {
     f_service_ <<
       indent() << "result.__isset.success = true;" << endl;
   }
@@ -2091,8 +2088,7 @@ void t_java_generator::generate_process_function(t_service* tservice,
       if (!tfunction->is_async()) {
         indent_up();
         f_service_ <<
-          indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << ";" << endl <<
-          indent() << "result.__isset." << (*x_iter)->get_name() << " = true;" << endl;
+          indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << ";" << endl;
         indent_down();
         f_service_ << indent() << "}";
       } else {
@@ -2945,6 +2941,16 @@ void t_java_generator::generate_deep_copy_non_container(ofstream& out, std::stri
       out << source_name;
   } else {
     out << "new " << type_name(type, true, true) << "(" << source_name << ")";
+  }
+}
+
+std::string t_java_generator::generate_isset_check(t_field* field) {
+  return "is" + get_cap_name("set") + get_cap_name(field->get_name()) + "()";
+}
+
+void t_java_generator::generate_isset_set(ofstream& out, t_field* field) {
+  if (!type_can_be_null(field->get_type())) {
+    indent(out) << "this.__isset." << field->get_name() << " = true;" << endl;
   }
 }
 
