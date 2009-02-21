@@ -1014,7 +1014,7 @@ void t_java_generator::generate_java_validator(ofstream& out,
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
       if (bean_style_) {
         out <<
-          indent() << "if (!__isset." << (*f_iter)->get_name() << ") {" << endl <<
+          indent() << "if (" << generate_isset_check(*f_iter) << ") {" << endl <<
           indent() << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' is unset! Struct:\" + toString());" << endl <<
           indent() << "}" << endl << endl;
       } else{
