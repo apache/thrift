@@ -217,6 +217,7 @@ class TProtocol {
     bool value;
     uint32_t rv = readBool(value);
     ref = value;
+    return rv;
   }
 
   /**
