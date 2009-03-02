@@ -1,7 +1,7 @@
 SUBDIRS = test
 
 Makefile-perl.mk : Makefile.PL
-	$(PERL) Makefile.PL MAKEFILE=Makefile-perl.mk
+	$(PERL) Makefile.PL MAKEFILE=Makefile-perl.mk INSTALLDIRS=$(INSTALLDIRS)
 
 all-local: Makefile-perl.mk
 	$(MAKE) -f Makefile-perl.mk
