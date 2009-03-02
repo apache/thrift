@@ -241,7 +241,7 @@ sub write
         my $got = $sock->send($buf);
 
         if (!defined $got || $got == 0 ) {
-            die new Thrift::TException('TSocket: Could not write '.strlen($buf).' bytes '.
+            die new Thrift::TException('TSocket: Could not write '.length($buf).' bytes '.
                                  $self->{host}.':'.$self->{host});
         }
 
