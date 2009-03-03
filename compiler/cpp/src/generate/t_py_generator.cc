@@ -37,6 +37,9 @@ class t_py_generator : public t_generator {
     iter = parsed_options.find("new_style");
     gen_newstyle_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("twisted");
+    gen_twisted_ = (iter != parsed_options.end());
+
     out_dir_base_ = "gen-py";
   }
 
@@ -147,6 +150,7 @@ class t_py_generator : public t_generator {
   std::string render_field_default_value(t_field* tfield);
   std::string type_name(t_type* ttype);
   std::string function_signature(t_function* tfunction, std::string prefix="");
+  std::string function_signature_if(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
@@ -165,6 +169,11 @@ class t_py_generator : public t_generator {
    * True iff we should generate new-style classes.
    */
   bool gen_newstyle_;
+
+  /**
+   * True iff we should generate Twisted-friendly RPC services.
+   */
+  bool gen_twisted_;
 
   /**
    * File streams
@@ -810,8 +819,16 @@ void t_py_generator::generate_service(t_service* tservice) {
   f_service_ <<
     "from ttypes import *" << endl <<
     "from thrift.Thrift import TProcessor" << endl <<
-    render_fastbinary_includes() <<
-    endl << endl;
+    render_fastbinary_includes() << endl;
+
+  if (gen_twisted_) {
+    f_service_ <<
+      "from zope.interface import Interface, implements" << endl <<
+      "from twisted.internet import defer" << endl <<
+      "from thrift.transport import TTwisted" << endl;
+  }
+
+  f_service_ << endl;
 
   // Generate the three main parts of the service (well, two for now in PHP)
   generate_service_interface(tservice);
@@ -878,21 +895,26 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends());
     extends_if = "(" + extends + ".Iface)";
+  } else {
+    if (gen_twisted_) {
+      extends_if = "(Interface)";
+    }
   }
 
   f_service_ <<
     "class Iface" << extends_if << ":" << endl;
   indent_up();
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter;
-  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    f_service_ <<
-      indent() << "def " << function_signature(*f_iter) << ":" << endl <<
-      indent() << "  pass" << endl << endl;
-  }
   if (functions.empty()) {
     f_service_ <<
       indent() << "pass" << endl;
+  } else {
+    vector<t_function*>::iterator f_iter;
+    for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+      f_service_ <<
+        indent() << "def " << function_signature_if(*f_iter) << ":" << endl <<
+        indent() << "  pass" << endl << endl;
+    }
   }
 
   indent_down();
@@ -910,27 +932,61 @@ void t_py_generator::generate_service_client(t_service* tservice) {
   string extends_client = "";
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends());
-    extends_client = extends + ".Client, ";
+    if (gen_twisted_) {
+      extends_client = "(" + extends + ".Client)";
+    } else {
+      extends_client = extends + ".Client, ";
+    }
+  } else {
+    if (gen_twisted_ && gen_newstyle_) {
+        extends_client = "(object)";
+    }
   }
 
-  f_service_ <<
-    "class Client(" << extends_client << "Iface):" << endl;
+  if (gen_twisted_) {
+    f_service_ <<
+      "class Client" << extends_client << ":" << endl <<
+      "  implements(Iface)" << endl << endl;
+  } else {
+    f_service_ <<
+      "class Client(" << extends_client << "Iface):" << endl;
+  }
   indent_up();
 
   // Constructor function
-  f_service_ <<
-    indent() << "def __init__(self, iprot, oprot=None):" << endl;
-  if (extends.empty()) {
+  if (gen_twisted_) {
     f_service_ <<
-      indent() << "  self._iprot = self._oprot = iprot" << endl <<
-      indent() << "  if oprot != None:" << endl <<
-      indent() << "    self._oprot = oprot" << endl <<
-      indent() << "  self._seqid = 0" << endl <<
-      endl;
+      indent() << "def __init__(self, transport, oprot_factory):" << endl;
   } else {
     f_service_ <<
-      indent() << "  " << extends << ".Client.__init__(self, iprot, oprot)" << endl <<
-      endl;
+      indent() << "def __init__(self, iprot, oprot=None):" << endl;
+  }
+  if (extends.empty()) {
+    if (gen_twisted_) {
+      f_service_ <<
+        indent() << "  self._transport = transport" << endl <<
+        indent() << "  self._oprot_factory = oprot_factory" << endl <<
+        indent() << "  self._seqid = 0" << endl <<
+        indent() << "  self._reqs = {}" << endl <<
+        endl;
+    } else {
+      f_service_ <<
+        indent() << "  self._iprot = self._oprot = iprot" << endl <<
+        indent() << "  if oprot != None:" << endl <<
+        indent() << "    self._oprot = oprot" << endl <<
+        indent() << "  self._seqid = 0" << endl <<
+        endl;
+    }
+  } else {
+    if (gen_twisted_) {
+      f_service_ <<
+        indent() << "  " << extends << ".Client.__init__(self, transport, oprot_factory)" << endl <<
+        endl;
+    } else {
+      f_service_ <<
+        indent() << "  " << extends << ".Client.__init__(self, iprot, oprot)" << endl <<
+        endl;
+    }
   }
 
   // Generate client method implementations
@@ -946,90 +1002,152 @@ void t_py_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) <<
       "def " << function_signature(*f_iter) << ":" << endl;
     indent_up();
-      indent(f_service_) <<
-        "self.send_" << funname << "(";
-
-      bool first = true;
-      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-        if (first) {
-          first = false;
-        } else {
-          f_service_ << ", ";
-        }
-        f_service_ << (*fld_iter)->get_name();
-      }
-      f_service_ << ")" << endl;
-
+    if (gen_twisted_) {
+      indent(f_service_) << "self._seqid += 1" << endl;
       if (!(*f_iter)->is_async()) {
-        f_service_ << indent();
+        indent(f_service_) <<
+          "d = self._reqs[self._seqid] = defer.Deferred()" << endl;
+      }
+    }
+
+    indent(f_service_) <<
+      "self.send_" << funname << "(";
+
+    bool first = true;
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      if (first) {
+        first = false;
+      } else {
+        f_service_ << ", ";
+      }
+      f_service_ << (*fld_iter)->get_name();
+    }
+    f_service_ << ")" << endl;
+
+    if (!(*f_iter)->is_async()) {
+      f_service_ << indent();
+      if (gen_twisted_) {
+        f_service_ << "return d" << endl;
+      } else {
         if (!(*f_iter)->get_returntype()->is_void()) {
           f_service_ << "return ";
         }
         f_service_ <<
           "self.recv_" << funname << "()" << endl;
       }
+    } else {
+      if (gen_twisted_) {
+        f_service_ <<
+          indent() << "return defer.succeed(None)" << endl;
+      }
+    }
     indent_down();
     f_service_ << endl;
 
     indent(f_service_) <<
       "def send_" << function_signature(*f_iter) << ":" << endl;
+
     indent_up();
 
-      std::string argsname = (*f_iter)->get_name() + "_args";
+    std::string argsname = (*f_iter)->get_name() + "_args";
 
-      // Serialize the request header
+    // Serialize the request header
+    if (gen_twisted_) {
+      f_service_ <<
+        indent() << "oprot = self._oprot_factory.getProtocol(self._transport)" << endl <<
+        indent() <<
+          "oprot.writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType.CALL, self._seqid)"
+        << endl;
+    } else {
       f_service_ <<
         indent() << "self._oprot.writeMessageBegin('" << (*f_iter)->get_name() << "', TMessageType.CALL, self._seqid)" << endl;
+    }
 
+    f_service_ <<
+      indent() << "args = " << argsname << "()" << endl;
+
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ <<
-        indent() << "args = " << argsname << "()" << endl;
+        indent() << "args." << (*fld_iter)->get_name() << " = " << (*fld_iter)->get_name() << endl;
+    }
 
-      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-        f_service_ <<
-          indent() << "args." << (*fld_iter)->get_name() << " = " << (*fld_iter)->get_name() << endl;
-      }
-
-      // Write to the stream
+    // Write to the stream
+    if (gen_twisted_) {
+      f_service_ <<
+        indent() << "args.write(oprot)" << endl <<
+        indent() << "oprot.writeMessageEnd()" << endl <<
+        indent() << "oprot.trans.flush()" << endl;
+    } else {
       f_service_ <<
         indent() << "args.write(self._oprot)" << endl <<
         indent() << "self._oprot.writeMessageEnd()" << endl <<
         indent() << "self._oprot.trans.flush()" << endl;
+    }
 
     indent_down();
 
     if (!(*f_iter)->is_async()) {
       std::string resultname = (*f_iter)->get_name() + "_result";
-      t_struct noargs(program_);
-
-      t_function recv_function((*f_iter)->get_returntype(),
-                               string("recv_") + (*f_iter)->get_name(),
-                               &noargs);
       // Open function
       f_service_ <<
-        endl <<
-        indent() << "def " << function_signature(&recv_function) << ":" << endl;
+        endl;
+      if (gen_twisted_) {
+        f_service_ <<
+          indent() << "def recv_" << (*f_iter)->get_name() <<
+              "(self, iprot, mtype, rseqid):" << endl;
+      } else {
+        t_struct noargs(program_);
+        t_function recv_function((*f_iter)->get_returntype(),
+                               string("recv_") + (*f_iter)->get_name(),
+                               &noargs);
+        f_service_ <<
+          indent() << "def " << function_signature(&recv_function) << ":" << endl;
+      }
       indent_up();
 
       // TODO(mcslee): Validate message reply here, seq ids etc.
 
-      f_service_ <<
-        indent() << "(fname, mtype, rseqid) = self._iprot.readMessageBegin()" << endl <<
-        indent() << "if mtype == TMessageType.EXCEPTION:" << endl <<
-        indent() << "  x = TApplicationException()" << endl <<
-        indent() << "  x.read(self._iprot)" << endl <<
-        indent() << "  self._iprot.readMessageEnd()" << endl <<
-        indent() << "  raise x" << endl;
+      if (gen_twisted_) {
+        f_service_ <<
+          indent() << "d = self._reqs.pop(rseqid)" << endl;
+      } else {
+        f_service_ <<
+          indent() << "(fname, mtype, rseqid) = self._iprot.readMessageBegin()" << endl;
+      }
 
       f_service_ <<
-        indent() << "result = " << resultname << "()" << endl <<
-        indent() << "result.read(self._iprot)" << endl <<
-        indent() << "self._iprot.readMessageEnd()" << endl;
+        indent() << "if mtype == TMessageType.EXCEPTION:" << endl <<
+        indent() << "  x = TApplicationException()" << endl;
+
+      if (gen_twisted_) {
+        f_service_ <<
+          indent() << "  x.read(iprot)" << endl <<
+          indent() << "  iprot.readMessageEnd()" << endl <<
+          indent() << "  return d.errback(x)" << endl <<
+          indent() << "result = " << resultname << "()" << endl <<
+          indent() << "result.read(iprot)" << endl <<
+          indent() << "iprot.readMessageEnd()" << endl;
+      } else {
+        f_service_ <<
+          indent() << "  x.read(self._iprot)" << endl <<
+          indent() << "  self._iprot.readMessageEnd()" << endl <<
+          indent() << "  raise x" << endl <<
+          indent() << "result = " << resultname << "()" << endl <<
+          indent() << "result.read(self._iprot)" << endl <<
+          indent() << "self._iprot.readMessageEnd()" << endl;
+      }
 
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ <<
-          indent() << "if result.success != None:" << endl <<
-          indent() << "  return result.success" << endl;
+          indent() << "if result.success != None:" << endl;
+          if (gen_twisted_) {
+            f_service_ <<
+              indent() << "  return d.callback(result.success)" << endl;
+          } else {
+            f_service_ <<
+              indent() << "  return result.success" << endl;
+          }
       }
 
       t_struct* xs = (*f_iter)->get_xceptions();
@@ -1037,17 +1155,34 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
-          indent() << "if result." << (*x_iter)->get_name() << " != None:" << endl <<
-          indent() << "  raise result." << (*x_iter)->get_name() << "" << endl;
+          indent() << "if result." << (*x_iter)->get_name() << " != None:" << endl;
+          if (gen_twisted_) {
+            f_service_ <<
+              indent() << "  return d.errback(result." << (*x_iter)->get_name() << ")" << endl;
+
+          } else {
+            f_service_ <<
+              indent() << "  raise result." << (*x_iter)->get_name() << "" << endl;
+          }
       }
 
       // Careful, only return _result if not a void function
       if ((*f_iter)->get_returntype()->is_void()) {
-        indent(f_service_) <<
-          "return" << endl;
+        if (gen_twisted_) {
+          indent(f_service_) <<
+            "return d.callback(None)" << endl;
+        } else {
+          indent(f_service_) <<
+            "return" << endl;
+        }
       } else {
-        f_service_ <<
-          indent() << "raise TApplicationException(TApplicationException.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+        if (gen_twisted_) {
+          f_service_ <<
+            indent() << "return d.errback(TApplicationException(TApplicationException.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\"))" << endl;
+        } else {
+          f_service_ <<
+            indent() << "raise TApplicationException(TApplicationException.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+        }
       }
 
       // Close function
@@ -1238,20 +1373,39 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   }
 
   // Generate the header portion
-  f_service_ <<
-    "class Processor(" << extends_processor << "Iface, TProcessor):" << endl;
+  if (gen_twisted_) {
+    f_service_ <<
+      "class Processor(" << extends_processor << "TProcessor):" << endl <<
+      "  implements(Iface)" << endl << endl;
+  } else {
+    f_service_ <<
+      "class Processor(" << extends_processor << "Iface, TProcessor):" << endl;
+  }
+
   indent_up();
 
   indent(f_service_) <<
     "def __init__(self, handler):" << endl;
   indent_up();
   if (extends.empty()) {
+    if (gen_twisted_) {
+      f_service_ <<
+        indent() << "self._handler = Iface(handler)" << endl;
+    } else {
+      f_service_ <<
+        indent() << "self._handler = handler" << endl;
+    }
+
     f_service_ <<
-      indent() << "self._handler = handler" << endl <<
       indent() << "self._processMap = {}" << endl;
   } else {
-    f_service_ <<
-      indent() << extends << ".Processor.__init__(self, handler)" << endl;
+    if (gen_twisted_) {
+      f_service_ <<
+        indent() << extends << ".Processor.__init__(self, Iface(handler))" << endl;
+    } else {
+      f_service_ <<
+        indent() << extends << ".Processor.__init__(self, handler)" << endl;
+    }
   }
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_service_ <<
@@ -1279,14 +1433,30 @@ void t_py_generator::generate_service_server(t_service* tservice) {
     indent() << "  oprot.writeMessageBegin(name, TMessageType.EXCEPTION, seqid)" << endl <<
     indent() << "  x.write(oprot)" << endl <<
     indent() << "  oprot.writeMessageEnd()" << endl <<
-    indent() << "  oprot.trans.flush()" << endl <<
-    indent() << "  return" << endl <<
-    indent() << "else:" << endl <<
-    indent() << "  self._processMap[name](self, seqid, iprot, oprot)" << endl;
+    indent() << "  oprot.trans.flush()" << endl;
 
-  // Read end of args field, the T_STOP, and the struct close
+  if (gen_twisted_) {
+    f_service_ <<
+      indent() << "  return defer.succeed(None)" << endl;
+  } else {
+    f_service_ <<
+      indent() << "  return" << endl;
+  }
+
   f_service_ <<
-    indent() << "return True" << endl;
+    indent() << "else:" << endl;
+
+  if (gen_twisted_) {
+    f_service_ <<
+      indent() << "  return self._processMap[name](self, seqid, iprot, oprot)" << endl;
+  } else {
+    f_service_ <<
+      indent() << "  self._processMap[name](self, seqid, iprot, oprot)" << endl;
+
+    // Read end of args field, the T_STOP, and the struct close
+    f_service_ <<
+      indent() << "return True" << endl;
+  }
 
   indent_down();
   f_service_ << endl;
@@ -1331,70 +1501,168 @@ void t_py_generator::generate_process_function(t_service* tservice,
       indent() << "result = " << resultname << "()" << endl;
   }
 
-  // Try block for a function with exceptions
-  if (xceptions.size() > 0) {
+  if (gen_twisted_) {
+    // Generate the function call
+    t_struct* arg_struct = tfunction->get_arglist();
+    const std::vector<t_field*>& fields = arg_struct->get_members();
+    vector<t_field*>::const_iterator f_iter;
+
     f_service_ <<
-      indent() << "try:" << endl;
-    indent_up();
-  }
-
-  // Generate the function call
-  t_struct* arg_struct = tfunction->get_arglist();
-  const std::vector<t_field*>& fields = arg_struct->get_members();
-  vector<t_field*>::const_iterator f_iter;
-
-  f_service_ << indent();
-  if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
-    f_service_ << "result.success = ";
-  }
-  f_service_ <<
-    "self._handler." << tfunction->get_name() << "(";
-  bool first = true;
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if (first) {
-      first = false;
-    } else {
-      f_service_ << ", ";
-    }
-    f_service_ << "args." << (*f_iter)->get_name();
-  }
-  f_service_ << ")" << endl;
-
-  if (!tfunction->is_async() && xceptions.size() > 0) {
-    indent_down();
-    for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-      f_service_ <<
-        indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
-      if (!tfunction->is_async()) {
-        indent_up();
-        f_service_ <<
-          indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << endl;
-        indent_down();
+      indent() << "d = defer.maybeDeferred(self._handler." <<
+        tfunction->get_name() << ", ";
+    bool first = true;
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      if (first) {
+        first = false;
       } else {
-        f_service_ <<
-          indent() << "pass" << endl;
+        f_service_ << ", ";
       }
+      f_service_ << "args." << (*f_iter)->get_name();
     }
-  }
+    f_service_ << ")" << endl;
 
-  // Shortcut out here for async functions
-  if (tfunction->is_async()) {
+    // Shortcut out here for async functions
+    if (tfunction->is_async()) {
+      f_service_ <<
+        indent() << "return d" << endl;
+      indent_down();
+      f_service_ << endl;
+      return;
+    }
+
     f_service_ <<
-      indent() << "return" << endl;
+      indent() <<
+        "d.addCallback(self.write_results_success_" <<
+          tfunction->get_name() << ", result, seqid, oprot)" << endl;
+
+    if (xceptions.size() > 0) {
+      f_service_ <<
+        indent() <<
+          "d.addErrback(self.write_results_exception_" <<
+            tfunction->get_name() << ", result, seqid, oprot)" << endl;
+    }
+
+    f_service_ <<
+      indent() << "return d" << endl;
+
     indent_down();
     f_service_ << endl;
-    return;
+
+    indent(f_service_) <<
+        "def write_results_success_" << tfunction->get_name() <<
+        "(self, success, result, seqid, oprot):" << endl;
+    indent_up();
+    f_service_ <<
+      indent() << "result.success = success" << endl <<
+      indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name() <<
+        "\", TMessageType.REPLY, seqid)" << endl <<
+      indent() << "result.write(oprot)" << endl <<
+      indent() << "oprot.writeMessageEnd()" << endl <<
+      indent() << "oprot.trans.flush()" << endl;
+    indent_down();
+    f_service_ << endl;
+
+    // Try block for a function with exceptions
+    if (!tfunction->is_async() && xceptions.size() > 0) {
+      indent(f_service_) <<
+        "def write_results_exception_" << tfunction->get_name() <<
+        "(self, error, result, seqid, oprot):" << endl;
+      indent_up();
+      f_service_ <<
+        indent() << "try:" << endl;
+
+      // Kinda absurd
+      f_service_ <<
+        indent() << "  error.raiseException()" << endl;
+      for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+        f_service_ <<
+          indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
+        if (!tfunction->is_async()) {
+          indent_up();
+          f_service_ <<
+            indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << endl;
+          indent_down();
+        } else {
+          f_service_ <<
+            indent() << "pass" << endl;
+        }
+      }
+      f_service_ <<
+        indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name() <<
+          "\", TMessageType.REPLY, seqid)" << endl <<
+        indent() << "result.write(oprot)" << endl <<
+        indent() << "oprot.writeMessageEnd()" << endl <<
+        indent() << "oprot.trans.flush()" << endl;
+      indent_down();
+      f_service_ << endl;
+    }
+  } else {
+
+    // Try block for a function with exceptions
+    if (xceptions.size() > 0) {
+      f_service_ <<
+        indent() << "try:" << endl;
+      indent_up();
+    }
+
+    // Generate the function call
+    t_struct* arg_struct = tfunction->get_arglist();
+    const std::vector<t_field*>& fields = arg_struct->get_members();
+    vector<t_field*>::const_iterator f_iter;
+
+    f_service_ << indent();
+    if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
+      f_service_ << "result.success = ";
+    }
+    f_service_ <<
+      "self._handler." << tfunction->get_name() << "(";
+    bool first = true;
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      if (first) {
+        first = false;
+      } else {
+        f_service_ << ", ";
+      }
+      f_service_ << "args." << (*f_iter)->get_name();
+    }
+    f_service_ << ")" << endl;
+
+    if (!tfunction->is_async() && xceptions.size() > 0) {
+      indent_down();
+      for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+        f_service_ <<
+          indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
+        if (!tfunction->is_async()) {
+          indent_up();
+          f_service_ <<
+            indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << endl;
+          indent_down();
+        } else {
+          f_service_ <<
+            indent() << "pass" << endl;
+        }
+      }
+    }
+
+    // Shortcut out here for async functions
+    if (tfunction->is_async()) {
+      f_service_ <<
+        indent() << "return" << endl;
+      indent_down();
+      f_service_ << endl;
+      return;
+    }
+
+    f_service_ <<
+      indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name() << "\", TMessageType.REPLY, seqid)" << endl <<
+      indent() << "result.write(oprot)" << endl <<
+      indent() << "oprot.writeMessageEnd()" << endl <<
+      indent() << "oprot.trans.flush()" << endl;
+
+    // Close function
+    indent_down();
+    f_service_ << endl;
   }
-
-  f_service_ <<
-    indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name() << "\", TMessageType.REPLY, seqid)" << endl <<
-    indent() << "result.write(oprot)" << endl <<
-    indent() << "oprot.writeMessageEnd()" << endl <<
-    indent() << "oprot.trans.flush()" << endl;
-
-  // Close function
-  indent_down();
-  f_service_ << endl;
 }
 
 /**
@@ -1811,6 +2079,24 @@ string t_py_generator::function_signature(t_function* tfunction,
 }
 
 /**
+ * Renders an interface function signature of the form 'type name(args)'
+ *
+ * @param tfunction Function definition
+ * @return String of rendered function definition
+ */
+string t_py_generator::function_signature_if(t_function* tfunction,
+                                           string prefix) {
+  // TODO(mcslee): Nitpicky, no ',' if argument_list is empty
+  string signature = prefix + tfunction->get_name() + "(";
+  if (!gen_twisted_) {
+    signature += "self, ";
+  }
+  signature += argument_list(tfunction->get_arglist()) + ")";
+  return signature;
+}
+
+
+/**
  * Renders a field list
  */
 string t_py_generator::argument_list(t_struct* tstruct) {
@@ -1918,5 +2204,6 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
 
 
 THRIFT_REGISTER_GENERATOR(py, "Python",
-"    new_style:       Generate new-style classes.\n"
+"    new_style:       Generate new-style classes.\n" \
+"    twisted:         Generate Twisted-friendly RPC services.\n"
 );
