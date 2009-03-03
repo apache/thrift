@@ -1,6 +1,7 @@
 from zope.interface import implements, Interface, Attribute
-from twisted.internet.protocol import Protocol, ServerFactory, ClientFactory,
+from twisted.internet.protocol import Protocol, ServerFactory, ClientFactory, \
     connectionDone
+from twisted.internet import defer
 from twisted.protocols import basic
 from twisted.python import log
 from thrift.transport import TTransport
@@ -45,6 +46,7 @@ class ThriftClientProtocol(basic.Int32StringReceiver):
             self._oprot_factory = oprot_factory
 
         self.recv_map = {}
+        self.started = defer.Deferred()
 
     def dispatch(self, msg):
         self.sendString(msg)
@@ -52,6 +54,7 @@ class ThriftClientProtocol(basic.Int32StringReceiver):
     def connectionMade(self):
         tmo = TCallbackTransport(self.dispatch)
         self.client = self._client_class(tmo, self._oprot_factory)
+        self.started.callback(self.client)
 
     def connectionLost(self, reason=connectionDone):
         for k,v in self.client._reqs.iteritems():
