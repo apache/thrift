@@ -303,10 +303,8 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
   bool first = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     // Populate the set
-    if ((*c_iter)->has_value()){
-      first ? first = false: f_types_ << ", ";
-      f_types_ << capitalize((*c_iter)->get_name());
-    }          
+    first ? first = false: f_types_ << ", ";
+    f_types_ << capitalize((*c_iter)->get_name());
   }
   f_types_ << "]).freeze" << endl;
 
