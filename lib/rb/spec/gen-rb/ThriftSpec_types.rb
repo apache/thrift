@@ -8,7 +8,7 @@ require 'thrift/protocol'
 
 module SpecNamespace
     class Hello
-      include Thrift::Struct
+      include ::Thrift::Struct
       GREETING = 1
 
       Thrift::Struct.field_accessor self, :greeting
@@ -24,7 +24,7 @@ module SpecNamespace
     end
 
     class Foo
-      include Thrift::Struct
+      include ::Thrift::Struct
       SIMPLE = 1
       WORDS = 2
       HELLO = 3
@@ -62,7 +62,7 @@ module SpecNamespace
     end
 
     class BoolStruct
-      include Thrift::Struct
+      include ::Thrift::Struct
       YESNO = 1
 
       Thrift::Struct.field_accessor self, :yesno
@@ -78,7 +78,7 @@ module SpecNamespace
     end
 
     class SimpleList
-      include Thrift::Struct
+      include ::Thrift::Struct
       BOOLS = 1
       BYTES = 2
       I16S = 3
@@ -114,7 +114,7 @@ module SpecNamespace
     end
 
     class Xception < Thrift::Exception
-      include Thrift::Struct
+      include ::Thrift::Struct
       MESSAGE = 1
       CODE = 2
 

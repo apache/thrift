@@ -11,7 +11,7 @@ require File.dirname(__FILE__) + '/Benchmark_types'
     module ThriftBenchmark
       module BenchmarkService
         class Client
-          include Thrift::Client
+          include ::Thrift::Client
 
           def fibonacci(n)
             send_fibonacci(n)
@@ -31,7 +31,7 @@ require File.dirname(__FILE__) + '/Benchmark_types'
         end
 
         class Processor
-          include Thrift::Processor
+          include ::Thrift::Processor
 
           def process_fibonacci(seqid, iprot, oprot)
             args = read_args(iprot, Fibonacci_args)
@@ -45,7 +45,7 @@ require File.dirname(__FILE__) + '/Benchmark_types'
         # HELPER FUNCTIONS AND STRUCTURES
 
         class Fibonacci_args
-          include Thrift::Struct
+          include ::Thrift::Struct
           N = 1
 
           Thrift::Struct.field_accessor self, :n
@@ -61,7 +61,7 @@ require File.dirname(__FILE__) + '/Benchmark_types'
         end
 
         class Fibonacci_result
-          include Thrift::Struct
+          include ::Thrift::Struct
           SUCCESS = 0
 
           Thrift::Struct.field_accessor self, :success

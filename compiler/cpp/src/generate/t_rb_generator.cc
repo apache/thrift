@@ -638,7 +638,7 @@ void t_rb_generator::generate_service(t_service* tservice) {
 
   begin_namespace(f_service_, ruby_modules(tservice->get_program()));
 
-  indent(f_service_) << "module " << tservice->get_name() << endl;
+  indent(f_service_) << "module " << capitalize(tservice->get_name()) << endl;
   indent_up();
 
   // Generate the three main parts of the service (well, two for now in PHP)

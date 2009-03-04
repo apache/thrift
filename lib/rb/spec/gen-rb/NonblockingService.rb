@@ -11,7 +11,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
     module SpecNamespace
       module NonblockingService
         class Client
-          include Thrift::Client
+          include ::Thrift::Client
 
           def greeting(english)
             send_greeting(english)
@@ -74,7 +74,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
         end
 
         class Processor
-          include Thrift::Processor
+          include ::Thrift::Processor
 
           def process_greeting(seqid, iprot, oprot)
             args = read_args(iprot, Greeting_args)
@@ -114,7 +114,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
         # HELPER FUNCTIONS AND STRUCTURES
 
         class Greeting_args
-          include Thrift::Struct
+          include ::Thrift::Struct
           ENGLISH = 1
 
           Thrift::Struct.field_accessor self, :english
@@ -130,7 +130,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
         end
 
         class Greeting_result
-          include Thrift::Struct
+          include ::Thrift::Struct
           SUCCESS = 0
 
           Thrift::Struct.field_accessor self, :success
@@ -146,7 +146,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
         end
 
         class Block_args
-          include Thrift::Struct
+          include ::Thrift::Struct
 
           FIELDS = {
 
@@ -160,7 +160,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
         end
 
         class Block_result
-          include Thrift::Struct
+          include ::Thrift::Struct
           SUCCESS = 0
 
           Thrift::Struct.field_accessor self, :success
@@ -176,7 +176,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
         end
 
         class Unblock_args
-          include Thrift::Struct
+          include ::Thrift::Struct
           N = 1
 
           Thrift::Struct.field_accessor self, :n
@@ -192,7 +192,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
         end
 
         class Unblock_result
-          include Thrift::Struct
+          include ::Thrift::Struct
 
           FIELDS = {
 
@@ -206,7 +206,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
         end
 
         class Shutdown_args
-          include Thrift::Struct
+          include ::Thrift::Struct
 
           FIELDS = {
 
@@ -220,7 +220,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
         end
 
         class Shutdown_result
-          include Thrift::Struct
+          include ::Thrift::Struct
 
           FIELDS = {
 
@@ -234,7 +234,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
         end
 
         class Sleep_args
-          include Thrift::Struct
+          include ::Thrift::Struct
           SECONDS = 1
 
           Thrift::Struct.field_accessor self, :seconds
@@ -250,7 +250,7 @@ require File.dirname(__FILE__) + '/ThriftSpec_types'
         end
 
         class Sleep_result
-          include Thrift::Struct
+          include ::Thrift::Struct
 
           FIELDS = {
 
