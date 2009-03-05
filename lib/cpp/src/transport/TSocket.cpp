@@ -96,6 +96,17 @@ bool TSocket::peek() {
   int r = recv(socket_, &buf, 1, MSG_PEEK);
   if (r == -1) {
     int errno_copy = errno;
+    #ifdef __FreeBSD__
+    /* shigin:
+     * freebsd returns -1 and ECONNRESET if socket was closed by 
+     * the other side
+     */
+    if (errno_copy == ECONNRESET)
+    {
+      close();
+      return false;
+    }
+    #endif
     GlobalOutput.perror("TSocket::peek() recv() " + getSocketInfo(), errno_copy);
     throw TTransportException(TTransportException::UNKNOWN, "recv()", errno_copy);
   }
@@ -284,6 +295,7 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
   struct timeval begin;
   gettimeofday(&begin, NULL);
   int got = recv(socket_, buf, len, 0);
+  int errno_copy = errno; //gettimeofday can change errno
   struct timeval end;
   gettimeofday(&end, NULL);
   uint32_t readElapsedMicros =  (((end.tv_sec - begin.tv_sec) * 1000 * 1000)
@@ -292,7 +304,7 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
 
   // Check for error on read
   if (got < 0) {
-    if (errno == EAGAIN) {
+    if (errno_copy == EAGAIN) {
       // check if this is the lack of resources or timeout case
       if (!eagainThresholdMicros || (readElapsedMicros < eagainThresholdMicros)) {
         if (retries++ < maxRecvRetries_) {
@@ -310,31 +322,37 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
     }
 
     // If interrupted, try again
-    if (errno == EINTR && retries++ < maxRecvRetries_) {
+    if (errno_copy == EINTR && retries++ < maxRecvRetries_) {
       goto try_again;
     }
 
     // Now it's not a try again case, but a real probblez
-    int errno_copy = errno;  // Copy errno because we're allocating memory.
     GlobalOutput.perror("TSocket::read() recv() " + getSocketInfo(), errno_copy);
 
     // If we disconnect with no linger time
-    if (errno == ECONNRESET) {
+    if (errno_copy == ECONNRESET) {
+      #ifdef __FreeBSD__
+      /* shigin: freebsd doesn't follow POSIX semantic of recv and fails with
+       * ECONNRESET if peer performed shutdown 
+       */
+      close();
+      return 0;
+      #else
       throw TTransportException(TTransportException::NOT_OPEN, "ECONNRESET");
+      #endif
     }
 
     // This ish isn't open
-    if (errno == ENOTCONN) {
+    if (errno_copy == ENOTCONN) {
       throw TTransportException(TTransportException::NOT_OPEN, "ENOTCONN");
     }
 
     // Timed out!
-    if (errno == ETIMEDOUT) {
+    if (errno_copy == ETIMEDOUT) {
       throw TTransportException(TTransportException::TIMED_OUT, "ETIMEDOUT");
     }
 
     // Some other error, whatevz
-    errno_copy = errno;
     throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
   }
 
