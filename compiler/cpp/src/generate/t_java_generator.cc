@@ -93,6 +93,7 @@ class t_java_generator : public t_oop_generator {
   void generate_function_helpers(t_function* tfunction);
   std::string get_cap_name(std::string name);
   std::string generate_isset_check(t_field* field);
+  std::string generate_isset_check(std::string field);
   void generate_isset_set(ofstream& out, t_field* field);
   
   void generate_service_interface (t_service* tservice);
@@ -1849,7 +1850,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ <<
-          indent() << "if (result.isSetSuccess()) {" << endl <<
+          indent() << "if (result." << generate_isset_check("success") << ") {" << endl <<
           indent() << "  return result.success;" << endl <<
           indent() << "}" << endl;
       }
@@ -2945,7 +2946,11 @@ void t_java_generator::generate_deep_copy_non_container(ofstream& out, std::stri
 }
 
 std::string t_java_generator::generate_isset_check(t_field* field) {
-  return "is" + get_cap_name("set") + get_cap_name(field->get_name()) + "()";
+  return generate_isset_check(field->get_name());
+}
+
+std::string t_java_generator::generate_isset_check(std::string field_name) {
+  return "is" + get_cap_name("set") + get_cap_name(field_name) + "()";
 }
 
 void t_java_generator::generate_isset_set(ofstream& out, t_field* field) {
