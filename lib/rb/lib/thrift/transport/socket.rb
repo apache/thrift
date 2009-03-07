@@ -23,9 +23,23 @@ module Thrift
 
     def open
       begin
-        @handle = TCPSocket.new(@host, @port)
-      rescue StandardError
-        raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}")
+        addrinfo = ::Socket::getaddrinfo(@host, @port).first
+        @handle = ::Socket.new(addrinfo[4], ::Socket::SOCK_STREAM, 0)
+        sockaddr = ::Socket.sockaddr_in(addrinfo[1], addrinfo[3])
+        begin
+          @handle.connect_nonblock(sockaddr)
+        rescue Errno::EINPROGRESS
+          unless IO.select(nil, [ @handle ], nil, @timeout)
+            raise TransportException.new(TransportException::NOT_OPEN, "Connection timeout to #{@desc}")
+          end
+          begin
+            @handle.connect_nonblock(sockaddr)
+          rescue Errno::EISCONN
+          end
+        end
+        @handle
+      rescue StandardError => e
+        raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}: #{e}")
       end
     end
 
