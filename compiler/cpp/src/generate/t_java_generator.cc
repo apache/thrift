@@ -1034,10 +1034,16 @@ void t_java_generator::generate_java_validator(ofstream& out,
   out << indent() << "// check that fields of type enum have valid values" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = (*f_iter);
-    
+    t_type* type = field->get_type();
     // if field is an enum, check that its value is valid
-    if (field->get_type()->is_enum()){      
-      indent(out) << "if (__isset." << field->get_name() << " && !" << field->get_type()->get_name() << ".VALID_VALUES.contains(" << field->get_name() << ")){" << endl;
+    if (type->is_enum()){
+      string package = "";
+      t_program* program = type->get_program();
+      if (program != NULL && program != program_) {
+        package = program->get_namespace("java") + ".";
+      }
+
+      indent(out) << "if (__isset." << field->get_name() << " && !" << package << type->get_name() << ".VALID_VALUES.contains(" << field->get_name() << ")){" << endl;
       indent_up();
       indent(out) << "throw new TProtocolException(\"Invalid value of field '" << field->get_name() << "'!\");" << endl;
       indent_down();
