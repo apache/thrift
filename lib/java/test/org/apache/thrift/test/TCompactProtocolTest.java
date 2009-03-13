@@ -1,14 +1,27 @@
 
 package org.apache.thrift.test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
-import org.apache.thrift.transport.*;
-import org.apache.thrift.server.*;
-import org.apache.thrift.protocol.*;
-import org.apache.thrift.*;
+import org.apache.thrift.TBase;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TField;
+import org.apache.thrift.protocol.TMessage;
+import org.apache.thrift.protocol.TMessageType;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.protocol.TStruct;
+import org.apache.thrift.protocol.TType;
+import org.apache.thrift.transport.TMemoryBuffer;
 
-import thrift.test.*;
+import thrift.test.CompactProtoTestStruct;
+import thrift.test.HolyMoley;
+import thrift.test.Nesting;
+import thrift.test.OneOfEach;
+import thrift.test.Srv;
 
 public class TCompactProtocolTest {
 

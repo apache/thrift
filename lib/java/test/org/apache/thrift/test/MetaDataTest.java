@@ -14,9 +14,7 @@ import thrift.test.*;
 public class MetaDataTest {
   
   public static void main(String[] args) throws Exception {
-    CrazyNesting cn = new CrazyNesting();
-    Insanity in = new Insanity();
-    Map<Integer, FieldMetaData> mdMap = cn.metaDataMap;
+    Map<Integer, FieldMetaData> mdMap = CrazyNesting.metaDataMap;
     
     // Check for struct fields existence
     if (mdMap.size() != 3)
@@ -53,8 +51,8 @@ public class MetaDataTest {
             FieldMetaData.getStructMetaDataMap(Insanity.class) == null ||
             FieldMetaData.getStructMetaDataMap(Xtruct.class) == null)
       throw new RuntimeException("global metadata map doesn't contain an entry for a known struct");
-    if (FieldMetaData.getStructMetaDataMap(CrazyNesting.class) != cn.metaDataMap ||
-            FieldMetaData.getStructMetaDataMap(Insanity.class) != in.metaDataMap)
+    if (FieldMetaData.getStructMetaDataMap(CrazyNesting.class) != CrazyNesting.metaDataMap ||
+            FieldMetaData.getStructMetaDataMap(Insanity.class) != Insanity.metaDataMap)
       throw new RuntimeException("global metadata map contains wrong entry for a loaded struct");    
   }
 }

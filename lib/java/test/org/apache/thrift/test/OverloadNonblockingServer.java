@@ -1,23 +1,8 @@
 
-package org.apache.thrift;
+package org.apache.thrift.test;
 
-import thrift.test.*;
-
-import org.apache.thrift.TApplicationException;
-import org.apache.thrift.TSerializer;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TSimpleJSONProtocol;
-
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ArrayList;
+import org.apache.thrift.transport.TSocket;
 
 
 public class OverloadNonblockingServer {

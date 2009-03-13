@@ -1,17 +1,19 @@
 package org.apache.thrift.test;
 
 // Generated code
-import thrift.test.*;
-
-import org.apache.thrift.transport.TMemoryBuffer;
-import org.apache.thrift.protocol.TJSONProtocol;
-
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ArrayList;
+
+import org.apache.thrift.protocol.TJSONProtocol;
+import org.apache.thrift.transport.TMemoryBuffer;
+
+import thrift.test.Base64;
+import thrift.test.Bonk;
+import thrift.test.HolyMoley;
+import thrift.test.Nesting;
+import thrift.test.OneOfEach;
 
 /**
  * Tests for the Java implementation of TJSONProtocol. Mirrors the C++ version

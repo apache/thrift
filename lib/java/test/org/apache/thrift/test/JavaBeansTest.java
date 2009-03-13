@@ -40,10 +40,10 @@ public class JavaBeansTest {
     // Everything is set
     ooe.set_a_bite((byte) 1);
     ooe.set_base64("bytes".getBytes());
-    ooe.set_byte_list(new LinkedList());
+    ooe.set_byte_list(new LinkedList<Byte>());
     ooe.set_double_precision(1);
-    ooe.set_i16_list(new LinkedList());
-    ooe.set_i64_list(new LinkedList());
+    ooe.set_i16_list(new LinkedList<Short>());
+    ooe.set_i64_list(new LinkedList<Long>());
     ooe.set_boolean_field(true);
     ooe.set_integer16((short) 1);
     ooe.set_integer32(1);

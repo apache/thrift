@@ -13,10 +13,10 @@ public class FieldMetaData implements java.io.Serializable {
   public final String fieldName;
   public final byte requirementType;
   public final FieldValueMetaData valueMetaData;
-  private static Map<Class<? extends TBase>, Map> structMap;
+  private static Map<Class<? extends TBase>, Map<Integer, FieldMetaData>> structMap;
   
   static {
-    structMap = new HashMap<Class<? extends TBase>, Map>();
+    structMap = new HashMap<Class<? extends TBase>, Map<Integer, FieldMetaData>>();
   }
   
   public FieldMetaData(String name, byte req, FieldValueMetaData vMetaData){
@@ -25,7 +25,7 @@ public class FieldMetaData implements java.io.Serializable {
     this.valueMetaData = vMetaData;
   }
   
-  public static void addStructMetaDataMap(Class<? extends TBase> sClass, Map map){
+  public static void addStructMetaDataMap(Class<? extends TBase> sClass, Map<Integer, FieldMetaData> map){
     structMap.put(sClass, map);
   }
 
