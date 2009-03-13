@@ -1194,8 +1194,11 @@ void t_java_generator::generate_reflection_getters(ostringstream& out, t_type* t
 void t_java_generator::generate_reflection_setters(ostringstream& out, t_type* type, string field_name, string cap_name) {
   indent(out) << "case " << upcase_string(field_name) << ":" << endl;
   indent_up();
-
-  indent(out) << "set" << cap_name << "((" << type_name(type, true, false) << ")value);" << endl;
+  indent(out) << "if (value == null) {" << endl;
+  indent(out) << "  unset" << get_cap_name(field_name) << "();" << endl;
+  indent(out) << "} else {" << endl;
+  indent(out) << "  set" << cap_name << "((" << type_name(type, true, false) << ")value);" << endl;
+  indent(out) << "}" << endl;
   indent(out) << "break;" << endl << endl;
 
   indent_down();
