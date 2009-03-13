@@ -49,9 +49,8 @@ AM_CONDITIONAL(NET_2_0, [test "$net_3_5" = "no"])
 
 AX_THRIFT_LIB(java, [Java], yes)
 if test "$with_java" = "yes";  then
+  AX_JAVAC_AND_JAVA
   AC_PATH_PROG([ANT], [ant])
-  AX_PROG_JAVAC
-  AX_PROG_JAVA
 fi
 AM_CONDITIONAL([WITH_JAVA],
                [test -n "$ANT" -a -n "$JAVA" -a -n "$JAVAC"])
