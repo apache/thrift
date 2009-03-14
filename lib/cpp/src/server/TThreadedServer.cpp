@@ -106,6 +106,16 @@ TThreadedServer::TThreadedServer(shared_ptr<TProcessor> processor,
   threadFactory_ = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
 }
 
+TThreadedServer::TThreadedServer(boost::shared_ptr<TProcessor> processor,
+                                 boost::shared_ptr<TServerTransport> serverTransport,
+                                 boost::shared_ptr<TTransportFactory> transportFactory,
+                                 boost::shared_ptr<TProtocolFactory> protocolFactory,
+                                 boost::shared_ptr<ThreadFactory> threadFactory):
+  TServer(processor, serverTransport, transportFactory, protocolFactory),
+  threadFactory_(threadFactory),
+  stop_(false) {
+}
+
 TThreadedServer::~TThreadedServer() {}
 
 void TThreadedServer::serve() {

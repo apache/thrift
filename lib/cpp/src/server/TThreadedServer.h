@@ -32,6 +32,12 @@ class TThreadedServer : public TServer {
                   boost::shared_ptr<TTransportFactory> transportFactory,
                   boost::shared_ptr<TProtocolFactory> protocolFactory);
 
+  TThreadedServer(boost::shared_ptr<TProcessor> processor,
+                  boost::shared_ptr<TServerTransport> serverTransport,
+                  boost::shared_ptr<TTransportFactory> transportFactory,
+                  boost::shared_ptr<TProtocolFactory> protocolFactory,
+                  boost::shared_ptr<ThreadFactory> threadFactory);
+
   virtual ~TThreadedServer();
 
   virtual void serve();
