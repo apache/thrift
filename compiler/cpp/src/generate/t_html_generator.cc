@@ -317,7 +317,7 @@ void t_html_generator::generate_css() {
 void t_html_generator::print_doc(t_doc* tdoc) {
   if (tdoc->has_doc()) {
     string doc = tdoc->get_doc();
-    unsigned int index;
+    size_t index;
     while ((index = doc.find_first_of("\r\n")) != string::npos) {
       if (index == 0) {
 	f_out_ << "<p/>" << endl;
