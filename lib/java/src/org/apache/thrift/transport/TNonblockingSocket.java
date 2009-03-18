@@ -58,45 +58,7 @@ public class TNonblockingSocket extends TNonblockingTransport {
     } catch (SocketException sx) {
       sx.printStackTrace();
     }
-
-    // if (isOpen()) {
-    //   try {
-    //     // inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
-    //     // outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
-    //   } catch (IOException iox) {
-    //     close();
-    //     throw new TTransportException(TTransportException.NOT_OPEN, iox);
-    //   }
-    // }
   }
-
-  // This is all for the clientside stuff. Not sure that we'll actually be supporting that yet.
-  // /**
-  //  * Creates a new unconnected socket that will connect to the given host
-  //  * on the given port.
-  //  *
-  //  * @param host Remote host
-  //  * @param port Remote port
-  //  */
-  // public TNonblockingSocket(String host, int port) {
-  //   this(host, port, 0);
-  // }
-  //
-  // /**
-  //  * Creates a new unconnected socket that will connect to the given host
-  //  * on the given port.
-  //  *
-  //  * @param host    Remote host
-  //  * @param port    Remote port
-  //  * @param timeout Socket timeout
-  //  */
-  // public TSocket(String host, int port, int timeout) {
-  //   host_ = host;
-  //   port_ = port;
-  //   timeout_ = timeout;
-  //   initSocket();
-  // }
-
 
   /**
    * Register this socket with the specified selector for both read and write
@@ -164,29 +126,6 @@ public class TNonblockingSocket extends TNonblockingTransport {
    */
   public void open() throws TTransportException {
     throw new RuntimeException("Not implemented yet");
-    // if (isOpen()) {
-    //   throw new TTransportException(TTransportException.ALREADY_OPEN, "Socket already connected.");
-    // }
-    //
-    // if (host_.length() == 0) {
-    //   throw new TTransportException(TTransportException.NOT_OPEN, "Cannot open null host.");
-    // }
-    // if (port_ <= 0) {
-    //   throw new TTransportException(TTransportException.NOT_OPEN, "Cannot open without port.");
-    // }
-    //
-    // if (socket_ == null) {
-    //   initSocket();
-    // }
-    //
-    // try {
-    //   socket_.connect(new InetSocketAddress(host_, port_));
-    //   inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
-    //   outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
-    // } catch (IOException iox) {
-    //   close();
-    //   throw new TTransportException(TTransportException.NOT_OPEN, iox);
-    // }
   }
 
   /**
