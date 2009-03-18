@@ -35,7 +35,9 @@ module Thrift
 
     def close; end
 
-    def read(sz); end
+    def read(sz)
+      raise NotImplementedError
+    end
 
     def read_all(size)
       buf = ''
