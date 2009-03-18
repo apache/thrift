@@ -75,6 +75,7 @@ include_concurrency_HEADERS = \
                          src/concurrency/Thread.h \
                          src/concurrency/ThreadManager.h \
                          src/concurrency/TimerManager.h \
+                         src/concurrency/FunctionRunner.h \
                          src/concurrency/Util.h
 
 include_protocoldir = $(include_thriftdir)/protocol
@@ -102,6 +103,7 @@ include_transport_HEADERS = \
                          src/transport/TTransportException.h \
                          src/transport/TTransportUtils.h \
                          src/transport/TBufferTransports.h \
+                         src/transport/TShortReadTransport.h \
                          src/transport/TZlibTransport.h
 
 include_serverdir = $(include_thriftdir)/server

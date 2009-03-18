@@ -1,4 +1,4 @@
-EXTRA_DIST = build.xml src LICENSE
+EXTRA_DIST = build.xml src test LICENSE
 
 all-local:
 	$(ANT)

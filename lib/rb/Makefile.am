@@ -1,4 +1,13 @@
-EXTRA_DIST = setup.rb lib ext
+EXTRA_DIST = \
+	CHANGELOG \
+	LICENSE \
+	Rakefile \
+	Manifest \
+	setup.rb \
+	lib \
+	ext \
+	benchmark \
+	spec
 
 all-local:
 	$(RUBY) setup.rb config

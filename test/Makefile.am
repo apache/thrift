@@ -118,3 +118,30 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 
 clean-local:
 	$(RM) -r gen-cpp
+
+EXTRA_DIST = \
+	cpp \
+	threads \
+	csharp \
+	py \
+	rb \
+	perl \
+	php \
+	erl \
+	hs \
+	ocaml \
+	AnnotationTest.thrift \
+	BrokenConstants.thrift \
+	ConstantsDemo.thrift \
+	DebugProtoTest.thrift \
+	DenseLinkingTest.thrift \
+	DocTest.thrift \
+	JavaBeansTest.thrift \
+	ManyTypedefs.thrift \
+	OptionalRequiredTest.thrift \
+	SmallTest.thrift \
+	StressTest.thrift \
+	ThriftTest.thrift \
+	ZlibTest.cpp \
+	DenseProtoTest.cpp \
+	FastbinaryTest.py
