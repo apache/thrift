@@ -1043,9 +1043,9 @@ void t_java_generator::generate_java_validator(ofstream& out,
         package = program->get_namespace("java") + ".";
       }
 
-      indent(out) << "if (__isset." << field->get_name() << " && !" << package << type->get_name() << ".VALID_VALUES.contains(" << field->get_name() << ")){" << endl;
+      indent(out) << "if (" << generate_isset_check(field) << " && !" << package << type->get_name() << ".VALID_VALUES.contains(" << field->get_name() << ")){" << endl;
       indent_up();
-      indent(out) << "throw new TProtocolException(\"Invalid value of field '" << field->get_name() << "'!\");" << endl;
+      indent(out) << "throw new TProtocolException(\"The field '" << field->get_name() << "' has been assigned the invalid value \" + " << field->get_name() << ");" << endl;
       indent_down();
       indent(out) << "}" << endl;
     } 
