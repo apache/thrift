@@ -16,6 +16,25 @@
 #include <stdint.h>
 #include <netinet/in.h>
 
+/* Fix endianness issues on Solaris */
+#if defined (__SVR4) && defined (__sun)
+ #if defined(__i386) && !defined(__i386__)
+  #define __i386__
+ #endif
+
+ #ifndef BIG_ENDIAN
+  #define BIG_ENDIAN (4321)
+ #endif
+ #ifndef LITTLE_ENDIAN
+  #define LITTLE_ENDIAN (1234)
+ #endif
+
+ /* I386 is LE, even on Solaris */
+ #if !defined(BYTE_ORDER) && defined(__i386__)
+  #define BYTE_ORDER LITTLE_ENDIAN
+ #endif
+#endif
+
 // TODO(dreiss): defval appears to be unused.  Look into removing it.
 // TODO(dreiss): Make parse_spec_args recursive, and cache the output
 //               permanently in the object.  (Malloc and orphan.)
