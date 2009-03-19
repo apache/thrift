@@ -15,10 +15,11 @@ ext/struct.h
 ext/protocol.h
 ext/protocol.c
 ext/constants.h
+ext/macros.h
 ext/memory_buffer.h
 ext/memory_buffer.c
-ext/rope_transport.c
-ext/rope_transport.h
+ext/compact_protocol.h
+ext/compact_protocol.c
 ext/thrift_native.c
 ext/extconf.rb
 lib/thrift/client.rb
@@ -28,6 +29,7 @@ lib/thrift/processor.rb
 lib/thrift/protocol/binaryprotocol.rb
 lib/thrift/protocol/binaryprotocolaccelerated.rb
 lib/thrift/protocol/tbinaryprotocol.rb
+lib/thrift/protocol/compact_protocol.rb
 lib/thrift/protocol/tprotocol.rb
 lib/thrift/protocol.rb
 lib/thrift/serializer.rb

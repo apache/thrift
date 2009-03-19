@@ -1,0 +1,1 @@
+void Init_compact_protocol();

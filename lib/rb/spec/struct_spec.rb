@@ -10,16 +10,8 @@ class ThriftStructSpec < Spec::ExampleGroup
   describe Struct do
     it "should iterate over all fields properly" do
       fields = {}
-      Foo.new.each_field { |fid,type,name,default,optional| fields[fid] = [type,name,default,optional] }
-      fields.should == {
-        1 => [Types::I32, 'simple', 53, nil],
-        2 => [Types::STRING, 'words', "words", nil],
-        3 => [Types::STRUCT, 'hello', Hello.new(:greeting => 'hello, world!'), nil],
-        4 => [Types::LIST, 'ints', [1, 2, 2, 3], nil],
-        5 => [Types::MAP, 'complex', nil, nil],
-        6 => [Types::SET, 'shorts', Set.new([5, 17, 239]), nil],
-        7 => [Types::STRING, 'opt_string', nil, true]
-      }
+      Foo.new.each_field { |fid,field_info| fields[fid] = field_info }
+      fields.should == Foo::FIELDS
     end
 
     it "should initialize all fields to defaults" do

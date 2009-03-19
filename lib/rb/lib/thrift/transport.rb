@@ -297,6 +297,22 @@ module Thrift
       end
     end
 
+    def inspect_buffer
+      out = []
+      for idx in 0...(@buf.size)
+        # if idx != 0
+        #   out << " "
+        # end
+        
+        if idx == @index
+          out << ">"
+        end
+        
+        out << @buf[idx].to_s(16)
+      end
+      out.join(" ")
+    end
+
     alias_method :consume!, :read
   end
   deprecate_class! :TMemoryBuffer => MemoryBuffer

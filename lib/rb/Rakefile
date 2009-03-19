@@ -27,7 +27,7 @@ task :test do
 end
 
 desc 'Compile the .thrift files for the specs'
-task :'gen-rb' => [:'gen-rb:spec', :'gen-rb:benchmark']
+task :'gen-rb' => [:'gen-rb:spec', :'gen-rb:benchmark', :'gen-rb:debug_proto']
 
 namespace :'gen-rb' do
   task :'spec' do
@@ -38,6 +38,11 @@ namespace :'gen-rb' do
   task :'benchmark' do
     dir = File.dirname(__FILE__) + '/benchmark'
     sh THRIFT, '--gen', 'rb', '-o', dir, "#{dir}/Benchmark.thrift"
+  end
+  
+  task :'debug_proto' do
+    sh "mkdir", "-p", "debug_proto_test"
+    sh THRIFT, '--gen', 'rb', "-o", "debug_proto_test", "../../test/DebugProtoTest.thrift"
   end
 end
 

@@ -78,35 +78,17 @@ public class TCompactProtocolTest {
     testI32Field(-0xffffff);
     
     testNakedI64(0);
-    testNakedI64(1);
-    testNakedI64(0xff);
-    testNakedI64(0xffff);
-    testNakedI64(0xffffff);
-    testNakedI64(6000000000L);
-    testNakedI64(Long.MAX_VALUE);
-    testNakedI64(-1);
-    testNakedI64(-0xff);
-    testNakedI64(-0xffff);
-    testNakedI64(-0xffffff);
-    testNakedI64(-6000000000L);
-    
+    for (int i = 0; i < 62; i++) {
+      testNakedI64(1L << i);
+      testNakedI64(-(1L << i));
+    }
+
     testI64Field(0);
-    testI64Field(1);
-    testI64Field(0xff);
-    testI64Field(0xffff);
-    testI64Field(0xffffff);
-    testI64Field(6000000000L);
-    testI64Field(1L << 32);
-    testI64Field(1L << 48);
-    testI64Field(1L << 55);
-    testI64Field(Long.MAX_VALUE);
-    testI64Field(-1);
-    testI64Field(-0xff);
-    testI64Field(-0xffff);
-    testI64Field(-0xffffff);
-    testI64Field(-6000000000L);
-    testI64Field(-1*Long.MAX_VALUE);
-    
+    for (int i = 0; i < 62; i++) {
+      testI64Field(1L << i);
+      testI64Field(-(1L << i));
+    }
+
     testDouble();
     
     testNakedString("");

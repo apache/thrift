@@ -1,6 +1,7 @@
 #include <ruby.h>
 #include <struct.h>
 #include <binary_protocol_accelerated.h>
+#include <compact_protocol.h>
 #include <protocol.h>
 #include <memory_buffer.h>
 
@@ -169,5 +170,6 @@ void Init_thrift_native() {
   Init_protocol();
   Init_struct();
   Init_binary_protocol_accelerated();
+  Init_compact_protocol();
   Init_memory_buffer();
 }

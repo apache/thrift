@@ -436,6 +436,9 @@ describe "deprecate_module!" do
       FIELDS = {
         1 => {:name => "foo", :type => Thrift::Types::STRING}
       }
+      def struct_fields
+        FIELDS
+      end
     end
     stub_stderr('ThriftStruct')
     klass.new(:foo => "foo")
