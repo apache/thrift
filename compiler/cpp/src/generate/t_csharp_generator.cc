@@ -1510,7 +1510,7 @@ void t_csharp_generator::generate_property(ofstream& out, t_field* tfield, bool 
     indent(out) << "set" << endl;
     scope_up(out);
     indent(out) << "__isset." << tfield->get_name() << " = true;" << endl;
-    indent(out) << tfield->get_name() << " = value;" << endl;
+    indent(out) << "this." << tfield->get_name() << " = value;" << endl;
     scope_down(out);
     scope_down(out);
     out << endl;
