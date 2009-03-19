@@ -495,6 +495,17 @@ void TConnection::close() {
   server_->returnConnection(this);
 }
 
+void TConnection::checkIdleBufferMemLimit(uint32_t limit) {
+  if (readBufferSize_ > limit) {
+    readBufferSize_ = limit;
+    readBuffer_ = (uint8_t*)std::realloc(readBuffer_, readBufferSize_);
+    if (readBuffer_ == NULL) {
+      GlobalOutput("TConnection::checkIdleBufferMemLimit() realloc");
+      close();
+    }
+  }
+}
+
 /**
  * Creates a new connection either by reusing an object off the stack or
  * by allocating a new one entirely
@@ -515,7 +526,13 @@ TConnection* TNonblockingServer::createConnection(int socket, short flags) {
  * Returns a connection to the stack
  */
 void TNonblockingServer::returnConnection(TConnection* connection) {
-  connectionStack_.push(connection);
+  if (connectionStackLimit_ &&
+      (connectionStack_.size() >= connectionStackLimit_)) {
+    delete connection;
+  } else {
+    connection->checkIdleBufferMemLimit(idleBufferMemLimit_);
+    connectionStack_.push(connection);
+  }
 }
 
 /**
