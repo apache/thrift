@@ -103,7 +103,7 @@ VALUE rb_thrift_binary_proto_write_message_begin(VALUE self, VALUE name, VALUE t
     write_i32_direct(trans, FIX2INT(seqid));
   } else {
     write_string_direct(trans, name);
-    write_byte_direct(trans, type);
+    write_byte_direct(trans, FIX2INT(type));
     write_i32_direct(trans, FIX2INT(seqid));
   }
   
