@@ -18,8 +18,8 @@ public class TTransportFactory {
   /**
    * Return a wrapped instance of the base Transport.
    *
-   * @param in The base transport
-   * @returns Wrapped Transport
+   * @param trans The base transport
+   * @return Wrapped Transport
    */
   public TTransport getTransport(TTransport trans) {
     return trans;

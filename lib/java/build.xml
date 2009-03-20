@@ -7,6 +7,7 @@
 
   <property name="src" location="src" />
   <property name="build" location="build" />
+  <property name="javadoc" location="${build}/javadoc" />
   <property name="install.path" value="/usr/local/lib" />
   <property name="src.test" location="test" />
   <property name="build.test" location="${build}/test" />
@@ -26,20 +27,42 @@
     <javac srcdir="${src}" destdir="${build}" source="1.5" debug="true"/>
   </target>
 
-  <target name="dist" depends="compile">
-    <jar jarfile="libthrift.jar" basedir="${build}"/>
+  <target name="javadoc" depends="init">
+    <javadoc sourcepath="${src}"
+      destdir="${javadoc}"
+      version="true"
+      windowtitle="Thrift Java API"
+      doctitle="Thrift Java API">
+    </javadoc>
   </target>
 
-  <target name="install" depends="dist">
+  <target name="dist" depends="compile">
+    <jar jarfile="libthrift.jar">
+      <fileset dir="${build}">
+        <include name="**/*.class" />
+      </fileset>
+      <fileset dir="src">
+        <include name="**/*.java" />
+      </fileset>
+    </jar>
+  </target>
+
+  <target name="install" depends="dist,javadoc">
     <exec executable="install">
       <arg line="libthrift.jar ${install.path}" />
     </exec>
+    <copy todir="${install.javadoc.path}">
+      <fileset dir="${javadoc}">
+        <include name="**/*" />
+      </fileset>
+    </copy>
   </target>
 
   <target name="clean">
     <delete dir="${build}" />
     <delete dir="${gen}"/>
     <delete dir="${genbean}"/>
+    <delete dir="${javadoc}"/>
     <delete file="libthrift.jar" />
   </target>
 

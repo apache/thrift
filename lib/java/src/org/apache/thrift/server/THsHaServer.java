@@ -190,7 +190,7 @@ public class THsHaServer extends TNonblockingServer {
     STOP_TIMEOUT_UNIT = options.stopTimeoutUnit;
   }
 
-  /** @inheritdoc */
+  /** @inheritDoc */
   @Override
   public void serve() {
     if (!startInvokerPool()) {
