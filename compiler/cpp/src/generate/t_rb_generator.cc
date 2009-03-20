@@ -592,6 +592,10 @@ void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type,
     out << ", :optional => true";
   }
 
+  if (field_type->is_enum()) {
+    out << ", :enum_class => " << full_type_name(field_type);
+  }
+
   // End of this field's defn
   out << "}";
 }
