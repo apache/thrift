@@ -13,12 +13,10 @@ libtestgencpp_la_SOURCES = \
 	gen-cpp/DebugProtoTest_types.cpp \
 	gen-cpp/OptionalRequiredTest_types.cpp \
 	gen-cpp/DebugProtoTest_types.cpp \
-	gen-cpp/Service.cpp \
-	gen-cpp/StressTest_types.cpp \
-	gen-cpp/SecondService.cpp \
-	gen-cpp/ThriftTest_constants.cpp \
-	gen-cpp/ThriftTest.cpp \
 	gen-cpp/ThriftTest_types.cpp \
+	gen-cpp/DebugProtoTest_types.h \
+	gen-cpp/OptionalRequiredTest_types.h \
+	gen-cpp/ThriftTest_types.h \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp
 
@@ -99,16 +97,16 @@ OptionalRequiredTest_LDADD = libtestgencpp.la
 #
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-gen-cpp/DebugProtoTest_types.cpp: DebugProtoTest.thrift
+gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h: DebugProtoTest.thrift
 	$(THRIFT) --gen cpp:dense $<
 
-gen-cpp/OptionalRequiredTest_types.cpp: OptionalRequiredTest.thrift
+gen-cpp/OptionalRequiredTest_types.cpp gen-cpp/OptionalRequiredTest_types.h: OptionalRequiredTest.thrift
 	$(THRIFT) --gen cpp:dense $<
 
 gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: StressTest.thrift
 	$(THRIFT) --gen cpp:dense $<
 
-gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp: ThriftTest.thrift
+gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: ThriftTest.thrift
 	$(THRIFT) --gen cpp:dense $<
 
 INCLUDES = \
