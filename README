@@ -53,17 +53,8 @@ thrift/
 Requirements
 ============
 
-Thrift requires boost shared pointers from boost-1.33.1 or greater, see:
-http://www.boost.org/libs/smart_ptr/smart_ptr.htm
-
-Some portions of Thrift also depend upon libevent, see:
-http://monkey.org/~provos/libevent/
-
-Some portions of Thrift also depend upon zlib, see:
-http://www.zlib.net/
-
-These libraries are open source and may be freely obtained, but they are not
-provided as a part of this distribution.
+See http://wiki.apache.org/thrift/ThriftRequirements for
+an up-to-date list of build requirements.
 
 Resources
 =========
