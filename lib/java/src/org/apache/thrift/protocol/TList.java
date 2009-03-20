@@ -9,7 +9,6 @@ package org.apache.thrift.protocol;
 /**
  * Helper class that encapsulates list metadata.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public final class TList {
   public TList() {

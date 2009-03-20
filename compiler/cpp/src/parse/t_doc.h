@@ -10,7 +10,6 @@
 /**
  * Documentation stubs
  *
- * @author Charlie Cheever <charlie@facebook.com>
  */
 class t_doc {
 

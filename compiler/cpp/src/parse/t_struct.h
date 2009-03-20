@@ -20,7 +20,6 @@ class t_program;
  * A struct is a container for a set of member fields that has a name. Structs
  * are also used to implement exception types.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_struct : public t_type {
  public:

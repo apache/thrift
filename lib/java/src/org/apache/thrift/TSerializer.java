@@ -18,7 +18,6 @@ import org.apache.thrift.transport.TIOStreamTransport;
  * Generic utility for easily serializing objects into a byte array or Java
  * String.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TSerializer {
 

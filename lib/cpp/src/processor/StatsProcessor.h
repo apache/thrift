@@ -17,7 +17,6 @@ namespace apache { namespace thrift { namespace processor {
 /*
  * Class for keeping track of function call statistics and printing them if desired
  *
- * @author James Wang <jwang@facebook.com>
  */
 class StatsProcessor : public apache::thrift::TProcessor {
 public:

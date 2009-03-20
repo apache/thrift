@@ -17,7 +17,6 @@ namespace apache { namespace thrift { namespace transport {
  * Server transport framework. A server needs to have some facility for
  * creating base transports to read/write from.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TServerTransport {
  public:

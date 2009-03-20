@@ -29,7 +29,6 @@ struct ReadWriteCounterMap : ReadWriteMutex,
 /**
  * Base Facebook service implementation in C++.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class FacebookBase : virtual public FacebookServiceIf {
  protected:

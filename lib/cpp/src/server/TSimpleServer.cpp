@@ -20,7 +20,6 @@ using boost::shared_ptr;
 /**
  * A simple single-threaded application server. Perfect for unit tests!
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 void TSimpleServer::serve() {
 

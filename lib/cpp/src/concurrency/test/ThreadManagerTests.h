@@ -23,7 +23,6 @@ using namespace apache::thrift::concurrency;
 /**
  * ThreadManagerTests class
  *
- * @author marc
  * @version $Id:$
  */
 class ThreadManagerTests {

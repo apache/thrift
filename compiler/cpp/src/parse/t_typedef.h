@@ -16,7 +16,6 @@
  * ignore typedefs and just use the underlying type directly, though in C++
  * the symbolic naming can be quite useful for code clarity.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_typedef : public t_type {
  public:

@@ -18,7 +18,6 @@ using boost::shared_ptr;
 /**
  * TSocketPoolServer implementation
  *
- * @author Akhil Wable <akhil@facebook.com>
  */
 TSocketPoolServer::TSocketPoolServer()
   : host_(""),
@@ -40,7 +39,6 @@ TSocketPoolServer::TSocketPoolServer(const string &host, int port)
 /**
  * TSocketPool implementation.
  *
- * @author Jason Sobel <jsobel@facebook.com>
  */
 
 TSocketPool::TSocketPool() : TSocket(),

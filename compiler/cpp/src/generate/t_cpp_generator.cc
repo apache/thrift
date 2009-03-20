@@ -22,7 +22,6 @@ using namespace std;
 /**
  * C++ code generator. This is legitimacy incarnate.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_cpp_generator : public t_oop_generator {
  public:

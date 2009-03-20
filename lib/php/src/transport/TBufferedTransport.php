@@ -8,7 +8,6 @@
  * http://developers.facebook.com/thrift/
  *
  * @package thrift.transport
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 /**
@@ -17,7 +16,6 @@
  * read and then serve data out of the internal buffer.
  *
  * @package thrift.transport
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TBufferedTransport extends TTransport {
 

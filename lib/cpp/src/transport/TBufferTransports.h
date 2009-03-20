@@ -32,7 +32,6 @@ namespace apache { namespace thrift { namespace transport {
  * class.  Subclasses are expected to define the "slow path" operations
  * that have to be done when the buffers are full or empty.
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 class TBufferBase : public TTransport {
 
@@ -219,8 +218,6 @@ class TUnderlyingTransport : public TBufferBase {
  * and will serve future data out of a local buffer. For writes, data is
  * stored to an in memory buffer before being written out.
  *
- * @author Mark Slee <mcslee@facebook.com>
- * @author David Reiss <dreiss@facebook.com>
  */
 class TBufferedTransport : public TUnderlyingTransport {
  public:
@@ -285,7 +282,6 @@ class TBufferedTransport : public TUnderlyingTransport {
 /**
  * Wraps a transport into a buffered one.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TBufferedTransportFactory : public TTransportFactory {
  public:
@@ -309,8 +305,6 @@ class TBufferedTransportFactory : public TTransportFactory {
  * binary chunk followed by the data payload. This allows the receiver on the
  * other end to always do fixed-length reads.
  *
- * @author Mark Slee <mcslee@facebook.com>
- * @author David Reiss <dreiss@facebook.com>
  */
 class TFramedTransport : public TUnderlyingTransport {
  public:
@@ -355,7 +349,6 @@ class TFramedTransport : public TUnderlyingTransport {
 /**
  * Wraps a transport into a framed one.
  *
- * @author Dave Simpson <dave@powerset.com>
  */
 class TFramedTransportFactory : public TTransportFactory {
  public:
@@ -381,8 +374,6 @@ class TFramedTransportFactory : public TTransportFactory {
  * The buffers are allocated using C constructs malloc,realloc, and the size
  * doubles as necessary.  We've considered using scoped
  *
- * @author Mark Slee <mcslee@facebook.com>
- * @author David Reiss <dreiss@facebook.com>
  */
 class TMemoryBuffer : public TBufferBase {
  private:

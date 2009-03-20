@@ -8,14 +8,12 @@
  * http://developers.facebook.com/thrift/
  *
  * @package thrift.transport
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 /**
  * Sockets implementation of the TTransport interface.
  *
  * @package thrift.transport
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TSocket extends TTransport {
 

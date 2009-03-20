@@ -19,7 +19,6 @@ import java.util.Map;
  * HTTP implementation of the TTransport interface. Used for working with a
  * Thrift web services implementation.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class THttpClient extends TTransport {
 

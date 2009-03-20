@@ -9,7 +9,6 @@ package org.apache.thrift.protocol;
 /**
  * Helper class that encapsulates struct metadata.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public final class TMessage {
   public TMessage() {

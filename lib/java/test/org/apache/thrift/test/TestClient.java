@@ -25,7 +25,6 @@ import java.util.ArrayList;
  * this makes a variety of requests to enable testing for both performance and
  * correctness of the output.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TestClient {
   public static void main(String [] args) {

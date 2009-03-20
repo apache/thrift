@@ -14,7 +14,6 @@
  * A thrift base type, which must be one of the defined enumerated types inside
  * this definition.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_base_type : public t_type {
  public:

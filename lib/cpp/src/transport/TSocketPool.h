@@ -15,7 +15,6 @@ namespace apache { namespace thrift { namespace transport {
  /**
   * Class to hold server information for TSocketPool
   *
-  * @author Akhil Wable <akhil@facebook.com>
   */
 class TSocketPoolServer {
 
@@ -49,7 +48,6 @@ class TSocketPoolServer {
 /**
  * TCP Socket implementation of the TTransport interface.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TSocketPool : public TSocket {
 

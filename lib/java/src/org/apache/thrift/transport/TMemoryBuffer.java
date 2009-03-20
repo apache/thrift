@@ -12,7 +12,6 @@ import java.io.UnsupportedEncodingException;
 /**
  * Memory buffer-based implementation of the TTransport interface.
  *
- * @author Chad Walters <chad@powerset.com>
  */
 public class TMemoryBuffer extends TTransport {
 

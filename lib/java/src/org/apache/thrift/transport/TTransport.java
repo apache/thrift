@@ -10,7 +10,6 @@ package org.apache.thrift.transport;
  * Generic class that encapsulates the I/O layer. This is basically a thin
  * wrapper around the combined functionality of Java input/output streams.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public abstract class TTransport {
 

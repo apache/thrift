@@ -42,7 +42,6 @@ namespace apache { namespace thrift { namespace protocol {
  * We inherit so that we can can explicitly call TBPs's primitive-writing
  * methods within our versions.
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 class TDenseProtocol : public TBinaryProtocol {
  protected:

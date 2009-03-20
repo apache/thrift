@@ -21,7 +21,6 @@ using namespace std;
 /**
  * Haskell code generator.
  *
- * @author Iain Proctor <iproctor@facebook.com>
  */
 class t_hs_generator : public t_oop_generator {
  public:

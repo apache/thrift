@@ -10,7 +10,6 @@
  * Thrift scanner.
  *
  * Tokenizes a thrift definition file.
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 %{

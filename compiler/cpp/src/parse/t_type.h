@@ -24,7 +24,6 @@ class t_program;
  * used by the code generator to branch based upon different handling for the
  * various types.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_type : public t_doc {
  public:

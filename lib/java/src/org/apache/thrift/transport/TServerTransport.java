@@ -9,7 +9,6 @@ package org.apache.thrift.transport;
 /**
  * Server transport. Object which provides client transports.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public abstract class TServerTransport {
 

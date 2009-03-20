@@ -8,7 +8,6 @@
  * http://developers.facebook.com/thrift/
  *
  * @package thrift.protocol
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 /**
@@ -16,8 +15,6 @@
  * a protocol encoder/decoder.
  *
  * @package thrift.protocol
- * @author Mark Slee <mcslee@facebook.com>
- * @author Aditya Agarwal <aditya@facebook.com>
  */
 
 /**

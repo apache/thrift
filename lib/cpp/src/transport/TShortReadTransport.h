@@ -18,7 +18,6 @@ namespace apache { namespace thrift { namespace transport { namespace test {
  * Calls to read are passed through with some probability.  Otherwise,
  * the read amount is randomly reduced before being passed through.
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 class TShortReadTransport : public TTransport {
  public:

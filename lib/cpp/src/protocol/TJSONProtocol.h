@@ -78,7 +78,6 @@ class TJSONContext;
  * client, this would mean that infinities get converted to not-a-number in
  * transmission. I don't know of any work-around for this issue.
  *
- * @author Chad Walters <chad@powerset.com>
  */
 class TJSONProtocol : public TProtocol {
  public:

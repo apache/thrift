@@ -16,7 +16,6 @@
  * of the value object, since that is not determined until after parsing the
  * whole thing out.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_const : public t_doc {
  public:

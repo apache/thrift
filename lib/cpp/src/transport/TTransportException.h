@@ -19,7 +19,6 @@ namespace apache { namespace thrift { namespace transport {
  * base of error handling to be used for various types of transports, i.e.
  * pipes etc.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TTransportException : public apache::thrift::TException {
  public:

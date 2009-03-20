@@ -7,7 +7,6 @@ dnl
 dnl These macros have poor error handling and are poorly documented.
 dnl They are intended only for internal use by the Thrift compiler.
 dnl
-dnl @author David Reiss <dreiss@facebook.com>
 dnl @version 2008-02-20
 dnl @license AllPermissive
 

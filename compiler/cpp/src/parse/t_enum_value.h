@@ -15,7 +15,6 @@
  * symbol identifiers that may or may not have an explicit value associated
  * with them.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_enum_value : public t_doc {
  public:

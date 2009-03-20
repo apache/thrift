@@ -12,7 +12,6 @@ import java.io.ByteArrayOutputStream;
  * Class that allows access to the underlying buf without doing deep
  * copies on it.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TByteArrayOutputStream extends ByteArrayOutputStream {
   public TByteArrayOutputStream(int size) {

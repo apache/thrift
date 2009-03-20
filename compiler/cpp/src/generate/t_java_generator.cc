@@ -22,7 +22,6 @@ using namespace std;
 /**
  * Java code generator.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_java_generator : public t_oop_generator {
  public:

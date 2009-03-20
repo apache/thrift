@@ -17,7 +17,6 @@ import java.util.logging.Logger;
 /**
  * Wrapper around ServerSocket for Thrift.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TServerSocket extends TServerTransport {
 

@@ -16,7 +16,6 @@ namespace apache { namespace thrift { namespace concurrency {
 /**
  * Implementation of Mutex class using POSIX mutex
  *
- * @author marc
  * @version $Id:$
  */
 class Mutex::impl {
@@ -99,7 +98,6 @@ void Mutex::RECURSIVE_INITIALIZER(void* arg) {
 /**
  * Implementation of ReadWriteMutex class using POSIX rw lock
  *
- * @author boz
  * @version $Id:$
  */
 class ReadWriteMutex::impl {

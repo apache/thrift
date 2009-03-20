@@ -12,7 +12,6 @@ import org.apache.thrift.protocol.TProtocol;
  * A processor is a generic object which operates upon an input stream and
  * writes to some output stream.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public interface TProcessor {
   public boolean process(TProtocol in, TProtocol out)

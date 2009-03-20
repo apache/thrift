@@ -9,7 +9,6 @@ package org.apache.thrift.protocol;
 /**
  * Type constants in the Thrift protocol.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public final class TType {
   public static final byte STOP   = 0;

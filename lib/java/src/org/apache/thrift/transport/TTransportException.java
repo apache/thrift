@@ -11,7 +11,6 @@ import org.apache.thrift.TException;
 /**
  * Transport exceptions.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TTransportException extends TException {
 

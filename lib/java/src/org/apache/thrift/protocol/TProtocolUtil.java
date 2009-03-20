@@ -12,7 +12,6 @@ import org.apache.thrift.TException;
  * Utility class with static methods for interacting with protocol data
  * streams.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TProtocolUtil {
 

@@ -60,7 +60,6 @@ ServiceTracker::ServiceTracker(facebook::fb303::FacebookBase *handler,
  * @param const ServiceMethod &serviceMethod A reference to the ServiceMethod
  *                                           object instantiated at the start
  *                                           of the service method.
- * @author Karl Voskuil
  */
 void
 ServiceTracker::startService(const ServiceMethod &serviceMethod)
@@ -115,7 +114,6 @@ ServiceTracker::startService(const ServiceMethod &serviceMethod)
  *                                           of the service method.
  * @return int64_t Elapsed units (see stopwatchUnit_) since ServiceMethod
  *                 instantiation.
- * @author Karl Voskuil
  */
 int64_t
 ServiceTracker::stepService(const ServiceMethod &serviceMethod,
@@ -138,7 +136,6 @@ ServiceTracker::stepService(const ServiceMethod &serviceMethod,
  * @param const ServiceMethod &serviceMethod A reference to the ServiceMethod
  *                                           object instantiated at the start
  *                                           of the service method.
- * @author Karl Voskuil
  */
 void
 ServiceTracker::finishService(const ServiceMethod &serviceMethod)
@@ -225,7 +222,6 @@ ServiceTracker::finishService(const ServiceMethod &serviceMethod)
  * uses of the object variables (and calls to this method) with a
  * mutex.
  *
- * @author Karl Voskuil
  */
 void
 ServiceTracker::reportCheckpoint()
@@ -287,7 +283,6 @@ ServiceTracker::reportCheckpoint()
  * activity.
  *
  * @param shared_ptr<ThreadManager> threadManager The server's thread manager.
- * @author Karl Voskuil
  */
 void
 ServiceTracker::setThreadManager(boost::shared_ptr<ThreadManager>
@@ -345,7 +340,6 @@ ServiceTracker::defaultLogMethod(int level, const string &message)
  * Creates a Stopwatch, which can report the time elapsed since its
  * creation.
  *
- * @author Karl Voskuil
  */
 Stopwatch::Stopwatch()
 {
@@ -417,7 +411,6 @@ Stopwatch::elapsedUnits(Stopwatch::Unit unit, string *label) const
  *                           of service method parameters).
  * @param const string &signature A signature uniquely identifying the method
  *                                invocation (usually name plus parameters).
- * @author Karl Voskuil
  */
 ServiceMethod::ServiceMethod(ServiceTracker *tracker,
                              const string &name,

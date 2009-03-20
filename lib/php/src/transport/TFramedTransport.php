@@ -8,7 +8,6 @@
  * http://developers.facebook.com/thrift/
  *
  * @package thrift.transport
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 /**
@@ -16,7 +15,6 @@
  * their length.
  *
  * @package thrift.transport
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TFramedTransport extends TTransport {
 

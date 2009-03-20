@@ -24,7 +24,6 @@ namespace apache { namespace thrift { namespace transport {
  * and it will let you write anything you want to it, though it won't actually
  * go anywhere.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TNullTransport : public TTransport {
  public:
@@ -52,7 +51,6 @@ class TNullTransport : public TTransport {
  * The underlying buffer expands to a keep a copy of the entire
  * request/response.
  *
- * @author Aditya Agarwal <aditya@facebook.com>
  */
 class TPipedTransport : virtual public TTransport {
  public:
@@ -178,7 +176,6 @@ class TPipedTransport : virtual public TTransport {
 /**
  * Wraps a transport into a pipedTransport instance.
  *
- * @author Aditya Agarwal <aditya@facebook.com>
  */
 class TPipedTransportFactory : public TTransportFactory {
  public:
@@ -212,7 +209,6 @@ class TPipedTransportFactory : public TTransportFactory {
  * it is a templatized class, so that clients who rely on a specific
  * TTransport can still access the original transport.
  *
- * @author James Wang <jwang@facebook.com>
  */
 class TPipedFileReaderTransport : public TPipedTransport,
                                   public TFileReaderTransport {
@@ -250,7 +246,6 @@ class TPipedFileReaderTransport : public TPipedTransport,
 /**
  * Creates a TPipedFileReaderTransport from a filepath and a destination transport
  *
- * @author James Wang <jwang@facebook.com>
  */
 class TPipedFileReaderTransportFactory : public TPipedTransportFactory {
  public:

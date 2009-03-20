@@ -40,7 +40,6 @@
  *
  * The program module also contains the definitions of the base types.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_program : public t_doc {
  public:

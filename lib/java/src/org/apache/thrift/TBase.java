@@ -11,7 +11,6 @@ import org.apache.thrift.protocol.TProtocol;
 /**
  * Generic base interface for generated Thrift objects.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public interface TBase extends Cloneable {
 

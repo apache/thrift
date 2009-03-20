@@ -8,7 +8,6 @@
  * http://developers.facebook.com/thrift/
  *
  * @package thrift
- * @author Aditya Agarwal <aditya@facebook.com>
  */
 
 /**

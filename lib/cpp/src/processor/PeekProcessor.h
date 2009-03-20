@@ -20,7 +20,6 @@ namespace apache { namespace thrift { namespace processor {
  * Class for peeking at the raw data that is being processed by another processor
  * and gives the derived class a chance to change behavior accordingly
  *
- * @author James Wang <jwang@facebook.com>
  */
 class PeekProcessor : public apache::thrift::TProcessor {
 

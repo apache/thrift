@@ -39,7 +39,6 @@ using namespace apache::thrift::protocol;
 /**
  * Fake clock_gettime for systems like darwin
  *
- * @author Paul Querna <pquerna@apache.org>
  */
 #define CLOCK_REALTIME 0
 static int clock_gettime(int clk_id /*ignored*/, struct timespec *tp) {

@@ -21,7 +21,6 @@
  * Class with utility methods shared across common object oriented languages.
  * Specifically, most of this stuff is for C++/Java.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_oop_generator : public t_generator {
  public:

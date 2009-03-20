@@ -25,7 +25,6 @@ using namespace std;
 /**
  * Smalltalk code generator.
  *
- * @author Patrick Collison <patrick@collison.ie>
  */
 class t_st_generator : public t_oop_generator {
  public:

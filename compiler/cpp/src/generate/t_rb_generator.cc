@@ -24,7 +24,6 @@ using namespace std;
 /**
  * Ruby code generator.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_rb_generator : public t_oop_generator {
  public:

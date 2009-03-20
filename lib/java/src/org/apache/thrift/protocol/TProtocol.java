@@ -12,7 +12,6 @@ import org.apache.thrift.transport.TTransport;
 /**
  * Protocol interface definition.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public abstract class TProtocol {
 

@@ -19,7 +19,6 @@
  * used to determine code generation, but rather to resolve identifiers at
  * parse time.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_scope {
  public:

@@ -17,7 +17,6 @@ import org.apache.thrift.transport.TIOStreamTransport;
  * Generic utility for easily deserializing objects from a byte array or Java
  * String.
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 public class TDeserializer {
   private final TProtocolFactory protocolFactory_;

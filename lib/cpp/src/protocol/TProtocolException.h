@@ -18,7 +18,6 @@ namespace apache { namespace thrift { namespace protocol {
  * base of error handling to be used for various types of protocols, i.e.
  * pipes etc.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TProtocolException : public apache::thrift::TException {
  public:

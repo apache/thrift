@@ -25,7 +25,6 @@ namespace apache { namespace thrift { namespace concurrency {
  * platform dependent crap.  Rather it should be inluded directly in
  * concurrency library implementation source.
  *
- * @author marc
  * @version $Id:$
  */
 class Util {

@@ -14,7 +14,6 @@ import org.apache.thrift.transport.TTransport;
 /**
  * Binary protocol implementation for thrift.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TBinaryProtocol extends TProtocol {
   private static final TStruct ANONYMOUS_STRUCT = new TStruct();

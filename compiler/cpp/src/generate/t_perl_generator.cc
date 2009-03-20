@@ -21,7 +21,6 @@ using namespace std;
 /**
  * PERL code generator.
  *
- * @author Jake Luciani <jakers@gmail.com>
  */
 class t_perl_generator : public t_oop_generator {
  public:

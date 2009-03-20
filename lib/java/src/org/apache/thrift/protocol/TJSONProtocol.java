@@ -20,7 +20,6 @@ import java.util.Stack;
  * Please see the C++ class header for a detailed description of the
  * protocol's wire format.
  *
- * @author Chad Walters <chad@powerset.com>
  */
 public class TJSONProtocol extends TProtocol {
 

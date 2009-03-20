@@ -14,7 +14,6 @@
 /**
  * Contains utility macros for debugging and logging.
  *
- * @author Aditya Agarwal
  */
 
 #ifndef HAVE_CLOCK_GETTIME

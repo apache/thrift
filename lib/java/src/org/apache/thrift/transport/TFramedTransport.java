@@ -13,7 +13,6 @@ import org.apache.thrift.TByteArrayOutputStream;
 /**
  * Socket implementation of the TTransport interface. To be commented soon!
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TFramedTransport extends TTransport {
 

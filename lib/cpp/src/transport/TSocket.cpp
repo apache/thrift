@@ -32,7 +32,6 @@ uint32_t g_socket_syscalls = 0;
 /**
  * TSocket implementation.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 TSocket::TSocket(string host, int port) :

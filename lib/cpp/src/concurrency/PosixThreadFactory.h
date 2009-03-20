@@ -16,7 +16,6 @@ namespace apache { namespace thrift { namespace concurrency {
 /**
  * A thread factory to create posix threads
  *
- * @author marc
  * @version $Id:$
  */
 class PosixThreadFactory : public ThreadFactory {

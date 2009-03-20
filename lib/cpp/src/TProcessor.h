@@ -19,7 +19,6 @@ namespace apache { namespace thrift {
  * though the typical case is for some sort of server that either generates
  * responses to an input stream or forwards data from one pipe onto another.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TProcessor {
  public:

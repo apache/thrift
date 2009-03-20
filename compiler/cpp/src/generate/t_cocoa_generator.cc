@@ -20,7 +20,6 @@ using namespace std;
 /**
  * Objective-C code generator.
  *
- * @author Andrew McGeachie <geechorama@gmail.com>, although it was
  * mostly copy/pasting/tweaking from mcslee's work.
  */
 class t_cocoa_generator : public t_oop_generator {

@@ -21,7 +21,6 @@ use Thrift::Transport;
 # their length.
 #
 # @package thrift.transport
-# @author Mark Slee <mcslee@facebook.com>
 #
 package Thrift::FramedTransport;
 

@@ -15,7 +15,6 @@ import org.apache.thrift.transport.TTransportFactory;
 /**
  * Generic interface for a Thrift server.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public abstract class TServer {
 

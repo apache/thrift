@@ -28,7 +28,6 @@ package org.apache.thrift.test;
 import thrift.test.*;
 
 /'''r'''**
- * @author David Reiss <dreiss@facebook.com>
  *'''r'''/
 public class EqualityTest {
   public static void main(String[] args) throws Exception {
@@ -95,7 +94,6 @@ package org.apache.thrift.test;
 import thrift.test.*;
 
 /**
- * @author David Reiss <dreiss@facebook.com>
  */
 public class EqualityTest {
   public static void main(String[] args) throws Exception {

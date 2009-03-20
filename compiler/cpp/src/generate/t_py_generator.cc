@@ -22,7 +22,6 @@ using namespace std;
 /**
  * Python code generator.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_py_generator : public t_generator {
  public:

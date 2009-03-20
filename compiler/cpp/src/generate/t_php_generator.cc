@@ -20,7 +20,6 @@ using namespace std;
 /**
  * PHP code generator.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_php_generator : public t_oop_generator {
  public:

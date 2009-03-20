@@ -17,7 +17,6 @@
  * optional modifiers, and an argument list, which is implemented as a thrift
  * struct.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_function : public t_doc {
  public:

@@ -21,7 +21,6 @@ using namespace std;
 /**
  * OCaml code generator.
  *
- * @author Iain Proctor <iproctor@facebook.com>
  */
 class t_ocaml_generator : public t_oop_generator {
  public:

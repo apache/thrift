@@ -9,7 +9,6 @@ package org.apache.thrift.protocol;
 /**
  * Helper class that encapsulates field metadata.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TField {
   public TField() {

@@ -3,7 +3,6 @@ package org.apache.thrift.test;
 import thrift.test.*;
 
 /**
- * @author David Reiss <dreiss@facebook.com>
  */
 public class ToStringTest {
   public static void main(String[] args) throws Exception {

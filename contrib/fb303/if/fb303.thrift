@@ -13,7 +13,6 @@
  * provided in the base implementation, and in other cases they simply define
  * methods that inheriting applications should implement (i.e. status report)
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 namespace java com.facebook.fb303

@@ -16,7 +16,6 @@ namespace apache { namespace thrift { namespace concurrency {
 /**
  * Thread Pool Manager and related classes
  *
- * @author marc
  * @version $Id:$
  */
 class ThreadManager;

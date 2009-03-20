@@ -13,7 +13,6 @@
 /**
  * An enumerated type. A list of constant objects with a name for the type.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_enum : public t_type {
  public:

@@ -18,7 +18,6 @@ import java.util.logging.Logger;
 /**
  * Socket implementation of the TTransport interface. To be commented soon!
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TSocket extends TIOStreamTransport {
 

@@ -22,7 +22,6 @@ import org.apache.thrift.transport.TTransportException;
 /**
  * Simple singlethreaded server for testing.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TSimpleServer extends TServer {
 

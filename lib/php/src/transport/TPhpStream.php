@@ -8,7 +8,6 @@
  * http://developers.facebook.com/thrift/
  *
  * @package thrift.transport
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 /**
@@ -16,7 +15,6 @@
  * php://input and php://output
  *
  * @package thrift.transport
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TPhpStream extends TTransport {
 

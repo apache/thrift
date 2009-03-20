@@ -16,7 +16,6 @@
  * A const value is something parsed that could be a map, set, list, struct
  * or whatever.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_const_value {
  public:

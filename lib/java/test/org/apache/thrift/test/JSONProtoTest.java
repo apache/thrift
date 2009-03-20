@@ -18,7 +18,6 @@ import thrift.test.OneOfEach;
 /**
  * Tests for the Java implementation of TJSONProtocol. Mirrors the C++ version
  *
- * @author Chad Walters <chad@powerset.com>
  */
 public class JSONProtoTest {
 

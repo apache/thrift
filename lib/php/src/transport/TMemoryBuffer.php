@@ -8,7 +8,6 @@
  * http://developers.facebook.com/thrift/
  *
  * @package thrift.transport
- * @author Levy Klots <lklots@facebook.com>
  */
 
 /**
@@ -18,7 +17,6 @@
  * buffer.
  *
  * @package thrift.transport
- * @author Levy Klots <lklots@facebook.com>
  */
 class TMemoryBuffer extends TTransport {
 

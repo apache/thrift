@@ -18,7 +18,6 @@ namespace apache { namespace thrift { namespace transport {
  * here is a VERY basic HTTP/1.1 client which supports HTTP 100 Continue,
  * chunked transfer encoding, keepalive, etc. Tested against Apache.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class THttpClient : public TTransport {
  public:

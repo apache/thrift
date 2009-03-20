@@ -9,14 +9,11 @@ include_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
  * http://developers.facebook.com/thrift/
  *
  * @package thrift.protocol
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 /**
  * Binary implementation of the Thrift protocol.
  *
- * @author Mark Slee <mcslee@facebook.com>
- * @author Marc Kwiatkowski <marc@facebook.com>
  */
 class TBinaryProtocol extends TProtocol {
 

@@ -22,7 +22,6 @@ namespace apache { namespace thrift { namespace concurrency {
  *
  * This class dispatches timer tasks when they fall due.
  *
- * @author marc
  * @version $Id:$
  */
 class TimerManager {

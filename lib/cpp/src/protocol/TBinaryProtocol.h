@@ -17,7 +17,6 @@ namespace apache { namespace thrift { namespace protocol {
  * The default binary protocol for thrift. Writes all data in a very basic
  * binary format, essentially just spitting out the raw bytes.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TBinaryProtocol : public TProtocol {
  protected:

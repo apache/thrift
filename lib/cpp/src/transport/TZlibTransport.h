@@ -55,7 +55,6 @@ class TZlibTransportException : public TTransportException {
  * TODO(dreiss): Don't do an extra copy of the compressed data if
  *               the underlying transport is TBuffered or TMemory.
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 class TZlibTransport : public TTransport {
  public:

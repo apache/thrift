@@ -13,7 +13,6 @@
  * A map is a lightweight container type that just wraps another two data
  * types.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_map : public t_container {
  public:

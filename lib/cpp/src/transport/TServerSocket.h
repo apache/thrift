@@ -18,7 +18,6 @@ class TSocket;
  * Server socket implementation of TServerTransport. Wrapper around a unix
  * socket listen and accept calls.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TServerSocket : public TServerTransport {
  public:

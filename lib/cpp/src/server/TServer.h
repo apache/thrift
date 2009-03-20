@@ -65,7 +65,6 @@ class TServerEventHandler {
 /**
  * Thrift server.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TServer : public concurrency::Runnable {
  public:

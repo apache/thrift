@@ -18,7 +18,6 @@ namespace apache { namespace thrift { namespace server {
  * that connection until it closes, and then repeating. It is a good example
  * of how to extend the TServer interface.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TSimpleServer : public TServer {
  public:

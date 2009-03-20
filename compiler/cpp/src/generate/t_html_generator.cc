@@ -21,7 +21,6 @@ using namespace std;
 /**
  * HTML code generator
  *
- * @author Dave Engberg, although it was
  * mostly copy/pasting/tweaking from mcslee's work.
  */
 class t_html_generator : public t_generator {

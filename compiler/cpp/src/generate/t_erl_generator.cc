@@ -22,7 +22,6 @@ using namespace std;
 /**
  * Erlang code generator.
  *
- * @author
  */
 class t_erl_generator : public t_generator {
  public:

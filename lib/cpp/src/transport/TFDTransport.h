@@ -18,7 +18,6 @@ namespace apache { namespace thrift { namespace transport {
 /**
  * Dead-simple wrapper around a file descriptor.
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 class TFDTransport : public TTransport {
  public:

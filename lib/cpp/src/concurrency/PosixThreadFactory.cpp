@@ -26,7 +26,6 @@ using boost::weak_ptr;
 /**
  * The POSIX thread class.
  *
- * @author marc
  * @version $Id:$
  */
 class PthreadThread: public Thread {

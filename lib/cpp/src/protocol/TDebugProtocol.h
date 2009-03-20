@@ -32,7 +32,6 @@ Complaints are not. :R
  * Protocol that prints the payload in a nice human-readable format.
  * Reading from this protocol is not supported.
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 class TDebugProtocol : public TWriteOnlyProtocol {
  private:

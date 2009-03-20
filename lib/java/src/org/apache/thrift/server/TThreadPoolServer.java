@@ -30,7 +30,6 @@ import java.util.logging.Logger;
  * Server which uses Java's built in ThreadPool management to spawn off
  * a worker pool that
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TThreadPoolServer extends TServer {
 

@@ -18,8 +18,6 @@ namespace apache { namespace thrift { namespace transport {
 /**
  * TCP Socket implementation of the TTransport interface.
  *
- * @author Mark Slee <mcslee@facebook.com>
- * @author Aditya Agarwal <aditya@facebook.com>
  */
 class TSocket : public TTransport {
   /**

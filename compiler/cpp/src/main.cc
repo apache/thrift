@@ -12,7 +12,6 @@
  * code for each language lives in a file by the language name under the
  * generate/ folder, and all parse structures live in parse/
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 #include <cassert>

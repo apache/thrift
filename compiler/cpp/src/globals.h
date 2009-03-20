@@ -21,7 +21,6 @@
  * global variables such that the parser does the right thing and puts entries
  * into the right containers, etc.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 /**

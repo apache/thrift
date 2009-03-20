@@ -18,7 +18,6 @@ namespace apache { namespace thrift { namespace transport {
  * Generic interface for a method of transporting data. A TTransport may be
  * capable of either reading or writing, but not necessarily both.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TTransport {
  public:
@@ -191,7 +190,6 @@ class TTransport {
  * source transport. Commonly used inside servers to make input and output
  * streams out of raw clients.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TTransportFactory {
  public:

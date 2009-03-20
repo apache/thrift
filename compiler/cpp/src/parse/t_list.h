@@ -12,7 +12,6 @@
 /**
  * A list is a lightweight container type that just wraps another data type.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_list : public t_container {
  public:

@@ -11,7 +11,6 @@ import org.apache.thrift.TException;
 /**
  * Protocol exceptions.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TProtocolException extends TException {
 

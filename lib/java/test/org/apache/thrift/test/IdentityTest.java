@@ -21,7 +21,6 @@ import thrift.test.OneOfEach;
 
 /**
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 public class IdentityTest {
   public static Object deepCopy(Object oldObj) throws Exception {

@@ -16,7 +16,6 @@ dnl "ax_javac_and_java" are set to "yes" or "no", and "JAVAC" and
 dnl "JAVA" are set to the appropriate commands.
 dnl
 dnl @category Java
-dnl @author David Reiss <dreiss@facebook.com>
 dnl @version 2009-02-09
 dnl @license AllPermissive
 dnl

@@ -19,7 +19,6 @@ using namespace std;
 /**
  * XSD generator, creates an XSD for the base types etc.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_xsd_generator : public t_generator {
  public:

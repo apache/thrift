@@ -17,7 +17,6 @@ using namespace std;
 /**
  * Http client implementation.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 // Yeah, yeah, hacky to put these here, I know.

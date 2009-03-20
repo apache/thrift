@@ -9,7 +9,6 @@ package org.apache.thrift;
 /**
  * Generic exception class for Thrift.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TException extends Exception {
 

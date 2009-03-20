@@ -15,7 +15,6 @@ namespace apache { namespace thrift { namespace protocol {
  * Abstract class for implementing a protocol that can only be written,
  * not read.
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 class TWriteOnlyProtocol : public TProtocol {
  public:
@@ -151,7 +150,6 @@ class TWriteOnlyProtocol : public TProtocol {
  * Abstract class for implementing a protocol that can only be read,
  * not written.
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 class TReadOnlyProtocol : public TProtocol {
  public:

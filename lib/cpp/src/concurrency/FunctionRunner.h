@@ -26,7 +26,6 @@ namespace apache { namespace thrift { namespace concurrency {
  *  thread->start();
  *
  *
- * @author mrabkin
  */
 
 class FunctionRunner : public Runnable {

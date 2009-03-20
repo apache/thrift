@@ -100,7 +100,6 @@ enum TMessageType {
  * when parsing an input XML stream, reading should be batched rather than
  * looking ahead character by character for a close tag).
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TProtocol {
  public:

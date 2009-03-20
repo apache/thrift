@@ -22,7 +22,6 @@ namespace apache { namespace thrift { namespace concurrency {
  * bit constness.  This allows const methods to call monitor methods without
  * needing to cast away constness or change to non-const signatures.
  *
- * @author marc
  * @version $Id:$
  */
 class Monitor {

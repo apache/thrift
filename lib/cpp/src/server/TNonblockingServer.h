@@ -35,7 +35,6 @@ class TConnection;
  * It does not use the TServerTransport framework, but rather has socket
  * operations hardcoded for use with select.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class TNonblockingServer : public TServer {
  private:

@@ -18,7 +18,6 @@ using apache::thrift::transport::TTransport;
  * through to an enclosed protocol object, but also mirrored as write to a
  * second protocol object.
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 class TProtocolTap : public TReadOnlyProtocol {
  public:

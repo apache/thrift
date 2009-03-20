@@ -22,7 +22,6 @@ typedef std::pair<task_iterator, task_iterator> task_range;
 /**
  * TimerManager class
  *
- * @author marc
  * @version $Id:$
  */
 class TimerManager::Task : public Runnable {

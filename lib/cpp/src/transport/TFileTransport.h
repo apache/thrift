@@ -93,7 +93,6 @@ typedef struct readState {
  * Note: The above rules are enforced mainly for debugging its sole client TFileTransport
  *       which uses the buffer in this way.
  *
- * @author James Wang <jwang@facebook.com>
  */
 class TFileTransportBuffer {
   public:
@@ -148,7 +147,6 @@ class TFileWriterTransport : virtual public TTransport {
  * File implementation of a transport. Reads and writes are done to a
  * file on disk.
  *
- * @author Aditya Agarwal <aditya@facebook.com>
  */
 class TFileTransport : public TFileReaderTransport,
                        public TFileWriterTransport {

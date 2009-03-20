@@ -25,7 +25,6 @@ dnl       but it can be easily modified to allow it.  (grep "cross").
 dnl
 dnl @category InstalledPackages
 dnl @category C
-dnl @author David Reiss <dreiss@facebook.com>
 dnl @version 2007-09-12
 dnl @license AllPermissive
 

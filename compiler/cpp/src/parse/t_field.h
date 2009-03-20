@@ -19,7 +19,6 @@ class t_struct;
  * Class to represent a field in a thrift structure. A field has a data type,
  * a symbolic name, and a numeric identifier.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_field : public t_doc {
  public:

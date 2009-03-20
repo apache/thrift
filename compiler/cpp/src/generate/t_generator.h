@@ -18,7 +18,6 @@
  * routines for code generation and contains the top level method that
  * dispatches code generation across various components.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_generator {
  public:

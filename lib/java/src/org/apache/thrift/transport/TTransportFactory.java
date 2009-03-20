@@ -12,8 +12,6 @@ package org.apache.thrift.transport;
  * a ServerTransport and then may want to mutate them (i.e. create
  * a BufferedTransport from the underlying base transport)
  *
- * @author Mark Slee <mcslee@facebook.com>
- * @author Aditya Agarwal <aditya@facebook.com>
  */
 public class TTransportFactory {
 

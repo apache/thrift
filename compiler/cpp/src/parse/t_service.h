@@ -15,7 +15,6 @@ class t_program;
 /**
  * A service consists of a set of functions.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 class t_service : public t_type {
  public:

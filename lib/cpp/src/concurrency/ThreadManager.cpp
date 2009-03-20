@@ -31,7 +31,6 @@ using boost::dynamic_pointer_cast;
  * it maintains statistics on number of idle threads, number of active threads,
  * task backlog, and average wait and service times.
  *
- * @author marc
  * @version $Id:$
  */
 class ThreadManager::Impl : public ThreadManager  {

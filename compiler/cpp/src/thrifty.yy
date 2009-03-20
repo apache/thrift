@@ -10,7 +10,6 @@
  *
  * This parser is used on a thrift definition file.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 #define __STDC_LIMIT_MACROS

@@ -19,8 +19,6 @@ import org.apache.thrift.transport.TTransport;
  * suitable for parsing by scripting languages.  It should not be
  * confused with the full-featured TJSONProtocol.
  *
- * @author Joydeep Sen Sarma <jssarma@facebook.com>
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TSimpleJSONProtocol extends TProtocol {
 

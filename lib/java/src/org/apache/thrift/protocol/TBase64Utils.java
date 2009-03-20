@@ -18,7 +18,6 @@ package org.apache.thrift.protocol;
  * results in bad decoded data -- this is not in compliance with the RFC but is
  * done in the interest of performance.
  *
- * @author Chad Walters <chad@powerset.com>
  */
 class TBase64Utils {
 

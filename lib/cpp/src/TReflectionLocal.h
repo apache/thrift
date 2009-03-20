@@ -16,7 +16,6 @@
  * and generation of this particular representation of Thrift types.
  * (It is called local because it cannot be serialized by Thrift).
  *
- * @author David Reiss <dreiss@facebook.com>
  */
 
 namespace apache { namespace thrift { namespace reflection { namespace local {

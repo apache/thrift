@@ -8,7 +8,6 @@
  * http://developers.facebook.com/thrift/
  *
  * @package thrift.transport
- * @author Mark Slee <mcslee@facebook.com>
  */
 
 /**
@@ -16,7 +15,6 @@
  * This is useful for measuring the serialized size of structures.
  *
  * @package thrift.transport
- * @author David Reiss <dreiss@facebook.com>
  */
 class TNullTransport extends TTransport {
 

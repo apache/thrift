@@ -15,7 +15,6 @@ import org.apache.thrift.protocol.TType;
 /**
  * Application level exception
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TApplicationException extends TException {
 

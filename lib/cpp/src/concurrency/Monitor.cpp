@@ -20,7 +20,6 @@ namespace apache { namespace thrift { namespace concurrency {
 /**
  * Monitor implementation using the POSIX pthread library
  *
- * @author marc
  * @version $Id:$
  */
 class Monitor::Impl {

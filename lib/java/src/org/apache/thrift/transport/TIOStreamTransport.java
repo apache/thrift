@@ -18,7 +18,6 @@ import java.util.logging.Logger;
  * This allows for compatibility with all the nice constructs Java already
  * has to provide a variety of types of streams.
  *
- * @author Mark Slee <mcslee@facebook.com>
  */
 public class TIOStreamTransport extends TTransport {
 
