@@ -20,6 +20,9 @@ libtestgencpp_la_SOURCES = \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp
 
+ThriftTest_extras.o: gen-cpp/ThriftTest_types.h
+DebugProtoTest_extras.o: gen-cpp/DebugProtoTest_types.h
+
 libtestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 
 noinst_PROGRAMS = Benchmark
