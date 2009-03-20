@@ -214,7 +214,7 @@ class BenchmarkManager
   }
 
   def tabulate(fmt, *labels_and_values)
-    labels = labels_and_values.map { |(l,)| Array === l ? l.first : l }
+    labels = labels_and_values.map { |l| Array === l ? l.first : l }
     label_width = labels.inject(0) { |w,l| l.size > w ? l.size : w }
     labels_and_values.each do |(l,v)|
       f = fmt
