@@ -48,6 +48,8 @@ module Thrift
       end
     end
 
+    def write_struct_begin(name); nil; end
+
     def write_field_begin(name, type, id)
       write_byte(type)
       write_i16(id)
@@ -125,6 +127,8 @@ module Thrift
         [name, type, seqid]
       end
     end
+
+    def read_struct_begin; nil; end
 
     def read_field_begin
       type = read_byte
