@@ -54,5 +54,4 @@ module Thrift
       oprot.trans.flush
     end
   end
-  deprecate_module! :TProcessor => Processor
 end

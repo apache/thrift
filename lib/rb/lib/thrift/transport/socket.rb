@@ -132,7 +132,6 @@ module Thrift
       @handle
     end
   end
-  deprecate_class! :TSocket => Socket
 
   class ServerSocket < ServerTransport
     # call-seq: initialize(host = nil, port)
@@ -173,5 +172,4 @@ module Thrift
 
     alias to_io handle
   end
-  deprecate_class! :TServerSocket => ServerSocket
 end

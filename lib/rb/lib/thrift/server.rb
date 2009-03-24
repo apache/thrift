@@ -32,7 +32,6 @@ module Thrift
 
     def serve; nil; end
   end
-  deprecate_class! :TServer => Server
 
   class SimpleServer < Server
     def serve
@@ -56,7 +55,6 @@ module Thrift
       end
     end
   end
-  deprecate_class! :TSimpleServer => SimpleServer
 end
 
 # do *not* use fastthread
@@ -88,7 +86,6 @@ module Thrift
       end
     end
   end
-  deprecate_class! :TThreadedServer => ThreadedServer
 
   class ThreadPoolServer < Server
     def initialize(processor, serverTransport, transportFactory=nil, protocolFactory=nil, num=20)
@@ -142,5 +139,4 @@ module Thrift
       end
     end
   end
-  deprecate_class! :TThreadPoolServer => ThreadPoolServer
 end

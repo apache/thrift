@@ -59,5 +59,4 @@ module Thrift
       @server.run.join
     end
   end
-  deprecate_class! :TSimpleMongrelHTTPServer => SimpleMongrelHTTPServer
 end

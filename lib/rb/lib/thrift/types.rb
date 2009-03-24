@@ -35,7 +35,6 @@ module Thrift
     SET = 14
     LIST = 15
   end
-  deprecate_module! :TType => Types
 
   class << self
     attr_accessor :type_checking
@@ -96,7 +95,6 @@ module Thrift
     REPLY = 2
     EXCEPTION = 3
   end
-  deprecate_module! :TMessageType => MessageTypes
 end
 
 Thrift.type_checking = false if Thrift.type_checking.nil?

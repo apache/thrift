@@ -30,10 +30,6 @@ class TestThriftTransport < Test::Unit::TestCase
     assert_nil @trans.close
   end
   
-  def test_read
-    assert_nil @trans.read(100) # arbitrary size
-  end
-  
   # TODO:
   # This doesn't necessarily test he right thing.
   # It _looks_ like read isn't guarenteed to return the length

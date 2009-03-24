@@ -32,15 +32,10 @@ module Thrift
       @type = type
     end
   end
-  deprecate_class! :TTransportException => TransportException
 
-# Transport is basically an abstract class, but isn't raising NotImplementedError
-# TODO: Think about if this is the right thing - Kevin Clark - 3/27/08
   class Transport
     def open?; end
-    deprecate! :isOpen => :open?
-    deprecate! :is_open? => :open?
-
+    
     def open; end
 
     def close; end
@@ -59,33 +54,34 @@ module Thrift
     
       buf
     end
-    deprecate! :readAll => :read_all
   
     def write(buf); end
     alias_method :<<, :write
 
     def flush; end
   end
-  deprecate_class! :TTransport => Transport
 
   class ServerTransport
-    def listen; nil; end
+    def listen
+      raise NotImplementedError
+    end
 
-    def accept; nil; end
-
+    def accept
+      raise NotImplementedError
+    end
+      
     def close; nil; end
 
-    def closed?; nil; end
+    def closed?
+      raise NotImplementedError
+    end
   end
-  deprecate_class! :TServerTransport => ServerTransport
 
   class TransportFactory
     def get_transport(trans)
       return trans
     end
-    deprecate! :getTransport => :get_transport
   end
-  deprecate_class! :TTransportFactory => TransportFactory
 
   class BufferedTransport < Transport
     DEFAULT_BUFFER = 4096
@@ -131,34 +127,13 @@ module Thrift
       
       @transport.flush
     end
-
-    def borrow(requested_length = 0)
-      # $stderr.puts "#{Time.now.to_f} Have #{@rbuf.length} asking for #{requested_length.inspect}"
-      return @rbuf if @rbuf.length > requested_length
-      
-      if @rbuf.length < DEFAULT_BUFFER
-        @rbuf << @transport.read([requested_length, DEFAULT_BUFFER].max)
-      end
-      
-      if @rbuf.length < requested_length
-        @rbuf << @transport.read_all(requested_length - @rbuf.length)
-      end
-    
-      @rbuf
-    end
-    
-    def consume!(size)
-      @rbuf.slice!(0...size)
-    end
   end
-  deprecate_class! :TBufferedTransport => BufferedTransport
 
   class BufferedTransportFactory < TransportFactory
     def get_transport(transport)
       return BufferedTransport.new(transport)
     end
   end
-  deprecate_class! :TBufferedTransportFactory => BufferedTransportFactory
 
   class FramedTransport < Transport
     def initialize(transport, read=true, write=true)
@@ -211,17 +186,6 @@ module Thrift
       @wbuf = ''
     end
 
-    def borrow(requested_length = 0)
-      read_frame if @rbuf.empty?
-      # there isn't any more coming, so if it's not enough, it's an error.
-      raise EOFError if requested_length > @rbuf.size
-      @rbuf
-    end
-    
-    def consume!(size)
-      @rbuf.slice!(0...size)
-    end
-
     private
 
     def read_frame
@@ -230,14 +194,12 @@ module Thrift
       @rbuf = @transport.read_all(sz).dup # protect against later #slice!
     end
   end
-  deprecate_class! :TFramedTransport => FramedTransport
 
   class FramedTransportFactory < TransportFactory
     def get_transport(transport)
       return FramedTransport.new(transport)
     end
   end
-  deprecate_class! :TFramedTransportFactory => FramedTransportFactory
 
   class MemoryBuffer < Transport
     GARBAGE_BUFFER_SIZE = 4*(2**10) # 4kB
@@ -294,19 +256,6 @@ module Thrift
     def flush
     end
 
-    # For fast binary protocol access
-    def borrow(size = nil)
-      if size.nil?
-        @buf[@index..-1]
-      else
-        if size > available
-          raise EOFError # Memory buffers only get one shot.
-        else
-          @buf[@index, size]
-        end
-      end
-    end
-
     def inspect_buffer
       out = []
       for idx in 0...(@buf.size)
@@ -322,10 +271,7 @@ module Thrift
       end
       out.join(" ")
     end
-
-    alias_method :consume!, :read
   end
-  deprecate_class! :TMemoryBuffer => MemoryBuffer
 
   ## Very very simple implementation of wrapping two objects, one with a #read
   ## method and one with a #write method, into a transport for thrift.
@@ -343,5 +289,4 @@ module Thrift
     def close; @input.close; @output.close end
     def to_io; @input end # we're assuming this is used in a IO.select for reading
   end
-  deprecate_class! :TIOStreamTransport => IOStreamTransport
 end

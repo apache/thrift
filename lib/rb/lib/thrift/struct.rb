@@ -292,5 +292,4 @@ module Thrift
         :element => field[:element] }
     end
   end
-  deprecate_module! :ThriftStruct => Struct
 end

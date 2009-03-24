@@ -44,5 +44,4 @@ module Thrift
       @outbuf = ""
     end
   end
-  deprecate_class! :THttpClient => HTTPClient
 end

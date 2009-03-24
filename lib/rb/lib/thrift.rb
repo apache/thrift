@@ -24,7 +24,6 @@ module Thrift
   DEPRECATION = false unless const_defined? :DEPRECATION
 end
 
-require 'thrift/deprecation'
 require 'thrift/exceptions'
 require 'thrift/types'
 require 'thrift/processor'
