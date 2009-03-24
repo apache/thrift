@@ -130,7 +130,7 @@ class t_hs_generator : public t_oop_generator {
   std::string type_name(t_type* ttype);
   std::string function_type(t_function* tfunc, bool options = false, bool io = false, bool method = false);
   std::string type_to_enum(t_type* ttype);
-  std::string render_hs_type(t_type* type);
+  std::string render_hs_type(t_type* type, bool needs_parens = true);
 
 
  private:
@@ -217,7 +217,7 @@ void t_hs_generator::close_generator() {
  */
 void t_hs_generator::generate_typedef(t_typedef* ttypedef) {
   f_types_ <<
-    indent() << "type "<< capitalize(ttypedef->get_symbolic()) << " = " << render_hs_type(ttypedef->get_type()) << endl << endl;
+    indent() << "type "<< capitalize(ttypedef->get_symbolic()) << " = " << render_hs_type(ttypedef->get_type(), false) << endl << endl;
 }
 
 /**
@@ -463,7 +463,7 @@ void t_hs_generator::generate_hs_struct_definition(ofstream& out,
       else
         out << ",";
       string mname = (*m_iter)->get_name();
-      out << "f_" << tname << "_" << mname << " :: Maybe (" << render_hs_type((*m_iter)->get_type()) << ")";
+      out << "f_" << tname << "_" << mname << " :: Maybe " << render_hs_type((*m_iter)->get_type());
     }
     out << "}";
   }
@@ -1301,19 +1301,15 @@ string t_hs_generator::function_type(t_function* tfunc, bool options, bool io, b
   const vector<t_field*>& fields = tfunc->get_arglist()->get_members();
   vector<t_field*>::const_iterator f_iter;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if(options)
-      result += "Maybe (";
-    result += render_hs_type((*f_iter)->get_type());
-    if(options)
-      result+=")";
+    if(options) result += "Maybe ";
+    result += render_hs_type((*f_iter)->get_type(), options);
     result += " -> ";
   }
   if(fields.empty() && !method){
     result += "() -> ";
   }
-  if(io) result += "IO (";
-  result += render_hs_type(tfunc->get_returntype());
-  if(io) result += ")";
+  if(io) result += "IO ";
+  result += render_hs_type(tfunc->get_returntype(), io);
   return result;
 }
 
@@ -1380,8 +1376,9 @@ string t_hs_generator::type_to_enum(t_type* type) {
 /**
  * Converts the parse type to an haskell type
  */
-string t_hs_generator::render_hs_type(t_type* type) {
+string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
   type = get_true_type(type);
+  string type_repr;
 
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
@@ -1389,7 +1386,7 @@ string t_hs_generator::render_hs_type(t_type* type) {
     case t_base_type::TYPE_VOID:
       return "()";
     case t_base_type::TYPE_STRING:
-      return "[Char]";
+      return "String";
     case t_base_type::TYPE_BOOL:
       return "Bool";
     case t_base_type::TYPE_BYTE:
@@ -1410,16 +1407,20 @@ string t_hs_generator::render_hs_type(t_type* type) {
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    return "Map.Map ("+ render_hs_type(ktype)+") ("+render_hs_type(vtype)+")";
+
+    type_repr = "Map.Map " + render_hs_type(ktype, true) + " " + render_hs_type(vtype, true);
   } else if (type->is_set()) {
     t_type* etype = ((t_set*)type)->get_elem_type();
-    return "Set.Set ("+render_hs_type(etype)+")";
+
+    type_repr = "Set.Set " + render_hs_type(etype, true) ;
   } else if (type->is_list()) {
     t_type* etype = ((t_list*)type)->get_elem_type();
-    return "["+render_hs_type(etype)+"]";
+    return "[" + render_hs_type(etype, false) + "]";
+  } else {
+    throw "INVALID TYPE IN type_to_enum: " + type->get_name();
   }
 
-  throw "INVALID TYPE IN type_to_enum: " + type->get_name();
+  return needs_parens ? "(" + type_repr + ")" : type_repr;
 }
 
 
