@@ -137,7 +137,7 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
       writeByte :: TTransport t => a t -> Int -> IO ()
       writeI16 :: TTransport t => a t -> Int -> IO ()
       writeI32 :: TTransport t => a t -> Int -> IO ()
-      writeI64 :: TTransport t => a t -> Int -> IO ()
+      writeI64 :: TTransport t => a t -> Int64 -> IO ()
       writeDouble :: TTransport t => a t -> Double -> IO ()
       writeString :: TTransport t => a t -> [Char] -> IO ()
       writeBinary :: TTransport t => a t -> [Char] -> IO ()
@@ -157,7 +157,7 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
       readByte :: TTransport t => a t -> IO Int
       readI16 :: TTransport t => a t -> IO Int
       readI32 :: TTransport t => a t -> IO Int
-      readI64 :: TTransport t => a t -> IO Int
+      readI64 :: TTransport t => a t -> IO Int64
       readDouble :: TTransport t => a t -> IO Double
       readString :: TTransport t => a t -> IO [Char]
       readBinary :: TTransport t => a t -> IO [Char]

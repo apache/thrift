@@ -1453,7 +1453,7 @@ string t_hs_generator::render_hs_type(t_type* type) {
     case t_base_type::TYPE_I32:
       return "Int";
     case t_base_type::TYPE_I64:
-      return "Int";
+      return "Int64";
     case t_base_type::TYPE_DOUBLE:
       return "Double";
     }

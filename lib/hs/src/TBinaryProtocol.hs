@@ -12,9 +12,12 @@ module TBinaryProtocol (TBinaryProtocol(..)) where
     version_mask = 0xffff0000
     version_1 = 0x80010000;
 
-    getByte i b= 255 .&. (shiftR i (8*b))
+    getByte :: Bits a => a -> Int -> a
+    getByte i b = 255 .&. (shiftR i (8*b))
+
+    getBytes :: (Bits a, Integral a) => a -> Int -> String
     getBytes i 0 = []
-    getBytes i n = (toEnum (getByte i (n-1)) :: Char):(getBytes i (n-1))
+    getBytes i n = (toEnum $ fromIntegral $ getByte i (n-1)):(getBytes i (n-1))
 
     floatBits :: Double -> Word64
     floatBits (D# d#) = W64# (unsafeCoerce# d#)
@@ -40,7 +43,7 @@ module TBinaryProtocol (TBinaryProtocol(..)) where
         writeI16 (TBinaryProtocol tr) b = twrite tr (getBytes b 2)
         writeI32 (TBinaryProtocol tr) b = twrite tr (getBytes b 4)
         writeI64 (TBinaryProtocol tr) b = twrite tr (getBytes b 8)
-        writeDouble (TBinaryProtocol tr) b = writeI64 (TBinaryProtocol tr) (fromIntegral (floatBits b) :: Int)
+        writeDouble (TBinaryProtocol tr) b = writeI64 (TBinaryProtocol tr) (fromIntegral (floatBits b) :: Int64)
         writeString (TBinaryProtocol tr) s = do twrite tr (getBytes (length s) 4)
                                                 twrite tr s
         writeBinary = writeString
@@ -70,7 +73,7 @@ module TBinaryProtocol (TBinaryProtocol(..)) where
         readI32 (TBinaryProtocol tr) = do b <- treadAll tr 4
                                           return $ (fromIntegral (fromIntegral (compBytes b) :: Int32) :: Int)
         readI64 (TBinaryProtocol tr) = do b <- treadAll tr 8
-                                          return $ (fromIntegral (fromIntegral (compBytes64 b) :: Int64) :: Int)
+                                          return $ (fromIntegral (compBytes64 b) :: Int64)
         readDouble (TBinaryProtocol tr) = do b <- readI64 (TBinaryProtocol tr)
                                              return $ floatOfBits (fromIntegral b :: Word64)
         readBool (TBinaryProtocol tr) = do b <- readByte (TBinaryProtocol tr)
