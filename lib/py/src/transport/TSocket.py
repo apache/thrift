@@ -94,7 +94,7 @@ class TSocket(TSocketBase):
   def flush(self):
     pass
 
-class TServerSocket(TServerTransportBase, TSocketBase):
+class TServerSocket(TSocketBase, TServerTransportBase):
   """Socket implementation of TServerTransport base."""
 
   def __init__(self, port=9090, unix_socket=None):
