@@ -113,6 +113,7 @@ service SecondService
 
 struct VersioningTestV1 {
        1: i32 begin_in_both,
+       3: string old_string,
        12: i32 end_in_both
 }
 

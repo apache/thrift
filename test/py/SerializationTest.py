@@ -16,6 +16,7 @@ class AbstractTest(unittest.TestCase):
   def setUp(self):
       self.v1obj = VersioningTestV1(
           begin_in_both=12345,
+          old_string='aaa',
           end_in_both=54321,
           )
 
