@@ -269,11 +269,11 @@ namespace Test
 				}
 			}
 
-			public void testAsync(int arg)
+			public void testOneway(int arg)
 			{
-				Console.WriteLine("testAsync(" + arg + "), sleeping...");
+				Console.WriteLine("testOneway(" + arg + "), sleeping...");
 				System.Threading.Thread.Sleep(arg * 1000);
-				Console.WriteLine("testAsync finished");
+				Console.WriteLine("testOneway finished");
 			}
 
 		} // class TestHandler

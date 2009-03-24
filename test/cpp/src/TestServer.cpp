@@ -261,10 +261,10 @@ class TestHandler : public ThriftTestIf {
     }
   }
 
-  void testAsync(int sleepFor) {
-    printf("testAsync(%d): Sleeping...\n", sleepFor);
+  void testOneway(int sleepFor) {
+    printf("testOneway(%d): Sleeping...\n", sleepFor);
     sleep(sleepFor);
-    printf("testAsync(%d): done sleeping!\n", sleepFor);
+    printf("testOneway(%d): done sleeping!\n", sleepFor);
   }
 };
 

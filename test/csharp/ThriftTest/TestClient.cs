@@ -399,8 +399,8 @@ namespace Test
 			Console.Write(" = Xtruct(byte_thing:" + multiResponse.Byte_thing + ",String_thing:" + multiResponse.String_thing
 						+ ",i32_thing:" + multiResponse.I32_thing + ",i64_thing:" + multiResponse.I64_thing + ")\n");
 
-			Console.WriteLine("Test Async(1)");
-			client.testAsync(1);
+			Console.WriteLine("Test Oneway(1)");
+			client.testOneway(1);
 		}
 	}
 }

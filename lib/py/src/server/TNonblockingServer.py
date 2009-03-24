@@ -148,7 +148,7 @@ class Connection:
         This function is the only function witch can be called asynchronous.
         
         The ready can switch Connection to three states:
-            WAIT_LEN if request was async.
+            WAIT_LEN if request was oneway.
             SEND_ANSWER if request was processed in normal way.
             CLOSED if request throws unexpected exception.
         

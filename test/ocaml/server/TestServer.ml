@@ -97,7 +97,7 @@ object (self)
     let res = new xtruct in
       res#set_string_thing (sod a1);
       res
-  method testAsync i =
+  method testOneway i =
     Unix.sleep (sod i)
 end;;
 

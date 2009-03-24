@@ -150,6 +150,6 @@ handle_function(testMultiException, {Arg0, Arg1}) ->
             {reply, #xtruct{string_thing = Arg1}}
     end;
 
-handle_function(testAsync, {Seconds}) ->
+handle_function(testOneway, {Seconds}) ->
     timer:sleep(1000 * Seconds),
     ok.

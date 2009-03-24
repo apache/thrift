@@ -54,8 +54,8 @@ class TestHandler:
     elif str == "throw_undeclared":
       raise ValueError("foo")
 
-  def testAsync(self, seconds):
-    print 'testAsync(%d) => sleeping...' % seconds
+  def testOneway(self, seconds):
+    print 'testOneway(%d) => sleeping...' % seconds
     time.sleep(seconds)
     print 'done sleeping'
 

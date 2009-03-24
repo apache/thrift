@@ -28,7 +28,7 @@ instance ThriftTest_Iface TestHandler where
     testMulti a a1 a2 a3 a4 a5 a6 = return (Xtruct Nothing Nothing Nothing Nothing)
     testException a c = throwDyn (Xception (Just 1) (Just "bya"))
     testMultiException a c1 c2 = return (Xtruct Nothing Nothing Nothing Nothing)
-    testAsync a (Just i) = do print i
+    testOneway a (Just i) = do print i
 
 
 main = do (run_basic_server TestHandler process 9090) `catchDyn` (\(TransportExn s t) -> print s)

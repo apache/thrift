@@ -422,10 +422,10 @@ int main(int argc, char** argv) {
 
     /* test oneway void */
     {
-        printf("testClient.testAsync(3) =>");
-        uint64_t startAsync = now();
-        testClient.testAsync(3);
-        uint64_t elapsed = now() - startAsync;
+        printf("testClient.testOneway(3) =>");
+        uint64_t startOneway = now();
+        testClient.testOneway(3);
+        uint64_t elapsed = now() - startOneway;
         if (elapsed > 200 * 1000) { // 0.2 seconds
             printf("  FAILURE - took %.2f ms\n", (double)elapsed/1000.0);
         } else {

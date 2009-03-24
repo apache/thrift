@@ -9,7 +9,7 @@ t).
 {error,{bad_args,testVoid,[asdf]}}
 121> thrift_client:call(C, testI32, [123]).
 {ok,123}
-122> thrift_client:call(C, testAsync, [1]).
+122> thrift_client:call(C, testOneway, [1]).
 {ok,ok}
 123> catch thrift_client:call(C, testXception, ["foo"]).
 {error,{no_function,testXception}}

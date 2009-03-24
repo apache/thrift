@@ -354,17 +354,17 @@ public class TestClient {
         System.out.print("}\n");
 
         // Test oneway
-        System.out.print("testAsync(3)...");
-        long startAsync = System.nanoTime();
-        testClient.testAsync(3);
-        long asyncElapsedMillis = (System.nanoTime() - startAsync) / 1000000;
-        if (asyncElapsedMillis > 200) {
-          throw new Exception("Async test failed: took " +
-                              Long.toString(asyncElapsedMillis) +
+        System.out.print("testOneway(3)...");
+        long startOneway = System.nanoTime();
+        testClient.testOneway(3);
+        long onewayElapsedMillis = (System.nanoTime() - startOneway) / 1000000;
+        if (onewayElapsedMillis > 200) {
+          throw new Exception("Oneway test failed: took " +
+                              Long.toString(onewayElapsedMillis) +
                               "ms");
         } else {
           System.out.println("Success - took " +
-                             Long.toString(asyncElapsedMillis) +
+                             Long.toString(onewayElapsedMillis) +
                              "ms");
         }
 

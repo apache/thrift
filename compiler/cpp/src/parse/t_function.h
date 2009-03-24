@@ -43,7 +43,7 @@ class t_function : public t_doc {
     oneway_(oneway)
   {
     if (oneway_ && !xceptions_->get_members().empty()) {
-      throw std::string("Async methods can't throw exceptions.");
+      throw std::string("Oneway methods can't throw exceptions.");
     }
   }
 

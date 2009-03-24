@@ -233,8 +233,8 @@ public class TestServer {
       return result;
     }
 
-    public void testAsync(int sleepFor) {
-      System.out.println("testAsync(" + Integer.toString(sleepFor) +
+    public void testOneway(int sleepFor) {
+      System.out.println("testOneway(" + Integer.toString(sleepFor) +
                          ") => sleeping...");
       try {
         Thread.sleep(sleepFor * 1000);
