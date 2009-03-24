@@ -121,7 +121,7 @@ service Calculator extends shared.SharedService {
     * a request and does not listen for any response at all. Oneway methods
     * must be void.
     */
-   async void zip()
+   oneway void zip()
 
 }
 

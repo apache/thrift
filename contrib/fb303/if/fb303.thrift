@@ -95,11 +95,11 @@ service FacebookService {
   /**
    * Tell the server to reload its configuration, reopen log files, etc
    */
-  async void reinitialize(),
+  oneway void reinitialize(),
 
   /**
    * Suggest a shutdown to the server
    */
-  async void shutdown(),
+  oneway void shutdown(),
 
 }

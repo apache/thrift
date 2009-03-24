@@ -40,7 +40,7 @@ exception Xception {
 service NonblockingService {
   Hello greeting(1:bool english)
   bool block()
-  async void unblock(1:i32 n)
-  async void shutdown()
+  oneway void unblock(1:i32 n)
+  oneway void shutdown()
   void sleep(1:double seconds)
 }

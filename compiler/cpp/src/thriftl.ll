@@ -106,7 +106,7 @@ st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
 "map"                { return tok_map;                  }
 "list"               { return tok_list;                 }
 "set"                { return tok_set;                  }
-"async"              { return tok_oneway;               }
+"oneway"             { return tok_oneway;               }
 "typedef"            { return tok_typedef;              }
 "struct"             { return tok_struct;               }
 "exception"          { return tok_xception;             }
@@ -117,6 +117,10 @@ st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
 "const"              { return tok_const;                }
 "required"           { return tok_required;             }
 "optional"           { return tok_optional;             }
+"async" {
+  pwarning(0, "\"async\" is deprecated.  It is called \"oneway\" now.\n");
+  return tok_oneway;
+}
 
 
 "abstract"           { thrift_reserved_keyword(yytext); }
