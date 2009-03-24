@@ -62,7 +62,7 @@ handle_function(State=#thrift_processor{in_protocol = IProto,
 
 handle_function_catch(State = #thrift_processor{service = Service},
                       Function, ErrType, ErrData) ->
-    IsOneway = Service:function_info(Function, reply_type) =:= async_void,
+    IsOneway = Service:function_info(Function, reply_type) =:= oneway_void,
 
     case {ErrType, ErrData} of
         _ when IsOneway ->
@@ -96,7 +96,7 @@ handle_success(State = #thrift_processor{out_protocol = OProto,
              ok when ReplyType == {struct, []} ->
                  send_reply(OProto, Function, ?tMessageType_REPLY, {ReplyType, {StructName}});
 
-             ok when ReplyType == async_void ->
+             ok when ReplyType == oneway_void ->
                  %% no reply for oneway void
                  ok
          end.

@@ -265,7 +265,7 @@ receive_function_result(State = #state{protocol = Proto,
 
 read_result(_State,
             _Function,
-            async_void) ->
+            oneway_void) ->
     {ok, ok};
 
 read_result(State = #state{protocol = Proto,
