@@ -337,7 +337,7 @@ void TConnection::transition() {
       return;
     }
 
-    // In this case, the request was asynchronous and we should fall through
+    // In this case, the request was oneway and we should fall through
     // right back into the read frame header state
     goto LABEL_APP_INIT;
 

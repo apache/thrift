@@ -353,7 +353,7 @@ public class TestClient {
         }
         System.out.print("}\n");
 
-        // Test async
+        // Test oneway
         System.out.print("testAsync(3)...");
         long startAsync = System.nanoTime();
         testClient.testAsync(3);

@@ -1020,7 +1020,7 @@ void t_hs_generator::generate_process_function(t_service* tservice,
 
 
 
-  // Shortcut out here for async functions
+  // Shortcut out here for oneway functions
   if (tfunction->is_oneway()) {
     f_service_ <<
       indent() << "return ()" << endl;

@@ -634,7 +634,7 @@ public class TNonblockingServer extends TServer {
       readBufferBytesAllocated -= buffer_.array().length;
 
       if (response_.len() == 0) {
-        // go straight to reading again. this was probably an async method
+        // go straight to reading again. this was probably an oneway method
         state_ = AWAITING_REGISTER_READ;
         buffer_ = null;
       } else {

@@ -97,7 +97,7 @@ handle_success(State = #thrift_processor{out_protocol = OProto,
                  send_reply(OProto, Function, ?tMessageType_REPLY, {ReplyType, {StructName}});
 
              ok when ReplyType == async_void ->
-                 %% no reply for async void
+                 %% no reply for oneway void
                  ok
          end.
 

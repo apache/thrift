@@ -14,12 +14,12 @@ t() ->
 
     io:format("Client started~n"),
 
-    % We have to make async calls into this client only since otherwise it will try
+    % We have to make oneway calls into this client only since otherwise it will try
     % to read from the disklog and go boom.
     {ok, ok} = thrift_client:call(Client, testAsync, [16#deadbeef]),
     io:format("Call written~n"),
 
-    % Use the send_call method to write a non-async call into the log
+    % Use the send_call method to write a non-oneway call into the log
     ok = thrift_client:send_call(Client, testString, [<<"hello world">>]),
     io:format("Non-async call sent~n"),
 
@@ -46,12 +46,12 @@ t_base64() ->
 
     io:format("Client started~n"),
 
-    % We have to make async calls into this client only since otherwise it will try
+    % We have to make oneway calls into this client only since otherwise it will try
     % to read from the disklog and go boom.
     {ok, ok} = thrift_client:call(Client, testAsync, [16#deadbeef]),
     io:format("Call written~n"),
 
-    % Use the send_call method to write a non-async call into the log
+    % Use the send_call method to write a non-oneway call into the log
     ok = thrift_client:send_call(Client, testString, [<<"hello world">>]),
     io:format("Non-async call sent~n"),
 

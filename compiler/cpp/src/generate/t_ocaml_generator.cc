@@ -1096,7 +1096,7 @@ void t_ocaml_generator::generate_process_function(t_service* tservice,
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
 
-  // Declare result for non async function
+  // Declare result for non oneway function
   if (!tfunction->is_oneway()) {
     f_service_ <<
       indent() << "let result = new " << resultname << " in" << endl;
@@ -1149,7 +1149,7 @@ void t_ocaml_generator::generate_process_function(t_service* tservice,
 
 
 
-  // Shortcut out here for async functions
+  // Shortcut out here for oneway functions
   if (tfunction->is_oneway()) {
     f_service_ <<
       indent() << "()" << endl;

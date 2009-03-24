@@ -883,7 +883,7 @@ void t_rb_generator::generate_process_function(t_service* tservice,
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
 
-  // Declare result for non async function
+  // Declare result for non oneway function
   if (!tfunction->is_oneway()) {
     f_service_ <<
       indent() << "result = " << resultname << ".new()" << endl;
@@ -933,7 +933,7 @@ void t_rb_generator::generate_process_function(t_service* tservice,
     indent(f_service_) << "end" << endl;
   }
 
-  // Shortcut out here for async functions
+  // Shortcut out here for oneway functions
   if (tfunction->is_oneway()) {
     f_service_ <<
       indent() << "return" << endl;

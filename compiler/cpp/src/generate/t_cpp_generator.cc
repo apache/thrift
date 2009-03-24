@@ -1698,7 +1698,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     scope_down(f_service_);
     f_service_ << endl;
 
-    // Generate recv function only if not an async function
+    // Generate recv function only if not an oneway function
     if (!(*f_iter)->is_oneway()) {
       t_struct noargs(program_);
       t_function recv_function((*f_iter)->get_returntype(),
@@ -2100,7 +2100,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   }
   f_service_ << indent() << "}" << endl;
 
-  // Shortcut out here for async functions
+  // Shortcut out here for oneway functions
   if (tfunction->is_oneway()) {
     f_service_ <<
       indent() << "return;" << endl;

@@ -162,7 +162,7 @@ class Connection:
         self.len = ''
         self.message = struct.pack('!i', len(message)) + message
         if len(message) == 0:
-            # it was async request, do not write answer
+            # it was a oneway request, do not write answer
             self.status = WAIT_LEN
         else:
             self.status = SEND_ANSWER

@@ -98,7 +98,7 @@ cast(Client, Function, Args)
     gen_server:cast(Client, {call, Function, Args}).
 
 %% Sends a function call but does not read the result. This is useful
-%% if you're trying to log non-async function calls to write-only
+%% if you're trying to log non-oneway function calls to write-only
 %% transports like thrift_disk_log_transport.
 send_call(Client, Function, Args)
   when is_pid(Client), is_atom(Function), is_list(Args) ->
