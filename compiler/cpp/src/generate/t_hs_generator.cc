@@ -287,6 +287,7 @@ void t_hs_generator::generate_const(t_const* tconst) {
   string name = decapitalize(tconst->get_name());
   t_const_value* value = tconst->get_value();
 
+  indent(f_consts_) << name << " :: " << render_hs_type(type, false) << endl;
   indent(f_consts_) << name << " = " << render_const_value(type, value) << endl << endl;
 }
 
@@ -383,13 +384,24 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
       out << "(" << key << ","<< val << ")";
     }
     out << "])";
-  } else if (type->is_list()) {
+  } else if (type->is_list() || type->is_set()) {
     t_type* etype;
-    etype = ((t_list*)type)->get_elem_type();
-    out << "[";
+
+    if (type->is_list()) {
+        etype = ((t_list*) type)->get_elem_type();
+    } else  {
+        etype = ((t_set*) type)->get_elem_type();
+    }
+
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
-    bool first=true;
+    bool first = true;
+
+    if (type->is_set())
+        out << "(Set.fromList ";
+
+    out << "[";
+
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       if(first)
         first=false;
@@ -397,17 +409,10 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
         out << ",";
       out << render_const_value(etype, *v_iter);
     }
+
     out << "]";
-  } else if (type->is_set()) {
-    t_type* etype = ((t_set*)type)->get_elem_type();
-    const vector<t_const_value*>& val = value->get_list();
-    vector<t_const_value*>::const_iterator v_iter;
-    out << "(mkSet [";
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string val = render_const_value(etype, *v_iter);
-      out << val;
-    }
-    out << "])";
+    if (type->is_set())
+        out << ")";
   } else {
     throw "CANNOT GENERATE CONSTANT FOR TYPE: " + type->get_name();
   }
