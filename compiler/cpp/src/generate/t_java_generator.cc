@@ -259,16 +259,14 @@ string t_java_generator::java_type_imports() {
 
   return
     string() +
+    hash_builder +
     "import java.util.List;\n" +
     "import java.util.ArrayList;\n" +
     "import java.util.Map;\n" +
     "import java.util.HashMap;\n" +
     "import java.util.Set;\n" +
     "import java.util.HashSet;\n" +
-    "import java.util.Collections;\n" +
-    hash_builder +
-    "import org.apache.thrift.*;\n" +
-    "import org.apache.thrift.meta_data.*;\n\n";
+    "import java.util.Collections;\n\n";
 }
 
 /**
@@ -279,8 +277,9 @@ string t_java_generator::java_type_imports() {
 string t_java_generator::java_thrift_imports() {
   return
     string() +
-    "import org.apache.thrift.protocol.*;\n" +
-    "import org.apache.thrift.transport.*;\n\n";
+    "import org.apache.thrift.*;\n" +
+    "import org.apache.thrift.meta_data.*;\n" +
+    "import org.apache.thrift.protocol.*;\n\n";
 }
 
 /**
