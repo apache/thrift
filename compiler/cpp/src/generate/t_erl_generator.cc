@@ -489,8 +489,9 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out,
         out     << ", ";
         hrl_out << ", ";
       }
-      out     << (*m_iter)->get_name();
-      hrl_out << (*m_iter)->get_name();
+      std::string name = uncapitalize((*m_iter)->get_name());
+      out     << name;
+      hrl_out << name;
     }
     out     << "})." << endl;
     hrl_out << "})." << endl;
