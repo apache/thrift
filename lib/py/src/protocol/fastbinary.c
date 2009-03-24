@@ -479,6 +479,8 @@ output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs) {
         Py_DECREF(v);
         return false;
       }
+      Py_DECREF(k);
+      Py_DECREF(v);
     }
     break;
   }
