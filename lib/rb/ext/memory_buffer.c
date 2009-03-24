@@ -49,7 +49,7 @@ VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value) {
     index = RSTRING(buf)->len;
   }
   if (index >= GARBAGE_BUFFER_SIZE) {
-    rb_ivar_set(self, buf_ivar_id, rb_funcall(buf, slice_method_id, 2, INT2FIX(index), INT2FIX(-1)));
+    rb_ivar_set(self, buf_ivar_id, rb_funcall(buf, slice_method_id, 2, INT2FIX(index), INT2FIX(RSTRING(buf)->len - 1)));
     index = 0;
   }
 
