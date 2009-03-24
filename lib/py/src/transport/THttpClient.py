@@ -37,6 +37,10 @@ class THttpClient(TTransportBase):
     self.__wbuf.write(buf)
 
   def flush(self):
+    if self.isOpen():
+      self.close()
+    self.open();
+
     # Pull data out of buffer
     data = self.__wbuf.getvalue()
     self.__wbuf = StringIO()
