@@ -106,7 +106,7 @@ st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
 "map"                { return tok_map;                  }
 "list"               { return tok_list;                 }
 "set"                { return tok_set;                  }
-"async"              { return tok_async;                }
+"async"              { return tok_oneway;               }
 "typedef"            { return tok_typedef;              }
 "struct"             { return tok_struct;               }
 "exception"          { return tok_xception;             }

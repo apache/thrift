@@ -120,7 +120,7 @@ int g_arglist = 0;
 /**
  * Function modifiers
  */
-%token tok_async
+%token tok_oneway
 
 /**
  * Thrift language keywords
@@ -189,7 +189,7 @@ int g_arglist = 0;
 
 %type<tstruct>   Throws
 %type<tservice>  Extends
-%type<tbool>     Async
+%type<tbool>     Oneway
 %type<tbool>     XsdAll
 %type<tbool>     XsdOptional
 %type<tbool>     XsdNillable
@@ -778,7 +778,7 @@ FunctionList:
     }
 
 Function:
-  CaptureDocText Async FunctionType tok_identifier '(' FieldList ')' Throws CommaOrSemicolonOptional
+  CaptureDocText Oneway FunctionType tok_identifier '(' FieldList ')' Throws CommaOrSemicolonOptional
     {
       $6->set_name(std::string($4) + "_args");
       $$ = new t_function($3, $4, $6, $8, $2);
@@ -787,8 +787,8 @@ Function:
       }
     }
 
-Async:
-  tok_async
+Oneway:
+  tok_oneway
     {
       $$ = true;
     }
