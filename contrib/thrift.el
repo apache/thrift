@@ -87,7 +87,7 @@
 (defvar thrift-mode-syntax-table
   (let ((thrift-mode-syntax-table (make-syntax-table)))
     (modify-syntax-entry ?_ "w" thrift-mode-syntax-table)
-    (modify-syntax-entry ?/ ". 124b" thrift-mode-syntax-table)
+    (modify-syntax-entry ?/ ". 1456" thrift-mode-syntax-table)
     (modify-syntax-entry ?* ". 23" thrift-mode-syntax-table)
     (modify-syntax-entry ?\n "> b" thrift-mode-syntax-table)
     thrift-mode-syntax-table)
