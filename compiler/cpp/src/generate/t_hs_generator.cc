@@ -43,7 +43,6 @@ class t_hs_generator : public t_oop_generator {
   /**
    * Program-level generation functions
    */
-  void generate_program  ();
   void generate_typedef  (t_typedef*  ttypedef);
   void generate_enum     (t_enum*     tenum);
   void generate_const    (t_const*    tconst);
@@ -147,59 +146,6 @@ class t_hs_generator : public t_oop_generator {
   std::ofstream f_client_;
 
 };
-
-
-/*
- * This is necessary because we want typedefs to appear later,
- * after all the types have been declared.
- */
-void t_hs_generator::generate_program() {
-  // Initialize the generator
-  init_generator();
-
-  // Generate enums
-  vector<t_enum*> enums = program_->get_enums();
-  vector<t_enum*>::iterator en_iter;
-  for (en_iter = enums.begin(); en_iter != enums.end(); ++en_iter) {
-    generate_enum(*en_iter);
-  }
-
-  // Generate structs
-  vector<t_struct*> structs = program_->get_structs();
-  vector<t_struct*>::iterator st_iter;
-  for (st_iter = structs.begin(); st_iter != structs.end(); ++st_iter) {
-    generate_struct(*st_iter);
-  }
-
-  // Generate xceptions
-  vector<t_struct*> xceptions = program_->get_xceptions();
-  vector<t_struct*>::iterator x_iter;
-  for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-    generate_xception(*x_iter);
-  }
-
-  // Generate typedefs
-  vector<t_typedef*> typedefs = program_->get_typedefs();
-  vector<t_typedef*>::iterator td_iter;
-  for (td_iter = typedefs.begin(); td_iter != typedefs.end(); ++td_iter) {
-    generate_typedef(*td_iter);
-  }
-
-  // Generate services
-  vector<t_service*> services = program_->get_services();
-  vector<t_service*>::iterator sv_iter;
-  for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
-    service_name_ = get_service_name(*sv_iter);
-    generate_service(*sv_iter);
-  }
-
-  // Generate constants
-  vector<t_const*> consts = program_->get_consts();
-  generate_consts(consts);
-
-  // Close the generator
-  close_generator();
-}
 
 
 /**
