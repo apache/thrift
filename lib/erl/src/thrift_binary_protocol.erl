@@ -231,9 +231,10 @@ read(This, field_stop) ->
 %%
 
 read(This, bool) ->
-    Byte = read(This, byte),
-    {ok, (Byte /= 0)};
-
+    case read(This, byte) of
+        {ok, Byte} -> {ok, Byte /= 0};
+        Else -> Else
+    end;
 
 read(This, byte) ->
     case read(This, 1) of

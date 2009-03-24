@@ -22,6 +22,11 @@ struct Bonk
   2: i32 type
 }
 
+struct Bools {
+  1: bool im_true,
+  2: bool im_false,
+}
+
 struct Xtruct
 {
   1:  string string_thing,
