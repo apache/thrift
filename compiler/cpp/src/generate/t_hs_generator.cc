@@ -766,7 +766,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
 
     f_client_ << endl;
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       f_client_ << indent();
       f_client_ <<
         "recv_" << funname << " ip" << endl;
@@ -801,7 +801,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
 
     indent_down();
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       std::string resultname = capitalize((*f_iter)->get_name() + "_result");
       t_struct noargs(program_);
 
@@ -958,7 +958,7 @@ void t_hs_generator::generate_process_function(t_service* tservice,
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
   int n = xceptions.size();
-  if (!tfunction->is_async()){
+  if (!tfunction->is_oneway()){
     if(!tfunction->get_returntype()->is_void()){
       n++;
     }
@@ -983,7 +983,7 @@ void t_hs_generator::generate_process_function(t_service* tservice,
   f_service_ << "(do" << endl;
   indent_up();
   f_service_ << indent();
-  if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()){
+  if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()){
     f_service_ << "res <- ";
   }
   f_service_ << "Iface." << tfunction->get_name() << " handler";
@@ -992,21 +992,21 @@ void t_hs_generator::generate_process_function(t_service* tservice,
   }
 
 
-  if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()){
+  if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()){
     f_service_ << endl;
     indent(f_service_) << "return rs{f_"<<resultname<<"_success= Just res}";
-  } else if (!tfunction->is_async()){
+  } else if (!tfunction->is_oneway()){
     f_service_ << endl;
     indent(f_service_) << "return rs";
   }
   f_service_ << ")" << endl;
   indent_down();
 
-  if (xceptions.size() > 0 && !tfunction->is_async()) {
+  if (xceptions.size() > 0 && !tfunction->is_oneway()) {
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       indent(f_service_) << "(\\e  -> " <<endl;
       indent_up();
-      if(!tfunction->is_async()){
+      if(!tfunction->is_oneway()){
         f_service_ <<
           indent() << "return rs{f_"<<resultname<<"_" << (*x_iter)->get_name() << " =Just e}";
       } else {
@@ -1021,7 +1021,7 @@ void t_hs_generator::generate_process_function(t_service* tservice,
 
 
   // Shortcut out here for async functions
-  if (tfunction->is_async()) {
+  if (tfunction->is_oneway()) {
     f_service_ <<
       indent() << "return ()" << endl;
     indent_down();

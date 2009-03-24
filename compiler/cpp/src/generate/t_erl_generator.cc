@@ -675,7 +675,7 @@ void t_erl_generator::generate_function_info(t_service* tservice,
   if (!tfunction->get_returntype()->is_void())
     indent(f_service_) <<
         generate_type_term(tfunction->get_returntype(), false) << ";" << endl;
-  else if (tfunction->is_async())
+  else if (tfunction->is_oneway())
     indent(f_service_) << "async_void;" << endl;
   else
     indent(f_service_) << "{struct, []}" << ";" << endl;

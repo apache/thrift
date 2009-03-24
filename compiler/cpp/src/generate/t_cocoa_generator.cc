@@ -969,7 +969,7 @@ string t_cocoa_generator::function_result_helper_struct_type(t_function* tfuncti
  * @param tfunction The function
  */
 void t_cocoa_generator::generate_function_helpers(t_function* tfunction) {
-  if (tfunction->is_async()) {
+  if (tfunction->is_oneway()) {
     return;
   }
 
@@ -1137,7 +1137,7 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
     scope_down(out);
     out << endl;
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       t_struct noargs(program_);
       t_function recv_function((*f_iter)->get_returntype(),
                                string("recv_") + (*f_iter)->get_name(),
@@ -1220,7 +1220,7 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
     }
     out << "];" << endl;
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       out << indent();
       if (!(*f_iter)->get_returntype()->is_void()) {
         out << "return ";

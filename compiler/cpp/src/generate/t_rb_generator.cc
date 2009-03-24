@@ -744,7 +744,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       }
       f_service_ << ")" << endl;
 
-      if (!(*f_iter)->is_async()) {
+      if (!(*f_iter)->is_oneway()) {
         f_service_ << indent();
         if (!(*f_iter)->get_returntype()->is_void()) {
           f_service_ << "return ";
@@ -773,7 +773,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
     indent_down();
     indent(f_service_) << "end" << endl;
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       std::string resultname = capitalize((*f_iter)->get_name() + "_result");
       t_struct noargs(program_);
 
@@ -884,7 +884,7 @@ void t_rb_generator::generate_process_function(t_service* tservice,
   vector<t_field*>::const_iterator x_iter;
 
   // Declare result for non async function
-  if (!tfunction->is_async()) {
+  if (!tfunction->is_oneway()) {
     f_service_ <<
       indent() << "result = " << resultname << ".new()" << endl;
   }
@@ -902,7 +902,7 @@ void t_rb_generator::generate_process_function(t_service* tservice,
   vector<t_field*>::const_iterator f_iter;
 
   f_service_ << indent();
-  if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
+  if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
     f_service_ << "result.success = ";
   }
   f_service_ <<
@@ -918,12 +918,12 @@ void t_rb_generator::generate_process_function(t_service* tservice,
   }
   f_service_ << ")" << endl;
 
-  if (!tfunction->is_async() && xceptions.size() > 0) {
+  if (!tfunction->is_oneway() && xceptions.size() > 0) {
     indent_down();
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ <<
         indent() << "rescue " << full_type_name((*x_iter)->get_type()) << " => " << (*x_iter)->get_name() << endl;
-      if (!tfunction->is_async()) {
+      if (!tfunction->is_oneway()) {
         indent_up();
         f_service_ <<
           indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << endl;
@@ -934,7 +934,7 @@ void t_rb_generator::generate_process_function(t_service* tservice,
   }
 
   // Shortcut out here for async functions
-  if (tfunction->is_async()) {
+  if (tfunction->is_oneway()) {
     f_service_ <<
       indent() << "return" << endl;
     indent_down();

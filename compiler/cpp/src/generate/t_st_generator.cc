@@ -937,14 +937,14 @@ void t_st_generator::generate_service_client(t_service* tservice) {
     f_ << function_types_comment(*f_iter) << endl <<
       indent() << "self send" << capitalize(signature) << "." << endl;
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       f_ << indent() << "^ self recv" << capitalize(funname) << " success " << endl;
     }
 
     st_close_method(f_);
 
     generate_send_method(*f_iter);
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       generate_recv_method(*f_iter);
     }
   }

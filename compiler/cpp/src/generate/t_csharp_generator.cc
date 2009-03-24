@@ -859,7 +859,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     }
     f_service_ << ");" << endl;
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       f_service_ << indent();
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ << "return ";
@@ -897,7 +897,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     scope_down(f_service_);
     f_service_ << endl;
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       string resultname = (*f_iter)->get_name() + "_result";
 
       t_struct noargs(program_);
@@ -1066,7 +1066,7 @@ void t_csharp_generator::generate_service_server(t_service* tservice) {
 }
 
 void t_csharp_generator::generate_function_helpers(t_function* tfunction) {
-  if (tfunction->is_async()) {
+  if (tfunction->is_oneway()) {
     return;
   }
 
@@ -1103,7 +1103,7 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
 
-  if (!tfunction->is_async()) {
+  if (!tfunction->is_oneway()) {
     f_service_ <<
       indent() << resultname << " result = new " << resultname << "();" << endl;
   }
@@ -1119,7 +1119,7 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
   vector<t_field*>::const_iterator f_iter;
 
   f_service_ << indent();
-  if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
+  if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
     f_service_ << "result.Success = ";
   }
   f_service_ <<
@@ -1135,12 +1135,12 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
   }
   f_service_ << ");" << endl;
 
-  if (!tfunction->is_async() && xceptions.size() > 0) {
+  if (!tfunction->is_oneway() && xceptions.size() > 0) {
     indent_down();
     f_service_ << indent() << "}";
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ << " catch (" << type_name((*x_iter)->get_type(), false, false) << " " << (*x_iter)->get_name() << ") {" << endl;
-      if (!tfunction->is_async()) {
+      if (!tfunction->is_oneway()) {
         indent_up();
         f_service_ <<
           indent() << "result." << prop_name(*x_iter) << " = " << (*x_iter)->get_name() << ";" << endl;
@@ -1153,7 +1153,7 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
     f_service_ << endl;
   }
 
-  if (tfunction->is_async()) {
+  if (tfunction->is_oneway()) {
     f_service_ <<
       indent() << "return;" << endl;
     scope_down(f_service_);

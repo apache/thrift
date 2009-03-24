@@ -861,7 +861,7 @@ void t_ocaml_generator::generate_service_client(t_service* tservice) {
     }
     f_service_ << ";" << endl;
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       f_service_ << indent();
       f_service_ <<
         "self#recv_" << funname << endl;
@@ -896,7 +896,7 @@ void t_ocaml_generator::generate_service_client(t_service* tservice) {
     indent_down();
     indent_down();
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       std::string resultname = decapitalize((*f_iter)->get_name() + "_result");
       t_struct noargs(program_);
 
@@ -1097,7 +1097,7 @@ void t_ocaml_generator::generate_process_function(t_service* tservice,
   vector<t_field*>::const_iterator x_iter;
 
   // Declare result for non async function
-  if (!tfunction->is_async()) {
+  if (!tfunction->is_oneway()) {
     f_service_ <<
       indent() << "let result = new " << resultname << " in" << endl;
     indent_up();
@@ -1114,7 +1114,7 @@ void t_ocaml_generator::generate_process_function(t_service* tservice,
 
 
   f_service_ << indent();
-  if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
+  if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
     f_service_ << "result#set_success ";
   }
   f_service_ <<
@@ -1134,7 +1134,7 @@ void t_ocaml_generator::generate_process_function(t_service* tservice,
         indent() << "| " << capitalize(type_name((*x_iter)->get_type())) << " " << (*x_iter)->get_name() << " -> " << endl;
       indent_up();
       indent_up();
-      if(!tfunction->is_async()){
+      if(!tfunction->is_oneway()){
            f_service_ <<
              indent() << "result#set_" << (*x_iter)->get_name() << " " << (*x_iter)->get_name() << endl;
       } else {
@@ -1150,7 +1150,7 @@ void t_ocaml_generator::generate_process_function(t_service* tservice,
 
 
   // Shortcut out here for async functions
-  if (tfunction->is_async()) {
+  if (tfunction->is_oneway()) {
     f_service_ <<
       indent() << "()" << endl;
     indent_down();

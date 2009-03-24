@@ -866,7 +866,7 @@ void t_py_generator::generate_service_helpers(t_service* tservice) {
  * @param tfunction The function
  */
 void t_py_generator::generate_py_function_helpers(t_function* tfunction) {
-  if (!tfunction->is_async()) {
+  if (!tfunction->is_oneway()) {
     t_struct result(program_, tfunction->get_name() + "_result");
     t_field success(tfunction->get_returntype(), "success", 0);
     if (!tfunction->get_returntype()->is_void()) {
@@ -1003,7 +1003,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
     indent_up();
     if (gen_twisted_) {
       indent(f_service_) << "self._seqid += 1" << endl;
-      if (!(*f_iter)->is_async()) {
+      if (!(*f_iter)->is_oneway()) {
         indent(f_service_) <<
           "d = self._reqs[self._seqid] = defer.Deferred()" << endl;
       }
@@ -1023,7 +1023,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
     }
     f_service_ << ")" << endl;
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       f_service_ << indent();
       if (gen_twisted_) {
         f_service_ << "return d" << endl;
@@ -1085,7 +1085,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
 
     indent_down();
 
-    if (!(*f_iter)->is_async()) {
+    if (!(*f_iter)->is_oneway()) {
       std::string resultname = (*f_iter)->get_name() + "_result";
       // Open function
       f_service_ <<
@@ -1495,7 +1495,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
   vector<t_field*>::const_iterator x_iter;
 
   // Declare result for non async function
-  if (!tfunction->is_async()) {
+  if (!tfunction->is_oneway()) {
     f_service_ <<
       indent() << "result = " << resultname << "()" << endl;
   }
@@ -1521,7 +1521,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
     f_service_ << ")" << endl;
 
     // Shortcut out here for async functions
-    if (tfunction->is_async()) {
+    if (tfunction->is_oneway()) {
       f_service_ <<
         indent() << "return d" << endl;
       indent_down();
@@ -1562,7 +1562,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
     f_service_ << endl;
 
     // Try block for a function with exceptions
-    if (!tfunction->is_async() && xceptions.size() > 0) {
+    if (!tfunction->is_oneway() && xceptions.size() > 0) {
       indent(f_service_) <<
         "def write_results_exception_" << tfunction->get_name() <<
         "(self, error, result, seqid, oprot):" << endl;
@@ -1576,7 +1576,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
           indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
-        if (!tfunction->is_async()) {
+        if (!tfunction->is_oneway()) {
           indent_up();
           f_service_ <<
             indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << endl;
@@ -1610,7 +1610,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
     vector<t_field*>::const_iterator f_iter;
 
     f_service_ << indent();
-    if (!tfunction->is_async() && !tfunction->get_returntype()->is_void()) {
+    if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
       f_service_ << "result.success = ";
     }
     f_service_ <<
@@ -1626,12 +1626,12 @@ void t_py_generator::generate_process_function(t_service* tservice,
     }
     f_service_ << ")" << endl;
 
-    if (!tfunction->is_async() && xceptions.size() > 0) {
+    if (!tfunction->is_oneway() && xceptions.size() > 0) {
       indent_down();
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
           indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
-        if (!tfunction->is_async()) {
+        if (!tfunction->is_oneway()) {
           indent_up();
           f_service_ <<
             indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << endl;
@@ -1644,7 +1644,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
     }
 
     // Shortcut out here for async functions
-    if (tfunction->is_async()) {
+    if (tfunction->is_oneway()) {
       f_service_ <<
         indent() << "return" << endl;
       indent_down();
