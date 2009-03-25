@@ -288,7 +288,7 @@ VALUE rb_thrift_compact_proto_write_double(VALUE self, VALUE dub) {
     double f;
     int64_t l;
   } transfer;
-  transfer.f = RFLOAT(rb_Float(dub))->value;
+  transfer.f = RFLOAT_VALUE(rb_Float(dub));
   char buf[8];
   buf[0] = transfer.l & 0xff;
   buf[1] = (transfer.l >> 8) & 0xff;
@@ -304,8 +304,8 @@ VALUE rb_thrift_compact_proto_write_double(VALUE self, VALUE dub) {
 
 VALUE rb_thrift_compact_proto_write_string(VALUE self, VALUE str) {
   VALUE transport = GET_TRANSPORT(self);
-  write_varint32(transport, RSTRING(str)->len);
-  WRITE(transport, RSTRING(str)->ptr, RSTRING(str)->len);
+  write_varint32(transport, RSTRING_LEN(str));
+  WRITE(transport, RSTRING_PTR(str), RSTRING_LEN(str));
   return Qnil;
 }
 
@@ -354,7 +354,8 @@ static int8_t get_ttype(int8_t ctype) {
 }
 
 static char read_byte_direct(VALUE self) {
-  return (RSTRING(READ(self, 1))->ptr)[0];
+  VALUE buf = READ(self, 1);
+  return RSTRING_PTR(buf)[0];
 }
 
 static int64_t zig_zag_to_ll(int64_t n) {
@@ -527,14 +528,14 @@ VALUE rb_thrift_compact_proto_read_double(VALUE self) {
     int64_t l;
   } transfer;
   VALUE bytes = READ(self, 8);
-  uint32_t lo = ((uint8_t)(RSTRING(bytes)->ptr[0]))
-    | (((uint8_t)(RSTRING(bytes)->ptr[1])) << 8)
-    | (((uint8_t)(RSTRING(bytes)->ptr[2])) << 16)
-    | (((uint8_t)(RSTRING(bytes)->ptr[3])) << 24);
-  uint64_t hi = (((uint8_t)(RSTRING(bytes)->ptr[4])))
-    | (((uint8_t)(RSTRING(bytes)->ptr[5])) << 8)
-    | (((uint8_t)(RSTRING(bytes)->ptr[6])) << 16)
-    | (((uint8_t)(RSTRING(bytes)->ptr[7])) << 24);
+  uint32_t lo = ((uint8_t)(RSTRING_PTR(bytes)[0]))
+    | (((uint8_t)(RSTRING_PTR(bytes)[1])) << 8)
+    | (((uint8_t)(RSTRING_PTR(bytes)[2])) << 16)
+    | (((uint8_t)(RSTRING_PTR(bytes)[3])) << 24);
+  uint64_t hi = (((uint8_t)(RSTRING_PTR(bytes)[4])))
+    | (((uint8_t)(RSTRING_PTR(bytes)[5])) << 8)
+    | (((uint8_t)(RSTRING_PTR(bytes)[6])) << 16)
+    | (((uint8_t)(RSTRING_PTR(bytes)[7])) << 24);
   transfer.l = (hi << 32) | lo;
 
   return rb_float_new(transfer.f);

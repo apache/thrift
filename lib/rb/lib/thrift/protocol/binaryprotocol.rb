@@ -80,6 +80,7 @@ module Thrift
     end
 
     def write_byte(byte)
+      raise RangeError if byte < -2**31 || byte >= 2**32
       trans.write([byte].pack('c'))
     end
 
@@ -93,6 +94,7 @@ module Thrift
     end
 
     def write_i64(i64)
+      raise RangeError if i64 < -2**63 || i64 >= 2**64
       hi = i64 >> 32
       lo = i64 & 0xffffffff
       trans.write([hi, lo].pack('N2'))
@@ -166,7 +168,7 @@ module Thrift
 
     def read_byte
       dat = trans.read_all(1)
-      val = dat[0]
+      val = dat[0].ord
       if (val > 0x7f)
         val = 0 - ((val - 1) ^ 0xff)
       end

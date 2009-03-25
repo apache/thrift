@@ -39,9 +39,9 @@ class ThriftServerSpec < Spec::ExampleGroup
       x = 0
       @processor.should_receive(:process).exactly(3).times.with(@prot, @prot).and_return do
         case (x += 1)
-        when 1: raise Thrift::TransportException
-        when 2: raise Thrift::ProtocolException
-        when 3: throw :stop
+        when 1 then raise Thrift::TransportException
+        when 2 then raise Thrift::ProtocolException
+        when 3 then throw :stop
         end
       end
       @trans.should_receive(:close).exactly(3).times
@@ -66,9 +66,9 @@ class ThriftServerSpec < Spec::ExampleGroup
       x = 0
       @processor.should_receive(:process).exactly(3).times.with(@prot, @prot).and_return do
         case (x += 1)
-        when 1: raise Thrift::TransportException
-        when 2: raise Thrift::ProtocolException
-        when 3: throw :stop
+        when 1 then raise Thrift::TransportException
+        when 2 then raise Thrift::ProtocolException
+        when 3 then throw :stop
         end
       end
       @trans.should_receive(:close).exactly(3).times
@@ -127,9 +127,9 @@ class ThriftServerSpec < Spec::ExampleGroup
       error = RuntimeError.new("Stopped")
       @processor.should_receive(:process).exactly(3).times.with(@prot, @prot).and_return do
         case (x += 1)
-        when 1: raise Thrift::TransportException
-        when 2: raise Thrift::ProtocolException
-        when 3: raise error
+        when 1 then raise Thrift::TransportException
+        when 2 then raise Thrift::ProtocolException
+        when 3 then raise error
         end
       end
       @trans.should_receive(:close).exactly(3).times

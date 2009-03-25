@@ -76,7 +76,7 @@ static void write_i64_direct(VALUE trans, int64_t value) {
 }
 
 static void write_string_direct(VALUE trans, VALUE str) {
-  write_i32_direct(trans, RSTRING(str)->len);
+  write_i32_direct(trans, RSTRING_LEN(str));
   rb_funcall(trans, write_method_id, 1, str);
 }
 
@@ -200,7 +200,7 @@ VALUE rb_thrift_binary_proto_write_double(VALUE self, VALUE dub) {
     double f;
     int64_t t;
   } transfer;
-  transfer.f = RFLOAT(rb_Float(dub))->value;
+  transfer.f = RFLOAT_VALUE(rb_Float(dub));
   write_i64_direct(GET_TRANSPORT(self), transfer.t);
 
   return Qnil;
@@ -209,8 +209,6 @@ VALUE rb_thrift_binary_proto_write_double(VALUE self, VALUE dub) {
 VALUE rb_thrift_binary_proto_write_string(VALUE self, VALUE str) {
   CHECK_NIL(str);
   VALUE trans = GET_TRANSPORT(self);
-  // write_i32_direct(trans, RSTRING(str)->len);
-  // rb_funcall(trans, write_method_id, 1, str);
   write_string_direct(trans, str);
   return Qnil;
 }
@@ -225,20 +223,21 @@ VALUE rb_thrift_binary_proto_read_i32(VALUE self);
 VALUE rb_thrift_binary_proto_read_i16(VALUE self);
 
 static char read_byte_direct(VALUE self) {
-  return (RSTRING(READ(self, 1))->ptr)[0];
+  VALUE buf = READ(self, 1);
+  return RSTRING_PTR(buf)[0];
 }
 
 static int16_t read_i16_direct(VALUE self) {
   VALUE buf = READ(self, 2);
-  return (int16_t)(((uint8_t)(RSTRING(buf)->ptr[1])) | ((uint16_t)((RSTRING(buf)->ptr[0]) << 8)));
+  return (int16_t)(((uint8_t)(RSTRING_PTR(buf)[1])) | ((uint16_t)((RSTRING_PTR(buf)[0]) << 8)));
 }
 
 static int32_t read_i32_direct(VALUE self) {
   VALUE buf = READ(self, 4);
-  return ((uint8_t)(RSTRING(buf)->ptr[3])) | 
-    (((uint8_t)(RSTRING(buf)->ptr[2])) << 8) | 
-    (((uint8_t)(RSTRING(buf)->ptr[1])) << 16) | 
-    (((uint8_t)(RSTRING(buf)->ptr[0])) << 24);
+  return ((uint8_t)(RSTRING_PTR(buf)[3])) | 
+    (((uint8_t)(RSTRING_PTR(buf)[2])) << 8) | 
+    (((uint8_t)(RSTRING_PTR(buf)[1])) << 16) | 
+    (((uint8_t)(RSTRING_PTR(buf)[0])) << 24);
 }
 
 static int64_t read_i64_direct(VALUE self) {

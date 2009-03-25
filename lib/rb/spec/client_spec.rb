@@ -40,10 +40,10 @@ class ThriftClientSpec < Spec::ExampleGroup
         @prot.should_receive(:write_message_begin).with('testMessage2', MessageTypes::CALL, 1).ordered
         @prot.should_receive(:write_message_begin).with('testMessage3', MessageTypes::CALL, 2).ordered
         @prot.stub!(:write_message_end)
-        @prot.stub!(:trans).and_return stub_everything("trans")
-        @client.send_message('testMessage', stub_everything("args class"))
-        @client.send_message('testMessage2', stub_everything("args class"))
-        @client.send_message('testMessage3', stub_everything("args class"))
+        @prot.stub!(:trans).and_return mock("trans").as_null_object
+        @client.send_message('testMessage', mock("args class").as_null_object)
+        @client.send_message('testMessage2', mock("args class").as_null_object)
+        @client.send_message('testMessage3', mock("args class").as_null_object)        
       end
     end
 

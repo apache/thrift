@@ -279,10 +279,10 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol);
 static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_info);
 
 VALUE get_field_value(VALUE obj, VALUE field_name) {
-  char name_buf[RSTRING(field_name)->len + 1];
+  char name_buf[RSTRING_LEN(field_name) + 1];
   
   name_buf[0] = '@';
-  strlcpy(&name_buf[1], RSTRING(field_name)->ptr, sizeof(name_buf));
+  strlcpy(&name_buf[1], RSTRING_PTR(field_name), sizeof(name_buf));
 
   VALUE value = rb_ivar_get(obj, rb_intern(name_buf));
   
@@ -309,7 +309,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
     
     keys = rb_funcall(value, keys_method_id, 0);
     
-    sz = RARRAY(keys)->len;
+    sz = RARRAY_LEN(keys);
     
     mt->write_map_begin(protocol, keytype_value, valuetype_value, INT2FIX(sz));
     
@@ -334,7 +334,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
   } else if (ttype == TTYPE_LIST) {
     Check_Type(value, T_ARRAY);
 
-    sz = RARRAY(value)->len;
+    sz = RARRAY_LEN(value);
 
     VALUE element_type_info = rb_hash_aref(field_info, element_sym);
     VALUE element_type_value = rb_hash_aref(element_type_info, type_sym);
@@ -364,7 +364,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
       }
     }
 
-    sz = RARRAY(items)->len;
+    sz = RARRAY_LEN(items);
 
     VALUE element_type_info = rb_hash_aref(field_info, element_sym);
     VALUE element_type_value = rb_hash_aref(element_type_info, type_sym);
@@ -431,7 +431,7 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
   VALUE struct_field_ids_ordered = rb_funcall(struct_field_ids_unordered, sort_method_id, 0);
   
   int i = 0;
-  for (i=0; i < RARRAY(struct_field_ids_ordered)->len; i++) {
+  for (i=0; i < RARRAY_LEN(struct_field_ids_ordered); i++) {
     VALUE field_id = rb_ary_entry(struct_field_ids_ordered, i);
     VALUE field_info = rb_hash_aref(struct_fields, field_id);
 
@@ -464,10 +464,10 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
 static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol);
 
 static void set_field_value(VALUE obj, VALUE field_name, VALUE value) {
-  char name_buf[RSTRING(field_name)->len + 1];
+  char name_buf[RSTRING_LEN(field_name) + 1];
 
   name_buf[0] = '@';
-  strlcpy(&name_buf[1], RSTRING(field_name)->ptr, sizeof(name_buf));
+  strlcpy(&name_buf[1], RSTRING_PTR(field_name), sizeof(name_buf));
 
   rb_ivar_set(obj, rb_intern(name_buf), value);
 }

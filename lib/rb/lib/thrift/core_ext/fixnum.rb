@@ -15,23 +15,15 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
+#
 
-$:.unshift File.dirname(__FILE__)
-
-module Thrift
-  # prevent the deprecation layer from being loaded if you require 'thrift'
-  DEPRECATION = false unless const_defined? :DEPRECATION
+# Versions of ruby pre 1.8.7 do not have an .ord method available in the Fixnum
+# class.
+#
+if RUBY_VERSION < "1.8.7"
+  class Fixnum
+    def ord
+      self
+    end
+  end
 end
-
-require 'thrift/core_ext'
-require 'thrift/exceptions'
-require 'thrift/types'
-require 'thrift/processor'
-require 'thrift/client'
-require 'thrift/struct'
-require 'thrift/protocol'
-require 'thrift/protocol/binaryprotocol'
-require 'thrift/transport'
-require 'thrift/transport/socket'
-require 'thrift/server'
