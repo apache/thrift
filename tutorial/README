@@ -14,9 +14,10 @@ Tutorial
 
 2) Read tutorial.thrift to learn about the syntax of a Thrift file
 
-3) Run tutorial.thrift to compile the code:
+3) Compile the code for the language of your choice:
 
-     ./tutorial.thrift
+     $ thrift
+     $ thrift --gen cpp tutorial.thrift
 
 4) Take a look at the generated code.
 
