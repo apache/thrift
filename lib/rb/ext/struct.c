@@ -19,6 +19,7 @@
 
 #include <struct.h>
 #include <constants.h>
+#include "macros.h"
 
 #ifndef HAVE_STRLCPY
 

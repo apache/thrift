@@ -19,6 +19,7 @@
 
 #include <ruby.h>
 #include <constants.h>
+#include "macros.h"
 
 ID buf_ivar_id;
 ID index_ivar_id;
