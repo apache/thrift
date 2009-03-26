@@ -1,7 +1,9 @@
 ACLOCAL_AMFLAGS = -I ./aclocal
 
 SUBDIRS = compiler/cpp lib test
-## Don't run make dist from a subversion working copy
-## because it will pull in your .svn directories.
+
+dist-hook:
+	find $(distdir) -name '.[a-zA-Z0-9]*' | xargs rm -rf
+
 EXTRA_DIST = bootstrap.sh cleanup.sh print_version.sh doc tutorial contrib \
              CONTRIBUTORS LICENSE
