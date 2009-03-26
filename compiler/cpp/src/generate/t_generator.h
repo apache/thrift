@@ -9,6 +9,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include "parse/t_program.h"
 #include "globals.h"
@@ -39,6 +40,11 @@ class t_generator {
 
   const t_program* get_program() const { return program_; }
 
+  void generate_docstring_comment(std::ofstream& out,
+                                  const std::string& comment_start,
+                                  const std::string& line_prefix,
+                                  const std::string& contents,
+                                  const std::string& comment_end);
  protected:
 
   /**

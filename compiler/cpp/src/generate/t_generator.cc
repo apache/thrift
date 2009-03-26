@@ -66,6 +66,23 @@ void t_generator::generate_consts(vector<t_const*> consts) {
   }
 }
 
+void t_generator::generate_docstring_comment(ofstream& out,
+                                             const string& comment_start,
+                                             const string& line_prefix,
+                                             const string& contents,
+                                             const string& comment_end) {
+  if (comment_start != "") indent(out) << comment_start;
+  stringstream docs(contents, ios_base::in);
+  while (!docs.eof()) {
+    char line[1024];
+    docs.getline(line, 1024);
+    if (strlen(line) > 0 || !docs.eof()) {  // skip the empty last line
+      indent(out) << line_prefix << line << std::endl;
+    }
+  }
+  if (comment_end != "") indent(out) << comment_end;
+}
+
 
 void t_generator_registry::register_generator(t_generator_factory* factory) {
   gen_map_t& the_map = get_generator_map();
