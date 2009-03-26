@@ -7,21 +7,47 @@
 from TTransport import *
 from cStringIO import StringIO
 
+import urlparse
 import httplib
+import warnings
 
 class THttpClient(TTransportBase):
 
   """Http implementation of TTransport base."""
 
-  def __init__(self, host, port, uri):
-    self.host = host
-    self.port = port
-    self.uri = uri
+  def __init__(self, uri_or_host, port=None, path=None):
+    """THttpClient supports two different types constructor parameters.
+
+    THttpClient(host, port, path) - deprecated
+    THttpClient(uri)
+
+    Only the second supports https."""
+
+    if port is not None:
+      warnings.warn("Please use the THttpClient('http://host:port/path') syntax", DeprecationWarning, stacklevel=2)
+      self.host = uri_or_host
+      self.port = port
+      assert path
+      self.path = path
+      self.scheme = 'http'
+    else:
+      parsed = urlparse.urlparse(uri_or_host)
+      self.scheme = parsed.scheme
+      assert self.scheme in ('http', 'https')
+      if self.scheme == 'http':
+        self.port = parsed.port or httplib.HTTP_PORT
+      elif self.scheme == 'https':
+        self.port = parsed.port or httplib.HTTPS_PORT
+      self.host = parsed.hostname
+      self.path = parsed.path
     self.__wbuf = StringIO()
     self.__http = None
 
   def open(self):
-    self.__http = httplib.HTTP(self.host, self.port)
+    if self.scheme == 'http':
+      self.__http = httplib.HTTP(self.host, self.port)
+    else:
+      self.__http = httplib.HTTPS(self.host, self.port)
 
   def close(self):
     self.__http.close()
@@ -46,7 +72,7 @@ class THttpClient(TTransportBase):
     self.__wbuf = StringIO()
 
     # HTTP request
-    self.__http.putrequest('POST', self.uri)
+    self.__http.putrequest('POST', self.path)
 
     # Write headers
     self.__http.putheader('Host', self.host)
