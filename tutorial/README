@@ -17,7 +17,7 @@ Tutorial
 3) Compile the code for the language of your choice:
 
      $ thrift
-     $ thrift --gen cpp tutorial.thrift
+     $ thrift -r --gen cpp tutorial.thrift
 
 4) Take a look at the generated code.
 
