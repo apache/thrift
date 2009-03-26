@@ -19,11 +19,6 @@
 
 $:.unshift File.dirname(__FILE__)
 
-module Thrift
-  # prevent the deprecation layer from being loaded if you require 'thrift'
-  DEPRECATION = false unless const_defined? :DEPRECATION
-end
-
 require 'thrift/core_ext'
 require 'thrift/exceptions'
 require 'thrift/types'
@@ -32,6 +27,8 @@ require 'thrift/client'
 require 'thrift/struct'
 require 'thrift/protocol'
 require 'thrift/protocol/binaryprotocol'
+require 'thrift/protocol/compact_protocol'
 require 'thrift/transport'
 require 'thrift/transport/socket'
 require 'thrift/server'
+require "thrift/thrift_native"

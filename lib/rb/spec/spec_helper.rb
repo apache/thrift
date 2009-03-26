@@ -9,13 +9,6 @@ $:.unshift File.join(File.dirname(__FILE__), *%w[.. ext])
 # will get screwed up
 # $" << 'fastthread.bundle'
 
-# turn on deprecation so we can test it
-module Thrift
-  # squelch any warnings if we happen to get required twice
-  remove_const(:DEPRECATION) if const_defined? :DEPRECATION
-  DEPRECATION = true
-end
-
 require File.dirname(__FILE__) + '/../lib/thrift'
 
 class Object
@@ -31,9 +24,6 @@ Spec::Runner.configure do |configuration|
     Thrift.type_checking = true
   end
 end
-
-require "thrift/protocol/compact_protocol"
-require "thrift_native"
 
 require File.dirname(__FILE__) + "/../debug_proto_test/gen-rb/Srv"
 

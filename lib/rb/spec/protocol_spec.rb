@@ -1,5 +1,4 @@
 require File.dirname(__FILE__) + '/spec_helper'
-require "thrift_native"
 
 class ThriftProtocolSpec < Spec::ExampleGroup
   include Thrift
