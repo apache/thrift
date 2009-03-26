@@ -6,6 +6,7 @@ $GLOBALS['THRIFT_ROOT'] = '../../lib/php/src';
 require_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
 require_once $GLOBALS['THRIFT_ROOT'].'/protocol/TBinaryProtocol.php';
 require_once $GLOBALS['THRIFT_ROOT'].'/transport/TSocket.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/transport/THttpClient.php';
 require_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
 
 /**
@@ -25,7 +26,11 @@ require_once $GEN_DIR.'/tutorial_types.php';
 error_reporting(E_ALL);
 
 try {
-  $socket = new TSocket('localhost', 9090);
+  if (array_search('--http', $argv)) {
+    $socket = new THttpClient('localhost', 8080, '/php/PhpServer.php');
+  } else {
+    $socket = new TSocket('localhost', 9090);
+  }
   $transport = new TBufferedTransport($socket, 1024, 1024);
   $protocol = new TBinaryProtocol($transport);
   $client = new CalculatorClient($protocol);
