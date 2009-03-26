@@ -69,8 +69,8 @@ class CalculatorHandler : public CalculatorIf {
 
     SharedStruct ss;
     ss.key = logid;
-    char buffer[11];
-    sprintf(buffer, "%d", val);
+    char buffer[12];
+    snprintf(buffer, sizeof(buffer), "%d", val);
     ss.value = buffer;
 
     log[logid] = ss;
