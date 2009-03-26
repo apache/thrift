@@ -91,6 +91,7 @@ module Thrift
       @transport = transport
       @wbuf = ''
       @rbuf = ''
+      @index = 0
     end
 
     def open?
@@ -107,13 +108,16 @@ module Thrift
     end
 
     def read(sz)
-      ret = @rbuf.slice!(0...sz) 
+      @index += sz
+      ret = @rbuf.slice(@index - sz, sz) || ''
+
       if ret.length == 0
-        @rbuf = @transport.read([sz, DEFAULT_BUFFER].max) 
-        @rbuf.slice!(0...sz) 
-      else 
-        ret 
+        @rbuf = @transport.read([sz, DEFAULT_BUFFER].max)
+        @index = sz
+        ret = @rbuf.slice(0, sz) || ''
       end
+
+      ret
     end
 
     def write(buf)
@@ -143,6 +147,7 @@ module Thrift
       @wbuf      = ''
       @read      = read
       @write     = write
+      @index      = 0
     end
 
     def open?
@@ -162,9 +167,10 @@ module Thrift
 
       return '' if sz <= 0
 
-      read_frame if @rbuf.empty?
+      read_frame if @index >= @rbuf.length
 
-      @rbuf.slice!(0, sz)
+      @index += sz
+      @rbuf.slice(@index - sz, sz) || ''
     end
 
     def write(buf,sz=nil)
@@ -192,7 +198,8 @@ module Thrift
     def read_frame
       sz = @transport.read_all(4).unpack('N').first
 
-      @rbuf = @transport.read_all(sz).dup # protect against later #slice!
+      @index = 0
+      @rbuf = @transport.read_all(sz)
     end
   end
 
