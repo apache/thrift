@@ -330,7 +330,7 @@ std::string t_csharp_generator::render_const_value(ofstream& out, string name, t
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
       case t_base_type::TYPE_STRING:
-        render << "\"" + value->get_string() + "\"";
+        render << '"' << get_escaped_string(value) << '"';
         break;
       case t_base_type::TYPE_BOOL:
         render << ((value->get_integer() > 0) ? "true" : "false");

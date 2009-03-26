@@ -32,6 +32,12 @@ class t_html_generator : public t_generator {
     : t_generator(program)
   {
     out_dir_base_ = "gen-html";
+    escape_.clear();
+    escape_['&']  = "&amp;";
+    escape_['<']  = "&lt;";
+    escape_['>']  = "&gt;";
+    escape_['"']  = "&quot;";
+    escape_['\''] = "&apos;";
   }
 
   void generate_program();
@@ -396,7 +402,7 @@ void t_html_generator::print_const_value(t_const_value* tvalue) {
     f_out_ << tvalue->get_double();
     break;
   case t_const_value::CV_STRING:
-    f_out_ << "\"" << tvalue->get_string() << "\"";
+    f_out_ << '"' << get_escaped_string(tvalue) << '"';
     break;
   case t_const_value::CV_MAP:
     {

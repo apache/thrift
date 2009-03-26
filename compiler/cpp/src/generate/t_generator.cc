@@ -59,6 +59,19 @@ void t_generator::generate_program() {
   close_generator();
 }
 
+string t_generator::escape_string(const string &in) const {
+  string result = "";
+  for (string::const_iterator it = in.begin(); it < in.end(); it++) {
+    std::map<char, std::string>::const_iterator res = escape_.find(*it);
+    if (res != escape_.end()) {
+      result.append(res->second);
+    } else {
+      result.push_back(*it);
+    }
+  }
+  return result;
+}
+
 void t_generator::generate_consts(vector<t_const*> consts) {
   vector<t_const*>::iterator c_iter;
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {

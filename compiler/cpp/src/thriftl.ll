@@ -14,6 +14,7 @@
 
 %{
 
+#include <string>
 #include <errno.h>
 
 #include "main.h"
@@ -58,10 +59,8 @@ doctext       ("/**"([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
 comment       ("//"[^\n]*)
 unixcomment   ("#"[^\n]*)
 symbol        ([:;\,\{\}\(\)\=<>\[\]])
-dliteral      ("\""[^"]*"\"")
-sliteral      ("'"[^']*"'")
 st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
-
+literal_begin (['\"])
 
 %%
 
@@ -222,17 +221,56 @@ st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
   return tok_st_identifier;
 }
 
-{dliteral} {
-  yylval.id = strdup(yytext+1);
-  yylval.id[strlen(yylval.id)-1] = '\0';
-  return tok_literal;
+{literal_begin} {
+  char mark = yytext[0];
+  std::string result;
+  for(;;)
+  {
+    int ch = yyinput();
+    switch (ch) {
+      case EOF:
+        yyerror("End of file while read string at %d\n", yylineno);
+        exit(1);
+      case '\n':
+        yyerror("End of line while read string at %d\n", yylineno - 1);
+        exit(1);
+      case '\\':
+        ch = yyinput();
+        switch (ch) {
+          case 'r':
+            result.push_back('\r');
+            continue;
+          case 'n':
+            result.push_back('\n');
+            continue;
+          case 't':
+            result.push_back('\t');
+            continue;
+          case '"':
+            result.push_back('"');
+            continue;
+          case '\'':
+            result.push_back('\'');
+            continue;
+          case '\\':
+            result.push_back('\\');
+            continue;
+          default:
+            yyerror("Bad escape character\n");
+            return -1;
+        }
+        break;
+      default:
+        if (ch == mark) {
+          yylval.id = strdup(result.c_str());
+          return tok_literal;
+        } else {
+          result.push_back(ch);
+        }
+    }
+  }
 }
 
-{sliteral} {
-  yylval.id = strdup(yytext+1);
-  yylval.id[strlen(yylval.id)-1] = '\0';
-  return tok_literal;
-}
 
 {doctext} {
  /* This does not show up in the parse tree. */
