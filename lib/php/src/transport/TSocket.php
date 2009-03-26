@@ -101,7 +101,7 @@ class TSocket extends TTransport {
   /**
    * Sets the send timeout.
    *
-   * @param int $timeout
+   * @param int $timeout  Timeout in milliseconds.
    */
   public function setSendTimeout($timeout) {
     $this->sendTimeout_ = $timeout;
@@ -110,7 +110,7 @@ class TSocket extends TTransport {
   /**
    * Sets the receive timeout.
    *
-   * @param int $timeout
+   * @param int $timeout  Timeout in milliseconds.
    */
   public function setRecvTimeout($timeout) {
     $this->recvTimeout_ = $timeout;
