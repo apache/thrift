@@ -248,3 +248,6 @@ st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
 
 
 %%
+
+/* vim: filetype=lex
+*/
