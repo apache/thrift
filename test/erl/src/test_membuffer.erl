@@ -40,7 +40,23 @@ t2() ->
                       i64_thing = TestData#xtruct.i64_thing}.
 
 
+t3() ->
+    {ok, Transport} = thrift_memory_buffer:new(),
+    {ok, Protocol} = thrift_binary_protocol:new(Transport),
+    TestData = #bools{im_true = true, im_false = false},
+    ok = thrift_protocol:write(Protocol,
+			       {{struct, element(2, thriftTest_types:struct_info('bools'))},
+				TestData}),
+    {ok, Result} = thrift_protocol:read(Protocol,
+					{struct, element(2, thriftTest_types:struct_info('bools'))},
+					'bools'),
+
+    true = TestData#bools.im_true  =:= Result#bools.im_true,
+    true = TestData#bools.im_false =:= Result#bools.im_false.
+
+
 t() ->
     t1(),
-    t2().
+    t2(),
+    t3().
 
