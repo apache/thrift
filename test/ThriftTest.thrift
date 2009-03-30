@@ -42,6 +42,15 @@ struct Xtruct2
   3: i32    i32_thing
 }
 
+struct Xtruct3
+{
+  1:  string string_thing,
+  4:  i32    changed,
+  9:  i32    i32_thing,
+  11: i64    i64_thing
+}
+
+
 struct Insanity
 {
   1: map<Numberz, UserId> userMap,

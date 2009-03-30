@@ -140,18 +140,29 @@ read_struct_loop(IProto, SDict, RTuple) ->
         _Else ->
             case dict:find(Fid, SDict) of
                 {ok, {Type, Index}} ->
-                    {ok, Val} = read(IProto, Type),
-                    thrift_protocol:read(IProto, field_end),
-                    NewRTuple = setelement(Index, RTuple, Val),
-                    read_struct_loop(IProto, SDict, NewRTuple);
+                    case term_to_typeid(Type) of
+                        FType ->
+                            {ok, Val} = read(IProto, Type),
+                            thrift_protocol:read(IProto, field_end),
+                            NewRTuple = setelement(Index, RTuple, Val),
+                            read_struct_loop(IProto, SDict, NewRTuple);
+                        Expected ->
+                            error_logger:info_msg(
+                              "Skipping field ~p with wrong type (~p != ~p)~n",
+                              [Fid, FType, Expected]),
+                            skip_field(FType, IProto, SDict, RTuple)
+                    end;
                 _Else2 ->
-                    error_logger:info_msg("Skipping fid ~p~n", [Fid]),
-                    FTypeAtom = thrift_protocol:typeid_to_atom(FType),
-                    thrift_protocol:skip(IProto, FTypeAtom),
-                    read(IProto, field_end),
-                    read_struct_loop(IProto, SDict, RTuple)
+                    error_logger:info_msg("Skipping field ~p with unknown fid~n", [Fid]),
+                    skip_field(FType, IProto, SDict, RTuple)
             end
     end.
+
+skip_field(FType, IProto, SDict, RTuple) ->
+    FTypeAtom = thrift_protocol:typeid_to_atom(FType),
+    thrift_protocol:skip(IProto, FTypeAtom),
+    read(IProto, field_end),
+    read_struct_loop(IProto, SDict, RTuple).
 
 
 skip(Proto, struct) ->
