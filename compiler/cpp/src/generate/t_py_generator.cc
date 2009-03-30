@@ -929,9 +929,11 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
       f_service_ <<
         indent() << "def " << function_signature_if(*f_iter) << ":" << endl;
+      indent_up();
       generate_python_docstring(f_service_, (*f_iter));
       f_service_ <<
-        indent() << "  pass" << endl << endl;
+        indent() << "pass" << endl << endl;
+      indent_down();
     }
   }
 
