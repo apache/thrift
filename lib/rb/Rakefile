@@ -4,9 +4,11 @@ require 'spec/rake/spectask'
 
 THRIFT = '../../compiler/cpp/thrift'
 
-task :default => [:'gen-rb', :spec, :test]
+task :default => [:spec]
 
-Spec::Rake::SpecTask.new do |t|
+task :spec => [:'gen-rb', :realspec]
+
+Spec::Rake::SpecTask.new(:realspec) do |t|
   t.spec_files = FileList['spec/**/*_spec.rb']
   t.spec_opts = ['--color']
 end
