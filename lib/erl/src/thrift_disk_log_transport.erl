@@ -1,13 +1,25 @@
-%%%-------------------------------------------------------------------
-%%% File    : thrift_disk_log_transport.erl
-%%% Author  : Todd Lipcon <todd@amiestreet.com>
-%%% Description : Write-only Thrift transport outputting to disk_log
-%%% Created : 22 Apr 2008 by Todd Lipcon <todd@lipcon.org>
-%%%
+%%
+%% Licensed to the Apache Software Foundation (ASF) under one
+%% or more contributor license agreements. See the NOTICE file
+%% distributed with this work for additional information
+%% regarding copyright ownership. The ASF licenses this file
+%% to you under the Apache License, Version 2.0 (the
+%% "License"); you may not use this file except in compliance
+%% with the License. You may obtain a copy of the License at
+%%
+%%   http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing,
+%% software distributed under the License is distributed on an
+%% "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+%% KIND, either express or implied. See the License for the
+%% specific language governing permissions and limitations
+%% under the License.
+%%
+
 %%% Todo: this might be better off as a gen_server type of transport
 %%%       that handles stuff like group commit, similar to TFileTransport
 %%%       in cpp land
-%%%-------------------------------------------------------------------
 -module(thrift_disk_log_transport).
 
 -behaviour(thrift_transport).

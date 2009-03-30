@@ -1,14 +1,23 @@
-%%%-------------------------------------------------------------------
-%%% File    : thrift_socket_server.erl
-%%% Author  : eugene letuchy <eletuchy@facebook.com>
-%%% Description : A rewrite of thrift_server, based quite heavily
-%%%         on the mochiweb_socket_server module of mochiweb
-%%% Created :  3 Mar 2008 by eugene letuchy <eletuchy@facebook.com>
-%%%-------------------------------------------------------------------
--module(thrift_socket_server).
+%%
+%% Licensed to the Apache Software Foundation (ASF) under one
+%% or more contributor license agreements. See the NOTICE file
+%% distributed with this work for additional information
+%% regarding copyright ownership. The ASF licenses this file
+%% to you under the Apache License, Version 2.0 (the
+%% "License"); you may not use this file except in compliance
+%% with the License. You may obtain a copy of the License at
+%%
+%%   http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing,
+%% software distributed under the License is distributed on an
+%% "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+%% KIND, either express or implied. See the License for the
+%% specific language governing permissions and limitations
+%% under the License.
+%%
 
--author('eletuchy@facebook.com').
--author('todd@lipcon.org').
+-module(thrift_socket_server).
 
 -behaviour(gen_server).
 
