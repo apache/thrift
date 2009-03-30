@@ -27,6 +27,11 @@ dnl @category InstalledPackages
 dnl @category C
 dnl @version 2007-09-12
 dnl @license AllPermissive
+dnl
+dnl Copyright (C) 2009 David Reiss
+dnl Copying and distribution of this file, with or without modification,
+dnl are permitted in any medium without royalty provided the copyright
+dnl notice and this notice are preserved.
 
 dnl Input: ax_libevent_path, WANT_LIBEVENT_VERSION
 dnl Output: success=yes/no
