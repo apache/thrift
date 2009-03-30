@@ -11,7 +11,7 @@
 -behaviour(thrift_transport).
 
 %% API
--export([new/2, set_http_options/2]).
+-export([new/2, new/3]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -28,30 +28,31 @@
                          path, % string()
                          read_buffer, % iolist()
                          write_buffer, % iolist()
-                         http_options
+                         http_options % see http(3)
                         }).
 
 %%====================================================================
 %% API
 %%====================================================================
 %%--------------------------------------------------------------------
-%% Function: new() -> {ok,Pid} | ignore | {error,Error}
+%% Function: new() -> {ok, Transport} | ignore | {error,Error}
 %% Description: Starts the server
 %%--------------------------------------------------------------------
 new(Host, Path) ->
-    case gen_server:start_link(?MODULE, {Host, Path}, []) of
+    new(Host, Path, _Options = []).
+
+%%--------------------------------------------------------------------
+%% Options include:
+%%   {http_options, HttpOptions}  = See http(3)
+%%   {extra_headers, ExtraHeaders}  = List of extra HTTP headers
+%%--------------------------------------------------------------------
+new(Host, Path, Options) ->
+    case gen_server:start_link(?MODULE, {Host, Path, Options}, []) of
         {ok, Pid} ->
             thrift_transport:new(?MODULE, Pid);
         Else ->
             Else
     end.
-
-%%--------------------------------------------------------------------
-%% Function: set_http_options() -> ok | {error,Error}
-%% Description: Set HTTP options
-%%--------------------------------------------------------------------
-set_http_options(Transport, HTTPOptions) ->
-    gen_server:call(Transport, {set_http_options, HTTPOptions}).
 
 %%--------------------------------------------------------------------
 %% Function: write(Transport, Data) -> ok
@@ -93,12 +94,27 @@ read(Transport, Len) when is_integer(Len) ->
 %% gen_server callbacks
 %%====================================================================
 
-init({Host, Path}) ->
-    {ok, #http_transport{host = Host,
-                         path = Path,
-                         read_buffer = [],
-                         write_buffer = [],
-                         http_options = []}}.
+init({Host, Path, Options}) ->
+    State1 = #http_transport{host = Host,
+                             path = Path,
+                             read_buffer = [],
+                             write_buffer = [],
+                             http_options = []},
+    ApplyOption =
+        fun
+            ({http_options, HttpOpts}, State = #http_transport{}) ->
+                State#http_transport{http_options = HttpOpts};
+            (Other, #http_transport{}) ->
+                {invalid_option, Other};
+            (_, Error) ->
+                Error
+        end,
+    case lists:foldl(ApplyOption, State1, Options) of
+        State2 = #http_transport{} ->
+            {ok, State2};
+        Else ->
+            {stop, Else}
+    end.
 
 handle_call({write, Data}, _From, State = #http_transport{write_buffer = WBuf}) ->
     {reply, ok, State#http_transport{write_buffer = [WBuf, Data]}};
@@ -114,9 +130,6 @@ handle_call({read, Len}, _From, State = #http_transport{read_buffer = RBuf}) ->
         _ ->
             {reply, {error, 'EOF'}, State}
     end;
-
-handle_call({set_http_options, HTTPOptions}, _From, State) ->
-    {reply, ok, State#http_transport{http_options = HTTPOptions}};
 
 handle_call(flush, _From, State) ->
     {Response, State1} = do_flush(State),
