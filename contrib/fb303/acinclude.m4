@@ -1,3 +1,8 @@
+dnl Copyright (C) 2009 Facebook
+dnl Copying and distribution of this file, with or without modification,
+dnl are permitted in any medium without royalty provided the copyright
+dnl notice and this notice are preserved.
+
 AC_DEFUN([FB_INITIALIZE],
 [
 AM_INIT_AUTOMAKE([ foreign 1.9.5 no-define ])
