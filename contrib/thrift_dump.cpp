@@ -15,8 +15,8 @@
 
 using namespace std;
 using boost::shared_ptr;
-using namespace facebook::thrift::transport;
-using namespace facebook::thrift::protocol;
+using namespace apache::thrift::transport;
+using namespace apache::thrift::protocol;
 
 void usage() {
   fprintf(stderr,
