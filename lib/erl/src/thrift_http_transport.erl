@@ -28,7 +28,8 @@
                          path, % string()
                          read_buffer, % iolist()
                          write_buffer, % iolist()
-                         http_options % see http(3)
+                         http_options, % see http(3)
+                         extra_headers % [{str(), str()}, ...]
                         }).
 
 %%====================================================================
@@ -99,11 +100,14 @@ init({Host, Path, Options}) ->
                              path = Path,
                              read_buffer = [],
                              write_buffer = [],
-                             http_options = []},
+                             http_options = [],
+                             extra_headers = []},
     ApplyOption =
         fun
             ({http_options, HttpOpts}, State = #http_transport{}) ->
                 State#http_transport{http_options = HttpOpts};
+            ({extra_headers, ExtraHeaders}, State = #http_transport{}) ->
+                State#http_transport{extra_headers = ExtraHeaders};
             (Other, #http_transport{}) ->
                 {invalid_option, Other};
             (_, Error) ->
@@ -158,7 +162,8 @@ do_flush(State = #http_transport{host = Host,
                                  path = Path,
                                  read_buffer = Rbuf,
                                  write_buffer = Wbuf,
-                                 http_options = HttpOptions}) ->
+                                 http_options = HttpOptions,
+                                 extra_headers = ExtraHeaders}) ->
     case iolist_to_binary(Wbuf) of
         <<>> ->
             %% Don't bother flushing empty buffers.
@@ -167,7 +172,7 @@ do_flush(State = #http_transport{host = Host,
             {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Body}} =
               http:request(post,
                            {"http://" ++ Host ++ Path,
-                            [{"User-Agent", "Erlang/thrift_http_transport"}],
+                            [{"User-Agent", "Erlang/thrift_http_transport"} | ExtraHeaders],
                             "application/x-thrift",
                             WBinary},
                            HttpOptions,
