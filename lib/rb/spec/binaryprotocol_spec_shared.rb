@@ -208,6 +208,12 @@ shared_examples_for 'a binary protocol' do
     @prot.read_message_begin().should == ['testMessage', Thrift::MessageTypes::CALL, 17]
   end
   
+  it "should read the message header without version when writes are not strict" do
+    @prot = protocol_class.new(@trans, false, true) # no strict write
+    @trans.write("\000\000\000\vtestMessage\001\000\000\000\021")
+    @prot.read_message_begin().should == ['testMessage', Thrift::MessageTypes::CALL, 17]
+  end
+
   # message footer is a noop
   
   it "should read a field header" do

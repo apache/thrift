@@ -300,7 +300,7 @@ VALUE rb_thrift_binary_proto_read_message_begin(VALUE self) {
       rb_exc_raise(get_protocol_exception(INT2FIX(BAD_VERSION), rb_str_new2("No version identifier, old protocol client?")));
     }
     name = READ(self, version);
-    type = rb_thrift_binary_proto_read_byte(self);
+    type = read_byte_direct(self);
     seqid = rb_thrift_binary_proto_read_i32(self);
   }
   
