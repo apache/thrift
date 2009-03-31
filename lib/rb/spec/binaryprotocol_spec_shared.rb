@@ -203,6 +203,11 @@ shared_examples_for 'a binary protocol' do
     lambda { @prot.write_string(nil) }.should raise_error
   end
   
+  it "should read message header correctly" do
+    @trans.write([protocol_class.const_get(:VERSION_1) | Thrift::MessageTypes::CALL, "testMessage".size, "testMessage", 17].pack("NNa11N"))
+    @prot.read_message_begin().should == ['testMessage', Thrift::MessageTypes::CALL, 17]
+  end
+  
   # message footer is a noop
   
   it "should read a field header" do
