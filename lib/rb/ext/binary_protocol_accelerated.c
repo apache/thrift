@@ -336,7 +336,7 @@ VALUE rb_thrift_binary_proto_read_set_begin(VALUE self) {
 
 VALUE rb_thrift_binary_proto_read_bool(VALUE self) {
   char byte = read_byte_direct(self);
-  return byte == 1 ? Qtrue : Qfalse;
+  return byte != 0 ? Qtrue : Qfalse;
 }
 
 VALUE rb_thrift_binary_proto_read_byte(VALUE self) {

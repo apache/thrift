@@ -416,11 +416,6 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
   // call validate
   rb_funcall(self, validate_method_id, 0);
 
-  // if (rb_funcall(protocol, native_qmark_method_id, 0) == Qtrue) {
-  //   set_native_proto_function_pointers(protocol);
-  // } else {
-  //   set_default_proto_function_pointers();
-  // }
   check_native_proto_method_table(protocol);
   
   // write struct begin
@@ -565,7 +560,7 @@ static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
   
   // read each field
   while (true) {
-    VALUE field_header = rb_funcall(protocol, read_field_begin_method_id, 0);
+    VALUE field_header = mt->read_field_begin(protocol);
     VALUE field_type_value = rb_ary_entry(field_header, 1);
     int field_type = FIX2INT(field_type_value);
     

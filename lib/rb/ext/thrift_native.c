@@ -87,7 +87,7 @@ ID sort_method_id;
 ID write_field_stop_method_id;
 ID skip_method_id;
 ID write_method_id;
-ID read_method_id;
+ID read_all_method_id;
 ID native_qmark_method_id;
 
 // constant ids
@@ -169,7 +169,7 @@ void Init_thrift_native() {
   write_field_stop_method_id = rb_intern("write_field_stop");
   skip_method_id = rb_intern("skip");
   write_method_id = rb_intern("write");
-  read_method_id = rb_intern("read");
+  read_all_method_id = rb_intern("read_all");
   native_qmark_method_id = rb_intern("native?");
   
   // constant ids

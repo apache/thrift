@@ -97,25 +97,6 @@ struct Base64 {
   7: binary b6,
 }
 
-service Srv {
-  i32 Janky(i32 arg)
-}
-
-service Inherited extends Srv {
-  i32 identity(i32 arg)
-}
-
-service EmptyService {}
-
-// The only purpose of this thing is to increase the size of the generated code
-// so that ZlibTest has more highly compressible data to play with.
-struct BlowUp {
-  1: map<list<i32>,set<map<i32,string>>> b1;
-  2: map<list<i32>,set<map<i32,string>>> b2;
-  3: map<list<i32>,set<map<i32,string>>> b3;
-  4: map<list<i32>,set<map<i32,string>>> b4;
-}
-
 struct CompactProtoTestStruct {
   // primitive fields
   1: byte   a_byte = 127;
@@ -178,3 +159,31 @@ struct CompactProtoTestStruct {
   48: map<byte, set<byte>>        byte_set_map = {0 : [], 1 : [1], 2 : [1, 2]};
   49: map<byte, list<byte>>       byte_list_map = {0 : [], 1 : [1], 2 : [1, 2]};
 }
+
+
+
+service Srv {
+  i32 Janky(i32 arg);
+  
+  // return type only methods
+  
+  void voidMethod();
+  i32 primitiveMethod();
+  CompactProtoTestStruct structMethod();
+}
+
+service Inherited extends Srv {
+  i32 identity(i32 arg)
+}
+
+service EmptyService {}
+
+// The only purpose of this thing is to increase the size of the generated code
+// so that ZlibTest has more highly compressible data to play with.
+struct BlowUp {
+  1: map<list<i32>,set<map<i32,string>>> b1;
+  2: map<list<i32>,set<map<i32,string>>> b2;
+  3: map<list<i32>,set<map<i32,string>>> b3;
+  4: map<list<i32>,set<map<i32,string>>> b4;
+}
+

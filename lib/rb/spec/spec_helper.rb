@@ -48,4 +48,6 @@ require File.dirname(__FILE__) + "/../debug_proto_test/gen-rb/Srv"
 
 module Fixtures
   COMPACT_PROTOCOL_TEST_STRUCT = CompactProtoTestStruct.new(:a_binary => [0,1,2,3,4,5,6,7,8].pack('c*'))
+  COMPACT_PROTOCOL_TEST_STRUCT.set_byte_map = nil
+  COMPACT_PROTOCOL_TEST_STRUCT.map_byte_map = nil
 end

@@ -7,7 +7,6 @@ benchmark/gen-rb/BenchmarkService.rb
 benchmark/server.rb
 benchmark/thin_server.rb
 CHANGELOG
-COPYING
 ext/binary_protocol_accelerated.c
 ext/binary_protocol_accelerated.h
 ext/compact_protocol.c
@@ -43,7 +42,6 @@ lib/thrift/transport/unixsocket.rb
 lib/thrift/transport.rb
 lib/thrift/types.rb
 lib/thrift.rb
-LICENSE
 Manifest
 README
 spec/binaryprotocol_spec.rb

@@ -365,6 +365,21 @@ public class TCompactProtocolTest {
       public int Janky(int i32arg) throws TException {
         return i32arg * 2;
       }
+
+      public int primitiveMethod() throws TException {
+        // TODO Auto-generated method stub
+        return 0;
+      }
+
+      public CompactProtoTestStruct structMethod() throws TException {
+        // TODO Auto-generated method stub
+        return null;
+      }
+
+      public void voidMethod() throws TException {
+        // TODO Auto-generated method stub
+        
+      }
     };
     
     Srv.Processor testProcessor = new Srv.Processor(handler);

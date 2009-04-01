@@ -299,4 +299,77 @@ shared_examples_for 'a binary protocol' do
     @trans.write([str.size].pack("N") + str)
     @prot.read_string.should == str
   end
+
+  it "should perform a complete rpc with no args or return" do
+    srv_test(
+      proc {|client| client.send_voidMethod()},
+      proc {|client| client.recv_voidMethod.should == nil}
+    )
+  end
+
+  it "should perform a complete rpc with a primitive return type" do
+    srv_test(
+      proc {|client| client.send_primitiveMethod()},
+      proc {|client| client.recv_primitiveMethod.should == 1}
+    )
+  end
+
+  it "should perform a complete rpc with a struct return type" do
+    srv_test(
+      proc {|client| client.send_structMethod()},
+      proc {|client|
+        result = client.recv_structMethod
+        result.set_byte_map = nil
+        result.map_byte_map = nil
+        result.should == Fixtures::COMPACT_PROTOCOL_TEST_STRUCT
+      }
+    )
+  end
+
+  def get_socket_connection
+    server = Thrift::ServerSocket.new("localhost", 9090)
+    server.listen
+    
+    clientside = Thrift::Socket.new("localhost", 9090)
+    clientside.open
+    serverside = server.accept
+    [clientside, serverside, server]
+  end
+
+  def srv_test(firstblock, secondblock)
+    clientside, serverside, server = get_socket_connection
+
+    clientproto = protocol_class.new(clientside)
+    serverproto = protocol_class.new(serverside)
+
+    processor = Srv::Processor.new(SrvHandler.new)
+
+    client = Srv::Client.new(clientproto, clientproto)
+    
+    # first block
+    firstblock.call(client)
+    
+    processor.process(serverproto, serverproto)
+    
+    # second block
+    secondblock.call(client)
+  ensure
+    clientside.close
+    serverside.close
+    server.close
+  end
+
+  class SrvHandler 
+    def voidMethod()
+    end
+    
+    def primitiveMethod
+      1
+    end
+    
+    def structMethod
+      Fixtures::COMPACT_PROTOCOL_TEST_STRUCT
+    end
+  end
+
 end

@@ -73,7 +73,7 @@ extern ID sort_method_id;
 extern ID write_field_stop_method_id;
 extern ID skip_method_id;
 extern ID write_method_id;
-extern ID read_method_id;
+extern ID read_all_method_id;
 extern ID native_qmark_method_id;
 
 extern ID fields_const_id;
