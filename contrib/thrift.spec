@@ -24,7 +24,7 @@
 %{!?thrift_erlang_root: %define thrift_erlang_root /opt/thrift-erl}
 
 Name:           thrift
-License:        Thrift Software License
+License:        Apache License v2.0
 Group:          Development
 Summary:        RPC and serialization framework
 Version:        20080529svn
