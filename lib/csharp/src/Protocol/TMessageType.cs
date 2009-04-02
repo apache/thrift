@@ -25,6 +25,7 @@ namespace Thrift.Protocol
 	{
 		Call = 1,
 		Reply = 2,
-		Exception = 3
+		Exception = 3,
+		Oneway = 4
 	}
 }

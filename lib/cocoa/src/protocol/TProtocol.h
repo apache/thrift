@@ -25,7 +25,8 @@
 enum {
   TMessageType_CALL = 1,
   TMessageType_REPLY = 2,
-  TMessageType_EXCEPTION = 3
+  TMessageType_EXCEPTION = 3,
+  TMessageType_ONEWAY = 4
 };
 
 enum {

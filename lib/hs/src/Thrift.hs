@@ -118,6 +118,7 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
   data Message_type = M_CALL
                     | M_REPLY
                     | M_EXCEPTION
+                    | M_ONEWAY
                     | M_UNKNOWN
                       deriving Eq
   instance Enum Message_type where
@@ -126,12 +127,14 @@ module Thrift (TransportExn(..),TransportExn_Type(..),TTransport(..), T_type(..)
                      M_CALL -> 1
                      M_REPLY -> 2
                      M_EXCEPTION -> 3
+                     M_ONEWAY -> 4
                      M_UNKNOWN -> -1
 
       toEnum t = case t of
                    1 -> M_CALL
                    2 -> M_REPLY
                    3 -> M_EXCEPTION
+                   4 -> M_ONEWAY
                    _ -> M_UNKNOWN
 
 

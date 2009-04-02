@@ -1909,7 +1909,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     endl <<
     indent() << "iprot->readMessageBegin(fname, mtype, seqid);" << endl <<
     endl <<
-    indent() << "if (mtype != apache::thrift::protocol::T_CALL) {" << endl <<
+    indent() << "if (mtype != apache::thrift::protocol::T_CALL && mtype != apache::thrift::protocol::T_ONEWAY) {" << endl <<
     indent() << "  iprot->skip(apache::thrift::protocol::T_STRUCT);" << endl <<
     indent() << "  iprot->readMessageEnd();" << endl <<
     indent() << "  iprot->getTransport()->readEnd();" << endl <<

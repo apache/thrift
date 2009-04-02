@@ -97,7 +97,8 @@ enum TType {
 enum TMessageType {
   T_CALL       = 1,
   T_REPLY      = 2,
-  T_EXCEPTION  = 3
+  T_EXCEPTION  = 3,
+  T_ONEWAY     = 4
 };
 
 /**

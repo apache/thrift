@@ -36,6 +36,7 @@
 -define(tMessageType_CALL, 1).
 -define(tMessageType_REPLY, 2).
 -define(tMessageType_EXCEPTION, 3).
+-define(tMessageType_ONEWAY, 4).
 
 % TApplicationException
 -define(TApplicationException_Structure,

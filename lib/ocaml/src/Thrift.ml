@@ -141,16 +141,19 @@ struct
     | CALL
     | REPLY
     | EXCEPTION
+    | ONEWAY
 
   let message_type_to_i = function
     | CALL -> 1
     | REPLY -> 2
     | EXCEPTION -> 3
+    | ONEWAY -> 4
 
   let message_type_of_i = function
     | 1 -> CALL
     | 2 -> REPLY
     | 3 -> EXCEPTION
+    | 4 -> ONEWAY
     | _ -> raise Thrift_error
 
   class virtual t (trans: Transport.t) =

@@ -53,6 +53,7 @@ package TMessageType;
 use constant CALL      => 1;
 use constant REPLY     => 2;
 use constant EXCEPTION => 3;
+use constant ONEWAY    => 4;
 1;
 
 package Thrift::TException;
