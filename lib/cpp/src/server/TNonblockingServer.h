@@ -171,7 +171,7 @@ class TNonblockingServer : public TServer {
    *
    * @return the current limit on TConnection pool size.
    */
-  int getConnectionStackLimit() const {
+  size_t getConnectionStackLimit() const {
     return connectionStackLimit_;
   }
 
@@ -180,7 +180,7 @@ class TNonblockingServer : public TServer {
    *
    * @param sz the new limit for TConnection pool size.
    */
-  void setConnectionStackLimit(int sz) {
+  void setConnectionStackLimit(size_t sz) {
     connectionStackLimit_ = sz;
   }
 
