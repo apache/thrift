@@ -23,6 +23,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include <stdio.h>
 
 #include <netinet/in.h>
 #ifdef HAVE_INTTYPES_H

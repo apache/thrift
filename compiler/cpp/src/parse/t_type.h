@@ -23,6 +23,7 @@
 #include <string>
 #include <map>
 #include <cstring>
+#include <stdint.h>
 #include "t_doc.h"
 
 // What's worse?  This, or making a src/parse/non_inlined.cc?

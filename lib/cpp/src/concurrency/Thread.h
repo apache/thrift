@@ -20,6 +20,7 @@
 #ifndef _THRIFT_CONCURRENCY_THREAD_H_
 #define _THRIFT_CONCURRENCY_THREAD_H_ 1
 
+#include <stdint.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
