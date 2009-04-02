@@ -22,8 +22,8 @@
 ./cleanup.sh
 
 autoscan || exit 1
-autoheader || exit 1
 aclocal -I ./aclocal || exit 1
+autoheader || exit 1
 
 if libtoolize --version 1 >/dev/null 2>/dev/null; then
   libtoolize --automake || exit 1
