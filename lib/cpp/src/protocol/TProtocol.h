@@ -24,11 +24,53 @@
 #include <protocol/TProtocolException.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/static_assert.hpp>
 
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <string>
 #include <map>
+
+
+// Use this to get around strict aliasing rules.
+// For example, uint64_t i = bitwise_cast<uint64_t>(returns_double());
+// The most obvious implementation is to just cast a pointer,
+// but that doesn't work.
+// For a pretty in-depth explanation of the problem, see
+// http://www.cellperformance.com/mike_acton/2006/06/ (...)
+// understanding_strict_aliasing.html
+template <typename To, typename From>
+static inline To bitwise_cast(From from) {
+  BOOST_STATIC_ASSERT(sizeof(From) == sizeof(To));
+
+  // BAD!!!  These are all broken with -O2.
+  //return *reinterpret_cast<To*>(&from);  // BAD!!!
+  //return *static_cast<To*>(static_cast<void*>(&from));  // BAD!!!
+  //return *(To*)(void*)&from;  // BAD!!!
+
+  // Super clean and paritally blessed by section 3.9 of the standard.
+  //unsigned char c[sizeof(from)];
+  //memcpy(c, &from, sizeof(from));
+  //To to;
+  //memcpy(&to, c, sizeof(c));
+  //return to;
+
+  // Slightly more questionable.
+  // Same code emitted by GCC.
+  //To to;
+  //memcpy(&to, &from, sizeof(from));
+  //return to;
+
+  // Technically undefined, but almost universally supported,
+  // and the most efficient implementation.
+  union {
+    From f;
+    To t;
+  } u;
+  u.f = from;
+  return u.t;
+}
+
 
 namespace apache { namespace thrift { namespace protocol {
 
@@ -49,9 +91,28 @@ using apache::thrift::transport::TTransport;
 #endif
 
 #if __BYTE_ORDER == __BIG_ENDIAN
-# define ntohll(n) (n)
-# define htonll(n) (n)
+#  define ntohll(n) (n)
+#  define htonll(n) (n)
+# if defined(__GNUC__) && defined(__GLIBC__)
+#  include <byteswap.h>
+#  define htolell(n) bswap_64(n)
+#  define letohll(n) bswap_64(n)
+# else /* GNUC & GLIBC */
+#  define bswap_64(n) \
+      ( (((n) & 0xff00000000000000ull) >> 56) \
+      | (((n) & 0x00ff000000000000ull) >> 40) \
+      | (((n) & 0x0000ff0000000000ull) >> 24) \
+      | (((n) & 0x000000ff00000000ull) >> 8)  \
+      | (((n) & 0x00000000ff000000ull) << 8)  \
+      | (((n) & 0x0000000000ff0000ull) << 24) \
+      | (((n) & 0x000000000000ff00ull) << 40) \
+      | (((n) & 0x00000000000000ffull) << 56) )
+#  define ntolell(n) bswap_64(n)
+#  define letonll(n) bswap_64(n)
+# endif /* GNUC & GLIBC */
 #elif __BYTE_ORDER == __LITTLE_ENDIAN
+#  define htolell(n) (n)
+#  define letohll(n) (n)
 # if defined(__GNUC__) && defined(__GLIBC__)
 #  include <byteswap.h>
 #  define ntohll(n) bswap_64(n)
