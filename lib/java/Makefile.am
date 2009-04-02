@@ -17,7 +17,7 @@
 # under the License.
 #
 
-EXTRA_DIST = build.xml src test LICENSE
+EXTRA_DIST = build.xml src test
 
 all-local:
 	$(ANT)

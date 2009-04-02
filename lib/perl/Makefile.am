@@ -40,7 +40,6 @@ clean-local:
 	rm -f Makefile-perl.mk.old
 
 EXTRA_DIST = \
-	LICENSE \
 	Makefile.PL \
 	test.pl \
 	lib/Thrift.pm \

@@ -19,7 +19,6 @@
 
 EXTRA_DIST = \
 	CHANGELOG \
-	LICENSE \
 	Rakefile \
 	Manifest \
 	setup.rb \
