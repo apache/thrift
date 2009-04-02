@@ -120,15 +120,15 @@ service ThriftTest
   map<UserId, map<Numberz,Insanity>> testInsanity(1: Insanity argument),
 
   /* Multiple parameters */
-  Xtruct testMulti(byte arg0, i32 arg1, i64 arg2, map<i16, string> arg3, Numberz arg4, UserId arg5),
+  Xtruct testMulti(1: byte arg0, 2: i32 arg1, 3: i64 arg2, 4: map<i16, string> arg3, 5: Numberz arg4, 6: UserId arg5),
 
   /* Exception specifier */
 
-  void testException(string arg) throws(Xception err1),
+  void testException(1: string arg) throws(1: Xception err1),
 
   /* Multiple exceptions specifier */
 
-  Xtruct testMultiException(string arg0, string arg1) throws(Xception err1, Xception2 err2)
+  Xtruct testMultiException(1: string arg0, 2: string arg1) throws(1: Xception err1, 2: Xception2 err2)
 
   /* Test oneway void */
   oneway void testOneway(1:i32 secondsToSleep)

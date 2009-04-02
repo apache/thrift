@@ -163,7 +163,7 @@ struct CompactProtoTestStruct {
 
 
 service Srv {
-  i32 Janky(i32 arg);
+  i32 Janky(1: i32 arg);
   
   // return type only methods
   
@@ -173,7 +173,7 @@ service Srv {
 }
 
 service Inherited extends Srv {
-  i32 identity(i32 arg)
+  i32 identity(1: i32 arg)
 }
 
 service EmptyService {}

@@ -88,5 +88,5 @@ struct RandomStuffZZ {
 }
 
 service Srv {
-  i32 Janky(i32 arg)
+  i32 Janky(1: i32 arg)
 }

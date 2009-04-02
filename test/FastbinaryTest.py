@@ -104,7 +104,6 @@ rshuge = RandomStuff()
 rshuge.myintlist=range(10000)
 
 my_zero = Srv.Janky_result({"arg":5})
-my_nega = Srv.Janky_args({"success":6})
 
 def checkWrite(o):
   trans_fast = TTransport.TMemoryBuffer()
@@ -159,12 +158,6 @@ def doTest():
   checkWrite(my_zero)
   checkRead(my_zero)
   checkRead(Backwards({"first_tag2":4, "second_tag1":2}))
-  try:
-    checkWrite(my_nega)
-    print "Hey, did this get fixed?"
-  except AttributeError:
-    # Sorry, doesn't work with negative tags.
-    pass
 
   # One case where the serialized form changes, but only superficially.
   o = Backwards({"first_tag2":4, "second_tag1":2})
