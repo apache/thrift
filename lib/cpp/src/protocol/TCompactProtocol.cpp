@@ -20,6 +20,7 @@
 #include "TCompactProtocol.h"
 
 #include <config.h>
+#include <limits>
 
 /*
  * TCompactProtocol::i*ToZigzag depend on the fact that the right shift
