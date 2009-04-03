@@ -848,6 +848,10 @@ Field:
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
       if ($2 < 0) {
         pwarning(1, "No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", $5);
+        if (g_strict >= 192) {
+          yyerror("Implicit field keys are deprecated and not allowed with -strict");
+          exit(1);
+        }
       }
       $$ = new t_field($4, $5, $2);
       $$->set_req($3);

@@ -121,6 +121,11 @@ bool g_cpp_use_include_prefix = false;
 int g_debug = 0;
 
 /**
+ * Strictness level
+ */
+int g_strict = 127;
+
+/**
  * Warning level
  */
 int g_warn = 1;
@@ -928,6 +933,7 @@ int main(int argc, char** argv) {
       } else if (strcmp(arg, "-nowarn") == 0) {
         g_warn = 0;
       } else if (strcmp(arg, "-strict") == 0) {
+        g_strict = 255;
         g_warn = 2;
       } else if (strcmp(arg, "-v") == 0 || strcmp(arg, "-verbose") == 0 ) {
         g_verbose = 1;

@@ -54,6 +54,11 @@ enum PARSE_MODE {
 };
 
 /**
+ * Strictness level
+ */
+extern int g_strict;
+
+/**
  * The master program parse tree. This is accessed from within the parser code
  * to build up the program elements.
  */
