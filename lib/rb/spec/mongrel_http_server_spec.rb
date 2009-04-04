@@ -18,14 +18,14 @@
 #
 
 require File.dirname(__FILE__) + '/spec_helper'
-require 'thrift/server/httpserver'
+require 'thrift/server/mongrel_http_server'
 
 class ThriftHTTPServerSpec < Spec::ExampleGroup
   include Thrift
 
-  Handler = SimpleMongrelHTTPServer::Handler
+  Handler = MongrelHTTPServer::Handler
 
-  describe SimpleMongrelHTTPServer do
+  describe MongrelHTTPServer do
     it "should have appropriate defaults" do
       mock_factory = mock("BinaryProtocolFactory")
       mock_proc = mock("Processor")
@@ -37,7 +37,7 @@ class ThriftHTTPServerSpec < Spec::ExampleGroup
           mock.should_receive(:register).with("/", handler)
         end
       end
-      SimpleMongrelHTTPServer.new(mock_proc)
+      MongrelHTTPServer.new(mock_proc)
     end
 
     it "should understand :ip, :port, :path, and :protocol_factory" do
@@ -50,7 +50,7 @@ class ThriftHTTPServerSpec < Spec::ExampleGroup
           mock.should_receive(:register).with("/foo", handler)
         end
       end
-      SimpleMongrelHTTPServer.new(mock_proc, :ip => "1.2.3.4", :port => 1234, :path => "foo",
+      MongrelHTTPServer.new(mock_proc, :ip => "1.2.3.4", :port => 1234, :path => "foo",
                                              :protocol_factory => mock_factory)
     end
 
@@ -67,11 +67,11 @@ class ThriftHTTPServerSpec < Spec::ExampleGroup
           end
         end
       end
-      SimpleMongrelHTTPServer.new(nil).serve
+      MongrelHTTPServer.new(nil).serve
     end
   end
 
-  describe SimpleMongrelHTTPServer::Handler do
+  describe MongrelHTTPServer::Handler do
     before(:each) do
       @processor = mock("Processor")
       @factory = mock("ProtocolFactory")

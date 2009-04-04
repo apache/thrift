@@ -1,3 +1,4 @@
+# encoding: ascii-8bit
 # 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -16,11 +17,11 @@
 # specific language governing permissions and limitations
 # under the License.
 # 
-require 'thrift/transport'
+
 require 'socket'
 
 module Thrift
-  class Socket < Transport
+  class Socket < BaseTransport
     def initialize(host='localhost', port=9090, timeout=nil)
       @host = host
       @port = port
@@ -131,45 +132,5 @@ module Thrift
     def to_io
       @handle
     end
-  end
-
-  class ServerSocket < ServerTransport
-    # call-seq: initialize(host = nil, port)
-    def initialize(host_or_port, port = nil)
-      if port
-        @host = host_or_port
-        @port = port
-      else
-        @host = nil
-        @port = host_or_port
-      end
-      @handle = nil
-    end
-
-    attr_reader :handle
-
-    def listen
-      @handle = TCPServer.new(@host, @port)
-    end
-
-    def accept
-      unless @handle.nil?
-        sock = @handle.accept
-        trans = Socket.new
-        trans.handle = sock
-        trans
-      end
-    end
-
-    def close
-     @handle.close unless @handle.nil? or @handle.closed?
-     @handle = nil
-    end
-
-    def closed?
-      @handle.nil? or @handle.closed?
-    end
-
-    alias to_io handle
   end
 end

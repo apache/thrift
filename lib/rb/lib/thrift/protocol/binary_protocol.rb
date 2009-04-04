@@ -17,10 +17,8 @@
 # under the License.
 # 
 
-require 'thrift/protocol'
-
 module Thrift
-  class BinaryProtocol < Protocol
+  class BinaryProtocol < BaseProtocol
     VERSION_MASK = 0xffff0000
     VERSION_1 = 0x80010000
     TYPE_MASK = 0x000000ff
@@ -219,7 +217,7 @@ module Thrift
 
   end
 
-  class BinaryProtocolFactory < ProtocolFactory
+  class BinaryProtocolFactory < BaseProtocolFactory
     def get_protocol(trans)
       return Thrift::BinaryProtocol.new(trans)
     end

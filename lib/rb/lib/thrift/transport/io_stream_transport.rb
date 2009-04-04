@@ -1,4 +1,5 @@
-#
+# encoding: ascii-8bit
+# 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -6,9 +7,9 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
-#
+# 
 #   http://www.apache.org/licenses/LICENSE-2.0
-#
+# 
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -17,28 +18,22 @@
 # under the License.
 #
 
-$:.unshift File.dirname(__FILE__) + '/../lib'
-require 'thrift'
-$:.unshift File.dirname(__FILE__) + "/gen-rb"
-require 'BenchmarkService'
-HOST = 'localhost'
-PORT = 42587
-
-class BenchmarkHandler
-  # 1-based index into the fibonacci sequence
-  def fibonacci(n)
-    seq = [1, 1]
-    3.upto(n) do
-      seq << seq[-1] + seq[-2]
+# Very very simple implementation of wrapping two objects, one with a #read
+# method and one with a #write method, into a transport for thrift.
+#
+# Assumes both objects are open, remain open, don't require flushing, etc.
+#
+module Thrift
+  class IOStreamTransport < BaseTransport
+    def initialize(input, output)
+      @input = input
+      @output = output
     end
-    seq[n-1] # n is 1-based
+
+    def open?; not @input.closed? or not @output.closed? end
+    def read(sz); @input.read(sz) end
+    def write(buf); @output.write(buf) end
+    def close; @input.close; @output.close end
+    def to_io; @input end # we're assuming this is used in a IO.select for reading
   end
 end
-
-handler = BenchmarkHandler.new
-processor = ThriftBenchmark::BenchmarkService::Processor.new(handler)
-transport = Thrift::ServerSocket.new(HOST, PORT)
-transport_factory = Thrift::FramedTransportFactory.new
-logger = Logger.new(STDERR)
-logger.level = Logger::WARN
-Thrift::NonblockingServer.new(processor, transport, transport_factory, nil, 20, logger).serve

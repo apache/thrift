@@ -18,14 +18,13 @@
 #
 
 require File.dirname(__FILE__) + '/spec_helper'
-require 'thrift/transport/httpclient'
 
-class ThriftHTTPClientSpec < Spec::ExampleGroup
+class ThriftHTTPClientTransportSpec < Spec::ExampleGroup
   include Thrift
 
-  describe HTTPClient do
+  describe HTTPClientTransport do
     before(:each) do
-      @client = HTTPClient.new("http://my.domain.com/path/to/service")
+      @client = HTTPClientTransport.new("http://my.domain.com/path/to/service")
     end
 
     it "should always be open" do

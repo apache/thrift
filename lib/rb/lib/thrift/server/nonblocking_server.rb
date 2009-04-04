@@ -17,15 +17,14 @@
 # under the License.
 # 
 
-require 'thrift/server'
 require 'logger'
 require 'thread'
 
 module Thrift
   # this class expects to always use a FramedTransport for reading messages
-  class NonblockingServer < Server
-    def initialize(processor, serverTransport, transportFactory=nil, protocolFactory=nil, num=20, logger = nil)
-      super(processor, serverTransport, transportFactory, protocolFactory)
+  class NonblockingServer < BaseServer
+    def initialize(processor, server_transport, transport_factory=nil, protocol_factory=nil, num=20, logger=nil)
+      super(processor, server_transport, transport_factory, protocol_factory)
       @num_threads = num
       if logger.nil?
         @logger = Logger.new(STDERR)
@@ -39,15 +38,15 @@ module Thrift
 
     def serve
       @logger.info "Starting #{self}"
-      @serverTransport.listen
+      @server_transport.listen
       @io_manager = start_io_manager
 
       begin
         loop do
-          break if @serverTransport.closed?
-          rd, = select([@serverTransport], nil, nil, 0.1)
+          break if @server_transport.closed?
+          rd, = select([@server_transport], nil, nil, 0.1)
           next if rd.nil?
-          socket = @serverTransport.accept
+          socket = @server_transport.accept
           @logger.debug "Accepted socket: #{socket.inspect}"
           @io_manager.add_connection socket
         end
@@ -57,7 +56,7 @@ module Thrift
       @logger.info "#{self} is shutting down, goodbye"
     ensure
       @transport_semaphore.synchronize do
-        @serverTransport.close
+        @server_transport.close
       end
       @io_manager.ensure_closed unless @io_manager.nil?
     end
@@ -72,7 +71,7 @@ module Thrift
       shutdown_proc = lambda do
         @io_manager.shutdown(timeout)
         @transport_semaphore.synchronize do
-          @serverTransport.close # this will break the accept loop
+          @server_transport.close # this will break the accept loop
         end
       end
       if block
@@ -85,7 +84,7 @@ module Thrift
     private
 
     def start_io_manager
-      iom = IOManager.new(@processor, @serverTransport, @transportFactory, @protocolFactory, @num_threads, @logger)
+      iom = IOManager.new(@processor, @server_transport, @transport_factory, @protocol_factory, @num_threads, @logger)
       iom.spawn
       iom
     end
@@ -93,11 +92,11 @@ module Thrift
     class IOManager # :nodoc:
       DEFAULT_BUFFER = 2**20
       
-      def initialize(processor, serverTransport, transportFactory, protocolFactory, num, logger)
+      def initialize(processor, server_transport, transport_factory, protocol_factory, num, logger)
         @processor = processor
-        @serverTransport = serverTransport
-        @transportFactory = transportFactory
-        @protocolFactory = protocolFactory
+        @server_transport = server_transport
+        @transport_factory = transport_factory
+        @protocol_factory = protocol_factory
         @num_threads = num
         @logger = logger
         @connections = []
@@ -177,7 +176,7 @@ module Thrift
       end
 
       def spin_thread
-        Worker.new(@processor, @transportFactory, @protocolFactory, @logger, @worker_queue).spawn
+        Worker.new(@processor, @transport_factory, @protocol_factory, @logger, @worker_queue).spawn
       end
 
       def signal(msg)
@@ -252,10 +251,10 @@ module Thrift
       end
 
       class Worker # :nodoc:
-        def initialize(processor, transportFactory, protocolFactory, logger, queue)
+        def initialize(processor, transport_factory, protocol_factory, logger, queue)
           @processor = processor
-          @transportFactory = transportFactory
-          @protocolFactory = protocolFactory
+          @transport_factory = transport_factory
+          @protocol_factory = protocol_factory
           @logger = logger
           @queue = queue
         end
@@ -279,11 +278,11 @@ module Thrift
             when :frame
               fd, frame = args
               begin
-                otrans = @transportFactory.get_transport(fd)
-                oprot = @protocolFactory.get_protocol(otrans)
-                membuf = MemoryBuffer.new(frame)
-                itrans = @transportFactory.get_transport(membuf)
-                iprot = @protocolFactory.get_protocol(itrans)
+                otrans = @transport_factory.get_transport(fd)
+                oprot = @protocol_factory.get_protocol(otrans)
+                membuf = MemoryBufferTransport.new(frame)
+                itrans = @transport_factory.get_transport(membuf)
+                iprot = @protocol_factory.get_protocol(itrans)
                 @processor.process(iprot, oprot)
               rescue => e
                 @logger.error "#{Thread.current.inspect} raised error: #{e.inspect}\n#{e.backtrace.join("\n")}"

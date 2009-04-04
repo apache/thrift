@@ -19,7 +19,6 @@
 
 $:.unshift File.dirname(__FILE__) + '/../lib'
 require 'thrift'
-require 'thrift/server/nonblockingserver'
 $:.unshift File.dirname(__FILE__) + "/gen-rb"
 require 'BenchmarkService'
 
@@ -41,8 +40,8 @@ module Server
     handler = BenchmarkHandler.new
     processor = ThriftBenchmark::BenchmarkService::Processor.new(handler)
     transport = ServerSocket.new(host, port)
-    transportFactory = FramedTransportFactory.new
-    args = [processor, transport, transportFactory, nil, 20]
+    transport_factory = FramedTransportFactory.new
+    args = [processor, transport, transport_factory, nil, 20]
     if serverClass == NonblockingServer
       logger = Logger.new(STDERR)
       logger.level = Logger::WARN

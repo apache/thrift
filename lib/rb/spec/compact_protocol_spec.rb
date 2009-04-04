@@ -18,7 +18,6 @@
 #
 
 require File.dirname(__FILE__) + '/spec_helper'
-require "thrift/protocol/compact_protocol"
 
 describe Thrift::CompactProtocol do
   TESTS = {
@@ -36,7 +35,7 @@ describe Thrift::CompactProtocol do
     TESTS.each_pair do |primitive_type, test_values|
       test_values.each do |value|
         # puts "testing #{value}" if primitive_type == :i64
-        trans = Thrift::MemoryBuffer.new
+        trans = Thrift::MemoryBufferTransport.new
         proto = Thrift::CompactProtocol.new(trans)
         
         proto.send(writer(primitive_type), value)
@@ -53,7 +52,7 @@ describe Thrift::CompactProtocol do
       thrift_type = Thrift::Types.const_get(final_primitive_type.to_s.upcase)
       # puts primitive_type
       test_values.each do |value|
-        trans = Thrift::MemoryBuffer.new
+        trans = Thrift::MemoryBufferTransport.new
         proto = Thrift::CompactProtocol.new(trans)
 
         proto.write_field_begin(nil, thrift_type, 15)
@@ -72,7 +71,7 @@ describe Thrift::CompactProtocol do
   end
 
   it "should encode and decode a monster struct correctly" do
-    trans = Thrift::MemoryBuffer.new
+    trans = Thrift::MemoryBufferTransport.new
     proto = Thrift::CompactProtocol.new(trans)
 
     struct = CompactProtoTestStruct.new
@@ -96,10 +95,10 @@ describe Thrift::CompactProtocol do
   end
 
   it "should make method calls correctly" do
-    client_out_trans = Thrift::MemoryBuffer.new
+    client_out_trans = Thrift::MemoryBufferTransport.new
     client_out_proto = Thrift::CompactProtocol.new(client_out_trans)
     
-    client_in_trans = Thrift::MemoryBuffer.new
+    client_in_trans = Thrift::MemoryBufferTransport.new
     client_in_proto = Thrift::CompactProtocol.new(client_in_trans)
     
     processor = Srv::Processor.new(JankyHandler.new)

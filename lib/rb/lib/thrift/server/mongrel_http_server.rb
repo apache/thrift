@@ -17,15 +17,11 @@
 # under the License.
 # 
 
-require 'thrift/protocol'
-require 'thrift/protocol/binaryprotocol'
-require 'thrift/transport'
-
 require 'mongrel'
 
 ## Sticks a service on a URL, using mongrel to do the HTTP work
 module Thrift
-  class SimpleMongrelHTTPServer
+  class MongrelHTTPServer < BaseServer
     class Handler < Mongrel::HttpHandler
       def initialize(processor, protocol_factory)
         @processor = processor

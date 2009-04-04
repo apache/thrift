@@ -18,7 +18,6 @@
 #
 
 require File.dirname(__FILE__) + '/spec_helper'
-require 'thrift/transport/unixsocket'
 require File.dirname(__FILE__) + "/socket_spec_shared"
 
 class ThriftUNIXSocketSpec < Spec::ExampleGroup

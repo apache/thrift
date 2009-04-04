@@ -24,7 +24,7 @@ require 'spec'
 
 $:.unshift File.join(File.dirname(__FILE__), *%w[.. ext])
 
-# pretend we already loaded fastthread, otherwise the nonblockingserver_spec
+# pretend we already loaded fastthread, otherwise the nonblocking_server_spec
 # will get screwed up
 # $" << 'fastthread.bundle'
 

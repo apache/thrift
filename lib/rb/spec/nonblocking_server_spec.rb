@@ -18,7 +18,6 @@
 #
 
 require File.dirname(__FILE__) + '/spec_helper'
-require 'thrift/server/nonblockingserver'
 require File.dirname(__FILE__) + '/gen-rb/NonblockingService'
 
 class ThriftNonblockingServerSpec < Spec::ExampleGroup
@@ -57,7 +56,7 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
     end
   end
 
-  class SpecTransport < Transport
+  class SpecTransport < BaseTransport
     def initialize(transport, queue)
       @transport = transport
       @queue = queue
@@ -110,10 +109,10 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
       processor = NonblockingService::Processor.new(handler)
       queue = Queue.new
       @transport = SpecServerSocket.new('localhost', @port, queue)
-      transportFactory = FramedTransportFactory.new
+      transport_factory = FramedTransportFactory.new
       logger = Logger.new(STDERR)
       logger.level = Logger::WARN
-      @server = NonblockingServer.new(processor, @transport, transportFactory, nil, 5, logger)
+      @server = NonblockingServer.new(processor, @transport, transport_factory, nil, 5, logger)
       handler.server = @server
       @server_thread = Thread.new(Thread.current) do |master_thread|
         begin

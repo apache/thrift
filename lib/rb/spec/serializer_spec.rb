@@ -18,7 +18,6 @@
 #
 
 require File.dirname(__FILE__) + '/spec_helper'
-require 'thrift/serializer'
 require File.dirname(__FILE__) + '/gen-rb/ThriftSpec_types'
 
 class ThriftSerializerSpec < Spec::ExampleGroup
@@ -33,16 +32,16 @@ class ThriftSerializerSpec < Spec::ExampleGroup
     end
 
     it "should serialize structs to the given protocol" do
-      protocol = Protocol.new(mock("transport"))
+      protocol = BaseProtocol.new(mock("transport"))
       protocol.should_receive(:write_struct_begin).with("SpecNamespace::Hello")
       protocol.should_receive(:write_field_begin).with("greeting", Types::STRING, 1)
       protocol.should_receive(:write_string).with("Good day")
       protocol.should_receive(:write_field_end)
       protocol.should_receive(:write_field_stop)
       protocol.should_receive(:write_struct_end)
-      protocolFactory = mock("ProtocolFactory")
-      protocolFactory.stub!(:get_protocol).and_return(protocol)
-      serializer = Serializer.new(protocolFactory)
+      protocol_factory = mock("ProtocolFactory")
+      protocol_factory.stub!(:get_protocol).and_return(protocol)
+      serializer = Serializer.new(protocol_factory)
       serializer.serialize(Hello.new(:greeting => "Good day"))
     end
   end
@@ -55,16 +54,16 @@ class ThriftSerializerSpec < Spec::ExampleGroup
     end
 
     it "should deserialize structs from the given protocol" do
-      protocol = Protocol.new(mock("transport"))
+      protocol = BaseProtocol.new(mock("transport"))
       protocol.should_receive(:read_struct_begin).and_return("SpecNamespace::Hello")
       protocol.should_receive(:read_field_begin).and_return(["greeting", Types::STRING, 1],
                                                             [nil, Types::STOP, 0])
       protocol.should_receive(:read_string).and_return("Good day")
       protocol.should_receive(:read_field_end)
       protocol.should_receive(:read_struct_end)
-      protocolFactory = mock("ProtocolFactory")
-      protocolFactory.stub!(:get_protocol).and_return(protocol)
-      deserializer = Deserializer.new(protocolFactory)
+      protocol_factory = mock("ProtocolFactory")
+      protocol_factory.stub!(:get_protocol).and_return(protocol)
+      deserializer = Deserializer.new(protocol_factory)
       deserializer.deserialize(Hello.new, "").should == Hello.new(:greeting => "Good day")
     end
   end

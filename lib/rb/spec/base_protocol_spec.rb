@@ -19,15 +19,15 @@
 
 require File.dirname(__FILE__) + '/spec_helper'
 
-class ThriftProtocolSpec < Spec::ExampleGroup
+class ThriftBaseProtocolSpec < Spec::ExampleGroup
   include Thrift
 
   before(:each) do
     @trans = mock("MockTransport")
-    @prot = Protocol.new(@trans)
+    @prot = BaseProtocol.new(@trans)
   end
 
-  describe Protocol do
+  describe BaseProtocol do
     # most of the methods are stubs, so we can ignore them
 
     it "should make trans accessible" do
@@ -151,10 +151,10 @@ class ThriftProtocolSpec < Spec::ExampleGroup
     end
   end
 
-  describe ProtocolFactory do
+  describe BaseProtocolFactory do
     it "should raise NotImplementedError" do
       # returning nil since Protocol is just an abstract class
-      lambda {ProtocolFactory.new.get_protocol(mock("MockTransport"))}.should raise_error(NotImplementedError)
+      lambda {BaseProtocolFactory.new.get_protocol(mock("MockTransport"))}.should raise_error(NotImplementedError)
     end
   end
 end

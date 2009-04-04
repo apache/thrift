@@ -15,33 +15,17 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# 
+#
 
-require 'thrift/transport'
-
-require 'net/http'
-require 'net/https'
-require 'uri'
-require 'stringio'
-
-## Very simple HTTP client
 module Thrift
-  class HTTPClient < Transport
-    def initialize(url)
-      @url = URI url
-      @outbuf = ""
+  class BaseServer
+    def initialize(processor, server_transport, transport_factory=nil, protocol_factory=nil)
+      @processor = processor
+      @server_transport = server_transport
+      @transport_factory = transport_factory ? transport_factory : Thrift::BaseTransportFactory.new
+      @protocol_factory = protocol_factory ? protocol_factory : Thrift::BinaryProtocolFactory.new
     end
 
-    def open?; true end
-    def read(sz); @inbuf.read sz end
-    def write(buf); @outbuf << buf end
-    def flush
-      http = Net::HTTP.new @url.host, @url.port
-      http.use_ssl = @url.scheme == "https"
-      headers = { 'Content-Type' => 'application/x-thrift' }
-      resp, data = http.post(@url.path, @outbuf, headers)
-      @inbuf = StringIO.new data
-      @outbuf = ""
-    end
+    def serve; nil; end
   end
 end

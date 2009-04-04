@@ -144,7 +144,7 @@ VALUE rb_thift_read_set_end(VALUE self) {
 }
 
 void Init_protocol() {
-  VALUE c_protocol = rb_const_get(thrift_module, rb_intern("Protocol"));
+  VALUE c_protocol = rb_const_get(thrift_module, rb_intern("BaseProtocol"));
   
   rb_define_method(c_protocol, "skip", rb_thrift_protocol_skip, 1);
   rb_define_method(c_protocol, "write_message_end", rb_thrift_write_message_end, 0);

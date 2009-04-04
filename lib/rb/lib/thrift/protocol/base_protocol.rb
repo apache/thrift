@@ -35,10 +35,9 @@ module Thrift
       super(message)
       @type = type
     end
-
   end
 
-  class Protocol
+  class BaseProtocol
 
     attr_reader :trans
 
@@ -281,10 +280,9 @@ module Thrift
         read_list_end
       end
     end
-
   end
 
-  class ProtocolFactory
+  class BaseProtocolFactory
     def get_protocol(trans)
       raise NotImplementedError
     end

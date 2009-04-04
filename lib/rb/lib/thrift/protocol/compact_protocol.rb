@@ -17,10 +17,8 @@
 # under the License.
 # 
 
-require 'thrift/protocol'
-
 module Thrift
-  class CompactProtocol < Protocol
+  class CompactProtocol < BaseProtocol
 
     PROTOCOL_ID = [0x82].pack('c').unpack('c').first
     VERSION = 1
@@ -416,7 +414,7 @@ module Thrift
     end
   end
 
-  class CompactProtocolFactory < ProtocolFactory
+  class CompactProtocolFactory < BaseProtocolFactory
     def get_protocol(trans)
       CompactProtocol.new(trans)
     end

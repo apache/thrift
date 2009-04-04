@@ -1,3 +1,4 @@
+# encoding: ascii-8bit
 # 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -18,29 +19,52 @@
 # 
 
 module Thrift
-  class Serializer
-    def initialize(protocolFactory = BinaryProtocolFactory.new)
-      @transport = MemoryBuffer.new
-      @protocol = protocolFactory.get_protocol(@transport)
-    end
+  class TransportException < Exception
+    UNKNOWN = 0
+    NOT_OPEN = 1
+    ALREADY_OPEN = 2
+    TIMED_OUT = 3
+    END_OF_FILE = 4
 
-    def serialize(base)
-      @transport.reset_buffer
-      base.write(@protocol)
-      @transport.read(@transport.available)
+    attr_reader :type
+
+    def initialize(type=UNKNOWN, message=nil)
+      super(message)
+      @type = type
     end
   end
 
-  class Deserializer
-    def initialize(protocolFactory = BinaryProtocolFactory.new)
-      @transport = MemoryBuffer.new
-      @protocol = protocolFactory.get_protocol(@transport)
+  class BaseTransport
+    def open?; end
+    
+    def open; end
+
+    def close; end
+
+    def read(sz)
+      raise NotImplementedError
     end
 
-    def deserialize(base, buffer)
-      @transport.reset_buffer(buffer)
-      base.read(@protocol)
-      base
+    def read_all(size)
+      buf = ''
+    
+      while (buf.length < size)
+        chunk = read(size - buf.length)
+        buf << chunk
+      end
+    
+      buf
+    end
+  
+    def write(buf); end
+    alias_method :<<, :write
+
+    def flush; end
+  end
+  
+  class BaseTransportFactory
+    def get_transport(trans)
+      return trans
     end
   end
 end

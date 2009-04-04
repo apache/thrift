@@ -20,8 +20,6 @@
 require 'rubygems'
 $:.unshift File.dirname(__FILE__) + '/../lib'
 require 'thrift'
-require 'thrift/server/nonblockingserver'
-require 'thrift/transport/unixsocket'
 require 'stringio'
 
 HOST = '127.0.0.1'

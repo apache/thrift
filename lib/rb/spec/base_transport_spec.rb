@@ -19,7 +19,7 @@
 
 require File.dirname(__FILE__) + '/spec_helper'
 
-class ThriftTransportSpec < Spec::ExampleGroup
+class ThriftBaseTransportSpec < Spec::ExampleGroup
   include Thrift
 
   describe TransportException do
@@ -30,9 +30,9 @@ class ThriftTransportSpec < Spec::ExampleGroup
     end
   end
 
-  describe Transport do
+  describe BaseTransport do
     it "should read the specified size" do
-      transport = Transport.new
+      transport = BaseTransport.new
       transport.should_receive(:read).with(40).ordered.and_return("10 letters")
       transport.should_receive(:read).with(30).ordered.and_return("fifteen letters")
       transport.should_receive(:read).with(15).ordered.and_return("more characters")
@@ -42,27 +42,27 @@ class ThriftTransportSpec < Spec::ExampleGroup
     it "should stub out the rest of the methods" do
       # can't test for stubbiness, so just make sure they're defined
       [:open?, :open, :close, :read, :write, :flush].each do |sym|
-        Transport.method_defined?(sym).should be_true
+        BaseTransport.method_defined?(sym).should be_true
       end
     end
 
     it "should alias << to write" do
-      Transport.instance_method(:<<).should == Transport.instance_method(:write)
+      BaseTransport.instance_method(:<<).should == BaseTransport.instance_method(:write)
     end
   end
 
-  describe ServerTransport do
+  describe BaseServerTransport do
     it "should stub out its methods" do
       [:listen, :accept, :close].each do |sym|
-        ServerTransport.method_defined?(sym).should be_true
+        BaseServerTransport.method_defined?(sym).should be_true
       end
     end
   end
 
-  describe TransportFactory do
+  describe BaseTransportFactory do
     it "should return the transport it's given" do
       transport = mock("Transport")
-      TransportFactory.new.get_transport(transport).should eql(transport)
+      BaseTransportFactory.new.get_transport(transport).should eql(transport)
     end
   end
 
@@ -250,14 +250,14 @@ class ThriftTransportSpec < Spec::ExampleGroup
     end
   end
 
-  describe MemoryBuffer do
+  describe MemoryBufferTransport do
     before(:each) do
-      @buffer = MemoryBuffer.new
+      @buffer = MemoryBufferTransport.new
     end
 
     it "should accept a buffer on input and use it directly" do
       s = "this is a test"
-      @buffer = MemoryBuffer.new(s)
+      @buffer = MemoryBufferTransport.new(s)
       @buffer.read(4).should == "this"
       s.slice!(-4..-1)
       @buffer.read(@buffer.available).should == " is a "

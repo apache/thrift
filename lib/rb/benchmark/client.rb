@@ -19,7 +19,6 @@
 
 $:.unshift File.dirname(__FILE__) + '/../lib'
 require 'thrift'
-require 'thrift/server/nonblockingserver'
 $:.unshift File.dirname(__FILE__) + "/gen-rb"
 require 'BenchmarkService'
 

@@ -22,11 +22,11 @@ require File.dirname(__FILE__) + '/spec_helper'
 class ThriftServerSpec < Spec::ExampleGroup
   include Thrift
 
-  describe Server do
-    it "should default to TransportFactory and BinaryProtocolFactory when not specified" do
-      server = Server.new(mock("Processor"), mock("ServerTransport"))
-      server.instance_variable_get(:'@transportFactory').should be_an_instance_of(TransportFactory)
-      server.instance_variable_get(:'@protocolFactory').should be_an_instance_of(BinaryProtocolFactory)
+  describe BaseServer do
+    it "should default to BaseTransportFactory and BinaryProtocolFactory when not specified" do
+      server = BaseServer.new(mock("Processor"), mock("BaseServerTransport"))
+      server.instance_variable_get(:'@transport_factory').should be_an_instance_of(BaseTransportFactory)
+      server.instance_variable_get(:'@protocol_factory').should be_an_instance_of(BinaryProtocolFactory)
     end
 
     # serve is a noop, so can't test that
@@ -36,8 +36,8 @@ class ThriftServerSpec < Spec::ExampleGroup
     before(:each) do
       @processor = mock("Processor")
       @serverTrans = mock("ServerTransport")
-      @trans = mock("Transport")
-      @prot = mock("Protocol")
+      @trans = mock("BaseTransport")
+      @prot = mock("BaseProtocol")
       @client = mock("Client")
       @server = server_type.new(@processor, @serverTrans, @trans, @prot)
     end

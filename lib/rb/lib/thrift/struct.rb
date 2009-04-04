@@ -17,7 +17,6 @@
 # under the License.
 # 
 
-require 'thrift/types'
 require 'set'
 
 module Thrift

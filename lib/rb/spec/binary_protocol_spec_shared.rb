@@ -21,7 +21,7 @@ require File.dirname(__FILE__) + '/spec_helper'
 
 shared_examples_for 'a binary protocol' do
   before(:each) do
-    @trans = Thrift::MemoryBuffer.new
+    @trans = Thrift::MemoryBufferTransport.new
     @prot = protocol_class.new(@trans)
   end
 
@@ -203,17 +203,18 @@ shared_examples_for 'a binary protocol' do
     lambda { @prot.write_string(nil) }.should raise_error
   end
   
-  it "should read message header correctly" do
-    @trans.write([protocol_class.const_get(:VERSION_1) | Thrift::MessageTypes::CALL, "testMessage".size, "testMessage", 17].pack("NNa11N"))
-    @prot.read_message_begin().should == ['testMessage', Thrift::MessageTypes::CALL, 17]
+  it "should write the message header without version when writes are not strict" do
+    @prot = protocol_class.new(@trans, true, false) # no strict write
+    @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
+    @trans.read(1000).should == "\000\000\000\vtestMessage\001\000\000\000\021"
+  end
+    
+  it "should write the message header with a version when writes are strict" do
+    @prot = protocol_class.new(@trans) # strict write
+    @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
+    @trans.read(1000).should == "\200\001\000\001\000\000\000\vtestMessage\000\000\000\021"
   end
   
-  it "should read the message header without version when writes are not strict" do
-    @prot = protocol_class.new(@trans, false, true) # no strict write
-    @trans.write("\000\000\000\vtestMessage\001\000\000\000\021")
-    @prot.read_message_begin().should == ['testMessage', Thrift::MessageTypes::CALL, 17]
-  end
-
   # message footer is a noop
   
   it "should read a field header" do
@@ -345,7 +346,7 @@ shared_examples_for 'a binary protocol' do
     processor = Srv::Processor.new(SrvHandler.new)
 
     client = Srv::Client.new(clientproto, clientproto)
-    
+
     # first block
     firstblock.call(client)
     
@@ -371,5 +372,4 @@ shared_examples_for 'a binary protocol' do
       Fixtures::COMPACT_PROTOCOL_TEST_STRUCT
     end
   end
-
 end

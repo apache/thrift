@@ -25,10 +25,35 @@ require 'thrift/types'
 require 'thrift/processor'
 require 'thrift/client'
 require 'thrift/struct'
-require 'thrift/protocol'
-require 'thrift/protocol/binaryprotocol'
+
+# serializer
+require 'thrift/serializer/serializer'
+require 'thrift/serializer/deserializer'
+
+# protocol
+require 'thrift/protocol/base_protocol'
+require 'thrift/protocol/binary_protocol'
+require 'thrift/protocol/binary_protocol_accelerated'
 require 'thrift/protocol/compact_protocol'
-require 'thrift/transport'
+
+# transport
+require 'thrift/transport/base_transport'
+require 'thrift/transport/base_server_transport'
 require 'thrift/transport/socket'
-require 'thrift/server'
-require "thrift/thrift_native"
+require 'thrift/transport/server_socket'
+require 'thrift/transport/unix_socket'
+require 'thrift/transport/unix_server_socket'
+require 'thrift/transport/buffered_transport'
+require 'thrift/transport/framed_transport'
+require 'thrift/transport/http_client_transport'
+require 'thrift/transport/io_stream_transport'
+require 'thrift/transport/memory_buffer_transport'
+
+# server
+require 'thrift/server/base_server'
+require 'thrift/server/nonblocking_server'
+require 'thrift/server/simple_server'
+require 'thrift/server/threaded_server'
+require 'thrift/server/thread_pool_server'
+
+require 'thrift/thrift_native'

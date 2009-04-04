@@ -19,7 +19,7 @@
 
 require File.dirname(__FILE__) + "/../spec/spec_helper.rb"
 require "lib/thrift/serializer"
-require "lib/thrift/protocol/binaryprotocolaccelerated"
+require "lib/thrift/protocol/binary_protocol_accelerated"
 
 require "benchmark"
 # require "ruby-prof"
@@ -83,7 +83,7 @@ Benchmark.bm(60) do |reporter|
 
 
   # f = File.new("/tmp/testfile", "w")
-  # proto = Thrift::BinaryProtocolAccelerated.new(Thrift::IOStreamTransport.new(Thrift::MemoryBuffer.new, f))
+  # proto = Thrift::BinaryProtocolAccelerated.new(Thrift::IOStreamTransport.new(Thrift::MemoryBufferTransport.new, f))
   # reporter.report("accelerated binary protocol, write (to disk)") do
   #   HOW_MANY.times do
   #     obj.write(proto)
@@ -93,7 +93,7 @@ Benchmark.bm(60) do |reporter|
   # f.close
   #   
   # f = File.new("/tmp/testfile", "r")
-  # proto = Thrift::BinaryProtocolAccelerated.new(Thrift::IOStreamTransport.new(f, Thrift::MemoryBuffer.new))
+  # proto = Thrift::BinaryProtocolAccelerated.new(Thrift::IOStreamTransport.new(f, Thrift::MemoryBufferTransport.new))
   # reporter.report("accelerated binary protocol, read (from disk)") do
   #   HOW_MANY.times do
   #     obj.read(proto)
@@ -103,7 +103,7 @@ Benchmark.bm(60) do |reporter|
   # 
   # f = File.new("/tmp/testfile", "w")
   # reporter.report("compact protocol, write (to disk)") do
-  #   proto = Thrift::CompactProtocol.new(Thrift::IOStreamTransport.new(Thrift::MemoryBuffer.new, f))
+  #   proto = Thrift::CompactProtocol.new(Thrift::IOStreamTransport.new(Thrift::MemoryBufferTransport.new, f))
   #   HOW_MANY.times do
   #     obj.write(proto)
   #   end
@@ -113,7 +113,7 @@ Benchmark.bm(60) do |reporter|
   # 
   # f = File.new("/tmp/testfile", "r")
   # reporter.report("compact protocol, read (from disk)") do
-  #   proto = Thrift::CompactProtocol.new(Thrift::IOStreamTransport.new(f, Thrift::MemoryBuffer.new))
+  #   proto = Thrift::CompactProtocol.new(Thrift::IOStreamTransport.new(f, Thrift::MemoryBufferTransport.new))
   #   HOW_MANY.times do
   #     obj.read(proto)
   #   end

@@ -18,8 +18,7 @@
 #
 
 require File.dirname(__FILE__) + '/spec_helper'
-require 'thrift/protocol/binaryprotocolaccelerated'
-require File.dirname(__FILE__) + '/binaryprotocol_spec_shared'
+require File.dirname(__FILE__) + '/binary_protocol_spec_shared'
 require File.dirname(__FILE__) + '/gen-rb/ThriftSpec_types'
 
 class ThriftBinaryProtocolAcceleratedSpec < Spec::ExampleGroup

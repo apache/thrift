@@ -18,7 +18,6 @@
 #
 
 require "spec/spec_helper"
-require "lib/thrift/serializer"
 
 path, factory_class = ARGV
 

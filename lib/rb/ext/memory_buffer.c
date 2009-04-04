@@ -59,7 +59,7 @@ VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value) {
 }
 
 void Init_memory_buffer() {
-  VALUE thrift_memory_buffer_class = rb_const_get(thrift_module, rb_intern("MemoryBuffer"));
+  VALUE thrift_memory_buffer_class = rb_const_get(thrift_module, rb_intern("MemoryBufferTransport"));
   rb_define_method(thrift_memory_buffer_class, "write", rb_thrift_memory_buffer_write, 1);
   rb_define_method(thrift_memory_buffer_class, "read", rb_thrift_memory_buffer_read, 1);
   
