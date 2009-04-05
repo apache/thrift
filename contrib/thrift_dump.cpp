@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
   } catch (TProtocolException exn) {
     cout << "Protocol Exception: " << exn.what() << endl;
   } catch (...) {
+    oprot->getTransport()->flush();
   }
 
   cout << endl;
