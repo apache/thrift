@@ -460,7 +460,7 @@ void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, b
   generate_rdoc(out, tstruct);
   indent(out) << "class " << type_name(tstruct);
   if (is_exception) {
-    out << " < Thrift::Exception";
+    out << " < ::Thrift::Exception";
   }
   out << endl;
 
@@ -521,7 +521,7 @@ void t_rb_generator::generate_accessors(std::ofstream& out, t_struct* tstruct) {
   vector<t_field*>::const_iterator m_iter;
 
   if (members.size() > 0) {
-    indent(out) << "Thrift::Struct.field_accessor self";
+    indent(out) << "::Thrift::Struct.field_accessor self";
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       out << ", :" << (*m_iter)->get_name();
     }
@@ -813,7 +813,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
           "return" << endl;
       } else {
         f_service_ <<
-          indent() << "raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, '" << (*f_iter)->get_name() << " failed: unknown result')" << endl;
+          indent() << "raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, '" << (*f_iter)->get_name() << " failed: unknown result')" << endl;
       }
 
       // Close function
@@ -1018,30 +1018,30 @@ string t_rb_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_VOID:
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
-      return "Thrift::Types::STRING";
+      return "::Thrift::Types::STRING";
     case t_base_type::TYPE_BOOL:
-      return "Thrift::Types::BOOL";
+      return "::Thrift::Types::BOOL";
     case t_base_type::TYPE_BYTE:
-      return "Thrift::Types::BYTE";
+      return "::Thrift::Types::BYTE";
     case t_base_type::TYPE_I16:
-      return "Thrift::Types::I16";
+      return "::Thrift::Types::I16";
     case t_base_type::TYPE_I32:
-      return "Thrift::Types::I32";
+      return "::Thrift::Types::I32";
     case t_base_type::TYPE_I64:
-      return "Thrift::Types::I64";
+      return "::Thrift::Types::I64";
     case t_base_type::TYPE_DOUBLE:
-      return "Thrift::Types::DOUBLE";
+      return "::Thrift::Types::DOUBLE";
     }
   } else if (type->is_enum()) {
-    return "Thrift::Types::I32";
+    return "::Thrift::Types::I32";
   } else if (type->is_struct() || type->is_xception()) {
-    return "Thrift::Types::STRUCT";
+    return "::Thrift::Types::STRUCT";
   } else if (type->is_map()) {
-    return "Thrift::Types::MAP";
+    return "::Thrift::Types::MAP";
   } else if (type->is_set()) {
-    return "Thrift::Types::SET";
+    return "::Thrift::Types::SET";
   } else if (type->is_list()) {
-    return "Thrift::Types::LIST";
+    return "::Thrift::Types::LIST";
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
@@ -1066,7 +1066,7 @@ void t_rb_generator::generate_rb_struct_required_validator(std::ofstream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = (*f_iter);
     if (field->get_req() == t_field::T_REQUIRED) {
-      indent(out) << "raise Thrift::ProtocolException.new(Thrift::ProtocolException::UNKNOWN, 'Required field " << field->get_name() << " is unset!')";
+      indent(out) << "raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field " << field->get_name() << " is unset!')";
       if (field->get_type()->is_bool()) {
         out << " if @" << field->get_name() << ".nil?";
       } else {
@@ -1083,7 +1083,7 @@ void t_rb_generator::generate_rb_struct_required_validator(std::ofstream& out,
     if (field->get_type()->is_enum()){      
       indent(out) << "unless @" << field->get_name() << ".nil? || " << field->get_type()->get_name() << "::VALID_VALUES.include?(@" << field->get_name() << ")" << endl;      
       indent_up();
-      indent(out) << "raise Thrift::ProtocolException.new(Thrift::ProtocolException::UNKNOWN, 'Invalid value of field " << field->get_name() << "!')" << endl;  
+      indent(out) << "raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Invalid value of field " << field->get_name() << "!')" << endl;  
       indent_down();
       indent(out) << "end" << endl;
     }
