@@ -288,9 +288,12 @@ readSetBegin
 		elemType: self readByte;
 		size: self readI32! !
 
-!TBinaryProtocol methodsFor: 'reading' stamp: 'pc 10/26/2007 04:48'!
+!TBinaryProtocol methodsFor: 'reading' stamp: 'pc 02/07/2009 19:00'!
 readString
-	^ (transport read: self readI32) asString! !
+readString
+	| sz |
+	sz := self readI32.
+	^ sz > 0 ifTrue: [(transport read: sz) asString] ifFalse: ['']! !
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 11/1/2007 04:22'!
 unsignedInt: val size: size
