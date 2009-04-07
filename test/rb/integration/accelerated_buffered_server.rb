@@ -22,7 +22,6 @@ $:.push File.join(File.dirname(__FILE__), '../../../lib/rb/lib')
 $:.push File.join(File.dirname(__FILE__), '../../../lib/rb/ext')
 
 require 'thrift'
-require 'thrift/protocol/binaryprotocolaccelerated'
 require 'ThriftTest'
 
 class SimpleHandler

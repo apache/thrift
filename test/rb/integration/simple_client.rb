@@ -20,7 +20,6 @@
 require File.join(File.dirname(__FILE__), '../test_helper')
 
 require 'thrift'
-require 'thrift/protocol/binaryprotocol'
 require 'ThriftTest'
 
 class SimpleClientTest < Test::Unit::TestCase

@@ -21,7 +21,6 @@ $:.push File.dirname(__FILE__) + '/../gen-rb'
 $:.push File.join(File.dirname(__FILE__), '../../../lib/rb/lib')
 
 require 'thrift'
-require 'thrift/protocol/binaryprotocol'
 require 'ThriftTest'
 
 class SimpleHandler

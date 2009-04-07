@@ -19,9 +19,9 @@
 
 require File.join(File.dirname(__FILE__), '../../test_helper')
 
-require 'thrift/transport'
+require 'thrift'
 
-class DummyTransport < Thrift::Transport
+class DummyTransport < Thrift::BaseTransport
   def initialize(data)
     @data = data
   end
@@ -34,7 +34,7 @@ end
 # TTransport is basically an abstract class, but isn't raising NotImplementedError
 class TestThriftTransport < Test::Unit::TestCase
   def setup
-    @trans = Thrift::Transport.new
+    @trans = Thrift::BaseTransport.new
   end
   
   def test_open?

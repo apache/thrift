@@ -26,6 +26,5 @@ class TestThriftException < Test::Unit::TestCase
     msg = "hi there thrift"
     assert_equal msg, Thrift::Exception.new(msg).message
   end
-  
 end
 

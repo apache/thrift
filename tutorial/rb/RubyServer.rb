@@ -23,8 +23,6 @@ $:.push('../gen-rb')
 $:.unshift '../../lib/rb/lib'
 
 require 'thrift'
-require 'thrift/protocol/binaryprotocol'
-require 'thrift/server/tserver'
 
 require 'Calculator'
 require 'shared_types'

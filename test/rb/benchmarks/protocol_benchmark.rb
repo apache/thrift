@@ -21,9 +21,6 @@ $LOAD_PATH.unshift File.join(File.dirname(__FILE__), *%w[.. .. .. lib rb lib])
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), *%w[.. .. .. lib rb ext])
 
 require 'thrift'
-require 'thrift/transport'
-require 'thrift/protocol/binaryprotocol'
-require 'thrift/protocol/binaryprotocolaccelerated'
 
 require 'benchmark'
 require 'rubygems'
