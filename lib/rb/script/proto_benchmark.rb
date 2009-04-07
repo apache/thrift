@@ -18,8 +18,6 @@
 #
 
 require File.dirname(__FILE__) + "/../spec/spec_helper.rb"
-require "lib/thrift/serializer"
-require "lib/thrift/protocol/binary_protocol_accelerated"
 
 require "benchmark"
 # require "ruby-prof"

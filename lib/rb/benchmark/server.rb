@@ -20,7 +20,7 @@
 $:.unshift File.dirname(__FILE__) + '/../lib'
 require 'thrift'
 $:.unshift File.dirname(__FILE__) + "/gen-rb"
-require 'BenchmarkService'
+require 'benchmark_service'
 
 module Server
   include Thrift

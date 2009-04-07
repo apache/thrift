@@ -20,7 +20,7 @@
 $:.unshift File.dirname(__FILE__) + '/../lib'
 require 'thrift'
 $:.unshift File.dirname(__FILE__) + "/gen-rb"
-require 'BenchmarkService'
+require 'benchmark_service'
 
 class Client
   def initialize(host, port, clients_per_process, calls_per_client, log_exceptions)
