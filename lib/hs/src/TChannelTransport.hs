@@ -18,10 +18,14 @@
 --
 
 module TChannelTransport(TChannelTrans(..)) where
-import System.IO
-import IO
+
 import Thrift
 import Control.Exception
+
+import System.IO
+import System.IO.Error ( isEOFError )
+
+
 data TChannelTrans = TChannelTrans (Handle)
 
 instance TTransport TChannelTrans where

@@ -18,11 +18,15 @@
 --
 
 module TSocket(TSocket(..)) where
+
 import Thrift
 import Data.IORef
 import Network
-import IO
 import Control.Exception
+
+import System.IO
+
+
 data TSocket = TSocket{host::[Char],port::PortNumber,chan :: Maybe Handle}
 
 instance TTransport TSocket where
