@@ -18,7 +18,7 @@
 #
 
 require File.join(File.dirname(__FILE__), '../test_helper')
-require 'SmallService'
+require 'small_service'
 
 class TestStructGeneration < Test::Unit::TestCase
 

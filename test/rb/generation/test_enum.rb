@@ -18,7 +18,7 @@
 #
 
 require File.join(File.dirname(__FILE__), '../test_helper')
-require 'ThriftTest'
+require 'thrift_test'
 
 class TestEnumGeneration < Test::Unit::TestCase
   include Thrift::Test
