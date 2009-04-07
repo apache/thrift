@@ -181,6 +181,7 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
       client = setup_client
       client.greeting(true).should == Hello.new
       client.greeting(false).should == Hello.new(:greeting => 'Aloha!')
+      @server.shutdown
     end
 
     it "should handle concurrent clients" do
@@ -198,6 +199,7 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
       4.times { trans_queue.pop }
       setup_client.unblock(4)
       4.times { queue.pop.should be_true }
+      @server.shutdown
     end
 
     it "should handle messages from more than 5 long-lived connections" do
@@ -222,6 +224,7 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
       client.greeting(false).should == Hello.new(:greeting => 'Aloha!')
       7.times { queues.shift << :exit }
       client.greeting(true).should == Hello.new
+      @server.shutdown
     end
 
     it "should shut down when asked" do
