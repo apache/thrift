@@ -117,7 +117,7 @@ public class Fixtures {
       holyMoley.bonks.put("poe", stage2);
       
       // superhuge compact proto test struct
-      compactProtoTestStruct = new CompactProtoTestStruct();
+      compactProtoTestStruct = new CompactProtoTestStruct(thrift.test.Constants.COMPACT_TEST);
       compactProtoTestStruct.a_binary = new byte[]{0,1,2,3,4,5,6,7,8};
     } catch (Exception e) {
       throw new RuntimeException(e);
