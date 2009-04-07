@@ -40,3 +40,7 @@ clean-local:
 	$$RUBY setup.rb clean
 
 check-local: all
+if HAVE_RSPEC
+	rake spec
+endif
+
