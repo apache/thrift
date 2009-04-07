@@ -1,0 +1,25 @@
+Thrift Changelog
+
+Release 0.1.0 / 4-7-09
+
+Compatibility Breaking Changes:
+  Ruby Library:
+    * Generated files now have underscored names [THRIFT-421]
+    * The library has been rearranged to be more Ruby-like [THRIFT-276]
+
+  Java Library:
+
+  C++ Library:
+
+  Python Library:
+  
+  
+New Features and Bug Fixes:
+  Ruby Library:
+    * Support for TCompactProtocol [THRIFT-332]
+
+  Java Library:
+    * Support for TCompactProtocol [THRIFT-110]
+
+  C++ Library:
+    * Support for TCompactProtocol [THRIFT-333]
