@@ -76,21 +76,10 @@ describe Thrift::CompactProtocol do
 
     struct = CompactProtoTestStruct.new
     # sets and maps don't hash well... not sure what to do here.
-    struct.set_byte_map = nil
-    struct.map_byte_map = nil
     struct.write(proto)
-    
-    # puts trans.inspect
-    
-    struct2 = CompactProtoTestStruct.new
-    struct2.instance_variables.each do |ivar|
-      struct2.instance_variable_set(ivar, nil)
-    end
-    
-    struct2.should_not == struct
 
-    struct2.read(proto)
-    
+    struct2 = CompactProtoTestStruct.new
+    struct2.read(proto)    
     struct2.should == struct
   end
 
