@@ -211,7 +211,7 @@ string t_hs_generator::hs_autogen_comment() {
  * Prints standard thrift imports
  */
 string t_hs_generator::hs_imports() {
-  return "import Thrift\nimport Data.Generics\nimport Control.Exception\nimport qualified Data.Map as Map\nimport qualified Data.Set as Set\nimport Data.Int";
+  return "import Thrift\nimport Data.Typeable ( Typeable )\nimport Control.Exception\nimport qualified Data.Map as Map\nimport qualified Data.Set as Set\nimport Data.Int";
 }
 
 /**
@@ -253,7 +253,7 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
       f_types_ << "|";
     f_types_ << name;
   }
-  indent(f_types_) << "deriving (Show,Eq, Typeable, Data, Ord)" << endl;
+  indent(f_types_) << "deriving (Show,Eq, Typeable, Ord)" << endl;
   indent_down();
 
   int value = -1;
@@ -287,7 +287,7 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
     f_types_ <<
       indent() << value << " -> " << name << endl;
   }
-  indent(f_types_) << "_ -> throwDyn Thrift_Error" << endl;
+  indent(f_types_) << "_ -> throw ThriftException" << endl;
   indent_down();
   indent_down();
 }
@@ -487,7 +487,7 @@ void t_hs_generator::generate_hs_struct_definition(ofstream& out,
   }
 
   out << " deriving (Show,Eq,Ord,Typeable)" << endl;
-
+  if (is_exception) out << "instance Exception " << tname << endl;
   generate_hs_struct_writer(out, tstruct);
 
   generate_hs_struct_reader(out, tstruct);
@@ -810,7 +810,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
     // Write to the stream
     f_client_ <<
       indent() << "writeMessageEnd op" << endl <<
-      indent() << "tflush (getTransport op)" << endl;
+      indent() << "tFlush (getTransport op)" << endl;
 
     indent_down();
 
@@ -837,7 +837,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
         indent() << "  x <- readAppExn ip" << endl <<
         indent() << "  readMessageEnd ip" << endl;
       f_client_ <<
-        indent() << "  throwDyn x" << endl;
+        indent() << "  throw x" << endl;
       f_client_ <<
         indent() << "  else return ()" << endl;
 
@@ -866,7 +866,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
           indent() << "case f_"<< resultname << "_" << (*x_iter)->get_name() << " res of" << endl;
         indent_up(); //case
         indent(f_client_) << "Nothing -> return ()" << endl;
-        indent(f_client_) << "Just _v -> throwDyn _v" << endl;
+        indent(f_client_) << "Just _v -> throw _v" << endl;
         indent_down(); //-case
       }
 
@@ -876,7 +876,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
           "return ()" << endl;
       } else {
         f_client_ <<
-          indent() << "throwDyn (AppExn AE_MISSING_RESULT \"" << (*f_iter)->get_name() << " failed: unknown result\")" << endl;
+          indent() << "throw (AppExn AE_MISSING_RESULT \"" << (*f_iter)->get_name() << " failed: unknown result\")" << endl;
         indent_down(); //-none
         indent_down(); //-case
       }
@@ -923,7 +923,7 @@ void t_hs_generator::generate_service_server(t_service* tservice) {
     indent(f_service_) << "writeMessageBegin oprot (name,M_EXCEPTION,seqid)" << endl;
     indent(f_service_) << "writeAppExn oprot (AppExn AE_UNKNOWN_METHOD (\"Unknown function \" ++ name))" << endl;
     indent(f_service_) << "writeMessageEnd oprot" << endl;
-    indent(f_service_) << "tflush (getTransport oprot)" << endl;
+    indent(f_service_) << "tFlush (getTransport oprot)" << endl;
     indent_down();
   }
   indent_down();
@@ -987,7 +987,7 @@ void t_hs_generator::generate_process_function(t_service* tservice,
   // Try block for a function with exceptions
   if (xceptions.size() > 0) {
     for(unsigned int i=0;i<xceptions.size();i++){
-      f_service_ << "(catchDyn" << endl;
+      f_service_ << "(Control.Exception.catch" << endl;
       indent_up();
       f_service_ << indent();
     }
@@ -1045,7 +1045,7 @@ void t_hs_generator::generate_process_function(t_service* tservice,
     indent() << "writeMessageBegin oprot (\"" << tfunction->get_name() << "\", M_REPLY, seqid);" << endl <<
     indent() << "write_"<<resultname<<" oprot res" << endl <<
     indent() << "writeMessageEnd oprot" << endl <<
-    indent() << "tflush (getTransport oprot)" << endl;
+    indent() << "tFlush (getTransport oprot)" << endl;
 
   // Close function
   indent_down();

@@ -18,13 +18,15 @@
 --
 
 module Server where
-import Thrift
+
 import ThriftTest
 import ThriftTest_Iface
 import Data.Map as Map
-import TServer
 import Control.Exception
 import ThriftTest_Types
+
+import Thrift
+import Thrift.Server
 
 
 data TestHandler = TestHandler
@@ -45,9 +47,11 @@ instance ThriftTest_Iface TestHandler where
     testMapMap a (Just x) = return (Map.fromList [(1,Map.fromList [(2,2)])])
     testInsanity a (Just x) = return (Map.fromList [(1,Map.fromList [(ONE,x)])])
     testMulti a a1 a2 a3 a4 a5 a6 = return (Xtruct Nothing Nothing Nothing Nothing)
-    testException a c = throwDyn (Xception (Just 1) (Just "bya"))
-    testMultiException a c1 c2 = return (Xtruct Nothing Nothing Nothing Nothing)
+    testException a c = throw (Xception (Just 1) (Just "bya"))
+    testMultiException a c1 c2 = throw (Xception (Just 1) (Just "xyz"))
     testOneway a (Just i) = do print i
 
 
-main = do (run_basic_server TestHandler process 9090) `catchDyn` (\(TransportExn s t) -> print s)
+main = do (runBasicServer TestHandler process 9090)
+          `Control.Exception.catch`
+          (\(TransportExn s t) -> print s)
