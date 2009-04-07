@@ -171,7 +171,7 @@ class t_rb_generator : public t_oop_generator {
     std::vector<std::string> modules;
 
     for(boost::tokenizer<>::iterator beg=tok.begin(); beg != tok.end(); ++beg) {
-      modules.push_back(*beg);
+      modules.push_back(capitalize(*beg));
     }
 
     return modules;
