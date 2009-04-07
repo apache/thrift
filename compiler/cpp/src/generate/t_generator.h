@@ -178,6 +178,16 @@ class t_generator {
     }
     return in;
   }
+  std::string underscore(std::string in) {
+    in[0] = tolower(in[0]);
+    for (size_t i = 1; i < in.size(); ++i) {
+      if (isupper(in[i])) {
+        in[i] = tolower(in[i]);
+        in.insert(i, "_");
+      }
+    }
+    return in;
+  }
 
   /**
    * Get the true type behind a series of typedefs.

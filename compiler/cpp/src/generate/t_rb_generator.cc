@@ -204,10 +204,10 @@ void t_rb_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
 
   // Make output file
-  string f_types_name = get_out_dir()+program_name_+"_types.rb";
+  string f_types_name = get_out_dir()+underscore(program_name_)+"_types.rb";
   f_types_.open(f_types_name.c_str());
 
-  string f_consts_name = get_out_dir()+program_name_+"_constants.rb";
+  string f_consts_name = get_out_dir()+underscore(program_name_)+"_constants.rb";
   f_consts_.open(f_consts_name.c_str());
 
   // Print header
@@ -218,7 +218,7 @@ void t_rb_generator::init_generator() {
 
   f_consts_ <<
     rb_autogen_comment() << endl <<
-    "require File.dirname(__FILE__) + '/" << program_name_ << "_types'" << endl <<
+    "require File.dirname(__FILE__) + '/" << underscore(program_name_) << "_types'" << endl <<
     endl;
     begin_namespace(f_consts_, ruby_modules(program_));
 
@@ -231,7 +231,7 @@ string t_rb_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   for (size_t i = 0; i < includes.size(); ++i) {
-    result += "require '" + includes[i]->get_name() + "_types'\n";
+    result += "require '" + underscore(includes[i]->get_name()) + "_types'\n";
   }
   if (includes.size() > 0) {
     result += "\n";
@@ -622,7 +622,7 @@ void t_rb_generator::end_namespace(std::ofstream& out, vector<std::string> modul
  * @param tservice The service definition
  */
 void t_rb_generator::generate_service(t_service* tservice) {
-  string f_service_name = get_out_dir()+service_name_+".rb";
+  string f_service_name = get_out_dir()+underscore(service_name_)+".rb";
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<
@@ -631,11 +631,11 @@ void t_rb_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != NULL) {
     f_service_ <<
-      "require '" << tservice->get_extends()->get_name() << "'" << endl;
+      "require '" << underscore(tservice->get_extends()->get_name()) << "'" << endl;
   }
 
   f_service_ <<
-    "require File.dirname(__FILE__) + '/" << program_name_ << "_types'" << endl <<
+    "require File.dirname(__FILE__) + '/" << underscore(program_name_) << "_types'" << endl <<
     endl;
 
   begin_namespace(f_service_, ruby_modules(tservice->get_program()));

@@ -18,7 +18,7 @@
 #
 
 require File.dirname(__FILE__) + '/spec_helper'
-require File.dirname(__FILE__) + '/gen-rb/NonblockingService'
+require File.dirname(__FILE__) + '/gen-rb/nonblocking_service'
 
 class ThriftNonblockingServerSpec < Spec::ExampleGroup
   include Thrift
