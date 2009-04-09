@@ -20,9 +20,7 @@
 #ifndef T_STRUCT_H
 #define T_STRUCT_H
 
-#include <algorithm>
 #include <vector>
-#include <utility>
 #include <string>
 
 #include "t_type.h"
@@ -38,8 +36,6 @@ class t_program;
  */
 class t_struct : public t_type {
  public:
-  typedef std::vector<t_field*> members_type;
-
   t_struct(t_program* program) :
     t_type(program),
     is_xception_(false),
@@ -66,19 +62,11 @@ class t_struct : public t_type {
     return xsd_all_;
   }
 
-  bool append(t_field* elem) {
-    typedef members_type::iterator iter_type;
-    std::pair<iter_type, iter_type> bounds = std::equal_range(
-            members_.begin(), members_.end(), elem, t_field::key_compare()
-        );
-    if (bounds.first != bounds.second) {
-      return false;
-    }
-    members_.insert(bounds.second, elem);
-    return true;
+  void append(t_field* elem) {
+    members_.push_back(elem);
   }
 
-  const members_type& get_members() {
+  const std::vector<t_field*>& get_members() {
     return members_;
   }
 
@@ -92,7 +80,7 @@ class t_struct : public t_type {
 
   virtual std::string get_fingerprint_material() const {
     std::string rv = "{";
-    members_type::const_iterator m_iter;
+    std::vector<t_field*>::const_iterator m_iter;
     for (m_iter = members_.begin(); m_iter != members_.end(); ++m_iter) {
       rv += (*m_iter)->get_fingerprint_material();
       rv += ";";
@@ -103,15 +91,26 @@ class t_struct : public t_type {
 
   virtual void generate_fingerprint() {
     t_type::generate_fingerprint();
-    members_type::const_iterator m_iter;
+    std::vector<t_field*>::const_iterator m_iter;
     for (m_iter = members_.begin(); m_iter != members_.end(); ++m_iter) {
       (*m_iter)->get_type()->generate_fingerprint();
     }
   }
 
+  bool validate_field(t_field* field) {
+    int key = field->get_key();
+    std::vector<t_field*>::const_iterator m_iter;
+    for (m_iter = members_.begin(); m_iter != members_.end(); ++m_iter) {
+      if ((*m_iter)->get_key() == key) {
+        return false;
+      }
+    }
+    return true;
+  }
+
  private:
 
-  members_type members_;
+  std::vector<t_field*> members_;
   bool is_xception_;
 
   bool xsd_all_;
