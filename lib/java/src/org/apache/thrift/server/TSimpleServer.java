@@ -19,9 +19,6 @@
 
 package org.apache.thrift.server;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
@@ -31,6 +28,7 @@ import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.TTransportException;
+import org.apache.log4j.Logger;
 
 /**
  * Simple singlethreaded server for testing.
@@ -94,7 +92,7 @@ public class TSimpleServer extends TServer {
     try {
       serverTransport_.listen();
     } catch (TTransportException ttx) {
-      LOGGER.log(Level.SEVERE, "Error occurred during listening.", ttx);
+      LOGGER.error("Error occurred during listening.", ttx);
       return;
     }
 
@@ -119,11 +117,11 @@ public class TSimpleServer extends TServer {
         // Client died, just move on
       } catch (TException tx) {
         if (!stopped_) {
-          LOGGER.log(Level.SEVERE, "Thrift error occurred during processing of message.", tx);
+          LOGGER.error("Thrift error occurred during processing of message.", tx);
         }
       } catch (Exception x) {
         if (!stopped_) {
-          LOGGER.log(Level.SEVERE, "Error occurred during processing of message.", x);
+          LOGGER.error("Error occurred during processing of message.", x);
         }
       }
 

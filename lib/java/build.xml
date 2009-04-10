@@ -42,7 +42,7 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac srcdir="${src}" destdir="${build}" source="1.5" debug="true"/>
+    <javac srcdir="${src}" destdir="${build}" source="1.5" debug="true" classpath="${cpath}" />
   </target>
 
   <target name="javadoc" depends="init">

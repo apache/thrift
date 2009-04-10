@@ -29,8 +29,8 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.apache.log4j.Logger;
 
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TException;
@@ -199,7 +199,7 @@ public class TNonblockingServer extends TServer {
       serverTransport_.listen();
       return true;
     } catch (TTransportException ttx) {
-      LOGGER.log(Level.SEVERE, "Failed to start listening on server socket!", ttx);
+      LOGGER.error("Failed to start listening on server socket!", ttx);
       return false;
     }
   }
@@ -224,7 +224,7 @@ public class TNonblockingServer extends TServer {
       selectThread_.start();
       return true;
     } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "Failed to start selector thread!", e);
+      LOGGER.error("Failed to start selector thread!", e);
       return false;
     }
   }
@@ -356,11 +356,11 @@ public class TNonblockingServer extends TServer {
             // deal with writes
             handleWrite(key);
           } else {
-            LOGGER.log(Level.WARNING, "Unexpected state in select! " + key.interestOps());
+            LOGGER.warn("Unexpected state in select! " + key.interestOps());
           }
         }
       } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "Got an IOException while selecting!", e);
+        LOGGER.warn("Got an IOException while selecting!", e);
       }
     }
 
@@ -393,7 +393,7 @@ public class TNonblockingServer extends TServer {
         clientKey.attach(frameBuffer);
       } catch (TTransportException tte) {
         // something went wrong accepting.
-        LOGGER.log(Level.WARNING, "Exception trying to accept!", tte);
+        LOGGER.warn("Exception trying to accept!", tte);
         tte.printStackTrace();
         if (clientKey != null) cleanupSelectionkey(clientKey);
         if (client != null) client.close();
@@ -512,7 +512,7 @@ public class TNonblockingServer extends TServer {
           // pull out the frame size as an integer.
           int frameSize = buffer_.getInt(0);
           if (frameSize <= 0) {
-            LOGGER.severe("Read an invalid frame size of " + frameSize
+            LOGGER.error("Read an invalid frame size of " + frameSize
               + ". Are you using TFramedTransport on the client side?");
             return false;
           }
@@ -520,7 +520,7 @@ public class TNonblockingServer extends TServer {
           // if this frame will always be too large for this server, log the
           // error and close the connection.
           if (frameSize + 4 > MAX_READ_BUFFER_BYTES) {
-            LOGGER.severe("Read a frame size of " + frameSize
+            LOGGER.error("Read a frame size of " + frameSize
               + ", which is bigger than the maximum allowable buffer size for ALL connections.");
             return false;
           }
@@ -569,7 +569,7 @@ public class TNonblockingServer extends TServer {
       }
 
       // if we fall through to this point, then the state must be invalid.
-      LOGGER.severe("Read was called but state is invalid (" + state_ + ")");
+      LOGGER.error("Read was called but state is invalid (" + state_ + ")");
       return false;
     }
 
@@ -583,7 +583,7 @@ public class TNonblockingServer extends TServer {
             return false;
           }
         } catch (IOException e) {
-          LOGGER.log(Level.WARNING, "Got an IOException during write!", e);
+          LOGGER.warn("Got an IOException during write!", e);
           return false;
         }
 
@@ -594,7 +594,7 @@ public class TNonblockingServer extends TServer {
         return true;
       }
 
-      LOGGER.severe("Write was called, but state is invalid (" + state_ + ")");
+      LOGGER.error("Write was called, but state is invalid (" + state_ + ")");
       return false;
     }
 
@@ -613,7 +613,7 @@ public class TNonblockingServer extends TServer {
         close();
         selectionKey_.cancel();
       } else {
-        LOGGER.severe(
+        LOGGER.error(
           "changeSelectInterest was called, but state is invalid ("
           + state_ + ")");
       }
@@ -682,9 +682,9 @@ public class TNonblockingServer extends TServer {
         responseReady();
         return;
       } catch (TException te) {
-        LOGGER.log(Level.WARNING, "Exception while invoking!", te);
+        LOGGER.warn("Exception while invoking!", te);
       } catch (Exception e) {
-        LOGGER.log(Level.SEVERE, "Unexpected exception while invoking!", e);
+        LOGGER.error("Unexpected exception while invoking!", e);
       }
       // This will only be reached when there is an exception.
       state_ = AWAITING_CLOSE;
@@ -721,7 +721,7 @@ public class TNonblockingServer extends TServer {
         }
         return true;
       } catch (IOException e) {
-        LOGGER.log(Level.WARNING, "Got an IOException in internalRead!", e);
+        LOGGER.warn("Got an IOException in internalRead!", e);
         return false;
       }
     }

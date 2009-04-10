@@ -29,14 +29,14 @@ import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TTransportFactory;
+import org.apache.log4j.Logger;
+import org.apache.log4j.Level;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 
 /**
@@ -172,7 +172,7 @@ public class TThreadPoolServer extends TServer {
     try {
       serverTransport_.listen();
     } catch (TTransportException ttx) {
-      LOGGER.log(Level.SEVERE, "Error occurred during listening.", ttx);
+      LOGGER.error("Error occurred during listening.", ttx);
       return;
     }
 
@@ -186,7 +186,7 @@ public class TThreadPoolServer extends TServer {
       } catch (TTransportException ttx) {
         if (!stopped_) {
           ++failureCount;
-          LOGGER.log(Level.WARNING, "Transport error occurred during acceptance of message.", ttx);
+          LOGGER.warn("Transport error occurred during acceptance of message.", ttx);
         }
       }
     }
@@ -253,9 +253,9 @@ public class TThreadPoolServer extends TServer {
       } catch (TTransportException ttx) {
         // Assume the client died and continue silently
       } catch (TException tx) {
-        LOGGER.log(Level.SEVERE, "Thrift error occurred during processing of message.", tx);
+        LOGGER.error("Thrift error occurred during processing of message.", tx);
       } catch (Exception x) {
-        LOGGER.log(Level.SEVERE, "Error occurred during processing of message.", x);
+        LOGGER.error("Error occurred during processing of message.", x);
       }
 
       if (inputTransport != null) {

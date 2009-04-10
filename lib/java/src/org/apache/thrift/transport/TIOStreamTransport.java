@@ -19,11 +19,11 @@
 
 package org.apache.thrift.transport;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * This is the most commonly used base transport. It takes an InputStream
@@ -100,7 +100,7 @@ public class TIOStreamTransport extends TTransport {
       try {
         inputStream_.close();
       } catch (IOException iox) {
-        LOGGER.log(Level.WARNING, "Error closing input stream.", iox);
+        LOGGER.warn("Error closing input stream.", iox);
       }
       inputStream_ = null;
     }
@@ -108,7 +108,7 @@ public class TIOStreamTransport extends TTransport {
       try {
         outputStream_.close();
       } catch (IOException iox) {
-        LOGGER.log(Level.WARNING, "Error closing output stream.", iox);
+        LOGGER.warn("Error closing output stream.", iox);
       }
       outputStream_ = null;
     }

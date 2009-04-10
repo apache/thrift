@@ -19,13 +19,13 @@
 
 package org.apache.thrift.transport;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Wrapper around ServerSocket for Thrift.
@@ -105,7 +105,7 @@ public class TServerSocket extends TServerTransport {
       try {
         serverSocket_.setSoTimeout(0);
       } catch (SocketException sx) {
-        LOGGER.log(Level.WARNING, "Could not set socket timeout.", sx);
+        LOGGER.error("Could not set socket timeout.", sx);
       }
     }
   }
@@ -129,7 +129,7 @@ public class TServerSocket extends TServerTransport {
       try {
         serverSocket_.close();
       } catch (IOException iox) {
-        LOGGER.log(Level.WARNING, "Could not close server socket.", iox);
+        LOGGER.warn("Could not close server socket.", iox);
       }
       serverSocket_ = null;
     }
