@@ -122,6 +122,18 @@ class t_field : public t_doc {
       type_->get_fingerprint_material();
   }
 
+  /**
+   * Comparator to sort fields in ascending order by key.
+   * Make this a functor instead of a function to help GCC inline it.
+   * The arguments are (const) references to const pointers to const t_fields.
+   */
+  struct key_compare {
+    bool operator()(t_field const * const & a, t_field const * const & b) {
+      return a->get_key() < b->get_key();
+    }
+  };
+
+
  private:
   t_type* type_;
   std::string name_;

@@ -240,3 +240,14 @@ struct BlowUp {
   4: map<list<i32>,set<map<i32,string>>> b4;
 }
 
+
+struct ReverseOrderStruct {
+  4: string first;
+  3: i16 second;
+  2: i32 third;
+  1: i64 fourth;
+}
+
+service ReverseOrderService {
+  void myMethod(4: string first, 3: i16 second, 2: i32 third, 1: i64 fourth);
+}

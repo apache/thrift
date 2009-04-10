@@ -1081,7 +1081,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
   indent_up();
 
   string name = tstruct->get_name();
-  const vector<t_field*>& fields = tstruct->get_members();
+  const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
   // performs various checks (e.g. check that all required fields are set)
@@ -1146,7 +1146,7 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
   indent_up();
 
   string name = tstruct->get_name();
-  const vector<t_field*>& fields = tstruct->get_members();
+  const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) << "oprot.writeStructBegin(STRUCT_DESC);" << endl;

@@ -630,7 +630,7 @@ void t_perl_generator::generate_perl_struct_reader(ofstream& out,
 void t_perl_generator::generate_perl_struct_writer(ofstream& out,
                                                    t_struct* tstruct) {
   string name = tstruct->get_name();
-  const vector<t_field*>& fields = tstruct->get_members();
+  const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
   out << "sub write {" << endl;

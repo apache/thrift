@@ -571,7 +571,7 @@ void t_hs_generator::generate_hs_struct_reader(ofstream& out, t_struct* tstruct)
 void t_hs_generator::generate_hs_struct_writer(ofstream& out,
                                                t_struct* tstruct) {
   string name = type_name(tstruct);
-  const vector<t_field*>& fields = tstruct->get_members();
+  const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
   string str = tmp("_str");
   string f = tmp("_f");

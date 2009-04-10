@@ -870,7 +870,7 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
     // T_STOP type, so we use the global void type, and special case it when
     // generating its typespec.
 
-    const vector<t_field*>& members = ((t_struct*)ttype)->get_members();
+    const vector<t_field*>& members = ((t_struct*)ttype)->get_sorted_members();
     vector<t_field*>::const_iterator m_iter;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       generate_local_reflection(out, (**m_iter).get_type(), is_definition);
@@ -1112,7 +1112,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
                                              t_struct* tstruct,
                                              bool pointers) {
   string name = tstruct->get_name();
-  const vector<t_field*>& fields = tstruct->get_members();
+  const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<
@@ -1174,7 +1174,7 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
                                                     t_struct* tstruct,
                                                     bool pointers) {
   string name = tstruct->get_name();
-  const vector<t_field*>& fields = tstruct->get_members();
+  const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<

@@ -565,7 +565,7 @@ void t_csharp_generator::generate_csharp_struct_writer(ofstream& out, t_struct* 
   indent_up();
 
   string name = tstruct->get_name();
-  const vector<t_field*>& fields = tstruct->get_members();
+  const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<
@@ -625,7 +625,7 @@ void t_csharp_generator::generate_csharp_struct_result_writer(ofstream& out, t_s
   indent_up();
 
   string name = tstruct->get_name();
-  const vector<t_field*>& fields = tstruct->get_members();
+  const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<

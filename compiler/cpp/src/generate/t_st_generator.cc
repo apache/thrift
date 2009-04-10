@@ -693,7 +693,7 @@ string t_st_generator::set_reader(t_set *tset) {
 
 string t_st_generator::struct_writer(t_struct *tstruct, string sname) {
   std::ostringstream out;
-  const vector<t_field*>& fields = tstruct->get_members();
+  const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator fld_iter;
 
   out << "[oprot writeStructBegin: " <<
