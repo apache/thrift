@@ -989,7 +989,7 @@ string t_rb_generator::type_name(t_type* ttype) {
   string prefix = "";
 
   string name = ttype->get_name();
-  if (ttype->is_struct() || ttype->is_xception()) {
+  if (ttype->is_struct() || ttype->is_xception() || ttype->is_enum()) {
     name = capitalize(ttype->get_name());
   }
 
