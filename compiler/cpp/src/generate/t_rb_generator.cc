@@ -707,7 +707,7 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
   string extends = "";
   string extends_client = "";
   if (tservice->get_extends() != NULL) {
-    extends = type_name(tservice->get_extends());
+    extends = full_type_name(tservice->get_extends());
     extends_client = " < " + extends + "::Client ";
   }
 
@@ -839,7 +839,7 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
   string extends = "";
   string extends_processor = "";
   if (tservice->get_extends() != NULL) {
-    extends = type_name(tservice->get_extends());
+    extends = full_type_name(tservice->get_extends());
     extends_processor = " < " + extends + "::Processor ";
   }
 
