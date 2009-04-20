@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS = test
+SUBDIRS = 
 
 Makefile-perl.mk : Makefile.PL
 	$(PERL) Makefile.PL MAKEFILE=Makefile-perl.mk INSTALLDIRS=$(INSTALLDIRS)
@@ -27,6 +27,7 @@ all-local: Makefile-perl.mk
 	find blib -name 'Makefile*' -exec rm -f {} \;
 
 check-local:
+	make -C test
 	$(PERL) -Iblib/lib -I@abs_srcdir@ -I@builddir@/test/gen-perl \
 		@abs_srcdir@/test.pl @abs_srcdir@/test/*.t
 
