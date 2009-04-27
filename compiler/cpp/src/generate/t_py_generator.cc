@@ -531,6 +531,7 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
                                                    bool is_result) {
 
   const vector<t_field*>& members = tstruct->get_members();
+  const vector<t_field*>& sorted_members = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator m_iter;
 
   out <<
@@ -571,12 +572,12 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   // for structures with no members.
   // TODO(dreiss): Test encoding of structs where some inner structs
   // don't have thrift_spec.
-  if (members.empty() || (members[0]->get_key() >= 0)) {
+  if (sorted_members.empty() || (sorted_members[0]->get_key() >= 0)) {
     indent(out) << "thrift_spec = (" << endl;
     indent_up();
 
     int sorted_keys_pos = 0;
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    for (m_iter = sorted_members.begin(); m_iter != sorted_members.end(); ++m_iter) {
 
       for (; sorted_keys_pos != (*m_iter)->get_key(); sorted_keys_pos++) {
         indent(out) << "None, # " << sorted_keys_pos << endl;
