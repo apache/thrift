@@ -37,7 +37,7 @@ namespace Thrift.Collections
 
 		public bool IsReadOnly
 		{
-			get { return set.IsReadOnly; }
+			get { return false; }
 		}
 
 		public void Add(T item)
