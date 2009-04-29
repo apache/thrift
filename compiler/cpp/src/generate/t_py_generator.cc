@@ -637,6 +637,16 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   generate_py_struct_reader(out, tstruct);
   generate_py_struct_writer(out, tstruct);
 
+  // For exceptions only, generate a __str__ method. This is
+  // because when raised exceptions are printed to the console, __repr__
+  // isn't used. See python bug #5882
+  if (is_exception) {
+    out <<
+      indent() << "def __str__(self):" << endl <<
+      indent() << "  return repr(self)" << endl <<
+      endl;
+  }
+
   // Printing utilities so that on the command line thrift
   // structs look pretty like dictionaries
   out <<
