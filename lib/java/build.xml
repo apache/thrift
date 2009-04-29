@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <!--
  Licensed to the Apache Software Foundation (ASF) under one
  or more contributor license agreements. See the NOTICE file
@@ -16,7 +17,8 @@
  specific language governing permissions and limitations
  under the License.
 -->
-<project name="libthrift" default="dist" basedir=".">
+<project name="libthrift" default="dist" basedir="."
+  xmlns:ivy="antlib:org.apache.ivy.ant">
 
   <description>Thrift Build File</description>
 
@@ -33,16 +35,79 @@
 
   <property file="${user.home}/.thrift-build.properties" />
 
-  <property name="cpath" location="libthrift.jar:${thrift.extra.cpath}" />
+  <!-- ivy properties -->
+  <property name="ivy.version" value="2.0.0-rc2" />
+  <property name="ivy.dir" location="${build}/ivy" />
+  <property name="ivy.jar" location="${ivy.dir}/ivy-${ivy.version}.jar"/>
+  <property name="ivy.lib.dir" location="${ivy.dir}/lib" />
+  <property name="ivy_repo_url" value="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"/>
+  <property name="ivysettings.xml" location="${ivy.dir}/ivysettings.xml" />
+
+  <path id="compile.classpath">
+    <fileset dir="${ivy.lib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
+
+  <path id="test.classpath">
+    <path refid="compile.classpath" />
+    <pathelement location="build/test" />
+    <pathelement location="libthrift.jar" />
+  </path>
 
   <target name="init">
     <tstamp />
     <mkdir dir="${build}"/>
     <mkdir dir="${build.test}" />
+    <!--
+    Allow Ivy to be disabled with "-Dnoivy=".
+    It is kind of a hack to pretend that we already found it,
+    but Ant doesn't provide an easy way of blocking dependencies
+    from executing or checking multiple conditions.
+    -->
+    <condition property="ivy.found"><isset property="noivy" /></condition>
+    <condition property="offline"><isset property="noivy" /></condition>
   </target>
 
-  <target name="compile" depends="init">
-    <javac srcdir="${src}" destdir="${build}" source="1.5" debug="true" classpath="${cpath}" />
+  <target name="ivy-init-dirs">
+    <mkdir dir="${ivy.dir}" />
+    <mkdir dir="${ivy.lib.dir}" />
+  </target>
+
+  <target name="ivy-download" depends="ivy-init-dirs" description="To download ivy" unless="offline">
+    <get src="${ivy_repo_url}" dest="${ivy.jar}" usetimestamp="true"/>
+  </target>
+
+  <target name="ivy-probe-antlib">
+    <condition property="ivy.found">
+      <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
+    </condition>
+  </target>
+
+  <target name="ivy-init-antlib" depends="ivy-download,ivy-probe-antlib" unless="ivy.found">
+    <typedef uri="antlib:org.apache.ivy.ant" onerror="fail"
+      loaderRef="ivyLoader">
+      <classpath>
+        <pathelement location="${ivy.jar}"/>
+      </classpath>
+    </typedef>
+    <fail>
+      <condition >
+        <not>
+          <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
+        </not>
+      </condition>
+      You need Apache Ivy 2.0 or later from http://ant.apache.org/
+      It could not be loaded from ${ivy_repo_url}
+    </fail>
+  </target>
+
+  <target name="resolve" depends="ivy-init-antlib" description="retrieve dependencies with ivy" unless="noivy">
+    <ivy:retrieve />
+  </target>
+
+  <target name="compile" depends="init,resolve">
+    <javac srcdir="${src}" destdir="${build}" source="1.5" debug="true" classpathref="compile.classpath" />
   </target>
 
   <target name="javadoc" depends="init">
@@ -85,28 +150,28 @@
   </target>
 
   <target name="compile-test" description="Build the test suite classes" depends="generate,dist">
-    <javac debug="true" srcdir="${gen}" destdir="${build.test}" classpath="${cpath}" />
-    <javac debug="true" srcdir="${genbean}" destdir="${build.test}" classpath="${cpath}" />
-    <javac debug="true" srcdir="${src.test}" destdir="${build.test}" classpath="${cpath}:${gen}" />
+    <javac debug="true" srcdir="${gen}" destdir="${build.test}" classpathref="test.classpath" />
+    <javac debug="true" srcdir="${genbean}" destdir="${build.test}" classpathref="test.classpath" />
+    <javac debug="true" srcdir="${src.test}" destdir="${build.test}" classpathref="test.classpath" />
   </target>
 
   <target name="test" description="Run the full test suite" depends="compile-test">
     <java classname="org.apache.thrift.test.JSONProtoTest"
-      classpath="${cpath}:${build.test}" failonerror="true" />
+      classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.TCompactProtocolTest"
-      classpath="${cpath}:${build.test}" failonerror="true" />
+      classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.IdentityTest"
-      classpath="${cpath}:${build.test}" failonerror="true" />
+      classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.EqualityTest"
-      classpath="${cpath}:${build.test}" failonerror="true" />
+      classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.ToStringTest"
-      classpath="${cpath}:${build.test}" failonerror="true" />
+      classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.DeepCopyTest"
-      classpath="${cpath}:${build.test}" failonerror="true" />
+      classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.MetaDataTest"
-      classpath="${cpath}:${build.test}" failonerror="true" />
+      classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.JavaBeansTest"
-      classpath="${cpath}:${build.test}" failonerror="true" />
+      classpathref="test.classpath" failonerror="true" />
   </target>
 
   <target name="generate">
