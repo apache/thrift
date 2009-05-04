@@ -42,6 +42,13 @@
   return [self initWithInputStream: nil outputStream: output];
 }
 
+- (void) dealloc
+{
+  [mInput release];
+  [mOutput release];
+  [super dealloc];
+}
+
 
 - (int) readAll: (uint8_t *) buf offset: (int) off length: (int) len
 {
