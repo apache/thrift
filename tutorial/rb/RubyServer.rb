@@ -24,7 +24,7 @@ $:.unshift '../../lib/rb/lib'
 
 require 'thrift'
 
-require 'Calculator'
+require 'calculator'
 require 'shared_types'
 
 class CalculatorHandler

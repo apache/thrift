@@ -24,7 +24,7 @@ $:.unshift '../../lib/rb/lib'
 
 require 'thrift'
 
-require 'Calculator'
+require 'calculator'
 
 begin
   port = ARGV[0] || 9090
