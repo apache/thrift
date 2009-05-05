@@ -364,7 +364,7 @@ string t_rb_generator::render_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_enum()) {
     indent(out) << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    out << type->get_name() << ".new({" << endl;
+    out << full_type_name(type) << ".new({" << endl;
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -1081,7 +1081,7 @@ void t_rb_generator::generate_rb_struct_required_validator(std::ofstream& out,
     t_field* field = (*f_iter);
         
     if (field->get_type()->is_enum()){      
-      indent(out) << "unless @" << field->get_name() << ".nil? || " << field->get_type()->get_name() << "::VALID_VALUES.include?(@" << field->get_name() << ")" << endl;      
+      indent(out) << "unless @" << field->get_name() << ".nil? || " << full_type_name(field->get_type()) << "::VALID_VALUES.include?(@" << field->get_name() << ")" << endl;
       indent_up();
       indent(out) << "raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Invalid value of field " << field->get_name() << "!')" << endl;  
       indent_down();
