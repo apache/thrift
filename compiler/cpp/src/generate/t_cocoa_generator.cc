@@ -338,7 +338,7 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
   std::ostringstream const_interface;
   string constants_class_name = cocoa_prefix_ + program_name_ + "Constants";
 
-  const_interface << "@interface " << constants_class_name << " ";
+  const_interface << "@interface " << constants_class_name << " : NSObject ";
   scope_up(const_interface);
   scope_down(const_interface);
 
