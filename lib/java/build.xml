@@ -107,7 +107,7 @@
   </target>
 
   <target name="compile" depends="init,resolve">
-    <javac srcdir="${src}" destdir="${build}" source="1.5" debug="true" classpathref="compile.classpath" />
+    <javac srcdir="${src}" destdir="${build}" source="1.5" target="1.5" debug="true" classpathref="compile.classpath" />
   </target>
 
   <target name="javadoc" depends="init">
