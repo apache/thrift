@@ -247,7 +247,9 @@ public class TNonblockingServer extends TServer {
    */
   public void stop() {
     stopped_ = true;
-    selectThread_.wakeupSelector();
+    if (selectThread_ != null) {
+      selectThread_.wakeupSelector();
+    }
   }
 
   /**
