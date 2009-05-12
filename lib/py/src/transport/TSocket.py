@@ -95,6 +95,8 @@ class TSocket(TSocketBase):
     return buff
 
   def write(self, buff):
+    if not self.handle:
+      raise TTransportException(TTransportException.NOT_OPEN, 'Transport not open')
     sent = 0
     have = len(buff)
     while sent < have:
