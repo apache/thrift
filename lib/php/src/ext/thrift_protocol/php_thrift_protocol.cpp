@@ -441,23 +441,23 @@ void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval
     case T_BYTE: {
       uint8_t c;
       transport.readBytes(&c, 1);
-      RETURN_LONG(c);
+      RETURN_LONG((int8_t)c);
     }
     case T_I16: {
       uint16_t c;
       transport.readBytes(&c, 2);
-      RETURN_LONG(ntohs(c));
+      RETURN_LONG((int16_t)ntohs(c));
     }
     case T_I32: {
       uint32_t c;
       transport.readBytes(&c, 4);
-      RETURN_LONG(ntohl(c));
+      RETURN_LONG((int32_t)ntohl(c));
     }
     case T_U64:
     case T_I64: {
       uint64_t c;
       transport.readBytes(&c, 8);
-      RETURN_LONG(ntohll(c));
+      RETURN_LONG((int64_t)ntohll(c));
     }
     case T_DOUBLE: {
       union {
