@@ -70,6 +70,12 @@ AX_THRIFT_LIB(java, [Java], yes)
 if test "$with_java" = "yes";  then
   AX_JAVAC_AND_JAVA
   AC_PATH_PROG([ANT], [ant])
+  AX_CHECK_JAVA_CLASS(org.apache.log4j.Logger)
+  have_log4j="$success"
+  if test "x$have_log4j" = "xyes" ; then
+    ANT_FLAGS="$ANT_FLAGS -Dnoivy="
+  fi
+  AC_SUBST(ANT_FLAGS)
 fi
 AM_CONDITIONAL([WITH_JAVA],
                [test -n "$ANT" -a -n "$JAVA" -a -n "$JAVAC"])
