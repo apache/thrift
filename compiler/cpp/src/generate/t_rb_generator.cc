@@ -218,7 +218,7 @@ void t_rb_generator::init_generator() {
 
   f_consts_ <<
     rb_autogen_comment() << endl <<
-    "require File.dirname(__FILE__) + '/" << underscore(program_name_) << "_types'" << endl <<
+    "require '" << underscore(program_name_) << "_types'" << endl <<
     endl;
     begin_namespace(f_consts_, ruby_modules(program_));
 
@@ -412,7 +412,7 @@ string t_rb_generator::render_const_value(t_type* type, t_const_value* value) {
       etype = ((t_set*)type)->get_elem_type();
     }
     if (type->is_set()) {
-      out << "Set.new([";
+      out << "Set.new([" << endl;
     } else {
       out << "[" << endl;
     }
@@ -635,7 +635,7 @@ void t_rb_generator::generate_service(t_service* tservice) {
   }
 
   f_service_ <<
-    "require File.dirname(__FILE__) + '/" << underscore(program_name_) << "_types'" << endl <<
+    "require '" << underscore(program_name_) << "_types'" << endl <<
     endl;
 
   begin_namespace(f_service_, ruby_modules(tservice->get_program()));
