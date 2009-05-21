@@ -131,7 +131,12 @@ AC_CHECK_HEADERS([libintl.h])
 AC_CHECK_HEADERS([malloc.h])
 
 AC_CHECK_LIB(pthread, pthread_create)
-AC_CHECK_LIB(rt, sched_get_priority_min)
+dnl NOTE(dreiss): I haven't been able to find any really solid docs
+dnl on what librt is and how it fits into various Unix systems.
+dnl My best guess is that it is where glibc stashes its implementation
+dnl of the POSIX Real-Time Extensions.  This seems necessary on Linux,
+dnl and we haven't yet found a system where this is a problem.
+AC_CHECK_LIB(rt, clock_gettime)
 
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T
@@ -170,7 +175,6 @@ AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([strtoul])
 AC_CHECK_FUNCS([bzero])
-AC_CHECK_FUNCS([clock_gettime])
 AC_CHECK_FUNCS([ftruncate])
 AC_CHECK_FUNCS([gethostbyname])
 AC_CHECK_FUNCS([gettimeofday])
@@ -186,6 +190,10 @@ AC_CHECK_FUNCS([strerror])
 AC_CHECK_FUNCS([strstr])
 AC_CHECK_FUNCS([strtol])
 AC_CHECK_FUNCS([sqrt])
+dnl The following functions are optional.
+AC_CHECK_FUNCS([clock_gettime])
+AC_CHECK_FUNCS([sched_get_priority_min])
+AC_CHECK_FUNCS([sched_get_priority_max])
 
 AX_SIGNED_RIGHT_SHIFT
 

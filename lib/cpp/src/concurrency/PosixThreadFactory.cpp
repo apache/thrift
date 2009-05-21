@@ -227,8 +227,14 @@ class PosixThreadFactory::Impl {
    */
   static int toPthreadPriority(POLICY policy, PRIORITY priority) {
     int pthread_policy = toPthreadPolicy(policy);
-    int min_priority = sched_get_priority_min(pthread_policy);
-    int max_priority = sched_get_priority_max(pthread_policy);
+    int min_priority = 0;
+    int max_priority = 0;
+#ifdef HAVE_SCHED_GET_PRIORITY_MIN
+    min_priority = sched_get_priority_min(pthread_policy);
+#endif
+#ifdef HAVE_SCHED_GET_PRIORITY_MAX
+    max_priority = sched_get_priority_max(pthread_policy);
+#endif
     int quanta = (HIGHEST - LOWEST) + 1;
     float stepsperquanta = (max_priority - min_priority) / quanta;
 
