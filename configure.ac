@@ -149,6 +149,16 @@ AC_CHECK_TYPES([ptrdiff_t], [], [exit 1])
 
 AC_STRUCT_TM
 
+dnl NOTE(dreiss): AI_ADDRCONFIG is not defined on OpenBSD.
+AC_CHECK_DECL([AI_ADDRCONFIG], [],
+              [AC_DEFINE([AI_ADDRCONFIG], 0,
+                         [Define if the AI_ADDRCONFIG symbol is unavailable])],
+              [
+  #include <sys/types.h>
+  #include <sys/socket.h>
+  #include <netdb.h>
+])
+
 AC_FUNC_ALLOCA
 AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
