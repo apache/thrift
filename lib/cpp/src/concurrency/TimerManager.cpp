@@ -29,9 +29,6 @@ namespace apache { namespace thrift { namespace concurrency {
 
 using boost::shared_ptr;
 
-typedef std::multimap<int64_t, shared_ptr<TimerManager::Task> >::iterator task_iterator;
-typedef std::pair<task_iterator, task_iterator> task_range;
-
 /**
  * TimerManager class
  *
