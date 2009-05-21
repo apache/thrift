@@ -18,6 +18,7 @@
  */
 
 #include <cstring>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <sys/types.h>
