@@ -28,6 +28,7 @@
 #include <string>
 #include <errno.h>
 #include <cstdlib>
+#include <unistd.h>
 #include <event.h>
 
 namespace apache { namespace thrift { namespace server {

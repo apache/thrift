@@ -27,6 +27,8 @@
 #include <string>
 #include <stdio.h>
 
+#include <pthread.h>
+
 #include <boost/shared_ptr.hpp>
 
 namespace apache { namespace thrift { namespace transport {
