@@ -65,7 +65,7 @@ class TOutput {
 
   inline static void errorTimeWrapper(const char* msg) {
     time_t now;
-    char dbgtime[25];
+    char dbgtime[26];
     time(&now);
     ctime_r(&now, dbgtime);
     dbgtime[24] = 0;
