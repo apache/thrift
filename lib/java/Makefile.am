@@ -17,7 +17,7 @@
 # under the License.
 #
 
-EXTRA_DIST = build.xml src test
+EXTRA_DIST = build.xml ivy.xml src test
 
 export CLASSPATH
 

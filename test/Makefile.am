@@ -93,7 +93,9 @@ TPipedTransportTest_LDADD = \
 # AllProtocolsTest
 #
 AllProtocolsTest_SOURCES = \
-	AllProtocolTests.cpp
+	AllProtocolTests.cpp \
+	AllProtocolTests.tcc \
+	GenericHelpers.h
 
 AllProtocolsTest_LDADD = libtestgencpp.la
 

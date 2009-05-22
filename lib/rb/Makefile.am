@@ -25,6 +25,7 @@ EXTRA_DIST = \
 	lib \
 	ext \
 	benchmark \
+	script \
 	spec
 
 all-local:
