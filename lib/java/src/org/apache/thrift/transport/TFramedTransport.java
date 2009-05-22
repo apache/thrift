@@ -96,6 +96,10 @@ public class TFramedTransport extends TTransport {
       ((i32rd[2] & 0xff) <<  8) |
       ((i32rd[3] & 0xff));
 
+    if (size < 0) {
+      throw new TTransportException("Read a negative frame size (" + size + ")!");
+    }
+    
     byte[] buff = new byte[size];
     transport_.readAll(buff, 0, size);
     readBuffer_ = new ByteArrayInputStream(buff);
