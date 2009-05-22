@@ -77,6 +77,7 @@ if test "$with_java" = "yes";  then
   if test "x$have_log4j" = "xyes" && test "x$have_hashcode" = "xyes" ; then
     ANT_FLAGS="$ANT_FLAGS -Dnoivy="
   fi
+  AC_SUBST(CLASSPATH)
   AC_SUBST(ANT_FLAGS)
 fi
 AM_CONDITIONAL([WITH_JAVA],
