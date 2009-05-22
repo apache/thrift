@@ -72,7 +72,9 @@ if test "$with_java" = "yes";  then
   AC_PATH_PROG([ANT], [ant])
   AX_CHECK_JAVA_CLASS(org.apache.log4j.Logger)
   have_log4j="$success"
-  if test "x$have_log4j" = "xyes" ; then
+  AX_CHECK_JAVA_CLASS(org.apache.commons.lang.builder.HashCodeBuilder)
+  have_hashcode="$success"
+  if test "x$have_log4j" = "xyes" && test "x$have_hashcode" = "xyes" ; then
     ANT_FLAGS="$ANT_FLAGS -Dnoivy="
   fi
   AC_SUBST(ANT_FLAGS)
