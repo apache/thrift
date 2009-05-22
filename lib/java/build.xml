@@ -22,6 +22,8 @@
 
   <description>Thrift Build File</description>
 
+  <property environment="env" />
+
   <property name="gen" location="gen-java" />
   <property name="genbean" location="gen-javabean" />
 
@@ -51,6 +53,7 @@
 
   <path id="test.classpath">
     <path refid="compile.classpath" />
+    <pathelement path="${env.CLASSPATH}" />
     <pathelement location="build/test" />
     <pathelement location="libthrift.jar" />
   </path>
