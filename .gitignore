@@ -34,6 +34,7 @@
 /lib/cpp/*.pc
 /lib/csharp/Makefile
 /lib/csharp/Makefile.in
+/lib/hs/dist
 /lib/java/Makefile
 /lib/java/Makefile.in
 /lib/java/build
