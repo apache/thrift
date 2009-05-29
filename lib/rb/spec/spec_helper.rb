@@ -44,8 +44,13 @@ Spec::Runner.configure do |configuration|
   end
 end
 
-require File.dirname(__FILE__) + "/../debug_proto_test/gen-rb/Srv"
-require File.dirname(__FILE__) + "/../debug_proto_test/gen-rb/debug_proto_test_constants"
+$:.unshift File.join(File.dirname(__FILE__), *%w[.. debug_proto_test gen-rb])
+require "srv"
+require "debug_proto_test_constants"
+
+$:.unshift File.join(File.dirname(__FILE__), *%w[gen-rb])
+require 'thrift_spec_types'
+require 'nonblocking_service'
 
 module Fixtures
   COMPACT_PROTOCOL_TEST_STRUCT = COMPACT_TEST.dup
