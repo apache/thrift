@@ -360,13 +360,12 @@ void t_java_generator::generate_enum(t_enum* tenum) {
   bool first = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     // populate set
-    if ((*c_iter)->has_value()) {
-      f_enum << (first ? "" : ", ") << (*c_iter)->get_name();
-      first = false;
-    }
+    f_enum << (first ? "" : ", ") << endl;
+    first = false;
+    indent(f_enum) << (*c_iter)->get_name();
   }
+  f_enum << " );" << endl << endl;
   indent_down();
-  f_enum << ");" << endl;
 
   indent(f_enum) << "public static final Map<Integer, String> VALUES_TO_NAMES = new HashMap<Integer, String>() {{" << endl;
 
