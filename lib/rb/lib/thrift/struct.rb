@@ -141,9 +141,13 @@ module Thrift
       self.class == other.class && self == other
     end
 
-    # for the time being, we're ok with a naive hash. this could definitely be improved upon.
     def hash
-      0
+      field_values = []
+      each_field do |fid, field_info|
+        name = field_info[:name]
+        field_values << self.instance_variable_get("@#{name}")
+      end
+      field_values.hash
     end
 
     def differences(other)
