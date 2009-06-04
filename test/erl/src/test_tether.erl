@@ -5,11 +5,21 @@
 
 -compile(export_all).
 
+
 t() ->
+    io:format("Beginning transport error test.~n"),
+    Pid1 = erlang:spawn(?MODULE, t_sub, [2]),
+    wait_for(Pid1),
+    io:format("Beginning protocol error test.~n"),
+    Pid2 = erlang:spawn(?MODULE, t_sub, [22]),
+    wait_for(Pid2),
+    ok.
+
+t_sub(Port) ->
     io:format("Starting.~n", []),
     register(tester, self()),
 
-    Pid1 = erlang:spawn(?MODULE, test_start, []),
+    Pid1 = erlang:spawn(?MODULE, test_start, [Port]),
     receive after 200 -> ok end,  % Wait for completion.
     case is_up(Pid1) of
         true ->
@@ -18,7 +28,7 @@ t() ->
             io:format("FAIL.  Unlinked owner is dead.~n")
     end,
 
-    Pid2 = erlang:spawn(?MODULE, test_linked, []),
+    Pid2 = erlang:spawn(?MODULE, test_linked, [Port]),
     receive after 200 -> ok end,  % Wait for completion.
     case is_up(Pid2) of
         true ->
@@ -27,7 +37,7 @@ t() ->
             io:format("PASS.  Linked owner is dead.~n")
     end,
 
-    Pid3 = erlang:spawn(?MODULE, test_tethered, []),
+    Pid3 = erlang:spawn(?MODULE, test_tethered, [Port]),
     receive after 200 -> ok end,  % Wait for completion.
     case is_up(Pid3) of
         true ->
@@ -36,9 +46,7 @@ t() ->
             io:format("FAIL.  Tethered owner is dead.~n")
     end,
 
-    check_extras(3),
-
-    erlang:halt().
+    check_extras(3).
 
 is_up(Pid) ->
     MonitorRef = erlang:monitor(process, Pid),
@@ -49,6 +57,13 @@ is_up(Pid) ->
         50 ->
             erlang:demonitor(MonitorRef),
             true
+    end.
+
+wait_for(Pid) ->
+    MonitorRef = erlang:monitor(process, Pid),
+    receive
+        {'DOWN', MonitorRef, process, Pid, _Info} ->
+            ok
     end.
 
 check_extras(0) -> ok;
@@ -88,14 +103,15 @@ make_protocol_factory(Port) ->
     ProtocolFactory.
 
 
-test_start() ->
+test_start(Port) ->
     {ok, Client1} = make_thrift_client([{connect, false}]),
     tester ! {client, unlinked, Client1},
     {ok, Client2} = make_thrift_client([{connect, false}]),
     io:format("PASS.  Unlinked clients created.~n"),
     try
-        gen_server:call(Client2, {connect, make_protocol_factory(2)}),
-        io:format("FAIL.  Unlinked client connected.~n", [])
+        gen_server:call(Client2, {connect, make_protocol_factory(Port)}),
+        thrift_client:call(Client2, testVoid, []),
+        io:format("FAIL.  Unlinked client connected and called.~n", [])
     catch
         Kind:Info ->
             io:format("PASS.  Caught unlinked error.  ~p:~p~n", [Kind, Info])
@@ -108,14 +124,15 @@ test_start() ->
     %% Exit abnormally to not kill our unlinked extra client.
     exit(die).
 
-test_linked() ->
+test_linked(Port) ->
     {ok, Client1} = make_thrift_client([{connect, false}, {monitor, link}]),
     tester ! {client, linked, Client1},
     {ok, Client2} = make_thrift_client([{connect, false}, {monitor, link}]),
     io:format("PASS.  Linked clients created.~n"),
     try
-        gen_server:call(Client2, {connect, make_protocol_factory(2)}),
-        io:format("FAIL.  Linked client connected.~n", [])
+        gen_server:call(Client2, {connect, make_protocol_factory(Port)}),
+        thrift_client:call(Client2, testVoid, []),
+        io:format("FAIL.  Linked client connected and called.~n", [])
     catch
         Kind:Info ->
             io:format("FAIL.  Caught linked error.  ~p:~p~n", [Kind, Info])
@@ -129,14 +146,15 @@ test_linked() ->
     %% But we should never get here.
     exit(die).
 
-test_tethered() ->
+test_tethered(Port) ->
     {ok, Client1} = make_thrift_client([{connect, false}, {monitor, tether}]),
     tester ! {client, tethered, Client1},
     {ok, Client2} = make_thrift_client([{connect, false}, {monitor, tether}]),
     io:format("PASS.  Tethered clients created.~n"),
     try
-        gen_server:call(Client2, {connect, make_protocol_factory(2)}),
-        io:format("FAIL.  Tethered client connected.~n", [])
+        gen_server:call(Client2, {connect, make_protocol_factory(Port)}),
+        thrift_client:call(Client2, testVoid, []),
+        io:format("FAIL.  Tethered client connected and called.~n", [])
     catch
         Kind:Info ->
             io:format("PASS.  Caught tethered error.  ~p:~p~n", [Kind, Info])
