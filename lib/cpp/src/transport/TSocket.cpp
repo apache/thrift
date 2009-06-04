@@ -108,7 +108,7 @@ bool TSocket::peek() {
   int r = recv(socket_, &buf, 1, MSG_PEEK);
   if (r == -1) {
     int errno_copy = errno;
-    #ifdef __FreeBSD__
+    #if defined __FreeBSD__ || defined __MACH__
     /* shigin:
      * freebsd returns -1 and ECONNRESET if socket was closed by 
      * the other side
@@ -338,20 +338,22 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
       goto try_again;
     }
 
-    // Now it's not a try again case, but a real probblez
-    GlobalOutput.perror("TSocket::read() recv() " + getSocketInfo(), errno_copy);
-
-    // If we disconnect with no linger time
+    #if defined __FreeBSD__ || defined __MACH__
     if (errno_copy == ECONNRESET) {
-      #ifdef __FreeBSD__
       /* shigin: freebsd doesn't follow POSIX semantic of recv and fails with
        * ECONNRESET if peer performed shutdown 
        */
       close();
       return 0;
-      #else
+    }
+    #endif
+
+    // Now it's not a try again case, but a real probblez
+    GlobalOutput.perror("TSocket::read() recv() " + getSocketInfo(), errno_copy);
+
+    // If we disconnect with no linger time
+    if (errno_copy == ECONNRESET) {
       throw TTransportException(TTransportException::NOT_OPEN, "ECONNRESET");
-      #endif
     }
 
     // This ish isn't open
