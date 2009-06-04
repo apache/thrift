@@ -134,9 +134,9 @@
   </target>
 
   <target name="install" depends="dist,javadoc">
-    <exec executable="install">
-      <arg line="libthrift.jar ${install.path}" />
-    </exec>
+    <copy todir="${install.path}">
+        <fileset dir="."><include name="*.jar" /></fileset>
+    </copy>
     <copy todir="${install.javadoc.path}">
       <fileset dir="${javadoc}">
         <include name="**/*" />
