@@ -144,10 +144,6 @@ public:
         }
       }
 
-      for (std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin(); thread != threads.end(); thread++) {
-        threads.erase(*thread);
-      }
-
       std::cout << "\t\t\treaped " << lix * count << " threads" << std::endl;
     }
 
