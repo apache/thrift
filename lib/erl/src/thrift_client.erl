@@ -101,12 +101,14 @@ start(Host, Port, Service, Options)
 %% ProtocolFactory :: fun() -> thrift_protocol()
 start(ProtocolFactory, Service, ClientOpts)
   when is_function(ProtocolFactory), is_atom(Service) ->
-    Starter =
+    {Starter, Opts} =
         case lists:keysearch(monitor, 1, ClientOpts) of
             {value, {monitor, link}} ->
-                start_link;
+                {start_link, []};
+            {value, {monitor, tether}} ->
+                {start, [{tether, self()}]};
             _ ->
-                start
+                {start, []}
         end,
 
     Connect =
@@ -119,7 +121,7 @@ start(ProtocolFactory, Service, ClientOpts)
         end,
 
 
-    Started = gen_server:Starter(?MODULE, [Service], []),
+    Started = gen_server:Starter(?MODULE, [Service, Opts], []),
 
     if
         Connect ->
@@ -171,7 +173,13 @@ close(Client) when is_pid(Client) ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init([Service]) ->
+init([Service, Opts]) ->
+    case lists:keysearch(tether, 1, Opts) of
+        {value, {tether, Pid}} ->
+            erlang:monitor(process, Pid);
+        _Else ->
+            ok
+    end,
     {ok, #state{service = Service}}.
 
 %%--------------------------------------------------------------------
@@ -262,6 +270,11 @@ handle_cast(_Msg, State) ->
 %%                                       {stop, Reason, State}
 %% Description: Handling all non call/cast messages
 %%--------------------------------------------------------------------
+handle_info({'DOWN', MonitorRef, process, Pid, _Info}, State)
+  when is_reference(MonitorRef), is_pid(Pid) ->
+    %% We don't actually verify the correctness of the DOWN message.
+    {stop, parent_died, State};
+
 handle_info(_Info, State) ->
     {noreply, State}.
 

@@ -27,7 +27,16 @@ t() ->
             io:format("PASS.  Linked owner is dead.~n")
     end,
 
-    check_extras(2),
+    Pid3 = erlang:spawn(?MODULE, test_tethered, []),
+    receive after 200 -> ok end,  % Wait for completion.
+    case is_up(Pid3) of
+        true ->
+            io:format("PASS.  Tethered owner still alive.~n");
+        false ->
+            io:format("FAIL.  Tethered owner is dead.~n")
+    end,
+
+    check_extras(3),
 
     erlang:halt().
 
@@ -54,7 +63,11 @@ check_extras(N) ->
                 {linked, true} ->
                     io:format("FAIL.  Linked client still alive.~n");
                 {linked, false} ->
-                    io:format("PASS.  Linked client dead.~n")
+                    io:format("PASS.  Linked client dead.~n");
+                {tethered, true} ->
+                    io:format("FAIL.  Tethered client still alive.~n");
+                {tethered, false} ->
+                    io:format("PASS.  Tethered client dead.~n")
             end,
             check_extras(N-1)
     after
@@ -114,4 +127,24 @@ test_linked() ->
     end,
     %% Exit abnormally to kill our linked extra client.
     %% But we should never get here.
+    exit(die).
+
+test_tethered() ->
+    {ok, Client1} = make_thrift_client([{connect, false}, {monitor, tether}]),
+    tester ! {client, tethered, Client1},
+    {ok, Client2} = make_thrift_client([{connect, false}, {monitor, tether}]),
+    io:format("PASS.  Tethered clients created.~n"),
+    try
+        gen_server:call(Client2, {connect, make_protocol_factory(2)}),
+        io:format("FAIL.  Tethered client connected.~n", [])
+    catch
+        Kind:Info ->
+            io:format("PASS.  Caught tethered error.  ~p:~p~n", [Kind, Info])
+    end,
+    receive after 100 ->
+                    io:format("PASS.  Still alive after tethered death.~n"),
+                    % Hang around a little longer so our parent can verify.
+                    receive after 200 -> ok end
+    end,
+    %% Exit abnormally to kill our tethered extra client.
     exit(die).
