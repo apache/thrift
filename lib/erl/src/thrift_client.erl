@@ -22,7 +22,9 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/2, start_link/3, start_link/4, call/3, send_call/3, close/1]).
+-export([start_link/2, start_link/3, start_link/4,
+         start/3, start/4,
+         call/3, send_call/3, close/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -39,11 +41,16 @@
 %%====================================================================
 %%--------------------------------------------------------------------
 %% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
-%% Description: Starts the server
+%% Description: Starts the server as a linked process.
 %%--------------------------------------------------------------------
 start_link(Host, Port, Service) when is_integer(Port), is_atom(Service) ->
     start_link(Host, Port, Service, []).
 
+start_link(Host, Port, Service, Options) ->
+    start(Host, Port, Service, [{monitor, link} | Options]).
+
+start_link(ProtocolFactory, Service) ->
+    start(ProtocolFactory, Service, [{monitor, link}]).
 
 %%
 %% Splits client options into protocol options and transport options
@@ -51,27 +58,36 @@ start_link(Host, Port, Service) when is_integer(Port), is_atom(Service) ->
 %% split_options([Options...]) -> {ProtocolOptions, TransportOptions}
 %%
 split_options(Options) ->
-    split_options(Options, [], []).
+    split_options(Options, [], [], []).
 
-split_options([], ProtoIn, TransIn) ->
-    {ProtoIn, TransIn};
+split_options([], ClientIn, ProtoIn, TransIn) ->
+    {ClientIn, ProtoIn, TransIn};
 
-split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
+split_options([Opt = {OptKey, _} | Rest], ClientIn, ProtoIn, TransIn)
+  when OptKey =:= monitor ->
+    split_options(Rest, [Opt | ClientIn], ProtoIn, TransIn);
+
+split_options([Opt = {OptKey, _} | Rest], ClientIn, ProtoIn, TransIn)
   when OptKey =:= strict_read;
        OptKey =:= strict_write ->
-    split_options(Rest, [Opt | ProtoIn], TransIn);
+    split_options(Rest, ClientIn, [Opt | ProtoIn], TransIn);
 
-split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
+split_options([Opt = {OptKey, _} | Rest], ClientIn, ProtoIn, TransIn)
   when OptKey =:= framed;
        OptKey =:= connect_timeout;
        OptKey =:= sockopts ->
-    split_options(Rest, ProtoIn, [Opt | TransIn]).
+    split_options(Rest, ClientIn, ProtoIn, [Opt | TransIn]).
 
+
+%%--------------------------------------------------------------------
+%% Function: start() -> {ok,Pid} | ignore | {error,Error}
+%% Description: Starts the server as an unlinked process.
+%%--------------------------------------------------------------------
 
 %% Backwards-compatible starter for the common-case of socket transports
-start_link(Host, Port, Service, Options)
+start(Host, Port, Service, Options)
   when is_integer(Port), is_atom(Service), is_list(Options) ->
-    {ProtoOpts, TransOpts} = split_options(Options),
+    {ClientOpts, ProtoOpts, TransOpts} = split_options(Options),
 
     {ok, TransportFactory} =
         thrift_socket_transport:new_transport_factory(Host, Port, TransOpts),
@@ -79,13 +95,21 @@ start_link(Host, Port, Service, Options)
     {ok, ProtocolFactory} = thrift_binary_protocol:new_protocol_factory(
                               TransportFactory, ProtoOpts),
 
-    start_link(ProtocolFactory, Service).
+    start(ProtocolFactory, Service, ClientOpts).
 
 
 %% ProtocolFactory :: fun() -> thrift_protocol()
-start_link(ProtocolFactory, Service)
+start(ProtocolFactory, Service, ClientOpts)
   when is_function(ProtocolFactory), is_atom(Service) ->
-    case gen_server:start_link(?MODULE, [Service], []) of
+    Starter =
+        case lists:keysearch(monitor, 1, ClientOpts) of
+            {value, {monitor, link}} ->
+                start_link;
+            _ ->
+                start
+        end,
+
+    case gen_server:Starter(?MODULE, [Service], []) of
         {ok, Pid} ->
             case gen_server:call(Pid, {connect, ProtocolFactory}) of
                 ok ->
