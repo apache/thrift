@@ -106,12 +106,25 @@ class TimerManagerTests {
 
       assert(timerManager.state() == TimerManager::STARTED);
 
-      shared_ptr<TimerManagerTests::Task> task = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, timeout));
+      // Don't create task yet, because its constructor sets the expected completion time, and we
+      // need to delay between inserting the two tasks into the run queue.
+      shared_ptr<TimerManagerTests::Task> task;
 
       {
         Synchronized s(_monitor);
 
         timerManager.add(orphanTask, 10 * timeout);
+
+        try {
+          // Wait for 1 second in order to give timerManager a chance to start sleeping in response
+          // to adding orphanTask. We need to do this so we can verify that adding the second task
+          // kicks the dispatcher out of the current wait and starts the new 1 second wait.
+          _monitor.wait (1000);
+          assert (0 == "ERROR: This wait should time out. TimerManager dispatcher may have a problem.");
+        } catch (TimedOutException &ex) {
+        }
+
+        task.reset (new TimerManagerTests::Task(_monitor, timeout));
 
         timerManager.add(task, timeout);
 
