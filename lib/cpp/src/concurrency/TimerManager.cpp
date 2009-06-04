@@ -208,9 +208,7 @@ void TimerManager::stop() {
 
   if (doStop) {
     // Clean up any outstanding tasks
-    for (task_iterator ix =  taskMap_.begin(); ix != taskMap_.end(); ix++) {
-      taskMap_.erase(ix);
-    }
+    taskMap_.clear();
 
     // Remove dispatcher's reference to us.
     dispatcher_->manager_ = NULL;
