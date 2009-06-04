@@ -109,16 +109,33 @@ start(ProtocolFactory, Service, ClientOpts)
                 start
         end,
 
-    case gen_server:Starter(?MODULE, [Service], []) of
-        {ok, Pid} ->
-            case gen_server:call(Pid, {connect, ProtocolFactory}) of
-                ok ->
-                    {ok, Pid};
-                Error ->
-                    Error
+    Connect =
+        case lists:keysearch(connect, 1, ClientOpts) of
+            {value, {connect, Choice}} ->
+                Choice;
+            _ ->
+                %% By default, connect at creation-time.
+                true
+        end,
+
+
+    Started = gen_server:Starter(?MODULE, [Service], []),
+
+    if
+        Connect ->
+            case Started of
+                {ok, Pid} ->
+                    case gen_server:call(Pid, {connect, ProtocolFactory}) of
+                        ok ->
+                            {ok, Pid};
+                        Error ->
+                            Error
+                    end;
+                Else ->
+                    Else
             end;
-        Else ->
-            Else
+        true ->
+            Started
     end.
 
 call(Client, Function, Args)

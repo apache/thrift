@@ -62,6 +62,9 @@ check_extras(N) ->
             io:format("FAIL.  Expected ~p more clients.~n", [N])
     end.
 
+make_thrift_client(Opts) ->
+     thrift_client:start(fun()->ok end, thriftTest_thrift, Opts).
+
 make_protocol_factory(Port) ->
     {ok, TransportFactory} =
         thrift_socket_transport:new_transport_factory(
@@ -73,9 +76,9 @@ make_protocol_factory(Port) ->
 
 
 test_start() ->
-    {ok, Client1} = gen_server:start(thrift_client, [thriftTest_thrift], []),
+    {ok, Client1} = make_thrift_client([{connect, false}]),
     tester ! {client, unlinked, Client1},
-    {ok, Client2} = gen_server:start(thrift_client, [thriftTest_thrift], []),
+    {ok, Client2} = make_thrift_client([{connect, false}]),
     io:format("PASS.  Unlinked clients created.~n"),
     try
         gen_server:call(Client2, {connect, make_protocol_factory(2)}),
@@ -93,9 +96,9 @@ test_start() ->
     exit(die).
 
 test_linked() ->
-    {ok, Client1} = gen_server:start_link(thrift_client, [thriftTest_thrift], []),
+    {ok, Client1} = make_thrift_client([{connect, false}, {monitor, link}]),
     tester ! {client, linked, Client1},
-    {ok, Client2} = gen_server:start_link(thrift_client, [thriftTest_thrift], []),
+    {ok, Client2} = make_thrift_client([{connect, false}, {monitor, link}]),
     io:format("PASS.  Linked clients created.~n"),
     try
         gen_server:call(Client2, {connect, make_protocol_factory(2)}),
