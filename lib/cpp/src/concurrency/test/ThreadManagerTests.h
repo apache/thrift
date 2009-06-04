@@ -282,7 +282,19 @@ public:
       try {
         threadManager->add(extraTask, 1);
         throw TException("Unexpected success adding task in excess of pending task count");
+      } catch(TooManyPendingTasksException& e) {
+        throw TException("Should have timed out adding task in excess of pending task count");
       } catch(TimedOutException& e) {
+        // Expected result
+      }
+
+      try {
+        threadManager->add(extraTask, -1);
+        throw TException("Unexpected success adding task in excess of pending task count");
+      } catch(TimedOutException& e) {
+        throw TException("Unexpected timeout adding task in excess of pending task count");
+      } catch(TooManyPendingTasksException& e) {
+        // Expected result
       }
 
       std::cout << "\t\t\t" << "Pending tasks " << threadManager->pendingTaskCount()  << std::endl;
@@ -351,6 +363,7 @@ public:
       }
 
     } catch(TException& e) {
+      std::cout << "ERROR: " << e.what() << std::endl;
     }
 
     std::cout << "\t\t\t" << (success ? "Success" : "Failure") << std::endl;
