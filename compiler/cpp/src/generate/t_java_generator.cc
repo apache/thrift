@@ -279,7 +279,8 @@ string t_java_generator::java_type_imports() {
     "import java.util.HashMap;\n" +
     "import java.util.Set;\n" +
     "import java.util.HashSet;\n" +
-    "import java.util.Collections;\n\n";
+    "import java.util.Collections;\n" +
+    "import org.apache.log4j.Logger;\n\n";
 }
 
 /**
@@ -1940,6 +1941,8 @@ void t_java_generator::generate_service_server(t_service* tservice) {
     "public static class Processor" << extends_processor << " implements TProcessor {" << endl;
   indent_up();
 
+  indent(f_service_) << "private static final Logger LOGGER = Logger.getLogger(Processor.class.getName());" << endl;
+
   indent(f_service_) <<
     "public Processor(Iface iface)" << endl;
   scope_up(f_service_);
@@ -2128,7 +2131,18 @@ void t_java_generator::generate_process_function(t_service* tservice,
         f_service_ << "}";
       }
     }
-    f_service_ << endl;
+    f_service_ << " catch (Throwable th) {" << endl;
+    indent_up();
+    f_service_ <<
+      indent() << "LOGGER.error(\"Internal error processing " << tfunction->get_name() << "\", th);" << endl <<
+      indent() << "TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, \"Internal error processing " << tfunction->get_name() << "\");" << endl <<
+      indent() << "oprot.writeMessageBegin(new TMessage(\"" << tfunction->get_name() << "\", TMessageType.EXCEPTION, seqid));" << endl <<
+      indent() << "x.write(oprot);" << endl <<
+      indent() << "oprot.writeMessageEnd();" << endl <<
+      indent() << "oprot.getTransport().flush();" << endl <<
+      indent() << "return;" << endl;
+    indent_down();
+    f_service_ << indent() << "}" << endl;
   }
 
   // Shortcut out here for oneway functions

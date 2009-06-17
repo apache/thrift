@@ -43,6 +43,7 @@ public class TApplicationException extends TException {
   public static final int WRONG_METHOD_NAME = 3;
   public static final int BAD_SEQUENCE_ID = 4;
   public static final int MISSING_RESULT = 5;
+  public static final int INTERNAL_ERROR = 6;
 
   protected int type_ = UNKNOWN;
 
