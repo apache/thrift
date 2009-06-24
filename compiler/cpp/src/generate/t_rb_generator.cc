@@ -299,9 +299,26 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
       indent() << name << " = " << value << endl;
   }
   
+  //Create a hash mapping values back to their names (as strings) since ruby has no native enum type
+  indent(f_types_) << "VALUE_MAP = {";
+  bool first = true;
+  value = -1;
+  for(c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+    //Populate the hash
+    //If no value is given, use the next available one
+    if ((*c_iter)->has_value())
+      value = (*c_iter)->get_value();
+    else ++value;
+    
+    first ? first = false : f_types_ << ", ";
+    f_types_ << value << " => \"" << capitalize((*c_iter)->get_name()) << "\"";
+    
+  }
+  f_types_ << "}" << endl;
+  
   // Create a set with valid values for this enum
   indent(f_types_) << "VALID_VALUES = Set.new([";
-  bool first = true;
+  first = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     // Populate the set
     first ? first = false: f_types_ << ", ";
