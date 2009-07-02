@@ -95,13 +95,13 @@
   </Target>
   -->
   <PropertyGroup>
-    <PreBuildEvent>rmdir /s /q $(ProjectDir)gen-csharp
-del /f /q $(ProjectDir)ThriftImpl.dll
-
-$(ProjectDir)\..\..\..\compiler\cpp\thrift.exe -csharp -o $(ProjectDir) $(ProjectDir)\..\..\ThriftTest.thrift
-
-cd $(ProjectDir)
-
-$(MSBuildToolsPath)\Csc.exe /t:library /out:.\ThriftImpl.dll /recurse:.\gen-csharp\* /reference:$(ProjectDir)..\..\..\lib\csharp\src\bin\Debug\Thrift.dll</PreBuildEvent>
+    <PreBuildEvent>rmdir /s /q "$(ProjectDir)gen-csharp"
+del /f /q "$(ProjectDir)ThriftImpl.dll"
+SET OUTPUT_DIR=$(ProjectDir)
+SET THRIFT_FILE=$(ProjectDir)\..\..\ThriftTest.thrift
+for %25%25I in ("%25OUTPUT_DIR%25") do set SHORT_DIR=%25%25~fsI
+for %25%25I in ("%25THRIFT_FILE%25") do set THRIFT_SHORT=%25%25~fsI
+"$(ProjectDir)\..\..\..\compiler\cpp\thrift.exe" --gen csharp -o %25SHORT_DIR%25 %25THRIFT_SHORT%25
+$(MSBuildToolsPath)\Csc.exe /t:library /out:"$(ProjectDir)ThriftImpl.dll" /recurse:"$(ProjectDir)gen-csharp"\* /reference:"$(ProjectDir)..\..\..\lib\csharp\src\bin\Debug\Thrift.dll"</PreBuildEvent>
   </PropertyGroup>
 </Project>
