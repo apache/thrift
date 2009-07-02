@@ -410,7 +410,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
   indent(out) << "[Serializable]" << endl;
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
  
-  indent(out) << "public " << (is_final ? "sealed " : "") << "class " << tstruct->get_name() << " : ";
+  indent(out) << "public " << (is_final ? "sealed " : "") << "partial class " << tstruct->get_name() << " : ";
 
   if (is_exception) {
     out << "Exception, ";
