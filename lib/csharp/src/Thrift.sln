@@ -11,22 +11,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThriftMSBuildTask", "..\ThriftMSBuildTask\ThriftMSBuildTask.csproj", "{EC0A0231-66EA-4593-A792-C6CA3BB8668E}"
 EndProject
 Global
-	GlobalSection(SourceCodeControl) = preSolution
-		SccNumberOfProjects = 4
-		SccProjectName0 = Perforce\u0020Project
-		SccLocalPath0 = ..\\..\\..
-		SccProvider0 = MSSCCI:Perforce\u0020SCM
-		SccProjectFilePathRelativizedFromConnection0 = lib\\csharp\\src\\
-		SccProjectUniqueName1 = Thrift.csproj
-		SccLocalPath1 = ..\\..\\..
-		SccProjectFilePathRelativizedFromConnection1 = lib\\csharp\\src\\
-		SccProjectUniqueName2 = ..\\..\\..\\test\\csharp\\ThriftTest\\ThriftTest.csproj
-		SccLocalPath2 = ..\\..\\..
-		SccProjectFilePathRelativizedFromConnection2 = test\\csharp\\ThriftTest\\
-		SccProjectUniqueName3 = ..\\ThriftMSBuildTask\\ThriftMSBuildTask.csproj
-		SccLocalPath3 = ..\\..\\..
-		SccProjectFilePathRelativizedFromConnection3 = lib\\csharp\\ThriftMSBuildTask\\
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
