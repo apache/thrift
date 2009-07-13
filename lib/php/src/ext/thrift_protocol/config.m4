@@ -8,6 +8,8 @@ PHP_ARG_ENABLE(thrift_protocol, whether to enable the thrift_protocol extension,
 
 if test "$PHP_THRIFT_PROTOCOL" != "no"; then
   PHP_REQUIRE_CXX()
+  PHP_ADD_LIBRARY_WITH_PATH(stdc++, "", THRIFT_PROTOCOL_SHARED_LIBADD)
+  PHP_SUBST(THRIFT_PROTOCOL_SHARED_LIBADD)
   PHP_NEW_EXTENSION(thrift_protocol, php_thrift_protocol.cpp, $ext_shared)
 fi
 
