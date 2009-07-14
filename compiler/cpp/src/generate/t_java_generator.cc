@@ -1096,7 +1096,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
         indent() << "if (this." << (*f_iter)->get_name() << " != null) {" << endl;
       indent_up();
     }
-    bool optional = bean_style_ && (*f_iter)->get_req() == t_field::T_OPTIONAL;
+    bool optional = (*f_iter)->get_req() == t_field::T_OPTIONAL;
     if (optional) {
       indent(out) << "if (" << generate_isset_check((*f_iter)) << ") {" << endl;
       indent_up();
