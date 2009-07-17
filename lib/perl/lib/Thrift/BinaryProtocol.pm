@@ -477,7 +477,7 @@ sub readStringBody
 #
 # Binary Protocol Factory
 #
-package TBinaryProtocolFactory;
+package Thrift::BinaryProtocolFactory;
 use base('TProtocolFactory');
 
 sub new
@@ -492,7 +492,7 @@ sub getProtocol{
     my $self  = shift;
     my $trans = shift;
 
-    return new TBinaryProtocol($trans);
+    return new Thrift::BinaryProtocol($trans);
 }
 
 1;

@@ -28,4 +28,4 @@ gen-perl/ThriftTest/Types.pm: $(THRIFT_IF)
 clean-local:
 	rm -rf gen-perl
 
-EXTRA_DIST = memory_buffer.t
+EXTRA_DIST = memory_buffer.t processor.t

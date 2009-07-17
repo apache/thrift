@@ -781,7 +781,7 @@ void t_perl_generator::generate_service_processor(t_service* tservice) {
   // HOT: check for method implementation
   f_service_ <<
     indent() << "my $methodname = 'process_'.$fname;" << endl <<
-    indent() << "if (!method_exists($self, $methodname)) {" << endl;
+    indent() << "if (!$self->can($methodname)) {" << endl;
 
   f_service_ <<
     indent() << "  $input->skip(TType::STRUCT);" << endl <<
@@ -824,7 +824,7 @@ void t_perl_generator::generate_process_function(t_service* tservice,
 
   f_service_ <<
     indent() << "my $self = shift;"<<endl<<
-    indent() << "my ($seqid, $input, $output); " << endl;
+    indent() << "my ($seqid, $input, $output) = @_;" << endl;
 
   string argsname = perl_namespace(tservice->get_program()) + service_name_ + "_" + tfunction->get_name() + "_args";
   string resultname = perl_namespace(tservice->get_program()) + service_name_ + "_" + tfunction->get_name() + "_result";
