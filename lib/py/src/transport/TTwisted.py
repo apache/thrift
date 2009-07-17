@@ -57,7 +57,7 @@ class TCallbackTransport(TMessageSenderTransport):
 
 class ThriftClientProtocol(basic.Int32StringReceiver):
 
-    MAX_LENGTH = 2 ** 31
+    MAX_LENGTH = 2 ** 31 - 1
 
     def __init__(self, client_class, iprot_factory, oprot_factory=None):
         self._client_class = client_class
@@ -101,7 +101,7 @@ class ThriftClientProtocol(basic.Int32StringReceiver):
 
 class ThriftServerProtocol(basic.Int32StringReceiver):
 
-    MAX_LENGTH = 2 ** 31
+    MAX_LENGTH = 2 ** 31 - 1
 
     def dispatch(self, msg):
         self.sendString(msg)
