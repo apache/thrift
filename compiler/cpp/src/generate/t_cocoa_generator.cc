@@ -385,7 +385,7 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
     if ((*c_iter)->get_type()->is_container() ||
         (*c_iter)->get_type()->is_struct()) {
       string name = (*c_iter)->get_name();
-      f_impl_ << indent() << name << " = " << render_const_value(name,
+      f_impl_ << indent() << cocoa_prefix_ << name << " = " << render_const_value(name,
                                                                  (*c_iter)->get_type(),
                                                                  (*c_iter)->get_value());
       f_impl_ << ";" << endl;
@@ -400,7 +400,7 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
     f_impl_ <<
       "+ (" << type_name(type) << ") " << name;
     scope_up(f_impl_);
-    indent(f_impl_) << "return " << name << ";" << endl;
+    indent(f_impl_) << "return " << cocoa_prefix_ << name << ";" << endl;
     scope_down(f_impl_);
   }
 
