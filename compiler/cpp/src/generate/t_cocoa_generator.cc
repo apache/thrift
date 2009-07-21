@@ -169,6 +169,8 @@ class t_cocoa_generator : public t_oop_generator {
   std::string type_name(t_type* ttype, bool class_ref=false);
   std::string base_type_name(t_base_type* tbase);
   std::string declare_field(t_field* tfield);
+  std::string declare_property(t_field* tfield);
+  std::string synthesize_property(t_field* tfield);
   std::string function_signature(t_function* tfunction);
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
@@ -471,6 +473,15 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream &out,
   scope_down(out);
   out << endl;
 
+  // properties
+  if (members.size() > 0) {
+    out << "#if TARGET_OS_IPHONE || (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5)" << endl;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      out << indent() << declare_property(*m_iter) << endl;
+    }
+    out << "#endif" << endl << endl;
+  }
+
   // initializer for all fields
   if (!members.empty()) {
     generate_cocoa_struct_initializer_signature(out, tstruct);
@@ -545,7 +556,7 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream &out,
                                                              bool is_exception,
                                                              bool is_result) {
   indent(out) <<
-    "@implementation " << cocoa_prefix_ << tstruct->get_name() << endl;
+    "@implementation " << cocoa_prefix_ << tstruct->get_name() << endl << endl;
 
   // exceptions need to call the designated initializer on NSException
   if (is_exception) {
@@ -556,8 +567,19 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream &out,
     scope_down(out);
   }
 
-  // initializer with all fields as params
   const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  // synthesize properties
+  if (!members.empty()) {
+    out << "#if TARGET_OS_IPHONE || (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5)" << endl;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      out << indent() << synthesize_property(*m_iter) << endl;
+    }
+    out << "#endif" << endl << endl;
+  }
+
+  // initializer with all fields as params
   if (!members.empty()) {
     generate_cocoa_struct_initializer_signature(out, tstruct);
     out << endl;
@@ -568,7 +590,6 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream &out,
       out << indent() << "self = [super init];" << endl;
     }
 
-    vector<t_field*>::const_iterator m_iter;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
       out << indent() << "__" << (*m_iter)->get_name() << " = ";
@@ -590,7 +611,6 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream &out,
     out << "- (void) dealloc" << endl;
     scope_up(out);
 
-    vector<t_field*>::const_iterator m_iter;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
       if (type_can_be_null(t)) {
@@ -1953,6 +1973,34 @@ string t_cocoa_generator::render_const_value(string name,
  */
 string t_cocoa_generator::declare_field(t_field* tfield) {
   return type_name(tfield->get_type()) + " __" + tfield->get_name() + ";";
+}
+
+/**
+ * Declares an Objective-C 2.0 property.
+ *
+ * @param tfield The field to declare a property for
+ */
+string t_cocoa_generator::declare_property(t_field* tfield) {
+  std::ostringstream render;
+  render << "@property (nonatomic, ";
+
+  if (type_can_be_null(tfield->get_type()))
+    render << "retain, ";
+  
+  render << "getter=" << decapitalize(tfield->get_name()) <<
+    ", setter=set" << capitalize(tfield->get_name()) + ":) " <<
+    type_name(tfield->get_type()) << " " << tfield->get_name() << ";";
+
+  return render.str();
+}
+
+/**
+ * Synthesizes an Objective-C 2.0 property.
+ *
+ * @param tfield The field to synthesize a property for
+ */
+string t_cocoa_generator::synthesize_property(t_field* tfield) {
+  return "@synthesize " + tfield->get_name() + ";";
 }
 
 /**
