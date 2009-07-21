@@ -43,6 +43,11 @@ class t_cocoa_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    std::map<std::string, std::string>::const_iterator iter;
+    
+    iter = parsed_options.find("log_unexpected");
+    log_unexpected_ = (iter != parsed_options.end());    
+    
     out_dir_base_ = "gen-cocoa";
   }
 
@@ -194,6 +199,7 @@ class t_cocoa_generator : public t_oop_generator {
   std::ofstream f_header_;
   std::ofstream f_impl_;
 
+  bool log_unexpected_;
 };
 
 
@@ -679,18 +685,22 @@ void t_cocoa_generator::generate_cocoa_struct_reader(ofstream& out,
         }
 
         indent_down();
-        out <<
-          indent() << "} else { " << endl <<
-          indent() << "  [TProtocolUtil skipType: fieldType onProtocol: inProtocol];" << endl <<
+        out << indent() << "} else { " << endl;
+        if (log_unexpected_) {
+          out << indent() << "  NSLog(@\"%s: field ID %i has unexpected type %i.  Skipping.\", __PRETTY_FUNCTION__, fieldID, fieldType);" << endl;
+        }
+        out << indent() << "  [TProtocolUtil skipType: fieldType onProtocol: inProtocol];" << endl <<
           indent() << "}" << endl <<
           indent() << "break;" << endl;
         indent_down();
       }
 
       // In the default case we skip the field
-      out <<
-        indent() << "default:" << endl <<
-        indent() << "  [TProtocolUtil skipType: fieldType onProtocol: inProtocol];" << endl <<
+      out << indent() << "default:" << endl;
+      if (log_unexpected_) {
+        out << indent() << "  NSLog(@\"%s: unexpected field ID %i with type %i.  Skipping.\", __PRETTY_FUNCTION__, fieldID, fieldType);" << endl;
+      }
+      out << indent() << "  [TProtocolUtil skipType: fieldType onProtocol: inProtocol];" << endl <<
         indent() << "  break;" << endl;
 
       scope_down(out);
@@ -2076,4 +2086,6 @@ string t_cocoa_generator::call_field_setter(t_field* tfield, string fieldName) {
 }
 
 
-THRIFT_REGISTER_GENERATOR(cocoa, "Cocoa", "");
+THRIFT_REGISTER_GENERATOR(cocoa, "Cocoa",
+"    log_unexpected:  Log every time an unexpected field ID or type is encountered.\n"
+);
