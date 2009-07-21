@@ -1486,11 +1486,15 @@ void t_cocoa_generator::generate_deserialize_map_element(ofstream& out,
     " forKey: " << containerize(keyType, key) << "];" << endl;
 
   if (type_can_be_null(keyType)) {
-    indent(out) << "[" << containerize(keyType, key) << " release];" << endl;
+    if (!(get_true_type(keyType)->is_string())) {
+      indent(out) << "[" << containerize(keyType, key) << " release];" << endl;
+    }
   }
 
   if (type_can_be_null(valType)) {
-    indent(out) << "[" << containerize(valType, val) << " release];" << endl;
+    if (!(get_true_type(valType)->is_string())) {
+      indent(out) << "[" << containerize(valType, val) << " release];" << endl;
+    }
   }
 }
 
@@ -1510,7 +1514,10 @@ void t_cocoa_generator::generate_deserialize_set_element(ofstream& out,
     "[" << fieldName << " addObject: " << containerize(type, elem) << "];" << endl;
 
   if (type_can_be_null(type)) {
-    indent(out) << "[" << containerize(type, elem) << " release];" << endl;
+    // deserialized strings are autorelease, so don't release them
+    if (!(get_true_type(type)->is_string())) {
+      indent(out) << "[" << containerize(type, elem) << " release];" << endl;
+    }
   }
 }
 
@@ -1530,7 +1537,9 @@ void t_cocoa_generator::generate_deserialize_list_element(ofstream& out,
     "[" << fieldName << " addObject: " << containerize(type, elem) << "];" << endl;
 
   if (type_can_be_null(type)) {
-    indent(out) << "[" << containerize(type, elem) << " release];" << endl;
+    if (!(get_true_type(type)->is_string())) {
+      indent(out) << "[" << containerize(type, elem) << " release];" << endl;
+    }
   }
 }
 
