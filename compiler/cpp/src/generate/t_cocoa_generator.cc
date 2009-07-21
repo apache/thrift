@@ -966,7 +966,7 @@ void t_cocoa_generator::generate_cocoa_struct_description(ofstream& out,
   }
   out <<
     indent() << "[ms appendString: @\")\"];" << endl <<
-    indent() << "return [ms copy];" << endl;
+    indent() << "return [NSString stringWithString: ms];" << endl;
 
   indent_down();
   indent(out) << "}" << endl <<
