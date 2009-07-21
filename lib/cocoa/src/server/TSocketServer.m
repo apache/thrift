@@ -22,54 +22,77 @@
 #import "TNSFileHandleTransport.h"
 #import "TProtocol.h"
 #import "TTransportException.h"
+#import <sys/socket.h>
+#include <netinet/in.h>
+
+
+
+NSString * const kTSocketServer_ClientConnectionFinishedForProcessorNotification = @"TSocketServer_ClientConnectionFinishedForProcessorNotification";
+NSString * const kTSocketServer_ProcessorKey = @"TSocketServer_Processor";
+NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
 
 
 @implementation TSocketServer
 
 - (id) initWithPort: (int) port
     protocolFactory: (id <TProtocolFactory>) protocolFactory
-          processor: (id <TProcessor>) processor;
+   processorFactory: (id <TProcessorFactory>) processorFactory;
 {
   self = [super init];
 
   mInputProtocolFactory = [protocolFactory retain];
   mOutputProtocolFactory = [protocolFactory retain];
-  mProcessor = [processor retain];
+  mProcessorFactory = [processorFactory retain];
 
-  // create a socket
-  mServerSocket = [[NSSocketPort alloc] initWithTCPPort: port];
-  // FIXME - move this separate start method and add method to close
-  // and cleanup any open ports
+  // create a socket.
+  int fd = -1;
+  CFSocketRef socket = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL);
+  if (socket) {
+    fd = CFSocketGetNative(socket);
+    int yes = 1;
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
 
-  if (mServerSocket == nil) {
-    NSLog(@"Unable to listen on TCP port %d", port);
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_len = sizeof(addr);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    NSData *address = [NSData dataWithBytes:&addr length:sizeof(addr)];
+    if (CFSocketSetAddress(socket, (CFDataRef)address) != kCFSocketSuccess) {
+      NSLog(@"*** Could not bind to address");
+      return nil;
+    }
   } else {
-    NSLog(@"Listening on TCP port %d", port);
-
-    // wrap it in a file handle so we can get messages from it
-    mSocketFileHandle = [[NSFileHandle alloc] initWithFileDescriptor: [mServerSocket socket]
-                                                      closeOnDealloc: YES];
-
-    // register for notifications of accepted incoming connections
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(connectionAccepted:)
-                                                 name: NSFileHandleConnectionAcceptedNotification
-                                               object: mSocketFileHandle];
-
-    // tell socket to listen
-    [mSocketFileHandle acceptConnectionInBackgroundAndNotify];
+    NSLog(@"*** No server socket");
+    return nil;
   }
-
+  
+  // wrap it in a file handle so we can get messages from it
+  mSocketFileHandle = [[NSFileHandle alloc] initWithFileDescriptor: fd
+                                                    closeOnDealloc: YES];
+  
+    // register for notifications of accepted incoming connections
+  [[NSNotificationCenter defaultCenter] addObserver: self
+                                           selector: @selector(connectionAccepted:)
+                                               name: NSFileHandleConnectionAcceptedNotification
+                                             object: mSocketFileHandle];
+  
+  // tell socket to listen
+  [mSocketFileHandle acceptConnectionInBackgroundAndNotify];
+  
+  NSLog(@"Listening on TCP port %d", port);
+  
   return self;
 }
 
 
 - (void) dealloc {
+  [[NSNotificationCenter defaultCenter] removeObject: self];
   [mInputProtocolFactory release];
   [mOutputProtocolFactory release];
-  [mProcessor release];
+  [mProcessorFactory release];
   [mSocketFileHandle release];
-  [mServerSocket release];
   [super dealloc];
 }
 
@@ -90,19 +113,35 @@
 - (void) handleClientConnection: (NSFileHandle *) clientSocket
 {
   NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-
+  
   TNSFileHandleTransport * transport = [[TNSFileHandleTransport alloc] initWithFileHandle: clientSocket];
-
+  id<TProcessor> processor = [mProcessorFactory processorForTransport: transport];
+  
   id <TProtocol> inProtocol = [mInputProtocolFactory newProtocolOnTransport: transport];
   id <TProtocol> outProtocol = [mOutputProtocolFactory newProtocolOnTransport: transport];
 
   @try {
-    while ([mProcessor processOnInputProtocol: inProtocol outputProtocol: outProtocol]);
+    BOOL result = NO;
+    do {
+      NSAutoreleasePool * myPool = [[NSAutoreleasePool alloc] init];
+      result = [processor processOnInputProtocol: inProtocol outputProtocol: outProtocol];
+      [myPool release];
+    } while (result);
   }
   @catch (TTransportException * te) {
-    NSLog(@"%@", te);
+    //NSLog(@"Caught transport exception, abandoning client connection: %@", te);
   }
 
+  NSNotification * n = [NSNotification notificationWithName: kTSocketServer_ClientConnectionFinishedForProcessorNotification
+                                                     object: self
+                                                   userInfo: [NSDictionary dictionaryWithObjectsAndKeys: 
+                                                              processor,
+                                                              kTSocketServer_ProcessorKey,
+                                                              transport,
+                                                              kTSockerServer_TransportKey,
+                                                              nil]];
+  [[NSNotificationCenter defaultCenter] performSelectorOnMainThread: @selector(postNotification:) withObject: n waitUntilDone: YES];
+  
   [pool release];
 }
 

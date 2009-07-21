@@ -72,8 +72,12 @@
                                                      length: length
                                                freeWhenDone: NO];
 
-  [mOutputFileHandle writeData: dataObject];
-
+  @try {
+    [mOutputFileHandle writeData: dataObject];
+  } @catch (NSException * e) {
+    @throw [TTransportException exceptionWithName: @"TTransportException"
+                                           reason: [NSString stringWithFormat: @"%s: Unable to write data: %@", __PRETTY_FUNCTION__, e]];
+  }
 
   [dataObject release];
 }

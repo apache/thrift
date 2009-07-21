@@ -91,6 +91,7 @@ class t_cocoa_generator : public t_oop_generator {
   void generate_cocoa_struct_description(std::ofstream& out, t_struct* tstruct);
 
   std::string function_result_helper_struct_type(t_function* tfunction);
+  std::string function_args_helper_struct_type(t_function* tfunction);
   void generate_function_helpers(t_function* tfunction);
 
   /**
@@ -100,6 +101,8 @@ class t_cocoa_generator : public t_oop_generator {
   void generate_cocoa_service_protocol (std::ofstream& out, t_service* tservice);
   void generate_cocoa_service_client_interface (std::ofstream& out, t_service* tservice);
   void generate_cocoa_service_client_implementation (std::ofstream& out, t_service* tservice);
+  void generate_cocoa_service_server_interface (std::ofstream& out, t_service* tservice);
+  void generate_cocoa_service_server_implementation (std::ofstream& out, t_service* tservice);
   void generate_cocoa_service_helpers   (t_service* tservice);
   void generate_service_client    (t_service* tservice);
   void generate_service_server    (t_service* tservice);
@@ -265,6 +268,7 @@ string t_cocoa_generator::cocoa_thrift_imports() {
     "#import <TProtocol.h>\n" +
     "#import <TApplicationException.h>\n" +
     "#import <TProtocolUtil.h>\n" +
+    "#import <TProcessor.h>\n" +
     "\n";
 
   // Include other Thrift includes
@@ -983,8 +987,10 @@ void t_cocoa_generator::generate_cocoa_struct_description(ofstream& out,
 void t_cocoa_generator::generate_service(t_service* tservice) {
   generate_cocoa_service_protocol(f_header_, tservice);
   generate_cocoa_service_client_interface(f_header_, tservice);
+  generate_cocoa_service_server_interface(f_header_, tservice);
   generate_cocoa_service_helpers(tservice);
   generate_cocoa_service_client_implementation(f_impl_, tservice);
+  generate_cocoa_service_server_implementation(f_impl_, tservice);
 }
 
 
@@ -997,12 +1003,20 @@ void t_cocoa_generator::generate_cocoa_service_helpers(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    t_struct* ts = (*f_iter)->get_arglist();
+    generate_cocoa_struct_interface(f_impl_, ts, false);
+    generate_cocoa_struct_implementation(f_impl_, ts, false, false);  
     generate_function_helpers(*f_iter);
   }
 }
 
 string t_cocoa_generator::function_result_helper_struct_type(t_function* tfunction) {
-  return capitalize(tfunction->get_name()) + "Result_";
+  return capitalize(tfunction->get_name()) + "_result";
+}
+
+
+string t_cocoa_generator::function_args_helper_struct_type(t_function* tfunction) {
+  return tfunction->get_name() + "_args";
 }
 
 
@@ -1033,8 +1047,9 @@ void t_cocoa_generator::generate_function_helpers(t_function* tfunction) {
 
   // generate the result struct
   generate_cocoa_struct_interface(f_impl_, &result, false);
-  generate_cocoa_struct_implementation(f_impl_, &result, false, true);
+  generate_cocoa_struct_implementation(f_impl_, &result, false, true);  
 }
+
 
 /**
  * Generates a service protocol definition.
@@ -1079,6 +1094,28 @@ void t_cocoa_generator::generate_cocoa_service_client_interface(ofstream& out,
 
   out << "- (id) initWithProtocol: (id <TProtocol>) protocol;" << endl;
   out << "- (id) initWithInProtocol: (id <TProtocol>) inProtocol outProtocol: (id <TProtocol>) outProtocol;" << endl;
+  out << "@end" << endl << endl;
+}
+
+
+/**
+ * Generates a service server interface definition. In other words, the TProcess implementation for the
+ * service definition.
+ *
+ * @param tservice The service to generate a client interface definition for
+ */
+void t_cocoa_generator::generate_cocoa_service_server_interface(ofstream& out,
+                                                                t_service* tservice) {
+  out << "@interface " << cocoa_prefix_ << tservice->get_name() << "Processor : NSObject <TProcessor> ";
+  
+  scope_up(out);
+  out << indent() << "id <" << cocoa_prefix_ << tservice->get_name() <<"> mService;" << endl;
+  out << indent() << "NSDictionary * mMethodMap;" << endl;
+  scope_down(out);
+  
+  out << "- (id) initWith" << tservice->get_name() << ": (id <" << cocoa_prefix_ << tservice->get_name() << ">) service;" << endl;
+  out << "- (id<"<<cocoa_prefix_ << tservice->get_name() << ">) service;" << endl;
+
   out << "@end" << endl << endl;
 }
 
@@ -1274,6 +1311,152 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
     scope_down(out);
     out << endl;
   }
+
+  indent_down();
+
+  out << "@end" << endl << endl;
+}
+
+
+/**
+ * Generates a service server implementation.  In other words the actual TProcessor implementation
+ * for the service.
+ *
+ * @param tservice The service to generate an implementation for
+ */
+void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& out,
+                                                                     t_service* tservice) {
+  out << "@implementation " << cocoa_prefix_ << tservice->get_name() << "Processor" << endl;
+  indent_up();
+  
+  // initializer
+  out << endl;
+  out << "- (id) initWith" << tservice->get_name() << ": (id <" << cocoa_prefix_ << tservice->get_name() << ">) service" << endl;
+  scope_up(out);
+  out << indent() << "self = [super init];" << endl;
+  out << indent() << "if (!self) {" << endl;
+  out << indent() << "  return nil;" << endl;
+  out << indent() << "}" << endl;
+  out << indent() << "mService = [service retain];" << endl;
+  out << indent() << "mMethodMap = [[NSMutableDictionary dictionary] retain];" << endl;
+  
+  // generate method map for routing incoming calls
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::const_iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    string funname = (*f_iter)->get_name();
+    scope_up(out);
+    out << indent() << "SEL s = @selector(process_" << funname << "_withSequenceID:inProtocol:outProtocol:);" << endl;
+    out << indent() << "NSMethodSignature * sig = [self methodSignatureForSelector: s];" << endl;
+    out << indent() << "NSInvocation * invocation = [NSInvocation invocationWithMethodSignature: sig];" << endl;
+    out << indent() << "[invocation setSelector: s];" << endl;
+    out << indent() << "[invocation retainArguments];" << endl;
+    out << indent() << "[mMethodMap setValue: invocation forKey: @\"" << funname << "\"];" << endl;
+    scope_down(out);
+  }
+  out << indent() << "return self;" << endl;
+  scope_down(out);
+  
+  // implementation of the 'service' method which returns the service associated with this
+  // processor
+  out << endl;
+  out << indent() << "- (id<"<<cocoa_prefix_ << tservice->get_name() << ">) service" << endl;
+  out << indent() << "{" << endl;
+  out << indent() << "  return [[mService retain] autorelease];" << endl;
+  out << indent() << "}" << endl;
+  
+  // implementation of the TProcess method, which dispatches the incoming call using the method map
+  out << endl;
+  out << indent() << "- (BOOL) processOnInputProtocol: (id <TProtocol>) inProtocol" << endl;
+  out << indent() << "                 outputProtocol: (id <TProtocol>) outProtocol" <<endl;
+  out << indent() << "{" << endl;
+  out << indent() << "  NSString * messageName;" << endl;
+  out << indent() << "  int messageType;" << endl;
+  out << indent() << "  int seqID;" << endl;
+  out << indent() << "  [inProtocol readMessageBeginReturningName: &messageName" << endl;
+  out << indent() << "                                       type: &messageType" << endl;
+  out << indent() << "                                 sequenceID: &seqID];" << endl;
+  out << indent() << "  NSInvocation * invocation = [mMethodMap valueForKey: messageName];" << endl;
+  out << indent() << "  if (invocation == nil) {" << endl;
+  out << indent() << "    [TProtocolUtil skipType: TType_STRUCT onProtocol: inProtocol];" << endl;
+  out << indent() << "    [inProtocol readMessageEnd];" << endl;
+  out << indent() << "    TApplicationException * x = [TApplicationException exceptionWithType: TApplicationException_UNKNOWN_METHOD reason: [NSString stringWithFormat: @\"Invalid method name: '%@'\", messageName]];" << endl;
+  out << indent() << "    [outProtocol writeMessageBeginWithName: messageName" << endl;
+  out << indent() << "                                      type: TMessageType_EXCEPTION" << endl;
+  out << indent() << "                                sequenceID: seqID];" << endl;
+  out << indent() << "    [x write: outProtocol];" << endl;
+  out << indent() << "    [outProtocol writeMessageEnd];" << endl;
+  out << indent() << "    [[outProtocol transport] flush];" << endl;
+  out << indent() << "    return YES;" << endl;
+  out << indent() << "  }" << endl;
+  out << indent() << "  // NSInvocation does not conform to NSCopying protocol" << endl;
+  out << indent() << "  NSInvocation * i = [NSInvocation invocationWithMethodSignature: [invocation methodSignature]];" << endl;
+  out << indent() << "  [i setSelector: [invocation selector]];" << endl;
+  out << indent() << "  [i setArgument: &seqID atIndex: 2];" << endl;
+  out << indent() << "  [i setArgument: &inProtocol atIndex: 3];" << endl;
+  out << indent() << "  [i setArgument: &outProtocol atIndex: 4];" << endl;
+  out << indent() << "  [i setTarget: self];" << endl;
+  out << indent() << "  [i invoke];" << endl;
+  out << indent() << "  return YES;" << endl;
+  out << indent() << "}" << endl;
+  
+  // generate a process_XXXX method for each service function, which reads args, calls the service, and writes results
+  functions = tservice->get_functions();
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    out << endl;
+    string funname = (*f_iter)->get_name();
+    out << indent() << "- (void) process_" << funname << "_withSequenceID: (int32_t) seqID inProtocol: (id<TProtocol>) inProtocol outProtocol: (id<TProtocol>) outProtocol" << endl;
+    scope_up(out);
+    string argstype = cocoa_prefix_ + function_args_helper_struct_type(*f_iter);
+    out << indent() << argstype << " * args = [[" << argstype << " alloc] init];" << endl;
+    out << indent() << "[args read: inProtocol];" << endl;
+    out << indent() << "[inProtocol readMessageEnd];" << endl;
+    
+    string resulttype = cocoa_prefix_ + function_result_helper_struct_type(*f_iter);
+    out << indent() << resulttype << " * result = [[" << resulttype << " alloc] init];" << endl;
+
+    // make the call to the actual service object
+    out << indent();
+    if (!(*f_iter)->get_returntype()->is_void()) {
+      out << "[result setSuccess: ";
+    }
+    out << "[mService " << funname;
+    // supplying arguments
+    t_struct* arg_struct = (*f_iter)->get_arglist();
+    const vector<t_field*>& fields = arg_struct->get_members();
+    vector<t_field*>::const_iterator fld_iter;
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      string fieldName = (*fld_iter)->get_name();
+      out << ": [args " << fieldName << "]";
+    }
+    out << "]";
+    if (!(*f_iter)->get_returntype()->is_void()) {
+      out << "]";
+    }
+    out << ";" << endl;
+    
+    // write out the result
+    out << indent() << "[outProtocol writeMessageBeginWithName: @\"" << funname << "\"" << endl;
+    out << indent() << "                                  type: TMessageType_REPLY" << endl;
+    out << indent() << "                            sequenceID: seqID];" << endl;
+    out << indent() << "[result write: outProtocol];" << endl;
+    out << indent() << "[outProtocol writeMessageEnd];" << endl;
+    out << indent() << "[[outProtocol transport] flush];" << endl;
+    out << indent() << "[result release];" << endl;
+    out << indent() << "[args release];" << endl;
+    
+    scope_down(out);
+  }
+  
+  // dealloc
+  out << endl;
+  out << "- (void) dealloc" << endl;
+  scope_up(out);
+  out << indent() << "[mService release];" << endl;
+  out << indent() << "[mMethodMap release];" << endl;
+  out << indent() << "[super dealloc];" << endl;
+  scope_down(out);
+  out << endl;
 
   indent_down();
 

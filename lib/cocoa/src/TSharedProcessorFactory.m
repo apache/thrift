@@ -17,34 +17,35 @@
  * under the License.
  */
 
-#import <Foundation/Foundation.h>
-#import "TProtocolFactory.h"
-#import "TProcessorFactory.h"
 
-#if !TARGET_OS_IPHONE
-#import <CoreServices/CoreServices.h>
-#else
-#import <CFNetwork/CFNetwork.h>
-#endif
-
-extern NSString * const kTSocketServer_ClientConnectionFinishedForProcessorNotification;
-extern NSString * const kTSocketServer_ProcessorKey;
-extern NSString * const kTSockerServer_TransportKey;
+#import "TSharedProcessorFactory.h"
 
 
-@interface TSocketServer : NSObject {
-  NSSocketPort * mServerSocket;
-  NSFileHandle * mSocketFileHandle;
-  id <TProtocolFactory> mInputProtocolFactory;
-  id <TProtocolFactory> mOutputProtocolFactory;
-  id <TProcessorFactory> mProcessorFactory;
+@implementation TSharedProcessorFactory
+
+
+- (id) initWithSharedProcessor: (id<TProcessor>) sharedProcessor
+{
+  self = [super init];
+  if (!self) {
+    return nil;
+  }
+  
+  mSharedProcessor = [sharedProcessor retain];
+  return self;
 }
 
-- (id) initWithPort: (int) port
-    protocolFactory: (id <TProtocolFactory>) protocolFactory
-   processorFactory: (id <TProcessorFactory>) processorFactory;
+
+- (void) dealloc
+{
+  [mSharedProcessor release];
+  [super dealloc];
+}
+
+
+- (id<TProcessor>) processorForTransport: (id<TTransport>) transport
+{
+  return [[mSharedProcessor retain] autorelease];
+}
 
 @end
-
-
-

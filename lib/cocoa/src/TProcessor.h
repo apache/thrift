@@ -18,6 +18,7 @@
  */
 
 #import <Foundation/Foundation.h>
+#import "TProtocol.h"
 
 
 @protocol TProcessor <NSObject>
