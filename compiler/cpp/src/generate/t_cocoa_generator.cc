@@ -1443,15 +1443,25 @@ void t_cocoa_generator::generate_deserialize_map_element(ofstream& out,
                                                          string fieldName) {
   string key = tmp("_key");
   string val = tmp("_val");
-  t_field fkey(tmap->get_key_type(), key);
-  t_field fval(tmap->get_val_type(), val);
+  t_type* keyType = tmap->get_key_type();
+  t_type* valType = tmap->get_val_type();
+  t_field fkey(keyType, key);
+  t_field fval(valType, val);
 
   generate_deserialize_field(out, &fkey, key);
   generate_deserialize_field(out, &fval, val);
 
   indent(out) <<
-    "[" << fieldName << " setObject: " << containerize(fval.get_type(), val) <<
-    " forKey: " << containerize(fkey.get_type(), key) << "];" << endl;
+    "[" << fieldName << " setObject: " << containerize(valType, val) <<
+    " forKey: " << containerize(keyType, key) << "];" << endl;
+
+  if (type_can_be_null(keyType)) {
+    indent(out) << "[" << containerize(keyType, key) << " release];" << endl;
+  }
+
+  if (type_can_be_null(valType)) {
+    indent(out) << "[" << containerize(valType, val) << " release];" << endl;
+  }
 }
 
 /**
@@ -1461,12 +1471,17 @@ void t_cocoa_generator::generate_deserialize_set_element(ofstream& out,
                                                          t_set* tset,
                                                          string fieldName) {
   string elem = tmp("_elem");
-  t_field felem(tset->get_elem_type(), elem);
+  t_type* type = tset->get_elem_type();
+  t_field felem(type, elem);
 
   generate_deserialize_field(out, &felem, elem);
 
   indent(out) <<
-    "[" << fieldName << " addObject: " << containerize(felem.get_type(), elem) << "];" << endl;
+    "[" << fieldName << " addObject: " << containerize(type, elem) << "];" << endl;
+
+  if (type_can_be_null(type)) {
+    indent(out) << "[" << containerize(type, elem) << " release];" << endl;
+  }
 }
 
 /**
@@ -1476,12 +1491,17 @@ void t_cocoa_generator::generate_deserialize_list_element(ofstream& out,
                                                           t_list* tlist,
                                                           string fieldName) {
   string elem = tmp("_elem");
-  t_field felem(tlist->get_elem_type(), elem);
+  t_type* type = tlist->get_elem_type();
+  t_field felem(type, elem);
 
   generate_deserialize_field(out, &felem, elem);
 
   indent(out) <<
-    "[" << fieldName << " addObject: " << containerize(felem.get_type(), elem) << "];" << endl;
+    "[" << fieldName << " addObject: " << containerize(type, elem) << "];" << endl;
+
+  if (type_can_be_null(type)) {
+    indent(out) << "[" << containerize(type, elem) << " release];" << endl;
+  }
 }
 
 
