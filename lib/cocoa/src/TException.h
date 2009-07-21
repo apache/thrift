@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 @interface TException : NSException {
 }

@@ -243,7 +243,7 @@ void t_cocoa_generator::init_generator() {
 string t_cocoa_generator::cocoa_imports() {
   return
     string() +
-    "#import <Cocoa/Cocoa.h>\n" +
+    "#import <Foundation/Foundation.h>\n" +
     "\n";
 }
 

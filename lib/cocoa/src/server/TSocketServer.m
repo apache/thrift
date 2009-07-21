@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 #import "TSocketServer.h"
 #import "TNSFileHandleTransport.h"
 #import "TProtocol.h"

@@ -18,7 +18,7 @@
  */
 
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 #import "TTransport.h"
 
 @interface TNSFileHandleTransport : NSObject <TTransport> {
