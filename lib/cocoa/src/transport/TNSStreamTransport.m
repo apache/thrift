@@ -65,17 +65,19 @@
 }
 
 
-// FIXME:geech:20071019 - make this write all
 - (void) write: (uint8_t *) data offset: (unsigned int) offset length: (unsigned int) length
 {
-  int result = [mOutput write: data+offset maxLength: length];
-  if (result == -1) {
-    @throw [TTransportException exceptionWithReason: @"Error writing to transport output stream."
-                                              error: [mOutput streamError]];
-  } else if (result == 0) {
-    @throw [TTransportException exceptionWithReason: @"End of output stream."];
-  } else if (result != length) {
-    @throw [TTransportException exceptionWithReason: @"Output stream did not write all of our data."];
+  int got = 0;
+  int result = 0;
+  while (got < length) {
+    result = [mOutput write: data+offset+got maxLength: length-got];
+    if (result == -1) {
+      @throw [TTransportException exceptionWithReason: @"Error writing to transport output stream."
+                                                error: [mOutput streamError]];
+    } else if (result == 0) {
+      @throw [TTransportException exceptionWithReason: @"End of output stream."];
+    }
+    got += result;
   }
 }
 
