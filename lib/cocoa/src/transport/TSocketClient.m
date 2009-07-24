@@ -16,28 +16,39 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-#import <Foundation/Foundation.h>
 #import "TSocketClient.h"
+#import <CFNetwork/CFSocketStream.h>
 
 @implementation TSocketClient
 
 - (id) initWithHostname: (NSString *) hostname
                    port: (int) port
 {
-  NSInputStream * input = nil;
-  NSOutputStream * output = nil;
-
-  [NSStream getStreamsToHost: [NSHost hostWithName: hostname]
-            port: port
-            inputStream: &input
-            outputStream: &output];
-
-  self = [super initWithInputStream: input outputStream: output];
-  [input open];
-  [output open];
-
-  return self;
+	NSInputStream * inputStream = NULL;
+	NSOutputStream * outputStream = NULL;
+	CFReadStreamRef readStream = NULL;
+	CFWriteStreamRef writeStream = NULL;
+	CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (CFStringRef)hostname, port, &readStream, &writeStream);
+	if (readStream && writeStream) {
+		CFReadStreamSetProperty(readStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
+		CFWriteStreamSetProperty(writeStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
+		
+		inputStream = (NSInputStream *)readStream;
+		[inputStream retain];
+		[inputStream setDelegate:self];
+		[inputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+		[inputStream open];
+		
+		outputStream = (NSOutputStream *)writeStream;
+		[outputStream retain];
+		[outputStream setDelegate:self];
+		[outputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+		[outputStream open];
+	}
+	
+	self = [super initWithInputStream: inputStream outputStream: outputStream];
+	
+	return self;
 }
 
 
