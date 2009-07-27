@@ -29,3 +29,6 @@ struct foo {
   python.type = "DenseFoo",
   java.final = "",
 )
+
+typedef string ( unicode.encoding = "UTF-16" ) non_latin_string
+typedef list< double ( cpp.fixed_point = "16" ) > tiny_float_list

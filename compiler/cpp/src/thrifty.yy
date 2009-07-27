@@ -154,6 +154,7 @@ int g_arglist = 0;
  */
 
 %type<ttype>     BaseType
+%type<ttype>     SimpleBaseType
 %type<ttype>     ContainerType
 %type<ttype>     SimpleContainerType
 %type<ttype>     MapType
@@ -976,7 +977,19 @@ FieldType:
       $$ = $1;
     }
 
-BaseType:
+BaseType: SimpleBaseType TypeAnnotations
+    {
+      pdebug("BaseType -> SimpleBaseType TypeAnnotations");
+      if ($2 != NULL) {
+        $$ = new t_base_type(*static_cast<t_base_type*>($1));
+        $$->annotations_ = $2->annotations_;
+        delete $2;
+      } else {
+        $$ = $1;
+      }
+    }
+
+SimpleBaseType:
   tok_string
     {
       pdebug("BaseType -> tok_string");
