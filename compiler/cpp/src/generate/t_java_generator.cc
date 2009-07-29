@@ -168,10 +168,16 @@ class t_java_generator : public t_oop_generator {
                                           std::string iter);
 
   void generate_java_doc                 (std::ofstream& out,
-                                          t_doc*     tdoc);
+                                          t_field*    field);
+
+  void generate_java_doc                 (std::ofstream& out,
+                                          t_doc*      tdoc);
 
   void generate_java_doc                 (std::ofstream& out,
                                           t_function* tdoc);
+
+  void generate_java_docstring_comment   (std::ofstream &out,
+                                          string contents);
 
   void generate_deep_copy_container(std::ofstream& out, std::string source_name_p1, std::string source_name_p2, std::string result_name, t_type* type);
   void generate_deep_copy_non_container(std::ofstream& out, std::string source_name, std::string dest_name, t_type* type);
@@ -349,6 +355,7 @@ void t_java_generator::generate_enum(t_enum* tenum) {
       ++value;
     }
 
+    generate_java_doc(f_enum, *c_iter);
     indent(f_enum) <<
       "public static final int " << (*c_iter)->get_name() <<
       " = " << value << ";" << endl;
@@ -2774,16 +2781,30 @@ string t_java_generator::constant_name(string name) {
   return constant_name;
 }
 
+void t_java_generator::generate_java_docstring_comment(ofstream &out, string contents) {
+  generate_docstring_comment(out,
+    "/**\n",
+    " * ", contents,
+    " */\n");
+}
+
+void t_java_generator::generate_java_doc(ofstream &out,
+                                         t_field* field) {
+  if (field->get_type()->is_enum()) {
+    string combined_message = field->get_doc() + "\n@see " + get_enum_class_name(field->get_type());
+    generate_java_docstring_comment(out, combined_message);
+  } else {
+    generate_java_doc(out, (t_doc*)field);
+  }
+}
+
 /**
  * Emits a JavaDoc comment if the provided object has a doc in Thrift
  */
 void t_java_generator::generate_java_doc(ofstream &out,
                                          t_doc* tdoc) {
   if (tdoc->has_doc()) {
-    generate_docstring_comment(out,
-      "/**\n",
-      " * ", tdoc->get_doc(),
-      " */\n");
+    generate_java_docstring_comment(out, tdoc->get_doc());
   }
 }
 

@@ -30,6 +30,7 @@ enum enumconstants {
 }
 
 struct thing2 {
+  /** standard docstring */
   1: enumconstants val = TWO
 }
 
