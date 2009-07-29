@@ -181,6 +181,7 @@ AC_DEFUN([AX_LIB_EVENT],
             else
               AC_MSG_RESULT(yes)
               AC_DEFINE(HAVE_LIBEVENT,,[define if libevent is available])
+              ax_have_libevent_[]m4_translit([$1], [.], [_])="yes"
             fi
 
             ax_have_libevent="$success"
