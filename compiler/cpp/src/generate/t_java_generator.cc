@@ -1341,12 +1341,13 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
 
     // Simple setter
     generate_java_doc(out, field);
-    indent(out) << "public void set" << cap_name << "(" << type_name(type) <<
+    indent(out) << "public " << type_name(tstruct) << " set" << cap_name << "(" << type_name(type) <<
       " " << field_name << ") {" << endl;
     indent_up();
     indent(out) << "this." << field_name << " = " << field_name << ";" <<
       endl;
     generate_isset_set(out, field);
+    indent(out) << "return this;" << endl;
 
     indent_down();
     indent(out) << "}" << endl << endl;
