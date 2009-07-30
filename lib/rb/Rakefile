@@ -83,6 +83,7 @@ begin
     p.url = "http://incubator.apache.org/thrift/"
     p.include_rakefile = true
     p.version = "0.1.0"
+    p.rubygems_version = ">= 1.2.0"
   end
 
   task :install => [:check_site_lib]
