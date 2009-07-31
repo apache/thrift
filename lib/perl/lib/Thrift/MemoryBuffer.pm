@@ -109,6 +109,26 @@ sub read
     return $ret;
 }
 
+sub readAll
+{
+    my $self = shift;
+    my $len  = shift;
+
+    my $avail = ($self->{wPos} - $self->{rPos});
+    if ($avail < $len) {
+        die new TTransportException("Attempt to readAll($len) found only $avail available");
+    }
+
+    my $data = '';
+    my $got = 0;
+
+    while (($got = length($data)) < $len) {
+        $data .= $self->read($len - $got);
+    }
+
+    return $data;
+}
+
 sub write
 {
     my $self = shift;
