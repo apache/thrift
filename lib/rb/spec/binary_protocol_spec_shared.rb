@@ -41,19 +41,19 @@ shared_examples_for 'a binary protocol' do
 
   it "should write the message header" do
     @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
-    @trans.read(1000).should == [protocol_class.const_get(:VERSION_1) | Thrift::MessageTypes::CALL, "testMessage".size, "testMessage", 17].pack("NNa11N")
+    @trans.read(@trans.available).should == [protocol_class.const_get(:VERSION_1) | Thrift::MessageTypes::CALL, "testMessage".size, "testMessage", 17].pack("NNa11N")
   end
   
   it "should write the message header without version when writes are not strict" do
     @prot = protocol_class.new(@trans, true, false) # no strict write
     @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
-    @trans.read(1000).should == "\000\000\000\vtestMessage\001\000\000\000\021"
+    @trans.read(@trans.available).should == "\000\000\000\vtestMessage\001\000\000\000\021"
   end
   
   it "should write the message header with a version when writes are strict" do
     @prot = protocol_class.new(@trans) # strict write
     @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
-    @trans.read(1000).should == "\200\001\000\001\000\000\000\vtestMessage\000\000\000\021"
+    @trans.read(@trans.available).should == "\200\001\000\001\000\000\000\vtestMessage\000\000\000\021"
   end
   
 
@@ -61,7 +61,7 @@ shared_examples_for 'a binary protocol' do
 
   it "should write the field header" do
     @prot.write_field_begin('foo', Thrift::Types::DOUBLE, 3)
-    @trans.read(1000).should == [Thrift::Types::DOUBLE, 3].pack("cn")
+    @trans.read(@trans.available).should == [Thrift::Types::DOUBLE, 3].pack("cn")
   end
   
   # field footer is a noop
@@ -73,27 +73,27 @@ shared_examples_for 'a binary protocol' do
   
   it "should write the map header" do
     @prot.write_map_begin(Thrift::Types::STRING, Thrift::Types::LIST, 17)
-    @trans.read(1000).should == [Thrift::Types::STRING, Thrift::Types::LIST, 17].pack("ccN");
+    @trans.read(@trans.available).should == [Thrift::Types::STRING, Thrift::Types::LIST, 17].pack("ccN");
   end
    
   # map footer is a noop
   
   it "should write the list header" do
     @prot.write_list_begin(Thrift::Types::I16, 42)
-    @trans.read(1000).should == [Thrift::Types::I16, 42].pack("cN")
+    @trans.read(@trans.available).should == [Thrift::Types::I16, 42].pack("cN")
   end
   
   # list footer is a noop
   
   it "should write the set header" do
     @prot.write_set_begin(Thrift::Types::I16, 42)
-    @trans.read(1000).should == [Thrift::Types::I16, 42].pack("cN")
+    @trans.read(@trans.available).should == [Thrift::Types::I16, 42].pack("cN")
   end
   
   it "should write a bool" do
     @prot.write_bool(true)
     @prot.write_bool(false)
-    @trans.read(1000).should == "\001\000"
+    @trans.read(@trans.available).should == "\001\000"
   end
   
   it "should treat a nil bool as false" do
@@ -130,7 +130,7 @@ shared_examples_for 'a binary protocol' do
     # and try something out of signed range, it should clip
     @prot.write_i16(2**15 + 5)
     
-    @trans.read(1000).should == "\200\000\374\000\000\021\000\000\330\360\006\273\177\377\200\005"
+    @trans.read(@trans.available).should == "\200\000\374\000\000\021\000\000\330\360\006\273\177\377\200\005"
     
     # a Bignum should error
     # lambda { @prot.write_i16(2**65) }.should raise_error(RangeError)
@@ -147,7 +147,7 @@ shared_examples_for 'a binary protocol' do
       @prot.write_i32(i)
     end
     # try something out of signed range, it should clip
-    @trans.read(1000).should == "\200\000\000\000" + "\377\376\037\r" + "\377\377\366\034" + "\377\377\377\375" + "\000\000\000\000" + "\000#\340\203" + "\000\0000+" + "\177\377\377\377"
+    @trans.read(@trans.available).should == "\200\000\000\000" + "\377\376\037\r" + "\377\377\366\034" + "\377\377\377\375" + "\000\000\000\000" + "\000#\340\203" + "\000\0000+" + "\177\377\377\377"
     [2 ** 31 + 5, 2 ** 65 + 5].each do |i|
       lambda { @prot.write_i32(i) }.should raise_error(RangeError)  
     end
@@ -164,7 +164,7 @@ shared_examples_for 'a binary protocol' do
       @prot.write_i64(i)
     end
     # try something out of signed range, it should clip
-    @trans.read(1000).should == ["\200\000\000\000\000\000\000\000",
+    @trans.read(@trans.available).should == ["\200\000\000\000\000\000\000\000",
       "\377\377\364\303\035\244+]",
       "\377\377\377\377\376\231:\341",
       "\377\377\377\377\377\377\377\026",
@@ -185,7 +185,7 @@ shared_examples_for 'a binary protocol' do
     values = [Float::MIN,-1231.15325, -123123.23, -23.23515123, 0, 12351.1325, 523.23, Float::MAX]
     values.each do |f|
       @prot.write_double(f)
-      @trans.read(1000).should == [f].pack("G")
+      @trans.read(@trans.available).should == [f].pack("G")
     end
   end
   
@@ -196,7 +196,7 @@ shared_examples_for 'a binary protocol' do
   it "should write a string" do
     str = "hello world"
     @prot.write_string(str)
-    @trans.read(1000).should == [str.size].pack("N") + str
+    @trans.read(@trans.available).should == [str.size].pack("N") + str
   end
   
   it "should error gracefully when trying to write a nil string" do
@@ -206,13 +206,13 @@ shared_examples_for 'a binary protocol' do
   it "should write the message header without version when writes are not strict" do
     @prot = protocol_class.new(@trans, true, false) # no strict write
     @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
-    @trans.read(1000).should == "\000\000\000\vtestMessage\001\000\000\000\021"
+    @trans.read(@trans.available).should == "\000\000\000\vtestMessage\001\000\000\000\021"
   end
     
   it "should write the message header with a version when writes are strict" do
     @prot = protocol_class.new(@trans) # strict write
     @prot.write_message_begin('testMessage', Thrift::MessageTypes::CALL, 17)
-    @trans.read(1000).should == "\200\001\000\001\000\000\000\vtestMessage\000\000\000\021"
+    @trans.read(@trans.available).should == "\200\001\000\001\000\000\000\vtestMessage\000\000\000\021"
   end
   
   # message footer is a noop

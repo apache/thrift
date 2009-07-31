@@ -276,7 +276,7 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
       @buffer.read(4)
       @buffer.peek.should be_true
       @buffer.available.should == 5
-      @buffer.read(16)
+      @buffer.read(5)
       @buffer.peek.should be_false
       @buffer.available.should == 0
     end
@@ -285,12 +285,12 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
       @buffer.write "test data"
       @buffer.reset_buffer("foobar")
       @buffer.available.should == 6
-      @buffer.read(10).should == "foobar"
+      @buffer.read(@buffer.available).should == "foobar"
       @buffer.reset_buffer
       @buffer.available.should == 0
     end
 
-    it "should copy the given string whne resetting the buffer" do
+    it "should copy the given string when resetting the buffer" do
       s = "this is a test"
       @buffer.reset_buffer(s)
       @buffer.available.should == 14
@@ -302,11 +302,18 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
     it "should return from read what was given in write" do
       @buffer.write "test data"
       @buffer.read(4).should == "test"
-      @buffer.read(10).should == " data"
-      @buffer.read(10).should == ""
+      @buffer.read(@buffer.available).should == " data"
       @buffer.write "foo"
       @buffer.write " bar"
-      @buffer.read(10).should == "foo bar"
+      @buffer.read(@buffer.available).should == "foo bar"
+    end
+    
+    it "should throw an EOFError when there isn't enough data in the buffer" do
+      @buffer.reset_buffer("")
+      lambda{@buffer.read(1)}.should raise_error(EOFError)
+
+      @buffer.reset_buffer("1234")
+      lambda{@buffer.read(5)}.should raise_error(EOFError)
     end
   end
 

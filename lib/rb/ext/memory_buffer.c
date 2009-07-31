@@ -54,6 +54,10 @@ VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value) {
     index = 0;
   }
 
+  if (RSTRING(data)->len < length) {
+    rb_raise(rb_eEOFError, "Not enough bytes remain in memory buffer");
+  }
+
   rb_ivar_set(self, index_ivar_id, INT2FIX(index));
   return data;
 }

@@ -64,6 +64,9 @@ module Thrift
         @buf = @buf.slice(@index..-1)
         @index = 0
       end
+      if data.size < len
+        raise EOFError, "Not enough bytes remain in buffer"
+      end
       data
     end
 
