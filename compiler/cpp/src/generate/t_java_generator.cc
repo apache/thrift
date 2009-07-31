@@ -88,6 +88,7 @@ class t_java_generator : public t_oop_generator {
 
   void generate_java_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool in_class=false, bool is_result=false);
   void generate_java_struct_equality(std::ofstream& out, t_struct* tstruct);
+  void generate_java_struct_compare_to(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_java_validator(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_result_writer(std::ofstream& out, t_struct* tstruct);
@@ -181,6 +182,9 @@ class t_java_generator : public t_oop_generator {
 
   void generate_deep_copy_container(std::ofstream& out, std::string source_name_p1, std::string source_name_p2, std::string result_name, t_type* type);
   void generate_deep_copy_non_container(std::ofstream& out, std::string source_name, std::string dest_name, t_type* type);
+
+  bool is_comparable(t_struct* tstruct);
+  bool is_comparable(t_type* type);
 
   /**
    * Helper rendering functions
@@ -641,7 +645,13 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   if (is_exception) {
     out << "extends Exception ";
   }
-  out << "implements TBase, java.io.Serializable, Cloneable ";
+  out << "implements TBase, java.io.Serializable, Cloneable";
+
+  if (is_comparable(tstruct)) {
+    out << ", Comparable<" << type_name(tstruct) << ">";
+  }
+
+  out << " ";
 
   scope_up(out);
 
@@ -794,6 +804,9 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   generate_generic_isset_method(out, tstruct);
 
   generate_java_struct_equality(out, tstruct);
+  if (is_comparable(tstruct)) {
+    generate_java_struct_compare_to(out, tstruct);
+  }
 
   generate_java_struct_reader(out, tstruct);
   if (is_result) {
@@ -919,6 +932,40 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
   } else {
     indent(out) << "return 0;" << endl;
   }
+  indent_down();
+  indent(out) << "}" << endl << endl;
+}
+
+void t_java_generator::generate_java_struct_compare_to(ofstream& out, t_struct* tstruct) {
+  indent(out) << "public int compareTo(" << type_name(tstruct) << " other) {" << endl;
+  indent_up();
+
+  indent(out) << "if (!getClass().equals(other.getClass())) {" << endl;
+  indent(out) << "  return getClass().getName().compareTo(other.getClass().getName());" << endl;
+  indent(out) << "}" << endl;
+  out << endl;
+
+  indent(out) << "int lastComparison = 0;" << endl;
+  indent(out) << type_name(tstruct) << " typedOther = (" << type_name(tstruct) << ")other;" << endl;
+  out << endl;
+
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_field* field = *m_iter;
+    indent(out) << "lastComparison = Boolean.valueOf(" << generate_isset_check(field) << ").compareTo(" << generate_isset_check(field) << ");" << endl;
+    indent(out) << "if (lastComparison != 0) {" << endl;
+    indent(out) << "  return lastComparison;" << endl;
+    indent(out) << "}" << endl;
+
+    indent(out) << "lastComparison = TBaseHelper.compareTo(" << field->get_name() << ", typedOther." << field->get_name() << ");" << endl;
+    indent(out) << "if (lastComparison != 0) {" << endl;
+    indent(out) << "  return lastComparison;" << endl;
+    indent(out) << "}" << endl;
+  }
+
+  indent(out) << "return 0;" << endl;
+
   indent_down();
   indent(out) << "}" << endl << endl;
 }
@@ -2964,6 +3011,32 @@ std::string t_java_generator::get_enum_class_name(t_type* type) {
     package = program->get_namespace("java") + ".";
   }
   return package + type->get_name();
+}
+
+bool t_java_generator::is_comparable(t_struct* tstruct) {
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    if (!is_comparable((*m_iter)->get_type())) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool t_java_generator::is_comparable(t_type* type) {
+  if (type->is_container()) {
+    if (type->is_list()) {
+      return is_comparable(((t_list*)type)->get_elem_type());
+    } else {
+      return false;
+    }
+  } else if (type->is_struct()) {
+    return is_comparable((t_struct*)type);
+  } else {
+    return true;
+  }
 }
 
 THRIFT_REGISTER_GENERATOR(java, "Java",
