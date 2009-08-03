@@ -108,7 +108,8 @@ class t_java_generator : public t_oop_generator {
   std::string generate_isset_check(t_field* field);
   std::string generate_isset_check(std::string field);
   void generate_isset_set(ofstream& out, t_field* field);
-  
+  std::string isset_field_id(t_field* field);
+
   void generate_service_interface (t_service* tservice);
   void generate_service_helpers   (t_service* tservice);
   void generate_service_client    (t_service* tservice);
@@ -185,6 +186,8 @@ class t_java_generator : public t_oop_generator {
 
   bool is_comparable(t_struct* tstruct);
   bool is_comparable(t_type* type);
+
+  bool has_bit_vector(t_struct* tstruct);
 
   /**
    * Helper rendering functions
@@ -290,6 +293,7 @@ string t_java_generator::java_type_imports() {
     "import java.util.Set;\n" +
     "import java.util.HashSet;\n" +
     "import java.util.Collections;\n" +
+    "import java.util.BitSet;\n" +
     "import org.apache.log4j.Logger;\n\n";
 }
 
@@ -684,23 +688,26 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     indent(out) << "public static final int " << upcase_string((*m_iter)->get_name()) << " = " << (*m_iter)->get_key() << ";" << endl;
   }
   
-  // Inner Isset class
+  // isset data
   if (members.size() > 0) {
-    out <<
-      endl <<
-      indent() << "private final Isset __isset = new Isset();" << endl <<
-      indent() << "private static final class Isset implements java.io.Serializable {" << endl;
-    indent_up();
-      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        if (!type_can_be_null((*m_iter)->get_type())){
-          indent(out) <<
-            "public boolean " << (*m_iter)->get_name() << " = false;" <<  endl;
-        }
+    out << endl;
+
+    indent(out) << "// isset id assignments" << endl;
+
+    int i = 0;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      if (!type_can_be_null((*m_iter)->get_type())) {
+        indent(out) << "private static final int " << isset_field_id(*m_iter)
+          << " = " << i << ";" <<  endl;
+        i++;
       }
-    indent_down();
-    out <<
-      indent() << "}" << endl <<
-      endl;
+    }
+
+    if (i > 0) {
+      indent(out) << "private BitSet __isset_bit_vector = new BitSet(" << i << ");" << endl;
+    }
+
+    out << endl;
   }
 
   generate_java_meta_data_map(out, tstruct);
@@ -760,15 +767,16 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   indent(out) << "public " << tstruct->get_name() << "(" << tstruct->get_name() << " other) {" << endl;
   indent_up();
 
+  if (has_bit_vector(tstruct)) {
+    indent(out) << "__isset_bit_vector.clear();" << endl;
+    indent(out) << "__isset_bit_vector.or(other.__isset_bit_vector);" << endl;    
+  }
+
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_field* field = (*m_iter);
     std::string field_name = field->get_name();
     t_type* type = field->get_type();
     bool can_be_null = type_can_be_null(type);
-
-    if (!can_be_null) {
-      indent(out) << "__isset." << field_name << " = other.__isset." << field_name << ";" << endl;
-    }
 
     if (can_be_null) {
       indent(out) << "if (other." << generate_isset_check(field) << ") {" << endl;
@@ -1050,7 +1058,7 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
 
     out <<
       indent() << "iprot.readStructEnd();" << endl << endl;
-    
+
     // in non-beans style, check for required fields of primitive type
     // (which can be checked here but not in the general validate method)
     if (!bean_style_){
@@ -1058,7 +1066,7 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_req() == t_field::T_REQUIRED && !type_can_be_null((*f_iter)->get_type())) {
           out <<
-            indent() << "if (!__isset." << (*f_iter)->get_name() << ") {" << endl <<
+            indent() << "if (!" << generate_isset_check(*f_iter) << ") {" << endl <<
             indent() << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' was not found in serialized data! Struct: \" + toString());" << endl <<
             indent() << "}" << endl;
         }
@@ -1405,7 +1413,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     if (type_can_be_null(type)) {
       indent(out) << "this." << field_name << " = null;" << endl;
     } else {
-      indent(out) << "this.__isset." << field_name << " = false;" << endl;
+      indent(out) << "__isset_bit_vector.clear(" << isset_field_id(field) << ");" << endl;
     }
     indent_down();
     indent(out) << "}" << endl << endl;
@@ -1417,24 +1425,22 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     if (type_can_be_null(type)) {
       indent(out) << "return this." << field_name << " != null;" << endl;
     } else {
-      indent(out) << "return this.__isset." << field_name << ";" << endl;
+      indent(out) << "return __isset_bit_vector.get(" << isset_field_id(field) << ");" << endl;
     }
     indent_down();
     indent(out) << "}" << endl << endl;
-    
-    if(!bean_style_) {
-      indent(out) << "public void set" << cap_name << get_cap_name("isSet") << "(boolean value) {" << endl;
-      indent_up();
-      if (type_can_be_null(type)) {
-        indent(out) << "if (!value) {" << endl;
-        indent(out) << "  this." << field_name << " = null;" << endl;
-        indent(out) << "}" << endl;
-      } else {
-        indent(out) << "this.__isset." << field_name << " = value;" << endl;
-      }
-      indent_down();
-      indent(out) << "}" << endl << endl; 
+
+    indent(out) << "public void set" << cap_name << get_cap_name("isSet") << "(boolean value) {" << endl;
+    indent_up();
+    if (type_can_be_null(type)) {
+      indent(out) << "if (!value) {" << endl;
+      indent(out) << "  this." << field_name << " = null;" << endl;
+      indent(out) << "}" << endl;
+    } else {
+      indent(out) << "__isset_bit_vector.set(" << isset_field_id(field) << ", value);" << endl;
     }
+    indent_down();
+    indent(out) << "}" << endl << endl; 
   }
 }
 
@@ -2098,7 +2104,7 @@ void t_java_generator::generate_process_function(t_service* tservice,
   // Set isset on success field
   if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void() && !type_can_be_null(tfunction->get_returntype())) {
     f_service_ <<
-      indent() << "result.__isset.success = true;" << endl;
+      indent() << "result.set" << get_cap_name("success") << get_cap_name("isSet") << "(true);" << endl;
   }
 
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
@@ -2994,13 +3000,17 @@ std::string t_java_generator::generate_isset_check(t_field* field) {
   return generate_isset_check(field->get_name());
 }
 
+std::string t_java_generator::isset_field_id(t_field* field) {
+  return "__" + upcase_string(field->get_name() + "_isset_id");
+}
+
 std::string t_java_generator::generate_isset_check(std::string field_name) {
   return "is" + get_cap_name("set") + get_cap_name(field_name) + "()";
 }
 
 void t_java_generator::generate_isset_set(ofstream& out, t_field* field) {
   if (!type_can_be_null(field->get_type())) {
-    indent(out) << "this.__isset." << field->get_name() << " = true;" << endl;
+    indent(out) << "set" << get_cap_name(field->get_name()) << get_cap_name("isSet") << "(true);" << endl;
   }
 }
 
@@ -3037,6 +3047,18 @@ bool t_java_generator::is_comparable(t_type* type) {
   } else {
     return true;
   }
+}
+
+bool t_java_generator::has_bit_vector(t_struct* tstruct) {
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    if (!type_can_be_null((*m_iter)->get_type())) {
+      return true;
+    }
+  }
+  return false;  
 }
 
 THRIFT_REGISTER_GENERATOR(java, "Java",
