@@ -107,8 +107,8 @@ using apache::thrift::transport::TTransport;
       | (((n) & 0x0000000000ff0000ull) << 24) \
       | (((n) & 0x000000000000ff00ull) << 40) \
       | (((n) & 0x00000000000000ffull) << 56) )
-#  define ntolell(n) bswap_64(n)
-#  define letonll(n) bswap_64(n)
+#  define htolell(n) bswap_64(n)
+#  define letohll(n) bswap_64(n)
 # endif /* GNUC & GLIBC */
 #elif __BYTE_ORDER == __LITTLE_ENDIAN
 #  define htolell(n) (n)
