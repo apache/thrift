@@ -180,6 +180,7 @@ literal_begin (['\"])
 "private"            { thrift_reserved_keyword(yytext); }
 "protected"          { thrift_reserved_keyword(yytext); }
 "raise"              { thrift_reserved_keyword(yytext); }
+"register"           { thrift_reserved_keyword(yytext); }
 "return"             { thrift_reserved_keyword(yytext); }
 "sizeof"             { thrift_reserved_keyword(yytext); }
 "static"             { thrift_reserved_keyword(yytext); }
