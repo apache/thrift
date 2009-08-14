@@ -1,7 +1,8 @@
 <ivy-module version="1.0">
     <info organisation="jayasoft" module="hello-ivy" />
     <dependencies>
-       <dependency org="log4j" name="log4j" rev="1.2.15" conf="default->master"/> 
+       <dependency org="org.slf4j" name="slf4j-api" rev="1.5.8" conf="* -> *,!sources,!javadoc"/>
+       <dependency org="org.slf4j" name="slf4j-simple" rev="1.5.8" conf="* -> *,!sources,!javadoc"/>
        <dependency org="commons-lang" name="commons-lang" rev="2.4" conf="* -> *,!sources,!javadoc"/>
     </dependencies>
 </ivy-module>

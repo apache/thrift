@@ -19,7 +19,8 @@
 
 package org.apache.thrift.transport;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +35,7 @@ import java.io.OutputStream;
  */
 public class TIOStreamTransport extends TTransport {
 
-  private static final Logger LOGGER = Logger.getLogger(TIOStreamTransport.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(TIOStreamTransport.class.getName());
 
   /** Underlying inputStream */
   protected InputStream inputStream_ = null;

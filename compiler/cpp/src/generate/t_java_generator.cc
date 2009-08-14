@@ -294,7 +294,8 @@ string t_java_generator::java_type_imports() {
     "import java.util.HashSet;\n" +
     "import java.util.Collections;\n" +
     "import java.util.BitSet;\n" +
-    "import org.apache.log4j.Logger;\n\n";
+    "import org.slf4j.Logger;\n" +
+    "import org.slf4j.LoggerFactory;\n\n";
 }
 
 /**
@@ -1932,7 +1933,7 @@ void t_java_generator::generate_service_server(t_service* tservice) {
     "public static class Processor" << extends_processor << " implements TProcessor {" << endl;
   indent_up();
 
-  indent(f_service_) << "private static final Logger LOGGER = Logger.getLogger(Processor.class.getName());" << endl;
+  indent(f_service_) << "private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());" << endl;
 
   indent(f_service_) <<
     "public Processor(Iface iface)" << endl;

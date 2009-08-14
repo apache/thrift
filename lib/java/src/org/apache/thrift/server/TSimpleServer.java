@@ -28,7 +28,9 @@ import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.TTransportException;
-import org.apache.log4j.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Simple singlethreaded server for testing.
@@ -36,7 +38,7 @@ import org.apache.log4j.Logger;
  */
 public class TSimpleServer extends TServer {
 
-  private static final Logger LOGGER = Logger.getLogger(TSimpleServer.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(TSimpleServer.class.getName());
 
   private boolean stopped_ = false;
 

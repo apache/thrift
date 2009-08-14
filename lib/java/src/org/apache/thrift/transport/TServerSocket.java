@@ -19,7 +19,8 @@
 
 package org.apache.thrift.transport;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -33,7 +34,7 @@ import java.net.SocketException;
  */
 public class TServerSocket extends TServerTransport {
 
-  private static final Logger LOGGER = Logger.getLogger(TServerSocket.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(TServerSocket.class.getName());
 
   /**
    * Underlying serversocket object

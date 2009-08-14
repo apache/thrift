@@ -30,7 +30,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TException;
@@ -59,7 +60,7 @@ import org.apache.thrift.transport.TTransportException;
  */
 public class TNonblockingServer extends TServer {
   private static final Logger LOGGER =
-    Logger.getLogger(TNonblockingServer.class.getName());
+    LoggerFactory.getLogger(TNonblockingServer.class.getName());
 
   // Flag for stopping the server
   private volatile boolean stopped_;

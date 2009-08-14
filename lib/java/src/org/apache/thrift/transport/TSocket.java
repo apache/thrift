@@ -19,7 +19,8 @@
 
 package org.apache.thrift.transport;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -34,7 +35,7 @@ import java.net.SocketException;
  */
 public class TSocket extends TIOStreamTransport {
 
-  private static final Logger LOGGER = Logger.getLogger(TSocket.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(TSocket.class.getName());
 
   /**
    * Wrapped Socket object

@@ -29,8 +29,9 @@ import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TTransportFactory;
-import org.apache.log4j.Logger;
-import org.apache.log4j.Level;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,7 +47,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TThreadPoolServer extends TServer {
 
-  private static final Logger LOGGER = Logger.getLogger(TThreadPoolServer.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(TThreadPoolServer.class.getName());
 
   // Executor service for handling client connections
   private ExecutorService executorService_;

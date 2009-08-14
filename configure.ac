@@ -70,11 +70,13 @@ AX_THRIFT_LIB(java, [Java], yes)
 if test "$with_java" = "yes";  then
   AX_JAVAC_AND_JAVA
   AC_PATH_PROG([ANT], [ant])
-  AX_CHECK_JAVA_CLASS(org.apache.log4j.Logger)
-  have_log4j="$success"
+  AX_CHECK_JAVA_CLASS(org.slf4j.Logger)
+  have_slf4j="$success"
+  AX_CHECK_JAVA_CLASS(org.slf4j.impl.SimpleLogger)
+  have_slf4j_simple="$success"
   AX_CHECK_JAVA_CLASS(org.apache.commons.lang.builder.HashCodeBuilder)
   have_hashcode="$success"
-  if test "x$have_log4j" = "xyes" && test "x$have_hashcode" = "xyes" ; then
+  if test "x$have_slf4j_simple" = "xyes" && test "x$have_slf4j" = "xyes" && test "x$have_hashcode" = "xyes" ; then
     ANT_FLAGS="$ANT_FLAGS -Dnoivy="
   fi
   AC_SUBST(CLASSPATH)
