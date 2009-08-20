@@ -34,19 +34,8 @@ public class SerializationBenchmark {
   public static void main(String[] args) throws Exception {
     TProtocolFactory factory = new TBinaryProtocol.Factory();
 
-    OneOfEach ooe = new OneOfEach();
-    ooe.im_true   = true;
-    ooe.im_false  = false;
-    ooe.a_bite    = (byte)0xd6;
-    ooe.integer16 = 27000;
-    ooe.integer32 = 1<<24;
-    ooe.integer64 = (long)6000 * 1000 * 1000;
-    ooe.double_precision = Math.PI;
-    ooe.some_characters  = "JSON THIS! \"\u0001";
-    ooe.base64 = new byte[]{1,2,3,(byte)255};
-
-    testSerialization(factory, ooe);
-    testDeserialization(factory, ooe, OneOfEach.class);
+    testSerialization(factory, Fixtures.oneOfEach);
+    testDeserialization(factory, Fixtures.oneOfEach, OneOfEach.class);
   }
   
   public static void testSerialization(TProtocolFactory factory, TBase object) throws Exception {

@@ -24,6 +24,10 @@ import java.util.*;
 import thrift.test.*;
 
 public class Fixtures {
+  public static final OneOfEach oneOfEach;
+  public static final Nesting nesting;
+  public static final HolyMoley holyMoley;
+  public static final CompactProtoTestStruct compactProtoTestStruct;
   
   private static final byte[] kUnicodeBytes = {
     (byte)0xd3, (byte)0x80, (byte)0xe2, (byte)0x85, (byte)0xae, (byte)0xce,
@@ -35,38 +39,28 @@ public class Fixtures {
     (byte)0x85, (byte)0xbd, (byte)0xce, (byte)0xba, (byte)0x83, (byte)0xe2,
     (byte)0x80, (byte)0xbc
   };
-  
-  
-  public static final OneOfEach oneOfEach;
-  public static final Nesting nesting;
-  public static final HolyMoley holyMoley;
-  public static final CompactProtoTestStruct compactProtoTestStruct;
-  
+
   static {
     try {
       oneOfEach = new OneOfEach();
       oneOfEach.im_true = true;
       oneOfEach.im_false = false;
-      oneOfEach.a_bite = (byte) 0x03;
+      oneOfEach.a_bite = (byte) 0xd6;
       oneOfEach.integer16 = 27000;
       oneOfEach.integer32 = 1 << 24;
       oneOfEach.integer64 = (long) 6000 * 1000 * 1000;
       oneOfEach.double_precision = Math.PI;
       oneOfEach.some_characters = "JSON THIS! \"\1";
       oneOfEach.zomg_unicode = new String(kUnicodeBytes, "UTF-8");
+      oneOfEach.base64 = "base64".getBytes();
+      // byte, i16, and i64 lists are populated by default constructor
 
-      nesting = new Nesting(new Bonk(), new OneOfEach());
-      nesting.my_ooe.integer16 = 16;
-      nesting.my_ooe.integer32 = 32;
-      nesting.my_ooe.integer64 = 64;
-      nesting.my_ooe.double_precision = (Math.sqrt(5) + 1) / 2;
-      nesting.my_ooe.some_characters = ":R (me going \"rrrr\")";
-      nesting.my_ooe.zomg_unicode = new String(kUnicodeBytes, "UTF-8");
-      nesting.my_bonk.type = 31337;
-      nesting.my_bonk.message = "I am a bonk... xor!";
+      Bonk bonk = new Bonk();
+      bonk.type = 31337;
+      bonk.message = "I am a bonk... xor!";
+      nesting = new Nesting(bonk, oneOfEach);
 
       holyMoley = new HolyMoley();
-
       holyMoley.big = new ArrayList<OneOfEach>();
       holyMoley.big.add(new OneOfEach(oneOfEach));
       holyMoley.big.add(nesting.my_ooe);
@@ -89,7 +83,7 @@ public class Fixtures {
       ArrayList<Bonk> stage2 = new ArrayList<Bonk>();
       holyMoley.bonks = new HashMap<String, List<Bonk>>();
       // one empty
-      holyMoley.bonks.put("nothing", stage2);
+      holyMoley.bonks.put("zero", stage2);
       
       // one with two
       stage2 = new ArrayList<Bonk>();
@@ -101,7 +95,7 @@ public class Fixtures {
       b.type = 2;
       b.message = "What?";
       stage2.add(b);      
-      holyMoley.bonks.put("something", stage2);
+      holyMoley.bonks.put("two", stage2);
       
       // one with three
       stage2 = new ArrayList<Bonk>();
@@ -114,11 +108,21 @@ public class Fixtures {
       b = new Bonk();
       b.type = 5;
       b.message = "nevermore";
-      holyMoley.bonks.put("poe", stage2);
-      
+      holyMoley.bonks.put("three", stage2);
+
       // superhuge compact proto test struct
       compactProtoTestStruct = new CompactProtoTestStruct(thrift.test.Constants.COMPACT_TEST);
-      compactProtoTestStruct.a_binary = new byte[]{0,1,2,3,4,5,6,7,8};
+      compactProtoTestStruct.a_binary = new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8};
+      compactProtoTestStruct.binary_list = Arrays.asList(new byte[]{(byte) 0, (byte) 1}, new byte[]{(byte) 2, (byte) 3});
+      compactProtoTestStruct.binary_set = new HashSet<byte[]>(compactProtoTestStruct.binary_list);
+      compactProtoTestStruct.binary_byte_map = new HashMap<byte[], Byte>() {{
+        put(new byte[]{(byte) 0, (byte) 1}, (byte) 100);
+        put(new byte[]{(byte) 2, (byte) 3}, (byte) 101);
+      }};
+      compactProtoTestStruct.byte_binary_map = new HashMap<Byte, byte[]>() {{
+        put((byte) 100, new byte[]{(byte) 0, (byte) 1});
+        put((byte) 101, new byte[]{(byte) 2, (byte) 3});
+      }};
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
