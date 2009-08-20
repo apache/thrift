@@ -34,6 +34,7 @@
   <property name="src.test" location="test" />
   <property name="build.test" location="${build}/test" />
   <property name="test.thrift.home" location="../../test"/>
+  <property name="thrift.root" location="../../"/>
 
   <property file="${user.home}/.thrift-build.properties" />
 
@@ -123,9 +124,13 @@
   </target>
 
   <target name="dist" depends="compile">
+    <mkdir dir="${build}/META-INF"/>
+    <copy file="${thrift.root}/LICENSE" tofile="${build}/META-INF/LICENSE.txt"/>
+    <copy file="${thrift.root}/NOTICE" tofile="${build}/META-INF/NOTICE.txt"/>
     <jar jarfile="libthrift.jar">
       <fileset dir="${build}">
         <include name="**/*.class" />
+        <include name="META-INF/*.txt" />
       </fileset>
       <fileset dir="src">
         <include name="**/*.java" />
