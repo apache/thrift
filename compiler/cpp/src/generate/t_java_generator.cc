@@ -1065,7 +1065,7 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
     if (!bean_style_){
       out << endl << indent() << "// check for required fields of primitive type, which can't be checked in the validate method" << endl;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-        if ((*f_iter)->get_req() != t_field::T_OPTIONAL && !type_can_be_null((*f_iter)->get_type())) {
+        if ((*f_iter)->get_req() == t_field::T_REQUIRED && !type_can_be_null((*f_iter)->get_type())) {
           out <<
             indent() << "if (!" << generate_isset_check(*f_iter) << ") {" << endl <<
             indent() << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' was not found in serialized data! Struct: \" + toString());" << endl <<
@@ -1095,7 +1095,7 @@ void t_java_generator::generate_java_validator(ofstream& out,
   
   out << indent() << "// check for required fields" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if ((*f_iter)->get_req() != t_field::T_OPTIONAL) {
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
       if (bean_style_) {
         out <<
           indent() << "if (!" << generate_isset_check(*f_iter) << ") {" << endl <<
@@ -1107,7 +1107,7 @@ void t_java_generator::generate_java_validator(ofstream& out,
           indent(out) << "  throw new TProtocolException(\"Required field '" << (*f_iter)->get_name() << "' was not present! Struct: \" + toString());" << endl;
           indent(out) << "}" << endl;
         } else {
-          indent(out) << "// '" << (*f_iter)->get_name() << "' is only checked in read() because it's a primitive and you chose the non-beans generator." << endl;
+          indent(out) << "// alas, we cannot check '" << (*f_iter)->get_name() << "' because it's a primitive and you chose the non-beans generator." << endl;
         }
       }      
     }

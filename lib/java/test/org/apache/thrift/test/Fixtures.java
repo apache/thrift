@@ -112,17 +112,7 @@ public class Fixtures {
 
       // superhuge compact proto test struct
       compactProtoTestStruct = new CompactProtoTestStruct(thrift.test.Constants.COMPACT_TEST);
-      compactProtoTestStruct.a_binary = new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8};
-      compactProtoTestStruct.binary_list = Arrays.asList(new byte[]{(byte) 0, (byte) 1}, new byte[]{(byte) 2, (byte) 3});
-      compactProtoTestStruct.binary_set = new HashSet<byte[]>(compactProtoTestStruct.binary_list);
-      compactProtoTestStruct.binary_byte_map = new HashMap<byte[], Byte>() {{
-        put(new byte[]{(byte) 0, (byte) 1}, (byte) 100);
-        put(new byte[]{(byte) 2, (byte) 3}, (byte) 101);
-      }};
-      compactProtoTestStruct.byte_binary_map = new HashMap<Byte, byte[]>() {{
-        put((byte) 100, new byte[]{(byte) 0, (byte) 1});
-        put((byte) 101, new byte[]{(byte) 2, (byte) 3});
-      }};
+      compactProtoTestStruct.a_binary = new byte[]{0,1,2,3,4,5,6,7,8};
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
