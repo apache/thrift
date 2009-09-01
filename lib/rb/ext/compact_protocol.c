@@ -86,7 +86,7 @@ static int get_compact_type(VALUE type_value) {
   } else {
     char str[50];
     sprintf(str, "don't know what type: %d", type);
-    rb_raise(rb_eStandardError, str);
+    rb_raise(rb_eStandardError, "%s", str);
     return 0;
   }
 }
@@ -348,7 +348,7 @@ static int8_t get_ttype(int8_t ctype) {
   } else {
     char str[50];
     sprintf(str, "don't know what type: %d", ctype);
-    rb_raise(rb_eStandardError, str);
+    rb_raise(rb_eStandardError, "%s", str);
     return 0;
   }
 }
