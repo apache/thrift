@@ -286,8 +286,7 @@ class PosixThreadFactory::Impl {
   void setDetached(bool value) { detached_ = value; }
 
   Thread::id_t getCurrentThreadId() const {
-    // TODO(dreiss): Stop using C-style casts.
-    return (id_t)pthread_self();
+    return (Thread::id_t)pthread_self();
   }
 
 };
