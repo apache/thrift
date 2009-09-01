@@ -42,6 +42,8 @@
  */
 int y_field_val = -1;
 int g_arglist = 0;
+const int struct_is_struct = 0;
+const int struct_is_union = 1;
 
 %}
 
@@ -148,6 +150,7 @@ int g_arglist = 0;
 %token tok_const
 %token tok_required
 %token tok_optional
+%token tok_union
 
 /**
  * Grammar nodes
@@ -193,6 +196,7 @@ int g_arglist = 0;
 %type<tconstv>   ConstMap
 %type<tconstv>   ConstMapContents
 
+%type<iconst>    StructHead
 %type<tstruct>   Struct
 %type<tstruct>   Xception
 %type<tservice>  Service
@@ -679,11 +683,22 @@ ConstMapContents:
       $$->set_map();
     }
 
+StructHead:
+  tok_struct
+    {
+      $$ = struct_is_struct;
+    }
+| tok_union
+    {
+      $$ = struct_is_union;
+    }
+
 Struct:
-  tok_struct tok_identifier XsdAll '{' FieldList '}' TypeAnnotations
+  StructHead tok_identifier XsdAll '{' FieldList '}' TypeAnnotations
     {
       pdebug("Struct -> tok_struct tok_identifier { FieldList }");
       $5->set_xsd_all($3);
+      $5->set_union($1 == struct_is_union);
       $$ = $5;
       $$->set_name($2);
       if ($7 != NULL) {
@@ -691,7 +706,7 @@ Struct:
         delete $7;
       }
     }
-
+    
 XsdAll:
   tok_xsd_all
     {

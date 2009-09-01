@@ -251,3 +251,18 @@ struct ReverseOrderStruct {
 service ReverseOrderService {
   void myMethod(4: string first, 3: i16 second, 2: i32 third, 1: i64 fourth);
 }
+
+union TestUnion {
+  /**
+   * A doc string
+   */
+  1: string string_field;
+  2: i32 i32_field;
+  3: OneOfEach struct_field;
+  4: list<RandomStuff> struct_list;
+  5: i32 other_i32_field;
+}
+
+struct StructWithAUnion {
+  1: TestUnion test_union;
+}

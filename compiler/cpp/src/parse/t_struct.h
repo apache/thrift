@@ -58,6 +58,10 @@ class t_struct : public t_type {
     is_xception_ = is_xception;
   }
 
+  void set_union(bool is_union) {
+    is_union_ = is_union;
+  }
+
   void set_xsd_all(bool xsd_all) {
     xsd_all_ = xsd_all;
   }
@@ -95,6 +99,10 @@ class t_struct : public t_type {
   bool is_xception() const {
     return is_xception_;
   }
+  
+  bool is_union() const {
+    return is_union_;
+  }
 
   virtual std::string get_fingerprint_material() const {
     std::string rv = "{";
@@ -120,6 +128,7 @@ class t_struct : public t_type {
   members_type members_;
   members_type members_in_id_order_;
   bool is_xception_;
+  bool is_union_;
 
   bool xsd_all_;
 };

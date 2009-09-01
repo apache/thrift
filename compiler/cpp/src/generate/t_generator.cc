@@ -49,7 +49,7 @@ void t_generator::generate_program() {
   vector<t_const*> consts = program_->get_consts();
   generate_consts(consts);
 
-  // Generate structs and exceptions in declared order
+  // Generate structs, exceptions, and unions in declared order
   vector<t_struct*> objects = program_->get_objects();
   vector<t_struct*>::iterator o_iter;
   for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {

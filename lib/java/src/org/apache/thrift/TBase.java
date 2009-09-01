@@ -19,13 +19,15 @@
 
 package org.apache.thrift;
 
+import java.io.Serializable;
+
 import org.apache.thrift.protocol.TProtocol;
 
 /**
  * Generic base interface for generated Thrift objects.
  *
  */
-public interface TBase extends Cloneable {
+public interface TBase extends Serializable {
 
   /**
    * Reads the TObject from the given input protocol.
@@ -63,4 +65,6 @@ public interface TBase extends Cloneable {
    * @param fieldId The field's id tag as found in the IDL.
    */
   public void setFieldValue(int fieldId, Object value);
+
+  public TBase deepCopy();
 }
