@@ -2523,17 +2523,16 @@ void t_java_generator::generate_serialize_container(ofstream& out,
       prefix << ")";
   }
 
-    scope_up(out);
-
-    if (ttype->is_map()) {
-      generate_serialize_map_element(out, (t_map*)ttype, iter, prefix);
-    } else if (ttype->is_set()) {
-      generate_serialize_set_element(out, (t_set*)ttype, iter);
-    } else if (ttype->is_list()) {
-      generate_serialize_list_element(out, (t_list*)ttype, iter);
-    }
-
-    scope_down(out);
+  out << endl;
+  scope_up(out);
+  if (ttype->is_map()) {
+    generate_serialize_map_element(out, (t_map*)ttype, iter, prefix);
+  } else if (ttype->is_set()) {
+    generate_serialize_set_element(out, (t_set*)ttype, iter);
+  } else if (ttype->is_list()) {
+    generate_serialize_list_element(out, (t_list*)ttype, iter);
+  }
+  scope_down(out);
 
   if (ttype->is_map()) {
     indent(out) <<
