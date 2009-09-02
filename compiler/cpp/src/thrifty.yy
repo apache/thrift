@@ -902,14 +902,7 @@ FieldIdentifier:
 FieldRequiredness:
   tok_required
     {
-      if (g_arglist) {
-        if (g_parse_mode == PROGRAM) {
-          pwarning(1, "required keyword is ignored in argument lists.\n");
-        }
-        $$ = t_field::T_OPT_IN_REQ_OUT;
-      } else {
-        $$ = t_field::T_REQUIRED;
-      }
+      $$ = t_field::T_REQUIRED;
     }
 | tok_optional
     {
