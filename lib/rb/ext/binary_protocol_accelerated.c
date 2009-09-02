@@ -76,6 +76,9 @@ static void write_i64_direct(VALUE trans, int64_t value) {
 }
 
 static void write_string_direct(VALUE trans, VALUE str) {
+  if (TYPE(str) != T_STRING) {
+    rb_raise(rb_eStandardError, "Value should be a string");    
+  }
   write_i32_direct(trans, RSTRING_LEN(str));
   rb_funcall(trans, write_method_id, 1, str);
 }
