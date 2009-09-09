@@ -37,7 +37,8 @@
          ip=any,
          listen=null,
          acceptor=null,
-         socket_opts=[{recv_timeout, 500}]
+         socket_opts=[{recv_timeout, 500}],
+         framed=false
         }).
 
 start(State=#thrift_socket_server{}) ->
@@ -101,7 +102,9 @@ parse_options([{max, Max} | Rest], State) ->
                  Max when is_integer(Max) ->
                      Max
              end,
-    parse_options(Rest, State#thrift_socket_server{max=MaxInt}).
+    parse_options(Rest, State#thrift_socket_server{max=MaxInt});
+parse_options([{framed, Framed} | Rest], State) when is_boolean(Framed) ->
+    parse_options(Rest, State#thrift_socket_server{framed=Framed}).
 
 start_server(State=#thrift_socket_server{name=Name}) ->
     case Name of
@@ -165,22 +168,26 @@ new_acceptor(State=#thrift_socket_server{max=0}) ->
     State#thrift_socket_server{acceptor=null};
 new_acceptor(State=#thrift_socket_server{acceptor=OldPid, listen=Listen,
                                          service=Service, handler=Handler,
-                                         socket_opts=Opts
+                                         socket_opts=Opts, framed=Framed
                                         }) ->
     Pid = proc_lib:spawn_link(?MODULE, acceptor_loop,
-                              [{self(), Listen, Service, Handler, Opts}]),
+                              [{self(), Listen, Service, Handler, Opts, Framed}]),
 %%     error_logger:info_msg("Spawning new acceptor: ~p => ~p", [OldPid, Pid]),
     State#thrift_socket_server{acceptor=Pid}.
 
-acceptor_loop({Server, Listen, Service, Handler, SocketOpts})
+acceptor_loop({Server, Listen, Service, Handler, SocketOpts, Framed})
   when is_pid(Server), is_list(SocketOpts) ->
     case catch gen_tcp:accept(Listen) of % infinite timeout
         {ok, Socket} ->
             gen_server:cast(Server, {accepted, self()}),
             ProtoGen = fun() ->
                                {ok, SocketTransport}   = thrift_socket_transport:new(Socket, SocketOpts),
-                               {ok, BufferedTransport} = thrift_buffered_transport:new(SocketTransport),
-                               {ok, Protocol}          = thrift_binary_protocol:new(BufferedTransport),
+                               {ok, Transport}         =
+                                   case Framed of
+                                       true  -> thrift_framed_transport:new(SocketTransport);
+                                       false -> thrift_buffered_transport:new(SocketTransport)
+                                   end,
+                               {ok, Protocol}          = thrift_binary_protocol:new(Transport),
                                {ok, IProt=Protocol, OProt=Protocol}
                        end,
             thrift_processor:init({Server, ProtoGen, Service, Handler});
