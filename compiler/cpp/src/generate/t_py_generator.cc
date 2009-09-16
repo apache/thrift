@@ -922,6 +922,8 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
   } else {
     if (gen_twisted_) {
       extends_if = "(Interface)";
+    } else if (gen_newstyle_) {
+      extends_if = "(object)";
     }
   }
 
