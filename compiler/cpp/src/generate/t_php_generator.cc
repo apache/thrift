@@ -193,6 +193,7 @@ class t_php_generator : public t_oop_generator {
   std::ofstream f_helpers_;
   std::ofstream f_service_;
 
+  std::string package_dir_;
   /**
    * Generate protocol-independent template? Or Binary inline code?
    */
@@ -230,9 +231,10 @@ class t_php_generator : public t_oop_generator {
 void t_php_generator::init_generator() {
   // Make output directory
   MKDIR(get_out_dir().c_str());
-
+  package_dir_ = get_out_dir()+"/"+program_name_+"/";
+  MKDIR(package_dir_.c_str());
   // Make output file
-  string f_types_name = get_out_dir()+program_name_+"_types.php";
+  string f_types_name = package_dir_+program_name_+"_types.php";
   f_types_.open(f_types_name.c_str());
 
   // Print header
@@ -252,7 +254,7 @@ void t_php_generator::init_generator() {
 
   // Print header
   if (!program_->get_consts().empty()) {
-    string f_consts_name = get_out_dir()+program_name_+"_constants.php";
+    string f_consts_name = package_dir_+program_name_+"_constants.php";
     f_consts_.open(f_consts_name.c_str());
     f_consts_ <<
       "<?php" << endl <<
@@ -581,7 +583,7 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
     // Make output file
     ofstream autoload_out;
     string f_struct = program_name_+"."+(tstruct->get_name())+".php";
-    string f_struct_name = get_out_dir()+f_struct;
+    string f_struct_name = package_dir_+f_struct;
     autoload_out.open(f_struct_name.c_str());
     autoload_out << "<?php" << endl;
     _generate_php_struct_definition(autoload_out, tstruct, is_exception);
@@ -909,7 +911,7 @@ void t_php_generator::generate_php_struct_writer(ofstream& out,
  * @param tservice The service definition
  */
 void t_php_generator::generate_service(t_service* tservice) {
-  string f_service_name = get_out_dir()+service_name_+".php";
+  string f_service_name = package_dir_+service_name_+".php";
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<
@@ -1306,7 +1308,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
     // Make output file
     ofstream autoload_out;
     string f_struct = program_name_+"."+(tservice->get_name())+".client.php";
-    string f_struct_name = get_out_dir()+f_struct;
+    string f_struct_name = package_dir_+f_struct;
     autoload_out.open(f_struct_name.c_str());
     autoload_out << "<?php" << endl;
     _generate_service_client(autoload_out, tservice);
