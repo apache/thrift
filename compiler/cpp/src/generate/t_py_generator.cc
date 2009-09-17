@@ -52,7 +52,11 @@ class t_py_generator : public t_generator {
     iter = parsed_options.find("twisted");
     gen_twisted_ = (iter != parsed_options.end());
 
-    out_dir_base_ = "gen-py";
+    if (gen_twisted_){
+      out_dir_base_ = "gen-py.twisted";
+    } else {
+      out_dir_base_ = "gen-py";
+    }
   }
 
   /**
