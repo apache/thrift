@@ -591,6 +591,9 @@ void TNonblockingServer::handleEvent(int fd, short which) {
 
     // Put this client connection into the proper state
     clientConnection->transition();
+
+    // addrLen is written by the accept() call, so needs to be set before the next call.
+    addrLen = sizeof(addr);
   }
 
   // Done looping accept, now we have to make sure the error is due to
