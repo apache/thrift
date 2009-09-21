@@ -960,7 +960,7 @@ void t_java_generator::generate_union_comparisons(ofstream& out, t_struct* tstru
     indent(out) << "@Override" << endl;
     indent(out) << "public int compareTo(" << type_name(tstruct) << " other) {" << endl;
     indent(out) << "  int lastComparison = TBaseHelper.compareTo(getSetField(), other.getSetField());" << endl;
-    indent(out) << "  if (lastComparison != 0) {" << endl;
+    indent(out) << "  if (lastComparison == 0) {" << endl;
     indent(out) << "    return TBaseHelper.compareTo((Comparable)getFieldValue(), (Comparable)other.getFieldValue());" << endl;
     indent(out) << "  }" << endl;
     indent(out) << "  return lastComparison;" << endl;
