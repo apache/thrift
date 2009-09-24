@@ -86,23 +86,23 @@ class TSocket(TSocketBase):
         message = 'Could not connect to socket %s' % self._unix_socket
       else:
         message = 'Could not connect to %s:%d' % (self.host, self.port)
-      raise TTransportException(TTransportException.NOT_OPEN, message)
+      raise TTransportException(type=TTransportException.NOT_OPEN, message=message)
 
   def read(self, sz):
     buff = self.handle.recv(sz)
     if len(buff) == 0:
-      raise TTransportException('TSocket read 0 bytes')
+      raise TTransportException(type=TTransportException.END_OF_FILE, message='TSocket read 0 bytes')
     return buff
 
   def write(self, buff):
     if not self.handle:
-      raise TTransportException(TTransportException.NOT_OPEN, 'Transport not open')
+      raise TTransportException(type=TTransportException.NOT_OPEN, message='Transport not open')
     sent = 0
     have = len(buff)
     while sent < have:
       plus = self.handle.send(buff)
       if plus == 0:
-        raise TTransportException('TSocket sent 0 bytes')
+        raise TTransportException(type=TTransportException.END_OF_FILE, message='TSocket sent 0 bytes')
       sent += plus
       buff = buff[plus:]
 

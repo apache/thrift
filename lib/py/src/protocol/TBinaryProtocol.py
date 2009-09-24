@@ -127,13 +127,13 @@ class TBinaryProtocol(TProtocolBase):
     if sz < 0:
       version = sz & TBinaryProtocol.VERSION_MASK
       if version != TBinaryProtocol.VERSION_1:
-        raise TProtocolException(TProtocolException.BAD_VERSION, 'Bad version in readMessageBegin: %d' % (sz))
+        raise TProtocolException(type=TProtocolException.BAD_VERSION, message='Bad version in readMessageBegin: %d' % (sz))
       type = sz & TBinaryProtocol.TYPE_MASK
       name = self.readString()
       seqid = self.readI32()
     else:
       if self.strictRead:
-        raise TProtocolException(TProtocolException.BAD_VERSION, 'No protocol version header')
+        raise TProtocolException(type=TProtocolException.BAD_VERSION, message='No protocol version header')
       name = self.trans.readAll(sz)
       type = self.readByte()
       seqid = self.readI32()
