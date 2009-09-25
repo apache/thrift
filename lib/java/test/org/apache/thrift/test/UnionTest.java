@@ -62,6 +62,11 @@ public class UnionTest {
       // sweet
     }
 
+    union = TestUnion.i32_field(1);
+    
+    if (union.equals((TestUnion)null)) {
+      throw new RuntimeException("uh oh, union.equals(null)!");
+    }
   }
 
 

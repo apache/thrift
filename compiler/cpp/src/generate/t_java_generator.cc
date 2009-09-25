@@ -951,7 +951,7 @@ void t_java_generator::generate_union_comparisons(ofstream& out, t_struct* tstru
   out << endl;
 
   indent(out) << "public boolean equals(" << tstruct->get_name() << " other) {" << endl;
-  indent(out) << "  return getSetField() == other.getSetField() && ((value_ instanceof byte[]) ? " << endl;
+  indent(out) << "  return other != null && getSetField() == other.getSetField() && ((value_ instanceof byte[]) ? " << endl;
   indent(out) << "    Arrays.equals((byte[])getFieldValue(), (byte[])other.getFieldValue()) : getFieldValue().equals(other.getFieldValue()));" << endl;
   indent(out) << "}" << endl;
   out << endl;
