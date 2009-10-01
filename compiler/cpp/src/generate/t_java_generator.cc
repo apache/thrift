@@ -1732,6 +1732,76 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     std::string field_name = field->get_name();
     std::string cap_name = get_cap_name(field_name);
 
+    if (type->is_container()) {
+      // Method to return the size of the collection
+      indent(out) << "public int get" << cap_name;
+      out << get_cap_name("size() {") << endl;
+
+      indent_up();
+      indent(out) << "return (this." << field_name << " == null) ? 0 : " <<
+        "this." << field_name << ".size();" << endl;
+      indent_down();
+      indent(out) << "}" << endl << endl;
+    }
+
+    if (type->is_set() || type->is_list()) {
+
+      t_type* element_type;
+      if (type->is_set()) {
+        element_type = ((t_set*)type)->get_elem_type();
+      } else {
+        element_type = ((t_list*)type)->get_elem_type();
+      }
+
+      // Iterator getter for sets and lists
+      indent(out) << "public java.util.Iterator<" <<
+        type_name(element_type, true, false) <<  "> get" << cap_name;
+      out << get_cap_name("iterator() {") << endl;
+
+      indent_up();
+      indent(out) << "return (this." << field_name << " == null) ? null : " <<
+        "this." << field_name << ".iterator();" << endl;
+      indent_down();
+      indent(out) << "}" << endl << endl;
+
+      // Add to set or list, create if the set/list is null
+      indent(out);
+      out << "public void add" << get_cap_name("to");
+      out << cap_name << "(" << type_name(element_type) << " elem) {" << endl;
+
+      indent_up();
+      indent(out) << "if (this." << field_name << " == null) {" << endl;
+      indent_up();
+      indent(out) << "this." << field_name << " = new " << type_name(type, false, true) <<
+        "();" << endl;
+      indent_down();
+      indent(out) << "}" << endl;
+      indent(out) << "this." << field_name << ".add(elem);" << endl;
+      indent_down();
+      indent(out) << "}" << endl << endl;
+
+    } else if (type->is_map()) {
+      // Put to map
+      t_type* key_type = ((t_map*)type)->get_key_type();
+      t_type* val_type = ((t_map*)type)->get_val_type();
+
+      indent(out);
+      out << "public void put" << get_cap_name("to");
+      out << cap_name << "(" << type_name(key_type) << " key, "
+        << type_name(val_type) << " val) {" << endl;
+
+      indent_up();
+      indent(out) << "if (this." << field_name << " == null) {" << endl;
+      indent_up();
+      indent(out) << "this." << field_name << " = new " <<
+        type_name(type, false, true) << "();" << endl;
+      indent_down();
+      indent(out) << "}" << endl;
+      indent(out) << "this." << field_name << ".put(key, val);" << endl;
+      indent_down();
+      indent(out) << "}" << endl << endl;
+    }
+
     // Simple getter
     generate_java_doc(out, field);
     indent(out) << "public " << type_name(type);
