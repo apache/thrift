@@ -182,6 +182,8 @@
       classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.UnionTest"
       classpathref="test.classpath" failonerror="true" />
+    <java classname="org.apache.thrift.test.PartialDeserializeTest"
+      classpathref="test.classpath" failonerror="true" />
   </target>
 
   <target name="generate">

@@ -266,3 +266,9 @@ union TestUnion {
 struct StructWithAUnion {
   1: TestUnion test_union;
 }
+
+struct PrimitiveThenStruct {
+  1: i32 blah;
+  2: i32 blah2;
+  3: Backwards bw;
+}

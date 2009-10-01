@@ -23,7 +23,11 @@ import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TField;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.protocol.TProtocolUtil;
+import org.apache.thrift.protocol.TType;
 import org.apache.thrift.transport.TIOStreamTransport;
 
 /**
@@ -78,6 +82,59 @@ public class TDeserializer {
     } catch (UnsupportedEncodingException uex) {
       throw new TException("JVM DOES NOT SUPPORT ENCODING: " + charset);
     }
+  }
+
+  /**
+   * Deserialize only a single Thrift object (addressed by recursively using field id)
+   * from a byte record.
+   * @param record The object to read from
+   * @param tb The object to read into
+   * @param fieldIdPath The FieldId's that define a path tb
+   * @throws TException 
+   */
+  public void partialDeserialize(TBase tb, byte[] bytes, int ... fieldIdPath) throws TException {
+    // if there are no elements in the path, then the user is looking for the 
+    // regular deserialize method
+    // TODO: it might be nice not to have to do this check every time to save
+    // some performance.
+    if (fieldIdPath.length == 0) {
+      deserialize(tb, bytes);
+      return;
+    }
+
+    TProtocol iprot = protocolFactory_.getProtocol(
+        new TIOStreamTransport(
+          new ByteArrayInputStream(bytes))); 
+
+    // index into field ID path being currently searched for
+    int curPathIndex = 0;
+
+    iprot.readStructBegin();
+
+    while (curPathIndex < fieldIdPath.length) {
+      TField field = iprot.readFieldBegin();
+      // we can stop searching if we either see a stop or we go past the field 
+      // id we're looking for (since fields should now be serialized in asc
+      // order).
+      if (field.type == TType.STOP || field.id > fieldIdPath[curPathIndex]) { 
+        return;
+      }
+
+      if (field.id != fieldIdPath[curPathIndex]) {
+        // Not the field we're looking for. Skip field.
+        TProtocolUtil.skip(iprot, field.type);
+        iprot.readFieldEnd();
+      } else {
+        // This field is the next step in the path. Step into field.
+        curPathIndex++;
+        if (curPathIndex < fieldIdPath.length) {
+          iprot.readStructBegin();
+        }
+      }
+    }
+
+    // when this line is reached, iprot will be positioned at the start of tb.
+    tb.read(iprot);
   }
 
   /**
