@@ -1068,6 +1068,8 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
 
   generate_java_meta_data_map(out, tstruct);
 
+  bool all_optional_members = true;
+
   // Default constructor
   indent(out) <<
     "public " << tstruct->get_name() << "() {" << endl;
@@ -1077,22 +1079,27 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     if ((*m_iter)->get_value() != NULL) {
       print_const_value(out, "this." + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
     }
+    if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
+      all_optional_members = false;
+    }
   }
   indent_down();
   indent(out) << "}" << endl << endl;
 
-
-  if (!members.empty()) {
+  if (!members.empty() && !all_optional_members) {
     // Full constructor for all fields
     indent(out) <<
       "public " << tstruct->get_name() << "(" << endl;
     indent_up();
-    for (m_iter = members.begin(); m_iter != members.end(); ) {
-      indent(out) << type_name((*m_iter)->get_type()) << " " <<
-        (*m_iter)->get_name();
-      ++m_iter;
-      if (m_iter != members.end()) {
-        out << "," << endl;
+    bool first = true;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
+        if (!first) {
+          out << "," << endl;
+        }
+        first = false;
+        indent(out) << type_name((*m_iter)->get_type()) << " " <<
+          (*m_iter)->get_name();
       }
     }
     out << ")" << endl;
@@ -1101,9 +1108,11 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     indent_up();
     indent(out) << "this();" << endl;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      indent(out) << "this." << (*m_iter)->get_name() << " = " <<
-        (*m_iter)->get_name() << ";" << endl;
-      generate_isset_set(out, (*m_iter));
+      if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
+        indent(out) << "this." << (*m_iter)->get_name() << " = " <<
+          (*m_iter)->get_name() << ";" << endl;
+        generate_isset_set(out, (*m_iter));
+      }
     }
     indent_down();
     indent(out) << "}" << endl << endl;
