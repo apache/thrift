@@ -96,6 +96,7 @@ class t_java_generator : public t_oop_generator {
   void generate_java_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_tostring(std::ofstream& out, t_struct* tstruct);
   void generate_java_meta_data_map(std::ofstream& out, t_struct* tstruct);
+  void generate_java_field_name_map(std::ofstream& out, t_struct* tstruct);
   void generate_field_value_meta_data(std::ofstream& out, t_type* type);
   std::string get_java_type_string(t_type* type);
   void generate_reflection_setters(std::ostringstream& out, t_type* type, std::string field_name, std::string cap_name);
@@ -689,6 +690,8 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
 
   generate_java_meta_data_map(f_struct, tstruct);
 
+  generate_java_field_name_map(f_struct, tstruct);
+
   generate_union_constructor(f_struct, tstruct);
 
   f_struct << endl;
@@ -1069,6 +1072,8 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   generate_java_meta_data_map(out, tstruct);
 
   bool all_optional_members = true;
+
+  generate_java_field_name_map(out, tstruct);
 
   // Default constructor
   indent(out) <<
@@ -2000,6 +2005,30 @@ void t_java_generator::generate_java_meta_data_map(ofstream& out,
   indent(out) << "FieldMetaData.addStructMetaDataMap(" << type_name(tstruct) << ".class, metaDataMap);" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
+}
+
+/**
+ * Generates a static map from field names to field IDs
+ *
+ * @param tstruct The struct definition
+ */
+void t_java_generator::generate_java_field_name_map(ofstream& out,
+                                                    t_struct* tstruct) {
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  // Static Map with fieldName -> fieldID
+  indent(out) << "public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{" << endl;
+
+  // Populate map
+  indent_up();
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field* field = *f_iter;
+    std::string field_name = field->get_name();
+    indent(out) << "put(\"" << field->get_name() << "\", new Integer(" << upcase_string(field->get_name()) << "));" << endl;
+  }
+  indent_down();
+  indent(out) << "}});" << endl << endl;
 }
 
 /** 

@@ -73,5 +73,15 @@ public class MetaDataTest {
     if (FieldMetaData.getStructMetaDataMap(CrazyNesting.class) != CrazyNesting.metaDataMap ||
             FieldMetaData.getStructMetaDataMap(Insanity.class) != Insanity.metaDataMap)
       throw new RuntimeException("global metadata map contains wrong entry for a loaded struct");    
+
+    Map<String, Integer> fnMap = CrazyNesting.fieldNameMap;
+    if (fnMap.size() != 3) {
+      throw new RuntimeException("Field Name Map contains wrong number of entries!");
+    }
+    for (Map.Entry<Integer, FieldMetaData> mdEntry : mdMap.entrySet()) {
+      if (!fnMap.get(mdEntry.getValue().fieldName).equals(mdEntry.getKey())) {
+        throw new RuntimeException("Field name map contained invalid Name <-> ID mapping");
+      }
+    }
   }
 }
