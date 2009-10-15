@@ -591,6 +591,9 @@ static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
   // read struct end
   mt->read_struct_end(protocol);
 
+  // call validate
+  rb_funcall(self, validate_method_id, 0);
+
   return Qnil;
 }
 
