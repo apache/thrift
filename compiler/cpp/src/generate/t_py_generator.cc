@@ -354,12 +354,17 @@ void t_py_generator::generate_typedef(t_typedef* ttypedef) {}
  * @param tenum The enumeration
  */
 void t_py_generator::generate_enum(t_enum* tenum) {
+  std::ostringstream to_string_mapping, from_string_mapping;
+
   f_types_ <<
     "class " << tenum->get_name() <<
     (gen_newstyle_ ? "(object)" : "") <<
     ":" << endl;
   indent_up();
   generate_python_docstring(f_types_, tenum);
+
+  to_string_mapping << indent() << "_VALUES_TO_NAMES = {" << endl;
+  from_string_mapping << indent() << "_NAMES_TO_VALUES = {" << endl;
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
@@ -373,10 +378,21 @@ void t_py_generator::generate_enum(t_enum* tenum) {
 
     f_types_ <<
       indent() << (*c_iter)->get_name() << " = " << value << endl;
+
+    // Dictionaries to/from string names of enums
+    to_string_mapping <<
+      indent() << indent() << value << ": \"" <<
+      escape_string((*c_iter)->get_name()) << "\"," << endl;
+    from_string_mapping <<
+      indent() << indent() << '"' << escape_string((*c_iter)->get_name()) <<
+      "\": " << value << ',' << endl;
   }
+  to_string_mapping << indent() << "}" << endl;
+  from_string_mapping << indent() << "}" << endl;
 
   indent_down();
   f_types_ << endl;
+  f_types_ << to_string_mapping.str() << endl << from_string_mapping.str() << endl;
 }
 
 /**
