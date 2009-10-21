@@ -29,6 +29,10 @@
 #include <errno.h>
 #include <assert.h>
 
+#ifndef AF_LOCAL
+#define AF_LOCAL AF_UNIX
+#endif
+
 namespace apache { namespace thrift { namespace server {
 
 using namespace apache::thrift::protocol;

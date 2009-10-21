@@ -33,6 +33,10 @@
 #include "TServerSocket.h"
 #include <boost/shared_ptr.hpp>
 
+#ifndef AF_LOCAL
+#define AF_LOCAL AF_UNIX
+#endif
+
 namespace apache { namespace thrift { namespace transport {
 
 using namespace std;

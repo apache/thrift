@@ -86,7 +86,10 @@ using apache::thrift::transport::TTransport;
 #  define __LITTLE_ENDIAN LITTLE_ENDIAN
 #  define __BIG_ENDIAN BIG_ENDIAN
 # else
-#  error "Cannot determine endianness"
+#  include <boost/config.hpp>
+#  define __BYTE_ORDER BOOST_BYTE_ORDER
+#  define __LITTLE_ENDIAN BOOST_LITTLE_ENDIAN
+#  define __BIG_ENDIAN BOOST_BIG_ENDIAN
 # endif
 #endif
 

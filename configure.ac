@@ -142,6 +142,7 @@ dnl My best guess is that it is where glibc stashes its implementation
 dnl of the POSIX Real-Time Extensions.  This seems necessary on Linux,
 dnl and we haven't yet found a system where this is a problem.
 AC_CHECK_LIB(rt, clock_gettime)
+AC_CHECK_LIB(socket, setsockopt)
 
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T
