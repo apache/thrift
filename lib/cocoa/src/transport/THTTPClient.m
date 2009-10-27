@@ -139,7 +139,8 @@
   }
   if (![response isKindOfClass: [NSHTTPURLResponse class]]) {
     @throw [TTransportException exceptionWithName: @"TTransportException"
-                                           reason: @"Unexpected NSURLResponse type"];
+                                           reason: [NSString stringWithFormat: @"Unexpected NSURLResponse type: %@",
+                                                    [response className]]];
   }
 
   NSHTTPURLResponse * httpResponse = (NSHTTPURLResponse *) response;
