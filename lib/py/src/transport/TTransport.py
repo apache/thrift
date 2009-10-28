@@ -298,7 +298,7 @@ class TFramedTransport(TTransportBase, CReadableTransport):
     # ask for a refill until the previous buffer is empty.  Therefore,
     # we can start reading new frames immediately.
     while len(prefix) < reqlen:
-      readFrame()
+      self.readFrame()
       prefix += self.__rbuf.getvalue()
     self.__rbuf = StringIO(prefix)
     return self.__rbuf
