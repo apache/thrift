@@ -79,6 +79,12 @@ class t_cocoa_generator : public t_oop_generator {
   void generate_cocoa_struct_implementation(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool is_result=false);
   void generate_cocoa_struct_initializer_signature(std::ofstream& out,
                                                    t_struct* tstruct);
+  void generate_cocoa_struct_init_with_coder_method(ofstream &out,
+                                                    t_struct* tstruct,
+                                                    bool is_exception);
+  void generate_cocoa_struct_encode_with_coder_method(ofstream &out,
+                                                    t_struct* tstruct,
+                                                    bool is_exception);
   void generate_cocoa_struct_field_accessor_declarations(std::ofstream& out,
                                                          t_struct* tstruct,
                                                          bool is_exception);
@@ -451,6 +457,7 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream &out,
   } else {
     out << "NSObject ";
   }
+  out << "<NSCoding> ";
 
   scope_up(out);
 
@@ -549,6 +556,142 @@ void t_cocoa_generator::generate_cocoa_struct_field_accessor_declarations(ofstre
 
 
 /**
+ * Generate the initWithCoder method for this struct so it's compatible with
+ * the NSCoding protocol
+ */
+void t_cocoa_generator::generate_cocoa_struct_init_with_coder_method(ofstream &out,
+                                                                     t_struct* tstruct,
+                                                                     bool is_exception) 
+{
+  indent(out) << "- (id) initWithCoder: (NSCoder *) decoder" << endl;
+  scope_up(out);
+  if (is_exception) {
+    // NSExceptions conform to NSCoding, so we can call super
+    out << indent() << "self = [super initWithCoder: decoder];" << endl;
+  } else {
+    out << indent() << "self = [super init];" << endl;
+  }
+
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
+    out << indent() << "if ([decoder containsValueForKey: @\""<< (*m_iter)->get_name() <<"\"])" << endl;
+    scope_up(out);
+    out << indent() << "__" << (*m_iter)->get_name() << " = ";
+    if (type_can_be_null(t)) 
+    {
+      out << "[[decoder decodeObjectForKey: @\"" << (*m_iter)->get_name() << "\"] retain];" << endl;
+    }
+    else if (t->is_enum()) 
+    {
+      out << "[decoder decodeIntForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+    }
+    else 
+    {
+      t_base_type::t_base tbase = ((t_base_type *) t)->get_base();
+      switch (tbase)
+      {
+        case t_base_type::TYPE_BOOL:
+          out << "[decoder decodeBoolForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          break;
+        case t_base_type::TYPE_BYTE:
+          out << "[decoder decodeIntForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          break;
+        case t_base_type::TYPE_I16:
+          out << "[decoder decodeIntForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          break;
+        case t_base_type::TYPE_I32:
+          out << "[decoder decodeInt32ForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          break;
+        case t_base_type::TYPE_I64:
+          out << "[decoder decodeInt64ForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          break;
+        case t_base_type::TYPE_DOUBLE:
+          out << "[decoder decodeDoubleForKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;      
+          break;
+        default:    
+          throw "compiler error: don't know how to decode thrift type: " + t_base_type::t_base_name(tbase);
+      }
+    }
+    out << indent() << "__" << (*m_iter)->get_name() << "_isset = YES;" << endl;
+    scope_down(out);
+  }
+  
+  out << indent() << "return self;" << endl;
+  scope_down(out);
+  out << endl;
+}
+
+
+/**
+ * Generate the encodeWithCoder method for this struct so it's compatible with
+ * the NSCoding protocol
+ */
+void t_cocoa_generator::generate_cocoa_struct_encode_with_coder_method(ofstream &out,
+                                                                       t_struct* tstruct,
+                                                                       bool is_exception) 
+{
+  indent(out) << "- (void) encodeWithCoder: (NSCoder *) encoder" << endl;
+  scope_up(out);
+  if (is_exception) {
+    // NSExceptions conform to NSCoding, so we can call super
+    out << indent() << "[super encodeWithCoder: encoder];" << endl;
+  }
+  
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+  
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
+    out << indent() << "if (__"<< (*m_iter)->get_name() <<"_isset)" << endl;
+    scope_up(out);
+    //out << indent() << "__" << (*m_iter)->get_name() << " = ";
+    if (type_can_be_null(t)) 
+    {
+      out << indent() << "[encoder encodeObject: __" << (*m_iter)->get_name() << " forKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
+    }
+    else if (t->is_enum()) 
+    {
+      out << indent() << "[encoder encodeInt: __" << (*m_iter)->get_name() << " forKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
+    }
+    else 
+    {
+      t_base_type::t_base tbase = ((t_base_type *) t)->get_base();
+      switch (tbase)
+      {
+        case t_base_type::TYPE_BOOL:
+          out << indent() << "[encoder encodeBool: __" << (*m_iter)->get_name() << " forKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
+          break;
+        case t_base_type::TYPE_BYTE:
+          out << indent() << "[encoder encodeInt: __" << (*m_iter)->get_name() << " forKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
+          break;
+        case t_base_type::TYPE_I16:
+          out << indent() << "[encoder encodeInt: __" << (*m_iter)->get_name() << " forKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
+          break;
+        case t_base_type::TYPE_I32:
+          out << indent() << "[encoder encodeInt32: __" << (*m_iter)->get_name() << " forKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
+          break;
+        case t_base_type::TYPE_I64:
+          out << indent() << "[encoder encodeInt64: __" << (*m_iter)->get_name() << " forKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
+          break;
+        case t_base_type::TYPE_DOUBLE:
+          out << indent() << "[encoder encodeDouble: __" << (*m_iter)->get_name() << " forKey: @\"" << (*m_iter)->get_name() << "\"];" << endl;
+          break;
+        default:    
+          throw "compiler error: don't know how to encode thrift type: " + t_base_type::t_base_name(tbase);
+      }
+    }
+    scope_down(out);
+  }
+  
+  scope_down(out);
+  out << endl;
+}
+
+
+/**
  * Generate struct implementation.
  *
  * @param tstruct      The struct definition
@@ -609,6 +752,11 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream &out,
     scope_down(out);
     out << endl;
   }
+  
+  // initWithCoder for NSCoding
+  generate_cocoa_struct_init_with_coder_method(out, tstruct, is_exception);
+  // encodeWithCoder for NSCoding
+  generate_cocoa_struct_encode_with_coder_method(out, tstruct, is_exception);  
 
   // dealloc
   if (!members.empty()) {
