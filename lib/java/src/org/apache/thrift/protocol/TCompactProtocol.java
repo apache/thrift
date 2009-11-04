@@ -554,7 +554,7 @@ public final class TCompactProtocol extends TProtocol {
    * Read a single byte off the wire. Nothing interesting here.
    */
   public byte readByte() throws TException {
-    trans_.read(byteRawBuf, 0, 1);
+    trans_.readAll(byteRawBuf, 0, 1);
     return byteRawBuf[0];
   }
 
@@ -584,7 +584,7 @@ public final class TCompactProtocol extends TProtocol {
    */
   public double readDouble() throws TException {
     byte[] longBits = new byte[8];
-    trans_.read(longBits, 0, 8);
+    trans_.readAll(longBits, 0, 8);
     return Double.longBitsToDouble(bytesToLong(longBits));
   }
 
@@ -607,7 +607,7 @@ public final class TCompactProtocol extends TProtocol {
     if (length == 0) return new byte[0];
 
     byte[] buf = new byte[length];
-    trans_.read(buf, 0, length);
+    trans_.readAll(buf, 0, length);
     return buf;
   }
 
