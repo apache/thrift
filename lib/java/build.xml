@@ -187,16 +187,16 @@
   </target>
 
   <target name="generate">
-    <exec executable="../../compiler/cpp/thrift">
+    <exec executable="../../compiler/cpp/thrift" failonerror="true">
       <arg line="--gen java:hashcode ${test.thrift.home}/ThriftTest.thrift" />
     </exec>
-    <exec executable="../../compiler/cpp/thrift">
+    <exec executable="../../compiler/cpp/thrift" failonerror="true">
       <arg line="--gen java:hashcode ${test.thrift.home}/DebugProtoTest.thrift" />
     </exec>
-    <exec executable="../../compiler/cpp/thrift">
+    <exec executable="../../compiler/cpp/thrift" failonerror="true">
       <arg line="--gen java:hashcode ${test.thrift.home}/OptionalRequiredTest.thrift" />
     </exec>
-    <exec executable="../../compiler/cpp/thrift">
+    <exec executable="../../compiler/cpp/thrift" failonerror="true">
       <arg line="--gen java:beans,nocamel ${test.thrift.home}/JavaBeansTest.thrift" />
     </exec>
   </target>

@@ -3523,7 +3523,7 @@ bool t_java_generator::is_comparable(t_struct* tstruct) {
   vector<t_field*>::const_iterator m_iter;
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    if (!is_comparable((*m_iter)->get_type())) {
+    if (!is_comparable(get_true_type((*m_iter)->get_type()))) {
       return false;
     }
   }
@@ -3533,7 +3533,7 @@ bool t_java_generator::is_comparable(t_struct* tstruct) {
 bool t_java_generator::is_comparable(t_type* type) {
   if (type->is_container()) {
     if (type->is_list()) {
-      return is_comparable(((t_list*)type)->get_elem_type());
+      return is_comparable(get_true_type(((t_list*)type)->get_elem_type()));
     } else {
       return false;
     }
@@ -3549,11 +3549,11 @@ bool t_java_generator::has_bit_vector(t_struct* tstruct) {
   vector<t_field*>::const_iterator m_iter;
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    if (!type_can_be_null((*m_iter)->get_type())) {
+    if (!type_can_be_null(get_true_type((*m_iter)->get_type()))) {
       return true;
     }
   }
-  return false;  
+  return false;
 }
 
 THRIFT_REGISTER_GENERATOR(java, "Java",

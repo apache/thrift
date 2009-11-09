@@ -272,3 +272,9 @@ struct PrimitiveThenStruct {
   2: i32 blah2;
   3: Backwards bw;
 }
+
+typedef map<i32,i32> SomeMap
+
+struct StructWithASomemap {
+  1: required SomeMap somemap_field;
+}
