@@ -42,6 +42,7 @@ THRIFTCODE= \
             src/Transport/TSocket.cs \
             src/Transport/TTransportException.cs \
             src/Transport/TStreamTransport.cs \
+            src/Transport/TFramedTransport.cs \
             src/Transport/TServerTransport.cs \
             src/Transport/TServerSocket.cs \
             src/Transport/TTransportFactory.cs \
