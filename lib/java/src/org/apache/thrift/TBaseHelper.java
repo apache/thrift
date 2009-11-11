@@ -68,8 +68,8 @@ public class TBaseHelper {
       return sizeCompare;
     }
     for (int i = 0; i < a.length; i++) {
-      int byteCompare = compareTo(a, b);
-      if (byteCompare !=0) {
+      int byteCompare = compareTo(a[i], b[i]);
+      if (byteCompare != 0) {
         return byteCompare;
       }
     }

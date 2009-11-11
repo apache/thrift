@@ -263,6 +263,11 @@ union TestUnion {
   5: i32 other_i32_field;
 }
 
+union ComparableUnion {
+  1: string string_field;
+  2: binary binary_field;
+}
+
 struct StructWithAUnion {
   1: TestUnion test_union;
 }

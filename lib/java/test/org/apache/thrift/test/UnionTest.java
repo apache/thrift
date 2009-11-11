@@ -7,6 +7,7 @@ import org.apache.thrift.transport.TMemoryBuffer;
 import thrift.test.Empty;
 import thrift.test.StructWithAUnion;
 import thrift.test.TestUnion;
+import thrift.test.ComparableUnion;
 
 public class UnionTest {
 
@@ -15,8 +16,9 @@ public class UnionTest {
    */
   public static void main(String[] args) throws Exception {
     testBasic();
-    testEquality();    
+    testEquality();
     testSerialization();
+    testCompareTo();
   }
 
   public static void testBasic() throws Exception {
@@ -131,6 +133,38 @@ public class UnionTest {
 
     swau.write(proto);
     new Empty().read(proto);
+  }
+  
+  public static void testCompareTo() throws Exception {
+    ComparableUnion cu = ComparableUnion.string_field("a");
+    ComparableUnion cu2 = ComparableUnion.string_field("b");
 
+    if (cu.compareTo(cu2) != -1) {
+      throw new RuntimeException("a was supposed to be < b, but was " + cu.compareTo(cu2));
+    }
+
+    if (cu2.compareTo(cu) != 1) {
+      throw new RuntimeException("b was supposed to be > a, but was " + cu2.compareTo(cu));
+    }
+
+    cu2 = ComparableUnion.binary_field(new byte[]{2});
+
+    if (cu.compareTo(cu2) != -1) {
+      throw new RuntimeException("a was supposed to be < b, but was " + cu.compareTo(cu2));
+    }
+
+    if (cu2.compareTo(cu) != 1) {
+      throw new RuntimeException("b was supposed to be > a, but was " + cu2.compareTo(cu));
+    }
+
+    cu = ComparableUnion.binary_field(new byte[]{1});
+
+    if (cu.compareTo(cu2) != -1) {
+      throw new RuntimeException("a was supposed to be < b, but was " + cu.compareTo(cu2));
+    }
+
+    if (cu2.compareTo(cu) != 1) {
+      throw new RuntimeException("b was supposed to be > a, but was " + cu2.compareTo(cu));
+    }
   }
 }
