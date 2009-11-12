@@ -196,7 +196,7 @@ sub read
     return unless defined $self->{handle};
 
     #check for timeout
-    my @sockets = $self->{handle}->can_read( $self->{sendTimeout} / 1000 );
+    my @sockets = $self->{handle}->can_read( $self->{recvTimeout} / 1000 );
 
     if(@sockets == 0){
         die new Thrift::TException('TSocket: timed out reading '.$len.' bytes from '.
@@ -236,7 +236,7 @@ sub write
 
 
         #check for timeout
-        my @sockets = $self->{handle}->can_write( $self->{recvTimeout} / 1000 );
+        my @sockets = $self->{handle}->can_write( $self->{sendTimeout} / 1000 );
 
         if(@sockets == 0){
             die new Thrift::TException('TSocket: timed out writing to bytes from '.
