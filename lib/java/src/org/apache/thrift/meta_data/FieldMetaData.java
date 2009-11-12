@@ -22,6 +22,7 @@ package org.apache.thrift.meta_data;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.thrift.TBase;
+import org.apache.thrift.TFieldIdEnum;
 
 /**
  * This class is used to store meta data about thrift fields. Every field in a
@@ -32,10 +33,10 @@ public class FieldMetaData implements java.io.Serializable {
   public final String fieldName;
   public final byte requirementType;
   public final FieldValueMetaData valueMetaData;
-  private static Map<Class<? extends TBase>, Map<Integer, FieldMetaData>> structMap;
+  private static Map<Class<? extends TBase>, Map<? extends TFieldIdEnum, FieldMetaData>> structMap;
   
   static {
-    structMap = new HashMap<Class<? extends TBase>, Map<Integer, FieldMetaData>>();
+    structMap = new HashMap<Class<? extends TBase>, Map<? extends TFieldIdEnum, FieldMetaData>>();
   }
   
   public FieldMetaData(String name, byte req, FieldValueMetaData vMetaData){
@@ -44,7 +45,7 @@ public class FieldMetaData implements java.io.Serializable {
     this.valueMetaData = vMetaData;
   }
   
-  public static void addStructMetaDataMap(Class<? extends TBase> sClass, Map<Integer, FieldMetaData> map){
+  public static void addStructMetaDataMap(Class<? extends TBase> sClass, Map<? extends TFieldIdEnum, FieldMetaData> map){
     structMap.put(sClass, map);
   }
 
@@ -54,7 +55,7 @@ public class FieldMetaData implements java.io.Serializable {
    *
    * @param sClass The TBase class for which the metadata map is requested
    */
-  public static Map<Integer, FieldMetaData> getStructMetaDataMap(Class<? extends TBase> sClass){
+  public static Map<? extends TFieldIdEnum, FieldMetaData> getStructMetaDataMap(Class<? extends TBase> sClass){
     if (!structMap.containsKey(sClass)){ // Load class if it hasn't been loaded
       try{
         sClass.newInstance();

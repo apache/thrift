@@ -29,6 +29,7 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
 import org.apache.thrift.transport.TIOStreamTransport;
+import org.apache.thrift.TFieldIdEnum;
 
 /**
  * Generic utility for easily deserializing objects from a byte array or Java
@@ -92,7 +93,7 @@ public class TDeserializer {
    * @param fieldIdPath The FieldId's that define a path tb
    * @throws TException 
    */
-  public void partialDeserialize(TBase tb, byte[] bytes, int ... fieldIdPath) throws TException {
+  public void partialDeserialize(TBase tb, byte[] bytes, TFieldIdEnum ... fieldIdPath) throws TException {
     // if there are no elements in the path, then the user is looking for the 
     // regular deserialize method
     // TODO: it might be nice not to have to do this check every time to save
@@ -116,11 +117,11 @@ public class TDeserializer {
       // we can stop searching if we either see a stop or we go past the field 
       // id we're looking for (since fields should now be serialized in asc
       // order).
-      if (field.type == TType.STOP || field.id > fieldIdPath[curPathIndex]) { 
+      if (field.type == TType.STOP || field.id > fieldIdPath[curPathIndex].getThriftFieldId()) { 
         return;
       }
 
-      if (field.id != fieldIdPath[curPathIndex]) {
+      if (field.id != fieldIdPath[curPathIndex].getThriftFieldId()) {
         // Not the field we're looking for. Skip field.
         TProtocolUtil.skip(iprot, field.type);
         iprot.readFieldEnd();

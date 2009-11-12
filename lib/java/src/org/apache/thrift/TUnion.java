@@ -12,28 +12,28 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TStruct;
 
-public abstract class TUnion implements TBase {
+public abstract class TUnion<F extends TFieldIdEnum> implements TBase<F> {
 
   protected Object value_;
-  protected int setField_;
-  
+  protected F setField_;
+
   protected TUnion() {
-    setField_ = 0;
+    setField_ = null;
     value_ = null;
   }
 
-  protected TUnion(int setField, Object value) {
+  protected TUnion(F setField, Object value) {
     setFieldValue(setField, value);
   }
 
-  protected TUnion(TUnion other) {
+  protected TUnion(TUnion<F> other) {
     if (!other.getClass().equals(this.getClass())) {
       throw new ClassCastException();
     }
     setField_ = other.setField_;
     value_ = deepCopyObject(other.value_);
   }
-  
+
   private static Object deepCopyObject(Object o) {
     if (o instanceof TBase) {
       return ((TBase)o).deepCopy();
@@ -52,7 +52,7 @@ public abstract class TUnion implements TBase {
       return o;
     }
   }
-  
+
   private static Map deepCopyMap(Map<Object, Object> map) {
     Map copy = new HashMap();
     for (Map.Entry<Object, Object> entry : map.entrySet()) {
@@ -77,15 +77,15 @@ public abstract class TUnion implements TBase {
     return copy;
   }
 
-  public int getSetField() {
+  public F getSetField() {
     return setField_;
   }
-  
+
   public Object getFieldValue() {
     return value_;
   }
-  
-  public Object getFieldValue(int fieldId) {
+
+  public Object getFieldValue(F fieldId) {
     if (fieldId != setField_) {
       throw new IllegalArgumentException("Cannot get the value of field " + fieldId + " because union's set field is " + setField_);
     }
@@ -93,16 +93,24 @@ public abstract class TUnion implements TBase {
     return getFieldValue();
   }
 
+  public Object getFieldValue(int fieldId) {
+    return getFieldValue(enumForId((short)fieldId));
+  }
+
   public boolean isSet() {
-    return setField_ != 0;
+    return setField_ != null;
   }
   
-  public boolean isSet(int fieldId) {
+  public boolean isSet(F fieldId) {
     return setField_ == fieldId;
   }
 
+  public boolean isSet(int fieldId) {
+    return isSet(enumForId((short)fieldId));
+  }
+
   public void read(TProtocol iprot) throws TException {
-    setField_ = 0;
+    setField_ = null;
     value_ = null;
 
     iprot.readStructBegin();
@@ -111,7 +119,7 @@ public abstract class TUnion implements TBase {
 
     value_ = readValue(iprot, field);
     if (value_ != null) {
-      setField_ = field.id;
+      setField_ = enumForId(field.id);
     }
 
     iprot.readFieldEnd();
@@ -122,19 +130,23 @@ public abstract class TUnion implements TBase {
     iprot.readStructEnd();
   }
 
-  public void setFieldValue(int fieldId, Object value) {
-    checkType((short)fieldId, value);
-    setField_ = (short)fieldId;
+  public void setFieldValue(F fieldId, Object value) {
+    checkType(fieldId, value);
+    setField_ = fieldId;
     value_ = value;
   }
 
+  public void setFieldValue(int fieldId, Object value) {
+    setFieldValue(enumForId((short)fieldId), value);
+  }
+
   public void write(TProtocol oprot) throws TException {
-    if (getSetField() == 0 || getFieldValue() == null) {
+    if (getSetField() == null || getFieldValue() == null) {
       throw new TProtocolException("Cannot write a TUnion with no set value!");
     }
     oprot.writeStructBegin(getStructDesc());
     oprot.writeFieldBegin(getFieldDesc(setField_));
-    writeValue(oprot, (short)setField_, value_);
+    writeValue(oprot, setField_, value_);
     oprot.writeFieldEnd();
     oprot.writeFieldStop();
     oprot.writeStructEnd();
@@ -146,7 +158,7 @@ public abstract class TUnion implements TBase {
    * @param setField
    * @param value
    */
-  protected abstract void checkType(short setField, Object value) throws ClassCastException;
+  protected abstract void checkType(F setField, Object value) throws ClassCastException;
 
   /**
    * Implementation should be generated to read the right stuff from the wire 
@@ -156,11 +168,13 @@ public abstract class TUnion implements TBase {
    */
   protected abstract Object readValue(TProtocol iprot, TField field) throws TException;
 
-  protected abstract void writeValue(TProtocol oprot, short setField, Object value) throws TException;
+  protected abstract void writeValue(TProtocol oprot, F setField, Object value) throws TException;
 
   protected abstract TStruct getStructDesc();
 
-  protected abstract TField getFieldDesc(int setField);
+  protected abstract TField getFieldDesc(F setField);
+
+  protected abstract F enumForId(short id);
 
   @Override
   public String toString() {

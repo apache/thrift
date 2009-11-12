@@ -27,7 +27,7 @@ import org.apache.thrift.protocol.TProtocol;
  * Generic base interface for generated Thrift objects.
  *
  */
-public interface TBase extends Serializable {
+public interface TBase<F extends TFieldIdEnum> extends Serializable {
 
   /**
    * Reads the TObject from the given input protocol.
@@ -48,7 +48,15 @@ public interface TBase extends Serializable {
    *
    * @param fieldId The field's id tag as found in the IDL.
    */
+  @Deprecated
   public boolean isSet(int fieldId);
+
+  /**
+   * Check if a field is currently set or unset.
+   *
+   * @param field
+   */
+  public boolean isSet(F field);
 
   /**
    * Get a field's value by id. Primitive types will be wrapped in the 
@@ -56,7 +64,16 @@ public interface TBase extends Serializable {
    *
    * @param fieldId The field's id tag as found in the IDL.
    */
+  @Deprecated
   public Object getFieldValue(int fieldId);
+
+  /**
+   * Get a field's value by field variable. Primitive types will be wrapped in 
+   * the appropriate "boxed" types.
+   *
+   * @param field
+   */
+  public Object getFieldValue(F field);
 
   /**
    * Set a field's value by id. Primitive types must be "boxed" in the 
@@ -64,7 +81,16 @@ public interface TBase extends Serializable {
    *
    * @param fieldId The field's id tag as found in the IDL.
    */
+  @Deprecated
   public void setFieldValue(int fieldId, Object value);
 
-  public TBase deepCopy();
+  /**
+   * Set a field's value by field variable. Primitive types must be "boxed" in
+   * the appropriate object wrapper type.
+   *
+   * @param field
+   */
+  public void setFieldValue(F field, Object value);
+
+  public TBase<F> deepCopy();
 }

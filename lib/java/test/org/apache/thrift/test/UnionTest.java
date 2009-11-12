@@ -32,18 +32,18 @@ public class UnionTest {
       throw new RuntimeException("unset union didn't return null for value");
     }
 
-    union = new TestUnion(TestUnion.I32_FIELD, 25);
+    union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
 
     if ((Integer)union.getFieldValue() != 25) {
       throw new RuntimeException("set i32 field didn't come out as planned");
     }
 
-    if ((Integer)union.getFieldValue(TestUnion.I32_FIELD) != 25) {
+    if ((Integer)union.getFieldValue(TestUnion._Fields.I32_FIELD) != 25) {
       throw new RuntimeException("set i32 field didn't come out of TBase getFieldValue");
     }
 
     try {
-      union.getFieldValue(TestUnion.STRING_FIELD);
+      union.getFieldValue(TestUnion._Fields.STRING_FIELD);
       throw new RuntimeException("was expecting an exception around wrong set field");
     } catch (IllegalArgumentException e) {
       // cool!
@@ -73,21 +73,21 @@ public class UnionTest {
 
 
   public static void testEquality() throws Exception {
-    TestUnion union = new TestUnion(TestUnion.I32_FIELD, 25);
+    TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
 
-    TestUnion otherUnion = new TestUnion(TestUnion.STRING_FIELD, "blah!!!");
-
-    if (union.equals(otherUnion)) {
-      throw new RuntimeException("shouldn't be equal");
-    }
-
-    otherUnion = new TestUnion(TestUnion.I32_FIELD, 400);
+    TestUnion otherUnion = new TestUnion(TestUnion._Fields.STRING_FIELD, "blah!!!");
 
     if (union.equals(otherUnion)) {
       throw new RuntimeException("shouldn't be equal");
     }
 
-    otherUnion = new TestUnion(TestUnion.OTHER_I32_FIELD, 25);
+    otherUnion = new TestUnion(TestUnion._Fields.I32_FIELD, 400);
+
+    if (union.equals(otherUnion)) {
+      throw new RuntimeException("shouldn't be equal");
+    }
+
+    otherUnion = new TestUnion(TestUnion._Fields.OTHER_I32_FIELD, 25);
 
     if (union.equals(otherUnion)) {
       throw new RuntimeException("shouldn't be equal");
@@ -96,7 +96,7 @@ public class UnionTest {
 
 
   public static void testSerialization() throws Exception {
-    TestUnion union = new TestUnion(TestUnion.I32_FIELD, 25);
+    TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
 
     TMemoryBuffer buf = new TMemoryBuffer(0);
     TProtocol proto = new TBinaryProtocol(buf);

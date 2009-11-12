@@ -24,6 +24,7 @@ import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
+import org.apache.thrift.TFieldIdEnum;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
@@ -48,7 +49,7 @@ public class PartialDeserializeTest {
     //  1:Union
     //    1.3:OneOfEach
     OneOfEach Level3OneOfEach = Fixtures.oneOfEach;
-    TestUnion Level2TestUnion = new TestUnion(TestUnion.STRUCT_FIELD, Level3OneOfEach);
+    TestUnion Level2TestUnion = new TestUnion(TestUnion._Fields.STRUCT_FIELD, Level3OneOfEach);
     StructWithAUnion Level1SWU = new StructWithAUnion(Level2TestUnion);
 
     Backwards bw = new Backwards(2, 1);
@@ -59,20 +60,20 @@ public class PartialDeserializeTest {
       testPartialDeserialize(factory, Level1SWU, new StructWithAUnion(), Level1SWU);
 
       //Level 2 test
-      testPartialDeserialize(factory, Level1SWU, new TestUnion(), Level2TestUnion, StructWithAUnion.TEST_UNION);
+      testPartialDeserialize(factory, Level1SWU, new TestUnion(), Level2TestUnion, StructWithAUnion._Fields.TEST_UNION);
 
       //Level 3 on 3rd field test
-      testPartialDeserialize(factory, Level1SWU, new OneOfEach(), Level3OneOfEach, StructWithAUnion.TEST_UNION, TestUnion.STRUCT_FIELD);
+      testPartialDeserialize(factory, Level1SWU, new OneOfEach(), Level3OneOfEach, StructWithAUnion._Fields.TEST_UNION, TestUnion._Fields.STRUCT_FIELD);
 
       //Test early termination when traversed path Field.id exceeds the one being searched for
-      testPartialDeserialize(factory, Level1SWU, new OneOfEach(), new OneOfEach(), StructWithAUnion.TEST_UNION, TestUnion.I32_FIELD);
-      
+      testPartialDeserialize(factory, Level1SWU, new OneOfEach(), new OneOfEach(), StructWithAUnion._Fields.TEST_UNION, TestUnion._Fields.I32_FIELD);
+
       //Test that readStructBegin isn't called on primitive
-      testPartialDeserialize(factory, pts, new Backwards(), bw, PrimitiveThenStruct.BW);      
+      testPartialDeserialize(factory, pts, new Backwards(), bw, PrimitiveThenStruct._Fields.BW);
     }
   }
 
-  public static void testPartialDeserialize(TProtocolFactory protocolFactory, TBase input, TBase output, TBase expected, int ... fieldIdPath) throws TException {
+  public static void testPartialDeserialize(TProtocolFactory protocolFactory, TBase input, TBase output, TBase expected, TFieldIdEnum ... fieldIdPath) throws TException {
     byte[] record = new TSerializer(protocolFactory).serialize(input);
     new TDeserializer(protocolFactory).partialDeserialize(output, record, fieldIdPath);
     if(!output.equals(expected))
