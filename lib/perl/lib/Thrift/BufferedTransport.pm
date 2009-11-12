@@ -106,4 +106,31 @@ sub flush
 }
 
 
+#
+# BufferedTransport factory creates buffered transport objects from transports
+#
+package Thrift::BufferedTransportFactory;
+
+sub new {
+    my $classname = shift;
+    my $self      = {};
+
+    return bless($self,$classname);
+}
+
+#
+# Build a buffered transport from the base transport
+#
+# @return Thrift::BufferedTransport transport
+#
+sub getTransport
+{
+    my $self  = shift;
+    my $trans = shift;
+
+    my $buffered = Thrift::BufferedTransport->new($trans);
+    return $buffered;
+}
+
+
 1;

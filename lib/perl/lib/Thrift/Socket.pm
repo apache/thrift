@@ -33,9 +33,9 @@ use base('Thrift::Transport');
 
 sub new
 {
-    my $classname = shift;
-    my $host      = shift || "localhost";
-    my $port      = shift || 9090;
+    my $classname    = shift;
+    my $host         = shift || "localhost";
+    my $port         = shift || 9090;
     my $debugHandler = shift;
 
     my $self = {
@@ -132,7 +132,7 @@ sub close
     my $self = shift;
 
     if( defined $self->{handle} ){
-        close( ($self->{handle}->handles())[0] );
+        CORE::close( ($self->{handle}->handles())[0] );
     }
 }
 
@@ -267,5 +267,64 @@ sub flush
 
     my $ret  = ($self->{handle}->handles())[0]->flush;
 }
+
+
+#
+# Build a ServerSocket from the ServerTransport base class
+#
+package  Thrift::ServerSocket;
+
+use base qw( Thrift::Socket Thrift::ServerTransport );
+
+use constant LISTEN_QUEUE_SIZE => 128;
+
+sub new
+{
+    my $classname   = shift;
+    my $port        = shift;
+
+    my $self        = $classname->SUPER::new(undef, $port, undef);
+    return bless($self,$classname);
+}
+
+sub listen
+{
+    my $self = shift;
+
+    # Listen to a new socket
+    my $sock = IO::Socket::INET->new(LocalAddr => undef, # any addr
+                                     LocalPort => $self->{port},
+                                     Proto     => 'tcp',
+                                     Listen    => LISTEN_QUEUE_SIZE,
+                                     ReuseAddr => 1)
+        || do {
+            my $error = 'TServerSocket: Could not bind to ' .
+                        $self->{host} . ':' . $self->{port} . ' (' . $! . ')';
+
+            if ($self->{debug}) {
+                $self->{debugHandler}->($error);
+            }
+
+            die new Thrift::TException($error);
+        };
+
+    $self->{handle} = $sock;
+}
+
+sub accept
+{
+    my $self = shift;
+
+    if ( exists $self->{handle} and defined $self->{handle} )
+    {
+        my $client        = $self->{handle}->accept();
+        my $result        = new Thrift::Socket;
+        $result->{handle} = new IO::Select($client);
+        return $result;
+    }
+
+    return 0;
+}
+
 
 1;

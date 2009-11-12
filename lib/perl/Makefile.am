@@ -50,5 +50,6 @@ EXTRA_DIST = \
 	lib/Thrift/HttpClient.pm \
 	lib/Thrift/MemoryBuffer.pm \
 	lib/Thrift/Protocol.pm \
+	lib/Thrift/Server.pm \
 	lib/Thrift/Socket.pm \
 	lib/Thrift/Transport.pm

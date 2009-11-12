@@ -125,5 +125,53 @@ sub write
 #
 sub flush {}
 
+
+#
+# TransportFactory creates transport objects from transports
+#
+package Thrift::TransportFactory;
+
+sub new {
+    my $classname = shift;
+    my $self      = {};
+
+    return bless($self,$classname);
+}
+
+#
+# Build a transport from the base transport
+#
+# @return Thrift::Transport transport
+#
+sub getTransport
+{
+    my $self  = shift;
+    my $trans = shift;
+
+    return $trans;
+}
+
+
+#
+#  ServerTransport base class module
+#
+package Thrift::ServerTransport;
+
+sub listen
+{
+    die "abstract";
+}
+
+sub accept
+{
+    die "abstract";
+}
+
+sub close
+{
+    die "abstract";
+}
+
+
 1;
 
