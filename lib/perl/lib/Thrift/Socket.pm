@@ -43,8 +43,8 @@ sub new
         port         => $port,
         debugHandler => $debugHandler,
         debug        => 0,
-        sendTimeout  => 100,
-        recvTimeout  => 750,
+        sendTimeout  => 10000,
+        recvTimeout  => 10000,
         handle       => undef,
     };
 
