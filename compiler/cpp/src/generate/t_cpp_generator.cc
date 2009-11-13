@@ -617,7 +617,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
                                                  bool write) {
   string extends = "";
   if (is_exception) {
-    extends = " : public apache::thrift::TException";
+    extends = " : public ::apache::thrift::TException";
   }
 
   // Open struct def
@@ -688,7 +688,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   // Pointer to this structure's reflection local typespec.
   if (gen_dense_) {
     indent(out) <<
-      "static apache::thrift::reflection::local::TypeSpec* local_reflection;" <<
+      "static ::apache::thrift::reflection::local::TypeSpec* local_reflection;" <<
       endl << endl;
   }
 
@@ -785,11 +785,11 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   }
   if (read) {
     out <<
-      indent() << "uint32_t read(apache::thrift::protocol::TProtocol* iprot);" << endl;
+      indent() << "uint32_t read(::apache::thrift::protocol::TProtocol* iprot);" << endl;
   }
   if (write) {
     out <<
-      indent() << "uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;" << endl;
+      indent() << "uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;" << endl;
   }
   out << endl;
 
@@ -880,7 +880,7 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
     // For definitions of structures, do the arrays of metas and field specs also.
     if (is_definition) {
       out <<
-        indent() << "apache::thrift::reflection::local::FieldMeta" << endl <<
+        indent() << "::apache::thrift::reflection::local::FieldMeta" << endl <<
         indent() << local_reflection_name("metas", ttype) <<"[] = {" << endl;
       indent_up();
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -893,7 +893,7 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
       indent_down();
 
       out <<
-        indent() << "apache::thrift::reflection::local::TypeSpec*" << endl <<
+        indent() << "::apache::thrift::reflection::local::TypeSpec*" << endl <<
         indent() << local_reflection_name("specs", ttype) <<"[] = {" << endl;
       indent_up();
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -910,7 +910,7 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
   out <<
     indent() << "// " << ttype->get_fingerprint_material() << endl <<
     indent() << (is_definition ? "" : "extern ") <<
-      "apache::thrift::reflection::local::TypeSpec" << endl <<
+      "::apache::thrift::reflection::local::TypeSpec" << endl <<
       local_reflection_name("typespec", ttype) <<
       (is_definition ? "(" : ";") << endl;
 
@@ -922,7 +922,7 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
   indent_up();
 
   if (ttype->is_void()) {
-    indent(out) << "apache::thrift::protocol::T_STOP";
+    indent(out) << "::apache::thrift::protocol::T_STOP";
   } else {
     indent(out) << type_to_enum(ttype);
   }
@@ -961,7 +961,7 @@ void t_cpp_generator::generate_local_reflection_pointer(std::ofstream& out,
     return;
   }
   indent(out) <<
-    "apache::thrift::reflection::local::TypeSpec* " <<
+    "::apache::thrift::reflection::local::TypeSpec* " <<
       ttype->get_name() << "::local_reflection = " << endl <<
     indent() << "  &" << local_reflection_name("typespec", ttype) << ";" <<
     endl << endl;
@@ -977,7 +977,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
                                              t_struct* tstruct,
                                              bool pointers) {
   indent(out) <<
-    "uint32_t " << tstruct->get_name() << "::read(apache::thrift::protocol::TProtocol* iprot) {" << endl;
+    "uint32_t " << tstruct->get_name() << "::read(::apache::thrift::protocol::TProtocol* iprot) {" << endl;
   indent_up();
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -988,12 +988,12 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
     endl <<
     indent() << "uint32_t xfer = 0;" << endl <<
     indent() << "std::string fname;" << endl <<
-    indent() << "apache::thrift::protocol::TType ftype;" << endl <<
+    indent() << "::apache::thrift::protocol::TType ftype;" << endl <<
     indent() << "int16_t fid;" << endl <<
     endl <<
     indent() << "xfer += iprot->readStructBegin(fname);" << endl <<
     endl <<
-    indent() << "using apache::thrift::protocol::TProtocolException;" << endl <<
+    indent() << "using ::apache::thrift::protocol::TProtocolException;" << endl <<
     endl;
 
   // Required variables aren't in __isset, so we need tmp vars to check them.
@@ -1015,7 +1015,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
 
     // Check for field STOP marker
     out <<
-      indent() << "if (ftype == apache::thrift::protocol::T_STOP) {" << endl <<
+      indent() << "if (ftype == ::apache::thrift::protocol::T_STOP) {" << endl <<
       indent() << "  break;" << endl <<
       indent() << "}" << endl;
 
@@ -1116,7 +1116,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<
-    "uint32_t " << tstruct->get_name() << "::write(apache::thrift::protocol::TProtocol* oprot) const {" << endl;
+    "uint32_t " << tstruct->get_name() << "::write(::apache::thrift::protocol::TProtocol* oprot) const {" << endl;
   indent_up();
 
   out <<
@@ -1178,7 +1178,7 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
   vector<t_field*>::const_iterator f_iter;
 
   indent(out) <<
-    "uint32_t " << tstruct->get_name() << "::write(apache::thrift::protocol::TProtocol* oprot) const {" << endl;
+    "uint32_t " << tstruct->get_name() << "::write(::apache::thrift::protocol::TProtocol* oprot) const {" << endl;
   indent_up();
 
   out <<
@@ -1557,7 +1557,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
 
   indent_up();
   f_header_ <<
-    indent() << service_name_ << "Client(boost::shared_ptr<apache::thrift::protocol::TProtocol> prot) :" << endl;
+    indent() << service_name_ << "Client(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> prot) :" << endl;
   if (extends.empty()) {
     f_header_ <<
       indent() << "  piprot_(prot)," << endl <<
@@ -1571,7 +1571,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
   }
 
   f_header_ <<
-    indent() << service_name_ << "Client(boost::shared_ptr<apache::thrift::protocol::TProtocol> iprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> oprot) :" << endl;
+    indent() << service_name_ << "Client(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> iprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> oprot) :" << endl;
   if (extends.empty()) {
     f_header_ <<
       indent() << "  piprot_(iprot)," << endl <<
@@ -1586,12 +1586,12 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
 
   // Generate getters for the protocols.
   f_header_ <<
-    indent() << "boost::shared_ptr<apache::thrift::protocol::TProtocol> getInputProtocol() {" << endl <<
+    indent() << "boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getInputProtocol() {" << endl <<
     indent() << "  return piprot_;" << endl <<
     indent() << "}" << endl;
 
   f_header_ <<
-    indent() << "boost::shared_ptr<apache::thrift::protocol::TProtocol> getOutputProtocol() {" << endl <<
+    indent() << "boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getOutputProtocol() {" << endl <<
     indent() << "  return poprot_;" << endl <<
     indent() << "}" << endl;
 
@@ -1618,10 +1618,10 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
       " protected:" << endl;
     indent_up();
     f_header_ <<
-      indent() << "boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot_;"  << endl <<
-      indent() << "boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot_;"  << endl <<
-      indent() << "apache::thrift::protocol::TProtocol* iprot_;"  << endl <<
-      indent() << "apache::thrift::protocol::TProtocol* oprot_;"  << endl;
+      indent() << "boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot_;"  << endl <<
+      indent() << "boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot_;"  << endl <<
+      indent() << "::apache::thrift::protocol::TProtocol* iprot_;"  << endl <<
+      indent() << "::apache::thrift::protocol::TProtocol* oprot_;"  << endl;
     indent_down();
   }
 
@@ -1692,7 +1692,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
     // Serialize the request
     f_service_ <<
       indent() << "int32_t cseqid = 0;" << endl <<
-      indent() << "oprot_->writeMessageBegin(\"" << (*f_iter)->get_name() << "\", apache::thrift::protocol::T_CALL, cseqid);" << endl <<
+      indent() << "oprot_->writeMessageBegin(\"" << (*f_iter)->get_name() << "\", ::apache::thrift::protocol::T_CALL, cseqid);" << endl <<
       endl <<
       indent() << argsname << " args;" << endl;
 
@@ -1726,27 +1726,27 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
         endl <<
         indent() << "int32_t rseqid = 0;" << endl <<
         indent() << "std::string fname;" << endl <<
-        indent() << "apache::thrift::protocol::TMessageType mtype;" << endl <<
+        indent() << "::apache::thrift::protocol::TMessageType mtype;" << endl <<
         endl <<
         indent() << "iprot_->readMessageBegin(fname, mtype, rseqid);" << endl <<
-        indent() << "if (mtype == apache::thrift::protocol::T_EXCEPTION) {" << endl <<
-        indent() << "  apache::thrift::TApplicationException x;" << endl <<
+        indent() << "if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {" << endl <<
+        indent() << "  ::apache::thrift::TApplicationException x;" << endl <<
         indent() << "  x.read(iprot_);" << endl <<
         indent() << "  iprot_->readMessageEnd();" << endl <<
         indent() << "  iprot_->getTransport()->readEnd();" << endl <<
         indent() << "  throw x;" << endl <<
         indent() << "}" << endl <<
-        indent() << "if (mtype != apache::thrift::protocol::T_REPLY) {" << endl <<
-        indent() << "  iprot_->skip(apache::thrift::protocol::T_STRUCT);" << endl <<
+        indent() << "if (mtype != ::apache::thrift::protocol::T_REPLY) {" << endl <<
+        indent() << "  iprot_->skip(::apache::thrift::protocol::T_STRUCT);" << endl <<
         indent() << "  iprot_->readMessageEnd();" << endl <<
         indent() << "  iprot_->getTransport()->readEnd();" << endl <<
-        indent() << "  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);" << endl <<
+        indent() << "  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);" << endl <<
         indent() << "}" << endl <<
         indent() << "if (fname.compare(\"" << (*f_iter)->get_name() << "\") != 0) {" << endl <<
-        indent() << "  iprot_->skip(apache::thrift::protocol::T_STRUCT);" << endl <<
+        indent() << "  iprot_->skip(::apache::thrift::protocol::T_STRUCT);" << endl <<
         indent() << "  iprot_->readMessageEnd();" << endl <<
         indent() << "  iprot_->getTransport()->readEnd();" << endl <<
-        indent() << "  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);" << endl <<
+        indent() << "  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);" << endl <<
         indent() << "}" << endl;
 
       if (!(*f_iter)->get_returntype()->is_void() &&
@@ -1802,7 +1802,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice) {
           "return;" << endl;
       } else {
         f_service_ <<
-          indent() << "throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+          indent() << "throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
 
       // Close function
@@ -1832,7 +1832,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
   // Generate the header portion
   f_header_ <<
     "class " << service_name_ << "Processor : " <<
-    "virtual public apache::thrift::TProcessor" <<
+    "virtual public ::apache::thrift::TProcessor" <<
     extends_processor << " {" << endl;
 
   // Protected data members
@@ -1842,7 +1842,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
   f_header_ <<
     indent() << "boost::shared_ptr<" << service_name_ << "If> iface_;" << endl;
   f_header_ <<
-    indent() << "virtual bool process_fn(apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid);" << endl;
+    indent() << "virtual bool process_fn(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid);" << endl;
   indent_down();
 
   // Process function declarations
@@ -1850,10 +1850,10 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     " private:" << endl;
   indent_up();
   f_header_ <<
-    indent() << "std::map<std::string, void (" << service_name_ << "Processor::*)(int32_t, apache::thrift::protocol::TProtocol*, apache::thrift::protocol::TProtocol*)> processMap_;" << endl;
+    indent() << "std::map<std::string, void (" << service_name_ << "Processor::*)(int32_t, ::apache::thrift::protocol::TProtocol*, ::apache::thrift::protocol::TProtocol*)> processMap_;" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_header_) <<
-      "void process_" << (*f_iter)->get_name() << "(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);" << endl;
+      "void process_" << (*f_iter)->get_name() << "(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);" << endl;
   }
   indent_down();
 
@@ -1888,7 +1888,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     declare_map <<
     indent() << "}" << endl <<
     endl <<
-    indent() << "virtual bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot);" << endl <<
+    indent() << "virtual bool process(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot);" << endl <<
     indent() << "virtual ~" << service_name_ << "Processor() {}" << endl;
   indent_down();
   f_header_ <<
@@ -1896,25 +1896,25 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
 
   // Generate the server implementation
   f_service_ <<
-    "bool " << service_name_ << "Processor::process(boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot) {" << endl;
+    "bool " << service_name_ << "Processor::process(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot) {" << endl;
   indent_up();
 
   f_service_ <<
     endl <<
-    indent() << "apache::thrift::protocol::TProtocol* iprot = piprot.get();" << endl <<
-    indent() << "apache::thrift::protocol::TProtocol* oprot = poprot.get();" << endl <<
+    indent() << "::apache::thrift::protocol::TProtocol* iprot = piprot.get();" << endl <<
+    indent() << "::apache::thrift::protocol::TProtocol* oprot = poprot.get();" << endl <<
     indent() << "std::string fname;" << endl <<
-    indent() << "apache::thrift::protocol::TMessageType mtype;" << endl <<
+    indent() << "::apache::thrift::protocol::TMessageType mtype;" << endl <<
     indent() << "int32_t seqid;" << endl <<
     endl <<
     indent() << "iprot->readMessageBegin(fname, mtype, seqid);" << endl <<
     endl <<
-    indent() << "if (mtype != apache::thrift::protocol::T_CALL && mtype != apache::thrift::protocol::T_ONEWAY) {" << endl <<
-    indent() << "  iprot->skip(apache::thrift::protocol::T_STRUCT);" << endl <<
+    indent() << "if (mtype != ::apache::thrift::protocol::T_CALL && mtype != ::apache::thrift::protocol::T_ONEWAY) {" << endl <<
+    indent() << "  iprot->skip(::apache::thrift::protocol::T_STRUCT);" << endl <<
     indent() << "  iprot->readMessageEnd();" << endl <<
     indent() << "  iprot->getTransport()->readEnd();" << endl <<
-    indent() << "  apache::thrift::TApplicationException x(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);" << endl <<
-    indent() << "  oprot->writeMessageBegin(fname, apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
+    indent() << "  ::apache::thrift::TApplicationException x(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);" << endl <<
+    indent() << "  oprot->writeMessageBegin(fname, ::apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
     indent() << "  x.write(oprot);" << endl <<
     indent() << "  oprot->writeMessageEnd();" << endl <<
     indent() << "  oprot->getTransport()->flush();" << endl <<
@@ -1931,21 +1931,21 @@ void t_cpp_generator::generate_service_processor(t_service* tservice) {
     endl;
 
   f_service_ <<
-    "bool " << service_name_ << "Processor::process_fn(apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid) {" << endl;
+    "bool " << service_name_ << "Processor::process_fn(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid) {" << endl;
   indent_up();
 
   // HOT: member function pointer map
   f_service_ <<
-    indent() << "std::map<std::string, void (" << service_name_ << "Processor::*)(int32_t, apache::thrift::protocol::TProtocol*, apache::thrift::protocol::TProtocol*)>::iterator pfn;" << endl <<
+    indent() << "std::map<std::string, void (" << service_name_ << "Processor::*)(int32_t, ::apache::thrift::protocol::TProtocol*, ::apache::thrift::protocol::TProtocol*)>::iterator pfn;" << endl <<
     indent() << "pfn = processMap_.find(fname);" << endl <<
     indent() << "if (pfn == processMap_.end()) {" << endl;
   if (extends.empty()) {
     f_service_ <<
-      indent() << "  iprot->skip(apache::thrift::protocol::T_STRUCT);" << endl <<
+      indent() << "  iprot->skip(::apache::thrift::protocol::T_STRUCT);" << endl <<
       indent() << "  iprot->readMessageEnd();" << endl <<
       indent() << "  iprot->getTransport()->readEnd();" << endl <<
-      indent() << "  apache::thrift::TApplicationException x(apache::thrift::TApplicationException::UNKNOWN_METHOD, \"Invalid method name: '\"+fname+\"'\");" << endl <<
-      indent() << "  oprot->writeMessageBegin(fname, apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
+      indent() << "  ::apache::thrift::TApplicationException x(::apache::thrift::TApplicationException::UNKNOWN_METHOD, \"Invalid method name: '\"+fname+\"'\");" << endl <<
+      indent() << "  oprot->writeMessageBegin(fname, ::apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
       indent() << "  x.write(oprot);" << endl <<
       indent() << "  oprot->writeMessageEnd();" << endl <<
       indent() << "  oprot->getTransport()->flush();" << endl <<
@@ -2016,7 +2016,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   f_service_ <<
     "void " << tservice->get_name() << "Processor::" <<
     "process_" << tfunction->get_name() <<
-    "(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)" << endl;
+    "(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)" << endl;
   scope_up(f_service_);
 
   string argsname = tservice->get_name() + "_" + tfunction->get_name() + "_args";
@@ -2102,8 +2102,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   if (!tfunction->is_oneway()) {
     indent_up();
     f_service_ <<
-      indent() << "apache::thrift::TApplicationException x(e.what());" << endl <<
-      indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() << "\", apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
+      indent() << "::apache::thrift::TApplicationException x(e.what());" << endl <<
+      indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() << "\", ::apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
       indent() << "x.write(oprot);" << endl <<
       indent() << "oprot->writeMessageEnd();" << endl <<
       indent() << "oprot->getTransport()->flush();" << endl <<
@@ -2126,7 +2126,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   // Serialize the result into a struct
   f_service_ <<
     endl <<
-    indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() << "\", apache::thrift::protocol::T_REPLY, seqid);" << endl <<
+    indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() << "\", ::apache::thrift::protocol::T_REPLY, seqid);" << endl <<
     indent() << "result.write(oprot);" << endl <<
     indent() << "oprot->writeMessageEnd();" << endl <<
     indent() << "oprot->getTransport()->flush();" << endl <<
@@ -2162,10 +2162,10 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
     "#include <transport/TServerSocket.h>" << endl <<
     "#include <transport/TBufferTransports.h>" << endl <<
     endl <<
-    "using namespace apache::thrift;" << endl <<
-    "using namespace apache::thrift::protocol;" << endl <<
-    "using namespace apache::thrift::transport;" << endl <<
-    "using namespace apache::thrift::server;" << endl <<
+    "using namespace ::apache::thrift;" << endl <<
+    "using namespace ::apache::thrift::protocol;" << endl <<
+    "using namespace ::apache::thrift::transport;" << endl <<
+    "using namespace ::apache::thrift::server;" << endl <<
     endl <<
     "using boost::shared_ptr;" << endl <<
     endl;
@@ -2329,18 +2329,18 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
   // Declare variables, read header
   if (ttype->is_map()) {
     out <<
-      indent() << "apache::thrift::protocol::TType " << ktype << ";" << endl <<
-      indent() << "apache::thrift::protocol::TType " << vtype << ";" << endl <<
+      indent() << "::apache::thrift::protocol::TType " << ktype << ";" << endl <<
+      indent() << "::apache::thrift::protocol::TType " << vtype << ";" << endl <<
       indent() << "iprot->readMapBegin(" <<
                    ktype << ", " << vtype << ", " << size << ");" << endl;
   } else if (ttype->is_set()) {
     out <<
-      indent() << "apache::thrift::protocol::TType " << etype << ";" << endl <<
+      indent() << "::apache::thrift::protocol::TType " << etype << ";" << endl <<
       indent() << "iprot->readSetBegin(" <<
                    etype << ", " << size << ");" << endl;
   } else if (ttype->is_list()) {
     out <<
-      indent() << "apache::thrift::protocol::TType " << etype << ";" << endl <<
+      indent() << "::apache::thrift::protocol::TType " << etype << ";" << endl <<
       indent() << "iprot->readListBegin(" <<
       etype << ", " << size << ");" << endl;
     if (!use_push) {
@@ -2906,32 +2906,32 @@ string t_cpp_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_VOID:
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
-      return "apache::thrift::protocol::T_STRING";
+      return "::apache::thrift::protocol::T_STRING";
     case t_base_type::TYPE_BOOL:
-      return "apache::thrift::protocol::T_BOOL";
+      return "::apache::thrift::protocol::T_BOOL";
     case t_base_type::TYPE_BYTE:
-      return "apache::thrift::protocol::T_BYTE";
+      return "::apache::thrift::protocol::T_BYTE";
     case t_base_type::TYPE_I16:
-      return "apache::thrift::protocol::T_I16";
+      return "::apache::thrift::protocol::T_I16";
     case t_base_type::TYPE_I32:
-      return "apache::thrift::protocol::T_I32";
+      return "::apache::thrift::protocol::T_I32";
     case t_base_type::TYPE_I64:
-      return "apache::thrift::protocol::T_I64";
+      return "::apache::thrift::protocol::T_I64";
     case t_base_type::TYPE_DOUBLE:
-      return "apache::thrift::protocol::T_DOUBLE";
+      return "::apache::thrift::protocol::T_DOUBLE";
     }
   } else if (type->is_enum()) {
-    return "apache::thrift::protocol::T_I32";
+    return "::apache::thrift::protocol::T_I32";
   } else if (type->is_struct()) {
-    return "apache::thrift::protocol::T_STRUCT";
+    return "::apache::thrift::protocol::T_STRUCT";
   } else if (type->is_xception()) {
-    return "apache::thrift::protocol::T_STRUCT";
+    return "::apache::thrift::protocol::T_STRUCT";
   } else if (type->is_map()) {
-    return "apache::thrift::protocol::T_MAP";
+    return "::apache::thrift::protocol::T_MAP";
   } else if (type->is_set()) {
-    return "apache::thrift::protocol::T_SET";
+    return "::apache::thrift::protocol::T_SET";
   } else if (type->is_list()) {
-    return "apache::thrift::protocol::T_LIST";
+    return "::apache::thrift::protocol::T_LIST";
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
