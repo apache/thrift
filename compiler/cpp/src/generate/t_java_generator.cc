@@ -985,7 +985,7 @@ void t_java_generator::generate_union_hashcode(ofstream& out, t_struct* tstruct)
   if (gen_hash_code_) {
     indent(out) << "@Override" << endl;
     indent(out) << "public int hashCode() {" << endl;
-    indent(out) << "  return new HashCodeBuilder().append(getSetField()).append(getFieldValue()).toHashCode();" << endl;
+    indent(out) << "  return new HashCodeBuilder().append(getSetField().getThriftFieldId()).append(getFieldValue()).toHashCode();" << endl;
     indent(out) << "}";
   } else {
     indent(out) << "/**" << endl;
