@@ -140,7 +140,7 @@ public class TestServer {
       return thing;
     }
 
-    public int testEnum(int thing) {
+    public Numberz testEnum(Numberz thing) {
       System.out.print("testEnum(" + thing + ")\n");
       return thing;
     }
@@ -168,7 +168,7 @@ public class TestServer {
       return mapmap;
     }
 
-    public Map<Long, Map<Integer,Insanity>> testInsanity(Insanity argument) {
+    public Map<Long, Map<Numberz,Insanity>> testInsanity(Insanity argument) {
       System.out.print("testInsanity()\n");
 
       Xtruct hello = new Xtruct();
@@ -184,7 +184,7 @@ public class TestServer {
       goodbye.i64_thing = (long)4;
 
       Insanity crazy = new Insanity();
-      crazy.userMap = new HashMap<Integer, Long>();
+      crazy.userMap = new HashMap<Numberz, Long>();
       crazy.xtructs = new ArrayList<Xtruct>();
 
       crazy.userMap.put(Numberz.EIGHT, (long)8);
@@ -194,23 +194,23 @@ public class TestServer {
       crazy.userMap.put(Numberz.FIVE, (long)5);
       crazy.xtructs.add(hello);
 
-      HashMap<Integer,Insanity> first_map = new HashMap<Integer, Insanity>();
-      HashMap<Integer,Insanity> second_map = new HashMap<Integer, Insanity>();;
+      HashMap<Numberz,Insanity> first_map = new HashMap<Numberz, Insanity>();
+      HashMap<Numberz,Insanity> second_map = new HashMap<Numberz, Insanity>();;
 
       first_map.put(Numberz.TWO, crazy);
       first_map.put(Numberz.THREE, crazy);
 
       second_map.put(Numberz.SIX, looney);
 
-      Map<Long,Map<Integer,Insanity>> insane =
-        new HashMap<Long, Map<Integer,Insanity>>();
+      Map<Long,Map<Numberz,Insanity>> insane =
+        new HashMap<Long, Map<Numberz,Insanity>>();
       insane.put((long)1, first_map);
       insane.put((long)2, second_map);
 
       return insane;
     }
 
-    public Xtruct testMulti(byte arg0, int arg1, long arg2, Map<Short,String> arg3, int arg4, long arg5) {
+    public Xtruct testMulti(byte arg0, int arg1, long arg2, Map<Short,String> arg3, Numberz arg4, long arg5) {
       System.out.print("testMulti()\n");
 
       Xtruct hello = new Xtruct();;

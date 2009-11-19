@@ -23,6 +23,9 @@ namespace rb Thrift.Test
 namespace perl ThriftTest
 namespace csharp Thrift.Test
 
+/**
+ * Docstring!
+ */
 enum Numberz
 {
   ONE = 1,

@@ -19,24 +19,13 @@
 
 package org.apache.thrift.meta_data;
 
-import org.apache.thrift.protocol.TType;
+import org.apache.thrift.TEnum;
 
-/**
- * FieldValueMetaData and collection of subclasses to store metadata about
- * the value(s) of a field
- */
-public class FieldValueMetaData implements java.io.Serializable {
-  public final byte type;  
-
-  public FieldValueMetaData(byte type){
-    this.type = type;
-  }
-
-  public boolean isStruct() {
-    return type == TType.STRUCT; 
-  }
-
-  public boolean isContainer() {
-    return type == TType.LIST || type == TType.MAP || type == TType.SET;
-  }
+public class EnumMetaData extends FieldValueMetaData {
+  public final Class<? extends TEnum> enumClass;
+  
+  public EnumMetaData(byte type, Class<? extends TEnum> sClass){
+    super(type);
+    this.enumClass = sClass;
+  }    
 }

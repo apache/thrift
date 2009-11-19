@@ -252,6 +252,11 @@ service ReverseOrderService {
   void myMethod(4: string first, 3: i16 second, 2: i32 third, 1: i64 fourth);
 }
 
+enum SomeEnum {
+  ONE
+  TWO
+}
+
 union TestUnion {
   /**
    * A doc string
@@ -261,6 +266,7 @@ union TestUnion {
   3: OneOfEach struct_field;
   4: list<RandomStuff> struct_list;
   5: i32 other_i32_field;
+  6: SomeEnum enum_field;
 }
 
 union ComparableUnion {

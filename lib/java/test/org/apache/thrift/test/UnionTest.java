@@ -7,6 +7,7 @@ import org.apache.thrift.transport.TMemoryBuffer;
 import thrift.test.Empty;
 import thrift.test.StructWithAUnion;
 import thrift.test.TestUnion;
+import thrift.test.SomeEnum;
 import thrift.test.ComparableUnion;
 
 public class UnionTest {
@@ -56,6 +57,7 @@ public class UnionTest {
     if (union.getI32_field() != 1) {
       throw new RuntimeException("didn't get the right value for i32 field!");
     }
+    union.hashCode();
 
     try {
       union.getString_field();
@@ -69,6 +71,9 @@ public class UnionTest {
     if (union.equals((TestUnion)null)) {
       throw new RuntimeException("uh oh, union.equals(null)!");
     }
+
+    union = TestUnion.enum_field(SomeEnum.ONE);
+    union.hashCode();
   }
 
 

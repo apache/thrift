@@ -281,7 +281,7 @@ public class TestClient {
          * ENUM TEST
          */
         System.out.print("testEnum(ONE)");
-        int ret = testClient.testEnum(Numberz.ONE);
+        Numberz ret = testClient.testEnum(Numberz.ONE);
         System.out.print(" = " + ret + "\n");
 
         System.out.print("testEnum(TWO)");
@@ -328,7 +328,7 @@ public class TestClient {
          * INSANITY TEST
          */
         insane = new Insanity();
-        insane.userMap = new HashMap<Integer, Long>();
+        insane.userMap = new HashMap<Numberz, Long>();
         insane.userMap.put(Numberz.FIVE, (long)5000);
         Xtruct truck = new Xtruct();
         truck.string_thing = "Truck";
@@ -338,20 +338,20 @@ public class TestClient {
         insane.xtructs = new ArrayList<Xtruct>();
         insane.xtructs.add(truck);
         System.out.print("testInsanity()");
-        Map<Long,Map<Integer,Insanity>> whoa =
+        Map<Long,Map<Numberz,Insanity>> whoa =
           testClient.testInsanity(insane);
         System.out.print(" = {");
         for (long key : whoa.keySet()) {
-          Map<Integer,Insanity> val = whoa.get(key);
+          Map<Numberz,Insanity> val = whoa.get(key);
           System.out.print(key + " => {");
 
-          for (int k2 : val.keySet()) {
+          for (Numberz k2 : val.keySet()) {
             Insanity v2 = val.get(k2);
             System.out.print(k2 + " => {");
-            Map<Integer, Long> userMap = v2.userMap;
+            Map<Numberz, Long> userMap = v2.userMap;
             System.out.print("{");
             if (userMap != null) {
-              for (int k3 : userMap.keySet()) {
+              for (Numberz k3 : userMap.keySet()) {
                 System.out.print(k3 + " => " + userMap.get(k3) + ", ");
               }
             }
