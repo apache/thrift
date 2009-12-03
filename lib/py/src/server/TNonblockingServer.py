@@ -178,11 +178,12 @@ class Connection:
             self.wake_up()
             return
         self.len = ''
-        self.message = struct.pack('!i', len(message)) + message
         if len(message) == 0:
             # it was a oneway request, do not write answer
+            self.message = ''
             self.status = WAIT_LEN
         else:
+            self.message = struct.pack('!i', len(message)) + message
             self.status = SEND_ANSWER
         self.wake_up()
 

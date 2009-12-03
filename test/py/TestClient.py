@@ -129,6 +129,10 @@ class AbstractTest(unittest.TestCase):
     end = time.time()
     self.assertTrue(end - start < 0.2,
                     "oneway sleep took %f sec" % (end - start))
+  
+  def testOnewayThenNormal(self):
+    self.client.testOneway(0.5)
+    self.assertEqual(self.client.testString('Python'), 'Python')
 
 class NormalBinaryTest(AbstractTest):
   protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
