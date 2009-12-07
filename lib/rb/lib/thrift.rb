@@ -16,6 +16,9 @@
 # specific language governing permissions and limitations
 # under the License.
 # 
+# Contains some contributions under the Thrift Software License.
+# Please see doc/old-thrift-license.txt in the Thrift distribution for
+# details.
 
 $:.unshift File.dirname(__FILE__)
 
