@@ -1,3 +1,412 @@
+Release Notes for Thrift 0.2.0
+
+General changes:
+  * First release under the Apache Incubator
+  * THRIFT-34, THRIFT-270: Namespaces have been updated to Apache instead of Facebook
+  * THRIFT-110, THRIFT-332, THRIFT-333: Beginnings of a new "Compact Protocol" implemented in Ruby, Java, and C++
+  * THRIFT-136: "async" has been renamed "oneway"
+  * THRIFT-409: Support for unions
+  * THRIFT-173: New HTML generator for generating documentation
+
+C++:
+      THRIFT-91. cpp: Fix compilation on Fedora Core 9
+      THRIFT-95. cpp: Fix write buffer initialization in TBufferedTransport
+      THRIFT-96. cpp: TSocket.peek fails on FreeBSD
+      THRIFT-149. cpp: Make TNonblockingServer handle a shut-down ThreadManager
+      THRIFT-168. cpp: Clear transport buffers before a flush
+      THRIFT-177. cpp: Add a missing "std::"
+      THRIFT-178. java, csharp, cpp: Final Keyword
+      THRIFT-194. cpp: Properlyl namespace exception types in catch
+      THRIFT-203. cpp: Make library headers compile under g++ -pedantic
+      THRIFT-214. cpp: Qualify another cast
+      THRIFT-214. cpp: Qualify a cast to fix OSX compilation
+      THRIFT-215. cpp: Disable an assertion that fails on various platforms
+      THRIFT-225. java/cpp: Handle non-i32 integer constants properly
+      THRIFT-244. cpp: Fix TJSONProtocol::writeMessageBegin
+      THRIFT-244. cpp: Make TJSONProtocolFactor inherit from TProtocolFactory
+      THRIFT-255. cpp: Add TSimpleFileTransport, a wrapper around TFDTransport
+      THRIFT-265. cpp: Reset buffers every 512 calls in TNonblockingServer
+      THRIFT-289. cpp: Fix "make check" by defining a comparator for "Instanity"
+      THRIFT-333. cpp: Initial TCompactProtocol implementation
+      THRIFT-348. cpp: Fix readBool for vectors of bools (again)
+      THRIFT-351. cpp: Allow a custom ThreadFactory in TThreadedServer
+      Thrift-357. cpp: Fix buffer and connection bloat in TNonBlockingServer
+      THRIFT-411. cpp: Make TNonblockingServer::connectionStackLimit_ accessors use the right type
+      THRIFT-425. cpp: numeric_limits is declared in <limits>
+      THRIFT-426. cpp: Fix include path under test/cpp
+      THRIFT-464. cpp: Fix some STL misuse in the concurrency library
+      THRIFT-465. cpp: Fix some STL misuse in the concurrency library test
+      THRIFT-466. cpp: Make the concurrency library test more thorough
+      THRIFT-469. cpp: Fix a bug in TimerManager::add
+      THRIFT-497. cpp: Fix TSocket::read and peek on Max OS
+      THRIFT-555. cpp: Fix macro defintions for TCompact on non-GNU big endian
+      THRIFT-587. cpp: Properly set addrLen before accept calls
+      THRIFT-606. cpp: Fix build on Solaris Nevada
+      THRIFT-621. cpp: Fix generated files using "apache" namespaces
+      cpp: Add some missing includes to fix OpenBSD compilation
+      cpp: Deal with systems without AI_ADDRCONFIG (OpenBSD)
+      cpp: Deal with systems without sched_get_priority_{min,max} (OpenBSD)
+      cpp: Eliminate a buffer overflow in the tutorial server
+      cpp: Eliminate the use of fprintf [THRIFT-77]
+      cpp: Fix an OpenBSD compilation bug by moving a typedef
+      cpp: Fix an OpenBSD compilation error that appears to be a real bug
+      cpp: Fix compilation on OpenBSD by including sys/types.h
+      cpp: Fix compiler and library compilation with newer glibc
+      cpp: Fix implementations of "list<bool>"
+      cpp: Fix test server/client under test/cpp
+      cpp: Fix "make check" by defining a comparator for "Empty"
+      cpp: Make the test server compatible with the Python test client
+      cpp: Rename Makefiles under test/cpp
+      cpp: Resolve an ambiguous overload in some tests
+
+Java:
+      Minor whitespace fixes in the Java generator and gen-code
+      THRIFT-10. java: Descriptors used during serialization should be immutable objects
+      THRIFT-34 Java libraries should be namespaced under org.apache.thrift, not com.facebook.thrift
+      THRIFT-64. java: Allow TServerSocket to bind to a specific IP address
+      THRIFT-81. java: TNonblockingServer: Support a limit on read buffer size
+      THRIFT-100. java: Set __isset better in beans style
+      THRIFT-110. java: A more compact format
+      THRIFT-115. java: Isset structure has a large memory footprint
+      THRIFT-116. java: Isset fields for non-primitive types unnecessary
+      THRIFT-119. java: structs' toString omits unset optional fields
+      THRIFT-120. java: Make the nocamel option work for more methods
+      THRIFT-130. java: Eliminate frame{Read,Write} from TFramedTransport
+      THRIFT-138. java: Create deep-copy constructors for Thrift structs
+      THRIFT-138. java: Fix copy constructor for binary fields
+      THRIFT-139. java: Expose field ids in more useful ways
+      THRIFT-139. java: Fix indentation in beans mode
+      THRIFT-142. java: Better handling of required fields
+      THRIFT-144. java: Generated classes should implement Comparable
+      THRIFT-145. java: Make TNonblockingServer more robust against errors
+      THRIFT-152. java: Set isset appropriately in structure constructors
+      THRIFT-166. java: Java tests should be in lib/java/test/ THRIFT-221. java: Make java build classpath more dynamic and configurable
+      THRIFT-172. java: Improve toString output for binary fields
+      THRIFT-178. java, csharp, cpp: Final Keyword
+      THRIFT-179. java: Include per-field docstrings in generated code
+      THRIFT-191. java: Create a static field id -> name map for each struct
+      THRIFT-202: java: Fix "make check"
+      THRIFT-218. java: When validation fails on serialization/deserialization, print out the invalid object
+      THRIFT-222. java: Better exposure if __isset in beans style
+      THRIFT-225. java/cpp: Handle non-i32 integer constants properly
+      THRIFT-235. java: Explicitly cast integer constants to double
+      THRIFT-239. java: Generate @Override annotations for all overrided methods
+      THRIFT-240. java: TBase should implement Cloneable
+      THRIFT-249. java: Add @param lines to function docstrings
+      THRIFT-253. java: Enhance FieldMetaData
+      THRIFT-262. java: Generate Javadocs for library classes
+      THRIFT-278. java: #validate exceptions should contain the offending value
+      THRIFT-288. java: Generated code iterates maps during write inefficiently
+      THRIFT-289. test: "make check" no longer runs the Java tests
+      THRIFT-290. java: Metadata map doesn't properly reference external thrift file's types
+      THRIFT-292. Auto-generate the Java gen-code in build.xml
+      THRIFT-297. java: getFieldValue and setFieldValue should be abstract TBase methods
+      THRIFT-303. java: Changes to __isset interface
+      THRIFT-316. java: @Override isn't generated for hashCode() without the hash code builder
+      THRIFT-318. java: Performance of HashSet for enumeration VALID_VALUES seems poor
+      THRIFT-321. java: THRIFT-303 broke EqualityTest Regenerated test code.
+      THRIFT-359. java:  nocamel style breaks generated services
+      THRIFT-364. java: Use of enums in other namespaces breaks java generated code
+      THRIFT-366. java: Lots of little warnings in java library
+      THRIFT-367. java: Some dead code in TNonblockingSocket.java
+      THRIFT-368. java: setFieldValue should allow nulls for all field types
+      THRIFT-378. java: Java servers do not turn internal errors into thrift exceptions
+      THRIFT-379. java: Print enum value names
+      THRIFT-382. java:  Unused imports in generated code
+      THRIFT-409. java: Add "union" to Thrift
+      THRIFT-416. java: java.util.logging eats exceptions without warning
+      THRIFT-427. java: Fix print_const_value
+      THRIFT-446. java: PartialDeserialization in Java
+      THRIFT-450. java: Check for Apache Commons Lang also
+      THRIFT-450. java: Propagate CLASSPATH from ./configure to make and ant
+      THRIFT-450. java: Respect the global classpath during testing
+      THRIFT-453. java: By default, use Ivy to download Java dependencies
+      THRIFT-462. java: Installed jar shouldn't be executable
+      THRIFT-479. java: Add javadocs for enum types
+      THRIFT-482. java: build.xml does not specify a target version for compiled java classes
+      THRIFT-489. java: Java enum validation only validates explicitly assigned values
+      THRIFT-493. java: Stopping TNonblockingServer when it hasn't been starting results in an exception
+      THRIFT-529. java: Change generated constructors so that application code evolves better Optional fields are now excluded from constructors.
+      THRIFT-540. java: Have set methods return reference to self
+      THRIFT-543. java: Generate normal style java files should respect the "optional" keyword when serializing
+      THRIFT-551. java: Enumeration doesn't generate real enum in Java This patch makes the compiler generate actual Enum classes.
+      THRIFT-558. java:  Replace use of log4j by commons-logging in Java library and generated Java code
+      THRIFT-565. java: Structs containing typedefs for incomparable objects will be considered comparable This patch causes the compiler to fully unwrap typedefs when determining comparability.
+      THRIFT-566. java: jar file should contain copies of LICENSE and NOTICE files
+      THRIFT-572. java: Union compareTo is broken
+      THRIFT-588. java: Generated .equals method throws NPE for thrift object
+      THRIFT-589. java: Add Field Name to Field ID Mapping Java Thrift structs now have a static mapping of field name to field ID.
+      THRIFT-620. java: Compact Protocol should call readAll, not read This patch switches to calling readAll instead of read.
+      THRIFT-623. java: Use a Java enum to represent field ids in generated structs
+      THRIFT-624. java: compareTo is broken for Unions with binary fields This patch adds a special case for byte[] values in TUnion. It also fixes a related bug in TBaseHelper for comparing two byte arrays.
+      THRIFT-628. java: Hash code method for _Fields objects does not behave as expected This patch switches to using the hashcode of the actual field id, instead of the field id enumeration.
+      java: Added SerializationBenchmark.java, helper class for performing tests on protocols.
+      java: Add a helper function to implement nocamel style
+      java: Add nocamel option to not CamelCase field accessors [THRIFT-42]
+      java: Close broken connections [THRIFT-73]
+      java: Fix a minor formatting problem in the gen-code
+      java: Specify in build.xml that we are using Java 1.5
+      (THRIFT-5) A TNonblockingServers (single-threaded and thread-pool) for Java
+      (THRIFT-12) Make the Java library use java.util.logging instead of stdout.
+      [THRIFT-70] Allow the Java install prefix to be configured.
+
+
+Erlang:
+      Add erl back to EXTRA_DIST because it doesn't use Automake.
+      Allow the Thrift compiler to be built without the Erlang generator.
+      Make the Erlang generator dynamic.
+      THRIFT-83. erlang: Don't flush an empty buffer in the http transport.
+      THRIFT-94. erlang: Fix a syntax error
+      THRIFT-126. erlang: TMemoryBuffer for Erlang
+      THRIFT-127. erlang: Skip fields that have the wrong type
+      THRIFT-136. s/async/oneway/ in Erlang
+      THRIFT-186. erl: Make the Makefile work on OpenSolaris
+      THRIFT-192. erlang: Commit test code missed in r757870
+      THRIFT-192. erl: Fix handling of booleans
+      THRIFT-211. erlang: Allow clients to be created without connecting
+      THRIFT-211. erlang: Modify test_tether to test protocol error handling as well
+      THRIFT-211. erlang: Support unlinked Thrift clients.
+      THRIFT-211. erlang: Support "tethered" clients
+      THRIFT-266. erlang: Erlang atoms must always start with lower-case character
+      THRIFT-305. erlang: Fix http_options for thrift_http_transport
+      THRIFT-306. erlang: Let thrift_http_transport specify custom HTTP headers
+      THRIFT-307. erlang: Make HiPE optional
+      THRIFT-524. erlang: Decapitalize file names in include directives
+      THRIFT-574. erlang: Support framed transport for servers
+
+
+Python:
+      Python generator exception namespacing, THRIFT-150
+      THRIFT-48. python: Make TServerSocket work with Unix-domain sockets
+      THRIFT-67. python: Add TNonblockingServer
+      THRIFT-93. Remove unnecessary shebang lines from Python libraries
+      THRIFT-108. python: Fix call to PyDict_Next in fastbinary.c
+      THRIFT-109. python: Use self.assert* instead of assert in tests
+      THRIFT-148. py: Add support for Twisted
+      THRIFT-148. py: Add un-commited file missing from 749510
+      THRIFT-148. py: One more time, reapply the most *recent* patch
+      THRIFT-154. python: Make THttpClient take a URL in its constructor
+      THRIFT-155. python: Reopen THttpClient on a flush
+      THRIFT-195. python: Add a simple THttpServer
+      THRIFT-212. python: Make TFramedTransport implement CReadableTransport
+      THRIFT-217. Use "--gen py" instead of "-py" in build scripts
+      THRIFT-241. python: Generate a better implementation of __repr__
+      THRIFT-242. python: Used named arguments in __init__ instead of a dict
+      THRIFT-256. python: Fix inheritance of services in the same IDL file
+      THRIFT-282. Generate doccstrings for Python classes
+      THRIFT-284. python: Update tutorial files to use repr
+      THRIFT-285. python: Don't generate _result structs for async functions
+      THRIFT-292. Auto-generate the Python gen-code in build.xml
+      THRIFT-292. Restore fb303/FacebookBase.py
+      THRIFT-310. python: Generate valid code for empty services
+      THRIFT-329. python: Make TServerSocket.close() work properly
+      THRIFT-340. python: Detect endianness properly on FreeBSD
+      THRIFT-360. python: Make fastbinary skip struct fields with the wrong type
+      THRIFT-362. python: Detect endianness on Solaris
+      THRIFT-391. py: Fix memory leak in fastbinary
+      THRIFT-412. python: Fix some syntacticaly-incorrect code generation
+      THRIFT-463. python: Fix thrift_spec ordering bug from r760201
+      THRIFT-471. python: Generated exceptions should implement __str__
+      THRIFT-494. python: Update meta-information in setup.py
+      THRIFT-495. python: Raise a TTransportException if TSocket is not open
+      THRIFT-535. py: Twisted Thrift protocol max length is too small
+      THRIFT-535. py: Twisted Thrift protocol max length is too small (fix off-by-one error in MAX_LENGTH)
+      THRIFT-583. python: Allow new-style classes for Interfaces
+      THRIFT-586. python: TSocket incorrectly sets the exception type when an end of file error occurs
+      THRIFT-612. python: Fix exception bug in TFramedTransport.cstringio_refill
+      THRIFT-637. python: Fix mixing of oneway and regular requests in TNonblockingServer
+      cpp: Make the test server compatible with the Python test client
+      generate Twisted code in a separate directory (gen-py.twisted)
+      python: Add TFileObjectTransport
+      python: Eliminate the option of TFramedTransport to not frame
+      python: Make TFramedTransport use a cStringIO for reading
+      python: Make the unit tests run faster and more reliably
+      rb: Make TServer.py Python 2.4 compatible [THRIFT-44]
+
+Ruby:
+      Add Apache headers to Ruby libs and remove a few remaining Facebook notices
+      Add back OCamlMakefile and setup.rb to LICENSE
+      Fix "make distclean" when Ruby is not in use
+      Remove now defunct tests (they've been moved to specs in lib/rb)
+      THRFIT-231. rb: Make Thrift::Structs hashable
+      THRIFT-132. ruby: Ruby generator should use ::Thrift::Foo namespace form
+      THRIFT-157. rb: Quote strings and qualify class names properly
+      THRIFT-175. Specs in Ruby library should be run during make check
+      THRIFT-229. rb: Don't block indefinitely on connect()
+      THRIFT-245. rb: FIELDS constant should contain name of enumerated type for enum fields
+      THRIFT-246. rb: Generate #struct_fields rather than reflect.
+      THRIFT-248. ruby: Factor BinaryProtocolAccelerated into separate protocol and struct components
+      THRIFT-254. rb: Add optional strict version support to binary protocols
+      THRIFT-260. rb: Some Protocol methods shouldn't have default nil implementations
+      THRIFT-275. rb: Remove deprecated classes from Ruby library
+      THRIFT-276. rb: Ruby libraries should have one class per file
+      THRIFT-277. rb: Abstract Transport in Ruby #read method should throw NotImplementedException
+      THRIFT-298. ruby: Exception propagation seems broken for Ruby clients
+      THRIFT-302. ruby: Native extension fails to build
+      THRIFT-312. rb: Ruby unit tests fail due to change in BinaryProtocolAccelerated interface
+      THRIFT-313. rb: BinaryProtocolAccelerated and BinaryProtocol don't produce the same bytes when writes aren't strict
+      THRIFT-332. rb: Compact Protocol in Ruby
+      THRIFT-352. rb: Implicit enums should be valid values
+      THRIFT-353. rb: Capitalize module names on ruby generation
+      THRIFT-358. ruby:  Change how external thrift files' generated code is required
+      THRIFT-372. rb: Ruby lib doesn't rescue properly from lack of native_thrift extension
+      THRIFT-374. rb: ruby 1.9 compatibility
+      THRIFT-375. rb: syntax error in benchmark.rb
+      THRIFT-396. rb: BinaryProtocol missing method implementations
+      THRIFT-401. rb: Speed up FramedTransport
+      THRIFT-402. rb: MemoryBuffer > 4096 bytes will truncate remaining bytes
+      THRIFT-408. rb: Ruby C extension doesn't build on 1.8.5
+      THRIFT-410. rb: Ruby lib should have no checked in generated code
+      THRIFT-410. rb:  Ruby lib should have no checked in generated code
+      THRIFT-415. rb: BinaryProtocolAccelerated does not behave properly when strict reads are turned off
+      THRIFT-417. rb: BufferedTransport can enter an infinite loop
+      THRIFT-421. rb: Fix tests broken by original patch
+      THRIFT-422. rb: scope all references to the Thrift module
+      THRIFT-430. rb: ruby tutorials and ruby tests require deprecated files and class names
+      THRIFT-431. rb: Capitalize namespace values
+      THRIFT-433. rb: 'rake spec' sort of fails
+      THRIFT-437. rb: fix benchmarking tools to require proper file names
+      THRIFT-444. rb: THRIFT-356 broke compact protocol spec
+      THRIFT-445. rb: client and processor do not inherit from the proper namespace scope
+      THRIFT-451. rb: ruby structs use lowercase enum while modules are capitalized
+      THRIFT-485. rb:  Generated validate methods that reference external thrift files' types are not referenced correctly
+      THRIFT-486. rb: ruby tutorial needs updated require statements
+      THRIFT-498. rb: Compact and Binary native protocols, used at the same time, can cause some issues
+      THRIFT-501. rb: File.dirname(...) requires cause warnings in some scenarios
+      THRIFT-511. rb: Better performing hash method for generated structs
+      THRIFT-513. rb: spec test files broken, rake searching for misnamed files
+      THRIFT-516. rb: If TFramedTransport reads a negative frame size, throw a TTransportException descendant instead of the default NegativeArraySizeException
+      THRIFT-526. rb: Generated Ruby enums have no good way to get the names back out once you have a number.
+      THRIFT-547. rb: Thrift deserializer hangs when deserializing empty string
+      THRIFT-552. rb: gem requires exactly rubygems 1.2.0
+      HRIFT-569. rb: Segmentation Fault when using BinaryProtocolAccelerated in Ruby
+      THRIFT-571. rb: compact_protocol.c:89: warning: format not a string literal and no format arguments
+      THRIFT-572. rb: fix RSTRING for 1.9 compatibility
+      THRIFT-603. rb: Struct read method does not call validate After reading a struct, we will now call the struct's validate method.
+      Thrift-421. rb: Underscore output file names and require file statments
+      rb: Add FramedTransport#borrow/consume! [THRIFT-117]
+      rb: Add TProtocolException to the backwards_compatibility_spec [THRIFT-88]
+      rb: Add docstrings to generated ruby code [THRIFT-147]
+      rb: Add ext/ to loadpath so BinaryProtocolAccelerated specs pass
+      rb: Add optional timeout argument to Thrift::Socket [THRIFT-74]
+      rb: Add pretty inspect, optional field hint for Thrift::Struct
+      rb: Add some additional error handling to Thrift::Socket [THRIFT-53]
+      rb: Add stubs for rake install/package when Echoe not present [THRIFT-52]
+      rb: BinaryProtocolAccelerated should use Thrift::ProtocolException [THRIFT-89]
+      rb: BufferedTransport should flush on close [THRIFT-49]
+      rb: Buffer the slice!s in MemoryBuffer for a significant performance increase [THRIFT-63]
+      rb: Bugfix for deprecation code [kevin@rapleaf.com][THRIFT-50]
+      rb: Change the license from Thrift Software License to Apache Software License [THRIFT-38]
+      rb: Check Thrift.type_checking earlier for a performance boost [THRIFT-55]
+      rb: Check container elements when Thrift.type_checking = true [THRIFT-104]
+      rb: Create constants for field ids in generated structs [THRIFT-165]
+      rb: Delete setup.rb [THRIFT-38]
+      rb: Display field name in type-checking error [THRIFT-78]
+      rb: Ensure the specs that expect deprecation warnings actually get them [THRIFT-56]
+      rb: Ensure the transport is closed if an exception is raised serializing data in Client.send_message [THRIFT-75]
+      rb: Improve IOStreamTransport to behave more like a real transport [THRIFT-76]
+      rb: Make TServer.py Python 2.4 compatible [THRIFT-44]
+      rb: Performance tweaks in Struct#initialize [THRIFT-188]
+      rb: Remove extra validate in read [THRIFT-207]
+      rb: Reorganize the Rakefile a bit [THRIFT-38]
+      rb: Spec out Thrift::BinaryProtocolAccelerated [THRIFT-90]
+      rb: Speed up Struct#initialize for optional fields [THRFIT-112]
+      rb: Support SSL and correct Content-Type in HTTPClient [THRIFT-156]
+      rb: Support `raise Xception, message` for Structs that inherit from ::Exception [THRIFT-58]
+      rb: Teach BinaryProtocolAccelerated to encode strings with NULs [THRIFT-97]
+      rb: The deprecation stuff should skip thrift library code when showing caller [THRIFT-56]
+      rb: The shared binary protocol specs lacked a test for read_message_begin
+      rb: Thrift.check_type should check struct classes [THRIFT-185]
+      rb: Update HTTPClientSpec for THRIFT-156
+      rb: Use Echoe to manage the gem [THRIFT-38]
+      rb: Use File.dirname(__FILE__) in generated requires [THRIFT-57]
+      rb: Use defined? JRUBY_VERSION to detect JRuby [THRIFT-38]
+      rb: Validate struct _after_ read. [THRIFT-206]
+      rb: When passing unknown keys to Thrift::Struct.new, report those keys in the exception [THRIFT-51]
+      rb: raise if an object is serialized without required fields [THRIFT-143]
+      rb: require 'thrift' first in generated service definitions [THRIFT-38]
+      rb: rewrite the README [THRIFT-38]
+
+PHP:
+      Allow the Thrift compiler to be built without the PHP generator.
+      Make the PHP generator dynamic.
+      Make the PHP generator use non-hardcoded namespaces.
+      Remove obsolete php extension tag
+      THRIFT-99. php: Add scheme (http[s], etc.) support to THttpClient
+      THRIFT-349. php: Accelerated binary protocol serialization segementation fault
+      THRIFT-350. php: Fix the extension build when C++ is not already used
+      THRIFT-404. php: Make TPhpStream work for cli (cgi) scripts
+      THRIFT-405. php: Create a tutorial server
+      THRIFT-499. php: Thrift_protocol PHP extension does not handle signedness correctly
+      THRIFT-584. php: Generate a better directory structure
+      php: Fix an undefined variasble in an error message
+      php: Improve some docblock comments for TSocket
+
+Perl:
+      Perl library should honor the INSTALLDIRS variable
+      THRIFT-190. Added dependency check to perl Makefile
+      THRIFT-193: Patch for proper namespace support in perl compiler
+      THRIFT-199. perl: Let "make distclean" work when we are not using Perl
+      THRIFT-199: integrate perl into automake
+      THRIFT-470. fb303: Use a namespace in Perl gen-code
+      THRIFT-542: Perl compiler uses invalid method 'method_exists' and subsequent test
+      THRIFT-554: Perl improper namespace check for exception handling and writeMessageEnd missing on processor calls
+      THRIFT-590: send/recv timeout values interchanged in perl socket lib
+      THRIFT-619: Perl server and example
+
+
+C#:
+      THRIFT-25. csharp: Various compiler and library improvements
+      THRIFT-46. csharp: Throw the correct exception for an unknown method
+      THRIFT-129. csharp: Make all Thrift structures extend TBase
+      THRIFT-158. csharp: Update headers to Apache
+      THRIFT-159. csharp: Compiler doesn't add package scope to exceptions in catch blocks and assigns to unused local var when reading
+      THRIFT-178. java, csharp, cpp: Final Keyword
+      THRIFT-204. csharp: C# Partial Classes
+      THRIFT-209. csharp: Make TTransportFactory.GetTransport virtual
+      THRIFT-258. csharp: Include all lib source files in Makefile.am
+      THRIFT-264. csharp: Include TBufferedTransport in the build on Linux
+      THRIFT-264. csharp: Use /langversion:linq to fix the Linux build
+      THRIFT-384. csharp: Fix handling of fields named "value"
+      THRIFT-467. csharp: Fix compilation on Debian Sid
+      THRIFT-525. csharp: ThriftTest project will not generate c# from .thrift file or generate ThriftImpl.dll
+      THRIFT-531. csharp: C# project and solution files reference external source control system
+      csharp: Remove a BOM and CRLF line endings from some test code
+
+Haskell:
+      Consolidate lib/hs/.gitignore into the top-level .gitignore
+      THRIFT-385. hs: 64-bit integer and double types incorrectly serialized on 32-bit platforms
+      THRIFT-390. hs: Cabalize Haskell library code
+      THRIFT-392. hs: Make test scripts easier to use
+      THRIFT-397. hs: Remove unnecessary redefinition of generate_program()
+      THRIFT-398. hs: Remove unnecessary parens from generated type annotations
+      THRIFT-399. hs: Fix set and number issues in generated constant code
+      THRIFT-407. hs: Refactor and improve Haskell-related code
+
+OCaml:
+      No changes
+
+Smalltalk:
+      smalltalk: Fix TBinaryProtocol readString for empty strings
+
+XSD:
+      Allow the Thrift compiler to be built without the XSD generator.
+      Make the XSD generator dynamic.
+      Make the XSD generator use non-hardcoded namespaces.
+
+HTML:
+      THRIFT-173. Commit the html generator
+      THRIFT-259. html: Generate "extends" link for extended services
+      THRIFT-365. html:  HTML compiler infinite loop
+
+Cocoa:
+      THRIFT-280. Server-side Cocoa implementation.
+      THRIFT-343. Import <Foundation/Foundation.h> instead of <Cocoa/Cocoa.h> to support iPhone
+      THRIFT-344.  Add a 'log_unexpected' option to the cocoa generator.  off by default.  when supplied, unexpected field IDs and types are logged when reading a struct.
+      THRIFT-520. Fix generation of cocoa constants when a namespace prefix is set.
+
+
+
 Release Notes for Thrift 20080411
 
 .equals and .hashCode() for Java scturcts (developed by dreiss).
