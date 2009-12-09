@@ -46,8 +46,8 @@ echo ' SAFE TO IGNORE THESE IN TEST'."\n";
 echo '==============================='."\n";
 
 /** Include the generated code */
-require_once $GEN_DIR.'/ThriftTest.php';
-require_once $GEN_DIR.'/ThriftTest_types.php';
+require_once $GEN_DIR.'/ThriftTest/ThriftTest.php';
+require_once $GEN_DIR.'/ThriftTest/ThriftTest_types.php';
 
 echo '==============================='."\n";
 echo ' END OF SAFE ERRORS SECTION'."\n";
