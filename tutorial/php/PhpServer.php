@@ -48,10 +48,10 @@ require_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
  */
 error_reporting(E_NONE);
 $GEN_DIR = realpath(dirname(__FILE__).'/..').'/gen-php';
-require_once $GEN_DIR.'/SharedService.php';
-require_once $GEN_DIR.'/shared_types.php';
-require_once $GEN_DIR.'/Calculator.php';
-require_once $GEN_DIR.'/tutorial_types.php';
+require_once $GEN_DIR.'/shared/SharedService.php';
+require_once $GEN_DIR.'/shared/shared_types.php';
+require_once $GEN_DIR.'/tutorial/Calculator.php';
+require_once $GEN_DIR.'/tutorial/tutorial_types.php';
 error_reporting(E_ALL);
 
 class CalculatorHandler implements CalculatorIf {
