@@ -186,6 +186,27 @@
       classpathref="test.classpath" failonerror="true" />
   </target>
 
+  <target name="testclient" description="Run a test client">
+    <java classname="org.apache.thrift.test.TestClient"
+      classpathref="test.classpath" failonerror="true">
+      <arg line="${testargs}" />
+    </java>
+  </target>
+
+  <target name="testserver" description="Run a test server">
+    <java classname="org.apache.thrift.test.TestServer"
+      classpathref="test.classpath" failonerror="true">
+      <arg line="${testargs}" />
+    </java>
+  </target>
+
+  <target name="testnonblockingserver" description="Run a test nonblocking server">
+    <java classname="org.apache.thrift.test.TestNonblockingServer"
+      classpathref="test.classpath" failonerror="true">
+      <arg line="${testargs}" />
+    </java>
+  </target>
+
   <target name="generate">
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
       <arg line="--gen java:hashcode ${test.thrift.home}/ThriftTest.thrift" />
