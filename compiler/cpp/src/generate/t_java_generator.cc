@@ -1933,16 +1933,6 @@ void t_java_generator::generate_java_struct_tostring(ofstream& out,
       indent(out) << "    sb.append(Integer.toHexString(this." << field->get_name() << "[i]).length() > 1 ? Integer.toHexString(this." << field->get_name() << "[i]).substring(Integer.toHexString(this." << field->get_name() << "[i]).length() - 2).toUpperCase() : \"0\" + Integer.toHexString(this." << field->get_name() << "[i]).toUpperCase());" <<endl;
       indent(out) << "  }" << endl;
       indent(out) << "  if (this." << field->get_name() << ".length > 128) sb.append(\" ...\");" << endl;
-    } else if(field->get_type()->is_enum()) {
-      indent(out) << "String " << field->get_name() << "_name = " << field->get_name() << ".name();"<< endl;
-      indent(out) << "if (" << field->get_name() << "_name != null) {" << endl;
-      indent(out) << "  sb.append(" << field->get_name() << "_name);" << endl;
-      indent(out) << "  sb.append(\" (\");" << endl;
-      indent(out) << "}" << endl;
-      indent(out) << "sb.append(this." << field->get_name() << ");" << endl;
-      indent(out) << "if (" << field->get_name() << "_name != null) {" << endl;
-      indent(out) << "  sb.append(\")\");" << endl;
-      indent(out) << "}" << endl;
     } else {
       indent(out) << "sb.append(this." << (*f_iter)->get_name() << ");" << endl;
     }
