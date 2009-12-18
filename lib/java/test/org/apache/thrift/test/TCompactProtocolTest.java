@@ -380,6 +380,11 @@ public class TCompactProtocolTest {
         // TODO Auto-generated method stub
         
       }
+
+      public void methodWithDefaultArgs(int something) throws TException {
+        // TODO Auto-generated method stub
+        
+      }
     };
     
     Srv.Processor testProcessor = new Srv.Processor(handler);

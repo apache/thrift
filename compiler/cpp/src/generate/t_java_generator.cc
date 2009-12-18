@@ -367,11 +367,11 @@ void t_java_generator::generate_enum(t_enum* tenum) {
   f_enum << string() +
     "import java.util.Map;\n" + 
     "import java.util.HashMap;\n" +
-    "import org.apache.thrift.TEnum;" << endl;
+    "import org.apache.thrift.TEnum;" << endl << endl;
 
   generate_java_doc(f_enum, tenum);
   indent(f_enum) <<
-    "public enum " << tenum->get_name() << " implements TEnum";
+    "public enum " << tenum->get_name() << " implements TEnum ";
   scope_up(f_enum);
 
   vector<t_enum_value*> constants = tenum->get_constants();
@@ -392,7 +392,7 @@ void t_java_generator::generate_enum(t_enum* tenum) {
     }
 
     generate_java_doc(f_enum, *c_iter);
-    indent(f_enum) << "  " << (*c_iter)->get_name() << "(" << value << ")";
+    indent(f_enum) << (*c_iter)->get_name() << "(" << value << ")";
   }
   f_enum << ";" << endl << endl;
 
@@ -487,7 +487,7 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
     string v2 = render_const_value(out, name, type, value);
     out << name << " = " << v2 << ";" << endl << endl;
   } else if (type->is_enum()) {
-    out << name << " = " << value->get_integer() << ";" << endl << endl;
+    out << name << " = " << render_const_value(out, name, type, value) << ";" << endl << endl;
   } else if (type->is_struct() || type->is_xception()) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -602,7 +602,7 @@ string t_java_generator::render_const_value(ofstream& out, string name, t_type* 
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    render << value->get_integer();
+    render << type_name(type, false, false) << "." << value->get_identifier();
   } else {
     string t = tmp("tmp");
     print_const_value(out, t, type, value, true);

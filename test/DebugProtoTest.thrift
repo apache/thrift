@@ -214,6 +214,7 @@ const CompactProtoTestStruct COMPACT_TEST = {
 }
 
 
+const i32 MYCONST = 2
 
 service Srv {
   i32 Janky(1: i32 arg);
@@ -223,6 +224,8 @@ service Srv {
   void voidMethod();
   i32 primitiveMethod();
   CompactProtoTestStruct structMethod();
+  
+  void methodWithDefaultArgs(1: i32 something = MYCONST);
 }
 
 service Inherited extends Srv {
@@ -253,8 +256,25 @@ service ReverseOrderService {
 }
 
 enum SomeEnum {
-  ONE
-  TWO
+  ONE = 1
+  TWO = 2
+}
+
+const SomeEnum MY_SOME_ENUM = ONE
+
+const SomeEnum MY_SOME_ENUM_1 = 1
+/*const SomeEnum MY_SOME_ENUM_2 = 7*/
+
+const map<SomeEnum,SomeEnum> MY_ENUM_MAP = {
+  ONE : TWO
+}
+
+struct StructWithSomeEnum {
+  1: SomeEnum blah;
+}
+
+const map<SomeEnum,StructWithSomeEnum> EXTRA_CRAZY_MAP = {
+  ONE : {"blah" : TWO}
 }
 
 union TestUnion {

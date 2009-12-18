@@ -55,6 +55,11 @@ class t_enum_value : public t_doc {
     return value_;
   }
 
+  void set_value(int val) {
+    has_value_ = true;
+    value_ = val;
+  }
+
  private:
   std::string name_;
   bool has_value_;

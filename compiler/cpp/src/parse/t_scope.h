@@ -23,8 +23,14 @@
 #include <map>
 #include <string>
 
+#include <boost/lexical_cast.hpp>
 #include "t_type.h"
 #include "t_service.h"
+#include "t_const.h"
+#include "t_const_value.h"
+#include "t_base_type.h"
+#include "t_map.h"
+#include "t_list.h"
 
 /**
  * This represents a variable scope used for looking up predefined types and
@@ -67,6 +73,86 @@ class t_scope {
       printf("%s => %s\n",
              iter->first.c_str(),
              iter->second->get_name().c_str());
+    }
+  }
+
+  void resolve_const_value(t_const_value* const_val, t_type* ttype) {
+    if (ttype->is_map()) {
+      const std::map<t_const_value*, t_const_value*>& map = const_val->get_map();
+      std::map<t_const_value*, t_const_value*>::const_iterator v_iter;
+      for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
+        resolve_const_value(v_iter->first, ((t_map*)ttype)->get_key_type());
+        resolve_const_value(v_iter->second, ((t_map*)ttype)->get_val_type());
+      }
+    } else if (ttype->is_list() || ttype->is_set()) {
+      const std::vector<t_const_value*>& val = const_val->get_list();
+      std::vector<t_const_value*>::const_iterator v_iter;
+      for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+        resolve_const_value((*v_iter), ((t_list*)ttype)->get_elem_type());
+      }
+    } else if (ttype->is_struct()) {
+      t_struct* tstruct = (t_struct*)ttype;
+      const std::map<t_const_value*, t_const_value*>& map = const_val->get_map();
+      std::map<t_const_value*, t_const_value*>::const_iterator v_iter;
+      for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
+        t_field* field = tstruct->get_field_by_name(v_iter->first->get_string());
+        resolve_const_value(v_iter->second, field->get_type());
+      }
+    } else if (const_val->get_type() == t_const_value::CV_IDENTIFIER) {
+      if (ttype->is_enum()) {
+        const_val->set_enum((t_enum*)ttype);
+      } else {
+        t_const* constant = get_constant(const_val->get_identifier());
+        if (constant == NULL) {
+          throw "No enum value or constant found named \"" + const_val->get_identifier() + "\"!";
+        }
+
+        if (constant->get_type()->is_base_type()) {
+          switch (((t_base_type*)constant->get_type())->get_base()) {
+            case t_base_type::TYPE_I16:
+            case t_base_type::TYPE_I32:
+            case t_base_type::TYPE_I64:
+            case t_base_type::TYPE_BOOL:
+            case t_base_type::TYPE_BYTE:
+              const_val->set_integer(constant->get_value()->get_integer());
+              break;
+            case t_base_type::TYPE_STRING:
+              const_val->set_string(constant->get_value()->get_string());
+              break;
+            case t_base_type::TYPE_DOUBLE:
+              const_val->set_double(constant->get_value()->get_double());
+              break;
+            case t_base_type::TYPE_VOID:
+              throw "Constants cannot be of type VOID";
+          }
+        } else if (constant->get_type()->is_map()) {
+          const std::map<t_const_value*, t_const_value*>& map = constant->get_value()->get_map();
+          std::map<t_const_value*, t_const_value*>::const_iterator v_iter;
+
+          const_val->set_map();
+          for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
+            const_val->add_map(v_iter->first, v_iter->second);
+          }
+        } else if (constant->get_type()->is_list()) {
+          const std::vector<t_const_value*>& val = constant->get_value()->get_list();
+          std::vector<t_const_value*>::const_iterator v_iter;
+
+          const_val->set_list();
+          for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+            const_val->add_list(*v_iter);
+          }
+        }
+      }
+    } else if (ttype->is_enum()) {
+      // enum constant with non-identifier value. set the enum and find the
+      // value's name.
+      t_enum* tenum = (t_enum*)ttype;
+      t_enum_value* enum_value = tenum->get_constant_by_value(const_val->get_integer());
+      if (enum_value == NULL) {
+        throw "Couldn't find a named value in enum " + tenum->get_name() + " for value " + boost::lexical_cast<std::string>(const_val->get_integer());
+      }
+      const_val->set_identifier(enum_value->get_name());
+      const_val->set_enum(tenum);
     }
   }
 

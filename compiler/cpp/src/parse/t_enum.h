@@ -44,12 +44,47 @@ class t_enum : public t_type {
     return constants_;
   }
 
+  t_enum_value* get_constant_by_name(const std::string name) {
+    const std::vector<t_enum_value*>& enum_values = get_constants();
+    std::vector<t_enum_value*>::const_iterator c_iter;
+    for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
+      if ((*c_iter)->get_name() == name) {
+        return *c_iter;
+      }
+    }
+    return NULL;
+  }
+
+  t_enum_value* get_constant_by_value(int64_t value) {
+    const std::vector<t_enum_value*>& enum_values = get_constants();
+    std::vector<t_enum_value*>::const_iterator c_iter;
+    for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
+      if ((*c_iter)->get_value() == value) {
+        return *c_iter;
+      }
+    }
+    return NULL;
+  }
+
   bool is_enum() const {
     return true;
   }
 
   virtual std::string get_fingerprint_material() const {
     return "enum";
+  }
+
+  void resolve_values() {
+    const std::vector<t_enum_value*>& enum_values = get_constants();
+    std::vector<t_enum_value*>::const_iterator c_iter;
+    int lastValue = -1;
+    for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
+      if (! (*c_iter)->has_value()) {
+        (*c_iter)->set_value(++lastValue);
+      } else {
+        lastValue = (*c_iter)->get_value();
+      }
+    }
   }
 
  private:

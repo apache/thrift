@@ -504,6 +504,7 @@ Enum:
       pdebug("Enum -> tok_enum tok_identifier { EnumDefList }");
       $$ = $4;
       $$->set_name($2);
+      $$->resolve_values();
     }
 
 EnumDefList:
@@ -583,6 +584,7 @@ Const:
     {
       pdebug("Const -> tok_const FieldType tok_identifier = ConstValue");
       if (g_parse_mode == PROGRAM) {
+        g_scope->resolve_const_value($5, $2);
         $$ = new t_const($2, $3, $5);
         validate_const_type($$);
 
@@ -590,7 +592,6 @@ Const:
         if (g_parent_scope != NULL) {
           g_parent_scope->add_constant(g_parent_prefix + $3, $$);
         }
-
       } else {
         $$ = NULL;
       }
@@ -620,15 +621,8 @@ ConstValue:
 | tok_identifier
     {
       pdebug("ConstValue => tok_identifier");
-      t_const* constant = g_scope->get_constant($1);
-      if (constant != NULL) {
-        $$ = constant->get_value();
-      } else {
-        if (g_parse_mode == PROGRAM) {
-          pwarning(1, "Constant strings should be quoted: %s\n", $1);
-        }
-        $$ = new t_const_value($1);
-      }
+      $$ = new t_const_value();
+      $$->set_identifier($1);
     }
 | ConstList
     {
@@ -872,6 +866,7 @@ Field:
       $$ = new t_field($4, $5, $2);
       $$->set_req($3);
       if ($6 != NULL) {
+        g_scope->resolve_const_value($6, $4);
         validate_field_value($$, $6);
         $$->set_value($6);
       }

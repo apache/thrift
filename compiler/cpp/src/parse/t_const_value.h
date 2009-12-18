@@ -20,7 +20,7 @@
 #ifndef T_CONST_VALUE_H
 #define T_CONST_VALUE_H
 
-#include "t_const.h"
+#include "t_enum.h"
 #include <stdint.h>
 #include <map>
 #include <vector>
@@ -38,7 +38,8 @@ class t_const_value {
     CV_DOUBLE,
     CV_STRING,
     CV_MAP,
-    CV_LIST
+    CV_LIST,
+    CV_IDENTIFIER
   };
 
   t_const_value() {}
@@ -66,7 +67,15 @@ class t_const_value {
   }
 
   int64_t get_integer() const {
-    return intVal_;
+    if (valType_ == CV_IDENTIFIER) {
+      if (enum_ == NULL) {
+        throw "have identifier \"" + get_identifier() + "\", but unset enum on line!";
+      }
+      t_enum_value* val = enum_->get_constant_by_name(get_identifier());
+      return val->get_value();
+    } else {
+      return intVal_;
+    }
   }
 
   void set_double(double val) {
@@ -102,6 +111,19 @@ class t_const_value {
     return listVal_;
   }
 
+  void set_identifier(std::string val) {
+    valType_ = CV_IDENTIFIER;
+    identifierVal_ = val;
+  }
+
+  std::string get_identifier() const {
+    return identifierVal_;
+  }
+  
+  void set_enum(t_enum* tenum) {
+    enum_ = tenum;
+  }
+
   t_const_value_type get_type() const {
     return valType_;
   }
@@ -112,6 +134,8 @@ class t_const_value {
   std::string stringVal_;
   int64_t intVal_;
   double doubleVal_;
+  std::string identifierVal_;
+  t_enum* enum_;
 
   t_const_value_type valType_;
 
