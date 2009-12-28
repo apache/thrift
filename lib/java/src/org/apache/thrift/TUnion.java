@@ -212,7 +212,7 @@ public abstract class TUnion<F extends TFieldIdEnum> implements TBase<F> {
       if (i != 0) {
         sb.append(" ");
       }
-      String digit = Integer.toHexString(bytes[i]);
+      String digit = Integer.toHexString(bytes[i] & 0xFF);
       sb.append(digit.length() > 1 ? digit : "0" + digit);
     }
     if (bytes.length > 128) {
