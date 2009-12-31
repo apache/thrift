@@ -299,6 +299,14 @@ union TestUnion {
   6: SomeEnum enum_field;
 }
 
+union TestUnionMinusStringField {
+  2: i32 i32_field;
+  3: OneOfEach struct_field;
+  4: list<RandomStuff> struct_list;
+  5: i32 other_i32_field;
+  6: SomeEnum enum_field;
+}
+
 union ComparableUnion {
   1: string string_field;
   2: binary binary_field;

@@ -850,7 +850,10 @@ void t_java_generator::generate_read_value(ofstream& out, t_struct* tstruct) {
 
   indent_up();
 
-  indent(out) << "switch (_Fields.findByThriftId(field.id)) {" << endl;
+  indent(out) << "_Fields setField = _Fields.findByThriftId(field.id);" << endl;
+  indent(out) << "if (setField != null) {" << endl;
+  indent_up();
+  indent(out) << "switch (setField) {" << endl;
   indent_up();
 
   const vector<t_field*>& members = tstruct->get_members();
@@ -873,11 +876,18 @@ void t_java_generator::generate_read_value(ofstream& out, t_struct* tstruct) {
     indent(out) << "}" << endl;
     indent_down();
   }
-  
-  indent(out) << "default:" << endl;
-  indent(out) << "  TProtocolUtil.skip(iprot, field.type);" << endl;
-  indent(out) << "  return null;" << endl;
 
+  indent(out) << "default:" << endl;
+  indent(out) << "  throw new IllegalStateException(\"setField wasn't null, but didn't match any of the case statements!\");" << endl;
+
+  indent_down();
+  indent(out) << "}" << endl;
+
+  indent_down();
+  indent(out) << "} else {" << endl;
+  indent_up();
+  indent(out) << "TProtocolUtil.skip(iprot, field.type);" << endl;
+  indent(out) << "return null;" << endl;
   indent_down();
   indent(out) << "}" << endl;
 

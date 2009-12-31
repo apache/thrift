@@ -17,15 +17,18 @@
  */
 package org.apache.thrift.test;
 
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 
+import thrift.test.ComparableUnion;
 import thrift.test.Empty;
+import thrift.test.SomeEnum;
 import thrift.test.StructWithAUnion;
 import thrift.test.TestUnion;
-import thrift.test.SomeEnum;
-import thrift.test.ComparableUnion;
+import thrift.test.TestUnionMinusStringField;
 
 public class UnionTest {
 
@@ -37,6 +40,7 @@ public class UnionTest {
     testEquality();
     testSerialization();
     testCompareTo();
+    testSkip();
   }
 
   public static void testBasic() throws Exception {
@@ -187,6 +191,19 @@ public class UnionTest {
 
     if (cu2.compareTo(cu) != 1) {
       throw new RuntimeException("b was supposed to be > a, but was " + cu2.compareTo(cu));
+    }
+  }
+
+  public static void testSkip() throws Exception {
+    TestUnion tu = TestUnion.string_field("string");
+    byte[] tuSerialized = new TSerializer().serialize(tu);
+    TestUnionMinusStringField tums = new TestUnionMinusStringField();
+    new TDeserializer().deserialize(tums, tuSerialized);
+    if (tums.getSetField() != null) {
+      throw new RuntimeException("Expected tums to be unset!");
+    }
+    if (tums.getFieldValue() != null) {
+      throw new RuntimeException("Expected tums to have null value!");
     }
   }
 }
