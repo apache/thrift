@@ -3570,7 +3570,7 @@ bool t_java_generator::is_comparable(t_type* type) {
     } else {
       return false;
     }
-  } else if (type->is_struct()) {
+  } else if (type->is_struct() || type->is_xception()) {
     return is_comparable((t_struct*)type);
   } else {
     return true;

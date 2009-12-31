@@ -216,6 +216,16 @@ const CompactProtoTestStruct COMPACT_TEST = {
 
 const i32 MYCONST = 2
 
+
+exception ExceptionWithAMap {
+  1: string blah;
+  2: map<string, string> map_field;
+}
+
+service ServiceForExceptionWithAMap {
+  void methodThatThrowsAnException() throws (1: ExceptionWithAMap xwamap);
+}
+
 service Srv {
   i32 Janky(1: i32 arg);
   
