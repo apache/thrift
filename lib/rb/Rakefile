@@ -82,7 +82,7 @@ begin
     p.summary = "Ruby libraries for Thrift (a language-agnostic RPC system)"
     p.url = "http://incubator.apache.org/thrift/"
     p.include_rakefile = true
-    p.version = "0.1.0"
+    p.version = "0.2.0"
     p.rubygems_version = ">= 1.2.0"
   end
 
