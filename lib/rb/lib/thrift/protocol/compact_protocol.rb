@@ -252,6 +252,7 @@ module Thrift
         modifier = (type & 0xf0) >> 4
         if modifier == 0
           # not a delta. look ahead for the zigzag varint field id.
+          @last_field.pop
           field_id = read_i16()
         else
           # has a delta. add the delta to the last read field id.

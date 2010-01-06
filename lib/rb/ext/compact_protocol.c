@@ -458,6 +458,7 @@ VALUE rb_thrift_compact_proto_read_field_begin(VALUE self) {
     
     if (modifier == 0) {
       // not a delta. look ahead for the zigzag varint field id.
+      LAST_ID(self);
       field_id = read_i16(self);
     } else {
       // has a delta. add the delta to the last read field id.

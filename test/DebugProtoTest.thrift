@@ -327,3 +327,14 @@ typedef map<i32,i32> SomeMap
 struct StructWithASomemap {
   1: required SomeMap somemap_field;
 }
+
+struct BigFieldIdStruct {
+  1: string field1;
+  45: string field2;
+}
+
+struct BreaksRubyCompactProtocol {
+  1: string field1;
+  2: BigFieldIdStruct field2;
+  3: i32 field3;
+}

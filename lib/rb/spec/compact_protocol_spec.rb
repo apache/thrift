@@ -86,17 +86,33 @@ describe Thrift::CompactProtocol do
   it "should make method calls correctly" do
     client_out_trans = Thrift::MemoryBufferTransport.new
     client_out_proto = Thrift::CompactProtocol.new(client_out_trans)
-    
+
     client_in_trans = Thrift::MemoryBufferTransport.new
     client_in_proto = Thrift::CompactProtocol.new(client_in_trans)
-    
+
     processor = Srv::Processor.new(JankyHandler.new)
-    
+
     client = Srv::Client.new(client_in_proto, client_out_proto)
     client.send_Janky(1)
     # puts client_out_trans.inspect_buffer
     processor.process(client_out_proto, client_in_proto)
     client.recv_Janky.should == 2
+  end
+  
+  it "should deal with fields following fields that have non-delta ids" do
+    brcp = BreaksRubyCompactProtocol.new(
+      :field1 => "blah", 
+      :field2 => BigFieldIdStruct.new(
+        :field1 => "string1", 
+        :field2 => "string2"), 
+      :field3 => 3)
+    ser = Thrift::Serializer.new(Thrift::CompactProtocolFactory.new)
+    bytes = ser.serialize(brcp)
+
+    deser = Thrift::Deserializer.new(Thrift::CompactProtocolFactory.new)
+    brcp2 = BreaksRubyCompactProtocol.new
+    deser.deserialize(brcp2, bytes)
+    brcp2.should == brcp
   end
   
   class JankyHandler
