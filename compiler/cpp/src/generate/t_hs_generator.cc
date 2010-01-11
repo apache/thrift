@@ -139,8 +139,9 @@ class t_hs_generator : public t_oop_generator {
    */
 
   std::string hs_autogen_comment();
+  std::string hs_language_pragma();
   std::string hs_imports();
-  std::string type_name(t_type* ttype);
+  std::string type_name(t_type* ttype, string function_prefix = "");
   std::string function_type(t_function* tfunc, bool options = false, bool io = false, bool method = false);
   std::string type_to_enum(t_type* ttype);
   std::string render_hs_type(t_type* type, bool needs_parens = true);
@@ -180,13 +181,17 @@ void t_hs_generator::init_generator() {
   string f_consts_name = get_out_dir()+pname+"_Consts.hs";
   f_consts_.open(f_consts_name.c_str());
 
+
+
   // Print header
   f_types_ <<
+    hs_language_pragma() << endl <<
     hs_autogen_comment() << endl <<
     "module " << pname <<"_Types where" << endl <<
     hs_imports() << endl;
 
   f_consts_ <<
+    hs_language_pragma() << endl <<
     hs_autogen_comment() << endl <<
     "module " << pname <<"_Consts where" << endl <<
     hs_imports() << endl <<
@@ -194,6 +199,9 @@ void t_hs_generator::init_generator() {
 
 }
 
+string t_hs_generator::hs_language_pragma() {
+  return std::string("{-# LANGUAGE DeriveDataTypeable #-}");
+}
 
 /**
  * Autogen'd comment
@@ -211,7 +219,17 @@ string t_hs_generator::hs_autogen_comment() {
  * Prints standard thrift imports
  */
 string t_hs_generator::hs_imports() {
-  return "import Thrift\nimport Data.Typeable ( Typeable )\nimport Control.Exception\nimport qualified Data.Map as Map\nimport qualified Data.Set as Set\nimport Data.Int";
+  const vector<t_program*>& includes = program_->get_includes();
+  string result = "";
+  for (size_t i = 0; i < includes.size(); ++i) {
+    result += "import qualified " + capitalize(includes[i]->get_name()) + "_Types\n";
+  }
+  if (includes.size() > 0) {
+    result += "\n";
+  }
+
+  result += "import Thrift\nimport Data.Typeable ( Typeable )\nimport Control.Exception\nimport qualified Data.Map as Map\nimport qualified Data.Set as Set\nimport Data.Int;\nimport Prelude ((==), String, Eq, Show, Ord, Maybe(..), (&&), (||), return, IO, Enum, fromEnum, toEnum, Bool(..), (++))";
+  return result;
 }
 
 /**
@@ -618,6 +636,7 @@ void t_hs_generator::generate_service(t_service* tservice) {
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<
+    hs_language_pragma() << endl <<
     hs_autogen_comment() << endl <<
     "module " << capitalize(service_name_) << " where" << endl <<
     hs_imports() << endl;
@@ -1249,7 +1268,7 @@ void t_hs_generator::generate_serialize_field(ofstream &out,
 void t_hs_generator::generate_serialize_struct(ofstream &out,
                                                t_struct* tstruct,
                                                string prefix) {
-  out << "write_" << type_name(tstruct) << " oprot " << prefix;
+  out << type_name(tstruct, "write_") << " oprot " << prefix;
 }
 
 void t_hs_generator::generate_serialize_container(ofstream &out,
@@ -1332,7 +1351,7 @@ string t_hs_generator::function_type(t_function* tfunc, bool options, bool io, b
 }
 
 
-string t_hs_generator::type_name(t_type* ttype) {
+string t_hs_generator::type_name(t_type* ttype, string function_prefix) {
   string prefix = "";
   t_program* program = ttype->get_program();
   if (program != NULL && program != program_) {
@@ -1347,7 +1366,7 @@ string t_hs_generator::type_name(t_type* ttype) {
   } else {
     name = capitalize(name);
   }
-  return prefix + name;
+  return prefix + function_prefix + name;
 }
 
 /**

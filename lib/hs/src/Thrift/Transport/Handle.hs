@@ -32,12 +32,14 @@ import System.IO.Error ( isEOFError )
 
 import Thrift.Transport
 
+import qualified Data.ByteString.Lazy.Char8 as LBS
+import Data.Monoid
 
 instance Transport Handle where
     tIsOpen = hIsOpen
     tClose h    = hClose h
-    tRead  h n  = replicateM n (hGetChar h) `catch` handleEOF
-    tWrite h s  = mapM_ (hPutChar h) s
+    tRead  h n  = LBS.hGet h n `catch` handleEOF
+    tWrite h s  = LBS.hPut h s
     tFlush = hFlush
 
 
@@ -54,5 +56,5 @@ instance HandleSource (HostName, PortID) where
 
 
 handleEOF e = if isEOFError e
-    then return []
+    then return mempty
     else throw $ TransportExn "TChannelTransport: Could not read" TE_UNKNOWN

@@ -23,6 +23,7 @@ module Thrift.Protocol.Binary
     ) where
 
 import Control.Exception ( throw )
+import Control.Monad ( liftM )
 
 import Data.Bits
 import Data.Int
@@ -34,6 +35,7 @@ import GHC.Word
 import Thrift.Protocol
 import Thrift.Transport
 
+import qualified Data.ByteString.Lazy.Char8 as LBS
 
 version_mask = 0xffff0000
 version_1    = 0x80010000
@@ -62,13 +64,13 @@ instance Protocol BinaryProtocol where
     writeSetBegin p (t, n) = writeType p t >> writeI32 p n
     writeSetEnd _ = return ()
 
-    writeBool p b = tWrite (getTransport p) [toEnum $ if b then 1 else 0]
+    writeBool p b = tWrite (getTransport p) $ LBS.singleton $ toEnum $ if b then 1 else 0
     writeByte p b = tWrite (getTransport p) (getBytes b 1)
     writeI16 p b = tWrite (getTransport p) (getBytes b 2)
     writeI32 p b = tWrite (getTransport p) (getBytes b 4)
     writeI64 p b = tWrite (getTransport p) (getBytes b 8)
     writeDouble p d = writeI64 p (fromIntegral $ floatBits d)
-    writeString p s = writeI32 p (length s) >> tWrite (getTransport p) s
+    writeString p s = writeI32 p (length s) >> tWrite (getTransport p) (LBS.pack s)
     writeBinary = writeString
 
     readMessageBegin p = do
@@ -116,7 +118,10 @@ instance Protocol BinaryProtocol where
     readDouble p = do
         bs <- readI64 p
         return $ floatOfBits $ fromIntegral bs
-    readString p = readI32 p >>= tReadAll (getTransport p)
+    readString p = do
+        i <- readI32 p
+        LBS.unpack `liftM` tReadAll (getTransport p) i
+
     readBinary = readString
 
 
@@ -128,16 +133,16 @@ writeType p t = writeByte p (fromEnum t)
 readType :: (Protocol p, Transport t) => p t -> IO ThriftType
 readType p = toEnum `fmap` readByte p
 
-composeBytes :: (Bits b, Enum t) => [t] -> b
-composeBytes = (foldl' fn 0) . (map $ fromIntegral . fromEnum)
+composeBytes :: (Bits b) => LBS.ByteString -> b
+composeBytes = (foldl' fn 0) . (map (fromIntegral . fromEnum)) . LBS.unpack
     where fn acc b = (acc `shiftL` 8) .|. b
 
 getByte :: Bits a => a -> Int -> a
 getByte i n = 255 .&. (i `shiftR` (8 * n))
 
-getBytes :: (Bits a, Integral a) => a -> Int -> String
-getBytes i 0 = []
-getBytes i n = (toEnum $ fromIntegral $ getByte i (n-1)):(getBytes i (n-1))
+getBytes :: (Bits a, Integral a) => a -> Int -> LBS.ByteString
+getBytes i 0 = LBS.empty
+getBytes i n = (toEnum $ fromIntegral $ getByte i (n-1)) `LBS.cons` (getBytes i (n-1))
 
 floatBits :: Double -> Word64
 floatBits (D# d#) = W64# (unsafeCoerce# d#)

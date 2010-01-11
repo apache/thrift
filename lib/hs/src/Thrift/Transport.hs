@@ -28,23 +28,25 @@ import Control.Exception ( Exception, throw )
 
 import Data.Typeable ( Typeable )
 
+import qualified Data.ByteString.Lazy.Char8 as LBS
+import Data.Monoid
 
 class Transport a where
     tIsOpen :: a -> IO Bool
     tClose  :: a -> IO ()
-    tRead   :: a -> Int -> IO String
-    tWrite  :: a -> String ->IO ()
+    tRead   :: a -> Int -> IO LBS.ByteString
+    tWrite  :: a -> LBS.ByteString -> IO ()
     tFlush  :: a -> IO ()
-    tReadAll :: a -> Int -> IO String
+    tReadAll :: a -> Int -> IO LBS.ByteString
 
-    tReadAll a 0 = return []
+    tReadAll a 0 = return mempty
     tReadAll a len = do
         result <- tRead a len
-        let rlen = length result
+        let rlen = fromIntegral $ LBS.length result
         when (rlen == 0) (throw $ TransportExn "Cannot read. Remote side has closed." TE_UNKNOWN)
         if len <= rlen
             then return result
-            else (result ++) `fmap` (tReadAll a (len - rlen))
+            else (result `mappend`) `fmap` (tReadAll a (len - rlen))
 
 data TransportExn = TransportExn String TransportExnType
   deriving ( Show, Typeable )
