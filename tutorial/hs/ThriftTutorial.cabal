@@ -1,0 +1,29 @@
+Name:           ThriftTutorial
+Version:        0.1.0
+Cabal-Version:  >= 1.2
+License:        Apache2
+Category:       Foreign
+Build-Type:     Simple
+Synopsis:       Thrift Tutorial library package
+
+Executable HaskellServer
+  Main-is: HaskellServer.hs
+  Hs-Source-Dirs:
+    ., ../gen-hs/
+  Build-Depends:
+    base >=4, network, ghc-prim, containers, Thrift
+  ghc-options:
+    -fglasgow-exts
+  Extensions:
+    DeriveDataTypeable
+
+Executable HaskellClient
+  Main-is: HaskellClient.hs
+  Hs-Source-Dirs:
+    ., ../gen-hs/
+  Build-Depends:
+    base >=4, network, ghc-prim, containers, Thrift
+  ghc-options:
+    -fglasgow-exts
+  Extensions:
+    DeriveDataTypeable
