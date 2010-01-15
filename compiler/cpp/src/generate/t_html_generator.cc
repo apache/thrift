@@ -534,11 +534,13 @@ void t_html_generator::generate_struct(t_struct* tstruct) {
   vector<t_field*> members = tstruct->get_members();
   vector<t_field*>::iterator mem_iter = members.begin();
   f_out_ << "<table>";
-  f_out_ << "<tr><th>Field</th><th>Type</th><th>Required</th><th>Default value</th></tr>"
+  f_out_ << "<tr><th>Field</th><th>Type</th><th>Description</th><th>Required</th><th>Default value</th></tr>"
 	 << endl;
   for ( ; mem_iter != members.end(); mem_iter++) {
     f_out_ << "<tr><td>" << (*mem_iter)->get_name() << "</td><td>";
     print_type((*mem_iter)->get_type());
+    f_out_ << "</td><td>";
+    f_out_ << (*mem_iter)->get_doc();
     f_out_ << "</td><td>";
     if ((*mem_iter)->get_req() != t_field::T_OPTIONAL) {
       f_out_ << "yes";
