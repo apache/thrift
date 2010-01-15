@@ -160,8 +160,7 @@ module Thrift
 
       def read_connection(fd)
         @buffers[fd] << fd.read(DEFAULT_BUFFER)
-        frame = slice_frame!(@buffers[fd])
-        if frame
+        while(frame = slice_frame!(@buffers[fd]))
           @logger.debug "#{self} is processing a frame"
           @worker_queue.push [:frame, fd, frame]
         end
