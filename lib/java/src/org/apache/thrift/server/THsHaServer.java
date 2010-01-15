@@ -112,8 +112,11 @@ public class THsHaServer extends TNonblockingServer {
                       TNonblockingServerTransport serverTransport,
                       TProtocolFactory protocolFactory,
                       Options options) {
-    this(processor, serverTransport, new TFramedTransport.Factory(),
-      protocolFactory);
+    this(new TProcessorFactory(processor), serverTransport, 
+      new TFramedTransport.Factory(),
+      new TFramedTransport.Factory(),
+      protocolFactory, protocolFactory, 
+      options);
   }
 
   /**
