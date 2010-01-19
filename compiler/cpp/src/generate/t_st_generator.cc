@@ -124,7 +124,6 @@ class t_st_generator : public t_oop_generator {
   std::string client_class_name();
   std::string prefix(std::string name);
   std::string declare_field(t_field* tfield);
-  std::string sanitize(std::string s);
   std::string type_name(t_type* ttype);
 
   std::string function_signature(t_function* tfunction);
@@ -495,7 +494,7 @@ void t_st_generator::generate_st_struct(std::ofstream& out, t_struct* tstruct, b
   if (members.size() > 0) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if (m_iter != members.begin()) out << " ";
-      out << sanitize((*m_iter)->get_name());
+      out << camelcase((*m_iter)->get_name());
     }
   }
 
@@ -536,7 +535,7 @@ void t_st_generator::generate_accessors(std::ofstream& out, t_struct* tstruct) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       st_accessors(out,
                    capitalize(type_name(tstruct)),
-                   sanitize((*m_iter)->get_name()),
+                   camelcase((*m_iter)->get_name()),
                    a_type((*m_iter)->get_type()));
     }
     out << endl;
@@ -706,8 +705,8 @@ string t_st_generator::struct_writer(t_struct *tstruct, string sname) {
 
   for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
     bool optional = (*fld_iter)->get_req() == t_field::T_OPTIONAL;
-    string fname = (*fld_iter)->get_name();
-    string accessor = sname + " " + sanitize(fname);
+    string fname = camelcase((*fld_iter)->get_name());
+    string accessor = sname + " " + camelcase(fname);
 
     if (optional) {
       out << indent() << accessor << " ifNotNil: [" << endl;
@@ -765,7 +764,7 @@ string t_st_generator::struct_reader(t_struct *tstruct, string clsName = "") {
     indent_up();
 
     out << indent() << found << " := true." << endl <<
-      indent() << val << " " << sanitize((*fld_iter)->get_name()) << ": " <<
+      indent() << val << " " << camelcase((*fld_iter)->get_name()) << ": " <<
       read_val((*fld_iter)->get_type());
     indent_down();
 
@@ -854,10 +853,10 @@ void t_st_generator::generate_send_method(t_function* function) {
   indent_down();
 
   f_ << indent() << "oprot writeStructBegin: " <<
-    "(TStruct new name: '" + capitalize(function->get_name()) + "_args')." << endl;
+    "(TStruct new name: '" + capitalize(camelcase(funname)) + "_args')." << endl;
 
   for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-    string fname = (*fld_iter)->get_name();
+    string fname = camelcase((*fld_iter)->get_name());
 
     f_ << indent() << "oprot writeFieldBegin: (TField new name: '" << fname <<
       "'; type: " << type_to_enum((*fld_iter)->get_type()) <<
@@ -875,7 +874,7 @@ void t_st_generator::generate_send_method(t_function* function) {
 
 // We only support receiving TResult structures (so this won't work on the server side)
 void t_st_generator::generate_recv_method(t_function* function) {
-  string funname = function->get_name();
+  string funname = camelcase(function->get_name());
   string signature = function_signature(function);
 
   t_struct result(program_, "TResult");
@@ -911,7 +910,7 @@ string t_st_generator::function_types_comment(t_function* fn) {
   out << "\"";
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    out << (*f_iter)->get_name() << ": " << type_name((*f_iter)->get_type());
+    out << camelcase((*f_iter)->get_name()) << ": " << type_name((*f_iter)->get_type());
     if ((f_iter + 1) != fields.end()) {
       out << ", ";
     }
@@ -945,7 +944,7 @@ void t_st_generator::generate_service_client(t_service* tservice) {
     "\tcategory: '" << generated_category() << "'!\n\n";
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    string funname = (*f_iter)->get_name();
+    string funname = camelcase((*f_iter)->get_name());
     string signature = function_signature(*f_iter);
 
     st_method(f_, client_class_name(), signature);
@@ -965,26 +964,6 @@ void t_st_generator::generate_service_client(t_service* tservice) {
   }
 }
 
-string t_st_generator::sanitize(string s) {
-  std::ostringstream out;
-  bool underscore = false;
-
-  for (unsigned int i = 0; i < s.size(); i++) {
-    if (s[i] == '_') {
-      underscore = true;
-      continue;
-    }
-    if (underscore) {
-      out << (char) toupper(s[i]);
-      underscore = false;
-      continue;
-    }
-    out << s[i];
-  }
-
-  return out.str();
-}
-
 /**
  * Renders a function signature of the form 'type name(args)'
  *
@@ -992,7 +971,7 @@ string t_st_generator::sanitize(string s) {
  * @return String of rendered function definition
  */
 string t_st_generator::function_signature(t_function* tfunction) {
-  return tfunction->get_name() + capitalize(argument_list(tfunction->get_arglist()));
+  return camelcase(tfunction->get_name()) + capitalize(argument_list(tfunction->get_arglist()));
 }
 
 /**
@@ -1010,7 +989,8 @@ string t_st_generator::argument_list(t_struct* tstruct) {
     } else {
       result += " ";
     }
-    result += (*f_iter)->get_name() + ": " + (*f_iter)->get_name();
+    string name = camelcase((*f_iter)->get_name());
+    result += name + ": " + name;
   }
   return result;
 }

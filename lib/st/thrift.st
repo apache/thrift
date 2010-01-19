@@ -294,7 +294,6 @@ readSetBegin
 
 !TBinaryProtocol methodsFor: 'reading' stamp: 'pc 02/07/2009 19:00'!
 readString
-readString
 	| sz |
 	sz := self readI32.
 	^ sz > 0 ifTrue: [(transport read: sz) asString] ifFalse: ['']! !

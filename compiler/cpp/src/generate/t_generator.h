@@ -178,6 +178,14 @@ class t_generator {
     }
     return in;
   }
+  /**
+   * Transforms a camel case string to an equivalent one separated by underscores
+   * e.g. aMultiWord -> a_multi_word
+   *      someName   -> some_name
+   *      CamelCase  -> camel_case
+   *      name       -> name
+   *      Name       -> name
+   */
   std::string underscore(std::string in) {
     in[0] = tolower(in[0]);
     for (size_t i = 1; i < in.size(); ++i) {
@@ -187,6 +195,31 @@ class t_generator {
       }
     }
     return in;
+  }
+  /**
+    * Transforms a string with words separated by underscores to a camel case equivalent
+    * e.g. a_multi_word -> aMultiWord
+    *      some_name    ->  someName
+    *      name         ->  name
+    */
+  std::string camelcase(std::string in) {
+    std::ostringstream out;
+    bool underscore = false;
+
+    for (size_t i = 0; i < in.size(); i++) {
+      if (in[i] == '_') {
+        underscore = true;
+        continue;
+      }
+      if (underscore) {
+        out << (char) toupper(in[i]);
+        underscore = false;
+        continue;
+      }
+      out << in[i];
+    }
+
+    return out.str();
   }
 
   /**
