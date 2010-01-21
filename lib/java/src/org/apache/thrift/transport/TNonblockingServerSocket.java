@@ -81,7 +81,15 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
    * Creates just a port listening server socket
    */
   public TNonblockingServerSocket(int port, int clientTimeout) throws TTransportException {
+    this(new InetSocketAddress(port), clientTimeout);
     port_ = port;
+  }  
+
+  public TNonblockingServerSocket(InetSocketAddress bindAddr) throws TTransportException {
+    this(bindAddr, 0);
+  }
+
+  public TNonblockingServerSocket(InetSocketAddress bindAddr, int clientTimeout) throws TTransportException {
     clientTimeout_ = clientTimeout;
     try {
       serverSocketChannel = ServerSocketChannel.open();
@@ -92,10 +100,10 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
       // Prevent 2MSL delay problem on server restarts
       serverSocket_.setReuseAddress(true);
       // Bind to listening port
-      serverSocket_.bind(new InetSocketAddress(port_));
+      serverSocket_.bind(bindAddr);
     } catch (IOException ioe) {
       serverSocket_ = null;
-      throw new TTransportException("Could not create ServerSocket on port " + port + ".");
+      throw new TTransportException("Could not create ServerSocket on address " + bindAddr.toString() + ".");
     }
   }
 
