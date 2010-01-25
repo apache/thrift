@@ -28,7 +28,7 @@ namespace apache { namespace thrift { namespace transport {
 /**
  * Class to encapsulate all the possible types of transport errors that may
  * occur in various transport systems. This provides a sort of generic
- * wrapper around the shitty UNIX E_ error codes that lets a common code
+ * wrapper around the vague UNIX E_ error codes that lets a common code
  * base of error handling to be used for various types of transports, i.e.
  * pipes etc.
  *

@@ -278,7 +278,7 @@ class TSocketPool extends TSocket {
       }
     }
 
-    // Holy shit we failed them all. The system is totally ill!
+    // Oh no; we failed them all. The system is totally ill!
     $error = 'TSocketPool: All hosts in pool are down. ';
     $hosts = array();
     foreach ($this->servers_ as $server) {

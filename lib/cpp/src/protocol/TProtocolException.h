@@ -27,7 +27,7 @@ namespace apache { namespace thrift { namespace protocol {
 /**
  * Class to encapsulate all the possible types of protocol errors that may
  * occur in various protocol systems. This provides a sort of generic
- * wrapper around the shitty UNIX E_ error codes that lets a common code
+ * wrapper around the vague UNIX E_ error codes that lets a common code
  * base of error handling to be used for various types of protocols, i.e.
  * pipes etc.
  *

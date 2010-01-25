@@ -35,7 +35,7 @@ namespace apache { namespace thrift { namespace concurrency {
  * and other common platform-dependent concurrency operations.
  * It should not be included in API headers for other concurrency library
  * headers, since it will, by definition, pull in all sorts of horrid
- * platform dependent crap.  Rather it should be inluded directly in
+ * platform dependent stuff.  Rather it should be inluded directly in
  * concurrency library implementation source.
  *
  * @version $Id:$

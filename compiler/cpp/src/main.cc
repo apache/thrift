@@ -652,7 +652,7 @@ void usage() {
  * wouldn't need runtime type information and all that jazz. But then we
  * decided to add constants, and all of a sudden that means runtime type
  * validation and inference, except the "runtime" is the code generator
- * runtime. Shit. I've been had.
+ * runtime.
  */
 void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
   if (type->is_void()) {

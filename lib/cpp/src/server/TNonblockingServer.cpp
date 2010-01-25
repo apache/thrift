@@ -213,7 +213,7 @@ void TConnection::workSocket() {
     return;
 
   default:
-    GlobalOutput.printf("Shit Got Ill. Socket State %d", socketState_);
+    GlobalOutput.printf("Unexpected Socket State %d", socketState_);
     assert(0);
   }
 }
@@ -426,7 +426,7 @@ void TConnection::transition() {
     return;
 
   default:
-    GlobalOutput.printf("Totally Fucked. Application State %d", appState_);
+    GlobalOutput.printf("Unexpected Application State %d", appState_);
     assert(0);
   }
 }
@@ -557,7 +557,7 @@ void TNonblockingServer::returnConnection(TConnection* connection) {
  * connections on fd and assign TConnection objects to handle those requests.
  */
 void TNonblockingServer::handleEvent(int fd, short which) {
-  // Make sure that libevent didn't fuck up the socket handles
+  // Make sure that libevent didn't mess up the socket handles
   assert(fd == serverSocket_);
 
   // Server socket accepted a new connection
