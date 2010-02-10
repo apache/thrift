@@ -48,6 +48,7 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
   int fd = -1;
   CFSocketRef socket = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL);
   if (socket) {
+    CFSocketSetSocketFlags(socket, CFSocketGetSocketFlags(socket) & ~kCFSocketCloseOnInvalidate);
     fd = CFSocketGetNative(socket);
     int yes = 1;
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
@@ -60,6 +61,8 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     NSData *address = [NSData dataWithBytes:&addr length:sizeof(addr)];
     if (CFSocketSetAddress(socket, (CFDataRef)address) != kCFSocketSuccess) {
+      CFSocketInvalidate(socket);
+      CFRelease(socket);
       NSLog(@"*** Could not bind to address");
       return nil;
     }
@@ -71,6 +74,10 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
   // wrap it in a file handle so we can get messages from it
   mSocketFileHandle = [[NSFileHandle alloc] initWithFileDescriptor: fd
                                                     closeOnDealloc: YES];
+  
+  // throw away our socket
+  CFSocketInvalidate(socket);
+  CFRelease(socket);
   
     // register for notifications of accepted incoming connections
   [[NSNotificationCenter defaultCenter] addObserver: self
