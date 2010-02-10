@@ -129,7 +129,7 @@
     <copy file="${thrift.root}/NOTICE" tofile="${build}/META-INF/NOTICE.txt"/>
     <jar jarfile="libthrift.jar">
       <fileset dir="${build}">
-        <include name="**/*.class" />
+        <include name="org/apache/thrift/**/*.class" />
         <include name="META-INF/*.txt" />
       </fileset>
       <fileset dir="src">
