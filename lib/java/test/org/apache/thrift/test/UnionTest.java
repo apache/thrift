@@ -95,6 +95,10 @@ public class UnionTest {
 
     union = TestUnion.enum_field(SomeEnum.ONE);
     union.hashCode();
+
+    union = new TestUnion();
+    // should not throw an exception
+    union.toString();
   }
 
 

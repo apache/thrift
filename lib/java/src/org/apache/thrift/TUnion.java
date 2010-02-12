@@ -195,14 +195,20 @@ public abstract class TUnion<F extends TFieldIdEnum> implements TBase<F> {
 
   @Override
   public String toString() {
-    Object v = getFieldValue();
-    String vStr = null;
-    if (v instanceof byte[]) {
-      vStr = bytesToStr((byte[])v);
-    } else {
-      vStr = v.toString();
+    String result = "<" + this.getClass().getSimpleName() + " ";
+
+    if (getSetField() != null) {
+      Object v = getFieldValue();
+      String vStr = null;
+      if (v instanceof byte[]) {
+        vStr = bytesToStr((byte[])v);
+      } else {
+        vStr = v.toString();
+      }
+      result += getFieldDesc(getSetField()).name + ":" + vStr;
     }
-    return "<" + this.getClass().getSimpleName() + " " + getFieldDesc(getSetField()).name + ":" + vStr + ">";
+
+    return result + ">";
   }
 
   private static String bytesToStr(byte[] bytes) {
