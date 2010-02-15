@@ -1,0 +1,115 @@
+<html>
+<head>
+  <title>Thrift Javascript Bindings - Example</title>
+
+  <script src="/thrift.js"                 type="text/javascript"></script>
+  <script src="gen-js/ThriftTest_types.js" type="text/javascript"></script>
+  <script src="gen-js/ThriftTest.js"       type="text/javascript"></script>
+
+  <!-- for async example -->
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+
+</head>
+<body id="body">
+
+<script language="javascript">
+
+  //create client
+  var transport = new Thrift.Transport("/service")
+  var protocol  = new Thrift.Protocol(transport)
+  var client    = new ThriftTest.ThriftTestClient(protocol)
+
+  //create insanity obj
+  var insanity  = new ThriftTest.Insanity()
+  insanity.userMap[ThriftTest.Numberz.ONE] = 1
+  insanity.userMap[ThriftTest.Numberz.TWO] = 2
+
+  var xtr = new ThriftTest.Xtruct()
+  xtr.string_thing = 'worked'
+  insanity.xtructs.push(xtr)
+
+  var xtr2= new ThriftTest.Xtruct2()
+  xtr2.struct_thing = xtr
+
+  var list = [1,2,3]
+
+  //run tests synchronously
+
+  document.write("<h2><u>Thrift Javascript Bindings</u></h2>")
+  document.write("<h2>Synchronous Example</h2>")
+  document.write("client.testString() => "+(client.testString("works")     == "works")+"<br/>")
+  document.write("client.testString(utf-8) => "+(client.testString("a‡Ž’—œe")   == "a‡Ž’—œe")+"<br/>")
+  document.write("client.testDouble() => "+(client.testDouble(3.14)        == 3.14)+"<br/>")
+  document.write("client.testByte()   => "+(client.testByte(0x01)          == 0x01)+"<br/>")
+  document.write("client.testI32()    => "+(client.testI32(Math.pow(2,30)) == Math.pow(2,30))+"<br/>")
+  document.write("client.testI64()    => "+(client.testI64(Math.pow(2,60)) == Math.pow(2,60))+"<br/>")
+  document.write("client.testStruct() => "+(client.testStruct(xtr).string_thing == "worked")+"<br/>")
+  document.write("client.testNest()   => "+(client.testNest(xtr2).struct_thing.string_thing == "worked")+"<br/>")
+  document.write("client.testMap()    => "+(client.testMap(insanity.userMap)[ThriftTest.Numberz.ONE] == 1)+"<br/>")
+  document.write("client.testList()   => "+(client.testList(list).length == 3)+"<br/>")
+  document.write("client.testSet()    => "+(client.testSet(list).length == 3)+"<br/>")
+  document.write("client.testEnum()   => "+(client.testEnum(ThriftTest.Numberz.ONE) == ThriftTest.Numberz.ONE)+"<br/>")
+
+  document.write("client.testException() => ")
+  try{
+    client.testException("go")
+    document.write("false<br/>")
+  }catch(e){
+    document.write("true<br/>")
+  }
+
+  document.write("client.testInsanity() => ")
+  var res = client.testInsanity(insanity)
+
+  document.write((res["1"]["1"].xtructs[0].string_thing == "worked")+"<br/>")
+
+  //////////////////////////////////
+  //Run same tests asynchronously
+
+  var transport = new Thrift.Transport()
+  var protocol  = new Thrift.Protocol(transport)
+  var client    = new ThriftTest.ThriftTestClient(protocol)
+
+  document.write("<h2>Asynchronous Example</h2>")
+  jQuery.ajax({
+     url: "/service",
+     data: client.send_testI32(Math.pow(2,30)),
+     type: "POST",
+     cache: false,
+     success: function(res){
+            var _transport = new Thrift.Transport()
+            var _protocol  = new Thrift.Protocol(_transport)
+            var _client    = new ThriftTest.ThriftTestClient(_protocol)
+
+            _transport.setRecvBuffer( res )
+
+            var v =  _client.recv_testI32()
+            $("#body").append("client.testI32()    => "+(v == Math.pow(2,30))+"<br/>")
+
+     }
+  })
+
+  jQuery.ajax({
+     url: "/service",
+     data: client.send_testI64(Math.pow(2,60)),
+     type: "POST",
+     cache: false,
+     success: function(res){
+            var _transport = new Thrift.Transport()
+            var _protocol  = new Thrift.Protocol(_transport)
+            var _client    = new ThriftTest.ThriftTestClient(_protocol)
+
+            _transport.setRecvBuffer( res )
+
+            var v =  _client.recv_testI64()
+            $("#body").append("client.testI64()    => "+(v == Math.pow(2,60))+"<br/>")
+
+     }
+  })
+
+
+
+</script>
+
+</body>
+</html>

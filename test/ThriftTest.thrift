@@ -26,6 +26,7 @@ namespace cpp thrift.test
 namespace rb Thrift.Test
 namespace perl ThriftTest
 namespace csharp Thrift.Test
+namespace js ThriftTest
 
 /**
  * Docstring!
