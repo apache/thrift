@@ -42,6 +42,38 @@ struct Hello {
   1: string greeting = "hello world"
 }
 
+union My_union {
+  1: bool im_true,
+  2: byte a_bite,
+  3: i16 integer16,
+  4: i32 integer32,
+  5: i64 integer64,
+  6: double double_precision,
+  7: string some_characters,
+  8: i32 other_i32
+}
+
+struct Struct_with_union {
+  1: My_union fun_union
+  2: i32 integer32
+  3: string some_characters
+}
+
+enum SomeEnum {
+  ONE
+  TWO
+}
+
+union TestUnion {
+  /**
+   * A doc string
+   */
+  1: string string_field;
+  2: i32 i32_field;
+  3: i32 other_i32_field;
+  4: SomeEnum enum_field;
+}
+
 struct Foo {
   1: i32 simple = 53,
   2: string words = "words",

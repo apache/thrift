@@ -28,6 +28,8 @@ require 'thrift/types'
 require 'thrift/processor'
 require 'thrift/client'
 require 'thrift/struct'
+require 'thrift/union'
+require 'thrift/struct_union'
 
 # serializer
 require 'thrift/serializer/serializer'

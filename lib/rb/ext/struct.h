@@ -17,6 +17,7 @@
  * under the License.
  */
 
+
 #include <stdbool.h>
 #include <ruby.h>
 
@@ -41,7 +42,7 @@ typedef struct native_proto_method_table {
   VALUE (*write_field_stop)(VALUE);
   VALUE (*write_message_begin)(VALUE, VALUE, VALUE, VALUE);
   VALUE (*write_message_end)(VALUE);
-  
+
   VALUE (*read_message_begin)(VALUE);
   VALUE (*read_message_end)(VALUE);
   VALUE (*read_field_begin)(VALUE);
@@ -61,7 +62,7 @@ typedef struct native_proto_method_table {
   VALUE (*read_string)(VALUE);
   VALUE (*read_struct_begin)(VALUE);
   VALUE (*read_struct_end)(VALUE);
-  
 } native_proto_method_table;
 
 void Init_struct();
+void Init_union();

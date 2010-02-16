@@ -20,22 +20,27 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require File.dirname(__FILE__) + '/binary_protocol_spec_shared'
 
-class ThriftBinaryProtocolAcceleratedSpec < Spec::ExampleGroup
-  include Thrift
+if defined? Thrift::BinaryProtocolAccelerated
 
-  describe Thrift::BinaryProtocolAccelerated do
-    # since BinaryProtocolAccelerated should be directly equivalent to 
-    # BinaryProtocol, we don't need any custom specs!
-    it_should_behave_like 'a binary protocol'
+  class ThriftBinaryProtocolAcceleratedSpec < Spec::ExampleGroup
+    include Thrift
 
-    def protocol_class
-      BinaryProtocolAccelerated
+    describe Thrift::BinaryProtocolAccelerated do
+      # since BinaryProtocolAccelerated should be directly equivalent to 
+      # BinaryProtocol, we don't need any custom specs!
+      it_should_behave_like 'a binary protocol'
+
+      def protocol_class
+        BinaryProtocolAccelerated
+      end
+    end
+
+    describe BinaryProtocolAcceleratedFactory do
+      it "should create a BinaryProtocolAccelerated" do
+        BinaryProtocolAcceleratedFactory.new.get_protocol(mock("MockTransport")).should be_instance_of(BinaryProtocolAccelerated)
+      end
     end
   end
-
-  describe BinaryProtocolAcceleratedFactory do
-    it "should create a BinaryProtocolAccelerated" do
-      BinaryProtocolAcceleratedFactory.new.get_protocol(mock("MockTransport")).should be_instance_of(BinaryProtocolAccelerated)
-    end
-  end
+else
+  puts "skipping BinaryProtocolAccelerated spec because it is not defined."
 end

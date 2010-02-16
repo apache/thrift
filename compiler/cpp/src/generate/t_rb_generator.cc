@@ -68,6 +68,7 @@ class t_rb_generator : public t_oop_generator {
   void generate_enum        (t_enum*     tenum);
   void generate_const       (t_const*    tconst);
   void generate_struct      (t_struct*   tstruct);
+  void generate_union        (t_struct*   tunion);
   void generate_xception    (t_struct*   txception);
   void generate_service     (t_service*  tservice);
 
@@ -79,11 +80,15 @@ class t_rb_generator : public t_oop_generator {
 
   void generate_rb_struct(std::ofstream& out, t_struct* tstruct, bool is_exception);
   void generate_rb_struct_required_validator(std::ofstream& out, t_struct* tstruct);
+  void generate_rb_union(std::ofstream& out, t_struct* tstruct, bool is_exception);
+  void generate_rb_union_validator(std::ofstream& out, t_struct* tstruct);
   void generate_rb_function_helpers(t_function* tfunction);
   void generate_rb_simple_constructor(std::ofstream& out, t_struct* tstruct);
   void generate_rb_simple_exception_constructor(std::ofstream& out, t_struct* tstruct);
   void generate_field_constants (std::ofstream& out, t_struct* tstruct);
-  void generate_accessors   (std::ofstream& out, t_struct* tstruct);
+  void generate_field_constructors (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_accessors   (std::ofstream& out, t_struct* tstruct);
+  void generate_union_accessors   (std::ofstream& out, t_struct* tstruct);
   void generate_field_defns (std::ofstream& out, t_struct* tstruct);
   void generate_field_data  (std::ofstream& out, t_type* field_type, const std::string& field_name, t_const_value* field_value, bool optional);
 
@@ -461,7 +466,11 @@ string t_rb_generator::render_const_value(t_type* type, t_const_value* value) {
  * Generates a ruby struct
  */
 void t_rb_generator::generate_struct(t_struct* tstruct) {
-  generate_rb_struct(f_types_, tstruct, false);
+  if (tstruct->is_union()) {
+    generate_rb_union(f_types_, tstruct, false);
+  } else {
+    generate_rb_struct(f_types_, tstruct, false);
+  }
 }
 
 /**
@@ -486,19 +495,66 @@ void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, b
   out << endl;
 
   indent_up();
-  indent(out) << "include ::Thrift::Struct" << endl;
+  indent(out) << "include ::Thrift::Struct, ::Thrift::Struct_Union" << endl;
 
   if (is_exception) {
     generate_rb_simple_exception_constructor(out, tstruct);
   }
 
   generate_field_constants(out, tstruct);
-  generate_accessors(out, tstruct);
+  generate_struct_accessors(out, tstruct);
   generate_field_defns(out, tstruct);
   generate_rb_struct_required_validator(out, tstruct);
   
   indent_down();
   indent(out) << "end" << endl << endl;
+}
+
+
+/**
+ * Generates a ruby union
+ */
+void t_rb_generator::generate_rb_union(std::ofstream& out, t_struct* tstruct, bool is_exception = false) {
+  generate_rdoc(out, tstruct);
+  indent(out) << "class " << type_name(tstruct) << " < ::Thrift::Union" << endl;
+
+  indent_up();
+  indent(out) << "include ::Thrift::Struct_Union" << endl;
+  
+  generate_field_constructors(out, tstruct);
+  
+  generate_field_constants(out, tstruct);
+  generate_union_accessors(out, tstruct);
+  generate_field_defns(out, tstruct);
+  generate_rb_union_validator(out, tstruct);
+
+  indent_down();
+  indent(out) << "end" << endl << endl;
+}
+
+void t_rb_generator::generate_field_constructors(std::ofstream& out, t_struct* tstruct) {
+
+  indent(out) << "class << self" << endl;
+  indent_up();
+
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if (f_iter != fields.begin()) {
+      out << endl;
+    }
+    std::string field_name = (*f_iter)->get_name();
+
+    indent(out) << "def " << field_name << "(val)" << endl;
+    indent(out) << "  " << tstruct->get_name() << ".new(:" << field_name << ", val)" << endl;
+    indent(out) << "end" << endl;
+  }
+  
+  indent_down();
+  indent(out) << "end" << endl;
+
+  out << endl;
 }
 
 void t_rb_generator::generate_rb_simple_exception_constructor(std::ofstream& out, t_struct* tstruct) {
@@ -537,12 +593,25 @@ void t_rb_generator::generate_field_constants(std::ofstream& out, t_struct* tstr
   out << endl;
 }
 
-void t_rb_generator::generate_accessors(std::ofstream& out, t_struct* tstruct) {
+void t_rb_generator::generate_struct_accessors(std::ofstream& out, t_struct* tstruct) {
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
   if (members.size() > 0) {
     indent(out) << "::Thrift::Struct.field_accessor self";
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      out << ", :" << (*m_iter)->get_name();
+    }
+    out << endl;
+  }
+}
+
+void t_rb_generator::generate_union_accessors(std::ofstream& out, t_struct* tstruct) {
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  if (members.size() > 0) {
+    indent(out) << "field_accessor self";
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       out << ", :" << (*m_iter)->get_name();
     }
@@ -1080,7 +1149,7 @@ void t_rb_generator::generate_rb_struct_required_validator(std::ofstream& out,
                                                            t_struct* tstruct) {
   indent(out) << "def validate" << endl;
   indent_up();
-  
+
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
@@ -1096,11 +1165,11 @@ void t_rb_generator::generate_rb_struct_required_validator(std::ofstream& out,
       out << endl;
     }
   }
-  
+
   // if field is an enum, check that its value is valid
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = (*f_iter);
-        
+
     if (field->get_type()->is_enum()){      
       indent(out) << "unless @" << field->get_name() << ".nil? || " << full_type_name(field->get_type()) << "::VALID_VALUES.include?(@" << field->get_name() << ")" << endl;
       indent_up();
@@ -1108,11 +1177,35 @@ void t_rb_generator::generate_rb_struct_required_validator(std::ofstream& out,
       indent_down();
       indent(out) << "end" << endl;
     }
-  }  
-  
+  }
+
   indent_down();
   indent(out) << "end" << endl << endl;
-  
+}
+
+void t_rb_generator::generate_rb_union_validator(std::ofstream& out, 
+                                                 t_struct* tstruct) {
+  indent(out) << "def validate" << endl;
+  indent_up();
+
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  indent(out) << "raise(StandardError, 'Union fields are not set.') if get_set_field.nil? || get_value.nil?" << endl;
+
+  // if field is an enum, check that its value is valid
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    const t_field* field = (*f_iter);
+
+    if (field->get_type()->is_enum()){      
+      indent(out) << "if get_set_field == :" << field->get_name() << endl;
+      indent(out) << "  raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Invalid value of field " << field->get_name() << "!') unless " << full_type_name(field->get_type()) << "::VALID_VALUES.include?(get_value)" << endl;  
+      indent(out) << "end" << endl;
+    }
+  }
+
+  indent_down();
+  indent(out) << "end" << endl << endl;
 }
 
 THRIFT_REGISTER_GENERATOR(rb, "Ruby", "");

@@ -57,7 +57,7 @@ module Thrift
               when Types::STRING
                 String
               when Types::STRUCT
-                Struct
+                [Struct, Union]
               when Types::MAP
                 Hash
               when Types::SET

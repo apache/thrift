@@ -29,7 +29,11 @@ See MemoryBuffer and BufferedTransport for examples.
 module Thrift
   class BinaryProtocolAcceleratedFactory < BaseProtocolFactory
     def get_protocol(trans)
-      BinaryProtocolAccelerated.new(trans)
+      if (defined? BinaryProtocolAccelerated)
+        BinaryProtocolAccelerated.new(trans)
+      else
+        BinaryProtocol.new(trans)
+      end
     end
   end
 end

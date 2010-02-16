@@ -111,7 +111,7 @@ void Init_thrift_native() {
   thrift_types_module = rb_const_get(thrift_module, rb_intern("Types"));
   rb_cSet = rb_const_get(rb_cObject, rb_intern("Set"));
   protocol_exception_class = rb_const_get(thrift_module, rb_intern("ProtocolException"));
-  
+
   // Init ttype constants
   TTYPE_BOOL = FIX2INT(rb_const_get(thrift_types_module, rb_intern("BOOL")));
   TTYPE_BYTE = FIX2INT(rb_const_get(thrift_types_module, rb_intern("BYTE")));
@@ -171,13 +171,13 @@ void Init_thrift_native() {
   write_method_id = rb_intern("write");
   read_all_method_id = rb_intern("read_all");
   native_qmark_method_id = rb_intern("native?");
-  
+
   // constant ids
   fields_const_id = rb_intern("FIELDS");
   transport_ivar_id = rb_intern("@trans");
   strict_read_ivar_id = rb_intern("@strict_read");
   strict_write_ivar_id = rb_intern("@strict_write");  
-  
+
   // cached symbols
   type_sym = ID2SYM(rb_intern("type"));
   name_sym = ID2SYM(rb_intern("name"));

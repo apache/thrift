@@ -349,9 +349,9 @@ shared_examples_for 'a binary protocol' do
 
     # first block
     firstblock.call(client)
-    
+
     processor.process(serverproto, serverproto)
-    
+
     # second block
     secondblock.call(client)
   ensure
