@@ -141,5 +141,11 @@ class ThriftUnionSpec < Spec::ExampleGroup
       swu2.read(proto)
       swu2.should == swu
     end
+    
+    it "should support old style constructor" do
+      union = My_union.new(:integer32 => 26)
+      union.get_set_field.should == :integer32
+      union.get_value.should == 26
+    end
   end
 end

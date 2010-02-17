@@ -21,6 +21,14 @@ module Thrift
   class Union
     def initialize(name=nil, value=nil)
       if name
+        if name.is_a? Hash
+          if name.size > 1
+            raise "#{self.class} cannot be instantiated with more than one field!"
+          end
+
+          name, value = name.keys.first, name.values.first
+        end
+
         if value.nil?
           raise Exception, "Union #{self.class} cannot be instantiated with setfield and nil value!"
         end
