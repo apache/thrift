@@ -28,6 +28,8 @@ lib/thrift/core_ext.rb
 lib/thrift/exceptions.rb
 lib/thrift/processor.rb
 lib/thrift/struct.rb
+lib/thrift/struct_union.rb
+lib/thrift/union.rb
 lib/thrift/thrift_native.rb
 lib/thrift/types.rb
 lib/thrift/core_ext/fixnum.rb
@@ -76,6 +78,7 @@ spec/socket_spec.rb
 spec/socket_spec_shared.rb
 spec/spec_helper.rb
 spec/struct_spec.rb
+spec/union_spec.rb
 spec/ThriftSpec.thrift
 spec/types_spec.rb
 spec/unix_socket_spec.rb
