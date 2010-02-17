@@ -1024,7 +1024,19 @@ void t_java_generator::generate_union_hashcode(ofstream& out, t_struct* tstruct)
   if (gen_hash_code_) {
     indent(out) << "@Override" << endl;
     indent(out) << "public int hashCode() {" << endl;
-    indent(out) << "  return new HashCodeBuilder().append(getSetField().getThriftFieldId()).append((getFieldValue() instanceof TEnum) ? ((TEnum)getFieldValue()).getValue() : getFieldValue()).toHashCode();" << endl;
+    indent(out) << "  HashCodeBuilder hcb = new HashCodeBuilder();" << endl;
+    indent(out) << "  hcb.append(this.getClass().getName());" << endl;
+    indent(out) << "  TFieldIdEnum setField = getSetField();" << endl;
+    indent(out) << "  if (setField != null) {" << endl;
+    indent(out) << "    hcb.append(setField.getThriftFieldId());" << endl;
+    indent(out) << "    Object value = getFieldValue();" << endl;
+    indent(out) << "    if (value instanceof TEnum) {" << endl;
+    indent(out) << "      hcb.append(((TEnum)getFieldValue()).getValue());" << endl;
+    indent(out) << "    } else {" << endl;
+    indent(out) << "      hcb.append(value);" << endl;
+    indent(out) << "    }" << endl;
+    indent(out) << "  }" << endl;
+    indent(out) << "  return hcb.toHashCode();" << endl;
     indent(out) << "}";
   } else {
     indent(out) << "/**" << endl;
