@@ -72,7 +72,7 @@ module Thrift
         name = field_info[:name]
         value = instance_variable_get("@#{name}")
         unless skip_optional_nulls && field_info[:optional] && value.nil?
-          fields << "#{name}:#{value.inspect}"
+          fields << "#{name}:#{inspect_field(value, field_info)}"
         end
       end
       "<#{self.class} #{fields.join(", ")}>"

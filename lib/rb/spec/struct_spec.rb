@@ -62,6 +62,12 @@ class ThriftStructSpec < Spec::ExampleGroup
       Foo.new(:simple => 52).should_not == Foo.new
     end
 
+    it "should print enum value names in inspect" do
+      StructWithSomeEnum.new(:some_enum => SomeEnum::ONE).inspect.should == "<SpecNamespace::StructWithSomeEnum some_enum:ONE (0)>"
+
+      StructWithEnumMap.new(:my_map => {SomeEnum::ONE => [SomeEnum::TWO]}).inspect.should == "<SpecNamespace::StructWithEnumMap my_map:{ONE (0): [TWO (1)]}>"
+    end
+
     it "should read itself off the wire" do
       struct = Foo.new
       prot = BaseProtocol.new(mock("transport"))

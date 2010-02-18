@@ -122,5 +122,37 @@ module Thrift
         :value => field[:value],
         :element => field[:element] }
     end
+
+    def inspect_field(value, field_info)
+      if enum_class = field_info[:enum_class]
+        "#{enum_class.const_get(:VALUE_MAP)[value]} (#{value})"
+      elsif value.is_a? Hash 
+        if field_info[:type] == Types::MAP
+          map_buf = []
+          value.each do |k, v|
+            map_buf << inspect_field(k, field_info[:key]) + ": " + inspect_field(v, field_info[:value])
+          end
+          "{" + map_buf.join(", ") + "}"
+        else
+          # old-style set
+          inspect_collection(value.keys, field_info)
+        end
+      elsif value.is_a? Array
+        inspect_collection(value, field_info)
+      elsif value.is_a? Set
+        inspect_collection(value, field_info)
+      else
+        value.inspect
+      end
+    end
+    
+    def inspect_collection(collection, field_info)
+      buf = []
+      collection.each do |k|
+        buf << inspect_field(k, field_info[:element])
+      end
+      "[" + buf.join(", ") + "]"      
+    end
+    
   end
 end

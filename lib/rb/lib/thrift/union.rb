@@ -42,7 +42,7 @@ module Thrift
     end
 
     def inspect
-      "<#{self.class} #{@setfield}: #{@value}>"
+      "<#{self.class} #{@setfield}: #{inspect_field(@value, struct_fields[name_to_id(@setfield.to_s)])}>"
     end
 
     def read(iprot)

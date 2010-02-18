@@ -147,5 +147,11 @@ class ThriftUnionSpec < Spec::ExampleGroup
       union.get_set_field.should == :integer32
       union.get_value.should == 26
     end
+    
+    it "should print enum value name when inspected" do
+      My_union.new(:some_enum => SomeEnum::ONE).inspect.should == "<SpecNamespace::My_union some_enum: ONE (0)>"
+      
+      My_union.new(:my_map => {SomeEnum::ONE => [SomeEnum::TWO]}).inspect.should == "<SpecNamespace::My_union my_map: {ONE (0): [TWO (1)]}>" 
+    end
   end
 end
