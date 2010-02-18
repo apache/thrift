@@ -153,5 +153,12 @@ class ThriftUnionSpec < Spec::ExampleGroup
       
       My_union.new(:my_map => {SomeEnum::ONE => [SomeEnum::TWO]}).inspect.should == "<SpecNamespace::My_union my_map: {ONE (0): [TWO (1)]}>" 
     end
+    
+    it "should offer field? methods" do
+      My_union.new.some_enum?.should be_false
+      My_union.new(:some_enum => SomeEnum::ONE).some_enum?.should be_true
+      My_union.new(:im_true => false).im_true?.should be_true
+      My_union.new(:im_true => true).im_true?.should be_true
+    end
   end
 end

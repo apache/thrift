@@ -145,13 +145,25 @@ module Thrift
       diffs
     end
 
-    def self.field_accessor(klass, *fields)
-      fields.each do |field|
-        klass.send :attr_reader, field
-        klass.send :define_method, "#{field}=" do |value|
-          Thrift.check_type(value, klass::FIELDS.values.find { |f| f[:name].to_s == field.to_s }, field) if Thrift.type_checking
-          instance_variable_set("@#{field}", value)
-        end
+    def self.field_accessor(klass, field_info)
+      field_name_sym = field_info[:name].to_sym
+      klass.send :attr_reader, field_name_sym
+      klass.send :define_method, "#{field_info[:name]}=" do |value|
+        Thrift.check_type(value, field_info, field_info[:name]) if Thrift.type_checking
+        instance_variable_set("@#{field_name_sym}", value)
+      end
+    end
+
+    def self.generate_accessors(klass)
+      klass::FIELDS.values.each do |field_info|
+        field_accessor(klass, field_info)
+        qmark_isset_method(klass, field_info)
+      end
+    end
+
+    def self.qmark_isset_method(klass, field_info)
+      klass.send :define_method, "#{field_info[:name]}?" do
+        !self.send(field_info[:name].to_sym).nil?
       end
     end
 

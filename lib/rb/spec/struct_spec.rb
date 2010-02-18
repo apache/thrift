@@ -68,6 +68,13 @@ class ThriftStructSpec < Spec::ExampleGroup
       StructWithEnumMap.new(:my_map => {SomeEnum::ONE => [SomeEnum::TWO]}).inspect.should == "<SpecNamespace::StructWithEnumMap my_map:{ONE (0): [TWO (1)]}>"
     end
 
+    it "should offer field? methods" do
+      Foo.new.opt_string?.should be_false
+      Foo.new(:simple => 52).simple?.should be_true
+      Foo.new(:my_bool => false).my_bool?.should be_true
+      Foo.new(:my_bool => true).my_bool?.should be_true
+    end
+
     it "should read itself off the wire" do
       struct = Foo.new
       prot = BaseProtocol.new(mock("transport"))

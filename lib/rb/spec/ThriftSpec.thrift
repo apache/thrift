@@ -69,6 +69,7 @@ struct Foo {
   5: map<i32, map<string, double>> complex,
   6: set<i16> shorts = [5, 17, 239],
   7: optional string opt_string
+  8: bool my_bool
 }
 
 struct BoolStruct {

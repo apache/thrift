@@ -87,8 +87,6 @@ class t_rb_generator : public t_oop_generator {
   void generate_rb_simple_exception_constructor(std::ofstream& out, t_struct* tstruct);
   void generate_field_constants (std::ofstream& out, t_struct* tstruct);
   void generate_field_constructors (std::ofstream& out, t_struct* tstruct);
-  void generate_struct_accessors   (std::ofstream& out, t_struct* tstruct);
-  void generate_union_accessors   (std::ofstream& out, t_struct* tstruct);
   void generate_field_defns (std::ofstream& out, t_struct* tstruct);
   void generate_field_data  (std::ofstream& out, t_type* field_type, const std::string& field_name, t_const_value* field_value, bool optional);
 
@@ -502,10 +500,11 @@ void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, b
   }
 
   generate_field_constants(out, tstruct);
-  generate_struct_accessors(out, tstruct);
   generate_field_defns(out, tstruct);
   generate_rb_struct_required_validator(out, tstruct);
-  
+
+  indent(out) << "::Thrift::Struct.generate_accessors self" << endl;
+
   indent_down();
   indent(out) << "end" << endl << endl;
 }
@@ -520,13 +519,14 @@ void t_rb_generator::generate_rb_union(std::ofstream& out, t_struct* tstruct, bo
 
   indent_up();
   indent(out) << "include ::Thrift::Struct_Union" << endl;
-  
+
   generate_field_constructors(out, tstruct);
-  
+
   generate_field_constants(out, tstruct);
-  generate_union_accessors(out, tstruct);
   generate_field_defns(out, tstruct);
   generate_rb_union_validator(out, tstruct);
+
+  indent(out) << "::Thrift::Union.generate_accessors self" << endl;
 
   indent_down();
   indent(out) << "end" << endl << endl;
@@ -591,32 +591,6 @@ void t_rb_generator::generate_field_constants(std::ofstream& out, t_struct* tstr
     indent(out) << cap_field_name << " = " << (*f_iter)->get_key() << endl;
   }
   out << endl;
-}
-
-void t_rb_generator::generate_struct_accessors(std::ofstream& out, t_struct* tstruct) {
-  const vector<t_field*>& members = tstruct->get_members();
-  vector<t_field*>::const_iterator m_iter;
-
-  if (members.size() > 0) {
-    indent(out) << "::Thrift::Struct.field_accessor self";
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out << ", :" << (*m_iter)->get_name();
-    }
-    out << endl;
-  }
-}
-
-void t_rb_generator::generate_union_accessors(std::ofstream& out, t_struct* tstruct) {
-  const vector<t_field*>& members = tstruct->get_members();
-  vector<t_field*>::const_iterator m_iter;
-
-  if (members.size() > 0) {
-    indent(out) << "field_accessor self";
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out << ", :" << (*m_iter)->get_name();
-    }
-    out << endl;
-  }
 }
 
 void t_rb_generator::generate_field_defns(std::ofstream& out, t_struct* tstruct) {

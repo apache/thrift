@@ -90,21 +90,32 @@ module Thrift
       [self.class.name, @setfield, @value].hash
     end
 
-    def self.field_accessor(klass, *fields)
-      fields.each do |field|
-        klass.send :define_method, "#{field}" do
-          if field == @setfield
-            @value
-          else 
-            raise RuntimeError, "#{field} is not union's set field."
-          end
+    def self.field_accessor(klass, field_info)
+      klass.send :define_method, field_info[:name] do
+        if field_info[:name].to_sym == @setfield
+          @value
+        else 
+          raise RuntimeError, "#{field_info[:name]} is not union's set field."
         end
+      end
 
-        klass.send :define_method, "#{field}=" do |value|
-          Thrift.check_type(value, klass::FIELDS.values.find {|f| f[:name].to_s == field.to_s }, field) if Thrift.type_checking
-          @setfield = field
-          @value = value
-        end
+      klass.send :define_method, "#{field_info[:name]}=" do |value|
+        Thrift.check_type(value, field_info, field_info[:name]) if Thrift.type_checking
+        @setfield = field_info[:name].to_sym
+        @value = value
+      end
+    end
+
+    def self.qmark_isset_method(klass, field_info)
+      klass.send :define_method, "#{field_info[:name]}?" do
+        get_set_field == field_info[:name].to_sym && !get_value.nil?
+      end
+    end
+
+    def self.generate_accessors(klass)
+      klass::FIELDS.values.each do |field_info|
+        field_accessor(klass, field_info)
+        qmark_isset_method(klass, field_info)
       end
     end
 
