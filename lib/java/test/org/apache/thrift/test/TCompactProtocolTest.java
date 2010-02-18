@@ -24,7 +24,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.thrift.TBase;
+import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
+import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TField;
@@ -138,6 +140,8 @@ public class TCompactProtocolTest {
     testMessage();
     
     testServerRequest();
+    
+    testTDeserializer();
   }
   
   public static void testNakedByte() throws Exception {
@@ -367,23 +371,17 @@ public class TCompactProtocolTest {
       }
 
       public int primitiveMethod() throws TException {
-        // TODO Auto-generated method stub
         return 0;
       }
 
       public CompactProtoTestStruct structMethod() throws TException {
-        // TODO Auto-generated method stub
         return null;
       }
 
       public void voidMethod() throws TException {
-        // TODO Auto-generated method stub
-        
       }
 
       public void methodWithDefaultArgs(int something) throws TException {
-        // TODO Auto-generated method stub
-        
       }
     };
     
@@ -451,5 +449,18 @@ public class TCompactProtocolTest {
     
     public abstract void writeMethod(TProtocol proto) throws TException;
     public abstract void readMethod(TProtocol proto) throws TException;
+  }
+  
+  private static void testTDeserializer() throws TException {
+    TSerializer ser = new TSerializer(new TCompactProtocol.Factory());
+    byte[] bytes = ser.serialize(Fixtures.compactProtoTestStruct);
+    
+    TDeserializer deser = new TDeserializer(new TCompactProtocol.Factory());
+    CompactProtoTestStruct cpts = new CompactProtoTestStruct();
+    deser.deserialize(cpts, bytes);
+    
+    if (!Fixtures.compactProtoTestStruct.equals(cpts)) {
+      throw new RuntimeException(Fixtures.compactProtoTestStruct + " and " + cpts + " do not match!");
+    }
   }
 }

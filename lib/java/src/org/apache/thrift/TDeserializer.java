@@ -19,7 +19,6 @@
 
 package org.apache.thrift;
 
-import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -28,8 +27,7 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
-import org.apache.thrift.transport.TIOStreamTransport;
-import org.apache.thrift.TFieldIdEnum;
+import org.apache.thrift.transport.TMemoryInputTransport;
 
 /**
  * Generic utility for easily deserializing objects from a byte array or Java
@@ -37,7 +35,8 @@ import org.apache.thrift.TFieldIdEnum;
  *
  */
 public class TDeserializer {
-  private final TProtocolFactory protocolFactory_;
+  private final TProtocol protocol_;
+  private final TMemoryInputTransport trans_;
 
   /**
    * Create a new TDeserializer that uses the TBinaryProtocol by default.
@@ -53,7 +52,8 @@ public class TDeserializer {
    * @param protocolFactory Factory to create a protocol
    */
   public TDeserializer(TProtocolFactory protocolFactory) {
-    protocolFactory_ = protocolFactory;
+    trans_ = new TMemoryInputTransport(null);
+    protocol_ = protocolFactory.getProtocol(trans_);
   }
 
   /**
@@ -63,10 +63,8 @@ public class TDeserializer {
    * @param bytes The array to read from
    */
   public void deserialize(TBase base, byte[] bytes) throws TException {
-    base.read(
-        protocolFactory_.getProtocol(
-          new TIOStreamTransport(
-            new ByteArrayInputStream(bytes))));
+    trans_.reset(bytes);
+    base.read(protocol_);
   }
 
   /**
@@ -103,17 +101,15 @@ public class TDeserializer {
       return;
     }
 
-    TProtocol iprot = protocolFactory_.getProtocol(
-        new TIOStreamTransport(
-          new ByteArrayInputStream(bytes))); 
+    trans_.reset(bytes);
 
     // index into field ID path being currently searched for
     int curPathIndex = 0;
 
-    iprot.readStructBegin();
+    protocol_.readStructBegin();
 
     while (curPathIndex < fieldIdPath.length) {
-      TField field = iprot.readFieldBegin();
+      TField field = protocol_.readFieldBegin();
       // we can stop searching if we either see a stop or we go past the field 
       // id we're looking for (since fields should now be serialized in asc
       // order).
@@ -123,19 +119,19 @@ public class TDeserializer {
 
       if (field.id != fieldIdPath[curPathIndex].getThriftFieldId()) {
         // Not the field we're looking for. Skip field.
-        TProtocolUtil.skip(iprot, field.type);
-        iprot.readFieldEnd();
+        TProtocolUtil.skip(protocol_, field.type);
+        protocol_.readFieldEnd();
       } else {
         // This field is the next step in the path. Step into field.
         curPathIndex++;
         if (curPathIndex < fieldIdPath.length) {
-          iprot.readStructBegin();
+          protocol_.readStructBegin();
         }
       }
     }
 
     // when this line is reached, iprot will be positioned at the start of tb.
-    tb.read(iprot);
+    tb.read(protocol_);
   }
 
   /**

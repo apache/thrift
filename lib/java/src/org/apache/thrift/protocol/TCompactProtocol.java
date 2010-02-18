@@ -467,12 +467,12 @@ public final class TCompactProtocol extends TProtocol {
    */
   public TField readFieldBegin() throws TException {
     byte type = readByte();
-    
+
     // if it's a stop, then we can return immediately, as the struct is over.
-    if ((type & 0x0f) == TType.STOP) {
+    if (type == TType.STOP) {
       return TSTOP;
     }
-    
+
     short fieldId;
 
     // mask off the 4 MSB of the type header. it could contain a field id delta.
@@ -484,7 +484,7 @@ public final class TCompactProtocol extends TProtocol {
       // has a delta. add the delta to the last read field id.
       fieldId = (short)(lastFieldId_ + modifier);
     }
-    
+
     TField field = new TField("", getTType((byte)(type & 0x0f)), fieldId);
 
     // if this happens to be a boolean field, the value is encoded in the type
@@ -554,8 +554,15 @@ public final class TCompactProtocol extends TProtocol {
    * Read a single byte off the wire. Nothing interesting here.
    */
   public byte readByte() throws TException {
-    trans_.readAll(byteRawBuf, 0, 1);
-    return byteRawBuf[0];
+    byte b;
+    if (trans_.getBytesRemainingInBuffer() > 0) {
+      b = trans_.getBuffer()[trans_.getBufferPosition()];
+      trans_.consumeBuffer(1);
+    } else {
+      trans_.readAll(byteRawBuf, 0, 1);
+      b = byteRawBuf[0];
+    }
+    return b;
   }
 
   /**
@@ -592,8 +599,20 @@ public final class TCompactProtocol extends TProtocol {
    * Reads a byte[] (via readBinary), and then UTF-8 decodes it.
    */
   public String readString() throws TException {
+    int length = readVarint32();
+
+    if (length == 0) {
+      return "";
+    }
+
     try {
-      return new String(readBinary(), "UTF-8");
+      if (trans_.getBytesRemainingInBuffer() >= length) {
+        String str = new String(trans_.getBuffer(), trans_.getBufferPosition(), length, "UTF-8");
+        trans_.consumeBuffer(length);
+        return str;
+      } else {
+        return new String(readBinary(length), "UTF-8");
+      }
     } catch (UnsupportedEncodingException e) {
       throw new TException("UTF-8 not supported!");
     }
@@ -611,6 +630,16 @@ public final class TCompactProtocol extends TProtocol {
     return buf;
   }
 
+  /**
+   * Read a byte[] of a known length from the wire. 
+   */
+  private byte[] readBinary(int length) throws TException {
+    if (length == 0) return new byte[0];
+
+    byte[] buf = new byte[length];
+    trans_.readAll(buf, 0, length);
+    return buf;
+  }
 
   //
   // These methods are here for the struct to call, but don't have any wire 
@@ -692,7 +721,8 @@ public final class TCompactProtocol extends TProtocol {
   //
 
   private boolean isBoolType(byte b) {
-    return (b & 0x0f) == Types.BOOLEAN_TRUE || (b & 0x0f) == Types.BOOLEAN_FALSE;
+    int lowerNibble = b & 0x0f;
+    return lowerNibble == Types.BOOLEAN_TRUE || lowerNibble == Types.BOOLEAN_FALSE;
   }
 
   /**

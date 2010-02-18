@@ -118,4 +118,37 @@ public abstract class TTransport {
    */
   public void flush()
     throws TTransportException {}
+
+  /**
+   * Access the protocol's underlying buffer directly. If this is not a
+   * buffered transport, return null.
+   * @return
+   */
+  public byte[] getBuffer() {
+    return null;
+  }
+
+  /**
+   * Return the index within the underlying buffer that specifies the next spot
+   * that should be read from.
+   * @return
+   */
+  public int getBufferPosition() {
+    return 0;
+  }
+
+  /**
+   * Get the number of bytes remaining in the underlying buffer. Returns -1 if
+   * this is a non-buffered transport.
+   * @return
+   */
+  public int getBytesRemainingInBuffer() {
+    return -1;
+  }
+
+  /**
+   * Consume len bytes from the underlying buffer.
+   * @param len
+   */
+  public void consumeBuffer(int len) {}
 }

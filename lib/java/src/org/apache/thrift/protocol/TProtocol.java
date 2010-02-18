@@ -142,5 +142,4 @@ public abstract class TProtocol {
   public abstract String readString() throws TException;
 
   public abstract byte[] readBinary() throws TException;
-
 }

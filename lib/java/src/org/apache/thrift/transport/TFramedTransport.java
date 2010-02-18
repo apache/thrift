@@ -24,8 +24,8 @@ import java.io.ByteArrayInputStream;
 import org.apache.thrift.TByteArrayOutputStream;
 
 /**
- * Socket implementation of the TTransport interface. To be commented soon!
- *
+ * TFramedTransport is a buffered TTransport that ensures a fully read message
+ * every time by preceeding messages with a 4-byte frame size. 
  */
 public class TFramedTransport extends TTransport {
 
