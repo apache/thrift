@@ -141,28 +141,53 @@ class ThriftUnionSpec < Spec::ExampleGroup
       swu2.read(proto)
       swu2.should == swu
     end
-    
+
     it "should support old style constructor" do
       union = My_union.new(:integer32 => 26)
       union.get_set_field.should == :integer32
       union.get_value.should == 26
     end
-    
+
+    it "should not throw an error when inspected and unset" do
+      lambda{TestUnion.new().inspect}.should_not raise_error
+    end
+
     it "should print enum value name when inspected" do
       My_union.new(:some_enum => SomeEnum::ONE).inspect.should == "<SpecNamespace::My_union some_enum: ONE (0)>"
-      
+
       My_union.new(:my_map => {SomeEnum::ONE => [SomeEnum::TWO]}).inspect.should == "<SpecNamespace::My_union my_map: {ONE (0): [TWO (1)]}>" 
     end
-    
+
     it "should offer field? methods" do
       My_union.new.some_enum?.should be_false
       My_union.new(:some_enum => SomeEnum::ONE).some_enum?.should be_true
       My_union.new(:im_true => false).im_true?.should be_true
       My_union.new(:im_true => true).im_true?.should be_true
     end
-    
+
     it "should pretty print binary fields" do
       TestUnion.new(:binary_field => "\001\002\003").inspect.should == "<SpecNamespace::TestUnion binary_field: 010203>"
+    end
+
+    it "should be comparable" do
+      relationships = [
+        [0,   -1, -1, -1],
+        [1,   0,  -1, -1],
+        [1,   1,  0,  -1],
+        [1,   1,  1,  0]]
+
+      objs = [
+        TestUnion.new(:string_field, "blah"), 
+        TestUnion.new(:string_field, "blahblah"),
+        TestUnion.new(:i32_field, 1),
+        TestUnion.new()]
+
+      for y in 0..3
+        for x in 0..3
+          # puts "#{objs[y].inspect} <=> #{objs[x].inspect} should == #{relationships[y][x]}"
+          (objs[y] <=> objs[x]).should == relationships[y][x]
+        end
+      end
     end
   end
 end

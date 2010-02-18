@@ -167,6 +167,30 @@ module Thrift
       end
     end
 
+    def <=>(other)
+      if self.class == other.class
+        each_field do |fid, field_info|
+          v1 = self.send(field_info[:name])
+          v1_set = !v1.nil?
+          v2 = other.send(field_info[:name])
+          v2_set = !v2.nil?
+          if v1_set && !v2_set
+            return -1
+          elsif !v1_set && v2_set
+            return 1
+          elsif v1_set && v2_set
+            cmp = v1 <=> v2
+            if cmp != 0
+              return cmp
+            end
+          end
+        end
+        0
+      else
+        self.class <=> other.class
+      end
+    end
+
     protected
 
     def self.append_features(mod)

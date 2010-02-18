@@ -79,6 +79,16 @@ class ThriftStructSpec < Spec::ExampleGroup
       Foo.new(:my_bool => true).my_bool?.should be_true
     end
 
+    it "should be comparable" do
+      s1 = StructWithSomeEnum.new(:some_enum => SomeEnum::ONE)
+      s2 = StructWithSomeEnum.new(:some_enum => SomeEnum::TWO)
+
+      (s1 <=> s2).should == -1
+      (s2 <=> s1).should == 1
+      (s1 <=> s1).should == 0
+      (s1 <=> StructWithSomeEnum.new()).should == -1
+    end
+
     it "should read itself off the wire" do
       struct = Foo.new
       prot = BaseProtocol.new(mock("transport"))

@@ -46,7 +46,11 @@ module Thrift
     end
 
     def inspect
-      "<#{self.class} #{@setfield}: #{inspect_field(@value, struct_fields[name_to_id(@setfield.to_s)])}>"
+      if get_set_field
+        "<#{self.class} #{@setfield}: #{inspect_field(@value, struct_fields[name_to_id(@setfield.to_s)])}>"
+      else
+        "<#{self.class} >"
+      end
     end
 
     def read(iprot)
@@ -133,6 +137,30 @@ module Thrift
     # what field to expect.
     def get_value
       @value
+    end
+
+    def <=>(other)
+      if self.class == other.class
+        if get_set_field == other.get_set_field
+          if get_set_field.nil?
+            0
+          else
+            get_value <=> other.get_value
+          end
+        else
+          if get_set_field && other.get_set_field.nil?
+            -1
+          elsif get_set_field.nil? && other.get_set_field
+            1
+          elsif get_set_field.nil? && other.get_set_field.nil?
+            0
+          else
+            name_to_id(get_set_field.to_s) <=> name_to_id(other.get_set_field.to_s)
+          end
+        end
+      else
+        self.class <=> other.class
+      end
     end
 
     protected

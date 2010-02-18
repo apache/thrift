@@ -155,6 +155,5 @@ module Thrift
       end
       "[" + buf.join(", ") + "]"      
     end
-    
   end
 end
