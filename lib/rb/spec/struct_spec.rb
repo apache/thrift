@@ -68,6 +68,10 @@ class ThriftStructSpec < Spec::ExampleGroup
       StructWithEnumMap.new(:my_map => {SomeEnum::ONE => [SomeEnum::TWO]}).inspect.should == "<SpecNamespace::StructWithEnumMap my_map:{ONE (0): [TWO (1)]}>"
     end
 
+    it "should pretty print binary fields" do
+      Foo2.new(:my_binary => "\001\002\003").inspect.should == "<SpecNamespace::Foo2 my_binary:010203>"
+    end
+
     it "should offer field? methods" do
       Foo.new.opt_string?.should be_false
       Foo.new(:simple => 52).simple?.should be_true

@@ -59,6 +59,7 @@ union TestUnion {
   2: i32 i32_field;
   3: i32 other_i32_field;
   4: SomeEnum enum_field;
+  5: binary binary_field;
 }
 
 struct Foo {
@@ -70,6 +71,10 @@ struct Foo {
   6: set<i16> shorts = [5, 17, 239],
   7: optional string opt_string
   8: bool my_bool
+}
+
+struct Foo2 {
+  1: binary my_binary
 }
 
 struct BoolStruct {

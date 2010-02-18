@@ -29,6 +29,10 @@ module Thrift
           name, value = name.keys.first, name.values.first
         end
 
+        if Thrift.type_checking
+          raise Exception, "#{self.class} does not contain a field named #{name}!" unless name_to_id(name.to_s)
+        end
+
         if value.nil?
           raise Exception, "Union #{self.class} cannot be instantiated with setfield and nil value!"
         end

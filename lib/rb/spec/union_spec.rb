@@ -160,5 +160,9 @@ class ThriftUnionSpec < Spec::ExampleGroup
       My_union.new(:im_true => false).im_true?.should be_true
       My_union.new(:im_true => true).im_true?.should be_true
     end
+    
+    it "should pretty print binary fields" do
+      TestUnion.new(:binary_field => "\001\002\003").inspect.should == "<SpecNamespace::TestUnion binary_field: 010203>"
+    end
   end
 end
