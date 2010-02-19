@@ -653,7 +653,7 @@ void t_rb_generator::generate_field_data(std::ofstream& out, t_type* field_type,
     }
   } else {
     if (((t_base_type*)field_type)->is_binary()) {
-      out << ", :binary => true" << endl;
+      out << ", :binary => true";
     }
   }
   
