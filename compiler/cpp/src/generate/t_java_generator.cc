@@ -1392,14 +1392,16 @@ void t_java_generator::generate_java_struct_compare_to(ofstream& out, t_struct* 
   vector<t_field*>::const_iterator m_iter;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_field* field = *m_iter;
-    indent(out) << "lastComparison = Boolean.valueOf(" << generate_isset_check(field) << ").compareTo(" << generate_isset_check(field) << ");" << endl;
+    indent(out) << "lastComparison = Boolean.valueOf(" << generate_isset_check(field) << ").compareTo(typedOther." << generate_isset_check(field) << ");" << endl;
     indent(out) << "if (lastComparison != 0) {" << endl;
     indent(out) << "  return lastComparison;" << endl;
     indent(out) << "}" << endl;
 
-    indent(out) << "lastComparison = TBaseHelper.compareTo(" << field->get_name() << ", typedOther." << field->get_name() << ");" << endl;
-    indent(out) << "if (lastComparison != 0) {" << endl;
-    indent(out) << "  return lastComparison;" << endl;
+    indent(out) << "if (" << generate_isset_check(field) << ") {";
+    indent(out) << "  lastComparison = TBaseHelper.compareTo(" << field->get_name() << ", typedOther." << field->get_name() << ");" << endl;
+    indent(out) << "  if (lastComparison != 0) {" << endl;
+    indent(out) << "    return lastComparison;" << endl;
+    indent(out) << "  }" << endl;
     indent(out) << "}" << endl;
   }
 
