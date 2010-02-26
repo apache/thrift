@@ -27,6 +27,7 @@ from ThriftTest.ttypes import *
 from thrift.transport import TTransport
 from thrift.transport import TSocket
 from thrift.protocol import TBinaryProtocol
+from thrift.TSerialization import serialize, deserialize
 import unittest
 import time
 
@@ -118,6 +119,23 @@ class AcceleratedFramedTest(unittest.TestCase):
     self.assertEqual(prot.readString(), bigstring)
     self.assertEqual(prot.readI16(), 24)
 
+class SerializersTest(unittest.TestCase):
+
+  def testSerializeThenDeserialize(self):
+    obj = Xtruct2(i32_thing=1,
+                  struct_thing=Xtruct(string_thing="foo"))
+
+    s1 = serialize(obj)
+    for i in range(10):
+      self.assertEquals(s1, serialize(obj))
+      objcopy = Xtruct2()
+      deserialize(objcopy, serialize(obj))
+      self.assertEquals(obj, objcopy)
+
+    obj = Xtruct(string_thing="bar")
+    objcopy = Xtruct()
+    deserialize(objcopy, serialize(obj))
+    self.assertEquals(obj, objcopy)
 
 
 def suite():
@@ -127,6 +145,7 @@ def suite():
   suite.addTest(loader.loadTestsFromTestCase(NormalBinaryTest))
   suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
   suite.addTest(loader.loadTestsFromTestCase(AcceleratedFramedTest))
+  suite.addTest(loader.loadTestsFromTestCase(SerializersTest))
   return suite
 
 if __name__ == "__main__":
