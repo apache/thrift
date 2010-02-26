@@ -2538,7 +2538,25 @@ void t_java_generator::generate_process_function(t_service* tservice,
 
   f_service_ <<
     indent() << argsname << " args = new " << argsname << "();" << endl <<
-    indent() << "args.read(iprot);" << endl <<
+    indent() << "try {" << endl;
+  indent_up();
+  f_service_ <<
+    indent() << "args.read(iprot);" << endl;
+  indent_down();
+  f_service_ << 
+    indent() << "} catch (TProtocolException e) {" << endl;
+  indent_up();
+  f_service_ <<
+    indent() << "iprot.readMessageEnd();" << endl <<
+    indent() << "TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());" << endl <<
+    indent() << "oprot.writeMessageBegin(new TMessage(\"" << tfunction->get_name() << "\", TMessageType.EXCEPTION, seqid));" << endl <<
+    indent() << "x.write(oprot);" << endl <<
+    indent() << "oprot.writeMessageEnd();" << endl <<
+    indent() << "oprot.getTransport().flush();" << endl <<
+    indent() << "return;" << endl;
+  indent_down();
+  f_service_ << indent() << "}" << endl;
+  f_service_ <<
     indent() << "iprot.readMessageEnd();" << endl;
 
   t_struct* xs = tfunction->get_xceptions();
