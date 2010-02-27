@@ -135,6 +135,13 @@ class ThriftStructSpec < Spec::ExampleGroup
       struct.shorts.should == Set.new([3, 2])
     end
 
+    it "should serialize false boolean fields correctly" do
+      b = BoolStruct.new(:yesno => false)
+      prot = BinaryProtocol.new(MemoryBufferTransport.new)
+      prot.should_receive(:write_bool).with(false)
+      b.write(prot)
+    end
+
     it "should skip unexpected fields in structs and use default values" do
       struct = Foo.new
       prot = BaseProtocol.new(mock("transport"))
