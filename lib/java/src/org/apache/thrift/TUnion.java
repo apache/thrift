@@ -163,7 +163,7 @@ public abstract class TUnion<F extends TFieldIdEnum> implements TBase<F> {
     }
     oprot.writeStructBegin(getStructDesc());
     oprot.writeFieldBegin(getFieldDesc(setField_));
-    writeValue(oprot, setField_, value_);
+    writeValue(oprot);
     oprot.writeFieldEnd();
     oprot.writeFieldStop();
     oprot.writeStructEnd();
@@ -185,7 +185,7 @@ public abstract class TUnion<F extends TFieldIdEnum> implements TBase<F> {
    */
   protected abstract Object readValue(TProtocol iprot, TField field) throws TException;
 
-  protected abstract void writeValue(TProtocol oprot, F setField, Object value) throws TException;
+  protected abstract void writeValue(TProtocol oprot) throws TException;
 
   protected abstract TStruct getStructDesc();
 

@@ -915,11 +915,11 @@ void t_java_generator::generate_read_value(ofstream& out, t_struct* tstruct) {
 
 void t_java_generator::generate_write_value(ofstream& out, t_struct* tstruct) {
   indent(out) << "@Override" << endl;
-  indent(out) << "protected void writeValue(TProtocol oprot, _Fields setField, Object value) throws TException {" << endl;
+  indent(out) << "protected void writeValue(TProtocol oprot) throws TException {" << endl;
 
   indent_up();
 
-  indent(out) << "switch (setField) {" << endl;
+  indent(out) << "switch (setField_) {" << endl;
   indent_up();
 
   const vector<t_field*>& members = tstruct->get_members();
@@ -931,14 +931,14 @@ void t_java_generator::generate_write_value(ofstream& out, t_struct* tstruct) {
     indent(out) << "case " << constant_name(field->get_name()) << ":" << endl;
     indent_up();
     indent(out) << type_name(field->get_type(), true, false) << " " << field->get_name() 
-      << " = (" <<  type_name(field->get_type(), true, false) << ")getFieldValue();" << endl;
+      << " = (" <<  type_name(field->get_type(), true, false) << ")value_;" << endl;
     generate_serialize_field(out, field, "");
     indent(out) << "return;" << endl;
     indent_down();
   }
   
   indent(out) << "default:" << endl;
-  indent(out) << "  throw new IllegalStateException(\"Cannot write union with unknown field \" + setField);" << endl;
+  indent(out) << "  throw new IllegalStateException(\"Cannot write union with unknown field \" + setField_);" << endl;
 
   indent_down();
   indent(out) << "}" << endl;
