@@ -19,8 +19,6 @@
 
 package org.apache.thrift.transport;
 
-import java.io.ByteArrayInputStream;
-
 import org.apache.thrift.TByteArrayOutputStream;
 
 /**
@@ -43,7 +41,7 @@ public class TFramedTransport extends TTransport {
   /**
    * Buffer for input
    */
-  private ByteArrayInputStream readBuffer_ = null;
+  private TMemoryInputTransport readBuffer_ = new TMemoryInputTransport(new byte[0]);
 
   public static class Factory extends TTransportFactory {
     public Factory() {
@@ -87,8 +85,24 @@ public class TFramedTransport extends TTransport {
     return readBuffer_.read(buf, off, len);
   }
 
+  public byte[] getBuffer() {
+    return readBuffer_.getBuffer();
+  }
+
+  public int getBufferPosition() {
+    return readBuffer_.getBufferPosition();
+  }
+
+  public int getBytesRemainingInBuffer() {
+    return readBuffer_.getBytesRemainingInBuffer();
+  }
+
+  public void consumeBuffer(int len) {
+    readBuffer_.consumeBuffer(len);
+  }
+
+  private final byte[] i32rd = new byte[4];
   private void readFrame() throws TTransportException {
-    byte[] i32rd = new byte[4];
     transport_.readAll(i32rd, 0, 4);
     int size =
       ((i32rd[0] & 0xff) << 24) |
@@ -99,10 +113,10 @@ public class TFramedTransport extends TTransport {
     if (size < 0) {
       throw new TTransportException("Read a negative frame size (" + size + ")!");
     }
-    
+
     byte[] buff = new byte[size];
     transport_.readAll(buff, 0, size);
-    readBuffer_ = new ByteArrayInputStream(buff);
+    readBuffer_.reset(buff);
   }
 
   public void write(byte[] buf, int off, int len) throws TTransportException {

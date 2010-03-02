@@ -186,6 +186,8 @@
       classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.PartialDeserializeTest"
       classpathref="test.classpath" failonerror="true" />
+    <java classname="org.apache.thrift.test.transport.TFramedTransportTest"
+      classpathref="test.classpath" failonerror="true" />
   </target>
 
   <target name="testclient" description="Run a test client">
