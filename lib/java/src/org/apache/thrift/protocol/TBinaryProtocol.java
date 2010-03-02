@@ -244,41 +244,75 @@ public class TBinaryProtocol extends TProtocol {
 
   private byte[] bin = new byte[1];
   public byte readByte() throws TException {
+    if (trans_.getBytesRemainingInBuffer() >= 1) {
+      byte b = trans_.getBuffer()[trans_.getBufferPosition()];
+      trans_.consumeBuffer(1);
+      return b;
+    }
     readAll(bin, 0, 1);
     return bin[0];
   }
 
   private byte[] i16rd = new byte[2];
   public short readI16() throws TException {
-    readAll(i16rd, 0, 2);
+    byte[] buf = i16rd;
+    int off = 0;
+
+    if (trans_.getBytesRemainingInBuffer() >= 2) {
+      buf = trans_.getBuffer();
+      off = trans_.getBufferPosition();
+      trans_.consumeBuffer(2);
+    } else {
+      readAll(i16rd, 0, 2);
+    }
+
     return
       (short)
-      (((i16rd[0] & 0xff) << 8) |
-       ((i16rd[1] & 0xff)));
+      (((buf[off] & 0xff) << 8) |
+       ((buf[off+1] & 0xff)));
   }
 
   private byte[] i32rd = new byte[4];
   public int readI32() throws TException {
-    readAll(i32rd, 0, 4);
+    byte[] buf = i32rd;
+    int off = 0;
+
+    if (trans_.getBytesRemainingInBuffer() >= 4) {
+      buf = trans_.getBuffer();
+      off = trans_.getBufferPosition();
+      trans_.consumeBuffer(4);
+    } else {
+      readAll(i32rd, 0, 4);
+    }
     return
-      ((i32rd[0] & 0xff) << 24) |
-      ((i32rd[1] & 0xff) << 16) |
-      ((i32rd[2] & 0xff) <<  8) |
-      ((i32rd[3] & 0xff));
+      ((buf[off] & 0xff) << 24) |
+      ((buf[off+1] & 0xff) << 16) |
+      ((buf[off+2] & 0xff) <<  8) |
+      ((buf[off+3] & 0xff));
   }
 
   private byte[] i64rd = new byte[8];
   public long readI64() throws TException {
-    readAll(i64rd, 0, 8);
+    byte[] buf = i64rd;
+    int off = 0;
+
+    if (trans_.getBytesRemainingInBuffer() >= 8) {
+      buf = trans_.getBuffer();
+      off = trans_.getBufferPosition();
+      trans_.consumeBuffer(8);
+    } else {
+      readAll(i64rd, 0, 8);
+    }
+
     return
-      ((long)(i64rd[0] & 0xff) << 56) |
-      ((long)(i64rd[1] & 0xff) << 48) |
-      ((long)(i64rd[2] & 0xff) << 40) |
-      ((long)(i64rd[3] & 0xff) << 32) |
-      ((long)(i64rd[4] & 0xff) << 24) |
-      ((long)(i64rd[5] & 0xff) << 16) |
-      ((long)(i64rd[6] & 0xff) <<  8) |
-      ((long)(i64rd[7] & 0xff));
+      ((long)(buf[off]   & 0xff) << 56) |
+      ((long)(buf[off+1] & 0xff) << 48) |
+      ((long)(buf[off+2] & 0xff) << 40) |
+      ((long)(buf[off+3] & 0xff) << 32) |
+      ((long)(buf[off+4] & 0xff) << 24) |
+      ((long)(buf[off+5] & 0xff) << 16) |
+      ((long)(buf[off+6] & 0xff) <<  8) |
+      ((long)(buf[off+7] & 0xff));
   }
 
   public double readDouble() throws TException {
@@ -287,6 +321,17 @@ public class TBinaryProtocol extends TProtocol {
 
   public String readString() throws TException {
     int size = readI32();
+
+    if (trans_.getBytesRemainingInBuffer() >= size) {
+      try {
+        String s = new String(trans_.getBuffer(), trans_.getBufferPosition(), size, "UTF-8");
+        trans_.consumeBuffer(size);
+        return s;
+      } catch (UnsupportedEncodingException e) {
+        throw new TException("JVM DOES NOT SUPPORT UTF-8");
+      }
+    }
+
     return readStringBody(size);
   }
 

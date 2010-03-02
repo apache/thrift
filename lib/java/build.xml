@@ -168,6 +168,8 @@
       classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.TCompactProtocolTest"
       classpathref="test.classpath" failonerror="true" />
+    <java classname="org.apache.thrift.test.TBinaryProtocolTest"
+      classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.IdentityTest"
       classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.EqualityTest"

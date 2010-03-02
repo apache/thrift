@@ -20,13 +20,16 @@
 
 package org.apache.thrift.test;
 
-import java.io.ByteArrayInputStream;
+import org.apache.thrift.TBase;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.transport.TMemoryBuffer;
+import org.apache.thrift.transport.TMemoryInputTransport;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
-import org.apache.thrift.*;
-import org.apache.thrift.protocol.*;
-import org.apache.thrift.transport.*;
-
-import thrift.test.*;
+import thrift.test.OneOfEach;
 
 public class SerializationBenchmark {
   private final static int HOW_MANY = 10000000;
@@ -55,7 +58,7 @@ public class SerializationBenchmark {
     }
     long endTime = System.currentTimeMillis();
     
-    System.out.println("Test time: " + (endTime - startTime) + " ms");
+    System.out.println("Serialization test time: " + (endTime - startTime) + " ms");
   }
   
   public static <T extends TBase> void testDeserialization(TProtocolFactory factory, T object, Class<T> klass) throws Exception {
@@ -63,14 +66,14 @@ public class SerializationBenchmark {
     object.write(factory.getProtocol(buf));
     byte[] serialized = new byte[100*1024];
     buf.read(serialized, 0, 100*1024);
-    
+
     long startTime = System.currentTimeMillis();
     for (int i = 0; i < HOW_MANY; i++) {
       T o2 = klass.newInstance();
-      o2.read(factory.getProtocol(new TIOStreamTransport(new ByteArrayInputStream(serialized))));
+      o2.read(factory.getProtocol(new TMemoryInputTransport(serialized)));
     }
     long endTime = System.currentTimeMillis();
-    
-    System.out.println("Test time: " + (endTime - startTime) + " ms");
+
+    System.out.println("Deserialization test time: " + (endTime - startTime) + " ms");
   }
 }
