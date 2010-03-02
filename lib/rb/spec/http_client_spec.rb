@@ -24,7 +24,7 @@ class ThriftHTTPClientTransportSpec < Spec::ExampleGroup
 
   describe HTTPClientTransport do
     before(:each) do
-      @client = HTTPClientTransport.new("http://my.domain.com/path/to/service")
+      @client = HTTPClientTransport.new("http://my.domain.com/path/to/service?param=value")
     end
 
     it "should always be open" do
@@ -39,7 +39,7 @@ class ThriftHTTPClientTransportSpec < Spec::ExampleGroup
       Net::HTTP.should_receive(:new).with("my.domain.com", 80).and_return do
         mock("Net::HTTP").tee do |http|
           http.should_receive(:use_ssl=).with(false)
-          http.should_receive(:post).with("/path/to/service", "a test frame", {"Content-Type"=>"application/x-thrift"}).and_return([nil, "data"])
+          http.should_receive(:post).with("/path/to/service?param=value", "a test frame", {"Content-Type"=>"application/x-thrift"}).and_return([nil, "data"])
         end
       end
       @client.flush

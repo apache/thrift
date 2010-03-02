@@ -37,7 +37,7 @@ module Thrift
       http = Net::HTTP.new @url.host, @url.port
       http.use_ssl = @url.scheme == "https"
       headers = { 'Content-Type' => 'application/x-thrift' }
-      resp, data = http.post(@url.path, @outbuf, headers)
+      resp, data = http.post(@url.request_uri, @outbuf, headers)
       @inbuf = StringIO.new data
       @outbuf = ""
     end
