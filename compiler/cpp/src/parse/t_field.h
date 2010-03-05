@@ -133,6 +133,7 @@ class t_field : public t_doc {
     }
   };
 
+  std::map<std::string, std::string> annotations_;
 
  private:
   t_type* type_;

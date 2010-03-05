@@ -853,7 +853,7 @@ FieldList:
     }
 
 Field:
-  CaptureDocText FieldIdentifier FieldRequiredness FieldType tok_identifier FieldValue XsdOptional XsdNillable XsdAttributes CommaOrSemicolonOptional
+  CaptureDocText FieldIdentifier FieldRequiredness FieldType tok_identifier FieldValue XsdOptional XsdNillable XsdAttributes TypeAnnotations CommaOrSemicolonOptional
     {
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
       if ($2 < 0) {
@@ -877,6 +877,10 @@ Field:
       }
       if ($9 != NULL) {
         $$->set_xsd_attrs($9);
+      }
+      if ($10 != NULL) {
+        $$->annotations_ = $10->annotations_;
+        delete $10;
       }
     }
 
