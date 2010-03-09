@@ -23,6 +23,7 @@ from cStringIO import StringIO
 import urlparse
 import httplib
 import warnings
+import socket
 
 class THttpClient(TTransportBase):
 
@@ -55,6 +56,7 @@ class THttpClient(TTransportBase):
       self.path = parsed.path
     self.__wbuf = StringIO()
     self.__http = None
+    self.__timeout = None
 
   def open(self):
     if self.scheme == 'http':
@@ -69,11 +71,29 @@ class THttpClient(TTransportBase):
   def isOpen(self):
     return self.__http != None
 
+  def setTimeout(self, ms):
+    if not hasattr(socket, 'getdefaulttimeout'):
+      raise NotImplementedError
+
+    if ms is None:
+      self.__timeout = None
+    else:
+      self.__timeout = ms/1000.0
+
   def read(self, sz):
     return self.__http.file.read(sz)
 
   def write(self, buf):
     self.__wbuf.write(buf)
+
+  def __withTimeout(f):
+    def _f(*args, **kwargs):
+      orig_timeout = socket.getdefaulttimeout()
+      socket.setdefaulttimeout(args[0].__timeout)
+      result = f(*args, **kwargs)
+      socket.setdefaulttimeout(orig_timeout)
+      return result
+    return _f
 
   def flush(self):
     if self.isOpen():
@@ -98,3 +118,7 @@ class THttpClient(TTransportBase):
 
     # Get reply to flush the request
     self.code, self.message, self.headers = self.__http.getreply()
+
+  # Decorate if we know how to timeout
+  if hasattr(socket, 'getdefaulttimeout'):
+    flush = __withTimeout(flush)
