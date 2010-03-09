@@ -570,12 +570,12 @@ void TNonblockingServer::handleEvent(int fd, short which) {
       nTotalConnectionsDropped_++;
       if (overloadAction_ == T_OVERLOAD_CLOSE_ON_ACCEPT) {
         close(clientSocket);
-        continue;
+        return;
       } else if (overloadAction_ == T_OVERLOAD_DRAIN_TASK_QUEUE) {
         if (!drainPendingTask()) {
           // Nothing left to discard, so we drop connection instead.
           close(clientSocket);
-          continue;
+          return;
         }
       }
     }
@@ -717,6 +717,13 @@ void TNonblockingServer::createNotificationPipe() {
   if (pipe(notificationPipeFDs_) != 0) {
     GlobalOutput.perror("TNonblockingServer::createNotificationPipe ", errno);
       throw TException("can't create notification pipe");
+  }
+  int flags;
+  if ((flags = fcntl(notificationPipeFDs_[0], F_GETFL, 0)) < 0 ||
+      fcntl(notificationPipeFDs_[0], F_SETFL, flags | O_NONBLOCK) < 0) {
+    close(notificationPipeFDs_[0]);
+    close(notificationPipeFDs_[1]);
+    throw TException("TNonblockingServer::createNotificationPipe() O_NONBLOCK");
   }
 }
 

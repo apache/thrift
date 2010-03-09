@@ -722,13 +722,17 @@ class TConnection {
    */
   static void taskHandler(int fd, short /* which */, void* /* v */) {
     TConnection* connection;
-    if (read(fd, (void*)&connection, sizeof(TConnection*))
-        != sizeof(TConnection*)) {
-      GlobalOutput.perror("TConnection::taskHandler read failed, resource leak", errno);
-      return;
+    ssize_t nBytes;
+    while ((nBytes = read(fd, (void*)&connection, sizeof(TConnection*)))
+        == sizeof(TConnection*)) {
+      connection->transition();
     }
-
-    connection->transition();
+    if (nBytes > 0) {
+      throw TException("TConnection::taskHandler unexpected partial read");
+    }
+    if (errno != EWOULDBLOCK && errno != EAGAIN) {
+      GlobalOutput.perror("TConnection::taskHandler read failed, resource leak", errno);
+    }
   }
 
   /**
