@@ -72,6 +72,9 @@ public:
     } catch (std::exception &x) {
       string errStr = string("TThreadPoolServer, std::exception: ") + x.what();
       GlobalOutput(errStr.c_str());
+    } catch (...) {
+      GlobalOutput("TThreadPoolServer, unexpected exception in "
+                   "TThreadPoolServer::Task::run()");
     }
 
     if (eventHandler != NULL) {
