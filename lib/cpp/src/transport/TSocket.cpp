@@ -308,16 +308,17 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
   gettimeofday(&begin, NULL);
   int got = recv(socket_, buf, len, 0);
   int errno_copy = errno; //gettimeofday can change errno
-  struct timeval end;
-  gettimeofday(&end, NULL);
-  uint32_t readElapsedMicros =  (((end.tv_sec - begin.tv_sec) * 1000 * 1000)
-                                 + (((uint64_t)(end.tv_usec - begin.tv_usec))));
   ++g_socket_syscalls;
 
   // Check for error on read
   if (got < 0) {
     if (errno_copy == EAGAIN) {
       // check if this is the lack of resources or timeout case
+      struct timeval end;
+      gettimeofday(&end, NULL);
+      uint32_t readElapsedMicros =  (((end.tv_sec - begin.tv_sec) * 1000 * 1000)
+                                     + (((uint64_t)(end.tv_usec - begin.tv_usec))));
+
       if (!eagainThresholdMicros || (readElapsedMicros < eagainThresholdMicros)) {
         if (retries++ < maxRecvRetries_) {
           usleep(50);
