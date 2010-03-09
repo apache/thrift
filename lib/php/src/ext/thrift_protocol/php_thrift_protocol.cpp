@@ -399,6 +399,12 @@ void throw_tprotocolexception(char* what, long errorcode) {
   throw PHPExceptionWrapper(ex);
 }
 
+// Sets EG(exception), call this and then RETURN_NULL();
+void throw_zend_exception_from_std_exception(const std::exception& ex) {
+  zend_throw_exception(zend_exception_get_default(TSRMLS_CC), const_cast<char*>(ex.what()), 0 TSRMLS_CC);
+}
+
+
 void binary_deserialize(int8_t thrift_typeID, PHPInputTransport& transport, zval* return_value, HashTable* fieldspec) {
   zval** val_ptr;
   Z_TYPE_P(return_value) = IS_NULL; // just in case
@@ -927,6 +933,9 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
   } catch (const PHPExceptionWrapper& ex) {
     zend_throw_exception_object(ex TSRMLS_CC);
     RETURN_NULL();
+  } catch (const std::exception& ex) {
+    throw_zend_exception_from_std_exception(ex);
+    RETURN_NULL();
   }
 }
 
@@ -999,6 +1008,9 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
     binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec));
   } catch (const PHPExceptionWrapper& ex) {
     zend_throw_exception_object(ex TSRMLS_CC);
+    RETURN_NULL();
+  } catch (const std::exception& ex) {
+    throw_zend_exception_from_std_exception(ex);
     RETURN_NULL();
   }
 }
