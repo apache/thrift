@@ -141,7 +141,7 @@ public class TDeserializer {
    * @param base The object to read into
    * @param data The string to read from
    */
-  public void toString(TBase base, String data) throws TException {
+  public void fromString(TBase base, String data) throws TException {
     deserialize(base, data.getBytes());
   }
 }
