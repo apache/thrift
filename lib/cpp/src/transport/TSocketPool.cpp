@@ -167,12 +167,20 @@ void TSocketPool::setCurrentServer(const shared_ptr<TSocketPoolServer> &server) 
   socket_ = server->socket_;
 }
 
+/**
+ * This function throws an exception if socket open fails. When socket
+ * opens fails, the socket in the current server is reset.
+ */
 /* TODO: without apc we ignore a lot of functionality from the php version */
 void TSocketPool::open() {
 
   unsigned int numServers = servers_.size();
-  if (numServers == 1 && isOpen()) {
-    // only one server that is already connected to
+  if (numServers == 0) {
+    socket_ = -1;
+    throw TTransportException(TTransportException::NOT_OPEN);
+  }
+
+  if (isOpen()) {
     return;
   }
 
@@ -206,22 +214,19 @@ void TSocketPool::open() {
       for (int j = 0; j < numRetries_; ++j) {
         try {
           TSocket::open();
-
-          // Copy over the opened socket so that we can keep it persistent
-          server->socket_ = socket_;
-
-          // reset lastFailTime_ is required
-          if (server->lastFailTime_) {
-            server->lastFailTime_ = 0;
-          }
-
-          // success
-          return;
         } catch (TException e) {
           string errStr = "TSocketPool::open failed "+getSocketInfo()+": "+e.what();
           GlobalOutput(errStr.c_str());
-          // connection failed
+          socket_ = -1;
+          continue;
         }
+
+        // Copy over the opened socket so that we can keep it persistent
+        server->socket_ = socket_;
+        // reset lastFailTime_ is required
+        server->lastFailTime_ = 0;
+        // success
+        return;
       }
 
       ++server->consecutiveFailures_;
@@ -238,8 +243,8 @@ void TSocketPool::open() {
 }
 
 void TSocketPool::close() {
-  if (isOpen()) {
-    TSocket::close();
+  TSocket::close();
+  if (currentServer_) {
     currentServer_->socket_ = -1;
   }
 }
