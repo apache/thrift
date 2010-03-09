@@ -1134,6 +1134,21 @@ void t_php_generator::generate_process_function(t_service* tservice,
     return;
   }
 
+  f_service_ <<
+    indent() << "$bin_accel = ($output instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');" << endl;
+
+  f_service_ <<
+    indent() << "if ($bin_accel)" << endl;
+  scope_up(f_service_);
+
+  f_service_ <<
+    indent() << "thrift_protocol_write_binary($output, '" << tfunction->get_name() << "', TMessageType::REPLY, $result, $seqid, $output->isStrictWrite());" << endl;
+
+  scope_down(f_service_);
+  f_service_ <<
+    indent() << "else" << endl;
+  scope_up(f_service_);
+
   // Serialize the request header
   if (binary_inline_) {
     f_service_ <<
@@ -1150,6 +1165,8 @@ void t_php_generator::generate_process_function(t_service* tservice,
       indent() << "$result->write($output);" << endl <<
       indent() << "$output->getTransport()->flush();" << endl;
   }
+
+  scope_down(f_service_);
 
   // Close function
   indent_down();
