@@ -128,15 +128,18 @@ void TConnection::workSocket() {
 
     // Double the buffer size until it is big enough
     if (readWant_ > readBufferSize_) {
-      while (readWant_ > readBufferSize_) {
-        readBufferSize_ *= 2;
+      uint32_t newSize = readBufferSize_;
+      while (readWant_ > newSize) {
+        newSize *= 2;
       }
-      readBuffer_ = (uint8_t*)std::realloc(readBuffer_, readBufferSize_);
-      if (readBuffer_ == NULL) {
+      uint8_t* newBuffer = (uint8_t*)std::realloc(readBuffer_, newSize);
+      if (newBuffer == NULL) {
         GlobalOutput("TConnection::workSocket() realloc");
         close();
         return;
       }
+      readBuffer_ = newBuffer;
+      readBufferSize_ = newSize;
     }
 
     // Read from the socket

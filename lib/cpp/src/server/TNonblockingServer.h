@@ -708,6 +708,7 @@ class TConnection {
   }
 
   ~TConnection() {
+    std::free(readBuffer_);
     server_->decrementNumConnections();
   }
 
