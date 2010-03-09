@@ -128,10 +128,11 @@ const uint8_t* TBufferedTransport::borrowSlow(uint8_t* buf, uint32_t* len) {
   if ((offset > rBufSize_/2) || (offset + need > rBufSize_)) {
     memmove(rBuf_.get(), rBase_, have);
     setReadBuffer(rBuf_.get(), have);
+    offset = have;
   }
 
   // First try to fill up the buffer.
-  uint32_t got = transport_->read(rBound_, rBufSize_ - have);
+  uint32_t got = transport_->read(rBound_, rBufSize_ - offset);
   rBound_ += got;
   need -= got;
 
