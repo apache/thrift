@@ -19,6 +19,7 @@
 
 #include "TNonblockingServer.h"
 #include <concurrency/Exception.h>
+#include <transport/TSocket.h>
 
 #include <iostream>
 #include <sys/socket.h>
@@ -39,6 +40,8 @@ using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::concurrency;
 using namespace std;
+using apache::thrift::transport::TSocket;
+using apache::thrift::transport::TTransportException;
 
 class TConnection::Task: public Runnable {
  public:
@@ -706,6 +709,12 @@ void TNonblockingServer::listenSocket(int s) {
   setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
   #endif
 
+  #ifdef TCP_LOW_MIN_RTO
+  if (TSocket::getUseLowMinRto()) {
+    setsockopt(s, IPPROTO_TCP, TCP_LOW_MIN_RTO, &one, sizeof(one));
+  }
+  #endif
+
   if (listen(s, LISTEN_BACKLOG) == -1) {
     close(s);
     throw TException("TNonblockingServer::serve() listen");
@@ -761,7 +770,7 @@ void TNonblockingServer::registerEvents(event_base* base) {
               EV_READ | EV_PERSIST,
               TConnection::taskHandler,
               this);
-    
+
     // Attach to the base
     event_base_set(eventBase_, &notificationEvent_);
 

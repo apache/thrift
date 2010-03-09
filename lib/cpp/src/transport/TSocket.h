@@ -22,6 +22,7 @@
 
 #include <string>
 #include <sys/time.h>
+#include <netdb.h>
 
 #include "TTransport.h"
 #include "TServerSocket.h"
@@ -182,6 +183,15 @@ class TSocket : public TTransport {
    **/
   int getPeerPort();
 
+  /**
+   * Sets whether to use a low minimum TCP retransmission timeout.
+   */
+  static void setUseLowMinRto(bool useLowMinRto);
+
+  /**
+   * Gets whether to use a low minimum TCP retransmission timeout.
+   */
+  static bool getUseLowMinRto();
 
  protected:
   /**
@@ -234,6 +244,9 @@ class TSocket : public TTransport {
 
   /** Recv timeout timeval */
   struct timeval recvTimeval_;
+
+  /** Whether to use low minimum TCP retransmission timeout */
+  static bool useLowMinRto_;
 };
 
 }}} // apache::thrift::transport

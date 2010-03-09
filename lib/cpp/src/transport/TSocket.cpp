@@ -153,6 +153,15 @@ void TSocket::openConnection(struct addrinfo *res) {
   // No delay
   setNoDelay(noDelay_);
 
+  // Uses a low min RTO if asked to.
+#ifdef TCP_LOW_MIN_RTO
+  if (getUseLowMinRto()) {
+    int one = 1;
+    setsockopt(socket_, IPPROTO_TCP, TCP_LOW_MIN_RTO, &one, sizeof(one));
+  }
+#endif
+
+
   // Set the socket to be non blocking for connect if a timeout exists
   int flags = fcntl(socket_, F_GETFL, 0);
   if (connTimeout_ > 0) {
@@ -587,6 +596,14 @@ std::string TSocket::getPeerAddress() {
 int TSocket::getPeerPort() {
   getPeerAddress();
   return peerPort_;
+}
+
+bool TSocket::useLowMinRto_ = false;
+void TSocket::setUseLowMinRto(bool useLowMinRto) {
+  useLowMinRto_ = useLowMinRto;
+}
+bool TSocket::getUseLowMinRto() {
+  return useLowMinRto_;
 }
 
 }}} // apache::thrift::transport
