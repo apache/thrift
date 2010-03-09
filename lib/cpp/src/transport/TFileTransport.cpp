@@ -43,6 +43,7 @@
 
 namespace apache { namespace thrift { namespace transport {
 
+using boost::scoped_ptr;
 using boost::shared_ptr;
 using namespace std;
 using namespace apache::thrift::protocol;
@@ -529,6 +530,7 @@ uint32_t TFileTransport::read(uint8_t* buf, uint32_t len) {
   return len;
 }
 
+// note caller is responsible for freeing returned events
 eventInfo* TFileTransport::readEvent() {
   int readTries = 0;
 
@@ -763,7 +765,13 @@ void TFileTransport::seekToChunk(int32_t chunk) {
     uint32_t oldReadTimeout = getReadTimeout();
     setReadTimeout(NO_TAIL_READ_TIMEOUT);
     // keep on reading unti the last event at point of seekChunk call
-    while (readEvent() && ((offset_ + readState_.bufferPtr_) < minEndOffset)) {};
+    boost::scoped_ptr<eventInfo> event;
+    while ((offset_ + readState_.bufferPtr_) < minEndOffset) {
+      event.reset(readEvent());
+      if (event.get() == NULL) {
+        break;
+      }
+    }
     setReadTimeout(oldReadTimeout);
   }
 

@@ -29,6 +29,7 @@
 
 #include <pthread.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace apache { namespace thrift { namespace transport {
