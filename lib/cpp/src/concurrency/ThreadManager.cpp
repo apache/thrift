@@ -20,6 +20,7 @@
 #include "ThreadManager.h"
 #include "Exception.h"
 #include "Monitor.h"
+#include "Util.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -54,6 +55,7 @@ class ThreadManager::Impl : public ThreadManager  {
     workerMaxCount_(0),
     idleCount_(0),
     pendingTaskCountMax_(0),
+    expiredCount_(0),
     state_(ThreadManager::UNINITIALIZED),
     monitor_(&mutex_),
     maxMonitor_(&mutex_) {}
@@ -108,6 +110,13 @@ class ThreadManager::Impl : public ThreadManager  {
     return pendingTaskCountMax_;
   }
 
+  size_t expiredTaskCount() {
+    Synchronized s(monitor_);
+    size_t result = expiredCount_;
+    expiredCount_ = 0;
+    return result;
+  }
+
   void pendingTaskCountMax(const size_t value) {
     Synchronized s(monitor_);
     pendingTaskCountMax_ = value;
@@ -115,11 +124,15 @@ class ThreadManager::Impl : public ThreadManager  {
 
   bool canSleep();
 
-  void add(shared_ptr<Runnable> value, int64_t timeout);
+  void add(shared_ptr<Runnable> value, int64_t timeout, int64_t expiration);
 
   void remove(shared_ptr<Runnable> task);
 
   shared_ptr<Runnable> removeNextPending();
+
+  void removeExpiredTasks();
+
+  void setExpireCallback(ExpireCallback expireCallback);
 
 private:
   void stopImpl(bool join);
@@ -128,6 +141,8 @@ private:
   size_t workerMaxCount_;
   size_t idleCount_;
   size_t pendingTaskCountMax_;
+  size_t expiredCount_;
+  ExpireCallback expireCallback_;
 
   ThreadManager::STATE state_;
   shared_ptr<ThreadFactory> threadFactory_;
@@ -156,9 +171,10 @@ class ThreadManager::Task : public Runnable {
     COMPLETE
   };
 
-  Task(shared_ptr<Runnable> runnable) :
+  Task(shared_ptr<Runnable> runnable, int64_t expiration=0LL)  :
     runnable_(runnable),
-    state_(WAITING) {}
+    state_(WAITING),
+    expireTime_(expiration != 0LL ? Util::currentTime() + expiration : 0LL) {}
 
   ~Task() {}
 
@@ -173,10 +189,15 @@ class ThreadManager::Task : public Runnable {
     return runnable_;
   }
 
+  int64_t getExpireTime() const {
+    return expireTime_;
+  }
+
  private:
   shared_ptr<Runnable> runnable_;
   friend class ThreadManager::Worker;
   STATE state_;
+  int64_t expireTime_;
 };
 
 class ThreadManager::Worker: public Runnable {
@@ -262,6 +283,8 @@ class ThreadManager::Worker: public Runnable {
         }
 
         if (active) {
+          manager_->removeExpiredTasks();
+
           if (!manager_->tasks_.empty()) {
             task = manager_->tasks_.front();
             manager_->tasks_.pop();
@@ -435,13 +458,16 @@ void ThreadManager::Impl::removeWorker(size_t value) {
     return idMap_.find(id) == idMap_.end();
   }
 
-  void ThreadManager::Impl::add(shared_ptr<Runnable> value, int64_t timeout) {
+  void ThreadManager::Impl::add(shared_ptr<Runnable> value,
+                                int64_t timeout,
+                                int64_t expiration) {
     Guard g(mutex_);
 
     if (state_ != ThreadManager::STARTED) {
       throw IllegalStateException();
     }
 
+    removeExpiredTasks();
     if (pendingTaskCountMax_ > 0 && (tasks_.size() >= pendingTaskCountMax_)) {
       if (canSleep() && timeout >= 0) {
         while (pendingTaskCountMax_ > 0 && tasks_.size() >= pendingTaskCountMax_) {
@@ -453,7 +479,7 @@ void ThreadManager::Impl::removeWorker(size_t value) {
       }
     }
 
-    tasks_.push(shared_ptr<ThreadManager::Task>(new ThreadManager::Task(value)));
+    tasks_.push(shared_ptr<ThreadManager::Task>(new ThreadManager::Task(value, expiration)));
 
     // If idle thread is available notify it, otherwise all worker threads are
     // running and will get around to this task in time.
@@ -483,6 +509,34 @@ boost::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
   tasks_.pop();
   
   return task->getRunnable();
+}
+
+void ThreadManager::Impl::removeExpiredTasks() {
+  int64_t now = 0LL; // we won't ask for the time untile we need it
+
+  // note that this loop breaks at the first non-expiring task
+  while (!tasks_.empty()) {
+    shared_ptr<ThreadManager::Task> task = tasks_.front();
+    if (task->getExpireTime() == 0LL) {
+      break;
+    }
+    if (now == 0LL) {
+      now = Util::currentTime();
+    }
+    if (task->getExpireTime() > now) {
+      break;
+    }
+    if (expireCallback_) {
+      expireCallback_(task->getRunnable());
+    }
+    tasks_.pop();
+    expiredCount_++;
+  }
+}
+
+
+void ThreadManager::Impl::setExpireCallback(ExpireCallback expireCallback) {
+  expireCallback_ = expireCallback;
 }
 
 class SimpleThreadManager : public ThreadManager::Impl {

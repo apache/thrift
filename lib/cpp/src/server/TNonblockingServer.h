@@ -113,6 +113,9 @@ class TNonblockingServer : public TServer {
   /// Limit for number of open connections
   size_t maxConnections_;
 
+  /// Time in milliseconds before an unperformed task expires (0 == infinite).
+  int64_t taskExpireTime_;
+
   /**
    * Hysteresis for overload state.  This is the fraction of the overload
    * value that needs to be reached before the overload state is cleared;
@@ -173,6 +176,7 @@ class TNonblockingServer : public TServer {
     connectionStackLimit_(CONNECTION_STACK_LIMIT),
     maxActiveProcessors_(MAX_ACTIVE_PROCESSORS),
     maxConnections_(MAX_CONNECTIONS),
+    taskExpireTime_(0),
     overloadHysteresis_(0.8),
     overloadAction_(T_OVERLOAD_NO_ACTION),
     idleBufferMemLimit_(IDLE_BUFFER_MEM_LIMIT),
@@ -194,6 +198,7 @@ class TNonblockingServer : public TServer {
     connectionStackLimit_(CONNECTION_STACK_LIMIT),
     maxActiveProcessors_(MAX_ACTIVE_PROCESSORS),
     maxConnections_(MAX_CONNECTIONS),
+    taskExpireTime_(0),
     overloadHysteresis_(0.8),
     overloadAction_(T_OVERLOAD_NO_ACTION),
     idleBufferMemLimit_(IDLE_BUFFER_MEM_LIMIT),
@@ -224,12 +229,13 @@ class TNonblockingServer : public TServer {
     connectionStackLimit_(CONNECTION_STACK_LIMIT),
     maxActiveProcessors_(MAX_ACTIVE_PROCESSORS),
     maxConnections_(MAX_CONNECTIONS),
+    taskExpireTime_(0),
     overloadHysteresis_(0.8),
     overloadAction_(T_OVERLOAD_NO_ACTION),
     idleBufferMemLimit_(IDLE_BUFFER_MEM_LIMIT),
     overloaded_(false),
     nConnectionsDropped_(0),
-    nTotalConnectionsDropped_(0)  {
+    nTotalConnectionsDropped_(0) {
     setInputTransportFactory(inputTransportFactory);
     setOutputTransportFactory(outputTransportFactory);
     setInputProtocolFactory(inputProtocolFactory);
@@ -239,10 +245,7 @@ class TNonblockingServer : public TServer {
 
   ~TNonblockingServer() {}
 
-  void setThreadManager(boost::shared_ptr<ThreadManager> threadManager) {
-    threadManager_ = threadManager;
-    threadPoolProcessing_ = (threadManager != NULL);
-  }
+  void setThreadManager(boost::shared_ptr<ThreadManager> threadManager);
 
   boost::shared_ptr<ThreadManager> getThreadManager() {
     return threadManager_;
@@ -271,7 +274,7 @@ class TNonblockingServer : public TServer {
   }
 
   void addTask(boost::shared_ptr<Runnable> task) {
-    threadManager_->add(task);
+    threadManager_->add(task, 0LL, taskExpireTime_);
   }
 
   event_base* getEventBase() const {
@@ -406,6 +409,24 @@ class TNonblockingServer : public TServer {
   }
 
   /**
+   * Get the time in milliseconds after which a task expires (0 == infinite).
+   *
+   * @return a 64-bit time in milliseconds.
+   */
+  int64_t getTaskExpireTime() const {
+    return taskExpireTime_;
+  }
+
+  /**
+   * Set the time in milliseconds after which a task expires (0 == infinite).
+   *
+   * @param taskExpireTime a 64-bit time in milliseconds.
+   */
+  void setTaskExpireTime(int64_t taskExpireTime) {
+    taskExpireTime_ = taskExpireTime;
+  }
+
+  /**
    * Determine if the server is currently overloaded.
    * This function checks the maximums for open connections and connections
    * currently in processing, and sets an overload condition if they are
@@ -461,6 +482,14 @@ class TNonblockingServer : public TServer {
    * @param connection the TConection being returned.
    */
   void returnConnection(TConnection* connection);
+
+  /**
+   * Callback function that the threadmanager calls when a task reaches
+   * its expiration time.  It is needed to clean up the expired connection.
+   *
+   * @param task the runnable associated with the expired task.
+   */
+  void expireClose(boost::shared_ptr<Runnable> task);
 
   /**
    * C-callable event handler for listener events.  Provides a callback

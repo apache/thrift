@@ -21,6 +21,7 @@
 #define _THRIFT_CONCURRENCY_THREADMANAGER_H_ 1
 
 #include <boost/shared_ptr.hpp>
+#include <tr1/functional>
 #include <sys/types.h>
 #include "Thread.h"
 
@@ -56,6 +57,9 @@ class ThreadManager {
   ThreadManager() {}
 
  public:
+  class Task;
+  typedef std::tr1::function<void(boost::shared_ptr<Runnable>)> ExpireCallback;
+
   virtual ~ThreadManager() {}
 
   /**
@@ -125,6 +129,11 @@ class ThreadManager {
   virtual size_t pendingTaskCountMax() const = 0;
 
   /**
+   * Gets the number of tasks which have been expired without being run.
+   */
+  virtual size_t expiredTaskCount() = 0;
+
+  /**
    * Adds a task to be executed at some time in the future by a worker thread.
    *
    * This method will block if pendingTaskCountMax() in not zero and pendingTaskCount()
@@ -138,10 +147,14 @@ class ThreadManager {
    * is specified. Specific cases:
    * timeout = 0  : Wait forever to queue task.
    * timeout = -1 : Return immediately if pending task count exceeds specified max
+   * @param expiration when nonzero, the number of milliseconds the task is valid
+   * to be run; if exceeded, the task will be dropped off the queue and not run.
    *
    * @throws TooManyPendingTasksException Pending task count exceeds max pending task count
    */
-  virtual void add(boost::shared_ptr<Runnable>task, int64_t timeout=0LL) = 0;
+  virtual void add(boost::shared_ptr<Runnable>task,
+                   int64_t timeout=0LL,
+                   int64_t expiration=0LL) = 0;
 
   /**
    * Removes a pending task
@@ -154,6 +167,19 @@ class ThreadManager {
    * @return the task removed.
    */
   virtual boost::shared_ptr<Runnable> removeNextPending() = 0;
+
+  /**
+   * Remove tasks from front of task queue that have expired.
+   */
+  virtual void removeExpiredTasks() = 0;
+
+  /**
+   * Set a callback to be called when a task is expired and not run.
+   *
+   * @param expireCallback a function called with the shared_ptr<Runnable> for
+   * the expired task.
+   */
+  virtual void setExpireCallback(ExpireCallback expireCallback) = 0;
 
   static boost::shared_ptr<ThreadManager> newThreadManager();
 

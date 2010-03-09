@@ -770,6 +770,16 @@ void TNonblockingServer::registerEvents(event_base* base) {
   }
 }
 
+void TNonblockingServer::setThreadManager(boost::shared_ptr<ThreadManager> threadManager) {
+  threadManager_ = threadManager;
+  if (threadManager != NULL) {
+    threadManager->setExpireCallback(std::tr1::bind(&TNonblockingServer::expireClose, this, std::tr1::placeholders::_1));
+    threadPoolProcessing_ = true;
+  } else {
+    threadPoolProcessing_ = false;
+  }
+}
+
 bool  TNonblockingServer::serverOverloaded() {
   size_t activeConnections = numTConnections_ - connectionStack_.size();
   if (numActiveProcessors_ > maxActiveProcessors_ ||
@@ -805,6 +815,14 @@ bool TNonblockingServer::drainPendingTask() {
     }
   }
   return false;
+}
+
+void TNonblockingServer::expireClose(boost::shared_ptr<Runnable> task) {
+  TConnection* connection =
+    static_cast<TConnection::Task*>(task.get())->getTConnection();
+  assert(connection && connection->getServer()
+	 && connection->getState() == APP_WAIT_TASK);
+  connection->forceClose();
 }
 
 /**
