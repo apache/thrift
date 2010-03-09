@@ -86,7 +86,7 @@ class TSocket : public TTransport {
   /**
    * Shuts down communications on the socket.
    */
-  void close();
+  virtual void close();
 
   /**
    * Reads from the underlying socket.
