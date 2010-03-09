@@ -52,12 +52,16 @@ class Mutex::impl {
 
   void unlock() const { pthread_mutex_unlock(&pthread_mutex_); }
 
+  void* getUnderlyingImpl() const { return (void*) &pthread_mutex_; }
+
  private:
   mutable pthread_mutex_t pthread_mutex_;
   mutable bool initialized_;
 };
 
 Mutex::Mutex(Initializer init) : impl_(new Mutex::impl(init)) {}
+
+void* Mutex::getUnderlyingImpl() const { return impl_->getUnderlyingImpl(); }
 
 void Mutex::lock() const { impl_->lock(); }
 

@@ -21,6 +21,10 @@
 #define _THRIFT_CONCURRENCY_MONITOR_H_ 1
 
 #include "Exception.h"
+#include "Mutex.h"
+
+#include <boost/utility.hpp>
+
 
 namespace apache { namespace thrift { namespace concurrency {
 
@@ -29,7 +33,12 @@ namespace apache { namespace thrift { namespace concurrency {
  * notifying condition events requires that the caller own the mutex.  Mutex
  * lock and unlock operations can be performed independently of condition
  * events.  This is more or less analogous to java.lang.Object multi-thread
- * operations
+ * operations.
+ *
+ * Note the Monitor can create a new, internal mutex; alternatively, a
+ * separate Mutex can be passed in and the Monitor will re-use it without
+ * taking ownership.  It's the user's responsibility to make sure that the
+ * Mutex is not deallocated before the Monitor.
  *
  * Note that all methods are const.  Monitors implement logical constness, not
  * bit constness.  This allows const methods to call monitor methods without
@@ -37,13 +46,21 @@ namespace apache { namespace thrift { namespace concurrency {
  *
  * @version $Id:$
  */
-class Monitor {
-
+class Monitor : boost::noncopyable {
  public:
-
+  /** Creates a new mutex, and takes ownership of it. */
   Monitor();
 
+  /** Uses the provided mutex without taking ownership. */
+  explicit Monitor(Mutex* mutex);
+
+  /** Uses the mutex inside the provided Monitor without taking ownership. */
+  explicit Monitor(Monitor* monitor);
+
+  /** Deallocates the mutex only if we own it. */
   virtual ~Monitor();
+
+  Mutex& mutex() const;
 
   virtual void lock() const;
 
@@ -64,18 +81,11 @@ class Monitor {
 
 class Synchronized {
  public:
-
- Synchronized(const Monitor& value) :
-   monitor_(value) {
-   monitor_.lock();
-  }
-
-  ~Synchronized() {
-    monitor_.unlock();
-  }
+ Synchronized(const Monitor* monitor) : g(monitor->mutex()) { }
+ Synchronized(const Monitor& monitor) : g(monitor.mutex()) { }
 
  private:
-  const Monitor& monitor_;
+  Guard g;
 };
 
 

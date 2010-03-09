@@ -39,6 +39,8 @@ class Mutex {
   virtual bool trylock() const;
   virtual void unlock() const;
 
+  void* getUnderlyingImpl() const;
+
   static void DEFAULT_INITIALIZER(void*);
   static void ADAPTIVE_INITIALIZER(void*);
   static void RECURSIVE_INITIALIZER(void*);

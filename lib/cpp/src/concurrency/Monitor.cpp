@@ -21,6 +21,8 @@
 #include "Exception.h"
 #include "Util.h"
 
+#include <boost/scoped_ptr.hpp>
+
 #include <assert.h>
 #include <errno.h>
 
@@ -29,6 +31,8 @@
 #include <pthread.h>
 
 namespace apache { namespace thrift { namespace concurrency {
+
+using boost::scoped_ptr;
 
 /**
  * Monitor implementation using the POSIX pthread library
@@ -39,43 +43,48 @@ class Monitor::Impl {
 
  public:
 
-  Impl() :
-    mutexInitialized_(false),
-    condInitialized_(false) {
+  Impl()
+     : ownedMutex_(new Mutex()),
+       mutex_(NULL),
+       condInitialized_(false) {
+    init(ownedMutex_.get());
+  }
 
-    if (pthread_mutex_init(&pthread_mutex_, NULL) == 0) {
-      mutexInitialized_ = true;
+  Impl(Mutex* mutex)
+     : mutex_(NULL),
+       condInitialized_(false) {
+    init(mutex);
+  }
 
-      if (pthread_cond_init(&pthread_cond_, NULL) == 0) {
-        condInitialized_ = true;
-      }
-    }
-
-    if (!mutexInitialized_ || !condInitialized_) {
-      cleanup();
-      throw SystemResourceException();
-    }
+  Impl(Monitor* monitor)
+     : mutex_(NULL),
+       condInitialized_(false) {
+    init(&(monitor->mutex()));
   }
 
   ~Impl() { cleanup(); }
 
-  void lock() const { pthread_mutex_lock(&pthread_mutex_); }
-
-  void unlock() const { pthread_mutex_unlock(&pthread_mutex_); }
+  Mutex& mutex() { return *mutex_; }
+  void lock() { mutex().lock(); }
+  void unlock() { mutex().unlock(); }
 
   void wait(int64_t timeout) const {
+    assert(mutex_);
+    pthread_mutex_t* mutexImpl =
+      reinterpret_cast<pthread_mutex_t*>(mutex_->getUnderlyingImpl());
+    assert(mutexImpl);
 
     // XXX Need to assert that caller owns mutex
     assert(timeout >= 0LL);
     if (timeout == 0LL) {
-      int iret = pthread_cond_wait(&pthread_cond_, &pthread_mutex_);
+      int iret = pthread_cond_wait(&pthread_cond_, mutexImpl);
       assert(iret == 0);
     } else {
       struct timespec abstime;
       int64_t now = Util::currentTime();
       Util::toTimespec(abstime, now + timeout);
       int result = pthread_cond_timedwait(&pthread_cond_,
-                                          &pthread_mutex_,
+                                          mutexImpl,
                                           &abstime);
       if (result == ETIMEDOUT) {
         // pthread_cond_timedwait has been observed to return early on
@@ -100,13 +109,20 @@ class Monitor::Impl {
 
  private:
 
-  void cleanup() {
-    if (mutexInitialized_) {
-      mutexInitialized_ = false;
-      int iret = pthread_mutex_destroy(&pthread_mutex_);
-      assert(iret == 0);
+  void init(Mutex* mutex) {
+    mutex_ = mutex;
+
+    if (pthread_cond_init(&pthread_cond_, NULL) == 0) {
+      condInitialized_ = true;
     }
 
+    if (!condInitialized_) {
+      cleanup();
+      throw SystemResourceException();
+    }
+  }
+
+  void cleanup() {
     if (condInitialized_) {
       condInitialized_ = false;
       int iret = pthread_cond_destroy(&pthread_cond_);
@@ -114,15 +130,20 @@ class Monitor::Impl {
     }
   }
 
-  mutable pthread_mutex_t pthread_mutex_;
-  mutable bool mutexInitialized_;
+  scoped_ptr<Mutex> ownedMutex_;
+  Mutex* mutex_;
+
   mutable pthread_cond_t pthread_cond_;
   mutable bool condInitialized_;
 };
 
 Monitor::Monitor() : impl_(new Monitor::Impl()) {}
+Monitor::Monitor(Mutex* mutex) : impl_(new Monitor::Impl(mutex)) {}
+Monitor::Monitor(Monitor* monitor) : impl_(new Monitor::Impl(monitor)) {}
 
 Monitor::~Monitor() { delete impl_; }
+
+Mutex& Monitor::mutex() const { return impl_->mutex(); }
 
 void Monitor::lock() const { impl_->lock(); }
 
