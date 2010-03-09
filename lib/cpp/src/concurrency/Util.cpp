@@ -31,25 +31,24 @@
 
 namespace apache { namespace thrift { namespace concurrency {
 
-const int64_t Util::currentTime() {
+const int64_t Util::currentTimeTicks(int64_t ticksPerSec) {
   int64_t result;
 
 #if defined(HAVE_CLOCK_GETTIME)
   struct timespec now;
   int ret = clock_gettime(CLOCK_REALTIME, &now);
   assert(ret == 0);
-  toMilliseconds(result, now);
+  toTicks(result, now, ticksPerSec);
 #elif defined(HAVE_GETTIMEOFDAY)
   struct timeval now;
   int ret = gettimeofday(&now, NULL);
   assert(ret == 0);
-  toMilliseconds(result, now);
+  toTicks(result, now, ticksPerSec);
 #else
 #error "No high-precision clock is available."
 #endif // defined(HAVE_CLOCK_GETTIME)
 
   return result;
 }
-
 
 }}} // apache::thrift::concurrency
