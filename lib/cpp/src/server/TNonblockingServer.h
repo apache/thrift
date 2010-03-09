@@ -101,7 +101,7 @@ class TNonblockingServer : public TServer {
   /// Number of TConnection object we've created
   size_t numTConnections_;
 
-  /// Number of Connections processing or waiting to process 
+  /// Number of Connections processing or waiting to process
   size_t numActiveProcessors_;
 
   /// Limit for how many TConnection objects to cache
@@ -740,7 +740,7 @@ class TConnection {
    * Can be called either when processing is completed or when a waiting
    * task has been preemptively terminated (on overload).
    *
-   * @return true if successful, false if unable to notify (check errno). 
+   * @return true if successful, false if unable to notify (check errno).
    */
   bool notifyServer() {
     TConnection* connection = this;
