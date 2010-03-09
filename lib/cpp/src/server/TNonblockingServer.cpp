@@ -651,9 +651,11 @@ void TNonblockingServer::listenSocket() {
   }
 
   #ifdef IPV6_V6ONLY
-  int zero = 0;
-  if (-1 == setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &zero, sizeof(zero))) {
-    GlobalOutput("TServerSocket::listen() IPV6_V6ONLY");
+  if (res->ai_family == AF_INET6) {
+    int zero = 0;
+    if (-1 == setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &zero, sizeof(zero))) {
+      GlobalOutput("TServerSocket::listen() IPV6_V6ONLY");
+    }
   }
   #endif // #ifdef IPV6_V6ONLY
 
