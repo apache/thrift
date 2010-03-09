@@ -33,11 +33,17 @@ namespace apache { namespace thrift { namespace concurrency {
  * Example use:
  *  void* my_thread_main(void* arg);
  *  shared_ptr<ThreadFactory> factory = ...;
+ *  // To create a thread that executes my_thread_main once:
  *  shared_ptr<Thread> thread =
  *    factory->newThread(shared_ptr<FunctionRunner>(
  *      new FunctionRunner(my_thread_main, some_argument)));
  *  thread->start();
  *
+ *  bool A::foo();
+ *  A* a = new A();
+ *  // To create a thread that executes a.foo() every 100 milliseconds:
+ *  factory->newThread(shared_ptr<FunctionRunner>(
+ *    new FunctionRunner(std::tr1::bind(&A::foo, a), 100)))->start();
  *
  */
 
@@ -48,28 +54,47 @@ class FunctionRunner : public Runnable {
   // This a fully-generic void(void) callback for custom bindings.
   typedef std::tr1::function<void()> VoidFunc;
 
+  typedef std::tr1::function<bool()> BoolFunc;
+
   /**
    * Given a 'pthread_create' style callback, this FunctionRunner will
    * execute the given callback.  Note that the 'void*' return value is ignored.
    */
   FunctionRunner(PthreadFuncPtr func, void* arg)
-   : func_(std::tr1::bind(func, arg))
+   : func_(std::tr1::bind(func, arg)), repFunc_(0)
   { }
 
   /**
    * Given a generic callback, this FunctionRunner will execute it.
    */
   FunctionRunner(const VoidFunc& cob)
-   : func_(cob)
+   : func_(cob), repFunc_(0)
   { }
 
+  /**
+   * Given a bool foo(...) type callback, FunctionRunner will execute
+   * the callback repeatedly with 'intervalMs' milliseconds between the calls,
+   * until it returns false. Note that the actual interval between calls will
+   * be intervalMs plus execution time of the callback.
+   */
+  FunctionRunner(const BoolFunc& cob, int intervalMs)
+   : func_(0), repFunc_(cob), intervalMs_(intervalMs)
+  { }
 
   void run() {
-    func_();
+    if (repFunc_) {
+      while(repFunc_()) {
+        usleep(intervalMs_*1000);
+      }
+    } else {
+      func_();
+    }
   }
 
  private:
   VoidFunc func_;
+  BoolFunc repFunc_;
+  int intervalMs_;
 };
 
 }}} // apache::thrift::concurrency
