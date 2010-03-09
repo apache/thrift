@@ -461,7 +461,11 @@ void ThreadManager::Impl::removeWorker(size_t value) {
   void ThreadManager::Impl::add(shared_ptr<Runnable> value,
                                 int64_t timeout,
                                 int64_t expiration) {
-    Guard g(mutex_);
+    Guard g(mutex_, timeout);
+
+    if (!g) {
+      throw TimedOutException();
+    }
 
     if (state_ != ThreadManager::STARTED) {
       throw IllegalStateException();

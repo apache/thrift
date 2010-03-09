@@ -37,6 +37,7 @@ class Mutex {
   virtual ~Mutex() {}
   virtual void lock() const;
   virtual bool trylock() const;
+  virtual bool timedlock(int64_t milliseconds) const;
   virtual void unlock() const;
 
   void* getUnderlyingImpl() const;
@@ -75,17 +76,32 @@ private:
 
 class Guard {
  public:
-  Guard(const Mutex& value) : mutex_(value) {
-    mutex_.lock();
+  Guard(const Mutex& value, int64_t timeout = 0) : mutex_(&value) {
+    if (timeout == 0) {
+      value.lock();
+    } else if (timeout < 0) {
+      if (!value.trylock()) {
+        mutex_ = NULL;
+      }
+    } else {
+      if (!value.timedlock(timeout)) {
+        mutex_ = NULL;
+      }
+    }
   }
   ~Guard() {
-    mutex_.unlock();
+    if (mutex_) {
+      mutex_->unlock();
+    }
+  }
+
+  operator bool() const {
+    return (mutex_ != NULL);
   }
 
  private:
-  const Mutex& mutex_;
+  const Mutex* mutex_;
 };
-
 
 // Can be used as second argument to RWGuard to make code more readable
 // as to whether we're doing acquireRead() or acquireWrite().

@@ -18,6 +18,7 @@
  */
 
 #include "Mutex.h"
+#include "Util.h"
 
 #include <assert.h>
 #include <pthread.h>
@@ -50,6 +51,12 @@ class Mutex::impl {
 
   bool trylock() const { return (0 == pthread_mutex_trylock(&pthread_mutex_)); }
 
+  bool timedlock(int64_t milliseconds) const {
+    struct timespec ts;
+    Util::toTimespec(ts, milliseconds);
+    return (0 == pthread_mutex_timedlock(&pthread_mutex_, &ts));
+  }
+
   void unlock() const { pthread_mutex_unlock(&pthread_mutex_); }
 
   void* getUnderlyingImpl() const { return (void*) &pthread_mutex_; }
@@ -66,6 +73,8 @@ void* Mutex::getUnderlyingImpl() const { return impl_->getUnderlyingImpl(); }
 void Mutex::lock() const { impl_->lock(); }
 
 bool Mutex::trylock() const { return impl_->trylock(); }
+
+bool Mutex::timedlock(int64_t ms) const { return impl_->timedlock(ms); }
 
 void Mutex::unlock() const { impl_->unlock(); }
 
