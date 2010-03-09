@@ -169,17 +169,20 @@ void TSocketPool::setCurrentServer(const shared_ptr<TSocketPoolServer> &server) 
 
 /* TODO: without apc we ignore a lot of functionality from the php version */
 void TSocketPool::open() {
-  if (randomize_) {
+
+  unsigned int numServers = servers_.size();
+  if (numServers == 1 && isOpen()) {
+    // only one server that is already connected to
+    return;
+  }
+
+  if (randomize_ && numServers > 1) {
     random_shuffle(servers_.begin(), servers_.end());
   }
 
-  unsigned int numServers = servers_.size();
   for (unsigned int i = 0; i < numServers; ++i) {
 
     shared_ptr<TSocketPoolServer> &server = servers_[i];
-    bool retryIntervalPassed = (server->lastFailTime_ == 0);
-    bool isLastServer = alwaysTryLast_ ? (i == (numServers - 1)) : false;
-
     // Impersonate the server socket
     setCurrentServer(server);
 
@@ -187,6 +190,9 @@ void TSocketPool::open() {
       // already open means we're done
       return;
     }
+
+    bool retryIntervalPassed = (server->lastFailTime_ == 0);
+    bool isLastServer = alwaysTryLast_ ? (i == (numServers - 1)) : false;
 
     if (server->lastFailTime_ > 0) {
       // The server was marked as down, so check if enough time has elapsed to retry
