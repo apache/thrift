@@ -148,6 +148,13 @@ class ThreadManager {
    */
   virtual void remove(boost::shared_ptr<Runnable> task) = 0;
 
+  /**
+   * Remove the next pending task which would be run.
+   *
+   * @return the task removed.
+   */
+  virtual boost::shared_ptr<Runnable> removeNextPending() = 0;
+
   static boost::shared_ptr<ThreadManager> newThreadManager();
 
   /**

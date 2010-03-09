@@ -117,6 +117,8 @@ class ThreadManager::Impl : public ThreadManager  {
 
   void remove(shared_ptr<Runnable> task);
 
+  shared_ptr<Runnable> removeNextPending();
+
 private:
   void stopImpl(bool join);
 
@@ -161,6 +163,10 @@ class ThreadManager::Task : public Runnable {
       runnable_->run();
       state_ = COMPLETE;
     }
+  }
+
+  shared_ptr<Runnable> getRunnable() {
+    return runnable_;
   }
 
  private:
@@ -456,6 +462,22 @@ void ThreadManager::Impl::remove(shared_ptr<Runnable> task) {
   if (state_ != ThreadManager::STARTED) {
     throw IllegalStateException();
   }
+}
+
+boost::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
+  Guard g(mutex_);
+  if (state_ != ThreadManager::STARTED) {
+    throw IllegalStateException();
+  }
+
+  if (tasks_.empty()) {
+    return boost::shared_ptr<Runnable>();
+  }
+
+  shared_ptr<ThreadManager::Task> task = tasks_.front();
+  tasks_.pop();
+  
+  return task->getRunnable();
 }
 
 class SimpleThreadManager : public ThreadManager::Impl {
