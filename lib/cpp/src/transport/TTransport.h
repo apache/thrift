@@ -102,7 +102,8 @@ class TTransport {
     while (have < len) {
       get = read(buf+have, len-have);
       if (get <= 0) {
-        throw TTransportException("No more data to read.");
+        throw TTransportException(TTransportException::END_OF_FILE,
+				  "No more data to read.");
       }
       have += get;
     }
