@@ -338,6 +338,10 @@ class TFileTransport : public TFileReaderTransport,
   uint32_t corruptedEventSleepTime_;
   static const uint32_t DEFAULT_CORRUPTED_SLEEP_TIME_US = 1 * 1000 * 1000;
 
+  // sleep duration in seconds when an IO error is encountered in the writer thread
+  uint32_t writerThreadIOErrorSleepTime_;
+  static const uint32_t DEFAULT_WRITER_THREAD_SLEEP_TIME_US = 60 * 1000 * 1000;
+
   // writer thread id
   pthread_t writerThreadId_;
 
