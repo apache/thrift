@@ -266,7 +266,7 @@ inline uint32_t TDenseProtocol::vlqWrite(uint64_t vlq) {
 uint32_t TDenseProtocol::writeMessageBegin(const std::string& name,
                                            const TMessageType messageType,
                                            const int32_t seqid) {
-  throw TApplicationException("TDenseProtocol doesn't work with messages (yet).");
+  throw TException("TDenseProtocol doesn't work with messages (yet).");
 
   int32_t version = (VERSION_2) | ((int32_t)messageType);
   uint32_t wsize = 0;
@@ -290,7 +290,7 @@ uint32_t TDenseProtocol::writeStructBegin(const char* name) {
 
     if (type_spec_ == NULL) {
       resetState();
-      throw TApplicationException("TDenseProtocol: No type specified.");
+      throw TException("TDenseProtocol: No type specified.");
     } else {
       assert(type_spec_->ttype == T_STRUCT);
       ts_stack_.push_back(type_spec_);
@@ -481,7 +481,7 @@ uint32_t TDenseProtocol::subWriteString(const std::string& str) {
 uint32_t TDenseProtocol::readMessageBegin(std::string& name,
                                           TMessageType& messageType,
                                           int32_t& seqid) {
-  throw TApplicationException("TDenseProtocol doesn't work with messages (yet).");
+  throw TException("TDenseProtocol doesn't work with messages (yet).");
 
   uint32_t xfer = 0;
   int32_t sz;
@@ -514,7 +514,7 @@ uint32_t TDenseProtocol::readStructBegin(string& name) {
 
     if (type_spec_ == NULL) {
       resetState();
-      throw TApplicationException("TDenseProtocol: No type specified.");
+      throw TException("TDenseProtocol: No type specified.");
     } else {
       assert(type_spec_->ttype == T_STRUCT);
       ts_stack_.push_back(type_spec_);
