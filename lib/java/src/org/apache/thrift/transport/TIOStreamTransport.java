@@ -122,11 +122,16 @@ public class TIOStreamTransport extends TTransport {
     if (inputStream_ == null) {
       throw new TTransportException(TTransportException.NOT_OPEN, "Cannot read from null inputStream");
     }
+    int bytesRead;
     try {
-      return inputStream_.read(buf, off, len);
+      bytesRead = inputStream_.read(buf, off, len);
     } catch (IOException iox) {
       throw new TTransportException(TTransportException.UNKNOWN, iox);
     }
+    if (bytesRead < 0) {
+      throw new TTransportException(TTransportException.END_OF_FILE);
+    }
+    return bytesRead;
   }
 
   /**
