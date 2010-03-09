@@ -168,7 +168,6 @@ const int struct_is_union = 1;
 %type<ttype>     TypeDefinition
 
 %type<ttypedef>  Typedef
-%type<ttype>     DefinitionType
 
 %type<ttype>     TypeAnnotations
 %type<ttype>     TypeAnnotationList
@@ -483,9 +482,9 @@ TypeDefinition:
     }
 
 Typedef:
-  tok_typedef DefinitionType tok_identifier
+  tok_typedef FieldType tok_identifier
     {
-      pdebug("TypeDef -> tok_typedef DefinitionType tok_identifier");
+      pdebug("TypeDef -> tok_typedef FieldType tok_identifier");
       t_typedef *td = new t_typedef(g_program, $2, $3);
       $$ = td;
     }
@@ -931,18 +930,6 @@ FieldValue:
 |
     {
       $$ = NULL;
-    }
-
-DefinitionType:
-  BaseType
-    {
-      pdebug("DefinitionType -> BaseType");
-      $$ = $1;
-    }
-| ContainerType
-    {
-      pdebug("DefinitionType -> ContainerType");
-      $$ = $1;
     }
 
 FunctionType:
