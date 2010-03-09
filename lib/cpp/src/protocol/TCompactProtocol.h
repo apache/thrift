@@ -109,6 +109,9 @@ class TCompactProtocol : public TProtocol {
     boolValue_.hasBoolValue = false;
   }
 
+  ~TCompactProtocol() {
+    free(string_buf_);
+  }
 
 
   /**
