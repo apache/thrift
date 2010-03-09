@@ -86,10 +86,29 @@ class Guard {
   const Mutex& mutex_;
 };
 
+
+// Can be used as second argument to RWGuard to make code more readable
+// as to whether we're doing acquireRead() or acquireWrite().
+enum RWGuardType {
+  RW_READ = 0,
+  RW_WRITE = 1,
+};
+
+
 class RWGuard {
   public:
-    RWGuard(const ReadWriteMutex& value, bool write = 0) : rw_mutex_(value) {
+    RWGuard(const ReadWriteMutex& value, bool write = false)
+         : rw_mutex_(value) {
       if (write) {
+        rw_mutex_.acquireWrite();
+      } else {
+        rw_mutex_.acquireRead();
+      }
+    }
+
+    RWGuard(const ReadWriteMutex& value, RWGuardType type)
+         : rw_mutex_(value) {
+      if (type == RW_WRITE) {
         rw_mutex_.acquireWrite();
       } else {
         rw_mutex_.acquireRead();
