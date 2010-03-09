@@ -125,6 +125,12 @@ void TSocketPool::addServer(const string& host, int port) {
   servers_.push_back(shared_ptr<TSocketPoolServer>(new TSocketPoolServer(host, port)));
 }
 
+void TSocketPool::addServer(shared_ptr<TSocketPoolServer> &server) {
+  if (server) {
+    servers_.push_back(server);
+  }
+}
+
 void TSocketPool::setServers(const vector< shared_ptr<TSocketPoolServer> >& servers) {
   servers_ = servers;
 }

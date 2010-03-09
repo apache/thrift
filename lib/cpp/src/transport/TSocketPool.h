@@ -113,6 +113,11 @@ class TSocketPool : public TSocket {
    void addServer(const std::string& host, int port);
 
    /**
+    * Add a server to the pool
+    */
+  void addServer(boost::shared_ptr<TSocketPoolServer> &server);
+
+   /**
     * Set list of servers in this pool
     */
   void setServers(const std::vector< boost::shared_ptr<TSocketPoolServer> >& servers);
