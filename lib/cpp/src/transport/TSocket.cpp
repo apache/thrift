@@ -230,7 +230,7 @@ void TSocket::open() {
   }
 
   // Validate port number
-  if (port_ < 0 || port_ > 65536) {
+  if (port_ < 0 || port_ > 0xFFFF) {
     throw TTransportException(TTransportException::NOT_OPEN, "Specified port is invalid");
   }
 
@@ -238,7 +238,7 @@ void TSocket::open() {
   res = NULL;
   res0 = NULL;
   int error;
-  char port[sizeof("65536")];
+  char port[sizeof("65535")];
   std::memset(&hints, 0, sizeof(hints));
   hints.ai_family = PF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
