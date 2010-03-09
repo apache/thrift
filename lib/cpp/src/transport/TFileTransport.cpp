@@ -498,6 +498,22 @@ uint32_t TFileTransport::readAll(uint8_t* buf, uint32_t len) {
   return have;
 }
 
+bool TFileTransport::peek() {
+  // check if there is an event ready to be read
+  if (!currentEvent_) {
+    currentEvent_ = readEvent();
+  }
+
+  // did not manage to read an event from the file. This could have happened
+  // if the timeout expired or there was some other error
+  if (!currentEvent_) {
+    return false;
+  }
+
+  // check if there is anything to read
+  return (currentEvent_->eventSize_ - currentEvent_->eventBuffPos_) > 0;
+}
+
 uint32_t TFileTransport::read(uint8_t* buf, uint32_t len) {
   // check if there an event is ready to be read
   if (!currentEvent_) {
