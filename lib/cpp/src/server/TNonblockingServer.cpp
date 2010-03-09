@@ -62,6 +62,9 @@ class TConnection::Task: public Runnable {
       cerr << "TNonblockingServer client died: " << ttx.what() << endl;
     } catch (TException& x) {
       cerr << "TNonblockingServer exception: " << x.what() << endl;
+    } catch (bad_alloc&) {
+      cerr << "TNonblockingServer caught bad_alloc exception.";
+      exit(-1);
     } catch (...) {
       cerr << "TNonblockingServer uncaught exception." << endl;
     }
