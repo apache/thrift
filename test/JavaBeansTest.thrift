@@ -32,3 +32,8 @@ struct OneOfEachBeans {
   10: list<i16> i16_list,
   11: list<i64> i64_list
 }
+
+
+service Service {
+  i64 mymethod(i64 blah);
+}
