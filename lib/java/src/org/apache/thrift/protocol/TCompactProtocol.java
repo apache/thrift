@@ -20,11 +20,11 @@
 
 package org.apache.thrift.protocol;
 
-import java.util.Stack;
 import java.io.UnsupportedEncodingException;
+import java.util.Stack;
 
-import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransport;
 
 /**
  * TCompactProtocol2 is the Java implementation of the compact protocol specified
@@ -729,7 +729,7 @@ public final class TCompactProtocol extends TProtocol {
    * Given a TCompactProtocol.Types constant, convert it to its corresponding 
    * TType value.
    */
-  private byte getTType(byte type) {
+  private byte getTType(byte type) throws TProtocolException {
     switch ((byte)(type & 0x0f)) {
       case TType.STOP:
         return TType.STOP;
@@ -757,7 +757,7 @@ public final class TCompactProtocol extends TProtocol {
       case Types.STRUCT:
         return TType.STRUCT;
       default:
-        throw new RuntimeException("don't know what type: " + (byte)(type & 0x0f));
+        throw new TProtocolException("don't know what type: " + (byte)(type & 0x0f));
     }
   }
 
