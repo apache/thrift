@@ -135,6 +135,7 @@ class Mutex::impl {
   bool trylock() const { return (0 == pthread_mutex_trylock(&pthread_mutex_)); }
 
   bool timedlock(int64_t milliseconds) const {
+#if defined(_POSIX_TIMEOUTS) && _POSIX_TIMEOUTS >= 200112L
     PROFILE_MUTEX_START_LOCK();
 
     struct timespec ts;
@@ -147,6 +148,11 @@ class Mutex::impl {
 
     PROFILE_MUTEX_NOT_LOCKED();
     return false;
+#else
+    // If pthread_mutex_timedlock isn't supported, the safest thing to do
+    // is just do a nonblocking trylock.
+    return trylock();
+#endif
   }
 
   void unlock() const {
