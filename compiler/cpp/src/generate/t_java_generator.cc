@@ -2007,14 +2007,17 @@ void t_java_generator::generate_java_meta_data_map(ofstream& out,
   vector<t_field*>::const_iterator f_iter;
 
   // Static Map with fieldID -> FieldMetaData mappings
-  indent(out) << "public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{" << endl;
+  indent(out) << "public static final Map<_Fields, FieldMetaData> metaDataMap;" << endl;
+  indent(out) << "static {" << endl;
+  indent_up();
+
+  indent(out) << "Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);" << endl;
 
   // Populate map
-  indent_up();
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = *f_iter;
     std::string field_name = field->get_name();
-    indent(out) << "put(_Fields." << constant_name(field_name) << ", new FieldMetaData(\"" << field_name << "\", ";
+    indent(out) << "tmpMap.put(_Fields." << constant_name(field_name) << ", new FieldMetaData(\"" << field_name << "\", ";
 
     // Set field requirement type (required, optional, etc.)
     if (field->get_req() == t_field::T_REQUIRED) {
@@ -2029,12 +2032,9 @@ void t_java_generator::generate_java_meta_data_map(ofstream& out,
     generate_field_value_meta_data(out, field->get_type());
     out  << "));" << endl;
   }
-  indent_down();
-  indent(out) << "}});" << endl << endl;
 
-  // Static initializer to populate global class to struct metadata map
-  indent(out) << "static {" << endl;
-  indent_up();
+  indent(out) << "metaDataMap = Collections.unmodifiableMap(tmpMap);" << endl;
+
   indent(out) << "FieldMetaData.addStructMetaDataMap(" << type_name(tstruct) << ".class, metaDataMap);" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
