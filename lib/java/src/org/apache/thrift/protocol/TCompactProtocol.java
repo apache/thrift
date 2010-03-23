@@ -41,7 +41,7 @@ public final class TCompactProtocol extends TProtocol {
   private final static TField TSTOP = new TField("", TType.STOP, (short)0);
 
   private final static byte[] ttypeToCompactType = new byte[16];
-  
+
   static {
     ttypeToCompactType[TType.STOP] = TType.STOP;
     ttypeToCompactType[TType.BOOL] = Types.BOOLEAN_TRUE;
@@ -56,24 +56,24 @@ public final class TCompactProtocol extends TProtocol {
     ttypeToCompactType[TType.MAP] = Types.MAP;
     ttypeToCompactType[TType.STRUCT] = Types.STRUCT;
   }
-  
+
   /**
    * TProtocolFactory that produces TCompactProtocols.
    */
   public static class Factory implements TProtocolFactory {
     public Factory() {}
-    
+
     public TProtocol getProtocol(TTransport trans) {
       return new TCompactProtocol(trans);
     }
   }
-  
+
   private static final byte PROTOCOL_ID = (byte)0x82;
   private static final byte VERSION = 1;
   private static final byte VERSION_MASK = 0x1f; // 0001 1111
   private static final byte TYPE_MASK = (byte)0xE0; // 1110 0000
   private static final int  TYPE_SHIFT_AMOUNT = 5;
-  
+
   /**
    * All of the on-wire type codes.
    */
@@ -91,27 +91,27 @@ public final class TCompactProtocol extends TProtocol {
     public static final byte MAP            = 0x0B;
     public static final byte STRUCT         = 0x0C;
   }
-  
+
   /** 
    * Used to keep track of the last field for the current and previous structs,
    * so we can do the delta stuff.
    */
   private Stack<Short> lastField_ = new Stack<Short>();
-  
+
   private short lastFieldId_ = 0;
-  
-  /** 
+
+  /**
    * If we encounter a boolean field begin, save the TField here so it can 
    * have the value incorporated.
    */
   private TField booleanField_ = null;
-  
+
   /**
    * If we read a field header, and it's a boolean field, save the boolean 
    * value here so that readBool can use it.
    */
   private Boolean boolValue_ = null;
-  
+
   /**
    * Create a TCompactProtocol.
    *
@@ -120,8 +120,13 @@ public final class TCompactProtocol extends TProtocol {
   public TCompactProtocol(TTransport transport) {
     super(transport);
   }
-  
-  
+
+  @Override
+  public void reset() {
+    lastField_.clear();
+    lastFieldId_ = 0;
+  }
+
   //
   // Public Writing methods.
   //
@@ -155,7 +160,7 @@ public final class TCompactProtocol extends TProtocol {
   public void writeStructEnd() throws TException {
     lastFieldId_ = lastField_.pop();
   }
-  
+
   /**
    * Write a field header containing the field id and field type. If the
    * difference between the current field id and the last one is small (< 15),
@@ -260,7 +265,7 @@ public final class TCompactProtocol extends TProtocol {
   public void writeI16(short i16) throws TException {
     writeVarint32(intToZigZag(i16));
   }
-  
+
   /**
    * Write an i32 as a zigzag varint.
    */
@@ -307,7 +312,7 @@ public final class TCompactProtocol extends TProtocol {
   // These methods are called by structs, but don't actually have any wire 
   // output or purpose.
   // 
-  
+
   public void writeMessageEnd() throws TException {}
   public void writeMapEnd() throws TException {}
   public void writeListEnd() throws TException {}
@@ -370,7 +375,7 @@ public final class TCompactProtocol extends TProtocol {
     }
     trans_.write(varint64out, 0, idx);
   }
-  
+
   /**
    * Convert l into a zigzag long. This allows negative numbers to be 
    * represented compactly as a varint.
@@ -378,7 +383,7 @@ public final class TCompactProtocol extends TProtocol {
   private long longToZigzag(long l) {
     return (l << 1) ^ (l >> 63);
   }
-  
+
   /**
    * Convert n into a zigzag int. This allows negative numbers to be 
    * represented compactly as a varint.
@@ -386,7 +391,7 @@ public final class TCompactProtocol extends TProtocol {
   private int intToZigZag(int n) {
     return (n << 1) ^ (n >> 31);
   }
-  
+
   /**
    * Convert a long into little-endian bytes in buf starting at off and going 
    * until off+7.
@@ -650,11 +655,11 @@ public final class TCompactProtocol extends TProtocol {
   public void readMapEnd() throws TException {}
   public void readListEnd() throws TException {}
   public void readSetEnd() throws TException {}
-  
+
   //
   // Internal reading methods
   //
-  
+
   /**
    * Read an i32 from the wire as a varint. The MSB of each byte is set
    * if there is another byte to follow. This can read up to 5 bytes.
@@ -684,14 +689,14 @@ public final class TCompactProtocol extends TProtocol {
   //
   // encoding helpers
   //
-  
+
   /**
    * Convert from zigzag int to int.
    */
   private int zigzagToInt(int n) {
     return (n >>> 1) ^ -(n & 1);
   }
-  
+
   /** 
    * Convert from zigzag long to long.
    */
@@ -767,5 +772,4 @@ public final class TCompactProtocol extends TProtocol {
   private byte getCompactType(byte ttype) {
     return ttypeToCompactType[ttype];
   }
-  
 }

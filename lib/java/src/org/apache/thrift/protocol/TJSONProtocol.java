@@ -301,6 +301,13 @@ public class TJSONProtocol extends TProtocol {
     super(trans);
   }
 
+  @Override
+  public void reset() {
+    contextStack_.clear();
+    context_ = new JSONBaseContext();
+    reader_ = new LookaheadReader();
+  }
+
   // Temporary buffer used by several methods
   private byte[] tmpbuf_ = new byte[4];
 

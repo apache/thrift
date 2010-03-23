@@ -75,9 +75,14 @@ public class PartialDeserializeTest {
 
   public static void testPartialDeserialize(TProtocolFactory protocolFactory, TBase input, TBase output, TBase expected, TFieldIdEnum ... fieldIdPath) throws TException {
     byte[] record = new TSerializer(protocolFactory).serialize(input);
-    new TDeserializer(protocolFactory).partialDeserialize(output, record, fieldIdPath);
-    if(!output.equals(expected))
-      throw new RuntimeException("with " + protocolFactory.toString() + ", expected " + expected + " but got " + output);
+    TDeserializer deserializer = new TDeserializer(protocolFactory);
+    for (int i = 0; i < 2; i++) {
+      TBase outputCopy = output.deepCopy();
+      deserializer.partialDeserialize(outputCopy, record, fieldIdPath);
+      if(!outputCopy.equals(expected)) {
+        throw new RuntimeException("on attempt " + i + ", with " + protocolFactory.toString() + ", expected " + expected + " but got " + outputCopy);
+      }
+    }
   }
 }
 

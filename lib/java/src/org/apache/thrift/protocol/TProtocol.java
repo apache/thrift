@@ -142,4 +142,10 @@ public abstract class TProtocol {
   public abstract String readString() throws TException;
 
   public abstract byte[] readBinary() throws TException;
+
+  /**
+   * Reset any internal state back to a blank slate. This method only needs to
+   * be implemented for stateful protocols.
+   */
+  public void reset() {}
 }

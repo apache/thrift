@@ -63,8 +63,12 @@ public class TDeserializer {
    * @param bytes The array to read from
    */
   public void deserialize(TBase base, byte[] bytes) throws TException {
-    trans_.reset(bytes);
-    base.read(protocol_);
+    try {
+      trans_.reset(bytes);
+      base.read(protocol_);
+    } finally {
+      protocol_.reset();
+    }
   }
 
   /**
@@ -80,6 +84,8 @@ public class TDeserializer {
       deserialize(base, data.getBytes(charset));
     } catch (UnsupportedEncodingException uex) {
       throw new TException("JVM DOES NOT SUPPORT ENCODING: " + charset);
+    } finally {
+      protocol_.reset();
     }
   }
 
@@ -92,46 +98,52 @@ public class TDeserializer {
    * @throws TException 
    */
   public void partialDeserialize(TBase tb, byte[] bytes, TFieldIdEnum ... fieldIdPath) throws TException {
-    // if there are no elements in the path, then the user is looking for the 
-    // regular deserialize method
-    // TODO: it might be nice not to have to do this check every time to save
-    // some performance.
-    if (fieldIdPath.length == 0) {
-      deserialize(tb, bytes);
-      return;
-    }
-
-    trans_.reset(bytes);
-
-    // index into field ID path being currently searched for
-    int curPathIndex = 0;
-
-    protocol_.readStructBegin();
-
-    while (curPathIndex < fieldIdPath.length) {
-      TField field = protocol_.readFieldBegin();
-      // we can stop searching if we either see a stop or we go past the field 
-      // id we're looking for (since fields should now be serialized in asc
-      // order).
-      if (field.type == TType.STOP || field.id > fieldIdPath[curPathIndex].getThriftFieldId()) { 
+    try {
+      // if there are no elements in the path, then the user is looking for the 
+      // regular deserialize method
+      // TODO: it might be nice not to have to do this check every time to save
+      // some performance.
+      if (fieldIdPath.length == 0) {
+        deserialize(tb, bytes);
         return;
       }
 
-      if (field.id != fieldIdPath[curPathIndex].getThriftFieldId()) {
-        // Not the field we're looking for. Skip field.
-        TProtocolUtil.skip(protocol_, field.type);
-        protocol_.readFieldEnd();
-      } else {
-        // This field is the next step in the path. Step into field.
-        curPathIndex++;
-        if (curPathIndex < fieldIdPath.length) {
-          protocol_.readStructBegin();
+      trans_.reset(bytes);
+
+      // index into field ID path being currently searched for
+      int curPathIndex = 0;
+
+      protocol_.readStructBegin();
+
+      while (curPathIndex < fieldIdPath.length) {
+        TField field = protocol_.readFieldBegin();
+        // we can stop searching if we either see a stop or we go past the field 
+        // id we're looking for (since fields should now be serialized in asc
+        // order).
+        if (field.type == TType.STOP || field.id > fieldIdPath[curPathIndex].getThriftFieldId()) { 
+          return;
+        }
+
+        if (field.id != fieldIdPath[curPathIndex].getThriftFieldId()) {
+          // Not the field we're looking for. Skip field.
+          TProtocolUtil.skip(protocol_, field.type);
+          protocol_.readFieldEnd();
+        } else {
+          // This field is the next step in the path. Step into field.
+          curPathIndex++;
+          if (curPathIndex < fieldIdPath.length) {
+            protocol_.readStructBegin();
+          }
         }
       }
-    }
 
-    // when this line is reached, iprot will be positioned at the start of tb.
-    tb.read(protocol_);
+      // when this line is reached, iprot will be positioned at the start of tb.
+      tb.read(protocol_);
+    } catch (Exception e) {
+      throw new TException(e);
+    } finally {
+      protocol_.reset();
+    }
   }
 
   /**
@@ -145,4 +157,3 @@ public class TDeserializer {
     deserialize(base, data.getBytes());
   }
 }
-
