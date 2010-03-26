@@ -38,30 +38,42 @@ import thrift.test.Srv;
 
 public abstract class ProtocolTestBase extends TestCase {
 
+  protected abstract boolean canBeUsedNaked();
+  
   protected abstract TProtocolFactory getFactory();
 
   public void testProtocol() throws Exception {
-    internalTestNakedByte();
+    if (canBeUsedNaked()) {
+      internalTestNakedByte();
+    }
     for (int i = 0; i < 128; i++) {
       internalTestByteField((byte)i);
       internalTestByteField((byte)-i);
     }
 
     for (int s : Arrays.asList(0, 1, 7, 150, 15000, 0x7fff, -1, -7, -150, -15000, -0x7fff)) {
-      internalTestNakedI16((short)s);
+      if (canBeUsedNaked()) {
+        internalTestNakedI16((short)s);
+      }
       internalTestI16Field((short)s);
     }
 
     for (int i : Arrays.asList(0, 1, 7, 150, 15000, 31337, 0xffff, 0xffffff, -1, -7, -150, -15000, -0xffff, -0xffffff)) {
-      internalTestNakedI32(i);
+      if (canBeUsedNaked()) {
+        internalTestNakedI32(i);
+      }
       internalTestI32Field(i);
     }
 
-    internalTestNakedI64(0);
+    if (canBeUsedNaked()) {
+      internalTestNakedI64(0);
+    }
     internalTestI64Field(0);
     for (int i = 0; i < 62; i++) {
-      internalTestNakedI64(1L << i);
-      internalTestNakedI64(-(1L << i));
+      if (canBeUsedNaked()) {
+        internalTestNakedI64(1L << i);
+        internalTestNakedI64(-(1L << i));
+      }
       internalTestI64Field(1L << i);
       internalTestI64Field(-(1L << i));
     }
@@ -69,12 +81,16 @@ public abstract class ProtocolTestBase extends TestCase {
     internalTestDouble();
 
     for (String s : Arrays.asList("", "short", "borderlinetiny", "a bit longer than the smallest possible")) {
-      internalTestNakedString(s);
+      if (canBeUsedNaked()) {
+        internalTestNakedString(s);
+      }
       internalTestStringField(s);
     }
 
     for (byte[] b : Arrays.asList(new byte[0], new byte[]{0,1,2,3,4,5,6,7,8,9,10}, new byte[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14}, new byte[128])) {
-      internalTestNakedBinary(b);
+      if (canBeUsedNaked()) {
+        internalTestNakedBinary(b);
+      }
       internalTestBinaryField(b);
     }
 
@@ -91,7 +107,7 @@ public abstract class ProtocolTestBase extends TestCase {
   }
 
   private void internalTestNakedByte() throws Exception {
-    TMemoryBuffer buf = new TMemoryBuffer(0);
+    TMemoryBuffer buf = new TMemoryBuffer(1000);
     TProtocol proto = getFactory().getProtocol(buf);
     proto.writeByte((byte)123);
     assertEquals((byte) 123, proto.readByte());
@@ -167,10 +183,24 @@ public abstract class ProtocolTestBase extends TestCase {
   }
 
   private void internalTestDouble() throws Exception {
-    TMemoryBuffer buf = new TMemoryBuffer(1000);
-    TProtocol proto = getFactory().getProtocol(buf);
-    proto.writeDouble(123.456);
-    assertEquals(123.456, proto.readDouble());
+    if (canBeUsedNaked()) {
+      TMemoryBuffer buf = new TMemoryBuffer(1000);
+      TProtocol proto = getFactory().getProtocol(buf);
+      proto.writeDouble(123.456);
+      assertEquals(123.456, proto.readDouble());
+    }
+    
+    internalTestStructField(new StructFieldTestCase(TType.DOUBLE, (short)15) {
+      @Override
+      public void readMethod(TProtocol proto) throws TException {
+        assertEquals(123.456, proto.readDouble());
+      }
+
+      @Override
+      public void writeMethod(TProtocol proto) throws TException {
+        proto.writeDouble(123.456);
+      }
+    });
   }
 
   private void internalTestNakedString(String str) throws Exception {

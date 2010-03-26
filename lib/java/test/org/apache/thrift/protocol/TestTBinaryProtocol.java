@@ -6,4 +6,9 @@ public class TestTBinaryProtocol extends ProtocolTestBase {
   protected TProtocolFactory getFactory() {
     return new TBinaryProtocol.Factory();
   }
+
+  @Override
+  protected boolean canBeUsedNaked() {
+    return true;
+  }
 }

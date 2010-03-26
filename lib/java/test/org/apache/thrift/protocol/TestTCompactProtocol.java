@@ -28,4 +28,9 @@ public class TestTCompactProtocol extends ProtocolTestBase {
   protected TProtocolFactory getFactory() {
     return new TCompactProtocol.Factory();
   }
+
+  @Override
+  protected boolean canBeUsedNaked() {
+    return true;
+  }
 }
