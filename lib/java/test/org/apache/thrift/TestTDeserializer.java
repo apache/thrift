@@ -16,19 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.thrift;
 
-
-package org.apache.thrift.test;
-
-import org.apache.thrift.TBase;
-import org.apache.thrift.TDeserializer;
-import org.apache.thrift.TException;
-import org.apache.thrift.TSerializer;
-import org.apache.thrift.TFieldIdEnum;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.test.Fixtures;
 
 import thrift.test.Backwards;
 import thrift.test.OneOfEach;
@@ -36,7 +30,9 @@ import thrift.test.PrimitiveThenStruct;
 import thrift.test.StructWithAUnion;
 import thrift.test.TestUnion;
 
-public class PartialDeserializeTest {
+import junit.framework.TestCase;
+
+public class TestTDeserializer extends TestCase {
 
   private static final TProtocolFactory[] PROTOCOLS = new TProtocolFactory[] {
     new TBinaryProtocol.Factory(), 
@@ -44,7 +40,7 @@ public class PartialDeserializeTest {
     new TJSONProtocol.Factory()
   };
 
-  public static void main(String[] args) throws TException {
+  public void testPartialDeserialize() throws Exception {
     //Root:StructWithAUnion
     //  1:Union
     //    1.3:OneOfEach
@@ -79,10 +75,9 @@ public class PartialDeserializeTest {
     for (int i = 0; i < 2; i++) {
       TBase outputCopy = output.deepCopy();
       deserializer.partialDeserialize(outputCopy, record, fieldIdPath);
-      if(!outputCopy.equals(expected)) {
-        throw new RuntimeException("on attempt " + i + ", with " + protocolFactory.toString() + ", expected " + expected + " but got " + outputCopy);
-      }
+      assertEquals("on attempt " + i + ", with " + protocolFactory.toString() 
+          + ", expected " + expected + " but got " + outputCopy,
+          expected, outputCopy);
     }
   }
 }
-
