@@ -163,7 +163,34 @@
     <javac debug="true" srcdir="${src.test}" destdir="${build.test}" classpathref="test.classpath" />
   </target>
 
-  <target name="test" description="Run the full test suite" depends="compile-test">
+  <property name="build.test" location="${build.dir}/test"/>
+  <property name="test.junit.output.format" value="plain"/>
+  <property name="test.timeout" value="2000000"/>
+  <property name="test.src.dir" location="${basedir}/test"/>
+  <property name="test.log.dir" value="${build.test}/log"/>
+
+  <target name="junit-test" description="Run the JUnit test suite" depends="compile-test">
+    <mkdir dir="${test.log.dir}"/>
+    <junit
+      printsummary="yes" showoutput="${test.output}" 
+      haltonfailure="no" fork="yes" forkmode="once" maxmemory="512m"
+      errorProperty="tests.failed" failureProperty="tests.failed"
+      timeout="${test.timeout}"
+    >
+      <sysproperty key="build.test" value="${build.test}"/>
+      <classpath refid="test.classpath"/>
+      <formatter type="${test.junit.output.format}" />
+      <batchtest todir="${test.log.dir}" unless="testcase">
+        <fileset dir="${test.src.dir}" includes="**/Test*.java" />
+      </batchtest>
+      <batchtest todir="${test.log.dir}" if="testcase">
+        <fileset dir="${test.src.dir}" includes="**/${testcase}.java" />
+      </batchtest>
+    </junit>
+    <fail if="tests.failed">Tests failed!</fail>
+  </target>
+
+  <target name="deprecated-test" description="Run the non-JUnit test suite" depends="compile-test">
     <java classname="org.apache.thrift.test.JSONProtoTest"
       classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.TCompactProtocolTest"
@@ -191,6 +218,8 @@
     <java classname="org.apache.thrift.test.transport.TFramedTransportTest"
       classpathref="test.classpath" failonerror="true" />
   </target>
+
+  <target name="test" description="Run the full test suite" depends="junit-test,deprecated-test"/>
 
   <target name="testclient" description="Run a test client">
     <java classname="org.apache.thrift.test.TestClient"
