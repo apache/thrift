@@ -23,11 +23,11 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import org.apache.thrift.Fixtures;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
-import org.apache.thrift.test.Fixtures;
 import org.apache.thrift.transport.TMemoryBuffer;
 
 import thrift.test.CompactProtoTestStruct;

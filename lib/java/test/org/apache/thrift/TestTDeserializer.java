@@ -22,7 +22,6 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.test.Fixtures;
 
 import thrift.test.Backwards;
 import thrift.test.OneOfEach;

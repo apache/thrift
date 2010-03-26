@@ -20,6 +20,7 @@
 
 package org.apache.thrift.test;
 
+import org.apache.thrift.Fixtures;
 import org.apache.thrift.TBase;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;

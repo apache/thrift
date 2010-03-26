@@ -22,6 +22,7 @@ package org.apache.thrift.test;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 
+import org.apache.thrift.Fixtures;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TIOStreamTransport;

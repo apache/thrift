@@ -18,7 +18,7 @@
  */
 
 
-package org.apache.thrift.test;
+package org.apache.thrift;
 
 import java.util.*;
 import thrift.test.*;
