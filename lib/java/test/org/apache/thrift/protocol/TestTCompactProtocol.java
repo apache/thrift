@@ -18,18 +18,12 @@
  */
 
 
-package org.apache.thrift.test;
+package org.apache.thrift.protocol;
 
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 
-public class TCompactProtocolTest extends ProtocolTestBase {
-  
-  public static void main(String[] args) throws Exception {
-    new TCompactProtocolTest().main();
-  }
-
-  
+public class TestTCompactProtocol extends ProtocolTestBase {
   @Override
   protected TProtocolFactory getFactory() {
     return new TCompactProtocol.Factory();
