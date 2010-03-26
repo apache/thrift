@@ -112,8 +112,7 @@ public class THsHaServer extends TNonblockingServer {
                       TNonblockingServerTransport serverTransport,
                       TProtocolFactory protocolFactory,
                       Options options) {
-    this(new TProcessorFactory(processor), serverTransport, 
-      new TFramedTransport.Factory(),
+    this(new TProcessorFactory(processor), serverTransport,
       new TFramedTransport.Factory(),
       protocolFactory, protocolFactory, 
       options);
@@ -142,7 +141,7 @@ public class THsHaServer extends TNonblockingServer {
                       TFramedTransport.Factory transportFactory,
                       TProtocolFactory protocolFactory) {
     this(processorFactory, serverTransport,
-      transportFactory, transportFactory,
+      transportFactory,
       protocolFactory, protocolFactory, new Options());
   }
 
@@ -156,7 +155,7 @@ public class THsHaServer extends TNonblockingServer {
                       TProtocolFactory protocolFactory,
                       Options options) {
     this(processorFactory, serverTransport,
-      transportFactory, transportFactory,
+      transportFactory,
       protocolFactory, protocolFactory,
       options);
   }
@@ -166,12 +165,11 @@ public class THsHaServer extends TNonblockingServer {
    */
   public THsHaServer( TProcessor processor,
                       TNonblockingServerTransport serverTransport,
-                      TFramedTransport.Factory inputTransportFactory,
                       TFramedTransport.Factory outputTransportFactory,
                       TProtocolFactory inputProtocolFactory,
                       TProtocolFactory outputProtocolFactory) {
     this(new TProcessorFactory(processor), serverTransport,
-      inputTransportFactory, outputTransportFactory,
+      outputTransportFactory,
       inputProtocolFactory, outputProtocolFactory);
   }
 
@@ -180,13 +178,12 @@ public class THsHaServer extends TNonblockingServer {
    */
   public THsHaServer( TProcessorFactory processorFactory,
                       TNonblockingServerTransport serverTransport,
-                      TFramedTransport.Factory inputTransportFactory,
                       TFramedTransport.Factory outputTransportFactory,
                       TProtocolFactory inputProtocolFactory,
                       TProtocolFactory outputProtocolFactory)
   {
     this(processorFactory, serverTransport,
-      inputTransportFactory, outputTransportFactory,
+      outputTransportFactory,
       inputProtocolFactory, outputProtocolFactory, new Options());
   }
 
@@ -195,14 +192,13 @@ public class THsHaServer extends TNonblockingServer {
    */
   public THsHaServer( TProcessorFactory processorFactory,
                       TNonblockingServerTransport serverTransport,
-                      TFramedTransport.Factory inputTransportFactory,
                       TFramedTransport.Factory outputTransportFactory,
                       TProtocolFactory inputProtocolFactory,
                       TProtocolFactory outputProtocolFactory,
                       Options options)
   {
     super(processorFactory, serverTransport,
-      inputTransportFactory, outputTransportFactory,
+      outputTransportFactory,
       inputProtocolFactory, outputProtocolFactory,
       options);
 
