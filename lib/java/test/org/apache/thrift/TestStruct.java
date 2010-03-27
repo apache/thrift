@@ -9,6 +9,7 @@ import junit.framework.TestCase;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
 
+import thrift.test.Bonk;
 import thrift.test.HolyMoley;
 import thrift.test.Nesting;
 import thrift.test.OneOfEach;
@@ -104,5 +105,34 @@ public class TestStruct extends TestCase {
     hmCopy2.bonks.get("two").get(1).message = "What else?";
 
     assertFalse(hm.equals(hmCopy2));
+  }
+
+  public void testCompareTo() throws Exception {
+    Bonk bonk1 = new Bonk();
+    Bonk bonk2 = new Bonk();
+
+    // Compare empty thrift objects.
+    assertEquals(0, bonk1.compareTo(bonk2));
+
+    bonk1.setMessage("m");
+
+    // Compare one thrift object with a filled in field and another without it.
+    assertTrue(bonk1.compareTo(bonk2) > 0);
+    assertTrue(bonk2.compareTo(bonk1) < 0);
+
+    // Compare both have filled-in fields.
+    bonk2.setMessage("z");
+    assertTrue(bonk1.compareTo(bonk2) < 0);
+    assertTrue(bonk2.compareTo(bonk1) > 0);
+
+    // Compare bonk1 has a field filled in that bonk2 doesn't.
+    bonk1.setType(123);
+    assertTrue(bonk1.compareTo(bonk2) > 0);
+    assertTrue(bonk2.compareTo(bonk1) < 0);
+
+    // Compare bonk1 and bonk2 equal.
+    bonk2.setType(123);
+    bonk2.setMessage("m");
+    assertEquals(0, bonk1.compareTo(bonk2));
   }
 }
