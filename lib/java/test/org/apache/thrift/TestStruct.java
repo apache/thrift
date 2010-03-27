@@ -1,49 +1,23 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
+package org.apache.thrift;
 
-package org.apache.thrift.test;
-
-// Generated code
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 
-import org.apache.thrift.Fixtures;
-import org.apache.thrift.TDeserializer;
-import org.apache.thrift.TSerializer;
+import junit.framework.TestCase;
+
 import org.apache.thrift.protocol.TBinaryProtocol;
 
-import thrift.test.Bonk;
 import thrift.test.HolyMoley;
+import thrift.test.JavaTestHelper;
 import thrift.test.Nesting;
 import thrift.test.OneOfEach;
 
-/**
- *
- */
-public class IdentityTest {
-  public static Object deepCopy(Object oldObj) throws Exception {
+public class TestStruct extends TestCase {
+
+  public static Object deepCopyViaSerialization(Object oldObj) throws Exception {
     ObjectOutputStream oos = null;
     ObjectInputStream ois = null;
     try {
@@ -62,14 +36,14 @@ public class IdentityTest {
     }
   }
 
-  public static void main(String[] args) throws Exception {
+  public void testIdentity() throws Exception {
     TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
 
     OneOfEach ooe = Fixtures.oneOfEach;
 
     Nesting n = new Nesting();
-    n.my_ooe = (OneOfEach)deepCopy(ooe);
+    n.my_ooe = (OneOfEach)deepCopyViaSerialization(ooe);
     n.my_ooe.integer16 = 16;
     n.my_ooe.integer32 = 32;
     n.my_ooe.integer64 = 64;
@@ -88,12 +62,8 @@ public class IdentityTest {
         ooe2,
         binarySerializer.serialize(ooe));
 
-    if (!ooe.equals(ooe2)) {
-      throw new RuntimeException("Failure: ooe (equals)");
-    }
-    if (ooe.hashCode() != ooe2.hashCode()) {
-      throw new RuntimeException("Failure: ooe (hash)");
-    }
+    assertEquals(ooe, ooe2);
+    assertEquals(ooe.hashCode(), ooe2.hashCode());
 
 
     Nesting n2 = new Nesting();
@@ -101,24 +71,15 @@ public class IdentityTest {
         n2,
         binarySerializer.serialize(n));
 
-    if (!n.equals(n2)) {
-      throw new RuntimeException("Failure: n (equals)");
-    }
-    if (n.hashCode() != n2.hashCode()) {
-      throw new RuntimeException("Failure: n (hash)");
-    }
+    assertEquals(n, n2);
+    assertEquals(n.hashCode(), n2.hashCode());
 
     HolyMoley hm2 = new HolyMoley();
     binaryDeserializer.deserialize(
         hm2,
         binarySerializer.serialize(hm));
 
-    if (!hm.equals(hm2)) {
-      throw new RuntimeException("Failure: hm (equals)");
-    }
-    if (hm.hashCode() != hm2.hashCode()) {
-      throw new RuntimeException("Failure: hm (hash)");
-    }
-
+    assertEquals(hm, hm2);
+    assertEquals(hm.hashCode(), hm2.hashCode());
   }
 }

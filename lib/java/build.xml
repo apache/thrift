@@ -191,8 +191,6 @@
   </target>
 
   <target name="deprecated-test" description="Run the non-JUnit test suite" depends="compile-test">
-    <java classname="org.apache.thrift.test.IdentityTest"
-      classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.EqualityTest"
       classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.ToStringTest"
