@@ -195,8 +195,6 @@
       classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.ToStringTest"
       classpathref="test.classpath" failonerror="true" />
-    <java classname="org.apache.thrift.test.DeepCopyTest"
-      classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.CompareTest"
       classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.MetaDataTest"

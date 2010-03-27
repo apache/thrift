@@ -4,14 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Map;
 
 import junit.framework.TestCase;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
 
 import thrift.test.HolyMoley;
-import thrift.test.JavaTestHelper;
 import thrift.test.Nesting;
 import thrift.test.OneOfEach;
 
@@ -81,5 +79,30 @@ public class TestStruct extends TestCase {
 
     assertEquals(hm, hm2);
     assertEquals(hm.hashCode(), hm2.hashCode());
+  }
+
+  public void testDeepCopy() throws Exception {
+    TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
+    TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
+
+    HolyMoley hm = Fixtures.holyMoley;
+
+    byte[] binaryCopy = binarySerializer.serialize(hm);
+    HolyMoley hmCopy = new HolyMoley();
+    binaryDeserializer.deserialize(hmCopy, binaryCopy);
+    HolyMoley hmCopy2 = new HolyMoley(hm);
+
+    assertEquals(hm, hmCopy);
+    assertEquals(hmCopy, hmCopy2);
+
+    // change binary value in original object
+    hm.big.get(0).base64[0]++;
+    // make sure the change didn't propagate to the copied object
+    assertFalse(hm.equals(hmCopy2));
+    hm.big.get(0).base64[0]--; // undo change
+
+    hmCopy2.bonks.get("two").get(1).message = "What else?";
+
+    assertFalse(hm.equals(hmCopy2));
   }
 }
