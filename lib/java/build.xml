@@ -18,7 +18,8 @@
  under the License.
 -->
 <project name="libthrift" default="dist" basedir="."
-  xmlns:ivy="antlib:org.apache.ivy.ant">
+  xmlns:ivy="antlib:org.apache.ivy.ant"
+  xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
   <description>Thrift Build File</description>
 
@@ -26,7 +27,8 @@
 
   <property name="gen" location="gen-java" />
   <property name="genbean" location="gen-javabean" />
-
+  <property name="mvn.ant.task.version" value="2.1.0" />
+  
   <property name="src" location="src" />
   <property name="build" location="build" />
   <property name="javadoc" location="${build}/javadoc" />
@@ -35,6 +37,7 @@
   <property name="build.test" location="${build}/test" />
   <property name="test.thrift.home" location="../../test"/>
   <property name="thrift.root" location="../../"/>
+  <property name="jar.file" location="${basedir}/libthrift.jar" />  
 
   <property file="${user.home}/.thrift-build.properties" />
 
@@ -45,7 +48,14 @@
   <property name="ivy.lib.dir" location="${ivy.dir}/lib" />
   <property name="ivy_repo_url" value="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"/>
   <property name="ivysettings.xml" location="${ivy.dir}/ivysettings.xml" />
-
+  <property name="mvn_ant_task_url" value="http://www.reverse.net/pub/apache/maven/binaries/maven-ant-tasks-${mvn.ant.task.version}.jar" />
+  <property name="mvn.ant.task.jar" location="${ivy.dir}/maven-ant-tasks-${mvn.ant.task.version}.jar" />
+  <property name="sources.zip" location="${build}/libthrift-src.zip" />
+  <property name="pom.file" location="${build}/pom.xml" />
+  
+  <!-- TODO: Get the appropriate tokens / URL for upload -->  
+  <property name="apache.snapshot.repository" value="https://repository.apache.org/content/repositories/snapshots" />
+  
   <path id="compile.classpath">
     <fileset dir="${ivy.lib.dir}">
       <include name="**/*.jar" />
@@ -56,7 +66,7 @@
     <path refid="compile.classpath" />
     <pathelement path="${env.CLASSPATH}" />
     <pathelement location="build/test" />
-    <pathelement location="libthrift.jar" />
+    <pathelement location="${jar.file}" />
   </path>
 
   <target name="init">
@@ -127,7 +137,7 @@
     <mkdir dir="${build}/META-INF"/>
     <copy file="${thrift.root}/LICENSE" tofile="${build}/META-INF/LICENSE.txt"/>
     <copy file="${thrift.root}/NOTICE" tofile="${build}/META-INF/NOTICE.txt"/>
-    <jar jarfile="libthrift.jar">
+    <jar jarfile="${jar.file}">
       <fileset dir="${build}">
         <include name="org/apache/thrift/**/*.class" />
         <include name="META-INF/*.txt" />
@@ -154,7 +164,7 @@
     <delete dir="${gen}"/>
     <delete dir="${genbean}"/>
     <delete dir="${javadoc}"/>
-    <delete file="libthrift.jar" />
+    <delete file="${jar.file}" />
   </target>
 
   <target name="compile-test" description="Build the test suite classes" depends="generate,dist">
@@ -241,4 +251,39 @@
     </exec>
   </target>
 
+  <target name="mvn.init">
+    <get src="${mvn_ant_task_url}" dest="${mvn.ant.task.jar}" usetimestamp="true" /> 
+    <path id="maven-ant-tasks.classpath" path="${mvn.ant.task.jar}" />
+  <taskdef resource="org/apache/maven/artifact/ant/antlib.xml"
+                        uri="antlib:org.apache.maven.artifact.ant"
+          classpathref="maven-ant-tasks.classpath" />
+  </target>
+
+  <target name="pack.src">
+    <zip destfile="${sources.zip}" basedir="${src}" />
+  </target>
+
+  <target name="generate.pom" depends="init,resolve" description="Generate a Maven POM file for libthrift">
+    <ivy:makepom ivyfile="${basedir}/ivy.xml" pomfile="${pom.file}" >
+      <mapping conf="default" scope="compile" />
+      <mapping conf="runtime" scope="runtime" />
+    </ivy:makepom>
+  </target>
+
+  <target name="publish" depends="test,dist,mvn.init,generate.pom,pack.src">
+    <artifact:pom id="pom" file="${pom.file}" />
+
+    <artifact:install file="${jar.file}">
+      <pom refid="pom"/>
+      <attach file="${sources.zip}" classifier="source" />
+    </artifact:install>
+
+    <artifact:remoteRepository id="remote.repository" url="${apache.snapshot.repository}" />
+
+    <artifact:deploy file="${jar.file}">
+      <remoteRepository refid="remote.repository" />
+      <pom refid="pom"/>
+      <attach file="${sources.zip}" classifier="source" />
+    </artifact:deploy>
+  </target>
 </project>

@@ -15,7 +15,12 @@
    limitations under the License.
 -->
 <ivy-module version="1.0">
-    <info organisation="jayasoft" module="hello-ivy" />
+    <info organisation="org.apache.thrift" module="libthrift" revision="0.3.0-20100116" >
+      <license name="apache" />
+      <ivyauthor name="Thrift Team" url="thrift-dev@incubator.apache.org" />
+      <repository name="apache repository" url="http://incubator.apache.org/thrift/" />
+      <description homepage="http://incubator.apache.org/thrift/" />
+    </info>
     <dependencies>
        <dependency org="org.slf4j" name="slf4j-api" rev="1.5.8" conf="* -> *,!sources,!javadoc"/>
        <dependency org="org.slf4j" name="slf4j-simple" rev="1.5.8" conf="* -> *,!sources,!javadoc"/>
