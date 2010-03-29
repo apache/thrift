@@ -199,9 +199,6 @@ class t_java_generator : public t_oop_generator {
   void generate_deep_copy_container(std::ofstream& out, std::string source_name_p1, std::string source_name_p2, std::string result_name, t_type* type);
   void generate_deep_copy_non_container(std::ofstream& out, std::string source_name, std::string dest_name, t_type* type);
 
-  bool is_comparable(t_struct* tstruct);
-  bool is_comparable(t_type* type);
-
   bool has_bit_vector(t_struct* tstruct);
 
   /**
@@ -703,9 +700,7 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
     "public " << (is_final ? "final " : "") << "class " << tstruct->get_name() 
     << " extends TUnion<" << tstruct->get_name() << "._Fields> ";
 
-  if (is_comparable(tstruct)) {
-    f_struct << "implements Comparable<" << type_name(tstruct) << "> ";
-  }
+  f_struct << "implements Comparable<" << type_name(tstruct) << "> ";
 
   scope_up(f_struct);
 
@@ -1002,22 +997,20 @@ void t_java_generator::generate_union_comparisons(ofstream& out, t_struct* tstru
   indent(out) << "}" << endl;
   out << endl;
 
-  if (is_comparable(tstruct)) {
-    indent(out) << "@Override" << endl;
-    indent(out) << "public int compareTo(" << type_name(tstruct) << " other) {" << endl;
-    indent(out) << "  int lastComparison = TBaseHelper.compareTo(getSetField(), other.getSetField());" << endl;
-    indent(out) << "  if (lastComparison == 0) {" << endl;
-    indent(out) << "    Object myValue = getFieldValue();" << endl;
-    indent(out) << "    if (myValue instanceof byte[]) {" << endl;
-    indent(out) << "      return TBaseHelper.compareTo((byte[])myValue, (byte[])other.getFieldValue());" << endl;
-    indent(out) << "    } else {" << endl;
-    indent(out) << "      return TBaseHelper.compareTo((Comparable)myValue, (Comparable)other.getFieldValue());" << endl;
-    indent(out) << "    }" << endl;
-    indent(out) << "  }" << endl;
-    indent(out) << "  return lastComparison;" << endl;
-    indent(out) << "}" << endl;
-    out << endl;
-  }
+  indent(out) << "@Override" << endl;
+  indent(out) << "public int compareTo(" << type_name(tstruct) << " other) {" << endl;
+  indent(out) << "  int lastComparison = TBaseHelper.compareTo(getSetField(), other.getSetField());" << endl;
+  indent(out) << "  if (lastComparison == 0) {" << endl;
+  indent(out) << "    Object myValue = getFieldValue();" << endl;
+  indent(out) << "    if (myValue instanceof byte[]) {" << endl;
+  indent(out) << "      return TBaseHelper.compareTo((byte[])myValue, (byte[])other.getFieldValue());" << endl;
+  indent(out) << "    } else {" << endl;
+  indent(out) << "      return TBaseHelper.compareTo((Comparable)myValue, (Comparable)other.getFieldValue());" << endl;
+  indent(out) << "    }" << endl;
+  indent(out) << "  }" << endl;
+  indent(out) << "  return lastComparison;" << endl;
+  indent(out) << "}" << endl;
+  out << endl;
 }
 
 void t_java_generator::generate_union_hashcode(ofstream& out, t_struct* tstruct) {
@@ -1077,9 +1070,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   }
   out << "implements TBase<" << tstruct->get_name() << "._Fields>, java.io.Serializable, Cloneable";
 
-  if (is_comparable(tstruct)) {
-    out << ", Comparable<" << type_name(tstruct) << ">";
-  }
+  out << ", Comparable<" << type_name(tstruct) << ">";
 
   out << " ";
 
@@ -1241,9 +1232,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   generate_generic_isset_method(out, tstruct);
 
   generate_java_struct_equality(out, tstruct);
-  if (is_comparable(tstruct)) {
-    generate_java_struct_compare_to(out, tstruct);
-  }
+  generate_java_struct_compare_to(out, tstruct);
 
   generate_java_struct_reader(out, tstruct);
   if (is_result) {
@@ -3604,32 +3593,6 @@ void t_java_generator::generate_field_name_constants(ofstream& out, t_struct* ts
   indent_down();
 
   indent(out) << "}" << endl;
-}
-
-bool t_java_generator::is_comparable(t_struct* tstruct) {
-  const vector<t_field*>& members = tstruct->get_members();
-  vector<t_field*>::const_iterator m_iter;
-
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    if (!is_comparable(get_true_type((*m_iter)->get_type()))) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool t_java_generator::is_comparable(t_type* type) {
-  if (type->is_container()) {
-    if (type->is_list()) {
-      return is_comparable(get_true_type(((t_list*)type)->get_elem_type()));
-    } else {
-      return false;
-    }
-  } else if (type->is_struct() || type->is_xception()) {
-    return is_comparable((t_struct*)type);
-  } else {
-    return true;
-  }
 }
 
 bool t_java_generator::has_bit_vector(t_struct* tstruct) {

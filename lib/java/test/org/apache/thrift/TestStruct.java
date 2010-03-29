@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.HashMap;
 
 import junit.framework.TestCase;
 
@@ -11,7 +12,9 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 
 import thrift.test.Bonk;
 import thrift.test.HolyMoley;
+import thrift.test.Insanity;
 import thrift.test.Nesting;
+import thrift.test.Numberz;
 import thrift.test.OneOfEach;
 
 public class TestStruct extends TestCase {
@@ -134,5 +137,53 @@ public class TestStruct extends TestCase {
     bonk2.setType(123);
     bonk2.setMessage("m");
     assertEquals(0, bonk1.compareTo(bonk2));
+  }
+
+  public void testCompareToWithDataStructures() {
+    Insanity insanity1 = new Insanity();
+    Insanity insanity2 = new Insanity();
+
+    // Both empty.
+    expectEquals(insanity1, insanity2);
+
+    insanity1.setUserMap(new HashMap<Numberz, Long>());
+    // insanity1.map = {}, insanity2.map = null
+    expectGreaterThan(insanity1, insanity2);
+
+    // insanity1.map = {2:1}, insanity2.map = null
+    insanity1.getUserMap().put(Numberz.TWO, 1l);
+    expectGreaterThan(insanity1, insanity2);
+
+    // insanity1.map = {2:1}, insanity2.map = {}
+    insanity2.setUserMap(new HashMap<Numberz, Long>());
+    expectGreaterThan(insanity1, insanity2);
+
+    // insanity1.map = {2:1}, insanity2.map = {2:2}
+    insanity2.getUserMap().put(Numberz.TWO, 2l);
+    expectLessThan(insanity1, insanity2);
+
+    // insanity1.map = {2:1, 3:5}, insanity2.map = {2:2}
+    insanity1.getUserMap().put(Numberz.THREE, 5l);
+    expectGreaterThan(insanity1, insanity2);
+
+    // insanity1.map = {2:1, 3:5}, insanity2.map = {2:1, 4:5}
+    insanity2.getUserMap().put(Numberz.TWO, 1l);
+    insanity2.getUserMap().put(Numberz.FIVE, 5l);
+    expectLessThan(insanity1, insanity2);
+  }
+
+  private void expectLessThan(Insanity insanity1, Insanity insanity2) {
+    int compareTo = insanity1.compareTo(insanity2);
+    assertTrue(insanity1 + " should be less than " + insanity2 + ", but is: " + compareTo, compareTo < 0);
+  }
+
+  private void expectGreaterThan(Insanity insanity1, Insanity insanity2) {
+    int compareTo = insanity1.compareTo(insanity2);
+    assertTrue(insanity1 + " should be greater than " + insanity2 + ", but is: " + compareTo, compareTo > 0);
+  }
+
+  private void expectEquals(Insanity insanity1, Insanity insanity2) {
+    int compareTo = insanity1.compareTo(insanity2);
+    assertEquals(insanity1 + " should be equal to " + insanity2 + ", but is: " + compareTo, 0, compareTo);
   }
 }
