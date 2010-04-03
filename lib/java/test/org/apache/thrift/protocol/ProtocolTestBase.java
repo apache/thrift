@@ -368,4 +368,33 @@ public abstract class ProtocolTestBase extends TestCase {
     public abstract void writeMethod(TProtocol proto) throws TException;
     public abstract void readMethod(TProtocol proto) throws TException;
   }
+
+  private static final int NUM_TRIALS = 5;
+  private static final int NUM_REPS = 10000;
+
+  protected void benchmark() throws Exception {
+    for (int trial = 0; trial < NUM_TRIALS; trial++) {
+      TSerializer ser = new TSerializer(getFactory());
+      byte[] serialized = null;
+      long serStart = System.currentTimeMillis();
+      for (int rep = 0; rep < NUM_REPS; rep++) {
+        serialized = ser.serialize(Fixtures.holyMoley);
+      }
+      long serEnd = System.currentTimeMillis();
+      long serElapsed = serEnd - serStart;
+      System.out.println("Ser:\t" + serElapsed + "ms\t" 
+          + ((double)serElapsed / NUM_REPS) + "ms per serialization");
+
+      HolyMoley cpts = new HolyMoley();
+      TDeserializer deser = new TDeserializer(getFactory());
+      long deserStart = System.currentTimeMillis();
+      for (int rep = 0; rep < NUM_REPS; rep++) {
+        deser.deserialize(cpts, serialized);
+      }
+      long deserEnd = System.currentTimeMillis();
+      long deserElapsed = deserEnd - deserStart;
+      System.out.println("Des:\t" + deserElapsed + "ms\t" 
+          + ((double)deserElapsed / NUM_REPS) + "ms per deserialization");
+    }
+  }
 }

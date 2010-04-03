@@ -21,8 +21,8 @@
 package org.apache.thrift.protocol;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Stack;
 
+import org.apache.thrift.ShortStack;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
 
@@ -96,7 +96,7 @@ public final class TCompactProtocol extends TProtocol {
    * Used to keep track of the last field for the current and previous structs,
    * so we can do the delta stuff.
    */
-  private Stack<Short> lastField_ = new Stack<Short>();
+  private ShortStack lastField_ = new ShortStack(15);
 
   private short lastFieldId_ = 0;
 
