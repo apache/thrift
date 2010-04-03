@@ -2203,8 +2203,24 @@ void t_java_generator::generate_service_client(t_service* tservice) {
   }
 
   indent(f_service_) <<
-    "public static class Client" << extends_client << " implements Iface {" << endl;
+    "public static class Client" << extends_client << " implements TServiceClient, Iface {" << endl;
   indent_up();
+
+  indent(f_service_) << "public static class Factory implements TServiceClientFactory<Client> {" << endl;
+  indent_up();
+  indent(f_service_) << "public Factory() {}" << endl;
+  indent(f_service_) << "public Client getClient(TProtocol prot) {" << endl;
+  indent_up();
+  indent(f_service_) << "return new Client(prot);" << endl;
+  indent_down();
+  indent(f_service_) << "}" << endl;
+  indent(f_service_) << "public Client getClient(TProtocol iprot, TProtocol oprot) {" << endl;
+  indent_up();
+  indent(f_service_) << "return new Client(iprot, oprot);" << endl;
+  indent_down();
+  indent(f_service_) << "}" << endl;
+  indent_down();
+  indent(f_service_) << "}" << endl << endl;
 
   indent(f_service_) <<
     "public Client(TProtocol prot)" << endl;
