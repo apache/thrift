@@ -85,18 +85,22 @@ public class TFramedTransport extends TTransport {
     return readBuffer_.read(buf, off, len);
   }
 
+  @Override
   public byte[] getBuffer() {
     return readBuffer_.getBuffer();
   }
 
+  @Override
   public int getBufferPosition() {
     return readBuffer_.getBufferPosition();
   }
 
+  @Override
   public int getBytesRemainingInBuffer() {
     return readBuffer_.getBytesRemainingInBuffer();
   }
 
+  @Override
   public void consumeBuffer(int len) {
     readBuffer_.consumeBuffer(len);
   }

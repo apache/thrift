@@ -1,17 +1,30 @@
 package org.apache.thrift.transport;
 
-public class TMemoryInputTransport extends TTransport {
+public final class TMemoryInputTransport extends TTransport {
 
   private byte[] buf_;
   private int pos_;
+  private int endPos_;
+
+  public TMemoryInputTransport() {
+  }
 
   public TMemoryInputTransport(byte[] buf) {
     reset(buf);
   }
 
+  public TMemoryInputTransport(byte[] buf, int offset, int length) {
+    reset(buf, offset, length);
+  }
+
   public void reset(byte[] buf) {
+    reset(buf, 0, buf.length);
+  }
+
+  public void reset(byte[] buf, int offset, int length) {
     buf_ = buf;
-    pos_ = 0;
+    pos_ = offset;
+    endPos_ = offset + length;
   }
 
   @Override
@@ -51,7 +64,7 @@ public class TMemoryInputTransport extends TTransport {
   }
 
   public int getBytesRemainingInBuffer() {
-    return buf_.length - pos_;
+    return endPos_ - pos_;
   }
 
   public void consumeBuffer(int len) {

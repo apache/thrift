@@ -42,4 +42,26 @@ public class TestTMemoryInputTransport extends TestCase {
     assertEquals(new_buf, trans.getBuffer());
     assertEquals(3, trans.getBytesRemainingInBuffer());
   }
+
+  public void testWithOffsetAndLength() throws Exception {
+    byte[] input_buf = new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    TMemoryInputTransport trans = new TMemoryInputTransport(input_buf, 1, 3);
+    assertEquals(1, trans.getBufferPosition());
+    assertEquals(3, trans.getBytesRemainingInBuffer());
+    byte[] readBuffer = new byte[3];
+    trans.readAll(readBuffer, 0, 3);
+    assertTrue(Arrays.equals(new byte[]{2, 3, 4}, readBuffer));
+
+    try {
+      assertEquals(0, trans.readAll(readBuffer, 0, 3));
+      fail("should have thrown an exception");
+    } catch (Exception e) {
+      // yay
+    }
+
+    trans.reset(input_buf, 3, 4);
+    readBuffer = new byte[4];
+    trans.readAll(readBuffer, 0, 4);
+    assertTrue(Arrays.equals(new byte[]{4, 5, 6, 7}, readBuffer));
+  }
 }

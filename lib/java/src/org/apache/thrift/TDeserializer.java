@@ -52,7 +52,7 @@ public class TDeserializer {
    * @param protocolFactory Factory to create a protocol
    */
   public TDeserializer(TProtocolFactory protocolFactory) {
-    trans_ = new TMemoryInputTransport(null);
+    trans_ = new TMemoryInputTransport();
     protocol_ = protocolFactory.getProtocol(trans_);
   }
 
