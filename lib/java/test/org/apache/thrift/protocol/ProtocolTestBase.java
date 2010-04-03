@@ -38,33 +38,59 @@ import thrift.test.Srv;
 
 public abstract class ProtocolTestBase extends TestCase {
 
+  /** Does it make sense to call methods like writeI32 directly on your protocol? */
   protected abstract boolean canBeUsedNaked();
-  
+
+  /** The protocol factory for the protocol being tested. */
   protected abstract TProtocolFactory getFactory();
 
-  public void testProtocol() throws Exception {
+  public void testDouble() throws Exception {
     if (canBeUsedNaked()) {
-      internalTestNakedByte();
-    }
-    for (int i = 0; i < 128; i++) {
-      internalTestByteField((byte)i);
-      internalTestByteField((byte)-i);
+      TMemoryBuffer buf = new TMemoryBuffer(1000);
+      TProtocol proto = getFactory().getProtocol(buf);
+      proto.writeDouble(123.456);
+      assertEquals(123.456, proto.readDouble());
     }
 
-    for (int s : Arrays.asList(0, 1, 7, 150, 15000, 0x7fff, -1, -7, -150, -15000, -0x7fff)) {
-      if (canBeUsedNaked()) {
-        internalTestNakedI16((short)s);
+    internalTestStructField(new StructFieldTestCase(TType.DOUBLE, (short)15) {
+      @Override
+      public void readMethod(TProtocol proto) throws TException {
+        assertEquals(123.456, proto.readDouble());
       }
-      internalTestI16Field((short)s);
-    }
 
-    for (int i : Arrays.asList(0, 1, 7, 150, 15000, 31337, 0xffff, 0xffffff, -1, -7, -150, -15000, -0xffff, -0xffffff)) {
-      if (canBeUsedNaked()) {
-        internalTestNakedI32(i);
+      @Override
+      public void writeMethod(TProtocol proto) throws TException {
+        proto.writeDouble(123.456);
       }
-      internalTestI32Field(i);
-    }
+    });
+  }
 
+  public void testSerialization() throws Exception {
+    internalTestSerialization(OneOfEach.class, Fixtures.oneOfEach);
+    internalTestSerialization(Nesting.class, Fixtures.nesting);
+    internalTestSerialization(HolyMoley.class, Fixtures.holyMoley);
+    internalTestSerialization(CompactProtoTestStruct.class, Fixtures.compactProtoTestStruct);
+  }
+
+  public void testBinary() throws Exception {
+    for (byte[] b : Arrays.asList(new byte[0], new byte[]{0,1,2,3,4,5,6,7,8,9,10}, new byte[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14}, new byte[128])) {
+      if (canBeUsedNaked()) {
+        internalTestNakedBinary(b);
+      }
+      internalTestBinaryField(b);
+    }
+  }
+
+  public void testString() throws Exception {
+    for (String s : Arrays.asList("", "short", "borderlinetiny", "a bit longer than the smallest possible")) {
+      if (canBeUsedNaked()) {
+        internalTestNakedString(s);
+      }
+      internalTestStringField(s);
+    }
+  }
+
+  public void testLong() throws Exception {
     if (canBeUsedNaked()) {
       internalTestNakedI64(0);
     }
@@ -77,33 +103,34 @@ public abstract class ProtocolTestBase extends TestCase {
       internalTestI64Field(1L << i);
       internalTestI64Field(-(1L << i));
     }
+  }
 
-    internalTestDouble();
-
-    for (String s : Arrays.asList("", "short", "borderlinetiny", "a bit longer than the smallest possible")) {
+  public void testInt() throws Exception {
+    for (int i : Arrays.asList(0, 1, 7, 150, 15000, 31337, 0xffff, 0xffffff, -1, -7, -150, -15000, -0xffff, -0xffffff)) {
       if (canBeUsedNaked()) {
-        internalTestNakedString(s);
+        internalTestNakedI32(i);
       }
-      internalTestStringField(s);
+      internalTestI32Field(i);
     }
+  }
 
-    for (byte[] b : Arrays.asList(new byte[0], new byte[]{0,1,2,3,4,5,6,7,8,9,10}, new byte[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14}, new byte[128])) {
+  public void testShort() throws Exception {
+    for (int s : Arrays.asList(0, 1, 7, 150, 15000, 0x7fff, -1, -7, -150, -15000, -0x7fff)) {
       if (canBeUsedNaked()) {
-        internalTestNakedBinary(b);
+        internalTestNakedI16((short)s);
       }
-      internalTestBinaryField(b);
+      internalTestI16Field((short)s);
     }
+  }
 
-    internalTestSerialization(OneOfEach.class, Fixtures.oneOfEach);
-    internalTestSerialization(Nesting.class, Fixtures.nesting);
-    internalTestSerialization(HolyMoley.class, Fixtures.holyMoley);
-    internalTestSerialization(CompactProtoTestStruct.class, Fixtures.compactProtoTestStruct);
-
-    internalTestMessage();
-
-    internalTestServerRequest();
-
-    internalTestTDeserializer();
+  public void testByte() throws Exception {
+    if (canBeUsedNaked()) {
+      internalTestNakedByte();
+    }
+    for (int i = 0; i < 128; i++) {
+      internalTestByteField((byte)i);
+      internalTestByteField((byte)-i);
+    }
   }
 
   private void internalTestNakedByte() throws Exception {
@@ -182,27 +209,6 @@ public abstract class ProtocolTestBase extends TestCase {
     });
   }
 
-  private void internalTestDouble() throws Exception {
-    if (canBeUsedNaked()) {
-      TMemoryBuffer buf = new TMemoryBuffer(1000);
-      TProtocol proto = getFactory().getProtocol(buf);
-      proto.writeDouble(123.456);
-      assertEquals(123.456, proto.readDouble());
-    }
-    
-    internalTestStructField(new StructFieldTestCase(TType.DOUBLE, (short)15) {
-      @Override
-      public void readMethod(TProtocol proto) throws TException {
-        assertEquals(123.456, proto.readDouble());
-      }
-
-      @Override
-      public void writeMethod(TProtocol proto) throws TException {
-        proto.writeDouble(123.456);
-      }
-    });
-  }
-
   private void internalTestNakedString(String str) throws Exception {
     TMemoryBuffer buf = new TMemoryBuffer(0);
     TProtocol proto = getFactory().getProtocol(buf);
@@ -258,7 +264,7 @@ public abstract class ProtocolTestBase extends TestCase {
     assertEquals(expected, actual);
   }
 
-  private void internalTestMessage() throws Exception {
+  public void testMessage() throws Exception {
     List<TMessage> msgs = Arrays.asList(new TMessage[]{
       new TMessage("short message name", TMessageType.CALL, 0),
       new TMessage("1", TMessageType.REPLY, 12345),
@@ -280,7 +286,7 @@ public abstract class ProtocolTestBase extends TestCase {
     }
   }
 
-  private void internalTestServerRequest() throws Exception {
+  public void testServerRequest() throws Exception {
     Srv.Iface handler = new Srv.Iface() {
       public int Janky(int i32arg) throws TException {
         return i32arg * 2;
@@ -317,7 +323,7 @@ public abstract class ProtocolTestBase extends TestCase {
     assertEquals(2, testClient.recv_Janky());
   }
 
-  private void internalTestTDeserializer() throws TException {
+  public void testTDeserializer() throws TException {
     TSerializer ser = new TSerializer(getFactory());
     byte[] bytes = ser.serialize(Fixtures.compactProtoTestStruct);
 
