@@ -49,6 +49,9 @@ class t_java_generator : public t_oop_generator {
     iter = parsed_options.find("beans");
     bean_style_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("private-members");
+    private_members_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("nocamel");
     nocamel_style_ = (iter != parsed_options.end());
 
@@ -243,6 +246,7 @@ class t_java_generator : public t_oop_generator {
   std::string package_dir_;
 
   bool bean_style_;
+  bool private_members_;
   bool nocamel_style_;
   bool gen_hash_code_;
 
@@ -1089,7 +1093,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   out << endl;
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    if (bean_style_) {
+    if (bean_style_ || private_members_) {
       indent(out) << "private ";
     } else {
       generate_java_doc(out, *m_iter);
@@ -1865,13 +1869,20 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
 
     // Simple setter
     generate_java_doc(out, field);
-    indent(out) << "public " << type_name(tstruct) << " set" << cap_name << "(" << type_name(type) <<
-      " " << field_name << ") {" << endl;
+    indent(out) << "public ";
+    if (bean_style_) {
+      out << "void";
+    } else {
+      out << type_name(tstruct);
+    }
+    out << " set" << cap_name << "(" << type_name(type) << " " << field_name << ") {" << endl;
     indent_up();
     indent(out) << "this." << field_name << " = " << field_name << ";" <<
       endl;
     generate_isset_set(out, field);
-    indent(out) << "return this;" << endl;
+    if (!bean_style_) {
+      indent(out) << "return this;" << endl;
+    }
 
     indent_down();
     indent(out) << "}" << endl << endl;
@@ -3608,7 +3619,8 @@ bool t_java_generator::has_bit_vector(t_struct* tstruct) {
 }
 
 THRIFT_REGISTER_GENERATOR(java, "Java",
-"    beans:           Generate bean-style output files.\n"
+"    beans:           Members will be private, and setter methods will return void.\n"
+"    private-members: Members will be private, but setter methods will return 'this' like usual.\n"
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
 "    hashcode:        Generate quality hashCode methods.\n"
 );
