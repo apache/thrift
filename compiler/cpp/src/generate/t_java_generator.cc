@@ -3566,13 +3566,11 @@ void t_java_generator::generate_field_name_constants(ofstream& out, t_struct* ts
 
   out << ";" << endl << endl;
 
-  indent(out) << "private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();" << endl;
   indent(out) << "private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();" << endl;
   out << endl;
 
   indent(out) << "static {" << endl;
   indent(out) << "  for (_Fields field : EnumSet.allOf(_Fields.class)) {" << endl;
-  indent(out) << "    byId.put((int)field._thriftId, field);" << endl;
   indent(out) << "    byName.put(field.getFieldName(), field);" << endl;
   indent(out) << "  }" << endl;
   indent(out) << "}" << endl << endl;
@@ -3581,7 +3579,22 @@ void t_java_generator::generate_field_name_constants(ofstream& out, t_struct* ts
   indent(out) << " * Find the _Fields constant that matches fieldId, or null if its not found." << endl;
   indent(out) << " */" << endl;
   indent(out) << "public static _Fields findByThriftId(int fieldId) {" << endl;
-  indent(out) << "  return byId.get(fieldId);" << endl;
+  indent_up();
+  indent(out) << "switch(fieldId) {" << endl;
+  indent_up();
+
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    indent(out) << "case " << (*m_iter)->get_key() << ": // " << constant_name((*m_iter)->get_name()) << endl;
+    indent(out) << "  return " << constant_name((*m_iter)->get_name()) << ";" << endl;
+  }
+
+  indent(out) << "default:" << endl;
+  indent(out) << "  return null;" << endl;
+
+  indent_down();
+  indent(out) << "}" << endl;
+
+  indent_down();
   indent(out) << "}" << endl << endl;
 
   indent(out) << "/**" << endl;
