@@ -665,9 +665,29 @@ public final class TCompactProtocol extends TProtocol {
    * if there is another byte to follow. This can read up to 5 bytes.
    */
   private int readVarint32() throws TException {
-    // if the wire contains the right stuff, this will just truncate the i64 we
-    // read and get us the right sign.
-    return (int)readVarint64();
+    int result = 0;
+    int shift = 0;
+    if (trans_.getBytesRemainingInBuffer() >= 5) {
+      byte[] buf = trans_.getBuffer();
+      int pos = trans_.getBufferPosition();
+      int off = 0;
+      while (true) {
+        byte b = buf[pos+off];
+        result |= (int) (b & 0x7f) << shift;
+        if ((b & 0x80) != 0x80) break;
+        shift += 7;
+        off++;
+      }
+      trans_.consumeBuffer(off+1);
+    } else {
+      while (true) {
+        byte b = readByte();
+        result |= (int) (b & 0x7f) << shift;
+        if ((b & 0x80) != 0x80) break;
+        shift += 7;
+      }
+    }
+    return result;
   }
 
   /**
@@ -677,11 +697,25 @@ public final class TCompactProtocol extends TProtocol {
   private long readVarint64() throws TException {
     int shift = 0;
     long result = 0;
-    while (true) {
-      byte b = readByte();
-      result |= (long) (b & 0x7f) << shift;
-      if ((b & 0x80) != 0x80) break;
-      shift +=7;
+    if (trans_.getBytesRemainingInBuffer() >= 10) {
+      byte[] buf = trans_.getBuffer();
+      int pos = trans_.getBufferPosition();
+      int off = 0;
+      while (true) {
+        byte b = buf[pos+off];
+        result |= (long) (b & 0x7f) << shift;
+        if ((b & 0x80) != 0x80) break;
+        shift += 7;
+        off++;
+      }
+      trans_.consumeBuffer(off+1);
+    } else {
+      while (true) {
+        byte b = readByte();
+        result |= (long) (b & 0x7f) << shift;
+        if ((b & 0x80) != 0x80) break;
+        shift +=7;
+      }
     }
     return result;
   }
