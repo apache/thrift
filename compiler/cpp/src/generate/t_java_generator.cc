@@ -701,10 +701,8 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
 
   indent(f_struct) <<
-    "public " << (is_final ? "final " : "") << "class " << tstruct->get_name() 
-    << " extends TUnion<" << tstruct->get_name() << "._Fields> ";
-
-  f_struct << "implements Comparable<" << type_name(tstruct) << "> ";
+    "public " << (is_final ? "final " : "") << "class " << tstruct->get_name()
+    << " extends TUnion<" << tstruct->get_name() << ", " << tstruct->get_name() << "._Fields> ";
 
   scope_up(f_struct);
 
@@ -1072,9 +1070,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   if (is_exception) {
     out << "extends Exception ";
   }
-  out << "implements TBase<" << tstruct->get_name() << "._Fields>, java.io.Serializable, Cloneable";
-
-  out << ", Comparable<" << type_name(tstruct) << ">";
+  out << "implements TBase<" << tstruct->get_name() << ", " << tstruct->get_name() << "._Fields>, java.io.Serializable, Cloneable";
 
   out << " ";
 

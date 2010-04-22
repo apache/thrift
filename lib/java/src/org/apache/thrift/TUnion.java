@@ -29,7 +29,7 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TStruct;
 
-public abstract class TUnion<F extends TFieldIdEnum> implements TBase<F> {
+public abstract class TUnion<T extends TUnion, F extends TFieldIdEnum> implements TBase<T, F> {
 
   protected Object value_;
   protected F setField_;
@@ -43,7 +43,7 @@ public abstract class TUnion<F extends TFieldIdEnum> implements TBase<F> {
     setFieldValue(setField, value);
   }
 
-  protected TUnion(TUnion<F> other) {
+  protected TUnion(TUnion<T, F> other) {
     if (!other.getClass().equals(this.getClass())) {
       throw new ClassCastException();
     }
