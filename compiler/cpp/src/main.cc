@@ -191,6 +191,15 @@ char *saferealpath(const char *path, char *resolved_path) {
     CharLowerBuff(buf, len);
     strcpy(resolved_path, buf);
   }
+
+  // Replace backslashes with forward slashes so the
+  // rest of the code behaves correctly.
+  size_t resolved_len = strlen(resolved_path);
+  for (size_t i = 0; i < resolved_len; i++) {
+    if (resolved_path[i] == '\\') {
+      resolved_path[i] = '/';
+    }
+  }
   return resolved_path;
 #else
   return realpath(path, resolved_path);
