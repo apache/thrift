@@ -28,8 +28,27 @@ import org.apache.thrift.protocol.TType;
 public class FieldValueMetaData implements java.io.Serializable {
   public final byte type;  
 
-  public FieldValueMetaData(byte type){
+  private final boolean isTypedefType;
+  private final String typedefName;
+
+  public FieldValueMetaData(byte type) {
     this.type = type;
+    this.isTypedefType = false;
+    this.typedefName = null;
+  }
+
+  public FieldValueMetaData(byte type, String typedefName) {
+    this.type = type;
+    this.isTypedefType = true;
+    this.typedefName = typedefName;
+  }
+
+  public boolean isTypedef() {
+    return isTypedefType;
+  }
+
+  public String getTypedefName() {
+    return typedefName;
   }
 
   public boolean isStruct() {

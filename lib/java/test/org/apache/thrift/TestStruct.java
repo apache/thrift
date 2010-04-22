@@ -5,17 +5,26 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
+import org.apache.thrift.meta_data.FieldMetaData;
+import org.apache.thrift.meta_data.ListMetaData;
+import org.apache.thrift.meta_data.MapMetaData;
+import org.apache.thrift.meta_data.SetMetaData;
+import org.apache.thrift.meta_data.StructMetaData;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TType;
 
 import thrift.test.Bonk;
+import thrift.test.CrazyNesting;
 import thrift.test.HolyMoley;
 import thrift.test.Insanity;
 import thrift.test.Nesting;
 import thrift.test.Numberz;
 import thrift.test.OneOfEach;
+import thrift.test.Xtruct;
 
 public class TestStruct extends TestCase {
 
@@ -185,5 +194,53 @@ public class TestStruct extends TestCase {
   private void expectEquals(Insanity insanity1, Insanity insanity2) {
     int compareTo = insanity1.compareTo(insanity2);
     assertEquals(insanity1 + " should be equal to " + insanity2 + ", but is: " + compareTo, 0, compareTo);
+  }
+
+  public void testMetaData() throws Exception {
+    Map<CrazyNesting._Fields, FieldMetaData> mdMap = CrazyNesting.metaDataMap;
+
+    // Check for struct fields existence
+    assertEquals(3, mdMap.size());
+    assertTrue(mdMap.containsKey(CrazyNesting._Fields.SET_FIELD));
+    assertTrue(mdMap.containsKey(CrazyNesting._Fields.LIST_FIELD));
+    assertTrue(mdMap.containsKey(CrazyNesting._Fields.STRING_FIELD));
+
+    // Check for struct fields contents
+    assertEquals("string_field", mdMap.get(CrazyNesting._Fields.STRING_FIELD).fieldName);
+    assertEquals("list_field", mdMap.get(CrazyNesting._Fields.LIST_FIELD).fieldName);
+    assertEquals("set_field", mdMap.get(CrazyNesting._Fields.SET_FIELD).fieldName);
+
+    assertEquals(TFieldRequirementType.DEFAULT, mdMap.get(CrazyNesting._Fields.STRING_FIELD).requirementType);
+    assertEquals(TFieldRequirementType.REQUIRED, mdMap.get(CrazyNesting._Fields.LIST_FIELD).requirementType);
+    assertEquals(TFieldRequirementType.OPTIONAL, mdMap.get(CrazyNesting._Fields.SET_FIELD).requirementType);
+
+    assertEquals(TType.STRING, mdMap.get(CrazyNesting._Fields.STRING_FIELD).valueMetaData.type);
+    assertEquals(TType.LIST, mdMap.get(CrazyNesting._Fields.LIST_FIELD).valueMetaData.type);
+    assertEquals(TType.SET, mdMap.get(CrazyNesting._Fields.SET_FIELD).valueMetaData.type);
+
+    // Check nested structures
+    assertTrue(mdMap.get(CrazyNesting._Fields.LIST_FIELD).valueMetaData.isContainer());
+
+    assertFalse(mdMap.get(CrazyNesting._Fields.LIST_FIELD).valueMetaData.isStruct());
+
+    assertEquals(TType.STRUCT, ((MapMetaData)((ListMetaData)((SetMetaData)((MapMetaData)((MapMetaData)((ListMetaData)mdMap.get(CrazyNesting._Fields.LIST_FIELD).valueMetaData).elemMetaData).valueMetaData).valueMetaData).elemMetaData).elemMetaData).keyMetaData.type);
+
+    assertEquals(Insanity.class, ((StructMetaData)((MapMetaData)((ListMetaData)((SetMetaData)((MapMetaData)((MapMetaData)((ListMetaData)mdMap.get(CrazyNesting._Fields.LIST_FIELD).valueMetaData).elemMetaData).valueMetaData).valueMetaData).elemMetaData).elemMetaData).keyMetaData).structClass);
+
+    // Check that FieldMetaData contains a map with metadata for all generated struct classes
+    assertNotNull(FieldMetaData.getStructMetaDataMap(CrazyNesting.class));
+    assertNotNull(FieldMetaData.getStructMetaDataMap(Insanity.class));
+    assertNotNull(FieldMetaData.getStructMetaDataMap(Xtruct.class));
+
+    assertEquals(CrazyNesting.metaDataMap, FieldMetaData.getStructMetaDataMap(CrazyNesting.class));
+    assertEquals(Insanity.metaDataMap, FieldMetaData.getStructMetaDataMap(Insanity.class));
+
+    for (Map.Entry<? extends TFieldIdEnum, FieldMetaData> mdEntry : mdMap.entrySet()) {
+      assertEquals(mdEntry.getKey(), CrazyNesting._Fields.findByName(mdEntry.getValue().fieldName));
+    }
+
+    MapMetaData vmd = (MapMetaData)Insanity.metaDataMap.get(Insanity._Fields.USER_MAP).valueMetaData;
+    assertTrue(vmd.valueMetaData.isTypedef());
+    assertFalse(vmd.keyMetaData.isTypedef());
   }
 }

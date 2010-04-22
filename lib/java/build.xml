@@ -205,8 +205,6 @@
       classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.ToStringTest"
       classpathref="test.classpath" failonerror="true" />
-    <java classname="org.apache.thrift.test.MetaDataTest"
-      classpathref="test.classpath" failonerror="true" />
     <java classname="org.apache.thrift.test.JavaBeansTest"
       classpathref="test.classpath" failonerror="true" />
   </target>
