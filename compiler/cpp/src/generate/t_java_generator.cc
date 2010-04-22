@@ -1387,7 +1387,7 @@ void t_java_generator::generate_java_struct_compare_to(ofstream& out, t_struct* 
     indent(out) << "}" << endl;
 
     indent(out) << "if (" << generate_isset_check(field) << ") {";
-    indent(out) << "  lastComparison = TBaseHelper.compareTo(" << field->get_name() << ", typedOther." << field->get_name() << ");" << endl;
+    indent(out) << "  lastComparison = TBaseHelper.compareTo(this." << field->get_name() << ", typedOther." << field->get_name() << ");" << endl;
     indent(out) << "  if (lastComparison != 0) {" << endl;
     indent(out) << "    return lastComparison;" << endl;
     indent(out) << "  }" << endl;
