@@ -64,6 +64,9 @@ endif
 if THRIFT_GEN_java
 thrift_SOURCES += src/generate/t_java_generator.cc
 endif
+if THRIFT_GEN_as3
+thrift_SOURCES += src/generate/t_as3_generator.cc
+endif
 if THRIFT_GEN_csharp
 thrift_SOURCES += src/generate/t_csharp_generator.cc
 endif
