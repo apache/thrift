@@ -20,10 +20,9 @@
 
 package org.apache.thrift.protocol;
 
-import java.io.UnsupportedEncodingException;
-
 import org.apache.thrift.ShortStack;
 import org.apache.thrift.TException;
+import org.apache.thrift.Utf8Helper;
 import org.apache.thrift.transport.TTransport;
 
 /**
@@ -293,11 +292,7 @@ public final class TCompactProtocol extends TProtocol {
    * Write a string to the wire with a varint size preceeding.
    */
   public void writeString(String str) throws TException {
-    try {
-      writeBinary(str.getBytes("UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      throw new TException("UTF-8 not supported!");
-    }
+    writeBinary(Utf8Helper.encode(str));
   }
 
   /**
@@ -610,16 +605,12 @@ public final class TCompactProtocol extends TProtocol {
       return "";
     }
 
-    try {
-      if (trans_.getBytesRemainingInBuffer() >= length) {
-        String str = new String(trans_.getBuffer(), trans_.getBufferPosition(), length, "UTF-8");
-        trans_.consumeBuffer(length);
-        return str;
-      } else {
-        return new String(readBinary(length), "UTF-8");
-      }
-    } catch (UnsupportedEncodingException e) {
-      throw new TException("UTF-8 not supported!");
+    if (trans_.getBytesRemainingInBuffer() >= length) {
+      String str = Utf8Helper.decode(trans_.getBuffer(), trans_.getBufferPosition(), length);
+      trans_.consumeBuffer(length);
+      return str;
+    } else {
+      return Utf8Helper.decode(readBinary(length));
     }
   }
 
