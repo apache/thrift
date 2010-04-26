@@ -2323,7 +2323,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
 
     // Serialize the request
     f_service_ <<
-      indent() << "oprot_.writeMessageBegin(new TMessage(\"" << funname << "\", TMessageType.CALL, seqid_));" << endl <<
+      indent() << "oprot_.writeMessageBegin(new TMessage(\"" << funname << "\", TMessageType.CALL, ++seqid_));" << endl <<
       indent() << argsname << " args = new " << argsname << "();" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
@@ -2352,14 +2352,15 @@ void t_java_generator::generate_service_client(t_service* tservice) {
         "public " << function_signature(&recv_function) << endl;
       scope_up(f_service_);
 
-      // TODO(mcslee): Message validation here, was the seqid etc ok?
-
       f_service_ <<
         indent() << "TMessage msg = iprot_.readMessageBegin();" << endl <<
         indent() << "if (msg.type == TMessageType.EXCEPTION) {" << endl <<
         indent() << "  TApplicationException x = TApplicationException.read(iprot_);" << endl <<
         indent() << "  iprot_.readMessageEnd();" << endl <<
         indent() << "  throw x;" << endl <<
+        indent() << "}" << endl <<
+        indent() << "if (msg.seqid != seqid_) {" << endl <<
+        indent() << "  throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, \"" << (*f_iter)->get_name() << " failed: out of sequence response\");" << endl <<
         indent() << "}" << endl <<
         indent() << resultname << " result = new " << resultname << "();" << endl <<
         indent() << "result.read(iprot_);" << endl <<
