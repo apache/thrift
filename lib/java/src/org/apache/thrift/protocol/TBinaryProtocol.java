@@ -45,18 +45,28 @@ public class TBinaryProtocol extends TProtocol {
   public static class Factory implements TProtocolFactory {
     protected boolean strictRead_ = false;
     protected boolean strictWrite_ = true;
+    protected int readLength_;
 
     public Factory() {
       this(false, true);
     }
 
     public Factory(boolean strictRead, boolean strictWrite) {
+      this(strictRead, strictWrite, 0);
+    }
+
+    public Factory(boolean strictRead, boolean strictWrite, int readLength) {
       strictRead_ = strictRead;
       strictWrite_ = strictWrite;
+      readLength_ = readLength;
     }
 
     public TProtocol getProtocol(TTransport trans) {
-      return new TBinaryProtocol(trans, strictRead_, strictWrite_);
+      TBinaryProtocol proto = new TBinaryProtocol(trans, strictRead_, strictWrite_);
+      if (readLength_ != 0) {
+        proto.setReadLength(readLength_);
+      }
+      return proto;
     }
   }
 
