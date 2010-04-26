@@ -27,6 +27,10 @@ import org.apache.thrift.TByteArrayOutputStream;
  */
 public class TFramedTransport extends TTransport {
 
+  protected static final int DEFAULT_MAX_LENGTH = 0x7FFFFFFF;
+
+  private int maxLength_;
+
   /**
    * Underlying transport
    */
@@ -44,19 +48,32 @@ public class TFramedTransport extends TTransport {
   private TMemoryInputTransport readBuffer_ = new TMemoryInputTransport(new byte[0]);
 
   public static class Factory extends TTransportFactory {
+    private int maxLength_;
+
     public Factory() {
+      maxLength_ = TFramedTransport.DEFAULT_MAX_LENGTH;
+    }
+
+    public Factory(int maxLength) {
+      maxLength_ = maxLength;
     }
 
     public TTransport getTransport(TTransport base) {
-      return new TFramedTransport(base);
+      return new TFramedTransport(base, maxLength_);
     }
   }
 
   /**
    * Constructor wraps around another tranpsort
    */
+  public TFramedTransport(TTransport transport, int maxLength) {
+    transport_ = transport;
+    maxLength_ = maxLength;
+  }
+
   public TFramedTransport(TTransport transport) {
     transport_ = transport;
+    maxLength_ = TFramedTransport.DEFAULT_MAX_LENGTH;
   }
 
   public void open() throws TTransportException {
@@ -116,6 +133,10 @@ public class TFramedTransport extends TTransport {
 
     if (size < 0) {
       throw new TTransportException("Read a negative frame size (" + size + ")!");
+    }
+
+    if (size > maxLength_) {
+      throw new TTransportException("Frame size (" + size + ") larger than max length (" + maxLength_ + ")!");
     }
 
     byte[] buff = new byte[size];
