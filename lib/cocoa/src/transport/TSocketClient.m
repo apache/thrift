@@ -17,7 +17,12 @@
  * under the License.
  */
 #import "TSocketClient.h"
-#import <CFNetwork/CFSocketStream.h>
+
+#if !TARGET_OS_IPHONE
+#import <CoreServices/CoreServices.h>
+#else
+#import <CFNetwork/CFNetwork.h>
+#endif
 
 @implementation TSocketClient
 
