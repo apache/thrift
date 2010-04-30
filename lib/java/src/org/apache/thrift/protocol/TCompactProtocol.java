@@ -606,9 +606,10 @@ public final class TCompactProtocol extends TProtocol {
     }
 
     if (trans_.getBytesRemainingInBuffer() >= length) {
-      String str = Utf8Helper.decode(trans_.getBuffer(), trans_.getBufferPosition(), length);
+      char[] charBuf = new char[length];
+      int charsDecoded = Utf8Helper.decode(trans_.getBuffer(), trans_.getBufferPosition(), length, charBuf);
       trans_.consumeBuffer(length);
-      return str;
+      return new String(charBuf, 0, charsDecoded);
     } else {
       return Utf8Helper.decode(readBinary(length));
     }

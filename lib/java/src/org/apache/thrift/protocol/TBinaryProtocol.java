@@ -328,9 +328,10 @@ public class TBinaryProtocol extends TProtocol {
     int size = readI32();
 
     if (trans_.getBytesRemainingInBuffer() >= size) {
-      String s = Utf8Helper.decode(trans_.getBuffer(), trans_.getBufferPosition(), size);
+      char[] charBuf = new char[size];
+      int charsDecoded = Utf8Helper.decode(trans_.getBuffer(), trans_.getBufferPosition(), size, charBuf);
       trans_.consumeBuffer(size);
-      return s;
+      return new String(charBuf, 0, charsDecoded);
     }
 
     return readStringBody(size);

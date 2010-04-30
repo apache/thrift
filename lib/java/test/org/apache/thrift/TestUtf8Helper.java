@@ -25,8 +25,11 @@ public class TestUtf8Helper extends TestCase {
   private static final String UNICODE_STRING_2;
   private static final byte[] UNICODE_STRING_BYTES_2;
 
-  private static final String REALLY_WHACKY_ONE = "\u20491";
+  private static final String REALLY_WHACKY_ONE = "\uD841\uDC91";
   private static final byte[] REALLY_WHACKY_ONE_BYTES;
+
+  private static final String TWO_CHAR_CHAR = "\uD801\uDC00";
+  private static final byte[] TWO_CHAR_CHAR_BYTES;
 
   static {
     try {
@@ -34,6 +37,7 @@ public class TestUtf8Helper extends TestCase {
       UNICODE_STRING_2 = new String(kUnicodeBytes, "UTF-8");
       UNICODE_STRING_BYTES_2 = UNICODE_STRING_2.getBytes("UTF-8");
       REALLY_WHACKY_ONE_BYTES = REALLY_WHACKY_ONE.getBytes("UTF-8");
+      TWO_CHAR_CHAR_BYTES = TWO_CHAR_CHAR.getBytes("UTF-8");
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
     }
@@ -53,6 +57,9 @@ public class TestUtf8Helper extends TestCase {
 
     otherBytes = Utf8Helper.encode(REALLY_WHACKY_ONE);
     assertTrue(Arrays.equals(REALLY_WHACKY_ONE_BYTES, otherBytes));
+
+    otherBytes = Utf8Helper.encode(TWO_CHAR_CHAR);
+    assertTrue(Arrays.equals(TWO_CHAR_CHAR_BYTES, otherBytes));
   }
 
   public void testDecode() throws Exception {
@@ -62,5 +69,6 @@ public class TestUtf8Helper extends TestCase {
     assertEquals(UNICODE_STRING, Utf8Helper.decode(UNICODE_STRING_BYTES));
     assertEquals(UNICODE_STRING_2, Utf8Helper.decode(UNICODE_STRING_BYTES_2));
     assertEquals(REALLY_WHACKY_ONE, Utf8Helper.decode(REALLY_WHACKY_ONE_BYTES));
+    assertEquals(TWO_CHAR_CHAR, Utf8Helper.decode(TWO_CHAR_CHAR_BYTES));
   }
 }
