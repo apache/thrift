@@ -19,8 +19,9 @@
 
 package org.apache.thrift.protocol;
 
+import java.io.UnsupportedEncodingException;
+
 import org.apache.thrift.TException;
-import org.apache.thrift.Utf8Helper;
 import org.apache.thrift.transport.TTransport;
 
 /**
@@ -179,9 +180,13 @@ public class TBinaryProtocol extends TProtocol {
   }
 
   public void writeString(String str) throws TException {
-    byte[] dat = Utf8Helper.encode(str);
-    writeI32(dat.length);
-    trans_.write(dat, 0, dat.length);
+    try {
+      byte[] dat = str.getBytes("UTF-8");
+      writeI32(dat.length);
+      trans_.write(dat, 0, dat.length);
+    } catch (UnsupportedEncodingException uex) {
+      throw new TException("JVM DOES NOT SUPPORT UTF-8");
+    }
   }
 
   public void writeBinary(byte[] bin) throws TException {
@@ -328,20 +333,27 @@ public class TBinaryProtocol extends TProtocol {
     int size = readI32();
 
     if (trans_.getBytesRemainingInBuffer() >= size) {
-      char[] charBuf = new char[size];
-      int charsDecoded = Utf8Helper.decode(trans_.getBuffer(), trans_.getBufferPosition(), size, charBuf);
-      trans_.consumeBuffer(size);
-      return new String(charBuf, 0, charsDecoded);
+      try {
+        String s = new String(trans_.getBuffer(), trans_.getBufferPosition(), size, "UTF-8");
+        trans_.consumeBuffer(size);
+        return s;
+      } catch (UnsupportedEncodingException e) {
+        throw new TException("JVM DOES NOT SUPPORT UTF-8");
+      }
     }
 
     return readStringBody(size);
   }
 
   public String readStringBody(int size) throws TException {
-    checkReadLength(size);
-    byte[] buf = new byte[size];
-    trans_.readAll(buf, 0, size);
-    return Utf8Helper.decode(buf);
+    try {
+      checkReadLength(size);
+      byte[] buf = new byte[size];
+      trans_.readAll(buf, 0, size);
+      return new String(buf, "UTF-8");
+    } catch (UnsupportedEncodingException uex) {
+      throw new TException("JVM DOES NOT SUPPORT UTF-8");
+    }
   }
 
   public byte[] readBinary() throws TException {

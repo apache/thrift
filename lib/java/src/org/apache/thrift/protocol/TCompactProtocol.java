@@ -20,9 +20,10 @@
 
 package org.apache.thrift.protocol;
 
+import java.io.UnsupportedEncodingException;
+
 import org.apache.thrift.ShortStack;
 import org.apache.thrift.TException;
-import org.apache.thrift.Utf8Helper;
 import org.apache.thrift.transport.TTransport;
 
 /**
@@ -292,7 +293,11 @@ public final class TCompactProtocol extends TProtocol {
    * Write a string to the wire with a varint size preceeding.
    */
   public void writeString(String str) throws TException {
-    writeBinary(Utf8Helper.encode(str));
+    try {
+      writeBinary(str.getBytes("UTF-8"));
+    } catch (UnsupportedEncodingException e) {
+      throw new TException("UTF-8 not supported!");
+    }
   }
 
   /**
@@ -605,13 +610,16 @@ public final class TCompactProtocol extends TProtocol {
       return "";
     }
 
-    if (trans_.getBytesRemainingInBuffer() >= length) {
-      char[] charBuf = new char[length];
-      int charsDecoded = Utf8Helper.decode(trans_.getBuffer(), trans_.getBufferPosition(), length, charBuf);
-      trans_.consumeBuffer(length);
-      return new String(charBuf, 0, charsDecoded);
-    } else {
-      return Utf8Helper.decode(readBinary(length));
+    try {
+      if (trans_.getBytesRemainingInBuffer() >= length) {
+        String str = new String(trans_.getBuffer(), trans_.getBufferPosition(), length, "UTF-8");
+        trans_.consumeBuffer(length);
+        return str;
+      } else {
+        return new String(readBinary(length), "UTF-8");
+      }
+    } catch (UnsupportedEncodingException e) {
+      throw new TException("UTF-8 not supported!");
     }
   }
 
