@@ -18,8 +18,7 @@
  */
 
 #include <algorithm>
-#include <boost/foreach.hpp>
-#include <boost/test/unit_test.hpp>
+#include <boost/test/auto_unit_test.hpp>
 #include <transport/TBufferTransports.h>
 #include <transport/TShortReadTransport.h>
 
@@ -29,8 +28,6 @@ using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::transport::TBufferedTransport;
 using apache::thrift::transport::TFramedTransport;
 using apache::thrift::transport::test::TShortReadTransport;
-
-#define foreach BOOST_FOREACH
 
 // Shamelessly copied from ZlibTransport.  TODO: refactor.
 unsigned int dist[][5000] = {
@@ -175,7 +172,7 @@ void init_data() {
 }
 
 
-BOOST_AUTO_TEST_SUITE( TBufferBaseTest )
+BOOST_AUTO_TEST_SUITE( TBufferBaseTest );
 
 BOOST_AUTO_TEST_CASE( test_MemoryBuffer_Write_GetBuffer ) {
   init_data();
@@ -401,7 +398,8 @@ BOOST_AUTO_TEST_CASE( test_BufferedTransport_Write ) {
     1<<14, 1<<17,
   };
 
-  foreach (int size, sizes) {
+  for (int i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
+    int size = sizes[i];
     for (int d1 = 0; d1 < 3; d1++) {
       shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(16));
       TBufferedTransport trans(buffer, size);
@@ -431,7 +429,8 @@ BOOST_AUTO_TEST_CASE( test_BufferedTransport_Read_Full ) {
     1<<14, 1<<17,
   };
 
-  foreach (int size, sizes) {
+  for (int i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
+    int size = sizes[i];
     for (int d1 = 0; d1 < 3; d1++) {
       shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(data, sizeof(data)));
       TBufferedTransport trans(buffer, size);
@@ -463,7 +462,8 @@ BOOST_AUTO_TEST_CASE( test_BufferedTransport_Read_Short ) {
     1<<14, 1<<17,
   };
 
-  foreach (int size, sizes) {
+  for (int i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
+    int size = sizes[i];
     for (int d1 = 0; d1 < 3; d1++) {
       shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(data, sizeof(data)));
       shared_ptr<TShortReadTransport> tshort(new TShortReadTransport(buffer, 0.125));
@@ -496,7 +496,8 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Write ) {
     1<<14, 1<<17,
   };
 
-  foreach (int size, sizes) {
+  for (int i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
+    int size = sizes[i];
     for (int d1 = 0; d1 < 3; d1++) {
       shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(16));
       TFramedTransport trans(buffer, size);
@@ -558,8 +559,10 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Write_Read ) {
 
   int probs[] = { 1, 2, 4, 8, 16, 32, };
 
-  foreach (int size, sizes) {
-    foreach (int prob, probs) {
+  for (int i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
+    int size = sizes[i];
+    for (int j = 0; j < sizeof (probs) / sizeof (probs[0]); j++) {
+      int prob = probs[j];
       for (int d1 = 0; d1 < 3; d1++) {
         shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(16));
         TFramedTransport trans(buffer, size);
@@ -588,7 +591,9 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Write_Read ) {
 
         int read_offset = 0;
         int read_index = 0;
-        foreach (int fsize, flush_sizes) {
+
+        for (int k = 0; k < flush_sizes.size(); k++) {
+          int fsize = flush_sizes[k];
           // We are exploiting an implementation detail of TFramedTransport.
           // The read buffer starts empty and it will never do more than one
           // readFrame per read, so we should always get exactly one frame.
@@ -636,4 +641,4 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Empty_Flush ) {
   BOOST_CHECK_EQUAL(buffer->getBufferAsString(), output2);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END();

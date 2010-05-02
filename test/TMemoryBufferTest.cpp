@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <boost/test/unit_test.hpp>
+#include <boost/test/auto_unit_test.hpp>
 #include <iostream>
 #include <climits>
 #include <cassert>
@@ -25,7 +25,7 @@
 #include <protocol/TBinaryProtocol.h>
 #include "gen-cpp/ThriftTest_types.h"
 
-BOOST_AUTO_TEST_SUITE( TMemoryBufferTest )
+BOOST_AUTO_TEST_SUITE( TMemoryBufferTest );
 
 BOOST_AUTO_TEST_CASE( test_roundtrip ) {
     using apache::thrift::transport::TMemoryBuffer;
@@ -104,4 +104,4 @@ BOOST_AUTO_TEST_CASE( test_exceptions )
     }
   }
 
-BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END();
