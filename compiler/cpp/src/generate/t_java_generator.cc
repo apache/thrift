@@ -1899,7 +1899,11 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     indent(out) << "public boolean is" << get_cap_name("set") << cap_name << "() {" << endl;
     indent_up();
     if (type_can_be_null(type)) {
-      indent(out) << "return this." << field_name << " != null;" << endl;
+      indent(out) << "return this." << field_name << " != null";
+      if (type->is_struct() && ((t_struct*)type)->is_union()) {
+        out << " && this." << field_name << ".isSet()";
+      }
+      out << ";" << endl;
     } else {
       indent(out) << "return __isset_bit_vector.get(" << isset_field_id(field) << ");" << endl;
     }

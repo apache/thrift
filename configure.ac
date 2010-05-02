@@ -37,6 +37,12 @@ AC_ARG_VAR([JAVA_PREFIX], [Prefix for installing the Java lib jar.
                            Default = "/usr/local/lib"])
 AS_IF([test "x$JAVA_PREFIX" = x], [JAVA_PREFIX="/usr/local/lib"])
 
+AC_ARG_VAR([PHP_PREFIX], [Prefix for installing PHP modules.
+                         (Normal --prefix is ignored for PHP because
+                         PHP has different conventions.)
+                         Default = "/usr/lib/php"])
+AS_IF([test "x$PHP_PREFIX" = x], [PHP_PREFIX="/usr/lib/php"])
+
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_CXX
@@ -102,6 +108,12 @@ if test "$with_perl" = "yes"; then
   AC_PATH_PROG([PERL], [perl])
 fi
 AM_CONDITIONAL(WITH_PERL, [test -n "$PERL"])
+
+AX_THRIFT_LIB(php, [PHP], yes)
+if test "$with_php" = "yes"; then
+  AC_PATH_PROG([PHP], [php])
+fi
+AM_CONDITIONAL(WITH_PHP, [test -n "$PHP"])
 
 AX_THRIFT_LIB(ruby, [Ruby], yes)
 if test "$with_ruby" = "yes"; then
@@ -250,6 +262,7 @@ AC_CONFIG_FILES([
   lib/java/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile
+  lib/php/Makefile
   lib/py/Makefile
   lib/rb/Makefile
   test/Makefile
