@@ -17,6 +17,9 @@
 # under the License.
 #
 
+# directory where erlang library code should live
+ERL_LIB_ROOT_DIR=$(shell erl -eval 'io:format("~s~n", [code:lib_dir()])' -s init stop -noshell)
+
 MODULES = \
 	src
 
@@ -25,8 +28,20 @@ all clean docs:
 		(cd $$dir; ${MAKE} $@); \
 	done
 
+ERLLIBDIR=$(DESTDIR)$(ERL_LIB_ROOT_DIR)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)
+
 install: all
-	echo 'No install target, sorry.'
+	mkdir -p $(ERLLIBDIR) ; \
+	mkdir -p $(ERLLIBDIR)/ebin ; \
+	mkdir -p $(ERLLIBDIR)/include ; \
+	mkdir -p $(ERLLIBDIR)/src ; \
+	for i in ebin/*.app*   ; do $(INSTALL) $$i $(ERLLIBDIR)/$$i ; done ; \
+	for i in ebin/*.beam   ; do $(INSTALL) $$i $(ERLLIBDIR)/$$i ; done ; \
+	for i in include/*.hrl ; do $(INSTALL) $$i $(ERLLIBDIR)/$$i ; done ; \
+	for i in src/*.erl     ; do $(INSTALL) $$i $(ERLLIBDIR)/$$i ; done
+
+uninstall:
+	rm -rf $(ERLLIBDIR)
 
 check: all
 
@@ -35,3 +50,8 @@ distclean: clean
 # Hack to make "make dist" work.
 # This should not work, but it appears to.
 distdir:
+
+MAINTAINERCLEANFILES = Makefile.in
+
+maintainer-clean:
+	test ! -d ebin || rm -rf ebin
