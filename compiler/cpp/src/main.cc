@@ -618,7 +618,7 @@ void generate_all_fingerprints(t_program* program) {
  * Prints the version number
  */
 void version() {
-  printf("Thrift version %s-%s\n", THRIFT_VERSION, THRIFT_REVISION);
+  printf("Thrift version %s\n", THRIFT_VERSION);
 }
 
 /**

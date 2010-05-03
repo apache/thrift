@@ -253,6 +253,7 @@ AC_CONFIG_HEADERS(config.h:config.hin)
 AC_CONFIG_FILES([
   Makefile
   compiler/cpp/Makefile
+  compiler/cpp/version.h
   lib/Makefile
   lib/cpp/Makefile
   lib/cpp/thrift.pc

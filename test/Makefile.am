@@ -28,7 +28,7 @@ SUBDIRS += rb
 endif
 
 noinst_LTLIBRARIES = libtestgencpp.la
-libtestgencpp_la_SOURCES = \
+nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/DebugProtoTest_types.cpp \
 	gen-cpp/OptionalRequiredTest_types.cpp \
 	gen-cpp/DebugProtoTest_types.cpp \
@@ -175,4 +175,7 @@ EXTRA_DIST = \
 	ThriftTest.thrift \
 	ZlibTest.cpp \
 	DenseProtoTest.cpp \
-	FastbinaryTest.py
+	FastbinaryTest.py \
+	ThriftTest_extras.cpp \
+	DebugProtoTest_extras.cpp
+
