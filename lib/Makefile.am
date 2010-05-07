@@ -56,4 +56,6 @@ EXTRA_DIST = \
   ocaml \
   php \
   erl \
+  js \
+  as3 \
   st
