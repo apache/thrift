@@ -37,6 +37,11 @@ AC_ARG_VAR([JAVA_PREFIX], [Prefix for installing the Java lib jar.
                            Default = "/usr/local/lib"])
 AS_IF([test "x$JAVA_PREFIX" = x], [JAVA_PREFIX="/usr/local/lib"])
 
+AC_ARG_VAR([RUBY_PREFIX], [Prefix for installing Ruby modules.
+                           (Normal --prefix is ignored for Ruby because
+                           Ruby has different conventions.)
+                           Default = none, let ruby setup decide])
+
 AC_ARG_VAR([PHP_PREFIX], [Prefix for installing PHP modules.
                          (Normal --prefix is ignored for PHP because
                          PHP has different conventions.)
