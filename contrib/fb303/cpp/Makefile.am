@@ -58,7 +58,7 @@ endif
 
 # Shared -- multiple libraries can be defined
 if SHARED
-shareddir = lib
+shareddir = $(prefix)/lib
 shared_PROGRAMS = libfb303.so
 libfb303_so_SOURCES = $(fb303_lib)
 libfb303_so_CXXFLAGS = $(SHARED_CXXFLAGS)
