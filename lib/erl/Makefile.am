@@ -26,16 +26,16 @@ all clean docs:
 	done
 
 install: all
-	mkdir -p $(ERLANG_INSTALL_LIB_DIR_thrift) ; \
-	mkdir -p $(ERLANG_INSTALL_LIB_DIR_thrift)/ebin ; \
-	mkdir -p $(ERLANG_INSTALL_LIB_DIR_thrift)/include ; \
-	mkdir -p $(ERLANG_INSTALL_LIB_DIR_thrift)/src ; \
-	for i in ebin/*.app* ebin/*.beam include/*.hrl src/*.erl ; \
-		do $(INSTALL) $$p $(ERLANG_INSTALL_LIB_DIR_thrift)/$$p ; \
+	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
+	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/ebin ; \
+	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/include ; \
+	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/src ; \
+	for p in ebin/*.app* ebin/*.beam include/*.hrl src/*.erl ; \
+		do $(INSTALL) $$p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)/$$p ; \
 	done
 
 uninstall:
-	rm -rf $(ERLANG_INSTALL_LIB_DIR_thrift)
+	rm -rf $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)
 
 
 maintainer-clean-local:
