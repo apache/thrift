@@ -98,9 +98,11 @@ AM_CONDITIONAL([WITH_JAVA],
 
 AX_THRIFT_LIB(erlang, [Erlang], yes)
 if test "$with_erlang" = "yes";  then
-  AC_PATH_PROG([ERLC], [erlc])
+  AC_ERLANG_PATH_ERL
+  AC_ERLANG_PATH_ERLC
+  AC_ERLANG_SUBST_INSTALL_LIB_SUBDIR(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 fi
-AM_CONDITIONAL(WITH_ERLANG, [test -n "$ERLC"])
+AM_CONDITIONAL(WITH_ERLANG, [test -n "$ERL" -a -n "$ERLC"])
 
 AX_THRIFT_LIB(py, [Python], yes)
 if test "$with_py" = "yes";  then
