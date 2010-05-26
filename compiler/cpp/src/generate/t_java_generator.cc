@@ -115,8 +115,10 @@ class t_java_generator : public t_oop_generator {
   std::string isset_field_id(t_field* field);
 
   void generate_service_interface (t_service* tservice);
+  void generate_service_async_interface(t_service* tservice);
   void generate_service_helpers   (t_service* tservice);
   void generate_service_client    (t_service* tservice);
+  void generate_service_async_client(t_service* tservice);
   void generate_service_server    (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
 
@@ -215,13 +217,16 @@ class t_java_generator : public t_oop_generator {
   std::string base_type_name(t_base_type* tbase, bool in_container=false);
   std::string declare_field(t_field* tfield, bool init=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
-  std::string argument_list(t_struct* tstruct);
+  std::string function_signature_async(t_function* tfunction, bool use_base_method = false, std::string prefix="");
+  std::string argument_list(t_struct* tstruct, bool include_types = true);
+  std::string async_function_call_arglist(t_function* tfunc, bool use_base_method = true, bool include_types = true);
+  std::string async_argument_list(t_function* tfunct, t_struct* tstruct, t_type* ttype, bool include_types=false);
   std::string type_to_enum(t_type* ttype);
   std::string get_enum_class_name(t_type* type);
   void generate_struct_desc(ofstream& out, t_struct* tstruct);
   void generate_field_descs(ofstream& out, t_struct* tstruct);
   void generate_field_name_constants(ofstream& out, t_struct* tstruct);
-  
+
   bool type_can_be_null(t_type* ttype) {
     ttype = get_true_type(ttype);
 
@@ -330,7 +335,9 @@ string t_java_generator::java_thrift_imports() {
   return
     string() +
     "import org.apache.thrift.*;\n" +
+    "import org.apache.thrift.async.*;\n" +
     "import org.apache.thrift.meta_data.*;\n" +
+    "import org.apache.thrift.transport.*;\n" +
     "import org.apache.thrift.protocol.*;\n\n";
 }
 
@@ -2133,7 +2140,9 @@ void t_java_generator::generate_service(t_service* tservice) {
 
   // Generate the three main parts of the service
   generate_service_interface(tservice);
+  generate_service_async_interface(tservice);
   generate_service_client(tservice);
+  generate_service_async_client(tservice);
   generate_service_server(tservice);
   generate_service_helpers(tservice);
 
@@ -2164,13 +2173,29 @@ void t_java_generator::generate_service_interface(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_java_doc(f_service_, *f_iter);
-    indent(f_service_) << "public " << function_signature(*f_iter) << ";" <<
-      endl << endl;
+    indent(f_service_) << "public " << function_signature(*f_iter) << ";" << endl << endl;
   }
   indent_down();
-  f_service_ <<
-    indent() << "}" << endl <<
-    endl;
+  f_service_ << indent() << "}" << endl << endl;
+}
+
+void t_java_generator::generate_service_async_interface(t_service* tservice) {
+  string extends = "";
+  string extends_iface = "";
+  if (tservice->get_extends() != NULL) {
+    extends = type_name(tservice->get_extends());
+    extends_iface = " extends " + extends + " .AsyncIface";
+  }
+
+  f_service_ << indent() << "public interface AsyncIface" << extends_iface << " {" << endl << endl;
+  indent_up();
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    indent(f_service_) << "public " << function_signature_async(*f_iter, true) << " throws TException;" << endl << endl;
+  }
+  indent_down();
+  f_service_ << indent() << "}" << endl << endl;
 }
 
 /**
@@ -2402,6 +2427,138 @@ void t_java_generator::generate_service_client(t_service* tservice) {
   indent_down();
   indent(f_service_) <<
     "}" << endl;
+}
+
+void t_java_generator::generate_service_async_client(t_service* tservice) {
+  string extends = "TAsyncClient";
+  string extends_client = "";
+  if (tservice->get_extends() != NULL) {
+    extends = type_name(tservice->get_extends()) + ".AsyncClient";
+    // extends_client = " extends " + extends + ".AsyncClient";
+  }
+
+  indent(f_service_) <<
+    "public static class AsyncClient extends " << extends << " implements AsyncIface {" << endl;
+  indent_up();
+
+  // Factory method
+  indent(f_service_) << "public static class Factory implements TAsyncClientFactory<AsyncClient> {" << endl;
+  indent(f_service_) << "  private TAsyncClientManager clientManager;" << endl;
+  indent(f_service_) << "  private TProtocolFactory protocolFactory;" << endl;
+  indent(f_service_) << "  public Factory(TAsyncClientManager clientManager, TProtocolFactory protocolFactory) {" << endl;
+  indent(f_service_) << "    this.clientManager = clientManager;" << endl; 
+  indent(f_service_) << "    this.protocolFactory = protocolFactory;" << endl;
+  indent(f_service_) << "  }" << endl;
+  indent(f_service_) << "  public AsyncClient getAsyncClient(TNonblockingTransport transport) {" << endl;
+  indent(f_service_) << "    return new AsyncClient(protocolFactory, clientManager, transport);" << endl;
+  indent(f_service_) << "  }" << endl;
+  indent(f_service_) << "}" << endl << endl;
+
+  indent(f_service_) << "public AsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager clientManager, TNonblockingTransport transport) {" << endl;
+  indent(f_service_) << "  super(protocolFactory, clientManager, transport);" << endl;
+  indent(f_service_) << "}" << endl << endl;
+
+  // Generate client method implementations
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::const_iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    string funname = (*f_iter)->get_name();
+    t_type* ret_type = (*f_iter)->get_returntype();
+    t_struct* arg_struct = (*f_iter)->get_arglist();
+    string funclassname = funname + "_call";
+    const vector<t_field*>& fields = arg_struct->get_members();
+    const std::vector<t_field*>& xceptions = (*f_iter)->get_xceptions()->get_members();
+    vector<t_field*>::const_iterator fld_iter;
+    string args_name = (*f_iter)->get_name() + "_args";
+    string result_name = (*f_iter)->get_name() + "_result";
+
+    // Main method body   
+    indent(f_service_) << "public " << function_signature_async(*f_iter, false) << " throws TException {" << endl;
+    indent(f_service_) << "  checkReady();" << endl;
+    indent(f_service_) << "  " << funclassname << " method_call = new " + funclassname + "(" << async_argument_list(*f_iter, arg_struct, ret_type) << ", this, protocolFactory, transport);" << endl;    
+    indent(f_service_) << "  manager.call(method_call);" << endl;
+    indent(f_service_) << "}" << endl;
+
+    f_service_ << endl;
+
+    // TAsyncMethod object for this function call
+    indent(f_service_) << "public static class " + funclassname + " extends TAsyncMethodCall {" << endl;
+    indent_up();
+
+    // Member variables
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      indent(f_service_) << "private " + type_name((*fld_iter)->get_type()) + " " + (*fld_iter)->get_name() + ";" << endl;
+    }
+
+    // NOTE since we use a new Client instance to deserialize, let's keep seqid to 0 for now
+    // indent(f_service_) << "private int seqid;" << endl << endl;
+
+    // Constructor
+    indent(f_service_) << "public " + funclassname + "(" + async_argument_list(*f_iter, arg_struct, ret_type, true) << ", TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {" << endl;
+    indent(f_service_) << "  super(client, protocolFactory, transport, resultHandler, " << ((*f_iter)->is_oneway() ? "true" : "false") << ");" << endl;
+
+    // Assign member variables
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      indent(f_service_) << "  this." + (*fld_iter)->get_name() + " = " + (*fld_iter)->get_name() + ";" << endl;
+    }
+
+    indent(f_service_) << "}" << endl << endl;
+
+    indent(f_service_) << "public void write_args(TProtocol prot) throws TException {" << endl;
+    indent_up();
+
+    // Serialize request
+    // NOTE we are leaving seqid as 0, for now (see above)
+    f_service_ << 
+      indent() << "prot.writeMessageBegin(new TMessage(\"" << funname << "\", TMessageType.CALL, 0));" << endl <<
+      indent() << args_name << " args = new " << args_name << "();" << endl;
+
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      f_service_ << indent() << "args.set" << get_cap_name((*fld_iter)->get_name()) << "(" << (*fld_iter)->get_name() << ");" << endl;
+    }
+
+    f_service_ << 
+      indent() << "args.write(prot);" << endl <<
+      indent() << "prot.writeMessageEnd();" << endl;
+
+    indent_down();
+    indent(f_service_) << "}" << endl << endl;
+
+    // Return method  
+    indent(f_service_) << "public " + type_name(ret_type) + " getResult() throws ";
+    vector<t_field*>::const_iterator x_iter;
+    for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+      f_service_ << type_name((*x_iter)->get_type(), false, false) + ", ";
+    }
+    f_service_ << "TException {" << endl;
+
+    indent_up();
+    f_service_ <<
+      indent() << "if (getState() != State.RESPONSE_READ) {" << endl <<
+      indent() << "  throw new IllegalStateException(\"Method call not finished!\");" << endl <<
+      indent() << "}" << endl <<
+      indent() << "TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());" << endl <<
+      indent() << "TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);" << endl;
+    if (!(*f_iter)->is_oneway()) {
+      indent(f_service_);
+      if (!ret_type->is_void()) {
+        f_service_ << "return "; 
+      }
+      f_service_ << "(new Client(prot)).recv_" + funname + "();" << endl;
+    }
+
+    // Close function
+    indent_down();
+    indent(f_service_) << "}" << endl;
+
+    // Close class
+    indent_down();
+    indent(f_service_) << "}" << endl << endl;
+  }
+
+  // Close AsyncClient
+  scope_down(f_service_);
+  f_service_ << endl;
 }
 
 /**
@@ -3247,9 +3404,48 @@ string t_java_generator::function_signature(t_function* tfunction,
 }
 
 /**
+  * Renders a function signature of the form 'void name(args, resultHandler)'
+  *
+  * @params tfunction Function definition
+  * @return String of rendered function definition
+  */
+string t_java_generator::function_signature_async(t_function* tfunction, bool use_base_method, string prefix) {
+  std::string arglist = async_function_call_arglist(tfunction, use_base_method, true);
+
+  std::string ret_type = "";
+  if (use_base_method) {
+    ret_type += "AsyncClient.";
+  }
+  ret_type += tfunction->get_name() + "_call";
+
+  std::string result = prefix + "void " + tfunction->get_name() + "(" + arglist + ")";
+  return result;
+}
+
+string t_java_generator::async_function_call_arglist(t_function* tfunc, bool use_base_method, bool include_types) {
+  std::string arglist = "";
+  if (tfunc->get_arglist()->get_members().size() > 0) {
+    arglist = argument_list(tfunc->get_arglist(), include_types) + ", ";
+  }
+
+  std::string ret_type = "";
+  if (use_base_method) {
+    ret_type += "AsyncClient.";
+  }
+  ret_type += tfunc->get_name() + "_call";
+
+  if (include_types) {
+    arglist += "AsyncMethodCallback<" + ret_type + "> ";
+  }
+  arglist += "resultHandler";
+
+  return arglist;
+}
+
+/**
  * Renders a comma separated field list, with type names
  */
-string t_java_generator::argument_list(t_struct* tstruct) {
+string t_java_generator::argument_list(t_struct* tstruct, bool include_types) {
   string result = "";
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -3261,8 +3457,37 @@ string t_java_generator::argument_list(t_struct* tstruct) {
     } else {
       result += ", ";
     }
-    result += type_name((*f_iter)->get_type()) + " " + (*f_iter)->get_name();
+    if (include_types) {
+      result += type_name((*f_iter)->get_type()) + " ";
+    }
+    result += (*f_iter)->get_name();
   }
+  return result;
+}
+
+string t_java_generator::async_argument_list(t_function* tfunct, t_struct* tstruct, t_type* ttype, bool include_types) {
+  string result = "";
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+  bool first = true;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if (first) {
+      first = false;
+    } else {
+      result += ", ";
+    }
+    if (include_types) {
+      result += type_name((*f_iter)->get_type()) + " ";
+    }
+    result += (*f_iter)->get_name();
+  }
+  if (!first) {
+    result += ", ";
+  }
+  if (include_types) {
+    result += "AsyncMethodCallback<" + tfunct->get_name() + "_call" + "> ";
+  }
+  result += "resultHandler";
   return result;
 }
 

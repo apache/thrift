@@ -16,30 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.thrift.async;
 
-package org.apache.thrift;
+import org.apache.thrift.transport.TNonblockingTransport;
 
-import java.io.ByteArrayOutputStream;
-
-/**
- * Class that allows access to the underlying buf without doing deep
- * copies on it.
- *
- */
-public class TByteArrayOutputStream extends ByteArrayOutputStream {
-  public TByteArrayOutputStream(int size) {
-    super(size);
-  }
-
-  public TByteArrayOutputStream() {
-    super();
-  }
-
-  public byte[] get() {
-    return buf;
-  }
-
-  public int len() {
-    return count;
-  }
+public interface TAsyncClientFactory<T extends TAsyncClient> {
+  public T getAsyncClient(TNonblockingTransport transport);
 }

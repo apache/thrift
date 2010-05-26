@@ -24,12 +24,12 @@ import java.io.UnsupportedEncodingException;
 
 /**
  * Memory buffer-based implementation of the TTransport interface.
- *
  */
 public class TMemoryBuffer extends TTransport {
-
   /**
-   *
+   * Create a TMemoryBuffer with an initial buffer size of <i>size</i>. The
+   * internal buffer will grow as necessary to accomodate the size of the data
+   * being written to it.
    */
   public TMemoryBuffer(int size) {
     arr_ = new TByteArrayOutputStream(size);
@@ -90,9 +90,13 @@ public class TMemoryBuffer extends TTransport {
 
   // Position to read next byte from
   private int pos_;
-  
+
   public int length() {
     return arr_.size();
+  }
+
+  public byte[] getArray() {
+    return arr_.get();
   }
 }
 

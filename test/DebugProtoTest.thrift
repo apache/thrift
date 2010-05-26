@@ -228,14 +228,16 @@ service ServiceForExceptionWithAMap {
 
 service Srv {
   i32 Janky(1: i32 arg);
-  
+
   // return type only methods
-  
+
   void voidMethod();
   i32 primitiveMethod();
   CompactProtoTestStruct structMethod();
-  
+
   void methodWithDefaultArgs(1: i32 something = MYCONST);
+
+  oneway void onewayMethod();
 }
 
 service Inherited extends Srv {

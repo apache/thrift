@@ -16,30 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.thrift.async;
 
-package org.apache.thrift;
+public interface AsyncMethodCallback<T> {
+  /**
+   * This method will be called when the remote side has completed invoking
+   * your method call and the result is fully read. For oneway method calls,
+   * this method will be called as soon as we have completed writing out the
+   * request.
+   * @param response
+   */
+  public void onComplete(T response);
 
-import java.io.ByteArrayOutputStream;
-
-/**
- * Class that allows access to the underlying buf without doing deep
- * copies on it.
- *
- */
-public class TByteArrayOutputStream extends ByteArrayOutputStream {
-  public TByteArrayOutputStream(int size) {
-    super(size);
-  }
-
-  public TByteArrayOutputStream() {
-    super();
-  }
-
-  public byte[] get() {
-    return buf;
-  }
-
-  public int len() {
-    return count;
-  }
+  /**
+   * This method will be called when there is an unexpected clientside
+   * exception. This does not include application-defined exceptions that
+   * appear in the IDL, but rather things like IOExceptions.
+   * @param throwable
+   */
+  public void onError(Throwable throwable);
 }

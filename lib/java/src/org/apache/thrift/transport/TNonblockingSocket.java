@@ -21,6 +21,7 @@
 package org.apache.thrift.transport;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
@@ -41,19 +42,20 @@ public class TNonblockingSocket extends TNonblockingTransport {
   private Socket socket_ = null;
 
   /**
-   * Remote host
-   */
-  private String host_  = null;
-
-  /**
-   * Remote port
-   */
-  private int port_ = 0;
-
-  /**
    * Socket timeout
    */
   private int timeout_ = 0;
+
+  /**
+   * Create a new nonblocking socket transport connected to host:port.
+   * @param host
+   * @param port
+   * @throws TTransportException
+   * @throws IOException
+   */
+  public TNonblockingSocket(String host, int port) throws TTransportException, IOException {
+    this(SocketChannel.open(new InetSocketAddress(host, port)));
+  }
 
   /**
    * Constructor that takes an already created socket.
