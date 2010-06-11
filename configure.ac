@@ -48,6 +48,12 @@ AC_ARG_VAR([PHP_PREFIX], [Prefix for installing PHP modules.
                          Default = "/usr/lib/php"])
 AS_IF([test "x$PHP_PREFIX" = x], [PHP_PREFIX="/usr/lib/php"])
 
+AC_ARG_VAR([PERL_PREFIX], [Prefix for installing Perl modules.
+                           (Normal --prefix is ignored for Perl because
+                           Perl has different conventions.)
+                           Default = "/usr/local/lib"])
+AS_IF([test "x$PERL_PREFIX" = x], [PERL_PREFIX="/usr/local"])
+
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_CXX
