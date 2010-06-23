@@ -302,6 +302,7 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
     // agree and play nice.
     string name = capitalize((*c_iter)->get_name());
 
+    generate_rdoc(f_types_, *c_iter);
     f_types_ <<
       indent() << name << " = " << value << endl;
   }
