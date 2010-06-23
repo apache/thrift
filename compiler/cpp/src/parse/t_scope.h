@@ -96,6 +96,9 @@ class t_scope {
       std::map<t_const_value*, t_const_value*>::const_iterator v_iter;
       for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
         t_field* field = tstruct->get_field_by_name(v_iter->first->get_string());
+        if (field == NULL) {
+          throw "No field named \"" + v_iter->first->get_string() + "\" was found in struct of type \"" + tstruct->get_name() + "\"";
+        }
         resolve_const_value(v_iter->second, field->get_type());
       }
     } else if (const_val->get_type() == t_const_value::CV_IDENTIFIER) {
