@@ -31,6 +31,22 @@ public class TBaseHelper {
 
   private static final Comparator comparator = new NestedStructureComparator();
 
+  public static int compareTo(Object o1, Object o2) {
+    if (o1 instanceof Comparable) {
+      return compareTo((Comparable)o1, (Comparable)o2);
+    } else if (o1 instanceof List) {
+      return compareTo((List)o1, (List)o2);
+    } else if (o1 instanceof Set) {
+      return compareTo((Set)o1, (Set)o2);
+    } else if (o1 instanceof Map) {
+      return compareTo((Map)o1, (Map)o2);
+    } else if (o1 instanceof byte[]) {
+      return compareTo((byte[])o1, (byte[])o2);
+    } else {
+      throw new IllegalArgumentException("Cannot compare objects of type " + o1.getClass());
+    }
+  }
+
   public static int compareTo(boolean a, boolean b) {
     return Boolean.valueOf(a).compareTo(b);
   }

@@ -24,10 +24,16 @@ import org.apache.thrift.transport.TMemoryBuffer;
 
 import thrift.test.ComparableUnion;
 import thrift.test.Empty;
+import thrift.test.RandomStuff;
 import thrift.test.SomeEnum;
 import thrift.test.StructWithAUnion;
 import thrift.test.TestUnion;
 import thrift.test.TestUnionMinusStringField;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import junit.framework.TestCase;
 
 public class TestTUnion extends TestCase {
@@ -98,6 +104,22 @@ public class TestTUnion extends TestCase {
 
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
+    
+    TestUnion union1 = new TestUnion(TestUnion._Fields.STRUCT_LIST, new ArrayList<RandomStuff>());
+    TestUnion union2 = new TestUnion(TestUnion._Fields.STRUCT_LIST, new ArrayList<RandomStuff>());
+    assertTrue(union1.compareTo(union2) == 0);
+
+    TestUnion union3 = new TestUnion(TestUnion._Fields.I32_SET, new HashSet<Integer>());
+    Set<Integer> i32_set = new HashSet<Integer>();
+    i32_set.add(1);
+    TestUnion union4 = new TestUnion(TestUnion._Fields.I32_SET, i32_set);
+    assertTrue(union3.compareTo(union4) < 0);
+
+    Map<Integer, Integer> i32_map = new HashMap<Integer, Integer>();
+    i32_map.put(1,1);
+    TestUnion union5 = new TestUnion(TestUnion._Fields.I32_MAP, i32_map);
+    TestUnion union6 = new TestUnion(TestUnion._Fields.I32_MAP, new HashMap<Integer, Integer>());
+    assertTrue(union5.compareTo(union6) > 0);
   }
 
   public void testEquality() throws Exception {

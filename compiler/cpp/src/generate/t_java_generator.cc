@@ -1010,12 +1010,7 @@ void t_java_generator::generate_union_comparisons(ofstream& out, t_struct* tstru
   indent(out) << "public int compareTo(" << type_name(tstruct) << " other) {" << endl;
   indent(out) << "  int lastComparison = TBaseHelper.compareTo(getSetField(), other.getSetField());" << endl;
   indent(out) << "  if (lastComparison == 0) {" << endl;
-  indent(out) << "    Object myValue = getFieldValue();" << endl;
-  indent(out) << "    if (myValue instanceof byte[]) {" << endl;
-  indent(out) << "      return TBaseHelper.compareTo((byte[])myValue, (byte[])other.getFieldValue());" << endl;
-  indent(out) << "    } else {" << endl;
-  indent(out) << "      return TBaseHelper.compareTo((Comparable)myValue, (Comparable)other.getFieldValue());" << endl;
-  indent(out) << "    }" << endl;
+  indent(out) << "    return TBaseHelper.compareTo(getFieldValue(), other.getFieldValue());" << endl;
   indent(out) << "  }" << endl;
   indent(out) << "  return lastComparison;" << endl;
   indent(out) << "}" << endl;

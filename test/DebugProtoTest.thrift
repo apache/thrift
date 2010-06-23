@@ -299,6 +299,8 @@ union TestUnion {
   4: list<RandomStuff> struct_list;
   5: i32 other_i32_field;
   6: SomeEnum enum_field;
+  7: set<i32> i32_set;
+  8: map<i32, i32> i32_map;
 }
 
 union TestUnionMinusStringField {
@@ -307,6 +309,8 @@ union TestUnionMinusStringField {
   4: list<RandomStuff> struct_list;
   5: i32 other_i32_field;
   6: SomeEnum enum_field;
+  7: set<i32> i32_set;
+  8: map<i32, i32> i32_map;
 }
 
 union ComparableUnion {
@@ -340,3 +344,4 @@ struct BreaksRubyCompactProtocol {
   2: BigFieldIdStruct field2;
   3: i32 field3;
 }
+
