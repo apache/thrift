@@ -59,6 +59,7 @@
     <Compile Include="TProcessor.cs" />
     <Compile Include="Transport\TBufferedTransport.cs" />
     <Compile Include="Transport\TFramedTransport.cs" />
+    <Compile Include="Transport\THttpClient.cs" />
     <Compile Include="Transport\TServerSocket.cs" />
     <Compile Include="Transport\TServerTransport.cs" />
     <Compile Include="Transport\TSocket.cs" />

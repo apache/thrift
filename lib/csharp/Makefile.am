@@ -46,6 +46,7 @@ THRIFTCODE= \
             src/Transport/TServerTransport.cs \
             src/Transport/TServerSocket.cs \
             src/Transport/TTransportFactory.cs \
+            src/Transport/THttpClient.cs \
             src/TProcessor.cs \
             src/TApplicationException.cs
 

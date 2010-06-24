@@ -87,15 +87,23 @@ namespace Test
 				{
 					Thread t = new Thread(new ParameterizedThreadStart(ClientThread));
 					threads[test] = t;
-					TSocket socket = new TSocket(host, port);
-					if (buffered)
+					if (url == null)
 					{
-						TBufferedTransport buffer = new TBufferedTransport(socket);
-						t.Start(buffer);
+						TSocket socket = new TSocket(host, port);
+						if (buffered)
+						{
+							TBufferedTransport buffer = new TBufferedTransport(socket);
+							t.Start(buffer);
+						}
+						else
+						{
+							t.Start(socket);
+						}
 					}
 					else
 					{
-						t.Start(socket);
+						THttpClient http = new THttpClient(new Uri(url));
+						t.Start(http);
 					}
 				}
 
