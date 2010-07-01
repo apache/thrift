@@ -52,6 +52,9 @@ class t_py_generator : public t_generator {
     iter = parsed_options.find("twisted");
     gen_twisted_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("utf8strings");
+    gen_utf8strings_ = (iter != parsed_options.end());
+
     if (gen_twisted_){
       out_dir_base_ = "gen-py.twisted";
     } else {
@@ -204,6 +207,11 @@ class t_py_generator : public t_generator {
    * True iff we should generate Twisted-friendly RPC services.
    */
   bool gen_twisted_;
+
+  /**
+   * True iff strings should be encoded using utf-8.
+   */
+  bool gen_utf8strings_;
 
   /**
    * File streams
@@ -1752,7 +1760,11 @@ void t_py_generator::generate_deserialize_field(ofstream &out,
           name;
         break;
       case t_base_type::TYPE_STRING:
-        out << "readString();";
+        if (((t_base_type*)type)->is_binary() || !gen_utf8strings_) {
+          out << "readString();";
+        } else {
+          out << "readString().decode('utf-8')";
+        }
         break;
       case t_base_type::TYPE_BOOL:
         out << "readBool();";
@@ -1946,7 +1958,11 @@ void t_py_generator::generate_serialize_field(ofstream &out,
           "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        out << "writeString(" << name << ")";
+        if (((t_base_type*)type)->is_binary() || !gen_utf8strings_) {
+          out << "writeString(" << name << ")";
+        } else {
+          out << "writeString(" << name << ".encode('utf-8'))";
+        }
         break;
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ")";
