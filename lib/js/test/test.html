@@ -46,7 +46,7 @@
   document.write("client.testStruct() => "+(client.testStruct(xtr).string_thing == "worked")+"<br/>")
   document.write("client.testNest()   => "+(client.testNest(xtr2).struct_thing.string_thing == "worked")+"<br/>")
   document.write("client.testMap()    => "+(client.testMap(insanity.userMap)[ThriftTest.Numberz.ONE] == 1)+"<br/>")
-  document.write("client.testList()   => "+(client.testList(list).length == 3)+"<br/>")
+  document.write("client.testList()   => "+(client.testList(list).length == 3 && client.testList(list)[1] == 2)+"<br/>")
   document.write("client.testSet()    => "+(client.testSet(list).length == 3)+"<br/>")
   document.write("client.testEnum()   => "+(client.testEnum(ThriftTest.Numberz.ONE) == ThriftTest.Numberz.ONE)+"<br/>")
 
