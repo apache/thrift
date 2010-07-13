@@ -25,6 +25,7 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +43,8 @@ public class TAsyncClientManager {
     selectThread.start();
   }
 
-  public void call(TAsyncMethodCall method) {
+  public void call(TAsyncMethodCall method) throws TException {
+    method.prepareMethodCall();
     pendingCalls.add(method);
     selectThread.getSelector().wakeup();
   }

@@ -47,7 +47,8 @@ public class TestTAsyncClientManager extends TestCase {
   public class SrvHandler implements Iface {
     @Override
     public int Janky(int arg) throws TException {
-      return 0;
+      assertEquals(1, arg);
+      return 3;
     }
 
     @Override
@@ -99,7 +100,7 @@ public class TestTAsyncClientManager extends TestCase {
       @Override
       public void onComplete(Janky_call response) {
         try {
-          assertEquals(0, response.getResult());
+          assertEquals(3, response.getResult());
           jankyReturned.set(true);
         } catch (TException e) {
           fail("unexpected exception: " + e);

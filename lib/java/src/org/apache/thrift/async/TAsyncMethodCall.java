@@ -62,7 +62,7 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
   private ByteBuffer frameBuffer;
   private State state;
 
-  protected TAsyncMethodCall(TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport, AsyncMethodCallback<T> callback, boolean isOneway) throws TException {
+  protected TAsyncMethodCall(TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport, AsyncMethodCallback<T> callback, boolean isOneway) {
     this.transport = transport;
     this.callback = callback;
     this.protocolFactory = protocolFactory;
@@ -70,7 +70,6 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
     this.isOneway = isOneway;
 
     this.state = State.WRITING_REQUEST_SIZE;
-    prepareMethodCall();
   }
 
   protected State getState() {
@@ -79,7 +78,7 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
 
   protected abstract void write_args(TProtocol protocol) throws TException;
 
-  private void prepareMethodCall() throws TException {
+  protected void prepareMethodCall() throws TException {
     TMemoryBuffer memoryBuffer = new TMemoryBuffer(INITIAL_MEMORY_BUFFER_SIZE);
     TProtocol protocol = protocolFactory.getProtocol(memoryBuffer);
     write_args(protocol);
