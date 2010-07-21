@@ -23,6 +23,14 @@
 #define GARBAGE_BUFFER_SIZE 4096 // 4KiB
 
 @implementation TMemoryBuffer
+- (id)init {
+	if (self = [super init]) {
+		mBuffer = [[NSMutableData alloc] init];
+		mOffset = 0;
+	}
+	return self;
+}
+
 - (id)initWithData:(NSData *)data {
 	if (self = [super init]) {
 		mBuffer = [data mutableCopy];
@@ -50,6 +58,10 @@
 
 - (void)flush {
 	// noop
+}
+
+- (NSData *)getBuffer {
+	return [[mBuffer copy] autorelease];
 }
 
 - (void)dealloc {
