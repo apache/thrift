@@ -37,7 +37,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 }
 
 - (TBinaryProtocol *) newProtocolOnTransport: (id <TTransport>) transport {
-  return [[[TBinaryProtocol alloc] initWithTransport: transport] autorelease];
+  return [[TBinaryProtocol alloc] initWithTransport: transport];
 }
 
 @end

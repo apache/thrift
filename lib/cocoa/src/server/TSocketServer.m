@@ -124,8 +124,8 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
   TNSFileHandleTransport * transport = [[TNSFileHandleTransport alloc] initWithFileHandle: clientSocket];
   id<TProcessor> processor = [mProcessorFactory processorForTransport: transport];
   
-  id <TProtocol> inProtocol = [mInputProtocolFactory newProtocolOnTransport: transport];
-  id <TProtocol> outProtocol = [mOutputProtocolFactory newProtocolOnTransport: transport];
+  id <TProtocol> inProtocol = [[mInputProtocolFactory newProtocolOnTransport: transport] autorelease];
+  id <TProtocol> outProtocol = [[mOutputProtocolFactory newProtocolOnTransport: transport] autorelease];
 
   @try {
     BOOL result = NO;
