@@ -609,58 +609,7 @@ static void Init_rb_methods() {
   rb_define_method(thrift_compact_protocol_class, "read_set_end",       rb_thrift_compact_proto_read_set_end, 0);
 }
 
-static void Init_npmt() {
-  native_proto_method_table *npmt;
-  npmt = ALLOC(native_proto_method_table);
-  
-  npmt->write_field_begin   =  rb_thrift_compact_proto_write_field_begin;
-  npmt->write_field_stop    =  rb_thrift_compact_proto_write_field_stop;
-  npmt->write_map_begin     =  rb_thrift_compact_proto_write_map_begin;
-  npmt->write_list_begin    =  rb_thrift_compact_proto_write_list_begin;
-  npmt->write_set_begin     =  rb_thrift_compact_proto_write_set_begin;
-  npmt->write_byte          =  rb_thrift_compact_proto_write_byte;
-  npmt->write_bool          =  rb_thrift_compact_proto_write_bool;
-  npmt->write_i16           =  rb_thrift_compact_proto_write_i16;
-  npmt->write_i32           =  rb_thrift_compact_proto_write_i32;
-  npmt->write_i64           =  rb_thrift_compact_proto_write_i64;
-  npmt->write_double        =  rb_thrift_compact_proto_write_double;
-  npmt->write_string        =  rb_thrift_compact_proto_write_string;
-  npmt->write_message_end   =  rb_thrift_compact_proto_write_message_end;
-  npmt->write_struct_begin  =  rb_thrift_compact_proto_write_struct_begin;
-  npmt->write_struct_end    =  rb_thrift_compact_proto_write_struct_end;
-  npmt->write_field_end     =  rb_thrift_compact_proto_write_field_end;
-  npmt->write_map_end       =  rb_thrift_compact_proto_write_map_end;
-  npmt->write_list_end      =  rb_thrift_compact_proto_write_list_end;
-  npmt->write_set_end       =  rb_thrift_compact_proto_write_set_end;
-  
-  npmt->read_message_begin  =  rb_thrift_compact_proto_read_message_begin;
-  npmt->read_field_begin    =  rb_thrift_compact_proto_read_field_begin;
-  npmt->read_map_begin      =  rb_thrift_compact_proto_read_map_begin;
-  npmt->read_list_begin     =  rb_thrift_compact_proto_read_list_begin;
-  npmt->read_set_begin      =  rb_thrift_compact_proto_read_set_begin;
-  npmt->read_byte           =  rb_thrift_compact_proto_read_byte;
-  npmt->read_bool           =  rb_thrift_compact_proto_read_bool;
-  npmt->read_i16            =  rb_thrift_compact_proto_read_i16;
-  npmt->read_i32            =  rb_thrift_compact_proto_read_i32;
-  npmt->read_i64            =  rb_thrift_compact_proto_read_i64;
-  npmt->read_double         =  rb_thrift_compact_proto_read_double;
-  npmt->read_string         =  rb_thrift_compact_proto_read_string;
-  npmt->read_message_end    =  rb_thrift_compact_proto_read_message_end;
-  npmt->read_struct_begin   =  rb_thrift_compact_proto_read_struct_begin;
-  npmt->read_struct_end     =  rb_thrift_compact_proto_read_struct_end;
-  npmt->read_field_end      =  rb_thrift_compact_proto_read_field_end;
-  npmt->read_map_end        =  rb_thrift_compact_proto_read_map_end;
-  npmt->read_list_end       =  rb_thrift_compact_proto_read_list_end;
-  npmt->read_set_end        =  rb_thrift_compact_proto_read_set_end;
-  
-  VALUE method_table_object = Data_Wrap_Struct(rb_cObject, 0, free, npmt);
-  rb_const_set(thrift_compact_protocol_class, rb_intern("@native_method_table"), method_table_object);
-}
-
-
-
 void Init_compact_protocol() {
   Init_constants();
   Init_rb_methods();
-  Init_npmt();
 }

@@ -43,9 +43,6 @@ strlcpy (char *dst, const char *src, size_t dst_sz)
 
 #endif
 
-static native_proto_method_table *mt;
-static native_proto_method_table *default_mt;
-
 VALUE thrift_union_class;
 
 ID setfield_id;
@@ -221,47 +218,6 @@ VALUE default_read_struct_end(VALUE protocol) {
   return rb_funcall(protocol, read_struct_end_method_id, 0);
 }
 
-static void set_default_proto_function_pointers() {
-  default_mt = ALLOC(native_proto_method_table);
-
-  default_mt->write_field_begin = default_write_field_begin;
-  default_mt->write_field_stop = default_write_field_stop;
-  default_mt->write_map_begin = default_write_map_begin;
-  default_mt->write_map_end = default_write_map_end;
-  default_mt->write_list_begin = default_write_list_begin;
-  default_mt->write_list_end = default_write_list_end;
-  default_mt->write_set_begin = default_write_set_begin;
-  default_mt->write_set_end = default_write_set_end;
-  default_mt->write_byte = default_write_byte;
-  default_mt->write_bool = default_write_bool;
-  default_mt->write_i16 = default_write_i16;
-  default_mt->write_i32 = default_write_i32;
-  default_mt->write_i64 = default_write_i64;
-  default_mt->write_double = default_write_double;
-  default_mt->write_string = default_write_string;
-  default_mt->write_struct_begin = default_write_struct_begin;
-  default_mt->write_struct_end = default_write_struct_end;
-  default_mt->write_field_end = default_write_field_end;
-
-  default_mt->read_struct_begin = default_read_struct_begin;
-  default_mt->read_struct_end = default_read_struct_end;
-  default_mt->read_field_begin = default_read_field_begin;
-  default_mt->read_field_end = default_read_field_end;
-  default_mt->read_map_begin = default_read_map_begin;
-  default_mt->read_map_end = default_read_map_end;
-  default_mt->read_list_begin = default_read_list_begin;
-  default_mt->read_list_end = default_read_list_end;
-  default_mt->read_set_begin = default_read_set_begin;
-  default_mt->read_set_end = default_read_set_end;
-  default_mt->read_byte = default_read_byte;
-  default_mt->read_bool = default_read_bool;
-  default_mt->read_i16 = default_read_i16;
-  default_mt->read_i32 = default_read_i32;
-  default_mt->read_i64 = default_read_i64;
-  default_mt->read_double = default_read_double;
-  default_mt->read_string = default_read_string;
-}
-
 // end default protocol methods
 
 static VALUE rb_thrift_union_write (VALUE self, VALUE protocol);
@@ -301,7 +257,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
 
     sz = RARRAY_LEN(keys);
 
-    mt->write_map_begin(protocol, keytype_value, valuetype_value, INT2FIX(sz));
+    default_write_map_begin(protocol, keytype_value, valuetype_value, INT2FIX(sz));
 
     for (i = 0; i < sz; i++) {
       key = rb_ary_entry(keys, i);
@@ -320,7 +276,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
       }
     }
 
-    mt->write_map_end(protocol);
+    default_write_map_end(protocol);
   } else if (ttype == TTYPE_LIST) {
     Check_Type(value, T_ARRAY);
 
@@ -330,7 +286,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
     VALUE element_type_value = rb_hash_aref(element_type_info, type_sym);
     int element_type = FIX2INT(element_type_value);
 
-    mt->write_list_begin(protocol, element_type_value, INT2FIX(sz));
+    default_write_list_begin(protocol, element_type_value, INT2FIX(sz));
     for (i = 0; i < sz; ++i) {
       VALUE val = rb_ary_entry(value, i);
       if (IS_CONTAINER(element_type)) {
@@ -339,7 +295,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
         write_anything(element_type, val, protocol, element_type_info);
       }
     }
-    mt->write_list_end(protocol);
+    default_write_list_end(protocol);
   } else if (ttype == TTYPE_SET) {
     VALUE items;
 
@@ -360,7 +316,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
     VALUE element_type_value = rb_hash_aref(element_type_info, type_sym);
     int element_type = FIX2INT(element_type_value);
 
-    mt->write_set_begin(protocol, element_type_value, INT2FIX(sz));
+    default_write_set_begin(protocol, element_type_value, INT2FIX(sz));
 
     for (i = 0; i < sz; i++) {
       VALUE val = rb_ary_entry(items, i);
@@ -371,7 +327,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
       }
     }
 
-    mt->write_set_end(protocol);
+    default_write_set_end(protocol);
   } else {
     rb_raise(rb_eNotImpError, "can't write container of type: %d", ttype);
   }
@@ -379,19 +335,19 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
 
 static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_info) {
   if (ttype == TTYPE_BOOL) {
-    mt->write_bool(protocol, value);
+    default_write_bool(protocol, value);
   } else if (ttype == TTYPE_BYTE) {
-    mt->write_byte(protocol, value);
+    default_write_byte(protocol, value);
   } else if (ttype == TTYPE_I16) {
-    mt->write_i16(protocol, value);
+    default_write_i16(protocol, value);
   } else if (ttype == TTYPE_I32) {
-    mt->write_i32(protocol, value);
+    default_write_i32(protocol, value);
   } else if (ttype == TTYPE_I64) {
-    mt->write_i64(protocol, value);
+    default_write_i64(protocol, value);
   } else if (ttype == TTYPE_DOUBLE) {
-    mt->write_double(protocol, value);
+    default_write_double(protocol, value);
   } else if (ttype == TTYPE_STRING) {
-    mt->write_string(protocol, value);
+    default_write_string(protocol, value);
   } else if (IS_CONTAINER(ttype)) {
     write_container(ttype, field_info, value, protocol);
   } else if (ttype == TTYPE_STRUCT) {
@@ -409,10 +365,8 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
   // call validate
   rb_funcall(self, validate_method_id, 0);
 
-  // check_native_proto_method_table(protocol);
-
   // write struct begin
-  mt->write_struct_begin(protocol, rb_class_name(CLASS_OF(self)));
+  default_write_struct_begin(protocol, rb_class_name(CLASS_OF(self)));
 
   // iterate through all the fields here
   VALUE struct_fields = STRUCT_FIELDS(self);
@@ -433,18 +387,18 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
     VALUE field_value = get_field_value(self, field_name);
 
     if (!NIL_P(field_value)) {
-      mt->write_field_begin(protocol, field_name, ttype_value, field_id);
+      default_write_field_begin(protocol, field_name, ttype_value, field_id);
 
       write_anything(ttype, field_value, protocol, field_info);
 
-      mt->write_field_end(protocol);
+      default_write_field_end(protocol);
     }
   }
 
-  mt->write_field_stop(protocol);
+  default_write_field_stop(protocol);
 
   // write struct end
-  mt->write_struct_end(protocol);
+  default_write_struct_end(protocol);
 
   return Qnil;
 }
@@ -469,19 +423,19 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
   VALUE result = Qnil;
 
   if (ttype == TTYPE_BOOL) {
-    result = mt->read_bool(protocol);
+    result = default_read_bool(protocol);
   } else if (ttype == TTYPE_BYTE) {
-    result = mt->read_byte(protocol);
+    result = default_read_byte(protocol);
   } else if (ttype == TTYPE_I16) {
-    result = mt->read_i16(protocol);
+    result = default_read_i16(protocol);
   } else if (ttype == TTYPE_I32) {
-    result = mt->read_i32(protocol);
+    result = default_read_i32(protocol);
   } else if (ttype == TTYPE_I64) {
-    result = mt->read_i64(protocol);
+    result = default_read_i64(protocol);
   } else if (ttype == TTYPE_STRING) {
-    result = mt->read_string(protocol);
+    result = default_read_string(protocol);
   } else if (ttype == TTYPE_DOUBLE) {
-    result = mt->read_double(protocol);
+    result = default_read_double(protocol);
   } else if (ttype == TTYPE_STRUCT) {
     VALUE klass = rb_hash_aref(field_info, class_sym);
     result = rb_class_new_instance(0, NULL, klass);
@@ -494,7 +448,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
   } else if (ttype == TTYPE_MAP) {
     int i;
 
-    VALUE map_header = mt->read_map_begin(protocol);
+    VALUE map_header = default_read_map_begin(protocol);
     int key_ttype = FIX2INT(rb_ary_entry(map_header, 0));
     int value_ttype = FIX2INT(rb_ary_entry(map_header, 1));
     int num_entries = FIX2INT(rb_ary_entry(map_header, 2));
@@ -513,11 +467,11 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
       rb_hash_aset(result, key, val);
     }
 
-    mt->read_map_end(protocol);
+    default_read_map_end(protocol);
   } else if (ttype == TTYPE_LIST) {
     int i;
 
-    VALUE list_header = mt->read_list_begin(protocol);
+    VALUE list_header = default_read_list_begin(protocol);
     int element_ttype = FIX2INT(rb_ary_entry(list_header, 0));
     int num_elements = FIX2INT(rb_ary_entry(list_header, 1));
     result = rb_ary_new2(num_elements);
@@ -526,12 +480,12 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
       rb_ary_push(result, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
     }
 
-    mt->read_list_end(protocol);
+    default_read_list_end(protocol);
   } else if (ttype == TTYPE_SET) {
     VALUE items;
     int i;
 
-    VALUE set_header = mt->read_set_begin(protocol);
+    VALUE set_header = default_read_set_begin(protocol);
     int element_ttype = FIX2INT(rb_ary_entry(set_header, 0));
     int num_elements = FIX2INT(rb_ary_entry(set_header, 1));
     items = rb_ary_new2(num_elements);
@@ -540,7 +494,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
       rb_ary_push(items, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
     }
 
-    mt->read_set_end(protocol);
+    default_read_set_end(protocol);
 
     result = rb_class_new_instance(1, &items, rb_cSet);
   } else {
@@ -551,16 +505,14 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
 }
 
 static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
-  // check_native_proto_method_table(protocol);
-
   // read struct begin
-  mt->read_struct_begin(protocol);
+  default_read_struct_begin(protocol);
 
   VALUE struct_fields = STRUCT_FIELDS(self);
 
   // read each field
   while (true) {
-    VALUE field_header = mt->read_field_begin(protocol);
+    VALUE field_header = default_read_field_begin(protocol);
     VALUE field_type_value = rb_ary_entry(field_header, 1);
     int field_type = FIX2INT(field_type_value);
 
@@ -585,11 +537,11 @@ static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
     }
 
     // read field end
-    mt->read_field_end(protocol);
+    default_read_field_end(protocol);
   }
 
   // read struct end
-  mt->read_struct_end(protocol);
+  default_read_struct_end(protocol);
 
   // call validate
   rb_funcall(self, validate_method_id, 0);
@@ -604,11 +556,11 @@ static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
 
 static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
   // read struct begin
-  mt->read_struct_begin(protocol);
+  default_read_struct_begin(protocol);
 
   VALUE struct_fields = STRUCT_FIELDS(self);
 
-  VALUE field_header = mt->read_field_begin(protocol);
+  VALUE field_header = default_read_field_begin(protocol);
   VALUE field_type_value = rb_ary_entry(field_header, 1);
   int field_type = FIX2INT(field_type_value);
 
@@ -630,9 +582,9 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
   }
 
   // read field end
-  mt->read_field_end(protocol);
+  default_read_field_end(protocol);
 
-  field_header = mt->read_field_begin(protocol);
+  field_header = default_read_field_begin(protocol);
   field_type_value = rb_ary_entry(field_header, 1);
   field_type = FIX2INT(field_type_value);
 
@@ -641,10 +593,10 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
   }
 
   // read field end
-  mt->read_field_end(protocol);
+  default_read_field_end(protocol);
 
   // read struct end
-  mt->read_struct_end(protocol);
+  default_read_struct_end(protocol);
 
   // call validate
   rb_funcall(self, validate_method_id, 0);
@@ -657,7 +609,7 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
   rb_funcall(self, validate_method_id, 0);
 
   // write struct begin
-  mt->write_struct_begin(protocol, rb_class_name(CLASS_OF(self)));
+  default_write_struct_begin(protocol, rb_class_name(CLASS_OF(self)));
 
   VALUE struct_fields = STRUCT_FIELDS(self);
 
@@ -670,16 +622,16 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
   VALUE ttype_value = rb_hash_aref(field_info, type_sym);
   int ttype = FIX2INT(ttype_value);
 
-  mt->write_field_begin(protocol, setfield, ttype_value, field_id);
+  default_write_field_begin(protocol, setfield, ttype_value, field_id);
 
   write_anything(ttype, setvalue, protocol, field_info);
 
-  mt->write_field_end(protocol);
+  default_write_field_end(protocol);
 
-  mt->write_field_stop(protocol);
+  default_write_field_stop(protocol);
 
   // write struct end
-  mt->write_struct_end(protocol);
+  default_write_struct_end(protocol);
 
   return Qnil;
 }
@@ -700,7 +652,4 @@ void Init_struct() {
 
   to_s_method_id = rb_intern("to_s");
   name_to_id_method_id = rb_intern("name_to_id");
-
-  set_default_proto_function_pointers();
-  mt = default_mt;
 }
