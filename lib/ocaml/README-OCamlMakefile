@@ -1,3 +1,6 @@
+NOTE (bryanduxbury): OCamlMakefile is safe to include in the project after
+https://issues.apache.org/jira/browse/LEGAL-58.
+
 ---------------------------------------------------------------------------
 
                         Distribution of "ocaml_make"
