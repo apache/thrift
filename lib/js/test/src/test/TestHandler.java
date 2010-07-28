@@ -48,7 +48,7 @@ public class TestHandler implements ThriftTest.Iface {
     }
 
     public void testException(String arg) throws Xception, TException {
-        throw new Xception(1,"server test exception");       
+        throw new Xception(1,arg);       
     }
 
     public int testI32(int thing) throws TException {
