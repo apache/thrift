@@ -42,10 +42,9 @@ public class THsHaServer extends TNonblockingServer {
   // for the passing of Invocations from the Selector to workers.
   private ExecutorService invoker;
 
-  protected final int MIN_WORKER_THREADS;
-  protected final int MAX_WORKER_THREADS;
-  protected final int STOP_TIMEOUT_VAL;
-  protected final TimeUnit STOP_TIMEOUT_UNIT;
+  protected final int worker_threads;
+  protected final int stop_timeout_val;
+  protected final TimeUnit stop_timeout_unit;
 
   /**
    * Create server with given processor, and server transport. Default server
@@ -202,10 +201,9 @@ public class THsHaServer extends TNonblockingServer {
       inputProtocolFactory, outputProtocolFactory,
       options);
 
-    MIN_WORKER_THREADS = options.minWorkerThreads;
-    MAX_WORKER_THREADS = options.maxWorkerThreads;
-    STOP_TIMEOUT_VAL = options.stopTimeoutVal;
-    STOP_TIMEOUT_UNIT = options.stopTimeoutUnit;
+    worker_threads = options.workerThreads;
+    stop_timeout_val = options.stopTimeoutVal;
+    stop_timeout_unit = options.stopTimeoutUnit;
   }
 
   /** @inheritDoc */
@@ -239,8 +237,8 @@ public class THsHaServer extends TNonblockingServer {
   protected boolean startInvokerPool() {
     // start the invoker pool
     LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
-    invoker = new ThreadPoolExecutor(MIN_WORKER_THREADS, MAX_WORKER_THREADS,
-      STOP_TIMEOUT_VAL, STOP_TIMEOUT_UNIT, queue);
+    invoker = new ThreadPoolExecutor(worker_threads, worker_threads,
+      stop_timeout_val, stop_timeout_unit, queue);
 
     return true;
   }
@@ -295,8 +293,7 @@ public class THsHaServer extends TNonblockingServer {
   }
 
   public static class Options extends TNonblockingServer.Options {
-    public int minWorkerThreads = 5;
-    public int maxWorkerThreads = Integer.MAX_VALUE;
+    public int workerThreads = 5;
     public int stopTimeoutVal = 60;
     public TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
   }
