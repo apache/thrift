@@ -129,7 +129,8 @@
       destdir="${javadoc}"
       version="true"
       windowtitle="Thrift Java API"
-      doctitle="Thrift Java API">
+      doctitle="Thrift Java API"
+      classpathref="test.classpath">
     </javadoc>
   </target>
 
