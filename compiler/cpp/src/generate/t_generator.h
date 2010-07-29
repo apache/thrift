@@ -26,6 +26,7 @@
 #include <sstream>
 #include "parse/t_program.h"
 #include "globals.h"
+#include "t_generator_registry.h"
 
 /**
  * Base class for a thrift code generator. This class defines the basic
@@ -271,84 +272,5 @@ class t_generator {
    */
   int tmp_;
 };
-
-
-/**
- * A factory for producing generator classes of a particular language.
- *
- * This class is also responsible for:
- *  - Registering itself with the generator registry.
- *  - Providing documentation for the generators it produces.
- */
-class t_generator_factory {
- public:
-  t_generator_factory(const std::string& short_name,
-                      const std::string& long_name,
-                      const std::string& documentation);
-
-  virtual ~t_generator_factory() {}
-
-  virtual t_generator* get_generator(
-      // The program to generate.
-      t_program* program,
-      // Note: parsed_options will not exist beyond the call to get_generator.
-      const std::map<std::string, std::string>& parsed_options,
-      // Note: option_string might not exist beyond the call to get_generator.
-      const std::string& option_string)
-    = 0;
-
-  std::string get_short_name() { return short_name_; }
-  std::string get_long_name() { return long_name_; }
-  std::string get_documentation() { return documentation_; }
-
- private:
-  std::string short_name_;
-  std::string long_name_;
-  std::string documentation_;
-};
-
-template <typename generator>
-class t_generator_factory_impl : public t_generator_factory {
- public:
-  t_generator_factory_impl(const std::string& short_name,
-                           const std::string& long_name,
-                           const std::string& documentation)
-    : t_generator_factory(short_name, long_name, documentation)
-  {}
-
-  virtual t_generator* get_generator(
-      t_program* program,
-      const std::map<std::string, std::string>& parsed_options,
-      const std::string& option_string) {
-    return new generator(program, parsed_options, option_string);
-  }
-};
-
-class t_generator_registry {
- public:
-  static void register_generator(t_generator_factory* factory);
-
-  static t_generator* get_generator(t_program* program,
-                                    const std::string& options);
-
-  typedef std::map<std::string, t_generator_factory*> gen_map_t;
-  static gen_map_t& get_generator_map();
-
- private:
-  t_generator_registry();
-  t_generator_registry(const t_generator_registry&);
-};
-
-#define THRIFT_REGISTER_GENERATOR(language, long_name, doc)        \
-  class t_##language##_generator_factory_impl                      \
-    : public t_generator_factory_impl<t_##language##_generator>    \
-  {                                                                \
-   public:                                                         \
-    t_##language##_generator_factory_impl()                        \
-      : t_generator_factory_impl<t_##language##_generator>(        \
-          #language, long_name, doc)                               \
-    {}                                                             \
-  };                                                               \
-  static t_##language##_generator_factory_impl _registerer;
 
 #endif

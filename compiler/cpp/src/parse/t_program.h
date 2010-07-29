@@ -38,6 +38,7 @@
 #include "t_list.h"
 #include "t_map.h"
 #include "t_set.h"
+#include "generate/t_generator_registry.h"
 //#include "t_doc.h"
 
 /**
@@ -159,6 +160,14 @@ class t_program : public t_doc {
 
   // Language neutral namespace / packaging
   void set_namespace(std::string language, std::string name_space) {
+    t_generator_registry::gen_map_t my_copy = t_generator_registry::get_generator_map();
+
+    t_generator_registry::gen_map_t::iterator it;
+    it=my_copy.find(language);
+
+    if (it == my_copy.end()) {
+      throw "No generator named '" + language + "' could be found!";
+    }
     namespaces_[language] = name_space;
   }
 
