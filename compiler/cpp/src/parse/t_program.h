@@ -166,7 +166,9 @@ class t_program : public t_doc {
     it=my_copy.find(language);
 
     if (it == my_copy.end()) {
-      throw "No generator named '" + language + "' could be found!";
+      if (language != "smalltalk.prefix" && language != "smalltalk.package") {
+        throw "No generator named '" + language + "' could be found!";
+      }
     }
     namespaces_[language] = name_space;
   }
