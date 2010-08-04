@@ -33,6 +33,7 @@ thrift_SOURCES = src/thrifty.yy \
                  src/main.cc \
                  src/md5.c \
                  src/generate/t_generator.cc \
+                 src/generate/t_generator_registry.h \
                  src/globals.h \
                  src/main.h \
                  src/platform.h \
