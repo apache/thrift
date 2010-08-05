@@ -45,5 +45,20 @@ class ThriftHTTPClientTransportSpec < Spec::ExampleGroup
       @client.flush
       @client.read(10).should == "data"
     end
+
+    it "should send custom headers if defined" do
+      @client.write "test"
+      custom_headers = {"Cookie" => "Foo"}
+      headers = {"Content-Type"=>"application/x-thrift"}.merge(custom_headers)
+
+      @client.add_headers(custom_headers)
+      Net::HTTP.should_receive(:new).with("my.domain.com", 80).and_return do
+        mock("Net::HTTP").tee do |http|
+          http.should_receive(:use_ssl=).with(false)
+          http.should_receive(:post).with("/path/to/service?param=value", "test", headers).and_return([nil, "data"])
+        end
+      end
+      @client.flush
+    end
   end
 end
