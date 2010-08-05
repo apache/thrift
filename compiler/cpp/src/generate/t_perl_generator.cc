@@ -1576,20 +1576,20 @@ void t_perl_generator::generate_serialize_container(ofstream &out,
 
   if (ttype->is_map()) {
     indent(out) <<
-      "$output->writeMapBegin(" <<
+      "$xfer += $output->writeMapBegin(" <<
       type_to_enum(((t_map*)ttype)->get_key_type()) << ", " <<
       type_to_enum(((t_map*)ttype)->get_val_type()) << ", " <<
       "scalar(keys %{$" << prefix << "}));" << endl;
   } else if (ttype->is_set()) {
     indent(out) <<
-      "$output->writeSetBegin(" <<
+      "$xfer += $output->writeSetBegin(" <<
       type_to_enum(((t_set*)ttype)->get_elem_type()) << ", " <<
       "scalar(@{$" << prefix << "}));" << endl;
 
   } else if (ttype->is_list()) {
 
     indent(out) <<
-      "$output->writeListBegin(" <<
+      "$xfer += $output->writeListBegin(" <<
       type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " <<
       "scalar(@{$" << prefix << "}));" << endl;
 
@@ -1629,13 +1629,13 @@ void t_perl_generator::generate_serialize_container(ofstream &out,
 
   if (ttype->is_map()) {
     indent(out) <<
-      "$output->writeMapEnd();" << endl;
+      "$xfer += $output->writeMapEnd();" << endl;
   } else if (ttype->is_set()) {
     indent(out) <<
-      "$output->writeSetEnd();" << endl;
+      "$xfer += $output->writeSetEnd();" << endl;
   } else if (ttype->is_list()) {
     indent(out) <<
-      "$output->writeListEnd();" << endl;
+      "$xfer += $output->writeListEnd();" << endl;
   }
 
   scope_down(out);
