@@ -98,6 +98,7 @@ class t_java_generator : public t_oop_generator {
   void generate_java_struct_result_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_tostring(std::ofstream& out, t_struct* tstruct);
+  void generate_java_struct_clear(std::ofstream& out, t_struct* tstruct);
   void generate_java_meta_data_map(std::ofstream& out, t_struct* tstruct);
   void generate_field_value_meta_data(std::ofstream& out, t_type* type);
   std::string get_java_type_string(t_type* type);
@@ -739,7 +740,7 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
   generate_union_comparisons(f_struct, tstruct);
 
   f_struct << endl;
-  
+
   generate_union_hashcode(f_struct, tstruct);
 
   f_struct << endl;
@@ -1228,6 +1229,8 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   indent(out) << "public " << tstruct->get_name() << " clone() {" << endl;
   indent(out) << "  return new " << tstruct->get_name() << "(this);" << endl;
   indent(out) << "}" << endl << endl;
+
+  generate_java_struct_clear(out, tstruct);
 
   generate_java_bean_boilerplate(out, tstruct);
   generate_generic_field_getters_setters(out, tstruct);
@@ -3865,6 +3868,47 @@ bool t_java_generator::has_bit_vector(t_struct* tstruct) {
     }
   }
   return false;
+}
+
+void t_java_generator::generate_java_struct_clear(std::ofstream& out, t_struct* tstruct) {
+  indent(out) << "@Override" << endl;
+  indent(out) << "public void clear() {" << endl;
+
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  indent_up();
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
+    if ((*m_iter)->get_value() != NULL) {
+      print_const_value(out, "this." + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
+    } else {
+      if (type_can_be_null(t)) {
+        indent(out) << "this." << (*m_iter)->get_name() << " = null;" << endl;
+      } else {
+        // must be a base type
+        // means it also needs to be explicitly unset
+        indent(out) << "set" << get_cap_name((*m_iter)->get_name()) << get_cap_name("isSet") << "(false);" << endl;
+        switch (((t_base_type*)t)->get_base()) {
+          case t_base_type::TYPE_BYTE:
+          case t_base_type::TYPE_I16:
+          case t_base_type::TYPE_I32:
+          case t_base_type::TYPE_I64:
+            indent(out) << "this." << (*m_iter)->get_name() << " = 0;" << endl;
+            break;
+          case t_base_type::TYPE_DOUBLE:
+            indent(out) << "this." << (*m_iter)->get_name() << " = 0.0;" << endl;
+            break;
+          case t_base_type::TYPE_BOOL:
+            indent(out) << "this." << (*m_iter)->get_name() << " = false;" << endl;
+            break;
+        }
+      }
+    }
+  }
+  indent_down();
+
+  indent(out) << "}" << endl << endl;
 }
 
 THRIFT_REGISTER_GENERATOR(java, "Java",

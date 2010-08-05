@@ -226,4 +226,10 @@ public abstract class TUnion<T extends TUnion, F extends TFieldIdEnum> implement
     }
     return sb.toString();
   }
+
+  @Override
+  public final void clear() {
+    this.setField_ = null;
+    this.value_ = null;
+  }
 }

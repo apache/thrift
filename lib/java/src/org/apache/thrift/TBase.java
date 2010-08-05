@@ -93,4 +93,10 @@ public interface TBase<T extends TBase, F extends TFieldIdEnum> extends Comparab
   public void setFieldValue(F field, Object value);
 
   public TBase<T, F> deepCopy();
+
+  /**
+   * Return to the state of having just been initialized, as though you had just
+   * called the default constructor.
+   */
+  public void clear();
 }
