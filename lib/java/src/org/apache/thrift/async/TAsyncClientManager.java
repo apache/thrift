@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.spi.SelectorProvider;
+import java.nio.channels.CancelledKeyException;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.ClosedSelectorException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -82,28 +85,40 @@ public class TAsyncClientManager {
         }
 
         // Handle any ready channels calls
-        Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-        while (keys.hasNext()) {
-          SelectionKey key = keys.next();
-          keys.remove();
-          if (!key.isValid()) {
-            // this should only have happened if the method call experienced an
-            // error and the key was cancelled. just skip it.
-            continue;
+        try {
+          Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+          while (keys.hasNext()) {
+            SelectionKey key = keys.next();
+            keys.remove();
+            if (!key.isValid()) {
+              // this should only have happened if the method call experienced an
+              // error and the key was cancelled. just skip it.
+              continue;
+            }
+            TAsyncMethodCall method = (TAsyncMethodCall)key.attachment();
+            method.transition(key);
           }
-          TAsyncMethodCall method = (TAsyncMethodCall)key.attachment();
-          method.transition(key);
+        } catch (ClosedSelectorException e) {
+          LOGGER.error("Caught ClosedSelectorException in TAsyncClientManager!", e);
         }
 
         // Start any new calls
         TAsyncMethodCall methodCall;
         while ((methodCall = pendingCalls.poll()) != null) {
+          // Catch registration errors. Method will catch transition errors and cleanup.
           try {
             SelectionKey key = methodCall.registerWithSelector(selector);
             methodCall.transition(key);
-          } catch (IOException e) {
-            LOGGER.warn("Caught IOException in TAsyncClientManager!", e);
-          }
+          } catch (ClosedChannelException e) {
+            methodCall.onError(e);
+            LOGGER.warn("Caught ClosedChannelException in TAsyncClientManager!", e);
+          } catch (CancelledKeyException e) {
+            methodCall.onError(e);
+            LOGGER.warn("Caught CancelledKeyExce115ption in TAsyncClientManager!", e);
+          } catch (Exception e) {
+            methodCall.onError(e);
+            LOGGER.warn("Caught unexpected exception in TAsyncClientManager!", e);
+          }          
         }
       }
     }

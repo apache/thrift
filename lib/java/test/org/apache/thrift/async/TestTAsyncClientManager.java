@@ -28,6 +28,9 @@ import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingSocket;
 
+import java.util.List;
+import java.util.ArrayList;
+
 import thrift.test.CompactProtoTestStruct;
 import thrift.test.Srv;
 import thrift.test.Srv.Iface;
@@ -71,6 +74,72 @@ public class TestTAsyncClientManager extends TestCase {
 
     @Override
     public void onewayMethod() throws TException {
+    }
+  }
+  
+  public class JankyRunnable implements Runnable {
+    private TAsyncClientManager acm_;
+    private int numCalls_;
+    private int numSuccesses_ = 0;
+    private Srv.AsyncClient client_;
+    private TNonblockingSocket clientSocket_;
+    
+    public JankyRunnable(TAsyncClientManager acm, int numCalls) throws Exception {
+      this.acm_ = acm;
+      this.numCalls_ = numCalls;
+      this.clientSocket_ = new TNonblockingSocket("localhost", 12345);
+      this.client_ = new Srv.AsyncClient(new TBinaryProtocol.Factory(), acm_, clientSocket_);
+    }
+    
+    public int getNumSuccesses() {
+      return numSuccesses_;
+    }
+    
+    public void run() {
+      for (int i = 0; i < numCalls_; i++) {
+        try {          
+          // connect an async client
+          final Object o = new Object();
+          
+          final AtomicBoolean jankyReturned = new AtomicBoolean(false);
+          client_.Janky(1, new AsyncMethodCallback<Srv.AsyncClient.Janky_call>() {
+            @Override
+            public void onComplete(Janky_call response) {
+              try {
+                assertEquals(3, response.getResult());
+                jankyReturned.set(true);
+                synchronized(o) {
+                  o.notifyAll();
+                }
+              } catch (TException e) {
+                e.printStackTrace();               
+                synchronized(o) {
+                  o.notifyAll();
+                }
+                fail("unexpected exception: " + e);
+              } 
+              
+            }
+            
+            @Override
+            public void onError(Throwable throwable) {
+              synchronized(o) {
+                o.notifyAll();
+              }
+              fail("unexpected exception: " + throwable);             
+            }
+          });
+      
+          synchronized(o) {
+            o.wait(1000);
+          }
+          
+          assertTrue(jankyReturned.get());
+          this.numSuccesses_++;
+        } catch (Exception e) {
+          fail("Unexpected " + e);
+        }
+      }
     }
   }
 
@@ -179,7 +248,27 @@ public class TestTAsyncClientManager extends TestCase {
     synchronized(o) {
       o.wait(1000);
     }
-
     assertTrue(voidAfterOnewayReturned.get());
+    
+    // make multiple calls with deserialization in the selector thread (repro Eric's issue)
+    int numThreads = 500;
+    int numCallsPerThread = 100;
+    List<JankyRunnable> runnables = new ArrayList<JankyRunnable>();
+    List<Thread> threads = new ArrayList<Thread>();
+    for (int i = 0; i < numThreads; i++) {
+      JankyRunnable runnable = new JankyRunnable(acm, numCallsPerThread);
+      Thread thread = new Thread(runnable);
+      thread.start();
+      threads.add(thread);
+      runnables.add(runnable);
+    }
+    for (Thread thread : threads) {
+      thread.join();
+    }
+    int numSuccesses = 0;
+    for (JankyRunnable runnable : runnables) {
+      numSuccesses += runnable.getNumSuccesses();
+    }
+    assertEquals(numSuccesses, numThreads * numCallsPerThread);
   }
 }

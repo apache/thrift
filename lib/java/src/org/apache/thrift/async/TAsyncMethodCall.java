@@ -111,8 +111,7 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
     if (!key.isValid()) {
       key.cancel();
       Exception e = new TTransportException("Selection key not valid!");
-      client.onError(e);
-      callback.onError(e);
+      onError(e);
       return;
     }
 
@@ -137,12 +136,16 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
               + " but selector called transition method. Seems like a bug...");
       }
     } catch (Throwable e) {
-      state = State.ERROR;
       key.cancel();
       key.attach(null);
-      client.onError(e);
-      callback.onError(e);
+      onError(e);
     }
+  }
+  
+  protected void onError(Throwable e) {
+    state = State.ERROR;
+    client.onError(e);
+    callback.onError(e);
   }
 
   private void doReadingResponseBody(SelectionKey key) throws IOException {
@@ -159,7 +162,6 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
     key.interestOps(0);
     // this ensures that the TAsyncMethod instance doesn't hang around
     key.attach(null);
-    key.cancel();
     client.onComplete();
     callback.onComplete((T)this);
   }
