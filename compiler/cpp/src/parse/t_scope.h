@@ -60,7 +60,12 @@ class t_scope {
   }
 
   void add_constant(std::string name, t_const* constant) {
-    constants_[name] = constant;
+    if (constants_.find(name) != constants_.end()) {
+      throw "Enum " + name + " is already defined!";
+    } else {
+      constants_[name] = constant;
+    }
+		   
   }
 
   t_const* get_constant(std::string name) {
