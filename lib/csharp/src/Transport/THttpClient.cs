@@ -121,8 +121,14 @@ namespace Thrift.Transport
 
 		public override void Flush()
 		{
-			SendRequest();
-			outputStream = new MemoryStream();
+			try 
+			{
+				SendRequest();
+			}
+			finally
+			{
+				outputStream = new MemoryStream();
+			}
 		}
 
 		private void SendRequest()
