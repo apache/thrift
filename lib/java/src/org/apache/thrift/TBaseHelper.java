@@ -17,6 +17,7 @@
  */
 package org.apache.thrift;
 
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -217,4 +218,26 @@ public class TBaseHelper {
     }
   }
 
+  public static void toString(ByteBuffer bb, StringBuilder sb) {
+    byte[] buf = bb.array();
+
+    int arrayOffset = bb.arrayOffset();
+    int origLimit = bb.limit();
+    int limit = (origLimit - arrayOffset > 128) ? arrayOffset + 128 : origLimit;
+
+    for (int i = arrayOffset; i < limit; i++) {
+      if (i > arrayOffset) {
+        sb.append(" ");
+      }
+      sb.append(paddedByteString(buf[i]));
+    }
+    if (origLimit != limit) {
+      sb.append("...");
+    }
+  }
+
+  public static String paddedByteString(byte b) {
+    int extended = (b | 0x100) & 0x1ff;
+    return Integer.toHexString(extended).toUpperCase().substring(1);
+  }
 }

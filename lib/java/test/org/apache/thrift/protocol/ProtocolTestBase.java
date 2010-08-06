@@ -18,6 +18,7 @@
  */
 package org.apache.thrift.protocol;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -231,18 +232,18 @@ public abstract class ProtocolTestBase extends TestCase {
   private void internalTestNakedBinary(byte[] data) throws Exception {
     TMemoryBuffer buf = new TMemoryBuffer(0);
     TProtocol proto = getFactory().getProtocol(buf);
-    proto.writeBinary(data);
-    assertTrue(Arrays.equals(data, proto.readBinary()));
+    proto.writeBinary(ByteBuffer.wrap(data));
+    assertEquals(ByteBuffer.wrap(data), proto.readBinary());
   }
 
   private void internalTestBinaryField(final byte[] data) throws Exception {
     internalTestStructField(new StructFieldTestCase(TType.STRING, (short)15) {
       public void writeMethod(TProtocol proto) throws TException {
-        proto.writeBinary(data);
+        proto.writeBinary(ByteBuffer.wrap(data));
       }
 
       public void readMethod(TProtocol proto) throws TException {
-        assertTrue(Arrays.equals(data, proto.readBinary()));
+        assertEquals(ByteBuffer.wrap(data), proto.readBinary());
       }
     });
   }

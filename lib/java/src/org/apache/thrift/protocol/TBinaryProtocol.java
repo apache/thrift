@@ -20,6 +20,7 @@
 package org.apache.thrift.protocol;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
@@ -189,9 +190,10 @@ public class TBinaryProtocol extends TProtocol {
     }
   }
 
-  public void writeBinary(byte[] bin) throws TException {
-    writeI32(bin.length);
-    trans_.write(bin, 0, bin.length);
+  public void writeBinary(ByteBuffer bin) throws TException {
+    int length = bin.limit() - bin.position() - bin.arrayOffset();
+    writeI32(length);
+    trans_.write(bin.array(), bin.position() + bin.arrayOffset(), length);
   }
 
   /**
@@ -356,12 +358,19 @@ public class TBinaryProtocol extends TProtocol {
     }
   }
 
-  public byte[] readBinary() throws TException {
+  public ByteBuffer readBinary() throws TException {
     int size = readI32();
     checkReadLength(size);
+
+    if (trans_.getBytesRemainingInBuffer() >= size) {
+      ByteBuffer bb = ByteBuffer.wrap(trans_.getBuffer(), trans_.getBufferPosition(), size);
+      trans_.consumeBuffer(size);
+      return bb;
+    }
+
     byte[] buf = new byte[size];
     trans_.readAll(buf, 0, size);
-    return buf;
+    return ByteBuffer.wrap(buf);
   }
 
   private int readAll(byte[] buf, int off, int len) throws TException {

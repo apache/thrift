@@ -18,10 +18,7 @@
  */
 package org.apache.thrift;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,32 +36,13 @@ import thrift.test.Bonk;
 import thrift.test.CrazyNesting;
 import thrift.test.HolyMoley;
 import thrift.test.Insanity;
+import thrift.test.JavaTestHelper;
 import thrift.test.Nesting;
 import thrift.test.Numberz;
 import thrift.test.OneOfEach;
 import thrift.test.Xtruct;
 
 public class TestStruct extends TestCase {
-
-  public static Object deepCopyViaSerialization(Object oldObj) throws Exception {
-    ObjectOutputStream oos = null;
-    ObjectInputStream ois = null;
-    try {
-      ByteArrayOutputStream bos =
-        new ByteArrayOutputStream();
-      oos = new ObjectOutputStream(bos);
-      oos.writeObject(oldObj);
-      oos.flush();
-      ByteArrayInputStream bis =
-        new ByteArrayInputStream(bos.toByteArray());
-      ois = new ObjectInputStream(bis);
-      return ois.readObject();
-    } finally {
-      oos.close();
-      ois.close();
-    }
-  }
-
   public void testIdentity() throws Exception {
     TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
@@ -72,7 +50,7 @@ public class TestStruct extends TestCase {
     OneOfEach ooe = Fixtures.oneOfEach;
 
     Nesting n = new Nesting();
-    n.my_ooe = (OneOfEach)deepCopyViaSerialization(ooe);
+    n.my_ooe = ooe;
     n.my_ooe.integer16 = 16;
     n.my_ooe.integer32 = 32;
     n.my_ooe.integer64 = 64;
@@ -127,10 +105,10 @@ public class TestStruct extends TestCase {
     assertEquals(hmCopy, hmCopy2);
 
     // change binary value in original object
-    hm.big.get(0).base64[0]++;
+    hm.big.get(0).base64.array()[0]++;
     // make sure the change didn't propagate to the copied object
     assertFalse(hm.equals(hmCopy2));
-    hm.big.get(0).base64[0]--; // undo change
+    hm.big.get(0).base64.array()[0]--; // undo change
 
     hmCopy2.bonks.get("two").get(1).message = "What else?";
 
@@ -260,5 +238,62 @@ public class TestStruct extends TestCase {
     MapMetaData vmd = (MapMetaData)Insanity.metaDataMap.get(Insanity._Fields.USER_MAP).valueMetaData;
     assertTrue(vmd.valueMetaData.isTypedef());
     assertFalse(vmd.keyMetaData.isTypedef());
+  }
+
+  public void testToString() throws Exception {
+    JavaTestHelper object = new JavaTestHelper();
+    object.req_int = 0;
+    object.req_obj = "";
+
+    object.req_bin = ByteBuffer.wrap(new byte[] {
+      0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15,
+      16, -17, 18, -19, 20, -21, 22, -23, 24, -25, 26, -27, 28, -29,
+      30, -31, 32, -33, 34, -35, 36, -37, 38, -39, 40, -41, 42, -43, 44,
+      -45, 46, -47, 48, -49, 50, -51, 52, -53, 54, -55, 56, -57, 58, -59,
+      60, -61, 62, -63, 64, -65, 66, -67, 68, -69, 70, -71, 72, -73, 74,
+      -75, 76, -77, 78, -79, 80, -81, 82, -83, 84, -85, 86, -87, 88, -89,
+      90, -91, 92, -93, 94, -95, 96, -97, 98, -99, 100, -101, 102, -103,
+      104, -105, 106, -107, 108, -109, 110, -111, 112, -113, 114, -115,
+      116, -117, 118, -119, 120, -121, 122, -123, 124, -125, 126, -127,
+    });
+
+    assertEquals("JavaTestHelper(req_int:0, req_obj:, req_bin:"+
+        "00 FF 02 FD 04 FB 06 F9 08 F7 0A F5 0C F3 0E F1 10 EF 12 ED 14 "+
+        "EB 16 E9 18 E7 1A E5 1C E3 1E E1 20 DF 22 DD 24 DB 26 D9 28 D7 "+
+        "2A D5 2C D3 2E D1 30 CF 32 CD 34 CB 36 C9 38 C7 3A C5 3C C3 3E "+
+        "C1 40 BF 42 BD 44 BB 46 B9 48 B7 4A B5 4C B3 4E B1 50 AF 52 AD "+
+        "54 AB 56 A9 58 A7 5A A5 5C A3 5E A1 60 9F 62 9D 64 9B 66 99 68 "+
+        "97 6A 95 6C 93 6E 91 70 8F 72 8D 74 8B 76 89 78 87 7A 85 7C 83 "+
+        "7E 81)",
+        object.toString());
+ 
+    object.req_bin = ByteBuffer.wrap(new byte[] {
+      0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15,
+      16, -17, 18, -19, 20, -21, 22, -23, 24, -25, 26, -27, 28, -29,
+      30, -31, 32, -33, 34, -35, 36, -37, 38, -39, 40, -41, 42, -43, 44,
+      -45, 46, -47, 48, -49, 50, -51, 52, -53, 54, -55, 56, -57, 58, -59,
+      60, -61, 62, -63, 64, -65, 66, -67, 68, -69, 70, -71, 72, -73, 74,
+      -75, 76, -77, 78, -79, 80, -81, 82, -83, 84, -85, 86, -87, 88, -89,
+      90, -91, 92, -93, 94, -95, 96, -97, 98, -99, 100, -101, 102, -103,
+      104, -105, 106, -107, 108, -109, 110, -111, 112, -113, 114, -115,
+      116, -117, 118, -119, 120, -121, 122, -123, 124, -125, 126, -127,
+      0,
+    });
+
+    assertEquals("JavaTestHelper(req_int:0, req_obj:, req_bin:"+
+        "00 FF 02 FD 04 FB 06 F9 08 F7 0A F5 0C F3 0E F1 10 EF 12 ED 14 "+
+        "EB 16 E9 18 E7 1A E5 1C E3 1E E1 20 DF 22 DD 24 DB 26 D9 28 D7 "+
+        "2A D5 2C D3 2E D1 30 CF 32 CD 34 CB 36 C9 38 C7 3A C5 3C C3 3E "+
+        "C1 40 BF 42 BD 44 BB 46 B9 48 B7 4A B5 4C B3 4E B1 50 AF 52 AD "+
+        "54 AB 56 A9 58 A7 5A A5 5C A3 5E A1 60 9F 62 9D 64 9B 66 99 68 "+
+        "97 6A 95 6C 93 6E 91 70 8F 72 8D 74 8B 76 89 78 87 7A 85 7C 83 "+
+        "7E 81...)",
+        object.toString());
+
+    object.req_bin = ByteBuffer.wrap(new byte[] {});
+    object.setOpt_binIsSet(true);
+
+    assertEquals("JavaTestHelper(req_int:0, req_obj:, req_bin:)", 
+        object.toString());
   }
 }

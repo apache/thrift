@@ -18,6 +18,15 @@
  */
 package org.apache.thrift;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import junit.framework.TestCase;
+
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
@@ -29,12 +38,6 @@ import thrift.test.SomeEnum;
 import thrift.test.StructWithAUnion;
 import thrift.test.TestUnion;
 import thrift.test.TestUnionMinusStringField;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import junit.framework.TestCase;
 
 public class TestTUnion extends TestCase {
 
@@ -95,12 +98,12 @@ public class TestTUnion extends TestCase {
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
 
-    cu2 = ComparableUnion.binary_field(new byte[]{2});
+    cu2 = ComparableUnion.binary_field(ByteBuffer.wrap(new byte[]{2}));
 
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
 
-    cu = ComparableUnion.binary_field(new byte[]{1});
+    cu = ComparableUnion.binary_field(ByteBuffer.wrap(new byte[]{1}));
 
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);

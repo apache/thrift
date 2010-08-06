@@ -21,6 +21,7 @@
 package org.apache.thrift.protocol;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 
 import org.apache.thrift.ShortStack;
 import org.apache.thrift.TException;
@@ -294,7 +295,8 @@ public final class TCompactProtocol extends TProtocol {
    */
   public void writeString(String str) throws TException {
     try {
-      writeBinary(str.getBytes("UTF-8"));
+      byte[] bytes = str.getBytes("UTF-8");
+      writeBinary(bytes, 0, bytes.length);
     } catch (UnsupportedEncodingException e) {
       throw new TException("UTF-8 not supported!");
     }
@@ -303,9 +305,14 @@ public final class TCompactProtocol extends TProtocol {
   /**
    * Write a byte array, using a varint for the size. 
    */
-  public void writeBinary(byte[] bin) throws TException {
-    writeVarint32(bin.length);
-    trans_.write(bin);
+  public void writeBinary(ByteBuffer bin) throws TException {
+    int length = bin.limit() - bin.position() - bin.arrayOffset();
+    writeBinary(bin.array(), bin.position() + bin.arrayOffset(), length);
+  }
+
+  private void writeBinary(byte[] buf, int offset, int length) throws TException {
+    writeVarint32(length);
+    trans_.write(buf, offset, length);
   }
 
   //
@@ -626,13 +633,13 @@ public final class TCompactProtocol extends TProtocol {
   /**
    * Read a byte[] from the wire. 
    */
-  public byte[] readBinary() throws TException {
+  public ByteBuffer readBinary() throws TException {
     int length = readVarint32();
-    if (length == 0) return new byte[0];
+    if (length == 0) return ByteBuffer.wrap(new byte[0]);
 
     byte[] buf = new byte[length];
     trans_.readAll(buf, 0, length);
-    return buf;
+    return ByteBuffer.wrap(buf);
   }
 
   /**

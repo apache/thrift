@@ -19,7 +19,9 @@
 
 package org.apache.thrift.test;
 
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
+
 import thrift.test.OneOfEachBeans;
 
 public class JavaBeansTest {
@@ -58,7 +60,7 @@ public class JavaBeansTest {
 
     // Everything is set
     ooe.set_a_bite((byte) 1);
-    ooe.set_base64("bytes".getBytes());
+    ooe.set_base64(ByteBuffer.wrap("bytes".getBytes()));
     ooe.set_byte_list(new LinkedList<Byte>());
     ooe.set_double_precision(1);
     ooe.set_i16_list(new LinkedList<Short>());

@@ -18,7 +18,7 @@
  */
 package org.apache.thrift;
 
-import java.util.Arrays;
+import java.nio.ByteBuffer;
 
 import junit.framework.TestCase;
 
@@ -97,10 +97,10 @@ public class TestTDeserializer extends TestCase {
       String resultString = deserializer.partialDeserializeString(serialize(level1SWU, factory), StructWithAUnion._Fields.TEST_UNION, TestUnion._Fields.STRUCT_FIELD, OneOfEach._Fields.SOME_CHARACTERS);
       assertEquals(expectedString, resultString);
 
-      byte[] expectedBinary = level3OneOfEach.getBase64();
-      byte[] resultBinary = deserializer.partialDeserializeByteArray(serialize(level1SWU, factory), StructWithAUnion._Fields.TEST_UNION, TestUnion._Fields.STRUCT_FIELD, OneOfEach._Fields.BASE64);
-      assertEquals(expectedBinary.length, resultBinary.length);
-      assertTrue(Arrays.equals(expectedBinary, resultBinary));
+      byte[] expectedBinary = level3OneOfEach.getBase64().array();
+      ByteBuffer resultBinary = deserializer.partialDeserializeByteArray(serialize(level1SWU, factory), StructWithAUnion._Fields.TEST_UNION, TestUnion._Fields.STRUCT_FIELD, OneOfEach._Fields.BASE64);
+      assertEquals(expectedBinary.length, resultBinary.limit() - resultBinary.position() - resultBinary.arrayOffset());
+      assertEquals(ByteBuffer.wrap(expectedBinary), resultBinary);
 
       // Test field id in Union
       short id = deserializer.partialDeserializeSetFieldIdInUnion(serialize(level1SWU, factory), StructWithAUnion._Fields.TEST_UNION);

@@ -20,6 +20,7 @@
 
 package org.apache.thrift;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 import thrift.test.*;
 
@@ -52,7 +53,7 @@ public class Fixtures {
       oneOfEach.double_precision = Math.PI;
       oneOfEach.some_characters = "JSON THIS! \"\1";
       oneOfEach.zomg_unicode = new String(kUnicodeBytes, "UTF-8");
-      oneOfEach.base64 = "base64".getBytes();
+      oneOfEach.base64 = ByteBuffer.wrap("base64".getBytes());
       // byte, i16, and i64 lists are populated by default constructor
 
       Bonk bonk = new Bonk();
@@ -112,7 +113,7 @@ public class Fixtures {
 
       // superhuge compact proto test struct
       compactProtoTestStruct = new CompactProtoTestStruct(thrift.test.Constants.COMPACT_TEST);
-      compactProtoTestStruct.a_binary = new byte[]{0,1,2,3,4,5,6,7,8};
+      compactProtoTestStruct.a_binary = ByteBuffer.wrap(new byte[]{0,1,2,3,4,5,6,7,8});
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
