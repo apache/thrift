@@ -88,7 +88,7 @@ module Thrift
           out << ">"
         end
       
-        out << @buf[idx].to_s(16)
+        out << @buf[idx].ord.to_s(16)
       end
       out.join(" ")
     end
