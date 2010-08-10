@@ -86,7 +86,7 @@ AM_CONDITIONAL(NET_2_0, [test "$net_3_5" = "no"])
 AX_THRIFT_LIB(java, [Java], yes)
 if test "$with_java" = "yes";  then
   AX_JAVAC_AND_JAVA
-  AC_PATH_PROG([ANT], [ant])
+  PKG_CHECK_MODULES([ANT], ant >= 1.7)
   AX_CHECK_JAVA_CLASS(org.slf4j.Logger)
   have_slf4j="$success"
   AX_CHECK_JAVA_CLASS(org.slf4j.impl.SimpleLogger)
