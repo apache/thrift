@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include <struct.h>
-#include <constants.h>
+#include "struct.h"
+#include "constants.h"
 #include "macros.h"
 
 #ifndef HAVE_STRLCPY
@@ -40,7 +40,12 @@ strlcpy (char *dst, const char *src, size_t dst_sz)
       *(dst - 1) = '\0';
     return n + strlen (src);
 }
-
+#else
+/*
+   Ruby 1.9.x includes the OpenBSD implementation of strlcpy.
+   See missing/strlcpy.c in Ruby 1.9 source
+ */
+extern size_t strlcpy(char *, const char *, size_t);
 #endif
 
 VALUE thrift_union_class;

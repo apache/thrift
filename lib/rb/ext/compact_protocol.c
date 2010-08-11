@@ -20,8 +20,8 @@
 #include <ruby.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <constants.h>
-#include <struct.h>
+#include "constants.h"
+#include "struct.h"
 #include "macros.h"
 
 #define LAST_ID(obj) FIX2INT(rb_ary_pop(rb_ivar_get(obj, last_field_id)))
@@ -458,7 +458,7 @@ VALUE rb_thrift_compact_proto_read_field_begin(VALUE self) {
     
     if (modifier == 0) {
       // not a delta. look ahead for the zigzag varint field id.
-      LAST_ID(self);
+      (void) LAST_ID(self);
       field_id = read_i16(self);
     } else {
       // has a delta. add the delta to the last read field id.
