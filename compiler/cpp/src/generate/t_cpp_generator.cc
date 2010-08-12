@@ -625,6 +625,59 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     extends = " : public ::apache::thrift::TException";
   }
 
+  // Get members
+  vector<t_field*>::const_iterator m_iter;
+  const vector<t_field*>& members = tstruct->get_members();
+
+  // Write the isset structure declaration outside the class. This makes
+  // the generated code amenable to processing by SWIG.
+  // We only declare the struct if it gets used in the class.
+
+  // Isset struct has boolean fields, but only for non-required fields.
+  bool has_nonrequired_fields = false;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    if ((*m_iter)->get_req() != t_field::T_REQUIRED)
+      has_nonrequired_fields = true;
+  }
+
+  if (has_nonrequired_fields && (!pointers || read)) {
+
+    out <<
+      indent() << "typedef struct _" << tstruct->get_name() << "__isset {" << endl;
+    indent_up();
+
+    indent(out) <<
+      "_" << tstruct->get_name() << "__isset() ";
+    bool first = true;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      if ((*m_iter)->get_req() == t_field::T_REQUIRED) {
+        continue;
+      }
+      if (first) {
+        first = false;
+        out <<
+          ": " << (*m_iter)->get_name() << "(false)";
+      } else {
+        out <<
+          ", " << (*m_iter)->get_name() << "(false)";
+      }
+    }
+    out << " {}" << endl;
+
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
+        indent(out) <<
+          "bool " << (*m_iter)->get_name() << ";" << endl;
+        }
+      }
+
+      indent_down();
+      indent(out) <<
+        "} _" << tstruct->get_name() << "__isset;" << endl;
+    }
+
+  out << endl;
+
   // Open struct def
   out <<
     indent() << "class " << tstruct->get_name() << extends << " {" << endl <<
@@ -634,10 +687,6 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
 
   // Put the fingerprint up top for all to see.
   generate_struct_fingerprint(out, tstruct, false);
-
-  // Get members
-  vector<t_field*>::const_iterator m_iter;
-  const vector<t_field*>& members = tstruct->get_members();
 
   if (!pointers) {
     // Default constructor
@@ -703,47 +752,11 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       declare_field(*m_iter, false, pointers && !(*m_iter)->get_type()->is_xception(), !read) << endl;
   }
 
-  // Isset struct has boolean fields, but only for non-required fields.
-  bool has_nonrequired_fields = false;
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    if ((*m_iter)->get_req() != t_field::T_REQUIRED)
-      has_nonrequired_fields = true;
-  }
-
+  // Add the __isset data member if we need it, using the definition from above
   if (has_nonrequired_fields && (!pointers || read)) {
     out <<
       endl <<
-      indent() << "struct __isset {" << endl;
-    indent_up();
-
-      indent(out) <<
-        "__isset() : ";
-      bool first = true;
-      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        if ((*m_iter)->get_req() == t_field::T_REQUIRED) {
-          continue;
-        }
-        if (first) {
-          first = false;
-          out <<
-            (*m_iter)->get_name() << "(false)";
-        } else {
-          out <<
-            ", " << (*m_iter)->get_name() << "(false)";
-        }
-      }
-      out << " {}" << endl;
-
-      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
-          indent(out) <<
-            "bool " << (*m_iter)->get_name() << ";" << endl;
-        }
-      }
-
-    indent_down();
-    indent(out) <<
-      "} __isset;" << endl;
+      indent() << "_" << tstruct->get_name() << "__isset __isset;" << endl;
   }
 
   out << endl;
