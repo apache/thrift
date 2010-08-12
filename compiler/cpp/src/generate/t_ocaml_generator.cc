@@ -65,6 +65,9 @@ class t_ocaml_generator : public t_oop_generator {
   void generate_service  (t_service*  tservice);
 
   std::string render_const_value(t_type* type, t_const_value* value);
+  bool struct_member_persistent(t_field *tmember);
+  bool struct_member_omitable(t_field *tmember);
+  bool struct_member_default_cheaply_comparable(t_field *tmember);
 
   /**
    * Struct generation code
@@ -72,6 +75,7 @@ class t_ocaml_generator : public t_oop_generator {
 
   void generate_ocaml_struct(t_struct* tstruct, bool is_exception);
   void generate_ocaml_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false);
+  void generate_ocaml_struct_member(std::ofstream& out, string tname, t_field* tmember);
   void generate_ocaml_struct_sig(std::ofstream& out, t_struct* tstruct, bool is_exception);
   void generate_ocaml_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_ocaml_struct_writer(std::ofstream& out, t_struct* tstruct);
@@ -390,6 +394,8 @@ string t_ocaml_generator::render_const_value(t_type* type, t_const_value* value)
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
         out << value->get_integer();
+      } else if(value->get_double() == 0.0) {
+        out << "0.0";   // OCaml can't bear '0' in place of double.
       } else {
         out << value->get_double();
       }
@@ -537,14 +543,9 @@ void t_ocaml_generator::generate_ocaml_struct_definition(ofstream& out,
 
   indent_up();
 
-  string x = tmp("_x");
   if (members.size() > 0) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      string mname = decapitalize((*m_iter)->get_name());
-      indent(out) << "val mutable _" << mname << " : " << render_ocaml_type((*m_iter)->get_type()) << " option = None" << endl;
-      indent(out) << "method get_" << mname << " = _" << mname << endl;
-      indent(out) << "method grab_" << mname << " = match _"<<mname<<" with None->raise (Field_empty \""<<tname<<"."<<mname<<"\") | Some " << x <<" -> " << x << endl;
-      indent(out) << "method set_" << mname << " " << x << " = _" << mname << " <- Some " << x << endl;
+      generate_ocaml_struct_member(out, tname, (*m_iter));
     }
   }
   generate_ocaml_struct_writer(out, tstruct);
@@ -556,6 +557,94 @@ void t_ocaml_generator::generate_ocaml_struct_definition(ofstream& out,
   }
 
   generate_ocaml_struct_reader(out, tstruct);
+}
+
+/**
+ * Generates a structure member for a thrift data type.
+ *
+ * @param tname Name of the parent structure for the member
+ * @param tmember Member definition
+ */
+void t_ocaml_generator::generate_ocaml_struct_member(ofstream& out,
+                                                     string tname,
+                                                     t_field* tmember) {
+  string x = tmp("_x");
+  string mname = decapitalize(tmember->get_name());
+
+  indent(out) << "val mutable _" << mname << " : " << render_ocaml_type(tmember->get_type());
+  t_const_value *val = tmember->get_value();
+  if(val) {
+    if(struct_member_persistent(tmember))
+        out << " = " << render_const_value(tmember->get_type(), tmember->get_value()) << endl;
+    else
+        out << " option = Some " << render_const_value(tmember->get_type(), tmember->get_value()) << endl;
+  } else {
+    // assert(!struct_member_persistent(tmember))
+    out << " option = None" << endl;
+  }
+
+  if(struct_member_persistent(tmember)) {
+        indent(out) << "method get_" << mname << " = Some _" << mname << endl;
+        indent(out) << "method grab_" << mname << " = _" << mname << endl;
+        indent(out) << "method set_" << mname << " " << x << " = _" << mname << " <- " << x << endl;
+  } else {
+        indent(out) << "method get_" << mname << " = _" << mname << endl;
+        indent(out) << "method grab_" << mname << " = match _"<<mname<<" with None->raise (Field_empty \""<<tname<<"."<<mname<<"\") | Some " << x <<" -> " << x << endl;
+        indent(out) << "method set_" << mname << " " << x << " = _" << mname << " <- Some " << x << endl;
+  }
+}
+
+/**
+ * Check whether a member of the structure can not have undefined value
+ *
+ * @param tmember Member definition
+ */
+bool t_ocaml_generator::struct_member_persistent(t_field *tmember) {
+  t_const_value *val = tmember->get_value();
+  return (val ? true : false);
+}
+
+/**
+ * Check whether a member of the structure can be skipped during encoding
+ *
+ * @param tmember Member definition
+ */
+bool t_ocaml_generator::struct_member_omitable(t_field *tmember) {
+  return (tmember->get_req() != t_field::T_REQUIRED);
+}
+
+/**
+ * Figure out whether a member of the structure has
+ * a cheaply comparable default value.
+ *
+ * @param tmember Member definition
+ */
+bool t_ocaml_generator::struct_member_default_cheaply_comparable(t_field *tmember) {
+  t_type* type = get_true_type(tmember->get_type());
+  t_const_value *val = tmember->get_value();
+  if(!val) {
+    return false;
+  } else if(type->is_base_type()) {
+    // Base types are generally cheaply compared for structural equivalence.
+    switch(((t_base_type*)type)->get_base()) {
+    case t_base_type::TYPE_DOUBLE:
+        if(val->get_double() == 0.0)
+                return true;
+        else
+                return false;
+    default:
+        return true;
+    }
+  } else if(type->is_list()) {
+    // Empty lists are cheaply compared for structural equivalence.
+    // Is empty list?
+    if(val->get_list().size() == 0)
+        return true;
+    else
+        return false;
+  } else {
+    return false;
+  }
 }
 
 /**
@@ -682,17 +771,55 @@ void t_ocaml_generator::generate_ocaml_struct_writer(ofstream& out,
     "oprot#writeStructBegin \""<<name<<"\";" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    // Write field header
-    string mname = "_"+decapitalize((*f_iter)->get_name());
-    indent(out) <<
-      "(match " << mname << " with None -> () | Some _v -> " << endl;
+    t_field *tmember = (*f_iter);
+    string mname = "_"+decapitalize(tmember->get_name());
+    string _v;
+
+    if(struct_member_persistent(tmember)) {
+
+      if(struct_member_omitable(tmember)
+        && struct_member_default_cheaply_comparable(tmember)) {
+        _v = "_v";
+        // Avoid redundant encoding of members having default values.
+        indent(out) << "(match " << mname << " with "
+            << render_const_value(tmember->get_type(), tmember->get_value())
+            << " -> () | " << _v << " -> " << endl;
+      } else {
+        _v = mname;
+        indent(out) << "(" << endl;
+      }
+
+    } else {
+
+      indent(out) << "(match " << mname << " with ";
+
+      if(struct_member_omitable(tmember)) {
+        out << "None -> ()";
+
+        if(struct_member_default_cheaply_comparable(tmember)) {
+          // Avoid redundant encoding of members having default values.
+          out << " | Some "
+              << render_const_value(tmember->get_type(), tmember->get_value())
+              << " -> ()";
+        }
+        out << " | Some _v -> " << endl;
+      } else {
+        out << endl;
+        indent(out) << "| None -> raise (Field_empty \""
+                    << type_name(tstruct) << "." << mname << "\")" << endl;
+        indent(out) << "| Some _v -> " << endl;
+      }
+
+      _v = "_v";
+    }
     indent_up();
-    indent(out) << "oprot#writeFieldBegin(\""<< (*f_iter)->get_name()<<"\","
-                <<type_to_enum((*f_iter)->get_type())<<","
-                <<(*f_iter)->get_key()<<");" << endl;
+    // Write field header
+    indent(out) << "oprot#writeFieldBegin(\""<< tmember->get_name()<<"\","
+                << type_to_enum(tmember->get_type()) << ","
+                << tmember->get_key()<<");" << endl;
 
     // Write field contents
-    generate_serialize_field(out, *f_iter, "_v");
+    generate_serialize_field(out, tmember, _v);
 
     // Write field closer
     indent(out) << "oprot#writeFieldEnd" << endl;
