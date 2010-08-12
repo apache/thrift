@@ -308,5 +308,3 @@ class TSocket extends TTransport {
     }
   }
 }
-
-?>

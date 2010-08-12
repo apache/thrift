@@ -104,5 +104,3 @@ abstract class TTransport {
    */
   public function flush() {}
 }
-
-?>

@@ -107,5 +107,3 @@ class TPhpStream extends TTransport {
   }
 
 }
-
-?>

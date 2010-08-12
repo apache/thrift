@@ -80,5 +80,3 @@ class TMemoryBuffer extends TTransport {
     return strlen($this->buf_);
   }
 }
-
-?>

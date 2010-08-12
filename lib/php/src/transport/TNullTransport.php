@@ -44,5 +44,3 @@ class TNullTransport extends TTransport {
   public function write($buf) {}
 
 }
-
-?>

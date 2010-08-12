@@ -427,5 +427,3 @@ class TBinaryProtocolAccelerated extends TBinaryProtocol {
     return $this->strictWrite_;
   }
 }
-
-?>

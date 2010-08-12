@@ -292,5 +292,3 @@ class TSocketPool extends TSocket {
     throw new TException($error);
   }
 }
-
-?>

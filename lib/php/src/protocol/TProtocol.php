@@ -372,6 +372,3 @@ interface TProtocolFactory {
    */
   public function getProtocol($trans);
 }
-
-
-?>

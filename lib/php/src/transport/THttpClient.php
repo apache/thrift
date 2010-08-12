@@ -198,5 +198,3 @@ class THttpClient extends TTransport {
   }
 
 }
-
-?>
