@@ -44,6 +44,12 @@ class t_service : public t_type {
   }
 
   void add_function(t_function* func) {
+    std::vector<t_function*>::const_iterator iter;
+    for (iter = functions_.begin(); iter != functions_.end(); iter++) {
+      if (func->get_name() == (*iter)->get_name()) {
+        throw "Function " + func->get_name() + " is already defined";
+      }
+    }
     functions_.push_back(func);
   }
 
