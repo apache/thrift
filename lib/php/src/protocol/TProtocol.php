@@ -368,7 +368,7 @@ interface TProtocolFactory {
   /**
    * Build a protocol from the base transport
    *
-   * @return TProtcol protocol
+   * @return TProtocol protocol
    */
   public function getProtocol($trans);
 }
