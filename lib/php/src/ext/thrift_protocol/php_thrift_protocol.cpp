@@ -152,7 +152,6 @@ public:
 
   ~PHPOutputTransport() {
     flush();
-    directFlush();
   }
 
   void write(const char* data, size_t len) {
@@ -203,6 +202,7 @@ public:
       buffer_ptr = buffer;
       buffer_used = 0;
     }
+    directFlush();
   }
 
 protected:
@@ -901,19 +901,19 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
     RETURN_NULL();
   }
 
-  PHPOutputTransport transport(*args[0]);
-  const char* method_name = Z_STRVAL_PP(args[1]);
-  convert_to_long(*args[2]);
-  int32_t msgtype = Z_LVAL_PP(args[2]);
-  zval* request_struct = *args[3];
-  convert_to_long(*args[4]);
-  int32_t seqID = Z_LVAL_PP(args[4]);
-  convert_to_boolean(*args[5]);
-  bool strictWrite = Z_BVAL_PP(args[5]);
-  efree(args);
-  args = NULL;
-
   try {
+    PHPOutputTransport transport(*args[0]);
+    const char* method_name = Z_STRVAL_PP(args[1]);
+    convert_to_long(*args[2]);
+    int32_t msgtype = Z_LVAL_PP(args[2]);
+    zval* request_struct = *args[3];
+    convert_to_long(*args[4]);
+    int32_t seqID = Z_LVAL_PP(args[4]);
+    convert_to_boolean(*args[5]);
+    bool strictWrite = Z_BVAL_PP(args[5]);
+    efree(args);
+    args = NULL;
+
     if (strictWrite) {
       int32_t version = VERSION_1 | msgtype;
       transport.writeI32(version);
@@ -930,6 +930,7 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
         throw_tprotocolexception("Attempt to send non-Thrift object", INVALID_DATA);
     }
     binary_serialize_spec(request_struct, transport, Z_ARRVAL_P(spec));
+    transport.flush();
   } catch (const PHPExceptionWrapper& ex) {
     zend_throw_exception_object(ex TSRMLS_CC);
     RETURN_NULL();
@@ -962,14 +963,14 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
     RETURN_NULL();
   }
 
-  PHPInputTransport transport(*args[0]);
-  char* obj_typename = Z_STRVAL_PP(args[1]);
-  convert_to_boolean(*args[2]);
-  bool strict_read = Z_BVAL_PP(args[2]);
-  efree(args);
-  args = NULL;
-
   try {
+    PHPInputTransport transport(*args[0]);
+    char* obj_typename = Z_STRVAL_PP(args[1]);
+    convert_to_boolean(*args[2]);
+    bool strict_read = Z_BVAL_PP(args[2]);
+    efree(args);
+    args = NULL;
+
     int8_t messageType = 0;
     int32_t sz = transport.readI32();
 
