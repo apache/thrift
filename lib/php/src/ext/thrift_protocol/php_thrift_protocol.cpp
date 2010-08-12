@@ -218,12 +218,12 @@ protected:
   void directWrite(const char* data, size_t len) {
     zval writefn;
     ZVAL_STRING(&writefn, "write", 0);
-    char* newbuf = (char*)emalloc(buffer_used + 1);
-    memcpy(newbuf, buffer, buffer_used);
-    newbuf[buffer_used] = '\0';
+    char* newbuf = (char*)emalloc(len + 1);
+    memcpy(newbuf, data, len);
+    newbuf[len] = '\0';
     zval *args[1];
     MAKE_STD_ZVAL(args[0]);
-    ZVAL_STRINGL(args[0], newbuf, buffer_used, 0);
+    ZVAL_STRINGL(args[0], newbuf, len, 0);
     TSRMLS_FETCH();
     zval ret;
     ZVAL_NULL(&ret);
