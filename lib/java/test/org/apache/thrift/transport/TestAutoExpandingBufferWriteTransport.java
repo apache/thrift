@@ -18,39 +18,27 @@
  */
 package org.apache.thrift.transport;
 
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
+import java.nio.ByteBuffer;
 
-public class WriteCountingTransport extends TTransport {
-  public int writeCount = 0;
-  private final TTransport trans;
+import junit.framework.TestCase;
 
-  public WriteCountingTransport(TTransport underlying) {
-    trans = underlying;
-  }
+public class TestAutoExpandingBufferWriteTransport extends TestCase {
 
-  @Override
-  public void close() {}
+  public void testIt() throws Exception {
+    AutoExpandingBufferWriteTransport t = new AutoExpandingBufferWriteTransport(1, 1.5);
+    assertEquals(1, t.getBuf().array().length);
+    byte[] b1 = new byte[]{1,2,3};
+    t.write(b1);
+    assertEquals(3, t.getPos());
+    assertTrue(t.getBuf().array().length >= 3);
+    assertEquals(ByteBuffer.wrap(b1), ByteBuffer.wrap(t.getBuf().array(), 0, 3));
 
-  @Override
-  public boolean isOpen() {return true;}
-
-  @Override
-  public void open() throws TTransportException {}
-
-  @Override
-  public int read(byte[] buf, int off, int len) throws TTransportException {
-    return 0;
-  }
-
-  @Override
-  public void write(byte[] buf, int off, int len) throws TTransportException {
-    writeCount ++;
-    trans.write(buf, off, len);
-  }
-
-  @Override
-  public void flush() throws TTransportException {
-    trans.flush();
+    t.reset();
+    assertTrue(t.getBuf().array().length >= 3);
+    assertEquals(0, t.getPos());
+    byte[] b2 = new byte[]{4,5};
+    t.write(b2);
+    assertEquals(2, t.getPos());
+    assertEquals(ByteBuffer.wrap(b2), ByteBuffer.wrap(t.getBuf().array(), 0, 2));
   }
 }

@@ -18,39 +18,20 @@
  */
 package org.apache.thrift.transport;
 
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
+import junit.framework.TestCase;
 
-public class WriteCountingTransport extends TTransport {
-  public int writeCount = 0;
-  private final TTransport trans;
+public class TestAutoExpandingBuffer extends TestCase {
+  public void testExpands() throws Exception {
+    // has expected initial capacity
+    AutoExpandingBuffer b = new AutoExpandingBuffer(10, 1.5);
+    assertEquals(10, b.array().length);
 
-  public WriteCountingTransport(TTransport underlying) {
-    trans = underlying;
-  }
+    // doesn't shrink
+    b.resizeIfNecessary(8);
+    assertEquals(10, b.array().length);
 
-  @Override
-  public void close() {}
-
-  @Override
-  public boolean isOpen() {return true;}
-
-  @Override
-  public void open() throws TTransportException {}
-
-  @Override
-  public int read(byte[] buf, int off, int len) throws TTransportException {
-    return 0;
-  }
-
-  @Override
-  public void write(byte[] buf, int off, int len) throws TTransportException {
-    writeCount ++;
-    trans.write(buf, off, len);
-  }
-
-  @Override
-  public void flush() throws TTransportException {
-    trans.flush();
+    // grows when more capacity is needed
+    b.resizeIfNecessary(100);
+    assertTrue(b.array().length >= 100);
   }
 }

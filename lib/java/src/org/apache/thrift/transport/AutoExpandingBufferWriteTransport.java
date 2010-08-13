@@ -18,15 +18,19 @@
  */
 package org.apache.thrift.transport;
 
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
+import org.apache.commons.lang.NotImplementedException;
 
-public class WriteCountingTransport extends TTransport {
-  public int writeCount = 0;
-  private final TTransport trans;
+/**
+ * TTransport for writing to an AutoExpandingBuffer.
+ */
+public final class AutoExpandingBufferWriteTransport extends TTransport {
 
-  public WriteCountingTransport(TTransport underlying) {
-    trans = underlying;
+  private final AutoExpandingBuffer buf;
+  private int pos;
+
+  public AutoExpandingBufferWriteTransport(int initialCapacity, double growthCoefficient) {
+    this.buf = new AutoExpandingBuffer(initialCapacity, growthCoefficient);
+    this.pos = 0;
   }
 
   @Override
@@ -40,17 +44,25 @@ public class WriteCountingTransport extends TTransport {
 
   @Override
   public int read(byte[] buf, int off, int len) throws TTransportException {
-    return 0;
+    throw new NotImplementedException();
   }
 
   @Override
-  public void write(byte[] buf, int off, int len) throws TTransportException {
-    writeCount ++;
-    trans.write(buf, off, len);
+  public void write(byte[] toWrite, int off, int len) throws TTransportException {
+    buf.resizeIfNecessary(pos + len);
+    System.arraycopy(toWrite, off, buf.array(), pos, len);
+    pos += len;
   }
 
-  @Override
-  public void flush() throws TTransportException {
-    trans.flush();
+  public AutoExpandingBuffer getBuf() {
+    return buf;
+  }
+
+  public int getPos() {
+    return pos;
+  }
+
+  public void reset() {
+    pos = 0;
   }
 }
