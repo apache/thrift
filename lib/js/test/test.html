@@ -1,4 +1,22 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements. See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership. The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations
+  under the License.
+-->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -10,6 +28,9 @@
 
   <!-- jQuery -->
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" charset="utf-8"></script>
+  
+  <!-- json2  -->
+  <script type="text/javascript" src="json2.js" charset="utf-8"></script>
 
   <!-- QUnit Test framework-->
   <script type="text/javascript" src="http://github.com/jquery/qunit/raw/master/qunit/qunit.js" charset="utf-8"></script>
@@ -24,13 +45,14 @@
 
 
     module("Base Types");
-
-    test("String", function() {
-      equals(client.testString("works"), "works");
+    
+    test("Void", function() {
+      equals(client.testVoid(), undefined);
     });
-    test("String UTF-8", function() {
-      var languagesUtf8 = "Afrikaans, Alemannisch, Aragonés, العربية, مصرى, Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška, Беларуская, Беларуская (тарашкевіца), Български, Bamanankan, বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн, Cebuano, ᏣᎳᎩ, Česky, Словѣ́ньскъ / ⰔⰎⰑⰂⰡⰐⰠⰔⰍⰟ, Чӑвашла, Cymraeg, Dansk, Zazaki, ދިވެހިބަސް, Ελληνικά, Emiliàn e rumagnòl, English, Esperanto, Español, Eesti, Euskara, فارسی, Suomi, Võro, Føroyskt, Français, Arpetan, Furlan, Frysk, Gaeilge, 贛語, Gàidhlig, Galego, Avañe'ẽ, ગુજરાતી, Gaelg, עברית, हिन्दी, Fiji Hindi, Hrvatski, Kreyòl ayisyen, Magyar, Հայերեն, Interlingua, Bahasa Indonesia, Ilokano, Ido, Íslenska, Italiano, 日本語, Lojban, Basa Jawa, ქართული, Kongo, Kalaallisut, ಕನ್ನಡ, 한국어, Къарачай-Малкъар, Ripoarisch, Kurdî, Коми, Kernewek, Кыргызча, Latina, Ladino, Lëtzebuergesch, Limburgs, Lingála, ລາວ, Lietuvių, Latviešu, Basa Banyumasan, Malagasy, Македонски, മലയാളം, मराठी, Bahasa Melayu, مازِرونی, Nnapulitano, Nedersaksisch, नेपाल भाषा, Nederlands, ‪Norsk (nynorsk)‬, ‪Norsk (bokmål)‬, Nouormand, Diné bizaad, Occitan, Иронау, Papiamentu, Deitsch, Norfuk / Pitkern, Polski, پنجابی, پښتو, Português, Runa Simi, Rumantsch, Romani, Română, Русский, Саха тыла, Sardu, Sicilianu, Scots, Sámegiella, Simple English, Slovenčina, Slovenščina, Српски / Srpski, Seeltersk, Svenska, Kiswahili, தமிழ், తెలుగు, Тоҷикӣ, ไทย, Türkmençe, Tagalog, Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük, Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文, Bân-lâm-gú, 粵語";
-      equals(client.testString(languagesUtf8), languagesUtf8);
+    test("String", function() {
+      // all Languages in UTF-8
+      var stringTest = "Afrikaans, Alemannisch, Aragonés, العربية, مصرى, Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška, Беларуская, Беларуская (тарашкевіца), Български, Bamanankan, বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн, Cebuano, ᏣᎳᎩ, Česky, Словѣ́ньскъ / ⰔⰎⰑⰂⰡⰐⰠⰔⰍⰟ, Чӑвашла, Cymraeg, Dansk, Zazaki, ދިވެހިބަސް, Ελληνικά, Emiliàn e rumagnòl, English, Esperanto, Español, Eesti, Euskara, فارسی, Suomi, Võro, Føroyskt, Français, Arpetan, Furlan, Frysk, Gaeilge, 贛語, Gàidhlig, Galego, Avañe'ẽ, ગુજરાતી, Gaelg, עברית, हिन्दी, Fiji Hindi, Hrvatski, Kreyòl ayisyen, Magyar, Հայերեն, Interlingua, Bahasa Indonesia, Ilokano, Ido, Íslenska, Italiano, 日本語, Lojban, Basa Jawa, ქართული, Kongo, Kalaallisut, ಕನ್ನಡ, 한국어, Къарачай-Малкъар, Ripoarisch, Kurdî, Коми, Kernewek, Кыргызча, Latina, Ladino, Lëtzebuergesch, Limburgs, Lingála, ລາວ, Lietuvių, Latviešu, Basa Banyumasan, Malagasy, Македонски, മലയാളം, मराठी, Bahasa Melayu, مازِرونی, Nnapulitano, Nedersaksisch, नेपाल भाषा, Nederlands, ‪Norsk (nynorsk)‬, ‪Norsk (bokmål)‬, Nouormand, Diné bizaad, Occitan, Иронау, Papiamentu, Deitsch, Norfuk / Pitkern, Polski, پنجابی, پښتو, Português, Runa Simi, Rumantsch, Romani, Română, Русский, Саха тыла, Sardu, Sicilianu, Scots, Sámegiella, Simple English, Slovenčina, Slovenščina, Српски / Srpski, Seeltersk, Svenska, Kiswahili, தமிழ், తెలుగు, Тоҷикӣ, ไทย, Türkmençe, Tagalog, Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük, Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文, Bân-lâm-gú, 粵語";
+      equals(client.testString(stringTest), stringTest);
     });
     test("Double", function() {
       equals(client.testDouble(3.14), 3.14);
@@ -40,6 +62,11 @@
     });
     test("I32", function() {
       equals(client.testI32(Math.pow(2,30)), Math.pow(2,30));
+      
+      /*
+        how to test things like that?
+        equals(client.testI32(Math.pow(2,60)), Math.pow(2,60));
+      */
     });
     test("I64", function() {
       equals(client.testI64(Math.pow(2,60)), Math.pow(2,60));
@@ -48,36 +75,114 @@
 
     module("Structured Types");
 
-    var insanity  = new ThriftTest.Insanity()
-    insanity.userMap[ThriftTest.Numberz.ONE] = 1
-    insanity.userMap[ThriftTest.Numberz.TWO] = 2
-
-    var xtr = new ThriftTest.Xtruct()
-    xtr.string_thing = 'worked'
-    insanity.xtructs.push(xtr)
-
-    var xtr2= new ThriftTest.Xtruct2()
-    xtr2.struct_thing = xtr
-
-    var list = [1,2,3]
-
     test("Struct", function() {
-      equals(client.testStruct(xtr).string_thing, "worked");
+      var structTestInput = new ThriftTest.Xtruct()
+      structTestInput.string_thing = 'worked'
+      structTestInput.byte_thing = 0x01
+      structTestInput.i32_thing = Math.pow(2,30)
+      structTestInput.i64_thing = Math.pow(2,60)
+
+      var structTestOutput = client.testStruct(structTestInput);
+
+      equals(structTestOutput.string_thing, structTestInput.string_thing);
+      equals(structTestOutput.byte_thing, structTestInput.byte_thing);
+      equals(structTestOutput.i32_thing, structTestInput.i32_thing);
+      equals(structTestOutput.i64_thing, structTestInput.i64_thing);
+      
+      equals(JSON.stringify(structTestOutput), JSON.stringify(structTestInput))
     });
+    
     test("Nest", function() {
-      equals(client.testNest(xtr2).struct_thing.string_thing, "worked");
+      var xtrTestInput = new ThriftTest.Xtruct()
+      xtrTestInput.string_thing = 'worked'
+      xtrTestInput.byte_thing = 0x01
+      xtrTestInput.i32_thing = Math.pow(2,30)
+      xtrTestInput.i64_thing = Math.pow(2,60)
+      
+      var nestTestInput = new ThriftTest.Xtruct2()
+      nestTestInput.byte_thing = 0x02
+      nestTestInput.struct_thing = xtrTestInput
+      nestTestInput.i32_thing = Math.pow(2,15)
+      
+      var nestTestOutput = client.testNest(nestTestInput);
+      
+      equals(nestTestOutput.byte_thing, nestTestInput.byte_thing);
+      equals(nestTestOutput.struct_thing.string_thing, nestTestInput.struct_thing.string_thing);
+      equals(nestTestOutput.struct_thing.byte_thing, nestTestInput.struct_thing.byte_thing);
+      equals(nestTestOutput.struct_thing.i32_thing, nestTestInput.struct_thing.i32_thing);
+      equals(nestTestOutput.struct_thing.i64_thing, nestTestInput.struct_thing.i64_thing);
+      equals(nestTestOutput.i32_thing, nestTestInput.i32_thing);
+      
+      equals(JSON.stringify(nestTestOutput), JSON.stringify(nestTestInput))
     });
+    
     test("Map", function() {
-      equals(client.testMap(insanity.userMap)[ThriftTest.Numberz.ONE], 1);
+      var mapTestInput = {7:77, 8:88, 9:99};
+
+      var mapTestOutput = client.testMap(mapTestInput)
+      
+      for (var key in mapTestOutput) {
+        equals(mapTestOutput[key], mapTestInput[key]);
+      }
+
+      equals(JSON.stringify(mapTestOutput), JSON.stringify(mapTestInput))
     });
-    test("List", function() {
-      same(client.testList(list), list);
-    });
+    
     test("Set", function() {
-      same(client.testSet(list), list);
+      var setTestInput = new Array(1,2,3)
+      ok(client.testSet(setTestInput), setTestInput);
     });
+    
+    test("List", function() {
+      var listTestInput = new Array(1,2,3)
+      ok(client.testList(listTestInput), listTestInput);
+    });
+    
     test("Enum", function() {
       equals(client.testEnum(ThriftTest.Numberz.ONE), ThriftTest.Numberz.ONE);
+    });
+    
+    test("TypeDef", function() {
+      equals(client.testTypedef(69), 69);
+    });
+
+    module("deeper!");
+    
+    test("MapMap", function() {
+      var mapMapTestExpectedResult = {
+      "-4":{"-4":-4, "-3":-3, "-2":-2, "-1":-1}, 
+      "4":{"1":1,"2":2,"3":3,"4":4}
+      };
+
+      var mapMapTestOutput = client.testMapMap(1);
+      
+      equals(JSON.stringify(mapMapTestOutput), JSON.stringify(mapMapTestExpectedResult))
+    });
+    
+    test("testInsanity", function() {
+      var insanityTestOutput;
+      var insanityTestInput;
+      
+       //  map<UserId, map<Numberz,Insanity>> testInsanity(1: Insanity argument),
+
+      var insanity  = new ThriftTest.Insanity()
+      insanity.userMap[ThriftTest.Numberz.ONE] = 1
+      insanity.userMap[ThriftTest.Numberz.TWO] = 2
+
+
+      insanityTestOutput = client.testInsanity(insanity);
+      equals(JSON.stringify(insanityTestOutput), JSON.stringify(insanityTestInput))
+      /*
+        request:
+        [1,"testInsanity",1,0,{"1":{"rec":{"1":{"map":["i32","i64",2,{"1":1,"2":2}]},"2":{"lst":["rec",0]}}}}]
+        response:
+        [1,"testInsanity",2,0,{"0":{"map":["i64","map",2,{"1":["i32","rec",2,{"2":{"1":{"map":["i32","i64",2,{"5":5,"8":8}]},"2":{"lst":["rec",2,{"1":{"str":"Goodbye4"},"4":{"i8":4},"9":{"i32":4},"11":{"i64":4}},{"1":{"str":"Hello2"},"4":{"i8":2},"9":{"i32":2},"11":{"i64":2}}]}},"3":{"1":{"map":["i32","i64",2,{"5":5,"8":8}]},"2":{"lst":["rec",2,{"1":{"str":"Goodbye4"},"4":{"i8":4},"9":{"i32":4},"11":{"i64":4}},{"1":{"str":"Hello2"},"4":{"i8":2},"9":{"i32":2},"11":{"i64":2}}]}}}],"2":["i32","rec",1,{"6":{"1":{"map":["i32","i64",0,{}]},"2":{"lst":["rec",0]}}}]}]}}]
+      */
+      //equals(res["1"]["1"].xtructs[0].string_thing, "worked");
+    });
+    test("testMulti", function() {
+      //var res = client.testInsanity(insanity);
+      //equals(res["1"]["1"].xtructs[0].string_thing, "worked");
     });
 
 
@@ -178,6 +283,7 @@
   </script>
   <h1 id="qunit-header">Thrift Javascript Bindings: Unit Test (<a href="https://svn.apache.org/repos/asf/incubator/thrift/trunk/test/ThriftTest.thrift">ThriftTest.thrift</a>)</h1>
   <h2 id="qunit-banner"></h2>
+  <div id="qunit-testrunner-toolbar"></div> 
   <h2 id="qunit-userAgent"></h2>
   <ol id="qunit-tests"><li><!-- get valid xhtml strict--></li></ol>
   <p>
