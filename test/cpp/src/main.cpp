@@ -427,7 +427,7 @@ int main(int argc, char **argv) {
 
     for (size_t ix = 0; ix < clientCount; ix++) {
 
-      shared_ptr<TSocket> socket(new TSocket("127.0.01", port));
+      shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
       shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
       shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket));
       shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
