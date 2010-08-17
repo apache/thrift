@@ -24,13 +24,10 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <machine/endian.h>
-#include <machine/byte_order.h>
+#include <sys/param.h>
 #include <stdexcept>
 
-#ifndef _BYTESWAP_H
-#define _BYTESWAP_H
-
+#ifndef bswap_64
 #define	bswap_64(x)     (((uint64_t)(x) << 56) | \
                         (((uint64_t)(x) << 40) & 0xff000000000000ULL) | \
                         (((uint64_t)(x) << 24) & 0xff0000000000ULL) | \
@@ -44,9 +41,11 @@
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define htonll(x) bswap_64(x)
 #define ntohll(x) bswap_64(x)
-#else
+#elif __BYTE_ORDER == __BIG_ENDIAN
 #define htonll(x) x
 #define ntohll(x) x
+#else
+#error Unknown __BYTE_ORDER
 #endif
 
 enum TType {

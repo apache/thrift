@@ -76,8 +76,8 @@ namespace apache { namespace thrift { namespace protocol {
 
 using apache::thrift::transport::TTransport;
 
-#ifdef HAVE_ENDIAN_H
-#include <endian.h>
+#ifdef HAVE_SYS_PARAM_H_
+#include <sys/param.h>
 #endif
 
 #ifndef __BYTE_ORDER
