@@ -55,6 +55,7 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
   protected final TAsyncClient client;
   private final AsyncMethodCallback<T> callback;
   private final boolean isOneway;
+  private long lastTransitionTime;
 
   private ByteBuffer sizeBuffer;
   private final byte[] sizeBufferArray = new byte[4];
@@ -74,6 +75,18 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
 
   protected State getState() {
     return state;
+  }
+
+  protected boolean isFinished() {
+    return state == State.RESPONSE_READ;
+  }
+
+  protected long getLastTransitionTime() {
+    return lastTransitionTime;
+  }
+
+  public TAsyncClient getClient() {
+    return client;
   }
 
   protected abstract void write_args(TProtocol protocol) throws TException;
@@ -135,13 +148,14 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
           throw new IllegalStateException("Method call in state " + state 
               + " but selector called transition method. Seems like a bug...");
       }
+      lastTransitionTime = System.currentTimeMillis();
     } catch (Throwable e) {
       key.cancel();
       key.attach(null);
       onError(e);
     }
   }
-  
+
   protected void onError(Throwable e) {
     state = State.ERROR;
     client.onError(e);

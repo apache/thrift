@@ -18,6 +18,9 @@
  */
 package org.apache.thrift.async;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import junit.framework.TestCase;
@@ -28,14 +31,12 @@ import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingSocket;
 
-import java.util.List;
-import java.util.ArrayList;
-
 import thrift.test.CompactProtoTestStruct;
 import thrift.test.Srv;
 import thrift.test.Srv.Iface;
 import thrift.test.Srv.AsyncClient.Janky_call;
 import thrift.test.Srv.AsyncClient.onewayMethod_call;
+import thrift.test.Srv.AsyncClient.primitiveMethod_call;
 import thrift.test.Srv.AsyncClient.voidMethod_call;
 
 public class TestTAsyncClientManager extends TestCase {
@@ -58,8 +59,15 @@ public class TestTAsyncClientManager extends TestCase {
     public void methodWithDefaultArgs(int something) throws TException {
     }
 
+    // Using this method for timeout testing
     @Override
     public int primitiveMethod() throws TException {
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
       return 0;
     }
 
@@ -76,31 +84,31 @@ public class TestTAsyncClientManager extends TestCase {
     public void onewayMethod() throws TException {
     }
   }
-  
+
   public class JankyRunnable implements Runnable {
     private TAsyncClientManager acm_;
     private int numCalls_;
     private int numSuccesses_ = 0;
     private Srv.AsyncClient client_;
     private TNonblockingSocket clientSocket_;
-    
+
     public JankyRunnable(TAsyncClientManager acm, int numCalls) throws Exception {
       this.acm_ = acm;
       this.numCalls_ = numCalls;
       this.clientSocket_ = new TNonblockingSocket("localhost", 12345);
       this.client_ = new Srv.AsyncClient(new TBinaryProtocol.Factory(), acm_, clientSocket_);
     }
-    
+
     public int getNumSuccesses() {
       return numSuccesses_;
     }
-    
+
     public void run() {
       for (int i = 0; i < numCalls_; i++) {
-        try {          
+        try {
           // connect an async client
           final Object o = new Object();
-          
+
           final AtomicBoolean jankyReturned = new AtomicBoolean(false);
           client_.Janky(1, new AsyncMethodCallback<Srv.AsyncClient.Janky_call>() {
             @Override
@@ -112,28 +120,28 @@ public class TestTAsyncClientManager extends TestCase {
                   o.notifyAll();
                 }
               } catch (TException e) {
-                e.printStackTrace();               
+                e.printStackTrace();
                 synchronized(o) {
                   o.notifyAll();
                 }
                 fail("unexpected exception: " + e);
-              } 
-              
+              }
             }
-            
+
             @Override
             public void onError(Throwable throwable) {
+              System.out.println(throwable.toString());
               synchronized(o) {
                 o.notifyAll();
               }
-              fail("unexpected exception: " + throwable);             
+              fail("unexpected exception: " + throwable);
             }
           });
-      
+
           synchronized(o) {
             o.wait(1000);
           }
-          
+
           assertTrue(jankyReturned.get());
           this.numSuccesses_++;
         } catch (Exception e) {
@@ -141,6 +149,30 @@ public class TestTAsyncClientManager extends TestCase {
         }
       }
     }
+  }
+
+  public void standardCallTest(Srv.AsyncClient client) throws Exception {
+    final Object o = new Object();
+    final AtomicBoolean jankyReturned = new AtomicBoolean(false);
+    client.Janky(1, new FailureLessCallback<Srv.AsyncClient.Janky_call>() {
+      @Override
+      public void onComplete(Janky_call response) {
+        try {
+          assertEquals(3, response.getResult());
+          jankyReturned.set(true);
+        } catch (TException e) {
+          fail("unexpected exception: " + e);
+        }
+        synchronized(o) {
+          o.notifyAll();
+        }
+      }
+    });
+
+    synchronized(o) {
+      o.wait(100000);
+    }
+    assertTrue(jankyReturned.get());
   }
 
   public void testIt() throws Exception {
@@ -164,26 +196,11 @@ public class TestTAsyncClientManager extends TestCase {
     final Object o = new Object();
 
     // make a standard method call
-    final AtomicBoolean jankyReturned = new AtomicBoolean(false);
-    client.Janky(1, new FailureLessCallback<Srv.AsyncClient.Janky_call>() {
-      @Override
-      public void onComplete(Janky_call response) {
-        try {
-          assertEquals(3, response.getResult());
-          jankyReturned.set(true);
-        } catch (TException e) {
-          fail("unexpected exception: " + e);
-        }
-        synchronized(o) {
-          o.notifyAll();
-        }
-      }
-    });
+    standardCallTest(client);
 
-    synchronized(o) {
-      o.wait(100000);
-    }
-    assertTrue(jankyReturned.get());
+    // make a standard method call that succeeds within timeout
+    client.setTimeout(5000);
+    standardCallTest(client);
 
     // make a void method call
     final AtomicBoolean voidMethodReturned = new AtomicBoolean(false);
@@ -249,7 +266,7 @@ public class TestTAsyncClientManager extends TestCase {
       o.wait(1000);
     }
     assertTrue(voidAfterOnewayReturned.get());
-    
+
     // make multiple calls with deserialization in the selector thread (repro Eric's issue)
     int numThreads = 500;
     int numCallsPerThread = 100;
@@ -270,5 +287,34 @@ public class TestTAsyncClientManager extends TestCase {
       numSuccesses += runnable.getNumSuccesses();
     }
     assertEquals(numSuccesses, numThreads * numCallsPerThread);
+
+    // check that timeouts work
+    client.setTimeout(100);
+    client.primitiveMethod(new AsyncMethodCallback<primitiveMethod_call>() {
+
+      @Override
+      public void onError(Throwable throwable) {
+        if (!(throwable instanceof TimeoutException)) {
+          fail("should have received timeout exception");
+          synchronized(o) {
+            o.notifyAll();
+          }
+        }
+      }
+
+      @Override
+      public void onComplete(primitiveMethod_call response) {
+        fail("should not have finished timed out call.");
+        synchronized(o) {
+          o.notifyAll();
+        }
+      }
+
+    });
+    synchronized(o) {
+      o.wait(2000);
+    }
+    assertTrue(client.hasError());
+    assertTrue(client.getError() instanceof TimeoutException);
   }
 }

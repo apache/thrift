@@ -27,15 +27,33 @@ public abstract class TAsyncClient {
   protected final TAsyncClientManager manager;
   private TAsyncMethodCall currentMethod;
   private Throwable error;
+  private long timeout;
 
   public TAsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager manager, TNonblockingTransport transport) {
+    this(protocolFactory, manager, transport, 0);
+  }
+
+  public TAsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager manager, TNonblockingTransport transport, long timeout) {
     this.protocolFactory = protocolFactory;
     this.manager = manager;
     this.transport = transport;
+    this.timeout = timeout;
   }
 
   public TProtocolFactory getProtocolFactory() {
     return protocolFactory;
+  }
+
+  public long getTimeout() { 
+    return timeout;
+  }
+
+  public boolean hasTimeout() {
+    return timeout > 0;
+  }
+
+  public void setTimeout(long timeout) {
+    this.timeout = timeout;
   }
 
   /**

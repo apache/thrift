@@ -19,14 +19,15 @@
 package org.apache.thrift.async;
 
 import java.io.IOException;
+import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.spi.SelectorProvider;
-import java.nio.channels.CancelledKeyException;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.ClosedSelectorException;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Contains selector thread which transitions method call objects
  */
+@SuppressWarnings("unchecked")
 public class TAsyncClientManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(TAsyncClientManager.class.getName());
 
@@ -57,8 +59,12 @@ public class TAsyncClientManager {
   }
 
   private class SelectThread extends Thread {
+    // Selector waits at most SELECT_TIME milliseconds before waking
+    private static final long SELECT_TIME = 200;
+
     private final Selector selector;
     private volatile boolean running;
+    private final Set<TAsyncMethodCall> timeoutWatchSet = new HashSet<TAsyncMethodCall>();
 
     public SelectThread() throws IOException {
       this.selector = SelectorProvider.provider().openSelector();
@@ -79,46 +85,76 @@ public class TAsyncClientManager {
     public void run() {
       while (running) {
         try {
-          selector.select();
+          selector.select(SELECT_TIME);
         } catch (IOException e) {
           LOGGER.error("Caught IOException in TAsyncClientManager!", e);
         }
 
-        // Handle any ready channels calls
-        try {
-          Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-          while (keys.hasNext()) {
-            SelectionKey key = keys.next();
-            keys.remove();
-            if (!key.isValid()) {
-              // this should only have happened if the method call experienced an
-              // error and the key was cancelled. just skip it.
-              continue;
-            }
-            TAsyncMethodCall method = (TAsyncMethodCall)key.attachment();
-            method.transition(key);
-          }
-        } catch (ClosedSelectorException e) {
-          LOGGER.error("Caught ClosedSelectorException in TAsyncClientManager!", e);
-        }
+        transitionMethods();
+        timeoutIdleMethods();
+        startPendingMethods();
+      }
+    }
 
-        // Start any new calls
-        TAsyncMethodCall methodCall;
-        while ((methodCall = pendingCalls.poll()) != null) {
-          // Catch registration errors. Method will catch transition errors and cleanup.
-          try {
-            SelectionKey key = methodCall.registerWithSelector(selector);
-            methodCall.transition(key);
-          } catch (ClosedChannelException e) {
-            methodCall.onError(e);
-            LOGGER.warn("Caught ClosedChannelException in TAsyncClientManager!", e);
-          } catch (CancelledKeyException e) {
-            methodCall.onError(e);
-            LOGGER.warn("Caught CancelledKeyExce115ption in TAsyncClientManager!", e);
-          } catch (Exception e) {
-            methodCall.onError(e);
-            LOGGER.warn("Caught unexpected exception in TAsyncClientManager!", e);
-          }          
+    // Transition methods for ready keys
+    private void transitionMethods() {
+      try {
+        Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+        while (keys.hasNext()) {
+          SelectionKey key = keys.next();
+          keys.remove();
+          if (!key.isValid()) {
+            // this can happen if the method call experienced an error and the key was cancelled
+            // this can also happen if we timeout a method, which results in a channel close
+            // just skip
+            continue;
+          }
+          TAsyncMethodCall methodCall = (TAsyncMethodCall)key.attachment();
+          methodCall.transition(key);
+
+          // If done or error occurred, remove from timeout watch set
+          if (methodCall.isFinished() || methodCall.getClient().hasError()) {
+            timeoutWatchSet.remove(methodCall);
+          }
+        }
+      } catch (ClosedSelectorException e) {
+        LOGGER.error("Caught ClosedSelectorException in TAsyncClientManager!", e);
+      }
+    }
+
+    // Timeout any existing method calls
+    private void timeoutIdleMethods() {
+      Iterator<TAsyncMethodCall> iterator = timeoutWatchSet.iterator();
+      while (iterator.hasNext()) {
+        TAsyncMethodCall methodCall = iterator.next();
+        long clientTimeout = methodCall.getClient().getTimeout();
+        long timeElapsed = System.currentTimeMillis() - methodCall.getLastTransitionTime();
+        if (timeElapsed > clientTimeout) {
+          iterator.remove();
+          methodCall.onError(new TimeoutException("Operation " + 
+              methodCall.getClass() + " timed out after " + timeElapsed + 
+              " milliseconds."));
+        }
+      }
+    }
+
+    // Start any new calls
+    private void startPendingMethods() {
+      TAsyncMethodCall methodCall;
+      while ((methodCall = pendingCalls.poll()) != null) {
+        // Catch registration errors. method will catch transition errors and cleanup.
+        try {
+          SelectionKey key = methodCall.registerWithSelector(selector);
+          methodCall.transition(key);
+
+          // If timeout specified and first transition went smoothly, add to timeout watch set
+          TAsyncClient client = methodCall.getClient();
+          if (client.hasTimeout() && !client.hasError()) {
+            timeoutWatchSet.add(methodCall);
+          }
+        } catch (Throwable e) {
+          LOGGER.warn("Caught throwable in TAsyncClientManager!", e);
+          methodCall.onError(e);
         }
       }
     }
