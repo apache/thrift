@@ -119,8 +119,12 @@ AM_CONDITIONAL(WITH_PYTHON, [test -n "$PYTHON" -a "$PYTHON" != ":"])
 AX_THRIFT_LIB(perl, [Perl], yes)
 if test "$with_perl" = "yes"; then
   AC_PATH_PROG([PERL], [perl])
+  if test -n "`$PERL -MBit::Vector -e exit 2>&1`"; then
+    AC_MSG_WARN([Perl Bit::Vector module not installed, skipping perl])
+    have_perl_bit_vector="no"
+  fi
 fi
-AM_CONDITIONAL(WITH_PERL, [test -n "$PERL"])
+AM_CONDITIONAL(WITH_PERL, [test -n "$PERL" -a -z "$have_perl_bit_vector"])
 
 AX_THRIFT_LIB(php, [PHP], yes)
 if test "$with_php" = "yes"; then
