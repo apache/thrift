@@ -24,5 +24,5 @@ SUBDIRS = compiler/cpp lib test
 dist-hook:
 	find $(distdir) -name '.[a-zA-Z0-9]*' | xargs rm -rf
 
-EXTRA_DIST = bootstrap.sh cleanup.sh doc tutorial contrib \
+EXTRA_DIST = doc tutorial contrib \
              CONTRIBUTORS LICENSE CHANGES DISCLAIMER NOTICE
