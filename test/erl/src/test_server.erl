@@ -19,12 +19,42 @@
 
 -module(test_server).
 
--export([start_link/1, handle_function/2]).
+-export([go/0, go/1, start_link/2, handle_function/2]).
 
 -include("thriftTest_types.hrl").
 
-start_link(Port) ->
-    thrift_server:start_link(Port, thriftTest_thrift, ?MODULE).
+-record(options, {port = 9090,
+                  server_opts = []}).
+
+parse_args(Args) -> parse_args(Args, #options{}).
+parse_args([], Opts) -> Opts;
+parse_args([Head | Rest], Opts) ->
+    NewOpts =
+        case catch list_to_integer(Head) of
+            Port when is_integer(Port) ->
+                Opts#options{port = Port};
+            _Else ->
+                case Head of
+                    "framed" ->
+                        Opts#options{server_opts = [{framed, true} | Opts#options.server_opts]};
+                    "" ->
+                        Opts;
+                    _Else ->
+                        erlang:error({bad_arg, Head})
+                end
+        end,
+    parse_args(Rest, NewOpts).
+
+go() -> go([]).
+go(Args) ->
+    #options{port = Port, server_opts = ServerOpts} = parse_args(Args),
+    spawn(fun() -> start_link(Port, ServerOpts), receive after infinity -> ok end end).
+
+start_link(Port, ServerOpts) ->
+    thrift_socket_server:start([{handler, ?MODULE},
+                                {service, thriftTest_thrift},
+                                {port, Port}] ++
+                               ServerOpts).
 
 
 handle_function(testVoid, {}) ->
@@ -124,12 +154,12 @@ handle_function(testInsanity, {Insanity}) when is_record(Insanity, insanity) ->
                                {?thriftTest_THREE, Crazy}]),
 
     SecondMap = dict:from_list([{?thriftTest_SIX, Looney}]),
-    
+
     Insane = dict:from_list([{1, FirstMap},
                              {2, SecondMap}]),
-    
+
     io:format("Return = ~p~n", [Insane]),
-    
+
     {reply, Insane};
 
 handle_function(testMulti, Args = {Arg0, Arg1, Arg2, _Arg3, Arg4, Arg5})
@@ -150,7 +180,7 @@ handle_function(testException, {String}) when is_binary(String) ->
     case String of
         <<"Xception">> ->
             throw(#xception{errorCode = 1001,
-                            message = <<"This is an Xception">>});
+                            message = String});
         _ ->
             ok
     end;

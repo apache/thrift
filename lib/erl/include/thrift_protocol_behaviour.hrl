@@ -17,10 +17,21 @@
 %% under the License.
 %%
 
--module(test_handler).
+%% Signature specifications for protocol implementations.
 
--export([handle_function/2]).
+-ifndef(THRIFT_PROTOCOL_BEHAVIOUR_INCLUDED).
+-define(THRIFT_PROTOCOL_BEHAVIOUR_INCLUDED, true).
 
-handle_function(add, Params = {A, B}) ->
-    io:format("Got params: ~p~n", [Params]),
-    {reply, A + B}.
+-spec flush_transport(state()) -> {state(), ok | {error, _Reason}}.
+-spec close_transport(state()) -> {state(), ok | {error, _Reason}}.
+
+-spec write(state(), term()) -> {state(), ok | {error, _Reason}}.
+
+%% NOTE: Keep this in sync with thrift_protocol:read and read_specific.
+-spec read
+        (state(), tprot_empty_tag()) ->  {state(),  ok                | {error, _Reason}};
+        (state(), tprot_header_tag()) -> {state(), tprot_header_val() | {error, _Reason}};
+        (state(), tprot_data_tag()) ->   {state(), {ok, term()}       | {error, _Reason}}.
+
+
+-endif.

@@ -27,6 +27,7 @@ INSTALL_DST = $(ERLANG_OTP)/lib/$(APP_NAME)-$(VSN)
 
 MODULES = $(shell find . -name \*.erl | sed 's:^\./::' | sed 's/\.erl//')
 MODULES_STRING_LIST = $(shell find . -name \*.erl | sed 's:^\./:":' | sed 's/\.erl/",/')
+BEHAV_MODULES = $(shell find . -name \*.erl | xargs grep -l behaviour_info | sed 's:^\./::' | sed 's/\.erl//')
 
 HRL_FILES=
 INTERNAL_HRL_FILES= $(APP_NAME).hrl
@@ -43,7 +44,8 @@ APP_TARGET= $(EBIN)/$(APP_FILE)
 APPUP_TARGET= $(EBIN)/$(APPUP_FILE)
 
 BEAMS= $(MODULES:%=$(EBIN)/%.$(EMULATOR))
-TARGET_FILES= $(BEAMS) $(APP_TARGET) $(APPUP_TARGET)
+BEHAV_BEAMS= $(BEHAV_MODULES:%=$(EBIN)/%.$(EMULATOR))
+TARGET_FILES= $(BEHAV_BEAMS) $(BEAMS) $(APP_TARGET) $(APPUP_TARGET)
 
 WEB_TARGET=/var/yaws/www/$(APP_NAME)
 
@@ -53,7 +55,8 @@ WEB_TARGET=/var/yaws/www/$(APP_NAME)
 
 ERL_FLAGS +=
 ERL_INCLUDE = -I../include -I../../fslib/include -I../../system_status/include
-ERL_COMPILE_FLAGS += $(ERL_INCLUDE)
+ERL_BEHAV_PATH = -pz ../ebin
+ERL_COMPILE_FLAGS += $(ERL_INCLUDE) $(ERL_BEHAV_PATH)
 
 # ----------------------------------------------------
 # Targets

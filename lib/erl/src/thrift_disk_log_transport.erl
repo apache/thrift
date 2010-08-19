@@ -35,6 +35,8 @@
                        close_on_close = false,
                        sync_every = infinity,
                        sync_tref}).
+-type state() :: #dl_transport{}.
+-include("thrift_transport_behaviour.hrl").
 
 
 %% Create a transport attached to an already open log.
@@ -47,7 +49,7 @@ new(LogName, Opts) when is_atom(LogName), is_list(Opts) ->
     State2 =
         case State#dl_transport.sync_every of
             N when is_integer(N), N > 0 ->
-                {ok, TRef} = timer:apply_interval(N, ?MODULE, force_flush, State),
+                {ok, TRef} = timer:apply_interval(N, ?MODULE, force_flush, [State]),
                 State#dl_transport{sync_tref = TRef};
             _ -> State
         end,
@@ -58,38 +60,41 @@ new(LogName, Opts) when is_atom(LogName), is_list(Opts) ->
 parse_opts([], State) ->
     State;
 parse_opts([{close_on_close, Bool} | Rest], State) when is_boolean(Bool) ->
-    State#dl_transport{close_on_close = Bool};
+    parse_opts(Rest, State#dl_transport{close_on_close = Bool});
 parse_opts([{sync_every, Int} | Rest], State) when is_integer(Int), Int > 0 ->
-    State#dl_transport{sync_every = Int}.
+    parse_opts(Rest, State#dl_transport{sync_every = Int}).
 
 
 %%%% TRANSPORT IMPLENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% disk_log_transport is write-only
-read(_State, Len) ->
-    {error, no_read_from_disk_log}.
+read(State, _Len) ->
+    {State, {error, no_read_from_disk_log}}.
 
-write(#dl_transport{log = Log}, Data) ->
-    disk_log:balog(Log, erlang:iolist_to_binary(Data)).
+write(This = #dl_transport{log = Log}, Data) ->
+    {This, disk_log:balog(Log, erlang:iolist_to_binary(Data))}.
 
 force_flush(#dl_transport{log = Log}) ->
     error_logger:info_msg("~p syncing~n", [?MODULE]),
     disk_log:sync(Log).
 
-flush(#dl_transport{log = Log, sync_every = SE}) ->
+flush(This = #dl_transport{log = Log, sync_every = SE}) ->
     case SE of
         undefined -> % no time-based sync
             disk_log:sync(Log);
         _Else ->     % sync will happen automagically
             ok
-    end.
+    end,
+    {This, ok}.
+
+
 
 
 %% On close, close the underlying log if we're configured to do so.
-close(#dl_transport{close_on_close = false}) ->
-    ok;
-close(#dl_transport{log = Log}) ->
-    disk_log:lclose(Log).
+close(This = #dl_transport{close_on_close = false}) ->
+    {This, ok};
+close(This = #dl_transport{log = Log}) ->
+    {This, disk_log:lclose(Log)}.
 
 
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -109,10 +114,10 @@ factory_impl(Name, ExtraLogOpts, TransportOpts) ->
                ExtraLogOpts],
     Log =
         case disk_log:open(LogOpts) of
-            {ok, Log} ->
-                Log;
-            {repaired, Log, Info1, Info2} ->
-                error_logger:info_msg("Disk log ~p repaired: ~p, ~p~n", [Log, Info1, Info2]),
-                Log
+            {ok, LogS} ->
+                LogS;
+            {repaired, LogS, Info1, Info2} ->
+                error_logger:info_msg("Disk log ~p repaired: ~p, ~p~n", [LogS, Info1, Info2]),
+                LogS
         end,
     new(Log, TransportOpts).

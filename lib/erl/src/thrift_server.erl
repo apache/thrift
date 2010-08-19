@@ -126,7 +126,7 @@ handle_info({inet_async, ListenSocket, Ref, {ok, ClientSocket}},
             {stop, Reason, State}
     end;
 
-handle_info({inet_async, ListenSocket, Ref, Error}, State) ->
+handle_info({inet_async, _ListenSocket, _Ref, Error}, State) ->
     error_logger:error_msg("Error in acceptor: ~p~n", [Error]),
     {stop, Error, State};
 
@@ -177,7 +177,7 @@ start_processor(Socket, Service, Handler) ->
                        {ok, SocketTransport} = thrift_socket_transport:new(Socket),
                        {ok, BufferedTransport} = thrift_buffered_transport:new(SocketTransport),
                        {ok, Protocol} = thrift_binary_protocol:new(BufferedTransport),
-                       {ok, Protocol, Protocol}
+                       {ok, Protocol}
                end,
 
     spawn(thrift_processor, init, [{Server, ProtoGen, Service, Handler}]).

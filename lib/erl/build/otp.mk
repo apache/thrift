@@ -25,7 +25,6 @@ OS_TYPE=${shell uname}
 
 # MHOST is the host where this Makefile runs.
 MHOST=${shell hostname -s}
-ERL_COMPILE_FLAGS+=-W0
 
 # The location of the erlang runtime system.
 ifndef ERL_RUN_TOP

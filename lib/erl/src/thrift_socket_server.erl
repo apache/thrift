@@ -166,13 +166,12 @@ gen_tcp_listen(Port, Opts, State) ->
 new_acceptor(State=#thrift_socket_server{max=0}) ->
     error_logger:error_msg("Not accepting new connections"),
     State#thrift_socket_server{acceptor=null};
-new_acceptor(State=#thrift_socket_server{acceptor=OldPid, listen=Listen,
+new_acceptor(State=#thrift_socket_server{listen=Listen,
                                          service=Service, handler=Handler,
                                          socket_opts=Opts, framed=Framed
                                         }) ->
     Pid = proc_lib:spawn_link(?MODULE, acceptor_loop,
                               [{self(), Listen, Service, Handler, Opts, Framed}]),
-%%     error_logger:info_msg("Spawning new acceptor: ~p => ~p", [OldPid, Pid]),
     State#thrift_socket_server{acceptor=Pid}.
 
 acceptor_loop({Server, Listen, Service, Handler, SocketOpts, Framed})
@@ -188,7 +187,7 @@ acceptor_loop({Server, Listen, Service, Handler, SocketOpts, Framed})
                                        false -> thrift_buffered_transport:new(SocketTransport)
                                    end,
                                {ok, Protocol}          = thrift_binary_protocol:new(Transport),
-                               {ok, IProt=Protocol, OProt=Protocol}
+                               {ok, Protocol}
                        end,
             thrift_processor:init({Server, ProtoGen, Service, Handler});
         {error, closed} ->
