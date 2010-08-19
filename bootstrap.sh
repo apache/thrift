@@ -19,13 +19,6 @@
 # under the License.
 #
 
-have_ac_version=`autoconf --version | head -1 | cut -d' ' -f4`
-desired_ac_version=2.65
-if [ `expr $have_ac_version \>= $desired_ac_version` -eq "0" ]; then
-  echo "Must have autoconf $desired_ac_version of higher."
-  exit 1
-fi
-
 ./cleanup.sh
 
 autoscan || exit 1
