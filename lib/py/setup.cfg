@@ -1,0 +1,2 @@
+[install]
+optimize = 1
