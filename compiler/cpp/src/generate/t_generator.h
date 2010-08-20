@@ -66,6 +66,16 @@ class t_generator {
                                   const std::string& comment_end);
 
   /**
+   * check whether sub-namespace declaraction is used by generator.
+   * e.g. allow 
+   * namespace py.twisted bar
+   * to specify namespace to use when -gen py:twisted is specified.
+   * Will be called with subnamespace, i.e. is_valid_namespace("twisted")
+   * will be called for the above example.
+   */
+  static bool is_valid_namespace(const std::string& sub_namespace) { return false; }
+
+  /**
    * Escape string to use one in generated sources.
    */
   virtual std::string escape_string(const std::string &in) const;

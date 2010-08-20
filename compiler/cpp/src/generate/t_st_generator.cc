@@ -181,6 +181,10 @@ string t_st_generator::class_name() {
   return capitalize(program_name_);
 }
 
+static bool is_valid_namespace(const std::string& sub_namespace) {
+  return sub_namespace == "prefix" || sub_namespace == "category";
+}
+
 string t_st_generator::prefix(string class_name) {
   string prefix = program_->get_namespace("smalltalk.prefix");
   string name = capitalize(class_name);

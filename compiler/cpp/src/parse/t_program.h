@@ -160,16 +160,26 @@ class t_program : public t_doc {
 
   // Language neutral namespace / packaging
   void set_namespace(std::string language, std::string name_space) {
+    size_t sub_index = language.find('.');
+    std::string base_language = language.substr(0, sub_index);
+    std::string sub_namespace;
+
     t_generator_registry::gen_map_t my_copy = t_generator_registry::get_generator_map();
 
     t_generator_registry::gen_map_t::iterator it;
-    it=my_copy.find(language);
+    it=my_copy.find(base_language);
 
     if (it == my_copy.end()) {
-      if (language != "smalltalk.prefix" && language != "smalltalk.package") {
-        throw "No generator named '" + language + "' could be found!";
-      }
+      throw "No generator named '" + base_language + "' could be found!";
     }
+
+    if (sub_index != std::string::npos) {
+      std::string sub_namespace = language.substr(sub_index+1);
+      if(! it->second->is_valid_namespace(sub_namespace)) {
+        throw base_language +" generator does not accept '" + sub_namespace + "' as sub-namespace!";
+      }
+    } 
+
     namespaces_[language] = name_space;
   }
 
