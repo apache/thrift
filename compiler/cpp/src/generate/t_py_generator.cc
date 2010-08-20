@@ -188,7 +188,18 @@ class t_py_generator : public t_generator {
   std::string type_to_enum(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
 
-  static std::string get_real_py_module(const t_program* program) {
+  static bool is_valid_namespace(const std::string& sub_namespace) {
+    return sub_namespace == "twisted";
+  }
+
+  static std::string get_real_py_module(const t_program* program, bool gen_twisted) {
+    if(gen_twisted) {
+      std::string twisted_module = program->get_namespace("py.twisted");
+      if(!twisted_module.empty()){
+        return twisted_module;
+      }
+    }
+
     std::string real_module = program->get_namespace("py");
     if (real_module.empty()) {
       return program->get_name();
@@ -234,7 +245,7 @@ class t_py_generator : public t_generator {
  */
 void t_py_generator::init_generator() {
   // Make output directory
-  string module = get_real_py_module(program_);
+  string module = get_real_py_module(program_, gen_twisted_);
   package_dir_ = get_out_dir();
   while (true) {
     // TODO: Do better error checking here.
@@ -298,7 +309,7 @@ string t_py_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   for (size_t i = 0; i < includes.size(); ++i) {
-    result += "import " + get_real_py_module(includes[i]) + ".ttypes\n";
+    result += "import " + get_real_py_module(includes[i], gen_twisted_) + ".ttypes\n";
   }
   if (includes.size() > 0) {
     result += "\n";
@@ -864,7 +875,7 @@ void t_py_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != NULL) {
     f_service_ <<
-      "import " << get_real_py_module(tservice->get_extends()->get_program()) <<
+      "import " << get_real_py_module(tservice->get_extends()->get_program(), gen_twisted_) <<
       "." << tservice->get_extends()->get_name() << endl;
   }
 
@@ -2258,10 +2269,10 @@ string t_py_generator::argument_list(t_struct* tstruct) {
 string t_py_generator::type_name(t_type* ttype) {
   t_program* program = ttype->get_program();
   if (ttype->is_service()) {
-    return get_real_py_module(program) + "." + ttype->get_name();
+    return get_real_py_module(program, gen_twisted_) + "." + ttype->get_name();
   }
   if (program != NULL && program != program_) {
-    return get_real_py_module(program) + ".ttypes." + ttype->get_name();
+    return get_real_py_module(program, gen_twisted_) + ".ttypes." + ttype->get_name();
   }
   return ttype->get_name();
 }
