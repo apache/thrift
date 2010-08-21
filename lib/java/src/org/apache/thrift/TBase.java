@@ -44,12 +44,9 @@ public interface TBase<T extends TBase, F extends TFieldIdEnum> extends Comparab
   public void write(TProtocol oprot) throws TException;
 
   /**
-   * Check if a field is currently set or unset.
-   *
-   * @param fieldId The field's id tag as found in the IDL.
+   * Get the F instance that corresponds to fieldId.
    */
-  @Deprecated
-  public boolean isSet(int fieldId);
+  public F fieldForId(int fieldId);
 
   /**
    * Check if a field is currently set or unset.
@@ -59,30 +56,12 @@ public interface TBase<T extends TBase, F extends TFieldIdEnum> extends Comparab
   public boolean isSet(F field);
 
   /**
-   * Get a field's value by id. Primitive types will be wrapped in the 
-   * appropriate "boxed" types.
-   *
-   * @param fieldId The field's id tag as found in the IDL.
-   */
-  @Deprecated
-  public Object getFieldValue(int fieldId);
-
-  /**
    * Get a field's value by field variable. Primitive types will be wrapped in 
    * the appropriate "boxed" types.
    *
    * @param field
    */
   public Object getFieldValue(F field);
-
-  /**
-   * Set a field's value by id. Primitive types must be "boxed" in the 
-   * appropriate object wrapper type.
-   *
-   * @param fieldId The field's id tag as found in the IDL.
-   */
-  @Deprecated
-  public void setFieldValue(int fieldId, Object value);
 
   /**
    * Set a field's value by field variable. Primitive types must be "boxed" in

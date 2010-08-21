@@ -102,6 +102,7 @@ class t_java_generator : public t_oop_generator {
   void generate_java_meta_data_map(std::ofstream& out, t_struct* tstruct);
   void generate_field_value_meta_data(std::ofstream& out, t_type* type);
   std::string get_java_type_string(t_type* type);
+  void generate_java_struct_field_by_id(ofstream& out, t_struct* tstruct);
   void generate_reflection_setters(std::ostringstream& out, t_type* type, std::string field_name, std::string cap_name);
   void generate_reflection_getters(std::ostringstream& out, t_type* type, std::string field_name, std::string cap_name);
   void generate_generic_field_getters_setters(std::ofstream& out, t_struct* tstruct);
@@ -734,6 +735,10 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
 
   f_struct << endl;
 
+  generate_java_struct_field_by_id(f_struct, tstruct);
+
+  f_struct << endl;
+
   generate_union_getters_and_setters(f_struct, tstruct);
   
   f_struct << endl;
@@ -1225,11 +1230,6 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   indent(out) << "  return new " << tstruct->get_name() << "(this);" << endl;
   indent(out) << "}" << endl << endl;
 
-  indent(out) << "@Deprecated" << endl;
-  indent(out) << "public " << tstruct->get_name() << " clone() {" << endl;
-  indent(out) << "  return new " << tstruct->get_name() << "(this);" << endl;
-  indent(out) << "}" << endl << endl;
-
   generate_java_struct_clear(out, tstruct);
 
   generate_java_bean_boilerplate(out, tstruct);
@@ -1238,6 +1238,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
 
   generate_java_struct_equality(out, tstruct);
   generate_java_struct_compare_to(out, tstruct);
+  generate_java_struct_field_by_id(out, tstruct);
 
   generate_java_struct_reader(out, tstruct);
   if (is_result) {
@@ -1662,6 +1663,12 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
     endl;
 }
 
+void t_java_generator::generate_java_struct_field_by_id(ofstream& out, t_struct* tstruct) {
+  indent(out) << "public _Fields fieldForId(int fieldId) {" << endl;
+  indent(out) << "  return _Fields.findByThriftId(fieldId);" << endl;
+  indent(out) << "}" << endl << endl;
+}
+
 void t_java_generator::generate_reflection_getters(ostringstream& out, t_type* type, string field_name, string cap_name) {
   indent(out) << "case " << constant_name(field_name) << ":" << endl;
   indent_up();
@@ -1712,15 +1719,11 @@ void t_java_generator::generate_generic_field_getters_setters(std::ofstream& out
 
 
   // create the setter
-  
+
   indent(out) << "public void setFieldValue(_Fields field, Object value) {" << endl;
   indent(out) << "  switch (field) {" << endl;
   out << setter_stream.str();
   indent(out) << "  }" << endl;
-  indent(out) << "}" << endl << endl;
-
-  indent(out) << "public void setFieldValue(int fieldID, Object value) {" << endl;
-  indent(out) << "  setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);" << endl;
   indent(out) << "}" << endl << endl;
 
   // create the getter
@@ -1731,10 +1734,6 @@ void t_java_generator::generate_generic_field_getters_setters(std::ofstream& out
   indent(out) << "}" << endl;
   indent(out) << "throw new IllegalStateException();" << endl;
   indent_down();
-  indent(out) << "}" << endl << endl;
-
-  indent(out) << "public Object getFieldValue(int fieldId) {" << endl;
-  indent(out) << "  return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));" << endl;
   indent(out) << "}" << endl << endl;
 }
 
@@ -1747,6 +1746,10 @@ void t_java_generator::generate_generic_isset_method(std::ofstream& out, t_struc
   indent(out) << "/** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */" << endl;
   indent(out) << "public boolean isSet(_Fields field) {" << endl;
   indent_up();
+  indent(out) << "if (field == null) {" << endl;
+  indent(out) << "  throw new IllegalArgumentException();" << endl;
+  indent(out) << "}" << endl << endl;
+
   indent(out) << "switch (field) {" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1760,10 +1763,6 @@ void t_java_generator::generate_generic_isset_method(std::ofstream& out, t_struc
   indent(out) << "}" << endl;
   indent(out) << "throw new IllegalStateException();" << endl;
   indent_down();
-  indent(out) << "}" << endl << endl;
-
-  indent(out) << "public boolean isSet(int fieldID) {" << endl;
-  indent(out) << "  return isSet(_Fields.findByThriftIdOrThrow(fieldID));" << endl;
   indent(out) << "}" << endl << endl;
 }
 
