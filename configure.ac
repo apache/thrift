@@ -106,10 +106,12 @@ AX_THRIFT_LIB(erlang, [Erlang], yes)
 if test "$with_erlang" = "yes";  then
   AC_ERLANG_PATH_ERL
   AC_ERLANG_PATH_ERLC
-  AC_ERLANG_SUBST_LIB_DIR
-  # Install into the detected Erlang directory instead of $libdir/erlang/lib
-  ERLANG_INSTALL_LIB_DIR="$ERLANG_LIB_DIR"
-  AC_ERLANG_SUBST_INSTALL_LIB_SUBDIR(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
+  if test -n "$ERLC" ; then
+    AC_ERLANG_SUBST_LIB_DIR
+    # Install into the detected Erlang directory instead of $libdir/erlang/lib
+    ERLANG_INSTALL_LIB_DIR="$ERLANG_LIB_DIR"
+    AC_ERLANG_SUBST_INSTALL_LIB_SUBDIR(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
+  fi
 fi
 AM_CONDITIONAL(WITH_ERLANG, [test -n "$ERL" -a -n "$ERLC"])
 
