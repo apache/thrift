@@ -25,13 +25,13 @@
 -spec flush_transport(state()) -> {state(), ok | {error, _Reason}}.
 -spec close_transport(state()) -> {state(), ok | {error, _Reason}}.
 
--spec write(state(), term()) -> {state(), ok | {error, _Reason}}.
+-spec write(state(), any()) -> {state(), ok | {error, _Reason}}.
 
 %% NOTE: Keep this in sync with thrift_protocol:read and read_specific.
 -spec read
         (state(), tprot_empty_tag()) ->  {state(),  ok                | {error, _Reason}};
         (state(), tprot_header_tag()) -> {state(), tprot_header_val() | {error, _Reason}};
-        (state(), tprot_data_tag()) ->   {state(), {ok, term()}       | {error, _Reason}}.
+        (state(), tprot_data_tag()) ->   {state(), {ok, any()}        | {error, _Reason}}.
 
 
 -endif.

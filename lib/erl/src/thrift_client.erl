@@ -34,7 +34,7 @@ new(Protocol, Service)
                   service = Service,
                   seqid = 0}}.
 
--spec call(#tclient{}, atom(), list()) -> {#tclient{}, {ok, term()} | {error, term()}}.
+-spec call(#tclient{}, atom(), list()) -> {#tclient{}, {ok, any()} | {error, any()}}.
 call(Client = #tclient{}, Function, Args)
   when is_atom(Function), is_list(Args) ->
     case send_function_call(Client, Function, Args) of
@@ -61,7 +61,7 @@ close(#tclient{protocol=Protocol}) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
--spec send_function_call(#tclient{}, atom(), list()) -> {#tclient{}, ok | {error, term()}}.
+-spec send_function_call(#tclient{}, atom(), list()) -> {#tclient{}, ok | {error, any()}}.
 send_function_call(Client = #tclient{protocol = Proto0,
                                      service  = Service,
                                      seqid    = SeqId},
@@ -84,7 +84,7 @@ send_function_call(Client = #tclient{protocol = Proto0,
             {Client#tclient{protocol = Proto4}, ok}
     end.
 
--spec receive_function_result(#tclient{}, atom()) -> {#tclient{}, {ok, term()} | {error, term()}}.
+-spec receive_function_result(#tclient{}, atom()) -> {#tclient{}, {ok, any()} | {error, any()}}.
 receive_function_result(Client = #tclient{service = Service}, Function) ->
     ResultType = Service:function_info(Function, reply_type),
     read_result(Client, Function, ResultType).
