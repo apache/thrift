@@ -48,6 +48,13 @@ AC_ARG_VAR([PHP_PREFIX], [Prefix for installing PHP modules.
                          Default = "/usr/lib/php"])
 AS_IF([test "x$PHP_PREFIX" = x], [PHP_PREFIX="/usr/lib/php"])
 
+AC_ARG_VAR([PHP_CONFIG_PREFIX],
+           [Prefix for installing PHP extension module .ini file.
+            (Normal --prefix is ignored for PHP because PHP has
+             different conventions.)
+           Default = "/etc/php.d"])
+AS_IF([test "x$PHP_CONFIG_PREFIX" = x], [PHP_CONFIG_PREFIX="/etc/php.d"])
+
 AC_ARG_VAR([PERL_PREFIX], [Prefix for installing Perl modules.
                            (Normal --prefix is ignored for Perl because
                            Perl has different conventions.)
@@ -136,6 +143,13 @@ if test "$with_php" = "yes"; then
   AC_PATH_PROG([PHP], [php])
 fi
 AM_CONDITIONAL(WITH_PHP, [test -n "$PHP"])
+
+AX_THRIFT_LIB(php_extension, [PHP_EXTENSION], yes)
+if test "$with_php_extension" = "yes"; then
+  AC_PATH_PROG([PHP_CONFIG], [php-config])
+  AC_CONFIG_SUBDIRS([lib/php/src/ext/thrift_protocol])
+fi
+AM_CONDITIONAL(WITH_PHP_EXTENSION, [test -n "$PHP_CONFIG"])
 
 AX_THRIFT_LIB(ruby, [Ruby], yes)
 if test "$with_ruby" = "yes"; then

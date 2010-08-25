@@ -20,6 +20,7 @@
 #
 
 ./cleanup.sh
+(cd lib/php/src/ext/thrift_protocol && phpize)
 
 autoscan || exit 1
 aclocal -I ./aclocal || exit 1

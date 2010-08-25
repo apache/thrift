@@ -17,16 +17,22 @@
 # under the License.
 #
 
+%.so:
+	cd src/ext/thrift_protocol/ \
+	  && $(MAKE)
+
+if WITH_PHP_EXTENSION
+phpconfdir=$(PHP_CONFIG_PREFIX)
+phpconf_DATA=thrift_protocol.ini
+
+phpmoduledir = `php-config --extension-dir`
+phpmodule_SCRIPTS = src/ext/thrift_protocol/modules/thrift_protocol.so
+endif
+
 phpdir = $(PHP_PREFIX)
 php_DATA =  \
   src/autoload.php \
   src/Thrift.php
-
-phpextdir = $(phpdir)/ext/thrift_protocol
-phpext_DATA = \
-  src/ext/thrift_protocol/config.m4 \
-  src/ext/thrift_protocol/php_thrift_protocol.cpp \
-  src/ext/thrift_protocol/php_thrift_protocol.h
 
 phpprotocoldir = $(phpdir)/protocol
 phpprotocol_DATA = \
