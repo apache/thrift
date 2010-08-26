@@ -74,7 +74,7 @@ class t_generator_factory_impl : public t_generator_factory {
     return new generator(program, parsed_options, option_string);
   }
 
-  bool is_valid_namespace(const std::string& sub_namespace){
+  virtual bool is_valid_namespace(const std::string& sub_namespace) {
     return generator::is_valid_namespace(sub_namespace);
   }
 };

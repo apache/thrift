@@ -178,7 +178,7 @@ class t_program : public t_doc {
       if(! it->second->is_valid_namespace(sub_namespace)) {
         throw base_language +" generator does not accept '" + sub_namespace + "' as sub-namespace!";
       }
-    } 
+    }
 
     namespaces_[language] = name_space;
   }

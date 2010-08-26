@@ -67,7 +67,7 @@ class t_generator {
 
   /**
    * check whether sub-namespace declaraction is used by generator.
-   * e.g. allow 
+   * e.g. allow
    * namespace py.twisted bar
    * to specify namespace to use when -gen py:twisted is specified.
    * Will be called with subnamespace, i.e. is_valid_namespace("twisted")
