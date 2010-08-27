@@ -30,6 +30,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingSocket;
+import org.apache.thrift.server.ServerTestBase;
 
 import thrift.test.CompactProtoTestStruct;
 import thrift.test.Srv;
@@ -95,7 +96,7 @@ public class TestTAsyncClientManager extends TestCase {
     public JankyRunnable(TAsyncClientManager acm, int numCalls) throws Exception {
       this.acm_ = acm;
       this.numCalls_ = numCalls;
-      this.clientSocket_ = new TNonblockingSocket("localhost", 12345);
+      this.clientSocket_ = new TNonblockingSocket(ServerTestBase.HOST, ServerTestBase.PORT);
       this.client_ = new Srv.AsyncClient(new TBinaryProtocol.Factory(), acm_, clientSocket_);
     }
 
@@ -177,7 +178,8 @@ public class TestTAsyncClientManager extends TestCase {
 
   public void testIt() throws Exception {
     // put up a server
-    final TNonblockingServer s = new TNonblockingServer(new Srv.Processor(new SrvHandler()), new TNonblockingServerSocket(12345));
+    final TNonblockingServer s = new TNonblockingServer(new Srv.Processor(new SrvHandler()),
+      new TNonblockingServerSocket(ServerTestBase.PORT));
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -190,7 +192,8 @@ public class TestTAsyncClientManager extends TestCase {
     TAsyncClientManager acm = new TAsyncClientManager();
 
     // connect an async client
-    TNonblockingSocket clientSock = new TNonblockingSocket("localhost", 12345);
+    TNonblockingSocket clientSock = new TNonblockingSocket(
+      ServerTestBase.HOST, ServerTestBase.PORT);
     Srv.AsyncClient client = new Srv.AsyncClient(new TBinaryProtocol.Factory(), acm, clientSock);
 
     final Object o = new Object();
@@ -268,7 +271,7 @@ public class TestTAsyncClientManager extends TestCase {
     assertTrue(voidAfterOnewayReturned.get());
 
     // make multiple calls with deserialization in the selector thread (repro Eric's issue)
-    int numThreads = 500;
+    int numThreads = 200;
     int numCallsPerThread = 100;
     List<JankyRunnable> runnables = new ArrayList<JankyRunnable>();
     List<Thread> threads = new ArrayList<Thread>();

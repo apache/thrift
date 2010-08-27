@@ -275,8 +275,9 @@ public abstract class ServerTestBase extends TestCase {
       new TBinaryProtocol.Factory(),
       new TCompactProtocol.Factory());
 
-  protected static final String HOST = "localhost";
-  protected static final int PORT = 9090;
+  public static final String HOST = "localhost";
+  public static final int PORT = Integer.valueOf(
+    System.getProperty("test.port", "9090"));
   protected static final int SOCKET_TIMEOUT = 1000;
   private static final Xtruct XSTRUCT = new Xtruct("Zero", (byte) 1, -3, -5);
   private static final Xtruct2 XSTRUCT2 = new Xtruct2((byte)1, XSTRUCT, 5);

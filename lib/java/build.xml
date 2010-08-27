@@ -179,16 +179,18 @@
   <property name="test.timeout" value="2000000"/>
   <property name="test.src.dir" location="${basedir}/test"/>
   <property name="test.log.dir" value="${build.test}/log"/>
+  <property name="test.port" value="9090" />
 
   <target name="junit-test" description="Run the JUnit test suite" depends="compile-test">
     <mkdir dir="${test.log.dir}"/>
     <junit
       printsummary="yes" showoutput="${test.output}" 
-      haltonfailure="no" fork="yes" forkmode="once" maxmemory="512m"
+      haltonfailure="no" fork="yes" maxmemory="512m"
       errorProperty="tests.failed" failureProperty="tests.failed"
       timeout="${test.timeout}"
     >
       <sysproperty key="build.test" value="${build.test}"/>
+      <sysproperty key="test.port" value="${test.port}" />
       <classpath refid="test.classpath"/>
       <formatter type="${test.junit.output.format}" />
       <batchtest todir="${test.log.dir}" unless="testcase">
