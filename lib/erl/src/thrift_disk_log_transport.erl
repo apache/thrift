@@ -68,7 +68,7 @@ parse_opts([{sync_every, Int} | Rest], State) when is_integer(Int), Int > 0 ->
 %%%% TRANSPORT IMPLENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% disk_log_transport is write-only
-read(State, Len) ->
+read(State, _Len) ->
     {State, {error, no_read_from_disk_log}}.
 
 write(This = #dl_transport{log = Log}, Data) ->

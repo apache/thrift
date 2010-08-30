@@ -183,7 +183,7 @@ read_specific(Proto = #protocol{module = Module,
     {Proto#protocol{data = NewData}, Result}.
 
 read_struct_loop(IProto0, SDict, RTuple) ->
-    {IProto1, #protocol_field_begin{type = FType, id = Fid, name = Name}} =
+    {IProto1, #protocol_field_begin{type = FType, id = Fid}} =
         thrift_protocol:read(IProto0, field_begin),
     case {FType, Fid} of
         {?tType_STOP, _} ->
@@ -323,7 +323,6 @@ write(Proto, {{struct, {Module, StructureName}}, Data})
   when is_atom(Module),
        is_atom(StructureName),
        element(1, Data) =:= StructureName ->
-    StructType = Module:struct_info(StructureName),
     write(Proto, {Module:struct_info(StructureName), Data});
 
 write(Proto0, {{list, Type}, Data})

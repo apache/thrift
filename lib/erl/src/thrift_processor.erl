@@ -26,7 +26,7 @@
 
 -record(thrift_processor, {handler, protocol, service}).
 
-init({Server, ProtoGen, Service, Handler}) when is_function(ProtoGen, 0) ->
+init({_Server, ProtoGen, Service, Handler}) when is_function(ProtoGen, 0) ->
     {ok, Proto} = ProtoGen(),
     loop(#thrift_processor{protocol = Proto,
                            service = Service,
