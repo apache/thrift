@@ -29,6 +29,8 @@
 
 -record(data, {socket,
                recv_timeout=infinity}).
+-type state() :: #data{}.
+-include("thrift_transport_impl.hrl").
 
 new(Socket) ->
     new(Socket, []).

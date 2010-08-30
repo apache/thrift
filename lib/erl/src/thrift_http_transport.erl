@@ -43,6 +43,8 @@
                          http_options, % see http(3)
                          extra_headers % [{str(), str()}, ...]
                         }).
+-type state() :: pid().
+-include("thrift_transport_impl.hrl").
 
 %%====================================================================
 %% API

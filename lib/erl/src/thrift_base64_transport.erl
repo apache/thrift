@@ -29,6 +29,8 @@
 
 %% State
 -record(b64_transport, {wrapped}).
+-type state() :: #b64_transport{}.
+-include("thrift_transport_impl.hrl").
 
 new(Wrapped) ->
     State = #b64_transport{wrapped = Wrapped},

@@ -35,6 +35,9 @@
 -record(buffered_transport, {wrapped, % a thrift_transport
                              write_buffer % iolist()
                             }).
+-type state() :: pid().
+-include("thrift_transport_impl.hrl").
+
 
 %%====================================================================
 %% API

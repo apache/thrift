@@ -33,6 +33,8 @@
 -export([write/2, read/2, flush/1, close/1]).
 
 -record(memory_buffer, {buffer}).
+-type state() :: #memory_buffer{}.
+-include("thrift_transport_impl.hrl").
 
 %%====================================================================
 %% API

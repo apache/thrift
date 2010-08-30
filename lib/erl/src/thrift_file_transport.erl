@@ -29,6 +29,8 @@
 -record(t_file_transport, {device,
                            should_close = true,
                            mode = write}).
+-type state() :: #t_file_transport{}.
+-include("thrift_transport_impl.hrl").
 
 %%%% CONSTRUCTION   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

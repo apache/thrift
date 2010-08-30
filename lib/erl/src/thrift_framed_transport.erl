@@ -36,6 +36,8 @@
                            read_buffer, % iolist()
                            write_buffer % iolist()
                           }).
+-type state() :: pid().
+-include("thrift_transport_impl.hrl").
 
 %%====================================================================
 %% API

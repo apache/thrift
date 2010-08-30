@@ -41,17 +41,20 @@ new(Module, Data) when is_atom(Module) ->
     {ok, #transport{module = Module,
                     data = Data}}.
 
-%% Data :: iolist()
+-spec write(#transport{}, iolist() | binary()) -> ok | {error, _Reason}.
 write(Transport, Data) ->
     Module = Transport#transport.module,
     Module:write(Transport#transport.data, Data).
 
+-spec read(#transport{}, non_neg_integer()) -> {ok, binary()} | {error, _Reason}.
 read(Transport, Len) when is_integer(Len) ->
     Module = Transport#transport.module,
     Module:read(Transport#transport.data, Len).
 
+-spec flush(#transport{}) -> ok | {error, _Reason}.
 flush(#transport{module = Module, data = Data}) ->
     Module:flush(Data).
 
+-spec close(#transport{}) -> ok | {error, _Reason}.
 close(#transport{module = Module, data = Data}) ->
     Module:close(Data).
