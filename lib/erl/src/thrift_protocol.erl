@@ -117,7 +117,7 @@ read(IProto0, {struct, Structure}, Tag)
     {IProto2, {ok, RTuple2}}.
 
 
-%% NOTE: Keep this in sync with thrift_protocol_impl:read
+%% NOTE: Keep this in sync with thrift_protocol_behaviour:read
 -spec read
         (#protocol{}, {struct, _Info}) ->    {#protocol{}, {ok, tuple()}      | {error, _Reason}};
         (#protocol{}, tprot_cont_tag()) ->   {#protocol{}, {ok, term()}       | {error, _Reason}};
@@ -172,7 +172,7 @@ read(IProto0, {set, Type}) ->
 read(Protocol, ProtocolType) ->
     read_specific(Protocol, ProtocolType).
 
-%% NOTE: Keep this in sync with thrift_protocol_impl:read
+%% NOTE: Keep this in sync with thrift_protocol_behaviour:read
 -spec read_specific
         (#protocol{}, tprot_empty_tag()) ->  {#protocol{},  ok                | {error, _Reason}};
         (#protocol{}, tprot_header_tag()) -> {#protocol{}, tprot_header_val() | {error, _Reason}};

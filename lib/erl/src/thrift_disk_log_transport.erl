@@ -36,7 +36,7 @@
                        sync_every = infinity,
                        sync_tref}).
 -type state() :: #dl_transport{}.
--include("thrift_transport_impl.hrl").
+-include("thrift_transport_behaviour.hrl").
 
 
 %% Create a transport attached to an already open log.

@@ -29,7 +29,7 @@
 
 -record(memory_buffer, {buffer}).
 -type state() :: #memory_buffer{}.
--include("thrift_transport_impl.hrl").
+-include("thrift_transport_behaviour.hrl").
 
 new() ->
     State = #memory_buffer{buffer = []},

@@ -17,15 +17,21 @@
 %% under the License.
 %%
 
-%% Signature specifications for transport implementations.
+%% Signature specifications for protocol implementations.
 
--ifndef(THRIFT_TRANSPORT_IMPL_INCLUDED).
--define(THRIFT_TRANSPORT_IMPL_INCLUDED, true).
+-ifndef(THRIFT_PROTOCOL_BEHAVIOUR_INCLUDED).
+-define(THRIFT_PROTOCOL_BEHAVIOUR_INCLUDED, true).
 
--spec write(state(), iolist() | binary()) -> {state(), ok | {error, _Reason}}.
--spec read(state(), non_neg_integer()) -> {state(), {ok, binary()} | {error, _Reason}}.
--spec flush(state()) -> {state(), ok | {error, _Reason}}.
--spec close(state()) -> {state(), ok | {error, _Reason}}.
+-spec flush_transport(state()) -> {state(), ok | {error, _Reason}}.
+-spec close_transport(state()) -> {state(), ok | {error, _Reason}}.
+
+-spec write(state(), term()) -> {state(), ok | {error, _Reason}}.
+
+%% NOTE: Keep this in sync with thrift_protocol:read and read_specific.
+-spec read
+        (state(), tprot_empty_tag()) ->  {state(),  ok                | {error, _Reason}};
+        (state(), tprot_header_tag()) -> {state(), tprot_header_val() | {error, _Reason}};
+        (state(), tprot_data_tag()) ->   {state(), {ok, term()}       | {error, _Reason}}.
 
 
 -endif.

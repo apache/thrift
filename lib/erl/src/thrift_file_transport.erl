@@ -30,7 +30,7 @@
                            should_close = true,
                            mode = write}).
 -type state() :: #t_file_transport{}.
--include("thrift_transport_impl.hrl").
+-include("thrift_transport_behaviour.hrl").
 
 %%%% CONSTRUCTION   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

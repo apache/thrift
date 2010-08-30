@@ -31,7 +31,7 @@
                              write_buffer % iolist()
                             }).
 -type state() :: #buffered_transport{}.
--include("thrift_transport_impl.hrl").
+-include("thrift_transport_behaviour.hrl").
 
 
 new(WrappedTransport) ->

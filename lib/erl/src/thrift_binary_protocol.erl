@@ -38,7 +38,7 @@
                           strict_write=true
                          }).
 -type state() :: #binary_protocol{}.
--include("thrift_protocol_impl.hrl").
+-include("thrift_protocol_behaviour.hrl").
 
 -define(VERSION_MASK, 16#FFFF0000).
 -define(VERSION_1, 16#80010000).

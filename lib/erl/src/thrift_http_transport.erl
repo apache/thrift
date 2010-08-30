@@ -35,7 +35,7 @@
                          extra_headers % [{str(), str()}, ...]
                         }).
 -type state() :: pid().
--include("thrift_transport_impl.hrl").
+-include("thrift_transport_behaviour.hrl").
 
 new(Host, Path) ->
     new(Host, Path, _Options = []).
