@@ -92,30 +92,33 @@ receive_function_result(Client = #tclient{service = Service}, Function) ->
 read_result(Client, _Function, oneway_void) ->
     {Client, {ok, ok}};
 
-read_result(Client = #tclient{protocol = Proto,
+read_result(Client = #tclient{protocol = Proto0,
                               seqid    = SeqId},
             Function,
             ReplyType) ->
-    case thrift_protocol:read(Proto, message_begin) of
+    {Proto1, MessageBegin} = thrift_protocol:read(Proto0, message_begin),
+    NewClient = Client#tclient{protocol = Proto1},
+    case MessageBegin of
         #protocol_message_begin{seqid = RetSeqId} when RetSeqId =/= SeqId ->
-            {Client, {error, {bad_seq_id, SeqId}}};
+            {NewClient, {error, {bad_seq_id, SeqId}}};
 
         #protocol_message_begin{type = ?tMessageType_EXCEPTION} ->
-            handle_application_exception(Client);
+            handle_application_exception(NewClient);
 
         #protocol_message_begin{type = ?tMessageType_REPLY} ->
-            handle_reply(Client, Function, ReplyType)
+            handle_reply(NewClient, Function, ReplyType)
     end.
 
 
-handle_reply(Client = #tclient{protocol = Proto,
+handle_reply(Client = #tclient{protocol = Proto0,
                                service = Service},
              Function,
              ReplyType) ->
     {struct, ExceptionFields} = Service:function_info(Function, exceptions),
     ReplyStructDef = {struct, [{0, ReplyType}] ++ ExceptionFields},
-    {ok, Reply} = thrift_protocol:read(Proto, ReplyStructDef),
-    ok = thrift_protocol:read(Proto, message_end),
+    {Proto1, {ok, Reply}} = thrift_protocol:read(Proto0, ReplyStructDef),
+    {Proto2, ok} = thrift_protocol:read(Proto1, message_end),
+    NewClient = Client#tclient{protocol = Proto2},
     ReplyList = tuple_to_list(Reply),
     true = length(ReplyList) == length(ExceptionFields) + 1,
     ExceptionVals = tl(ReplyList),
@@ -123,19 +126,20 @@ handle_reply(Client = #tclient{protocol = Proto,
                    X =/= undefined],
     case Thrown of
         [] when ReplyType == {struct, []} ->
-            {Client, {ok, ok}};
+            {NewClient, {ok, ok}};
         [] ->
-            {Client, {ok, hd(ReplyList)}};
+            {NewClient, {ok, hd(ReplyList)}};
         [Exception] ->
-            throw({Client, {exception, Exception}})
+            throw({NewClient, {exception, Exception}})
     end.
 
-handle_application_exception(Client = #tclient{protocol = Proto}) ->
-    {ok, Exception} =
-        thrift_protocol:read(Proto, ?TApplicationException_Structure),
-    ok = thrift_protocol:read(Proto, message_end),
+handle_application_exception(Client = #tclient{protocol = Proto0}) ->
+    {Proto1, {ok, Exception}} =
+        thrift_protocol:read(Proto0, ?TApplicationException_Structure),
+    {Proto2, ok} = thrift_protocol:read(Proto1, message_end),
     XRecord = list_to_tuple(
                 ['TApplicationException' | tuple_to_list(Exception)]),
     error_logger:error_msg("X: ~p~n", [XRecord]),
     true = is_record(XRecord, 'TApplicationException'),
-    throw({Client, {exception, XRecord}}).
+    NewClient = Client#tclient{protocol = Proto2},
+    throw({NewClient, {exception, XRecord}}).
