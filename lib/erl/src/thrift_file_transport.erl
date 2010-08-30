@@ -65,25 +65,25 @@ parse_opts([], State) ->
 
 %%%% TRANSPORT IMPL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-write(#t_file_transport{device = Device, mode = write}, Data) ->
-    file:write(Device, Data);
-write(_T, _D) ->
-    {error, read_mode}.
+write(This = #t_file_transport{device = Device, mode = write}, Data) ->
+    {This, file:write(Device, Data)};
+write(This, _D) ->
+    {This, {error, read_mode}}.
 
 
-read(#t_file_transport{device = Device, mode = read}, Len)
+read(This = #t_file_transport{device = Device, mode = read}, Len)
   when is_integer(Len), Len >= 0 ->
-    file:read(Device, Len);
-read(_T, _D) ->
-    {error, read_mode}.
+    {This, file:read(Device, Len)};
+read(This, _D) ->
+    {This, {error, read_mode}}.
 
-flush(#t_file_transport{device = Device, mode = write}) ->
-    file:sync(Device).
+flush(This = #t_file_transport{device = Device, mode = write}) ->
+    {This, file:sync(Device)}.
 
-close(#t_file_transport{device = Device, should_close = SC}) ->
+close(This = #t_file_transport{device = Device, should_close = SC}) ->
     case SC of
         true ->
-            file:close(Device);
+            {This, file:close(Device)};
         false ->
-            ok
+            {This, ok}
     end.

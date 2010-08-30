@@ -77,7 +77,7 @@ new(Host, Path, Options) ->
 %% Description: Writes data into the buffer
 %%--------------------------------------------------------------------
 write(Transport, Data) ->
-    gen_server:call(Transport, {write, Data}).
+    {Transport, gen_server:call(Transport, {write, Data})}.
 
 %%--------------------------------------------------------------------
 %% Function: flush(Transport) -> ok
@@ -85,7 +85,7 @@ write(Transport, Data) ->
 %% Description: Flushes the buffer, making a request
 %%--------------------------------------------------------------------
 flush(Transport) ->
-    gen_server:call(Transport, flush).
+    {Transport, gen_server:call(Transport, flush)}.
 
 %%--------------------------------------------------------------------
 %% Function: close(Transport) -> ok
@@ -93,7 +93,7 @@ flush(Transport) ->
 %% Description: Closes the transport
 %%--------------------------------------------------------------------
 close(Transport) ->
-    gen_server:cast(Transport, close).
+    {Transport, gen_server:cast(Transport, close)}.
 
 %%--------------------------------------------------------------------
 %% Function: Read(Transport, Len) -> {ok, Data}
@@ -103,7 +103,7 @@ close(Transport) ->
 %% Description: Reads data through from the wrapped transoprt
 %%--------------------------------------------------------------------
 read(Transport, Len) when is_integer(Len) ->
-    gen_server:call(Transport, {read, Len}).
+    {Transport, gen_server:call(Transport, {read, Len})}.
 
 %%====================================================================
 %% gen_server callbacks

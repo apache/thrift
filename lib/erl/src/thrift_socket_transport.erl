@@ -47,25 +47,26 @@ new(Socket, Opts) when is_list(Opts) ->
     thrift_transport:new(?MODULE, State).
 
 %% Data :: iolist()
-write(#data{socket = Socket}, Data) ->
-    gen_tcp:send(Socket, Data).
+write(This = #data{socket = Socket}, Data) ->
+    {This, gen_tcp:send(Socket, Data)}.
 
-read(#data{socket=Socket, recv_timeout=Timeout}, Len)
+read(This = #data{socket=Socket, recv_timeout=Timeout}, Len)
   when is_integer(Len), Len >= 0 ->
     case gen_tcp:recv(Socket, Len, Timeout) of
         Err = {error, timeout} ->
             error_logger:info_msg("read timeout: peer conn ~p", [inet:peername(Socket)]),
             gen_tcp:close(Socket),
-            Err;
-        Data -> Data
+            {This, Err};
+        Data ->
+            {This, Data}
     end.
 
 %% We can't really flush - everything is flushed when we write
-flush(_) ->
-    ok.
+flush(This) ->
+    {This, ok}.
 
-close(#data{socket = Socket}) ->
-    gen_tcp:close(Socket).
+close(This = #data{socket = Socket}) ->
+    {This, gen_tcp:close(Socket)}.
 
 
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

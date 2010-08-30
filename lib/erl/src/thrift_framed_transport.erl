@@ -62,7 +62,7 @@ new(WrappedTransport) ->
 %% Description: Writes data into the buffer
 %%--------------------------------------------------------------------
 write(Transport, Data) ->
-    gen_server:call(Transport, {write, Data}).
+    {Transport, gen_server:call(Transport, {write, Data})}.
 
 %%--------------------------------------------------------------------
 %% Function: flush(Transport) -> ok
@@ -70,7 +70,7 @@ write(Transport, Data) ->
 %% Description: Flushes the buffer through to the wrapped transport
 %%--------------------------------------------------------------------
 flush(Transport) ->
-    gen_server:call(Transport, flush).
+    {Transport, gen_server:call(Transport, flush)}.
 
 %%--------------------------------------------------------------------
 %% Function: close(Transport) -> ok
@@ -78,7 +78,7 @@ flush(Transport) ->
 %% Description: Closes the transport and the wrapped transport
 %%--------------------------------------------------------------------
 close(Transport) ->
-    gen_server:cast(Transport, close).
+    {Transport, gen_server:cast(Transport, close)}.
 
 %%--------------------------------------------------------------------
 %% Function: Read(Transport, Len) -> {ok, Data}
@@ -88,7 +88,7 @@ close(Transport) ->
 %% Description: Reads data through from the wrapped transoprt
 %%--------------------------------------------------------------------
 read(Transport, Len) when is_integer(Len) ->
-    gen_server:call(Transport, {read, Len}).
+    {Transport, gen_server:call(Transport, {read, Len})}.
 
 %%====================================================================
 %% gen_server callbacks
@@ -118,22 +118,22 @@ init([Wrapped]) ->
 handle_call({write, Data}, _From, State = #framed_transport{write_buffer = WBuf}) ->
     {reply, ok, State#framed_transport{write_buffer = [WBuf, Data]}};
 
-handle_call({read, Len}, _From, State = #framed_transport{wrapped = Wrapped,
+handle_call({read, Len}, _From, State = #framed_transport{wrapped = Wrapped0,
                                                           read_buffer = RBuf}) ->
-    {RBuf1, RBuf1Size} =
+    {Wrapped1, {RBuf1, RBuf1Size}} =
         %% if the read buffer is empty, read another frame
         %% otherwise, just read from what's left in the buffer
         case iolist_size(RBuf) of
             0 ->
                 %% read the frame length
-                {ok, <<FrameLen:32/integer-signed-big, _/binary>>} =
-                    thrift_transport:read(Wrapped, 4),
+                {WrappedS1, {ok, <<FrameLen:32/integer-signed-big, _/binary>>}} =
+                    thrift_transport:read(Wrapped0, 4),
                 %% then read the data
-                {ok, Bin} =
-                    thrift_transport:read(Wrapped, FrameLen),
-                {Bin, erlang:byte_size(Bin)};
+                {WrappedS2, {ok, Bin}} =
+                    thrift_transport:read(WrappedS1, FrameLen),
+                {WrappedS2, {Bin, erlang:byte_size(Bin)}};
             Sz ->
-                {RBuf, Sz}
+                {Wrapped0, {RBuf, Sz}}
         end,
 
     %% pull off Give bytes, return them to the user, leave the rest in the buffer
@@ -141,7 +141,7 @@ handle_call({read, Len}, _From, State = #framed_transport{wrapped = Wrapped,
     <<Data:Give/binary, RBuf2/binary>> = iolist_to_binary(RBuf1),
 
     Response = {ok, Data},
-    State1 = State#framed_transport{read_buffer=RBuf2},
+    State1 = State#framed_transport{wrapped = Wrapped1, read_buffer=RBuf2},
 
     {reply, Response, State1};
 
@@ -193,15 +193,15 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 do_flush(State = #framed_transport{write_buffer = Buffer,
-                                   wrapped = Wrapped}) ->
+                                   wrapped = Wrapped0}) ->
     FrameLen = iolist_size(Buffer),
     Data     = [<<FrameLen:32/integer-signed-big>>, Buffer],
 
-    Response = thrift_transport:write(Wrapped, Data),
+    {Wrapped1, Response} = thrift_transport:write(Wrapped0, Data),
 
-    thrift_transport:flush(Wrapped),
+    {Wrapped2, _} = thrift_transport:flush(Wrapped1),
 
-    State1 = State#framed_transport{write_buffer = []},
+    State1 = State#framed_transport{wrapped = Wrapped2, write_buffer = []},
     {Response, State1}.
 
 min(A,B) when A<B -> A;

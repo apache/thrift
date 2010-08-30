@@ -22,10 +22,10 @@
 -ifndef(THRIFT_TRANSPORT_IMPL_INCLUDED).
 -define(THRIFT_TRANSPORT_IMPL_INCLUDED, true).
 
--spec write(state(), iolist() | binary()) -> ok | {error, _Reason}.
--spec read(state(), non_neg_integer()) -> {ok, binary()} | {error, _Reason}.
--spec flush(state()) -> ok | {error, _Reason}.
--spec close(state()) -> ok | {error, _Reason}.
+-spec write(state(), iolist() | binary()) -> {state(), ok | {error, _Reason}}.
+-spec read(state(), non_neg_integer()) -> {state(), {ok, binary()} | {error, _Reason}}.
+-spec flush(state()) -> {state(), ok | {error, _Reason}}.
+-spec close(state()) -> {state(), ok | {error, _Reason}}.
 
 
 -endif.

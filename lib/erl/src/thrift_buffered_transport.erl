@@ -64,7 +64,7 @@ new(WrappedTransport) ->
 %% Description: Writes data into the buffer
 %%--------------------------------------------------------------------
 write(Transport, Data) ->
-    gen_server:call(Transport, {write, Data}).
+    {Transport, gen_server:call(Transport, {write, Data})}.
 
 %%--------------------------------------------------------------------
 %% Function: flush(Transport) -> ok
@@ -72,7 +72,7 @@ write(Transport, Data) ->
 %% Description: Flushes the buffer through to the wrapped transport
 %%--------------------------------------------------------------------
 flush(Transport) ->
-    gen_server:call(Transport, flush).
+    {Transport, gen_server:call(Transport, flush)}.
 
 %%--------------------------------------------------------------------
 %% Function: close(Transport) -> ok
@@ -80,7 +80,7 @@ flush(Transport) ->
 %% Description: Closes the transport and the wrapped transport
 %%--------------------------------------------------------------------
 close(Transport) ->
-    gen_server:cast(Transport, close).
+    {Transport, gen_server:cast(Transport, close)}.
 
 %%--------------------------------------------------------------------
 %% Function: Read(Transport, Len) -> {ok, Data}
@@ -90,7 +90,7 @@ close(Transport) ->
 %% Description: Reads data through from the wrapped transoprt
 %%--------------------------------------------------------------------
 read(Transport, Len) when is_integer(Len) ->
-    gen_server:call(Transport, {read, Len}, _Timeout=10000).
+    {Transport, gen_server:call(Transport, {read, Len}, _Timeout=10000)}.
 
 %%====================================================================
 %% gen_server callbacks
@@ -120,14 +120,17 @@ handle_call({write, Data}, _From, State = #buffered_transport{write_buffer = WBu
     {reply, ok, State#buffered_transport{write_buffer = [WBuf, Data]}};
 
 handle_call({read, Len}, _From, State = #buffered_transport{wrapped = Wrapped}) ->
-    Response = thrift_transport:read(Wrapped, Len),
-    {reply, Response, State};
+    {NewWrapped, Response} = thrift_transport:read(Wrapped, Len),
+    NewState = State#buffered_transport{wrapped = NewWrapped},
+    {reply, Response, NewState};
 
 handle_call(flush, _From, State = #buffered_transport{write_buffer = WBuf,
-                                                      wrapped = Wrapped}) ->
-    Response = thrift_transport:write(Wrapped, WBuf),
-    thrift_transport:flush(Wrapped),
-    {reply, Response, State#buffered_transport{write_buffer = []}}.
+                                                      wrapped = Wrapped0}) ->
+    {Wrapped1, Response} = thrift_transport:write(Wrapped0, WBuf),
+    {Wrapped2, _} = thrift_transport:flush(Wrapped1),
+    NewState = State#buffered_transport{write_buffer = [],
+                                        wrapped = Wrapped2},
+    {reply, Response, NewState}.
 
 %%--------------------------------------------------------------------
 %% Function: handle_cast(Msg, State) -> {noreply, State} |

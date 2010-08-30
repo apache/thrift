@@ -41,20 +41,24 @@ new(Module, Data) when is_atom(Module) ->
     {ok, #transport{module = Module,
                     data = Data}}.
 
--spec write(#transport{}, iolist() | binary()) -> ok | {error, _Reason}.
+-spec write(#transport{}, iolist() | binary()) -> {#transport{}, ok | {error, _Reason}}.
 write(Transport, Data) ->
     Module = Transport#transport.module,
-    Module:write(Transport#transport.data, Data).
+    {NewTransData, Result} = Module:write(Transport#transport.data, Data),
+    {Transport#transport{data = NewTransData}, Result}.
 
--spec read(#transport{}, non_neg_integer()) -> {ok, binary()} | {error, _Reason}.
+-spec read(#transport{}, non_neg_integer()) -> {#transport{}, {ok, binary()} | {error, _Reason}}.
 read(Transport, Len) when is_integer(Len) ->
     Module = Transport#transport.module,
-    Module:read(Transport#transport.data, Len).
+    {NewTransData, Result} = Module:read(Transport#transport.data, Len),
+    {Transport#transport{data = NewTransData}, Result}.
 
--spec flush(#transport{}) -> ok | {error, _Reason}.
-flush(#transport{module = Module, data = Data}) ->
-    Module:flush(Data).
+-spec flush(#transport{}) -> {#transport{}, ok | {error, _Reason}}.
+flush(Transport = #transport{module = Module, data = Data}) ->
+    {NewTransData, Result} = Module:flush(Data),
+    {Transport#transport{data = NewTransData}, Result}.
 
--spec close(#transport{}) -> ok | {error, _Reason}.
-close(#transport{module = Module, data = Data}) ->
-    Module:close(Data).
+-spec close(#transport{}) -> {#transport{}, ok | {error, _Reason}}.
+close(Transport = #transport{module = Module, data = Data}) ->
+    {NewTransData, Result} = Module:close(Data),
+    {Transport#transport{data = NewTransData}, Result}.

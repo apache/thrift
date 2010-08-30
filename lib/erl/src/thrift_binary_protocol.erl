@@ -61,12 +61,12 @@ parse_options([{strict_write, Bool} | Rest], State) when is_boolean(Bool) ->
 
 
 flush_transport(This = #binary_protocol{transport = Transport}) ->
-    Result = thrift_transport:flush(Transport),
-    {This, Result}.
+    {NewTransport, Result} = thrift_transport:flush(Transport),
+    {This#binary_protocol{transport = NewTransport}, Result}.
 
 close_transport(This = #binary_protocol{transport = Transport}) ->
-    Result = thrift_transport:close(Transport),
-    {This, Result}.
+    {NewTransport, Result} = thrift_transport:close(Transport),
+    {This#binary_protocol{transport = NewTransport}, Result}.
 
 %%%
 %%% instance methods
@@ -166,8 +166,8 @@ write(This0, {string, Bin}) when is_binary(Bin) ->
 
 %% Data :: iolist()
 write(This = #binary_protocol{transport = Trans}, Data) ->
-    Result = thrift_transport:write(Trans, Data),
-    {This, Result}.
+    {NewTransport, Result} = thrift_transport:write(Trans, Data),
+    {This#binary_protocol{transport = NewTransport}, Result}.
 
 %%
 
@@ -312,8 +312,8 @@ read(This0, string) ->
     {#binary_protocol{}, {ok, binary()} | {error, _Reason}}.
 read_data(This, 0) -> {This, {ok, <<>>}};
 read_data(This = #binary_protocol{transport = Trans}, Len) when is_integer(Len) andalso Len > 0 ->
-    Result = thrift_transport:read(Trans, Len),
-    {This, Result}.
+    {NewTransport, Result} = thrift_transport:read(Trans, Len),
+    {This#binary_protocol{transport = NewTransport}, Result}.
 
 
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

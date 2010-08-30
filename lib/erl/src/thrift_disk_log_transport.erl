@@ -68,30 +68,33 @@ parse_opts([{sync_every, Int} | Rest], State) when is_integer(Int), Int > 0 ->
 %%%% TRANSPORT IMPLENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% disk_log_transport is write-only
-read(_State, Len) ->
-    {error, no_read_from_disk_log}.
+read(State, Len) ->
+    {State, {error, no_read_from_disk_log}}.
 
-write(#dl_transport{log = Log}, Data) ->
-    disk_log:balog(Log, erlang:iolist_to_binary(Data)).
+write(This = #dl_transport{log = Log}, Data) ->
+    {This, disk_log:balog(Log, erlang:iolist_to_binary(Data))}.
 
 force_flush(#dl_transport{log = Log}) ->
     error_logger:info_msg("~p syncing~n", [?MODULE]),
     disk_log:sync(Log).
 
-flush(#dl_transport{log = Log, sync_every = SE}) ->
+flush(This = #dl_transport{log = Log, sync_every = SE}) ->
     case SE of
         undefined -> % no time-based sync
             disk_log:sync(Log);
         _Else ->     % sync will happen automagically
             ok
-    end.
+    end,
+    {This, ok}.
+
+
 
 
 %% On close, close the underlying log if we're configured to do so.
-close(#dl_transport{close_on_close = false}) ->
-    ok;
-close(#dl_transport{log = Log}) ->
-    disk_log:lclose(Log).
+close(This = #dl_transport{close_on_close = false}) ->
+    {This, ok};
+close(This = #dl_transport{log = Log}) ->
+    {This, disk_log:lclose(Log)}.
 
 
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
