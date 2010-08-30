@@ -72,24 +72,35 @@ read(State0 = #framed_transport{wrapped = Wrapped0, read_buffer = RBuf},
         case iolist_size(RBuf) of
             0 ->
                 %% read the frame length
-                {WrappedS1, {ok, <<FrameLen:32/integer-signed-big, _/binary>>}} =
-                    thrift_transport:read(Wrapped0, 4),
-                %% then read the data
-                {WrappedS2, {ok, Bin}} =
-                    thrift_transport:read(WrappedS1, FrameLen),
-                {WrappedS2, {Bin, erlang:byte_size(Bin)}};
+                case thrift_transport:read(Wrapped0, 4) of
+                  {WrappedS1,
+                    {ok, <<FrameLen:32/integer-signed-big, _/binary>>}} ->
+                    %% then read the data
+                    case thrift_transport:read(WrappedS1, FrameLen) of
+                      {WrappedS2, {ok, Bin}} ->
+                        {WrappedS2, {Bin, erlang:byte_size(Bin)}};
+                      {WrappedS2, {error, Reason1}} ->
+                        {WrappedS2, {error, Reason1}}
+                    end;
+                  {WrappedS1, {error, Reason2}} ->
+                    {WrappedS1, {error, Reason2}}
+                end;
             Sz ->
                 {Wrapped0, {RBuf, Sz}}
         end,
 
     %% pull off Give bytes, return them to the user, leave the rest in the buffer
-    Give = min(RBuf1Size, Len),
-    <<Data:Give/binary, RBuf2/binary>> = iolist_to_binary(RBuf1),
+    case RBuf1 of
+      error ->
+        { State0#framed_transport {wrapped = Wrapped1, read_buffer = [] },
+          {RBuf1, RBuf1Size} };
+      _ ->
+        Give = min(RBuf1Size, Len),
+        <<Data:Give/binary, RBuf2/binary>> = iolist_to_binary(RBuf1),
 
-    Response = {ok, Data},
-    State1 = State0#framed_transport{wrapped = Wrapped1, read_buffer=RBuf2},
-
-    {State1, Response}.
+        { State0#framed_transport{wrapped = Wrapped1, read_buffer=RBuf2},
+          {ok, Data} }
+    end.
 
 %%--------------------------------------------------------------------
 %% Internal functions
