@@ -150,7 +150,7 @@ handle_function(testException, {String}) when is_binary(String) ->
     case String of
         <<"Xception">> ->
             throw(#xception{errorCode = 1001,
-                            message = <<"This is an Xception">>});
+                            message = String});
         _ ->
             ok
     end;
