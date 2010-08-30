@@ -188,7 +188,7 @@ acceptor_loop({Server, Listen, Service, Handler, SocketOpts, Framed})
                                        false -> thrift_buffered_transport:new(SocketTransport)
                                    end,
                                {ok, Protocol}          = thrift_binary_protocol:new(Transport),
-                               {ok, IProt=Protocol, OProt=Protocol}
+                               {ok, Protocol}
                        end,
             thrift_processor:init({Server, ProtoGen, Service, Handler});
         {error, closed} ->

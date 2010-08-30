@@ -177,7 +177,7 @@ start_processor(Socket, Service, Handler) ->
                        {ok, SocketTransport} = thrift_socket_transport:new(Socket),
                        {ok, BufferedTransport} = thrift_buffered_transport:new(SocketTransport),
                        {ok, Protocol} = thrift_binary_protocol:new(BufferedTransport),
-                       {ok, Protocol, Protocol}
+                       {ok, Protocol}
                end,
 
     spawn(thrift_processor, init, [{Server, ProtoGen, Service, Handler}]).
