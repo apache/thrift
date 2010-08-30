@@ -154,7 +154,6 @@ handle_call(flush, _From, State) ->
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
 handle_cast(close, State) ->
-    {_, State1} = do_flush(State),
     %% Wrapped is closed by terminate/2
     %%  error_logger:info_msg("thrift_framed_transport ~p: closing", [self()]),
     {stop, normal, State};
