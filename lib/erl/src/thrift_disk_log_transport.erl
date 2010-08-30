@@ -47,7 +47,7 @@ new(LogName, Opts) when is_atom(LogName), is_list(Opts) ->
     State2 =
         case State#dl_transport.sync_every of
             N when is_integer(N), N > 0 ->
-                {ok, TRef} = timer:apply_interval(N, ?MODULE, force_flush, State),
+                {ok, TRef} = timer:apply_interval(N, ?MODULE, force_flush, [State]),
                 State#dl_transport{sync_tref = TRef};
             _ -> State
         end,
