@@ -135,6 +135,7 @@ read(IProto, S={struct, Structure}) when is_list(Structure) ->
 read(IProto0, {list, Type}) ->
     {IProto1, #protocol_list_begin{etype = EType, size = Size}} =
         read(IProto0, list_begin),
+    {EType, EType} = {term_to_typeid(Type), EType},
     {List, IProto2} = lists:mapfoldl(fun(_, ProtoS0) ->
                                              {ProtoS1, {ok, Item}} = read(ProtoS0, Type),
                                              {Item, ProtoS1}
@@ -145,8 +146,10 @@ read(IProto0, {list, Type}) ->
     {IProto3, {ok, List}};
 
 read(IProto0, {map, KeyType, ValType}) ->
-    {IProto1, #protocol_map_begin{size = Size}} =
+    {IProto1, #protocol_map_begin{size = Size, ktype = KType, vtype = VType}} =
         read(IProto0, map_begin),
+    {KType, KType} = {term_to_typeid(KeyType), KType},
+    {VType, VType} = {term_to_typeid(ValType), VType},
     {List, IProto2} = lists:mapfoldl(fun(_, ProtoS0) ->
                                              {ProtoS1, {ok, Key}} = read(ProtoS0, KeyType),
                                              {ProtoS2, {ok, Val}} = read(ProtoS1, ValType),
@@ -160,6 +163,7 @@ read(IProto0, {map, KeyType, ValType}) ->
 read(IProto0, {set, Type}) ->
     {IProto1, #protocol_set_begin{etype = EType, size = Size}} =
         read(IProto0, set_begin),
+    {EType, EType} = {term_to_typeid(Type), EType},
     {List, IProto2} = lists:mapfoldl(fun(_, ProtoS0) ->
                                              {ProtoS1, {ok, Item}} = read(ProtoS0, Type),
                                              {Item, ProtoS1}

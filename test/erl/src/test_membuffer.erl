@@ -74,8 +74,23 @@ t3() ->
     true = TestData#bools.im_false =:= Result#bools.im_false.
 
 
+t4() ->
+    {ok, Transport} = thrift_memory_buffer:new(),
+    {ok, Protocol0} = thrift_binary_protocol:new(Transport),
+    TestData = #insanity{xtructs=[]},
+		{Protocol1, ok} = thrift_protocol:write(Protocol0,
+			       {{struct, element(2, thriftTest_types:struct_info('insanity'))},
+				TestData}),
+		{_Protocol2, {ok, Result}} = thrift_protocol:read(Protocol1,
+					{struct, element(2, thriftTest_types:struct_info('insanity'))},
+					'insanity'),
+
+    TestData = Result.
+
+
 t() ->
     t1(),
     t2(),
-    t3().
+    t3(),
+    t4().
 
