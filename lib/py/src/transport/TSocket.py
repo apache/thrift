@@ -21,6 +21,7 @@ from TTransport import *
 import os
 import errno
 import socket
+import sys
 
 class TSocketBase(TTransportBase):
   def _resolveAddr(self):
@@ -89,7 +90,20 @@ class TSocket(TSocketBase):
       raise TTransportException(type=TTransportException.NOT_OPEN, message=message)
 
   def read(self, sz):
-    buff = self.handle.recv(sz)
+    try:
+      buff = self.handle.recv(sz)
+    except socket.error, e:
+      if (e.args[0] == errno.ECONNRESET and
+          (sys.platform == 'darwin' or sys.platform.startswith('freebsd'))):
+        # freebsd and Mach don't follow POSIX semantic of recv
+        # and fail with ECONNRESET if peer performed shutdown.
+        # See corresponding comment and code in TSocket::read()
+        # in lib/cpp/src/transport/TSocket.cpp.
+        self.close()
+        # Trigger the check to raise the END_OF_FILE exception below.
+        buff = ''
+      else:
+        raise
     if len(buff) == 0:
       raise TTransportException(type=TTransportException.END_OF_FILE, message='TSocket read 0 bytes')
     return buff
