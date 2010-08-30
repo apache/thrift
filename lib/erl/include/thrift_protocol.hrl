@@ -18,7 +18,7 @@
 %%
 
 -ifndef(THRIFT_PROTOCOL_INCLUDED).
--define(THRIFT_PROTOCOL_INCLUDED, yea).
+-define(THRIFT_PROTOCOL_INCLUDED, true).
 
 -record(protocol_message_begin, {name, type, seqid}).
 -record(protocol_struct_begin, {name}).
