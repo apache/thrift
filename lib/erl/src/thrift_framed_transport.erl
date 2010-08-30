@@ -63,7 +63,7 @@ close(State = #framed_transport{wrapped = Wrapped0}) ->
     NewState = State#framed_transport{wrapped = Wrapped1},
     {NewState, Result}.
 
-%% Reads data through from the wrapped transoprt
+%% Reads data through from the wrapped transport
 read(State0 = #framed_transport{wrapped = Wrapped0, read_buffer = RBuf},
      Len) when is_integer(Len) ->
     {Wrapped1, {RBuf1, RBuf1Size}} =

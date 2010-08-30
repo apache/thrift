@@ -59,7 +59,7 @@ close(State = #buffered_transport{wrapped = Wrapped0}) ->
     NewState = State#buffered_transport{wrapped = Wrapped1},
     {NewState, Result}.
 
-%% Reads data through from the wrapped transoprt
+%% Reads data through from the wrapped transport
 read(State = #buffered_transport{wrapped = Wrapped0}, Len) when is_integer(Len) ->
     {Wrapped1, Response} = thrift_transport:read(Wrapped0, Len),
     NewState = State#buffered_transport{wrapped = Wrapped1},
