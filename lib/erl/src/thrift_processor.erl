@@ -69,7 +69,7 @@ handle_function(State=#thrift_processor{in_protocol = IProto,
         %%                       [Function, Params, Micro/1000.0]),
         handle_success(State, Function, Result)
     catch
-        Type:Data ->
+        Type:Data when Type =:= throw orelse Type =:= error ->
             handle_function_catch(State, Function, Type, Data)
     end,
     after_reply(OProto).
