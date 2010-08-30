@@ -24,7 +24,9 @@
 -include("thriftTest_types.hrl").
 
 start_link(Port) ->
-    thrift_server:start_link(Port, thriftTest_thrift, ?MODULE).
+    thrift_socket_server:start([{handler, ?MODULE},
+                                {service, thriftTest_thrift},
+                                {port, Port}]).
 
 
 handle_function(testVoid, {}) ->
