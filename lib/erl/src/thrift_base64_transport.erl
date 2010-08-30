@@ -29,35 +29,30 @@
 
 %% State
 -record(b64_transport, {wrapped}).
--type state() :: #b64_transport{}.
--include("thrift_transport_behaviour.hrl").
 
 new(Wrapped) ->
     State = #b64_transport{wrapped = Wrapped},
     thrift_transport:new(?MODULE, State).
 
 
-write(This = #b64_transport{wrapped = Wrapped}, Data) ->
-    {NewWrapped, Result} = thrift_transport:write(Wrapped, base64:encode(iolist_to_binary(Data))),
-    {This#b64_transport{wrapped = NewWrapped}, Result}.
+write(#b64_transport{wrapped = Wrapped}, Data) ->
+    thrift_transport:write(Wrapped, base64:encode(iolist_to_binary(Data))).
 
 
 %% base64 doesn't support reading quite yet since it would involve
 %% nasty buffering and such
-read(This = #b64_transport{}, _Data) ->
-    {This, {error, no_reads_allowed}}.
+read(#b64_transport{wrapped = Wrapped}, Data) ->
+    {error, no_reads_allowed}.
 
 
-flush(This = #b64_transport{wrapped = Wrapped0}) ->
-    {Wrapped1, ok} = thrift_transport:write(Wrapped0, <<"\n">>),
-    {Wrapped2, ok} = thrift_transport:flush(Wrapped1),
-    {This#b64_transport{wrapped = Wrapped2}, ok}.
+flush(#b64_transport{wrapped = Wrapped}) ->
+    thrift_transport:write(Wrapped, <<"\n">>),
+    thrift_transport:flush(Wrapped).
 
 
-close(This0) ->
-    {This1 = #b64_transport{wrapped = Wrapped}, ok} = flush(This0),
-    {NewWrapped, ok} = thrift_transport:close(Wrapped),
-    {This1#b64_transport{wrapped = NewWrapped}, ok}.
+close(Me = #b64_transport{wrapped = Wrapped}) ->
+    flush(Me),
+    thrift_transport:close(Wrapped).
 
 
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

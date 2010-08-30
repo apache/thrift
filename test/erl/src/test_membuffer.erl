@@ -30,12 +30,12 @@ test_data() ->
 
 t1() ->
     {ok, Transport} = thrift_memory_buffer:new(),
-    {ok, Protocol0} = thrift_binary_protocol:new(Transport),
+    {ok, Protocol} = thrift_binary_protocol:new(Transport),
     TestData = test_data(),
-		{Protocol1, ok} = thrift_protocol:write(Protocol0,
+    ok = thrift_protocol:write(Protocol,
 			       {{struct, element(2, thriftTest_types:struct_info('xtruct'))},
 				TestData}),
-		{_Protocol2, {ok, Result}} = thrift_protocol:read(Protocol1,
+    {ok, Result} = thrift_protocol:read(Protocol,
 					{struct, element(2, thriftTest_types:struct_info('xtruct'))},
 					'xtruct'),
 
@@ -44,12 +44,12 @@ t1() ->
 
 t2() ->
     {ok, Transport} = thrift_memory_buffer:new(),
-    {ok, Protocol0} = thrift_binary_protocol:new(Transport),
+    {ok, Protocol} = thrift_binary_protocol:new(Transport),
     TestData = test_data(),
-		{Protocol1, ok} = thrift_protocol:write(Protocol0,
+    ok = thrift_protocol:write(Protocol,
 			       {{struct, element(2, thriftTest_types:struct_info('xtruct'))},
 				TestData}),
-		{_Protocol2, {ok, Result}} = thrift_protocol:read(Protocol1,
+    {ok, Result} = thrift_protocol:read(Protocol,
 					{struct, element(2, thriftTest_types:struct_info('xtruct3'))},
 					'xtruct3'),
 
@@ -61,12 +61,12 @@ t2() ->
 
 t3() ->
     {ok, Transport} = thrift_memory_buffer:new(),
-    {ok, Protocol0} = thrift_binary_protocol:new(Transport),
+    {ok, Protocol} = thrift_binary_protocol:new(Transport),
     TestData = #bools{im_true = true, im_false = false},
-		{Protocol1, ok} = thrift_protocol:write(Protocol0,
+    ok = thrift_protocol:write(Protocol,
 			       {{struct, element(2, thriftTest_types:struct_info('bools'))},
 				TestData}),
-		{_Protocol2, {ok, Result}} = thrift_protocol:read(Protocol1,
+    {ok, Result} = thrift_protocol:read(Protocol,
 					{struct, element(2, thriftTest_types:struct_info('bools'))},
 					'bools'),
 
@@ -74,23 +74,8 @@ t3() ->
     true = TestData#bools.im_false =:= Result#bools.im_false.
 
 
-t4() ->
-    {ok, Transport} = thrift_memory_buffer:new(),
-    {ok, Protocol0} = thrift_binary_protocol:new(Transport),
-    TestData = #insanity{xtructs=[]},
-		{Protocol1, ok} = thrift_protocol:write(Protocol0,
-			       {{struct, element(2, thriftTest_types:struct_info('insanity'))},
-				TestData}),
-		{_Protocol2, {ok, Result}} = thrift_protocol:read(Protocol1,
-					{struct, element(2, thriftTest_types:struct_info('insanity'))},
-					'insanity'),
-
-    TestData = Result.
-
-
 t() ->
     t1(),
     t2(),
-    t3(),
-    t4().
+    t3().
 

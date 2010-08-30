@@ -649,8 +649,8 @@ void t_erl_generator::generate_service_interface(t_service* tservice) {
                          << "_thrift:function_info(Function, InfoType)." << endl;
       indent_down();
   } else {
-      // Use a special return code for nonexistent functions
-      indent(f_service_) << "function_info(_Func, _Info) -> no_function." << endl;
+      // Dummy function_info so we don't worry about the ;s
+      indent(f_service_) << "function_info(xxx, dummy) -> dummy." << endl;
   }
 
   indent(f_service_) << endl;

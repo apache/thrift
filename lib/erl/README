@@ -25,19 +25,32 @@ Example
 
 Example session using thrift_client:
 
-1> {ok, C0} = thrift_client_util:new("localhost", 9090, thriftTest_thrift, []), ok.
-ok
-2> {C1, R1} = thrift_client:call(C0, testVoid, []), R1.
+118> f(), {ok, C} = thrift_client:start_link("localhost", 9090, thriftTest_thrif
+t).
+{ok,<0.271.0>}
+119> thrift_client:call(C, testVoid, []).
 {ok,ok}
-3> {C2, R2} = thrift_client:call(C1, testVoid, [asdf]), R2.
+120> thrift_client:call(C, testVoid, [asdf]).
 {error,{bad_args,testVoid,[asdf]}}
-4> {C3, R3} = thrift_client:call(C2, testI32, [123]), R3.
+121> thrift_client:call(C, testI32, [123]).
 {ok,123}
-5> {C4, R4} = thrift_client:call(C3, testOneway, [1]), R4.
+122> thrift_client:call(C, testOneway, [1]).
 {ok,ok}
-6> {C5, R5} = thrift_client:call(C4, testXception, ["foo"]), R5.
+123> catch thrift_client:call(C, testXception, ["foo"]).
 {error,{no_function,testXception}}
-7> {C6, R6} = thrift_client:call(C5, testException, ["foo"]), R6.
+124> catch thrift_client:call(C, testException, ["foo"]).
 {ok,ok}
-8> {C7, R7} = (catch thrift_client:call(C6, testException, ["Xception"])), R7.
-{exception,{xception,1001,<<"Xception">>}}
+125> catch thrift_client:call(C, testException, ["Xception"]).
+{xception,1001,"This is an Xception"}
+126> thrift_client:call(C, testException, ["Xception"]).
+
+=ERROR REPORT==== 24-Feb-2008::23:00:23 ===
+Error in process <0.269.0> with exit value: {{nocatch,{xception,1001,"This is an
+ Xception"}},[{thrift_client,call,3},{erl_eval,do_apply,5},{shell,exprs,6},{shel
+l,eval_loop,3}]}
+
+** exited: {{nocatch,{xception,1001,"This is an Xception"}},
+            [{thrift_client,call,3},
+             {erl_eval,do_apply,5},
+             {shell,exprs,6},
+             {shell,eval_loop,3}]} **

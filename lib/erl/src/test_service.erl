@@ -17,15 +17,13 @@
 %% under the License.
 %%
 
-%% Signature specifications for transport implementations.
+-module(test_service).
+%
+% Test service definition
 
--ifndef(THRIFT_TRANSPORT_BEHAVIOUR_INCLUDED).
--define(THRIFT_TRANSPORT_BEHAVIOUR_INCLUDED, true).
+-export([function_info/2]).
 
--spec write(state(), iolist() | binary()) -> {state(), ok | {error, _Reason}}.
--spec read(state(), non_neg_integer()) -> {state(), {ok, binary()} | {error, _Reason}}.
--spec flush(state()) -> {state(), ok | {error, _Reason}}.
--spec close(state()) -> {state(), ok | {error, _Reason}}.
-
-
--endif.
+function_info(add, params_type) ->
+    {struct, [{1, i32},
+              {2, i32}]};
+function_info(add, reply_type) -> i32.

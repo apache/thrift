@@ -29,8 +29,6 @@
 -record(t_file_transport, {device,
                            should_close = true,
                            mode = write}).
--type state() :: #t_file_transport{}.
--include("thrift_transport_behaviour.hrl").
 
 %%%% CONSTRUCTION   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -65,25 +63,25 @@ parse_opts([], State) ->
 
 %%%% TRANSPORT IMPL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-write(This = #t_file_transport{device = Device, mode = write}, Data) ->
-    {This, file:write(Device, Data)};
-write(This, _D) ->
-    {This, {error, read_mode}}.
+write(#t_file_transport{device = Device, mode = write}, Data) ->
+    file:write(Device, Data);
+write(_T, _D) ->
+    {error, read_mode}.
 
 
-read(This = #t_file_transport{device = Device, mode = read}, Len)
+read(#t_file_transport{device = Device, mode = read}, Len)
   when is_integer(Len), Len >= 0 ->
-    {This, file:read(Device, Len)};
-read(This, _D) ->
-    {This, {error, read_mode}}.
+    file:read(Device, Len);
+read(_T, _D) ->
+    {error, read_mode}.
 
-flush(This = #t_file_transport{device = Device, mode = write}) ->
-    {This, file:sync(Device)}.
+flush(#t_file_transport{device = Device, mode = write}) ->
+    file:sync(Device).
 
-close(This = #t_file_transport{device = Device, should_close = SC}) ->
+close(#t_file_transport{device = Device, should_close = SC}) ->
     case SC of
         true ->
-            {This, file:close(Device)};
+            file:close(Device);
         false ->
-            {This, ok}
+            ok
     end.
