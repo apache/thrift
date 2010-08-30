@@ -164,6 +164,11 @@ class t_program : public t_doc {
     std::string base_language = language.substr(0, sub_index);
     std::string sub_namespace;
 
+    if(base_language == "smalltalk") {
+      pwarning(1, "Namespace 'smalltalk' is deprecated. Use 'st' instead");
+      base_language = "st";
+    }
+
     t_generator_registry::gen_map_t my_copy = t_generator_registry::get_generator_map();
 
     t_generator_registry::gen_map_t::iterator it;

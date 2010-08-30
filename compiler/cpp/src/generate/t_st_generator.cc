@@ -121,6 +121,7 @@ class t_st_generator : public t_oop_generator {
   void st_accessors(std::ofstream &out, std::string cls, std::string name, std::string type);
 
   std::string class_name();
+  static bool is_valid_namespace(const std::string& sub_namespace);
   std::string client_class_name();
   std::string prefix(std::string name);
   std::string declare_field(t_field* tfield);
@@ -181,7 +182,7 @@ string t_st_generator::class_name() {
   return capitalize(program_name_);
 }
 
-static bool is_valid_namespace(const std::string& sub_namespace) {
+bool t_st_generator::is_valid_namespace(const std::string& sub_namespace) {
   return sub_namespace == "prefix" || sub_namespace == "category";
 }
 
