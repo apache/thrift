@@ -60,9 +60,9 @@ new(LogName, Opts) when is_atom(LogName), is_list(Opts) ->
 parse_opts([], State) ->
     State;
 parse_opts([{close_on_close, Bool} | Rest], State) when is_boolean(Bool) ->
-    State#dl_transport{close_on_close = Bool};
+    parse_opts(Rest, State#dl_transport{close_on_close = Bool});
 parse_opts([{sync_every, Int} | Rest], State) when is_integer(Int), Int > 0 ->
-    State#dl_transport{sync_every = Int}.
+    parse_opts(Rest, State#dl_transport{sync_every = Int}).
 
 
 %%%% TRANSPORT IMPLENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
