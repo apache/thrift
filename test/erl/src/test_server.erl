@@ -19,14 +19,42 @@
 
 -module(test_server).
 
--export([start_link/1, handle_function/2]).
+-export([go/0, go/1, start_link/2, handle_function/2]).
 
 -include("thriftTest_types.hrl").
 
-start_link(Port) ->
+-record(options, {port = 9090,
+                  server_opts = []}).
+
+parse_args(Args) -> parse_args(Args, #options{}).
+parse_args([], Opts) -> Opts;
+parse_args([Head | Rest], Opts) ->
+    NewOpts =
+        case catch list_to_integer(Head) of
+            Port when is_integer(Port) ->
+                Opts#options{port = Port};
+            _Else ->
+                case Head of
+                    "framed" ->
+                        Opts#options{server_opts = [{framed, true} | Opts#options.server_opts]};
+                    "" ->
+                        Opts;
+                    _Else ->
+                        erlang:error({bad_arg, Head})
+                end
+        end,
+    parse_args(Rest, NewOpts).
+
+go() -> go([]).
+go(Args) ->
+    #options{port = Port, server_opts = ServerOpts} = parse_args(Args),
+    spawn(fun() -> start_link(Port, ServerOpts), receive after infinity -> ok end end).
+
+start_link(Port, ServerOpts) ->
     thrift_socket_server:start([{handler, ?MODULE},
                                 {service, thriftTest_thrift},
-                                {port, Port}]).
+                                {port, Port}] ++
+                               ServerOpts).
 
 
 handle_function(testVoid, {}) ->

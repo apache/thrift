@@ -23,11 +23,34 @@
 
 -include("thriftTest_types.hrl").
 
-start() -> start(["9090"]).
-start([PortStr]) ->
-  Port = list_to_integer(PortStr),
+-record(options, {port = 9090,
+                  client_opts = []}).
+
+parse_args(Args) -> parse_args(Args, #options{}).
+parse_args([], Opts) -> Opts;
+parse_args([Head | Rest], Opts) ->
+    NewOpts =
+        case catch list_to_integer(Head) of
+            Port when is_integer(Port) ->
+                Opts#options{port = Port};
+            _Else ->
+                case Head of
+                    "framed" ->
+                        Opts#options{client_opts = [{framed, true} | Opts#options.client_opts]};
+                    "" ->
+                        Opts;
+                    _Else ->
+                        erlang:error({bad_arg, Head})
+                end
+        end,
+    parse_args(Rest, NewOpts).
+
+
+start() -> start([]).
+start(Args) ->
+  #options{port = Port, client_opts = ClientOpts} = parse_args(Args),
   {ok, Client0} = thrift_client_util:new(
-    "127.0.0.1", Port, thriftTest_thrift, []),
+    "127.0.0.1", Port, thriftTest_thrift, ClientOpts),
 
   DemoXtruct = #xtruct{
     string_thing = <<"Zero">>,
