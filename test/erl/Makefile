@@ -55,11 +55,11 @@ ${GENDIR}/: ${RPCFILE}
 ${GEN_TARGETDIR}/: ${GENDIR}/
 	rm -rf ${GEN_TARGETDIR}
 	mkdir -p ${GEN_TARGETDIR}
-	erlc ${INCLUDEFLAGS} -o ${GEN_TARGETDIR} ${GEN_SRCDIR}/*.erl
+	erlc ${ERLC_FLAGS} ${INCLUDEFLAGS} -o ${GEN_TARGETDIR} ${GEN_SRCDIR}/*.erl
 
 $(TARGETS): ${TARGETDIR}/%.beam: ${SRCDIR}/%.erl ${GEN_INCLUDEDIR}/ ${HEADERS}
 	mkdir -p ${TARGETDIR}
-	erlc ${INCLUDEFLAGS} -o ${TARGETDIR} $<
+	erlc ${ERLC_FLAGS} ${INCLUDEFLAGS} -o ${TARGETDIR} $<
 
 clean:
 	rm -f ${TARGETDIR}/*.beam
