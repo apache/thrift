@@ -29,20 +29,21 @@ t() ->
            {size, {1024*1024, 10}}]),
     {ok, ProtocolFactory} = thrift_binary_protocol:new_protocol_factory(
                               TransportFactory, []),
-    {ok, Client} = thrift_client:start_link(ProtocolFactory, thriftTest_thrift),
+    {ok, Proto} = ProtocolFactory(),
+    {ok, Client0} = thrift_client:new(Proto, thriftTest_thrift),
 
     io:format("Client started~n"),
 
     % We have to make oneway calls into this client only since otherwise it will try
     % to read from the disklog and go boom.
-    {ok, ok} = thrift_client:call(Client, testOneway, [16#deadbeef]),
+    {Client1, {ok, ok}} = thrift_client:call(Client0, testOneway, [16#deadbeef]),
     io:format("Call written~n"),
 
     % Use the send_call method to write a non-oneway call into the log
-    ok = thrift_client:send_call(Client, testString, [<<"hello world">>]),
+    {Client2, ok} = thrift_client:send_call(Client1, testString, [<<"hello world">>]),
     io:format("Non-oneway call sent~n"),
 
-    ok = thrift_client:close(Client),
+    {_Client3, ok} = thrift_client:close(Client2),
     io:format("Client closed~n"),
 
     ok.
@@ -61,21 +62,22 @@ t_base64() ->
         thrift_buffered_transport:new_transport_factory(B64Factory),
     {ok, ProtocolFactory} = thrift_binary_protocol:new_protocol_factory(
                               BufFactory, []),
-    {ok, Client} = thrift_client:start_link(ProtocolFactory, thriftTest_thrift),
+    {ok, Proto} = ProtocolFactory(),
+    {ok, Client0} = thrift_client:new(Proto, thriftTest_thrift),
 
     io:format("Client started~n"),
 
     % We have to make oneway calls into this client only since otherwise it will try
     % to read from the disklog and go boom.
-    {ok, ok} = thrift_client:call(Client, testOneway, [16#deadbeef]),
+    {Client1, {ok, ok}} = thrift_client:call(Client0, testOneway, [16#deadbeef]),
     io:format("Call written~n"),
 
     % Use the send_call method to write a non-oneway call into the log
-    ok = thrift_client:send_call(Client, testString, [<<"hello world">>]),
+    {Client2, ok} = thrift_client:send_call(Client1, testString, [<<"hello world">>]),
     io:format("Non-oneway call sent~n"),
 
-    ok = thrift_client:close(Client),
+    {_Client3, ok} = thrift_client:close(Client2),
     io:format("Client closed~n"),
 
     ok.
-    
+
