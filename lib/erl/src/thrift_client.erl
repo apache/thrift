@@ -140,6 +140,7 @@ start(ProtocolFactory, Service, ClientOpts)
             Started
     end.
 
+-spec call(term(), atom(), list()) -> {ok, term()} | {error, term()}.
 call(Client, Function, Args)
   when is_pid(Client), is_atom(Function), is_list(Args) ->
     case gen_server:call(Client, {call, Function, Args}) of
@@ -148,6 +149,7 @@ call(Client, Function, Args)
         {exception, Exception} -> throw(Exception)
     end.
 
+-spec cast(term(), atom(), list()) -> ok.
 cast(Client, Function, Args)
   when is_pid(Client), is_atom(Function), is_list(Args) ->
     gen_server:cast(Client, {call, Function, Args}).
@@ -155,10 +157,12 @@ cast(Client, Function, Args)
 %% Sends a function call but does not read the result. This is useful
 %% if you're trying to log non-oneway function calls to write-only
 %% transports like thrift_disk_log_transport.
+-spec send_call(term(), atom(), list()) -> ok.
 send_call(Client, Function, Args)
   when is_pid(Client), is_atom(Function), is_list(Args) ->
     gen_server:call(Client, {send_call, Function, Args}).
 
+-spec close(term()) -> ok.
 close(Client) when is_pid(Client) ->
     gen_server:cast(Client, close).
 

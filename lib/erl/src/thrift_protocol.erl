@@ -49,10 +49,12 @@ new(Module, Data) when is_atom(Module) ->
     {ok, #protocol{module = Module,
                    data = Data}}.
 
+-spec flush_transport(#protocol{}) -> ok.
 flush_transport(#protocol{module = Module,
                           data = Data}) ->
     Module:flush_transport(Data).
 
+-spec close_transport(#protocol{}) -> ok.
 close_transport(#protocol{module = Module,
                           data = Data}) ->
     Module:close_transport(Data).
@@ -86,6 +88,7 @@ term_to_typeid({list, _}) -> ?tType_LIST.
 
 %% Structure is like:
 %%    [{Fid, Type}, ...]
+-spec read(#protocol{}, {struct, _StructDef}, atom()) -> {ok, tuple()}.
 read(IProto, {struct, Structure}, Tag)
   when is_list(Structure), is_atom(Tag) ->
 
@@ -111,6 +114,8 @@ read(IProto, {struct, Structure}, Tag)
 
     RTuple2 = read_struct_loop(IProto, SDict, RTuple1),
     {ok, RTuple2}.
+
+-spec read(#protocol{}, term()) -> term().
 
 read(IProto, {struct, {Module, StructureName}}) when is_atom(Module),
                                                      is_atom(StructureName) ->
@@ -183,6 +188,7 @@ skip_field(FType, IProto, SDict, RTuple) ->
     read(IProto, field_end),
     read_struct_loop(IProto, SDict, RTuple).
 
+-spec skip(#protocol{}, term()) -> ok.
 
 skip(Proto, struct) ->
     ok = read(Proto, struct_begin),
@@ -271,6 +277,8 @@ skip_list_loop(Proto, Map = #protocol_list_begin{etype = Etype,
 %%
 %% Description:
 %%--------------------------------------------------------------------
+-spec write(#protocol{}, term()) -> ok | {error, _Reason}.
+
 write(Proto, {{struct, StructDef}, Data})
   when is_list(StructDef), is_tuple(Data), length(StructDef) == size(Data) - 1 ->
 
