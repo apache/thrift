@@ -57,6 +57,10 @@
                         | double
                         | string
                         .
+-type tprot_cont_tag() :: {list, _Type}
+                        | {map, _KType, _VType}
+                        | {set, _Type}
+                        .
 
 
 -endif.

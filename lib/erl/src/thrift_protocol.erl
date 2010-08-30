@@ -115,7 +115,14 @@ read(IProto, {struct, Structure}, Tag)
     RTuple2 = read_struct_loop(IProto, SDict, RTuple1),
     {ok, RTuple2}.
 
--spec read(#protocol{}, term()) -> term().
+
+%% NOTE: Keep this in sync with thrift_protocol_impl:read
+-spec read
+        (#protocol{}, {struct, _Info}) ->    {ok, tuple()}      | {error, _Reason};
+        (#protocol{}, tprot_cont_tag()) ->   {ok, term()}       | {error, _Reason};
+        (#protocol{}, tprot_empty_tag()) ->   ok                | {error, _Reason};
+        (#protocol{}, tprot_header_tag()) -> tprot_header_val() | {error, _Reason};
+        (#protocol{}, tprot_data_tag()) ->   {ok, term()}       | {error, _Reason}.
 
 read(IProto, {struct, {Module, StructureName}}) when is_atom(Module),
                                                      is_atom(StructureName) ->
