@@ -19,7 +19,7 @@
 
 -module(thrift_binary_protocol).
 
--behavior(thrift_protocol).
+-behaviour(thrift_protocol).
 
 -include("thrift_constants.hrl").
 -include("thrift_protocol.hrl").
