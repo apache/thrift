@@ -120,10 +120,10 @@ read(IProto0, {struct, Structure}, Tag)
 %% NOTE: Keep this in sync with thrift_protocol_behaviour:read
 -spec read
         (#protocol{}, {struct, _Info}) ->    {#protocol{}, {ok, tuple()}      | {error, _Reason}};
-        (#protocol{}, tprot_cont_tag()) ->   {#protocol{}, {ok, term()}       | {error, _Reason}};
+        (#protocol{}, tprot_cont_tag()) ->   {#protocol{}, {ok, any()}        | {error, _Reason}};
         (#protocol{}, tprot_empty_tag()) ->  {#protocol{},  ok                | {error, _Reason}};
         (#protocol{}, tprot_header_tag()) -> {#protocol{}, tprot_header_val() | {error, _Reason}};
-        (#protocol{}, tprot_data_tag()) ->   {#protocol{}, {ok, term()}       | {error, _Reason}}.
+        (#protocol{}, tprot_data_tag()) ->   {#protocol{}, {ok, any()}        | {error, _Reason}}.
 
 read(IProto, {struct, {Module, StructureName}}) when is_atom(Module),
                                                      is_atom(StructureName) ->
@@ -180,7 +180,7 @@ read(Protocol, ProtocolType) ->
 -spec read_specific
         (#protocol{}, tprot_empty_tag()) ->  {#protocol{},  ok                | {error, _Reason}};
         (#protocol{}, tprot_header_tag()) -> {#protocol{}, tprot_header_val() | {error, _Reason}};
-        (#protocol{}, tprot_data_tag()) ->   {#protocol{}, {ok, term()}       | {error, _Reason}}.
+        (#protocol{}, tprot_data_tag()) ->   {#protocol{}, {ok, any()}        | {error, _Reason}}.
 read_specific(Proto = #protocol{module = Module,
                                 data = ModuleData}, ProtocolType) ->
     {NewData, Result} = Module:read(ModuleData, ProtocolType),
@@ -219,7 +219,7 @@ skip_field(FType, IProto0, SDict, RTuple) ->
     {IProto2, ok} = read(IProto1, field_end),
     read_struct_loop(IProto2, SDict, RTuple).
 
--spec skip(#protocol{}, term()) -> {#protocol{}, ok}.
+-spec skip(#protocol{}, any()) -> {#protocol{}, ok}.
 
 skip(Proto0, struct) ->
     {Proto1, ok} = read(Proto0, struct_begin),
@@ -308,11 +308,11 @@ skip_list_loop(Proto0, Map = #protocol_list_begin{etype = Etype,
 %%       | list()   -- for list
 %%       | dictionary()   -- for map
 %%       | set()    -- for set
-%%       | term()   -- for base types
+%%       | any()    -- for base types
 %%
 %% Description:
 %%--------------------------------------------------------------------
--spec write(#protocol{}, term()) -> {#protocol{}, ok | {error, _Reason}}.
+-spec write(#protocol{}, any()) -> {#protocol{}, ok | {error, _Reason}}.
 
 write(Proto0, {{struct, StructDef}, Data})
   when is_list(StructDef), is_tuple(Data), length(StructDef) == size(Data) - 1 ->
