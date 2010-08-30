@@ -134,7 +134,6 @@ handle_call(flush, _From, State = #buffered_transport{write_buffer = WBuf,
 %%--------------------------------------------------------------------
 handle_cast(close, State = #buffered_transport{write_buffer = WBuf,
                                                wrapped = Wrapped}) ->
-    thrift_transport:write(Wrapped, WBuf),
     %% Wrapped is closed by terminate/2
     %%  error_logger:info_msg("thrift_buffered_transport ~p: closing", [self()]),
     {stop, normal, State};
