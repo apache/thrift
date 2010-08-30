@@ -37,9 +37,23 @@ behaviour_info(callbacks) ->
 
 -record(transport, {module, data}).
 
+-ifdef(transport_wrapper_module).
+-define(debug_wrap(Transport),
+        case Transport#transport.module of
+            ?transport_wrapper_module ->
+                Transport;
+            _Else ->
+                {ok, Result} = ?transport_wrapper_module:new(Transport),
+                Result
+        end).
+-else.
+-define(debug_wrap(Transport), Transport).
+-endif.
+
 new(Module, Data) when is_atom(Module) ->
-    {ok, #transport{module = Module,
-                    data = Data}}.
+    Transport0 = #transport{module = Module, data = Data},
+    Transport1 = ?debug_wrap(Transport0),
+    {ok, Transport1}.
 
 -spec write(#transport{}, iolist() | binary()) -> {#transport{}, ok | {error, _Reason}}.
 write(Transport, Data) ->
