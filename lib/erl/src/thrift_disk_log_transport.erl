@@ -109,10 +109,10 @@ factory_impl(Name, ExtraLogOpts, TransportOpts) ->
                ExtraLogOpts],
     Log =
         case disk_log:open(LogOpts) of
-            {ok, Log} ->
-                Log;
-            {repaired, Log, Info1, Info2} ->
-                error_logger:info_msg("Disk log ~p repaired: ~p, ~p~n", [Log, Info1, Info2]),
-                Log
+            {ok, LogS} ->
+                LogS;
+            {repaired, LogS, Info1, Info2} ->
+                error_logger:info_msg("Disk log ~p repaired: ~p, ~p~n", [LogS, Info1, Info2]),
+                LogS
         end,
     new(Log, TransportOpts).
