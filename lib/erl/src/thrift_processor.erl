@@ -71,8 +71,7 @@ handle_function(State=#thrift_processor{in_protocol = IProto,
     catch
         Type:Data when Type =:= throw orelse Type =:= error ->
             handle_function_catch(State, Function, Type, Data)
-    end,
-    after_reply(OProto).
+    end.
 
 handle_function_catch(State = #thrift_processor{service = Service},
                       Function, ErrType, ErrData) ->
@@ -181,8 +180,3 @@ send_reply(OProto, Function, ReplyMessageType, Reply) ->
     ok = thrift_protocol:write(OProto, message_end),
     ok = thrift_protocol:flush_transport(OProto),
     ok.
-
-after_reply(OProto) ->
-    ok = thrift_protocol:flush_transport(OProto)
-    %%     ok = thrift_protocol:close_transport(OProto)
-    .
