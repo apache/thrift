@@ -187,7 +187,7 @@ read(This, message_begin) ->
 
         {ok, Sz} when This#binary_protocol.strict_read =:= false ->
             %% strict_read is false, so just read the old way
-            {ok, Name}  = read(This, Sz),
+            {ok, Name}  = read_data(This, Sz),
             {ok, Type}  = read(This, byte),
             {ok, SeqId} = read(This, i32),
             #protocol_message_begin{name  = binary_to_list(Name),
@@ -252,19 +252,19 @@ read(This, bool) ->
     end;
 
 read(This, byte) ->
-    case read(This, 1) of
+    case read_data(This, 1) of
         {ok, <<Val:8/integer-signed-big, _/binary>>} -> {ok, Val};
         Else -> Else
     end;
 
 read(This, i16) ->
-    case read(This, 2) of
+    case read_data(This, 2) of
         {ok, <<Val:16/integer-signed-big, _/binary>>} -> {ok, Val};
         Else -> Else
     end;
 
 read(This, i32) ->
-    case read(This, 4) of
+    case read_data(This, 4) of
         {ok, <<Val:32/integer-signed-big, _/binary>>} -> {ok, Val};
         Else -> Else
     end;
@@ -273,19 +273,19 @@ read(This, i32) ->
 %% of the packet version header. Without this special function BEAM works fine
 %% but hipe thinks it received a bad version header.
 read(This, ui32) ->
-    case read(This, 4) of
+    case read_data(This, 4) of
         {ok, <<Val:32/integer-unsigned-big, _/binary>>} -> {ok, Val};
         Else -> Else
     end;
 
 read(This, i64) ->
-    case read(This, 8) of
+    case read_data(This, 8) of
         {ok, <<Val:64/integer-signed-big, _/binary>>} -> {ok, Val};
         Else -> Else
     end;
 
 read(This, double) ->
-    case read(This, 8) of
+    case read_data(This, 8) of
         {ok, <<Val:64/float-signed-big, _/binary>>} -> {ok, Val};
         Else -> Else
     end;
@@ -293,10 +293,11 @@ read(This, double) ->
 % returns a binary directly, call binary_to_list if necessary
 read(This, string) ->
     {ok, Sz}  = read(This, i32),
-    {ok, Bin} = read(This, Sz);
+    {ok, Bin} = read_data(This, Sz).
 
-read(This, 0) -> {ok, <<>>};
-read(This, Len) when is_integer(Len), Len >= 0 ->
+-spec read_data(#binary_protocol{}, non_neg_integer()) -> {ok, binary()} | {error, _Reason}.
+read_data(This, 0) -> {ok, <<>>};
+read_data(This, Len) when is_integer(Len), Len >= 0 ->
     thrift_transport:read(This#binary_protocol.transport, Len).
 
 

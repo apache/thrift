@@ -28,7 +28,6 @@
 -spec write(state(), term()) -> ok | {error, _Reason}.
 
 -spec read
-        (state(), non_neg_integer()) ->  {ok, binary()}     | {error, _Reason};
         (state(), tprot_empty_tag()) ->   ok                | {error, _Reason};
         (state(), tprot_header_tag()) -> tprot_header_val() | {error, _Reason};
         (state(), tprot_data_tag()) ->   {ok, term()}       | {error, _Reason}.
