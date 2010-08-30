@@ -24,7 +24,7 @@
 %% API
 -export([start_link/2, start_link/3, start_link/4,
          start/3, start/4,
-         call/3, send_call/3, close/1]).
+         call/3, cast/3, send_call/3, close/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
