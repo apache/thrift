@@ -49,10 +49,11 @@ new(Module, Data) when is_atom(Module) ->
     {ok, #protocol{module = Module,
                    data = Data}}.
 
--spec flush_transport(#protocol{}) -> ok.
-flush_transport(#protocol{module = Module,
-                          data = Data}) ->
-    Module:flush_transport(Data).
+-spec flush_transport(#protocol{}) -> {#protocol{}, ok}.
+flush_transport(Proto = #protocol{module = Module,
+                                  data = Data}) ->
+    {NewData, Result} = Module:flush_transport(Data),
+    {Proto#protocol{data = NewData}, Result}.
 
 -spec close_transport(#protocol{}) -> ok.
 close_transport(#protocol{module = Module,
@@ -292,16 +293,16 @@ skip_list_loop(Proto, Map = #protocol_list_begin{etype = Etype,
 %%
 %% Description:
 %%--------------------------------------------------------------------
--spec write(#protocol{}, term()) -> ok | {error, _Reason}.
+-spec write(#protocol{}, term()) -> {#protocol{}, ok | {error, _Reason}}.
 
-write(Proto, {{struct, StructDef}, Data})
+write(Proto0, {{struct, StructDef}, Data})
   when is_list(StructDef), is_tuple(Data), length(StructDef) == size(Data) - 1 ->
 
     [StructName | Elems] = tuple_to_list(Data),
-    ok = write(Proto, #protocol_struct_begin{name = StructName}),
-    ok = struct_write_loop(Proto, StructDef, Elems),
-    ok = write(Proto, struct_end),
-    ok;
+    {Proto1, ok} = write(Proto0, #protocol_struct_begin{name = StructName}),
+    {Proto2, ok} = struct_write_loop(Proto1, StructDef, Elems),
+    {Proto3, ok} = write(Proto2, struct_end),
+    {Proto3, ok};
 
 write(Proto, {{struct, {Module, StructureName}}, Data})
   when is_atom(Module),
@@ -310,70 +311,74 @@ write(Proto, {{struct, {Module, StructureName}}, Data})
     StructType = Module:struct_info(StructureName),
     write(Proto, {Module:struct_info(StructureName), Data});
 
-write(Proto, {{list, Type}, Data})
+write(Proto0, {{list, Type}, Data})
   when is_list(Data) ->
-    ok = write(Proto,
+    {Proto1, ok} = write(Proto0,
                #protocol_list_begin{
                  etype = term_to_typeid(Type),
                  size = length(Data)
                 }),
-    lists:foreach(fun(Elem) ->
-                          ok = write(Proto, {Type, Elem})
-                  end,
-                  Data),
-    ok = write(Proto, list_end),
-    ok;
+    Proto2 = lists:foldl(fun(Elem, ProtoIn) ->
+                                 {ProtoOut, ok} = write(ProtoIn, {Type, Elem}),
+                                 ProtoOut
+                         end,
+                         Proto1,
+                         Data),
+    {Proto3, ok} = write(Proto2, list_end),
+    {Proto3, ok};
 
-write(Proto, {{map, KeyType, ValType}, Data}) ->
-    ok = write(Proto,
-               #protocol_map_begin{
-                 ktype = term_to_typeid(KeyType),
-                 vtype = term_to_typeid(ValType),
-                 size  = dict:size(Data)
-                }),
-    dict:fold(fun(KeyData, ValData, _Acc) ->
-                      ok = write(Proto, {KeyType, KeyData}),
-                      ok = write(Proto, {ValType, ValData})
-              end,
-              _AccO = ok,
-              Data),
-    ok = write(Proto, map_end),
-    ok;
+write(Proto0, {{map, KeyType, ValType}, Data}) ->
+    {Proto1, ok} = write(Proto0,
+                         #protocol_map_begin{
+                           ktype = term_to_typeid(KeyType),
+                           vtype = term_to_typeid(ValType),
+                           size  = dict:size(Data)
+                          }),
+    Proto2 = dict:fold(fun(KeyData, ValData, ProtoS0) ->
+                               {ProtoS1, ok} = write(ProtoS0, {KeyType, KeyData}),
+                               {ProtoS2, ok} = write(ProtoS1, {ValType, ValData}),
+                               ProtoS2
+                       end,
+                       Proto1,
+                       Data),
+    {Proto3, ok} = write(Proto2, map_end),
+    {Proto3, ok};
 
-write(Proto, {{set, Type}, Data}) ->
+write(Proto0, {{set, Type}, Data}) ->
     true = sets:is_set(Data),
-    ok = write(Proto,
-               #protocol_set_begin{
-                 etype = term_to_typeid(Type),
-                 size  = sets:size(Data)
-                }),
-    sets:fold(fun(Elem, _Acc) ->
-                      ok = write(Proto, {Type, Elem})
-              end,
-              _Acc0 = ok,
-              Data),
-    ok = write(Proto, set_end),
-    ok;
+    {Proto1, ok} = write(Proto0,
+                         #protocol_set_begin{
+                           etype = term_to_typeid(Type),
+                           size  = sets:size(Data)
+                          }),
+    Proto2 = sets:fold(fun(Elem, ProtoIn) ->
+                               {ProtoOut, ok} = write(ProtoIn, {Type, Elem}),
+                               ProtoOut
+                       end,
+                       Proto1,
+                       Data),
+    {Proto3, ok} = write(Proto2, set_end),
+    {Proto3, ok};
 
-write(#protocol{module = Module,
-                data = ModuleData}, Data) ->
-    Module:write(ModuleData, Data).
+write(Proto = #protocol{module = Module,
+                        data = ModuleData}, Data) ->
+    {NewData, Result} = Module:write(ModuleData, Data),
+    {Proto#protocol{data = NewData}, Result}.
 
-struct_write_loop(Proto, [{Fid, Type} | RestStructDef], [Data | RestData]) ->
-    case Data of
-        undefined ->
-            % null fields are skipped in response
-            skip;
-        _ ->
-            ok = write(Proto,
-                       #protocol_field_begin{
-                         type = term_to_typeid(Type),
-                         id = Fid
-                        }),
-            ok = write(Proto, {Type, Data}),
-            ok = write(Proto, field_end)
-    end,
-    struct_write_loop(Proto, RestStructDef, RestData);
+struct_write_loop(Proto0, [{Fid, Type} | RestStructDef], [Data | RestData]) ->
+    NewProto = case Data of
+                   undefined ->
+                       Proto0; % null fields are skipped in response
+                   _ ->
+                       {Proto1, ok} = write(Proto0,
+                                           #protocol_field_begin{
+                                             type = term_to_typeid(Type),
+                                             id = Fid
+                                            }),
+                       {Proto2, ok} = write(Proto1, {Type, Data}),
+                       {Proto3, ok} = write(Proto2, field_end),
+                       Proto3
+               end,
+    struct_write_loop(NewProto, RestStructDef, RestData);
 struct_write_loop(Proto, [], []) ->
-    ok = write(Proto, field_stop),
-    ok.
+    write(Proto, field_stop).

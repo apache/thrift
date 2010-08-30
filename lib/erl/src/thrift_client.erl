@@ -62,7 +62,7 @@ close(#tclient{protocol=Protocol}) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 -spec send_function_call(#tclient{}, atom(), list()) -> {#tclient{}, ok | {error, term()}}.
-send_function_call(Client = #tclient{protocol = Proto,
+send_function_call(Client = #tclient{protocol = Proto0,
                                      service  = Service,
                                      seqid    = SeqId},
                    Function,
@@ -77,11 +77,11 @@ send_function_call(Client = #tclient{protocol = Proto,
             Begin = #protocol_message_begin{name = atom_to_list(Function),
                                             type = ?tMessageType_CALL,
                                             seqid = SeqId},
-            ok = thrift_protocol:write(Proto, Begin),
-            ok = thrift_protocol:write(Proto, {Params, list_to_tuple([Function | Args])}),
-            ok = thrift_protocol:write(Proto, message_end),
-            ok = thrift_protocol:flush_transport(Proto),
-            {Client, ok}
+            {Proto1, ok} = thrift_protocol:write(Proto0, Begin),
+            {Proto2, ok} = thrift_protocol:write(Proto1, {Params, list_to_tuple([Function | Args])}),
+            {Proto3, ok} = thrift_protocol:write(Proto2, message_end),
+            {Proto4, ok} = thrift_protocol:flush_transport(Proto3),
+            {Client#tclient{protocol = Proto4}, ok}
     end.
 
 -spec receive_function_result(#tclient{}, atom()) -> {#tclient{}, {ok, term()} | {error, term()}}.
