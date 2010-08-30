@@ -158,8 +158,16 @@ read(IProto, {set, Type}) ->
     ok = read(IProto, set_end),
     {ok, sets:from_list(List)};
 
-read(#protocol{module = Module,
-               data = ModuleData}, ProtocolType) ->
+read(Protocol, ProtocolType) ->
+    read_specific(Protocol, ProtocolType).
+
+%% NOTE: Keep this in sync with thrift_protocol_impl:read
+-spec read_specific
+        (#protocol{}, tprot_empty_tag()) ->   ok                | {error, _Reason};
+        (#protocol{}, tprot_header_tag()) -> tprot_header_val() | {error, _Reason};
+        (#protocol{}, tprot_data_tag()) ->   {ok, term()}       | {error, _Reason}.
+read_specific(#protocol{module = Module,
+                        data = ModuleData}, ProtocolType) ->
     Module:read(ModuleData, ProtocolType).
 
 read_struct_loop(IProto, SDict, RTuple) ->
