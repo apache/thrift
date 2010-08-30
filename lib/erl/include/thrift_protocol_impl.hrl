@@ -22,16 +22,16 @@
 -ifndef(THRIFT_PROTOCOL_IMPL_INCLUDED).
 -define(THRIFT_PROTOCOL_IMPL_INCLUDED, true).
 
--spec flush_transport(state()) -> ok.
--spec close_transport(state()) -> ok.
+-spec flush_transport(state()) -> {state(), ok | {error, _Reason}}.
+-spec close_transport(state()) -> {state(), ok | {error, _Reason}}.
 
--spec write(state(), term()) -> ok | {error, _Reason}.
+-spec write(state(), term()) -> {state(), ok | {error, _Reason}}.
 
 %% NOTE: Keep this in sync with thrift_protocol:read and read_specific.
 -spec read
-        (state(), tprot_empty_tag()) ->   ok                | {error, _Reason};
-        (state(), tprot_header_tag()) -> tprot_header_val() | {error, _Reason};
-        (state(), tprot_data_tag()) ->   {ok, term()}       | {error, _Reason}.
+        (state(), tprot_empty_tag()) ->  {state(),  ok                | {error, _Reason}};
+        (state(), tprot_header_tag()) -> {state(), tprot_header_val() | {error, _Reason}};
+        (state(), tprot_data_tag()) ->   {state(), {ok, term()}       | {error, _Reason}}.
 
 
 -endif.
