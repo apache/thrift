@@ -124,12 +124,12 @@ handle_function(testInsanity, {Insanity}) when is_record(Insanity, insanity) ->
                                {?thriftTest_THREE, Crazy}]),
 
     SecondMap = dict:from_list([{?thriftTest_SIX, Looney}]),
-    
+
     Insane = dict:from_list([{1, FirstMap},
                              {2, SecondMap}]),
-    
+
     io:format("Return = ~p~n", [Insane]),
-    
+
     {reply, Insane};
 
 handle_function(testMulti, Args = {Arg0, Arg1, Arg2, _Arg3, Arg4, Arg5})
