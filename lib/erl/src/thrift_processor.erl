@@ -87,7 +87,7 @@ handle_function_catch(State = #thrift_processor{service = Service},
             ok;
 
         {throw, Exception} when is_tuple(Exception), size(Exception) > 0 ->
-            error_logger:warning_msg("~p threw exception: ~p~n", [Function, Exception]),
+            %error_logger:warning_msg("~p threw exception: ~p~n", [Function, Exception]),
             handle_exception(State, Function, Exception),
             ok;   % we still want to accept more requests from this client
 
