@@ -281,7 +281,9 @@ AC_CHECK_FUNCS([clock_gettime])
 AC_CHECK_FUNCS([sched_get_priority_min])
 AC_CHECK_FUNCS([sched_get_priority_max])
 
-AX_SIGNED_RIGHT_SHIFT
+if test "$cross_compiling" = "no" ; then
+  AX_SIGNED_RIGHT_SHIFT
+fi
 
 AX_THRIFT_GEN(cpp, [C++], yes)
 AM_CONDITIONAL([THRIFT_GEN_cpp], [test "$ax_thrift_gen_cpp" = "yes"])
