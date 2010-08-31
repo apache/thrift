@@ -22,6 +22,9 @@ AC_DEFUN([AX_THRIFT_GEN],
                         [ax_thrift_gen_$1="$enableval"],
                         [ax_thrift_gen_$1=$3]
                         )
+          if test "x$ax_thrift_gen_$1" = "xyes" ; then
+            thrift_generators="$thrift_generators $1"
+          fi
           dnl I'd like to run the AM_CONDITIONAL here, but automake likes
           dnl all AM_CONDITIONALs to be nice and explicit in configure.ac.
           dnl AM_CONDITIONAL([THRIFT_GEN_$1], [test "$ax_thrift_gen_$1" = "yes"])
@@ -34,6 +37,7 @@ AC_DEFUN([AX_THRIFT_LIB],
                       [with_$1="$withval"],
                       [with_$1=$3]
                       )
+          have_$1=no
           dnl What we do here is going to vary from library to library,
           dnl so we can't really generalize (yet!).
          ])
