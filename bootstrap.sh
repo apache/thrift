@@ -22,15 +22,21 @@
 ./cleanup.sh
 (cd lib/php/src/ext/thrift_protocol && phpize)
 
-autoscan || exit 1
-aclocal -I ./aclocal || exit 1
-autoheader || exit 1
+set -e
 
+# libtoolize is called "glibtoolize" on OSX.
 if libtoolize --version 1 >/dev/null 2>/dev/null; then
-  libtoolize --copy --automake || exit 1
+  LIBTOOLIZE=libtoolize
 elif glibtoolize --version 1 >/dev/null 2>/dev/null; then
-  glibtoolize --copy --automake || exit 1
+  LIBTOOLIZE=glibtoolize
+else
+  echo >&2 "Couldn't find libtoolize!"
+  exit 1
 fi
 
+autoscan
+$LIBTOOLIZE --copy --automake
+aclocal -I ./aclocal
+autoheader
 autoconf
-automake -ac --add-missing --foreign || exit 1
+automake --copy --add-missing --foreign
