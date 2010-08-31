@@ -76,15 +76,22 @@ AC_PROG_MKDIR_P
 AC_LANG([C++])
 AX_BOOST_BASE([1.33.1])
 
-have_cpp=yes
+AX_THRIFT_LIB(cpp, [C++], yes)
+have_cpp=no
+if test "$with_cpp" = "yes";  then
+  # Just set this to yes for now, since there is no way
+  # to get through configure without the C++ requirements.
+  have_cpp="yes"
 
-AX_LIB_EVENT([1.0])
-have_libevent=$success
-AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$success" = "yes"])
+  AX_LIB_EVENT([1.0])
+  have_libevent=$success
 
-AX_LIB_ZLIB([1.2.3])
-have_zlib=$success
-AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$success" = "yes"])
+  AX_LIB_ZLIB([1.2.3])
+  have_zlib=$success
+fi
+AM_CONDITIONAL([WITH_CPP], [test "$have_cpp" = "yes"])
+AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$have_libevent" = "yes"])
+AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$have_zlib" = "yes"])
 
 AX_THRIFT_LIB(csharp, [C#], yes)
 if test "$with_csharp" = "yes";  then
@@ -342,6 +349,7 @@ echo "$PACKAGE $VERSION"
 echo
 echo "Building code generators ..... :$thrift_generators"
 echo
+echo "Building C++ Library ......... : $have_cpp"
 echo "Building Java Library ........ : $have_java"
 echo "Building C# Library .......... : $have_csharp"
 echo "Building Python Library ...... : $have_python"

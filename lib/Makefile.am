@@ -17,8 +17,11 @@
 # under the License.
 #
 
-SUBDIRS = \
-  cpp
+SUBDIRS =
+
+if WITH_CPP
+SUBDIRS += cpp
+endif
 
 if WITH_MONO
 SUBDIRS += csharp
