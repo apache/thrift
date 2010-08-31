@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 #include <string>
 #include <algorithm>
 #include <sys/types.h>
