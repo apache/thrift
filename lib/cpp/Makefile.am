@@ -17,6 +17,8 @@
 # under the License.
 #
 
+SUBDIRS = . test
+
 pkgconfigdir = $(libdir)/pkgconfig
 
 lib_LTLIBRARIES = libthrift.la
