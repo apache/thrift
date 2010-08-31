@@ -74,14 +74,14 @@ AC_PROG_LN_S
 AC_PROG_MKDIR_P
 
 AC_LANG([C++])
-AX_BOOST_BASE([1.33.1])
 
 AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
 if test "$with_cpp" = "yes";  then
-  # Just set this to yes for now, since there is no way
-  # to get through configure without the C++ requirements.
-  have_cpp="yes"
+  AX_BOOST_BASE([1.33.1])
+  if test "x$succeeded" == "xyes" ; then
+    have_cpp="yes"
+  fi
 
   AX_LIB_EVENT([1.0])
   have_libevent=$success

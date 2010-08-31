@@ -24,6 +24,7 @@
 # LAST MODIFICATION
 #
 #   2007-07-28
+#   Modified for use in Thrift
 #
 # COPYLEFT
 #
@@ -181,9 +182,9 @@ if test "x$want_boost" = "xyes"; then
 
 	if test "$succeeded" != "yes" ; then
 		if test "$_version" = "0" ; then
-			AC_MSG_ERROR([[We could not detect the boost libraries (version $boost_lib_version_req_shorten or higher). If you have a staged boost library (still not installed) please specify \$BOOST_ROOT in your environment and do not give a PATH to --with-boost option.  If you are sure you have boost installed, then check your version number looking in <boost/version.hpp>. See http://randspringer.de/boost for more documentation.]])
+			AC_MSG_WARN([[We could not detect the boost libraries (version $boost_lib_version_req_shorten or higher). If you have a staged boost library (still not installed) please specify \$BOOST_ROOT in your environment and do not give a PATH to --with-boost option.  If you are sure you have boost installed, then check your version number looking in <boost/version.hpp>. See http://randspringer.de/boost for more documentation.]])
 		else
-			AC_MSG_NOTICE([Your boost libraries seems to old (version $_version).])
+			AC_MSG_WARN([Your boost libraries seems to old (version $_version).])
 		fi
 	else
 		AC_SUBST(BOOST_CPPFLAGS)

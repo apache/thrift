@@ -108,8 +108,8 @@ if THRIFT_GEN_js
 thrift_SOURCES += src/generate/t_js_generator.cc
 endif
 
-thrift_CXXFLAGS = -Wall -I$(srcdir)/src $(BOOST_CPPFLAGS)
-thrift_LDFLAGS = -Wall $(BOOST_LDFLAGS)
+thrift_CXXFLAGS = -Wall -I$(srcdir)/src
+thrift_LDFLAGS = -Wall
 
 thrift_LDADD = @LEXLIB@
 
