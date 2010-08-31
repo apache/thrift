@@ -17,8 +17,6 @@
 # under the License.
 #
 
-ACLOCAL_AMFLAGS = -I ./aclocal
-
 pkgconfigdir = $(libdir)/pkgconfig
 
 lib_LTLIBRARIES = libthrift.la
