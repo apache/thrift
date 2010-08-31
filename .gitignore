@@ -84,12 +84,6 @@
 /test/OptionalRequiredTest
 /test/ReflectionTest
 /test/gen-cpp
-/test/java/Makefile
-/test/java/Makefile.am
-/test/java/Makefile.in
-/test/java/build
-/test/java/gen-java
-/test/java/thrifttest.jar
 /test/py/Makefile
 /test/py/Makefile.in
 /test/py/gen-py
