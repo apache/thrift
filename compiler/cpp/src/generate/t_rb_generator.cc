@@ -25,13 +25,12 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sstream>
-
-#include <boost/tokenizer.hpp>
 
 #include "t_oop_generator.h"
 #include "platform.h"
@@ -174,11 +173,20 @@ class t_rb_generator : public t_oop_generator {
 
   std::vector<std::string> ruby_modules(t_program* p) {
     std::string ns = p->get_namespace("rb");
-    boost::tokenizer<> tok(ns);
     std::vector<std::string> modules;
+    if (ns.empty()) {
+      return modules;
+    }
 
-    for(boost::tokenizer<>::iterator beg=tok.begin(); beg != tok.end(); ++beg) {
-      modules.push_back(capitalize(*beg));
+    std::string::iterator pos = ns.begin();
+    while (true) {
+      std::string::iterator delim = std::find(pos, ns.end(), '.');
+      modules.push_back(capitalize(std::string(pos, delim)));
+      pos = delim;
+      if (pos == ns.end()) {
+        break;
+      }
+      ++pos;
     }
 
     return modules;
