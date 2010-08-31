@@ -22,8 +22,8 @@
 
 #include <map>
 #include <string>
+#include <sstream>
 
-#include <boost/lexical_cast.hpp>
 #include "t_type.h"
 #include "t_service.h"
 #include "t_const.h"
@@ -157,7 +157,9 @@ class t_scope {
       t_enum* tenum = (t_enum*)ttype;
       t_enum_value* enum_value = tenum->get_constant_by_value(const_val->get_integer());
       if (enum_value == NULL) {
-        throw "Couldn't find a named value in enum " + tenum->get_name() + " for value " + boost::lexical_cast<std::string>(const_val->get_integer());
+        std::ostringstream valstm;
+        valstm << const_val->get_integer();
+        throw "Couldn't find a named value in enum " + tenum->get_name() + " for value " + valstm.str();
       }
       const_val->set_identifier(enum_value->get_name());
       const_val->set_enum(tenum);

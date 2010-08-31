@@ -21,7 +21,7 @@
 #define T_FIELD_H
 
 #include <string>
-#include <boost/lexical_cast.hpp>
+#include <sstream>
 
 #include "t_doc.h"
 
@@ -117,7 +117,9 @@ class t_field : public t_doc {
   // This is not the same function as t_type::get_fingerprint_material,
   // but it does the same thing.
   std::string get_fingerprint_material() const {
-    return boost::lexical_cast<std::string>(key_) + ":" +
+    std::ostringstream keystm;
+    keystm << key_;
+    return keystm.str() + ":" +
       ((req_ == T_OPTIONAL) ? "opt-" : "") +
       type_->get_fingerprint_material();
   }
