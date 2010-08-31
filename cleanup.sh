@@ -32,6 +32,11 @@ INSTALL \
 Makefile \
 Makefile.in \
 Makefile.orig \
+aclocal/libtool.m4 \
+aclocal/ltoptions.m4 \
+aclocal/ltsugar.m4 \
+aclocal/ltversion.m4 \
+aclocal/lt~obsolete.m4 \
 aclocal.m4 \
 autom4te.cache \
 autoscan.log \

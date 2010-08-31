@@ -1,5 +1,10 @@
 /Makefile
 /Makefile.in
+/aclocal/libtool.m4
+/aclocal/ltoptions.m4
+/aclocal/ltsugar.m4
+/aclocal/ltversion.m4
+/aclocal/lt~obsolete.m4
 /aclocal.m4
 /autom4te.cache
 /autoscan.log
@@ -55,6 +60,10 @@
 /lib/py/build
 /lib/rb/Makefile
 /lib/rb/Makefile.in
+/lib/php/Makefile
+/lib/php/Makefile.in
+/lib/erl/Makefile
+/lib/erl/Makefile.in
 /libtool
 /ltmain.sh
 /missing
