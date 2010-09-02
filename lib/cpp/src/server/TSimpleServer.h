@@ -58,6 +58,7 @@ class TSimpleServer : public TServer {
 
   void stop() {
     stop_ = true;
+    serverTransport_->interrupt();
   }
 
  protected:
