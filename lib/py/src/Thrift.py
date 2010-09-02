@@ -85,15 +85,15 @@ class TApplicationException(TException):
   def __str__(self):
     if self.message:
       return self.message
-    elif self.type == UNKNOWN_METHOD:
+    elif self.type == self.UNKNOWN_METHOD:
       return 'Unknown method'
-    elif self.type == INVALID_MESSAGE_TYPE:
+    elif self.type == self.INVALID_MESSAGE_TYPE:
       return 'Invalid message type'
-    elif self.type == WRONG_METHOD_NAME:
+    elif self.type == self.WRONG_METHOD_NAME:
       return 'Wrong method name'
-    elif self.type == BAD_SEQUENCE_ID:
+    elif self.type == self.BAD_SEQUENCE_ID:
       return 'Bad sequence ID'
-    elif self.type == MISSING_RESULT:
+    elif self.type == self.MISSING_RESULT:
       return 'Missing result'
     else:
       return 'Default (unknown) TApplicationException'
