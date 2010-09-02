@@ -521,6 +521,29 @@ void TConnection::checkIdleBufferMemLimit(size_t limit) {
   }
 }
 
+TNonblockingServer::~TNonblockingServer() {
+  // TODO: We currently leak any active TConnection objects.
+  // Since we're shutting down and destroying the event_base, the TConnection
+  // objects will never receive any additional callbacks.  (And even if they
+  // did, it would be bad, since they keep a pointer around to the server,
+  // which is being destroyed.)
+
+  // Clean up unused TConnection objects in connectionStack_
+  while (!connectionStack_.empty()) {
+    TConnection* connection = connectionStack_.top();
+    connectionStack_.pop();
+    delete connection;
+  }
+
+  if (eventBase_) {
+    event_base_free(eventBase_);
+  }
+
+  if (serverSocket_ >= 0) {
+    close(serverSocket_);
+  }
+}
+
 /**
  * Creates a new connection either by reusing an object off the stack or
  * by allocating a new one entirely

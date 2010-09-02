@@ -243,7 +243,7 @@ class TNonblockingServer : public TServer {
     setThreadManager(threadManager);
   }
 
-  ~TNonblockingServer() {}
+  ~TNonblockingServer();
 
   void setThreadManager(boost::shared_ptr<ThreadManager> threadManager);
 
