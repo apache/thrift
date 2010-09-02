@@ -129,14 +129,19 @@ class TBufferedTransportFactory:
 
 class TBufferedTransport(TTransportBase,CReadableTransport):
 
-  """Class that wraps another transport and buffers its I/O."""
+  """Class that wraps another transport and buffers its I/O.
+
+  The implementation uses a (configurable) fixed-size read buffer
+  but buffers all writes until a flush is performed.
+  """
 
   DEFAULT_BUFFER = 4096
 
-  def __init__(self, trans):
+  def __init__(self, trans, rbuf_size = DEFAULT_BUFFER):
     self.__trans = trans
     self.__wbuf = StringIO()
     self.__rbuf = StringIO("")
+    self.__rbuf_size = rbuf_size
 
   def isOpen(self):
     return self.__trans.isOpen()
@@ -152,7 +157,7 @@ class TBufferedTransport(TTransportBase,CReadableTransport):
     if len(ret) != 0:
       return ret
 
-    self.__rbuf = StringIO(self.__trans.read(max(sz, self.DEFAULT_BUFFER)))
+    self.__rbuf = StringIO(self.__trans.read(max(sz, self.__rbuf_size)))
     return self.__rbuf.read(sz)
 
   def write(self, buf):
@@ -172,9 +177,9 @@ class TBufferedTransport(TTransportBase,CReadableTransport):
 
   def cstringio_refill(self, partialread, reqlen):
     retstring = partialread
-    if reqlen < self.DEFAULT_BUFFER:
+    if reqlen < self.__rbuf_size:
       # try to make a read of as much as we can.
-      retstring += self.__trans.read(self.DEFAULT_BUFFER)
+      retstring += self.__trans.read(self.__rbuf_size)
 
     # but make sure we do read reqlen bytes.
     if len(retstring) < reqlen:
