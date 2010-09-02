@@ -54,6 +54,8 @@ class THttpClient(TTransportBase):
         self.port = parsed.port or httplib.HTTPS_PORT
       self.host = parsed.hostname
       self.path = parsed.path
+      if parsed.query:
+        self.path += '?%s' % parsed.query
     self.__wbuf = StringIO()
     self.__http = None
     self.__timeout = None

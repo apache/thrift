@@ -1352,6 +1352,8 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     "  else:" << endl <<
     "    port = 80" << endl <<
     "  uri = url[2]" << endl <<
+    "  if url[4]:" << endl <<
+    "    uri += '?%s' % url[4]" << endl <<
     "  http = True" << endl <<
     "  argi += 2" << endl <<
     endl <<
@@ -1407,6 +1409,10 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
 
     f_remote << endl;
   }
+  f_remote << "else:" << endl;
+  f_remote << "  print 'Unrecognized method %s' % cmd" << endl;
+  f_remote << "  sys.exit(1)" << endl;
+  f_remote << endl;
 
   f_remote << "transport.close()" << endl;
 
