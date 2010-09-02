@@ -90,6 +90,7 @@ class t_py_generator : public t_generator {
   void generate_py_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool is_result=false);
   void generate_py_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_py_struct_writer(std::ofstream& out, t_struct* tstruct);
+  void generate_py_struct_required_validator(std::ofstream& out, t_struct* tstruct);
   void generate_py_function_helpers(t_function* tfunction);
 
   /**
@@ -323,7 +324,7 @@ string t_py_generator::render_includes() {
 string t_py_generator::render_fastbinary_includes() {
   return
     "from thrift.transport import TTransport\n"
-    "from thrift.protocol import TBinaryProtocol\n"
+    "from thrift.protocol import TBinaryProtocol, TProtocol\n"
     "try:\n"
     "  from thrift.protocol import fastbinary\n"
     "except:\n"
@@ -853,9 +854,35 @@ void t_py_generator::generate_py_struct_writer(ofstream& out,
     indent() << "oprot.writeFieldStop()" << endl <<
     indent() << "oprot.writeStructEnd()" << endl;
 
+  generate_py_struct_required_validator(out, tstruct);
+
   indent_down();
   out <<
     endl;
+}
+
+void t_py_generator::generate_py_struct_required_validator(ofstream& out,
+                                               t_struct* tstruct) {
+  indent(out) << "def validate(self):" << endl;
+  indent_up();
+
+  const vector<t_field*>& fields = tstruct->get_members();
+
+  if (fields.size() > 0) {
+    vector<t_field*>::const_iterator f_iter;
+
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      t_field* field = (*f_iter);
+      if (field->get_req() == t_field::T_REQUIRED) {
+        indent(out) << "if self." << field->get_name() << " is None:" << endl;
+        indent(out) << "  raise TProtocol.TProtocolException(message='Required field " <<
+          field->get_name() << " is unset!')" << endl;
+      }
+    }
+  }
+
+  indent(out) << "return" << endl << endl;
+  indent_down();
 }
 
 /**
