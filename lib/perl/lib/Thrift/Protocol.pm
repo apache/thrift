@@ -399,8 +399,7 @@ sub skip
         return $result;
     }
 
-
-    return 0;
+    die new Thrift::TException("Type $type not recognised --- corrupt data?");
 
   }
 
@@ -511,8 +510,7 @@ sub skipBinary
         return $result;
     }
 
-    return 0;
-
+    die new Thrift::TException("Type $type not recognised --- corrupt data?");
 }
 
 #
