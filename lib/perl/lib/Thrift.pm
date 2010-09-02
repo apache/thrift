@@ -93,11 +93,11 @@ sub read {
     my $ftype = 0;
     my $fid   = 0;
 
-    $xfer += $input->readStructBegin($fname);
+    $xfer += $input->readStructBegin(\$fname);
 
     while (1)
     {
-        $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+        $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
         if ($ftype == TType::STOP) {
             last; next;
         }
@@ -107,7 +107,7 @@ sub read {
           /1/ && do{
 
               if ($ftype == TType::STRING) {
-                  $xfer += $input->readString($self->{message});
+                  $xfer += $input->readString(\$self->{message});
               } else {
                   $xfer += $input->skip($ftype);
               }
@@ -117,7 +117,7 @@ sub read {
 
           /2/ && do{
               if ($ftype == TType::I32) {
-                  $xfer += $input->readI32($self->{code});
+                  $xfer += $input->readI32(\$self->{code});
               } else {
                   $xfer += $input->skip($ftype);
               }
