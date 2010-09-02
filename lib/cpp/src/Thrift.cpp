@@ -19,6 +19,7 @@
 
 #include <Thrift.h>
 #include <cstring>
+#include <cstdlib>
 #include <boost/lexical_cast.hpp>
 #include <stdarg.h>
 #include <stdio.h>
