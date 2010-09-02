@@ -102,7 +102,11 @@ void t_generator::generate_docstring_comment(ofstream& out,
   while (!docs.eof()) {
     char line[1024];
     docs.getline(line, 1024);
-    if (strlen(line) > 0 || !docs.eof()) {  // skip the empty last line
+
+    // Just prnt a newline when the line & prefix are empty.
+    if (strlen(line) == 0 && line_prefix == "" && !docs.eof()) {
+        out << std::endl;
+    } else if (strlen(line) > 0 || !docs.eof()) {  // skip the empty last line
       indent(out) << line_prefix << line << std::endl;
     }
   }
