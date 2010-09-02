@@ -280,6 +280,13 @@ Header:
         g_program->set_namespace($2, $3);
       }
     }
+| tok_namespace '*' tok_identifier
+    {
+      pdebug("Header -> tok_namespace * tok_identifier");
+      if (g_parse_mode == PROGRAM) {
+        g_program->set_namespace("*", $3);
+      }
+    }
 /* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
 | tok_cpp_namespace tok_identifier
     {

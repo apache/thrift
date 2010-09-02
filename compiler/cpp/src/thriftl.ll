@@ -342,6 +342,11 @@ literal_begin (['\"])
 }
 
 
+. {
+  /* Catch-all to let us catch "*" in the parser. */
+  return (int) yytext[0];
+}
+
 %%
 
 /* vim: filetype=lex

@@ -189,11 +189,12 @@ class t_program : public t_doc {
   }
 
   std::string get_namespace(std::string language) const {
-    std::map<std::string, std::string>::const_iterator iter = namespaces_.find(language);
-    if (iter == namespaces_.end()) {
-      return std::string();
+    std::map<std::string, std::string>::const_iterator iter;
+    if ((iter = namespaces_.find(language)) != namespaces_.end() ||
+        (iter = namespaces_.find("*"     )) != namespaces_.end()) {
+      return iter->second;
     }
-    return iter->second;
+    return std::string();
   }
 
   // Language specific namespace / packaging
