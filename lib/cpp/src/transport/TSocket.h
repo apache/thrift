@@ -193,13 +193,12 @@ class TSocket : public TTransport {
    */
   static bool getUseLowMinRto();
 
- protected:
   /**
-   * Constructor to create socket from raw UNIX handle. Never called directly
-   * but used by the TServerSocket class.
+   * Constructor to create socket from raw UNIX handle.
    */
   TSocket(int socket);
 
+ protected:
   /** connect, called by open */
   void openConnection(struct addrinfo *res);
 

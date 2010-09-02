@@ -41,13 +41,12 @@ class TTransportException : public apache::thrift::TException {
   enum TTransportExceptionType
   { UNKNOWN = 0
   , NOT_OPEN = 1
-  , ALREADY_OPEN = 2
-  , TIMED_OUT = 3
-  , END_OF_FILE = 4
-  , INTERRUPTED = 5
-  , BAD_ARGS = 6
-  , CORRUPTED_DATA = 7
-  , INTERNAL_ERROR = 8
+  , TIMED_OUT = 2
+  , END_OF_FILE = 3
+  , INTERRUPTED = 4
+  , BAD_ARGS = 5
+  , CORRUPTED_DATA = 6
+  , INTERNAL_ERROR = 7
   };
 
   TTransportException() :
@@ -89,7 +88,6 @@ class TTransportException : public apache::thrift::TException {
       switch (type_) {
         case UNKNOWN        : return "TTransportException: Unknown transport exception";
         case NOT_OPEN       : return "TTransportException: Transport not open";
-        case ALREADY_OPEN   : return "TTransportException: Transport already open";
         case TIMED_OUT      : return "TTransportException: Timed out";
         case END_OF_FILE    : return "TTransportException: End of file";
         case INTERRUPTED    : return "TTransportException: Interrupted";

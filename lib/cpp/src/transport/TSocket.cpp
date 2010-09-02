@@ -127,7 +127,7 @@ bool TSocket::peek() {
 
 void TSocket::openConnection(struct addrinfo *res) {
   if (isOpen()) {
-    throw TTransportException(TTransportException::ALREADY_OPEN);
+    return;
   }
 
   socket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -235,7 +235,7 @@ void TSocket::openConnection(struct addrinfo *res) {
 
 void TSocket::open() {
   if (isOpen()) {
-    throw TTransportException(TTransportException::ALREADY_OPEN);
+    return;
   }
 
   // Validate port number
