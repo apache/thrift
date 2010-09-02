@@ -33,7 +33,6 @@ extern NSString * const kTSockerServer_TransportKey;
 
 
 @interface TSocketServer : NSObject {
-  NSSocketPort * mServerSocket;
   NSFileHandle * mSocketFileHandle;
   id <TProtocolFactory> mInputProtocolFactory;
   id <TProtocolFactory> mOutputProtocolFactory;
