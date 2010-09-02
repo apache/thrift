@@ -212,7 +212,11 @@ void t_html_generator::generate_program() {
   MKDIR(get_out_dir().c_str());
   string fname = get_out_dir() + program_->get_name() + ".html";
   f_out_.open(fname.c_str());
-  f_out_ << "<html><head>" << endl;
+  f_out_ << "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"" << endl;
+  f_out_ << "    \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">" << endl;
+  f_out_ << "<html xmlns=\"http://www.w3.org/1999/xhtml\">" << endl;
+  f_out_ << "<head>" << endl;
+  f_out_ << "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\" />" << endl;
   f_out_ << "<link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"/>"
 	 << endl;
   f_out_ << "<title>Thrift module: " << program_->get_name()
@@ -534,10 +538,12 @@ void t_html_generator::generate_struct(t_struct* tstruct) {
   vector<t_field*> members = tstruct->get_members();
   vector<t_field*>::iterator mem_iter = members.begin();
   f_out_ << "<table>";
-  f_out_ << "<tr><th>Field</th><th>Type</th><th>Description</th><th>Requiredness</th><th>Default value</th></tr>"
+  f_out_ << "<tr><th>Key</th><th>Field</th><th>Type</th><th>Description</th><th>Requiredness</th><th>Default value</th></tr>"
 	 << endl;
   for ( ; mem_iter != members.end(); mem_iter++) {
-    f_out_ << "<tr><td>" << (*mem_iter)->get_name() << "</td><td>";
+    f_out_ << "<tr><td>" << (*mem_iter)->get_key() << "</td><td>";
+    f_out_ << (*mem_iter)->get_name();
+    f_out_ << "</td><td>";
     print_type((*mem_iter)->get_type());
     f_out_ << "</td><td>";
     f_out_ << (*mem_iter)->get_doc();
