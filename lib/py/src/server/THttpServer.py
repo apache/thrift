@@ -29,7 +29,8 @@ class THttpServer(TServer.TServer):
   acting as a mock version of an Apache-based PHP Thrift endpoint."""
 
   def __init__(self, processor, server_address,
-      inputProtocolFactory, outputProtocolFactory = None):
+      inputProtocolFactory, outputProtocolFactory = None,
+      server_class = BaseHTTPServer.HTTPServer):
     """Set up protocol factories and HTTP server.
 
     See BaseHTTPServer for server_address.
@@ -52,12 +53,14 @@ class THttpServer(TServer.TServer):
 
         itrans = TTransport.TFileObjectTransport(self.rfile)
         otrans = TTransport.TFileObjectTransport(self.wfile)
+        itrans = TTransport.TBufferedTransport(itrans, int(self.headers['Content-Length']))
+        otrans = TTransport.TBufferedTransport(otrans)
         iprot = thttpserver.inputProtocolFactory.getProtocol(itrans)
         oprot = thttpserver.outputProtocolFactory.getProtocol(otrans)
         thttpserver.processor.process(iprot, oprot)
         otrans.flush()
 
-    self.httpd = BaseHTTPServer.HTTPServer(server_address, RequestHander)
+    self.httpd = server_class(server_address, RequestHander)
 
   def serve(self):
     self.httpd.serve_forever()
