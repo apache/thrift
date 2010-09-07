@@ -210,16 +210,9 @@ code for the these subcomponents is subject to the terms and
 conditions of the following licenses.
 
 --------------------------------------------------
-The following files are licensed under the MIT License:
-  lib/erl/build/beamver
-  lib/erl/build/buildtargets.mk
-  lib/erl/build/colors.mk
-  lib/erl/build/docs.mk
-  lib/erl/build/mime.types
-  lib/erl/build/otp.mk
-  lib/erl/build/otp_subdir.mk
-  lib/erl/build/raw_test.mk
-  lib/erl/src/Makefile
+Portions of the following files are licensed under the MIT License:
+
+  lib/erl/src/Makefile.am
 
 Please see doc/otp-base-license.txt for the full terms of this license.
 

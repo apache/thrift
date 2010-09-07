@@ -332,6 +332,7 @@ AC_CONFIG_FILES([
   lib/cpp/thrift-z.pc
   lib/csharp/Makefile
   lib/erl/Makefile
+  lib/erl/src/Makefile
   lib/java/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile

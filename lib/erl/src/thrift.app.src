@@ -54,9 +54,6 @@
          % should the TApplicationException serialized back to the client
          % include the erlang backtrace?
          {exceptions_include_traces, true}
-  ]},
-
-  % The Module and Args used to start this application.
-  {mod, {thrift_app, []}}
+  ]}
  ]
 }.
