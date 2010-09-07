@@ -60,4 +60,30 @@ ltmain.sh \
 missing \
 ylwrap \
 if/gen-* \
-test/gen-*
+test/gen-* \
+lib/php/src/ext/thrift_protocol/.deps \
+lib/php/src/ext/thrift_protocol/Makefile \
+lib/php/src/ext/thrift_protocol/Makefile.fragments \
+lib/php/src/ext/thrift_protocol/Makefile.global \
+lib/php/src/ext/thrift_protocol/Makefile.objects \
+lib/php/src/ext/thrift_protocol/acinclude.m4 \
+lib/php/src/ext/thrift_protocol/aclocal.m4 \
+lib/php/src/ext/thrift_protocol/autom4te.cache \
+lib/php/src/ext/thrift_protocol/build \
+lib/php/src/ext/thrift_protocol/config.guess \
+lib/php/src/ext/thrift_protocol/config.h \
+lib/php/src/ext/thrift_protocol/config.h.in \
+lib/php/src/ext/thrift_protocol/config.log \
+lib/php/src/ext/thrift_protocol/config.nice \
+lib/php/src/ext/thrift_protocol/config.status \
+lib/php/src/ext/thrift_protocol/config.sub \
+lib/php/src/ext/thrift_protocol/configure \
+lib/php/src/ext/thrift_protocol/configure.in \
+lib/php/src/ext/thrift_protocol/include \
+lib/php/src/ext/thrift_protocol/install-sh \
+lib/php/src/ext/thrift_protocol/libtool \
+lib/php/src/ext/thrift_protocol/ltmain.sh \
+lib/php/src/ext/thrift_protocol/missing \
+lib/php/src/ext/thrift_protocol/mkinstalldirs \
+lib/php/src/ext/thrift_protocol/modules \
+lib/php/src/ext/thrift_protocol/run-tests.php
