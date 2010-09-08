@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Contains selector thread which transitions method call objects
  */
-@SuppressWarnings("unchecked")
 public class TAsyncClientManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(TAsyncClientManager.class.getName());
 
@@ -60,7 +59,7 @@ public class TAsyncClientManager {
 
   private class SelectThread extends Thread {
     // Selector waits at most SELECT_TIME milliseconds before waking
-    private static final long SELECT_TIME = 200;
+    private static final long SELECT_TIME = 5;
 
     private final Selector selector;
     private volatile boolean running;
@@ -85,14 +84,18 @@ public class TAsyncClientManager {
     public void run() {
       while (running) {
         try {
-          selector.select(SELECT_TIME);
-        } catch (IOException e) {
-          LOGGER.error("Caught IOException in TAsyncClientManager!", e);
-        }
+          try {
+            selector.select(SELECT_TIME);
+          } catch (IOException e) {
+            LOGGER.error("Caught IOException in TAsyncClientManager!", e);
+          }
 
-        transitionMethods();
-        timeoutIdleMethods();
-        startPendingMethods();
+          transitionMethods();
+          timeoutIdleMethods();
+          startPendingMethods();
+        } catch (Throwable throwable) {
+          LOGGER.error("Ignoring uncaught exception in SelectThread", throwable);
+        }
       }
     }
 
@@ -129,10 +132,11 @@ public class TAsyncClientManager {
         TAsyncMethodCall methodCall = iterator.next();
         long clientTimeout = methodCall.getClient().getTimeout();
         long timeElapsed = System.currentTimeMillis() - methodCall.getLastTransitionTime();
+
         if (timeElapsed > clientTimeout) {
           iterator.remove();
-          methodCall.onError(new TimeoutException("Operation " + 
-              methodCall.getClass() + " timed out after " + timeElapsed + 
+          methodCall.onError(new TimeoutException("Operation " +
+              methodCall.getClass() + " timed out after " + timeElapsed +
               " milliseconds."));
         }
       }
@@ -144,8 +148,7 @@ public class TAsyncClientManager {
       while ((methodCall = pendingCalls.poll()) != null) {
         // Catch registration errors. method will catch transition errors and cleanup.
         try {
-          SelectionKey key = methodCall.registerWithSelector(selector);
-          methodCall.transition(key);
+          methodCall.start(selector);
 
           // If timeout specified and first transition went smoothly, add to timeout watch set
           TAsyncClient client = methodCall.getClient();

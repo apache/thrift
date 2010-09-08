@@ -62,7 +62,7 @@ public class TNonblockingServer extends TServer {
     LoggerFactory.getLogger(TNonblockingServer.class.getName());
 
   // Flag for stopping the server
-  private volatile boolean stopped_;
+  private volatile boolean stopped_ = true;
 
   private SelectThread selectThread_;
 
@@ -218,6 +218,7 @@ public class TNonblockingServer extends TServer {
     // start the selector
     try {
       selectThread_ = new SelectThread((TNonblockingServerTransport)serverTransport_);
+      stopped_ = false;
       selectThread_.start();
       return true;
     } catch (IOException e) {
@@ -265,6 +266,10 @@ public class TNonblockingServer extends TServer {
     selectThread_.requestSelectInterestChange(frameBuffer);
   }
 
+  public boolean isStopped() {
+    return selectThread_.isStopped();
+  }
+
   /**
    * The thread that will be doing all the selecting, managing new connections
    * and those that still need to be read.
@@ -288,14 +293,24 @@ public class TNonblockingServer extends TServer {
       serverTransport.registerSelector(selector);
     }
 
+    public boolean isStopped() {
+      return stopped_;
+    }
+
     /**
      * The work loop. Handles both selecting (all IO operations) and managing
      * the selection preferences of all existing connections.
      */
     public void run() {
-      while (!stopped_) {
-        select();
-        processInterestChanges();
+      try {
+        while (!stopped_) {
+          select();
+          processInterestChanges();
+        }
+      } catch (Throwable t) {
+        LOGGER.error("run() exiting due to uncaught error", t);
+      } finally {
+        stopped_ = true;
       }
     }
 

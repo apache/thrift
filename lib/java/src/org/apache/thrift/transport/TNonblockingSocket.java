@@ -23,102 +23,92 @@ package org.apache.thrift.transport;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
+import org.apache.thrift.async.TAsyncMethodCall;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * Socket implementation of the TTransport interface. To be commented soon!
+ * Transport for use with async client.
  */
 public class TNonblockingSocket extends TNonblockingTransport {
 
-  private SocketChannel socketChannel = null;
+  private static final Logger LOGGER = LoggerFactory.getLogger(TNonblockingSocket.class.getName());
 
   /**
-   * Wrapped Socket object
+   * Host and port if passed in, used for lazy non-blocking connect.
    */
-  private Socket socket_ = null;
+  private SocketAddress socketAddress_ = null;
+
+  private final SocketChannel socketChannel_;
+
+  private final Socket socket_;
+
+  public TNonblockingSocket(String host, int port) throws IOException {
+    this(host, port, 0);
+  }
 
   /**
-   * Socket timeout
-   */
-  private int timeout_ = 0;
-
-  /**
-   * Create a new nonblocking socket transport connected to host:port.
+   * Create a new nonblocking socket transport that will be connected to host:port.
    * @param host
    * @param port
    * @throws TTransportException
    * @throws IOException
    */
-  public TNonblockingSocket(String host, int port) throws TTransportException, IOException {
-    this(SocketChannel.open(new InetSocketAddress(host, port)));
+  public TNonblockingSocket(String host, int port, int timeout) throws IOException {
+    this(SocketChannel.open(), timeout);
+    socketAddress_ = new InetSocketAddress(host, port);
   }
 
   /**
    * Constructor that takes an already created socket.
    *
    * @param socketChannel Already created SocketChannel object
-   * @throws TTransportException if there is an error setting up the streams
+   * @throws IOException if there is an error setting up the streams
    */
-  public TNonblockingSocket(SocketChannel socketChannel) throws TTransportException {
-    try {
-      // make it a nonblocking channel
-      socketChannel.configureBlocking(false);
-    } catch (IOException e) {
-      throw new TTransportException(e);
-    }
+  public TNonblockingSocket(SocketChannel socketChannel) throws IOException {
+    this(socketChannel, 0);
+    if (!socketChannel.isConnected()) throw new IOException("Socket must already be connected");
+  }
 
-    this.socketChannel = socketChannel;
-    this.socket_ = socketChannel.socket();
-    try {
-      socket_.setSoLinger(false, 0);
-      socket_.setTcpNoDelay(true);
-    } catch (SocketException sx) {
-      sx.printStackTrace();
-    }
+  private TNonblockingSocket(SocketChannel socketChannel, int timeout) throws IOException {
+    socketChannel_ = socketChannel;
+    socket_ = socketChannel.socket();
+
+    // make it a nonblocking channel
+    socketChannel.configureBlocking(false);
+    socket_.setSoLinger(false, 0);
+    socket_.setTcpNoDelay(true);
+    setTimeout(timeout);
   }
 
   /**
-   * Register this socket with the specified selector for both read and write
-   * operations.
+   * Register the new SocketChannel with our Selector, indicating
+   * we'd like to be notified when it's ready for I/O.
    *
    * @param selector
    * @return the selection key for this socket.
    */
   public SelectionKey registerSelector(Selector selector, int interests) throws IOException {
-    // Register the new SocketChannel with our Selector, indicating
-    // we'd like to be notified when there's data waiting to be read
-    return socketChannel.register(selector, interests);
+    return socketChannel_.register(selector, interests);
   }
 
   /**
-   * Initializes the socket object
-   */
-  private void initSocket() {
-    socket_ = new Socket();
-    try {
-      socket_.setSoLinger(false, 0);
-      socket_.setTcpNoDelay(true);
-      socket_.setSoTimeout(timeout_);
-    } catch (SocketException sx) {
-      sx.printStackTrace();
-    }
-  }
-
-  /**
-   * Sets the socket timeout
+   * Sets the socket timeout, although this implementation never uses blocking operations so it is unused.
    *
    * @param timeout Milliseconds timeout
    */
   public void setTimeout(int timeout) {
-    timeout_ = timeout;
     try {
       socket_.setSoTimeout(timeout);
     } catch (SocketException sx) {
-      sx.printStackTrace();
+      LOGGER.warn("Could not set socket timeout.", sx);
     }
   }
 
@@ -126,9 +116,6 @@ public class TNonblockingSocket extends TNonblockingTransport {
    * Returns a reference to the underlying socket.
    */
   public Socket getSocket() {
-    if (socket_ == null) {
-      initSocket();
-    }
     return socket_;
   }
 
@@ -136,24 +123,21 @@ public class TNonblockingSocket extends TNonblockingTransport {
    * Checks whether the socket is connected.
    */
   public boolean isOpen() {
-    if (socket_ == null) {
-      return false;
-    }
     return socket_.isConnected();
   }
 
   /**
-   * Connects the socket, creating a new socket object if necessary.
+   * Do not call, the implementation provides its own lazy non-blocking connect.
    */
   public void open() throws TTransportException {
-    throw new RuntimeException("Not implemented yet");
+    throw new RuntimeException("open() is not implemented for TNonblockingSocket");
   }
 
   /**
    * Perform a nonblocking read into buffer.
    */
   public int read(ByteBuffer buffer) throws IOException {
-    return socketChannel.read(buffer);
+    return socketChannel_.read(buffer);
   }
 
 
@@ -161,12 +145,12 @@ public class TNonblockingSocket extends TNonblockingTransport {
    * Reads from the underlying input stream if not null.
    */
   public int read(byte[] buf, int off, int len) throws TTransportException {
-    if ((socketChannel.validOps() & SelectionKey.OP_READ) != SelectionKey.OP_READ) {
+    if ((socketChannel_.validOps() & SelectionKey.OP_READ) != SelectionKey.OP_READ) {
       throw new TTransportException(TTransportException.NOT_OPEN,
         "Cannot read from write-only socket channel");
     }
     try {
-      return socketChannel.read(ByteBuffer.wrap(buf, off, len));
+      return socketChannel_.read(ByteBuffer.wrap(buf, off, len));
     } catch (IOException iox) {
       throw new TTransportException(TTransportException.UNKNOWN, iox);
     }
@@ -176,26 +160,26 @@ public class TNonblockingSocket extends TNonblockingTransport {
    * Perform a nonblocking write of the data in buffer;
    */
   public int write(ByteBuffer buffer) throws IOException {
-    return socketChannel.write(buffer);
+    return socketChannel_.write(buffer);
   }
 
   /**
    * Writes to the underlying output stream if not null.
    */
   public void write(byte[] buf, int off, int len) throws TTransportException {
-    if ((socketChannel.validOps() & SelectionKey.OP_WRITE) != SelectionKey.OP_WRITE) {
+    if ((socketChannel_.validOps() & SelectionKey.OP_WRITE) != SelectionKey.OP_WRITE) {
       throw new TTransportException(TTransportException.NOT_OPEN,
         "Cannot write to write-only socket channel");
     }
     try {
-      socketChannel.write(ByteBuffer.wrap(buf, off, len));
+      socketChannel_.write(ByteBuffer.wrap(buf, off, len));
     } catch (IOException iox) {
       throw new TTransportException(TTransportException.UNKNOWN, iox);
     }
   }
 
   /**
-   * Flushes the underlying output stream if not null.
+   * Noop.
    */
   public void flush() throws TTransportException {
     // Not supported by SocketChannel.
@@ -206,10 +190,20 @@ public class TNonblockingSocket extends TNonblockingTransport {
    */
   public void close() {
     try {
-      socketChannel.close();
-    } catch (IOException e) {
-      // silently ignore.
+      socketChannel_.close();
+    } catch (IOException iox) {
+      LOGGER.warn("Could not close socket.", iox);
     }
+  }
+
+  /** {@inheritDoc} */
+  public boolean startConnect() throws IOException {
+    return socketChannel_.connect(socketAddress_);
+  }
+
+  /** {@inheritDoc} */
+  public boolean finishConnect() throws IOException {
+    return socketChannel_.finishConnect();
   }
 
 }
