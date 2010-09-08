@@ -34,7 +34,6 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
@@ -286,7 +285,7 @@ public abstract class ServerTestBase extends TestCase {
 
   public abstract void stopServer() throws Exception;
 
-  public abstract TTransport getTransport() throws Exception;
+  public abstract TTransport getClientTransport(TTransport underlyingTransport) throws Exception;
 
   private void testByte(ThriftTest.Client testClient) throws TException {
     byte i8 = testClient.testByte((byte)1);
@@ -374,12 +373,9 @@ public abstract class ServerTestBase extends TestCase {
 
       startServer(processor, protoFactory);
 
-      TTransport transport;
-
       TSocket socket = new TSocket(HOST, PORT);
       socket.setTimeout(SOCKET_TIMEOUT);
-      transport = socket;
-      transport = new TFramedTransport(transport);
+      TTransport transport = getClientTransport(socket);
 
       TProtocol protocol = protoFactory.getProtocol(transport);
       ThriftTest.Client testClient = new ThriftTest.Client(protocol);

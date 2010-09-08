@@ -23,7 +23,6 @@ import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TNonblockingServerSocket;
-import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
 public class TestNonblockingServer extends ServerTestBase {
@@ -68,9 +67,7 @@ public class TestNonblockingServer extends ServerTestBase {
   }
 
   @Override
-  public TTransport getTransport() throws Exception {
-    TSocket socket = new TSocket(HOST, PORT);
-    socket.setTimeout(SOCKET_TIMEOUT);
-    return new TFramedTransport(socket);
+  public TTransport getClientTransport(TTransport underlyingTransport) throws Exception {
+    return new TFramedTransport(underlyingTransport);
   }
 }
