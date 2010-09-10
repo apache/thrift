@@ -50,6 +50,9 @@ class t_cpp_generator : public t_oop_generator {
   {
     std::map<std::string, std::string>::const_iterator iter;
 
+    iter = parsed_options.find("pure_enums");
+    gen_pure_enums_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("dense");
     gen_dense_ = (iter != parsed_options.end());
 
@@ -202,6 +205,11 @@ class t_cpp_generator : public t_oop_generator {
    * empty string if no include prefix should be used.
    */
   std::string get_include_prefix(const t_program& program) const;
+
+  /**
+   * True iff we should generate pure enums for Thrift enums, instead of wrapper classes.
+   */
+  bool gen_pure_enums_;
 
   /**
    * True iff we should generate local reflection metadata for TDenseProtocol.
@@ -363,8 +371,15 @@ void t_cpp_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_cpp_generator::generate_enum(t_enum* tenum) {
+  std::string enum_name = tenum->get_name();
+  if (!gen_pure_enums_) {
+    enum_name = "type";
+    f_types_ <<
+      indent() << "struct " << tenum->get_name() << " {" << endl;
+    indent_up();
+  }
   f_types_ <<
-    indent() << "enum " << tenum->get_name() << " {" << endl;
+    indent() << "enum " << enum_name << " {" << endl;
   indent_up();
 
   vector<t_enum_value*> constants = tenum->get_constants();
@@ -386,10 +401,15 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
   }
 
   indent_down();
-  f_types_ <<
-    endl <<
-    "};" << endl <<
-    endl;
+  f_types_ << endl;
+  indent(f_types_) << "};" << endl;
+
+  if (!gen_pure_enums_) {
+    indent_down();
+    f_types_ << "};" << endl;
+  }
+
+  f_types_ << endl;
 
   generate_local_reflection(f_types_, tenum, false);
   generate_local_reflection(f_types_impl_, tenum, true);
@@ -2764,6 +2784,10 @@ string t_cpp_generator::type_name(t_type* ttype, bool in_typedef, bool arg) {
     pname = class_prefix + ttype->get_name();
   }
 
+  if (ttype->is_enum() && !gen_pure_enums_) {
+    pname += "::type";
+  }
+
   if (arg) {
     if (is_complex_type(ttype)) {
       return "const " + pname + "&";
@@ -3016,6 +3040,7 @@ string t_cpp_generator::get_include_prefix(const t_program& program) const {
 
 
 THRIFT_REGISTER_GENERATOR(cpp, "C++",
+"    pure_enums:      Generate pure enums instead of wrapper classes.\n"
 "    dense:           Generate type specifications for the dense protocol.\n"
 "    include_prefix:  Use full include paths in generated files.\n"
 );
