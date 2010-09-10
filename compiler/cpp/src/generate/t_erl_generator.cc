@@ -298,7 +298,7 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
     string name = capitalize((*c_iter)->get_name());
 
     f_types_hrl_file_ <<
-      indent() << "-define(" << program_name_ << "_" << name << ", " << value << ")."<< endl;
+      indent() << "-define(" << program_name_ << "_" << tenum->get_name() << "_" << name << ", " << value << ")."<< endl;
   }
 
   f_types_hrl_file_ << endl;
