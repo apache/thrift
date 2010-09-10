@@ -290,6 +290,7 @@ public class TestTAsyncClientManager extends TestCase {
 
     // check that timeouts work
     assertFalse(s.isStopped());
+    assertTrue(clientSock.isOpen());
     final CountDownLatch timeoutLatch = new CountDownLatch(1);
     client.setTimeout(100);
     client.primitiveMethod(new AsyncMethodCallback<primitiveMethod_call>() {
@@ -320,5 +321,8 @@ public class TestTAsyncClientManager extends TestCase {
     timeoutLatch.await(2, TimeUnit.SECONDS);
     assertTrue(client.hasError());
     assertTrue(client.getError() instanceof TimeoutException);
+
+    // error closes socket and make sure isOpen reflects that
+    assertFalse(clientSock.isOpen());
   }
 }

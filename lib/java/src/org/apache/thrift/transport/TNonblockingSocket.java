@@ -30,7 +30,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
-import org.apache.thrift.async.TAsyncMethodCall;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +43,9 @@ public class TNonblockingSocket extends TNonblockingTransport {
   /**
    * Host and port if passed in, used for lazy non-blocking connect.
    */
-  private SocketAddress socketAddress_ = null;
+  private final SocketAddress socketAddress_;
 
   private final SocketChannel socketChannel_;
-
-  private final Socket socket_;
 
   public TNonblockingSocket(String host, int port) throws IOException {
     this(host, port, 0);
@@ -62,8 +59,7 @@ public class TNonblockingSocket extends TNonblockingTransport {
    * @throws IOException
    */
   public TNonblockingSocket(String host, int port, int timeout) throws IOException {
-    this(SocketChannel.open(), timeout);
-    socketAddress_ = new InetSocketAddress(host, port);
+    this(SocketChannel.open(), timeout, new InetSocketAddress(host, port));
   }
 
   /**
@@ -73,18 +69,22 @@ public class TNonblockingSocket extends TNonblockingTransport {
    * @throws IOException if there is an error setting up the streams
    */
   public TNonblockingSocket(SocketChannel socketChannel) throws IOException {
-    this(socketChannel, 0);
+    this(socketChannel, 0, null);
     if (!socketChannel.isConnected()) throw new IOException("Socket must already be connected");
   }
 
-  private TNonblockingSocket(SocketChannel socketChannel, int timeout) throws IOException {
+  private TNonblockingSocket(SocketChannel socketChannel, int timeout, SocketAddress socketAddress)
+      throws IOException {
     socketChannel_ = socketChannel;
-    socket_ = socketChannel.socket();
+    socketAddress_ = socketAddress;
 
     // make it a nonblocking channel
     socketChannel.configureBlocking(false);
-    socket_.setSoLinger(false, 0);
-    socket_.setTcpNoDelay(true);
+
+    // set options
+    Socket socket = socketChannel.socket();
+    socket.setSoLinger(false, 0);
+    socket.setTcpNoDelay(true);
     setTimeout(timeout);
   }
 
@@ -106,24 +106,25 @@ public class TNonblockingSocket extends TNonblockingTransport {
    */
   public void setTimeout(int timeout) {
     try {
-      socket_.setSoTimeout(timeout);
+      socketChannel_.socket().setSoTimeout(timeout);
     } catch (SocketException sx) {
       LOGGER.warn("Could not set socket timeout.", sx);
     }
   }
 
   /**
-   * Returns a reference to the underlying socket.
+   * Returns a reference to the underlying SocketChannel.
    */
-  public Socket getSocket() {
-    return socket_;
+  public SocketChannel getSocketChannel() {
+    return socketChannel_;
   }
 
   /**
    * Checks whether the socket is connected.
    */
   public boolean isOpen() {
-    return socket_.isConnected();
+    // isConnected() does not return false after close(), but isOpen() does
+    return socketChannel_.isOpen() && socketChannel_.isConnected();
   }
 
   /**
