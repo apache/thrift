@@ -631,7 +631,7 @@ string t_java_generator::render_const_value(ofstream& out, string name, t_type* 
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    render << type_name(type, false, false) << "." << value->get_identifier();
+    render << value->get_identifier();
   } else {
     string t = tmp("tmp");
     print_const_value(out, t, type, value, true);
