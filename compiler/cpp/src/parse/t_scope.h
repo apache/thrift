@@ -161,7 +161,7 @@ class t_scope {
         valstm << const_val->get_integer();
         throw "Couldn't find a named value in enum " + tenum->get_name() + " for value " + valstm.str();
       }
-      const_val->set_identifier(enum_value->get_name());
+      const_val->set_identifier(tenum->get_name() + "." + enum_value->get_name());
       const_val->set_enum(tenum);
     }
   }
