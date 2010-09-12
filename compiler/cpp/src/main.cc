@@ -720,7 +720,13 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
     vector<t_enum_value*>::const_iterator c_iter;
     bool found = false;
     for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
-      if ((*c_iter)->get_name() == value->get_identifier()) {
+      size_t sub_index = value->get_identifier().find('.');
+      if (sub_index == string::npos) {
+        throw "error: identifier " + value->get_identifier() + " is unqualified!";
+      }
+      std::string name_portion = value->get_identifier().substr(sub_index+1);
+
+      if ((*c_iter)->get_name() == name_portion) {
         found = true;
         break;
       }

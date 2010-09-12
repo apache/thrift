@@ -511,6 +511,20 @@ Enum:
       $$ = $4;
       $$->set_name($2);
       $$->resolve_values();
+      // make constants for all the enum values
+      if (g_parse_mode == PROGRAM) {
+        const std::vector<t_enum_value*>& enum_values = $$->get_constants();
+        std::vector<t_enum_value*>::const_iterator c_iter;
+        for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
+          std::string const_name = $$->get_name() + "." + (*c_iter)->get_name();
+          t_const_value* const_val = new t_const_value((*c_iter)->get_value());
+          const_val->set_enum($$);
+          g_scope->add_constant(const_name, new t_const(g_type_i32, (*c_iter)->get_name(), const_val));
+          if (g_parent_scope != NULL) {
+            g_parent_scope->add_constant(g_parent_prefix + const_name, new t_const(g_type_i32, (*c_iter)->get_name(), const_val));
+          }
+        }
+      }
     }
 
 EnumDefList:
@@ -539,12 +553,6 @@ EnumDef:
       $$ = new t_enum_value($2, $4);
       if ($1 != NULL) {
         $$->set_doc($1);
-      }
-      if (g_parse_mode == PROGRAM) {
-        g_scope->add_constant($2, new t_const(g_type_i32, $2, new t_const_value($4)));
-        if (g_parent_scope != NULL) {
-          g_parent_scope->add_constant(g_parent_prefix + $2, new t_const(g_type_i32, $2, new t_const_value($4)));
-        }
       }
     }
 |

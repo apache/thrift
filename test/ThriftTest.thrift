@@ -43,6 +43,10 @@ enum Numberz
   EIGHT = 8
 }
 
+const Numberz myNumberz = Numberz.ONE;
+// the following is expected to fail:
+// const Numberz urNumberz = ONE;
+
 typedef i64 UserId
 
 struct Bonk
