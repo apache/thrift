@@ -286,7 +286,7 @@ public class TestTAsyncClientManager extends TestCase {
     for (JankyRunnable runnable : runnables) {
       numSuccesses += runnable.getNumSuccesses();
     }
-    assertEquals(numThreads * numCallsPerThread, numSuccesses);
+    assertEquals(numSuccesses, numThreads * numCallsPerThread);
 
     // check that timeouts work
     assertFalse(s.isStopped());
