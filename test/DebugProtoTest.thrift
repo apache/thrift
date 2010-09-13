@@ -272,6 +272,7 @@ enum SomeEnum {
   TWO = 2
 }
 
+/** This is a docstring on a constant! */
 const SomeEnum MY_SOME_ENUM = SomeEnum.ONE
 
 const SomeEnum MY_SOME_ENUM_1 = 1

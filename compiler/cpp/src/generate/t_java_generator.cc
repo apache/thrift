@@ -485,6 +485,7 @@ void t_java_generator::generate_consts(std::vector<t_const*> consts) {
   indent_up();
   vector<t_const*>::iterator c_iter;
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+    generate_java_doc(f_consts, (*c_iter));
     print_const_value(f_consts,
                       (*c_iter)->get_name(),
                       (*c_iter)->get_type(),
