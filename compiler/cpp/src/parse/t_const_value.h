@@ -72,6 +72,11 @@ class t_const_value {
         throw "have identifier \"" + get_identifier() + "\", but unset enum on line!";
       }
       t_enum_value* val = enum_->get_constant_by_name(get_identifier());
+      if (val == NULL) {
+        throw
+          "Unable to find enum value \"" + get_identifier() +
+          "\" in enum \"" + enum_->get_name() + "\"";
+      }
       return val->get_value();
     } else {
       return intVal_;
