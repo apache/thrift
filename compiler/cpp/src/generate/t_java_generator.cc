@@ -1854,21 +1854,46 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
 
     // Simple getter
     generate_java_doc(out, field);
-    indent(out) << "public " << type_name(type);
-    if (type->is_base_type() &&
-        ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
-      out << " is";
+    if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+      indent(out) << "public byte[] get" << cap_name << "() {" << endl;
+      indent(out) << "  set" << cap_name << "(TBaseHelper.rightSize(" << field_name << "));" << endl;
+      indent(out) << "  return " << field_name << ".array();" << endl;
+      indent(out) << "}" << endl << endl;
+
+      indent(out) << "public ByteBuffer " << get_cap_name("bufferFor") << cap_name << "() {" << endl;
+      indent(out) << "  return " << field_name << ";" << endl;
+      indent(out) << "}" << endl << endl;
     } else {
-      out << " get";
+      indent(out) << "public " << type_name(type);
+      if (type->is_base_type() &&
+          ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
+        out << " is";
+      } else {
+        out << " get";
+      }
+      out << cap_name << "() {" << endl;
+      indent_up();
+      indent(out) << "return this." << field_name << ";" << endl;
+      indent_down();
+      indent(out) << "}" << endl << endl;
     }
-    out << cap_name << "() {" << endl;
-    indent_up();
-    indent(out) << "return this." << field_name << ";" << endl;
-    indent_down();
-    indent(out) << "}" << endl << endl;
 
     // Simple setter
     generate_java_doc(out, field);
+    if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+      indent(out) << "public ";
+      if (bean_style_) {
+        out << "void";
+      } else {
+        out << type_name(tstruct);
+      }
+      out << " set" << cap_name << "(byte[] " << field_name << ") {" << endl;
+      indent(out) << "  set" << cap_name << "(ByteBuffer.wrap(" << field_name << "));" << endl;
+      if (!bean_style_) {
+        indent(out) << "  return this;" << endl;
+      }
+      indent(out) << "}" << endl << endl;
+    }
     indent(out) << "public ";
     if (bean_style_) {
       out << "void";

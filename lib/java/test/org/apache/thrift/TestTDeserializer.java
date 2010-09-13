@@ -97,7 +97,7 @@ public class TestTDeserializer extends TestCase {
       String resultString = deserializer.partialDeserializeString(serialize(level1SWU, factory), StructWithAUnion._Fields.TEST_UNION, TestUnion._Fields.STRUCT_FIELD, OneOfEach._Fields.SOME_CHARACTERS);
       assertEquals(expectedString, resultString);
 
-      byte[] expectedBinary = level3OneOfEach.getBase64().array();
+      byte[] expectedBinary = level3OneOfEach.getBase64();
       ByteBuffer resultBinary = deserializer.partialDeserializeByteArray(serialize(level1SWU, factory), StructWithAUnion._Fields.TEST_UNION, TestUnion._Fields.STRUCT_FIELD, OneOfEach._Fields.BASE64);
       assertEquals(expectedBinary.length, resultBinary.limit() - resultBinary.position() - resultBinary.arrayOffset());
       assertEquals(ByteBuffer.wrap(expectedBinary), resultBinary);

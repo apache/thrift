@@ -240,4 +240,37 @@ public class TBaseHelper {
     int extended = (b | 0x100) & 0x1ff;
     return Integer.toHexString(extended).toUpperCase().substring(1);
   }
+
+  public static byte[] byteBufferToByteArray(ByteBuffer byteBuffer) {
+    if (wrapsFullArray(byteBuffer)) {
+      return byteBuffer.array();
+    }
+    byte[] target = new byte[byteBuffer.remaining()];
+    byteBufferToByteArray(byteBuffer, target, 0);
+    return target;
+  }
+
+  public static boolean wrapsFullArray(ByteBuffer byteBuffer) {
+    return byteBuffer.hasArray()
+      && byteBuffer.position() == 0
+      && byteBuffer.arrayOffset() == 0
+      && byteBuffer.remaining() == byteBuffer.capacity();
+  }
+
+  public static int byteBufferToByteArray(ByteBuffer byteBuffer, byte[] target, int offset) {
+    int remaining = byteBuffer.remaining();
+    System.arraycopy(byteBuffer.array(),
+        byteBuffer.arrayOffset() + byteBuffer.position(),
+        target,
+        offset,
+        remaining);
+    return remaining;
+  }
+
+  public static ByteBuffer rightSize(ByteBuffer in) {
+    if (wrapsFullArray(in)) {
+      return in;
+    }
+    return ByteBuffer.wrap(byteBufferToByteArray(in));
+  }
 }

@@ -18,6 +18,7 @@
  */
 package org.apache.thrift;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -138,5 +139,15 @@ public class TestTBaseHelper extends TestCase {
     a.add(new byte[]{'a','b', 'd'});
     b.add(new byte[]{'a','b', 'a'});
     assertTrue(TBaseHelper.compareTo(a, b) > 0);
+  }
+
+  public void testByteBufferToByteArray() throws Exception {
+    byte[] b1 = {10,9,8,7,6,5,4,3,2,1,0};
+    byte[] b2 = TBaseHelper.byteBufferToByteArray(ByteBuffer.wrap(b1));
+    assertEquals("b1 and b2 should be the exact same array (identity) due to fast path", b1, b2);
+
+    byte[] b3 = TBaseHelper.byteBufferToByteArray(ByteBuffer.wrap(b1, 1, 3));
+    assertEquals(3, b3.length);
+    assertEquals(ByteBuffer.wrap(b1, 1, 3), ByteBuffer.wrap(b3));
   }
 }
