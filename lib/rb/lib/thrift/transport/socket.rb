@@ -97,12 +97,13 @@ module Thrift
           data = @handle.readpartial(sz)
         else
           # it's possible to interrupt select for something other than the timeout
-          # so we need to ensure we've waited long enough
+          # so we need to ensure we've waited long enough, but not too long
           start = Time.now
-          rd = nil # scoping
-          loop do
-            rd, = IO.select([@handle], nil, nil, @timeout)
-            break if (rd and not rd.empty?) or Time.now - start >= @timeout
+          timespent = 0
+          rd = loop do
+            rd, = IO.select([@handle], nil, nil, @timeout - timespent)
+            timespent = Time.now - start
+            break rd if (rd and not rd.empty?) or timespent >= @timeout
           end
           if rd.nil? or rd.empty?
             raise TransportException.new(TransportException::TIMED_OUT, "Socket: Timed out reading #{sz} bytes from #{@desc}")

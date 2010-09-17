@@ -91,7 +91,7 @@ shared_examples_for "a socket" do
   it "should raise an error when read times out" do
     @socket.timeout = 0.5
     @socket.open
-    IO.should_receive(:select).with([@handle], nil, nil, 0.5).at_least(1).times.and_return(nil)
+    IO.should_receive(:select).once {sleep(0.5); nil}
     lambda { @socket.read(17) }.should raise_error(Thrift::TransportException) { |e| e.type.should == Thrift::TransportException::TIMED_OUT }
   end
 
