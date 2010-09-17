@@ -150,4 +150,35 @@ public class TestTBaseHelper extends TestCase {
     assertEquals(3, b3.length);
     assertEquals(ByteBuffer.wrap(b1, 1, 3), ByteBuffer.wrap(b3));
   }
+
+  public void testCopyBinaryWithByteBuffer() throws Exception {
+    byte[] bytes = new byte[]{0, 1, 2, 3, 4, 5};
+    ByteBuffer b = ByteBuffer.wrap(bytes);
+    ByteBuffer bCopy = TBaseHelper.copyBinary(b);
+    assertEquals(b, bCopy);
+    assertEquals(0, b.position());
+
+    b = ByteBuffer.allocateDirect(6);
+    b.put(bytes);
+    b.position(0);
+    bCopy = TBaseHelper.copyBinary(b);
+    assertEquals(6, b.remaining());
+    assertEquals(0, b.position());
+    assertEquals(b, bCopy);
+
+    b.mark();
+    b.get();
+    bCopy = TBaseHelper.copyBinary(b);
+    assertEquals(ByteBuffer.wrap(bytes, 1, 5), bCopy);
+    assertEquals(1, b.position());
+    b.reset();
+    assertEquals(0, b.position());
+  }
+
+  public void testCopyBinaryWithByteArray() throws Exception {
+    byte[] bytes = new byte[]{0, 1, 2, 3, 4, 5};
+    byte[] copy = TBaseHelper.copyBinary(bytes);
+    assertEquals(ByteBuffer.wrap(bytes), ByteBuffer.wrap(copy));
+    assertNotSame(bytes, copy);
+  }
 }

@@ -28,7 +28,9 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-public class TBaseHelper {
+public final class TBaseHelper {
+
+  private TBaseHelper(){}
 
   private static final Comparator comparator = new NestedStructureComparator();
 
@@ -272,5 +274,22 @@ public class TBaseHelper {
       return in;
     }
     return ByteBuffer.wrap(byteBufferToByteArray(in));
+  }
+
+  public static ByteBuffer copyBinary(final ByteBuffer orig) {
+    ByteBuffer copy = ByteBuffer.wrap(new byte[orig.remaining()]);
+    if (orig.hasArray()) {
+      System.arraycopy(orig.array(), orig.arrayOffset() + orig.position(), copy.array(), 0, orig.remaining());
+    } else {
+      orig.slice().get(copy.array());
+    }
+
+    return copy;
+  }
+
+  public static byte[] copyBinary(final byte[] orig) {
+    byte[] copy = new byte[orig.length];
+    System.arraycopy(orig, 0, copy, 0, orig.length);
+    return copy;
   }
 }

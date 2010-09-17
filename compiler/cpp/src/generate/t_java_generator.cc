@@ -1393,7 +1393,7 @@ void t_java_generator::generate_java_struct_compare_to(ofstream& out, t_struct* 
     indent(out) << "  return lastComparison;" << endl;
     indent(out) << "}" << endl;
 
-    indent(out) << "if (" << generate_isset_check(field) << ") {";
+    indent(out) << "if (" << generate_isset_check(field) << ") {" << endl;
     indent(out) << "  lastComparison = TBaseHelper.compareTo(this." << field->get_name() << ", typedOther." << field->get_name() << ");" << endl;
     indent(out) << "  if (lastComparison != 0) {" << endl;
     indent(out) << "    return lastComparison;" << endl;
@@ -3732,14 +3732,12 @@ void t_java_generator::generate_deep_copy_container(ofstream &out, std::string s
 
 void t_java_generator::generate_deep_copy_non_container(ofstream& out, std::string source_name, std::string dest_name, t_type* type) {
   if (type->is_base_type() || type->is_enum() || type->is_typedef()) {
-    // binary fields need to be copied with System.arraycopy
-    if (((t_base_type*)type)->is_binary()){
-      out << "ByteBuffer.wrap(new byte[" << source_name << ".limit() - " << source_name << ".arrayOffset()]);" << endl;
-      indent(out) << "System.arraycopy(" << source_name << ".array(), " << source_name << ".arrayOffset(), " << dest_name << ".array(), 0, " << source_name << ".limit() - " << source_name << ".arrayOffset())";
-    }
-    // everything else can be copied directly
-    else
+    if (((t_base_type*)type)->is_binary()) {
+      out << "TBaseHelper.copyBinary(" << source_name << ");" << endl;
+    } else {
+      // everything else can be copied directly
       out << source_name;
+    }
   } else {
     out << "new " << type_name(type, true, true) << "(" << source_name << ")";
   }
