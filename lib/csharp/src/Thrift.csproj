@@ -56,8 +56,10 @@
   <ItemGroup>
     <Compile Include="Collections\THashSet.cs" />
     <Compile Include="Protocol\TBase.cs" />
+    <Compile Include="Protocol\TBase64Utils.cs" />
     <Compile Include="Protocol\TBinaryProtocol.cs" />
     <Compile Include="Protocol\TField.cs" />
+    <Compile Include="Protocol\TJSONProtocol.cs" />
     <Compile Include="Protocol\TList.cs" />
     <Compile Include="Protocol\TMap.cs" />
     <Compile Include="Protocol\TMessage.cs" />

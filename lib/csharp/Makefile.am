@@ -20,6 +20,8 @@
 THRIFTCODE= \
             src/Collections/THashSet.cs \
             src/Protocol/TBase.cs \
+            src/Protocol/TBase64Utils.cs \
+            src/Protocol/TJSONProtocol.cs \
             src/Protocol/TProtocolException.cs \
             src/Protocol/TProtocolFactory.cs \
             src/Protocol/TList.cs \

@@ -61,6 +61,11 @@ namespace Thrift.Transport
 			return got;
 		}
 
+		public virtual void Write(byte[] buf) 
+		{
+			Write (buf, 0, buf.Length);
+		}
+
 		public abstract void Write(byte[] buf, int off, int len);
 
 		public virtual void Flush()

@@ -32,6 +32,7 @@ namespace Thrift.Protocol
 		public const int NEGATIVE_SIZE = 2;
 		public const int SIZE_LIMIT = 3;
 		public const int BAD_VERSION = 4;
+		public const int NOT_IMPLEMENTED= 5;
 
 		protected int type_ = UNKNOWN;
 
