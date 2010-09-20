@@ -574,7 +574,7 @@ void t_hs_generator::generate_hs_struct_reader(ofstream& out, t_struct* tstruct)
   // read
   indent(out) << "read_"<<sname<<" iprot = do" << endl;
   indent_up();
-  indent(out) << "readStructBegin iprot" << endl;
+  indent(out) << "_ <- readStructBegin iprot" << endl;
   indent(out) << "rec <- read_"<<sname<<"_fields iprot ("<<sname<<"{";
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
