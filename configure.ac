@@ -317,6 +317,8 @@ AX_THRIFT_GEN(html, [HTML], yes)
 AM_CONDITIONAL([THRIFT_GEN_html], [test "$ax_thrift_gen_html" = "yes"])
 AX_THRIFT_GEN(js, [JavaScript], yes)
 AM_CONDITIONAL([THRIFT_GEN_js], [test "$ax_thrift_gen_js" = "yes"])
+AX_THRIFT_GEN(javame, [JavaME], yes)
+AM_CONDITIONAL([THRIFT_GEN_javame], [test "$ax_thrift_gen_javame" = "yes"])
 
 AC_CONFIG_HEADERS(config.h:config.hin)
 

@@ -107,6 +107,9 @@ endif
 if THRIFT_GEN_js
 thrift_SOURCES += src/generate/t_js_generator.cc
 endif
+if THRIFT_GEN_javame
+thrift_SOURCES += src/generate/t_javame_generator.cc
+endif
 
 thrift_CXXFLAGS = -Wall -I$(srcdir)/src
 thrift_LDFLAGS = -Wall
