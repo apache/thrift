@@ -200,7 +200,11 @@ void t_hs_generator::init_generator() {
 }
 
 string t_hs_generator::hs_language_pragma() {
-  return std::string("{-# LANGUAGE DeriveDataTypeable #-}");
+  return std::string("{-# LANGUAGE DeriveDataTypeable #-}\n"
+                     "{-# OPTIONS_GHC -fno-warn-missing-signatures #-}\n"
+                     "{-# OPTIONS_GHC -fno-warn-name-shadowing #-}\n"
+                     "{-# OPTIONS_GHC -fno-warn-unused-imports #-}\n"
+                     "{-# OPTIONS_GHC -fno-warn-unused-matches #-}\n");
 }
 
 /**
@@ -712,6 +716,10 @@ void t_hs_generator::generate_hs_function_helpers(t_function* tfunction) {
 void t_hs_generator::generate_service_interface(t_service* tservice) {
   string f_iface_name = get_out_dir()+capitalize(service_name_)+"_Iface.hs";
   f_iface_.open(f_iface_name.c_str());
+  f_iface_ <<
+      hs_language_pragma() << endl <<
+      hs_autogen_comment() << endl;
+
   indent(f_iface_) << "module " << capitalize(service_name_) << "_Iface where" << endl;
 
   indent(f_iface_) <<
@@ -749,6 +757,9 @@ void t_hs_generator::generate_service_interface(t_service* tservice) {
 void t_hs_generator::generate_service_client(t_service* tservice) {
   string f_client_name = get_out_dir()+capitalize(service_name_)+"_Client.hs";
   f_client_.open(f_client_name.c_str());
+  f_client_ <<
+      hs_language_pragma() << endl <<
+      hs_autogen_comment() << endl;
 
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;

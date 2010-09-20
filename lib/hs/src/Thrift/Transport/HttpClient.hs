@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 --
 -- Licensed to the Apache Software Foundation (ASF) under one
 -- or more contributor license agreements. See the NOTICE file
@@ -26,7 +27,6 @@ module Thrift.Transport.HttpClient
 import Thrift.Transport
 import Network.URI
 import Network.HTTP hiding (port, host)
-import Network.TCP
 
 import Control.Monad (liftM)
 import Data.Maybe (fromJust)
@@ -47,26 +47,29 @@ data HttpClient =
       readBuffer :: ReadBuffer
     }
 
+uriAuth :: URI -> URIAuth
 uriAuth = fromJust . uriAuthority
+
+host :: URI -> String
 host = uriRegName . uriAuth
 
 port :: URI -> Int
-port uri =
+port uri_ =
     if portStr == mempty then
         httpPort
     else
         read portStr
     where
-      portStr = dropWhile (== ':') $ uriPort $ uriAuth uri
+      portStr = dropWhile (== ':') $ uriPort $ uriAuth uri_
       httpPort = 80
 
 -- | Use 'openHttpClient' to create an HttpClient connected to @uri@
 openHttpClient :: URI -> IO HttpClient
-openHttpClient uri = do
-  stream <- openTCPConnection (host uri) (port uri)
+openHttpClient uri_ = do
+  stream <- openTCPConnection (host uri_) (port uri_)
   wbuf <- newWriteBuffer
   rbuf <- newReadBuffer
-  return $ HttpClient stream uri wbuf rbuf
+  return $ HttpClient stream uri_ wbuf rbuf
 
 instance Transport HttpClient where
 
@@ -89,8 +92,8 @@ instance Transport HttpClient where
 
       res <- sendHTTP (hstream hclient) request
       case res of
-        Right res -> do
-            fillBuf (readBuffer hclient) (rspBody res)
+        Right response -> do
+            fillBuf (readBuffer hclient) (rspBody response)
         Left _ -> do
             throw $ TransportExn "THttpConnection: HTTP failure from server" TE_UNKNOWN
       return ()

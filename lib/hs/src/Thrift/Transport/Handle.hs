@@ -1,3 +1,8 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 --
 -- Licensed to the Apache Software Foundation (ASF) under one
 -- or more contributor license agreements. See the NOTICE file
@@ -23,7 +28,7 @@ module Thrift.Transport.Handle
     ) where
 
 import Control.Exception ( throw )
-import Control.Monad ( replicateM )
+import Control.Monad ()
 
 import Network
 
@@ -55,6 +60,7 @@ instance HandleSource (HostName, PortID) where
     hOpen = uncurry connectTo
 
 
+handleEOF :: forall a (m :: * -> *).(Monoid a, Monad m) => IOError -> m a
 handleEOF e = if isEOFError e
     then return mempty
     else throw $ TransportExn "TChannelTransport: Could not read" TE_UNKNOWN

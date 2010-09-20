@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE RankNTypes #-}
 --
 -- Licensed to the Apache Software Foundation (ASF) under one
 -- or more contributor license agreements. See the NOTICE file
@@ -56,6 +59,7 @@ instance Enum AppExnType where
     toEnum 3 = AE_WRONG_METHOD_NAME
     toEnum 4 = AE_BAD_SEQUENCE_ID
     toEnum 5 = AE_MISSING_RESULT
+    toEnum t = error $ "Invalid AppExnType " ++ show t
 
     fromEnum AE_UNKNOWN = 0
     fromEnum AE_UNKNOWN_METHOD = 1
@@ -85,16 +89,17 @@ writeAppExn pt ae = do
 
 readAppExn :: (Protocol p, Transport t) => p t -> IO AppExn
 readAppExn pt = do
-    readStructBegin pt
+    _ <- readStructBegin pt
     rec <- readAppExnFields pt (AppExn {ae_type = undefined, ae_message = undefined})
     readStructEnd pt
     return rec
 
+readAppExnFields :: forall (a :: * -> *) t. (Protocol a, Transport t) => a t -> AppExn -> IO AppExn 
 readAppExnFields pt rec = do
-    (n, ft, id) <- readFieldBegin pt
+    (_, ft, tag) <- readFieldBegin pt
     if ft == T_STOP
         then return rec
-        else case id of
+        else case tag of
                  1 -> if ft == T_STRING then
                           do s <- readString pt
                              readAppExnFields pt rec{ae_message = s}

@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 --
 -- Licensed to the Apache Software Foundation (ASF) under one
 -- or more contributor license agreements. See the NOTICE file
@@ -31,7 +32,7 @@ import Network
 import System.IO
 
 import Thrift
-import Thrift.Transport.Handle
+import Thrift.Transport.Handle()
 import Thrift.Protocol.Binary
 
 
@@ -60,6 +61,6 @@ runBasicServer hand proc port = runThreadedServer binaryAccept hand proc (PortNu
 acceptLoop :: IO t -> (t -> IO Bool) -> IO a
 acceptLoop accepter proc = forever $
     do ps <- accepter
-       forkIO $ handle (\(e :: SomeException) -> return ())
+       forkIO $ handle (\(_ :: SomeException) -> return ())
                   (loop $ proc ps)
   where loop m = do { continue <- m; when continue (loop m) }

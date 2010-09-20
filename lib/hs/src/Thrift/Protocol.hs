@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 --
 -- Licensed to the Apache Software Foundation (ASF) under one
 -- or more contributor license agreements. See the NOTICE file
@@ -79,6 +80,7 @@ instance Enum ThriftType where
     toEnum 13 = T_MAP
     toEnum 14 = T_SET
     toEnum 15 = T_LIST
+    toEnum t = error $ "Invalid ThriftType " ++ show t
 
 data MessageType
     = M_CALL
@@ -94,6 +96,7 @@ instance Enum MessageType where
     toEnum 1 = M_CALL
     toEnum 2 = M_REPLY
     toEnum 3 = M_EXCEPTION
+    toEnum t = error $ "Invalid MessageType " ++ show t
 
 
 class Protocol a where
@@ -149,8 +152,8 @@ class Protocol a where
 
 
 skip :: (Protocol p, Transport t) => p t -> ThriftType -> IO ()
-skip p T_STOP = return ()
-skip p T_VOID = return ()
+skip _ T_STOP = return ()
+skip _ T_VOID = return ()
 skip p T_BOOL = readBool p >> return ()
 skip p T_BYTE = readByte p >> return ()
 skip p T_I16 = readI16 p >> return ()
@@ -158,7 +161,7 @@ skip p T_I32 = readI32 p >> return ()
 skip p T_I64 = readI64 p >> return ()
 skip p T_DOUBLE = readDouble p >> return ()
 skip p T_STRING = readString p >> return ()
-skip p T_STRUCT = do readStructBegin p
+skip p T_STRUCT = do _ <- readStructBegin p
                      skipFields p
                      readStructEnd p
 skip p T_MAP = do (k, v, s) <- readMapBegin p

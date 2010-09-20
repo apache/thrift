@@ -1,3 +1,5 @@
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE MagicHash #-}
 --
 -- Licensed to the Apache Software Foundation (ASF) under one
 -- or more contributor license agreements. See the NOTICE file
@@ -37,7 +39,10 @@ import Thrift.Transport
 
 import qualified Data.ByteString.Lazy.Char8 as LBS
 
+version_mask :: Int
 version_mask = 0xffff0000
+
+version_1 :: Int
 version_1    = 0x80010000
 
 data BinaryProtocol a = Transport a => BinaryProtocol a
@@ -58,7 +63,7 @@ instance Protocol BinaryProtocol where
     writeFieldEnd _ = return ()
     writeFieldStop p = writeType p T_STOP
     writeMapBegin p (k, v, n) = writeType p k >> writeType p v >> writeI32 p n
-    writeMapEnd p = return ()
+    writeMapEnd _ = return ()
     writeListBegin p (t, n) = writeType p t >> writeI32 p n
     writeListEnd _ = return ()
     writeSetBegin p (t, n) = writeType p t >> writeI32 p n
@@ -141,7 +146,7 @@ getByte :: Bits a => a -> Int -> a
 getByte i n = 255 .&. (i `shiftR` (8 * n))
 
 getBytes :: (Bits a, Integral a) => a -> Int -> LBS.ByteString
-getBytes i 0 = LBS.empty
+getBytes _ 0 = LBS.empty
 getBytes i n = (toEnum $ fromIntegral $ getByte i (n-1)) `LBS.cons` (getBytes i (n-1))
 
 floatBits :: Double -> Word64
