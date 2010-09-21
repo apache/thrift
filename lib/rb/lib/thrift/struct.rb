@@ -21,7 +21,7 @@ require 'set'
 
 module Thrift
   module Struct
-    def initialize(d={})
+    def initialize(d={}, &block)
       # get a copy of the default values to work on, removing defaults in favor of arguments
       fields_with_defaults = fields_with_default_values.dup
       
@@ -50,6 +50,8 @@ module Thrift
           instance_variable_set("@#{name}", (default_value.dup rescue default_value))
         end
       end
+      
+      yield self if block_given?
     end
 
     def fields_with_default_values

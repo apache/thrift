@@ -31,13 +31,22 @@ class ThriftStructSpec < Spec::ExampleGroup
     end
 
     it "should initialize all fields to defaults" do
-      struct = Foo.new
-      struct.simple.should == 53
-      struct.words.should == "words"
-      struct.hello.should == Hello.new(:greeting => 'hello, world!')
-      struct.ints.should == [1, 2, 2, 3]
-      struct.complex.should be_nil
-      struct.shorts.should == Set.new([5, 17, 239])
+      validate_default_arguments(Foo.new)
+    end
+
+    it "should initialize all fields to defaults and accept a block argument" do
+      Foo.new do |f|
+        validate_default_arguments(f)
+      end
+    end
+
+    def validate_default_arguments(object)
+      object.simple.should == 53
+      object.words.should == "words"
+      object.hello.should == Hello.new(:greeting => 'hello, world!')
+      object.ints.should == [1, 2, 2, 3]
+      object.complex.should be_nil
+      object.shorts.should == Set.new([5, 17, 239])
     end
 
     it "should not share default values between instances" do
