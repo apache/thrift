@@ -21,7 +21,8 @@
   <!-- project wide settings. All directories relative to basedir -->
   <property name="src.dir" value="java"/>
   <property name="if.dir" value="if"/>
-  <property name="thrift_home" value="/usr/local"/>
+  <property name="thrift_compiler" value="../../compiler/cpp/thrift" />
+  <property name="thrift_lib" value="../../lib/java/libthrift.jar" />
 
   <!-- temp build directories -->
   <property name="build.dir" value="${src.dir}/build"/>
@@ -44,7 +45,7 @@
   <!-- generate fb303 thrift code -->
   <target name="thriftbuild">
     <echo>generating thrift fb303 files</echo>
-    <exec executable="${thrift_home}/bin/thrift"  failonerror="true">
+    <exec executable="${thrift_compiler}"  failonerror="true">
       <arg line="--gen java -o ${src.dir} ${src.dir}/../if/fb303.thrift" />
     </exec>
     <move todir="${src.dir}">
@@ -59,7 +60,10 @@
     <echo>Building libfb303.jar .... </echo>
     <javac srcdir="${src.dir}" destdir="${build.classes.dir}" debug="on">
       <classpath>
-        <pathelement location="${thrift_home}/lib/libthrift.jar"/>
+        <pathelement location="${thrift_lib}"/>
+        <fileset dir="../../lib/java/build/ivy/lib">
+          <include name="*.jar" />
+        </fileset>
       </classpath>
       <include name="*.java"/>
       <include name="${build.dir}/gen-java/com/facebook/fb303"/>

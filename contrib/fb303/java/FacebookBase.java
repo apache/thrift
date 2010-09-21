@@ -44,7 +44,7 @@ public abstract class FacebookBase implements FacebookService.Iface {
     return name_;
   }
 
-  public abstract int getStatus();
+  public abstract fb_status getStatus();
 
   public String getStatusDetails() {
     return "";
