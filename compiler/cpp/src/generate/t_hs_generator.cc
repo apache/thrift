@@ -232,7 +232,7 @@ string t_hs_generator::hs_imports() {
     result += "\n";
   }
 
-  result += "import Thrift\nimport Data.Typeable ( Typeable )\nimport Control.Exception\nimport qualified Data.Map as Map\nimport qualified Data.Set as Set\nimport Data.Int;\nimport Prelude ((==), String, Eq, Show, Ord, Maybe(..), (&&), (||), return, IO, Enum, fromEnum, toEnum, Bool(..), (++), ($), Double, (-))";
+  result += "import Thrift\nimport Data.Typeable ( Typeable )\nimport Control.Exception\nimport qualified Data.Map as Map\nimport qualified Data.Set as Set\nimport Data.ByteString.Lazy\nimport Data.Int\nimport Data.Word\nimport Prelude ((==), String, Eq, Show, Ord, Maybe(..), (&&), (||), return, IO, Enum, fromInteger, toInteger, fromEnum, toEnum, Bool(..), (++), ($), Double, (-), length)";
   return result;
 }
 
@@ -337,18 +337,31 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
+
     case t_base_type::TYPE_STRING:
       out << '"' << get_escaped_string(value) << '"';
       break;
+
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "True" : "False");
       break;
+
     case t_base_type::TYPE_BYTE:
-    case t_base_type::TYPE_I16:
-    case t_base_type::TYPE_I32:
-    case t_base_type::TYPE_I64:
-      out << value->get_integer();
+      out << "(" << value->get_integer() << " :: Word8)";
       break;
+
+    case t_base_type::TYPE_I16:
+      out << "(" << value->get_integer() << " :: Int16)";
+      break;
+
+    case t_base_type::TYPE_I32:
+      out << "(" << value->get_integer() << " :: Int32)";
+      break;
+
+    case t_base_type::TYPE_I64:
+      out << "(" << value->get_integer() << " :: Int64)";
+      break;
+
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
         out << value->get_integer();
@@ -1116,7 +1129,7 @@ void t_hs_generator::generate_deserialize_type(ofstream &out,
       throw "compiler error: cannot serialize void field in a struct";
       break;
     case t_base_type::TYPE_STRING:
-      out << "readString";
+      out << (((t_base_type*)type)->is_binary() ? "readBinary" : "readString");
       break;
     case t_base_type::TYPE_BOOL:
       out << "readBool";
@@ -1234,7 +1247,7 @@ void t_hs_generator::generate_serialize_field(ofstream &out,
           "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        out << "writeString oprot " << name;
+        out << (((t_base_type*)type)->is_binary() ? "writeBinary" : "writeString") << " oprot " << name;
         break;
       case t_base_type::TYPE_BOOL:
         out << "writeBool oprot " << name;
@@ -1300,7 +1313,7 @@ void t_hs_generator::generate_serialize_container(ofstream &out,
     string v = tmp("_viter");
     out << "(let {f [] = return (); f ("<<v<<":t) = do {";
     generate_serialize_list_element(out, (t_list*)ttype, v);
-    out << ";f t}} in do {writeListBegin oprot ("<< type_to_enum(((t_list*)ttype)->get_elem_type())<<",length " << prefix << "); f " << prefix << ";writeListEnd oprot})";
+    out << ";f t}} in do {writeListBegin oprot ("<< type_to_enum(((t_list*)ttype)->get_elem_type())<<",fromInteger $ toInteger $ Prelude.length " << prefix << "); f " << prefix << ";writeListEnd oprot})";
   }
 
 }
@@ -1434,15 +1447,15 @@ string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
     case t_base_type::TYPE_VOID:
       return "()";
     case t_base_type::TYPE_STRING:
-      return "String";
+      return (((t_base_type*)type)->is_binary() ? "ByteString" : "String");
     case t_base_type::TYPE_BOOL:
       return "Bool";
     case t_base_type::TYPE_BYTE:
-      return "Int";
+      return "Word8";
     case t_base_type::TYPE_I16:
-      return "Int";
+      return "Int16";
     case t_base_type::TYPE_I32:
-      return "Int";
+      return "Int32";
     case t_base_type::TYPE_I64:
       return "Int64";
     case t_base_type::TYPE_DOUBLE:

@@ -82,7 +82,7 @@ writeAppExn pt ae = do
         writeFieldEnd pt
 
     writeFieldBegin pt ("type", T_I32, 2);
-    writeI32 pt (fromEnum (ae_type ae))
+    writeI32 pt (fromIntegral $ fromEnum (ae_type ae))
     writeFieldEnd pt
     writeFieldStop pt
     writeStructEnd pt
@@ -107,7 +107,7 @@ readAppExnFields pt rec = do
                                   readAppExnFields pt rec
                  2 -> if ft == T_I32 then
                           do i <- readI32 pt
-                             readAppExnFields pt rec{ae_type = (toEnum  i)}
+                             readAppExnFields pt rec{ae_type = (toEnum $ fromIntegral i)}
                           else do skip pt ft
                                   readAppExnFields pt rec
                  _ -> do skip pt ft
