@@ -360,10 +360,11 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
       if (field_type == NULL) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
+      if (v_iter != val.begin())
+        out << ",";
       out << render_const_value(g_type_string, v_iter->first);
       out << " : ";
       out << render_const_value(field_type, v_iter->second);
-      out << ",";
     }
 
     out << "})";
@@ -380,15 +381,16 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+        if (v_iter != val.begin())
+          out << "," << endl;
 
         out << render_const_value(ktype, v_iter->first);
 
         out << " : ";
         out << render_const_value(vtype, v_iter->second);
-        out << "," << endl;
     }
 
-    out << "}";
+    out << endl << "}";
   } else if (type->is_list() || type->is_set()) {
     t_type* etype;
     if (type->is_list()) {
@@ -400,9 +402,9 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-
+      if (v_iter != val.begin())
+        out << ",";
       out << render_const_value(etype, *v_iter);
-      out << ",";
     }
     out << "]";
   }
