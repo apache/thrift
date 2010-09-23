@@ -18,7 +18,7 @@
 --
 
 Name:           Thrift
-Version:        0.1.1
+Version:        0.2.0
 Cabal-Version:  >= 1.2
 License:        Apache2
 Category:       Foreign
@@ -30,10 +30,11 @@ Library
     src
   Build-Depends:
     base >=4, network, ghc-prim, binary, bytestring, HTTP
-  ghc-options:
-    -fglasgow-exts
-  Extensions:
-    DeriveDataTypeable
   Exposed-Modules:
     Thrift, Thrift.Protocol, Thrift.Transport, Thrift.Protocol.Binary
-    Thrift.Transport.Handle, Thrift.Transport.HttpClient,  Thrift.Server
+    Thrift.Transport.Handle, Thrift.Transport.HttpClient, Thrift.Server
+  Extensions:
+    DeriveDataTypeable, ExistentialQuantification, FlexibleInstances,
+    KindSignatures, MagicHash, RankNTypes,
+    ScopedTypeVariables, TypeSynonymInstances
+
