@@ -44,23 +44,23 @@ runThreadedServer :: (Transport t, Protocol i, Protocol o)
                   -> (h -> (i t, o t) -> IO Bool)
                   -> PortID
                   -> IO a
-runThreadedServer accepter hand proc port = do
+runThreadedServer accepter hand proc_ port = do
     socket <- listenOn port
-    acceptLoop (accepter socket) (proc hand)
+    acceptLoop (accepter socket) (proc_ hand)
 
 -- | A basic threaded binary protocol socket server.
 runBasicServer :: h
                -> (h -> (BinaryProtocol Handle, BinaryProtocol Handle) -> IO Bool)
                -> PortNumber
                -> IO a
-runBasicServer hand proc port = runThreadedServer binaryAccept hand proc (PortNumber port)
+runBasicServer hand proc_ port = runThreadedServer binaryAccept hand proc_ (PortNumber port)
   where binaryAccept s = do
             (h, _, _) <- accept s
             return (BinaryProtocol h, BinaryProtocol h)
 
 acceptLoop :: IO t -> (t -> IO Bool) -> IO a
-acceptLoop accepter proc = forever $
+acceptLoop accepter proc_ = forever $
     do ps <- accepter
        forkIO $ handle (\(_ :: SomeException) -> return ())
-                  (loop $ proc ps)
+                  (loop $ proc_ ps)
   where loop m = do { continue <- m; when continue (loop m) }

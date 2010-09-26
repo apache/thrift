@@ -542,14 +542,14 @@ void t_hs_generator::generate_hs_struct_reader(ofstream& out, t_struct* tstruct)
   string t = tmp("_t");
   string id = tmp("_id");
 
-  indent(out) << "read_" << sname << "_fields iprot rec = do" << endl;
+  indent(out) << "read_" << sname << "_fields iprot record = do" << endl;
   indent_up(); // do
 
   // Read beginning field marker
   indent(out) << "(_," << t <<","<<id<<") <- readFieldBegin iprot" << endl;
   // Check for field STOP marker and break
   indent(out) <<
-    "if " << t <<" == T_STOP then return rec else" << endl;
+    "if " << t <<" == T_STOP then return record else" << endl;
   indent_up(); // if
   indent(out) << "case " << id<<" of " << endl;
   indent_up(); // case
@@ -561,12 +561,12 @@ void t_hs_generator::generate_hs_struct_reader(ofstream& out, t_struct* tstruct)
     indent(out) << "s <- ";
     generate_deserialize_field(out, *f_iter,str);
     out << endl;
-    indent(out) << "read_"<<sname<<"_fields iprot rec{f_"<<sname<<"_"<< decapitalize((*f_iter)->get_name()) <<"=Just s}" << endl;
+    indent(out) << "read_"<<sname<<"_fields iprot record{f_"<<sname<<"_"<< decapitalize((*f_iter)->get_name()) <<"=Just s}" << endl;
     out <<
       indent() << "else do" << endl;
     indent_up();
     indent(out) << "skip iprot "<< t << endl;
-    indent(out) << "read_"<<sname<<"_fields iprot rec" << endl;
+    indent(out) << "read_"<<sname<<"_fields iprot record" << endl;
     indent_down(); // -do
     indent_down(); // -if
   }
@@ -578,7 +578,7 @@ void t_hs_generator::generate_hs_struct_reader(ofstream& out, t_struct* tstruct)
   indent_up();
   indent(out) << "skip iprot "<<t<< endl;
   indent(out) << "readFieldEnd iprot" << endl;
-  indent(out) << "read_"<<sname<<"_fields iprot rec" << endl;
+  indent(out) << "read_"<<sname<<"_fields iprot record" << endl;
   indent_down(); // -case
   indent_down(); // -if
   indent_down(); // -do
@@ -588,7 +588,7 @@ void t_hs_generator::generate_hs_struct_reader(ofstream& out, t_struct* tstruct)
   indent(out) << "read_"<<sname<<" iprot = do" << endl;
   indent_up();
   indent(out) << "_ <- readStructBegin iprot" << endl;
-  indent(out) << "rec <- read_"<<sname<<"_fields iprot ("<<sname<<"{";
+  indent(out) << "record <- read_"<<sname<<"_fields iprot ("<<sname<<"{";
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if(first)
@@ -599,7 +599,7 @@ void t_hs_generator::generate_hs_struct_reader(ofstream& out, t_struct* tstruct)
   }
   out << "})" << endl;
   indent(out) << "readStructEnd iprot" << endl;
-  indent(out) << "return rec" << endl;
+  indent(out) << "return record" << endl;
   indent_down();
 }
 
@@ -612,7 +612,7 @@ void t_hs_generator::generate_hs_struct_writer(ofstream& out,
   string f = tmp("_f");
 
   indent(out) <<
-    "write_"<<name<<" oprot rec = do" << endl;
+    "write_"<<name<<" oprot record = do" << endl;
   indent_up();
   indent(out) <<
     "writeStructBegin oprot \""<<name<<"\"" << endl;
@@ -620,7 +620,7 @@ void t_hs_generator::generate_hs_struct_writer(ofstream& out,
     // Write field header
     string mname = (*f_iter)->get_name();
     indent(out) <<
-      "case f_" << name << "_" << mname << " rec of {Nothing -> return (); Just _v -> do" << endl;
+      "case f_" << name << "_" << mname << " record of {Nothing -> return (); Just _v -> do" << endl;
     indent_up();
     indent(out) << "writeFieldBegin oprot (\""<< (*f_iter)->get_name()<<"\","
                 <<type_to_enum((*f_iter)->get_type())<<","
@@ -949,7 +949,7 @@ void t_hs_generator::generate_service_server(t_service* tservice) {
   }
 
 
-  indent(f_service_) << "proc handler (iprot,oprot) (name,typ,seqid) = case name of" << endl;
+  indent(f_service_) << "proc_ handler (iprot,oprot) (name,typ,seqid) = case name of" << endl;
   indent_up();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     string fname = (*f_iter)->get_name();
@@ -957,7 +957,7 @@ void t_hs_generator::generate_service_server(t_service* tservice) {
   }
   indent(f_service_) << "_ -> ";
   if(tservice->get_extends() != NULL){
-    f_service_ << type_name(tservice->get_extends()) << ".proc handler (iprot,oprot) (name,typ,seqid)" << endl;
+    f_service_ << type_name(tservice->get_extends()) << ".proc_ handler (iprot,oprot) (name,typ,seqid)" << endl;
   } else {
     f_service_ << "do" << endl;
     indent_up();
@@ -978,7 +978,7 @@ void t_hs_generator::generate_service_server(t_service* tservice) {
 
   f_service_ <<
     indent() << "(name, typ, seqid) <- readMessageBegin iprot" << endl;
-  f_service_ << indent() << "proc handler (iprot,oprot) (name,typ,seqid)" << endl;
+  f_service_ << indent() << "proc_ handler (iprot,oprot) (name,typ,seqid)" << endl;
   indent(f_service_) << "return True" << endl;
   indent_down();
 
