@@ -54,19 +54,19 @@ public class JavaServer {
       System.out.println("calculate(" + logid + ", {" + work.op + "," + work.num1 + "," + work.num2 + "})");
       int val = 0;
       switch (work.op) {
-      case Operation.ADD:
+      case ADD:
         val = work.num1 + work.num2;
         break;
-      case Operation.SUBTRACT:
+      case SUBTRACT:
         val = work.num1 - work.num2;
         break;
-      case Operation.MULTIPLY:
+      case MULTIPLY:
         val = work.num1 * work.num2;
         break;
-      case Operation.DIVIDE:
+      case DIVIDE:
         if (work.num2 == 0) {
           InvalidOperation io = new InvalidOperation();
-          io.what = work.op;
+          io.what = work.op.getValue();
           io.why = "Cannot divide by 0";
           throw io;
         }
@@ -74,7 +74,7 @@ public class JavaServer {
         break;
       default:
         InvalidOperation io = new InvalidOperation();
-        io.what = work.op;
+        io.what = work.op.getValue();
         io.why = "Unknown operation";
         throw io;
       }

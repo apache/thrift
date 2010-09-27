@@ -23,7 +23,17 @@
   <property name="src" location="src" />
   <property name="gen" location="../gen-java" />
   <property name="build" location="build" />
-  <property name="cpath" location="/usr/local/lib/libthrift.jar" />
+
+  <path id="libs.classpath">
+    <pathelement path="../../lib/java/libthrift.jar" />
+    <fileset dir="../../lib/java/build/ivy/lib">
+      <include name="*.jar" />
+    </fileset>
+  </path>
+  <path id="build.classpath">
+    <path refid="libs.classpath" />
+    <pathelement path="${gen}" />
+  </path>
 
   <target name="init">
     <tstamp />
@@ -31,8 +41,8 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac srcdir="${gen}" destdir="${build}" classpath="${cpath}" />
-    <javac srcdir="${src}" destdir="${build}" classpath="${cpath}:${gen}" />
+    <javac srcdir="${gen}" destdir="${build}" classpathref="libs.classpath" />
+    <javac srcdir="${src}" destdir="${build}" classpathref="build.classpath" />
   </target>
 
   <target name="tutorial" depends="compile">

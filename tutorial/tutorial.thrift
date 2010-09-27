@@ -66,7 +66,6 @@ namespace cpp tutorial
 namespace java tutorial
 namespace php tutorial
 namespace perl tutorial
-namespace smalltalk.category Thrift.Tutorial
 
 /**
  * Thrift lets you do typedefs to get pretty names for your types. Standard

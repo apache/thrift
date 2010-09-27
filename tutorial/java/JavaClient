@@ -18,5 +18,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+THIS_DIR=$(dirname $0)
+LIB_DIR=$THIS_DIR/../../lib/java/
+IVY_DIR=$LIB_DIR/build/ivy/lib/
 
-java -cp tutorial.jar:/usr/local/lib/libthrift.jar JavaClient
+java -cp $IVY_DIR/*:$LIB_DIR/libthrift.jar:tutorial.jar JavaClient
