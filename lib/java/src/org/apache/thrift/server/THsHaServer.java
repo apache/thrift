@@ -22,6 +22,7 @@ package org.apache.thrift.server;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -31,12 +32,16 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TNonblockingServerTransport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An extension of the TNonblockingServer to a Half-Sync/Half-Async server.
  * Like TNonblockingServer, it relies on the use of TFramedTransport.
  */
 public class THsHaServer extends TNonblockingServer {
+  private static final Logger LOGGER =
+    LoggerFactory.getLogger(THsHaServer.class.getName());
 
   // This wraps all the functionality of queueing and thread pool management
   // for the passing of Invocations from the Selector to workers.
@@ -285,8 +290,14 @@ public class THsHaServer extends TNonblockingServer {
    * invoker service instead of immediately invoking. The thread pool takes care of the rest.
    */
   @Override
-  protected void requestInvoke(FrameBuffer frameBuffer) {
-    invoker.execute(new Invocation(frameBuffer));
+  protected boolean requestInvoke(FrameBuffer frameBuffer) {
+    try {
+      invoker.execute(new Invocation(frameBuffer));
+      return true;
+    } catch (RejectedExecutionException rx) {
+      LOGGER.warn("ExecutorService rejected execution!", rx);
+      return false;
+    }
   }
 
   /**

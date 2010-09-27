@@ -254,8 +254,9 @@ public class TNonblockingServer extends TServer {
    * Perform an invocation. This method could behave several different ways
    * - invoke immediately inline, queue for separate execution, etc.
    */
-  protected void requestInvoke(FrameBuffer frameBuffer) {
+  protected boolean requestInvoke(FrameBuffer frameBuffer) {
     frameBuffer.invoke();
+    return true;
   }
 
   /**
@@ -420,13 +421,16 @@ public class TNonblockingServer extends TServer {
      */
     private void handleRead(SelectionKey key) {
       FrameBuffer buffer = (FrameBuffer)key.attachment();
-      if (buffer.read()) {
-        // if the buffer's frame read is complete, invoke the method.
-        if (buffer.isFrameFullyRead()) {
-          requestInvoke(buffer);
-        }
-      } else {
+      if (!buffer.read()) {
         cleanupSelectionkey(key);
+        return;
+      }
+
+      // if the buffer's frame read is complete, invoke the method.
+      if (buffer.isFrameFullyRead()) {
+        if (!requestInvoke(buffer)) {
+          cleanupSelectionkey(key);
+        }
       }
     }
 
