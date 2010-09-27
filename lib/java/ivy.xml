@@ -21,11 +21,15 @@
       <repository name="apache repository" url="http://incubator.apache.org/thrift/" />
       <description homepage="http://incubator.apache.org/thrift/" />
     </info>
+    <configurations defaultconfmapping="compile">
+      <conf name="compile" />
+      <conf name="test" extends="compile" visibility="private" />
+    </configurations>
     <dependencies>
        <dependency org="org.slf4j" name="slf4j-api" rev="1.5.8" conf="* -> *,!sources,!javadoc"/>
-       <dependency org="org.slf4j" name="slf4j-simple" rev="1.5.8" conf="* -> *,!sources,!javadoc"/>
+       <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.5.8" conf="test -> *,!sources,!javadoc"/>
        <dependency org="commons-lang" name="commons-lang" rev="2.5" conf="* -> *,!sources,!javadoc"/>
-       <dependency org="junit" name="junit" rev="4.4" conf="* -> *,!sources,!javadoc"/>
+       <dependency org="junit" name="junit" rev="4.4" conf="test -> *,!sources,!javadoc"/>
        <dependency org="javax.servlet" name="servlet-api" rev="2.5" conf="* -> *,!sources,!javadoc"/>
     </dependencies>
 </ivy-module>

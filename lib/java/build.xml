@@ -55,15 +55,14 @@
   
   <!-- TODO: Get the appropriate tokens / URL for upload -->  
   <property name="apache.snapshot.repository" value="https://repository.apache.org/content/repositories/snapshots" />
-  
+ 
   <path id="compile.classpath">
-    <fileset dir="${ivy.lib.dir}">
-      <include name="**/*.jar" />
-    </fileset>
+    <path refid="ivy.compile.classpath" />
   </path>
 
   <path id="test.classpath">
     <path refid="compile.classpath" />
+    <path refid="ivy.test.classpath" />
     <pathelement path="${env.CLASSPATH}" />
     <pathelement location="build/test" />
     <pathelement location="${jar.file}" />
@@ -118,6 +117,8 @@
 
   <target name="resolve" depends="ivy-init-antlib" description="retrieve dependencies with ivy" unless="noivy">
     <ivy:retrieve />
+    <ivy:cachepath pathid="ivy.compile.classpath" conf="compile" />
+    <ivy:cachepath pathid="ivy.test.classpath" conf="test" />
   </target>
 
   <target name="compile" depends="init,resolve">
@@ -172,6 +173,9 @@
     <javac debug="true" srcdir="${gen}" destdir="${build.test}" classpathref="test.classpath" />
     <javac debug="true" srcdir="${genbean}" destdir="${build.test}" classpathref="test.classpath" />
     <javac debug="true" srcdir="${src.test}" destdir="${build.test}" classpathref="test.classpath" />
+    <copy todir="${build.test}">
+      <fileset dir="${src.test}" includes="log4j.properties" />
+    </copy>
   </target>
 
   <property name="build.test" location="${build.dir}/test"/>
