@@ -28,14 +28,18 @@ from ThriftTest.ttypes import *
 from thrift.transport import TTransport
 from thrift.transport import TSocket
 from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TCompactProtocol
 import unittest
 import time
 
 class TestEof(unittest.TestCase):
 
-  def setUp(self):
+  def make_data(self, pfactory=None):
     trans = TTransport.TMemoryBuffer()
-    prot = TBinaryProtocol.TBinaryProtocol(trans)
+    if pfactory:
+      prot = pfactory.getProtocol(trans)
+    else:
+      prot = TBinaryProtocol.TBinaryProtocol(trans)
 
     x = Xtruct()
     x.string_thing = "Zero"
@@ -49,11 +53,11 @@ class TestEof(unittest.TestCase):
 
     x.write(prot)
 
-    self.data = trans.getvalue()
+    return trans.getvalue()
 
   def testTransportReadAll(self):
     """Test that readAll on any type of transport throws an EOFError"""
-    trans = TTransport.TMemoryBuffer(self.data)
+    trans = TTransport.TMemoryBuffer(self.make_data())
     trans.readAll(1)
 
     try:
@@ -64,7 +68,7 @@ class TestEof(unittest.TestCase):
     self.fail("Should have gotten EOFError")
 
   def eofTestHelper(self, pfactory):
-    trans = TTransport.TMemoryBuffer(self.data)
+    trans = TTransport.TMemoryBuffer(self.make_data(pfactory))
     prot = pfactory.getProtocol(trans)
 
     x = Xtruct()
@@ -89,8 +93,9 @@ class TestEof(unittest.TestCase):
     """Teest the ability of TBinaryProtocol to deal with the removal of every byte in the file"""
     # TODO: we should make sure this covers more of the code paths
 
-    for i in xrange(0, len(self.data) + 1):
-      trans = TTransport.TMemoryBuffer(self.data[0:i])
+    data = self.make_data(pfactory)
+    for i in xrange(0, len(data) + 1):
+      trans = TTransport.TMemoryBuffer(data[0:i])
       prot = pfactory.getProtocol(trans)
       try:
         x = Xtruct()
@@ -110,6 +115,11 @@ class TestEof(unittest.TestCase):
     """Test that TBinaryProtocolAccelerated throws an EOFError when it reaches the end of the stream"""
     self.eofTestHelper(TBinaryProtocol.TBinaryProtocolAcceleratedFactory())
     self.eofTestHelperStress(TBinaryProtocol.TBinaryProtocolAcceleratedFactory())
+
+  def testCompactProtocolEof(self):
+    """Test that TCompactProtocol throws an EOFError when it reaches the end of the stream"""
+    self.eofTestHelper(TCompactProtocol.TCompactProtocolFactory())
+    self.eofTestHelperStress(TCompactProtocol.TCompactProtocolFactory())
 
 def suite():
   suite = unittest.TestSuite()
