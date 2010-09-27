@@ -201,6 +201,7 @@ void t_hs_generator::init_generator() {
 
 string t_hs_generator::hs_language_pragma() {
   return std::string("{-# LANGUAGE DeriveDataTypeable #-}\n"
+                     "{-# OPTIONS_GHC -fno-warn-missing-fields #-}\n"
                      "{-# OPTIONS_GHC -fno-warn-missing-signatures #-}\n"
                      "{-# OPTIONS_GHC -fno-warn-name-shadowing #-}\n"
                      "{-# OPTIONS_GHC -fno-warn-unused-imports #-}\n"
@@ -232,7 +233,7 @@ string t_hs_generator::hs_imports() {
     result += "\n";
   }
 
-  result += "import Thrift\nimport Data.Typeable ( Typeable )\nimport Control.Exception\nimport qualified Data.Map as Map\nimport qualified Data.Set as Set\nimport Data.ByteString.Lazy\nimport Data.Int\nimport Data.Word\nimport Prelude ((==), String, Eq, Show, Ord, Maybe(..), (&&), (||), return, IO, Enum, fromInteger, toInteger, fromEnum, toEnum, Bool(..), (++), ($), Double, (-), length)";
+  result += "import Thrift\nimport Data.Typeable ( Typeable )\nimport Control.Exception\nimport qualified Data.Map as Map\nimport qualified Data.Set as Set\nimport Data.ByteString.Lazy\nimport Data.Int\nimport Data.Word\nimport Prelude ((==), String, Eq, Show, Ord, Maybe(..), (&&), (||), return, IO, Enum, fromIntegral, fromEnum, toEnum, Bool(..), (++), ($), Double, (-), length)";
   return result;
 }
 
@@ -786,9 +787,9 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
     else
       exports+=",";
     string funname = (*f_iter)->get_name();
-    exports+=funname;
+    exports += decapitalize(funname);
   }
-  indent(f_client_) << "module " << capitalize(service_name_) << "_Client("<<exports<<") where" << endl;
+  indent(f_client_) << "module " << capitalize(service_name_) << "_Client(" << exports << ") where" << endl;
 
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends());
@@ -816,7 +817,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
     }
 
     // Open function
-    indent(f_client_) << funname << " (ip,op)" <<  fargs << " = do" << endl;
+    indent(f_client_) << decapitalize(funname) << " (ip,op)" <<  fargs << " = do" << endl;
     indent_up();
     indent(f_client_) <<  "send_" << funname << " op" << fargs;
 
@@ -993,7 +994,7 @@ void t_hs_generator::generate_process_function(t_service* tservice,
                                                t_function* tfunction) {
   // Open function
   indent(f_service_) <<
-    "process_" << tfunction->get_name() << " (seqid, iprot, oprot, handler) = do" << endl;
+    "process_" << decapitalize(tfunction->get_name()) << " (seqid, iprot, oprot, handler) = do" << endl;
   indent_up();
 
   string argsname = capitalize(tfunction->get_name()) + "_args";
@@ -1042,7 +1043,7 @@ void t_hs_generator::generate_process_function(t_service* tservice,
   if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()){
     f_service_ << "res <- ";
   }
-  f_service_ << "Iface." << tfunction->get_name() << " handler";
+  f_service_ << "Iface." << decapitalize(tfunction->get_name()) << " handler";
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     f_service_ <<  " (f_" << argsname <<  "_" << (*f_iter)->get_name() << " args)";
   }
@@ -1155,7 +1156,7 @@ void t_hs_generator::generate_deserialize_type(ofstream &out,
     out << " iprot";
   } else if (type->is_enum()) {
     string ename = capitalize(type->get_name());
-    out << "(do {i <- readI32 iprot; return (toEnum i :: " << ename << ")})";
+    out << "(do {i <- readI32 iprot; return $ toEnum $ fromIntegral i})";
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE TYPE '%s'\n",
            type->get_name().c_str());
@@ -1273,7 +1274,7 @@ void t_hs_generator::generate_serialize_field(ofstream &out,
 
     } else if (type->is_enum()) {
       string ename = capitalize(type->get_name());
-      out << "writeI32 oprot (fromEnum "<< name << ")";
+      out << "writeI32 oprot (fromIntegral $ fromEnum "<< name << ")";
     }
 
   } else {
@@ -1303,17 +1304,17 @@ void t_hs_generator::generate_serialize_container(ofstream &out,
     string v = tmp("_viter");
     out << "(let {f [] = return (); f (("<<k<<","<<v<<"):t) = do {";
     generate_serialize_map_element(out, (t_map*)ttype, k, v);
-    out << ";f t}} in do {writeMapBegin oprot ("<< type_to_enum(((t_map*)ttype)->get_key_type())<<","<< type_to_enum(((t_map*)ttype)->get_val_type())<<",Map.size " << prefix << "); f (Map.toList " << prefix << ");writeMapEnd oprot})";
+    out << ";f t}} in do {writeMapBegin oprot ("<< type_to_enum(((t_map*)ttype)->get_key_type())<<","<< type_to_enum(((t_map*)ttype)->get_val_type())<<",fromIntegral $ Map.size " << prefix << "); f (Map.toList " << prefix << ");writeMapEnd oprot})";
   } else if (ttype->is_set()) {
     string v = tmp("_viter");
     out << "(let {f [] = return (); f ("<<v<<":t) = do {";
     generate_serialize_set_element(out, (t_set*)ttype, v);
-    out << ";f t}} in do {writeSetBegin oprot ("<< type_to_enum(((t_set*)ttype)->get_elem_type())<<",Set.size " << prefix << "); f (Set.toList " << prefix << ");writeSetEnd oprot})";
+    out << ";f t}} in do {writeSetBegin oprot ("<< type_to_enum(((t_set*)ttype)->get_elem_type())<<",fromIntegral $ Set.size " << prefix << "); f (Set.toList " << prefix << ");writeSetEnd oprot})";
   } else if (ttype->is_list()) {
     string v = tmp("_viter");
     out << "(let {f [] = return (); f ("<<v<<":t) = do {";
     generate_serialize_list_element(out, (t_list*)ttype, v);
-    out << ";f t}} in do {writeListBegin oprot ("<< type_to_enum(((t_list*)ttype)->get_elem_type())<<",fromInteger $ toInteger $ Prelude.length " << prefix << "); f " << prefix << ";writeListEnd oprot})";
+    out << ";f t}} in do {writeListBegin oprot ("<< type_to_enum(((t_list*)ttype)->get_elem_type())<<",fromIntegral $ Prelude.length " << prefix << "); f " << prefix << ";writeListEnd oprot})";
   }
 
 }

@@ -19,9 +19,50 @@
 # under the License.
 #
 
+# Check some basic 
 if [ -z $BASE ]; then
     BASE=../..
 fi
 
-printf "Starting server... "
-ghc -fglasgow-exts -i$BASE/lib/hs/src -i$BASE/test/hs/gen-hs Server.hs -e "putStrLn \"ready.\" >> Server.main"
+if [ -z $OUTDIR ]; then
+    OUTDIR=server-bindings
+fi
+
+if [ -z $THRIFT_BIN ]; then
+    THRIFT_BIN=$(which thrift)
+fi
+
+if [ ! -x "$THRIFT_BIN" ]; then
+    printf "Could not find thrift binary; pass it as environment variable THRIFT_BIN\n"
+    exit 1
+fi
+
+# Figure out what file to generate bindings from
+if [ -z $THRIFT_FILE ]; then
+    THRIFT_FILE=$BASE/test/$1.thrift
+fi
+
+if [ ! -e $THRIFT_FILE ]; then
+    printf "Missing thrift file $THRIFT_FILE \n"
+    exit 2
+fi
+
+# Figure out what file to run has a server
+if [ -z $SERVER_FILE ]; then
+    SERVER_FILE=$BASE/test/hs/$1_TestServer.hs
+fi
+
+if [ ! -e $SERVER_FILE ]; then
+    printf "Missing server code file $SERVER_FILE \n"
+    exit 3
+fi
+
+# Actually run the server bits
+printf "Creating directory $OUTDIR to hold generated bindings... \n"
+[ -d $OUTDIR ] || mkdir $OUTDIR
+
+printf "Generating bindings... \n"
+$THRIFT_BIN -o $OUTDIR --gen hs $THRIFT_FILE
+
+printf "Starting server... \n"
+runhaskell -Wall -Werror -i$BASE/lib/hs/src -i$OUTDIR/gen-hs $SERVER_FILE

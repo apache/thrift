@@ -29,15 +29,15 @@ enum enumconstants {
   TWO = 2
 }
 
-struct thing2 {
-  /** standard docstring */
-  1: enumconstants val = TWO
-}
+// struct thing2 {
+//   /** standard docstring */
+//   1: enumconstants val = TWO
+// }
 
 typedef i32 myIntType
 const myIntType myInt = 3
 
-const map<enumconstants,string> GEN_ENUM_NAMES = {ONE : "HOWDY", TWO: PARTNER}
+//const map<enumconstants,string> GEN_ENUM_NAMES = {ONE : "HOWDY", TWO: "PARTNER"}
 
 const i32 hex_const = 0x0001F
 
