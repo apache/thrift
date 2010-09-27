@@ -28,6 +28,7 @@ namespace perl ThriftTest
 namespace csharp Thrift.Test
 namespace js ThriftTest
 namespace st ThriftTest
+namespace py ThriftTest
 namespace * thrift.test
 
 /**
