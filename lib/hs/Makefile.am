@@ -17,51 +17,23 @@
 # under the License.
 #
 
-SUBDIRS =
-
-if WITH_CPP
-SUBDIRS += cpp
-endif
-
-if WITH_MONO
-SUBDIRS += csharp
-endif
-
-if WITH_JAVA
-SUBDIRS += java
-endif
-
-if WITH_PYTHON
-SUBDIRS += py
-endif
-
-if WITH_ERLANG
-SUBDIRS += erl
-endif
-
-if WITH_RUBY
-SUBDIRS += rb
-endif
-
-if WITH_HASKELL
-SUBDIRS += hs
-endif
-
-if WITH_PERL
-SUBDIRS += perl
-endif
-
-if WITH_PHP
-SUBDIRS += php
-endif
-
-# All of the libs that don't use Automake need to go in here
-# so they will end up in our release tarballs.
 EXTRA_DIST = \
-  cocoa \
-  ocaml \
-  php \
-  erl \
-  js \
-  as3 \
-  st
+  README \
+  Setup.lhs \
+  TODO \
+  Thrift.cabal \
+  src
+
+all-local:
+	$(RUNHASKELL) Setup.lhs configure $(CABAL_CONFIGURE_FLAGS)
+	$(RUNHASKELL) Setup.lhs build
+
+install-exec-hook:
+	$(RUNHASKELL) Setup.lhs install
+
+# Make sure this doesn't fail if Haskell is not configured.
+clean-local:
+	$(RUNHASKELL) Setup.lhs clean
+
+maintainer-clean-local:
+	$(RUNHASKELL) Setup.lhs clean

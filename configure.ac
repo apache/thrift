@@ -61,6 +61,12 @@ AC_ARG_VAR([PERL_PREFIX], [Prefix for installing Perl modules.
                            Default = "/usr/local/lib"])
 AS_IF([test "x$PERL_PREFIX" = x], [PERL_PREFIX="/usr/local"])
 
+AC_ARG_VAR([CABAL_CONFIGURE_FLAGS],
+           [Extra flags to pass to cabal: "cabal Setup.lhs configure $CABAL_CONFIGURE_FLAGS".
+            (Typically used to set --user or force --global.)])
+
+AC_SUBST(CABAL_CONFIGURE_FLAGS)
+
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_CXX
@@ -191,6 +197,19 @@ fi
 AM_CONDITIONAL(WITH_RUBY, [test "$have_ruby" = "yes"])
 AM_CONDITIONAL(HAVE_RSPEC, [test "x$RSPEC" != "x"])
 
+AX_THRIFT_LIB(haskell, [Haskell], yes)
+have_haskell=no
+RUNHASKELL=true
+if test "$with_haskell" = "yes"; then
+  AC_PATH_PROG([RUNHASKELL], [runhaskell])
+  if test "x$RUNHASKELL" != "x"; then
+    have_haskell="yes"
+  else
+    RUNHASKELL=true
+  fi
+fi
+AC_SUBST(RUNHASKELL)
+AM_CONDITIONAL(WITH_HASKELL, [test "$have_haskell" = "yes"])
 
 AC_C_CONST
 AC_C_INLINE
@@ -335,6 +354,7 @@ AC_CONFIG_FILES([
   lib/csharp/Makefile
   lib/erl/Makefile
   lib/erl/src/Makefile
+  lib/hs/Makefile
   lib/java/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile
@@ -359,6 +379,7 @@ echo "Building Java Library ........ : $have_java"
 echo "Building C# Library .......... : $have_csharp"
 echo "Building Python Library ...... : $have_python"
 echo "Building Ruby Library ........ : $have_ruby"
+echo "Building Haskell Library ..... : $have_haskell"
 echo "Building Perl Library ........ : $have_perl"
 echo "Building PHP Library ......... : $have_php"
 echo "Building Erlang Library ...... : $have_erlang"
@@ -385,6 +406,10 @@ if test "$have_ruby" = "yes" ; then
   echo
   echo "Using Ruby ................... : $RUBY"
   echo "Using rspec .................. : $RSPEC"
+fi
+if test "$have_haskell" = "yes" ; then
+  echo
+  echo "Using Haskell ................ : $RUNHASKELL"
 fi
 if test "$have_perl" = "yes" ; then
   echo
