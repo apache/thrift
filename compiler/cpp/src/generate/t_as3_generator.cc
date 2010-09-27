@@ -315,14 +315,8 @@ void t_as3_generator::generate_enum(t_enum* tenum) {
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
-  int value = -1;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if ((*c_iter)->has_value()) {
-      value = (*c_iter)->get_value();
-    } else {
-      ++value;
-    }
-
+    int value = (*c_iter)->get_value();
     indent(f_enum) <<
       "public static const " << (*c_iter)->get_name() <<
       ":int = " << value << ";" << endl;
@@ -336,10 +330,8 @@ void t_as3_generator::generate_enum(t_enum* tenum) {
   bool firstValue = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     // populate set
-    if ((*c_iter)->has_value()) {
-      f_enum << (firstValue ? "" : ", ") << (*c_iter)->get_name();
-      firstValue = false;
-    }
+    f_enum << (firstValue ? "" : ", ") << (*c_iter)->get_name();
+    firstValue = false;
   }
   indent_down();
   f_enum << ");" << endl;

@@ -333,10 +333,8 @@ void t_cocoa_generator::generate_enum(t_enum* tenum) {
     }
     f_header_ <<
       indent() << tenum->get_name() << "_" << (*c_iter)->get_name();
-    if ((*c_iter)->has_value()) {
-      f_header_ <<
-        " = " << (*c_iter)->get_value();
-    }
+    f_header_ <<
+      " = " << (*c_iter)->get_value();
   }
 
   indent_down();

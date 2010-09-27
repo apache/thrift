@@ -313,7 +313,6 @@ void t_ocaml_generator::generate_enum(t_enum* tenum) {
   indent_up();
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
-  int value = -1;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     string name = capitalize((*c_iter)->get_name());
     indent(f_types_) << "| " << name << endl;
@@ -325,15 +324,9 @@ void t_ocaml_generator::generate_enum(t_enum* tenum) {
   indent(f_types_i_) << "val to_i : t -> int" << endl;
   indent_up();
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if ((*c_iter)->has_value()) {
-      value = (*c_iter)->get_value();
-    } else {
-      ++value;
-    }
+    int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
-
-    f_types_ <<
-      indent() << "| " << name << " -> " << value << endl;
+    indent(f_types_) << "| " << name << " -> " << value << endl;
   }
   indent_down();
 
@@ -341,15 +334,9 @@ void t_ocaml_generator::generate_enum(t_enum* tenum) {
   indent(f_types_i_) << "val of_i : int -> t" << endl;
   indent_up();
   for(c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if ((*c_iter)->has_value()) {
-      value = (*c_iter)->get_value();
-    } else {
-      ++value;
-    }
+    int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
-
-    f_types_ <<
-      indent() << "| " << value << " -> " << name << endl;
+    indent(f_types_) << "| " << value << " -> " << name << endl;
   }
   indent(f_types_) << "| _ -> raise Thrift_error" << endl;
   indent_down();
@@ -410,14 +397,9 @@ string t_ocaml_generator::render_const_value(t_type* type, t_const_value* value)
     t_enum* tenum = (t_enum*)type;
     vector<t_enum_value*> constants = tenum->get_constants();
     vector<t_enum_value*>::iterator c_iter;
-    int val = -1;
     for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-      if ((*c_iter)->has_value()) {
-        val = (*c_iter)->get_value();
-      } else {
-        ++val;
-      }
-      if(val == value->get_integer()){
+      int val = (*c_iter)->get_value();
+      if (val == value->get_integer()) {
         indent(out) << capitalize(tenum->get_name()) << "." << capitalize((*c_iter)->get_name());
         break;
       }

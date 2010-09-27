@@ -304,15 +304,9 @@ void t_perl_generator::generate_enum(t_enum* tenum) {
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
-  int value = -1;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if ((*c_iter)->has_value()) {
-      value = (*c_iter)->get_value();
-    } else {
-      ++value;
-    }
-
-    f_types_ << "use constant "<<(*c_iter)->get_name() << " => " << value << ";" << endl;
+    int value = (*c_iter)->get_value();
+    f_types_ << "use constant "<< (*c_iter)->get_name() << " => " << value << ";" << endl;
   }
 }
 

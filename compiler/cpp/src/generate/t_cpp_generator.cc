@@ -394,10 +394,8 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
     }
     f_types_ <<
       indent() << (*c_iter)->get_name();
-    if ((*c_iter)->has_value()) {
-      f_types_ <<
-        " = " << (*c_iter)->get_value();
-    }
+    f_types_ <<
+      " = " << (*c_iter)->get_value();
   }
 
   indent_down();

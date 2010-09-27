@@ -279,36 +279,23 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
   indent(f_types_) << "deriving (Show,Eq, Typeable, Ord)" << endl;
   indent_down();
 
-  int value = -1;
   indent(f_types_) << "instance Enum " << capitalize(tenum->get_name()) << " where" << endl;
   indent_up();
   indent(f_types_) << "fromEnum t = case t of" << endl;
   indent_up();
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if ((*c_iter)->has_value()) {
-      value = (*c_iter)->get_value();
-    } else {
-      ++value;
-    }
+    int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
-
-    f_types_ <<
-      indent() << name << " -> " << value << endl;
+    indent(f_types_) << name << " -> " << value << endl;
   }
   indent_down();
 
   indent(f_types_) << "toEnum t = case t of" << endl;
   indent_up();
   for(c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if ((*c_iter)->has_value()) {
-      value = (*c_iter)->get_value();
-    } else {
-      ++value;
-    }
+    int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
-
-    f_types_ <<
-      indent() << value << " -> " << name << endl;
+    indent(f_types_) << value << " -> " << name << endl;
   }
   indent(f_types_) << "_ -> throw ThriftException" << endl;
   indent_down();
@@ -377,14 +364,9 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
     t_enum* tenum = (t_enum*)type;
     vector<t_enum_value*> constants = tenum->get_constants();
     vector<t_enum_value*>::iterator c_iter;
-    int val = -1;
     for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-      if ((*c_iter)->has_value()) {
-        val = (*c_iter)->get_value();
-      } else {
-        ++val;
-      }
-      if(val == value->get_integer()){
+      int val = (*c_iter)->get_value();
+      if (val == value->get_integer()) {
         indent(out) << capitalize((*c_iter)->get_name());
         break;
       }

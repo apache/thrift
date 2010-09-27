@@ -286,19 +286,11 @@ void t_erl_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
 
-  int value = -1;
-
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if ((*c_iter)->has_value()) {
-      value = (*c_iter)->get_value();
-    } else {
-      ++value;
-    }
-
+    int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
-
-    f_types_hrl_file_ <<
-      indent() << "-define(" << program_name_ << "_" << tenum->get_name() << "_" << name << ", " << value << ")."<< endl;
+    indent(f_types_hrl_file_) <<
+      "-define(" << program_name_ << "_" << tenum->get_name() << "_" << name << ", " << value << ")."<< endl;
   }
 
   f_types_hrl_file_ << endl;

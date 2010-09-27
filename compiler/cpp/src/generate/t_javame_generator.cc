@@ -339,14 +339,8 @@ void t_javame_generator::generate_enum(t_enum* tenum) {
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
-  int value = -1;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if ((*c_iter)->has_value()) {
-      value = (*c_iter)->get_value();
-    } else {
-      ++value;
-    }
-
+    int value = (*c_iter)->get_value();
     generate_java_doc(f_enum, *c_iter);
     indent(f_enum) << "public static final " << tenum->get_name() <<
       " " << (*c_iter)->get_name() << " = new " << tenum->get_name() <<
@@ -379,15 +373,8 @@ void t_javame_generator::generate_enum(t_enum* tenum) {
   indent(f_enum) << "switch (value) {" << endl;
   indent_up();
 
-  value = -1;
-
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if ((*c_iter)->has_value()) {
-      value = (*c_iter)->get_value();
-    } else {
-      ++value;
-    }
-
+    int value = (*c_iter)->get_value();
     indent(f_enum) << "case " << value << ":" << endl;
     indent(f_enum) << "  return " << (*c_iter)->get_name() << ";" << endl;
   }

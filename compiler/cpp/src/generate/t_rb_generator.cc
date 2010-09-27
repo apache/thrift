@@ -297,13 +297,8 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
-  int value = -1;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if ((*c_iter)->has_value()) {
-      value = (*c_iter)->get_value();
-    } else {
-      ++value;
-    }
+    int value = (*c_iter)->get_value();
 
     // Ruby class constants have to be capitalized... omg i am so on the fence
     // about languages strictly enforcing capitalization why can't we just all
@@ -311,24 +306,17 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
     string name = capitalize((*c_iter)->get_name());
 
     generate_rdoc(f_types_, *c_iter);
-    f_types_ <<
-      indent() << name << " = " << value << endl;
+    indent(f_types_) << name << " = " << value << endl;
   }
   
-  //Create a hash mapping values back to their names (as strings) since ruby has no native enum type
+  // Create a hash mapping values back to their names (as strings) since ruby has no native enum type
   indent(f_types_) << "VALUE_MAP = {";
   bool first = true;
-  value = -1;
   for(c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    //Populate the hash
-    //If no value is given, use the next available one
-    if ((*c_iter)->has_value())
-      value = (*c_iter)->get_value();
-    else ++value;
-    
+    // Populate the hash
+    int value = (*c_iter)->get_value();
     first ? first = false : f_types_ << ", ";
     f_types_ << value << " => \"" << capitalize((*c_iter)->get_name()) << "\"";
-    
   }
   f_types_ << "}" << endl;
   
@@ -337,7 +325,7 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
   first = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     // Populate the set
-    first ? first = false: f_types_ << ", ";
+    first ? first = false : f_types_ << ", ";
     f_types_ << capitalize((*c_iter)->get_name());
   }
   f_types_ << "]).freeze" << endl;
