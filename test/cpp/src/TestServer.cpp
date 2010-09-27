@@ -138,7 +138,7 @@ class TestHandler : public ThriftTestIf {
     out = thing;
   }
 
-  Numberz testEnum(const Numberz thing) {
+  Numberz::type testEnum(const Numberz::type thing) {
     printf("testEnum(%d)\n", thing);
     return thing;
   }
@@ -163,7 +163,7 @@ class TestHandler : public ThriftTestIf {
 
   }
 
-  void testInsanity(map<UserId, map<Numberz,Insanity> > &insane, const Insanity &argument) {
+  void testInsanity(map<UserId, map<Numberz::type,Insanity> > &insane, const Insanity &argument) {
     printf("testInsanity()\n");
 
     Xtruct hello;
@@ -179,36 +179,36 @@ class TestHandler : public ThriftTestIf {
     goodbye.i64_thing = 4;
 
     Insanity crazy;
-    crazy.userMap.insert(make_pair(EIGHT, 8));
+    crazy.userMap.insert(make_pair(Numberz::EIGHT, 8));
     crazy.xtructs.push_back(goodbye);
 
     Insanity looney;
-    crazy.userMap.insert(make_pair(FIVE, 5));
+    crazy.userMap.insert(make_pair(Numberz::FIVE, 5));
     crazy.xtructs.push_back(hello);
 
-    map<Numberz, Insanity> first_map;
-    map<Numberz, Insanity> second_map;
+    map<Numberz::type, Insanity> first_map;
+    map<Numberz::type, Insanity> second_map;
 
-    first_map.insert(make_pair(TWO, crazy));
-    first_map.insert(make_pair(THREE, crazy));
+    first_map.insert(make_pair(Numberz::TWO, crazy));
+    first_map.insert(make_pair(Numberz::THREE, crazy));
 
-    second_map.insert(make_pair(SIX, looney));
+    second_map.insert(make_pair(Numberz::SIX, looney));
 
     insane.insert(make_pair(1, first_map));
     insane.insert(make_pair(2, second_map));
 
     printf("return");
     printf(" = {");
-    map<UserId, map<Numberz,Insanity> >::const_iterator i_iter;
+    map<UserId, map<Numberz::type,Insanity> >::const_iterator i_iter;
     for (i_iter = insane.begin(); i_iter != insane.end(); ++i_iter) {
       printf("%"PRId64" => {", i_iter->first);
-      map<Numberz,Insanity>::const_iterator i2_iter;
+      map<Numberz::type,Insanity>::const_iterator i2_iter;
       for (i2_iter = i_iter->second.begin();
            i2_iter != i_iter->second.end();
            ++i2_iter) {
         printf("%d => {", i2_iter->first);
-        map<Numberz, UserId> userMap = i2_iter->second.userMap;
-        map<Numberz, UserId>::const_iterator um;
+        map<Numberz::type, UserId> userMap = i2_iter->second.userMap;
+        map<Numberz::type, UserId>::const_iterator um;
         printf("{");
         for (um = userMap.begin(); um != userMap.end(); ++um) {
           printf("%d => %"PRId64", ", um->first, um->second);
@@ -232,7 +232,7 @@ class TestHandler : public ThriftTestIf {
 
   }
 
-  void testMulti(Xtruct &hello, const int8_t arg0, const int32_t arg1, const int64_t arg2, const std::map<int16_t, std::string>  &arg3, const Numberz arg4, const UserId arg5) {
+  void testMulti(Xtruct &hello, const int8_t arg0, const int32_t arg1, const int64_t arg2, const std::map<int16_t, std::string>  &arg3, const Numberz::type arg4, const UserId arg5) {
     printf("testMulti()\n");
 
     hello.string_thing = "Hello2";
@@ -353,7 +353,7 @@ int main(int argc, char **argv) {
     if (!args["workers"].empty()) {
       workerCount = atoi(args["workers"].c_str());
     }
-  } catch (exception& e) {
+  } catch (std::exception& e) {
     cerr << e.what() << endl;
     cerr << usage;
   }

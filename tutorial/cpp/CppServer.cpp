@@ -61,16 +61,16 @@ class CalculatorHandler : public CalculatorIf {
     int32_t val;
 
     switch (work.op) {
-    case ADD:
+    case Operation::ADD:
       val = work.num1 + work.num2;
       break;
-    case SUBTRACT:
+    case Operation::SUBTRACT:
       val = work.num1 - work.num2;
       break;
-    case MULTIPLY:
+    case Operation::MULTIPLY:
       val = work.num1 * work.num2;
       break;
-    case DIVIDE:
+    case Operation::DIVIDE:
       if (work.num2 == 0) {
         InvalidOperation io;
         io.what = work.op;
