@@ -31,6 +31,10 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslServer;
+import javax.security.sasl.SaslServerFactory;
 import javax.security.sasl.SaslException;
 
 import org.apache.thrift.TProcessor;
@@ -75,13 +79,19 @@ public class TestTSaslTransports extends TestCase {
 
 
   private static class TestSaslCallbackHandler implements CallbackHandler {
+    private final String password;
+
+    public TestSaslCallbackHandler(String password) {
+      this.password = password;
+    }
+
     @Override
     public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
       for (Callback c : callbacks) {
         if (c instanceof NameCallback) {
           ((NameCallback) c).setName(PRINCIPAL);
         } else if (c instanceof PasswordCallback) {
-          ((PasswordCallback) c).setPassword(PASSWORD.toCharArray());
+          ((PasswordCallback) c).setPassword(password.toCharArray());
         } else if (c instanceof AuthorizeCallback) {
           ((AuthorizeCallback) c).setAuthorized(true);
         } else if (c instanceof RealmCallback) {
@@ -93,39 +103,63 @@ public class TestTSaslTransports extends TestCase {
     }
   }
 
-  private void testSaslOpen(final String mechanism, final Map<String, String> props)
-      throws SaslException, TTransportException {
-    Thread serverThread = new Thread() {
-      public void run() {
-        try {
-          TServerSocket serverSocket = new TServerSocket(ServerTestBase.PORT);
-          TTransport serverTransport = serverSocket.accept();
-          TTransport saslServerTransport = new TSaslServerTransport(mechanism, SERVICE, HOST,
-              props, new TestSaslCallbackHandler(), serverTransport);
+  private class ServerThread extends Thread {
+    final String mechanism;
+    final Map<String, String> props;
+    volatile Throwable thrown;
 
-          saslServerTransport.open();
+    public ServerThread(String mechanism, Map<String, String> props) {
+      this.mechanism = mechanism;
+      this.props = props;
+    }
 
-          byte[] inBuf = new byte[testMessage1.getBytes().length];
-          // Deliberately read less than the full buffer to ensure
-          // that TSaslTransport is correctly buffering reads. This
-          // will fail for the WRAPPED test, if it doesn't work.
-          saslServerTransport.readAll(inBuf, 0, 5);
-          saslServerTransport.readAll(inBuf, 5, 10);
-          saslServerTransport.readAll(inBuf, 15, inBuf.length - 15);
-          LOGGER.debug("server got: {}", new String(inBuf));
-          assertEquals(new String(inBuf), testMessage1);
-
-          LOGGER.debug("server writing: {}", testMessage2);
-          saslServerTransport.write(testMessage2.getBytes());
-          saslServerTransport.flush();
-
-          serverSocket.close();
-          saslServerTransport.close();
-        } catch (TTransportException e) {
-          fail(e.toString());
-        }
+    public void run() {
+      try {
+        internalRun();
+      } catch (Throwable t) {
+        thrown = t;
       }
-    };
+    }
+
+    private void internalRun() throws Exception {
+      TServerSocket serverSocket = new TServerSocket(ServerTestBase.PORT);
+      try {
+        acceptAndWrite(serverSocket);
+      } finally {
+        serverSocket.close();
+      }
+    }
+
+    private void acceptAndWrite(TServerSocket serverSocket)
+      throws Exception {
+      TTransport serverTransport = serverSocket.accept();
+      TTransport saslServerTransport = new TSaslServerTransport(
+        mechanism, SERVICE, HOST,
+        props, new TestSaslCallbackHandler(PASSWORD), serverTransport);
+
+      saslServerTransport.open();
+
+      byte[] inBuf = new byte[testMessage1.getBytes().length];
+      // Deliberately read less than the full buffer to ensure
+      // that TSaslTransport is correctly buffering reads. This
+      // will fail for the WRAPPED test, if it doesn't work.
+      saslServerTransport.readAll(inBuf, 0, 5);
+      saslServerTransport.readAll(inBuf, 5, 10);
+      saslServerTransport.readAll(inBuf, 15, inBuf.length - 15);
+      LOGGER.debug("server got: {}", new String(inBuf));
+      assertEquals(new String(inBuf), testMessage1);
+
+      LOGGER.debug("server writing: {}", testMessage2);
+      saslServerTransport.write(testMessage2.getBytes());
+      saslServerTransport.flush();
+
+      saslServerTransport.close();
+    }
+  }
+
+  private void testSaslOpen(final String mechanism, final Map<String, String> props)
+      throws Exception {
+    ServerThread serverThread = new ServerThread(mechanism, props);
     serverThread.start();
 
     try {
@@ -134,42 +168,93 @@ public class TestTSaslTransports extends TestCase {
       // Ah well.
     }
 
-    TSocket clientSocket = new TSocket(HOST, ServerTestBase.PORT);
-    TTransport saslClientTransport = new TSaslClientTransport(mechanism,
-        PRINCIPAL, SERVICE, HOST, props, new TestSaslCallbackHandler(), clientSocket);
-    saslClientTransport.open();
-    LOGGER.debug("client writing: {}", testMessage1);
-    saslClientTransport.write(testMessage1.getBytes());
-    saslClientTransport.flush();
-
-    byte[] inBuf = new byte[testMessage2.getBytes().length];
-    saslClientTransport.readAll(inBuf, 0, inBuf.length);
-    LOGGER.debug("client got: {}", new String(inBuf));
-    assertEquals(new String(inBuf), testMessage2);
-
-    TTransportException expectedException = null;
     try {
+      TSocket clientSocket = new TSocket(HOST, ServerTestBase.PORT);
+      TTransport saslClientTransport = new TSaslClientTransport(mechanism,
+                                                                PRINCIPAL, SERVICE, HOST, props, new TestSaslCallbackHandler(PASSWORD), clientSocket);
       saslClientTransport.open();
-    } catch (TTransportException e) {
-      expectedException = e;
-    }
-    assertNotNull(expectedException);
+      LOGGER.debug("client writing: {}", testMessage1);
+      saslClientTransport.write(testMessage1.getBytes());
+      saslClientTransport.flush();
 
-    saslClientTransport.close();
+      byte[] inBuf = new byte[testMessage2.getBytes().length];
+      saslClientTransport.readAll(inBuf, 0, inBuf.length);
+      LOGGER.debug("client got: {}", new String(inBuf));
+      assertEquals(new String(inBuf), testMessage2);
 
-    try {
-      serverThread.join();
-    } catch (InterruptedException e) {
-      // Ah well.
+      TTransportException expectedException = null;
+      try {
+        saslClientTransport.open();
+      } catch (TTransportException e) {
+        expectedException = e;
+      }
+      assertNotNull(expectedException);
+
+      saslClientTransport.close();
+    } catch (Exception e) {
+      LOGGER.warn("Exception caught", e);
+      throw e;
+    } finally {
+      serverThread.interrupt();
+      try {
+        serverThread.join();
+      } catch (InterruptedException e) {
+        // Ah well.
+      }
+      assertNull(serverThread.thrown);
     }
   }
 
-  public void testUnwrappedOpen() throws SaslException, TTransportException {
+  public void testUnwrappedOpen() throws Exception {
     testSaslOpen(UNWRAPPED_MECHANISM, UNWRAPPED_PROPS);
   }
 
-  public void testWrappedOpen() throws SaslException, TTransportException {
+  public void testWrappedOpen() throws Exception {
     testSaslOpen(WRAPPED_MECHANISM, WRAPPED_PROPS);
+  }
+
+  public void testAnonymousOpen() throws Exception {
+    testSaslOpen("ANONYMOUS", null);
+  }
+
+  /**
+   * Test that we get the proper exceptions thrown back the server when
+   * the client provides invalid password.
+   */
+  public void testBadPassword() throws Exception {
+    ServerThread serverThread = new ServerThread(UNWRAPPED_MECHANISM, UNWRAPPED_PROPS);
+    serverThread.start();
+
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      // Ah well.
+    }
+
+    boolean clientSidePassed = true;
+
+    try {
+      TSocket clientSocket = new TSocket(HOST, ServerTestBase.PORT);
+      TTransport saslClientTransport = new TSaslClientTransport(
+        UNWRAPPED_MECHANISM, PRINCIPAL, SERVICE, HOST, UNWRAPPED_PROPS,
+        new TestSaslCallbackHandler("NOT THE PASSWORD"), clientSocket);
+      saslClientTransport.open();
+      clientSidePassed = false;
+      fail("Was able to open transport with bad password");
+    } catch (TTransportException tte) {
+      LOGGER.error("Exception for bad password", tte);
+      assertNotNull(tte.getMessage());
+      assertTrue(tte.getMessage().contains("Invalid response"));
+
+    } finally {
+      serverThread.interrupt();
+      serverThread.join();
+
+      if (clientSidePassed) {
+        assertNotNull(serverThread.thrown);
+        assertTrue(serverThread.thrown.getMessage().contains("Invalid response"));
+      }
+    }
   }
 
   public void testWithServer() throws Exception {
@@ -183,8 +268,9 @@ public class TestTSaslTransports extends TestCase {
 
     @Override
     public TTransport getClientTransport(TTransport underlyingTransport) throws Exception {
-      return new TSaslClientTransport(WRAPPED_MECHANISM,
-          PRINCIPAL, SERVICE, HOST, WRAPPED_PROPS, new TestSaslCallbackHandler(), underlyingTransport);
+      return new TSaslClientTransport(
+        WRAPPED_MECHANISM, PRINCIPAL, SERVICE, HOST, WRAPPED_PROPS,
+        new TestSaslCallbackHandler(PASSWORD), underlyingTransport);
     }
 
     @Override
@@ -195,8 +281,9 @@ public class TestTSaslTransports extends TestCase {
             // Transport
             TServerSocket socket = new TServerSocket(PORT);
 
-            TTransportFactory factory = new TSaslServerTransport.Factory(WRAPPED_MECHANISM,
-                SERVICE, HOST, WRAPPED_PROPS, new TestSaslCallbackHandler());
+            TTransportFactory factory = new TSaslServerTransport.Factory(
+              WRAPPED_MECHANISM, SERVICE, HOST, WRAPPED_PROPS,
+              new TestSaslCallbackHandler(PASSWORD));
             server = new TSimpleServer(processor, socket, factory, protoFactory);
 
             // Run it
@@ -222,4 +309,104 @@ public class TestTSaslTransports extends TestCase {
 
   }
 
+
+  /**
+   * Implementation of SASL ANONYMOUS, used for testing client-side
+   * intial responses.
+   */
+  private static class AnonymousClient implements SaslClient {
+    private final String username;
+    private boolean hasProvidedInitialResponse;
+
+    public AnonymousClient(String username) {
+      this.username = username;
+    }
+
+    public String getMechanismName() { return "ANONYMOUS"; }
+    public boolean hasInitialResponse() { return true; }
+    public byte[] evaluateChallenge(byte[] challenge) throws SaslException {
+      if (hasProvidedInitialResponse) {
+        throw new SaslException("Already complete!");
+      }
+
+      try {
+        hasProvidedInitialResponse = true;
+        return username.getBytes("UTF-8");
+      } catch (IOException e) {
+        throw new SaslException(e.toString());
+      }
+    }
+    public boolean isComplete() { return hasProvidedInitialResponse; }
+    public byte[] unwrap(byte[] incoming, int offset, int len) {
+      throw new UnsupportedOperationException();
+    }
+    public byte[] wrap(byte[] outgoing, int offset, int len) {
+      throw new UnsupportedOperationException();
+    }
+    public Object getNegotiatedProperty(String propName) { return null; }
+    public void dispose() {}
+  }
+
+  private static class AnonymousServer implements SaslServer {
+    private String user;
+    public String getMechanismName() { return "ANONYMOUS"; }
+    public byte[] evaluateResponse(byte[] response) throws SaslException {
+      try {
+        this.user = new String(response, "UTF-8");
+      } catch (IOException e) {
+        throw new SaslException(e.toString());
+      }
+      return null;
+    }
+    public boolean isComplete() { return user != null; }
+    public String getAuthorizationID() { return user; }
+    public byte[] unwrap(byte[] incoming, int offset, int len) {
+      throw new UnsupportedOperationException();
+    }
+    public byte[] wrap(byte[] outgoing, int offset, int len) {
+      throw new UnsupportedOperationException();
+    }
+    public Object getNegotiatedProperty(String propName) { return null; }
+    public void dispose() {}
+
+  }
+
+  public static class SaslAnonymousFactory
+    implements SaslClientFactory, SaslServerFactory {
+
+    public SaslClient createSaslClient(
+      String[] mechanisms, String authorizationId, String protocol,
+      String serverName, Map<String,?> props, CallbackHandler cbh)
+    {
+      for (String mech : mechanisms) {
+        if ("ANONYMOUS".equals(mech)) {
+          return new AnonymousClient(authorizationId);
+        }
+      }
+      return null;
+    }
+
+    public SaslServer createSaslServer(
+      String mechanism, String protocol, String serverName, Map<String,?> props, CallbackHandler cbh)
+    {
+      if ("ANONYMOUS".equals(mechanism)) {
+        return new AnonymousServer();
+      }
+      return null;
+    }
+    public String[] getMechanismNames(Map<String, ?> props) {
+      return new String[] { "ANONYMOUS" };
+    }
+  }
+
+  static {
+    java.security.Security.addProvider(new SaslAnonymousProvider());
+  }
+  public static class SaslAnonymousProvider extends java.security.Provider {
+    public SaslAnonymousProvider() {
+      super("ThriftSaslAnonymous", 1.0, "Thrift Anonymous SASL provider");
+      put("SaslClientFactory.ANONYMOUS", SaslAnonymousFactory.class.getName());
+      put("SaslServerFactory.ANONYMOUS", SaslAnonymousFactory.class.getName());
+    }
+  }
 }

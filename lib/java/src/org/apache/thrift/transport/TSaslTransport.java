@@ -21,6 +21,8 @@ package org.apache.thrift.transport;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,16 +50,42 @@ abstract class TSaslTransport extends TTransport {
   protected static final int STATUS_BYTES = 1;
   protected static final int PAYLOAD_LENGTH_BYTES = 4;
 
+  protected static enum SaslRole {
+    SERVER, CLIENT;
+  }
+
   /**
    * Status bytes used during the initial Thrift SASL handshake.
    */
-  protected static final byte START = 0x01;
-  protected static final byte OK = 0x02;
-  protected static final byte BAD = 0x03;
-  protected static final byte ERROR = 0x04;
-  protected static final byte COMPLETE = 0x05;
+  protected static enum NegotiationStatus {
+    START((byte)0x01),
+    OK((byte)0x02),
+    BAD((byte)0x03),
+    ERROR((byte)0x04),
+    COMPLETE((byte)0x05);
 
-  protected static final Set<Byte> VALID_STATUSES = new HashSet<Byte>(Arrays.asList(START, OK, BAD, ERROR, COMPLETE));
+    private final byte value;
+
+    private static final Map<Byte, NegotiationStatus> reverseMap =
+      new HashMap<Byte, NegotiationStatus>();
+    static {
+      for (NegotiationStatus s : NegotiationStatus.class.getEnumConstants()) {
+        reverseMap.put(s.getValue(), s);
+      }
+    }
+
+    private NegotiationStatus(byte val) {
+      this.value = val;
+    }
+
+    public byte getValue() {
+      return value;
+    }
+
+    public static NegotiationStatus byValue(byte val) {
+      return reverseMap.get(val);
+    }
+  }
 
   /**
    * Transport underlying this one.
@@ -126,14 +154,16 @@ abstract class TSaslTransport extends TTransport {
    *          The data to send as the payload of this message.
    * @throws TTransportException
    */
-  protected void sendSaslMessage(byte status, byte[] payload) throws TTransportException {
+  protected void sendSaslMessage(NegotiationStatus status, byte[] payload) throws TTransportException {
     if (payload == null)
       payload = new byte[0];
 
-    messageHeader[0] = status;
+    messageHeader[0] = status.getValue();
     EncodingUtils.encodeBigEndian(payload.length, messageHeader, STATUS_BYTES);
 
-    LOGGER.debug("Writing message with status {} and payload length {}", status, payload.length);
+    if (LOGGER.isDebugEnabled())
+      LOGGER.debug(getRole() + ": Writing message with status {} and payload length {}",
+                   status, payload.length);
     underlyingTransport.write(messageHeader);
     underlyingTransport.write(payload);
     underlyingTransport.flush();
@@ -150,21 +180,25 @@ abstract class TSaslTransport extends TTransport {
   protected SaslResponse receiveSaslMessage() throws TTransportException {
     underlyingTransport.readAll(messageHeader, 0, messageHeader.length);
 
-    byte status = messageHeader[0];
+    byte statusByte = messageHeader[0];
     byte[] payload = new byte[EncodingUtils.decodeBigEndian(messageHeader, STATUS_BYTES)];
     underlyingTransport.readAll(payload, 0, payload.length);
 
-    if (!VALID_STATUSES.contains(status))
-      sendAndThrowMessage(ERROR, "Invalid status " + status);
-    else if (status == BAD || status == ERROR) {
+    NegotiationStatus status = NegotiationStatus.byValue(statusByte);
+    if (status == null) {
+      sendAndThrowMessage(NegotiationStatus.ERROR, "Invalid status " + statusByte);
+    } else if (status == NegotiationStatus.BAD || status == NegotiationStatus.ERROR) {
       try {
-        throw new TTransportException(new String(payload, "UTF-8"));
+        String remoteMessage = new String(payload, "UTF-8");
+        throw new TTransportException("Peer indicated failure: " + remoteMessage);
       } catch (UnsupportedEncodingException e) {
         throw new TTransportException(e);
       }
     }
 
-    LOGGER.debug("Received message with status {} and payload length {}", status, payload.length);
+    if (LOGGER.isDebugEnabled())
+      LOGGER.debug(getRole() + ": Received message with status {} and payload length {}",
+                   status, payload.length);
     return new SaslResponse(status, payload);
   }
 
@@ -180,8 +214,13 @@ abstract class TSaslTransport extends TTransport {
    * @throws TTransportException
    *           Always thrown with the message provided.
    */
-  protected void sendAndThrowMessage(byte status, String message) throws TTransportException {
-    sendSaslMessage(status, message.getBytes());
+  protected void sendAndThrowMessage(NegotiationStatus status, String message) throws TTransportException {
+    try {
+      sendSaslMessage(status, message.getBytes());
+    } catch (Exception e) {
+      LOGGER.warn("Could not send failure response", e);
+      message += "\nAlso, could not send response: " + e.toString();
+    }
     throw new TTransportException(message);
   }
 
@@ -194,6 +233,8 @@ abstract class TSaslTransport extends TTransport {
    * @throws SaslException
    */
   abstract protected void handleSaslStartMessage() throws TTransportException, SaslException;
+
+  protected abstract SaslRole getRole();
 
   /**
    * Opens the underlying transport if it's not already open and then performs
@@ -210,24 +251,55 @@ abstract class TSaslTransport extends TTransport {
       underlyingTransport.open();
 
     try {
+      // Negotiate a SASL mechanism. The client also sends its
+      // initial response, or an empty one.
       handleSaslStartMessage();
+      LOGGER.debug("{}: Start message handled", getRole());
 
-      SaslResponse message;
-      do {
+      SaslResponse message = null;
+      while (!sasl.isComplete()) {
         message = receiveSaslMessage();
-        if (message.status != COMPLETE && message.status != OK) {
+        if (message.status != NegotiationStatus.COMPLETE &&
+            message.status != NegotiationStatus.OK) {
           throw new TTransportException("Expected COMPLETE or OK, got " + message.status);
         }
 
-        if (sasl.isComplete() && message.status == COMPLETE)
-          break;
-
         byte[] challenge = sasl.evaluateChallengeOrResponse(message.payload);
-        sendSaslMessage(sasl.isComplete() ? COMPLETE : OK, challenge);
-      } while (!(sasl.isComplete() && message.status == COMPLETE));
+
+        // If we are the client, and the server indicates COMPLETE, we don't need to
+        // send back any further response.
+        if (message.status == NegotiationStatus.COMPLETE &&
+            getRole() == SaslRole.CLIENT) {
+          LOGGER.debug("{}: All done!", getRole());
+          break;
+        }
+
+        sendSaslMessage(sasl.isComplete() ? NegotiationStatus.COMPLETE : NegotiationStatus.OK,
+                        challenge);
+      }
+      LOGGER.debug("{}: Main negotiation loop complete", getRole());
+
+      assert sasl.isComplete();
+
+      // If we're the client, and we're complete, but the server isn't
+      // complete yet, we need to wait for its response. This will occur
+      // with ANONYMOUS auth, for example, where we send an initial response
+      // and are immediately complete.
+      if (getRole() == SaslRole.CLIENT &&
+          (message == null || message.status == NegotiationStatus.OK)) {
+        LOGGER.debug("{}: SASL Client receiving last message", getRole());
+        message = receiveSaslMessage();
+        if (message.status != NegotiationStatus.COMPLETE) {
+          throw new TTransportException(
+            "Expected SASL COMPLETE, but got " + message.status);
+        }
+      }
     } catch (SaslException e) {
-      underlyingTransport.close();
-      sendAndThrowMessage(BAD, e.getMessage());
+      try {
+        sendAndThrowMessage(NegotiationStatus.BAD, e.getMessage());
+      } finally {
+        underlyingTransport.close();
+      }
     }
 
     String qop = (String) sasl.getNegotiatedProperty(Sasl.QOP);
@@ -241,7 +313,7 @@ abstract class TSaslTransport extends TTransport {
    * @return The <code>SaslClient</code>, or <code>null</code> if this transport
    *         is backed by a <code>SaslServer</code>.
    */
-  protected SaslClient getSaslClient() {
+  public SaslClient getSaslClient() {
     return sasl.saslClient;
   }
 
@@ -251,7 +323,7 @@ abstract class TSaslTransport extends TTransport {
    * @return The <code>SaslServer</code>, or <code>null</code> if this transport
    *         is backed by a <code>SaslClient</code>.
    */
-  protected SaslServer getSaslServer() {
+  public SaslServer getSaslServer() {
     return sasl.saslServer;
   }
 
@@ -348,7 +420,7 @@ abstract class TSaslTransport extends TTransport {
       throw new TTransportException("Read a negative frame size (" + dataLength + ")!");
 
     byte[] buff = new byte[dataLength];
-    LOGGER.debug("reading data length: {}", dataLength);
+    LOGGER.debug("{}: reading data length: {}", getRole(), dataLength);
     underlyingTransport.readAll(buff, 0, dataLength);
     if (shouldWrap) {
       buff = sasl.unwrap(buff, 0, buff.length);
@@ -396,11 +468,11 @@ abstract class TSaslTransport extends TTransport {
   /**
    * Used exclusively by readSaslMessage to return both a status and data.
    */
-  private static class SaslResponse {
-    public byte status;
+  protected static class SaslResponse {
+    public NegotiationStatus status;
     public byte[] payload;
 
-    public SaslResponse(byte status, byte[] payload) {
+    public SaslResponse(NegotiationStatus status, byte[] payload) {
       this.status = status;
       this.payload = payload;
     }

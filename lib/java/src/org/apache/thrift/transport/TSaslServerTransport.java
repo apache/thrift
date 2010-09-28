@@ -108,6 +108,11 @@ public class TSaslServerTransport extends TSaslTransport {
         props, cbh));
   }
 
+  @Override
+  protected SaslRole getRole() {
+    return SaslRole.SERVER;
+  }
+
   /**
    * Performs the server side of the initial portion of the Thrift SASL protocol.
    * Receives the initial response from the client, creates a SASL server using
@@ -116,35 +121,24 @@ public class TSaslServerTransport extends TSaslTransport {
    */
   @Override
   protected void handleSaslStartMessage() throws TTransportException, SaslException {
-    // Get the status byte and length of the mechanism name.
-    byte[] messageHeader = new byte[STATUS_BYTES + MECHANISM_NAME_BYTES];
-    underlyingTransport.readAll(messageHeader, 0, messageHeader.length);
-    LOGGER.debug("Received status {} and mechanism name length {}", messageHeader[0],
-        messageHeader[1]);
-    if (messageHeader[0] != START) {
-      sendAndThrowMessage(ERROR, "Expecting START status, received " + messageHeader[0]);
+    SaslResponse message = receiveSaslMessage();
+
+    LOGGER.debug("Received start message with status {}", message.status);
+    if (message.status != NegotiationStatus.START) {
+      sendAndThrowMessage(NegotiationStatus.ERROR, "Expecting START status, received " + message.status);
     }
 
     // Get the mechanism name.
-    byte[] mechanismBytes = new byte[messageHeader[1]];
-    underlyingTransport.readAll(mechanismBytes, 0, mechanismBytes.length);
-
-    String mechanismName = new String(mechanismBytes);
-    TSaslServerDefinition serverDefinition = serverDefinitionMap.get(new String(mechanismBytes));
+    String mechanismName = new String(message.payload);
+    TSaslServerDefinition serverDefinition = serverDefinitionMap.get(mechanismName);
     LOGGER.debug("Received mechanism name '{}'", mechanismName);
 
     if (serverDefinition == null) {
-      sendAndThrowMessage(BAD, "Unsupported mechanism type " + mechanismName);
+      sendAndThrowMessage(NegotiationStatus.BAD, "Unsupported mechanism type " + mechanismName);
     }
     SaslServer saslServer = Sasl.createSaslServer(serverDefinition.mechanism,
         serverDefinition.protocol, serverDefinition.serverName, serverDefinition.props,
         serverDefinition.cbh);
-
-    // Evaluate the initial response and send the first challenge.
-    byte[] initialResponse = new byte[readLength()];
-    sendSaslMessage(saslServer.isComplete() ? COMPLETE : OK, saslServer
-        .evaluateResponse(initialResponse));
-
     setSaslServer(saslServer);
   }
 
@@ -221,7 +215,7 @@ public class TSaslServerTransport extends TSaslTransport {
           ret.open();
         } catch (TTransportException e) {
           LOGGER.debug("failed to open server transport", e);
-          return null;
+          throw new RuntimeException(e);
         }
         transportMap.put(base, ret);
       } else {

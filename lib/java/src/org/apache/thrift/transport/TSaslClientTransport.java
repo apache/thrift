@@ -75,6 +75,12 @@ public class TSaslClientTransport extends TSaslTransport {
     this.mechanism = mechanism;
   }
 
+
+  @Override
+  protected SaslRole getRole() {
+    return SaslRole.CLIENT;
+  }
+
   /**
    * Performs the client side of the initial portion of the Thrift SASL
    * protocol. Generates and sends the initial response to the server, including
@@ -88,21 +94,15 @@ public class TSaslClientTransport extends TSaslTransport {
     if (saslClient.hasInitialResponse())
       initialResponse = saslClient.evaluateChallenge(initialResponse);
 
-    byte[] mechanismBytes = mechanism.getBytes();
-    byte[] messageHeader = new byte[STATUS_BYTES + MECHANISM_NAME_BYTES + mechanismBytes.length
-        + PAYLOAD_LENGTH_BYTES];
-
-    messageHeader[0] = START;
-    messageHeader[1] = (byte) (0xff & mechanismBytes.length);
-    System.arraycopy(mechanismBytes, 0, messageHeader, STATUS_BYTES + MECHANISM_NAME_BYTES,
-        mechanismBytes.length);
-    EncodingUtils.encodeBigEndian(initialResponse.length, messageHeader, STATUS_BYTES
-        + MECHANISM_NAME_BYTES + mechanismBytes.length);
-
     LOGGER.debug("Sending mechanism name {} and initial response of length {}", mechanism,
         initialResponse.length);
-    underlyingTransport.write(messageHeader);
-    underlyingTransport.write(initialResponse);
+
+    byte[] mechanismBytes = mechanism.getBytes();
+    sendSaslMessage(NegotiationStatus.START,
+                    mechanismBytes);
+    // Send initial response
+    sendSaslMessage(saslClient.isComplete() ? NegotiationStatus.COMPLETE : NegotiationStatus.OK,
+                    initialResponse);
     underlyingTransport.flush();
   }
 }
