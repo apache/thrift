@@ -20,6 +20,7 @@
 #include <cstring>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/poll.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -61,6 +62,20 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   acceptBacklog_(1024),
   sendTimeout_(sendTimeout),
   recvTimeout_(recvTimeout),
+  retryLimit_(0),
+  retryDelay_(0),
+  tcpSendBuffer_(0),
+  tcpRecvBuffer_(0),
+  intSock1_(-1),
+  intSock2_(-1) {}
+
+TServerSocket::TServerSocket(string path) :
+  port_(0),
+  path_(path),
+  serverSocket_(-1),
+  acceptBacklog_(1024),
+  sendTimeout_(0),
+  recvTimeout_(0),
   retryLimit_(0),
   retryDelay_(0),
   tcpSendBuffer_(0),
@@ -131,7 +146,12 @@ void TServerSocket::listen() {
       break;
   }
 
-  serverSocket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+  if (! path_.empty()) {
+    serverSocket_ = socket(PF_UNIX, SOCK_STREAM, IPPROTO_IP);
+  } else {
+    serverSocket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+  }
+
   if (serverSocket_ == -1) {
     int errno_copy = errno;
     GlobalOutput.perror("TServerSocket::listen() socket() ", errno_copy);
@@ -201,13 +221,16 @@ void TServerSocket::listen() {
     throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_LINGER", errno_copy);
   }
 
-  // TCP Nodelay, speed over bandwidth
-  if (-1 == setsockopt(serverSocket_, IPPROTO_TCP, TCP_NODELAY,
-                       &one, sizeof(one))) {
-    int errno_copy = errno;
-    GlobalOutput.perror("TServerSocket::listen() setsockopt() TCP_NODELAY ", errno_copy);
-    close();
-    throw TTransportException(TTransportException::NOT_OPEN, "Could not set TCP_NODELAY", errno_copy);
+  // Unix Sockets do not need that
+  if (path_.empty()) {
+    // TCP Nodelay, speed over bandwidth
+    if (-1 == setsockopt(serverSocket_, IPPROTO_TCP, TCP_NODELAY,
+                         &one, sizeof(one))) {
+      int errno_copy = errno;
+      GlobalOutput.perror("TServerSocket::listen() setsockopt() TCP_NODELAY ", errno_copy);
+      close();
+      throw TTransportException(TTransportException::NOT_OPEN, "Could not set TCP_NODELAY", errno_copy);
+    }
   }
 
   // Set NONBLOCK on the accept socket
@@ -228,21 +251,49 @@ void TServerSocket::listen() {
   // we may want to try to bind more than once, since SO_REUSEADDR doesn't
   // always seem to work. The client can configure the retry variables.
   int retries = 0;
-  do {
-    if (0 == bind(serverSocket_, res->ai_addr, res->ai_addrlen)) {
-      break;
+
+  if (! path_.empty()) {
+    // Unix Domain Socket
+    struct sockaddr_un address;
+    socklen_t len;
+
+    if (path_.length() > sizeof(address.sun_path)) {
+      int errno_copy = errno;
+      GlobalOutput.perror("TSocket::listen() Unix Domain socket path too long", errno_copy);
+      throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
     }
 
-    // use short circuit evaluation here to only sleep if we need to
-  } while ((retries++ < retryLimit_) && (sleep(retryDelay_) == 0));
+    address.sun_family = AF_UNIX;
+    sprintf(address.sun_path, path_.c_str());
+    len = sizeof(address);
 
-  // free addrinfo
-  freeaddrinfo(res0);
+    do {
+      if (0 == bind(serverSocket_, (struct sockaddr *) &address, len)) {
+        break;
+      }
+      // use short circuit evaluation here to only sleep if we need to
+    } while ((retries++ < retryLimit_) && (sleep(retryDelay_) == 0));
+  } else {
+    do {
+      if (0 == bind(serverSocket_, res->ai_addr, res->ai_addrlen)) {
+        break;
+      }
+      // use short circuit evaluation here to only sleep if we need to
+    } while ((retries++ < retryLimit_) && (sleep(retryDelay_) == 0));
+
+    // free addrinfo
+    freeaddrinfo(res0);
+  }
 
   // throw an error if we failed to bind properly
   if (retries > retryLimit_) {
     char errbuf[1024];
-    sprintf(errbuf, "TServerSocket::listen() BIND %d", port_);
+    if (! path_.empty()) {
+      sprintf(errbuf, "TServerSocket::listen() PATH %s", path_.c_str());
+    }
+    else {
+      sprintf(errbuf, "TServerSocket::listen() BIND %d", port_);
+    }
     GlobalOutput(errbuf);
     close();
     throw TTransportException(TTransportException::NOT_OPEN, "Could not bind");

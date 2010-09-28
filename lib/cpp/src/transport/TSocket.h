@@ -60,6 +60,14 @@ class TSocket : public TTransport {
   TSocket(std::string host, int port);
 
   /**
+   * Constructs a new Unix domain socket.
+   * Note that this does NOT actually connect the socket.
+   *
+   * @param path The Unix domain socket e.g. "/tmp/ThriftTest.binary.thrift"
+   */
+  TSocket(std::string path);
+
+  /**
    * Destroyes the socket object, closing it if necessary.
    */
   virtual ~TSocket();
@@ -217,6 +225,9 @@ class TSocket : public TTransport {
   /** Port number to connect on */
   int port_;
 
+  /** UNIX domain socket path */
+  std::string path_;
+
   /** Underlying UNIX socket handle */
   int socket_;
 
@@ -246,6 +257,10 @@ class TSocket : public TTransport {
 
   /** Whether to use low minimum TCP retransmission timeout */
   static bool useLowMinRto_;
+
+ private:
+  void unix_open();
+  void local_open();
 };
 
 }}} // apache::thrift::transport

@@ -21,6 +21,7 @@
 #include <cstring>
 #include <sstream>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/poll.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -50,6 +51,23 @@ uint32_t g_socket_syscalls = 0;
 TSocket::TSocket(string host, int port) :
   host_(host),
   port_(port),
+  path_(""),
+  socket_(-1),
+  connTimeout_(0),
+  sendTimeout_(0),
+  recvTimeout_(0),
+  lingerOn_(1),
+  lingerVal_(0),
+  noDelay_(1),
+  maxRecvRetries_(5) {
+  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
+  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
+}
+
+TSocket::TSocket(string path) :
+  host_(""),
+  port_(0),
+  path_(path),
   socket_(-1),
   connTimeout_(0),
   sendTimeout_(0),
@@ -65,6 +83,7 @@ TSocket::TSocket(string host, int port) :
 TSocket::TSocket() :
   host_(""),
   port_(0),
+  path_(""),
   socket_(-1),
   connTimeout_(0),
   sendTimeout_(0),
@@ -80,6 +99,7 @@ TSocket::TSocket() :
 TSocket::TSocket(int socket) :
   host_(""),
   port_(0),
+  path_(""),
   socket_(socket),
   connTimeout_(0),
   sendTimeout_(0),
@@ -130,7 +150,12 @@ void TSocket::openConnection(struct addrinfo *res) {
     return;
   }
 
-  socket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+  if (! path_.empty()) {
+    socket_ = socket(PF_UNIX, SOCK_STREAM, IPPROTO_IP);
+  } else {
+    socket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+  }
+
   if (socket_ == -1) {
     int errno_copy = errno;
     GlobalOutput.perror("TSocket::open() socket() " + getSocketInfo(), errno_copy);
@@ -179,7 +204,24 @@ void TSocket::openConnection(struct addrinfo *res) {
   }
 
   // Connect the socket
-  int ret = connect(socket_, res->ai_addr, res->ai_addrlen);
+  int ret;
+  if (! path_.empty()) {
+    struct sockaddr_un address;
+    socklen_t len;
+
+    if (path_.length() > sizeof(address.sun_path)) {
+      int errno_copy = errno;
+      GlobalOutput.perror("TSocket::open() Unix Domain socket path too long", errno_copy);
+      throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
+    }
+
+    address.sun_family = AF_UNIX;
+    sprintf(address.sun_path, path_.c_str());
+    len = sizeof(address);
+    ret = connect(socket_, (struct sockaddr *) &address, len);
+  } else {
+    ret = connect(socket_, res->ai_addr, res->ai_addrlen);
+  }
 
   // success case
   if (ret == 0) {
@@ -234,6 +276,24 @@ void TSocket::openConnection(struct addrinfo *res) {
 }
 
 void TSocket::open() {
+  if (isOpen()) {
+    return;
+  }
+  if (! path_.empty()) {
+    unix_open();
+  } else {
+    local_open();
+  }
+}
+
+void TSocket::unix_open(){
+  if (! path_.empty()) {
+    // Unix Domain SOcket does not need addrinfo struct, so we pass NULL
+    openConnection(NULL);
+  }
+}
+
+void TSocket::local_open(){
   if (isOpen()) {
     return;
   }
