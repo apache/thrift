@@ -1,0 +1,29 @@
+Steps for Java tutorial
+==================================================
+
+1) Make sure thrift is compiled, both the compiler and the Java library. You should
+be able to verify the following:
+
+thrift/tutorial/java$ file ../../lib/java/libthrift.jar 
+../../lib/java/libthrift.jar: Zip archive data, at least v1.0 to extract
+
+thrift/tutorial/java$ file ../../compiler/cpp/thrift
+../../compiler/cpp/thrift: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.15, not stripped
+
+thrift/tutorial/java$ ls ../../lib/java/build/ivy/lib/
+commons-lang-2.5.jar  junit-4.4.jar  servlet-api-2.5.jar  slf4j-api-1.5.8.jar  slf4j-simple-1.5.8.jar
+
+
+2) Generate code for java:
+
+thrift/tutorial/java$ cd ..
+thrift/tutorial$ thrift -r -gen java tutorial.thrift
+
+3) Compile example
+
+thrift/tutorial/java$ ant
+
+4) Run example:
+
+thrift/tutorial/java$ ./JavaServer &
+thrift/tutorial/java$ ./JavaClient
