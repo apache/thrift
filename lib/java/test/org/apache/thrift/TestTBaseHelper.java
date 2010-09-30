@@ -173,6 +173,8 @@ public class TestTBaseHelper extends TestCase {
     assertEquals(1, b.position());
     b.reset();
     assertEquals(0, b.position());
+
+    assertNull(TBaseHelper.copyBinary((ByteBuffer)null));
   }
 
   public void testCopyBinaryWithByteArray() throws Exception {
@@ -180,5 +182,7 @@ public class TestTBaseHelper extends TestCase {
     byte[] copy = TBaseHelper.copyBinary(bytes);
     assertEquals(ByteBuffer.wrap(bytes), ByteBuffer.wrap(copy));
     assertNotSame(bytes, copy);
+
+    assertNull(TBaseHelper.copyBinary((byte[])null));
   }
 }
