@@ -277,6 +277,9 @@ public final class TBaseHelper {
   }
 
   public static ByteBuffer copyBinary(final ByteBuffer orig) {
+    if (orig == null) {
+      return null;
+    }
     ByteBuffer copy = ByteBuffer.wrap(new byte[orig.remaining()]);
     if (orig.hasArray()) {
       System.arraycopy(orig.array(), orig.arrayOffset() + orig.position(), copy.array(), 0, orig.remaining());
@@ -288,6 +291,10 @@ public final class TBaseHelper {
   }
 
   public static byte[] copyBinary(final byte[] orig) {
+    if (orig == null) {
+      return null;
+    }
+
     byte[] copy = new byte[orig.length];
     System.arraycopy(orig, 0, copy, 0, orig.length);
     return copy;
