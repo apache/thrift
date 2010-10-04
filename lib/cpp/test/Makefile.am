@@ -58,7 +58,7 @@ UnitTests_SOURCES = \
 	TMemoryBufferTest.cpp \
 	TBufferBaseTest.cpp
 
-UnitTests_LDADD = libtestgencpp.la -lboost_unit_test_framework
+UnitTests_LDADD = $(BOOST_LDFLAGS) libtestgencpp.la -lboost_unit_test_framework
 
 #
 # TFDTransportTest
