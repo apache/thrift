@@ -41,4 +41,6 @@ uninstall:
 maintainer-clean-local:
 	rm -rf ebin
 
+EXTRA_DIST = include src
+
 MAINTAINERCLEANFILES = Makefile.in

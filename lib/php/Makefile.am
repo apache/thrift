@@ -51,4 +51,6 @@ phptransport_DATA = \
   src/transport/TSocketPool.php \
   src/transport/TTransport.php
 
+EXTRA_DIST = src thrift_protocol.ini README.apache
+
 MAINTAINERCLEANFILES = Makefile Makefile.in

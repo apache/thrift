@@ -60,8 +60,6 @@ endif
 EXTRA_DIST = \
   cocoa \
   ocaml \
-  php \
-  erl \
   js \
   as3 \
   st
