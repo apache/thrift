@@ -181,9 +181,12 @@ AM_CONDITIONAL(WITH_PHP, [test "$have_php" = "yes"])
 AX_THRIFT_LIB(php_extension, [PHP_EXTENSION], yes)
 if test "$with_php_extension" = "yes"; then
   AC_PATH_PROG([PHP_CONFIG], [php-config])
-  AC_CONFIG_SUBDIRS([lib/php/src/ext/thrift_protocol])
+  if test -n "$PHP_CONFIG" ; then
+    AC_CONFIG_SUBDIRS([lib/php/src/ext/thrift_protocol])
+    have_php_extension="yes"
+  fi
 fi
-AM_CONDITIONAL(WITH_PHP_EXTENSION, [test -n "$PHP_CONFIG"])
+AM_CONDITIONAL(WITH_PHP_EXTENSION, [test "$have_php_extension" = "yes"])
 
 AX_THRIFT_LIB(ruby, [Ruby], yes)
 have_ruby=no
@@ -401,6 +404,10 @@ fi
 if test "$have_python" = "yes" ; then
   echo
   echo "Using Python ................. : $PYTHON"
+fi
+if test "$have_php" = "yes" ; then
+  echo
+  echo "Using php-config ............. : $PHP_CONFIG"
 fi
 if test "$have_ruby" = "yes" ; then
   echo
