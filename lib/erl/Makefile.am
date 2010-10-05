@@ -17,13 +17,7 @@
 # under the License.
 #
 
-MODULES = \
-	src
-
-all clean docs:
-	for dir in $(MODULES); do \
-		(cd $$dir; ${MAKE} $@); \
-	done
+SUBDIRS = src
 
 install: all
 	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
