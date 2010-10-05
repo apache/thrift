@@ -237,10 +237,7 @@ class t_generator {
    * Get the true type behind a series of typedefs.
    */
   static t_type* get_true_type(t_type* type) {
-    while (type->is_typedef()) {
-      type = ((t_typedef*)type)->get_type();
-    }
-    return type;
+    return type->get_true_type();
   }
 
  protected:

@@ -66,6 +66,7 @@ class t_type : public t_doc {
     return program_;
   }
 
+  t_type* get_true_type();
 
   // Return a string that uniquely identifies this type
   // from any other thrift type in the world, as far as

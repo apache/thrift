@@ -1,4 +1,5 @@
 #include "t_type.h"
+#include "t_typedef.h"
 
 #include "md5.h"
 
@@ -8,4 +9,12 @@ void t_type::generate_fingerprint() {
   md5_init(&ctx);
   md5_append(&ctx, (md5_byte_t*)(material.data()), (int)material.size());
   md5_finish(&ctx, (md5_byte_t*)fingerprint_);
+}
+
+t_type* t_type::get_true_type() {
+  t_type* type = this;
+  while (type->is_typedef()) {
+    type = ((t_typedef*)type)->get_type();
+  }
+  return type;
 }
