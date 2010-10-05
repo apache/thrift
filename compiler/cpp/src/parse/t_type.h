@@ -26,9 +26,6 @@
 #include <stdint.h>
 #include "t_doc.h"
 
-// What's worse?  This, or making a src/parse/non_inlined.cc?
-#include "md5.h"
-
 class t_program;
 
 /**
@@ -82,13 +79,7 @@ class t_type : public t_doc {
   static const int fingerprint_len = 16;
 
   // Call this before trying get_*_fingerprint().
-  virtual void generate_fingerprint() {
-    std::string material = get_fingerprint_material();
-    md5_state_t ctx;
-    md5_init(&ctx);
-    md5_append(&ctx, (md5_byte_t*)(material.data()), (int)material.size());
-    md5_finish(&ctx, (md5_byte_t*)fingerprint_);
-  }
+  virtual void generate_fingerprint();
 
   bool has_fingerprint() const {
     for (int i = 0; i < fingerprint_len; i++) {

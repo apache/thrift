@@ -56,6 +56,7 @@ thrift_SOURCES = src/thrifty.yy \
                  src/parse/t_scope.h \
                  src/parse/t_const.h \
                  src/parse/t_const_value.h \
+                 src/parse/parse.cc \
                  src/generate/t_generator.h \
                  src/generate/t_oop_generator.h
 
