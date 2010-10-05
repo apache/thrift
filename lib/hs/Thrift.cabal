@@ -17,19 +17,24 @@
 -- under the License.
 --
 
-Name:           Thrift
+Name:           thrift
 Version:        0.2.0
-Cabal-Version:  >= 1.2
-License:        Apache2
+Cabal-Version:  >= 1.4
+License:        OtherLicense
 Category:       Foreign
 Build-Type:     Simple
-Synopsis:       Thrift library package
+Synopsis:       Apache Thrift bindings
+Maintainer:     christian.lavoie@gmail.com
+License-File:   LICENSE
+
+Description:
+  Haskell bindings for the Apache Thrift RPC system. Requires the use of the thrift code generator.
 
 Library
   Hs-Source-Dirs:
     src
   Build-Depends:
-    base >=4, network, ghc-prim, binary, bytestring, HTTP
+    base == 4, network, ghc-prim, binary, bytestring, HTTP
   Exposed-Modules:
     Thrift, Thrift.Protocol, Thrift.Transport, Thrift.Protocol.Binary
     Thrift.Transport.Handle, Thrift.Transport.HttpClient, Thrift.Server
