@@ -67,6 +67,8 @@ class t_php_generator : public t_oop_generator {
     escape_['$'] = "\\$";
   }
 
+  static bool is_valid_namespace(const std::string& sub_namespace);
+
   /**
    * Init and close methods
    */
@@ -183,6 +185,22 @@ class t_php_generator : public t_oop_generator {
     return ns.size() ? (ns + "_") : "";
   }
 
+  std::string php_path(t_program* p) {
+    std::string ns = p->get_namespace("php.path");
+    if (ns.empty()) {
+      return p->get_name();
+    }
+
+    // Transform the java-style namespace into a path.
+    for (std::string::iterator it = ns.begin(); it != ns.end(); ++it) {
+      if (*it == '.') {
+        *it = '/';
+      }
+    }
+
+    return ns + '/' + p->get_name();
+  }
+
  private:
 
   /**
@@ -222,6 +240,11 @@ class t_php_generator : public t_oop_generator {
 };
 
 
+bool t_php_generator::is_valid_namespace(const std::string& sub_namespace) {
+  return sub_namespace == "path";
+}
+
+
 /**
  * Prepares for file generation by opening up the necessary file output
  * streams.
@@ -247,8 +270,9 @@ void t_php_generator::init_generator() {
   const vector<t_program*>& includes = program_->get_includes();
   for (size_t i = 0; i < includes.size(); ++i) {
     string package = includes[i]->get_name();
+    string prefix = php_path(includes[i]);
     f_types_ <<
-      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << package << "/" << package << "_types.php';" << endl;
+      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << prefix << "/" << package << "_types.php';" << endl;
   }
   f_types_ << endl;
 
@@ -259,7 +283,7 @@ void t_php_generator::init_generator() {
     f_consts_ <<
       "<?php" << endl <<
       autogen_comment() <<
-      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + program_name_ + "/" + program_name_ + "_types.php';" << endl <<
+      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + php_path(program_) + "/" + program_name_ + "_types.php';" << endl <<
       endl <<
       "$GLOBALS['" << program_name_ << "_CONSTANTS'] = array();" << endl <<
       endl;
@@ -902,11 +926,11 @@ void t_php_generator::generate_service(t_service* tservice) {
     php_includes();
 
   f_service_ <<
-    "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << program_name_ << "/" << program_name_ << "_types.php';" << endl;
+    "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << php_path(program_) << "/" << program_name_ << "_types.php';" << endl;
 
   if (tservice->get_extends() != NULL) {
     f_service_ <<
-      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << tservice->get_extends()->get_program()->get_name() << "/" << tservice->get_extends()->get_name() << ".php';" << endl;
+      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << php_path(tservice->get_extends()->get_program()) << "/" << tservice->get_extends()->get_name() << ".php';" << endl;
   }
 
   f_service_ <<
