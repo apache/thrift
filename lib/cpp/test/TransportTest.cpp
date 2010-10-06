@@ -128,10 +128,10 @@ class CoupledTransports {
  public:
   typedef Transport_ TransportType;
 
-  CoupledTransports() : in(NULL), out(NULL) {}
+  CoupledTransports() : in(), out() {}
 
-  Transport_* in;
-  Transport_* out;
+  boost::shared_ptr<Transport_> in;
+  boost::shared_ptr<Transport_> out;
 
  private:
   CoupledTransports(const CoupledTransports&);
@@ -143,75 +143,66 @@ class CoupledTransports {
  */
 class CoupledMemoryBuffers : public CoupledTransports<TMemoryBuffer> {
  public:
-  CoupledMemoryBuffers() {
-    in = &buf;
-    out = &buf;
+  CoupledMemoryBuffers() :
+    buf(new TMemoryBuffer) {
+    in = buf;
+    out = buf;
   }
 
-  TMemoryBuffer buf;
+  boost::shared_ptr<TMemoryBuffer> buf;
+};
+
+/**
+ * Helper template class for creating coupled transports that wrap
+ * another transport.
+ */
+template <class WrapperTransport_, class InnerCoupledTransports_>
+class CoupledWrapperTransportsT : public CoupledTransports<WrapperTransport_> {
+ public:
+  CoupledWrapperTransportsT() {
+    if (inner_.in) {
+      this->in.reset(new WrapperTransport_(inner_.in));
+    }
+    if (inner_.out) {
+      this->out.reset(new WrapperTransport_(inner_.out));
+    }
+  }
+
+  InnerCoupledTransports_ inner_;
 };
 
 /**
  * Coupled TBufferedTransports.
- *
- * Uses a TMemoryBuffer as the underlying transport.
  */
-class CoupledBufferedTransports :
-  public CoupledTransports<TBufferedTransport> {
- public:
-  CoupledBufferedTransports() :
-    buf(new TMemoryBuffer) {
-    in = new TBufferedTransport(buf);
-    out = new TBufferedTransport(buf);
-  }
-
-  ~CoupledBufferedTransports() {
-    delete in;
-    delete out;
-  }
-
-  boost::shared_ptr<TMemoryBuffer> buf;
+template <class InnerTransport_>
+class CoupledBufferedTransportsT :
+  public CoupledWrapperTransportsT<TBufferedTransport, InnerTransport_> {
 };
+
+typedef CoupledBufferedTransportsT<CoupledMemoryBuffers>
+  CoupledBufferedTransports;
 
 /**
  * Coupled TFramedTransports.
- *
- * Uses a TMemoryBuffer as the underlying transport.
  */
-class CoupledFramedTransports : public CoupledTransports<TFramedTransport> {
- public:
-  CoupledFramedTransports() :
-    buf(new TMemoryBuffer) {
-    in = new TFramedTransport(buf);
-    out = new TFramedTransport(buf);
-  }
-
-  ~CoupledFramedTransports() {
-    delete in;
-    delete out;
-  }
-
-  boost::shared_ptr<TMemoryBuffer> buf;
+template <class InnerTransport_>
+class CoupledFramedTransportsT :
+  public CoupledWrapperTransportsT<TFramedTransport, InnerTransport_> {
 };
+
+typedef CoupledFramedTransportsT<CoupledMemoryBuffers>
+  CoupledFramedTransports;
 
 /**
  * Coupled TZlibTransports.
  */
-class CoupledZlibTransports : public CoupledTransports<TZlibTransport> {
- public:
-  CoupledZlibTransports() :
-    buf(new TMemoryBuffer) {
-    in = new TZlibTransport(buf);
-    out = new TZlibTransport(buf);
-  }
-
-  ~CoupledZlibTransports() {
-    delete in;
-    delete out;
-  }
-
-  boost::shared_ptr<TMemoryBuffer> buf;
+template <class InnerTransport_>
+class CoupledZlibTransportsT :
+  public CoupledWrapperTransportsT<TZlibTransport, InnerTransport_> {
 };
+
+typedef CoupledZlibTransportsT<CoupledMemoryBuffers>
+  CoupledZlibTransports;
 
 /**
  * Coupled TFDTransports.
@@ -225,13 +216,8 @@ class CoupledFDTransports : public CoupledTransports<TFDTransport> {
       return;
     }
 
-    in = new TFDTransport(pipes[0], TFDTransport::CLOSE_ON_DESTROY);
-    out = new TFDTransport(pipes[1], TFDTransport::CLOSE_ON_DESTROY);
-  }
-
-  ~CoupledFDTransports() {
-    delete in;
-    delete out;
+    in.reset(new TFDTransport(pipes[0], TFDTransport::CLOSE_ON_DESTROY));
+    out.reset(new TFDTransport(pipes[1], TFDTransport::CLOSE_ON_DESTROY));
   }
 };
 
@@ -246,8 +232,8 @@ class CoupledSocketTransports : public CoupledTransports<TSocket> {
       return;
     }
 
-    in = new TSocket(sockets[0]);
-    out = new TSocket(sockets[1]);
+    in.reset(new TSocket(sockets[0]));
+    out.reset(new TSocket(sockets[1]));
   }
 };
 
@@ -267,14 +253,11 @@ class CoupledFileTransports : public CoupledTransports<TFileTransport> {
       return;
     }
 
-    in = new TFileTransport(filename, true);
-    out = new TFileTransport(filename);
+    in.reset(new TFileTransport(filename, true));
+    out.reset(new TFileTransport(filename));
   }
 
   ~CoupledFileTransports() {
-    delete in;
-    delete out;
-
     if (fd >= 0) {
       close(fd);
       unlink(filename);
@@ -463,43 +446,30 @@ void test_rw(uint32_t totalSize,
  *   is compiler-dependent.  gcc returns mangled names.)
  **************************************************************************/
 
+#define ADD_TEST(CoupledTransports, totalSize, ...) \
+    addTest< CoupledTransports >(BOOST_STRINGIZE(CoupledTransports), \
+                                 totalSize, ## __VA_ARGS__);
+
 #define TEST_RW(CoupledTransports, totalSize, ...) \
   do { \
     /* Add the test as specified, to test the non-virtual function calls */ \
-    addTest<CoupledTransports>(BOOST_STRINGIZE(CoupledTransports), \
-                               totalSize, ## __VA_ARGS__); \
+    ADD_TEST(CoupledTransports, totalSize, ## __VA_ARGS__); \
     /* \
      * Also test using the transport as a TTransport*, to test \
      * the read_virt()/write_virt() calls \
      */ \
-    addTest< CoupledTTransports<CoupledTransports> >( \
-        BOOST_STRINGIZE(CoupledTTransports<CoupledTransports>), \
-                        totalSize, ## __VA_ARGS__); \
+    ADD_TEST(CoupledTTransports<CoupledTransports>, \
+             totalSize, ## __VA_ARGS__); \
+    /* Test wrapping the transport with TBufferedTransport */ \
+    ADD_TEST(CoupledBufferedTransportsT<CoupledTransports>, \
+        totalSize, ## __VA_ARGS__); \
+    /* Test wrapping the transport with TFramedTransports */ \
+    ADD_TEST(CoupledFramedTransportsT<CoupledTransports>, \
+             totalSize, ## __VA_ARGS__); \
+    /* Test wrapping the transport with TZlibTransport */ \
+    ADD_TEST(CoupledZlibTransportsT<CoupledTransports>, \
+             totalSize, ## __VA_ARGS__); \
   } while (0)
-
-#define TEST_RW_BUF(CoupledTransports, totalSize, ...) \
-  do { \
-    /* Add the standard tests */ \
-    TEST_RW(CoupledTransports, totalSize, ## __VA_ARGS__); \
-    /* Also test using the transport as a TBufferBase* */ \
-    addTest< CoupledBufferBases<CoupledTransports> >( \
-        BOOST_STRINGIZE(CoupledBufferBases<CoupledTransports>), \
-                        totalSize, ## __VA_ARGS__); \
-  } while (0)
-
-// We use the same tests for all of the buffered transports
-// This is a helper macro so we don't have to copy-and-paste them.
-#define BUFFER_TESTS(CoupledTransports) \
-  TEST_RW_BUF(CoupledTransports, 1024*1024, 0, 0); \
-  TEST_RW_BUF(CoupledTransports, 1024*256, rand4k, rand4k); \
-  TEST_RW_BUF(CoupledTransports, 1024*256, 167, 163); \
-  TEST_RW_BUF(CoupledTransports, 1024*16, 1, 1); \
-  \
-  TEST_RW_BUF(CoupledTransports, 1024*256, 0, 0, rand4k, rand4k); \
-  TEST_RW_BUF(CoupledTransports, 1024*256, \
-              rand4k, rand4k, rand4k, rand4k); \
-  TEST_RW_BUF(CoupledTransports, 1024*256, 167, 163, rand4k, rand4k); \
-  TEST_RW_BUF(CoupledTransports, 1024*16, 1, 1, rand4k, rand4k);
 
 class TransportTestGen {
  public:
@@ -516,21 +486,16 @@ class TransportTestGen {
      * although we tweak the parameters in some places.
      */
 
-    // Buffered transport tests
-    BUFFER_TESTS(CoupledMemoryBuffers)
-    BUFFER_TESTS(CoupledBufferedTransports)
-    BUFFER_TESTS(CoupledFramedTransports)
+    // TMemoryBuffer tests
+    TEST_RW(CoupledMemoryBuffers, 1024*1024, 0, 0);
+    TEST_RW(CoupledMemoryBuffers, 1024*256, rand4k, rand4k);
+    TEST_RW(CoupledMemoryBuffers, 1024*256, 167, 163);
+    TEST_RW(CoupledMemoryBuffers, 1024*16, 1, 1);
 
-    TEST_RW(CoupledZlibTransports, 1024*256, 0, 0);
-    TEST_RW(CoupledZlibTransports, 1024*256, rand4k, rand4k);
-    TEST_RW(CoupledZlibTransports, 1024*128, 167, 163);
-    TEST_RW(CoupledZlibTransports, 1024*2, 1, 1);
-
-    TEST_RW(CoupledZlibTransports, 1024*256, 0, 0, rand4k, rand4k);
-    TEST_RW(CoupledZlibTransports, 1024*256,
-            rand4k, rand4k, rand4k, rand4k);
-    TEST_RW(CoupledZlibTransports, 1024*128, 167, 163, rand4k, rand4k);
-    TEST_RW(CoupledZlibTransports, 1024*2, 1, 1, rand4k, rand4k);
+    TEST_RW(CoupledMemoryBuffers, 1024*256, 0, 0, rand4k, rand4k);
+    TEST_RW(CoupledMemoryBuffers, 1024*256, rand4k, rand4k, rand4k, rand4k);
+    TEST_RW(CoupledMemoryBuffers, 1024*256, 167, 163, rand4k, rand4k);
+    TEST_RW(CoupledMemoryBuffers, 1024*16, 1, 1, rand4k, rand4k);
 
     // TFDTransport tests
     // Since CoupledFDTransports tests with a pipe, writes will block
@@ -591,6 +556,21 @@ class TransportTestGen {
             rand4k, rand4k, rand4k, rand4k);
     TEST_RW(CoupledFileTransports, 1024*64, 167, 163, rand4k, rand4k);
     TEST_RW(CoupledFileTransports, 1024*2, 1, 1, rand4k, rand4k);
+
+    // Add some tests that access TBufferedTransport and TFramedTransport
+    // via TTransport pointers and TBufferBase pointers.
+    ADD_TEST(CoupledTTransports<CoupledBufferedTransports>,
+             1024*1024, rand4k, rand4k, rand4k, rand4k);
+    ADD_TEST(CoupledBufferBases<CoupledBufferedTransports>,
+             1024*1024, rand4k, rand4k, rand4k, rand4k);
+    ADD_TEST(CoupledTTransports<CoupledFramedTransports>,
+             1024*1024, rand4k, rand4k, rand4k, rand4k);
+    ADD_TEST(CoupledBufferBases<CoupledFramedTransports>,
+             1024*1024, rand4k, rand4k, rand4k, rand4k);
+
+    // Test using TZlibTransport via a TTransport pointer
+    ADD_TEST(CoupledTTransports<CoupledZlibTransports>,
+             1024*1024, rand4k, rand4k, rand4k, rand4k);
   }
 
  private:
