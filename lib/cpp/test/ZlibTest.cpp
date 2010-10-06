@@ -440,7 +440,9 @@ void parse_args(int argc, char* argv[]) {
 unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   parse_args(argc, argv);
 
-  unit_test::test_suite* suite = BOOST_TEST_SUITE("ZlibTests");
+  unit_test::test_suite* suite =
+    &boost::unit_test::framework::master_test_suite();
+  suite->p_name.value = "ZlibTest";
 
   uint32_t buf_len = 1024*32;
   add_tests(suite, gen_uniform_buffer(buf_len, 'a'), buf_len, "uniform");
@@ -449,5 +451,5 @@ unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
 
   suite->add(BOOST_TEST_CASE(test_no_write));
 
-  return suite;
+  return NULL;
 }

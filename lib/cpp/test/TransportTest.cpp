@@ -1037,9 +1037,11 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
 
   initrand(options.seed);
 
-  boost::unit_test::test_suite* suite = BOOST_TEST_SUITE("TransportTests");
+  boost::unit_test::test_suite* suite =
+    &boost::unit_test::framework::master_test_suite();
+  suite->p_name.value = "TransportTest";
   TransportTestGen transport_test_generator(suite, options.sizeMultiplier);
   transport_test_generator.generate();
 
-  return suite;
+  return NULL;
 }

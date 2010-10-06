@@ -164,7 +164,7 @@ int time_diff(const struct timeval* t1, const struct timeval* t2) {
  * wall-clock time.  This could result in false failures on slower systems, or
  * on heavily loaded machines.
  */
-void test_destructor() {
+BOOST_AUTO_TEST_CASE(test_destructor) {
   TempFile f(tmp_dir, "thrift.TFileTransportTest.");
 
   unsigned int const NUM_ITERATIONS = 1000;
@@ -286,17 +286,17 @@ void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us,
   }
 }
 
-void test_flush_max_us1() {
+BOOST_AUTO_TEST_CASE(test_flush_max_us1) {
   // fsync every 10ms, write every 5ms, for 500ms
   test_flush_max_us_impl(10000, 5000, 500000);
 }
 
-void test_flush_max_us2() {
+BOOST_AUTO_TEST_CASE(test_flush_max_us2) {
   // fsync every 50ms, write every 20ms, for 500ms
   test_flush_max_us_impl(50000, 20000, 500000);
 }
 
-void test_flush_max_us3() {
+BOOST_AUTO_TEST_CASE(test_flush_max_us3) {
   // fsync every 400ms, write every 300ms, for 1s
   test_flush_max_us_impl(400000, 300000, 1000000);
 }
@@ -307,7 +307,7 @@ void test_flush_max_us3() {
  * TFileTransport used to have a bug where flush() would wait for the fsync
  * timeout to expire.
  */
-void test_noop_flush() {
+BOOST_AUTO_TEST_CASE(test_noop_flush) {
   TempFile f(tmp_dir, "thrift.TFileTransportTest.");
   TFileTransport transport(f.getPath());
 
@@ -381,17 +381,10 @@ void parse_args(int argc, char* argv[]) {
 }
 
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
+  boost::unit_test::framework::master_test_suite().p_name.value =
+    "TFileTransportTest";
+
   // Parse arguments
   parse_args(argc, argv);
-
-  boost::unit_test::test_suite* suite =
-    BOOST_TEST_SUITE("TFileTransportTests");
-
-  suite->add(BOOST_TEST_CASE(test_destructor));
-  suite->add(BOOST_TEST_CASE(test_flush_max_us1));
-  suite->add(BOOST_TEST_CASE(test_flush_max_us2));
-  suite->add(BOOST_TEST_CASE(test_flush_max_us3));
-  suite->add(BOOST_TEST_CASE(test_noop_flush));
-
-  return suite;
+  return NULL;
 }
