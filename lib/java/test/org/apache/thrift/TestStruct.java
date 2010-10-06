@@ -196,23 +196,28 @@ public class TestStruct extends TestCase {
     Map<CrazyNesting._Fields, FieldMetaData> mdMap = CrazyNesting.metaDataMap;
 
     // Check for struct fields existence
-    assertEquals(3, mdMap.size());
+    assertEquals(4, mdMap.size());
     assertTrue(mdMap.containsKey(CrazyNesting._Fields.SET_FIELD));
     assertTrue(mdMap.containsKey(CrazyNesting._Fields.LIST_FIELD));
     assertTrue(mdMap.containsKey(CrazyNesting._Fields.STRING_FIELD));
+    assertTrue(mdMap.containsKey(CrazyNesting._Fields.BINARY_FIELD));
 
     // Check for struct fields contents
     assertEquals("string_field", mdMap.get(CrazyNesting._Fields.STRING_FIELD).fieldName);
     assertEquals("list_field", mdMap.get(CrazyNesting._Fields.LIST_FIELD).fieldName);
     assertEquals("set_field", mdMap.get(CrazyNesting._Fields.SET_FIELD).fieldName);
+    assertEquals("binary_field", mdMap.get(CrazyNesting._Fields.BINARY_FIELD).fieldName);
 
     assertEquals(TFieldRequirementType.DEFAULT, mdMap.get(CrazyNesting._Fields.STRING_FIELD).requirementType);
     assertEquals(TFieldRequirementType.REQUIRED, mdMap.get(CrazyNesting._Fields.LIST_FIELD).requirementType);
     assertEquals(TFieldRequirementType.OPTIONAL, mdMap.get(CrazyNesting._Fields.SET_FIELD).requirementType);
 
     assertEquals(TType.STRING, mdMap.get(CrazyNesting._Fields.STRING_FIELD).valueMetaData.type);
+    assertFalse(mdMap.get(CrazyNesting._Fields.STRING_FIELD).valueMetaData.isBinary());
     assertEquals(TType.LIST, mdMap.get(CrazyNesting._Fields.LIST_FIELD).valueMetaData.type);
     assertEquals(TType.SET, mdMap.get(CrazyNesting._Fields.SET_FIELD).valueMetaData.type);
+    assertEquals(TType.STRING, mdMap.get(CrazyNesting._Fields.BINARY_FIELD).valueMetaData.type);
+    assertTrue(mdMap.get(CrazyNesting._Fields.BINARY_FIELD).valueMetaData.isBinary());
 
     // Check nested structures
     assertTrue(mdMap.get(CrazyNesting._Fields.LIST_FIELD).valueMetaData.isContainer());

@@ -2112,6 +2112,8 @@ void t_java_generator::generate_field_value_meta_data(std::ofstream& out, t_type
     indent(out) << "new FieldValueMetaData(" << get_java_type_string(type);
     if (type->is_typedef()) {
       indent(out) << ", \"" << ((t_typedef*)type)->get_symbolic() << "\"";
+    } else if (((t_base_type*)type)->is_binary()) {
+      indent(out) << ", true";
     }
   }
   out << ")";
