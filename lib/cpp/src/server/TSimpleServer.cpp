@@ -46,7 +46,8 @@ void TSimpleServer::serve() {
     // Start the server listening
     serverTransport_->listen();
   } catch (TTransportException& ttx) {
-    cerr << "TSimpleServer::run() listen(): " << ttx.what() << endl;
+    string errStr = string("TSimpleServer::run() listen(): ") + ttx.what();
+    GlobalOutput(errStr.c_str());
     return;
   }
 
@@ -63,50 +64,74 @@ void TSimpleServer::serve() {
       outputTransport = outputTransportFactory_->getTransport(client);
       inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
-      void* connectionContext = NULL;
-      if (eventHandler_ != NULL) {
-        connectionContext = eventHandler_->createContext(inputProtocol, outputProtocol);
-      }
-      try {
-        for (;;) {
-          if (eventHandler_ != NULL) {
-            eventHandler_->processContext(connectionContext, client);
-          }
-          if (!processor_->process(inputProtocol, outputProtocol, connectionContext) ||
-              // Peek ahead, is the remote side closed?
-              !inputProtocol->getTransport()->peek()) {
-            break;
-          }
-        }
-      } catch (TTransportException& ttx) {
-        cerr << "TSimpleServer client died: " << ttx.what() << endl;
-      } catch (TException& tx) {
-        cerr << "TSimpleServer exception: " << tx.what() << endl;
-      }
-      if (eventHandler_ != NULL) {
-        eventHandler_->deleteContext(connectionContext, inputProtocol, outputProtocol);
-      }
-      inputTransport->close();
-      outputTransport->close();
-      client->close();
     } catch (TTransportException& ttx) {
       if (inputTransport != NULL) { inputTransport->close(); }
       if (outputTransport != NULL) { outputTransport->close(); }
       if (client != NULL) { client->close(); }
-      cerr << "TServerTransport died on accept: " << ttx.what() << endl;
+      string errStr = string("TServerTransport died on accept: ") + ttx.what();
+      GlobalOutput(errStr.c_str());
       continue;
     } catch (TException& tx) {
       if (inputTransport != NULL) { inputTransport->close(); }
       if (outputTransport != NULL) { outputTransport->close(); }
       if (client != NULL) { client->close(); }
-      cerr << "Some kind of accept exception: " << tx.what() << endl;
+      string errStr = string("Some kind of accept exception: ") + tx.what();
+      GlobalOutput(errStr.c_str());
       continue;
     } catch (string s) {
       if (inputTransport != NULL) { inputTransport->close(); }
       if (outputTransport != NULL) { outputTransport->close(); }
       if (client != NULL) { client->close(); }
-      cerr << "TThreadPoolServer: Unknown exception: " << s << endl;
+      string errStr = string("Some kind of accept exception: ") + s;
+      GlobalOutput(errStr.c_str());
       break;
+    }
+
+    void* connectionContext = NULL;
+    if (eventHandler_ != NULL) {
+      connectionContext = eventHandler_->createContext(inputProtocol, outputProtocol);
+    }
+    try {
+      for (;;) {
+        if (eventHandler_ != NULL) {
+          eventHandler_->processContext(connectionContext, client);
+        }
+        if (!processor_->process(inputProtocol, outputProtocol, connectionContext) ||
+            // Peek ahead, is the remote side closed?
+            !inputProtocol->getTransport()->peek()) {
+          break;
+        }
+      }
+    } catch (TTransportException& ttx) {
+      string errStr = string("TSimpleServer client died: ") + ttx.what();
+      GlobalOutput(errStr.c_str());
+    } catch (TException& tx) {
+      string errStr = string("TSimpleServer exception: ") + tx.what();
+      GlobalOutput(errStr.c_str());
+    } catch (...) {
+      GlobalOutput("TSimpleServer uncaught exception.");
+    }
+    if (eventHandler_ != NULL) {
+      eventHandler_->deleteContext(connectionContext, inputProtocol, outputProtocol);
+    }
+
+    try {
+      inputTransport->close();
+    } catch (TTransportException& ttx) {
+      string errStr = string("TSimpleSimple input close failed: ") + ttx.what();
+      GlobalOutput(errStr.c_str());
+    }
+    try {
+      outputTransport->close();
+    } catch (TTransportException& ttx) {
+      string errStr = string("TSimpleSimple output close failed: ") + ttx.what();
+      GlobalOutput(errStr.c_str());
+    }
+    try {
+      client->close();
+    } catch (TTransportException& ttx) {
+      string errStr = string("TSimpleSimple client close failed: ") + ttx.what();
+      GlobalOutput(errStr.c_str());
     }
   }
 
@@ -114,7 +139,8 @@ void TSimpleServer::serve() {
     try {
       serverTransport_->close();
     } catch (TTransportException &ttx) {
-      cerr << "TServerTransport failed on close: " << ttx.what() << endl;
+      string errStr = string("TServerTransport failed on close: ") + ttx.what();
+      GlobalOutput(errStr.c_str());
     }
     stop_ = false;
   }
