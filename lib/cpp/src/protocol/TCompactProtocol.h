@@ -20,7 +20,7 @@
 #ifndef _THRIFT_PROTOCOL_TCOMPACTPROTOCOL_H_
 #define _THRIFT_PROTOCOL_TCOMPACTPROTOCOL_H_ 1
 
-#include "TProtocol.h"
+#include "TVirtualProtocol.h"
 
 #include <stack>
 #include <boost/shared_ptr.hpp>
@@ -30,7 +30,7 @@ namespace apache { namespace thrift { namespace protocol {
 /**
  * C++ Implementation of the Compact Protocol as described in THRIFT-110
  */
-class TCompactProtocol : public TProtocol {
+class TCompactProtocol : public TVirtualProtocol<TCompactProtocol> {
 
  protected:
   static const int8_t  PROTOCOL_ID = 0x82;
@@ -86,7 +86,7 @@ class TCompactProtocol : public TProtocol {
 
  public:
   TCompactProtocol(boost::shared_ptr<TTransport> trans) :
-    TProtocol(trans),
+    TVirtualProtocol<TCompactProtocol>(trans),
     lastFieldId_(0),
     string_limit_(0),
     string_buf_(NULL),
@@ -99,7 +99,7 @@ class TCompactProtocol : public TProtocol {
   TCompactProtocol(boost::shared_ptr<TTransport> trans,
                    int32_t string_limit,
                    int32_t container_limit) :
-    TProtocol(trans),
+    TVirtualProtocol<TCompactProtocol>(trans),
     lastFieldId_(0),
     string_limit_(string_limit),
     string_buf_(NULL),

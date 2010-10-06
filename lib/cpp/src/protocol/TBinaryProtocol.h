@@ -21,6 +21,7 @@
 #define _THRIFT_PROTOCOL_TBINARYPROTOCOL_H_ 1
 
 #include "TProtocol.h"
+#include "TVirtualProtocol.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -31,7 +32,7 @@ namespace apache { namespace thrift { namespace protocol {
  * binary format, essentially just spitting out the raw bytes.
  *
  */
-class TBinaryProtocol : public TProtocol {
+class TBinaryProtocol : public TVirtualProtocol<TBinaryProtocol> {
  protected:
   static const int32_t VERSION_MASK = 0xffff0000;
   static const int32_t VERSION_1 = 0x80010000;
@@ -39,7 +40,7 @@ class TBinaryProtocol : public TProtocol {
 
  public:
   TBinaryProtocol(boost::shared_ptr<TTransport> trans) :
-    TProtocol(trans),
+    TVirtualProtocol<TBinaryProtocol>(trans),
     string_limit_(0),
     container_limit_(0),
     strict_read_(false),
@@ -52,7 +53,7 @@ class TBinaryProtocol : public TProtocol {
                   int32_t container_limit,
                   bool strict_read,
                   bool strict_write) :
-    TProtocol(trans),
+    TVirtualProtocol<TBinaryProtocol>(trans),
     string_limit_(string_limit),
     container_limit_(container_limit),
     strict_read_(strict_read),
@@ -84,11 +85,11 @@ class TBinaryProtocol : public TProtocol {
    * Writing functions.
    */
 
-  virtual uint32_t writeMessageBegin(const std::string& name,
-                                     const TMessageType messageType,
-                                     const int32_t seqid);
+  uint32_t writeMessageBegin(const std::string& name,
+                             const TMessageType messageType,
+                             const int32_t seqid);
 
-  virtual uint32_t writeMessageEnd();
+  uint32_t writeMessageEnd();
 
 
   uint32_t writeStructBegin(const char* name);

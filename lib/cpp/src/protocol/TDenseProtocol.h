@@ -56,7 +56,8 @@ namespace apache { namespace thrift { namespace protocol {
  * methods within our versions.
  *
  */
-class TDenseProtocol : public TBinaryProtocol {
+class TDenseProtocol
+  : public TVirtualProtocol<TDenseProtocol, TBinaryProtocol> {
  protected:
   static const int32_t VERSION_MASK = 0xffff0000;
   // VERSION_1 (0x80010000)  is taken by TBinaryProtocol.
@@ -72,7 +73,7 @@ class TDenseProtocol : public TBinaryProtocol {
    */
   TDenseProtocol(boost::shared_ptr<TTransport> trans,
                  TypeSpec* type_spec = NULL) :
-    TBinaryProtocol(trans),
+    TVirtualProtocol<TDenseProtocol, TBinaryProtocol>(trans),
     type_spec_(type_spec),
     standalone_(true)
   {}
@@ -89,56 +90,54 @@ class TDenseProtocol : public TBinaryProtocol {
    * Writing functions.
    */
 
-  virtual uint32_t writeMessageBegin(const std::string& name,
-                                     const TMessageType messageType,
-                                     const int32_t seqid);
+  uint32_t writeMessageBegin(const std::string& name,
+                             const TMessageType messageType,
+                             const int32_t seqid);
 
-  virtual uint32_t writeMessageEnd();
+  uint32_t writeMessageEnd();
 
 
-  virtual uint32_t writeStructBegin(const char* name);
+  uint32_t writeStructBegin(const char* name);
 
-  virtual uint32_t writeStructEnd();
+  uint32_t writeStructEnd();
 
-  virtual uint32_t writeFieldBegin(const char* name,
-                                   const TType fieldType,
-                                   const int16_t fieldId);
+  uint32_t writeFieldBegin(const char* name,
+                           const TType fieldType,
+                           const int16_t fieldId);
 
-  virtual uint32_t writeFieldEnd();
+  uint32_t writeFieldEnd();
 
-  virtual uint32_t writeFieldStop();
+  uint32_t writeFieldStop();
 
-  virtual uint32_t writeMapBegin(const TType keyType,
-                                 const TType valType,
-                                 const uint32_t size);
+  uint32_t writeMapBegin(const TType keyType,
+                         const TType valType,
+                         const uint32_t size);
 
-  virtual uint32_t writeMapEnd();
+  uint32_t writeMapEnd();
 
-  virtual uint32_t writeListBegin(const TType elemType,
-                                  const uint32_t size);
+  uint32_t writeListBegin(const TType elemType, const uint32_t size);
 
-  virtual uint32_t writeListEnd();
+  uint32_t writeListEnd();
 
-  virtual uint32_t writeSetBegin(const TType elemType,
-                                 const uint32_t size);
+  uint32_t writeSetBegin(const TType elemType, const uint32_t size);
 
-  virtual uint32_t writeSetEnd();
+  uint32_t writeSetEnd();
 
-  virtual uint32_t writeBool(const bool value);
+  uint32_t writeBool(const bool value);
 
-  virtual uint32_t writeByte(const int8_t byte);
+  uint32_t writeByte(const int8_t byte);
 
-  virtual uint32_t writeI16(const int16_t i16);
+  uint32_t writeI16(const int16_t i16);
 
-  virtual uint32_t writeI32(const int32_t i32);
+  uint32_t writeI32(const int32_t i32);
 
-  virtual uint32_t writeI64(const int64_t i64);
+  uint32_t writeI64(const int64_t i64);
 
-  virtual uint32_t writeDouble(const double dub);
+  uint32_t writeDouble(const double dub);
 
-  virtual uint32_t writeString(const std::string& str);
+  uint32_t writeString(const std::string& str);
 
-  virtual uint32_t writeBinary(const std::string& str);
+  uint32_t writeBinary(const std::string& str);
 
 
   /*

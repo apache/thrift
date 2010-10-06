@@ -357,7 +357,7 @@ public:
 
 
 TJSONProtocol::TJSONProtocol(boost::shared_ptr<TTransport> ptrans) :
-  TProtocol(ptrans),
+  TVirtualProtocol<TJSONProtocol>(ptrans),
   context_(new TJSONContext()),
   reader_(*ptrans) {
 }

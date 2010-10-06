@@ -20,7 +20,7 @@
 #ifndef _THRIFT_PROTOCOL_TJSONPROTOCOL_H_
 #define _THRIFT_PROTOCOL_TJSONPROTOCOL_H_ 1
 
-#include "TProtocol.h"
+#include "TVirtualProtocol.h"
 
 #include <stack>
 
@@ -92,7 +92,7 @@ class TJSONContext;
  * transmission. I don't know of any work-around for this issue.
  *
  */
-class TJSONProtocol : public TProtocol {
+class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
  public:
 
   TJSONProtocol(boost::shared_ptr<TTransport> ptrans);

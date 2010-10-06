@@ -111,11 +111,11 @@ include_protocol_HEADERS = \
                          src/protocol/TCompactProtocol.h \
                          src/protocol/TDenseProtocol.h \
                          src/protocol/TDebugProtocol.h \
-                         src/protocol/TOneWayProtocol.h \
                          src/protocol/TBase64Utils.h \
                          src/protocol/TJSONProtocol.h \
                          src/protocol/TProtocolTap.h \
                          src/protocol/TProtocolException.h \
+                         src/protocol/TVirtualProtocol.h \
                          src/protocol/TProtocol.h
 
 include_transportdir = $(include_thriftdir)/transport
