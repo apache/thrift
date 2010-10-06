@@ -287,6 +287,39 @@ class TestHandler : public ThriftTestIf {
   }
 };
 
+
+class TestProcessorEventHandler : public TProcessorEventHandler {
+  virtual void* getContext(const char* fn_name) {
+    return new std::string(fn_name);
+  }
+  virtual void freeContext(void* ctx, const char* fn_name) {
+    delete static_cast<std::string*>(ctx);
+  }
+  virtual void preRead(void* ctx, const char* fn_name) {
+    communicate("preRead", ctx, fn_name);
+  }
+  virtual void postRead(void* ctx, const char* fn_name) {
+    communicate("postRead", ctx, fn_name);
+  }
+  virtual void preWrite(void* ctx, const char* fn_name) {
+    communicate("preWrite", ctx, fn_name);
+  }
+  virtual void postWrite(void* ctx, const char* fn_name) {
+    communicate("postWrite", ctx, fn_name);
+  }
+  virtual void asyncComplete(void* ctx, const char* fn_name) {
+    communicate("asyncComplete", ctx, fn_name);
+  }
+  virtual void handlerError(void* ctx, const char* fn_name) {
+    communicate("handlerError", ctx, fn_name);
+  }
+
+  void communicate(const char* event, void* ctx, const char* fn_name) {
+    std::cout << event << ": " << *static_cast<std::string*>(ctx) << " = " << fn_name << std::endl;
+  }
+};
+
+
 int main(int argc, char **argv) {
 
   int port = 9090;
@@ -297,7 +330,7 @@ int main(int argc, char **argv) {
   ostringstream usage;
 
   usage <<
-    argv[0] << " [--port=<port number>] [--server-type=<server-type>] [--protocol-type=<protocol-type>] [--workers=<worker-count>]" << endl <<
+    argv[0] << " [--port=<port number>] [--server-type=<server-type>] [--protocol-type=<protocol-type>] [--workers=<worker-count>] [--processor-events]" << endl <<
 
     "\t\tserver-type\t\ttype of server, \"simple\", \"thread-pool\", \"threaded\", or \"nonblocking\".  Default is " << serverType << endl <<
 
@@ -364,6 +397,12 @@ int main(int argc, char **argv) {
   shared_ptr<TestHandler> testHandler(new TestHandler());
 
   shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
+
+
+  if (!args["processor-events"].empty()) {
+    testProcessor->setEventHandler(shared_ptr<TProcessorEventHandler>(
+          new TestProcessorEventHandler()));
+  }
 
   // Transport
   shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
