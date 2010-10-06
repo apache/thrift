@@ -49,6 +49,7 @@ check_PROGRAMS = \
 	OptionalRequiredTest \
 	SpecializationTest \
 	AllProtocolsTest \
+	TransportTest \
 	UnitTests
 
 TESTS = \
@@ -60,6 +61,11 @@ UnitTests_SOURCES = \
 	TBufferBaseTest.cpp
 
 UnitTests_LDADD = $(BOOST_LDFLAGS) libtestgencpp.la -lboost_unit_test_framework
+
+TransportTest_SOURCES = \
+	TransportTest.cpp
+
+TransportTest_LDADD = libtestgencpp.la $(top_builddir)/lib/cpp/libthriftz.la -l:libboost_unit_test_framework.a -lz
 
 #
 # TFDTransportTest
