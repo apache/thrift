@@ -272,33 +272,37 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool bl
 
 bool TFileTransport::swapEventBuffers(struct timespec* deadline) {
   pthread_mutex_lock(&mutex_);
-  if (deadline != NULL) {
-    // if we were handed a deadline time struct, do a timed wait
-    pthread_cond_timedwait(&notEmpty_, &mutex_, deadline);
+
+  bool swap;
+  if (!enqueueBuffer_->isEmpty()) {
+    swap = true;
   } else {
-    // just wait until the buffer gets an item
-    pthread_cond_wait(&notEmpty_, &mutex_);
+    if (deadline != NULL) {
+      // if we were handed a deadline time struct, do a timed wait
+      pthread_cond_timedwait(&notEmpty_, &mutex_, deadline);
+    } else {
+      // just wait until the buffer gets an item
+      pthread_cond_wait(&notEmpty_, &mutex_);
+    }
+
+    // could be empty if we timed out
+    swap = enqueueBuffer_->isEmpty();
   }
 
-  bool swapped = false;
-
-  // could be empty if we timed out
-  if (!enqueueBuffer_->isEmpty()) {
+  if (swap) {
     TFileTransportBuffer *temp = enqueueBuffer_;
     enqueueBuffer_ = dequeueBuffer_;
     dequeueBuffer_ = temp;
-
-    swapped = true;
   }
 
   // unlock the mutex and signal if required
   pthread_mutex_unlock(&mutex_);
 
-  if (swapped) {
+  if (swap) {
     pthread_cond_signal(&notFull_);
   }
 
-  return swapped;
+  return swap;
 }
 
 
