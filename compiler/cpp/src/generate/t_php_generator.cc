@@ -413,7 +413,7 @@ string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
       out << render_const_value(g_type_string, v_iter->first);
       out << " => ";
       out << render_const_value(field_type, v_iter->second);
-      out << endl;
+      out << "," << endl;
     }
     indent_down();
     indent(out) << "))";
