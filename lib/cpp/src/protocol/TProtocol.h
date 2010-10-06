@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <string>
 #include <map>
+#include <vector>
 
 
 // Use this to get around strict aliasing rules.
@@ -493,6 +494,8 @@ class TProtocol {
 
   virtual uint32_t readBool_virt(bool& value) = 0;
 
+  virtual uint32_t readBool_virt(std::vector<bool>::reference value) = 0;
+
   virtual uint32_t readByte_virt(int8_t& byte) = 0;
 
   virtual uint32_t readI16_virt(int16_t& i16) = 0;
@@ -611,11 +614,14 @@ class TProtocol {
     return readBinary_virt(str);
   }
 
-  uint32_t readBool(std::vector<bool>::reference ref) {
-    bool value;
-    uint32_t rv = readBool(value);
-    ref = value;
-    return rv;
+  /*
+   * std::vector is specialized for bool, and its elements are individual bits
+   * rather than bools.   We need to define a different version of readBool()
+   * to work with std::vector<bool>.
+   */
+  uint32_t readBool(std::vector<bool>::reference value) {
+    T_VIRTUAL_CALL();
+    return readBool_virt(value);
   }
 
   /**

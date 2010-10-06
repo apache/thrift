@@ -189,6 +189,8 @@ class TDenseProtocol
   uint32_t readSetEnd();
 
   uint32_t readBool(bool& value);
+  // Provide the default readBool() implementation for std::vector<bool>
+  using TVirtualProtocol<TDenseProtocol, TBinaryProtocol>::readBool;
 
   uint32_t readByte(int8_t& byte);
 

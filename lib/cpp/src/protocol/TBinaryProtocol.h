@@ -174,6 +174,8 @@ class TBinaryProtocolT
   inline uint32_t readSetEnd();
 
   inline uint32_t readBool(bool& value);
+  // Provide the default readBool() implementation for std::vector<bool>
+  using TVirtualProtocol< TBinaryProtocolT<Transport_> >::readBool;
 
   inline uint32_t readByte(int8_t& byte);
 

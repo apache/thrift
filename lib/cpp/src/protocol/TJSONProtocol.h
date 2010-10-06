@@ -243,6 +243,9 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
 
   uint32_t readBool(bool& value);
 
+  // Provide the default readBool() implementation for std::vector<bool>
+  using TVirtualProtocol<TJSONProtocol>::readBool;
+
   uint32_t readByte(int8_t& byte);
 
   uint32_t readI16(int16_t& i16);

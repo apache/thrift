@@ -192,6 +192,8 @@ class TCompactProtocolT
                         uint32_t& size);
 
   uint32_t readBool(bool& value);
+  // Provide the default readBool() implementation for std::vector<bool>
+  using TVirtualProtocol< TCompactProtocolT<Transport_> >::readBool;
 
   uint32_t readByte(int8_t& byte);
 

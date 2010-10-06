@@ -133,6 +133,9 @@ class TProtocolTap : public TVirtualProtocol<TProtocolTap> {
     return rv;
   }
 
+  // Provide the default readBool() implementation for std::vector<bool>
+  using TVirtualProtocol<TProtocolTap>::readBool;
+
   uint32_t readByte(int8_t& byte) {
     uint32_t rv = source_->readByte(byte);
     sink_->writeByte(byte);
