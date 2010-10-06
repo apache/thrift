@@ -50,6 +50,7 @@ check_PROGRAMS = \
 	SpecializationTest \
 	AllProtocolsTest \
 	TransportTest \
+	ZlibTest \
 	UnitTests
 
 TESTS = \
@@ -66,6 +67,11 @@ TransportTest_SOURCES = \
 	TransportTest.cpp
 
 TransportTest_LDADD = libtestgencpp.la $(top_builddir)/lib/cpp/libthriftz.la -l:libboost_unit_test_framework.a -lz
+
+ZlibTest_SOURCES = \
+	ZlibTest.cpp
+
+ZlibTest_LDADD = libtestgencpp.la $(top_builddir)/lib/cpp/libthriftz.la -l:libboost_unit_test_framework.a -lz
 
 #
 # TFDTransportTest
@@ -156,7 +162,6 @@ clean-local:
 	$(RM) -r gen-cpp
 
 EXTRA_DIST = \
-	ZlibTest.cpp \
 	DenseProtoTest.cpp \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp

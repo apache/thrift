@@ -17,29 +17,31 @@
  * under the License.
  */
 
-/*
-thrift --gen cpp DebugProtoTest.thrift
-g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
-  ZlibTest.cpp \
-  ../lib/cpp/.libs/libthriftz.a ../lib/cpp/.libs/libthrift.a \
-  -lz -o ZlibTest
-./ZlibTest
-*/
-
 #define __STDC_LIMIT_MACROS
 #define __STDC_FORMAT_MACROS
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE // needed for getopt_long
+#endif
+
 #include <stdint.h>
 #include <inttypes.h>
+#include <getopt.h>
 #include <cstddef>
-#include <cassert>
 #include <fstream>
 #include <iostream>
+#include <tr1/functional>
 
 #include <boost/random.hpp>
+#include <boost/shared_array.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <transport/TBufferTransports.h>
 #include <transport/TZlibTransport.h>
+
+using namespace std;
+using namespace boost;
+using namespace apache::thrift::transport;
 
 
 // Distributions of reads and writes meant to approximate a real load,
@@ -224,171 +226,242 @@ uint8_t* gen_random_buffer(uint32_t buf_len) {
   return buf;
 }
 
-int main() {
-  using namespace std;
-  using namespace boost;
-  using namespace apache::thrift::transport;
+void test_write_then_read(const uint8_t* buf, uint32_t buf_len) {
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  zlib_trans->write(buf, buf_len);
+  zlib_trans->flush();
 
-  uint32_t seed = time(NULL);
-  printf("seed: %"PRIu32"\n", seed);
-  rng.seed(time(NULL));
+  boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
+  uint32_t got = zlib_trans->read(mirror.get(), buf_len);
+  BOOST_REQUIRE_EQUAL(got, buf_len);
+  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf, buf_len), 0);
+  zlib_trans->verifyChecksum();
+}
 
-  uint32_t buf_len = 1024*32;
-  uint8_t* buffers[4];
-  buffers[0] = gen_uniform_buffer(buf_len, 'a');
-  buffers[1] = gen_compressible_buffer(buf_len);
-  buffers[2] = gen_random_buffer(buf_len);
-  buffers[3] = NULL;
+void test_separate_checksum(const uint8_t* buf, uint32_t buf_len) {
+  // This one is tricky.  I separate the last byte of the stream out
+  // into a separate crbuf_.  The last byte is part of the checksum,
+  // so the entire read goes fine, but when I go to verify the checksum
+  // it isn't there.  The original implementation complained that
+  // the stream was not complete.  I'm about to go fix that.
+  // It worked.  Awesome.
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  zlib_trans->write(buf, buf_len);
+  zlib_trans->flush();
+  string tmp_buf;
+  membuf->appendBufferToString(tmp_buf);
+  zlib_trans.reset(new TZlibTransport(membuf, false,
+                                      TZlibTransport::DEFAULT_URBUF_SIZE,
+                                      tmp_buf.length()-1));
 
-  for (uint8_t** bufp = &buffers[0]; *bufp != NULL; ++bufp) {
-    vector<uint8_t> content(*bufp, (*bufp) + buf_len);
-    vector<uint8_t> mirror;
+  boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
+  uint32_t got = zlib_trans->read(mirror.get(), buf_len);
+  BOOST_REQUIRE_EQUAL(got, buf_len);
+  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf, buf_len), 0);
+  zlib_trans->verifyChecksum();
+}
 
-    // Let's just start with the big dog!
-    {
-      mirror.clear();
-      shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-      shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
-      zlib_trans->write(&content[0], content.size());
-      zlib_trans->flush();
-      mirror.resize(content.size());
-      uint32_t got = zlib_trans->read(&mirror[0], mirror.size());
-      assert(got == content.size());
-      assert(mirror == content);
-      zlib_trans->verifyChecksum();
+void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
+  // Make sure we still get that "not complete" error if
+  // it really isn't complete.
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  zlib_trans->write(buf, buf_len);
+  zlib_trans->flush();
+  string tmp_buf;
+  membuf->appendBufferToString(tmp_buf);
+  tmp_buf.erase(tmp_buf.length() - 1);
+  membuf->resetBuffer(const_cast<uint8_t*>(
+                        reinterpret_cast<const uint8_t*>(tmp_buf.data())),
+                      tmp_buf.length());
+
+  boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
+  uint32_t got = zlib_trans->read(mirror.get(), buf_len);
+  BOOST_REQUIRE_EQUAL(got, buf_len);
+  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf, buf_len), 0);
+  try {
+    zlib_trans->verifyChecksum();
+    BOOST_ERROR("verifyChecksum() did not report an error");
+  } catch (TTransportException& ex) {
+    BOOST_CHECK_EQUAL(ex.getType(), TTransportException::CORRUPTED_DATA);
+  }
+}
+
+void test_read_write_mix(const uint8_t* buf, uint32_t buf_len,
+                         unsigned int* write_dist, unsigned int* read_dist) {
+  // Try it with a mix of read/write sizes.
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  int idx;
+  unsigned int tot;
+
+  idx = 0;
+  tot = 0;
+  while (tot < buf_len) {
+    uint32_t write_len = write_dist[idx];
+    if (tot + write_len > buf_len) {
+      write_len = buf_len - tot;
     }
+    zlib_trans->write(buf + tot, write_len);
+    tot += write_len;
+    idx++;
+  }
 
-    // This one is tricky.  I separate the last byte of the stream out
-    // into a separate crbuf_.  The last byte is part of the checksum,
-    // so the entire read goes fine, but when I go to verify the checksum
-    // it isn't there.  The original implementation complained that
-    // the stream was not complete.  I'm about to go fix that.
-    // It worked.  Awesome.
-    {
-      mirror.clear();
-      shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-      shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
-      zlib_trans->write(&content[0], content.size());
-      zlib_trans->flush();
-      string tmp_buf;
-      membuf->appendBufferToString(tmp_buf);
-      zlib_trans.reset(new TZlibTransport(membuf, false,
-            TZlibTransport::DEFAULT_URBUF_SIZE,
-            tmp_buf.length()-1));
-      mirror.resize(content.size());
-      uint32_t got = zlib_trans->read(&mirror[0], mirror.size());
-      assert(got == content.size());
-      assert(mirror == content);
-      zlib_trans->verifyChecksum();
+  zlib_trans->flush();
+
+  idx = 0;
+  tot = 0;
+  boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
+  while (tot < buf_len) {
+    uint32_t read_len = read_dist[idx];
+    uint32_t expected_read_len = read_len;
+    if (tot + read_len > buf_len) {
+      expected_read_len = buf_len - tot;
     }
+    uint32_t got = zlib_trans->read(mirror.get() + tot, read_len);
+    BOOST_REQUIRE_EQUAL(got, expected_read_len);
+    tot += got;
+    idx++;
+  }
 
-    // Make sure we still get that "not complete" error if
-    // it really isn't complete.
-    {
-      mirror.clear();
-      shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-      shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
-      zlib_trans->write(&content[0], content.size());
-      zlib_trans->flush();
-      string tmp_buf;
-      membuf->appendBufferToString(tmp_buf);
-      tmp_buf.erase(tmp_buf.length() - 1);
-      membuf->resetBuffer(const_cast<uint8_t*>(
-                            reinterpret_cast<const uint8_t*>(tmp_buf.data())),
-                          tmp_buf.length());
-      mirror.resize(content.size());
-      uint32_t got = zlib_trans->read(&mirror[0], mirror.size());
-      assert(got == content.size());
-      assert(mirror == content);
-      try {
-        zlib_trans->verifyChecksum();
-        assert(false);
-      } catch (TTransportException& ex) {
-        assert(ex.getType() == TTransportException::CORRUPTED_DATA);
-      }
-    }
+  BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf, buf_len), 0);
+  zlib_trans->verifyChecksum();
+}
 
-    // Try it with a mix of read/write sizes.
-    for (int d1 = 0; d1 < 3; d1++) {
-      for (int d2 = 0; d2 < 3; d2++) {
-        mirror.clear();
-        shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-        shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
-        int idx;
-        unsigned int tot;
+void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
+  // Verify checksum checking.
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  zlib_trans->write(buf, buf_len);
+  zlib_trans->flush();
+  string tmp_buf;
+  membuf->appendBufferToString(tmp_buf);
+  // Modify a byte at the end of the buffer (part of the checksum).
+  // On rare occasions, modifying a byte in the middle of the buffer
+  // isn't caught by the checksum.
+  //
+  // (This happens especially often for the uniform buffer.  The
+  // re-inflated data is correct, however.  I suspect in this case that
+  // we're more likely to modify bytes that are part of zlib metadata
+  // instead of the actual compressed data.)
+  //
+  // I've also seen some failure scenarios where a checksum failure isn't
+  // reported, but zlib keeps trying to decode past the end of the data.
+  // (When this occurs, verifyChecksum() throws an exception indicating
+  // that the end of the data hasn't been reached.)  I haven't seen this
+  // error when only modifying checksum bytes.
+  int index = tmp_buf.size() - 1;
+  tmp_buf[index]++;
+  membuf->resetBuffer(const_cast<uint8_t*>(
+                        reinterpret_cast<const uint8_t*>(tmp_buf.data())),
+                      tmp_buf.length());
 
-        idx = 0;
-        tot = 0;
-        while (tot < content.size()) {
-          uint32_t write_len = dist[d1][idx];
-          if (tot + write_len > content.size()) {
-            write_len = content.size() - tot;
-          }
-          zlib_trans->write(&content[tot], write_len);
-          tot += write_len;
-          idx++;
-        }
+  boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
+  try {
+    zlib_trans->read(mirror.get(), buf_len);
+    zlib_trans->verifyChecksum();
+    BOOST_ERROR("verifyChecksum() did not report an error");
+  } catch (TZlibTransportException& ex) {
+    BOOST_CHECK_EQUAL(ex.getType(), TTransportException::INTERNAL_ERROR);
+  }
+}
 
-        zlib_trans->flush();
-        mirror.resize(content.size());
+#define ADD_TEST_CASE(suite, name, function, ...) \
+  do { \
+    ::std::ostringstream name_ss; \
+    name_ss << name << "-" << BOOST_STRINGIZE(function); \
+    ::boost::unit_test::test_case* tc = ::boost::unit_test::make_test_case( \
+        ::std::tr1::bind(function, ## __VA_ARGS__), \
+        name_ss.str()); \
+    (suite)->add(tc); \
+  } while (0)
 
-        idx = 0;
-        tot = 0;
-        while (tot < mirror.size()) {
-          uint32_t read_len = dist[d2][idx];
-          uint32_t expected_read_len = read_len;
-          if (tot + read_len > content.size()) {
-            expected_read_len = content.size() - tot;
-          }
-          uint32_t got = zlib_trans->read(&mirror[tot], read_len);
-          assert(got == expected_read_len);
-          tot += got;
-          idx++;
-        }
+void add_tests(unit_test::test_suite* suite,
+               const uint8_t* buf,
+               uint32_t buf_len,
+               const char* name) {
+  ADD_TEST_CASE(suite, name, test_write_then_read, buf, buf_len);
+  ADD_TEST_CASE(suite, name, test_separate_checksum, buf, buf_len);
+  ADD_TEST_CASE(suite, name, test_incomplete_checksum, buf, buf_len);
 
-        assert(mirror == content);
-        zlib_trans->verifyChecksum();
-      }
-    }
-
-    // Verify checksum checking.
-    {
-      mirror.clear();
-      shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-      shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
-      zlib_trans->write(&content[0], content.size());
-      zlib_trans->flush();
-      string tmp_buf;
-      membuf->appendBufferToString(tmp_buf);
-      // Modify a byte at the end of the buffer (part of the checksum).
-      // On rare occasions, modifying a byte in the middle of the buffer
-      // isn't caught by the checksum.
-      //
-      // (This happens especially often for the uniform buffer.  The
-      // re-inflated data is correct, however.  I suspect in this case that
-      // we're more likely to modify bytes that are part of zlib metadata
-      // instead of the actual compressed data.)
-      //
-      // I've also seen some failure scenarios where a checksum failure isn't
-      // reported, but zlib keeps trying to decode past the end of the data.
-      // (When this occurs, verifyChecksum() throws an exception indicating
-      // that the end of the data hasn't been reached.)  I haven't seen this
-      // error when only modifying checksum bytes.
-      int index = tmp_buf.size() - 1;
-      tmp_buf[index]++;
-      membuf->resetBuffer(const_cast<uint8_t*>(
-                            reinterpret_cast<const uint8_t*>(tmp_buf.data())),
-                          tmp_buf.length());
-      mirror.resize(content.size());
-      try {
-        zlib_trans->read(&mirror[0], mirror.size());
-        zlib_trans->verifyChecksum();
-        assert(false);
-      } catch (TZlibTransportException& ex) {
-        assert(ex.getType() == TTransportException::INTERNAL_ERROR);
-      }
+  for (int d1 = 0; d1 < 3; d1++) {
+    for (int d2 = 0; d2 < 3; d2++) {
+      ADD_TEST_CASE(suite, name << "_w" << d1 << "_r" << d2,
+                    test_read_write_mix, buf, buf_len, dist[d1], dist[d2]);
     }
   }
 
-  return 0;
+  ADD_TEST_CASE(suite, name, test_invalid_checksum, buf, buf_len);
+}
+
+void print_usage(FILE* f, const char* argv0) {
+  fprintf(f, "Usage: %s [boost_options] [options]\n", argv0);
+  fprintf(f, "Options:\n");
+  fprintf(f, "  --seed=<N>, -s <N>\n");
+  fprintf(f, "  --help\n");
+}
+
+void parse_args(int argc, char* argv[]) {
+  uint32_t seed = 0;
+  bool has_seed = false;
+
+  struct option long_opts[] = {
+    { "help", false, NULL, 'h' },
+    { "seed", true, NULL, 's' },
+    { NULL, 0, NULL, 0 }
+  };
+
+  while (true) {
+    optopt = 1;
+    int optchar = getopt_long(argc, argv, "hs:", long_opts, NULL);
+    if (optchar == -1) {
+      break;
+    }
+
+    switch (optchar) {
+      case 's': {
+        char *endptr;
+        seed = strtol(optarg, &endptr, 0);
+        if (endptr == optarg || *endptr != '\0') {
+          fprintf(stderr, "invalid seed value \"%s\": must be a positive "
+                  "integer\n", optarg);
+          exit(1);
+        }
+        has_seed = true;
+        break;
+      }
+      case 'h':
+        print_usage(stdout, argv[0]);
+        exit(0);
+      case '?':
+        exit(1);
+      default:
+        // Only happens if someone adds another option to the optarg string,
+        // but doesn't update the switch statement to handle it.
+        fprintf(stderr, "unknown option \"-%c\"\n", optchar);
+        exit(1);
+    }
+  }
+
+  if (!has_seed) {
+    seed = time(NULL);
+  }
+
+  printf("seed: %" PRIu32 "\n", seed);
+  rng.seed(seed);
+}
+
+unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
+  parse_args(argc, argv);
+
+  unit_test::test_suite* suite = BOOST_TEST_SUITE("ZlibTests");
+
+  uint32_t buf_len = 1024*32;
+  add_tests(suite, gen_uniform_buffer(buf_len, 'a'), buf_len, "uniform");
+  add_tests(suite, gen_compressible_buffer(buf_len), buf_len, "compressible");
+  add_tests(suite, gen_random_buffer(buf_len), buf_len, "random");
+
+  return suite;
 }
