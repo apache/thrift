@@ -37,6 +37,7 @@
 #include <transport/TFDTransport.h>
 #include <transport/TFileTransport.h>
 #include <transport/TZlibTransport.h>
+#include <transport/TSocket.h>
 
 using namespace apache::thrift::transport;
 
@@ -114,6 +115,14 @@ class GenericSizeGenerator : public SizeGenerator {
  * Classes to set up coupled transports
  **************************************************************************/
 
+/**
+ * Helper class to represent a coupled pair of transports.
+ *
+ * Data written to the out transport can be read from the in transport.
+ *
+ * This is used as the base class for the various coupled transport
+ * implementations.  It shouldn't be instantiated directly.
+ */
 template <class Transport_>
 class CoupledTransports {
  public:
@@ -129,6 +138,9 @@ class CoupledTransports {
   CoupledTransports &operator=(const CoupledTransports&);
 };
 
+/**
+ * Coupled TMemoryBuffers
+ */
 class CoupledMemoryBuffers : public CoupledTransports<TMemoryBuffer> {
  public:
   CoupledMemoryBuffers() {
@@ -139,6 +151,11 @@ class CoupledMemoryBuffers : public CoupledTransports<TMemoryBuffer> {
   TMemoryBuffer buf;
 };
 
+/**
+ * Coupled TBufferedTransports.
+ *
+ * Uses a TMemoryBuffer as the underlying transport.
+ */
 class CoupledBufferedTransports :
   public CoupledTransports<TBufferedTransport> {
  public:
@@ -156,6 +173,11 @@ class CoupledBufferedTransports :
   boost::shared_ptr<TMemoryBuffer> buf;
 };
 
+/**
+ * Coupled TFramedTransports.
+ *
+ * Uses a TMemoryBuffer as the underlying transport.
+ */
 class CoupledFramedTransports : public CoupledTransports<TFramedTransport> {
  public:
   CoupledFramedTransports() :
@@ -172,6 +194,9 @@ class CoupledFramedTransports : public CoupledTransports<TFramedTransport> {
   boost::shared_ptr<TMemoryBuffer> buf;
 };
 
+/**
+ * Coupled TZlibTransports.
+ */
 class CoupledZlibTransports : public CoupledTransports<TZlibTransport> {
  public:
   CoupledZlibTransports() :
@@ -188,6 +213,9 @@ class CoupledZlibTransports : public CoupledTransports<TZlibTransport> {
   boost::shared_ptr<TMemoryBuffer> buf;
 };
 
+/**
+ * Coupled TFDTransports.
+ */
 class CoupledFDTransports : public CoupledTransports<TFDTransport> {
  public:
   CoupledFDTransports() {
@@ -207,6 +235,25 @@ class CoupledFDTransports : public CoupledTransports<TFDTransport> {
   }
 };
 
+/**
+ * Coupled TSockets
+ */
+class CoupledSocketTransports : public CoupledTransports<TSocket> {
+ public:
+  CoupledSocketTransports() {
+    int sockets[2];
+    if (socketpair(PF_UNIX, SOCK_STREAM, 0, sockets) != 0) {
+      return;
+    }
+
+    in = new TSocket(sockets[0]);
+    out = new TSocket(sockets[1]);
+  }
+};
+
+/**
+ * Coupled TFileTransports
+ */
 class CoupledFileTransports : public CoupledTransports<TFileTransport> {
  public:
   CoupledFileTransports() {
@@ -239,6 +286,14 @@ class CoupledFileTransports : public CoupledTransports<TFileTransport> {
   int fd;
 };
 
+/**
+ * Wrapper around another CoupledTransports implementation that exposes the
+ * transports as TTransport pointers.
+ *
+ * This is used since accessing a transport via a "TTransport*" exercises a
+ * different code path than using the base pointer class.  As part of the
+ * template code changes, most transport methods are no longer virtual.
+ */
 template <class CoupledTransports_>
 class CoupledTTransports : public CoupledTransports<TTransport> {
  public:
@@ -250,6 +305,13 @@ class CoupledTTransports : public CoupledTransports<TTransport> {
   CoupledTransports_ transports;
 };
 
+/**
+ * Wrapper around another CoupledTransports implementation that exposes the
+ * transports as TBufferBase pointers.
+ *
+ * This can only be instantiated with a transport type that is a subclass of
+ * TBufferBase.
+ */
 template <class CoupledTransports_>
 class CoupledBufferBases : public CoupledTransports<TBufferBase> {
  public:
@@ -260,18 +322,6 @@ class CoupledBufferBases : public CoupledTransports<TBufferBase> {
 
   CoupledTransports_ transports;
 };
-
-/*
- * TODO: It would be nice to test TSocket, too.
- * Unfortunately, TSocket/TServerSocket currently don't provide a low-level
- * API that would allow us to create a connected socket pair.
- *
- * TODO: It would be nice to test TZlibTransport, too.
- * However, TZlibTransport doesn't conform to quite the same semantics as other
- * transports.  No new data can be written to a TZlibTransport after flush() is
- * called, since flush() terminates the zlib data stream.  In the future maybe
- * we should make TZlibTransport behave more like the other transports.
- */
 
 /**************************************************************************
  * Main testing function
@@ -503,6 +553,28 @@ class TransportTestGen {
             rand4k, rand4k, fd_max_outstanding);
     TEST_RW(CoupledFDTransports, 1024*16, 1, 1,
             rand4k, rand4k, fd_max_outstanding);
+
+    // TSocket tests
+    uint32_t socket_max_outstanding = 4096;
+    TEST_RW(CoupledSocketTransports, 1024*1024, 0, 0,
+            0, 0, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024*256, rand4k, rand4k,
+            0, 0, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024*256, 167, 163,
+            0, 0, socket_max_outstanding);
+    // Doh.  Apparently writing to a socket has some additional overhead for
+    // each send() call.  If we have more than ~400 outstanding 1-byte write
+    // requests, additional send() calls start blocking.
+    TEST_RW(CoupledSocketTransports, 1024*16, 1, 1,
+            0, 0, 400);
+    TEST_RW(CoupledSocketTransports, 1024*256, 0, 0,
+            rand4k, rand4k, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024*256, rand4k, rand4k,
+            rand4k, rand4k, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024*256, 167, 163,
+            rand4k, rand4k, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024*16, 1, 1,
+            rand4k, rand4k, 400);
 
     // TFileTransport tests
     // We use smaller buffer sizes here, since TFileTransport is fairly slow.
