@@ -52,12 +52,18 @@ class TConnection::Task: public Runnable {
     processor_(processor),
     input_(input),
     output_(output),
-    connection_(connection) {}
+    connection_(connection),
+    serverEventHandler_(connection_->getServerEventHandler()),
+    connectionContext_(connection_->getConnectionContext()) {}
 
   void run() {
     try {
-      while (processor_->process(input_, output_, NULL)) {
-        if (!input_->getTransport()->peek()) {
+      for (;;) {
+        if (serverEventHandler_ != NULL) {
+          serverEventHandler_->processContext(connectionContext_, connection_->getTSocket());
+        }
+        if (!processor_->process(input_, output_, connectionContext_) ||
+            !input_->getTransport()->peek()) {
           break;
         }
       }
@@ -87,10 +93,15 @@ class TConnection::Task: public Runnable {
   boost::shared_ptr<TProtocol> input_;
   boost::shared_ptr<TProtocol> output_;
   TConnection* connection_;
+  boost::shared_ptr<TServerEventHandler> serverEventHandler_;
+  void* connectionContext_;
 };
 
-void TConnection::init(int socket, short eventFlags, TNonblockingServer* s) {
-  socket_ = socket;
+void TConnection::init(int socket, short eventFlags, TNonblockingServer* s,
+                       const sockaddr* addr, socklen_t addrLen) {
+  tSocket_->setSocketFD(socket);
+  tSocket_->setCachedAddress(addr, addrLen);
+
   server_ = s;
   appState_ = APP_INIT;
   eventFlags_ = 0;
@@ -115,10 +126,18 @@ void TConnection::init(int socket, short eventFlags, TNonblockingServer* s) {
   // Create protocol
   inputProtocol_ = s->getInputProtocolFactory()->getProtocol(factoryInputTransport_);
   outputProtocol_ = s->getOutputProtocolFactory()->getProtocol(factoryOutputTransport_);
+
+  // Set up for any server event handler
+  serverEventHandler_ = server_->getEventHandler();
+  if (serverEventHandler_ != NULL) {
+    connectionContext_ = serverEventHandler_->createContext(inputProtocol_, outputProtocol_);
+  } else {
+    connectionContext_ = NULL;
+  }
 }
 
 void TConnection::workSocket() {
-  int flags=0, got=0, left=0, sent=0;
+  int got=0, left=0, sent=0;
   uint32_t fetch = 0;
 
   switch (socketState_) {
@@ -142,10 +161,18 @@ void TConnection::workSocket() {
       readBufferSize_ = newSize;
     }
 
-    // Read from the socket
-    fetch = readWant_ - readBufferPos_;
-    got = recv(socket_, readBuffer_ + readBufferPos_, fetch, 0);
+    try {
+      // Read from the socket
+      fetch = readWant_ - readBufferPos_;
+      got = tSocket_->read(readBuffer_ + readBufferPos_, fetch);
+    }
+    catch (TTransportException& te) {
+      GlobalOutput.printf("TConnection::workSocket(): %s", te.what());
+      close();
 
+      return;
+    }
+        
     if (got > 0) {
       // Move along in the buffer
       readBufferPos_ += got;
@@ -158,15 +185,6 @@ void TConnection::workSocket() {
         transition();
       }
       return;
-    } else if (got == -1) {
-      // Blocking errors are okay, just move on
-      if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        return;
-      }
-
-      if (errno != ECONNRESET) {
-        GlobalOutput.perror("TConnection::workSocket() recv -1 ", errno);
-      }
     }
 
     // Whenever we get down here it means a remote disconnect
@@ -185,24 +203,12 @@ void TConnection::workSocket() {
       return;
     }
 
-    flags = 0;
-    #ifdef MSG_NOSIGNAL
-    // Note the use of MSG_NOSIGNAL to suppress SIGPIPE errors, instead we
-    // check for the EPIPE return condition and close the socket in that case
-    flags |= MSG_NOSIGNAL;
-    #endif // ifdef MSG_NOSIGNAL
-
-    left = writeBufferSize_ - writeBufferPos_;
-    sent = send(socket_, writeBuffer_ + writeBufferPos_, left, flags);
-
-    if (sent <= 0) {
-      // Blocking errors are okay, just move on
-      if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        return;
-      }
-      if (errno != EPIPE) {
-        GlobalOutput.perror("TConnection::workSocket() send -1 ", errno);
-      }
+    try {
+      left = writeBufferSize_ - writeBufferPos_;
+      sent = tSocket_->write_partial(writeBuffer_ + writeBufferPos_, left);
+    }
+    catch (TTransportException& te) {
+      GlobalOutput.printf("TConnection::workSocket(): %s ", te.what());
       close();
       return;
     }
@@ -478,7 +484,8 @@ void TConnection::setFlags(short eventFlags) {
    * ev structure for multiple monitored descriptors; each descriptor needs
    * its own ev.
    */
-  event_set(&event_, socket_, eventFlags_, TConnection::eventHandler, this);
+  event_set(&event_, tSocket_->getSocketFD(), eventFlags_,
+            TConnection::eventHandler, this);
   event_base_set(server_->getEventBase(), &event_);
 
   // Add the event
@@ -493,14 +500,15 @@ void TConnection::setFlags(short eventFlags) {
 void TConnection::close() {
   // Delete the registered libevent
   if (event_del(&event_) == -1) {
-    GlobalOutput("TConnection::close() event_del");
+    GlobalOutput.perror("TConnection::close() event_del", errno);
+  }
+
+  if (serverEventHandler_ != NULL) {
+    serverEventHandler_->deleteContext(connectionContext_, inputProtocol_, outputProtocol_);
   }
 
   // Close the socket
-  if (socket_ >= 0) {
-    ::close(socket_);
-  }
-  socket_ = -1;
+  tSocket_->close();
 
   // close any factory produced transports
   factoryInputTransport_->close();
@@ -548,14 +556,16 @@ TNonblockingServer::~TNonblockingServer() {
  * Creates a new connection either by reusing an object off the stack or
  * by allocating a new one entirely
  */
-TConnection* TNonblockingServer::createConnection(int socket, short flags) {
+TConnection* TNonblockingServer::createConnection(int socket, short flags,
+                                                  const sockaddr* addr,
+                                                  socklen_t addrLen) {
   // Check the stack
   if (connectionStack_.empty()) {
-    return new TConnection(socket, flags, this);
+    return new TConnection(socket, flags, this, addr, addrLen);
   } else {
     TConnection* result = connectionStack_.top();
     connectionStack_.pop();
-    result->init(socket, flags, this);
+    result->init(socket, flags, this, addr, addrLen);
     return result;
   }
 }
@@ -583,8 +593,9 @@ void TNonblockingServer::handleEvent(int fd, short which) {
 
   // Server socket accepted a new connection
   socklen_t addrLen;
-  struct sockaddr addr;
-  addrLen = sizeof(addr);
+  sockaddr_storage addrStorage;
+  sockaddr* addrp = (sockaddr*)&addrStorage;
+  addrLen = sizeof(addrStorage);
 
   // Going to accept a new client socket
   int clientSocket;
@@ -592,7 +603,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
   // Accept as many new clients as possible, even though libevent signaled only
   // one, this helps us to avoid having to go back into the libevent engine so
   // many times
-  while ((clientSocket = accept(fd, &addr, &addrLen)) != -1) {
+  while ((clientSocket = ::accept(fd, addrp, &addrLen)) != -1) {
     // If we're overloaded, take action here
     if (overloadAction_ != T_OVERLOAD_NO_ACTION && serverOverloaded()) {
       nConnectionsDropped_++;
@@ -619,7 +630,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
 
     // Create a new TConnection for this client socket.
     TConnection* clientConnection =
-      createConnection(clientSocket, EV_READ | EV_PERSIST);
+      createConnection(clientSocket, EV_READ | EV_PERSIST, addrp, addrLen);
 
     // Fail fast if we could not create a TConnection object
     if (clientConnection == NULL) {
@@ -632,7 +643,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
     clientConnection->transition();
 
     // addrLen is written by the accept() call, so needs to be set before the next call.
-    addrLen = sizeof(addr);
+    addrLen = sizeof(addrStorage);
   }
 
   // Done looping accept, now we have to make sure the error is due to

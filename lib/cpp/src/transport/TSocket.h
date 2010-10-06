@@ -95,9 +95,14 @@ class TSocket : public TVirtualTransport<TSocket> {
   uint32_t read(uint8_t* buf, uint32_t len);
 
   /**
-   * Writes to the underlying socket.
+   * Writes to the underlying socket.  Loops until done or fail.
    */
   void write(const uint8_t* buf, uint32_t len);
+
+  /**
+   * Writes to the underlying socket.  Does single send() and returns result.
+   */
+  uint32_t write_partial(const uint8_t* buf, uint32_t len);
 
   /**
    * Get the host that the socket is connected to
@@ -191,6 +196,15 @@ class TSocket : public TVirtualTransport<TSocket> {
     return socket_;
   }
 
+  /**
+   * (Re-)initialize a TSocket for the supplied descriptor.  This is only
+   * intended for use by TNonblockingServer -- other use may result in
+   * unfortunate surprises.
+   *
+   * @param fd the descriptor for an already-connected socket
+   */
+  void setSocketFD(int fd);
+
   /*
    * Returns a cached copy of the peer address.
    */
@@ -211,15 +225,15 @@ class TSocket : public TVirtualTransport<TSocket> {
    */
   TSocket(int socket);
 
- protected:
-  /** connect, called by open */
-  void openConnection(struct addrinfo *res);
-
   /**
    * Set a cache of the peer address (used when trivially available: e.g.
    * accept() or connect()). Only caches IPV4 and IPV6; unset for others.
    */
   void setCachedAddress(const sockaddr* addr, socklen_t len);
+
+ protected:
+  /** connect, called by open */
+  void openConnection(struct addrinfo *res);
 
   /** Host to connect to */
   std::string host_;

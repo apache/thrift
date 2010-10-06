@@ -23,6 +23,7 @@
 #include <Thrift.h>
 #include <server/TServer.h>
 #include <transport/TBufferTransports.h>
+#include <transport/TSocket.h>
 #include <concurrency/ThreadManager.h>
 #include <climits>
 #include <stack>
@@ -35,6 +36,7 @@
 namespace apache { namespace thrift { namespace server {
 
 using apache::thrift::transport::TMemoryBuffer;
+using apache::thrift::transport::TSocket;
 using apache::thrift::protocol::TProtocol;
 using apache::thrift::concurrency::Runnable;
 using apache::thrift::concurrency::ThreadManager;
@@ -470,9 +472,12 @@ class TNonblockingServer : public TServer {
    *
    * @param socket FD of socket associated with this connection.
    * @param flags initial lib_event flags for this connection.
+   * @param addr the sockaddr of the client
+   * @param addrLen the length of addr
    * @return pointer to initialized TConnection object.
    */
-  TConnection* createConnection(int socket, short flags);
+  TConnection* createConnection(int socket, short flags,
+                                const sockaddr* addr, socklen_t addrLen);
 
   /**
    * Returns a connection to pool or deletion.  If the connection pool
@@ -576,7 +581,7 @@ enum TAppState {
  * Represents a connection that is handled via libevent. This connection
  * essentially encapsulates a socket that has some associated libevent state.
  */
-class TConnection {
+  class TConnection {
  private:
 
   /// Starting size for new connection buffer
@@ -585,8 +590,8 @@ class TConnection {
   /// Server handle
   TNonblockingServer* server_;
 
-  /// Socket handle
-  int socket_;
+  /// Object wrapping network socket
+  boost::shared_ptr<TSocket> tSocket_;
 
   /// Libevent object
   struct event event_;
@@ -649,6 +654,12 @@ class TConnection {
   /// Protocol encoder
   boost::shared_ptr<TProtocol> outputProtocol_;
 
+  /// Server event handler, if any
+  boost::shared_ptr<TServerEventHandler> serverEventHandler_;
+
+  /// Thrift call context, if any
+  void *connectionContext_;
+
   /// Go into read mode
   void setRead() {
     setFlags(EV_READ | EV_PERSIST);
@@ -687,7 +698,8 @@ class TConnection {
   class Task;
 
   /// Constructor
-  TConnection(int socket, short eventFlags, TNonblockingServer *s) {
+  TConnection(int socket, short eventFlags, TNonblockingServer *s,
+              const sockaddr* addr, socklen_t addrLen) {
     readBuffer_ = (uint8_t*)std::malloc(STARTING_CONNECTION_BUFFER_SIZE);
     if (readBuffer_ == NULL) {
       throw new apache::thrift::TException("Out of memory.");
@@ -702,8 +714,9 @@ class TConnection {
     // reallocated on init() call)
     inputTransport_ = boost::shared_ptr<TMemoryBuffer>(new TMemoryBuffer(readBuffer_, readBufferSize_));
     outputTransport_ = boost::shared_ptr<TMemoryBuffer>(new TMemoryBuffer());
+    tSocket_.reset(new TSocket());
 
-    init(socket, eventFlags, s);
+    init(socket, eventFlags, s, addr, addrLen);
     server_->incrementNumConnections();
   }
 
@@ -720,7 +733,8 @@ class TConnection {
   void checkIdleBufferMemLimit(size_t limit);
 
   /// Initialize
-  void init(int socket, short eventFlags, TNonblockingServer *s);
+  void init(int socket, short eventFlags, TNonblockingServer *s,
+            const sockaddr* addr, socklen_t addrLen);
 
   /**
    * This is called when the application transitions from one state into
@@ -738,7 +752,7 @@ class TConnection {
    * @param v void* callback arg where we placed TConnection's "this".
    */
   static void eventHandler(int fd, short /* which */, void* v) {
-    assert(fd == ((TConnection*)v)->socket_);
+    assert(fd == ((TConnection*)v)->getTSocket()->getSocketFD());
     ((TConnection*)v)->workSocket();
   }
 
@@ -799,6 +813,22 @@ class TConnection {
   TAppState getState() {
     return appState_;
   }
+
+  /// return the TSocket transport wrapping this network connection
+  boost::shared_ptr<TSocket> getTSocket() const {
+    return tSocket_;
+  }
+
+  /// return the server event handler if any
+  boost::shared_ptr<TServerEventHandler> getServerEventHandler() {
+    return serverEventHandler_;
+  }
+
+  /// return the Thrift connection context if any
+  void* getConnectionContext() {
+    return connectionContext_;
+  }
+
 };
 
 }}} // apache::thrift::server
