@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 #include <stdio.h>
+#include <assert.h>
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -41,6 +42,34 @@
 #include "TLogging.h"
 
 namespace apache { namespace thrift {
+
+class TEnumIterator {
+ public:
+  TEnumIterator(int n,
+                int* enums,
+                const char** names) :
+      ii_(0), n_(n), enums_(enums), names_(names) {
+  }
+
+  int operator ++() {
+    return ++ii_;
+  }
+
+  bool operator !=(const TEnumIterator& end) {
+    assert(end.n_ == -1);
+    return (ii_ != n_);
+  }
+
+  std::pair<int, const char*> operator*() const {
+    return std::make_pair(enums_[ii_], names_[ii_]);
+  }
+
+ private:
+  int ii_;
+  const int n_;
+  int* enums_;
+  const char** names_;
+};
 
 class TOutput {
  public:

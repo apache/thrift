@@ -198,6 +198,12 @@ class t_cpp_generator : public t_oop_generator {
   std::string type_to_enum(t_type* ttype);
   std::string local_reflection_name(const char*, t_type* ttype, bool external=false);
 
+  void generate_enum_constant_list(std::ofstream& f,
+                                   const vector<t_enum_value*>& constants,
+                                   const char* prefix,
+                                   const char* suffix,
+                                   bool include_values);
+
   // These handles checking gen_dense_ and checking for duplicates.
   void generate_local_reflection(std::ofstream& out, t_type* ttype, bool is_definition);
   void generate_local_reflection_pointer(std::ofstream& out, t_type* ttype);
@@ -441,6 +447,35 @@ void t_cpp_generator::generate_typedef(t_typedef* ttypedef) {
     endl;
 }
 
+
+void t_cpp_generator::generate_enum_constant_list(std::ofstream& f,
+                                                  const vector<t_enum_value*>& constants,
+                                                  const char* prefix,
+                                                  const char* suffix,
+                                                  bool include_values) {
+  f << " {" << endl;
+  indent_up();
+
+  vector<t_enum_value*>::const_iterator c_iter;
+  bool first = true;
+  for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+    if (first) {
+      first = false;
+    } else {
+      f << "," << endl;
+    }
+    indent(f)
+      << prefix << (*c_iter)->get_name() << suffix;
+    if (include_values && (*c_iter)->has_value()) {
+      f << " = " << (*c_iter)->get_value();
+    }
+  }
+
+  f << endl;
+  indent_down();
+  indent(f) << "};" << endl;
+}
+
 /**
  * Generates code for an enumerated type. In C++, this is essentially the same
  * as the thrift definition itself, using the enum keyword in C++.
@@ -448,6 +483,8 @@ void t_cpp_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_cpp_generator::generate_enum(t_enum* tenum) {
+  vector<t_enum_value*> constants = tenum->get_constants();
+
   std::string enum_name = tenum->get_name();
   if (!gen_pure_enums_) {
     enum_name = "type";
@@ -456,28 +493,9 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
     indent_up();
   }
   f_types_ <<
-    indent() << "enum " << enum_name << " {" << endl;
-  indent_up();
+    indent() << "enum " << enum_name;
 
-  vector<t_enum_value*> constants = tenum->get_constants();
-  vector<t_enum_value*>::iterator c_iter;
-  bool first = true;
-  for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    if (first) {
-      first = false;
-    } else {
-      f_types_ <<
-        "," << endl;
-    }
-    f_types_ <<
-      indent() << (*c_iter)->get_name();
-    f_types_ <<
-      " = " << (*c_iter)->get_value();
-  }
-
-  indent_down();
-  f_types_ << endl;
-  indent(f_types_) << "};" << endl;
+  generate_enum_constant_list(f_types_, constants, "", "", true);
 
   if (!gen_pure_enums_) {
     indent_down();
@@ -485,6 +503,29 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
   }
 
   f_types_ << endl;
+
+  /**
+     Generate a character array of enum names for debugging purposes.
+  */
+  std::string prefix = tenum->get_name() + "::";
+  f_types_impl_ <<
+    indent() << "int _k" << tenum->get_name() << "Values[] =";
+  generate_enum_constant_list(f_types_impl_, constants, prefix.c_str(), "", false);
+
+  f_types_impl_ <<
+    indent() << "const char* _k" << tenum->get_name() << "Names[] =";
+  generate_enum_constant_list(f_types_impl_, constants, "\"", "\"", false);
+
+  f_types_ <<
+    indent() << "extern const std::map<int, const char*> _" <<
+    tenum->get_name() << "_VALUES_TO_NAMES;" << endl << endl;
+
+  f_types_impl_ <<
+    indent() << "const std::map<int, const char*> _" << tenum->get_name() <<
+    "_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(" << constants.size() <<
+    ", _k" << tenum->get_name() << "Values" <<
+    ", _k" << tenum->get_name() << "Names), " <<
+    "::apache::thrift::TEnumIterator(-1, NULL, NULL));" << endl << endl;
 
   generate_local_reflection(f_types_, tenum, false);
   generate_local_reflection(f_types_impl_, tenum, true);
