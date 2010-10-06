@@ -86,6 +86,21 @@ class TProcessorEventHandler {
 };
 
 /**
+ * A helper class used by the generated code to free each context.
+ */
+class TProcessorContextFreer {
+ public:
+  TProcessorContextFreer(TProcessorEventHandler* handler, void* context, const char* method) :
+    handler_(handler), context_(context), method_(method) {}
+  ~TProcessorContextFreer() { if (handler_ != NULL) handler_->freeContext(context_, method_); }
+  void unregister() { handler_ = NULL; }
+ private:
+  apache::thrift::TProcessorEventHandler* handler_;
+  void* context_;
+  const char* method_;
+};
+
+/**
  * A processor is a generic object that acts upon two streams of data, one
  * an input and the other an output. The definition of this object is loose,
  * though the typical case is for some sort of server that either generates

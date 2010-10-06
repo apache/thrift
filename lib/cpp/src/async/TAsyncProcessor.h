@@ -31,6 +31,9 @@ namespace apache { namespace thrift { namespace async {
  * Async version of a TProcessor.  It is not expected to complete by the time
  * the call to process returns.  Instead, it calls a cob to signal completion.
  */
+
+class TEventServer; // forward declaration
+
 class TAsyncProcessor {
  public:
   virtual ~TAsyncProcessor() {}
@@ -44,8 +47,27 @@ class TAsyncProcessor {
     return process(_return, io, io);
   }
 
+  boost::shared_ptr<TProcessorEventHandler> getEventHandler() {
+    return eventHandler_;
+  }
+
+  void setEventHandler(boost::shared_ptr<TProcessorEventHandler> eventHandler) {
+    eventHandler_ = eventHandler;
+  }
+
+  const TEventServer* getAsyncServer() {
+    return asyncServer_;
+  }
  protected:
   TAsyncProcessor() {}
+
+  boost::shared_ptr<TProcessorEventHandler> eventHandler_;
+  const TEventServer* asyncServer_;
+ private:
+  friend class TEventServer;
+  void setAsyncServer(const TEventServer* server) {
+    asyncServer_ = server;
+  }
 };
 
 }}} // apache::thrift::async
