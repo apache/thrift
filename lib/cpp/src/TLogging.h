@@ -162,24 +162,38 @@
 
 
 /**
- * T_GLOBAL_DEBUG_VIRTUAL = 0: normal operation,
- *                             virtual call debug messages disabled
- * T_GLOBAL_DEBUG_VIRTUAL = 1: log a debug messages whenever an
- *                             avoidable virtual call is made
+ * T_GLOBAL_DEBUG_VIRTUAL = 0 or unset: normal operation,
+ *                                      virtual call debug messages disabled
+ * T_GLOBAL_DEBUG_VIRTUAL = 1:          log a debug messages whenever an
+ *                                      avoidable virtual call is made
+ * T_GLOBAL_DEBUG_VIRTUAL = 2:          record detailed info that can be
+ *                                      printed by calling
+ *                                      apache::thrift::profile_print_info()
  */
-#define T_GLOBAL_DEBUG_VIRTUAL 0
-
-/**
- * Log a message indicating that a virtual function call is being made.
- *
- * This should be disabled during normal use.  It is intended to be used
- * only to help debug serialization performance.
- */
-#if T_GLOBAL_DEBUG_VIRTUAL > 0
-  #define T_VIRTUAL_CALL()                                              \
+#if T_GLOBAL_DEBUG_VIRTUAL > 1
+  #define T_VIRTUAL_CALL()                                                \
+    ::apache::thrift::profile_virtual_call(typeid(*this))
+  #define T_GENERIC_PROTOCOL(template_class, generic_prot, specific_prot) \
+    do {                                                                  \
+      if (!(specific_prot)) {                                             \
+        ::apache::thrift::profile_generic_protocol(                     \
+            typeid(*template_class), typeid(*generic_prot));              \
+      }                                                                   \
+    } while (0)
+#elif T_GLOBAL_DEBUG_VIRTUAL == 1
+  #define T_VIRTUAL_CALL()                                                \
     fprintf(stderr,"[%s,%d] virtual call\n", __FILE__, __LINE__)
+  #define T_GENERIC_PROTOCOL(template_class, generic_prot, specific_prot) \
+    do {                                                                  \
+      if (!(specific_prot)) {                                             \
+        fprintf(stderr,                                                   \
+                "[%s,%d] failed to cast to specific protocol type\n",     \
+                __FILE__, __LINE__);                                      \
+      }                                                                   \
+    } while (0)
 #else
   #define T_VIRTUAL_CALL()
+  #define T_GENERIC_PROTOCOL(template_class, generic_prot, specific_prot)
 #endif
 
 #endif // #ifndef _THRIFT_TLOGGING_H_

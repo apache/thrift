@@ -2768,7 +2768,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         indent() << "if (_iprot && _oprot) {" << endl <<
         indent() << "  return process_" << tfunction->get_name() <<
         "(seqid, _iprot, _oprot, callContext);" << endl <<
-        indent() << "}" << endl << endl;
+        indent() << "}" << endl <<
+        indent() << "T_GENERIC_PROTOCOL(this, iprot, _iprot);" << endl <<
+        indent() << "T_GENERIC_PROTOCOL(this, oprot, _oprot);" << endl << endl;
     }
 
     string argsname = tservice->get_name() + "_" + tfunction->get_name() + "_args";
@@ -2934,7 +2936,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         indent() << "if (_iprot && _oprot) {" << endl <<
         indent() << "  return process_" << tfunction->get_name() <<
         "(cob, seqid, _iprot, _oprot);" << endl <<
-        indent() << "}" << endl << endl;
+        indent() << "}" << endl <<
+        indent() << "T_GENERIC_PROTOCOL(this, iprot, _iprot);" << endl <<
+        indent() << "T_GENERIC_PROTOCOL(this, oprot, _oprot);" << endl << endl;
     }
 
     out <<
@@ -3066,7 +3070,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
           indent() << "if (_oprot) {" << endl <<
           indent() << "  return return_" << tfunction->get_name() <<
           "(cob, seqid, _oprot, ctx" << ret_arg_name << ");" << endl <<
-          indent() << "}" << endl << endl;
+          indent() << "}" << endl <<
+          indent() << "T_GENERIC_PROTOCOL(this, oprot, _oprot);" <<
+          endl << endl;
       }
 
       out <<
@@ -3124,7 +3130,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
           indent() << "if (_oprot) {" << endl <<
           indent() << "  return throw_" << tfunction->get_name() <<
           "(cob, seqid, _oprot, ctx, _throw);" << endl <<
-          indent() << "}" << endl << endl;
+          indent() << "}" << endl <<
+          indent() << "  T_GENERIC_PROTOCOL(this, oprot, _oprot);" <<
+          endl << endl;
       }
 
       out <<
