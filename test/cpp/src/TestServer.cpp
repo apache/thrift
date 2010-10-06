@@ -298,13 +298,13 @@ class TestProcessorEventHandler : public TProcessorEventHandler {
   virtual void preRead(void* ctx, const char* fn_name) {
     communicate("preRead", ctx, fn_name);
   }
-  virtual void postRead(void* ctx, const char* fn_name) {
+  virtual void postRead(void* ctx, const char* fn_name, uint32_t bytes) {
     communicate("postRead", ctx, fn_name);
   }
   virtual void preWrite(void* ctx, const char* fn_name) {
     communicate("preWrite", ctx, fn_name);
   }
-  virtual void postWrite(void* ctx, const char* fn_name) {
+  virtual void postWrite(void* ctx, const char* fn_name, uint32_t bytes) {
     communicate("postWrite", ctx, fn_name);
   }
   virtual void asyncComplete(void* ctx, const char* fn_name) {

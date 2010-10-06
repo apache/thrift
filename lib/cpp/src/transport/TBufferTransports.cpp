@@ -262,6 +262,10 @@ void TFramedTransport::flush()  {
   transport_->flush();
 }
 
+uint32_t TFramedTransport::writeEnd() {
+  return wBase_ - wBuf_.get();
+}
+
 const uint8_t* TFramedTransport::borrowSlow(uint8_t* buf, uint32_t* len) {
   // Don't try to be clever with shifting buffers.
   // If the fast path failed let the protocol use its slow path.
@@ -269,6 +273,10 @@ const uint8_t* TFramedTransport::borrowSlow(uint8_t* buf, uint32_t* len) {
   return NULL;
 }
 
+uint32_t TFramedTransport::readEnd() {
+  // include framing bytes
+  return rBound_ - rBuf_.get() + sizeof(uint32_t);
+}
 
 void TMemoryBuffer::computeRead(uint32_t len, uint8_t** out_start, uint32_t* out_give) {
   // Correct rBound_ so we can use the fast path in the future.

@@ -136,7 +136,7 @@ class TPipedTransport : virtual public TTransport {
 
   uint32_t read(uint8_t* buf, uint32_t len);
 
-  void readEnd() {
+  uint32_t readEnd() {
 
     if (pipeOnRead_) {
       dstTrans_->write(rBuf_, rPos_);
@@ -148,18 +148,22 @@ class TPipedTransport : virtual public TTransport {
     // If requests are being pipelined, copy down our read-ahead data,
     // then reset our state.
     int read_ahead = rLen_ - rPos_;
+    uint32_t bytes = rPos_;
     memcpy(rBuf_, rBuf_ + rPos_, read_ahead);
     rPos_ = 0;
     rLen_ = read_ahead;
+
+    return bytes;
   }
 
   void write(const uint8_t* buf, uint32_t len);
 
-  void writeEnd() {
+  uint32_t writeEnd() {
     if (pipeOnWrite_) {
       dstTrans_->write(wBuf_, wLen_);
       dstTrans_->flush();
     }
+    return wLen_;
   }
 
   void flush();
@@ -237,9 +241,9 @@ class TPipedFileReaderTransport : public TPipedTransport,
   void close();
   uint32_t read(uint8_t* buf, uint32_t len);
   uint32_t readAll(uint8_t* buf, uint32_t len);
-  void readEnd();
+  uint32_t readEnd();
   void write(const uint8_t* buf, uint32_t len);
-  void writeEnd();
+  uint32_t writeEnd();
   void flush();
 
   // TFileReaderTransport functions

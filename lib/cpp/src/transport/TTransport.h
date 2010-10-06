@@ -116,10 +116,11 @@ class TTransport {
    * This can be over-ridden to perform a transport-specific action
    * e.g. logging the request to a file
    *
+   * @return number of bytes read if available, 0 otherwise.
    */
-  virtual void readEnd() {
+  virtual uint32_t readEnd() {
     // default behaviour is to do nothing
-    return;
+    return 0;
   }
 
   /**
@@ -137,10 +138,11 @@ class TTransport {
    * This can be over-ridden to perform a transport-specific action
    * at the end of a request.
    *
+   * @return number of bytes written if available, 0 otherwise
    */
-  virtual void writeEnd() {
+  virtual uint32_t writeEnd() {
     // default behaviour is to do nothing
-    return;
+    return 0;
   }
 
   /**
@@ -149,7 +151,9 @@ class TTransport {
    *
    * @throws TTransportException if an error occurs
    */
-  virtual void flush() {}
+  virtual void flush() {
+    // default behaviour is to do nothing
+  }
 
   /**
    * Attempts to return a pointer to \c len bytes, possibly copied into \c buf.

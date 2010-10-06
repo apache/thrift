@@ -59,7 +59,7 @@ class TProcessorEventHandler {
   /**
    * Called between reading arguments and calling the handler.
    */
-  virtual void postRead(void* ctx, const char* fn_name) {}
+  virtual void postRead(void* ctx, const char* fn_name, uint32_t bytes) {}
 
   /**
    * Called between calling the handler and writing the response.
@@ -69,7 +69,7 @@ class TProcessorEventHandler {
   /**
    * Called after writing the response.
    */
-  virtual void postWrite(void* ctx, const char* fn_name) {}
+  virtual void postWrite(void* ctx, const char* fn_name, uint32_t bytes) {}
 
   /**
    * Called when an async function call completes successfully.

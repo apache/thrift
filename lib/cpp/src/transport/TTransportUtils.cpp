@@ -135,16 +135,16 @@ uint32_t TPipedFileReaderTransport::readAll(uint8_t* buf, uint32_t len) {
   return have;
 }
 
-void TPipedFileReaderTransport::readEnd() {
-  TPipedTransport::readEnd();
+uint32_t TPipedFileReaderTransport::readEnd() {
+  return TPipedTransport::readEnd();
 }
 
 void TPipedFileReaderTransport::write(const uint8_t* buf, uint32_t len) {
   TPipedTransport::write(buf, len);
 }
 
-void TPipedFileReaderTransport::writeEnd() {
-  TPipedTransport::writeEnd();
+uint32_t TPipedFileReaderTransport::writeEnd() {
+  return TPipedTransport::writeEnd();
 }
 
 void TPipedFileReaderTransport::flush() {

@@ -55,7 +55,7 @@ class THttpTransport : public TTransport {
 
   uint32_t read(uint8_t* buf, uint32_t len);
 
-  void readEnd();
+  uint32_t readEnd();
 
   void write(const uint8_t* buf, uint32_t len);
 

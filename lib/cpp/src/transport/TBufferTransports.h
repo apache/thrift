@@ -348,6 +348,10 @@ class TFramedTransport : public TBufferBase {
 
   virtual void flush();
 
+  uint32_t readEnd();
+
+  uint32_t writeEnd();
+
   const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len);
 
   boost::shared_ptr<TTransport> getUnderlyingTransport() {
@@ -612,10 +616,18 @@ class TMemoryBuffer : public TBufferBase {
 
   uint32_t readAppendToString(std::string& str, uint32_t len);
 
-  void readEnd() {
+  // return number of bytes read
+  uint32_t readEnd() {
+    uint32_t bytes = rBase_ - buffer_;
     if (rBase_ == wBase_) {
       resetBuffer();
     }
+    return bytes;
+  }
+
+  // Return number of bytes written
+  uint32_t writeEnd() {
+    return wBase_ - buffer_;
   }
 
   uint32_t available_read() const {

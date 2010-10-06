@@ -2351,9 +2351,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << argsname << " args;" << endl <<
       indent() << "args.read(iprot);" << endl <<
       indent() << "iprot->readMessageEnd();" << endl <<
-      indent() << "iprot->getTransport()->readEnd();" << endl << endl <<
+      indent() << "uint32_t bytes = iprot->getTransport()->readEnd();" << endl << endl <<
       indent() << "if (eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  eventHandler_->postRead(ctx, \"" << tfunction->get_name() << "\");" << endl <<
+      indent() << "  eventHandler_->postRead(ctx, \"" << tfunction->get_name() << "\", bytes);" << endl <<
       indent() << "}" << endl <<
       endl;
 
@@ -2460,10 +2460,10 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() << "\", ::apache::thrift::protocol::T_REPLY, seqid);" << endl <<
       indent() << "result.write(oprot);" << endl <<
       indent() << "oprot->writeMessageEnd();" << endl <<
-      indent() << "oprot->getTransport()->writeEnd();" << endl <<
+      indent() << "bytes = oprot->getTransport()->writeEnd();" << endl <<
       indent() << "oprot->getTransport()->flush();" << endl << endl <<
       indent() << "if (eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  eventHandler_->postWrite(ctx, \"" << tfunction->get_name() << "\");" << endl <<
+      indent() << "  eventHandler_->postWrite(ctx, \"" << tfunction->get_name() << "\", bytes);" << endl <<
       indent() << "}" << endl;
 
     // Close function

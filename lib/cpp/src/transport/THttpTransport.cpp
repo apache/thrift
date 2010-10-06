@@ -66,13 +66,14 @@ uint32_t THttpTransport::read(uint8_t* buf, uint32_t len) {
   return readBuffer_.read(buf, len);
 }
 
-void THttpTransport::readEnd() {
+uint32_t THttpTransport::readEnd() {
   // Read any pending chunked data (footers etc.)
   if (chunked_) {
     while (!chunkedDone_) {
       readChunked();
     }
   }
+  return 0;
 }
 
 uint32_t THttpTransport::readMoreData() {
