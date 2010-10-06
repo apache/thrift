@@ -170,7 +170,7 @@ int main() {
 
   char *file_names[] = {
     // Highly compressible.
-    "./gen-cpp/DebugProtoTest_types.cpp",
+    "./gen-cpp/DebugProtoTest_types.tcc",
     // Uncompressible.
     "/dev/urandom",
     // Null-terminated.
@@ -237,7 +237,9 @@ int main() {
       string tmp_buf;
       membuf->appendBufferToString(tmp_buf);
       tmp_buf.erase(tmp_buf.length() - 1);
-      membuf->resetFromString(tmp_buf);
+      membuf->resetBuffer(const_cast<uint8_t*>(
+                            reinterpret_cast<const uint8_t*>(tmp_buf.data())),
+                          tmp_buf.length());
       mirror.resize(content.size());
       uint32_t got = zlib_trans->read(&mirror[0], mirror.size());
       assert(got == content.size());
@@ -262,8 +264,12 @@ int main() {
         idx = 0;
         tot = 0;
         while (tot < content.size()) {
-          zlib_trans->write(&content[tot], dist[d1][idx]);
-          tot += dist[d1][idx];
+          uint32_t write_len = dist[d1][idx];
+          if (tot + write_len > content.size()) {
+            write_len = content.size() - tot;
+          }
+          zlib_trans->write(&content[tot], write_len);
+          tot += write_len;
           idx++;
         }
 
@@ -273,9 +279,14 @@ int main() {
         idx = 0;
         tot = 0;
         while (tot < mirror.size()) {
-          uint32_t got = zlib_trans->read(&mirror[tot], dist[d2][idx]);
-          assert(got == dist[d2][idx]);
-          tot += dist[d2][idx];
+          uint32_t read_len = dist[d2][idx];
+          uint32_t expected_read_len = read_len;
+          if (tot + read_len > content.size()) {
+            expected_read_len = content.size() - tot;
+          }
+          uint32_t got = zlib_trans->read(&mirror[tot], read_len);
+          assert(got == expected_read_len);
+          tot += got;
           idx++;
         }
 
@@ -294,7 +305,9 @@ int main() {
       string tmp_buf;
       membuf->appendBufferToString(tmp_buf);
       tmp_buf[57]++;
-      membuf->resetFromString(tmp_buf);
+      membuf->resetBuffer(const_cast<uint8_t*>(
+                            reinterpret_cast<const uint8_t*>(tmp_buf.data())),
+                          tmp_buf.length());
       mirror.resize(content.size());
       try {
         zlib_trans->read(&mirror[0], mirror.size());
