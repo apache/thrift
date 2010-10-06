@@ -37,3 +37,6 @@ clean-local:
 
 maintainer-clean-local:
 	$(RUNHASKELL) Setup.lhs clean
+
+check-local:
+	$(CABAL) check

@@ -19,17 +19,18 @@
 # under the License.
 #
 
-# Check some basic 
+if [ "x" == "x$1" ]; then
+  printf "run-test.sh needs an argument, the name of the test to run. Try 'ThriftTest' or 'ProtoDebugTest'\n"
+  exit 2
+fi
+
+# Check some basics
 if [ -z $BASE ]; then
     BASE=../..
 fi
 
-if [ -z $OUTDIR ]; then
-    OUTDIR=server-bindings
-fi
-
 if [ -z $THRIFT_BIN ]; then
-    THRIFT_BIN=$(which thrift)
+    THRIFT_BIN=$BASE/compiler/cpp/thrift 
 fi
 
 if [ ! -x "$THRIFT_BIN" ]; then
@@ -47,22 +48,24 @@ if [ ! -e $THRIFT_FILE ]; then
     exit 2
 fi
 
-# Figure out what file to run has a server
-if [ -z $SERVER_FILE ]; then
-    SERVER_FILE=$BASE/test/hs/$1_TestServer.hs
+if [ ! -e "$THRIFT_FILE" ]; then
+    printf "Could not find thrift file to run; pass it as environment variable THRIFT_FILE\n"
+    exit 1
 fi
 
-if [ ! -e $SERVER_FILE ]; then
-    printf "Missing server code file $SERVER_FILE \n"
+# Figure out what file to run has a server
+if [ -z $TEST_SOURCE_FILE ]; then
+    TEST_SOURCE_FILE=$BASE/test/hs/$1_Main.hs
+fi
+
+if [ ! -e $TEST_SOURCE_FILE ]; then
+    printf "Missing server code file $TEST_SOURCE_FILE \n"
     exit 3
 fi
 
 # Actually run the server bits
-printf "Creating directory $OUTDIR to hold generated bindings... \n"
-[ -d $OUTDIR ] || mkdir $OUTDIR
-
 printf "Generating bindings... \n"
-$THRIFT_BIN -o $OUTDIR --gen hs $THRIFT_FILE
+$THRIFT_BIN --gen hs $THRIFT_FILE
 
-printf "Starting server... \n"
-runhaskell -Wall -Werror -i$BASE/lib/hs/src -i$OUTDIR/gen-hs $SERVER_FILE
+printf "Running test... \n"
+runhaskell -Wall -Werror -i$BASE/lib/hs/src -igen-hs $TEST_SOURCE_FILE

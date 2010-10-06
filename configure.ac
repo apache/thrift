@@ -203,14 +203,18 @@ AM_CONDITIONAL(HAVE_RSPEC, [test "x$RSPEC" != "x"])
 AX_THRIFT_LIB(haskell, [Haskell], yes)
 have_haskell=no
 RUNHASKELL=true
+CABAL=true
 if test "$with_haskell" = "yes"; then
+  AC_PATH_PROG([CABAL], [cabal])
   AC_PATH_PROG([RUNHASKELL], [runhaskell])
-  if test "x$RUNHASKELL" != "x"; then
+  if test "x$CABAL" != "x" -a "x$RUNHASKELL" != "x"; then
     have_haskell="yes"
   else
     RUNHASKELL=true
+    CABAL=true
   fi
 fi
+AC_SUBST(CABAL)
 AC_SUBST(RUNHASKELL)
 AM_CONDITIONAL(WITH_HASKELL, [test "$have_haskell" = "yes"])
 
@@ -351,9 +355,9 @@ AC_CONFIG_FILES([
   lib/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
-  lib/cpp/thrift.pc
   lib/cpp/thrift-nb.pc
   lib/cpp/thrift-z.pc
+  lib/cpp/thrift.pc
   lib/csharp/Makefile
   lib/erl/Makefile
   lib/erl/src/Makefile
@@ -365,6 +369,7 @@ AC_CONFIG_FILES([
   lib/py/Makefile
   lib/rb/Makefile
   test/Makefile
+  test/hs/Makefile
   test/py/Makefile
   test/rb/Makefile
 ])
@@ -417,6 +422,7 @@ fi
 if test "$have_haskell" = "yes" ; then
   echo
   echo "Using Haskell ................ : $RUNHASKELL"
+  echo "Using Cabal .................. : $CABAL"
 fi
 if test "$have_perl" = "yes" ; then
   echo
