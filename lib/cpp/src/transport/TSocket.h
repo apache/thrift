@@ -35,14 +35,6 @@ namespace apache { namespace thrift { namespace transport {
  *
  */
 class TSocket : public TVirtualTransport<TSocket> {
-  /**
-   * We allow the TServerSocket acceptImpl() method to access the private
-   * members of a socket so that it can access the TSocket(int socket)
-   * constructor which creates a socket object from the raw UNIX socket
-   * handle.
-   */
-  friend class TServerSocket;
-
  public:
   /**
    * Constructs a new socket. Note that this does NOT actually connect the
