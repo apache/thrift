@@ -145,7 +145,7 @@ void test_write_then_read(const uint8_t* buf, uint32_t buf_len) {
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
   zlib_trans->write(buf, buf_len);
-  zlib_trans->flush();
+  zlib_trans->finish();
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
   uint32_t got = zlib_trans->read(mirror.get(), buf_len);
@@ -164,7 +164,7 @@ void test_separate_checksum(const uint8_t* buf, uint32_t buf_len) {
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
   zlib_trans->write(buf, buf_len);
-  zlib_trans->flush();
+  zlib_trans->finish();
   string tmp_buf;
   membuf->appendBufferToString(tmp_buf);
   zlib_trans.reset(new TZlibTransport(membuf, false,
@@ -184,7 +184,7 @@ void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
   zlib_trans->write(buf, buf_len);
-  zlib_trans->flush();
+  zlib_trans->finish();
   string tmp_buf;
   membuf->appendBufferToString(tmp_buf);
   tmp_buf.erase(tmp_buf.length() - 1);
@@ -222,7 +222,7 @@ void test_read_write_mix(const uint8_t* buf, uint32_t buf_len,
     tot += write_len;
   }
 
-  zlib_trans->flush();
+  zlib_trans->finish();
 
   tot = 0;
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
@@ -246,7 +246,7 @@ void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
   zlib_trans->write(buf, buf_len);
-  zlib_trans->flush();
+  zlib_trans->finish();
   string tmp_buf;
   membuf->appendBufferToString(tmp_buf);
   // Modify a byte at the end of the buffer (part of the checksum).
@@ -279,6 +279,54 @@ void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
   }
 }
 
+void test_write_after_flush(const uint8_t* buf, uint32_t buf_len) {
+  // write some data
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  zlib_trans->write(buf, buf_len);
+
+  // call finish()
+  zlib_trans->finish();
+
+  // make sure write() throws an error
+  try {
+    uint8_t write_buf[] = "a";
+    zlib_trans->write(write_buf, 1);
+    BOOST_ERROR("write() after finish() did not raise an exception");
+  } catch (TTransportException& ex) {
+    BOOST_CHECK_EQUAL(ex.getType(), TTransportException::BAD_ARGS);
+  }
+
+  // make sure flush() throws an error
+  try {
+    zlib_trans->flush();
+    BOOST_ERROR("flush() after finish() did not raise an exception");
+  } catch (TTransportException& ex) {
+    BOOST_CHECK_EQUAL(ex.getType(), TTransportException::BAD_ARGS);
+  }
+
+  // make sure finish() throws an error
+  try {
+    zlib_trans->finish();
+    BOOST_ERROR("finish() after finish() did not raise an exception");
+  } catch (TTransportException& ex) {
+    BOOST_CHECK_EQUAL(ex.getType(), TTransportException::BAD_ARGS);
+  }
+}
+
+void test_no_write() {
+  // Verify that no data is written to the underlying transport if we
+  // never write data to the TZlibTransport.
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  {
+    // Create a TZlibTransport object, and immediately destroy it
+    // when it goes out of scope.
+    TZlibTransport w_zlib_trans(membuf, false);
+  }
+
+  BOOST_CHECK_EQUAL(membuf->available_read(), 0);
+}
+
 /*
  * Initialization
  */
@@ -301,6 +349,7 @@ void add_tests(unit_test::test_suite* suite,
   ADD_TEST_CASE(suite, name, test_separate_checksum, buf, buf_len);
   ADD_TEST_CASE(suite, name, test_incomplete_checksum, buf, buf_len);
   ADD_TEST_CASE(suite, name, test_invalid_checksum, buf, buf_len);
+  ADD_TEST_CASE(suite, name, test_write_after_flush, buf, buf_len);
 
   shared_ptr<SizeGenerator> size_32k(new ConstantSizeGenerator(1<<15));
   shared_ptr<SizeGenerator> size_lognormal(new LogNormalSizeGenerator(20, 30));
@@ -396,6 +445,8 @@ unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   add_tests(suite, gen_uniform_buffer(buf_len, 'a'), buf_len, "uniform");
   add_tests(suite, gen_compressible_buffer(buf_len), buf_len, "compressible");
   add_tests(suite, gen_random_buffer(buf_len), buf_len, "random");
+
+  suite->add(BOOST_TEST_CASE(test_no_write));
 
   return suite;
 }

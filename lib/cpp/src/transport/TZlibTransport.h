@@ -96,7 +96,7 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
     urpos_(0),
     uwpos_(0),
     input_ended_(false),
-    output_flushed_(false),
+    output_finished_(false),
     urbuf_size_(urbuf_size),
     crbuf_size_(crbuf_size),
     uwbuf_size_(uwbuf_size),
@@ -145,6 +145,13 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
   // Don't call this outside of the constructor.
   void initZlib();
 
+  /**
+   * TZlibTransport destructor.
+   *
+   * Warning: Destroying a TZlibTransport object may discard any written but
+   * unflushed data.  You must explicitly call flush() or finish() to ensure
+   * that data is actually written and flushed to the underlying transport.
+   */
   ~TZlibTransport();
 
   bool isOpen();
@@ -163,10 +170,25 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
 
   void flush();
 
+  /**
+   * Finalize the zlib stream.
+   *
+   * This causes zlib to flush any pending write data and write end-of-stream
+   * information, including the checksum.  Once finish() has been called, no
+   * new data can be written to the stream.
+   */
+  void finish();
+
   const uint8_t* borrow(uint8_t* buf, uint32_t* len);
 
   void consume(uint32_t len);
 
+  /**
+   * Verify the checksum at the end of the zlib stream.
+   *
+   * This may only be called after all data has been read.
+   * It verifies the checksum that was written by the finish() call.
+   */
   void verifyChecksum();
 
    /**
@@ -182,7 +204,8 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
   inline void checkZlibRv(int status, const char* msg);
   inline void checkZlibRvNothrow(int status, const char* msg);
   inline int readAvail();
-  void flushToZlib(const uint8_t* buf, int len, bool finish = false);
+  void flushToTransport(int flush);
+  void flushToZlib(const uint8_t* buf, int len, int flush);
 
   // Writes smaller than this are buffered up.
   // Larger (or equal) writes are dumped straight to zlib.
@@ -197,9 +220,9 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
   /// True iff zlib has reached the end of a stream.
   /// This is only ever true in standalone protcol objects.
   bool input_ended_;
-  /// True iff we have flushed the output stream.
+  /// True iff we have finished the output stream.
   /// This is only ever true in standalone protcol objects.
-  bool output_flushed_;
+  bool output_finished_;
 
   int urbuf_size_;
   int crbuf_size_;

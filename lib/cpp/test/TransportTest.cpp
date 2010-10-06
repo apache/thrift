@@ -36,6 +36,7 @@
 #include <transport/TBufferTransports.h>
 #include <transport/TFDTransport.h>
 #include <transport/TFileTransport.h>
+#include <transport/TZlibTransport.h>
 
 using namespace apache::thrift::transport;
 
@@ -171,6 +172,22 @@ class CoupledFramedTransports : public CoupledTransports<TFramedTransport> {
   }
 
   ~CoupledFramedTransports() {
+    delete in;
+    delete out;
+  }
+
+  boost::shared_ptr<TMemoryBuffer> buf;
+};
+
+class CoupledZlibTransports : public CoupledTransports<TZlibTransport> {
+ public:
+  CoupledZlibTransports() :
+    buf(new TMemoryBuffer) {
+    in = new TZlibTransport(buf, false);
+    out = new TZlibTransport(buf, false);
+  }
+
+  ~CoupledZlibTransports() {
     delete in;
     delete out;
   }
@@ -363,7 +380,16 @@ void test_rw(uint32_t totalSize,
         read_size = rchunk_size - chunk_read;
       }
 
-      int bytes_read = transports.in->read(rbuf.get() + total_read, read_size);
+      int bytes_read = -1;
+      try {
+        bytes_read = transports.in->read(rbuf.get() + total_read, read_size);
+      } catch (TTransportException& e) {
+        BOOST_FAIL("read(pos=" << total_read << ", size=" << read_size <<
+                   ") threw exception \"" << e.what() <<
+                   "\"; written so far: " << total_written << " / " <<
+                   totalSize << " bytes");
+      }
+
       BOOST_REQUIRE_MESSAGE(bytes_read > 0,
                             "read(pos=" << total_read << ", size=" <<
                             read_size << ") returned " << bytes_read <<
@@ -448,6 +474,17 @@ class TransportTestGen {
     BUFFER_TESTS(CoupledMemoryBuffers)
     BUFFER_TESTS(CoupledBufferedTransports)
     BUFFER_TESTS(CoupledFramedTransports)
+
+    TEST_RW(CoupledZlibTransports, 1024*1024*10, 0, 0);
+    TEST_RW(CoupledZlibTransports, 1024*1024*10, rand4k, rand4k);
+    TEST_RW(CoupledZlibTransports, 1024*1024*5, 167, 163);
+    TEST_RW(CoupledZlibTransports, 1024*64, 1, 1);
+
+    TEST_RW(CoupledZlibTransports, 1024*1024*10, 0, 0, rand4k, rand4k);
+    TEST_RW(CoupledZlibTransports, 1024*1024*10,
+            rand4k, rand4k, rand4k, rand4k);
+    TEST_RW(CoupledZlibTransports, 1024*1024*5, 167, 163, rand4k, rand4k);
+    TEST_RW(CoupledZlibTransports, 1024*64, 1, 1, rand4k, rand4k);
 
     // TFDTransport tests
     // Since CoupledFDTransports tests with a pipe, writes will block

@@ -144,6 +144,12 @@ class TTransport {
   /**
    * Writes the string in its entirety to the buffer.
    *
+   * Note: You must call flush() to ensure the data is actually written,
+   * and available to be read back in the future.  Destroying a TTransport
+   * object does not automatically flush pending data--if you destroy a
+   * TTransport object with written but unflushed data, that data may be
+   * discarded.
+   *
    * @param buf  The data to write out
    * @throws TTransportException if an error occurs
    */

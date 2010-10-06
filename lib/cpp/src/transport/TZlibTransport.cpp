@@ -90,8 +90,16 @@ TZlibTransport::~TZlibTransport() {
   int rv;
   rv = inflateEnd(rstream_);
   checkZlibRvNothrow(rv, rstream_->msg);
+
   rv = deflateEnd(wstream_);
-  checkZlibRvNothrow(rv, wstream_->msg);
+  // Z_DATA_ERROR may be returned if the caller has written data, but not
+  // called flush() to actually finish writing the data out to the underlying
+  // transport.  The defined TTransport behavior in this case is that this data
+  // may be discarded, so we ignore the error and silently discard the data.
+  // For other erros, log a message.
+  if (rv != Z_DATA_ERROR) {
+    checkZlibRvNothrow(rv, wstream_->msg);
+  }
 
   delete[] urbuf_;
   delete[] crbuf_;
@@ -200,15 +208,20 @@ uint32_t TZlibTransport::read(uint8_t* buf, uint32_t len) {
 // - Deflate from the source into the compressed buffer.
 
 void TZlibTransport::write(const uint8_t* buf, uint32_t len) {
+  if (output_finished_) {
+    throw TTransportException(TTransportException::BAD_ARGS,
+                              "write() called after finish()");
+  }
+
   // zlib's "deflate" function has enough logic in it that I think
   // we're better off (performance-wise) buffering up small writes.
   if ((int)len > MIN_DIRECT_DEFLATE_SIZE) {
-    flushToZlib(uwbuf_, uwpos_);
+    flushToZlib(uwbuf_, uwpos_, Z_NO_FLUSH);
     uwpos_ = 0;
-    flushToZlib(buf, len);
+    flushToZlib(buf, len, Z_NO_FLUSH);
   } else if (len > 0) {
     if (uwbuf_size_ - uwpos_ < (int)len) {
-      flushToZlib(uwbuf_, uwpos_);
+      flushToZlib(uwbuf_, uwpos_, Z_NO_FLUSH);
       uwpos_ = 0;
     }
     memcpy(uwbuf_ + uwpos_, buf, len);
@@ -217,19 +230,46 @@ void TZlibTransport::write(const uint8_t* buf, uint32_t len) {
 }
 
 void TZlibTransport::flush()  {
-  flushToZlib(uwbuf_, uwpos_, true);
-  assert((int)wstream_->avail_out != cwbuf_size_);
+  if (output_finished_) {
+    throw TTransportException(TTransportException::BAD_ARGS,
+                              "flush() called after finish()");
+  }
+
+  flushToTransport(Z_SYNC_FLUSH);
+}
+
+void TZlibTransport::finish()  {
+  if (output_finished_) {
+    throw TTransportException(TTransportException::BAD_ARGS,
+                              "finish() called more than once");
+  }
+
+  flushToTransport(Z_FINISH);
+}
+
+void TZlibTransport::flushToTransport(int flush)  {
+  // write pending data in uwbuf_ to zlib
+  flushToZlib(uwbuf_, uwpos_, flush);
+  uwpos_ = 0;
+
+  // write all available data from zlib to the transport
   transport_->write(cwbuf_, cwbuf_size_ - wstream_->avail_out);
+  wstream_->next_out = cwbuf_;
+  wstream_->avail_out = cwbuf_size_;
+
+  // flush the transport
   transport_->flush();
 }
 
-void TZlibTransport::flushToZlib(const uint8_t* buf, int len, bool finish) {
-  int flush = (finish ? Z_FINISH : Z_NO_FLUSH);
-
+void TZlibTransport::flushToZlib(const uint8_t* buf, int len, int flush) {
   wstream_->next_in  = const_cast<uint8_t*>(buf);
   wstream_->avail_in = len;
 
-  while (wstream_->avail_in > 0 || finish) {
+  while (true) {
+    if (flush == Z_NO_FLUSH && wstream_->avail_in == 0) {
+      break;
+    }
+
     // If our ouput buffer is full, flush to the underlying transport.
     if (wstream_->avail_out == 0) {
       transport_->write(cwbuf_, cwbuf_size_);
@@ -239,12 +279,18 @@ void TZlibTransport::flushToZlib(const uint8_t* buf, int len, bool finish) {
 
     int zlib_rv = deflate(wstream_, flush);
 
-    if (finish && zlib_rv == Z_STREAM_END) {
+    if (flush == Z_FINISH && zlib_rv == Z_STREAM_END) {
       assert(wstream_->avail_in == 0);
+      output_finished_ = true;
       break;
     }
 
     checkZlibRv(zlib_rv, wstream_->msg);
+
+    if ((flush == Z_SYNC_FLUSH || flush == Z_FULL_FLUSH) &&
+        wstream_->avail_in == 0 && wstream_->avail_out != 0) {
+      break;
+    }
   }
 }
 
