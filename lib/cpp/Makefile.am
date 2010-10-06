@@ -70,9 +70,11 @@ libthrift_la_SOURCES = src/Thrift.cpp \
                        src/server/TSimpleServer.cpp \
                        src/server/TThreadPoolServer.cpp \
                        src/server/TThreadedServer.cpp \
+											 src/async/TAsyncChannel.cpp \
                        src/processor/PeekProcessor.cpp
 
-libthriftnb_la_SOURCES = src/server/TNonblockingServer.cpp
+libthriftnb_la_SOURCES = src/server/TNonblockingServer.cpp \
+                         src/async/TAsyncProtocolProcessor.cpp
 
 libthriftz_la_SOURCES = src/transport/TZlibTransport.cpp
 
@@ -147,6 +149,17 @@ include_processordir = $(include_thriftdir)/processor
 include_processor_HEADERS = \
                          src/processor/PeekProcessor.h \
                          src/processor/StatsProcessor.h
+
+include_asyncdir = $(include_thriftdir)/async
+include_async_HEADERS = \
+                     src/async/TAsyncChannel.h \
+                     src/async/TAsyncProcessor.h \
+                     src/async/TAsyncBufferProcessor.h \
+                     src/async/TAsyncProtocolProcessor.h \
+                     src/async/TEvhttpClientChannel.h \
+                     src/async/TEvhttpServer.h \
+                     src/async/SimpleCallback.h
+
 
 noinst_PROGRAMS = concurrency_test
 

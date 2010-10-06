@@ -119,4 +119,4 @@ class TProcessor {
 
 }} // apache::thrift
 
-#endif // #ifndef _THRIFT_PROCESSOR_H_
+#endif // #ifndef _THRIFT_TPROCESSOR_H_

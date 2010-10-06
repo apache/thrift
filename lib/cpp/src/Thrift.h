@@ -110,6 +110,29 @@ namespace reflection { namespace local {
 struct TypeSpec;
 }}
 
+class TDelayedException {
+ public:
+  template <class E> static TDelayedException* delayException(const E& e);
+  virtual void throw_it() = 0;
+  virtual ~TDelayedException() {};
+};
+
+template <class E> class TExceptionWrapper : public TDelayedException {
+ public:
+  TExceptionWrapper(const E& e) : e_(e) {}
+  virtual void throw_it() {
+    E temp(e_);
+    delete this;
+    throw temp;
+  }
+ private:
+  E e_;
+};
+
+template <class E>
+TDelayedException* TDelayedException::delayException(const E& e) {
+  return new TExceptionWrapper<E>(e);
+}
 
 }} // apache::thrift
 

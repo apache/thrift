@@ -311,6 +311,14 @@ if test "$cross_compiling" = "no" ; then
   AX_SIGNED_RIGHT_SHIFT
 fi
 
+dnl autoscan thinks we need this macro because we have a member function
+dnl called "error".  Invoke the macro but don't run the check so autoscan
+dnl thinks we are in the clear.  It's highly unlikely that we will ever
+dnl actually use the function that this checks for.
+if false ; then
+  AC_FUNC_ERROR_AT_LINE
+fi
+
 AX_THRIFT_GEN(cpp, [C++], yes)
 AM_CONDITIONAL([THRIFT_GEN_cpp], [test "$ax_thrift_gen_cpp" = "yes"])
 AX_THRIFT_GEN(java, [Java], yes)
