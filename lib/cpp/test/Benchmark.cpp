@@ -19,12 +19,10 @@
 
 #include <iostream>
 #include <cmath>
-#include <transport/TBufferTransports.h>
-#include <protocol/TBinaryProtocol.h>
-#include <protocol/TJSONProtocol.h>
+#include "transport/TBufferTransports.h"
+#include "protocol/TBinaryProtocol.h"
 #include "gen-cpp/DebugProtoTest_types.h"
 #include <time.h>
-#include <protocol/TDebugProtocol.h>
 #include <sys/time.h>
 
 class Timer {
@@ -76,7 +74,7 @@ int main() {
 
     for (int i = 0; i < num; i ++) {
       buf->resetBuffer();
-      TBinaryProtocol prot(buf);
+      TBinaryProtocolT<TBufferBase> prot(buf);
       ooe.write(&prot);
     }
     cout << "Write: " << num / (1000 * timer.frame()) << " kHz" << endl;
@@ -95,7 +93,7 @@ int main() {
       OneOfEach ooe2;
       shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
       //buf2->resetBuffer(data, datasize);
-      TBinaryProtocol prot(buf2);
+      TBinaryProtocolT<TBufferBase> prot(buf2);
       ooe2.read(&prot);
 
       //cout << apache::thrift::ThriftDebugString(ooe2) << endl << endl;

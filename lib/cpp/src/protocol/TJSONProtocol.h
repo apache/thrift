@@ -291,6 +291,7 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
   };
 
  private:
+  TTransport* trans_;
 
   std::stack<boost::shared_ptr<TJSONContext> > contexts_;
   boost::shared_ptr<TJSONContext> context_;

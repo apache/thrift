@@ -30,7 +30,9 @@ namespace apache { namespace thrift { namespace protocol {
 /**
  * C++ Implementation of the Compact Protocol as described in THRIFT-110
  */
-class TCompactProtocol : public TVirtualProtocol<TCompactProtocol> {
+template <class Transport_>
+class TCompactProtocolT
+  : public TVirtualProtocol< TCompactProtocolT<Transport_> > {
 
  protected:
   static const int8_t  PROTOCOL_ID = 0x82;
@@ -38,6 +40,8 @@ class TCompactProtocol : public TVirtualProtocol<TCompactProtocol> {
   static const int8_t  VERSION_MASK = 0x1f; // 0001 1111
   static const int8_t  TYPE_MASK = 0xE0; // 1110 0000
   static const int32_t TYPE_SHIFT_AMOUNT = 5;
+
+  Transport_* trans_;
 
   /**
    * (Writing) If we encounter a boolean field begin, save the TField here
@@ -66,27 +70,10 @@ class TCompactProtocol : public TVirtualProtocol<TCompactProtocol> {
   std::stack<int16_t> lastField_;
   int16_t lastFieldId_;
 
-  enum Types {
-    CT_STOP           = 0x00,
-    CT_BOOLEAN_TRUE   = 0x01,
-    CT_BOOLEAN_FALSE  = 0x02,
-    CT_BYTE           = 0x03,
-    CT_I16            = 0x04,
-    CT_I32            = 0x05,
-    CT_I64            = 0x06,
-    CT_DOUBLE         = 0x07,
-    CT_BINARY         = 0x08,
-    CT_LIST           = 0x09,
-    CT_SET            = 0x0A,
-    CT_MAP            = 0x0B,
-    CT_STRUCT         = 0x0C,
-  };
-
-  static const int8_t TTypeToCType[16];
-
  public:
-  TCompactProtocol(boost::shared_ptr<TTransport> trans) :
-    TVirtualProtocol<TCompactProtocol>(trans),
+  TCompactProtocolT(boost::shared_ptr<Transport_> trans) :
+    TVirtualProtocol< TCompactProtocolT<Transport_> >(trans),
+    trans_(trans.get()),
     lastFieldId_(0),
     string_limit_(0),
     string_buf_(NULL),
@@ -96,10 +83,11 @@ class TCompactProtocol : public TVirtualProtocol<TCompactProtocol> {
     boolValue_.hasBoolValue = false;
   }
 
-  TCompactProtocol(boost::shared_ptr<TTransport> trans,
-                   int32_t string_limit,
-                   int32_t container_limit) :
-    TVirtualProtocol<TCompactProtocol>(trans),
+  TCompactProtocolT(boost::shared_ptr<Transport_> trans,
+                    int32_t string_limit,
+                    int32_t container_limit) :
+    TVirtualProtocol< TCompactProtocolT<Transport_> >(trans),
+    trans_(trans.get()),
     lastFieldId_(0),
     string_limit_(string_limit),
     string_buf_(NULL),
@@ -109,7 +97,7 @@ class TCompactProtocol : public TVirtualProtocol<TCompactProtocol> {
     boolValue_.hasBoolValue = false;
   }
 
-  ~TCompactProtocol() {
+  ~TCompactProtocolT() {
     free(string_buf_);
   }
 
@@ -244,20 +232,23 @@ class TCompactProtocol : public TVirtualProtocol<TCompactProtocol> {
   int32_t container_limit_;
 };
 
+typedef TCompactProtocolT<TTransport> TCompactProtocol;
+
 /**
  * Constructs compact protocol handlers
  */
-class TCompactProtocolFactory : public TProtocolFactory {
+template <class Transport_>
+class TCompactProtocolFactoryT : public TProtocolFactory {
  public:
-  TCompactProtocolFactory() :
+  TCompactProtocolFactoryT() :
     string_limit_(0),
     container_limit_(0) {}
 
-  TCompactProtocolFactory(int32_t string_limit, int32_t container_limit) :
+  TCompactProtocolFactoryT(int32_t string_limit, int32_t container_limit) :
     string_limit_(string_limit),
     container_limit_(container_limit) {}
 
-  virtual ~TCompactProtocolFactory() {}
+  virtual ~TCompactProtocolFactoryT() {}
 
   void setStringSizeLimit(int32_t string_limit) {
     string_limit_ = string_limit;
@@ -268,7 +259,17 @@ class TCompactProtocolFactory : public TProtocolFactory {
   }
 
   boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TProtocol>(new TCompactProtocol(trans, string_limit_, container_limit_));
+    boost::shared_ptr<Transport_> specific_trans =
+      boost::dynamic_pointer_cast<Transport_>(trans);
+    TProtocol* prot;
+    if (specific_trans) {
+      prot = new TCompactProtocolT<Transport_>(specific_trans, string_limit_,
+                                               container_limit_);
+    } else {
+      prot = new TCompactProtocol(trans, string_limit_, container_limit_);
+    }
+
+    return boost::shared_ptr<TProtocol>(prot);
   }
 
  private:
@@ -277,6 +278,10 @@ class TCompactProtocolFactory : public TProtocolFactory {
 
 };
 
+typedef TCompactProtocolFactoryT<TTransport> TCompactProtocolFactory;
+
 }}} // apache::thrift::protocol
+
+#include "TCompactProtocol.tcc"
 
 #endif

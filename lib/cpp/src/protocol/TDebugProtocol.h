@@ -59,6 +59,7 @@ class TDebugProtocol : public TVirtualProtocol<TDebugProtocol> {
  public:
   TDebugProtocol(boost::shared_ptr<TTransport> trans)
     : TVirtualProtocol<TDebugProtocol>(trans)
+    , trans_(trans.get())
     , string_limit_(DEFAULT_STRING_LIMIT)
     , string_prefix_size_(DEFAULT_STRING_PREFIX_SIZE)
   {
@@ -139,6 +140,8 @@ class TDebugProtocol : public TVirtualProtocol<TDebugProtocol> {
   uint32_t writeItem(const std::string& str);
 
   static std::string fieldTypeName(TType type);
+
+  TTransport* trans_;
 
   int32_t string_limit_;
   int32_t string_prefix_size_;

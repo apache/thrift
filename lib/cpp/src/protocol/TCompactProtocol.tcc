@@ -16,10 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef _THRIFT_PROTOCOL_TCOMPACTPROTOCOL_TCC_
+#define _THRIFT_PROTOCOL_TCOMPACTPROTOCOL_TCC_ 1
 
-#include "TCompactProtocol.h"
-
-#include <config.h>
 #include <limits>
 
 /*
@@ -33,7 +32,7 @@
 # error "Unable to determine the behavior of a signed right shift"
 #endif
 #if SIGNED_RIGHT_SHIFT_IS != ARITHMETIC_RIGHT_SHIFT
-# error "TCompactProtocol currenly only works if a signed right shift is arithmetic"
+# error "TCompactProtocol currently only works if a signed right shift is arithmetic"
 #endif
 
 #ifdef __GNUC__
@@ -44,29 +43,51 @@
 
 namespace apache { namespace thrift { namespace protocol {
 
-const int8_t TCompactProtocol::TTypeToCType[16] = {
-    CT_STOP, // T_STOP
-    0, // unused
-    CT_BOOLEAN_TRUE, // T_BOOL
-    CT_BYTE, // T_BYTE
-    CT_DOUBLE, // T_DOUBLE
-    0, // unused
-    CT_I16, // T_I16
-    0, // unused
-    CT_I32, // T_I32
-    0, // unused
-    CT_I64, // T_I64
-    CT_BINARY, // T_STRING
-    CT_STRUCT, // T_STRUCT
-    CT_MAP, // T_MAP
-    CT_SET, // T_SET
-    CT_LIST, // T_LIST
-  };
+namespace detail { namespace compact {
+
+enum Types {
+  CT_STOP           = 0x00,
+  CT_BOOLEAN_TRUE   = 0x01,
+  CT_BOOLEAN_FALSE  = 0x02,
+  CT_BYTE           = 0x03,
+  CT_I16            = 0x04,
+  CT_I32            = 0x05,
+  CT_I64            = 0x06,
+  CT_DOUBLE         = 0x07,
+  CT_BINARY         = 0x08,
+  CT_LIST           = 0x09,
+  CT_SET            = 0x0A,
+  CT_MAP            = 0x0B,
+  CT_STRUCT         = 0x0C,
+};
+
+const int8_t TTypeToCType[16] = {
+  CT_STOP, // T_STOP
+  0, // unused
+  CT_BOOLEAN_TRUE, // T_BOOL
+  CT_BYTE, // T_BYTE
+  CT_DOUBLE, // T_DOUBLE
+  0, // unused
+  CT_I16, // T_I16
+  0, // unused
+  CT_I32, // T_I32
+  0, // unused
+  CT_I64, // T_I64
+  CT_BINARY, // T_STRING
+  CT_STRUCT, // T_STRUCT
+  CT_MAP, // T_MAP
+  CT_SET, // T_SET
+  CT_LIST, // T_LIST
+};
+
+}} // end detail::compact namespace
 
 
-uint32_t TCompactProtocol::writeMessageBegin(const std::string& name,
-                                             const TMessageType messageType,
-                                             const int32_t seqid) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeMessageBegin(
+    const std::string& name,
+    const TMessageType messageType,
+    const int32_t seqid) {
   uint32_t wsize = 0;
   wsize += writeByte(PROTOCOL_ID);
   wsize += writeByte((VERSION_N & VERSION_MASK) | (((int32_t)messageType << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
@@ -81,9 +102,10 @@ uint32_t TCompactProtocol::writeMessageBegin(const std::string& name,
  * then the field id will be encoded in the 4 MSB as a delta. Otherwise, the
  * field id will follow the type header as a zigzag varint.
  */
-uint32_t TCompactProtocol::writeFieldBegin(const char* name,
-                                           const TType fieldType,
-                                           const int16_t fieldId) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeFieldBegin(const char* name,
+                                                        const TType fieldType,
+                                                        const int16_t fieldId) {
   if (fieldType == T_BOOL) {
     booleanField_.name = name;
     booleanField_.fieldType = fieldType;
@@ -97,7 +119,8 @@ uint32_t TCompactProtocol::writeFieldBegin(const char* name,
 /**
  * Write the STOP symbol so we know there are no more fields in this struct.
  */
-uint32_t TCompactProtocol::writeFieldStop() {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeFieldStop() {
   return writeByte(T_STOP);
 }
 
@@ -106,7 +129,8 @@ uint32_t TCompactProtocol::writeFieldStop() {
  * use it as an opportunity to put special placeholder markers on the field
  * stack so we can get the field id deltas correct.
  */
-uint32_t TCompactProtocol::writeStructBegin(const char* name) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeStructBegin(const char* name) {
   lastField_.push(lastFieldId_);
   lastFieldId_ = 0;
   return 0;
@@ -117,7 +141,8 @@ uint32_t TCompactProtocol::writeStructBegin(const char* name) {
  * this as an opportunity to pop the last field from the current struct off
  * of the field stack.
  */
-uint32_t TCompactProtocol::writeStructEnd() {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeStructEnd() {
   lastFieldId_ = lastField_.top();
   lastField_.pop();
   return 0;
@@ -126,16 +151,18 @@ uint32_t TCompactProtocol::writeStructEnd() {
 /**
  * Write a List header.
  */
-uint32_t TCompactProtocol::writeListBegin(const TType elemType,
-                                          const uint32_t size) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeListBegin(const TType elemType,
+                                                       const uint32_t size) {
   return writeCollectionBegin(elemType, size);
 }
 
 /**
  * Write a set header.
  */
-uint32_t TCompactProtocol::writeSetBegin(const TType elemType,
-                                         const uint32_t size) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeSetBegin(const TType elemType,
+                                                      const uint32_t size) {
   return writeCollectionBegin(elemType, size);
 }
 
@@ -143,9 +170,10 @@ uint32_t TCompactProtocol::writeSetBegin(const TType elemType,
  * Write a map header. If the map is empty, omit the key and value type
  * headers, as we don't need any additional information to skip it.
  */
-uint32_t TCompactProtocol::writeMapBegin(const TType keyType,
-                                         const TType valType,
-                                         const uint32_t size) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeMapBegin(const TType keyType,
+                                                      const TType valType,
+                                                      const uint32_t size) {
   uint32_t wsize = 0;
 
   if (size == 0) {
@@ -163,7 +191,8 @@ uint32_t TCompactProtocol::writeMapBegin(const TType keyType,
  * right type header is for the value and then write the field header.
  * Otherwise, write a single byte.
  */
-uint32_t TCompactProtocol::writeBool(const bool value) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeBool(const bool value) {
   uint32_t wsize = 0;
 
   if (booleanField_.name != NULL) {
@@ -171,16 +200,19 @@ uint32_t TCompactProtocol::writeBool(const bool value) {
     wsize += writeFieldBeginInternal(booleanField_.name,
                                      booleanField_.fieldType,
                                      booleanField_.fieldId,
-                                     value ? CT_BOOLEAN_TRUE : CT_BOOLEAN_FALSE);
+                                     value ? detail::compact::CT_BOOLEAN_TRUE :
+                                     detail::compact::CT_BOOLEAN_FALSE);
     booleanField_.name = NULL;
   } else {
     // we're not part of a field, so just write the value
-    wsize += writeByte(value ? CT_BOOLEAN_TRUE : CT_BOOLEAN_FALSE);
+    wsize += writeByte(value ? detail::compact::CT_BOOLEAN_TRUE :
+                       detail::compact::CT_BOOLEAN_FALSE);
   }
   return wsize;
 }
 
-uint32_t TCompactProtocol::writeByte(const int8_t byte) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeByte(const int8_t byte) {
   trans_->write((uint8_t*)&byte, 1);
   return 1;
 }
@@ -188,28 +220,32 @@ uint32_t TCompactProtocol::writeByte(const int8_t byte) {
 /**
  * Write an i16 as a zigzag varint.
  */
-uint32_t TCompactProtocol::writeI16(const int16_t i16) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeI16(const int16_t i16) {
   return writeVarint32(i32ToZigzag(i16));
 }
 
 /**
  * Write an i32 as a zigzag varint.
  */
-uint32_t TCompactProtocol::writeI32(const int32_t i32) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeI32(const int32_t i32) {
   return writeVarint32(i32ToZigzag(i32));
 }
 
 /**
  * Write an i64 as a zigzag varint.
  */
-uint32_t TCompactProtocol::writeI64(const int64_t i64) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeI64(const int64_t i64) {
   return writeVarint64(i64ToZigzag(i64));
 }
 
 /**
  * Write a double to the wire as 8 bytes.
  */
-uint32_t TCompactProtocol::writeDouble(const double dub) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeDouble(const double dub) {
   BOOST_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
   BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
 
@@ -222,11 +258,13 @@ uint32_t TCompactProtocol::writeDouble(const double dub) {
 /**
  * Write a string to the wire with a varint size preceeding.
  */
-uint32_t TCompactProtocol::writeString(const std::string& str) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeString(const std::string& str) {
   return writeBinary(str);
 }
 
-uint32_t TCompactProtocol::writeBinary(const std::string& str) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeBinary(const std::string& str) {
   uint32_t ssize = str.size();
   uint32_t wsize = writeVarint32(ssize) + ssize;
   trans_->write((uint8_t*)str.data(), ssize);
@@ -242,10 +280,12 @@ uint32_t TCompactProtocol::writeBinary(const std::string& str) {
  * 'type override' of the type header. This is used specifically in the
  * boolean field case.
  */
-int32_t TCompactProtocol::writeFieldBeginInternal(const char* name,
-                                                  const TType fieldType,
-                                                  const int16_t fieldId,
-                                                  int8_t typeOverride) {
+template <class Transport_>
+int32_t TCompactProtocolT<Transport_>::writeFieldBeginInternal(
+    const char* name,
+    const TType fieldType,
+    const int16_t fieldId,
+    int8_t typeOverride) {
   uint32_t wsize = 0;
 
   // if there's a type override, use that.
@@ -269,7 +309,9 @@ int32_t TCompactProtocol::writeFieldBeginInternal(const char* name,
  * Abstract method for writing the start of lists and sets. List and sets on
  * the wire differ only by the type indicator.
  */
-uint32_t TCompactProtocol::writeCollectionBegin(int8_t elemType, int32_t size) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeCollectionBegin(int8_t elemType,
+                                                             int32_t size) {
   uint32_t wsize = 0;
   if (size <= 14) {
     wsize += writeByte(size << 4 | getCompactType(elemType));
@@ -283,7 +325,8 @@ uint32_t TCompactProtocol::writeCollectionBegin(int8_t elemType, int32_t size) {
 /**
  * Write an i32 as a varint. Results in 1-5 bytes on the wire.
  */
-uint32_t TCompactProtocol::writeVarint32(uint32_t n) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeVarint32(uint32_t n) {
   uint8_t buf[5];
   uint32_t wsize = 0;
 
@@ -303,7 +346,8 @@ uint32_t TCompactProtocol::writeVarint32(uint32_t n) {
 /**
  * Write an i64 as a varint. Results in 1-10 bytes on the wire.
  */
-uint32_t TCompactProtocol::writeVarint64(uint64_t n) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::writeVarint64(uint64_t n) {
   uint8_t buf[10];
   uint32_t wsize = 0;
 
@@ -324,7 +368,8 @@ uint32_t TCompactProtocol::writeVarint64(uint64_t n) {
  * Convert l into a zigzag long. This allows negative numbers to be
  * represented compactly as a varint.
  */
-uint64_t TCompactProtocol::i64ToZigzag(const int64_t l) {
+template <class Transport_>
+uint64_t TCompactProtocolT<Transport_>::i64ToZigzag(const int64_t l) {
   return (l << 1) ^ (l >> 63);
 }
 
@@ -332,15 +377,17 @@ uint64_t TCompactProtocol::i64ToZigzag(const int64_t l) {
  * Convert n into a zigzag int. This allows negative numbers to be
  * represented compactly as a varint.
  */
-uint32_t TCompactProtocol::i32ToZigzag(const int32_t n) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::i32ToZigzag(const int32_t n) {
   return (n << 1) ^ (n >> 31);
 }
 
 /**
- * Given a TType value, find the appropriate TCompactProtocol.Type value
+ * Given a TType value, find the appropriate detail::compact::Types value
  */
-int8_t TCompactProtocol::getCompactType(int8_t ttype) {
-  return TTypeToCType[ttype];
+template <class Transport_>
+int8_t TCompactProtocolT<Transport_>::getCompactType(int8_t ttype) {
+  return detail::compact::TTypeToCType[ttype];
 }
 
 //
@@ -350,9 +397,11 @@ int8_t TCompactProtocol::getCompactType(int8_t ttype) {
 /**
  * Read a message header.
  */
-uint32_t TCompactProtocol::readMessageBegin(std::string& name,
-                                            TMessageType& messageType,
-                                            int32_t& seqid) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readMessageBegin(
+    std::string& name,
+    TMessageType& messageType,
+    int32_t& seqid) {
   uint32_t rsize = 0;
   int8_t protocolId;
   int8_t versionAndType;
@@ -380,7 +429,8 @@ uint32_t TCompactProtocol::readMessageBegin(std::string& name,
  * Read a struct begin. There's nothing on the wire for this, but it is our
  * opportunity to push a new struct begin marker on the field stack.
  */
-uint32_t TCompactProtocol::readStructBegin(std::string& name) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readStructBegin(std::string& name) {
   name = "";
   lastField_.push(lastFieldId_);
   lastFieldId_ = 0;
@@ -391,7 +441,8 @@ uint32_t TCompactProtocol::readStructBegin(std::string& name) {
  * Doesn't actually consume any wire data, just removes the last field for
  * this struct from the field stack.
  */
-uint32_t TCompactProtocol::readStructEnd() {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readStructEnd() {
   lastFieldId_ = lastField_.top();
   lastField_.pop();
   return 0;
@@ -400,9 +451,10 @@ uint32_t TCompactProtocol::readStructEnd() {
 /**
  * Read a field header off the wire.
  */
-uint32_t TCompactProtocol::readFieldBegin(std::string& name,
-                                          TType& fieldType,
-                                          int16_t& fieldId) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readFieldBegin(std::string& name,
+                                                       TType& fieldType,
+                                                       int16_t& fieldId) {
   uint32_t rsize = 0;
   int8_t byte;
   int8_t type;
@@ -428,10 +480,12 @@ uint32_t TCompactProtocol::readFieldBegin(std::string& name,
   fieldType = getTType(type);
 
   // if this happens to be a boolean field, the value is encoded in the type
-  if (type == CT_BOOLEAN_TRUE || type == CT_BOOLEAN_FALSE) {
+  if (type == detail::compact::CT_BOOLEAN_TRUE ||
+      type == detail::compact::CT_BOOLEAN_FALSE) {
     // save the boolean value in a special instance variable.
     boolValue_.hasBoolValue = true;
-    boolValue_.boolValue = (type == CT_BOOLEAN_TRUE ? true : false);
+    boolValue_.boolValue =
+      (type == detail::compact::CT_BOOLEAN_TRUE ? true : false);
   }
 
   // push the new field onto the field stack so we can keep the deltas going.
@@ -444,9 +498,10 @@ uint32_t TCompactProtocol::readFieldBegin(std::string& name,
  * and value type. This means that 0-length maps will yield TMaps without the
  * "correct" types.
  */
-uint32_t TCompactProtocol::readMapBegin(TType& keyType,
-                                        TType& valType,
-                                        uint32_t& size) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readMapBegin(TType& keyType,
+                                                     TType& valType,
+                                                     uint32_t& size) {
   uint32_t rsize = 0;
   int8_t kvType = 0;
   int32_t msize = 0;
@@ -474,8 +529,9 @@ uint32_t TCompactProtocol::readMapBegin(TType& keyType,
  * of the element type header will be 0xF, and a varint will follow with the
  * true size.
  */
-uint32_t TCompactProtocol::readListBegin(TType& elemType,
-                                         uint32_t& size) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readListBegin(TType& elemType,
+                                                      uint32_t& size) {
   int8_t size_and_type;
   uint32_t rsize = 0;
   int32_t lsize;
@@ -505,8 +561,9 @@ uint32_t TCompactProtocol::readListBegin(TType& elemType,
  * of the element type header will be 0xF, and a varint will follow with the
  * true size.
  */
-uint32_t TCompactProtocol::readSetBegin(TType& elemType,
-                                        uint32_t& size) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readSetBegin(TType& elemType,
+                                                     uint32_t& size) {
   return readListBegin(elemType, size);
 }
 
@@ -515,7 +572,8 @@ uint32_t TCompactProtocol::readSetBegin(TType& elemType,
  * already have been read during readFieldBegin, so we'll just consume the
  * pre-stored value. Otherwise, read a byte.
  */
-uint32_t TCompactProtocol::readBool(bool& value) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readBool(bool& value) {
   if (boolValue_.hasBoolValue == true) {
     value = boolValue_.boolValue;
     boolValue_.hasBoolValue = false;
@@ -523,7 +581,7 @@ uint32_t TCompactProtocol::readBool(bool& value) {
   } else {
     int8_t val;
     readByte(val);
-    value = (val == CT_BOOLEAN_TRUE);
+    value = (val == detail::compact::CT_BOOLEAN_TRUE);
     return 1;
   }
 }
@@ -531,7 +589,8 @@ uint32_t TCompactProtocol::readBool(bool& value) {
 /**
  * Read a single byte off the wire. Nothing interesting here.
  */
-uint32_t TCompactProtocol::readByte(int8_t& byte) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readByte(int8_t& byte) {
   uint8_t b[1];
   trans_->readAll(b, 1);
   byte = *(int8_t*)b;
@@ -541,7 +600,8 @@ uint32_t TCompactProtocol::readByte(int8_t& byte) {
 /**
  * Read an i16 from the wire as a zigzag varint.
  */
-uint32_t TCompactProtocol::readI16(int16_t& i16) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readI16(int16_t& i16) {
   int32_t value;
   uint32_t rsize = readVarint32(value);
   i16 = (int16_t)zigzagToI32(value);
@@ -551,7 +611,8 @@ uint32_t TCompactProtocol::readI16(int16_t& i16) {
 /**
  * Read an i32 from the wire as a zigzag varint.
  */
-uint32_t TCompactProtocol::readI32(int32_t& i32) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readI32(int32_t& i32) {
   int32_t value;
   uint32_t rsize = readVarint32(value);
   i32 = zigzagToI32(value);
@@ -561,7 +622,8 @@ uint32_t TCompactProtocol::readI32(int32_t& i32) {
 /**
  * Read an i64 from the wire as a zigzag varint.
  */
-uint32_t TCompactProtocol::readI64(int64_t& i64) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readI64(int64_t& i64) {
   int64_t value;
   uint32_t rsize = readVarint64(value);
   i64 = zigzagToI64(value);
@@ -571,7 +633,8 @@ uint32_t TCompactProtocol::readI64(int64_t& i64) {
 /**
  * No magic here - just read a double off the wire.
  */
-uint32_t TCompactProtocol::readDouble(double& dub) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readDouble(double& dub) {
   BOOST_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
   BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
 
@@ -584,14 +647,16 @@ uint32_t TCompactProtocol::readDouble(double& dub) {
   return 8;
 }
 
-uint32_t TCompactProtocol::readString(std::string& str) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readString(std::string& str) {
   return readBinary(str);
 }
 
 /**
  * Read a byte[] from the wire.
  */
-uint32_t TCompactProtocol::readBinary(std::string& str) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readBinary(std::string& str) {
   int32_t rsize = 0;
   int32_t size;
 
@@ -629,7 +694,8 @@ uint32_t TCompactProtocol::readBinary(std::string& str) {
  * Read an i32 from the wire as a varint. The MSB of each byte is set
  * if there is another byte to follow. This can read up to 5 bytes.
  */
-uint32_t TCompactProtocol::readVarint32(int32_t& i32) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readVarint32(int32_t& i32) {
   int64_t val;
   uint32_t rsize = readVarint64(val);
   i32 = (int32_t)val;
@@ -640,7 +706,8 @@ uint32_t TCompactProtocol::readVarint32(int32_t& i32) {
  * Read an i64 from the wire as a proper varint. The MSB of each byte is set
  * if there is another byte to follow. This can read up to 10 bytes.
  */
-uint32_t TCompactProtocol::readVarint64(int64_t& i64) {
+template <class Transport_>
+uint32_t TCompactProtocolT<Transport_>::readVarint64(int64_t& i64) {
   uint32_t rsize = 0;
   uint64_t val = 0;
   int shift = 0;
@@ -689,43 +756,46 @@ uint32_t TCompactProtocol::readVarint64(int64_t& i64) {
 /**
  * Convert from zigzag int to int.
  */
-int32_t TCompactProtocol::zigzagToI32(uint32_t n) {
+template <class Transport_>
+int32_t TCompactProtocolT<Transport_>::zigzagToI32(uint32_t n) {
   return (n >> 1) ^ -(n & 1);
 }
 
 /**
  * Convert from zigzag long to long.
  */
-int64_t TCompactProtocol::zigzagToI64(uint64_t n) {
+template <class Transport_>
+int64_t TCompactProtocolT<Transport_>::zigzagToI64(uint64_t n) {
   return (n >> 1) ^ -(n & 1);
 }
 
-TType TCompactProtocol::getTType(int8_t type) {
+template <class Transport_>
+TType TCompactProtocolT<Transport_>::getTType(int8_t type) {
   switch (type) {
     case T_STOP:
       return T_STOP;
-    case CT_BOOLEAN_FALSE:
-    case CT_BOOLEAN_TRUE:
+    case detail::compact::CT_BOOLEAN_FALSE:
+    case detail::compact::CT_BOOLEAN_TRUE:
       return T_BOOL;
-    case CT_BYTE:
+    case detail::compact::CT_BYTE:
       return T_BYTE;
-    case CT_I16:
+    case detail::compact::CT_I16:
       return T_I16;
-    case CT_I32:
+    case detail::compact::CT_I32:
       return T_I32;
-    case CT_I64:
+    case detail::compact::CT_I64:
       return T_I64;
-    case CT_DOUBLE:
+    case detail::compact::CT_DOUBLE:
       return T_DOUBLE;
-    case CT_BINARY:
+    case detail::compact::CT_BINARY:
       return T_STRING;
-    case CT_LIST:
+    case detail::compact::CT_LIST:
       return T_LIST;
-    case CT_SET:
+    case detail::compact::CT_SET:
       return T_SET;
-    case CT_MAP:
+    case detail::compact::CT_MAP:
       return T_MAP;
-    case CT_STRUCT:
+    case detail::compact::CT_STRUCT:
       return T_STRUCT;
     default:
       throw TException("don't know what type: " + type);
@@ -734,3 +804,5 @@ TType TCompactProtocol::getTType(int8_t type) {
 }
 
 }}} // apache::thrift::protocol
+
+#endif // _THRIFT_PROTOCOL_TCOMPACTPROTOCOL_TCC_

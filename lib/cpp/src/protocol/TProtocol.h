@@ -645,11 +645,9 @@ class TProtocol {
  protected:
   TProtocol(boost::shared_ptr<TTransport> ptrans):
     ptrans_(ptrans) {
-    trans_ = ptrans.get();
   }
 
   boost::shared_ptr<TTransport> ptrans_;
-  TTransport* trans_;
 
  private:
   TProtocol() {}

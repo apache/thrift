@@ -48,8 +48,6 @@ libthrift_la_SOURCES = src/Thrift.cpp \
                        src/concurrency/ThreadManager.cpp \
                        src/concurrency/TimerManager.cpp \
                        src/concurrency/Util.cpp \
-                       src/protocol/TBinaryProtocol.cpp \
-                       src/protocol/TCompactProtocol.cpp \
                        src/protocol/TDebugProtocol.cpp \
                        src/protocol/TDenseProtocol.cpp \
                        src/protocol/TJSONProtocol.cpp \
@@ -108,7 +106,9 @@ include_concurrency_HEADERS = \
 include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = \
                          src/protocol/TBinaryProtocol.h \
+                         src/protocol/TBinaryProtocol.tcc \
                          src/protocol/TCompactProtocol.h \
+                         src/protocol/TCompactProtocol.tcc \
                          src/protocol/TDenseProtocol.h \
                          src/protocol/TDebugProtocol.h \
                          src/protocol/TBase64Utils.h \

@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
   }
 
 
-  shared_ptr<TTransport> transport;
+  shared_ptr<TBufferBase> transport;
 
   shared_ptr<TSocket> socket(new TSocket(host, port));
 
@@ -87,7 +87,8 @@ int main(int argc, char** argv) {
     transport = bufferedSocket;
   }
 
-  shared_ptr<TBinaryProtocol> protocol(new TBinaryProtocol(transport));
+  shared_ptr< TBinaryProtocolT<TBufferBase> > protocol(
+      new TBinaryProtocolT<TBufferBase>(transport));
   ThriftTestClient testClient(protocol);
 
   uint64_t time_min = 0;

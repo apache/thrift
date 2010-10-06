@@ -47,6 +47,7 @@ check_PROGRAMS = \
 	DebugProtoTest \
 	JSONProtoTest \
 	OptionalRequiredTest \
+	SpecializationTest \
 	AllProtocolsTest \
 	UnitTests
 
@@ -113,6 +114,14 @@ OptionalRequiredTest_SOURCES = \
 	OptionalRequiredTest.cpp
 
 OptionalRequiredTest_LDADD = libtestgencpp.la
+
+#
+# SpecializationTest
+#
+SpecializationTest_SOURCES = \
+	SpecializationTest.cpp
+
+SpecializationTest_LDADD = libtestgencpp.la
 
 
 #

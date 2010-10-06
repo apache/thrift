@@ -32,15 +32,18 @@ namespace apache { namespace thrift { namespace protocol {
  * binary format, essentially just spitting out the raw bytes.
  *
  */
-class TBinaryProtocol : public TVirtualProtocol<TBinaryProtocol> {
+template <class Transport_>
+class TBinaryProtocolT
+  : public TVirtualProtocol< TBinaryProtocolT<Transport_> > {
  protected:
   static const int32_t VERSION_MASK = 0xffff0000;
   static const int32_t VERSION_1 = 0x80010000;
   // VERSION_2 (0x80020000)  is taken by TDenseProtocol.
 
  public:
-  TBinaryProtocol(boost::shared_ptr<TTransport> trans) :
-    TVirtualProtocol<TBinaryProtocol>(trans),
+  TBinaryProtocolT(boost::shared_ptr<Transport_> trans) :
+    TVirtualProtocol< TBinaryProtocolT<Transport_> >(trans),
+    trans_(trans.get()),
     string_limit_(0),
     container_limit_(0),
     strict_read_(false),
@@ -48,12 +51,13 @@ class TBinaryProtocol : public TVirtualProtocol<TBinaryProtocol> {
     string_buf_(NULL),
     string_buf_size_(0) {}
 
-  TBinaryProtocol(boost::shared_ptr<TTransport> trans,
-                  int32_t string_limit,
-                  int32_t container_limit,
-                  bool strict_read,
-                  bool strict_write) :
-    TVirtualProtocol<TBinaryProtocol>(trans),
+  TBinaryProtocolT(boost::shared_ptr<Transport_> trans,
+                   int32_t string_limit,
+                   int32_t container_limit,
+                   bool strict_read,
+                   bool strict_write) :
+    TVirtualProtocol< TBinaryProtocolT<Transport_> >(trans),
+    trans_(trans.get()),
     string_limit_(string_limit),
     container_limit_(container_limit),
     strict_read_(strict_read),
@@ -61,7 +65,7 @@ class TBinaryProtocol : public TVirtualProtocol<TBinaryProtocol> {
     string_buf_(NULL),
     string_buf_size_(0) {}
 
-  ~TBinaryProtocol() {
+  ~TBinaryProtocolT() {
     if (string_buf_ != NULL) {
       std::free(string_buf_);
       string_buf_size_ = 0;
@@ -85,112 +89,110 @@ class TBinaryProtocol : public TVirtualProtocol<TBinaryProtocol> {
    * Writing functions.
    */
 
-  uint32_t writeMessageBegin(const std::string& name,
-                             const TMessageType messageType,
-                             const int32_t seqid);
+  /*ol*/ uint32_t writeMessageBegin(const std::string& name,
+                                    const TMessageType messageType,
+                                    const int32_t seqid);
 
-  uint32_t writeMessageEnd();
+  /*ol*/ uint32_t writeMessageEnd();
 
 
-  uint32_t writeStructBegin(const char* name);
+  inline uint32_t writeStructBegin(const char* name);
 
-  uint32_t writeStructEnd();
+  inline uint32_t writeStructEnd();
 
-  uint32_t writeFieldBegin(const char* name,
-                           const TType fieldType,
-                           const int16_t fieldId);
+  inline uint32_t writeFieldBegin(const char* name,
+                                  const TType fieldType,
+                                  const int16_t fieldId);
 
-  uint32_t writeFieldEnd();
+  inline uint32_t writeFieldEnd();
 
-  uint32_t writeFieldStop();
+  inline uint32_t writeFieldStop();
 
-  uint32_t writeMapBegin(const TType keyType,
-                         const TType valType,
-                         const uint32_t size);
+  inline uint32_t writeMapBegin(const TType keyType,
+                                const TType valType,
+                                const uint32_t size);
 
-  uint32_t writeMapEnd();
+  inline uint32_t writeMapEnd();
 
-  uint32_t writeListBegin(const TType elemType,
-                          const uint32_t size);
+  inline uint32_t writeListBegin(const TType elemType, const uint32_t size);
 
-  uint32_t writeListEnd();
+  inline uint32_t writeListEnd();
 
-  uint32_t writeSetBegin(const TType elemType,
-                         const uint32_t size);
+  inline uint32_t writeSetBegin(const TType elemType, const uint32_t size);
 
-  uint32_t writeSetEnd();
+  inline uint32_t writeSetEnd();
 
-  uint32_t writeBool(const bool value);
+  inline uint32_t writeBool(const bool value);
 
-  uint32_t writeByte(const int8_t byte);
+  inline uint32_t writeByte(const int8_t byte);
 
-  uint32_t writeI16(const int16_t i16);
+  inline uint32_t writeI16(const int16_t i16);
 
-  uint32_t writeI32(const int32_t i32);
+  inline uint32_t writeI32(const int32_t i32);
 
-  uint32_t writeI64(const int64_t i64);
+  inline uint32_t writeI64(const int64_t i64);
 
-  uint32_t writeDouble(const double dub);
+  inline uint32_t writeDouble(const double dub);
 
-  uint32_t writeString(const std::string& str);
+  inline uint32_t writeString(const std::string& str);
 
-  uint32_t writeBinary(const std::string& str);
+  inline uint32_t writeBinary(const std::string& str);
 
   /**
    * Reading functions
    */
 
 
-  uint32_t readMessageBegin(std::string& name,
-                            TMessageType& messageType,
-                            int32_t& seqid);
+  /*ol*/ uint32_t readMessageBegin(std::string& name,
+                                   TMessageType& messageType,
+                                   int32_t& seqid);
 
-  uint32_t readMessageEnd();
+  /*ol*/ uint32_t readMessageEnd();
 
-  uint32_t readStructBegin(std::string& name);
+  inline uint32_t readStructBegin(std::string& name);
 
-  uint32_t readStructEnd();
+  inline uint32_t readStructEnd();
 
-  uint32_t readFieldBegin(std::string& name,
-                          TType& fieldType,
-                          int16_t& fieldId);
+  inline uint32_t readFieldBegin(std::string& name,
+                                 TType& fieldType,
+                                 int16_t& fieldId);
 
-  uint32_t readFieldEnd();
+  inline uint32_t readFieldEnd();
 
-  uint32_t readMapBegin(TType& keyType,
-                        TType& valType,
-                        uint32_t& size);
+  inline uint32_t readMapBegin(TType& keyType,
+                               TType& valType,
+                               uint32_t& size);
 
-  uint32_t readMapEnd();
+  inline uint32_t readMapEnd();
 
-  uint32_t readListBegin(TType& elemType,
-                         uint32_t& size);
+  inline uint32_t readListBegin(TType& elemType, uint32_t& size);
 
-  uint32_t readListEnd();
+  inline uint32_t readListEnd();
 
-  uint32_t readSetBegin(TType& elemType,
-                        uint32_t& size);
+  inline uint32_t readSetBegin(TType& elemType, uint32_t& size);
 
-  uint32_t readSetEnd();
+  inline uint32_t readSetEnd();
 
-  uint32_t readBool(bool& value);
+  inline uint32_t readBool(bool& value);
 
-  uint32_t readByte(int8_t& byte);
+  inline uint32_t readByte(int8_t& byte);
 
-  uint32_t readI16(int16_t& i16);
+  inline uint32_t readI16(int16_t& i16);
 
-  uint32_t readI32(int32_t& i32);
+  inline uint32_t readI32(int32_t& i32);
 
-  uint32_t readI64(int64_t& i64);
+  inline uint32_t readI64(int64_t& i64);
 
-  uint32_t readDouble(double& dub);
+  inline uint32_t readDouble(double& dub);
 
-  uint32_t readString(std::string& str);
+  inline uint32_t readString(std::string& str);
 
-  uint32_t readBinary(std::string& str);
+  inline uint32_t readBinary(std::string& str);
 
  protected:
   uint32_t readStringBody(std::string& str, int32_t sz);
+
+  Transport_* trans_;
 
   int32_t string_limit_;
   int32_t container_limit_;
@@ -206,24 +208,28 @@ class TBinaryProtocol : public TVirtualProtocol<TBinaryProtocol> {
 
 };
 
+typedef TBinaryProtocolT<TTransport> TBinaryProtocol;
+
 /**
  * Constructs binary protocol handlers
  */
-class TBinaryProtocolFactory : public TProtocolFactory {
+template <class Transport_>
+class TBinaryProtocolFactoryT : public TProtocolFactory {
  public:
-  TBinaryProtocolFactory() :
+  TBinaryProtocolFactoryT() :
     string_limit_(0),
     container_limit_(0),
     strict_read_(false),
     strict_write_(true) {}
 
-  TBinaryProtocolFactory(int32_t string_limit, int32_t container_limit, bool strict_read, bool strict_write) :
+  TBinaryProtocolFactoryT(int32_t string_limit, int32_t container_limit,
+                          bool strict_read, bool strict_write) :
     string_limit_(string_limit),
     container_limit_(container_limit),
     strict_read_(strict_read),
     strict_write_(strict_write) {}
 
-  virtual ~TBinaryProtocolFactory() {}
+  virtual ~TBinaryProtocolFactoryT() {}
 
   void setStringSizeLimit(int32_t string_limit) {
     string_limit_ = string_limit;
@@ -239,7 +245,19 @@ class TBinaryProtocolFactory : public TProtocolFactory {
   }
 
   boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TProtocol>(new TBinaryProtocol(trans, string_limit_, container_limit_, strict_read_, strict_write_));
+    boost::shared_ptr<Transport_> specific_trans =
+      boost::dynamic_pointer_cast<Transport_>(trans);
+    TProtocol* prot;
+    if (specific_trans) {
+      prot = new TBinaryProtocolT<Transport_>(specific_trans, string_limit_,
+                                              container_limit_, strict_read_,
+                                              strict_write_);
+    } else {
+      prot = new TBinaryProtocol(trans, string_limit_, container_limit_,
+                                 strict_read_, strict_write_);
+    }
+
+    return boost::shared_ptr<TProtocol>(prot);
   }
 
  private:
@@ -250,6 +268,10 @@ class TBinaryProtocolFactory : public TProtocolFactory {
 
 };
 
+typedef TBinaryProtocolFactoryT<TTransport> TBinaryProtocolFactory;
+
 }}} // apache::thrift::protocol
+
+#include "TBinaryProtocol.tcc"
 
 #endif // #ifndef _THRIFT_PROTOCOL_TBINARYPROTOCOL_H_
