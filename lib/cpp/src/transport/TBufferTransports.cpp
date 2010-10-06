@@ -208,21 +208,23 @@ bool TFramedTransport::readFrame() {
 void TFramedTransport::writeSlow(const uint8_t* buf, uint32_t len) {
   // Double buffer size until sufficient.
   uint32_t have = wBase_ - wBuf_.get();
-  while (wBufSize_ < len + have) {
-    wBufSize_ *= 2;
+  uint32_t new_size = wBufSize_;
+  while (new_size < len + have) {
+    new_size = new_size > 0 ? new_size * 2 : 1;
   }
 
   // TODO(dreiss): Consider modifying this class to use malloc/free
   // so we can use realloc here.
 
   // Allocate new buffer.
-  uint8_t* new_buf = new uint8_t[wBufSize_];
+  uint8_t* new_buf = new uint8_t[new_size];
 
   // Copy the old buffer to the new one.
   memcpy(new_buf, wBuf_.get(), have);
 
   // Now point buf to the new one.
   wBuf_.reset(new_buf);
+  wBufSize_ = new_size;
   wBase_ = wBuf_.get() + have;
   wBound_ = wBuf_.get() + wBufSize_;
 
