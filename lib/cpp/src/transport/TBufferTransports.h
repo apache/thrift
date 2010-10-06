@@ -24,6 +24,7 @@
 #include "boost/scoped_array.hpp"
 
 #include <transport/TTransport.h>
+#include <transport/TVirtualTransport.h>
 
 #ifdef __GNUC__
 #define TDB_LIKELY(val) (__builtin_expect((val), 1))
@@ -46,7 +47,7 @@ namespace apache { namespace thrift { namespace transport {
  * that have to be done when the buffers are full or empty.
  *
  */
-class TBufferBase : public TTransport {
+class TBufferBase : public TVirtualTransport<TBufferBase> {
 
  public:
 
@@ -78,7 +79,7 @@ class TBufferBase : public TTransport {
       rBase_ = new_rBase;
       return len;
     }
-    return facebook::thrift::transport::readAll(*this, buf, len);
+    return apache::thrift::transport::readAll(*this, buf, len);
   }
 
   /**
@@ -187,7 +188,8 @@ class TBufferBase : public TTransport {
  * stored to an in memory buffer before being written out.
  *
  */
-class TBufferedTransport : public TBufferBase {
+class TBufferedTransport
+  : public TVirtualTransport<TBufferedTransport, TBufferBase> {
  public:
 
   static const int DEFAULT_BUFFER_SIZE = 512;
@@ -269,6 +271,12 @@ class TBufferedTransport : public TBufferBase {
     return transport_;
   }
 
+  /*
+   * TVirtualTransport provides a default implementation of readAll().
+   * We want to use the TBufferBase version instead.
+   */
+  using TBufferBase::readAll;
+
  protected:
   void initPointers() {
     setReadBuffer(rBuf_.get(), 0);
@@ -312,7 +320,8 @@ class TBufferedTransportFactory : public TTransportFactory {
  * other end to always do fixed-length reads.
  *
  */
-class TFramedTransport : public TBufferBase {
+class TFramedTransport
+  : public TVirtualTransport<TFramedTransport, TBufferBase> {
  public:
 
   static const int DEFAULT_BUFFER_SIZE = 512;
@@ -371,6 +380,12 @@ class TFramedTransport : public TBufferBase {
     return transport_;
   }
 
+  /*
+   * TVirtualTransport provides a default implementation of readAll().
+   * We want to use the TBufferBase version instead.
+   */
+  using TBufferBase::readAll;
+
  protected:
   /**
    * Reads a frame of input from the underlying stream.
@@ -423,7 +438,7 @@ class TFramedTransportFactory : public TTransportFactory {
  * doubles as necessary.  We've considered using scoped
  *
  */
-class TMemoryBuffer : public TBufferBase {
+class TMemoryBuffer : public TVirtualTransport<TMemoryBuffer, TBufferBase> {
  private:
 
   // Common initialization done by all constructors.
@@ -665,6 +680,12 @@ class TMemoryBuffer : public TBufferBase {
   // Informs the buffer that the client has written 'len' bytes into storage
   // that had been provided by getWritePtr().
   void wroteBytes(uint32_t len);
+
+  /*
+   * TVirtualTransport provides a default implementation of readAll().
+   * We want to use the TBufferBase version instead.
+   */
+  using TBufferBase::readAll;
 
  protected:
   void swap(TMemoryBuffer& that) {

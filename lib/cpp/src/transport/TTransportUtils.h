@@ -38,7 +38,7 @@ namespace apache { namespace thrift { namespace transport {
  * go anywhere.
  *
  */
-class TNullTransport : public TTransport {
+class TNullTransport : public TVirtualTransport<TNullTransport> {
  public:
   TNullTransport() {}
 
@@ -172,6 +172,18 @@ class TPipedTransport : virtual public TTransport {
     return dstTrans_;
   }
 
+  /*
+   * Override TTransport *_virt() functions to invoke our implementations.
+   * We cannot use TVirtualTransport to provide these, since we need to inherit
+   * virtually from TTransport.
+   */
+  virtual uint32_t read_virt(uint8_t* buf, uint32_t len) {
+    return this->read(buf, len);
+  }
+  virtual void write_virt(const uint8_t* buf, uint32_t len) {
+    this->write(buf, len);
+  }
+
  protected:
   boost::shared_ptr<TTransport> srcTrans_;
   boost::shared_ptr<TTransport> dstTrans_;
@@ -253,6 +265,21 @@ class TPipedFileReaderTransport : public TPipedTransport,
   uint32_t getCurChunk();
   void seekToChunk(int32_t chunk);
   void seekToEnd();
+
+  /*
+   * Override TTransport *_virt() functions to invoke our implementations.
+   * We cannot use TVirtualTransport to provide these, since we need to inherit
+   * virtually from TTransport.
+   */
+  virtual uint32_t read_virt(uint8_t* buf, uint32_t len) {
+    return this->read(buf, len);
+  }
+  virtual uint32_t readAll_virt(uint8_t* buf, uint32_t len) {
+    return this->readAll(buf, len);
+  }
+  virtual void write_virt(const uint8_t* buf, uint32_t len) {
+    this->write(buf, len);
+  }
 
  protected:
   // shouldn't be used

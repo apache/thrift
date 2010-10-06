@@ -273,6 +273,21 @@ class TFileTransport : public TFileReaderTransport,
     return eofSleepTime_;
   }
 
+  /*
+   * Override TTransport *_virt() functions to invoke our implementations.
+   * We cannot use TVirtualTransport to provide these, since we need to inherit
+   * virtually from TTransport.
+   */
+  virtual uint32_t read_virt(uint8_t* buf, uint32_t len) {
+    return this->read(buf, len);
+  }
+  virtual uint32_t readAll_virt(uint8_t* buf, uint32_t len) {
+    return this->readAll(buf, len);
+  }
+  virtual void write_virt(const uint8_t* buf, uint32_t len) {
+    this->write(buf, len);
+  }
+
  private:
   // helper functions for writing to a file
   void enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool blockUntilFlush);

@@ -25,6 +25,7 @@
 #include <netdb.h>
 
 #include "TTransport.h"
+#include "TVirtualTransport.h"
 #include "TServerSocket.h"
 
 namespace apache { namespace thrift { namespace transport {
@@ -33,7 +34,7 @@ namespace apache { namespace thrift { namespace transport {
  * TCP Socket implementation of the TTransport interface.
  *
  */
-class TSocket : public TTransport {
+class TSocket : public TVirtualTransport<TSocket> {
   /**
    * We allow the TServerSocket acceptImpl() method to access the private
    * members of a socket so that it can access the TSocket(int socket)

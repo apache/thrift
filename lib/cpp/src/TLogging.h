@@ -160,4 +160,26 @@
   #define T_LOG_OPER(format_string,...)
 #endif
 
+
+/**
+ * T_GLOBAL_DEBUG_VIRTUAL = 0: normal operation,
+ *                             virtual call debug messages disabled
+ * T_GLOBAL_DEBUG_VIRTUAL = 1: log a debug messages whenever an
+ *                             avoidable virtual call is made
+ */
+#define T_GLOBAL_DEBUG_VIRTUAL 0
+
+/**
+ * Log a message indicating that a virtual function call is being made.
+ *
+ * This should be disabled during normal use.  It is intended to be used
+ * only to help debug serialization performance.
+ */
+#if T_GLOBAL_DEBUG_VIRTUAL > 0
+  #define T_VIRTUAL_CALL()                                              \
+    fprintf(stderr,"[%s,%d] virtual call\n", __FILE__, __LINE__)
+#else
+  #define T_VIRTUAL_CALL()
+#endif
+
 #endif // #ifndef _THRIFT_TLOGGING_H_

@@ -104,8 +104,13 @@ class TTransport {
    * @return How many bytes were actually read
    * @throws TTransportException If an error occurs
    */
-  virtual uint32_t read(uint8_t* /* buf */, uint32_t /* len */) {
-    throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot read.");
+  uint32_t read(uint8_t* buf, uint32_t len) {
+    T_VIRTUAL_CALL();
+    return read_virt(buf, len);
+  }
+  virtual uint32_t read_virt(uint8_t* /* buf */, uint32_t /* len */) {
+    throw TTransportException(TTransportException::NOT_OPEN,
+                              "Base TTransport cannot read.");
   }
 
   /**
@@ -116,7 +121,11 @@ class TTransport {
    * @return How many bytes read, which must be equal to size
    * @throws TTransportException If insufficient data was read
    */
-  virtual uint32_t readAll(uint8_t* buf, uint32_t len) {
+  uint32_t readAll(uint8_t* buf, uint32_t len) {
+    T_VIRTUAL_CALL();
+    return readAll_virt(buf, len);
+  }
+  virtual uint32_t readAll_virt(uint8_t* buf, uint32_t len) {
     return apache::thrift::transport::readAll(*this, buf, len);
   }
 
@@ -138,8 +147,13 @@ class TTransport {
    * @param buf  The data to write out
    * @throws TTransportException if an error occurs
    */
-  virtual void write(const uint8_t* /* buf */, uint32_t /* len */) {
-    throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot write.");
+  void write(const uint8_t* buf, uint32_t len) {
+    T_VIRTUAL_CALL();
+    write_virt(buf, len);
+  }
+  virtual void write_virt(const uint8_t* /* buf */, uint32_t /* len */) {
+    throw TTransportException(TTransportException::NOT_OPEN,
+                              "Base TTransport cannot write.");
   }
 
   /**
@@ -191,7 +205,11 @@ class TTransport {
    *         the transport's internal buffers.
    * @throws TTransportException if an error occurs
    */
-  virtual const uint8_t* borrow(uint8_t* /* buf */, uint32_t* /* len */) {
+  const uint8_t* borrow(uint8_t* buf, uint32_t* len) {
+    T_VIRTUAL_CALL();
+    return borrow_virt(buf, len);
+  }
+  virtual const uint8_t* borrow_virt(uint8_t* /* buf */, uint32_t* /* len */) {
     return NULL;
   }
 
@@ -204,8 +222,13 @@ class TTransport {
    * @param len  How many bytes to consume
    * @throws TTransportException If an error occurs
    */
-  virtual void consume(uint32_t /* len */) {
-    throw TTransportException(TTransportException::NOT_OPEN, "Base TTransport cannot consume.");
+  void consume(uint32_t len) {
+    T_VIRTUAL_CALL();
+    consume_virt(len);
+  }
+  virtual void consume_virt(uint32_t /* len */) {
+    throw TTransportException(TTransportException::NOT_OPEN,
+                              "Base TTransport cannot consume.");
   }
 
  protected:

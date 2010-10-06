@@ -22,6 +22,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <transport/TTransport.h>
+#include <transport/TVirtualTransport.h>
 
 struct z_stream_s;
 
@@ -69,7 +70,7 @@ class TZlibTransportException : public TTransportException {
  *               the underlying transport is TBuffered or TMemory.
  *
  */
-class TZlibTransport : public TTransport {
+class TZlibTransport : public TVirtualTransport<TZlibTransport> {
  public:
 
   /**

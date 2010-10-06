@@ -130,6 +130,7 @@ include_transport_HEADERS = \
                          src/transport/THttpServer.h \
                          src/transport/TSocket.h \
                          src/transport/TSocketPool.h \
+                         src/transport/TVirtualTransport.h \
                          src/transport/TTransport.h \
                          src/transport/TTransportException.h \
                          src/transport/TTransportUtils.h \

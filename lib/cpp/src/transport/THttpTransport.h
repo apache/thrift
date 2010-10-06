@@ -21,6 +21,7 @@
 #define _THRIFT_TRANSPORT_THTTPTRANSPORT_H_ 1
 
 #include <transport/TBufferTransports.h>
+#include "TVirtualTransport.h"
 
 namespace apache { namespace thrift { namespace transport {
 
@@ -31,7 +32,7 @@ namespace apache { namespace thrift { namespace transport {
  * here is a VERY basic HTTP/1.1 client which supports HTTP 100 Continue,
  * chunked transfer encoding, keepalive, etc. Tested against Apache.
  */
-class THttpTransport : public TTransport {
+class THttpTransport : public TVirtualTransport<THttpTransport> {
  public:
   THttpTransport(boost::shared_ptr<TTransport> transport);
 
