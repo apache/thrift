@@ -375,6 +375,8 @@ void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTabl
 void binary_serialize_spec(zval* zthis, PHPOutputTransport& transport, HashTable* spec);
 void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval** value, HashTable* fieldspec);
 void skip_element(long thrift_typeID, PHPInputTransport& transport);
+void protocol_writeMessageBegin(zval *transport, const char* method_name, int32_t msgtype, int32_t seqID);
+
 
 // Create a PHP object given a typename and call the ctor, optionally passing up to 2 arguments
 void createObject(char* obj_typename, zval* return_value, int nargs = 0, zval* arg1 = NULL, zval* arg2 = NULL) {
@@ -642,6 +644,28 @@ void skip_element(long thrift_typeID, PHPInputTransport& transport) {
   char errbuf[128];
   sprintf(errbuf, "Unknown thrift typeID %ld", thrift_typeID);
   throw_tprotocolexception(errbuf, INVALID_DATA);
+}
+
+void protocol_writeMessageBegin(zval* transport, const char* method_name, int32_t msgtype, int32_t seqID) {
+  zval *args[3];
+
+  MAKE_STD_ZVAL(args[0]);
+  ZVAL_STRINGL(args[0], (char*)method_name, strlen(method_name), 0);
+
+  MAKE_STD_ZVAL(args[1]);
+  ZVAL_LONG(args[1], msgtype);
+
+  MAKE_STD_ZVAL(args[2]);
+  ZVAL_LONG(args[2], seqID);
+
+  TSRMLS_FETCH();
+  zval ret;
+  ZVAL_NULL(&ret);
+  zval writeMessagefn;
+  ZVAL_STRING(&writeMessagefn, "writeMessageBegin", 0);
+  TSRMLS_FETCH();
+  call_user_function(EG(function_table), &transport, &writeMessagefn, &ret, 3, args TSRMLS_CC);
+  zval_dtor(&ret);
 }
 
 void binary_serialize_hashtable_key(int8_t keytype, PHPOutputTransport& transport, HashTable* ht, HashPosition& ht_pos) {
@@ -913,8 +937,10 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
     RETURN_NULL();
   }
 
+
   try {
     PHPOutputTransport transport(*args[0]);
+    zval *protocol = *args[0];
     const char* method_name = Z_STRVAL_PP(args[1]);
     convert_to_long(*args[2]);
     int32_t msgtype = Z_LVAL_PP(args[2]);
@@ -925,18 +951,7 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
     bool strictWrite = Z_BVAL_PP(args[5]);
     efree(args);
     args = NULL;
-
-    if (strictWrite) {
-      int32_t version = VERSION_1 | msgtype;
-      transport.writeI32(version);
-      transport.writeString(method_name, strlen(method_name));
-      transport.writeI32(seqID);
-    } else {
-      transport.writeString(method_name, strlen(method_name));
-      transport.writeI8(msgtype);
-      transport.writeI32(seqID);
-    }
-
+    protocol_writeMessageBegin(protocol, method_name, msgtype, seqID);
     zval* spec = zend_read_static_property(zend_get_class_entry(request_struct TSRMLS_CC), "_TSPEC", 6, false TSRMLS_CC);
     if (Z_TYPE_P(spec) != IS_ARRAY) {
         throw_tprotocolexception("Attempt to send non-Thrift object", INVALID_DATA);
