@@ -450,7 +450,7 @@ class TMemoryBuffer : public TVirtualTransport<TMemoryBuffer, TBufferBase> {
       assert(owner);
       buf = (uint8_t*)std::malloc(size);
       if (buf == NULL) {
-        throw TTransportException("Out of memory");
+        throw std::bad_alloc();
       }
     }
 

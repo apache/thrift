@@ -44,7 +44,7 @@ THttpTransport::THttpTransport(boost::shared_ptr<TTransport> transport) :
 void THttpTransport::init() {
   httpBuf_ = (char*)std::malloc(httpBufSize_+1);
   if (httpBuf_ == NULL) {
-    throw TTransportException("Out of memory.");
+    throw std::bad_alloc();
   }
   httpBuf_[httpBufLen_] = '\0';
 }
@@ -197,7 +197,7 @@ void THttpTransport::refill() {
     httpBufSize_ *= 2;
     httpBuf_ = (char*)std::realloc(httpBuf_, httpBufSize_+1);
     if (httpBuf_ == NULL) {
-      throw TTransportException("Out of memory.");
+      throw std::bad_alloc();
     }
   }
 

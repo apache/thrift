@@ -679,7 +679,7 @@ uint32_t TCompactProtocolT<Transport_>::readBinary(std::string& str) {
   if (size > string_buf_size_ || string_buf_ == NULL) {
     void* new_string_buf = std::realloc(string_buf_, (uint32_t)size);
     if (new_string_buf == NULL) {
-      throw TProtocolException(TProtocolException::UNKNOWN, "Out of memory in TCompactProtocol::readString");
+      throw std::bad_alloc();
     }
     string_buf_ = (uint8_t*)new_string_buf;
     string_buf_size_ = size;

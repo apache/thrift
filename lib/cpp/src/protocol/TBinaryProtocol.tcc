@@ -435,8 +435,7 @@ uint32_t TBinaryProtocolT<Transport_>::readStringBody(std::string& str,
   if (size > this->string_buf_size_ || this->string_buf_ == NULL) {
     void* new_string_buf = std::realloc(this->string_buf_, (uint32_t)size);
     if (new_string_buf == NULL) {
-      throw TProtocolException(TProtocolException::UNKNOWN,
-                               "Out of memory in TBinaryProtocolT::readString");
+      throw std::bad_alloc();
     }
     this->string_buf_ = (uint8_t*)new_string_buf;
     this->string_buf_size_ = size;

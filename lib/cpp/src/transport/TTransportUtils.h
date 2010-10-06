@@ -79,7 +79,13 @@ class TPipedTransport : virtual public TTransport {
     pipeOnWrite_ = false;
 
     rBuf_ = (uint8_t*) std::malloc(sizeof(uint8_t) * rBufSize_);
+    if (rBuf_ == NULL) {
+      throw std::bad_alloc();
+    }
     wBuf_ = (uint8_t*) std::malloc(sizeof(uint8_t) * wBufSize_);
+    if (wBuf_ == NULL) {
+      throw std::bad_alloc();
+    }
   }
 
   TPipedTransport(boost::shared_ptr<TTransport> srcTrans,
@@ -91,7 +97,13 @@ class TPipedTransport : virtual public TTransport {
     wBufSize_(sz), wLen_(0) {
 
     rBuf_ = (uint8_t*) std::malloc(sizeof(uint8_t) * rBufSize_);
+    if (rBuf_ == NULL) {
+      throw std::bad_alloc();
+    }
     wBuf_ = (uint8_t*) std::malloc(sizeof(uint8_t) * wBufSize_);
+    if (wBuf_ == NULL) {
+      throw std::bad_alloc();
+    }
   }
 
   ~TPipedTransport() {

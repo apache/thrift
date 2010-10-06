@@ -335,7 +335,7 @@ void TMemoryBuffer::ensureCanWrite(uint32_t len) {
   // Allocate into a new pointer so we don't bork ours if it fails.
   void* new_buffer = std::realloc(buffer_, new_size);
   if (new_buffer == NULL) {
-    throw TTransportException("Out of memory.");
+    throw std::bad_alloc();
   }
   bufferSize_ = new_size;
 

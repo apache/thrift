@@ -226,6 +226,9 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
 
   eventInfo* toEnqueue = new eventInfo();
   toEnqueue->eventBuff_ = (uint8_t *)std::malloc((sizeof(uint8_t) * eventLen) + 4);
+  if (toEnqueue->eventBuff_ == NULL) {
+    throw std::bad_alloc();
+  }
   // first 4 bytes is the event length
   memcpy(toEnqueue->eventBuff_, (void*)(&eventLen), 4);
   // actual event contents
