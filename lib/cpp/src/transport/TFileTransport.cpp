@@ -204,10 +204,10 @@ void TFileTransport::write(const uint8_t* buf, uint32_t len) {
     throw TTransportException("TFileTransport: attempting to write to file opened readonly");
   }
 
-  enqueueEvent(buf, len, false);
+  enqueueEvent(buf, len);
 }
 
-void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool blockUntilFlush) {
+void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
   // can't enqueue more events if file is going to close
   if (closing_) {
     return;
@@ -249,6 +249,11 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool bl
     pthread_cond_wait(&notFull_, &mutex_);
   }
 
+  // We shouldn't be trying to enqueue new data while a forced flush is
+  // requested.  (Otherwise the writer thread might not ever be able to finish
+  // the flush if more data keeps being enqueued.)
+  assert(!forceFlush_);
+
   // add to the buffer
   if (!enqueueBuffer_->addEvent(toEnqueue)) {
     delete toEnqueue;
@@ -258,10 +263,6 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool bl
 
   // signal anybody who's waiting for the buffer to be non-empty
   pthread_cond_signal(&notEmpty_);
-
-  if (blockUntilFlush) {
-    pthread_cond_wait(&flushed_, &mutex_);
-  }
 
   // this really should be a loop where it makes sure it got flushed
   // because condition variables can get triggered by the os for no reason
@@ -449,28 +450,67 @@ void TFileTransport::writerThread() {
       continue;
     }
 
-    bool flushTimeElapsed = false;
-    struct timespec current_time;
-    clock_gettime(CLOCK_REALTIME, &current_time);
+    // Local variable to cache the state of forceFlush_.
+    //
+    // We only want to check the value of forceFlush_ once each time around the
+    // loop.  If we check it more than once without holding the lock the entire
+    // time, it could have changed state in between.  This will result in us
+    // making inconsistent decisions.
+    bool forced_flush = false;
+    pthread_mutex_lock(&mutex_);
+    if (forceFlush_) {
+      if (!enqueueBuffer_->isEmpty()) {
+        // If forceFlush_ is true, we need to flush all available data.
+        // If enqueueBuffer_ is not empty, go back to the start of the loop to
+        // write it out.
+        //
+        // We know the main thread is waiting on forceFlush_ to be cleared,
+        // so no new events will be added to enqueueBuffer_ until we clear
+        // forceFlush_.  Therefore the next time around the loop enqueueBuffer_
+        // is guaranteed to be empty.  (I.e., we're guaranteed to make progress
+        // and clear forceFlush_ the next time around the loop.)
+        pthread_mutex_unlock(&mutex_);
+        continue;
+      }
+      forced_flush = true;
+    }
+    pthread_mutex_unlock(&mutex_);
 
-    if (current_time.tv_sec > ts_next_flush.tv_sec ||
-        (current_time.tv_sec == ts_next_flush.tv_sec && current_time.tv_nsec > ts_next_flush.tv_nsec)) {
-      flushTimeElapsed = true;
-      getNextFlushTime(&ts_next_flush);
+    // determine if we need to perform an fsync
+    bool flush = false;
+    if (forced_flush || unflushed > flushMaxBytes_) {
+      flush = true;
+    } else {
+      struct timespec current_time;
+      clock_gettime(CLOCK_REALTIME, &current_time);
+      if (current_time.tv_sec > ts_next_flush.tv_sec ||
+          (current_time.tv_sec == ts_next_flush.tv_sec &&
+           current_time.tv_nsec > ts_next_flush.tv_nsec)) {
+        if (unflushed > 0) {
+          flush = true;
+        } else {
+          // If there is no new data since the last fsync,
+          // don't perform the fsync, but do reset the timer.
+          getNextFlushTime(&ts_next_flush);
+        }
+      }
     }
 
-    // couple of cases from which a flush could be triggered
-    if ((flushTimeElapsed && unflushed > 0) ||
-       unflushed > flushMaxBytes_ ||
-       forceFlush_) {
-
+    if (flush) {
       // sync (force flush) file to disk
       fsync(fd_);
       unflushed = 0;
+      getNextFlushTime(&ts_next_flush);
 
       // notify anybody waiting for flush completion
-      forceFlush_ = false;
-      pthread_cond_broadcast(&flushed_);
+      if (forced_flush) {
+        pthread_mutex_lock(&mutex_);
+        forceFlush_ = false;
+        assert(enqueueBuffer_->isEmpty());
+        assert(dequeueBuffer_->isEmpty());
+        pthread_cond_broadcast(&flushed_);
+        pthread_mutex_unlock(&mutex_);
+      }
     }
   }
 }
@@ -483,7 +523,10 @@ void TFileTransport::flush() {
   // wait for flush to take place
   pthread_mutex_lock(&mutex_);
 
+  // Indicate that we are requesting a flush
   forceFlush_ = true;
+  // Wake up the writer thread so it will perform the flush immediately
+  pthread_cond_signal(&notEmpty_);
 
   while (forceFlush_) {
     pthread_cond_wait(&flushed_, &mutex_);

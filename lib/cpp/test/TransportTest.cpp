@@ -450,13 +450,13 @@ void test_rw(uint32_t totalSize,
   TEST_RW_BUF(CoupledTransports, 1024*1024*30, 0, 0); \
   TEST_RW_BUF(CoupledTransports, 1024*1024*10, rand4k, rand4k); \
   TEST_RW_BUF(CoupledTransports, 1024*1024*10, 167, 163); \
-  TEST_RW_BUF(CoupledTransports, 1024*1024, 1, 1); \
+  TEST_RW_BUF(CoupledTransports, 1024*512, 1, 1); \
   \
   TEST_RW_BUF(CoupledTransports, 1024*1024*10, 0, 0, rand4k, rand4k); \
   TEST_RW_BUF(CoupledTransports, 1024*1024*10, \
               rand4k, rand4k, rand4k, rand4k); \
   TEST_RW_BUF(CoupledTransports, 1024*1024*10, 167, 163, rand4k, rand4k); \
-  TEST_RW_BUF(CoupledTransports, 1024*1024*2, 1, 1, rand4k, rand4k);
+  TEST_RW_BUF(CoupledTransports, 1024*512, 1, 1, rand4k, rand4k);
 
 class TransportTestGen {
  public:

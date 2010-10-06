@@ -45,14 +45,15 @@ FsyncLog* fsync_log;
 // Provide BOOST_CHECK_LT() and BOOST_CHECK_GT(), in case we're compiled
 // with an older version of boost
 #ifndef BOOST_CHECK_LT
-#define BOOST_CHECK_CMP(a, b, op) \
-  BOOST_CHECK_MESSAGE((a) op (b), \
-                      "check " BOOST_STRINGIZE(a) " " BOOST_STRINGIZE(op) " " \
-                      BOOST_STRINGIZE(b) " failed: " BOOST_STRINGIZE(a) "=" <<\
-                      (a) << " " BOOST_STRINGIZE(b) "=" << (b))
+#define BOOST_CHECK_CMP(a, b, op, check_fn) \
+  check_fn((a) op (b), \
+           "check " BOOST_STRINGIZE(a) " " BOOST_STRINGIZE(op) " " \
+           BOOST_STRINGIZE(b) " failed: " BOOST_STRINGIZE(a) "=" << (a) << \
+           " " BOOST_STRINGIZE(b) "=" << (b))
 
-#define BOOST_CHECK_LT(a, b) BOOST_CHECK_CMP(a, b, <)
-#define BOOST_CHECK_GT(a, b) BOOST_CHECK_CMP(a, b, >)
+#define BOOST_CHECK_LT(a, b) BOOST_CHECK_CMP(a, b, <, BOOST_CHECK_MESSAGE)
+#define BOOST_CHECK_GT(a, b) BOOST_CHECK_CMP(a, b, >, BOOST_CHECK_MESSAGE)
+#define BOOST_REQUIRE_LT(a, b) BOOST_CHECK_CMP(a, b, <, BOOST_REQUIRE_MESSAGE)
 #endif // BOOST_CHECK_LT
 
 /**
@@ -143,7 +144,6 @@ int fsync(int fd) {
   }
   return 0;
 }
-
 
 int time_diff(const struct timeval* t1, const struct timeval* t2) {
   return (t2->tv_usec - t1->tv_usec) + (t2->tv_sec - t1->tv_sec) * 1000000;
@@ -301,6 +301,39 @@ void test_flush_max_us3() {
   test_flush_max_us_impl(400000, 300000, 1000000);
 }
 
+/**
+ * Make sure flush() is fast when there is nothing to do.
+ *
+ * TFileTransport used to have a bug where flush() would wait for the fsync
+ * timeout to expire.
+ */
+void test_noop_flush() {
+  TempFile f(tmp_dir, "thrift.TFileTransportTest.");
+  TFileTransport transport(f.getPath());
+
+  // Write something to start the writer thread.
+  uint8_t buf[] = "a";
+  transport.write(buf, 1);
+
+  struct timeval start;
+  gettimeofday(&start, NULL);
+
+  for (unsigned int n = 0; n < 10; ++n) {
+    transport.flush();
+
+    struct timeval now;
+    gettimeofday(&now, NULL);
+
+    // Fail if at any point we've been running for longer than half a second.
+    // (With the buggy code, TFileTransport used to take 3 seconds per flush())
+    //
+    // Use a fatal fail so we break out early, rather than continuing to make
+    // many more slow flush() calls.
+    int delta = time_diff(&start, &now);
+    BOOST_REQUIRE_LT(delta, 500000);
+  }
+}
+
 /**************************************************************************
  * General Initialization
  **************************************************************************/
@@ -358,6 +391,7 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   suite->add(BOOST_TEST_CASE(test_flush_max_us1));
   suite->add(BOOST_TEST_CASE(test_flush_max_us2));
   suite->add(BOOST_TEST_CASE(test_flush_max_us3));
+  suite->add(BOOST_TEST_CASE(test_noop_flush));
 
   return suite;
 }

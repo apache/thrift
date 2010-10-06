@@ -290,7 +290,7 @@ class TFileTransport : public TFileReaderTransport,
 
  private:
   // helper functions for writing to a file
-  void enqueueEvent(const uint8_t* buf, uint32_t eventLen, bool blockUntilFlush);
+  void enqueueEvent(const uint8_t* buf, uint32_t eventLen);
   bool swapEventBuffers(struct timespec* deadline);
   bool initBufferAndWriteThread();
 
