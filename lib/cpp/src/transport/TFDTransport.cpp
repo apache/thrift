@@ -45,14 +45,23 @@ void TFDTransport::close() {
 }
 
 uint32_t TFDTransport::read(uint8_t* buf, uint32_t len) {
-  ssize_t rv = ::read(fd_, buf, len);
-  if (rv < 0) {
-    int errno_copy = errno;
-    throw TTransportException(TTransportException::UNKNOWN,
-                              "TFDTransport::read()",
-                              errno_copy);
+  unsigned int maxRetries = 5; // same as the TSocket default
+  unsigned int retries = 0;
+  while (true) {
+    ssize_t rv = ::read(fd_, buf, len);
+    if (rv < 0) {
+      if (errno == EINTR && retries < maxRetries) {
+        // If interrupted, try again
+        ++retries;
+        continue;
+      }
+      int errno_copy = errno;
+      throw TTransportException(TTransportException::UNKNOWN,
+                                "TFDTransport::read()",
+                                errno_copy);
+    }
+    return rv;
   }
-  return rv;
 }
 
 void TFDTransport::write(const uint8_t* buf, uint32_t len) {

@@ -148,7 +148,7 @@ void test_write_then_read(const uint8_t* buf, uint32_t buf_len) {
   zlib_trans->finish();
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
-  uint32_t got = zlib_trans->read(mirror.get(), buf_len);
+  uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
   BOOST_REQUIRE_EQUAL(got, buf_len);
   BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf, buf_len), 0);
   zlib_trans->verifyChecksum();
@@ -172,7 +172,7 @@ void test_separate_checksum(const uint8_t* buf, uint32_t buf_len) {
                                       tmp_buf.length()-1));
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
-  uint32_t got = zlib_trans->read(mirror.get(), buf_len);
+  uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
   BOOST_REQUIRE_EQUAL(got, buf_len);
   BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf, buf_len), 0);
   zlib_trans->verifyChecksum();
@@ -193,7 +193,7 @@ void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
                       tmp_buf.length());
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
-  uint32_t got = zlib_trans->read(mirror.get(), buf_len);
+  uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
   BOOST_REQUIRE_EQUAL(got, buf_len);
   BOOST_CHECK_EQUAL(memcmp(mirror.get(), buf, buf_len), 0);
   try {
@@ -233,7 +233,8 @@ void test_read_write_mix(const uint8_t* buf, uint32_t buf_len,
       expected_read_len = buf_len - tot;
     }
     uint32_t got = zlib_trans->read(mirror.get() + tot, read_len);
-    BOOST_REQUIRE_EQUAL(got, expected_read_len);
+    BOOST_REQUIRE_LE(got, expected_read_len);
+    BOOST_REQUIRE_NE(got, 0);
     tot += got;
   }
 
@@ -271,7 +272,7 @@ void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
   try {
-    zlib_trans->read(mirror.get(), buf_len);
+    zlib_trans->readAll(mirror.get(), buf_len);
     zlib_trans->verifyChecksum();
     BOOST_ERROR("verifyChecksum() did not report an error");
   } catch (TZlibTransportException& ex) {

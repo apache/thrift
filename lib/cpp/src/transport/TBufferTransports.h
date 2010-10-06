@@ -389,8 +389,11 @@ class TFramedTransport
  protected:
   /**
    * Reads a frame of input from the underlying stream.
+   *
+   * Returns true if a frame was read successfully, or false on EOF.
+   * (Raises a TTransportException if EOF occurs after a partial frame.)
    */
-  void readFrame();
+  bool readFrame();
 
   void initPointers() {
     setReadBuffer(NULL, 0);

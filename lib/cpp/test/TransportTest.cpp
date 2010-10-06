@@ -581,6 +581,64 @@ void test_read_part_available() {
 }
 
 template <class CoupledTransports>
+void test_read_partial_midframe() {
+  CoupledTransports transports;
+  BOOST_REQUIRE(transports.in != NULL);
+  BOOST_REQUIRE(transports.out != NULL);
+
+  uint8_t write_buf[16];
+  uint8_t read_buf[16];
+  memset(write_buf, 'a', sizeof(write_buf));
+
+  // Attempt to read 10 bytes, when only 9 are available, but after we have
+  // already read part of the data that is available.  This exercises a
+  // different code path for several of the transports.
+  //
+  // For transports that add their own framing (e.g., TFramedTransport and
+  // TFileTransport), the two flush calls break up the data in to a 10 byte
+  // frame and a 3 byte frame.  The first read then puts us partway through the
+  // first frame, and then we attempt to read past the end of that frame, and
+  // through the next frame, too.
+  //
+  // For buffered transports that perform read-ahead (e.g.,
+  // TBufferedTransport), the read-ahead will most likely see all 13 bytes
+  // written on the first read.  The next read will then attempt to read past
+  // the end of the read-ahead buffer.
+  //
+  // Flush 10 bytes, then 3 bytes.  This creates 2 separate frames for
+  // transports that track framing internally.
+  transports.out->write(write_buf, 10);
+  transports.out->flush();
+  transports.out->write(write_buf, 3);
+  transports.out->flush();
+
+  // Now read 4 bytes, so that we are partway through the written data.
+  uint32_t bytes_read = transports.in->read(read_buf, 4);
+  BOOST_CHECK_EQUAL(bytes_read, 4);
+
+  // Now attempt to read 10 bytes.  Only 9 more are available.
+  //
+  // We should be able to get all 9 bytes, but it might take multiple read
+  // calls, since it is valid for read() to return fewer bytes than requested.
+  // (Most transports do immediately return 9 bytes, but the framing transports
+  // tend to only return to the end of the current frame, which is 6 bytes in
+  // this case.)
+  uint32_t total_read = 0;
+  while (total_read < 9) {
+    set_trigger(3, transports.out, 1);
+    bytes_read = transports.in->read(read_buf, 10);
+    BOOST_REQUIRE_EQUAL(numTriggersFired, 0);
+    BOOST_REQUIRE_GT(bytes_read, 0);
+    total_read += bytes_read;
+    BOOST_REQUIRE_LE(total_read, 9);
+  }
+
+  BOOST_CHECK_EQUAL(total_read, 9);
+
+  clear_triggers();
+}
+
+template <class CoupledTransports>
 void test_borrow_part_available() {
   CoupledTransports transports;
   BOOST_REQUIRE(transports.in != NULL);
@@ -849,6 +907,12 @@ class TransportTestGen {
              transportName);
     tc = boost::unit_test::make_test_case(
           test_read_part_available<CoupledTransports>, name);
+    suite_->add(tc, expectedFailures);
+
+    snprintf(name, sizeof(name), "%s::test_read_partial_midframe()",
+             transportName);
+    tc = boost::unit_test::make_test_case(
+          test_read_partial_midframe<CoupledTransports>, name);
     suite_->add(tc, expectedFailures);
 
     snprintf(name, sizeof(name), "%s::test_read_none_available()",

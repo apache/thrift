@@ -149,6 +149,14 @@ uint32_t TZlibTransport::read(uint8_t* buf, uint32_t len) {
       return len;
     }
 
+    // If we will need to read from the underlying transport to get more data,
+    // but we already have some data available, return it now.  Reading from
+    // the underlying transport may block, and read() is only allowed to block
+    // when no data is available.
+    if (need < len && rstream_->avail_in == 0) {
+      return len - need;
+    }
+
     // If we get to this point, we need to get some more data.
 
     // If zlib has reported the end of a stream, we can't really do any more.
