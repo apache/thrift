@@ -62,6 +62,9 @@ class t_cpp_generator : public t_oop_generator {
     iter = parsed_options.find("cob_style");
     gen_cob_style_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("no_client_completion");
+    gen_no_client_completion_ = (iter != parsed_options.end());
+
     out_dir_base_ = "gen-cpp";
   }
 
@@ -236,6 +239,11 @@ class t_cpp_generator : public t_oop_generator {
    * True iff we should generate "Continuation OBject"-style classes as well.
    */
   bool gen_cob_style_;
+
+  /**
+   * True if we should omit calls to completion__() in CobClient class.
+   */
+  bool gen_no_client_completion_;
 
   /**
    * Strings for namespace, computed once up front then used directly
@@ -1834,6 +1842,10 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
       indent() << "boost::shared_ptr< ::apache::thrift::async::TAsyncChannel> getChannel() {" << endl <<
       indent() << "  return channel_;" << endl <<
       indent() << "}" << endl;
+    if (!gen_no_client_completion_) {
+      f_header_ <<
+        indent() << "virtual void completed__(bool success) {}" << endl;
+    }
   }
 
   vector<t_function*> functions = tservice->get_functions();
@@ -1991,27 +2003,49 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
           endl <<
           indent() << "int32_t rseqid = 0;" << endl <<
           indent() << "std::string fname;" << endl <<
-          indent() << "::apache::thrift::protocol::TMessageType mtype;" << endl <<
-          endl <<
+          indent() << "::apache::thrift::protocol::TMessageType mtype;" << endl;
+        if (style == "Cob" && !gen_no_client_completion_) {
+          f_service_ <<
+            indent() << "bool completed = false;" << endl << endl <<
+            indent() << "try {";
+          indent_up();
+        }
+        f_service_ << endl <<
           indent() << "iprot_->readMessageBegin(fname, mtype, rseqid);" << endl <<
           indent() << "if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {" << endl <<
           indent() << "  ::apache::thrift::TApplicationException x;" << endl <<
           indent() << "  x.read(iprot_);" << endl <<
           indent() << "  iprot_->readMessageEnd();" << endl <<
-          indent() << "  iprot_->getTransport()->readEnd();" << endl <<
+          indent() << "  iprot_->getTransport()->readEnd();" << endl;
+        if (style == "Cob" && !gen_no_client_completion_) {
+          f_service_ <<
+            indent() << "  completed = true;" << endl <<
+            indent() << "  completed__(true);" << endl;
+        }
+        f_service_ <<
           indent() << "  throw x;" << endl <<
           indent() << "}" << endl <<
           indent() << "if (mtype != ::apache::thrift::protocol::T_REPLY) {" << endl <<
           indent() << "  iprot_->skip(::apache::thrift::protocol::T_STRUCT);" << endl <<
           indent() << "  iprot_->readMessageEnd();" << endl <<
-          indent() << "  iprot_->getTransport()->readEnd();" << endl <<
-          indent() << "  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);" << endl <<
+          indent() << "  iprot_->getTransport()->readEnd();" << endl;
+        if (style == "Cob" && !gen_no_client_completion_) {
+          f_service_ <<
+            indent() << "  completed = true;" << endl <<
+            indent() << "  completed__(false);" << endl;
+        }
+        f_service_ <<
           indent() << "}" << endl <<
           indent() << "if (fname.compare(\"" << (*f_iter)->get_name() << "\") != 0) {" << endl <<
           indent() << "  iprot_->skip(::apache::thrift::protocol::T_STRUCT);" << endl <<
           indent() << "  iprot_->readMessageEnd();" << endl <<
-          indent() << "  iprot_->getTransport()->readEnd();" << endl <<
-          indent() << "  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);" << endl <<
+          indent() << "  iprot_->getTransport()->readEnd();" << endl;
+        if (style == "Cob" && !gen_no_client_completion_) {
+          f_service_ <<
+            indent() << "  completed = true;" << endl <<
+            indent() << "  completed__(false);" << endl;
+        }
+        f_service_ <<
           indent() << "}" << endl;
 
         if (!(*f_iter)->get_returntype()->is_void() &&
@@ -2040,12 +2074,24 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
           if (is_complex_type((*f_iter)->get_returntype())) {
             f_service_ <<
               indent() << "if (result.__isset.success) {" << endl <<
-              indent() << "  // _return pointer has now been filled" << endl <<
+              indent() << "  // _return pointer has now been filled" << endl;
+            if (style == "Cob" && !gen_no_client_completion_) {
+              f_service_ <<
+                indent() << "  completed = true;" << endl <<
+                indent() << "  completed__(true);" << endl;
+            }
+            f_service_ <<
               indent() << "  return;" << endl <<
               indent() << "}" << endl;
           } else {
             f_service_ <<
-              indent() << "if (result.__isset.success) {" << endl <<
+              indent() << "if (result.__isset.success) {" << endl;
+            if (style == "Cob" && !gen_no_client_completion_) {
+              f_service_ <<
+                indent() << "  completed = true;" << endl <<
+                indent() << "  completed__(true);" << endl;
+            }
+            f_service_ <<
               indent() << "  return _return;" << endl <<
               indent() << "}" << endl;
           }
@@ -2056,20 +2102,45 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         vector<t_field*>::const_iterator x_iter;
         for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
           f_service_ <<
-            indent() << "if (result.__isset." << (*x_iter)->get_name() << ") {" << endl <<
+            indent() << "if (result.__isset." << (*x_iter)->get_name() << ") {" << endl;
+          if (style == "Cob" && !gen_no_client_completion_) {
+            f_service_ <<
+              indent() << "  completed = true;" << endl <<
+              indent() << "  completed__(true);" << endl;
+          }
+          f_service_  <<
             indent() << "  throw result." << (*x_iter)->get_name() << ";" << endl <<
             indent() << "}" << endl;
         }
 
         // We only get here if we are a void function
         if ((*f_iter)->get_returntype()->is_void()) {
+          if (style == "Cob" && !gen_no_client_completion_) {
+            f_service_ <<
+              indent() << "completed = true;" << endl <<
+              indent() << "completed__(true);" << endl;
+          }
           indent(f_service_) <<
             "return;" << endl;
         } else {
+          if (style == "Cob" && !gen_no_client_completion_) {
+            f_service_ <<
+              indent() << "completed = true;" << endl <<
+              indent() << "completed__(true);" << endl;
+          }
           f_service_ <<
             indent() << "throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
         }
-
+        if (style == "Cob" && !gen_no_client_completion_) {
+          indent_down();
+          f_service_ <<
+            indent() << "} catch (...) {" << endl <<
+            indent() << "  if (!completed) {" << endl <<
+            indent() << "    completed__(false);" << endl <<
+            indent() << "  }" << endl <<
+            indent() << "  throw;" << endl <<
+            indent() << "}" << endl;
+        }
         // Close function
         scope_down(f_service_);
         f_service_ << endl;
