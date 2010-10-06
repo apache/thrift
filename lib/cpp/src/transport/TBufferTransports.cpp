@@ -324,24 +324,25 @@ void TMemoryBuffer::ensureCanWrite(uint32_t len) {
   }
 
   // Grow the buffer as necessary.
+  uint32_t new_size = bufferSize_;
   while (len > avail) {
-    bufferSize_ *= 2;
-    wBound_ = buffer_ + bufferSize_;
-    avail = available_write();
+    new_size = new_size > 0 ? new_size * 2 : 1;
+    avail = available_write() + (new_size - bufferSize_);
   }
 
   // Allocate into a new pointer so we don't bork ours if it fails.
-  void* new_buffer = std::realloc(buffer_, bufferSize_);
+  void* new_buffer = std::realloc(buffer_, new_size);
   if (new_buffer == NULL) {
     throw TTransportException("Out of memory.");
   }
+  bufferSize_ = new_size;
 
   ptrdiff_t offset = (uint8_t*)new_buffer - buffer_;
   buffer_ += offset;
   rBase_ += offset;
   rBound_ += offset;
   wBase_ += offset;
-  wBound_ += offset;
+  wBound_ = buffer_ + bufferSize_;
 }
 
 void TMemoryBuffer::writeSlow(const uint8_t* buf, uint32_t len) {
