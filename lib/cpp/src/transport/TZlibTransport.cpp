@@ -161,31 +161,41 @@ uint32_t TZlibTransport::read(uint8_t* buf, uint32_t len) {
     rstream_->avail_out = urbuf_size_;
     urpos_ = 0;
 
-    // If we don't have any more compressed data available,
-    // read some from the underlying transport.
-    if (rstream_->avail_in == 0) {
-      uint32_t got = transport_->read(crbuf_, crbuf_size_);
-      if (got == 0) {
-        return len - need;
-      }
-      rstream_->next_in  = crbuf_;
-      rstream_->avail_in = got;
-    }
-
-    // We have some compressed data now.  Uncompress it.
-    int zlib_rv = inflate(rstream_, Z_SYNC_FLUSH);
-
-    if (zlib_rv == Z_STREAM_END) {
-      if (standalone_) {
-        input_ended_ = true;
-      }
-    } else {
-      checkZlibRv(zlib_rv, rstream_->msg);
+    // Call inflate() to uncompress some more data
+    if (!readFromZlib()) {
+      // no data available from underlying transport
+      return len - need;
     }
 
     // Okay.  The read buffer should have whatever we can give it now.
     // Loop back to the start and try to give some more.
   }
+}
+
+bool TZlibTransport::readFromZlib() {
+  assert(!input_ended_);
+
+  // If we don't have any more compressed data available,
+  // read some from the underlying transport.
+  if (rstream_->avail_in == 0) {
+    uint32_t got = transport_->read(crbuf_, crbuf_size_);
+    if (got == 0) {
+      return false;
+    }
+    rstream_->next_in  = crbuf_;
+    rstream_->avail_in = got;
+  }
+
+  // We have some compressed data now.  Uncompress it.
+  int zlib_rv = inflate(rstream_, Z_SYNC_FLUSH);
+
+  if (zlib_rv == Z_STREAM_END) {
+    input_ended_ = true;
+  } else {
+    checkZlibRv(zlib_rv, rstream_->msg);
+  }
+
+  return true;
 }
 
 
@@ -315,30 +325,60 @@ void TZlibTransport::consume(uint32_t len) {
 }
 
 void TZlibTransport::verifyChecksum() {
-  if (!standalone_) {
+  // If zlib has already reported the end of the stream,
+  // it has verified the checksum.
+  if (input_ended_) {
+    return;
+  }
+
+  // This should only be called when reading is complete.
+  // If the caller still has unread data, throw an exception.
+  if (readAvail() > 0) {
     throw TTransportException(
-        TTransportException::BAD_ARGS,
-        "TZLibTransport can only verify checksums for standalone objects.");
+        TTransportException::CORRUPTED_DATA,
+        "verifyChecksum() called before end of zlib stream");
   }
 
-  if (!input_ended_) {
-    // This should only be called when reading is complete,
-    // but it's possible that the whole checksum has not been fed to zlib yet.
-    // We try to read an extra byte here to force zlib to finish the stream.
-    // It might not always be easy to "unread" this byte,
-    // but we throw an exception if we get it, which is not really
-    // a recoverable error, so it doesn't matter.
-    uint8_t buf[1];
-    uint32_t got = this->read(buf, sizeof(buf));
-    if (got || !input_ended_) {
-      throw TTransportException(
-          TTransportException::CORRUPTED_DATA,
-          "Zlib stream not complete.");
-    }
+  // Reset the rstream fields, in case avail_out is 0.
+  // (Since readAvail() is 0, we know there is no unread data in urbuf_)
+  rstream_->next_out  = urbuf_;
+  rstream_->avail_out = urbuf_size_;
+  urpos_ = 0;
+
+  // Call inflate()
+  // This will throw an exception if the checksum is bad.
+  bool performed_inflate = readFromZlib();
+  if (!performed_inflate) {
+    // We needed to read from the underlying transport, and the read() call
+    // returned 0.
+    //
+    // Not all TTransport implementations behave the same way here, so we'll
+    // end up with different behavior depending on the underlying transport.
+    //
+    // For some transports (e.g., TFDTransport), read() blocks if no more data
+    // is available.  They only return 0 if EOF has been reached, or if the
+    // remote endpoint has closed the connection.  For those transports,
+    // verifyChecksum() will block until the checksum becomes available.
+    //
+    // Other transport types (e.g., TMemoryBuffer) always return 0 immediately
+    // if no more data is available.  For those transport types, verifyChecksum
+    // will raise the following exception if the checksum is not available from
+    // the underlying transport yet.
+    throw TTransportException(TTransportException::CORRUPTED_DATA,
+                              "checksum not available yet in "
+                              "verifyChecksum()");
   }
 
-  // If the checksum had been bad, we would have gotten an error while
-  // inflating.
+  // If input_ended_ is true now, the checksum has been verified
+  if (input_ended_) {
+    return;
+  }
+
+  // The caller invoked us before the actual end of the data stream
+  assert(rstream_->avail_out < urbuf_size_);
+  throw TTransportException(TTransportException::CORRUPTED_DATA,
+                            "verifyChecksum() called before end of "
+                            "zlib stream");
 }
 
 

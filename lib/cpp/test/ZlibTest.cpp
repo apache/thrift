@@ -143,7 +143,7 @@ uint8_t* gen_random_buffer(uint32_t buf_len) {
 
 void test_write_then_read(const uint8_t* buf, uint32_t buf_len) {
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf, buf_len);
   zlib_trans->finish();
 
@@ -162,12 +162,12 @@ void test_separate_checksum(const uint8_t* buf, uint32_t buf_len) {
   // the stream was not complete.  I'm about to go fix that.
   // It worked.  Awesome.
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf, buf_len);
   zlib_trans->finish();
   string tmp_buf;
   membuf->appendBufferToString(tmp_buf);
-  zlib_trans.reset(new TZlibTransport(membuf, false,
+  zlib_trans.reset(new TZlibTransport(membuf,
                                       TZlibTransport::DEFAULT_URBUF_SIZE,
                                       tmp_buf.length()-1));
 
@@ -182,7 +182,7 @@ void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
   // Make sure we still get that "not complete" error if
   // it really isn't complete.
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf, buf_len);
   zlib_trans->finish();
   string tmp_buf;
@@ -209,7 +209,7 @@ void test_read_write_mix(const uint8_t* buf, uint32_t buf_len,
                          const shared_ptr<SizeGenerator>& read_gen) {
   // Try it with a mix of read/write sizes.
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   unsigned int tot;
 
   tot = 0;
@@ -244,7 +244,7 @@ void test_read_write_mix(const uint8_t* buf, uint32_t buf_len,
 void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
   // Verify checksum checking.
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf, buf_len);
   zlib_trans->finish();
   string tmp_buf;
@@ -282,7 +282,7 @@ void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
 void test_write_after_flush(const uint8_t* buf, uint32_t buf_len) {
   // write some data
   shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf, false));
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf, buf_len);
 
   // call finish()
@@ -321,7 +321,7 @@ void test_no_write() {
   {
     // Create a TZlibTransport object, and immediately destroy it
     // when it goes out of scope.
-    TZlibTransport w_zlib_trans(membuf, false);
+    TZlibTransport w_zlib_trans(membuf);
   }
 
   BOOST_CHECK_EQUAL(membuf->available_read(), 0);

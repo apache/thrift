@@ -183,8 +183,8 @@ class CoupledZlibTransports : public CoupledTransports<TZlibTransport> {
  public:
   CoupledZlibTransports() :
     buf(new TMemoryBuffer) {
-    in = new TZlibTransport(buf, false);
-    out = new TZlibTransport(buf, false);
+    in = new TZlibTransport(buf);
+    out = new TZlibTransport(buf);
   }
 
   ~CoupledZlibTransports() {

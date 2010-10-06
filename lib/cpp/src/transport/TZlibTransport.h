@@ -76,8 +76,6 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
   /**
    * @param transport    The transport to read compressed data from
    *                     and write compressed data to.
-   * @param use_for_rpc  True if this object will be used for RPC,
-   *                     false if this is a standalone object.
    * @param urbuf_size   Uncompressed buffer size for reading.
    * @param crbuf_size   Compressed buffer size for reading.
    * @param uwbuf_size   Uncompressed buffer size for writing.
@@ -86,13 +84,11 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
    * TODO(dreiss): Write a constructor that isn't a pain.
    */
   TZlibTransport(boost::shared_ptr<TTransport> transport,
-                 bool use_for_rpc,
                  int urbuf_size = DEFAULT_URBUF_SIZE,
                  int crbuf_size = DEFAULT_CRBUF_SIZE,
                  int uwbuf_size = DEFAULT_UWBUF_SIZE,
                  int cwbuf_size = DEFAULT_CWBUF_SIZE) :
     transport_(transport),
-    standalone_(!use_for_rpc),
     urpos_(0),
     uwpos_(0),
     input_ended_(false),
@@ -108,13 +104,6 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
     rstream_(NULL),
     wstream_(NULL)
   {
-
-    if (!standalone_) {
-      throw TTransportException(
-          TTransportException::BAD_ARGS,
-          "TZLibTransport has not been tested for RPC.");
-    }
-
     if (uwbuf_size_ < MIN_DIRECT_DEFLATE_SIZE) {
       // Have to copy this into a local because of a linking issue.
       int minimum = MIN_DIRECT_DEFLATE_SIZE;
@@ -206,22 +195,47 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
   inline int readAvail();
   void flushToTransport(int flush);
   void flushToZlib(const uint8_t* buf, int len, int flush);
+  bool readFromZlib();
 
+ private:
+  // Deprecated constructor signature.
+  //
+  // This used to be the constructor signature.  If you are getting a compile
+  // error because you are trying to use this constructor, you need to update
+  // your code as follows:
+  // - Remove the use_for_rpc argument in the constructur.
+  //   There is no longer any distinction between RPC and standalone zlib
+  //   transports.  (Previously, only standalone was allowed, anyway.)
+  // - Replace TZlibTransport::flush() calls with TZlibTransport::finish()
+  //   in your code.  Previously, flush() used to finish the zlib stream.
+  //   Now flush() only flushes out pending data, so more writes can be
+  //   performed after a flush().  The finish() method can be used to finalize
+  //   the zlib stream.
+  //
+  // If we don't declare this constructor, old code written as
+  // TZlibTransport(trans, false) still compiles but behaves incorrectly.
+  // The second bool argument is converted to an integer and used as the
+  // urbuf_size.
+  TZlibTransport(boost::shared_ptr<TTransport> transport,
+                 bool use_for_rpc,
+                 int urbuf_size = DEFAULT_URBUF_SIZE,
+                 int crbuf_size = DEFAULT_CRBUF_SIZE,
+                 int uwbuf_size = DEFAULT_UWBUF_SIZE,
+                 int cwbuf_size = DEFAULT_CWBUF_SIZE);
+
+ protected:
   // Writes smaller than this are buffered up.
   // Larger (or equal) writes are dumped straight to zlib.
   static const int MIN_DIRECT_DEFLATE_SIZE = 32;
 
   boost::shared_ptr<TTransport> transport_;
-  bool standalone_;
 
   int urpos_;
   int uwpos_;
 
-  /// True iff zlib has reached the end of a stream.
-  /// This is only ever true in standalone protcol objects.
+  /// True iff zlib has reached the end of the input stream.
   bool input_ended_;
   /// True iff we have finished the output stream.
-  /// This is only ever true in standalone protcol objects.
   bool output_finished_;
 
   int urbuf_size_;
