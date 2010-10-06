@@ -76,6 +76,9 @@ class TNonblockingServer : public TServer {
   /// Default limit on connections in handler/task processing
   static const int MAX_ACTIVE_PROCESSORS = INT_MAX;
 
+  /// Default size of write buffer
+  static const int WRITE_BUFFER_DEFAULT_SIZE = 1024;
+
   /// Maximum size of read buffer allocated to idle connection (0 = unlimited)
   static const int IDLE_READ_BUFFER_LIMIT = 1024;
 
@@ -135,10 +138,16 @@ class TNonblockingServer : public TServer {
   TOverloadAction overloadAction_;
 
   /**
+   * The write buffer is initialized (and when idleWriteBufferLimit_ is checked
+   * and found to be exceeded, reinitialized) to this size.
+   */
+  size_t writeBufferDefaultSize_;
+
+  /**
    * Max read buffer size for an idle TConnection.  When we place an idle
    * TConnection into connectionStack_ or on every resizeBufferEveryN_ calls,
-   * we insure that its read buffer is reduced to this size to insure that
-   * idle connections don't hog memory.  0 disables this check.
+   * we will free the buffer (such that it will be reinitialized by the next
+   * received frame) if it has exceeded this limit.  0 disables this check.
    */
   size_t idleReadBufferLimit_;
 
@@ -146,8 +155,8 @@ class TNonblockingServer : public TServer {
    * Max write buffer size for an idle connection.  When we place an idle
    * TConnection into connectionStack_ or on every resizeBufferEveryN_ calls,
    * we insure that its write buffer is <= to this size; otherwise we
-   * replace it with a new one to insure that idle connections don't hog
-   * memory. 0 disables this check.
+   * replace it with a new one of writeBufferDefaultSize_ bytes to insure that
+   * idle connections don't hog memory. 0 disables this check.
    */
   size_t idleWriteBufferLimit_;
 
@@ -203,6 +212,7 @@ class TNonblockingServer : public TServer {
     taskExpireTime_(0),
     overloadHysteresis_(0.8),
     overloadAction_(T_OVERLOAD_NO_ACTION),
+    writeBufferDefaultSize_(WRITE_BUFFER_DEFAULT_SIZE),
     idleReadBufferLimit_(IDLE_READ_BUFFER_LIMIT),
     idleWriteBufferLimit_(IDLE_WRITE_BUFFER_LIMIT),
     resizeBufferEveryN_(RESIZE_BUFFER_EVERY_N),
@@ -227,6 +237,7 @@ class TNonblockingServer : public TServer {
     taskExpireTime_(0),
     overloadHysteresis_(0.8),
     overloadAction_(T_OVERLOAD_NO_ACTION),
+    writeBufferDefaultSize_(WRITE_BUFFER_DEFAULT_SIZE),
     idleReadBufferLimit_(IDLE_READ_BUFFER_LIMIT),
     idleWriteBufferLimit_(IDLE_WRITE_BUFFER_LIMIT),
     resizeBufferEveryN_(RESIZE_BUFFER_EVERY_N),
@@ -260,6 +271,7 @@ class TNonblockingServer : public TServer {
     taskExpireTime_(0),
     overloadHysteresis_(0.8),
     overloadAction_(T_OVERLOAD_NO_ACTION),
+    writeBufferDefaultSize_(WRITE_BUFFER_DEFAULT_SIZE),
     idleReadBufferLimit_(IDLE_READ_BUFFER_LIMIT),
     idleWriteBufferLimit_(IDLE_WRITE_BUFFER_LIMIT),
     resizeBufferEveryN_(RESIZE_BUFFER_EVERY_N),
@@ -474,9 +486,27 @@ class TNonblockingServer : public TServer {
   bool drainPendingTask();
 
   /**
+   * Get the starting size of a TConnection object's write buffer.
+   *
+   * @return # bytes we initialize a TConnection object's write buffer to.
+   */
+  size_t getWriteBufferDefaultSize() const {
+    return writeBufferDefaultSize_;
+  }
+
+  /**
+   * Set the starting size of a TConnection object's write buffer.
+   *
+   * @param size # bytes we initialize a TConnection object's write buffer to.
+   */
+  void setWriteBufferDefaultSize(size_t size) {
+    writeBufferDefaultSize_ = size;
+  }
+
+  /**
    * Get the maximum size of read buffer allocated to idle TConnection objects.
    *
-   * @return # bytes beyond which we will shrink buffers when idle.
+   * @return # bytes beyond which we will dealloc idle buffer.
    */
   size_t getIdleReadBufferLimit() const {
     return idleReadBufferLimit_;
@@ -486,7 +516,7 @@ class TNonblockingServer : public TServer {
    * [NOTE: This is for backwards compatibility, use getIdleReadBufferLimit().]
    * Get the maximum size of read buffer allocated to idle TConnection objects.
    *
-   * @return # bytes beyond which we will shrink buffers when idle.
+   * @return # bytes beyond which we will dealloc idle buffer.
    */
   size_t getIdleBufferMemLimit() const {
     return idleReadBufferLimit_;
@@ -496,7 +526,8 @@ class TNonblockingServer : public TServer {
    * Set the maximum size read buffer allocated to idle TConnection objects.
    * If a TConnection object is found (either on connection close or between
    * calls when resizeBufferEveryN_ is set) with more than this much memory
-   * allocated to its read buffer, we shrink it to this value.
+   * allocated to its read buffer, we free it and allow it to be reinitialized
+   * on the next received frame.
    *
    * @param limit of bytes beyond which we will shrink buffers when checked.
    */
@@ -509,7 +540,8 @@ class TNonblockingServer : public TServer {
    * Set the maximum size read buffer allocated to idle TConnection objects.
    * If a TConnection object is found (either on connection close or between
    * calls when resizeBufferEveryN_ is set) with more than this much memory
-   * allocated to its read buffer, we shrink it to this value.
+   * allocated to its read buffer, we free it and allow it to be reinitialized
+   * on the next received frame.
    *
    * @param limit of bytes beyond which we will shrink buffers when checked.
    */
@@ -532,7 +564,8 @@ class TNonblockingServer : public TServer {
    * Set the maximum size write buffer allocated to idle TConnection objects.
    * If a TConnection object is found (either on connection close or between
    * calls when resizeBufferEveryN_ is set) with more than this much memory
-   * allocated to its write buffer, we destroy and construct that buffer.
+   * allocated to its write buffer, we destroy and construct that buffer with
+   * writeBufferDefaultSize_ bytes.
    *
    * @param limit of bytes beyond which we will shrink buffers when idle.
    */
@@ -651,8 +684,9 @@ class TNonblockingServer : public TServer {
   void serve();
 };
 
-/// Two states for sockets, recv and send mode
+/// Three states for sockets: recv frame size, recv data, and send mode
 enum TSocketState {
+  SOCKET_RECV_FRAMING,
   SOCKET_RECV,
   SOCKET_SEND
 };
@@ -680,9 +714,6 @@ enum TAppState {
  */
 class TConnection {
  private:
-
-  /// Starting size for new connection buffer
-  static const int STARTING_CONNECTION_BUFFER_SIZE = 1024;
 
   /// Server handle
   TNonblockingServer* server_;
@@ -797,17 +828,14 @@ class TConnection {
   /// Constructor
   TConnection(int socket, short eventFlags, TNonblockingServer *s,
               const sockaddr* addr, socklen_t addrLen) {
-    readBuffer_ = (uint8_t*)std::malloc(STARTING_CONNECTION_BUFFER_SIZE);
-    if (readBuffer_ == NULL) {
-      throw new apache::thrift::TException("Out of memory.");
-    }
-    readBufferSize_ = STARTING_CONNECTION_BUFFER_SIZE;
+    readBuffer_ = NULL;
+    readBufferSize_ = 0;
 
     // Allocate input and output tranpsorts
     // these only need to be allocated once per TConnection (they don't need to be
     // reallocated on init() call)
     inputTransport_ = boost::shared_ptr<TMemoryBuffer>(new TMemoryBuffer(readBuffer_, readBufferSize_));
-    outputTransport_ = boost::shared_ptr<TMemoryBuffer>(new TMemoryBuffer());
+    outputTransport_ = boost::shared_ptr<TMemoryBuffer>(new TMemoryBuffer(s->getWriteBufferDefaultSize()));
     tSocket_.reset(new TSocket());
 
     init(socket, eventFlags, s, addr, addrLen);
