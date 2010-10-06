@@ -623,6 +623,15 @@ class TMemoryBuffer : public TVirtualTransport<TMemoryBuffer, TBufferBase> {
     // Our old self gets destroyed.
   }
 
+  /// See constructor documentation.
+  void resetBuffer(uint32_t sz) {
+    // Construct the new buffer.
+    TMemoryBuffer new_buffer(sz);
+    // Move it into ourself.
+    this->swap(new_buffer);
+    // Our old self gets destroyed.
+  }    
+
   std::string readAsString(uint32_t len) {
     std::string str;
     (void)readAppendToString(str, len);
