@@ -168,8 +168,8 @@ void test_destructor() {
   TempFile f(tmp_dir, "thrift.TFileTransportTest.");
 
   unsigned int const NUM_ITERATIONS = 1000;
-  int const MAX_DESTRUCTOR_USEC = 500;
 
+  unsigned int num_over_500us = 0;
   for (unsigned int n = 0; n < NUM_ITERATIONS; ++n) {
     ftruncate(f.getFD(), 0);
 
@@ -195,8 +195,22 @@ void test_destructor() {
     gettimeofday(&end, NULL);
 
     int delta = time_diff(&start, &end);
-    BOOST_CHECK_LT(delta, MAX_DESTRUCTOR_USEC);
+
+    // If any attempt takes more than 100ms, treat that as a failure.
+    // Treat this as a fatal failure, so we'll return now instead of
+    // looping over a very slow operation.
+    BOOST_REQUIRE_LT(delta, 100000);
+
+    // Normally, it takes less than 500us on my dev box.
+    // However, if the box is heavily loaded, some of the test runs
+    // take longer, since we're just waiting for our turn on the CPU.
+    if (delta > 500) {
+      ++num_over_500us;
+    }
   }
+
+  // Make sure fewer than 10% of the runs took longer than 500us
+  BOOST_CHECK(num_over_500us < (NUM_ITERATIONS / 10));
 }
 
 /**
@@ -220,8 +234,14 @@ void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us,
   uint8_t buf[] = "a";
   uint32_t buflen = sizeof(buf);
 
-  // Flush every 500us
+  // Set the flush interval
   transport->setFlushMaxUs(flush_us);
+
+  // Make one call to write, to start the writer thread now.
+  // (If we just let the thread get created during our test loop,
+  // the thread creation sometimes takes long enough to make the first
+  // fsync interval fail the check.)
+  transport->write(buf, buflen);
 
   // Add one entry to the fsync log, just to mark the start time
   log.fsync(-1);
