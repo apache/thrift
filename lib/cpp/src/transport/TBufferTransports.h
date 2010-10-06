@@ -591,23 +591,7 @@ class TMemoryBuffer : public TVirtualTransport<TMemoryBuffer, TBufferBase> {
     str.append((char*)buf, sz);
   }
 
-  void resetBuffer(bool reset_capacity = false) {
-    if (reset_capacity)
-    {
-      assert(owner_);
-
-      void* new_buffer = std::realloc(buffer_, defaultSize);
-
-      if (new_buffer == NULL) {
-        throw TTransportException("Out of memory.");
-      }
-
-      buffer_ = (uint8_t*) new_buffer;
-      bufferSize_ = defaultSize;
-
-      wBound_ = buffer_ + bufferSize_;
-    }
-
+  void resetBuffer() {
     rBase_ = buffer_;
     rBound_ = buffer_;
     wBase_ = buffer_;

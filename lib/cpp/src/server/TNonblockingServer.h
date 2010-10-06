@@ -626,12 +626,6 @@ enum TAppState {
   /// How far through writing are we?
   uint32_t writeBufferPos_;
 
-  /// How many times have we read since our last buffer reset?
-  uint32_t numReadsSinceReset_;
-
-  /// How many times have we written since our last buffer reset?
-  uint32_t numWritesSinceReset_;
-
   /// Task handle
   int taskHandle_;
 
@@ -705,9 +699,6 @@ enum TAppState {
       throw new apache::thrift::TException("Out of memory.");
     }
     readBufferSize_ = STARTING_CONNECTION_BUFFER_SIZE;
-
-    numReadsSinceReset_ = 0;
-    numWritesSinceReset_ = 0;
 
     // Allocate input and output tranpsorts
     // these only need to be allocated once per TConnection (they don't need to be

@@ -246,24 +246,8 @@ void TConnection::transition() {
   case APP_READ_REQUEST:
     // We are done reading the request, package the read buffer into transport
     // and get back some data from the dispatch function
-    // If we've used these transport buffers enough times, reset them to avoid bloating
-
     inputTransport_->resetBuffer(readBuffer_, readBufferPos_);
-    ++numReadsSinceReset_;
-    if (numWritesSinceReset_ < 512) {
-      outputTransport_->resetBuffer();
-    } else {
-      // reset the capacity of the output transport if we used it enough times that it might be bloated
-      try {
-        outputTransport_->resetBuffer(true);
-        numWritesSinceReset_ = 0;
-      } catch (TTransportException &ttx) {
-        GlobalOutput.printf("TTransportException: TMemoryBuffer::resetBuffer() %s", ttx.what());
-        close();
-        return;
-      }
-    }
-
+    outputTransport_->resetBuffer();
     // Prepend four bytes of blank space to the buffer so we can
     // write the frame size there later.
     outputTransport_->getWritePtr(4);
@@ -359,26 +343,10 @@ void TConnection::transition() {
 
   case APP_SEND_RESULT:
 
-    ++numWritesSinceReset_;
-
     // N.B.: We also intentionally fall through here into the INIT state!
 
   LABEL_APP_INIT:
   case APP_INIT:
-
-    // reset the input buffer if we used it enough times that it might be bloated
-    if (numReadsSinceReset_ > 512)
-    {
-      void * new_buffer = std::realloc(readBuffer_, 1024);
-      if (new_buffer == NULL) {
-        GlobalOutput("TConnection::transition() realloc");
-        close();
-        return;
-      }
-      readBuffer_ = (uint8_t*) new_buffer;
-      readBufferSize_ = 1024;
-      numReadsSinceReset_ = 0;
-    }
 
     // Clear write buffer variables
     writeBuffer_ = NULL;
