@@ -28,6 +28,27 @@
 namespace apache { namespace thrift { namespace transport {
 
 /**
+ * Helper template to hoist readAll implementation out of TTransport
+ */
+template <class Transport_>
+uint32_t readAll(Transport_ &trans, uint8_t* buf, uint32_t len) {
+  uint32_t have = 0;
+  uint32_t get = 0;
+
+  while (have < len) {
+    get = trans.read(buf+have, len-have);
+    if (get <= 0) {
+      throw TTransportException(TTransportException::END_OF_FILE,
+                                "No more data to read.");
+    }
+    have += get;
+  }
+
+  return have;
+}
+
+
+/**
  * Generic interface for a method of transporting data. A TTransport may be
  * capable of either reading or writing, but not necessarily both.
  *
@@ -96,19 +117,7 @@ class TTransport {
    * @throws TTransportException If insufficient data was read
    */
   virtual uint32_t readAll(uint8_t* buf, uint32_t len) {
-    uint32_t have = 0;
-    uint32_t get = 0;
-
-    while (have < len) {
-      get = read(buf+have, len-have);
-      if (get <= 0) {
-        throw TTransportException(TTransportException::END_OF_FILE,
-				  "No more data to read.");
-      }
-      have += get;
-    }
-
-    return have;
+    return apache::thrift::transport::readAll(*this, buf, len);
   }
 
   /**
