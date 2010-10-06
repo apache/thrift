@@ -2440,7 +2440,6 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
   string extends_client = "";
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends()) + ".AsyncClient";
-    // extends_client = " extends " + extends + ".AsyncClient";
   }
 
   indent(f_service_) <<
@@ -2481,7 +2480,8 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
     // Main method body   
     indent(f_service_) << "public " << function_signature_async(*f_iter, false) << " throws TException {" << endl;
     indent(f_service_) << "  checkReady();" << endl;
-    indent(f_service_) << "  " << funclassname << " method_call = new " + funclassname + "(" << async_argument_list(*f_iter, arg_struct, ret_type) << ", this, protocolFactory, transport);" << endl;    
+    indent(f_service_) << "  " << funclassname << " method_call = new " + funclassname + "(" << async_argument_list(*f_iter, arg_struct, ret_type) << ", this, protocolFactory, transport);" << endl;
+    indent(f_service_) << "  this.currentMethod = method_call;" << endl;
     indent(f_service_) << "  manager.call(method_call);" << endl;
     indent(f_service_) << "}" << endl;
 

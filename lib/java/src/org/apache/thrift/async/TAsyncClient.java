@@ -25,7 +25,7 @@ public abstract class TAsyncClient {
   protected final TProtocolFactory protocolFactory;
   protected final TNonblockingTransport transport;
   protected final TAsyncClientManager manager;
-  private TAsyncMethodCall currentMethod;
+  protected TAsyncMethodCall currentMethod;
   private Throwable error;
   private long timeout;
 
