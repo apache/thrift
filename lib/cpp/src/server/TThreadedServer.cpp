@@ -42,11 +42,13 @@ public:
   Task(TThreadedServer& server,
        shared_ptr<TProcessor> processor,
        shared_ptr<TProtocol> input,
-       shared_ptr<TProtocol> output) :
+       shared_ptr<TProtocol> output,
+       shared_ptr<TTransport> transport) :
     server_(server),
     processor_(processor),
     input_(input),
-    output_(output) {
+    output_(output),
+    transport_(transport) {
   }
 
   ~Task() {}
@@ -54,12 +56,17 @@ public:
   void run() {
     boost::shared_ptr<TServerEventHandler> eventHandler =
       server_.getEventHandler();
+    void* connectionContext = NULL;
     if (eventHandler != NULL) {
-      eventHandler->clientBegin(input_, output_);
+      connectionContext = eventHandler->createContext(input_, output_);
     }
     try {
-      while (processor_->process(input_, output_)) {
-        if (!input_->getTransport()->peek()) {
+      for (;;) {
+        if (eventHandler != NULL) {
+          eventHandler->processContext(connectionContext, transport_);
+        }
+        if (!processor_->process(input_, output_, connectionContext) ||
+            !input_->getTransport()->peek()) {
           break;
         }
       }
@@ -73,7 +80,7 @@ public:
       GlobalOutput("TThreadedServer uncaught exception.");
     }
     if (eventHandler != NULL) {
-      eventHandler->clientEnd(input_, output_);
+      eventHandler->deleteContext(connectionContext, input_, output_);
     }
 
     try {
@@ -107,6 +114,7 @@ public:
   shared_ptr<TProcessor> processor_;
   shared_ptr<TProtocol> input_;
   shared_ptr<TProtocol> output_;
+  shared_ptr<TTransport> transport_;
 };
 
 
@@ -173,7 +181,8 @@ void TThreadedServer::serve() {
       TThreadedServer::Task* task = new TThreadedServer::Task(*this,
                                                               processor_,
                                                               inputProtocol,
-                                                              outputProtocol);
+                                                              outputProtocol,
+                                                              client);
 
       // Create a task
       shared_ptr<Runnable> runnable =

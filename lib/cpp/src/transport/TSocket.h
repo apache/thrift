@@ -193,6 +193,18 @@ class TSocket : public TVirtualTransport<TSocket> {
   int getPeerPort();
 
   /**
+   * Returns the underlying socket file descriptor.
+   */
+  int getSocketFD() {
+    return socket_;
+  }
+
+  /*
+   * Returns a cached copy of the peer address.
+   */
+  sockaddr* getCachedAddress(socklen_t* len) const;
+
+  /**
    * Sets whether to use a low minimum TCP retransmission timeout.
    */
   static void setUseLowMinRto(bool useLowMinRto);
@@ -210,6 +222,12 @@ class TSocket : public TVirtualTransport<TSocket> {
  protected:
   /** connect, called by open */
   void openConnection(struct addrinfo *res);
+
+  /**
+   * Set a cache of the peer address (used when trivially available: e.g.
+   * accept() or connect()). Only caches IPV4 and IPV6; unset for others.
+   */
+  void setCachedAddress(const sockaddr* addr, socklen_t len);
 
   /** Host to connect to */
   std::string host_;
@@ -255,6 +273,15 @@ class TSocket : public TVirtualTransport<TSocket> {
 
   /** Recv timeout timeval */
   struct timeval recvTimeval_;
+
+  /** Cached peer address */
+  union {
+    sockaddr_in ipv4;
+    sockaddr_in6 ipv6;
+  } cachedPeerAddr_;
+
+  /** Connection start time */
+  timespec startTime_;
 
   /** Whether to use low minimum TCP retransmission timeout */
   static bool useLowMinRto_;

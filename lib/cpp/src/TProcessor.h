@@ -44,7 +44,7 @@ class TProcessorEventHandler {
    * The return value is passed to all other callbacks
    * for that function invocation.
    */
-  virtual void* getContext(const char* fn_name) { return NULL; }
+  virtual void* getContext(const char* fn_name, void* serverContext) { return NULL; }
 
   /**
    * Expected to free resources associated with a context.
@@ -112,10 +112,12 @@ class TProcessor {
   virtual ~TProcessor() {}
 
   virtual bool process(boost::shared_ptr<protocol::TProtocol> in,
-                       boost::shared_ptr<protocol::TProtocol> out) = 0;
+                       boost::shared_ptr<protocol::TProtocol> out,
+                       void* connectionContext) = 0;
 
-  bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> io) {
-    return process(io, io);
+  bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> io,
+               void* connectionContext) {
+    return process(io, io, connectionContext);
   }
 
   boost::shared_ptr<TProcessorEventHandler> getEventHandler() {

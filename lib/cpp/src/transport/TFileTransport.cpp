@@ -966,7 +966,7 @@ void TFileProcessor::process(uint32_t numEvents, bool tail) {
     // bad form to use exceptions for flow control but there is really
     // no other way around it
     try {
-      processor_->process(inputProtocol, outputProtocol);
+      processor_->process(inputProtocol, outputProtocol, NULL);
       numProcessed++;
       if ( (numEvents > 0) && (numProcessed == numEvents)) {
         return;
@@ -998,7 +998,7 @@ void TFileProcessor::processChunk() {
     // bad form to use exceptions for flow control but there is really
     // no other way around it
     try {
-      processor_->process(inputProtocol, outputProtocol);
+      processor_->process(inputProtocol, outputProtocol, NULL);
       if (curChunk != inputTransport_->getCurChunk()) {
         break;
       }

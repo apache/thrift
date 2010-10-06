@@ -53,7 +53,8 @@ class PeekProcessor : public apache::thrift::TProcessor {
   void setTargetTransport(boost::shared_ptr<apache::thrift::transport::TTransport> targetTransport);
 
   virtual bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> in,
-                       boost::shared_ptr<apache::thrift::protocol::TProtocol> out);
+                       boost::shared_ptr<apache::thrift::protocol::TProtocol> out,
+                       void* connectionContext);
 
   // The following three functions can be overloaded by child classes to
   // achieve desired peeking behavior

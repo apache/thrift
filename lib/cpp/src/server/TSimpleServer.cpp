@@ -63,13 +63,18 @@ void TSimpleServer::serve() {
       outputTransport = outputTransportFactory_->getTransport(client);
       inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
+      void* connectionContext = NULL;
       if (eventHandler_ != NULL) {
-        eventHandler_->clientBegin(inputProtocol, outputProtocol);
+        connectionContext = eventHandler_->createContext(inputProtocol, outputProtocol);
       }
       try {
-        while (processor_->process(inputProtocol, outputProtocol)) {
-          // Peek ahead, is the remote side closed?
-          if (!inputTransport->peek()) {
+        for (;;) {
+          if (eventHandler_ != NULL) {
+            eventHandler_->processContext(connectionContext, client);
+          }
+          if (!processor_->process(inputProtocol, outputProtocol, connectionContext) ||
+              // Peek ahead, is the remote side closed?
+              !inputProtocol->getTransport()->peek()) {
             break;
           }
         }
@@ -79,7 +84,7 @@ void TSimpleServer::serve() {
         cerr << "TSimpleServer exception: " << tx.what() << endl;
       }
       if (eventHandler_ != NULL) {
-        eventHandler_->clientEnd(inputProtocol, outputProtocol);
+        eventHandler_->deleteContext(connectionContext, inputProtocol, outputProtocol);
       }
       inputTransport->close();
       outputTransport->close();

@@ -289,7 +289,7 @@ class TestHandler : public ThriftTestIf {
 
 
 class TestProcessorEventHandler : public TProcessorEventHandler {
-  virtual void* getContext(const char* fn_name) {
+  virtual void* getContext(const char* fn_name, void* serverContext) {
     return new std::string(fn_name);
   }
   virtual void freeContext(void* ctx, const char* fn_name) {

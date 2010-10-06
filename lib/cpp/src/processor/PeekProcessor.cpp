@@ -58,7 +58,8 @@ void PeekProcessor::setTargetTransport(boost::shared_ptr<TTransport> targetTrans
 }
 
 bool PeekProcessor::process(boost::shared_ptr<TProtocol> in,
-                            boost::shared_ptr<TProtocol> out) {
+                            boost::shared_ptr<TProtocol> out,
+                            void* connectionContext) {
 
   std::string fname;
   TMessageType mtype;
@@ -100,7 +101,7 @@ bool PeekProcessor::process(boost::shared_ptr<TProtocol> in,
   // Done peeking at variables
   peekEnd();
 
-  bool ret = actualProcessor_->process(pipedProtocol_, out);
+  bool ret = actualProcessor_->process(pipedProtocol_, out, connectionContext);
   memoryBuffer_->resetBuffer();
   return ret;
 }

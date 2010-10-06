@@ -78,6 +78,7 @@ TSocket::TSocket(string path) :
   maxRecvRetries_(5) {
   recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
   recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
+  cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
 }
 
 TSocket::TSocket() :
@@ -94,6 +95,7 @@ TSocket::TSocket() :
   maxRecvRetries_(5) {
   recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
   recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
+  cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
 }
 
 TSocket::TSocket(int socket) :
@@ -110,6 +112,7 @@ TSocket::TSocket(int socket) :
   maxRecvRetries_(5) {
   recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
   recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
+  cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
 }
 
 TSocket::~TSocket() {
@@ -273,6 +276,8 @@ void TSocket::openConnection(struct addrinfo *res) {
  done:
   // Set socket back to normal mode (blocking)
   fcntl(socket_, F_SETFL, flags);
+
+  setCachedAddress(res->ai_addr, res->ai_addrlen);
 }
 
 void TSocket::open() {
@@ -600,22 +605,29 @@ string TSocket::getSocketInfo() {
 std::string TSocket::getPeerHost() {
   if (peerHost_.empty()) {
     struct sockaddr_storage addr;
-    socklen_t addrLen = sizeof(addr);
+    struct sockaddr* addrPtr;
+    socklen_t addrLen;
 
     if (socket_ < 0) {
       return host_;
     }
 
-    int rv = getpeername(socket_, (sockaddr*) &addr, &addrLen);
+    addrPtr = getCachedAddress(&addrLen);
 
-    if (rv != 0) {
-      return peerHost_;
+    if (addrPtr == NULL) {
+      addrLen = sizeof(addr);
+      if (getpeername(socket_, (sockaddr*) &addr, &addrLen) != 0) {
+        return peerHost_;
+      }
+      addrPtr = (sockaddr*)&addr;
+
+      setCachedAddress(addrPtr, addrLen);
     }
 
     char clienthost[NI_MAXHOST];
     char clientservice[NI_MAXSERV];
 
-    getnameinfo((sockaddr*) &addr, addrLen,
+    getnameinfo((sockaddr*) addrPtr, addrLen,
                 clienthost, sizeof(clienthost),
                 clientservice, sizeof(clientservice), 0);
 
@@ -627,22 +639,29 @@ std::string TSocket::getPeerHost() {
 std::string TSocket::getPeerAddress() {
   if (peerAddress_.empty()) {
     struct sockaddr_storage addr;
-    socklen_t addrLen = sizeof(addr);
+    struct sockaddr* addrPtr;
+    socklen_t addrLen;
 
     if (socket_ < 0) {
       return peerAddress_;
     }
 
-    int rv = getpeername(socket_, (sockaddr*) &addr, &addrLen);
+    addrPtr = getCachedAddress(&addrLen);
 
-    if (rv != 0) {
-      return peerAddress_;
+    if (addrPtr == NULL) {
+      addrLen = sizeof(addr);
+      if (getpeername(socket_, (sockaddr*) &addr, &addrLen) != 0) {
+        return peerAddress_;
+      }
+      addrPtr = (sockaddr*)&addr;
+
+      setCachedAddress(addrPtr, addrLen);
     }
 
     char clienthost[NI_MAXHOST];
     char clientservice[NI_MAXSERV];
 
-    getnameinfo((sockaddr*) &addr, addrLen,
+    getnameinfo(addrPtr, addrLen,
                 clienthost, sizeof(clienthost),
                 clientservice, sizeof(clientservice),
                 NI_NUMERICHOST|NI_NUMERICSERV);
@@ -657,6 +676,37 @@ int TSocket::getPeerPort() {
   getPeerAddress();
   return peerPort_;
 }
+
+void TSocket::setCachedAddress(const sockaddr* addr, socklen_t len) {
+  switch (addr->sa_family) {
+  case AF_INET:
+    if (len == sizeof(sockaddr_in)) {
+      memcpy((void*)&cachedPeerAddr_.ipv4, (void*)addr, len);
+    }
+    break;
+
+  case AF_INET6:
+    if (len == sizeof(sockaddr_in6)) {
+      memcpy((void*)&cachedPeerAddr_.ipv6, (void*)addr, len);
+    }
+    break;
+  }
+}
+
+sockaddr* TSocket::getCachedAddress(socklen_t* len) const {
+  switch (cachedPeerAddr_.ipv4.sin_family) {
+  case AF_INET:
+    *len = sizeof(sockaddr_in);
+    return (sockaddr*) &cachedPeerAddr_.ipv4;
+
+  case AF_INET6:
+    *len = sizeof(sockaddr_in6);
+    return (sockaddr*) &cachedPeerAddr_.ipv6;
+
+  default:
+    return NULL;
+  }
+} 
 
 bool TSocket::useLowMinRto_ = false;
 void TSocket::setUseLowMinRto(bool useLowMinRto) {

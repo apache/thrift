@@ -2403,12 +2403,18 @@ void t_cpp_generator::generate_service_processor(t_service* tservice, string sty
   string finish_cob;
   string finish_cob_decl;
   string cob_arg;
+  string call_context = ", void* callContext";
+  string call_context_arg = ", callContext";
+  string call_context_decl = ", void*";
   string ret_type = "bool ";
   if (style == "Cob") {
     ifstyle = "CobSv";
     pstyle = "Async";
     finish_cob = "std::tr1::function<void(bool ok)> cob, ";
     finish_cob_decl = "std::tr1::function<void(bool ok)>, ";
+    call_context = "";  // TODO(edhall) remove when callContext is aded to TAsyncProcessor
+    call_context_arg = "";  // ditto
+    call_context_decl = ""; // ditto
     cob_arg = "cob, ";
     ret_type = "void ";
   }
@@ -2452,7 +2458,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice, string sty
   f_header_ <<
     indent() << "boost::shared_ptr<" << service_name_ << ifstyle << "If> iface_;" << endl;
   f_header_ <<
-    indent() << "virtual " << ret_type << "process_fn(" << finish_cob << "::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid);" << endl;
+    indent() << "virtual " << ret_type << "process_fn(" << finish_cob << "::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid" << call_context << ");" << endl;
   indent_down();
 
   // Process function declarations
@@ -2463,14 +2469,16 @@ void t_cpp_generator::generate_service_processor(t_service* tservice, string sty
     indent() << "std::map<std::string, void (" <<
     service_name_ << pstyle << class_suffix << "::*)(" << finish_cob_decl <<
     "int32_t, ::apache::thrift::protocol::TProtocol*, " <<
-    "::apache::thrift::protocol::TProtocol*)> processMap_;" << endl;
+    "::apache::thrift::protocol::TProtocol*" << call_context_decl <<
+    ")> processMap_;" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_header_) <<
-      "void process_" << (*f_iter)->get_name() << "(" << finish_cob << "int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);" << endl;
+      "void process_" << (*f_iter)->get_name() << "(" << finish_cob << "int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot" << call_context << ");" << endl;
     if (gen_templates_) {
       indent(f_header_) <<
         "void process_" << (*f_iter)->get_name() << "(" << finish_cob <<
-        "int32_t seqid, Protocol_* iprot, Protocol_* oprot);" << endl;
+        "int32_t seqid, Protocol_* iprot, Protocol_* oprot" <<
+        call_context << ");" << endl;
     }
     if (style == "Cob") {
       // XXX Factor this out, even if it is a pain.
@@ -2539,7 +2547,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice, string sty
     declare_map <<
     indent() << "}" << endl <<
     endl <<
-    indent() << "virtual " << ret_type << "process(" << finish_cob << "boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot);" << endl <<
+    indent() << "virtual " << ret_type << "process(" << finish_cob << "boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot" << call_context << ");" << endl <<
     indent() << "virtual ~" << service_name_ << pstyle << class_suffix <<
     "() {}" << endl;
   indent_down();
@@ -2553,8 +2561,8 @@ void t_cpp_generator::generate_service_processor(t_service* tservice, string sty
     ret_type << service_name_ << pstyle << class_suffix << template_suffix <<
     "::process(" << finish_cob <<
     "boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, " <<
-    "boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot) {" <<
-    endl;
+    "boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot" <<
+    call_context << ") {" << endl;
   indent_up();
 
   out <<
@@ -2581,7 +2589,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice, string sty
     indent() << "}" << endl <<
     endl <<
     indent() << "return process_fn(" << (style == "Cob" ? "cob, " : "")
-             << "iprot, oprot, fname, seqid);" <<
+             << "iprot, oprot, fname, seqid" << call_context_arg << ");" <<
     endl;
 
   indent_down();
@@ -2595,7 +2603,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice, string sty
     "::process_fn(" << finish_cob <<
     "::apache::thrift::protocol::TProtocol* iprot, " <<
     "::apache::thrift::protocol::TProtocol* oprot, " <<
-    "std::string& fname, int32_t seqid) {" << endl;
+    "std::string& fname, int32_t seqid" << call_context << ") {" << endl;
   indent_up();
 
   // HOT: member function pointer map
@@ -2603,7 +2611,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice, string sty
     indent() << typename_str << "std::map<std::string, void (" <<
     service_name_ << pstyle << class_suffix << "::*)(" << finish_cob_decl <<
     "int32_t, ::apache::thrift::protocol::TProtocol*, " <<
-    "::apache::thrift::protocol::TProtocol*)>::iterator pfn;" << endl <<
+    "::apache::thrift::protocol::TProtocol*" << call_context_decl << ")>::iterator pfn;" << endl <<
     indent() << "pfn = processMap_.find(fname);" << endl <<
     indent() << "if (pfn == processMap_.end()) {" << endl;
   if (extends.empty()) {
@@ -2623,11 +2631,11 @@ void t_cpp_generator::generate_service_processor(t_service* tservice, string sty
       indent() << "  return "
                << extends << "::process_fn("
                << (style == "Cob" ? "cob, " : "")
-               << "iprot, oprot, fname, seqid);" << endl;
+               << "iprot, oprot, fname, seqid" << call_context_arg << ");" << endl;
   }
   out <<
     indent() << "}" << endl <<
-    indent() << "(this->*(pfn->second))(" << cob_arg << "seqid, iprot, oprot);" << endl;
+    indent() << "(this->*(pfn->second))(" << cob_arg << "seqid, iprot, oprot" << call_context_arg << ");" << endl;
 
   // TODO(dreiss): return pfn ret?
   if (style == "Cob") {
@@ -2746,7 +2754,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     out <<
       "void " << tservice->get_name() << "Processor" << class_suffix << "::" <<
       "process_" << tfunction->get_name() << "(int32_t seqid, " <<
-      prot_type << "* iprot, " << prot_type << "* oprot)" << endl;
+      prot_type << "* iprot, " << prot_type << "* oprot, void* callContext)" << endl;
     scope_up(out);
 
     if (gen_templates_ && !specialized) {
@@ -2759,7 +2767,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         endl <<
         indent() << "if (_iprot && _oprot) {" << endl <<
         indent() << "  return process_" << tfunction->get_name() <<
-        "(seqid, _iprot, _oprot);" << endl <<
+        "(seqid, _iprot, _oprot, callContext);" << endl <<
         indent() << "}" << endl << endl;
     }
 
@@ -2769,7 +2777,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     out <<
       indent() << "void* ctx = NULL;" << endl <<
       indent() << "if (eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  ctx = eventHandler_->getContext(\"" << service_func_name << "\");" << endl <<
+      indent() << "  ctx = eventHandler_->getContext(\"" << service_func_name << "\", callContext);" << endl <<
       indent() << "}" << endl <<
       indent() << "::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, \"" << service_func_name << "\");" << endl << endl <<
       indent() << "if (eventHandler_.get() != NULL) {" << endl <<
@@ -2901,6 +2909,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   // Cob style.
   else {
     // Processor entry point.
+    // TODO(edhall) update for callContext when TEventServer is ready
     if (gen_templates_) {
       out <<
         indent() << "template <class Protocol_>" << endl;
@@ -2932,7 +2941,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << tservice->get_name() + "_" + tfunction->get_name() + "_args" << " args;" << endl <<
       indent() << "void* ctx = NULL;" << endl <<
       indent() << "if (eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  ctx = eventHandler_->getContext(\"" << service_func_name << "\");" << endl <<
+      indent() << "  ctx = eventHandler_->getContext(\"" << service_func_name << "\", NULL);" << endl <<
       indent() << "}" << endl <<
       indent() << "::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, \"" << service_func_name << "\");" << endl << endl <<
       indent() << "try {" << endl;
@@ -3073,7 +3082,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       out <<
         endl <<
         indent() << "if (eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  ctx = eventHandler_->getContext(\"" << service_func_name << "\");" << endl <<
+        indent() << "  ctx = eventHandler_->getContext(\"" << service_func_name << "\", NULL);" << endl <<
         indent() << "}" << endl <<
         indent() << "::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, \"" << service_func_name << "\");" << endl << endl <<
         indent() << "if (eventHandler_.get() != NULL) {" << endl <<
@@ -3142,7 +3151,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       out <<
         endl <<
         indent() << "if (eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  ctx = eventHandler_->getContext(\"" << service_func_name << "\");" << endl <<
+        indent() << "  ctx = eventHandler_->getContext(\"" << service_func_name << "\", NULL);" << endl <<
         indent() << "}" << endl <<
         indent() << "::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, \"" << service_func_name << "\");" << endl << endl <<
         indent() << "if (eventHandler_.get() != NULL) {" << endl <<

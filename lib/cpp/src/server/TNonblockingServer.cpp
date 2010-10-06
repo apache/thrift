@@ -56,7 +56,7 @@ class TConnection::Task: public Runnable {
 
   void run() {
     try {
-      while (processor_->process(input_, output_)) {
+      while (processor_->process(input_, output_, NULL)) {
         if (!input_->getTransport()->peek()) {
           break;
         }
@@ -293,7 +293,7 @@ void TConnection::transition() {
     } else {
       try {
         // Invoke the processor
-        server_->getProcessor()->process(inputProtocol_, outputProtocol_);
+        server_->getProcessor()->process(inputProtocol_, outputProtocol_, NULL);
       } catch (TTransportException &ttx) {
         GlobalOutput.printf("TTransportException: Server::process() %s", ttx.what());
         server_->decrementActiveProcessors();

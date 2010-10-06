@@ -39,7 +39,9 @@ public:
   {}
   virtual ~StatsProcessor() {};
 
-  virtual bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot) {
+  virtual bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot,
+                       boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot,
+                       void* serverContext) {
 
     piprot_ = piprot;
 

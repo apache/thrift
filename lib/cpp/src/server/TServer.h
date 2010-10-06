@@ -57,14 +57,33 @@ class TServerEventHandler {
   /**
    * Called when a new client has connected and is about to being processing.
    */
-  virtual void clientBegin(boost::shared_ptr<TProtocol> /* input */,
-                           boost::shared_ptr<TProtocol> /* output */) {}
+  virtual void* createContext(boost::shared_ptr<TProtocol> input,
+                              boost::shared_ptr<TProtocol> output) {
+    (void)input;
+    (void)output;
+    return NULL;
+  }
 
   /**
-   * Called when a client has finished making requests.
+   * Called when a client has finished request-handling to delete server
+   * context.
    */
-  virtual void clientEnd(boost::shared_ptr<TProtocol> /* input */,
-                         boost::shared_ptr<TProtocol> /* output */) {}
+  virtual void deleteContext(void* serverContext,
+                             boost::shared_ptr<TProtocol>input,
+                             boost::shared_ptr<TProtocol>output) {
+    (void)serverContext;
+    (void)input;
+    (void)output;
+  }
+
+  /**
+   * Called when a client is about to call the processor.
+   */
+  virtual void processContext(void* serverContext,
+                              boost::shared_ptr<TTransport> transport) {
+    (void)serverContext;
+    (void)transport;
+}
 
  protected:
 
