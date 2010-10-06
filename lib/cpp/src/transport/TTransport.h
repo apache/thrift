@@ -167,7 +167,10 @@ class TTransport {
    *
    * @oaram buf  A buffer where the data can be stored if needed.
    *             If borrow doesn't return buf, then the contents of
-   *             buf after the call are undefined.
+   *             buf after the call are undefined.  This parameter may be
+   *             NULL to indicate that the caller is not supplying storage,
+   *             but would like a pointer into an internal buffer, if
+   *             available.
    * @param len  *len should initially contain the number of bytes to borrow.
    *             If borrow succeeds, *len will contain the number of bytes
    *             available in the returned pointer.  This will be at least

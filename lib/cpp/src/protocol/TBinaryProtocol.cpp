@@ -377,6 +377,15 @@ uint32_t TBinaryProtocol::readStringBody(string& str, int32_t size) {
     return result;
   }
 
+  // Try to borrow first
+  const uint8_t* borrow_buf;
+  uint32_t got = size;
+  if ((borrow_buf = trans_->borrow(NULL, &got))) {
+    str.assign((const char*)borrow_buf, size);
+    trans_->consume(size);
+    return size;
+  }
+
   // Use the heap here to prevent stack overflow for v. large strings
   if (size > string_buf_size_ || string_buf_ == NULL) {
     void* new_string_buf = std::realloc(string_buf_, (uint32_t)size);
