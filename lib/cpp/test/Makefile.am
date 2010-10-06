@@ -51,6 +51,7 @@ check_PROGRAMS = \
 	AllProtocolsTest \
 	TransportTest \
 	ZlibTest \
+	TFileTransportTest \
 	UnitTests
 
 TESTS = \
@@ -72,6 +73,11 @@ ZlibTest_SOURCES = \
 	ZlibTest.cpp
 
 ZlibTest_LDADD = libtestgencpp.la $(top_builddir)/lib/cpp/libthriftz.la -l:libboost_unit_test_framework.a -lz
+
+TFileTransportTest_SOURCES = \
+	TFileTransportTest.cpp
+
+TFileTransportTest_LDADD = libtestgencpp.la -l:libboost_unit_test_framework.a
 
 #
 # TFDTransportTest

@@ -119,6 +119,9 @@ void TFileTransport::resetOutputFile(int fd, string filename, int64_t offset) {
       int errno_copy = errno;
       GlobalOutput.perror("TFileTransport: resetOutputFile() ::close() ", errno_copy);
       throw TTransportException(TTransportException::UNKNOWN, "TFileTransport: error in file close", errno_copy);
+    } else {
+      //successfully closed fd
+      fd_ = 0;
     }
   }
 
@@ -134,19 +137,12 @@ void TFileTransport::resetOutputFile(int fd, string filename, int64_t offset) {
 TFileTransport::~TFileTransport() {
   // flush the buffer if a writer thread is active
   if (writerThreadId_ > 0) {
-    // reduce the flush timeout so that closing is quicker
-    setFlushMaxUs(300*1000);
-
-    // flush output buffer
-    flush();
-
     // set state to closing
     closing_ = true;
 
-    // TODO: make sure event queue is empty
-    // currently only the write buffer is flushed
-    // we dont actually wait until the queue is empty. This shouldn't be a big
-    // deal in the common case because writing is quick
+    // wake up the writer thread
+    // Since closing_ is true, it will attempt to flush all data, then exit.
+    pthread_cond_signal(&notEmpty_);
 
     pthread_join(writerThreadId_, NULL);
     writerThreadId_ = 0;
@@ -176,6 +172,9 @@ TFileTransport::~TFileTransport() {
   if (fd_ > 0) {
     if(-1 == ::close(fd_)) {
       GlobalOutput.perror("TFileTransport: ~TFileTransport() ::close() ", errno);
+    } else {
+      //successfully closed fd
+      fd_ = 0;
     }
   }
 }
@@ -276,6 +275,10 @@ bool TFileTransport::swapEventBuffers(struct timespec* deadline) {
   bool swap;
   if (!enqueueBuffer_->isEmpty()) {
     swap = true;
+  } else if (closing_) {
+    // even though there is no data to write,
+    // return immediately if the transport is closing
+    swap = false;
   } else {
     if (deadline != NULL) {
       // if we were handed a deadline time struct, do a timed wait
@@ -348,12 +351,15 @@ void TFileTransport::writerThread() {
         pthread_exit(NULL);
       }
 
-      // Try to empty buffers before exit 
+      // Try to empty buffers before exit
       if (enqueueBuffer_->isEmpty() && dequeueBuffer_->isEmpty()) {
         fsync(fd_);
         if (-1 == ::close(fd_)) {
           int errno_copy = errno;
           GlobalOutput.perror("TFileTransport: writerThread() ::close() ", errno_copy);
+        } else {
+          //fd successfully closed
+          fd_ = 0;
         }
         pthread_exit(NULL);
       }
