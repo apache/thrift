@@ -112,9 +112,11 @@ void TConnection::init(int socket, short eventFlags, TNonblockingServer* s,
   writeBuffer_ = NULL;
   writeBufferSize_ = 0;
   writeBufferPos_ = 0;
+  largestWriteBufferSize_ = 0;
 
   socketState_ = SOCKET_RECV;
   appState_ = APP_INIT;
+  callsForResize_ = 0;
 
   // Set flags, which also registers the event
   setFlags(eventFlags);
@@ -342,6 +344,16 @@ void TConnection::transition() {
     goto LABEL_APP_INIT;
 
   case APP_SEND_RESULT:
+    // it's now safe to perform buffer size housekeeping.
+    if (writeBufferSize_ > largestWriteBufferSize_) {
+      largestWriteBufferSize_ = writeBufferSize_;
+    }
+    if (server_->getResizeBufferEveryN() > 0
+        && ++callsForResize_ >= server_->getResizeBufferEveryN()) {
+      checkIdleBufferMemLimit(server_->getIdleReadBufferLimit(),
+                              server_->getIdleWriteBufferLimit());
+      callsForResize_ = 0;
+    }
 
     // N.B.: We also intentionally fall through here into the INIT state!
 
@@ -486,14 +498,21 @@ void TConnection::close() {
   server_->returnConnection(this);
 }
 
-void TConnection::checkIdleBufferMemLimit(size_t limit) {
-  if (readBufferSize_ > limit) {
-    readBufferSize_ = limit;
+void TConnection::checkIdleBufferMemLimit(size_t readLimit,
+                                          size_t writeLimit) {
+  if (readLimit > 0 && readBufferSize_ > readLimit) {
+    readBufferSize_ = readLimit;
     readBuffer_ = (uint8_t*)std::realloc(readBuffer_, readBufferSize_);
     if (readBuffer_ == NULL) {
       GlobalOutput("TConnection::checkIdleBufferMemLimit() realloc");
       close();
     }
+  }
+
+  if (writeLimit > 0 && largestWriteBufferSize_ > writeLimit) {
+    // just start over
+    outputTransport_->resetBuffer(NULL, 0, TMemoryBuffer::TAKE_OWNERSHIP);
+    largestWriteBufferSize_ = 0;
   }
 }
 
@@ -546,7 +565,7 @@ void TNonblockingServer::returnConnection(TConnection* connection) {
       (connectionStack_.size() >= connectionStackLimit_)) {
     delete connection;
   } else {
-    connection->checkIdleBufferMemLimit(idleBufferMemLimit_);
+    connection->checkIdleBufferMemLimit(idleReadBufferLimit_, idleWriteBufferLimit_);
     connectionStack_.push(connection);
   }
 }
