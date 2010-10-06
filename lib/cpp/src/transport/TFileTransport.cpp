@@ -752,7 +752,7 @@ void TFileTransport::seekToChunk(int32_t chunk) {
 
   // too large a value for reverse seek, just seek to beginning
   if (chunk < 0) {
-    T_DEBUG("Incorrect value for reverse seek. Seeking to beginning...", chunk)
+    T_DEBUG("Incorrect value for reverse seek. Seeking to beginning...");
     chunk = 0;
   }
 
