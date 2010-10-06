@@ -26,10 +26,18 @@ g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
 ./ZlibTest
 */
 
+#define __STDC_LIMIT_MACROS
+#define __STDC_FORMAT_MACROS
+
+#include <stdint.h>
+#include <inttypes.h>
 #include <cstddef>
 #include <cassert>
 #include <fstream>
 #include <iostream>
+
+#include <boost/random.hpp>
+
 #include <transport/TBufferTransports.h>
 #include <transport/TZlibTransport.h>
 
@@ -162,31 +170,79 @@ unsigned int dist[][5000] = {
  },
 };
 
+boost::mt19937 rng;
+
+uint8_t* gen_uniform_buffer(uint32_t buf_len, uint8_t c) {
+  uint8_t* buf = new uint8_t[buf_len];
+  memset(buf, c, buf_len);
+  return buf;
+}
+
+uint8_t* gen_compressible_buffer(uint32_t buf_len) {
+  uint8_t* buf = new uint8_t[buf_len];
+
+  // Generate small runs of alternately increasing and decreasing bytes
+  boost::uniform_smallint<uint32_t> run_length_distribution(1, 64);
+  boost::uniform_smallint<uint8_t> byte_distribution(0, UINT8_MAX);
+  boost::variate_generator< boost::mt19937, boost::uniform_smallint<uint8_t> >
+    byte_generator(rng, byte_distribution);
+  boost::variate_generator< boost::mt19937, boost::uniform_smallint<uint32_t> >
+    run_len_generator(rng, run_length_distribution);
+
+  uint32_t idx = 0;
+  int8_t step = 1;
+  while (idx < buf_len) {
+    uint32_t run_length = run_len_generator();
+    if (idx + run_length > buf_len) {
+      run_length = buf_len - idx;
+    }
+
+    uint8_t byte = byte_generator();
+    for (uint32_t n = 0; n < run_length; ++n) {
+      buf[idx] = byte;
+      ++idx;
+      byte += step;
+    }
+
+    step *= -1;
+  }
+
+  return buf;
+}
+
+uint8_t* gen_random_buffer(uint32_t buf_len) {
+  uint8_t* buf = new uint8_t[buf_len];
+
+  boost::uniform_smallint<uint8_t> distribution(0, UINT8_MAX);
+  boost::variate_generator< boost::mt19937, boost::uniform_smallint<uint8_t> >
+    generator(rng, distribution);
+
+  for (uint32_t n = 0; n < buf_len; ++n) {
+    buf[n] = generator();
+  }
+
+  return buf;
+}
 
 int main() {
   using namespace std;
   using namespace boost;
   using namespace apache::thrift::transport;
 
-  char *file_names[] = {
-    // Highly compressible.
-    "./gen-cpp/DebugProtoTest_types.tcc",
-    // Uncompressible.
-    "/dev/urandom",
-    // Null-terminated.
-    NULL,
-  };
+  uint32_t seed = time(NULL);
+  printf("seed: %"PRIu32"\n", seed);
+  rng.seed(time(NULL));
 
+  uint32_t buf_len = 1024*32;
+  uint8_t* buffers[4];
+  buffers[0] = gen_uniform_buffer(buf_len, 'a');
+  buffers[1] = gen_compressible_buffer(buf_len);
+  buffers[2] = gen_random_buffer(buf_len);
+  buffers[3] = NULL;
 
-  for (char** fnamep = &file_names[0]; *fnamep != NULL; fnamep++) {
-    ifstream file(*fnamep);
-    char buf[32*1024];
-    file.read(buf, sizeof(buf));
-    vector<uint8_t> content(buf, buf+file.gcount());
+  for (uint8_t** bufp = &buffers[0]; *bufp != NULL; ++bufp) {
+    vector<uint8_t> content(*bufp, (*bufp) + buf_len);
     vector<uint8_t> mirror;
-    file.close();
-
-    assert(content.size() == 32*1024);
 
     // Let's just start with the big dog!
     {
@@ -304,7 +360,22 @@ int main() {
       zlib_trans->flush();
       string tmp_buf;
       membuf->appendBufferToString(tmp_buf);
-      tmp_buf[57]++;
+      // Modify a byte at the end of the buffer (part of the checksum).
+      // On rare occasions, modifying a byte in the middle of the buffer
+      // isn't caught by the checksum.
+      //
+      // (This happens especially often for the uniform buffer.  The
+      // re-inflated data is correct, however.  I suspect in this case that
+      // we're more likely to modify bytes that are part of zlib metadata
+      // instead of the actual compressed data.)
+      //
+      // I've also seen some failure scenarios where a checksum failure isn't
+      // reported, but zlib keeps trying to decode past the end of the data.
+      // (When this occurs, verifyChecksum() throws an exception indicating
+      // that the end of the data hasn't been reached.)  I haven't seen this
+      // error when only modifying checksum bytes.
+      int index = tmp_buf.size() - 1;
+      tmp_buf[index]++;
       membuf->resetBuffer(const_cast<uint8_t*>(
                             reinterpret_cast<const uint8_t*>(tmp_buf.data())),
                           tmp_buf.length());
