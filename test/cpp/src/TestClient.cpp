@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
 
   shared_ptr< TBinaryProtocolT<TBufferBase> > protocol(
       new TBinaryProtocolT<TBufferBase>(transport));
-  ThriftTestClient testClient(protocol);
+  ThriftTestClientT< TBinaryProtocolT<TBufferBase> > testClient(protocol);
 
   uint64_t time_min = 0;
   uint64_t time_max = 0;

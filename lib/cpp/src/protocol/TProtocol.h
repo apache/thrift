@@ -671,6 +671,15 @@ class TProtocolFactory {
   virtual boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) = 0;
 };
 
+/**
+ * Dummy protocol class.
+ *
+ * This class does nothing, and should never be instantiated.
+ * It is used only by the generator code.
+ */
+class TDummyProtocol : public TProtocol {
+};
+
 }}} // apache::thrift::protocol
 
 #endif // #define _THRIFT_PROTOCOL_TPROTOCOL_H_ 1
