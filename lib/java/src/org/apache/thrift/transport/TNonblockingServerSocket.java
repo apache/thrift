@@ -30,10 +30,15 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
+import org.apache.thrift.async.TAsyncClientManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Wrapper around ServerSocketChannel
  */
 public class TNonblockingServerSocket extends TNonblockingServerTransport {
+  private static final Logger LOGGER = LoggerFactory.getLogger(TNonblockingServerTransport.class.getName());
 
   /**
    * This channel is where all the nonblocking magic happens.
@@ -152,8 +157,7 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
       try {
         serverSocket_.close();
       } catch (IOException iox) {
-        System.err.println("WARNING: Could not close server socket: " +
-                           iox.getMessage());
+        LOGGER.warn("WARNING: Could not close server socket: " + iox.getMessage());
       }
       serverSocket_ = null;
     }

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
@@ -38,9 +39,10 @@ import org.apache.thrift.transport.TTransportException;
  *   - public T getResult() throws <Exception_1>, <Exception_2>, ...
  * @param <T>
  */
-public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
+public abstract class TAsyncMethodCall<T> {
 
   private static final int INITIAL_MEMORY_BUFFER_SIZE = 128;
+  private static AtomicLong sequenceIdCounter = new AtomicLong(0);
 
   public static enum State {
     CONNECTING,
@@ -62,12 +64,13 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
   protected final TAsyncClient client;
   private final AsyncMethodCallback<T> callback;
   private final boolean isOneway;
-
-  private long lastTransitionTime;
-
+  private long sequenceId;
+  
   private ByteBuffer sizeBuffer;
   private final byte[] sizeBufferArray = new byte[4];
   private ByteBuffer frameBuffer;
+
+  private long startTime = System.currentTimeMillis();
 
   protected TAsyncMethodCall(TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport, AsyncMethodCallback<T> callback, boolean isOneway) {
     this.transport = transport;
@@ -75,7 +78,7 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
     this.protocolFactory = protocolFactory;
     this.client = client;
     this.isOneway = isOneway;
-    this.lastTransitionTime = System.currentTimeMillis();
+    this.sequenceId = TAsyncMethodCall.sequenceIdCounter.getAndIncrement();
   }
 
   protected State getState() {
@@ -86,12 +89,24 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
     return state == State.RESPONSE_READ;
   }
 
-  protected long getLastTransitionTime() {
-    return lastTransitionTime;
+  protected long getStartTime() {
+    return startTime;
+  }
+  
+  protected long getSequenceId() {
+    return sequenceId;
   }
 
   public TAsyncClient getClient() {
     return client;
+  }
+  
+  public boolean hasTimeout() {
+    return client.hasTimeout();
+  }
+  
+  public long getTimeoutTimestamp() {
+    return client.getTimeout() + startTime;
   }
 
   protected abstract void write_args(TProtocol protocol) throws TException;
@@ -181,15 +196,14 @@ public abstract class TAsyncMethodCall<T extends TAsyncMethodCall> {
           throw new IllegalStateException("Method call in state " + state
               + " but selector called transition method. Seems like a bug...");
       }
-      lastTransitionTime = System.currentTimeMillis();
-    } catch (Throwable e) {
+    } catch (Exception e) {
       key.cancel();
       key.attach(null);
       onError(e);
     }
   }
 
-  protected void onError(Throwable e) {
+  protected void onError(Exception e) {
     client.onError(e);
     callback.onError(e);
     state = State.ERROR;

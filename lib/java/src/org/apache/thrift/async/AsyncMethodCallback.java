@@ -18,6 +18,7 @@
  */
 package org.apache.thrift.async;
 
+
 public interface AsyncMethodCallback<T> {
   /**
    * This method will be called when the remote side has completed invoking
@@ -32,7 +33,7 @@ public interface AsyncMethodCallback<T> {
    * This method will be called when there is an unexpected clientside
    * exception. This does not include application-defined exceptions that
    * appear in the IDL, but rather things like IOExceptions.
-   * @param throwable
+   * @param exception
    */
-  public void onError(Throwable throwable);
+  public void onError(Exception exception);
 }
