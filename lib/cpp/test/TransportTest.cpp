@@ -43,14 +43,7 @@ using namespace apache::thrift::transport;
 static boost::mt19937 rng;
 static const char* tmp_dir = "/tmp";
 
-void initrand(const int* seedptr) {
-  unsigned int seed;
-  if (seedptr) {
-    seed = *seedptr;
-  } else {
-    seed = static_cast<unsigned int>(time(NULL));
-  }
-
+void initrand(unsigned int seed) {
   rng.seed(seed);
 }
 
@@ -447,20 +440,23 @@ void test_rw(uint32_t totalSize,
 // We use the same tests for all of the buffered transports
 // This is a helper macro so we don't have to copy-and-paste them.
 #define BUFFER_TESTS(CoupledTransports) \
-  TEST_RW_BUF(CoupledTransports, 1024*1024*30, 0, 0); \
-  TEST_RW_BUF(CoupledTransports, 1024*1024*10, rand4k, rand4k); \
-  TEST_RW_BUF(CoupledTransports, 1024*1024*10, 167, 163); \
-  TEST_RW_BUF(CoupledTransports, 1024*512, 1, 1); \
+  TEST_RW_BUF(CoupledTransports, 1024*1024, 0, 0); \
+  TEST_RW_BUF(CoupledTransports, 1024*256, rand4k, rand4k); \
+  TEST_RW_BUF(CoupledTransports, 1024*256, 167, 163); \
+  TEST_RW_BUF(CoupledTransports, 1024*16, 1, 1); \
   \
-  TEST_RW_BUF(CoupledTransports, 1024*1024*10, 0, 0, rand4k, rand4k); \
-  TEST_RW_BUF(CoupledTransports, 1024*1024*10, \
+  TEST_RW_BUF(CoupledTransports, 1024*256, 0, 0, rand4k, rand4k); \
+  TEST_RW_BUF(CoupledTransports, 1024*256, \
               rand4k, rand4k, rand4k, rand4k); \
-  TEST_RW_BUF(CoupledTransports, 1024*1024*10, 167, 163, rand4k, rand4k); \
-  TEST_RW_BUF(CoupledTransports, 1024*512, 1, 1, rand4k, rand4k);
+  TEST_RW_BUF(CoupledTransports, 1024*256, 167, 163, rand4k, rand4k); \
+  TEST_RW_BUF(CoupledTransports, 1024*16, 1, 1, rand4k, rand4k);
 
 class TransportTestGen {
  public:
-  TransportTestGen(boost::unit_test::test_suite* suite) : suite_(suite) {}
+  TransportTestGen(boost::unit_test::test_suite* suite,
+                   float sizeMultiplier) :
+      suite_(suite),
+      sizeMultiplier_(sizeMultiplier) {}
 
   void generate() {
     GenericSizeGenerator rand4k(1, 4096);
@@ -475,37 +471,37 @@ class TransportTestGen {
     BUFFER_TESTS(CoupledBufferedTransports)
     BUFFER_TESTS(CoupledFramedTransports)
 
-    TEST_RW(CoupledZlibTransports, 1024*1024*10, 0, 0);
-    TEST_RW(CoupledZlibTransports, 1024*1024*10, rand4k, rand4k);
-    TEST_RW(CoupledZlibTransports, 1024*1024*5, 167, 163);
-    TEST_RW(CoupledZlibTransports, 1024*64, 1, 1);
+    TEST_RW(CoupledZlibTransports, 1024*256, 0, 0);
+    TEST_RW(CoupledZlibTransports, 1024*256, rand4k, rand4k);
+    TEST_RW(CoupledZlibTransports, 1024*128, 167, 163);
+    TEST_RW(CoupledZlibTransports, 1024*2, 1, 1);
 
-    TEST_RW(CoupledZlibTransports, 1024*1024*10, 0, 0, rand4k, rand4k);
-    TEST_RW(CoupledZlibTransports, 1024*1024*10,
+    TEST_RW(CoupledZlibTransports, 1024*256, 0, 0, rand4k, rand4k);
+    TEST_RW(CoupledZlibTransports, 1024*256,
             rand4k, rand4k, rand4k, rand4k);
-    TEST_RW(CoupledZlibTransports, 1024*1024*5, 167, 163, rand4k, rand4k);
-    TEST_RW(CoupledZlibTransports, 1024*64, 1, 1, rand4k, rand4k);
+    TEST_RW(CoupledZlibTransports, 1024*128, 167, 163, rand4k, rand4k);
+    TEST_RW(CoupledZlibTransports, 1024*2, 1, 1, rand4k, rand4k);
 
     // TFDTransport tests
     // Since CoupledFDTransports tests with a pipe, writes will block
     // if there is too much outstanding unread data in the pipe.
     uint32_t fd_max_outstanding = 4096;
-    TEST_RW(CoupledFDTransports, 1024*1024*30, 0, 0,
+    TEST_RW(CoupledFDTransports, 1024*1024, 0, 0,
             0, 0, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*1024*10, rand4k, rand4k,
+    TEST_RW(CoupledFDTransports, 1024*256, rand4k, rand4k,
             0, 0, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*1024*10, 167, 163,
+    TEST_RW(CoupledFDTransports, 1024*256, 167, 163,
             0, 0, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*512, 1, 1,
+    TEST_RW(CoupledFDTransports, 1024*16, 1, 1,
             0, 0, fd_max_outstanding);
 
-    TEST_RW(CoupledFDTransports, 1024*1024*10, 0, 0,
+    TEST_RW(CoupledFDTransports, 1024*256, 0, 0,
             rand4k, rand4k, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*1024*10, rand4k, rand4k,
+    TEST_RW(CoupledFDTransports, 1024*256, rand4k, rand4k,
             rand4k, rand4k, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*1024*10, 167, 163,
+    TEST_RW(CoupledFDTransports, 1024*256, 167, 163,
             rand4k, rand4k, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*512, 1, 1,
+    TEST_RW(CoupledFDTransports, 1024*16, 1, 1,
             rand4k, rand4k, fd_max_outstanding);
 
     // TFileTransport tests
@@ -513,16 +509,16 @@ class TransportTestGen {
     //
     // TFileTransport can't write more than 16MB at once
     uint32_t max_write_at_once = 1024*1024*16 - 4;
-    TEST_RW(CoupledFileTransports, 1024*1024*30, max_write_at_once, 0);
-    TEST_RW(CoupledFileTransports, 1024*1024*5, rand4k, rand4k);
-    TEST_RW(CoupledFileTransports, 1024*1024*5, 167, 163);
-    TEST_RW(CoupledFileTransports, 1024*64, 1, 1);
+    TEST_RW(CoupledFileTransports, 1024*1024, max_write_at_once, 0);
+    TEST_RW(CoupledFileTransports, 1024*128, rand4k, rand4k);
+    TEST_RW(CoupledFileTransports, 1024*128, 167, 163);
+    TEST_RW(CoupledFileTransports, 1024*2, 1, 1);
 
-    TEST_RW(CoupledFileTransports, 1024*1024*2, 0, 0, rand4k, rand4k);
-    TEST_RW(CoupledFileTransports, 1024*1024*2,
+    TEST_RW(CoupledFileTransports, 1024*64, 0, 0, rand4k, rand4k);
+    TEST_RW(CoupledFileTransports, 1024*64,
             rand4k, rand4k, rand4k, rand4k);
-    TEST_RW(CoupledFileTransports, 1024*1024*2, 167, 163, rand4k, rand4k);
-    TEST_RW(CoupledFileTransports, 1024*64, 1, 1, rand4k, rand4k);
+    TEST_RW(CoupledFileTransports, 1024*64, 167, 163, rand4k, rand4k);
+    TEST_RW(CoupledFileTransports, 1024*2, 1, 1, rand4k, rand4k);
   }
 
  private:
@@ -533,6 +529,9 @@ class TransportTestGen {
                GenericSizeGenerator rChunkSizeGen = 0,
                uint32_t maxOutstanding = 0,
                uint32_t expectedFailures = 0) {
+    // adjust totalSize by the specified sizeMultiplier_ first
+    totalSize = static_cast<uint32_t>(totalSize * sizeMultiplier_);
+
     std::ostringstream name;
     name << transport_name << "::test_rw(" << totalSize << ", " <<
       wSizeGen.describe() << ", " << rSizeGen.describe() << ", " <<
@@ -549,6 +548,11 @@ class TransportTestGen {
   };
 
   boost::unit_test::test_suite* suite_;
+  // sizeMultiplier_ is configurable via the command line, and allows the
+  // user to adjust between smaller buffers that can be tested quickly,
+  // or larger buffers that more thoroughly exercise the code, but take
+  // longer.
+  float sizeMultiplier_;
 };
 
 /**************************************************************************
@@ -563,20 +567,27 @@ void print_usage(FILE* f, const char* argv0) {
   fprintf(f, "  --help\n");
 }
 
-void parse_args(int argc, char* argv[]) {
+struct Options {
   int seed;
-  int *seedptr = NULL;
+  bool haveSeed;
+  float sizeMultiplier;
+};
+
+void parse_args(int argc, char* argv[], Options* options) {
+  bool have_seed = false;
+  options->sizeMultiplier = 1;
 
   struct option long_opts[] = {
     { "help", false, NULL, 'h' },
     { "seed", true, NULL, 's' },
     { "tmp-dir", true, NULL, 't' },
+    { "size-multiplier", true, NULL, 'x' },
     { NULL, 0, NULL, 0 }
   };
 
   while (true) {
     optopt = 1;
-    int optchar = getopt_long(argc, argv, "hs:t:", long_opts, NULL);
+    int optchar = getopt_long(argc, argv, "hs:t:x:", long_opts, NULL);
     if (optchar == -1) {
       break;
     }
@@ -587,18 +598,33 @@ void parse_args(int argc, char* argv[]) {
         break;
       case 's': {
         char *endptr;
-        seed = strtol(optarg, &endptr, 0);
+        options->seed = strtol(optarg, &endptr, 0);
         if (endptr == optarg || *endptr != '\0') {
           fprintf(stderr, "invalid seed value \"%s\": must be an integer\n",
                   optarg);
           exit(1);
         }
-        seedptr = &seed;
+        have_seed = true;
         break;
       }
       case 'h':
         print_usage(stdout, argv[0]);
         exit(0);
+      case 'x': {
+        char *endptr;
+        options->sizeMultiplier = strtof(optarg, &endptr);
+        if (endptr == optarg || *endptr != '\0') {
+          fprintf(stderr, "invalid size multiplier \"%s\": must be a number\n",
+                  optarg);
+          exit(1);
+        }
+        if (options->sizeMultiplier < 0) {
+          fprintf(stderr, "invalid size multiplier \"%s\": "
+                  "must be non-negative\n", optarg);
+          exit(1);
+        }
+        break;
+      }
       case '?':
         exit(1);
       default:
@@ -609,15 +635,23 @@ void parse_args(int argc, char* argv[]) {
     }
   }
 
-  initrand(seedptr);
+  if (!have_seed) {
+    // choose a seed now if the user didn't specify one
+    struct timespec t;
+    clock_gettime(CLOCK_REALTIME, &t);
+    options->seed = t.tv_sec + t.tv_nsec;
+  }
 }
 
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   // Parse arguments
-  parse_args(argc, argv);
+  Options options;
+  parse_args(argc, argv, &options);
+
+  initrand(options.seed);
 
   boost::unit_test::test_suite* suite = BOOST_TEST_SUITE("TransportTests");
-  TransportTestGen transport_test_generator(suite);
+  TransportTestGen transport_test_generator(suite, options.sizeMultiplier);
   transport_test_generator.generate();
 
   return suite;
