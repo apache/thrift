@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(test_destructor) {
 
   unsigned int const NUM_ITERATIONS = 1000;
 
-  unsigned int num_over_500us = 0;
+  unsigned int num_over = 0;
   for (unsigned int n = 0; n < NUM_ITERATIONS; ++n) {
     ftruncate(f.getFD(), 0);
 
@@ -201,16 +201,16 @@ BOOST_AUTO_TEST_CASE(test_destructor) {
     // looping over a very slow operation.
     BOOST_REQUIRE_LT(delta, 100000);
 
-    // Normally, it takes less than 500us on my dev box.
+    // Normally, it takes less than 1000us on my dev box.
     // However, if the box is heavily loaded, some of the test runs
     // take longer, since we're just waiting for our turn on the CPU.
-    if (delta > 500) {
-      ++num_over_500us;
+    if (delta > 1000) {
+      ++num_over;
     }
   }
 
-  // Make sure fewer than 10% of the runs took longer than 500us
-  BOOST_CHECK(num_over_500us < (NUM_ITERATIONS / 10));
+  // Make sure fewer than 10% of the runs took longer than 1000us
+  BOOST_CHECK(num_over < (NUM_ITERATIONS / 10));
 }
 
 /**
