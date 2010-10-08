@@ -156,6 +156,8 @@ if test "$with_python" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_PYTHON, [test "$have_python" = "yes"])
 
+AC_PATH_PROG([TRIAL], [trial])
+
 AX_THRIFT_LIB(perl, [Perl], yes)
 if test "$with_perl" = "yes"; then
   AC_PATH_PROG([PERL], [perl])
@@ -379,6 +381,7 @@ AC_CONFIG_FILES([
   test/Makefile
   test/hs/Makefile
   test/py/Makefile
+  test/py.twisted/Makefile
   test/rb/Makefile
 ])
 

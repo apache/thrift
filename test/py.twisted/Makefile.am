@@ -17,43 +17,14 @@
 # under the License.
 #
 
-SUBDIRS =
+THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
-if WITH_PYTHON
-SUBDIRS += py
-SUBDIRS += py.twisted
-endif
+stubs: ../ThriftTest.thrift ../SmallTest.thrift
+	$(THRIFT) --gen py:twisted ../ThriftTest.thrift
+	$(THRIFT) --gen py:twisted ../SmallTest.thrift
 
-if WITH_RUBY
-SUBDIRS += rb
-endif
+check: stubs
+	$(TRIAL) test_suite.py
 
-if WITH_HASKELL
-SUBDIRS += hs
-endif
-
-EXTRA_DIST = \
-	cpp \
-	threads \
-	csharp \
-	py \
-	py.twisted \
-	rb \
-	perl \
-	php \
-	erl \
-	hs \
-	ocaml \
-	AnnotationTest.thrift \
-	BrokenConstants.thrift \
-	ConstantsDemo.thrift \
-	DebugProtoTest.thrift \
-	DenseLinkingTest.thrift \
-	DocTest.thrift \
-	JavaBeansTest.thrift \
-	ManyTypedefs.thrift \
-	OptionalRequiredTest.thrift \
-	SmallTest.thrift \
-	StressTest.thrift \
-	ThriftTest.thrift \
-	FastbinaryTest.py
+clean-local:
+	$(RM) -r gen-py.twisted
