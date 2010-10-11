@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TAsyncClientManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(TAsyncClientManager.class.getName());
-  
+
   private final SelectThread selectThread;
   private final ConcurrentLinkedQueue<TAsyncMethodCall> pendingCalls = new ConcurrentLinkedQueue<TAsyncMethodCall>();
 
@@ -50,7 +50,7 @@ public class TAsyncClientManager {
   public void call(TAsyncMethodCall method) throws TException {
     if (!isRunning()) {
       throw new TException("SelectThread is not running");
-    }    
+    }
     method.prepareMethodCall();
     pendingCalls.add(method);
     selectThread.getSelector().wakeup();
@@ -59,11 +59,11 @@ public class TAsyncClientManager {
   public void stop() {
     selectThread.finish();
   }
-  
+
   public boolean isRunning() {
     return selectThread.isAlive();
   }
-  
+
   private class SelectThread extends Thread {
     private final Selector selector;
     private volatile boolean running;
@@ -73,7 +73,7 @@ public class TAsyncClientManager {
       this.selector = SelectorProvider.provider().openSelector();
       this.running = true;
       this.setName("TAsyncClientManager#SelectorThread " + this.getId());
-      
+
       // We don't want to hold up the JVM when shutting down
       setDaemon(true);
     }
@@ -126,8 +126,9 @@ public class TAsyncClientManager {
           SelectionKey key = keys.next();
           keys.remove();
           if (!key.isValid()) {
-            // this can happen if the method call experienced an error and the key was cancelled
-            // this can also happen if we timeout a method, which results in a channel close
+            // this can happen if the method call experienced an error and the
+            // key was cancelled. can also happen if we timeout a method, which
+            // results in a channel close.
             // just skip
             continue;
           }
@@ -166,7 +167,7 @@ public class TAsyncClientManager {
         // Catch registration errors. method will catch transition errors and cleanup.
         try {
           methodCall.start(selector);
-          
+
           // If timeout specified and first transition went smoothly, add to timeout watch set
           TAsyncClient client = methodCall.getClient();
           if (client.hasTimeout() && !client.hasError()) {
@@ -179,8 +180,8 @@ public class TAsyncClientManager {
       }
     }
   }
-  
-  // Comparator used in TreeSet
+
+  /** Comparator used in TreeSet */
   private static class TAsyncMethodCallTimeoutComparator implements Comparator<TAsyncMethodCall> {
     @Override
     public int compare(TAsyncMethodCall left, TAsyncMethodCall right) {
@@ -189,7 +190,6 @@ public class TAsyncClientManager {
       } else {
         return (int)(left.getTimeoutTimestamp() - right.getTimeoutTimestamp());
       }
-    }    
+    }
   }
-
 }
