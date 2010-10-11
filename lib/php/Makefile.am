@@ -37,6 +37,7 @@ php_DATA =  \
 phpprotocoldir = $(phpdir)/protocol
 phpprotocol_DATA = \
   src/protocol/TBinaryProtocol.php \
+  src/protocol/TBinarySerializer.php \
   src/protocol/TProtocol.php
 
 phptransportdir = $(phpdir)/transport
