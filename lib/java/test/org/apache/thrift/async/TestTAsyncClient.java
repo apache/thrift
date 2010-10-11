@@ -1,8 +1,9 @@
 package org.apache.thrift.async;
 
+import junit.framework.TestCase;
+
 import org.apache.thrift.TException;
 
-import junit.framework.TestCase;
 import thrift.test.Srv;
 import thrift.test.Srv.AsyncClient;
 

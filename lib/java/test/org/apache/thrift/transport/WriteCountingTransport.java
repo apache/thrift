@@ -18,8 +18,6 @@
  */
 package org.apache.thrift.transport;
 
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
 
 public class WriteCountingTransport extends TTransport {
   public int writeCount = 0;

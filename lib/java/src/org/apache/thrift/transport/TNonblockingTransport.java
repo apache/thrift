@@ -20,11 +20,10 @@
 package org.apache.thrift.transport;
 
 import java.io.IOException;
-import java.nio.channels.Selector;
-import java.nio.channels.SelectionKey;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-
-import org.apache.thrift.async.TAsyncMethodCall;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 
 public abstract class TNonblockingTransport extends TTransport {
 

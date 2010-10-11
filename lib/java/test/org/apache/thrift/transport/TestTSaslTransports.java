@@ -33,9 +33,11 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
-import javax.security.sasl.SaslException;
+
+import junit.framework.TestCase;
 
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -44,8 +46,6 @@ import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import junit.framework.TestCase;
 
 public class TestTSaslTransports extends TestCase {
 

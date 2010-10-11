@@ -20,8 +20,6 @@
 
 package org.apache.thrift.protocol;
 
-import org.apache.thrift.protocol.TCompactProtocol;
-import org.apache.thrift.protocol.TProtocolFactory;
 
 public class TestTCompactProtocol extends ProtocolTestBase {
   @Override

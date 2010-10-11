@@ -21,8 +21,16 @@
 package org.apache.thrift;
 
 import java.nio.ByteBuffer;
-import java.util.*;
-import thrift.test.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+
+import thrift.test.Bonk;
+import thrift.test.CompactProtoTestStruct;
+import thrift.test.HolyMoley;
+import thrift.test.Nesting;
+import thrift.test.OneOfEach;
 
 public class Fixtures {
   public static final OneOfEach oneOfEach;

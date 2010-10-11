@@ -42,11 +42,6 @@ public class TServerSocket extends TServerTransport {
   private ServerSocket serverSocket_ = null;
 
   /**
-   * Port to listen on
-   */
-  private int port_ = 0;
-
-  /**
    * Timeout for client sockets from accept
    */
   private int clientTimeout_ = 0;
@@ -78,7 +73,6 @@ public class TServerSocket extends TServerTransport {
    */
   public TServerSocket(int port, int clientTimeout) throws TTransportException {
     this(new InetSocketAddress(port), clientTimeout);
-    port_ = port;
   }
 
   public TServerSocket(InetSocketAddress bindAddr) throws TTransportException {

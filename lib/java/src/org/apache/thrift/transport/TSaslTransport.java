@@ -20,11 +20,8 @@
 package org.apache.thrift.transport;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.Map;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
