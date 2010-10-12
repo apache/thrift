@@ -26,9 +26,8 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.TTransportException;
-
+import org.apache.thrift.transport.TTransportFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,6 +97,8 @@ public class TSimpleServer extends TServer {
       return;
     }
 
+    setServing(true);
+
     while (!stopped_) {
       TTransport client = null;
       TProcessor processor = null;
@@ -136,6 +137,7 @@ public class TSimpleServer extends TServer {
       }
 
     }
+    setServing(false);
   }
 
   public void stop() {

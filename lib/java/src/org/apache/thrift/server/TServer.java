@@ -61,6 +61,8 @@ public abstract class TServer {
    */
   protected TProtocolFactory outputProtocolFactory_;
 
+  private boolean isServing;
+
   /**
    * Default constructors.
    */
@@ -123,4 +125,11 @@ public abstract class TServer {
    */
   public void stop() {}
 
+  public boolean isServing() {
+    return isServing;
+  }
+
+  protected void setServing(boolean serving) {
+    isServing = serving;
+  }
 }

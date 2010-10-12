@@ -237,10 +237,14 @@ public class THsHaServer extends TNonblockingServer {
       return;
     }
 
+    setServing(true);
+
     // this will block while we serve
     joinSelector();
 
     gracefullyShutdownInvokerPool();
+
+    setServing(false);
 
     // do a little cleanup
     stopListening();
