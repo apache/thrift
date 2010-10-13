@@ -644,4 +644,5 @@ void t_html_generator::generate_service(t_service* tservice) {
   }
 }
 
-THRIFT_REGISTER_GENERATOR(html, "HTML", "");
+THRIFT_REGISTER_GENERATOR(html, "HTML", "")
+

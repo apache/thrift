@@ -421,8 +421,9 @@ void TFileTransport::writerThread() {
             offset_ = lseek(fd_, 0, SEEK_CUR);
             int32_t padding = (int32_t)((offset_ / chunkSize_ + 1) * chunkSize_ - offset_);
 
-            uint8_t zeros[padding];
-            bzero(zeros, padding);
+            uint8_t* zeros = new uint8_t[padding];
+            memset(zeros, '\0', padding);
+            boost::scoped_array<uint8_t> array(zeros);
             if (-1 == ::write(fd_, zeros, padding)) {
               int errno_copy = errno;
               GlobalOutput.perror("TFileTransport: writerThread() error while padding zeros ", errno_copy);
@@ -1004,7 +1005,7 @@ TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
   inputProtocolFactory_(protocolFactory),
   outputProtocolFactory_(protocolFactory),
   inputTransport_(inputTransport),
-  outputTransport_(outputTransport) {};
+  outputTransport_(outputTransport) {}
 
 void TFileProcessor::process(uint32_t numEvents, bool tail) {
   shared_ptr<TProtocol> inputProtocol = inputProtocolFactory_->getProtocol(inputTransport_);

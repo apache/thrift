@@ -360,8 +360,9 @@ void alarm_handler(int signum) {
   set_alarm();
 
   // Write some data to the transport to hopefully unblock it.
-  uint8_t buf[info->writeLength];
+  uint8_t* buf = new uint8_t[info->writeLength];
   memset(buf, 'b', info->writeLength);
+  boost::scoped_array<uint8_t> array(buf);
   info->transport->write(buf, info->writeLength);
   info->transport->flush();
 
@@ -895,7 +896,7 @@ class TransportTestGen {
     boost::unit_test::test_case* tc =
       boost::unit_test::make_test_case(test_func, name.str());
     suite_->add(tc, expectedFailures);
-  };
+  }
 
   template <class CoupledTransports>
   void addTestBlocking(const char* transportName,

@@ -4118,4 +4118,5 @@ THRIFT_REGISTER_GENERATOR(cpp, "C++",
 "    pure_enums:      Generate pure enums instead of wrapper classes.\n"
 "    dense:           Generate type specifications for the dense protocol.\n"
 "    include_prefix:  Use full include paths in generated files.\n"
-);
+)
+

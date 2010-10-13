@@ -2462,4 +2462,5 @@ string t_cocoa_generator::call_field_setter(t_field* tfield, string fieldName) {
 
 THRIFT_REGISTER_GENERATOR(cocoa, "Cocoa",
 "    log_unexpected:  Log every time an unexpected field ID or type is encountered.\n"
-);
+)
+

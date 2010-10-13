@@ -1468,4 +1468,5 @@ string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
 }
 
 
-THRIFT_REGISTER_GENERATOR(hs, "Haskell", "");
+THRIFT_REGISTER_GENERATOR(hs, "Haskell", "")
+

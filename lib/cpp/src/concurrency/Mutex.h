@@ -133,7 +133,7 @@ class Guard {
 // as to whether we're doing acquireRead() or acquireWrite().
 enum RWGuardType {
   RW_READ = 0,
-  RW_WRITE = 1,
+  RW_WRITE = 1
 };
 
 

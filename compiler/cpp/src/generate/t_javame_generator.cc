@@ -3375,4 +3375,5 @@ void t_javame_generator::generate_java_struct_clear(std::ofstream& out, t_struct
   indent(out) << "}" << endl << endl;
 }
 
-THRIFT_REGISTER_GENERATOR(javame, "Java ME", "");
+THRIFT_REGISTER_GENERATOR(javame, "Java ME", "")
+

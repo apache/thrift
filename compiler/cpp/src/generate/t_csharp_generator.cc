@@ -1697,4 +1697,5 @@ string t_csharp_generator::type_to_enum(t_type* type) {
 }
 
 
-THRIFT_REGISTER_GENERATOR(csharp, "C#", "");
+THRIFT_REGISTER_GENERATOR(csharp, "C#", "")
+

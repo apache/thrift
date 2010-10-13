@@ -30,7 +30,7 @@ using boost::shared_ptr;
 using namespace std;
 using namespace apache::thrift;
 using namespace apache::thrift::concurrency;
-using namespace apache::thrift::protocol;;
+using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 
 class TThreadPoolServer::Task : public Runnable {

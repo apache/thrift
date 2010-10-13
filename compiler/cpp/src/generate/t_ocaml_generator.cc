@@ -1873,4 +1873,5 @@ string t_ocaml_generator::render_ocaml_type(t_type* type) {
 }
 
 
-THRIFT_REGISTER_GENERATOR(ocaml, "OCaml", "");
+THRIFT_REGISTER_GENERATOR(ocaml, "OCaml", "")
+

@@ -71,7 +71,7 @@ class t_field : public t_doc {
   enum e_req {
     T_REQUIRED,
     T_OPTIONAL,
-    T_OPT_IN_REQ_OUT,
+    T_OPT_IN_REQ_OUT
   };
 
   void set_req(e_req req) {

@@ -3924,5 +3924,5 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    private-members: Members will be private, but setter methods will return 'this' like usual.\n"
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
 "    hashcode:        Generate quality hashCode methods.\n"
-);
+)
 

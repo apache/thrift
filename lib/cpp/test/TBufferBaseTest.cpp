@@ -172,7 +172,7 @@ void init_data() {
 }
 
 
-BOOST_AUTO_TEST_SUITE( TBufferBaseTest );
+BOOST_AUTO_TEST_SUITE( TBufferBaseTest )
 
 BOOST_AUTO_TEST_CASE( test_MemoryBuffer_Write_GetBuffer ) {
   init_data();
@@ -641,4 +641,5 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Empty_Flush ) {
   BOOST_CHECK_EQUAL(buffer->getBufferAsString(), output2);
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END()
+

@@ -2303,4 +2303,5 @@ THRIFT_REGISTER_GENERATOR(php, "PHP",
 "    autoload:        Generate PHP with autoload\n"
 "    oop:             Generate PHP with object oriented subclasses\n"
 "    rest:            Generate PHP REST processors\n"
-);
+)
+

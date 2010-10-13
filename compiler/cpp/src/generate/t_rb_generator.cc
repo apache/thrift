@@ -1183,4 +1183,5 @@ void t_rb_generator::generate_rb_union_validator(std::ofstream& out,
   indent(out) << "end" << endl << endl;
 }
 
-THRIFT_REGISTER_GENERATOR(rb, "Ruby", "");
+THRIFT_REGISTER_GENERATOR(rb, "Ruby", "")
+

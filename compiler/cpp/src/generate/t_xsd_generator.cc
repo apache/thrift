@@ -351,4 +351,5 @@ string t_xsd_generator::base_type_name(t_base_type::t_base tbase) {
   }
 }
 
-THRIFT_REGISTER_GENERATOR(xsd, "XSD", "");
+THRIFT_REGISTER_GENERATOR(xsd, "XSD", "")
+

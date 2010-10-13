@@ -58,7 +58,7 @@ enum Types {
   CT_LIST           = 0x09,
   CT_SET            = 0x0A,
   CT_MAP            = 0x0B,
-  CT_STRUCT         = 0x0C,
+  CT_STRUCT         = 0x0C
 };
 
 const int8_t TTypeToCType[16] = {

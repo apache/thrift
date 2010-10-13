@@ -2595,4 +2595,5 @@ std::string t_as3_generator::get_enum_class_name(t_type* type) {
 
 THRIFT_REGISTER_GENERATOR(as3, "AS3",
 "    bindable:          Add [bindable] metadata to all the struct classes.\n"
-);
+)
+

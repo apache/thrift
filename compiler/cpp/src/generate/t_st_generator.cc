@@ -1051,4 +1051,5 @@ string t_st_generator::type_to_enum(t_type* type) {
 }
 
 
-THRIFT_REGISTER_GENERATOR(st, "Smalltalk", "");
+THRIFT_REGISTER_GENERATOR(st, "Smalltalk", "")
+
