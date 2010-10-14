@@ -189,7 +189,6 @@ char *saferealpath(const char *path, char *resolved_path) {
   if (len == 0 || len > MAX_PATH - 1){
     strcpy(resolved_path, path);
   } else {
-    CharLowerBuff(buf, len);
     strcpy(resolved_path, buf);
   }
 
