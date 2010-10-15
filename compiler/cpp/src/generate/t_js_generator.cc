@@ -1342,29 +1342,23 @@ string t_js_generator::declare_field(t_field* tfield, bool init, bool obj) {
       case t_base_type::TYPE_VOID:
         break;
       case t_base_type::TYPE_STRING:
-        result += " = ''";
-        break;
       case t_base_type::TYPE_BOOL:
-        result += " = false";
-        break;
       case t_base_type::TYPE_BYTE:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
-        result += " = 0";
-        break;
       case t_base_type::TYPE_DOUBLE:
-        result += " = 0.0";
+        result += " = null";
         break;
       default:
         throw "compiler error: no JS initializer for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
-      result += " = 0";
+      result += " = null";
     } else if (type->is_map()){
-      result += " = {}";
+      result += " = null";
     } else if (type->is_container()) {
-      result += " = []";
+      result += " = null";
     } else if (type->is_struct() || type->is_xception()) {
       if (obj) {
           result += " = new " +js_namespace(type->get_program()) + type->get_name() + "()";
