@@ -19,17 +19,26 @@
 # under the License.
 #
 
-LOG4J="../../java/build/ivy/lib/slf4j-api-1.5.8.jar:../../java/build/ivy/lib/log4j-1.2.15.jar:../../java/build/ivy/lib/slf4j-simple-1.5.8.jar"
+LOG4J="../../java/build/ivy/lib/slf4j-api-1.5.8.jar:../../java/build/ivy/lib/log4j-1.2.14.jar:../../java/build/ivy/lib/slf4j-log4j12-1.5.8.jar"
 HTTPCORE="./httpcore-4.0.1.jar"
 
 if [ -f ${HTTPCORE} ]
 then
     echo "compiling test..."
 else
-    echo "Missing required file ${HTTPCORE}"
-    echo "You can download this from http://archive.apache.org/dist/httpcomponents/httpcore/binary/httpcomponents-core-4.0.1-bin.tar.gz"
-    echo "Place the jar in this directory and try again."
-    exit
+    echo "try to download httpcore..."
+
+    wget http://archive.apache.org/dist/httpcomponents/httpcore/binary/httpcomponents-core-4.0.1-bin.tar.gz
+    # extract required jar file
+    tar -xzf httpcomponents-core-4.0.1-bin.tar.gz httpcomponents-core-4.0.1/lib/httpcore-4.0.1.jar --to-stdout > ${HTTPCORE}
+
+    if [ ! -f ${HTTPCORE} ]
+    then
+        echo "Missing required file ${HTTPCORE}"
+        echo "You can download this from http://archive.apache.org/dist/httpcomponents/httpcore/binary/httpcomponents-core-4.0.1-bin.tar.gz"
+        echo "Place the jar in this directory and try again."
+        exit
+    fi
 fi
 
 ../../../compiler/cpp/thrift --gen java ../../../test/ThriftTest.thrift
