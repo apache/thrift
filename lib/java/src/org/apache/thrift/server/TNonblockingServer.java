@@ -494,7 +494,7 @@ public class TNonblockingServer extends TServer {
     //
 
     // the actual transport hooked up to the client.
-    private final TNonblockingTransport trans_;
+    public final TNonblockingTransport trans_;
 
     // the SelectionKey that corresponds to our transport
     private final SelectionKey selectionKey_;
