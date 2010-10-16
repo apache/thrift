@@ -3887,31 +3887,39 @@ void t_java_generator::generate_java_struct_clear(std::ofstream& out, t_struct* 
 
   indent_up();
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    t_type* t = get_true_type((*m_iter)->get_type());
-    if ((*m_iter)->get_value() != NULL) {
-      print_const_value(out, "this." + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
-    } else {
-      if (type_can_be_null(t)) {
-        indent(out) << "this." << (*m_iter)->get_name() << " = null;" << endl;
-      } else {
-        // must be a base type
-        // means it also needs to be explicitly unset
-        indent(out) << "set" << get_cap_name((*m_iter)->get_name()) << get_cap_name("isSet") << "(false);" << endl;
-        switch (((t_base_type*)t)->get_base()) {
-          case t_base_type::TYPE_BYTE:
-          case t_base_type::TYPE_I16:
-          case t_base_type::TYPE_I32:
-          case t_base_type::TYPE_I64:
-            indent(out) << "this." << (*m_iter)->get_name() << " = 0;" << endl;
-            break;
-          case t_base_type::TYPE_DOUBLE:
-            indent(out) << "this." << (*m_iter)->get_name() << " = 0.0;" << endl;
-            break;
-          case t_base_type::TYPE_BOOL:
-            indent(out) << "this." << (*m_iter)->get_name() << " = false;" << endl;
-            break;
-        }
-      }
+    t_field* field = *m_iter;
+    t_type* t = get_true_type(field->get_type());
+
+    if (field->get_value() != NULL) {
+      print_const_value(out, "this." + field->get_name(), t, field->get_value(), true, true);
+      continue;
+    }
+
+    if (type_can_be_null(t)) {
+      indent(out) << "this." << field->get_name() << " = null;" << endl;
+      continue;
+    }
+
+    // must be a base type
+    // means it also needs to be explicitly unset
+    indent(out) << "set" << get_cap_name(field->get_name()) << get_cap_name("isSet") << "(false);" << endl;
+    t_base_type* base_type = (t_base_type*) t;
+
+    switch (base_type->get_base()) {
+      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I16:
+      case t_base_type::TYPE_I32:
+      case t_base_type::TYPE_I64:
+        indent(out) << "this." << field->get_name() << " = 0;" << endl;
+        break;
+      case t_base_type::TYPE_DOUBLE:
+        indent(out) << "this." << field->get_name() << " = 0.0;" << endl;
+        break;
+      case t_base_type::TYPE_BOOL:
+        indent(out) << "this." << field->get_name() << " = false;" << endl;
+        break;
+      default:
+        throw "unsupported type: " + base_type->get_name() + " for field " + field->get_name();
     }
   }
   indent_down();
