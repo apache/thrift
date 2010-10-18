@@ -153,6 +153,7 @@ uint32_t TDebugProtocol::writeMessageBegin(const std::string& name,
     case T_CALL      : mtype = "call"   ; break;
     case T_REPLY     : mtype = "reply"  ; break;
     case T_EXCEPTION : mtype = "exn"    ; break;
+    case T_ONEWAY    : mtype = "oneway" ; break;
   }
 
   uint32_t size = writeIndented("(" + mtype + ") " + name + "(");
