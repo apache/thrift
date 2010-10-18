@@ -150,9 +150,9 @@ uint32_t TDebugProtocol::writeMessageBegin(const std::string& name,
                                            const int32_t seqid) {
   string mtype;
   switch (messageType) {
-    case T_CALL      : mtype = "call"  ; break;
-    case T_REPLY     : mtype = "reply" ; break;
-    case T_EXCEPTION : mtype = "exn"   ; break;
+    case T_CALL      : mtype = "call"   ; break;
+    case T_REPLY     : mtype = "reply"  ; break;
+    case T_EXCEPTION : mtype = "exn"    ; break;
   }
 
   uint32_t size = writeIndented("(" + mtype + ") " + name + "(");
