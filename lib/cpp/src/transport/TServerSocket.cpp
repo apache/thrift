@@ -264,7 +264,7 @@ void TServerSocket::listen() {
     }
 
     address.sun_family = AF_UNIX;
-    sprintf(address.sun_path, path_.c_str());
+    snprintf(address.sun_path, sizeof(address.sun_path), "%s", path_.c_str());
     len = sizeof(address);
 
     do {
