@@ -187,3 +187,7 @@ struct ListTypeVersioningV2 {
        1: list<string> strings;
        2: string hello;
 }
+
+struct GuessProtocolStruct {
+  7: map<string,string> map_field,
+}

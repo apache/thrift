@@ -155,4 +155,77 @@ public class TProtocolUtil {
       break;
     }
   }
+
+  /**
+   * Attempt to determine the protocol used to serialize some data.
+   *
+   * The guess is based on known specificities of supported protocols.
+   * In some cases, no guess can be done, in that case we return the
+   * fallback TProtocolFactory.
+   * To be certain to correctly detect the protocol, the first encoded
+   * field should have a field id < 256
+   *
+   * @param data The serialized data to guess the protocol for.
+   * @param fallback The TProtocol to return if no guess can be made.
+   * @return a Class implementing TProtocolFactory which can be used to create a deserializer.
+   */
+  public static TProtocolFactory guessProtocolFactory(byte[] data, TProtocolFactory fallback) {
+    //
+    // If the first and last bytes are opening/closing curly braces we guess the protocol as
+    // being TJSONProtocol.
+    // It could not be a TCompactBinary encoding for a field of type 0xb (Map)
+    // with delta id 7 as the last byte for TCompactBinary is always 0.
+    //
+
+    if ('{' == data[0] && '}' == data[data.length - 1]) {
+      return new TJSONProtocol.Factory();
+    }
+
+    //
+    // If the last byte is not 0, then it cannot be TCompactProtocol, it must be
+    // TBinaryProtocol.
+    //
+
+    if (data[data.length - 1] != 0) {
+      return new TBinaryProtocol.Factory();
+    }
+
+    //
+    // A first byte of value > 16 indicates TCompactProtocol was used, and the first byte
+    // encodes a delta field id (id <= 15) and a field type.
+    //
+
+    if (data[0] > 0x10) {
+      return new TCompactProtocol.Factory();
+    }
+
+    //
+    // If the second byte is 0 then it is a field id < 256 encoded by TBinaryProtocol.
+    // It cannot possibly be TCompactProtocol since a value of 0 would imply a field id
+    // of 0 as the zig zag varint encoding would end.
+    //
+
+    if (data.length > 1 && 0 == data[1]) {
+      return new TBinaryProtocol.Factory();
+    }
+
+    //
+    // If bit 7 of the first byte of the field id is set then we have two choices:
+    // 1. A field id > 63 was encoded with TCompactProtocol.
+    // 2. A field id > 0x7fff (32767) was encoded with TBinaryProtocol and the last byte of the
+    //    serialized data is 0.
+    // Option 2 is impossible since field ids are short and thus limited to 32767.
+    //
+
+    if (data.length > 1 && (data[1] & 0x80) != 0) {
+      return new TCompactProtocol.Factory();
+    }
+
+    //
+    // The remaining case is either a field id <= 63 encoded as TCompactProtocol,
+    // one >= 256 encoded with TBinaryProtocol with a last byte at 0, or an empty structure.
+    // As we cannot really decide, we return the fallback protocol.
+    //
+    return fallback;
+  }
 }
