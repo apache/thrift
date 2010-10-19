@@ -195,6 +195,10 @@
     >
       <sysproperty key="build.test" value="${build.test}"/>
       <sysproperty key="test.port" value="${test.port}" />
+      <sysproperty key="javax.net.ssl.trustStore" value="${src.test}/.truststore"/>
+      <sysproperty key="javax.net.ssl.trustStorePassword" value="thrift"/>
+      <sysproperty key="javax.net.ssl.keyStore" value="${src.test}/.keystore"/>
+      <sysproperty key="javax.net.ssl.keyStorePassword" value="thrift"/>
       <classpath refid="test.classpath"/>
       <formatter type="${test.junit.output.format}" />
       <batchtest todir="${test.log.dir}" unless="testcase">

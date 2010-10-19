@@ -22,4 +22,11 @@ THIS_DIR=$(dirname $0)
 LIB_DIR=$THIS_DIR/../../lib/java/
 IVY_DIR=$LIB_DIR/build/ivy/lib/
 
+# Optionally the following properties could be set for SSL instead
+# of configuring it in the code
+# -Djavax.net.ssl.trustStore=../../lib/java/test/.truststore
+# -Djavax.net.ssl.trustStorePassword=thrift
+# -Djavax.net.ssl.keyStore=../../lib/java/test/.keystore
+# -Djavax.net.ssl.keyStorePassword=thrift
+
 java -cp $IVY_DIR/*:$LIB_DIR/libthrift.jar:tutorial.jar JavaServer

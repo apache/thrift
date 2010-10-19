@@ -22,4 +22,4 @@ THIS_DIR=$(dirname $0)
 LIB_DIR=$THIS_DIR/../../lib/java/
 IVY_DIR=$LIB_DIR/build/ivy/lib/
 
-java -cp $IVY_DIR/*:$LIB_DIR/libthrift.jar:tutorial.jar JavaClient
+java -cp $IVY_DIR/*:$LIB_DIR/libthrift.jar:tutorial.jar JavaClient $1

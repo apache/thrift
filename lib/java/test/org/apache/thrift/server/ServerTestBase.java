@@ -367,7 +367,7 @@ public abstract class ServerTestBase extends TestCase {
 
   public void testIt() throws Exception {
 
-    for (TProtocolFactory protoFactory : PROTOCOLS) {
+    for (TProtocolFactory protoFactory : getProtocols()) {
       TestHandler handler = new TestHandler();
       ThriftTest.Processor processor = new ThriftTest.Processor(handler);
 
@@ -380,7 +380,7 @@ public abstract class ServerTestBase extends TestCase {
       TProtocol protocol = protoFactory.getProtocol(transport);
       ThriftTest.Client testClient = new ThriftTest.Client(protocol);
 
-      transport.open();
+      open(transport);
       testVoid(testClient);
       testString(testClient);
       testByte(testClient);
@@ -401,6 +401,14 @@ public abstract class ServerTestBase extends TestCase {
 
       stopServer();
     }
+  }
+
+  public void open(TTransport transport) throws Exception {
+    transport.open();
+  }
+
+  public List<TProtocolFactory> getProtocols() {
+    return PROTOCOLS;  
   }
 
   private void testList(ThriftTest.Client testClient) throws TException {

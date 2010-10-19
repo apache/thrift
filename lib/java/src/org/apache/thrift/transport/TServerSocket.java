@@ -136,4 +136,7 @@ public class TServerSocket extends TServerTransport {
     close();
   }
 
+  public ServerSocket getServerSocket() {
+    return serverSocket_;
+  }
 }
