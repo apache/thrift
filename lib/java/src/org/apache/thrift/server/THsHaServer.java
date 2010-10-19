@@ -57,7 +57,7 @@ public class THsHaServer extends TNonblockingServer {
                       TNonblockingServerTransport serverTransport) {
     this(processor, serverTransport, new Options());
   }
-
+  
   /**
    * Create server with given processor, server transport, and server options
    * using TBinaryProtocol for the protocol, and TFramedTransport.Factory on
@@ -296,12 +296,17 @@ public class THsHaServer extends TNonblockingServer {
   @Override
   protected boolean requestInvoke(FrameBuffer frameBuffer) {
     try {
-      invoker.execute(new Invocation(frameBuffer));
+      Runnable invocation = getRunnable(frameBuffer);
+      invoker.execute(invocation);
       return true;
     } catch (RejectedExecutionException rx) {
       LOGGER.warn("ExecutorService rejected execution!", rx);
       return false;
     }
+  }
+
+  protected Runnable getRunnable(FrameBuffer frameBuffer){
+	return new Invocation(frameBuffer);
   }
 
   /**
