@@ -19,15 +19,13 @@
 
 package org.apache.thrift.transport;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Socket implementation of the TTransport interface. To be commented soon!
@@ -74,8 +72,8 @@ public class TSocket extends TIOStreamTransport {
 
     if (isOpen()) {
       try {
-        inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
-        outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
+        inputStream_ = socket_.getInputStream();
+        outputStream_ = socket_.getOutputStream();
       } catch (IOException iox) {
         close();
         throw new TTransportException(TTransportException.NOT_OPEN, iox);
@@ -178,8 +176,8 @@ public class TSocket extends TIOStreamTransport {
 
     try {
       socket_.connect(new InetSocketAddress(host_, port_), timeout_);
-      inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
-      outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
+      inputStream_ = socket_.getInputStream();
+      outputStream_ = socket_.getOutputStream();
     } catch (IOException iox) {
       close();
       throw new TTransportException(TTransportException.NOT_OPEN, iox);
