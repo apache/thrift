@@ -77,12 +77,12 @@ begin
   require 'echoe'
 
   Echoe.new('thrift') do |p|
-    p.author = ['Kevin Ballard', 'Kevin Clark', 'Mark Slee']
-    p.email = ['kevin@sb.org', 'kevin.clark@gmail.com', 'mcslee@facebook.com']
-    p.summary = "Ruby libraries for Thrift (a language-agnostic RPC system)"
+    p.author = ['Thrift Developers']
+    p.email = ['thrift-dev@incubator.apache.org']
+    p.summary = "Ruby bindings for the Apache Thrift RPC system"
     p.url = "http://incubator.apache.org/thrift/"
     p.include_rakefile = true
-    p.version = "0.6.0"
+    p.version = "0.6.0-dev"
     p.rubygems_version = ">= 1.2.0"
   end
 

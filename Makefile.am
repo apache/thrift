@@ -24,5 +24,8 @@ SUBDIRS = compiler/cpp lib test
 dist-hook:
 	find $(distdir) -name '.[a-zA-Z0-9]*' | xargs rm -rf
 
+print-version:
+	@echo $(VERSION)
+
 EXTRA_DIST = doc tutorial contrib \
              CONTRIBUTORS LICENSE CHANGES DISCLAIMER NOTICE

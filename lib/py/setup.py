@@ -26,8 +26,8 @@ fastbinarymod = Extension('thrift.protocol.fastbinary',
                           )
 
 setup(name = 'Thrift',
-      version = '0.1',
-      description = 'Thrift Python Libraries',
+      version = '0.6.0-dev',
+      description = 'Python bindings for the Apache Thrift RPC system',
       author = ['Thrift Developers'],
       author_email = ['thrift-dev@incubator.apache.org'],
       url = 'http://incubator.apache.org/thrift/',
