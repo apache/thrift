@@ -20,21 +20,16 @@
 package org.apache.thrift.server;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
-import org.apache.thrift.TProcessorFactory;
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.apache.thrift.transport.TTransportFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +40,28 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class TThreadPoolServer extends TServer {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(TThreadPoolServer.class.getName());
+
+  public static class Args extends AbstractServerArgs<Args> {
+    public int minWorkerThreads = 5;
+    public int maxWorkerThreads = Integer.MAX_VALUE;
+    public int stopTimeoutVal = 60;
+    public TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
+
+    public Args(TServerTransport transport) {
+      super(transport);
+    }
+
+    public Args minWorkerThreads(int n) {
+      minWorkerThreads = n;
+      return this;
+    }
+
+    public Args maxWorkerThreads(int n) {
+      maxWorkerThreads = n;
+      return this;
+    }
+  }
 
   // Executor service for handling client connections
   private ExecutorService executorService_;
@@ -54,117 +69,24 @@ public class TThreadPoolServer extends TServer {
   // Flag for stopping the server
   private volatile boolean stopped_;
 
-  // Server options
-  private Options options_;
+  private final TimeUnit stopTimeoutUnit;
 
-  // Customizable server options
-  public static class Options {
-    public int minWorkerThreads = 5;
-    public int maxWorkerThreads = Integer.MAX_VALUE;
-    public int stopTimeoutVal = 60;
-    public TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
-  }
+  private final long stopTimeoutVal;
 
-  public TThreadPoolServer(TProcessor processor,
-                           TServerTransport serverTransport) {
-    this(processor, serverTransport,
-         new TTransportFactory(), new TTransportFactory(),
-         new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory());
-  }
-
-  public TThreadPoolServer(TProcessorFactory processorFactory,
-                           TServerTransport serverTransport) {
-    this(processorFactory, serverTransport,
-         new TTransportFactory(), new TTransportFactory(),
-         new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory());
-  }
-
-  public TThreadPoolServer(TProcessor processor,
-                           TServerTransport serverTransport,
-                           TProtocolFactory protocolFactory) {
-    this(processor, serverTransport,
-         new TTransportFactory(), new TTransportFactory(),
-         protocolFactory, protocolFactory);
-  }
-
-  public TThreadPoolServer(TProcessor processor,
-                           TServerTransport serverTransport,
-                           TTransportFactory transportFactory,
-                           TProtocolFactory protocolFactory) {
-    this(processor, serverTransport,
-         transportFactory, transportFactory,
-         protocolFactory, protocolFactory);
-  }
-
-  public TThreadPoolServer(TProcessorFactory processorFactory,
-                           TServerTransport serverTransport,
-                           TTransportFactory transportFactory,
-                           TProtocolFactory protocolFactory) {
-    this(processorFactory, serverTransport,
-         transportFactory, transportFactory,
-         protocolFactory, protocolFactory);
-  }
-
-  public TThreadPoolServer(TProcessor processor,
-                           TServerTransport serverTransport,
-                           TTransportFactory inputTransportFactory,
-                           TTransportFactory outputTransportFactory,
-                           TProtocolFactory inputProtocolFactory,
-                           TProtocolFactory outputProtocolFactory) {
-    this(new TProcessorFactory(processor), serverTransport,
-         inputTransportFactory, outputTransportFactory,
-         inputProtocolFactory, outputProtocolFactory);
-  }
-
-  public TThreadPoolServer(TProcessorFactory processorFactory,
-                           TServerTransport serverTransport,
-                           TTransportFactory inputTransportFactory,
-                           TTransportFactory outputTransportFactory,
-                           TProtocolFactory inputProtocolFactory,
-                           TProtocolFactory outputProtocolFactory) {
-    super(processorFactory, serverTransport,
-          inputTransportFactory, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory);
-    options_ = new Options();
-    executorService_ = Executors.newCachedThreadPool();
-  }
-
-  public TThreadPoolServer(TProcessor processor,
-          TServerTransport serverTransport,
-          TTransportFactory inputTransportFactory,
-          TTransportFactory outputTransportFactory,
-          TProtocolFactory inputProtocolFactory,
-          TProtocolFactory outputProtocolFactory,
-          Options options) {
-    this(new TProcessorFactory(processor), serverTransport,
-         inputTransportFactory, outputTransportFactory,
-         inputProtocolFactory, outputProtocolFactory,
-         options);
-  }
-
-  public TThreadPoolServer(TProcessorFactory processorFactory,
-                           TServerTransport serverTransport,
-                           TTransportFactory inputTransportFactory,
-                           TTransportFactory outputTransportFactory,
-                           TProtocolFactory inputProtocolFactory,
-                           TProtocolFactory outputProtocolFactory,
-                           Options options) {
-    super(processorFactory, serverTransport,
-          inputTransportFactory, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory);
-
-    executorService_ = null;
+  public TThreadPoolServer(Args args) {
+    super(args);
 
     SynchronousQueue<Runnable> executorQueue =
       new SynchronousQueue<Runnable>();
 
-    executorService_ = new ThreadPoolExecutor(options.minWorkerThreads,
-                                              options.maxWorkerThreads,
+    stopTimeoutUnit = args.stopTimeoutUnit;
+    stopTimeoutVal = args.stopTimeoutVal;
+
+    executorService_ = new ThreadPoolExecutor(args.minWorkerThreads,
+                                              args.maxWorkerThreads,
                                               60,
                                               TimeUnit.SECONDS,
                                               executorQueue);
-
-    options_ = options;
   }
 
 
@@ -198,7 +120,7 @@ public class TThreadPoolServer extends TServer {
     // exception. If we don't do this, then we'll shut down prematurely. We want
     // to let the executorService clear it's task queue, closing client sockets
     // appropriately.
-    long timeoutMS = options_.stopTimeoutUnit.toMillis(options_.stopTimeoutVal);
+    long timeoutMS = stopTimeoutUnit.toMillis(stopTimeoutVal);
     long now = System.currentTimeMillis();
     while (timeoutMS >= 0) {
       try {

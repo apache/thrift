@@ -44,6 +44,7 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.ServerTestBase;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.server.TServer.Args;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -284,7 +285,7 @@ public class TestTSaslTransports extends TestCase {
             TTransportFactory factory = new TSaslServerTransport.Factory(
               WRAPPED_MECHANISM, SERVICE, HOST, WRAPPED_PROPS,
               new TestSaslCallbackHandler(PASSWORD));
-            server = new TSimpleServer(processor, socket, factory, protoFactory);
+            server = new TSimpleServer(new Args(socket).processor(processor).transportFactory(factory).protocolFactory(protoFactory));
 
             // Run it
             LOGGER.debug("Starting the server on port {}", PORT);

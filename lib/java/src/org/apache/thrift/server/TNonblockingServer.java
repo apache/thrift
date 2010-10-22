@@ -31,11 +31,7 @@ import java.util.Set;
 
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TException;
-import org.apache.thrift.TProcessor;
-import org.apache.thrift.TProcessorFactory;
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TIOStreamTransport;
 import org.apache.thrift.transport.TMemoryInputTransport;
@@ -61,6 +57,21 @@ public class TNonblockingServer extends TServer {
   private static final Logger LOGGER =
     LoggerFactory.getLogger(TNonblockingServer.class.getName());
 
+  public static class Args extends AbstractNonblockingServerArgs<Args> {
+    public Args(TNonblockingServerTransport transport) {
+      super(transport);
+    }
+  }
+
+  public static abstract class AbstractNonblockingServerArgs<T extends AbstractNonblockingServerArgs<T>> extends AbstractServerArgs<T> {
+    public long maxReadBufferBytes = Long.MAX_VALUE;
+
+    public AbstractNonblockingServerArgs(TNonblockingServerTransport transport) {
+      super(transport);
+      transportFactory(new TFramedTransport.Factory());
+    }
+  }
+
   // Flag for stopping the server
   private volatile boolean stopped_ = true;
 
@@ -73,95 +84,14 @@ public class TNonblockingServer extends TServer {
    */
   private final long MAX_READ_BUFFER_BYTES;
 
-  protected final Options options_;
-
   /**
    * How many bytes are currently allocated to read buffers.
    */
   private long readBufferBytesAllocated = 0;
 
-  /**
-   * Create server with given processor and server transport, using
-   * TBinaryProtocol for the protocol, TFramedTransport.Factory on both input
-   * and output transports. A TProcessorFactory will be created that always
-   * returns the specified processor.
-   */
-  public TNonblockingServer(TProcessor processor,
-                           TNonblockingServerTransport serverTransport) {
-    this(new TProcessorFactory(processor), serverTransport);
-  }
-
-  /**
-   * Create server with specified processor factory and server transport.
-   * TBinaryProtocol is assumed. TFramedTransport.Factory is used on both input
-   * and output transports.
-   */
-  public TNonblockingServer(TProcessorFactory processorFactory,
-                            TNonblockingServerTransport serverTransport) {
-    this(processorFactory, serverTransport,
-         new TFramedTransport.Factory(),
-         new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory());
-  }
-
-  public TNonblockingServer(TProcessor processor,
-                            TNonblockingServerTransport serverTransport,
-                            TProtocolFactory protocolFactory) {
-    this(processor, serverTransport,
-         new TFramedTransport.Factory(),
-         protocolFactory, protocolFactory);
-  }
-
-  public TNonblockingServer(TProcessor processor,
-                            TNonblockingServerTransport serverTransport,
-                            TFramedTransport.Factory transportFactory,
-                            TProtocolFactory protocolFactory) {
-    this(processor, serverTransport,
-         transportFactory,
-         protocolFactory, protocolFactory);
-  }
-
-  public TNonblockingServer(TProcessorFactory processorFactory,
-                            TNonblockingServerTransport serverTransport,
-                            TFramedTransport.Factory transportFactory,
-                            TProtocolFactory protocolFactory) {
-    this(processorFactory, serverTransport,
-         transportFactory,
-         protocolFactory, protocolFactory);
-  }
-
-  public TNonblockingServer(TProcessor processor,
-                            TNonblockingServerTransport serverTransport,
-                            TFramedTransport.Factory outputTransportFactory,
-                            TProtocolFactory inputProtocolFactory,
-                            TProtocolFactory outputProtocolFactory) {
-    this(new TProcessorFactory(processor), serverTransport,
-         outputTransportFactory,
-         inputProtocolFactory, outputProtocolFactory);
-  }
-
-  public TNonblockingServer(TProcessorFactory processorFactory,
-                            TNonblockingServerTransport serverTransport,
-                            TFramedTransport.Factory outputTransportFactory,
-                            TProtocolFactory inputProtocolFactory,
-                            TProtocolFactory outputProtocolFactory) {
-    this(processorFactory, serverTransport,
-          outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory,
-          new Options());
-  }
-
-  public TNonblockingServer(TProcessorFactory processorFactory,
-                            TNonblockingServerTransport serverTransport,
-                            TFramedTransport.Factory outputTransportFactory,
-                            TProtocolFactory inputProtocolFactory,
-                            TProtocolFactory outputProtocolFactory,
-                            Options options) {
-    super(processorFactory, serverTransport,
-          null, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory);
-    options_ = options;
-    options_.validate();
-    MAX_READ_BUFFER_BYTES = options.maxReadBufferBytes;
+  public TNonblockingServer(AbstractNonblockingServerArgs args) {
+    super(args);
+    MAX_READ_BUFFER_BYTES = args.maxReadBufferBytes;
   }
 
   /**
@@ -772,17 +702,4 @@ public class TNonblockingServer extends TServer {
       }
     }
   } // FrameBuffer
-
-
-  public static class Options {
-    public long maxReadBufferBytes = Long.MAX_VALUE;
-
-    public Options() {}
-
-    public void validate() {
-      if (maxReadBufferBytes <= 1024) {
-        throw new IllegalArgumentException("You must allocate at least 1KB to the read buffer.");
-      }
-    }
-  }
 }

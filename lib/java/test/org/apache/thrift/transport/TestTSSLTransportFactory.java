@@ -28,6 +28,7 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.ServerTestBase;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.server.TServer.Args;
 
 public class TestTSSLTransportFactory extends ServerTestBase {
   private Thread serverThread;
@@ -52,7 +53,7 @@ public class TestTSSLTransportFactory extends ServerTestBase {
       public void run() {
         try {
           TServerTransport serverTransport = TSSLTransportFactory.getServerSocket(PORT);
-          server = new TSimpleServer(processor, serverTransport);
+          server = new TSimpleServer(new Args(serverTransport).processor(processor));
           server.serve();
         } catch (TTransportException e) {
           e.printStackTrace();

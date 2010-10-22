@@ -34,6 +34,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.ServerTestBase;
 import org.apache.thrift.server.THsHaServer;
+import org.apache.thrift.server.THsHaServer.Args;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingSocket;
 
@@ -46,13 +47,13 @@ import thrift.test.Srv.AsyncClient.primitiveMethod_call;
 import thrift.test.Srv.AsyncClient.voidMethod_call;
 
 public class TestTAsyncClientManager extends TestCase {
-  
+
   private THsHaServer server_;
   private Thread serverThread_;
   private TAsyncClientManager clientManager_;
-  
+
   public void setUp() throws Exception {
-    server_ = new THsHaServer(new Srv.Processor(new SrvHandler()), new TNonblockingServerSocket(ServerTestBase.PORT));
+    server_ = new THsHaServer(new Args(new TNonblockingServerSocket(ServerTestBase.PORT)).processor(new Srv.Processor(new SrvHandler())));
     serverThread_ = new Thread(new Runnable() {
       public void run() {
         server_.serve();
@@ -62,18 +63,18 @@ public class TestTAsyncClientManager extends TestCase {
     clientManager_ = new TAsyncClientManager();
     Thread.sleep(500);
   }
-  
+
   public void tearDown() throws Exception {
     server_.stop();
     clientManager_.stop();
     serverThread_.join();
   }
-  
+
   public void testBasicCall() throws Exception {
     Srv.AsyncClient client = getClient();
     basicCall(client);
   }
-   
+
   public void testBasicCallWithTimeout() throws Exception {
     Srv.AsyncClient client = getClient();
     client.setTimeout(5000);

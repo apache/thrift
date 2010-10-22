@@ -19,6 +19,7 @@
 
 package org.apache.thrift.server;
 
+import org.apache.thrift.TProcessor;
 import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -30,6 +31,67 @@ import org.apache.thrift.transport.TTransportFactory;
  *
  */
 public abstract class TServer {
+
+  public static class Args extends AbstractServerArgs<Args> {
+    public Args(TServerTransport transport) {
+      super(transport);
+    }
+  }
+
+  public static abstract class AbstractServerArgs<T extends AbstractServerArgs<T>> {
+    final TServerTransport serverTransport;
+    TProcessorFactory processorFactory;
+    TTransportFactory inputTransportFactory = new TTransportFactory();
+    TTransportFactory outputTransportFactory = new TTransportFactory();
+    TProtocolFactory inputProtocolFactory = new TBinaryProtocol.Factory();
+    TProtocolFactory outputProtocolFactory = new TBinaryProtocol.Factory();
+
+    public AbstractServerArgs(TServerTransport transport) {
+      serverTransport = transport;
+    }
+
+    public T processorFactory(TProcessorFactory factory) {
+      this.processorFactory = factory;
+      return (T) this;
+    }
+
+    public T processor(TProcessor processor) {
+      this.processorFactory = new TProcessorFactory(processor);
+      return (T) this;
+    }
+
+    public T transportFactory(TTransportFactory factory) {
+      this.inputTransportFactory = factory;
+      this.outputTransportFactory = factory;
+      return (T) this;
+    }
+
+    public T inputTransportFactory(TTransportFactory factory) {
+      this.inputTransportFactory = factory;
+      return (T) this;
+    }
+
+    public T outputTransportFactory(TTransportFactory factory) {
+      this.outputTransportFactory = factory;
+      return (T) this;
+    }
+
+    public T protocolFactory(TProtocolFactory factory) {
+      this.inputProtocolFactory = factory;
+      this.outputProtocolFactory = factory;
+      return (T) this;
+    }
+
+    public T inputProtocolFactory(TProtocolFactory factory) {
+      this.inputProtocolFactory = factory;
+      return (T) this;
+    }
+
+    public T outputProtocolFactory(TProtocolFactory factory) {
+      this.outputProtocolFactory = factory;
+      return (T) this;
+    }
+  }
 
   /**
    * Core processor
@@ -63,55 +125,13 @@ public abstract class TServer {
 
   private boolean isServing;
 
-  /**
-   * Default constructors.
-   */
-
-  protected TServer(TProcessorFactory processorFactory,
-                    TServerTransport serverTransport) {
-    this(processorFactory,
-         serverTransport,
-         new TTransportFactory(),
-         new TTransportFactory(),
-         new TBinaryProtocol.Factory(),
-         new TBinaryProtocol.Factory());
-  }
-
-  protected TServer(TProcessorFactory processorFactory,
-                    TServerTransport serverTransport,
-                    TTransportFactory transportFactory) {
-    this(processorFactory,
-         serverTransport,
-         transportFactory,
-         transportFactory,
-         new TBinaryProtocol.Factory(),
-         new TBinaryProtocol.Factory());
-  }
-
-  protected TServer(TProcessorFactory processorFactory,
-                    TServerTransport serverTransport,
-                    TTransportFactory transportFactory,
-                    TProtocolFactory protocolFactory) {
-    this(processorFactory,
-         serverTransport,
-         transportFactory,
-         transportFactory,
-         protocolFactory,
-         protocolFactory);
-  }
-
-  protected TServer(TProcessorFactory processorFactory,
-                    TServerTransport serverTransport,
-                    TTransportFactory inputTransportFactory,
-                    TTransportFactory outputTransportFactory,
-                    TProtocolFactory inputProtocolFactory,
-                    TProtocolFactory outputProtocolFactory) {
-    processorFactory_ = processorFactory;
-    serverTransport_ = serverTransport;
-    inputTransportFactory_ = inputTransportFactory;
-    outputTransportFactory_ = outputTransportFactory;
-    inputProtocolFactory_ = inputProtocolFactory;
-    outputProtocolFactory_ = outputProtocolFactory;
+  protected TServer(AbstractServerArgs args) {
+    processorFactory_ = args.processorFactory;
+    serverTransport_ = args.serverTransport;
+    inputTransportFactory_ = args.inputTransportFactory;
+    outputTransportFactory_ = args.outputTransportFactory;
+    inputProtocolFactory_ = args.inputProtocolFactory;
+    outputProtocolFactory_ = args.outputProtocolFactory;
   }
 
   /**

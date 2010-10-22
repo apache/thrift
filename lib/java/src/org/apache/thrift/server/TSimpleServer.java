@@ -21,13 +21,9 @@ package org.apache.thrift.server;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
-import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.apache.thrift.transport.TTransportFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,52 +37,9 @@ public class TSimpleServer extends TServer {
 
   private boolean stopped_ = false;
 
-  public TSimpleServer(TProcessor processor,
-                       TServerTransport serverTransport) {
-    super(new TProcessorFactory(processor), serverTransport);
+  public TSimpleServer(AbstractServerArgs args) {
+    super(args);
   }
-
-  public TSimpleServer(TProcessor processor,
-                       TServerTransport serverTransport,
-                       TTransportFactory transportFactory,
-                       TProtocolFactory protocolFactory) {
-    super(new TProcessorFactory(processor), serverTransport, transportFactory, protocolFactory);
-  }
-
-  public TSimpleServer(TProcessor processor,
-                       TServerTransport serverTransport,
-                       TTransportFactory inputTransportFactory,
-                       TTransportFactory outputTransportFactory,
-                       TProtocolFactory inputProtocolFactory,
-                       TProtocolFactory outputProtocolFactory) {
-    super(new TProcessorFactory(processor), serverTransport,
-          inputTransportFactory, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory);
-  }
-
-  public TSimpleServer(TProcessorFactory processorFactory,
-          TServerTransport serverTransport) {
-    super(processorFactory, serverTransport);
-  }
-
-  public TSimpleServer(TProcessorFactory processorFactory,
-          TServerTransport serverTransport,
-          TTransportFactory transportFactory,
-          TProtocolFactory protocolFactory) {
-    super(processorFactory, serverTransport, transportFactory, protocolFactory);
-  }
-
-  public TSimpleServer(TProcessorFactory processorFactory,
-          TServerTransport serverTransport,
-          TTransportFactory inputTransportFactory,
-          TTransportFactory outputTransportFactory,
-          TProtocolFactory inputProtocolFactory,
-          TProtocolFactory outputProtocolFactory) {
-    super(processorFactory, serverTransport,
-          inputTransportFactory, outputTransportFactory,
-          inputProtocolFactory, outputProtocolFactory);
-  }
-
 
   public void serve() {
     stopped_ = false;
