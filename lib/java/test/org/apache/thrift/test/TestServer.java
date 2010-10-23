@@ -69,10 +69,10 @@ public class TestServer {
       TServer serverEngine;
 
       // Simple Server
-      serverEngine = new TSimpleServer(new Args(tServerSocket).processor(testProcessor));
+      //serverEngine = new TSimpleServer(new Args(tServerSocket).processor(testProcessor));
 
       // ThreadPool Server
-      //serverEngine = new TThreadPoolServer(testProcessor, tServerSocket, tProtocolFactory);
+      serverEngine = new TThreadPoolServer(new TThreadPoolServer.Args(tServerSocket).processor(testProcessor).protocolFactory(tProtocolFactory));
 
       // Run it
       System.out.println("Starting the server on port " + port + "...");
