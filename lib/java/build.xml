@@ -38,6 +38,7 @@
   <property name="test.thrift.home" location="../../test"/>
   <property name="thrift.root" location="../../"/>
   <property name="jar.file" location="${basedir}/libthrift.jar" />  
+  <property name="test.jar.file" location="${basedir}/libthrift-test.jar" />
 
   <property file="${user.home}/.thrift-build.properties" />
 
@@ -167,6 +168,7 @@
     <delete dir="${genbean}"/>
     <delete dir="${javadoc}"/>
     <delete file="${jar.file}" />
+    <delete file="${test.jar.file}" />
   </target>
 
   <target name="compile-test" description="Build the test suite classes" depends="generate,dist">
@@ -176,6 +178,7 @@
     <copy todir="${build.test}">
       <fileset dir="${src.test}" includes="log4j.properties" />
     </copy>
+    <jar jarfile="${test.jar.file}" basedir="${build}/test"/>
   </target>
 
   <property name="build.test" location="${build.dir}/test"/>
@@ -220,21 +223,21 @@
 
   <target name="test" description="Run the full test suite" depends="junit-test,deprecated-test"/>
 
-  <target name="testclient" description="Run a test client">
+  <target name="testclient" description="Run a test client" depends="compile-test">
     <java classname="org.apache.thrift.test.TestClient"
       classpathref="test.classpath" failonerror="true">
       <arg line="${testargs}" />
     </java>
   </target>
 
-  <target name="testserver" description="Run a test server">
+  <target name="testserver" description="Run a test server" depends="compile-test">
     <java classname="org.apache.thrift.test.TestServer"
       classpathref="test.classpath" failonerror="true">
       <arg line="${testargs}" />
     </java>
   </target>
 
-  <target name="testnonblockingserver" description="Run a test nonblocking server">
+  <target name="testnonblockingserver" description="Run a test nonblocking server" depends="compile-test">
     <java classname="org.apache.thrift.test.TestNonblockingServer"
       classpathref="test.classpath" failonerror="true">
       <arg line="${testargs}" />
