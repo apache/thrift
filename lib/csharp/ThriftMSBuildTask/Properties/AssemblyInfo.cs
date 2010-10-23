@@ -28,11 +28,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Thrift")]
-[assembly: AssemblyDescription("C# bindings for the Apache Thrift RPC system")]
+[assembly: AssemblyTitle("ThriftMSBuildTask")]
+[assembly: AssemblyDescription("MSBuild Task to generate csharp from .thrift files, and compile the code into a library: ThriftImpl.dll")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("The Apache Software Foundation")]
-[assembly: AssemblyProduct("Thrift")]
+[assembly: AssemblyProduct("ThriftMSBuildTask")]
 [assembly: AssemblyCopyright("The Apache Software Foundation")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
