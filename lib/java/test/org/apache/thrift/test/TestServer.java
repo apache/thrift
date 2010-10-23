@@ -28,6 +28,8 @@ import java.util.Set;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TServer.Args;
+import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.server.ServerTestBase.TestHandler;
@@ -67,10 +69,10 @@ public class TestServer {
       TServer serverEngine;
 
       // Simple Server
-      // serverEngine = new TSimpleServer(testProcessor, tServerSocket);
+      serverEngine = new TSimpleServer(new Args(tServerSocket).processor(testProcessor));
 
       // ThreadPool Server
-      serverEngine = new TThreadPoolServer(testProcessor, tServerSocket, tProtocolFactory);
+      //serverEngine = new TThreadPoolServer(testProcessor, tServerSocket, tProtocolFactory);
 
       // Run it
       System.out.println("Starting the server on port " + port + "...");

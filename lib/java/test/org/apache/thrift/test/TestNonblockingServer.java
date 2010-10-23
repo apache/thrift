@@ -22,6 +22,7 @@ package org.apache.thrift.test;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.THsHaServer.Args;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.server.ServerTestBase.TestHandler;
 
@@ -57,10 +58,10 @@ public class TestNonblockingServer extends TestServer {
 
       if (hsha) {
         // HsHa Server
-        serverEngine = new THsHaServer(testProcessor, tServerSocket);
+        serverEngine = new THsHaServer(new Args(tServerSocket).processor(testProcessor));
       } else {
         // Nonblocking Server
-        serverEngine = new TNonblockingServer(testProcessor, tServerSocket);
+        serverEngine = new TNonblockingServer(new Args(tServerSocket).processor(testProcessor));
       }
 
       // Run it
