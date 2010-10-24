@@ -70,6 +70,7 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 
 import thrift.test.ThriftTest;
+import org.apache.thrift.server.ServerTestBase.TestHandler;
 
 /**
  * Basic, yet fully functional and spec compliant, HTTP/1.1 file server.

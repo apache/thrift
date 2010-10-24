@@ -200,17 +200,8 @@
       try{
         client.testException("Xception");
       }catch(e){
-        equals(e.errorCode, 1);
-        equals(e.message, "Xception");
-      }
-    });
-
-    test("ApplicationException", function() {
-      expect(1);
-      try{
-        client.testException("ApplicationException");
-      }catch(e){
-        equals(e.message, "ApplicationException");
+        equals(e.errorCode, 1001);
+        equals(e.message, "This is an Xception");
       }
     });
 

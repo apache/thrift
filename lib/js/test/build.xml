@@ -1,0 +1,157 @@
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one
+ or more contributor license agreements. See the NOTICE file
+ distributed with this work for additional information
+ regarding copyright ownership. The ASF licenses this file
+ to you under the Apache License, Version 2.0 (the
+ "License"); you may not use this file except in compliance
+ with the License. You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the License is distributed on an
+ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ KIND, either express or implied. See the License for the
+ specific language governing permissions and limitations
+ under the License.
+-->
+<project name="Java Script Test" default="test" basedir="."
+  xmlns:ivy="antlib:org.apache.ivy.ant"
+  xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+
+  <description>Java Script Test based on Thrift Java Library</description>
+
+  <property name="src" location="src" />
+  <property name="genjava" location="gen-java" />
+  <property name="genjs" location="gen-js" />
+  <property name="build" location="build" />
+  <property name="jar.file" location="${basedir}/jstest.jar" /> 
+
+  <!-- the root directory, where you unpack thrift distibution (e.g. thrift-0.x.x.tar.gz) -->
+  <property name="thrift.dir" location="../../../" />
+  <property name="thrift.java.dir" location="${thrift.dir}/lib/java" />
+
+  <property name="thrift.compiler" location="${thrift.dir}/compiler/cpp/thrift" />
+
+  <!-- take ivy from java, test depends anyway on java! -->
+  <property name="ivy.dir" location="${thrift.java.dir}/build/ivy" />
+  <property name="ivy.lib.dir" location="${ivy.dir}/lib" />
+
+  <path id="libs.classpath">
+    <pathelement path="${thrift.java.dir}/libthrift.jar" />
+    <pathelement path="${thrift.java.dir}/libthrift-test.jar" />
+    <fileset dir="${thrift.java.dir}/build/ivy/lib">
+      <include name="*.jar" />
+    </fileset>
+  </path>
+
+  <path id="test.classpath">
+    <path refid="libs.classpath" />
+    <pathelement location="${jar.file}" />
+  </path>
+
+  <target name="dependencies">
+    <fail>
+      <condition>
+        <not>
+          <resourcecount count="1">
+            <fileset id="fs" dir="${thrift.java.dir}" includes="libthrift.jar"/>
+          </resourcecount>
+        </not>
+      </condition>
+      You need libthrift.jar located at
+      ${thrift.java.dir}
+      Did you compile Thrift Java library and its test suite by "ant compile-test"?
+    </fail>
+    <fail>
+      <condition>
+        <not>
+          <resourcecount count="1">
+            <fileset id="fs" dir="${ivy.dir}" includes="ivy-2*.jar"/>
+          </resourcecount>
+        </not>
+      </condition>
+      ivy is missing at ${ivy.dir}
+    </fail>
+    <fail>
+      <condition>
+        <not>
+          <resourcecount count="1">
+            <fileset id="fs" dir="${thrift.dir}" includes="compiler/cpp/thrift"/>
+          </resourcecount>
+        </not>
+      </condition>
+      Thrift compiler is missing !
+    </fail>
+  </target>
+
+  <target name="init" depends="dependencies">
+    <tstamp />
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compile" description="compile the test suite" depends="init, generate, resolve">
+    <javac srcdir="${genjava}" destdir="${build}" classpathref="libs.classpath" />
+    <javac srcdir="${src}" destdir="${build}" classpathref="libs.classpath" />
+  </target>
+
+  <target name="jstest" description="" depends="compile">
+    <jar jarfile="${jar.file}" basedir="${build}"/>
+  </target>
+
+  <target name="test" description="run the test server" depends="jstest">
+    <java classname="test.Httpd" fork="true"
+      classpathref="test.classpath" failonerror="true">
+      <arg value="../" />
+    </java>
+  </target>
+
+  <target name="generate">
+    <exec executable="${thrift.compiler}" failonerror="true">
+      <arg line="--gen java ${thrift.dir}/test/ThriftTest.thrift" />
+    </exec>
+    <exec executable="${thrift.compiler}" failonerror="true">
+      <arg line="--gen js ${thrift.dir}/test/ThriftTest.thrift" />
+    </exec>
+  </target>
+
+  <target name="clean">
+    <delete dir="${build}" />
+    <delete dir="${genjava}" />
+    <delete dir="${genjs}" />
+    <delete file="${jar.file}" />
+  </target>
+
+  <!-- ivy tasks from java build.xml ... don't know how to import them instead of copying -->
+  <target name="resolve" depends="ivy-init-antlib" description="retrieve dependencies with ivy" unless="noivy">
+    <ivy:retrieve />
+  </target>
+
+  <target name="ivy-probe-antlib">
+    <condition property="ivy.found">
+      <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
+    </condition>
+  </target>
+
+  <target name="ivy-init-antlib" depends="ivy-probe-antlib" unless="ivy.found">
+    <typedef uri="antlib:org.apache.ivy.ant" onerror="fail"
+      loaderRef="ivyLoader">
+      <classpath>
+        <fileset dir="${ivy.dir}">
+          <include name="ivy-2.*.jar" />
+        </fileset>
+      </classpath>
+    </typedef>
+    <fail>
+      <condition >
+        <not>
+          <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
+        </not>
+      </condition>
+      You need Apache Ivy 2.0 or later from http://ant.apache.org/
+      It could not be loaded from ${ivy_repo_url}
+    </fail>
+  </target>
+
+</project>
