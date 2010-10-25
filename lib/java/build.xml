@@ -205,7 +205,12 @@
       <classpath refid="test.classpath"/>
       <formatter type="${test.junit.output.format}" />
       <batchtest todir="${test.log.dir}" unless="testcase">
-        <fileset dir="${test.src.dir}" includes="**/Test*.java" />
+        <fileset dir="${test.src.dir}">
+          <include name="**/Test*.java"/>
+          <exclude name="**/TestClient.java"/>
+          <exclude name="**/TestServer.java"/>
+          <exclude name="**/TestNonblockingServer.java"/>
+        </fileset>
       </batchtest>
       <batchtest todir="${test.log.dir}" if="testcase">
         <fileset dir="${test.src.dir}" includes="**/${testcase}.java" />
