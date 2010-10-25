@@ -114,7 +114,8 @@ extern TOutput GlobalOutput;
 
 class TException : public std::exception {
  public:
-  TException() {}
+  TException():
+    message_() {}
 
   TException(const std::string& message) :
     message_(message) {}
