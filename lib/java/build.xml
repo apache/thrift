@@ -122,7 +122,18 @@
     <ivy:cachepath pathid="ivy.test.classpath" conf="test" />
   </target>
 
-  <target name="compile" depends="init,resolve">
+  <target name="resolve-offline" depends="ivy-init-antlib" description="retrieve dependencies with ivy" if="noivy">
+    <path id="ivy.compile.classpath">
+      <fileset dir="${ivy.lib.dir}">
+        <include name="**/*.jar" />
+      </fileset>
+    </path>
+    <path id="ivy.test.classpath">
+    <!-- same as ivy.compile.classpath, but has to be defined -->
+    </path>
+  </target>
+
+  <target name="compile" depends="init,resolve,resolve-offline">
     <javac srcdir="${src}" destdir="${build}" source="1.5" target="1.5" debug="true" classpathref="compile.classpath" />
   </target>
 
