@@ -83,7 +83,12 @@ public abstract class TTransport {
     while (got < len) {
       ret = read(buf, off+got, len-got);
       if (ret <= 0) {
-        throw new TTransportException("Cannot read. Remote side has closed. Tried to read " + len + " bytes, but only got " + got + " bytes.");
+        throw new TTransportException(
+            "Cannot read. Remote side has closed. Tried to read "
+                + len
+                + " bytes, but only got "
+                + got
+                + " bytes. (This is often indicative of an internal error on the server side. Please check your server logs.)");
       }
       got += ret;
     }
