@@ -99,6 +99,16 @@ AM_CONDITIONAL([WITH_CPP], [test "$have_cpp" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$have_libevent" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$have_zlib" = "yes"])
 
+AX_THRIFT_LIB(c_glib, [C (GLib)], no)
+if test "$with_c_glib" = "yes"; then
+  PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.0], have_glib2=yes, have_glib2=no)
+  PKG_CHECK_MODULES([GOBJECT], [gobject-2.0 >= 2.0], have_gobject2=yes, have_gobject2=no)
+  if test "$have_glib2" = "yes" -a "$have_gobject2" = "yes" ; then
+    have_c_glib="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_C_GLIB, [test "$have_glib2" = "yes" -a "$have_gobject2" = "yes"])
+
 AX_THRIFT_LIB(csharp, [C#], yes)
 if test "$with_csharp" = "yes";  then
   PKG_CHECK_MODULES(MONO, mono >= 2.0.0, net_3_5=yes, net_3_5=no)
@@ -279,6 +289,7 @@ AC_CHECK_DECL([AI_ADDRCONFIG], [],
 ])
 
 AC_FUNC_ALLOCA
+AC_FUNC_FORK
 AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
 AC_FUNC_REALLOC
@@ -305,6 +316,7 @@ AC_CHECK_FUNCS([strstr])
 AC_CHECK_FUNCS([strtol])
 AC_CHECK_FUNCS([sqrt])
 dnl The following functions are optional.
+AC_CHECK_FUNCS([alarm])
 AC_CHECK_FUNCS([clock_gettime])
 AC_CHECK_FUNCS([sched_get_priority_min])
 AC_CHECK_FUNCS([sched_get_priority_max])
@@ -323,6 +335,8 @@ fi
 
 AX_THRIFT_GEN(cpp, [C++], yes)
 AM_CONDITIONAL([THRIFT_GEN_cpp], [test "$ax_thrift_gen_cpp" = "yes"])
+AX_THRIFT_GEN(c_glib, [C (GLib)], yes)
+AM_CONDITIONAL([THRIFT_GEN_c_glib], [test "$ax_thrift_gen_c_glib" = "yes"])
 AX_THRIFT_GEN(java, [Java], yes)
 AM_CONDITIONAL([THRIFT_GEN_java], [test "$ax_thrift_gen_java" = "yes"])
 AX_THRIFT_GEN(as3, [AS3], yes)
@@ -356,6 +370,29 @@ AM_CONDITIONAL([THRIFT_GEN_js], [test "$ax_thrift_gen_js" = "yes"])
 AX_THRIFT_GEN(javame, [JavaME], yes)
 AM_CONDITIONAL([THRIFT_GEN_javame], [test "$ax_thrift_gen_javame" = "yes"])
 
+# --- Coverage hooks ---
+
+AC_ARG_ENABLE(coverage,
+              [  --enable-coverage      turn on -fprofile-arcs -ftest-coverage],
+              [case "${enableval}" in
+                yes) ENABLE_COVERAGE=1 ;;
+                no) ENABLE_COVERAGE=0 ;;
+                *) AC_MSG_ERROR(bad value ${enableval} for --enable-cov) ;;
+              esac],
+              [ENABLE_COVERAGE=2])
+
+if test "x[$]ENABLE_COVERAGE" = "x1"; then
+  AC_MSG_WARN(enable coverage)
+  GCOV_CFLAGS="`echo \"[$]CFLAGS\" | perl -pe 's/-O\d+//g;'` -fprofile-arcs -ftest-coverage"
+  GCOV_CXXFLAGS="`echo \"[$]CXXFLAGS\" | perl -pe 's/-O\d+//g;'` -fprofile-arcs -ftest-coverage"
+  GCOV_LDFLAGS="-XCClinker -fprofile-arcs -XCClinker -ftest-coverage"
+fi
+
+AC_SUBST(ENABLE_COVERAGE)
+AC_SUBST(GCOV_CFLAGS)
+AC_SUBST(GCOV_CXXFLAGS)
+AC_SUBST(GCOV_LDFLAGS)
+
 AC_CONFIG_HEADERS(config.h:config.hin)
 
 AC_CONFIG_FILES([
@@ -368,6 +405,9 @@ AC_CONFIG_FILES([
   lib/cpp/thrift-nb.pc
   lib/cpp/thrift-z.pc
   lib/cpp/thrift.pc
+  lib/c_glib/Makefile
+  lib/c_glib/thrift_c_glib.pc
+  lib/c_glib/test/Makefile
   lib/csharp/Makefile
   lib/erl/Makefile
   lib/erl/src/Makefile
@@ -385,6 +425,9 @@ AC_CONFIG_FILES([
   test/rb/Makefile
 ])
 
+AC_CONFIG_FILES([lib/c_glib/test/test-wrapper.sh],
+                [chmod +x lib/c_glib/test/test-wrapper.sh])
+
 AC_OUTPUT
 
 
@@ -394,6 +437,7 @@ echo
 echo "Building code generators ..... :$thrift_generators"
 echo
 echo "Building C++ Library ......... : $have_cpp"
+echo "Building C (GLib) Library .... : $have_c_glib"
 echo "Building Java Library ........ : $have_java"
 echo "Building C# Library .......... : $have_csharp"
 echo "Building Python Library ...... : $have_python"

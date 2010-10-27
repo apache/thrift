@@ -1,0 +1,58 @@
+# /bin/sh
+
+command="$0"
+
+stripcommand=`echo "$command" | sed 's/testwrapper-//'`
+
+"$stripcommand" "$@" || exit $?
+
+if test "x@ENABLE_COVERAGE@" = "x1"; then
+  # linux: 97.67% of 86 lines executed in file ../src/test123.h
+  # bsd: 100.00% of 196 source lines executed in file testbimap.c
+
+  extrastripcommand=`echo "$stripcommand" | sed 's/\.\///'`
+    ${GCOV:-gcov} "$extrastripcommand" 2>&1                        \
+  | perl -ne 'BEGIN { $file = undef; }
+      next if m!^Creating!;
+      next if m!creating!;
+      next if m!^$!;
+      next if m!not exhausted!;
+      next if m!^Unexpected EOF!;
+      if (m!([\d\.]+)\% of \d+( source)? lines executed in file (.+)!)
+        {
+          do
+            {
+              if ( $3 !~ m#^/# )
+                {
+                  $a = $3 =~ m%([\-\w\.]+)$%;
+                  print STDERR $_;
+                  print "$1.gcov\n";
+                }
+            } if $1 < 110.0;
+        }
+      elsif (m#^File .(.*?).$#)
+        {
+          $file = $1;
+        }
+      elsif (m#Lines executed:([\d\.]+)\% of (\d+)#)
+        {
+          $percent = $1;
+          $lines = $2;
+          do
+            {
+              if ( $file !~ m#^/# )
+                {
+                  $a = $file =~ m%([\-\w\.]+)$%;
+                  print STDERR "$percent% of $lines executed in file $file\n";
+                  print "$1.gcov\n";
+                }
+            } if $percent < 110.0;
+        }
+      else
+        {
+          print
+        }'                 \
+  | xargs grep -n -A2 -B2 '#####.*\w'
+  exit 0
+fi
+

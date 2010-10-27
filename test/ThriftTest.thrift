@@ -21,6 +21,7 @@
  * details.
  */
 
+namespace c_glib TTest
 namespace java thrift.test
 namespace cpp thrift.test
 namespace rb Thrift.Test

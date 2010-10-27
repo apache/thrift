@@ -209,6 +209,14 @@ class t_program : public t_doc {
     return cpp_includes_;
   }
 
+  void add_c_include(std::string path) {
+    c_includes_.push_back(path);
+  }
+
+  const std::vector<std::string>& get_c_includes() {
+    return c_includes_;
+  }
+
  private:
 
   // File path
@@ -246,6 +254,9 @@ class t_program : public t_doc {
 
   // C++ extra includes
   std::vector<std::string> cpp_includes_;
+
+  // C extra includes
+  std::vector<std::string> c_includes_;
 
 };
 

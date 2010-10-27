@@ -17,53 +17,13 @@
 # under the License.
 #
 
-SUBDIRS =
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
 
-if WITH_CPP
-SUBDIRS += cpp
-endif
-
-if WITH_C_GLIB
-SUBDIRS += c_glib
-endif
-
-if WITH_MONO
-SUBDIRS += csharp
-endif
-
-if WITH_JAVA
-SUBDIRS += java
-endif
-
-if WITH_PYTHON
-SUBDIRS += py
-endif
-
-if WITH_ERLANG
-SUBDIRS += erl
-endif
-
-if WITH_RUBY
-SUBDIRS += rb
-endif
-
-if WITH_HASKELL
-SUBDIRS += hs
-endif
-
-if WITH_PERL
-SUBDIRS += perl
-endif
-
-if WITH_PHP
-SUBDIRS += php
-endif
-
-# All of the libs that don't use Automake need to go in here
-# so they will end up in our release tarballs.
-EXTRA_DIST = \
-  cocoa \
-  ocaml \
-  js \
-  as3 \
-  st
+Name: Thrift
+Description: Thrift C API
+Version: @VERSION@
+Libs: -L${libdir} -lthriftc
+Cflags: -I${includedir}/thrift

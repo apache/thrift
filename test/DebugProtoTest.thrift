@@ -17,6 +17,7 @@
  * under the License.
  */
 
+namespace c_glib TTest
 namespace cpp thrift.test.debug
 namespace java thrift.test
 
