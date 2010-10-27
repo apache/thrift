@@ -18,7 +18,9 @@
  */
 
 import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TServer.Args;
 import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
@@ -32,76 +34,13 @@ import java.util.HashMap;
 
 public class JavaServer {
 
-  public static class CalculatorHandler implements Calculator.Iface {
-
-    private HashMap<Integer,SharedStruct> log;
-
-    public CalculatorHandler() {
-      log = new HashMap<Integer, SharedStruct>();
-    }
-
-    public void ping() {
-      System.out.println("ping()");
-    }
-
-    public int add(int n1, int n2) {
-      System.out.println("add(" + n1 + "," + n2 + ")");
-      return n1 + n2;
-    }
-
-    public int calculate(int logid, Work work) throws InvalidOperation {
-      System.out.println("calculate(" + logid + ", {" + work.op + "," + work.num1 + "," + work.num2 + "})");
-      int val = 0;
-      switch (work.op) {
-        case ADD:
-          val = work.num1 + work.num2;
-          break;
-        case SUBTRACT:
-          val = work.num1 - work.num2;
-          break;
-        case MULTIPLY:
-          val = work.num1 * work.num2;
-          break;
-        case DIVIDE:
-          if (work.num2 == 0) {
-            InvalidOperation io = new InvalidOperation();
-            io.what = work.op.getValue();
-            io.why = "Cannot divide by 0";
-            throw io;
-          }
-          val = work.num1 / work.num2;
-          break;
-        default:
-          InvalidOperation io = new InvalidOperation();
-          io.what = work.op.getValue();
-          io.why = "Unknown operation";
-          throw io;
-      }
-
-      SharedStruct entry = new SharedStruct();
-      entry.key = logid;
-      entry.value = Integer.toString(val);
-      log.put(logid, entry);
-
-      return val;
-    }
-
-    public SharedStruct getStruct(int key) {
-      System.out.println("getStruct(" + key + ")");
-      return log.get(key);
-    }
-
-    public void zip() {
-      System.out.println("zip()");
-    }
-
-  }
+  public static CalculatorHandler handler;
 
   public static Calculator.Processor processor;
 
   public static void main(String [] args) {
     try {
-      CalculatorHandler handler = new CalculatorHandler();
+      handler = new CalculatorHandler();
       processor = new Calculator.Processor(handler);
 
       Runnable simple = new Runnable() {
@@ -125,10 +64,10 @@ public class JavaServer {
   public static void simple(Calculator.Processor processor) {
     try {
       TServerTransport serverTransport = new TServerSocket(9090);
-      TServer server = new TSimpleServer(processor, serverTransport);
+      TServer server = new TSimpleServer(new Args(serverTransport).processor(processor));
 
       // Use this for a multithreaded server
-      // server = new TThreadPoolServer(processor, serverTransport);
+      // TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 
       System.out.println("Starting the simple server...");
       server.serve();
@@ -157,10 +96,10 @@ public class JavaServer {
        * from the factory class. 
        */
       TServerTransport serverTransport = TSSLTransportFactory.getServerSocket(9091, 0, null, params);
-      TServer server = new TSimpleServer(processor, serverTransport);
+      TServer server = new TSimpleServer(new Args(serverTransport).processor(processor));
 
       // Use this for a multi threaded server
-      // server = new TThreadPoolServer(processor, serverTransport);
+      // TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 
       System.out.println("Starting the secure server...");
       server.serve();
