@@ -1,0 +1,44 @@
+%%% -*- mode:erlang -*-
+{application, %APP_NAME%,
+ [
+  % A quick description of the application.
+  {description, "Thrift bindings"},
+
+  % The version of the applicaton
+  {vsn, "%VSN%"},
+
+  % All modules used by the application.
+  {modules, [
+       %MODULES%
+   ]},
+
+  % All of the registered names the application uses. This can be ignored.
+  {registered, []},
+
+  % Applications that are to be started prior to this one. This can be ignored
+  % leave it alone unless you understand it well and let the .rel files in
+  % your release handle this.
+  {applications,
+   [
+    kernel,
+    stdlib
+   ]},
+
+  % OTP application loader will load, but not start, included apps. Again
+  % this can be ignored as well.  To load but not start an application it
+  % is easier to include it in the .rel file followed by the atom 'none'
+  {included_applications, []},
+
+  % configuration parameters similar to those in the config file specified
+  % on the command line. can be fetched with gas:get_env
+  {env, [
+         % If an error/crash occurs during processing of a function,
+         % should the TApplicationException serialized back to the client
+         % include the erlang backtrace?
+         {exceptions_include_traces, true}
+  ]},
+
+  % The Module and Args used to start this application.
+  {mod, {thrift_app, []}}
+ ]
+}.

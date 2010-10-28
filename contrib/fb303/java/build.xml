@@ -1,0 +1,84 @@
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one
+ or more contributor license agreements. See the NOTICE file
+ distributed with this work for additional information
+ regarding copyright ownership. The ASF licenses this file
+ to you under the Apache License, Version 2.0 (the
+ "License"); you may not use this file except in compliance
+ with the License. You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the License is distributed on an
+ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ KIND, either express or implied. See the License for the
+ specific language governing permissions and limitations
+ under the License.
+-->
+<project name="libfb303" default="dist" basedir="..">
+
+  <!-- project wide settings. All directories relative to basedir -->
+  <property name="src.dir" value="java"/>
+  <property name="if.dir" value="if"/>
+  <property name="thrift_home" value="/usr/local"/>
+
+  <!-- temp build directories -->
+  <property name="build.dir" value="${src.dir}/build"/>
+  <property name="build.classes.dir" value="${build.dir}/classes"/>
+  <property name="build.lib.dir" value="${build.dir}/lib"/>
+
+  <!-- final distribution directories -->
+  <property name="dist.dir" value="/usr/local"/>
+  <property name="dist.lib.dir" value="${dist.dir}/lib"/>
+
+  <!-- make temporary and distribution directories -->
+  <target name="prepare">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.classes.dir}"/>
+    <mkdir dir="${build.lib.dir}"/>
+    <mkdir dir="${dist.dir}"/>
+    <mkdir dir="${dist.lib.dir}"/>
+  </target>
+
+  <!-- generate fb303 thrift code -->
+  <target name="thriftbuild">
+    <echo>generating thrift fb303 files</echo>
+    <exec executable="${thrift_home}/bin/thrift"  failonerror="true">
+      <arg line="--gen java -o ${src.dir} ${src.dir}/../if/fb303.thrift" />
+    </exec>
+    <move todir="${src.dir}">
+      <fileset dir="${src.dir}/gen-java/com/facebook/fb303">
+        <include name="**/*.java"/>
+      </fileset>
+    </move>
+  </target>
+
+  <!-- compile the base and thrift generated code and jar them -->
+  <target name="dist" depends="prepare,thriftbuild">
+    <echo>Building libfb303.jar .... </echo>
+    <javac srcdir="${src.dir}" destdir="${build.classes.dir}" debug="on">
+      <classpath>
+        <pathelement location="${thrift_home}/lib/libthrift.jar"/>
+      </classpath>
+      <include name="*.java"/>
+      <include name="${build.dir}/gen-java/com/facebook/fb303"/>
+    </javac>
+    <jar jarfile="${build.lib.dir}/libfb303.jar" basedir="${build.classes.dir}">
+    </jar>
+  </target>
+
+  <!-- copy the build jar to the distribution library directory -->
+  <target name="install" depends="dist">
+    <copy todir="${dist.lib.dir}">
+      <fileset dir="${build.lib.dir}" includes="libfb303.jar"/>
+    </copy>
+  </target>
+
+  <target name="clean">
+    <echo>Cleaning old stuff .... </echo>
+    <delete dir="${build.dir}/classes/com"/>
+    <delete dir="${build.dir}/lib"/>
+    <delete dir="${build.dir}"/>
+  </target>
+</project>

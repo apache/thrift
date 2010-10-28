@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# erlwareSys: otp/build/beamver,v 1.1 2002/02/14 11:45:20 hal Exp $
+
+# usage: beamver <beam_file>
+#
+# if there's a usable -vsn() attribute, print it and exit with status 0
+# otherwise, print nothing and exit with status 1
+
+# From the Erlang shell:
+#
+# 5> code:which(acca_inets).
+# "/home/martin/work/otp/releases/<app>/../../acca/ebin/<app>.beam"
+#
+# 8> beam_lib:version(code:which(<app>)).
+# {ok,{<app>,['$Id: beamver,v 1.1.1.1 2003/06/13 21:43:21 mlogan Exp $ ']}}
+
+# TMPFILE looks like this:
+#
+# io:format("hello ~p~n",
+#   beam_lib:version("/home/hal/work/otp/acca/ebin/acca_inets.beam")]).
+
+TMPFILE=/tmp/beamver.$$
+
+# exit with failure if we can't read the file
+test -f "$1" || exit 1
+BEAMFILE=\"$1\"
+
+cat > $TMPFILE <<_EOF
+io:format("~p~n",
+  [beam_lib:version($BEAMFILE)]).
+_EOF
+
+# beam_result is {ok,{Module_name, Beam_version} or {error,beam_lib,{Reason}}
+beam_result=`erl -noshell \
+  -s file eval $TMPFILE \
+  -s erlang halt`
+
+rm -f $TMPFILE
+
+# sed regexes:
+#   remove brackets and anything outside them
+#   remove quotes and anything outside them
+#   remove apostrophes and anything outside them
+#   remove leading and trailing spaces
+
+case $beam_result in
+\{ok*)
+  echo $beam_result | sed -e 's/.*\[\(.*\)].*/\1/'  \
+                          -e 's/.*\"\(.*\)\".*/\1/' \
+                          -e "s/.*\'\(.*\)\'.*/\1/" \
+                          -e 's/ *$//' -e 's/^ *//'
+  exit 0
+  ;;
+*)
+  exit 1
+  ;;
+esac
+

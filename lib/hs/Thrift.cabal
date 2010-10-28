@@ -1,0 +1,20 @@
+Name:           Thrift
+Version:        0.1.0
+Cabal-Version:  >= 1.2
+License:        Apache2
+Category:       Foreign
+Build-Type:     Simple
+Synopsis:       Thrift library package
+
+Library
+  Hs-Source-Dirs:
+    src
+  Build-Depends:
+    base >=4, network, ghc-prim
+  ghc-options:
+    -fglasgow-exts
+  Extensions:
+    DeriveDataTypeable
+  Exposed-Modules:
+    Thrift, Thrift.Protocol, Thrift.Transport, Thrift.Protocol.Binary
+    Thrift.Transport.Handle, Thrift.Server

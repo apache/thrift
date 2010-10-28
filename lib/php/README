@@ -1,0 +1,63 @@
+Thrift PHP Software Library
+
+License
+=======
+
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+
+Using Thrift with PHP
+=====================
+
+Thrift requires PHP 5. Thrift makes as few assumptions about your PHP
+environment as possible while trying to make some more advanced PHP
+features (i.e. APC cacheing using asbolute path URLs) as simple as possible.
+
+To use Thrift in your PHP codebase, take the following steps:
+
+#1) Copy all of thrift/lib/php/src into your PHP codebase
+#2) Set $GLOBALS['THRIFT_ROOT'] to the path you installed Thrift
+#3) include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
+
+Note that #3 must be done before including any other Thrift files.
+If you do not do #2, Thrift.php will set this global for you, but it will be
+done using dirname(__FILE__), which is less efficient than providing the static
+string yourself.
+
+When you generate a Thrift package using the compiler, it makes an assumption
+about where your generated code will live. If your file is "MyPackage.thrift",
+the generated files must be installed into:
+
+$GLOBALS['THRIFT_ROOT'].'/packages/MyPackage/';
+
+This allows the code generator to compile your code without any extra flags
+for the target directory names while still allowing your include paths to
+be absolute (if you have an absolute THRIFT_ROOT).
+
+Dependencies
+============
+
+PHP_INT_SIZE
+
+  This built-in signals whether your architecture is 32 or 64 bit and is
+  used by the TBinaryProtocol to properly use pack() and unpack() to
+  serialize data.
+
+apc_fetch(), apc_store()
+
+  APC cache is used by the TSocketPool class. If you do not have APC installed,
+  Thrift will fill in null stub function definitions.

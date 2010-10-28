@@ -1,0 +1,35 @@
+Thrift Changelog
+
+Version 0.1.0 RC1 / Unreleased
+
+Compatibility Breaking Changes:
+  C++:
+    * It's quite possible that regenerating code and rebuilding will be
+      required.  Make sure your headers match your libs!
+
+  Java:
+
+  Python:
+
+  Ruby:
+    * Generated files now have underscored names [THRIFT-421]
+    * The library has been rearranged to be more Ruby-like [THRIFT-276]
+
+  Erlang:
+    * Generated code will have to be regenerated, and the new code will
+      have to be deployed atomically with the new library code [THRIFT-136]
+  
+  
+New Features and Bug Fixes:
+  C++:
+    * Support for TCompactProtocol [THRIFT-333]
+
+  Java:
+    * Support for TCompactProtocol [THRIFT-110]
+
+  Python:
+    * Support for Twisted [THRIFT-148]
+
+  Ruby:
+    * Support for TCompactProtocol [THRIFT-332]
+

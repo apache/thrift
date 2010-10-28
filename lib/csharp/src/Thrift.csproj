@@ -1,0 +1,77 @@
+﻿<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{499EB63C-D74C-47E8-AE48-A2FC94538E9D}</ProjectGuid>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>Thrift</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <RootNamespace>Thrift</RootNamespace>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Collections\THashSet.cs" />
+    <Compile Include="Protocol\TBase.cs" />
+    <Compile Include="Protocol\TBinaryProtocol.cs" />
+    <Compile Include="Protocol\TField.cs" />
+    <Compile Include="Protocol\TList.cs" />
+    <Compile Include="Protocol\TMap.cs" />
+    <Compile Include="Protocol\TMessage.cs" />
+    <Compile Include="Protocol\TMessageType.cs" />
+    <Compile Include="Protocol\TProtocol.cs" />
+    <Compile Include="Protocol\TProtocolException.cs" />
+    <Compile Include="Protocol\TProtocolFactory.cs" />
+    <Compile Include="Protocol\TProtocolUtil.cs" />
+    <Compile Include="Protocol\TSet.cs" />
+    <Compile Include="Protocol\TStruct.cs" />
+    <Compile Include="Protocol\TType.cs" />
+    <Compile Include="Server\TThreadedServer.cs" />
+    <Compile Include="Server\TServer.cs" />
+    <Compile Include="Server\TSimpleServer.cs" />
+    <Compile Include="Server\TThreadPoolServer.cs" />
+    <Compile Include="TApplicationException.cs" />
+    <Compile Include="TProcessor.cs" />
+    <Compile Include="Transport\TBufferedTransport.cs" />
+    <Compile Include="Transport\TServerSocket.cs" />
+    <Compile Include="Transport\TServerTransport.cs" />
+    <Compile Include="Transport\TSocket.cs" />
+    <Compile Include="Transport\TStreamTransport.cs" />
+    <Compile Include="Transport\TTransport.cs" />
+    <Compile Include="Transport\TTransportException.cs" />
+    <Compile Include="Transport\TTransportFactory.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+</Project>

@@ -1,0 +1,82 @@
+Haskell Thrift Bindings
+
+License
+=======
+
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+
+Running
+=======
+
+You need -fglasgow-exts. Use Cabal to compile and install. If you're trying to
+manually compile or load via ghci, and you're using ghc 6.10 (or really if your
+default base package has major version number 4), you must specify a version of
+the base package with major version number 3. Furthermore if you have the syb
+package installed you need to hide that package to avoid import conflicts.
+Here's an example of what I'm talking about:
+
+  ghci -fglasgow-exts -package base-3.0.3.0 -hide-package syb -isrc Thrift.hs
+
+To determine which versions of the base package you have installed use the
+following command:
+
+  ghc-pkg list base
+
+All of this is taken care of for you if you use Cabal.
+
+
+Enums
+=====
+
+become haskell data types. Use fromEnum to get out the int value.
+
+Structs
+=======
+
+become records. Field labels are ugly, of the form f_STRUCTNAME_FIELDNAME. All
+fields are Maybe types.
+
+Exceptions
+==========
+
+identical to structs. Throw them with throwDyn. Catch them with catchDyn.
+
+Client
+======
+
+just a bunch of functions. You may have to import a bunch of client files to
+deal with inheritance.
+
+Interface
+=========
+
+You should only have to import the last one in the chain of inheritors. To make
+an interface, declare a label:
+
+  data MyIface = MyIface
+
+and then declare it an instance of each iface class, starting with the superest
+class and proceding down (all the while defining the methods).  Then pass your
+label to process as the handler.
+
+Processor
+=========
+
+Just a function that takes a handler label, protocols. It calls the
+superclasses process if there is a superclass.
+

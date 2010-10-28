@@ -1,0 +1,56 @@
+Thrift Erlang Software Library
+
+License
+=======
+
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership. The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License. You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied. See the License for the
+specific language governing permissions and limitations
+under the License.
+
+Example
+=======
+
+Example session using thrift_client:
+
+118> f(), {ok, C} = thrift_client:start_link("localhost", 9090, thriftTest_thrif
+t).
+{ok,<0.271.0>}
+119> thrift_client:call(C, testVoid, []).
+{ok,ok}
+120> thrift_client:call(C, testVoid, [asdf]).
+{error,{bad_args,testVoid,[asdf]}}
+121> thrift_client:call(C, testI32, [123]).
+{ok,123}
+122> thrift_client:call(C, testOneway, [1]).
+{ok,ok}
+123> catch thrift_client:call(C, testXception, ["foo"]).
+{error,{no_function,testXception}}
+124> catch thrift_client:call(C, testException, ["foo"]).
+{ok,ok}
+125> catch thrift_client:call(C, testException, ["Xception"]).
+{xception,1001,"This is an Xception"}
+126> thrift_client:call(C, testException, ["Xception"]).
+
+=ERROR REPORT==== 24-Feb-2008::23:00:23 ===
+Error in process <0.269.0> with exit value: {{nocatch,{xception,1001,"This is an
+ Xception"}},[{thrift_client,call,3},{erl_eval,do_apply,5},{shell,exprs,6},{shel
+l,eval_loop,3}]}
+
+** exited: {{nocatch,{xception,1001,"This is an Xception"}},
+            [{thrift_client,call,3},
+             {erl_eval,do_apply,5},
+             {shell,exprs,6},
+             {shell,eval_loop,3}]} **

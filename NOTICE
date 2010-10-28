@@ -1,0 +1,26 @@
+Apache Thrift
+Copyright 2006-2009 The Apache Software Foundation, et al.
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+Some files in this distribution are distributed under different terms
+from the rest of Apache Thrift.  Please see individual files for
+license information.
+
+In addition, the following unlabelled files are distributed under
+specific terms.  Please see the "doc" directory for the text of their
+licenses.
+
+  lib/rb/setup.rb:                   GNU Lesser General Public License 2.1 (lgpl-2.1.txt)
+  lib/ocaml/OCamlMakefile:           GNU Lesser General Public License 2.1 (lgpl-2.1.txt)
+  lib/ocaml/README-OCamlMakefile:    GNU Lesser General Public License 2.1 (lgpl-2.1.txt)
+  lib/erl/build/beamver:             MIT License (otp-base-license.txt)
+  lib/erl/build/buildtargets.mk:     MIT License (otp-base-license.txt)
+  lib/erl/build/colors.mk:           MIT License (otp-base-license.txt)
+  lib/erl/build/docs.mk:             MIT License (otp-base-license.txt)
+  lib/erl/build/mime.types:          MIT License (otp-base-license.txt)
+  lib/erl/build/otp.mk:              MIT License (otp-base-license.txt)
+  lib/erl/build/otp_subdir.mk:       MIT License (otp-base-license.txt)
+  lib/erl/build/raw_test.mk:         MIT License (otp-base-license.txt)
+  lib/erl/src/Makefile:              MIT License (otp-base-license.txt)
