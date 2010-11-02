@@ -17,9 +17,9 @@
 <ivy-module version="1.0">
     <info organisation="org.apache.thrift" module="libthrift" revision="0.6.0-dev" >
       <license name="Apache License 2.0" url="http://www.apache.org/licenses/LICENSE-2.0" />
-      <ivyauthor name="Thrift Developers" url="thrift-dev@incubator.apache.org" />
-      <repository name="apache repository" url="http://incubator.apache.org/thrift/" />
-      <description homepage="http://incubator.apache.org/thrift/">
+      <ivyauthor name="Thrift Developers" url="dev@thrift.apache.org" />
+      <repository name="apache repository" url="http://thrift.apache.org" />
+      <description homepage="http://thrift.apache.org">
       Java bindings for the Apache Thrift RPC system
       </description>
     </info>

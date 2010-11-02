@@ -78,9 +78,9 @@ begin
 
   Echoe.new('thrift') do |p|
     p.author = ['Thrift Developers']
-    p.email = ['thrift-dev@incubator.apache.org']
+    p.email = ['dev@thrift.apache.org']
     p.summary = "Ruby bindings for the Apache Thrift RPC system"
-    p.url = "http://incubator.apache.org/thrift/"
+    p.url = "http://thrift.apache.org"
     p.include_rakefile = true
     p.version = "0.6.0-dev"
     p.rubygems_version = ">= 1.2.0"

@@ -20,11 +20,13 @@
 Name:           thrift
 Version:        0.6.0-dev
 Cabal-Version:  >= 1.4
-License:        Apache License 2.0
+License:        OtherLicense
 Category:       Foreign
 Build-Type:     Simple
 Synopsis:       Haskell bindings for the Apache Thrift RPC system
-Maintainer:     thrift-dev@incubator.apache.org
+Homepage:       http://thrift.apache.org
+Bug-Reports:    https://issues.apache.org/jira/browse/THRIFT
+Maintainer:     dev@thrift.apache.org
 License-File:   LICENSE
 
 Description:
