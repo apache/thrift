@@ -31,7 +31,6 @@ import Control.Monad ( replicateM_, unless )
 import Control.Exception
 import Data.Int
 import Data.Typeable ( Typeable )
-import Data.Word
 import Data.ByteString.Lazy
 
 import Thrift.Transport
@@ -119,7 +118,7 @@ class Protocol a where
     writeSetEnd      :: Transport t => a t -> IO ()
 
     writeBool   :: Transport t => a t -> Bool -> IO ()
-    writeByte   :: Transport t => a t -> Word8 -> IO ()
+    writeByte   :: Transport t => a t -> Int8 -> IO ()
     writeI16    :: Transport t => a t -> Int16 -> IO ()
     writeI32    :: Transport t => a t -> Int32 -> IO ()
     writeI64    :: Transport t => a t -> Int64 -> IO ()
@@ -143,7 +142,7 @@ class Protocol a where
     readSetEnd      :: Transport t => a t -> IO ()
 
     readBool   :: Transport t => a t -> IO Bool
-    readByte   :: Transport t => a t -> IO Word8
+    readByte   :: Transport t => a t -> IO Int8
     readI16    :: Transport t => a t -> IO Int16
     readI32    :: Transport t => a t -> IO Int32
     readI64    :: Transport t => a t -> IO Int64

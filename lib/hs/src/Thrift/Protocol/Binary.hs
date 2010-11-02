@@ -27,10 +27,9 @@ module Thrift.Protocol.Binary
 import Control.Exception ( throw )
 import Control.Monad ( liftM )
 
+import qualified Data.Binary
 import Data.Bits
 import Data.Int
-import Data.List ( foldl' )
-import Data.Word
 
 import GHC.Exts
 import GHC.Word
@@ -38,8 +37,8 @@ import GHC.Word
 import Thrift.Protocol
 import Thrift.Transport
 
-import qualified Data.ByteString.Lazy.Char8 as LBSChar8
 import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Lazy.Char8 as LBSChar8
 
 version_mask :: Int32
 version_mask = 0xffff0000
@@ -71,11 +70,11 @@ instance Protocol BinaryProtocol where
     writeSetBegin p (t, n) = writeType p t >> writeI32 p n
     writeSetEnd _ = return ()
 
-    writeBool p b = tWrite (getTransport p) $ LBSChar8.singleton $ toEnum $ if b then 1 else 0
-    writeByte p b = tWrite (getTransport p) (getBytes b 1)
-    writeI16 p b = tWrite (getTransport p) (getBytes b 2)
-    writeI32 p b = tWrite (getTransport p) (getBytes b 4)
-    writeI64 p b = tWrite (getTransport p) (getBytes b 8)
+    writeBool p b = tWrite (getTransport p) $ LBS.singleton $ toEnum $ if b then 1 else 0
+    writeByte p b = tWrite (getTransport p) $ Data.Binary.encode b
+    writeI16 p b = tWrite (getTransport p) $ Data.Binary.encode b
+    writeI32 p b = tWrite (getTransport p) $ Data.Binary.encode b
+    writeI64 p b = tWrite (getTransport p) $ Data.Binary.encode b
     writeDouble p d = writeI64 p (fromIntegral $ floatBits d)
     writeString p s = writeI32 p (fromIntegral $ length s) >> tWrite (getTransport p) (LBSChar8.pack s)
     writeBinary p s = writeI32 p (fromIntegral $ LBS.length s) >> tWrite (getTransport p) s
@@ -114,20 +113,31 @@ instance Protocol BinaryProtocol where
     readSetEnd _ = return ()
 
     readBool p = (== 1) `fmap` readByte p
+
     readByte p = do
         bs <- tReadAll (getTransport p) 1
-        return $ fromIntegral (composeBytes bs :: Int8)
+        return $ Data.Binary.decode bs
+
     readI16 p = do
         bs <- tReadAll (getTransport p) 2
-        return $ fromIntegral (composeBytes bs :: Int16)
-    readI32 p = composeBytes `fmap` tReadAll (getTransport p) 4
-    readI64 p = composeBytes `fmap` tReadAll (getTransport p) 8
+        return $ Data.Binary.decode bs
+
+    readI32 p = do
+        bs <- tReadAll (getTransport p) 4
+        return $ Data.Binary.decode bs
+
+    readI64 p = do
+        bs <- tReadAll (getTransport p) 8
+        return $ Data.Binary.decode bs
+
     readDouble p = do
         bs <- readI64 p
         return $ floatOfBits $ fromIntegral bs
+
     readString p = do
         i <- readI32 p
         LBSChar8.unpack `liftM` tReadAll (getTransport p) (fromIntegral i)
+
     readBinary p = do
         i <- readI32 p
         tReadAll (getTransport p) (fromIntegral i)
@@ -142,17 +152,6 @@ readType :: (Protocol p, Transport t) => p t -> IO ThriftType
 readType p = do
     b <- readByte p
     return $ toEnum $ fromIntegral b
-
-composeBytes :: (Bits b) => LBSChar8.ByteString -> b
-composeBytes = (foldl' fn 0) . (map (fromIntegral . fromEnum)) . LBSChar8.unpack
-    where fn acc b = (acc `shiftL` 8) .|. b
-
-getByte :: Bits a => a -> Int -> a
-getByte i n = 255 .&. (i `shiftR` (8 * n))
-
-getBytes :: (Bits a, Integral a) => a -> Int -> LBSChar8.ByteString
-getBytes _ 0 = LBSChar8.empty
-getBytes i n = (toEnum $ fromIntegral $ getByte i (n-1)) `LBSChar8.cons` (getBytes i (n-1))
 
 floatBits :: Double -> Word64
 floatBits (D# d#) = W64# (unsafeCoerce# d#)

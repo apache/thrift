@@ -29,7 +29,7 @@ import Control.Exception ( Exception, throw )
 
 import Data.Typeable ( Typeable )
 
-import qualified Data.ByteString.Lazy.Char8 as LBS
+import qualified Data.ByteString.Lazy as LBS
 import Data.Monoid
 
 class Transport a where

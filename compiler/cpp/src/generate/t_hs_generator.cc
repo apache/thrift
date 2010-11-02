@@ -233,7 +233,7 @@ string t_hs_generator::hs_imports() {
     result += "\n";
   }
 
-  result += "import Thrift\nimport Data.Typeable ( Typeable )\nimport Control.Exception\nimport qualified Data.Map as Map\nimport qualified Data.Set as Set\nimport Data.ByteString.Lazy\nimport Data.Int\nimport Data.Word\nimport Prelude ((==), String, Eq, Show, Ord, Maybe(..), (&&), (||), return, IO, Enum, fromIntegral, fromEnum, toEnum, Bool(..), (++), ($), Double, (-), length)";
+  result += "import Thrift\nimport Data.Typeable ( Typeable )\nimport Control.Exception\nimport qualified Data.Map as Map\nimport qualified Data.Set as Set\nimport Data.ByteString.Lazy\nimport Data.Int\nimport Prelude ((==), String, Eq, Show, Ord, Maybe(..), (&&), (||), return, IO, Enum, fromIntegral, fromEnum, toEnum, Bool(..), (++), ($), Double, (-), length)";
   return result;
 }
 
@@ -335,7 +335,7 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
       break;
 
     case t_base_type::TYPE_BYTE:
-      out << "(" << value->get_integer() << " :: Word8)";
+      out << "(" << value->get_integer() << " :: Int8)";
       break;
 
     case t_base_type::TYPE_I16:
@@ -1434,7 +1434,7 @@ string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
     case t_base_type::TYPE_BOOL:
       return "Bool";
     case t_base_type::TYPE_BYTE:
-      return "Word8";
+      return "Int8";
     case t_base_type::TYPE_I16:
       return "Int16";
     case t_base_type::TYPE_I32:

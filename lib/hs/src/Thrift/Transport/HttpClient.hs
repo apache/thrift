@@ -34,7 +34,7 @@ import Data.Monoid (mappend, mempty)
 import Control.Exception (throw)
 import Control.Concurrent.MVar
 import qualified Data.Binary.Builder as B
-import qualified Data.ByteString.Lazy.Char8 as LBS
+import qualified Data.ByteString.Lazy as LBS
 
 
 -- | 'HttpClient', or THttpClient implements the Thrift Transport

@@ -37,7 +37,7 @@ import System.IO.Error ( isEOFError )
 
 import Thrift.Transport
 
-import qualified Data.ByteString.Lazy.Char8 as LBS
+import qualified Data.ByteString.Lazy as LBS
 import Data.Monoid
 
 instance Transport Handle where
