@@ -194,7 +194,7 @@ static uint8_t hexVal(uint8_t ch) {
     return ch - '0';
   }
   else if ((ch >= 'a') && (ch <= 'f')) {
-    return ch - 'a';
+    return ch - 'a' + 10;
   }
   else {
     throw TProtocolException(TProtocolException::INVALID_DATA,
@@ -211,7 +211,7 @@ static uint8_t hexChar(uint8_t val) {
     return val + '0';
   }
   else {
-    return val + 'a';
+    return val - 10 + 'a';
   }
 }
 
