@@ -1,6 +1,6 @@
-Apache Thrift (an Apache Incubator project)
+Apache Thrift
 
-Last Modified: 2009-Jan-30
+Last Modified: 2010-Nov-04
 
 License
 =======
@@ -39,7 +39,7 @@ For more details on Thrift's design and implementation, take a gander at
 the Thrift whitepaper included in this distribution or at the README files
 in your particular subdirectory of interest.
 
-Heirarchy
+Hierarchy
 =========
 
 thrift/
@@ -78,7 +78,7 @@ Resources
 
 More information about Thrift can be obtained on the Thrift webpage at:
 
-     http://incubator.apache.org/thrift
+     http://thrift.apache.org
 
 Acknowledgments
 ===============
