@@ -164,7 +164,7 @@ void init_data() {
 
   // Repeatability.  Kind of.
   std::srand(42);
-  for (int i = 0; i < (int)(sizeof(data)/sizeof(data[0])); ++i) {
+  for (size_t i = 0; i < (sizeof(data)/sizeof(data[0])); ++i) {
     data[i] = (uint8_t)rand();
   }
 
@@ -398,7 +398,7 @@ BOOST_AUTO_TEST_CASE( test_BufferedTransport_Write ) {
     1<<14, 1<<17,
   };
 
-  for (int i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
+  for (size_t i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
     int size = sizes[i];
     for (int d1 = 0; d1 < 3; d1++) {
       shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(16));
@@ -429,7 +429,7 @@ BOOST_AUTO_TEST_CASE( test_BufferedTransport_Read_Full ) {
     1<<14, 1<<17,
   };
 
-  for (int i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
+  for (size_t i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
     int size = sizes[i];
     for (int d1 = 0; d1 < 3; d1++) {
       shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(data, sizeof(data)));
@@ -462,7 +462,7 @@ BOOST_AUTO_TEST_CASE( test_BufferedTransport_Read_Short ) {
     1<<14, 1<<17,
   };
 
-  for (int i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
+  for (size_t i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
     int size = sizes[i];
     for (int d1 = 0; d1 < 3; d1++) {
       shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(data, sizeof(data)));
@@ -496,7 +496,7 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Write ) {
     1<<14, 1<<17,
   };
 
-  for (int i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
+  for (size_t i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
     int size = sizes[i];
     for (int d1 = 0; d1 < 3; d1++) {
       shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(16));
@@ -559,9 +559,9 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Write_Read ) {
 
   int probs[] = { 1, 2, 4, 8, 16, 32, };
 
-  for (int i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
+  for (size_t i = 0; i < sizeof (sizes) / sizeof (sizes[0]); i++) {
     int size = sizes[i];
-    for (int j = 0; j < sizeof (probs) / sizeof (probs[0]); j++) {
+    for (size_t j = 0; j < sizeof (probs) / sizeof (probs[0]); j++) {
       int prob = probs[j];
       for (int d1 = 0; d1 < 3; d1++) {
         shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(16));
@@ -592,7 +592,7 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Write_Read ) {
         int read_offset = 0;
         int read_index = 0;
 
-        for (int k = 0; k < flush_sizes.size(); k++) {
+        for (unsigned int k = 0; k < flush_sizes.size(); k++) {
           int fsize = flush_sizes[k];
           // We are exploiting an implementation detail of TFramedTransport.
           // The read buffer starts empty and it will never do more than one

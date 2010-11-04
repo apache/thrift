@@ -60,7 +60,6 @@ class TimerManager::Task : public Runnable {
 
  private:
   shared_ptr<Runnable> runnable_;
-  class TimerManager::Dispatcher;
   friend class TimerManager::Dispatcher;
   STATE state_;
 };

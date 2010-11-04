@@ -741,8 +741,10 @@ bool TFileTransport::isEventCorrupted() {
   } else if( ((offset_ + readState_.bufferPtr_ - 4)/chunkSize_) !=
              ((offset_ + readState_.bufferPtr_ + readState_.event_->eventSize_ - 1)/chunkSize_) ) {
     // 3. size indicates that event crosses chunk boundary
-    T_ERROR("Read corrupt event. Event crosses chunk boundary. Event size:%u  Offset:%ld",
-            readState_.event_->eventSize_, offset_ + readState_.bufferPtr_ + 4);
+    T_ERROR("Read corrupt event. Event crosses chunk boundary. Event size:%u  Offset:%lld",
+            readState_.event_->eventSize_,
+            (long long int) (offset_ + readState_.bufferPtr_ + 4));
+
     return true;
   }
 
@@ -781,8 +783,9 @@ void TFileTransport::performRecovery() {
       readState_.resetState(readState_.lastDispatchPtr_);
       currentEvent_ = NULL;
       char errorMsg[1024];
-      sprintf(errorMsg, "TFileTransport: log file corrupted at offset: %lu",
-              offset_ + readState_.lastDispatchPtr_);
+      sprintf(errorMsg, "TFileTransport: log file corrupted at offset: %lld",
+              (long long int) (offset_ + readState_.lastDispatchPtr_));
+              
       GlobalOutput(errorMsg);
       throw TTransportException(errorMsg);
     }
@@ -815,7 +818,7 @@ void TFileTransport::seekToChunk(int32_t chunk) {
 
   // cannot seek past EOF
   bool seekToEnd = false;
-  uint32_t minEndOffset = 0;
+  off_t minEndOffset = 0;
   if (chunk >= numChunks) {
     T_DEBUG("Trying to seek past EOF. Seeking to EOF instead...");
     seekToEnd = true;

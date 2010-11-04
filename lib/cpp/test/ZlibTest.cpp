@@ -234,7 +234,7 @@ void test_read_write_mix(const uint8_t* buf, uint32_t buf_len,
     }
     uint32_t got = zlib_trans->read(mirror.get() + tot, read_len);
     BOOST_REQUIRE_LE(got, expected_read_len);
-    BOOST_REQUIRE_NE(got, 0);
+    BOOST_REQUIRE_NE(got, (uint32_t) 0);
     tot += got;
   }
 
@@ -325,7 +325,7 @@ void test_no_write() {
     TZlibTransport w_zlib_trans(membuf);
   }
 
-  BOOST_CHECK_EQUAL(membuf->available_read(), 0);
+  BOOST_CHECK_EQUAL(membuf->available_read(), (uint32_t) 0);
 }
 
 /*

@@ -575,8 +575,8 @@ void test_read_part_available() {
   transports.out->flush();
   set_trigger(3, transports.out, 1);
   uint32_t bytes_read = transports.in->read(read_buf, 10);
-  BOOST_CHECK_EQUAL(numTriggersFired, 0);
-  BOOST_CHECK_EQUAL(bytes_read, 9);
+  BOOST_CHECK_EQUAL(numTriggersFired, (unsigned int) 0);
+  BOOST_CHECK_EQUAL(bytes_read, (uint32_t) 9);
 
   clear_triggers();
 }
@@ -615,7 +615,7 @@ void test_read_partial_midframe() {
 
   // Now read 4 bytes, so that we are partway through the written data.
   uint32_t bytes_read = transports.in->read(read_buf, 4);
-  BOOST_CHECK_EQUAL(bytes_read, 4);
+  BOOST_CHECK_EQUAL(bytes_read, (uint32_t) 4);
 
   // Now attempt to read 10 bytes.  Only 9 more are available.
   //
@@ -628,13 +628,13 @@ void test_read_partial_midframe() {
   while (total_read < 9) {
     set_trigger(3, transports.out, 1);
     bytes_read = transports.in->read(read_buf, 10);
-    BOOST_REQUIRE_EQUAL(numTriggersFired, 0);
-    BOOST_REQUIRE_GT(bytes_read, 0);
+    BOOST_REQUIRE_EQUAL(numTriggersFired, (unsigned int) 0);
+    BOOST_REQUIRE_GT(bytes_read, (uint32_t) 0);
     total_read += bytes_read;
-    BOOST_REQUIRE_LE(total_read, 9);
+    BOOST_REQUIRE_LE(total_read, (uint32_t) 9);
   }
 
-  BOOST_CHECK_EQUAL(total_read, 9);
+  BOOST_CHECK_EQUAL(total_read, (uint32_t) 9);
 
   clear_triggers();
 }
@@ -656,7 +656,7 @@ void test_borrow_part_available() {
   set_trigger(3, transports.out, 1);
   uint32_t borrow_len = 10;
   const uint8_t* borrowed_buf = transports.in->borrow(read_buf, &borrow_len);
-  BOOST_CHECK_EQUAL(numTriggersFired, 0);
+  BOOST_CHECK_EQUAL(numTriggersFired, (unsigned int) 0);
   BOOST_CHECK(borrowed_buf == NULL);
 
   clear_triggers();
@@ -682,11 +682,11 @@ void test_read_none_available() {
   add_trigger(1, transports.out, 8);
   uint32_t bytes_read = transports.in->read(read_buf, 10);
   if (bytes_read == 0) {
-    BOOST_CHECK_EQUAL(numTriggersFired, 0);
+    BOOST_CHECK_EQUAL(numTriggersFired, (unsigned int) 0);
     clear_triggers();
   } else {
-    BOOST_CHECK_EQUAL(numTriggersFired, 1);
-    BOOST_CHECK_EQUAL(bytes_read, 2);
+    BOOST_CHECK_EQUAL(numTriggersFired, (unsigned int) 1);
+    BOOST_CHECK_EQUAL(bytes_read, (uint32_t) 2);
   }
 
   clear_triggers();
@@ -706,7 +706,7 @@ void test_borrow_none_available() {
   uint32_t borrow_len = 10;
   const uint8_t* borrowed_buf = transports.in->borrow(NULL, &borrow_len);
   BOOST_CHECK(borrowed_buf == NULL);
-  BOOST_CHECK_EQUAL(numTriggersFired, 0);
+  BOOST_CHECK_EQUAL(numTriggersFired, (unsigned int) 0);
 
   clear_triggers();
 }

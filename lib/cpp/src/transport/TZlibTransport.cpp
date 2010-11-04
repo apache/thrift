@@ -131,14 +131,14 @@ inline int TZlibTransport::readAvail() {
 }
 
 uint32_t TZlibTransport::read(uint8_t* buf, uint32_t len) {
-  int need = len;
+  uint32_t need = len;
 
   // TODO(dreiss): Skip urbuf on big reads.
 
   while (true) {
     // Copy out whatever we have available, then give them the min of
     // what we have and what they want, then advance indices.
-    int give = std::min(readAvail(), need);
+    int give = std::min((uint32_t) readAvail(), need);
     memcpy(buf, urbuf_ + urpos_, give);
     need -= give;
     buf += give;
@@ -233,12 +233,12 @@ void TZlibTransport::write(const uint8_t* buf, uint32_t len) {
 
   // zlib's "deflate" function has enough logic in it that I think
   // we're better off (performance-wise) buffering up small writes.
-  if ((int)len > MIN_DIRECT_DEFLATE_SIZE) {
+  if (len > MIN_DIRECT_DEFLATE_SIZE) {
     flushToZlib(uwbuf_, uwpos_, Z_NO_FLUSH);
     uwpos_ = 0;
     flushToZlib(buf, len, Z_NO_FLUSH);
   } else if (len > 0) {
-    if (uwbuf_size_ - uwpos_ < (int)len) {
+    if (uwbuf_size_ - uwpos_ < len) {
       flushToZlib(uwbuf_, uwpos_, Z_NO_FLUSH);
       uwpos_ = 0;
     }

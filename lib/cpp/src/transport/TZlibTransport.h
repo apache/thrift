@@ -226,7 +226,7 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
  protected:
   // Writes smaller than this are buffered up.
   // Larger (or equal) writes are dumped straight to zlib.
-  static const int MIN_DIRECT_DEFLATE_SIZE = 32;
+  static const uint32_t MIN_DIRECT_DEFLATE_SIZE = 32;
 
   boost::shared_ptr<TTransport> transport_;
 
@@ -238,10 +238,10 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
   /// True iff we have finished the output stream.
   bool output_finished_;
 
-  int urbuf_size_;
-  int crbuf_size_;
-  int uwbuf_size_;
-  int cwbuf_size_;
+  uint32_t urbuf_size_;
+  uint32_t crbuf_size_;
+  uint32_t uwbuf_size_;
+  uint32_t cwbuf_size_;
 
   uint8_t* urbuf_;
   uint8_t* crbuf_;
