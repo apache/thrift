@@ -62,22 +62,35 @@ UnitTests_SOURCES = \
 	TMemoryBufferTest.cpp \
 	TBufferBaseTest.cpp
 
-UnitTests_LDADD = $(BOOST_LDFLAGS) libtestgencpp.la -lboost_unit_test_framework
+UnitTests_LDADD = \
+  $(BOOST_LDFLAGS) \
+  libtestgencpp.la \
+  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
 
 TransportTest_SOURCES = \
 	TransportTest.cpp
 
-TransportTest_LDADD = libtestgencpp.la $(top_builddir)/lib/cpp/libthriftz.la -l:libboost_unit_test_framework.a -lz
+TransportTest_LDADD = \
+  libtestgencpp.la \
+  $(top_builddir)/lib/cpp/libthriftz.la \
+  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a \
+  -lz
 
 ZlibTest_SOURCES = \
 	ZlibTest.cpp
 
-ZlibTest_LDADD = libtestgencpp.la $(top_builddir)/lib/cpp/libthriftz.la -l:libboost_unit_test_framework.a -lz
+ZlibTest_LDADD = \
+  libtestgencpp.la \
+  $(top_builddir)/lib/cpp/libthriftz.la \
+  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a \
+  -lz
 
 TFileTransportTest_SOURCES = \
 	TFileTransportTest.cpp
 
-TFileTransportTest_LDADD = libtestgencpp.la -l:libboost_unit_test_framework.a
+TFileTransportTest_LDADD = \
+  libtestgencpp.la \
+  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
 
 #
 # TFDTransportTest

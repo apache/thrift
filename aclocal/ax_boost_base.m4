@@ -70,11 +70,13 @@ if test "x$want_boost" = "xyes"; then
 	if test "$ac_boost_path" != ""; then
 		BOOST_LDFLAGS="-L$ac_boost_path/lib"
 		BOOST_CPPFLAGS="-I$ac_boost_path/include"
+		BOOST_ROOT_PATH="$ac_boost_path"
 	else
 		for ac_boost_path_tmp in /usr /usr/local /opt /opt/local ; do
 			if test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
 				BOOST_LDFLAGS="-L$ac_boost_path_tmp/lib"
 				BOOST_CPPFLAGS="-I$ac_boost_path_tmp/include"
+				BOOST_ROOT_PATH="$ac_boost_path_tmp"
 				break;
 			fi
 		done
@@ -87,6 +89,8 @@ if test "x$want_boost" = "xyes"; then
 	LDFLAGS_SAVED="$LDFLAGS"
 	LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
 	export LDFLAGS
+
+	export BOOST_ROOT_PATH
 
 	AC_LANG_PUSH(C++)
      	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -141,6 +145,7 @@ if test "x$want_boost" = "xyes"; then
 			VERSION_UNDERSCORE=`echo $_version | sed 's/\./_/'`
 			BOOST_CPPFLAGS="-I$best_path/include/boost-$VERSION_UNDERSCORE"
 			BOOST_LDFLAGS="-L$best_path/lib"
+			BOOST_ROOT_PATH="$best_path"
 
 	    		if test "x$BOOST_ROOT" != "x"; then
 				if test -d "$BOOST_ROOT" && test -r "$BOOST_ROOT" && test -d "$BOOST_ROOT/stage/lib" && test -r "$BOOST_ROOT/stage/lib"; then
@@ -152,6 +157,7 @@ if test "x$want_boost" = "xyes"; then
 						AC_MSG_NOTICE(We will use a staged boost library from $BOOST_ROOT)
 						BOOST_CPPFLAGS="-I$BOOST_ROOT"
 						BOOST_LDFLAGS="-L$BOOST_ROOT/stage/lib"
+						BOOST_ROOT_PATH="$BOOST_ROOT"
 					fi
 				fi
 	    		fi
@@ -161,6 +167,7 @@ if test "x$want_boost" = "xyes"; then
 		export CPPFLAGS
 		LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
 		export LDFLAGS
+		export BOOST_ROOT_PATH
 
 		AC_LANG_PUSH(C++)
 	     	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -189,6 +196,7 @@ if test "x$want_boost" = "xyes"; then
 	else
 		AC_SUBST(BOOST_CPPFLAGS)
 		AC_SUBST(BOOST_LDFLAGS)
+		AC_SUBST(BOOST_ROOT_PATH)
 		AC_DEFINE(HAVE_BOOST,,[define if the Boost library is available])
 	fi
 

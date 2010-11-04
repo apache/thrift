@@ -379,7 +379,7 @@ void set_alarm() {
   struct sigaction action;
   memset(&action, 0, sizeof(action));
   action.sa_handler = alarm_handler;
-  action.sa_flags = SA_ONESHOT;
+  action.sa_flags = SA_RESETHAND;
   sigemptyset(&action.sa_mask);
   sigaction(SIGALRM, &action, NULL);
 
@@ -1025,9 +1025,10 @@ void parse_args(int argc, char* argv[], Options* options) {
 
   if (!have_seed) {
     // choose a seed now if the user didn't specify one
-    struct timespec t;
-    clock_gettime(CLOCK_REALTIME, &t);
-    options->seed = t.tv_sec + t.tv_nsec;
+    struct timeval tv;
+    struct timezone tz;
+    gettimeofday(&tv, &tz);
+    options->seed = tv.tv_sec ^ tv.tv_usec;
   }
 }
 
