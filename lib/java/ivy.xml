@@ -33,5 +33,6 @@
        <dependency org="commons-lang" name="commons-lang" rev="2.5" conf="* -> *,!sources,!javadoc"/>
        <dependency org="junit" name="junit" rev="4.4" conf="test -> *,!sources,!javadoc"/>
        <dependency org="javax.servlet" name="servlet-api" rev="2.5" conf="* -> *,!sources,!javadoc"/>
+       <dependency org="org.apache.httpcomponents" name="httpclient" rev="4.0.1" conf="* -> *,!sources,!javadoc"/>
     </dependencies>
 </ivy-module>
