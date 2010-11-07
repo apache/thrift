@@ -61,6 +61,11 @@ void integer_overflow(char* text) {
 %option noyywrap
 
 /**
+ * We don't use it, and it fires up warnings at -Wall
+ */
+%option nounput
+
+/**
  * Helper definitions, comments, constants, and whatnot
  */
 

@@ -84,7 +84,7 @@ class t_base_type : public t_type {
   }
 
   void set_string_enum(bool val) {
-    string_enum_ = true;
+    string_enum_ = val;
   }
 
   bool is_string_enum() const {

@@ -2981,6 +2981,4 @@ initial_caps_to_underscores (string name)
 }
 
 /* register this generator with the main program */
-THRIFT_REGISTER_GENERATOR(c_glib, "C, using GLib", "");
-
-
+THRIFT_REGISTER_GENERATOR(c_glib, "C, using GLib", "")
