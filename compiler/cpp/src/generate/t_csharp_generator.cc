@@ -456,7 +456,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
       t = ((t_typedef*)t)->get_type();
     }
     if ((*m_iter)->get_value() != NULL) {
-      print_const_value(out, "this." + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
+      print_const_value(out, "this._" + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
     }
   }
 
