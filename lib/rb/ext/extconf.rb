@@ -17,10 +17,14 @@
 # under the License.
 # 
 
-require 'mkmf'
+if defined?(RUBY_ENGINE) && RUBY_ENGINE =~ /jruby/
+  File.open('Makefile', 'w'){|f| f.puts "all:\n\ninstall:\n" }
+else
+  require 'mkmf'
 
-$CFLAGS = "-g -O2 -Wall -Werror"
+  $CFLAGS = "-g -O2 -Wall -Werror"
 
-have_func("strlcpy", "string.h")
+  have_func("strlcpy", "string.h")
 
-create_makefile 'thrift_native'
+  create_makefile 'thrift_native'
+end
