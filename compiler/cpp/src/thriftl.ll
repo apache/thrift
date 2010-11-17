@@ -25,6 +25,9 @@
 
 %{
 
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wunused-label"
+
 #include <string>
 #include <errno.h>
 

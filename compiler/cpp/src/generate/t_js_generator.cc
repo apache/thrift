@@ -41,7 +41,8 @@ class t_js_generator : public t_oop_generator {
                 const std::map<std::string, std::string>& parsed_options,
                 const std::string& option_string) :
      t_oop_generator(program) {
-
+     (void) parsed_options;
+     (void) option_string;
      out_dir_base_ = "gen-js";
   }
 
@@ -262,7 +263,9 @@ void t_js_generator::close_generator() {
  *
  * @param ttypedef The type definition
  */
-void t_js_generator::generate_typedef(t_typedef* ttypedef) {}
+void t_js_generator::generate_typedef(t_typedef* ttypedef) {
+  (void) ttypedef;
+}
 
 /**
  * Generates code for an enumerated type. Since define is expensive to lookup
@@ -642,7 +645,7 @@ void t_js_generator::generate_service(t_service* tservice) {
  * @param tservice The service to generate a server for.
  */
 void t_js_generator::generate_service_processor(t_service* tservice) {
-
+  (void) tservice;
 }
 
 /**
@@ -652,7 +655,8 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
  */
 void t_js_generator::generate_process_function(t_service* tservice,
                                                  t_function* tfunction) {
-
+  (void) tservice;
+  (void) tfunction;
 }
 
 /**
@@ -705,14 +709,14 @@ void t_js_generator::generate_js_function_helpers(t_function* tfunction) {
  * @param tservice The service to generate a header definition for
  */
 void t_js_generator::generate_service_interface(t_service* tservice) {
-
+  (void) tservice;
 }
 
 /**
  * Generates a REST interface
  */
 void t_js_generator::generate_service_rest(t_service* tservice) {
-
+  (void) tservice;
 }
 
 /**
@@ -904,6 +908,7 @@ void t_js_generator::generate_deserialize_field(ofstream &out,
                                                   t_field* tfield,
                                                   string prefix,
                                                   bool inclass) {
+  (void) inclass;
   t_type* type = get_true_type(tfield->get_type());
 
   if (type->is_void()) {
@@ -1207,7 +1212,8 @@ void t_js_generator::generate_serialize_field(ofstream &out,
 void t_js_generator::generate_serialize_struct(ofstream &out,
                                                  t_struct* tstruct,
                                                  string prefix) {
-    indent(out) << prefix << ".write(output)" << endl;
+  (void) tstruct;
+  indent(out) << prefix << ".write(output)" << endl;
 }
 
 /**

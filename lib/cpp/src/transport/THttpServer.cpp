@@ -61,7 +61,7 @@ bool THttpServer::parseStatusLine(char* status) {
   }
 
   *path = '\0';
-  while (*(++path) == ' ');
+  while (*(++path) == ' ') {};
 
   char* http = strchr(path, ' ');
   if (http == NULL) {

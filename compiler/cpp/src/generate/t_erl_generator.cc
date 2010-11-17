@@ -44,6 +44,8 @@ class t_erl_generator : public t_generator {
       const std::string& option_string)
     : t_generator(program)
   {
+    (void) parsed_options;
+    (void) option_string;
     program_name_[0] = tolower(program_name_[0]);
     service_name_[0] = tolower(service_name_[0]);
     out_dir_base_ = "gen-erl";
@@ -213,6 +215,7 @@ void t_erl_generator::hrl_header(ostream& out, string name) {
 }
 
 void t_erl_generator::hrl_footer(ostream& out, string name) {
+  (void) name;
   out << "-endif." << endl;
 }
 
@@ -274,6 +277,7 @@ void t_erl_generator::close_generator() {
  * @param ttypedef The type definition
  */
 void t_erl_generator::generate_typedef(t_typedef* ttypedef) {
+  (void) ttypedef;
 }
 
 /**
@@ -472,6 +476,7 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out,
                                                      bool is_exception,
                                                      bool is_result)
 {
+  (void) is_result;
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
@@ -612,6 +617,7 @@ void t_erl_generator::generate_service_helpers(t_service* tservice) {
  * @param tfunction The function
  */
 void t_erl_generator::generate_erl_function_helpers(t_function* tfunction) {
+  (void) tfunction;
 }
 
 /**
@@ -655,7 +661,7 @@ void t_erl_generator::generate_service_interface(t_service* tservice) {
  */
 void t_erl_generator::generate_function_info(t_service* tservice,
                                                 t_function* tfunction) {
-
+  (void) tservice;
   string name_atom = "'" + tfunction->get_name() + "'";
 
 

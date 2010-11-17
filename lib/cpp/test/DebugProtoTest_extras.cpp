@@ -25,6 +25,7 @@
 namespace thrift { namespace test { namespace debug {
 
 bool Empty::operator<(Empty const& other) const {
+  (void) other;
   // It is empty, so all are equal.
   return false;
 }

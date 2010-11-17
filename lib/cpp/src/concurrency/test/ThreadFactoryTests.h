@@ -308,6 +308,7 @@ public:
   };
 
   void foo(PosixThreadFactory *tf) {
+    (void) tf;
   }
 
   bool floodNTest(size_t loop=1, size_t count=100000) {

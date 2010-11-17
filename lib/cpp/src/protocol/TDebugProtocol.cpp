@@ -148,6 +148,7 @@ uint32_t TDebugProtocol::writeItem(const std::string& str) {
 uint32_t TDebugProtocol::writeMessageBegin(const std::string& name,
                                            const TMessageType messageType,
                                            const int32_t seqid) {
+  (void) seqid;
   string mtype;
   switch (messageType) {
     case T_CALL      : mtype = "call"   ; break;

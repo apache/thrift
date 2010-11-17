@@ -43,6 +43,8 @@ class t_ocaml_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    (void) parsed_options;
+    (void) option_string;
     out_dir_base_ = "gen-ocaml";
   }
 
@@ -1283,6 +1285,7 @@ void t_ocaml_generator::generate_service_server(t_service* tservice) {
  */
 void t_ocaml_generator::generate_process_function(t_service* tservice,
                                                t_function* tfunction) {
+  (void) tservice;
   // Open function
   indent(f_service_) <<
     "method private process_" << tfunction->get_name() <<
@@ -1624,6 +1627,7 @@ void t_ocaml_generator::generate_serialize_field(ofstream &out,
 void t_ocaml_generator::generate_serialize_struct(ofstream &out,
                                                t_struct* tstruct,
                                                string prefix) {
+  (void) tstruct;
   indent(out) << prefix << "#write(oprot)";
 }
 

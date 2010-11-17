@@ -49,6 +49,8 @@ class t_rb_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    (void) parsed_options;
+    (void) option_string;
     out_dir_base_ = "gen-rb";
   }
 
@@ -282,7 +284,9 @@ void t_rb_generator::close_generator() {
  *
  * @param ttypedef The type definition
  */
-void t_rb_generator::generate_typedef(t_typedef* ttypedef) {}
+void t_rb_generator::generate_typedef(t_typedef* ttypedef) {
+  (void) ttypedef;
+}
 
 /**
  * Generates code for an enumerated type. Done using a class to scope
@@ -511,6 +515,7 @@ void t_rb_generator::generate_rb_struct(std::ofstream& out, t_struct* tstruct, b
  * Generates a ruby union
  */
 void t_rb_generator::generate_rb_union(std::ofstream& out, t_struct* tstruct, bool is_exception = false) {
+  (void) is_exception;
   generate_rdoc(out, tstruct);
   indent(out) << "class " << type_name(tstruct) << " < ::Thrift::Union" << endl;
 
@@ -933,6 +938,7 @@ void t_rb_generator::generate_service_server(t_service* tservice) {
  */
 void t_rb_generator::generate_process_function(t_service* tservice,
                                                t_function* tfunction) {
+  (void) tservice;
   // Open function
   indent(f_service_) <<
     "def process_" << tfunction->get_name() <<

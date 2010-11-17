@@ -68,7 +68,7 @@ class Util {
     result.tv_usec = (value % MS_PER_S) * US_PER_MS; // ms to us
   }
 
-  static const void toTicks(int64_t& result, int64_t secs, int64_t oldTicks,
+  static void toTicks(int64_t& result, int64_t secs, int64_t oldTicks,
                             int64_t oldTicksPerSec, int64_t newTicksPerSec) {
     result = secs * newTicksPerSec;
     result += oldTicks * newTicksPerSec / oldTicksPerSec;
@@ -81,7 +81,7 @@ class Util {
   /**
    * Converts struct timespec to arbitrary-sized ticks since epoch
    */
-  static const void toTicks(int64_t& result,
+  static void toTicks(int64_t& result,
                             const struct timespec& value,
                             int64_t ticksPerSec) {
     return toTicks(result, value.tv_sec, value.tv_nsec, NS_PER_S, ticksPerSec);
@@ -90,7 +90,7 @@ class Util {
   /**
    * Converts struct timeval to arbitrary-sized ticks since epoch
    */
-  static const void toTicks(int64_t& result,
+  static void toTicks(int64_t& result,
                             const struct timeval& value,
                             int64_t ticksPerSec) {
     return toTicks(result, value.tv_sec, value.tv_usec, US_PER_S, ticksPerSec);
@@ -99,7 +99,7 @@ class Util {
   /**
    * Converts struct timespec to milliseconds
    */
-  static const void toMilliseconds(int64_t& result,
+  static void toMilliseconds(int64_t& result,
                                    const struct timespec& value) {
     return toTicks(result, value, MS_PER_S);
   }
@@ -107,7 +107,7 @@ class Util {
   /**
    * Converts struct timeval to milliseconds
    */
-  static const void toMilliseconds(int64_t& result,
+  static void toMilliseconds(int64_t& result,
                                    const struct timeval& value) {
     return toTicks(result, value, MS_PER_S);
   }
@@ -115,31 +115,31 @@ class Util {
   /**
    * Converts struct timespec to microseconds
    */
-  static const void toUsec(int64_t& result, const struct timespec& value) {
+  static void toUsec(int64_t& result, const struct timespec& value) {
     return toTicks(result, value, US_PER_S);
   }
 
   /**
    * Converts struct timeval to microseconds
    */
-  static const void toUsec(int64_t& result, const struct timeval& value) {
+  static void toUsec(int64_t& result, const struct timeval& value) {
     return toTicks(result, value, US_PER_S);
   }
 
   /**
    * Get current time as a number of arbitrary-size ticks from epoch
    */
-  static const int64_t currentTimeTicks(int64_t ticksPerSec);
+  static int64_t currentTimeTicks(int64_t ticksPerSec);
 
   /**
    * Get current time as milliseconds from epoch
    */
-  static const int64_t currentTime() { return currentTimeTicks(MS_PER_S); }
+  static int64_t currentTime() { return currentTimeTicks(MS_PER_S); }
 
   /**
    * Get current time as micros from epoch
    */
-  static const int64_t currentTimeUsec() { return currentTimeTicks(US_PER_S); }
+  static int64_t currentTimeUsec() { return currentTimeTicks(US_PER_S); }
 };
 
 }}} // apache::thrift::concurrency

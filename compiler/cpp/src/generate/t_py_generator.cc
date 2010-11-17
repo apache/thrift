@@ -44,6 +44,7 @@ class t_py_generator : public t_generator {
       const std::string& option_string)
     : t_generator(program)
   {
+    (void) option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
     iter = parsed_options.find("new_style");
@@ -365,7 +366,9 @@ void t_py_generator::close_generator() {
  *
  * @param ttypedef The type definition
  */
-void t_py_generator::generate_typedef(t_typedef* ttypedef) {}
+void t_py_generator::generate_typedef(t_typedef* ttypedef) {
+  (void) ttypedef;
+}
 
 /**
  * Generates code for an enumerated type. Done using a class to scope
@@ -562,7 +565,7 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
                                                    t_struct* tstruct,
                                                    bool is_exception,
                                                    bool is_result) {
-
+  (void) is_result;
   const vector<t_field*>& members = tstruct->get_members();
   const vector<t_field*>& sorted_members = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator m_iter;
@@ -1572,6 +1575,7 @@ void t_py_generator::generate_service_server(t_service* tservice) {
  */
 void t_py_generator::generate_process_function(t_service* tservice,
                                                t_function* tfunction) {
+  (void) tservice;
   // Open function
   indent(f_service_) <<
     "def process_" << tfunction->get_name() <<
@@ -1767,6 +1771,7 @@ void t_py_generator::generate_deserialize_field(ofstream &out,
                                                 t_field* tfield,
                                                 string prefix,
                                                 bool inclass) {
+  (void) inclass;
   t_type* type = get_true_type(tfield->get_type());
 
   if (type->is_void()) {
@@ -2040,6 +2045,7 @@ void t_py_generator::generate_serialize_field(ofstream &out,
 void t_py_generator::generate_serialize_struct(ofstream &out,
                                                t_struct* tstruct,
                                                string prefix) {
+  (void) tstruct;
   indent(out) <<
     prefix << ".write(oprot)" << endl;
 }

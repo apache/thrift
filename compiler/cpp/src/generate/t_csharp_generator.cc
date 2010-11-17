@@ -44,6 +44,8 @@ class t_csharp_generator : public t_oop_generator
         const std::string& option_string)
       : t_oop_generator(program)
     {
+      (void) parsed_options;
+      (void) option_string;
       out_dir_base_ = "gen-csharp";
     }
     void init_generator();
@@ -175,7 +177,9 @@ string t_csharp_generator::csharp_thrift_usings() {
 }
 
 void t_csharp_generator::close_generator() { }
-void t_csharp_generator::generate_typedef(t_typedef* ttypedef) {}
+void t_csharp_generator::generate_typedef(t_typedef* ttypedef) {
+  (void) ttypedef;
+}
 
 void t_csharp_generator::generate_enum(t_enum* tenum) {
   string f_enum_name = namespace_dir_+"/" + (tenum->get_name())+".cs";
@@ -334,6 +338,7 @@ bool t_csharp_generator::print_const_value(std::ofstream& out, string name, t_ty
 }
 
 std::string t_csharp_generator::render_const_value(ofstream& out, string name, t_type* type, t_const_value* value) {
+  (void) name;
   std::ostringstream render;
 
   if (type->is_base_type()) {
@@ -1096,6 +1101,7 @@ void t_csharp_generator::generate_function_helpers(t_function* tfunction) {
 }
 
 void t_csharp_generator::generate_process_function(t_service* tservice, t_function* tfunction) {
+  (void) tservice;
   indent(f_service_) <<
     "public void " << tfunction->get_name() << "_Process(int seqid, TProtocol iprot, TProtocol oprot)" << endl;
   scope_up(f_service_);
@@ -1424,6 +1430,7 @@ void t_csharp_generator::generate_serialize_field(ofstream& out, t_field* tfield
 }
 
 void t_csharp_generator::generate_serialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
+  (void) tstruct;
   out <<
     indent() << prefix << ".Write(oprot);" << endl;
 }
@@ -1537,6 +1544,7 @@ std::string t_csharp_generator::prop_name(t_field* tfield) {
 }
 
 string t_csharp_generator::type_name(t_type* ttype, bool in_container, bool in_init) {
+  (void) in_init;
   while (ttype->is_typedef()) {
     ttype = ((t_typedef*)ttype)->get_type();
   }
@@ -1567,6 +1575,7 @@ string t_csharp_generator::type_name(t_type* ttype, bool in_container, bool in_i
 }
 
 string t_csharp_generator::base_type_name(t_base_type* tbase, bool in_container) {
+  (void) in_container;
   switch (tbase->get_base()) {
     case t_base_type::TYPE_VOID:
       return "void";

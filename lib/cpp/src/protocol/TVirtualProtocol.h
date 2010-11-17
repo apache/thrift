@@ -42,6 +42,9 @@ class TProtocolDefaults : public TProtocol {
   uint32_t readMessageBegin(std::string& name,
                             TMessageType& messageType,
                             int32_t& seqid) {
+    (void) name;
+    (void) messageType;
+    (void) seqid;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
@@ -52,6 +55,7 @@ class TProtocolDefaults : public TProtocol {
   }
 
   uint32_t readStructBegin(std::string& name) {
+    (void) name;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
@@ -64,6 +68,9 @@ class TProtocolDefaults : public TProtocol {
   uint32_t readFieldBegin(std::string& name,
                           TType& fieldType,
                           int16_t& fieldId) {
+    (void) name;
+    (void) fieldType;
+    (void) fieldId;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
@@ -74,6 +81,9 @@ class TProtocolDefaults : public TProtocol {
   }
 
   uint32_t readMapBegin(TType& keyType, TType& valType, uint32_t& size) {
+    (void) keyType;
+    (void) valType;
+    (void) size;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
@@ -84,6 +94,8 @@ class TProtocolDefaults : public TProtocol {
   }
 
   uint32_t readListBegin(TType& elemType, uint32_t& size) {
+    (void) elemType;
+    (void) size;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
@@ -94,6 +106,8 @@ class TProtocolDefaults : public TProtocol {
   }
 
   uint32_t readSetBegin(TType& elemType, uint32_t& size) {
+    (void) elemType;
+    (void) size;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
@@ -104,46 +118,55 @@ class TProtocolDefaults : public TProtocol {
   }
 
   uint32_t readBool(bool& value) {
+    (void) value;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
 
   uint32_t readBool(std::vector<bool>::reference value) {
+    (void) value;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
 
   uint32_t readByte(int8_t& byte) {
+    (void) byte;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
 
   uint32_t readI16(int16_t& i16) {
+    (void) i16;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
 
   uint32_t readI32(int32_t& i32) {
+    (void) i32;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
 
   uint32_t readI64(int64_t& i64) {
+    (void) i64;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
 
   uint32_t readDouble(double& dub) {
+    (void) dub;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
 
   uint32_t readString(std::string& str) {
+    (void) str;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
 
   uint32_t readBinary(std::string& str) {
+    (void) str;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support reading (yet).");
   }
@@ -151,6 +174,9 @@ class TProtocolDefaults : public TProtocol {
   uint32_t writeMessageBegin(const std::string& name,
                              const TMessageType messageType,
                              const int32_t seqid) {
+    (void) name;
+    (void) messageType;
+    (void) seqid;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
@@ -162,6 +188,7 @@ class TProtocolDefaults : public TProtocol {
 
 
   uint32_t writeStructBegin(const char* name) {
+    (void) name;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
@@ -174,6 +201,9 @@ class TProtocolDefaults : public TProtocol {
   uint32_t writeFieldBegin(const char* name,
                            const TType fieldType,
                            const int16_t fieldId) {
+    (void) name;
+    (void) fieldType;
+    (void) fieldId;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
@@ -191,6 +221,9 @@ class TProtocolDefaults : public TProtocol {
   uint32_t writeMapBegin(const TType keyType,
                          const TType valType,
                          const uint32_t size) {
+    (void) keyType;
+    (void) valType;
+    (void) size;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
@@ -201,6 +234,8 @@ class TProtocolDefaults : public TProtocol {
   }
 
   uint32_t writeListBegin(const TType elemType, const uint32_t size) {
+    (void) elemType;
+    (void) size;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
@@ -211,6 +246,8 @@ class TProtocolDefaults : public TProtocol {
   }
 
   uint32_t writeSetBegin(const TType elemType, const uint32_t size) {
+    (void) elemType;
+    (void) size;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
@@ -221,41 +258,49 @@ class TProtocolDefaults : public TProtocol {
   }
 
   uint32_t writeBool(const bool value) {
+    (void) value;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
 
   uint32_t writeByte(const int8_t byte) {
+    (void) byte;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
 
   uint32_t writeI16(const int16_t i16) {
+    (void) i16;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
 
   uint32_t writeI32(const int32_t i32) {
+    (void) i32;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
 
   uint32_t writeI64(const int64_t i64) {
+    (void) i64;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
 
   uint32_t writeDouble(const double dub) {
+    (void) dub;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
 
   uint32_t writeString(const std::string& str) {
+    (void) str;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }
 
   uint32_t writeBinary(const std::string& str) {
+    (void) str;
     throw TProtocolException(TProtocolException::NOT_IMPLEMENTED,
                              "this protocol does not support writing (yet).");
   }

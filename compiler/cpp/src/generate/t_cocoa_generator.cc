@@ -43,6 +43,7 @@ class t_cocoa_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    (void) option_string;
     std::map<std::string, std::string>::const_iterator iter;
     
     iter = parsed_options.find("log_unexpected");
@@ -541,6 +542,7 @@ void t_cocoa_generator::generate_cocoa_struct_initializer_signature(ofstream &ou
 void t_cocoa_generator::generate_cocoa_struct_field_accessor_declarations(ofstream &out,
                                                                           t_struct* tstruct,
                                                                           bool is_exception) {
+  (void) is_exception;
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -1019,6 +1021,7 @@ void t_cocoa_generator::generate_cocoa_struct_result_writer(ofstream& out,
 void t_cocoa_generator::generate_cocoa_struct_field_accessor_implementations(ofstream& out,
                                                                              t_struct* tstruct,
                                                                              bool is_exception) {
+  (void) is_exception;
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1954,6 +1957,7 @@ void t_cocoa_generator::generate_serialize_field(ofstream& out,
 void t_cocoa_generator::generate_serialize_struct(ofstream& out,
                                                   t_struct* tstruct,
                                                   string fieldName) {
+  (void) tstruct;
   out <<
     indent() << "[" << fieldName << " write: outProtocol];" << endl;
 }

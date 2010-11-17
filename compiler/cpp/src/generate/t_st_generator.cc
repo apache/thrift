@@ -49,6 +49,8 @@ class t_st_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    (void) parsed_options;
+    (void) option_string;
     out_dir_base_ = "gen-st";
   }
 
@@ -240,7 +242,9 @@ string t_st_generator::generated_category() {
  *
  * @param ttypedef The type definition
  */
-void t_st_generator::generate_typedef(t_typedef* ttypedef) {}
+void t_st_generator::generate_typedef(t_typedef* ttypedef) {
+  (void) ttypedef;
+}
 
 void t_st_generator::st_class_def(std::ofstream &out, string name) {
   out << "Object subclass: #" << prefix(name) << endl;

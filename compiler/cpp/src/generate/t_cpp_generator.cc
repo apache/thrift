@@ -48,6 +48,7 @@ class t_cpp_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    (void) option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
     iter = parsed_options.find("pure_enums");
@@ -686,6 +687,7 @@ void t_cpp_generator::print_const_value(ofstream& out, string name, t_type* type
  *
  */
 string t_cpp_generator::render_const_value(ofstream& out, string name, t_type* type, t_const_value* value) {
+  (void) name;
   std::ostringstream render;
 
   if (type->is_base_type()) {
@@ -3389,6 +3391,7 @@ void t_cpp_generator::generate_deserialize_field(ofstream& out,
 void t_cpp_generator::generate_deserialize_struct(ofstream& out,
                                                   t_struct* tstruct,
                                                   string prefix) {
+  (void) tstruct;
   indent(out) <<
     "xfer += " << prefix << ".read(iprot);" << endl;
 }
@@ -3607,6 +3610,7 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
 void t_cpp_generator::generate_serialize_struct(ofstream& out,
                                                 t_struct* tstruct,
                                                 string prefix) {
+  (void) tstruct;
   indent(out) <<
     "xfer += " << prefix << ".write(oprot);" << endl;
 }

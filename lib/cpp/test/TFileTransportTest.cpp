@@ -70,6 +70,7 @@ class FsyncLog {
   FsyncLog() {}
 
   void fsync(int fd) {
+    (void) fd;
     FsyncCall call;
     gettimeofday(&call.time, NULL);
     calls_.push_back(call);

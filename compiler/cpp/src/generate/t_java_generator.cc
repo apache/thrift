@@ -44,6 +44,7 @@ class t_java_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    (void) option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
     iter = parsed_options.find("beans");
@@ -356,7 +357,9 @@ void t_java_generator::close_generator() {}
  *
  * @param ttypedef The type definition
  */
-void t_java_generator::generate_typedef(t_typedef* ttypedef) {}
+void t_java_generator::generate_typedef(t_typedef* ttypedef) {
+  (void) ttypedef;
+}
 
 /**
  * Enums are a class with a set of static constants.
@@ -585,6 +588,7 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
 }
 
 string t_java_generator::render_const_value(ofstream& out, string name, t_type* type, t_const_value* value) {
+  (void) name;
   type = get_true_type(type);
   std::ostringstream render;
 
@@ -978,6 +982,7 @@ void t_java_generator::generate_get_field_desc(ofstream& out, t_struct* tstruct)
 }
 
 void t_java_generator::generate_get_struct_desc(ofstream& out, t_struct* tstruct) {
+  (void) tstruct;
   indent(out) << "@Override" << endl;
   indent(out) << "protected TStruct getStructDesc() {" << endl;
   indent(out) << "  return STRUCT_DESC;" << endl;
@@ -1013,6 +1018,7 @@ void t_java_generator::generate_union_comparisons(ofstream& out, t_struct* tstru
 }
 
 void t_java_generator::generate_union_hashcode(ofstream& out, t_struct* tstruct) {
+  (void) tstruct;
   if (gen_hash_code_) {
     indent(out) << "@Override" << endl;
     indent(out) << "public int hashCode() {" << endl;
@@ -1653,6 +1659,7 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
 }
 
 void t_java_generator::generate_java_struct_field_by_id(ofstream& out, t_struct* tstruct) {
+  (void) tstruct;
   indent(out) << "public _Fields fieldForId(int fieldId) {" << endl;
   indent(out) << "  return _Fields.findByThriftId(fieldId);" << endl;
   indent(out) << "}" << endl << endl;
@@ -2704,6 +2711,7 @@ void t_java_generator::generate_function_helpers(t_function* tfunction) {
  */
 void t_java_generator::generate_process_function(t_service* tservice,
                                                  t_function* tfunction) {
+  (void) tservice;
   // Open class
   indent(f_service_) <<
     "private class " << tfunction->get_name() << " implements ProcessFunction {" << endl;
@@ -3141,6 +3149,7 @@ void t_java_generator::generate_serialize_field(ofstream& out,
 void t_java_generator::generate_serialize_struct(ofstream& out,
                                                  t_struct* tstruct,
                                                  string prefix) {
+  (void) tstruct;
   out <<
     indent() << prefix << ".write(oprot);" << endl;
 }
@@ -3228,6 +3237,7 @@ void t_java_generator::generate_serialize_map_element(ofstream& out,
                                                       t_map* tmap,
                                                       string iter,
                                                       string map) {
+  (void) map;
   t_field kfield(tmap->get_key_type(), iter + ".getKey()");
   generate_serialize_field(out, &kfield, "");
   t_field vfield(tmap->get_val_type(), iter + ".getValue()");
@@ -3474,6 +3484,7 @@ string t_java_generator::argument_list(t_struct* tstruct, bool include_types) {
 }
 
 string t_java_generator::async_argument_list(t_function* tfunct, t_struct* tstruct, t_type* ttype, bool include_types) {
+  (void) ttype;
   string result = "";
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -3721,6 +3732,7 @@ void t_java_generator::generate_deep_copy_container(ofstream &out, std::string s
 }
 
 void t_java_generator::generate_deep_copy_non_container(ofstream& out, std::string source_name, std::string dest_name, t_type* type) {
+  (void) dest_name;
   if (type->is_base_type() || type->is_enum() || type->is_typedef()) {
     if (((t_base_type*)type)->is_binary()) {
       out << "TBaseHelper.copyBinary(" << source_name << ");" << endl;

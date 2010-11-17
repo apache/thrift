@@ -93,7 +93,7 @@ class ThreadManager {
     STOPPED
   };
 
-  virtual const STATE state() const = 0;
+  virtual STATE state() const = 0;
 
   virtual boost::shared_ptr<ThreadFactory> threadFactory() const = 0;
 

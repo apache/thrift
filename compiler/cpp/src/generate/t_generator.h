@@ -73,7 +73,10 @@ class t_generator {
    * Will be called with subnamespace, i.e. is_valid_namespace("twisted")
    * will be called for the above example.
    */
-  static bool is_valid_namespace(const std::string& sub_namespace) { return false; }
+  static bool is_valid_namespace(const std::string& sub_namespace) {
+    (void) sub_namespace;
+    return false;
+  }
 
   /**
    * Escape string to use one in generated sources.
@@ -102,7 +105,9 @@ class t_generator {
 
   virtual void generate_typedef  (t_typedef*  ttypedef)  = 0;
   virtual void generate_enum     (t_enum*     tenum)     = 0;
-  virtual void generate_const    (t_const*    tconst) {}
+  virtual void generate_const    (t_const*    tconst) {
+    (void) tconst;
+  }
   virtual void generate_struct   (t_struct*   tstruct)   = 0;
   virtual void generate_service  (t_service*  tservice)  = 0;
   virtual void generate_xception (t_struct*   txception) {

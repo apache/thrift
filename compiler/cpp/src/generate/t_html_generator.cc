@@ -44,6 +44,8 @@ class t_html_generator : public t_generator {
       const std::string& option_string)
     : t_generator(program)
   {
+    (void) parsed_options;
+    (void) option_string;  
     out_dir_base_ = "gen-html";
     escape_.clear();
     escape_['&']  = "&amp;";

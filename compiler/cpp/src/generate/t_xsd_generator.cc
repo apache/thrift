@@ -41,6 +41,8 @@ class t_xsd_generator : public t_generator {
       const std::string& option_string)
     : t_generator(program)
   {
+    (void) parsed_options;
+    (void) option_string;
     out_dir_base_ = "gen-xsd";
   }
 
@@ -58,7 +60,9 @@ class t_xsd_generator : public t_generator {
    */
 
   void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum) {}
+  void generate_enum(t_enum* tenum) {
+    (void) tenum;
+  }
 
   void generate_service(t_service* tservice);
   void generate_struct(t_struct* tstruct);

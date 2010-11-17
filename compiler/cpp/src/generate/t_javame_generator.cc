@@ -44,6 +44,8 @@ class t_javame_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    (void) parsed_options;
+    (void) option_string;
     std::map<std::string, std::string>::const_iterator iter;
     out_dir_base_ = "gen-javame";
   }
@@ -313,7 +315,9 @@ void t_javame_generator::close_generator() {}
  *
  * @param ttypedef The type definition
  */
-void t_javame_generator::generate_typedef(t_typedef* ttypedef) {}
+void t_javame_generator::generate_typedef(t_typedef* ttypedef) {
+  (void) ttypedef;
+}
 
 /**
  * Enums are a class with a set of static constants.
@@ -537,6 +541,7 @@ void t_javame_generator::print_const_value(std::ofstream& out, string name, t_ty
 }
 
 string t_javame_generator::render_const_value(ofstream& out, string name, t_type* type, t_const_value* value) {
+  (void) name;
   type = get_true_type(type);
   std::ostringstream render;
 
@@ -934,6 +939,7 @@ void t_javame_generator::generate_get_field_desc(ofstream& out, t_struct* tstruc
 }
 
 void t_javame_generator::generate_get_struct_desc(ofstream& out, t_struct* tstruct) {
+  (void) tstruct;
   indent(out) << "protected TStruct getStructDesc() {" << endl;
   indent(out) << "  return STRUCT_DESC;" << endl;
   indent(out) << "}" << endl;
@@ -967,6 +973,7 @@ void t_javame_generator::generate_union_comparisons(ofstream& out, t_struct* tst
 }
 
 void t_javame_generator::generate_union_hashcode(ofstream& out, t_struct* tstruct) {
+  (void) tstruct;
   indent(out) << "/**" << endl;
   indent(out) << " * If you'd like this to perform more respectably, use the hashcode generator option." << endl;
   indent(out) << " */" << endl;
@@ -1553,7 +1560,7 @@ void t_javame_generator::generate_reflection_setters(ostringstream& out, t_type*
 }
 
 void t_javame_generator::generate_generic_field_getters_setters(std::ofstream& out, t_struct* tstruct) {
-
+  (void) out;
   std::ostringstream getter_stream;
   std::ostringstream setter_stream;
 
@@ -2313,6 +2320,7 @@ void t_javame_generator::generate_function_helpers(t_function* tfunction) {
  */
 void t_javame_generator::generate_process_function(t_service* tservice,
                                                  t_function* tfunction) {
+  (void) tservice;
   // Open class
   indent(f_service_) <<
     "private class " << tfunction->get_name() << " implements ProcessFunction {" << endl;
@@ -2754,6 +2762,7 @@ void t_javame_generator::generate_serialize_field(ofstream& out,
 void t_javame_generator::generate_serialize_struct(ofstream& out,
                                                  t_struct* tstruct,
                                                  string prefix) {
+  (void) tstruct;
   out <<
     indent() << prefix << ".write(oprot);" << endl;
 }
@@ -2881,6 +2890,8 @@ void t_javame_generator::generate_serialize_list_element(ofstream& out,
  * @return Java type name, i.e. Vector
  */
 string t_javame_generator::type_name(t_type* ttype, bool in_container, bool in_init, bool skip_generic) {
+  (void) in_init;
+  (void) skip_generic;
   // In Java typedefs are just resolved to their real type
   ttype = get_true_type(ttype);
   string prefix;

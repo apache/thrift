@@ -341,6 +341,7 @@ unsigned int numTriggersFired;
 void set_alarm();
 
 void alarm_handler(int signum) {
+  (void) signum;
   // The alarm timed out, which almost certainly means we're stuck
   // on a transport that is incorrectly blocked.
   ++numTriggersFired;

@@ -68,7 +68,7 @@ class ThreadManager::Impl : public ThreadManager  {
 
   void join() { stopImpl(true); }
 
-  const ThreadManager::STATE state() const {
+  ThreadManager::STATE state() const {
     return state_;
   }
 
@@ -492,6 +492,7 @@ void ThreadManager::Impl::removeWorker(size_t value) {
   }
 
 void ThreadManager::Impl::remove(shared_ptr<Runnable> task) {
+  (void) task;
   Synchronized s(monitor_);
   if (state_ != ThreadManager::STARTED) {
     throw IllegalStateException();

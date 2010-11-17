@@ -99,7 +99,7 @@ class TimerManager {
     STOPPED
   };
 
-  virtual const STATE state() const;
+  virtual STATE state() const;
 
  private:
   boost::shared_ptr<const ThreadFactory> threadFactory_;

@@ -28,6 +28,8 @@ class t_c_glib_generator : public t_oop_generator
                       const map<string, string> &parsed_options,
                       const string &option_string) : t_oop_generator (program)
   {
+    (void) parsed_options;
+    (void) option_string;
     /* set the output directory */
     this->out_dir_base_ = "gen-c_glib";
 
@@ -520,6 +522,7 @@ t_c_glib_generator::is_complex_type (t_type *ttype)
 string
 t_c_glib_generator::type_name (t_type* ttype, bool in_typedef, bool is_const)
 {
+  (void) in_typedef;
   if (ttype->is_base_type ())
   {
     string bname = base_type_name ((t_base_type *) ttype);
@@ -1709,6 +1712,7 @@ t_c_glib_generator::generate_service_client (t_service *tservice)
 void
 t_c_glib_generator::generate_service_server (t_service *tservice)
 {
+  (void) tservice;
   /* get some C friendly service names */
   string service_name_u = initial_caps_to_underscores (service_name_);
   string service_name_uc = to_upper_case (service_name_u);
@@ -2349,6 +2353,7 @@ void
 t_c_glib_generator::generate_serialize_struct (ofstream &out, t_struct *tstruct,
                                           string prefix, int error_ret)
 {
+  (void) tstruct;
   out <<
     indent () << "if ((ret = thrift_struct_write (THRIFT_STRUCT (" << prefix << "), protocol, error)) < 0)" << endl <<
     indent () << "  return " << error_ret << ";" << endl <<
@@ -2823,6 +2828,7 @@ t_c_glib_generator::generate_deserialize_list_element (ofstream &out, t_list *tl
                                                   string prefix, string index,
                                                   int error_ret)
 {
+  (void) index;
   string elem = tmp ("_elem");
   t_field felem (tlist->get_elem_type (), elem);
 

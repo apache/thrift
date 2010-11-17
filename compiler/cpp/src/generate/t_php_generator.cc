@@ -42,6 +42,7 @@ class t_php_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    (void) option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
     iter = parsed_options.find("inlined");
@@ -317,7 +318,9 @@ void t_php_generator::close_generator() {
  *
  * @param ttypedef The type definition
  */
-void t_php_generator::generate_typedef(t_typedef* ttypedef) {}
+void t_php_generator::generate_typedef(t_typedef* ttypedef) {
+  (void) ttypedef;
+}
 
 /**
  * Generates code for an enumerated type. Since define is expensive to lookup
@@ -2018,6 +2021,7 @@ void t_php_generator::generate_serialize_field(ofstream &out,
 void t_php_generator::generate_serialize_struct(ofstream &out,
                                                 t_struct* tstruct,
                                                 string prefix) {
+  (void) tstruct;
   indent(out) <<
     "$xfer += $" << prefix << "->write($output);" << endl;
 }

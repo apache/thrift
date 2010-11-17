@@ -31,6 +31,8 @@ using namespace apache::thrift::transport;
 char errorMessage[ERR_LEN];
 
 int main(int argc, char** argv) {
+  (void) argc;
+  (void) argv;
   try {
     testProtocol<TBinaryProtocol>("TBinaryProtocol");
     testProtocol<TCompactProtocol>("TCompactProtocol");

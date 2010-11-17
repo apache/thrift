@@ -107,14 +107,18 @@ bool PeekProcessor::process(boost::shared_ptr<TProtocol> in,
 }
 
 void PeekProcessor::peekName(const std::string& fname) {
+  (void) fname;
 }
 
 void PeekProcessor::peekBuffer(uint8_t* buffer, uint32_t size) {
+  (void) buffer;
+  (void) size;
 }
 
 void PeekProcessor::peek(boost::shared_ptr<TProtocol> in,
                          TType ftype,
                          int16_t fid) {
+  (void) fid;
   in->skip(ftype);
 }
 

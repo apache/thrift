@@ -43,6 +43,8 @@ class t_hs_generator : public t_oop_generator {
                  const string& option_string)
     : t_oop_generator(program)
   {
+    (void) parsed_options;
+    (void) option_string;
     out_dir_base_ = "gen-hs";
   }
 
@@ -517,6 +519,7 @@ void t_hs_generator::generate_hs_struct_definition(ofstream& out,
                                                    t_struct* tstruct,
                                                    bool is_exception,
                                                    bool helper) {
+  (void) helper;
   string tname = type_name(tstruct);
   string name = tstruct->get_name();
 
@@ -992,6 +995,7 @@ void t_hs_generator::generate_service_server(t_service* tservice) {
  */
 void t_hs_generator::generate_process_function(t_service* tservice,
                                                t_function* tfunction) {
+  (void) tservice;
   // Open function
   string funname = decapitalize(tfunction->get_name());
   indent(f_service_) << "process_" << funname << " (seqid, iprot, oprot, handler) = do" << endl;
@@ -1098,6 +1102,7 @@ void t_hs_generator::generate_process_function(t_service* tservice,
 void t_hs_generator::generate_deserialize_field(ofstream &out,
                                                 t_field* tfield,
                                                 string prefix) {
+  (void) prefix;
   t_type* type = tfield->get_type();
   generate_deserialize_type(out,type);
 }

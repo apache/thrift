@@ -602,6 +602,7 @@ void TNonblockingServer::returnConnection(TConnection* connection) {
  * connections on fd and assign TConnection objects to handle those requests.
  */
 void TNonblockingServer::handleEvent(int fd, short which) {
+  (void) which;
   // Make sure that libevent didn't mess up the socket handles
   assert(fd == serverSocket_);
 

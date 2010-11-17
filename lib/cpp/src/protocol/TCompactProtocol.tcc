@@ -131,6 +131,7 @@ uint32_t TCompactProtocolT<Transport_>::writeFieldStop() {
  */
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::writeStructBegin(const char* name) {
+  (void) name;
   lastField_.push(lastFieldId_);
   lastFieldId_ = 0;
   return 0;
@@ -286,6 +287,7 @@ int32_t TCompactProtocolT<Transport_>::writeFieldBeginInternal(
     const TType fieldType,
     const int16_t fieldId,
     int8_t typeOverride) {
+  (void) name;
   uint32_t wsize = 0;
 
   // if there's a type override, use that.
@@ -455,6 +457,7 @@ template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::readFieldBegin(std::string& name,
                                                        TType& fieldType,
                                                        int16_t& fieldId) {
+  (void) name;
   uint32_t rsize = 0;
   int8_t byte;
   int8_t type;

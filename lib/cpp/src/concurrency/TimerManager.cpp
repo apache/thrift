@@ -271,13 +271,14 @@ void TimerManager::add(shared_ptr<Runnable> task, const struct timespec& value) 
 
 
 void TimerManager::remove(shared_ptr<Runnable> task) {
+  (void) task;
   Synchronized s(monitor_);
   if (state_ != TimerManager::STARTED) {
     throw IllegalStateException();
   }
 }
 
-const TimerManager::STATE TimerManager::state() const { return state_; }
+TimerManager::STATE TimerManager::state() const { return state_; }
 
 }}} // apache::thrift::concurrency
 

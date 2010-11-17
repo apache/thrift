@@ -109,6 +109,8 @@ void TBufferedTransport::writeSlow(const uint8_t* buf, uint32_t len) {
 }
 
 const uint8_t* TBufferedTransport::borrowSlow(uint8_t* buf, uint32_t* len) {
+  (void) buf;
+  (void) len;
   // Simply return NULL.  We don't know if there is actually data available on
   // the underlying transport, so calling read() might block.
   return NULL;
@@ -262,6 +264,8 @@ uint32_t TFramedTransport::writeEnd() {
 }
 
 const uint8_t* TFramedTransport::borrowSlow(uint8_t* buf, uint32_t* len) {
+  (void) buf;
+  (void) len;
   // Don't try to be clever with shifting buffers.
   // If the fast path failed let the protocol use its slow path.
   // Besides, who is going to try to borrow across messages?
@@ -364,6 +368,7 @@ void TMemoryBuffer::wroteBytes(uint32_t len) {
 }
 
 const uint8_t* TMemoryBuffer::borrowSlow(uint8_t* buf, uint32_t* len) {
+  (void) buf;
   rBound_ = wBase_;
   if (available_read() >= *len) {
     *len = available_read();

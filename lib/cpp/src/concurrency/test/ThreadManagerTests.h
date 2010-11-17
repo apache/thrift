@@ -235,7 +235,7 @@ public:
    * pendingTaskCountMax + 1th task.  Verify that we unblock when a task completes */
 
   bool blockTest(int64_t timeout=100LL, size_t workerCount=2) {
-
+    (void) timeout;
     bool success = false;
 
     try {

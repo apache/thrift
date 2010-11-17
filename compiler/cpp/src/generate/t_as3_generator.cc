@@ -44,6 +44,7 @@ class t_as3_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
+    (void) option_string;
     std::map<std::string, std::string>::const_iterator iter;
     
     iter = parsed_options.find("bindable");
@@ -285,7 +286,9 @@ void t_as3_generator::close_generator() {}
  *
  * @param ttypedef The type definition
  */
-void t_as3_generator::generate_typedef(t_typedef* ttypedef) {}
+void t_as3_generator::generate_typedef(t_typedef* ttypedef) {
+  (void) ttypedef;
+}
 
 /**
  * Enums are a class with a set of static constants.
@@ -498,6 +501,7 @@ void t_as3_generator::print_const_value(std::ofstream& out, string name, t_type*
 }
 
 string t_as3_generator::render_const_value(ofstream& out, string name, t_type* type, t_const_value* value) {
+  (void) name;
   type = get_true_type(type);
   std::ostringstream render;
   
@@ -967,6 +971,8 @@ void t_as3_generator::generate_as3_struct_result_writer(ofstream& out,
 }
 
 void t_as3_generator::generate_reflection_getters(ostringstream& out, t_type* type, string field_name, string cap_name) {
+  (void) type;
+  (void) cap_name;
   indent(out) << "case " << upcase_string(field_name) << ":" << endl;
   indent_up();
   indent(out) << "return this." << field_name << ";" << endl;
@@ -974,6 +980,8 @@ void t_as3_generator::generate_reflection_getters(ostringstream& out, t_type* ty
 }
 
 void t_as3_generator::generate_reflection_setters(ostringstream& out, t_type* type, string field_name, string cap_name) {
+  (void) type;
+  (void) cap_name;
   indent(out) << "case " << upcase_string(field_name) << ":" << endl;
   indent_up();
   indent(out) << "if (value == null) {" << endl;
@@ -1772,6 +1780,7 @@ void t_as3_generator::generate_function_helpers(t_function* tfunction) {
  */
 void t_as3_generator::generate_process_function(t_service* tservice,
                                                  t_function* tfunction) {
+  (void) tservice;
   // Open class
   indent(f_service_) <<
   "private function " << tfunction->get_name() << "():Function {" << endl;
@@ -2194,6 +2203,7 @@ void t_as3_generator::generate_serialize_field(ofstream& out,
 void t_as3_generator::generate_serialize_struct(ofstream& out,
                                                  t_struct* tstruct,
                                                  string prefix) {
+  (void) tstruct;
   out <<
     indent() << prefix << ".write(oprot);" << endl;
 }
@@ -2313,6 +2323,7 @@ void t_as3_generator::generate_serialize_list_element(ofstream& out,
  * @return As3 type name, i.e. HashMap<Key,Value>
  */
 string t_as3_generator::type_name(t_type* ttype, bool in_container, bool in_init) {
+  (void) in_init;
   // In As3 typedefs are just resolved to their real type
   ttype = get_true_type(ttype);
   string prefix;
@@ -2349,6 +2360,7 @@ string t_as3_generator::type_name(t_type* ttype, bool in_container, bool in_init
  */
 string t_as3_generator::base_type_name(t_base_type* type,
                                         bool in_container) {
+  (void) in_container;
   t_base_type::t_base tbase = type->get_base();
 
   switch (tbase) {

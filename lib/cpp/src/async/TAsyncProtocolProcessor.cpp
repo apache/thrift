@@ -43,6 +43,7 @@ void TAsyncProtocolProcessor::process(
     std::tr1::function<void(bool healthy)> _return,
     boost::shared_ptr<TProtocol> oprot,
     bool healthy) {
+  (void) oprot;
   // This is a stub function to hold a reference to oprot.
   return _return(healthy);
 }
