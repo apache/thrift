@@ -181,13 +181,13 @@ TFileTransport::~TFileTransport() {
 
 bool TFileTransport::initBufferAndWriteThread() {
   if (bufferAndThreadInitialized_) {
-    T_ERROR("Trying to double-init TFileTransport");
+    T_ERROR("%s", "Trying to double-init TFileTransport");
     return false;
   }
 
   if (writerThreadId_ == 0) {
     if (pthread_create(&writerThreadId_, NULL, startWriterThread, (void *)this) != 0) {
-      T_ERROR("Could not create writer thread");
+      T_ERROR("%s", "Could not create writer thread");
       return false;
     }
   }
@@ -220,7 +220,7 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
   }
 
   if (eventLen == 0) {
-    T_ERROR("cannot enqueue an empty event");
+    T_ERROR("%s", "cannot enqueue an empty event");
     return;
   }
 
@@ -812,7 +812,7 @@ void TFileTransport::seekToChunk(int32_t chunk) {
 
   // too large a value for reverse seek, just seek to beginning
   if (chunk < 0) {
-    T_DEBUG("Incorrect value for reverse seek. Seeking to beginning...");
+    T_DEBUG("%s", "Incorrect value for reverse seek. Seeking to beginning...");
     chunk = 0;
   }
 
@@ -820,7 +820,7 @@ void TFileTransport::seekToChunk(int32_t chunk) {
   bool seekToEnd = false;
   off_t minEndOffset = 0;
   if (chunk >= numChunks) {
-    T_DEBUG("Trying to seek past EOF. Seeking to EOF instead...");
+    T_DEBUG("%s", "Trying to seek past EOF. Seeking to EOF instead...");
     seekToEnd = true;
     chunk = numChunks - 1;
     // this is the min offset to process events till
@@ -956,7 +956,7 @@ eventInfo* TFileTransportBuffer::getNext() {
 
 void TFileTransportBuffer::reset() {
   if (bufferMode_ == WRITE || writePoint_ > readPoint_) {
-    T_DEBUG("Resetting a buffer with unread entries");
+    T_DEBUG("%s", "Resetting a buffer with unread entries");
   }
   // Clean up the old entries
   for (uint32_t i = 0; i < writePoint_; i++) {

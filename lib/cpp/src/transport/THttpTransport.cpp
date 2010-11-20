@@ -127,9 +127,9 @@ uint32_t THttpTransport::parseChunkSize(char* line) {
   if (semi != NULL) {
     *semi = '\0';
   }
-  int size = 0;
+  uint32_t size = 0;
   sscanf(line, "%x", &size);
-  return (uint32_t)size;
+  return size;
 }
 
 uint32_t THttpTransport::readContent(uint32_t size) {
