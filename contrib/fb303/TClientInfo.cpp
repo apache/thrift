@@ -160,7 +160,7 @@ void TClientInfoServerHandler::getStatsStrings(vector<string>& result) {
 
     char buf[256];
     snprintf(buf, sizeof buf, "%d %s %s %.3f %llu", i, addrStr, callStr, secs,
-             (unsigned long long)info->getNCalls());
+             (uint64_t)info->getNCalls());
                
     result.push_back(buf);
   }

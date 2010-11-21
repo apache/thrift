@@ -42,7 +42,7 @@ using namespace thrift::test;
 // Current time, microseconds since the epoch
 uint64_t now()
 {
-  long long ret;
+  int64_t ret;
   struct timeval tv;
 
   gettimeofday(&tv, NULL);

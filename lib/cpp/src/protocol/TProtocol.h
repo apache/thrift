@@ -122,8 +122,8 @@ using apache::thrift::transport::TTransport;
 #  define ntohll(n) bswap_64(n)
 #  define htonll(n) bswap_64(n)
 # else /* GNUC & GLIBC */
-#  define ntohll(n) ( (((unsigned long long)ntohl(n)) << 32) + ntohl(n >> 32) )
-#  define htonll(n) ( (((unsigned long long)htonl(n)) << 32) + htonl(n >> 32) )
+#  define ntohll(n) ( (((uint64_t)ntohl(n)) << 32) + ntohl(n >> 32) )
+#  define htonll(n) ( (((uint64_t)htonl(n)) << 32) + htonl(n >> 32) )
 # endif /* GNUC & GLIBC */
 #else /* __BYTE_ORDER */
 # error "Can't define htonll or ntohll!"

@@ -216,8 +216,8 @@ public:
   size_t& _workerCount;
   size_t _loopCount;
   TType _loopType;
-  long long _startTime;
-  long long _endTime;
+  int64_t _startTime;
+  int64_t _endTime;
   bool _done;
   Monitor _sleep;
 };
@@ -432,8 +432,8 @@ int main(int argc, char **argv) {
       (*thread)->start();
     }
 
-    long long time00;
-    long long time01;
+    int64_t time00;
+    int64_t time01;
 
     {Synchronized s(monitor);
       threadCount = clientCount;
@@ -451,18 +451,18 @@ int main(int argc, char **argv) {
       time01 =  Util::currentTime();
     }
 
-    long long firstTime = 9223372036854775807LL;
-    long long lastTime = 0;
+    int64_t firstTime = 9223372036854775807LL;
+    int64_t lastTime = 0;
 
     double averageTime = 0;
-    long long minTime = 9223372036854775807LL;
-    long long maxTime = 0;
+    int64_t minTime = 9223372036854775807LL;
+    int64_t maxTime = 0;
 
     for (set<shared_ptr<Thread> >::iterator ix = clientThreads.begin(); ix != clientThreads.end(); ix++) {
 
       shared_ptr<ClientThread> client = dynamic_pointer_cast<ClientThread>((*ix)->runnable());
 
-      long long delta = client->_endTime - client->_startTime;
+      int64_t delta = client->_endTime - client->_startTime;
 
       assert(delta > 0);
 

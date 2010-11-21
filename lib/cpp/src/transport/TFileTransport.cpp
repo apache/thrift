@@ -743,7 +743,7 @@ bool TFileTransport::isEventCorrupted() {
     // 3. size indicates that event crosses chunk boundary
     T_ERROR("Read corrupt event. Event crosses chunk boundary. Event size:%u  Offset:%lld",
             readState_.event_->eventSize_,
-            (long long int) (offset_ + readState_.bufferPtr_ + 4));
+            (int64_t) (offset_ + readState_.bufferPtr_ + 4));
 
     return true;
   }
@@ -784,7 +784,7 @@ void TFileTransport::performRecovery() {
       currentEvent_ = NULL;
       char errorMsg[1024];
       sprintf(errorMsg, "TFileTransport: log file corrupted at offset: %lld",
-              (long long int) (offset_ + readState_.lastDispatchPtr_));
+              (int64_t) (offset_ + readState_.lastDispatchPtr_));
               
       GlobalOutput(errorMsg);
       throw TTransportException(errorMsg);
