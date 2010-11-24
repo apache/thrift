@@ -270,6 +270,9 @@ public final class TBaseHelper {
   }
 
   public static ByteBuffer rightSize(ByteBuffer in) {
+    if (in == null) {
+      return null;
+    }
     if (wrapsFullArray(in)) {
       return in;
     }

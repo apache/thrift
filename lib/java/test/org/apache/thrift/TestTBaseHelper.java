@@ -151,6 +151,10 @@ public class TestTBaseHelper extends TestCase {
     assertEquals(ByteBuffer.wrap(b1, 1, 3), ByteBuffer.wrap(b3));
   }
 
+  public void testRightSize() throws Exception {
+    assertNull(TBaseHelper.rightSize(null));
+  }
+
   public void testCopyBinaryWithByteBuffer() throws Exception {
     byte[] bytes = new byte[]{0, 1, 2, 3, 4, 5};
     ByteBuffer b = ByteBuffer.wrap(bytes);
