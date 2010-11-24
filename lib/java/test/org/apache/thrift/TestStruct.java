@@ -301,4 +301,12 @@ public class TestStruct extends TestCase {
     assertEquals("JavaTestHelper(req_int:0, req_obj:, req_bin:)", 
         object.toString());
   }
+
+  public void testBytesBufferFeatures() throws Exception {
+    JavaTestHelper o = new JavaTestHelper();
+    o.setReq_bin((ByteBuffer)null);
+    assertNull(o.getReq_bin());
+    o.setReq_bin((byte[])null);
+    assertNull(o.getReq_bin());
+  }
 }

@@ -807,7 +807,8 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
     if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
       indent(out) << "public byte[] get" << cap_name << "() {" << endl;
       indent(out) << "  set" << cap_name << "(TBaseHelper.rightSize(buffer" << get_cap_name("for") << cap_name << "()));" << endl;
-      indent(out) << "  return buffer" << get_cap_name("for") << cap_name << "().array();" << endl;
+      indent(out) << "  ByteBuffer b = buffer" << get_cap_name("for") << cap_name << "();" << endl;
+      indent(out) << "  return b == null ? null : b.array();" << endl;
       indent(out) << "}" << endl;
 
       out << endl;
@@ -1889,7 +1890,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
       indent(out) << "public byte[] get" << cap_name << "() {" << endl;
       indent(out) << "  set" << cap_name << "(TBaseHelper.rightSize(" << field_name << "));" << endl;
-      indent(out) << "  return " << field_name << ".array();" << endl;
+      indent(out) << "  return " << field_name << " == null ? null : " << field_name << ".array();" << endl;
       indent(out) << "}" << endl << endl;
 
       indent(out) << "public ByteBuffer buffer" << get_cap_name("for") << cap_name << "() {" << endl;
@@ -1920,7 +1921,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
         out << type_name(tstruct);
       }
       out << " set" << cap_name << "(byte[] " << field_name << ") {" << endl;
-      indent(out) << "  set" << cap_name << "(ByteBuffer.wrap(" << field_name << "));" << endl;
+      indent(out) << "  set" << cap_name << "(" << field_name << " == null ? (ByteBuffer)null : ByteBuffer.wrap(" << field_name << "));" << endl;
       if (!bean_style_) {
         indent(out) << "  return this;" << endl;
       }
