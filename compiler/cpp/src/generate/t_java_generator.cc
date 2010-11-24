@@ -624,7 +624,7 @@ string t_java_generator::render_const_value(ofstream& out, string name, t_type* 
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    render << value->get_identifier();
+    render << type->get_program()->get_namespace("java") << "." << value->get_identifier_with_parent();
   } else {
     string t = tmp("tmp");
     print_const_value(out, t, type, value, true);
@@ -770,11 +770,20 @@ void t_java_generator::generate_union_constructor(ofstream& out, t_struct* tstru
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    indent(out) << "public static " << type_name(tstruct) << " " << (*m_iter)->get_name() << "(" << type_name((*m_iter)->get_type()) << " value) {" << endl;
+    t_type* type = (*m_iter)->get_type();
+    indent(out) << "public static " << type_name(tstruct) << " " << (*m_iter)->get_name() << "(" << type_name(type) << " value) {" << endl;
     indent(out) << "  " << type_name(tstruct) << " x = new " << type_name(tstruct) << "();" << endl;
     indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name()) << "(value);" << endl;
     indent(out) << "  return x;" << endl;
-    indent(out) << "}" << endl << endl; 
+    indent(out) << "}" << endl << endl;
+
+    if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+      indent(out) << "public static " << type_name(tstruct) << " " << (*m_iter)->get_name() << "(byte[] value) {" << endl;
+      indent(out) << "  " << type_name(tstruct) << " x = new " << type_name(tstruct) << "();" << endl;
+      indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name()) << "(ByteBuffer.wrap(value));" << endl;
+      indent(out) << "  return x;" << endl;
+      indent(out) << "}" << endl << endl;
+    }
   }
 }
 
@@ -791,20 +800,47 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
     }
 
     t_field* field = (*m_iter);
+    t_type* type = field->get_type();
+    std::string cap_name = get_cap_name(field->get_name());
 
     generate_java_doc(out, field);
-    indent(out) << "public " << type_name(field->get_type()) << " get" << get_cap_name(field->get_name()) << "() {" << endl;
-    indent(out) << "  if (getSetField() == _Fields." << constant_name(field->get_name()) << ") {" << endl;
-    indent(out) << "    return (" << type_name(field->get_type(), true) << ")getFieldValue();" << endl;
-    indent(out) << "  } else {" << endl;
-    indent(out) << "    throw new RuntimeException(\"Cannot get field '" << field->get_name() 
-      << "' because union is currently set to \" + getFieldDesc(getSetField()).name);" << endl;
-    indent(out) << "  }" << endl;
-    indent(out) << "}" << endl;
-    
+    if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+      indent(out) << "public byte[] get" << cap_name << "() {" << endl;
+      indent(out) << "  set" << cap_name << "(TBaseHelper.rightSize(buffer" << get_cap_name("for") << cap_name << "()));" << endl;
+      indent(out) << "  return buffer" << get_cap_name("for") << cap_name << "().array();" << endl;
+      indent(out) << "}" << endl;
+
+      out << endl;
+
+      indent(out) << "public ByteBuffer buffer" << get_cap_name("for") << get_cap_name(field->get_name()) << "() {" << endl;
+      indent(out) << "  if (getSetField() == _Fields." << constant_name(field->get_name()) << ") {" << endl;
+      indent(out) << "    return (ByteBuffer)getFieldValue();" << endl;
+      indent(out) << "  } else {" << endl;
+      indent(out) << "    throw new RuntimeException(\"Cannot get field '" << field->get_name()
+        << "' because union is currently set to \" + getFieldDesc(getSetField()).name);" << endl;
+      indent(out) << "  }" << endl;
+      indent(out) << "}" << endl;
+    } else {
+      indent(out) << "public " << type_name(field->get_type()) << " get" << get_cap_name(field->get_name()) << "() {" << endl;
+      indent(out) << "  if (getSetField() == _Fields." << constant_name(field->get_name()) << ") {" << endl;
+      indent(out) << "    return (" << type_name(field->get_type(), true) << ")getFieldValue();" << endl;
+      indent(out) << "  } else {" << endl;
+      indent(out) << "    throw new RuntimeException(\"Cannot get field '" << field->get_name() 
+        << "' because union is currently set to \" + getFieldDesc(getSetField()).name);" << endl;
+      indent(out) << "  }" << endl;
+      indent(out) << "}" << endl;
+    }
+
     out << endl;
 
     generate_java_doc(out, field);
+    if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+      indent(out) << "public void set" << get_cap_name(field->get_name()) << "(byte[] value) {" << endl;
+      indent(out) << "  set" << get_cap_name(field->get_name()) << "(ByteBuffer.wrap(value));" << endl;
+      indent(out) << "}" << endl;
+
+      out << endl;
+    }
     indent(out) << "public void set" << get_cap_name(field->get_name()) << "(" << type_name(field->get_type()) << " value) {" << endl;
     if (type_can_be_null(field->get_type())) {
       indent(out) << "  if (value == null) throw new NullPointerException();" << endl;
@@ -1856,7 +1892,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       indent(out) << "  return " << field_name << ".array();" << endl;
       indent(out) << "}" << endl << endl;
 
-      indent(out) << "public ByteBuffer " << get_cap_name("bufferFor") << cap_name << "() {" << endl;
+      indent(out) << "public ByteBuffer buffer" << get_cap_name("for") << cap_name << "() {" << endl;
       indent(out) << "  return " << field_name << ";" << endl;
       indent(out) << "}" << endl << endl;
     } else {

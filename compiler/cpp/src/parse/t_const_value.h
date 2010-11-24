@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <map>
 #include <vector>
+#include <string>
 
 /**
  * A const value is something parsed that could be a map, set, list, struct
@@ -129,7 +130,34 @@ class t_const_value {
   std::string get_identifier() const {
     return identifierVal_;
   }
-  
+
+  std::string get_identifier_name() const {
+    std::string ret = get_identifier();
+    size_t s = ret.find('.');
+    if (s == std::string::npos) {
+      throw "error: identifier " + ret + " is unqualified!";
+    }
+    ret = ret.substr(s+1);
+    s = ret.find('.');
+    if (s != std::string::npos) {
+      ret = ret.substr(s+1);
+    }
+    return ret;
+  }
+
+  std::string get_identifier_with_parent() const {
+    std::string ret = get_identifier();
+    size_t s = ret.find('.');
+    if (s == std::string::npos) {
+      throw "error: identifier " + ret + " is unqualified!";
+    }
+    size_t s2 = ret.find('.', s+1);
+    if (s2 != std::string::npos) {
+      ret = ret.substr(s+1);
+    }
+    return ret;
+  }
+
   void set_enum(t_enum* tenum) {
     enum_ = tenum;
   }
