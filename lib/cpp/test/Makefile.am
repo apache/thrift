@@ -176,6 +176,7 @@ INCLUDES = \
 	-I$(top_srcdir)/lib/cpp/src
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+AM_CXXFLAGS = -Wall
 
 clean-local:
 	$(RM) -r gen-cpp

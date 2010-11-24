@@ -25,6 +25,14 @@
 
 %{
 
+/* This is redundant with some of the flags in Makefile.am, but it works
+ * when people override CXXFLAGS without being careful. The pragmas are
+ * the 'right' way to do it, but don't work on old-enough GCC (in particular
+ * the GCC that ship on Mac OS X 10.6.5, *counter* to what the GNU docs say)
+ *
+ * We should revert the Makefile.am changes once Apple ships a reasonable
+ * GCC.
+ */
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-label"
 

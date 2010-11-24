@@ -26,11 +26,11 @@ BUILT_SOURCES =
 
 bin_PROGRAMS = thrift
 
+noinst_LIBRARIES = libparse.a
+
 thrift_OBJDIR = obj
 
-thrift_SOURCES = src/thrifty.yy \
-                 src/thriftl.ll \
-                 src/main.cc \
+thrift_SOURCES = src/main.cc \
                  src/md5.c \
                  src/generate/t_generator.cc \
                  src/generate/t_generator_registry.h \
@@ -115,10 +115,15 @@ if THRIFT_GEN_javame
 thrift_SOURCES += src/generate/t_javame_generator.cc
 endif
 
-thrift_CXXFLAGS = -Wall -I$(srcdir)/src
-thrift_LDFLAGS = -Wall
+thrift_CPPFLAGS = -I$(srcdir)/src
+thrift_CXXFLAGS = -Wall
+thrift_LDADD = @LEXLIB@ libparse.a
 
-thrift_LDADD = @LEXLIB@
+libparse_a_CPPFLAGS = -I$(srcdir)/src
+libparse_a_CXXFLAGS = -Wall -Wno-sign-compare -Wno-unused
+
+libparse_a_SOURCES = src/thrifty.yy \
+                     src/thriftl.ll
 
 EXTRA_DIST = README
 

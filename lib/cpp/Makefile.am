@@ -80,7 +80,8 @@ libthriftz_la_SOURCES = src/transport/TZlibTransport.cpp
 # Flags for the various libraries
 libthriftnb_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
 libthriftz_la_CPPFLAGS  = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
-
+libthriftnb_la_CXXFLAGS = $(AM_CXXFLAGS)
+libthriftz_la_CXXFLAGS  = $(AM_CXXFLAGS)
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
