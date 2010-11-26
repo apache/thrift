@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 #include <string.h>
 #include <stdio.h>
 
@@ -5,118 +24,7 @@
 #include "protocol/thrift_protocol.h"
 #include "protocol/thrift_binary_protocol.h"
 
-/* forward declarations */
-static guint64 thrift_bitwise_cast_guint64 (gdouble v);
-static gdouble thrift_bitwise_cast_gdouble (guint64 v);
-static void thrift_binary_protocol_class_init (ThriftProtocolClass *cls);
-
-gint32 thrift_binary_protocol_write_message_begin (ThriftProtocol *protocol, 
-           const gchar *name, const ThriftMessageType message_type,
-           const gint32 seqid, GError **error);
-gint32 thrift_binary_protocol_write_message_end (ThriftProtocol *protocol,
-                                                 GError **error);
-gint32 thrift_binary_protocol_write_struct_begin (ThriftProtocol *protocol,
-                                                  const gchar *name,
-                                                  GError **error);
-gint32 thrift_binary_protocol_write_struct_end (ThriftProtocol *protocol,
-                                                GError **error);
-gint32 thrift_binary_protocol_write_field_begin (ThriftProtocol *protocol,
-                                                 const gchar *name,
-                                                 const ThriftType field_type,
-                                                 const gint16 field_id,
-                                                 GError **error);
-gint32 thrift_binary_protocol_write_field_end (ThriftProtocol *protocol,
-                                               GError **error);
-gint32 thrift_binary_protocol_write_field_stop (ThriftProtocol *protocol,
-                                                GError **error);
-gint32 thrift_binary_protocol_write_map_begin (ThriftProtocol *protocol,
-                                               const ThriftType key_type,
-                                               const ThriftType value_type,
-                                               const guint32 size,
-                                               GError **error);
-gint32 thrift_binary_protocol_write_map_end (ThriftProtocol *protocol,
-                                             GError **error);
-gint32 thrift_binary_protocol_write_list_begin (ThriftProtocol *protocol,
-                                                const ThriftType element_type,
-                                                const guint32 size, 
-                                                GError **error);
-gint32 thrift_binary_protocol_write_list_end (ThriftProtocol *protocol,
-                                              GError **error);
-gint32 thrift_binary_protocol_write_set_begin (ThriftProtocol *protocol,
-                                               const ThriftType element_type,
-                                               const guint32 size, 
-                                               GError **error);
-gint32 thrift_binary_protocol_write_set_end (ThriftProtocol *protocol,
-                                             GError **error);
-gint32 thrift_binary_protocol_write_bool (ThriftProtocol *protocol,
-                                          const gboolean value, GError **error);
-gint32 thrift_binary_protocol_write_byte (ThriftProtocol *protocol,
-                                          const gint8 value, GError **error);
-gint32 thrift_binary_protocol_write_i16 (ThriftProtocol *protocol,
-                                         const gint16 value, GError **error);
-gint32 thrift_binary_protocol_write_i32 (ThriftProtocol *protocol,
-                                         const gint32 value, GError **error);
-gint32 thrift_binary_protocol_write_i64 (ThriftProtocol *protocol,
-                                         const gint64 value, GError **error);
-gint32 thrift_binary_protocol_write_double (ThriftProtocol *protocol,
-                                            const gdouble value,
-                                            GError **error);
-gint32 thrift_binary_protocol_write_string (ThriftProtocol *protocol,
-                                            const gchar *str, GError **error);
-gint32 thrift_binary_protocol_write_binary (ThriftProtocol *protocol,
-                                            const gpointer buf,
-                                            const guint32 len, GError **error);
-gint32 thrift_binary_protocol_read_message_begin (
-           ThriftProtocol *protocol, gchar **name,
-           ThriftMessageType *message_type, gint32 *seqid, GError **error);
-gint32 thrift_binary_protocol_read_message_end (ThriftProtocol *protocol,
-                                                GError **error);
-gint32 thrift_binary_protocol_read_struct_begin (ThriftProtocol *protocol,
-                                                 gchar **name,
-                                                 GError **error);
-gint32 thrift_binary_protocol_read_struct_end (ThriftProtocol *protocol,
-                                               GError **error);
-gint32 thrift_binary_protocol_read_field_begin (ThriftProtocol *protocol,
-                                                gchar **name,
-                                                ThriftType *field_type,
-                                                gint16 *field_id,
-                                                GError **error);
-gint32 thrift_binary_protocol_read_field_end (ThriftProtocol *protocol,
-                                              GError **error);
-gint32 thrift_binary_protocol_read_map_begin (ThriftProtocol *protocol,
-                                              ThriftType *key_type,
-                                              ThriftType *value_type,
-                                              guint32 *size,
-                                              GError **error);
-gint32 thrift_binary_protocol_read_map_end (ThriftProtocol *protocol,
-                                            GError **error);
-gint32 thrift_binary_protocol_read_list_begin (ThriftProtocol *protocol,
-                                               ThriftType *element_type,
-                                               guint32 *size, GError **error);
-gint32 thrift_binary_protocol_read_list_end (ThriftProtocol *protocol,
-                                             GError **error);
-gint32 thrift_binary_protocol_read_set_begin (ThriftProtocol *protocol,
-                                              ThriftType *element_type,
-                                              guint32 *size, GError **error);
-gint32 thrift_binary_protocol_read_set_end (ThriftProtocol *protocol,
-                                            GError **error);
-gint32 thrift_binary_protocol_read_bool (ThriftProtocol *protocol,
-                                         gboolean *value, GError **error);
-gint32 thrift_binary_protocol_read_byte (ThriftProtocol *protocol, gint8 *value,
-                                         GError **error);
-gint32 thrift_binary_protocol_read_i16 (ThriftProtocol *protocol, gint16 *value,
-                                        GError **error);
-gint32 thrift_binary_protocol_read_i32 (ThriftProtocol *protocol, gint32 *value,
-                                        GError **error);
-gint32 thrift_binary_protocol_read_i64 (ThriftProtocol *protocol, gint64 *value,
-                                        GError **error);
-gint32 thrift_binary_protocol_read_double (ThriftProtocol *protocol,
-                                           gdouble *value, GError **error);
-gint32 thrift_binary_protocol_read_string (ThriftProtocol *protocol,
-                                           gchar **str, GError **error);
-gint32 thrift_binary_protocol_read_binary (ThriftProtocol *protocol,
-                                           gpointer *buf, guint32 *len,
-                                           GError **error);
+G_DEFINE_TYPE(ThriftBinaryProtocol, thrift_binary_protocol, THRIFT_TYPE_PROTOCOL)
 
 static guint64
 thrift_bitwise_cast_guint64 (gdouble v)
@@ -138,82 +46,6 @@ thrift_bitwise_cast_gdouble (guint64 v)
   } u;
   u.from = v;
   return u.to;
-}
-
-GType
-thrift_binary_protocol_get_type (void)
-{
-  static GType type = 0;
-
-  if (type == 0)
-  {
-    static const GTypeInfo info =
-    {
-      sizeof (ThriftBinaryProtocolClass),
-      NULL, /* base_init */
-      NULL, /* base_finalize */
-      (GClassInitFunc) thrift_binary_protocol_class_init,
-      NULL, /* class_finalize */
-      NULL, /* class_data */
-      sizeof (ThriftBinaryProtocol),
-      0, /* n_preallocs */
-      NULL, /* instance_init */
-      NULL, /* value_table */
-    };
-
-    type = g_type_register_static (THRIFT_TYPE_PROTOCOL,
-                                   "ThriftBinaryProtocolType",
-                                   &info, 0);
-  }
-
-  return type;
-}
-
-/* initialize the class */
-static void
-thrift_binary_protocol_class_init (ThriftProtocolClass *cls)
-{
-  cls->write_message_begin = thrift_binary_protocol_write_message_begin;
-  cls->write_message_end = thrift_binary_protocol_write_message_end;
-  cls->write_struct_begin = thrift_binary_protocol_write_struct_begin;
-  cls->write_struct_end = thrift_binary_protocol_write_struct_end;
-  cls->write_field_begin = thrift_binary_protocol_write_field_begin;
-  cls->write_field_end = thrift_binary_protocol_write_field_end;
-  cls->write_field_stop = thrift_binary_protocol_write_field_stop;
-  cls->write_map_begin = thrift_binary_protocol_write_map_begin;
-  cls->write_map_end = thrift_binary_protocol_write_map_end;
-  cls->write_list_begin = thrift_binary_protocol_write_list_begin;
-  cls->write_list_end = thrift_binary_protocol_write_list_end;
-  cls->write_set_begin = thrift_binary_protocol_write_set_begin;
-  cls->write_set_end = thrift_binary_protocol_write_set_end;
-  cls->write_bool = thrift_binary_protocol_write_bool;
-  cls->write_byte = thrift_binary_protocol_write_byte;
-  cls->write_i16 = thrift_binary_protocol_write_i16;
-  cls->write_i32 = thrift_binary_protocol_write_i32;
-  cls->write_i64 = thrift_binary_protocol_write_i64;
-  cls->write_double = thrift_binary_protocol_write_double;
-  cls->write_string = thrift_binary_protocol_write_string;
-  cls->write_binary = thrift_binary_protocol_write_binary;
-  cls->read_message_begin = thrift_binary_protocol_read_message_begin;
-  cls->read_message_end = thrift_binary_protocol_read_message_end;
-  cls->read_struct_begin = thrift_binary_protocol_read_struct_begin;
-  cls->read_struct_end = thrift_binary_protocol_read_struct_end;
-  cls->read_field_begin = thrift_binary_protocol_read_field_begin;
-  cls->read_field_end = thrift_binary_protocol_read_field_end;
-  cls->read_map_begin = thrift_binary_protocol_read_map_begin;
-  cls->read_map_end = thrift_binary_protocol_read_map_end;
-  cls->read_list_begin = thrift_binary_protocol_read_list_begin;
-  cls->read_list_end = thrift_binary_protocol_read_list_end;
-  cls->read_set_begin = thrift_binary_protocol_read_set_begin;
-  cls->read_set_end = thrift_binary_protocol_read_set_end;
-  cls->read_bool = thrift_binary_protocol_read_bool;
-  cls->read_byte = thrift_binary_protocol_read_byte;
-  cls->read_i16 = thrift_binary_protocol_read_i16;
-  cls->read_i32 = thrift_binary_protocol_read_i32;
-  cls->read_i64 = thrift_binary_protocol_read_i64;
-  cls->read_double = thrift_binary_protocol_read_double;
-  cls->read_string = thrift_binary_protocol_read_string;
-  cls->read_binary = thrift_binary_protocol_read_binary;
 }
 
 gint32
@@ -980,4 +812,57 @@ thrift_binary_protocol_read_binary (ThriftProtocol *protocol,
   return xfer;
 }
 
+static void
+thrift_binary_protocol_init (ThriftBinaryProtocol *protocol)
+{
+  THRIFT_UNUSED_VAR (protocol);
+}
 
+/* initialize the class */
+static void
+thrift_binary_protocol_class_init (ThriftBinaryProtocolClass *klass)
+{
+  ThriftProtocolClass *cls = THRIFT_PROTOCOL_CLASS (klass);
+
+  cls->write_message_begin = thrift_binary_protocol_write_message_begin;
+  cls->write_message_end = thrift_binary_protocol_write_message_end;
+  cls->write_struct_begin = thrift_binary_protocol_write_struct_begin;
+  cls->write_struct_end = thrift_binary_protocol_write_struct_end;
+  cls->write_field_begin = thrift_binary_protocol_write_field_begin;
+  cls->write_field_end = thrift_binary_protocol_write_field_end;
+  cls->write_field_stop = thrift_binary_protocol_write_field_stop;
+  cls->write_map_begin = thrift_binary_protocol_write_map_begin;
+  cls->write_map_end = thrift_binary_protocol_write_map_end;
+  cls->write_list_begin = thrift_binary_protocol_write_list_begin;
+  cls->write_list_end = thrift_binary_protocol_write_list_end;
+  cls->write_set_begin = thrift_binary_protocol_write_set_begin;
+  cls->write_set_end = thrift_binary_protocol_write_set_end;
+  cls->write_bool = thrift_binary_protocol_write_bool;
+  cls->write_byte = thrift_binary_protocol_write_byte;
+  cls->write_i16 = thrift_binary_protocol_write_i16;
+  cls->write_i32 = thrift_binary_protocol_write_i32;
+  cls->write_i64 = thrift_binary_protocol_write_i64;
+  cls->write_double = thrift_binary_protocol_write_double;
+  cls->write_string = thrift_binary_protocol_write_string;
+  cls->write_binary = thrift_binary_protocol_write_binary;
+  cls->read_message_begin = thrift_binary_protocol_read_message_begin;
+  cls->read_message_end = thrift_binary_protocol_read_message_end;
+  cls->read_struct_begin = thrift_binary_protocol_read_struct_begin;
+  cls->read_struct_end = thrift_binary_protocol_read_struct_end;
+  cls->read_field_begin = thrift_binary_protocol_read_field_begin;
+  cls->read_field_end = thrift_binary_protocol_read_field_end;
+  cls->read_map_begin = thrift_binary_protocol_read_map_begin;
+  cls->read_map_end = thrift_binary_protocol_read_map_end;
+  cls->read_list_begin = thrift_binary_protocol_read_list_begin;
+  cls->read_list_end = thrift_binary_protocol_read_list_end;
+  cls->read_set_begin = thrift_binary_protocol_read_set_begin;
+  cls->read_set_end = thrift_binary_protocol_read_set_end;
+  cls->read_bool = thrift_binary_protocol_read_bool;
+  cls->read_byte = thrift_binary_protocol_read_byte;
+  cls->read_i16 = thrift_binary_protocol_read_i16;
+  cls->read_i32 = thrift_binary_protocol_read_i32;
+  cls->read_i64 = thrift_binary_protocol_read_i64;
+  cls->read_double = thrift_binary_protocol_read_double;
+  cls->read_string = thrift_binary_protocol_read_string;
+  cls->read_binary = thrift_binary_protocol_read_binary;
+}

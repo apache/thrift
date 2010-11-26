@@ -425,9 +425,6 @@ AC_CONFIG_FILES([
   test/rb/Makefile
 ])
 
-AC_CONFIG_FILES([lib/c_glib/test/test-wrapper.sh],
-                [chmod +x lib/c_glib/test/test-wrapper.sh])
-
 AC_OUTPUT
 
 

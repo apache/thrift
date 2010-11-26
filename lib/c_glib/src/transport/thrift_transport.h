@@ -1,7 +1,28 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 #ifndef _THRIFT_TRANSPORT_H
 #define _THRIFT_TRANSPORT_H
 
 #include <glib-object.h>
+
+G_BEGIN_DECLS
 
 /*! \file thrift_transport.h
  *  \brief Abstract class for Thrift transports.
@@ -13,20 +34,13 @@
  *    is necessary.
  */
 
-/* type macros */	
+/* type macros */
 #define THRIFT_TYPE_TRANSPORT (thrift_transport_get_type ())
-#define THRIFT_TRANSPORT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-                                   THRIFT_TYPE_TRANSPORT, ThriftTransport))
-#define THRIFT_IS_TRANSPORT(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-                                      THRIFT_TYPE_TRANSPORT))
-#define THRIFT_TRANSPORT_CLASS(c) (G_TYPE_CHECK_CLASS_CAST ((c), \
-                                       THRIFT_TYPE_TRANSPORT, \
-                                       ThriftTransportClass))
-#define THRIFT_IS_TRANSPORT_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), \
-                                          THRIFT_TYPE_TRANSPORT))
-#define THRIFT_TRANSPORT_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), \
-                                             THRIFT_TYPE_TRANSPORT, \
-                                             ThriftTransportClass))
+#define THRIFT_TRANSPORT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), THRIFT_TYPE_TRANSPORT, ThriftTransport))
+#define THRIFT_IS_TRANSPORT(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), THRIFT_TYPE_TRANSPORT))
+#define THRIFT_TRANSPORT_CLASS(c) (G_TYPE_CHECK_CLASS_CAST ((c), THRIFT_TYPE_TRANSPORT, ThriftTransportClass))
+#define THRIFT_IS_TRANSPORT_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_TRANSPORT))
+#define THRIFT_TRANSPORT_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_TRANSPORT, ThriftTransportClass))
 
 /*!
  * Thrift Protocol object
@@ -45,7 +59,7 @@ struct _ThriftTransportClass
   GObjectClass parent;
 
   /* vtable */
-  gboolean (*is_open) (ThriftTransport *transport); 
+  gboolean (*is_open) (ThriftTransport *transport);
   gboolean (*open) (ThriftTransport *transport, GError **error);
   gboolean (*close) (ThriftTransport *transport, GError **error);
   gint32 (*read) (ThriftTransport *transport, gpointer buf,
@@ -59,7 +73,7 @@ struct _ThriftTransportClass
 typedef struct _ThriftTransportClass ThriftTransportClass;
 
 /* used by THRIFT_TYPE_TRANSPORT */
-GType thrift_transport_get_type (void); 
+GType thrift_transport_get_type (void);
 
 /* virtual public methods */
 
@@ -67,7 +81,7 @@ GType thrift_transport_get_type (void);
  * Checks if this transport is opened.
  * \public \memberof ThriftTransportInterface
  */
-gboolean thrift_transport_is_open (ThriftTransport *transport); 
+gboolean thrift_transport_is_open (ThriftTransport *transport);
 
 /*!
  * Open the transport for reading and writing.
@@ -105,7 +119,7 @@ gboolean thrift_transport_write (ThriftTransport *transport, const gpointer buf,
  * Called when write is completed.
  * \public \memberof ThriftTransportInterface
  */
-gboolean thrift_transport_write_end (ThriftTransport *transport, 
+gboolean thrift_transport_write_end (ThriftTransport *transport,
                                      GError **error);
 
 /*!
@@ -131,5 +145,6 @@ typedef enum
 GQuark thrift_transport_error_quark (void);
 #define THRIFT_TRANSPORT_ERROR (thrift_transport_error_quark ())
 
+G_END_DECLS
 
 #endif /* _THRIFT_TRANSPORT_H */

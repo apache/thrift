@@ -1,33 +1,41 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 #ifndef _THRIFT_APPLICATION_EXCEPTION_H
 #define _THRIFT_APPLICATION_EXCEPTION_H
 
 #include <glib-object.h>
 #include "thrift_struct.h"
 
+G_BEGIN_DECLS
+
 /*! \file thrift_application_exception.h
  *  \brief C Implementation of a TApplicationException.
  */
 
 /* type macros */
-#define THRIFT_TYPE_APPLICATION_EXCEPTION \
-            (thrift_application_exception_get_type ())
-#define THRIFT_APPLICATION_EXCEPTION(obj) \
-            (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-                                         THRIFT_TYPE_APPLICATION_EXCEPTION, \
-                                         ThriftApplicationException))
-#define THRIFT_IS_APPLICATION_EXCEPTION(obj) \
-            (G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-                                         THRIFT_TYPE_APPLICATION_EXCEPTION))
-#define THRIFT_APPLICATION_EXCEPTION_CLASS(c) \
-            (G_TYPE_CHECK_CLASS_CAST ((c), \
-                                      THRIFT_TYPE_APPLICATION_EXCEPTION, \
-                                      ThriftApplicationExceptionClass))
-#define THRIFT_IS_APPLICATION_EXCEPTION_CLASS(c) \
-            (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_APPLICATION_EXCEPTION))
-#define THRIFT_APPLICATION_EXCEPTION_GET_CLASS(obj) \
-            (G_TYPE_INSTANCE_GET_CLASS ((obj), \
-                                        THRIFT_TYPE_APPLICATION_EXCEPTION, \
-                                        ThriftApplicationExceptionClass))
+#define THRIFT_TYPE_APPLICATION_EXCEPTION (thrift_application_exception_get_type ())
+#define THRIFT_APPLICATION_EXCEPTION(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), THRIFT_TYPE_APPLICATION_EXCEPTION, ThriftApplicationException))
+#define THRIFT_IS_APPLICATION_EXCEPTION(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), THRIFT_TYPE_APPLICATION_EXCEPTION))
+#define THRIFT_APPLICATION_EXCEPTION_CLASS(c) (G_TYPE_CHECK_CLASS_CAST ((c), THRIFT_TYPE_APPLICATION_EXCEPTION, ThriftApplicationExceptionClass))
+#define THRIFT_IS_APPLICATION_EXCEPTION_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_APPLICATION_EXCEPTION))
+#define THRIFT_APPLICATION_EXCEPTION_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_APPLICATION_EXCEPTION, ThriftApplicationExceptionClass))
 
 struct _ThriftApplicationException
 {
@@ -63,5 +71,7 @@ typedef enum
 /* define error domain for GError */
 GQuark thrift_application_exception_error_quark (void);
 #define THRIFT_APPLICATION_EXCEPTION_ERROR (thrift_application_exception_error_quark ())
+
+G_END_DECLS
 
 #endif /* _THRIFT_APPLICATION_EXCEPTION_H */

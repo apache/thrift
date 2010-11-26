@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 #include <errno.h>
 #include <netdb.h>
 #include <stdlib.h>
@@ -19,156 +38,7 @@ enum _ThriftSocketProperties
 /* for errors coming from socket() and connect() */
 extern int errno;
 
-/* forward declarations */
-static void thrift_socket_instance_init (ThriftSocket *self);
-static void thrift_socket_class_init (ThriftSocketClass *cls);
-
-gboolean thrift_socket_is_open (ThriftTransport *transport);
-gboolean thrift_socket_open (ThriftTransport *transport, GError **error);
-gboolean thrift_socket_close (ThriftTransport *transport, GError **error);
-gint32 thrift_socket_read (ThriftTransport *transport, gpointer buf,
-                           guint32 len, GError **error);
-gboolean thrift_socket_read_end (ThriftTransport *transport, GError **error);
-gboolean thrift_socket_write (ThriftTransport *transport, const gpointer buf,
-                              const guint32 len, GError **error);
-gboolean thrift_socket_write_end (ThriftTransport *transport, GError **error);
-gboolean thrift_socket_flush (ThriftTransport *transport, GError **error);
-
-GType
-thrift_socket_get_type (void)
-{
-  static GType type = 0;
-
-  if (type == 0)
-  {
-    static const GTypeInfo info =
-    {
-      sizeof (ThriftSocketClass),
-      NULL, /* base_init */
-      NULL, /* base_finalize */
-      (GClassInitFunc) thrift_socket_class_init,
-      NULL, /* class finalize */
-      NULL, /* class data */
-      sizeof (ThriftSocket),
-      0, /* n_preallocs */
-      (GInstanceInitFunc) thrift_socket_instance_init,
-      NULL, /* value_table */
-    };
-
-    type = g_type_register_static (THRIFT_TYPE_TRANSPORT,
-                                   "ThriftSocket", &info, 0);
-  }
-
-  return type;
-}
-
-/* initializes the instance */
-static void
-thrift_socket_instance_init (ThriftSocket *socket)
-{
-  socket->sd = 0;
-}
-
-/* destructor */
-static void
-thrift_socket_finalize (GObject *object)
-{
-  ThriftSocket *socket = THRIFT_SOCKET (object);
-
-  if (socket->hostname != NULL)
-  {
-    g_free (socket->hostname);
-  }
-  socket->hostname = NULL;
-
-  if (socket->sd != 0)
-  {
-    close (socket->sd);
-  }
-  socket->sd = 0;
-}
-
-/* property accessor */
-void
-thrift_socket_get_property (GObject *object, guint property_id,
-                            GValue *value, GParamSpec *pspec)
-{
-  THRIFT_UNUSED_VAR (pspec);
-  ThriftSocket *socket = THRIFT_SOCKET (object);
-
-  switch (property_id)
-  {
-    case PROP_THRIFT_SOCKET_HOSTNAME:
-      g_value_set_string (value, socket->hostname);
-      break;
-    case PROP_THRIFT_SOCKET_PORT:
-      g_value_set_uint (value, socket->port);
-      break;
-  }
-}
-
-/* property mutator */
-void
-thrift_socket_set_property (GObject *object, guint property_id,
-                            const GValue *value, GParamSpec *pspec)
-{
-  THRIFT_UNUSED_VAR (pspec);
-  ThriftSocket *socket = THRIFT_SOCKET (object);
-
-  switch (property_id)
-  {
-    case PROP_THRIFT_SOCKET_HOSTNAME:
-      socket->hostname = g_strdup (g_value_get_string (value));
-      break;
-    case PROP_THRIFT_SOCKET_PORT:
-      socket->port = g_value_get_uint (value);
-      break;
-  }
-}
-
-/* initializes the class */
-static void
-thrift_socket_class_init (ThriftSocketClass *cls)
-{
-  GObjectClass *gobject_class = G_OBJECT_CLASS (cls);
-  GParamSpec *param_spec = NULL;
-
-  /* setup accessors and mutators */
-  gobject_class->get_property = thrift_socket_get_property;
-  gobject_class->set_property = thrift_socket_set_property;
-
-  param_spec = g_param_spec_string ("hostname",
-                                    "hostname (construct)",
-                                    "Set the hostname of the remote host",
-                                    "localhost", /* default value */
-                                    G_PARAM_CONSTRUCT_ONLY |
-                                    G_PARAM_READWRITE);
-  g_object_class_install_property (gobject_class, PROP_THRIFT_SOCKET_HOSTNAME, 
-                                   param_spec);
-
-  param_spec = g_param_spec_uint ("port",
-                                  "port (construct)",
-                                  "Set the port of the remote host",
-                                  0, /* min */
-                                  65534, /* max */
-                                  9090, /* default by convention */
-                                  G_PARAM_CONSTRUCT_ONLY |
-                                  G_PARAM_READWRITE);
-  g_object_class_install_property (gobject_class, PROP_THRIFT_SOCKET_PORT, 
-                                   param_spec);
-
-  ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (cls);
-
-  gobject_class->finalize = thrift_socket_finalize;
-  ttc->is_open = thrift_socket_is_open;
-  ttc->open = thrift_socket_open;
-  ttc->close = thrift_socket_close;
-  ttc->read = thrift_socket_read;
-  ttc->read_end = thrift_socket_read_end;
-  ttc->write = thrift_socket_write;
-  ttc->write_end = thrift_socket_write_end;
-  ttc->flush = thrift_socket_flush;
-}
+G_DEFINE_TYPE(ThriftSocket, thrift_socket, THRIFT_TYPE_TRANSPORT)
 
 /* implements thrift_transport_is_open */
 gboolean
@@ -331,4 +201,110 @@ thrift_socket_flush (ThriftTransport *transport, GError **error)
   return TRUE;
 }
 
+/* initializes the instance */
+static void
+thrift_socket_init (ThriftSocket *socket)
+{
+  socket->sd = 0;
+}
 
+/* destructor */
+static void
+thrift_socket_finalize (GObject *object)
+{
+  ThriftSocket *socket = THRIFT_SOCKET (object);
+
+  if (socket->hostname != NULL)
+  {
+    g_free (socket->hostname);
+  }
+  socket->hostname = NULL;
+
+  if (socket->sd != 0)
+  {
+    close (socket->sd);
+  }
+  socket->sd = 0;
+}
+
+/* property accessor */
+void
+thrift_socket_get_property (GObject *object, guint property_id,
+                            GValue *value, GParamSpec *pspec)
+{
+  THRIFT_UNUSED_VAR (pspec);
+  ThriftSocket *socket = THRIFT_SOCKET (object);
+
+  switch (property_id)
+  {
+    case PROP_THRIFT_SOCKET_HOSTNAME:
+      g_value_set_string (value, socket->hostname);
+      break;
+    case PROP_THRIFT_SOCKET_PORT:
+      g_value_set_uint (value, socket->port);
+      break;
+  }
+}
+
+/* property mutator */
+void
+thrift_socket_set_property (GObject *object, guint property_id,
+                            const GValue *value, GParamSpec *pspec)
+{
+  THRIFT_UNUSED_VAR (pspec);
+  ThriftSocket *socket = THRIFT_SOCKET (object);
+
+  switch (property_id)
+  {
+    case PROP_THRIFT_SOCKET_HOSTNAME:
+      socket->hostname = g_strdup (g_value_get_string (value));
+      break;
+    case PROP_THRIFT_SOCKET_PORT:
+      socket->port = g_value_get_uint (value);
+      break;
+  }
+}
+
+/* initializes the class */
+static void
+thrift_socket_class_init (ThriftSocketClass *cls)
+{
+  GObjectClass *gobject_class = G_OBJECT_CLASS (cls);
+  GParamSpec *param_spec = NULL;
+
+  /* setup accessors and mutators */
+  gobject_class->get_property = thrift_socket_get_property;
+  gobject_class->set_property = thrift_socket_set_property;
+
+  param_spec = g_param_spec_string ("hostname",
+                                    "hostname (construct)",
+                                    "Set the hostname of the remote host",
+                                    "localhost", /* default value */
+                                    G_PARAM_CONSTRUCT_ONLY |
+                                    G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class, PROP_THRIFT_SOCKET_HOSTNAME,
+                                   param_spec);
+
+  param_spec = g_param_spec_uint ("port",
+                                  "port (construct)",
+                                  "Set the port of the remote host",
+                                  0, /* min */
+                                  65534, /* max */
+                                  9090, /* default by convention */
+                                  G_PARAM_CONSTRUCT_ONLY |
+                                  G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class, PROP_THRIFT_SOCKET_PORT,
+                                   param_spec);
+
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_CLASS (cls);
+
+  gobject_class->finalize = thrift_socket_finalize;
+  ttc->is_open = thrift_socket_is_open;
+  ttc->open = thrift_socket_open;
+  ttc->close = thrift_socket_close;
+  ttc->read = thrift_socket_read;
+  ttc->read_end = thrift_socket_read_end;
+  ttc->write = thrift_socket_write;
+  ttc->write_end = thrift_socket_write_end;
+  ttc->flush = thrift_socket_flush;
+}

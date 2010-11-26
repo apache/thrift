@@ -1,55 +1,26 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 #include "thrift_application_exception.h"
 #include "protocol/thrift_protocol.h"
 
-/* forward declarations */
-void thrift_application_exception_instance_init (ThriftApplicationException *object);
-void thrift_application_exception_class_init (ThriftStructClass *cls);
-gint32 thrift_application_exception_read (ThriftStruct *object, ThriftProtocol *protocol, GError **error);
-gint32 thrift_application_exception_write (ThriftStruct *object, ThriftProtocol *protocol, GError **error);
-
-GType
-thrift_application_exception_get_type (void)
-{
-  static GType type = 0;
-
-  if (type == 0)
-  {
-    static const GTypeInfo type_info =
-    {
-      sizeof (ThriftApplicationExceptionClass),
-      NULL, /* base_init */
-      NULL, /* base_finalize */
-      (GClassInitFunc) thrift_application_exception_class_init,
-      NULL, /* class_finalize */
-      NULL, /* class_data */
-      sizeof (ThriftApplicationException),
-      0, /* n_preallocs */
-      (GInstanceInitFunc) thrift_application_exception_instance_init,
-      NULL, /* value_table */
-    };
-
-    type = g_type_register_static (THRIFT_TYPE_STRUCT,
-                                   "ThriftApplicationExceptionType",
-                                   &type_info, 0);
-  }
-  return type;
-}
-
-void
-thrift_application_exception_instance_init (ThriftApplicationException *object)
-{
-  object->type = 0;
-  object->__isset_type = FALSE;
-  object->message = NULL;
-  object->__isset_message = FALSE;
-}
-
-void
-thrift_application_exception_class_init (ThriftStructClass *cls)
-{
-  cls->read = thrift_application_exception_read;
-  cls->write = thrift_application_exception_write;
-}
+G_DEFINE_TYPE(ThriftApplicationException, thrift_application_exception, THRIFT_TYPE_STRUCT)
 
 gint32
 thrift_application_exception_read (ThriftStruct *object,
@@ -190,3 +161,19 @@ thrift_application_exception_error_quark (void)
   return g_quark_from_static_string (THRIFT_APPLICATION_EXCEPTION_ERROR_DOMAIN);
 }
 
+void
+thrift_application_exception_init (ThriftApplicationException *object)
+{
+  object->type = 0;
+  object->__isset_type = FALSE;
+  object->message = NULL;
+  object->__isset_message = FALSE;
+}
+
+void
+thrift_application_exception_class_init (ThriftApplicationExceptionClass *class)
+{
+  ThriftStructClass *cls = THRIFT_STRUCT_CLASS(class);
+  cls->read = thrift_application_exception_read;
+  cls->write = thrift_application_exception_write;
+}

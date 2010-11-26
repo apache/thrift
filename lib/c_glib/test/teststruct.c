@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 #include <assert.h>
 #include <glib-object.h>
 
@@ -20,67 +39,13 @@ typedef struct _ThriftTestStructClass ThriftTestStructClass;
 GType thrift_test_struct_get_type (void);
 
 #define THRIFT_TYPE_TEST_STRUCT (thrift_test_struct_get_type ())
-#define THRIFT_TEST_STRUCT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-                                     THRIFT_TYPE_TEST_STRUCT, \
-                                     ThriftTestStruct))
-#define THRIFT_TEST_STRUCT_CLASS(c) (G_TYPE_CHECK_CLASS_CAST ((c), \
-                                         THRIFT_TYPE_TEST_STRUCT, \
-                                         ThriftTestStructClass))
-#define THRIFT_IS_TEST_STRUCT(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-                                        THRIFT_TYPE_TEST_STRUCT))
-#define THRIFT_IS_TEST_STRUCT_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), \
-                                            THRIFT_TYPE_TEST_STRUCT))
-#define THRIFT_TEST_STRUCT_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), \
-                                               THRIFT_TYPE_TEST_STRUCT, \
-                                               ThriftTestStructClass))
+#define THRIFT_TEST_STRUCT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), THRIFT_TYPE_TEST_STRUCT, ThriftTestStruct))
+#define THRIFT_TEST_STRUCT_CLASS(c) (G_TYPE_CHECK_CLASS_CAST ((c), THRIFT_TYPE_TEST_STRUCT, ThriftTestStructClass))
+#define THRIFT_IS_TEST_STRUCT(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), THRIFT_TYPE_TEST_STRUCT))
+#define THRIFT_IS_TEST_STRUCT_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_TEST_STRUCT))
+#define THRIFT_TEST_STRUCT_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_TEST_STRUCT, ThriftTestStructClass))
 
-/* test declarations */
-gint32 thrift_test_struct_read (ThriftStruct *object, ThriftProtocol *protocol,
-                                GError **error);
-gint32 thrift_test_struct_write (ThriftStruct *object, ThriftProtocol *protocol,
-                                 GError **error);
-
-static void
-thrift_test_struct_class_init (ThriftTestStructClass *cls)
-{
-  ThriftStructClass *ts_cls = THRIFT_STRUCT_CLASS (cls);
-  ts_cls->read = thrift_test_struct_read;
-  ts_cls->write = thrift_test_struct_write;
-}
-
-static void
-thrift_test_struct_instance_init (ThriftTestStruct *s)
-{
-  (void) s;
-}
-
-GType
-thrift_test_struct_get_type (void)
-{
-  static GType type = 0;
-
-  if (type == 0)
-  {
-    static const GTypeInfo type_info =
-    {
-      sizeof (ThriftTestStructClass),
-      NULL,
-      NULL,
-      (GClassInitFunc) thrift_test_struct_class_init,
-      NULL,
-      NULL,
-      sizeof (ThriftTestStruct),
-      0,
-      (GInstanceInitFunc) thrift_test_struct_instance_init,
-      NULL, 
-    };
-
-    type = g_type_register_static (THRIFT_TYPE_STRUCT,
-                                   "ThriftTestStructType", &type_info, 0);
-  }
-
-  return type;
-}
+G_DEFINE_TYPE(ThriftTestStruct, thrift_test_struct, THRIFT_TYPE_STRUCT)
 
 gint32
 thrift_test_struct_read (ThriftStruct *object, ThriftProtocol *protocol,
@@ -96,6 +61,19 @@ thrift_test_struct_write (ThriftStruct *object, ThriftProtocol *protocol,
   return 0;
 }
 
+static void
+thrift_test_struct_class_init (ThriftTestStructClass *cls)
+{
+  ThriftStructClass *ts_cls = THRIFT_STRUCT_CLASS (cls);
+  ts_cls->read = thrift_test_struct_read;
+  ts_cls->write = thrift_test_struct_write;
+}
+
+static void
+thrift_test_struct_init (ThriftTestStruct *s)
+{
+  THRIFT_UNUSED_VAR (s);
+}
 
 static void
 test_initialize_object (void)
@@ -112,10 +90,12 @@ test_initialize_object (void)
 }
 
 int
-main(void)
+main(int argc, char *argv[])
 {
-  g_type_init ();
-  test_initialize_object ();
+  g_type_init();
+  g_test_init (&argc, &argv, NULL);
 
-  return 0;
+  g_test_add_func ("/teststruct/InitializeObject", test_initialize_object);
+
+  return g_test_run ();
 }

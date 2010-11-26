@@ -1,80 +1,28 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 #include "server/thrift_simple_server.h"
 #include "transport/thrift_transport_factory.h"
 #include "protocol/thrift_protocol_factory.h"
 #include "protocol/thrift_binary_protocol_factory.h"
 
-static void thrift_simple_server_instance_init (ThriftServer *server);
-static void thrift_simple_server_class_init (ThriftServerClass *cls);
-
-/* forward declarations */
-void thrift_simple_server_serve (ThriftServer *server);
-void thrift_simple_server_stop (ThriftServer *server);
-
-GType
-thrift_simple_server_get_type (void)
-{
-  static GType type = 0;
-
-  if (type == 0)
-  {
-    static const GTypeInfo info =
-    {
-      sizeof (ThriftSimpleServerClass),
-      NULL, /* base_init */
-      NULL, /* base_finalize */
-      (GClassInitFunc) thrift_simple_server_class_init,
-      NULL, /* class_finalize */
-      NULL, /* class_data */
-      sizeof (ThriftSimpleServer),
-      0, /* n_preallocs */
-      (GInstanceInitFunc) thrift_simple_server_instance_init,
-      NULL, /* value_table */
-    };
-
-    type = g_type_register_static (THRIFT_TYPE_SERVER,
-                                   "ThriftSimpleServerType",
-                                   &info, 0);
-  }
-
-  return type;
-}
-
-static void
-thrift_simple_server_instance_init (ThriftServer *server)
-{
-  (THRIFT_SIMPLE_SERVER (server))->running = FALSE;
-
-  if (server->input_transport_factory == NULL)
-  {
-    server->input_transport_factory = 
-        g_object_new (THRIFT_TYPE_TRANSPORT_FACTORY, NULL);
-  }
-  if (server->output_transport_factory == NULL)
-  {
-    server->output_transport_factory =
-        g_object_new (THRIFT_TYPE_TRANSPORT_FACTORY, NULL);
-  }
-  if (server->input_protocol_factory == NULL)
-  {
-    server->input_protocol_factory =
-        g_object_new (THRIFT_TYPE_BINARY_PROTOCOL_FACTORY, NULL);
-  }
-  if (server->output_protocol_factory == NULL)
-  {
-    server->output_protocol_factory =
-        g_object_new (THRIFT_TYPE_BINARY_PROTOCOL_FACTORY, NULL);
-  }
-}
-
-
-/* initialize the class */
-static void
-thrift_simple_server_class_init (ThriftServerClass *cls)
-{
-  cls->serve = thrift_simple_server_serve;
-  cls->stop = thrift_simple_server_stop;
-}
+G_DEFINE_TYPE(ThriftSimpleServer, thrift_simple_server, THRIFT_TYPE_SERVER)
 
 void
 thrift_simple_server_serve (ThriftServer *server)
@@ -84,7 +32,7 @@ thrift_simple_server_serve (ThriftServer *server)
   ThriftTransport *t = NULL;
   ThriftTransport *input_transport = NULL, *output_transport = NULL;
   ThriftProtocol *input_protocol = NULL, *output_protocol = NULL;
-  ThriftSimpleServer *tss = THRIFT_SIMPLE_SERVER (server);
+  ThriftSimpleServer *tss = THRIFT_SIMPLE_SERVER(server);
 
   THRIFT_SERVER_TRANSPORT_GET_CLASS (server->server_transport)
       ->listen (server->server_transport, NULL);
@@ -130,4 +78,41 @@ thrift_simple_server_stop (ThriftServer *server)
   (THRIFT_SIMPLE_SERVER (server))->running = FALSE;
 }
 
+static void
+thrift_simple_server_init (ThriftSimpleServer *tss)
+{
+  tss->running = FALSE;
 
+  ThriftServer *server = THRIFT_SERVER(tss);
+
+  if (server->input_transport_factory == NULL)
+  {
+    server->input_transport_factory =
+        g_object_new (THRIFT_TYPE_TRANSPORT_FACTORY, NULL);
+  }
+  if (server->output_transport_factory == NULL)
+  {
+    server->output_transport_factory =
+        g_object_new (THRIFT_TYPE_TRANSPORT_FACTORY, NULL);
+  }
+  if (server->input_protocol_factory == NULL)
+  {
+    server->input_protocol_factory =
+        g_object_new (THRIFT_TYPE_BINARY_PROTOCOL_FACTORY, NULL);
+  }
+  if (server->output_protocol_factory == NULL)
+  {
+    server->output_protocol_factory =
+        g_object_new (THRIFT_TYPE_BINARY_PROTOCOL_FACTORY, NULL);
+  }
+}
+
+/* initialize the class */
+static void
+thrift_simple_server_class_init (ThriftSimpleServerClass *class)
+{
+  ThriftServerClass *cls = THRIFT_SERVER_CLASS(class);
+
+  cls->serve = thrift_simple_server_serve;
+  cls->stop = thrift_simple_server_stop;
+}

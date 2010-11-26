@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 #include "thrift.h"
 #include "protocol/thrift_protocol.h"
 #include "transport/thrift_transport.h"
@@ -12,103 +31,7 @@ enum _ThriftProtocolProperties
   PROP_THRIFT_PROTOCOL_TRANSPORT
 };
 
-/* forward declarations */
-static void thrift_protocol_instance_init (ThriftProtocol *protocol);
-static void thrift_protocol_class_init (ThriftProtocolClass *cls);
-void thrift_protocol_get_property (GObject *object, guint property_id,
-                                   GValue *value, GParamSpec *pspec);
-void thrift_protocol_set_property (GObject *object, guint property_id,
-                                   const GValue *value, GParamSpec *pspec);
-
-/* define ThriftProtocolInterface's type */
-GType
-thrift_protocol_get_type (void)
-{
-  static GType type = 0;
-
-  if (type == 0)
-  {
-    static const GTypeInfo info = {
-      sizeof (ThriftProtocolClass),
-      NULL, /* base_init */
-      NULL, /* base_finalize */
-      (GClassInitFunc) thrift_protocol_class_init,
-      NULL, /* class_finalize */
-      NULL, /* class_data */
-      sizeof (ThriftProtocol),
-      0, /* n_preallocs */
-      (GInstanceInitFunc) thrift_protocol_instance_init,
-      NULL, /* value_table */
-    };
-
-    type = g_type_register_static (G_TYPE_OBJECT, "ThriftProtocol",
-                                   &info, G_TYPE_FLAG_ABSTRACT);
-  }
-
-  return type;
-}
-
-static void
-thrift_protocol_instance_init (ThriftProtocol *protocol)
-{
-  protocol->transport = NULL;
-}
-
-static void
-thrift_protocol_class_init (ThriftProtocolClass *cls)
-{
-  GObjectClass *gobject_class = G_OBJECT_CLASS (cls);
-
-  gobject_class->get_property = thrift_protocol_get_property;
-  gobject_class->set_property = thrift_protocol_set_property;
-
-  g_object_class_install_property (gobject_class,
-      PROP_THRIFT_PROTOCOL_TRANSPORT,
-      g_param_spec_object ("transport", "Transport", "Thrift Transport",
-                           THRIFT_TYPE_TRANSPORT,
-                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
-
-  cls->write_message_begin = thrift_protocol_write_message_begin;
-  cls->write_message_end = thrift_protocol_write_message_end;
-  cls->write_struct_begin = thrift_protocol_write_struct_begin;
-  cls->write_struct_end = thrift_protocol_write_struct_end;
-  cls->write_field_begin = thrift_protocol_write_field_begin;
-  cls->write_field_end = thrift_protocol_write_field_end;
-  cls->write_field_stop = thrift_protocol_write_field_stop;
-  cls->write_map_begin = thrift_protocol_write_map_begin;
-  cls->write_map_end = thrift_protocol_write_map_end;
-  cls->write_list_begin = thrift_protocol_write_list_begin;
-  cls->write_list_end = thrift_protocol_write_list_end;
-  cls->write_set_begin = thrift_protocol_write_set_begin;
-  cls->write_set_end = thrift_protocol_write_set_end;
-  cls->write_bool = thrift_protocol_write_bool;
-  cls->write_byte = thrift_protocol_write_byte;
-  cls->write_i16 = thrift_protocol_write_i16;
-  cls->write_i32 = thrift_protocol_write_i32;
-  cls->write_i64 = thrift_protocol_write_i64;
-  cls->write_double = thrift_protocol_write_double;
-  cls->write_string = thrift_protocol_write_string;
-  cls->write_binary = thrift_protocol_write_binary;
-  cls->read_message_begin = thrift_protocol_read_message_begin;
-  cls->read_message_end = thrift_protocol_read_message_end;
-  cls->read_struct_begin = thrift_protocol_read_struct_begin;
-  cls->read_struct_end = thrift_protocol_read_struct_end;
-  cls->read_field_begin = thrift_protocol_read_field_begin;
-  cls->read_field_end = thrift_protocol_read_field_end;
-  cls->read_map_begin = thrift_protocol_read_map_begin;
-  cls->read_map_end = thrift_protocol_read_map_end;
-  cls->read_list_begin = thrift_protocol_read_list_begin;
-  cls->read_set_begin = thrift_protocol_read_set_begin;
-  cls->read_set_end = thrift_protocol_read_set_end;
-  cls->read_bool = thrift_protocol_read_bool;
-  cls->read_byte = thrift_protocol_read_byte;
-  cls->read_i16 = thrift_protocol_read_i16;
-  cls->read_i32 = thrift_protocol_read_i32;
-  cls->read_i64 = thrift_protocol_read_i64;
-  cls->read_double = thrift_protocol_read_double;
-  cls->read_string = thrift_protocol_read_string;
-  cls->read_binary = thrift_protocol_read_binary;
-}
+G_DEFINE_ABSTRACT_TYPE(ThriftProtocol, thrift_protocol, G_TYPE_OBJECT)
 
 void
 thrift_protocol_get_property (GObject *object, guint property_id,
@@ -602,3 +525,65 @@ thrift_protocol_error_quark (void)
   return g_quark_from_static_string (THRIFT_PROTOCOL_ERROR_DOMAIN);
 }
 
+
+static void
+thrift_protocol_init (ThriftProtocol *protocol)
+{
+  protocol->transport = NULL;
+}
+
+static void
+thrift_protocol_class_init (ThriftProtocolClass *cls)
+{
+  GObjectClass *gobject_class = G_OBJECT_CLASS (cls);
+
+  gobject_class->get_property = thrift_protocol_get_property;
+  gobject_class->set_property = thrift_protocol_set_property;
+
+  g_object_class_install_property (gobject_class,
+      PROP_THRIFT_PROTOCOL_TRANSPORT,
+      g_param_spec_object ("transport", "Transport", "Thrift Transport",
+                           THRIFT_TYPE_TRANSPORT,
+                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+
+  cls->write_message_begin = thrift_protocol_write_message_begin;
+  cls->write_message_end = thrift_protocol_write_message_end;
+  cls->write_struct_begin = thrift_protocol_write_struct_begin;
+  cls->write_struct_end = thrift_protocol_write_struct_end;
+  cls->write_field_begin = thrift_protocol_write_field_begin;
+  cls->write_field_end = thrift_protocol_write_field_end;
+  cls->write_field_stop = thrift_protocol_write_field_stop;
+  cls->write_map_begin = thrift_protocol_write_map_begin;
+  cls->write_map_end = thrift_protocol_write_map_end;
+  cls->write_list_begin = thrift_protocol_write_list_begin;
+  cls->write_list_end = thrift_protocol_write_list_end;
+  cls->write_set_begin = thrift_protocol_write_set_begin;
+  cls->write_set_end = thrift_protocol_write_set_end;
+  cls->write_bool = thrift_protocol_write_bool;
+  cls->write_byte = thrift_protocol_write_byte;
+  cls->write_i16 = thrift_protocol_write_i16;
+  cls->write_i32 = thrift_protocol_write_i32;
+  cls->write_i64 = thrift_protocol_write_i64;
+  cls->write_double = thrift_protocol_write_double;
+  cls->write_string = thrift_protocol_write_string;
+  cls->write_binary = thrift_protocol_write_binary;
+  cls->read_message_begin = thrift_protocol_read_message_begin;
+  cls->read_message_end = thrift_protocol_read_message_end;
+  cls->read_struct_begin = thrift_protocol_read_struct_begin;
+  cls->read_struct_end = thrift_protocol_read_struct_end;
+  cls->read_field_begin = thrift_protocol_read_field_begin;
+  cls->read_field_end = thrift_protocol_read_field_end;
+  cls->read_map_begin = thrift_protocol_read_map_begin;
+  cls->read_map_end = thrift_protocol_read_map_end;
+  cls->read_list_begin = thrift_protocol_read_list_begin;
+  cls->read_set_begin = thrift_protocol_read_set_begin;
+  cls->read_set_end = thrift_protocol_read_set_end;
+  cls->read_bool = thrift_protocol_read_bool;
+  cls->read_byte = thrift_protocol_read_byte;
+  cls->read_i16 = thrift_protocol_read_i16;
+  cls->read_i32 = thrift_protocol_read_i32;
+  cls->read_i64 = thrift_protocol_read_i64;
+  cls->read_double = thrift_protocol_read_double;
+  cls->read_string = thrift_protocol_read_string;
+  cls->read_binary = thrift_protocol_read_binary;
+}

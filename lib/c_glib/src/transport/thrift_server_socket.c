@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 #include <errno.h>
 #include <netdb.h>
 #include <string.h>
@@ -24,43 +43,101 @@ enum _ThriftServerSocketProperties
 /* for errors coming from socket() and connect() */
 extern int errno;
 
-/* forward declarations */
-static void thrift_server_socket_instance_init (ThriftServerSocket *self);
-static void thrift_server_socket_class_init (ThriftServerSocketClass *cls);
+G_DEFINE_TYPE(ThriftServerSocket, thrift_server_socket, THRIFT_TYPE_SERVER_TRANSPORT)
 
-gboolean thrift_server_socket_listen (ThriftServerTransport *transport,
-                                      GError **error);
-ThriftTransport *thrift_server_socket_accept (ThriftServerTransport *transport,
-                                              GError **error);
-gboolean thrift_server_socket_close (ThriftServerTransport *transport,
-                                     GError **error);
-
-GType
-thrift_server_socket_get_type (void)
+gboolean
+thrift_server_socket_listen (ThriftServerTransport *transport, GError **error)
 {
-  static GType type = 0;
+  int enabled = 1; /* for setsockopt() */
+  struct sockaddr_in pin;
+  ThriftServerSocket *tsocket = THRIFT_SERVER_SOCKET (transport);
 
-  if (type == 0)
+  /* create a address structure */
+  memset (&pin, 0, sizeof(pin));
+  pin.sin_family = AF_INET;
+  pin.sin_addr.s_addr = INADDR_ANY;
+  pin.sin_port = htons(tsocket->port);
+
+  /* create a socket */
+  if ((tsocket->sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
   {
-    static const GTypeInfo info =
-    {
-      sizeof (ThriftServerSocketClass),
-      NULL, /* base_init */
-      NULL, /* base_finalize */
-      (GClassInitFunc) thrift_server_socket_class_init,
-      NULL, /* class finalize */
-      NULL, /* class data */
-      sizeof (ThriftServerSocket),
-      0, /* n_preallocs */
-      (GInstanceInitFunc) thrift_server_socket_instance_init,
-      NULL, /* value_table */
-    };
-
-    type = g_type_register_static (THRIFT_TYPE_SERVER_TRANSPORT,
-                                   "ThriftServerSocket", &info, 0);
+    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
+                 THRIFT_SERVER_SOCKET_ERROR_SOCKET,
+                 "failed to create socket - %s", strerror (errno));
+    return FALSE;
   }
 
-  return type;
+  if (setsockopt(tsocket->sd, SOL_SOCKET, SO_REUSEADDR, &enabled,
+                 sizeof(enabled)) == -1)
+  {
+    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
+                 THRIFT_SERVER_SOCKET_ERROR_SETSOCKOPT,
+                 "unable to set SO_REUSEADDR - %s", strerror(errno));
+    return FALSE;
+  }
+
+  /* bind to the socket */
+  if (bind(tsocket->sd, (struct sockaddr *) &pin, sizeof(pin)) == -1)
+  {
+    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
+                 THRIFT_SERVER_SOCKET_ERROR_BIND,
+                 "failed to bind to port %d - %s",
+                 tsocket->port, strerror(errno));
+    return FALSE;
+  }
+
+  if (listen(tsocket->sd, tsocket->backlog) == -1)
+  {
+    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
+                 THRIFT_SERVER_SOCKET_ERROR_LISTEN,
+                 "failed to listen to port %d - %s",
+                 tsocket->port, strerror(errno));
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+ThriftTransport *
+thrift_server_socket_accept (ThriftServerTransport *transport, GError **error)
+{
+  int sd = 0;
+  guint addrlen = 0;
+  struct sockaddr_in address;
+  ThriftSocket *socket = NULL;
+
+  ThriftServerSocket *tsocket = THRIFT_SERVER_SOCKET (transport);
+
+  if ((sd = accept(tsocket->sd, (struct sockaddr *) &address, &addrlen)) == -1)
+  {
+    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
+                 THRIFT_SERVER_SOCKET_ERROR_ACCEPT,
+                 "failed to accept connection - %s",
+                 strerror(errno));
+    return FALSE;
+  }
+
+  socket = g_object_new (THRIFT_TYPE_SOCKET, NULL);
+  socket->sd = sd;
+
+  return THRIFT_TRANSPORT(socket);
+}
+
+gboolean
+thrift_server_socket_close (ThriftServerTransport *transport, GError **error)
+{
+  ThriftServerSocket *tsocket = THRIFT_SERVER_SOCKET (transport);
+
+  if (close (tsocket->sd) == -1)
+  {
+    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
+                 THRIFT_SERVER_SOCKET_ERROR_CLOSE,
+                 "unable to close socket - %s", strerror(errno));
+    return FALSE;
+  }
+  tsocket->sd = 0;
+
+  return TRUE;
 }
 
 /* define the GError domain for this implementation */
@@ -72,7 +149,7 @@ thrift_server_socket_error_quark (void)
 
 /* initializes the instance */
 static void
-thrift_server_socket_instance_init (ThriftServerSocket *socket)
+thrift_server_socket_init (ThriftServerSocket *socket)
 {
   socket->sd = 0;
 }
@@ -173,100 +250,5 @@ thrift_server_socket_class_init (ThriftServerSocketClass *cls)
   tstc->listen = thrift_server_socket_listen;
   tstc->accept = thrift_server_socket_accept;
   tstc->close = thrift_server_socket_close;
-}
-
-gboolean
-thrift_server_socket_listen (ThriftServerTransport *transport, GError **error)
-{
-  int enabled = 1; /* for setsockopt() */
-  struct sockaddr_in pin;
-  ThriftServerSocket *tsocket = THRIFT_SERVER_SOCKET (transport);
-
-  /* create a address structure */
-  memset (&pin, 0, sizeof(pin));
-  pin.sin_family = AF_INET;
-  pin.sin_addr.s_addr = INADDR_ANY;
-  pin.sin_port = htons(tsocket->port);
-
-  /* create a socket */
-  if ((tsocket->sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
-  {
-    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR, 
-                 THRIFT_SERVER_SOCKET_ERROR_SOCKET,
-                 "failed to create socket - %s", strerror (errno));
-    return FALSE;
-  }
-
-  if (setsockopt(tsocket->sd, SOL_SOCKET, SO_REUSEADDR, &enabled,
-                 sizeof(enabled)) == -1)
-  {
-    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
-                 THRIFT_SERVER_SOCKET_ERROR_SETSOCKOPT,
-                 "unable to set SO_REUSEADDR - %s", strerror(errno));
-    return FALSE;
-  }
-
-  /* bind to the socket */
-  if (bind(tsocket->sd, (struct sockaddr *) &pin, sizeof(pin)) == -1)
-  {
-    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR, 
-                 THRIFT_SERVER_SOCKET_ERROR_BIND,
-                 "failed to bind to port %d - %s", 
-                 tsocket->port, strerror(errno));
-    return FALSE;
-  } 
-
-  if (listen(tsocket->sd, tsocket->backlog) == -1)
-  {
-    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
-                 THRIFT_SERVER_SOCKET_ERROR_LISTEN,
-                 "failed to listen to port %d - %s",
-                 tsocket->port, strerror(errno));
-    return FALSE;
-  }
-
-  return TRUE;
-}
-
-ThriftTransport *
-thrift_server_socket_accept (ThriftServerTransport *transport, GError **error)
-{
-  int sd = 0;
-  guint addrlen = 0;
-  struct sockaddr_in address;
-  ThriftSocket *socket = NULL;
-
-  ThriftServerSocket *tsocket = THRIFT_SERVER_SOCKET (transport);
-
-  if ((sd = accept(tsocket->sd, (struct sockaddr *) &address, &addrlen)) == -1)
-  {
-    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
-                 THRIFT_SERVER_SOCKET_ERROR_ACCEPT,
-                 "failed to accept connection - %s",
-                 strerror(errno));
-    return FALSE;
-  }
-
-  socket = g_object_new (THRIFT_TYPE_SOCKET, NULL);
-  socket->sd = sd;
-
-  return THRIFT_TRANSPORT(socket);
-}
-
-gboolean
-thrift_server_socket_close (ThriftServerTransport *transport, GError **error)
-{
-  ThriftServerSocket *tsocket = THRIFT_SERVER_SOCKET (transport);
-
-  if (close (tsocket->sd) == -1)
-  {
-    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR, 
-                 THRIFT_SERVER_SOCKET_ERROR_CLOSE,
-                 "unable to close socket - %s", strerror(errno));
-    return FALSE;
-  }
-  tsocket->sd = 0;
-
-  return TRUE;
 }
 

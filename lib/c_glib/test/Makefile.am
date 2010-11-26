@@ -6,25 +6,9 @@ AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) @GCOV_LDFLAGS@
 CFLAGS = @GCOV_CFLAGS@
 CXXFLAGS = -g
 
-check_SCRIPTS = \
-  testwrapper-testtransportsocket \
-  testwrapper-testprotocolbinary \
-  testwrapper-testbufferedtransport \
-  testwrapper-testframedtransport \
-  testwrapper-testmemorybuffer \
-  testwrapper-teststruct \
-  testwrapper-testsimpleserver \
-  testwrapper-testdebugproto \
-  testwrapper-testoptionalrequired \
-  testwrapper-testthrifttest
-
-if WITH_CPP
-  check_SCRIPTS += testwrapper-testthrifttestclient
-endif
-
 check_PROGRAMS = \
   testtransportsocket \
-  testprotocolbinary \
+  testbinaryprotocol \
   testbufferedtransport \
   testframedtransport \
   testmemorybuffer \
@@ -44,8 +28,8 @@ testtransportsocket_LDADD = \
     ../libthrift_c_glib_la-thrift_server_transport.o \
     ../libthrift_c_glib_la-thrift_server_socket.o
 
-testprotocolbinary_SOURCES = testprotocolbinary.c
-testprotocolbinary_LDADD = \
+testbinaryprotocol_SOURCES = testbinaryprotocol.c
+testbinaryprotocol_LDADD = \
     ../libthrift_c_glib_la-thrift_protocol.o \
     ../libthrift_c_glib_la-thrift_transport.o \
     ../libthrift_c_glib_la-thrift_socket.o \
@@ -158,9 +142,7 @@ gen-c_glib/t_test_second_service.c gen-c_glib/t_test_thrift_test.c gen-c_glib/t_
 gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest.h: ../../../test/ThriftTest.thrift
 	$(THRIFT) --gen cpp $<
 
-
 TESTS = \
-  $(testwrapper-%) \
   $(check_PROGRAMS) \
   $(check_SCRIPTS)
 
@@ -212,18 +194,13 @@ leakcheck-%: %
 	    ${VALGRIND_LEAK_OPTS}                                       \
 	    ${$<_VALGRIND_LEAK_OPTS}  ./$<
 
-testwrapper-%: % test-wrapper.sh
-	@ln -sf test-wrapper.sh $@
-
 clean-local:
 	$(RM) -r gen-c_glib gen-cpp
 
 CLEANFILES =                            \
-    testwrapper-*                       \
     *.bb                                \
     *.bbg                               \
     *.da                                \
     *.gcno                              \
     *.gcda                              \
-    *.gcov                              \
-    test-wrapper.sh
+    *.gcov

@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 #include <assert.h>
 #include <glib.h>
 #include <stdlib.h>
@@ -5,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include "thrift.h"
 #include "processor/thrift_processor.h"
 #include "transport/thrift_server_socket.h"
 
@@ -27,6 +47,8 @@ struct _TestProcessorClass
 };
 typedef struct _TestProcessorClass TestProcessorClass;
 
+G_DEFINE_TYPE(TestProcessor, test_processor, THRIFT_TYPE_PROCESSOR)
+
 gboolean
 test_processor_process (ThriftProcessor *processor, ThriftProtocol *in,
                         ThriftProtocol *out)
@@ -35,38 +57,15 @@ test_processor_process (ThriftProcessor *processor, ThriftProtocol *in,
 }
 
 static void
-test_processor_class_init (ThriftProcessorClass *proc)
+test_processor_init (TestProcessor *p)
 {
-  proc->process = test_processor_process;
+  THRIFT_UNUSED_VAR (p);
 }
 
-GType
-test_processor_get_type (void)
+static void
+test_processor_class_init (TestProcessorClass *proc)
 {
-  static GType type = 0;
-
-  if (type == 0)
-  {
-    static const GTypeInfo info =
-    {
-      sizeof (TestProcessorClass),
-      NULL, /* base_init */
-      NULL, /* base_finalize */
-      (GClassInitFunc) test_processor_class_init,
-      NULL, /* class_finalize */
-      NULL, /* class_data */
-      sizeof (TestProcessor),
-      0, /* n_preallocs */
-      NULL, /* instance_init */
-      NULL, /* value_table */
-    };
-
-    type = g_type_register_static (THRIFT_TYPE_PROCESSOR,
-                                   "TestProcessorType",
-                                   &info, 0);
-  }
-
-  return type;
+  (THRIFT_PROCESSOR_CLASS(proc))->process = test_processor_process;
 }
 
 static void
@@ -104,10 +103,12 @@ test_server (void)
 }
 
 int
-main (void)
+main(int argc, char *argv[])
 {
-  g_type_init ();
-  test_server ();
+  g_type_init();
+  g_test_init (&argc, &argv, NULL);
 
-  return 0;
+  g_test_add_func ("/testsimpleserver/SimpleServer", test_server);
+
+  return g_test_run ();
 }
