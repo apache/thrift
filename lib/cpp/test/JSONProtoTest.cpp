@@ -33,7 +33,7 @@ int main() {
   OneOfEach ooe;
   ooe.im_true   = true;
   ooe.im_false  = false;
-  ooe.a_bite    = 0xd6;
+  ooe.a_bite    = 0x7f;
   ooe.integer16 = 27000;
   ooe.integer32 = 1<<24;
   ooe.integer64 = (uint64_t)6000 * 1000 * 1000;
@@ -123,7 +123,7 @@ int main() {
 
   assert(hm == hm2);
 
-  hm2.big[0].a_bite = 0xFF;
+  hm2.big[0].a_bite = 0x00;
 
   assert(hm != hm2);
 

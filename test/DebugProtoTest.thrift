@@ -35,8 +35,8 @@ struct Doubles {
 struct OneOfEach {
   1: bool im_true,
   2: bool im_false,
-  3: byte a_bite = 200,
-  4: i16 integer16 = 33000,
+  3: byte a_bite = 0x7f,
+  4: i16 integer16 = 0x7fff,
   5: i32 integer32,
   6: i64 integer64 = 10000000000,
   7: double double_precision,
