@@ -1776,7 +1776,7 @@ void t_java_generator::generate_generic_isset_method(std::ofstream& out, t_struc
   vector<t_field*>::const_iterator f_iter;
 
   // create the isSet method
-  indent(out) << "/** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */" << endl;
+  indent(out) << "/** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */" << endl;
   indent(out) << "public boolean isSet(_Fields field) {" << endl;
   indent_up();
   indent(out) << "if (field == null) {" << endl;
@@ -1957,7 +1957,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     indent(out) << "}" << endl << endl;
 
     // isSet method
-    indent(out) << "/** Returns true if field " << field_name << " is set (has been asigned a value) and false otherwise */" << endl;
+    indent(out) << "/** Returns true if field " << field_name << " is set (has been assigned a value) and false otherwise */" << endl;
     indent(out) << "public boolean is" << get_cap_name("set") << cap_name << "() {" << endl;
     indent_up();
     if (type_can_be_null(type)) {

@@ -1713,7 +1713,7 @@ void t_javame_generator::generate_java_bean_boilerplate(ofstream& out,
     indent(out) << "}" << endl << endl;
 
     // isSet method
-    indent(out) << "/** Returns true if field " << field_name << " is set (has been asigned a value) and false otherwise */" << endl;
+    indent(out) << "/** Returns true if field " << field_name << " is set (has been assigned a value) and false otherwise */" << endl;
     indent(out) << "public boolean is" << get_cap_name("set") << cap_name << "() {" << endl;
     indent_up();
     if (type_can_be_null(type)) {
