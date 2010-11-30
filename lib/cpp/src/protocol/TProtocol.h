@@ -266,9 +266,10 @@ uint32_t skip(Protocol_& prot, TType type) {
       result += prot.readListEnd();
       return result;
     }
-  default:
-    return 0;
+  case T_STOP: case T_VOID: case T_U64: case T_UTF8: case T_UTF16:
+    break;
   }
+  return 0;
 }
 
 /**
