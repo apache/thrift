@@ -663,10 +663,10 @@ main(int argc, char *argv[])
   g_type_init();
   g_test_init (&argc, &argv, NULL);
 
-  g_test_add_func ("/testmemorybuffer/CreateAndDestroy", test_create_and_destroy);
-  g_test_add_func ("/testmemorybuffer/Initialize", test_initialize);
-  g_test_add_func ("/testmemorybuffer/ReadAndWritePrimitives", test_read_and_write_primitives);
-  g_test_add_func ("/testmemorybuffer/ReadAndWriteComplexTypes", test_read_and_write_complex_types);
+  g_test_add_func ("/testbinaryprotocol/CreateAndDestroy", test_create_and_destroy);
+  g_test_add_func ("/testbinaryprotocol/Initialize", test_initialize);
+  g_test_add_func ("/testbinaryprotocol/ReadAndWritePrimitives", test_read_and_write_primitives);
+  g_test_add_func ("/testbinaryprotocol/ReadAndWriteComplexTypes", test_read_and_write_complex_types);
 
   return g_test_run ();
 }
