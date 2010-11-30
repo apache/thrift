@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.nio.ByteBuffer;
 
 import org.apache.thrift.protocol.TField;
 import org.apache.thrift.protocol.TProtocol;
@@ -54,11 +55,8 @@ public abstract class TUnion<T extends TUnion, F extends TFieldIdEnum> implement
   private static Object deepCopyObject(Object o) {
     if (o instanceof TBase) {
       return ((TBase)o).deepCopy();
-    } else if (o instanceof byte[]) {
-      byte[] other_val = (byte[])o;
-      byte[] this_val = new byte[other_val.length];
-      System.arraycopy(other_val, 0, this_val, 0, other_val.length);
-      return this_val;
+    } else if (o instanceof ByteBuffer) {
+      return TBaseHelper.copyBinary((ByteBuffer)o);
     } else if (o instanceof List) {
       return deepCopyList((List)o);
     } else if (o instanceof Set) {

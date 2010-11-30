@@ -183,4 +183,13 @@ public class TestTUnion extends TestCase {
     assertNull(tums.getSetField());
     assertNull(tums.getFieldValue());
   }
+
+  public void testDeepCopy() throws Exception {
+    byte[] bytes = {1, 2, 3};
+    ByteBuffer value = ByteBuffer.wrap(bytes);
+    ComparableUnion cu = ComparableUnion.binary_field(value);
+    ComparableUnion copy = cu.deepCopy();
+    assertEquals(cu, copy);
+    assertNotSame(cu.bufferForBinary_field().array(), copy.bufferForBinary_field().array());
+  }
 }
