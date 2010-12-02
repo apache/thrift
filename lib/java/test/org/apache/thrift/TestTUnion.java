@@ -192,4 +192,12 @@ public class TestTUnion extends TestCase {
     assertEquals(cu, copy);
     assertNotSame(cu.bufferForBinary_field().array(), copy.bufferForBinary_field().array());
   }
+  
+  public void testToString() throws Exception {
+    byte[] bytes = {1, 2, 3};
+    ByteBuffer value = ByteBuffer.wrap(bytes);
+    ComparableUnion cu = ComparableUnion.binary_field(value);
+    String expectedString = "<ComparableUnion binary_field:01 02 03>";
+    assertEquals(expectedString, cu.toString());
+  }
 }
