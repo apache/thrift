@@ -366,6 +366,8 @@ void t_ocaml_generator::generate_const(t_const* tconst) {
 string t_ocaml_generator::render_const_value(t_type* type, t_const_value* value) {
   type = get_true_type(type);
   std::ostringstream out;
+  // OCaml requires all floating point numbers contain a decimal point
+  out.setf(ios::showpoint);
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
@@ -385,9 +387,7 @@ string t_ocaml_generator::render_const_value(t_type* type, t_const_value* value)
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        out << value->get_integer();
-      } else if(value->get_double() == 0.0) {
-        out << "0.0";   // OCaml can't bear '0' in place of double.
+        out << value->get_integer() << ".0";
       } else {
         out << value->get_double();
       }
@@ -733,7 +733,7 @@ void t_ocaml_generator::generate_ocaml_struct_sig(ofstream& out,
   vector<t_field*>::const_iterator m_iter;
   string tname = type_name(tstruct);
   indent(out) << "class " << tname << " :" << endl;
-  indent(out) << "object" << endl;
+  indent(out) << "object ('a)" << endl;
 
   indent_up();
 
@@ -750,7 +750,7 @@ void t_ocaml_generator::generate_ocaml_struct_sig(ofstream& out,
       indent(out) << "method reset_" << mname << " : unit" << endl;
     }
   }
-  indent(out) << "method copy : " << tname << endl;
+  indent(out) << "method copy : 'a" << endl;
   indent(out) << "method write : Protocol.t -> unit" << endl;
   indent_down();
   indent(out) << "end" << endl;
