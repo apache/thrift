@@ -83,7 +83,7 @@ class t_java_generator : public t_oop_generator {
   void generate_service (t_service*  tservice);
 
   void print_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value, bool in_static, bool defval=false);
-  std::string render_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
+  std::string render_const_value(std::ofstream& out, t_type* type, t_const_value* value);
 
   /**
    * Service-level generation functions
@@ -489,10 +489,10 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
       type_name(type) << " ";
   }
   if (type->is_base_type()) {
-    string v2 = render_const_value(out, name, type, value);
+    string v2 = render_const_value(out, type, value);
     out << name << " = " << v2 << ";" << endl << endl;
   } else if (type->is_enum()) {
-    out << name << " = " << render_const_value(out, name, type, value) << ";" << endl << endl;
+    out << name << " = " << render_const_value(out, type, value) << ";" << endl << endl;
   } else if (type->is_struct() || type->is_xception()) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -513,7 +513,7 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
       if (field_type == NULL) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
-      string val = render_const_value(out, name, field_type, v_iter->second);
+      string val = render_const_value(out, field_type, v_iter->second);
       indent(out) << name << ".";
       std::string cap_name = get_cap_name(v_iter->first->get_string());
       out << "set" << cap_name << "(" << val << ");" << endl;
@@ -534,8 +534,8 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string key = render_const_value(out, name, ktype, v_iter->first);
-      string val = render_const_value(out, name, vtype, v_iter->second);
+      string key = render_const_value(out, ktype, v_iter->first);
+      string val = render_const_value(out, vtype, v_iter->second);
       indent(out) << name << ".put(" << key << ", " << val << ");" << endl;
     }
     if (!in_static) {
@@ -558,7 +558,7 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string val = render_const_value(out, name, etype, *v_iter);
+      string val = render_const_value(out, etype, *v_iter);
       indent(out) << name << ".add(" << val << ");" << endl;
     }
     if (!in_static) {
@@ -571,8 +571,7 @@ void t_java_generator::print_const_value(std::ofstream& out, string name, t_type
   }
 }
 
-string t_java_generator::render_const_value(ofstream& out, string name, t_type* type, t_const_value* value) {
-  (void) name;
+string t_java_generator::render_const_value(ofstream& out, t_type* type, t_const_value* value) {
   type = get_true_type(type);
   std::ostringstream render;
 
@@ -3337,7 +3336,7 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
 }
 
 /**
- * Returns the C++ type that corresponds to the thrift type.
+ * Returns the Java type that corresponds to the thrift type.
  *
  * @param tbase The base type
  * @param container Is it going in a Java container?
@@ -3368,14 +3367,15 @@ string t_java_generator::base_type_name(t_base_type* type,
   case t_base_type::TYPE_DOUBLE:
     return (in_container ? "Double" : "double");
   default:
-    throw "compiler error: no C++ name for base type " + t_base_type::t_base_name(tbase);
+    throw "compiler error: no Java name for base type " + t_base_type::t_base_name(tbase);
   }
 }
 
 /**
  * Declares a field, which may include initialization as necessary.
  *
- * @param ttype The type
+ * @param tfield The field
+ * @param init Whether to initialize the field
  */
 string t_java_generator::declare_field(t_field* tfield, bool init) {
   // TODO(mcslee): do we ever need to initialize the field?
@@ -3384,7 +3384,7 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
     t_type* ttype = get_true_type(tfield->get_type());
     if (ttype->is_base_type() && tfield->get_value() != NULL) {
       ofstream dummy;
-      result += " = " + render_const_value(dummy, tfield->get_name(), ttype, tfield->get_value());
+      result += " = " + render_const_value(dummy, ttype, tfield->get_value());
     } else if (ttype->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
       switch (tbase) {
@@ -3529,7 +3529,7 @@ string t_java_generator::async_argument_list(t_function* tfunct, t_struct* tstru
 }
 
 /**
- * Converts the parse type to a C++ enum string for the given type.
+ * Converts the parse type to a Java enum string for the given type.
  */
 string t_java_generator::type_to_enum(t_type* type) {
   type = get_true_type(type);

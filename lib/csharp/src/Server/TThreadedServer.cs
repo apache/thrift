@@ -85,7 +85,7 @@ namespace Thrift.Server
 		}
 
 		/// <summary>
-		/// Use new Thread for each new client connection. block until numConnections < maxTHreads
+		/// Use new Thread for each new client connection. block until numConnections < maxThreads
 		/// </summary>
 		public override void Serve()
 		{

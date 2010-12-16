@@ -380,7 +380,7 @@ namespace Thrift.Protocol
 		private byte[] tempBuffer = new byte[4];
 
 		///<summary>
-		/// Read a byte that must match b[0]; otherwise an excpetion is thrown.
+		/// Read a byte that must match b[0]; otherwise an exception is thrown.
 		/// Marked protected to avoid synthetic accessor in JSONListContext.Read
 		/// and JSONPairContext.Read
 		///</summary>

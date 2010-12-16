@@ -290,8 +290,6 @@ class t_cpp_generator : public t_oop_generator {
 /**
  * Prepares for file generation by opening up the necessary file output
  * streams.
- *
- * @param tprogram The program to generate
  */
 void t_cpp_generator::init_generator() {
   // Make output directory
@@ -3703,7 +3701,7 @@ void t_cpp_generator::generate_serialize_list_element(ofstream& out,
 /**
  * Makes a :: prefix for a namespace
  *
- * @param ns The namepsace, w/ periods in it
+ * @param ns The namespace, w/ periods in it
  * @return Namespaces
  */
 string t_cpp_generator::namespace_prefix(string ns) {
@@ -3726,7 +3724,7 @@ string t_cpp_generator::namespace_prefix(string ns) {
 /**
  * Opens namespace.
  *
- * @param ns The namepsace, w/ periods in it
+ * @param ns The namespace, w/ periods in it
  * @return Namespaces
  */
 string t_cpp_generator::namespace_open(string ns) {
@@ -3753,7 +3751,7 @@ string t_cpp_generator::namespace_open(string ns) {
 /**
  * Closes namespace.
  *
- * @param ns The namepsace, w/ periods in it
+ * @param ns The namespace, w/ periods in it
  * @return Namespaces
  */
 string t_cpp_generator::namespace_close(string ns) {
@@ -4066,7 +4064,7 @@ string t_cpp_generator::local_reflection_name(const char* prefix, t_type* ttype,
 
   // We have to use the program name as part of the identifier because
   // if two thrift "programs" are compiled into one actual program
-  // you would get a symbol collison if they both defined list<i32>.
+  // you would get a symbol collision if they both defined list<i32>.
   // trlo = Thrift Reflection LOcal.
   string prog;
   string name;
