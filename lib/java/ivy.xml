@@ -15,7 +15,7 @@
    limitations under the License.
 -->
 <ivy-module version="1.0">
-    <info organisation="org.apache.thrift" module="libthrift" revision="0.6.0-dev" >
+    <info organisation="org.apache.thrift" module="libthrift" revision="0.6.0" >
       <license name="Apache License 2.0" url="http://www.apache.org/licenses/LICENSE-2.0" />
       <ivyauthor name="Thrift Developers" url="dev@thrift.apache.org" />
       <repository name="apache repository" url="http://thrift.apache.org" />
