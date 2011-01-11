@@ -38,9 +38,7 @@ THRIFT-958    Java                 Change accessmodifer on trans_ field in the F
 THRIFT-959    Java                 TSocket seems to do its own buffering inefficiently (Bryan Duxbury)
 THRIFT-970    Java                 Under heavy load, THttpClient may fail with "too many open files" (Mathias Herberts)
 THRIFT-971    Java                 java module can't be compiled without ivy and network connection (Roger Meier)
-THRIFT-807    JavaScript           JavaScript: Initialization of Base Types with 0 instead of null (Roger Meier)
-THRIFT-913    JavaScript           Test Case for Url encoded strings + simple enhancement to lib/js/test/RunTestServer.sh (Roger Meier)
-THRIFT-961    JavaScript           JavaScript TestSuite using ant/ivy and Java's ServerTestBase Handler (Roger Meier)
+           JavaScript TestSuite using ant/ivy and Java's ServerTestBase Handler (Roger Meier)
 THRIFT-1005   Java                 Give unions byte[] signature methods to go along with their ByteBuffer counterparts (Bryan Duxbury)
 THRIFT-1008   Java                 byte[] accessors throw NPE on unset field (Bryan Duxbury)
 THRIFT-517    Java                 TExceptions thrown by server result in cryptic error message on client - Tried to read 4 bytes, but only got 0 bytes (Bryan Duxbury)
@@ -48,6 +46,10 @@ THRIFT-946    Java                 Augment FieldValueMetaData so it differentiat
 THRIFT-949    Java                 Modify the TEnum interface so it defines a method similar to findByValue (Mathias Herberts)
 THRIFT-960    Java                 add TestServer, TestNonblockingServer and TestClient again (Roger Meier)
 THRIFT-969    Java                 Java Tutorial broken, move CalculatorHandler to a separate file (Roger Meier)
+THRIFT-807    JavaScript           JavaScript: Initialization of Base Types with 0 instead of null (Roger Meier)
+THRIFT-913    JavaScript           Test Case for Url encoded strings + simple enhancement to lib/js/test/RunTestServer.sh (Roger Meier)
+THRIFT-961    JavaScript
+THRIFT-1033   JavaScript           Node.js support
 THRIFT-71     Misc                 Debian packaging for thrift (Roger Meier)
 THRIFT-1020   OCaml                OCaml compiler generates invalid OCaml (Richard Low)
 THRIFT-347    PHP                  PHP TSocket Timeout Issues (Tyler Hobbs)
