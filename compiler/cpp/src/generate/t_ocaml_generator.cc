@@ -323,22 +323,22 @@ void t_ocaml_generator::generate_enum(t_enum* tenum) {
   indent_down();
 
   indent(f_types_) << "let to_i = function" << endl;
-  indent(f_types_i_) << "val to_i : t -> int" << endl;
+  indent(f_types_i_) << "val to_i : t -> Int32.t" << endl;
   indent_up();
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
-    indent(f_types_) << "| " << name << " -> " << value << endl;
+    indent(f_types_) << "| " << name << " -> " << value << "l" << endl;
   }
   indent_down();
 
   indent(f_types_) << "let of_i = function" << endl;
-  indent(f_types_i_) << "val of_i : int -> t" << endl;
+  indent(f_types_i_) << "val of_i : Int32.t -> t" << endl;
   indent_up();
   for(c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
-    indent(f_types_) << "| " << value << " -> " << name << endl;
+    indent(f_types_) << "| " << value << "l -> " << name << endl;
   }
   indent(f_types_) << "| _ -> raise Thrift_error" << endl;
   indent_down();
@@ -379,8 +379,10 @@ string t_ocaml_generator::render_const_value(t_type* type, t_const_value* value)
       break;
     case t_base_type::TYPE_BYTE:
     case t_base_type::TYPE_I16:
-    case t_base_type::TYPE_I32:
       out << value->get_integer();
+      break;
+    case t_base_type::TYPE_I32:
+      out << value->get_integer() << "l";
       break;
     case t_base_type::TYPE_I64:
       out << value->get_integer() << "L";
@@ -1851,7 +1853,7 @@ string t_ocaml_generator::render_ocaml_type(t_type* type) {
     case t_base_type::TYPE_I16:
       return "int";
     case t_base_type::TYPE_I32:
-      return "int";
+      return "Int32.t";
     case t_base_type::TYPE_I64:
       return "Int64.t";
     case t_base_type::TYPE_DOUBLE:

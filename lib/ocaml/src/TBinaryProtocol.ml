@@ -22,6 +22,7 @@ open Thrift
 module P = Protocol
 
 let get_byte i b = 255 land (i lsr (8*b))
+let get_byte32 i b = 255 land (Int32.to_int (Int32.shift_right i (8*b)))
 let get_byte64 i b = 255 land (Int64.to_int (Int64.shift_right i (8*b)))
 
 
@@ -35,7 +36,7 @@ let comp_int b n =
     for i=0 to (n-1) do
       s:= Int32.logor !s (Int32.shift_left (Int32.of_int (int_of_char b.[i])) (8*(n-1-i)))
     done;
-    Int32.to_int (Int32.shift_right (Int32.shift_left !s sb) sb)
+    Int32.shift_right (Int32.shift_left !s sb) sb
 
 let comp_int64 b n =
   let s = ref 0L in
@@ -44,8 +45,8 @@ let comp_int64 b n =
     done;
     !s
 
-let version_mask = 0xffff0000
-let version_1 = 0x80010000
+let version_mask = 0xffff0000l
+let version_1 = 0x80010000l
 
 class t trans =
 object (self)
@@ -63,7 +64,7 @@ object (self)
       ibyte.[0] <- char_of_int (gb 1);
       trans#write ibyte 0 2
   method writeI32 i =
-    let gb = get_byte i in
+    let gb = get_byte32 i in
       for i=0 to 3 do
         ibyte.[3-i] <- char_of_int (gb i)
       done;
@@ -78,13 +79,13 @@ object (self)
     self#writeI64 (Int64.bits_of_float d)
   method writeString s=
     let n = String.length s in
-      self#writeI32(n);
+      self#writeI32 (Int32.of_int n);
       trans#write s 0 n
   method writeBinary a = self#writeString a
   method writeMessageBegin (n,t,s) =
-    self#writeI32 (version_1 lor (P.message_type_to_i t));
+    self#writeI32 (Int32.logor version_1 (Int32.of_int (P.message_type_to_i t)));
     self#writeString n;
-    self#writeI32 s
+    self#writeI32 (Int32.of_int s)
   method writeMessageEnd = ()
   method writeStructBegin s = ()
   method writeStructEnd = ()
@@ -93,26 +94,26 @@ object (self)
     self#writeI16 i
   method writeFieldEnd = ()
   method writeFieldStop =
-    self#writeByte (tv (Protocol.T_STOP))
+    self#writeByte (tv (P.T_STOP))
   method writeMapBegin (k,v,s) =
     self#writeByte (tv k);
     self#writeByte (tv v);
-    self#writeI32 s
+    self#writeI32 (Int32.of_int s)
   method writeMapEnd = ()
   method writeListBegin (t,s) =
     self#writeByte (tv t);
-    self#writeI32 s
+    self#writeI32 (Int32.of_int s)
   method writeListEnd = ()
   method writeSetBegin (t,s) =
     self#writeByte (tv t);
-    self#writeI32 s
+    self#writeI32 (Int32.of_int s)
   method writeSetEnd = ()
   method readByte =
     ignore (trans#readAll ibyte 0 1);
-    (comp_int ibyte 1)
+    Int32.to_int (comp_int ibyte 1)
   method readI16 =
     ignore (trans#readAll ibyte 0 2);
-    comp_int ibyte 2
+    Int32.to_int (comp_int ibyte 2)
   method readI32 =
     ignore (trans#readAll ibyte 0 4);
     comp_int ibyte 4
@@ -124,20 +125,19 @@ object (self)
   method readBool =
     self#readByte = 1
   method readString =
-    let sz = self#readI32 in
+    let sz = Int32.to_int (self#readI32) in
     let buf = String.create sz in
       ignore (trans#readAll buf 0 sz);
       buf
   method readBinary = self#readString
   method readMessageBegin =
     let ver = self#readI32 in
-      if (ver land version_mask != version_1) then
-        (print_int ver;
-        raise (P.E (P.BAD_VERSION, "Missing version identifier")))
+      if Int32.compare (Int32.logand ver version_mask) version_1 != 0 then
+        raise (P.E (P.BAD_VERSION, "Missing version identifier"))
       else
         let s = self#readString in
-        let mt = P.message_type_of_i (ver land 0xFF) in
-          (s,mt, self#readI32)
+        let mt = P.message_type_of_i (Int32.to_int (Int32.logand ver 0xFFl)) in
+          (s,mt, Int32.to_int self#readI32)
   method readMessageEnd = ()
   method readStructBegin =
     ""
@@ -152,15 +152,15 @@ object (self)
   method readMapBegin =
     let kt = vt (self#readByte) in
     let vt = vt (self#readByte) in
-      (kt,vt, self#readI32)
+      (kt,vt, Int32.to_int self#readI32)
   method readMapEnd = ()
   method readListBegin =
     let t = vt (self#readByte) in
-    (t,self#readI32)
+    (t, Int32.to_int self#readI32)
   method readListEnd = ()
   method readSetBegin =
     let t = vt (self#readByte) in
-    (t, self#readI32);
+    (t, Int32.to_int self#readI32);
   method readSetEnd = ()
 end
 

@@ -177,7 +177,7 @@ struct
     method virtual writeBool : bool -> unit
     method virtual writeByte : int -> unit
     method virtual writeI16 : int -> unit
-    method virtual writeI32 : int -> unit
+    method virtual writeI32 : Int32.t -> unit
     method virtual writeI64 : Int64.t -> unit
     method virtual writeDouble : float -> unit
     method virtual writeString : string -> unit
@@ -198,7 +198,7 @@ struct
     method virtual readBool : bool
     method virtual readByte : int
     method virtual readI16 : int
-    method virtual readI32: int
+    method virtual readI32: Int32.t
     method virtual readI64 : Int64.t
     method virtual readDouble : float
     method virtual readString : string
@@ -294,20 +294,20 @@ struct
       | MISSING_RESULT
 
   let typ_of_i = function
-      0 -> UNKNOWN
-    | 1 -> UNKNOWN_METHOD
-    | 2 -> INVALID_MESSAGE_TYPE
-    | 3 -> WRONG_METHOD_NAME
-    | 4 -> BAD_SEQUENCE_ID
-    | 5 -> MISSING_RESULT
+      0l -> UNKNOWN
+    | 1l -> UNKNOWN_METHOD
+    | 2l -> INVALID_MESSAGE_TYPE
+    | 3l -> WRONG_METHOD_NAME
+    | 4l -> BAD_SEQUENCE_ID
+    | 5l -> MISSING_RESULT
     | _ -> raise Thrift_error;;
   let typ_to_i = function
-    | UNKNOWN -> 0
-    | UNKNOWN_METHOD -> 1
-    | INVALID_MESSAGE_TYPE -> 2
-    | WRONG_METHOD_NAME -> 3
-    | BAD_SEQUENCE_ID -> 4
-    | MISSING_RESULT -> 5
+    | UNKNOWN -> 0l
+    | UNKNOWN_METHOD -> 1l
+    | INVALID_MESSAGE_TYPE -> 2l
+    | WRONG_METHOD_NAME -> 3l
+    | BAD_SEQUENCE_ID -> 4l
+    | MISSING_RESULT -> 5l
 
   class t =
   object (self)
@@ -337,23 +337,21 @@ struct
 
   let read (iprot : Protocol.t) =
     let msg = ref "" in
-    let typ = ref 0 in
+    let typ = ref 0l in
       ignore iprot#readStructBegin;
       (try
            while true do
              let (name,ft,id) =iprot#readFieldBegin in
-               if ft = Protocol.T_STOP then
-                 raise Break
+               if ft = Protocol.T_STOP
+               then raise Break
                else ();
                (match id with
-             | 1 -> (if ft = Protocol.T_STRING then
-                         msg := (iprot#readString)
-                     else
-                         iprot#skip ft)
-             | 2 -> (if ft = Protocol.T_I32 then
-                         typ := iprot#readI32
-                     else
-                         iprot#skip ft)
+             | 1 -> (if ft = Protocol.T_STRING
+               then msg := (iprot#readString)
+               else iprot#skip ft)
+             | 2 -> (if ft = Protocol.T_I32
+               then typ := iprot#readI32
+               else iprot#skip ft)
              | _ -> iprot#skip ft);
                iprot#readFieldEnd
       done
