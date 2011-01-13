@@ -115,7 +115,7 @@ if WITH_CPP
   check_LTLIBRARIES += libtestgencpp.la
 endif
 
-libtestgenc_la_SOURCES = \
+nodist_libtestgenc_la_SOURCES = \
         gen-c_glib/t_test_debug_proto_test_types.c \
         gen-c_glib/t_test_empty_service.c \
         gen-c_glib/t_test_inherited.c \
@@ -138,7 +138,7 @@ libtestgenc_la_SOURCES = \
         gen-c_glib/t_test_thrift_test_types.h
 libtestgenc_la_LIBADD = $(top_builddir)/lib/c_glib/libthrift_c_glib.la
 
-libtestgencpp_la_SOURCES = \
+nodist_libtestgencpp_la_SOURCES = \
         gen-cpp/ThriftTest.cpp \
         gen-cpp/ThriftTest_constants.cpp \
         gen-cpp/ThriftTest_types.cpp \
