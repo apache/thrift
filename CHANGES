@@ -3,6 +3,7 @@ Thrift Changelog
 Version 0.6.0
 
 THRIFT-940    Build                'make check' fails if boost is not in the std include and link paths (Christian Lavoie)
+THRIFT-1032   Build                "make dist" fails due to c_glib problem (Michael Lum)
 THRIFT-1002   C glib               CodeStyle: t_c_glib_generator.cc (Anatol Pomozov)
 THRIFT-975    C glib               lib/c_glib/README is missing => breaks make dist (Michael Lum)
 THRIFT-1003   C glib               Polishing c_glib code (Anatol Pomozov)
