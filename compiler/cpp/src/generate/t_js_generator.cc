@@ -541,19 +541,12 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
   out << "}\n";
 
   if (is_exception) {
-      if (gen_node_) {
-          out << "require('util').inherits(" <<
-              js_namespace(tstruct->get_program()) <<
-              tstruct->get_name() << ", Thrift.TException)" << endl;
-      } else {
-          out << "for (var property in Thrift.TException)"<<endl<<
-              js_namespace(tstruct->get_program())<<tstruct->get_name()<<"[property] = Thrift.TException[property]"<<endl;
-      }
-  }
-
-  if (!gen_node_) {
-      //init prototype
-      out << js_namespace(tstruct->get_program())<<tstruct->get_name() <<".prototype = {}\n";
+    out << "Thrift.inherits(" <<
+        js_namespace(tstruct->get_program()) <<
+        tstruct->get_name() << ", Thrift.TException)" << endl;
+  } else {
+    //init prototype
+    out << js_namespace(tstruct->get_program())<<tstruct->get_name() <<".prototype = {}\n";
   }
 
 
@@ -935,16 +928,14 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
 
   if (tservice->get_extends() != NULL) {
-      extends = tservice->get_extends()->get_name();
-
-      f_service_ << "for (var property in "<<extends<<"Client)"<<endl<<
-          js_namespace(tservice->get_program()) << service_name_<<"Client[property] = "<<extends<<"Client[property]"<<endl;
-
+    indent(f_service_) << "Thrift.inherits(" <<
+        js_namespace(tservice->get_program()) <<
+        service_name_ << "Client, " <<
+        tservice->get_extends()->get_name() << ".Client)" << endl;
+  } else {
+      //init prototype
+      indent(f_service_) <<  js_namespace(tservice->get_program())<<service_name_ << "Client.prototype = {}"<<endl;
   }
-
-  //init prototype
-  f_service_ <<  js_namespace(tservice->get_program())<<service_name_ << "Client.prototype = {}"<<endl;
-
 
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
