@@ -157,6 +157,7 @@ class t_js_generator : public t_oop_generator {
    */
 
   std::string js_includes();
+  std::string render_includes();
   std::string declare_field(t_field* tfield, bool init=false, bool obj=false);
   std::string function_signature(t_function* tfunction, std::string prefix="", bool include_callback=false);
   std::string argument_list(t_struct* tstruct);
@@ -191,11 +192,15 @@ class t_js_generator : public t_oop_generator {
       return pieces;
   }
 
-  std::string js_type_namespace(t_program* p) {
+  std::string js_type_namespace(t_type* ttype) {
+    t_program* program = ttype->get_program();
     if (gen_node_) {
+      if (program != NULL && program != program_) {
+        return program->get_name() + "_ttypes.";
+      }
       return "ttypes.";
     }
-    return js_namespace(p);
+    return js_namespace(program);
   }
 
   std::string js_export_namespace(t_program* p) {
@@ -287,6 +292,26 @@ string t_js_generator::js_includes() {
 }
 
 /**
+ * Renders all the imports necessary for including another Thrift program
+ */
+string t_js_generator::render_includes() {
+  if (gen_node_) {
+    const vector<t_program*>& includes = program_->get_includes();
+    string result = "";
+    for (size_t i = 0; i < includes.size(); ++i) {
+      result += "var " + includes[i]->get_name() + "_ttypes = require('./" + includes[i]->get_name() + "_types')\n";
+    }
+    if (includes.size() > 0) {
+      result += "\n";
+    }
+    return result;
+  }
+  string inc;
+
+  return inc;
+}
+
+/**
  * Close up (or down) some filez.
  */
 void t_js_generator::close_generator() {
@@ -311,7 +336,7 @@ void t_js_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_js_generator::generate_enum(t_enum* tenum) {
-  f_types_ << js_type_namespace(tenum->get_program())<<tenum->get_name()<<" = { "<<endl;
+  f_types_ << js_type_namespace(tenum)<<tenum->get_name()<<" = { "<<endl;
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
@@ -334,7 +359,7 @@ void t_js_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
 
-  f_types_ << js_type_namespace(program_)  << name << " = ";
+  f_types_ << js_type_namespace(type)  << name << " = ";
   f_types_ << render_const_value(type, value) << endl;
 }
 
@@ -376,7 +401,7 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_enum()) {
     out << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    out << "new " << js_type_namespace(type->get_program()) << type->get_name() << "({" << endl;
+    out << "new " << js_type_namespace(type) << type->get_name() << "({" << endl;
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -689,11 +714,23 @@ void t_js_generator::generate_service(t_service* tservice) {
 
     f_service_ <<
       autogen_comment() <<
-      js_includes() << endl;
+      js_includes() << endl <<
+      render_includes() << endl;
 
     if (gen_node_) {
-      f_service_ <<
-        "var ttypes = require('./" + program_->get_name() + "_types.js');" << endl;
+        if (tservice->get_extends() != NULL) {
+          f_service_ <<
+            "var " << tservice->get_extends()->get_name() <<
+            " = require('./" << tservice->get_extends()->get_name() << "')" << endl <<
+            "var " << tservice->get_extends()->get_name() << "Client = " <<
+            tservice->get_extends()->get_name() << ".Client" << endl;
+
+        }
+
+        if (gen_node_) {
+          f_service_ <<
+            "var ttypes = require('./" + program_->get_name() + "_types');" << endl;
+        }
     }
 
     generate_service_helpers(tservice);
@@ -931,7 +968,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) << "Thrift.inherits(" <<
         js_namespace(tservice->get_program()) <<
         service_name_ << "Client, " <<
-        tservice->get_extends()->get_name() << ".Client)" << endl;
+        tservice->get_extends()->get_name() << "Client)" << endl;
   } else {
       //init prototype
       indent(f_service_) <<  js_namespace(tservice->get_program())<<service_name_ << "Client.prototype = {}"<<endl;
@@ -1222,7 +1259,7 @@ void t_js_generator::generate_deserialize_struct(ofstream &out,
                                                    t_struct* tstruct,
                                                    string prefix) {
     out <<
-        indent() << prefix << " = new " <<  js_type_namespace(tstruct->get_program())<<tstruct->get_name() << "()" << endl <<
+        indent() << prefix << " = new " <<  js_type_namespace(tstruct)<<tstruct->get_name() << "()" << endl <<
         indent() << prefix << ".read(input)" << endl;
 
 }
@@ -1616,7 +1653,7 @@ string t_js_generator::declare_field(t_field* tfield, bool init, bool obj) {
       result += " = null";
     } else if (type->is_struct() || type->is_xception()) {
       if (obj) {
-          result += " = new " +js_type_namespace(type->get_program()) + type->get_name() + "()";
+          result += " = new " +js_type_namespace(type) + type->get_name() + "()";
       } else {
         result += " = null";
       }
