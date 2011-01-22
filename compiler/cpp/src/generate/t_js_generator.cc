@@ -1478,7 +1478,7 @@ void t_js_generator::generate_serialize_container(ofstream &out,
         "output.writeMapBegin(" <<
         type_to_enum(((t_map*)ttype)->get_key_type()) << ", " <<
         type_to_enum(((t_map*)ttype)->get_val_type()) << ", " <<
-        prefix << ".length)" << endl;
+        "Thrift.objectLength(" << prefix << "))" << endl;
   } else if (ttype->is_set()) {
     indent(out) <<
       "output.writeSetBegin(" <<
