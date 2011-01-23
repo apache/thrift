@@ -2102,7 +2102,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
       indent() << "}" << endl;
     if (!gen_no_client_completion_) {
       f_header_ <<
-        indent() << "virtual void completed__(bool success) {}" << endl;
+        indent() << "virtual void completed__(bool /* success */) {}" << endl;
     }
   }
 
