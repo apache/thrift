@@ -18,6 +18,7 @@
 #
 
 EXTRA_DIST = \
+  LICENSE \
   README \
   Setup.lhs \
   TODO \
