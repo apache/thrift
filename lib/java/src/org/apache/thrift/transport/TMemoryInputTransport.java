@@ -45,6 +45,10 @@ public final class TMemoryInputTransport extends TTransport {
     endPos_ = offset + length;
   }
 
+  public void clear() {
+    buf_ = null;
+  }
+
   @Override
   public void close() {}
 
