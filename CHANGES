@@ -26,6 +26,7 @@ THRIFT-950    Haskell              Haskell bindings treat 'byte' as unsigned 8-b
 THRIFT-1009   Java                 TUnion does not correctly deep copy a ByteBuffer (Takashi Yonebayashi)
 THRIFT-1013   Java                 generated java code may have name clashes with thrift library (Peter Schuller)
 THRIFT-1015   Java                 TUnion does not handle ByteBuffer in toString (Takashi Yonebayashi)
+THRIFT-1038   Java                 Generated Java code for structures containing binary fields (or collections thereof) are not serializable (in the Java sense) even though they implement java.io.Serializable (Mathias Herberts)
 THRIFT-106    Java                 TSSLServerSocket (Nirmal Ranganathan)
 THRIFT-377    Java                 TFileTransport port in Java (Joydeep Sen Sarma)
 THRIFT-745    Java                 Make it easier to instantiate servers (Bryan Duxbury)

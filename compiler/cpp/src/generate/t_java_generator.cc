@@ -100,6 +100,8 @@ class t_java_generator : public t_oop_generator {
   void generate_java_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_tostring(std::ofstream& out, t_struct* tstruct);
   void generate_java_struct_clear(std::ofstream& out, t_struct* tstruct);
+  void generate_java_struct_write_object(std::ofstream& out, t_struct* tstruct);
+  void generate_java_struct_read_object(std::ofstream& out, t_struct* tstruct);
   void generate_java_meta_data_map(std::ofstream& out, t_struct* tstruct);
   void generate_field_value_meta_data(std::ofstream& out, t_type* type);
   std::string get_java_type_string(t_type* type);
@@ -725,6 +727,14 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
 
   f_struct << endl;
 
+  generate_java_struct_write_object(f_struct, tstruct);
+
+  f_struct << endl;
+
+  generate_java_struct_read_object(f_struct, tstruct);
+
+  f_struct << endl;
+
   scope_down(f_struct);
 
   f_struct.close();
@@ -1261,6 +1271,10 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   }
   generate_java_struct_tostring(out, tstruct);
   generate_java_validator(out, tstruct);
+
+  generate_java_struct_write_object(out, tstruct);
+  generate_java_struct_read_object(out, tstruct);
+
   scope_down(out);
   out << endl;
 }
@@ -3954,6 +3968,32 @@ void t_java_generator::generate_java_struct_clear(std::ofstream& out, t_struct* 
   }
   indent_down();
 
+  indent(out) << "}" << endl << endl;
+}
+
+// generates java method to serialize (in the Java sense) the object
+void t_java_generator::generate_java_struct_write_object(ofstream& out, t_struct* tstruct) {
+  indent(out) << "private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {" << endl;
+  indent(out) << "  try {" << endl;
+  indent(out) << "    write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));" << endl;
+  indent(out) << "  } catch (org.apache.thrift.TException te) {" << endl;
+  indent(out) << "    throw new java.io.IOException(te);" << endl;
+  indent(out) << "  }" << endl;
+  indent(out) << "}" << endl << endl;
+}
+
+// generates java method to serialize (in the Java sense) the object
+void t_java_generator::generate_java_struct_read_object(ofstream& out, t_struct* tstruct) {
+  indent(out) << "private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {" << endl;
+  indent(out) << "  try {" << endl;
+  if (!tstruct->is_union() && has_bit_vector(tstruct)) {
+    indent(out) << "    // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor." << endl;
+    indent(out) << "    __isset_bit_vector = new BitSet(1);" << endl;
+  }
+  indent(out) << "    read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));" << endl;
+  indent(out) << "  } catch (org.apache.thrift.TException te) {" << endl;
+  indent(out) << "    throw new java.io.IOException(te);" << endl;
+  indent(out) << "  }" << endl;
   indent(out) << "}" << endl << endl;
 }
 

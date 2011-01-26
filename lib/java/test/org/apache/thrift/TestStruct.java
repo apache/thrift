@@ -18,6 +18,11 @@
  */
 package org.apache.thrift;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -308,5 +313,23 @@ public class TestStruct extends TestCase {
     assertNull(o.getReq_bin());
     o.setReq_bin((byte[])null);
     assertNull(o.getReq_bin());
+  }
+
+  public void testJavaSerializable() throws Exception {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream(baos);
+    
+    OneOfEach ooe = Fixtures.oneOfEach;
+
+    // Serialize ooe the Java way...
+    oos.writeObject(ooe);
+    byte[] serialized = baos.toByteArray();
+
+    // Attempt to deserialize it
+    ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
+    ObjectInputStream ois = new ObjectInputStream(bais);
+    OneOfEach ooe2 = (OneOfEach) ois.readObject();
+
+    assertEquals(ooe, ooe2);
   }
 }
