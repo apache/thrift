@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SOURCES = Thrift.ml TBinaryProtocol.ml TSocket.ml TChannelTransport.ml TServer.ml TSimpleServer.ml TServerSocket.ml TThreadedServer.ml
+SOURCES = Thrift.ml TBinaryProtocol.ml TSocket.ml TFramedTransport.ml TChannelTransport.ml TServer.ml TSimpleServer.ml TServerSocket.ml TThreadedServer.ml
 RESULT = thrift
 LIBS = unix threads
 THREADS = yes
