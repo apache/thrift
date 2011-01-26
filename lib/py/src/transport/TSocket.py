@@ -126,8 +126,8 @@ class TSocket(TSocketBase):
 class TServerSocket(TSocketBase, TServerTransportBase):
   """Socket implementation of TServerTransport base."""
 
-  def __init__(self, port=9090, unix_socket=None):
-    self.host = None
+  def __init__(self, host=None, port=9090, unix_socket=None):
+    self.host = host
     self.port = port
     self._unix_socket = unix_socket
     self.handle = None
