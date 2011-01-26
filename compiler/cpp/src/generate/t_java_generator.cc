@@ -1690,7 +1690,7 @@ void t_java_generator::generate_reflection_getters(ostringstream& out, t_type* t
   if (type->is_base_type() && !type->is_string()) {
     t_base_type* base_type = (t_base_type*)type;
 
-    indent(out) << "return new " << type_name(type, true, false) << "(" << (base_type->is_bool() ? "is" : "get") << cap_name << "());" << endl << endl;
+    indent(out) << "return " << type_name(type, true, false) << ".valueOf(" << (base_type->is_bool() ? "is" : "get") << cap_name << "());" << endl << endl;
   } else {
     indent(out) << "return get" << cap_name << "();" << endl << endl;
   }
