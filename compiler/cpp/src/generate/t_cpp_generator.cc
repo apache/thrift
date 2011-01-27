@@ -2794,8 +2794,11 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     }
     out <<
       "void " << tservice->get_name() << "Processor" << class_suffix << "::" <<
-      "process_" << tfunction->get_name() << "(int32_t seqid, " <<
-      prot_type << "* iprot, " << prot_type << "* oprot, void* callContext)" << endl;
+      "process_" << tfunction->get_name() << "(" <<
+      "int32_t" << (tfunction->is_oneway() ? ", " : " seqid, ") <<
+      prot_type << "* iprot, " <<
+      prot_type << "*" << (tfunction->is_oneway() ? ", " : " oprot, ")
+      << "void* callContext)" << endl;
     scope_up(out);
 
     if (gen_templates_ && !specialized) {
@@ -2882,16 +2885,12 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     if (!tfunction->is_oneway()) {
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         out << " catch (" << type_name((*x_iter)->get_type()) << " &" << (*x_iter)->get_name() << ") {" << endl;
-        if (!tfunction->is_oneway()) {
-          indent_up();
-          out <<
-            indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << ";" << endl <<
-            indent() << "result.__isset." << (*x_iter)->get_name() << " = true;" << endl;
-          indent_down();
-          out << indent() << "}";
-        } else {
-          out << "}";
-        }
+        indent_up();
+        out <<
+          indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name() << ";" << endl <<
+          indent() << "result.__isset." << (*x_iter)->get_name() << " = true;" << endl;
+        indent_down();
+        out << indent() << "}";
       }
     }
 
