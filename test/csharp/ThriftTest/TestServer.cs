@@ -301,7 +301,7 @@ namespace Test
 		{
 			try
 			{
-				bool useBufferedSockets = false;
+				bool useBufferedSockets = false, useFramed = false;
 				int port = 9090;
 				if (args.Length > 0)
 				{
@@ -309,7 +309,23 @@ namespace Test
 
 					if (args.Length > 1)
 					{
-						bool.TryParse(args[1], out useBufferedSockets);
+						if ( args[1] == "raw" )
+						{
+							// as default
+						}
+						else if ( args[1] == "buffered" )
+						{
+							useBufferedSockets = true;
+						}
+						else if ( args[1] == "framed" )
+						{
+							useFramed = true;
+						}
+						else
+						{
+							// Fall back to the older boolean syntax
+							bool.TryParse(args[1], out useBufferedSockets);
+						}
 					}
 				}
 
@@ -320,10 +336,12 @@ namespace Test
 				// Transport
 				TServerSocket tServerSocket = new TServerSocket(port, 0, useBufferedSockets);
 
-				TServer serverEngine;
-
 				// Simple Server
-				serverEngine = new TSimpleServer(testProcessor, tServerSocket);
+				TServer serverEngine;
+				if ( useFramed )
+					serverEngine = new TSimpleServer(testProcessor, tServerSocket, new TFramedTransport.Factory());
+				else
+					serverEngine = new TSimpleServer(testProcessor, tServerSocket);
 
 				// ThreadPool Server
 				// serverEngine = new TThreadPoolServer(testProcessor, tServerSocket);
@@ -334,7 +352,10 @@ namespace Test
 				testHandler.server = serverEngine;
 
 				// Run it
-				Console.WriteLine("Starting the server on port " + port + (useBufferedSockets ? " with buffered socket" : "") + "...");
+				Console.WriteLine("Starting the server on port " + port + 
+					(useBufferedSockets ? " with buffered socket" : "") + 
+					(useFramed ? " with framed transport" : "") + 
+					"...");
 				serverEngine.Serve();
 
 			}
