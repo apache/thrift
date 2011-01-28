@@ -183,7 +183,6 @@ public class TAsyncClientManager {
 
   /** Comparator used in TreeSet */
   private static class TAsyncMethodCallTimeoutComparator implements Comparator<TAsyncMethodCall> {
-    @Override
     public int compare(TAsyncMethodCall left, TAsyncMethodCall right) {
       if (left.getTimeoutTimestamp() == right.getTimeoutTimestamp()) {
         return (int)(left.getSequenceId() - right.getSequenceId());
