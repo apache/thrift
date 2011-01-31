@@ -24,8 +24,11 @@ namespace Thrift.Transport
 	public class TFramedTransport : TTransport
 	{
 		protected TTransport transport = null;
-		protected MemoryStream writeBuffer = new MemoryStream(1024);
+		protected MemoryStream writeBuffer;
 		protected MemoryStream readBuffer = null;
+
+		private const int header_size = 4;
+		private static byte[] header_dummy = new byte[header_size]; // used as header placeholder while initilizing new write buffer
 
 		public class Factory : TTransportFactory
 		{
@@ -35,7 +38,12 @@ namespace Thrift.Transport
 			}
 		}
 
-		public TFramedTransport(TTransport transport)
+		public TFramedTransport()
+		{
+			InitWriteBuffer();
+		}
+
+		public TFramedTransport(TTransport transport) : this()
 		{
 			this.transport = transport;
 		}
@@ -77,8 +85,8 @@ namespace Thrift.Transport
 
 		private void ReadFrame()
 		{
-			byte[] i32rd = new byte[4];
-			transport.ReadAll(i32rd, 0, 4);
+			byte[] i32rd = new byte[header_size];
+			transport.ReadAll(i32rd, 0, header_size);
 			int size =
 				((i32rd[0] & 0xff) << 24) |
 				((i32rd[1] & 0xff) << 16) |
@@ -99,16 +107,31 @@ namespace Thrift.Transport
 		{
 			byte[] buf = writeBuffer.GetBuffer();
 			int len = (int)writeBuffer.Length;
-			writeBuffer = new MemoryStream(writeBuffer.Capacity);
+			int data_len = len - header_size;
+			if ( data_len < 0 )
+				throw new System.InvalidOperationException (); // logic error actually
 
-			byte[] i32out = new byte[4];
-			i32out[0] = (byte)(0xff & (len >> 24));
-			i32out[1] = (byte)(0xff & (len >> 16));
-			i32out[2] = (byte)(0xff & (len >> 8));
-			i32out[3] = (byte)(0xff & (len));
-			transport.Write(i32out, 0, 4);
+			InitWriteBuffer();
+
+			// Inject message header into the reserved buffer space
+			buf[0] = (byte)(0xff & (data_len >> 24));
+			buf[1] = (byte)(0xff & (data_len >> 16));
+			buf[2] = (byte)(0xff & (data_len >> 8));
+			buf[3] = (byte)(0xff & (data_len));
+
+			// Send the entire message at once
 			transport.Write(buf, 0, len);
+
 			transport.Flush();
+		}
+
+		private void InitWriteBuffer ()
+		{
+			// Create new buffer instance
+			writeBuffer = new MemoryStream(1024);
+
+			// Reserve space for message header to be put right before sending it out
+			writeBuffer.Write ( header_dummy, 0, header_size );
 		}
 	}
 }

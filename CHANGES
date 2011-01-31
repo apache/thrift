@@ -9,6 +9,7 @@ THRIFT-975    C glib               lib/c_glib/README is missing => breaks make d
 THRIFT-1003   C glib               Polishing c_glib code (Anatol Pomozov)
 THRIFT-582    C glib               C implementation of Thrift (Anatol Pomozov)
 THRIFT-992    C#                   Naming convention in C# constructor is not consistent with other fields causes compile errors (Roger Meier)
+THRIFT-904    C#		   Disable nagle and linger
 THRIFT-977    C++                  Hex Conversion Bug in C++ TJSONProtocol (Aravind Narayanan)
 THRIFT-922    C++                  Templatized [de]serialization code for C++ (David Reiss)
 THRIFT-923    C++                  Event-driven client and server support for C++ (David Reiss)
@@ -48,10 +49,14 @@ THRIFT-946    Java                 Augment FieldValueMetaData so it differentiat
 THRIFT-949    Java                 Modify the TEnum interface so it defines a method similar to findByValue (Mathias Herberts)
 THRIFT-960    Java                 add TestServer, TestNonblockingServer and TestClient again (Roger Meier)
 THRIFT-969    Java                 Java Tutorial broken, move CalculatorHandler to a separate file (Roger Meier)
+THRIFT-1051   Java		   Fix compiler issue for java 1.5
 THRIFT-807    JavaScript           JavaScript: Initialization of Base Types with 0 instead of null (Roger Meier)
 THRIFT-913    JavaScript           Test Case for Url encoded strings + simple enhancement to lib/js/test/RunTestServer.sh (Roger Meier)
 THRIFT-961    JavaScript
-THRIFT-1033   JavaScript           Node.js support
+THRIFT-1033   JavaScript           Node.js support (Wade Simmons)
+THRIFT-1042   JavaScript           Node.js Fix TApplicationException.read Patch (Wade Simmons)
+THRIFT-1043   JavaScript	   Node.js Fix how the length of a map is calculated
+THRIFT-1044   JavaScript	   Fix JavaScript inheritance Patch (Wade Simmons)
 THRIFT-71     Misc                 Debian packaging for thrift (Roger Meier)
 THRIFT-1020   OCaml                OCaml compiler generates invalid OCaml (Richard Low)
 THRIFT-347    PHP                  PHP TSocket Timeout Issues (Tyler Hobbs)

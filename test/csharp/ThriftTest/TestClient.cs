@@ -39,7 +39,7 @@ namespace Test
 				int port = 9090;
 				string url = null;
 				int numThreads = 1;
-				bool buffered = false;
+				bool buffered = false, framed = false;
 
 				try
 				{
@@ -67,6 +67,11 @@ namespace Test
 							buffered = true;
 							Console.WriteLine("Using buffered sockets");
 						}
+						else if (args[i] == "-f" || args[i] == "-framed")
+						{
+							framed = true;
+							Console.WriteLine("Using framed transport");
+						}
 						else if (args[i] == "-t")
 						{
 							numThreads = Convert.ToInt32(args[++i]);
@@ -89,16 +94,13 @@ namespace Test
 					threads[test] = t;
 					if (url == null)
 					{
-						TSocket socket = new TSocket(host, port);
+						TTransport trans = new TSocket(host, port);
 						if (buffered)
-						{
-							TBufferedTransport buffer = new TBufferedTransport(socket);
-							t.Start(buffer);
-						}
-						else
-						{
-							t.Start(socket);
-						}
+							trans = new TBufferedTransport(trans as TStreamTransport);
+						if (framed)
+							trans = new TFramedTransport(trans);
+							
+						t.Start(trans);
 					}
 					else
 					{
@@ -428,6 +430,12 @@ namespace Test
 
 			Console.WriteLine("Test Oneway(1)");
 			client.testOneway(1);
+
+			Console.Write("Test Calltime()");
+			var startt = DateTime.UtcNow;
+			for ( int k=0; k<1000; ++k )
+				client.testVoid();
+			Console.WriteLine(" = " + (DateTime.UtcNow - startt).TotalSeconds.ToString() + " ms a testVoid() call" );
 		}
 	}
 }
