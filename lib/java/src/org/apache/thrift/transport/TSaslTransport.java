@@ -315,6 +315,14 @@ abstract class TSaslTransport extends TTransport {
   }
 
   /**
+   * Get the underlying transport that Sasl is using.
+   * @return The <code>TTransport</code> transport
+   */
+   public TTransport getUnderlyingTransport() {
+     return underlyingTransport;
+   }
+
+  /**
    * Get the underlying <code>SaslServer</code>.
    * 
    * @return The <code>SaslServer</code>, or <code>null</code> if this transport
