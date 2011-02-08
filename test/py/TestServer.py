@@ -103,7 +103,8 @@ processor = ThriftTest.Processor(handler)
 if sys.argv[1] == "THttpServer":
   server = THttpServer.THttpServer(processor, ('', 9090), pfactory)
 else:
-  transport = TSocket.TServerSocket(9090)
+  host = None
+  transport = TSocket.TServerSocket(host, 9090)
   tfactory = TTransport.TBufferedTransportFactory()
 
   if sys.argv[1] == "TNonblockingServer":
