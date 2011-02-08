@@ -91,6 +91,7 @@ namespace Thrift.Transport
 			{
 				// Make server socket
 				server = new TcpListener(System.Net.IPAddress.Any, this.port);
+				server.Server.NoDelay = true;
 			}
 			catch (Exception)
 			{

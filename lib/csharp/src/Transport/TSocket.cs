@@ -61,6 +61,7 @@ namespace Thrift.Transport
 		{
 			client = new TcpClient();
 			client.ReceiveTimeout = client.SendTimeout = timeout;
+			client.Client.NoDelay = true;
 		}
 
 		public int Timeout
