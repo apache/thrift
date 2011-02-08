@@ -354,28 +354,34 @@ uint32_t TBinaryProtocolT<Transport_>::readByte(int8_t& byte) {
 
 template <class Transport_>
 uint32_t TBinaryProtocolT<Transport_>::readI16(int16_t& i16) {
-  uint8_t b[2];
-  this->trans_->readAll(b, 2);
-  i16 = *(int16_t*)b;
-  i16 = (int16_t)ntohs(i16);
+  union bytes {
+    uint8_t b[2];
+    int16_t all;
+  } theBytes;
+  this->trans_->readAll(theBytes.b, 2);
+  i16 = (int16_t)ntohs(theBytes.all);
   return 2;
 }
 
 template <class Transport_>
 uint32_t TBinaryProtocolT<Transport_>::readI32(int32_t& i32) {
-  uint8_t b[4];
-  this->trans_->readAll(b, 4);
-  i32 = *(int32_t*)b;
-  i32 = (int32_t)ntohl(i32);
+  union bytes {
+    uint8_t b[4];
+    int32_t all;
+  } theBytes;
+  this->trans_->readAll(theBytes.b, 4);
+  i32 = (int32_t)ntohl(theBytes.all);
   return 4;
 }
 
 template <class Transport_>
 uint32_t TBinaryProtocolT<Transport_>::readI64(int64_t& i64) {
-  uint8_t b[8];
-  this->trans_->readAll(b, 8);
-  i64 = *(int64_t*)b;
-  i64 = (int64_t)ntohll(i64);
+  union bytes {
+    uint8_t b[8];
+    int64_t all;
+  } theBytes;
+  this->trans_->readAll(theBytes.b, 8);
+  i64 = (int64_t)ntohll(theBytes.all);
   return 8;
 }
 
@@ -384,12 +390,13 @@ uint32_t TBinaryProtocolT<Transport_>::readDouble(double& dub) {
   BOOST_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
   BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
 
-  uint64_t bits;
-  uint8_t b[8];
-  this->trans_->readAll(b, 8);
-  bits = *(uint64_t*)b;
-  bits = ntohll(bits);
-  dub = bitwise_cast<double>(bits);
+  union bytes {
+    uint8_t b[8];
+    uint64_t all;
+  } theBytes;
+  this->trans_->readAll(theBytes.b, 8);
+  theBytes.all = ntohll(theBytes.all);
+  dub = bitwise_cast<double>(theBytes.all);
   return 8;
 }
 
