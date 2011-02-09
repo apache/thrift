@@ -38,8 +38,9 @@ Library
   Build-Depends:
     base >= 4, base < 5, network, ghc-prim, binary, bytestring, HTTP
   Exposed-Modules:
-    Thrift, Thrift.Protocol, Thrift.Transport, Thrift.Protocol.Binary
-    Thrift.Transport.Handle, Thrift.Transport.HttpClient, Thrift.Server
+    Thrift, Thrift.Protocol, Thrift.Protocol.Binary, Thrift.Transport, 
+    Thrift.Transport.Framed, Thrift.Transport.Handle,
+    Thrift.Transport.HttpClient, Thrift.Server
   Extensions:
     DeriveDataTypeable, ExistentialQuantification, FlexibleInstances,
     KindSignatures, MagicHash, RankNTypes,
