@@ -24,6 +24,7 @@ AC_INIT([thrift], [0.7.0-dev])
 AC_CONFIG_AUX_DIR([.])
 
 AM_INIT_AUTOMAKE
+PKG_PROG_PKG_CONFIG
 
 AC_ARG_VAR([PY_PREFIX], [Prefix for installing Python modules.
                          (Normal --prefix is ignored for Python because
