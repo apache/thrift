@@ -26,12 +26,12 @@ if ! [ -d ${ERL_THRIFT}/ebin ]; then
     exit 1
 fi
 
-if ! [ -d ../gen-erl ]; then
-    echo "Please run thrift first to generate ../gen-erl/"
-    exit 1
+if ! [ -d gen-erl ]; then
+  ../../compiler/cpp/thrift -r --gen erl ../tutorial.thrift
 fi
 
 
-erlc -I ${ERL_THRIFT}/include -I ../gen-erl -o ../gen-erl ../gen-erl/*.erl  &&
-  erlc -I ${ERL_THRIFT}/include -I ../gen-erl *.erl &&
-  erl +K true -pa ${ERL_THRIFT}/ebin -pa ../gen-erl 
+erlc -I ${ERL_THRIFT}/include -I ${ERL_THRIFT}/ebin \
+     -I gen-erl -o gen-erl gen-erl/*.erl &&
+  erlc -I ${ERL_THRIFT}/include -I gen-erl *.erl &&
+  erl +K true -pa ${ERL_THRIFT}/ebin -pa gen-erl

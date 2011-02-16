@@ -39,17 +39,17 @@ calculate(Logid, Work) ->
     { Op, Num1, Num2 } = { Work#work.op, Work#work.num1, Work#work.num2 },
     debug("calculate(~p, {~p,~p,~p})", [Logid, Op, Num1, Num2]),
     case Op of
-        ?tutorial_ADD      -> Num1 + Num2;
-	?tutorial_SUBTRACT -> Num1 - Num2;
-	?tutorial_MULTIPLY -> Num1 * Num2;
+        ?tutorial_Operation_ADD      -> Num1 + Num2;
+        ?tutorial_Operation_SUBTRACT -> Num1 - Num2;
+        ?tutorial_Operation_MULTIPLY -> Num1 * Num2;
 
-	?tutorial_DIVIDE when Num2 == 0 ->
-	    throw(#invalidOperation{what=Op, why="Cannot divide by 0"});
-	?tutorial_DIVIDE ->
-	    Num1 div Num2;
+        ?tutorial_Operation_DIVIDE when Num2 == 0 ->
+          throw(#invalidOperation{what=Op, why="Cannot divide by 0"});
+        ?tutorial_Operation_DIVIDE ->
+          Num1 div Num2;
 
-	_Else ->
-	    throw(#invalidOperation{what=Op, why="Invalid operation"})
+        _Else ->
+          throw(#invalidOperation{what=Op, why="Invalid operation"})
     end.
 
 getStruct(Key) ->
