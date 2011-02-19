@@ -19,7 +19,7 @@
 # under the License.
 #
 
-if [ "x" == "x$1" ]; then
+if [ "x" = "x$1" ]; then
   printf "run-test.sh needs an argument, the name of the test to run. Try 'ThriftTest' or 'ProtoDebugTest'\n"
   exit 2
 fi
