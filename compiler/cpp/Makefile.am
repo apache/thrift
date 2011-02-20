@@ -114,6 +114,9 @@ endif
 if THRIFT_GEN_javame
 thrift_SOURCES += src/generate/t_javame_generator.cc
 endif
+if THRIFT_GEN_go
+thrift_SOURCES += src/generate/t_go_generator.cc
+endif
 
 thrift_CPPFLAGS = -I$(srcdir)/src
 thrift_CXXFLAGS = -Wall

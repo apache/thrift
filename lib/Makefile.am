@@ -66,4 +66,5 @@ EXTRA_DIST = \
   ocaml \
   js \
   as3 \
-  st
+  st \
+  go

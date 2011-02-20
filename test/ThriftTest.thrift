@@ -31,6 +31,7 @@ namespace js ThriftTest
 namespace st ThriftTest
 namespace py ThriftTest
 namespace py.twisted ThriftTest
+namespace go ThriftTest
 namespace * thrift.test
 
 /**

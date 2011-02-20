@@ -34,7 +34,7 @@ AS_IF([test "x$PY_PREFIX" = x], [PY_PREFIX="/usr"])
 
 AC_ARG_VAR([JAVA_PREFIX], [Prefix for installing the Java lib jar.
                            (Normal --prefix is ignored for Java because
-                           Java has different conevntions.)
+                           Java has different conventions.)
                            Default = "/usr/local/lib"])
 AS_IF([test "x$JAVA_PREFIX" = x], [JAVA_PREFIX="/usr/local/lib"])
 
@@ -68,6 +68,20 @@ AC_ARG_VAR([CABAL_CONFIGURE_FLAGS],
 
 AC_SUBST(CABAL_CONFIGURE_FLAGS)
 
+AC_ARG_VAR([GOROOT], [Prefix for the Go source directory.
+                           (Normal --prefix is ignored for Go because
+                           Go has different conventions.)
+                           Default = "/usr/local/share/go"])
+AS_IF([test "x$GOROOT" = x], [GOROOT="/usr/local/share/go"])
+
+AC_ARG_VAR([GOARCH], [Architecture default for Go.
+                           Default = "amd64"])
+AS_IF([test "x$GOARCH" = x], [GOARCH="amd64"])
+
+AC_ARG_VAR([GOBIN], [Binary directory for Go.
+                           Default = "/usr/local/bin"])
+AS_IF([test "x$GOBIN" = x], [GOBIN="/usr/local/bin"])
+
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_CXX
@@ -79,6 +93,8 @@ AC_PROG_LEX
 AM_PROG_LEX
 AC_PROG_LN_S
 AC_PROG_MKDIR_P
+AC_PROG_AWK
+AC_PROG_RANLIB
 
 AC_LANG([C++])
 
@@ -231,6 +247,36 @@ AC_SUBST(CABAL)
 AC_SUBST(RUNHASKELL)
 AM_CONDITIONAL(WITH_HASKELL, [test "$have_haskell" = "yes"])
 
+AX_THRIFT_LIB(go, [Go], yes)
+if test "$with_go" = "yes";  then
+  case X"$GOARCH" in
+  Xamd64)
+    GOARCH_NUM=6
+  	;;
+  X386)
+    GOARCH_NUM=8
+  	;;
+  Xarm)
+    GOARCH_NUM=5
+  	;;
+  *)
+    GOARCH_NUM=6
+    ;;
+  esac
+  GO_C=${GOBIN}/${GOARCH_NUM}g
+  GO_L=${GOBIN}/${GOARCH_NUM}l
+  GOMAKE=${GOBIN}/gomake
+  GOINSTALL=${GOBIN}/goinstall
+  AC_PATH_PROG([GO_C], [${GOARCH_NUM}g])
+  AC_PATH_PROG([GO_L], [${GOARCH_NUM}l])
+  AC_PATH_PROG([GOMAKE], [gomake])
+  AC_PATH_PROG([GOINSTALL], [goinstall])
+  if [[ -x "$GO_C" -a -x "$GO_L" -a -x "$GOMAKE" -a -x "$GOINSTALL" ]] ; then
+    have_go="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
+
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
@@ -238,6 +284,8 @@ AC_C_VOLATILE
 AC_HEADER_STDBOOL
 AC_HEADER_STDC
 AC_HEADER_TIME
+AC_HEADER_SYS_WAIT
+AC_TYPE_SIGNAL
 AC_CHECK_HEADERS([arpa/inet.h])
 AC_CHECK_HEADERS([sys/param.h])
 AC_CHECK_HEADERS([fcntl.h])
@@ -370,6 +418,8 @@ AX_THRIFT_GEN(js, [JavaScript], yes)
 AM_CONDITIONAL([THRIFT_GEN_js], [test "$ax_thrift_gen_js" = "yes"])
 AX_THRIFT_GEN(javame, [JavaME], yes)
 AM_CONDITIONAL([THRIFT_GEN_javame], [test "$ax_thrift_gen_javame" = "yes"])
+AX_THRIFT_GEN(go, [GO_C], yes)
+AM_CONDITIONAL([THRIFT_GEN_go], [test "$ax_thrift_gen_go" = "yes"])
 
 # --- Coverage hooks ---
 
@@ -444,6 +494,7 @@ echo "Building Haskell Library ..... : $have_haskell"
 echo "Building Perl Library ........ : $have_perl"
 echo "Building PHP Library ......... : $have_php"
 echo "Building Erlang Library ...... : $have_erlang"
+echo "Building Go Library .......... : $have_go"
 if test "$have_cpp" = "yes" ; then
   echo
   echo "Building TZlibTransport ...... : $have_zlib"
@@ -484,6 +535,14 @@ fi
 if test "$have_erlang" = "yes" ; then
   echo
   echo "Using erlc ................... : $ERLC"
+fi
+if test "$have_go" = "yes" ; then
+  echo
+  echo "Using GOROOT.................. : $GOROOT"
+  echo "Using GOBIN................... : $GOBIN"
+  echo "Using GOARCH.................. : $GOARCH"
+  echo "Using GO Compiler............. : $GO_C"
+  echo "Using GO Linker............... : $GO_L"
 fi
 echo
 echo "If something is missing that you think should be present,"
