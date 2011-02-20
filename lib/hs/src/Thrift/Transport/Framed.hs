@@ -27,6 +27,7 @@ module Thrift.Transport.Framed
 import Thrift.Transport
 
 import Control.Monad (liftM)
+import Data.Int (Int32)
 import Data.Monoid (mappend, mempty)
 import Control.Concurrent.MVar
 import qualified Data.Binary as B
@@ -69,7 +70,7 @@ instance Transport t => Transport (FramedTransport t) where
 
     tFlush trans = do
       bs <- flushBuf (writeBuffer trans)
-      let szBs = B.encode $ LBS.length bs
+      let szBs = B.encode $ (fromIntegral $ LBS.length bs :: Int32)
       tWrite (wrappedTrans trans) szBs
       tWrite (wrappedTrans trans) bs
       tFlush (wrappedTrans trans)
@@ -80,7 +81,7 @@ readFrame :: Transport t => FramedTransport t -> IO Int
 readFrame trans = do
   -- Read and decode the frame size.
   szBs <- tRead (wrappedTrans trans) 4
-  let sz = B.decode szBs
+  let sz = fromIntegral (B.decode szBs :: Int32)
 
   -- Read the frame and stuff it into the read buffer.
   bs   <- tRead (wrappedTrans trans) sz
