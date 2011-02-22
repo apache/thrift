@@ -386,7 +386,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     throw TTransportException(TTransportException::UNKNOWN, "fcntl(F_SETFL)", errno_copy);
   }
 
-  shared_ptr<TSocket> client(new TSocket(clientSocket));
+  shared_ptr<TSocket> client = createSocket(clientSocket);
   if (sendTimeout_ > 0) {
     client->setSendTimeout(sendTimeout_);
   }
@@ -396,6 +396,10 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   client->setCachedAddress((sockaddr*) &clientAddress, size);
   
   return client;
+}
+
+shared_ptr<TSocket> TServerSocket::createSocket(int clientSocket) {
+  return shared_ptr<TSocket>(new TSocket(clientSocket));
 }
 
 void TServerSocket::interrupt() {

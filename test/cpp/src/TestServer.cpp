@@ -34,6 +34,7 @@
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include <signal.h>
 
 using namespace std;
 using namespace boost;
@@ -326,6 +327,7 @@ int main(int argc, char **argv) {
   string serverType = "simple";
   string protocolType = "binary";
   size_t workerCount = 4;
+  bool ssl = false;
 
   ostringstream usage;
 
@@ -391,6 +393,11 @@ int main(int argc, char **argv) {
     cerr << usage;
   }
 
+  if (args["ssl"] == "true") {
+    ssl = true;
+    signal(SIGPIPE, SIG_IGN);
+  }
+
   // Dispatcher
   shared_ptr<TProtocolFactory> protocolFactory(
       new TBinaryProtocolFactoryT<TBufferBase>());
@@ -407,8 +414,18 @@ int main(int argc, char **argv) {
   }
 
   // Transport
-  shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
+  shared_ptr<TSSLSocketFactory> sslSocketFactory;
+  shared_ptr<TServerSocket> serverSocket;
 
+  if (ssl) {
+    sslSocketFactory = shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
+    sslSocketFactory->loadCertificate("./server-certificate.pem");
+    sslSocketFactory->loadPrivateKey("./server-private-key.pem");
+    sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+    serverSocket = shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
+  } else {
+    serverSocket = shared_ptr<TServerSocket>(new TServerSocket(port));
+  }
   // Factory
   shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
 

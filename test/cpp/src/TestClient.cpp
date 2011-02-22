@@ -23,6 +23,7 @@
 #include <protocol/TBinaryProtocol.h>
 #include <transport/TTransportUtils.h>
 #include <transport/TSocket.h>
+#include <transport/TSSLSocket.h>
 
 #include <boost/shared_ptr.hpp>
 #include "ThriftTest.h"
@@ -56,6 +57,7 @@ int main(int argc, char** argv) {
   int port = 9090;
   int numTests = 1;
   bool framed = false;
+  bool ssl = false;
 
   for (int i = 0; i < argc; ++i) {
     if (strcmp(argv[i], "-h") == 0) {
@@ -71,9 +73,22 @@ int main(int argc, char** argv) {
       numTests = atoi(argv[++i]);
     } else if (strcmp(argv[i], "-f") == 0) {
       framed = true;
+    } else if (strcmp(argv[i], "--ssl") == 0) {
+      ssl = true;
     }
   }
 
+  shared_ptr<TSocket> socket;
+  shared_ptr<TSSLSocketFactory> factory;
+  if (ssl) {
+    factory = shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
+    factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+    factory->loadTrustedCertificates("./trusted-ca-certificate.pem");
+    factory->authenticate(true);
+    socket = factory->createSocket(host, port);
+  } else {
+    socket = shared_ptr<TSocket>(new TSocket(host, port));
+  }
 
   shared_ptr<TBufferBase> transport;
 

@@ -70,12 +70,12 @@ class TSocket : public TVirtualTransport<TSocket> {
    *
    * @return Is the socket alive?
    */
-  bool isOpen();
+  virtual bool isOpen();
 
   /**
    * Calls select on the socket to see if there is more data available.
    */
-  bool peek();
+  virtual bool peek();
 
   /**
    * Creates and opens the UNIX socket.
@@ -92,12 +92,12 @@ class TSocket : public TVirtualTransport<TSocket> {
   /**
    * Reads from the underlying socket.
    */
-  uint32_t read(uint8_t* buf, uint32_t len);
+  virtual uint32_t read(uint8_t* buf, uint32_t len);
 
   /**
    * Writes to the underlying socket.  Loops until done or fail.
    */
-  void write(const uint8_t* buf, uint32_t len);
+  virtual void write(const uint8_t* buf, uint32_t len);
 
   /**
    * Writes to the underlying socket.  Does single send() and returns result.
