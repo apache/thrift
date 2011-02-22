@@ -250,7 +250,12 @@ class TSocket extends TTransport {
           throw new TTransportException('TSocket: Could not read '.$len.' bytes from '.
                                $this->host_.':'.$this->port_);
         }
-      } else if (($sz = strlen($buf)) < $len) {
+      }
+      else if (($sz = strlen($buf)) < $len) {
+        if((strlen($buf) == 0) && feof($this->handle_)){
+          throw new TTransportException('TSocket read 0 bytes');
+        };
+
         $md = stream_get_meta_data($this->handle_);
         if (true === $md['timed_out'] && false === $md['blocked']) {
           throw new TTransportException('TSocket: timed out reading '.$len.' bytes from '.
@@ -287,6 +292,10 @@ class TSocket extends TTransport {
                              $this->host_.':'.$this->port_);
       }
     }
+    elseif((strlen($data) == 0) && feof($this->handle_))
+    {
+      throw new TTransportException('TSocket read 0 bytes');
+    };
     return $data;
   }
 

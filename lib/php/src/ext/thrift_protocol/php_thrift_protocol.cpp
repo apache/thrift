@@ -22,9 +22,18 @@
 #endif
 
 #include <sys/types.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <sys/param.h>
+#if defined( WIN32 ) || defined( _WIN64 )
+typedef int  int32_t; 
+typedef signed char int8_t;
+typedef unsigned char   uint8_t;
+typedef unsigned short  uint16_t;
+typedef long long  int64_t;
+typedef unsigned   uint32_t; 
+typedef short  int16_t; 
+typedef unsigned long long   uint64_t;
+#else
+#include <arpa/inet.h> 
+#endif
 #include <stdexcept>
 
 #ifndef bswap_64
@@ -163,7 +172,7 @@ public:
   }
 
   ~PHPOutputTransport() {
-    flush();
+    //flush();
   }
 
   void write(const char* data, size_t len) {
@@ -414,8 +423,8 @@ void throw_tprotocolexception(char* what, long errorcode) {
 }
 
 // Sets EG(exception), call this and then RETURN_NULL();
-void throw_zend_exception_from_std_exception(const std::exception& ex) {
-  zend_throw_exception(zend_exception_get_default(TSRMLS_CC), const_cast<char*>(ex.what()), 0 TSRMLS_CC);
+void throw_zend_exception_from_std_exception(const std::exception& ex TSRMLS_DC) {
+  zend_throw_exception(zend_exception_get_default(TSRMLS_C), const_cast<char*>(ex.what()), 0 TSRMLS_CC);
 }
 
 
@@ -647,10 +656,11 @@ void skip_element(long thrift_typeID, PHPInputTransport& transport) {
 }
 
 void protocol_writeMessageBegin(zval* transport, const char* method_name, int32_t msgtype, int32_t seqID) {
+  TSRMLS_FETCH();
   zval *args[3];
 
   MAKE_STD_ZVAL(args[0]);
-  ZVAL_STRINGL(args[0], (char*)method_name, strlen(method_name), 0);
+  ZVAL_STRINGL(args[0], (char*)method_name, strlen(method_name), 1);
 
   MAKE_STD_ZVAL(args[1]);
   ZVAL_LONG(args[1], msgtype);
@@ -658,13 +668,17 @@ void protocol_writeMessageBegin(zval* transport, const char* method_name, int32_
   MAKE_STD_ZVAL(args[2]);
   ZVAL_LONG(args[2], seqID);
 
-  TSRMLS_FETCH();
   zval ret;
   ZVAL_NULL(&ret);
+
   zval writeMessagefn;
   ZVAL_STRING(&writeMessagefn, "writeMessageBegin", 0);
-  TSRMLS_FETCH();
+
   call_user_function(EG(function_table), &transport, &writeMessagefn, &ret, 3, args TSRMLS_CC);
+
+  zval_ptr_dtor(&args[0]);
+  zval_ptr_dtor(&args[1]);
+  zval_ptr_dtor(&args[2]);
   zval_dtor(&ret);
 }
 
@@ -780,10 +794,17 @@ void binary_serialize(int8_t thrift_typeID, PHPOutputTransport& transport, zval*
       transport.writeI32(Z_LVAL_PP(value));
       return;
     case T_I64:
-    case T_U64:
+    case T_U64: {
+      int64_t l_data;
+#if defined(_LP64) || defined(_WIN64)
       if (Z_TYPE_PP(value) != IS_LONG) convert_to_long(*value);
-      transport.writeI64(Z_LVAL_PP(value));
-      return;
+      l_data = Z_LVAL_PP(value);
+#else
+      if (Z_TYPE_PP(value) != IS_DOUBLE) convert_to_double(*value);
+      l_data = (int64_t)Z_DVAL_PP(value);
+#endif
+      transport.writeI64(l_data);
+    } return;
     case T_DOUBLE: {
       union {
         int64_t c;
@@ -962,7 +983,7 @@ PHP_FUNCTION(thrift_protocol_write_binary) {
     zend_throw_exception_object(ex TSRMLS_CC);
     RETURN_NULL();
   } catch (const std::exception& ex) {
-    throw_zend_exception_from_std_exception(ex);
+    throw_zend_exception_from_std_exception(ex TSRMLS_CC);
     RETURN_NULL();
   }
 }
@@ -1038,7 +1059,7 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
     zend_throw_exception_object(ex TSRMLS_CC);
     RETURN_NULL();
   } catch (const std::exception& ex) {
-    throw_zend_exception_from_std_exception(ex);
+    throw_zend_exception_from_std_exception(ex TSRMLS_CC);
     RETURN_NULL();
   }
 }
