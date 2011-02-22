@@ -478,7 +478,7 @@ static void callbackLocking(int mode, int n, const char*, int) {
 
 #if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID)
 static unsigned long callbackThreadID() {
-  return reinterpret_cast<unsigned long>(pthread_self());
+  return (unsigned long) pthread_self();
 }
 #endif
 
