@@ -29,6 +29,7 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 import org.apache.thrift.TException;
+import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -227,13 +228,18 @@ public abstract class ServerTestBase extends TestCase {
       return hello;
     }
   
-    public void testException(String arg) throws Xception {
+    public void testException(String arg) throws Xception, TApplicationException {
       System.out.print("testException("+arg+")\n");
       if (arg.equals("Xception")) {
         Xception x = new Xception();
         x.errorCode = 1001;
         x.message = "This is an Xception";
         throw x;
+      } else if (arg.equals("ApplicationException")) {
+        throw new TApplicationException("This is a ApplicationException");
+      } else {
+        Xtruct result = new Xtruct();
+        result.string_thing = arg;
       }
       return;
     }
