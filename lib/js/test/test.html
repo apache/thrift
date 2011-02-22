@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -165,28 +165,7 @@
       
       equals(JSON.stringify(mapMapTestOutput), JSON.stringify(mapMapTestExpectedResult))
     });
-    
-    test("testInsanity", function() {
-      var insanityTestOutput;
-      var insanityTestInput;
-      
-       //  map<UserId, map<Numberz,Insanity>> testInsanity(1: Insanity argument),
 
-      var insanity  = new ThriftTest.Insanity()
-      insanity.userMap[ThriftTest.Numberz.ONE] = 1
-      insanity.userMap[ThriftTest.Numberz.TWO] = 2
-
-
-      insanityTestOutput = client.testInsanity(insanity);
-      equals(JSON.stringify(insanityTestOutput), JSON.stringify(insanityTestInput))
-      /*
-        request:
-        [1,"testInsanity",1,0,{"1":{"rec":{"1":{"map":["i32","i64",2,{"1":1,"2":2}]},"2":{"lst":["rec",0]}}}}]
-        response:
-        [1,"testInsanity",2,0,{"0":{"map":["i64","map",2,{"1":["i32","rec",2,{"2":{"1":{"map":["i32","i64",2,{"5":5,"8":8}]},"2":{"lst":["rec",2,{"1":{"str":"Goodbye4"},"4":{"i8":4},"9":{"i32":4},"11":{"i64":4}},{"1":{"str":"Hello2"},"4":{"i8":2},"9":{"i32":2},"11":{"i64":2}}]}},"3":{"1":{"map":["i32","i64",2,{"5":5,"8":8}]},"2":{"lst":["rec",2,{"1":{"str":"Goodbye4"},"4":{"i8":4},"9":{"i32":4},"11":{"i64":4}},{"1":{"str":"Hello2"},"4":{"i8":2},"9":{"i32":2},"11":{"i64":2}}]}}}],"2":["i32","rec",1,{"6":{"1":{"map":["i32","i64",0,{}]},"2":{"lst":["rec",0]}}}]}]}}]
-      */
-      //equals(res["1"]["1"].xtructs[0].string_thing, "worked");
-    });
     test("testMulti", function() {
       //var res = client.testInsanity(insanity);
       //equals(res["1"]["1"].xtructs[0].string_thing, "worked");
@@ -206,11 +185,19 @@
     });
 
     test("no Exception", function() {
-      expect(1);
       try{
         client.testException("no Exception");
       }catch(e){
-        equals(e.message, "no Exception");
+        ok(false);
+      }
+    });
+
+    test("unexpected Application Exception", function() {
+      expect(1);
+      try{
+        client.testException("ApplicationException");
+      } catch(e) {
+        ok(true);
       }
     });
 
@@ -218,8 +205,9 @@
     module("Insanity");
 
     test("testInsanity", function() {
+      var insanity;
       var res = client.testInsanity(insanity);
-      equals(res["1"]["1"].xtructs[0].string_thing, "worked");
+      equals(res["1"]["2"].xtructs[0].string_thing, "Goodbye4");
     });
 
   });
