@@ -301,6 +301,9 @@ AC_CHECK_HEADERS([sys/time.h])
 AC_CHECK_HEADERS([unistd.h])
 AC_CHECK_HEADERS([libintl.h])
 AC_CHECK_HEADERS([malloc.h])
+AC_CHECK_HEADERS([openssl/ssl.h])
+AC_CHECK_HEADERS([openssl/rand.h])
+AC_CHECK_HEADERS([openssl/x509v3.h])
 
 AC_CHECK_LIB(pthread, pthread_create)
 dnl NOTE(dreiss): I haven't been able to find any really solid docs
@@ -310,6 +313,7 @@ dnl of the POSIX Real-Time Extensions.  This seems necessary on Linux,
 dnl and we haven't yet found a system where this is a problem.
 AC_CHECK_LIB(rt, clock_gettime)
 AC_CHECK_LIB(socket, setsockopt)
+AC_CHECK_LIB(ssl, SSL_ctrl)
 
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T
