@@ -228,15 +228,15 @@ public abstract class ServerTestBase extends TestCase {
       return hello;
     }
   
-    public void testException(String arg) throws Xception, TApplicationException {
+    public void testException(String arg) throws Xception, TException {
       System.out.print("testException("+arg+")\n");
       if (arg.equals("Xception")) {
         Xception x = new Xception();
         x.errorCode = 1001;
-        x.message = "This is an Xception";
+        x.message = arg;
         throw x;
       } else if (arg.equals("ApplicationException")) {
-        throw new TApplicationException("This is a ApplicationException");
+        throw new TException(arg);
       } else {
         Xtruct result = new Xtruct();
         result.string_thing = arg;
@@ -403,6 +403,7 @@ public abstract class ServerTestBase extends TestCase {
       testNestedMap(testClient);
       testInsanity(testClient);
       testOneway(testClient);
+      testException(testClient);
       transport.close();
 
       stopServer();
@@ -486,6 +487,21 @@ public abstract class ServerTestBase extends TestCase {
 
   private void testVoid(ThriftTest.Client testClient) throws TException {
     testClient.testVoid();
+  }
+
+  private void testException(ThriftTest.Client testClient) throws TException, Xception {
+    //@TODO testException
+    //testClient.testException("no Exception");
+    /*try {
+        testClient.testException("Xception");
+    } catch(Xception e) {
+    	assertEquals(e.message, "Xception");
+    }*/
+    /*try {
+        testClient.testException("ApplicationException");
+    } catch(TException e) {
+    	assertEquals(e.message, "ApplicationException");
+    }*/
   }
 
 }
