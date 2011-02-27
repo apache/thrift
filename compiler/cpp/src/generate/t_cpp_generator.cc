@@ -1917,8 +1917,8 @@ void t_cpp_generator::generate_service_multiface(t_service* tservice) {
       indent() << function_signature(*f_iter, "") << " {" << endl;
     indent_up();
     f_header_ <<
-      indent() << "uint32_t sz = ifaces_.size();" << endl <<
-      indent() << "for (uint32_t i = 0; i < sz; ++i) {" << endl;
+      indent() << "size_t sz = ifaces_.size();" << endl <<
+      indent() << "for (size_t i = 0; i < sz; ++i) {" << endl;
     if (!(*f_iter)->get_returntype()->is_void()) {
       f_header_ <<
         indent() << "  if (i == sz - 1) {" << endl;
@@ -3622,17 +3622,17 @@ void t_cpp_generator::generate_serialize_container(ofstream& out,
       "xfer += oprot->writeMapBegin(" <<
       type_to_enum(((t_map*)ttype)->get_key_type()) << ", " <<
       type_to_enum(((t_map*)ttype)->get_val_type()) << ", " <<
-      prefix << ".size());" << endl;
+      "static_cast<uint32_t>(" << prefix << ".size()));" << endl;
   } else if (ttype->is_set()) {
     indent(out) <<
       "xfer += oprot->writeSetBegin(" <<
       type_to_enum(((t_set*)ttype)->get_elem_type()) << ", " <<
-      prefix << ".size());" << endl;
+      "static_cast<uint32_t>(" << prefix << ".size()));" << endl;
   } else if (ttype->is_list()) {
     indent(out) <<
       "xfer += oprot->writeListBegin(" <<
       type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " <<
-      prefix << ".size());" << endl;
+      "static_cast<uint32_t>(" << prefix << ".size()));" << endl;
   }
 
   string iter = tmp("_iter");
