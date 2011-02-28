@@ -19,6 +19,7 @@
 
 #include <cstdlib>
 #include <sstream>
+#include <boost/algorithm/string.hpp>
 
 #include <transport/THttpClient.h>
 #include <transport/TSocket.h>
@@ -45,11 +46,11 @@ void THttpClient::parseHeader(char* header) {
   uint32_t sz = colon - header;
   char* value = colon+1;
 
-  if (strncmp(header, "Transfer-Encoding", sz) == 0) {
-    if (strstr(value, "chunked") != NULL) {
+  if (boost::istarts_with(header, "Transfer-Encoding")) {
+    if (boost::iends_with(value, "chunked")) {
       chunked_ = true;
     }
-  } else if (strncmp(header, "Content-Length", sz) == 0) {
+  } else if (boost::istarts_with(header, "Content-Length")) { 
     chunked_ = false;
     contentLength_ = atoi(value);
   }
