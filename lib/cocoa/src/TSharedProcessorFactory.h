@@ -23,5 +23,5 @@
 @interface TSharedProcessorFactory : NSObject <TProcessorFactory> {
   id<TProcessor> mSharedProcessor;
 }
-
+- (id) initWithSharedProcessor: (id<TProcessor>) sharedProcessor;
 @end

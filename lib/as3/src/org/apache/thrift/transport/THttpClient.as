@@ -27,6 +27,7 @@ package org.apache.thrift.transport {
   import flash.net.URLLoaderDataFormat;
   import flash.net.URLRequest;
   import flash.net.URLRequestMethod;
+  import flash.system.Capabilities;
   import flash.utils.ByteArray;
   
   /**
@@ -38,14 +39,19 @@ package org.apache.thrift.transport {
     private var request_:URLRequest = null;
     private var requestBuffer_:ByteArray = new ByteArray();
     private var responseBuffer_:ByteArray = null;
+    private var traceBuffers_:Boolean = Capabilities.isDebugger;
+
     
     public function getBuffer():ByteArray {
       return requestBuffer_;
     }
     
-    public function THttpClient(request:URLRequest):void {
+    public function THttpClient(request:URLRequest, traceBuffers:Boolean=true):void {
       request.contentType = "application/x-thrift";
       request_ = request;
+      if(traceBuffers == false) {
+        traceBuffers_ = traceBuffers;
+      }
     }
     
     public override function open():void {
@@ -64,9 +70,16 @@ package org.apache.thrift.transport {
       }
         try {
             responseBuffer_.readBytes(buf, off, len);
+            if (traceBuffers_) {
+              dumpBuffer(buf, "READ");
+            }
             return len;
           }
           catch (e:EOFError) {
+            if (traceBuffers_) {
+              dumpBuffer(requestBuffer_, "FAILED-RESPONSE-REQUEST");
+              dumpBuffer(responseBuffer_, "FAILED-RESPONSE");
+            }
             throw new TTransportError(TTransportError.UNKNOWN, "No more data available.");
         }
         return 0;
@@ -81,6 +94,9 @@ package org.apache.thrift.transport {
       if (callback != null) {
         loader.addEventListener(Event.COMPLETE, function(event:Event):void {
          responseBuffer_ = URLLoader(event.target).data;
+         if (traceBuffers_) {
+           dumpBuffer(responseBuffer_, "RESPONSE_BUFFER");
+         }
          callback(null);
          responseBuffer_ = null;
         });
@@ -99,5 +115,20 @@ package org.apache.thrift.transport {
       request_.data = requestBuffer_;
       loader.load(request_);
     }
+
+    private function dumpBuffer(buf:ByteArray, prefix:String):String {
+      var debugString : String = prefix + " BUFFER ";
+      if (buf != null) {
+        debugString += "length: " + buf.length + ", ";
+        for (var i : int = 0; i < buf.length; i++) {
+          debugString += "[" + buf[i].toString(16) + "]";
+        }
+      } else {
+        debugString = "null";
+      }
+      trace(debugString);
+      return debugString;
+    }
+
   }
 }

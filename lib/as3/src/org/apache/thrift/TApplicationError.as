@@ -40,6 +40,7 @@ package org.apache.thrift {
     public static const WRONG_METHOD_NAME:int = 3;
     public static const BAD_SEQUENCE_ID:int = 4;
     public static const MISSING_RESULT:int = 5;
+    public static const INTERNAL_ERROR:int = 6;
 
     public function TApplicationError(type:int = UNKNOWN, message:String = "") {
       super(message, type);
