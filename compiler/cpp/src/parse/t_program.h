@@ -60,13 +60,15 @@ class t_program : public t_doc {
   t_program(std::string path, std::string name) :
     path_(path),
     name_(name),
-    out_path_("./") {
+    out_path_("./"),
+    out_path_is_absolute_(false) {
     scope_ = new t_scope();
   }
 
   t_program(std::string path) :
     path_(path),
-    out_path_("./") {
+    out_path_("./"),
+    out_path_is_absolute_(false) {
     name_ = program_name(path);
     scope_ = new t_scope();
   }
@@ -76,6 +78,9 @@ class t_program : public t_doc {
 
   // Output path accessor
   const std::string& get_out_path() const { return out_path_; }
+
+  // Create gen-* dir accessor
+  bool is_out_path_absolute() { return out_path_is_absolute_; }
 
   // Name accessor
   const std::string& get_name() const { return name_; }
@@ -108,8 +113,9 @@ class t_program : public t_doc {
   // Programs to include
   const std::vector<t_program*>& get_includes() const { return includes_; }
 
-  void set_out_path(std::string out_path) {
+  void set_out_path(std::string out_path, bool out_path_is_absolute) {
     out_path_ = out_path;
+    out_path_is_absolute_ = out_path_is_absolute;
     // Ensure that it ends with a trailing '/' (or '\' for windows machines)
     char c = out_path_.at(out_path_.size() - 1);
     if (!(c == '/' || c == '\\')) {
@@ -227,6 +233,9 @@ class t_program : public t_doc {
 
   // Output directory
   std::string out_path_;
+
+  // Output directory is absolute location for generated source (no gen-*)
+  bool out_path_is_absolute_;
 
   // Namespace
   std::string namespace_;

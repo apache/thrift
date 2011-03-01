@@ -133,6 +133,10 @@ class t_generator {
    * Get the current output directory
    */
   virtual std::string get_out_dir() const {
+    if (program_->is_out_path_absolute()) {
+      return program_->get_out_path() + "/";
+    }
+
     return program_->get_out_path() + out_dir_base_ + "/";
   }
 

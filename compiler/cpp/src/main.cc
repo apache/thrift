@@ -630,6 +630,8 @@ void usage() {
   fprintf(stderr, "  -version    Print the compiler version\n");
   fprintf(stderr, "  -o dir      Set the output directory for gen-* packages\n");
   fprintf(stderr, "               (default: current directory)\n");
+  fprintf(stderr, "  -out dir    Set the ouput location for generated files.\n");
+  fprintf(stderr,"               (no gen-* folder will be created)\n");
   fprintf(stderr, "  -I dir      Add a directory to the list of directories\n");
   fprintf(stderr, "                searched for include directives\n");
   fprintf(stderr, "  -nowarn     Suppress all compiler warnings (BAD!)\n");
@@ -881,7 +883,7 @@ void generate(t_program* program, const vector<string>& generator_strings) {
     const vector<t_program*>& includes = program->get_includes();
     for (size_t i = 0; i < includes.size(); ++i) {
       // Propogate output path from parent to child programs
-      includes[i]->set_out_path(program->get_out_path());
+      includes[i]->set_out_path(program->get_out_path(), program->is_out_path_absolute());
 
       generate(includes[i], generator_strings);
     }
@@ -926,6 +928,7 @@ void generate(t_program* program, const vector<string>& generator_strings) {
 int main(int argc, char** argv) {
   int i;
   std::string out_path;
+  bool out_path_is_absolute = false;
 
   // Setup time string
   time_t now = time(NULL);
@@ -1035,8 +1038,10 @@ int main(int argc, char** argv) {
           usage();
         }
         g_incl_searchpath.push_back(arg);
-      } else if (strcmp(arg, "-o") == 0) {
-        arg = argv[++i];
+      } else if ((strcmp(arg, "-o") == 0) || (strcmp(arg, "-out") == 0)) {
+        out_path_is_absolute = (strcmp(arg, "-out") == 0) ? true : false;
+		  
+		arg = argv[++i];
         if (arg == NULL) {
           fprintf(stderr, "-o: missing output directory\n");
           usage();
@@ -1174,7 +1179,7 @@ int main(int argc, char** argv) {
   // Instance of the global parse tree
   t_program* program = new t_program(input_file);
   if (out_path.size()) {
-    program->set_out_path(out_path);
+    program->set_out_path(out_path, out_path_is_absolute);
   }
 
   // Compute the cpp include prefix.
