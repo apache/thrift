@@ -130,7 +130,7 @@ print_r(" = $dub\n");
  * STRUCT TEST
  */
 print_r("testStruct({\"Zero\", 1, -3, -5})");
-$out = new Xtruct();
+$out = new ThriftTest_Xtruct();
 $out->string_thing = "Zero";
 $out->byte_thing = 1;
 $out->i32_thing = -3;
@@ -145,7 +145,7 @@ print_r(" = {\"".$in->string_thing."\", ".
  * NESTED STRUCT TEST
  */
 print_r("testNest({1, {\"Zero\", 1, -3, -5}), 5}");
-$out2 = new Xtruct2();
+$out2 = new ThriftTest_Xtruct2();
 $out2->byte_thing = 1;
 $out2->struct_thing = $out;
 $out2->i32_thing = 5;
@@ -256,23 +256,23 @@ print_r("}\n");
  * ENUM TEST
  */
 print_r("testEnum(ONE)");
-$ret = $testClient->testEnum(Numberz::ONE);
+$ret = $testClient->testEnum(ThriftTest_Numberz::ONE);
 print_r(" = $ret\n");
 
 print_r("testEnum(TWO)");
-$ret = $testClient->testEnum(Numberz::TWO);
+$ret = $testClient->testEnum(ThriftTest_Numberz::TWO);
 print_r(" = $ret\n");
 
 print_r("testEnum(THREE)");
-$ret = $testClient->testEnum(Numberz::THREE);
+$ret = $testClient->testEnum(ThriftTest_Numberz::THREE);
 print_r(" = $ret\n");
 
 print_r("testEnum(FIVE)");
-$ret = $testClient->testEnum(Numberz::FIVE);
+$ret = $testClient->testEnum(ThriftTest_Numberz::FIVE);
 print_r(" = $ret\n");
 
 print_r("testEnum(EIGHT)");
-$ret = $testClient->testEnum(Numberz::EIGHT);
+$ret = $testClient->testEnum(ThriftTest_Numberz::EIGHT);
 print_r(" = $ret\n");
 
 /**
@@ -300,9 +300,9 @@ print_r("}\n");
 /**
  * INSANITY TEST
  */
-$insane = new Insanity();
-$insane->userMap[Numberz::FIVE] = 5000;
-$truck = new Xtruct();
+$insane = new ThriftTest_Insanity();
+$insane->userMap[ThriftTest_Numberz::FIVE] = 5000;
+$truck = new ThriftTest_Xtruct();
 $truck->string_thing = "Truck";
 $truck->byte_thing = 8;
 $truck->i32_thing = 8;
