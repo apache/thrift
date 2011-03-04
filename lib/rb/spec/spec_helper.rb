@@ -18,8 +18,6 @@
 #
 
 require 'rubygems'
-# require at least 1.1.4 to fix a bug with describing Modules
-gem 'rspec', '>= 1.1.4'
 require 'spec'
 
 $:.unshift File.join(File.dirname(__FILE__), *%w[.. ext])
