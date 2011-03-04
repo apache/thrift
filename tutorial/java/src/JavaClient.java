@@ -45,7 +45,7 @@ public class JavaClient {
       }
       else {
         /*
-         * Similar to the server, you can use the parametrs to setup client parameters or
+         * Similar to the server, you can use the parameters to setup client parameters or
          * use the default settings. On the client side, you will need a TrustStore which
          * contains the trusted certificate along with the public key. 
          * For this example it's a self-signed cert. 

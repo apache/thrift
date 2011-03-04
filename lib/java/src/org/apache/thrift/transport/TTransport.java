@@ -56,7 +56,7 @@ public abstract class TTransport {
   public abstract void close();
 
   /**
-   * Reads up to len bytes into buffer buf, starting att offset off.
+   * Reads up to len bytes into buffer buf, starting at offset off.
    *
    * @param buf Array to read into
    * @param off Index to start reading at

@@ -313,7 +313,7 @@ public class TestTSaslTransports extends TestCase {
 
   /**
    * Implementation of SASL ANONYMOUS, used for testing client-side
-   * intial responses.
+   * initial responses.
    */
   private static class AnonymousClient implements SaslClient {
     private final String username;

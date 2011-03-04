@@ -1,8 +1,8 @@
 Release Notes for Thrift 20080411
 
-.equals and .hashCode() for Java scturcts (developed by dreiss).
+.equals and .hashCode() for Java structs (developed by dreiss).
 
-Improvments to the C++ TSocketPool (developed by akhil).
+Improvements to the C++ TSocketPool (developed by akhil).
 
 PHP (de)serialization extension (developed by dweatherford).
 

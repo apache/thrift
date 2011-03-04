@@ -291,7 +291,7 @@ public final class TCompactProtocol extends TProtocol {
   }
 
   /**
-   * Write a string to the wire with a varint size preceeding.
+   * Write a string to the wire with a varint size preceding.
    */
   public void writeString(String str) throws TException {
     try {
@@ -415,7 +415,7 @@ public final class TCompactProtocol extends TProtocol {
   }
 
   /** 
-   * Writes a byte without any possiblity of all that field header nonsense. 
+   * Writes a byte without any possibility of all that field header nonsense. 
    * Used internally by other writing methods that know they need to write a byte.
    */
   private byte[] byteDirectBuffer = new byte[1];
@@ -425,7 +425,7 @@ public final class TCompactProtocol extends TProtocol {
   }
 
   /** 
-   * Writes a byte without any possiblity of all that field header nonsense.
+   * Writes a byte without any possibility of all that field header nonsense.
    */
   private void writeByteDirect(int n) throws TException {
     writeByteDirect((byte)n);

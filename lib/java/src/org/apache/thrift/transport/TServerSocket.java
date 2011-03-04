@@ -37,7 +37,7 @@ public class TServerSocket extends TServerTransport {
   private static final Logger LOGGER = LoggerFactory.getLogger(TServerSocket.class.getName());
 
   /**
-   * Underlying serversocket object
+   * Underlying ServerSocket object
    */
   private ServerSocket serverSocket_ = null;
 

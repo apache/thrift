@@ -240,7 +240,7 @@ public class THttpClient extends TTransport {
 
       // Read the responses into a byte array so we can release the connection
       // early. This implies that the whole content will have to be read in
-      // memory, and that momentarly we might use up twice the memory (while the
+      // memory, and that momentarily we might use up twice the memory (while the
       // thrift struct is being read up the chain).
       // Proceeding differently might lead to exhaustion of connections and thus
       // to app failure.

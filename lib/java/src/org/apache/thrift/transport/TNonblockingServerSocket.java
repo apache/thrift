@@ -45,7 +45,7 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
   private ServerSocketChannel serverSocketChannel = null;
 
   /**
-   * Underlying serversocket object
+   * Underlying ServerSocket object
    */
   private ServerSocket serverSocket_ = null;
 

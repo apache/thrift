@@ -136,7 +136,7 @@ public class TNonblockingServer extends TServer {
   }
 
   /**
-   * Stop listening for conections.
+   * Stop listening for connections.
    */
   protected void stopListening() {
     serverTransport_.close();
@@ -273,7 +273,7 @@ public class TNonblockingServer extends TServer {
      * Select and process IO events appropriately:
      * If there are connections to be accepted, accept them.
      * If there are existing connections with data waiting to be read, read it,
-     * bufferring until a whole frame has been read.
+     * buffering until a whole frame has been read.
      * If there are any pending responses, buffer them until their target client
      * is available, and then send the data.
      */
@@ -397,7 +397,7 @@ public class TNonblockingServer extends TServer {
    * Class that implements a sort of state machine around the interaction with
    * a client and an invoker. It manages reading the frame size and frame data,
    * getting it handed off as wrapped transports, and then the writing of
-   * reponse data back to the client. In the process it manages flipping the
+   * response data back to the client. In the process it manages flipping the
    * read and write bits on the selection key for its client.
    */
   protected class FrameBuffer {
@@ -483,7 +483,7 @@ public class TNonblockingServer extends TServer {
             return true;
           }
 
-          // incremement the amount of memory allocated to read buffers
+          // increment the amount of memory allocated to read buffers
           readBufferBytesAllocated += frameSize;
 
           // reallocate the readbuffer as a frame-sized buffer

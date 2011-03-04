@@ -151,7 +151,7 @@ how to safely transport the objects across languages.
 
 The type system rests upon a few base types. In considering which types to
 support, we aimed for clarity and simplicity over abundance, focusing
-on the key types available in all programming languages, ommitting any
+on the key types available in all programming languages, omitting any
 niche types available only in specific languages.
 
 The base types supported by Thrift are:
@@ -299,8 +299,8 @@ socket, a segment of shared memory, or a file on the local disk. The Thrift
 transport interface supports the following methods:
 
 \begin{itemize}
-\item \texttt{open} Opens the tranpsort
-\item \texttt{close} Closes the tranport
+\item \texttt{open} Opens the transport
+\item \texttt{close} Closes the transport
 \item \texttt{isOpen} Indicates whether the transport is open
 \item \texttt{read} Reads from the transport
 \item \texttt{write} Writes to the transport
@@ -345,7 +345,7 @@ post-processing or for reproduction and/or simulation of past events.
 \subsubsection{Utilities}
 
 The Transport interface is designed to support easy extension using common
-OOP techniques, such as composition. Some simple utilites include the
+OOP techniques, such as composition. Some simple utilities include the
 \texttt{TBufferedTransport}, which buffers the writes and reads on an
 underlying transport, the \texttt{TFramedTransport}, which transmits data with frame
 size headers for chunking optimization or nonblocking operation, and the
@@ -873,7 +873,7 @@ possible that our thread create call,
 \texttt{ThreadFactory::newThread()} could return to the caller
 well before that time. To ensure that the returned \texttt{Thread} object is not
 prematurely cleaned up if the caller gives up its reference prior to the
-\texttt{ThreadMain} call, the \texttt{Thread} object makes a weak referenence to
+\texttt{ThreadMain} call, the \texttt{Thread} object makes a weak reference to
 itself in its \texttt{start} method.
 
 With the weak reference in hand the \texttt{ThreadMain} function can attempt to get
@@ -1023,7 +1023,7 @@ described:
 XML parsing overhead.
 \item \textit{CORBA.} Relatively comprehensive, debatably overdesigned and
 heavyweight. Comparably cumbersome software installation.
-\item \textit{COM.} Embraced mainly in Windows client softare. Not an entirely
+\item \textit{COM.} Embraced mainly in Windows client software. Not an entirely
 open solution.
 \item \textit{Pillar.} Lightweight and high-performance, but missing versioning
 and abstraction.

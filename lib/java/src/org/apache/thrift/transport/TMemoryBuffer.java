@@ -28,7 +28,7 @@ import java.io.UnsupportedEncodingException;
 public class TMemoryBuffer extends TTransport {
   /**
    * Create a TMemoryBuffer with an initial buffer size of <i>size</i>. The
-   * internal buffer will grow as necessary to accomodate the size of the data
+   * internal buffer will grow as necessary to accommodate the size of the data
    * being written to it.
    */
   public TMemoryBuffer(int size) {

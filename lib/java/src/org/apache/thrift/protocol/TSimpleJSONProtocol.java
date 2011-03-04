@@ -264,7 +264,7 @@ public class TSimpleJSONProtocol extends TProtocol {
         escape.append('t');
         break;
       default:
-        // Control characeters! According to JSON RFC u0020 (space)
+        // Control characters! According to JSON RFC u0020 (space)
         if (c < ' ') {
           String hex = Integer.toHexString(c);
           escape.append('\\');

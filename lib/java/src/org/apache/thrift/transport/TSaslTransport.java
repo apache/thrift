@@ -200,7 +200,7 @@ abstract class TSaslTransport extends TTransport {
   }
 
   /**
-   * Send a Thrift SASL message with the given status (usaully BAD or ERROR) and
+   * Send a Thrift SASL message with the given status (usually BAD or ERROR) and
    * string message, and then throw a TTransportException with the given
    * message.
    * 
@@ -235,7 +235,7 @@ abstract class TSaslTransport extends TTransport {
 
   /**
    * Opens the underlying transport if it's not already open and then performs
-   * SASL negotiation. If a QOP is negoiated during this SASL handshake, it used
+   * SASL negotiation. If a QOP is negotiated during this SASL handshake, it used
    * for all communication on this transport after this call is complete.
    */
   @Override

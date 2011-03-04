@@ -53,7 +53,7 @@ public class TProtocolUtil {
    * Skips over the next data element from the provided input TProtocol object.
    *
    * @param prot  the protocol object to read from
-   * @param type  the next value will be intepreted as this TType value.
+   * @param type  the next value will be interpreted as this TType value.
    */
   public static void skip(TProtocol prot, byte type)
     throws TException {
@@ -64,7 +64,7 @@ public class TProtocolUtil {
    * Skips over the next data element from the provided input TProtocol object.
    *
    * @param prot  the protocol object to read from
-   * @param type  the next value will be intepreted as this TType value.
+   * @param type  the next value will be interpreted as this TType value.
    * @param maxDepth  this function will only skip complex objects to this
    *   recursive depth, to prevent Java stack overflow.
    */

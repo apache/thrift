@@ -31,12 +31,12 @@ Author: Ping Li <pingli@facebook.com>
      factory->loadPrivateKey("my-private-key.pem");
      // server: optionally setup access manager
      // shared_ptr<AccessManager> accessManager(new MyAccessManager);
-     // factory->access(acessManager);
+     // factory->access(accessManager);
      ...
    }
 
    // client code sample
-   shared_ptr<TSSLSocketFactory> factory = getSSLScoketFactory();
+   shared_ptr<TSSLSocketFactory> factory = getSSLSocketFactory();
    shared_ptr<TSocket> socket = factory.createSocket(host, port);
    shared_ptr<TBufferedTransport> transport(new TBufferedTransport(socket));
    ...
@@ -57,7 +57,7 @@ Author: Ping Li <pingli@facebook.com>
 
    After SSL handshake completes, additional checks are conducted. Application
    is given the chance to decide whether or not to continue the conversation
-   with the remote. Application is inqueried through the above three "verify"
+   with the remote. Application is queried through the above three "verify"
    method. They are called at different points of the verification process.
 
    Decisions can be one of ALLOW, DENY, and SKIP. ALLOW and DENY means the
@@ -74,7 +74,7 @@ Author: Ping Li <pingli@facebook.com>
    field is extracted, (c) is called.
 
    The "host" in (b) is the value from TSocket::getHost() if this is a client
-   side socket, or TScoket::getPeerHost() if this is a server side socket. The
+   side socket, or TSocket::getPeerHost() if this is a server side socket. The
    reason is client side socket initiates the connection. TSocket::getHost()
    is the remote host name. On server side, the remote host name is unknown
    unless it's retrieved through TSocket::getPeerHost(). Either way, "host"
@@ -132,4 +132,4 @@ Author: Ping Li <pingli@facebook.com>
    OpenSSL's RAND_poll() when OpenSSL library is first initialized.
 
    The PRNG seed is key to the application security. This method should be
-   overriden if it's not strong enough for you.
+   overridden if it's not strong enough for you.

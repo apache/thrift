@@ -451,7 +451,7 @@ public class TFileTransport extends TTransport {
 
 
   /**
-   * Reads up to len bytes into buffer buf, starting att offset off.
+   * Reads up to len bytes into buffer buf, starting at offset off.
    *
    * @param buf Array to read into
    * @param off Index to start reading at
@@ -515,7 +515,7 @@ public class TFileTransport extends TTransport {
       chunk += numChunks;
     }
 
-    // too large a value for reverse seek, just seek to beginnin
+    // too large a value for reverse seek, just seek to beginning
     if (chunk < 0) {
       chunk = 0;
     }
