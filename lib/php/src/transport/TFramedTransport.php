@@ -161,7 +161,7 @@ class TFramedTransport extends TTransport {
    * followed by the actual data.
    */
   public function flush() {
-    if (!$this->write_) {
+    if (!$this->write_ || strlen($this->wBuf_) == 0) {
       return $this->transport_->flush();
     }
 
