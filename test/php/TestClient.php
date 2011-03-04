@@ -1,3 +1,4 @@
+<?php
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -16,8 +17,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-<?php
 
 if (!isset($GEN_DIR)) {
   $GEN_DIR = 'gen-php';
@@ -39,6 +38,7 @@ require_once $GLOBALS['THRIFT_ROOT'].'/protocol/TBinaryProtocol.php';
 require_once $GLOBALS['THRIFT_ROOT'].'/transport/TSocketPool.php';
 
 /** Include the socket layer */
+require_once $GLOBALS['THRIFT_ROOT'].'/transport/TFramedTransport.php';
 require_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
 
 echo '==============================='."\n";
@@ -73,6 +73,11 @@ $socket->setDebug(TRUE);
 if ($MODE == 'inline') {
   $transport = $socket;
   $testClient = new ThriftTestClient($transport);
+} else if ($MODE == 'framed') {
+  $framedSocket = new TFramedTransport($socket);
+  $transport = $framedSocket;
+  $protocol = new TBinaryProtocol($transport);
+  $testClient = new ThriftTestClient($protocol);
 } else {
   $bufferedSocket = new TBufferedTransport($socket, 1024, 1024);
   $transport = $bufferedSocket;
@@ -317,7 +322,7 @@ foreach ($whoa as $key => $val) {
     print_r("$k2 => {");
     $userMap = $v2->userMap;
     print_r("{");
-    if (is_array($usermap)) {
+    if (is_array($userMap)) {
       foreach ($userMap as $k3 => $v3) {
         print_r("$k3 => $v3, ");
       }
@@ -347,7 +352,7 @@ print_r("testException('Xception')");
 try {
   $testClient->testException('Xception');
   print_r("  void\nFAILURE\n");
-} catch (Xception $x) {
+} catch (ThriftTest_Xception $x) {
   print_r(' caught xception '.$x->errorCode.': '.$x->message."\n");
 }
 
@@ -395,4 +400,3 @@ if ($num != $num2) {
 $transport->close();
 return;
 
-?>
