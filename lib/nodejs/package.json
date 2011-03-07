@@ -19,7 +19,7 @@
 {
   "name": "thrift",
   "description": "node-thrift",
-  "version": "0.6.0",
+  "version": "0.7.0-dev",
   "author": "Apache Thrift",
   "directories" : { "lib" : "./lib/thrift" },
   "main": "./lib/thrift",
