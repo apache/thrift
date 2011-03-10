@@ -198,6 +198,7 @@ class t_cpp_generator : public t_oop_generator {
   std::string argument_list(t_struct* tstruct, bool name_params=true, bool start_comma=false);
   std::string type_to_enum(t_type* ttype);
   std::string local_reflection_name(const char*, t_type* ttype, bool external=false);
+  std::string get_cap_name(std::string name);
 
   void generate_enum_constant_list(std::ofstream& f,
                                    const vector<t_enum_value*>& constants,
@@ -286,6 +287,13 @@ class t_cpp_generator : public t_oop_generator {
   std::set<std::string> reflected_fingerprints_;
 };
 
+/**
+ * Uppercases the first letter of the name
+ */
+std::string t_cpp_generator::get_cap_name(std::string name) {
+  name[0] = toupper(name[0]);
+  return name;
+}
 
 /**
  * Prepares for file generation by opening up the necessary file output
@@ -897,6 +905,29 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       indent() << "_" << tstruct->get_name() << "__isset __isset;" << endl;
   }
 
+  // Create a setter function for each field
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    if (pointers) {
+      continue;
+    }
+    out <<
+      endl <<
+      indent() << "void __set" << get_cap_name((*m_iter)->get_name()) <<
+        "(" << type_name((*m_iter)->get_type(), false, true);
+    out << " val) {" << endl << indent() <<
+      indent() << (*m_iter)->get_name() << " = val;" << endl;
+
+    // assume all fields are required except optional fields.
+    // for optional fields change __isset.name to true
+    bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
+    if (is_optional) {
+      out <<
+        indent() <<
+        indent() << "__isset." << (*m_iter)->get_name() << " = true;" << endl;
+    }
+    out << 
+      indent()<< "}" << endl;
+  }
   out << endl;
 
   if (!pointers) {
