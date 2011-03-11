@@ -265,7 +265,7 @@ void t_js_generator::init_generator() {
   // TODO should the namespace just be in the directory structure for node?
   vector<string> ns_pieces = js_namespace_pieces( program_ );
   if( ns_pieces.size() > 0){
-      f_types_ << "var " << ns_pieces[0] << " = {}"<<endl;
+      f_types_ << "var " << ns_pieces[0] << " = {};"<<endl;
 
       pns = ns_pieces[0];
 
@@ -335,19 +335,20 @@ void t_js_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_js_generator::generate_enum(t_enum* tenum) {
-  f_types_ << js_type_namespace(tenum->get_program())<<tenum->get_name()<<" = { "<<endl;
+  f_types_ << js_type_namespace(tenum->get_program())<<tenum->get_name()<<" = {"<<endl;
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
-    if (c_iter != constants.begin())
+	f_types_ << "'" << (*c_iter)->get_name() << "' : " << value;
+    if (c_iter != constants.end()-1)
         f_types_ << ",";
 
-    f_types_ << "'" << (*c_iter)->get_name() << "' : " << value << endl;
+	f_types_ << endl;
   }
 
-  f_types_ << "}"<<endl;
+  f_types_ << "};"<<endl;
 }
 
 /**
@@ -359,7 +360,7 @@ void t_js_generator::generate_const(t_const* tconst) {
   t_const_value* value = tconst->get_value();
 
   f_types_ << js_type_namespace(program_)  << name << " = ";
-  f_types_ << render_const_value(type, value) << endl;
+  f_types_ << render_const_value(type, value) << ";" << endl;
 }
 
 /**
@@ -511,12 +512,12 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
   if (gen_node_) {
     if (is_exported) {
       out << "var " << js_namespace(tstruct->get_program()) << tstruct->get_name() << " = " <<
-        "module.exports." << js_namespace(tstruct->get_program()) << tstruct->get_name() << " = function(args){\n";
+        "module.exports." << js_namespace(tstruct->get_program()) << tstruct->get_name() << " = function(args) {\n";
     } else {
-      out << "var " << js_namespace(tstruct->get_program()) << tstruct->get_name() << " = function(args){\n";
+      out << "var " << js_namespace(tstruct->get_program()) << tstruct->get_name() << " = function(args) {\n";
     }
   } else {
-    out << js_namespace(tstruct->get_program()) << tstruct->get_name() <<" = function(args){\n";
+    out << js_namespace(tstruct->get_program()) << tstruct->get_name() <<" = function(args) {\n";
   }
 
   if (gen_node_ && is_exception) {
@@ -531,10 +532,10 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
     string dval = declare_field(*m_iter,false,true);
     t_type* t = get_true_type((*m_iter)->get_type());
     if ((*m_iter)->get_value() != NULL && !(t->is_struct() || t->is_xception())) {
-        dval = render_const_value((*m_iter)->get_type(), (*m_iter)->get_value());
-        out << indent() << "this." << (*m_iter)->get_name() << " = " << dval << endl;
+        dval = render_const_value((*m_iter)-> get_type(), (*m_iter)->get_value());
+        out << indent() << "this." << (*m_iter)->get_name() << " = " << dval << ";" << endl;
     } else {
-        out << indent() <<  dval << endl;
+        out << indent() <<  dval << ";" << endl;
     }
 
   }
@@ -545,32 +546,32 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
       if ((*m_iter)->get_value() != NULL && (t->is_struct() || t->is_xception())) {
-        indent(out) << "this." << (*m_iter)->get_name() << " = " << render_const_value(t, (*m_iter)->get_value())  << endl;
+        indent(out) << "this." << (*m_iter)->get_name() << " = " << render_const_value(t, (*m_iter)->get_value())  << ";" << endl;
       }
     }
 
-    out << "if( args != null ){";
+    out << indent() <<  "if (args != null) {" << endl;
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        out << indent() << "if (null != args." << (*m_iter)->get_name() << ")" <<endl
-            << indent() << "this." << (*m_iter)->get_name() << " = args." << (*m_iter)->get_name()  << endl ;
-
+        out << indent() << indent() << "if (null != args." << (*m_iter)->get_name() << ") {" << endl
+            << indent() << indent() << indent() << "this." << (*m_iter)->get_name() << " = args." << (*m_iter)->get_name()  << ";" << endl
+            << indent() << indent() << "}" << endl;
     }
 
-    out << "}";
+    out << indent() <<  "}" << endl;
 
   }
 
   indent_down();
-  out << "}\n";
+  out << "};\n";
 
   if (is_exception) {
     out << "Thrift.inherits(" <<
         js_namespace(tstruct->get_program()) <<
-        tstruct->get_name() << ", Thrift.TException)" << endl;
+        tstruct->get_name() << ", Thrift.TException);" << endl;
   } else {
     //init prototype
-    out << js_namespace(tstruct->get_program())<<tstruct->get_name() <<".prototype = {}\n";
+    out << js_namespace(tstruct->get_program())<<tstruct->get_name() <<".prototype = {};\n";
   }
 
 
@@ -587,39 +588,39 @@ void t_js_generator::generate_js_struct_reader(ofstream& out,
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  out <<  js_namespace(tstruct->get_program())<<tstruct->get_name() << ".prototype.read = function(input){ "<<endl;
+  out <<  js_namespace(tstruct->get_program())<<tstruct->get_name() << ".prototype.read = function(input) {"<<endl;
 
   indent_up();
 
-  indent(out) << "var ret = input.readStructBegin()" << endl;
+  indent(out) << "input.readStructBegin();" << endl;
 
 
   // Loop over reading in fields
-  indent(out) << "while (1) " << endl;
+  indent(out) << "while (true)" << endl;
 
   scope_up(out);
 
-  indent(out) << "var ret = input.readFieldBegin()" << endl;
-  indent(out) << "var fname = ret.fname" <<endl;
-  indent(out) << "var ftype = ret.ftype" <<endl;
-  indent(out) << "var fid   = ret.fid"   <<endl;
+  indent(out) << "var ret = input.readFieldBegin();" << endl;
+  indent(out) << "var fname = ret.fname;" << endl;
+  indent(out) << "var ftype = ret.ftype;" << endl;
+  indent(out) << "var fid = ret.fid;"   << endl;
 
 
   // Check for field STOP marker and break
-  indent(out) << "if (ftype == Thrift.Type.STOP) " << endl;
+  indent(out) << "if (ftype == Thrift.Type.STOP)" << endl;
   indent_up();
-  indent(out) << "break" << endl;
+  indent(out) << "break;" << endl;
   indent_down();
 
   // Switch statement on the field we are reading
-  indent(out) << "switch(fid)" << endl;
+  indent(out) << "switch (fid)" << endl;
 
   scope_up(out);
 
   // Generate deserialization code for known cases
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
 
-    indent(out) << "case " << (*f_iter)->get_key() << ":";
+    indent(out) << "case " << (*f_iter)->get_key() << ":" << endl;
     indent(out) << "if (ftype == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
 
     indent_up();
@@ -628,29 +629,29 @@ void t_js_generator::generate_js_struct_reader(ofstream& out,
 
     indent(out) << "} else {" << endl;
 
-    indent(out) <<  "  input.skip(ftype)" << endl;
+    indent(out) <<  "  input.skip(ftype);" << endl;
 
     out <<
       indent() << "}" << endl <<
-      indent() << "break" << endl;
+      indent() << "break;" << endl;
 
   }
   // In the default case we skip the field
   indent(out) <<  "default:" << endl;
-  indent(out) <<  "  input.skip(ftype)" << endl;
+  indent(out) <<  "  input.skip(ftype);" << endl;
 
   scope_down(out);
 
-  indent(out) << "input.readFieldEnd()" << endl;
+  indent(out) << "input.readFieldEnd();" << endl;
 
   scope_down(out);
 
-  indent(out) << "input.readStructEnd()" << endl;
+  indent(out) << "input.readStructEnd();" << endl;
 
-  indent(out) << "return" << endl;
+  indent(out) << "return;" << endl;
 
   indent_down();
-  out << indent() << "}" << endl << endl;
+  out << indent() << "};" << endl << endl;
 }
 
 /**
@@ -662,11 +663,11 @@ void t_js_generator::generate_js_struct_writer(ofstream& out,
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  out << js_namespace(tstruct->get_program())<< tstruct->get_name() << ".prototype.write = function(output){ "<<endl;
+  out << js_namespace(tstruct->get_program())<< tstruct->get_name() << ".prototype.write = function(output) {"<<endl;
 
   indent_up();
 
-  indent(out) << "output.writeStructBegin('" << name << "')" << endl;
+  indent(out) << "output.writeStructBegin('" << name << "');" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     out << indent() << "if (null != this." << (*f_iter)->get_name() << ") {" << endl;
@@ -676,14 +677,14 @@ void t_js_generator::generate_js_struct_writer(ofstream& out,
       "output.writeFieldBegin(" <<
       "'" << (*f_iter)->get_name() << "', " <<
       type_to_enum((*f_iter)->get_type()) << ", " <<
-      (*f_iter)->get_key() << ")" << endl;
+      (*f_iter)->get_key() << ");" << endl;
 
 
     // Write field contents
     generate_serialize_field(out, *f_iter, "this.");
 
     indent(out) <<
-        "output.writeFieldEnd()" << endl;
+        "output.writeFieldEnd();" << endl;
 
     indent_down();
     indent(out) << "}" << endl;
@@ -691,14 +692,14 @@ void t_js_generator::generate_js_struct_writer(ofstream& out,
 
 
   out <<
-    indent() << "output.writeFieldStop()" << endl <<
-    indent() << "output.writeStructEnd()" << endl;
+    indent() << "output.writeFieldStop();" << endl <<
+    indent() << "output.writeStructEnd();" << endl;
 
-  out <<indent() << "return" << endl;
+  out <<indent() << "return;" << endl;
 
   indent_down();
   out <<
-    indent() << "}" << endl <<
+    indent() << "};" << endl <<
     endl;
 }
 
@@ -766,17 +767,17 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
 
     scope_up(f_service_);
 
-    f_service_ << indent() << "var r = input.readMessageBegin()" << endl
+    f_service_ << indent() << "var r = input.readMessageBegin();" << endl
                << indent() << "if (this['process_' + r.fname]) {" << endl
-               << indent() << "  return this['process_' + r.fname].call(this, r.rseqid, input, output)" << endl
+               << indent() << "  return this['process_' + r.fname].call(this, r.rseqid, input, output);" << endl
                << indent() << "} else {" << endl
-               << indent() << "  input.skip(Thrift.Type.STRUCT)" << endl
-               << indent() << "  input.readMessageEnd()" << endl
-               << indent() << "  var x = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN_METHOD, 'Unknown function ' + r.fname)" << endl
-               << indent() << "  output.writeMessageBegin(r.fname, Thrift.MessageType.Exception, r.rseqid)" << endl
-               << indent() << "  x.write(output)" << endl
-               << indent() << "  output.writeMessageEnd()" << endl
-               << indent() << "  output.flush()" << endl
+               << indent() << "  input.skip(Thrift.Type.STRUCT);" << endl
+               << indent() << "  input.readMessageEnd();" << endl
+               << indent() << "  var x = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN_METHOD, 'Unknown function ' + r.fname);" << endl
+               << indent() << "  output.writeMessageBegin(r.fname, Thrift.MessageType.Exception, r.rseqid);" << endl
+               << indent() << "  x.write(output);" << endl
+               << indent() << "  output.writeMessageEnd();" << endl
+               << indent() << "  output.flush();" << endl
                << indent() << "}" << endl;
 
     scope_down(f_service_);
@@ -804,14 +805,14 @@ void t_js_generator::generate_process_function(t_service* tservice,
     string resultname =  js_namespace(program_)+ service_name_ + "_" + tfunction->get_name() + "_result";
 
     f_service_ <<
-        indent() << "var args = new " << argsname << "()" << endl <<
-        indent() << "args.read(input)" << endl <<
-        indent() << "input.readMessageEnd()" << endl;
+        indent() << "var args = new " << argsname << "();" << endl <<
+        indent() << "args.read(input);" << endl <<
+        indent() << "input.readMessageEnd();" << endl;
 
     // Declare result for non oneway function
     if (!tfunction->is_oneway()) {
         f_service_ <<
-            indent() << "var result = new " << resultname << "()" << endl;
+            indent() << "var result = new " << resultname << "();" << endl;
     }
 
     // Generate the function call
@@ -843,16 +844,16 @@ void t_js_generator::generate_process_function(t_service* tservice,
     if (!first) {
         f_service_ << ", ";
     }
-    f_service_ << "function(success) {" << endl;
+    f_service_ << "function (success) {" << endl;
     indent_up();
 
     f_service_ <<
-      indent() << "result.success = success" << endl <<
+      indent() << "result.success = success;" << endl <<
       indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
-        "\", Thrift.MessageType.REPLY, seqid)" << endl <<
-      indent() << "result.write(output)" << endl <<
-      indent() << "output.writeMessageEnd()" << endl <<
-      indent() << "output.flush()" << endl;
+        "\", Thrift.MessageType.REPLY, seqid);" << endl <<
+      indent() << "result.write(output);" << endl <<
+      indent() << "output.writeMessageEnd();" << endl <<
+      indent() << "output.flush();" << endl;
 
     indent_down();
     indent(f_service_) << "})" << endl;
@@ -946,19 +947,19 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       indent() << "  this.output = output;" << endl <<
       indent() << "  this.pClass = pClass;" << endl <<
       indent() << "  this.seqid = 0;" << endl <<
-      indent() << "  this._reqs = {}" << endl;
+      indent() << "  this._reqs = {};" << endl;
   } else {
     f_service_ <<
-      indent() << "  this.input  = input" << endl <<
-      indent() << "  this.output = null == output ? input : output" << endl <<
-      indent() << "  this.seqid  = 0" << endl;
+      indent() << "  this.input = input;" << endl <<
+      indent() << "  this.output = null == output ? input : output;" << endl <<
+      indent() << "  this.seqid = 0;" << endl;
   }
 
 
   indent_down();
 
   f_service_ <<
-      indent() << "}" << endl;
+      indent() << "};" << endl;
 
 
   if (tservice->get_extends() != NULL) {
@@ -968,7 +969,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
         tservice->get_extends()->get_name() << "Client)" << endl;
   } else {
       //init prototype
-      indent(f_service_) <<  js_namespace(tservice->get_program())<<service_name_ << "Client.prototype = {}"<<endl;
+      indent(f_service_) <<  js_namespace(tservice->get_program())<<service_name_ << "Client.prototype = {};"<<endl;
   }
 
   // Generate client method implementations
@@ -981,7 +982,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     string funname = (*f_iter)->get_name();
 
     // Open function
-    f_service_ <<  js_namespace(tservice->get_program())<<service_name_<<"Client.prototype." << function_signature(*f_iter, "", gen_node_) << "{" << endl;
+    f_service_ <<  js_namespace(tservice->get_program())<<service_name_<<"Client.prototype." << function_signature(*f_iter, "", gen_node_) << " {" << endl;
 
     indent_up();
 
@@ -1003,7 +1004,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       }
       f_service_ << (*fld_iter)->get_name();
     }
-    f_service_ << ")" << endl;
+    f_service_ << ");" << endl;
 
     if (!gen_node_ && !(*f_iter)->is_oneway()) {
       f_service_ << indent();
@@ -1011,15 +1012,15 @@ void t_js_generator::generate_service_client(t_service* tservice) {
         f_service_ << "return ";
       }
       f_service_ <<
-        "this.recv_" << funname << "()" << endl;
+        "this.recv_" << funname << "();" << endl;
     }
 
     indent_down();
 
-    f_service_ << "}" << endl << endl;
+    f_service_ << "};" << endl << endl;
 
     f_service_ <<  js_namespace(tservice->get_program())<<service_name_ <<
-        "Client.prototype.send_" << function_signature(*f_iter) << "{" <<endl;
+        "Client.prototype.send_" << function_signature(*f_iter) << " {" <<endl;
 
     indent_up();
 
@@ -1036,31 +1037,31 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
     // Serialize the request header
     f_service_ <<
-      indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name() << "', Thrift.MessageType.CALL, this.seqid)" << endl;
+      indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name() << "', Thrift.MessageType.CALL, this.seqid);" << endl;
 
     f_service_ <<
-      indent() << "var args = new " << argsname << "()" << endl;
+      indent() << "var args = new " << argsname << "();" << endl; 
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ <<
-        indent() << "args." << (*fld_iter)->get_name() << " = " << (*fld_iter)->get_name() << endl;
+        indent() << "args." << (*fld_iter)->get_name() << " = " << (*fld_iter)->get_name() << ";" << endl;
     }
 
     // Write to the stream
     f_service_ <<
-      indent() << "args.write(" << outputVar << ")" << endl <<
-      indent() << outputVar << ".writeMessageEnd()" << endl;
+      indent() << "args.write(" << outputVar << ");" << endl <<
+      indent() << outputVar << ".writeMessageEnd();" << endl;
 
     if (gen_node_) {
-      f_service_ << indent() << "return this.output.flush()" << endl;
+      f_service_ << indent() << "return this.output.flush();" << endl;
     } else {
-      f_service_ << indent() << "return this.output.getTransport().flush()" << endl;
+      f_service_ << indent() << "return this.output.getTransport().flush();" << endl;
     }
 
 
     indent_down();
 
-    f_service_ << "}" << endl;
+    f_service_ << "};" << endl;
 
 
     if (!(*f_iter)->is_oneway()) {
@@ -1070,7 +1071,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
         // Open function
         f_service_ <<
             endl <<  js_namespace(tservice->get_program())<<service_name_ <<
-            "Client.prototype.recv_" << (*f_iter)->get_name() << " = function(input,mtype,rseqid){" << endl;
+            "Client.prototype.recv_" << (*f_iter)->get_name() << " = function(input,mtype,rseqid) {" << endl;
       } else {
         t_struct noargs(program_);
 
@@ -1080,7 +1081,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
         // Open function
         f_service_ <<
             endl <<  js_namespace(tservice->get_program())<<service_name_ <<
-            "Client.prototype." << function_signature(&recv_function) << "{" << endl;
+            "Client.prototype." << function_signature(&recv_function) << " {" << endl;
       }
 
       indent_up();
@@ -1098,28 +1099,28 @@ void t_js_generator::generate_service_client(t_service* tservice) {
           indent() << "delete this._reqs[rseqid];" << endl;
       } else {
         f_service_ <<
-          indent() << "var ret = this.input.readMessageBegin()" << endl <<
-          indent() << "var fname = ret.fname" << endl <<
-          indent() << "var mtype = ret.mtype" << endl <<
-          indent() << "var rseqid= ret.rseqid" <<endl;
+          indent() << "var ret = this.input.readMessageBegin();" << endl <<
+          indent() << "var fname = ret.fname;" << endl <<
+          indent() << "var mtype = ret.mtype;" << endl <<
+          indent() << "var rseqid = ret.rseqid;" <<endl;
       }
 
       f_service_ <<
           indent() << "if (mtype == Thrift.MessageType.EXCEPTION) {" << endl <<
-          indent() << "  var x = new Thrift.TApplicationException()" << endl <<
-          indent() << "  x.read(" << inputVar << ")" << endl <<
-          indent() << "  " << inputVar << ".readMessageEnd()" << endl <<
+          indent() << "  var x = new Thrift.TApplicationException();" << endl <<
+          indent() << "  x.read(" << inputVar << ");" << endl <<
+          indent() << "  " << inputVar << ".readMessageEnd();" << endl <<
           indent() << "  " << render_recv_throw("x") << endl <<
           indent() << "}" << endl;
 
 
       f_service_ <<
-        indent() << "var result = new " << resultname << "()" << endl <<
-        indent() << "result.read(" << inputVar << ")" << endl;
+        indent() << "var result = new " << resultname << "();" << endl <<
+        indent() << "result.read(" << inputVar << ");" << endl;
 
 
       f_service_ <<
-        indent() << inputVar << ".readMessageEnd()" << endl <<
+        indent() << inputVar << ".readMessageEnd();" << endl <<
         endl;
 
 
@@ -1136,22 +1137,22 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       // Careful, only return result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ <<
-          indent() << "if (null != result.success ) {" << endl <<
+          indent() << "if (null != result.success) {" << endl <<
           indent() << "  " << render_recv_return("result.success") << endl <<
           indent() << "}" << endl;
         f_service_ <<
-          indent() << render_recv_throw("\"" + (*f_iter)->get_name() + " failed: unknown result\"") << endl;
+          indent() << render_recv_throw("'" + (*f_iter)->get_name() + " failed: unknown result'") << endl;
       } else {
           if (gen_node_) {
             indent(f_service_) << "callback(null)" << endl;
           } else {
-            indent(f_service_) << "return" << endl;
+            indent(f_service_) << "return;" << endl;
           }
       }
 
       // Close function
       indent_down();
-      f_service_ << "}"<<endl;
+      f_service_ << "};"<<endl;
 
     }
   }
@@ -1162,7 +1163,7 @@ std::string t_js_generator::render_recv_throw(std::string var) {
   if (gen_node_) {
     return "return callback(" + var + ");";
   } else {
-    return "throw " + var;
+    return "throw " + var + ";";
   }
 }
 
@@ -1170,7 +1171,7 @@ std::string t_js_generator::render_recv_return(std::string var) {
   if (gen_node_) {
     return "return callback(null, " + var + ");";
   } else {
-    return "return " + var;
+    return "return " + var + ";";
   }
 }
 
@@ -1239,7 +1240,7 @@ void t_js_generator::generate_deserialize_field(ofstream &out,
         out << ".value";
     }
 
-    out << endl;
+    out << ";" << endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
            tfield->get_name().c_str(), type->get_name().c_str());
@@ -1256,16 +1257,14 @@ void t_js_generator::generate_deserialize_struct(ofstream &out,
                                                    t_struct* tstruct,
                                                    string prefix) {
     out <<
-        indent() << prefix << " = new " <<  js_type_namespace(tstruct->get_program())<<tstruct->get_name() << "()" << endl <<
-        indent() << prefix << ".read(input)" << endl;
+        indent() << prefix << " = new " <<  js_type_namespace(tstruct->get_program())<<tstruct->get_name() << "();" << endl <<
+        indent() << prefix << ".read(input);" << endl;
 
 }
 
 void t_js_generator::generate_deserialize_container(ofstream &out,
                                                       t_type* ttype,
                                                       string prefix) {
-  scope_up(out);
-
   string size = tmp("_size");
   string ktype = tmp("_ktype");
   string vtype = tmp("_vtype");
@@ -1276,40 +1275,40 @@ void t_js_generator::generate_deserialize_container(ofstream &out,
   t_field fvtype(g_type_byte, vtype);
   t_field fetype(g_type_byte, etype);
 
-  out << indent() << "var " << size << " = 0" << endl;
-  out << indent() << "var rtmp3" << endl;
+  out << indent() << "var " << size << " = 0;" << endl;
+  out << indent() << "var rtmp3;" << endl;
 
 
   // Declare variables, read header
   if (ttype->is_map()) {
       out <<
-          indent() << prefix << " = {}" << endl <<
-          indent() << "var " << ktype << " = 0" << endl <<
-          indent() << "var " << vtype << " = 0" << endl;
+          indent() << prefix << " = {};" << endl <<
+          indent() << "var " << ktype << " = 0;" << endl <<
+          indent() << "var " << vtype << " = 0;" << endl;
 
-      out << indent() << "rtmp3 = input.readMapBegin()" << endl;
-      out << indent() << ktype << "= rtmp3.ktype" << endl;
-      out << indent() << vtype << "= rtmp3.vtype" << endl;
-      out << indent() << size  << "= rtmp3.size" << endl;
+      out << indent() << "rtmp3 = input.readMapBegin();" << endl;
+      out << indent() << ktype << " = rtmp3.ktype;" << endl;
+      out << indent() << vtype << " = rtmp3.vtype;" << endl;
+      out << indent() << size  << " = rtmp3.size;" << endl;
 
 
   } else if (ttype->is_set()) {
 
     out <<
-        indent() << prefix << " = []" << endl <<
-        indent() << "var " << etype << " = 0" << endl <<
-        indent() << "rtmp3 = input.readSetBegin()" << endl <<
-        indent() << etype << "= rtmp3.etype"<<endl<<
-        indent() << size << " = rtmp3.size"<<endl;
+        indent() << prefix << " = [];" << endl <<
+        indent() << "var " << etype << " = 0;" << endl <<
+        indent() << "rtmp3 = input.readSetBegin();" << endl <<
+        indent() << etype << " = rtmp3.etype;"<<endl<<
+        indent() << size << " = rtmp3.size;"<<endl;
 
   } else if (ttype->is_list()) {
 
     out <<
-        indent() << prefix << " = []" << endl <<
-        indent() << "var " << etype << " = 0" << endl <<
-        indent() << "rtmp3 = input.readListBegin()" << endl <<
-        indent() << etype << " = rtmp3.etype"<<endl<<
-        indent() << size << " = rtmp3.size"<<endl;
+        indent() << prefix << " = [];" << endl <<
+        indent() << "var " << etype << " = 0;" << endl <<
+        indent() << "rtmp3 = input.readListBegin();" << endl <<
+        indent() << etype << " = rtmp3.etype;"<<endl<<
+        indent() << size << " = rtmp3.size;"<<endl;
   }
 
   // For loop iterates over elements
@@ -1333,14 +1332,12 @@ void t_js_generator::generate_deserialize_container(ofstream &out,
 
   // Read container end
   if (ttype->is_map()) {
-    indent(out) << "input.readMapEnd()" << endl;
+    indent(out) << "input.readMapEnd();" << endl;
   } else if (ttype->is_set()) {
-    indent(out) << "input.readSetEnd()" << endl;
+    indent(out) << "input.readSetEnd();" << endl;
   } else if (ttype->is_list()) {
-    indent(out) << "input.readListEnd()" << endl;
+    indent(out) << "input.readListEnd();" << endl;
   }
-
-  scope_down(out);
 }
 
 
@@ -1356,15 +1353,15 @@ void t_js_generator::generate_deserialize_map_element(ofstream &out,
   t_field fval(tmap->get_val_type(), val);
 
   indent(out) <<
-    declare_field(&fkey, false, false) << endl;
+    declare_field(&fkey, false, false) << ";" << endl;
   indent(out) <<
-    declare_field(&fval, false, false) << endl;
+    declare_field(&fval, false, false) << ";" << endl;
 
   generate_deserialize_field(out, &fkey);
   generate_deserialize_field(out, &fval);
 
   indent(out) <<
-      prefix << "[" << key << "] = " << val << endl;
+      prefix << "[" << key << "] = " << val << ";" << endl;
 }
 
 void t_js_generator::generate_deserialize_set_element(ofstream &out,
@@ -1374,12 +1371,12 @@ void t_js_generator::generate_deserialize_set_element(ofstream &out,
   t_field felem(tset->get_elem_type(), elem);
 
   indent(out) <<
-    "var " << elem << " = null" << endl;
+    "var " << elem << " = null;" << endl;
 
   generate_deserialize_field(out, &felem);
 
   indent(out) <<
-      prefix << ".push(" << elem << ")" << endl;
+      prefix << ".push(" << elem << ");" << endl;
 }
 
 void t_js_generator::generate_deserialize_list_element(ofstream &out,
@@ -1389,12 +1386,12 @@ void t_js_generator::generate_deserialize_list_element(ofstream &out,
   t_field felem(tlist->get_elem_type(), elem);
 
   indent(out) <<
-    "var " << elem << " = null" << endl;
+    "var " << elem << " = null;" << endl;
 
   generate_deserialize_field(out, &felem);
 
   indent(out) <<
-      prefix << ".push(" << elem << ")" << endl;
+      prefix << ".push(" << elem << ");" << endl;
 }
 
 
@@ -1467,7 +1464,7 @@ void t_js_generator::generate_serialize_field(ofstream &out,
     } else if (type->is_enum()) {
       out << "writeI32(" << name << ")";
     }
-    out << endl;
+    out << ";" << endl;
 
   } else {
     printf("DO NOT KNOW HOW TO SERIALIZE FIELD '%s%s' TYPE '%s'\n",
@@ -1487,7 +1484,7 @@ void t_js_generator::generate_serialize_struct(ofstream &out,
                                                  t_struct* tstruct,
                                                  string prefix) {
   (void) tstruct;
-  indent(out) << prefix << ".write(output)" << endl;
+  indent(out) << prefix << ".write(output);" << endl;
 }
 
 /**
@@ -1496,39 +1493,35 @@ void t_js_generator::generate_serialize_struct(ofstream &out,
 void t_js_generator::generate_serialize_container(ofstream &out,
                                                     t_type* ttype,
                                                     string prefix) {
-  scope_up(out);
-
   if (ttype->is_map()) {
     indent(out) <<
         "output.writeMapBegin(" <<
         type_to_enum(((t_map*)ttype)->get_key_type()) << ", " <<
         type_to_enum(((t_map*)ttype)->get_val_type()) << ", " <<
-        "Thrift.objectLength(" << prefix << "))" << endl;
+        "Thrift.objectLength(" << prefix << "));" << endl;
   } else if (ttype->is_set()) {
     indent(out) <<
       "output.writeSetBegin(" <<
       type_to_enum(((t_set*)ttype)->get_elem_type()) << ", " <<
-        prefix << ".length)" << endl;
+        prefix << ".length);" << endl;
 
   } else if (ttype->is_list()) {
 
     indent(out) <<
         "output.writeListBegin(" <<
         type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " <<
-        prefix << ".length)" << endl;
+        prefix << ".length);" << endl;
 
   }
-
-  scope_up(out);
 
   if (ttype->is_map()) {
     string kiter = tmp("kiter");
     string viter = tmp("viter");
-    indent(out) << "for(var "<<kiter<<" in "<<prefix<<")";
+    indent(out) << "for (var "<<kiter<<" in "<<prefix<<")" << endl;
     scope_up(out);
     indent(out) << "if ("<<prefix<<".hasOwnProperty("<<kiter<<"))" <<endl;
     scope_up(out);
-    indent(out) << "var "<<viter<<" = "<<prefix<<"["<<kiter<<"]"<<endl;
+    indent(out) << "var "<<viter<<" = "<<prefix<<"["<<kiter<<"];"<<endl;
     generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
     scope_down(out);
     scope_down(out);
@@ -1537,11 +1530,11 @@ void t_js_generator::generate_serialize_container(ofstream &out,
   } else if (ttype->is_set()) {
     string iter = tmp("iter");
     indent(out) <<
-      "for(var "<<iter<<" in " << prefix << ")" << endl;
+      "for (var "<<iter<<" in " << prefix << ")" << endl;
     scope_up(out);
     indent(out) << "if ("<<prefix<<".hasOwnProperty("<<iter<<"))" <<endl;
     scope_up(out);
-    indent(out) << iter << "=" << prefix << "[" << iter << "]"<< endl;
+    indent(out) << iter << " = " << prefix << "[" << iter << "];"<< endl;
     generate_serialize_set_element(out, (t_set*)ttype, iter);
     scope_down(out);
     scope_down(out);
@@ -1550,30 +1543,26 @@ void t_js_generator::generate_serialize_container(ofstream &out,
   } else if (ttype->is_list()) {
     string iter = tmp("iter");
     indent(out) <<
-        "for(var "<<iter<<" in "<< prefix << ")" << endl;
+        "for (var "<<iter<<" in "<< prefix << ")" << endl;
     scope_up(out);
     indent(out) << "if ("<<prefix<<".hasOwnProperty("<<iter<<"))" <<endl;
     scope_up(out);
-    indent(out) << iter << "=" << prefix << "[" << iter << "]"<< endl;
+    indent(out) << iter << " = " << prefix << "[" << iter << "];"<< endl;
     generate_serialize_list_element(out, (t_list*)ttype, iter);
     scope_down(out);
     scope_down(out);
   }
 
-  scope_down(out);
-
   if (ttype->is_map()) {
     indent(out) <<
-      "output.writeMapEnd()" << endl;
+      "output.writeMapEnd();" << endl;
   } else if (ttype->is_set()) {
     indent(out) <<
-      "output.writeSetEnd()" << endl;
+      "output.writeSetEnd();" << endl;
   } else if (ttype->is_list()) {
     indent(out) <<
-      "output.writeListEnd()" << endl;
+      "output.writeListEnd();" << endl;
   }
-
-  scope_down(out);
 }
 
 /**
@@ -1683,14 +1672,14 @@ string t_js_generator::function_signature(t_function* tfunction,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
 
       if(f_iter != fields.begin())
-          str += ",";
+          str += ", ";
 
       str += (*f_iter)->get_name();
   }
 
   if (include_callback) {
     if (!fields.empty()) {
-      str += ",";
+      str += ", ";
     }
     str += "callback";
   }
