@@ -850,9 +850,10 @@ void t_py_generator::generate_py_struct_writer(ofstream& out,
     indent() << "oprot.writeFieldStop()" << endl <<
     indent() << "oprot.writeStructEnd()" << endl;
 
-  generate_py_struct_required_validator(out, tstruct);
+  out << endl;
 
   indent_down();
+  generate_py_struct_required_validator(out, tstruct);
   out <<
     endl;
 }
