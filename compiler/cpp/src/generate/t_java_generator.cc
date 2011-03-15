@@ -2472,9 +2472,9 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
     // Main method body   
     indent(f_service_) << "public " << function_signature_async(*f_iter, false) << " throws org.apache.thrift.TException {" << endl;
     indent(f_service_) << "  checkReady();" << endl;
-    indent(f_service_) << "  " << funclassname << " method_call = new " + funclassname + "(" << async_argument_list(*f_iter, arg_struct, ret_type) << ", this, protocolFactory, transport);" << endl;
-    indent(f_service_) << "  this.currentMethod = method_call;" << endl;
-    indent(f_service_) << "  manager.call(method_call);" << endl;
+    indent(f_service_) << "  " << funclassname << " method_call = new " + funclassname + "(" << async_argument_list(*f_iter, arg_struct, ret_type) << ", this, ___protocolFactory, ___transport);" << endl;
+    indent(f_service_) << "  this.___currentMethod = method_call;" << endl;
+    indent(f_service_) << "  ___manager.call(method_call);" << endl;
     indent(f_service_) << "}" << endl;
 
     f_service_ << endl;

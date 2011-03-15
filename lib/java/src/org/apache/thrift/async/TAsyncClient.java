@@ -22,38 +22,38 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TNonblockingTransport;
 
 public abstract class TAsyncClient {
-  protected final TProtocolFactory protocolFactory;
-  protected final TNonblockingTransport transport;
-  protected final TAsyncClientManager manager;
-  protected TAsyncMethodCall currentMethod;
-  private Exception error;
-  private long timeout;
+  protected final TProtocolFactory ___protocolFactory;
+  protected final TNonblockingTransport ___transport;
+  protected final TAsyncClientManager ___manager;
+  protected TAsyncMethodCall ___currentMethod;
+  private Exception ___error;
+  private long ___timeout;
 
   public TAsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager manager, TNonblockingTransport transport) {
     this(protocolFactory, manager, transport, 0);
   }
 
   public TAsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager manager, TNonblockingTransport transport, long timeout) {
-    this.protocolFactory = protocolFactory;
-    this.manager = manager;
-    this.transport = transport;
-    this.timeout = timeout;
+    this.___protocolFactory = protocolFactory;
+    this.___manager = manager;
+    this.___transport = transport;
+    this.___timeout = timeout;
   }
 
   public TProtocolFactory getProtocolFactory() {
-    return protocolFactory;
+    return ___protocolFactory;
   }
 
   public long getTimeout() {
-    return timeout;
+    return ___timeout;
   }
 
   public boolean hasTimeout() {
-    return timeout > 0;
+    return ___timeout > 0;
   }
 
   public void setTimeout(long timeout) {
-    this.timeout = timeout;
+    this.___timeout = timeout;
   }
 
   /**
@@ -61,7 +61,7 @@ public abstract class TAsyncClient {
    * @return
    */
   public boolean hasError() {
-    return error != null;
+    return ___error != null;
   }
 
   /**
@@ -69,18 +69,18 @@ public abstract class TAsyncClient {
    * @return
    */
   public Exception getError() {
-    return error;
+    return ___error;
   }
 
   protected void checkReady() {
     // Ensure we are not currently executing a method
-    if (currentMethod != null) {
-      throw new IllegalStateException("Client is currently executing another method: " + currentMethod.getClass().getName());
+    if (___currentMethod != null) {
+      throw new IllegalStateException("Client is currently executing another method: " + ___currentMethod.getClass().getName());
     }
 
     // Ensure we're not in an error state
-    if (error != null) {
-      throw new IllegalStateException("Client has an error!", error);
+    if (___error != null) {
+      throw new IllegalStateException("Client has an error!", ___error);
     }
   }
 
@@ -88,15 +88,15 @@ public abstract class TAsyncClient {
    * Called by delegate method when finished
    */
   protected void onComplete() {
-    currentMethod = null;
+    ___currentMethod = null;
   }
 
   /**
    * Called by delegate method on error
    */
   protected void onError(Exception exception) {
-    transport.close();
-    currentMethod = null;
-    error = exception;
+    ___transport.close();
+    ___currentMethod = null;
+    ___error = exception;
   }
 }
