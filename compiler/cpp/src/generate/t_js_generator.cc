@@ -550,10 +550,10 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
       }
     }
 
-    out << indent() <<  "if (args != null) {" << endl;
+    out << indent() <<  "if (args) {" << endl;
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        out << indent() << indent() << "if (null != args." << (*m_iter)->get_name() << ") {" << endl
+        out << indent() << indent() << "if (!args." << (*m_iter)->get_name() << ") {" << endl
             << indent() << indent() << indent() << "this." << (*m_iter)->get_name() << " = args." << (*m_iter)->get_name()  << ";" << endl
             << indent() << indent() << "}" << endl;
     }
@@ -607,40 +607,50 @@ void t_js_generator::generate_js_struct_reader(ofstream& out,
 
 
   // Check for field STOP marker and break
-  indent(out) << "if (ftype == Thrift.Type.STOP)" << endl;
+  indent(out) << "if (ftype == Thrift.Type.STOP) {" << endl;
   indent_up();
   indent(out) << "break;" << endl;
   indent_down();
+  indent(out) << "}" << endl;
+  if (!fields.empty()) {
+    // Switch statement on the field we are reading
+    indent(out) << "switch (fid)" << endl;
 
-  // Switch statement on the field we are reading
-  indent(out) << "switch (fid)" << endl;
+    scope_up(out);
 
-  scope_up(out);
+    // Generate deserialization code for known cases
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
 
-  // Generate deserialization code for known cases
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      indent(out) << "case " << (*f_iter)->get_key() << ":" << endl;
+      indent(out) << "if (ftype == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
 
-    indent(out) << "case " << (*f_iter)->get_key() << ":" << endl;
-    indent(out) << "if (ftype == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
+      indent_up();
+      generate_deserialize_field(out, *f_iter, "this.");
+      indent_down();
 
-    indent_up();
-    generate_deserialize_field(out, *f_iter, "this.");
-    indent_down();
+      indent(out) << "} else {" << endl;
 
-    indent(out) << "} else {" << endl;
+      indent(out) <<  "  input.skip(ftype);" << endl;
 
+      out <<
+        indent() << "}" << endl <<
+        indent() << "break;" << endl;
+
+    }
+    if (fields.size() == 1) {
+      // pseudo case to make jslint happy
+      indent(out) <<  "case 0:" << endl;
+      indent(out) <<  "  input.skip(ftype);" << endl;
+      indent(out) <<  "  break;" << endl;
+    }
+    // In the default case we skip the field
+    indent(out) <<  "default:" << endl;
     indent(out) <<  "  input.skip(ftype);" << endl;
 
-    out <<
-      indent() << "}" << endl <<
-      indent() << "break;" << endl;
-
+    scope_down(out);
+  } else {
+    indent(out) << "input.skip(ftype);" << endl;
   }
-  // In the default case we skip the field
-  indent(out) <<  "default:" << endl;
-  indent(out) <<  "  input.skip(ftype);" << endl;
-
-  scope_down(out);
 
   indent(out) << "input.readFieldEnd();" << endl;
 
@@ -670,7 +680,7 @@ void t_js_generator::generate_js_struct_writer(ofstream& out,
   indent(out) << "output.writeStructBegin('" << name << "');" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    out << indent() << "if (null != this." << (*f_iter)->get_name() << ") {" << endl;
+    out << indent() << "if (this." << (*f_iter)->get_name() << ") {" << endl;
     indent_up();
 
     indent(out) <<
@@ -951,7 +961,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
   } else {
     f_service_ <<
       indent() << "  this.input = input;" << endl <<
-      indent() << "  this.output = null == output ? input : output;" << endl <<
+      indent() << "  this.output = (!output) ? input : output;" << endl <<
       indent() << "  this.seqid = 0;" << endl;
   }
 
@@ -1129,7 +1139,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
-          indent() << "if (null != result." << (*x_iter)->get_name() << ") {" << endl <<
+          indent() << "if (null !== result." << (*x_iter)->get_name() << ") {" << endl <<
           indent() << "  " << render_recv_throw("result." + (*x_iter)->get_name()) << endl <<
           indent() << "}" << endl;
       }
@@ -1137,7 +1147,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       // Careful, only return result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ <<
-          indent() << "if (null != result.success) {" << endl <<
+          indent() << "if (null !== result.success) {" << endl <<
           indent() << "  " << render_recv_return("result.success") << endl <<
           indent() << "}" << endl;
         f_service_ <<
@@ -1269,6 +1279,7 @@ void t_js_generator::generate_deserialize_container(ofstream &out,
   string ktype = tmp("_ktype");
   string vtype = tmp("_vtype");
   string etype = tmp("_etype");
+  string rtmp3 = tmp("_rtmp3");
 
   t_field fsize(g_type_i32, size);
   t_field fktype(g_type_byte, ktype);
@@ -1276,7 +1287,7 @@ void t_js_generator::generate_deserialize_container(ofstream &out,
   t_field fetype(g_type_byte, etype);
 
   out << indent() << "var " << size << " = 0;" << endl;
-  out << indent() << "var rtmp3;" << endl;
+  out << indent() << "var " << rtmp3 << ";" << endl;
 
 
   // Declare variables, read header
@@ -1286,10 +1297,10 @@ void t_js_generator::generate_deserialize_container(ofstream &out,
           indent() << "var " << ktype << " = 0;" << endl <<
           indent() << "var " << vtype << " = 0;" << endl;
 
-      out << indent() << "rtmp3 = input.readMapBegin();" << endl;
-      out << indent() << ktype << " = rtmp3.ktype;" << endl;
-      out << indent() << vtype << " = rtmp3.vtype;" << endl;
-      out << indent() << size  << " = rtmp3.size;" << endl;
+      out << indent() << rtmp3 << " = input.readMapBegin();" << endl;
+      out << indent() << ktype << " = " << rtmp3 << ".ktype;" << endl;
+      out << indent() << vtype << " = " << rtmp3 << ".vtype;" << endl;
+      out << indent() << size  << " = " << rtmp3 << ".size;" << endl;
 
 
   } else if (ttype->is_set()) {
@@ -1297,18 +1308,18 @@ void t_js_generator::generate_deserialize_container(ofstream &out,
     out <<
         indent() << prefix << " = [];" << endl <<
         indent() << "var " << etype << " = 0;" << endl <<
-        indent() << "rtmp3 = input.readSetBegin();" << endl <<
-        indent() << etype << " = rtmp3.etype;"<<endl<<
-        indent() << size << " = rtmp3.size;"<<endl;
+        indent() << rtmp3 << " = input.readSetBegin();" << endl <<
+        indent() << etype << " = " << rtmp3 << ".etype;"<<endl<<
+        indent() << size << " = " << rtmp3 << ".size;"<<endl;
 
   } else if (ttype->is_list()) {
 
     out <<
         indent() << prefix << " = [];" << endl <<
         indent() << "var " << etype << " = 0;" << endl <<
-        indent() << "rtmp3 = input.readListBegin();" << endl <<
-        indent() << etype << " = rtmp3.etype;"<<endl<<
-        indent() << size << " = rtmp3.size;"<<endl;
+        indent() << rtmp3 << " = input.readListBegin();" << endl <<
+        indent() << etype << " = " << rtmp3 << ".etype;"<<endl<<
+        indent() << size << " = " << rtmp3 << ".size;"<<endl;
   }
 
   // For loop iterates over elements

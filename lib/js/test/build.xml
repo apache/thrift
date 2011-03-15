@@ -18,7 +18,8 @@
 -->
 <project name="Java Script Test" default="test" basedir="."
   xmlns:ivy="antlib:org.apache.ivy.ant"
-  xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+  xmlns:artifact="antlib:org.apache.maven.artifact.ant"
+  xmlns:jsl="antlib:com.googlecode.jslint4java">
 
   <description>Java Script Test based on Thrift Java Library</description>
 
@@ -50,6 +51,8 @@
     <path refid="libs.classpath" />
     <pathelement location="${jar.file}" />
   </path>
+
+  <taskdef uri="antlib:com.googlecode.jslint4java" resource="com/googlecode/jslint4java/antlib.xml" classpathref="libs.classpath" />
 
   <target name="dependencies">
     <fail>
@@ -113,6 +116,35 @@
     </exec>
     <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen js ${thrift.dir}/test/ThriftTest.thrift" />
+    </exec>
+  </target>
+
+  <target name="lint" description="code quality checks" depends="gjslint, jslint"/>
+
+  <target name="jslint">
+    <!--
+         the following options would probably make sense in the future:
+         browser,undef,eqeqeq,plusplus,bitwise,regexp,strict,newcap,immed
+    -->
+  	<jsl:jslint options="evil,forin,browser,bitwise,regexp,newcap,immed">
+      <formatter type="plain" />
+      <fileset dir="${genjs}" includes="**/*.js" />
+      <fileset dir=".." includes="thrift.js" />
+    </jsl:jslint>
+  </target>
+
+  <target name="check-gjslint">
+    <echo>check if gjslint is available:</echo>
+    <exec executable="gjslint" failifexecutionfails="no" resultproperty="gjslint.present" failonerror="false">
+      <arg line="--helpshort"/>
+    </exec>
+  </target>
+    
+  <target name="gjslint" depends="check-gjslint" if="gjslint.present">
+    <exec executable="gjslint" failifexecutionfails="no">
+      <arg line="--nojsdoc"/>
+      <arg line="${genjs}/*.js"/>
+      <arg line="../thrift.js"/>
     </exec>
   </target>
 

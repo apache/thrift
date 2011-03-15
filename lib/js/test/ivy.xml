@@ -17,6 +17,7 @@
 <ivy-module version="2.0">
     <info organisation="org.apache.thrift" module="jstest"/>
     <dependencies>
-       <dependency org="org.apache.httpcomponents" name="httpclient" rev="4.0.1" conf="* -> *,!sources,!javadoc"/>
+        <dependency org="org.apache.httpcomponents" name="httpclient" rev="4.0.1" conf="* -> *,!sources,!javadoc"/>
+        <dependency org="com.googlecode.jslint4java" name="jslint4java-ant" rev="1.4.2" conf="* -> *,!sources,!javadoc"/>      
     </dependencies>
 </ivy-module>
