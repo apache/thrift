@@ -52,8 +52,9 @@ def readVarint(trans):
     shift += 7
 
 class CompactType:
-  TRUE = 1
-  FALSE = 2
+  STOP = 0x00
+  TRUE = 0x01
+  FALSE = 0x02
   BYTE = 0x03
   I16 = 0x04
   I32 = 0x05
@@ -65,7 +66,8 @@ class CompactType:
   MAP = 0x0B
   STRUCT = 0x0C
 
-CTYPES = {TType.BOOL: CompactType.TRUE, # used for collection
+CTYPES = {TType.STOP: CompactType.STOP,
+          TType.BOOL: CompactType.TRUE, # used for collection
           TType.BYTE: CompactType.BYTE,
           TType.I16: CompactType.I16,
           TType.I32: CompactType.I32,
@@ -75,7 +77,7 @@ CTYPES = {TType.BOOL: CompactType.TRUE, # used for collection
           TType.STRUCT: CompactType.STRUCT,
           TType.LIST: CompactType.LIST,
           TType.SET: CompactType.SET,
-          TType.MAP: CompactType.MAP,
+          TType.MAP: CompactType.MAP
           }
 
 TTYPES = {}
@@ -196,11 +198,15 @@ class TCompactProtocol(TProtocolBase):
 
   def writeBool(self, bool):
     if self.state == BOOL_WRITE:
-      self.__writeFieldHeader(types[bool], self.__bool_fid)
+        if bool:
+            ctype = CompactType.TRUE
+        else:
+            ctype = CompactType.FALSE
+        self.__writeFieldHeader(ctype, self.__bool_fid)
     elif self.state == CONTAINER_WRITE:
       self.__writeByte(int(bool))
     else:
-      raise AssertetionError, "Invalid state in compact protocol"
+      raise AssertionError, "Invalid state in compact protocol"
 
   writeByte = writer(__writeByte)
   writeI16 = writer(__writeI16)

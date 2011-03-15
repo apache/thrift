@@ -194,3 +194,16 @@ struct ListTypeVersioningV2 {
 struct GuessProtocolStruct {
   7: map<string,string> map_field,
 }
+
+struct LargeDeltas {
+  1: Bools b1,
+  10: Bools b10,
+  100: Bools b100,
+  500: bool check_true,
+  1000: Bools b1000,
+  1500: bool check_false,
+  2000: VersioningTestV2 vertwo2000,
+  2500: set<string> a_set2500,
+  3000: VersioningTestV2 vertwo3000,
+  4000: list<i32> big_numbers
+}
