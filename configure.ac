@@ -468,6 +468,7 @@ AC_CONFIG_FILES([
   lib/erl/src/Makefile
   lib/hs/Makefile
   lib/java/Makefile
+  lib/js/test/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile
   lib/php/Makefile

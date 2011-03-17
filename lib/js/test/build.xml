@@ -103,7 +103,7 @@
     <jar jarfile="${jar.file}" basedir="${build}"/>
   </target>
 
-  <target name="test" description="run the test server" depends="jstest">
+  <target name="testserver" description="run the test server" depends="jstest">
     <java classname="test.Httpd" fork="true"
       classpathref="test.classpath" failonerror="true">
       <arg value="../" />
@@ -119,7 +119,10 @@
     </exec>
   </target>
 
-  <target name="lint" description="code quality checks" depends="gjslint, jslint"/>
+  <!-- @TODO QUnit tests as part of the testsuite-->
+  <target name="test" description="run test suite" depends="init, generate, resolve, lint"/>
+
+  <target name="lint" description="code quality checks" depends="gjslint, jslint, generate"/>
 
   <target name="jslint">
     <!--
