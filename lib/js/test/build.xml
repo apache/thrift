@@ -52,8 +52,6 @@
     <pathelement location="${jar.file}" />
   </path>
 
-  <taskdef uri="antlib:com.googlecode.jslint4java" resource="com/googlecode/jslint4java/antlib.xml" classpathref="libs.classpath" />
-
   <target name="dependencies">
     <fail>
       <condition>
@@ -125,6 +123,7 @@
   <target name="lint" description="code quality checks" depends="gjslint, jslint, generate"/>
 
   <target name="jslint">
+    <taskdef uri="antlib:com.googlecode.jslint4java" resource="com/googlecode/jslint4java/antlib.xml" classpathref="libs.classpath" />
     <!--
          the following options would probably make sense in the future:
          browser,undef,eqeqeq,plusplus,bitwise,regexp,strict,newcap,immed
