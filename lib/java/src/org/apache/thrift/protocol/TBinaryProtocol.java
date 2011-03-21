@@ -191,7 +191,7 @@ public class TBinaryProtocol extends TProtocol {
   }
 
   public void writeBinary(ByteBuffer bin) throws TException {
-    int length = bin.limit() - bin.position() - bin.arrayOffset();
+    int length = bin.limit() - bin.position();
     writeI32(length);
     trans_.write(bin.array(), bin.position() + bin.arrayOffset(), length);
   }

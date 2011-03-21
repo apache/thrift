@@ -80,6 +80,17 @@ public abstract class ProtocolTestBase extends TestCase {
       }
       internalTestBinaryField(b);
     }
+
+    if (canBeUsedNaked()) {
+      byte[] data = {1, 2, 3, 4, 5, 6};
+
+      TMemoryBuffer buf = new TMemoryBuffer(0);
+      TProtocol proto = getFactory().getProtocol(buf);
+      ByteBuffer bb = ByteBuffer.wrap(data);
+      bb.get();
+      proto.writeBinary(bb.slice());
+      assertEquals(ByteBuffer.wrap(data, 1, 5), proto.readBinary());
+    }
   }
 
   public void testString() throws Exception {
