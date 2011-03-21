@@ -291,9 +291,8 @@ class TCompactProtocol(TProtocolBase):
     return (name, type, seqid)
 
   def readMessageEnd(self):
-    assert self.state == VALUE_READ
+    assert self.state == CLEAR
     assert len(self.__structs) == 0
-    self.state = CLEAR
 
   def readStructBegin(self):
     assert self.state in (CLEAR, CONTAINER_READ, VALUE_READ), self.state
