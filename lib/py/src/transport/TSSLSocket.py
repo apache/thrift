@@ -36,7 +36,7 @@ class TSSLSocket(TSocket.TSocket):
   """
   SSL_VERSION = ssl.PROTOCOL_TLSv1
 
-  def __init__(self, validate=True, ca_certs=None, *args, **kwargs):
+  def __init__(self, host='localhost', port=9090, validate=True, ca_certs=None, unix_socket=None):
     """
     @param validate: Set to False to disable SSL certificate validation entirely.
     @type validate: bool
@@ -56,10 +56,10 @@ class TSSLSocket(TSocket.TSocket):
     else:
       self.cert_reqs = ssl.CERT_REQUIRED
     self.ca_certs = ca_certs
-    if validate and ca_certs is not None:
-      if not os.access(ca_certs, os.R_OK):
+    if validate:
+      if ca_certs is None or not os.access(ca_certs, os.R_OK):
         raise IOError('Certificate Authority ca_certs file "%s" is not readable, cannot validate SSL certificates.' % (ca_certs))
-    TSocket.TSocket.__init__(self, *args, **kwargs)
+    TSocket.TSocket.__init__(self, host, port, unix_socket)
 
   def open(self):
     try:
@@ -131,7 +131,7 @@ class TSSLServerSocket(TSocket.TServerSocket):
   """
   SSL_VERSION = ssl.PROTOCOL_TLSv1
 
-  def __init__(self, certfile='cert.pem', *args, **kwargs):
+  def __init__(self, host=None, port=9090, certfile='cert.pem', unix_socket=None):
     """Initialize a TSSLServerSocket
     
     @param certfile: The filename of the server certificate file, defaults to cert.pem
@@ -143,7 +143,7 @@ class TSSLServerSocket(TSocket.TServerSocket):
     @type port: int
     """
     self.setCertfile(certfile)
-    TSocket.TServerSocket.__init__(self, *args, **kwargs)
+    TSocket.TServerSocket.__init__(self, host, port)
 
   def setCertfile(self, certfile):
     """Set or change the server certificate file used to wrap new connections.
@@ -159,8 +159,18 @@ class TSSLServerSocket(TSocket.TServerSocket):
 
   def accept(self):
     plain_client, addr = self.handle.accept()
+    try:
+      client = ssl.wrap_socket(plain_client, certfile=self.certfile,
+                      server_side=True, ssl_version=self.SSL_VERSION)
+    except ssl.SSLError, ssl_exc:
+      # failed handshake/ssl wrap, close socket to client
+      plain_client.close()
+      # raise ssl_exc
+      # We can't raise the exception, because it kills most TServer derived serve()
+      # methods.
+      # Instead, return None, and let the TServer instance deal with it in
+      # other exception handling.  (but TSimpleServer dies anyway)
+      return None 
     result = TSocket.TSocket()
-    client = ssl.wrap_socket(plain_client, certfile=self.certfile,
-                    server_side=True, ssl_version=self.SSL_VERSION)
     result.setHandle(client)
     return result

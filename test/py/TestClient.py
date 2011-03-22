@@ -28,6 +28,7 @@ from ThriftTest.ttypes import *
 from thrift.transport import TTransport
 from thrift.transport import TSocket
 from thrift.transport import THttpClient
+from thrift.transport import TZlibTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TCompactProtocol
 import unittest
@@ -40,6 +41,10 @@ parser.add_option("--port", type="int", dest="port",
     help="connect to server at port")
 parser.add_option("--host", type="string", dest="host",
     help="connect to server")
+parser.add_option("--zlib", action="store_true", dest="zlib",
+    help="use zlib wrapper for compressed transport")
+parser.add_option("--ssl", action="store_true", dest="ssl",
+    help="use SSL for encrypted transport")
 parser.add_option("--framed", action="store_true", dest="framed",
     help="use framed transport")
 parser.add_option("--http", dest="http_path",
@@ -58,19 +63,21 @@ options, args = parser.parse_args()
 class AbstractTest(unittest.TestCase):
   def setUp(self):
     if options.http_path:
-      self.transport = THttpClient.THttpClient(
-          options.host, options.port, options.http_path)
+      self.transport = THttpClient.THttpClient(options.host, port=options.port, path=options.http_path)
     else:
-      socket = TSocket.TSocket(options.host, options.port)
-
+      if options.ssl:
+        from thrift.transport import TSSLSocket
+        socket = TSSLSocket.TSSLSocket(options.host, options.port, validate=False)
+      else:
+        socket = TSocket.TSocket(options.host, options.port)
       # frame or buffer depending upon args
       if options.framed:
         self.transport = TTransport.TFramedTransport(socket)
       else:
         self.transport = TTransport.TBufferedTransport(socket)
-
+      if options.zlib:
+        self.transport = TZlibTransport.TZlibTransport(self.transport, 9)
     self.transport.open()
-
     protocol = self.protocol_factory.getProtocol(self.transport)
     self.client = ThriftTest.Client(protocol)
 
@@ -82,7 +89,7 @@ class AbstractTest(unittest.TestCase):
     self.client.testVoid()
 
   def testString(self):
-    self.assertEqual(self.client.testString('Python'), 'Python')
+    self.assertEqual(self.client.testString('Python' * 20), 'Python' * 20)
     self.assertEqual(self.client.testString(''), '')
 
   def testByte(self):
