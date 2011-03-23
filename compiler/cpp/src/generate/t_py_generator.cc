@@ -827,7 +827,7 @@ void t_py_generator::generate_py_struct_writer(ofstream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     // Write field header
     indent(out) <<
-      "if self." << (*f_iter)->get_name() << " != None:" << endl;
+      "if self." << (*f_iter)->get_name() << " is not None:" << endl;
     indent_up();
     indent(out) <<
       "oprot.writeFieldBegin(" <<
@@ -1064,7 +1064,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
     } else {
       f_service_ <<
         indent() << "  self._iprot = self._oprot = iprot" << endl <<
-        indent() << "  if oprot != None:" << endl <<
+        indent() << "  if oprot is not None:" << endl <<
         indent() << "    self._oprot = oprot" << endl <<
         indent() << "  self._seqid = 0" << endl <<
         endl;
@@ -1233,7 +1233,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ <<
-          indent() << "if result.success != None:" << endl;
+          indent() << "if result.success is not None:" << endl;
           if (gen_twisted_) {
             f_service_ <<
               indent() << "  return d.callback(result.success)" << endl;
@@ -1248,7 +1248,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
-          indent() << "if result." << (*x_iter)->get_name() << " != None:" << endl;
+          indent() << "if result." << (*x_iter)->get_name() << " is not None:" << endl;
           if (gen_twisted_) {
             f_service_ <<
               indent() << "  return d.errback(result." << (*x_iter)->get_name() << ")" << endl;
