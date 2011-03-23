@@ -38,6 +38,7 @@ class TAsyncBufferProcessor {
       std::tr1::function<void(bool healthy)> _return,
       boost::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
       boost::shared_ptr<apache::thrift::transport::TBufferBase> obuf) = 0;
+  virtual ~TAsyncBufferProcessor() {}
 };
 
 }}} // apache::thrift::async

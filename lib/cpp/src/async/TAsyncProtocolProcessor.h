@@ -40,6 +40,8 @@ class TAsyncProtocolProcessor : public TAsyncBufferProcessor {
       boost::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
       boost::shared_ptr<apache::thrift::transport::TBufferBase> obuf);
 
+  virtual ~TAsyncProtocolProcessor() {}
+
  private:
   static void finish(
       std::tr1::function<void(bool healthy)> _return,
