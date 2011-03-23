@@ -1470,8 +1470,13 @@ void t_ocaml_generator::generate_deserialize_type(ofstream &out,
  */
 void t_ocaml_generator::generate_deserialize_struct(ofstream &out,
                                                   t_struct* tstruct) {
+  string prefix = "";
+  t_program* program = tstruct->get_program();
+  if (program != NULL && program != program_) {
+     prefix = capitalize(program->get_name()) + "_types.";
+  }
   string name = decapitalize(tstruct->get_name());
-  out << "(read_" << name << " iprot)";
+  out << "(" << prefix << "read_" << name << " iprot)";
 
 }
 
