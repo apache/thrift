@@ -48,8 +48,8 @@ ${GENDIR}/: ${RPCFILE}
 	mkdir -p ${GEN_INCLUDEDIR}
 	mkdir -p ${GEN_SRCDIR}
 	mkdir -p ${GEN_TARGETDIR}
-	mv -t ${GEN_INCLUDEDIR} gen-erl/*.hrl
-	mv -t ${GEN_SRCDIR} gen-erl/*.erl
+	mv gen-erl/*.hrl ${GEN_INCLUDEDIR}
+	mv gen-erl/*.erl ${GEN_SRCDIR}
 	rm -rf gen-erl
 
 ${GEN_TARGETDIR}/: ${GENDIR}/

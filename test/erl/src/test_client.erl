@@ -88,7 +88,7 @@ start(Args) ->
   {Client11, {ok, DemoDict}}        = thrift_client:call(Client10, testMap, [DemoDict]),
   {Client12, {ok, DemoSet}}         = thrift_client:call(Client11, testSet, [DemoSet]),
   {Client13, {ok, [-1,2,3]}}        = thrift_client:call(Client12, testList, [[-1,2,3]]),
-  {Client14, {ok, 1}}               = thrift_client:call(Client13, testEnum, [?thriftTest_ONE]),
+  {Client14, {ok, 1}}               = thrift_client:call(Client13, testEnum, [?thriftTest_Numberz_ONE]),
   {Client15, {ok, 309858235082523}} = thrift_client:call(Client14, testTypedef, [309858235082523]),
 
   % No python implementation, but works with C++ and Erlang.

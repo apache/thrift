@@ -141,19 +141,19 @@ handle_function(testInsanity, {Insanity}) when is_record(Insanity, insanity) ->
                       i32_thing = 4,
                       i64_thing = 4},
     Crazy = #insanity{
-      userMap = dict:from_list([{?thriftTest_EIGHT, 8}]),
+      userMap = dict:from_list([{?thriftTest_Numberz_EIGHT, 8}]),
       xtructs = [Goodbye]
       },
 
     Looney = #insanity{
-      userMap = dict:from_list([{?thriftTest_FIVE, 5}]),
+      userMap = dict:from_list([{?thriftTest_Numberz_FIVE, 5}]),
       xtructs = [Hello]
       },
 
-    FirstMap = dict:from_list([{?thriftTest_TWO, Crazy},
-                               {?thriftTest_THREE, Crazy}]),
+    FirstMap = dict:from_list([{?thriftTest_Numberz_TWO, Crazy},
+                               {?thriftTest_Numberz_THREE, Crazy}]),
 
-    SecondMap = dict:from_list([{?thriftTest_SIX, Looney}]),
+    SecondMap = dict:from_list([{?thriftTest_Numberz_SIX, Looney}]),
 
     Insane = dict:from_list([{1, FirstMap},
                              {2, SecondMap}]),
