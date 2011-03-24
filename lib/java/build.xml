@@ -23,7 +23,7 @@
   
   <description>Thrift Build File</description>
   <property name="thrift.root" location="../../"/>
-  <property name="thrift.version" value="0.6.0"/>
+  <property name="thrift.version" value="0.6.1"/>
   <property name="thrift.groupid" value="org.apache.thrift"/>
   <property name="thrift.artifactid" value="libthrift"/>
   
