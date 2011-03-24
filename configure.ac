@@ -23,7 +23,7 @@ AC_INIT([thrift], [0.6.0])
 
 AC_CONFIG_AUX_DIR([.])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([1.9 tar-ustar])
 
 AC_ARG_VAR([PY_PREFIX], [Prefix for installing Python modules.
                          (Normal --prefix is ignored for Python because
