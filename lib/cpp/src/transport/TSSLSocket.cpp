@@ -7,6 +7,8 @@
 #include <errno.h>
 #include <string>
 #include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_array.hpp>
 #include <openssl/err.h>
