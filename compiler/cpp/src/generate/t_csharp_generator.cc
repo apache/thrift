@@ -1488,6 +1488,8 @@ void t_csharp_generator::generate_serialize_container(ofstream& out, t_type* tty
     generate_serialize_list_element(out, (t_list*)ttype, iter);
   }
 
+  scope_down(out);
+
   if (ttype->is_map()) {
     indent(out) << "oprot.WriteMapEnd();" << endl;
   } else if (ttype->is_set()) {
@@ -1496,7 +1498,6 @@ void t_csharp_generator::generate_serialize_container(ofstream& out, t_type* tty
     indent(out) << "oprot.WriteListEnd();" << endl;
   }
 
-  scope_down(out);
   scope_down(out);
 }
 
