@@ -1058,7 +1058,7 @@ namespace Thrift.Protocol
 
 		public override String ReadString()
 		{
-			return ReadJSONString(false).ToString();
+			return utf8Encoding.GetString(ReadJSONString(false));
 		}
 
 		public override byte[] ReadBinary()
