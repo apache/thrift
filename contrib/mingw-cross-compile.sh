@@ -7,6 +7,7 @@ set -e
   --without-csharp \
   --without-python \
   --without-ruby \
+  --without-haskell \
   --without-perl \
   --without-php \
   --without-erlang \
