@@ -68,7 +68,11 @@ class t_erl_generator : public t_generator {
   void generate_struct   (t_struct*   tstruct);
   void generate_xception (t_struct*   txception);
   void generate_service  (t_service*  tservice);
+  void generate_member_type(std::ostream & out, t_type* type);
+  void generate_member_value(std::ostream & out, t_type* type, t_const_value* value);
 
+  std::string render_member_type(t_type* type);
+  std::string render_default_value(t_type* type);
   std::string render_const_value(t_type* type, t_const_value* value);
 
   /**
@@ -77,6 +81,7 @@ class t_erl_generator : public t_generator {
 
   void generate_erl_struct(t_struct* tstruct, bool is_exception);
   void generate_erl_struct_definition(std::ostream& out, std::ostream& hrl_out, t_struct* tstruct, bool is_xception=false, bool is_result=false);
+  void generate_erl_struct_member(std::ostream& out, t_field * tmember);
   void generate_erl_struct_info(std::ostream& out, t_struct* tstruct);
   void generate_erl_function_helpers(t_function* tfunction);
 
@@ -95,7 +100,6 @@ class t_erl_generator : public t_generator {
   std::string erl_autogen_comment();
   std::string erl_imports();
   std::string render_includes();
-  std::string declare_field(t_field* tfield);
   std::string type_name(t_type* ttype);
 
   std::string function_signature(t_function* tfunction, std::string prefix="");
@@ -115,6 +119,8 @@ class t_erl_generator : public t_generator {
     in[0] = tolower(in[0]);
     return in;
   }
+
+  static std::string comment(string in);
 
  private:
 
@@ -247,6 +253,21 @@ string t_erl_generator::erl_autogen_comment() {
 }
 
 /**
+ * Comment out text
+ */
+
+string t_erl_generator::comment(string in)
+{
+  size_t pos = 0;
+  in.insert(pos, "%% ");
+  while ( (pos = in.find_first_of('\n', pos)) != string::npos )
+  {
+    in.insert(++pos, "%% ");
+  }
+  return in;
+}
+
+/**
  * Prints standard thrift imports
  */
 string t_erl_generator::erl_imports() {
@@ -349,7 +370,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     indent(out) << value->get_integer();
 
   } else if (type->is_struct() || type->is_xception()) {
-    out << "#" << type->get_name() << "{";
+    out << "#" << uncapitalize(type->get_name()) << "{";
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
@@ -382,41 +403,37 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
 
-    bool first = true;
-    out << "dict:from_list([";
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      if (first) {
-        first=false;
-      } else {
-        out << ",";
+    if ( value->get_map().empty() ) {
+      out << "dict:new()";
+    } else {
+      out << "dict:from_list([";
+      map<t_const_value*, t_const_value*>::const_iterator i, end = value->get_map().end();
+      for (i = value->get_map().begin(); i != end;) {
+        out << "("
+            << render_const_value(ktype, i->first)  << ","
+            << render_const_value(vtype, i->second) << ")";
+        if ( ++i != end ) {
+          out << ",";
+        }
       }
-      out << "("
-          << render_const_value(ktype, v_iter->first)  << ","
-          << render_const_value(vtype, v_iter->second) << ")";
+      out << "])";
     }
-    out << "])";
-
   } else if (type->is_set()) {
-    t_type* etype;
-    etype = ((t_set*)type)->get_elem_type();
-
-    bool first = true;
-    const vector<t_const_value*>& val = value->get_list();
-    vector<t_const_value*>::const_iterator v_iter;
-    out << "sets:from_list([";
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      if (first) {
-        first=false;
-      } else {
-        out << ",";
+    t_type* etype = ((t_set*)type)->get_elem_type();
+    if ( value->get_list().empty() ) {
+      out << "sets:new()";
+    } else {
+      out << "sets:from_list([";
+      vector<t_const_value*>::const_iterator i, end = value->get_list().end();
+      for( i = value->get_list().begin(); i != end; ) {
+        out << "(" << render_const_value(etype, *i) << ",true)";
+        if ( ++i != end ) {
+          out << ",";
+        }
       }
-      out << "(" << render_const_value(etype, *v_iter) << ",true)";
+      out << "])";
     }
-    out << "])";
-
   } else if (type->is_list()) {
     t_type* etype;
     etype = ((t_list*)type)->get_elem_type();
@@ -438,6 +455,53 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     throw "CANNOT GENERATE CONSTANT FOR TYPE: " + type->get_name();
   }
   return out.str();
+}
+
+string t_erl_generator::render_default_value(t_type* type) {
+  if (type->is_struct() || type->is_xception()) {
+    return "#" + uncapitalize(type->get_name()) + "{}";
+  } else if (type->is_map()) {
+    return "dict:new()";
+  } else if (type->is_set()) {
+    return "sets:new()";
+  } else if (type->is_list()) {
+    return "[]";
+  } else {
+    return "";
+  }
+}
+
+
+string t_erl_generator::render_member_type(t_type* type) {
+  type = get_true_type(type);
+  if (type->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_STRING:
+      return "string()";
+    case t_base_type::TYPE_BOOL:
+      return "boolean()";
+    case t_base_type::TYPE_BYTE:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      return "integer()";
+    case t_base_type::TYPE_DOUBLE:
+      return "float()";
+    default:
+      throw "compiler error: unsupported base type " + t_base_type::t_base_name(tbase);
+    }
+  } else if (type->is_enum()) {
+    return "integer()";
+  } else if (type->is_struct() || type->is_xception()) {
+  } else if (type->is_map()) {
+  } else if (type->is_set()) {
+  } else if (type->is_list()) {
+    return "list()";
+  } else {
+    throw "compiler error: unsupported type " + type->get_name();
+  }
+  return "";
 }
 
 /**
@@ -477,45 +541,55 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out,
                                                      bool is_result)
 {
   (void) is_result;
+  (void) is_exception;
+
+  indent(out) << "%% struct " << type_name(tstruct) << endl << endl;
+
+  std::stringstream buf;
+  buf << indent() << "-record(" << type_name(tstruct) << ", {";
+  string field_indent(buf.str().size(), ' ');
+
   const vector<t_field*>& members = tstruct->get_members();
-  vector<t_field*>::const_iterator m_iter;
-
-  indent(out) << "%% struct " << type_name(tstruct) << endl;
-
-  if (is_exception) {
-  }
-
-  out << endl;
-
-  if (members.size() > 0) {
-    indent(out)     << "% -record(" << type_name(tstruct) << ", {";
-    indent(hrl_out) <<   "-record(" << type_name(tstruct) << ", {";
-
-    bool first = true;
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      if (first) {
-        first = false;
-      } else {
-        out     << ", ";
-        hrl_out << ", ";
-      }
-      std::string name = uncapitalize((*m_iter)->get_name());
-      out     << name;
-      hrl_out << name;
+  for (vector<t_field*>::const_iterator m_iter = members.begin(); m_iter != members.end();) {
+    generate_erl_struct_member(buf, *m_iter);
+    if ( ++m_iter != members.end() ) {
+      buf << ", " << endl << field_indent;
     }
-    out     << "})." << endl;
-    hrl_out << "})." << endl;
-  } else { // no members; explicit comment
-    indent(out)     << "% -record(" << type_name(tstruct) << ", {})." << endl;
-    indent(hrl_out) <<   "-record(" << type_name(tstruct) << ", {})." << endl;
   }
+  buf << "}).";
 
-  out << endl;
-  hrl_out << endl;
-
+  hrl_out << buf.str() << endl << endl;
+  out << comment(buf.str()) << endl << endl;
 
   generate_erl_struct_info(out, tstruct);
 }
+
+/**
+ * Generates the record field definition
+ */
+
+void t_erl_generator::generate_erl_struct_member(ostream & out, t_field * tmember)
+{
+  out << uncapitalize(tmember->get_name());
+  generate_member_value(out, tmember->get_type(), tmember->get_value());
+  generate_member_type(out, tmember->get_type());
+}
+
+void t_erl_generator::generate_member_type(ostream & out, t_type* type) {
+  string member_type = render_member_type(type);
+  if ( !member_type.empty() ) {
+    out << " :: " << member_type;
+  }
+}
+
+void t_erl_generator::generate_member_value(ostream & out, t_type* type, t_const_value* value) {
+  string member_value = value ? render_const_value(type, value)
+                              : render_default_value(type);
+  if ( !member_value.empty() ) {
+    out << " = " << member_value;
+  }
+}
+
 
 /**
  * Generates the read method for a struct
@@ -698,23 +772,6 @@ void t_erl_generator::generate_function_info(t_service* tservice,
   indent_up();
   indent(f_service_) << generate_type_term(xs, true) << ";" << endl;
   indent_down();
-}
-
-
-/**
- * Declares a field, which may include initialization as necessary.
- *
- * @param ttype The type
- */
-string t_erl_generator::declare_field(t_field* tfield) {  // TODO
-  string result = "@" + tfield->get_name();
-  t_type* type = get_true_type(tfield->get_type());
-  if (tfield->get_value() != NULL) {
-    result += " = " + render_const_value(type, tfield->get_value());
-  } else {
-    result += " = nil";
-  }
-  return result;
 }
 
 /**
