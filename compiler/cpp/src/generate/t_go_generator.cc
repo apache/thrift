@@ -318,7 +318,11 @@ void t_go_generator::init_generator() {
 
   for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
     string service_dir = package_dir_+"/"+(*sv_iter)->get_name();
+#ifdef MINGW
     mkdir(service_dir.c_str());
+#else
+    mkdir(service_dir.c_str(), 0755);
+#endif
     string f_init_name = service_dir+"/Makefile";
     ofstream f_init;
     f_init.open(f_init_name.c_str());
