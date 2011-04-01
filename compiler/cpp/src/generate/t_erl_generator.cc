@@ -71,18 +71,23 @@ class t_erl_generator : public t_generator {
   void generate_member_type(std::ostream & out, t_type* type);
   void generate_member_value(std::ostream & out, t_type* type, t_const_value* value);
 
-  std::string render_member_type(t_type* type);
+  std::string render_member_type(t_field * field);
+  std::string render_member_value(t_field * field);
+  std::string render_member_requiredness(t_field * field);
+
   std::string render_default_value(t_type* type);
   std::string render_const_value(t_type* type, t_const_value* value);
+  std::string render_type_term(t_type* ttype, bool expand_structs, bool extended_info = false);
 
   /**
    * Struct generation code
    */
 
   void generate_erl_struct(t_struct* tstruct, bool is_exception);
-  void generate_erl_struct_definition(std::ostream& out, std::ostream& hrl_out, t_struct* tstruct, bool is_xception=false, bool is_result=false);
+  void generate_erl_struct_definition(std::ostream& out, t_struct* tstruct);
   void generate_erl_struct_member(std::ostream& out, t_field * tmember);
   void generate_erl_struct_info(std::ostream& out, t_struct* tstruct);
+  void generate_erl_extended_struct_info(std::ostream& out, t_struct* tstruct);
   void generate_erl_function_helpers(t_function* tfunction);
 
   /**
@@ -107,7 +112,6 @@ class t_erl_generator : public t_generator {
 
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
-  std::string generate_type_term(t_type* ttype, bool expand_structs);
   std::string type_module(t_type* ttype);
 
   std::string capitalize(std::string in) {
@@ -155,7 +159,9 @@ class t_erl_generator : public t_generator {
    * File streams
    */
 
-  std::ostringstream f_types_;
+  std::ostringstream f_info_;
+  std::ostringstream f_info_ext_;
+
   std::ofstream f_types_file_;
   std::ofstream f_types_hrl_file_;
 
@@ -278,12 +284,16 @@ string t_erl_generator::erl_imports() {
  * Closes the type files
  */
 void t_erl_generator::close_generator() {
-  // Close types file
-  export_types_string("struct_info", 1);
 
-  f_types_file_ << "-export([" << export_types_lines_.str() << "])." << endl;
-  f_types_file_ << f_types_.str();
-  f_types_file_ << "struct_info('i am a dummy struct') -> undefined." << endl;
+  export_types_string("struct_info", 1);
+  export_types_string("struct_info_ext", 1);
+  f_types_file_ << "-export([" << export_types_lines_.str() << "])." << endl << endl;
+
+  f_types_file_ << f_info_.str();
+  f_types_file_ << "struct_info('i am a dummy struct') -> undefined." << endl << endl;
+
+  f_types_file_ << f_info_ext_.str();
+  f_types_file_ << "struct_info_ext('i am a dummy struct') -> undefined." << endl << endl;
 
   hrl_footer(f_types_hrl_file_, string("BOGUS"));
 
@@ -404,36 +414,28 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
 
-    if ( value->get_map().empty() ) {
-      out << "dict:new()";
-    } else {
-      out << "dict:from_list([";
-      map<t_const_value*, t_const_value*>::const_iterator i, end = value->get_map().end();
-      for (i = value->get_map().begin(); i != end;) {
-        out << "("
-            << render_const_value(ktype, i->first)  << ","
-            << render_const_value(vtype, i->second) << ")";
-        if ( ++i != end ) {
-          out << ",";
-        }
+    out << "dict:from_list([";
+    map<t_const_value*, t_const_value*>::const_iterator i, end = value->get_map().end();
+    for (i = value->get_map().begin(); i != end;) {
+      out << "{"
+          << render_const_value(ktype, i->first)  << ","
+          << render_const_value(vtype, i->second) << "}";
+      if ( ++i != end ) {
+        out << ",";
       }
-      out << "])";
     }
+    out << "])";
   } else if (type->is_set()) {
     t_type* etype = ((t_set*)type)->get_elem_type();
-    if ( value->get_list().empty() ) {
-      out << "sets:new()";
-    } else {
-      out << "sets:from_list([";
-      vector<t_const_value*>::const_iterator i, end = value->get_list().end();
-      for( i = value->get_list().begin(); i != end; ) {
-        out << "(" << render_const_value(etype, *i) << ",true)";
-        if ( ++i != end ) {
-          out << ",";
-        }
+    out << "sets:from_list([";
+    vector<t_const_value*>::const_iterator i, end = value->get_list().end();
+    for( i = value->get_list().begin(); i != end; ) {
+      out << render_const_value(etype, *i) ;
+      if ( ++i != end ) {
+        out << ",";
       }
-      out << "])";
     }
+    out << "])";
   } else if (type->is_list()) {
     t_type* etype;
     etype = ((t_list*)type)->get_elem_type();
@@ -457,6 +459,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
   return out.str();
 }
 
+
 string t_erl_generator::render_default_value(t_type* type) {
   if (type->is_struct() || type->is_xception()) {
     return "#" + uncapitalize(type->get_name()) + "{}";
@@ -467,13 +470,12 @@ string t_erl_generator::render_default_value(t_type* type) {
   } else if (type->is_list()) {
     return "[]";
   } else {
-    return "";
+    return "undefined";
   }
 }
 
-
-string t_erl_generator::render_member_type(t_type* type) {
-  type = get_true_type(type);
+string t_erl_generator::render_member_type(t_field * field) {
+  t_type * type = get_true_type(field->get_type());
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
@@ -494,14 +496,24 @@ string t_erl_generator::render_member_type(t_type* type) {
   } else if (type->is_enum()) {
     return "integer()";
   } else if (type->is_struct() || type->is_xception()) {
+    return "#" + uncapitalize(type->get_name()) + "{}";
   } else if (type->is_map()) {
+    return "dict()";
   } else if (type->is_set()) {
+    return "set()";
   } else if (type->is_list()) {
     return "list()";
   } else {
     throw "compiler error: unsupported type " + type->get_name();
   }
-  return "";
+}
+
+string t_erl_generator::render_member_requiredness(t_field * field) {
+    switch(field->get_req()) {
+        case t_field::T_REQUIRED:       return "required";
+        case t_field::T_OPTIONAL:       return "optional";
+        default:                        return "undefined";
+    }
 }
 
 /**
@@ -524,9 +536,11 @@ void t_erl_generator::generate_xception(t_struct* txception) {
 /**
  * Generates a struct
  */
-void t_erl_generator::generate_erl_struct(t_struct* tstruct,
-                                          bool is_exception) {
-  generate_erl_struct_definition(f_types_, f_types_hrl_file_, tstruct, is_exception);
+void t_erl_generator::generate_erl_struct(t_struct* tstruct, bool is_exception) {
+  (void) is_exception;
+  generate_erl_struct_definition(f_types_hrl_file_, tstruct);
+  generate_erl_struct_info(f_info_, tstruct);
+  generate_erl_extended_struct_info(f_info_ext_, tstruct);
 }
 
 /**
@@ -534,15 +548,8 @@ void t_erl_generator::generate_erl_struct(t_struct* tstruct,
  *
  * @param tstruct The struct definition
  */
-void t_erl_generator::generate_erl_struct_definition(ostream& out,
-                                                     ostream& hrl_out,
-                                                     t_struct* tstruct,
-                                                     bool is_exception,
-                                                     bool is_result)
+void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tstruct)
 {
-  (void) is_result;
-  (void) is_exception;
-
   indent(out) << "%% struct " << type_name(tstruct) << endl << endl;
 
   std::stringstream buf;
@@ -558,10 +565,7 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out,
   }
   buf << "}).";
 
-  hrl_out << buf.str() << endl << endl;
-  out << comment(buf.str()) << endl << endl;
-
-  generate_erl_struct_info(out, tstruct);
+  out << buf.str() << endl << endl;
 }
 
 /**
@@ -571,42 +575,38 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out,
 void t_erl_generator::generate_erl_struct_member(ostream & out, t_field * tmember)
 {
   out << uncapitalize(tmember->get_name());
-  generate_member_value(out, tmember->get_type(), tmember->get_value());
-  generate_member_type(out, tmember->get_type());
+  out << " = "  << render_member_value(tmember);
+  out << " :: " << render_member_type(tmember);
 }
 
-void t_erl_generator::generate_member_type(ostream & out, t_type* type) {
-  string member_type = render_member_type(type);
-  if ( !member_type.empty() ) {
-    out << " :: " << member_type;
+string t_erl_generator::render_member_value(t_field * field) {
+  if (!field->get_value()) {
+    return render_default_value(field->get_type());
+  } else {
+    return render_const_value(field->get_type(), field->get_value());
   }
 }
 
-void t_erl_generator::generate_member_value(ostream & out, t_type* type, t_const_value* value) {
-  string member_value = value ? render_const_value(type, value)
-                              : render_default_value(type);
-  if ( !member_value.empty() ) {
-    out << " = " << member_value;
-  }
-}
 
 
 /**
  * Generates the read method for a struct
  */
-void t_erl_generator::generate_erl_struct_info(ostream& out,
-                                                  t_struct* tstruct) {
-  string name = type_name(tstruct);
-
-  indent(out) << "struct_info('" << name << "') ->" << endl;
+void t_erl_generator::generate_erl_struct_info(ostream& out, t_struct* tstruct) {
+  indent(out) << "struct_info('" << type_name(tstruct) << "') ->" << endl;
   indent_up();
-
-  out << indent() << generate_type_term(tstruct, true) << ";" << endl;
-
+  out << indent() << render_type_term(tstruct, true) << ";" << endl;
   indent_down();
   out << endl;
 }
 
+void t_erl_generator::generate_erl_extended_struct_info(ostream& out, t_struct* tstruct) {
+  indent(out) << "struct_info_ext('" << type_name(tstruct) << "') ->" << endl;
+  indent_up();
+  out << indent() << render_type_term(tstruct, true, true) << ";" << endl;
+  indent_down();
+  out << endl;
+}
 
 /**
  * Generates a thrift service.
@@ -748,7 +748,7 @@ void t_erl_generator::generate_function_info(t_service* tservice,
     "function_info(" << name_atom << ", params_type) ->" << endl;
   indent_up();
 
-  indent(f_service_) << generate_type_term(arg_struct, true) << ";" << endl;
+  indent(f_service_) << render_type_term(arg_struct, true) << ";" << endl;
 
   indent_down();
 
@@ -759,7 +759,7 @@ void t_erl_generator::generate_function_info(t_service* tservice,
 
   if (!tfunction->get_returntype()->is_void())
     indent(f_service_) <<
-        generate_type_term(tfunction->get_returntype(), false) << ";" << endl;
+        render_type_term(tfunction->get_returntype(), false) << ";" << endl;
   else if (tfunction->is_oneway())
     indent(f_service_) << "oneway_void;" << endl;
   else
@@ -770,7 +770,7 @@ void t_erl_generator::generate_function_info(t_service* tservice,
   indent(f_service_) <<
     "function_info(" << name_atom << ", exceptions) ->" << endl;
   indent_up();
-  indent(f_service_) << generate_type_term(xs, true) << ";" << endl;
+  indent(f_service_) << render_type_term(xs, true) << ";" << endl;
   indent_down();
 }
 
@@ -904,10 +904,8 @@ string t_erl_generator::type_to_enum(t_type* type) {
 /**
  * Generate an Erlang term which represents a thrift type
  */
-std::string t_erl_generator::generate_type_term(t_type* type,
-                                                   bool expand_structs) {
+std::string t_erl_generator::render_type_term(t_type* type, bool expand_structs, bool extended_info) {
     type = get_true_type(type);
-
 
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
@@ -933,28 +931,36 @@ std::string t_erl_generator::generate_type_term(t_type* type,
     return "i32";
   } else if (type->is_struct() || type->is_xception()) {
     if (expand_structs) {
-      // Convert to format: {struct, [{Fid, TypeTerm}, {Fid, TypeTerm}...]}
-      std::stringstream ret;
 
+      std::stringstream buf;
+      buf << "{struct, [";
 
-      ret << "{struct, [";
+      t_struct::members_type const& fields = static_cast<t_struct*>(type)->get_members();
+      t_struct::members_type::const_iterator i, end = fields.end();
+      for( i = fields.begin(); i != end; )
+      {
+        t_struct::members_type::value_type member = *i;
+        int32_t key  = member->get_key();
+        string  type = render_type_term(member->get_type(), false, false); // recursive call
 
-      int first = true;
-      const vector<t_field*>& fields = ((t_struct*)type)->get_members();
-      vector<t_field*>::const_iterator f_iter;
+        if ( !extended_info ) {
+          // Convert to format: {struct, [{Fid, Type}|...]}
+          buf << "{" << key << ", "  << type << "}";
+        } else {
+          // Convert to format: {struct, [{Fid, Req, Type, Name, Def}|...]}
+          string  name         = uncapitalize(member->get_name());
+          string  value        = render_member_value(member);
+          string  requiredness = render_member_requiredness(member);
+          buf << "{" << key << ", "  << requiredness << ", "  << type << ", '" << name << "'"<< ", "  << value << "}";
+        }
 
-      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-        // Comma separate the tuples
-        if (!first) ret << "," << endl << indent();
-        first = false;
-
-        ret << "{" << (*f_iter)->get_key() << ", " <<
-          generate_type_term((*f_iter)->get_type(), false) << "}";
+        if ( ++i != end ) {
+          buf << ", ";
+        }
       }
 
-      ret << "]}" << endl;
-
-      return ret.str();
+      buf << "]}" << endl;
+      return buf.str();
     } else {
       return "{struct, {'" + type_module(type) + "', '" + type_name(type) + "'}}";
     }
@@ -963,18 +969,18 @@ std::string t_erl_generator::generate_type_term(t_type* type,
     t_type *key_type = ((t_map*)type)->get_key_type();
     t_type *val_type = ((t_map*)type)->get_val_type();
 
-    return "{map, " + generate_type_term(key_type, false) + ", " +
-      generate_type_term(val_type, false) + "}";
+    return "{map, " + render_type_term(key_type, false) + ", " +
+      render_type_term(val_type, false) + "}";
 
   } else if (type->is_set()) {
     t_type *elem_type = ((t_set*)type)->get_elem_type();
 
-    return "{set, " + generate_type_term(elem_type, false) + "}";
+    return "{set, " + render_type_term(elem_type, false) + "}";
 
   } else if (type->is_list()) {
     t_type *elem_type = ((t_list*)type)->get_elem_type();
 
-    return "{list, " + generate_type_term(elem_type, false) + "}";
+    return "{list, " + render_type_term(elem_type, false) + "}";
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
