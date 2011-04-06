@@ -47,6 +47,9 @@ class t_js_generator : public t_oop_generator {
      
      iter = parsed_options.find("node");
      gen_node_ = (iter != parsed_options.end());
+     
+     iter = parsed_options.find("jquery");
+     gen_jquery_ = (iter != parsed_options.end());
 
      if (gen_node_) {
        out_dir_base_ = "gen-nodejs";
@@ -160,7 +163,7 @@ class t_js_generator : public t_oop_generator {
   std::string render_includes();
   std::string declare_field(t_field* tfield, bool init=false, bool obj=false);
   std::string function_signature(t_function* tfunction, std::string prefix="", bool include_callback=false);
-  std::string argument_list(t_struct* tstruct);
+  std::string argument_list(t_struct* tstruct, bool include_callback=false);
   std::string type_to_enum(t_type* ttype);
 
   std::string autogen_comment() {
@@ -225,6 +228,11 @@ class t_js_generator : public t_oop_generator {
    * True iff we should generate NodeJS-friendly RPC services.
    */
   bool gen_node_;
+
+  /**
+   * True if we should generate services that use jQuery ajax (async/sync).
+   */
+  bool gen_jquery_;
 
   /**
    * File streams
@@ -341,11 +349,11 @@ void t_js_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*>::iterator c_iter;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
-	f_types_ << "'" << (*c_iter)->get_name() << "' : " << value;
-    if (c_iter != constants.end()-1)
+    f_types_ << "'" << (*c_iter)->get_name() << "' : " << value;
+    if (c_iter != constants.end()-1) {
         f_types_ << ",";
-
-	f_types_ << endl;
+    }
+    f_types_ << endl;
   }
 
   f_types_ << "};"<<endl;
@@ -990,9 +998,11 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     const vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator fld_iter;
     string funname = (*f_iter)->get_name();
+    string arglist = argument_list(arg_struct);
 
     // Open function
-    f_service_ <<  js_namespace(tservice->get_program())<<service_name_<<"Client.prototype." << function_signature(*f_iter, "", gen_node_) << " {" << endl;
+    f_service_ <<  js_namespace(tservice->get_program())<<service_name_<<"Client.prototype." <<
+      function_signature(*f_iter, "", gen_node_ || gen_jquery_) << " {" << endl;
 
     indent_up();
 
@@ -1000,21 +1010,14 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       f_service_ <<
         indent() << "this.seqid += 1;" << endl <<
         indent() << "this._reqs[this.seqid] = callback;" << endl;
+    } else if (gen_jquery_) {
+      f_service_ <<
+        indent() << "if (callback === undefined) {" << endl;
+        indent_up();
     }
 
-    indent(f_service_) << indent() <<
-      "this.send_" << funname << "(";
-
-    bool first = true;
-    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      if (first) {
-        first = false;
-      } else {
-        f_service_ << ", ";
-      }
-      f_service_ << (*fld_iter)->get_name();
-    }
-    f_service_ << ");" << endl;
+    f_service_ << indent() <<
+      "this.send_" << funname << "(" << arglist << ");" << endl;
 
     if (!gen_node_ && !(*f_iter)->is_oneway()) {
       f_service_ << indent();
@@ -1025,12 +1028,28 @@ void t_js_generator::generate_service_client(t_service* tservice) {
         "this.recv_" << funname << "();" << endl;
     }
 
+    if (gen_jquery_) {
+      indent_down();
+      f_service_ << indent() << "} else {" << endl;
+      indent_up();
+        f_service_ << indent() << "var postData = this.send_" << funname <<
+           "(" << arglist << (arglist.empty() ? "" : ", ") << "true);" << endl;
+        f_service_ << indent() << "return this.output.getTransport()" << endl;
+        indent_up();
+          f_service_ << indent() << ".jqRequest(this, postData, arguments, this.recv_" << funname << ");" << endl;
+        indent_down();
+      indent_down();
+      f_service_ << indent() << "}" << endl;
+    }
+
     indent_down();
 
     f_service_ << "};" << endl << endl;
 
+
+    // Send function
     f_service_ <<  js_namespace(tservice->get_program())<<service_name_ <<
-        "Client.prototype.send_" << function_signature(*f_iter) << " {" <<endl;
+        "Client.prototype.send_" << function_signature(*f_iter, "", gen_jquery_) << " {" <<endl;
 
     indent_up();
 
@@ -1065,7 +1084,11 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     if (gen_node_) {
       f_service_ << indent() << "return this.output.flush();" << endl;
     } else {
-      f_service_ << indent() << "return this.output.getTransport().flush();" << endl;
+      if (gen_jquery_) {
+        f_service_ << indent() << "return this.output.getTransport().flush(callback);" << endl;
+      } else {
+        f_service_ << indent() << "return this.output.getTransport().flush();" << endl;
+      }
     }
 
 
@@ -1675,25 +1698,7 @@ string t_js_generator::function_signature(t_function* tfunction,
 
   str  = prefix + tfunction->get_name() + " = function(";
 
-
-  //Need to create js function arg inputs
-  const vector<t_field*> &fields = tfunction->get_arglist()->get_members();
-  vector<t_field*>::const_iterator f_iter;
-
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-
-      if(f_iter != fields.begin())
-          str += ", ";
-
-      str += (*f_iter)->get_name();
-  }
-
-  if (include_callback) {
-    if (!fields.empty()) {
-      str += ", ";
-    }
-    str += "callback";
-  }
+  str += argument_list(tfunction->get_arglist(), include_callback);
 
   str += ")";
   return str;
@@ -1702,7 +1707,8 @@ string t_js_generator::function_signature(t_function* tfunction,
 /**
  * Renders a field list
  */
-string t_js_generator::argument_list(t_struct* tstruct) {
+string t_js_generator::argument_list(t_struct* tstruct,
+                                       bool include_callback) {
   string result = "";
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -1716,6 +1722,14 @@ string t_js_generator::argument_list(t_struct* tstruct) {
     }
     result += (*f_iter)->get_name();
   }
+
+  if (include_callback) {
+    if (!fields.empty()) {
+      result += ", ";
+    }
+    result += "callback";
+  }
+
   return result;
 }
 
@@ -1761,6 +1775,7 @@ string t_js_generator ::type_to_enum(t_type* type) {
 }
 
 
-THRIFT_REGISTER_GENERATOR(js, "Javascript", 
+THRIFT_REGISTER_GENERATOR(js, "Javascript",
+"    jquery:          Generate jQuery compatible code.\n"
 "    node:            Generate node.js compatible code.\n")
 

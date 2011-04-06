@@ -27,7 +27,7 @@
   <script src="gen-js/ThriftTest.js"       type="text/javascript" charset="utf-8"></script>
 
   <!-- jQuery -->
-  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" charset="utf-8"></script>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.5.2.js" charset="utf-8"></script>
   
   <!-- json2  -->
   <script type="text/javascript" src="json2.js" charset="utf-8"></script>
@@ -39,9 +39,9 @@
   <script type="text/javascript" charset="utf-8">
   //<![CDATA[
   $(document).ready(function(){
-    var transport = new Thrift.Transport("/service")
-    var protocol  = new Thrift.Protocol(transport)
-    var client    = new ThriftTest.ThriftTestClient(protocol)
+    var transport = new Thrift.Transport("/service");
+    var protocol  = new Thrift.Protocol(transport);
+    var client    = new ThriftTest.ThriftTestClient(protocol);
 
 
     module("Base Types");
@@ -69,11 +69,6 @@
     });
     test("I32", function() {
       equals(client.testI32(Math.pow(2,30)), Math.pow(2,30));
-      
-      /*
-        how to test things like that?
-        equals(client.testI32(Math.pow(2,60)), Math.pow(2,60));
-      */
     });
     test("I64", function() {
       equals(client.testI64(Math.pow(2,60)), Math.pow(2,60));
@@ -174,9 +169,6 @@
       equals(JSON.stringify(mapMapTestOutput), JSON.stringify(mapMapTestExpectedResult))
     });
 
-    test("testMulti", function() {
-    });
-
 
     module("Exception");
 
@@ -204,7 +196,7 @@
         client.testException("ApplicationException");
       } catch(e) {
         ok(true); //@HACK: ignore faulty java server response for exceptions
-	//equals(e.message, "ApplicationException");
+        //equals(e.message, "ApplicationException");
       }
     });
 
@@ -217,63 +209,157 @@
       ok(res);
     });
 
+
+    //////////////////////////////////
+    //Run same tests asynchronously
+    jQuery.ajaxSetup({ timeout: 0 });
+    $(document).ajaxError( function() { QUnit.start(); } );
+
+    module("Async Manual");
+
+    test("testI32", function() {
+      expect( 2 );
+      QUnit.stop();
+
+      var transport = new Thrift.Transport();
+      var protocol  = new Thrift.Protocol(transport);
+      var client    = new ThriftTest.ThriftTestClient(protocol);
+
+      var jqxhr = jQuery.ajax({
+        url: "/service",
+        data: client.send_testI32(Math.pow(-2,31)),
+        type: "POST",
+        cache: false,
+        dataType: "text",
+        success: function(res){
+          transport.setRecvBuffer( res );
+          equals(client.recv_testI32(), Math.pow(-2,31));
+        },
+        error: function() { ok(false); },
+        complete: function() {
+          ok(true);
+          QUnit.start();
+        }
+      });
+    });
+
+
+    test("testI64", function() {
+      expect( 2 );
+      QUnit.stop();
+
+      var transport = new Thrift.Transport();
+      var protocol  = new Thrift.Protocol(transport);
+      var client    = new ThriftTest.ThriftTestClient(protocol);
+
+      jQuery.ajax({
+        url: "/service",
+        data: client.send_testI64(Math.pow(-2,61)),
+        type: "POST",
+        cache: false,
+        dataType: "text",
+        success: function(res){
+          transport.setRecvBuffer( res );
+          equals(client.recv_testI64(), Math.pow(-2,61));
+        },
+        error: function() { ok(false); },
+        complete: function() {
+          ok(true);
+          QUnit.start();
+        }
+      });
+    });
+
+
+
+    module("Async");
+
+    test("Double", function() {
+      expect( 1 );
+
+      QUnit.stop();
+      client.testDouble(3.14159265, function(result) {
+        equals(result, 3.14159265);
+        QUnit.start();
+      });
+    });
+
+    test("Byte", function() {
+      expect( 1 );
+
+      QUnit.stop();
+      client.testByte(0x01, function(result) {
+        equals(result, 0x01);
+        QUnit.start();
+      });
+    });
+
+    test("I32", function() {
+      expect( 3 );
+
+      QUnit.stop();
+      client.testI32(Math.pow(2,30), function(result) {
+        equals(result, Math.pow(2,30));
+        QUnit.start();
+      });
+
+      QUnit.stop();
+      var jqxhr = client.testI32(Math.pow(-2,31), function(result) {
+        equals(result, Math.pow(-2,31));
+      });
+
+      jqxhr.success(function(result) {
+        equals(result, Math.pow(-2,31));
+        QUnit.start();
+      });
+    });
+
+    test("I64", function() {
+      expect( 4 );
+
+      QUnit.stop();
+      client.testI64(Math.pow(2,60), function(result) {
+        equals(result, Math.pow(2,60));
+        QUnit.start();
+      });
+
+      QUnit.stop();
+      client.testI64(Math.pow(-2,61), function(result) {
+        equals(result, Math.pow(-2,61));
+      })
+      .error( function(e) {  ok(false); } )
+      .success(function(result) {
+        equals(result, Math.pow(-2,61));
+      })
+      .complete(function() {
+        ok(true);
+        QUnit.start();
+      });
+    });
+
+    test("Xception", function() {
+      expect( 2 );
+
+      QUnit.stop();
+
+      var dfd = client.testException("Xception", function(result) {
+        ok(false);
+        QUnit.start();
+      })
+      .error(function(e){
+        equals(e.errorCode, 1001);
+        equals(e.message, "Xception");
+        QUnit.start();
+      });
+    });
+
+
   });
   //]]>
   </script>
 
 </head>
 <body>
-
-  <script type="text/javascript" charset="utf-8">
-  //<![CDATA[
-
-  //////////////////////////////////
-  //Run same tests asynchronously
-/*
-  var transport = new Thrift.Transport()
-  var protocol  = new Thrift.Protocol(transport)
-  var client    = new ThriftTest.ThriftTestClient(protocol)
-
-  document.write("<h2>Asynchronous Example<\/h2>")
-  jQuery.ajax({
-     url: "/service",
-     data: client.send_testI32(Math.pow(2,30)),
-     type: "POST",
-     cache: false,
-     success: function(res){
-            var _transport = new Thrift.Transport()
-            var _protocol  = new Thrift.Protocol(_transport)
-            var _client    = new ThriftTest.ThriftTestClient(_protocol)
-
-            _transport.setRecvBuffer( res )
-
-            var v =  _client.recv_testI32()
-            $("#body").append("client.testI32()    => "+(v == Math.pow(2,30))+"<br/>")
-
-     }
-  })
-
-  jQuery.ajax({
-     url: "/service",
-     data: client.send_testI64(Math.pow(2,60)),
-     type: "POST",
-     cache: false,
-     success: function(res){
-            var _transport = new Thrift.Transport()
-            var _protocol  = new Thrift.Protocol(_transport)
-            var _client    = new ThriftTest.ThriftTestClient(_protocol)
-
-            _transport.setRecvBuffer( res )
-
-            var v =  _client.recv_testI64()
-            $("#body").append("client.testI64()    => "+(v == Math.pow(2,60))+"<br/>")
-
-     }
-  })
-*/
-
-  //]]>
-  </script>
   <h1 id="qunit-header">Thrift Javascript Bindings: Unit Test (<a href="https://svn.apache.org/repos/asf/thrift/trunk/test/ThriftTest.thrift">ThriftTest.thrift</a>)</h1>
   <h2 id="qunit-banner"></h2>
   <div id="qunit-testrunner-toolbar"></div> 

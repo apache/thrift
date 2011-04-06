@@ -66,7 +66,7 @@
         </not>
       </condition>
       You need libthrift*.jar and libthrift*test.jar located at
-      ${thrift.java.dir}
+      ${thrift.java.dir}/build
       Did you compile Thrift Java library and its test suite by "ant compile-test"?
     </fail>
     <fail>
@@ -101,7 +101,7 @@
     <javac srcdir="${src}" destdir="${build}" classpathref="libs.classpath" />
   </target>
 
-  <target name="jstest" description="" depends="compile">
+  <target name="jstest" description="" depends="compile, lint">
     <jar jarfile="${jar.file}" basedir="${build}"/>
   </target>
 
@@ -117,14 +117,14 @@
       <arg line="--gen java ${thrift.dir}/test/ThriftTest.thrift" />
     </exec>
     <exec executable="${thrift.compiler}" failonerror="true">
-      <arg line="--gen js ${thrift.dir}/test/ThriftTest.thrift" />
+      <arg line="--gen js:jquery ${thrift.dir}/test/ThriftTest.thrift" />
     </exec>
   </target>
 
   <!-- @TODO QUnit tests as part of the testsuite-->
   <target name="test" description="run test suite" depends="init, generate, resolve, lint"/>
 
-  <target name="lint" description="code quality checks" depends="gjslint, jslint, generate"/>
+  <target name="lint" description="code quality checks" depends="generate, gjslint, jslint"/>
 
   <target name="jslint">
     <taskdef uri="antlib:com.googlecode.jslint4java" resource="com/googlecode/jslint4java/antlib.xml" classpathref="libs.classpath" />
