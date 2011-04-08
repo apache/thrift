@@ -30,8 +30,11 @@
   <property name="thrift.java.dir" location="${thrift.dir}/lib/java" />
 
   <path id="libs.classpath">
-    <pathelement path="${thrift.java.dir}/libthrift.jar" />
-    <fileset dir="${thrift.java.dir}/build/ivy/lib">
+    <fileset dir="../../lib/java/build">
+      <include name="*.jar" />
+      <exclude name="-test.jar" />
+    </fileset>
+    <fileset dir="../../lib/java/build/lib">
       <include name="*.jar" />
     </fileset>
   </path>
