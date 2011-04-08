@@ -52,6 +52,7 @@ namespace Thrift
 			string message = null;
 			ExceptionType type = ExceptionType.Unknown;
 
+			iprot.ReadStructBegin();
 			while (true)
 			{
 				field = iprot.ReadFieldBegin();
