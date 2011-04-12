@@ -1,3 +1,9 @@
+thrift (0.7.0-dev1) stable; urgency=low
+  * added glib
+  * fix location of libthrift.jar
+
+ -- Roger Meier <roger@apache.org>  Tue, 12 Apr 2011 21:41:18 +0200
+
 thrift (0.6.0-dev1) stable; urgency=low
 
   * update version field
