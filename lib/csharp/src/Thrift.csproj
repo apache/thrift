@@ -52,6 +52,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Collections\THashSet.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="Transport\TBufferedTransport.cs" />
     <Compile Include="Transport\TFramedTransport.cs" />
     <Compile Include="Transport\THttpClient.cs" />
+    <Compile Include="Transport\THttpHandler.cs" />
     <Compile Include="Transport\TServerSocket.cs" />
     <Compile Include="Transport\TServerTransport.cs" />
     <Compile Include="Transport\TSocket.cs" />

@@ -18,6 +18,7 @@
 #
 
 THRIFTCODE= \
+            /r:System.Web \
             src/Collections/THashSet.cs \
             src/Protocol/TBase.cs \
             src/Protocol/TBase64Utils.cs \
@@ -49,6 +50,7 @@ THRIFTCODE= \
             src/Transport/TServerSocket.cs \
             src/Transport/TTransportFactory.cs \
             src/Transport/THttpClient.cs \
+            src/Transport/THttpHandler.cs \
             src/TProcessor.cs \
             src/TApplicationException.cs
 
