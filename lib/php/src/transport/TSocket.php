@@ -90,7 +90,7 @@ class TSocket extends TTransport {
    *
    * @var bool
    */
-  private $persist_ = FALSE;
+  protected $persist_ = FALSE;
 
   /**
    * Debugging on?
