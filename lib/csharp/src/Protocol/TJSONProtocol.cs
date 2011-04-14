@@ -744,7 +744,7 @@ namespace Thrift.Protocol
 					}
 					else
 					{
-						int off = Array.IndexOf(ESCAPE_CHARS, ch);
+						int off = Array.IndexOf(ESCAPE_CHARS, (char)ch);
 						if (off == -1)
 						{
 							throw new TProtocolException(TProtocolException.INVALID_DATA,
