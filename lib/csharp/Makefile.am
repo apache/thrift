@@ -18,7 +18,6 @@
 #
 
 THRIFTCODE= \
-            /r:System.Web \
             src/Collections/THashSet.cs \
             src/Protocol/TBase.cs \
             src/Protocol/TBase64Utils.cs \
@@ -64,7 +63,7 @@ endif
 all-local: Thrift.dll
 
 Thrift.dll: $(THRIFTCODE)
-	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library $(MONO_DEFINES)
+	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library /reference:System.Web $(MONO_DEFINES)
 
 clean-local:
 	$(RM) Thrift.dll
