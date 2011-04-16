@@ -59,6 +59,9 @@ class t_java_generator : public t_oop_generator {
     iter = parsed_options.find("hashcode");
     gen_hash_code_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("android_legacy");
+    android_legacy_ = (iter != parsed_options.end());
+
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
   }
 
@@ -258,6 +261,7 @@ class t_java_generator : public t_oop_generator {
   bool private_members_;
   bool nocamel_style_;
   bool gen_hash_code_;
+  bool android_legacy_;
 
 };
 
@@ -3839,7 +3843,7 @@ void t_java_generator::generate_java_struct_write_object(ofstream& out, t_struct
   indent(out) << "  try {" << endl;
   indent(out) << "    write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));" << endl;
   indent(out) << "  } catch (org.apache.thrift.TException te) {" << endl;
-  indent(out) << "    throw new java.io.IOException(te);" << endl;
+  indent(out) << "    throw new java.io.IOException(te" << (android_legacy_? ".getMessage()" : "") << ");" << endl;
   indent(out) << "  }" << endl;
   indent(out) << "}" << endl << endl;
 }
@@ -3854,7 +3858,7 @@ void t_java_generator::generate_java_struct_read_object(ofstream& out, t_struct*
   }
   indent(out) << "    read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));" << endl;
   indent(out) << "  } catch (org.apache.thrift.TException te) {" << endl;
-  indent(out) << "    throw new java.io.IOException(te);" << endl;
+  indent(out) << "    throw new java.io.IOException(te" << (android_legacy_? ".getMessage()" : "") << ");" << endl;
   indent(out) << "  }" << endl;
   indent(out) << "}" << endl << endl;
 }
@@ -3864,5 +3868,6 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    private-members: Members will be private, but setter methods will return 'this' like usual.\n"
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
 "    hashcode:        Generate quality hashCode methods.\n"
+"    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
 )
 
