@@ -514,7 +514,11 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
   /**
      Generate a character array of enum names for debugging purposes.
   */
-  std::string prefix = tenum->get_name() + "::";
+  std::string prefix = "";
+  if (!gen_pure_enums_) {
+    prefix = tenum->get_name() + "::";
+  }
+
   f_types_impl_ <<
     indent() << "int _k" << tenum->get_name() << "Values[] =";
   generate_enum_constant_list(f_types_impl_, constants, prefix.c_str(), "", false);
