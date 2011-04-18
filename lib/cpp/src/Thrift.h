@@ -43,7 +43,7 @@
 
 namespace apache { namespace thrift {
 
-class TEnumIterator {
+class TEnumIterator : public std::iterator<std::forward_iterator_tag, std::pair<int, const char*> > {
  public:
   TEnumIterator(int n,
                 int* enums,
