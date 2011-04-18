@@ -146,10 +146,14 @@ module Thrift
             break if read_signals == :shutdown
           end
           rd.each do |fd|
-            if fd.handle.eof?
+            begin
+              if fd.handle.eof?
+                remove_connection fd
+              else
+                read_connection fd
+              end
+            rescue Errno::ECONNRESET
               remove_connection fd
-            else
-              read_connection fd
             end
           end
         end
