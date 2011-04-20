@@ -1,5 +1,14 @@
 Thrift Changelog
 
+Version 0.6.1
+
+THRIFT-1074   Build                .keystore and .truststore are missing from the 0.6.0 distribution (Jake Farrell)
+THRIFT-1131   C#                   C# JSON Protocol is unable to decode escaped characters in string (Maciek Weksej)
+THRIFT-363    Java                 Maven Deploy (Jake Farrell)
+THRIFT-1109   Java                 Deploy fb303 along side libthrift to maven repo (Jake Farrell)
+THIRFT-1133   JavaScript           Java and JavaScript tutorial is broken since we have Java maven deployment (Roger Meier, Jake Farrell)
+
+
 Version 0.6.0
 
 THRIFT-940    Build                'make check' fails if boost is not in the std include and link paths (Christian Lavoie)
