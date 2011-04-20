@@ -17,7 +17,7 @@
 # under the License.
 #
 
-EXTRA_DIST = build.xml src test
+EXTRA_DIST = build.xml build.properties src test
 
 export CLASSPATH
 
