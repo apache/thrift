@@ -285,7 +285,6 @@
       <!-- Thrift dependencies list -->
       <dependency groupId="org.slf4j" artifactId="slf4j-api" version="1.5.8"/>
       <dependency groupId="commons-lang" artifactId="commons-lang" version="2.5"/>
-      <dependency groupId="junit" artifactId="junit" version="4.4"/>
       <dependency groupId="javax.servlet" artifactId="servlet-api" version="2.5"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="4.0.1"/>
     </artifact:pom>
@@ -299,6 +298,18 @@
     <!-- Copy the dependencies to the build/lib dir -->
     <copy todir="${build.dir}/lib">
       <fileset refid="build-dependency-jars"/>
+      <mapper type="flatten"/>
+    </copy>
+
+    <!-- Dependencies needed for testing -->
+    <artifact:dependencies filesetId="test-dependency-jars" useScope="runtime">
+      <dependency groupId="org.slf4j" artifactId="slf4j-log4j12" version="1.5.8"/>
+      <dependency groupId="junit" artifactId="junit" version="4.4"/>
+    </artifact:dependencies>
+
+    <!-- Copy the test dependencies to the build/lib dir -->
+    <copy todir="${build.dir}/lib">
+      <fileset refid="test-dependency-jars"/>
       <mapper type="flatten"/>
     </copy>
 
