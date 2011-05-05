@@ -56,9 +56,16 @@ AC_ARG_VAR([PHP_CONFIG_PREFIX],
            Default = "/etc/php.d"])
 AS_IF([test "x$PHP_CONFIG_PREFIX" = x], [PHP_CONFIG_PREFIX="/etc/php.d"])
 
+AC_ARG_VAR([INSTALLDIRS], [When installing Perl modules, specifies which
+                           of the sets of installation directories
+                           to choose: perl, site or vendor.
+                           Default = "vendor"])
+AS_IF([test "x$INSTALLDIRS" = x], [INSTALLDIRS="vendor"])
+
 AC_ARG_VAR([PERL_PREFIX], [Prefix for installing Perl modules.
                            (Normal --prefix is ignored for Perl because
                            Perl has different conventions.)
+                           Ignored, when INSTALLDIRS set to site or vendor.
                            Default = "/usr/local/lib"])
 AS_IF([test "x$PERL_PREFIX" = x], [PERL_PREFIX="/usr/local"])
 
