@@ -459,7 +459,8 @@ void t_as3_generator::generate_consts(std::vector<t_const*> consts) {
 
 void t_as3_generator::print_const_value(std::ofstream& out, string name, t_type* type, t_const_value* value, bool in_static, bool defval) {
   type = get_true_type(type);
-  
+
+  string type_name_val = (defval ? string() : (":" + type_name(type)));
   indent(out);
   if (!defval) {
     out <<
@@ -467,15 +468,17 @@ void t_as3_generator::print_const_value(std::ofstream& out, string name, t_type*
   }
   if (type->is_base_type()) {
     string v2 = render_const_value(out, name, type, value);
-    out << name << ":" << type_name(type) << " = " << v2 << ";" << endl << endl;
+    out << name << type_name_val << " = " << v2 << ";" << endl << endl;
+
   } else if (type->is_enum()) {
-    out << name << ":" << type_name(type) << " = " << value->get_integer() << ";" << endl << endl;
+    out << name << type_name_val << " = " << value->get_integer() << ";" << endl << endl;
   } else if (type->is_struct() || type->is_xception()) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
-    out << name << ":" << type_name(type) << " = new " << type_name(type, false, true) << "();" << endl;
+
+    out << name << type_name_val << " = new " << type_name(type, false, true) << "();" << endl;
     if (!in_static) {
       indent(out) << "{" << endl;
       indent_up();
@@ -504,7 +507,7 @@ void t_as3_generator::print_const_value(std::ofstream& out, string name, t_type*
     }
     out << endl;
   } else if (type->is_map()) {
-    out << name << ":" << type_name(type) << " = new " << type_name(type, false, true) << "();" << endl;
+    out << name << type_name_val << " = new " << type_name(type, false, true) << "();" << endl;
     if (!in_static) {
       indent(out) << "{" << endl;
       indent_up();
@@ -528,7 +531,7 @@ void t_as3_generator::print_const_value(std::ofstream& out, string name, t_type*
     }
     out << endl;
   } else if (type->is_list() || type->is_set()) {
-    out << name << ":" << type_name(type) << " = new " << type_name(type, false, true) << "();" << endl;
+    out << name << type_name_val << " = new " << type_name(type, false, true) << "();" << endl;
     if (!in_static) {
       indent(out) << "{" << endl;
       indent_up();
@@ -574,23 +577,19 @@ string t_as3_generator::render_const_value(ofstream& out, string name, t_type* t
           render << ((value->get_integer() > 0) ? "true" : "false");
           break;
         case t_base_type::TYPE_BYTE:
-          render << "(byte)" << value->get_integer();
+          render << value->get_integer();
           break;
         case t_base_type::TYPE_I16:
-          render << "(short)" << value->get_integer();
+          render << value->get_integer();
           break;
         case t_base_type::TYPE_I32:
           render << value->get_integer();
           break;
         case t_base_type::TYPE_I64:
-          render << value->get_integer() << "L";
+          render << value->get_integer();
           break;
         case t_base_type::TYPE_DOUBLE:
-          if (value->get_type() == t_const_value::CV_INTEGER) {
-            render << "(double)" << value->get_integer();
-          } else {
             render << value->get_double();
-          }
           break;
         default:
           throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
@@ -863,7 +862,7 @@ void t_as3_generator::generate_as3_struct_reader(ofstream& out,
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       if ((*f_iter)->get_req() == t_field::T_REQUIRED && !type_can_be_null((*f_iter)->get_type())) {
         out <<
-          indent() << "if (!__isset." << (*f_iter)->get_name() << ") {" << endl <<
+          indent() << "if (!__isset_" << (*f_iter)->get_name() << ") {" << endl <<
           indent() << "  throw new TProtocolError(TProtocolError.UNKNOWN, \"Required field '" << (*f_iter)->get_name() << "' was not found in serialized data! Struct: \" + toString());" << endl <<
           indent() << "}" << endl;
       }
@@ -2436,11 +2435,7 @@ string t_as3_generator::base_type_name(t_base_type* type,
   case t_base_type::TYPE_VOID:
     return "void";
   case t_base_type::TYPE_STRING:
-    if (type->is_binary()) {
-      return "byte[]";
-    } else {
-      return "String";
-    }
+    return "String";
   case t_base_type::TYPE_BOOL:
     return "Boolean";
   case t_base_type::TYPE_BYTE:
@@ -2487,7 +2482,7 @@ string t_as3_generator::declare_field(t_field* tfield, bool init) {
         result += " = 0";
         break;
       case t_base_type::TYPE_DOUBLE:
-        result += " = (double)0";
+        result += " = 0";
         break;
     }
 
