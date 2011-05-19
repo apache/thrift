@@ -754,7 +754,8 @@ void t_as3_generator::generate_as3_struct_definition(ofstream &out,
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = get_true_type((*m_iter)->get_type());
     if ((*m_iter)->get_value() != NULL) {
-      print_const_value(out, "this." + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
+      indent(out) << "this._" << (*m_iter)->get_name() << " = " << (*m_iter)->get_value()->get_integer() << ";" <<
+      endl;
     }
   }
   indent_down();
