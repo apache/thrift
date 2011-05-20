@@ -229,7 +229,7 @@
     </exec>
   </target>
 
-  <target name="mvn.ant.tasks.download" depends="setup.init" unless="mvn.ant.tasks.found">
+  <target name="mvn.ant.tasks.download" depends="setup.init,mvn.ant.tasks.check" unless="mvn.ant.tasks.found">
     <get src="${mvn.ant.task.url}/${mvn.ant.task.jar}" dest="${build.tools.dir}/${mvn.ant.task.jar}" usetimestamp="true"/>
   </target>
 
@@ -321,12 +321,13 @@
     <attribute name="file"/>
     <attribute name="classifier" default=""/>
     <attribute name="packaging" default="jar"/>
+    <attribute name="pom" default=""/>
     <sequential>
       <artifact:mvn fork="true">
         <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.1:sign-and-deploy-file"/>
         <arg value="-DrepositoryId=${maven-repository-id}"/>
         <arg value="-Durl=${maven-repository-url}"/>
-        <arg value="-DpomFile=${pom.xml}"/>
+        <arg value="-DpomFile=@{pom}"/>
         <arg value="-Dfile=@{file}"/>
         <arg value="-Dclassifier=@{classifier}"/>
         <arg value="-Dpackaging=@{packaging}"/>
@@ -338,9 +339,9 @@
   <target name="publish" depends="clean,init,test,dist,javadoc,pack.src">
     <!-- Compile, package, test and then send release to apache maven repo -->
     <!-- run with: ant -Drelease=true publish-->
-    <signAndDeploy file="${pom.xml}" packaging="pom" classifier=""/>
-    <signAndDeploy file="${jar.file}" packaging="jar" classifier=""/>
-    <signAndDeploy file="${javadoc.jar.file}" packaging="jar" classifier="javadoc"/>
-    <signAndDeploy file="${source.tar.gz}" packaging="src" classifier="tar.gz"/>
+    <signAndDeploy file="${pom.xml}" packaging="pom" classifier="" pom="${pom.xml}"/>
+    <signAndDeploy file="${jar.file}" packaging="jar" classifier="" pom="${pom.xml}"/>
+    <signAndDeploy file="${javadoc.jar.file}" packaging="jar" classifier="javadoc" pom="${pom.xml}"/>
+    <signAndDeploy file="${source.tar.gz}" packaging="src" classifier="tar.gz" pom="${pom.xml}"/>
   </target>
 </project>
