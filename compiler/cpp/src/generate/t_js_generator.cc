@@ -1645,7 +1645,7 @@ string t_js_generator::declare_field(t_field* tfield, bool init, bool obj) {
   string result = "this." + tfield->get_name();
 
   if(!obj){
-      result = tfield->get_name();
+      result = "var " + tfield->get_name();
   }
 
   if (init) {
