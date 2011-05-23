@@ -30,7 +30,7 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TStruct;
 
-public abstract class TUnion<T extends TUnion, F extends TFieldIdEnum> implements TBase<T, F> {
+public abstract class TUnion<T extends TUnion<?,?>, F extends TFieldIdEnum> implements TBase<T, F> {
 
   protected Object value_;
   protected F setField_;

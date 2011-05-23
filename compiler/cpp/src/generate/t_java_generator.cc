@@ -62,6 +62,12 @@ class t_java_generator : public t_oop_generator {
     iter = parsed_options.find("android_legacy");
     android_legacy_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("java5");
+    java5_ = (iter != parsed_options.end());
+    if (java5_) {
+        android_legacy_ = true;
+    }
+
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
   }
 
@@ -262,6 +268,7 @@ class t_java_generator : public t_oop_generator {
   bool nocamel_style_;
   bool gen_hash_code_;
   bool android_legacy_;
+  bool java5_;
 
 };
 
@@ -3789,7 +3796,9 @@ bool t_java_generator::has_bit_vector(t_struct* tstruct) {
 }
 
 void t_java_generator::generate_java_struct_clear(std::ofstream& out, t_struct* tstruct) {
-  indent(out) << "@Override" << endl;
+  if (!java5_) {
+     indent(out) << "@Override" << endl;
+  }
   indent(out) << "public void clear() {" << endl;
 
   const vector<t_field*>& members = tstruct->get_members();
@@ -3869,5 +3878,6 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
 "    hashcode:        Generate quality hashCode methods.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
+"    java5:           Generate Java 1.5 compliant code (includes android_legacy flag)."
 )
 
