@@ -148,15 +148,7 @@ AX_THRIFT_LIB(java, [Java], yes)
 if test "$with_java" = "yes";  then
   AX_JAVAC_AND_JAVA
   AC_PATH_PROG([ANT], [ant])
-  AX_CHECK_JAVA_CLASS(org.slf4j.Logger)
-  have_slf4j="$success"
-  AX_CHECK_JAVA_CLASS(org.slf4j.impl.SimpleLogger)
-  have_slf4j_simple="$success"
-  AX_CHECK_JAVA_CLASS(org.apache.commons.lang.builder.HashCodeBuilder)
-  have_hashcode="$success"
-  if test "x$have_slf4j_simple" = "xyes" && test "x$have_slf4j" = "xyes" && test "x$have_hashcode" = "xyes" ; then
-    ANT_FLAGS="$ANT_FLAGS -Dnoivy="
-  fi
+  AX_CHECK_ANT_VERSION($ANT, 1.7)
   AC_SUBST(CLASSPATH)
   AC_SUBST(ANT_FLAGS)
   if test "x$JAVAC" != "x" && test "x$JAVAC" != "x" && test "x$ANT" != "x" ; then

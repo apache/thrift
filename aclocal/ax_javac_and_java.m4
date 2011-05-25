@@ -105,3 +105,17 @@ AC_DEFUN([AX_CHECK_JAVA_CLASS],
 
           rm -f configtest_ax_javac_and_java.java configtest_ax_javac_and_java.class
           ])
+
+
+AC_DEFUN([AX_CHECK_ANT_VERSION],
+         [
+          AC_MSG_CHECKING(for ant version > $2)
+          ANT_VALID=`expr $($1 -version 2>/dev/null | sed -n 's/.*version \(@<:@0-9\.@:>@*\).*/\1/p') \>= $2`
+          if test "x$ANT_VALID" = "x1" ; then
+            AC_MSG_RESULT(yes)
+          else
+            AC_MSG_RESULT(no)
+            ANT=""
+          fi
+          ])
+
