@@ -31,8 +31,6 @@ class TMemoryBuffer;
 namespace apache { namespace thrift { namespace async {
 using apache::thrift::transport::TMemoryBuffer;
 
-class TAsyncTransport;
-
 class TAsyncChannel {
  public:
   typedef std::tr1::function<void()> VoidCallback;
