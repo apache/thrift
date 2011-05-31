@@ -92,8 +92,6 @@ int main(int argc, char** argv) {
 
   shared_ptr<TBufferBase> transport;
 
-  shared_ptr<TSocket> socket(new TSocket(host, port));
-
   if (framed) {
     shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
     transport = framedSocket;

@@ -56,16 +56,16 @@ stubs: ../StressTest.thrift
 	$(THRIFT) --gen cpp --gen php ../StressTest.thrift
 
 stress-test-debug-nb: stubs
-	g++ -o stress-test-nb $(DCFL) src/nb-main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
+	$(CC) -o stress-test-nb $(DCFL) src/nb-main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
 
 stress-test-nb: stubs
-	g++ -o stress-test-nb $(CFL) src/nb-main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
+	$(CC) -o stress-test-nb $(CFL) src/nb-main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
 
 stress-test-debug: stubs
-	g++ -o stress-test $(DCFL) src/main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
+	$(CC) -o stress-test $(DCFL) src/main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
 
 stress-test: stubs
-	g++ -o stress-test $(CFL) src/main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
+	$(CC) -o stress-test $(CFL) src/main.cpp ./gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
 
 clean:
 	rm -fr stress-test stress-test-nb gen-cpp

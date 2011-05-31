@@ -59,20 +59,20 @@ stubs: ../ThriftTest.thrift
 	$(THRIFT) --gen cpp:templates ../ThriftTest.thrift
 
 server-debug: stubs
-	g++ -o TestServer $(DCFL) src/TestServer.cpp ./gen-cpp/ThriftTest.cpp ./gen-cpp/ThriftTest_types.cpp $(thrift_home)/lib/cpp/test/ThriftTest_extras.cpp
+	$(CC) -o TestServer $(DCFL) src/TestServer.cpp ./gen-cpp/ThriftTest.cpp ./gen-cpp/ThriftTest_types.cpp ./gen-cpp/ThriftTest_constants.cpp
 
 client-debug: stubs
-	g++ -o TestClient $(DCFL) src/TestClient.cpp ./gen-cpp/ThriftTest.cpp ./gen-cpp/ThriftTest_types.cpp $(thrift_home)/lib/cpp/test/ThriftTest_extras.cpp
+	$(CC) -o TestClient $(DCFL) src/TestClient.cpp ./gen-cpp/ThriftTest.cpp ./gen-cpp/ThriftTest_types.cpp ./gen-cpp/ThriftTest_constants.cpp
 
 server: stubs
-	g++ -o TestServer $(CFL) src/TestServer.cpp ./gen-cpp/ThriftTest.cpp ./gen-cpp/ThriftTest_types.cpp $(thrift_home)/lib/cpp/test/ThriftTest_extras.cpp
+	$(CC) -o TestServer $(CFL) src/TestServer.cpp ./gen-cpp/ThriftTest.cpp ./gen-cpp/ThriftTest_types.cpp ./gen-cpp/ThriftTest_constants.cpp
 
 client: stubs
-	g++ -o TestClient $(CFL) src/TestClient.cpp ./gen-cpp/ThriftTest.cpp ./gen-cpp/ThriftTest_types.cpp $(thrift_home)/lib/cpp/test/ThriftTest_extras.cpp
+	$(CC) -o TestClient $(CFL) src/TestClient.cpp ./gen-cpp/ThriftTest.cpp ./gen-cpp/ThriftTest_types.cpp ./gen-cpp/ThriftTest_constants.cpp
 
 small:
 	$(THRIFT) --gen cpp:templates ../SmallTest.thrift
-	g++ -c $(CCFL) ./gen-cpp/SmallService.cpp ./gen-cpp/SmallTest_types.cpp
+	$(CC) -c $(CCFL) ./gen-cpp/SmallService.cpp ./gen-cpp/SmallTest_types.cpp
 
 clean:
 	rm -fr *.o TestServer TestClient gen-cpp

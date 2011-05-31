@@ -25,6 +25,8 @@
 #include <server/TThreadPoolServer.h>
 #include <server/TNonblockingServer.h>
 #include <transport/TServerSocket.h>
+#include <transport/TSSLServerSocket.h>
+#include <transport/TSSLSocket.h>
 #include <transport/TTransportUtils.h>
 #include "ThriftTest.h"
 

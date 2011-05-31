@@ -54,10 +54,10 @@ stubs: ThreadsTest.thrift
 	$(THRIFT) --gen cpp --gen py ThreadsTest.thrift
 
 server: stubs
-	g++ -o ThreadsServer $(CFL) ThreadsServer.cpp ./gen-cpp/ThreadsTest.cpp ./gen-cpp/ThreadsTest_types.cpp
+	$(CC) -o ThreadsServer $(CFL) ThreadsServer.cpp ./gen-cpp/ThreadsTest.cpp ./gen-cpp/ThreadsTest_types.cpp
 
 client: stubs
-	g++ -o ThreadsClient $(CFL) ThreadsClient.cpp ./gen-cpp/ThreadsTest.cpp ./gen-cpp/ThreadsTest_types.cpp
+	$(CC) -o ThreadsClient $(CFL) ThreadsClient.cpp ./gen-cpp/ThreadsTest.cpp ./gen-cpp/ThreadsTest_types.cpp
 
 clean:
 	$(RM) -r *.o ThreadsServer ThreadsClient gen-cpp gen-py

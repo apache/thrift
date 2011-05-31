@@ -38,11 +38,7 @@
 #include <set>
 #include <stdexcept>
 #include <sstream>
-
 #include <map>
-#include <ext/hash_map>
-using __gnu_cxx::hash_map;
-using __gnu_cxx::hash;
 
 using namespace std;
 using namespace boost;
@@ -325,7 +321,7 @@ int main(int argc, char **argv) {
       workerCount = atoi(args["workers"].c_str());
     }
 
-  } catch(exception& e) {
+  } catch(std::exception& e) {
     cerr << e.what() << endl;
     cerr << usage;
   }
