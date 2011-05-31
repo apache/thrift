@@ -46,25 +46,49 @@ module Thrift
         value.read(iprot)
       when Types::MAP
         key_type, val_type, size = iprot.read_map_begin
-        value = {}
-        size.times do
-          k = read_field(iprot, field_info(field[:key]))
-          v = read_field(iprot, field_info(field[:value]))
-          value[k] = v
+        # Skip the map contents if the declared key or value types don't match the expected ones.
+        if (key_type != field[:key][:type] || val_type != field[:value][:type])
+          size.times do
+            iprot.skip(key_type)
+            iprot.skip(val_type)
+          end
+          value = nil
+        else
+          value = {}
+          size.times do
+            k = read_field(iprot, field_info(field[:key]))
+            v = read_field(iprot, field_info(field[:value]))
+            value[k] = v
+          end
         end
         iprot.read_map_end
       when Types::LIST
         e_type, size = iprot.read_list_begin
-        value = Array.new(size) do |n|
-          read_field(iprot, field_info(field[:element]))
+        # Skip the list contents if the declared element type doesn't match the expected one.
+        if (e_type != field[:element][:type])
+          size.times do
+            iprot.skip(e_type)
+          end
+          value = nil
+        else
+          value = Array.new(size) do |n|
+            read_field(iprot, field_info(field[:element]))
+          end
         end
         iprot.read_list_end
       when Types::SET
         e_type, size = iprot.read_set_begin
-        value = Set.new
-        size.times do
-          element = read_field(iprot, field_info(field[:element]))
-          value << element
+        # Skip the set contents if the declared element type doesn't match the expected one.
+        if (e_type != field[:element][:type])
+          size.times do
+            iprot.skip(e_type)
+          end
+        else
+          value = Set.new
+          size.times do
+            element = read_field(iprot, field_info(field[:element]))
+            value << element
+          end
         end
         iprot.read_set_end
       else
