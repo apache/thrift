@@ -303,7 +303,7 @@ module Thrift
 
     def read_byte
       dat = trans.read_all(1)
-      val = dat[0]
+      val = dat[0].ord
       if (val > 0x7f)
         val = 0 - ((val - 1) ^ 0xff)
       end
