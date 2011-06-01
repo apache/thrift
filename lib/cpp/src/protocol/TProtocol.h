@@ -77,7 +77,7 @@ namespace apache { namespace thrift { namespace protocol {
 
 using apache::thrift::transport::TTransport;
 
-#ifdef HAVE_SYS_PARAM_H_
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
 
