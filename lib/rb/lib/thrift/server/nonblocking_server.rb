@@ -44,7 +44,13 @@ module Thrift
       begin
         loop do
           break if @server_transport.closed?
-          rd, = select([@server_transport], nil, nil, 0.1)
+          begin
+            rd, = select([@server_transport], nil, nil, 0.1)
+          rescue Errno::EBADF => e
+            # In Ruby 1.9, calling @server_transport.close in shutdown paths causes the select() to raise an
+            # Errno::EBADF. If this happens, ignore it and retry the loop.
+            next
+          end
           next if rd.nil?
           socket = @server_transport.accept
           @logger.debug "Accepted socket: #{socket.inspect}"
