@@ -131,12 +131,11 @@
 
   <target name="install" depends="dist,javadoc">
     <copy todir="${install.path}">
-      <fileset dir="."><include name="*.jar"/></fileset>
+      <fileset dir="${build.dir}" includes="*.jar"/>
+      <fileset dir="${build.lib.dir}" includes="*.jar"/>
     </copy>
     <copy todir="${install.javadoc.path}">
-      <fileset dir="${javadoc.dir}">
-        <include name="**/*"/>
-      </fileset>
+      <fileset dir="${javadoc.dir}" includes="**/*"/>
     </copy>
   </target>
 
