@@ -277,7 +277,9 @@ void TSocket::openConnection(struct addrinfo *res) {
   // Set socket back to normal mode (blocking)
   fcntl(socket_, F_SETFL, flags);
 
-  setCachedAddress(res->ai_addr, res->ai_addrlen);
+  if (path_.empty()) {
+    setCachedAddress(res->ai_addr, res->ai_addrlen);
+  }
 }
 
 void TSocket::open() {
@@ -561,7 +563,7 @@ void TSocket::setLinger(bool on, int linger) {
 
 void TSocket::setNoDelay(bool noDelay) {
   noDelay_ = noDelay;
-  if (socket_ < 0) {
+  if (socket_ < 0 || !path_.empty()) {
     return;
   }
 
@@ -641,7 +643,7 @@ string TSocket::getSocketInfo() {
 }
 
 std::string TSocket::getPeerHost() {
-  if (peerHost_.empty()) {
+  if (peerHost_.empty() && path_.empty()) {
     struct sockaddr_storage addr;
     struct sockaddr* addrPtr;
     socklen_t addrLen;
@@ -675,7 +677,7 @@ std::string TSocket::getPeerHost() {
 }
 
 std::string TSocket::getPeerAddress() {
-  if (peerAddress_.empty()) {
+  if (peerAddress_.empty() && path_.empty()) {
     struct sockaddr_storage addr;
     struct sockaddr* addrPtr;
     socklen_t addrLen;
@@ -716,6 +718,10 @@ int TSocket::getPeerPort() {
 }
 
 void TSocket::setCachedAddress(const sockaddr* addr, socklen_t len) {
+  if (!path_.empty()) {
+    return;
+  }
+
   switch (addr->sa_family) {
   case AF_INET:
     if (len == sizeof(sockaddr_in)) {
