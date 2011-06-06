@@ -197,15 +197,15 @@ BOOST_AUTO_TEST_CASE(test_destructor) {
 
     int delta = time_diff(&start, &end);
 
-    // If any attempt takes more than 100ms, treat that as a failure.
+    // If any attempt takes more than 500ms, treat that as a failure.
     // Treat this as a fatal failure, so we'll return now instead of
     // looping over a very slow operation.
-    BOOST_REQUIRE_LT(delta, 100000);
+    BOOST_REQUIRE_LT(delta, 500000);
 
-    // Normally, it takes less than 1000us on my dev box.
+    // Normally, it takes less than 100ms on my dev box.
     // However, if the box is heavily loaded, some of the test runs
     // take longer, since we're just waiting for our turn on the CPU.
-    if (delta > 1000) {
+    if (delta > 100000) {
       ++num_over;
     }
   }
@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE(test_noop_flush) {
     // Use a fatal fail so we break out early, rather than continuing to make
     // many more slow flush() calls.
     int delta = time_diff(&start, &now);
-    BOOST_REQUIRE_LT(delta, 500000);
+    BOOST_REQUIRE_LT(delta, 2000000);
   }
 }
 
