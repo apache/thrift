@@ -46,8 +46,8 @@ CC     = g++
 LD     = g++
 
 # Compiler flags
-DCFL  = -Wall -O3 -g -I. -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -lthriftnb -levent
-LFL   =  -L$(thrift_home)/lib/cpp/.libs -lthrift -lthriftnb -levent
+DCFL  = -Wall -O3 -g -I. -I./gen-cpp $(include_flags) -L$(thrift_home)/lib/cpp/.libs -lthrift -lthriftnb -levent -lboost_program_options
+LFL   =  -L$(thrift_home)/lib/cpp/.libs -lthrift -lthriftnb -levent -lboost_program_options
 CCFL  = -Wall -O3 -I. -I./gen-cpp $(include_flags)
 CFL   = $(CCFL) $(LFL)
 

@@ -17,15 +17,19 @@
  * under the License.
  */
 
-#include <stdio.h>
+#include <iostream>
 #include <unistd.h>
 #include <sys/time.h>
 #include <protocol/TBinaryProtocol.h>
+#include <protocol/TJSONProtocol.h>
+#include <transport/THttpClient.h>
 #include <transport/TTransportUtils.h>
 #include <transport/TSocket.h>
 #include <transport/TSSLSocket.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/program_options.hpp>
+
 #include "ThriftTest.h"
 
 #define __STDC_FORMAT_MACROS
@@ -56,30 +60,66 @@ int main(int argc, char** argv) {
   string host = "localhost";
   int port = 9090;
   int numTests = 1;
-  bool framed = false;
   bool ssl = false;
+  string transport_type = "buffered";
+  string protocol_type = "binary";
+  string domain_socket = "";
 
-  for (int i = 0; i < argc; ++i) {
-    if (strcmp(argv[i], "-h") == 0) {
-      char* pch = strtok(argv[++i], ":");
-      if (pch != NULL) {
-        host = string(pch);
-      }
-      pch = strtok(NULL, ":");
-      if (pch != NULL) {
-        port = atoi(pch);
-      }
-    } else if (strcmp(argv[i], "-n") == 0) {
-      numTests = atoi(argv[++i]);
-    } else if (strcmp(argv[i], "-f") == 0) {
-      framed = true;
-    } else if (strcmp(argv[i], "--ssl") == 0) {
-      ssl = true;
-    }
+  program_options::options_description desc("Allowed options");
+  desc.add_options()
+      ("help,h", "produce help message")
+      ("host", program_options::value<string>(&host)->default_value(host), "Host to connect")
+      ("port", program_options::value<int>(&port)->default_value(port), "Port number to connect")
+	  ("domain-socket", program_options::value<string>(&domain_socket)->default_value(domain_socket), "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
+      ("transport", program_options::value<string>(&transport_type)->default_value(transport_type), "Transport: buffered, framed, http")
+      ("protocol", program_options::value<string>(&protocol_type)->default_value(protocol_type), "Protocol: binary, json")
+	  ("ssl", "Encrypted Transport using SSL")
+      ("testloops,n", program_options::value<int>(&numTests)->default_value(numTests), "Number of Tests")
+  ;
+
+  program_options::variables_map vm;
+  program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
+  program_options::notify(vm);    
+
+  if (vm.count("help")) {
+    cout << desc << "\n";
+    return 1;
   }
+
+  try {   
+    if (!protocol_type.empty()) {
+      if (protocol_type == "binary") {
+      } else if (protocol_type == "json") {
+      } else {
+          throw invalid_argument("Unknown protocol type "+protocol_type);
+      }
+    }
+
+	if (!transport_type.empty()) {
+      if (transport_type == "buffered") {
+      } else if (transport_type == "framed") {
+      } else if (transport_type == "http") {
+      } else {
+          throw invalid_argument("Unknown transport type "+transport_type);
+      }
+    }
+
+  } catch (std::exception& e) {
+    cerr << e.what() << endl;
+    cout << desc << "\n";
+    return 1;
+  }
+
+  if (vm.count("ssl")) {
+    ssl = true;
+  }
+
+  shared_ptr<TTransport> transport;
+  shared_ptr<TProtocol> protocol;
 
   shared_ptr<TSocket> socket;
   shared_ptr<TSSLSocketFactory> factory;
+
   if (ssl) {
     factory = shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
@@ -87,22 +127,42 @@ int main(int argc, char** argv) {
     factory->authenticate(true);
     socket = factory->createSocket(host, port);
   } else {
-    socket = shared_ptr<TSocket>(new TSocket(host, port));
+    if (domain_socket != "") {
+      socket = shared_ptr<TSocket>(new TSocket(domain_socket));
+      port = 0;
+    }
+    else {
+      socket = shared_ptr<TSocket>(new TSocket(host, port));
+    }
   }
 
-  shared_ptr<TBufferBase> transport;
-
-  if (framed) {
+  if (transport_type.compare("http") == 0) {
+    shared_ptr<TTransport> httpSocket(new THttpClient(socket, host, "/service"));
+    transport = httpSocket;
+  } else if (transport_type.compare("framed") == 0){
     shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
     transport = framedSocket;
-  } else {
+  } else{
     shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
     transport = bufferedSocket;
   }
 
-  shared_ptr< TBinaryProtocolT<TBufferBase> > protocol(
-      new TBinaryProtocolT<TBufferBase>(transport));
-  ThriftTestClientT< TBinaryProtocolT<TBufferBase> > testClient(protocol);
+  if (protocol_type.compare("json") == 0) {
+    shared_ptr<TProtocol> jsonProtocol(new TJSONProtocol(transport));
+    protocol = jsonProtocol;
+  } else{
+    shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol(transport));
+    protocol = binaryProtocol;
+  }
+
+  // Connection info
+  cout << "Connecting (" << transport_type << "/" << protocol_type << ") to: " << domain_socket;
+  if (port != 0) {
+    cout << host << ":" << port;
+  }
+  cout << endl;
+
+  ThriftTestClient testClient(protocol);
 
   uint64_t time_min = 0;
   uint64_t time_max = 0;
