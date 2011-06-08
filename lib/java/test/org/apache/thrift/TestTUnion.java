@@ -49,6 +49,7 @@ public class TestTUnion extends TestCase {
     TestUnion union = new TestUnion();
 
     assertFalse(union.isSet());
+    assertFalse(union.isSetI32_field());
     assertNull(union.getFieldValue());
 
     union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
@@ -56,6 +57,8 @@ public class TestTUnion extends TestCase {
     assertEquals(Integer.valueOf(25), union.getFieldValue());
   
     assertEquals(Integer.valueOf(25), union.getFieldValue(TestUnion._Fields.I32_FIELD));
+    
+    assertTrue(union.isSetI32_field());
   
     try {
       union.getFieldValue(TestUnion._Fields.STRING_FIELD);
@@ -73,6 +76,8 @@ public class TestTUnion extends TestCase {
     assertEquals(1, union.getI32_field());
     union.hashCode();
 
+    assertFalse(union.isSetString_field());
+    
     try {
       union.getString_field();
       fail("should have thrown an exception");

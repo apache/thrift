@@ -139,6 +139,7 @@ class t_java_generator : public t_oop_generator {
   void generate_java_union(t_struct* tstruct);
   void generate_union_constructor(ofstream& out, t_struct* tstruct);
   void generate_union_getters_and_setters(ofstream& out, t_struct* tstruct);
+  void generate_union_is_set_methods(ofstream& out, t_struct* tstruct);
   void generate_union_abstract_methods(ofstream& out, t_struct* tstruct);
   void generate_check_type(ofstream& out, t_struct* tstruct);
   void generate_read_value(ofstream& out, t_struct* tstruct);
@@ -727,6 +728,10 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
   f_struct << endl;
 
   generate_union_getters_and_setters(f_struct, tstruct);
+
+  f_struct << endl;
+
+  generate_union_is_set_methods(f_struct, tstruct);
   
   f_struct << endl;
 
@@ -851,6 +856,28 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
     indent(out) << "  setField_ = _Fields." << constant_name(field->get_name()) << ";" << endl;
     indent(out) << "  value_ = value;" << endl;
     indent(out) << "}" << endl;
+  }
+}
+
+void t_java_generator::generate_union_is_set_methods(ofstream& out, t_struct* tstruct) {
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  bool first = true;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    if (first) {
+      first = false;
+    } else {
+      out << endl;
+    }
+
+    std::string field_name = (*m_iter)->get_name();
+
+    indent(out) << "public boolean is" << get_cap_name("set") << get_cap_name(field_name) << "() {" << endl;
+    indent_up();
+    indent(out) << "return setField_ == _Fields." << constant_name(field_name) << ";" << endl;
+    indent_down();
+    indent(out) << "}" << endl << endl;
   }
 }
 
