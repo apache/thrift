@@ -49,7 +49,7 @@ module Thrift
           rescue Errno::EBADF => e
             # In Ruby 1.9, calling @server_transport.close in shutdown paths causes the select() to raise an
             # Errno::EBADF. If this happens, ignore it and retry the loop.
-            next
+            break
           end
           next if rd.nil?
           socket = @server_transport.accept
