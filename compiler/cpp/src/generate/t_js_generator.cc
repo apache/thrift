@@ -275,15 +275,10 @@ void t_js_generator::init_generator() {
   // TODO should the namespace just be in the directory structure for node?
   vector<string> ns_pieces = js_namespace_pieces( program_ );
   if( ns_pieces.size() > 0){
-      f_types_ << "var " << ns_pieces[0] << " = {};"<<endl;
-
-      pns = ns_pieces[0];
-
-      for(size_t i=1; i<ns_pieces.size(); i++){
-          pns += "." + ns_pieces[i];
-
-          f_types_ << pns << " = {}"<<endl;
-      }
+    for(size_t i = 0; i < ns_pieces.size(); ++i) {
+      pns += ((i == 0) ? "" : ".") + ns_pieces[i];
+      f_types_ << "if (typeof " << pns << " === 'undefined') " << pns << " = {};" << endl;
+    }
   }
 
 }
