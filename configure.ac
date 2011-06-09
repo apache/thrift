@@ -109,7 +109,7 @@ AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
 if test "$with_cpp" = "yes";  then
   AX_BOOST_BASE([1.33.1])
-  if test "x$succeeded" == "xyes" ; then
+  if test "x$succeeded" = "xyes" ; then
     have_cpp="yes"
   fi
 
