@@ -277,7 +277,9 @@ void t_js_generator::init_generator() {
   if( ns_pieces.size() > 0){
     for(size_t i = 0; i < ns_pieces.size(); ++i) {
       pns += ((i == 0) ? "" : ".") + ns_pieces[i];
-      f_types_ << "if (typeof " << pns << " === 'undefined') " << pns << " = {};" << endl;
+      f_types_ << "if (typeof " << pns << " === 'undefined') {" << endl;
+        f_types_ << "  " << pns << " = {};" << endl;
+        f_types_ << "}" << endl;
     }
   }
 
