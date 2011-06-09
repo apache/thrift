@@ -468,9 +468,17 @@ void t_as3_generator::print_const_value(std::ofstream& out, string name, t_type*
   }
   if (type->is_base_type()) {
     string v2 = render_const_value(out, name, type, value);
-    out << name << ":" << type_name(type) << " = " << v2 << ";" << endl << endl;
+    out << name;
+    if (!defval) {
+      out << ":" << type_name(type);
+    }
+    out << " = " << v2 << ";" << endl << endl;
   } else if (type->is_enum()) {
-    out << name << ":" << type_name(type) << " = " << value->get_integer() << ";" << endl << endl;
+    out << name;
+    if(!defval) {
+      out << ":" << type_name(type);
+    }
+    out << " = " << value->get_integer() << ";" << endl << endl;
   } else if (type->is_struct() || type->is_xception()) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -505,7 +513,11 @@ void t_as3_generator::print_const_value(std::ofstream& out, string name, t_type*
     }
     out << endl;
   } else if (type->is_map()) {
-    out << name << ":" << type_name(type) << " = new " << type_name(type, false, true) << "();" << endl;
+    out << name;
+    if(!defval){
+      out << ":" << type_name(type);
+    }
+    out << " = new " << type_name(type, false, true) << "();" << endl;
     if (!in_static) {
       indent(out) << "{" << endl;
       indent_up();
@@ -529,7 +541,11 @@ void t_as3_generator::print_const_value(std::ofstream& out, string name, t_type*
     }
     out << endl;
   } else if (type->is_list() || type->is_set()) {
-    out << name << ":" << type_name(type) << " = new " << type_name(type, false, true) << "();" << endl;
+    out << name;
+    if(!defval) {
+      out << ":" << type_name(type);
+    }
+    out << " = new " << type_name(type, false, true) << "();" << endl;
     if (!in_static) {
       indent(out) << "{" << endl;
       indent_up();
