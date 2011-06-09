@@ -33,7 +33,7 @@ module Thrift
     end
 
     def each_field
-      struct_fields.keys.sort.each do |fid|
+      struct_field_ids.each do |fid|
         data = struct_fields[fid]
         yield fid, data
       end

@@ -77,6 +77,7 @@ extern ID read_all_method_id;
 extern ID native_qmark_method_id;
 
 extern ID fields_const_id;
+extern ID field_ids_const_id;
 extern ID transport_ivar_id;
 extern ID strict_read_ivar_id;
 extern ID strict_write_ivar_id;

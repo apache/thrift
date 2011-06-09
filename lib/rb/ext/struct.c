@@ -58,6 +58,7 @@ ID name_to_id_method_id;
 
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
 #define STRUCT_FIELDS(obj) rb_const_get(CLASS_OF(obj), fields_const_id)
+#define STRUCT_FIELD_IDS(obj) rb_const_get(CLASS_OF(obj), field_ids_const_id)
 
 //-------------------------------------------
 // Writing section
@@ -375,9 +376,7 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
 
   // iterate through all the fields here
   VALUE struct_fields = STRUCT_FIELDS(self);
-
-  VALUE struct_field_ids_unordered = rb_funcall(struct_fields, keys_method_id, 0);
-  VALUE struct_field_ids_ordered = rb_funcall(struct_field_ids_unordered, sort_method_id, 0);
+  VALUE struct_field_ids_ordered = STRUCT_FIELD_IDS(self);
 
   int i = 0;
   for (i=0; i < RARRAY_LEN(struct_field_ids_ordered); i++) {

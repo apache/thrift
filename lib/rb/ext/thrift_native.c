@@ -92,6 +92,7 @@ ID native_qmark_method_id;
 
 // constant ids
 ID fields_const_id;
+ID field_ids_const_id;
 ID transport_ivar_id;
 ID strict_read_ivar_id;
 ID strict_write_ivar_id;
@@ -174,6 +175,7 @@ void Init_thrift_native() {
 
   // constant ids
   fields_const_id = rb_intern("FIELDS");
+  field_ids_const_id = rb_intern("FIELD_IDS");
   transport_ivar_id = rb_intern("@trans");
   strict_read_ivar_id = rb_intern("@strict_read");
   strict_write_ivar_id = rb_intern("@strict_write");  
