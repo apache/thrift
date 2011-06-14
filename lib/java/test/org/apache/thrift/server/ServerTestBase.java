@@ -38,13 +38,7 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
-import thrift.test.Insanity;
-import thrift.test.Numberz;
-import thrift.test.ThriftTest;
-import thrift.test.Xception;
-import thrift.test.Xception2;
-import thrift.test.Xtruct;
-import thrift.test.Xtruct2;
+import thrift.test.*;
 
 public abstract class ServerTestBase extends TestCase {
 
@@ -104,15 +98,14 @@ public abstract class ServerTestBase extends TestCase {
   
     public Map<Integer,Integer> testMap(Map<Integer,Integer> thing) {
       System.out.print("testMap({");
-      boolean first = true;
-      for (int key : thing.keySet()) {
-        if (first) {
-          first = false;
-        } else {
-          System.out.print(", ");
-        }
-        System.out.print(key + " => " + thing.get(key));
-      }
+      System.out.print(thing);
+      System.out.print("})\n");
+      return thing;
+    }
+
+    public Map<String,String> testStringMap(Map<String,String> thing) {
+      System.out.print("testStringMap({");
+      System.out.print(thing);
       System.out.print("})\n");
       return thing;
     }

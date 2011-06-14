@@ -129,6 +129,7 @@ service ThriftTest
   Xtruct       testStruct(1: Xtruct thing),
   Xtruct2      testNest(1: Xtruct2 thing),
   map<i32,i32> testMap(1: map<i32,i32> thing),
+  map<string,string> testStringMap(1: map<string,string> thing),
   set<i32>     testSet(1: set<i32> thing),
   list<i32>    testList(1: list<i32> thing),
   Numberz      testEnum(1: Numberz thing),
