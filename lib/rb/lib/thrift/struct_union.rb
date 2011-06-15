@@ -32,8 +32,17 @@ module Thrift
       names_to_ids[name]
     end
 
+    def sorted_field_ids
+      sorted_field_ids = self.class.instance_variable_get(:@sorted_field_ids)
+      unless sorted_field_ids
+        sorted_field_ids = struct_fields.keys.sort
+        self.class.instance_variable_set(:@sorted_field_ids, sorted_field_ids)
+      end
+      sorted_field_ids
+    end
+
     def each_field
-      struct_field_ids.each do |fid|
+      sorted_field_ids.each do |fid|
         data = struct_fields[fid]
         yield fid, data
       end

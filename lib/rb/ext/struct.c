@@ -55,10 +55,10 @@ ID setvalue_id;
 
 ID to_s_method_id;
 ID name_to_id_method_id;
+static ID sorted_field_ids_method_id;
 
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
 #define STRUCT_FIELDS(obj) rb_const_get(CLASS_OF(obj), fields_const_id)
-#define STRUCT_FIELD_IDS(obj) rb_const_get(CLASS_OF(obj), field_ids_const_id)
 
 //-------------------------------------------
 // Writing section
@@ -376,11 +376,11 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
 
   // iterate through all the fields here
   VALUE struct_fields = STRUCT_FIELDS(self);
-  VALUE struct_field_ids_ordered = STRUCT_FIELD_IDS(self);
+  VALUE sorted_field_ids = rb_funcall(self, sorted_field_ids_method_id, 0);
 
   int i = 0;
-  for (i=0; i < RARRAY_LEN(struct_field_ids_ordered); i++) {
-    VALUE field_id = rb_ary_entry(struct_field_ids_ordered, i);
+  for (i=0; i < RARRAY_LEN(sorted_field_ids); i++) {
+    VALUE field_id = rb_ary_entry(sorted_field_ids, i);
 
     VALUE field_info = rb_hash_aref(struct_fields, field_id);
 
@@ -713,4 +713,5 @@ void Init_struct() {
 
   to_s_method_id = rb_intern("to_s");
   name_to_id_method_id = rb_intern("name_to_id");
+  sorted_field_ids_method_id = rb_intern("sorted_field_ids");
 }
