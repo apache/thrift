@@ -113,6 +113,23 @@ class TestHandler : public ThriftTestIf {
     out = thing;
   }
 
+  void testStringMap(map<std::string, std::string> &out, const map<std::string, std::string> &thing) {
+    printf("[C -> C++] testStringMap({");
+    map<std::string, std::string>::const_iterator m_iter;
+    bool first = true;
+    for (m_iter = thing.begin(); m_iter != thing.end(); ++m_iter) {
+      if (first) {
+        first = false;
+      } else {
+        printf(", ");
+      }
+      printf("\"%s\" => \"%s\"", (m_iter->first).c_str(), (m_iter->second).c_str());
+    }
+    printf("})\n");
+    out = thing;
+  }
+
+
   void testSet(set<int32_t> &out, const set<int32_t> &thing) {
     printf("[C -> C++] testSet({");
     set<int32_t>::const_iterator s_iter;
@@ -401,6 +418,17 @@ test_thrift_client (void)
   map_out = g_hash_table_new (NULL, NULL);
   map_in = g_hash_table_new (NULL, NULL);  g_hash_table_insert (map_out, &i32, &i32);
   assert (t_test_thrift_test_client_test_map (iface, &map_in, map_out, &error) == TRUE);
+  assert (error == NULL);
+  g_hash_table_destroy (map_out);
+  g_hash_table_destroy (map_in);
+
+  map_out = g_hash_table_new (NULL, NULL);
+  map_in = g_hash_table_new (NULL, NULL);
+  g_hash_table_insert (map_out, g_strdup ("a"), g_strdup ("123"));
+  g_hash_table_insert (map_out, g_strdup ("a b"), g_strdup ("with spaces "));
+  g_hash_table_insert (map_out, g_strdup ("same"), g_strdup ("same"));
+  g_hash_table_insert (map_out, g_strdup ("0"), g_strdup ("numeric key"));
+  assert (t_test_thrift_test_client_test_string_map (iface, &map_in, map_out, &error) == TRUE);
   assert (error == NULL);
   g_hash_table_destroy (map_out);
   g_hash_table_destroy (map_in);
