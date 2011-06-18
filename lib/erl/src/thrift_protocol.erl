@@ -329,6 +329,12 @@ write(Proto, {{struct, {Module, StructureName}}, Data})
        element(1, Data) =:= StructureName ->
     write(Proto, {Module:struct_info(StructureName), Data});
 
+write(_, {{struct, {Module, StructureName}}, Data})
+  when is_atom(Module),
+       is_atom(StructureName) ->
+    error(struct_unmatched, {{provided, element(1, Data)},
+                             {expected, StructureName}});
+
 write(Proto0, {{list, Type}, Data})
   when is_list(Data) ->
     {Proto1, ok} = write(Proto0,
