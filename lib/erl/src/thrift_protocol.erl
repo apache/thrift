@@ -332,7 +332,7 @@ write(Proto, {{struct, {Module, StructureName}}, Data})
 write(_, {{struct, {Module, StructureName}}, Data})
   when is_atom(Module),
        is_atom(StructureName) ->
-    error(struct_unmatched, {{provided, element(1, Data)},
+    erlang:error(struct_unmatched, {{provided, element(1, Data)},
                              {expected, StructureName}});
 
 write(Proto0, {{list, Type}, Data})
