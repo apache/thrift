@@ -560,7 +560,7 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
     out << indent() <<  "if (args) {" << endl;
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        out << indent() << indent() << "if (!args." << (*m_iter)->get_name() << ") {" << endl
+        out << indent() << indent() << "if (args." << (*m_iter)->get_name() << " !== undefined) {" << endl
             << indent() << indent() << indent() << "this." << (*m_iter)->get_name() << " = args." << (*m_iter)->get_name()  << ";" << endl
             << indent() << indent() << "}" << endl;
     }
