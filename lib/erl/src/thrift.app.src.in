@@ -17,17 +17,16 @@
 %% under the License.
 %%
 %%% -*- mode:erlang -*-
-{application, %APP_NAME%,
+{application, @PACKAGE_NAME@,
  [
   % A quick description of the application.
   {description, "Thrift bindings"},
 
   % The version of the applicaton
-  {vsn, "%VSN%"},
+  {vsn, "@PACKAGE_VERSION@"},
 
   % All modules used by the application.
   {modules, [
-       %MODULES%
    ]},
 
   % All of the registered names the application uses. This can be ignored.

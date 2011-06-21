@@ -18,7 +18,9 @@
 %%
 
 -module(test_membuffer).
--export([t/0]).
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
 
 -include("thriftTest_types.hrl").
 
@@ -30,7 +32,7 @@ test_data() ->
     i64_thing = 12345678900
   }.
 
-t1() ->
+encode_decode_1_test() ->
   {ok, Transport} = thrift_memory_buffer:new(),
   {ok, Protocol0} = thrift_binary_protocol:new(Transport),
   TestData = test_data(),
@@ -42,8 +44,7 @@ t1() ->
     'xtruct'),
   Result = TestData.
 
-
-t2() ->
+encode_decode_2_test() ->
   {ok, Transport} = thrift_memory_buffer:new(),
   {ok, Protocol0} = thrift_binary_protocol:new(Transport),
   TestData = test_data(),
@@ -60,7 +61,7 @@ t2() ->
     i64_thing = TestData#xtruct.i64_thing}.
 
 
-t3() ->
+encode_decode_3_test() ->
   {ok, Transport} = thrift_memory_buffer:new(),
   {ok, Protocol0} = thrift_binary_protocol:new(Transport),
   TestData = #bools{im_true = true, im_false = false},
@@ -75,7 +76,7 @@ t3() ->
   true = TestData#bools.im_false =:= Result#bools.im_false.
 
 
-t4() ->
+encode_decode_4_test() ->
   {ok, Transport} = thrift_memory_buffer:new(),
   {ok, Protocol0} = thrift_binary_protocol:new(Transport),
   TestData = #insanity{xtructs=[]},
@@ -88,7 +89,7 @@ t4() ->
 
   TestData = Result.
 
-t5() ->
+encode_decode_5_test() ->
   % test writing to a buffer, getting the bytes out, putting them
   % in a new buffer and reading them
 
@@ -111,10 +112,4 @@ t5() ->
 
   Result = TestData.
 
-t() ->
-  t1(),
-  t2(),
-  t3(),
-  t4(),
-  t5().
-
+-endif.

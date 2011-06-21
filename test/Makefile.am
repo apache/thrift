@@ -41,7 +41,6 @@ EXTRA_DIST = \
 	rb \
 	perl \
 	php \
-	erl \
 	hs \
 	ocaml \
 	AnnotationTest.thrift \

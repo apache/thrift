@@ -17,7 +17,23 @@
 # under the License.
 #
 
-SUBDIRS = src
+THRIFT = ../../compiler/cpp/thrift
+#THRIFT_FILES = ../../test/ThriftTest.thrift \
+#			   ../../test/Stress.thrift
+THRIFT_FILES = $(wildcard ../../test/*.thrift) \
+			   $(wildcard test/*.thrift)
+
+.generated: $(THRIFT_FILES)
+	for f in $(THRIFT_FILES) ; do \
+	  $(THRIFT) --gen erl -out test $$f ; \
+	done ; \
+	touch .generated
+
+all: .generated
+	./rebar compile
+
+check: .generated
+	./rebar eunit
 
 install: all
 	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
@@ -31,10 +47,36 @@ install: all
 uninstall:
 	rm -rf $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)
 
+clean:
+	rm .generated
+	./rebar clean
 
 maintainer-clean-local:
+	rm -f test/secondService_* \
+		  test/aService_* \
+		  test/serviceForExceptionWithAMap_* \
+		  test/annotationTest_* \
+		  test/service_* \
+		  test/constantsDemo_* \
+		  test/smallService_* \
+		  test/smallTest_* \
+		  test/debugProtoTest_* \
+		  test/srv_* \
+		  test/denseLinkingTest_* \
+		  test/stressTest_* \
+		  test/docTest_* \
+		  test/emptyService_* \
+		  test/inherited_* \
+		  test/javaBeansTest_* \
+		  test/thrift1151_* \
+		  test/javaBeansTest_* \
+		  test/manyTypedefs_* \
+		  test/thriftTest_* \
+		  test/optionalRequiredTest_* \
+		  test/yowza_* \
+		  test/reverseOrderService_*
 	rm -rf ebin
 
-EXTRA_DIST = include src
+EXTRA_DIST = include src rebar rebar.config
 
 MAINTAINERCLEANFILES = Makefile.in
