@@ -105,7 +105,7 @@ close(State) ->
 
 read(State = #http_transport{read_buffer = RBuf}, Len) when is_integer(Len) ->
     %% Pull off Give bytes, return them to the user, leave the rest in the buffer.
-    Give = min(iolist_size(RBuf), Len),
+    Give = erlang:min(iolist_size(RBuf), Len),
     case iolist_to_binary(RBuf) of
         <<Data:Give/binary, RBuf1/binary>> ->
             Response = {ok, Data},
@@ -114,6 +114,3 @@ read(State = #http_transport{read_buffer = RBuf}, Len) when is_integer(Len) ->
         _ ->
             {State, {error, 'EOF'}}
     end.
-
-min(A,B) when A<B -> A;
-min(_,B)          -> B.

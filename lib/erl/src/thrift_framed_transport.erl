@@ -95,17 +95,9 @@ read(State0 = #framed_transport{wrapped = Wrapped0, read_buffer = RBuf},
         { State0#framed_transport {wrapped = Wrapped1, read_buffer = [] },
           {RBuf1, RBuf1Size} };
       _ ->
-        Give = min(RBuf1Size, Len),
+        Give = erlang:min(RBuf1Size, Len),
         <<Data:Give/binary, RBuf2/binary>> = iolist_to_binary(RBuf1),
 
         { State0#framed_transport{wrapped = Wrapped1, read_buffer=RBuf2},
           {ok, Data} }
     end.
-
-%%--------------------------------------------------------------------
-%% Internal functions
-%%--------------------------------------------------------------------
-
-min(A,B) when A<B -> A;
-min(_,B)          -> B.
-
