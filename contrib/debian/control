@@ -132,7 +132,7 @@ Description: Thrift C++ library
 Package: libthrift-dev
 Architecture: any
 Section: libdevel
-Depends: ${shlibs:Depends}, ${misc:Depends}, libthrift0
+Depends: ${shlibs:Depends}, ${misc:Depends}, libthrift0, libglib2.0-dev
 Description: Thrift C++ library (development headers)
  Thrift is a software framework for scalable cross-language services
  development. It combines a software stack with a code generation engine to

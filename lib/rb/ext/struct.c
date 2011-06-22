@@ -55,6 +55,7 @@ ID setvalue_id;
 
 ID to_s_method_id;
 ID name_to_id_method_id;
+static ID sorted_field_ids_method_id;
 
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
 #define STRUCT_FIELDS(obj) rb_const_get(CLASS_OF(obj), fields_const_id)
@@ -375,13 +376,11 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
 
   // iterate through all the fields here
   VALUE struct_fields = STRUCT_FIELDS(self);
-
-  VALUE struct_field_ids_unordered = rb_funcall(struct_fields, keys_method_id, 0);
-  VALUE struct_field_ids_ordered = rb_funcall(struct_field_ids_unordered, sort_method_id, 0);
+  VALUE sorted_field_ids = rb_funcall(self, sorted_field_ids_method_id, 0);
 
   int i = 0;
-  for (i=0; i < RARRAY_LEN(struct_field_ids_ordered); i++) {
-    VALUE field_id = rb_ary_entry(struct_field_ids_ordered, i);
+  for (i=0; i < RARRAY_LEN(sorted_field_ids); i++) {
+    VALUE field_id = rb_ary_entry(sorted_field_ids, i);
 
     VALUE field_info = rb_hash_aref(struct_fields, field_id);
 
@@ -414,6 +413,8 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
 
 static VALUE rb_thrift_union_read(VALUE self, VALUE protocol);
 static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol);
+static void skip_map_contents(VALUE protocol, VALUE key_type_value, VALUE value_type_value, int size);
+static void skip_list_or_set_contents(VALUE protocol, VALUE element_type_value, int size);
 
 static void set_field_value(VALUE obj, VALUE field_name, VALUE value) {
   char name_buf[RSTRING_LEN(field_name) + 1];
@@ -422,6 +423,23 @@ static void set_field_value(VALUE obj, VALUE field_name, VALUE value) {
   strlcpy(&name_buf[1], RSTRING_PTR(field_name), sizeof(name_buf));
 
   rb_ivar_set(obj, rb_intern(name_buf), value);
+}
+
+// Helper method to skip the contents of a map (assumes the map header has been read).
+static void skip_map_contents(VALUE protocol, VALUE key_type_value, VALUE value_type_value, int size) {
+  int i;
+  for (i = 0; i < size; i++) {
+    rb_funcall(protocol, skip_method_id, 1, key_type_value);
+    rb_funcall(protocol, skip_method_id, 1, value_type_value);
+  }
+}
+
+// Helper method to skip the contents of a list or set (assumes the list/set header has been read).
+static void skip_list_or_set_contents(VALUE protocol, VALUE element_type_value, int size) {
+  int i;
+  for (i = 0; i < size; i++) {
+    rb_funcall(protocol, skip_method_id, 1, element_type_value);
+  }
 }
 
 static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
@@ -458,18 +476,30 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
     int value_ttype = FIX2INT(rb_ary_entry(map_header, 1));
     int num_entries = FIX2INT(rb_ary_entry(map_header, 2));
 
+    // Check the declared key and value types against the expected ones and skip the map contents
+    // if the types don't match.
     VALUE key_info = rb_hash_aref(field_info, key_sym);
     VALUE value_info = rb_hash_aref(field_info, value_sym);
 
-    result = rb_hash_new();
+    if (!NIL_P(key_info) && !NIL_P(value_info)) {
+      int specified_key_type = FIX2INT(rb_hash_aref(key_info, type_sym));
+      int specified_value_type = FIX2INT(rb_hash_aref(value_info, type_sym));
+      if (specified_key_type == key_ttype && specified_value_type == value_ttype) {
+        result = rb_hash_new();
 
-    for (i = 0; i < num_entries; ++i) {
-      VALUE key, val;
+        for (i = 0; i < num_entries; ++i) {
+          VALUE key, val;
 
-      key = read_anything(protocol, key_ttype, key_info);
-      val = read_anything(protocol, value_ttype, value_info);
+          key = read_anything(protocol, key_ttype, key_info);
+          val = read_anything(protocol, value_ttype, value_info);
 
-      rb_hash_aset(result, key, val);
+          rb_hash_aset(result, key, val);
+        }
+      } else {
+        skip_map_contents(protocol, INT2FIX(key_ttype), INT2FIX(value_ttype), num_entries);
+      }
+    } else {
+      skip_map_contents(protocol, INT2FIX(key_ttype), INT2FIX(value_ttype), num_entries);
     }
 
     default_read_map_end(protocol);
@@ -479,10 +509,23 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
     VALUE list_header = default_read_list_begin(protocol);
     int element_ttype = FIX2INT(rb_ary_entry(list_header, 0));
     int num_elements = FIX2INT(rb_ary_entry(list_header, 1));
-    result = rb_ary_new2(num_elements);
 
-    for (i = 0; i < num_elements; ++i) {
-      rb_ary_push(result, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
+    // Check the declared element type against the expected one and skip the list contents
+    // if the types don't match.
+    VALUE element_info = rb_hash_aref(field_info, element_sym);
+    if (!NIL_P(element_info)) {
+      int specified_element_type = FIX2INT(rb_hash_aref(element_info, type_sym));
+      if (specified_element_type == element_ttype) {
+        result = rb_ary_new2(num_elements);
+
+        for (i = 0; i < num_elements; ++i) {
+          rb_ary_push(result, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
+        }
+      } else {
+        skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
+      }
+    } else {
+      skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
     }
 
     default_read_list_end(protocol);
@@ -493,15 +536,28 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
     VALUE set_header = default_read_set_begin(protocol);
     int element_ttype = FIX2INT(rb_ary_entry(set_header, 0));
     int num_elements = FIX2INT(rb_ary_entry(set_header, 1));
-    items = rb_ary_new2(num_elements);
 
-    for (i = 0; i < num_elements; ++i) {
-      rb_ary_push(items, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
+    // Check the declared element type against the expected one and skip the set contents
+    // if the types don't match.
+    VALUE element_info = rb_hash_aref(field_info, element_sym);
+    if (!NIL_P(element_info)) {
+      int specified_element_type = FIX2INT(rb_hash_aref(element_info, type_sym));
+      if (specified_element_type == element_ttype) {
+        items = rb_ary_new2(num_elements);
+
+        for (i = 0; i < num_elements; ++i) {
+          rb_ary_push(items, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
+        }
+
+        result = rb_class_new_instance(1, &items, rb_cSet);
+      } else {
+        skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
+      }
+    } else {
+      skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
     }
 
     default_read_set_end(protocol);
-
-    result = rb_class_new_instance(1, &items, rb_cSet);
   } else {
     rb_raise(rb_eNotImpError, "read_anything not implemented for type %d!", ttype);
   }
@@ -657,4 +713,5 @@ void Init_struct() {
 
   to_s_method_id = rb_intern("to_s");
   name_to_id_method_id = rb_intern("name_to_id");
+  sorted_field_ids_method_id = rb_intern("sorted_field_ids");
 }

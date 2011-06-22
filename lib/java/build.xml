@@ -7,64 +7,47 @@
  to you under the Apache License, Version 2.0 (the
  "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
+ 
+ http://www.apache.org/licenses/LICENSE-2.0
+ 
  Unless required by applicable law or agreed to in writing,
  software distributed under the License is distributed on an
  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  KIND, either express or implied. See the License for the
  specific language governing permissions and limitations
  under the License.
--->
+ -->
 <project name="libthrift" default="dist" basedir="."
-  xmlns:ivy="antlib:org.apache.ivy.ant"
   xmlns:artifact="antlib:org.apache.maven.artifact.ant">
-
+  
   <description>Thrift Build File</description>
   <property name="thrift.root" location="../../"/>
-  <property name="thrift.version" value="0.7.0"/>
-  <property name="thrift.groupid" value="org.apache.thrift"/>
   <property name="thrift.artifactid" value="libthrift"/>
-	
-  <property name="mvn.ant.task.version" value="2.1.1"/>
-  <property name="ivy.version" value="2.2.0"/>
- 	
-  <!-- Local install locations -->
-  <property name="install.path" value="/usr/local/lib"/>
-  <property name="install.javadoc.path" value="${install.path}"/>
 
-  <!-- Dependency download location -->
-  <property name="mvn.repo" value="http://repo1.maven.org/maven2"/>
-  <property name="apache.repo" value="https://repository.apache.org/content/repositories/releases"/>	
-  
-  <!-- Publish information-->
-  <property name="license" value="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
-  <property name="maven-repository-url" value="https://repository.apache.org/service/local/staging/deploy/maven2"/>
-  <property name="maven-repository-id" value="apache.releases.https"/>	
+  <!-- Include the base properties file -->
+  <property file="${basedir}/build.properties" />
 
   <property environment="env"/>
 
   <condition property="version" value="${thrift.version}">
     <isset property="release"/>
   </condition>
-  <property name="version" value="${thrift.version}-snapshot"/>	
+  <property name="version" value="${thrift.version}-snapshot"/> 
 
   <property name="final.name" value="${thrift.artifactid}-${version}"/>
-
-  <property name="gen" location="gen-java"/>
-  <property name="genbean" location="gen-javabean"/>
 
   <property name="src" location="${basedir}/src"/>
   <property name="build.dir" location="${basedir}/build"/>
   <property name="build.lib.dir" location="${build.dir}/lib"/>
   <property name="build.tools.dir" location="${build.dir}/tools"/>
   <property name="src.test" location="test"/>
+  <property name="javadoc.dir" location="${build.dir}/javadoc"/>
   <property name="build.test.dir" location="${build.dir}/test"/>
   <property name="test.thrift.home" location="${thrift.root}/test"/>
 
-  <property name="javadoc.dir" location="${build.dir}/javadoc"/>
-  
+  <property name="gen" location="gen-java"/>
+  <property name="genbean" location="gen-javabean"/>
+
   <property name="jar.file" location="${build.dir}/${final.name}.jar"/>
   <property name="test.jar.file" location="${build.dir}/${final.name}-test.jar"/>
   <property name="javadoc.jar.file" location="${build.dir}/${final.name}-javadoc.jar"/>
@@ -75,19 +58,10 @@
   <property name="test.timeout" value="2000000"/>
   <property name="test.src.dir" location="${basedir}/test"/>
   <property name="test.log.dir" value="${build.test.dir}/log"/>
-  <property name="test.port" value="9090"/>	
-
-  <!-- ivy properties -->	
-  <property name="ivy.repo.url" value="${mvn.repo}/org/apache/ivy/ivy/${ivy.version}/"/>
-  <property name="ivy.jar" value="${build.tools.dir}/ivy-${ivy.version}.jar"/>	
+  <property name="test.port" value="9090"/> 
 
   <!-- maven properties -->
-  <property name="mvn.ant.task.url" value="${mvn.repo}/org/apache/maven/maven-ant-tasks/${mvn.ant.task.version}"/>
-  <property name="mvn.ant.task.jar" location="${build.tools.dir}/maven-ant-tasks-${mvn.ant.task.version}.jar"/>
   <property name="pom.xml" location="${build.dir}/${final.name}.pom"/>
-
-  <!-- custom override anything with a thrift-build.properties file in your home directory -->	
-  <property file="${user.home}/.thrift-build.properties"/>
 
   <path id="compile.classpath">
     <fileset dir="${build.lib.dir}"> 
@@ -103,8 +77,8 @@
     <pathelement location="${test.jar.file}"/>
   </path>
 
-  <!-- Tasks -->	
-  <target name="init" depends="setup.init,ivy.init,mvn.init" unless="init.finished">
+  <!-- Tasks --> 
+  <target name="init" depends="setup.init,mvn.init" unless="init.finished">
     <property name="init.finished" value="true"/>
   </target>
 
@@ -116,35 +90,9 @@
     <mkdir dir="${build.test.dir}"/>
   </target>
 
-  <target name="ivy.download" depends="setup.init" unless="ivy.found">
-    <get src="${ivy.repo.url}/ivy-${ivy.version}.jar" dest="${ivy.jar}" usetimestamp="true"/>
-  </target>
-
-  <target name="ivy.check" description="check if ivy is in the classpath">
-    <condition property="ivy.found">
-      <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
-    </condition>
-  </target>
-
-  <target name="ivy.init" depends="setup.init,ivy.check,ivy.download" unless="ivy.found">
-    <typedef uri="antlib:org.apache.ivy.ant" onerror="fail" loaderRef="ivyLoader">
-      <classpath>
-        <pathelement location="${ivy.jar}"/>
-      </classpath>
-    </typedef>
-    <fail>
-      <condition >
-        <not>
-          <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
-        </not>
-      </condition>
-      You need Apache Ivy 2.0 or later from ${ivy.repo.url}. It could not be loaded from ${ivy.jar}
-    </fail>
-  </target>
-
   <target name="compile" depends="init">
     <javac srcdir="${src}" destdir="${build.dir}" source="1.5" target="1.5" 
-      debug="true" classpathref="compile.classpath" includeantruntime="false"/>
+    debug="true" classpathref="compile.classpath" includeantruntime="false"/>
   </target>
 
   <target name="javadoc" depends="init">
@@ -183,12 +131,11 @@
 
   <target name="install" depends="dist,javadoc">
     <copy todir="${install.path}">
-        <fileset dir="."><include name="*.jar"/></fileset>
+      <fileset dir="${build.dir}" includes="*.jar"/>
+      <fileset dir="${build.lib.dir}" includes="*.jar"/>
     </copy>
     <copy todir="${install.javadoc.path}">
-      <fileset dir="${javadoc.dir}">
-        <include name="**/*"/>
-      </fileset>
+      <fileset dir="${javadoc.dir}" includes="**/*"/>
     </copy>
   </target>
 
@@ -211,7 +158,7 @@
   <target name="junit-test" description="Run the JUnit test suite" depends="compile-test">
     <mkdir dir="${test.log.dir}"/>
     <junit printsummary="true" showoutput="${test.output}" timeout="${test.timeout}" 
-      haltonfailure="no" errorProperty="tests.failed" failureProperty="tests.failed"
+      haltonfailure="true" errorProperty="tests.failed" failureProperty="tests.failed"
       fork="true" forkmode="perTest" maxmemory="512m"
     >
       <sysproperty key="build.test" value="${build.test.dir}"/>
@@ -281,19 +228,19 @@
     </exec>
   </target>
 
-  <target name="mvn.ant.tasks.download" depends="setup.init" unless="mvn.ant.tasks.found">
-    <get src="${mvn.ant.task.url}/maven-ant-tasks-${mvn.ant.task.version}.jar" dest="${mvn.ant.task.jar}" usetimestamp="true"/>
+  <target name="mvn.ant.tasks.download" depends="setup.init,mvn.ant.tasks.check" unless="mvn.ant.tasks.found">
+    <get src="${mvn.ant.task.url}/${mvn.ant.task.jar}" dest="${build.tools.dir}/${mvn.ant.task.jar}" usetimestamp="true"/>
   </target>
 
   <target name="mvn.ant.tasks.check">
     <condition property="mvn.ant.tasks.found">
       <typefound uri="antlib:org.apache.maven.artifact.ant" name="artifact"/>
     </condition>
-  </target>	
+  </target> 
 
   <target name="mvn.init" depends="mvn.ant.tasks.download" unless="mvn.finished">
     <!-- Download mvn ant tasks, download dependencies, and setup pom file -->
-    <typedef uri="antlib:org.apache.maven.artifact.ant" classpath="${mvn.ant.task.jar}"/>
+    <typedef uri="antlib:org.apache.maven.artifact.ant" classpath="${build.tools.dir}/${mvn.ant.task.jar}"/>
 
     <!-- remote repositories used to download dependencies from -->
     <artifact:remoteRepository id="central" url="${mvn.repo}"/>
@@ -332,12 +279,11 @@
       <developer id="geechorama" name="Andrew McGeachie"/>
       <developer id="molinaro" name="Anthony Molinaro"/>
       <developer id="roger" name="Roger Meier"/>
+      <developer id="jfarrell" name="Jake Farrell"/>
 
       <!-- Thrift dependencies list -->
       <dependency groupId="org.slf4j" artifactId="slf4j-api" version="1.5.8"/>
-      <dependency groupId="org.slf4j" artifactId="slf4j-log4j12" version="1.5.8"/>
       <dependency groupId="commons-lang" artifactId="commons-lang" version="2.5"/>
-      <dependency groupId="junit" artifactId="junit" version="4.4"/>
       <dependency groupId="javax.servlet" artifactId="servlet-api" version="2.5"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="4.0.1"/>
     </artifact:pom>
@@ -354,6 +300,18 @@
       <mapper type="flatten"/>
     </copy>
 
+    <!-- Dependencies needed for testing -->
+    <artifact:dependencies filesetId="test-dependency-jars" useScope="runtime">
+      <dependency groupId="org.slf4j" artifactId="slf4j-log4j12" version="1.5.8"/>
+      <dependency groupId="junit" artifactId="junit" version="4.4"/>
+    </artifact:dependencies>
+
+    <!-- Copy the test dependencies to the build/lib dir -->
+    <copy todir="${build.dir}/lib">
+      <fileset refid="test-dependency-jars"/>
+      <mapper type="flatten"/>
+    </copy>
+
     <property name="mvn.finished" value="true"/>
   </target>
 
@@ -362,12 +320,13 @@
     <attribute name="file"/>
     <attribute name="classifier" default=""/>
     <attribute name="packaging" default="jar"/>
+    <attribute name="pom" default=""/>
     <sequential>
       <artifact:mvn fork="true">
         <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.1:sign-and-deploy-file"/>
         <arg value="-DrepositoryId=${maven-repository-id}"/>
         <arg value="-Durl=${maven-repository-url}"/>
-        <arg value="-DpomFile=${pom.xml}"/>
+        <arg value="-DpomFile=@{pom}"/>
         <arg value="-Dfile=@{file}"/>
         <arg value="-Dclassifier=@{classifier}"/>
         <arg value="-Dpackaging=@{packaging}"/>
@@ -379,9 +338,9 @@
   <target name="publish" depends="clean,init,test,dist,javadoc,pack.src">
     <!-- Compile, package, test and then send release to apache maven repo -->
     <!-- run with: ant -Drelease=true publish-->
-    <signAndDeploy file="${pom.xml}" packaging="pom" classifier=""/>
-    <signAndDeploy file="${jar.file}" packaging="jar" classifier=""/>
-    <signAndDeploy file="${javadoc.jar.file}" packaging="jar" classifier="javadoc"/>
-    <signAndDeploy file="${source.tar.gz}" packaging="src" classifier="tar.gz"/>
+    <signAndDeploy file="${pom.xml}" packaging="pom" classifier="" pom="${pom.xml}"/>
+    <signAndDeploy file="${jar.file}" packaging="jar" classifier="" pom="${pom.xml}"/>
+    <signAndDeploy file="${javadoc.jar.file}" packaging="jar" classifier="javadoc" pom="${pom.xml}"/>
+    <signAndDeploy file="${source.tar.gz}" packaging="src" classifier="tar.gz" pom="${pom.xml}"/>
   </target>
 </project>

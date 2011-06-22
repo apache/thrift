@@ -514,7 +514,11 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
   /**
      Generate a character array of enum names for debugging purposes.
   */
-  std::string prefix = tenum->get_name() + "::";
+  std::string prefix = "";
+  if (!gen_pure_enums_) {
+    prefix = tenum->get_name() + "::";
+  }
+
   f_types_impl_ <<
     indent() << "int _k" << tenum->get_name() << "Values[] =";
   generate_enum_constant_list(f_types_impl_, constants, prefix.c_str(), "", false);
@@ -925,7 +929,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
         indent() <<
         indent() << "__isset." << (*m_iter)->get_name() << " = true;" << endl;
     }
-    out << 
+    out <<
       indent()<< "}" << endl;
   }
   out << endl;
@@ -2823,13 +2827,15 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       out <<
         indent() << "template <class Protocol_>" << endl;
     }
+    const bool unnamed_oprot_seqid = tfunction->is_oneway() &&
+      !(gen_templates_ && !specialized);
     out <<
       "void " << tservice->get_name() << "Processor" << class_suffix << "::" <<
       "process_" << tfunction->get_name() << "(" <<
-      "int32_t" << (tfunction->is_oneway() ? ", " : " seqid, ") <<
+      "int32_t" << (unnamed_oprot_seqid ? ", " : " seqid, ") <<
       prot_type << "* iprot, " <<
-      prot_type << "*" << (tfunction->is_oneway() ? ", " : " oprot, ")
-      << "void* callContext)" << endl;
+      prot_type << "*" << (unnamed_oprot_seqid ? ", " : " oprot, ") <<
+      "void* callContext)" << endl;
     scope_up(out);
 
     if (gen_templates_ && !specialized) {

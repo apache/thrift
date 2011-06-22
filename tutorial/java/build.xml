@@ -25,8 +25,11 @@
   <property name="build" location="build" />
 
   <path id="libs.classpath">
-    <pathelement path="../../lib/java/libthrift.jar" />
-    <fileset dir="../../lib/java/build/ivy/lib">
+    <fileset dir="../../lib/java/build">
+      <include name="*.jar" />
+      <exclude name="-test.jar" />
+    </fileset>
+    <fileset dir="../../lib/java/build/lib">
       <include name="*.jar" />
     </fileset>
   </path>

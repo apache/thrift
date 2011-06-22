@@ -28,12 +28,14 @@ EXTRA_DIST = \
 	script \
 	spec
 
+DESTDIR ?= /
+
 all-local:
 	if [ -n "$(RUBY_PREFIX)" ] ; then $(RUBY) setup.rb config --prefix=$(DESTDIR)$(RUBY_PREFIX) --rbdir='$$libdir/ruby' --sodir='$$libdir/ruby' ; elif [ -n "$(DESTDIR)" ] ; then $(RUBY) setup.rb config --prefix=$(DESTDIR) ; else $(RUBY) setup.rb config ; fi
 	$(RUBY) setup.rb setup
 
 install-exec-hook:
-	$(RUBY) setup.rb install
+	$(RUBY) setup.rb install --prefix=$(DESTDIR)
 
 # Make sure this doesn't fail if Ruby is not configured.
 clean-local:

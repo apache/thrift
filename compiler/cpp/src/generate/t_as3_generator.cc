@@ -46,10 +46,10 @@ class t_as3_generator : public t_oop_generator {
   {
     (void) option_string;
     std::map<std::string, std::string>::const_iterator iter;
-    
+
     iter = parsed_options.find("bindable");
     bindable_ = (iter != parsed_options.end());
-    
+
     out_dir_base_ = "gen-as3";
   }
 
@@ -103,13 +103,13 @@ class t_as3_generator : public t_oop_generator {
   std::string generate_isset_check(std::string field);
   void generate_isset_set(ofstream& out, t_field* field);
   //removed std::string isset_field_id(t_field* field);
-  
+
   void generate_service_interface (t_service* tservice);
   void generate_service_helpers   (t_service* tservice);
   void generate_service_client    (t_service* tservice);
   void generate_service_server    (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
-  
+
   /**
    * Serialization constructs
    */
@@ -176,8 +176,8 @@ class t_as3_generator : public t_oop_generator {
   std::string as3_package();
   std::string as3_type_imports();
   std::string as3_thrift_imports();
-  std::string as3_thrift_gen_imports(t_struct* tstruct, string& imports); 
-  std::string as3_thrift_gen_imports(t_service* tservice); 
+  std::string as3_thrift_gen_imports(t_struct* tstruct, string& imports);
+  std::string as3_thrift_gen_imports(t_service* tservice);
   std::string type_name(t_type* ttype, bool in_container=false, bool in_init=false);
   std::string base_type_name(t_base_type* tbase, bool in_container=false);
   std::string declare_field(t_field* tfield, bool init=false);
@@ -207,8 +207,8 @@ class t_as3_generator : public t_oop_generator {
   std::string package_name_;
   std::ofstream f_service_;
   std::string package_dir_;
-  
-  bool bindable_;	
+
+  bool bindable_;
 };
 
 
@@ -260,6 +260,7 @@ string t_as3_generator::as3_type_imports() {
   return
     string() +
     "import org.apache.thrift.Set;\n" +
+    "import flash.utils.ByteArray;\n" +
     "import flash.utils.Dictionary;\n\n";
 }
 
@@ -298,7 +299,7 @@ string t_as3_generator::as3_thrift_gen_imports(t_struct* tstruct, string& import
       }
     }
   }
-  return imports;  
+  return imports;
 }
 
 
@@ -324,11 +325,11 @@ string t_as3_generator::as3_thrift_gen_imports(t_service* tservice) {
       }
     }
 
-    as3_thrift_gen_imports((*f_iter)->get_arglist(), imports);	    
-    as3_thrift_gen_imports((*f_iter)->get_xceptions(), imports);	    
+    as3_thrift_gen_imports((*f_iter)->get_arglist(), imports);
+    as3_thrift_gen_imports((*f_iter)->get_xceptions(), imports);
 
   }
- 
+
   return imports;
 
 }
@@ -364,13 +365,13 @@ void t_as3_generator::generate_enum(t_enum* tenum) {
   f_enum <<
     autogen_comment() <<
     as3_package() << endl;
-  
+
   scope_up(f_enum);
   // Add as3 imports
   f_enum << string() +
   "import org.apache.thrift.Set;" << endl <<
   "import flash.utils.Dictionary;" << endl;
-  
+
   indent(f_enum) <<
     "public class " << tenum->get_name() << " ";
   scope_up(f_enum);
@@ -383,10 +384,10 @@ void t_as3_generator::generate_enum(t_enum* tenum) {
       "public static const " << (*c_iter)->get_name() <<
       ":int = " << value << ";" << endl;
   }
-  
+
   // Create a static Set with all valid values for this enum
   f_enum << endl;
-  
+
   indent(f_enum) << "public static const VALID_VALUES:Set = new Set(";
   indent_up();
   bool firstValue = true;
@@ -405,13 +406,13 @@ void t_as3_generator::generate_enum(t_enum* tenum) {
     indent(f_enum) << "VALUES_TO_NAMES[" << (*c_iter)->get_name() << "] = \"" << (*c_iter)->get_name() << "\";" << endl;
   }
   f_enum << endl;
-  
+
   scope_down(f_enum);
 
   scope_down(f_enum); // end class
-  
+
   scope_down(f_enum); // end package
-  
+
   f_enum.close();
 }
 
@@ -430,14 +431,14 @@ void t_as3_generator::generate_consts(std::vector<t_const*> consts) {
   // Print header
   f_consts <<
     autogen_comment() << as3_package();
-  
+
   scope_up(f_consts);
   f_consts << endl;
-  
+
   f_consts << as3_type_imports();
 
- 
-  
+
+
   indent(f_consts) <<
     "public class Constants {" << endl <<
     endl;
@@ -472,6 +473,12 @@ void t_as3_generator::print_const_value(std::ofstream& out, string name, t_type*
 
   } else if (type->is_enum()) {
     out << name << type_name_val << " = " << value->get_integer() << ";" << endl << endl;
+  } else if (type->is_enum()) {
+    out << name;
+    if(!defval) {
+      out << ":" << type_name(type);
+    }
+    out << " = " << value->get_integer() << ";" << endl << endl;
   } else if (type->is_struct() || type->is_xception()) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -566,7 +573,7 @@ string t_as3_generator::render_const_value(ofstream& out, string name, t_type* t
   (void) name;
   type = get_true_type(type);
   std::ostringstream render;
-  
+
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
@@ -601,7 +608,7 @@ string t_as3_generator::render_const_value(ofstream& out, string name, t_type* t
     print_const_value(out, t, type, value, true);
     render << t;
   }
-  
+
   return render.str();
 }
 
@@ -641,27 +648,27 @@ void t_as3_generator::generate_as3_struct(t_struct* tstruct,
   f_struct <<
     autogen_comment() <<
   as3_package();
-  
+
   scope_up(f_struct);
   f_struct << endl;
-  
+
   string imports;
 
   f_struct <<
     as3_type_imports() <<
-    as3_thrift_imports() << 
+    as3_thrift_imports() <<
     as3_thrift_gen_imports(tstruct, imports) << endl;
-  
+
   if (bindable_ && ! is_exception) {
     f_struct << "import flash.events.Event;" << endl <<
     "import flash.events.EventDispatcher;" << endl <<
     "import mx.events.PropertyChangeEvent;" << endl;
   }
-  
+
   generate_as3_struct_definition(f_struct,
                                   tstruct,
                                   is_exception);
-  
+
   scope_down(f_struct); // end of package
   f_struct.close();
 }
@@ -722,9 +729,9 @@ void t_as3_generator::generate_as3_struct_definition(ofstream &out,
 
     indent(out) << "public static const " << upcase_string((*m_iter)->get_name()) << ":int = " << (*m_iter)->get_key() << ";" << endl;
   }
-  
+
   out << endl;
-  
+
   // Inner Isset class
   if (members.size() > 0) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -734,11 +741,11 @@ void t_as3_generator::generate_as3_struct_definition(ofstream &out,
         }
       }
   }
-  
+
   out << endl;
-  
+
   generate_as3_meta_data_map(out, tstruct);
-  
+
   // Static initializer to populate global class to struct metadata map
   indent(out) << "{" << endl;
   indent_up();
@@ -753,12 +760,13 @@ void t_as3_generator::generate_as3_struct_definition(ofstream &out,
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = get_true_type((*m_iter)->get_type());
     if ((*m_iter)->get_value() != NULL) {
-      print_const_value(out, "this." + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
+      indent(out) << "this._" << (*m_iter)->get_name() << " = " << (*m_iter)->get_value()->get_integer() << ";" <<
+      endl;
     }
   }
   indent_down();
   indent(out) << "}" << endl << endl;
-  
+
   generate_as3_bean_boilerplate(out, tstruct, bindable);
   generate_generic_field_getters_setters(out, tstruct);
   generate_generic_isset_method(out, tstruct);
@@ -855,7 +863,7 @@ void t_as3_generator::generate_as3_struct_reader(ofstream& out,
 
     out <<
       indent() << "iprot.readStructEnd();" << endl << endl;
-    
+
     // in non-beans style, check for required fields of primitive type
     // (which can be checked here but not in the general validate method)
     out << endl << indent() << "// check for required fields of primitive type, which can't be checked in the validate method" << endl;
@@ -882,11 +890,11 @@ void t_as3_generator::generate_as3_struct_reader(ofstream& out,
 void t_as3_generator::generate_as3_validator(ofstream& out,
                                                    t_struct* tstruct){
   indent(out) << "public function validate():void {" << endl;
-  indent_up();  
-  
+  indent_up();
+
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
-  
+
   out << indent() << "// check for required fields" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
@@ -899,7 +907,7 @@ void t_as3_generator::generate_as3_validator(ofstream& out,
       }
     }
   }
-  
+
   // check that fields of type enum have valid values
   out << indent() << "// check that fields of type enum have valid values" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -912,9 +920,9 @@ void t_as3_generator::generate_as3_validator(ofstream& out,
       indent(out) << "throw new TProtocolError(TProtocolError.UNKNOWN, \"The field '" << field->get_name() << "' has been assigned the invalid value \" + " << field->get_name() << ");" << endl;
       indent_down();
       indent(out) << "}" << endl;
-    } 
-  }  
-  
+    }
+  }
+
   indent_down();
   indent(out) << "}" << endl << endl;
 }
@@ -1006,7 +1014,7 @@ void t_as3_generator::generate_as3_struct_result_writer(ofstream& out,
     out << "(this." << generate_isset_check(*f_iter) << ") {" << endl;
 
     indent_up();
-    
+
     indent(out) << "oprot.writeFieldBegin(" << constant_name((*f_iter)->get_name()) << "_FIELD_DESC);" << endl;
 
     // Write field contents
@@ -1153,7 +1161,7 @@ void t_as3_generator::generate_as3_bean_boilerplate(ofstream& out,
     t_type* type = get_true_type(field->get_type());
     std::string field_name = field->get_name();
     std::string cap_name = get_cap_name(field_name);
-        
+
     // Simple getter
     generate_as3_doc(out, field);
     indent(out) << "public function get " << field_name << "():" <<
@@ -1162,7 +1170,7 @@ void t_as3_generator::generate_as3_bean_boilerplate(ofstream& out,
     indent(out) << "return this._" << field_name << ";" << endl;
     indent_down();
     indent(out) << "}" << endl << endl;
-    
+
     // Simple setter
     generate_as3_doc(out, field);
     std::string propName = tmp("thriftPropertyChange");
@@ -1175,21 +1183,21 @@ void t_as3_generator::generate_as3_bean_boilerplate(ofstream& out,
     indent(out) << "this._" << field_name << " = " << field_name << ";" <<
     endl;
     generate_isset_set(out, field);
-    
+
     if (bindable) {
       // We have to use a custom event rather than the default, because if you use the default,
       // the setter only gets called if the value has changed - this means calling foo.setIntValue(0)
       // will not cause foo.isIntValueSet() to return true since the value of foo._intValue wasn't changed
       // so the setter was never called.
       indent(out) << "dispatchEvent(new Event(\"" << propName << "\"));" << endl;
-      
+
       // However, if you just use a custom event, then collections won't be able to detect when elements
       // in the collections have changed since they listed for PropertyChangeEvents.  So, we dispatch both.
       indent(out) << "dispatchEvent(new PropertyChangeEvent(PropertyChangeEvent.PROPERTY_CHANGE));" << endl;
     }
     indent_down();
     indent(out) << "}" << endl << endl;
-    
+
     // Unsetter
     indent(out) << "public function unset" << cap_name << "():void {" << endl;
     indent_up();
@@ -1200,7 +1208,7 @@ void t_as3_generator::generate_as3_bean_boilerplate(ofstream& out,
     }
     indent_down();
     indent(out) << "}" << endl << endl;
-    
+
     // isSet method
     indent(out) << "// Returns true if field " << field_name << " is set (has been assigned a value) and false otherwise" << endl;
     indent(out) << "public function is" << get_cap_name("set") << cap_name << "():Boolean {" << endl;
@@ -1253,7 +1261,7 @@ void t_as3_generator::generate_as3_struct_tostring(ofstream& out,
       indent(out) << "} else {" << endl;
       indent_up();
     }
-    
+
     if (field->get_type()->is_base_type() && ((t_base_type*)(field->get_type()))->is_binary()) {
       indent(out) << "  ret += \"BINARY\";" << endl;
     } else if(field->get_type()->is_enum()) {
@@ -1269,7 +1277,7 @@ void t_as3_generator::generate_as3_struct_tostring(ofstream& out,
     } else {
       indent(out) << "ret += this." << (*f_iter)->get_name() << ";" << endl;
     }
-    
+
     if (can_be_null) {
       indent_down();
       indent(out) << "}" << endl;
@@ -1322,7 +1330,7 @@ void t_as3_generator::generate_as3_meta_data_map(ofstream& out,
         out << "TFieldRequirementType.DEFAULT, ";
       }
 
-      // Create value meta data    
+      // Create value meta data
       generate_field_value_meta_data(out, field->get_type());
       out  << ");" << endl;
     }
@@ -1330,7 +1338,7 @@ void t_as3_generator::generate_as3_meta_data_map(ofstream& out,
   }
 }
 
-/** 
+/**
  * Returns a string with the as3 representation of the given thrift type
  * (e.g. for the type struct it returns "TType.STRUCT")
  */
@@ -1373,12 +1381,12 @@ void t_as3_generator::generate_field_value_meta_data(std::ofstream& out, t_type*
   } else if (type->is_container()){
     if (type->is_list()){
       indent(out) << "new ListMetaData(TType.LIST, ";
-      t_type* elem_type = ((t_list*)type)->get_elem_type();    
-      generate_field_value_meta_data(out, elem_type);   
+      t_type* elem_type = ((t_list*)type)->get_elem_type();
+      generate_field_value_meta_data(out, elem_type);
     } else if (type->is_set()){
       indent(out) << "new SetMetaData(TType.SET, ";
-      t_type* elem_type = ((t_list*)type)->get_elem_type();    
-      generate_field_value_meta_data(out, elem_type); 
+      t_type* elem_type = ((t_list*)type)->get_elem_type();
+      generate_field_value_meta_data(out, elem_type);
     } else{ // map
       indent(out) << "new MapMetaData(TType.MAP, ";
       t_type* key_type = ((t_map*)type)->get_key_type();
@@ -1411,9 +1419,9 @@ void t_as3_generator::generate_service(t_service* tservice) {
 
   f_service_ <<
     autogen_comment() << as3_package();
-  
+
   scope_up(f_service_);
-  
+
   f_service_ << endl <<
     as3_type_imports() <<
     as3_thrift_imports() <<
@@ -1423,59 +1431,59 @@ void t_as3_generator::generate_service(t_service* tservice) {
 
   scope_down(f_service_);
   f_service_.close();
-  
+
   // Now make the implementation/client file
   f_service_name = package_dir_+"/"+service_name_+"Impl.as";
   f_service_.open(f_service_name.c_str());
-  
+
   f_service_ <<
   autogen_comment() << as3_package();
-  
+
   scope_up(f_service_);
-  
+
   f_service_ << endl <<
   as3_type_imports() <<
   as3_thrift_imports() <<
   as3_thrift_gen_imports(tservice) << endl;
-  
+
   generate_service_client(tservice);
   scope_down(f_service_);
-  
+
   f_service_ << as3_type_imports();
   f_service_ << as3_thrift_imports();
   f_service_ << as3_thrift_gen_imports(tservice);
   f_service_ << "import " << package_name_ << ".*;" << endl;
-  
+
   generate_service_helpers(tservice);
-  
+
   f_service_.close();
-  
+
   // Now make the processor/server file
   f_service_name = package_dir_+"/"+service_name_+"Processor.as";
   f_service_.open(f_service_name.c_str());
-  
+
   f_service_ <<
   autogen_comment() << as3_package();
-  
+
   scope_up(f_service_);
-  
+
   f_service_ << endl <<
   as3_type_imports() <<
   as3_thrift_imports() <<
   as3_thrift_gen_imports(tservice) << endl;
-  
+
   generate_service_server(tservice);
   scope_down(f_service_);
-  
+
   f_service_ << as3_type_imports();
   f_service_ << as3_thrift_imports();
   f_service_ << as3_thrift_gen_imports(tservice) <<endl;
   f_service_ << "import " << package_name_ << ".*;" << endl;
-  
+
   generate_service_helpers(tservice);
-  
+
   f_service_.close();
-    
+
 }
 
 /**
@@ -1622,7 +1630,7 @@ void t_as3_generator::generate_service_client(t_service* tservice) {
 
     // Get the struct of function call params
     t_struct* arg_struct = (*f_iter)->get_arglist();
-    
+
     string argsname = (*f_iter)->get_name() + "_args";
     vector<t_field*>::const_iterator fld_iter;
     const vector<t_field*>& fields = arg_struct->get_members();
@@ -1640,7 +1648,7 @@ void t_as3_generator::generate_service_client(t_service* tservice) {
     f_service_ <<
       indent() << "args.write(oprot_);" << endl <<
     indent() << "oprot_.writeMessageEnd();" << endl;
-    
+
     if ((*f_iter)->is_oneway()) {
       f_service_ << indent() << "oprot_.getTransport().flush();" << endl;
     }
@@ -1692,7 +1700,7 @@ void t_as3_generator::generate_service_client(t_service* tservice) {
           indent() << "if (onSuccess != null) onSuccess();" << endl <<
           indent() << "return;" << endl;
       } else {
-        
+
         f_service_ <<
           indent() << "if (onError != null) onError(new TApplicationError(TApplicationError.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\"));" << endl;
       }
@@ -1700,8 +1708,8 @@ void t_as3_generator::generate_service_client(t_service* tservice) {
       f_service_ << indent() << "} catch (e:TError) {" << endl <<
         indent() << "  if (onError != null) onError(e);" << endl <<
         indent() << "}" << endl;
-      
-      
+
+
       indent_down();
       indent(f_service_) <<
       "});" << endl;
@@ -1898,7 +1906,7 @@ void t_as3_generator::generate_process_function(t_service* tservice,
         first = false;
       } else {
         f_service_ << ", ";
-      } 
+      }
       f_service_ << "args." << (*f_iter)->get_name();
     }
     f_service_ << ");" << endl;
@@ -2294,7 +2302,7 @@ void t_as3_generator::generate_serialize_container(ofstream& out,
     indent(out) << "for (var " << iter << ":* in " << prefix << ") {" << endl;
     indent(out) << "  " << counter << +"++;" << endl;
     indent(out) << "}" << endl;
-    
+
     indent(out) <<
       "oprot.writeMapBegin(new TMap(" <<
       type_to_enum(((t_map*)ttype)->get_key_type()) << ", " <<
@@ -2421,7 +2429,7 @@ string t_as3_generator::type_name(t_type* ttype, bool in_container, bool in_init
 }
 
 /**
- * Returns the C++ type that corresponds to the thrift type.
+ * Returns the AS3 type that corresponds to the thrift type.
  *
  * @param tbase The base type
  * @param container Is it going in a As3 container?
@@ -2435,7 +2443,11 @@ string t_as3_generator::base_type_name(t_base_type* type,
   case t_base_type::TYPE_VOID:
     return "void";
   case t_base_type::TYPE_STRING:
-    return "String";
+    if (type->is_binary()) {
+      return "ByteArray";
+    } else {
+      return "String";
+    }
   case t_base_type::TYPE_BOOL:
     return "Boolean";
   case t_base_type::TYPE_BYTE:
@@ -2513,7 +2525,7 @@ string t_as3_generator::function_signature(t_function* tfunction,
     arguments += "onError:Function, onSuccess:Function";
   }
 
-  std::string result = "function " + 
+  std::string result = "function " +
     prefix + tfunction->get_name() + "(" + arguments + "):void";
   return result;
 }

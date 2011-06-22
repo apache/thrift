@@ -56,9 +56,16 @@ AC_ARG_VAR([PHP_CONFIG_PREFIX],
            Default = "/etc/php.d"])
 AS_IF([test "x$PHP_CONFIG_PREFIX" = x], [PHP_CONFIG_PREFIX="/etc/php.d"])
 
+AC_ARG_VAR([INSTALLDIRS], [When installing Perl modules, specifies which
+                           of the sets of installation directories
+                           to choose: perl, site or vendor.
+                           Default = "vendor"])
+AS_IF([test "x$INSTALLDIRS" = x], [INSTALLDIRS="vendor"])
+
 AC_ARG_VAR([PERL_PREFIX], [Prefix for installing Perl modules.
                            (Normal --prefix is ignored for Perl because
                            Perl has different conventions.)
+                           Ignored, when INSTALLDIRS set to site or vendor.
                            Default = "/usr/local/lib"])
 AS_IF([test "x$PERL_PREFIX" = x], [PERL_PREFIX="/usr/local"])
 
@@ -102,7 +109,7 @@ AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
 if test "$with_cpp" = "yes";  then
   AX_BOOST_BASE([1.33.1])
-  if test "x$succeeded" == "xyes" ; then
+  if test "x$succeeded" = "xyes" ; then
     have_cpp="yes"
   fi
 
@@ -141,15 +148,7 @@ AX_THRIFT_LIB(java, [Java], yes)
 if test "$with_java" = "yes";  then
   AX_JAVAC_AND_JAVA
   AC_PATH_PROG([ANT], [ant])
-  AX_CHECK_JAVA_CLASS(org.slf4j.Logger)
-  have_slf4j="$success"
-  AX_CHECK_JAVA_CLASS(org.slf4j.impl.SimpleLogger)
-  have_slf4j_simple="$success"
-  AX_CHECK_JAVA_CLASS(org.apache.commons.lang.builder.HashCodeBuilder)
-  have_hashcode="$success"
-  if test "x$have_slf4j_simple" = "xyes" && test "x$have_slf4j" = "xyes" && test "x$have_hashcode" = "xyes" ; then
-    ANT_FLAGS="$ANT_FLAGS -Dnoivy="
-  fi
+  AX_CHECK_ANT_VERSION($ANT, 1.7)
   AC_SUBST(CLASSPATH)
   AC_SUBST(ANT_FLAGS)
   if test "x$JAVAC" != "x" && test "x$JAVAC" != "x" && test "x$ANT" != "x" ; then
@@ -465,7 +464,7 @@ AC_CONFIG_FILES([
   lib/c_glib/test/Makefile
   lib/csharp/Makefile
   lib/erl/Makefile
-  lib/erl/src/Makefile
+  lib/erl/src/thrift.app.src
   lib/hs/Makefile
   lib/java/Makefile
   lib/js/test/Makefile

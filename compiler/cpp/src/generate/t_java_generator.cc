@@ -59,6 +59,15 @@ class t_java_generator : public t_oop_generator {
     iter = parsed_options.find("hashcode");
     gen_hash_code_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("android_legacy");
+    android_legacy_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("java5");
+    java5_ = (iter != parsed_options.end());
+    if (java5_) {
+        android_legacy_ = true;
+    }
+
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
   }
 
@@ -130,6 +139,7 @@ class t_java_generator : public t_oop_generator {
   void generate_java_union(t_struct* tstruct);
   void generate_union_constructor(ofstream& out, t_struct* tstruct);
   void generate_union_getters_and_setters(ofstream& out, t_struct* tstruct);
+  void generate_union_is_set_methods(ofstream& out, t_struct* tstruct);
   void generate_union_abstract_methods(ofstream& out, t_struct* tstruct);
   void generate_check_type(ofstream& out, t_struct* tstruct);
   void generate_read_value(ofstream& out, t_struct* tstruct);
@@ -258,6 +268,8 @@ class t_java_generator : public t_oop_generator {
   bool private_members_;
   bool nocamel_style_;
   bool gen_hash_code_;
+  bool android_legacy_;
+  bool java5_;
 
 };
 
@@ -716,6 +728,10 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
   f_struct << endl;
 
   generate_union_getters_and_setters(f_struct, tstruct);
+
+  f_struct << endl;
+
+  generate_union_is_set_methods(f_struct, tstruct);
   
   f_struct << endl;
 
@@ -840,6 +856,28 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
     indent(out) << "  setField_ = _Fields." << constant_name(field->get_name()) << ";" << endl;
     indent(out) << "  value_ = value;" << endl;
     indent(out) << "}" << endl;
+  }
+}
+
+void t_java_generator::generate_union_is_set_methods(ofstream& out, t_struct* tstruct) {
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
+  bool first = true;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    if (first) {
+      first = false;
+    } else {
+      out << endl;
+    }
+
+    std::string field_name = (*m_iter)->get_name();
+
+    indent(out) << "public boolean is" << get_cap_name("set") << get_cap_name(field_name) << "() {" << endl;
+    indent_up();
+    indent(out) << "return setField_ == _Fields." << constant_name(field_name) << ";" << endl;
+    indent_down();
+    indent(out) << "}" << endl << endl;
   }
 }
 
@@ -3785,7 +3823,9 @@ bool t_java_generator::has_bit_vector(t_struct* tstruct) {
 }
 
 void t_java_generator::generate_java_struct_clear(std::ofstream& out, t_struct* tstruct) {
-  indent(out) << "@Override" << endl;
+  if (!java5_) {
+     indent(out) << "@Override" << endl;
+  }
   indent(out) << "public void clear() {" << endl;
 
   const vector<t_field*>& members = tstruct->get_members();
@@ -3839,7 +3879,7 @@ void t_java_generator::generate_java_struct_write_object(ofstream& out, t_struct
   indent(out) << "  try {" << endl;
   indent(out) << "    write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));" << endl;
   indent(out) << "  } catch (org.apache.thrift.TException te) {" << endl;
-  indent(out) << "    throw new java.io.IOException(te);" << endl;
+  indent(out) << "    throw new java.io.IOException(te" << (android_legacy_? ".getMessage()" : "") << ");" << endl;
   indent(out) << "  }" << endl;
   indent(out) << "}" << endl << endl;
 }
@@ -3854,7 +3894,7 @@ void t_java_generator::generate_java_struct_read_object(ofstream& out, t_struct*
   }
   indent(out) << "    read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));" << endl;
   indent(out) << "  } catch (org.apache.thrift.TException te) {" << endl;
-  indent(out) << "    throw new java.io.IOException(te);" << endl;
+  indent(out) << "    throw new java.io.IOException(te" << (android_legacy_? ".getMessage()" : "") << ");" << endl;
   indent(out) << "  }" << endl;
   indent(out) << "}" << endl << endl;
 }
@@ -3864,5 +3904,7 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    private-members: Members will be private, but setter methods will return 'this' like usual.\n"
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
 "    hashcode:        Generate quality hashCode methods.\n"
+"    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
+"    java5:           Generate Java 1.5 compliant code (includes android_legacy flag)."
 )
 

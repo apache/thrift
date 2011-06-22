@@ -7,7 +7,7 @@
  "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing,
  software distributed under the License is distributed on an
@@ -17,7 +17,6 @@
  under the License.
 -->
 <project name="Java Script Test" default="test" basedir="."
-  xmlns:ivy="antlib:org.apache.ivy.ant"
   xmlns:artifact="antlib:org.apache.maven.artifact.ant"
   xmlns:jsl="antlib:com.googlecode.jslint4java">
 
@@ -33,11 +32,10 @@
   <property name="thrift.dir" location="../../../" />
   <property name="thrift.java.dir" location="${thrift.dir}/lib/java" />
 
-  <property name="thrift.compiler" location="${thrift.dir}/compiler/cpp/thrift" />
+  <!-- Include the base java properties file -->
+  <property file="${thrift.java.dir}/build.properties" />
 
-  <!-- take ivy from java, test depends anyway on java! -->
-  <property name="ivy.dir" location="${build}/ivy" />
-  <property name="ivy.lib.dir" location="${ivy.dir}/lib" />
+  <property name="thrift.compiler" location="${thrift.dir}/compiler/cpp/thrift" />
 
   <path id="libs.classpath">
     <fileset dir="${thrift.java.dir}/build/">
@@ -46,7 +44,7 @@
     <fileset dir="${thrift.java.dir}/build/lib">
       <include name="*.jar" />
     </fileset>
-    <fileset dir="${ivy.lib.dir}/">
+    <fileset dir="${build}/lib">
       <include name="*.jar" />
     </fileset>
   </path>
@@ -73,16 +71,6 @@
       <condition>
         <not>
           <resourcecount count="1">
-            <fileset id="fs" dir="${thrift.java.dir}/build/tools" includes="ivy-2*.jar"/>
-          </resourcecount>
-        </not>
-      </condition>
-      ivy is missing at ${ivy.dir}
-    </fail>
-    <fail>
-      <condition>
-        <not>
-          <resourcecount count="1">
             <fileset id="fs" dir="${thrift.dir}" includes="compiler/cpp/thrift"/>
           </resourcecount>
         </not>
@@ -94,6 +82,7 @@
   <target name="init" depends="dependencies">
     <tstamp />
     <mkdir dir="${build}"/>
+    <mkdir dir="${build}/lib"/>
   </target>
 
   <target name="compile" description="compile the test suite" depends="init, generate, resolve">
@@ -132,7 +121,7 @@
          the following options would probably make sense in the future:
          browser,undef,eqeqeq,plusplus,bitwise,regexp,strict,newcap,immed
     -->
-  	<jsl:jslint options="evil,forin,browser,bitwise,regexp,newcap,immed">
+    <jsl:jslint options="evil,forin,browser,bitwise,regexp,newcap,immed">
       <formatter type="plain" />
       <fileset dir="${genjs}" includes="**/*.js" />
       <fileset dir=".." includes="thrift.js" />
@@ -145,7 +134,7 @@
       <arg line="--helpshort"/>
     </exec>
   </target>
-    
+
   <target name="gjslint" depends="check-gjslint" if="gjslint.present">
     <exec executable="gjslint" failifexecutionfails="no">
       <arg line="--nojsdoc"/>
@@ -161,35 +150,21 @@
     <delete file="${jar.file}" />
   </target>
 
-  <!-- ivy tasks from java build.xml ... don't know how to import them instead of copying -->
-  <target name="resolve" depends="ivy-init-antlib" description="retrieve dependencies with ivy" unless="noivy">
-    <ivy:retrieve />
-  </target>
+  <target name="resolve" unless="mvn.finished">
+    <typedef uri="antlib:org.apache.maven.artifact.ant" classpath="${thrift.java.dir}/build/tools/${mvn.ant.task.jar}"/>
 
-  <target name="ivy-probe-antlib">
-    <condition property="ivy.found">
-      <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
-    </condition>
-  </target>
+    <artifact:dependencies filesetId="js.test.dependency.jars">
+      <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="4.0.1"/>
+      <dependency groupId="com.googlecode.jslint4java" artifactId="jslint4java-ant" version="1.4.6"/>
+    </artifact:dependencies>
 
-  <target name="ivy-init-antlib" depends="ivy-probe-antlib" unless="ivy.found">
-    <typedef uri="antlib:org.apache.ivy.ant" onerror="fail"
-      loaderRef="ivyLoader">
-      <classpath>
-        <fileset dir="${thrift.java.dir}/build/tools">
-          <include name="ivy-2.*.jar" />
-        </fileset>
-      </classpath>
-    </typedef>
-    <fail>
-      <condition >
-        <not>
-          <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
-        </not>
-      </condition>
-      You need Apache Ivy 2.0 or later from http://ant.apache.org/
-      It could not be loaded from ${ivy_repo_url}
-    </fail>
+    <!-- Copy the dependencies to the build/lib dir -->
+    <copy todir="${build}/lib">
+      <fileset refid="js.test.dependency.jars"/>
+      <mapper type="flatten"/>
+    </copy>
+    
+    <property name="mvn.finished" value="true"/>
   </target>
-
 </project>
+

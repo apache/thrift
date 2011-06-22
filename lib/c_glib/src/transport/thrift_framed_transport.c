@@ -81,7 +81,7 @@ thrift_framed_transport_read_frame (ThriftTransport *transport,
   guchar tmpdata[sz];
   bytes = THRIFT_TRANSPORT_GET_CLASS (t->transport)->read (t->transport,
                                                            tmpdata,
-                                                           sz - sizeof (sz),
+                                                           sz,
                                                            error);
 
   /* add the data to the buffer */
@@ -205,7 +205,7 @@ thrift_framed_transport_flush (ThriftTransport *transport, GError **error)
 
   // get the size of the frame in host and network byte order
   sz_hbo = t->w_buf->len + sizeof(sz_nbo);
-  sz_nbo = (gint32) htonl ((guint32) sz_hbo);
+  sz_nbo = (gint32) htonl ((guint32) t->w_buf->len);
 
   // copy the size of the frame and then the frame itself
   guchar tmpdata[sz_hbo];

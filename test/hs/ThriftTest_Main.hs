@@ -99,6 +99,13 @@ instance Iface.ThriftTest_Iface TestHandler where
     testMap _ Nothing = do
         error $ "Unsupported testMap form"
 
+    testStringMap _ (Just x) = do
+        ThriftTestUtils.serverLog $ show x
+        return x
+
+    testStringMap _ Nothing = do
+        error $ "Unsupported testMap form"
+
     testSet _ (Just x) = do
         ThriftTestUtils.serverLog $ show x
         return x
@@ -190,14 +197,17 @@ client addr = do
     v10 <- Client.testMap ps (Map.fromList [(1,1),(2,2),(3,3)])
     ThriftTestUtils.clientLog $ show v10
 
-    v11 <- Client.testList ps [1,2,3,4,5]
+    v11 <- Client.testStringMap ps (Map.fromList [("a","123"),("a b","with spaces "),("same","same"),("0","numeric key")])
     ThriftTestUtils.clientLog $ show v11
 
-    v12 <- Client.testSet ps (Set.fromList [1,2,3,4,5])
+    v12 <- Client.testList ps [1,2,3,4,5]
     ThriftTestUtils.clientLog $ show v12
 
-    v13 <- Client.testStruct ps (Types.Xtruct (Just "hi") (Just 4) (Just 5) Nothing)
+    v13 <- Client.testSet ps (Set.fromList [1,2,3,4,5])
     ThriftTestUtils.clientLog $ show v13
+
+    v14 <- Client.testStruct ps (Types.Xtruct (Just "hi") (Just 4) (Just 5) Nothing)
+    ThriftTestUtils.clientLog $ show v14
 
     (testException ps "bad") `Control.Exception.catch` testExceptionHandler
 

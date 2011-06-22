@@ -43,7 +43,6 @@ void THttpClient::parseHeader(char* header) {
   if (colon == NULL) {
     return;
   }
-  uint32_t sz = colon - header;
   char* value = colon+1;
 
   if (boost::istarts_with(header, "Transfer-Encoding")) {

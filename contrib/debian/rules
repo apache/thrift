@@ -23,7 +23,7 @@ configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
 	if [ -f bootstrap.sh ]; then $(CURDIR)/bootstrap.sh; fi
-	$(CURDIR)/configure --prefix=/usr
+	$(CURDIR)/configure --prefix=/usr --with-c_glib
 
 	touch configure-stamp
 
@@ -41,6 +41,9 @@ build-arch-stamp: configure-stamp
 
 	# Compile C++ library
 	$(MAKE) -C $(CURDIR)/lib/cpp
+
+	# Compile C (glib) library
+	$(MAKE) -C $(CURDIR)/lib/c_glib
 
 	# Python library
 	cd $(CURDIR)/lib/py && \
@@ -105,7 +108,7 @@ install-indep:
 
     # Java
 	mkdir -p $(CURDIR)/debian/libthrift-java/usr/share/java/ && \
-	cp $(CURDIR)/lib/java/libthrift.jar \
+	cp $(CURDIR)/lib/java/build/libthrift*.jar \
 		$(CURDIR)/debian/libthrift-java/usr/share/java/
 
 	# Erlang
@@ -163,9 +166,11 @@ install-arch:
 	cd $(CURDIR)/lib/php && \
 		$(MAKE) DESTDIR=$(CURDIR)/debian/php5-thrift install
 
-	#cpp
+	# C++ and C (glib)
 	mkdir -p $(CURDIR)/debian/tmp; \
 	cd $(CURDIR)/lib/cpp && \
+		make DESTDIR=$(CURDIR)/debian/tmp install
+	cd $(CURDIR)/lib/c_glib && \
 		make DESTDIR=$(CURDIR)/debian/tmp install
 
 	dh_install --sourcedir=debian/tmp -s

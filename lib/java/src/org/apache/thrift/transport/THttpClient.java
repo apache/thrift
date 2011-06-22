@@ -233,6 +233,13 @@ public class THttpClient extends TTransport {
       
       HttpResponse response = this.client.execute(this.host, post);
       int responseCode = response.getStatusLine().getStatusCode();
+
+      //      
+      // Retrieve the inputstream BEFORE checking the status code so
+      // resources get freed in the finally clause.
+      //
+
+      is = response.getEntity().getContent();
       
       if (responseCode != HttpStatus.SC_OK) {
         throw new TTransportException("HTTP Response code: " + responseCode);
@@ -244,8 +251,6 @@ public class THttpClient extends TTransport {
       // thrift struct is being read up the chain).
       // Proceeding differently might lead to exhaustion of connections and thus
       // to app failure.
-      
-      is = response.getEntity().getContent();
       
       byte[] buf = new byte[1024];
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
