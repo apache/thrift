@@ -228,7 +228,12 @@
     </exec>
   </target>
 
-  <target name="mvn.ant.tasks.download" depends="setup.init,mvn.ant.tasks.check" unless="mvn.ant.tasks.found">
+  <target name="proxy" if="proxy.enabled">
+    <setproxy proxyhost="${proxy.host}" proxyport="${proxy.port}"
+      proxyuser="${proxy.user}" proxypassword="${proxy.pass}"/>
+  </target>
+
+  <target name="mvn.ant.tasks.download" depends="setup.init,mvn.ant.tasks.check,proxy" unless="mvn.ant.tasks.found">
     <get src="${mvn.ant.task.url}/${mvn.ant.task.jar}" dest="${build.tools.dir}/${mvn.ant.task.jar}" usetimestamp="true"/>
   </target>
 
