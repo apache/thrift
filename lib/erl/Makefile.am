@@ -18,8 +18,6 @@
 #
 
 THRIFT = ../../compiler/cpp/thrift
-#THRIFT_FILES = ../../test/ThriftTest.thrift \
-#			   ../../test/Stress.thrift
 THRIFT_FILES = $(wildcard ../../test/*.thrift) \
 			   $(wildcard test/*.thrift)
 
