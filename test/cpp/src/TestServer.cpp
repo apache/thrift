@@ -17,6 +17,9 @@
  * under the License.
  */
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include <concurrency/ThreadManager.h>
 #include <concurrency/PosixThreadFactory.h>
 #include <protocol/TBinaryProtocol.h>
@@ -39,8 +42,6 @@
 
 #include <boost/program_options.hpp>
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include <signal.h>
 
 using namespace std;
@@ -109,6 +110,22 @@ class TestHandler : public ThriftTestIf {
         printf(", ");
       }
       printf("%d => %d", m_iter->first, m_iter->second);
+    }
+    printf("})\n");
+    out = thing;
+  }
+
+  void testStringMap(map<std::string, std::string> &out, const map<std::string, std::string> &thing) {
+    printf("testMap({");
+    map<std::string, std::string>::const_iterator m_iter;
+    bool first = true;
+    for (m_iter = thing.begin(); m_iter != thing.end(); ++m_iter) {
+      if (first) {
+        first = false;
+      } else {
+        printf(", ");
+      }
+      printf("%s => %s", (m_iter->first).c_str(), (m_iter->second).c_str());
     }
     printf("})\n");
     out = thing;

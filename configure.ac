@@ -474,6 +474,7 @@ AC_CONFIG_FILES([
   lib/py/Makefile
   lib/rb/Makefile
   test/Makefile
+  test/cpp/Makefile
   test/hs/Makefile
   test/py/Makefile
   test/py.twisted/Makefile

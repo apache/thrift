@@ -17,6 +17,9 @@
  * under the License.
  */
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include <iostream>
 #include <unistd.h>
 #include <sys/time.h>
@@ -31,9 +34,6 @@
 #include <boost/program_options.hpp>
 
 #include "ThriftTest.h"
-
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 using namespace boost;
 using namespace std;
