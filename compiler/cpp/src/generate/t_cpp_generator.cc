@@ -2652,7 +2652,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice, string sty
     indent() << "  oprot->writeMessageEnd();" << endl <<
     indent() << "  oprot->getTransport()->writeEnd();" << endl <<
     indent() << "  oprot->getTransport()->flush();" << endl <<
-    indent() << (style == "Cob" ? "  return cob(true);" : "  return true;") << endl <<
+    indent() << (style == "Cob" ? "  return cob(false);" : "  return false;") << endl <<
     indent() << "}" << endl <<
     endl <<
     indent() << "return process_fn(" << (style == "Cob" ? "cob, " : "")
@@ -2692,7 +2692,7 @@ void t_cpp_generator::generate_service_processor(t_service* tservice, string sty
       indent() << "  oprot->writeMessageEnd();" << endl <<
       indent() << "  oprot->getTransport()->writeEnd();" << endl <<
       indent() << "  oprot->getTransport()->flush();" << endl <<
-      indent() << (style == "Cob" ? "  return cob(true);" : "  return true;") << endl;
+      indent() << (style == "Cob" ? "  return cob(false);" : "  return false;") << endl;
   } else {
     out <<
       indent() << "  return "
