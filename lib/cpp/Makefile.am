@@ -163,8 +163,7 @@ include_async_HEADERS = \
                      src/async/TAsyncBufferProcessor.h \
                      src/async/TAsyncProtocolProcessor.h \
                      src/async/TEvhttpClientChannel.h \
-                     src/async/TEvhttpServer.h \
-                     src/async/SimpleCallback.h
+                     src/async/TEvhttpServer.h
 
 
 noinst_PROGRAMS = concurrency_test
