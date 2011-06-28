@@ -21,13 +21,13 @@ require 'set'
 module Thrift
   module Struct_Union
     def name_to_id(name)
-      names_to_ids = self.class.instance_variable_get("@names_to_ids")
+      names_to_ids = self.class.instance_variable_get(:@names_to_ids)
       unless names_to_ids
         names_to_ids = {}
         struct_fields.each do |fid, field_def|
           names_to_ids[field_def[:name]] = fid
         end
-        self.class.instance_variable_set("@names_to_ids", names_to_ids)
+        self.class.instance_variable_set(:@names_to_ids, names_to_ids)
       end
       names_to_ids[name]
     end

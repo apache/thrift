@@ -98,6 +98,10 @@ module Thrift
 
       @last_field = [0]
       @boolean_value = nil
+
+      # Pre-allocated read buffer for read_double().
+      @rbuf = "\0" * 8
+      @rbuf.force_encoding("BINARY") if @rbuf.respond_to?(:force_encoding)
     end
 
     def write_message_begin(name, type, seqid)
@@ -302,8 +306,7 @@ module Thrift
     end
 
     def read_byte
-      dat = trans.read_all(1)
-      val = dat[0].ord
+      val = trans.read_byte
       if (val > 0x7f)
         val = 0 - ((val - 1) ^ 0xff)
       end
@@ -323,8 +326,8 @@ module Thrift
     end
 
     def read_double
-      dat = trans.read_all(8)
-      val = dat.reverse.unpack('G').first
+      trans.read_into_buffer(@rbuf, 8)
+      val = @rbuf.reverse.unpack('G').first
       val
     end
 

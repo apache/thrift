@@ -34,6 +34,7 @@ static int VERSION_1;
 static int VERSION_MASK;
 static int TYPE_MASK;
 static int BAD_VERSION;
+static ID rbuf_ivar_id;
 
 static void write_byte_direct(VALUE trans, int8_t b) {
   WRITE(trans, (char*)&b, 1);
@@ -226,26 +227,36 @@ VALUE rb_thrift_binary_proto_read_i32(VALUE self);
 VALUE rb_thrift_binary_proto_read_i16(VALUE self);
 
 static char read_byte_direct(VALUE self) {
-  VALUE buf = READ(self, 1);
-  return RSTRING_PTR(buf)[0];
+  VALUE byte = rb_funcall(GET_TRANSPORT(self), read_byte_method_id, 0);
+  return (char)(FIX2INT(byte));
 }
 
 static int16_t read_i16_direct(VALUE self) {
-  VALUE buf = READ(self, 2);
-  return (int16_t)(((uint8_t)(RSTRING_PTR(buf)[1])) | ((uint16_t)((RSTRING_PTR(buf)[0]) << 8)));
+  VALUE rbuf = rb_ivar_get(self, rbuf_ivar_id);
+  rb_funcall(GET_TRANSPORT(self), read_into_buffer_method_id, 2, rbuf, INT2FIX(2));
+  return (int16_t)(((uint8_t)(RSTRING_PTR(rbuf)[1])) | ((uint16_t)((RSTRING_PTR(rbuf)[0]) << 8)));
 }
 
 static int32_t read_i32_direct(VALUE self) {
-  VALUE buf = READ(self, 4);
-  return ((uint8_t)(RSTRING_PTR(buf)[3])) | 
-    (((uint8_t)(RSTRING_PTR(buf)[2])) << 8) | 
-    (((uint8_t)(RSTRING_PTR(buf)[1])) << 16) | 
-    (((uint8_t)(RSTRING_PTR(buf)[0])) << 24);
+  VALUE rbuf = rb_ivar_get(self, rbuf_ivar_id);
+  rb_funcall(GET_TRANSPORT(self), read_into_buffer_method_id, 2, rbuf, INT2FIX(4));
+  return ((uint8_t)(RSTRING_PTR(rbuf)[3])) |
+    (((uint8_t)(RSTRING_PTR(rbuf)[2])) << 8) |
+    (((uint8_t)(RSTRING_PTR(rbuf)[1])) << 16) |
+    (((uint8_t)(RSTRING_PTR(rbuf)[0])) << 24);
 }
 
 static int64_t read_i64_direct(VALUE self) {
-  uint64_t hi = read_i32_direct(self);
-  uint32_t lo = read_i32_direct(self);
+  VALUE rbuf = rb_ivar_get(self, rbuf_ivar_id);
+  rb_funcall(GET_TRANSPORT(self), read_into_buffer_method_id, 2, rbuf, INT2FIX(8));
+  uint64_t hi = ((uint8_t)(RSTRING_PTR(rbuf)[3])) |
+    (((uint8_t)(RSTRING_PTR(rbuf)[2])) << 8) |
+    (((uint8_t)(RSTRING_PTR(rbuf)[1])) << 16) |
+    (((uint8_t)(RSTRING_PTR(rbuf)[0])) << 24);
+  uint32_t lo = ((uint8_t)(RSTRING_PTR(rbuf)[7])) |
+    (((uint8_t)(RSTRING_PTR(rbuf)[6])) << 8) |
+    (((uint8_t)(RSTRING_PTR(rbuf)[5])) << 16) |
+    (((uint8_t)(RSTRING_PTR(rbuf)[4])) << 24);
   return (hi << 32) | lo;
 }
 
@@ -425,4 +436,6 @@ void Init_binary_protocol_accelerated() {
   rb_define_method(bpa_class, "read_map_end", rb_thift_binary_proto_read_map_end, 0);
   rb_define_method(bpa_class, "read_list_end", rb_thift_binary_proto_read_list_end, 0);
   rb_define_method(bpa_class, "read_set_end", rb_thift_binary_proto_read_set_end, 0);
+
+  rbuf_ivar_id = rb_intern("@rbuf");
 }

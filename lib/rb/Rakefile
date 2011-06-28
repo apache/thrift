@@ -82,7 +82,7 @@ begin
     p.summary = "Ruby bindings for the Apache Thrift RPC system"
     p.url = "http://thrift.apache.org"
     p.include_rakefile = true
-    p.version = "0.7.0-dev"
+    p.version = "0.7.0dev"
     p.rubygems_version = ">= 1.2.0"
   end
 
