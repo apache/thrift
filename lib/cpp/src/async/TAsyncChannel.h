@@ -22,7 +22,6 @@
 
 #include <tr1/functional>
 #include <Thrift.h>
-#include <transport/TTransportUtils.h>
 
 namespace apache { namespace thrift { namespace transport {
 class TMemoryBuffer;
