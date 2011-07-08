@@ -22,10 +22,20 @@
 #include <transport/TSocket.h>
 
 #include <iostream>
+
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#endif
+
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+
 #include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
@@ -708,7 +718,7 @@ void TNonblockingServer::listenSocket() {
   #ifdef IPV6_V6ONLY
   if (res->ai_family == AF_INET6) {
     int zero = 0;
-    if (-1 == setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &zero, sizeof(zero))) {
+    if (-1 == setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, const_cast_sockopt(&zero), sizeof(zero))) {
       GlobalOutput("TServerSocket::listen() IPV6_V6ONLY");
     }
   }
@@ -718,9 +728,9 @@ void TNonblockingServer::listenSocket() {
   int one = 1;
 
   // Set reuseaddr to avoid 2MSL delay on server restart
-  setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+  setsockopt(s, SOL_SOCKET, SO_REUSEADDR, const_cast_sockopt(&one), sizeof(one));
 
-  if (bind(s, res->ai_addr, res->ai_addrlen) == -1) {
+  if (::bind(s, res->ai_addr, res->ai_addrlen) == -1) {
     close(s);
     freeaddrinfo(res0);
     throw TException("TNonblockingServer::serve() bind");
@@ -750,20 +760,20 @@ void TNonblockingServer::listenSocket(int s) {
   struct linger ling = {0, 0};
 
   // Keepalive to ensure full result flushing
-  setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
+  setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, const_cast_sockopt(&one), sizeof(one));
 
   // Turn linger off to avoid hung sockets
-  setsockopt(s, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
+  setsockopt(s, SOL_SOCKET, SO_LINGER, const_cast_sockopt(&ling), sizeof(ling));
 
   // Set TCP nodelay if available, MAC OS X Hack
   // See http://lists.danga.com/pipermail/memcached/2005-March/001240.html
   #ifndef TCP_NOPUSH
-  setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
+  setsockopt(s, IPPROTO_TCP, TCP_NODELAY, const_cast_sockopt(&one), sizeof(one));
   #endif
 
   #ifdef TCP_LOW_MIN_RTO
   if (TSocket::getUseLowMinRto()) {
-    setsockopt(s, IPPROTO_TCP, TCP_LOW_MIN_RTO, &one, sizeof(one));
+    setsockopt(s, IPPROTO_TCP, TCP_LOW_MIN_RTO, const_cast_sockopt(&one), sizeof(one));
   }
   #endif
 
@@ -777,13 +787,12 @@ void TNonblockingServer::listenSocket(int s) {
 }
 
 void TNonblockingServer::createNotificationPipe() {
-  if (pipe(notificationPipeFDs_) != 0) {
-    GlobalOutput.perror("TNonblockingServer::createNotificationPipe ", errno);
-      throw TException("can't create notification pipe");
+  if(evutil_socketpair(AF_LOCAL, SOCK_STREAM, 0, notificationPipeFDs_) == -1) {
+    GlobalOutput.perror("TNonblockingServer::createNotificationPipe ", EVUTIL_SOCKET_ERROR());
+    throw TException("can't create notification pipe");
   }
-  int flags;
-  if ((flags = fcntl(notificationPipeFDs_[0], F_GETFL, 0)) < 0 ||
-      fcntl(notificationPipeFDs_[0], F_SETFL, flags | O_NONBLOCK) < 0) {
+  if(evutil_make_socket_nonblocking(notificationPipeFDs_[0])<0 ||
+     evutil_make_socket_nonblocking(notificationPipeFDs_[1])<0) {
     close(notificationPipeFDs_[0]);
     close(notificationPipeFDs_[1]);
     throw TException("TNonblockingServer::createNotificationPipe() O_NONBLOCK");

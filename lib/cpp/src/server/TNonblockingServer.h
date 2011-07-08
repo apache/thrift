@@ -44,6 +44,36 @@ using apache::thrift::concurrency::ThreadManager;
 // Forward declaration of class
 class TConnection;
 
+#ifdef LIBEVENT_VERSION_NUMBER
+#define LIBEVENT_VERSION_MAJOR (LIBEVENT_VERSION_NUMBER >> 24)
+#define LIBEVENT_VERSION_MINOR ((LIBEVENT_VERSION_NUMBER >> 16) & 0xFF)
+#define LIBEVENT_VERSION_REL ((LIBEVENT_VERSION_NUMBER >> 8) & 0xFF)
+#else
+// assume latest version 1 series
+#define LIBEVENT_VERSION_MAJOR 1
+#define LIBEVENT_VERSION_MINOR 14
+#define LIBEVENT_VERSION_REL 13
+#define LIBEVENT_VERSION_NUMBER ((LIBEVENT_VERSION_MAJOR << 24) | (LIBEVENT_VERSION_MINOR << 16) | (LIBEVENT_VERSION_REL << 8))
+#endif
+
+#if LIBEVENT_VERSION_NUMBER < 0x02000000
+ typedef int evutil_socket_t;
+#endif
+
+#ifndef SOCKOPT_CAST_T
+#define SOCKOPT_CAST_T void
+#endif
+
+template<class T>
+inline const SOCKOPT_CAST_T* const_cast_sockopt(const T* v) {
+  return reinterpret_cast<const SOCKOPT_CAST_T*>(v);
+}
+
+template<class T>
+inline SOCKOPT_CAST_T* cast_sockopt(T* v) {
+  return reinterpret_cast<SOCKOPT_CAST_T*>(v);
+}
+
 /**
  * This is a non-blocking server in C++ for high performance that operates a
  * single IO thread. It assumes that all incoming requests are framed with a
@@ -176,7 +206,7 @@ class TNonblockingServer : public TServer {
   uint64_t nTotalConnectionsDropped_;
 
   /// File descriptors for pipe used for task completion notification.
-  int notificationPipeFDs_[2];
+  evutil_socket_t notificationPipeFDs_[2];
 
   /**
    * This is a stack of all the objects that have been created but that
@@ -634,7 +664,7 @@ class TNonblockingServer : public TServer {
    * @param which the flags associated with the event.
    * @param v void* callback arg where we placed TNonblockingServer's "this".
    */
-  static void eventHandler(int fd, short which, void* v) {
+  static void eventHandler(evutil_socket_t fd, short which, void* v) {
     ((TNonblockingServer*)v)->handleEvent(fd, which);
   }
 
@@ -874,7 +904,7 @@ class TConnection {
    * @param which the flags associated with the event.
    * @param v void* callback arg where we placed TConnection's "this".
    */
-  static void eventHandler(int fd, short /* which */, void* v) {
+  static void eventHandler(evutil_socket_t fd, short /* which */, void* v) {
     assert(fd == ((TConnection*)v)->getTSocket()->getSocketFD());
     ((TConnection*)v)->workSocket();
   }
@@ -887,17 +917,17 @@ class TConnection {
    *
    * @param fd the descriptor the event occured on.
    */
-  static void taskHandler(int fd, short /* which */, void* /* v */) {
+  static void taskHandler(evutil_socket_t fd, short /* which */, void* /* v */) {
     TConnection* connection;
     ssize_t nBytes;
-    while ((nBytes = read(fd, (void*)&connection, sizeof(TConnection*)))
+    while ((nBytes = recv(fd, cast_sockopt(&connection), sizeof(TConnection*), 0))
         == sizeof(TConnection*)) {
       connection->transition();
     }
     if (nBytes > 0) {
       throw TException("TConnection::taskHandler unexpected partial read");
     }
-    if (errno != EWOULDBLOCK && errno != EAGAIN) {
+    if (errno && errno != EWOULDBLOCK && errno != EAGAIN) {
       GlobalOutput.perror("TConnection::taskHandler read failed, resource leak", errno);
     }
   }
@@ -911,8 +941,8 @@ class TConnection {
    */
   bool notifyServer() {
     TConnection* connection = this;
-    if (write(server_->getNotificationSendFD(), (const void*)&connection,
-             sizeof(TConnection*)) != sizeof(TConnection*)) {
+    if (send(server_->getNotificationSendFD(), const_cast_sockopt(&connection),
+             sizeof(TConnection*), 0) != sizeof(TConnection*)) {
       return false;
     }
 
