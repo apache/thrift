@@ -99,6 +99,7 @@
 /lib/java/gen-javabean
 /lib/java/libthrift.jar
 /lib/js/test/build
+/lib/js/test/jstest.jar
 /lib/js/test/gen-*
 /lib/js/test/Makefile
 /lib/js/test/Makefile.in
