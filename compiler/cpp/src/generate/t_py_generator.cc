@@ -2387,6 +2387,7 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
 
 THRIFT_REGISTER_GENERATOR(py, "Python",
 "    new_style:       Generate new-style classes.\n" \
-"    twisted:         Generate Twisted-friendly RPC services.\n"
+"    twisted:         Generate Twisted-friendly RPC services.\n" \
+"    utf8strings:     Encode/decode strings using utf8 in the generated code.\n"
 )
 
