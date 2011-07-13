@@ -23,6 +23,7 @@ import (
   "bytes"
   "http"
   "os"
+  "strconv"
 )
 
 
@@ -69,11 +70,11 @@ func NewTHttpPostClientTransportFactory(url string) *THttpClientTransportFactory
 
 
 func NewTHttpClient(url string) (TTransport, os.Error) {
-  response, finalUrl, err := http.Get(url)
+  parsedURL, err := http.ParseURL(url)
   if err != nil {
     return nil, err
   }
-  parsedURL, err := http.ParseURL(finalUrl)
+  response, err := http.Get(url)
   if err != nil {
     return nil, err
   }
@@ -139,7 +140,7 @@ func (p *THttpClient) Flush() os.Error {
   }
   if response.StatusCode != http.StatusOK {
     // TODO(pomack) log bad response
-    return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "HTTP Response code: "+string(response.StatusCode))
+    return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "HTTP Response code: "+ strconv.Itoa(response.StatusCode))
   }
   p.response = response
   return nil

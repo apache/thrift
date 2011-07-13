@@ -124,7 +124,7 @@ func FindAvailableTCPServerPort(startPort int) (net.Addr, os.Error) {
     l, err := net.Listen("tcp", s)
     if err == nil {
       l.Close()
-      return net.ResolveTCPAddr(s)
+      return net.ResolveTCPAddr("tcp", s)
     }
   }
   return nil, NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "Could not find available server port")

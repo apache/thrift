@@ -220,6 +220,7 @@ class t_go_generator : public t_generator {
   
   static std::string publicize(const std::string& value);
   static std::string privatize(const std::string& value);
+  static std::string variable_name_to_go_name(const std::string& value);
   static bool can_be_nil(t_type* value);
 
 };
@@ -253,6 +254,96 @@ std::string t_go_generator::privatize(const std::string& value) {
   }
   return value2;
 }
+
+std::string t_go_generator::variable_name_to_go_name(const std::string& value) {
+  if(value.size() <= 0) return value;
+  std::string value2(value);
+  std::transform(value2.begin(), value2.end(), value2.begin(), ::tolower);
+  switch(value[0]) {
+    case 'b':
+    case 'B':
+      if(value2 != "break") {
+        return value;
+      }
+      break;
+    case 'c':
+    case 'C':
+      if(value2 != "case" && value2 != "chan" && value2 != "const" && value2 != "continue") {
+        return value;
+      }
+      break;
+    case 'd':
+    case 'D':
+      if(value2 != "default" && value2 != "defer") {
+        return value;
+      }
+      break;
+    case 'e':
+    case 'E':
+      if(value2 != "else") {
+        return value;
+      }
+      break;
+    case 'f':
+    case 'F':
+      if(value2 != "fallthrough" && value2 != "for" && value2 != "func") {
+        return value;
+      }
+      break;
+    case 'g':
+    case 'G':
+      if(value2 != "go" && value2 != "goto") {
+        return value;
+      }
+      break;
+    case 'i':
+    case 'I':
+      if(value2 != "if" && value2 != "import" && value2 != "interface") {
+        return value;
+      }
+      break;
+    case 'm':
+    case 'M':
+      if(value2 != "map") {
+        return value;
+      }
+      break;
+    case 'p':
+    case 'P':
+      if(value2 != "package") {
+        return value;
+      }
+      break;
+    case 'r':
+    case 'R':
+      if(value2 != "range" && value2 != "return") {
+        return value;
+      }
+      break;
+    case 's':
+    case 'S':
+      if(value2 != "select" && value2 != "struct" && value2 != "switch") {
+        return value;
+      }
+      break;
+    case 't':
+    case 'T':
+      if(value2 != "type") {
+        return value;
+      }
+      break;
+    case 'v':
+    case 'V':
+      if(value2 != "var") {
+        return value;
+      }
+      break;
+    default:
+      return value;
+  }
+  return value2 + "_a1";
+}
+
 
 /**
  * Prepares for file generation by opening up the necessary file output
@@ -726,7 +817,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
       }
       t_type* fieldType = (*m_iter)->get_type();
       string goType(type_to_go_type(fieldType));
-      indent(out) << publicize((*m_iter)->get_name()) << " " 
+      indent(out) << publicize(variable_name_to_go_name((*m_iter)->get_name())) << " " 
                   << goType << " \"" << escape_string((*m_iter)->get_name())
                   << "\"; // " << sorted_keys_pos
                   << endl;
@@ -832,7 +923,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
     for(m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* orig_type = (*m_iter)->get_type();
       t_type* type = get_true_type(orig_type);
-      string field_name(publicize((*m_iter)->get_name()));
+      string field_name(publicize(variable_name_to_go_name((*m_iter)->get_name())));
       if(type->is_base_type() || type->is_enum()) {
         if(type->is_bool()) {
           out <<
@@ -870,7 +961,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
     indent() << "  default: return nil" << endl;
   indent_up();
   for(m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    string field_name(publicize((*m_iter)->get_name()));
+    string field_name(publicize(variable_name_to_go_name((*m_iter)->get_name())));
     out <<
       indent() << "case " << (*m_iter)->get_key() << ": return p." << field_name << endl;
   }
@@ -972,16 +1063,15 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
   // In the default case we skip the field
   if (first) {
     out <<
-      indent() << "if {" << endl;
+      indent() << "err = iprot.Skip(fieldTypeId)" << endl <<
+      indent() << "if err != nil { return thrift.NewTProtocolExceptionReadField(int(fieldId), fieldName, p.ThriftName(), err); }" << endl;
   } else {
     out <<
-      indent() << "} else {" << endl;
+      indent() << "} else {" << endl <<
+      indent() << "  err = iprot.Skip(fieldTypeId)" << endl <<
+      indent() << "  if err != nil { return thrift.NewTProtocolExceptionReadField(int(fieldId), fieldName, p.ThriftName(), err); }" << endl <<
+      indent() << "}" << endl;
   }
-  out <<
-    indent() << "  err = iprot.Skip(fieldTypeId)" << endl <<
-    indent() << "  if err != nil { return thrift.NewTProtocolExceptionReadField(int(fieldId), fieldName, p.ThriftName(), err); }" << endl <<
-    indent() << "}" << endl;
-
   // Read field end marker
   out <<
     indent() << "err = iprot.ReadFieldEnd()" << endl <<
@@ -1044,7 +1134,7 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
       fieldId = (*fr_iter)->get_key();
       if(can_be_nil((*fr_iter)->get_type()) && fieldId != 0) {
         out <<
-          indent() << "case p." << publicize(field_name) << " != nil:" << endl <<
+          indent() << "case p." << publicize(variable_name_to_go_name(field_name)) << " != nil:" << endl <<
           indent() << "  if err = p.WriteField" << fieldId << "(oprot); err != nil {" << endl <<
           indent() << "    return err" << endl <<
           indent() << "  }" << endl;
@@ -1091,7 +1181,7 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
     // Write field header
     if (can_be_nil((*f_iter)->get_type())) {
       out <<
-        indent() << "if p." << publicize(field_name) << " != nil {" << endl;
+        indent() << "if p." << publicize(variable_name_to_go_name(field_name)) << " != nil {" << endl;
       indent_up();
     }
     out <<
@@ -1377,7 +1467,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
       } else {
         f_service_ << ", ";
       }
-      f_service_ << (*fld_iter)->get_name();
+      f_service_ << variable_name_to_go_name((*fld_iter)->get_name());
     }
     f_service_ << ")" << endl <<
       indent() << "if err != nil { return }" << endl;
@@ -1413,7 +1503,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
     
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ <<
-        indent() << args << "." << publicize((*fld_iter)->get_name()) << " = " << (*fld_iter)->get_name() << endl;
+        indent() << args << "." << publicize(variable_name_to_go_name((*fld_iter)->get_name())) << " = " << variable_name_to_go_name((*fld_iter)->get_name()) << endl;
     }
     
     // Write to the stream
@@ -1607,7 +1697,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     indent() << "if useHttp {" << endl <<
     indent() << "  trans, err = thrift.NewTHttpClient(url.Raw)" << endl <<
     indent() << "} else {" << endl <<
-    indent() << "  addr, err := net.ResolveTCPAddr(fmt.Sprint(host, \":\", port))" << endl <<
+    indent() << "  addr, err := net.ResolveTCPAddr(\"tcp\", fmt.Sprint(host, \":\", port))" << endl <<
     indent() << "  if err != nil {" << endl <<
     indent() << "    fmt.Fprint(os.Stderr, \"Error resolving address\", err.String())" << endl <<
     indent() << "    os.Exit(1)" << endl <<
@@ -2035,7 +2125,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
     const vector<t_field*>& fields = exceptions->get_members();
     vector<t_field*>::const_iterator f_iter;
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-      f_service_ << "result." << publicize((*f_iter)->get_name()) << ", ";
+      f_service_ << "result." << publicize(variable_name_to_go_name((*f_iter)->get_name())) << ", ";
     }
   }
   
@@ -2054,7 +2144,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
     } else {
       f_service_ << ", ";
     }
-    f_service_ << "args." << publicize((*f_iter)->get_name());
+    f_service_ << "args." << publicize(variable_name_to_go_name((*f_iter)->get_name()));
   }
   f_service_ << "); err != nil {" << endl <<
     indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, \"Internal error processing " << escape_string(tfunction->get_name()) << ": \" + err.String())" << endl <<
@@ -2148,7 +2238,7 @@ void t_go_generator::generate_deserialize_field(ofstream &out,
                                                 bool coerceData) {
   t_type* orig_type = tfield->get_type();
   t_type* type = get_true_type(orig_type);
-  string name(prefix + publicize(tfield->get_name()));
+  string name(prefix + publicize(variable_name_to_go_name(tfield->get_name())));
 
   if (type->is_void()) {
     throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " + name;
@@ -2420,7 +2510,7 @@ void t_go_generator::generate_serialize_field(ofstream &out,
                                                string prefix,
                                                string err) {
   t_type* type = get_true_type(tfield->get_type());
-  string name(prefix + publicize(tfield->get_name()));
+  string name(prefix + publicize(variable_name_to_go_name(tfield->get_name())));
 
   // Do nothing for void types
   if (type->is_void()) {
@@ -2483,7 +2573,7 @@ void t_go_generator::generate_serialize_field(ofstream &out,
                         << ", \"" << escape_string(tfield->get_name())
                         << "\", " << structName << ", " << err << "); }\n";
   } else {
-    throw "INVALID TYPE IN generate_serialize_field '" + type->get_name() + "' for field '" + prefix + publicize(tfield->get_name()) + "'";
+    throw "INVALID TYPE IN generate_serialize_field '" + type->get_name() + "' for field '" + name + "'";
   }
 }
 
@@ -2677,7 +2767,7 @@ void t_go_generator::generate_go_docstring(ofstream& out,
     vector<t_field*>::const_iterator p_iter;
     for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
       t_field* p = *p_iter;
-      ss << " - " << publicize(p->get_name());
+      ss << " - " << publicize(variable_name_to_go_name(p->get_name()));
       if (p->has_doc()) {
         ss << ": " << p->get_doc();
       } else {
@@ -2802,7 +2892,7 @@ string t_go_generator::argument_list(t_struct* tstruct) {
     } else {
       result += ", ";
     }
-    result += (*f_iter)->get_name() + " " + type_to_go_type((*f_iter)->get_type());
+    result += variable_name_to_go_name((*f_iter)->get_name()) + " " + type_to_go_type((*f_iter)->get_type());
   }
   return result;
 }
