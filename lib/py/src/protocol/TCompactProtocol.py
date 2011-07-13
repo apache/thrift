@@ -204,7 +204,10 @@ class TCompactProtocol(TProtocolBase):
             ctype = CompactType.FALSE
         self.__writeFieldHeader(ctype, self.__bool_fid)
     elif self.state == CONTAINER_WRITE:
-      self.__writeByte(int(bool))
+       if bool:
+           self.__writeByte(CompactType.TRUE)
+       else:
+           self.__writeByte(CompactType.FALSE)
     else:
       raise AssertionError, "Invalid state in compact protocol"
 
@@ -338,9 +341,9 @@ class TCompactProtocol(TProtocolBase):
 
   def readBool(self):
     if self.state == BOOL_READ:
-      return self.__bool_value
+      return self.__bool_value == CompactType.TRUE
     elif self.state == CONTAINER_READ:
-      return bool(self.__readByte())
+      return self.__readByte() == CompactType.TRUE
     else:
       raise AssertionError, "Invalid state in compact protocol: %d" % self.state
 
