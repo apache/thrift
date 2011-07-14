@@ -1483,8 +1483,6 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   if (gen_cob_style_) {
     f_header_ <<
       "#include <tr1/functional>" << endl <<
-      // TODO(dreiss): Libify the base client so we don't have to include this.
-      "#include <transport/TTransportUtils.h>" << endl <<
       "namespace apache { namespace thrift { namespace async {" << endl <<
       "class TAsyncChannel;" << endl <<
       "}}}" << endl;
