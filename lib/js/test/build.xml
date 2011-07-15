@@ -59,7 +59,10 @@
       <condition>
         <not>
           <resourcecount count="2">
-            <fileset id="fs" dir="${thrift.java.dir}/build" includes="libthrift*.jar"/>
+            <fileset id="fs" dir="${thrift.java.dir}/build">
+              <include name="libthrift*.jar" />
+              <exclude name="libthrift*javadoc.jar" />
+            </fileset>
           </resourcecount>
         </not>
       </condition>
