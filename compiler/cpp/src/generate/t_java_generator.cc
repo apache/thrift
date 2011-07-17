@@ -3875,6 +3875,7 @@ void t_java_generator::generate_java_struct_clear(std::ofstream& out, t_struct* 
 
 // generates java method to serialize (in the Java sense) the object
 void t_java_generator::generate_java_struct_write_object(ofstream& out, t_struct* tstruct) {
+  (void) tstruct;
   indent(out) << "private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {" << endl;
   indent(out) << "  try {" << endl;
   indent(out) << "    write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));" << endl;

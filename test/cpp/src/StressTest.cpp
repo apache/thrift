@@ -92,7 +92,7 @@ class Server : public ServiceIf {
   int64_t echoI64(const int64_t arg) {return arg;}
   void echoString(string& out, const string &arg) {
     if (arg != "hello") {
-      T_ERROR_ABORT("WRONG STRING!!!!");
+      T_ERROR_ABORT("WRONG STRING (%s)!!!!", arg.c_str());
     }
     out = arg;
   }

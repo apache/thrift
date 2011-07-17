@@ -63,6 +63,9 @@ uint64_t now()
 }
 
 static void testString_clientReturn(const char* host, int port, event_base *base, TProtocolFactory* protocolFactory, ThriftTestCobClient* client) {
+  (void) host;
+  (void) port;
+  (void) protocolFactory;
   try {
     string s;
     client->recv_testString(s);
@@ -283,7 +286,7 @@ int main(int argc, char** argv) {
      */
     printf("testDouble(-5.2098523)");
     double dub = testClient.testDouble(-5.2098523);
-    printf(" = %lf\n", dub);
+    printf(" = %f\n", dub);
 
     /**
      * STRUCT TEST

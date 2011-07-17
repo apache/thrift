@@ -93,12 +93,16 @@ bool TEvhttpClientChannel::sendAndRecvMessage(
 
 bool TEvhttpClientChannel::sendMessage(
     const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message) {
+  (void) cob;
+  (void) message;
   abort(); // XXX
 }
 
 
 bool TEvhttpClientChannel::recvMessage(
     const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message) {
+  (void) cob;
+  (void) message;
   abort(); // XXX
 }
 

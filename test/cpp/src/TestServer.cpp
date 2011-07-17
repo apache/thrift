@@ -88,7 +88,7 @@ class TestHandler : public ThriftTestIf {
   }
 
   double testDouble(const double thing) {
-    printf("testDouble(%lf)\n", thing);
+    printf("testDouble(%f)\n", thing);
     return thing;
   }
 
@@ -193,6 +193,7 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testInsanity(map<UserId, map<Numberz::type,Insanity> > &insane, const Insanity &argument) {
+    (void) argument;
     printf("testInsanity()\n");
 
     Xtruct hello;
@@ -262,6 +263,10 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testMulti(Xtruct &hello, const int8_t arg0, const int32_t arg1, const int64_t arg2, const std::map<int16_t, std::string>  &arg3, const Numberz::type arg4, const UserId arg5) {
+    (void) arg3;
+    (void) arg4;
+    (void) arg5;
+    
     printf("testMulti()\n");
 
     hello.string_thing = "Hello2";
@@ -319,21 +324,25 @@ class TestHandler : public ThriftTestIf {
 
 class TestProcessorEventHandler : public TProcessorEventHandler {
   virtual void* getContext(const char* fn_name, void* serverContext) {
+    (void) serverContext;
     return new std::string(fn_name);
   }
   virtual void freeContext(void* ctx, const char* fn_name) {
+    (void) fn_name;
     delete static_cast<std::string*>(ctx);
   }
   virtual void preRead(void* ctx, const char* fn_name) {
     communicate("preRead", ctx, fn_name);
   }
   virtual void postRead(void* ctx, const char* fn_name, uint32_t bytes) {
+    (void) bytes;
     communicate("postRead", ctx, fn_name);
   }
   virtual void preWrite(void* ctx, const char* fn_name) {
     communicate("preWrite", ctx, fn_name);
   }
   virtual void postWrite(void* ctx, const char* fn_name, uint32_t bytes) {
+    (void) bytes;
     communicate("postWrite", ctx, fn_name);
   }
   virtual void asyncComplete(void* ctx, const char* fn_name) {

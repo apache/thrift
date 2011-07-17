@@ -46,6 +46,8 @@ class t_go_generator : public t_generator {
       const std::string& option_string)
     : t_generator(program)
   {
+    (void) parsed_options;
+    (void) option_string;
     std::map<std::string, std::string>::const_iterator iter;
     out_dir_base_ = "gen-go";
   }
@@ -771,6 +773,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
                                                    bool is_exception,
                                                    bool is_result) {
 
+  (void) is_exception;
   const vector<t_field*>& members = tstruct->get_members();
   const vector<t_field*>& sorted_members = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator m_iter;
@@ -996,6 +999,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
                                                 t_struct* tstruct,
                                                 const string& tstruct_name,
                                                 bool is_result) {
+  (void) is_result;
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
   string escaped_tstruct_name(escape_string(tstruct->get_name()));
@@ -2236,6 +2240,8 @@ void t_go_generator::generate_deserialize_field(ofstream &out,
                                                 string err,
                                                 bool inclass,
                                                 bool coerceData) {
+  (void) inclass;
+  (void) coerceData;
   t_type* orig_type = tfield->get_type();
   t_type* type = get_true_type(orig_type);
   string name(prefix + publicize(variable_name_to_go_name(tfield->get_name())));
@@ -2330,6 +2336,7 @@ void t_go_generator::generate_deserialize_struct(ofstream &out,
                                                   bool declare,
                                                   string prefix,
                                                   string err) {
+  (void) err;
   string err2(tmp("err"));
   string eq(" := ");
   if(!declare) {
@@ -2452,6 +2459,8 @@ void t_go_generator::generate_deserialize_map_element(ofstream &out,
                                                        bool   declare,
                                                        string prefix,
                                                        string err) {
+  (void) declare;
+  (void) err;
   string key = tmp("_key");
   string val = tmp("_val");
   t_field fkey(tmap->get_key_type(), key);
@@ -2472,6 +2481,7 @@ void t_go_generator::generate_deserialize_set_element(ofstream &out,
                                                        bool   declare,
                                                        string prefix,
                                                        string err) {
+  (void) declare;
   string elem = tmp("_elem");
   t_field felem(tset->get_elem_type(), elem);
 
@@ -2489,6 +2499,7 @@ void t_go_generator::generate_deserialize_list_element(ofstream &out,
                                                         bool   declare,
                                                         string prefix,
                                                         string err) {
+  (void) declare;
   string elem = tmp("_elem");
   t_field felem(tlist->get_elem_type(), elem);
 
@@ -3074,4 +3085,4 @@ string t_go_generator::type_to_spec_args(t_type* ttype) {
 }
 
 
-THRIFT_REGISTER_GENERATOR(go, "Go", "");
+THRIFT_REGISTER_GENERATOR(go, "Go", "")

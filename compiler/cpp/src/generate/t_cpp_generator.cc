@@ -3007,6 +3007,12 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         indent() << "T_GENERIC_PROTOCOL(this, oprot, _oprot);" << endl << endl;
     }
 
+    if (tfunction->is_oneway()) {
+      out <<
+        indent() << "(void) seqid;" << endl <<
+        indent() << "(void) oprot;" << endl;
+    }
+
     out <<
       indent() << tservice->get_name() + "_" + tfunction->get_name() + "_args" << " args;" << endl <<
       indent() << "void* ctx = NULL;" << endl <<
@@ -3996,7 +4002,7 @@ string t_cpp_generator::function_signature(t_function* tfunction,
                   ? "()"
                   : ("(" + type_name(ttype) + " const& _return)"));
       if (has_xceptions) {
-        exn_cob = ", std::tr1::function<void(::apache::thrift::TDelayedException* _throw)> exn_cob";
+        exn_cob = ", std::tr1::function<void(::apache::thrift::TDelayedException* _throw)> /* exn_cob */";
       }
     } else {
       throw "UNKNOWN STYLE";
