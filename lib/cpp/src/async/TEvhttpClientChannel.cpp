@@ -19,6 +19,7 @@
 
 #include "TEvhttpClientChannel.h"
 #include <evhttp.h>
+#include "transport/TBufferTransports.h"
 
 namespace apache { namespace thrift { namespace async {
 

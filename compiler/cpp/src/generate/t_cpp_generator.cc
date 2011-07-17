@@ -231,28 +231,28 @@ class t_cpp_generator : public t_oop_generator {
   std::string get_include_prefix(const t_program& program) const;
 
   /**
-   * True iff we should generate pure enums for Thrift enums, instead of wrapper classes.
+   * True if we should generate pure enums for Thrift enums, instead of wrapper classes.
    */
   bool gen_pure_enums_;
 
   /**
-   * True iff we should generate local reflection metadata for TDenseProtocol.
+   * True if we should generate local reflection metadata for TDenseProtocol.
    */
   bool gen_dense_;
 
   /**
-   * True iff we should generate templatized reader/writer methods.
+   * True if we should generate templatized reader/writer methods.
    */
   bool gen_templates_;
 
   /**
-   * True iff we should use a path prefix in our #include statements for other
+   * True if we should use a path prefix in our #include statements for other
    * thrift-generated header files.
    */
   bool use_include_prefix_;
 
   /**
-   * True iff we should generate "Continuation OBject"-style classes as well.
+   * True if we should generate "Continuation OBject"-style classes as well.
    */
   bool gen_cob_style_;
 
@@ -4142,6 +4142,10 @@ string t_cpp_generator::get_include_prefix(const t_program& program) const {
 
 
 THRIFT_REGISTER_GENERATOR(cpp, "C++",
+"    cob_style:       Generate \"Continuation OBject\"-style classes.\n"
+"    no_client_completion:\n"
+"                     Omit calls to completion__() in CobClient class.\n"
+"    templates:       Generate templatized reader/writer methods.\n"
 "    pure_enums:      Generate pure enums instead of wrapper classes.\n"
 "    dense:           Generate type specifications for the dense protocol.\n"
 "    include_prefix:  Use full include paths in generated files.\n"

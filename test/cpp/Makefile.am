@@ -87,7 +87,7 @@ StressTestNonBlocking_LDADD = \
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp: $(top_srcdir)/test/ThriftTest.thrift
-	$(THRIFT) --gen cpp:templates $<
+	$(THRIFT) --gen cpp:templates,cob_style -r $<
 
 gen-cpp/ThriftTest.cpp gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants.cpp: $(top_srcdir)/test/StressTest.thrift
 	$(THRIFT) --gen cpp $<
@@ -97,6 +97,7 @@ INCLUDES = \
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 AM_CXXFLAGS = -Wall
+AM_LDFLAGS = $(BOOST_LDFLAGS)
 
 clean-local:
 	$(RM) -r gen-cpp

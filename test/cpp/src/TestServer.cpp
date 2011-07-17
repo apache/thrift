@@ -27,6 +27,9 @@
 #include <server/TSimpleServer.h>
 #include <server/TThreadedServer.h>
 #include <server/TThreadPoolServer.h>
+#include <async/TEvhttpServer.h>
+#include <async/TAsyncBufferProcessor.h>
+#include <async/TAsyncProtocolProcessor.h>
 #include <server/TNonblockingServer.h>
 #include <transport/TServerSocket.h>
 #include <transport/TSSLServerSocket.h>
@@ -52,6 +55,7 @@ using namespace apache::thrift::concurrency;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
+using namespace apache::thrift::async;
 
 using namespace thrift::test;
 
@@ -345,6 +349,137 @@ class TestProcessorEventHandler : public TProcessorEventHandler {
 };
 
 
+class TestHandlerAsync : public ThriftTestCobSvIf {
+public:
+  TestHandlerAsync(shared_ptr<TestHandler>& handler) : _delegate(handler) {}
+  virtual ~TestHandlerAsync() {}
+
+  virtual void testVoid(std::tr1::function<void()> cob) {
+    _delegate->testVoid();
+    cob();
+  }
+
+  virtual void testString(std::tr1::function<void(std::string const& _return)> cob, const std::string& thing) {
+    std::string res;
+    _delegate->testString(res, thing);
+    cob(res);
+  }
+
+  virtual void testByte(std::tr1::function<void(int8_t const& _return)> cob, const int8_t thing) {
+    int8_t res = _delegate->testByte(thing);
+    cob(res);
+  }
+
+  virtual void testI32(std::tr1::function<void(int32_t const& _return)> cob, const int32_t thing) {
+    int32_t res = _delegate->testI32(thing);
+    cob(res);
+  }
+
+  virtual void testI64(std::tr1::function<void(int64_t const& _return)> cob, const int64_t thing) {
+    int64_t res = _delegate->testI64(thing);
+    cob(res);
+  }
+
+  virtual void testDouble(std::tr1::function<void(double const& _return)> cob, const double thing) {
+    double res = _delegate->testDouble(thing);
+    cob(res);
+  }
+
+  virtual void testStruct(std::tr1::function<void(Xtruct const& _return)> cob, const Xtruct& thing) {
+    Xtruct res;
+    _delegate->testStruct(res, thing);
+    cob(res);
+  }
+
+  virtual void testNest(std::tr1::function<void(Xtruct2 const& _return)> cob, const Xtruct2& thing) {
+    Xtruct2 res;
+    _delegate->testNest(res, thing);
+    cob(res);
+  }
+
+  virtual void testMap(std::tr1::function<void(std::map<int32_t, int32_t>  const& _return)> cob, const std::map<int32_t, int32_t> & thing) {
+    std::map<int32_t, int32_t> res;
+    _delegate->testMap(res, thing);
+    cob(res);
+  }
+
+  virtual void testStringMap(std::tr1::function<void(std::map<std::string, std::string>  const& _return)> cob, const std::map<std::string, std::string> & thing) {
+    std::map<std::string, std::string> res;
+    _delegate->testStringMap(res, thing);
+    cob(res);
+  }
+
+  virtual void testSet(std::tr1::function<void(std::set<int32_t>  const& _return)> cob, const std::set<int32_t> & thing) {
+    std::set<int32_t> res;
+    _delegate->testSet(res, thing);
+    cob(res);
+  }
+
+  virtual void testList(std::tr1::function<void(std::vector<int32_t>  const& _return)> cob, const std::vector<int32_t> & thing) {
+    std::vector<int32_t> res;
+    _delegate->testList(res, thing);
+    cob(res);
+  }
+
+  virtual void testEnum(std::tr1::function<void(Numberz::type const& _return)> cob, const Numberz::type thing) {
+    Numberz::type res = _delegate->testEnum(thing);
+    cob(res);
+  }
+
+  virtual void testTypedef(std::tr1::function<void(UserId const& _return)> cob, const UserId thing) {
+    UserId res = _delegate->testTypedef(thing);
+    cob(res);
+  }
+
+  virtual void testMapMap(std::tr1::function<void(std::map<int32_t, std::map<int32_t, int32_t> >  const& _return)> cob, const int32_t hello) {
+    std::map<int32_t, std::map<int32_t, int32_t> > res;
+    _delegate->testMapMap(res, hello);
+    cob(res);
+  }
+
+  virtual void testInsanity(std::tr1::function<void(std::map<UserId, std::map<Numberz::type, Insanity> >  const& _return)> cob, const Insanity& argument) {
+    std::map<UserId, std::map<Numberz::type, Insanity> > res; 
+    _delegate->testInsanity(res, argument);
+    cob(res);
+ }
+
+  virtual void testMulti(std::tr1::function<void(Xtruct const& _return)> cob, const int8_t arg0, const int32_t arg1, const int64_t arg2, const std::map<int16_t, std::string> & arg3, const Numberz::type arg4, const UserId arg5) {
+    Xtruct res;
+    _delegate->testMulti(res, arg0, arg1, arg2, arg3, arg4, arg5);
+    cob(res);
+  }
+
+  virtual void testException(std::tr1::function<void()> cob, std::tr1::function<void(::apache::thrift::TDelayedException* _throw)> exn_cob, const std::string& arg) {
+    try {
+      _delegate->testException(arg);
+    } catch(const apache::thrift::TException& e) {
+      exn_cob(apache::thrift::TDelayedException::delayException(e));
+      return;
+    }
+    cob();
+  }
+
+  virtual void testMultiException(std::tr1::function<void(Xtruct const& _return)> cob, std::tr1::function<void(::apache::thrift::TDelayedException* _throw)> exn_cob, const std::string& arg0, const std::string& arg1) {
+    Xtruct res;
+    try {
+      _delegate->testMultiException(res, arg0, arg1);
+    } catch(const apache::thrift::TException& e) {
+      exn_cob(apache::thrift::TDelayedException::delayException(e));
+      return;
+    }
+    cob(res);
+  }
+
+  virtual void testOneway(std::tr1::function<void()> cob, const int32_t secondsToSleep) {
+    _delegate->testOneway(secondsToSleep);
+    cob();
+  }
+
+protected:
+  shared_ptr<TestHandler> _delegate;
+};
+
+
 int main(int argc, char **argv) {
   int port = 9090;
   bool ssl = false;
@@ -464,7 +599,7 @@ int main(int argc, char **argv) {
   // Factory
   shared_ptr<TTransportFactory> transportFactory;
   
-  if (transport_type == "http") {
+  if (transport_type == "http" && server_type != "nonblocking") {
     shared_ptr<TTransportFactory> httpTransportFactory(new THttpServerTransportFactory()); 
     transportFactory = httpTransportFactory;
   } else if (transport_type == "framed") {
@@ -522,8 +657,17 @@ int main(int argc, char **argv) {
     threadedServer.serve();
 
   } else if (server_type == "nonblocking") {
-    TNonblockingServer nonblockingServer(testProcessor, port);
-    nonblockingServer.serve();
+    if(transport_type == "http") {
+      shared_ptr<TestHandlerAsync> testHandlerAsync(new TestHandlerAsync(testHandler));
+      shared_ptr<TAsyncProcessor> testProcessorAsync(new ThriftTestAsyncProcessor(testHandlerAsync));
+      shared_ptr<TAsyncBufferProcessor> testBufferProcessor(new TAsyncProtocolProcessor(testProcessorAsync, protocolFactory));
+      
+      TEvhttpServer nonblockingServer(testBufferProcessor, port);
+      nonblockingServer.serve();
+} else {
+      TNonblockingServer nonblockingServer(testProcessor, port);
+      nonblockingServer.serve();
+    }
   }
 
   cout << "done." << endl;

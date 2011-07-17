@@ -22,6 +22,10 @@
 #include "transport/TBufferTransports.h"
 #include <evhttp.h>
 
+#ifndef HTTP_INTERNAL // libevent < 2
+#define HTTP_INTERNAL 500
+#endif
+
 using apache::thrift::transport::TMemoryBuffer;
 
 namespace apache { namespace thrift { namespace async {
@@ -98,7 +102,11 @@ TEvhttpServer::RequestContext::RequestContext(struct evhttp_request* req) : req(
 
 
 void TEvhttpServer::request(struct evhttp_request* req, void* self) {
-  static_cast<TEvhttpServer*>(self)->process(req);
+  try {
+    static_cast<TEvhttpServer*>(self)->process(req);
+  } catch(std::exception& e) {
+    evhttp_send_reply(req, HTTP_INTERNAL, e.what(), 0);
+  }
 }
 
 

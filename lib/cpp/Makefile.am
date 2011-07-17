@@ -70,11 +70,13 @@ libthrift_la_SOURCES = src/Thrift.cpp \
                        src/server/TSimpleServer.cpp \
                        src/server/TThreadPoolServer.cpp \
                        src/server/TThreadedServer.cpp \
-											 src/async/TAsyncChannel.cpp \
+                       src/async/TAsyncChannel.cpp \
                        src/processor/PeekProcessor.cpp
 
 libthriftnb_la_SOURCES = src/server/TNonblockingServer.cpp \
-                         src/async/TAsyncProtocolProcessor.cpp
+                         src/async/TAsyncProtocolProcessor.cpp \
+                         src/async/TEvhttpServer.cpp \
+                         src/async/TEvhttpClientChannel.cpp 
 
 libthriftz_la_SOURCES = src/transport/TZlibTransport.cpp
 
