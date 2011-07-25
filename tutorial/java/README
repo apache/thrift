@@ -4,7 +4,7 @@ Steps for Java tutorial
 1) Make sure thrift is compiled, both the compiler and the Java library. You should
 be able to verify the following:
 
-thrift/tutorial/java$ file ../../lib/java/libthrift.jar 
+thrift/tutorial/java$ file ../../lib/java/build/libthrift-${version}-${release}.jar 
 ../../lib/java/libthrift.jar: Zip archive data, at least v1.0 to extract
 
 thrift/tutorial/java$ file ../../compiler/cpp/thrift
