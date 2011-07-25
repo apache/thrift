@@ -1,0 +1,5 @@
+name = "thrift"
+description = "Thrift runtime library"
+requires = "unix,threads"
+archive(byte) = "thrift.cma"
+archive(native) = "thrift.cmxa"

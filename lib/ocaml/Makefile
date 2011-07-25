@@ -21,3 +21,5 @@ all:
 	cd src; make; cd ..
 clean:
 	cd src; make clean; cd ..
+install:
+	cd src; make install; cd ..
