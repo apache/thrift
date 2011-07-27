@@ -24,5 +24,6 @@ LIBS = unix threads
 THREADS = yes
 all: native-code-library debug-code-library top
 install: libinstall
+uninstall: libuninstall
 OCAMLMAKEFILE = ../OCamlMakefile
 include $(OCAMLMAKEFILE)
