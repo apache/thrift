@@ -23,3 +23,5 @@ clean:
 	cd src; make clean; cd ..
 install:
 	cd src; make install; cd ..
+uninstall:
+	cd src; make uninstall; cd ..
