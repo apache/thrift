@@ -18,7 +18,7 @@
 #
 
 SOURCES = Thrift.ml TBinaryProtocol.ml TSocket.ml TFramedTransport.ml TChannelTransport.ml TServer.ml TSimpleServer.ml TServerSocket.ml TThreadedServer.ml
-LIBINSTALL_FILES = thrift.cma thrift.cmxa $(addsuffix .cmi, $(basename $(SOURCES)))
+LIBINSTALL_FILES = thrift.a thrift.cma thrift.cmxa $(addsuffix .cmi, $(basename $(SOURCES)))
 RESULT = thrift
 LIBS = unix threads
 THREADS = yes
