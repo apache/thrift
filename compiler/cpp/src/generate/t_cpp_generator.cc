@@ -1482,6 +1482,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     endl;
   if (gen_cob_style_) {
     f_header_ <<
+      "#include <transport/TBufferTransports.h>" << endl << // TMemoryBuffer
       "#include <tr1/functional>" << endl <<
       "namespace apache { namespace thrift { namespace async {" << endl <<
       "class TAsyncChannel;" << endl <<
