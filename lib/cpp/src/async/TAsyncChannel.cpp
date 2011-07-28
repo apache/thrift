@@ -22,13 +22,13 @@
 
 namespace apache { namespace thrift { namespace async {
 
-bool TAsyncChannel::sendAndRecvMessage(const VoidCallback& cob,
+void TAsyncChannel::sendAndRecvMessage(const VoidCallback& cob,
                                        TMemoryBuffer* sendBuf,
                                        TMemoryBuffer* recvBuf) {
   std::tr1::function<void()> send_done =
     std::tr1::bind(&TAsyncChannel::recvMessage, this, cob, recvBuf);
 
-  return sendMessage(send_done, sendBuf);
+  sendMessage(send_done, sendBuf);
 }
 
 }}}  // apache::thrift::async

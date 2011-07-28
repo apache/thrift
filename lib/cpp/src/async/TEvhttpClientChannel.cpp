@@ -50,7 +50,7 @@ TEvhttpClientChannel::~TEvhttpClientChannel() {
 }
 
 
-bool TEvhttpClientChannel::sendAndRecvMessage(
+void TEvhttpClientChannel::sendAndRecvMessage(
     const VoidCallback& cob,
     apache::thrift::transport::TMemoryBuffer* sendBuf,
     apache::thrift::transport::TMemoryBuffer* recvBuf) {
@@ -86,12 +86,10 @@ bool TEvhttpClientChannel::sendAndRecvMessage(
   if (rv != 0) {
     abort(); // XXX
   }
-
-  return true;
 }
 
 
-bool TEvhttpClientChannel::sendMessage(
+void TEvhttpClientChannel::sendMessage(
     const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message) {
   (void) cob;
   (void) message;
@@ -99,7 +97,7 @@ bool TEvhttpClientChannel::sendMessage(
 }
 
 
-bool TEvhttpClientChannel::recvMessage(
+void TEvhttpClientChannel::recvMessage(
     const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message) {
   (void) cob;
   (void) message;
@@ -109,14 +107,17 @@ bool TEvhttpClientChannel::recvMessage(
 
 void TEvhttpClientChannel::finish(struct evhttp_request* req) {
   if (req == NULL) {
-    return cob_();
+    cob_();
+	return;
   } else if (req->response_code != 200) {
-    return cob_();
+    cob_();
+	return;
   }
   recvBuf_->resetBuffer(
       EVBUFFER_DATA(req->input_buffer),
       EVBUFFER_LENGTH(req->input_buffer));
-  return cob_();
+  cob_();
+  return;
 }
 
 
