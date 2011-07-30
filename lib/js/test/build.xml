@@ -119,7 +119,7 @@
     </exec>
   </target>
 
-  <target name="unittest" description="do unit tests with headless browser phantomjs" depends="phantomjs, jstest" if="phantomjs.present">
+  <target name="unittest" description="do unit tests with headless browser phantomjs" depends="init, phantomjs, jstest" if="phantomjs.present">
     <parallel>
       <exec executable="Xvfb" spawn="true" failonerror="false">
         <arg line=":99" />
