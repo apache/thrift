@@ -92,6 +92,10 @@ module Thrift
         @index += 1
         i += 1
       end
+      if @index >= GARBAGE_BUFFER_SIZE
+        @buf = @buf.slice(@index..-1)
+        @index = 0
+      end
       i
     end
 
