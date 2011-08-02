@@ -3329,7 +3329,13 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
       result += " = new " + type_name(ttype, false, true) + "()";;
     }
   }
-  return result + ";";
+  result += "; // ";
+  if (tfield->get_xsd_optional()) {
+    result += "optional";
+  } else {
+    result += "required";
+  }
+  return result;
 }
 
 /**
