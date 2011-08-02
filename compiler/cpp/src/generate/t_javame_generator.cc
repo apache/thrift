@@ -2858,7 +2858,7 @@ void t_javame_generator::generate_serialize_map_element(ofstream& out,
   t_field kfield(tmap->get_key_type(), iter);
   generate_serialize_field(out, &kfield, "");
   string val_type = type_name(tmap->get_val_type(), true, false);
-  t_field vfield(tmap->get_val_type(), "(" + val_type + ")" + map + ".get(" + iter + ")");
+  t_field vfield(tmap->get_val_type(), "((" + val_type + ")" + map + ".get(" + iter + "))");
   generate_serialize_field(out, &vfield, "");
 }
 
