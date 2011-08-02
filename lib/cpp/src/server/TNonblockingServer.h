@@ -132,6 +132,7 @@ class TNonblockingServer : public TServer {
 
   /// The event base for libevent
   event_base* eventBase_;
+  bool ownEventBase_;
 
   /// Event struct, used with eventBase_ for connection events
   struct event serverEvent_;
@@ -234,6 +235,7 @@ class TNonblockingServer : public TServer {
     port_(port),
     threadPoolProcessing_(false),
     eventBase_(NULL),
+    ownEventBase_(false),
     numTConnections_(0),
     numActiveProcessors_(0),
     connectionStackLimit_(CONNECTION_STACK_LIMIT),
@@ -259,6 +261,7 @@ class TNonblockingServer : public TServer {
     port_(port),
     threadManager_(threadManager),
     eventBase_(NULL),
+    ownEventBase_(false),
     numTConnections_(0),
     numActiveProcessors_(0),
     connectionStackLimit_(CONNECTION_STACK_LIMIT),
@@ -293,6 +296,7 @@ class TNonblockingServer : public TServer {
     port_(port),
     threadManager_(threadManager),
     eventBase_(NULL),
+    ownEventBase_(false),
     numTConnections_(0),
     numActiveProcessors_(0),
     connectionStackLimit_(CONNECTION_STACK_LIMIT),
@@ -704,8 +708,10 @@ class TNonblockingServer : public TServer {
    * Register the core libevent events onto the proper base.
    *
    * @param base pointer to the event base to be initialized.
+   * @param ownEventBase if true, this server is responsible for
+   * freeing the event base memory.
    */
-  void registerEvents(event_base* base);
+  void registerEvents(event_base* base, bool ownEventBase = true);
 
   /**
    * Main workhorse function, starts up the server listening on a port and

@@ -567,7 +567,7 @@ TNonblockingServer::~TNonblockingServer() {
     delete connection;
   }
 
-  if (eventBase_) {
+  if (eventBase_ && ownEventBase_) {
     event_base_free(eventBase_);
   }
 
@@ -802,10 +802,11 @@ void TNonblockingServer::createNotificationPipe() {
 /**
  * Register the core libevent events onto the proper base.
  */
-void TNonblockingServer::registerEvents(event_base* base) {
+void TNonblockingServer::registerEvents(event_base* base, bool ownEventBase) {
   assert(serverSocket_ != -1);
   assert(!eventBase_);
   eventBase_ = base;
+  ownEventBase_ = ownEventBase;
 
   // Print some libevent stats
   GlobalOutput.printf("libevent %s method %s",
@@ -911,7 +912,7 @@ void TNonblockingServer::serve() {
   }
 
   // Initialize libevent core
-  registerEvents(static_cast<event_base*>(event_init()));
+  registerEvents(static_cast<event_base*>(event_init()), true);
 
   // Run the preServe event
   if (eventHandler_ != NULL) {
