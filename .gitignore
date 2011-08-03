@@ -50,6 +50,7 @@
 /lib/cpp/test/TransportTest
 /lib/cpp/test/UnitTests
 /lib/cpp/test/ZlibTest
+/lib/cpp/test/tests.xml
 /lib/cpp/test/*.la
 /lib/cpp/test/*.lo
 /lib/cpp/test/*.o
