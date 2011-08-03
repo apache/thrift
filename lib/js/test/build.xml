@@ -26,7 +26,7 @@
   <property name="genjava" location="gen-java" />
   <property name="genjs" location="gen-js" />
   <property name="build" location="build" />
-  <property name="jar.file" location="${basedir}/jstest.jar" /> 
+  <property name="jar.file" location="${build}/jstest.jar" />
 
   <!-- the root directory, where you unpack thrift distibution (e.g. thrift-0.x.x.tar.gz) -->
   <property name="thrift.dir" location="../../../" />
@@ -85,24 +85,44 @@
   <target name="init" depends="dependencies">
     <tstamp />
     <mkdir dir="${build}"/>
+    <mkdir dir="${build}/js/lib"/>
     <mkdir dir="${build}/lib"/>
     <mkdir dir="${build}/log"/>
+    <mkdir dir="${build}/test"/>
+    <mkdir dir="${build}/test/log"/>
+  </target>
+
+  <target name="jslibs" depends="init, proxy">
+    <get src="http://code.jquery.com/jquery-1.5.2.js" dest="${build}/js/lib" usetimestamp="true"/>
+    <get src="http://js-test-driver.googlecode.com/svn/trunk/JsTestDriver/contrib/qunit/src/equiv.js" dest="${build}/js/lib" usetimestamp="true"/>
+    <get src="http://js-test-driver.googlecode.com/svn/trunk/JsTestDriver/contrib/qunit/src/QUnitAdapter.js" dest="${build}/js/lib" usetimestamp="true"/>
+
+    <get src="http://code.jquery.com/qunit/git/qunit.js" dest="${build}/js/lib" usetimestamp="true"/>
+    <get src="http://code.jquery.com/qunit/git/qunit.css" dest="${build}/js/lib" usetimestamp="true"/>
+    <!-- js-test-driver has issues with relative path...so we need a copy -->
+    <copy file="../thrift.js" todir="${build}/js/"/>
   </target>
 
   <target name="compile" description="compile the test suite" depends="init, generate, resolve">
-    <javac srcdir="${genjava}" destdir="${build}" classpathref="libs.classpath" />
-    <javac srcdir="${src}" destdir="${build}" classpathref="libs.classpath" />
+    <!-- //TODO enable <compilerarg value="-Xlint"/>-->
+    <javac includeantruntime="false" srcdir="${genjava}" destdir="${build}/test" classpathref="libs.classpath"/>
+    <javac includeantruntime="false" srcdir="${src}" destdir="${build}/test" classpathref="libs.classpath"/>
   </target>
 
   <target name="jstest" description="create the test suite jar file" depends="compile">
-    <jar jarfile="${jar.file}" basedir="${build}"/>
+    <jar jarfile="${jar.file}" basedir="${build}/test"/>
   </target>
 
-  <target name="testserver" description="run the test server" depends="jstest">
+  <target name="testserver" description="run the test server" depends="jstest, jslibs">
     <java classname="test.Httpd" fork="true"
       classpathref="test.classpath" failonerror="true">
       <arg value="../" />
     </java>
+  </target>
+
+  <target name="proxy" if="proxy.enabled">
+    <setproxy proxyhost="${proxy.host}" proxyport="${proxy.port}"
+      proxyuser="${proxy.user}" proxypassword="${proxy.pass}"/>
   </target>
 
   <target name="xvfb">
@@ -119,7 +139,7 @@
     </exec>
   </target>
 
-  <target name="unittest" description="do unit tests with headless browser phantomjs" depends="init, phantomjs, jstest" if="phantomjs.present">
+  <target name="unittest" description="do unit tests with headless browser phantomjs" depends="init, phantomjs, jstest, jslibs" if="phantomjs.present">
     <parallel>
       <exec executable="Xvfb" spawn="true" failonerror="false">
         <arg line=":99" />
@@ -139,6 +159,41 @@
     </parallel>
   </target>
 
+  <target name="jstestdriver-server" description="start the js-test-driver server" depends="init, resolve">
+    <echo>Starting js-test-driver Server...</echo>
+    <java jar="${build}/lib/jstestdriver-1.3.2.jar" dir="." fork="true"
+            failonerror="true" output="${build}/log/jstestdriver-server.log">
+      <arg line="--port 9876"/>
+    </java>
+  </target>
+
+  <target name="jstestdriver" description="do unit tests with js-test-driver" depends="init, jstest, jslibs">
+    <parallel>
+      <java classname="test.Httpd" fork="true" timeout="10000"
+        classpathref="test.classpath" failonerror="false" output="${build}/log/unittest.log">
+        <arg value="../" />
+      </java>
+      <sequential>
+        <sleep seconds="2"/>
+        <echo>Running Unit Tests with js-test-driver</echo>
+          <java jar="${build}/lib/jstestdriver-1.3.2.jar" dir="." fork="true" 
+            failonerror="true" output="${build}/log/jstestdriver.log">
+            <arg value="--config" />
+            <arg value="jsTestDriver.conf" />
+
+            <arg value="--reset" />
+            <arg value="--verbose" />
+
+            <arg value="--tests" />
+            <arg value="all" />
+
+            <arg value="--testOutput" />
+            <arg value="${build}/test/log/" />
+        </java>
+      </sequential>
+    </parallel>
+  </target>
+
   <target name="generate">
     <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen java ${thrift.dir}/test/ThriftTest.thrift" />
@@ -148,20 +203,23 @@
     </exec>
   </target>
 
-  <target name="test" description="run test suite" depends="init, generate, resolve, lint, jstest, unittest"/>
+  <target name="test" description="run test suite (lint, unittest)" depends="lint, unittest"/>
 
-  <target name="lint" description="code quality checks" depends="generate, gjslint, jslint"/>
+  <target name="lint" description="code quality checks (jslint and gjslint if available)" depends="generate, gjslint, jslint"/>
 
-  <target name="jslint">
+  <target name="jslint" depends="resolve">
     <taskdef uri="antlib:com.googlecode.jslint4java" resource="com/googlecode/jslint4java/antlib.xml" classpathref="libs.classpath" />
     <!--
          the following options would probably make sense in the future:
          browser,undef,eqeqeq,plusplus,bitwise,regexp,strict,newcap,immed
     -->
-    <jsl:jslint options="evil,forin,browser,bitwise,regexp,newcap,immed">
+    <jsl:jslint options="evil,forin,browser,bitwise,regexp,newcap,immed" encoding="UTF-8">
       <formatter type="plain" />
       <fileset dir="${genjs}" includes="**/*.js" />
       <fileset dir=".." includes="thrift.js" />
+
+      <!-- issues with unsafe character -->
+      <!-- fileset dir="." includes="*test*.js" /> -->
     </jsl:jslint>
   </target>
 
@@ -177,6 +235,9 @@
       <arg line="--nojsdoc"/>
       <arg line="${genjs}/*.js"/>
       <arg line="../thrift.js"/>
+
+      <!-- issues with unsafe character, etc. -->
+      <!-- <arg line="*test*.js"/> -->
     </exec>
   </target>
 
@@ -184,7 +245,6 @@
     <delete dir="${build}" />
     <delete dir="${genjava}" />
     <delete dir="${genjs}" />
-    <delete file="${jar.file}" />
   </target>
 
   <target name="resolve" unless="mvn.finished">
@@ -193,6 +253,9 @@
     <artifact:dependencies filesetId="js.test.dependency.jars">
       <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="4.0.1"/>
       <dependency groupId="com.googlecode.jslint4java" artifactId="jslint4java-ant" version="1.4.6"/>
+      <!-- get jstestdriver.jar via maven-->
+      <remoteRepository id="jstd-maven-plugin google code repo" url="http://jstd-maven-plugin.googlecode.com/svn/maven2"/>
+      <dependency groupId="com.google.jstestdriver" artifactId="maven-jstestdriver-plugin" version="1.3.2.3"/>
     </artifact:dependencies>
 
     <!-- Copy the dependencies to the build/lib dir -->
