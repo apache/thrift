@@ -35,6 +35,8 @@ module Thrift
     WRONG_METHOD_NAME = 3
     BAD_SEQUENCE_ID = 4
     MISSING_RESULT = 5
+    INTERNAL_ERROR = 6
+    PROTOCOL_ERROR = 7
 
     attr_reader :type
 

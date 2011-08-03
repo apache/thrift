@@ -26,7 +26,9 @@ enum {
   TApplicationException_INVALID_MESSAGE_TYPE = 2,
   TApplicationException_WRONG_METHOD_NAME = 3,
   TApplicationException_BAD_SEQUENCE_ID = 4,
-  TApplicationException_MISSING_RESULT = 5
+  TApplicationException_MISSING_RESULT = 5,
+  TApplicationException_INTERNAL_ERROR = 6,
+  TApplicationException_PROTOCOL_ERROR = 7
 };
 
 // FIXME

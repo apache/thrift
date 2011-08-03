@@ -75,6 +75,8 @@ use constant INVALID_MESSAGE_TYPE => 2;
 use constant WRONG_METHOD_NAME    => 3;
 use constant BAD_SEQUENCE_ID      => 4;
 use constant MISSING_RESULT       => 5;
+use constant INTERNAL_ERROR       => 6;
+use constant PROTOCOL_ERROR       => 7;
 
 sub new {
     my $classname = shift;

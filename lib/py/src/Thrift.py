@@ -77,6 +77,8 @@ class TApplicationException(TException):
   WRONG_METHOD_NAME = 3
   BAD_SEQUENCE_ID = 4
   MISSING_RESULT = 5
+  INTERNAL_ERROR = 6
+  PROTOCOL_ERROR = 7
 
   def __init__(self, type=UNKNOWN, message=None):
     TException.__init__(self, message)
