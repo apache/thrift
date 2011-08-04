@@ -81,6 +81,8 @@ AC_DEFUN([AX_LIB_EVENT_DO_CHECK],
           ]], [[
           const char* lib_version = event_get_version();
           const char* wnt_version = "$WANT_LIBEVENT_VERSION";
+          int lib_digits;
+          int wnt_digits;
           for (;;) {
             /* If we reached the end of the want version.  We have it. */
             if (*wnt_version == '\0' || *wnt_version == '-') {
@@ -93,13 +95,11 @@ AC_DEFUN([AX_LIB_EVENT_DO_CHECK],
             }
             /* In the 1.4 version numbering style, if there are more digits */
             /* in one version than the other, that one is higher. */
-            int lib_digits;
             for (lib_digits = 0;
                 lib_version[lib_digits] >= '0' &&
                 lib_version[lib_digits] <= '9';
                 lib_digits++)
               ;
-            int wnt_digits;
             for (wnt_digits = 0;
                 wnt_version[wnt_digits] >= '0' &&
                 wnt_version[wnt_digits] <= '9';
