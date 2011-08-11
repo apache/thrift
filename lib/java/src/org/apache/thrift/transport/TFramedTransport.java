@@ -27,7 +27,7 @@ import org.apache.thrift.TByteArrayOutputStream;
  */
 public class TFramedTransport extends TTransport {
 
-  protected static final int DEFAULT_MAX_LENGTH = 0x7FFFFFFF;
+  protected static final int DEFAULT_MAX_LENGTH = 16384000;
 
   private int maxLength_;
 

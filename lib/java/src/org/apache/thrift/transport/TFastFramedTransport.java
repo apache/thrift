@@ -59,9 +59,9 @@ public class TFastFramedTransport extends TTransport {
    */
   public static final int DEFAULT_BUF_CAPACITY = 1024;
   /**
-   * How big is the largest allowable frame? Defaults to Integer.MAX_VALUE.
+   * How big is the largest allowable frame? Defaults to 16MB.
    */
-  public static final int DEFAULT_MAX_LENGTH = Integer.MAX_VALUE;
+  public static final int DEFAULT_MAX_LENGTH = 16384000;
 
   private final TTransport underlying;
   private final AutoExpandingBufferWriteTransport writeBuffer;
