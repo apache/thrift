@@ -37,7 +37,7 @@ public class Fixtures {
   public static final Nesting nesting;
   public static final HolyMoley holyMoley;
   public static final CompactProtoTestStruct compactProtoTestStruct;
-  
+
   private static final byte[] kUnicodeBytes = {
     (byte)0xd3, (byte)0x80, (byte)0xe2, (byte)0x85, (byte)0xae, (byte)0xce,
     (byte)0x9d, (byte)0x20, (byte)0xd0, (byte)0x9d, (byte)0xce, (byte)0xbf,
@@ -52,79 +52,79 @@ public class Fixtures {
   static {
     try {
       oneOfEach = new OneOfEach();
-      oneOfEach.im_true = true;
-      oneOfEach.im_false = false;
-      oneOfEach.a_bite = (byte) 0xd6;
-      oneOfEach.integer16 = 27000;
-      oneOfEach.integer32 = 1 << 24;
-      oneOfEach.integer64 = (long) 6000 * 1000 * 1000;
-      oneOfEach.double_precision = Math.PI;
-      oneOfEach.some_characters = "JSON THIS! \"\1";
-      oneOfEach.zomg_unicode = new String(kUnicodeBytes, "UTF-8");
-      oneOfEach.base64 = ByteBuffer.wrap("base64".getBytes());
+      oneOfEach.setIm_true(true);
+      oneOfEach.setIm_false(false);
+      oneOfEach.setA_bite((byte) 0xd6);
+      oneOfEach.setInteger16((short)27000);
+      oneOfEach.setInteger32(1 << 24);
+      oneOfEach.setInteger64((long) 6000 * 1000 * 1000);
+      oneOfEach.setDouble_precision(Math.PI);
+      oneOfEach.setSome_characters("JSON THIS! \"\1");
+      oneOfEach.setZomg_unicode(new String(kUnicodeBytes, "UTF-8"));
+      oneOfEach.setBase64(ByteBuffer.wrap("base64".getBytes()));
       // byte, i16, and i64 lists are populated by default constructor
 
       Bonk bonk = new Bonk();
-      bonk.type = 31337;
-      bonk.message = "I am a bonk... xor!";
+      bonk.setType(31337);
+      bonk.setMessage("I am a bonk... xor!");
       nesting = new Nesting(bonk, oneOfEach);
 
       holyMoley = new HolyMoley();
-      holyMoley.big = new ArrayList<OneOfEach>();
-      holyMoley.big.add(new OneOfEach(oneOfEach));
-      holyMoley.big.add(nesting.my_ooe);
-      holyMoley.big.get(0).a_bite = (byte) 0x22;
-      holyMoley.big.get(1).a_bite = (byte) 0x23;
+      ArrayList big = new ArrayList<OneOfEach>();
+      big.add(new OneOfEach(oneOfEach));
+      big.add(nesting.my_ooe);
+      holyMoley.setBig(big);
+      holyMoley.getBig().get(0).setA_bite((byte) 0x22);
+      holyMoley.getBig().get(0).setA_bite((byte) 0x23);
 
-      holyMoley.contain = new HashSet<List<String>>();
+      holyMoley.setContain(new HashSet<List<String>>());
       ArrayList<String> stage1 = new ArrayList<String>(2);
       stage1.add("and a one");
       stage1.add("and a two");
-      holyMoley.contain.add(stage1);
+      holyMoley.getContain().add(stage1);
       stage1 = new ArrayList<String>(3);
       stage1.add("then a one, two");
       stage1.add("three!");
       stage1.add("FOUR!!");
-      holyMoley.contain.add(stage1);
+      holyMoley.getContain().add(stage1);
       stage1 = new ArrayList<String>(0);
-      holyMoley.contain.add(stage1);
+      holyMoley.getContain().add(stage1);
 
       ArrayList<Bonk> stage2 = new ArrayList<Bonk>();
-      holyMoley.bonks = new HashMap<String, List<Bonk>>();
+      holyMoley.setBonks(new HashMap<String, List<Bonk>>());
       // one empty
-      holyMoley.bonks.put("zero", stage2);
-      
+      holyMoley.getBonks().put("zero", stage2);
+
       // one with two
       stage2 = new ArrayList<Bonk>();
       Bonk b = new Bonk();
-      b.type = 1;
-      b.message = "Wait.";
+      b.setType(1);
+      b.setMessage("Wait.");
       stage2.add(b);
       b = new Bonk();
-      b.type = 2;
-      b.message = "What?";
+      b.setType(2);
+      b.setMessage("What?");
       stage2.add(b);      
-      holyMoley.bonks.put("two", stage2);
-      
+      holyMoley.getBonks().put("two", stage2);
+
       // one with three
       stage2 = new ArrayList<Bonk>();
       b = new Bonk();
-      b.type = 3;
-      b.message = "quoth";
+      b.setType(3);
+      b.setMessage("quoth");
       b = new Bonk();
-      b.type = 4;
-      b.message = "the raven";
+      b.setType(4);
+      b.setMessage("the raven");
       b = new Bonk();
-      b.type = 5;
-      b.message = "nevermore";
-      holyMoley.bonks.put("three", stage2);
+      b.setType(5);
+      b.setMessage("nevermore");
+      holyMoley.getBonks().put("three", stage2);
 
       // superhuge compact proto test struct
       compactProtoTestStruct = new CompactProtoTestStruct(thrift.test.Constants.COMPACT_TEST);
-      compactProtoTestStruct.a_binary = ByteBuffer.wrap(new byte[]{0,1,2,3,4,5,6,7,8});
+      compactProtoTestStruct.setA_binary(ByteBuffer.wrap(new byte[]{0,1,2,3,4,5,6,7,8}));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
-  
 }

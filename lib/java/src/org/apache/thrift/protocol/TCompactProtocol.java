@@ -36,7 +36,7 @@ import org.apache.thrift.transport.TTransport;
  * fields, nested structures, short strings and collections, and low-value i32
  * and i64 fields you have, the more benefit you'll see.
  */
-public final class TCompactProtocol extends TProtocol {
+public class TCompactProtocol extends TProtocol {
 
   private final static TStruct ANONYMOUS_STRUCT = new TStruct("");
   private final static TField TSTOP = new TField("", TType.STOP, (short)0);
