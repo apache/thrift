@@ -9,7 +9,7 @@
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+#	http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
@@ -22,23 +22,23 @@
 from distutils.core import setup, Extension
 
 fastbinarymod = Extension('thrift.protocol.fastbinary',
-                          sources = ['src/protocol/fastbinary.c'],
-                          )
+						  sources = ['src/protocol/fastbinary.c'],
+						  )
 
 setup(name = 'Thrift',
-      version = '0.7.0-dev',
-      description = 'Python bindings for the Apache Thrift RPC system',
-      author = ['Thrift Developers'],
-      author_email = ['dev@thrift.apache.org'],
-      url = 'http://thrift.apache.org',
-      license = 'Apache License 2.0',
-      packages = [
-        'thrift',
-        'thrift.protocol',
-        'thrift.transport',
-        'thrift.server',
-      ],
-      package_dir = {'thrift' : 'src'},
-      ext_modules = [fastbinarymod],
-      )
+	  version = '0.7.0',
+	  description = 'Python bindings for the Apache Thrift RPC system',
+	  author = ['Thrift Developers'],
+	  author_email = ['dev@thrift.apache.org'],
+	  url = 'http://thrift.apache.org',
+	  license = 'Apache License 2.0',
+	  packages = [
+		'thrift',
+		'thrift.protocol',
+		'thrift.transport',
+		'thrift.server',
+	  ],
+	  package_dir = {'thrift' : 'src'},
+	  ext_modules = [fastbinarymod],
+	  )
 
