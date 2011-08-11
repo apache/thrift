@@ -2,6 +2,7 @@ Thrift Changelog
 
 Version 0.7.0
 
+THRIFT-1252   Ruby                 Segfault in Ruby deserializer
 THRIFT-940    Build                'make check' fails if boost is not in the std include and link paths (Christian Lavoie)
 THRIFT-1038   Java                 Generated Java code for structures containing binary fields are not serializable correctly
 THRIFT-1098   PHP                  Undefined properties in TBinaryProtocolFactory		
