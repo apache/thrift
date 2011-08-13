@@ -1,5 +1,134 @@
 Thrift Changelog
 
+Version 0.7.0
+
+THRIFT-1252   Ruby                 Segfault in Ruby deserializer
+THRIFT-940    Build                'make check' fails if boost is not in the std include and link paths (Christian Lavoie)
+THRIFT-1038   Java                 Generated Java code for structures containing binary fields are not serializable correctly
+THRIFT-1098   PHP                  Undefined properties in TBinaryProtocolFactory		
+THRIFT-1076   Erlang               Erlang Thrift socket server causes java framed client to throw ""out of sequence"" exception"		
+THRIFT-1171   Perl                 Perl write/readDouble assumes little-endian platform		
+THRIFT-151    C                    TSSLServerSocket and TSSLSocket implementation		
+THRIFT-1068   Python               Python SSL Socket Support		
+THRIFT-1011   AS3                  Error generating package imports when using classes from other packages		
+THRIFT-1069   Compiler (General)   Add command line option to prevent thrift from inserting gen-* directories		
+THRIFT-1055   C#                   csharp TServerSocket and TSocket do not disable Nagle via Socket.NoDelay = true like cpp and java do		
+THRIFT-638    PHP                  BufferedTransport + C extensions block until recv timeout is reached on last fread call		
+THRIFT-867    PHP                  PHP accelerator module's output transport is incompatible with TFramedTransport		
+THRIFT-1054                        explicit call to PKG_PROG_PKG_CONFIG is missing and first use of PKG_CHECK_MODULES may not happen
+THRIFT-125    OCaml                OCaml libraries don't compile with 32-bit ocaml		
+THRIFT-1200   JavaScript           JS compiler generates code that clobbers existing namespaces		
+THRIFT-1102   Build                "typo in configure.ac: ""=="" operator in 'test' (instead of""'="")"		
+THRIFT-994    Build                Don't try to invoke phpize if we don't have it		
+THRIFT-864    Compiler (General)   default value fails if identifier is a struct		
+THRIFT-1021   OCaml                Framed transport support for OCaml		
+THRIFT-1032                        make dist fails due to c_glib problem		
+THRIFT-1057   C++                  casts in TBinaryProtocol.tcc causing dereferencing type-punned pointer will break strict-aliasing rules
+THRIFT-1053   Java                 Make remote client's IP address available for all socket related transports		
+THRIFT-1036   C++                  "Auto-generated C++ code fails to compile with ""-Werror -Wextra -Wall"" g++ compiler flags"		
+THRIFT-1063   Tutorial             Fix Erlang Tutorial Files		
+THRIFT-625    Go                   Add support for 'Go'		
+THRIFT-1093   Python               several bugs in python TCompactProtocol		
+THRIFT-1101   Java                 bytebuffer length calculation in TBinaryProtocol writeBinary		
+THRIFT-1094   Python               bug in TCompactProto python readMessageEnd method and updated test cases		
+THRIFT-1100   Python               python TSSLSocket improvements, including certificate validation		
+THRIFT-1104   Build                INSTALLDIRS should be included in configure script		
+THRIFT-1103   Python               TZlibTransport for python, a zlib compressed transport		
+THRIFT-1105   OCaml                OCaml generator does not prefix methods of included structs with their type		
+THRIFT-1107   Python               improvement for compiler-generated python for 'None' object comparisons		
+THRIFT-1109   Java                 Deploy fb303 along side libthrift to maven repo		
+THRIFT-1111   Compiler (General)   The HTML generator does not distinguish between string and binary types		
+THRIFT-1074   Java                 .keystore and .truststore are missing from the 0.6.0 distribution		
+THRIFT-1119   C#                   TJSONProtocol fails to UTF8 decode strings		
+THRIFT-1120   C# - Compiler        proto.WriteListEnd being called in the wrong place		
+THRIFT-1126   Erlang               Extending struct_info for erlang bindings		
+THRIFT-1132   C#                   Deserialization error in TApplicationException C#		
+THRIFT-1131   C#                   C# JSON Protocol is unable to decode escaped characters in string		
+THRIFT-1133   Tutorial             Java and JavaScript tutorial is broken since we have Java maven deployment		
+THRIFT-1140   GlibC                Framed Transport Client using C (Glib) Library hangs when connecting to Ruby Server		
+THRIFT-342    PHP                  PHP: can't have sets of complex types		
+THRIFT-1149   Ruby                 Nonblocking server fails when client connection is reset		
+THRIFT-363    Java                 Maven Deploy		
+THRIFT-1155   Java				   Remove log4j dependency from java client		
+THRIFT-1170   Java                 Thrift Generated Code and Java 5		
+THRIFT-835    AS3                  Bad AS3 syntax in constructors that set default values		
+THRIFT-1174   Build                Publish as3 client implementation via Maven for use by flex-mojos users		
+THRIFT-1178   Java                 Java: TBase signature should be T extends TBase<?,?>		
+THRIFT-1067   PHP                  Tons of bugs in php implementation		
+THRIFT-1182   Ruby                 Native deserializer segfaults on incorrect list element type		
+THRIFT-1190   Java                 readBufferBytesAllocated in TNonblockingServer.java should be AtomicLong to fix FD leakage 
+THRIFT-1183   Ruby                 Pure-ruby CompactProtocol raises ArgumentError when deserializing under Ruby 1.9		
+THRIFT-1192                        Typo: TProtocol.h tests for HAVE_SYS_PARAM_H_		
+THRIFT-1194   Java                 Java lib does not install artifacts to local dir correctly		
+THRIFT-1208   Python               python TCompactProtocol.py writeBool and readBool not follow the compact-proto-spec-2.txt spec 
+THRIFT-1211   Java                 When using THttpClient, non 200 responses leave the connection open		
+THRIFT-627    C++                  should c++ have setters for optional fields?		
+THRIFT-1218   GLibC                c_glib uses wrong name in pkg-config		
+THRIFT-1189   Ruby                 Ruby deserializer speed improvements		
+THRIFT-1225   PHP                  TCompactProtocol for PHP		
+THRIFT-1227   Erlang               Erlang implementation of thrift JSON protocol		
+THRIFT-1228   PHP                  The php accelerator module calls flush incorrectly		
+THRIFT-1234   Python               thrift --help is missing doc on py:utf8strings		
+THRIFT-1237   Java                 Java fb303 missing some methods		
+THRIFT-1248   C++                  pointer subtraction in TMemoryBuffer relies on undefined behavior		
+THRIFT-1253   Java                 Code generated for maps is not compiling		
+THRIFT-1255   Java                 Mismatch of method name between JavaME's lib and generated code (compareTo/compareObjects)		
+THRIFT-1238   JavaScript           Thrift JS client cannot read map of structures		
+THRIFT-1213                        Membuffer should provide a way to get back the buffer		
+THRIFT-1117   JavaScript           JavaScript Unit Test does not work anymore because libthrift*.jar where moved by Maven Deployment		
+THRIFT-1164   JavaScript           Segmentation fault on NULL pointer in t_js_generator::generate_const		
+THRIFT-788    PHP                  thrift_protocol.so: multiget/multiget_slice does not handle more than 17 keys correctly		
+THRIFT-1222   C++                  Unhandled exception for TEvhttpServer request		
+THRIFT-1241   PHP                  php namespace generation		
+THRIFT-1236   Erlang               Erlang Reconnecting Thrift Client		
+THRIFT-1151   Erlang               Produce more informative runtime error in case of schema and data mismatch during serialization		
+THRIFT-1146   Java                 Android Incompatibility : in Android < 2.3 java.io.IOException doesn't support for Throwable 
+THRIFT-826    PHP                  PHP TSocket Write Timeout		
+THRIFT-27     Erlang               Generated erlang types don't contain default values for records		
+THRIFT-1153   C++                  HttpClient does not specify the connection close parameter		
+THRIFT-1154   Cocoa                HttpClient does not specify the connection close parameter		
+THRIFT-1081   PHP                  PHP tests broken and somewhat incomplete		
+THRIFT-1078   Test Suite           ThriftTest.thrift generates invalid PHP library		
+THRIFT-447    Java                 Make an abstract base Client class so we can generate less code		
+THRIFT-1181   AS3                  AS3 compiler generates incorrect code for setting default values in constructor		
+THRIFT-997    Java                 Using valueOf for base types in getFieldValue		
+THRIFT-999    PHP                  Add TForkingServer		
+THRIFT-1041   Java                 TDeserializer holds onto a reference of the array it reads after it is done deserializing		
+THRIFT-1065   JavaScript           Unexpected exceptions not proper handled on JS		
+THRIFT-993    C++                  Some improvements in C++ stubs for oneway operations		
+THRIFT-1083   Python               Preforking python process pool server		
+THRIFT-1092   Python               generated validate() method has wrong indentation		
+THRIFT-1050   Java                 "Declaring an argument named ""manager"" to a service method produces code that fails compile 
+THRIFT-1106   C++                  C++ code TAsyncProtocolProcessor.h & TAsyncBufferProcessor.h dont have virtual functions 
+THRIFT-1080   Erlang               erlang test's 'make' fails on Mac OSX		
+THRIFT-731    Java                 configure doesn't check for ant >= 1.7		
+THRIFT-1180   AS3                  AS3 compiler generates uncompilable code for binary types.		
+THRIFT-1187   Ruby                 nonblocking_server shutdown race under Ruby 1.9		
+THRIFT-1193   Ruby                 Potential infinite loop in nonblocking_server		
+THRIFT-891    Compiler (General)   Comments are not properly handled in some cases		
+THRIFT-1216   Java                 build Java Library behind a proxy		
+THRIFT-1177   Go                   Update thrift to reflect changes in Go's networking libraries		
+THRIFT-1220   C++                  TProcessor::process never returns false		
+THRIFT-1231   C++                  Remove bogus include		
+THRIFT-1217   C++                  Use evutil_socketpair instead of pipe (Windows port)		
+THRIFT-1215   JavaScript           Undefined property Thirft in lib/js/thrift.js		
+THRIFT-418    Ruby                 Don't do runtime sorting of struct fields		
+THRIFT-1244   C++                  'using' to disambiguate between functions in different bases does not conform to C++ standard
+THRIFT-892    Erlang               Refactor erlang build system with rebar		
+THRIFT-690    Compiler (General)   Update TApplicationException codes		
+THRIFT-1199   Java                 Union structs should have generated methods to test whether a specific field is currently set		
+THRIFT-113    Compiler (General)   to-string methods should omit optional null fields from output		
+THRIFT-1049   Python               Allow for TServerSocket python library to bind to a specific host		
+THRIFT-1152   PHP                  THRIFT-1144 Attributes from private to protected		
+THRIFT-1207   Ruby                 "Support DESTDIR on ""make install"" of ruby libs"		
+THRIFT-1123   C++                  Patch to compile Thrift server and client for vc++ 9.0 and 10.0		
+THRIFT-1031   C++                  Patch to compile Thrift for vc++ 9.0 and 10.0		
+THRIFT-1221   C++                  Remove SimpleCallback.h		
+THRIFT-1233   C++                  Remove unused include in generated C++ code		
+THRIFT-1246   Java                 Improve logging: Change TNonblockingServer internalRead to trace from warn		
+THRIFT-1251   Java                 Generated java code should indicate which fields are required and which are optional
+
+
 Version 0.6.0
 
 THRIFT-940    Build                'make check' fails if boost is not in the std include and link paths (Christian Lavoie)

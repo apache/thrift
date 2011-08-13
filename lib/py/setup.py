@@ -26,7 +26,7 @@ fastbinarymod = Extension('thrift.protocol.fastbinary',
                           )
 
 setup(name = 'Thrift',
-      version = '0.7.0-dev',
+      version = '0.8.0-dev',
       description = 'Python bindings for the Apache Thrift RPC system',
       author = ['Thrift Developers'],
       author_email = ['dev@thrift.apache.org'],

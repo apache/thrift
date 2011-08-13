@@ -17,7 +17,7 @@
 # under the License.
 #
 
-our $VERSION = '0.7.0-dev';
+our $VERSION = '0.8.0-dev';
 
 require 5.6.0;
 use strict;
