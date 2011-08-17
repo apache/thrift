@@ -152,6 +152,11 @@ char* g_doctext;
 int g_doctext_lineno;
 
 /**
+ * Whether or not negative field keys are accepted.
+ */
+int g_allow_neg_field_keys;
+
+/**
  * Flags to control code generation
  */
 bool gen_cpp = false;
@@ -639,6 +644,9 @@ void usage() {
   fprintf(stderr, "  -v[erbose]  Verbose mode\n");
   fprintf(stderr, "  -r[ecurse]  Also generate included files\n");
   fprintf(stderr, "  -debug      Parse debug trace to stdout\n");
+  fprintf(stderr, "  --allow-neg-keys  Allow negative field keys (Used to "
+          "preserve protocol\n");
+  fprintf(stderr, "                compatibility with older .thrift files)\n");
   fprintf(stderr, "  --gen STR   Generate code with a dynamically-registered generator.\n");
   fprintf(stderr, "                STR has the form language[:key1=val1[,key2,[key3=val3]]].\n");
   fprintf(stderr, "                Keys and values are options passed to the generator.\n");
@@ -970,6 +978,8 @@ int main(int argc, char** argv) {
         g_verbose = 1;
       } else if (strcmp(arg, "-r") == 0 || strcmp(arg, "-recurse") == 0 ) {
         gen_recurse = true;
+      } else if (strcmp(arg, "-allow-neg-keys") == 0) {
+        g_allow_neg_field_keys = true;
       } else if (strcmp(arg, "-gen") == 0) {
         arg = argv[++i];
         if (arg == NULL) {
