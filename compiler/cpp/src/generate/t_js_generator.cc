@@ -827,12 +827,6 @@ void t_js_generator::generate_process_function(t_service* tservice,
         indent() << "args.read(input);" << endl <<
         indent() << "input.readMessageEnd();" << endl;
 
-    // Declare result for non oneway function
-    if (!tfunction->is_oneway()) {
-        f_service_ <<
-            indent() << "var result = new " << resultname << "();" << endl;
-    }
-
     // Generate the function call
     t_struct* arg_struct = tfunction->get_arglist();
     const std::vector<t_field*>& fields = arg_struct->get_members();
@@ -866,7 +860,7 @@ void t_js_generator::generate_process_function(t_service* tservice,
     indent_up();
 
     f_service_ <<
-      indent() << "result.success = success;" << endl <<
+      indent() << "var result = new " << resultname << "(success);" << endl <<
       indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
         "\", Thrift.MessageType.REPLY, seqid);" << endl <<
       indent() << "result.write(output);" << endl <<
