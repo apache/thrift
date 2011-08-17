@@ -860,7 +860,7 @@ void t_js_generator::generate_process_function(t_service* tservice,
     indent_up();
 
     f_service_ <<
-      indent() << "var result = new " << resultname << "(success);" << endl <<
+      indent() << "var result = new " << resultname << "((typeof success === 'object' ? success : {\"success\": success}));" << endl <<
       indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
         "\", Thrift.MessageType.REPLY, seqid);" << endl <<
       indent() << "result.write(output);" << endl <<
