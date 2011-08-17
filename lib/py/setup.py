@@ -19,26 +19,38 @@
 # under the License.
 #
 
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup, Extension
+except:
+    from distutils.core import setup, Extension
 
 fastbinarymod = Extension('thrift.protocol.fastbinary',
-						  sources = ['src/protocol/fastbinary.c'],
-						  )
+                    sources = ['src/protocol/fastbinary.c'],
+                )
 
-setup(name = 'Thrift',
-	  version = '0.7.0',
-	  description = 'Python bindings for the Apache Thrift RPC system',
-	  author = ['Thrift Developers'],
-	  author_email = ['dev@thrift.apache.org'],
-	  url = 'http://thrift.apache.org',
-	  license = 'Apache License 2.0',
-	  packages = [
-		'thrift',
-		'thrift.protocol',
-		'thrift.transport',
-		'thrift.server',
-	  ],
-	  package_dir = {'thrift' : 'src'},
-	  ext_modules = [fastbinarymod],
-	  )
+setup(name = 'thrift',
+    version = '0.7.0',
+    description = 'Python bindings for the Apache Thrift RPC system',
+    author = ['Thrift Developers'],
+    author_email = ['dev@thrift.apache.org'],
+    url = 'http://thrift.apache.org',
+    license = 'Apache License 2.0',
+    packages = [
+        'thrift',
+        'thrift.protocol',
+        'thrift.transport',
+        'thrift.server',
+    ],
+    package_dir = {'thrift' : 'src'},
+    ext_modules = [fastbinarymod],
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Topic :: Software Development :: Libraries',
+        'Topic :: System :: Networking'
+    ]
+)
 
