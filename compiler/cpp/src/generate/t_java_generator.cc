@@ -1521,6 +1521,7 @@ void t_java_generator::generate_java_struct_compare_to(ofstream& out, t_struct* 
  */
 void t_java_generator::generate_java_struct_reader(ofstream& out,
                                                    t_struct* tstruct) {
+  (void) tstruct;
   indent(out) << "public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {" << endl;
   indent_up();
   indent(out) << "schemes.get(iprot.getScheme()).getScheme().read(iprot, this);" << endl; 
@@ -1570,6 +1571,7 @@ void t_java_generator::generate_java_validator(ofstream& out,
  */
 void t_java_generator::generate_java_struct_writer(ofstream& out,
                                                    t_struct* tstruct) {
+  (void) tstruct;
   indent(out) << "public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {" << endl;
   indent_up();
   indent(out) << "schemes.get(oprot.getScheme()).getScheme().write(oprot, this);" << endl;
@@ -1588,6 +1590,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
  */
 void t_java_generator::generate_java_struct_result_writer(ofstream& out,
                                                           t_struct* tstruct) {
+  (void) tstruct;
   indent(out) << "public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {" << endl;
   indent_up();
   indent(out) << "schemes.get(oprot.getScheme()).getScheme().write(oprot, this);" << endl;
