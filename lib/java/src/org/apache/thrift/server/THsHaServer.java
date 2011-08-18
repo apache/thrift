@@ -27,16 +27,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.thrift.transport.TNonblockingServerTransport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An extension of the TNonblockingServer to a Half-Sync/Half-Async server.
  * Like TNonblockingServer, it relies on the use of TFramedTransport.
  */
 public class THsHaServer extends TNonblockingServer {
-  private static final Logger LOGGER =
-    LoggerFactory.getLogger(THsHaServer.class.getName());
 
   public static class Args extends AbstractNonblockingServerArgs<Args> {
     private int workerThreads = 5;
@@ -85,46 +81,30 @@ public class THsHaServer extends TNonblockingServer {
     }
   }
 
+
   // This wraps all the functionality of queueing and thread pool management
   // for the passing of Invocations from the Selector to workers.
-  private ExecutorService invoker;
+  private final ExecutorService invoker;
+
+  private final Args args;
 
   /**
-   * Create server with every option fully specified, and with an injected
-   * ExecutorService
+   * Create the server with the specified Args configuration
    */
   public THsHaServer(Args args) {
     super(args);
 
     invoker = args.executorService == null ? createInvokerPool(args) : args.executorService;
+    this.args = args;
   }
 
-  /** @inheritDoc */
+  /**
+   * @inheritDoc
+   */
   @Override
-  public void serve() {
-    // start listening, or exit
-    if (!startListening()) {
-      return;
-    }
-
-    // start the selector, or exit
-    if (!startSelectorThread()) {
-      return;
-    }
-
-    setServing(true);
-
-    // this will block while we serve
+  protected void waitForShutdown() {
     joinSelector();
-
     gracefullyShutdownInvokerPool();
-
-    setServing(false);
-
-    // do a little cleanup
-    stopListening();
-
-    // ungracefully shut down the invoker pool?
   }
 
   /**
@@ -136,11 +116,12 @@ public class THsHaServer extends TNonblockingServer {
     TimeUnit stopTimeoutUnit = options.stopTimeoutUnit;
 
     LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
-    ExecutorService invoker = new ThreadPoolExecutor(workerThreads, workerThreads,
-      stopTimeoutVal, stopTimeoutUnit, queue);
+    ExecutorService invoker = new ThreadPoolExecutor(workerThreads,
+      workerThreads, stopTimeoutVal, stopTimeoutUnit, queue);
 
     return invoker;
   }
+
 
   protected void gracefullyShutdownInvokerPool() {
     // try to gracefully shut down the executor service
@@ -150,7 +131,7 @@ public class THsHaServer extends TNonblockingServer {
     // exception. If we don't do this, then we'll shut down prematurely. We want
     // to let the executorService clear it's task queue, closing client sockets
     // appropriately.
-    long timeoutMS = 10000;
+    long timeoutMS = args.stopTimeoutUnit.toMillis(args.stopTimeoutVal);
     long now = System.currentTimeMillis();
     while (timeoutMS >= 0) {
       try {
@@ -166,7 +147,8 @@ public class THsHaServer extends TNonblockingServer {
 
   /**
    * We override the standard invoke method here to queue the invocation for
-   * invoker service instead of immediately invoking. The thread pool takes care of the rest.
+   * invoker service instead of immediately invoking. The thread pool takes care
+   * of the rest.
    */
   @Override
   protected boolean requestInvoke(FrameBuffer frameBuffer) {
@@ -181,24 +163,6 @@ public class THsHaServer extends TNonblockingServer {
   }
 
   protected Runnable getRunnable(FrameBuffer frameBuffer){
-	return new Invocation(frameBuffer);
-  }
-
-  /**
-   * An Invocation represents a method call that is prepared to execute, given
-   * an idle worker thread. It contains the input and output protocols the
-   * thread's processor should use to perform the usual Thrift invocation.
-   */
-  private class Invocation implements Runnable {
-
-    private final FrameBuffer frameBuffer;
-
-    public Invocation(final FrameBuffer frameBuffer) {
-      this.frameBuffer = frameBuffer;
-    }
-
-    public void run() {
-      frameBuffer.invoke();
-    }
+    return new Invocation(frameBuffer);
   }
 }
