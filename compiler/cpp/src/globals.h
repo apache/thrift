@@ -129,4 +129,13 @@ extern int g_doctext_lineno;
  */
 extern int g_allow_neg_field_keys;
 
+/**
+ * Whether or not 64-bit constants will generate a warning.
+ *
+ * Some languages don't support 64-bit constants, but many do, so we can
+ * suppress this warning for projects that don't use any non-64-bit-safe
+ * languages.
+ */
+extern int g_allow_64bit_consts;
+
 #endif

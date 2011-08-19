@@ -157,6 +157,11 @@ int g_doctext_lineno;
 int g_allow_neg_field_keys;
 
 /**
+ * Whether or not 64-bit constants will generate a warning.
+ */
+int g_allow_64bit_consts = 0;
+
+/**
  * Flags to control code generation
  */
 bool gen_cpp = false;
@@ -647,6 +652,7 @@ void usage() {
   fprintf(stderr, "  --allow-neg-keys  Allow negative field keys (Used to "
           "preserve protocol\n");
   fprintf(stderr, "                compatibility with older .thrift files)\n");
+  fprintf(stderr, "  --allow-64bit-consts  Do not print warnings about using 64-bit constants\n");
   fprintf(stderr, "  --gen STR   Generate code with a dynamically-registered generator.\n");
   fprintf(stderr, "                STR has the form language[:key1=val1[,key2,[key3=val3]]].\n");
   fprintf(stderr, "                Keys and values are options passed to the generator.\n");
@@ -980,6 +986,8 @@ int main(int argc, char** argv) {
         gen_recurse = true;
       } else if (strcmp(arg, "-allow-neg-keys") == 0) {
         g_allow_neg_field_keys = true;
+      } else if (strcmp(arg, "-allow-64bit-consts") == 0) {
+        g_allow_64bit_consts = true;
       } else if (strcmp(arg, "-gen") == 0) {
         arg = argv[++i];
         if (arg == NULL) {

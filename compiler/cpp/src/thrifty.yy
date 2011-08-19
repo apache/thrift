@@ -618,7 +618,7 @@ ConstValue:
       pdebug("ConstValue => tok_int_constant");
       $$ = new t_const_value();
       $$->set_integer($1);
-      if ($1 < INT32_MIN || $1 > INT32_MAX) {
+      if (!g_allow_64bit_consts && ($1 < INT32_MIN || $1 > INT32_MAX)) {
         pwarning(1, "64-bit constant \"%"PRIi64"\" may not work in all languages.\n", $1);
       }
     }
