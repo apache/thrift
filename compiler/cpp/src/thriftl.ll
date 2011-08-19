@@ -59,6 +59,11 @@ void integer_overflow(char* text) {
   exit(1);
 }
 
+void unexpected_token(char* text) {
+  yyerror("Unexpected token in input: \"%s\"\n", text);
+  exit(1);
+}
+
 %}
 
 /**
@@ -355,6 +360,10 @@ literal_begin (['\"])
     g_doctext = clean_up_doctext(g_doctext);
     g_doctext_lineno = yylineno;
   }
+}
+
+. {
+  unexpected_token(yytext);
 }
 
 
