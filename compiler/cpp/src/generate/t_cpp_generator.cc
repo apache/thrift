@@ -1131,16 +1131,16 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
       indent() << local_reflection_name("specs", ttype);
   } else if (ttype->is_list()) {
     out << "," << endl <<
-      indent() << "&" << local_reflection_name("typespec", ((t_list*)ttype)->get_elem_type()) << "," << endl <<
+      indent() << "&" << local_reflection_name("typespec", ((t_list*)ttype)->get_elem_type(), true) << "," << endl <<
       indent() << "NULL";
   } else if (ttype->is_set()) {
     out << "," << endl <<
-      indent() << "&" << local_reflection_name("typespec", ((t_set*)ttype)->get_elem_type()) << "," << endl <<
+      indent() << "&" << local_reflection_name("typespec", ((t_set*)ttype)->get_elem_type(), true) << "," << endl <<
       indent() << "NULL";
   } else if (ttype->is_map()) {
     out << "," << endl <<
-      indent() << "&" << local_reflection_name("typespec", ((t_map*)ttype)->get_key_type()) << "," << endl <<
-      indent() << "&" << local_reflection_name("typespec", ((t_map*)ttype)->get_val_type());
+      indent() << "&" << local_reflection_name("typespec", ((t_map*)ttype)->get_key_type(), true) << "," << endl <<
+      indent() << "&" << local_reflection_name("typespec", ((t_map*)ttype)->get_val_type(), true);
   }
 
   out << ");" << endl << endl;
