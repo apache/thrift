@@ -3204,10 +3204,19 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
           indent() << "  return throw_" << tfunction->get_name() <<
           "(cob, seqid, _oprot, ctx, _throw);" << endl <<
           indent() << "}" << endl <<
-          indent() << "  T_GENERIC_PROTOCOL(this, oprot, _oprot);" <<
+          indent() << "T_GENERIC_PROTOCOL(this, oprot, _oprot);" <<
           endl << endl;
       }
 
+      // Get the event handler context
+      out <<
+        endl <<
+        indent() << "if (eventHandler_.get() != NULL) {" << endl <<
+        indent() << "  ctx = eventHandler_->getContext(\"" << service_func_name << "\", NULL);" << endl <<
+        indent() << "}" << endl <<
+        indent() << "apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, \"" << service_func_name << "\");" << endl << endl;
+
+      // Throw the TDelayedException, and catch the result
       out <<
         indent() << tservice->get_name() << "_" << tfunction->get_name() << "_result result;" << endl << endl <<
         indent() << "try {" << endl;
@@ -3226,15 +3235,32 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
           indent() << "result.__isset." << (*x_iter)->get_name() << " = true;" << endl;
         scope_down(out);
       }
-      // TODO(dreiss): Handle the case where an undeclared exception is thrown?
+
+      // Handle the case where an undeclared exception is thrown
+      out << " catch (std::exception& e) {" << endl;
+      indent_up();
+      out <<
+        indent() << "if (eventHandler_.get() != NULL) {" << endl <<
+        indent() << "  eventHandler_->handlerError(ctx, \"" <<
+          service_func_name << "\");" << endl <<
+        indent() << "}" << endl <<
+        endl <<
+        indent() << "apache::thrift::TApplicationException x(e.what());" <<
+          endl <<
+        indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() <<
+          "\", apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
+        indent() << "x.write(oprot);" << endl <<
+        indent() << "oprot->writeMessageEnd();" << endl <<
+        indent() << "oprot->getTransport()->writeEnd();" << endl <<
+        indent() << "oprot->getTransport()->flush();" << endl <<
+        // We pass true to the cob here, since we did successfully write a
+        // response, even though it is an exception response.
+        // It looks like the argument is currently ignored, anyway.
+        indent() << "return cob(true);" << endl;
+      scope_down(out);
 
       // Serialize the result into a struct
       out <<
-        endl <<
-        indent() << "if (eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  ctx = eventHandler_->getContext(\"" << service_func_name << "\", NULL);" << endl <<
-        indent() << "}" << endl <<
-        indent() << "::apache::thrift::TProcessorContextFreer freer(eventHandler_.get(), ctx, \"" << service_func_name << "\");" << endl << endl <<
         indent() << "if (eventHandler_.get() != NULL) {" << endl <<
         indent() << "  eventHandler_->preWrite(ctx, \"" << service_func_name << "\");" << endl <<
         indent() << "}" << endl << endl <<
