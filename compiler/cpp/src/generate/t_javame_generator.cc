@@ -1146,10 +1146,6 @@ void t_javame_generator::generate_java_struct_definition(ofstream &out,
   indent(out) << "  return new " << tstruct->get_name() << "(this);" << endl;
   indent(out) << "}" << endl << endl;
 
-  indent(out) << "public " << tstruct->get_name() << " clone() {" << endl;
-  indent(out) << "  return new " << tstruct->get_name() << "(this);" << endl;
-  indent(out) << "}" << endl << endl;
-
   generate_java_struct_clear(out, tstruct);
 
   generate_java_bean_boilerplate(out, tstruct);
