@@ -108,6 +108,7 @@ literal_begin (['\"])
 {unixcomment}        { /* do nothing */                 }
 
 {symbol}             { return yytext[0];                }
+"*"                  { return yytext[0];                }
 
 "namespace"          { return tok_namespace;            }
 "cpp_namespace"      { return tok_cpp_namespace;        }
