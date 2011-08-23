@@ -323,7 +323,7 @@ public class TSSLTransportFactory {
     /**
      * Set if client authentication is required
      * 
-     * @param auth
+     * @param clientAuth
      */
     public void requireClientAuth(boolean clientAuth) {
       this.clientAuth = clientAuth;

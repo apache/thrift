@@ -82,7 +82,7 @@ public final class TTupleProtocol extends TCompactProtocol {
    * assumed to be the least significant bit.
    * 
    * @param bits
-   * @return
+   * @return a byte array of at least length 1
    */
   public static byte[] toByteArray(BitSet bits) {
     byte[] bytes = new byte[bits.length() / 8 + 1];

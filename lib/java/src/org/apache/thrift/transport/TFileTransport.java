@@ -418,7 +418,7 @@ public class TFileTransport extends TTransport {
   /**
    * File Transport ctor
    *
-   * @param inputFile_ open TSeekableFile to read/write from
+   * @param inputFile open TSeekableFile to read/write from
    * @param readOnly Whether this is a read-only transport
    */
   public TFileTransport(TSeekableFile inputFile, boolean readOnly) {

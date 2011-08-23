@@ -179,7 +179,7 @@ public abstract class TUnion<T extends TUnion<?,?>, F extends TFieldIdEnum> impl
    * Implementation should be generated to read the right stuff from the wire 
    * based on the field header. 
    * @param field
-   * @return
+   * @return read Object based on the field header, as specified by the argument.
    */
   protected abstract Object readValue(TProtocol iprot, TField field) throws TException;
 

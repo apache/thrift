@@ -127,7 +127,7 @@ public abstract class TTransport {
   /**
    * Access the protocol's underlying buffer directly. If this is not a
    * buffered transport, return null.
-   * @return
+   * @return protocol's Underlying buffer
    */
   public byte[] getBuffer() {
     return null;
@@ -136,7 +136,8 @@ public abstract class TTransport {
   /**
    * Return the index within the underlying buffer that specifies the next spot
    * that should be read from.
-   * @return
+   * @return index within the underlying buffer that specifies the next spot
+   * that should be read from
    */
   public int getBufferPosition() {
     return 0;
@@ -145,7 +146,8 @@ public abstract class TTransport {
   /**
    * Get the number of bytes remaining in the underlying buffer. Returns -1 if
    * this is a non-buffered transport.
-   * @return
+   * @return the number of bytes remaining in the underlying buffer. <br> Returns -1 if
+   * this is a non-buffered transport.
    */
   public int getBytesRemainingInBuffer() {
     return -1;
