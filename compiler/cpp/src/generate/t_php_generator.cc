@@ -639,7 +639,8 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
     string f_struct = program_name_+"."+(tstruct->get_name())+".php";
     string f_struct_name = package_dir_+f_struct;
     autoload_out.open(f_struct_name.c_str());
-    autoload_out << "<?php" << endl;
+    autoload_out << "<?php" << endl
+      << "/**" << endl << " *  @generated" << endl << " */" << endl;
     _generate_php_struct_definition(autoload_out, tstruct, is_exception);
     autoload_out << endl << "?>" << endl;
     autoload_out.close();
@@ -1381,7 +1382,8 @@ void t_php_generator::generate_service_client(t_service* tservice) {
     string f_struct = program_name_+"."+(tservice->get_name())+".client.php";
     string f_struct_name = package_dir_+f_struct;
     autoload_out.open(f_struct_name.c_str());
-    autoload_out << "<?php" << endl;
+    autoload_out << "<?php" << endl
+      << "/**" << endl << " *  @generated" << endl << " */" << endl;
     _generate_service_client(autoload_out, tservice);
     autoload_out << endl << "?>" << endl;
     autoload_out.close();
