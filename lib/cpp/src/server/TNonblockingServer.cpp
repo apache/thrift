@@ -30,6 +30,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <arpa/inet.h>
 #endif
 
 #ifdef HAVE_NETDB_H
@@ -919,8 +920,47 @@ void TNonblockingServer::serve() {
     eventHandler_->preServe();
   }
 
-  // Run libevent engine, never returns, invokes calls to eventHandler
+  // Run libevent engine, invokes calls to eventHandler
+  // Only returns if stop() is called.
   event_base_loop(eventBase_, 0);
+}
+
+void TNonblockingServer::stop() {
+  if (!eventBase_) {
+    return;
+  }
+
+  // Call event_base_loopbreak() to tell libevent to exit the loop
+  //
+  // (The libevent documentation doesn't explicitly state that this function is
+  // safe to call from another thread.  However, all it does is set a variable,
+  // in the event_base, so it should be fine.)
+  event_base_loopbreak(eventBase_);
+
+  // event_base_loopbreak() only causes the loop to exit the next time it wakes
+  // up.  We need to force it to wake up, in case there are no real events
+  // it needs to process.
+  //
+  // Attempt to connect to the server socket.  If anything fails,
+  // we'll just have to wait until libevent wakes up on its own.
+  //
+  // First create a socket
+  int fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (fd < 0) {
+    return;
+  }
+
+  // Set up the address
+  struct sockaddr_in addr;
+  addr.sin_family = AF_INET;
+  addr.sin_addr.s_addr = htonl(0x7f000001); // 127.0.0.1
+  addr.sin_port = htons(port_);
+
+  // Finally do the connect().
+  // We don't care about the return value;
+  // we're just going to close the socket either way.
+  connect(fd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr));
+  close(fd);
 }
 
 }}} // apache::thrift::server

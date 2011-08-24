@@ -718,6 +718,11 @@ class TNonblockingServer : public TServer {
    * loops over the libevent handler.
    */
   void serve();
+
+  /**
+   * May be called from a separate thread to cause serve() to return.
+   */
+  void stop();
 };
 
 /// Three states for sockets: recv frame size, recv data, and send mode
