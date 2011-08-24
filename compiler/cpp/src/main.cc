@@ -819,7 +819,7 @@ bool validate_throws(t_struct* throws) {
   const vector<t_field*>& members = throws->get_members();
   vector<t_field*>::const_iterator m_iter;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    if (!(*m_iter)->get_type()->is_xception()) {
+    if (!t_generator::get_true_type((*m_iter)->get_type())->is_xception()) {
       return false;
     }
   }

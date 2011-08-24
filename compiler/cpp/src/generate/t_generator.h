@@ -242,6 +242,7 @@ class t_generator {
     return out.str();
   }
 
+ public:
   /**
    * Get the true type behind a series of typedefs.
    */
