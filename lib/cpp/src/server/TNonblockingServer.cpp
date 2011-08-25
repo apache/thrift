@@ -812,7 +812,7 @@ void TNonblockingServer::registerEvents(event_base* base, bool ownEventBase) {
   // Print some libevent stats
   GlobalOutput.printf("libevent %s method %s",
           event_get_version(),
-          event_get_method());
+          event_base_get_method(eventBase_));
 
   // Register the server event
   event_set(&serverEvent_,
@@ -913,7 +913,7 @@ void TNonblockingServer::serve() {
   }
 
   // Initialize libevent core
-  registerEvents(static_cast<event_base*>(event_init()), true);
+  registerEvents(static_cast<event_base*>(event_base_new()), true);
 
   // Run the preServe event
   if (eventHandler_ != NULL) {
