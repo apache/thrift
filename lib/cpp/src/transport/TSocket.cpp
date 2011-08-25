@@ -27,7 +27,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
