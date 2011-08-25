@@ -71,8 +71,10 @@ public:
         }
       }
     } catch (TTransportException& ttx) {
-      string errStr = string("TThreadedServer client died: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
+      if (ttx.getType() != TTransportException::END_OF_FILE) {
+        string errStr = string("TThreadedServer client died: ") + ttx.what();
+        GlobalOutput(errStr.c_str());
+      }
     } catch (TException& x) {
       string errStr = string("TThreadedServer exception: ") + x.what();
       GlobalOutput(errStr.c_str());
