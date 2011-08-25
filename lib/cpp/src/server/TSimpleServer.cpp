@@ -117,20 +117,23 @@ void TSimpleServer::serve() {
 
     try {
       inputTransport->close();
-    } catch (TTransportException& ttx) {
-      string errStr = string("TSimpleSimple input close failed: ") + ttx.what();
+    } catch (const TTransportException& ttx) {
+      string errStr = string("TSimpleServer input close failed: ")
+        + ttx.what();
       GlobalOutput(errStr.c_str());
     }
     try {
       outputTransport->close();
-    } catch (TTransportException& ttx) {
-      string errStr = string("TSimpleSimple output close failed: ") + ttx.what();
+    } catch (const TTransportException& ttx) {
+      string errStr = string("TSimpleServer output close failed: ")
+        + ttx.what();
       GlobalOutput(errStr.c_str());
     }
     try {
       client->close();
-    } catch (TTransportException& ttx) {
-      string errStr = string("TSimpleSimple client close failed: ") + ttx.what();
+    } catch (const TTransportException& ttx) {
+      string errStr = string("TSimpleServer client close failed: ")
+        + ttx.what();
       GlobalOutput(errStr.c_str());
     }
   }
