@@ -78,15 +78,16 @@ class TConnection::Task: public Runnable {
           break;
         }
       }
-    } catch (TTransportException& ttx) {
-      cerr << "TNonblockingServer client died: " << ttx.what() << endl;
-    } catch (TException& x) {
-      cerr << "TNonblockingServer exception: " << x.what() << endl;
-    } catch (bad_alloc&) {
-      cerr << "TNonblockingServer caught bad_alloc exception.";
+    } catch (const TTransportException& ttx) {
+      GlobalOutput.printf("TNonblockingServer client died: %s", ttx.what());
+    } catch (const bad_alloc&) {
+      GlobalOutput("TNonblockingServer caught bad_alloc exception.");
       exit(-1);
+    } catch (const std::exception& x) {
+      GlobalOutput.printf("TNonblockingServer process() exception: %s: %s",
+                          typeid(x).name(), x.what());
     } catch (...) {
-      cerr << "TNonblockingServer uncaught exception." << endl;
+      GlobalOutput("TNonblockingServer uncaught exception.");
     }
 
     // Signal completion back to the libevent thread via a pipe
@@ -320,13 +321,15 @@ void TConnection::transition() {
       try {
         // Invoke the processor
         server_->getProcessor()->process(inputProtocol_, outputProtocol_, NULL);
-      } catch (TTransportException &ttx) {
-        GlobalOutput.printf("TTransportException: Server::process() %s", ttx.what());
+      } catch (const TTransportException &ttx) {
+        GlobalOutput.printf("TNonblockingServer transport error in "
+                            "process(): %s", ttx.what());
         server_->decrementActiveProcessors();
         close();
         return;
-      } catch (TException &x) {
-        GlobalOutput.printf("TException: Server::process() %s", x.what());
+      } catch (const std::exception &x) {
+        GlobalOutput.printf("Server::process() uncaught exception: %s: %s",
+                            typeid(x).name(), x.what());
         server_->decrementActiveProcessors();
         close();
         return;

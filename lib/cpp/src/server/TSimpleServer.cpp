@@ -102,12 +102,12 @@ void TSimpleServer::serve() {
           break;
         }
       }
-    } catch (TTransportException& ttx) {
+    } catch (const TTransportException& ttx) {
       string errStr = string("TSimpleServer client died: ") + ttx.what();
       GlobalOutput(errStr.c_str());
-    } catch (TException& tx) {
-      string errStr = string("TSimpleServer exception: ") + tx.what();
-      GlobalOutput(errStr.c_str());
+    } catch (const std::exception& x) {
+      GlobalOutput.printf("TSimpleServer exception: %s: %s",
+                          typeid(x).name(), x.what());
     } catch (...) {
       GlobalOutput("TSimpleServer uncaught exception.");
     }

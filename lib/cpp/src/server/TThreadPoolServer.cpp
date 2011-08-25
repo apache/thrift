@@ -68,17 +68,14 @@ public:
           break;
         }
       }
-    } catch (TTransportException& ttx) {
+    } catch (const TTransportException& ttx) {
       // This is reasonably expected, client didn't send a full request so just
       // ignore him
       // string errStr = string("TThreadPoolServer client died: ") + ttx.what();
       // GlobalOutput(errStr.c_str());
-    } catch (TException& x) {
-      string errStr = string("TThreadPoolServer exception: ") + x.what();
-      GlobalOutput(errStr.c_str());
-    } catch (std::exception &x) {
-      string errStr = string("TThreadPoolServer, std::exception: ") + x.what();
-      GlobalOutput(errStr.c_str());
+    } catch (const std::exception& x) {
+      GlobalOutput.printf("TThreadPoolServer exception %s: %s",
+                          typeid(x).name(), x.what());
     } catch (...) {
       GlobalOutput("TThreadPoolServer, unexpected exception in "
                    "TThreadPoolServer::Task::run()");
