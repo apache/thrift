@@ -48,6 +48,7 @@ class TBinarySerializer {
     } else {
       $object->write($protocol);
     }
+    $protocol->getTransport()->flush();
     return $transport->getBuffer();
   }
 
