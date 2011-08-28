@@ -297,7 +297,7 @@
       <!-- Thrift dependencies list -->
       <dependency groupId="org.slf4j" artifactId="slf4j-api" version="1.5.8"/>
       <dependency groupId="commons-lang" artifactId="commons-lang" version="2.5"/>
-      <dependency groupId="javax.servlet" artifactId="servlet-api" version="2.5"/>
+      <dependency groupId="javax.servlet" artifactId="servlet-api" version="2.5" scope="provided"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="4.1.2"/>      
       <dependency groupId="org.apache.httpcomponents" artifactId="httpcore" version="4.1.3"/>
     </artifact:pom>
