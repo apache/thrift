@@ -227,91 +227,64 @@ class TNonblockingServer : public TServer {
    */
   void handleEvent(int fd, short which);
 
- public:
-  TNonblockingServer(boost::shared_ptr<TProcessor> processor,
-                     int port) :
-    TServer(processor),
-    serverSocket_(-1),
-    port_(port),
-    threadPoolProcessing_(false),
-    eventBase_(NULL),
-    ownEventBase_(false),
-    numTConnections_(0),
-    numActiveProcessors_(0),
-    connectionStackLimit_(CONNECTION_STACK_LIMIT),
-    maxActiveProcessors_(MAX_ACTIVE_PROCESSORS),
-    maxConnections_(MAX_CONNECTIONS),
-    taskExpireTime_(0),
-    overloadHysteresis_(0.8),
-    overloadAction_(T_OVERLOAD_NO_ACTION),
-    writeBufferDefaultSize_(WRITE_BUFFER_DEFAULT_SIZE),
-    idleReadBufferLimit_(IDLE_READ_BUFFER_LIMIT),
-    idleWriteBufferLimit_(IDLE_WRITE_BUFFER_LIMIT),
-    resizeBufferEveryN_(RESIZE_BUFFER_EVERY_N),
-    overloaded_(false),
-    nConnectionsDropped_(0),
-    nTotalConnectionsDropped_(0) {}
+  void init(int port) {
+    serverSocket_ = -1;
+    port_ = port;
+    threadPoolProcessing_ = false;
+    eventBase_ = NULL;
+    ownEventBase_ = false;
+    numTConnections_ = 0;
+    numActiveProcessors_ = 0;
+    connectionStackLimit_ = CONNECTION_STACK_LIMIT;
+    maxActiveProcessors_ = MAX_ACTIVE_PROCESSORS;
+    maxConnections_ = MAX_CONNECTIONS;
+    taskExpireTime_ = 0;
+    overloadHysteresis_ = 0.8;
+    overloadAction_ = T_OVERLOAD_NO_ACTION;
+    writeBufferDefaultSize_ = WRITE_BUFFER_DEFAULT_SIZE;
+    idleReadBufferLimit_ = IDLE_READ_BUFFER_LIMIT;
+    idleWriteBufferLimit_ = IDLE_WRITE_BUFFER_LIMIT;
+    resizeBufferEveryN_ = RESIZE_BUFFER_EVERY_N;
+    overloaded_ = false;
+    nConnectionsDropped_ = 0;
+    nTotalConnectionsDropped_ = 0;
+  }
 
-  TNonblockingServer(boost::shared_ptr<TProcessor> processor,
-                     boost::shared_ptr<TProtocolFactory> protocolFactory,
-                     int port,
-                     boost::shared_ptr<ThreadManager> threadManager = boost::shared_ptr<ThreadManager>()) :
-    TServer(processor),
-    serverSocket_(-1),
-    port_(port),
-    threadManager_(threadManager),
-    eventBase_(NULL),
-    ownEventBase_(false),
-    numTConnections_(0),
-    numActiveProcessors_(0),
-    connectionStackLimit_(CONNECTION_STACK_LIMIT),
-    maxActiveProcessors_(MAX_ACTIVE_PROCESSORS),
-    maxConnections_(MAX_CONNECTIONS),
-    taskExpireTime_(0),
-    overloadHysteresis_(0.8),
-    overloadAction_(T_OVERLOAD_NO_ACTION),
-    writeBufferDefaultSize_(WRITE_BUFFER_DEFAULT_SIZE),
-    idleReadBufferLimit_(IDLE_READ_BUFFER_LIMIT),
-    idleWriteBufferLimit_(IDLE_WRITE_BUFFER_LIMIT),
-    resizeBufferEveryN_(RESIZE_BUFFER_EVERY_N),
-    overloaded_(false),
-    nConnectionsDropped_(0),
-    nTotalConnectionsDropped_(0) {
-    setInputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
-    setOutputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
+ public:
+  TNonblockingServer(const boost::shared_ptr<TProcessor>& processor,
+                     int port) :
+    TServer(processor) {
+    init(port);
+  }
+
+  TNonblockingServer(
+      const boost::shared_ptr<TProcessor>& processor,
+      const boost::shared_ptr<TProtocolFactory>& protocolFactory,
+      int port,
+      const boost::shared_ptr<ThreadManager>& threadManager =
+        boost::shared_ptr<ThreadManager>()) :
+    TServer(processor) {
+
+    init(port);
+
     setInputProtocolFactory(protocolFactory);
     setOutputProtocolFactory(protocolFactory);
     setThreadManager(threadManager);
   }
 
-  TNonblockingServer(boost::shared_ptr<TProcessor> processor,
-                     boost::shared_ptr<TTransportFactory> inputTransportFactory,
-                     boost::shared_ptr<TTransportFactory> outputTransportFactory,
-                     boost::shared_ptr<TProtocolFactory> inputProtocolFactory,
-                     boost::shared_ptr<TProtocolFactory> outputProtocolFactory,
-                     int port,
-                     boost::shared_ptr<ThreadManager> threadManager = boost::shared_ptr<ThreadManager>()) :
-    TServer(processor),
-    serverSocket_(-1),
-    port_(port),
-    threadManager_(threadManager),
-    eventBase_(NULL),
-    ownEventBase_(false),
-    numTConnections_(0),
-    numActiveProcessors_(0),
-    connectionStackLimit_(CONNECTION_STACK_LIMIT),
-    maxActiveProcessors_(MAX_ACTIVE_PROCESSORS),
-    maxConnections_(MAX_CONNECTIONS),
-    taskExpireTime_(0),
-    overloadHysteresis_(0.8),
-    overloadAction_(T_OVERLOAD_NO_ACTION),
-    writeBufferDefaultSize_(WRITE_BUFFER_DEFAULT_SIZE),
-    idleReadBufferLimit_(IDLE_READ_BUFFER_LIMIT),
-    idleWriteBufferLimit_(IDLE_WRITE_BUFFER_LIMIT),
-    resizeBufferEveryN_(RESIZE_BUFFER_EVERY_N),
-    overloaded_(false),
-    nConnectionsDropped_(0),
-    nTotalConnectionsDropped_(0) {
+  TNonblockingServer(
+      const boost::shared_ptr<TProcessor>& processor,
+      const boost::shared_ptr<TTransportFactory>& inputTransportFactory,
+      const boost::shared_ptr<TTransportFactory>& outputTransportFactory,
+      const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
+      const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory,
+      int port,
+      const boost::shared_ptr<ThreadManager>& threadManager =
+        boost::shared_ptr<ThreadManager>()) :
+    TServer(processor) {
+
+    init(port);
+
     setInputTransportFactory(inputTransportFactory);
     setOutputTransportFactory(outputTransportFactory);
     setInputProtocolFactory(inputProtocolFactory);
