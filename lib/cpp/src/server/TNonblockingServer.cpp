@@ -320,7 +320,8 @@ void TConnection::transition() {
     } else {
       try {
         // Invoke the processor
-        server_->getProcessor()->process(inputProtocol_, outputProtocol_, NULL);
+        server_->getProcessor()->process(inputProtocol_, outputProtocol_,
+                                         connectionContext_);
       } catch (const TTransportException &ttx) {
         GlobalOutput.printf("TNonblockingServer transport error in "
                             "process(): %s", ttx.what());
