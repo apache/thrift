@@ -20,7 +20,7 @@
 #
 
 import sys
-sys.path.append('../gen-py')
+sys.path.append('../gen-py.twisted')
 
 from tutorial import Calculator
 from tutorial.ttypes import *
