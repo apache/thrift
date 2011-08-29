@@ -43,26 +43,22 @@ class TAsyncChannel {
 
   /**
    * Send a message over the channel.
-   *
-   * @return  true iff the cob has been or will be called, else false
    */
-  virtual void sendMessage(const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message) = 0;
+  virtual void sendMessage(const VoidCallback& cob,
+    apache::thrift::transport::TMemoryBuffer* message) = 0;
 
   /**
    * Receive a message from the channel.
-   *
-   * @return  true iff the cob has been or will be called, else false
    */
-  virtual void recvMessage(const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message) = 0;
+  virtual void recvMessage(const VoidCallback& cob,
+    apache::thrift::transport::TMemoryBuffer* message) = 0;
 
   /**
    * Send a message over the channel and receive a response.
-   *
-   * @return  true iff the cob has been or will be called, else false
    */
   virtual void sendAndRecvMessage(const VoidCallback& cob,
-                                  apache::thrift::transport::TMemoryBuffer* sendBuf,
-                                  apache::thrift::transport::TMemoryBuffer* recvBuf);
+    apache::thrift::transport::TMemoryBuffer* sendBuf,
+    apache::thrift::transport::TMemoryBuffer* recvBuf);
 };
 
 }}} // apache::thrift::async
