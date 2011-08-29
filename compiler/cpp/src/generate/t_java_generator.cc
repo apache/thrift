@@ -3812,7 +3812,7 @@ void t_java_generator::generate_standard_reader(ofstream& out, t_struct* tstruct
       "if (schemeField.type == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
     indent_up();
 
-    generate_deserialize_field(out, *f_iter, "struct.", false);
+    generate_deserialize_field(out, *f_iter, "struct.", true);
     indent(out) << "struct." << "set" << get_cap_name((*f_iter)->get_name()) << get_cap_name("isSet") << "(true);" << endl;
     indent_down();
     out <<
@@ -3889,7 +3889,7 @@ void t_java_generator::generate_standard_writer(ofstream& out, t_struct* tstruct
     indent(out) << "oprot.writeFieldBegin(" << constant_name((*f_iter)->get_name()) << "_FIELD_DESC);" << endl;
 
     // Write field contents
-    generate_serialize_field(out, *f_iter, "struct.", false);
+    generate_serialize_field(out, *f_iter, "struct.", true);
 
     // Write field closer
     indent(out) << "oprot.writeFieldEnd();" << endl;
