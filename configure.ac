@@ -312,7 +312,16 @@ dnl of the POSIX Real-Time Extensions.  This seems necessary on Linux,
 dnl and we haven't yet found a system where this is a problem.
 AC_CHECK_LIB(rt, clock_gettime)
 AC_CHECK_LIB(socket, setsockopt)
-AC_CHECK_LIB(ssl, SSL_ctrl)
+AC_CHECK_LIB(crypto,
+    BN_init,
+    [AC_CHECK_LIB(ssl,
+        SSL_ctrl,
+        [LIBS="-lssl -lcrypto $LIBS"],
+        [AC_MSG_ERROR(["Error: libssl required"])],
+        -lcrypto
+    )],
+    [AC_MSG_ERROR(["Error: libcrypto required."])]
+)
 
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T
