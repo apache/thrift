@@ -19,35 +19,28 @@
 
 require 'rubygems'
 require 'rake'
-require 'rspec/core/rake_task'
+require 'rake/clean'
+require 'spec/rake/spectask'
 
 THRIFT = '../../compiler/cpp/thrift'
 
 task :default => [:spec]
-
 task :spec => [:'gen-rb', :realspec]
 
-RSpec::Core::RakeTask.new(:realspec) do |t|
-  t.rspec_opts = ['--color']
+Spec::Rake::SpecTask.new(:realspec) do |t|
+  t.spec_files = FileList['spec/**/*_spec.rb']
+  t.spec_opts = ['--color']
 end
 
-RSpec::Core::RakeTask.new(:'spec:rcov') do |t|
-  t.rspec_opts = ['--color']
+Spec::Rake::SpecTask.new(:'spec:rcov') do |t|
+  t.spec_files = FileList['spec/**/*_spec.rb']
+  t.spec_opts = ['--color']
   t.rcov = true
   t.rcov_opts = ['--exclude', '^spec,/gems/']
 end
 
-desc 'Run the compiler tests (requires full thrift checkout)'
-task :test do
-  # ensure this is a full thrift checkout and not a tarball of the ruby libs
-  cmd = 'head -1 ../../README 2>/dev/null | grep Thrift >/dev/null 2>/dev/null'
-  system(cmd) or fail "rake test requires a full thrift checkout"
-  sh 'make', '-C', File.dirname(__FILE__) + "/../../test/rb", "check"
-end
-
 desc 'Compile the .thrift files for the specs'
 task :'gen-rb' => [:'gen-rb:spec', :'gen-rb:benchmark', :'gen-rb:debug_proto']
-
 namespace :'gen-rb' do
   task :'spec' do
     dir = File.dirname(__FILE__) + '/spec'
@@ -60,9 +53,31 @@ namespace :'gen-rb' do
   end
   
   task :'debug_proto' do
-    sh "mkdir", "-p", "debug_proto_test"
-    sh THRIFT, '--gen', 'rb', "-o", "debug_proto_test", "../../test/DebugProtoTest.thrift"
+    sh "mkdir", "-p", "test/debug_proto"
+    sh THRIFT, '--gen', 'rb', "-o", "test/debug_proto", "../../test/DebugProtoTest.thrift"
   end
+end
+
+desc "Build the native library"
+task :build_ext => :spec do
+   Dir::chdir(File::dirname('ext/extconf.rb')) do
+      unless sh "ruby #{File::basename('ext/extconf.rb')}"
+        $stderr.puts "Failed to run extconf"
+          break
+      end
+      unless sh "make"
+        $stderr.puts "make failed"
+        break
+      end
+    end
+end
+
+desc 'Run the compiler tests (requires full thrift checkout)'
+task :test do
+  # ensure this is a full thrift checkout and not a tarball of the ruby libs
+  cmd = 'head -1 ../../README 2>/dev/null | grep Thrift >/dev/null 2>/dev/null'
+  system(cmd) or fail "rake test requires a full thrift checkout"
+  sh 'make', '-C', File.dirname(__FILE__) + "/../../test/rb", "check"
 end
 
 desc 'Run benchmarking of NonblockingServer'
@@ -70,34 +85,20 @@ task :benchmark do
   ruby 'benchmark/benchmark.rb'
 end
 
-
-begin
-  require 'echoe'
-
-  Echoe.new('thrift') do |p|
-    p.author = ['Thrift Developers']
-    p.email = ['dev@thrift.apache.org']
-    p.summary = "Ruby bindings for the Apache Thrift RPC system"
-    p.url = "http://thrift.apache.org"
-    p.include_rakefile = true
-    p.version = "0.8.0-dev"
-    p.rubygems_version = ">= 1.2.0"
+desc 'Generate and install the thrift gem'
+task :install => [:spec, :build_ext] do
+  unless sh 'gem', 'build', 'thrift.gemspec'
+    $stderr.puts "Failed to build thrift gem"
+    break
   end
-
-  task :install => [:check_site_lib]
-
-  require 'rbconfig'
-  task :check_site_lib do
-    if File.exist?(File.join(Config::CONFIG['sitelibdir'], 'thrift.rb'))
-      fail "thrift is already installed in site_ruby"
-    end
-  end
-rescue LoadError
-  [:install, :package].each do |t|
-    desc "Stub for #{t}"
-    task t do
-      fail "The Echoe gem is required for this task"
-    end
+  unless sh 'gem', 'install', 'thrift-*.gem'
+    $stderr.puts "Failed to install thrift gem"
+    break
   end
 end
 
+CLEAN.include [ 'ext/*.{o,bundle,so,dll}', 'mkmf.log', 'ext/mkmf.log', 'ext/Makefile', 
+  'Gemfile.lock', '.bundle', 
+  'spec/gen-rb', 'test', 'benchmark/gen-rb',
+  'pkg', 'thrift-*.gem'
+]

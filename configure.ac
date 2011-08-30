@@ -220,13 +220,14 @@ AX_THRIFT_LIB(ruby, [Ruby], yes)
 have_ruby=no
 if test "$with_ruby" = "yes"; then
   AC_PATH_PROG([RUBY], [ruby])
-  AC_PATH_PROG([RSPEC], [spec])
-  if test "x$RUBY" != "x" ; then
+  AC_PATH_PROG([RAKE], [rake])
+  AC_PATH_PROG([BUNDLER], [bundle])
+  if test "x$RUBY" != "x" -a "x$RAKE" != "x"; then
     have_ruby="yes"
   fi
 fi
 AM_CONDITIONAL(WITH_RUBY, [test "$have_ruby" = "yes"])
-AM_CONDITIONAL(HAVE_RSPEC, [test "x$RSPEC" != "x"])
+AM_CONDITIONAL(HAVE_BUNDLER, [test "x$BUNDLER" != "x"])
 
 AX_THRIFT_LIB(haskell, [Haskell], yes)
 have_haskell=no

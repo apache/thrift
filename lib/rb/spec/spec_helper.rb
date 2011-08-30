@@ -42,7 +42,7 @@ Spec::Runner.configure do |configuration|
   end
 end
 
-$:.unshift File.join(File.dirname(__FILE__), *%w[.. debug_proto_test gen-rb])
+$:.unshift File.join(File.dirname(__FILE__), *%w[.. test debug_proto gen-rb])
 require "srv"
 require "debug_proto_test_constants"
 
