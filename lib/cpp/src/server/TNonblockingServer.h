@@ -30,7 +30,9 @@
 #include <string>
 #include <errno.h>
 #include <cstdlib>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <event.h>
 
 namespace apache { namespace thrift { namespace server {
@@ -663,7 +665,7 @@ class TNonblockingServer : public TServer {
    *
    * @return write fd for pipe.
    */
-  int getNotificationSendFD() const {
+  evutil_socket_t getNotificationSendFD() const {
     return notificationPipeFDs_[1];
   }
 
@@ -672,7 +674,7 @@ class TNonblockingServer : public TServer {
    *
    * @return read fd of pipe.
    */
-  int getNotificationRecvFD() const {
+  evutil_socket_t getNotificationRecvFD() const {
     return notificationPipeFDs_[0];
   }
 

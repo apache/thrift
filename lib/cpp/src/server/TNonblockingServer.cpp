@@ -244,7 +244,7 @@ class TNonblockingServer::TConnection {
    * @param which the flags associated with the event.
    * @param v void* callback arg where we placed TConnection's "this".
    */
-  static void eventHandler(int fd, short /* which */, void* v) {
+  static void eventHandler(evutil_socket_t fd, short /* which */, void* v) {
     assert(fd == ((TConnection*)v)->getTSocket()->getSocketFD());
     ((TConnection*)v)->workSocket();
   }
@@ -257,10 +257,10 @@ class TNonblockingServer::TConnection {
    *
    * @param fd the descriptor the event occurred on.
    */
-  static void taskHandler(int fd, short /* which */, void* /* v */) {
+  static void taskHandler(evutil_socket_t fd, short /* which */, void* /* v */) {
     TConnection* connection;
     ssize_t nBytes;
-    while ((nBytes = read(fd, (void*)&connection, sizeof(TConnection*)))
+    while ((nBytes = recv(fd, cast_sockopt(&connection), sizeof(TConnection*), 0))
         == sizeof(TConnection*)) {
       connection->transition();
     }
@@ -281,8 +281,8 @@ class TNonblockingServer::TConnection {
    */
   bool notifyServer() {
     TConnection* connection = this;
-    if (write(server_->getNotificationSendFD(), (const void*)&connection,
-             sizeof(TConnection*)) != sizeof(TConnection*)) {
+    if (send(server_->getNotificationSendFD(), const_cast_sockopt(&connection),
+             sizeof(TConnection*), 0) != sizeof(TConnection*)) {
       return false;
     }
 
