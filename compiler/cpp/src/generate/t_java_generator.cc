@@ -773,10 +773,6 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
 
   f_struct << endl;
 
-  //  generate_java_struct_standard_scheme(f_struct, tstruct);
-
-  f_struct << endl;
-
   scope_down(f_struct);
 
   f_struct.close();
@@ -1028,7 +1024,7 @@ void t_java_generator::generate_write_value(ofstream& out, t_struct* tstruct) {
     indent_up();
     indent(out) << type_name(field->get_type(), true, false) << " " << field->get_name() 
       << " = (" <<  type_name(field->get_type(), true, false) << ")value_;" << endl;
-    generate_serialize_field(out, field, "", false);
+    generate_serialize_field(out, field, "");
     indent(out) << "return;" << endl;
     indent_down();
   }
