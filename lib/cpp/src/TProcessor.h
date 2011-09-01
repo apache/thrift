@@ -189,6 +189,45 @@ class ReleaseHandler {
    boost::shared_ptr<HandlerFactory_> handlerFactory_;
 };
 
+struct TConnectionInfo {
+  // The input and output protocols
+  boost::shared_ptr<protocol::TProtocol> input;
+  boost::shared_ptr<protocol::TProtocol> output;
+  // The underlying transport used for the connection
+  // This is the transport that was returned by TServerTransport::accept(),
+  // and it may be different than the transport pointed to by the input and
+  // output protocols.
+  boost::shared_ptr<transport::TTransport> transport;
+};
+
+class TProcessorFactory {
+ public:
+  virtual ~TProcessorFactory() {}
+
+  /**
+   * Get the TProcessor to use for a particular connection.
+   *
+   * This method is always invoked in the same thread that the connection was
+   * accepted on.  This generally means that this call does not need to be
+   * thread safe, as it will always be invoked from a single thread.
+   */
+  virtual boost::shared_ptr<TProcessor> getProcessor(
+      const TConnectionInfo& connInfo) = 0;
+};
+
+class TSingletonProcessorFactory : public TProcessorFactory {
+ public:
+  TSingletonProcessorFactory(boost::shared_ptr<TProcessor> processor) :
+      processor_(processor) {}
+
+  boost::shared_ptr<TProcessor> getProcessor(const TConnectionInfo&) {
+    return processor_;
+  }
+
+ private:
+  boost::shared_ptr<TProcessor> processor_;
+};
+
 }} // apache::thrift
 
 #endif // #ifndef _THRIFT_TPROCESSOR_H_

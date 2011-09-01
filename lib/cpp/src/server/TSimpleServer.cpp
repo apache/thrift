@@ -87,6 +87,10 @@ void TSimpleServer::serve() {
       break;
     }
 
+    // Get the processor
+    shared_ptr<TProcessor> processor = getProcessor(inputProtocol,
+                                                    outputProtocol, client);
+
     void* connectionContext = NULL;
     if (eventHandler_ != NULL) {
       connectionContext = eventHandler_->createContext(inputProtocol, outputProtocol);
@@ -96,8 +100,9 @@ void TSimpleServer::serve() {
         if (eventHandler_ != NULL) {
           eventHandler_->processContext(connectionContext, client);
         }
-        if (!processor_->process(inputProtocol, outputProtocol, connectionContext) ||
-            // Peek ahead, is the remote side closed?
+        if (!processor->process(inputProtocol, outputProtocol,
+                                connectionContext) ||
+          // Peek ahead, is the remote side closed?
             !inputProtocol->getTransport()->peek()) {
           break;
         }

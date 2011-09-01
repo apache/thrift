@@ -88,6 +88,9 @@ class TNonblockingServer::TConnection {
   /// Server handle
   TNonblockingServer* server_;
 
+  /// TProcessor
+  boost::shared_ptr<TProcessor> processor_;
+
   /// Object wrapping network socket
   boost::shared_ptr<TSocket> tSocket_;
 
@@ -420,6 +423,9 @@ void TNonblockingServer::TConnection::init(int socket, short eventFlags,
   } else {
     connectionContext_ = NULL;
   }
+
+  // Get the processor
+  processor_ = s->getProcessor(inputProtocol_, outputProtocol_, tSocket_);
 }
 
 void TNonblockingServer::TConnection::workSocket() {
@@ -572,7 +578,7 @@ void TNonblockingServer::TConnection::transition() {
 
       // Create task and dispatch to the thread manager
       boost::shared_ptr<Runnable> task =
-        boost::shared_ptr<Runnable>(new Task(server_->getProcessor(),
+        boost::shared_ptr<Runnable>(new Task(processor_,
                                              inputProtocol_,
                                              outputProtocol_,
                                              this));
@@ -595,8 +601,8 @@ void TNonblockingServer::TConnection::transition() {
     } else {
       try {
         // Invoke the processor
-        server_->getProcessor()->process(inputProtocol_, outputProtocol_,
-                                         connectionContext_);
+        processor_->process(inputProtocol_, outputProtocol_,
+                            connectionContext_);
       } catch (const TTransportException &ttx) {
         GlobalOutput.printf("TNonblockingServer transport error in "
                             "process(): %s", ttx.what());

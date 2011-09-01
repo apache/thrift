@@ -170,8 +170,13 @@ void TThreadPoolServer::serve() {
       inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
+      shared_ptr<TProcessor> processor = getProcessor(inputProtocol,
+                                                      outputProtocol, client);
+
       // Add to threadmanager pool
-      threadManager_->add(shared_ptr<TThreadPoolServer::Task>(new TThreadPoolServer::Task(*this, processor_, inputProtocol, outputProtocol, client)), timeout_);
+      shared_ptr<TThreadPoolServer::Task> task(new TThreadPoolServer::Task(
+            *this, processor, inputProtocol, outputProtocol, client));
+      threadManager_->add(task, timeout_);
 
     } catch (TTransportException& ttx) {
       if (inputTransport != NULL) { inputTransport->close(); }

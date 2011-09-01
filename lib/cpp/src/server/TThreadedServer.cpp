@@ -180,8 +180,11 @@ void TThreadedServer::serve() {
       inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
 
+      shared_ptr<TProcessor> processor = getProcessor(inputProtocol,
+                                                      outputProtocol, client);
+
       TThreadedServer::Task* task = new TThreadedServer::Task(*this,
-                                                              processor_,
+                                                              processor,
                                                               inputProtocol,
                                                               outputProtocol,
                                                               client);
