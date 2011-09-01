@@ -119,24 +119,12 @@ public:
   shared_ptr<TTransport> transport_;
 };
 
+void TThreadedServer::init() {
+  stop_ = false;
 
-TThreadedServer::TThreadedServer(shared_ptr<TProcessor> processor,
-                                 shared_ptr<TServerTransport> serverTransport,
-                                 shared_ptr<TTransportFactory> transportFactory,
-                                 shared_ptr<TProtocolFactory> protocolFactory):
-  TServer(processor, serverTransport, transportFactory, protocolFactory),
-  stop_(false) {
-  threadFactory_ = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
-}
-
-TThreadedServer::TThreadedServer(boost::shared_ptr<TProcessor> processor,
-                                 boost::shared_ptr<TServerTransport> serverTransport,
-                                 boost::shared_ptr<TTransportFactory> transportFactory,
-                                 boost::shared_ptr<TProtocolFactory> protocolFactory,
-                                 boost::shared_ptr<ThreadFactory> threadFactory):
-  TServer(processor, serverTransport, transportFactory, protocolFactory),
-  threadFactory_(threadFactory),
-  stop_(false) {
+  if (!threadFactory_) {
+    threadFactory_.reset(new PosixThreadFactory);
+  }
 }
 
 TThreadedServer::~TThreadedServer() {}

@@ -252,18 +252,48 @@ class TNonblockingServer : public TServer {
   }
 
  public:
-  TNonblockingServer(const boost::shared_ptr<TProcessor>& processor,
-                     int port) :
+  template<typename ProcessorFactory>
+  TNonblockingServer(
+      const boost::shared_ptr<ProcessorFactory>& processorFactory,
+      int port,
+      THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)) :
+    TServer(processorFactory) {
+    init(port);
+  }
+
+  template<typename Processor>
+  TNonblockingServer(const boost::shared_ptr<Processor>& processor,
+                     int port,
+                     THRIFT_OVERLOAD_IF(Processor, TProcessor)) :
     TServer(processor) {
     init(port);
   }
 
+  template<typename ProcessorFactory>
   TNonblockingServer(
-      const boost::shared_ptr<TProcessor>& processor,
+      const boost::shared_ptr<ProcessorFactory>& processorFactory,
       const boost::shared_ptr<TProtocolFactory>& protocolFactory,
       int port,
       const boost::shared_ptr<ThreadManager>& threadManager =
-        boost::shared_ptr<ThreadManager>()) :
+        boost::shared_ptr<ThreadManager>(),
+      THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)) :
+    TServer(processorFactory) {
+
+    init(port);
+
+    setInputProtocolFactory(protocolFactory);
+    setOutputProtocolFactory(protocolFactory);
+    setThreadManager(threadManager);
+  }
+
+  template<typename Processor>
+  TNonblockingServer(
+      const boost::shared_ptr<Processor>& processor,
+      const boost::shared_ptr<TProtocolFactory>& protocolFactory,
+      int port,
+      const boost::shared_ptr<ThreadManager>& threadManager =
+        boost::shared_ptr<ThreadManager>(),
+      THRIFT_OVERLOAD_IF(Processor, TProcessor)) :
     TServer(processor) {
 
     init(port);
@@ -273,15 +303,39 @@ class TNonblockingServer : public TServer {
     setThreadManager(threadManager);
   }
 
+  template<typename ProcessorFactory>
   TNonblockingServer(
-      const boost::shared_ptr<TProcessor>& processor,
+      const boost::shared_ptr<ProcessorFactory>& processorFactory,
       const boost::shared_ptr<TTransportFactory>& inputTransportFactory,
       const boost::shared_ptr<TTransportFactory>& outputTransportFactory,
       const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
       const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory,
       int port,
       const boost::shared_ptr<ThreadManager>& threadManager =
-        boost::shared_ptr<ThreadManager>()) :
+        boost::shared_ptr<ThreadManager>(),
+      THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)) :
+    TServer(processorFactory) {
+
+    init(port);
+
+    setInputTransportFactory(inputTransportFactory);
+    setOutputTransportFactory(outputTransportFactory);
+    setInputProtocolFactory(inputProtocolFactory);
+    setOutputProtocolFactory(outputProtocolFactory);
+    setThreadManager(threadManager);
+  }
+
+  template<typename Processor>
+  TNonblockingServer(
+      const boost::shared_ptr<Processor>& processor,
+      const boost::shared_ptr<TTransportFactory>& inputTransportFactory,
+      const boost::shared_ptr<TTransportFactory>& outputTransportFactory,
+      const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
+      const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory,
+      int port,
+      const boost::shared_ptr<ThreadManager>& threadManager =
+        boost::shared_ptr<ThreadManager>(),
+      THRIFT_OVERLOAD_IF(Processor, TProcessor)) :
     TServer(processor) {
 
     init(port);
