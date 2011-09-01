@@ -21,6 +21,7 @@
 #define _THRIFT_CONCURRENCY_MUTEX_H_ 1
 
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 namespace apache { namespace thrift { namespace concurrency {
 
@@ -100,7 +101,7 @@ private:
   boost::shared_ptr<impl> impl_;
 };
 
-class Guard {
+class Guard : boost::noncopyable {
  public:
   Guard(const Mutex& value, int64_t timeout = 0) : mutex_(&value) {
     if (timeout == 0) {
