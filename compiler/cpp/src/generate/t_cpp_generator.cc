@@ -111,6 +111,7 @@ class t_cpp_generator : public t_oop_generator {
    */
 
   void generate_service_interface (t_service* tservice, string style);
+  void generate_service_interface_factory (t_service* tservice, string style);
   void generate_service_null      (t_service* tservice, string style);
   void generate_service_multiface (t_service* tservice);
   void generate_service_helpers   (t_service* tservice);
@@ -1560,6 +1561,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
 
   // Generate all the components
   generate_service_interface(tservice, "");
+  generate_service_interface_factory(tservice, "");
   generate_service_null(tservice, "");
   generate_service_helpers(tservice);
   generate_service_client(tservice, "");
@@ -1571,6 +1573,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   if (gen_cob_style_) {
     generate_service_interface(tservice, "CobCl");
     generate_service_interface(tservice, "CobSv");
+    generate_service_interface_factory(tservice, "CobSv");
     generate_service_null(tservice, "CobSv");
     generate_service_client(tservice, "Cob");
     generate_service_processor(tservice, "Cob");
@@ -1699,6 +1702,95 @@ void t_cpp_generator::generate_service_interface(t_service* tservice, string sty
       service_name_ << style << "If;" <<
       endl << endl;
   }
+}
+
+/**
+ * Generates a service interface factory.
+ *
+ * @param tservice The service to generate an interface factory for.
+ */
+void t_cpp_generator::generate_service_interface_factory(t_service* tservice,
+                                                         string style) {
+  string service_if_name = service_name_ + style + "If";
+
+  // Figure out the name of the upper-most parent class.
+  // Getting everything to work out properly with inheritance is annoying.
+  // Here's what we're doing for now:
+  //
+  // - All handlers implement getHandler(), but subclasses use covariant return
+  //   types to return their specific service interface class type.  We have to
+  //   use raw pointers because of this; shared_ptr<> can't be used for
+  //   covariant return types.
+  //
+  // - Since we're not using shared_ptr<>, we also provide a releaseHandler()
+  //   function that must be called to release a pointer to a handler obtained
+  //   via getHandler().
+  //
+  //   releaseHandler() always accepts a pointer to the upper-most parent class
+  //   type.  This is necessary since the parent versions of releaseHandler()
+  //   may accept any of the parent types, not just the most specific subclass
+  //   type.  Implementations can use dynamic_cast to cast the pointer to the
+  //   subclass type if desired.
+  t_service* base_service = tservice;
+  while (base_service->get_extends() != NULL) {
+    base_service = base_service->get_extends();
+  }
+  string base_if_name = type_name(base_service) + style + "If";
+
+  // Generate the abstract factory class
+  string factory_name = service_if_name + "Factory";
+  string extends;
+  if (tservice->get_extends() != NULL) {
+    extends = " : virtual public " + type_name(tservice->get_extends()) +
+      style + "IfFactory";
+  }
+
+  f_header_ <<
+    "class " << factory_name << extends << " {" << endl <<
+    " public:" << endl;
+  indent_up();
+  f_header_ <<
+    indent() << "typedef " << service_if_name << " Handler;" << endl <<
+    endl <<
+    indent() << "virtual ~" << factory_name << "() {}" << endl <<
+    endl <<
+    indent() << "virtual " << service_if_name << "* getHandler(" <<
+      "const ::apache::thrift::TConnectionInfo& connInfo) = 0;" <<
+    endl <<
+    indent() << "virtual void releaseHandler(" << base_if_name <<
+    "* handler) = 0;" << endl;
+
+  indent_down();
+  f_header_ <<
+    "};" << endl << endl;
+
+  // Generate the singleton factory class
+  string singleton_factory_name = service_if_name + "SingletonFactory";
+  f_header_ <<
+    "class " << singleton_factory_name <<
+    " : virtual public " << factory_name << " {" << endl <<
+    " public:" << endl;
+  indent_up();
+  f_header_ <<
+    indent() << singleton_factory_name << "(const boost::shared_ptr<" <<
+    service_if_name << ">& iface) : iface_(iface) {}" << endl <<
+    indent() << "virtual ~" << singleton_factory_name << "() {}" << endl <<
+    endl <<
+    indent() << "virtual " << service_if_name << "* getHandler(" <<
+      "const ::apache::thrift::TConnectionInfo&) {" << endl <<
+    indent() << "  return iface_.get();" << endl <<
+    indent() << "}" << endl <<
+    indent() << "virtual void releaseHandler(" << base_if_name <<
+    "* handler) {}" << endl;
+
+  f_header_ <<
+    endl <<
+    " protected:" << endl <<
+    indent() << "boost::shared_ptr<" << service_if_name << "> iface_;" << endl;
+
+  indent_down();
+  f_header_ <<
+    "};" << endl << endl;
 }
 
 /**
@@ -2479,12 +2571,15 @@ class ProcessorGenerator {
     generate_process_fn();
     // Generate all of the process subfunctions
     generate_process_functions();
+
+    generate_factory();
   }
 
   void generate_class_definition();
   void generate_process();
   void generate_process_fn();
   void generate_process_functions();
+  void generate_factory();
 
  protected:
   std::string type_name(t_type* ttype, bool in_typedef=false, bool arg=false) {
@@ -2514,6 +2609,7 @@ class ProcessorGenerator {
   string pstyle_;
   string class_name_;
   string if_name_;
+  string factory_class_name_;
   string finish_cob_;
   string finish_cob_decl_;
   string ret_type_;
@@ -2559,11 +2655,14 @@ ProcessorGenerator::ProcessorGenerator(t_cpp_generator* generator,
     call_context_decl_ = ", void*";
   }
 
+  factory_class_name_ = class_name_ + "Factory";
+
   if (generator->gen_templates_) {
     template_header_ = "template <class Protocol_>\n";
     template_suffix_ = "<Protocol_>";
     typename_str_ = "typename ";
     class_name_ += "T";
+    factory_class_name_ += "T";
   }
 
   if (service_->get_extends() != NULL) {
@@ -2818,6 +2917,68 @@ void ProcessorGenerator::generate_process_functions() {
       generator_->generate_process_function(service_, *f_iter, style_, false);
     }
   }
+}
+
+void ProcessorGenerator::generate_factory() {
+  string if_factory_name = if_name_ + "Factory";
+
+  // Generate the factory class definition
+  f_header_ <<
+    template_header_ <<
+    "class " << factory_class_name_ <<
+      " : public ::apache::thrift::TProcessorFactory {" << endl <<
+    " public:" << endl;
+  indent_up();
+
+  f_header_ <<
+    indent() << factory_class_name_ << "(const ::boost::shared_ptr< " <<
+      if_factory_name << " >& handlerFactory) :" << endl <<
+    indent() << "    handlerFactory_(handlerFactory) {}" << endl <<
+    endl <<
+    indent() << "::boost::shared_ptr< ::apache::thrift::TProcessor > " <<
+      "getProcessor(const ::apache::thrift::TConnectionInfo& connInfo);" <<
+      endl;
+
+  f_header_ <<
+    endl <<
+    " protected:" << endl <<
+    indent() << "::boost::shared_ptr< " << if_factory_name <<
+      " > handlerFactory_;" << endl;
+
+  indent_down();
+  f_header_ <<
+    "};" << endl << endl;
+
+  // If we are generating templates, output a typedef for the plain
+  // factory name.
+  if (generator_->gen_templates_) {
+    f_header_ <<
+      "typedef " << factory_class_name_ <<
+      "< ::apache::thrift::protocol::TDummyProtocol > " <<
+      service_name_ << pstyle_ << "ProcessorFactory;" << endl << endl;
+  }
+
+  // Generate the getProcessor() method
+  f_out_ <<
+    template_header_ <<
+    indent() << "::boost::shared_ptr< ::apache::thrift::TProcessor > " <<
+      factory_class_name_ << template_suffix_ << "::getProcessor(" <<
+      "const ::apache::thrift::TConnectionInfo& connInfo) {" << endl;
+  indent_up();
+
+  f_out_ <<
+    indent() << "::apache::thrift::ReleaseHandler< " << if_factory_name <<
+      " > cleanup(handlerFactory_);" << endl <<
+    indent() << "::boost::shared_ptr< " << if_name_ << " > handler(" <<
+      "handlerFactory_->getHandler(connInfo), cleanup);" << endl <<
+    indent() << "::boost::shared_ptr< ::apache::thrift::TProcessor > " <<
+      "processor(new " << class_name_ << template_suffix_ <<
+      "(handler));" << endl <<
+    indent() << "return processor;" << endl;
+
+  indent_down();
+  f_out_ <<
+    indent() << "}" << endl;
 }
 
 /**
