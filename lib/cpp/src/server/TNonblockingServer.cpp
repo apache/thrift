@@ -556,8 +556,6 @@ void TNonblockingServer::TConnection::workSocket() {
  */
 void TNonblockingServer::TConnection::transition() {
 
-  int sz = 0;
-
   // Switch upon the state that we are currently in and move to a new state
   switch (appState_) {
 
