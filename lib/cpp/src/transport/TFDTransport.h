@@ -21,7 +21,9 @@
 #define _THRIFT_TRANSPORT_TFDTRANSPORT_H_ 1
 
 #include <string>
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 
 #include "TTransport.h"
 #include "TVirtualTransport.h"

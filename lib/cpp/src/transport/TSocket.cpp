@@ -17,17 +17,31 @@
  * under the License.
  */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 #include <cstring>
 #include <sstream>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
+#endif
 #include <sys/types.h>
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
 

@@ -17,6 +17,10 @@
  * under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "TNonblockingServer.h"
 #include <concurrency/Exception.h>
 #include <transport/TSocket.h>
@@ -30,6 +34,9 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
 
@@ -37,7 +44,10 @@
 #include <netdb.h>
 #endif
 
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
+
 #include <errno.h>
 #include <assert.h>
 

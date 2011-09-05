@@ -26,7 +26,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/static_assert.hpp>
 
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include <sys/types.h>
 #include <string>
 #include <map>

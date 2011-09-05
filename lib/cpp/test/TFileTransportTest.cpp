@@ -20,7 +20,12 @@
 #define _GNU_SOURCE // needed for getopt_long
 #endif
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <getopt.h>
 #include <boost/test/unit_test.hpp>
 

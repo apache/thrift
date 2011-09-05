@@ -24,7 +24,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
+
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 
 namespace apache { namespace thrift { namespace concurrency {
 

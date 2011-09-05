@@ -17,11 +17,18 @@
  * under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <errno.h>
 #include <string>
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_array.hpp>
 #include <openssl/err.h>

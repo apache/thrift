@@ -24,7 +24,9 @@
 #include "TFileTransport.h"
 #include "TTransportUtils.h"
 
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
@@ -32,14 +34,18 @@
 #endif
 #include <fcntl.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
 
 namespace apache { namespace thrift { namespace transport {
 

@@ -17,11 +17,16 @@
  * under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include "Mutex.h"
 #include "Util.h"
 
 #include <assert.h>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <signal.h>
 
 using boost::shared_ptr;
