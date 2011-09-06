@@ -2136,13 +2136,15 @@ void t_php_generator::generate_serialize_container(ofstream &out,
     scope_down(out);
   } else if (ttype->is_set()) {
     string iter = tmp("iter");
+    string iter_val = tmp("iter");
     indent(out) <<
-      "foreach ($" << prefix << " as $" << iter << ")" << endl;
+      "foreach ($" << prefix << " as $" << iter << " => $" << iter_val << ")" << endl;
     scope_up(out);
-    indent(out) << "if (is_scalar($" << iter << ")) {" << endl <<
-      indent() << "  $" << prefix << "[$" << iter << "] = true;" << endl <<
-      indent() << "}" << endl;
+    indent(out) << "if (is_scalar($" << iter_val << ")) {" << endl;
     generate_serialize_set_element(out, (t_set*)ttype, iter);
+    indent(out) << "} else {" << endl;
+    generate_serialize_set_element(out, (t_set*)ttype, iter_val);
+    indent(out) << "}" << endl;
     scope_down(out);
   } else if (ttype->is_list()) {
     string iter = tmp("iter");
