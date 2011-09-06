@@ -302,8 +302,8 @@ struct
     | 3l -> WRONG_METHOD_NAME
     | 4l -> BAD_SEQUENCE_ID
     | 5l -> MISSING_RESULT
-    | 61 -> INTERNAL_ERROR
-    | 71 -> PROTOCOL_ERROR
+    | 6l -> INTERNAL_ERROR
+    | 7l -> PROTOCOL_ERROR
     | _ -> raise Thrift_error;;
   let typ_to_i = function
     | UNKNOWN -> 0l
@@ -312,8 +312,8 @@ struct
     | WRONG_METHOD_NAME -> 3l
     | BAD_SEQUENCE_ID -> 4l
     | MISSING_RESULT -> 5l
-    | INTERNAL_ERROR -> 61
-    | PROTOCOL_ERROR -> 71
+    | INTERNAL_ERROR -> 6l
+    | PROTOCOL_ERROR -> 7l
 
   class t =
   object (self)
