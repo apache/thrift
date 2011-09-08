@@ -221,11 +221,11 @@ public class TSSLTransportFactory {
     protected String protocol = "TLS";
     protected String keyStore;
     protected String keyPass;
-    protected String keyManagerType = "SunX509";
+    protected String keyManagerType = KeyManagerFactory.getDefaultAlgorithm();
     protected String keyStoreType = "JKS";
     protected String trustStore;
     protected String trustPass;
-    protected String trustManagerType = "SunX509";
+    protected String trustManagerType = TrustManagerFactory.getDefaultAlgorithm();
     protected String trustStoreType = "JKS";
     protected String[] cipherSuites;
     protected boolean clientAuth = false;
