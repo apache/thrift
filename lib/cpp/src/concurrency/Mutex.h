@@ -138,7 +138,7 @@ enum RWGuardType {
 };
 
 
-class RWGuard {
+class RWGuard : boost::noncopyable {
   public:
     RWGuard(const ReadWriteMutex& value, bool write = false)
          : rw_mutex_(value) {
