@@ -144,7 +144,7 @@
       <exec executable="Xvfb" spawn="true" failonerror="false">
         <arg line=":99" />
       </exec>
-      <java classname="test.Httpd" fork="true" timeout="5000"
+      <java classname="test.Httpd" fork="true" timeout="10000"
         classpathref="test.classpath" failonerror="false" output="${build}/log/unittest.log">
         <arg value="../" />
       </java>
