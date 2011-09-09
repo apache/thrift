@@ -31,7 +31,11 @@ class UncancellableTaskException : public apache::thrift::TException {};
 
 class InvalidArgumentException : public apache::thrift::TException {};
 
-class IllegalStateException : public apache::thrift::TException {};
+class IllegalStateException : public apache::thrift::TException {
+public:
+  IllegalStateException() {}
+  IllegalStateException(const std::string& message) : TException(message) {}
+};
 
 class TimedOutException : public apache::thrift::TException {
 public:
