@@ -187,4 +187,5 @@
 /test/rb/gen-*
 /test/rb/Makefile
 /test/rb/Makefile.in
+/thrift.exe
 /ylwrap

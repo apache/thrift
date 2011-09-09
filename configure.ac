@@ -316,6 +316,10 @@ dnl of the POSIX Real-Time Extensions.  This seems necessary on Linux,
 dnl and we haven't yet found a system where this is a problem.
 AC_CHECK_LIB(rt, clock_gettime)
 AC_CHECK_LIB(socket, setsockopt)
+
+if test "$have_cpp" = "yes" ; then
+# mingw toolchain used to build "Thrift Compiler for Windows"
+# does not support libcrypto, so we just check if we building the cpp library
 AC_CHECK_LIB(crypto,
     BN_init,
     [AC_CHECK_LIB(ssl,
@@ -326,6 +330,7 @@ AC_CHECK_LIB(crypto,
     )],
     [AC_MSG_ERROR(["Error: libcrypto required."])]
 )
+fi
 
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T
