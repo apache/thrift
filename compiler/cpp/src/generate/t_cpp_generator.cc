@@ -1758,7 +1758,7 @@ void t_cpp_generator::generate_service_interface_factory(t_service* tservice,
       "const ::apache::thrift::TConnectionInfo& connInfo) = 0;" <<
     endl <<
     indent() << "virtual void releaseHandler(" << base_if_name <<
-    "* handler) = 0;" << endl;
+    "* /* handler */) = 0;" << endl;
 
   indent_down();
   f_header_ <<
@@ -1781,7 +1781,7 @@ void t_cpp_generator::generate_service_interface_factory(t_service* tservice,
     indent() << "  return iface_.get();" << endl <<
     indent() << "}" << endl <<
     indent() << "virtual void releaseHandler(" << base_if_name <<
-    "* handler) {}" << endl;
+    "* /* handler */) {}" << endl;
 
   f_header_ <<
     endl <<
