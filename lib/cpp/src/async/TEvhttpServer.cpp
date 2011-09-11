@@ -22,6 +22,8 @@
 #include "transport/TBufferTransports.h"
 #include <evhttp.h>
 
+#include <iostream>
+
 #ifndef HTTP_INTERNAL // libevent < 2
 #define HTTP_INTERNAL 500
 #endif
@@ -55,12 +57,12 @@ TEvhttpServer::TEvhttpServer(boost::shared_ptr<TAsyncBufferProcessor> processor,
   // Create event_base and evhttp.
   eb_ = event_base_new();
   if (eb_ == NULL) {
-    abort();  // XXX
+    throw TException("event_base_new failed");
   }
   eh_ = evhttp_new(eb_);
   if (eh_ == NULL) {
     event_base_free(eb_);
-    abort();  // XXX
+    throw TException("evhttp_new failed");
   }
 
   // Bind to port.
@@ -68,6 +70,7 @@ TEvhttpServer::TEvhttpServer(boost::shared_ptr<TAsyncBufferProcessor> processor,
   if (ret < 0) {
     evhttp_free(eh_);
     event_base_free(eb_);
+	throw TException("evhttp_bind_socket failed");
   }
 
   // Register a handler.  If you use the other constructor,
@@ -89,7 +92,7 @@ TEvhttpServer::~TEvhttpServer() {
 
 int TEvhttpServer::serve() {
   if (eb_ == NULL) {
-    abort();  // XXX
+    throw TException("Unexpected call to TEvhttpServer::serve");
   }
   return event_base_dispatch(eb_);
 }
@@ -127,17 +130,19 @@ void TEvhttpServer::complete(RequestContext* ctx, bool success) {
   (void) success;
   std::auto_ptr<RequestContext> ptr(ctx);
 
-  int code = 200;
-  const char* reason = "OK";
+  int code = success ? 200 : 400;
+  const char* reason = success ? "OK" : "Bad Request";
 
   int rv = evhttp_add_header(ctx->req->output_headers, "Content-Type", "application/x-thrift");
   if (rv != 0) {
     // TODO: Log an error.
+    std::cerr << "evhttp_add_header failed " << __FILE__ << ":" << __LINE__ << std::endl;
   }
 
   struct evbuffer* buf = evbuffer_new();
   if (buf == NULL) {
     // TODO: Log an error.
+      std::cerr << "evbuffer_new failed " << __FILE__ << ":" <<  __LINE__ << std::endl;
   } else {
     uint8_t* obuf;
     uint32_t sz;
@@ -145,6 +150,7 @@ void TEvhttpServer::complete(RequestContext* ctx, bool success) {
     int ret = evbuffer_add(buf, obuf, sz);
     if (ret != 0) {
       // TODO: Log an error.
+      std::cerr << "evhttp_add failed with " << ret << " " << __FILE__ << ":" <<  __LINE__ << std::endl;
     }
   }
 
