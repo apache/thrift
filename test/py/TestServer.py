@@ -20,24 +20,13 @@
 #
 from __future__ import division
 import sys, glob, time
-sys.path.insert(0, './gen-py')
 sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
 from optparse import OptionParser
 
-from ThriftTest import ThriftTest
-from ThriftTest.ttypes import *
-from thrift.transport import TTransport
-from thrift.transport import TSocket
-from thrift.transport import TZlibTransport
-from thrift.protocol import TBinaryProtocol
-from thrift.protocol import TCompactProtocol
-from thrift.server import TServer, TNonblockingServer, THttpServer
-
-PROT_FACTORIES = {'binary': TBinaryProtocol.TBinaryProtocolFactory,
-    'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory,
-    'compact': TCompactProtocol.TCompactProtocolFactory}
-
 parser = OptionParser()
+parser.add_option('--genpydir', type='string', dest='genpydir',
+                  default='gen-py',
+                  help='include this local directory in sys.path for locating generated code')
 parser.add_option("--port", type="int", dest="port",
     help="port number for server to listen on")
 parser.add_option("--zlib", action="store_true", dest="zlib",
@@ -54,6 +43,21 @@ parser.add_option('--proto',  dest="proto", type="string",
     help="protocol to use, one of: accel, binary, compact")
 parser.set_defaults(port=9090, verbose=1, proto='binary')
 options, args = parser.parse_args()
+
+sys.path.insert(0, options.genpydir)
+
+from ThriftTest import ThriftTest
+from ThriftTest.ttypes import *
+from thrift.transport import TTransport
+from thrift.transport import TSocket
+from thrift.transport import TZlibTransport
+from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TCompactProtocol
+from thrift.server import TServer, TNonblockingServer, THttpServer
+
+PROT_FACTORIES = {'binary': TBinaryProtocol.TBinaryProtocolFactory,
+    'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory,
+    'compact': TCompactProtocol.TCompactProtocolFactory}
 
 class TestHandler:
 
@@ -105,7 +109,7 @@ class TestHandler:
       x.message = str
       raise x
     elif str == "throw_undeclared":
-      raise ValueError("foo")
+      raise ValueError("Exception test PASSES.")
 
   def testOneway(self, seconds):
     if options.verbose > 1:
@@ -206,7 +210,10 @@ elif server_type == "TProcessPoolServer":
         worker.terminate()
       if options.verbose > 0:
         print 'Requesting server to stop()'
-      server.stop()
+      try:
+        server.stop()
+      except:
+        pass
     signal.signal(signal.SIGALRM, clean_shutdown)
     signal.alarm(2)
   set_alarm()

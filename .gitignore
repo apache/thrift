@@ -179,6 +179,7 @@
 /test/py/Makefile
 /test/py/Makefile.in
 /test/py/gen-py
+/test/py/gen-py-*
 /test/py.twisted/Makefile
 /test/py.twisted/Makefile.in
 /test/py.twisted/_trial_temp/

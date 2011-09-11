@@ -28,6 +28,9 @@ import signal
 from optparse import OptionParser
 
 parser = OptionParser()
+parser.add_option('--genpydirs', type='string', dest='genpydirs',
+    default='default,slots,newstyle,newstyleslots,dynamic,dynamicslots',
+    help='directory extensions for generated code, used as suffixes for \"gen-py-*\" added sys.path for individual tests')
 parser.add_option("--port", type="int", dest="port", default=9090,
     help="port number for server to listen on")
 parser.add_option('-v', '--verbose', action="store_const", 
@@ -39,11 +42,15 @@ parser.add_option('-q', '--quiet', action="store_const",
 parser.set_defaults(verbose=1)
 options, args = parser.parse_args()
 
+generated_dirs = []
+for gp_dir in options.genpydirs.split(','):
+  generated_dirs.append('gen-py-%s' % (gp_dir))
+
+SCRIPTS = ['SerializationTest.py', 'TestEof.py', 'TestSyntax.py', 'TestSocket.py']
 FRAMED = ["TNonblockingServer"]
 SKIP_ZLIB = ['TNonblockingServer', 'THttpServer']
 SKIP_SSL = ['TNonblockingServer', 'THttpServer']
-EXTRA_DELAY = ['TProcessPoolServer']
-EXTRA_SLEEP = 3.5
+EXTRA_DELAY = dict(TProcessPoolServer=3.5)
 
 PROTOS= [
     'accel',
@@ -85,11 +92,21 @@ if len(args) == 1:
 def relfile(fname):
     return os.path.join(os.path.dirname(__file__), fname)
 
-def runTest(server_class, proto, port, use_zlib, use_ssl):
+def runScriptTest(genpydir, script):
+  script_args = [sys.executable, relfile(script) ]
+  script_args.append('--genpydir=%s' % genpydir)
+  serverproc = subprocess.Popen(script_args)
+  print '\nTesting script: %s\n----' % (' '.join(script_args))
+  ret = subprocess.call(script_args)
+  if ret != 0:
+    raise Exception("Script subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(script_args)))
+  
+def runServiceTest(genpydir, server_class, proto, port, use_zlib, use_ssl):
   # Build command line arguments
   server_args = [sys.executable, relfile('TestServer.py') ]
   cli_args = [sys.executable, relfile('TestClient.py') ]
   for which in (server_args, cli_args):
+    which.append('--genpydir=%s' % genpydir)
     which.append('--proto=%s' % proto) # accel, binary or compact
     which.append('--port=%d' % port) # default to 9090
     if use_zlib:
@@ -110,7 +127,7 @@ def runTest(server_class, proto, port, use_zlib, use_ssl):
   if options.verbose > 0:
     print 'Testing server %s: %s' % (server_class, ' '.join(server_args))
   serverproc = subprocess.Popen(server_args)
-  time.sleep(0.2)
+  time.sleep(0.15)
   try:
     if options.verbose > 0:
       print 'Testing client: %s' % (' '.join(cli_args))
@@ -124,29 +141,47 @@ def runTest(server_class, proto, port, use_zlib, use_ssl):
       print 'FAIL: Server process (%s) failed with retcode %d' % (' '.join(server_args), serverproc.returncode)
       raise Exception('Server subprocess %s died, args: %s' % (server_class, ' '.join(server_args)))
     else:
-      if server_class in EXTRA_DELAY:
-        if options.verbose > 0:
-          print 'Giving %s (proto=%s,zlib=%s,ssl=%s) an extra %d seconds for child processes to terminate via alarm' % (server_class,
-                proto, use_zlib, use_ssl, EXTRA_SLEEP)
-        time.sleep(EXTRA_SLEEP)
+      extra_sleep = EXTRA_DELAY.get(server_class, 0)
+      if extra_sleep > 0 and options.verbose > 0:
+        print 'Giving %s (proto=%s,zlib=%s,ssl=%s) an extra %d seconds for child processes to terminate via alarm' % (server_class,
+              proto, use_zlib, use_ssl, extra_sleep)
+        time.sleep(extra_sleep)
       os.kill(serverproc.pid, signal.SIGKILL)
   # wait for shutdown
-  time.sleep(0.1)
+  time.sleep(0.05)
 
 test_count = 0
+# run tests without a client/server first
+print '----------------'
+print ' Executing individual test scripts with various generated code directories'
+print ' Directories to be tested: ' + ', '.join(generated_dirs)
+print ' Scripts to be tested: ' + ', '.join(SCRIPTS)
+print '----------------'
+for genpydir in generated_dirs:
+  for script in SCRIPTS:
+    runScriptTest(genpydir, script)
+  
+print '----------------'
+print ' Executing Client/Server tests with various generated code directories'
+print ' Servers to be tested: ' + ', '.join(SERVERS)
+print ' Directories to be tested: ' + ', '.join(generated_dirs)
+print ' Protocols to be tested: ' + ', '.join(PROTOS)
+print ' Options to be tested: ZLIB(yes/no), SSL(yes/no)'
+print '----------------'
 for try_server in SERVERS:
-  for try_proto in PROTOS:
-    for with_zlib in (False, True):
-      # skip any servers that don't work with the Zlib transport
-      if with_zlib and try_server in SKIP_ZLIB:
-        continue
-      for with_ssl in (False, True):
-        # skip any servers that don't work with SSL
-        if with_ssl and try_server in SKIP_SSL:
+  for genpydir in generated_dirs:
+    for try_proto in PROTOS:
+      for with_zlib in (False, True):
+        # skip any servers that don't work with the Zlib transport
+        if with_zlib and try_server in SKIP_ZLIB:
           continue
-        test_count += 1
-        if options.verbose > 0:
-          print '\nTest run #%d:  Server=%s,  Proto=%s,  zlib=%s,  SSL=%s' % (test_count, try_server, try_proto, with_zlib, with_ssl)
-        runTest(try_server, try_proto, options.port, with_zlib, with_ssl)
-        if options.verbose > 0:
-          print 'OK: Finished  %s / %s proto / zlib=%s / SSL=%s.   %d combinations tested.' % (try_server, try_proto, with_zlib, with_ssl, test_count)
+        for with_ssl in (False, True):
+          # skip any servers that don't work with SSL
+          if with_ssl and try_server in SKIP_SSL:
+            continue
+          test_count += 1
+          if options.verbose > 0:
+            print '\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s' % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl)
+          runServiceTest(genpydir, try_server, try_proto, options.port, with_zlib, with_ssl)
+          if options.verbose > 0:
+            print 'OK: Finished (includes %s)  %s / %s proto / zlib=%s / SSL=%s.   %d combinations tested.' % (genpydir, try_server, try_proto, with_zlib, with_ssl, test_count)

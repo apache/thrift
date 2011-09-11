@@ -20,7 +20,12 @@
 #
 
 import sys, glob
-sys.path.insert(0, './gen-py')
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py')
+options, args = parser.parse_args()
+del sys.argv[1:] # clean up hack so unittest doesn't complain
+sys.path.insert(0, options.genpydir)
 sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
 
 from ThriftTest.ttypes import *
@@ -119,28 +124,86 @@ class AbstractTest(unittest.TestCase):
           byte_list_map={0 : [], 1 : [1], 2 : [1, 2]},
           )
 
+      self.nested_lists_i32x2 = NestedListsI32x2(
+                                              [
+                                                [ 1, 1, 2 ],
+                                                [ 2, 7, 9 ],
+                                                [ 3, 5, 8 ]
+                                              ]
+                                            )
+
+      self.nested_lists_i32x3 = NestedListsI32x3(
+                                              [
+                                                [
+                                                  [ 2, 7, 9 ],
+                                                  [ 3, 5, 8 ]
+                                                ],
+                                                [
+                                                  [ 1, 1, 2 ],
+                                                  [ 1, 4, 9 ]
+                                                ]
+                                              ]
+                                            )
+
+      self.nested_mixedx2 = NestedMixedx2( int_set_list=[
+                                            set([1,2,3]),
+                                            set([1,4,9]),
+                                            set([1,2,3,5,8,13,21]),
+                                            set([-1, 0, 1])
+                                            ],
+                                            # note, the sets below are sets of chars, since the strings are iterated
+                                            map_int_strset={ 10:set('abc'), 20:set('def'), 30:set('GHI') },
+                                            map_int_strset_list=[
+                                                                 { 10:set('abc'), 20:set('def'), 30:set('GHI') },
+                                                                 { 100:set('lmn'), 200:set('opq'), 300:set('RST') },
+                                                                 { 1000:set('uvw'), 2000:set('wxy'), 3000:set('XYZ') }
+                                                                 ]
+                                          )
+
+      self.nested_lists_bonk = NestedListsBonk(
+                                              [
+                                                [
+                                                  [
+                                                    Bonk(message='inner A first', type=1),
+                                                    Bonk(message='inner A second', type=1)
+                                                  ],
+                                                  [
+                                                  Bonk(message='inner B first', type=2),
+                                                  Bonk(message='inner B second', type=2)
+                                                  ]
+                                                ]
+                                              ]
+                                            )
+
+      self.list_bonks = ListBonks(
+                                    [
+                                      Bonk(message='inner A', type=1),
+                                      Bonk(message='inner B', type=2),
+                                      Bonk(message='inner C', type=0)
+                                    ]
+                                  )
 
   def _serialize(self, obj):
-      trans = TTransport.TMemoryBuffer()
-      prot = self.protocol_factory.getProtocol(trans)
-      obj.write(prot)
-      return trans.getvalue()
+    trans = TTransport.TMemoryBuffer()
+    prot = self.protocol_factory.getProtocol(trans)
+    obj.write(prot)
+    return trans.getvalue()
 
   def _deserialize(self, objtype, data):
-      prot = self.protocol_factory.getProtocol(TTransport.TMemoryBuffer(data))
-      ret = objtype()
-      ret.read(prot)
-      return ret
+    prot = self.protocol_factory.getProtocol(TTransport.TMemoryBuffer(data))
+    ret = objtype()
+    ret.read(prot)
+    return ret
 
   def testForwards(self):
-      obj = self._deserialize(VersioningTestV2, self._serialize(self.v1obj))
-      self.assertEquals(obj.begin_in_both, self.v1obj.begin_in_both)
-      self.assertEquals(obj.end_in_both, self.v1obj.end_in_both)
+    obj = self._deserialize(VersioningTestV2, self._serialize(self.v1obj))
+    self.assertEquals(obj.begin_in_both, self.v1obj.begin_in_both)
+    self.assertEquals(obj.end_in_both, self.v1obj.end_in_both)
 
   def testBackwards(self):
-      obj = self._deserialize(VersioningTestV1, self._serialize(self.v2obj))
-      self.assertEquals(obj.begin_in_both, self.v2obj.begin_in_both)
-      self.assertEquals(obj.end_in_both, self.v2obj.end_in_both)
+    obj = self._deserialize(VersioningTestV1, self._serialize(self.v2obj))
+    self.assertEquals(obj.begin_in_both, self.v2obj.begin_in_both)
+    self.assertEquals(obj.end_in_both, self.v2obj.end_in_both)
 
   def testSerializeV1(self):
     obj = self._deserialize(VersioningTestV1, self._serialize(self.v1obj))
@@ -152,20 +215,57 @@ class AbstractTest(unittest.TestCase):
 
   def testBools(self):
     self.assertNotEquals(self.bools, self.bools_flipped)
+    self.assertNotEquals(self.bools, self.v1obj)
     obj = self._deserialize(Bools, self._serialize(self.bools))
     self.assertEquals(obj, self.bools)
     obj = self._deserialize(Bools, self._serialize(self.bools_flipped))
     self.assertEquals(obj, self.bools_flipped)
+    rep = repr(self.bools)
+    self.assertTrue(len(rep) > 0)
 
   def testLargeDeltas(self):
     # test large field deltas (meaningful in CompactProto only)
     obj = self._deserialize(LargeDeltas, self._serialize(self.large_deltas))
     self.assertEquals(obj, self.large_deltas)
+    rep = repr(self.large_deltas)
+    self.assertTrue(len(rep) > 0)
+
+  def testNestedListsI32x2(self):
+    obj = self._deserialize(NestedListsI32x2, self._serialize(self.nested_lists_i32x2))
+    self.assertEquals(obj, self.nested_lists_i32x2)
+    rep = repr(self.nested_lists_i32x2)
+    self.assertTrue(len(rep) > 0)
+
+  def testNestedListsI32x3(self):
+    obj = self._deserialize(NestedListsI32x3, self._serialize(self.nested_lists_i32x3))
+    self.assertEquals(obj, self.nested_lists_i32x3)
+    rep = repr(self.nested_lists_i32x3)
+    self.assertTrue(len(rep) > 0)
+
+  def testNestedMixedx2(self):
+    obj = self._deserialize(NestedMixedx2, self._serialize(self.nested_mixedx2))
+    self.assertEquals(obj, self.nested_mixedx2)
+    rep = repr(self.nested_mixedx2)
+    self.assertTrue(len(rep) > 0)
+
+  def testNestedListsBonk(self):
+    obj = self._deserialize(NestedListsBonk, self._serialize(self.nested_lists_bonk))
+    self.assertEquals(obj, self.nested_lists_bonk)
+    rep = repr(self.nested_lists_bonk)
+    self.assertTrue(len(rep) > 0)
+
+  def testListBonks(self):
+    obj = self._deserialize(ListBonks, self._serialize(self.list_bonks))
+    self.assertEquals(obj, self.list_bonks)
+    rep = repr(self.list_bonks)
+    self.assertTrue(len(rep) > 0)
 
   def testCompactStruct(self):
     # test large field deltas (meaningful in CompactProto only)
     obj = self._deserialize(CompactProtoTestStruct, self._serialize(self.compact_struct))
     self.assertEquals(obj, self.compact_struct)
+    rep = repr(self.compact_struct)
+    self.assertTrue(len(rep) > 0)
 
 class NormalBinaryTest(AbstractTest):
   protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
