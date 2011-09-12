@@ -90,9 +90,15 @@ using apache::thrift::transport::TTransport;
 #  define __BIG_ENDIAN BIG_ENDIAN
 # else
 #  include <boost/config.hpp>
+#  include <boost/detail/endian.hpp>
 #  define __BYTE_ORDER BOOST_BYTE_ORDER
-#  define __LITTLE_ENDIAN BOOST_LITTLE_ENDIAN
-#  define __BIG_ENDIAN BOOST_BIG_ENDIAN
+#  ifdef BOOST_LITTLE_ENDIAN
+#   define __LITTLE_ENDIAN __BYTE_ORDER
+#   define __BIG_ENDIAN 0
+#  else
+#   define __LITTLE_ENDIAN 0
+#   define __BIG_ENDIAN __BYTE_ORDER
+#  endif
 # endif
 #endif
 
