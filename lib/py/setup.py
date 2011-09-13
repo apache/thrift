@@ -23,9 +23,14 @@ try:
     from setuptools import setup, Extension
 except:
     from distutils.core import setup, Extension
+import sys
 
+include_dirs = []
+if sys.platform == 'win32':
+    include_dirs.append('compat/win32')
 fastbinarymod = Extension('thrift.protocol.fastbinary',
                     sources = ['src/protocol/fastbinary.c'],
+                    include_dirs = include_dirs,
                 )
 
 setup(name = 'thrift',
