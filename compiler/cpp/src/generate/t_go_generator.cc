@@ -197,6 +197,7 @@ class t_go_generator : public t_generator {
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_go_type(t_type* ttype);
+  std::string type_to_go_type(t_type* ttype, bool honor_pointers);
   std::string type_to_spec_args(t_type* ttype);
 
   static std::string get_real_go_module(const t_program* program) {
@@ -876,6 +877,17 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
   out <<
     indent() << "}" << endl << endl;
 
+  // Type comparators
+  out <<
+    indent() << "func ValueIsA" << tstruct_name << "(val interface{}) bool {" << endl <<
+    indent() << "  _, ok := val.(" << tstruct_name << ")" << endl <<
+    indent() << "  if ok {" << endl <<
+    indent() << "    return ok" << endl <<
+    indent() << "  }" << endl <<
+    indent() << "  _, ok = val.(*" << tstruct_name << ")" << endl <<
+    indent() << "  return ok" << endl <<
+    indent() << "}" << endl << endl;
+
   generate_go_struct_reader(out, tstruct, tstruct_name, is_result);
   generate_go_struct_writer(out, tstruct, tstruct_name, is_result);
   
@@ -1530,11 +1542,6 @@ void t_go_generator::generate_service_client(t_service* tservice) {
         f_service_ <<
           "value " << type_to_go_type((*f_iter)->get_returntype()) << ", ";
       }
-      t_struct* exceptions = (*f_iter)->get_xceptions();
-      string errs = argument_list(exceptions);
-      if(errs.size()) {
-        f_service_ << errs << ", ";
-      }
       f_service_ << 
         "err os.Error) {" << endl;
       indent_up();
@@ -1587,7 +1594,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
           indent() << "if " << result << "." << publicize((*x_iter)->get_name()) << " != nil {" << endl <<
-          indent() << "  " << (*x_iter)->get_name() << " = " << result << "." << publicize((*x_iter)->get_name()) << endl <<
+          indent() << "  err = " << result << "." << publicize((*x_iter)->get_name()) << endl <<
           indent() << "}" << endl;
       }
       
@@ -2125,12 +2132,6 @@ void t_go_generator::generate_process_function(t_service* tservice,
     if(!tfunction->get_returntype()->is_void()) {
       f_service_ << "result.Success, ";
     }
-    t_struct* exceptions = tfunction->get_xceptions();
-    const vector<t_field*>& fields = exceptions->get_members();
-    vector<t_field*>::const_iterator f_iter;
-    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-      f_service_ << "result." << publicize(variable_name_to_go_name((*f_iter)->get_name())) << ", ";
-    }
   }
   
   
@@ -2150,7 +2151,14 @@ void t_go_generator::generate_process_function(t_service* tservice,
     }
     f_service_ << "args." << publicize(variable_name_to_go_name((*f_iter)->get_name()));
   }
-  f_service_ << "); err != nil {" << endl <<
+  f_service_ << "); err != nil";
+  t_struct* exceptions = tfunction->get_xceptions();
+  const vector<t_field*>& ex_fields = exceptions->get_members();
+  vector<t_field*>::const_iterator ex_iter;
+  for (ex_iter = ex_fields.begin(); ex_iter != ex_fields.end(); ++ex_iter) {
+    f_service_ << " && !ValueIsA" << publicize(type_to_go_type((*ex_iter)->get_type(), false)) << "(err)";
+  }
+  f_service_ << " {" << endl <<
     indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, \"Internal error processing " << escape_string(tfunction->get_name()) << ": \" + err.String())" << endl <<
     indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name()) << "\", thrift.EXCEPTION, seqId)" << endl <<
     indent() << "  x.Write(oprot)" << endl <<
@@ -2866,19 +2874,12 @@ string t_go_generator::function_signature_if(t_function* tfunction,
   string signature = publicize(prefix + tfunction->get_name()) + "(";
   signature += argument_list(tfunction->get_arglist()) + ") (";
   t_type* ret = tfunction->get_returntype();
-  t_struct* exceptions = tfunction->get_xceptions();
-  string errs = argument_list(exceptions);
   string retval(tmp("retval"));
   if(!ret->is_void()) {
     signature += retval + " " + type_to_go_type(ret);
-    if(addOsError || errs.size()==0) {
+    if(addOsError) {
       signature += ", ";
     }
-  }
-  if(errs.size()>0) {
-    signature += errs;
-    if(addOsError)
-      signature += ", ";
   }
   if(addOsError) {
     signature += "err os.Error";
@@ -2963,7 +2964,7 @@ string t_go_generator::type_to_enum(t_type* type) {
 /**
  * Converts the parse type to a go tyoe
  */
-string t_go_generator::type_to_go_type(t_type* type) {
+string t_go_generator::type_to_go_type(t_type* type, bool honor_pointers) {
   //type = get_true_type(type);
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
@@ -2988,7 +2989,9 @@ string t_go_generator::type_to_go_type(t_type* type) {
   } else if (type->is_enum()) {
     return publicize(type->get_name());
   } else if (type->is_struct() || type->is_xception()) {
-    return string("*") + publicize(type->get_name());
+    if (honor_pointers)
+      return string("*") + publicize(type->get_name());
+    return publicize(type->get_name());
   } else if (type->is_map()) {
     return "thrift.TMap";
     //t_map* t = (t_map*)type;
@@ -3010,6 +3013,10 @@ string t_go_generator::type_to_go_type(t_type* type) {
   }
 
   throw "INVALID TYPE IN type_to_go_type: " + type->get_name();
+}
+
+string t_go_generator::type_to_go_type(t_type* type) {
+  return type_to_go_type(type, true);
 }
 
 
