@@ -277,6 +277,12 @@ if test "$with_go" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
 
+have_tests=yes
+if test "$with_tests" = "no"; then
+  have_tests="no"
+fi
+AM_CONDITIONAL(WITH_TESTS, [test "$have_tests" = "yes"])
+
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
