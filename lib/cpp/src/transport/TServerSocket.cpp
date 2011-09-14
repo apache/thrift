@@ -63,6 +63,7 @@ TServerSocket::TServerSocket(int port) :
   acceptBacklog_(1024),
   sendTimeout_(0),
   recvTimeout_(0),
+  accTimeout_(-1),
   retryLimit_(0),
   retryDelay_(0),
   tcpSendBuffer_(0),
@@ -76,6 +77,7 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   acceptBacklog_(1024),
   sendTimeout_(sendTimeout),
   recvTimeout_(recvTimeout),
+  accTimeout_(-1),
   retryLimit_(0),
   retryDelay_(0),
   tcpSendBuffer_(0),
@@ -107,6 +109,10 @@ void TServerSocket::setSendTimeout(int sendTimeout) {
 
 void TServerSocket::setRecvTimeout(int recvTimeout) {
   recvTimeout_ = recvTimeout;
+}
+
+void TServerSocket::setAcceptTimeout(int accTimeout) {
+  accTimeout_ = accTimeout;
 }
 
 void TServerSocket::setRetryLimit(int retryLimit) {
@@ -342,7 +348,11 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
       fds[1].fd = intSock2_;
       fds[1].events = POLLIN;
     }
-    int ret = poll(fds, 2, -1);
+    /*
+      TODO: if EINTR is received, we'll restart the timeout.
+      To be accurate, we need to fix this in the future.
+     */
+    int ret = poll(fds, 2, accTimeout_);
 
     if (ret < 0) {
       // error cases
