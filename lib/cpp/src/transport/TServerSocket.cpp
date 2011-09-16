@@ -52,6 +52,24 @@
 #define AF_LOCAL AF_UNIX
 #endif
 
+#ifndef SOCKOPT_CAST_T
+#   ifndef _WIN32
+#       define SOCKOPT_CAST_T void
+#   else
+#       define SOCKOPT_CAST_T char
+#   endif // _WIN32
+#endif
+
+template<class T>
+inline const SOCKOPT_CAST_T* const_cast_sockopt(const T* v) {
+    return reinterpret_cast<const SOCKOPT_CAST_T*>(v);
+}
+
+template<class T>
+inline SOCKOPT_CAST_T* cast_sockopt(T* v) {
+    return reinterpret_cast<SOCKOPT_CAST_T*>(v);
+}
+
 namespace apache { namespace thrift { namespace transport {
 
 using namespace std;
@@ -182,7 +200,7 @@ void TServerSocket::listen() {
   // Set reusaddress to prevent 2MSL delay on accept
   int one = 1;
   if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_REUSEADDR,
-                       &one, sizeof(one))) {
+                       cast_sockopt(&one), sizeof(one))) {
     int errno_copy = errno;
     GlobalOutput.perror("TServerSocket::listen() setsockopt() SO_REUSEADDR ", errno_copy);
     close();
@@ -192,7 +210,7 @@ void TServerSocket::listen() {
   // Set TCP buffer sizes
   if (tcpSendBuffer_ > 0) {
     if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_SNDBUF,
-                         &tcpSendBuffer_, sizeof(tcpSendBuffer_))) {
+                         cast_sockopt(&tcpSendBuffer_), sizeof(tcpSendBuffer_))) {
       int errno_copy = errno;
       GlobalOutput.perror("TServerSocket::listen() setsockopt() SO_SNDBUF ", errno_copy);
       close();
@@ -202,7 +220,7 @@ void TServerSocket::listen() {
 
   if (tcpRecvBuffer_ > 0) {
     if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_RCVBUF,
-                         &tcpRecvBuffer_, sizeof(tcpRecvBuffer_))) {
+                         cast_sockopt(&tcpRecvBuffer_), sizeof(tcpRecvBuffer_))) {
       int errno_copy = errno;
       GlobalOutput.perror("TServerSocket::listen() setsockopt() SO_RCVBUF ", errno_copy);
       close();
@@ -225,7 +243,7 @@ void TServerSocket::listen() {
   if (res->ai_family == AF_INET6 && path_.empty()) {
     int zero = 0;
     if (-1 == setsockopt(serverSocket_, IPPROTO_IPV6, IPV6_V6ONLY, 
-          &zero, sizeof(zero))) {
+          cast_sockopt(&zero), sizeof(zero))) {
       GlobalOutput.perror("TServerSocket::listen() IPV6_V6ONLY ", errno);
     }
   }
@@ -234,7 +252,7 @@ void TServerSocket::listen() {
   // Turn linger off, don't want to block on calls to close
   struct linger ling = {0, 0};
   if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_LINGER,
-                       &ling, sizeof(ling))) {
+                       cast_sockopt(&ling), sizeof(ling))) {
     int errno_copy = errno;
     GlobalOutput.perror("TServerSocket::listen() setsockopt() SO_LINGER ", errno_copy);
     close();
@@ -245,7 +263,7 @@ void TServerSocket::listen() {
   if (path_.empty()) {
     // TCP Nodelay, speed over bandwidth
     if (-1 == setsockopt(serverSocket_, IPPROTO_TCP, TCP_NODELAY,
-                         &one, sizeof(one))) {
+                         cast_sockopt(&one), sizeof(one))) {
       int errno_copy = errno;
       GlobalOutput.perror("TServerSocket::listen() setsockopt() TCP_NODELAY ", errno_copy);
       close();
@@ -273,6 +291,9 @@ void TServerSocket::listen() {
   int retries = 0;
 
   if (! path_.empty()) {
+
+#ifndef _WIN32
+
     // Unix Domain Socket
     struct sockaddr_un address;
     socklen_t len;
@@ -303,6 +324,12 @@ void TServerSocket::listen() {
 
     // free addrinfo
     freeaddrinfo(res0);
+
+#else
+      GlobalOutput.perror("TSocket::open() Unix Domain socket path not supported on windows", -99);
+      throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path not supported");
+#endif
+
   }
 
   // throw an error if we failed to bind properly
@@ -368,7 +395,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
       // Check for an interrupt signal
       if (intSock2_ >= 0 && (fds[1].revents & POLLIN)) {
         int8_t buf;
-        if (-1 == recv(intSock2_, &buf, sizeof(int8_t), 0)) {
+        if (-1 == recv(intSock2_, cast_sockopt(&buf), sizeof(int8_t), 0)) {
           GlobalOutput.perror("TServerSocket::acceptImpl() recv() interrupt ", errno);
         }
         throw TTransportException(TTransportException::INTERRUPTED);
@@ -429,7 +456,7 @@ shared_ptr<TSocket> TServerSocket::createSocket(int clientSocket) {
 void TServerSocket::interrupt() {
   if (intSock1_ >= 0) {
     int8_t byte = 0;
-    if (-1 == send(intSock1_, &byte, sizeof(int8_t), 0)) {
+    if (-1 == send(intSock1_, cast_sockopt(&byte), sizeof(int8_t), 0)) {
       GlobalOutput.perror("TServerSocket::interrupt() send() ", errno);
     }
   }
@@ -437,11 +464,18 @@ void TServerSocket::interrupt() {
 
 void TServerSocket::close() {
   if (serverSocket_ >= 0) {
-    shutdown(serverSocket_, SHUT_RDWR);
-    ::close(serverSocket_);
+
+#ifdef _WIN32
+      shutdown(serverSocket_, SD_BOTH);
+      ::closesocket(serverSocket_);
+#else
+      shutdown(serverSocket_, SHUT_RDWR);
+      ::close(serverSocket_);
+#endif
+
   }
   if (intSock1_ >= 0) {
-    ::close(intSock1_);
+      ::close(intSock1_);
   }
   if (intSock2_ >= 0) {
     ::close(intSock2_);

@@ -60,7 +60,11 @@ using apache::thrift::concurrency::ThreadManager;
 #endif
 
 #ifndef SOCKOPT_CAST_T
-#define SOCKOPT_CAST_T void
+#   ifndef _WIN32
+#       define SOCKOPT_CAST_T void
+#   else
+#       define SOCKOPT_CAST_T char
+#   endif // _WIN32
 #endif
 
 template<class T>
