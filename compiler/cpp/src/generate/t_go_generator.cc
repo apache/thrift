@@ -1954,6 +1954,8 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   // Close service file
   f_remote.close();
 
+#ifndef _MSC_VER
+
   // Make file executable, love that bitwise OR action
   chmod(f_remote_name.c_str(),
           S_IRUSR
@@ -1966,6 +1968,9 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         | S_IXOTH
 #endif
   );
+
+#endif // _MSC_VER
+
 }
 
 /**
