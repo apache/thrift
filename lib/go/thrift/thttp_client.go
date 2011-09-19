@@ -24,12 +24,13 @@ import (
   "http"
   "os"
   "strconv"
+  "url"
 )
 
 
 type THttpClient struct {
   response           *http.Response
-  url                *http.URL
+  url                *url.URL
   requestBuffer      *bytes.Buffer
   nsecConnectTimeout int64
   nsecReadTimeout    int64
@@ -69,20 +70,20 @@ func NewTHttpPostClientTransportFactory(url string) *THttpClientTransportFactory
 }
 
 
-func NewTHttpClient(url string) (TTransport, os.Error) {
-  parsedURL, err := http.ParseURL(url)
+func NewTHttpClient(urlstr string) (TTransport, os.Error) {
+  parsedURL, err := url.Parse(urlstr)
   if err != nil {
     return nil, err
   }
-  response, err := http.Get(url)
+  response, err := http.Get(urlstr)
   if err != nil {
     return nil, err
   }
   return &THttpClient{response: response, url: parsedURL}, nil
 }
 
-func NewTHttpPostClient(url string) (TTransport, os.Error) {
-  parsedURL, err := http.ParseURL(url)
+func NewTHttpPostClient(urlstr string) (TTransport, os.Error) {
+  parsedURL, err := url.Parse(urlstr)
   if err != nil {
     return nil, err
   }
