@@ -25,10 +25,15 @@ import java.util.Map;
 import java.util.Set;
 import java.nio.ByteBuffer;
 
+import org.apache.thrift.TUnion.TUnionStandardScheme;
 import org.apache.thrift.protocol.TField;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TStruct;
+import org.apache.thrift.scheme.IScheme;
+import org.apache.thrift.scheme.SchemeFactory;
+import org.apache.thrift.scheme.StandardScheme;
+import org.apache.thrift.scheme.TupleScheme;
 
 public abstract class TUnion<T extends TUnion<?,?>, F extends TFieldIdEnum> implements TBase<T, F> {
 
@@ -38,6 +43,12 @@ public abstract class TUnion<T extends TUnion<?,?>, F extends TFieldIdEnum> impl
   protected TUnion() {
     setField_ = null;
     value_ = null;
+  }
+  
+  private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+  static {
+    schemes.put(StandardScheme.class, new TUnionStandardSchemeFactory());
+    schemes.put(TupleScheme.class, new TUnionTupleSchemeFactory());
   }
 
   protected TUnion(F setField, Object value) {
@@ -125,24 +136,7 @@ public abstract class TUnion<T extends TUnion<?,?>, F extends TFieldIdEnum> impl
   }
 
   public void read(TProtocol iprot) throws TException {
-    setField_ = null;
-    value_ = null;
-
-    iprot.readStructBegin();
-
-    TField field = iprot.readFieldBegin();
-
-    value_ = readValue(iprot, field);
-    if (value_ != null) {
-      setField_ = enumForId(field.id);
-    }
-
-    iprot.readFieldEnd();
-    // this is so that we will eat the stop byte. we could put a check here to
-    // make sure that it actually *is* the stop byte, but it's faster to do it
-    // this way.
-    iprot.readFieldBegin();
-    iprot.readStructEnd();
+    schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
   }
 
   public void setFieldValue(F fieldId, Object value) {
@@ -156,15 +150,7 @@ public abstract class TUnion<T extends TUnion<?,?>, F extends TFieldIdEnum> impl
   }
 
   public void write(TProtocol oprot) throws TException {
-    if (getSetField() == null || getFieldValue() == null) {
-      throw new TProtocolException("Cannot write a TUnion with no set value!");
-    }
-    oprot.writeStructBegin(getStructDesc());
-    oprot.writeFieldBegin(getFieldDesc(setField_));
-    writeValue(oprot);
-    oprot.writeFieldEnd();
-    oprot.writeFieldStop();
-    oprot.writeStructEnd();
+    schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
   }
 
   /**
@@ -181,9 +167,11 @@ public abstract class TUnion<T extends TUnion<?,?>, F extends TFieldIdEnum> impl
    * @param field
    * @return read Object based on the field header, as specified by the argument.
    */
-  protected abstract Object readValue(TProtocol iprot, TField field) throws TException;
-
-  protected abstract void writeValue(TProtocol oprot) throws TException;
+  protected abstract Object standardSchemeReadValue(TProtocol iprot, TField field) throws TException;
+  protected abstract void standardSchemeWriteValue(TProtocol oprot) throws TException;
+  
+  protected abstract Object tupleSchemeReadValue(TProtocol iprot, short fieldID) throws TException;
+  protected abstract void tupleSchemeWriteValue(TProtocol oprot) throws TException;
 
   protected abstract TStruct getStructDesc();
 
@@ -215,5 +203,78 @@ public abstract class TUnion<T extends TUnion<?,?>, F extends TFieldIdEnum> impl
   public final void clear() {
     this.setField_ = null;
     this.value_ = null;
+  }
+  
+  private static class TUnionStandardSchemeFactory implements SchemeFactory {
+    public TUnionStandardScheme getScheme() {
+      return new TUnionStandardScheme();
+    }
+  }
+  
+  public static class TUnionStandardScheme extends StandardScheme<TUnion> {
+
+    @Override
+    public void read(TProtocol iprot, TUnion struct) throws TException {
+      struct.setField_ = null;
+      struct.value_ = null;
+
+      iprot.readStructBegin();
+
+      TField field = iprot.readFieldBegin();
+
+      struct.value_ = struct.standardSchemeReadValue(iprot, field);
+      if (struct.value_ != null) {
+        struct.setField_ = struct.enumForId(field.id);
+      }
+
+      iprot.readFieldEnd();
+      // this is so that we will eat the stop byte. we could put a check here to
+      // make sure that it actually *is* the stop byte, but it's faster to do it
+      // this way.
+      iprot.readFieldBegin();
+      iprot.readStructEnd();
+    }
+
+    @Override
+    public void write(TProtocol oprot, TUnion struct) throws TException {
+      if (struct.getSetField() == null || struct.getFieldValue() == null) {
+        throw new TProtocolException("Cannot write a TUnion with no set value!");
+      }
+      oprot.writeStructBegin(struct.getStructDesc());
+      oprot.writeFieldBegin(struct.getFieldDesc(struct.setField_));
+      struct.standardSchemeWriteValue(oprot);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+  }
+  
+  private static class TUnionTupleSchemeFactory implements SchemeFactory {
+    public TUnionStandardScheme getScheme() {
+      return new TUnionStandardScheme();
+    }
+  }
+  
+  public static class TUnionTupleScheme extends TupleScheme<TUnion> {
+
+    @Override
+    public void read(TProtocol iprot, TUnion struct) throws TException {
+      struct.setField_ = null;
+      struct.value_ = null;
+      short fieldID = iprot.readI16();
+      struct.value_ = struct.tupleSchemeReadValue(iprot, fieldID);
+      if (struct.value_ != null) {
+        struct.setField_ = struct.enumForId(fieldID);
+      }
+    }
+
+    @Override
+    public void write(TProtocol oprot, TUnion struct) throws TException {
+      if (struct.getSetField() == null || struct.getFieldValue() == null) {
+        throw new TProtocolException("Cannot write a TUnion with no set value!");
+      }
+      oprot.writeI16(struct.setField_.getThriftFieldId());
+      struct.tupleSchemeWriteValue(oprot);
+    }
   }
 }
