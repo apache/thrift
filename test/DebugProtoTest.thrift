@@ -161,6 +161,10 @@ struct CompactProtoTestStruct {
   49: map<byte, list<byte>>       byte_list_map;
 }
 
+// To be used to test the serialization of an empty map
+struct SingleMapTestStruct {
+  1: required map<i32, i32>       i32_map;
+}
 
 const CompactProtoTestStruct COMPACT_TEST = {
   'a_byte'             : 127,

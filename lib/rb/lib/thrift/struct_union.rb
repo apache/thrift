@@ -56,7 +56,7 @@ module Thrift
       when Types::MAP
         key_type, val_type, size = iprot.read_map_begin
         # Skip the map contents if the declared key or value types don't match the expected ones.
-        if (key_type != field[:key][:type] || val_type != field[:value][:type])
+        if (size != 0 && (key_type != field[:key][:type] || val_type != field[:value][:type]))
           size.times do
             iprot.skip(key_type)
             iprot.skip(val_type)
