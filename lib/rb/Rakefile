@@ -24,7 +24,7 @@ require 'spec/rake/spectask'
 
 THRIFT = '../../compiler/cpp/thrift'
 
-task :default => [:spec]
+task :default => [:gem]
 task :spec => [:'gen-rb', :realspec]
 
 Spec::Rake::SpecTask.new(:realspec) do |t|
@@ -85,12 +85,16 @@ task :benchmark do
   ruby 'benchmark/benchmark.rb'
 end
 
-desc 'Generate and install the thrift gem'
-task :install => [:spec, :build_ext] do
+desc 'Builds the thrift gem'
+task :gem => [:spec, :build_ext] do
   unless sh 'gem', 'build', 'thrift.gemspec'
     $stderr.puts "Failed to build thrift gem"
     break
   end
+end
+
+desc 'Install the thrift gem'
+task :install => [:gem] do
   unless sh 'gem', 'install', 'thrift-*.gem'
     $stderr.puts "Failed to install thrift gem"
     break
