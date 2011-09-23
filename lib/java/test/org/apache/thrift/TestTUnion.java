@@ -24,6 +24,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -152,6 +153,7 @@ public class TestTUnion extends TestCase {
 
   public void testSerialization() throws Exception {
     TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
+    union.setI32_set(Collections.singleton(42));
 
     TMemoryBuffer buf = new TMemoryBuffer(0);
     TProtocol proto = new TBinaryProtocol(buf);

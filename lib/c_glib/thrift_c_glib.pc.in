@@ -26,5 +26,5 @@ Name: Thrift
 Description: Thrift C API
 Version: @VERSION@
 Requires: glib-2.0 gobject-2.0
-Libs: -L${libdir} -lthriftc
+Libs: -L${libdir} -lthrift_c_glib
 Cflags: -I${includedir}/thrift

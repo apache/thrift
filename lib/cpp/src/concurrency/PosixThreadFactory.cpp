@@ -68,7 +68,11 @@ class PthreadThread: public Thread {
  public:
 
   PthreadThread(int policy, int priority, int stackSize, bool detached, shared_ptr<Runnable> runnable) :
+
+#ifndef _WIN32
     pthread_(0),
+#endif // _WIN32
+
     state_(uninitialized),
     policy_(policy),
     priority_(priority),
@@ -152,7 +156,12 @@ class PthreadThread: public Thread {
   }
 
   Thread::id_t getId() {
+
+#ifndef _WIN32
     return (Thread::id_t)pthread_;
+#else
+    return (Thread::id_t)pthread_.p;
+#endif // _WIN32
   }
 
   shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
@@ -286,7 +295,13 @@ class PosixThreadFactory::Impl {
   void setDetached(bool value) { detached_ = value; }
 
   Thread::id_t getCurrentThreadId() const {
+
+#ifndef _WIN32
     return (Thread::id_t)pthread_self();
+#else
+    return (Thread::id_t)pthread_self().p;
+#endif // _WIN32
+
   }
 
 };

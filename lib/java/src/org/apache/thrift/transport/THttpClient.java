@@ -36,6 +36,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.params.CoreConnectionPNames;
+import org.apache.http.util.EntityUtils;
 
 /**
  * HTTP implementation of the TTransport interface. Used for working with a
@@ -265,7 +266,7 @@ public class THttpClient extends TTransport {
       
       try {
         // Indicate we're done with the content.
-        response.getEntity().consumeContent();
+        EntityUtils.consume(response.getEntity());
       } catch (IOException ioe) {
         // We ignore this exception, it might only mean the server has no
         // keep-alive capability.

@@ -20,23 +20,16 @@
 #
 
 import sys, glob
-sys.path.insert(0, './gen-py')
 sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
 
-from ThriftTest import ThriftTest
-from ThriftTest.ttypes import *
-from thrift.transport import TTransport
-from thrift.transport import TSocket
-from thrift.transport import THttpClient
-from thrift.transport import TZlibTransport
-from thrift.protocol import TBinaryProtocol
-from thrift.protocol import TCompactProtocol
 import unittest
 import time
 from optparse import OptionParser
 
-
 parser = OptionParser()
+parser.add_option('--genpydir', type='string', dest='genpydir',
+                  default='gen-py',
+                  help='include this local directory in sys.path for locating generated code')
 parser.add_option("--port", type="int", dest="port",
     help="connect to server at port")
 parser.add_option("--host", type="string", dest="host",
@@ -59,6 +52,17 @@ parser.add_option('--proto',  dest="proto", type="string",
     help="protocol to use, one of: accel, binary, compact")
 parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
 options, args = parser.parse_args()
+
+sys.path.insert(0, options.genpydir)
+
+from ThriftTest import ThriftTest
+from ThriftTest.ttypes import *
+from thrift.transport import TTransport
+from thrift.transport import TSocket
+from thrift.transport import THttpClient
+from thrift.transport import TZlibTransport
+from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TCompactProtocol
 
 class AbstractTest(unittest.TestCase):
   def setUp(self):
@@ -176,6 +180,9 @@ class AbstractTest(unittest.TestCase):
     except Xception, x:
       self.assertEqual(x.errorCode, 1001)
       self.assertEqual(x.message, 'Xception')
+      # ensure exception's repr method works
+      x_repr = repr(x)
+      self.assertEqual(x_repr, 'Xception(errorCode=1001, message=\'Xception\')')
 
     try:
       self.client.testException("throw_undeclared")
@@ -225,4 +232,4 @@ class OwnArgsTestProgram(unittest.TestProgram):
         self.createTests()
 
 if __name__ == "__main__":
-  OwnArgsTestProgram(defaultTest="suite", testRunner=unittest.TextTestRunner(verbosity=2))
+  OwnArgsTestProgram(defaultTest="suite", testRunner=unittest.TextTestRunner(verbosity=1))

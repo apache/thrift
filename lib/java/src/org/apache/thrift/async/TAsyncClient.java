@@ -58,7 +58,7 @@ public abstract class TAsyncClient {
 
   /**
    * Is the client in an error state?
-   * @return
+   * @return If client in an error state?
    */
   public boolean hasError() {
     return ___error != null;
@@ -66,7 +66,7 @@ public abstract class TAsyncClient {
 
   /**
    * Get the client's error - returns null if no error
-   * @return
+   * @return Get the client's error. <br /> returns null if no error
    */
   public Exception getError() {
     return ___error;

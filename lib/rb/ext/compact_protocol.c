@@ -34,6 +34,7 @@ VALUE rb_thrift_compact_proto_native_qmark(VALUE self) {
 static ID last_field_id;
 static ID boolean_field_id;
 static ID bool_value_id;
+static ID rbuf_ivar_id;
 
 static int VERSION;
 static int VERSION_MASK;
@@ -354,8 +355,8 @@ static int8_t get_ttype(int8_t ctype) {
 }
 
 static char read_byte_direct(VALUE self) {
-  VALUE buf = READ(self, 1);
-  return RSTRING_PTR(buf)[0];
+  VALUE byte = rb_funcall(GET_TRANSPORT(self), read_byte_method_id, 0);
+  return (char)(FIX2INT(byte));
 }
 
 static int64_t zig_zag_to_ll(int64_t n) {
@@ -528,15 +529,16 @@ VALUE rb_thrift_compact_proto_read_double(VALUE self) {
     double f;
     int64_t l;
   } transfer;
-  VALUE bytes = READ(self, 8);
-  uint32_t lo = ((uint8_t)(RSTRING_PTR(bytes)[0]))
-    | (((uint8_t)(RSTRING_PTR(bytes)[1])) << 8)
-    | (((uint8_t)(RSTRING_PTR(bytes)[2])) << 16)
-    | (((uint8_t)(RSTRING_PTR(bytes)[3])) << 24);
-  uint64_t hi = (((uint8_t)(RSTRING_PTR(bytes)[4])))
-    | (((uint8_t)(RSTRING_PTR(bytes)[5])) << 8)
-    | (((uint8_t)(RSTRING_PTR(bytes)[6])) << 16)
-    | (((uint8_t)(RSTRING_PTR(bytes)[7])) << 24);
+  VALUE rbuf = rb_ivar_get(self, rbuf_ivar_id);
+  rb_funcall(GET_TRANSPORT(self), read_into_buffer_method_id, 2, rbuf, INT2FIX(8));
+  uint32_t lo = ((uint8_t)(RSTRING_PTR(rbuf)[0]))
+    | (((uint8_t)(RSTRING_PTR(rbuf)[1])) << 8)
+    | (((uint8_t)(RSTRING_PTR(rbuf)[2])) << 16)
+    | (((uint8_t)(RSTRING_PTR(rbuf)[3])) << 24);
+  uint64_t hi = (((uint8_t)(RSTRING_PTR(rbuf)[4])))
+    | (((uint8_t)(RSTRING_PTR(rbuf)[5])) << 8)
+    | (((uint8_t)(RSTRING_PTR(rbuf)[6])) << 16)
+    | (((uint8_t)(RSTRING_PTR(rbuf)[7])) << 24);
   transfer.l = (hi << 32) | lo;
 
   return rb_float_new(transfer.f);
@@ -559,6 +561,7 @@ static void Init_constants() {
   last_field_id = rb_intern("@last_field");
   boolean_field_id = rb_intern("@boolean_field");
   bool_value_id = rb_intern("@bool_value");
+  rbuf_ivar_id = rb_intern("@rbuf");
 }
 
 static void Init_rb_methods() {

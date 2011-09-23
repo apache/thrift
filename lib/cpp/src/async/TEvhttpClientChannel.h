@@ -46,12 +46,12 @@ class TEvhttpClientChannel : public TAsyncChannel {
       struct event_base* eb);
   ~TEvhttpClientChannel();
 
-  virtual bool sendAndRecvMessage(const VoidCallback& cob,
+  virtual void sendAndRecvMessage(const VoidCallback& cob,
                                   apache::thrift::transport::TMemoryBuffer* sendBuf,
                                   apache::thrift::transport::TMemoryBuffer* recvBuf);
 
-  virtual bool sendMessage(const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message);
-  virtual bool recvMessage(const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message);
+  virtual void sendMessage(const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message);
+  virtual void recvMessage(const VoidCallback& cob, apache::thrift::transport::TMemoryBuffer* message);
 
   void finish(struct evhttp_request* req);
 

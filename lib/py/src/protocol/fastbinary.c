@@ -19,9 +19,24 @@
 
 #include <Python.h>
 #include "cStringIO.h"
-#include <stdbool.h>
 #include <stdint.h>
-#include <netinet/in.h>
+#ifndef _WIN32
+# include <stdbool.h>
+# include <netinet/in.h>
+#else
+# include <WinSock2.h>
+# pragma comment (lib, "ws2_32.lib")
+# define BIG_ENDIAN (4321)
+# define LITTLE_ENDIAN (1234)
+# define BYTE_ORDER LITTLE_ENDIAN
+# if defined(_MSC_VER) && _MSC_VER < 1600
+   typedef int _Bool;
+#  define bool _Bool
+#  define false 0 
+#  define true 1
+# endif
+# define inline __inline
+#endif
 
 /* Fix endianness issues on Solaris */
 #if defined (__SVR4) && defined (__sun)
@@ -1110,11 +1125,12 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
 
   case T_STRUCT: {
     StructTypeArgs parsedargs;
+	PyObject* ret;
     if (!parse_struct_args(&parsedargs, typeargs)) {
       return NULL;
     }
 
-    PyObject* ret = PyObject_CallObject(parsedargs.klass, NULL);
+    ret = PyObject_CallObject(parsedargs.klass, NULL);
     if (!ret) {
       return NULL;
     }
@@ -1147,8 +1163,8 @@ decode_binary(PyObject *self, PyObject *args) {
   PyObject* transport = NULL;
   PyObject* typeargs = NULL;
   StructTypeArgs parsedargs;
-  DecodeBuffer input = {};
-
+  DecodeBuffer input = {0, 0};
+  
   if (!PyArg_ParseTuple(args, "OOO", &output_obj, &transport, &typeargs)) {
     return NULL;
   }

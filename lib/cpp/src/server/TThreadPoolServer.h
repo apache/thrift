@@ -37,19 +37,66 @@ class TThreadPoolServer : public TServer {
  public:
   class Task;
 
-  TThreadPoolServer(boost::shared_ptr<TProcessor> processor,
-                    boost::shared_ptr<TServerTransport> serverTransport,
-                    boost::shared_ptr<TTransportFactory> transportFactory,
-                    boost::shared_ptr<TProtocolFactory> protocolFactory,
-                    boost::shared_ptr<ThreadManager> threadManager);
+  template<typename ProcessorFactory>
+  TThreadPoolServer(
+      const boost::shared_ptr<ProcessorFactory>& processorFactory,
+      const boost::shared_ptr<TServerTransport>& serverTransport,
+      const boost::shared_ptr<TTransportFactory>& transportFactory,
+      const boost::shared_ptr<TProtocolFactory>& protocolFactory,
+      const boost::shared_ptr<ThreadManager>& threadManager,
+      THRIFT_OVERLOAD_IF(ProcessorFactory, TProtocolFactory)) :
+    TServer(processorFactory, serverTransport, transportFactory,
+            protocolFactory),
+    threadManager_(threadManager),
+    stop_(false),
+    timeout_(0) {}
 
-  TThreadPoolServer(boost::shared_ptr<TProcessor> processor,
-                    boost::shared_ptr<TServerTransport> serverTransport,
-                    boost::shared_ptr<TTransportFactory> inputTransportFactory,
-                    boost::shared_ptr<TTransportFactory> outputTransportFactory,
-                    boost::shared_ptr<TProtocolFactory> inputProtocolFactory,
-                    boost::shared_ptr<TProtocolFactory> outputProtocolFactory,
-                    boost::shared_ptr<ThreadManager> threadManager);
+  template<typename Processor>
+  TThreadPoolServer(
+      const boost::shared_ptr<Processor>& processor,
+      const boost::shared_ptr<TServerTransport>& serverTransport,
+      const boost::shared_ptr<TTransportFactory>& transportFactory,
+      const boost::shared_ptr<TProtocolFactory>& protocolFactory,
+      const boost::shared_ptr<ThreadManager>& threadManager,
+      THRIFT_OVERLOAD_IF(Processor, TProcessor)) :
+    TServer(processor, serverTransport, transportFactory, protocolFactory),
+    threadManager_(threadManager),
+    stop_(false),
+    timeout_(0) {}
+
+  template<typename ProcessorFactory>
+  TThreadPoolServer(
+      const boost::shared_ptr<ProcessorFactory>& processorFactory,
+      const boost::shared_ptr<TServerTransport>& serverTransport,
+      const boost::shared_ptr<TTransportFactory>& inputTransportFactory,
+      const boost::shared_ptr<TTransportFactory>& outputTransportFactory,
+      const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
+      const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory,
+      const boost::shared_ptr<ThreadManager>& threadManager,
+      THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)) :
+    TServer(processorFactory, serverTransport,
+            inputTransportFactory, outputTransportFactory,
+            inputProtocolFactory, outputProtocolFactory),
+    threadManager_(threadManager),
+    stop_(false),
+    timeout_(0) {}
+
+  template<typename Processor>
+  TThreadPoolServer(
+      const boost::shared_ptr<Processor>& processor,
+      const boost::shared_ptr<TServerTransport>& serverTransport,
+      const boost::shared_ptr<TTransportFactory>& inputTransportFactory,
+      const boost::shared_ptr<TTransportFactory>& outputTransportFactory,
+      const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
+      const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory,
+      const boost::shared_ptr<ThreadManager>& threadManager,
+      THRIFT_OVERLOAD_IF(Processor, TProcessor)) :
+    TServer(processor, serverTransport,
+            inputTransportFactory, outputTransportFactory,
+            inputProtocolFactory, outputProtocolFactory),
+    threadManager_(threadManager),
+    stop_(false),
+    timeout_(0) {}
 
   virtual ~TThreadPoolServer();
 

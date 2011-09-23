@@ -38,6 +38,25 @@ class TType:
   UTF8   = 16
   UTF16  = 17
 
+  _VALUES_TO_NAMES = ( 'STOP',
+                      'VOID',
+                      'BOOL',
+                      'BYTE',
+                      'DOUBLE',
+                      None,
+                      'I16',
+                      None,
+                      'I32',
+                      None,
+                       'I64',
+                       'STRING',
+                       'STRUCT',
+                       'MAP',
+                       'SET',
+                       'LIST',
+                       'UTF8',
+                       'UTF16' )
+
 class TMessageType:
   CALL  = 1
   REPLY = 2
@@ -77,6 +96,8 @@ class TApplicationException(TException):
   WRONG_METHOD_NAME = 3
   BAD_SEQUENCE_ID = 4
   MISSING_RESULT = 5
+  INTERNAL_ERROR = 6
+  PROTOCOL_ERROR = 7
 
   def __init__(self, type=UNKNOWN, message=None):
     TException.__init__(self, message)

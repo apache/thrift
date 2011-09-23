@@ -71,6 +71,7 @@ const int struct_is_union = 1;
   char*          dtext;
   t_field::e_req ereq;
   t_annotation*  tannot;
+  t_field_id     tfieldid;
 }
 
 /**
@@ -174,7 +175,7 @@ const int struct_is_union = 1;
 %type<tannot>    TypeAnnotation
 
 %type<tfield>    Field
-%type<iconst>    FieldIdentifier
+%type<tfieldid>  FieldIdentifier
 %type<ereq>      FieldRequiredness
 %type<ttype>     FieldType
 %type<tconstv>   FieldValue
@@ -617,7 +618,7 @@ ConstValue:
       pdebug("ConstValue => tok_int_constant");
       $$ = new t_const_value();
       $$->set_integer($1);
-      if ($1 < INT32_MIN || $1 > INT32_MAX) {
+      if (!g_allow_64bit_consts && ($1 < INT32_MIN || $1 > INT32_MAX)) {
         pwarning(1, "64-bit constant \"%"PRIi64"\" may not work in all languages.\n", $1);
       }
     }
@@ -870,14 +871,14 @@ Field:
   CaptureDocText FieldIdentifier FieldRequiredness FieldType tok_identifier FieldValue XsdOptional XsdNillable XsdAttributes TypeAnnotations CommaOrSemicolonOptional
     {
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
-      if ($2 < 0) {
+      if ($2.auto_assigned) {
         pwarning(1, "No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", $5);
         if (g_strict >= 192) {
           yyerror("Implicit field keys are deprecated and not allowed with -strict");
           exit(1);
         }
       }
-      $$ = new t_field($4, $5, $2);
+      $$ = new t_field($4, $5, $2.value);
       $$->set_req($3);
       if ($6 != NULL) {
         g_scope->resolve_const_value($6, $4);
@@ -902,14 +903,42 @@ FieldIdentifier:
   tok_int_constant ':'
     {
       if ($1 <= 0) {
-        pwarning(1, "Nonpositive value (%d) not allowed as a field key.\n", $1);
-        $1 = y_field_val--;
+        if (g_allow_neg_field_keys) {
+          /*
+           * g_allow_neg_field_keys exists to allow users to add explicitly
+           * specified key values to old .thrift files without breaking
+           * protocol compatibility.
+           */
+          if ($1 != y_field_val) {
+            /*
+             * warn if the user-specified negative value isn't what
+             * thrift would have auto-assigned.
+             */
+            pwarning(1, "Negative field key (%d) differs from what would be "
+                     "auto-assigned by thrift (%d).\n", $1, y_field_val);
+          }
+          /*
+           * Leave $1 as-is, and update y_field_val to be one less than $1.
+           * The FieldList parsing will catch any duplicate key values.
+           */
+          y_field_val = $1 - 1;
+          $$.value = $1;
+          $$.auto_assigned = false;
+        } else {
+          pwarning(1, "Nonpositive value (%d) not allowed as a field key.\n",
+                   $1);
+          $$.value = y_field_val--;
+          $$.auto_assigned = true;
+        }
+      } else {
+        $$.value = $1;
+        $$.auto_assigned = false;
       }
-      $$ = $1;
     }
 |
     {
-      $$ = y_field_val--;
+      $$.value = y_field_val--;
+      $$.auto_assigned = true;
     }
 
 FieldRequiredness:

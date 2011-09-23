@@ -150,4 +150,13 @@ class t_field : public t_doc {
 
 };
 
+/**
+ * A simple struct for the parser to use to store a field ID, and whether or
+ * not it was specified by the user or automatically chosen.
+ */
+struct t_field_id {
+  int64_t value;
+  bool auto_assigned;
+};
+
 #endif

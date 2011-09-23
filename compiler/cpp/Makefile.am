@@ -22,6 +22,7 @@
 # details.
 
 AM_YFLAGS = -d
+LIBS =
 BUILT_SOURCES =
 
 bin_PROGRAMS = thrift

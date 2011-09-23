@@ -112,7 +112,7 @@ public class TBaseHelper {
         return 0;
     }
 
-    public static int compareObjects(Object a, Object b) {
+    public static int compareTo(Object a, Object b) {
         if (a instanceof Vector) {
             return compareTo((Vector)a, (Vector)b);
         } if (a instanceof Hashtable) {
@@ -130,7 +130,7 @@ public class TBaseHelper {
         for (int i = 0; i < a.size(); i++) {
             Object oA = a.elementAt(i);
             Object oB = b.elementAt(i);
-            lastComparison = compareObjects(oA, oB);
+            lastComparison = compareTo(oA, oB);
             if (lastComparison != 0) {
                 return lastComparison;
             }
@@ -149,9 +149,9 @@ public class TBaseHelper {
         while (lastComparison == 0 && enumA.hasMoreElements()) {
             Object keyA = enumA.nextElement();
             Object keyB = enumB.nextElement();
-            lastComparison = compareObjects(keyA, keyB);
+            lastComparison = compareTo(keyA, keyB);
             if (lastComparison == 0) {
-                lastComparison = compareObjects(a.get(keyA), b.get(keyB));
+                lastComparison = compareTo(a.get(keyA), b.get(keyB));
             }
         }
         return lastComparison;

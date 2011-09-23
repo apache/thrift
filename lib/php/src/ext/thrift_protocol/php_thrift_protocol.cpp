@@ -177,7 +177,7 @@ public:
 
   void write(const char* data, size_t len) {
     if ((len + buffer_used) > buffer_size) {
-      flush();
+      internalFlush();
     }
     if (len > buffer_size) {
       directWrite(data, len);
@@ -218,15 +218,18 @@ public:
   }
 
   void flush() {
-    if (buffer_used) {
-      directWrite(buffer, buffer_used);
-      buffer_ptr = buffer;
-      buffer_used = 0;
-    }
+    internalFlush();
     directFlush();
   }
 
 protected:
+  void internalFlush() {
+     if (buffer_used) {
+      directWrite(buffer, buffer_used);
+      buffer_ptr = buffer;
+      buffer_used = 0;
+    }
+  }
   void directFlush() {
     zval ret;
     ZVAL_NULL(&ret);

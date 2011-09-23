@@ -55,7 +55,7 @@ module Thrift
     end
 
     def fields_with_default_values
-      fields_with_default_values = self.class.instance_variable_get("@fields_with_default_values")
+      fields_with_default_values = self.class.instance_variable_get(:@fields_with_default_values)
       unless fields_with_default_values
         fields_with_default_values = {}
         struct_fields.each do |fid, field_def|
@@ -63,7 +63,7 @@ module Thrift
             fields_with_default_values[field_def[:name]] = field_def[:default]
           end
         end
-        self.class.instance_variable_set("@fields_with_default_values", fields_with_default_values)
+        self.class.instance_variable_set(:@fields_with_default_values, fields_with_default_values)
       end
       fields_with_default_values
     end
@@ -114,9 +114,10 @@ module Thrift
     end
 
     def ==(other)
+      return false if other.nil?
       each_field do |fid, field_info|
         name = field_info[:name]
-        return false unless self.instance_variable_get("@#{name}") == other.instance_variable_get("@#{name}")
+        return false unless other.respond_to?(name) && self.send(name) == other.send(name)
       end
       true
     end
@@ -125,13 +126,15 @@ module Thrift
       self.class == other.class && self == other
     end
 
+    # This implementation of hash() is inspired by Apache's Java HashCodeBuilder class.
     def hash
-      field_values = []
+      total = 17
       each_field do |fid, field_info|
         name = field_info[:name]
-        field_values << self.instance_variable_get("@#{name}")
+        value = self.send(name)
+        total = (total * 37 + value.hash) & 0xffffffff
       end
-      field_values.hash
+      total
     end
 
     def differences(other)

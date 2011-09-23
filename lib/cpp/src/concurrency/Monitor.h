@@ -66,10 +66,40 @@ class Monitor : boost::noncopyable {
 
   virtual void unlock() const;
 
-  virtual void wait(int64_t timeout=0LL) const;
+  /**
+   * Waits a maximum of the specified timeout in milliseconds for the condition
+   * to occur, or waits forever if timeout_ms == 0.
+   *
+   * Returns 0 if condition occurs, ETIMEDOUT on timeout, or an error code.
+   */
+  int waitForTimeRelative(int64_t timeout_ms) const;
 
+  /**
+   * Waits until the absolute time specified using struct timespec.
+   * Returns 0 if condition occurs, ETIMEDOUT on timeout, or an error code.
+   */
+  int waitForTime(const timespec* abstime) const;
+
+  /**
+   * Waits forever until the condition occurs.
+   * Returns 0 if condition occurs, or an error code otherwise.
+   */
+  int waitForever() const;
+
+  /**
+   * Exception-throwing version of waitForTimeRelative(), called simply
+   * wait(int64) for historical reasons.  Timeout is in milliseconds.
+   *
+   * If the condition occurs,  this function returns cleanly; on timeout or
+   * error an exception is thrown.
+   */
+  void wait(int64_t timeout_ms = 0LL) const;
+
+
+  /** Wakes up one thread waiting on this monitor. */
   virtual void notify() const;
 
+  /** Wakes up all waiting threads on this monitor. */
   virtual void notifyAll() const;
 
  private:

@@ -23,12 +23,14 @@ import (
   "bytes"
   "http"
   "os"
+  "strconv"
+  "url"
 )
 
 
 type THttpClient struct {
   response           *http.Response
-  url                *http.URL
+  url                *url.URL
   requestBuffer      *bytes.Buffer
   nsecConnectTimeout int64
   nsecReadTimeout    int64
@@ -68,20 +70,20 @@ func NewTHttpPostClientTransportFactory(url string) *THttpClientTransportFactory
 }
 
 
-func NewTHttpClient(url string) (TTransport, os.Error) {
-  response, finalUrl, err := http.Get(url)
+func NewTHttpClient(urlstr string) (TTransport, os.Error) {
+  parsedURL, err := url.Parse(urlstr)
   if err != nil {
     return nil, err
   }
-  parsedURL, err := http.ParseURL(finalUrl)
+  response, err := http.Get(urlstr)
   if err != nil {
     return nil, err
   }
   return &THttpClient{response: response, url: parsedURL}, nil
 }
 
-func NewTHttpPostClient(url string) (TTransport, os.Error) {
-  parsedURL, err := http.ParseURL(url)
+func NewTHttpPostClient(urlstr string) (TTransport, os.Error) {
+  parsedURL, err := url.Parse(urlstr)
   if err != nil {
     return nil, err
   }
@@ -139,7 +141,7 @@ func (p *THttpClient) Flush() os.Error {
   }
   if response.StatusCode != http.StatusOK {
     // TODO(pomack) log bad response
-    return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "HTTP Response code: "+string(response.StatusCode))
+    return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "HTTP Response code: "+ strconv.Itoa(response.StatusCode))
   }
   p.response = response
   return nil

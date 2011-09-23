@@ -23,6 +23,7 @@ using System.Collections.Generic;
 
 namespace Thrift.Collections
 {
+     [Serializable]
 	public class THashSet<T> : ICollection<T>
 	{
 #if NET_2_0

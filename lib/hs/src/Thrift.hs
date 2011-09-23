@@ -50,6 +50,8 @@ data AppExnType
     | AE_WRONG_METHOD_NAME
     | AE_BAD_SEQUENCE_ID
     | AE_MISSING_RESULT
+    | AE_INTERNAL_ERROR
+    | AE_PROTOCOL_ERROR
       deriving ( Eq, Show, Typeable )
 
 instance Enum AppExnType where
@@ -59,6 +61,8 @@ instance Enum AppExnType where
     toEnum 3 = AE_WRONG_METHOD_NAME
     toEnum 4 = AE_BAD_SEQUENCE_ID
     toEnum 5 = AE_MISSING_RESULT
+    toEnum 6 = AE_INTERNAL_ERROR
+    toEnum 7 = AE_PROTOCOL_ERROR
     toEnum t = error $ "Invalid AppExnType " ++ show t
 
     fromEnum AE_UNKNOWN = 0
@@ -67,6 +71,8 @@ instance Enum AppExnType where
     fromEnum AE_WRONG_METHOD_NAME = 3
     fromEnum AE_BAD_SEQUENCE_ID = 4
     fromEnum AE_MISSING_RESULT = 5
+    fromEnum AE_INTERNAL_ERROR = 6
+    fromEnum AE_PROTOCOL_ERROR = 7
 
 data AppExn = AppExn { ae_type :: AppExnType, ae_message :: String }
   deriving ( Show, Typeable )

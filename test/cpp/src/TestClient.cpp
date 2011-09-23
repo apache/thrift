@@ -17,6 +17,9 @@
  * under the License.
  */
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include <iostream>
 #include <unistd.h>
 #include <sys/time.h>
@@ -26,14 +29,14 @@
 #include <transport/TTransportUtils.h>
 #include <transport/TSocket.h>
 #include <transport/TSSLSocket.h>
+#include <async/TEvhttpClientChannel.h>
+#include <server/TNonblockingServer.h> // <event.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/program_options.hpp>
+#include <tr1/functional>
 
 #include "ThriftTest.h"
-
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 using namespace boost;
 using namespace std;
@@ -41,6 +44,9 @@ using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace thrift::test;
+using namespace apache::thrift::async;
+
+using std::tr1::placeholders::_1;
 
 //extern uint32_t g_socket_syscalls;
 
@@ -54,6 +60,36 @@ uint64_t now()
   ret = tv.tv_sec;
   ret = ret*1000*1000 + tv.tv_usec;
   return ret;
+}
+
+static void testString_clientReturn(const char* host, int port, event_base *base, TProtocolFactory* protocolFactory, ThriftTestCobClient* client) {
+  (void) host;
+  (void) port;
+  (void) protocolFactory;
+  try {
+    string s;
+    client->recv_testString(s);
+    cout << "testString: " << s << endl;
+  } catch (TException& exn) {
+    cout << "Error: " << exn.what() << endl;    
+  }
+
+  event_base_loopbreak(base); // end test
+}
+
+static void testVoid_clientReturn(const char* host, int port, event_base *base, TProtocolFactory* protocolFactory, ThriftTestCobClient* client) {
+  try {
+    client->recv_testVoid();
+    cout << "testVoid" << endl;
+
+    // next test
+    delete client;
+    shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host, "/", host, port, base));
+    client = new ThriftTestCobClient(channel, protocolFactory);
+    client->testString(tr1::bind(testString_clientReturn, host, port, base, protocolFactory, _1), "Test");
+  } catch (TException& exn) {
+    cout << "Error: " << exn.what() << endl;    
+  }
 }
 
 int main(int argc, char** argv) {
@@ -71,7 +107,7 @@ int main(int argc, char** argv) {
       ("host", program_options::value<string>(&host)->default_value(host), "Host to connect")
       ("port", program_options::value<int>(&port)->default_value(port), "Port number to connect")
 	  ("domain-socket", program_options::value<string>(&domain_socket)->default_value(domain_socket), "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
-      ("transport", program_options::value<string>(&transport_type)->default_value(transport_type), "Transport: buffered, framed, http")
+      ("transport", program_options::value<string>(&transport_type)->default_value(transport_type), "Transport: buffered, framed, http, evhttp")
       ("protocol", program_options::value<string>(&protocol_type)->default_value(protocol_type), "Protocol: binary, json")
 	  ("ssl", "Encrypted Transport using SSL")
       ("testloops,n", program_options::value<int>(&numTests)->default_value(numTests), "Number of Tests")
@@ -99,6 +135,7 @@ int main(int argc, char** argv) {
       if (transport_type == "buffered") {
       } else if (transport_type == "framed") {
       } else if (transport_type == "http") {
+      } else if (transport_type == "evhttp") {
       } else {
           throw invalid_argument("Unknown transport type "+transport_type);
       }
@@ -161,6 +198,25 @@ int main(int argc, char** argv) {
     cout << host << ":" << port;
   }
   cout << endl;
+
+  if (transport_type.compare("evhttp") == 0) {
+    event_base *base = event_base_new();
+    cout << "Libevent Version: " << event_get_version() << endl;
+    cout << "Libevent Method: " << event_base_get_method(base) << endl;
+#if LIBEVENT_VERSION_NUMBER >= 0x02000000
+    cout << "Libevent Features: 0x" << hex << event_base_get_features(base) << endl;
+#endif
+
+    shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+
+    shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
+    ThriftTestCobClient* client = new ThriftTestCobClient(channel, protocolFactory.get());
+    client->testVoid(tr1::bind(testVoid_clientReturn, host.c_str(), port, base, protocolFactory.get(), _1));
+    
+    event_base_loop(base, 0);
+    return 0;
+  }
+
 
   ThriftTestClient testClient(protocol);
 
@@ -230,7 +286,7 @@ int main(int argc, char** argv) {
      */
     printf("testDouble(-5.2098523)");
     double dub = testClient.testDouble(-5.2098523);
-    printf(" = %lf\n", dub);
+    printf(" = %f\n", dub);
 
     /**
      * STRUCT TEST

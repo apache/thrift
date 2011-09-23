@@ -41,3 +41,8 @@ ok
 {ok,ok}
 8> {C7, R7} = (catch thrift_client:call(C6, testException, ["Xception"])), R7.
 {exception,{xception,1001,<<"Xception">>}}
+
+Notes
+=====
+To use the JSON protocol client, you will need jsx.  This will be pulled in
+via rebar for building but not automatically installed by make install.

@@ -41,6 +41,7 @@ package org.apache.thrift {
     public static const BAD_SEQUENCE_ID:int = 4;
     public static const MISSING_RESULT:int = 5;
     public static const INTERNAL_ERROR:int = 6;
+    public static const PROTOCOL_ERROR:int = 7;
 
     public function TApplicationError(type:int = UNKNOWN, message:String = "") {
       super(message, type);

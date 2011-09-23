@@ -95,7 +95,7 @@ public class TFileProcessor {
    * Process from start to last chunk both inclusive where chunks begin from 0
 
    * @param startChunkNum first chunk to be processed
-   * @param lastChunkNum last chunk to be processed
+   * @param endChunkNum last chunk to be processed
    */
   public void processChunk(int startChunkNum, int endChunkNum) throws TException {
     int numChunks = inputTransport_.getNumChunks();

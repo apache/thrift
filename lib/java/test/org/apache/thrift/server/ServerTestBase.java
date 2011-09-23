@@ -185,13 +185,10 @@ public abstract class ServerTestBase extends TestCase {
   
       Insanity crazy = new Insanity();
       crazy.userMap = new HashMap<Numberz, Long>();
-      crazy.xtructs = new ArrayList<Xtruct>();
-  
       crazy.userMap.put(Numberz.EIGHT, (long)8);
-      crazy.xtructs.add(goodbye);
-  
-      Insanity looney = new Insanity();
       crazy.userMap.put(Numberz.FIVE, (long)5);
+      crazy.xtructs = new ArrayList<Xtruct>();
+      crazy.xtructs.add(goodbye);
       crazy.xtructs.add(hello);
   
       HashMap<Numberz,Insanity> first_map = new HashMap<Numberz, Insanity>();
@@ -200,6 +197,7 @@ public abstract class ServerTestBase extends TestCase {
       first_map.put(Numberz.TWO, crazy);
       first_map.put(Numberz.THREE, crazy);
   
+      Insanity looney = new Insanity();
       second_map.put(Numberz.SIX, looney);
   
       Map<Long,Map<Numberz,Insanity>> insane =
@@ -389,6 +387,7 @@ public abstract class ServerTestBase extends TestCase {
       testStruct(testClient);
       testNestedStruct(testClient);
       testMap(testClient);
+      testStringMap(testClient);
       testSet(testClient);
       testList(testClient);
       testEnum(testClient);
@@ -426,6 +425,16 @@ public abstract class ServerTestBase extends TestCase {
       mapout.put(i, i-10);
     }
     Map<Integer,Integer> mapin = testClient.testMap(mapout);
+    assertEquals(mapout, mapin);
+  }
+
+  private void testStringMap(ThriftTest.Client testClient) throws TException {
+    Map<String,String> mapout = new HashMap<String,String>();
+    mapout.put("a", "123");
+    mapout.put(" x y ", " with spaces ");
+    mapout.put("same", "same");
+    mapout.put("0", "numeric key");
+    Map<String,String> mapin = testClient.testStringMap(mapout);
     assertEquals(mapout, mapin);
   }
 

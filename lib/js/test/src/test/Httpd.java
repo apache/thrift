@@ -131,8 +131,12 @@ public class Httpd {
                 body.setContentType("text/html; charset=UTF-8");
                 response.setEntity(body);
             } else {
+                if(target.indexOf("?") != -1) {
+                 target = target.substring(1, target.indexOf("?"));
+                }
 
-                final File file = new File(this.docRoot, URLDecoder.decode(target));
+                final File file = new File(this.docRoot, URLDecoder.decode(target, "UTF-8"));
+
                 if (!file.exists()) {
 
                     response.setStatusCode(HttpStatus.SC_NOT_FOUND);

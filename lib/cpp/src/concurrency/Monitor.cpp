@@ -68,32 +68,70 @@ class Monitor::Impl {
   void lock() { mutex().lock(); }
   void unlock() { mutex().unlock(); }
 
-  void wait(int64_t timeout) const {
+  /**
+   * Exception-throwing version of waitForTimeRelative(), called simply
+   * wait(int64) for historical reasons.  Timeout is in milliseconds.
+   *
+   * If the condition occurs,  this function returns cleanly; on timeout or
+   * error an exception is thrown.
+   */
+  void wait(int64_t timeout_ms) const {
+    int result = waitForTimeRelative(timeout_ms);
+    if (result == ETIMEDOUT) {
+      // pthread_cond_timedwait has been observed to return early on
+      // various platforms, so comment out this assert.
+      //assert(Util::currentTime() >= (now + timeout));
+      throw TimedOutException();
+    } else if (result != 0) {
+      throw TException(
+        "pthread_cond_wait() or pthread_cond_timedwait() failed");
+    }
+  }
+
+  /**
+   * Waits until the specified timeout in milliseconds for the condition to
+   * occur, or waits forever if timeout_ms == 0.
+   *
+   * Returns 0 if condition occurs, ETIMEDOUT on timeout, or an error code.
+   */
+  int waitForTimeRelative(int64_t timeout_ms) const {
+    if (timeout_ms == 0LL) {
+      return waitForever();
+    }
+
+    struct timespec abstime;
+    Util::toTimespec(abstime, Util::currentTime() + timeout_ms);
+    return waitForTime(&abstime);
+  }
+
+  /**
+   * Waits until the absolute time specified using struct timespec.
+   * Returns 0 if condition occurs, ETIMEDOUT on timeout, or an error code.
+   */
+  int waitForTime(const timespec* abstime) const {
     assert(mutex_);
     pthread_mutex_t* mutexImpl =
       reinterpret_cast<pthread_mutex_t*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     // XXX Need to assert that caller owns mutex
-    assert(timeout >= 0LL);
-    if (timeout == 0LL) {
-      int iret = pthread_cond_wait(&pthread_cond_, mutexImpl);
-      assert(iret == 0);
-    } else {
-      struct timespec abstime;
-      int64_t now = Util::currentTime();
-      Util::toTimespec(abstime, now + timeout);
-      int result = pthread_cond_timedwait(&pthread_cond_,
-                                          mutexImpl,
-                                          &abstime);
-      if (result == ETIMEDOUT) {
-        // pthread_cond_timedwait has been observed to return early on
-        // various platforms, so comment out this assert.
-        //assert(Util::currentTime() >= (now + timeout));
-        throw TimedOutException();
-      }
-    }
+    return pthread_cond_timedwait(&pthread_cond_,
+                                  mutexImpl,
+                                  abstime);
   }
+
+  /**
+   * Waits forever until the condition occurs.
+   * Returns 0 if condition occurs, or an error code otherwise.
+   */
+  int waitForever() const {
+    assert(mutex_);
+    pthread_mutex_t* mutexImpl =
+      reinterpret_cast<pthread_mutex_t*>(mutex_->getUnderlyingImpl());
+    assert(mutexImpl);
+    return pthread_cond_wait(&pthread_cond_, mutexImpl);
+  }
+
 
   void notify() {
     // XXX Need to assert that caller owns mutex
@@ -150,6 +188,18 @@ void Monitor::lock() const { impl_->lock(); }
 void Monitor::unlock() const { impl_->unlock(); }
 
 void Monitor::wait(int64_t timeout) const { impl_->wait(timeout); }
+
+int Monitor::waitForTime(const timespec* abstime) const {
+  return impl_->waitForTime(abstime);
+}
+
+int Monitor::waitForTimeRelative(int64_t timeout_ms) const {
+  return impl_->waitForTimeRelative(timeout_ms);
+}
+
+int Monitor::waitForever() const {
+  return impl_->waitForever();
+}
 
 void Monitor::notify() const { impl_->notify(); }
 

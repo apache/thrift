@@ -19,6 +19,10 @@
 
 SUBDIRS =
 
+if WITH_CPP
+SUBDIRS += cpp
+endif
+
 if WITH_PYTHON
 SUBDIRS += py
 SUBDIRS += py.twisted

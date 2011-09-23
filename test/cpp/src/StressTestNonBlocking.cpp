@@ -26,6 +26,7 @@
 #include <server/TSimpleServer.h>
 #include <server/TThreadPoolServer.h>
 #include <server/TThreadedServer.h>
+#include <server/TNonblockingServer.h>
 #include <transport/TServerSocket.h>
 #include <transport/TSocket.h>
 #include <transport/TTransportUtils.h>
@@ -33,6 +34,9 @@
 #include <TLogging.h>
 
 #include "Service.h"
+
+#include <unistd.h>
+#include <boost/shared_ptr.hpp>
 
 #include <iostream>
 #include <set>
@@ -79,6 +83,8 @@ class Server : public ServiceIf {
 
   void echoVoid() {
     count("echoVoid");
+    // Sleep to simulate work
+    usleep(5000);
     return;
   }
 
@@ -92,7 +98,7 @@ class Server : public ServiceIf {
   int64_t echoI64(const int64_t arg) {return arg;}
   void echoString(string& out, const string &arg) {
     if (arg != "hello") {
-      T_ERROR_ABORT("WRONG STRING!!!!");
+      T_ERROR_ABORT("WRONG STRING (%s)!!!!", arg.c_str());
     }
     out = arg;
   }
@@ -123,9 +129,9 @@ public:
     // Wait for all worker threads to start
 
     {Synchronized s(_monitor);
-      while(_workerCount == 0) {
-        _monitor.wait();
-      }
+        while(_workerCount == 0) {
+          _monitor.wait();
+        }
     }
 
     _startTime = Util::currentTime();
@@ -216,7 +222,7 @@ public:
 int main(int argc, char **argv) {
 
   int port = 9091;
-  string serverType = "thread-pool";
+  string serverType = "simple";
   string protocolType = "binary";
   size_t workerCount = 4;
   size_t clientCount = 20;
@@ -304,17 +310,6 @@ int main(int argc, char **argv) {
 
     if (!args["server-type"].empty()) {
       serverType = args["server-type"];
-
-      if (serverType == "simple") {
-
-      } else if (serverType == "thread-pool") {
-
-      } else if (serverType == "threaded") {
-
-      } else {
-
-        throw invalid_argument("Unknown server type "+serverType);
-      }
     }
 
     if (!args["workers"].empty()) {
@@ -357,14 +352,11 @@ int main(int argc, char **argv) {
 
     shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
 
-    // Transport
-    shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
-
-    // Transport Factory
-    shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
-
     // Protocol Factory
     shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+
+    // Transport Factory
+    shared_ptr<TTransportFactory>      transportFactory;
 
     if (logRequests) {
       // initialize the log file
@@ -377,14 +369,12 @@ int main(int argc, char **argv) {
     }
 
     shared_ptr<Thread> serverThread;
+    shared_ptr<Thread> serverThread2;
 
     if (serverType == "simple") {
 
-      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TSimpleServer(serviceProcessor, serverSocket, transportFactory, protocolFactory)));
-
-    } else if (serverType == "threaded") {
-
-      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TThreadedServer(serviceProcessor, serverSocket, transportFactory, protocolFactory)));
+      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TNonblockingServer(serviceProcessor, protocolFactory, port)));
+      serverThread2 = threadFactory->newThread(shared_ptr<TServer>(new TNonblockingServer(serviceProcessor, protocolFactory, port+1)));
 
     } else if (serverType == "thread-pool") {
 
@@ -392,19 +382,22 @@ int main(int argc, char **argv) {
 
       threadManager->threadFactory(threadFactory);
       threadManager->start();
-      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TThreadPoolServer(serviceProcessor, serverSocket, transportFactory, protocolFactory, threadManager)));
+      serverThread = threadFactory->newThread(shared_ptr<TServer>(new TNonblockingServer(serviceProcessor, protocolFactory, port, threadManager)));
+      serverThread2 = threadFactory->newThread(shared_ptr<TServer>(new TNonblockingServer(serviceProcessor, protocolFactory, port+1, threadManager)));
     }
 
-    cerr << "Starting the server on port " << port << endl;
-
+    cerr << "Starting the server on port " << port << " and " << (port + 1) << endl;
     serverThread->start();
+    serverThread2->start();
 
     // If we aren't running clients, just wait forever for external clients
 
     if (clientCount == 0) {
       serverThread->join();
+      serverThread2->join();
     }
   }
+  sleep(1);
 
   if (clientCount > 0) {
 
@@ -423,9 +416,9 @@ int main(int argc, char **argv) {
 
     for (size_t ix = 0; ix < clientCount; ix++) {
 
-      shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
-      shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
-      shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket));
+      shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port + (ix % 2)));
+      shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
+      shared_ptr<TProtocol> protocol(new TBinaryProtocol(framedSocket));
       shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
 
       clientThreads.insert(threadFactory->newThread(shared_ptr<ClientThread>(new ClientThread(socket, serviceClient, monitor, threadCount, loopCount, loopType))));

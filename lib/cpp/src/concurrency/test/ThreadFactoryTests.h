@@ -143,7 +143,7 @@ public:
           monitor->wait(1000);
         }
       }
-
+      delete activeCount;
       std::cout << "\t\t\treaped " << lix * count << " threads" << std::endl;
     }
 

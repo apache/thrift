@@ -155,6 +155,23 @@ public class TestTBaseHelper extends TestCase {
     assertNull(TBaseHelper.rightSize(null));
   }
 
+  public void testByteBufferToString() {
+    byte[] array = new byte[]{1, 2, 3};
+    ByteBuffer bb = ByteBuffer.wrap(array, 1, 2);
+    StringBuilder sb = new StringBuilder();
+    TBaseHelper.toString(bb, sb);
+    assertEquals("02 03", sb.toString());
+    bb = ByteBuffer.wrap(array, 0, array.length);
+    bb.position(1);
+    bb = bb.slice();
+    assertEquals(1, bb.arrayOffset());
+    assertEquals(0, bb.position());
+    assertEquals(2, bb.limit());
+    sb = new StringBuilder();
+    TBaseHelper.toString(bb, sb);
+    assertEquals("02 03", sb.toString());
+  }
+
   public void testCopyBinaryWithByteBuffer() throws Exception {
     byte[] bytes = new byte[]{0, 1, 2, 3, 4, 5};
     ByteBuffer b = ByteBuffer.wrap(bytes);

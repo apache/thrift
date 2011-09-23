@@ -64,6 +64,17 @@ public abstract class FacebookBase implements FacebookService.Iface {
     return val;
   }
 
+  public long incrementCounter(String key, long increment) {
+    long val = getCounter(key) + increment;
+    counters_.put(key, val);
+    return val;
+  }
+
+  public long setCounter(String key, long value) {
+    counters_.put(key, value);
+    return value;
+  }
+
   public AbstractMap<String,Long> getCounters() {
     return counters_;
   }

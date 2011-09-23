@@ -86,11 +86,6 @@ class TJSONContext;
  * may try to provide a C component for this, so that other languages could
  * bind to the same underlying implementation for maximum consistency.
  *
- * Note further that JavaScript itself is not capable of representing
- * floating point infinities -- presumably when we have a JavaScript Thrift
- * client, this would mean that infinities get converted to not-a-number in
- * transmission. I don't know of any work-around for this issue.
- *
  */
 class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
  public:

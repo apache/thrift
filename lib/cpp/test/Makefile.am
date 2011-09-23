@@ -54,6 +54,11 @@ check_PROGRAMS = \
 	TFileTransportTest \
 	UnitTests
 
+TESTS_ENVIRONMENT= \
+	BOOST_TEST_LOG_SINK=tests.xml \
+	BOOST_TEST_LOG_LEVEL=test_suite \
+	BOOST_TEST_LOG_FORMAT=xml
+
 TESTS = \
 	$(check_PROGRAMS)
 

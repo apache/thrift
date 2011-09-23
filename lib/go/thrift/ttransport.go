@@ -22,6 +22,7 @@ package thrift
 import (
   "os"
   "log"
+  "strconv"
 )
 
 type Flusher interface {
@@ -162,7 +163,7 @@ func ReadAllTransport(p TTransport, buf []byte) (n int, err os.Error) {
     ret, err = p.Read(buf[n:])
     if ret <= 0 {
       if err != nil {
-        err = NewTTransportExceptionDefaultString("Cannot read. Remote side has closed. Tried to read " + string(size) + " bytes, but only got " + string(n) + " bytes.")
+        err = NewTTransportExceptionDefaultString("Cannot read. Remote side has closed. Tried to read " + strconv.Itoa(size) + " bytes, but only got " + strconv.Itoa(n) + " bytes.")
       }
       return ret, err
     }

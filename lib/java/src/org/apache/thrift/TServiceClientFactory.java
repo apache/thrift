@@ -30,7 +30,7 @@ public interface TServiceClientFactory<T extends TServiceClient> {
   /**
    * Get a brand-new T using <i>prot</i> as both the input and output protocol.
    * @param prot
-   * @return
+   * @return A brand-new T using <i>prot</i> as both the input and output protocol.
    */
   public T getClient(TProtocol prot);
 
@@ -39,7 +39,7 @@ public interface TServiceClientFactory<T extends TServiceClient> {
    * input and output protocols may be the same instance.
    * @param iprot
    * @param oprot
-   * @return
+   * @return a brand new T using the specified input and output protocols
    */
   public T getClient(TProtocol iprot, TProtocol oprot);
 }

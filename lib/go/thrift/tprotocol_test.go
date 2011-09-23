@@ -25,7 +25,7 @@ import (
   "http"
   "math"
   "net"
-  "io"
+  "io/ioutil"
   "os"
   "bytes"
   "fmt"
@@ -64,18 +64,26 @@ func init() {
 type HTTPEchoServer struct{}
 
 func (p *HTTPEchoServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-  w.WriteHeader(http.StatusOK)
-  io.Copy(w, req.Body)
+  buf, err := ioutil.ReadAll(req.Body)
+  if err != nil {
+    w.WriteHeader(http.StatusBadRequest)
+    w.Write(buf)
+  } else {
+    w.WriteHeader(http.StatusOK)
+    w.Write(buf)
+  }
 }
 
 func HttpClientSetupForTest(t *testing.T) (net.Listener, net.Addr) {
   addr, err := FindAvailableTCPServerPort(40000)
   if err != nil {
     t.Fatalf("Unable to find available tcp port addr: %s", err)
+    return nil, addr
   }
   l, err := net.Listen(addr.Network(), addr.String())
   if err != nil {
     t.Fatalf("Unable to setup tcp listener on %s: %s", addr.String(), err)
+    return l, addr
   }
   go http.Serve(l, &HTTPEchoServer{})
   return l, addr
@@ -85,6 +93,7 @@ func HttpClientSetupForTest(t *testing.T) (net.Listener, net.Addr) {
 func ReadWriteProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
   buf := bytes.NewBuffer(make([]byte, 0, 1024))
   l, addr := HttpClientSetupForTest(t)
+  defer l.Close()
   transports := []TTransportFactory{
     NewTMemoryBufferTransportFactory(1024),
     NewTIOStreamTransportFactory(buf, buf, true),
@@ -164,7 +173,6 @@ func ReadWriteProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
   //  trans.Close()
   //}
 
-  l.Close()
 }
 
 func ReadWriteBool(t *testing.T, p TProtocol, trans TTransport) {

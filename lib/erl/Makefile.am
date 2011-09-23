@@ -18,8 +18,6 @@
 #
 
 THRIFT = ../../compiler/cpp/thrift
-#THRIFT_FILES = ../../test/ThriftTest.thrift \
-#			   ../../test/Stress.thrift
 THRIFT_FILES = $(wildcard ../../test/*.thrift) \
 			   $(wildcard test/*.thrift)
 
@@ -30,11 +28,11 @@ THRIFT_FILES = $(wildcard ../../test/*.thrift) \
 	touch .generated
 
 all: .generated
+	./rebar get-deps
 	./rebar compile
 
 check: .generated
-	# FIXME: build breaks on apache build system because it doesn't have eunit
-	# ./rebar eunit
+	./rebar eunit
 
 install: all
 	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
@@ -49,10 +47,8 @@ uninstall:
 	rm -rf $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)
 
 clean:
-	rm .generated
 	./rebar clean
-
-maintainer-clean-local:
+	rm .generated
 	rm -f test/secondService_* \
 		  test/aService_* \
 		  test/serviceForExceptionWithAMap_* \
@@ -76,8 +72,11 @@ maintainer-clean-local:
 		  test/optionalRequiredTest_* \
 		  test/yowza_* \
 		  test/reverseOrderService_*
+	./rebar clean
+
+maintainer-clean-local:
 	rm -rf ebin
 
-EXTRA_DIST = include src rebar rebar.config
+EXTRA_DIST = include src rebar rebar.config test
 
 MAINTAINERCLEANFILES = Makefile.in

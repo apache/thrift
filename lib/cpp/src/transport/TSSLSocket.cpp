@@ -17,11 +17,18 @@
  * under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <errno.h>
 #include <string>
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_array.hpp>
 #include <openssl/err.h>
@@ -258,7 +265,7 @@ void TSSLSocket::authorize() {
   // both certificate and access manager are present
 
   string host;
-  sockaddr_storage sa = {};
+  sockaddr_storage sa;
   socklen_t saLength = sizeof(sa);
 
   if (getpeername(socket_, (sockaddr*)&sa, &saLength) != 0) {
@@ -591,7 +598,10 @@ void buildErrors(string& errors, int errno_copy) {
  * Default implementation of AccessManager
  */
 Decision DefaultClientAccessManager::verify(const sockaddr_storage& sa)
-  throw() { return SKIP; }
+  throw() { 
+  (void) sa;
+  return SKIP;
+}
 
 Decision DefaultClientAccessManager::verify(const string& host,
                                             const char* name,

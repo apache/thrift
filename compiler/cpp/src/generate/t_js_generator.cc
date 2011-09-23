@@ -576,6 +576,7 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
     out << "Thrift.inherits(" <<
         js_namespace(tstruct->get_program()) <<
         tstruct->get_name() << ", Thrift.TException);" << endl;
+	out << js_namespace(tstruct->get_program())<<tstruct->get_name() <<".prototype.name = '" << tstruct->get_name() << "';" << endl;
   } else {
     //init prototype
     out << js_namespace(tstruct->get_program())<<tstruct->get_name() <<".prototype = {};\n";
@@ -1353,6 +1354,13 @@ void t_js_generator::generate_deserialize_container(ofstream &out,
   scope_up(out);
 
   if (ttype->is_map()) {
+    out <<
+    indent() << "if (" << i << " > 0 ) {" << endl <<
+    indent() << "  if (input.rstack.length > input.rpos[input.rpos.length -1] + 1) {" << endl <<
+    indent() << "    input.rstack.pop();" << endl <<
+    indent() << "  }" << endl <<
+    indent() << "}" << endl;
+
     generate_deserialize_map_element(out, (t_map*)ttype, prefix);
   } else if (ttype->is_set()) {
     generate_deserialize_set_element(out, (t_set*)ttype, prefix);

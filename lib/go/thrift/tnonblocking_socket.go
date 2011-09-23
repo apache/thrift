@@ -108,7 +108,7 @@ func (p *TNonblockingSocket) Open() os.Error {
   }
 
   var err os.Error
-  if p.conn, err = net.Dial(p.addr.Network(), "", p.addr.String()); err != nil {
+  if p.conn, err = net.Dial(p.addr.Network(), p.addr.String()); err != nil {
     LOGGER.Print("Could not open socket", err.String())
     return NewTTransportException(NOT_OPEN, err.String())
   }

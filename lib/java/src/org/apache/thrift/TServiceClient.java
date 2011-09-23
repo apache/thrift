@@ -44,7 +44,7 @@ public abstract class TServiceClient {
 
   /**
    * Get the TProtocol being used as the input (read) protocol.
-   * @return
+   * @return the TProtocol being used as the input (read) protocol.
    */
   public TProtocol getInputProtocol() {
     return this.iprot_;
@@ -52,7 +52,7 @@ public abstract class TServiceClient {
 
   /**
    * Get the TProtocol being used as the output (write) protocol.
-   * @return
+   * @return the TProtocol being used as the output (write) protocol.
    */
   public TProtocol getOutputProtocol() {
     return this.oprot_;

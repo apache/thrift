@@ -20,8 +20,8 @@
 EXTRA_DIST = \
 	CHANGELOG \
 	Rakefile \
-	Manifest \
-	setup.rb \
+	Gemfile \
+	thrift.gemspec \
 	lib \
 	ext \
 	benchmark \
@@ -31,19 +31,17 @@ EXTRA_DIST = \
 DESTDIR ?= /
 
 all-local:
-	if [ -n "$(RUBY_PREFIX)" ] ; then $(RUBY) setup.rb config --prefix=$(DESTDIR)$(RUBY_PREFIX) --rbdir='$$libdir/ruby' --sodir='$$libdir/ruby' ; elif [ -n "$(DESTDIR)" ] ; then $(RUBY) setup.rb config --prefix=$(DESTDIR) ; else $(RUBY) setup.rb config ; fi
-	$(RUBY) setup.rb setup
+	$(RAKE) build_ext
 
 install-exec-hook:
-	$(RUBY) setup.rb install --prefix=$(DESTDIR)
+	$(RAKE) install
 
-# Make sure this doesn't fail if Ruby is not configured.
 clean-local:
-	RUBY=$(RUBY) ; if test -z "$$RUBY" ; then RUBY=: ; fi ; \
-	$$RUBY setup.rb clean
+	$(RAKE) clean
 
 check-local: all
-if HAVE_RSPEC
-	rake spec
+if HAVE_BUNDLER
+	$(BUNDLER) install
+	$(BUNDLER) exec rake
 endif
 

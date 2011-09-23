@@ -52,6 +52,32 @@ module Thrift
       @rbuf.slice(@index - sz, sz) || ''
     end
 
+    def read_byte
+      return @transport.read_byte() unless @read
+
+      read_frame if @index >= @rbuf.length
+
+      # The read buffer has some data now, read a single byte. Using get_string_byte() avoids
+      # allocating a temp string of size 1 unnecessarily.
+      @index += 1
+      return ::Thrift::TransportUtils.get_string_byte(@rbuf, @index - 1)
+    end
+
+    def read_into_buffer(buffer, size)
+      i = 0
+      while i < size
+        read_frame if @index >= @rbuf.length
+
+        # The read buffer has some data now, so copy bytes over to the output buffer.
+        byte = ::Thrift::TransportUtils.get_string_byte(@rbuf, @index)
+        ::Thrift::TransportUtils.set_string_byte(buffer, i, byte)
+        @index += 1
+        i += 1
+      end
+      i
+    end
+
+
     def write(buf,sz=nil)
       return @transport.write(buf) unless @write
 

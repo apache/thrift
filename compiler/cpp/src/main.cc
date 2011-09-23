@@ -152,6 +152,16 @@ char* g_doctext;
 int g_doctext_lineno;
 
 /**
+ * Whether or not negative field keys are accepted.
+ */
+int g_allow_neg_field_keys;
+
+/**
+ * Whether or not 64-bit constants will generate a warning.
+ */
+int g_allow_64bit_consts = 0;
+
+/**
  * Flags to control code generation
  */
 bool gen_cpp = false;
@@ -639,6 +649,10 @@ void usage() {
   fprintf(stderr, "  -v[erbose]  Verbose mode\n");
   fprintf(stderr, "  -r[ecurse]  Also generate included files\n");
   fprintf(stderr, "  -debug      Parse debug trace to stdout\n");
+  fprintf(stderr, "  --allow-neg-keys  Allow negative field keys (Used to "
+          "preserve protocol\n");
+  fprintf(stderr, "                compatibility with older .thrift files)\n");
+  fprintf(stderr, "  --allow-64bit-consts  Do not print warnings about using 64-bit constants\n");
   fprintf(stderr, "  --gen STR   Generate code with a dynamically-registered generator.\n");
   fprintf(stderr, "                STR has the form language[:key1=val1[,key2,[key3=val3]]].\n");
   fprintf(stderr, "                Keys and values are options passed to the generator.\n");
@@ -805,7 +819,7 @@ bool validate_throws(t_struct* throws) {
   const vector<t_field*>& members = throws->get_members();
   vector<t_field*>::const_iterator m_iter;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    if (!(*m_iter)->get_type()->is_xception()) {
+    if (!t_generator::get_true_type((*m_iter)->get_type())->is_xception()) {
       return false;
     }
   }
@@ -970,6 +984,10 @@ int main(int argc, char** argv) {
         g_verbose = 1;
       } else if (strcmp(arg, "-r") == 0 || strcmp(arg, "-recurse") == 0 ) {
         gen_recurse = true;
+      } else if (strcmp(arg, "-allow-neg-keys") == 0) {
+        g_allow_neg_field_keys = true;
+      } else if (strcmp(arg, "-allow-64bit-consts") == 0) {
+        g_allow_64bit_consts = true;
       } else if (strcmp(arg, "-gen") == 0) {
         arg = argv[++i];
         if (arg == NULL) {

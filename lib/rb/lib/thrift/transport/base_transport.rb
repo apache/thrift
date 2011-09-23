@@ -34,6 +34,26 @@ module Thrift
     end
   end
 
+  module TransportUtils
+    if RUBY_VERSION >= '1.9'
+      def self.get_string_byte(string, index)
+        string.getbyte(index)
+      end
+
+      def self.set_string_byte(string, index, byte)
+        string.setbyte(index, byte)
+      end
+    else
+      def self.get_string_byte(string, index)
+        string[index]
+      end
+
+      def self.set_string_byte(string, index, byte)
+        string[index] = byte
+      end
+    end
+  end
+
   class BaseTransport
     def open?; end
     
@@ -45,9 +65,26 @@ module Thrift
       raise NotImplementedError
     end
 
+    # Returns an unsigned byte as a Fixnum in the range (0..255).
+    def read_byte
+      buf = read_all(1)
+      return ::Thrift::TransportUtils.get_string_byte(buf, 0)
+    end
+
+    # Reads size bytes and copies them into buffer[0..size].
+    def read_into_buffer(buffer, size)
+      tmp = read_all(size)
+      i = 0
+      tmp.each_byte do |byte|
+        ::Thrift::TransportUtils.set_string_byte(buffer, i, byte)
+        i += 1
+      end
+      i
+    end
+
     def read_all(size)
-      buf = ''
-    
+      return '' if size <= 0
+      buf = read(size)
       while (buf.length < size)
         chunk = read(size - buf.length)
         buf << chunk

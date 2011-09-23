@@ -27,7 +27,9 @@
 #include <assert.h>
 
 #include <sys/types.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
@@ -39,7 +41,32 @@
 #include <exception>
 #include <typeinfo>
 
+#include <boost/utility/enable_if.hpp>
+#include <boost/type_traits/is_convertible.hpp>
+
 #include "TLogging.h"
+
+/**
+ * Helper macros to allow function overloading even when using
+ * boost::shared_ptr.
+ *
+ * shared_ptr makes overloading really annoying, since shared_ptr defines
+ * constructor methods to allow one shared_ptr type to be constructed from any
+ * other shared_ptr type.  (Even if it would be a compile error to actually try
+ * to instantiate the constructor.)  These macros add an extra argument to the
+ * function to cause it to only be instantiated if a pointer of type T is
+ * convertible to a pointer of type U.
+ *
+ * THRIFT_OVERLOAD_IF should be used in function declarations.
+ * THRIFT_OVERLOAD_IF_DEFN should be used in the function definition, if it is
+ * defined separately from where it is declared.
+ */
+#define THRIFT_OVERLOAD_IF_DEFN(T, Y) \
+  typename ::boost::enable_if<typename ::boost::is_convertible<T*, Y*>::type, \
+                              void*>::type
+
+#define THRIFT_OVERLOAD_IF(T, Y) \
+  THRIFT_OVERLOAD_IF_DEFN(T, Y) = NULL
 
 namespace apache { namespace thrift {
 

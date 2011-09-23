@@ -43,6 +43,8 @@ class TServerSocket : public TServerTransport {
   void setSendTimeout(int sendTimeout);
   void setRecvTimeout(int recvTimeout);
 
+  void setAcceptTimeout(int accTimeout);
+
   void setRetryLimit(int retryLimit);
   void setRetryDelay(int retryDelay);
 
@@ -65,6 +67,7 @@ class TServerSocket : public TServerTransport {
   int acceptBacklog_;
   int sendTimeout_;
   int recvTimeout_;
+  int accTimeout_;
   int retryLimit_;
   int retryDelay_;
   int tcpSendBuffer_;

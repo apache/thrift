@@ -29,6 +29,11 @@ module Thrift
       super(trans)
       @strict_read = strict_read
       @strict_write = strict_write
+
+      # Pre-allocated read buffer for fixed-size read methods. Needs to be at least 8 bytes long for
+      # read_i64() and read_double().
+      @rbuf = "\0" * 8
+      @rbuf.force_encoding("BINARY") if @rbuf.respond_to?(:force_encoding)
     end
 
     def write_message_begin(name, type, seqid)
@@ -165,8 +170,7 @@ module Thrift
     end
 
     def read_byte
-      dat = trans.read_all(1)
-      val = dat[0].ord
+      val = trans.read_byte
       if (val > 0x7f)
         val = 0 - ((val - 1) ^ 0xff)
       end
@@ -174,8 +178,8 @@ module Thrift
     end
 
     def read_i16
-      dat = trans.read_all(2)
-      val, = dat.unpack('n')
+      trans.read_into_buffer(@rbuf, 2)
+      val, = @rbuf.unpack('n')
       if (val > 0x7fff)
         val = 0 - ((val - 1) ^ 0xffff)
       end
@@ -183,8 +187,8 @@ module Thrift
     end
 
     def read_i32
-      dat = trans.read_all(4)
-      val, = dat.unpack('N')
+      trans.read_into_buffer(@rbuf, 4)
+      val, = @rbuf.unpack('N')
       if (val > 0x7fffffff)
         val = 0 - ((val - 1) ^ 0xffffffff)
       end
@@ -192,8 +196,8 @@ module Thrift
     end
 
     def read_i64
-      dat = trans.read_all(8)
-      hi, lo = dat.unpack('N2')
+      trans.read_into_buffer(@rbuf, 8)
+      hi, lo = @rbuf.unpack('N2')
       if (hi > 0x7fffffff)
         hi ^= 0xffffffff
         lo ^= 0xffffffff
@@ -204,8 +208,8 @@ module Thrift
     end
 
     def read_double
-      dat = trans.read_all(8)
-      val = dat.unpack('G').first
+      trans.read_into_buffer(@rbuf, 8)
+      val = @rbuf.unpack('G').first
       val
     end
 

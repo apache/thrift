@@ -201,7 +201,7 @@ class TSSLSocketFactory {
    * @param password Pass collected password to OpenSSL
    * @param size     Maximum length of password including NULL character
    */
-  virtual void getPassword(std::string& password, int size) { }
+  virtual void getPassword(std::string& /* password */, int /* size */) {}
  private:
   bool server_;
   boost::shared_ptr<AccessManager> access_;
@@ -253,7 +253,7 @@ class AccessManager {
   enum Decision {
     DENY   = -1,    // deny access
     SKIP   =  0,    // cannot make decision, move on to next (if any)
-    ALLOW  =  1,    // allow access
+    ALLOW  =  1     // allow access
   };
  /**
   * Destructor
@@ -270,7 +270,7 @@ class AccessManager {
   * @param  sa Peer IP address
   * @return True if the peer is trusted, false otherwise
   */
- virtual Decision verify(const sockaddr_storage& sa) throw() { return DENY; }
+ virtual Decision verify(const sockaddr_storage& /* sa */ ) throw() { return DENY; }
  /**
   * Determine whether the peer should be granted access or not. It's called
   * every time a DNS subjectAltName/common name is extracted from peer's
@@ -284,7 +284,7 @@ class AccessManager {
   *
   * Note: The "name" parameter may be UTF8 encoded.
   */
- virtual Decision verify(const std::string& host, const char* name, int size)
+ virtual Decision verify(const std::string& /* host */, const char* /* name */, int /* size */)
    throw() { return DENY; }
  /**
   * Determine whether the peer should be granted access or not. It's called
@@ -295,7 +295,7 @@ class AccessManager {
   * @param  size Length of the IP address
   * @return True if the peer is trusted, false otherwise
   */
- virtual Decision verify(const sockaddr_storage& sa, const char* data, int size)
+ virtual Decision verify(const sockaddr_storage& /* sa */, const char* /* data */, int /* size */)
    throw() { return DENY; }
 };
 

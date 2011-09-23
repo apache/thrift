@@ -70,6 +70,35 @@ module Thrift
       data
     end
 
+    def read_byte
+      raise EOFError.new("Not enough bytes remain in buffer") if @index >= @buf.size
+      val = ::Thrift::TransportUtils.get_string_byte(@buf, @index)
+      @index += 1
+      if @index >= GARBAGE_BUFFER_SIZE
+        @buf = @buf.slice(@index..-1)
+        @index = 0
+      end
+      val
+    end
+
+    def read_into_buffer(buffer, size)
+      i = 0
+      while i < size
+        raise EOFError.new("Not enough bytes remain in buffer") if @index >= @buf.size
+
+        # The read buffer has some data now, so copy bytes over to the output buffer.
+        byte = ::Thrift::TransportUtils.get_string_byte(@buf, @index)
+        ::Thrift::TransportUtils.set_string_byte(buffer, i, byte)
+        @index += 1
+        i += 1
+      end
+      if @index >= GARBAGE_BUFFER_SIZE
+        @buf = @buf.slice(@index..-1)
+        @index = 0
+      end
+      i
+    end
+
     def write(wbuf)
       @buf << wbuf
     end

@@ -17,15 +17,15 @@
  * under the License.
  */
 
-#include "Util.h"
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
+#include "Util.h"
+
 #if defined(HAVE_CLOCK_GETTIME)
 #include <time.h>
-#elif defined(HAVE_GETTIMEOFDAY)
+#elif defined(HAVE_SYS_TIME_H)
 #include <sys/time.h>
 #endif // defined(HAVE_CLOCK_GETTIME)
 

@@ -224,11 +224,12 @@ public final class TBaseHelper {
     byte[] buf = bb.array();
 
     int arrayOffset = bb.arrayOffset();
-    int origLimit = bb.limit();
-    int limit = (origLimit - arrayOffset > 128) ? arrayOffset + 128 : origLimit;
+    int offset = arrayOffset + bb.position();
+    int origLimit = arrayOffset + bb.limit();
+    int limit = (origLimit - offset > 128) ? offset + 128 : origLimit;
 
-    for (int i = arrayOffset; i < limit; i++) {
-      if (i > arrayOffset) {
+    for (int i = offset; i < limit; i++) {
+      if (i > offset) {
         sb.append(" ");
       }
       sb.append(paddedByteString(buf[i]));
