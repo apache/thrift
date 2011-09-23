@@ -181,10 +181,6 @@ bool TSocket::peek() {
 
 void TSocket::openConnection(struct addrinfo *res) {
 
-#ifdef _WIN32
-    TWinsockSingleton::create();
-#endif // _WIN32
-
   if (isOpen()) {
     return;
   }
@@ -276,7 +272,7 @@ void TSocket::openConnection(struct addrinfo *res) {
     goto done;
   }
 
-  if (errno != EINPROGRESS) {
+  if ((errno != EINPROGRESS) && (errno != EWOULDBLOCK)) {
     int errno_copy = errno;
     GlobalOutput.perror("TSocket::open() connect() " + getSocketInfo(), errno_copy);
     throw TTransportException(TTransportException::NOT_OPEN, "connect() failed", errno_copy);
@@ -346,6 +342,11 @@ void TSocket::unix_open(){
 }
 
 void TSocket::local_open(){
+
+#ifdef _WIN32
+    TWinsockSingleton::create();
+#endif // _WIN32
+
   if (isOpen()) {
     return;
   }

@@ -28,6 +28,11 @@
 #error This is a MSVC header only.
 #endif
 
+#pragma warning(disable: 4996) // Depreciated posix name.
+#pragma warning(disable: 4250) // Inherits via dominance.
+
+#define HAVE_GETTIMEOFDAY 1
+
 #include "TargetVersion.h"
 #include "GetTimeOfDay.h"
 #include "Operators.h"
@@ -50,27 +55,31 @@ typedef boost::uint8_t  uint8_t;
 // pthreads
 #include <pthread.h>
 
-//"asm/posix_types.h"
-typedef unsigned int __kernel_size_t;
-typedef int          __kernel_ssize_t;
-
-//"linux/types.h"
-typedef __kernel_size_t  size_t;
-typedef __kernel_ssize_t ssize_t;
-
-// Missing defines.
-#define __BYTE_ORDER __LITTLE_ENDIAN
+typedef ptrdiff_t ssize_t;
 
 // Missing functions.
 #define usleep(ms) Sleep(ms)
 
-#if WINVER == 0x0501
-#   define poll(fds, nfds, timeout) \
-    select(0, NULL, fds, NULL, timeout)
-#else
-#   define poll(fds, nfds, timeout) \
-    WSAPoll(fds, nfds, timeout)
-#endif // WINVER
+#define poll(fds, nfds, timeout) \
+    poll_win32(fds, nfds, timeout)
+
+inline int poll_win32(LPWSAPOLLFD fdArray, ULONG fds, INT timeout)
+{
+    fd_set read_fds;
+    fd_set write_fds;
+    fd_set except_fds;
+
+    FD_ZERO(&read_fds);
+    FD_ZERO(&write_fds);
+    FD_ZERO(&except_fds);
+
+    FD_SET(fdArray[0].fd, &read_fds);
+    FD_SET(fdArray[0].fd, &write_fds);
+    FD_SET(fdArray[0].fd, &except_fds);
+
+    timeval time_out = {timeout * 0.001, timeout * 1000};
+    return select(1, &read_fds, &write_fds, &except_fds, &time_out);
+}
 
 inline void close(SOCKET socket)
 {
