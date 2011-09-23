@@ -25,7 +25,7 @@ require 'spec/rake/spectask'
 THRIFT = '../../compiler/cpp/thrift'
 
 task :default => [:gem]
-task :spec => [:'gen-rb', :realspec]
+task :spec => [:'gen-rb', :build_ext, :realspec]
 
 Spec::Rake::SpecTask.new(:realspec) do |t|
   t.spec_files = FileList['spec/**/*_spec.rb']
@@ -59,7 +59,7 @@ namespace :'gen-rb' do
 end
 
 desc "Build the native library"
-task :build_ext => :spec do
+task :build_ext => :'gen-rb' do
    Dir::chdir(File::dirname('ext/extconf.rb')) do
       unless sh "ruby #{File::basename('ext/extconf.rb')}"
         $stderr.puts "Failed to run extconf"
