@@ -1655,7 +1655,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
   indent(out) << "schemes.get(oprot.getScheme()).getScheme().write(oprot, this);" << endl;
 
   indent_down();
-  indent(out) << "  }" << endl << endl;	
+  indent(out) << "}" << endl << endl;	
 }
 
 /**
