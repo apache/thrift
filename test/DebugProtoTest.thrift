@@ -351,3 +351,17 @@ struct BreaksRubyCompactProtocol {
   3: i32 field3;
 }
 
+struct TupleProtocolTestStruct {
+  optional i32 field1;
+  optional i32 field2;
+  optional i32 field3;
+  optional i32 field4;
+  optional i32 field5;
+  optional i32 field6;
+  optional i32 field7;
+  optional i32 field8;
+  optional i32 field9;
+  optional i32 field10;
+  optional i32 field11;
+  optional i32 field12;
+}

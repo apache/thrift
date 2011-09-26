@@ -43,8 +43,8 @@ public final class TTupleProtocol extends TCompactProtocol {
     return TupleScheme.class;
   }
 
-  public void writeBitSet(BitSet bs) throws TException {
-    byte[] bytes = toByteArray(bs);
+  public void writeBitSet(BitSet bs, int vectorWidth) throws TException {
+    byte[] bytes = toByteArray(bs, vectorWidth);
     for (byte b : bytes) {
       writeByte(b);
     }
@@ -82,10 +82,11 @@ public final class TTupleProtocol extends TCompactProtocol {
    * assumed to be the least significant bit.
    * 
    * @param bits
+   * @param vectorWidth 
    * @return a byte array of at least length 1
    */
-  public static byte[] toByteArray(BitSet bits) {
-    byte[] bytes = new byte[bits.length() / 8 + 1];
+  public static byte[] toByteArray(BitSet bits, int vectorWidth) {
+    byte[] bytes = new byte[vectorWidth / 8 + 1];
     for (int i = 0; i < bits.length(); i++) {
       if (bits.get(i)) {
         bytes[bytes.length - i / 8 - 1] |= 1 << (i % 8);

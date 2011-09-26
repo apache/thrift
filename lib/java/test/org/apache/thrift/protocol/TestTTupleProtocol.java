@@ -1,14 +1,10 @@
 package org.apache.thrift.protocol;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.TSerializer;
 
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TMemoryBuffer;
-import org.apache.thrift.transport.TMemoryInputTransport;
+import thrift.test.TupleProtocolTestStruct;
 
-import thrift.test.Complex;
-import thrift.test.Simple;
 
 public class TestTTupleProtocol extends ProtocolTestBase {
 
@@ -20,5 +16,12 @@ public class TestTTupleProtocol extends ProtocolTestBase {
   @Override
   protected TProtocolFactory getFactory() {
     return new TTupleProtocol.Factory();
+  }
+
+  public void testBitsetLengthIssue() throws Exception {
+    final TupleProtocolTestStruct t1 = new TupleProtocolTestStruct();
+    t1.setField1(0);
+    t1.setField2(12);
+    new TDeserializer(new TTupleProtocol.Factory()).deserialize(new TupleProtocolTestStruct(), new TSerializer(new TTupleProtocol.Factory()).serialize(t1));
   }
 }
