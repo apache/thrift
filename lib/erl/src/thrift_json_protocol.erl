@@ -294,7 +294,7 @@ write(This0, {string, Str}) -> write_values(This0, [
         {context_pre_item, false},
         case is_binary(Str) of
             true -> Str;
-            false -> jsx:term_to_json(list_to_binary(Str))
+            false -> jsx:term_to_json(list_to_binary(Str), [{strict, false}])
         end,
         {context_post_item, false}
     ]);
@@ -325,7 +325,7 @@ write_values(This0, ValueList) ->
 %% Subsequent calls to read actually operate on the events returned by JSX.
 read_all(#json_protocol{transport = Transport0} = State) ->
     {Transport1, Bin} = read_all_1(Transport0, []),
-    P = jsx:decoder(),
+    P = jsx:parser(),
     State#json_protocol{
         transport = Transport1,
         jsx = P(Bin)
