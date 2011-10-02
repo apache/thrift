@@ -21,7 +21,7 @@
 #include <inttypes.h>
 
 #include <concurrency/ThreadManager.h>
-#include <concurrency/PosixThreadFactory.h>
+#include <concurrency/PlatformThreadFactory.h>
 #include <protocol/TBinaryProtocol.h>
 #include <protocol/TJSONProtocol.h>
 #include <server/TSimpleServer.h>
@@ -641,8 +641,8 @@ int main(int argc, char **argv) {
     shared_ptr<ThreadManager> threadManager =
       ThreadManager::newSimpleThreadManager(workers);
 
-    shared_ptr<PosixThreadFactory> threadFactory =
-      shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
+    shared_ptr<PlatformThreadFactory> threadFactory =
+      shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
     threadManager->threadFactory(threadFactory);
 

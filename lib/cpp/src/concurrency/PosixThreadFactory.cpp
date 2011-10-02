@@ -195,7 +195,7 @@ void* PthreadThread::threadMain(void* arg) {
   ProfilerRegisterThread();
 #endif
 
-  thread->state_ = starting;
+  thread->state_ = started;
   thread->runnable()->run();
   if (thread->state_ != stopping && thread->state_ != stopped) {
     thread->state_ = stopping;

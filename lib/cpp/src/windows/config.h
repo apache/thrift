@@ -32,6 +32,7 @@
 #pragma warning(disable: 4250) // Inherits via dominance.
 
 #define HAVE_GETTIMEOFDAY 1
+#define HAVE_SYS_STAT_H 1
 
 #include "TargetVersion.h"
 #include "GetTimeOfDay.h"
@@ -53,13 +54,25 @@ typedef boost::uint8_t  uint8_t;
 #pragma comment(lib, "Ws2_32.lib")
 
 // pthreads
-#include <pthread.h>
+#if 0
+#	include <pthread.h>
+#else
+struct timespec {
+	long tv_sec;
+	long tv_nsec;
+};
+#	define USE_BOOST_THREAD 1
+#	define ctime_r( _clock, _buf ) \
+        ( strcpy( (_buf), ctime( (_clock) ) ),  \
+          (_buf) )
+#endif
 
 typedef ptrdiff_t ssize_t;
 
 // Missing functions.
 #define usleep(ms) Sleep(ms)
 
+#if WINVER <= 0x0502
 #define poll(fds, nfds, timeout) \
     poll_win32(fds, nfds, timeout)
 
@@ -80,6 +93,10 @@ inline int poll_win32(LPWSAPOLLFD fdArray, ULONG fds, INT timeout)
     timeval time_out = {timeout * 0.001, timeout * 1000};
     return select(1, &read_fds, &write_fds, &except_fds, &time_out);
 }
+#else
+#   define poll(fds, nfds, timeout) \
+    WSAPoll(fds, nfds, timeout)
+#endif // WINVER
 
 inline void close(SOCKET socket)
 {

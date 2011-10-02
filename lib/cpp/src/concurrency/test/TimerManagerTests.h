@@ -18,7 +18,7 @@
  */
 
 #include <concurrency/TimerManager.h>
-#include <concurrency/PosixThreadFactory.h>
+#include <concurrency/PlatformThreadFactory.h>
 #include <concurrency/Monitor.h>
 #include <concurrency/Util.h>
 
@@ -100,7 +100,7 @@ class TimerManagerTests {
 
       TimerManager timerManager;
 
-      timerManager.threadFactory(shared_ptr<PosixThreadFactory>(new PosixThreadFactory()));
+      timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
 
       timerManager.start();
 

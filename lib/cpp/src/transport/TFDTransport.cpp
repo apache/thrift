@@ -22,7 +22,9 @@
 
 #include <transport/TFDTransport.h>
 
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 using namespace std;
 

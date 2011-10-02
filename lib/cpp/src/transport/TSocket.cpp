@@ -496,6 +496,12 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
     }
     #endif
 
+#ifdef _WIN32
+    if(errno_copy == WSAECONNRESET) {
+      return 0; // EOF
+    }
+#endif
+
     // Now it's not a try again case, but a real probblez
     GlobalOutput.perror("TSocket::read() recv() " + getSocketInfo(), errno_copy);
 

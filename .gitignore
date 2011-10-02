@@ -129,6 +129,7 @@
 /lib/rb/ext/thrift_native.so
 /lib/rb/spec/gen-*
 /lib/rb/test/
+/lib/rb/thrift-*.gem
 /lib/php/Makefile
 /lib/php/Makefile.in
 /lib/php/src/ext/thrift_protocol/.deps

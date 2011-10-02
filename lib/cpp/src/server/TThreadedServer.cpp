@@ -19,12 +19,14 @@
 
 #include "server/TThreadedServer.h"
 #include "transport/TTransportException.h"
-#include "concurrency/PosixThreadFactory.h"
+#include <concurrency/PlatformThreadFactory.h>
 
 #include <string>
 #include <iostream>
-#include <pthread.h>
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 namespace apache { namespace thrift { namespace server {
 
@@ -123,7 +125,7 @@ void TThreadedServer::init() {
   stop_ = false;
 
   if (!threadFactory_) {
-    threadFactory_.reset(new PosixThreadFactory);
+    threadFactory_.reset(new PlatformThreadFactory);
   }
 }
 

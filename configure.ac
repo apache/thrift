@@ -432,6 +432,23 @@ AC_SUBST(GCOV_CFLAGS)
 AC_SUBST(GCOV_CXXFLAGS)
 AC_SUBST(GCOV_LDFLAGS)
 
+AC_ARG_ENABLE(boostthreads,
+              [  --enable-boostthreads      use boost threads, instead of POSIX pthread (experimental) ],
+              [case "${enableval}" in
+                yes) ENABLE_BOOSTTHREADS=1 ;;
+                no) ENABLE_BOOSTTHREADS=0 ;;
+                *) AC_MSG_ERROR(bad value ${enableval} for --enable-cov) ;;
+              esac],
+              [ENABLE_BOOSTTHREADS=2])
+
+
+if test "x[$]ENABLE_BOOSTTHREADS" = "x1"; then
+  AC_MSG_WARN(enable boostthreads)
+  AC_DEFINE([USE_BOOST_THREAD], [1], [experimental --enable-boostthreads that replaces POSIX pthread by boost::thread])
+fi
+
+AM_CONDITIONAL([WITH_BOOSTTHREADS], [test "x[$]ENABLE_BOOSTTHREADS" = "x1"])
+
 AC_CONFIG_HEADERS(config.h:config.hin)
 
 AC_CONFIG_FILES([

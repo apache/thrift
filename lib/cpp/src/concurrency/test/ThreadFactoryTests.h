@@ -19,7 +19,7 @@
 
 #include <config.h>
 #include <concurrency/Thread.h>
-#include <concurrency/PosixThreadFactory.h>
+#include <concurrency/PlatformThreadFactory.h>
 #include <concurrency/Monitor.h>
 #include <concurrency/Util.h>
 
@@ -60,7 +60,7 @@ public:
    */
   bool helloWorldTest() {
 
-    PosixThreadFactory threadFactory = PosixThreadFactory();
+    PlatformThreadFactory threadFactory = PlatformThreadFactory();
 
     shared_ptr<Task> task = shared_ptr<Task>(new ThreadFactoryTests::Task());
 
@@ -105,7 +105,7 @@ public:
 
   bool reapNThreads(int loop=1, int count=10) {
 
-    PosixThreadFactory threadFactory =  PosixThreadFactory();
+    PlatformThreadFactory threadFactory =  PlatformThreadFactory();
 
     Monitor* monitor = new Monitor();
 
@@ -203,7 +203,7 @@ public:
 
     shared_ptr<SynchStartTask> task = shared_ptr<SynchStartTask>(new SynchStartTask(monitor, state));
 
-    PosixThreadFactory threadFactory =  PosixThreadFactory();
+    PlatformThreadFactory threadFactory =  PlatformThreadFactory();
 
     shared_ptr<Thread> thread = threadFactory.newThread(task);
 
@@ -307,7 +307,7 @@ public:
     const size_t _id;
   };
 
-  void foo(PosixThreadFactory *tf) {
+  void foo(PlatformThreadFactory *tf) {
     (void) tf;
   }
 
@@ -317,7 +317,7 @@ public:
 
     for(size_t lix = 0; lix < loop; lix++) {
 
-      PosixThreadFactory threadFactory = PosixThreadFactory();
+      PlatformThreadFactory threadFactory = PlatformThreadFactory();
       threadFactory.setDetached(true);
 
         for(size_t tix = 0; tix < count; tix++) {
