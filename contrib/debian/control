@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 5), build-essential, mono-gmcs, python-dev, ant,
     pkg-config, libtool, bison, flex, libboost-dev | libboost1.40-dev, python-all, python-all-dev,
     python-all-dbg, ruby, openjdk-6-jdk | java-sdk, libcommons-lang-java,
     libboost-test-dev | libboost-test1.40-dev, libevent-dev, perl (>= 5.8.0-7),
-    php5, php5-dev
+    php5, php5-dev, libglib2.0-dev
 Maintainer: Thrift Developer's <dev@thrift.apache.org>
 Homepage: http://thrift.apache.org/
 Vcs-Svn: https://svn.apache.org/repos/asf/thrift
