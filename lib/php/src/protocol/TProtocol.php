@@ -262,7 +262,8 @@ abstract class TProtocol {
         return $result;
       }
     default:
-      return 0;
+      throw new TProtocolException('Unknown field type: '.$type,
+                                   TProtocolException::INVALID_DATA);
     }
   }
 
@@ -356,7 +357,8 @@ abstract class TProtocol {
         return $result;
       }
     default:
-      return 0;
+      throw new TProtocolException('Unknown field type: '.$type,
+                                   TProtocolException::INVALID_DATA);
     }
   }
 }
