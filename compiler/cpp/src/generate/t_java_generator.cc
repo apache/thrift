@@ -4125,6 +4125,6 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
 "    hashcode:        Generate quality hashCode methods.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
-"    java5:           Generate Java 1.5 compliant code (includes android_legacy flag)."
+"    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
 )
 
