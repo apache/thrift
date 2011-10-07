@@ -634,7 +634,7 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
     if (gen_dynamic_) {
       out << "(" << gen_dynbaseclass_exc_ << ")";
     } else {
-      out << "(Exception)";
+      out << "(TException)";
     }
   } else {
     if (gen_newstyle_) {
