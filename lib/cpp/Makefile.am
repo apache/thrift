@@ -27,6 +27,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 
 lib_LTLIBRARIES = libthrift.la
 pkgconfig_DATA = thrift.pc
+libthrift_la_LDFLAGS = -release $(VERSION)
 
 ## We only build the extra libraries if we have the dependencies,
 ## but we install all of the headers unconditionally.
@@ -99,6 +100,8 @@ libthriftnb_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
 libthriftz_la_CPPFLAGS  = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
 libthriftnb_la_CXXFLAGS = $(AM_CXXFLAGS)
 libthriftz_la_CXXFLAGS  = $(AM_CXXFLAGS)
+libthriftnb_la_LDFLAGS  = -release $(VERSION)
+libthriftz_la_LDFLAGS   = -release $(VERSION)
 
 if WITH_BOOSTTHREADS
 libthrift_la_LIBADD = -lboost_thread
