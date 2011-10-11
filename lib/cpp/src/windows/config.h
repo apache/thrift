@@ -31,6 +31,7 @@
 #pragma warning(disable: 4996) // Depreciated posix name.
 #pragma warning(disable: 4250) // Inherits via dominance.
 
+#define VERSION "0.8.0-dev"
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SYS_STAT_H 1
 
@@ -38,7 +39,7 @@
 #include "GetTimeOfDay.h"
 #include "Operators.h"
 #include "TWinsockSingleton.h"
-#include "Fcntl.h"
+#include "WinFcntl.h"
 #include "SocketPair.h"
 
 // boost
@@ -58,8 +59,8 @@ typedef boost::uint8_t  uint8_t;
 #	include <pthread.h>
 #else
 struct timespec {
-	long tv_sec;
-	long tv_nsec;
+	int64_t tv_sec;
+	int64_t tv_nsec;
 };
 #	define USE_BOOST_THREAD 1
 #	define ctime_r( _clock, _buf ) \
@@ -94,8 +95,9 @@ inline int poll_win32(LPWSAPOLLFD fdArray, ULONG fds, INT timeout)
     return select(1, &read_fds, &write_fds, &except_fds, &time_out);
 }
 #else
-#   define poll(fds, nfds, timeout) \
-    WSAPoll(fds, nfds, timeout)
+	inline int poll(struct pollfd* fdArray, ULONG fds, INT timeout) {
+		return WSAPoll(fdArray, fds, timeout);
+	}
 #endif // WINVER
 
 inline void close(SOCKET socket)

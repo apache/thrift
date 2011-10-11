@@ -50,5 +50,8 @@
     <ClInclude Include="src\windows\TargetVersion.h">
       <Filter>windows</Filter>
     </ClInclude>
+    <ClInclude Include="src\windows\force_inc.h">
+      <Filter>windows</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

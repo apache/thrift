@@ -29,6 +29,8 @@
 #endif
 
 #define NOMINMAX
+#define BOOST_ALL_NO_LIB 1
+#define BOOST_THREAD_NO_LIB 1
 
 #include "windows/config.h"
 

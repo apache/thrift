@@ -26,6 +26,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef _WIN32
+#include <io.h>
+#endif
+
 using namespace std;
 
 namespace apache { namespace thrift { namespace transport {

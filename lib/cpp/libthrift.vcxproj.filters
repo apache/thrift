@@ -9,20 +9,11 @@
     <ClCompile Include="src\windows\StdAfx.cpp">
       <Filter>windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\concurrency\Monitor.cpp">
-      <Filter>concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="src\concurrency\Mutex.cpp">
-      <Filter>concurrency</Filter>
-    </ClCompile>
     <ClCompile Include="src\transport\TTransportException.cpp">
       <Filter>transport</Filter>
     </ClCompile>
     <ClCompile Include="src\windows\GetTimeOfDay.cpp">
       <Filter>windows</Filter>
-    </ClCompile>
-    <ClCompile Include="src\concurrency\PosixThreadFactory.cpp">
-      <Filter>concurrency</Filter>
     </ClCompile>
     <ClCompile Include="src\concurrency\ThreadManager.cpp">
       <Filter>concurrency</Filter>
@@ -87,13 +78,22 @@
     <ClCompile Include="src\transport\TSocket.cpp">
       <Filter>transport</Filter>
     </ClCompile>
-    <ClCompile Include="src\windows\Fcntl.cpp">
-      <Filter>windows</Filter>
-    </ClCompile>
     <ClCompile Include="src\windows\TWinsockSingleton.cpp">
       <Filter>windows</Filter>
     </ClCompile>
     <ClCompile Include="src\windows\SocketPair.cpp">
+      <Filter>windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\concurrency\BoostMonitor.cpp">
+      <Filter>concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\concurrency\BoostMutex.cpp">
+      <Filter>concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\concurrency\BoostThreadFactory.cpp">
+      <Filter>concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\WinFcntl.cpp">
       <Filter>windows</Filter>
     </ClCompile>
   </ItemGroup>
@@ -115,12 +115,6 @@
     </ClInclude>
     <ClInclude Include="src\windows\TargetVersion.h">
       <Filter>windows</Filter>
-    </ClInclude>
-    <ClInclude Include="src\concurrency\Monitor.h">
-      <Filter>concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="src\concurrency\Mutex.h">
-      <Filter>concurrency</Filter>
     </ClInclude>
     <ClInclude Include="src\concurrency\Exception.h">
       <Filter>concurrency</Filter>
@@ -200,9 +194,6 @@
     <ClInclude Include="src\windows\Operators.h">
       <Filter>windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\windows\Fcntl.h">
-      <Filter>windows</Filter>
-    </ClInclude>
     <ClInclude Include="src\windows\TWinsockSingleton.h">
       <Filter>windows</Filter>
     </ClInclude>
@@ -210,6 +201,15 @@
       <Filter>windows</Filter>
     </ClInclude>
     <ClInclude Include="src\windows\force_inc.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\concurrency\BoostThreadFactory.h">
+      <Filter>concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\concurrency\PlatformThreadFactory.h">
+      <Filter>concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows\WinFcntl.h">
       <Filter>windows</Filter>
     </ClInclude>
   </ItemGroup>
