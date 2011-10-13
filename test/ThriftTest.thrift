@@ -226,3 +226,8 @@ struct ListBonks {
 struct NestedListsBonk {
   1: list<list<list<Bonk>>> bonk
 }
+
+struct BoolTest {
+  1: optional bool b = true;
+  2: optional string s = "true";
+}
