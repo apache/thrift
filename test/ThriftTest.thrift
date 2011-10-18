@@ -33,6 +33,7 @@ namespace py ThriftTest
 namespace py.twisted ThriftTest
 namespace go ThriftTest
 namespace php ThriftTest
+namespace delphi Thrift.Test
 namespace * thrift.test
 
 /**

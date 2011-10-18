@@ -120,6 +120,7 @@ literal_begin (['\"])
 "java_package"       { return tok_java_package;         }
 "cocoa_prefix"       { return tok_cocoa_prefix;         }
 "csharp_namespace"   { return tok_csharp_namespace;     }
+"delphi_namespace"   { return tok_delphi_namespace;     }
 "php_namespace"      { return tok_php_namespace;        }
 "py_module"          { return tok_py_module;            }
 "perl_package"       { return tok_perl_package;         }

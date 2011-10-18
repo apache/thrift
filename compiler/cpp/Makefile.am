@@ -80,6 +80,7 @@ thrift_SOURCES += src/generate/t_c_glib_generator.cc \
                   src/generate/t_html_generator.cc \
                   src/generate/t_js_generator.cc \
                   src/generate/t_javame_generator.cc \
+                  src/generate/t_delphi_generator.cc \
                   src/generate/t_go_generator.cc
 
 thrift_CPPFLAGS = -I$(srcdir)/src

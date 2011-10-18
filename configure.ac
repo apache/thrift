@@ -528,7 +528,6 @@ fi
 if test "$have_ruby" = "yes" ; then
   echo
   echo "Using Ruby ................... : $RUBY"
-  echo "Using rspec .................. : $RSPEC"
 fi
 if test "$have_haskell" = "yes" ; then
   echo

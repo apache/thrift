@@ -110,6 +110,7 @@ const int struct_is_union = 1;
 %token tok_smalltalk_prefix
 %token tok_cocoa_prefix
 %token tok_csharp_namespace
+%token tok_delphi_namespace
 
 /**
  * Base datatype keywords
@@ -391,6 +392,15 @@ Header:
      pdebug("Header -> tok_csharp_namespace tok_identifier");
      if (g_parse_mode == PROGRAM) {
        g_program->set_namespace("csharp", $2);
+     }
+   }
+/* TODO(dreiss): Get rid of this once everyone is using the new hotness. */
+| tok_delphi_namespace tok_identifier
+   {
+     pwarning(1, "'delphi_namespace' is deprecated. Use 'namespace delphi' instead");
+     pdebug("Header -> tok_delphi_namespace tok_identifier");
+     if (g_parse_mode == PROGRAM) {
+       g_program->set_namespace("delphi", $2);
      }
    }
 
