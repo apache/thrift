@@ -144,9 +144,9 @@ class THttpClient extends TTransport {
     if ($data === FALSE || $data === '') {
       $md = stream_get_meta_data($this->handle_);
       if ($md['timed_out']) {
-        throw new TTransportException('THttpClient: timed out reading '.$len.' bytes from '.$this->host_.':'.$this->port_.'/'.$this->uri_, TTransportException::TIMED_OUT);
+        throw new TTransportException('THttpClient: timed out reading '.$len.' bytes from '.$this->host_.':'.$this->port_.$this->uri_, TTransportException::TIMED_OUT);
       } else {
-        throw new TTransportException('THttpClient: Could not read '.$len.' bytes from '.$this->host_.':'.$this->port_.'/'.$this->uri_, TTransportException::UNKNOWN);
+        throw new TTransportException('THttpClient: Could not read '.$len.' bytes from '.$this->host_.':'.$this->port_.$this->uri_, TTransportException::UNKNOWN);
       }
     }
     return $data;
