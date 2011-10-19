@@ -87,6 +87,7 @@
 /lib/erl/.generated
 /lib/erl/.eunit
 /lib/erl/ebin
+/lib/erl/deps/
 /lib/erl/src/thrift.app.src
 /lib/erl/test/*.erl
 /lib/erl/test/*.hrl
@@ -129,6 +130,7 @@
 /lib/rb/ext/thrift_native.so
 /lib/rb/spec/gen-*
 /lib/rb/test/
+/lib/rb/thrift-*.gem
 /lib/php/Makefile
 /lib/php/Makefile.in
 /lib/php/src/ext/thrift_protocol/.deps

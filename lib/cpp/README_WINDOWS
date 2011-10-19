@@ -33,7 +33,7 @@ Thrift is divided into two libraries.
 
 libthrift
   The core Thrift library contains all the core Thrift code. It requires
-  boost shared pointers and pthreads_win32.
+  boost shared pointers and boost thread.
 
 libthriftnb
   This library contains the Thrift nonblocking server, which uses libevent.
@@ -46,7 +46,7 @@ Linking Against Thrift
 ======================
 
 You need to link your project that uses thrift against all the thrift
-dependancies; in the case of libthrift, pthreads_win32, boost and for
+dependancies; in the case of libthrift, boost and for
 libthriftnb, libevent.
 
 In the project properties you must also set HAVE_CONFIG_H as force include
@@ -58,29 +58,35 @@ Dependencies
 boost shared pointers
 http://www.boost.org/libs/smart_ptr/smart_ptr.htm
 
+boost thread
+http://www.boost.org/doc/libs/release/doc/html/thread.html
+
 libevent (for libthriftnb only)
 http://monkey.org/~provos/libevent/
 
-pthreads win32
-http://sources.redhat.com/pthreads-win32/
+Notes on boost thread (static vs shared):
+=========================================
+
+By default lib/cpp/windows/force_inc.h defines:
+
+#define BOOST_ALL_NO_LIB 1
+#define BOOST_THREAD_NO_LIB 1
+
+This has for effect to have the host application linking against Thrift
+to have to link with boost thread as a static library.
+
+If you wanted instead to link with boost thread as a shared library,
+you'll need to uncomment those two lines, and recompile.
 
 Known issues
 ============
 
-- Endianess has not been fully tested, may not work with doubles.
-- Currently does not support the non-blocking connect path.
-- Only supports the creation of clients, server sockets are not yet ported.
 - Does not support named pipes. (Supported in unix through unix domain sockets).
 
 TODO
 ====
 
 - Port remaining classes in libthrift:
-    - TFDTransport
-    - TFileTransport
-    - THttpClient
-    - THttpServer
-    - TSimpleFileTransport
     - TSSLSocket
 
 - Port test cases. (Not even started this. Run test cases in release mode?)

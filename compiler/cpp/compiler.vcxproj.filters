@@ -1,0 +1,180 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="src\main.h" />
+    <ClInclude Include="src\windows\version.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows\config.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_base_type.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_const.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_const_value.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_container.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_doc.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_enum.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_enum_value.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_field.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_function.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_list.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_map.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_program.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_scope.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_service.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_set.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_struct.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_type.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parse\t_typedef.h">
+      <Filter>parse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\generate\t_generator.h">
+      <Filter>generate</Filter>
+    </ClInclude>
+    <ClInclude Include="src\generate\t_generator_registry.h">
+      <Filter>generate</Filter>
+    </ClInclude>
+    <ClInclude Include="src\generate\t_oop_generator.h">
+      <Filter>generate</Filter>
+    </ClInclude>
+    <ClInclude Include="src\globals.h" />
+    <ClInclude Include="src\md5.h" />
+    <ClInclude Include="src\platform.h" />
+    <ClInclude Include="src\thrifty.h">
+      <Filter>generated</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="windows">
+      <UniqueIdentifier>{ae9d0a15-57ae-4f01-87a4-81f790249b83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resources">
+      <UniqueIdentifier>{c9be9380-57bb-438a-a647-4a6943326d6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="generated">
+      <UniqueIdentifier>{79697fe7-fdf0-4ed4-bb4f-3128632c3446}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="parse">
+      <UniqueIdentifier>{5df016bb-591b-420a-a535-4330d9187fbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="generate">
+      <UniqueIdentifier>{b5c626af-afa5-433c-8e10-ee734533cb68}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cc" />
+    <ClCompile Include="src\parse\parse.cc">
+      <Filter>parse</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_as3_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_c_glib_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_cocoa_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_cpp_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_csharp_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_erl_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_hs_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_html_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_java_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_javame_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_js_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_ocaml_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_perl_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_php_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_rb_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_st_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_xsd_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\md5.c" />
+    <ClCompile Include="src\thriftl.cc">
+      <Filter>generated</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrifty.cc">
+      <Filter>generated</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_go_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_py_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\thriftl.ll">
+      <Filter>resources</Filter>
+    </None>
+    <None Include="src\thrifty.yy">
+      <Filter>resources</Filter>
+    </None>
+    <None Include="README_WINDOWS" />
+  </ItemGroup>
+</Project>

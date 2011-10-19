@@ -118,6 +118,11 @@ class PthreadThread: public Thread {
     }
 
     // Set thread policy
+    #ifdef _WIN32
+	//WIN32 Pthread implementation doesn't seem to support sheduling policies other then PosixThreadFactory::OTHER - runtime error
+	policy_ = PosixThreadFactory::OTHER;
+    #endif
+
     if (pthread_attr_setschedpolicy(&thread_attr, policy_) != 0) {
       throw SystemResourceException("pthread_attr_setschedpolicy failed");
     }
@@ -190,7 +195,7 @@ void* PthreadThread::threadMain(void* arg) {
   ProfilerRegisterThread();
 #endif
 
-  thread->state_ = starting;
+  thread->state_ = started;
   thread->runnable()->run();
   if (thread->state_ != stopping && thread->state_ != stopped) {
     thread->state_ = stopping;
@@ -245,7 +250,7 @@ class PosixThreadFactory::Impl {
     max_priority = sched_get_priority_max(pthread_policy);
 #endif
     int quanta = (HIGHEST - LOWEST) + 1;
-    float stepsperquanta = (max_priority - min_priority) / quanta;
+    float stepsperquanta = (float)(max_priority - min_priority) / quanta;
 
     if (priority <= HIGHEST) {
       return (int)(min_priority + stepsperquanta * priority);

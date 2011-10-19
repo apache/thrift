@@ -33,6 +33,7 @@ namespace py ThriftTest
 namespace py.twisted ThriftTest
 namespace go ThriftTest
 namespace php ThriftTest
+namespace delphi Thrift.Test
 namespace * thrift.test
 
 /**
@@ -225,4 +226,9 @@ struct ListBonks {
 }
 struct NestedListsBonk {
   1: list<list<list<Bonk>>> bonk
+}
+
+struct BoolTest {
+  1: optional bool b = true;
+  2: optional string s = "true";
 }

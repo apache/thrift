@@ -31,7 +31,7 @@ EXTRA_DIST = \
 DESTDIR ?= /
 
 all-local:
-	$(RAKE) build_ext
+	$(RAKE) 
 
 install-exec-hook:
 	$(RAKE) install

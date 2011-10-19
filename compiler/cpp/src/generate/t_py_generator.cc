@@ -406,7 +406,7 @@ string t_py_generator::py_autogen_comment() {
  */
 string t_py_generator::py_imports() {
   return
-    string("from thrift.Thrift import TType, TMessageType");
+    string("from thrift.Thrift import TType, TMessageType, TException");
 }
 
 /**
@@ -634,7 +634,7 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
     if (gen_dynamic_) {
       out << "(" << gen_dynbaseclass_exc_ << ")";
     } else {
-      out << "(Exception)";
+      out << "(TException)";
     }
   } else {
     if (gen_newstyle_) {
@@ -1430,7 +1430,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
   f_remote <<
     "if len(sys.argv) <= 1 or sys.argv[1] == '--help':" << endl <<
     "  print ''" << endl <<
-    "  print 'Usage: ' + sys.argv[0] + ' [-h host:port] [-u url] [-f[ramed]] function [arg1 [arg2...]]'" << endl <<
+    "  print 'Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] function [arg1 [arg2...]]'" << endl <<
     "  print ''" << endl <<
     "  print 'Functions:'" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1469,7 +1469,8 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     "if sys.argv[argi] == '-h':" << endl <<
     "  parts = sys.argv[argi+1].split(':')" << endl <<
     "  host = parts[0]" << endl <<
-    "  port = int(parts[1])" << endl <<
+    "  if len(parts) > 1:" << endl <<
+    "    port = int(parts[1])" << endl <<
     "  argi += 2" << endl <<
     endl <<
     "if sys.argv[argi] == '-u':" << endl <<

@@ -18,7 +18,7 @@
  */
 
 #include <concurrency/ThreadManager.h>
-#include <concurrency/PosixThreadFactory.h>
+#include <concurrency/PlatformThreadFactory.h>
 #include <concurrency/Monitor.h>
 #include <concurrency/Util.h>
 #include <concurrency/Mutex.h>
@@ -326,7 +326,7 @@ int main(int argc, char **argv) {
     cerr << usage;
   }
 
-  shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
+  shared_ptr<PlatformThreadFactory> threadFactory = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
   // Dispatcher
   shared_ptr<Server> serviceHandler(new Server());

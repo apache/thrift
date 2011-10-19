@@ -184,6 +184,7 @@ bool gen_ocaml = false;
 bool gen_hs = false;
 bool gen_cocoa = false;
 bool gen_csharp = false;
+bool gen_delphi = false;
 bool gen_st = false;
 bool gen_recurse = false;
 
@@ -1045,6 +1046,8 @@ int main(int argc, char** argv) {
         gen_st = true;
       } else if (strcmp(arg, "-csharp") == 0) {
         gen_csharp = true;
+      } else if (strcmp(arg, "-delphi") == 0) {
+        gen_delphi = true;
       } else if (strcmp(arg, "-cpp_use_include_prefix") == 0) {
         g_cpp_use_include_prefix = true;
       } else if (strcmp(arg, "-I") == 0) {
@@ -1123,6 +1126,10 @@ int main(int argc, char** argv) {
   if (gen_csharp) {
     pwarning(1, "-csharp is deprecated.  Use --gen csharp");
     generator_strings.push_back("csharp");
+  }
+  if (gen_delphi) {
+    pwarning(1, "-delphi is deprecated.  Use --gen delphi");
+    generator_strings.push_back("delphi");
   }
   if (gen_py) {
     pwarning(1, "-py is deprecated.  Use --gen py");

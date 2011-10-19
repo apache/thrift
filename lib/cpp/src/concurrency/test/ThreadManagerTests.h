@@ -19,7 +19,7 @@
 
 #include <config.h>
 #include <concurrency/ThreadManager.h>
-#include <concurrency/PosixThreadFactory.h>
+#include <concurrency/PlatformThreadFactory.h>
 #include <concurrency/Monitor.h>
 #include <concurrency/Util.h>
 
@@ -110,10 +110,11 @@ public:
 
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
 
-    shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
+    shared_ptr<PlatformThreadFactory> threadFactory = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
+#ifndef USE_BOOST_THREAD
     threadFactory->setPriority(PosixThreadFactory::HIGHEST);
-
+#endif
     threadManager->threadFactory(threadFactory);
 
     threadManager->start();
@@ -249,10 +250,11 @@ public:
 
       shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount, pendingTaskMaxCount);
 
-      shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
+      shared_ptr<PlatformThreadFactory> threadFactory = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
+#ifndef USE_BOOST_THREAD
       threadFactory->setPriority(PosixThreadFactory::HIGHEST);
-
+#endif
       threadManager->threadFactory(threadFactory);
 
       threadManager->start();

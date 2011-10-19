@@ -484,7 +484,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
     if (!NIL_P(key_info) && !NIL_P(value_info)) {
       int specified_key_type = FIX2INT(rb_hash_aref(key_info, type_sym));
       int specified_value_type = FIX2INT(rb_hash_aref(value_info, type_sym));
-      if (specified_key_type == key_ttype && specified_value_type == value_ttype) {
+      if (num_entries == 0 || (specified_key_type == key_ttype && specified_value_type == value_ttype)) {
         result = rb_hash_new();
 
         for (i = 0; i < num_entries; ++i) {

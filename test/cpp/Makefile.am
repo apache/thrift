@@ -95,9 +95,9 @@ gen-cpp/ThriftTest.cpp gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants
 INCLUDES = \
 	-I$(top_srcdir)/lib/cpp/src -Igen-cpp
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
 AM_CXXFLAGS = -Wall
-AM_LDFLAGS = $(BOOST_LDFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS)
 
 clean-local:
 	$(RM) -r gen-cpp
@@ -109,5 +109,3 @@ EXTRA_DIST = \
 	src/StressTestNonBlocking.cpp \
 	realloc/realloc_test.c \
 	realloc/Makefile
-	
-	

@@ -142,8 +142,10 @@ public:
   void generate_union_is_set_methods(ofstream& out, t_struct* tstruct);
   void generate_union_abstract_methods(ofstream& out, t_struct* tstruct);
   void generate_check_type(ofstream& out, t_struct* tstruct);
-  void generate_read_value(ofstream& out, t_struct* tstruct);
-  void generate_write_value(ofstream& out, t_struct* tstruct);
+  void generate_standard_scheme_read_value(ofstream& out, t_struct* tstruct);
+  void generate_standard_scheme_write_value(ofstream& out, t_struct* tstruct);
+  void generate_tuple_scheme_read_value(ofstream& out, t_struct* tstruct);
+  void generate_tuple_scheme_write_value(ofstream& out, t_struct* tstruct);
   void generate_get_field_desc(ofstream& out, t_struct* tstruct);
   void generate_get_struct_desc(ofstream& out, t_struct* tstruct);
   void generate_get_field_name(ofstream& out, t_struct* tstruct);
@@ -906,9 +908,13 @@ void t_java_generator::generate_union_is_set_methods(ofstream& out, t_struct* ts
 void t_java_generator::generate_union_abstract_methods(ofstream& out, t_struct* tstruct) {
   generate_check_type(out, tstruct);
   out << endl;
-  generate_read_value(out, tstruct);
+  generate_standard_scheme_read_value(out, tstruct);
   out << endl;
-  generate_write_value(out, tstruct);
+  generate_standard_scheme_write_value(out, tstruct);
+  out << endl;
+  generate_tuple_scheme_read_value(out, tstruct);
+  out << endl;
+  generate_tuple_scheme_write_value(out, tstruct);
   out << endl;
   generate_get_field_desc(out, tstruct);
   out << endl;
@@ -954,9 +960,9 @@ void t_java_generator::generate_check_type(ofstream& out, t_struct* tstruct) {
   indent(out) << "}" << endl;
 }
 
-void t_java_generator::generate_read_value(ofstream& out, t_struct* tstruct) {
+void t_java_generator::generate_standard_scheme_read_value(ofstream& out, t_struct* tstruct) {
   indent(out) << "@Override" << endl;
-  indent(out) << "protected Object readValue(org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TField field) throws org.apache.thrift.TException {" << endl;
+  indent(out) << "protected Object standardSchemeReadValue(org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TField field) throws org.apache.thrift.TException {" << endl;
 
   indent_up();
 
@@ -995,8 +1001,7 @@ void t_java_generator::generate_read_value(ofstream& out, t_struct* tstruct) {
 
   indent_down();
   indent(out) << "} else {" << endl;
-  indent_up();
-  indent(out) << "org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);" << endl;
+  indent_up();  
   indent(out) << "return null;" << endl;
   indent_down();
   indent(out) << "}" << endl;
@@ -1005,9 +1010,9 @@ void t_java_generator::generate_read_value(ofstream& out, t_struct* tstruct) {
   indent(out) << "}" << endl;
 }
 
-void t_java_generator::generate_write_value(ofstream& out, t_struct* tstruct) {
+void t_java_generator::generate_standard_scheme_write_value(ofstream& out, t_struct* tstruct) {
   indent(out) << "@Override" << endl;
-  indent(out) << "protected void writeValue(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {" << endl;
+  indent(out) << "protected void standardSchemeWriteValue(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {" << endl;
 
   indent_up();
 
@@ -1037,6 +1042,83 @@ void t_java_generator::generate_write_value(ofstream& out, t_struct* tstruct) {
 
   indent_down();
 
+  indent(out) << "}" << endl;
+}
+
+void t_java_generator::generate_tuple_scheme_read_value(ofstream& out, t_struct* tstruct) {
+  indent(out) << "@Override" << endl;
+  indent(out) << "protected Object tupleSchemeReadValue(org.apache.thrift.protocol.TProtocol iprot, short fieldID) throws org.apache.thrift.TException {" << endl;
+  
+  indent_up();
+  
+  indent(out) << "_Fields setField = _Fields.findByThriftId(fieldID);" << endl;
+  indent(out) << "if (setField != null) {" << endl;
+  indent_up();
+  indent(out) << "switch (setField) {" << endl;
+  indent_up();
+  
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+  
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_field* field = (*m_iter);
+    
+    indent(out) << "case " << constant_name(field->get_name()) << ":" << endl;
+    indent_up();
+    indent(out) << type_name(field->get_type(), true, false) << " " << field->get_name() << ";" << endl;
+    generate_deserialize_field(out, field, "");
+    indent(out) << "return " << field->get_name() << ";" << endl;
+    indent_down();
+  }
+  
+  indent(out) << "default:" << endl;
+  indent(out) << "  throw new IllegalStateException(\"setField wasn't null, but didn't match any of the case statements!\");" << endl;
+  
+  indent_down();
+  indent(out) << "}" << endl;
+  
+  indent_down();
+  indent(out) << "} else {" << endl;
+  indent_up();
+  indent(out) << "return null;" << endl;
+  indent_down();
+  indent(out) << "}" << endl;
+  indent_down();
+  indent(out) << "}" << endl;
+}
+
+void t_java_generator::generate_tuple_scheme_write_value(ofstream& out, t_struct* tstruct) {
+  indent(out) << "@Override" << endl;
+  indent(out) << "protected void tupleSchemeWriteValue(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {" << endl;
+  
+  indent_up();
+  
+  indent(out) << "switch (setField_) {" << endl;
+  indent_up();
+  
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+  
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_field* field = (*m_iter);
+    
+    indent(out) << "case " << constant_name(field->get_name()) << ":" << endl;
+    indent_up();
+    indent(out) << type_name(field->get_type(), true, false) << " " << field->get_name() 
+    << " = (" <<  type_name(field->get_type(), true, false) << ")value_;" << endl;
+    generate_serialize_field(out, field, "");
+    indent(out) << "return;" << endl;
+    indent_down();
+  }
+  
+  indent(out) << "default:" << endl;
+  indent(out) << "  throw new IllegalStateException(\"Cannot write union with unknown field \" + setField_);" << endl;
+  
+  indent_down();
+  indent(out) << "}" << endl;
+  
+  indent_down();
+  
   indent(out) << "}" << endl;
 }
 
@@ -1573,7 +1655,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
   indent(out) << "schemes.get(oprot.getScheme()).getScheme().write(oprot, this);" << endl;
 
   indent_down();
-  indent(out) << "  }" << endl << endl;	
+  indent(out) << "}" << endl << endl;	
 }
 
 /**
@@ -3977,8 +4059,10 @@ void t_java_generator::generate_java_struct_tuple_writer(ofstream& out, t_struct
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
   bool has_optional = false;
+  int optional_count = 0;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_OPTIONAL || (*f_iter)->get_req() == t_field::T_OPT_IN_REQ_OUT) {
+      optional_count++;
       has_optional = true;
     }
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
@@ -3999,7 +4083,7 @@ void t_java_generator::generate_java_struct_tuple_writer(ofstream& out, t_struct
       }
     }
 
-    indent(out) << "oprot.writeBitSet(optionals);" << endl;
+    indent(out) << "oprot.writeBitSet(optionals, " << optional_count << ");" << endl;
     int j = 0;
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       if ((*f_iter)->get_req() == t_field::T_OPTIONAL || (*f_iter)->get_req() == t_field::T_OPT_IN_REQ_OUT) {
@@ -4041,6 +4125,6 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
 "    hashcode:        Generate quality hashCode methods.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
-"    java5:           Generate Java 1.5 compliant code (includes android_legacy flag)."
+"    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
 )
 

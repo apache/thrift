@@ -181,10 +181,6 @@ bool TSocket::peek() {
 
 void TSocket::openConnection(struct addrinfo *res) {
 
-#ifdef _WIN32
-    TWinsockSingleton::create();
-#endif // _WIN32
-
   if (isOpen()) {
     return;
   }
@@ -276,7 +272,7 @@ void TSocket::openConnection(struct addrinfo *res) {
     goto done;
   }
 
-  if (errno != EINPROGRESS) {
+  if ((errno != EINPROGRESS) && (errno != EWOULDBLOCK)) {
     int errno_copy = errno;
     GlobalOutput.perror("TSocket::open() connect() " + getSocketInfo(), errno_copy);
     throw TTransportException(TTransportException::NOT_OPEN, "connect() failed", errno_copy);
@@ -346,6 +342,11 @@ void TSocket::unix_open(){
 }
 
 void TSocket::local_open(){
+
+#ifdef _WIN32
+    TWinsockSingleton::create();
+#endif // _WIN32
+
   if (isOpen()) {
     return;
   }
@@ -494,6 +495,12 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
       return 0;
     }
     #endif
+
+#ifdef _WIN32
+    if(errno_copy == WSAECONNRESET) {
+      return 0; // EOF
+    }
+#endif
 
     // Now it's not a try again case, but a real probblez
     GlobalOutput.perror("TSocket::read() recv() " + getSocketInfo(), errno_copy);

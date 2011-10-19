@@ -28,6 +28,12 @@
 #error This is a MSVC header only.
 #endif
 
+#define NOMINMAX
+#define BOOST_ALL_NO_LIB 1
+#define BOOST_THREAD_NO_LIB 1
+
+#include "windows/config.h"
+
 #undef gai_strerror
 #define gai_strerror gai_strerrorA
 

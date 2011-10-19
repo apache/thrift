@@ -25,9 +25,9 @@
 #include <server/TThreadPoolServer.h>
 #include <transport/TSocket.h>
 #include <transport/TTransportUtils.h>
-#include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PosixThreadFactory.h>
+#include <concurrency/Monitor.h>
+#include <concurrency/ThreadManager.h>
+#include <concurrency/PlatformThreadFactory.h>
 
 using boost::shared_ptr;
 using namespace apache::thrift;

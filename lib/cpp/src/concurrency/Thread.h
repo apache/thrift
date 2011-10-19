@@ -24,6 +24,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
+#ifdef USE_BOOST_THREAD
+#include <boost/thread.hpp>
+#endif
+
 namespace apache { namespace thrift { namespace concurrency {
 
 class Thread;
@@ -68,7 +72,11 @@ class Thread {
 
  public:
 
+#ifdef USE_BOOST_THREAD
+  typedef boost::thread::id id_t;
+#else
   typedef uint64_t id_t;
+#endif
 
   virtual ~Thread() {};
 

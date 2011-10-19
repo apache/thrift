@@ -27,6 +27,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 
 lib_LTLIBRARIES = libthrift.la
 pkgconfig_DATA = thrift.pc
+libthrift_la_LDFLAGS = -release $(VERSION)
 
 ## We only build the extra libraries if we have the dependencies,
 ## but we install all of the headers unconditionally.
@@ -41,14 +42,12 @@ endif
 
 AM_CXXFLAGS = -Wall
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(srcdir)/src
+AM_LDFLAGS = $(BOOST_LDFLAGS)
 
 # Define the source files for the module
 
 libthrift_la_SOURCES = src/Thrift.cpp \
                        src/TApplicationException.cpp \
-                       src/concurrency/Mutex.cpp \
-                       src/concurrency/Monitor.cpp \
-                       src/concurrency/PosixThreadFactory.cpp \
                        src/concurrency/ThreadManager.cpp \
                        src/concurrency/TimerManager.cpp \
                        src/concurrency/Util.cpp \
@@ -77,6 +76,17 @@ libthrift_la_SOURCES = src/Thrift.cpp \
                        src/async/TAsyncChannel.cpp \
                        src/processor/PeekProcessor.cpp
 
+if WITH_BOOSTTHREADS
+libthrift_la_SOURCES += src/concurrency/BoostThreadFactory.cpp \
+                        src/concurrency/BoostMonitor.cpp \
+                        src/concurrency/BoostMutex.cpp
+else
+libthrift_la_SOURCES += src/concurrency/Mutex.cpp \
+                        src/concurrency/Monitor.cpp \
+                        src/concurrency/PosixThreadFactory.cpp
+endif
+
+
 libthriftnb_la_SOURCES = src/server/TNonblockingServer.cpp \
                          src/async/TAsyncProtocolProcessor.cpp \
                          src/async/TEvhttpServer.cpp \
@@ -90,6 +100,12 @@ libthriftnb_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
 libthriftz_la_CPPFLAGS  = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
 libthriftnb_la_CXXFLAGS = $(AM_CXXFLAGS)
 libthriftz_la_CXXFLAGS  = $(AM_CXXFLAGS)
+libthriftnb_la_LDFLAGS  = -release $(VERSION)
+libthriftz_la_LDFLAGS   = -release $(VERSION)
+
+if WITH_BOOSTTHREADS
+libthrift_la_LIBADD = -lboost_thread
+endif
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \

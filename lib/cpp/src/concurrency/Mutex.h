@@ -167,7 +167,7 @@ class RWGuard : boost::noncopyable {
 
 // A little hack to prevent someone from trying to do "Guard(m);"
 // Such a use is invalid because the temporary Guard object is
-// destoryed at the end of the line, releasing the lock.
+// destroyed at the end of the line, releasing the lock.
 // Sorry for polluting the global namespace, but I think it's worth it.
 #define Guard(m) incorrect_use_of_Guard(m)
 #define RWGuard(m) incorrect_use_of_RWGuard(m)

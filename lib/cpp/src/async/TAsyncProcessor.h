@@ -70,6 +70,23 @@ class TAsyncProcessor {
   }
 };
 
+class TAsyncProcessorFactory {
+ public:
+  virtual ~TAsyncProcessorFactory() {}
+
+  /**
+   * Get the TAsyncProcessor to use for a particular connection.
+   *
+   * This method is always invoked in the same thread that the connection was
+   * accepted on.  This generally means that this call does not need to be
+   * thread safe, as it will always be invoked from a single thread.
+   */
+  virtual boost::shared_ptr<TAsyncProcessor> getProcessor(
+      const TConnectionInfo& connInfo) = 0;
+};
+
+
+
 }}} // apache::thrift::async
 
 // XXX I'm lazy for now

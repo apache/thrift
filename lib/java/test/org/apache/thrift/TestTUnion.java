@@ -34,6 +34,7 @@ import junit.framework.TestCase;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 
 import thrift.test.ComparableUnion;
@@ -181,6 +182,41 @@ public class TestTUnion extends TestCase {
     // this should NOT throw an exception.
     buf = new TMemoryBuffer(0);
     proto = new TBinaryProtocol(buf);
+
+    swau.write(proto);
+    new Empty().read(proto);
+  }
+  
+  public void testTupleProtocolSerialization () throws Exception {
+    TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
+    union.setI32_set(Collections.singleton(42));
+
+    TMemoryBuffer buf = new TMemoryBuffer(0);
+    TProtocol proto = new TTupleProtocol(buf);
+
+    union.write(proto);
+
+    TestUnion u2 = new TestUnion();
+
+    u2.read(proto);
+
+    assertEquals(u2, union);
+
+    StructWithAUnion swau = new StructWithAUnion(u2);
+
+    buf = new TMemoryBuffer(0);
+    proto = new TBinaryProtocol(buf);
+
+    swau.write(proto);
+
+    StructWithAUnion swau2 = new StructWithAUnion();
+    assertFalse(swau2.equals(swau));
+    swau2.read(proto);
+    assertEquals(swau2, swau);
+
+    // this should NOT throw an exception.
+    buf = new TMemoryBuffer(0);
+    proto = new TTupleProtocol(buf);
 
     swau.write(proto);
     new Empty().read(proto);

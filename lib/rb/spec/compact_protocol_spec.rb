@@ -115,6 +115,17 @@ describe Thrift::CompactProtocol do
     brcp2.should == brcp
   end
   
+  it "should deserialize an empty map to an empty hash" do
+    struct = SingleMapTestStruct.new(:i32_map => {})
+    ser = Thrift::Serializer.new(Thrift::CompactProtocolFactory.new)
+    bytes = ser.serialize(struct)
+
+    deser = Thrift::Deserializer.new(Thrift::CompactProtocolFactory.new)
+    struct2 = SingleMapTestStruct.new
+    deser.deserialize(struct2, bytes)
+    struct.should == struct2
+  end
+  
   class JankyHandler
     def Janky(i32arg)
       i32arg * 2

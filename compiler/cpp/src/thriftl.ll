@@ -110,6 +110,9 @@ literal_begin (['\"])
 {symbol}             { return yytext[0];                }
 "*"                  { return yytext[0];                }
 
+"false"              { yylval.iconst=0; return tok_int_constant; }
+"true"               { yylval.iconst=1; return tok_int_constant; }
+
 "namespace"          { return tok_namespace;            }
 "cpp_namespace"      { return tok_cpp_namespace;        }
 "cpp_include"        { return tok_cpp_include;          }
@@ -117,6 +120,7 @@ literal_begin (['\"])
 "java_package"       { return tok_java_package;         }
 "cocoa_prefix"       { return tok_cocoa_prefix;         }
 "csharp_namespace"   { return tok_csharp_namespace;     }
+"delphi_namespace"   { return tok_delphi_namespace;     }
 "php_namespace"      { return tok_php_namespace;        }
 "py_module"          { return tok_py_module;            }
 "perl_package"       { return tok_perl_package;         }
@@ -204,7 +208,6 @@ literal_begin (['\"])
 "ensure"             { thrift_reserved_keyword(yytext); }
 "except"             { thrift_reserved_keyword(yytext); }
 "exec"               { thrift_reserved_keyword(yytext); }
-"false"              { thrift_reserved_keyword(yytext); }
 "finally"            { thrift_reserved_keyword(yytext); }
 "float"              { thrift_reserved_keyword(yytext); }
 "for"                { thrift_reserved_keyword(yytext); }
@@ -250,7 +253,6 @@ literal_begin (['\"])
 "this"               { thrift_reserved_keyword(yytext); }
 "throw"              { thrift_reserved_keyword(yytext); }
 "transient"          { thrift_reserved_keyword(yytext); }
-"true"               { thrift_reserved_keyword(yytext); }
 "try"                { thrift_reserved_keyword(yytext); }
 "undef"              { thrift_reserved_keyword(yytext); }
 "union"              { thrift_reserved_keyword(yytext); }
