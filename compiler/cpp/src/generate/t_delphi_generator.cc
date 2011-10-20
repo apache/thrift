@@ -30,10 +30,6 @@
 #include <sys/stat.h>
 #include <sstream>
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
 #include "platform.h"
 #include "t_oop_generator.h"
 
@@ -55,9 +51,6 @@ class t_delphi_generator : public t_oop_generator
 
       iter = parsed_options.find("ansistr_binary");
       ansistr_binary_ = (iter != parsed_options.end());
-
-      iter = parsed_options.find("suppress_guid");
-      suppress_guid_ = (iter != parsed_options.end());
 
       out_dir_base_ = "gen-delphi";
       escape_.clear();
@@ -196,10 +189,6 @@ class t_delphi_generator : public t_oop_generator
     bool is_void( t_type* type );
     int indent_impl_;
     bool ansistr_binary_;
-    bool suppress_guid_;
-
-    std::string generate_guid();
-
     void indent_up_impl(){
       ++indent_impl_;
     };
@@ -218,21 +207,6 @@ class t_delphi_generator : public t_oop_generator
       return os << indent_impl();
     };
 };
-
-/**
- * Generates a new UUID/GUID for internal purposes. 
- * These GUIDs are not intended to be used cross-module, 
- * as they are always re-generated and NOT constant!
- *
- * @return Pascal-style GUID.
- */
-std::string t_delphi_generator::generate_guid() {
-  boost::uuids::basic_random_generator<boost::mt19937> gen;
-  boost::uuids::uuid u = gen(); 
-  std::ostringstream stream;
-  stream << u;
-  return "['{" + upcase_string(stream.str()) + "}']";
-}
 
 bool t_delphi_generator::find_keyword( std::map<std::string, int>& keyword_map, std::string name) {
   int len = name.length();
@@ -497,7 +471,6 @@ void t_delphi_generator::close_generator() {
   f_all  << "const"  << endl;
   indent_up();
   indent(f_all)  << "c" << tmp_unit << "_Option_AnsiStr_Binary = " << ( ansistr_binary_ ? "True" : "False") << ";" << endl;
-  indent(f_all)  << "c" << tmp_unit << "_Option_Suppress_GUID = " << ( suppress_guid_ ? "True" : "False") << ";" << endl << endl;
   indent_down();
 
   f_all  << "type"  << endl;
@@ -950,10 +923,6 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struc
     indent(out) << struct_intf_name << " = interface(IBase)" << endl;
     indent_up();
 
-    if (! suppress_guid_) {
-      indent(out) << generate_guid() << endl;
-    }
-
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       generate_delphi_property_reader_definition( out, *m_iter);
       generate_delphi_property_writer_definition( out, *m_iter);
@@ -1136,11 +1105,6 @@ void t_delphi_generator::generate_service_interface(t_service* tservice) {
   }
 
   indent_up();
-
-  if (! suppress_guid_) {
-    indent(s_service) << generate_guid() << endl;
-  }
-
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter)
@@ -2683,6 +2647,5 @@ bool t_delphi_generator::is_void( t_type* type ) {
 }
 
 THRIFT_REGISTER_GENERATOR(delphi, "delphi",
-"    ansistr_binary:  Use AnsiString as binary properties.\n" \
-"    suppress_guid:   Suppress GUID for interface declaretion.\n")
+"    ansistr_binary:  Use AnsiString as binary properties.\n")
 
