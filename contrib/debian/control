@@ -2,9 +2,9 @@ Source: thrift
 Section: devel
 Priority: extra
 Build-Depends: debhelper (>= 5), build-essential, mono-gmcs, python-dev, ant,
-    libmono-dev, erlang-base, ruby1.8-dev, autoconf, python-support, automake,
-    pkg-config, libtool, bison, flex, libboost-dev | libboost1.40-dev, python-all, python-all-dev,
-    python-all-dbg, ruby, openjdk-6-jdk | java-sdk, libcommons-lang-java,
+    libmono-dev,  libmono-system-web2.0-cil, erlang-base, ruby1.8-dev, autoconf, python-support,
+    automake, pkg-config, libtool, bison, flex, libboost-dev | libboost1.40-dev, python-all,
+    python-all-dev, python-all-dbg, ruby, openjdk-6-jdk | java-sdk, libcommons-lang-java,
     libboost-test-dev | libboost-test1.40-dev, libevent-dev, perl (>= 5.8.0-7),
     php5, php5-dev, libglib2.0-dev
 Maintainer: Thrift Developer's <dev@thrift.apache.org>
@@ -84,7 +84,8 @@ Description: Java bindings for Thrift
 Package: libthrift-cil
 Architecture: all
 Section: libs
-Depends: cli-common, libmono-corlib1.0-cil (>= 1.0), libmono-system1.0-cil (>= 1.0), ${misc:Depends}
+Depends: cli-common, libmono-corlib1.0-cil (>= 1.0), libmono-system1.0-cil (>= 1.0), 
+    libmono-system-web2.0-cil, ${misc:Depends}
 Description: CLI bindings for Thrift
  Thrift is a software framework for scalable cross-language services
  development. It combines a software stack with a code generation engine to
