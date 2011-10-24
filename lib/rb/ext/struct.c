@@ -231,10 +231,10 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol);
 static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_info);
 
 VALUE get_field_value(VALUE obj, VALUE field_name) {
-  char name_buf[RSTRING_LEN(field_name) + 1];
+  char name_buf[RSTRING_LEN(field_name) + 2];
 
   name_buf[0] = '@';
-  strlcpy(&name_buf[1], RSTRING_PTR(field_name), sizeof(name_buf));
+  strlcpy(&name_buf[1], RSTRING_PTR(field_name), RSTRING_LEN(field_name) + 1);
 
   VALUE value = rb_ivar_get(obj, rb_intern(name_buf));
 
@@ -417,10 +417,10 @@ static void skip_map_contents(VALUE protocol, VALUE key_type_value, VALUE value_
 static void skip_list_or_set_contents(VALUE protocol, VALUE element_type_value, int size);
 
 static void set_field_value(VALUE obj, VALUE field_name, VALUE value) {
-  char name_buf[RSTRING_LEN(field_name) + 1];
+  char name_buf[RSTRING_LEN(field_name) + 2];
 
   name_buf[0] = '@';
-  strlcpy(&name_buf[1], RSTRING_PTR(field_name), sizeof(name_buf));
+  strlcpy(&name_buf[1], RSTRING_PTR(field_name), RSTRING_LEN(field_name)+1);
 
   rb_ivar_set(obj, rb_intern(name_buf), value);
 }
