@@ -189,7 +189,10 @@ constructor TServerImpl.Create(AProcessor: IProcessor;
   AServerTransport: IServerTransport; ATransportFactory: ITransportFactory;
   AProtocolFactory: IProtocolFactory);
 begin
-
+  Create( AProcessor, AServerTransport,
+          ATransportFactory, ATransportFactory,
+          AProtocolFactory, AProtocolFactory,
+          DefaultLogDelegate);
 end;
 
 { TSimpleServer }
