@@ -151,8 +151,8 @@ class TServerSocket(TSocketBase, TServerTransportBase):
 
     self.handle = socket.socket(res[0], res[1])
     self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    if hasattr(self.handle, 'set_timeout'):
-      self.handle.set_timeout(None)
+    if hasattr(self.handle, 'settimeout'):
+      self.handle.settimeout(None)
     self.handle.bind(res[4])
     self.handle.listen(128)
 
