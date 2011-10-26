@@ -959,7 +959,7 @@ procedure TStreamTransportImpl.Write(const buf: TBytes; off, len: Integer);
 begin
   if FOutputStream = nil then
   begin
-    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen, 'Cannot read from null outputstream' );
+    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen, 'Cannot write to null outputstream' );
   end;
 
   FOutputStream.Write( buf, off, len );

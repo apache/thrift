@@ -2372,13 +2372,10 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out, string
 
   indent_impl(code_block) << "field_ := iprot.ReadFieldBegin();" << endl;
 
-  indent_impl(code_block) << "try" << endl;
-  indent_up_impl();
-
   indent_impl(code_block) << "if (field_.Type_ = TType.Stop) then" << endl;
   indent_impl(code_block) << "begin" << endl;
   indent_up_impl();
-  indent_impl(code_block) << "break;" << endl;
+  indent_impl(code_block) << "Break;" << endl;
   indent_down_impl();
   indent_impl(code_block) << "end;" << endl;
 
@@ -2432,14 +2429,7 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out, string
     indent_impl(code_block) << "end;" << endl;
   }
 
-
-  indent_down_impl();
-
-  indent_impl(code_block) << "finally" << endl;
-  indent_up_impl();
   indent_impl(code_block) << "iprot.ReadFieldEnd;" << endl;
-  indent_down_impl();
-  indent_impl(code_block) << "end;" << endl;
 
   indent_down_impl();
 
