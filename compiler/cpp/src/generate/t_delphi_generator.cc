@@ -756,32 +756,16 @@ string t_delphi_generator::render_const_value(ostream& vars, ostream& out, strin
         render << ((value->get_integer() > 0) ? "True" : "False");
         break;
       case t_base_type::TYPE_BYTE:
-        if( 0x7F < value->get_integer()) {
-          render << "ShortInt( " << value->get_integer() << ")";
-        } else {
-          render << value->get_integer();
-        }
+        render << "ShortInt( " << value->get_integer() << ")";
         break;
       case t_base_type::TYPE_I16:
-        if( 0x7FFF < value->get_integer()) {
-          render << "SmallInt( " << value->get_integer() << ")";
-        } else {
-          render << value->get_integer();
-        }
+        render << "SmallInt( " << value->get_integer() << ")";
         break;
       case t_base_type::TYPE_I32:
-        if( 0x7FFFFFFF < value->get_integer()) {
-          render << "LongInt( " << value->get_integer() << ")";
-        } else {
-          render << value->get_integer();
-        }
+        render << "LongInt( " << value->get_integer() << ")";
         break;
       case t_base_type::TYPE_I64:
-        if( 0x7FFFFFFFFFFFFFFF < value->get_integer()) {
-          render << "Int64( " << value->get_integer() << ")";
-        } else {
-          render << value->get_integer();
-        }
+        render << "Int64( " << value->get_integer() << ")";
         break;
       case t_base_type::TYPE_DOUBLE:
         if (value->get_type() == t_const_value::CV_INTEGER) {
