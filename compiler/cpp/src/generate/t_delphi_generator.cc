@@ -1941,6 +1941,9 @@ void t_delphi_generator::generate_serialize_container(ostream& out, bool is_xcep
     generate_serialize_list_element(out, is_xception, (t_list*)ttype, iter, local_vars);
   }
 
+  indent_down_impl();
+  indent_impl(out) << "end;" << endl;
+
   if (ttype->is_map()) {
     indent_impl(out) << "oprot.WriteMapEnd();" << endl;
   } else if (ttype->is_set()) {
@@ -1948,9 +1951,6 @@ void t_delphi_generator::generate_serialize_container(ostream& out, bool is_xcep
   } else if (ttype->is_list()) {
     indent_impl(out) << "oprot.WriteListEnd();" << endl;
   }
-
-  indent_down_impl();
-  indent_impl(out) << "end;" << endl;
 }
 
 void t_delphi_generator::generate_serialize_map_element(ostream& out, bool is_xception, t_map* tmap, string iter, string map, ostream& local_vars) {
