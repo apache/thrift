@@ -222,8 +222,12 @@ module Thrift
   end
 
   class BinaryProtocolFactory < BaseProtocolFactory
+    def initialize(strict_read=true, strict_write=true)
+      @strict_read = strict_read
+      @strict_write = strict_write
+    end
     def get_protocol(trans)
-      return Thrift::BinaryProtocol.new(trans)
+      return Thrift::BinaryProtocol.new(trans, @strict_read, @strict_write)
     end
   end
 end
