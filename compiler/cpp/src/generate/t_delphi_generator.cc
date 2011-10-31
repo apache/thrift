@@ -1765,6 +1765,14 @@ void t_delphi_generator::generate_deserialize_container(ostream& out, bool is_xc
   }
   indent_down_impl();
   indent_impl(out) << "end;" << endl;
+
+  if (ttype->is_map()) {
+    indent_impl(out) << "iprot.ReadMapEnd();" << endl;
+  } else if (ttype->is_set()) {
+    indent_impl(out) << "iprot.ReadSetEnd();" << endl;
+  } else if (ttype->is_list()) {
+    indent_impl(out) << "iprot.ReadListEnd();" << endl;
+  }
 }
 
 void t_delphi_generator::generate_deserialize_map_element(ostream& out, bool is_xception, t_map* tmap, string prefix, ostream& local_vars) {
