@@ -981,7 +981,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struc
   }
   out << "class(";
   if ( is_exception && (! is_x_factory)) {
-    out << "Exception";
+    out << "TException";
   } else {
     out << "TInterfacedObject, IBase, " << struct_intf_name;
   }

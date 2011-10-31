@@ -54,7 +54,21 @@ type
     procedure Write( oprot: IProtocol );
   end;
 
+  // base class for IDL-generated exceptions
+  TException = class( SysUtils.Exception)
+  public
+    procedure Message;  // hide inherited property to prevent accidental read/write
+  end;
+
 implementation
+
+{ TException }
+
+procedure TException.Message;
+// hide inherited property to prevent accidental read/write
+begin
+  ASSERT( FALSE, 'Unexpected call to '+ClassName+'.message. Forgot the underscore?');
+end;
 
 { TApplicationException }
 

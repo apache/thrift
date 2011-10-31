@@ -276,7 +276,7 @@ begin
   begin
     x := TXception.Create;
     x.ErrorCode := 1001;
-    x.Message := 'This is an Xception';
+    x.Message_ := 'This is an Xception';
     raise x;
   end else
   if ( arg0 = 'Xception2') then
