@@ -22,8 +22,8 @@
 #include "macros.h"
 
 #ifndef HAVE_STRLCPY
+#define HAVE_STRLCPY
 
-static
 size_t
 strlcpy (char *dst, const char *src, size_t dst_sz)
 {
