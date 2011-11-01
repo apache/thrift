@@ -2548,7 +2548,7 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out, string
     bool null_allowed = type_can_be_null((*f_iter)->get_type());
     if (null_allowed) {
       indent_impl(code_block) <<
-        "if ((" << prop_name((*f_iter)) << " <> nil) and __isset_" << prop_name(*f_iter,is_exception) << ") then" << endl;
+        "if ((" << prop_name((*f_iter), is_exception) << " <> nil) and __isset_" << prop_name(*f_iter,is_exception) << ") then" << endl;
       indent_impl(code_block) << "begin" << endl;
       indent_up_impl();
     } else {
