@@ -479,10 +479,10 @@ public abstract class AbstractNonblockingServer extends TServer {
         return;
       } catch (TException te) {
         LOGGER.warn("Exception while invoking!", te);
-      } catch (Exception e) {
-        LOGGER.error("Unexpected exception while invoking!", e);
+      } catch (Throwable t) {
+        LOGGER.error("Unexpected throwable while invoking!", t);
       }
-      // This will only be reached when there is an exception.
+      // This will only be reached when there is a throwable.
       state_ = FrameBufferState.AWAITING_CLOSE;
       requestSelectInterestChange();
     }
