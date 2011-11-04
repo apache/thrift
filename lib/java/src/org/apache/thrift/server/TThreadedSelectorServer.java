@@ -537,6 +537,9 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
           processAcceptedConnections();
           processInterestChanges();
         }
+        for (SelectionKey selectionKey : selector.keys()) {
+          cleanupSelectionKey(selectionKey);
+        }
       } catch (Throwable t) {
         LOGGER.error("run() exiting due to uncaught error", t);
       } finally {

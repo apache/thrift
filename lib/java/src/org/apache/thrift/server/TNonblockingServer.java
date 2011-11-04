@@ -20,13 +20,13 @@
 
 package org.apache.thrift.server;
 
-import java.io.IOException;
-import java.nio.channels.SelectionKey;
-import java.util.Iterator;
-
 import org.apache.thrift.transport.TNonblockingServerTransport;
 import org.apache.thrift.transport.TNonblockingTransport;
 import org.apache.thrift.transport.TTransportException;
+
+import java.io.IOException;
+import java.nio.channels.SelectionKey;
+import java.util.Iterator;
 
 /**
  * A nonblocking TServer implementation. This allows for fairness amongst all
@@ -153,6 +153,9 @@ public class TNonblockingServer extends AbstractNonblockingServer {
         while (!stopped_) {
           select();
           processInterestChanges();
+        }
+        for (SelectionKey selectionKey : selector.keys()) {
+          cleanupSelectionKey(selectionKey);
         }
       } catch (Throwable t) {
         LOGGER.error("run() exiting due to uncaught error", t);
