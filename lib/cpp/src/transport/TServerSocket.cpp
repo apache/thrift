@@ -110,6 +110,7 @@ TServerSocket::TServerSocket(string path) :
   acceptBacklog_(1024),
   sendTimeout_(0),
   recvTimeout_(0),
+  accTimeout_(-1),
   retryLimit_(0),
   retryDelay_(0),
   tcpSendBuffer_(0),
