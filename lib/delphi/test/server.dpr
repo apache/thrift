@@ -43,6 +43,7 @@ var
 
 begin
   try
+    Writeln( 'Delphi TestServer '+Thrift.Version);
     nParamCount := ParamCount;
     SetLength( args, nParamCount);
     for i := 1 to nParamCount do

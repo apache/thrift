@@ -44,6 +44,7 @@ var
 
 begin
   try
+    Writeln( 'Delphi TestClient '+Thrift.Version);
     nParamCount := ParamCount;
     SetLength( args, nParamCount);
     for i := 1 to nParamCount do
