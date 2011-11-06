@@ -21,33 +21,6 @@
 #include "constants.h"
 #include "macros.h"
 
-#ifndef HAVE_STRLCPY
-
-static
-size_t
-strlcpy (char *dst, const char *src, size_t dst_sz)
-{
-    size_t n;
-
-    for (n = 0; n < dst_sz; n++) {
-      if ((*dst++ = *src++) == '\0')
-        break;
-    }
-
-    if (n < dst_sz)
-      return n;
-    if (n > 0)
-      *(dst - 1) = '\0';
-    return n + strlen (src);
-}
-#else
-/*
-   Ruby 1.9.x includes the OpenBSD implementation of strlcpy.
-   See missing/strlcpy.c in Ruby 1.9 source
- */
-extern size_t strlcpy(char *, const char *, size_t);
-#endif
-
 VALUE thrift_union_class;
 
 ID setfield_id;
