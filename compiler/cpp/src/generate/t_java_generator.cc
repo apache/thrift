@@ -3266,7 +3266,7 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
     }
   }
   result += "; // ";
-  if (tfield->get_xsd_optional()) {
+  if (tfield->get_req() == t_field::T_OPTIONAL) {
     result += "optional";
   } else {
     result += "required";
