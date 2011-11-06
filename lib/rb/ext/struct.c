@@ -20,6 +20,7 @@
 #include "struct.h"
 #include "constants.h"
 #include "macros.h"
+#include "strlcpy.h"
 
 VALUE thrift_union_class;
 

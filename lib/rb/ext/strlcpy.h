@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -17,25 +17,13 @@
  * under the License.
  */
 
-#include "strlcpy.h"
+
+#include <string.h>
 
 #ifndef HAVE_STRLCPY
-#define HAVE_STRLCPY
 size_t
 strlcpy (char *dst, const char *src, size_t dst_sz)
-{
-    size_t n;
-
-    for (n = 0; n < dst_sz; n++) {
-      if ((*dst++ = *src++) == '\0')
-        break;
-    }
-
-    if (n < dst_sz)
-      return n;
-    if (n > 0)
-      *(dst - 1) = '\0';
-    return n + strlen (src);
-}
+#else
+extern size_t strlcpy(char *, const char *, size_t);
 #endif
 
