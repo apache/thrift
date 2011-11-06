@@ -30,20 +30,15 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
-#include <boost/interprocess/sync/interprocess_condition.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
 
 namespace apache { namespace thrift { namespace concurrency {
 
-using namespace boost::interprocess;
-
 /**
- * Monitor implementation using the boost interprocess library
+ * Monitor implementation using the boost thread library
  *
  * @version $Id:$
  */
-class Monitor::Impl : public interprocess_condition {
+class Monitor::Impl : public boost::condition_variable_any {
 
  public:
 
@@ -96,11 +91,11 @@ class Monitor::Impl : public interprocess_condition {
     }
 
     assert(mutex_);
-    interprocess_mutex* mutexImpl =
-      reinterpret_cast<interprocess_mutex*>(mutex_->getUnderlyingImpl());
+	boost::timed_mutex* mutexImpl =
+      reinterpret_cast<boost::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
-	scoped_lock<interprocess_mutex> lock(*mutexImpl, accept_ownership_type());
+	boost::timed_mutex::scoped_lock lock(*mutexImpl, boost::adopt_lock);
 	int res = timed_wait(lock, boost::get_system_time()+boost::posix_time::milliseconds(timeout_ms)) ? 0 : ETIMEDOUT;
 	lock.release();
 	return res;
@@ -112,8 +107,8 @@ class Monitor::Impl : public interprocess_condition {
    */
   int waitForTime(const timespec* abstime) {
     assert(mutex_);
-    interprocess_mutex* mutexImpl =
-      reinterpret_cast<interprocess_mutex*>(mutex_->getUnderlyingImpl());
+    boost::timed_mutex* mutexImpl =
+      reinterpret_cast<boost::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     struct timespec currenttime;
@@ -126,7 +121,7 @@ class Monitor::Impl : public interprocess_condition {
 	if(tv_nsec < 0)
 		tv_nsec = 0;
 
-	scoped_lock<interprocess_mutex> lock(*mutexImpl, accept_ownership_type());
+	boost::timed_mutex::scoped_lock lock(*mutexImpl, boost::adopt_lock);
 	int res = timed_wait(lock, boost::get_system_time() +
 		boost::posix_time::seconds(tv_sec) +
 		boost::posix_time::microseconds(tv_nsec / 1000)
@@ -141,12 +136,12 @@ class Monitor::Impl : public interprocess_condition {
    */
   int waitForever() {
     assert(mutex_);
-    interprocess_mutex* mutexImpl =
-      reinterpret_cast<interprocess_mutex*>(mutex_->getUnderlyingImpl());
+    boost::timed_mutex* mutexImpl =
+      reinterpret_cast<boost::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
-	scoped_lock<interprocess_mutex> lock(*mutexImpl, accept_ownership_type());
-	((interprocess_condition*)this)->wait(lock);
+	boost::timed_mutex::scoped_lock lock(*mutexImpl, boost::adopt_lock);
+	((boost::condition_variable_any*)this)->wait(lock);
 	lock.release();
     return 0;
   }

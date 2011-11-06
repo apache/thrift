@@ -445,6 +445,7 @@ AC_ARG_ENABLE(boostthreads,
 if test "x[$]ENABLE_BOOSTTHREADS" = "x1"; then
   AC_MSG_WARN(enable boostthreads)
   AC_DEFINE([USE_BOOST_THREAD], [1], [experimental --enable-boostthreads that replaces POSIX pthread by boost::thread])
+  LIBS="-lboost_thread $LIBS"
 fi
 
 AM_CONDITIONAL([WITH_BOOSTTHREADS], [test "x[$]ENABLE_BOOSTTHREADS" = "x1"])

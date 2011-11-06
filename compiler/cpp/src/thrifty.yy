@@ -28,7 +28,11 @@
 #define __STDC_LIMIT_MACROS
 #define __STDC_FORMAT_MACROS
 #include <stdio.h>
+#ifndef _WIN32
 #include <inttypes.h>
+#else
+#include <stdint.h>
+#endif
 #include <limits.h>
 #include "main.h"
 #include "globals.h"

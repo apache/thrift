@@ -68,7 +68,6 @@ UnitTests_SOURCES = \
 	TBufferBaseTest.cpp
 
 UnitTests_LDADD = \
-  $(BOOST_LDFLAGS) \
   libtestgencpp.la \
   $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
 
@@ -181,6 +180,7 @@ INCLUDES = \
 	-I$(top_srcdir)/lib/cpp/src
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS)
 AM_CXXFLAGS = -Wall
 
 clean-local:
