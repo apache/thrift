@@ -127,6 +127,7 @@ class GenericSizeGenerator : public SizeGenerator {
 template <class Transport_>
 class CoupledTransports {
  public:
+  virtual ~CoupledTransports() {}
   typedef Transport_ TransportType;
 
   CoupledTransports() : in(), out() {}
