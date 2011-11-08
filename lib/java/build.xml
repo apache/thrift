@@ -116,6 +116,14 @@
     <jar jarfile="${jar.file}">
       <manifest>
         <attribute name="Implementation-Version" value="${version}"/>
+        <attribute name="Bundle-ManifestVersion" value="2"/>
+        <attribute name="Bundle-SymbolicName" value="${thrift.groupid}"/>
+        <attribute name="Bundle-Name" value="Apache Thrift"/>
+        <attribute name="Bundle-Version" value="${version}"/>
+        <attribute name="Bundle-Description" value="Apache Thrift library"/>
+        <attribute name="Bundle-License" value="${license}"/>
+        <attribute name="Bundle-ActivationPolicy" value="lazy"/>
+        <attribute name="Export-Package" value="${thrift.groupid};version=${version}"/>
       </manifest>
       <fileset dir="${build.dir}">
         <include name="org/apache/thrift/**/*.class"/>
