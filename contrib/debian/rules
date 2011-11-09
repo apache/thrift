@@ -23,7 +23,7 @@ configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
 	if [ -f bootstrap.sh ]; then $(CURDIR)/bootstrap.sh; fi
-	$(CURDIR)/configure --prefix=/usr --with-c_glib
+	$(CURDIR)/configure --prefix=/usr --with-c_glib --without-erlang
 
 	touch configure-stamp
 
@@ -70,7 +70,7 @@ build-indep-stamp: configure-stamp
 		ant
 
 	# Erlang
-	$(MAKE) -C $(CURDIR)/lib/erl
+	# $(MAKE) -C $(CURDIR)/lib/erl
 
 	# C#
 	$(MAKE) -C $(CURDIR)/lib/csharp
@@ -107,11 +107,11 @@ install-indep:
 		$(CURDIR)/debian/libthrift-java/usr/share/java/
 
 	# Erlang
-	mkdir -p $(CURDIR)/debian/libthrift-erlang/usr/lib/erlang/lib/thrift/ && \
-	cp -r $(CURDIR)/lib/erl/ebin \
-		$(CURDIR)/lib/erl/include \
-		$(CURDIR)/lib/erl/src \
-		$(CURDIR)/debian/libthrift-erlang/usr/lib/erlang/lib/thrift/
+	# mkdir -p $(CURDIR)/debian/libthrift-erlang/usr/lib/erlang/lib/thrift/ && \
+	# cp -r $(CURDIR)/lib/erl/ebin \
+	#	$(CURDIR)/lib/erl/include \
+	#	$(CURDIR)/lib/erl/src \
+	#	$(CURDIR)/debian/libthrift-erlang/usr/lib/erlang/lib/thrift/
 
 	# C#
 	mkdir -p $(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/ && \
