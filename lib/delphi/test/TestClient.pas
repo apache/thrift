@@ -22,12 +22,19 @@ unit TestClient;
 interface
 
 uses
-  SysUtils, Classes, Thrift.Protocol, Thrift.Transport, Thrift.Test,
-  Generics.Collections, Thrift.Collections, Windows, Thrift.Console,
-  DateUtils;
+  Windows, SysUtils, Classes,
+  DateUtils,
+  Generics.Collections,
+  TestConstants,
+  Thrift.Protocol.JSON,
+  Thrift.Protocol,
+  Thrift.Transport,
+  Thrift.Stream,
+  Thrift.Test,
+  Thrift.Collections,
+  Thrift.Console;
 
 type
-
   TThreadConsole = class
   private
     FThread : TThread;
@@ -40,14 +47,19 @@ type
   TClientThread = class( TThread )
   private
     FTransport : ITransport;
+    FProtocol : IProtocol;
     FNumIteration : Integer;
     FConsole : TThreadConsole;
 
+    FErrors, FSuccesses : Integer;
+    procedure Expect( aTestResult : Boolean; const aTestInfo : string);
+    
     procedure ClientTest;
+    procedure JSONProtocolReadWriteTest;
   protected
     procedure Execute; override;
   public
-    constructor Create(ATransport: ITransport; ANumIteration: Integer);
+    constructor Create(ATransport: ITransport; AProtocol : IProtocol; ANumIteration: Integer);
     destructor Destroy; override;
   end;
 
@@ -61,6 +73,7 @@ type
   end;
 
 implementation
+
 
 { TTestClient }
 
@@ -79,12 +92,14 @@ var
   test : Integer;
   thread : TThread;
   trans : ITransport;
+  prot : IProtocol;
   streamtrans : IStreamTransport;
   http : IHTTPClient;
-
+  protType, p : TKnownProtocol;
 begin
   bBuffered := False;;
   bFramed := False;
+  protType := prot_Binary;
   try
     host := 'localhost';
     port := 9090;
@@ -132,6 +147,18 @@ begin
           begin
             Inc( i );
             FNumThread := StrToInt( args[i] );
+          end else
+          if (args[i] = '-prot') then  // -prot JSON|binary
+          begin
+            Inc( i );
+            s := args[i];
+            for p:= Low(TKnownProtocol) to High(TKnownProtocol) do begin
+              if SameText( s, KNOWN_PROTOCOLS[p]) then begin
+                protType := p;
+                Console.WriteLine('Using '+KNOWN_PROTOCOLS[protType]+' protocol');
+                Break;
+              end;
+            end;
           end;
         finally
           Inc( i );
@@ -167,7 +194,17 @@ begin
         http := THTTPClientImpl.Create( url );
         trans := http;
       end;
-      thread := TClientThread.Create( trans, FNumIteration);
+
+      // create protocol instance, default to BinaryProtocol
+      case protType of
+        prot_Binary:  prot := TBinaryProtocolImpl.Create( trans);
+        prot_JSON  :  prot := TJSONProtocolImpl.Create( trans);
+      else
+        ASSERT( FALSE);  // unhandled case!
+        prot := TBinaryProtocolImpl.Create( trans);  // use default
+      end;
+
+      thread := TClientThread.Create( trans, prot, FNumIteration);
       threads[test] := thread;
 {$WARN SYMBOL_DEPRECATED OFF}
       thread.Resume;
@@ -201,7 +238,6 @@ end;
 
 procedure TClientThread.ClientTest;
 var
-  binaryProtocol : TBinaryProtocolImpl;
   client : TThriftTest.Iface;
   s : string;
   i8 : ShortInt;
@@ -234,7 +270,7 @@ var
   k2_2 : TNumberz;
   k3 : TNumberz;
   v2 : IInsanity;
-	userMap : IThriftDictionary<TNumberz, Int64>;
+  userMap : IThriftDictionary<TNumberz, Int64>;
   xtructs : IThriftList<IXtruct>;
   x : IXtruct;
   arg0 : ShortInt;
@@ -248,8 +284,7 @@ var
   proc : TThreadProcedure;
 
 begin
-  binaryProtocol := TBinaryProtocolImpl.Create( FTransport );
-  client := TThriftTest.TClient.Create( binaryProtocol );
+  client := TThriftTest.TClient.Create( FProtocol);
   try
     if not FTransport.IsOpen then
     begin
@@ -523,11 +558,114 @@ begin
 
 end;
 
-constructor TClientThread.Create(ATransport: ITransport; ANumIteration: Integer);
+
+procedure TClientThread.JSONProtocolReadWriteTest;
+// Tests only then read/write procedures of the JSON protocol
+// All tests succeed, if we can read what we wrote before
+// Note that passing this test does not imply, that our JSON is really compatible to what
+// other clients or servers expect as the real JSON. This is beyond the scope of this test.
+var prot   : IProtocol;
+    stm    : TStringStream;
+    list   : IList;
+    binary, binRead : TBytes;
+    i,iErr : Integer;
+const
+  TEST_SHORT   = ShortInt( $FE);
+  TEST_SMALL   = SmallInt( $FEDC);
+  TEST_LONG    = LongInt( $FEDCBA98);
+  TEST_I64     = Int64( $FEDCBA9876543210);
+  TEST_DOUBLE  = -1.234e-56;
+  DELTA_DOUBLE = TEST_DOUBLE * 1e-14;
+  TEST_STRING  = 'abc-'#$00E4#$00f6#$00fc; // german umlauts (en-us: "funny chars")
+begin
+  stm  := TStringStream.Create;
+  try
+    // prepare binary data
+    SetLength( binary, $100);
+    for i := Low(binary) to High(binary) do binary[i] := i;
+
+    // output setup
+    prot := TJSONProtocolImpl.Create(
+              TStreamTransportImpl.Create(
+                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE)));
+
+    // write
+    prot.WriteListBegin( TListImpl.Create( TType.String_, 9));
+    prot.WriteBool( TRUE);
+    prot.WriteBool( FALSE);
+    prot.WriteByte( TEST_SHORT);
+    prot.WriteI16( TEST_SMALL);
+    prot.WriteI32( TEST_LONG);
+    prot.WriteI64( TEST_I64);
+    prot.WriteDouble( TEST_DOUBLE);
+    prot.WriteString( TEST_STRING);
+    prot.WriteBinary( binary);
+    prot.WriteListEnd;
+
+    // input setup
+    Expect( stm.Position = stm.Size, 'Stream position/length after write');
+    stm.Position := 0;
+    prot := TJSONProtocolImpl.Create(
+              TStreamTransportImpl.Create(
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+
+    // read and compare
+    list := prot.ReadListBegin;
+    Expect( list.ElementType = TType.String_, 'list element type');
+    Expect( list.Count = 9, 'list element count');
+    Expect( prot.ReadBool, 'WriteBool/ReadBool: TRUE');
+    Expect( not prot.ReadBool, 'WriteBool/ReadBool: FALSE');
+    Expect( prot.ReadByte   = TEST_SHORT,  'WriteByte/ReadByte');
+    Expect( prot.ReadI16    = TEST_SMALL,  'WriteI16/ReadI16');
+    Expect( prot.ReadI32    = TEST_LONG,   'WriteI32/ReadI32');
+    Expect( prot.ReadI64    = TEST_I64,    'WriteI64/ReadI64');
+    Expect( abs(prot.ReadDouble-TEST_DOUBLE) < abs(DELTA_DOUBLE), 'WriteDouble/ReadDouble');
+    Expect( prot.ReadString = TEST_STRING, 'WriteString/ReadString');
+    binRead := prot.ReadBinary;
+    prot.ReadListEnd;
+
+    // test binary data
+    Expect( Length(binary) = Length(binRead), 'Binary data length check');
+    iErr := -1;
+    for i := Low(binary) to High(binary) do begin
+      if binary[i] <> binRead[i] then begin
+        iErr := i;
+        Break;
+      end;
+    end;
+    if iErr < 0
+    then Expect( TRUE,  'Binary data check ('+IntToStr(Length(binary))+' Bytes)')
+    else Expect( FALSE, 'Binary data check at offset '+IntToStr(iErr));
+
+    Expect( stm.Position = stm.Size, 'Stream position after read');
+
+  finally
+    stm.Free;
+    prot := nil;  //-> Release
+  end;
+end;
+
+
+procedure TClientThread.Expect( aTestResult : Boolean; const aTestInfo : string);
+begin
+  if aTestResult  then begin
+    Inc(FSuccesses);
+    Console.WriteLine( aTestInfo+' = OK');
+  end
+  else begin
+    Inc(FErrors);
+    Console.WriteLine( aTestInfo+' = FAILED');
+    ASSERT( FALSE);  // we have a failed test!
+  end;
+end;
+
+
+constructor TClientThread.Create(ATransport: ITransport; AProtocol : IProtocol; ANumIteration: Integer);
 begin
   inherited Create( True );
   FNumIteration := ANumIteration;
   FTransport := ATransport;
+  FProtocol := AProtocol;
   FConsole := TThreadConsole.Create( Self );
 end;
 
@@ -545,6 +683,7 @@ begin
   for i := 0 to FNumIteration - 1 do
   begin
     ClientTest;
+    JSONProtocolReadWriteTest;
   end;
 
   proc := procedure

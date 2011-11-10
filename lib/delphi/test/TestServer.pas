@@ -27,10 +27,13 @@ uses
   Thrift.Console,
   Thrift.Server,
   Thrift.Transport,
+  Thrift.Protocol,
+  Thrift.Protocol.JSON,
   Thrift.Collections,
   Thrift.Utils,
   Thrift.Test,
   Thrift,
+  TestConstants,
   Contnrs;
 
 type
@@ -86,19 +89,19 @@ end;
 
 function TTestServer.TTestHandlerImpl.testByte(thing: ShortInt): ShortInt;
 begin
-	Console.WriteLine('testByte("' + IntToStr( thing) + '")');
-	Result := thing;
+  Console.WriteLine('testByte("' + IntToStr( thing) + '")');
+  Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testDouble(thing: Double): Double;
 begin
-	Console.WriteLine('testDouble("' + FloatToStr( thing ) + '")');
-	Result := thing;
+  Console.WriteLine('testDouble("' + FloatToStr( thing ) + '")');
+  Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testEnum(thing: TNumberz): TNumberz;
 begin
-	Console.WriteLine('testEnum(' + IntToStr( Integer( thing)) + ')');
+  Console.WriteLine('testEnum(' + IntToStr( Integer( thing)) + ')');
   Result := thing;
 end;
 
@@ -118,14 +121,14 @@ end;
 
 function TTestServer.TTestHandlerImpl.testI32(thing: Integer): Integer;
 begin
-	Console.WriteLine('testI32("' + IntToStr( thing) + '")');
-	Result := thing;
+  Console.WriteLine('testI32("' + IntToStr( thing) + '")');
+  Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testI64(thing: Int64): Int64;
 begin
-	Console.WriteLine('testI64("' + IntToStr( thing) + '")');
-	Result := thing;
+  Console.WriteLine('testI64("' + IntToStr( thing) + '")');
+  Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testInsanity(
@@ -154,14 +157,14 @@ begin
   goodbye.I64_thing := 4;
 
   crazy := TInsanityImpl.Create;
-	crazy.UserMap := TThriftDictionaryImpl<TNumberz, Int64>.Create;
-	crazy.UserMap.AddOrSetValue( TNumberz.EIGHT, 8);
-	crazy.Xtructs := TThriftListImpl<IXtruct>.Create;
-	crazy.Xtructs.Add(goodbye);
+  crazy.UserMap := TThriftDictionaryImpl<TNumberz, Int64>.Create;
+  crazy.UserMap.AddOrSetValue( TNumberz.EIGHT, 8);
+  crazy.Xtructs := TThriftListImpl<IXtruct>.Create;
+  crazy.Xtructs.Add(goodbye);
 
   looney := TInsanityImpl.Create;
   crazy.UserMap.AddOrSetValue( TNumberz.FIVE, 5);
-	crazy.Xtructs.Add(hello);
+  crazy.Xtructs.Add(hello);
 
   first_map := TThriftDictionaryImpl<TNumberz, IInsanity>.Create;
   second_map := TThriftDictionaryImpl<TNumberz, IInsanity>.Create;
@@ -212,7 +215,7 @@ begin
   first := True;
   for key in thing.Keys do
   begin
-  	if (first) then
+    if (first) then
     begin
       first := false;
     end else
@@ -221,7 +224,7 @@ begin
     end;
     Console.Write(IntToStr(key) + ' => ' + IntToStr( thing[key]));
   end;
-	Console.WriteLine('})');
+  Console.WriteLine('})');
   Result := thing;
 end;
 
@@ -297,21 +300,21 @@ var
   temp : IXtruct;
 begin
   temp := thing.Struct_thing;
-	Console.WriteLine('testNest({' +
-				 IntToStr( thing.Byte_thing) + ', {' +
-				 '"' + temp.String_thing + '", ' +
-				 IntToStr( temp.Byte_thing) + ', ' +
-				 IntToStr( temp.I32_thing) + ', ' +
-				 IntToStr( temp.I64_thing) + '}, ' +
-				 IntToStr( temp.I32_thing) + '})');
+  Console.WriteLine('testNest({' +
+         IntToStr( thing.Byte_thing) + ', {' +
+         '"' + temp.String_thing + '", ' +
+         IntToStr( temp.Byte_thing) + ', ' +
+         IntToStr( temp.I32_thing) + ', ' +
+         IntToStr( temp.I64_thing) + '}, ' +
+         IntToStr( temp.I32_thing) + '})');
   Result := thing;
 end;
 
 procedure TTestServer.TTestHandlerImpl.testOneway(secondsToSleep: Integer);
 begin
-	Console.WriteLine('testOneway(' + IntToStr( secondsToSleep )+ '), sleeping...');
-	Sleep(secondsToSleep * 1000);
-	Console.WriteLine('testOneway finished');
+  Console.WriteLine('testOneway(' + IntToStr( secondsToSleep )+ '), sleeping...');
+  Sleep(secondsToSleep * 1000);
+  Console.WriteLine('testOneway finished');
 end;
 
 function TTestServer.TTestHandlerImpl.testSet(
@@ -348,8 +351,8 @@ end;
 
 function TTestServer.TTestHandlerImpl.testString(thing: string): string;
 begin
-	Console.WriteLine('teststring("' + thing + '")');
-	Result := thing;
+  Console.WriteLine('teststring("' + thing + '")');
+  Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testStringMap(
@@ -360,7 +363,7 @@ end;
 
 function TTestServer.TTestHandlerImpl.testTypedef(thing: Int64): Int64;
 begin
-	Console.WriteLine('testTypedef(' + IntToStr( thing) + ')');
+  Console.WriteLine('testTypedef(' + IntToStr( thing) + ')');
   Result := thing;
 end;
 
@@ -373,9 +376,9 @@ function TTestServer.TTestHandlerImpl.testStruct(thing: IXtruct): IXtruct;
 begin
   Console.WriteLine('testStruct({' +
     '"' + thing.String_thing + '", ' +
-		  IntToStr( thing.Byte_thing) + ', ' +
-			IntToStr( thing.I32_thing) + ', ' +
-			IntToStr( thing.I64_thing));
+      IntToStr( thing.Byte_thing) + ', ' +
+      IntToStr( thing.I32_thing) + ', ' +
+      IntToStr( thing.I64_thing));
   Result := thing;
 end;
 
@@ -390,59 +393,85 @@ var
   testProcessor : IProcessor;
   ServerSocket : IServerTransport;
   ServerEngine : IServer;
-  TransportFactroy : ITransportFactory;
-
-
+  TransportFactory : ITransportFactory;
+  ProtocolFactory : IProtocolFactory;
+  i : Integer;
+  s : string;
+  protType, p : TKnownProtocol;
 begin
   try
     UseBufferedSockets := False;
     UseFramed := False;
+    protType := prot_Binary;
     Port := 9090;
 
-    if ( Length( args) > 0) then
-    begin
-      Port :=  StrToIntDef( args[0], Port);
+    i := 0;
+    while ( i < Length(args) ) do begin
+      s := args[i];
+      Inc(i);
 
-      if ( Length( args) > 0) then
+      if StrToIntDef( s, -1) > 0 then
       begin
-        if ( args[0] = 'raw' ) then
-        begin
-          // as default
-        end else
-        if ( args[0] = 'buffered' ) then
-        begin
-          UseBufferedSockets := True;
-        end else
-        if ( args[0] = 'framed' ) then
-        begin
-          UseFramed := True;
-        end else
-        begin
-          // Fall back to the older boolean syntax
-          UseBufferedSockets := StrToBoolDef( args[1], UseBufferedSockets);
-        end
+        Port :=  StrToIntDef( s, Port);
+      end else
+      if ( s = 'raw' ) then
+      begin
+        // as default
+      end else
+      if ( s = 'buffered' ) then
+      begin
+        UseBufferedSockets := True;
+      end else
+      if ( s = 'framed' ) then
+      begin
+        UseFramed := True;
+      end else
+      if (s = '-prot') then  // -prot JSON|binary
+      begin
+        s := args[i];
+        Inc( i );
+        for p:= Low(TKnownProtocol) to High(TKnownProtocol) do begin
+          if SameText( s, KNOWN_PROTOCOLS[p]) then begin
+            protType := p;
+            Break;
+          end;
+        end;
+      end else
+      begin
+        // Fall back to the older boolean syntax
+        UseBufferedSockets := StrToBoolDef( args[1], UseBufferedSockets);
       end
+    end;
+
+    // create protocol factory, default to BinaryProtocol
+    case protType of
+      prot_Binary:  ProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
+      prot_JSON  :  ProtocolFactory := TJSONProtocolImpl.TFactory.Create;
+    else
+      ASSERT( FALSE);  // unhandled case!
+      ProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
     end;
 
     testHandler := TTestHandlerImpl.Create;
 
     testProcessor := TThriftTest.TProcessorImpl.Create( testHandler );
     ServerSocket := TServerSocketImpl.Create( Port, 0, UseBufferedSockets );
-    if UseFramed then
-    begin
-      TransportFactroy := TFramedTransportImpl.TFactory.Create;
-      ServerEngine := TSimpleServer.Create( testProcessor, ServerSocket,
-         TransportFactroy);
-    end else
-    begin
-      ServerEngine := TSimpleServer.Create( testProcessor, ServerSocket);
-    end;
+
+    if UseFramed
+    then TransportFactory := TFramedTransportImpl.TFactory.Create
+    else TransportFactory := TTransportFactoryImpl.Create;
+
+    ServerEngine := TSimpleServer.Create( testProcessor,
+                                          ServerSocket,
+                                          TransportFactory,
+                                          ProtocolFactory);
 
     testHandler.SetServer( ServerEngine);
 
     Console.WriteLine('Starting the server on port ' + IntToStr( Port) +
       IfValue(UseBufferedSockets, ' with buffered socket', '') +
       IfValue(useFramed, ' with framed transport', '') +
+      ' using '+KNOWN_PROTOCOLS[protType]+' protocol' +
       '...');
 
     serverEngine.Serve;

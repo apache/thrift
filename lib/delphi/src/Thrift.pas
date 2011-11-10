@@ -26,7 +26,7 @@ uses
 
 const
   Version = '0.8.0-dev';
-	
+
 type
   IProcessor = interface
     ['{B1538A07-6CAC-4406-8A4C-AFED07C70A89}']

@@ -28,6 +28,7 @@ uses
   Thrift in '..\..\..\lib\delphi\src\Thrift.pas',
   Thrift.Transport in '..\..\..\lib\delphi\src\Thrift.Transport.pas',
   Thrift.Protocol in '..\..\..\lib\delphi\src\Thrift.Protocol.pas',
+  Thrift.Protocol.JSON in '..\..\..\lib\delphi\src\Thrift.Protocol.JSON.pas',
   Thrift.Collections in '..\..\..\lib\delphi\src\Thrift.Collections.pas',
   Thrift.Server in '..\..\..\lib\delphi\src\Thrift.Server.pas',
   Thrift.Console in '..\..\..\lib\delphi\src\Thrift.Console.pas',
@@ -58,6 +59,4 @@ begin
       Writeln(E.ClassName, ': ', E.Message);
   end;
 end.
-
-
 
