@@ -17,8 +17,8 @@
 # under the License.
 #
 
-require File.dirname(__FILE__) + '/spec_helper'
-require File.dirname(__FILE__) + '/binary_protocol_spec_shared'
+require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require File.expand_path("#{File.dirname(__FILE__)}/binary_protocol_spec_shared")
 
 class ThriftBinaryProtocolSpec < Spec::ExampleGroup
   include Thrift
