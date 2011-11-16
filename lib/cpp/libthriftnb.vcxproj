@@ -119,6 +119,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;HAVE_CONFIG_H;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>force_inc.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ProgramDataBaseFileName>$(IntDir)libthriftnb.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -149,6 +150,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;HAVE_CONFIG_H;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>force_inc.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ProgramDataBaseFileName>$(IntDir)libthriftnb.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
