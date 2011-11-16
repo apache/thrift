@@ -38,15 +38,16 @@ endif
 
 EXTRA_DIST = \
 	cpp \
-	threads \
 	csharp \
+	erl \
+	hs \
+	ocaml \
+	perl \
+	php \
 	py \
 	py.twisted \
 	rb \
-	perl \
-	php \
-	hs \
-	ocaml \
+	threads \
 	AnnotationTest.thrift \
 	BrokenConstants.thrift \
 	ConstantsDemo.thrift \

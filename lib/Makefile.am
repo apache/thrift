@@ -65,9 +65,12 @@ endif
 # All of the libs that don't use Automake need to go in here
 # so they will end up in our release tarballs.
 EXTRA_DIST = \
-  cocoa \
-  ocaml \
-  js \
-  as3 \
-  st \
-  go
+			as3 \
+			cocoa \
+			delphi \
+			go \
+			javame \
+			js \
+			nodejs \
+			ocaml \
+			st

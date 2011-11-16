@@ -33,5 +33,12 @@ dist-hook:
 print-version:
 	@echo $(VERSION)
 
-EXTRA_DIST = doc tutorial contrib \
-             CONTRIBUTORS LICENSE CHANGES DISCLAIMER NOTICE
+EXTRA_DIST = \
+ 			doc \
+			tutorial \
+			contrib \
+			CONTRIBUTORS \
+			LICENSE \
+			CHANGES \
+			DISCLAIMER \
+			NOTICE

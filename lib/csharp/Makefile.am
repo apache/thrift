@@ -19,6 +19,7 @@
 
 THRIFTCODE= \
             src/Collections/THashSet.cs \
+            src/Properties/AssemblyInfo.cs \
             src/Protocol/TBase.cs \
             src/Protocol/TBase64Utils.cs \
             src/Protocol/TJSONProtocol.cs \

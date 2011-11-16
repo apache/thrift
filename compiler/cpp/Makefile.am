@@ -59,7 +59,9 @@ thrift_SOURCES = src/main.cc \
                  src/parse/t_const_value.h \
                  src/parse/parse.cc \
                  src/generate/t_generator.h \
-                 src/generate/t_oop_generator.h
+                 src/generate/t_oop_generator.h \
+                 src/windows/config.h \
+                 src/windows/version.h
 
 # Specific client generator source
 thrift_SOURCES += src/generate/t_c_glib_generator.cc \
@@ -93,7 +95,13 @@ libparse_a_CXXFLAGS = -Wall -Wno-sign-compare -Wno-unused
 libparse_a_SOURCES = src/thrifty.yy \
                      src/thriftl.ll
 
-EXTRA_DIST = README
+WINDOWS_DIST = \
+             compiler.sln \
+             compiler.vcxproj \
+             compiler.vcxproj.filters
+
+EXTRA_DIST = \
+             $(WINDOWS_DIST)
 
 clean-local:
 	$(RM) thriftl.cc thrifty.cc thrifty.h version.h

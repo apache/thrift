@@ -18,7 +18,7 @@
 #
 
 DESTDIR ?= /
-EXTRA_DIST = setup.py setup.cfg src
+EXTRA_DIST = setup.py setup.cfg src compat
 
 all-local:
 	$(PYTHON) setup.py build

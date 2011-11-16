@@ -48,6 +48,7 @@ AM_LDFLAGS = $(BOOST_LDFLAGS)
 
 libthrift_la_SOURCES = src/Thrift.cpp \
                        src/TApplicationException.cpp \
+                       src/VirtualProfiling.cpp \
                        src/concurrency/ThreadManager.cpp \
                        src/concurrency/TimerManager.cpp \
                        src/concurrency/Util.cpp \
@@ -86,14 +87,12 @@ libthrift_la_SOURCES += src/concurrency/Mutex.cpp \
                         src/concurrency/PosixThreadFactory.cpp
 endif
 
-
 libthriftnb_la_SOURCES = src/server/TNonblockingServer.cpp \
                          src/async/TAsyncProtocolProcessor.cpp \
                          src/async/TEvhttpServer.cpp \
                          src/async/TEvhttpClientChannel.cpp 
 
 libthriftz_la_SOURCES = src/transport/TZlibTransport.cpp
-
 
 # Flags for the various libraries
 libthriftnb_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
@@ -114,9 +113,11 @@ include_thrift_HEADERS = \
 
 include_concurrencydir = $(include_thriftdir)/concurrency
 include_concurrency_HEADERS = \
+                         src/concurrency/BoostThreadFactory.h \
                          src/concurrency/Exception.h \
                          src/concurrency/Mutex.h \
                          src/concurrency/Monitor.h \
+                         src/concurrency/PlatformThreadFactory.h \
                          src/concurrency/PosixThreadFactory.h \
                          src/concurrency/Thread.h \
                          src/concurrency/ThreadManager.h \
@@ -186,15 +187,27 @@ include_async_HEADERS = \
 
 noinst_PROGRAMS = concurrency_test
 
-concurrency_test_SOURCES = src/concurrency/test/Tests.cpp \
+concurrency_test_SOURCES = \
+                           src/concurrency/test/Tests.cpp \
                            src/concurrency/test/ThreadFactoryTests.h \
                            src/concurrency/test/ThreadManagerTests.h \
                            src/concurrency/test/TimerManagerTests.h
 
 concurrency_test_LDADD = libthrift.la
 
+WINDOWS_DIST = \
+             README_WINDOWS \
+             src/windows \
+             thrift.sln \
+             libthrift.vcxproj \
+             libthrift.vcxproj.filters \
+             libthriftnb.vcxproj \
+             libthriftnb.vcxproj.filters
+
 EXTRA_DIST = \
              README \
+             README.SSL \
              thrift-nb.pc.in \
              thrift.pc.in \
-             thrift-z.pc.in
+             thrift-z.pc.in \
+             $(WINDOWS_DIST)
