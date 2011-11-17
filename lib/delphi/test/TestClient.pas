@@ -26,6 +26,7 @@ uses
   DateUtils,
   Generics.Collections,
   TestConstants,
+  Thrift,
   Thrift.Protocol.JSON,
   Thrift.Protocol,
   Thrift.Transport,
@@ -51,8 +52,13 @@ type
     FNumIteration : Integer;
     FConsole : TThreadConsole;
 
-    FErrors, FSuccesses : Integer;
+    // test reporting, will be refactored out into separate class later
+    FTestGroup : string;
+    FSuccesses : Integer;
+    FErrors : TStringList;
+    procedure StartTestGroup( const aGroup : string);
     procedure Expect( aTestResult : Boolean; const aTestInfo : string);
+    procedure ReportResults;
     
     procedure ClientTest;
     procedure JSONProtocolReadWriteTest;
@@ -73,6 +79,14 @@ type
   end;
 
 implementation
+
+function BoolToString( b : Boolean) : string;
+// overrides global BoolToString()
+begin
+  if b
+  then result := 'true'
+  else result := 'false';
+end;
 
 
 { TTestClient }
@@ -260,6 +274,8 @@ var
   ret : TNumberz;
   uid : Int64;
   mm : IThriftDictionary<Integer, IThriftDictionary<Integer, Integer>>;
+  pos : IThriftDictionary<Integer, Integer>;
+  neg : IThriftDictionary<Integer, Integer>;
   m2 : IThriftDictionary<Integer, Integer>;
   k2 : Integer;
   insane : IInsanity;
@@ -276,12 +292,17 @@ var
   arg0 : ShortInt;
   arg1 : Integer;
   arg2 : Int64;
-  multiDict : IThriftDictionary<SmallInt, string>;
+  arg3 : IThriftDictionary<SmallInt, string>;
   arg4 : TNumberz;
   arg5 : Int64;
   StartTick : Cardinal;
   k : Integer;
   proc : TThreadProcedure;
+  hello, goodbye : IXtruct;
+  crazy : IInsanity;
+  looney : IInsanity;
+  first_map : IThriftDictionary<TNumberz, IInsanity>;
+  second_map : IThriftDictionary<TNumberz, IInsanity>;
 
 begin
   client := TThriftTest.TClient.Create( FProtocol);
@@ -298,70 +319,90 @@ begin
     end;
   end;
 
-  Console.Write('testException()');
+  // in-depth exception test
+  // (1) do we get an exception at all?
+  // (2) do we get the right exception?
+  // (3) does the exception contain the expected data?
+  StartTestGroup( 'testException');
   try
     client.testException('Xception');
+    Expect( FALSE, 'testException(''Xception''): must trow an exception');
   except
-    on E: TXception do
-    begin
-      Console.WriteLine( ' = ' + IntToStr(E.ErrorCode) + ', ' + E.Message_ );
+    on e:TXception do begin
+      Expect( e.ErrorCode = 1001,                  'error code');
+      Expect( e.Message_  = 'This is an Xception', 'error message');
+      Console.WriteLine( ' = ' + IntToStr(e.ErrorCode) + ', ' + e.Message_ );
     end;
+    on e:TTransportException do Expect( FALSE, 'Unexpected : "'+e.ToString+'"');
+    on e:Exception do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
   end;
 
-  Console.Write('testVoid()');
+  // simple things
+  StartTestGroup( 'simple Thrift calls');
   client.testVoid();
-  Console.WriteLine(' = void');
+  Expect( TRUE, 'testVoid()');  // success := no exception
 
-  Console.Write('testString(''Test'')');
   s := client.testString('Test');
-  Console.WriteLine(' := ''' + s + '''');
+  Expect( s = 'Test', 'testString(''Test'') = "'+s+'"');
 
-  Console.Write('testByte(1)');
   i8 := client.testByte(1);
-  Console.WriteLine(' := ' + IntToStr( i8 ));
+  Expect( i8 = 1, 'testByte(1) = ' + IntToStr( i8 ));
 
-  Console.Write('testI32(-1)');
   i32 := client.testI32(-1);
-  Console.WriteLine(' := ' + IntToStr(i32));
+  Expect( i32 = -1, 'testI32(-1) = ' + IntToStr(i32));
 
-  Console.Write('testI64(-34359738368)');
+  Console.WriteLine('testI64(-34359738368)');
   i64 := client.testI64(-34359738368);
-  Console.WriteLine(' := ' + IntToStr( i64));
+  Expect( i64 = -34359738368, 'testI64(-34359738368) = ' + IntToStr( i64));
 
-  Console.Write('testDouble(5.325098235)');
+  Console.WriteLine('testDouble(5.325098235)');
   dub := client.testDouble(5.325098235);
-  Console.WriteLine(' := ' + FloatToStr( dub));
+  Expect( abs(dub-5.325098235) < 1e-14, 'testDouble(5.325098235) = ' + FloatToStr( dub));
 
-  Console.Write('testStruct({''Zero'', 1, -3, -5})');
+  // structs
+  StartTestGroup( 'testStruct');
+  Console.WriteLine('testStruct({''Zero'', 1, -3, -5})');
   o := TXtructImpl.Create;
   o.String_thing := 'Zero';
   o.Byte_thing := 1;
   o.I32_thing := -3;
   o.I64_thing := -5;
   i := client.testStruct(o);
-  Console.WriteLine(' := {''' +
-    i.String_thing + ''', ' +
-    IntToStr( i.Byte_thing) + ', ' +
-    IntToStr( i.I32_thing) + ', ' +
-    IntToStr( i.I64_thing) + '}');
+  Expect( i.String_thing = 'Zero', 'i.String_thing = "'+i.String_thing+'"');
+  Expect( i.Byte_thing = 1, 'i.Byte_thing = '+IntToStr(i.Byte_thing));
+  Expect( i.I32_thing = -3, 'i.I32_thing = '+IntToStr(i.I32_thing));
+  Expect( i.I64_thing = -5, 'i.I64_thing = '+IntToStr(i.I64_thing));
+  Expect( i.__isset_String_thing, 'i.__isset_String_thing = '+BoolToString(i.__isset_String_thing));
+  Expect( i.__isset_Byte_thing, 'i.__isset_Byte_thing = '+BoolToString(i.__isset_Byte_thing));
+  Expect( i.__isset_I32_thing, 'i.__isset_I32_thing = '+BoolToString(i.__isset_I32_thing));
+  Expect( i.__isset_I64_thing, 'i.__isset_I64_thing = '+BoolToString(i.__isset_I64_thing));
 
-  Console.Write('testNest({1, {''Zero'', 1, -3, -5}, 5})');
+  // nested structs
+  StartTestGroup( 'testNest');
+  Console.WriteLine('testNest({1, {''Zero'', 1, -3, -5}, 5})');
   o2 := TXtruct2Impl.Create;
   o2.Byte_thing := 1;
   o2.Struct_thing := o;
   o2.I32_thing := 5;
   i2 := client.testNest(o2);
   i := i2.Struct_thing;
-  Console.WriteLine(' := {' + IntToStr( i2.Byte_thing) + ', {''' +
-    i.String_thing + ''', ' +
-    IntToStr( i.Byte_thing) + ', ' +
-    IntToStr( i.I32_thing) + ', ' +
-    IntToStr( i.I64_thing) + '}, ' +
-    IntToStr( i2.I32_thing) + '}');
+  Expect( i.String_thing = 'Zero', 'i.String_thing = "'+i.String_thing+'"');
+  Expect( i.Byte_thing = 1,  'i.Byte_thing = '+IntToStr(i.Byte_thing));
+  Expect( i.I32_thing = -3,  'i.I32_thing = '+IntToStr(i.I32_thing));
+  Expect( i.I64_thing = -5,  'i.I64_thing = '+IntToStr(i.I64_thing));
+  Expect( i2.Byte_thing = 1, 'i2.Byte_thing = '+IntToStr(i2.Byte_thing));
+  Expect( i2.I32_thing = 5,  'i2.I32_thing = '+IntToStr(i2.I32_thing));
+  Expect( i.__isset_String_thing, 'i.__isset_String_thing = '+BoolToString(i.__isset_String_thing));
+  Expect( i.__isset_Byte_thing,  'i.__isset_Byte_thing = '+BoolToString(i.__isset_Byte_thing));
+  Expect( i.__isset_I32_thing,  'i.__isset_I32_thing = '+BoolToString(i.__isset_I32_thing));
+  Expect( i.__isset_I64_thing,  'i.__isset_I64_thing = '+BoolToString(i.__isset_I64_thing));
+  Expect( i2.__isset_Byte_thing, 'i2.__isset_Byte_thing');
+  Expect( i2.__isset_I32_thing,  'i2.__isset_I32_thing');
 
-
+  // map<type1,type2>: A map of strictly unique keys to values.
+  // Translates to an STL map, Java HashMap, PHP associative array, Python/Ruby dictionary, etc.
+  StartTestGroup( 'testMap');
   mapout := TThriftDictionaryImpl<Integer,Integer>.Create;
-
   for j := 0 to 4 do
   begin
     mapout.AddOrSetValue( j, j - 10);
@@ -370,33 +411,30 @@ begin
   first := True;
   for key in mapout.Keys do
   begin
-    if first then
-    begin
-      first := False;
-    end else
-    begin
-      Console.Write( ', ' );
-    end;
+    if first
+    then first := False
+    else Console.Write( ', ' );
     Console.Write( IntToStr( key) + ' => ' + IntToStr( mapout[key]));
   end;
-  Console.Write('})');
+  Console.WriteLine('})');
 
   mapin := client.testMap( mapout );
-  Console.Write(' = {');
-  first := True;
+  Expect( mapin.Count = mapout.Count, 'testMap: mapin.Count = mapout.Count');
+  for j := 0 to 4 do
+  begin
+    Expect( mapout.ContainsKey(j), 'testMap: mapout.ContainsKey('+IntToStr(j)+') = '+BoolToString(mapout.ContainsKey(j)));
+  end;
   for key in mapin.Keys do
   begin
-    if first then
-    begin
-      first := False;
-    end else
-    begin
-      Console.Write( ', ' );
-    end;
-    Console.Write( IntToStr( key) + ' => ' + IntToStr( mapin[key]));
+    Expect( mapin[key] = mapout[key], 'testMap: '+IntToStr(key) + ' => ' + IntToStr( mapin[key]));
+    Expect( mapin[key] = key - 10, 'testMap: mapin['+IntToStr(key)+'] = '+IntToStr( mapin[key]));
   end;
-  Console.WriteLine('}');
 
+
+  // set<type>: An unordered set of unique elements.
+  // Translates to an STL set, Java HashSet, set in Python, etc.
+  // Note: PHP does not support sets, so it is treated similar to a List
+  StartTestGroup( 'testSet');
   setout := THashSetImpl<Integer>.Create;
   for j := -2 to 2 do
   begin
@@ -406,59 +444,74 @@ begin
   first := True;
   for j in setout do
   begin
-    if first then
-    begin
-      first := False;
-    end else
-    begin
-      Console.Write(', ');
-    end;
+    if first
+    then first := False
+    else Console.Write(', ');
     Console.Write(IntToStr( j));
   end;
-  Console.Write('})');
+  Console.WriteLine('})');
 
-  Console.Write(' = {');
-
-  first := True;
   setin := client.testSet(setout);
-  for j in setin do
+  Expect( setin.Count = setout.Count, 'testSet: setin.Count = setout.Count');
+  Expect( setin.Count = 5, 'testSet: setin.Count = '+IntToStr(setin.Count));
+  for j := -2 to 2 do // unordered, we can't rely on the order => test for known elements only
   begin
-    if first then
+    Expect( setin.Contains(j), 'testSet: setin.Contains('+IntToStr(j)+') => '+BoolToString(setin.Contains(j)));
+  end;
+
+  // list<type>: An ordered list of elements.
+  // Translates to an STL vector, Java ArrayList, native arrays in scripting languages, etc.
+  StartTestGroup( 'testList');
+  listout := TThriftListImpl<Integer>.Create;
+  listout.Add( +1);
+  listout.Add( -2);
+  listout.Add( +3);
+  listout.Add( -4);
+  listout.Add( 0);
+  Console.Write('testList({');
+  first := True;
+  for j in listout do
     begin
-      first := False;
-    end else
-    begin
-      Console.Write(', ');
-    end;
+    if first
+    then first := False
+    else Console.Write(', ');
     Console.Write(IntToStr( j));
   end;
-  Console.WriteLine('}');
+  Console.WriteLine('})');
 
-  Console.Write('testEnum(ONE)');
+  listin := client.testList(listout);
+  Expect( listin.Count = listout.Count, 'testList: listin.Count = listout.Count');
+  Expect( listin.Count = 5, 'testList: listin.Count = '+IntToStr(listin.Count));
+  Expect( listin[0] = +1, 'listin[0] = '+IntToStr( listin[0]));
+  Expect( listin[1] = -2, 'listin[1] = '+IntToStr( listin[1]));
+  Expect( listin[2] = +3, 'listin[2] = '+IntToStr( listin[2]));
+  Expect( listin[3] = -4, 'listin[3] = '+IntToStr( listin[3]));
+  Expect( listin[4] = 0,  'listin[4] = '+IntToStr( listin[4]));
+
+  // enums
   ret := client.testEnum(TNumberz.ONE);
-  Console.WriteLine(' = ' + IntToStr( Integer( ret)));
+  Expect( ret = TNumberz.ONE, 'testEnum(ONE) = '+IntToStr(Ord(ret)));
 
-  Console.Write('testEnum(TWO)');
   ret := client.testEnum(TNumberz.TWO);
-  Console.WriteLine(' = ' + IntToStr( Integer( ret)));
+  Expect( ret = TNumberz.TWO, 'testEnum(TWO) = '+IntToStr(Ord(ret)));
 
-  Console.Write('testEnum(THREE)');
   ret := client.testEnum(TNumberz.THREE);
-  Console.WriteLine(' = ' + IntToStr( Integer( ret)));
+  Expect( ret = TNumberz.THREE, 'testEnum(THREE) = '+IntToStr(Ord(ret)));
 
-  Console.Write('testEnum(FIVE)');
   ret := client.testEnum(TNumberz.FIVE);
-  Console.WriteLine(' = ' + IntToStr( Integer( ret)));
+  Expect( ret = TNumberz.FIVE, 'testEnum(FIVE) = '+IntToStr(Ord(ret)));
 
-  Console.Write('testEnum(EIGHT)');
   ret := client.testEnum(TNumberz.EIGHT);
-  Console.WriteLine(' = ' + IntToStr( Integer( ret)));
+  Expect( ret = TNumberz.EIGHT, 'testEnum(EIGHT) = '+IntToStr(Ord(ret)));
 
-  Console.Write('testTypedef(309858235082523)');
+
+  // typedef
   uid := client.testTypedef(309858235082523);
-  Console.WriteLine(' = ' + IntToStr( uid));
+  Expect( uid = 309858235082523, 'testTypedef(309858235082523) = '+IntToStr(uid));
 
-  Console.Write('testMapMap(1)');
+
+  // maps of maps
+  StartTestGroup( 'testMapMap(1)');
   mm := client.testMapMap(1);
   Console.Write(' = {');
   for key in mm.Keys do
@@ -473,6 +526,20 @@ begin
   end;
   Console.WriteLine('}');
 
+  // verify result data
+  Expect( mm.Count = 2, 'mm.Count = '+IntToStr(mm.Count));
+  pos := mm[4];
+  neg := mm[-4];
+  for j := 1 to 4 do
+  begin
+    Expect( pos[j]  = j,  'pos[j]  = '+IntToStr(pos[j]));
+    Expect( neg[-j] = -j, 'neg[-j] = '+IntToStr(neg[-j]));
+  end;
+
+
+
+  // insanity
+  StartTestGroup( 'testInsanity');
   insane := TInsanityImpl.Create;
   insane.UserMap := TThriftDictionaryImpl<TNumberz, Int64>.Create;
   insane.UserMap.AddOrSetValue( TNumberz.FIVE, 5000);
@@ -483,7 +550,6 @@ begin
   truck.I64_thing := 8;
   insane.Xtructs := TThriftListImpl<IXtruct>.Create;
   insane.Xtructs.Add( truck );
-  Console.Write('testInsanity()');
   whoa := client.testInsanity( insane );
   Console.Write(' = {');
   for key64 in whoa.Keys do
@@ -530,32 +596,140 @@ begin
   end;
   Console.WriteLine('}');
 
+  // verify result data
+  Expect( whoa.Count = 2, 'whoa.Count = '+IntToStr(whoa.Count));
+  //
+  first_map  := whoa[1];
+  second_map := whoa[2];
+  Expect( first_map.Count = 2, 'first_map.Count = '+IntToStr(first_map.Count));
+  Expect( second_map.Count = 1, 'second_map.Count = '+IntToStr(second_map.Count));
+  //
+  looney := second_map[TNumberz.SIX];
+  Expect( Assigned(looney), 'Assigned(looney) = '+BoolToString(Assigned(looney)));
+  Expect( not looney.__isset_UserMap, 'looney.__isset_UserMap = '+BoolToString(looney.__isset_UserMap));
+  Expect( not looney.__isset_Xtructs, 'looney.__isset_Xtructs = '+BoolToString(looney.__isset_Xtructs));
+  //
+  for ret in [TNumberz.SIX, TNumberz.THREE] do begin
+    crazy := first_map[ret];
+    Console.WriteLine('first_map['+intToStr(Ord(ret))+']');
+
+    Expect( crazy.__isset_UserMap, 'crazy.__isset_UserMap = '+BoolToString(crazy.__isset_UserMap));
+    Expect( crazy.__isset_Xtructs, 'crazy.__isset_Xtructs = '+BoolToString(crazy.__isset_Xtructs));
+
+    Expect( crazy.UserMap.Count = 2, 'crazy.UserMap.Count = '+IntToStr(crazy.UserMap.Count));
+    Expect( crazy.UserMap[TNumberz.FIVE] = 5, 'crazy.UserMap[TNumberz.FIVE] = '+IntToStr(crazy.UserMap[TNumberz.FIVE]));
+    Expect( crazy.UserMap[TNumberz.EIGHT] = 8, 'crazy.UserMap[TNumberz.EIGHT] = '+IntToStr(crazy.UserMap[TNumberz.EIGHT]));
+
+    Expect( crazy.Xtructs.Count = 2, 'crazy.Xtructs.Count = '+IntToStr(crazy.Xtructs.Count));
+    goodbye := crazy.Xtructs[0];  // lists are ordered, so we are allowed to assume this order
+	  hello   := crazy.Xtructs[1];
+
+    Expect( goodbye.String_thing = 'Goodbye4', 'goodbye.String_thing = "'+goodbye.String_thing+'"');
+    Expect( goodbye.Byte_thing = 4, 'goodbye.Byte_thing = '+IntToStr(goodbye.Byte_thing));
+    Expect( goodbye.I32_thing = 4, 'goodbye.I32_thing = '+IntToStr(goodbye.I32_thing));
+    Expect( goodbye.I64_thing = 4, 'goodbye.I64_thing = '+IntToStr(goodbye.I64_thing));
+    Expect( goodbye.__isset_String_thing, 'goodbye.__isset_String_thing = '+BoolToString(goodbye.__isset_String_thing));
+    Expect( goodbye.__isset_Byte_thing, 'goodbye.__isset_Byte_thing = '+BoolToString(goodbye.__isset_Byte_thing));
+    Expect( goodbye.__isset_I32_thing, 'goodbye.__isset_I32_thing = '+BoolToString(goodbye.__isset_I32_thing));
+    Expect( goodbye.__isset_I64_thing, 'goodbye.__isset_I64_thing = '+BoolToString(goodbye.__isset_I64_thing));
+
+    Expect( hello.String_thing = 'hello', 'hello.String_thing = "'+hello.String_thing+'"');
+    Expect( hello.Byte_thing = 2, 'hello.Byte_thing = '+IntToStr(hello.Byte_thing));
+    Expect( hello.I32_thing = 2, 'hello.I32_thing = '+IntToStr(hello.I32_thing));
+    Expect( hello.I64_thing = 2, 'hello.I64_thing = '+IntToStr(hello.I64_thing));
+    Expect( hello.__isset_String_thing, 'hello.__isset_String_thing = '+BoolToString(hello.__isset_String_thing));
+    Expect( hello.__isset_Byte_thing, 'hello.__isset_Byte_thing = '+BoolToString(hello.__isset_Byte_thing));
+    Expect( hello.__isset_I32_thing, 'hello.__isset_I32_thing = '+BoolToString(hello.__isset_I32_thing));
+    Expect( hello.__isset_I64_thing, 'hello.__isset_I64_thing = '+BoolToString(hello.__isset_I64_thing));
+  end;
+
+
+  // multi args
+  StartTestGroup( 'testMulti');
   arg0 := 1;
   arg1 := 2;
   arg2 := High(Int64);
-
-  multiDict := TThriftDictionaryImpl<SmallInt, string>.Create;
-  multiDict.AddOrSetValue( 1, 'one');
-
+  arg3 := TThriftDictionaryImpl<SmallInt, string>.Create;
+  arg3.AddOrSetValue( 1, 'one');
   arg4 := TNumberz.FIVE;
   arg5 := 5000000;
   Console.WriteLine('Test Multi(' + IntToStr( arg0) + ',' +
     IntToStr( arg1) + ',' + IntToStr( arg2) + ',' +
-    multiDict.ToString + ',' + IntToStr( Integer( arg4)) + ',' +
+    arg3.ToString + ',' + IntToStr( Integer( arg4)) + ',' +
       IntToStr( arg5) + ')');
 
-  Console.WriteLine('Test Oneway(1)');
+  i := client.testMulti( arg0, arg1, arg2, arg3, arg4, arg5);
+  Expect( i.String_thing = 'Hello2', 'testMulti: i.String_thing = "'+i.String_thing+'"');
+  Expect( i.Byte_thing = arg0, 'testMulti: i.Byte_thing = '+IntToStr(i.Byte_thing));
+  Expect( i.I32_thing = arg1, 'testMulti: i.I32_thing = '+IntToStr(i.I32_thing));
+  Expect( i.I64_thing = arg2, 'testMulti: i.I64_thing = '+IntToStr(i.I64_thing));
+  Expect( i.__isset_String_thing, 'testMulti: i.__isset_String_thing = '+BoolToString(i.__isset_String_thing));
+  Expect( i.__isset_Byte_thing, 'testMulti: i.__isset_Byte_thing = '+BoolToString(i.__isset_Byte_thing));
+  Expect( i.__isset_I32_thing, 'testMulti: i.__isset_I32_thing = '+BoolToString(i.__isset_I32_thing));
+  Expect( i.__isset_I64_thing, 'testMulti: i.__isset_I64_thing = '+BoolToString(i.__isset_I64_thing));
+
+  // multi exception
+  StartTestGroup( 'testMultiException(1)');
+  try
+    i := client.testMultiException( 'need more pizza', 'run out of beer');
+    Expect( i.String_thing = 'run out of beer', 'i.String_thing = "' +i.String_thing+ '"');
+    Expect( i.__isset_String_thing, 'i.__isset_String_thing = '+BoolToString(i.__isset_String_thing));
+    Expect( not i.__isset_Byte_thing, 'i.__isset_Byte_thing = '+BoolToString(i.__isset_Byte_thing));
+    Expect( not i.__isset_I32_thing, 'i.__isset_I32_thing = '+BoolToString(i.__isset_I32_thing));
+    Expect( not i.__isset_I64_thing, 'i.__isset_I64_thing = '+BoolToString(i.__isset_I64_thing));
+  except
+    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
+  end;
+
+  StartTestGroup( 'testMultiException(Xception)');
+  try
+    i := client.testMultiException( 'Xception', 'second test');
+    Expect( FALSE, 'testMultiException(''Xception''): must trow an exception');
+  except
+    on x:TXception do begin
+      Expect( x.__isset_ErrorCode, 'x.__isset_ErrorCode = '+BoolToString(x.__isset_ErrorCode));
+      Expect( x.__isset_Message_,  'x.__isset_Message_ = '+BoolToString(x.__isset_Message_));
+      Expect( x.ErrorCode = 1001, 'x.ErrorCode = '+IntToStr(x.ErrorCode));
+      Expect( x.Message_ = 'This is an Xception', 'x.Message = "'+x.Message_+'"');
+    end;
+    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
+  end;
+
+  StartTestGroup( 'testMultiException(Xception2)');
+  try
+    i := client.testMultiException( 'Xception2', 'third test');
+    Expect( FALSE, 'testMultiException(''Xception2''): must trow an exception');
+  except
+    on x:TXception2 do begin
+      Expect( x.__isset_ErrorCode, 'x.__isset_ErrorCode = '+BoolToString(x.__isset_ErrorCode));
+      Expect( x.__isset_Struct_thing,  'x.__isset_Struct_thing = '+BoolToString(x.__isset_Struct_thing));
+      Expect( x.ErrorCode = 2002, 'x.ErrorCode = '+IntToStr(x.ErrorCode));
+      Expect( x.Struct_thing.String_thing = 'This is an Xception2', 'x.Struct_thing.String_thing = "'+x.Struct_thing.String_thing+'"');
+      Expect( x.Struct_thing.__isset_String_thing, 'x.Struct_thing.__isset_String_thing = '+BoolToString(x.Struct_thing.__isset_String_thing));
+      Expect( not x.Struct_thing.__isset_Byte_thing, 'x.Struct_thing.__isset_Byte_thing = '+BoolToString(x.Struct_thing.__isset_Byte_thing));
+      Expect( not x.Struct_thing.__isset_I32_thing, 'x.Struct_thing.__isset_I32_thing = '+BoolToString(x.Struct_thing.__isset_I32_thing));
+      Expect( not x.Struct_thing.__isset_I64_thing, 'x.Struct_thing.__isset_I64_thing = '+BoolToString(x.Struct_thing.__isset_I64_thing));
+    end;
+    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
+  end;
+
+
+  // oneway functions
+  StartTestGroup( 'Test Oneway(1)');
   client.testOneway(1);
+  Expect( TRUE, 'Test Oneway(1)');  // success := no exception
 
-  Console.Write('Test Calltime()');
+  // call time
+  StartTestGroup( 'Test Calltime()');
   StartTick := GetTIckCount;
-
   for k := 0 to 1000 - 1 do
   begin
     client.testVoid();
   end;
   Console.WriteLine(' = ' + FloatToStr( (GetTickCount - StartTick) / 1000 ) + ' ms a testVoid() call' );
 
+  // no more tests here
+  StartTestGroup( '');
 end;
 
 
@@ -580,6 +754,8 @@ const
 begin
   stm  := TStringStream.Create;
   try
+    StartTestGroup( 'JsonProtocolTest');  // no more tests here
+
     // prepare binary data
     SetLength( binary, $100);
     for i := Low(binary) to High(binary) do binary[i] := i;
@@ -642,6 +818,18 @@ begin
   finally
     stm.Free;
     prot := nil;  //-> Release
+    StartTestGroup( '');  // no more tests here
+  end;
+end;
+
+
+procedure TClientThread.StartTestGroup( const aGroup : string);
+begin
+  FTestGroup := aGroup;
+  if FTestGroup <> '' then begin
+    Console.WriteLine('');
+    Console.WriteLine( aGroup+' tests');
+    Console.WriteLine( StringOfChar('-',60));
   end;
 end;
 
@@ -650,13 +838,43 @@ procedure TClientThread.Expect( aTestResult : Boolean; const aTestInfo : string)
 begin
   if aTestResult  then begin
     Inc(FSuccesses);
-    Console.WriteLine( aTestInfo+' = OK');
+    Console.WriteLine( aTestInfo+': passed');
   end
   else begin
-    Inc(FErrors);
-    Console.WriteLine( aTestInfo+' = FAILED');
-    ASSERT( FALSE);  // we have a failed test!
+    FErrors.Add( FTestGroup+': '+aTestInfo);
+    Console.WriteLine( aTestInfo+': *** FAILED ***');
+
+    // We have a failed test!
+    // -> issue DebugBreak ONLY if a debugger is attached,
+    // -> unhandled DebugBreaks would cause Windows to terminate the app otherwise
+    if IsDebuggerPresent then asm int 3 end;
   end;
+end;
+
+
+procedure TClientThread.ReportResults;
+var nTotal : Integer;
+    sLine : string;
+begin
+  // prevent us from stupid DIV/0 errors
+  nTotal := FSuccesses + FErrors.Count;
+  if nTotal = 0 then begin
+    Console.WriteLine('No results logged');
+    Exit;
+  end;
+
+  Console.WriteLine('');
+  Console.WriteLine( StringOfChar('=',60));
+  Console.WriteLine( IntToStr(nTotal)+' tests performed');
+  Console.WriteLine( IntToStr(FSuccesses)+' tests succeeded ('+IntToStr(round(100*FSuccesses/nTotal))+'%)');
+  Console.WriteLine( IntToStr(FErrors.Count)+' tests failed ('+IntToStr(round(100*FErrors.Count/nTotal))+'%)');
+  Console.WriteLine( StringOfChar('=',60));
+  if FErrors.Count > 0 then begin
+    Console.WriteLine('FAILED TESTS:');
+    for sLine in FErrors do Console.WriteLine('- '+sLine);
+    Console.WriteLine( StringOfChar('=',60));
+  end;
+  Console.WriteLine('');
 end;
 
 
@@ -667,11 +885,17 @@ begin
   FTransport := ATransport;
   FProtocol := AProtocol;
   FConsole := TThreadConsole.Create( Self );
+
+  // error list: keep correct order, allow for duplicates
+  FErrors := TStringList.Create;
+  FErrors.Sorted := FALSE;
+  FErrors.Duplicates := dupAccept;
 end;
 
 destructor TClientThread.Destroy;
 begin
-  FConsole.Free;
+  FreeAndNil( FConsole);
+  FreeAndNil( FErrors);
   inherited;
 end;
 
@@ -680,12 +904,21 @@ var
   i : Integer;
   proc : TThreadProcedure;
 begin
-  for i := 0 to FNumIteration - 1 do
-  begin
-    ClientTest;
-    JSONProtocolReadWriteTest;
+  // perform all tests
+  try
+    for i := 0 to FNumIteration - 1 do
+    begin
+      ClientTest;
+      JSONProtocolReadWriteTest;
+    end;
+  except
+    on e:Exception do Expect( FALSE, 'unexpected exception: "'+e.message+'"');
   end;
 
+  // report the outcome
+  ReportResults;
+
+  // shutdown
   proc := procedure
   begin
     if FTransport <> nil then
