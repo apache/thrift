@@ -45,10 +45,6 @@ void t_generator::generate_program() {
     generate_typedef(*td_iter);
   }
 
-  // Generate constants
-  vector<t_const*> consts = program_->get_consts();
-  generate_consts(consts);
-
   // Generate structs, exceptions, and unions in declared order
   vector<t_struct*> objects = program_->get_objects();
   vector<t_struct*>::iterator o_iter;
@@ -59,6 +55,10 @@ void t_generator::generate_program() {
       generate_struct(*o_iter);
     }
   }
+
+  // Generate constants
+  vector<t_const*> consts = program_->get_consts();
+  generate_consts(consts);
 
   // Generate services
   vector<t_service*> services = program_->get_services();
