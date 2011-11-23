@@ -105,6 +105,7 @@
 /lib/js/test/gen-*
 /lib/js/test/Makefile
 /lib/js/test/Makefile.in
+/lib/nodejs/examples/gen-*
 /lib/perl/MANIFEST
 /lib/perl/Makefile
 /lib/perl/Makefile.in
