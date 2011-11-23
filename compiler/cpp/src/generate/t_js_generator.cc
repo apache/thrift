@@ -741,7 +741,9 @@ void t_js_generator::generate_service(t_service* tservice) {
             "var " << tservice->get_extends()->get_name() <<
             " = require('./" << tservice->get_extends()->get_name() << "')" << endl <<
             "var " << tservice->get_extends()->get_name() << "Client = " <<
-            tservice->get_extends()->get_name() << ".Client" << endl;
+            tservice->get_extends()->get_name() << ".Client" << endl <<
+            "var " << tservice->get_extends()->get_name() << "Processor = " <<
+            tservice->get_extends()->get_name() << ".Processor" << endl;
 
         }
 
@@ -778,6 +780,13 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
     f_service_ << indent() << "this._handler = handler" << endl;
 
     scope_down(f_service_);
+
+    if (tservice->get_extends() != NULL) {
+        indent(f_service_) << "Thrift.inherits(" <<
+            js_namespace(tservice->get_program()) <<
+            service_name_ << "Processor, " <<
+            tservice->get_extends()->get_name() << "Processor)" << endl;
+    }
 
     // Generate the server implementation
     indent(f_service_) <<
