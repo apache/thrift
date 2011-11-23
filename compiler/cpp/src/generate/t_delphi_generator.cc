@@ -81,7 +81,7 @@ class t_delphi_generator : public t_oop_generator
     void generate_delphi_struct_writer_impl(ostream& out, std::string cls_prefix, t_struct* tstruct, bool is_exception);
     void generate_delphi_struct_result_writer_impl(ostream& out, std::string cls_prefix, t_struct* tstruct, bool is_exception);
 
-    void generate_delphi_struct_tostring_impl(ostream& out, std::string cls_prefix, t_struct* tstruct, bool is_exception);
+    void generate_delphi_struct_tostring_impl(ostream& out, std::string cls_prefix, t_struct* tstruct, bool is_exception, bool is_x_factory);
 
     void add_delphi_uses_list( string unitname);
 
@@ -900,8 +900,8 @@ void t_delphi_generator::generate_delphi_struct_impl( ostream& out, string cls_p
     } else {
       generate_delphi_struct_writer_impl( out, cls_prefix, tstruct, is_exception);
     }
-    generate_delphi_struct_tostring_impl( out, cls_prefix, tstruct, is_exception);
   }
+  generate_delphi_struct_tostring_impl( out, cls_prefix, tstruct, is_exception, is_x_factory);
 
   if (is_exception && is_x_factory) {
     generate_delphi_create_exception_impl( out, cls_prefix, tstruct, is_exception);
@@ -1039,10 +1039,8 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struc
   indent(out) << "constructor Create;" << endl;
   indent(out) << "destructor Destroy; override;" << endl;
 
-  if ((! is_exception) || is_x_factory) {
-    out  << endl;
-    indent(out) << "function ToString: string; override;" << endl;
-  }
+  out  << endl;
+  indent(out) << "function ToString: string; override;" << endl;
 
   if (is_exception && (! is_x_factory)) {
     out  << endl;
@@ -2337,6 +2335,8 @@ void t_delphi_generator::generate_delphi_create_exception_impl(ostream& out, str
     indent_impl(out) << "end;" << endl;
   }
 
+  indent_impl(out) << "Result.UpdateMessageProperty;" << endl;
+ 
   indent_down_impl();
   indent_impl(out) << "end;" << endl << endl;
 }
@@ -2593,7 +2593,7 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out, string
 
 }
 
-void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out, string cls_prefix, t_struct* tstruct, bool is_exception) {
+void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out, string cls_prefix, t_struct* tstruct, bool is_exception, bool is_x_factory) {
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -2601,7 +2601,7 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out, stri
   string cls_nm;
 
   if (is_exception) {
-    cls_nm = type_name(tstruct,true,false,true,true);
+    cls_nm = type_name(tstruct,true,(! is_x_factory),is_x_factory,true);
   } else {
     cls_nm = type_name(tstruct,true,false);
   }

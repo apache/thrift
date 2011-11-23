@@ -115,6 +115,7 @@ begin
     x := TXception.Create;
     x.ErrorCode := 1001;
     x.Message_ := 'This is an Xception';
+    x.UpdateMessageProperty;
     raise x;
   end;
 end;
@@ -280,6 +281,7 @@ begin
     x := TXception.Create;
     x.ErrorCode := 1001;
     x.Message_ := 'This is an Xception';
+    x.UpdateMessageProperty;
     raise x;
   end else
   if ( arg0 = 'Xception2') then
@@ -288,6 +290,7 @@ begin
     x2.ErrorCode := 2002;
     x2.Struct_thing := TXtructImpl.Create;
     x2.Struct_thing.String_thing := 'This is an Xception2';
+    x2.UpdateMessageProperty;
     raise x2;
   end;
 

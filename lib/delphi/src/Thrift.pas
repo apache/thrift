@@ -60,17 +60,26 @@ type
   // base class for IDL-generated exceptions
   TException = class( SysUtils.Exception)
   public
-    procedure Message;  // hide inherited property to prevent accidental read/write
+    function Message : string;        // hide inherited property: allow read, but prevent accidental writes
+    procedure UpdateMessageProperty;  // update inherited message property with toString()
   end;
 
 implementation
 
 { TException }
 
-procedure TException.Message;
-// hide inherited property to prevent accidental read/write
+function TException.Message;
+// allow read (exception summary), but prevent accidental writes
+// read will return the exception summary
 begin
-  ASSERT( FALSE, 'Unexpected call to '+ClassName+'.message. Forgot the underscore?');
+  result := Self.ToString;
+end;
+
+procedure TException.UpdateMessageProperty;
+// Update the inherited Message property to better conform to standard behaviour.
+// Nice benefit: The IDE is now able to show the exception message again.
+begin
+  inherited Message := Self.ToString;  // produces a summary text
 end;
 
 { TApplicationException }
