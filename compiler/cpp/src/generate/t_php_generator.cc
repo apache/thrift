@@ -199,26 +199,48 @@ class t_php_generator : public t_oop_generator {
   std::string type_to_cast(t_type* ttype);
   std::string type_to_enum(t_type* ttype);
 
-  std::string php_namespace(t_program* p) {
+  std::string php_namespace_base(const t_program* p, bool modern) {
     std::string ns = p->get_namespace("php");
-    size_t position = ns.find( "." );
+    const char * delimiter = modern ? "\\" : "_";
+    size_t position = ns.find('.');
     while (position != string::npos) {
-      ns.replace(position, 1, "\\");
-      position = ns.find(".", position+1);
+      ns.replace(position, 1, delimiter);
+      position = ns.find('.', position + 1);
     }
-    if(namespace_php_) return (nsglobal_.size() ? NSGLOBAL_AB : NSGLOBAL_B) + (ns.size() ? (ns + "\\") : "");
-    else return "";
+    return ns;
   }
 
-  std::string php_namespace_suffix(const t_program* p) {
-    std::string ns = p->get_namespace("php");
-    size_t position = ns.find( "." );
-    while (position != string::npos) {
-      ns.replace(position, 1, "\\");
-      position = ns.find(".", position+1);
-    }    
+  //general use namespace prefixing: \my\namespace\ or my_namespace_
+  string php_namespace(const t_program* p) {
+    string ns = php_namespace_base(p, namespace_php_);
+    if(namespace_php_) return (nsglobal_.size() ? NSGLOBAL_AB : NSGLOBAL_B) + (ns.size() ? (ns + "\\") : "");
+    else return (nsglobal_.size() ? NSGLOBAL + "_" : "") + (ns.size() ? (ns + "_") : "");
+  }
+
+  //setting the namespace of a file: my\namespace
+  string php_namespace_suffix(const t_program* p) {
+    string ns = php_namespace_base(p, namespace_php_);
     if (namespace_php_) return (nsglobal_.size() ? NSGLOBAL_B : NSGLOBAL) + ns;
-    else return "";
+    //provides consistent behavior even though this function is never called when namespace_php_ is false
+    else return (nsglobal_.size() ? (NSGLOBAL + "_") : "") + ns;
+  }
+
+  //writing an autload identifier into globals: my\namespace\ or my_namespace_
+  string php_namespace_autoload(const t_program* p) {
+    std::string ns = php_namespace_base(p, namespace_php_);
+    if (namespace_php_) return (nsglobal_.size() ? NSGLOBAL_B : NSGLOBAL) + (ns.size() ? (ns + "\\") : "");
+    else return (nsglobal_.size() ? (NSGLOBAL + "_") : "") + (ns.size() ? (ns + "_") : "");
+  }
+
+  string php_namespace_constant(const t_program* p) {
+    std::string ns = php_namespace_base(p, false);
+    return ns.size() ? (ns + "_") : "";
+  }
+
+  //declaring a type: typename or my_namespace_typename
+  string php_namespace_declaration(t_type* t) {
+    if(namespace_php_) return t->get_name();
+    return php_namespace(t->get_program()) + t->get_name();
   }
 
   std::string php_path(t_program* p) {
@@ -331,7 +353,7 @@ void t_php_generator::init_generator() {
      f_consts_ << autogen_comment() <<
       "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + php_path(program_) + "/" + program_name_ + "_types.php';" << endl <<
       endl <<
-      "$GLOBALS['" << program_name_ << "_CONSTANTS'] = array();" << endl <<
+      "$GLOBALS['" << php_namespace_constant(get_program()) << program_name_ << "_CONSTANTS'] = array();" << endl <<
       endl;
   }
 }
@@ -424,7 +446,7 @@ void t_php_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
 
-  f_consts_ << "$GLOBALS['" << program_name_ << "_CONSTANTS']['" << name << "'] = ";
+  f_consts_ << "$GLOBALS['" << php_namespace_constant(get_program()) << program_name_ << "_CONSTANTS']['" << name << "'] = ";
   f_consts_ << render_const_value(type, value);
   f_consts_ << ";" << endl << endl;
 }
@@ -641,12 +663,15 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
     autoload_out.open(f_struct_name.c_str());
     autoload_out << "<?php" << endl
       << "/**" << endl << " *  @generated" << endl << " */" << endl;
+    if(namespace_php_) autoload_out << "namespace " << php_namespace_suffix(tstruct->get_program()) << ";" << endl;
     _generate_php_struct_definition(autoload_out, tstruct, is_exception);
     autoload_out << endl << "?>" << endl;
     autoload_out.close();
 
     f_types_ <<
-      "$GLOBALS['THRIFT_AUTOLOAD']['" << lowercase(php_namespace(tstruct->get_program()) + tstruct->get_name()) << "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
+      "$GLOBALS['THRIFT_AUTOLOAD']['" <<
+      lowercase(php_namespace_autoload(tstruct->get_program()) + tstruct->get_name()) <<
+      "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
 
   } else {
     _generate_php_struct_definition(out, tstruct, is_exception);
@@ -667,7 +692,7 @@ void t_php_generator::_generate_php_struct_definition(ofstream& out,
   vector<t_field*>::const_iterator m_iter;
 
   out <<
-    "class " << tstruct->get_name();
+    "class " << php_namespace_declaration(tstruct);
   if (is_exception) {
     out << " extends " << NS_ROOT << "TException";
   } else if (oop_) {
@@ -1288,7 +1313,7 @@ void t_php_generator::generate_service_interface(t_service* tservice) {
     extends_if = " extends " + php_namespace(tservice->get_extends()->get_program()) + tservice->get_extends()->get_name() + "If";
   }
   f_service_ <<
-    "interface " << service_name_ << "If" << extends_if << " {" << endl;
+    "interface " << php_namespace_declaration(tservice) << "If" << extends_if << " {" << endl;
   indent_up();
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
@@ -1384,12 +1409,15 @@ void t_php_generator::generate_service_client(t_service* tservice) {
     autoload_out.open(f_struct_name.c_str());
     autoload_out << "<?php" << endl
       << "/**" << endl << " *  @generated" << endl << " */" << endl;
+    if(namespace_php_) autoload_out << endl << "namespace " << php_namespace_suffix(tservice->get_program()) << ";" << endl << endl;
     _generate_service_client(autoload_out, tservice);
     autoload_out << endl << "?>" << endl;
     autoload_out.close();
 
     f_service_ <<
-      "$GLOBALS['THRIFT_AUTOLOAD']['" << lowercase(service_name_ + "Client") << "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
+      "$GLOBALS['THRIFT_AUTOLOAD']['" <<
+      lowercase(php_namespace_autoload(get_program()) + service_name_ + "Client") <<
+      "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
 
   } else {
     _generate_service_client(f_service_, tservice);
@@ -1410,7 +1438,7 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
   }
 
   out <<
-    "class " << service_name_ << "Client" << extends_client << " implements " <<  (namespace_php_ ? php_namespace(tservice->get_program()) : "") << service_name_ << "If {" << endl;
+    "class " << php_namespace_declaration(tservice) << "Client" << extends_client << " implements " <<  php_namespace(tservice->get_program()) << service_name_ << "If {" << endl;
   indent_up();
 
   // Private members
@@ -1480,7 +1508,7 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
       "public function send_" << function_signature(*f_iter) << endl;
     scope_up(out);
 
-      std::string argsname = (namespace_php_ ? php_namespace(tservice->get_program()) : "") + service_name_ + "_" + (*f_iter)->get_name() + "_args";
+      std::string argsname = php_namespace(tservice->get_program()) + service_name_ + "_" + (*f_iter)->get_name() + "_args";
 
       out <<
         indent() << "$args = new " << argsname << "();" << endl;
