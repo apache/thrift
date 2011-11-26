@@ -1,5 +1,117 @@
 Thrift Changelog
 
+Version 0.8.0
+
+THRIFT-1330   PHP                  PHP Namespaces no longer generated
+THRIFT-1392   PHP                  Enabling both namespaces and autoloading in generated PHP code won't work.
+THRIFT-386    Python               Make it possible to build the Python library without the extension
+THRIFT-1431   Node.js              Rename 'sys' module to 'util'
+THRIFT-1435   Delphi               make TException.Message property conformant to the usual expectations
+THRIFT-1432   JavaScript           Javascript struct constants declared in the same file as their struct cause an error
+THRIFT-1391   Delphi               Improved Delphi XE test cases
+THRIFT-1387   C++                  Build MSVC libraries with Boost Threads instead of Pthreads
+THRIFT-1426   Build Process        Dist package missing files for release 0.8
+THRIFT-1428   Tutorial             shared.thrft does not include namespace for php, compiler generate incorrect name
+THRIFT-1411   Java                 java generator does not provide type parameter for TBaseProcessor
+THRIFT-1425   Node.js              The Node package is incompatible with latest node (0.6) & npm (1.0.27)
+THRIFT-1401   Delphi               JSON-protocol for Delphi XE Libraries
+THRIFT-1424   Ruby                 Ruby specs fail when run with rake
+THRIFT-1382   Ruby                 Bundle install doesnot work because thrift crashes
+THRIFT-1251   Java                 Generated java code should indicate which fields are required and which are optional
+THRIFT-1361   C++                  Optional replacement of pthread by boost::thread
+THRIFT-1415   Delphi               delphi: add version Info to the library
+THRIFT-1031   C++                  Patch to compile Thrift for vc++ 9.0 and 10.0
+THRIFT-1420   Java                 Nonblocking and HsHa server should close all socket connections when the selector exits
+THRIFT-1419   Java                 AbstractNonBlockingServer does not catch errors when invoking the processor
+THRIFT-1416   Python               Python Unit test is broken on ci
+THRIFT-1409   Delphi               Name conflict check does not work properly for exception object(Delphi).
+THRIFT-1413   Delphi               Generated code does not read MapEnd / ListEnd / SetEnd
+THRIFT-1408   Delphi               Delphi Test Server: Exception test case fails due to naming conflict with e.message
+THRIFT-1407   Python               Typo in Python socket server causes Thrift to fail when we enable a global socket timout
+THRIFT-1405   Delphi               Delphi compiler does not generates container serializer properly.
+THRIFT-1399   Delphi               One of the TServerImpl.Create CTORs lacks implementation
+THRIFT-1406   Delphi               Build error after applying THRIFT-1395
+THRIFT-1404   Delphi               Delphi compiler generates struct reader code with problem.
+THRIFT-1395   Delphi               Patch to prevent warnings for integer types in some cases
+THRIFT-1400   Ruby                 Ruby native extension aborts with __stack_chk_fail in OSX
+THRIFT-1397   Test Suite           CI server fails during build due to unused parameters in delphi generator
+THRIFT-1396   Delphi               Dephi generator has dependacy on boost 1.42 later.
+THRIFT-1390   Build Process        Debian packages build fix for Squeeze (build from the official  0.7.0 tarball)
+THRIFT-1393   PHP                  TTransportException's thrown from THttpClient has extra slashes in the Exception message
+THRIFT-1366   Delphi               Delphi generator, lirbrary and unit test.
+THRIFT-1130   Compiler (General)   Add the ability to specify symbolic default value for optional boolean
+THRIFT-1381   C++                  Thrift C++ libs have incorrectly versioned names
+THRIFT-1384   Javame               Java help menu missing newline near javame flag
+THRIFT-1373   C++                  Fix user-defined exception generation in thrift (python)
+THRIFT-1379   C++                  fix uninitialized enum values in thrift C++ objects
+THRIFT-1377   C++                  abort PHP deserialization on unknown field type
+THRIFT-1376   C++                  Make port specification option in thrift remote
+THRIFT-1375   C++                  fixed a hex char conversion bug in TJSONProtocol
+THRIFT-1370   C glib               Debian packaging should Build-Depend on libglib2.0-dev
+THRIFT-1121   Java                 Java server performance regression in 0.6
+THRIFT-1365   Java                 TupleProtocol#writeBitSet unintentionally writes a variable length byte array
+THRIFT-1359   C++                  --gen-cob cpp:cob_style does not compile anymore
+THRIFT-1355   Ruby                 Running make in lib/rb doesn't build the native extensions
+THRIFT-1354   Ruby                 Add rake task to build just the gem file
+THRIFT-857    Test Suite           tests run by "make install" fail if generators are disabled
+THRIFT-1339   Java                 Extend Tuple Protocol to TUnions
+THRIFT-1331   Ruby                 Ruby library deserializes an empty map to nil
+THRIFT-1350   Go                   Go library code does not build as of r60 (most recent release)
+THRIFT-1227   Erlang               Erlang implementation of thrift JSON protocol
+THRIFT-1335   C++                  Add accept timeout to TServerSocket
+THRIFT-1345   Build Process        Allow building without tests
+THRIFT-1342   Python               Compilation problem on Windows of fastbinary.c
+THRIFT-1341   C++                  TProtocol.h endian detection wrong with boost
+THRIFT-1243   C++                  TAsyncChannel callbacks
+THRIFT-1238   JavaScript           Thrift JS client cannot read map of structures
+THRIFT-1333   C++                  Make RWGuard not copyable
+THRIFT-1334   C++                  Add more info to IllegalStateException
+THRIFT-1332   Java                 TSSLTransportParameters class uses hard coded value keyManagerType: SunX509
+THRIFT-1328   Java                 TBaseHelper.toString(...) appends ByteBuffer data outside of valid buffer range
+THRIFT-1322   OCaml                OCaml lib fail to compile: Thrift.ml line 305, int vs int32 mismatch
+THRIFT-1279   PHP                  type set is handled incorrectly when writing object
+THRIFT-1320   C++                  Consistency of configure generated config.h
+THRIFT-1319   Java                 Mismatch between how a union reads and writes a container
+THRIFT-1316   C++                  thrift: update server classes to accept
+THRIFT-1314   C++                  thrift: add TProcessorFactory
+THRIFT-1315   C++                  thrift: generate server interface factory classes
+THRIFT-1317   C++                  Remove copy constructibility from
+THRIFT-1305   C++                  thrift: make TConnection a private inner class of
+THRIFT-1286   Ruby                 Modernize the Thrift Ruby Library Dev Environment
+THRIFT-1304   C++                  TNonblockingServer: pass in the connection context to
+THRIFT-1302   C++                  thrift: raise an exception if send() times out in
+THRIFT-1301   C++                  thrift: consolidate common code in TNonblockingServer
+THRIFT-1298   Java                 Standard scheme doesn't read or write metadata along with field values
+THRIFT-1257   Java                 thrift's dependency scope on javax.servlet:servlet-api should be 'provided'
+THRIFT-1240   PHP                  TBinarySerializer invalid serialization due to TBufferTransport not flushing 
+THRIFT-1295   C++                  Duplicate include in TSocket.cpp
+THRIFT-1294   C++                  thrift: fix log message typos in TSimpleServer
+THRIFT-1293   C++                  thrift: improve handling of exceptions thrown by
+THRIFT-1292   C++                  thrift: silence log spew from TThreadedServer
+THRIFT-1290   C++                  thrift: TNonblockingServer: clean up state in the
+THRIFT-1289   C++                  thrift: implement TNonblockingServer::stop()
+THRIFT-1288   C++                  Allow typedefed exceptions in throws clauses
+THRIFT-1287   C++                  thrift: start refactoring some of the C++ processor
+THRIFT-1280   C++                  Thrift: Improve Monitor exception-free interfaces
+THRIFT-1281   Compiler (General)   add @generated to the docblock
+THRIFT-1282   Java                 Upgrade httpclient to 4.1.2 (from 4.0.1)
+THRIFT-1284   C++                  thrift: fix processor inheritance
+THRIFT-1283   C++                  thrift: wrap t_cpp_generator::generate_process_function() to 80
+THRIFT-1278   Java                 javadoc warnings - compilation
+THRIFT-1254   JavaME               Code compiled against a regular JRE: Object.clone() override has a different return type
+THRIFT-1271   C++                  thrift: fix missing namespace in generated local
+THRIFT-1274   C++                  thrift: fail compilation if an unexpected token is
+THRIFT-1275   C++                  thrift: always prefix namespaces with " ::"
+THRIFT-1265   C++                  C++ container deserialize
+THRIFT-1167   Java                 Java nonblocking server with more than one thread for select and handling IO
+THRIFT-380    Python               Use setuptools for python build
+THRIFT-1270   C++                  thrift: add --allow-neg-keys argument to allow
+THRIFT-1263   Ruby                 publish ruby client to rubygems
+THRIFT-1205   Java                 port server unduly fragile with arbitrary input
+THRIFT-769    Java                 Pluggable Serializers
+THRIFT-1239   Java                 TupleProtocol- An extremely compact, temporary protocol
+
+
 Version 0.7.0
 
 THRIFT-1252   Ruby                 Segfault in Ruby deserializer
