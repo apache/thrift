@@ -69,9 +69,6 @@ build-indep-stamp: configure-stamp
 	cd $(CURDIR)/lib/java && \
 		ant
 
-	# Erlang
-	# $(MAKE) -C $(CURDIR)/lib/erl
-
 	# C#
 	$(MAKE) -C $(CURDIR)/lib/csharp
 
@@ -105,13 +102,6 @@ install-indep:
 	mkdir -p $(CURDIR)/debian/libthrift-java/usr/share/java/ && \
 	cp $(CURDIR)/lib/java/build/libthrift*.jar \
 		$(CURDIR)/debian/libthrift-java/usr/share/java/
-
-	# Erlang
-	# mkdir -p $(CURDIR)/debian/libthrift-erlang/usr/lib/erlang/lib/thrift/ && \
-	# cp -r $(CURDIR)/lib/erl/ebin \
-	#	$(CURDIR)/lib/erl/include \
-	#	$(CURDIR)/lib/erl/src \
-	#	$(CURDIR)/debian/libthrift-erlang/usr/lib/erlang/lib/thrift/
 
 	# C#
 	mkdir -p $(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/ && \
