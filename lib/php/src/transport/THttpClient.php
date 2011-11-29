@@ -85,7 +85,7 @@ class THttpClient extends TTransport {
    * @param string $uri
    */
   public function __construct($host, $port=80, $uri='', $scheme = 'http') {
-    if ((strlen($uri) > 0) && ($uri{0} != '/')) {
+    if ((TStringFuncFactory::create()->strlen($uri) > 0) && ($uri{0} != '/')) {
       $uri = '/'.$uri;
     }
     $this->scheme_ = $scheme;
@@ -175,7 +175,7 @@ class THttpClient extends TTransport {
                      'Accept: application/x-thrift',
                      'User-Agent: PHP/THttpClient',
                      'Content-Type: application/x-thrift',
-                     'Content-Length: '.strlen($this->buf_));
+                     'Content-Length: '.TStringFuncFactory::create()->strlen($this->buf_));
 
     $options = array('method' => 'POST',
                      'header' => implode("\r\n", $headers),

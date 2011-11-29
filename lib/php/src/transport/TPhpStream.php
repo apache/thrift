@@ -86,12 +86,12 @@ class TPhpStream extends TTransport {
   }
 
   public function write($buf) {
-    while (strlen($buf) > 0) {
+    while (TStringFuncFactory::create()->strlen($buf) > 0) {
       $got = @fwrite($this->outStream_, $buf);
       if ($got === 0 || $got === FALSE) {
-        throw new TException('TPhpStream: Could not write '.strlen($buf).' bytes');
+        throw new TException('TPhpStream: Could not write '.TStringFuncFactory::create()->strlen($buf).' bytes');
       }
-      $buf = substr($buf, $got);
+      $buf = TStringFuncFactory::create()->substr($buf, $got);
     }
   }
 

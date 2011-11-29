@@ -180,7 +180,7 @@ class TBinaryProtocol extends TProtocol {
   }
 
   public function writeString($value) {
-    $len = strlen($value);
+    $len = TStringFuncFactory::create()->strlen($value);
     $result = $this->writeI32($len);
     if ($len) {
       $this->trans_->write($value, $len);

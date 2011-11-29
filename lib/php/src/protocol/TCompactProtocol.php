@@ -121,7 +121,7 @@ class TCompactProtocol extends TProtocol {
 
   public function writeVarint($data) {
     $out = $this->getVarint($data);
-    $result = strlen($out);
+    $result = TStringFuncFactory::create()->strlen($out);
     $this->trans_->write($out, $result);
     return $result;
   }
@@ -308,7 +308,7 @@ class TCompactProtocol extends TProtocol {
   }
 
   public function writeString($value) {
-    $len = strlen($value);
+    $len = TStringFuncFactory::create()->strlen($value);
     $result = $this->writeVarint($len);
     if ($len) {
       $this->trans_->write($value, $len);
@@ -653,7 +653,7 @@ class TCompactProtocol extends TProtocol {
         }
       }
 
-      $ret = strlen($out);
+      $ret = TStringFuncFactory::create()->strlen($out);
       $this->trans_->write($out, $ret);
 
       return $ret;

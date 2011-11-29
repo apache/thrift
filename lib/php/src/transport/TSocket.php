@@ -283,23 +283,23 @@ class TSocket extends TTransport {
     $write = array($this->handle_);
 
     // keep writing until all the data has been written
-    while (strlen($buf) > 0) {
+    while (TStringFuncFactory::create()->strlen($buf) > 0) {
       // wait for stream to become available for writing
       $writable = @stream_select($null, $write, $null, $this->sendTimeoutSec_, $this->sendTimeoutUsec_);
       if ($writable > 0) {
         // write buffer to stream
         $written = @stream_socket_sendto($this->handle_, $buf);
         if ($written === -1 || $written === false) {
-          throw new TTransportException('TSocket: Could not write '.strlen($buf).' bytes '.
+          throw new TTransportException('TSocket: Could not write '.TStringFuncFactory::create()->strlen($buf).' bytes '.
                                    $this->host_.':'.$this->port_);
         }
         // determine how much of the buffer is left to write
-        $buf = substr($buf, $written);
+        $buf = TStringFuncFactory::create()->substr($buf, $written);
       } else if ($writable === 0) {
-          throw new TTransportException('TSocket: timed out writing '.strlen($buf).' bytes from '.
+          throw new TTransportException('TSocket: timed out writing '.TStringFuncFactory::create()->strlen($buf).' bytes from '.
                                $this->host_.':'.$this->port_);
         } else {
-            throw new TTransportException('TSocket: Could not write '.strlen($buf).' bytes '.
+            throw new TTransportException('TSocket: Could not write '.TStringFuncFactory::create()->strlen($buf).' bytes '.
                                  $this->host_.':'.$this->port_);
         }
       }

@@ -83,7 +83,7 @@ abstract class TTransport {
 
     $data = '';
     $got = 0;
-    while (($got = strlen($data)) < $len) {
+    while (($got = TStringFuncFactory::create()->strlen($data)) < $len) {
       $data .= $this->read($len - $got);
     }
     return $data;

@@ -54,20 +54,20 @@ class TMemoryBuffer extends TTransport {
   }
 
   public function read($len) {
-    if (strlen($this->buf_) === 0) {
+    if (TStringFuncFactory::create()->strlen($this->buf_) === 0) {
       throw new TTransportException('TMemoryBuffer: Could not read ' .
                                     $len . ' bytes from buffer.',
                                     TTransportException::UNKNOWN);
     }
 
-    if (strlen($this->buf_) <= $len) {
+    if (TStringFuncFactory::create()->strlen($this->buf_) <= $len) {
       $ret = $this->buf_;
       $this->buf_ = '';
       return $ret;
     }
 
-    $ret = substr($this->buf_, 0, $len);
-    $this->buf_ = substr($this->buf_, $len);
+    $ret = TStringFuncFactory::create()->substr($this->buf_, 0, $len);
+    $this->buf_ = TStringFuncFactory::create()->substr($this->buf_, $len);
 
     return $ret;
   }
@@ -77,6 +77,6 @@ class TMemoryBuffer extends TTransport {
   }
 
   public function available() {
-    return strlen($this->buf_);
+    return TStringFuncFactory::create()->strlen($this->buf_);
   }
 }

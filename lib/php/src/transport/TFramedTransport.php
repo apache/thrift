@@ -98,20 +98,20 @@ class TFramedTransport extends TTransport {
       return $this->transport_->read($len);
     }
 
-    if (strlen($this->rBuf_) === 0) {
+    if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
       $this->readFrame();
     }
 
     // Just return full buff
-    if ($len >= strlen($this->rBuf_)) {
+    if ($len >= TStringFuncFactory::create()->strlen($this->rBuf_)) {
       $out = $this->rBuf_;
       $this->rBuf_ = null;
       return $out;
     }
 
-    // Return substr
-    $out = substr($this->rBuf_, 0, $len);
-    $this->rBuf_ = substr($this->rBuf_, $len);
+    // Return TStringFuncFactory::create()->substr
+    $out = TStringFuncFactory::create()->substr($this->rBuf_, 0, $len);
+    $this->rBuf_ = TStringFuncFactory::create()->substr($this->rBuf_, $len);
     return $out;
   }
 
@@ -121,7 +121,7 @@ class TFramedTransport extends TTransport {
    * @param string $data data to return
    */
   public function putBack($data) {
-    if (strlen($this->rBuf_) === 0) {
+    if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
       $this->rBuf_ = $data;
     } else {
       $this->rBuf_ = ($data . $this->rBuf_);
@@ -150,8 +150,8 @@ class TFramedTransport extends TTransport {
       return $this->transport_->write($buf, $len);
     }
 
-    if ($len !== null && $len < strlen($buf)) {
-      $buf = substr($buf, 0, $len);
+    if ($len !== null && $len < TStringFuncFactory::create()->strlen($buf)) {
+      $buf = TStringFuncFactory::create()->substr($buf, 0, $len);
     }
     $this->wBuf_ .= $buf;
   }
@@ -161,11 +161,11 @@ class TFramedTransport extends TTransport {
    * followed by the actual data.
    */
   public function flush() {
-    if (!$this->write_ || strlen($this->wBuf_) == 0) {
+    if (!$this->write_ || TStringFuncFactory::create()->strlen($this->wBuf_) == 0) {
       return $this->transport_->flush();
     }
 
-    $out = pack('N', strlen($this->wBuf_));
+    $out = pack('N', TStringFuncFactory::create()->strlen($this->wBuf_));
     $out .= $this->wBuf_;
 
     // Note that we clear the internal wBuf_ prior to the underlying write
