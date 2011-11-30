@@ -29,7 +29,7 @@
 #endif
 
 #define PATH_MAX MAX_PATH
-#define THRIFT_VERSION "0.8.0-dev"
+#define THRIFT_VERSION "0.9.0-dev"
 
 #ifndef S_ISDIR
 #define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
