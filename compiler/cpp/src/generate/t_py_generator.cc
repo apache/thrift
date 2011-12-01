@@ -838,8 +838,13 @@ void t_py_generator::generate_py_struct_reader(ofstream& out,
     "and fastbinary is not None:" << endl;
   indent_up();
 
-  indent(out) <<
-    "fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))" << endl;
+  if (gen_utf8strings_) {
+    indent(out) <<
+      "fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec), True)" << endl;
+  } else {
+    indent(out) <<
+      "fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))" << endl;
+  }
   indent(out) <<
     "return" << endl;
   indent_down();
@@ -923,8 +928,13 @@ void t_py_generator::generate_py_struct_writer(ofstream& out,
     "and fastbinary is not None:" << endl;
   indent_up();
 
-  indent(out) <<
-    "oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))" << endl;
+  if (gen_utf8strings_) {
+    indent(out) <<
+      "oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec), True))" << endl;
+  } else {
+    indent(out) <<
+      "oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))" << endl;
+  }
   indent(out) <<
     "return" << endl;
   indent_down();
