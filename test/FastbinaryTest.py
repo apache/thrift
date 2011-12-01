@@ -69,7 +69,7 @@ ooe2.zomg_unicode     = "\xd3\x80\xe2\x85\xae\xce\x9d\x20"\
                         "\x20\xce\x91\x74\x74\xce\xb1\xe2\x85\xbd\xce\xba"\
                         "\xc7\x83\xe2\x80\xbc";
 
-hm = HolyMoley({"big":[], "contain":set(), "bonks":{}})
+hm = HolyMoley(big=[], contain=set(), bonks={})
 hm.big.append(ooe1)
 hm.big.append(ooe2)
 hm.big[0].a_bite = 0x22;
@@ -81,13 +81,13 @@ hm.contain.add(())
 
 hm.bonks["nothing"] = [];
 hm.bonks["something"] = [
-  Bonk({"type":1, "message":"Wait."}),
-  Bonk({"type":2, "message":"What?"}),
+  Bonk(type=1, message="Wait."),
+  Bonk(type=2, message="What?"),
 ]
 hm.bonks["poe"] = [
-  Bonk({"type":3, "message":"quoth"}),
-  Bonk({"type":4, "message":"the raven"}),
-  Bonk({"type":5, "message":"nevermore"}),
+  Bonk(type=3, message="quoth"),
+  Bonk(type=4, message="the raven"),
+  Bonk(type=5, message="nevermore"),
 ]
 
 rs = RandomStuff()
@@ -95,7 +95,7 @@ rs.a = 1
 rs.b = 2
 rs.c = 3
 rs.myintlist = range(20)
-rs.maps = {1:Wrapper({"foo":Empty()}),2:Wrapper({"foo":Empty()})}
+rs.maps = {1:Wrapper(foo=Empty()),2:Wrapper(foo=Empty())}
 rs.bigint = 124523452435L
 rs.triple = 3.14
 
@@ -103,7 +103,7 @@ rs.triple = 3.14
 rshuge = RandomStuff()
 rshuge.myintlist=range(10000)
 
-my_zero = Srv.Janky_result({"arg":5})
+my_zero = Srv.Janky_result(5)
 
 def checkWrite(o):
   trans_fast = TTransport.TMemoryBuffer()
@@ -157,10 +157,10 @@ def doTest():
   checkRead(rshuge)
   checkWrite(my_zero)
   checkRead(my_zero)
-  checkRead(Backwards({"first_tag2":4, "second_tag1":2}))
+  checkRead(Backwards(first_tag2=4, second_tag1=2))
 
   # One case where the serialized form changes, but only superficially.
-  o = Backwards({"first_tag2":4, "second_tag1":2})
+  o = Backwards(first_tag2=4, second_tag1=2)
   trans_fast = TTransport.TMemoryBuffer()
   trans_slow = TTransport.TMemoryBuffer()
   prot_fast = TBinaryProtocol.TBinaryProtocolAccelerated(trans_fast)
