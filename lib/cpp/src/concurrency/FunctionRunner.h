@@ -34,16 +34,15 @@ namespace apache { namespace thrift { namespace concurrency {
  *  void* my_thread_main(void* arg);
  *  shared_ptr<ThreadFactory> factory = ...;
  *  // To create a thread that executes my_thread_main once:
- *  shared_ptr<Thread> thread =
- *    factory->newThread(shared_ptr<FunctionRunner>(
- *      new FunctionRunner(my_thread_main, some_argument)));
+ *  shared_ptr<Thread> thread = factory->newThread(
+ *    FunctionRunner::create(my_thread_main, some_argument));
  *  thread->start();
  *
  *  bool A::foo();
  *  A* a = new A();
  *  // To create a thread that executes a.foo() every 100 milliseconds:
- *  factory->newThread(shared_ptr<FunctionRunner>(
- *    new FunctionRunner(std::tr1::bind(&A::foo, a), 100)))->start();
+ *  factory->newThread(FunctionRunner::create(
+ *    std::tr1::bind(&A::foo, a), 100))->start();
  *
  */
 
@@ -55,6 +54,20 @@ class FunctionRunner : public Runnable {
   typedef std::tr1::function<void()> VoidFunc;
 
   typedef std::tr1::function<bool()> BoolFunc;
+
+  /**
+   * Syntactic sugar to make it easier to create new FunctionRunner
+   * objects wrapped in shared_ptr.
+   */
+  static boost::shared_ptr<FunctionRunner> create(const VoidFunc& cob) {
+    return boost::shared_ptr<FunctionRunner>(new FunctionRunner(cob));
+  }
+
+  static boost::shared_ptr<FunctionRunner> create(PthreadFuncPtr func,
+                                                  void* arg) {
+    return boost::shared_ptr<FunctionRunner>(new FunctionRunner(func, arg));
+  }
+
 
   /**
    * Given a 'pthread_create' style callback, this FunctionRunner will
