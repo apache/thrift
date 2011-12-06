@@ -19,6 +19,7 @@
 
 #import "TBinaryProtocol.h"
 #import "TProtocolException.h"
+#import "TObjective-C.h"
 
 int32_t VERSION_1 = 0x80010000;
 int32_t VERSION_MASK = 0xffff0000;
@@ -56,7 +57,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
              strictWrite: (BOOL) strictWrite
 {
   self = [super init];
-  mTransport = [transport retain];
+  mTransport = [transport retain_stub];
   mStrictRead = strictRead;
   mStrictWrite = strictWrite;
   return self;
@@ -77,8 +78,8 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 
 - (void) dealloc
 {
-  [mTransport release];
-  [super dealloc];
+  [mTransport release_stub];
+  [super dealloc_stub];
 }
 
 
