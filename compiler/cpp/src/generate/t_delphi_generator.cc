@@ -91,7 +91,7 @@ class t_delphi_generator : public t_oop_generator
     void print_const_prop(std::ostream& out, string name, t_type* type, t_const_value* value);
     void print_private_field(std::ostream& out, string name, t_type* type, t_const_value* value);
     void print_const_value ( std::ostream& vars, std::ostream& out, std::string name, t_type* type, t_const_value* value);
-    void initialize_field(std::ostream& vars, std::ostream& out, std::string name, t_type* type, t_const_value* value, std::string cls_nm = "");
+    void initialize_field(std::ostream& vars, std::ostream& out, std::string name, t_type* type, t_const_value* value);
     void finalize_field(std::ostream& out, std::string name, t_type* type, t_const_value* value, std::string cls_nm = "");
     std::string render_const_value( std::ostream& local_vars, std::ostream& out, std::string name, t_type* type, t_const_value* value);
     void print_const_def_value( std::ostream& vars, std::ostream& out, std::string name, t_type* type, t_const_value* value, std::string cls_nm = "");
@@ -609,8 +609,8 @@ void t_delphi_generator::generate_consts(std::vector<t_const*> consts) {
 
   indent_up_impl();
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-    initialize_field( vars, code, "F" + prop_name( (*c_iter)->get_name()),
-      (*c_iter)->get_type(), (*c_iter)->get_value(), "TConstants" );
+    initialize_field( vars, code, "TConstants.F" + prop_name( (*c_iter)->get_name()),
+      (*c_iter)->get_type(), (*c_iter)->get_value());
   }
   indent_down_impl();
 
@@ -723,8 +723,7 @@ void t_delphi_generator::print_const_value( std::ostream& vars, std::ostream& ou
 
 }
 
-void t_delphi_generator::initialize_field(std::ostream& vars, std::ostream& out, string name, t_type* type, t_const_value* value, string cls_nm) {
-  (void) cls_nm;
+void t_delphi_generator::initialize_field(std::ostream& vars, std::ostream& out, string name, t_type* type, t_const_value* value) {
   print_const_value( vars, out, name, type, value );
 }
 

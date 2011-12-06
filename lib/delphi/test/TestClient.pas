@@ -88,6 +88,8 @@ begin
   else result := 'false';
 end;
 
+// not available in all versions, so make sure we have this one imported
+function IsDebuggerPresent: BOOL; stdcall; external KERNEL32 name 'IsDebuggerPresent';
 
 { TTestClient }
 
