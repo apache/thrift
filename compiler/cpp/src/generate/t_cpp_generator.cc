@@ -3052,8 +3052,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
-  string service_func_name = tservice->get_name() + "." +
-    tfunction->get_name();
+  string service_func_name = "\"" + tservice->get_name() + "." +
+    tfunction->get_name() + "\"";
 
   std::ofstream& out = (gen_templates_ ? f_service_tcc_ : f_service_);
 
@@ -3106,15 +3106,15 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     out <<
       indent() << "void* ctx = NULL;" << endl <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  ctx = this->eventHandler_->getContext(\"" <<
-        service_func_name << "\", callContext);" << endl <<
+      indent() << "  ctx = this->eventHandler_->getContext(" <<
+        service_func_name << ", callContext);" << endl <<
       indent() << "}" << endl <<
       indent() << "apache::thrift::TProcessorContextFreer freer(" <<
-        "this->eventHandler_.get(), ctx, \"" << service_func_name << "\");" <<
+        "this->eventHandler_.get(), ctx, " << service_func_name << ");" <<
         endl << endl <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  this->eventHandler_->preRead(ctx, \"" <<
-        service_func_name << "\");" << endl <<
+      indent() << "  this->eventHandler_->preRead(ctx, " <<
+        service_func_name << ");" << endl <<
       indent() << "}" << endl << endl <<
       indent() << argsname << " args;" << endl <<
       indent() << "args.read(iprot);" << endl <<
@@ -3122,8 +3122,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << "uint32_t bytes = iprot->getTransport()->readEnd();" <<
         endl << endl <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  this->eventHandler_->postRead(ctx, \"" <<
-        service_func_name << "\", bytes);" << endl <<
+      indent() << "  this->eventHandler_->postRead(ctx, " <<
+        service_func_name << ", bytes);" << endl <<
       indent() << "}" << endl <<
       endl;
 
@@ -3195,8 +3195,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     indent_up();
     out <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  this->eventHandler_->handlerError(ctx, \"" <<
-        service_func_name << "\");" << endl <<
+      indent() << "  this->eventHandler_->handlerError(ctx, " <<
+        service_func_name << ");" << endl <<
       indent() << "}" << endl;
 
     if (!tfunction->is_oneway()) {
@@ -3219,8 +3219,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     if (tfunction->is_oneway()) {
       out <<
         indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  this->eventHandler_->asyncComplete(ctx, \"" <<
-          service_func_name << "\");" << endl <<
+        indent() << "  this->eventHandler_->asyncComplete(ctx, " <<
+          service_func_name << ");" << endl <<
         indent() << "}" << endl << endl <<
         indent() << "return;" << endl;
       indent_down();
@@ -3232,8 +3232,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     // Serialize the result into a struct
     out <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  this->eventHandler_->preWrite(ctx, \"" <<
-        service_func_name << "\");" << endl <<
+      indent() << "  this->eventHandler_->preWrite(ctx, " <<
+        service_func_name << ");" << endl <<
       indent() << "}" << endl << endl <<
       indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() <<
         "\", apache::thrift::protocol::T_REPLY, seqid);" << endl <<
@@ -3242,8 +3242,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << "bytes = oprot->getTransport()->writeEnd();" << endl <<
       indent() << "oprot->getTransport()->flush();" << endl << endl <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  this->eventHandler_->postWrite(ctx, \"" <<
-        service_func_name << "\", bytes);" << endl <<
+      indent() << "  this->eventHandler_->postWrite(ctx, " <<
+        service_func_name << ", bytes);" << endl <<
       indent() << "}" << endl;
 
     // Close function
@@ -3295,26 +3295,26 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         "_args args;" << endl <<
       indent() << "void* ctx = NULL;" << endl <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  ctx = this->eventHandler_->getContext(\"" <<
-        service_func_name << "\", NULL);" << endl <<
+      indent() << "  ctx = this->eventHandler_->getContext(" <<
+        service_func_name << ", NULL);" << endl <<
       indent() << "}" << endl <<
       indent() << "apache::thrift::TProcessorContextFreer freer(" <<
-        "this->eventHandler_.get(), ctx, \"" << service_func_name << "\");" <<
+        "this->eventHandler_.get(), ctx, " << service_func_name << ");" <<
         endl << endl <<
       indent() << "try {" << endl;
     indent_up();
     out <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  this->eventHandler_->preRead(ctx, \"" <<
-        service_func_name << "\");" << endl <<
+      indent() << "  this->eventHandler_->preRead(ctx, " <<
+        service_func_name << ");" << endl <<
       indent() << "}" << endl <<
       indent() << "args.read(iprot);" << endl <<
       indent() << "iprot->readMessageEnd();" << endl <<
       indent() << "uint32_t bytes = iprot->getTransport()->readEnd();" <<
         endl <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-      indent() << "  this->eventHandler_->postRead(ctx, \"" <<
-        service_func_name << "\", bytes);" << endl <<
+      indent() << "  this->eventHandler_->postRead(ctx, " <<
+        service_func_name << ", bytes);" << endl <<
       indent() << "}" << endl;
     scope_down(out);
 
@@ -3322,8 +3322,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     out <<
       indent() << "catch (const std::exception& exn) {" << endl <<
       indent() << "  if (this->eventHandler_.get() != NULL) {" << endl <<
-      indent() << "    this->eventHandler_->handlerError(ctx, \"" <<
-        service_func_name << "\");" << endl <<
+      indent() << "    this->eventHandler_->handlerError(ctx, " <<
+        service_func_name << ");" << endl <<
       indent() << "  }" << endl <<
       indent() << "  return cob(false);" << endl <<
       indent() << "}" << endl;
@@ -3331,8 +3331,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     if (tfunction->is_oneway()) {
       out <<
         indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  this->eventHandler_->asyncComplete(ctx, \"" <<
-          service_func_name << "\");" << endl <<
+        indent() << "  this->eventHandler_->asyncComplete(ctx, " <<
+          service_func_name << ");" << endl <<
         indent() << "}" << endl;
     }
     // TODO(dreiss): Figure out a strategy for exceptions in async handlers.
@@ -3449,15 +3449,15 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       out <<
         endl <<
         indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  ctx = this->eventHandler_->getContext(\"" <<
-          service_func_name << "\", NULL);" << endl <<
+        indent() << "  ctx = this->eventHandler_->getContext(" <<
+          service_func_name << ", NULL);" << endl <<
         indent() << "}" << endl <<
         indent() << "apache::thrift::TProcessorContextFreer freer(" <<
-          "this->eventHandler_.get(), ctx, \"" << service_func_name <<
-          "\");" << endl << endl <<
+          "this->eventHandler_.get(), ctx, " << service_func_name <<
+          ");" << endl << endl <<
         indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  this->eventHandler_->preWrite(ctx, \"" <<
-          service_func_name << "\");" << endl <<
+        indent() << "  this->eventHandler_->preWrite(ctx, " <<
+          service_func_name << ");" << endl <<
         indent() << "}" << endl << endl <<
         indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() <<
           "\", apache::thrift::protocol::T_REPLY, seqid);" << endl <<
@@ -3467,8 +3467,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
           endl <<
         indent() << "oprot->getTransport()->flush();" << endl <<
         indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  this->eventHandler_->postWrite(ctx, \"" <<
-          service_func_name << "\", bytes);" << endl <<
+        indent() << "  this->eventHandler_->postWrite(ctx, " <<
+          service_func_name << ", bytes);" << endl <<
         indent() << "}" << endl <<
         indent() << "return cob(true);" << endl;
       scope_down(out);
@@ -3507,11 +3507,11 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       out <<
         endl <<
         indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  ctx = this->eventHandler_->getContext(\"" <<
-          service_func_name << "\", NULL);" << endl <<
+        indent() << "  ctx = this->eventHandler_->getContext(" <<
+          service_func_name << ", NULL);" << endl <<
         indent() << "}" << endl <<
         indent() << "apache::thrift::TProcessorContextFreer freer(" <<
-          "this->eventHandler_.get(), ctx, \"" << service_func_name << "\");" <<
+          "this->eventHandler_.get(), ctx, " << service_func_name << ");" <<
           endl << endl;
 
       // Throw the TDelayedException, and catch the result
@@ -3543,8 +3543,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent_up();
       out <<
         indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  this->eventHandler_->handlerError(ctx, \"" <<
-          service_func_name << "\");" << endl <<
+        indent() << "  this->eventHandler_->handlerError(ctx, " <<
+          service_func_name << ");" << endl <<
         indent() << "}" << endl <<
         endl <<
         indent() << "apache::thrift::TApplicationException x(e.what());" <<
@@ -3564,8 +3564,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       // Serialize the result into a struct
       out <<
         indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  this->eventHandler_->preWrite(ctx, \"" <<
-          service_func_name << "\");" << endl <<
+        indent() << "  this->eventHandler_->preWrite(ctx, " <<
+          service_func_name << ");" << endl <<
         indent() << "}" << endl << endl <<
         indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() <<
           "\", apache::thrift::protocol::T_REPLY, seqid);" << endl <<
@@ -3575,8 +3575,8 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
           endl <<
         indent() << "oprot->getTransport()->flush();" << endl <<
         indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
-        indent() << "  this->eventHandler_->postWrite(ctx, \"" <<
-          service_func_name << "\", bytes);" << endl <<
+        indent() << "  this->eventHandler_->postWrite(ctx, " <<
+          service_func_name << ", bytes);" << endl <<
         indent() << "}" << endl <<
         indent() << "return cob(true);" << endl;
       scope_down(out);
