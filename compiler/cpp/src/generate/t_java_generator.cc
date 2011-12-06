@@ -483,7 +483,7 @@ void t_java_generator::generate_consts(std::vector<t_const*> consts) {
     return;
   }
 
-  string f_consts_name = package_dir_+"/Constants.java";
+  string f_consts_name = package_dir_+ '/' + program_name_ + "Constants.java";
   ofstream f_consts;
   f_consts.open(f_consts_name.c_str());
 
@@ -494,7 +494,7 @@ void t_java_generator::generate_consts(std::vector<t_const*> consts) {
     java_type_imports();
 
   f_consts <<
-    "public class Constants {" << endl <<
+    "public class " << program_name_ << "Constants {" << endl <<
     endl;
   indent_up();
   vector<t_const*>::iterator c_iter;
