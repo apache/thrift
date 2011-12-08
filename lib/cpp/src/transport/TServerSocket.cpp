@@ -310,14 +310,18 @@ void TServerSocket::listen() {
     len = sizeof(address);
 
     do {
-      if (0 == bind(serverSocket_, (struct sockaddr *) &address, len)) {
+      if (0 == ::bind(serverSocket_, (struct sockaddr *) &address, len)) {
         break;
       }
       // use short circuit evaluation here to only sleep if we need to
     } while ((retries++ < retryLimit_) && (sleep(retryDelay_) == 0));
+#else
+    GlobalOutput.perror("TSocket::open() Unix Domain socket path not supported on windows", -99);
+    throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path not supported");
+#endif
   } else {
     do {
-      if (0 == bind(serverSocket_, res->ai_addr, res->ai_addrlen)) {
+      if (0 == ::bind(serverSocket_, res->ai_addr, res->ai_addrlen)) {
         break;
       }
       // use short circuit evaluation here to only sleep if we need to
@@ -325,12 +329,6 @@ void TServerSocket::listen() {
 
     // free addrinfo
     freeaddrinfo(res0);
-
-#else
-      GlobalOutput.perror("TSocket::open() Unix Domain socket path not supported on windows", -99);
-      throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path not supported");
-#endif
-
   }
 
   // throw an error if we failed to bind properly

@@ -72,6 +72,11 @@ typedef ptrdiff_t ssize_t;
 
 // Missing functions.
 #define usleep(ms) Sleep(ms)
+inline int sleep(DWORD ms)
+{
+    Sleep(ms);
+    return 0;
+}
 
 #if WINVER <= 0x0502
 #define poll(fds, nfds, timeout) \
