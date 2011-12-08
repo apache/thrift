@@ -170,7 +170,7 @@ class TNonblockingServer : public TServer {
   std::vector<boost::shared_ptr<TNonblockingIOThread> > ioThreads_;
 
   // Index of next IO Thread to be used (for round-robin)
-  int nextIOThread_;
+  uint32_t nextIOThread_;
 
   // Synchronizes access to connection stack and similar data
   Mutex connMutex_;

@@ -866,7 +866,6 @@ TNonblockingServer::TConnection* TNonblockingServer::createConnection(
   Guard g(connMutex_);
 
   // pick an IO thread to handle this connection -- currently round robin
-  assert(nextIOThread_ >= 0);
   assert(nextIOThread_ < ioThreads_.size());
   int selectedThreadIdx = nextIOThread_;
   nextIOThread_ = (nextIOThread_ + 1) % ioThreads_.size();
@@ -1158,7 +1157,7 @@ void TNonblockingServer::expireClose(boost::shared_ptr<Runnable> task) {
 
 void TNonblockingServer::stop() {
   // Breaks the event loop in all threads so that they end ASAP.
-  for (int i = 0; i < ioThreads_.size(); ++i) {
+  for (uint32_t i = 0; i < ioThreads_.size(); ++i) {
     ioThreads_[i]->stop();
   }
 }
@@ -1177,7 +1176,7 @@ void TNonblockingServer::serve() {
     numIOThreads_ = DEFAULT_IO_THREADS;
   }
 
-  for (int id = 0; id < numIOThreads_; ++id) {
+  for (uint32_t id = 0; id < numIOThreads_; ++id) {
     // the first IO thread also does the listening on server socket
     int listenFd = (id == 0 ? serverSocket_ : -1);
 
@@ -1211,7 +1210,7 @@ void TNonblockingServer::serve() {
     assert(ioThreadFactory_.get());
 
     // intentionally starting at thread 1, not 0
-    for (int i = 1; i < ioThreads_.size(); ++i) {
+    for (uint32_t i = 1; i < ioThreads_.size(); ++i) {
       shared_ptr<Thread> thread = ioThreadFactory_->newThread(ioThreads_[i]);
       ioThreads_[i]->setThread(thread);
       thread->start();
@@ -1223,7 +1222,7 @@ void TNonblockingServer::serve() {
   ioThreads_[0]->run();
 
   // Ensure all threads are finished before exiting serve()
-  for (int i = 0; i < ioThreads_.size(); ++i) {
+  for (uint32_t i = 0; i < ioThreads_.size(); ++i) {
     ioThreads_[i]->join();
     GlobalOutput.printf("TNonblocking: join done for IO thread #%d", i);
   }
@@ -1353,6 +1352,7 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
 void TNonblockingIOThread::notifyHandler(int fd, short which, void* v) {
   TNonblockingIOThread* ioThread = (TNonblockingIOThread*) v;
   assert(ioThread);
+  (void)which;
 
   while (true) {
     TNonblockingServer::TConnection* connection = 0;

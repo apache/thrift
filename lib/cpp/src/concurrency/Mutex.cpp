@@ -154,6 +154,7 @@ class Mutex::impl {
     PROFILE_MUTEX_NOT_LOCKED();
     return false;
 #else
+    (void)milliseconds;
     // If pthread_mutex_timedlock isn't supported, the safest thing to do
     // is just do a nonblocking trylock.
     return trylock();
