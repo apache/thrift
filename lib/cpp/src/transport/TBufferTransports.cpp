@@ -211,6 +211,10 @@ void TFramedTransport::writeSlow(const uint8_t* buf, uint32_t len) {
   // Double buffer size until sufficient.
   uint32_t have = wBase_ - wBuf_.get();
   uint32_t new_size = wBufSize_;
+  if (len + have < have /* overflow */ || len + have > 0x7fffffff) {
+    throw TTransportException(TTransportException::BAD_ARGS,
+        "Attempted to write over 2 GB to TFramedTransport.");
+  }
   while (new_size < len + have) {
     new_size = new_size > 0 ? new_size * 2 : 1;
   }
