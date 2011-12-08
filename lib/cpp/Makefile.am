@@ -105,6 +105,7 @@ libthriftz_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS)
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
                          $(top_builddir)/config.h \
+	                 src/TDispatchProcessor.h \
                          src/Thrift.h \
                          src/TReflectionLocal.h \
                          src/TProcessor.h \
@@ -178,6 +179,7 @@ include_processor_HEADERS = \
 include_asyncdir = $(include_thriftdir)/async
 include_async_HEADERS = \
                      src/async/TAsyncChannel.h \
+                     src/async/TAsyncDispatchProcessor.h \
                      src/async/TAsyncProcessor.h \
                      src/async/TAsyncBufferProcessor.h \
                      src/async/TAsyncProtocolProcessor.h \
