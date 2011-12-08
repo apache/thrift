@@ -841,7 +841,7 @@ namespace Thrift.Protocol
 			if (reader.Peek() == QUOTE[0])
 			{
 				byte[] arr = ReadJSONString(true);
-				double dub = Double.Parse(utf8Encoding.GetString(arr), CultureInfo.InvariantCulture);
+				double dub = Double.Parse(utf8Encoding.GetString(arr,0,arr.Length), CultureInfo.InvariantCulture);
 
 				if (!context.EscapeNumbers() && !Double.IsNaN(dub) &&
 					!Double.IsInfinity(dub))
@@ -938,7 +938,8 @@ namespace Thrift.Protocol
 											 "Message contained bad version.");
 			}
 
-			message.Name = utf8Encoding.GetString(ReadJSONString(false));
+            var buf = ReadJSONString(false);
+			message.Name = utf8Encoding.GetString(buf,0,buf.Length);
 			message.Type = (TMessageType)ReadJSONInteger();
 			message.SeqID = (int)ReadJSONInteger();
 			return message;
@@ -1059,7 +1060,8 @@ namespace Thrift.Protocol
 
 		public override String ReadString()
 		{
-			return utf8Encoding.GetString(ReadJSONString(false));
+            var buf = ReadJSONString(false);
+			return utf8Encoding.GetString(buf,0,buf.Length);
 		}
 
 		public override byte[] ReadBinary()

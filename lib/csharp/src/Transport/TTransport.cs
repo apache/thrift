@@ -71,5 +71,14 @@ namespace Thrift.Transport
 		public virtual void Flush()
 		{
 		}
-	}
+        
+        public virtual IAsyncResult BeginFlush(AsyncCallback callback, object state)
+        {
+            return null;
+        }
+
+        public virtual void EndFlush(IAsyncResult asyncResult)
+        {
+        }
+    }
 }

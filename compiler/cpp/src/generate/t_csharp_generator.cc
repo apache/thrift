@@ -44,8 +44,12 @@ class t_csharp_generator : public t_oop_generator
         const std::string& option_string)
       : t_oop_generator(program)
     {
-      (void) parsed_options;
       (void) option_string;
+
+      std::map<std::string, std::string>::const_iterator iter;
+      iter = parsed_options.find("async");
+      async_ctp_ = (iter != parsed_options.end());
+
       out_dir_base_ = "gen-csharp";
     }
     void init_generator();
@@ -101,6 +105,9 @@ class t_csharp_generator : public t_oop_generator
     std::string type_name(t_type* ttype, bool in_countainer=false, bool in_init=false);
     std::string base_type_name(t_base_type* tbase, bool in_container=false);
     std::string declare_field(t_field* tfield, bool init=false, std::string prefix="");
+    std::string function_signature_async_begin(t_function* tfunction, std::string prefix = "");
+    std::string function_signature_async_end(t_function* tfunction, std::string prefix = "");
+    std::string function_signature_async_ctp(t_function* tfunction, std::string prefix = "");
     std::string function_signature(t_function* tfunction, std::string prefix="");
     std::string argument_list(t_struct* tstruct);
     std::string type_to_enum(t_type* ttype);
@@ -121,6 +128,7 @@ class t_csharp_generator : public t_oop_generator
     std::string namespace_name_;
     std::ofstream f_service_;
     std::string namespace_dir_;
+	bool async_ctp_;
 };
 
 
@@ -166,6 +174,7 @@ string t_csharp_generator::csharp_type_usings() {
     "using System.Collections.Generic;\n" +
     "using System.Text;\n" +
     "using System.IO;\n" +
+	(async_ctp_ ? "using System.Threading.Tasks;\n" : "") +
     "using Thrift;\n" +
     "using Thrift.Collections;\n";
 }
@@ -408,7 +417,9 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
   }
 
   out << endl;
-  indent(out) << "[Serializable]" << endl;
+  indent(out) << "#if !SILVERLIGHT" << endl;
+  indent(out) << "[Serializable]" << endl; 
+  indent(out) << "#endif" << endl;
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
  
   indent(out) << "public " << (is_final ? "sealed " : "") << "partial class " << tstruct->get_name() << " : ";
@@ -440,7 +451,9 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
     out <<
       endl <<
       indent() << "public Isset __isset;" << endl <<
+      indent() << "#if !SILVERLIGHT" << endl <<
       indent() << "[Serializable]" << endl <<
+      indent() << "#endif" << endl <<
       indent() << "public struct Isset {" << endl;
     indent_up();
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -778,6 +791,15 @@ void t_csharp_generator::generate_service_interface(t_service* tservice) {
   {
     indent(f_service_) <<
       function_signature(*f_iter) << ";" << endl;
+    indent(f_service_) << "#if SILVERLIGHT" << endl;
+    indent(f_service_) <<
+      function_signature_async_begin(*f_iter, "Begin_") << ";" << endl;
+    indent(f_service_) <<
+      function_signature_async_end(*f_iter, "End_") << ";" << endl;  
+    if( async_ctp_)
+      indent(f_service_) <<
+        function_signature_async_ctp(*f_iter) << ";" << endl;  
+    indent(f_service_) << "#endif" << endl;
   }
   indent_down();
   f_service_ <<
@@ -852,17 +874,104 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     string funname = (*f_iter)->get_name();
 
+    indent(f_service_) << endl;
+    indent(f_service_) << "#if SILVERLIGHT" << endl;
+	// Begin_
     indent(f_service_) <<
-      "public " << function_signature(*f_iter) << endl;
+      "public " << function_signature_async_begin(*f_iter, "Begin_") << endl;
     scope_up(f_service_);
     indent(f_service_) <<
-      "send_" << funname << "(";
+      "return " << "send_" << funname << "(callback, state";
 
     t_struct* arg_struct = (*f_iter)->get_arglist();
 
     const vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator fld_iter;
-    bool first = true;
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+	    f_service_ << ", ";
+        f_service_ << (*fld_iter)->get_name();
+    }
+    f_service_ << ");" << endl;
+    scope_down(f_service_);
+    f_service_ << endl;
+	
+    // End
+    indent(f_service_) <<
+      "public " << function_signature_async_end(*f_iter, "End_") << endl;
+    scope_up(f_service_);
+    indent(f_service_) <<
+      "oprot_.Transport.EndFlush(asyncResult);" << endl;
+    if (!(*f_iter)->is_oneway()) {
+      f_service_ << indent();
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        f_service_ << "return ";
+      }
+      f_service_ <<
+        "recv_" << funname << "();" << endl;
+    }
+    scope_down(f_service_);
+    f_service_ << endl;
+
+    // async CTP
+	bool first;
+    if( async_ctp_)
+	{
+      indent(f_service_) <<
+        "public async " << function_signature_async_ctp(*f_iter, "") << endl;
+      scope_up(f_service_);
+	
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        indent(f_service_) <<
+          type_name( (*f_iter)->get_returntype()) << " retval;" << endl;
+        indent(f_service_) <<
+          "retval = ";
+      }
+	  else
+	  {
+        indent(f_service_);
+	  }
+      f_service_ <<
+        "await TaskEx.Run(() =>" << endl;
+      scope_up(f_service_);
+      indent(f_service_);
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        f_service_ <<
+          "return ";
+      }
+      f_service_ << 
+        funname << "(";
+	  first = true;
+      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+        if (first) {
+          first = false;
+        } else {
+          f_service_ << ", ";
+        }
+        f_service_ << (*fld_iter)->get_name();
+      }
+      f_service_ << ");" << endl;
+      indent_down();
+      indent(f_service_) << 
+        "});" << endl;
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        indent(f_service_) << 
+          "return retval;"  << endl;
+      }
+	  scope_down(f_service_);
+      f_service_ << endl;
+    }
+	
+    indent(f_service_) << "#endif" << endl << endl;
+
+    // "Normal" Synchronous invoke
+    indent(f_service_) <<
+      "public " << function_signature(*f_iter) << endl;
+    scope_up(f_service_);
+    indent(f_service_) << "#if !SILVERLIGHT" << endl;
+    indent(f_service_) <<
+      "send_" << funname << "(";
+
+    first = true;
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       if (first) {
         first = false;
@@ -881,17 +990,49 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
       f_service_ <<
         "recv_" << funname << "();" << endl;
     }
-    scope_down(f_service_);
     f_service_ << endl;
 
+    indent(f_service_) << "#else" << endl;
+
+    // Silverlight synchronous invoke
+    indent(f_service_) << "var asyncResult = Begin_" << funname << "(null, null, ";
+    first = true;
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      if (first) {
+        first = false;
+      } else {
+        f_service_ << ", ";
+      }
+      f_service_ << (*fld_iter)->get_name();
+    }
+    f_service_ << ");" << endl;
+
+    if (!(*f_iter)->is_oneway()) {
+      f_service_ << indent();
+      if (!(*f_iter)->get_returntype()->is_void()) {
+        f_service_ << "return ";
+      }
+      f_service_ <<
+        "End_" << funname << "(asyncResult);" << endl;
+    }
+    f_service_ << endl;
+
+
+    indent(f_service_) << "#endif" << endl;
+    scope_down(f_service_);
+
+    // Send
     t_function send_function(g_type_void,
         string("send_") + (*f_iter)->get_name(),
         (*f_iter)->get_arglist());
 
     string argsname = (*f_iter)->get_name() + "_args";
 
-    indent(f_service_) <<
-      "public " << function_signature(&send_function) << endl;
+    indent(f_service_) << "#if SILVERLIGHT" << endl;
+    indent(f_service_) << "public " << function_signature_async_begin(&send_function) << endl;
+    indent(f_service_) << "#else" << endl;
+    indent(f_service_) << "public " << function_signature(&send_function) << endl;
+    indent(f_service_) << "#endif" << endl;
     scope_up(f_service_);
 
     f_service_ <<
@@ -905,8 +1046,13 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
 
     f_service_ <<
       indent() << "args.Write(oprot_);" << endl <<
-      indent() << "oprot_.WriteMessageEnd();" << endl <<
-      indent() << "oprot_.Transport.Flush();" << endl;
+      indent() << "oprot_.WriteMessageEnd();" << endl;;
+
+    indent(f_service_) << "#if SILVERLIGHT" << endl;
+    indent(f_service_) << "return oprot_.Transport.BeginFlush(callback, state);" << endl;
+    indent(f_service_) << "#else" << endl;
+    indent(f_service_) << "oprot_.Transport.Flush();" << endl;
+    indent(f_service_) << "#endif" << endl;
 
     scope_down(f_service_);
     f_service_ << endl;
@@ -1650,6 +1796,24 @@ string t_csharp_generator::function_signature(t_function* tfunction, string pref
   return type_name(ttype) + " " + prefix + tfunction->get_name() + "(" + argument_list(tfunction->get_arglist()) + ")";
 }
 
+string t_csharp_generator::function_signature_async_begin(t_function* tfunction, string prefix) {
+  return "IAsyncResult " + prefix + tfunction->get_name() + "(AsyncCallback callback, object state, " + argument_list(tfunction->get_arglist()) + ")";
+}
+
+string t_csharp_generator::function_signature_async_end(t_function* tfunction, string prefix) {
+  t_type* ttype = tfunction->get_returntype();
+  return type_name(ttype) + " " + prefix + tfunction->get_name() + "(IAsyncResult asyncResult)";
+}
+
+string t_csharp_generator::function_signature_async_ctp(t_function* tfunction, string prefix) {
+  t_type* ttype = tfunction->get_returntype();
+  string task = "Task";
+  if( ! ttype->is_void())
+    task += "<" + type_name(ttype) + ">";
+  return task + " " + prefix + tfunction->get_name() + "Async(" + argument_list(tfunction->get_arglist()) + ")";
+}
+
+
 string t_csharp_generator::argument_list(t_struct* tstruct) {
   string result = "";
   const vector<t_field*>& fields = tstruct->get_members();
@@ -1707,5 +1871,6 @@ string t_csharp_generator::type_to_enum(t_type* type) {
 }
 
 
-THRIFT_REGISTER_GENERATOR(csharp, "C#", "")
+THRIFT_REGISTER_GENERATOR(csharp, "C#",
+"    async:  add AsyncCTP support.\n")
 
