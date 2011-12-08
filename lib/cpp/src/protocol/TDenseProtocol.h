@@ -59,9 +59,9 @@ namespace apache { namespace thrift { namespace protocol {
 class TDenseProtocol
   : public TVirtualProtocol<TDenseProtocol, TBinaryProtocol> {
  protected:
-  static const int32_t VERSION_MASK = 0xffff0000;
+  static const int32_t VERSION_MASK = ((int32_t)0xffff0000);
   // VERSION_1 (0x80010000)  is taken by TBinaryProtocol.
-  static const int32_t VERSION_2 = 0x80020000;
+  static const int32_t VERSION_2 = ((int32_t)0x80020000);
 
  public:
   typedef apache::thrift::reflection::local::TypeSpec TypeSpec;
