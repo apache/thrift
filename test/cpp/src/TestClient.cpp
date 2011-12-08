@@ -229,7 +229,7 @@ int main(int argc, char** argv) {
       transport->open();
     } catch (TTransportException& ttx) {
       printf("Connect failed: %s\n", ttx.what());
-      continue;
+      return 1;
     }
 
     /**
