@@ -100,11 +100,17 @@ class t_cpp_generator : public t_oop_generator {
   void print_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
   std::string render_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
 
-  void generate_struct_definition    (std::ofstream& out, t_struct* tstruct, bool is_exception=false, bool pointers=false, bool read=true, bool write=true);
+  void generate_struct_definition    (std::ofstream& out, t_struct* tstruct,
+                                      bool is_exception=false,
+                                      bool pointers=false,
+                                      bool read=true,
+                                      bool write=true,
+                                      bool swap=false);
   void generate_struct_fingerprint   (std::ofstream& out, t_struct* tstruct, bool is_definition);
   void generate_struct_reader        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
   void generate_struct_writer        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
   void generate_struct_result_writer (std::ofstream& out, t_struct* tstruct, bool pointers=false);
+  void generate_struct_swap          (std::ofstream& out, t_struct* tstruct);
 
   /**
    * Service-level generation functions
@@ -389,6 +395,9 @@ void t_cpp_generator::init_generator() {
       "#include <TReflectionLocal.h>" << endl <<
       endl;
   }
+
+  // The swap() code needs <algorithm> for std::swap()
+  f_types_impl_ << "#include <algorithm>" << endl << endl;
 
   // Open namespace
   ns_open_ = namespace_open(program_->get_namespace("cpp"));
@@ -747,7 +756,8 @@ string t_cpp_generator::render_const_value(ofstream& out, string name, t_type* t
  * @param tstruct The struct definition
  */
 void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) {
-  generate_struct_definition(f_types_, tstruct, is_exception);
+  generate_struct_definition(f_types_, tstruct, is_exception,
+                             false, true, true, true);
   generate_struct_fingerprint(f_types_impl_, tstruct, true);
   generate_local_reflection(f_types_, tstruct, false);
   generate_local_reflection(f_types_impl_, tstruct, true);
@@ -756,6 +766,7 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   std::ofstream& out = (gen_templates_ ? f_types_tcc_ : f_types_impl_);
   generate_struct_reader(out, tstruct);
   generate_struct_writer(out, tstruct);
+  generate_struct_swap(f_types_impl_, tstruct);
 }
 
 /**
@@ -769,7 +780,8 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
                                                  bool is_exception,
                                                  bool pointers,
                                                  bool read,
-                                                 bool write) {
+                                                 bool write,
+                                                 bool swap) {
   string extends = "";
   if (is_exception) {
     extends = " : public ::apache::thrift::TException";
@@ -1003,6 +1015,14 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   indent(out) <<
     "};" << endl <<
     endl;
+
+  if (swap) {
+    // Generate a namespace-scope swap() function
+    out <<
+      indent() << "void swap(" << tstruct->get_name() << " &a, " <<
+      tstruct->get_name() << " &b);" << endl <<
+      endl;
+  }
 }
 
 /**
@@ -1465,6 +1485,49 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
   indent(out) <<
     "}" << endl <<
     endl;
+}
+
+/**
+ * Generates the swap function.
+ *
+ * @param out Stream to write to
+ * @param tstruct The struct
+ */
+void t_cpp_generator::generate_struct_swap(ofstream& out, t_struct* tstruct) {
+  out <<
+    indent() << "void swap(" << tstruct->get_name() << " &a, " <<
+    tstruct->get_name() << " &b) {" << endl;
+  indent_up();
+
+  // Let argument-dependent name lookup find the correct swap() function to
+  // use based on the argument types.  If none is found in the arguments'
+  // namespaces, fall back to ::std::swap().
+  out <<
+    indent() << "using ::std::swap;" << endl;
+
+  bool has_nonrequired_fields = false;
+  const vector<t_field*>& fields = tstruct->get_members();
+  for (vector<t_field*>::const_iterator f_iter = fields.begin();
+       f_iter != fields.end();
+       ++f_iter) {
+    t_field *tfield = *f_iter;
+
+    if (tfield->get_req() != t_field::T_REQUIRED) {
+      has_nonrequired_fields = true;
+    }
+
+    out <<
+      indent() << "swap(a." << tfield->get_name() <<
+      ", b." << tfield->get_name() << ");" << endl;
+  }
+
+  if (has_nonrequired_fields) {
+    out <<
+      indent() << "swap(a.__isset, b.__isset);" << endl;
+  }
+
+  scope_down(out);
+  out << endl;
 }
 
 /**
