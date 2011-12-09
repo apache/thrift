@@ -189,7 +189,9 @@ namespace Thrift.Transport
 #endif
 			}
 
+#if !SILVERLIGHT
 			connection.Proxy = null;
+#endif
 
             return connection;
 		}
