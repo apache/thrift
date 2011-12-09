@@ -106,17 +106,11 @@ begin
 end;
 
 procedure TTestServer.TTestHandlerImpl.testException(arg: string);
-var
-  x : TXception;
 begin
   Console.WriteLine('testException(' + arg + ')');
   if ( arg = 'Xception') then
   begin
-    x := TXception.Create;
-    x.ErrorCode := 1001;
-    x.Message_ := 'This is an Xception';
-    x.UpdateMessageProperty;
-    raise x;
+    raise TXception.Create( 1001, 'This is an Xception');
   end;
 end;
 
@@ -272,21 +266,16 @@ end;
 function TTestServer.TTestHandlerImpl.testMultiException(arg0,
   arg1: string): IXtruct;
 var
-  x : TXception;
   x2 : TXception2;
 begin
   Console.WriteLine('testMultiException(' + arg0 + ', ' + arg1 + ')');
   if ( arg0 = 'Xception') then
   begin
-    x := TXception.Create;
-    x.ErrorCode := 1001;
-    x.Message_ := 'This is an Xception';
-    x.UpdateMessageProperty;
-    raise x;
+    raise TXception.Create( 1001, 'This is an Xception');  // test the new rich CTOR 
   end else
   if ( arg0 = 'Xception2') then
   begin
-    x2 := TXception2.Create;
+    x2 := TXception2.Create;  // the old way still works too?
     x2.ErrorCode := 2002;
     x2.Struct_thing := TXtructImpl.Create;
     x2.Struct_thing.String_thing := 'This is an Xception2';
