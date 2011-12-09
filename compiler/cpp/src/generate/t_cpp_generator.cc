@@ -1526,6 +1526,14 @@ void t_cpp_generator::generate_struct_swap(ofstream& out, t_struct* tstruct) {
       indent() << "swap(a.__isset, b.__isset);" << endl;
   }
 
+  // handle empty structs
+  if (fields.size() == 0) {
+    out <<
+      indent() << "(void) a;" << endl;
+    out <<
+      indent() << "(void) b;" << endl;
+  }
+
   scope_down(out);
   out << endl;
 }
