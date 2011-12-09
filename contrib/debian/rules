@@ -72,6 +72,9 @@ build-indep-stamp: configure-stamp
 	# C#
 	$(MAKE) -C $(CURDIR)/lib/csharp
 
+	# Ruby
+	$(MAKE) -C $(CURDIR)/lib/rb
+
 	# Perl
 	$(MAKE) -C $(CURDIR)/lib/perl INSTALLDIRS=vendor
 
@@ -102,6 +105,18 @@ install-indep:
 	mkdir -p $(CURDIR)/debian/libthrift-java/usr/share/java/ && \
 	cp $(CURDIR)/lib/java/build/libthrift*.jar \
 		$(CURDIR)/debian/libthrift-java/usr/share/java/
+
+        # Ruby
+	mkdir -p $(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.8 && \
+	cp $(CURDIR)/lib/rb/lib/thrift.rb \
+		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.8
+	cp -r $(CURDIR)/lib/rb/lib/thrift \
+		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.8
+	mkdir -p $(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1 && \
+	cp $(CURDIR)/lib/rb/lib/thrift.rb \
+		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1
+	cp -r $(CURDIR)/lib/rb/lib/thrift \
+		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1
 
 	# C#
 	mkdir -p $(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/ && \
@@ -138,7 +153,7 @@ install-arch:
 
 	find $(CURDIR)/debian/python-thrift-dbg -name "*.pyc" -print0 | xargs -0 rm -f
 	find $(CURDIR)/debian/python-thrift-dbg -name "*.py" -print0 | xargs -0 rm -f
-	find $(CURDIR)/debian/python-thrift-dbg -name "*.egg-info" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python-thrift-dbg -name "*.egg-info" -print0 | xargs -0 rm -rf
 	find $(CURDIR)/debian/python-thrift-dbg -depth -type d -empty -exec rmdir {} \;
 
 	# PHP
