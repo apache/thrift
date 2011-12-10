@@ -3187,6 +3187,12 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     string resultname = tservice->get_name() + "_" + tfunction->get_name() +
       "_result";
 
+    if (tfunction->is_oneway() && !unnamed_oprot_seqid) {
+      out <<
+        indent() << "(void) seqid;" << endl <<
+        indent() << "(void) oprot;" << endl;
+    }
+
     out <<
       indent() << "void* ctx = NULL;" << endl <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
