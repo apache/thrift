@@ -82,7 +82,7 @@ static void testVoid_clientReturn(const char* host, int port, event_base *base, 
 
     // next test
     delete client;
-    shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host, "/", host, port, base));
+    boost::shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host, "/", host, port, base));
     client = new ThriftTestCobClient(channel, protocolFactory);
     client->testString(tr1::bind(testString_clientReturn, host, port, base, protocolFactory, std::tr1::placeholders::_1), "Test");
   } catch (TException& exn) {
@@ -149,44 +149,44 @@ int main(int argc, char** argv) {
     ssl = true;
   }
 
-  shared_ptr<TTransport> transport;
-  shared_ptr<TProtocol> protocol;
+  boost::shared_ptr<TTransport> transport;
+  boost::shared_ptr<TProtocol> protocol;
 
-  shared_ptr<TSocket> socket;
-  shared_ptr<TSSLSocketFactory> factory;
+  boost::shared_ptr<TSocket> socket;
+  boost::shared_ptr<TSSLSocketFactory> factory;
 
   if (ssl) {
-    factory = shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
+    factory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
     factory->loadTrustedCertificates("./trusted-ca-certificate.pem");
     factory->authenticate(true);
     socket = factory->createSocket(host, port);
   } else {
     if (domain_socket != "") {
-      socket = shared_ptr<TSocket>(new TSocket(domain_socket));
+      socket = boost::shared_ptr<TSocket>(new TSocket(domain_socket));
       port = 0;
     }
     else {
-      socket = shared_ptr<TSocket>(new TSocket(host, port));
+      socket = boost::shared_ptr<TSocket>(new TSocket(host, port));
     }
   }
 
   if (transport_type.compare("http") == 0) {
-    shared_ptr<TTransport> httpSocket(new THttpClient(socket, host, "/service"));
+    boost::shared_ptr<TTransport> httpSocket(new THttpClient(socket, host, "/service"));
     transport = httpSocket;
   } else if (transport_type.compare("framed") == 0){
-    shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
+    boost::shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
     transport = framedSocket;
   } else{
-    shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
+    boost::shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
     transport = bufferedSocket;
   }
 
   if (protocol_type.compare("json") == 0) {
-    shared_ptr<TProtocol> jsonProtocol(new TJSONProtocol(transport));
+    boost::shared_ptr<TProtocol> jsonProtocol(new TJSONProtocol(transport));
     protocol = jsonProtocol;
   } else{
-    shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol(transport));
+    boost::shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol(transport));
     protocol = binaryProtocol;
   }
 
@@ -205,9 +205,9 @@ int main(int argc, char** argv) {
     cout << "Libevent Features: 0x" << hex << event_base_get_features(base) << endl;
 #endif
 
-    shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
-    shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
+    boost::shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
     ThriftTestCobClient* client = new ThriftTestCobClient(channel, protocolFactory.get());
     client->testVoid(tr1::bind(testVoid_clientReturn, host.c_str(), port, base, protocolFactory.get(), std::tr1::placeholders::_1));
     

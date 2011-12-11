@@ -142,8 +142,8 @@ uint8_t* gen_random_buffer(uint32_t buf_len) {
  */
 
 void test_write_then_read(const uint8_t* buf, uint32_t buf_len) {
-  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf, buf_len);
   zlib_trans->finish();
 
@@ -161,8 +161,8 @@ void test_separate_checksum(const uint8_t* buf, uint32_t buf_len) {
   // it isn't there.  The original implementation complained that
   // the stream was not complete.  I'm about to go fix that.
   // It worked.  Awesome.
-  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf, buf_len);
   zlib_trans->finish();
   string tmp_buf;
@@ -181,8 +181,8 @@ void test_separate_checksum(const uint8_t* buf, uint32_t buf_len) {
 void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
   // Make sure we still get that "not complete" error if
   // it really isn't complete.
-  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf, buf_len);
   zlib_trans->finish();
   string tmp_buf;
@@ -205,11 +205,11 @@ void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
 }
 
 void test_read_write_mix(const uint8_t* buf, uint32_t buf_len,
-                         const shared_ptr<SizeGenerator>& write_gen,
-                         const shared_ptr<SizeGenerator>& read_gen) {
+                         const boost::shared_ptr<SizeGenerator>& write_gen,
+                         const boost::shared_ptr<SizeGenerator>& read_gen) {
   // Try it with a mix of read/write sizes.
-  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   unsigned int tot;
 
   tot = 0;
@@ -244,8 +244,8 @@ void test_read_write_mix(const uint8_t* buf, uint32_t buf_len,
 
 void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
   // Verify checksum checking.
-  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf, buf_len);
   zlib_trans->finish();
   string tmp_buf;
@@ -282,8 +282,8 @@ void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
 
 void test_write_after_flush(const uint8_t* buf, uint32_t buf_len) {
   // write some data
-  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf, buf_len);
 
   // call finish()
@@ -318,7 +318,7 @@ void test_write_after_flush(const uint8_t* buf, uint32_t buf_len) {
 void test_no_write() {
   // Verify that no data is written to the underlying transport if we
   // never write data to the TZlibTransport.
-  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   {
     // Create a TZlibTransport object, and immediately destroy it
     // when it goes out of scope.
@@ -352,8 +352,8 @@ void add_tests(unit_test::test_suite* suite,
   ADD_TEST_CASE(suite, name, test_invalid_checksum, buf, buf_len);
   ADD_TEST_CASE(suite, name, test_write_after_flush, buf, buf_len);
 
-  shared_ptr<SizeGenerator> size_32k(new ConstantSizeGenerator(1<<15));
-  shared_ptr<SizeGenerator> size_lognormal(new LogNormalSizeGenerator(20, 30));
+  boost::shared_ptr<SizeGenerator> size_32k(new ConstantSizeGenerator(1<<15));
+  boost::shared_ptr<SizeGenerator> size_lognormal(new LogNormalSizeGenerator(20, 30));
   ADD_TEST_CASE(suite, name << "-constant",
                 test_read_write_mix, buf, buf_len,
                 size_32k, size_32k);
@@ -373,8 +373,8 @@ void add_tests(unit_test::test_suite* suite,
   // Because the SizeGenerator makes a copy of the random number generator,
   // both SizeGenerators should return the exact same set of values, since they
   // both start with random number generators in the same state.
-  shared_ptr<SizeGenerator> write_size_gen(new LogNormalSizeGenerator(20, 30));
-  shared_ptr<SizeGenerator> read_size_gen(new LogNormalSizeGenerator(20, 30));
+  boost::shared_ptr<SizeGenerator> write_size_gen(new LogNormalSizeGenerator(20, 30));
+  boost::shared_ptr<SizeGenerator> read_size_gen(new LogNormalSizeGenerator(20, 30));
   ADD_TEST_CASE(suite, name << "-lognormal-same-distribution",
                 test_read_write_mix, buf, buf_len,
                 write_size_gen, read_size_gen);
