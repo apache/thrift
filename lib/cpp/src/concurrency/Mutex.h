@@ -101,6 +101,25 @@ private:
   boost::shared_ptr<impl> impl_;
 };
 
+/**
+ * A ReadWriteMutex that guarantees writers will not be starved by readers:
+ * When a writer attempts to acquire the mutex, all new readers will be
+ * blocked from acquiring the mutex until the writer has acquired and
+ * released it. In some operating systems, this may already be guaranteed
+ * by a regular ReadWriteMutex.
+ */
+class NoStarveReadWriteMutex : public ReadWriteMutex {
+public:
+  NoStarveReadWriteMutex();
+
+  virtual void acquireRead() const;
+  virtual void acquireWrite() const;
+
+private:
+  Mutex mutex_;
+  mutable volatile bool writerWaiting_;
+};
+
 class Guard : boost::noncopyable {
  public:
   Guard(const Mutex& value, int64_t timeout = 0) : mutex_(&value) {

@@ -270,9 +270,9 @@ public:
     PROFILE_MUTEX_LOCKED();
   }
 
-  bool attemptRead() const { return pthread_rwlock_tryrdlock(&rw_lock_); }
+  bool attemptRead() const { return !pthread_rwlock_tryrdlock(&rw_lock_); }
 
-  bool attemptWrite() const { return pthread_rwlock_trywrlock(&rw_lock_); }
+  bool attemptWrite() const { return !pthread_rwlock_trywrlock(&rw_lock_); }
 
   void release() const {
     PROFILE_MUTEX_START_UNLOCK();
@@ -299,6 +299,36 @@ bool ReadWriteMutex::attemptRead() const { return impl_->attemptRead(); }
 bool ReadWriteMutex::attemptWrite() const { return impl_->attemptWrite(); }
 
 void ReadWriteMutex::release() const { impl_->release(); }
+
+NoStarveReadWriteMutex::NoStarveReadWriteMutex() : writerWaiting_(false) {}
+
+void NoStarveReadWriteMutex::acquireRead() const
+{
+  if (writerWaiting_) {
+    // writer is waiting, block on the writer's mutex until he's done with it
+    mutex_.lock();
+    mutex_.unlock();
+  }
+
+  ReadWriteMutex::acquireRead();
+}
+
+void NoStarveReadWriteMutex::acquireWrite() const
+{
+  // if we can acquire the rwlock the easy way, we're done
+  if (attemptWrite()) {
+    return;
+  }
+
+  // failed to get the rwlock, do it the hard way:
+  // locking the mutex and setting writerWaiting will cause all new readers to
+  // block on the mutex rather than on the rwlock.
+  mutex_.lock();
+  writerWaiting_ = true;
+  ReadWriteMutex::acquireWrite();
+  writerWaiting_ = false;
+  mutex_.unlock();
+}
 
 }}} // apache::thrift::concurrency
 
