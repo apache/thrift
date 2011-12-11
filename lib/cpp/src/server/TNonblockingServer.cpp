@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#define __STDC_FORMAT_MACROS
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -435,7 +437,7 @@ void TNonblockingServer::TConnection::workSocket() {
   case SOCKET_RECV_FRAMING:
     union {
       uint8_t buf[sizeof(uint32_t)];
-      int32_t size;
+      uint32_t size;
     } framing;
 
     // if we've already received some bytes we kept them here
@@ -465,8 +467,14 @@ void TNonblockingServer::TConnection::workSocket() {
     }
 
     readWant_ = ntohl(framing.size);
-    if (static_cast<int>(readWant_) <= 0) {
-      GlobalOutput.printf("TConnection:workSocket() Negative frame size %d, remote side not using TFramedTransport?", static_cast<int>(readWant_));
+    if (readWant_ > server_->getMaxFrameSize()) {
+      // Don't allow giant frame sizes.  This prevents bad clients from
+      // causing us to try and allocate a giant buffer.
+      GlobalOutput.printf("TNonblockingServer: frame size too large "
+                          "(%"PRIu32" > %zu) from client %s. remote side not "
+                          "using TFramedTransport?",
+                          readWant_, server_->getMaxFrameSize(),
+                          tSocket_->getSocketInfo().c_str());
       close();
       return;
     }

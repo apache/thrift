@@ -121,6 +121,9 @@ class TNonblockingServer : public TServer {
   /// Default limit on size of idle connection pool
   static const size_t CONNECTION_STACK_LIMIT = 1024;
 
+  /// Default limit on frame size
+  static const int MAX_FRAME_SIZE = 256 * 1024 * 1024;
+
   /// Default limit on total number of connected sockets
   static const int MAX_CONNECTIONS = INT_MAX;
 
@@ -189,6 +192,9 @@ class TNonblockingServer : public TServer {
 
   /// Limit for number of open connections
   size_t maxConnections_;
+
+  /// Limit for frame size
+  size_t maxFrameSize_;
 
   /// Time in milliseconds before an unperformed task expires (0 == infinite).
   int64_t taskExpireTime_;
@@ -271,6 +277,7 @@ class TNonblockingServer : public TServer {
     connectionStackLimit_ = CONNECTION_STACK_LIMIT;
     maxActiveProcessors_ = MAX_ACTIVE_PROCESSORS;
     maxConnections_ = MAX_CONNECTIONS;
+    maxFrameSize_ = MAX_FRAME_SIZE;
     taskExpireTime_ = 0;
     overloadHysteresis_ = 0.8;
     overloadAction_ = T_OVERLOAD_NO_ACTION;
@@ -516,6 +523,27 @@ class TNonblockingServer : public TServer {
    */
   void setMaxActiveProcessors(size_t maxActiveProcessors) {
     maxActiveProcessors_ = maxActiveProcessors;
+  }
+
+  /**
+   * Get the maximum allowed frame size.
+   *
+   * If a client tries to send a message larger than this limit,
+   * its connection will be closed.
+   *
+   * @return Maxium frame size, in bytes.
+   */
+  size_t getMaxFrameSize() const {
+    return maxFrameSize_;
+  }
+
+  /**
+   * Set the maximum allowed frame size.
+   *
+   * @param maxFrameSize The new maximum frame size.
+   */
+  void setMaxFrameSize(size_t maxFrameSize) {
+    maxFrameSize_ = maxFrameSize;
   }
 
   /**
