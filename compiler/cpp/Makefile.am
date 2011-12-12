@@ -86,7 +86,7 @@ thrift_SOURCES += src/generate/t_c_glib_generator.cc \
                   src/generate/t_go_generator.cc
 
 thrift_CPPFLAGS = -I$(srcdir)/src
-thrift_CXXFLAGS = -Wall
+thrift_CXXFLAGS = -Wall -Wextra -std=c++0x -pedantic
 thrift_LDADD = @LEXLIB@ libparse.a
 
 libparse_a_CPPFLAGS = -I$(srcdir)/src

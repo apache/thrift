@@ -96,7 +96,7 @@ INCLUDES = \
 	-I$(top_srcdir)/lib/cpp/src -Igen-cpp
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
-AM_CXXFLAGS = -Wall
+AM_CXXFLAGS = -Wall -Wextra -std=c++0x -pedantic
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS)
 
 clean-local:
