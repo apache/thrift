@@ -34,7 +34,7 @@ module Thrift
 
     def open
       begin
-        addrinfo = ::Socket::getaddrinfo(@host, @port).first
+        addrinfo = ::Socket::getaddrinfo(@host, @port, nil, ::Socket::SOCK_STREAM).first
         @handle = ::Socket.new(addrinfo[4], ::Socket::SOCK_STREAM, 0)
         sockaddr = ::Socket.sockaddr_in(addrinfo[1], addrinfo[3])
         begin
