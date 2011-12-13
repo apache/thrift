@@ -40,7 +40,7 @@ lib_LTLIBRARIES += libthriftz.la
 pkgconfig_DATA += thrift-z.pc
 endif
 
-AM_CXXFLAGS = -Wall -Wextra -std=c++0x -pedantic
+AM_CXXFLAGS = -Wall
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(srcdir)/src
 AM_LDFLAGS = $(BOOST_LDFLAGS)
 

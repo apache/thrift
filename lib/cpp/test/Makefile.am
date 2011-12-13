@@ -182,7 +182,7 @@ INCLUDES = \
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 AM_LDFLAGS = $(BOOST_LDFLAGS)
-AM_CXXFLAGS = -Wall -Wextra -std=c++0x -pedantic
+AM_CXXFLAGS = -Wall
 
 clean-local:
 	$(RM) -r gen-cpp
