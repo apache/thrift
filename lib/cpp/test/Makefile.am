@@ -65,8 +65,12 @@ TESTS = \
 UnitTests_SOURCES = \
 	UnitTestMain.cpp \
 	TMemoryBufferTest.cpp \
-	TBufferBaseTest.cpp \
+	TBufferBaseTest.cpp
+
+if !WITH_BOOSTTHREADS
+UnitTests_SOURCES += \
         RWMutexStarveTest.cpp
+endif
 
 UnitTests_LDADD = \
   libtestgencpp.la \

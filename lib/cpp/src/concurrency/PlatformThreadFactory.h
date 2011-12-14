@@ -30,7 +30,6 @@ namespace apache { namespace thrift { namespace concurrency {
 
 #ifndef USE_BOOST_THREAD
   typedef PosixThreadFactory PlatformThreadFactory;
-#include <concurrency/PosixThreadFactory.h>
 #else
   typedef BoostThreadFactory PlatformThreadFactory;
 #endif

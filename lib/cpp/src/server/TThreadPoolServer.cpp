@@ -17,6 +17,10 @@
  * under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "server/TThreadPoolServer.h"
 #include "transport/TTransportException.h"
 #include "concurrency/Thread.h"

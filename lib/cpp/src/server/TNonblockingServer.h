@@ -27,7 +27,7 @@
 #include <concurrency/ThreadManager.h>
 #include <climits>
 #include <concurrency/Thread.h>
-#include <concurrency/PosixThreadFactory.h>
+#include <concurrency/PlatformThreadFactory.h>
 #include <concurrency/Mutex.h>
 #include <stack>
 #include <vector>
@@ -48,7 +48,7 @@ using apache::thrift::transport::TSocket;
 using apache::thrift::protocol::TProtocol;
 using apache::thrift::concurrency::Runnable;
 using apache::thrift::concurrency::ThreadManager;
-using apache::thrift::concurrency::PosixThreadFactory;
+using apache::thrift::concurrency::PlatformThreadFactory;
 using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::concurrency::Thread;
 using apache::thrift::concurrency::Mutex;
@@ -146,7 +146,7 @@ class TNonblockingServer : public TServer {
   static const int DEFAULT_IO_THREADS = 1;
 
   /// File descriptor of an invalid socket
-  static const int INVALID_SOCKET = -1;
+  static const int INVALID_SOCKET_VALUE = -1;
 
   /// # of IO threads this server will use
   size_t numIOThreads_;
@@ -167,7 +167,7 @@ class TNonblockingServer : public TServer {
   bool threadPoolProcessing_;
 
   // Factory to create the IO threads
-  boost::shared_ptr<PosixThreadFactory> ioThreadFactory_;
+  boost::shared_ptr<PlatformThreadFactory> ioThreadFactory_;
 
   // Vector of IOThread objects that will handle our IO
   std::vector<boost::shared_ptr<TNonblockingIOThread> > ioThreads_;
@@ -804,13 +804,13 @@ class TNonblockingIOThread : public Runnable {
 
   // Returns the thread id associated with this object.  This should
   // only be called after the thread has been started.
-  pthread_t getThreadId() const { return threadId_; }
+  Thread::id_t getThreadId() const { return threadId_; }
 
   // Returns the send-fd for task complete notifications.
-  int getNotificationSendFD() const { return notificationPipeFDs_[1]; }
+  evutil_socket_t getNotificationSendFD() const { return notificationPipeFDs_[1]; }
 
   // Returns the read-fd for task complete notifications.
-  int getNotificationRecvFD() const { return notificationPipeFDs_[0]; }
+  evutil_socket_t getNotificationRecvFD() const { return notificationPipeFDs_[0]; }
 
   // Returns the actual thread object associated with this IO thread.
   boost::shared_ptr<Thread> getThread() const { return thread_; }
@@ -839,7 +839,7 @@ class TNonblockingIOThread : public Runnable {
    *
    * @param fd the descriptor the event occurred on.
    */
-  static void notifyHandler(int fd, short which, void* v);
+  static void notifyHandler(evutil_socket_t fd, short which, void* v);
 
   /**
    * C-callable event handler for listener events.  Provides a callback
@@ -876,7 +876,7 @@ class TNonblockingIOThread : public Runnable {
   const int number_;
 
   /// The actual physical thread id.
-  pthread_t threadId_;
+  Thread::id_t threadId_;
 
   /// If listenSocket_ >= 0, adds an event on the event_base to accept conns
   int listenSocket_;
@@ -894,7 +894,7 @@ class TNonblockingIOThread : public Runnable {
   struct event notificationEvent_;
 
  /// File descriptors for pipe used for task completion notification.
-  int notificationPipeFDs_[2];
+  evutil_socket_t notificationPipeFDs_[2];
 
   /// Actual IO Thread
   boost::shared_ptr<Thread> thread_;

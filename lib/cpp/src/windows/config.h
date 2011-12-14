@@ -30,6 +30,8 @@
 
 #pragma warning(disable: 4996) // Depreciated posix name.
 #pragma warning(disable: 4250) // Inherits via dominance.
+#pragma warning(disable: 4244) // conversion from '...' to '...', possible loss of data.
+#pragma warning(disable: 4267) // conversion from '...' to '...', possible loss of data.
 
 #define VERSION "0.9.0-dev"
 #define HAVE_GETTIMEOFDAY 1
@@ -105,9 +107,9 @@ inline int poll_win32(LPWSAPOLLFD fdArray, ULONG fds, INT timeout)
 	}
 #endif // WINVER
 
-inline void close(SOCKET socket)
+inline int close(SOCKET socket)
 {
-    ::closesocket(socket);
+    return ::closesocket(socket);
 }
 
 #endif // _THRIFT_WINDOWS_CONFIG_H_

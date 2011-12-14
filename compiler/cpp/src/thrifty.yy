@@ -28,7 +28,11 @@
 #define __STDC_LIMIT_MACROS
 #define __STDC_FORMAT_MACROS
 #include <stdio.h>
+#ifndef _MSC_VER
 #include <inttypes.h>
+#else
+#include <stdint.h>
+#endif
 #include <limits.h>
 #include "main.h"
 #include "globals.h"

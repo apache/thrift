@@ -325,6 +325,7 @@ AC_CHECK_HEADERS([malloc.h])
 AC_CHECK_HEADERS([openssl/ssl.h])
 AC_CHECK_HEADERS([openssl/rand.h])
 AC_CHECK_HEADERS([openssl/x509v3.h])
+AC_CHECK_HEADERS([sched.h])
 
 AC_CHECK_LIB(pthread, pthread_create)
 dnl NOTE(dreiss): I haven't been able to find any really solid docs
