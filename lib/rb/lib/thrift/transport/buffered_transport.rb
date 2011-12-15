@@ -87,7 +87,7 @@ module Thrift
     end
 
     def write(buf)
-      @wbuf << buf
+      @wbuf << buf.force_encoding("utf-8")
     end
 
     def flush
