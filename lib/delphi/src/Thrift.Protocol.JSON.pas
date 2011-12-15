@@ -842,7 +842,7 @@ begin
     end;
 
     SetLength( result, buffer.Size);
-    Move( buffer.Memory^, result[0], Length(result));
+    if buffer.Size > 0 then Move( buffer.Memory^, result[0], Length(result));
 
   finally
     buffer.Free;
