@@ -34,7 +34,12 @@ module Thrift
 
     def open?; true end
     def read(sz); @inbuf.read sz end
-    def write(buf); @outbuf << buf end
+    
+    #def write(buf); @outbuf << buf end
+    def write(buf)
+      @outbuf << buf.force_encoding("utf-8")
+    end
+
 
     def add_headers(headers)
       @headers = @headers.merge(headers)
