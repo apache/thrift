@@ -240,7 +240,8 @@ public:
   void generate_deep_copy_container(std::ofstream& out, std::string source_name_p1, std::string source_name_p2, std::string result_name, t_type* type);
   void generate_deep_copy_non_container(std::ofstream& out, std::string source_name, std::string dest_name, t_type* type);
 
-  bool has_bit_vector(t_struct* tstruct);
+  enum isset_type { ISSET_NONE, ISSET_PRIMITIVE, ISSET_BITSET };
+  isset_type needs_isset(t_struct* tstruct, std::string *outPrimitiveType = NULL);
 
   /**
    * Helper rendering functions
@@ -352,6 +353,7 @@ string t_java_generator::java_type_imports() {
     "import org.apache.thrift.scheme.StandardScheme;\n\n" +
     "import org.apache.thrift.scheme.TupleScheme;\n" +
     "import org.apache.thrift.protocol.TTupleProtocol;\n" +
+    "import org.apache.thrift.EncodingUtils;\n" +
     "import java.util.List;\n" +
     "import java.util.ArrayList;\n" +
     "import java.util.Map;\n" +
@@ -1296,9 +1298,18 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
       }
     }
 
-    if (i > 0) {
+    std::string primitiveType;
+    switch(needs_isset(tstruct, &primitiveType)) {
+    case ISSET_NONE:
+      break;
+    case ISSET_PRIMITIVE:
+      indent(out) << "private " << primitiveType << " __isset_bitfield = 0;" << endl;
+      break;
+    case ISSET_BITSET:
       indent(out) << "private BitSet __isset_bit_vector = new BitSet(" << i << ");" << endl;
+      break;
     }
+
     if (optionals > 0) {
       std::string output_string = "private _Fields optionals[] = {";
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -1370,9 +1381,16 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   indent(out) << "public " << tstruct->get_name() << "(" << tstruct->get_name() << " other) {" << endl;
   indent_up();
 
-  if (has_bit_vector(tstruct)) {
+  switch(needs_isset(tstruct)) {
+  case ISSET_NONE:
+    break;
+  case ISSET_PRIMITIVE:
+    indent(out) << "__isset_bitfield = other.__isset_bitfield;" << endl;
+    break;
+  case ISSET_BITSET:
     indent(out) << "__isset_bit_vector.clear();" << endl;
     indent(out) << "__isset_bit_vector.or(other.__isset_bit_vector);" << endl;    
+    break;
   }
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -1788,6 +1806,7 @@ void t_java_generator::generate_generic_isset_method(std::ofstream& out, t_struc
  */
 void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
                                                       t_struct* tstruct) {
+  isset_type issetType = needs_isset(tstruct);
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1928,6 +1947,8 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     indent_up();
     if (type_can_be_null(type)) {
       indent(out) << "this." << field_name << " = null;" << endl;
+    } else if(issetType == ISSET_PRIMITIVE) {
+      indent(out) << "__isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, " << isset_field_id(field) << ");" << endl;
     } else {
       indent(out) << "__isset_bit_vector.clear(" << isset_field_id(field) << ");" << endl;
     }
@@ -1940,6 +1961,8 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     indent_up();
     if (type_can_be_null(type)) {
       indent(out) << "return this." << field_name << " != null;" << endl;
+    } else if(issetType == ISSET_PRIMITIVE) {
+      indent(out) << "return EncodingUtils.testBit(__isset_bitfield, " << isset_field_id(field) << ");" << endl;
     } else {
       indent(out) << "return __isset_bit_vector.get(" << isset_field_id(field) << ");" << endl;
     }
@@ -1952,6 +1975,8 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       indent(out) << "if (!value) {" << endl;
       indent(out) << "  this." << field_name << " = null;" << endl;
       indent(out) << "}" << endl;
+    } else if(issetType == ISSET_PRIMITIVE) {
+      indent(out) << "__isset_bitfield = EncodingUtils.setBit(__isset_bitfield, " << isset_field_id(field) << ", value);" << endl;
     } else {
       indent(out) << "__isset_bit_vector.set(" << isset_field_id(field) << ", value);" << endl;
     }
@@ -3759,16 +3784,33 @@ void t_java_generator::generate_field_name_constants(ofstream& out, t_struct* ts
   indent(out) << "}" << endl;
 }
 
-bool t_java_generator::has_bit_vector(t_struct* tstruct) {
+t_java_generator::isset_type t_java_generator::needs_isset(t_struct* tstruct, std::string *outPrimitiveType) {
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
+  int count = 0;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     if (!type_can_be_null(get_true_type((*m_iter)->get_type()))) {
-      return true;
+      count++;
     }
   }
-  return false;
+  if(count == 0) {
+    return ISSET_NONE;
+  } else if(count <= 64) {
+    if(outPrimitiveType != NULL) {
+      if(count <= 8)
+        *outPrimitiveType = "byte";
+      else if(count <= 16)
+        *outPrimitiveType = "short";
+      else if(count <= 32)
+        *outPrimitiveType = "int";
+      else if(count <= 64)
+        *outPrimitiveType = "long";
+    }
+    return ISSET_PRIMITIVE;
+  } else {
+    return ISSET_BITSET;
+  }
 }
 
 void t_java_generator::generate_java_struct_clear(std::ofstream& out, t_struct* tstruct) {
@@ -3838,9 +3880,19 @@ void t_java_generator::generate_java_struct_write_object(ofstream& out, t_struct
 void t_java_generator::generate_java_struct_read_object(ofstream& out, t_struct* tstruct) {
   indent(out) << "private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {" << endl;
   indent(out) << "  try {" << endl;
-  if (!tstruct->is_union() && has_bit_vector(tstruct)) {
-    indent(out) << "    // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor." << endl;
-    indent(out) << "    __isset_bit_vector = new BitSet(1);" << endl;
+  if (!tstruct->is_union()) {
+    switch(needs_isset(tstruct)) {
+      case ISSET_NONE:
+        break;
+      case ISSET_PRIMITIVE:
+        indent(out) << "    // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor." << endl;
+        indent(out) << "    __isset_bitfield = 0;" << endl;
+        break;
+      case ISSET_BITSET:
+        indent(out) << "    // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor." << endl;
+        indent(out) << "    __isset_bit_vector = new BitSet(1);" << endl;
+        break;
+    }
   }
   indent(out) << "    read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));" << endl;
   indent(out) << "  } catch (org.apache.thrift.TException te) {" << endl;

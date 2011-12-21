@@ -82,4 +82,67 @@ public class EncodingUtils {
         | ((buf[offset + 2] & 0xff) << 8) | ((buf[offset + 3] & 0xff));
   }
 
+  /**
+   * Bitfield utilities.
+   * Returns true if the bit at position is set in v.
+   */
+  public static final boolean testBit(byte v, int position) {
+    return testBit((int)v, position);
+  }
+
+  public static final boolean testBit(short v, int position) {
+    return testBit((int)v, position);
+  }
+
+  public static final boolean testBit(int v, int position) {
+    return (v & (1 << position)) != 0;
+  }
+
+  public static final boolean testBit(long v, int position) {
+    return (v & (1L << position)) != 0L;
+  }
+
+  /**
+   * Returns v, with the bit at position set to zero.
+   */
+  public static final byte clearBit(byte v, int position) {
+    return (byte)clearBit((int)v, position);
+  }
+
+  public static final short clearBit(short v, int position) {
+    return (short)clearBit((int)v, position);
+  }
+
+  public static final int clearBit(int v, int position) {
+    return v & ~(1 << position);
+  }
+
+  public static final long clearBit(long v, int position) {
+    return v & ~(1L << position);
+  }
+
+  /**
+   * Returns v, with the bit at position set to 1 or 0 depending on value.
+   */
+  public static final byte setBit(byte v, int position, boolean value) {
+    return (byte)setBit((int)v, position, value);
+  }
+
+  public static final short setBit(short v, int position, boolean value) {
+    return (short)setBit((int)v, position, value);
+  }
+
+  public static final int setBit(int v, int position, boolean value) {
+    if(value)
+      return v | (1 << position);
+    else
+      return clearBit(v, position);
+  }
+
+  public static final long setBit(long v, int position, boolean value) {
+    if(value)
+      return v | (1L << position);
+    else
+      return clearBit(v, position);
+  }
 }

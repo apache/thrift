@@ -242,6 +242,9 @@
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
       <arg line="--gen java:beans,nocamel ${test.thrift.home}/JavaBeansTest.thrift"/>
     </exec>
+    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+      <arg line="--gen java:hashcode ${test.thrift.home}/ManyOptionals.thrift"/>
+    </exec>
   </target>
 
   <target name="proxy" if="proxy.enabled">
