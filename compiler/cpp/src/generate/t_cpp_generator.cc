@@ -1366,11 +1366,29 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
 
   indent(out) <<
     "xfer += oprot->writeStructBegin(\"" << name << "\");" << endl;
+
+  bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if ((*f_iter)->get_req() == t_field::T_OPTIONAL) {
-      indent(out) << "if (this->__isset." << (*f_iter)->get_name() << ") {" << endl;
+    bool check_if_set = (*f_iter)->get_req() == t_field::T_OPTIONAL ||
+                        (*f_iter)->get_type()->is_xception();
+    if (check_if_set) {
+      if (first) {
+        first = false;
+          out <<
+            endl <<
+            indent() << "if ";
+      } else {
+        out <<
+          " else if ";
+      }
+      out << "(this->__isset." << (*f_iter)->get_name() << ") {" << endl;
       indent_up();
+    } else {
+      if (!first)
+        out << endl;
+      first = true;
     }
+
     // Write field header
     out <<
       indent() << "xfer += oprot->writeFieldBegin(" <<
@@ -1386,10 +1404,14 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
     // Write field closer
     indent(out) <<
       "xfer += oprot->writeFieldEnd();" << endl;
-    if ((*f_iter)->get_req() == t_field::T_OPTIONAL) {
+    if (check_if_set) {
       indent_down();
-      indent(out) << '}' << endl;
+      indent(out) << '}';
     }
+  }
+
+  if (!first) {
+    out << endl;
   }
 
   // Write the struct map
