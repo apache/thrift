@@ -22,7 +22,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,6 +44,8 @@ import thrift.test.JavaTestHelper;
 import thrift.test.Nesting;
 import thrift.test.Numberz;
 import thrift.test.OneOfEach;
+import thrift.test.StructA;
+import thrift.test.StructB;
 import thrift.test.Xtruct;
 
 public class TestStruct extends TestCase {
@@ -331,5 +332,37 @@ public class TestStruct extends TestCase {
     OneOfEach ooe2 = (OneOfEach) ois.readObject();
 
     assertEquals(ooe, ooe2);
+  }
+
+  public void testSubStructValidation() throws Exception {
+    StructA valid = new StructA("valid");
+    StructA invalid = new StructA();
+
+    StructB b = new StructB();
+    try {
+      b.validate();
+      fail();
+    } catch (TException e) {
+      // expected
+    }
+
+    b = new StructB().setAb(valid);
+    b.validate();
+
+    b = new StructB().setAb(invalid);
+    try {
+      b.validate();
+      fail();
+    } catch (TException e) {
+      // expected
+    }
+
+    b = new StructB().setAb(valid).setAa(invalid);
+    try {
+      b.validate();
+      fail();
+    } catch (TException e) {
+      // expected
+    }
   }
 }

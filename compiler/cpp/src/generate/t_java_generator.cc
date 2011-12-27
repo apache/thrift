@@ -1656,6 +1656,16 @@ void t_java_generator::generate_java_validator(ofstream& out,
     }
   }
 
+  out << indent() << "// check for sub-struct validity" << endl;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_type* type = (*f_iter)->get_type();
+    if (type->is_struct() && ! ((t_struct*)type)->is_union()) {
+      out << indent() << "if (" << (*f_iter)->get_name() << " != null) {" << endl;
+      out << indent() << "  " << (*f_iter)->get_name() << ".validate();" << endl;
+      out << indent() << "}" << endl;
+    }
+  }
+
   indent_down();
   indent(out) << "}" << endl << endl;
 }
