@@ -1243,6 +1243,7 @@ void t_php_generator::generate_process_function(t_service* tservice,
     f_service_ <<
       indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', " << NS_ROOT << "TMessageType::REPLY, $seqid);" << endl <<
       indent() << "$result->write($output);" << endl <<
+      indent() << "$output->writeMessageEnd();" << endl <<
       indent() << "$output->getTransport()->flush();" << endl;
   }
 
