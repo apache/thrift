@@ -2584,7 +2584,7 @@ void t_java_generator::generate_service_server(t_service* tservice) {
     extends_processor = "org.apache.thrift.TBaseProcessor<I>";
   } else {
     extends = type_name(tservice->get_extends());
-    extends_processor = extends + ".Processor";
+    extends_processor = extends + ".Processor<I>";
   }
 
   // Generate the header portion
