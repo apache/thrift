@@ -17,27 +17,28 @@
 # under the License.
 #
 
-import logging
-import sys
-import os
-import traceback
-import threading
 import Queue
+import logging
+import os
+import sys
+import threading
+import traceback
 
 from thrift.Thrift import TProcessor
-from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
+from thrift.transport import TTransport
+
 
 class TServer:
+  """Base interface for a server, which must have a serve() method.
 
-  """Base interface for a server, which must have a serve method."""
-
-  """ 3 constructors for all servers:
+  Three constructors for all servers:
   1) (processor, serverTransport)
   2) (processor, serverTransport, transportFactory, protocolFactory)
   3) (processor, serverTransport,
       inputTransportFactory, outputTransportFactory,
-      inputProtocolFactory, outputProtocolFactory)"""
+      inputProtocolFactory, outputProtocolFactory)
+  """
   def __init__(self, *args):
     if (len(args) == 2):
       self.__initArgs__(args[0], args[1],
@@ -63,8 +64,8 @@ class TServer:
   def serve(self):
     pass
 
-class TSimpleServer(TServer):
 
+class TSimpleServer(TServer):
   """Simple single-threaded server that just pumps around one transport."""
 
   def __init__(self, *args):
@@ -89,8 +90,8 @@ class TSimpleServer(TServer):
       itrans.close()
       otrans.close()
 
-class TThreadedServer(TServer):
 
+class TThreadedServer(TServer):
   """Threaded server that spawns a new thread per each connection."""
 
   def __init__(self, *args, **kwargs):
@@ -102,7 +103,7 @@ class TThreadedServer(TServer):
     while True:
       try:
         client = self.serverTransport.accept()
-        t = threading.Thread(target = self.handle, args=(client,))
+        t = threading.Thread(target=self.handle, args=(client,))
         t.setDaemon(self.daemon)
         t.start()
       except KeyboardInterrupt:
@@ -126,8 +127,8 @@ class TThreadedServer(TServer):
     itrans.close()
     otrans.close()
 
-class TThreadPoolServer(TServer):
 
+class TThreadPoolServer(TServer):
   """Server with a fixed size pool of threads which service requests."""
 
   def __init__(self, *args, **kwargs):
@@ -170,7 +171,7 @@ class TThreadPoolServer(TServer):
     """Start a fixed number of worker threads and put client into a queue"""
     for i in range(self.threads):
       try:
-        t = threading.Thread(target = self.serveThread)
+        t = threading.Thread(target=self.serveThread)
         t.setDaemon(self.daemon)
         t.start()
       except Exception, x:
@@ -187,9 +188,8 @@ class TThreadPoolServer(TServer):
 
 
 class TForkingServer(TServer):
+  """A Thrift server that forks a new process for each request
 
-  """A Thrift server that forks a new process for each request"""
-  """
   This is more scalable than the threaded server as it does not cause
   GIL contention.
 
@@ -200,7 +200,6 @@ class TForkingServer(TServer):
   This code is heavily inspired by SocketServer.ForkingMixIn in the
   Python stdlib.
   """
-
   def __init__(self, *args):
     TServer.__init__(self, *args)
     self.children = []
@@ -212,14 +211,13 @@ class TForkingServer(TServer):
       except IOError, e:
         logging.warning(e, exc_info=True)
 
-
     self.serverTransport.listen()
     while True:
       client = self.serverTransport.accept()
       try:
         pid = os.fork()
 
-        if pid: # parent
+        if pid:  # parent
           # add before collect, otherwise you race w/ waitpid
           self.children.append(pid)
           self.collect_children()
@@ -258,7 +256,6 @@ class TForkingServer(TServer):
       except Exception, x:
         logging.exception(x)
 
-
   def collect_children(self):
     while self.children:
       try:
@@ -270,5 +267,3 @@ class TForkingServer(TServer):
         self.children.remove(pid)
       else:
         break
-
-

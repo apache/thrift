@@ -17,16 +17,17 @@
 # under the License.
 #
 
-from TTransport import *
+import httplib
+import socket
+import urlparse
+import warnings
+
 from cStringIO import StringIO
 
-import urlparse
-import httplib
-import warnings
-import socket
+from TTransport import *
+
 
 class THttpClient(TTransportBase):
-
   """Http implementation of TTransport base."""
 
   def __init__(self, uri_or_host, port=None, path=None):
@@ -35,10 +36,13 @@ class THttpClient(TTransportBase):
     THttpClient(host, port, path) - deprecated
     THttpClient(uri)
 
-    Only the second supports https."""
-
+    Only the second supports https.
+    """
     if port is not None:
-      warnings.warn("Please use the THttpClient('http://host:port/path') syntax", DeprecationWarning, stacklevel=2)
+      warnings.warn(
+        "Please use the THttpClient('http://host:port/path') syntax",
+        DeprecationWarning,
+        stacklevel=2)
       self.host = uri_or_host
       self.port = port
       assert path
@@ -71,7 +75,7 @@ class THttpClient(TTransportBase):
     self.__http = None
 
   def isOpen(self):
-    return self.__http != None
+    return self.__http is not None
 
   def setTimeout(self, ms):
     if not hasattr(socket, 'getdefaulttimeout'):
@@ -80,7 +84,7 @@ class THttpClient(TTransportBase):
     if ms is None:
       self.__timeout = None
     else:
-      self.__timeout = ms/1000.0
+      self.__timeout = ms / 1000.0
 
   def read(self, sz):
     return self.__http.file.read(sz)
@@ -100,7 +104,7 @@ class THttpClient(TTransportBase):
   def flush(self):
     if self.isOpen():
       self.close()
-    self.open();
+    self.open()
 
     # Pull data out of buffer
     data = self.__wbuf.getvalue()

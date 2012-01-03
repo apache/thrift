@@ -18,11 +18,11 @@
 #
 
 from cStringIO import StringIO
-from struct import pack,unpack
+from struct import pack, unpack
 from thrift.Thrift import TException
 
-class TTransportException(TException):
 
+class TTransportException(TException):
   """Custom Transport Exception class"""
 
   UNKNOWN = 0
@@ -35,8 +35,8 @@ class TTransportException(TException):
     TException.__init__(self, message)
     self.type = type
 
-class TTransportBase:
 
+class TTransportBase:
   """Base class for Thrift transport layer."""
 
   def isOpen(self):
@@ -55,7 +55,7 @@ class TTransportBase:
     buff = ''
     have = 0
     while (have < sz):
-      chunk = self.read(sz-have)
+      chunk = self.read(sz - have)
       have += len(chunk)
       buff += chunk
 
@@ -69,6 +69,7 @@ class TTransportBase:
 
   def flush(self):
     pass
+
 
 # This class should be thought of as an interface.
 class CReadableTransport:
@@ -98,8 +99,8 @@ class CReadableTransport:
     """
     pass
 
-class TServerTransportBase:
 
+class TServerTransportBase:
   """Base class for Thrift server transports."""
 
   def listen(self):
@@ -111,15 +112,15 @@ class TServerTransportBase:
   def close(self):
     pass
 
-class TTransportFactoryBase:
 
+class TTransportFactoryBase:
   """Base class for a Transport Factory"""
 
   def getTransport(self, trans):
     return trans
 
-class TBufferedTransportFactory:
 
+class TBufferedTransportFactory:
   """Factory transport that builds buffered transports"""
 
   def getTransport(self, trans):
@@ -127,17 +128,15 @@ class TBufferedTransportFactory:
     return buffered
 
 
-class TBufferedTransport(TTransportBase,CReadableTransport):
-
+class TBufferedTransport(TTransportBase, CReadableTransport):
   """Class that wraps another transport and buffers its I/O.
 
   The implementation uses a (configurable) fixed-size read buffer
   but buffers all writes until a flush is performed.
   """
-
   DEFAULT_BUFFER = 4096
 
-  def __init__(self, trans, rbuf_size = DEFAULT_BUFFER):
+  def __init__(self, trans, rbuf_size=DEFAULT_BUFFER):
     self.__trans = trans
     self.__wbuf = StringIO()
     self.__rbuf = StringIO("")
@@ -188,6 +187,7 @@ class TBufferedTransport(TTransportBase,CReadableTransport):
     self.__rbuf = StringIO(retstring)
     return self.__rbuf
 
+
 class TMemoryBuffer(TTransportBase, CReadableTransport):
   """Wraps a cStringIO object as a TTransport.
 
@@ -237,8 +237,8 @@ class TMemoryBuffer(TTransportBase, CReadableTransport):
     # only one shot at reading...
     raise EOFError()
 
-class TFramedTransportFactory:
 
+class TFramedTransportFactory:
   """Factory transport that builds framed transports"""
 
   def getTransport(self, trans):
@@ -247,7 +247,6 @@ class TFramedTransportFactory:
 
 
 class TFramedTransport(TTransportBase, CReadableTransport):
-
   """Class that wraps another transport and frames its I/O when writing."""
 
   def __init__(self, trans,):
