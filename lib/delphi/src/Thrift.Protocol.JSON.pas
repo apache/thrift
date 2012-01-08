@@ -125,6 +125,7 @@ type
     FReader : TLookaheadReader;
 
     // Push/pop a new JSON context onto/from the stack.
+    procedure ResetContextStack;
     procedure PushContext( aCtx : TJSONBaseContext);
     procedure PopContext;
 
@@ -454,19 +455,6 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.PushContext( aCtx : TJSONBaseContext);
-begin
-  FContextStack.Push( FContext);
-  FContext := aCtx;
-end;
-
-procedure TJSONProtocolImpl.PopContext;
-begin
-  FreeAndNil(FContext);
-  FContext := FContextStack.Pop;
-end;
-
-
 constructor TJSONProtocolImpl.Create( aTrans : ITransport);
 begin
   inherited Create( aTrans);
@@ -482,12 +470,34 @@ end;
 destructor TJSONProtocolImpl.Destroy;
 begin
   try
+    ResetContextStack;  // free any contents
     FreeAndNil( FReader);
     FreeAndNil( FContext);
     FreeAndNil( FContextStack);
   finally
     inherited Destroy;
   end;
+end;
+
+
+procedure TJSONProtocolImpl.ResetContextStack;
+begin
+  while FContextStack.Count > 0
+  do PopContext;
+end;
+
+
+procedure TJSONProtocolImpl.PushContext( aCtx : TJSONBaseContext);
+begin
+  FContextStack.Push( FContext);
+  FContext := aCtx;
+end;
+
+
+procedure TJSONProtocolImpl.PopContext;
+begin
+  FreeAndNil(FContext);
+  FContext := FContextStack.Pop;
 end;
 
 
@@ -668,6 +678,8 @@ end;
 
 procedure TJSONProtocolImpl.WriteMessageBegin( aMsg : IMessage);
 begin
+  ResetContextStack;  // THRIFT-1473
+
   WriteJSONArrayStart;
   WriteJSONInteger(VERSION);
 
@@ -980,6 +992,8 @@ end;
 
 function TJSONProtocolImpl.ReadMessageBegin: IMessage;
 begin
+  ResetContextStack;  // THRIFT-1473
+
   result := TMessageImpl.Create;
   ReadJSONArrayStart;
 
