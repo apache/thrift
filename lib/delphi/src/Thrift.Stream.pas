@@ -68,7 +68,7 @@ type
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
   public
-    constructor Create( AStream: TStream; AOwnsStream : Boolean);
+    constructor Create( const AStream: TStream; AOwnsStream : Boolean);
     destructor Destroy; override;
   end;
 
@@ -84,7 +84,7 @@ type
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
   public
-    constructor Create( AStream: IStream);
+    constructor Create( const AStream: IStream);
   end;
 
 implementation
@@ -96,7 +96,7 @@ begin
   FStream := nil;
 end;
 
-constructor TThriftStreamAdapterCOM.Create(AStream: IStream);
+constructor TThriftStreamAdapterCOM.Create( const AStream: IStream);
 begin
   FStream := AStream;
 end;
@@ -219,7 +219,7 @@ begin
   FOwnsStream := False;
 end;
 
-constructor TThriftStreamAdapterDelphi.Create(AStream: TStream; AOwnsStream: Boolean);
+constructor TThriftStreamAdapterDelphi.Create( const AStream: TStream; AOwnsStream: Boolean);
 begin
   FStream := AStream;
   FOwnsStream := AOwnsStream;

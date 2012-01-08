@@ -61,7 +61,7 @@ type
 
   IProtocolFactory = interface
     ['{7CD64A10-4E9F-4E99-93BF-708A31F4A67B}']
-    function GetProtocol( trans: ITransport): IProtocol;
+    function GetProtocol( const trans: ITransport): IProtocol;
   end;
 
   TThriftStringBuilder = class( TStringBuilder)
@@ -236,25 +236,25 @@ type
   IProtocol = interface
     ['{FD95C151-1527-4C96-8134-B902BFC4B4FC}']
     function GetTransport: ITransport;
-    procedure WriteMessageBegin( message: IMessage);
+    procedure WriteMessageBegin( const msg: IMessage);
     procedure WriteMessageEnd;
-    procedure WriteStructBegin(struc: IStruct);
+    procedure WriteStructBegin( const struc: IStruct);
     procedure WriteStructEnd;
-    procedure WriteFieldBegin(field: IField);
+    procedure WriteFieldBegin( const field: IField);
     procedure WriteFieldEnd;
     procedure WriteFieldStop;
-    procedure WriteMapBegin(map: IMap);
+    procedure WriteMapBegin( const map: IMap);
     procedure WriteMapEnd;
-    procedure WriteListBegin( list: IList);
+    procedure WriteListBegin( const list: IList);
     procedure WriteListEnd();
-    procedure WriteSetBegin( set_: ISet );
+    procedure WriteSetBegin( const set_: ISet );
     procedure WriteSetEnd();
     procedure WriteBool( b: Boolean);
     procedure WriteByte( b: ShortInt);
     procedure WriteI16( i16: SmallInt);
     procedure WriteI32( i32: Integer);
-    procedure WriteI64( i64: Int64);
-    procedure WriteDouble( d: Double);
+    procedure WriteI64( const i64: Int64);
+    procedure WriteDouble( const d: Double);
     procedure WriteString( const s: string );
     procedure WriteAnsiString( const s: AnsiString);
     procedure WriteBinary( const b: TBytes);
@@ -288,25 +288,25 @@ type
     FTrans : ITransport;
     function GetTransport: ITransport;
   public
-    procedure WriteMessageBegin( message: IMessage); virtual; abstract;
+    procedure WriteMessageBegin( const msg: IMessage); virtual; abstract;
     procedure WriteMessageEnd; virtual; abstract;
-    procedure WriteStructBegin(struc: IStruct); virtual; abstract;
+    procedure WriteStructBegin( const struc: IStruct); virtual; abstract;
     procedure WriteStructEnd; virtual; abstract;
-    procedure WriteFieldBegin(field: IField); virtual; abstract;
+    procedure WriteFieldBegin( const field: IField); virtual; abstract;
     procedure WriteFieldEnd; virtual; abstract;
     procedure WriteFieldStop; virtual; abstract;
-    procedure WriteMapBegin(map: IMap); virtual; abstract;
+    procedure WriteMapBegin( const map: IMap); virtual; abstract;
     procedure WriteMapEnd; virtual; abstract;
-    procedure WriteListBegin( list: IList); virtual; abstract;
+    procedure WriteListBegin( const list: IList); virtual; abstract;
     procedure WriteListEnd(); virtual; abstract;
-    procedure WriteSetBegin( set_: ISet ); virtual; abstract;
+    procedure WriteSetBegin( const set_: ISet ); virtual; abstract;
     procedure WriteSetEnd(); virtual; abstract;
     procedure WriteBool( b: Boolean); virtual; abstract;
     procedure WriteByte( b: ShortInt); virtual; abstract;
     procedure WriteI16( i16: SmallInt); virtual; abstract;
     procedure WriteI32( i32: Integer); virtual; abstract;
-    procedure WriteI64( i64: Int64); virtual; abstract;
-    procedure WriteDouble( d: Double); virtual; abstract;
+    procedure WriteI64( const i64: Int64); virtual; abstract;
+    procedure WriteDouble( const d: Double); virtual; abstract;
     procedure WriteString( const s: string ); virtual;
     procedure WriteAnsiString( const s: AnsiString); virtual;
     procedure WriteBinary( const b: TBytes); virtual; abstract;
@@ -341,8 +341,8 @@ type
   IBase = interface
     ['{08D9BAA8-5EAA-410F-B50B-AC2E6E5E4155}']
     function ToString: string;
-    procedure Read( iprot: IProtocol);
-    procedure Write( iprot: IProtocol);
+    procedure Read( const iprot: IProtocol);
+    procedure Write( const iprot: IProtocol);
   end;
 
   IStruct = interface
@@ -385,33 +385,33 @@ type
         FStrictRead : Boolean;
         FStrictWrite : Boolean;
       public
-        function GetProtocol(trans: ITransport): IProtocol;
+        function GetProtocol( const trans: ITransport): IProtocol;
         constructor Create( AStrictRead, AStrictWrite: Boolean ); overload;
         constructor Create; overload;
       end;
 
-    constructor Create( trans: ITransport); overload;
-    constructor Create( trans: ITransport; strictRead: Boolean; strictWrite: Boolean); overload;
+    constructor Create( const trans: ITransport); overload;
+    constructor Create( const trans: ITransport; strictRead: Boolean; strictWrite: Boolean); overload;
 
-    procedure WriteMessageBegin( message: IMessage); override;
+    procedure WriteMessageBegin( const msg: IMessage); override;
     procedure WriteMessageEnd; override;
-    procedure WriteStructBegin(struc: IStruct); override;
+    procedure WriteStructBegin( const struc: IStruct); override;
     procedure WriteStructEnd; override;
-    procedure WriteFieldBegin(field: IField); override;
+    procedure WriteFieldBegin( const field: IField); override;
     procedure WriteFieldEnd; override;
     procedure WriteFieldStop; override;
-    procedure WriteMapBegin(map: IMap); override;
+    procedure WriteMapBegin( const map: IMap); override;
     procedure WriteMapEnd; override;
-    procedure WriteListBegin( list: IList); override;
+    procedure WriteListBegin( const list: IList); override;
     procedure WriteListEnd(); override;
-    procedure WriteSetBegin( set_: ISet ); override;
+    procedure WriteSetBegin( const set_: ISet ); override;
     procedure WriteSetEnd(); override;
     procedure WriteBool( b: Boolean); override;
     procedure WriteByte( b: ShortInt); override;
     procedure WriteI16( i16: SmallInt); override;
     procedure WriteI32( i32: Integer); override;
-    procedure WriteI64( i64: Int64); override;
-    procedure WriteDouble( d: Double); override;
+    procedure WriteI64( const i64: Int64); override;
+    procedure WriteDouble( const d: Double); override;
     procedure WriteBinary( const b: TBytes); override;
 
     function ReadMessageBegin: IMessage; override;
@@ -439,13 +439,13 @@ type
 
 implementation
 
-function ConvertInt64ToDouble( n: Int64): Double;
+function ConvertInt64ToDouble( const n: Int64): Double;
 begin
   ASSERT( SizeOf(n) = SizeOf(Result));
   System.Move( n, Result, SizeOf(Result));
 end;
 
-function ConvertDoubleToInt64( d: Double): Int64;
+function ConvertDoubleToInt64( const d: Double): Int64;
 begin
   ASSERT( SizeOf(d) = SizeOf(Result));
   System.Move( d, Result, SizeOf(Result));
@@ -739,7 +739,7 @@ end;
 
 { TBinaryProtocolImpl }
 
-constructor TBinaryProtocolImpl.Create( trans: ITransport);
+constructor TBinaryProtocolImpl.Create( const trans: ITransport);
 begin
   Create( trans, False, True);
 end;
@@ -756,7 +756,7 @@ begin
   end;
 end;
 
-constructor TBinaryProtocolImpl.Create(trans: ITransport; strictRead,
+constructor TBinaryProtocolImpl.Create( const trans: ITransport; strictRead,
   strictWrite: Boolean);
 begin
   inherited Create( trans );
@@ -997,12 +997,12 @@ begin
   FTrans.Write( a, 0, 1 );
 end;
 
-procedure TBinaryProtocolImpl.WriteDouble(d: Double);
+procedure TBinaryProtocolImpl.WriteDouble( const d: Double);
 begin
   WriteI64(ConvertDoubleToInt64(d));
 end;
 
-procedure TBinaryProtocolImpl.WriteFieldBegin(field: IField);
+procedure TBinaryProtocolImpl.WriteFieldBegin( const field: IField);
 begin
   WriteByte(ShortInt(field.Type_));
   WriteI16(field.ID);
@@ -1040,7 +1040,7 @@ begin
   FTrans.Write( i32out, 0, 4);
 end;
 
-procedure TBinaryProtocolImpl.WriteI64(i64: Int64);
+procedure TBinaryProtocolImpl.WriteI64( const i64: Int64);
 var
   i64out : TBytes;
 begin
@@ -1056,7 +1056,7 @@ begin
   FTrans.Write( i64out, 0, 8);
 end;
 
-procedure TBinaryProtocolImpl.WriteListBegin(list: IList);
+procedure TBinaryProtocolImpl.WriteListBegin( const list: IList);
 begin
   WriteByte(ShortInt(list.ElementType));
   WriteI32(list.Count);
@@ -1067,7 +1067,7 @@ begin
 
 end;
 
-procedure TBinaryProtocolImpl.WriteMapBegin(map: IMap);
+procedure TBinaryProtocolImpl.WriteMapBegin( const map: IMap);
 begin
   WriteByte(ShortInt(map.KeyType));
   WriteByte(ShortInt(map.ValueType));
@@ -1079,21 +1079,21 @@ begin
 
 end;
 
-procedure TBinaryProtocolImpl.WriteMessageBegin( message: IMessage);
+procedure TBinaryProtocolImpl.WriteMessageBegin( const msg: IMessage);
 var
   version : Cardinal;
 begin
   if FStrictWrite then
   begin
-    version := VERSION_1 or Cardinal( message.Type_);
+    version := VERSION_1 or Cardinal( msg.Type_);
     WriteI32( Integer( version) );
-    WriteString( message.Name);
-  	WriteI32(message.SeqID);
+    WriteString( msg.Name);
+  	WriteI32( msg.SeqID);
   end else
   begin
-    WriteString(message.Name);
-    WriteByte(ShortInt(message.Type_));
-    WriteI32(message.SeqID);
+    WriteString( msg.Name);
+    WriteByte(ShortInt( msg.Type_));
+    WriteI32( msg.SeqID);
   end;
 end;
 
@@ -1102,7 +1102,7 @@ begin
 
 end;
 
-procedure TBinaryProtocolImpl.WriteSetBegin(set_: ISet);
+procedure TBinaryProtocolImpl.WriteSetBegin( const set_: ISet);
 begin
   WriteByte(ShortInt(set_.ElementType));
   WriteI32(set_.Count);
@@ -1113,7 +1113,7 @@ begin
 
 end;
 
-procedure TBinaryProtocolImpl.WriteStructBegin(struc: IStruct);
+procedure TBinaryProtocolImpl.WriteStructBegin( const struc: IStruct);
 begin
 
 end;
@@ -1169,7 +1169,7 @@ begin
   Create( False, True )
 end;
 
-function TBinaryProtocolImpl.TFactory.GetProtocol(trans: ITransport): IProtocol;
+function TBinaryProtocolImpl.TFactory.GetProtocol( const trans: ITransport): IProtocol;
 begin
   Result := TBinaryProtocolImpl.Create( trans );
 end;
