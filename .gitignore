@@ -118,6 +118,7 @@
 /lib/erl/src/thrift.app.src
 /lib/erl/test/*.erl
 /lib/erl/test/*.hrl
+/lib/erl/test/*.beam
 /lib/hs/dist
 /lib/hs/Makefile
 /lib/hs/Makefile.in
@@ -206,6 +207,8 @@
 /test/hs/gen-*
 /test/hs/Makefile
 /test/hs/Makefile.in
+/test/perl/gen-*
+/test/php/gen-*
 /test/py/Makefile
 /test/py/Makefile.in
 /test/py/gen-py
