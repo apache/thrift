@@ -182,6 +182,7 @@
 /lib/php/src/ext/thrift_protocol/php_thrift_protocol.lo
 /lib/php/src/ext/thrift_protocol/run-tests.php
 /lib/php/src/ext/thrift_protocol/thrift_protocol.la
+/lib/erl/logs/
 /lib/erl/Makefile
 /lib/erl/Makefile.in
 /lib/erl/src/Makefile
@@ -207,6 +208,8 @@
 /test/hs/gen-*
 /test/hs/Makefile
 /test/hs/Makefile.in
+/test/log/
+/test/test.log
 /test/perl/gen-*
 /test/php/gen-*
 /test/py/Makefile
