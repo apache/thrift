@@ -17,14 +17,13 @@
 # under the License.
 #
 
-# Default target is everything
-target: all
+THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
-# Tools
-THRIFT = ../../compiler/cpp/thrift
-
-all: ../ThriftTest.thrift
+stubs: ../ThriftTest.thrift
 	$(THRIFT) --gen perl ../ThriftTest.thrift
 
-clean:
+check: stubs
+
+clean-local:
 	$(RM) -r gen-perl
+
