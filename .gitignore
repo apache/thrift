@@ -210,6 +210,9 @@
 /test/hs/Makefile.in
 /test/log/
 /test/test.log
+/test/nodejs/gen-nodejs/
+/test/nodejs/Makefile
+/test/nodejs/Makefile.in
 /test/perl/gen-*
 /test/perl/Makefile
 /test/perl/Makefile.in

@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS =
+SUBDIRS = nodejs
 
 if WITH_CPP
 SUBDIRS += cpp
@@ -45,6 +45,7 @@ EXTRA_DIST = \
 	csharp \
 	erl \
 	hs \
+	nodejs \
 	ocaml \
 	perl \
 	php \

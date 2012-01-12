@@ -76,6 +76,7 @@ sockets="ip domain"
 # we need a test certificate first
 #sockets="ip ip-ssl domain"
 
+
 for proto in $protocols; do
   for trans in $transports; do
     for sock in $sockets; do
@@ -117,3 +118,11 @@ do_test "perl-cpp"  "binary" "buffered-ip" \
         "perl -I perl/gen-perl/ -I../lib/perl/lib/ perl/TestClient.pl" \
         "cpp/TestServer" \
         "10"
+do_test "nodejs-nodejs" "binary" "framed-ip" \
+        "make -C nodejs/ client" \
+        "make -C nodejs/ server" \
+        "1"
+do_test "cpp-nodejs" "binary" "framed-ip" \
+        "cpp/TestClient --transport=framed" \
+        "make -C nodejs/ server" \
+        "1"

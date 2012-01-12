@@ -14,11 +14,20 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-all:	
-	../../../compiler/cpp/thrift --gen js:node user.thrift
 
-server: all	
-	NODE_PATH=../lib:../lib/thrift node server.js
 
-client: all	
-	NODE_PATH=../lib:../lib/thrift node client.js
+THRIFT = $(top_srcdir)/compiler/cpp/thrift
+
+stubs: ../ThriftTest.thrift
+	$(THRIFT) --gen js:node ../ThriftTest.thrift
+
+check: stubs
+
+clean-local:
+	$(RM) -r gen-nodejs
+
+server: stubs
+	NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift node server.js
+
+client: stubs
+	NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift node client.js
