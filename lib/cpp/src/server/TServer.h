@@ -144,7 +144,7 @@ protected:
   template<typename ProcessorFactory>
   TServer(const boost::shared_ptr<TProcessorFactory>& processorFactory,
           THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)):
-    processorFactory_(processorFactory_) {
+    processorFactory_(processorFactory) {
     setInputTransportFactory(boost::shared_ptr<TTransportFactory>(
           new TTransportFactory()));
     setOutputTransportFactory(boost::shared_ptr<TTransportFactory>(
@@ -227,7 +227,7 @@ protected:
           const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
           const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory,
           THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)):
-    processorFactory_(processorFactory_),
+    processorFactory_(processorFactory),
     serverTransport_(serverTransport),
     inputTransportFactory_(inputTransportFactory),
     outputTransportFactory_(outputTransportFactory),
