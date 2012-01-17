@@ -28,9 +28,8 @@
 #error This is a MSVC header only.
 #endif
 
-#include <winsdkver.h>
-
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0601
-#include <SDKDDKVer.h>
+#endif
 
 #endif //_THIRFT_WINDOWS_TARGETVERSION_H_

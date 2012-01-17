@@ -30,8 +30,6 @@
 
 #pragma warning(disable: 4996) // Depreciated posix name.
 #pragma warning(disable: 4250) // Inherits via dominance.
-#pragma warning(disable: 4244) // conversion from '...' to '...', possible loss of data.
-#pragma warning(disable: 4267) // conversion from '...' to '...', possible loss of data.
 
 #define VERSION "0.9.0-dev"
 #define HAVE_GETTIMEOFDAY 1
@@ -84,7 +82,15 @@ inline int sleep(DWORD ms)
 #define poll(fds, nfds, timeout) \
     poll_win32(fds, nfds, timeout)
 
-inline int poll_win32(LPWSAPOLLFD fdArray, ULONG fds, INT timeout)
+typedef struct pollfd {
+
+    SOCKET  fd;
+    SHORT   events;
+    SHORT   revents;
+
+} WSAPOLLFD, *PWSAPOLLFD, FAR *LPWSAPOLLFD;
+
+inline int poll_win32(LPWSAPOLLFD fdArray, ULONG /*fds*/, INT timeout)
 {
     fd_set read_fds;
     fd_set write_fds;
@@ -98,7 +104,7 @@ inline int poll_win32(LPWSAPOLLFD fdArray, ULONG fds, INT timeout)
     FD_SET(fdArray[0].fd, &write_fds);
     FD_SET(fdArray[0].fd, &except_fds);
 
-    timeval time_out = {timeout * 0.001, timeout * 1000};
+    timeval time_out = {timeout / 1000, timeout * 1000};
     return select(1, &read_fds, &write_fds, &except_fds, &time_out);
 }
 #else
