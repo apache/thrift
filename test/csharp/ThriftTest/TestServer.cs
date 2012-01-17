@@ -117,6 +117,26 @@ namespace Test
 				return thing;
 			}
 
+            public Dictionary<string, string> testStringMap(Dictionary<string, string> thing)
+            {
+                Console.WriteLine("testStringMap({");
+                bool first = true;
+                foreach (string key in thing.Keys)
+                {
+                    if (first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        Console.WriteLine(", ");
+                    }
+                    Console.WriteLine(key + " => " + thing[key]);
+                }
+                Console.WriteLine("})");
+                return thing;
+            }
+
 			public THashSet<int> testSet(THashSet<int> thing)
 			{
 				Console.WriteLine("testSet({");

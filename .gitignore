@@ -231,3 +231,9 @@
 /test/rb/Makefile.in
 /thrift.exe
 /ylwrap
+/compiler/cpp/Debug
+*.suo
+*.cache
+*.user
+*.ipch
+*.sdf

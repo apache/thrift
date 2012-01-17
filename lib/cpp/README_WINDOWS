@@ -39,9 +39,6 @@ libthriftnb
   This library contains the Thrift nonblocking server, which uses libevent.
   To link this library you will also need to link libevent.
 
-You MUST apply this patch to make generated code compile.
-https://issues.apache.org/jira/browse/THRIFT-1139
-
 Linking Against Thrift
 ======================
 
