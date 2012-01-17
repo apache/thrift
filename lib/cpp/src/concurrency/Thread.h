@@ -88,7 +88,7 @@ class Thread {
 #else
   typedef uint64_t id_t;
   static inline bool is_current(pthread_t t) { return pthread_equal(pthread_self(), t); }
-  static inline id_t get_current() { return pthread_self(); }
+  static inline id_t get_current() { return (Thread::id_t)pthread_self(); }
 #endif
 
   virtual ~Thread() {};
