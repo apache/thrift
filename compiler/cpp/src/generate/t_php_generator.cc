@@ -415,7 +415,7 @@ void t_php_generator::generate_enum(t_enum* tenum) {
   // code but you can't do things like an 'extract' on it, which is a bit of
   // a downer.
   f_types_ <<
-    "final class " << tenum->get_name() << " {" << endl;
+    "final class " << php_namespace(tenum->get_program()) << tenum->get_name() << " {" << endl;
   indent_up();
 
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
