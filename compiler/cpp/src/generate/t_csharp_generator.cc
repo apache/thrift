@@ -914,6 +914,8 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     extends_client = extends + ".Client, ";
   }
 
+  generate_csharp_doc(f_service_, tservice);
+
   indent(f_service_) <<
     "public class Client : " << extends_client << "Iface {" << endl;
   indent_up();
@@ -964,6 +966,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     string funname = (*f_iter)->get_name();
 
     indent(f_service_) << endl;
+	
     indent(f_service_) << "#if SILVERLIGHT" << endl;
 	// Begin_
     indent(f_service_) <<
@@ -1053,6 +1056,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) << "#endif" << endl << endl;
 
     // "Normal" Synchronous invoke
+    generate_csharp_doc(f_service_, *f_iter);
     indent(f_service_) <<
       "public " << function_signature(*f_iter) << endl;
     scope_up(f_service_);
