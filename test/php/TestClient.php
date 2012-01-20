@@ -72,17 +72,17 @@ $socket->setDebug(TRUE);
 
 if ($MODE == 'inline') {
   $transport = $socket;
-  $testClient = new ThriftTestClient($transport);
+  $testClient = new ThriftTest_ThriftTestClient($transport);
 } else if ($MODE == 'framed') {
   $framedSocket = new TFramedTransport($socket);
   $transport = $framedSocket;
   $protocol = new TBinaryProtocol($transport);
-  $testClient = new ThriftTestClient($protocol);
+  $testClient = new ThriftTest_ThriftTestClient($protocol);
 } else {
   $bufferedSocket = new TBufferedTransport($socket, 1024, 1024);
   $transport = $bufferedSocket;
   $protocol = new TBinaryProtocol($transport);
-  $testClient = new ThriftTestClient($protocol);
+  $testClient = new ThriftTest_ThriftTestClient($protocol);
 }
 
 $transport->open();
