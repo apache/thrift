@@ -118,6 +118,10 @@ do_test "perl-cpp"  "binary" "buffered-ip" \
         "perl -I perl/gen-perl/ -I../lib/perl/lib/ perl/TestClient.pl" \
         "cpp/TestServer" \
         "10"
+do_test "php-cpp"  "binary" "buffered-ip" \
+        "make -C php/ client" \
+        "cpp/TestServer" \
+        "10"
 do_test "nodejs-nodejs" "binary" "framed-ip" \
         "make -C nodejs/ client" \
         "make -C nodejs/ server" \

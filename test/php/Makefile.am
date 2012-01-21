@@ -17,23 +17,16 @@
 # under the License.
 #
 
-# Default target is everything
-target: all
-
-# Tools
-THRIFT = ../../compiler/cpp/thrift
-
-all: normal inline
-
-normal: stubs
-
-inline: stubs-inline
+THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
 stubs: ../ThriftTest.thrift
 	$(THRIFT) --gen php ../ThriftTest.thrift
-
-stubs-inline: ../ThriftTest.thrift
 	$(THRIFT) --gen php:inlined ../ThriftTest.thrift
 
-clean:
+check: stubs
+
+clean-local:
 	$(RM) -r gen-php gen-phpi
+
+client: stubs
+	php TestClient.php

@@ -217,6 +217,8 @@
 /test/perl/Makefile
 /test/perl/Makefile.in
 /test/php/gen-*
+/test/php/Makefile
+/test/php/Makefile.in
 /test/py/Makefile
 /test/py/Makefile.in
 /test/py/gen-py

@@ -493,6 +493,7 @@ AC_CONFIG_FILES([
   test/cpp/Makefile
   test/hs/Makefile
   test/nodejs/Makefile
+  test/php/Makefile
   test/perl/Makefile
   test/py/Makefile
   test/py.twisted/Makefile

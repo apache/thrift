@@ -27,6 +27,10 @@ if WITH_PERL
 SUBDIRS += perl
 endif
 
+if WITH_PHP
+SUBDIRS += php
+endif
+
 if WITH_PYTHON
 SUBDIRS += py
 SUBDIRS += py.twisted
