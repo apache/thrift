@@ -25,12 +25,9 @@ stubs: ../../../test/ThriftTest.thrift
 
 if HAVE_PHPUNIT
 check: stubs
-	$(PHPUNIT) protocol/TestTJSONProtocol.php
+	$(PHPUNIT) --log-junit=phpunit.xml protocol/TestTJSONProtocol.php
 endif
 
 clean-local:
 	$(RM) -r gen-php
 
-EXTRA_DIST = \
-	Fixtures.cpp \
-	protocol/TestTJSONProtocol.php
