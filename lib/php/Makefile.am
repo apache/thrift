@@ -17,6 +17,11 @@
 # under the License.
 #
 
+
+if WITH_TESTS
+SUBDIRS = test
+endif
+
 %.so:
 	cd src/ext/thrift_protocol/ \
 	  && $(MAKE)
