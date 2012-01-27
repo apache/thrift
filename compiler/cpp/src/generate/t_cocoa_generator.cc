@@ -270,11 +270,11 @@ string t_cocoa_generator::cocoa_imports() {
  */
 string t_cocoa_generator::cocoa_thrift_imports() {
   string result = string() +
-    "#import <TProtocol.h>\n" +
-    "#import <TApplicationException.h>\n" +
-    "#import <TProtocolUtil.h>\n" +
-    "#import <TProcessor.h>\n" +
-    "#import <TObjective-C.h>\n" +
+    "#import \"TProtocol.h\"\n" +
+    "#import \"TApplicationException.h\"\n" +
+    "#import \"TProtocolUtil.h\"\n" +
+    "#import \"TProcessor.h\"\n" +
+    "#import \"TObjective-C.h\"\n" +
     "\n";
 
   // Include other Thrift includes
