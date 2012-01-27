@@ -36,9 +36,9 @@ public abstract class ProcessFunction<I, T extends TBase> {
     oprot.getTransport().flush();
   }
 
-  protected abstract TBase getResult(I iface, T args) throws TException;
+  public abstract TBase getResult(I iface, T args) throws TException;
 
-  protected abstract T getEmptyArgsInstance();
+  public abstract T getEmptyArgsInstance();
 
   public String getMethodName() {
     return methodName;

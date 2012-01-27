@@ -1,5 +1,6 @@
 package org.apache.thrift;
 
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.thrift.protocol.TMessage;
@@ -15,6 +16,10 @@ public abstract class TBaseProcessor<I> implements TProcessor {
   protected TBaseProcessor(I iface, Map<String, ProcessFunction<I, ? extends TBase>> processFunctionMap) {
     this.iface = iface;
     this.processMap = processFunctionMap;
+  }
+
+  public Map<String,ProcessFunction<I, ? extends TBase>> getProcessMapView() {
+    return Collections.unmodifiableMap(processMap);
   }
 
   @Override

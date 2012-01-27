@@ -2662,18 +2662,18 @@ void t_java_generator::generate_process_function(t_service* tservice,
   (void) tservice;
   // Open class
   indent(f_service_) <<
-    "private static class " << tfunction->get_name() << "<I extends Iface> extends org.apache.thrift.ProcessFunction<I, " << argsname << "> {" << endl;
+    "public static class " << tfunction->get_name() << "<I extends Iface> extends org.apache.thrift.ProcessFunction<I, " << argsname << "> {" << endl;
   indent_up();
 
   indent(f_service_) << "public " << tfunction->get_name() << "() {" << endl;
   indent(f_service_) << "  super(\"" << tfunction->get_name() << "\");" << endl;
   indent(f_service_) << "}" << endl << endl;
 
-  indent(f_service_) << "protected " << argsname << " getEmptyArgsInstance() {" << endl;
+  indent(f_service_) << "public " << argsname << " getEmptyArgsInstance() {" << endl;
   indent(f_service_) << "  return new " << argsname << "();" << endl;
   indent(f_service_) << "}" << endl << endl;
 
-  indent(f_service_) << "protected " << resultname << " getResult(I iface, " << argsname << " args) throws org.apache.thrift.TException {" << endl;
+  indent(f_service_) << "public " << resultname << " getResult(I iface, " << argsname << " args) throws org.apache.thrift.TException {" << endl;
   indent_up();
   if (!tfunction->is_oneway()) {
     indent(f_service_) << resultname << " result = new " << resultname << "();" << endl;
