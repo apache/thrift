@@ -45,6 +45,7 @@ public class TThreadPoolServer extends TServer {
   public static class Args extends AbstractServerArgs<Args> {
     public int minWorkerThreads = 5;
     public int maxWorkerThreads = Integer.MAX_VALUE;
+    public ExecutorService executorService;
     public int stopTimeoutVal = 60;
     public TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
 
@@ -59,6 +60,11 @@ public class TThreadPoolServer extends TServer {
 
     public Args maxWorkerThreads(int n) {
       maxWorkerThreads = n;
+      return this;
+    }
+
+    public Args executorService(ExecutorService executorService) {
+      this.executorService = executorService;
       return this;
     }
   }
@@ -76,17 +82,21 @@ public class TThreadPoolServer extends TServer {
   public TThreadPoolServer(Args args) {
     super(args);
 
-    SynchronousQueue<Runnable> executorQueue =
-      new SynchronousQueue<Runnable>();
-
     stopTimeoutUnit = args.stopTimeoutUnit;
     stopTimeoutVal = args.stopTimeoutVal;
 
-    executorService_ = new ThreadPoolExecutor(args.minWorkerThreads,
-                                              args.maxWorkerThreads,
-                                              60,
-                                              TimeUnit.SECONDS,
-                                              executorQueue);
+    executorService_ = args.executorService != null ?
+        args.executorService : createDefaultExecutorService(args);
+  }
+
+  private static ExecutorService createDefaultExecutorService(Args args) {
+    SynchronousQueue<Runnable> executorQueue =
+      new SynchronousQueue<Runnable>();
+    return new ThreadPoolExecutor(args.minWorkerThreads,
+                                  args.maxWorkerThreads,
+                                  60,
+                                  TimeUnit.SECONDS,
+                                  executorQueue);
   }
 
 
