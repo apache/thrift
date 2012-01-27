@@ -242,5 +242,21 @@ int main() {
     assert(t1 != t2);
   }
 
+  {
+    OptionalDefault t1, t2;
+    cout << ThriftDebugString(t1) << endl;
+    assert(t1.__isset.opt_int == true);
+    assert(t1.__isset.opt_str == true);
+    assert(t1.opt_int == t2.opt_int);
+    assert(t1.opt_str == t2.opt_str);
+
+    write_to_read(t1, t2);
+    cout << ThriftDebugString(t2) << endl;
+    assert(t2.__isset.opt_int == true);
+    assert(t2.__isset.opt_str == true);
+    assert(t1.opt_int == t2.opt_int);
+    assert(t1.opt_str == t2.opt_str);
+  }
+
   return 0;
 }

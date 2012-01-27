@@ -815,13 +815,14 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       if ((*m_iter)->get_req() == t_field::T_REQUIRED) {
         continue;
       }
+      string isSet = ((*m_iter)->get_value() != NULL) ? "true" : "false";
       if (first) {
         first = false;
         out <<
-          ": " << (*m_iter)->get_name() << "(false)";
+          ": " << (*m_iter)->get_name() << "(" << isSet << ")";
       } else {
         out <<
-          ", " << (*m_iter)->get_name() << "(false)";
+          ", " << (*m_iter)->get_name() << "(" << isSet << ")";
       }
     }
     out << " {}" << endl;
