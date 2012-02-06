@@ -18,19 +18,29 @@
  */
 
 #ifndef _THRIFT_WINDOWS_FORCEINC_H_
-#define _THRIFT_WINDOWS_FORCEINC_H_
+#  define _THRIFT_WINDOWS_FORCEINC_H_
 
 #if defined(_MSC_VER) && (_MSC_VER > 1200)
-#pragma once
+#  pragma once
 #endif // _MSC_VER
 
 #ifndef _WIN32
-#error This is a MSVC header only.
+#  error This is a MSVC header only.
 #endif
 
 #define NOMINMAX
 #define BOOST_ALL_NO_LIB 1
 #define BOOST_THREAD_NO_LIB 1
+#define TARGET_WIN_XP
+
+#ifdef TARGET_WIN_XP
+#  define WINVER 0x0501
+#  define _WIN32_WINNT 0x0501
+#endif
+
+#ifndef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0601
+#endif
 
 #include "windows/config.h"
 

@@ -75,6 +75,13 @@ to have to link with boost thread as a static library.
 If you wanted instead to link with boost thread as a shared library,
 you'll need to uncomment those two lines, and recompile.
 
+Windows version compatibility
+=============================
+The Thrift library targets Windows XP for broadest compatbility. A notable
+difference is in the Windows-specific implementation of the socket poll
+function. To target Vista, Win7 or other versions, comment out the line
+#define TARGET_WIN_XP.
+
 Known issues
 ============
 
