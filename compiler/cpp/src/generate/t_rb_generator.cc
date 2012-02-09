@@ -1070,7 +1070,7 @@ string t_rb_generator::type_name(t_type* ttype) {
 }
 
 string t_rb_generator::full_type_name(t_type* ttype) {
-  string prefix = "";
+  string prefix = "::";
   vector<std::string> modules = ruby_modules(ttype->get_program());
   for (vector<std::string>::iterator m_iter = modules.begin();
        m_iter != modules.end(); ++m_iter) {
