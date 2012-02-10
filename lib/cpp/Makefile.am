@@ -17,6 +17,9 @@
 # under the License.
 #
 
+moc_%.cpp: %.h
+	$(QT_MOC) $(QT_CFLAGS) $< -o $@
+
 SUBDIRS = .
 
 if WITH_TESTS
@@ -38,6 +41,10 @@ endif
 if AMX_HAVE_ZLIB
 lib_LTLIBRARIES += libthriftz.la
 pkgconfig_DATA += thrift-z.pc
+endif
+if AMX_HAVE_QT
+lib_LTLIBRARIES += libthriftqt.la
+pkgconfig_DATA += thrift-qt.pc
 endif
 
 AM_CXXFLAGS = -Wall
@@ -94,18 +101,27 @@ libthriftnb_la_SOURCES = src/server/TNonblockingServer.cpp \
 
 libthriftz_la_SOURCES = src/transport/TZlibTransport.cpp
 
+libthriftqt_la_MOC = src/qt/moc_TQTcpServer.cpp
+libthriftqt_la_SOURCES = $(libthriftqt_la_MOC) \
+                         src/qt/TQIODeviceTransport.cpp \
+                         src/qt/TQTcpServer.cpp
+CLEANFILES = $(libthriftqt_la_MOC)
+
 # Flags for the various libraries
 libthriftnb_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
 libthriftz_la_CPPFLAGS  = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
+libthriftqt_la_CPPFLAGS = $(AM_CPPFLAGS) $(QT_CFLAGS)
 libthriftnb_la_CXXFLAGS = $(AM_CXXFLAGS)
 libthriftz_la_CXXFLAGS  = $(AM_CXXFLAGS)
+libthriftqt_la_CXXFLAGS  = $(AM_CXXFLAGS)
 libthriftnb_la_LDFLAGS  = -release $(VERSION) $(BOOST_LDFLAGS)
 libthriftz_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS)
+libthriftqt_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS) $(QT_LIBS)
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
                          $(top_builddir)/config.h \
-	                 src/TDispatchProcessor.h \
+                         src/TDispatchProcessor.h \
                          src/Thrift.h \
                          src/TReflectionLocal.h \
                          src/TProcessor.h \
@@ -186,6 +202,11 @@ include_async_HEADERS = \
                      src/async/TEvhttpClientChannel.h \
                      src/async/TEvhttpServer.h
 
+include_qtdir = $(include_thriftdir)/qt
+include_qt_HEADERS = \
+                  src/qt/TQIODeviceTransport.h \
+                  src/qt/TQTcpServer.h
+
 
 noinst_PROGRAMS = concurrency_test
 
@@ -212,4 +233,5 @@ EXTRA_DIST = \
              thrift-nb.pc.in \
              thrift.pc.in \
              thrift-z.pc.in \
+             thrift-qt.pc.in \
              $(WINDOWS_DIST)

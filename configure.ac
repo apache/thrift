@@ -118,10 +118,17 @@ if test "$with_cpp" = "yes";  then
 
   AX_LIB_ZLIB([1.2.3])
   have_zlib=$success
+  
+  PKG_CHECK_MODULES([QT], [QtCore >= 4.3, QtNetwork >= 4.3], have_qt=yes, have_qt=no)
+  if test "$have_qt" = "yes"; then
+    AC_PATH_PROGS([QT_MOC], [moc-qt4 moc])
+    have_qt=$success
+  fi
 fi
 AM_CONDITIONAL([WITH_CPP], [test "$have_cpp" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$have_libevent" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$have_zlib" = "yes"])
+AM_CONDITIONAL([AMX_HAVE_QT], [test "$have_qt" = "yes"])
 
 AX_THRIFT_LIB(c_glib, [C (GLib)], no)
 if test "$with_c_glib" = "yes"; then
@@ -477,6 +484,7 @@ AC_CONFIG_FILES([
   lib/cpp/test/Makefile
   lib/cpp/thrift-nb.pc
   lib/cpp/thrift-z.pc
+  lib/cpp/thrift-qt.pc
   lib/cpp/thrift.pc
   lib/c_glib/Makefile
   lib/c_glib/thrift_c_glib.pc
@@ -510,7 +518,7 @@ AC_OUTPUT
 echo
 echo "$PACKAGE $VERSION"
 echo
-echo "Building code generators ..... :$thrift_generators"
+echo "Building code generators ..... : $thrift_generators"
 echo
 echo "Building C++ Library ......... : $have_cpp"
 echo "Building C (GLib) Library .... : $have_c_glib"
@@ -525,51 +533,62 @@ echo "Building Erlang Library ...... : $have_erlang"
 echo "Building Go Library .......... : $have_go"
 if test "$have_cpp" = "yes" ; then
   echo
-  echo "Building TZlibTransport ...... : $have_zlib"
-  echo "Building TNonblockingServer .. : $have_libevent"
+  echo "C++ Library:"
+  echo "   Build TZlibTransport ...... : $have_zlib"
+  echo "   Build TNonblockingServer .. : $have_libevent"
+  echo "   Build TQTcpServer (Qt) .... : $have_qt"
 fi
 if test "$have_java" = "yes" ; then
   echo
-  echo "Using javac .................. : $JAVAC"
-  echo "Using java ................... : $JAVA"
-  echo "Using ant .................... : $ANT"
+  echo "Java Library:"
+  echo "   Using javac ............... : $JAVAC"
+  echo "   Using java ................ : $JAVA"
+  echo "   Using ant ................. : $ANT"
 fi
 if test "$have_csharp" = "yes" ; then
   echo
-  echo "Using .NET 3.5 ............... : $net_3_5"
+  echo "C# Library:"
+  echo "   Using .NET 3.5 ............ : $net_3_5"
 fi
 if test "$have_python" = "yes" ; then
   echo
-  echo "Using Python ................. : $PYTHON"
+  echo "Python Library:"
+  echo "   Using Python .............. : $PYTHON"
 fi
 if test "$have_php" = "yes" ; then
   echo
-  echo "Using php-config ............. : $PHP_CONFIG"
+  echo "PHP Library:"
+  echo "   Using php-config .......... : $PHP_CONFIG"
 fi
 if test "$have_ruby" = "yes" ; then
   echo
-  echo "Using Ruby ................... : $RUBY"
+  echo "Ruby Library:"
+  echo "   Using Ruby ................ : $RUBY"
 fi
 if test "$have_haskell" = "yes" ; then
   echo
-  echo "Using Haskell ................ : $RUNHASKELL"
-  echo "Using Cabal .................. : $CABAL"
+  echo "Haskell Library:"
+  echo "   Using Haskell ............. : $RUNHASKELL"
+  echo "   Using Cabal ............... : $CABAL"
 fi
 if test "$have_perl" = "yes" ; then
   echo
-  echo "Using Perl ................... : $PERL"
+  echo "Perl Library:"
+  echo "   Using Perl ................ : $PERL"
 fi
 if test "$have_erlang" = "yes" ; then
   echo
-  echo "Using erlc ................... : $ERLC"
+  echo "Erlang Library:"
+  echo "   Using erlc ................ : $ERLC"
 fi
 if test "$have_go" = "yes" ; then
   echo
-  echo "Using GOROOT.................. : $GOROOT"
-  echo "Using GOBIN................... : $GOBIN"
-  echo "Using GOARCH.................. : $GOARCH"
-  echo "Using GO Compiler............. : $GO_C"
-  echo "Using GO Linker............... : $GO_L"
+  echo "Go Library:"
+  echo "   Using GOROOT............... : $GOROOT"
+  echo "   Using GOBIN................ : $GOBIN"
+  echo "   Using GOARCH............... : $GOARCH"
+  echo "   Using GO Compiler.......... : $GO_C"
+  echo "   Using GO Linker............ : $GO_L"
 fi
 echo
 echo "If something is missing that you think should be present,"
