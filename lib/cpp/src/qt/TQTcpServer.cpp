@@ -1,11 +1,13 @@
-#include "TQTcpServer.h"
 
-#include <protocol/TProtocol.h>
-#include <async/TAsyncProcessor.h>
+#include "TQTcpServer.h"
+#include "TQIODeviceTransport.h"
 
 #include <QTcpSocket>
 
-#include "TQIODeviceTransport.h"
+#include <tr1/functional>
+
+#include <protocol/TProtocol.h>
+#include <async/TAsyncProcessor.h>
 
 using boost::shared_ptr;
 using apache::thrift::protocol::TProtocol;
@@ -91,8 +93,7 @@ void TQTcpServer::beginDecode()
   QTcpSocket* connection(qobject_cast<QTcpSocket*>(sender()));
   Q_ASSERT(connection);
 
-  if (ctxMap_.find(connection) == ctxMap_.end())
-  {
+  if (ctxMap_.find(connection) == ctxMap_.end()) {
     qWarning("[TQTcpServer] Got data on an unknown QTcpSocket");
     return;
   }
@@ -119,8 +120,7 @@ void TQTcpServer::socketClosed()
   QTcpSocket* connection(qobject_cast<QTcpSocket*>(sender()));
   Q_ASSERT(connection);
 
-  if (ctxMap_.find(connection) == ctxMap_.end())
-  {
+  if (ctxMap_.find(connection) == ctxMap_.end()) {
     qWarning("[TQTcpServer] Unknown QTcpSocket closed");
     return;
   }
@@ -130,8 +130,7 @@ void TQTcpServer::socketClosed()
 
 void TQTcpServer::finish(shared_ptr<ConnectionContext> ctx, bool healthy)
 {
-  if (!healthy)
-  {
+  if (!healthy) {
     qWarning("[TQTcpServer] Processor failed to process data successfully");
     ctxMap_.erase(ctx->connection_.get());
   }

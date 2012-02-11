@@ -6,10 +6,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <tr1/functional>
-
 namespace apache { namespace thrift { namespace protocol {
-class TProtocol;
 class TProtocolFactory;
 }}} // apache::thrift::protocol
 
@@ -17,6 +14,11 @@ namespace apache { namespace thrift { namespace async {
 
 class TAsyncProcessor;
 
+/**
+ *  Server that uses Qt to listen for connections.
+ *  Simply give it a QTcpServer that is listening, along with an async
+ *  processor and a protocol factory, and then run the Qt event loop.
+ */
 class TQTcpServer : public QObject {
  Q_OBJECT
  public:
@@ -32,6 +34,9 @@ class TQTcpServer : public QObject {
   void socketClosed();
 
  private:
+  TQTcpServer(const TQTcpServer&);
+  TQTcpServer& operator=(const TQTcpServer&);
+  
   class ConnectionContext;
 
   void finish(boost::shared_ptr<ConnectionContext> ctx, bool healthy);
