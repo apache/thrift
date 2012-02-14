@@ -2673,6 +2673,10 @@ void t_java_generator::generate_process_function(t_service* tservice,
   indent(f_service_) << "  return new " << argsname << "();" << endl;
   indent(f_service_) << "}" << endl << endl;
 
+  indent(f_service_) << "protected boolean isOneway() {" << endl;
+  indent(f_service_) << "  return " << ((tfunction->is_oneway())?"true":"false") << ";" << endl;
+  indent(f_service_) << "}" << endl << endl;
+
   indent(f_service_) << "public " << resultname << " getResult(I iface, " << argsname << " args) throws org.apache.thrift.TException {" << endl;
   indent_up();
   if (!tfunction->is_oneway()) {
