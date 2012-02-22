@@ -17,13 +17,13 @@
 %% under the License.
 %%
 %%% -*- mode:erlang -*-
-{application, @PACKAGE_NAME@,
+{application, thrift,
  [
   % A quick description of the application.
   {description, "Thrift bindings"},
 
   % The version of the applicaton
-  {vsn, "@PACKAGE_VERSION@"},
+  {vsn, "0.9.0-dev"},
 
   % All modules used by the application.
   {modules, [
