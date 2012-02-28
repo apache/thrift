@@ -142,9 +142,9 @@ inline int poll_win32(LPWSAPOLLFD fdArray, ULONG nfds, INT timeout)
   }
 #endif // WINVER
 
-inline void close(SOCKET socket)
+inline int close(SOCKET socket)
 {
-    ::closesocket(socket);
+    return ::closesocket(socket);
 }
 
 #endif // _THRIFT_WINDOWS_CONFIG_H_
