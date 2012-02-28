@@ -944,12 +944,12 @@ void TNonblockingServer::handleEvent(int fd, short which) {
       nConnectionsDropped_++;
       nTotalConnectionsDropped_++;
       if (overloadAction_ == T_OVERLOAD_CLOSE_ON_ACCEPT) {
-        close(clientSocket);
+        ::close(clientSocket);
         return;
       } else if (overloadAction_ == T_OVERLOAD_DRAIN_TASK_QUEUE) {
         if (!drainPendingTask()) {
           // Nothing left to discard, so we drop connection instead.
-          close(clientSocket);
+          ::close(clientSocket);
           return;
         }
       }
@@ -960,7 +960,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
     if ((flags = fcntl(clientSocket, F_GETFL, 0)) < 0 ||
         fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK) < 0) {
       GlobalOutput.perror("thriftServerEventHandler: set O_NONBLOCK (fcntl) ", errno);
-      close(clientSocket);
+      ::close(clientSocket);
       return;
     }
 
@@ -971,7 +971,7 @@ void TNonblockingServer::handleEvent(int fd, short which) {
     // Fail fast if we could not create a TConnection object
     if (clientConnection == NULL) {
       GlobalOutput.printf("thriftServerEventHandler: failed TConnection factory");
-      close(clientSocket);
+      ::close(clientSocket);
       return;
     }
 
@@ -1059,7 +1059,7 @@ void TNonblockingServer::createAndListenOnSocket() {
   setsockopt(s, SOL_SOCKET, SO_REUSEADDR, const_cast_sockopt(&one), sizeof(one));
 
   if (::bind(s, res->ai_addr, res->ai_addrlen) == -1) {
-    close(s);
+    ::close(s);
     freeaddrinfo(res0);
     throw TException("TNonblockingServer::serve() bind");
   }
@@ -1080,7 +1080,7 @@ void TNonblockingServer::listenSocket(int s) {
   int flags;
   if ((flags = fcntl(s, F_GETFL, 0)) < 0 ||
       fcntl(s, F_SETFL, flags | O_NONBLOCK) < 0) {
-    close(s);
+    ::close(s);
     throw TException("TNonblockingServer::serve() O_NONBLOCK");
   }
 
@@ -1106,7 +1106,7 @@ void TNonblockingServer::listenSocket(int s) {
   #endif
 
   if (listen(s, LISTEN_BACKLOG) == -1) {
-    close(s);
+    ::close(s);
     throw TException("TNonblockingServer::serve() listen");
   }
 
@@ -1267,7 +1267,7 @@ TNonblockingIOThread::~TNonblockingIOThread() {
   }
 
   if (listenSocket_ >= 0) {
-    if (0 != close(listenSocket_)) {
+    if (0 != ::close(listenSocket_)) {
       GlobalOutput.perror("TNonblockingIOThread listenSocket_ close(): ",
                           errno);
     }
@@ -1292,8 +1292,8 @@ void TNonblockingIOThread::createNotificationPipe() {
   }
   if(evutil_make_socket_nonblocking(notificationPipeFDs_[0])<0 ||
      evutil_make_socket_nonblocking(notificationPipeFDs_[1])<0) {
-    close(notificationPipeFDs_[0]);
-    close(notificationPipeFDs_[1]);
+    ::close(notificationPipeFDs_[0]);
+    ::close(notificationPipeFDs_[1]);
     throw TException("TNonblockingServer::createNotificationPipe() O_NONBLOCK");
   }
   for (int i = 0; i < 2; ++i) {
@@ -1304,8 +1304,8 @@ void TNonblockingIOThread::createNotificationPipe() {
 #else
     if (evutil_make_socket_closeonexec(notificationPipeFDs_[i]) < 0) {
 #endif
-      close(notificationPipeFDs_[0]);
-      close(notificationPipeFDs_[1]);
+      ::close(notificationPipeFDs_[0]);
+      ::close(notificationPipeFDs_[1]);
       throw TException("TNonblockingServer::createNotificationPipe() "
         "FD_CLOEXEC");
     }
