@@ -39,7 +39,11 @@ class ThriftHTTPClientTransportSpec < Spec::ExampleGroup
       Net::HTTP.should_receive(:new).with("my.domain.com", 80).and_return do
         mock("Net::HTTP").tee do |http|
           http.should_receive(:use_ssl=).with(false)
-          http.should_receive(:post).with("/path/to/service?param=value", "a test frame", {"Content-Type"=>"application/x-thrift"}).and_return([nil, "data"])
+          http.should_receive(:post).with("/path/to/service?param=value", "a test frame", {"Content-Type"=>"application/x-thrift"}).and_return do
+            mock("Net::HTTPOK").tee do |response|
+              response.should_receive(:body).and_return "data"
+            end
+          end
         end
       end
       @client.flush
@@ -55,7 +59,11 @@ class ThriftHTTPClientTransportSpec < Spec::ExampleGroup
       Net::HTTP.should_receive(:new).with("my.domain.com", 80).and_return do
         mock("Net::HTTP").tee do |http|
           http.should_receive(:use_ssl=).with(false)
-          http.should_receive(:post).with("/path/to/service?param=value", "test", headers).and_return([nil, "data"])
+          http.should_receive(:post).with("/path/to/service?param=value", "test", headers).and_return do
+            mock("Net::HTTPOK").tee do |response|
+              response.should_receive(:body).and_return "data"
+            end
+          end
         end
       end
       @client.flush
