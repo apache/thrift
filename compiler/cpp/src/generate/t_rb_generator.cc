@@ -51,9 +51,10 @@ class t_rb_generator : public t_oop_generator {
       const std::string& option_string)
     : t_oop_generator(program)
   {
-    (void) parsed_options;
     (void) option_string;
     out_dir_base_ = "gen-rb";
+
+    require_rubygems_ = (parsed_options.find("rubygems") != parsed_options.end());
   }
 
   /**
@@ -165,6 +166,7 @@ class t_rb_generator : public t_oop_generator {
    */
 
   std::string rb_autogen_comment();
+  std::string render_require_thrift();
   std::string render_includes();
   std::string declare_field(t_field* tfield);
   std::string type_name(t_type* ttype);
@@ -209,6 +211,8 @@ class t_rb_generator : public t_oop_generator {
   std::ofstream f_consts_;
   std::ofstream f_service_;
 
+  /** If true, add a "require 'rubygems'" line to the top of each gen-rb file. */
+  bool require_rubygems_;
 };
 
 
@@ -231,16 +235,27 @@ void t_rb_generator::init_generator() {
 
   // Print header
   f_types_ <<
-    rb_autogen_comment() << endl <<
+    rb_autogen_comment() << endl << render_require_thrift() <<
     render_includes() << endl;
     begin_namespace(f_types_, ruby_modules(program_));
 
   f_consts_ <<
-    rb_autogen_comment() << endl <<
+    rb_autogen_comment() << endl << render_require_thrift() <<
     "require '" << underscore(program_name_) << "_types'" << endl <<
     endl;
     begin_namespace(f_consts_, ruby_modules(program_));
 
+}
+
+/**
+ * Renders the require of thrift itself, and possibly of the rubygems dependency.
+ */
+string t_rb_generator::render_require_thrift() {
+  if (require_rubygems_) {
+    return "require 'rubygems'\nrequire 'thrift'\n";
+  } else {
+    return "require 'thrift'\n";
+  }
 }
 
 /**
@@ -698,8 +713,7 @@ void t_rb_generator::generate_service(t_service* tservice) {
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<
-    rb_autogen_comment() << endl <<
-    "require 'thrift'" << endl;
+    rb_autogen_comment() << endl << render_require_thrift();
 
   if (tservice->get_extends() != NULL) {
     f_service_ <<
@@ -1191,5 +1205,5 @@ void t_rb_generator::generate_rb_union_validator(std::ofstream& out,
   indent(out) << "end" << endl << endl;
 }
 
-THRIFT_REGISTER_GENERATOR(rb, "Ruby", "")
-
+THRIFT_REGISTER_GENERATOR(rb, "Ruby",
+"    rubygems:        Add a \"require 'rubygems'\" line to the top of each generated file.\n")
