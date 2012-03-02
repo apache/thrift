@@ -112,7 +112,7 @@ public class TSSLTransportFactory {
       if (params != null && params.cipherSuites != null) {
         serverSocket.setEnabledCipherSuites(params.cipherSuites);
       }
-      return new TServerSocket(serverSocket);
+      return new TServerSocket(serverSocket, timeout);
     } catch (Exception e) {
       throw new TTransportException("Could not bind to port " + port, e);
     }
