@@ -332,10 +332,11 @@ public abstract class AbstractNonblockingServer extends TServer {
           }
 
           // increment the amount of memory allocated to read buffers
-          readBufferBytesAllocated.addAndGet(frameSize);
+          readBufferBytesAllocated.addAndGet(frameSize + 4);
 
           // reallocate the readbuffer as a frame-sized buffer
-          buffer_ = ByteBuffer.allocate(frameSize);
+          buffer_ = ByteBuffer.allocate(frameSize + 4);
+          buffer_.putInt(frameSize);
 
           state_ = FrameBufferState.READING_FRAME;
         } else {
@@ -492,7 +493,7 @@ public abstract class AbstractNonblockingServer extends TServer {
      * the data it needs to handle an invocation.
      */
     private TTransport getInputTransport() {
-      return new TMemoryInputTransport(buffer_.array());
+      return inputTransportFactory_.getTransport(new TMemoryInputTransport(buffer_.array()));
     }
 
     /**
