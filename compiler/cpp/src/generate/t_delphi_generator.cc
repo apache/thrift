@@ -906,7 +906,9 @@ void t_delphi_generator::generate_delphi_struct_impl( ostream& out, string cls_p
     }
     generate_delphi_property_reader_impl( out, cls_prefix, cls_nm, t, *m_iter, "F", is_exception);
     generate_delphi_property_writer_impl( out, cls_prefix, cls_nm, t, *m_iter, "F", is_exception , is_x_factory, exception_factory_name);
-    generate_delphi_isset_reader_impl( out, cls_prefix, cls_nm, t, *m_iter, "F", is_exception);
+    if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
+      generate_delphi_isset_reader_impl( out, cls_prefix, cls_nm, t, *m_iter, "F", is_exception);
+    }
   }
 
   if ((! is_exception) || is_x_factory) {
@@ -975,15 +977,19 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struc
     if (members.size() > 0) {
       out << endl;
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        generate_delphi_isset_reader_definition( out, *m_iter, is_exception);
+        if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
+          generate_delphi_isset_reader_definition( out, *m_iter, is_exception);
+        }
       }
     }
 
     if (members.size() > 0) {
       out << endl;
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        isset_name = "__isset_" + prop_name(*m_iter, is_exception);
-        indent(out) << "property " << isset_name << ": Boolean read Get" << isset_name << ";" << endl;
+        if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
+          isset_name = "__isset_" + prop_name(*m_iter, is_exception);
+          indent(out) << "property " << isset_name << ": Boolean read Get" << isset_name << ";" << endl;
+        }
       }
     }
 
@@ -1027,8 +1033,10 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struc
   if (members.size() > 0) {
     indent(out) << endl;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      isset_name = "F__isset_" + prop_name(*m_iter, is_exception);
-      indent(out) << isset_name << ": Boolean;" << endl;
+      if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
+        isset_name = "F__isset_" + prop_name(*m_iter, is_exception);
+        indent(out) << isset_name << ": Boolean;" << endl;
+      }
     }
   }
 
@@ -1042,8 +1050,10 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struc
   if (members.size() > 0) {
     out << endl;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      isset_name = "__isset_" + prop_name(*m_iter, is_exception);
-      indent(out) << "function Get" << isset_name << ": Boolean;" << endl;
+      if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
+        isset_name = "__isset_" + prop_name(*m_iter, is_exception);
+        indent(out) << "function Get" << isset_name << ": Boolean;" << endl;
+      }
     }
   }
 
@@ -1095,8 +1105,10 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struc
     out << endl;
     indent(out) << "// isset" << endl;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      isset_name = "__isset_" + prop_name(*m_iter, is_exception);
-      indent(out) << "property " << isset_name << ": Boolean read Get" << isset_name << ";" << endl;
+      if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
+        isset_name = "__isset_" + prop_name(*m_iter, is_exception);
+        indent(out) << "property " << isset_name << ": Boolean read Get" << isset_name << ";" << endl;
+      }
     }
   }
 
@@ -2392,7 +2404,9 @@ void t_delphi_generator::generate_delphi_property_writer_impl(ostream& out, std:
   indent_impl(out) << "procedure " << cls_prefix << name << "." << "Set" << prop_name(tfield, is_xception_class) << "( const Value: " << type_name(ftype,false,true,is_xception,true) << ");" << endl;
   indent_impl(out) << "begin" << endl;
   indent_up_impl();
-  indent_impl(out) << "F__isset_" << prop_name(tfield, is_xception_class) << " := True;" << endl;
+  if (tfield->get_req() != t_field::T_REQUIRED) {
+    indent_impl(out) << "F__isset_" << prop_name(tfield, is_xception_class) << " := True;" << endl;
+  }
   indent_impl(out) << fieldPrefix << prop_name(tfield, is_xception_class) << " := Value;" << endl;
 
   if (is_xception_class && (! is_xception_factory) ) {
@@ -2452,12 +2466,16 @@ void t_delphi_generator::generate_delphi_create_exception_impl(ostream& out, str
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     propname = prop_name(*f_iter, is_exception);
-    indent_impl(out) << "if __isset_" << propname << " then" << endl;
-    indent_impl(out) << "begin" << endl;
-    indent_up_impl();
+    if ((*f_iter)->get_req() != t_field::T_REQUIRED) {
+      indent_impl(out) << "if __isset_" << propname << " then" << endl;
+      indent_impl(out) << "begin" << endl;
+      indent_up_impl();
+    }
     indent_impl(out) << "Result." << propname <<  " := " << propname << ";" << endl;
-    indent_down_impl();
-    indent_impl(out) << "end;" << endl;
+    if ((*f_iter)->get_req() != t_field::T_REQUIRED) {
+      indent_down_impl();
+      indent_impl(out) << "end;" << endl;
+    }
   }
 
   indent_impl(out) << "Result.UpdateMessageProperty;" << endl;
@@ -2478,6 +2496,16 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out, string
   indent_impl(code_block) << "begin" << endl;
   indent_up_impl();
 
+  // local bools for required fields
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      indent_impl(local_vars) << 
+        "_req_isset_" << prop_name(*f_iter, is_exception) << " : Boolean;" << endl;
+      indent_impl(code_block) << 
+        "_req_isset_" << prop_name(*f_iter, is_exception) << " := FALSE;" << endl;
+    }
+  }
+  
   indent_impl(code_block) << "struc := iprot.ReadStructBegin;" << endl;
 
   indent_impl(code_block) << "try" << endl;
@@ -2517,6 +2545,12 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out, string
     indent_up_impl();
 
     generate_deserialize_field(code_block, is_exception,  *f_iter, "", local_vars);
+
+    // required field?
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      indent_impl(code_block) << 
+        "_req_isset_" << prop_name(*f_iter, is_exception) << " := TRUE;" << endl;
+    }
 
     indent_down_impl();
 
@@ -2558,6 +2592,18 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out, string
   indent_impl(code_block) << "iprot.ReadStructEnd;" << endl;
   indent_down_impl();
   indent_impl(code_block) << "end;" << endl;
+
+  // all required fields have been read?  
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      indent_impl(code_block) << 
+        "if not _req_isset_" << prop_name(*f_iter, is_exception) << endl;
+      indent_impl(code_block) << 
+        "then raise TProtocolException.Create( TProtocolException.INVALID_DATA, '" << 
+        prop_name(*f_iter, is_exception) << "');" << endl;
+    }
+  }
+  
   indent_down_impl();
   indent_impl(code_block) << "end;" << endl << endl;
 
@@ -2671,17 +2717,28 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out, string
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     bool null_allowed = type_can_be_null((*f_iter)->get_type());
+    bool is_optional  = ((*f_iter)->get_req() != t_field::T_REQUIRED);
     if (null_allowed) {
       indent_impl(code_block) <<
-        "if ((" << prop_name((*f_iter), is_exception) << " <> nil) and __isset_" << prop_name(*f_iter,is_exception) << ") then" << endl;
+        "if (" << prop_name((*f_iter), is_exception) << " <> nil)";
+      if (is_optional) {
+        code_block << 
+          " and __isset_" << prop_name(*f_iter,is_exception);
+      }
+      code_block << 
+        " then" << endl;
       indent_impl(code_block) << "begin" << endl;
       indent_up_impl();
     } else {
-      indent_impl(code_block) << "if (__isset_" << prop_name(*f_iter,is_exception) << ") then" << endl;
-      indent_impl(code_block) << "begin" << endl;
-      indent_up_impl();
+      if (is_optional) {
+        indent_impl(code_block) << "if (__isset_" << prop_name(*f_iter,is_exception) << ") then" << endl;
+        indent_impl(code_block) << "begin" << endl;
+        indent_up_impl();
+      } else {
+        indent_impl(code_block) << "// required field" << endl;
+      }
     }
-     indent_impl(code_block) <<
+    indent_impl(code_block) <<
       "field_.Name := '" << (*f_iter)->get_name() << "';" << endl;
     indent_impl(code_block) <<
       "field_.Type_  := " << type_to_enum((*f_iter)->get_type()) << ";" << endl;
@@ -2691,8 +2748,10 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out, string
       "oprot.WriteFieldBegin(field_);" << endl;
     generate_serialize_field(code_block, is_exception, *f_iter, "", local_vars);
     indent_impl(code_block) << "oprot.WriteFieldEnd();" << endl;
-    indent_down_impl();
-    indent_impl(code_block) << "end;" << endl;
+    if (null_allowed || is_optional) {
+      indent_down_impl();
+      indent_impl(code_block) << "end;" << endl;
+    }
   }
 
   indent_impl(code_block) << "oprot.WriteFieldStop();" << endl;
