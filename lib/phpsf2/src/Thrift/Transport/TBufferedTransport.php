@@ -23,6 +23,7 @@
 namespace Thrift\Transport;
 
 use Thrift\Transport\TTransport;
+use Thrift\Factory\TStringFuncFactory;
 
 /**
  * Buffered transport. Stores data to an internal buffer that it doesn't
@@ -90,7 +91,7 @@ class TBufferedTransport extends TTransport {
   }
 
   public function putBack($data) {
-    if (strlen($this->rBuf_) === 0) {
+    if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
       $this->rBuf_ = $data;
     } else {
       $this->rBuf_ = ($data . $this->rBuf_);
@@ -107,7 +108,7 @@ class TBufferedTransport extends TTransport {
    * the buffered readAll.
    */
   public function readAll($len) {
-    $have = strlen($this->rBuf_);
+    $have = TStringFuncFactory::create()->strlen($this->rBuf_);
     if ($have == 0) {
       $data = $this->transport_->readAll($len);
     } else if ($have < $len) {
@@ -118,31 +119,31 @@ class TBufferedTransport extends TTransport {
       $data = $this->rBuf_;
       $this->rBuf_ = '';
     } else if ($have > $len) {
-      $data = substr($this->rBuf_, 0, $len);
-      $this->rBuf_ = substr($this->rBuf_, $len);
+      $data = TStringFuncFactory::create()->substr($this->rBuf_, 0, $len);
+      $this->rBuf_ = TStringFuncFactory::create()->substr($this->rBuf_, $len);
     }
     return $data;
   }
 
   public function read($len) {
-    if (strlen($this->rBuf_) === 0) {
+    if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
       $this->rBuf_ = $this->transport_->read($this->rBufSize_);
     }
 
-    if (strlen($this->rBuf_) <= $len) {
+    if (TStringFuncFactory::create()->strlen($this->rBuf_) <= $len) {
       $ret = $this->rBuf_;
       $this->rBuf_ = '';
       return $ret;
     }
 
-    $ret = substr($this->rBuf_, 0, $len);
-    $this->rBuf_ = substr($this->rBuf_, $len);
+    $ret = TStringFuncFactory::create()->substr($this->rBuf_, 0, $len);
+    $this->rBuf_ = TStringFuncFactory::create()->substr($this->rBuf_, $len);
     return $ret;
   }
 
   public function write($buf) {
     $this->wBuf_ .= $buf;
-    if (strlen($this->wBuf_) >= $this->wBufSize_) {
+    if (TStringFuncFactory::create()->strlen($this->wBuf_) >= $this->wBufSize_) {
       $out = $this->wBuf_;
 
       // Note that we clear the internal wBuf_ prior to the underlying write
@@ -154,7 +155,7 @@ class TBufferedTransport extends TTransport {
   }
 
   public function flush() {
-    if (strlen($this->wBuf_) > 0) {
+    if (TStringFuncFactory::create()->strlen($this->wBuf_) > 0) {
       $this->transport_->write($this->wBuf_);
       $this->wBuf_ = '';
     }

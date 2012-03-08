@@ -22,6 +22,8 @@
 
 namespace Thrift\Transport;
 
+use Thrift\Factory\TStringFuncFactory;
+
 /**
  * Base interface for a transport agent.
  *
@@ -68,7 +70,7 @@ abstract class TTransport {
 
     $data = '';
     $got = 0;
-    while (($got = strlen($data)) < $len) {
+    while (($got = TStringFuncFactory::create()->strlen($data)) < $len) {
       $data .= $this->read($len - $got);
     }
     return $data;

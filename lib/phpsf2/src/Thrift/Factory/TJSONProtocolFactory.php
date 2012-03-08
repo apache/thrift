@@ -22,14 +22,20 @@
 
 namespace Thrift\Factory;
 
+use Thrift\Factory\TProtocolFactory;
+use Thrift\Protocol\TJSONProtocol;
+
 /**
- * Protocol factory creates protocol objects from transports
+ * JSON Protocol Factory
  */
-interface TProtocolFactory {
-  /**
-   * Build a protocol from the base transport
-   *
-   * @return Thrift\Protocol\TProtocol protocol
-   */
-  public function getProtocol($trans);
+class TJSONProtocolFactory implements TProtocolFactory
+{
+    public function __construct()
+    {
+    }
+
+    public function getProtocol($trans)
+    {
+        return new TJSONProtocol($trans);
+    }
 }

@@ -25,6 +25,7 @@ namespace Thrift\Protocol;
 use Thrift\Protocol\TProtocol;
 use Thrift\Type\TType;
 use Thrift\Exception\TProtocolException;
+use Thrift\Factory\TStringFuncFactory;
 
 /**
  * Binary implementation of the Thrift protocol.
@@ -184,7 +185,7 @@ class TBinaryProtocol extends TProtocol {
   }
 
   public function writeString($value) {
-    $len = strlen($value);
+    $len = TStringFuncFactory::create()->strlen($value);
     $result = $this->writeI32($len);
     if ($len) {
       $this->trans_->write($value, $len);

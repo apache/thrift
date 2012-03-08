@@ -17,19 +17,29 @@
  * specific language governing permissions and limitations
  * under the License.
  *
- * @package thrift.protocol
  */
 
-namespace Thrift\Factory;
+namespace Thrift\StringFunc;
 
-/**
- * Protocol factory creates protocol objects from transports
- */
-interface TProtocolFactory {
-  /**
-   * Build a protocol from the base transport
-   *
-   * @return Thrift\Protocol\TProtocol protocol
-   */
-  public function getProtocol($trans);
+use Thrift\StringFunc\TStringFunc;
+
+class Mbstring implements TStringFunc {
+    public function substr($str, $start, $length = null) {
+        /**
+         * We need to set the charset parameter, which is the second
+         * optional parameter and the first optional parameter can't
+         * be null or false as a "magic" value because that would
+         * cause an empty string to be returned, so we need to
+         * actually calculate the proper length value.
+         */
+        if($length === null) {
+            $length = $this->strlen($str) - $start;
+        }
+
+        return mb_substr($str, $start, $length, '8bit');
+    }
+
+    public function strlen($str) {
+        return mb_strlen($str, '8bit');
+    }
 }

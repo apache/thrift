@@ -20,16 +20,20 @@
  * @package thrift.protocol
  */
 
-namespace Thrift\Factory;
+namespace Thrift\Protocol\JSON;
 
-/**
- * Protocol factory creates protocol objects from transports
- */
-interface TProtocolFactory {
-  /**
-   * Build a protocol from the base transport
-   *
-   * @return Thrift\Protocol\TProtocol protocol
-   */
-  public function getProtocol($trans);
+class BaseContext
+{
+    function escapeNum()
+    {
+        return false;
+    }
+
+    function write()
+    {
+    }
+
+    function read()
+    {
+    }
 }

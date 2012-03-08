@@ -17,19 +17,22 @@
  * specific language governing permissions and limitations
  * under the License.
  *
- * @package thrift.protocol
  */
 
-namespace Thrift\Factory;
+namespace Thrift\StringFunc;
 
-/**
- * Protocol factory creates protocol objects from transports
- */
-interface TProtocolFactory {
-  /**
-   * Build a protocol from the base transport
-   *
-   * @return Thrift\Protocol\TProtocol protocol
-   */
-  public function getProtocol($trans);
+use Thrift\StringFunc\TStringFunc;
+
+class Core implements TStringFunc {
+    public function substr($str, $start, $length = null) {
+        // specifying a null $length would return an empty string
+        if($length === null) {
+            return substr($str, $start);
+        }
+        return substr($str, $start, $length);
+    }
+
+    public function strlen($str) {
+        return strlen($str);
+    }
 }

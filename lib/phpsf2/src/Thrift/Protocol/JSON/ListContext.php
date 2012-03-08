@@ -20,16 +20,33 @@
  * @package thrift.protocol
  */
 
-namespace Thrift\Factory;
+namespace Thrift\Protocol\JSON;
 
-/**
- * Protocol factory creates protocol objects from transports
- */
-interface TProtocolFactory {
-  /**
-   * Build a protocol from the base transport
-   *
-   * @return Thrift\Protocol\TProtocol protocol
-   */
-  public function getProtocol($trans);
+use Thrift\Protocol\JSON\BaseContext;
+use Thrift\Protocol\TJSONProtocol;
+
+class ListContext extends BaseContext
+{
+    private $first_ = true;
+    private $p_;
+
+    public function __construct($p) {
+        $this->p_ = $p;
+    }
+
+    public function write() {
+        if ($this->first_) {
+            $this->first_ = false;
+        } else {
+            $this->p_->getTransport()->write(TJSONProtocol::COMMA);
+        }
+    }
+
+    public function read() {
+        if ($this->first_) {
+            $this->first_ = false;
+        } else {
+            $this->p_->readJSONSyntaxChar(TJSONProtocol::COMMA);
+        }
+    }
 }
