@@ -1,0 +1,26 @@
+/******************************************/
+ * Thrift Library with PHP 5.3 Namespaces *
+/******************************************/
+
+I have rewrite the Thrift PHP Generator to have a real Symfony 2 Namespace
+compliant code.
+
+Symfony 2 use UniversalClassLoader:
+https://github.com/symfony/symfony/tree/master/src/Symfony/Component/ClassLoader
+
+
+And now, to use it with Symfony 2:
+
+- Add to deps:
+    [Thrift]
+        git=git@github.com:ebuzzing/thrift.git
+        target=/apache-thrift
+        version=origin/0.8.x
+
+- Add to app/autoload.php
+    $loader->registerNamespaces(array(
+        ...
+        'Thrift'           => __DIR__.'/../vendor/apache-thrift/lib/phpsf2/src',
+    ));
+
+That's it !
