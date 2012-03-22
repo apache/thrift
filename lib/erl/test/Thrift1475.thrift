@@ -1,3 +1,8 @@
+struct StructB
+{
+  1: string x
+}
+
 struct StructA
 {
   1: string a,
@@ -17,6 +22,13 @@ struct StructA
   15: double o = 3.14159,
   16: list<string> string_list,
   17: list<byte> byte_list = [1, 2, 3],
-  18: set<string> string_set,
-  19: map<string, string> string_map
+  18: required list<string> rsl,
+  19: optional list<string> osl,
+  20: set<string> string_set,
+  21: required set<string> rss,
+  22: optional set<string> oss,
+  23: map<string, string> string_map,
+  24: required map<string, string> rsm,
+  25: optional map<string, string> osm,
+  26: StructB structb
 }

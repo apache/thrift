@@ -588,9 +588,13 @@ void t_erl_generator::generate_erl_struct_member(ostream & out, t_field * tmembe
 bool t_erl_generator::has_default_value(t_field * field) {
   t_type *type = field->get_type();
   if (!field->get_value()) {
-    if (type->is_struct() || type->is_xception() || type->is_map() ||
-        type->is_set() || type->is_list()) {
-      return true;
+    if ( field->get_req() == t_field::T_REQUIRED) {
+      if (type->is_struct() || type->is_xception() || type->is_map() ||
+          type->is_set() || type->is_list()) {
+        return true;
+      } else {
+        return false;
+      }
     } else {
       return false;
     }
