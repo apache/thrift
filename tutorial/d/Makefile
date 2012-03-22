@@ -17,64 +17,21 @@
 # under the License.
 #
 
-SUBDIRS =
+LIB_D_DIR = ../../lib/d
 
-if WITH_CPP
-SUBDIRS += cpp
-endif
+GEN_SRC = ../gen-d/share/SharedService.d ../gen-d/share/shared_types.d \
+	../gen-d/tutorial/tutorial_types.d ../gen-d/tutorial/Calculator.d
 
-if WITH_C_GLIB
-SUBDIRS += c_glib
-endif
+default: server client async_client
 
-if WITH_MONO
-SUBDIRS += csharp
-endif
+server: server.d
+	dmd -I${LIB_D_DIR}/src -L-L${LIB_D_DIR} -L-lthriftd server.d ${GEN_SRC}
 
-if WITH_JAVA
-SUBDIRS += java
-# JavaScript unit test depends on java
-# so test only if java, ant & co is available
-SUBDIRS += js/test
-endif
+client: client.d
+	dmd -I${LIB_D_DIR}/src -L-L${LIB_D_DIR} -L-lthriftd client.d ${GEN_SRC}
 
-if WITH_PYTHON
-SUBDIRS += py
-endif
+async_client: async_client.d
+	dmd -I${LIB_D_DIR}/src -L-L${LIB_D_DIR} -L-lthriftd -L-lthriftd-event -L-levent async_client.d ${GEN_SRC}
 
-if WITH_ERLANG
-SUBDIRS += erl
-endif
-
-if WITH_RUBY
-SUBDIRS += rb
-endif
-
-if WITH_HASKELL
-SUBDIRS += hs
-endif
-
-if WITH_PERL
-SUBDIRS += perl
-endif
-
-if WITH_PHP
-SUBDIRS += php
-endif
-
-if WITH_D
-SUBDIRS += d
-endif
-
-# All of the libs that don't use Automake need to go in here
-# so they will end up in our release tarballs.
-EXTRA_DIST = \
-			as3 \
-			cocoa \
-			delphi \
-			go \
-			javame \
-			js \
-			nodejs \
-			ocaml \
-			st
+clean:
+	$(RM) -f server client async_client
