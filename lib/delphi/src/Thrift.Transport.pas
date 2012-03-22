@@ -1136,7 +1136,9 @@ var
 begin
   if FReadBuffer <> nil then
   begin
-    got := FReadBuffer.Read( Pointer(@buf[0])^, len );
+    if len > 0
+    then got := FReadBuffer.Read( Pointer(@buf[off])^, len )
+    else got := 0;
     if got > 0 then
     begin
       Result := got;
@@ -1145,7 +1147,9 @@ begin
   end;
 
   ReadFrame;
-  Result := FReadBuffer.Read( Pointer(@buf[0])^, len );
+  if len > 0
+  then Result := FReadBuffer.Read( Pointer(@buf[off])^, len)
+  else Result := 0;
 end;
 
 procedure TFramedTransportImpl.ReadFrame;
@@ -1171,7 +1175,8 @@ end;
 
 procedure TFramedTransportImpl.Write(const buf: TBytes; off, len: Integer);
 begin
-  FWriteBuffer.Write( Pointer(@buf[0])^, len );
+  if len > 0
+  then FWriteBuffer.Write( Pointer(@buf[off])^, len );
 end;
 
 { TFramedTransport.TFactory }

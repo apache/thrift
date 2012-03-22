@@ -972,9 +972,11 @@ begin
 end;
 
 procedure TBinaryProtocolImpl.WriteBinary( const b: TBytes);
+var iLen : Integer;
 begin
-  WriteI32( Length(b));
-  FTrans.Write(b, 0, Length( b));
+  iLen := Length(b);
+  WriteI32( iLen);
+  if iLen > 0 then FTrans.Write(b, 0, iLen);
 end;
 
 procedure TBinaryProtocolImpl.WriteBool(b: Boolean);
