@@ -428,6 +428,11 @@ abstract class TBase {
       }
     }
   }
+  
+  public function __wakeup()
+  {
+    $this->__construct(get_object_vars($this));
+  }
 
   private function _readMap(&$var, $spec, $input) {
     $xfer = 0;
