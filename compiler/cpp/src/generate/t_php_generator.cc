@@ -409,7 +409,7 @@ void t_php_generator::init_generator() {
   package_dir_ = get_out_dir()+"/"+program_name_+"/";
   MKDIR(package_dir_.c_str());
   // Make output file
-  string f_types_name = package_dir_+program_name_+"_types.php";
+  string f_types_name = package_dir_+"Types.php";
   f_types_.open(f_types_name.c_str());
 
   // Print header
@@ -426,7 +426,7 @@ void t_php_generator::init_generator() {
       string package = includes[i]->get_name();
       string prefix = php_path(includes[i]);
       f_types_ <<
-        "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << prefix << "/" << package << "_types.php';" << endl;
+        "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << prefix << "/" << "Types.php';" << endl;
     }
   }
   f_types_ << endl;
@@ -1115,7 +1115,7 @@ void t_php_generator::generate_service(t_service* tservice) {
   if(!sf2_)
   {
 	f_service_ <<
-	  "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << php_path(program_) << "/" << program_name_ << "_types.php';" << endl;
+	  "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << php_path(program_) << "/" << "Types.php';" << endl;
 
 	if (tservice->get_extends() != NULL) {
 	  f_service_ <<
