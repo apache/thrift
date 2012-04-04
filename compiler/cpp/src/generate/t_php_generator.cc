@@ -406,8 +406,24 @@ bool t_php_generator::is_valid_namespace(const std::string& sub_namespace) {
 void t_php_generator::init_generator() {
   // Make output directory
   MKDIR(get_out_dir().c_str());
-  package_dir_ = get_out_dir()+"/"+program_name_+"/";
-  MKDIR(package_dir_.c_str());
+
+  // Create Real directory Namespaces
+  if(namespace_php_)
+  {
+	vector<string> NSx = split(php_namespace_suffix(get_program()), '\\');
+	package_dir_ = get_out_dir();
+
+	for (size_t i = 0; i < NSx.size(); ++i) {
+	  package_dir_ = package_dir_ + "/" + NSx[i] + "/";
+	  MKDIR(package_dir_.c_str());
+	}
+  }
+  else
+  {
+	package_dir_ = get_out_dir()+"/"+program_name_+"/";
+	MKDIR(package_dir_.c_str());
+  }
+
   // Make output file
   string f_types_name = package_dir_+"Types.php";
   f_types_.open(f_types_name.c_str());
@@ -1211,7 +1227,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
     indent() << "if (!method_exists($this, $methodname)) {" << endl;
   if (binary_inline_) {
     f_service_ <<
-      indent() << "  throw new Exception('Function '.$fname.' not implemented.');" << endl;
+      indent() << "  throw new " << ((namespace_php_) ? "\\" : "" ) << "Exception('Function '.$fname.' not implemented.');" << endl;
   } else {
     f_service_ <<
       indent() << "  $input->skip(" << NS_ROOT << "TType::STRUCT);" << endl <<
@@ -1308,7 +1324,7 @@ void t_php_generator::generate_process_function(t_service* tservice,
     indent_down();
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ <<
-        indent() << "} catch (" << php_namespace((*x_iter)->get_type()->get_program()) << (*x_iter)->get_type()->get_name() << " $" << (*x_iter)->get_name() << ") {" << endl;
+        indent() << "} catch (" << php_namespace(get_true_type((*x_iter)->get_type())->get_program()) << (*x_iter)->get_type()->get_name() << " $" << (*x_iter)->get_name() << ") {" << endl;
       if (!tfunction->is_oneway()) {
         indent_up();
         f_service_ <<
@@ -1765,7 +1781,7 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
           "return;" << endl;
       } else {
         out <<
-          indent() << "throw new " << NS_ROOT << "Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+          indent() << "throw new " << ((namespace_php_) ? "\\" : "" ) << "Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
 
     // Close function
