@@ -114,8 +114,6 @@ client.testNest(out2, function(err, response) {
 	passed();
 });
 
-/*
- * TypeError: Cannot read property 'length' of undefined
 var mapout = {};
 for (var i = 0; i < 5; ++i) {
   mapout[i] = i-10;
@@ -125,7 +123,6 @@ client.testMap(mapout, function(err, response) {
   console.log("testMap(", mapout, ") = \n", response);
 	passed();
 });
-*/
 
 /*
  * TODO: testSet, testList, testEnum, testTypedef, testMapMap, testInsanity

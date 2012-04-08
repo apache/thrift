@@ -1367,12 +1367,14 @@ void t_js_generator::generate_deserialize_container(ofstream &out,
   scope_up(out);
 
   if (ttype->is_map()) {
-    out <<
-    indent() << "if (" << i << " > 0 ) {" << endl <<
-    indent() << "  if (input.rstack.length > input.rpos[input.rpos.length -1] + 1) {" << endl <<
-    indent() << "    input.rstack.pop();" << endl <<
-    indent() << "  }" << endl <<
-    indent() << "}" << endl;
+    if (!gen_node_) {
+      out <<
+      indent() << "if (" << i << " > 0 ) {" << endl <<
+      indent() << "  if (input.rstack.length > input.rpos[input.rpos.length -1] + 1) {" << endl <<
+      indent() << "    input.rstack.pop();" << endl <<
+      indent() << "  }" << endl <<
+      indent() << "}" << endl;
+    }
 
     generate_deserialize_map_element(out, (t_map*)ttype, prefix);
   } else if (ttype->is_set()) {
