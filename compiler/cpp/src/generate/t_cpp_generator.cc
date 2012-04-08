@@ -2123,29 +2123,28 @@ void t_cpp_generator::generate_service_multiface(t_service* tservice) {
     indent_up();
     f_header_ <<
       indent() << "size_t sz = ifaces_.size();" << endl <<
-      indent() << "for (size_t i = 0; i < sz; ++i) {" << endl;
+      indent() << "size_t i = 0;" << endl <<
+      indent() << "for (; i < (sz - 1); ++i) {" << endl;
+	indent_up();
+	f_header_ <<
+      indent() << call << ";" << endl;
+	indent_down();
+	f_header_ <<
+      indent() << "}" << endl;
+
     if (!(*f_iter)->get_returntype()->is_void()) {
-      f_header_ <<
-        indent() << "  if (i == sz - 1) {" << endl;
       if (is_complex_type((*f_iter)->get_returntype())) {
         f_header_ <<
-          indent() << "    " << call << ";" << endl <<
-          indent() << "    return;" << endl;
+          indent() << call << ";" << endl <<
+          indent() << "return;" << endl;
       } else {
         f_header_ <<
-          indent() << "    return " << call << ";" << endl;
+          indent() << "return " << call << ";" << endl;
       }
-      f_header_ <<
-        indent() << "  } else {" << endl <<
-        indent() << "    " << call << ";" << endl <<
-        indent() << "  }" << endl;
     } else {
       f_header_ <<
-        indent() << "  " << call << ";" << endl;
+        indent() << call << ";" << endl;
     }
-
-    f_header_ <<
-      indent() << "}" << endl;
 
     indent_down();
     f_header_ <<
