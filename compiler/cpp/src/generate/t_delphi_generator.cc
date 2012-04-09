@@ -1440,8 +1440,19 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent_impl(s_service_impl) << "constructor " << full_cls << ".Create( iface_: Iface );" << endl;
   indent_impl(s_service_impl) << "begin" << endl;
   indent_up_impl();
+  if (tservice->get_extends() != NULL)
+  {
+    indent_impl(s_service_impl) << "inherited Create( iface_);" << endl;
+  } else {
+    indent_impl(s_service_impl) << "inherited Create;" << endl;
+  }
   indent_impl(s_service_impl) << "Self.iface_ := iface_;" << endl;
-  indent_impl(s_service_impl) << "processMap_ := TThriftDictionaryImpl<string, TProcessFunction>.Create;" << endl;
+  if (tservice->get_extends() != NULL)
+  {
+    indent_impl(s_service_impl) << "ASSERT( processMap_ <> nil);  // inherited" << endl;
+  } else {
+    indent_impl(s_service_impl) << "processMap_ := TThriftDictionaryImpl<string, TProcessFunction>.Create;" << endl;
+  }
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent_impl(s_service_impl) << 
@@ -1451,28 +1462,32 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent_impl(s_service_impl) << "end;" << endl << endl;
 
   indent_impl(s_service_impl) << "destructor " << full_cls << ".Destroy;" << endl;
-  indent_impl(s_service_impl) << "begin;" << endl;
+  indent_impl(s_service_impl) << "begin" << endl;
   indent_up_impl();
   indent_impl(s_service_impl) << "inherited;" << endl;
   indent_down_impl();
   indent_impl(s_service_impl) << "end;" << endl << endl;
 
-  indent(s_service) << "protected" << endl;
-  indent_up();
-  indent(s_service) << "type" << endl;
-  indent_up();
-  indent(s_service) << "TProcessFunction = reference to procedure( seqid: Integer; const iprot: IProtocol; const oprot: IProtocol);" << endl;
-  indent_down();
-  indent_down();
-
   indent(s_service) << "private" << endl;
   indent_up();
   indent(s_service) << "iface_: Iface;" << endl;
   indent_down();
-  indent(s_service) << "protected" << endl;
-  indent_up();
-  indent(s_service) << "processMap_: IThriftDictionary<string, TProcessFunction>;" << endl;
-  indent_down();
+
+  if (tservice->get_extends() == NULL)
+  {
+    indent(s_service) << "protected" << endl;
+    indent_up();
+    indent(s_service) << "type" << endl;
+    indent_up();
+    indent(s_service) << "TProcessFunction = reference to procedure( seqid: Integer; const iprot: IProtocol; const oprot: IProtocol);" << endl;
+    indent_down();
+    indent_down();
+    indent(s_service) << "protected" << endl;
+    indent_up();
+    indent(s_service) << "processMap_: IThriftDictionary<string, TProcessFunction>;" << endl;
+    indent_down();
+  }
+
   indent(s_service) << "public" << endl;
   indent_up();
   if (extends.empty()) {
@@ -1494,8 +1509,8 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent_up_impl();
   indent_impl(s_service_impl) << "msg := iprot.ReadMessageBegin();" << endl;
   indent_impl(s_service_impl) << "fn := nil;" << endl;
-  indent_impl(s_service_impl) << "processMap_.TryGetValue(msg.Name, fn);" << endl;
-  indent_impl(s_service_impl) << "if (@fn = nil) then" << endl;
+  indent_impl(s_service_impl) << "if not processMap_.TryGetValue(msg.Name, fn)" << endl;
+  indent_impl(s_service_impl) << "or not Assigned(fn) then" << endl;
   indent_impl(s_service_impl) << "begin" << endl;
   indent_up_impl();
   indent_impl(s_service_impl) << "TProtocolUtil.Skip(iprot, TType.Struct);" << endl;
