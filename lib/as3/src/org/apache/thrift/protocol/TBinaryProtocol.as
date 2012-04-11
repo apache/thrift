@@ -21,6 +21,7 @@ package org.apache.thrift.protocol {
 
   import flash.utils.ByteArray;
   
+  import com.hurlant.math.BigInteger;
   import org.apache.thrift.TError;
   import org.apache.thrift.transport.THttpClient;
   import org.apache.thrift.transport.TTransport;
@@ -154,18 +155,20 @@ package org.apache.thrift.protocol {
         trans_.write(out, 0, 4);
       }
       
-      //private byte[] i64out = new byte[8];
-      //public function writeI64(i64:Number):void {
-        //i64out[0] = (byte)(0xff & (i64 >> 56));
-        //i64out[1] = (byte)(0xff & (i64 >> 48));
-        //i64out[2] = (byte)(0xff & (i64 >> 40));
-        //i64out[3] = (byte)(0xff & (i64 >> 32));
-        //i64out[4] = (byte)(0xff & (i64 >> 24));
-        //i64out[5] = (byte)(0xff & (i64 >> 16));
-        //i64out[6] = (byte)(0xff & (i64 >> 8));
-        //i64out[7] = (byte)(0xff & (i64));
-        //trans_.write(i64out, 0, 8);
-      //}
+      public function writeI64(i64:BigInteger):void {
+        reset(out);
+        var ba:ByteArray = i64.toByteArray();
+        ba.position = 0;
+
+        // pad the output to make sure this 64-bit number takes 
+        // all 64-bits, and no more since BigInteger can handle more
+        var difference:int = 8 - Math.min(8, ba.length);
+        for( ; difference > 0; difference-- ){
+          out.writeByte(0);
+        }
+        out.writeBytes(ba, 0, Math.min(8, ba.bytesAvailable));
+        trans_.write(out, 0, 8);
+      }
       
       public function writeDouble(dub:Number):void {
         reset(out);
@@ -264,21 +267,10 @@ package org.apache.thrift.protocol {
       return bytes.readInt();
     }
   
-    //private byte[] i64rd = new byte[8];
-    /*
-    public function readI64() throws TException {
-      readAll(i64rd, 0, 8);
-      return
-        ((long)(i64rd[0] & 0xff) << 56) |
-        ((long)(i64rd[1] & 0xff) << 48) |
-        ((long)(i64rd[2] & 0xff) << 40) |
-        ((long)(i64rd[3] & 0xff) << 32) |
-        ((long)(i64rd[4] & 0xff) << 24) |
-        ((long)(i64rd[5] & 0xff) << 16) |
-        ((long)(i64rd[6] & 0xff) <<  8) |
-        ((long)(i64rd[7] & 0xff));
+    public function readI64():BigInteger {
+      readAll(8);
+      return new BigInteger(bytes);
     }
-    */
   
     public function readDouble():Number {
       readAll(8);

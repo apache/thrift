@@ -22,6 +22,8 @@ package org.apache.thrift.protocol {
   import org.apache.thrift.TError;
   import org.apache.thrift.transport.TTransport;
 
+  import com.hurlant.math.BigInteger;
+
   import flash.utils.ByteArray;
   
   /**
@@ -70,7 +72,7 @@ package org.apache.thrift.protocol {
     
     function writeI32(i32:int):void;
     
-    //function writeI64(i64:Number):void;
+    function writeI64(i64:BigInteger):void;
     
     function writeDouble(dub:Number):void;
     
@@ -113,7 +115,7 @@ package org.apache.thrift.protocol {
     
     function readI32():int;
     
-    //function readI64():Number;
+    function readI64():BigInteger;
     
     function readDouble():Number;
     

@@ -41,6 +41,7 @@
 
   <property name="src" value="${basedir}/src"/>
   <property name="build.dir" value="${basedir}/build"/>
+  <property name="lib.dir" value="${basedir}/lib"/>
 
   <property name="as3.swc.file" location="${build.dir}/${as3.final.name}.swc"/>
   <property name="as3.pom.xml" location="${build.dir}/${as3.final.name}.pom"/>
@@ -81,6 +82,9 @@
 
     <compc output="${as3.swc.file}" include-classes="${as.src.classes}">
       <source-path path-element="${src}"/>
+      <compiler.include-libraries dir="${lib.dir}" append="true">
+          <include name="as3crypto-1.3.0-library.swc" />
+      </compiler.include-libraries>
     </compc>
   </target>
 

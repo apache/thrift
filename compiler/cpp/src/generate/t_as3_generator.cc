@@ -193,7 +193,8 @@ class t_as3_generator : public t_oop_generator {
       ttype->is_container() ||
       ttype->is_struct() ||
       ttype->is_xception() ||
-      ttype->is_string();
+      ttype->is_string() ||
+      (ttype->is_base_type() && ((t_base_type*)ttype)->get_base() == t_base_type::TYPE_I64);//for using the new BigInteger library
   }
 
   std::string constant_name(std::string name);
@@ -261,7 +262,8 @@ string t_as3_generator::as3_type_imports() {
     string() +
     "import org.apache.thrift.Set;\n" +
     "import flash.utils.ByteArray;\n" +
-    "import flash.utils.Dictionary;\n\n";
+    "import flash.utils.Dictionary;\n" +
+    "import com.hurlant.math.BigInteger;\n\n";
 }
 
 /**
@@ -484,7 +486,13 @@ void t_as3_generator::print_const_value(std::ofstream& out, string name, t_type*
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
-    out << name << ":" << type_name(type) << " = new " << type_name(type, false, true) << "();" << endl;
+
+    out << name;
+    if(!defval){
+      out << ":" << type_name(type);
+    }
+    out << " = new " << type_name(type, false, true) << "();" << endl;
+
     if (!in_static) {
       indent(out) << "{" << endl;
       indent_up();
@@ -591,20 +599,20 @@ string t_as3_generator::render_const_value(ofstream& out, string name, t_type* t
           render << ((value->get_integer() > 0) ? "true" : "false");
           break;
         case t_base_type::TYPE_BYTE:
-          render << "(byte)" << value->get_integer();
+          render << "int(" << value->get_integer() << ")";
           break;
         case t_base_type::TYPE_I16:
-          render << "(short)" << value->get_integer();
+          render << "int(" << value->get_integer() << ")";
           break;
         case t_base_type::TYPE_I32:
           render << value->get_integer();
           break;
         case t_base_type::TYPE_I64:
-          render << value->get_integer() << "L";
+          render << "new BigInteger(\"" << hex << value->get_integer() << dec << "\")";
           break;
         case t_base_type::TYPE_DOUBLE:
           if (value->get_type() == t_const_value::CV_INTEGER) {
-            render << "(double)" << value->get_integer();
+            render << "Number(" << value->get_integer() << ")";
           } else {
             render << value->get_double();
           }
@@ -2465,7 +2473,7 @@ string t_as3_generator::base_type_name(t_base_type* type,
   case t_base_type::TYPE_I32:
     return "int";
   case t_base_type::TYPE_I64:
-    throw "i64 is not yet supported in as3";
+    return "BigInteger";
   case t_base_type::TYPE_DOUBLE:
     return "Number";
   default:
@@ -2500,8 +2508,10 @@ string t_as3_generator::declare_field(t_field* tfield, bool init) {
       case t_base_type::TYPE_BYTE:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
+        result += " = 0"; //leaving this here even though it doesn't work with BigInteger because it's never called by the generator.
+        break;
       case t_base_type::TYPE_I64:
-        result += " = 0";
+        result += " = new BigInteger(\"0x0\")";
         break;
       case t_base_type::TYPE_DOUBLE:
         result += " = (double)0";
