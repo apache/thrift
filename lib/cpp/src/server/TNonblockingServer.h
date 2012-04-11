@@ -455,6 +455,15 @@ class TNonblockingServer : public TServer {
   }
 
   /**
+   * Return the count of sockets currently connected to.
+   *
+   * @return count of connected sockets.
+   */
+  size_t getNumActiveConnections() const {
+    return getNumConnections() - getNumIdleConnections();
+  }
+
+  /**
    * Return the count of connection objects allocated but not in use.
    *
    * @return count of idle connection objects.
