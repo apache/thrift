@@ -139,14 +139,8 @@ void TThreadedServer::serve() {
   shared_ptr<TProtocol> inputProtocol;
   shared_ptr<TProtocol> outputProtocol;
 
-  try {
-    // Start the server listening
-    serverTransport_->listen();
-  } catch (TTransportException& ttx) {
-    string errStr = string("TThreadedServer::run() listen(): ") +ttx.what();
-    GlobalOutput(errStr.c_str());
-    return;
-  }
+  // Start the server listening
+  serverTransport_->listen();
 
   // Run the preServe event
   if (eventHandler_ != NULL) {

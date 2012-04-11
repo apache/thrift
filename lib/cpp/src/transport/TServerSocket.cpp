@@ -342,7 +342,8 @@ void TServerSocket::listen() {
     }
     GlobalOutput(errbuf);
     close();
-    throw TTransportException(TTransportException::NOT_OPEN, "Could not bind");
+    throw TTransportException(TTransportException::NOT_OPEN, "Could not bind",
+                              errno);
   }
 
   // Call listen

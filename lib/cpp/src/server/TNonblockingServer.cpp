@@ -1024,9 +1024,8 @@ void TNonblockingServer::createAndListenOnSocket() {
   // Wildcard address
   error = getaddrinfo(NULL, port, &hints, &res0);
   if (error) {
-    string errStr = "TNonblockingServer::serve() getaddrinfo " + string(gai_strerror(error));
-    GlobalOutput(errStr.c_str());
-    return;
+    throw TException("TNonblockingServer::serve() getaddrinfo " +
+                     string(gai_strerror(error)));
   }
 
   // Pick the ipv6 address first since ipv4 addresses can be mapped
@@ -1061,7 +1060,9 @@ void TNonblockingServer::createAndListenOnSocket() {
   if (::bind(s, res->ai_addr, res->ai_addrlen) == -1) {
     ::close(s);
     freeaddrinfo(res0);
-    throw TException("TNonblockingServer::serve() bind");
+    throw TTransportException(TTransportException::NOT_OPEN,
+                              "TNonblockingServer::serve() bind",
+                              errno);
   }
 
   // Done with the addr info
