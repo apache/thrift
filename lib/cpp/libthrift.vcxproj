@@ -114,6 +114,8 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="src\transport\TPipe.cpp" />
+    <ClCompile Include="src\transport\TPipeServer.cpp" />
     <ClCompile Include="src\transport\TServerSocket.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -179,6 +181,8 @@
     <ClInclude Include="src\transport\TFileTransport.h" />
     <ClInclude Include="src\transport\THttpClient.h" />
     <ClInclude Include="src\transport\THttpServer.h" />
+    <ClInclude Include="src\transport\TPipe.h" />
+    <ClInclude Include="src\transport\TPipeServer.h" />
     <ClInclude Include="src\transport\TServerSocket.h" />
     <ClInclude Include="src\transport\TServerTransport.h" />
     <ClInclude Include="src\transport\TSimpleFileTransport.h" />
@@ -248,13 +252,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;..\..\..\..\boost;..\..\..\..\boost\boost;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;..\..\..\..\boost;..\..\..\..\boost\boost;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>

@@ -53,6 +53,7 @@ typedef boost::uint8_t  uint8_t;
 #include <Winsock2.h>
 #include <ws2tcpip.h>
 #pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "advapi32.lib") //For security APIs in TPipeServer
 
 // pthreads
 #if 0
