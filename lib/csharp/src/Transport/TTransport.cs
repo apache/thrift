@@ -25,7 +25,7 @@ using System;
 
 namespace Thrift.Transport
 {
-	public abstract class TTransport
+	public abstract class TTransport : IDisposable
 	{
 		public abstract bool IsOpen
 		{
@@ -82,5 +82,17 @@ namespace Thrift.Transport
         public virtual void EndFlush(IAsyncResult asyncResult)
         {
         }
-    }
+
+		#region " IDisposable Support "
+		// IDisposable
+		protected abstract void Dispose(bool disposing);
+
+		public void Dispose()
+		{
+			// Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+		#endregion
+	}
 }

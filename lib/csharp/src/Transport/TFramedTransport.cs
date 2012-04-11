@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
+using System;
 using System.IO;
 
 namespace Thrift.Transport
 {
-	public class TFramedTransport : TTransport
+  public class TFramedTransport : TTransport, IDisposable
 	{
 		protected TTransport transport = null;
 		protected MemoryStream writeBuffer;
@@ -93,6 +93,7 @@ namespace Thrift.Transport
 				((i32rd[2] & 0xff) <<  8) |
 				((i32rd[3] & 0xff));
 
+
 			byte[] buff = new byte[size];
 			transport.ReadAll(buff, 0, size);
 			readBuffer = new MemoryStream(buff);
@@ -133,5 +134,22 @@ namespace Thrift.Transport
 			// Reserve space for message header to be put right before sending it out
 			writeBuffer.Write ( header_dummy, 0, header_size );
 		}
-	}
+    #region " IDisposable Support "
+    private bool _IsDisposed;
+
+    // IDisposable
+    protected override void Dispose(bool disposing)
+    {
+      if (!_IsDisposed)
+      {
+        if (disposing)
+        {
+          if (readBuffer != null)
+            readBuffer.Dispose();
+        }
+      }
+      _IsDisposed = true;
+    }
+    #endregion
+  }
 }

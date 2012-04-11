@@ -95,39 +95,35 @@ namespace Thrift.Server
 				TProtocol outputProtocol = null;
 				try
 				{
-					client = serverTransport.Accept();
-					if (client != null)
-					{
-						inputTransport = inputTransportFactory.GetTransport(client);
-						outputTransport = outputTransportFactory.GetTransport(client);
-						inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
-						outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
-						while (processor.Process(inputProtocol, outputProtocol)) { }
-					}
-				}
-				catch (TTransportException ttx)
-				{
-					// Client died, just move on
-					if (stop)
-					{
-						logDelegate("TSimpleServer was shutting down, caught " + ttx.GetType().Name);
-					}
-				}
-				catch (Exception x)
-				{
-					logDelegate(x.ToString());
-				}
-
-				if (inputTransport != null)
-				{
-					inputTransport.Close();
-				}
-
-				if (outputTransport != null)
-				{
-					outputTransport.Close();
-				}
-			}
+          using(client = serverTransport.Accept())
+          {
+            if (client != null)
+            {
+              using(inputTransport = inputTransportFactory.GetTransport(client))
+              {
+                using (outputTransport = outputTransportFactory.GetTransport(client))
+                {
+                  inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
+                  outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
+                  while (processor.Process(inputProtocol, outputProtocol)) { }
+                }
+              }
+            }
+          }
+        }
+        catch (TTransportException ttx)
+        {
+          // Client died, just move on
+          if (stop)
+          {
+            logDelegate("TSimpleServer was shutting down, caught " + ttx.GetType().Name);
+          }
+        }
+        catch (Exception x)
+        {
+          logDelegate(x.ToString());
+        }
+      }
 
 			if (stop)
 			{

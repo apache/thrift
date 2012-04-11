@@ -27,7 +27,7 @@ using System.Threading;
 
 namespace Thrift.Transport
 {
-	public class THttpClient : TTransport
+	public class THttpClient : TTransport, IDisposable
 	{
 		private readonly Uri uri;
 		private Stream inputStream;
@@ -142,9 +142,11 @@ namespace Thrift.Transport
 				byte[] data = outputStream.ToArray();
 				connection.ContentLength = data.Length;
 
-				Stream requestStream = connection.GetRequestStream();
-				requestStream.Write(data, 0, data.Length);
-				inputStream = connection.GetResponse().GetResponseStream();
+				using (Stream requestStream = connection.GetRequestStream())
+				{
+					requestStream.Write(data, 0, data.Length);
+					inputStream = connection.GetResponse().GetResponseStream();
+				}
 			}
 			catch (IOException iox)
 			{
@@ -156,7 +158,7 @@ namespace Thrift.Transport
 			}
 		}
 #endif
-        private HttpWebRequest CreateRequest()
+				private HttpWebRequest CreateRequest()
 		{
 			HttpWebRequest connection = (HttpWebRequest)WebRequest.Create(uri);
 
@@ -356,5 +358,24 @@ namespace Thrift.Transport
         }
 
 #endif
-    }
+#region " IDisposable Support "
+		private bool _IsDisposed;
+
+		// IDisposable
+		protected override void Dispose(bool disposing)
+		{
+			if (!_IsDisposed)
+			{
+				if (disposing)
+				{
+					if (inputStream != null)
+						inputStream.Dispose();
+					if (outputStream != null)
+						outputStream.Dispose();
+				}
+			}
+			_IsDisposed = true;
+		}
+#endregion
+	}
 }
