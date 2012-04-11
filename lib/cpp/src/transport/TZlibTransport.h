@@ -252,6 +252,24 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
   struct z_stream_s* wstream_;
 };
 
+
+/**
+ * Wraps a transport into a zlibbed one.
+ *
+ */
+class TZlibTransportFactory : public TTransportFactory {
+ public:
+  TZlibTransportFactory() {}
+
+  virtual ~TZlibTransportFactory() {}
+
+  virtual boost::shared_ptr<TTransport> getTransport(
+                                         boost::shared_ptr<TTransport> trans) {
+    return boost::shared_ptr<TTransport>(new TZlibTransport(trans));
+  }
+};
+
+
 }}} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TZLIBTRANSPORT_H_
