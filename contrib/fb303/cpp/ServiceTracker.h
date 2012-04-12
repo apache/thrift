@@ -100,7 +100,7 @@
 #include <map>
 #include <boost/shared_ptr.hpp>
 
-#include "concurrency/Mutex.h"
+#include <thrift/concurrency/Mutex.h>
 
 
 namespace apache { namespace thrift { namespace concurrency {

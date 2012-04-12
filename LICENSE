@@ -223,25 +223,25 @@ the Thrift Software License (see doc/old-thrift-license.txt), and relicensed
 under the Apache 2.0 License:
 
   compiler/cpp/Makefile.am
-  compiler/cpp/src/generate/t_cocoa_generator.cc
-  compiler/cpp/src/generate/t_cpp_generator.cc
-  compiler/cpp/src/generate/t_csharp_generator.cc
-  compiler/cpp/src/generate/t_erl_generator.cc
-  compiler/cpp/src/generate/t_hs_generator.cc
-  compiler/cpp/src/generate/t_java_generator.cc
-  compiler/cpp/src/generate/t_ocaml_generator.cc
-  compiler/cpp/src/generate/t_perl_generator.cc
-  compiler/cpp/src/generate/t_php_generator.cc
-  compiler/cpp/src/generate/t_py_generator.cc
-  compiler/cpp/src/generate/t_rb_generator.cc
-  compiler/cpp/src/generate/t_st_generator.cc
-  compiler/cpp/src/generate/t_xsd_generator.cc
-  compiler/cpp/src/main.cc
-  compiler/cpp/src/parse/t_field.h
-  compiler/cpp/src/parse/t_program.h
-  compiler/cpp/src/platform.h
-  compiler/cpp/src/thriftl.ll
-  compiler/cpp/src/thrifty.yy
+  compiler/cpp/src/thrift/generate/t_cocoa_generator.cc
+  compiler/cpp/src/thrift/generate/t_cpp_generator.cc
+  compiler/cpp/src/thrift/generate/t_csharp_generator.cc
+  compiler/cpp/src/thrift/generate/t_erl_generator.cc
+  compiler/cpp/src/thrift/generate/t_hs_generator.cc
+  compiler/cpp/src/thrift/generate/t_java_generator.cc
+  compiler/cpp/src/thrift/generate/t_ocaml_generator.cc
+  compiler/cpp/src/thrift/generate/t_perl_generator.cc
+  compiler/cpp/src/thrift/generate/t_php_generator.cc
+  compiler/cpp/src/thrift/generate/t_py_generator.cc
+  compiler/cpp/src/thrift/generate/t_rb_generator.cc
+  compiler/cpp/src/thrift/generate/t_st_generator.cc
+  compiler/cpp/src/thrift/generate/t_xsd_generator.cc
+  compiler/cpp/src/thrift/main.cc
+  compiler/cpp/src/thrift/parse/t_field.h
+  compiler/cpp/src/thrift/parse/t_program.h
+  compiler/cpp/src/thrift/platform.h
+  compiler/cpp/src/thrift/thriftl.ll
+  compiler/cpp/src/thrift/thrifty.yy
   lib/csharp/src/Protocol/TBinaryProtocol.cs
   lib/csharp/src/Protocol/TField.cs
   lib/csharp/src/Protocol/TList.cs
@@ -289,7 +289,7 @@ For the aclocal/ax_boost_base.m4 and contrib/fb303/aclocal/ax_boost_base.m4 comp
 #   the copyright notice and this notice are preserved.
 
 --------------------------------------------------
-For the compiler/cpp/src/md5.[ch] components:
+For the compiler/cpp/src/thrift/md5.[ch] components:
 
 /*
   Copyright (C) 1999, 2000, 2002 Aladdin Enterprises.  All rights reserved.

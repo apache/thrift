@@ -19,66 +19,66 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\generate\t_generator.h" />
-    <ClInclude Include="src\generate\t_generator_registry.h" />
-    <ClInclude Include="src\generate\t_oop_generator.h" />
-    <ClInclude Include="src\globals.h" />
-    <ClInclude Include="src\main.h" />
-    <ClInclude Include="src\md5.h" />
-    <ClInclude Include="src\parse\t_base_type.h" />
-    <ClInclude Include="src\parse\t_const.h" />
-    <ClInclude Include="src\parse\t_const_value.h" />
-    <ClInclude Include="src\parse\t_container.h" />
-    <ClInclude Include="src\parse\t_doc.h" />
-    <ClInclude Include="src\parse\t_enum.h" />
-    <ClInclude Include="src\parse\t_enum_value.h" />
-    <ClInclude Include="src\parse\t_field.h" />
-    <ClInclude Include="src\parse\t_function.h" />
-    <ClInclude Include="src\parse\t_list.h" />
-    <ClInclude Include="src\parse\t_map.h" />
-    <ClInclude Include="src\parse\t_program.h" />
-    <ClInclude Include="src\parse\t_scope.h" />
-    <ClInclude Include="src\parse\t_service.h" />
-    <ClInclude Include="src\parse\t_set.h" />
-    <ClInclude Include="src\parse\t_struct.h" />
-    <ClInclude Include="src\parse\t_type.h" />
-    <ClInclude Include="src\parse\t_typedef.h" />
-    <ClInclude Include="src\platform.h" />
-    <ClInclude Include="src\thrifty.h" />
-    <ClInclude Include="src\windows\config.h" />
-    <ClInclude Include="src\windows\version.h" />
+    <ClInclude Include="src\thrift\generate\t_generator.h" />
+    <ClInclude Include="src\thrift\generate\t_generator_registry.h" />
+    <ClInclude Include="src\thrift\generate\t_oop_generator.h" />
+    <ClInclude Include="src\thrift\globals.h" />
+    <ClInclude Include="src\thrift\main.h" />
+    <ClInclude Include="src\thrift\md5.h" />
+    <ClInclude Include="src\thrift\parse\t_base_type.h" />
+    <ClInclude Include="src\thrift\parse\t_const.h" />
+    <ClInclude Include="src\thrift\parse\t_const_value.h" />
+    <ClInclude Include="src\thrift\parse\t_container.h" />
+    <ClInclude Include="src\thrift\parse\t_doc.h" />
+    <ClInclude Include="src\thrift\parse\t_enum.h" />
+    <ClInclude Include="src\thrift\parse\t_enum_value.h" />
+    <ClInclude Include="src\thrift\parse\t_field.h" />
+    <ClInclude Include="src\thrift\parse\t_function.h" />
+    <ClInclude Include="src\thrift\parse\t_list.h" />
+    <ClInclude Include="src\thrift\parse\t_map.h" />
+    <ClInclude Include="src\thrift\parse\t_program.h" />
+    <ClInclude Include="src\thrift\parse\t_scope.h" />
+    <ClInclude Include="src\thrift\parse\t_service.h" />
+    <ClInclude Include="src\thrift\parse\t_set.h" />
+    <ClInclude Include="src\thrift\parse\t_struct.h" />
+    <ClInclude Include="src\thrift\parse\t_type.h" />
+    <ClInclude Include="src\thrift\parse\t_typedef.h" />
+    <ClInclude Include="src\thrift\platform.h" />
+    <ClInclude Include="src\thrift\thrifty.h" />
+    <ClInclude Include="src\thrift\windows\config.h" />
+    <ClInclude Include="src\thrift\windows\version.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\generate\t_as3_generator.cc" />
-    <ClCompile Include="src\generate\t_cocoa_generator.cc" />
-    <ClCompile Include="src\generate\t_cpp_generator.cc" />
-    <ClCompile Include="src\generate\t_csharp_generator.cc" />
-    <ClCompile Include="src\generate\t_c_glib_generator.cc" />
-    <ClCompile Include="src\generate\t_erl_generator.cc" />
-    <ClCompile Include="src\generate\t_generator.cc" />
-    <ClCompile Include="src\generate\t_go_generator.cc" />
-    <ClCompile Include="src\generate\t_hs_generator.cc" />
-    <ClCompile Include="src\generate\t_html_generator.cc" />
-    <ClCompile Include="src\generate\t_javame_generator.cc" />
-    <ClCompile Include="src\generate\t_java_generator.cc" />
-    <ClCompile Include="src\generate\t_js_generator.cc" />
-    <ClCompile Include="src\generate\t_ocaml_generator.cc" />
-    <ClCompile Include="src\generate\t_perl_generator.cc" />
-    <ClCompile Include="src\generate\t_php_generator.cc" />
-    <ClCompile Include="src\generate\t_py_generator.cc" />
-    <ClCompile Include="src\generate\t_rb_generator.cc" />
-    <ClCompile Include="src\generate\t_st_generator.cc" />
-    <ClCompile Include="src\generate\t_xsd_generator.cc" />
-    <ClCompile Include="src\main.cc" />
-    <ClCompile Include="src\md5.c" />
-    <ClCompile Include="src\parse\parse.cc" />
-    <ClCompile Include="src\thriftl.cc" />
-    <ClCompile Include="src\thrifty.cc" />
+    <ClCompile Include="src\thrift\generate\t_as3_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_cocoa_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_cpp_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_csharp_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_c_glib_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_erl_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_go_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_hs_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_html_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_javame_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_java_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_js_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_ocaml_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_perl_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_php_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_py_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_rb_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_st_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_xsd_generator.cc" />
+    <ClCompile Include="src\thrift\main.cc" />
+    <ClCompile Include="src\thrift\md5.c" />
+    <ClCompile Include="src\thrift\parse\parse.cc" />
+    <ClCompile Include="src\thrift\thriftl.cc" />
+    <ClCompile Include="src\thrift\thrifty.cc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README_WINDOWS" />
-    <None Include="src\thriftl.ll" />
-    <None Include="src\thrifty.yy" />
+    <None Include="src\thrift\thriftl.ll" />
+    <None Include="src\thrift\thrifty.yy" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{89975A1A-F799-4556-98B8-64E30AB39A90}</ProjectGuid>
@@ -126,25 +126,25 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
     <TargetName>thrift</TargetName>
     <ExecutablePath>$(ExecutablePath);C:\Program Files (x86)\Git\bin</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
     <TargetName>thrift</TargetName>
     <ExecutablePath>$(ExecutablePath);C:\Program Files (x86)\Git\bin</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
     <TargetName>thrift</TargetName>
     <ExecutablePath>$(ExecutablePath);C:\Program Files (x86)\Git\bin</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(IncludePath)</IncludePath>
     <TargetName>thrift</TargetName>
     <ExecutablePath>$(ExecutablePath);C:\Program Files (x86)\Git\bin</ExecutablePath>
   </PropertyGroup>
@@ -163,8 +163,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>flex -o "src/thriftl.cc" src/thriftl.ll
-bison -y -o "src/thrifty.cc" --defines="src/thrifty.h" src/thrifty.yy</Command>
+      <Command>flex -o "src\thrift\thriftl.cc" src/thriftl.ll
+bison -y -o "src\thrift\thrifty.cc" --defines="src/thrifty.h" src/thrifty.yy</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -182,8 +182,8 @@ bison -y -o "src/thrifty.cc" --defines="src/thrifty.h" src/thrifty.yy</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>flex -o "src/thriftl.cc" src/thriftl.ll
-bison -y -o "src/thrifty.cc" --defines="src/thrifty.h" src/thrifty.yy</Command>
+      <Command>flex -o "src\thrift\thriftl.cc" src/thriftl.ll
+bison -y -o "src\thrift\thrifty.cc" --defines="src/thrifty.h" src/thrifty.yy</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -205,8 +205,8 @@ bison -y -o "src/thrifty.cc" --defines="src/thrifty.h" src/thrifty.yy</Command>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>flex -o "src/thriftl.cc" src/thriftl.ll
-bison -y -o "src/thrifty.cc" --defines="src/thrifty.h" src/thrifty.yy</Command>
+      <Command>flex -o "src\thrift\thriftl.cc" src/thriftl.ll
+bison -y -o "src\thrift\thrifty.cc" --defines="src/thrifty.h" src/thrifty.yy</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -228,8 +228,8 @@ bison -y -o "src/thrifty.cc" --defines="src/thrifty.h" src/thrifty.yy</Command>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>flex -o "src/thriftl.cc" src/thriftl.ll
-bison -y -o "src/thrifty.cc" --defines="src/thrifty.h" src/thrifty.yy</Command>
+      <Command>flex -o "src\thrift\thriftl.cc" src/thriftl.ll
+bison -y -o "src\thrift\thrifty.cc" --defines="src/thrifty.h" src/thrifty.yy</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -23,8 +23,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "concurrency/Mutex.h"
-#include "concurrency/PosixThreadFactory.h"
+#include "thrift/concurrency/Mutex.h"
+#include "thrift/concurrency/PosixThreadFactory.h"
 
 using boost::shared_ptr;
 using boost::unit_test::test_suite;

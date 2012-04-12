@@ -24,9 +24,9 @@
 #include <netdb.h>
 #include <string.h>
 
-#include "protocol/thrift_protocol.h"
-#include "transport/thrift_socket.h"
-#include "transport/thrift_server_socket.h"
+#include <thrift/protocol/thrift_protocol.h>
+#include <thrift/transport/thrift_socket.h>
+#include <thrift/transport/thrift_server_socket.h>
 
 #define TEST_BOOL TRUE
 #define TEST_BYTE 123

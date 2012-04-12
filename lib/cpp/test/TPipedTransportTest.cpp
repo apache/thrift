@@ -19,9 +19,9 @@
 
 #include <cstdlib>
 #include <stdexcept>
-#include <Thrift.h>
-#include <transport/TTransportUtils.h>
-#include <transport/TBufferTransports.h>
+#include <thrift/Thrift.h>
+#include <thrift/transport/TTransportUtils.h>
+#include <thrift/transport/TBufferTransports.h>
 using namespace std;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TPipedTransport;

@@ -22,9 +22,9 @@
 
 // for inet_ntop --
 #include <arpa/inet.h>
-#include <server/TServer.h>
-#include <transport/TSocket.h>
-#include <concurrency/Mutex.h>
+#include <thrift/server/TServer.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/concurrency/Mutex.h>
 
 namespace apache { namespace thrift { namespace server {
 

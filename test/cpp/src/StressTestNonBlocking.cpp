@@ -17,20 +17,20 @@
  * under the License.
  */
 
-#include <concurrency/ThreadManager.h>
-#include <concurrency/PlatformThreadFactory.h>
-#include <concurrency/Monitor.h>
-#include <concurrency/Util.h>
-#include <concurrency/Mutex.h>
-#include <protocol/TBinaryProtocol.h>
-#include <server/TSimpleServer.h>
-#include <server/TThreadPoolServer.h>
-#include <server/TThreadedServer.h>
-#include <server/TNonblockingServer.h>
-#include <transport/TServerSocket.h>
-#include <transport/TSocket.h>
-#include <transport/TTransportUtils.h>
-#include <transport/TFileTransport.h>
+#include <thrift/concurrency/ThreadManager.h>
+#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/Monitor.h>
+#include <thrift/concurrency/Util.h>
+#include <thrift/concurrency/Mutex.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/server/TSimpleServer.h>
+#include <thrift/server/TThreadPoolServer.h>
+#include <thrift/server/TThreadedServer.h>
+#include <thrift/server/TNonblockingServer.h>
+#include <thrift/transport/TServerSocket.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TTransportUtils.h>
+#include <thrift/transport/TFileTransport.h>
 #include <TLogging.h>
 
 #include "Service.h"
