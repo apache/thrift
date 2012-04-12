@@ -19,8 +19,8 @@
 
 #include <iostream>
 #include <cmath>
-#include <transport/TBufferTransports.h>
-#include <protocol/TJSONProtocol.h>
+#include <thrift/transport/TBufferTransports.h>
+#include <thrift/protocol/TJSONProtocol.h>
 #include "gen-cpp/DebugProtoTest_types.h"
 
 int main() {

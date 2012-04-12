@@ -21,13 +21,13 @@
 // You should copy it to another filename to avoid overwriting it.
 
 #include "ThreadsTest.h"
-#include <protocol/TBinaryProtocol.h>
-#include <server/TThreadPoolServer.h>
-#include <transport/TSocket.h>
-#include <transport/TTransportUtils.h>
-#include <concurrency/Monitor.h>
-#include <concurrency/ThreadManager.h>
-#include <concurrency/PlatformThreadFactory.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/server/TThreadPoolServer.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TTransportUtils.h>
+#include <thrift/concurrency/Monitor.h>
+#include <thrift/concurrency/ThreadManager.h>
+#include <thrift/concurrency/PlatformThreadFactory.h>
 
 using boost::shared_ptr;
 using namespace apache::thrift;

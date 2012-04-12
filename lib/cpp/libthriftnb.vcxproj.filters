@@ -12,45 +12,45 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\server\TNonblockingServer.cpp">
+    <ClCompile Include="src\thrift\server\TNonblockingServer.cpp">
       <Filter>server</Filter>
     </ClCompile>
-    <ClCompile Include="src\async\TEvhttpClientChannel.cpp">
+    <ClCompile Include="src\thrift\async\TEvhttpClientChannel.cpp">
       <Filter>async</Filter>
     </ClCompile>
-    <ClCompile Include="src\async\TEvhttpServer.cpp">
+    <ClCompile Include="src\thrift\async\TEvhttpServer.cpp">
       <Filter>async</Filter>
     </ClCompile>
-    <ClCompile Include="src\async\TAsyncProtocolProcessor.cpp">
+    <ClCompile Include="src\thrift\async\TAsyncProtocolProcessor.cpp">
       <Filter>async</Filter>
     </ClCompile>
-    <ClCompile Include="src\windows\StdAfx.cpp">
+    <ClCompile Include="src\thrift\windows\StdAfx.cpp">
       <Filter>windows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\server\TNonblockingServer.h">
+    <ClInclude Include="src\thrift\server\TNonblockingServer.h">
       <Filter>server</Filter>
     </ClInclude>
-    <ClInclude Include="src\async\TEvhttpClientChannel.h">
+    <ClInclude Include="src\thrift\async\TEvhttpClientChannel.h">
       <Filter>async</Filter>
     </ClInclude>
-    <ClInclude Include="src\async\TEvhttpServer.h">
+    <ClInclude Include="src\thrift\async\TEvhttpServer.h">
       <Filter>async</Filter>
     </ClInclude>
-    <ClInclude Include="src\async\TAsyncProtocolProcessor.h">
+    <ClInclude Include="src\thrift\async\TAsyncProtocolProcessor.h">
       <Filter>async</Filter>
     </ClInclude>
-    <ClInclude Include="src\windows\config.h">
+    <ClInclude Include="src\thrift\windows\config.h">
       <Filter>windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\windows\StdAfx.h">
+    <ClInclude Include="src\thrift\windows\StdAfx.h">
       <Filter>windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\windows\TargetVersion.h">
+    <ClInclude Include="src\thrift\windows\TargetVersion.h">
       <Filter>windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\windows\force_inc.h">
+    <ClInclude Include="src\thrift\windows\force_inc.h">
       <Filter>windows</Filter>
     </ClInclude>
   </ItemGroup>

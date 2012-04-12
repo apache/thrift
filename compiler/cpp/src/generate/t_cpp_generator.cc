@@ -343,10 +343,10 @@ void t_cpp_generator::init_generator() {
 
   // Include base types
   f_types_ <<
-    "#include <Thrift.h>" << endl <<
-    "#include <TApplicationException.h>" << endl <<
-    "#include <protocol/TProtocol.h>" << endl <<
-    "#include <transport/TTransport.h>" << endl <<
+    "#include <thrift/Thrift.h>" << endl <<
+    "#include <thrift/TApplicationException.h>" << endl <<
+    "#include <thrift/protocol/TProtocol.h>" << endl <<
+    "#include <thrift/transport/TTransport.h>" << endl <<
     endl;
 
   // Include other Thrift includes
@@ -392,7 +392,7 @@ void t_cpp_generator::init_generator() {
   // the definition of TypeSpec.
   if (gen_dense_) {
     f_types_impl_ <<
-      "#include <TReflectionLocal.h>" << endl <<
+      "#include <thrift/TReflectionLocal.h>" << endl <<
       endl;
   }
 
@@ -1571,17 +1571,17 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     endl;
   if (gen_cob_style_) {
     f_header_ <<
-      "#include <transport/TBufferTransports.h>" << endl << // TMemoryBuffer
+      "#include <thrift/transport/TBufferTransports.h>" << endl << // TMemoryBuffer
       "#include <tr1/functional>" << endl <<
       "namespace apache { namespace thrift { namespace async {" << endl <<
       "class TAsyncChannel;" << endl <<
       "}}}" << endl;
   }
   f_header_ <<
-    "#include <TDispatchProcessor.h>" << endl;
+    "#include <thrift/TDispatchProcessor.h>" << endl;
   if (gen_cob_style_) {
     f_header_ <<
-      "#include <async/TAsyncDispatchProcessor.h>" << endl;
+      "#include <thrift/async/TAsyncDispatchProcessor.h>" << endl;
   }
   f_header_ <<
     "#include \"" << get_include_prefix(*get_program()) << program_name_ <<
@@ -1608,7 +1608,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\"" << endl;
   if (gen_cob_style_) {
     f_service_ <<
-      "#include \"async/TAsyncChannel.h\"" << endl;
+      "#include \"thrift/async/TAsyncChannel.h\"" << endl;
   }
   if (gen_templates_) {
     f_service_ <<
@@ -1630,7 +1630,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
 
     if (gen_cob_style_) {
       f_service_tcc_ <<
-        "#include \"async/TAsyncChannel.h\"" << endl;
+        "#include \"thrift/async/TAsyncChannel.h\"" << endl;
     }
   }
 
@@ -1974,8 +1974,8 @@ void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
     "// that would otherwise introduce unwanted latency." << endl <<
     endl <<
     "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\"" << endl <<
-    "#include <protocol/TBinaryProtocol.h>" << endl <<
-    "#include <async/TEventServer.h>" << endl <<
+    "#include <thrift/protocol/TBinaryProtocol.h>" << endl <<
+    "#include <thrift/async/TEventServer.h>" << endl <<
     endl <<
     "using namespace ::apache::thrift;" << endl <<
     "using namespace ::apache::thrift::protocol;" << endl <<
@@ -3703,10 +3703,10 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
     "// You should copy it to another filename to avoid overwriting it." << endl <<
     endl <<
     "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\"" << endl <<
-    "#include <protocol/TBinaryProtocol.h>" << endl <<
-    "#include <server/TSimpleServer.h>" << endl <<
-    "#include <transport/TServerSocket.h>" << endl <<
-    "#include <transport/TBufferTransports.h>" << endl <<
+    "#include <thrift/protocol/TBinaryProtocol.h>" << endl <<
+    "#include <thrift/server/TSimpleServer.h>" << endl <<
+    "#include <thrift/transport/TServerSocket.h>" << endl <<
+    "#include <thrift/transport/TBufferTransports.h>" << endl <<
     endl <<
     "using namespace ::apache::thrift;" << endl <<
     "using namespace ::apache::thrift::protocol;" << endl <<

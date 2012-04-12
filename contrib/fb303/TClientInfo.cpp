@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <server/TClientInfo.h>
+#include <thrift/server/TClientInfo.h>
 
 namespace apache { namespace thrift { namespace server {
 

@@ -39,8 +39,8 @@ g++ -Wall -g -I../lib/cpp/src -I/usr/local/include/boost-1_33_1 \
 #include <string>
 #include "gen-cpp/DebugProtoTest_types.h"
 #include "gen-cpp/OptionalRequiredTest_types.h"
-#include <protocol/TDenseProtocol.h>
-#include <transport/TBufferTransports.h>
+#include <thrift/protocol/TDenseProtocol.h>
+#include <thrift/transport/TBufferTransports.h>
 
 
 // Can't use memcmp here.  GCC is too smart.

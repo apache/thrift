@@ -23,14 +23,14 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/time.h>
-#include <protocol/TBinaryProtocol.h>
-#include <protocol/TJSONProtocol.h>
-#include <transport/THttpClient.h>
-#include <transport/TTransportUtils.h>
-#include <transport/TSocket.h>
-#include <transport/TSSLSocket.h>
-#include <async/TEvhttpClientChannel.h>
-#include <server/TNonblockingServer.h> // <event.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/protocol/TJSONProtocol.h>
+#include <thrift/transport/THttpClient.h>
+#include <thrift/transport/TTransportUtils.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TSSLSocket.h>
+#include <thrift/async/TEvhttpClientChannel.h>
+#include <thrift/server/TNonblockingServer.h> // <event.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/program_options.hpp>

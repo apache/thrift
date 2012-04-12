@@ -20,11 +20,11 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <transport/TBufferTransports.h>
-#include <transport/TFDTransport.h>
-#include <protocol/TBinaryProtocol.h>
-#include <protocol/TDebugProtocol.h>
-#include <protocol/TProtocolTap.h>
+#include <thrift/transport/TBufferTransports.h>
+#include <thrift/transport/TFDTransport.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/protocol/TDebugProtocol.h>
+#include <thrift/protocol/TProtocolTap.h>
 
 using namespace std;
 using boost::shared_ptr;

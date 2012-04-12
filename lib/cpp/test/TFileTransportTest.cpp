@@ -29,7 +29,7 @@
 #include <getopt.h>
 #include <boost/test/unit_test.hpp>
 
-#include <transport/TFileTransport.h>
+#include <thrift/transport/TFileTransport.h>
 
 using namespace apache::thrift::transport;
 

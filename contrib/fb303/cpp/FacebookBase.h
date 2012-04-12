@@ -22,8 +22,8 @@
 
 #include "FacebookService.h"
 
-#include "server/TServer.h"
-#include "concurrency/Mutex.h"
+#include <thrift/server/TServer.h>
+#include <thrift/concurrency/Mutex.h>
 
 #include <time.h>
 #include <string>
