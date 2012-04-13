@@ -110,8 +110,14 @@ TZlibTransport::~TZlibTransport() {
 }
 
 bool TZlibTransport::isOpen() {
-  return (readAvail() > 0) || transport_->isOpen();
+  return (readAvail() > 0) || (rstream_->avail_in > 0) || transport_->isOpen();
 }
+
+bool TZlibTransport::peek() {
+  return (readAvail() > 0) || (rstream_->avail_in > 0) || transport_->peek();
+}
+
+
 
 // READING STRATEGY
 //
@@ -253,7 +259,7 @@ void TZlibTransport::flush()  {
                               "flush() called after finish()");
   }
 
-  flushToTransport(Z_SYNC_FLUSH);
+  flushToTransport(Z_FULL_FLUSH);
 }
 
 void TZlibTransport::finish()  {

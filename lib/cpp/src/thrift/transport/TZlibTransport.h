@@ -144,6 +144,7 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
   ~TZlibTransport();
 
   bool isOpen();
+  bool peek();
 
   void open() {
     transport_->open();
