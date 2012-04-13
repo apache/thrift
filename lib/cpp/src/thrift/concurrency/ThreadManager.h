@@ -21,7 +21,7 @@
 #define _THRIFT_CONCURRENCY_THREADMANAGER_H_ 1
 
 #include <boost/shared_ptr.hpp>
-#include <tr1/functional>
+#include <thrift/windows/tr1/functional>
 #include <sys/types.h>
 #include "Thread.h"
 

@@ -42,7 +42,7 @@
 #  define _WIN32_WINNT 0x0601
 #endif
 
-#include <thrift/windows/config.h>
+#include "config.h"
 
 #undef gai_strerror
 #define gai_strerror gai_strerrorA
