@@ -241,3 +241,10 @@
 *.user
 *.ipch
 *.sdf
+
+*_ReSharper*
+lib/cpp/Debug/
+lib/cpp/Release/
+*.opensdf
+lib/cpp/x64/Debug/
+lib/cpp/x64/Release
