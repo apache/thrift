@@ -21,7 +21,7 @@
 #define _THRIFT_TRANSPORT_TZMQCLIENT_H_ 1
 
 #include <zmq.hpp>
-#include <transport/TBufferTransports.h>
+#include <thrift/transport/TBufferTransports.h>
 
 namespace apache { namespace thrift { namespace transport {
 

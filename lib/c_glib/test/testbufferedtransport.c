@@ -20,10 +20,10 @@
 #include <assert.h>
 #include <netdb.h>
 
-#include "transport/thrift_transport.h"
-#include "transport/thrift_socket.h"
-#include "transport/thrift_server_transport.h"
-#include "transport/thrift_server_socket.h"
+#include <thrift/transport/thrift_transport.h>
+#include <thrift/transport/thrift_socket.h>
+#include <thrift/transport/thrift_server_transport.h>
+#include <thrift/transport/thrift_server_socket.h>
 
 #define TEST_DATA { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' }
 

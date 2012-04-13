@@ -21,7 +21,7 @@
 #define _THRIFT_SERVER_TZMQSERVER_H_ 1
 
 #include <zmq.hpp>
-#include <server/TServer.h>
+#include <thrift/server/TServer.h>
 
 namespace apache { namespace thrift { namespace server {
 

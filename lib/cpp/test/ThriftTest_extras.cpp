@@ -19,7 +19,7 @@
 
 // Extra functions required for ThriftTest_types to work
 
-#include <protocol/TDebugProtocol.h>
+#include <thrift/protocol/TDebugProtocol.h>
 #include "gen-cpp/ThriftTest_types.h"
 
 

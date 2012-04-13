@@ -1,8 +1,8 @@
 #include <tr1/functional>
-#include "protocol/TBinaryProtocol.h"
-#include "async/TAsyncProtocolProcessor.h"
-#include "async/TEvhttpServer.h"
-#include "async/TEvhttpClientChannel.h"
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/async/TAsyncProtocolProcessor.h>
+#include <thrift/async/TEvhttpServer.h>
+#include <thrift/async/TEvhttpClientChannel.h>
 #include "Aggr.h"
 
 using std::tr1::bind;

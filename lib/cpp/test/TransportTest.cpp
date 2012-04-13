@@ -34,11 +34,11 @@
 #include <boost/type_traits.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <transport/TBufferTransports.h>
-#include <transport/TFDTransport.h>
-#include <transport/TFileTransport.h>
-#include <transport/TZlibTransport.h>
-#include <transport/TSocket.h>
+#include <thrift/transport/TBufferTransports.h>
+#include <thrift/transport/TFDTransport.h>
+#include <thrift/transport/TFileTransport.h>
+#include <thrift/transport/TZlibTransport.h>
+#include <thrift/transport/TSocket.h>
 
 using namespace apache::thrift::transport;
 

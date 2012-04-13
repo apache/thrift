@@ -24,9 +24,9 @@
 #include <cassert>
 #include <map>
 #include <iostream>
-#include <protocol/TDebugProtocol.h>
-#include <protocol/TBinaryProtocol.h>
-#include <transport/TBufferTransports.h>
+#include <thrift/protocol/TDebugProtocol.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/transport/TBufferTransports.h>
 #include "gen-cpp/OptionalRequiredTest_types.h"
 
 using std::cout;

@@ -22,8 +22,8 @@
 #endif
 #include <iostream>
 #include <cmath>
-#include "transport/TBufferTransports.h"
-#include "protocol/TBinaryProtocol.h"
+#include "thrift/transport/TBufferTransports.h"
+#include "thrift/protocol/TBinaryProtocol.h"
 #include "gen-cpp/DebugProtoTest_types.h"
 #include <time.h>
 #ifdef HAVE_SYS_TIME_H

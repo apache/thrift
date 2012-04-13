@@ -18,7 +18,7 @@
  */
 
 #include "TZmqServer.h"
-#include <transport/TBufferTransports.h>
+#include <thrift/transport/TBufferTransports.h>
 #include <boost/scoped_ptr.hpp>
 
 using boost::shared_ptr;

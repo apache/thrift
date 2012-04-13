@@ -19,9 +19,9 @@
 
 #include <stdio.h>
 
-#include <protocol/TBinaryProtocol.h>
-#include <protocol/TCompactProtocol.h>
-#include <transport/TBufferTransports.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/protocol/TCompactProtocol.h>
+#include <thrift/transport/TBufferTransports.h>
 #include "AllProtocolTests.tcc"
 
 using namespace apache::thrift;

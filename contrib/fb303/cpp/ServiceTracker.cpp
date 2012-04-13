@@ -21,7 +21,7 @@
 
 #include "FacebookBase.h"
 #include "ServiceTracker.h"
-#include "concurrency/ThreadManager.h"
+#include <thrift/concurrency/ThreadManager.h>
 
 using namespace std;
 using namespace facebook::fb303;

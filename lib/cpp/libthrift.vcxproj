@@ -19,192 +19,192 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\async\TAsyncChannel.cpp">
+    <ClCompile Include="src\thrift\thrift\async\TAsyncChannel.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\concurrency\BoostMonitor.cpp" />
-    <ClCompile Include="src\concurrency\BoostMutex.cpp" />
-    <ClCompile Include="src\concurrency\BoostThreadFactory.cpp" />
-    <ClCompile Include="src\concurrency\ThreadManager.cpp">
+    <ClCompile Include="src\thrift\thrift\concurrency\BoostMonitor.cpp" />
+    <ClCompile Include="src\thrift\thrift\concurrency\BoostMutex.cpp" />
+    <ClCompile Include="src\thrift\thrift\concurrency\BoostThreadFactory.cpp" />
+    <ClCompile Include="src\thrift\thrift\concurrency\ThreadManager.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\concurrency\TimerManager.cpp">
+    <ClCompile Include="src\thrift\thrift\concurrency\TimerManager.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\concurrency\Util.cpp">
+    <ClCompile Include="src\thrift\thrift\concurrency\Util.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\processor\PeekProcessor.cpp">
+    <ClCompile Include="src\thrift\thrift\processor\PeekProcessor.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\protocol\TBase64Utils.cpp" />
-    <ClCompile Include="src\protocol\TDebugProtocol.cpp">
+    <ClCompile Include="src\thrift\thrift\protocol\TBase64Utils.cpp" />
+    <ClCompile Include="src\thrift\thrift\protocol\TDebugProtocol.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\protocol\TDenseProtocol.cpp">
+    <ClCompile Include="src\thrift\thrift\protocol\TDenseProtocol.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\protocol\TJSONProtocol.cpp">
+    <ClCompile Include="src\thrift\thrift\protocol\TJSONProtocol.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\server\TSimpleServer.cpp">
+    <ClCompile Include="src\thrift\thrift\server\TSimpleServer.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\server\TThreadPoolServer.cpp">
+    <ClCompile Include="src\thrift\thrift\server\TThreadPoolServer.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\TApplicationException.cpp">
+    <ClCompile Include="src\thrift\thrift\TApplicationException.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\Thrift.cpp">
+    <ClCompile Include="src\thrift\thrift\Thrift.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\transport\TBufferTransports.cpp">
+    <ClCompile Include="src\thrift\thrift\transport\TBufferTransports.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\transport\TFDTransport.cpp" />
-    <ClCompile Include="src\transport\TFileTransport.cpp">
+    <ClCompile Include="src\thrift\thrift\transport\TFDTransport.cpp" />
+    <ClCompile Include="src\thrift\thrift\transport\TFileTransport.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\transport\THttpClient.cpp" />
-    <ClCompile Include="src\transport\THttpServer.cpp" />
-    <ClCompile Include="src\transport\THttpTransport.cpp">
+    <ClCompile Include="src\thrift\thrift\transport\THttpClient.cpp" />
+    <ClCompile Include="src\thrift\thrift\transport\THttpServer.cpp" />
+    <ClCompile Include="src\thrift\thrift\transport\THttpTransport.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\transport\TPipe.cpp" />
-    <ClCompile Include="src\transport\TPipeServer.cpp" />
-    <ClCompile Include="src\transport\TServerSocket.cpp">
+    <ClCompile Include="src\thrift\thrift\transport\TPipe.cpp" />
+    <ClCompile Include="src\thrift\thrift\transport\TPipeServer.cpp" />
+    <ClCompile Include="src\thrift\thrift\transport\TServerSocket.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\transport\TSimpleFileTransport.cpp" />
-    <ClCompile Include="src\transport\TSocket.cpp">
+    <ClCompile Include="src\thrift\thrift\transport\TSimpleFileTransport.cpp" />
+    <ClCompile Include="src\thrift\thrift\transport\TSocket.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\transport\TSSLSocket.cpp">
+    <ClCompile Include="src\thrift\thrift\transport\TSSLSocket.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\transport\TTransportException.cpp">
+    <ClCompile Include="src\thrift\thrift\transport\TTransportException.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\transport\TTransportUtils.cpp">
+    <ClCompile Include="src\thrift\thrift\transport\TTransportUtils.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\windows\GetTimeOfDay.cpp" />
-    <ClCompile Include="src\windows\SocketPair.cpp" />
-    <ClCompile Include="src\windows\StdAfx.cpp">
+    <ClCompile Include="src\thrift\thrift\windows\GetTimeOfDay.cpp" />
+    <ClCompile Include="src\thrift\thrift\windows\SocketPair.cpp" />
+    <ClCompile Include="src\thrift\thrift\windows\StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\windows\TWinsockSingleton.cpp" />
-    <ClCompile Include="src\windows\WinFcntl.cpp" />
+    <ClCompile Include="src\thrift\thrift\windows\TWinsockSingleton.cpp" />
+    <ClCompile Include="src\thrift\thrift\windows\WinFcntl.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\async\TAsyncChannel.h" />
-    <ClInclude Include="src\concurrency\BoostThreadFactory.h" />
-    <ClInclude Include="src\concurrency\Exception.h" />
-    <ClInclude Include="src\concurrency\PlatformThreadFactory.h" />
-    <ClInclude Include="src\processor\PeekProcessor.h" />
-    <ClInclude Include="src\protocol\TBinaryProtocol.h" />
-    <ClInclude Include="src\protocol\TDebugProtocol.h" />
-    <ClInclude Include="src\protocol\TDenseProtocol.h" />
-    <ClInclude Include="src\protocol\TJSONProtocol.h" />
-    <ClInclude Include="src\protocol\TProtocol.h" />
-    <ClInclude Include="src\protocol\TVirtualProtocol.h" />
-    <ClInclude Include="src\server\TServer.h" />
-    <ClInclude Include="src\server\TSimpleServer.h" />
-    <ClInclude Include="src\server\TThreadPoolServer.h" />
-    <ClInclude Include="src\TApplicationException.h" />
-    <ClInclude Include="src\Thrift.h" />
-    <ClInclude Include="src\TProcessor.h" />
-    <ClInclude Include="src\transport\TBufferTransports.h" />
-    <ClInclude Include="src\transport\TFDTransport.h" />
-    <ClInclude Include="src\transport\TFileTransport.h" />
-    <ClInclude Include="src\transport\THttpClient.h" />
-    <ClInclude Include="src\transport\THttpServer.h" />
-    <ClInclude Include="src\transport\TPipe.h" />
-    <ClInclude Include="src\transport\TPipeServer.h" />
-    <ClInclude Include="src\transport\TServerSocket.h" />
-    <ClInclude Include="src\transport\TServerTransport.h" />
-    <ClInclude Include="src\transport\TSimpleFileTransport.h" />
-    <ClInclude Include="src\transport\TSocket.h" />
-    <ClInclude Include="src\transport\TSSLSocket.h" />
-    <ClInclude Include="src\transport\TTransport.h" />
-    <ClInclude Include="src\transport\TTransportException.h" />
-    <ClInclude Include="src\transport\TTransportUtils.h" />
-    <ClInclude Include="src\transport\TVirtualTransport.h" />
-    <ClInclude Include="src\windows\config.h" />
-    <ClInclude Include="src\windows\force_inc.h" />
-    <ClInclude Include="src\windows\GetTimeOfDay.h" />
-    <ClInclude Include="src\windows\Operators.h" />
-    <ClInclude Include="src\windows\SocketPair.h" />
-    <ClInclude Include="src\windows\StdAfx.h" />
-    <ClInclude Include="src\windows\TargetVersion.h" />
-    <ClInclude Include="src\windows\TWinsockSingleton.h" />
-    <ClInclude Include="src\windows\WinFcntl.h" />
+    <ClInclude Include="src\thrift\thrift\async\TAsyncChannel.h" />
+    <ClInclude Include="src\thrift\thrift\concurrency\BoostThreadFactory.h" />
+    <ClInclude Include="src\thrift\thrift\concurrency\Exception.h" />
+    <ClInclude Include="src\thrift\thrift\concurrency\PlatformThreadFactory.h" />
+    <ClInclude Include="src\thrift\thrift\processor\PeekProcessor.h" />
+    <ClInclude Include="src\thrift\thrift\protocol\TBinaryProtocol.h" />
+    <ClInclude Include="src\thrift\thrift\protocol\TDebugProtocol.h" />
+    <ClInclude Include="src\thrift\thrift\protocol\TDenseProtocol.h" />
+    <ClInclude Include="src\thrift\thrift\protocol\TJSONProtocol.h" />
+    <ClInclude Include="src\thrift\thrift\protocol\TProtocol.h" />
+    <ClInclude Include="src\thrift\thrift\protocol\TVirtualProtocol.h" />
+    <ClInclude Include="src\thrift\thrift\server\TServer.h" />
+    <ClInclude Include="src\thrift\thrift\server\TSimpleServer.h" />
+    <ClInclude Include="src\thrift\thrift\server\TThreadPoolServer.h" />
+    <ClInclude Include="src\thrift\thrift\TApplicationException.h" />
+    <ClInclude Include="src\thrift\thrift\Thrift.h" />
+    <ClInclude Include="src\thrift\thrift\TProcessor.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TBufferTransports.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TFDTransport.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TFileTransport.h" />
+    <ClInclude Include="src\thrift\thrift\transport\THttpClient.h" />
+    <ClInclude Include="src\thrift\thrift\transport\THttpServer.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TPipe.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TPipeServer.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TServerSocket.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TServerTransport.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TSimpleFileTransport.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TSocket.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TSSLSocket.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TTransport.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TTransportException.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TTransportUtils.h" />
+    <ClInclude Include="src\thrift\thrift\transport\TVirtualTransport.h" />
+    <ClInclude Include="src\thrift\thrift\windows\config.h" />
+    <ClInclude Include="src\thrift\thrift\windows\force_inc.h" />
+    <ClInclude Include="src\thrift\thrift\windows\GetTimeOfDay.h" />
+    <ClInclude Include="src\thrift\thrift\windows\Operators.h" />
+    <ClInclude Include="src\thrift\thrift\windows\SocketPair.h" />
+    <ClInclude Include="src\thrift\thrift\windows\StdAfx.h" />
+    <ClInclude Include="src\thrift\thrift\windows\TargetVersion.h" />
+    <ClInclude Include="src\thrift\thrift\windows\TWinsockSingleton.h" />
+    <ClInclude Include="src\thrift\thrift\windows\WinFcntl.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\protocol\TBinaryProtocol.tcc" />
-    <None Include="src\windows\tr1\functional" />
+    <None Include="src\thrift\thrift\protocol\TBinaryProtocol.tcc" />
+    <None Include="src\thrift\thrift\windows\tr1\functional" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DD26F57E-60F2-4F37-A616-D219A9BF338F}</ProjectGuid>
@@ -252,16 +252,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;..\..\..\..\boost;..\..\..\..\boost\boost;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;..\..\..\..\boost;..\..\..\..\boost\boost;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;..\..\..\..\boost;..\..\..\..\boost\boost;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;..\..\..\..\boost;..\..\..\..\boost\boost;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(ProjectDir)\src\transport\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
