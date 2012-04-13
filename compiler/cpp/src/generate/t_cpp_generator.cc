@@ -865,7 +865,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
         if (t->is_enum()) {
           dval += "(" + type_name(t) + ")";
         }
-        dval += t->is_string() ? "\"\"" : "0";
+        dval += t->is_string() ? "" : "0";
         t_const_value* cv = (*m_iter)->get_value();
         if (cv != NULL) {
           dval = render_const_value(out, (*m_iter)->get_name(), t, cv);
@@ -4372,9 +4372,7 @@ string t_cpp_generator::declare_field(t_field* tfield, bool init, bool pointer, 
       t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
       switch (tbase) {
       case t_base_type::TYPE_VOID:
-        break;
       case t_base_type::TYPE_STRING:
-        result += " = \"\"";
         break;
       case t_base_type::TYPE_BOOL:
         result += " = false";
