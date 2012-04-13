@@ -1539,10 +1539,13 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
 
     f_remote << endl;
   }
-  f_remote << "else:" << endl;
-  f_remote << "  print 'Unrecognized method %s' % cmd" << endl;
-  f_remote << "  sys.exit(1)" << endl;
-  f_remote << endl;
+
+  if (functions.size() > 0) {
+    f_remote << "else:" << endl;
+    f_remote << "  print 'Unrecognized method %s' % cmd" << endl;
+    f_remote << "  sys.exit(1)" << endl;
+    f_remote << endl;
+  }
 
   f_remote << "transport.close()" << endl;
 
