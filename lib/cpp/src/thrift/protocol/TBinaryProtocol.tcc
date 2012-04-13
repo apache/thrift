@@ -428,7 +428,7 @@ uint32_t TBinaryProtocolT<Transport_>::readStringBody(std::string& str,
 
   // Catch empty string case
   if (size == 0) {
-    str = "";
+    str.clear();
     return result;
   }
 
@@ -451,7 +451,7 @@ uint32_t TBinaryProtocolT<Transport_>::readStringBody(std::string& str,
     this->string_buf_size_ = size;
   }
   this->trans_->readAll(this->string_buf_, size);
-  str = std::string((char*)this->string_buf_, size);
+  str.assign((char*)this->string_buf_, size);
   return (uint32_t)size;
 }
 
