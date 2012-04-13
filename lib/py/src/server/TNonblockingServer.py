@@ -237,6 +237,7 @@ class TNonblockingServer:
         self.tasks = Queue.Queue()
         self._read, self._write = socket.socketpair()
         self.prepared = False
+        self._stop = False
 
     def setNumThreads(self, num):
         """Set the number of worker threads that should be created."""
@@ -246,6 +247,8 @@ class TNonblockingServer:
 
     def prepare(self):
         """Prepares server for serve requests."""
+        if self.prepared:
+            return
         self.socket.listen()
         for _ in xrange(self.threads):
             thread = Worker(self.tasks)
@@ -265,6 +268,21 @@ class TNonblockingServer:
         socketpair.
         """
         self._write.send('1')
+
+    def stop(self):
+        """Stop the server.
+
+        This method causes the serve() method to return.  stop() may be invoked
+        from within your handler, or from another thread.
+
+        After stop() is called, serve() will return but the server will still
+        be listening on the socket.  serve() may then be called again to resume
+        processing requests.  Alternatively, close() may be called after
+        serve() returns to close the server socket and shutdown all worker
+        threads.
+        """
+        self._stop = True
+        self.wake_up()
 
     def _select(self):
         """Does select on open connections."""
@@ -318,7 +336,11 @@ class TNonblockingServer:
         self.prepared = False
 
     def serve(self):
-        """Serve forever."""
+        """Serve requests.
+
+        Serve requests forever, or until stop() is called.
+        """
+        self._stop = False
         self.prepare()
-        while True:
+        while not self._stop:
             self.handle()
