@@ -20,7 +20,7 @@
 #ifndef _THRIFT_TEST_GENERICPROTOCOLTEST_TCC_
 #define _THRIFT_TEST_GENERICPROTOCOLTEST_TCC_ 1
 
-#include <thrift/limits>
+#include <limits>
 
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TBufferTransports.h>

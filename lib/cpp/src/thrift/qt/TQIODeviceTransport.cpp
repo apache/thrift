@@ -17,9 +17,9 @@
  * under the License.
  */
 
-#include "TQIODeviceTransport.h"
+#include <thrift/qt/TQIODeviceTransport.h>
 
-#include <thrift/QAbstractSocket>
+#include <QAbstractSocket>
 #include <QIODevice>
 
 #include <thrift/transport/TBufferTransports.h>

@@ -101,7 +101,7 @@ libthriftnb_la_SOURCES = src/thrift/server/TNonblockingServer.cpp \
 
 libthriftz_la_SOURCES = src/thrift/transport/TZlibTransport.cpp
 
-libthriftqt_la_MOC = src/qt/moc_TQTcpServer.cpp
+libthriftqt_la_MOC = src/thrift/qt/moc_TQTcpServer.cpp
 libthriftqt_la_SOURCES = $(libthriftqt_la_MOC) \
                          src/thrift/qt/TQIODeviceTransport.cpp \
                          src/thrift/qt/TQTcpServer.cpp

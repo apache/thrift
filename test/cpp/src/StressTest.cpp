@@ -30,7 +30,7 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TFileTransport.h>
-#include <TLogging.h>
+#include <thrift/TLogging.h>
 
 #include "Service.h"
 

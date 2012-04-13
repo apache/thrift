@@ -20,7 +20,7 @@
 #ifndef _THRIFT_TRANSPORT_TSHORTREADTRANSPORT_H_
 #define _THRIFT_TRANSPORT_TSHORTREADTRANSPORT_H_ 1
 
-#include <thrift/cstdlib>
+#include <cstdlib>
 
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TVirtualTransport.h>
