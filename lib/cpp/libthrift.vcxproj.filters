@@ -96,10 +96,10 @@
     <ClCompile Include="src\thrift\windows\WinFcntl.cpp">
       <Filter>windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\transport\TPipeServer.cpp">
+    <ClCompile Include="src\thrift\transport\TPipe.cpp">
       <Filter>transport</Filter>
     </ClCompile>
-    <ClCompile Include="src\transport\TPipe.cpp">
+    <ClCompile Include="src\thrift\transport\TPipeServer.cpp">
       <Filter>transport</Filter>
     </ClCompile>
   </ItemGroup>
@@ -218,10 +218,10 @@
     <ClInclude Include="src\thrift\windows\WinFcntl.h">
       <Filter>windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\transport\TPipe.h">
+    <ClInclude Include="src\thrift\transport\TPipe.h">
       <Filter>transport</Filter>
     </ClInclude>
-    <ClInclude Include="src\transport\TPipeServer.h">
+    <ClInclude Include="src\thrift\transport\TPipeServer.h">
       <Filter>transport</Filter>
     </ClInclude>
   </ItemGroup>

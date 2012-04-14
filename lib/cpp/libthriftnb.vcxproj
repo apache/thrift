@@ -19,41 +19,41 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\thrift\thrift\async\TAsyncProtocolProcessor.cpp">
+    <ClCompile Include="src\thrift\async\TAsyncProtocolProcessor.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\thrift\thrift\async\TEvhttpClientChannel.cpp">
+    <ClCompile Include="src\thrift\async\TEvhttpClientChannel.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\thrift\thrift\async\TEvhttpServer.cpp">
+    <ClCompile Include="src\thrift\async\TEvhttpServer.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\thrift\thrift\server\TNonblockingServer.cpp">
+    <ClCompile Include="src\thrift\server\TNonblockingServer.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <ClCompile Include="src\thrift\thrift\windows\StdAfx.cpp" />
+    <ClCompile Include="src\thrift\windows\StdAfx.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\thrift\thrift\async\TAsyncProtocolProcessor.h" />
-    <ClInclude Include="src\thrift\thrift\async\TEvhttpClientChannel.h" />
-    <ClInclude Include="src\thrift\thrift\async\TEvhttpServer.h" />
-    <ClInclude Include="src\thrift\thrift\server\TNonblockingServer.h" />
-    <ClInclude Include="src\thrift\thrift\windows\config.h" />
-    <ClInclude Include="src\thrift\thrift\windows\force_inc.h" />
-    <ClInclude Include="src\thrift\thrift\windows\StdAfx.h" />
-    <ClInclude Include="src\thrift\thrift\windows\TargetVersion.h" />
+    <ClInclude Include="src\thrift\async\TAsyncProtocolProcessor.h" />
+    <ClInclude Include="src\thrift\async\TEvhttpClientChannel.h" />
+    <ClInclude Include="src\thrift\async\TEvhttpServer.h" />
+    <ClInclude Include="src\thrift\server\TNonblockingServer.h" />
+    <ClInclude Include="src\thrift\windows\config.h" />
+    <ClInclude Include="src\thrift\windows\force_inc.h" />
+    <ClInclude Include="src\thrift\windows\StdAfx.h" />
+    <ClInclude Include="src\thrift\windows\TargetVersion.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D8696CCE-7D46-4659-B432-91754A41DEB0}</ProjectGuid>
@@ -100,16 +100,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)\src\thrift\;$(ProjectDir)\src\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -118,7 +118,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;HAVE_CONFIG_H;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForcedIncludeFiles>force_inc.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>thrift\windows\force_inc.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <ProgramDataBaseFileName>$(IntDir)libthriftnb.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
@@ -133,7 +133,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;HAVE_CONFIG_H;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForcedIncludeFiles>force_inc.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>thrift\windows\force_inc.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -149,7 +149,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;HAVE_CONFIG_H;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForcedIncludeFiles>force_inc.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>thrift\windows\force_inc.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <ProgramDataBaseFileName>$(IntDir)libthriftnb.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
@@ -168,7 +168,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;HAVE_CONFIG_H;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ForcedIncludeFiles>force_inc.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>thrift\windows\force_inc.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

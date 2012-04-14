@@ -90,7 +90,7 @@ absent and prefix them with an 0x01 byte if they are present
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include "TDenseProtocol.h"
-#include "TReflectionLocal.h"
+#include "thrift/TReflectionLocal.h"
 
 // Leaving this on for now.  Disabling it will turn off asserts, which should
 // give a performance boost.  When we have *really* thorough test cases,
