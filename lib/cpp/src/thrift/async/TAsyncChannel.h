@@ -20,7 +20,7 @@
 #ifndef _THRIFT_ASYNC_TASYNCCHANNEL_H_
 #define _THRIFT_ASYNC_TASYNCCHANNEL_H_ 1
 
-#include <thrift/windows/tr1/functional>
+#include <tr1/functional>
 #include <thrift/Thrift.h>
 
 namespace apache { namespace thrift { namespace transport {

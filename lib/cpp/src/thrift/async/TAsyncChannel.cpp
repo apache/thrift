@@ -18,7 +18,7 @@
  */
 
 #include <thrift/async/TAsyncChannel.h>
-#include <thrift/windows/tr1/functional>
+#include <tr1/functional>
 
 namespace apache { namespace thrift { namespace async {
 
