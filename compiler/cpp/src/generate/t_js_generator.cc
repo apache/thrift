@@ -699,7 +699,7 @@ void t_js_generator::generate_js_struct_writer(ofstream& out,
   indent(out) << "output.writeStructBegin('" << name << "');" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    out << indent() << "if (this." << (*f_iter)->get_name() << ") {" << endl;
+    out << indent() << "if (this." << (*f_iter)->get_name() <<  " !== null && this." << (*f_iter)->get_name() << " !== undefined) {" << endl;
     indent_up();
 
     indent(out) <<
