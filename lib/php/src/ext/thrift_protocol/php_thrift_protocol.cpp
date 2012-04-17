@@ -96,7 +96,7 @@ const int BAD_VERSION = 4;
 #include "zend_exceptions.h"
 #include "php_thrift_protocol.h"
 
-static function_entry thrift_protocol_functions[] = {
+static zend_function_entry thrift_protocol_functions[] = {
   PHP_FE(thrift_protocol_write_binary, NULL)
   PHP_FE(thrift_protocol_read_binary, NULL)
   {NULL, NULL, NULL}
