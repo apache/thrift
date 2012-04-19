@@ -2321,7 +2321,7 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
       indent() << "gpointer value;" << endl <<
       indent() << "g_hash_table_foreach ((GHashTable *) " << prefix <<
                    ", thrift_hash_table_get_keys, &key_list);" << endl <<
-      indent() << telem_name << telem_ptr << "keys[g_list_length (key_list)];" << endl <<
+      indent() << telem_name << telem_ptr << " keys[g_list_length (key_list)];" << endl <<
       indent() << "int i=0, key_count = g_list_length (key_list);" << endl <<
       indent() << "for (iter = g_list_first (key_list); iter; iter = iter->next)" << endl <<
       indent() << "{" << endl <<
