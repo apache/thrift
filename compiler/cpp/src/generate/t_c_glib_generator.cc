@@ -193,7 +193,7 @@ void t_c_glib_generator::init_generator() {
   for (size_t i = 0; i < includes.size(); ++i) {
     f_types_ <<
       "/* other thrift includes */" << endl <<
-      "#include \"" << this->nspace_lc << includes[i]->get_name() <<
+      "#include \"" << this->nspace_lc << initial_caps_to_underscores(includes[i]->get_name()) <<
           "_types.h\"" << endl;
   }
   f_types_ << endl;
