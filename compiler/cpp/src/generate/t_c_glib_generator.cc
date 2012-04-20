@@ -2829,6 +2829,8 @@ string t_c_glib_generator::generate_free_func_from_type (t_type * ttype) {
     }
     printf("Type not expected inside the array: %s\n", etype->get_name().c_str());
     throw "Type not expected inside array" ;
+  } else if (ttype->is_typedef()) {
+    return generate_free_func_from_type(((t_typedef *) ttype)->get_type());
   }
   printf("Type not expected: %s\n", ttype->get_name().c_str());
   throw "Type not expected";
@@ -2862,6 +2864,8 @@ string t_c_glib_generator::generate_hash_func_from_type (t_type * ttype) {
     return "g_direct_hash";
   } else if (ttype->is_container() || ttype->is_struct()) {
     return "g_direct_hash";
+  } else if (ttype->is_typedef()) {
+    return generate_hash_func_from_type(((t_typedef *) ttype)->get_type());
   }
   printf("Type not expected: %s\n", ttype->get_name().c_str());
   throw "Type not expected";
@@ -2895,6 +2899,8 @@ string t_c_glib_generator::generate_cmp_func_from_type (t_type * ttype) {
     return "NULL";
   } else if (ttype->is_container() || ttype->is_struct()) {
     return "g_direct_equal";
+  } else if (ttype->is_typedef()) {
+    return generate_cmp_func_from_type(((t_typedef *) ttype)->get_type());
   }
   printf("Type not expected: %s\n", ttype->get_name().c_str());
   throw "Type not expected";
