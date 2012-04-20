@@ -2475,9 +2475,16 @@ void t_c_glib_generator::generate_deserialize_field(ofstream &out,
     generate_deserialize_container (out, type, name, error_ret);
   } else if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type *) type)->get_base();
-
-    indent(out) << "/* TODO: check if string is NULL */" << endl;
-
+    if (tbase == t_base_type::TYPE_STRING) {
+      indent(out) << "if (" << name << " != NULL)" << endl <<
+        indent() << "{" << endl;
+      indent_up();
+      indent(out) << "g_free(" << name << ");" << endl <<
+        indent() << name << " = NULL;" << endl;
+      indent_down();
+      indent(out) << "}" << endl <<
+      endl;
+    }
     indent(out) << "if ((ret = thrift_protocol_read_";
 
     switch (tbase) {
