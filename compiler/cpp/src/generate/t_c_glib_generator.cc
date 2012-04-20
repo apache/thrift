@@ -124,6 +124,7 @@ class t_c_glib_generator : public t_oop_generator {
   string argument_list(t_struct *tstruct);
   string xception_list(t_struct *tstruct);
   string declare_field(t_field *tfield, bool init=false, bool pointer=false, bool constant=false, bool reference=false);
+  void declare_local_variable(ofstream &out, t_type *ttype, string &base_name);
 
   /* generation functions */
   void generate_const_initializer(string name, t_type *type, t_const_value *value);
@@ -140,8 +141,8 @@ class t_c_glib_generator : public t_oop_generator {
   void generate_serialize_set_element(ofstream &out, t_set *tset, string element, int error_ret);
   void generate_serialize_list_element(ofstream &out, t_list *tlist, string list, string index, int error_ret);
 
-  void generate_deserialize_field(ofstream &out, t_field *tfield, string prefix, string suffix, int error_ret);
-  void generate_deserialize_struct(ofstream &out, t_struct *tstruct, string prefix, int error_ret);
+  void generate_deserialize_field(ofstream &out, t_field *tfield, string prefix, string suffix, int error_ret, bool allocate=true);
+  void generate_deserialize_struct(ofstream &out, t_struct *tstruct, string prefix, int error_ret, bool allocate=true);
   void generate_deserialize_container(ofstream &out, t_type *ttype, string prefix, int error_ret);
   void generate_deserialize_map_element(ofstream &out, t_map *tmap, string prefix, int error_ret);
   void generate_deserialize_set_element(ofstream &out, t_set *tset, string prefix, int error_ret);
@@ -809,6 +810,8 @@ string t_c_glib_generator::declare_field(t_field *tfield,
       }
     } else if (type->is_enum()) {
       result += " = (" + type_name (type) + ") 0";
+    } else if (type->is_struct() || type->is_container()) {
+      result += " = NULL";
     }
   }
 
@@ -2108,7 +2111,7 @@ void t_c_glib_generator::generate_struct_reader(ofstream &out,
 
     indent_up();
     // generate deserialize field
-    generate_deserialize_field (out, *f_iter, this_name, "", error_ret);
+    generate_deserialize_field (out, *f_iter, this_name, "", error_ret, false);
     indent_down();
 
     out <<
@@ -2455,7 +2458,8 @@ void t_c_glib_generator::generate_deserialize_field(ofstream &out,
                                                     t_field *tfield,
                                                     string prefix,
                                                     string suffix,
-                                                    int error_ret) {
+                                                    int error_ret,
+                                                    bool allocate) {
   t_type *type = get_true_type (tfield->get_type());
 
   if (type->is_void()) {
@@ -2466,11 +2470,13 @@ void t_c_glib_generator::generate_deserialize_field(ofstream &out,
   string name = prefix + tfield->get_name() + suffix;
 
   if (type->is_struct() || type->is_xception()) {
-    generate_deserialize_struct (out, (t_struct *) type, name, error_ret);
+    generate_deserialize_struct (out, (t_struct *) type, name, error_ret, allocate);
   } else if (type->is_container()) {
     generate_deserialize_container (out, type, name, error_ret);
   } else if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type *) type)->get_base();
+
+    indent(out) << "/* TODO: check if string is NULL */" << endl;
 
     indent(out) << "if ((ret = thrift_protocol_read_";
 
@@ -2544,12 +2550,31 @@ void t_c_glib_generator::generate_deserialize_field(ofstream &out,
 void t_c_glib_generator::generate_deserialize_struct(ofstream &out,
                                                      t_struct *tstruct,
                                                      string prefix,
-                                                     int error_ret) {
+                                                     int error_ret,
+                                                     bool allocate) {
   string name_uc = to_upper_case(initial_caps_to_underscores(tstruct->get_name()));
+  if (allocate) {
+    out <<
+      indent() << "if ( " << prefix << " != NULL)" << endl <<
+      indent() << "{" << endl;
+    indent_up();
+    out <<
+      indent() << "g_object_unref (" << prefix << ");" << endl;
+    indent_down();
+    out <<
+      indent() << "}" << endl <<
+      indent() << prefix << " = g_object_new (" << this->nspace_uc << "TYPE_" << name_uc << ", NULL);" << endl;
+  }
   out <<
-    indent() << prefix << " = g_object_new (" << this->nspace_uc << "TYPE_" << name_uc << ", NULL);" << endl <<
     indent() << "if ((ret = thrift_struct_read (THRIFT_STRUCT (" << prefix << "), protocol, error)) < 0)" << endl <<
-    indent() << "  return " << error_ret << ";" << endl <<
+    indent() << "{" << endl;
+  indent_up();
+  out <<
+    indent() << "/* ERROR, free allocated data */" << endl <<
+    indent() << "return " << error_ret << ";" << endl;
+  indent_down();
+  out <<
+    indent() << "}" << endl <<
     indent() << "xfer += ret;" << endl;
 }
 
@@ -2639,35 +2664,36 @@ void t_c_glib_generator::generate_deserialize_container (ofstream &out, t_type *
   scope_down(out);
 }
 
+void t_c_glib_generator::declare_local_variable(ofstream &out, t_type *ttype, string &name) {
+  string tname = type_name (ttype);
+  string ptr = ttype->is_string() || !ttype->is_base_type() ? "" : "*";
+
+  if (ttype->is_map()) {
+    out <<
+    indent() << tname << ptr << " " << name << " = g_hash_table_new (NULL, NULL);" << endl;
+  } else if (ttype->is_enum()) {
+    out <<
+    indent() << tname << ptr << " " << name << ";" << endl;
+  } else {
+    out <<
+    indent() << tname << ptr << " " << name << (ptr != "" ? " = g_new (" + tname + ", 1)" : " = NULL") << ";" << endl;
+  }
+}
+
+
 void t_c_glib_generator::generate_deserialize_map_element(ofstream &out,
                                                           t_map *tmap,
                                                           string prefix,
                                                           int error_ret) {
   t_type *tkey = tmap->get_key_type();
   t_type *tval = tmap->get_val_type();
-  string tkey_name = type_name (tkey);
-  string tval_name = type_name (tval);
   string tkey_ptr = tkey->is_string() || !tkey->is_base_type() ? "" : "*";
   string tval_ptr = tval->is_string() || !tval->is_base_type() ? "" : "*";
-
   string keyname = tmp("key");
   string valname = tmp("val");
 
-  if (tkey->is_map()) {
-    out <<
-      indent() << tkey_name << tkey_ptr << " " << keyname << " = g_hash_table_new (NULL, NULL);" << endl;
-  } else {
-    out <<
-      indent() << tkey_name << tkey_ptr << " " << keyname << (tkey_ptr != "" ? " = g_new (" + tkey_name + ", 1)" : "") << ";" << endl;
-  }
-
-  if (tval->is_map()) {
-    out <<
-      indent() << tval_name << tval_ptr << " " << valname << " = g_hash_table_new (NULL, NULL);" << endl;
-  } else {
-    out <<
-      indent() << tval_name << tval_ptr << " " << valname << (tval_ptr != "" ? " = g_new (" + tval_name + ", 1)" : "") << ";" << endl;
-  }
+  declare_local_variable(out, tkey, keyname);
+  declare_local_variable(out, tval, valname);
 
   // deserialize the fields of the map element
   t_field fkey (tkey, tkey_ptr + keyname);
@@ -2686,22 +2712,17 @@ void t_c_glib_generator::generate_deserialize_set_element(ofstream &out,
                                                           string prefix,
                                                           int error_ret) {
   t_type *telem = tset->get_elem_type();
-  string telem_name = type_name (telem);
+  string elem = tmp ("_elem");
   string telem_ptr = telem->is_string() || !telem->is_base_type() ? "" : "*";
 
-  if (telem->is_map()) {
-    out <<
-      indent() << telem_name << telem_ptr << " elem = g_hash_table_new (NULL, NULL);" << endl;
-  } else {
-    out <<
-      indent() << telem_name << telem_ptr << " elem" << (telem_ptr != "" ? " = g_new (" + telem_name + ", 1)" : "") << ";" << endl;
-  }
+  declare_local_variable(out, telem, elem);
 
-  t_field felem (telem, telem_ptr + "elem");
+  t_field felem (telem, telem_ptr + elem);
   generate_deserialize_field (out, &felem, "", "", error_ret);
 
   indent(out) <<
-    "g_hash_table_insert ((GHashTable *) " << prefix << ", (gpointer) elem, (gpointer) 1);" << endl;
+    "g_hash_table_insert ((GHashTable *) " << prefix << ", (gpointer) " <<
+                              elem << ", (gpointer) 1);" << endl;
 }
 
 void t_c_glib_generator::generate_deserialize_list_element(ofstream &out,
@@ -2710,15 +2731,17 @@ void t_c_glib_generator::generate_deserialize_list_element(ofstream &out,
                                                            string index,
                                                            int error_ret) {
   (void) index;
+  t_type *ttype = tlist->get_elem_type();
   string elem = tmp ("_elem");
-  t_field felem (tlist->get_elem_type(), elem);
+  string telem_ptr = ttype->is_string() || !ttype->is_base_type() ? "" : "*";
 
-  indent(out) << declare_field (&felem, true) << endl;
+  declare_local_variable(out, ttype, elem);
+
+  t_field felem (ttype, telem_ptr + elem);
   generate_deserialize_field (out, &felem, "", "", error_ret);
 
   indent(out);
 
-  t_type *ttype = tlist->get_elem_type();
   if (ttype->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type *) ttype)->get_base();
     switch (tbase) {
