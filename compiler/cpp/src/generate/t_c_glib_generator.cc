@@ -2576,8 +2576,10 @@ void t_c_glib_generator::generate_deserialize_struct(ofstream &out,
     indent() << "if ((ret = thrift_struct_read (THRIFT_STRUCT (" << prefix << "), protocol, error)) < 0)" << endl <<
     indent() << "{" << endl;
   indent_up();
+  if (allocate) {
+    indent(out) << "g_object_unref (" << prefix << ");" << endl;
+  }
   out <<
-    indent() << "/* ERROR, free allocated data */" << endl <<
     indent() << "return " << error_ret << ";" << endl;
   indent_down();
   out <<
