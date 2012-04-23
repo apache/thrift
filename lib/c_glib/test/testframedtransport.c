@@ -150,7 +150,7 @@ thrift_server (const int port)
   int bytes = 0;
   ThriftServerTransport *transport = NULL;
   ThriftTransport *client = NULL;
-  guchar buf[10]; /* a buffer */
+  guchar buf[12]; /* a buffer */
   guchar match[10] = TEST_DATA;
 
   ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
