@@ -2595,6 +2595,12 @@ void t_c_glib_generator::generate_deserialize_struct(ofstream &out,
                                                      int error_ret,
                                                      bool allocate) {
   string name_uc = to_upper_case(initial_caps_to_underscores(tstruct->get_name()));
+  if (tstruct->is_xception()) {
+    out <<
+      indent() << "/* This struct is an exception */" << endl;
+    allocate = true;
+  }
+
   if (allocate) {
     out <<
       indent() << "if ( " << prefix << " != NULL)" << endl <<
