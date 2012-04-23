@@ -2365,17 +2365,19 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
       indent() << "xfer += ret;" << endl;
   } else if (ttype->is_list()) {
     string length = prefix + "->len";
+    string i = tmp("i");
     out <<
       indent() << "if ((ret = thrift_protocol_write_list_begin (protocol, " <<
                    type_to_enum (((t_list *) ttype)->get_elem_type()) <<
                    ", (gint32) " << length << ", error)) < 0)" << endl <<
       indent() << "  return " << error_ret << ";" << endl <<
       indent() << "xfer += ret;" << endl <<
-      indent() << "guint i;" << endl <<
-      indent() << "for (i=0; i<" << length << "; i++)" << endl;
+      indent() << "guint " << i << ";" << endl <<
+      indent() << "for ("<< i << "=0; " << i << "<" << length << "; " << i <<
+                         "++)" << endl;
 
     scope_up(out);
-    generate_serialize_list_element (out, (t_list *) ttype, prefix, "i", error_ret);
+    generate_serialize_list_element (out, (t_list *) ttype, prefix, i, error_ret);
     scope_down(out);
 
     out <<
@@ -2415,6 +2417,7 @@ void t_c_glib_generator::generate_serialize_list_element(ofstream &out,
   t_type *ttype = tlist->get_elem_type();
 
   // cast to non-const
+  string cast = "";
   string name = "g_ptr_array_index ((GPtrArray *) " + list + ", "
                 + index + ")";
 
@@ -2443,13 +2446,40 @@ void t_c_glib_generator::generate_serialize_list_element(ofstream &out,
         name = "g_array_index (" + list + ", gdouble, " + index + ")";
         break;
       case t_base_type::TYPE_STRING:
+        cast = "(gchar*)";
         break;
       default:
         throw "compiler error: no array info for type";
     }
+  } else if (ttype->is_map() || ttype->is_set()) {
+    cast = "(GHashTable*)";
+  } else if (ttype->is_list()) {
+    t_type *base = ((t_list *)ttype)->get_elem_type();
+    if (base->is_base_type()) {
+      switch (((t_base_type *) base)->get_base()) {
+        case t_base_type::TYPE_VOID:
+          throw "compiler error: cannot determine array type";
+          break;
+        case t_base_type::TYPE_BOOL:
+        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I16:
+        case t_base_type::TYPE_I32:
+        case t_base_type::TYPE_I64:
+        case t_base_type::TYPE_DOUBLE:
+          cast = "(GArray*)";
+          break;
+        case t_base_type::TYPE_STRING:
+          cast = "(GPtrArray*)";
+          break;
+        default:
+          throw "Compiler error: no array info for type";
+      }
+    } else {
+      cast = "(GPtrArray*)";
+    }
   }
 
-  t_field efield (ttype, name);
+  t_field efield (ttype, "(" + cast + name + ")");
   generate_serialize_field (out, &efield, "", "", error_ret);
 }
 
