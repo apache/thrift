@@ -2029,7 +2029,7 @@ void t_c_glib_generator::generate_struct_reader(ofstream &out,
   out <<
     indent() << "gint32 ret;" << endl <<
     indent() << "gint32 xfer = 0;" << endl <<
-    indent() << "gchar *name;" << endl <<
+    indent() << "gchar *name = NULL;" << endl <<
     indent() << "ThriftType ftype;" << endl <<
     indent() << "gint16 fid;" << endl <<
     indent() << "guint32 len = 0;" << endl <<
@@ -2065,6 +2065,7 @@ void t_c_glib_generator::generate_struct_reader(ofstream &out,
     indent() << "}" << endl <<
     indent() << "xfer += ret;" << endl <<
     indent() << "if (name) g_free (name);" << endl <<
+    indent() << "name = NULL;" << endl <<
     endl;
 
   // read the struct fields
@@ -2083,6 +2084,7 @@ void t_c_glib_generator::generate_struct_reader(ofstream &out,
     indent() << "}" << endl <<
     indent() << "xfer += ret;" << endl <<
     indent() << "if (name) g_free (name);" << endl <<
+    indent() << "name = NULL;" << endl <<
     endl;
 
   // check for field STOP marker
