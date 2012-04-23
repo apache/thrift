@@ -2342,6 +2342,8 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
       indent() << "GList *key_list = NULL, *iter = NULL;" << endl <<
       indent() << telem_name << telem_ptr << " elem;" << endl <<
       indent() << "gpointer value;" << endl <<
+      indent() << "THRIFT_UNUSED_VAR (value);" << endl <<
+      endl <<
       indent() << "g_hash_table_foreach ((GHashTable *) " << prefix <<
                    ", thrift_hash_table_get_keys, &key_list);" << endl <<
       indent() << telem_name << telem_ptr << " keys[g_list_length (key_list)];" << endl <<
