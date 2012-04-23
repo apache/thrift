@@ -655,7 +655,7 @@ string t_c_glib_generator::constant_value(string name, t_type *type, t_const_val
     t_base_type::t_base tbase = ((t_base_type *) type)->get_base();
     switch (tbase) {
       case t_base_type::TYPE_STRING:
-        render << "\"" + value->get_string() + "\"";
+        render << "g_strdup (\"" + value->get_string() + "\")";
         break;
       case t_base_type::TYPE_BOOL:
         render << ((value->get_integer() != 0) ? 1 : 0);
@@ -883,6 +883,7 @@ void t_c_glib_generator::generate_const_initializer(string name, t_type *type, t
       endl;
   } else if (type->is_list()) {
     string list_type = "GPtrArray *";
+    // TODO: This initialization should contain a free function for container
     string list_initializer = "g_ptr_array_new();";
     string list_appender = "g_ptr_array_add";
     bool list_variable = false;
@@ -968,6 +969,7 @@ void t_c_glib_generator::generate_const_initializer(string name, t_type *type, t
       "  static GHashTable *constant = NULL;" << endl <<
       "  if (constant == NULL)" << endl <<
       "  {" << endl <<
+      // TODO: This initialization should contain a free function for elements
       "    constant = g_hash_table_new (NULL, NULL);" << endl <<
       initializers.str() << endl <<
       "  }" << endl <<
@@ -1004,6 +1006,7 @@ void t_c_glib_generator::generate_const_initializer(string name, t_type *type, t
       "  static GHashTable *constant = NULL;" << endl <<
       "  if (constant == NULL)" << endl <<
       "  {" << endl <<
+      // TODO: This initialization should contain a free function for elements
       "    constant = g_hash_table_new (NULL, NULL);" << endl <<
       initializers.str() << endl <<
       "  }" << endl <<
