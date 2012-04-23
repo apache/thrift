@@ -396,23 +396,25 @@ test_thrift_client (void)
   xtruct_out->__isset_i64_thing = TRUE;
   xtruct_out->string_thing = g_strdup ("abc123");
   xtruct_out->__isset_string_thing = TRUE;
+  xtruct_in = (TTestXtruct *) g_object_new(T_TEST_TYPE_XTRUCT, NULL);
   assert (t_test_thrift_test_client_test_struct (iface, &xtruct_in, xtruct_out, &error) == TRUE);
   assert (error == NULL);
 
   xtruct2_out = (TTestXtruct2 *) g_object_new (T_TEST_TYPE_XTRUCT2, NULL);
   xtruct2_out->byte_thing = 1;
   xtruct2_out->__isset_byte_thing = TRUE;
+  if (xtruct2_out->struct_thing != NULL)
+    g_object_unref(xtruct2_out->struct_thing);
   xtruct2_out->struct_thing = xtruct_out;
   xtruct2_out->__isset_struct_thing = TRUE;
   xtruct2_out->i32_thing = 123;
   xtruct2_out->__isset_i32_thing = TRUE;
+  xtruct2_in = (TTestXtruct2 *) g_object_new (T_TEST_TYPE_XTRUCT2, NULL);
   assert (t_test_thrift_test_client_test_nest (iface, &xtruct2_in, xtruct2_out, &error) == TRUE);
   assert (error == NULL);
 
   g_object_unref (xtruct2_out);
   g_object_unref (xtruct2_in);
-  g_free (xtruct_out->string_thing);
-  g_object_unref (xtruct_out);
   g_object_unref (xtruct_in);
 
   map_out = g_hash_table_new (NULL, NULL);
@@ -490,7 +492,6 @@ test_thrift_client (void)
   xtruct2->string_thing = g_strdup ("abc123");
   xtruct2->__isset_string_thing = TRUE;
 
-  insanity_out->xtructs = g_ptr_array_new ();
   insanity_in = g_hash_table_new (NULL, NULL);
   g_ptr_array_add (insanity_out->xtructs, xtruct1);
   g_ptr_array_add (insanity_out->xtructs, xtruct2);
@@ -498,25 +499,24 @@ test_thrift_client (void)
 
   g_hash_table_unref (insanity_in);
   g_ptr_array_free (insanity_out->xtructs, TRUE);
-  g_free (xtruct1->string_thing);
-  g_free (xtruct2->string_thing);
-  g_object_unref (xtruct1);
-  g_object_unref (xtruct2);
 
   multi_map_out = g_hash_table_new (NULL, NULL);
   string = g_strdup ("abc123");
   g_hash_table_insert (multi_map_out, &i16, string);
+  multi_in = (TTestXtruct *) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
   assert (t_test_thrift_test_client_test_multi (iface, &multi_in, byte, i32, i64, multi_map_out, enum_out, user_id_out, &error) == TRUE);
   assert (multi_in->i32_thing == i32);
   assert (multi_in->i64_thing == i64);
   g_object_unref (multi_in);
   g_hash_table_unref (multi_map_out);
-  g_free (string); 
+  g_free (string);
 
   assert (t_test_thrift_test_client_test_exception (iface, "Xception", &xception, &error) == FALSE);
   assert (xception->errorCode == 1001);
   g_error_free (error);
   error = NULL;
+  g_object_unref (xception);
+  xception = NULL;
 
   assert (t_test_thrift_test_client_test_exception (iface, "ApplicationException", &xception, &error) == FALSE);
   g_error_free (error);
@@ -527,23 +527,33 @@ test_thrift_client (void)
   assert (t_test_thrift_test_client_test_exception (iface, "Test", &xception, &error) == TRUE);
   assert (error == NULL);
 
+  multi_in = (TTestXtruct*) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
   assert (t_test_thrift_test_client_test_multi_exception (iface, &multi_in, "Xception", NULL, &xception, &xception2, &error) == FALSE);
   assert (xception->errorCode == 1001);
+  assert (xception2 == NULL);
   g_error_free (error);
   error = NULL;
   g_object_unref (xception);
+  g_object_unref (multi_in);
   xception = NULL;
-  xception2 = NULL;
+  multi_in = NULL;
 
+  multi_in = (TTestXtruct*) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
   assert (t_test_thrift_test_client_test_multi_exception (iface, &multi_in, "Xception2", NULL, &xception, &xception2, &error) == FALSE);
   assert (xception2->errorCode == 2002);
+  assert (xception == NULL);
   g_error_free (error);
   error = NULL;
   g_object_unref (xception2);
+  g_object_unref (multi_in);
   xception2 = NULL;
+  multi_in = NULL;
 
+  multi_in = (TTestXtruct*) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
   assert (t_test_thrift_test_client_test_multi_exception (iface, &multi_in, NULL , NULL, &xception, &xception2, &error) == TRUE);
   assert (error == NULL);
+  g_object_unref(multi_in);
+  multi_in = NULL;
 
   assert (t_test_thrift_test_client_test_oneway (iface, 1, &error) == TRUE);
   assert (error == NULL);
