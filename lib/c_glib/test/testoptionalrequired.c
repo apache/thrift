@@ -55,8 +55,10 @@ test_old_school1 (void)
   o->im_int = 10;
   o->im_str = g_strdup ("test");
   o->im_big = g_ptr_array_new ();
-  g_ptr_array_free (o->im_big, FALSE);
+  g_ptr_array_free (o->im_big, TRUE);
+  o->im_big = NULL;
   g_free (o->im_str);
+  o->im_str = NULL;
   g_object_unref (o);
 }
 
