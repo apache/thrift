@@ -211,6 +211,7 @@ void t_hs_generator::init_generator() {
 
 string t_hs_generator::hs_language_pragma() {
   return string("{-# LANGUAGE DeriveDataTypeable #-}\n"
+                "{-# LANGUAGE OverloadedStrings #-}\n"
                 "{-# OPTIONS_GHC -fno-warn-missing-fields #-}\n"
                 "{-# OPTIONS_GHC -fno-warn-missing-signatures #-}\n"
                 "{-# OPTIONS_GHC -fno-warn-name-shadowing #-}\n"
@@ -244,6 +245,8 @@ string t_hs_generator::hs_imports() {
       "import Data.ByteString.Lazy\n"
       "import Data.Hashable\n"
       "import Data.Int\n"
+      "import Data.Text.Lazy ( Text )\n"
+      "import qualified Data.Text.Lazy as TL\n"
       "import Data.Typeable ( Typeable )\n"
       "import qualified Data.HashMap.Lazy as Map\n"
       "import qualified Data.HashSet as Set\n"
@@ -983,7 +986,7 @@ void t_hs_generator::generate_service_server(t_service* tservice) {
     indent(f_service_) << "skip iprot T_STRUCT" << endl;
     indent(f_service_) << "readMessageEnd iprot" << endl;
     indent(f_service_) << "writeMessageBegin oprot (name,M_EXCEPTION,seqid)" << endl;
-    indent(f_service_) << "writeAppExn oprot (AppExn AE_UNKNOWN_METHOD (\"Unknown function \" ++ name))" << endl;
+    indent(f_service_) << "writeAppExn oprot (AppExn AE_UNKNOWN_METHOD (\"Unknown function \" ++ TL.unpack name))" << endl;
     indent(f_service_) << "writeMessageEnd oprot" << endl;
     indent(f_service_) << "tFlush (getTransport oprot)" << endl;
     indent_down();
@@ -1462,7 +1465,7 @@ string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_VOID:   return "()";
-    case t_base_type::TYPE_STRING: return (((t_base_type*)type)->is_binary() ? "ByteString" : "String");
+    case t_base_type::TYPE_STRING: return (((t_base_type*)type)->is_binary() ? "ByteString" : "Text");
     case t_base_type::TYPE_BOOL:   return "Bool";
     case t_base_type::TYPE_BYTE:   return "Int8";
     case t_base_type::TYPE_I16:    return "Int16";

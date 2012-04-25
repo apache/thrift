@@ -36,7 +36,7 @@ Library
   Hs-Source-Dirs:
     src
   Build-Depends:
-    base >= 4, base < 5, network, ghc-prim, binary, bytestring, hashable, HTTP, unordered-containers, vector
+    base >= 4, base < 5, network, ghc-prim, binary, bytestring, hashable, HTTP, text, unordered-containers, vector
   Exposed-Modules:
     Thrift,
     Thrift.Protocol,
