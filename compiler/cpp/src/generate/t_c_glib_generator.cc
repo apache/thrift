@@ -2753,10 +2753,8 @@ void t_c_glib_generator::generate_deserialize_map_element(ofstream &out,
   t_field fval (tval, tval_ptr + valname);
   generate_deserialize_field (out, &fval, "", "", error_ret);
 
-  // insert into the hashtable.  if the field is not a pointer, then use
-  // the address of the object.
   indent(out) <<
-    "g_hash_table_insert ((GHashTable *)" << prefix << ", (gpointer) " << (tkey_ptr != "" ? "" : "&") << keyname << ", (gpointer) " << (tval_ptr != "" ? "" : "&") << valname << ");" << endl;
+    "g_hash_table_insert ((GHashTable *)" << prefix << ", (gpointer) " << keyname << ", (gpointer) " << valname << ");" << endl;
 }
 
 void t_c_glib_generator::generate_deserialize_set_element(ofstream &out,
