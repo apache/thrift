@@ -168,7 +168,7 @@ class t_hs_generator : public t_oop_generator {
   string type_to_enum(t_type* ttype);
 
   string render_hs_type(t_type* type,
-                        bool needs_parens = true);
+                        bool needs_parens);
 
  private:
   ofstream f_types_;
@@ -247,6 +247,7 @@ string t_hs_generator::hs_imports() {
       "import Data.Typeable ( Typeable )\n"
       "import qualified Data.HashMap.Lazy as Map\n"
       "import qualified Data.HashSet as Set\n"
+      "import qualified Data.Vector as Vector\n"
       "\n"
       "import Thrift\n"
       "import Thrift.Types ()\n"
@@ -467,9 +468,9 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
     vector<t_const_value*>::const_iterator v_iter;
 
     if (type->is_set())
-      out << "(Set.fromList ";
-
-    out << "[";
+      out << "(Set.fromList [";
+    else
+      out << "(Vector.fromList ";
 
     bool first = true;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
@@ -478,10 +479,7 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
       first = false;
     }
 
-    out << "]";
-
-    if (type->is_set())
-      out << ")";
+    out << "])";
 
   } else {
     throw "CANNOT GENERATE CONSTANT FOR TYPE: " + type->get_name();
@@ -539,7 +537,7 @@ void t_hs_generator::generate_hs_struct_definition(ofstream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       string mname = (*m_iter)->get_name();
       out << (first ? "" : ",");
-      out << "f_" << tname << "_" << mname << " :: Maybe " << render_hs_type((*m_iter)->get_type());
+      out << "f_" << tname << "_" << mname << " :: Maybe " << render_hs_type((*m_iter)->get_type(), true);
       first = false;
     }
     out << "}";
@@ -1224,9 +1222,9 @@ void t_hs_generator::generate_deserialize_container(ofstream &out,
     out << ";r <- f (n-1); return $ v:r}} in do {(" << etype << "," << size << ") <- readSetBegin iprot; l <- f " << size << "; return $ Set.fromList l})";
 
   } else if (ttype->is_list()) {
-    out << "(let {f 0 = return []; f n = do {v <- ";
+    out << "(let f n = Vector.replicateM (fromIntegral n) (";
     generate_deserialize_type(out,((t_map*)ttype)->get_key_type());
-    out << ";r <- f (n-1); return $ v:r}} in do {(" << etype << "," << size << ") <- readListBegin iprot; f " << size << "})";
+    out << ") in do {(" << etype << "," << size << ") <- readListBegin iprot; f " << size << "})";
   }
 }
 
@@ -1337,9 +1335,9 @@ void t_hs_generator::generate_serialize_container(ofstream &out,
 
   } else if (ttype->is_list()) {
     string v = tmp("_viter");
-    out << "(let {f [] = return (); f (" << v << ":t) = do {";
+    out << "(let f = Vector.mapM_ (\\" << v << " -> ";
     generate_serialize_list_element(out, (t_list*)ttype, v);
-    out << ";f t}} in do {writeListBegin oprot (" << type_to_enum(((t_list*)ttype)->get_elem_type()) << ",fromIntegral $ Prelude.length " << prefix << "); f " << prefix << ";writeListEnd oprot})";
+    out << ") in do {writeListBegin oprot (" << type_to_enum(((t_list*)ttype)->get_elem_type()) << ",fromIntegral $ Vector.length " << prefix << "); f " << prefix << ";writeListEnd oprot})";
   }
 
 }
@@ -1490,7 +1488,7 @@ string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
 
   } else if (type->is_list()) {
     t_type* etype = ((t_list*)type)->get_elem_type();
-    return "[" + render_hs_type(etype, false) + "]";
+    type_repr = "Vector.Vector " + render_hs_type(etype, true);
 
   } else {
     throw "INVALID TYPE IN type_to_enum: " + type->get_name();
