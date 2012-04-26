@@ -31,7 +31,6 @@ import Control.Monad ( liftM )
 import qualified Data.Binary
 import Data.Bits
 import Data.Int
-import Data.Text.Lazy
 import Data.Text.Lazy.Encoding ( decodeUtf8, encodeUtf8 )
 
 import GHC.Exts
@@ -41,7 +40,6 @@ import Thrift.Protocol
 import Thrift.Transport
 
 import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.Char8 as LBSChar8
 
 version_mask :: Int32
 version_mask = 0xffff0000

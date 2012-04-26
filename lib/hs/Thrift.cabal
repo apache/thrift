@@ -47,6 +47,8 @@ Library
     Thrift.Transport.Handle,
     Thrift.Transport.HttpClient,
     Thrift.Types
+  Ghc-Options:
+    -O2 -W
   Extensions:
     DeriveDataTypeable,
     ExistentialQuantification,
