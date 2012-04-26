@@ -245,8 +245,8 @@ string t_hs_generator::hs_imports() {
       "import Data.Hashable\n"
       "import Data.Int\n"
       "import Data.Typeable ( Typeable )\n"
-      "import qualified Data.Map as Map\n"
-      "import qualified Data.Set as Set\n"
+      "import qualified Data.HashMap.Lazy as Map\n"
+      "import qualified Data.HashSet as Set\n"
       "\n"
       "import Thrift\n"
       "import Thrift.Types ()\n"
@@ -545,7 +545,7 @@ void t_hs_generator::generate_hs_struct_definition(ofstream& out,
     out << "}";
   }
 
-  out << " deriving (Show,Eq,Ord,Typeable)" << endl;
+  out << " deriving (Show,Eq,Typeable)" << endl;
 
   if (is_exception)
     out << "instance Exception " << tname << endl;
@@ -1482,11 +1482,11 @@ string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    type_repr = "Map.Map " + render_hs_type(ktype, true) + " " + render_hs_type(vtype, true);
+    type_repr = "Map.HashMap " + render_hs_type(ktype, true) + " " + render_hs_type(vtype, true);
 
   } else if (type->is_set()) {
     t_type* etype = ((t_set*)type)->get_elem_type();
-    type_repr = "Set.Set " + render_hs_type(etype, true) ;
+    type_repr = "Set.HashSet " + render_hs_type(etype, true) ;
 
   } else if (type->is_list()) {
     t_type* etype = ((t_list*)type)->get_elem_type();

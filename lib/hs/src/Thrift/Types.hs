@@ -18,13 +18,13 @@
 
 module Thrift.Types where
 
-import Data.List (foldl')
+import Data.Foldable (foldl')
 import Data.Hashable ( Hashable, hashWithSalt )
-import qualified Data.Map as Map
-import qualified Data.Set as Set
+import qualified Data.HashMap.Lazy as Map
+import qualified Data.HashSet as Set
 
-instance (Hashable k, Hashable v) => Hashable (Map.Map k v) where
-  hashWithSalt salt = foldl' hashWithSalt salt . Map.assocs
+instance (Hashable k, Hashable v) => Hashable (Map.HashMap k v) where
+  hashWithSalt salt = foldl' hashWithSalt salt . Map.toList
 
-instance (Hashable a) => Hashable (Set.Set a) where
-  hashWithSalt salt = foldl' hashWithSalt salt . Set.toList
+instance (Hashable a) => Hashable (Set.HashSet a) where
+  hashWithSalt salt = foldl' hashWithSalt salt
