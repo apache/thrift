@@ -36,13 +36,23 @@ Library
   Hs-Source-Dirs:
     src
   Build-Depends:
-    base >= 4, base < 5, network, ghc-prim, binary, bytestring, HTTP
+    base >= 4, base < 5, network, ghc-prim, binary, bytestring, containers, hashable, HTTP
   Exposed-Modules:
-    Thrift, Thrift.Protocol, Thrift.Protocol.Binary, Thrift.Transport, 
-    Thrift.Transport.Framed, Thrift.Transport.Handle,
-    Thrift.Transport.HttpClient, Thrift.Server
+    Thrift,
+    Thrift.Protocol,
+    Thrift.Protocol.Binary,
+    Thrift.Server,
+    Thrift.Transport,
+    Thrift.Transport.Framed,
+    Thrift.Transport.Handle,
+    Thrift.Transport.HttpClient,
+    Thrift.Types
   Extensions:
-    DeriveDataTypeable, ExistentialQuantification, FlexibleInstances,
-    KindSignatures, MagicHash, RankNTypes,
-    ScopedTypeVariables, TypeSynonymInstances
-
+    DeriveDataTypeable,
+    ExistentialQuantification,
+    FlexibleInstances,
+    KindSignatures,
+    MagicHash,
+    RankNTypes,
+    ScopedTypeVariables,
+    TypeSynonymInstances

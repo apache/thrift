@@ -238,16 +238,18 @@ string t_hs_generator::hs_imports() {
       "import Prelude ( Bool(..), Enum, Double, String, Maybe(..),\n"
       "                 Eq, Show, Ord,\n"
       "                 return, length, IO, fromIntegral, fromEnum, toEnum,\n"
-      "                 (&&), (||), (==), (++), ($), (-) )\n"
+      "                 (.), (&&), (||), (==), (++), ($), (-) )\n"
       "\n"
       "import Control.Exception\n"
       "import Data.ByteString.Lazy\n"
+      "import Data.Hashable\n"
       "import Data.Int\n"
       "import Data.Typeable ( Typeable )\n"
       "import qualified Data.Map as Map\n"
       "import qualified Data.Set as Set\n"
       "\n"
       "import Thrift\n"
+      "import Thrift.Types ()\n"
       "\n");
 
   for (size_t i = 0; i < includes.size(); ++i)
@@ -303,22 +305,19 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
   indent_down();
 
   string ename = capitalize(tenum->get_name());
+
   indent(f_types_) << "instance Enum " << ename << " where" << endl;
   indent_up();
-
   indent(f_types_) << "fromEnum t = case t of" << endl;
   indent_up();
-
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
     indent(f_types_) << name << " -> " << value << endl;
   }
   indent_down();
-
   indent(f_types_) << "toEnum t = case t of" << endl;
   indent_up();
-
   for(c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
@@ -326,6 +325,11 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
   }
   indent(f_types_) << "_ -> throw ThriftException" << endl;
   indent_down();
+  indent_down();
+
+  indent(f_types_) << "instance Hashable " << ename << " where" << endl;
+  indent_up();
+  indent(f_types_) << "hashWithSalt salt = hashWithSalt salt . fromEnum" << endl;
   indent_down();
 }
 
@@ -545,6 +549,16 @@ void t_hs_generator::generate_hs_struct_definition(ofstream& out,
 
   if (is_exception)
     out << "instance Exception " << tname << endl;
+
+  indent(out) << "instance Hashable " << tname << " where" << endl;
+  indent_up();
+  indent(out) << "hashWithSalt salt record = salt";
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    string mname = (*m_iter)->get_name();
+    indent(out) << " `hashWithSalt` " << "f_" << tname << "_" << mname << " record";
+  }
+  indent(out) << endl;
+  indent_down();
 
   generate_hs_struct_writer(out, tstruct);
   generate_hs_struct_reader(out, tstruct);
