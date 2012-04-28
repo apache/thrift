@@ -63,7 +63,7 @@ my_send(int socket, const void *buffer, size_t length, int flags)
 #define socket my_socket
 #define recv my_recv
 #define send my_send
-#include "../src/transport/thrift_socket.c"
+#include "../src/thrift/transport/thrift_socket.c"
 #undef socket
 #undef recv
 #undef send

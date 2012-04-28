@@ -71,7 +71,7 @@ my_thrift_transport_write (ThriftTransport *transport, const gpointer buf,
 
 #define thrift_transport_read my_thrift_transport_read
 #define thrift_transport_write my_thrift_transport_write
-#include "../src/protocol/thrift_binary_protocol.c"
+#include "../src/thrift/protocol/thrift_binary_protocol.c"
 #undef thrift_transport_read
 #undef thrift_transport_write
 

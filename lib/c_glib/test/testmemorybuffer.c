@@ -27,7 +27,7 @@
 
 #define TEST_DATA { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' }
 
-#include "../src/transport/thrift_memory_buffer.c"
+#include "../src/thrift/transport/thrift_memory_buffer.c"
 
 /* test object creation and destruction */
 static void

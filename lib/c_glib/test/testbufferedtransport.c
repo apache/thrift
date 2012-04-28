@@ -27,7 +27,7 @@
 
 #define TEST_DATA { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' }
 
-#include "../src/transport/thrift_buffered_transport.c"
+#include "../src/thrift/transport/thrift_buffered_transport.c"
 
 static const char TEST_ADDRESS[] = "localhost";
 static const short TEST_PORT = 64444;

@@ -32,6 +32,8 @@ test_debug_proto(void)
   TTestOneOfEach *ooe = NULL;
   TTestNesting *n = NULL;
   TTestHolyMoley *hm = NULL;
+  gchar *random = g_strdup("random string");
+  gchar *nothing = g_strdup("nothing");
 
   ooe = g_object_new (T_TEST_TYPE_ONE_OF_EACH, NULL);
   ooe->im_true = TRUE;
@@ -41,38 +43,37 @@ test_debug_proto(void)
   ooe->integer32 = 1<<24;
   ooe->integer64 = (guint64) 6000 * 1000 * 1000;
   ooe->double_precision = M_PI;
-  ooe->some_characters = "Debug THIS!";
-  ooe->zomg_unicode = "\xd7\n\a\t";
+  ooe->some_characters = g_strdup("Debug THIS!");
+  ooe->zomg_unicode = g_strdup("\xd7\n\a\t");
 
   n = g_object_new (T_TEST_TYPE_NESTING, NULL);
+  if (n->my_ooe != NULL)
+    g_object_unref(n->my_ooe);
+
   n->my_ooe = ooe;
   n->my_ooe->integer16 = 16;
   n->my_ooe->integer32 = 32;
   n->my_ooe->integer64 = 64;
   n->my_ooe->double_precision = (sqrt(5.0) + 1) / 2;
-  n->my_ooe->some_characters = ":R (me going \"rrrr\")";
-  n->my_ooe->zomg_unicode = "\xd3\x80\xe2\x85\xae\xce\x9d\x20";
+  n->my_ooe->some_characters = g_strdup(":R (me going \"rrrr\")");
+  n->my_ooe->zomg_unicode = g_strdup("\xd3\x80\xe2\x85\xae\xce\x9d\x20");
   n->my_bonk->type = 31337;
-  n->my_bonk->message = "I am a bonk... xor!";
+  n->my_bonk->message = g_strdup("I am a bonk... xor!");
 
   hm = g_object_new (T_TEST_TYPE_HOLY_MOLEY, NULL);
   g_ptr_array_add (hm->big, ooe);
-  g_ptr_array_add (hm->big, n->my_ooe);
+  g_ptr_array_add (hm->big, g_object_ref(n->my_ooe));
   ((TTestOneOfEach *) g_ptr_array_index (hm->big, 0))->a_bite = 0x22;
   ((TTestOneOfEach *) g_ptr_array_index (hm->big, 1))->a_bite = 0x33;
 
-  g_hash_table_insert (hm->contain, "random string", "random string");
+  g_hash_table_insert (hm->contain, random, random);
 
   TTestBonk *bonk = NULL;
   bonk = g_object_new (T_TEST_TYPE_BONK, NULL);
-  GPtrArray *bonks = g_ptr_array_new ();
+  GPtrArray *bonks = g_ptr_array_new_with_free_func (g_object_unref);
   g_ptr_array_add (bonks, bonk);
-  g_hash_table_insert (hm->bonks, "nothing", bonks);
+  g_hash_table_insert (hm->bonks, nothing, bonks);
 
-  g_ptr_array_free (bonks, TRUE);
-  g_object_unref (bonk);
-  g_object_unref (ooe);
-  g_object_unref (n);
   g_object_unref (hm);
 
   return 0;
