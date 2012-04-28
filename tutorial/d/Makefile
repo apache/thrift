@@ -31,7 +31,7 @@ client: client.d
 	dmd -I${LIB_D_DIR}/src -L-L${LIB_D_DIR} -L-lthriftd client.d ${GEN_SRC}
 
 async_client: async_client.d
-	dmd -I${LIB_D_DIR}/src -L-L${LIB_D_DIR} -L-lthriftd -L-lthriftd-event -L-levent async_client.d ${GEN_SRC}
+	dmd -I${LIB_D_DIR}/src -L-L${LIB_D_DIR} -L-lthriftd-event -L-lthriftd -L-levent async_client.d ${GEN_SRC}
 
 clean:
 	$(RM) -f server client async_client

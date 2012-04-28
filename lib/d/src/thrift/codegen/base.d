@@ -368,7 +368,7 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
   static assert(is(This == struct) || is(This : Exception),
     "TStructHelpers can only be used inside a struct or an Exception class.");
 
-  static if (is(TIsSetFlags!(This, fieldMetaData))) {
+  static if (TIsSetFlags!(This, fieldMetaData).tupleof.length > 0) {
     // If we need to keep isSet flags around, create an instance of the
     // container struct.
     TIsSetFlags!(This, fieldMetaData) isSetFlags;
@@ -530,38 +530,35 @@ unittest {
   assert(f.toString() == `Foo(a: a string, b: 0 (unset), c: 4)`);
 }
 
+
 /**
  * Generates an eponymous struct with boolean flags for the non-required
- * non-nullable fields of T, if any, or nothing otherwise (i.e. the template
- * body is empty).
+ * non-nullable fields of T.
  *
- * Nullable fields are just set to null to signal »not set«.
+ * Nullable fields are just set to null to signal »not set«, so no flag is
+ * emitted for them, even if they are optional.
  *
  * In most cases, you do not want to use this directly, but via TStructHelpers
  * instead.
  */
-// DMD @@BUG@@: Using getFieldMeta!T in here horribly breaks things to the point
-// where getFieldMeta is *instantiated twice*, with different bodies. This is
-// connected to the position of »enum fieldMeta« in TStructHelpers.
 template TIsSetFlags(T, alias fieldMetaData) {
   mixin({
-    string boolDefinitions;
-    foreach (name; __traits(derivedMembers, T)) {
-      static if (!is(MemberType!(T, name)) || is(MemberType!(T, name) == void)) {
-        // We hit something strange like the TStructHelpers template itself,
-        // just ignore.
-      } else static if (isNullable!(MemberType!(T, name))) {
-        // If the field is nullable, we don't need an isSet flag as we can map
-        // unset to null.
-      } else static if (memberReq!(T, name, fieldMetaData) != TReq.REQUIRED) {
-        boolDefinitions ~= "bool " ~ name ~ ";\n";
+    string code = "struct TIsSetFlags {\n";
+    foreach (meta; fieldMetaData) {
+      code ~= "static if (!is(MemberType!(T, `" ~ meta.name ~ "`))) {\n";
+      code ~= q{
+        static assert(false, "Field '" ~ meta.name ~
+          "' referenced in metadata not present in struct '" ~ T.stringof ~ "'.");
+      };
+      code ~= "}";
+      if (meta.req == TReq.OPTIONAL || meta.req == TReq.OPT_IN_REQ_OUT) {
+        code ~= "else static if (!isNullable!(MemberType!(T, `" ~ meta.name ~ "`))) {\n";
+        code ~= "  bool " ~ meta.name ~ ";\n";
+        code ~= "}\n";
       }
     }
-    if (!boolDefinitions.empty) {
-      return "struct TIsSetFlags {\n" ~ boolDefinitions ~ "}";
-    } else {
-      return "";
-    }
+    code ~= "}";
+    return code;
   }());
 }
 
