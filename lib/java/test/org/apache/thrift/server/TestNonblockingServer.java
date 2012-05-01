@@ -36,7 +36,7 @@ public class TestNonblockingServer extends ServerTestBase {
 
   private Thread serverThread;
   private TServer server;
-  private static final int NUM_QUERIES = 10000;
+  private static final int NUM_QUERIES = 1000;
 
   protected TServer getServer(TProcessor processor, TNonblockingServerSocket socket, TProtocolFactory protoFactory, TTransportFactory factory) {
     final Args args = new Args(socket).processor(processor).protocolFactory(protoFactory);

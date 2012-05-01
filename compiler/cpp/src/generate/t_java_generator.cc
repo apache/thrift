@@ -355,6 +355,7 @@ string t_java_generator::java_type_imports() {
     "import org.apache.thrift.protocol.TTupleProtocol;\n" +
     "import org.apache.thrift.protocol.TProtocolException;\n" +
     "import org.apache.thrift.EncodingUtils;\n" +
+    "import org.apache.thrift.TException;\n" +
     "import java.util.List;\n" +
     "import java.util.ArrayList;\n" +
     "import java.util.Map;\n" +
@@ -1242,7 +1243,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     (in_class ? "static " : "") << "class " << tstruct->get_name() << " ";
 
   if (is_exception) {
-    out << "extends Exception ";
+    out << "extends TException ";
   }
   out << "implements org.apache.thrift.TBase<" << tstruct->get_name() << ", " << tstruct->get_name() << "._Fields>, java.io.Serializable, Cloneable";
 
