@@ -1,4 +1,4 @@
-# encoding: ascii-8bit
+# encoding: utf-8
 # 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -79,10 +79,12 @@ module Thrift
 
 
     def write(buf,sz=nil)
+      buf.force_encoding("utf-8")
       return @transport.write(buf) unless @write
 
       @wbuf << (sz ? buf[0...sz] : buf)
     end
+        
 
     #
     # Writes the output buffer to the stream in the format of a 4-byte length
@@ -90,13 +92,13 @@ module Thrift
     #
     def flush
       return @transport.flush unless @write
-
       out = [@wbuf.length].pack('N')
+      out.force_encoding("utf-8")
       out << @wbuf
       @transport.write(out)
       @transport.flush
       @wbuf = ''
-    end
+    end    
 
     private
 
