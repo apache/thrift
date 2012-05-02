@@ -372,7 +372,68 @@ public class TestClient {
         }
         System.out.print("}\n");
 
-        // Test oneway
+        
+        /**
+         * EXECPTION TEST
+         */
+        try {
+          System.out.print("testClient.testException(\"Xception\") =>");
+          testClient.testException("Xception");
+          System.out.print("  void\nFAILURE\n");
+        } catch(Xception e) {
+          System.out.print("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
+        }
+        
+        try {
+          System.out.print("testClient.testException(\"Xception\") =>");
+          testClient.testException("Xception");
+          System.out.print("  void\nFAILURE\n");
+        } catch(TException e) {
+          System.out.print("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
+        }
+        
+        try {
+          System.out.print("testClient.testException(\"success\") =>");
+          testClient.testException("success");
+          System.out.print("  void\n");
+        }catch(Exception e) {
+          System.out.print("  exception\nFAILURE\n");
+        }
+        
+        
+        /**
+         * MULTI EXCEPTION TEST
+         */
+        
+        try {
+          System.out.print("testClient.testMultiException(\"Xception\", \"test 1\") =>");
+          testClient.testMultiException("Xception", "test 1");
+          System.out.print("  result\nFAILURE\n");
+        } catch(Xception e) {
+          System.out.print("  {%u, \"%s\"}\n", e.errorCode, e.message.c_str());
+        }
+        
+        try {
+          System.out.print("testClient.testMultiException(\"Xception2\", \"test 2\") =>");
+          testClient.testMultiException("Xception2", "test 2");
+          System.out.print("  result\nFAILURE\n");
+        } catch(Xception2 e) {
+          System.out.print("  {%u, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing.c_str());
+        }
+        
+        try {
+          System.out.print("testClient.testMultiException(\"success\", \"test 3\") =>");
+          testClient.testMultiException("success", "test 3");
+          System.out.print("  {{\"%s\"}}\n", result.string_thing.c_str());
+        } catch(Exception e) {
+          System.out.print("  exception\nFAILURE\n");
+        }
+
+
+        
+        /**
+         * ONEWAY TEST
+         */
         System.out.print("testOneway(3)...");
         long startOneway = System.nanoTime();
         testClient.testOneway(3);
