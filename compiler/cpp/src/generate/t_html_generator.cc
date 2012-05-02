@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <sstream>
 #include "t_generator.h"
+#include "t_html_generator.h"
 #include "platform.h"
 using namespace std;
 
@@ -77,6 +78,7 @@ class t_html_generator : public t_generator {
   void print_doc        (t_doc* tdoc);
   int  print_type       (t_type* ttype);
   void print_const_value(t_const_value* tvalue);
+  void print_fn_args_doc(t_function* tfunction);
 
   std::ofstream f_out_;
 };
@@ -85,8 +87,8 @@ class t_html_generator : public t_generator {
  * Emits the Table of Contents links at the top of the module's page
  */
 void t_html_generator::generate_program_toc() {
-  f_out_ << "<table><tr><th>Module</th><th>Services</th>"
-   << "<th>Data types</th><th>Constants</th></tr>" << endl;
+  f_out_ << "<table class=\"table-bordered table-striped table-condensed\"><thead><th>Module</th><th>Services</th>"
+   << "<th>Data types</th><th>Constants</th></thead>" << endl;
   generate_program_toc_row(program_);
   f_out_ << "</table>" << endl;
 }
@@ -186,15 +188,15 @@ void t_html_generator::generate_program_toc_row(t_program* tprog) {
        dt_iter != data_types.end(); dt_iter++) {
     f_out_ << dt_iter->second << "<br/>" << endl;
   }
-  f_out_ << "</td>" << endl << "<td><code>";
+  f_out_ << "</td>" << endl << "<td>";
   if (!tprog->get_consts().empty()) {
     map<string,string> const_html;
     vector<t_const*> consts = tprog->get_consts();
     vector<t_const*>::iterator con_iter;
     for (con_iter = consts.begin(); con_iter != consts.end(); ++con_iter) {
       string name = (*con_iter)->get_name();
-      string html ="<a href=\"" + fname + "#Const_" + name +
-        "\">" + name + "</a>";
+      string html ="<code><a href=\"" + fname + "#Const_" + name +
+        "\">" + name + "</a></code>";
       const_html.insert(pair<string,string>(name, html));
     }
     for (map<string,string>::iterator con_iter = const_html.begin();
@@ -219,10 +221,11 @@ void t_html_generator::generate_program() {
   f_out_ << "<html xmlns=\"http://www.w3.org/1999/xhtml\">" << endl;
   f_out_ << "<head>" << endl;
   f_out_ << "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\" />" << endl;
-  f_out_ << "<link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"/>"
-   << endl;
+  f_out_ << "<link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"/>" << endl;
   f_out_ << "<title>Thrift module: " << program_->get_name()
-   << "</title></head><body>" << endl << "<h1>Thrift module: "
+   << "</title></head><body>" << endl
+   << "<div class=\"container-fluid\">" << endl
+   << "<h1>Thrift module: "
    << program_->get_name() << "</h1>" << endl;
 
   print_doc(program_);
@@ -232,8 +235,8 @@ void t_html_generator::generate_program() {
   if (!program_->get_consts().empty()) {
     f_out_ << "<hr/><h2 id=\"Constants\">Constants</h2>" << endl;
     vector<t_const*> consts = program_->get_consts();
-    f_out_ << "<table>";
-    f_out_ << "<tr><th>Constant</th><th>Type</th><th>Value</th></tr>" << endl;
+    f_out_ << "<table class=\"table-bordered table-striped table-condensed\">";
+    f_out_ << "<thead><th>Constant</th><th>Type</th><th>Value</th></thead>" << endl;
     generate_consts(consts);
     f_out_ << "</table>";
   }
@@ -283,7 +286,7 @@ void t_html_generator::generate_program() {
     }
   }
 
-  f_out_ << "</body></html>" << endl;
+  f_out_ << "</div></body></html>" << endl;
   f_out_.close();
 
   generate_index();
@@ -300,37 +303,29 @@ void t_html_generator::generate_index() {
   f_out_ << "<link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"/>"
    << endl;
   f_out_ << "<title>All Thrift declarations</title></head><body>"
+   << endl << "<div class=\"container-fluid\">"
    << endl << "<h1>All Thrift declarations</h1>" << endl;
-  f_out_ << "<table><tr><th>Module</th><th>Services</th><th>Data types</th>"
-   << "<th>Constants</th></tr>" << endl;
+  f_out_ << "<table class=\"table-bordered table-striped table-condensed\"><thead><th>Module</th><th>Services</th><th>Data types</th>"
+   << "<th>Constants</th></thead>" << endl;
   vector<t_program*> programs;
   generate_program_toc_rows(program_, programs);
   f_out_ << "</table>" << endl;
-  f_out_ << "</body></html>" << endl;
+  f_out_ << "</div></body></html>" << endl;
   f_out_.close();
 }
 
 void t_html_generator::generate_css() {
   string css_fname = get_out_dir() + "style.css";
   f_out_.open(css_fname.c_str());
+  f_out_ << BOOTSTRAP_CSS() << endl;
   f_out_ << "/* Auto-generated CSS for generated Thrift docs */" << endl;
-  f_out_ <<
-    "body { font-family: Tahoma, sans-serif; }" << endl;
-  f_out_ <<
-    "pre { background-color: #dddddd; padding: 6px; }" << endl;
-  f_out_ <<
-    "h3,h4 { padding-top: 0px; margin-top: 0px; }" << endl;
-  f_out_ <<
-    "div.definition { border: 1px solid gray; margin: 10px; padding: 10px; }" << endl;
-  f_out_ <<
-    "div.extends { margin: -0.5em 0 1em 5em }" << endl;
-  f_out_ <<
-    "table { border: 1px solid grey; border-collapse: collapse; }" << endl;
-  f_out_ <<
-    "td { border: 1px solid grey; padding: 1px 6px; vertical-align: top; }" << endl;
-  f_out_ <<
-    "th { border: 1px solid black; background-color: #bbbbbb;" << endl <<
-    "     text-align: left; padding: 1px 6px; }" << endl;
+  f_out_ << "h3, h4 { margin-bottom: 6px; }" << endl;
+  f_out_ << "div.definition { border: 1px solid #CCC; margin-bottom: 10px; padding: 10px; }" << endl;
+  f_out_ << "div.extends { margin: -0.5em 0 1em 5em }" << endl;
+  f_out_ << "td { vertical-align: top; }" << endl;
+  f_out_ << "table { empty-cells: show; }" << endl;
+  f_out_ << "code { line-height: 20px; }" << endl;
+  f_out_ << ".table-bordered th, .table-bordered td { border-bottom: 1px solid #DDDDDD; }" << endl;
   f_out_.close();
 }
 
@@ -462,6 +457,59 @@ void t_html_generator::print_const_value(t_const_value* tvalue) {
 }
 
 /**
+ * Prints out documentation for arguments/exceptions of a function, if any documentation has been supplied.
+ */
+void t_html_generator::print_fn_args_doc(t_function* tfunction) {
+  bool has_docs = false;
+  vector<t_field*> args = tfunction->get_arglist()->get_members();
+  vector<t_field*>::iterator arg_iter = args.begin();
+  if (arg_iter != args.end()) {
+    for ( ; arg_iter != args.end(); arg_iter++) {
+      if ((*arg_iter)->has_doc() && !(*arg_iter)->get_doc().empty())
+        has_docs = true;
+    }
+    if (has_docs) {
+      arg_iter = args.begin();
+      f_out_ << "<br/><h4 id=\"Parameters_" << service_name_ << "_" << tfunction->get_name()
+        << "\">Parameters</h4>" << endl;
+      f_out_ << "<table class=\"table-bordered table-striped table-condensed\">";
+      f_out_ << "<thead><th>Name</th><th>Description</th></thead>";
+      for ( ; arg_iter != args.end(); arg_iter++) {
+        f_out_ << "<tr><td>" << (*arg_iter)->get_name();
+        f_out_ << "</td><td>";
+        f_out_ << (*arg_iter)->get_doc();
+        f_out_ << "</td></tr>" << endl;
+      }
+      f_out_ << "</table>";
+    }
+  }
+
+  has_docs = false;
+  vector<t_field*> excepts = tfunction->get_xceptions()->get_members();
+  vector<t_field*>::iterator ex_iter = excepts.begin();
+  if (ex_iter != excepts.end()) {
+    for ( ; ex_iter != excepts.end(); ex_iter++) {
+      if ((*ex_iter)->has_doc() && !(*ex_iter)->get_doc().empty())
+        has_docs = true;
+    }
+    if (has_docs) {
+      ex_iter = excepts.begin();
+      f_out_ << "<br/><h4 id=\"Exceptions_" << service_name_ << "_" << tfunction->get_name()
+        << "\">Exceptions</h4>" << endl;
+      f_out_ << "<table class=\"table-bordered table-striped table-condensed\">";
+      f_out_ << "<thead><th>Type</th><th>Description</th></thead>";
+      for ( ; ex_iter != excepts.end(); ex_iter++) {
+        f_out_ << "<tr><td>" << (*ex_iter)->get_type()->get_name();
+        f_out_ << "</td><td>";
+        f_out_ << (*ex_iter)->get_doc();
+        f_out_ << "</td></tr>" << endl;
+      }
+      f_out_ << "</table>";
+    }
+  }
+}
+
+/**
  * Generates a typedef.
  *
  * @param ttypedef The type definition
@@ -491,7 +539,7 @@ void t_html_generator::generate_enum(t_enum* tenum) {
   print_doc(tenum);
   vector<t_enum_value*> values = tenum->get_constants();
   vector<t_enum_value*>::iterator val_iter;
-  f_out_ << "<br/><table>" << endl;
+  f_out_ << "<br/><table class=\"table-bordered table-striped table-condensed\">" << endl;
   for (val_iter = values.begin(); val_iter != values.end(); ++val_iter) {
     f_out_ << "<tr><td><code>";
     f_out_ << (*val_iter)->get_name();
@@ -508,9 +556,9 @@ void t_html_generator::generate_enum(t_enum* tenum) {
 void t_html_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   f_out_ << "<tr id=\"Const_" << name << "\"><td><code>" << name
-   << "</code></td><td><code>";
+   << "</code></td><td>";
   print_type(tconst->get_type());
-  f_out_ << "</code></td><td><code>";
+  f_out_ << "</td><td><code>";
   print_const_value(tconst->get_value());
   f_out_ << "</code></td></tr>";
   if (tconst->has_doc()) {
@@ -537,8 +585,8 @@ void t_html_generator::generate_struct(t_struct* tstruct) {
   f_out_ << name << "</h3>" << endl;
   vector<t_field*> members = tstruct->get_members();
   vector<t_field*>::iterator mem_iter = members.begin();
-  f_out_ << "<table>";
-  f_out_ << "<tr><th>Key</th><th>Field</th><th>Type</th><th>Description</th><th>Requiredness</th><th>Default value</th></tr>"
+  f_out_ << "<table class=\"table-bordered table-striped table-condensed\">";
+  f_out_ << "<thead><th>Key</th><th>Field</th><th>Type</th><th>Description</th><th>Requiredness</th><th>Default value</th></thead>"
     << endl;
   for ( ; mem_iter != members.end(); mem_iter++) {
     f_out_ << "<tr><td>" << (*mem_iter)->get_key() << "</td><td>";
@@ -606,21 +654,19 @@ void t_html_generator::generate_service(t_service* tservice) {
     offset += fn_name.size() + 2;
     vector<t_field*> args = (*fn_iter)->get_arglist()->get_members();
     vector<t_field*>::iterator arg_iter = args.begin();
-    if (arg_iter != args.end()) {
-      for ( ; arg_iter != args.end(); arg_iter++) {
-        if (!first) {
-          f_out_ << "," << endl;
-          for (int i = 0; i < offset; ++i) {
-            f_out_ << " ";
-          }
+    for ( ; arg_iter != args.end(); arg_iter++) {
+      if (!first) {
+        f_out_ << "," << endl;
+        for (int i = 0; i < offset; ++i) {
+          f_out_ << " ";
         }
-        first = false;
-        print_type((*arg_iter)->get_type());
-        f_out_ << " " << (*arg_iter)->get_name();
-        if ((*arg_iter)->get_value() != NULL) {
-          f_out_ << " = ";
-          print_const_value((*arg_iter)->get_value());
-        }
+      }
+      first = false;
+      print_type((*arg_iter)->get_type());
+      f_out_ << " " << (*arg_iter)->get_name();
+      if ((*arg_iter)->get_value() != NULL) {
+        f_out_ << " = ";
+        print_const_value((*arg_iter)->get_value());
       }
     }
     f_out_ << ")" << endl;
@@ -640,6 +686,7 @@ void t_html_generator::generate_service(t_service* tservice) {
     }
     f_out_ << "</pre>";
     print_doc(*fn_iter);
+    print_fn_args_doc(*fn_iter);
     f_out_ << "</div>";
   }
 }

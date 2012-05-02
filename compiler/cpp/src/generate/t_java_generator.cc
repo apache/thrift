@@ -154,9 +154,9 @@ public:
   void generate_union_hashcode(ofstream& out, t_struct* tstruct);
 
   void generate_scheme_map(ofstream& out, t_struct* tstruct);
-  void generate_standard_writer(ofstream& out, t_struct* tstruct);
+  void generate_standard_writer(ofstream& out, t_struct* tstruct, bool is_result);
   void generate_standard_reader(ofstream& out, t_struct* tstruct);
-  void generate_java_struct_standard_scheme(ofstream& out, t_struct* tstruct);
+  void generate_java_struct_standard_scheme(ofstream& out, t_struct* tstruct, bool is_result);
 
   void generate_java_struct_tuple_scheme(ofstream& out, t_struct* tstruct);
   void generate_java_struct_tuple_reader(ofstream& out, t_struct* tstruct);
@@ -1451,7 +1451,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   generate_java_struct_write_object(out, tstruct);
   generate_java_struct_read_object(out, tstruct);
 
-  generate_java_struct_standard_scheme(out, tstruct);
+  generate_java_struct_standard_scheme(out, tstruct, is_result);
   generate_java_struct_tuple_scheme(out, tstruct);
 
   scope_down(out);
@@ -4005,7 +4005,7 @@ void t_java_generator::generate_standard_reader(ofstream& out, t_struct* tstruct
   out << indent() << "}" << endl;	
 }
 
-void t_java_generator::generate_standard_writer(ofstream& out, t_struct* tstruct) {
+void t_java_generator::generate_standard_writer(ofstream& out, t_struct* tstruct, bool is_result) {
   indent_up();
   out <<
     indent() << "public void write(org.apache.thrift.protocol.TProtocol oprot, " << 
@@ -4026,7 +4026,7 @@ void t_java_generator::generate_standard_writer(ofstream& out, t_struct* tstruct
       indent() << "if (struct." << (*f_iter)->get_name() << " != null) {" << endl;
       indent_up();
     }
-    bool optional = (*f_iter)->get_req() == t_field::T_OPTIONAL;
+    bool optional = ((*f_iter)->get_req() == t_field::T_OPTIONAL) || (is_result && !null_allowed);
     if (optional) {
       indent(out) << "if (" << "struct." << generate_isset_check((*f_iter)) << ") {" << endl;
       indent_up();
@@ -4059,7 +4059,7 @@ void t_java_generator::generate_standard_writer(ofstream& out, t_struct* tstruct
   indent_down();
 }
 
-void t_java_generator::generate_java_struct_standard_scheme(ofstream& out, t_struct* tstruct){
+void t_java_generator::generate_java_struct_standard_scheme(ofstream& out, t_struct* tstruct, bool is_result){
   indent(out) << "private static class " << tstruct->get_name() << "StandardSchemeFactory implements SchemeFactory {" << endl;
   indent_up();
   indent(out) << "public " << tstruct->get_name() << "StandardScheme getScheme() {" << endl;
@@ -4075,7 +4075,7 @@ void t_java_generator::generate_java_struct_standard_scheme(ofstream& out, t_str
   generate_standard_reader(out, tstruct);
   indent_down();
   out << endl;
-  generate_standard_writer(out, tstruct);
+  generate_standard_writer(out, tstruct, is_result);
 
   out <<
   indent() << "}" << endl <<
