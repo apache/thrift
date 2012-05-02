@@ -284,7 +284,7 @@ class TestHandler : public ThriftTestIf {
       e.errorCode = 1001;
       e.message = arg;
       throw e;
-    } else if (arg.compare("ApplicationException") == 0) {
+    } else if (arg.compare("TException") == 0) {
       apache::thrift::TException e;
       throw e;
     } else {
