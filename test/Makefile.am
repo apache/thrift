@@ -44,6 +44,12 @@ if WITH_HASKELL
 SUBDIRS += hs
 endif
 
+#
+# generate html for ThriftTest.thrift
+#
+check-local:
+	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/test/ThriftTest.thrift
+
 EXTRA_DIST = \
 	cpp \
 	csharp \

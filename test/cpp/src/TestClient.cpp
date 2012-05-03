@@ -530,8 +530,8 @@ int main(int argc, char** argv) {
     }
 
     try {
-        printf("testClient.testException(\"Xception\") =>");
-        testClient.testException("Xception");
+        printf("testClient.testException(\"TException\") =>");
+        testClient.testException("TException");
         printf("  void\nFAILURE\n");
 
       } catch(TException& e) {
