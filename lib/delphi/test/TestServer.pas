@@ -110,8 +110,15 @@ begin
   Console.WriteLine('testException(' + arg + ')');
   if ( arg = 'Xception') then
   begin
-    raise TXception.Create( 1001, 'This is an Xception');
+    raise TXception.Create( 1001, arg);
   end;
+
+  if (arg = 'TException') then
+  begin
+    raise TException.Create('');
+  end;
+
+  // else do not throw anything
 end;
 
 function TTestServer.TTestHandlerImpl.testI32(thing: Integer): Integer;
@@ -140,7 +147,7 @@ begin
 
   Console.WriteLine('testInsanity()');
   hello := TXtructImpl.Create;
-  hello.String_thing := 'hello';
+  hello.String_thing := 'Hello2';
   hello.Byte_thing := 2;
   hello.I32_thing := 2;
   hello.I64_thing := 2;
@@ -164,7 +171,7 @@ begin
   first_map := TThriftDictionaryImpl<TNumberz, IInsanity>.Create;
   second_map := TThriftDictionaryImpl<TNumberz, IInsanity>.Create;
 
-  first_map.AddOrSetValue( TNumberz.SIX, crazy);
+  first_map.AddOrSetValue( TNumberz.TWO, crazy);
   first_map.AddOrSetValue( TNumberz.THREE, crazy);
 
   second_map.AddOrSetValue( TNumberz.SIX, looney);
@@ -348,8 +355,25 @@ end;
 
 function TTestServer.TTestHandlerImpl.testStringMap(
   const thing: IThriftDictionary<string, string>): IThriftDictionary<string, string>;
+var
+  first : Boolean;
+  key : string;
 begin
-
+  Console.Write('testStringMap({');
+  first := True;
+  for key in thing.Keys do
+  begin
+    if (first) then
+    begin
+      first := false;
+    end else
+    begin
+      Console.Write(', ');
+    end;
+    Console.Write(key + ' => ' + thing[key]);
+  end;
+  Console.WriteLine('})');
+  Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testTypedef( const thing: Int64): Int64;

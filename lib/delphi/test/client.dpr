@@ -56,8 +56,10 @@ begin
     TTestClient.Execute( args );
     Readln;
   except
-    on E: Exception do
+    on E: Exception do begin
       Writeln(E.ClassName, ': ', E.Message);
+      ExitCode := $FFFF;
+    end;
   end;
 end.
 
