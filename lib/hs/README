@@ -52,6 +52,17 @@ Enums
 
 Become Haskell 'data' types. Use fromEnum to get out the int value.
 
+Lists
+=====
+
+Become Data.Vector.Vector from the vector package.
+
+Maps and Sets
+=============
+
+Become Data.HashMap.Strict.Map and Data.HashSet.Set from the
+unordered-containers package.
+
 Structs
 =======
 
@@ -61,7 +72,7 @@ fields are Maybe types.
 Exceptions
 ==========
 
-Identical to structs. Throw them with throwDyn. Catch them with catchDyn.
+Identical to structs. Use them with throw and catch from Control.Exception.
 
 Client
 ======
@@ -86,4 +97,3 @@ Processor
 
 Just a function that takes a handler label, protocols. It calls the
 superclasses process if there is a superclass.
-

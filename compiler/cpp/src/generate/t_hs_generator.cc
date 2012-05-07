@@ -248,7 +248,7 @@ string t_hs_generator::hs_imports() {
       "import Data.Text.Lazy ( Text )\n"
       "import qualified Data.Text.Lazy as TL\n"
       "import Data.Typeable ( Typeable )\n"
-      "import qualified Data.HashMap.Lazy as Map\n"
+      "import qualified Data.HashMap.Strict as Map\n"
       "import qualified Data.HashSet as Set\n"
       "import qualified Data.Vector as Vector\n"
       "\n"
