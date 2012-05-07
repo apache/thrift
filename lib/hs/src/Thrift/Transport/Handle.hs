@@ -27,7 +27,9 @@ module Thrift.Transport.Handle
     , HandleSource(..)
     ) where
 
-import Control.Exception ( throw )
+import Prelude hiding ( catch )
+
+import Control.Exception ( catch, throw )
 import Control.Monad ()
 
 import Network

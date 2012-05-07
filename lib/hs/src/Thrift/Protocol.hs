@@ -29,9 +29,10 @@ module Thrift.Protocol
 
 import Control.Monad ( replicateM_, unless )
 import Control.Exception
-import Data.Int
-import Data.Typeable ( Typeable )
 import Data.ByteString.Lazy
+import Data.Int
+import Data.Text.Lazy ( Text )
+import Data.Typeable ( Typeable )
 
 import Thrift.Transport
 
@@ -102,12 +103,12 @@ instance Enum MessageType where
 class Protocol a where
     getTransport :: Transport t => a t -> t
 
-    writeMessageBegin :: Transport t => a t -> (String, MessageType, Int32) -> IO ()
+    writeMessageBegin :: Transport t => a t -> (Text, MessageType, Int32) -> IO ()
     writeMessageEnd   :: Transport t => a t -> IO ()
 
-    writeStructBegin :: Transport t => a t -> String -> IO ()
+    writeStructBegin :: Transport t => a t -> Text -> IO ()
     writeStructEnd   :: Transport t => a t -> IO ()
-    writeFieldBegin  :: Transport t => a t -> (String, ThriftType, Int16) -> IO ()
+    writeFieldBegin  :: Transport t => a t -> (Text, ThriftType, Int16) -> IO ()
     writeFieldEnd    :: Transport t => a t -> IO ()
     writeFieldStop   :: Transport t => a t -> IO ()
     writeMapBegin    :: Transport t => a t -> (ThriftType, ThriftType, Int32) -> IO ()
@@ -123,16 +124,16 @@ class Protocol a where
     writeI32    :: Transport t => a t -> Int32 -> IO ()
     writeI64    :: Transport t => a t -> Int64 -> IO ()
     writeDouble :: Transport t => a t -> Double -> IO ()
-    writeString :: Transport t => a t -> String -> IO ()
+    writeString :: Transport t => a t -> Text -> IO ()
     writeBinary :: Transport t => a t -> ByteString -> IO ()
 
 
-    readMessageBegin :: Transport t => a t -> IO (String, MessageType, Int32)
+    readMessageBegin :: Transport t => a t -> IO (Text, MessageType, Int32)
     readMessageEnd   :: Transport t => a t -> IO ()
 
-    readStructBegin :: Transport t => a t -> IO String
+    readStructBegin :: Transport t => a t -> IO Text
     readStructEnd   :: Transport t => a t -> IO ()
-    readFieldBegin  :: Transport t => a t -> IO (String, ThriftType, Int16)
+    readFieldBegin  :: Transport t => a t -> IO (Text, ThriftType, Int16)
     readFieldEnd    :: Transport t => a t -> IO ()
     readMapBegin    :: Transport t => a t -> IO (ThriftType, ThriftType, Int32)
     readMapEnd      :: Transport t => a t -> IO ()
@@ -147,7 +148,7 @@ class Protocol a where
     readI32    :: Transport t => a t -> IO Int32
     readI64    :: Transport t => a t -> IO Int64
     readDouble :: Transport t => a t -> IO Double
-    readString :: Transport t => a t -> IO String
+    readString :: Transport t => a t -> IO Text
     readBinary :: Transport t => a t -> IO ByteString
 
 
