@@ -53,7 +53,6 @@ check-local:
 EXTRA_DIST = \
 	cpp \
 	csharp \
-	erl \
 	hs \
 	nodejs \
 	ocaml \

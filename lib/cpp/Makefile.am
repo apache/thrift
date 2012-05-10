@@ -224,8 +224,7 @@ processor_test_SOURCES = src/thrift/processor/test/ProcessorTest.cpp \
                         src/thrift/processor/test/ServerThread.cpp \
                         src/thrift/processor/test/EventLog.h \
                         src/thrift/processor/test/Handlers.h \
-                        src/thrift/processor/test/ServerThread.h \
-                        src/thrift/processor/test/gen-cpp/ChildService.h
+                        src/thrift/processor/test/ServerThread.h
 
 processor_test_LDADD = libprocessortest.la \
                        libthrift.la \
@@ -249,14 +248,14 @@ gen-cpp/ChildService.cpp: $(top_srcdir)/lib/cpp/src/thrift/processor/test/proc.t
 	$(THRIFT) --gen cpp:templates,cob_style $<
 
 nodist_libprocessortest_la_SOURCES = \
-       gen-cpp/ChildService.h \
-       gen-cpp/ChildService.cpp \
-       gen-cpp/ParentService.h \
-       gen-cpp/ParentService.cpp
+       src/thrift/processor/test/gen-cpp/ChildService.h \
+       src/thrift/processor/test/gen-cpp/ChildService.cpp \
+       src/thrift/processor/test/gen-cpp/ParentService.h \
+       src/thrift/processor/test/gen-cpp/ParentService.cpp
 
 WINDOWS_DIST = \
              README_WINDOWS \
-             src/windows \
+             src/thrift/windows \
              thrift.sln \
              libthrift.vcxproj \
              libthrift.vcxproj.filters \
