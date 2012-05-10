@@ -208,7 +208,8 @@ include_qt_HEADERS = \
                   src/thrift/qt/TQTcpServer.h
 
 
-noinst_PROGRAMS = concurrency_test
+noinst_PROGRAMS = concurrency_test \
+                  processor_test
 
 concurrency_test_SOURCES = \
                            src/thrift/concurrency/test/Tests.cpp \
@@ -217,6 +218,41 @@ concurrency_test_SOURCES = \
                            src/thrift/concurrency/test/TimerManagerTests.h
 
 concurrency_test_LDADD = libthrift.la
+
+processor_test_SOURCES = src/thrift/processor/test/ProcessorTest.cpp \
+                        src/thrift/processor/test/EventLog.cpp \
+                        src/thrift/processor/test/ServerThread.cpp \
+                        src/thrift/processor/test/EventLog.h \
+                        src/thrift/processor/test/Handlers.h \
+                        src/thrift/processor/test/ServerThread.h \
+                        src/thrift/processor/test/gen-cpp/ChildService.h
+
+processor_test_LDADD = libprocessortest.la \
+                       libthrift.la \
+                       libthriftnb.la \
+                       $(BOOST_LDFLAGS) \
+                       -levent \
+                       $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
+
+check_PROGRAMS = \
+       concurrency_test \
+       processor_test
+
+TESTS = \
+       $(check_PROGRAMS)
+
+noinst_LTLIBRARIES = libprocessortest.la
+
+THRIFT = $(top_builddir)/compiler/cpp/thrift
+
+gen-cpp/ChildService.cpp: $(top_srcdir)/lib/cpp/src/thrift/processor/test/proc.thrift
+	$(THRIFT) --gen cpp:templates,cob_style $<
+
+nodist_libprocessortest_la_SOURCES = \
+       gen-cpp/ChildService.h \
+       gen-cpp/ChildService.cpp \
+       gen-cpp/ParentService.h \
+       gen-cpp/ParentService.cpp
 
 WINDOWS_DIST = \
              README_WINDOWS \
