@@ -56,12 +56,47 @@
     <category rdf:resource="http://projects.apache.org/category/network-server" />
     <release>
       <Version>
-        <name>Apache Thrift 0.8.0</name>
+        <name>Apache Thrift</name>
         <created>2011-11-29</created>
         <revision>0.8.0</revision>
       </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2011-08-13</created>
+        <revision>0.7.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2011-04-25</created>
+        <revision>0.6.1</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2011-02-08</created>
+        <revision>0.6.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift (incubating)</name>
+        <created>2010-10-07</created>
+        <revision>0.5.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift (incubating)</name>
+        <created>2010-08-23</created>
+        <revision>0.4.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift (incubating)</name>
+        <created>2010-08-04</created>
+        <revision>0.3.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift (incubating)</name>
+        <created>2009-12-11</created>
+        <revision>0.2.0</revision>
+      </Version>
     </release>
-	    <repository>
+    <repository>
       <SVNRepository>
         <location rdf:resource="http://svn.apache.org/repos/asf/thrift"/>
         <browse rdf:resource="http://svn.apache.org/viewvc/thrift"/>
