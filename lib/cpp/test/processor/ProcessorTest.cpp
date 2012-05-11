@@ -35,9 +35,9 @@
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TSocket.h>
 
-#include <thrift/processor/test/EventLog.h>
-#include <thrift/processor/test/ServerThread.h>
-#include <thrift/processor/test/Handlers.h>
+#include "EventLog.h"
+#include "ServerThread.h"
+#include "Handlers.h"
 #include "gen-cpp/ChildService.h"
 
 using namespace std;

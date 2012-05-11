@@ -19,7 +19,7 @@
 #ifndef _THRIFT_TEST_EVENTLOG_H_
 #define _THRIFT_TEST_EVENTLOG_H_ 1
 
-#include "concurrency/Monitor.h"
+#include <thrift/concurrency/Monitor.h>
 
 namespace apache { namespace thrift { namespace test {
 

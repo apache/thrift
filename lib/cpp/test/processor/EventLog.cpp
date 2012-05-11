@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "processor/test/EventLog.h"
+#include "EventLog.h"
 
 #include <stdarg.h>
 

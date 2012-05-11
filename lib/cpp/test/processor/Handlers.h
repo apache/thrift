@@ -19,7 +19,7 @@
 #ifndef _THRIFT_PROCESSOR_TEST_HANDLERS_H_
 #define _THRIFT_PROCESSOR_TEST_HANDLERS_H_ 1
 
-#include "processor/test/EventLog.h"
+#include "EventLog.h"
 #include "gen-cpp/ParentService.h"
 #include "gen-cpp/ChildService.h"
 
