@@ -85,6 +85,8 @@ gen-*
 /lib/cpp/test/TransportTest
 /lib/cpp/test/UnitTests
 /lib/cpp/test/ZlibTest
+/lib/cpp/test/concurrency_test
+/lib/cpp/test/processor_test
 /lib/cpp/test/tests.xml
 /lib/cpp/concurrency_test
 /lib/cpp/*.pc
@@ -116,6 +118,7 @@ gen-*
 /lib/csharp/Makefile.in
 /lib/csharp/src/bin/
 /lib/csharp/src/obj/
+/lib/d/libthriftd.a
 /lib/d/Makefile
 /lib/d/Makefile.in
 /lib/d/test/Makefile
@@ -183,6 +186,7 @@ gen-*
 /lib/php/src/packages/
 /lib/php/test/Makefile
 /lib/php/test/Makefile.in
+/lib/php/test/phpunit.xml
 /lib/erl/logs/
 /lib/erl/Makefile
 /lib/erl/Makefile.in
