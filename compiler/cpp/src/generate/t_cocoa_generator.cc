@@ -2544,12 +2544,14 @@ string t_cocoa_generator::argument_list(t_struct* tstruct) {
   vector<t_field*>::const_iterator f_iter;
   bool first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    string argPrefix = "";
     if (first) {
       first = false;
     } else {
+      argPrefix = (*f_iter)->get_name();
       result += " ";
     }
-    result += ": (" + type_name((*f_iter)->get_type()) + ") " + (*f_iter)->get_name();
+    result += argPrefix + ": (" + type_name((*f_iter)->get_type()) + ") " + (*f_iter)->get_name();
   }
   return result;
 }
