@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 --
 -- Licensed to the Apache Software Foundation (ASF) under one
@@ -33,6 +34,7 @@ module Thrift
 import Control.Monad ( when )
 import Control.Exception
 
+import Data.Text.Lazy ( pack, unpack )
 import Data.Typeable ( Typeable )
 
 import Thrift.Transport
@@ -84,7 +86,7 @@ writeAppExn pt ae = do
 
     when (ae_message ae /= "") $ do
         writeFieldBegin pt ("message", T_STRING , 1)
-        writeString pt (ae_message ae)
+        writeString pt (pack $ ae_message ae)
         writeFieldEnd pt
 
     writeFieldBegin pt ("type", T_I32, 2);
@@ -108,7 +110,7 @@ readAppExnFields pt record = do
         else case tag of
                  1 -> if ft == T_STRING then
                           do s <- readString pt
-                             readAppExnFields pt record{ae_message = s}
+                             readAppExnFields pt record{ae_message = unpack s}
                           else do skip pt ft
                                   readAppExnFields pt record
                  2 -> if ft == T_I32 then
