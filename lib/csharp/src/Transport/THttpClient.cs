@@ -32,13 +32,21 @@ namespace Thrift.Transport
 		private readonly Uri uri;
 		private Stream inputStream;
 		private MemoryStream outputStream = new MemoryStream();
-		private int connectTimeout = 0;
-		private int readTimeout = 0;
+
+        // Timeouts in milliseconds
+        private int connectTimeout = 30000;
+
+        private int readTimeout = 30000;
+
 		private IDictionary<String, String> customHeaders = new Dictionary<string, string>();
+
+        private HttpWebRequest connection = null;
+        private IWebProxy proxy = WebRequest.DefaultWebProxy;
 
 		public THttpClient(Uri u)
 		{
 			uri = u;
+            connection = CreateRequest();
 		}
 
 		public int ConnectTimeout
@@ -64,6 +72,14 @@ namespace Thrift.Transport
 				return customHeaders;
 			}
 		}
+
+        public IWebProxy Proxy
+        {
+            set
+            {
+                proxy = value;
+            }
+        }
 
 		public override bool IsOpen
 		{
@@ -192,7 +208,7 @@ namespace Thrift.Transport
 			}
 
 #if !SILVERLIGHT
-			connection.Proxy = null;
+            connection.Proxy = proxy;
 #endif
 
             return connection;
