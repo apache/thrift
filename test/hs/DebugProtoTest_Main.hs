@@ -17,6 +17,8 @@
 -- under the License.
 --
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 
@@ -78,7 +80,7 @@ instance SIface.Srv_Iface InheritedHandler where
             Types.f_CompactProtoTestStruct_string_list = Nothing,
             Types.f_CompactProtoTestStruct_binary_list = Nothing,
             Types.f_CompactProtoTestStruct_boolean_list = Nothing,
-            Types.f_CompactProtoTestStruct_struct_list = Just [Types.Empty],
+            Types.f_CompactProtoTestStruct_struct_list = Nothing,
 
             Types.f_CompactProtoTestStruct_byte_set = Nothing,
             Types.f_CompactProtoTestStruct_i16_set = Nothing,
