@@ -41,9 +41,11 @@ namespace Thrift.Transport
 		private IDictionary<String, String> customHeaders = new Dictionary<string, string>();
 
         private HttpWebRequest connection = null;
+#if !SILVERLIGHT
         private IWebProxy proxy = WebRequest.DefaultWebProxy;
+#endif
 
-		public THttpClient(Uri u)
+        public THttpClient(Uri u)
 		{
 			uri = u;
             connection = CreateRequest();
@@ -73,6 +75,7 @@ namespace Thrift.Transport
 			}
 		}
 
+#if !SILVERLIGHT
         public IWebProxy Proxy
         {
             set
@@ -80,6 +83,7 @@ namespace Thrift.Transport
                 proxy = value;
             }
         }
+#endif
 
 		public override bool IsOpen
 		{
