@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <list>
 
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -184,11 +185,16 @@ class t_delphi_generator : public t_oop_generator
     std::map<std::string, int> delphi_keywords;
     std::map<std::string, int> delphi_reserved_method;
     std::map<std::string, int> delphi_reserved_method_exception;
+    std::map<std::string, int> types_known;
+    std::list<t_typedef*> typedefs_pending;
     std::vector<std::string> uses_list;
     void create_keywords();
     bool find_keyword( std::map<std::string, int>& keyword_map, std::string name);
     std::string normalize_name( std::string name, bool b_method = false, bool b_exception_method = false);
     std::string empty_value(t_type* type);
+    bool is_fully_defined_type( t_type* ttype);
+    void add_defined_type( t_type* ttype);
+    void init_known_types_list();
     bool is_void( t_type* type );
     int indent_impl_;
     bool ansistr_binary_;
@@ -412,6 +418,8 @@ void t_delphi_generator::init_generator() {
   add_delphi_uses_list("Thrift.Protocol");
   add_delphi_uses_list("Thrift.Transport");
 
+  init_known_types_list();
+  
   string unitname, nsname;
   const vector<t_program*>& includes = program_->get_includes();
   for (size_t i = 0; i < includes.size(); ++i) {
@@ -507,6 +515,9 @@ void t_delphi_generator::close_generator() {
   }
   f_all  << "end." << endl;
   f_all.close();
+  
+  if( ! typedefs_pending.empty())
+    printf("pending typedefs with unresolved references are left\n");
 }
 
 void t_delphi_generator::delphi_type_usings( ostream& out) {
@@ -517,7 +528,90 @@ void t_delphi_generator::delphi_type_usings( ostream& out) {
 }
 
 void t_delphi_generator::generate_typedef(t_typedef* ttypedef) {
-  (void) ttypedef;
+  t_type* type = ttypedef->get_type();
+
+  // write now or save for later?  
+  if( ! is_fully_defined_type( type)) {
+    typedefs_pending.push_back( ttypedef); 
+    return;
+  }
+  
+  indent_up();
+  indent(s_struct) << 
+    type_name(ttypedef) << " = ";
+
+  bool container = type->is_list() || type->is_map() || type->is_set();
+
+  // commented out: the benefit is not big enough to risk breaking existing code
+  //if( ! container)
+  //  s_struct << "type ";  //the "type A = type B" syntax leads to E2574 with generics
+
+  s_struct << type_name(ttypedef->get_type(), ! container) << ";" << endl <<
+    endl;
+  indent_down();
+  
+  add_defined_type( ttypedef);
+}
+
+bool t_delphi_generator::is_fully_defined_type( t_type* ttype) {
+  if (ttype->is_typedef()) {
+    return (1 == types_known[ type_name(ttype)]);
+  }
+  
+  if (ttype->is_base_type()) {
+    return (1 == types_known[ base_type_name((t_base_type*)ttype)]);
+  } else if (ttype->is_enum()) {
+    return true;  // enums are written first, before all other types
+  } else if (ttype->is_map()) {
+    t_map *tmap = (t_map*) ttype;
+    return is_fully_defined_type( tmap->get_key_type()) &&
+           is_fully_defined_type( tmap->get_val_type());
+  } else if (ttype->is_set()) {
+    t_set* tset = (t_set*) ttype;
+    return is_fully_defined_type( tset->get_elem_type());
+  } else if (ttype->is_list()) {
+    t_list* tlist = (t_list*) ttype;
+    return is_fully_defined_type( tlist->get_elem_type());
+  }
+
+  return (1 == types_known[ type_name(ttype)]);
+}
+
+void t_delphi_generator::add_defined_type( t_type* ttype) {
+  // mark as known type
+  types_known[ type_name(ttype)] = 1;
+  
+  // check all pending typedefs
+  std::list<t_typedef*>::iterator  iter;
+  bool more = true;
+  while( more && (! typedefs_pending.empty()))
+  {
+    more = false;
+    
+    for( iter = typedefs_pending.begin(); typedefs_pending.end() != iter; ++iter)
+    {
+      t_typedef* ttypedef = (*iter);
+      if( is_fully_defined_type( ttypedef->get_type()))
+      {
+        typedefs_pending.erase( iter);
+        generate_typedef( ttypedef);
+        more = true;
+        break;
+      }
+    }
+  }
+}
+
+void t_delphi_generator::init_known_types_list() {
+  // known base types
+  types_known[ type_name( g_type_string)] = 1;
+  types_known[ type_name( g_type_binary)] = 1;
+  types_known[ type_name( g_type_bool)] = 1;
+  types_known[ type_name( g_type_byte)] = 1;
+  types_known[ type_name( g_type_i16)] = 1;
+  types_known[ type_name( g_type_i32)] = 1;
+  types_known[ type_name( g_type_i64)] = 1;
+  types_known[ type_name( g_type_double)] = 1;
 }
 
 void t_delphi_generator::generate_enum(t_enum* tenum) {
@@ -802,9 +896,10 @@ void t_delphi_generator::generate_delphi_struct(t_struct* tstruct, bool is_excep
   indent_up();
   generate_delphi_struct_definition(s_struct, tstruct, is_exception);
   indent_down();
+  
+  add_defined_type( tstruct);
 
   generate_delphi_struct_impl(s_struct_impl, "", tstruct, is_exception);
-
 }
 
 void t_delphi_generator::generate_delphi_struct_impl( ostream& out, string cls_prefix, t_struct* tstruct, bool is_exception, bool is_result, bool is_x_factory) {
@@ -2067,10 +2162,11 @@ string t_delphi_generator::normalize_clsnm(string clsnm, string prefix, bool b_n
 }
 
 string t_delphi_generator::type_name( t_type* ttype, bool b_cls, bool b_no_postfix, bool b_exception_factory, bool b_full_exception_factory) {
-  while (ttype->is_typedef()) {
-    ttype = ((t_typedef*)ttype)->get_type();
+  
+  if (ttype->is_typedef()) {
+    return normalize_name( "T"+((t_typedef*)ttype)->get_symbolic());
   }
-
+  
   string typ_nm;
 
   string s_factory;
