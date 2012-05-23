@@ -86,9 +86,9 @@ class Thread {
   static inline bool is_current(id_t t) { return t == boost::this_thread::get_id(); }
   static inline id_t get_current() { return boost::this_thread::get_id(); }
 #else
-  typedef uint64_t id_t;
-  static inline bool is_current(pthread_t t) { return pthread_equal(pthread_self(), t); }
-  static inline id_t get_current() { return (Thread::id_t)pthread_self(); }
+  typedef pthread_t id_t;
+  static inline bool is_current(id_t t) { return pthread_equal(pthread_self(), t); }
+  static inline id_t get_current() { return pthread_self(); }
 #endif
 
   virtual ~Thread() {};
