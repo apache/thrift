@@ -60,9 +60,9 @@ check_PROGRAMS = \
 	TransportTest \
 	ZlibTest \
 	TFileTransportTest \
-	UnitTests \
-        processor_test
-# disable ... too strong
+	UnitTests
+# disable these test ... too strong
+#       processor_test
 #	concurrency_test
 
 TESTS_ENVIRONMENT= \
