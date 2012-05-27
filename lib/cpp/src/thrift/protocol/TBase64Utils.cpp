@@ -30,16 +30,16 @@ static const uint8_t *kBase64EncodeTable = (const uint8_t *)
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 void  base64_encode(const uint8_t *in, uint32_t len, uint8_t *buf) {
-  buf[0] = kBase64EncodeTable[(in[0] >> 2) & 0x3F];
+  buf[0] = kBase64EncodeTable[(in[0] >> 2) & 0x3f];
   if (len == 3) {
-    buf[1] = kBase64EncodeTable[((in[0] << 4) + (in[1] >> 4)) & 0x3f];
-    buf[2] = kBase64EncodeTable[((in[1] << 2) + (in[2] >> 6)) & 0x3f];
+    buf[1] = kBase64EncodeTable[((in[0] << 4) & 0x30) | ((in[1] >> 4) & 0x0f)];
+    buf[2] = kBase64EncodeTable[((in[1] << 2) & 0x3c) | ((in[2] >> 6) & 0x03)];
     buf[3] = kBase64EncodeTable[in[2] & 0x3f];
   } else if (len == 2) {
-    buf[1] = kBase64EncodeTable[((in[0] << 4) + (in[1] >> 4)) & 0x3f];
-    buf[2] = kBase64EncodeTable[(in[1] << 2) & 0x3f];
+    buf[1] = kBase64EncodeTable[((in[0] << 4) & 0x30) | ((in[1] >> 4) & 0x0f)];
+    buf[2] = kBase64EncodeTable[(in[1] << 2) & 0x3c];
   } else  { // len == 1
-    buf[1] = kBase64EncodeTable[(in[0] << 4) & 0x3f];
+    buf[1] = kBase64EncodeTable[(in[0] << 4) & 0x30];
   }
 }
 
