@@ -17,8 +17,6 @@
  * under the License.
  */
 
-#ifdef _WIN32
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -27,8 +25,10 @@
 #include "TPipe.h"
 #include "TPipeServer.h"
 #include <boost/shared_ptr.hpp>
-#include <AccCtrl.h>
-#include <Aclapi.h>
+#ifdef _WIN32
+#  include <AccCtrl.h>
+#  include <Aclapi.h>
+#endif //_WIN32
 
 namespace apache { namespace thrift { namespace transport {
 
@@ -39,15 +39,23 @@ using boost::shared_ptr;
 TPipeServer::TPipeServer(string pipename, uint32_t bufsize) :
   pipename_(pipename),
   bufsize_(bufsize),
-  hPipe_(INVALID_HANDLE_VALUE),
-  isAnonymous(false),
-  maxconns_(TPIPE_SERVER_MAX_CONNS_DEFAULT)
- {}
+  Pipe_(-1),
+  maxconns_(TPIPE_SERVER_MAX_CONNS_DEFAULT),
+  isAnonymous(false)
+ {
+#ifdef _WIN32
+    if(pipename_.find("\\\\") == 0) {
+      pipename_ = "\\\\.\\pipe\\" + pipename_;
+    }
+#else
+    dsrvsocket.reset(new TServerSocket(pipename));
+#endif
+ }
 
 TPipeServer::TPipeServer(string pipename, uint32_t bufsize, uint32_t maxconnections) :
   pipename_(pipename),
   bufsize_(bufsize),
-  hPipe_(INVALID_HANDLE_VALUE),
+  Pipe_(-1),
   isAnonymous(false)
  {  //Restrict maxconns_ to 1-255
     if(maxconnections == 0)
@@ -56,23 +64,40 @@ TPipeServer::TPipeServer(string pipename, uint32_t bufsize, uint32_t maxconnecti
       maxconns_ = 255;
 	else
       maxconns_ = maxconnections;
+
+#ifdef _WIN32
+    if(pipename_.find("\\\\") == -1) {
+      pipename_ = "\\\\.\\pipe\\" + pipename_;
+    }
+#else
+    dsrvsocket.reset(new TServerSocket(pipename));
+#endif
  }
 
 TPipeServer::TPipeServer(string pipename) :
   pipename_(pipename),
   bufsize_(1024),
-  hPipe_(INVALID_HANDLE_VALUE),
-  isAnonymous(false),
-  maxconns_(TPIPE_SERVER_MAX_CONNS_DEFAULT)
- {}
+  Pipe_(-1),
+  maxconns_(TPIPE_SERVER_MAX_CONNS_DEFAULT),
+  isAnonymous(false)
+ {
+#ifdef _WIN32
+    if(pipename_.find("\\\\") == 0) {
+      pipename_ = "\\\\.\\pipe\\" + pipename_;
+    }
+#else
+    dsrvsocket.reset(new TServerSocket(pipename));
+#endif
+ }
 
 TPipeServer::TPipeServer(int bufsize) : 
   pipename_(""),
   bufsize_(bufsize),
-  hPipe_(INVALID_HANDLE_VALUE),
-  isAnonymous(true),
-  maxconns_(1)
+  Pipe_(-1),
+  maxconns_(1),
+  isAnonymous(true)
  {
+#ifdef _WIN32
   //The anonymous pipe needs to be created first so that the server can
   //pass the handles on to the client before the serve (acceptImpl)
   //blocking call.
@@ -80,19 +105,28 @@ TPipeServer::TPipeServer(int bufsize) :
     GlobalOutput.perror("TPipeServer Create(Anon)Pipe failed, GLE=", GetLastError());
     throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer Create(Anon)Pipe failed");
   }
+#else
+  GlobalOutput.perror("TPipeServer: Anonymous pipes not yet supported under *NIX", -99);
+  throw TTransportException(TTransportException::NOT_OPEN, " Anonymous pipes not yet supported under *NIX");
+#endif
 }
 
 TPipeServer::TPipeServer() : 
   pipename_(""),
   bufsize_(1024),
-  hPipe_(INVALID_HANDLE_VALUE),
-  isAnonymous(true),
-  maxconns_(1)
+  Pipe_(-1),
+  maxconns_(1),
+  isAnonymous(true)
 {
+#ifdef _WIN32
   if (!TCreateAnonPipe()) {
     GlobalOutput.perror("TPipeServer Create(Anon)Pipe failed, GLE=", GetLastError());
     throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer Create(Anon)Pipe failed");
   }
+#else
+  GlobalOutput.perror("TPipeServer: Anonymous pipes not yet supported under *NIX", -99);
+  throw TTransportException(TTransportException::NOT_OPEN, " Anonymous pipes not yet supported under *NIX");
+#endif
 }
 
 //---- Destructor ----
@@ -104,6 +138,8 @@ TPipeServer::~TPipeServer() {
 // Transport callbacks
 //---------------------------------------------------------
 
+#ifdef _WIN32
+
 shared_ptr<TTransport> TPipeServer::acceptImpl() {
   shared_ptr<TPipe> client;
 
@@ -113,7 +149,7 @@ shared_ptr<TTransport> TPipeServer::acceptImpl() {
     byte buf;
     DWORD br;
     int fSuccess = ReadFile( 
-          hPipe_, // pipe handle 
+          (HANDLE)Pipe_, // pipe handle 
           &buf,   // buffer to receive reply 
           0,      // size of buffer 
           &br,    // number of bytes read 
@@ -123,7 +159,7 @@ shared_ptr<TTransport> TPipeServer::acceptImpl() {
       GlobalOutput.perror("TPipeServer unable to initiate pipe comms, GLE=", GetLastError());
       throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer unable to initiate pipe comms");
     }
-	client.reset(new TPipe(hPipe_, hPipeW_));
+	client.reset(new TPipe(Pipe_, PipeW_));
   }
   else
   { //Named Pipe
@@ -138,7 +174,7 @@ shared_ptr<TTransport> TPipeServer::acceptImpl() {
       // Wait for the client to connect; if it succeeds, the
       // function returns a nonzero value. If the function returns 
       // zero, GetLastError should return ERROR_PIPE_CONNECTED. 
-      ConnectRet = ConnectNamedPipe(hPipe_, NULL) ? 
+      ConnectRet = ConnectNamedPipe((HANDLE)Pipe_, NULL) ? 
                     TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 
       if (ConnectRet == TRUE)
@@ -153,34 +189,34 @@ shared_ptr<TTransport> TPipeServer::acceptImpl() {
         throw TTransportException(TTransportException::NOT_OPEN, "TPipeServer: client connection failed");
       }
     }
-	client.reset(new TPipe(hPipe_));
+	client.reset(new TPipe(Pipe_));
   }
 
   return client;
 }
 
 void TPipeServer::interrupt() {
-  if(hPipe_ != INVALID_HANDLE_VALUE) {
-    CancelIo(hPipe_);
+  if(Pipe_ != -1) {
+    CancelIo((HANDLE)Pipe_);
   }
 }
 
 void TPipeServer::close() {
   if(!isAnonymous)
   {
-    if(hPipe_ != INVALID_HANDLE_VALUE) {
-      DisconnectNamedPipe(hPipe_);
-      CloseHandle(hPipe_);
-      hPipe_ = INVALID_HANDLE_VALUE;
+    if(Pipe_ != -1) {
+      DisconnectNamedPipe((HANDLE)Pipe_);
+      CloseHandle((HANDLE)Pipe_);
+      Pipe_ = -1;
     }
   }
   else
   {
     try {
-      CloseHandle(hPipe_);
-      CloseHandle(hPipeW_);
-      CloseHandle(ClientAnonRead);
-      CloseHandle(ClientAnonWrite);
+      CloseHandle((HANDLE)Pipe_);
+      CloseHandle((HANDLE)PipeW_);
+      CloseHandle((HANDLE)ClientAnonRead);
+      CloseHandle((HANDLE)ClientAnonWrite);
     }
     catch(...) {
         GlobalOutput.perror("TPipeServer anon close GLE=", GetLastError());
@@ -219,7 +255,7 @@ bool TPipeServer::TCreateNamedPipe() {
   sa.bInheritHandle = FALSE;
 
   // Create an instance of the named pipe
-  hPipe_ = CreateNamedPipe( 
+  HANDLE hPipe_ = CreateNamedPipe( 
         pipename_.c_str(),        // pipe name 
         PIPE_ACCESS_DUPLEX,       // read/write access 
         PIPE_TYPE_MESSAGE |       // message type pipe 
@@ -230,7 +266,16 @@ bool TPipeServer::TCreateNamedPipe() {
         0,                        // client time-out 
         &sa);                     // default security attribute 
 
-  return (hPipe_ != INVALID_HANDLE_VALUE);
+  if(hPipe_ == INVALID_HANDLE_VALUE)
+  {
+    Pipe_ = -1;
+    GlobalOutput.perror("TPipeServer::TCreateNamedPipe() GLE=", GetLastError());
+    throw TTransportException(TTransportException::NOT_OPEN, "TCreateNamedPipe() failed", GetLastError());
+    return false;
+  }
+
+  Pipe_ = (int)hPipe_;
+  return true;
 }
 
 bool TPipeServer::TCreateAnonPipe() {
@@ -244,21 +289,54 @@ bool TPipeServer::TCreateAnonPipe() {
   sa.nLength = sizeof(SECURITY_ATTRIBUTES);
   sa.bInheritHandle = true; //allow passing handle to child
 
-  if (!CreatePipe(&ClientAnonRead,&hPipeW_,&sa,0))   //create stdin pipe
+  HANDLE ClientAnonReadH, PipeW_H, ClientAnonWriteH, Pipe_H;
+  if (!CreatePipe(&ClientAnonReadH,&PipeW_H,&sa,0))   //create stdin pipe
   {
     GlobalOutput.perror("TPipeServer CreatePipe (anon) failed, GLE=", GetLastError());
     return false;
   }
-  if (!CreatePipe(&hPipe_,&ClientAnonWrite,&sa,0))  //create stdout pipe
+  if (!CreatePipe(&Pipe_H,&ClientAnonWriteH,&sa,0))  //create stdout pipe
   {
     GlobalOutput.perror("TPipeServer CreatePipe (anon) failed, GLE=", GetLastError());
-    CloseHandle(ClientAnonRead);
-    CloseHandle(hPipeW_);
+    CloseHandle(ClientAnonReadH);
+    CloseHandle(PipeW_H);
     return false;
   }
+  ClientAnonRead  = (int)ClientAnonReadH;
+  ClientAnonWrite = (int)ClientAnonWriteH;
+  Pipe_  = (int)Pipe_H;
+  PipeW_ = (int)PipeW_H;
 
   return true;
 }
+
+#else
+//*NIX implementation uses Unix Domain Sockets.
+void TPipeServer::listen() {
+  dsrvsocket->listen();
+}
+
+shared_ptr<TTransport> TPipeServer::acceptImpl() {
+//	return boost::shared_dynamic_cast<apache::thrift::transport::TServerSocket>(dsrvsocket)->accept();
+  return dsrvsocket->accept();
+}
+
+void TPipeServer::interrupt() {
+  dsrvsocket->interrupt();
+}
+
+void TPipeServer::close() {
+  dsrvsocket->close();
+}
+
+bool TPipeServer::TCreateNamedPipe() {
+  return false; //placeholder
+}
+
+bool TPipeServer::TCreateAnonPipe() {
+  return false; //currently unimplemented
+}
+#endif //_WIN32
 
 
 //---------------------------------------------------------
@@ -281,21 +359,21 @@ void TPipeServer::setBufferSize(int bufsize) {
   bufsize_ = bufsize;
 }
 
-HANDLE TPipeServer::getPipeHandle() {
-  return hPipe_;
+int TPipeServer::getPipeHandle() {
+  return Pipe_;
 }
 
-HANDLE TPipeServer::getWrtPipeHandle()
+int TPipeServer::getWrtPipeHandle()
 {
-  return hPipeW_;
+  return PipeW_;
 }
 
-HANDLE TPipeServer::getClientRdPipeHandle()
+int TPipeServer::getClientRdPipeHandle()
 {
   return ClientAnonRead;
 }
 
-HANDLE TPipeServer::getClientWrtPipeHandle()
+int TPipeServer::getClientWrtPipeHandle()
 {
   return ClientAnonWrite;
 }
@@ -309,5 +387,3 @@ void TPipeServer::setAnonymous(bool anon) {
 }
 
 }}} // apache::thrift::transport
-
-#endif //_WIN32

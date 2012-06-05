@@ -17,8 +17,6 @@
 * under the License.
 */
 
-#ifdef _WIN32
-
 #include "TTransportException.h"
 #include "TPipe.h"
 
@@ -31,33 +29,56 @@ using namespace std;
 */
 
 //---- Constructors ----
-TPipe::TPipe(HANDLE hpipe) :
+TPipe::TPipe(int Pipe) :
   pipename_(""),
-  hPipe_(hpipe),
+  Pipe_(Pipe),
   TimeoutSeconds_(3),
   isAnonymous(false)
-{}
+{
+#ifndef _WIN32
+  GlobalOutput.perror("TPipe: constructor using a pipe handle is not supported under *NIX", -99);
+  throw TTransportException(TTransportException::NOT_OPEN, " constructor using a pipe handle is not supported under *NIX");
+#endif
+}
 
 TPipe::TPipe(string pipename) :
   pipename_(pipename),
-  hPipe_(INVALID_HANDLE_VALUE),
+  Pipe_(-1),
   TimeoutSeconds_(3),
   isAnonymous(false)
-{}
+{
+#ifdef _WIN32
+    if(pipename_.find("\\\\") == -1) {
+      pipename_ = "\\\\.\\pipe\\" + pipename_;
+    }
+#else
+  dsocket.reset(new TSocket(pipename));
+#endif
+}
 
-TPipe::TPipe(HANDLE hPipeRd, HANDLE hPipeWrt) :
+TPipe::TPipe(int PipeRd, int PipeWrt) :
   pipename_(""),
-  hPipe_(hPipeRd),
-  hPipeWrt_(hPipeWrt),
+  Pipe_(PipeRd),
+  PipeWrt_(PipeWrt),
   TimeoutSeconds_(3),
   isAnonymous(true)
-{}
+{
+#ifndef _WIN32
+  GlobalOutput.perror("TPipe: Anonymous pipes not yet supported under *NIX", -99);
+  throw TTransportException(TTransportException::NOT_OPEN, " Anonymous pipes not yet supported under *NIX");
+#endif
+}
 
   TPipe::TPipe() :
   pipename_(""),
-  hPipe_(INVALID_HANDLE_VALUE),
+  Pipe_(-1),
   TimeoutSeconds_(3)
-{}
+{
+#ifndef _WIN32
+  GlobalOutput.perror("TPipe: Anonymous pipes not yet supported under *NIX", -99);
+  throw TTransportException(TTransportException::NOT_OPEN, " Anonymous pipes not yet supported under *NIX");
+#endif
+}
 
 //---- Destructor ----
 TPipe::~TPipe() {
@@ -66,12 +87,14 @@ TPipe::~TPipe() {
 
 
 bool TPipe::isOpen() {
-  return (hPipe_ != INVALID_HANDLE_VALUE);
+  return (Pipe_ != -1);
 }
 
 //---------------------------------------------------------
 // Transport callbacks
 //---------------------------------------------------------
+
+#ifdef _WIN32 //Windows callbacks
 
 bool TPipe::peek() {
   if (!isOpen()) {
@@ -79,7 +102,7 @@ bool TPipe::peek() {
   }
   DWORD bytesavail = 0;
   int  PeekRet = 0;
-  PeekRet = PeekNamedPipe(hPipe_, NULL, 0, NULL, &bytesavail, NULL); 
+  PeekRet = PeekNamedPipe((HANDLE)Pipe_, NULL, 0, NULL, &bytesavail, NULL); 
   return (PeekRet != 0 && bytesavail > 0);
 }
 
@@ -90,6 +113,7 @@ void TPipe::open() {
 
   int SleepInterval = 500; //ms
   int retries = TimeoutSeconds_ * 1000 / SleepInterval;
+  HANDLE hPipe_;
   for(int i=0; i<retries; i++)
   {
     hPipe_ = CreateFile( 
@@ -101,18 +125,18 @@ void TPipe::open() {
               0,              // default attributes 
               NULL);          // no template file 
 
-    if (hPipe_ == INVALID_HANDLE_VALUE) 
+    if ((int)hPipe_ == -1) 
       sleep(SleepInterval);
     else
       break;
   }
-  if (hPipe_ == INVALID_HANDLE_VALUE) 
+  if ((int)hPipe_ == -1) 
     throw TTransportException(TTransportException::NOT_OPEN, "Unable to open pipe");
 
   // The pipe connected; change to message-read mode. 
   DWORD dwMode = PIPE_READMODE_MESSAGE; 
   int fSuccess = SetNamedPipeHandleState( 
-              hPipe_,   // pipe handle 
+              hPipe_, // pipe handle 
               &dwMode,  // new pipe mode 
               NULL,     // don't set maximum bytes 
               NULL);    // don't set maximum time 
@@ -121,14 +145,15 @@ void TPipe::open() {
     throw TTransportException(TTransportException::NOT_OPEN, "SetNamedPipeHandleState failed");
     close();
   }
+  Pipe_ = (int)hPipe_;
 }
 
 
 void TPipe::close() {
   if (isOpen())
   {
-    CloseHandle(hPipe_);
-    hPipe_ = INVALID_HANDLE_VALUE;
+    CloseHandle((HANDLE)Pipe_);
+    Pipe_ = -1;
   }
 }
 
@@ -138,7 +163,7 @@ uint32_t TPipe::read(uint8_t* buf, uint32_t len) {
 
   DWORD  cbRead; 
   int fSuccess = ReadFile( 
-              hPipe_,   // pipe handle 
+              (HANDLE)Pipe_, // pipe handle 
               buf,      // buffer to receive reply 
               len,      // size of buffer 
               &cbRead,  // number of bytes read 
@@ -154,10 +179,10 @@ void TPipe::write(const uint8_t* buf, uint32_t len) {
   if (!isOpen())
     throw TTransportException(TTransportException::NOT_OPEN, "Called write on non-open pipe");
 
-  HANDLE WritePipe = isAnonymous? hPipeWrt_: hPipe_;
+  int WritePipe = isAnonymous? PipeWrt_: Pipe_;
   DWORD  cbWritten; 
   int fSuccess = WriteFile( 
-              WritePipe,     // pipe handle 
+              (HANDLE)WritePipe, // pipe handle 
               buf,        // message 
               len,        // message length 
               &cbWritten, // bytes written 
@@ -166,6 +191,28 @@ void TPipe::write(const uint8_t* buf, uint32_t len) {
   if ( !fSuccess) 
     throw TTransportException(TTransportException::NOT_OPEN, "Write to pipe failed");
 }
+
+#else //*NIX callbacks implemented via Unix Domain Sockets.
+bool TPipe::peek() {
+  return dsocket->peek();
+}
+
+void TPipe::open() {
+  dsocket->open();
+}
+
+void TPipe::close() {
+  dsocket->close();
+}
+
+uint32_t TPipe::read(uint8_t* buf, uint32_t len) {
+  return dsocket->read(buf, len);
+}
+
+void TPipe::write(const uint8_t* buf, uint32_t len) {
+  dsocket->write(buf, len);
+}
+#endif //callbacks
 
 
 //---------------------------------------------------------
@@ -180,20 +227,20 @@ void TPipe::setPipename(std::string pipename) {
   pipename_ = pipename;
 }
 
-HANDLE TPipe::getPipeHandle() {
-  return hPipe_;
+int TPipe::getPipeHandle() {
+  return Pipe_;
 }
 
-void TPipe::setPipeHandle(HANDLE pipehandle) {
-  hPipe_ = pipehandle;
+void TPipe::setPipeHandle(int pipehandle) {
+  Pipe_ = pipehandle;
 }
 
-HANDLE TPipe::getWrtPipeHandle() {
-  return hPipeWrt_;
+int TPipe::getWrtPipeHandle() {
+  return PipeWrt_;
 }
 
-void TPipe::setWrtPipeHandle(HANDLE pipehandle) {
-  hPipeWrt_ = pipehandle;
+void TPipe::setWrtPipeHandle(int pipehandle) {
+  PipeWrt_ = pipehandle;
 }
 
 long TPipe::getConnectTimeout() {
@@ -205,5 +252,3 @@ void TPipe::setConnectTimeout(long seconds) {
 }
 
 }}} // apache::thrift::transport
-
-#endif //_WIN32

@@ -19,10 +19,12 @@
 
 #ifndef _THRIFT_TRANSPORT_TSERVERWINPIPES_H_
 #define _THRIFT_TRANSPORT_TSERVERWINPIPES_H_ 1
-#ifdef _WIN32
 
 #include "TServerTransport.h"
 #include <boost/shared_ptr.hpp>
+#ifndef _WIN32
+#  include "TServerSocket.h"
+#endif
 
 #define TPIPE_SERVER_MAX_CONNS_DEFAULT 10
 
@@ -46,7 +48,6 @@ class TPipeServer : public TServerTransport {
   ~TPipeServer();
 
   //Standard transport callbacks
-  //void listen(); //Unnecessary for Windows pipes
   void interrupt();
   void close();
  protected:
@@ -61,10 +62,10 @@ class TPipeServer : public TServerTransport {
   void setPipename(std::string pipename);
   int  getBufferSize();
   void setBufferSize(int bufsize);
-  HANDLE getPipeHandle();  //Named Pipe R/W -or- Anonymous pipe Read handle
-  HANDLE getWrtPipeHandle();
-  HANDLE getClientRdPipeHandle();
-  HANDLE getClientWrtPipeHandle();
+  int getPipeHandle();  //Named Pipe R/W -or- Anonymous pipe Read handle
+  int getWrtPipeHandle();
+  int getClientRdPipeHandle();
+  int getClientWrtPipeHandle();
   bool getAnonymous();
   void setAnonymous(bool anon);
 
@@ -72,14 +73,20 @@ class TPipeServer : public TServerTransport {
   std::string pipename_;
   uint32_t bufsize_;
   uint32_t maxconns_;
-  HANDLE hPipe_;  //Named Pipe (R/W) or Anonymous Pipe (R)
-  HANDLE hPipeW_; //Anonymous Pipe (W)
-  HANDLE ClientAnonRead, ClientAnonWrite; //Client side anonymous pipe handles
+  int Pipe_;  //Named Pipe (R/W) or Anonymous Pipe (R)
+  int PipeW_; //Anonymous Pipe (W)
+  int ClientAnonRead, ClientAnonWrite; //Client side anonymous pipe handles
   //? Do we need duplicates to send to client?
   bool isAnonymous;
+
+public:
+#ifndef _WIN32
+  //*NIX named pipe implementation uses domain socket
+  void listen(); //Only needed for domain sockets
+  boost::shared_ptr<TServerSocket> dsrvsocket;
+#endif
 };
 
 }}} // apache::thrift::transport
 
-#endif //_WIN32
 #endif // #ifndef _THRIFT_TRANSPORT_TSERVERWINPIPES_H_

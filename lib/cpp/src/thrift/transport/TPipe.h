@@ -19,10 +19,12 @@
 
 #ifndef _THRIFT_TRANSPORT_TPIPE_H_
 #define _THRIFT_TRANSPORT_TPIPE_H_ 1
-#ifdef _WIN32
 
-#include "TTransport.h"
-#include "TVirtualTransport.h"
+#include <thrift/transport/TTransport.h>
+#include <thrift/transport/TVirtualTransport.h>
+#ifndef _WIN32
+#  include "TSocket.h"
+#endif
 
 namespace apache { namespace thrift { namespace transport {
 
@@ -36,10 +38,10 @@ class TPipe : public TVirtualTransport<TPipe> {
   // Constructs a new pipe object.
   TPipe();
   // Named pipe constructors -
-  TPipe(HANDLE hPipe);
-  TPipe(std::string path);
+  TPipe(int Pipe);
+  TPipe(std::string pipename);
   // Anonymous pipe -
-  TPipe(HANDLE hPipeRd, HANDLE hPipeWrt);
+  TPipe(int PipeRd, int PipeWrt);
 
   // Destroys the pipe object, closing it if necessary.
   virtual ~TPipe();
@@ -66,24 +68,27 @@ class TPipe : public TVirtualTransport<TPipe> {
   //Accessors
   std::string getPipename();
   void setPipename(std::string pipename);
-  HANDLE getPipeHandle(); //doubles as the read handle for anon pipe
-  void setPipeHandle(HANDLE pipehandle);
-  HANDLE getWrtPipeHandle();
-  void setWrtPipeHandle(HANDLE pipehandle);
+  int getPipeHandle(); //doubles as the read handle for anon pipe
+  void setPipeHandle(int pipehandle);
+  int getWrtPipeHandle();
+  void setWrtPipeHandle(int pipehandle);
   long getConnectTimeout();
   void setConnectTimeout(long seconds);
 
  private:
   std::string pipename_;
   //Named pipe handles are R/W, while anonymous pipes are one or the other (half duplex).
-  HANDLE hPipe_, hPipeWrt_;
+  int Pipe_, PipeWrt_;
   long TimeoutSeconds_;
   bool isAnonymous;
 
+#ifndef _WIN32
+  //*NIX named pipe implementation uses domain socket
+  boost::shared_ptr<TSocket> dsocket;
+#endif
 };
 
 }}} // apache::thrift::transport
 
-#endif //_WIN32
 #endif // #ifndef _THRIFT_TRANSPORT_TPIPE_H_
 
