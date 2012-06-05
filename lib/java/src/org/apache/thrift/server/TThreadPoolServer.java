@@ -108,6 +108,11 @@ public class TThreadPoolServer extends TServer {
       return;
     }
 
+    // Run the preServe event
+    if (eventHandler_ != null) {
+      eventHandler_.preServe();
+    }
+
     stopped_ = false;
     setServing(true);
     while (!stopped_) {
@@ -175,21 +180,43 @@ public class TThreadPoolServer extends TServer {
       TTransport outputTransport = null;
       TProtocol inputProtocol = null;
       TProtocol outputProtocol = null;
+
+      TServerEventHandler eventHandler = null;
+      ServerContext connectionContext = null;
+
       try {
         processor = processorFactory_.getProcessor(client_);
         inputTransport = inputTransportFactory_.getTransport(client_);
         outputTransport = outputTransportFactory_.getTransport(client_);
         inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
-        outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
+        outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);	  
+
+        eventHandler = getEventHandler();
+        if (eventHandler != null) {
+          connectionContext = eventHandler.createContext(inputProtocol, outputProtocol);
+        }
         // we check stopped_ first to make sure we're not supposed to be shutting
         // down. this is necessary for graceful shutdown.
-        while (!stopped_ && processor.process(inputProtocol, outputProtocol)) {}
+        while (true) {
+
+            if (eventHandler != null) {
+              eventHandler.processContext(connectionContext, inputTransport, outputTransport);
+            }
+
+            if(stopped_ || !processor.process(inputProtocol, outputProtocol)) {
+              break;
+            }
+        }
       } catch (TTransportException ttx) {
         // Assume the client died and continue silently
       } catch (TException tx) {
         LOGGER.error("Thrift error occurred during processing of message.", tx);
       } catch (Exception x) {
         LOGGER.error("Error occurred during processing of message.", x);
+      }
+
+      if (eventHandler != null) {
+        eventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
       }
 
       if (inputTransport != null) {

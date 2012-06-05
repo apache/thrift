@@ -26,13 +26,17 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.server.ServerContext;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServer.Args;
 import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.server.ServerTestBase.TestHandler;
+import org.apache.thrift.server.TServerEventHandler;
+import org.apache.thrift.transport.TTransport;
 
 import thrift.test.Insanity;
 import thrift.test.Numberz;
@@ -43,6 +47,51 @@ import thrift.test.Xtruct;
 import thrift.test.Xtruct2;
 
 public class TestServer {
+
+  static class TestServerContext implements ServerContext {
+
+        int connectionId;
+
+        public TestServerContext(int connectionId) {
+            this.connectionId = connectionId;
+        }
+
+        public int getConnectionId() {
+            return connectionId;
+        }
+
+        public void setConnectionId(int connectionId) {
+            this.connectionId = connectionId;
+        }
+
+  }
+
+  static class TestServerEventHandler implements TServerEventHandler {
+
+        private int nextConnectionId = 1;
+
+        public void preServe() {
+            System.out.println("TServerEventHandler.preServe - called only once before server starts accepting connections");
+        }
+
+        public ServerContext createContext(TProtocol input, TProtocol output) {
+            //we can create some connection level data which is stored while connection is alive & served
+            TestServerContext ctx = new TestServerContext(nextConnectionId++);
+            System.out.println("TServerEventHandler.createContext - connection #"+ctx.getConnectionId()+" established");
+            return ctx;
+        }
+
+        public void deleteContext(ServerContext serverContext, TProtocol input, TProtocol output) {
+            TestServerContext ctx = (TestServerContext)serverContext;
+            System.out.println("TServerEventHandler.deleteContext - connection #"+ctx.getConnectionId()+" terminated");
+        }
+
+        public void processContext(ServerContext serverContext, TTransport inputTransport, TTransport outputTransport) {
+            TestServerContext ctx = (TestServerContext)serverContext;
+            System.out.println("TServerEventHandler.processContext - connection #"+ctx.getConnectionId()+" is ready to process next request");
+        }
+
+  }
 
   public static void main(String [] args) {
     try {
@@ -73,6 +122,9 @@ public class TestServer {
 
       // ThreadPool Server
       serverEngine = new TThreadPoolServer(new TThreadPoolServer.Args(tServerSocket).processor(testProcessor).protocolFactory(tProtocolFactory));
+
+      //Set server event handler
+      serverEngine.setServerEventHandler(new TestServerEventHandler());
 
       // Run it
       System.out.println("Starting the server on port " + port + "...");

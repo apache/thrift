@@ -550,4 +550,13 @@ public abstract class AbstractNonblockingServer extends TServer {
       }
     }
   } // FrameBuffer
+
+  public void setServerEventHandler(TServerEventHandler eventHandler) {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  public TServerEventHandler getEventHandler() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
 }
