@@ -62,7 +62,7 @@ type
       // This base context does nothing.
       TJSONBaseContext = class
       protected
-        FProto : IJSONProtocol;
+        FProto : Pointer;  // weak IJSONProtocol;
       public
         constructor Create( const aProto : IJSONProtocol);
         procedure Write;  virtual;
@@ -97,7 +97,7 @@ type
       // Holds up to one byte from the transport
       TLookaheadReader = class
       protected
-        FProto : IJSONProtocol;
+        FProto : Pointer;  // weak IJSONProtocol;
         constructor Create( const aProto : IJSONProtocol);
 
       private
@@ -335,7 +335,7 @@ end;
 constructor TJSONProtocolImpl.TJSONBaseContext.Create( const aProto : IJSONProtocol);
 begin
   inherited Create;
-  FProto := aProto;
+  FProto := Pointer(aProto);
 end;
 
 
@@ -368,7 +368,7 @@ procedure TJSONProtocolImpl.TJSONListContext.Write;
 begin
   if FFirst
   then FFirst := FALSE
-  else FProto.Transport.Write( COMMA);
+  else IJSONProtocol(FProto).Transport.Write( COMMA);
 end;
 
 
@@ -376,7 +376,7 @@ procedure TJSONProtocolImpl.TJSONListContext.Read;
 begin
   if FFirst
   then FFirst := FALSE
-  else FProto.ReadJSONSyntaxChar( COMMA[0]);
+  else IJSONProtocol(FProto).ReadJSONSyntaxChar( COMMA[0]);
 end;
 
 
@@ -396,8 +396,8 @@ begin
   end
   else begin
     if FColon
-    then FProto.Transport.Write( COLON)
-    else FProto.Transport.Write( COMMA);
+    then IJSONProtocol(FProto).Transport.Write( COLON)
+    else IJSONProtocol(FProto).Transport.Write( COMMA);
     FColon := not FColon;
   end;
 end;
@@ -411,8 +411,8 @@ begin
   end
   else begin
     if FColon
-    then FProto.ReadJSONSyntaxChar( COLON[0])
-    else FProto.ReadJSONSyntaxChar( COMMA[0]);
+    then IJSONProtocol(FProto).ReadJSONSyntaxChar( COLON[0])
+    else IJSONProtocol(FProto).ReadJSONSyntaxChar( COMMA[0]);
     FColon := not FColon;
   end;
 end;
@@ -427,7 +427,7 @@ end;
 constructor TJSONProtocolImpl.TLookaheadReader.Create( const aProto : IJSONProtocol);
 begin
   inherited Create;
-  FProto   := aProto;
+  FProto   := Pointer(aProto);
   FHasData := FALSE;
 end;
 
@@ -438,7 +438,7 @@ begin
   then FHasData := FALSE
   else begin
     SetLength( FData, 1);
-    FProto.Transport.ReadAll( FData, 0, 1);
+    IJSONProtocol(FProto).Transport.ReadAll( FData, 0, 1);
   end;
   result := FData[0];
 end;
@@ -448,7 +448,7 @@ function TJSONProtocolImpl.TLookaheadReader.Peek : Byte;
 begin
   if not FHasData then begin
     SetLength( FData, 1);
-    FProto.Transport.ReadAll( FData, 0, 1);
+    IJSONProtocol(FProto).Transport.ReadAll( FData, 0, 1);
     FHasData := TRUE;
   end;
   result := FData[0];

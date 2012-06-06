@@ -1611,7 +1611,8 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent_impl(s_service_impl) << "TProtocolUtil.Skip(iprot, TType.Struct);" << endl;
   indent_impl(s_service_impl) << "iprot.ReadMessageEnd();" << endl;
   indent_impl(s_service_impl) << "x := TApplicationException.Create(TApplicationException.TExceptionType.UnknownMethod, 'Invalid method name: ''' + msg.Name + '''');" << endl;
-  indent_impl(s_service_impl) << "oprot.WriteMessageBegin(TMessageImpl.Create(msg.Name, TMessageType.Exception, msg.SeqID));" << endl;
+  indent_impl(s_service_impl) << "msg := TMessageImpl.Create(msg.Name, TMessageType.Exception, msg.SeqID);" << endl;
+  indent_impl(s_service_impl) << "oprot.WriteMessageBegin( msg);" << endl;
   indent_impl(s_service_impl) << "x.Write(oprot);" << endl;
   indent_impl(s_service_impl) << "oprot.WriteMessageEnd();" << endl;
   indent_impl(s_service_impl) << "oprot.Transport.Flush();" << endl;
@@ -1691,6 +1692,7 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
   indent_up_impl();
   indent_impl(s_service_impl) << "args: " << args_intfnm << ";" << endl;
   if (!tfunction->is_oneway()) {
+    indent_impl(s_service_impl) << "msg: IMessage;" << endl;
     indent_impl(s_service_impl) << "ret: " << result_intfnm << ";" << endl;
   }
 
@@ -1760,7 +1762,8 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
   }
 
   if (! tfunction->is_oneway()) {
-    indent_impl(s_service_impl) << "oprot.WriteMessageBegin( TMessageImpl.Create('" << tfunction->get_name() << "', TMessageType.Reply, seqid)); " << endl;
+    indent_impl(s_service_impl) << "msg := TMessageImpl.Create('" << tfunction->get_name() << "', TMessageType.Reply, seqid); " << endl;
+    indent_impl(s_service_impl) << "oprot.WriteMessageBegin( msg); " << endl;
     indent_impl(s_service_impl) << "ret.Write(oprot);" << endl;
     indent_impl(s_service_impl) << "oprot.WriteMessageEnd();" << endl;
     indent_impl(s_service_impl) << "oprot.Transport.Flush();" << endl;
