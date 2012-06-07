@@ -72,8 +72,8 @@ class TPipeServer : public TServerTransport {
  private:
   std::string pipename_;
   uint32_t bufsize_;
-  uint32_t maxconns_;
   int Pipe_;  //Named Pipe (R/W) or Anonymous Pipe (R)
+  uint32_t maxconns_;
   int PipeW_; //Anonymous Pipe (W)
   int ClientAnonRead, ClientAnonWrite; //Client side anonymous pipe handles
   //? Do we need duplicates to send to client?
