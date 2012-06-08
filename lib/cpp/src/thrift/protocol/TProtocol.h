@@ -83,26 +83,26 @@ using apache::thrift::transport::TTransport;
 #include <sys/param.h>
 #endif
 
-#ifndef __BYTE_ORDER
+#ifndef __THRIFT_BYTE_ORDER
 # if defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
-#  define __BYTE_ORDER BYTE_ORDER
-#  define __LITTLE_ENDIAN LITTLE_ENDIAN
-#  define __BIG_ENDIAN BIG_ENDIAN
+#  define __THRIFT_BYTE_ORDER BYTE_ORDER
+#  define __THRIFT_LITTLE_ENDIAN LITTLE_ENDIAN
+#  define __THRIFT_BIG_ENDIAN BIG_ENDIAN
 # else
 #  include <boost/config.hpp>
 #  include <boost/detail/endian.hpp>
-#  define __BYTE_ORDER BOOST_BYTE_ORDER
+#  define __THRIFT_BYTE_ORDER BOOST_BYTE_ORDER
 #  ifdef BOOST_LITTLE_ENDIAN
-#   define __LITTLE_ENDIAN __BYTE_ORDER
-#   define __BIG_ENDIAN 0
+#   define __THRIFT_LITTLE_ENDIAN __THRIFT_BYTE_ORDER
+#   define __THRIFT_BIG_ENDIAN 0
 #  else
-#   define __LITTLE_ENDIAN 0
-#   define __BIG_ENDIAN __BYTE_ORDER
+#   define __THRIFT_LITTLE_ENDIAN 0
+#   define __THRIFT_BIG_ENDIAN __THRIFT_BYTE_ORDER
 #  endif
 # endif
 #endif
 
-#if __BYTE_ORDER == __BIG_ENDIAN
+#if __THRIFT_BYTE_ORDER == __THRIFT_BIG_ENDIAN
 #  define ntohll(n) (n)
 #  define htonll(n) (n)
 # if defined(__GNUC__) && defined(__GLIBC__)
@@ -122,7 +122,7 @@ using apache::thrift::transport::TTransport;
 #  define htolell(n) bswap_64(n)
 #  define letohll(n) bswap_64(n)
 # endif /* GNUC & GLIBC */
-#elif __BYTE_ORDER == __LITTLE_ENDIAN
+#elif __THRIFT_BYTE_ORDER == __THRIFT_LITTLE_ENDIAN
 #  define htolell(n) (n)
 #  define letohll(n) (n)
 # if defined(__GNUC__) && defined(__GLIBC__)
@@ -133,7 +133,7 @@ using apache::thrift::transport::TTransport;
 #  define ntohll(n) ( (((uint64_t)ntohl(n)) << 32) + ntohl(n >> 32) )
 #  define htonll(n) ( (((uint64_t)htonl(n)) << 32) + htonl(n >> 32) )
 # endif /* GNUC & GLIBC */
-#else /* __BYTE_ORDER */
+#else /* __THRIFT_BYTE_ORDER */
 # error "Can't define htonll or ntohll!"
 #endif
 
