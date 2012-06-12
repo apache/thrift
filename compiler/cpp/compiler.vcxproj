@@ -22,6 +22,7 @@
     <ClInclude Include="src\generate\t_generator.h" />
     <ClInclude Include="src\generate\t_generator_registry.h" />
     <ClInclude Include="src\generate\t_oop_generator.h" />
+    <ClInclude Include="src\generate\t_html_generator.h" />
     <ClInclude Include="src\globals.h" />
     <ClInclude Include="src\main.h" />
     <ClInclude Include="src\md5.h" />
@@ -54,6 +55,8 @@
     <ClCompile Include="src\generate\t_cpp_generator.cc" />
     <ClCompile Include="src\generate\t_csharp_generator.cc" />
     <ClCompile Include="src\generate\t_c_glib_generator.cc" />
+    <ClCompile Include="src\generate\t_d_generator.cc" />
+    <ClCompile Include="src\generate\t_delphi_generator.cc" />
     <ClCompile Include="src\generate\t_erl_generator.cc" />
     <ClCompile Include="src\generate\t_generator.cc" />
     <ClCompile Include="src\generate\t_go_generator.cc" />
