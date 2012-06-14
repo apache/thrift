@@ -3878,17 +3878,17 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
     out <<
       indent() << "::apache::thrift::protocol::TType " << ktype << ";" << endl <<
       indent() << "::apache::thrift::protocol::TType " << vtype << ";" << endl <<
-      indent() << "iprot->readMapBegin(" <<
+      indent() << "xfer += iprot->readMapBegin(" <<
                    ktype << ", " << vtype << ", " << size << ");" << endl;
   } else if (ttype->is_set()) {
     out <<
       indent() << "::apache::thrift::protocol::TType " << etype << ";" << endl <<
-      indent() << "iprot->readSetBegin(" <<
+      indent() << "xfer += iprot->readSetBegin(" <<
                    etype << ", " << size << ");" << endl;
   } else if (ttype->is_list()) {
     out <<
       indent() << "::apache::thrift::protocol::TType " << etype << ";" << endl <<
-      indent() << "iprot->readListBegin(" <<
+      indent() << "xfer += iprot->readListBegin(" <<
       etype << ", " << size << ");" << endl;
     if (!use_push) {
       indent(out) << prefix << ".resize(" << size << ");" << endl;
@@ -3916,11 +3916,11 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out,
 
   // Read container end
   if (ttype->is_map()) {
-    indent(out) << "iprot->readMapEnd();" << endl;
+    indent(out) << "xfer += iprot->readMapEnd();" << endl;
   } else if (ttype->is_set()) {
-    indent(out) << "iprot->readSetEnd();" << endl;
+    indent(out) << "xfer += iprot->readSetEnd();" << endl;
   } else if (ttype->is_list()) {
-    indent(out) << "iprot->readListEnd();" << endl;
+    indent(out) << "xfer += iprot->readListEnd();" << endl;
   }
 
   scope_down(out);
