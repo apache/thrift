@@ -30,6 +30,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rake", "~> 0.9.2.2"
   s.add_development_dependency "rspec", "1.3.2"
   s.add_development_dependency "rack", "~> 1.4.1"
+  s.add_development_dependency "rack-test", "~> 0.6.1"
   s.add_development_dependency "thin", "~> 1.3.1"
   s.add_development_dependency "bundler", "~> 1.1.4"
 end

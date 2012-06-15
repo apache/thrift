@@ -20,60 +20,72 @@
 require 'rack'
 require 'thin'
 
-## Sticks a service on a URL, using Thin to do the HTTP work
+##
+# Wraps the Thin web server to provide a Thrift server over HTTP.
 module Thrift
   class ThinHTTPServer < BaseServer
 
-    THRIFT_HEADER = "application/x-thrift"
-
-    def initialize(processor, opts={})
-      port = opts[:port] || 80
-      ip = opts[:ip] || "0.0.0.0"
-      path = opts[:path] || "/"
-      protocol_factory = opts[:protocol_factory] || BinaryProtocolFactory.new
-      application_context = create_application_context(path, processor, protocol_factory)
-      @server = Thin::Server.new(ip, port, application_context)
+    ##
+    # Accepts a Thrift::Processor
+    # Options include:
+    # * :port
+    # * :ip
+    # * :path
+    # * :protocol_factory
+    def initialize(processor, options={})
+      port = options[:port] || 80
+      ip = options[:ip] || "0.0.0.0"
+      path = options[:path] || "/"
+      protocol_factory = options[:protocol_factory] || BinaryProtocolFactory.new
+      app = RackApplication.for(path, processor, protocol_factory)
+      @server = Thin::Server.new(ip, port, app)
     end
 
+    ##
+    # Starts the server
     def serve
       @server.start
     end
 
-    def self.successful_request(processor, protocol_factory)
-      response = Rack::Response.new([], 200)
-      transport = IOStreamTransport.new request.body, response
-      protocol = protocol_factory.get_protocol transport
-      processor.process protocol, protocol
-      response
-    end
+    class RackApplication
 
-    def self.failed_request
-      Rack::Response.new(['Not Found'], 404)
-    end
+      THRIFT_HEADER = "application/x-thrift"
 
-    def self.valid_thrift_request?(env)
-      request = Rack::Request.new(env)
-      request.post? && env["CONTENT_TYPE"] == THRIFT_HEADER
-    end
-
-    private
-
-    def create_application_context(path, processor, protocol_factory)
-      Rack::Builder.new do
-        use Rack::CommonLogger
-        use Rack::ShowExceptions
-        use Rack::ContentType, THRIFT_HEADER
-        use Rack::Lint
-        map path do
-          run lambda { |env|
-            if ThinHTTPServer.valid_thrift_request?(env)
-              ThinHTTPServer.successful_request(processor, protocol_factory)
-            else
-              ThinHTTPServer.failed_request
-            end
-          }
+      def self.for(path, processor, protocol_factory)
+        Rack::Builder.new do
+          use Rack::CommonLogger
+          use Rack::ShowExceptions
+          use Rack::Lint
+          map path do
+            run lambda { |env|
+              request = Rack::Request.new(env)
+              if RackApplication.valid_thrift_request?(request)
+                RackApplication.successful_request(request, processor, protocol_factory)
+              else
+                RackApplication.failed_request
+              end
+            }
+          end
         end
       end
+
+      def self.successful_request(rack_request, processor, protocol_factory)
+        response = Rack::Response.new([], 200, {'Content-Type' => THRIFT_HEADER})
+        transport = IOStreamTransport.new rack_request.body, response
+        protocol = protocol_factory.get_protocol transport
+        processor.process protocol, protocol
+        response
+      end
+
+      def self.failed_request
+        Rack::Response.new(['Not Found'], 404, {'Content-Type' => THRIFT_HEADER})
+      end
+
+      def self.valid_thrift_request?(rack_request)
+        rack_request.post? && rack_request.env["CONTENT_TYPE"] == THRIFT_HEADER
+      end
+
     end
+
   end
 end
