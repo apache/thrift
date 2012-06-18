@@ -142,7 +142,7 @@ class TServer : public concurrency::Runnable {
 
 protected:
   template<typename ProcessorFactory>
-  TServer(const boost::shared_ptr<TProcessorFactory>& processorFactory,
+  TServer(const boost::shared_ptr<ProcessorFactory>& processorFactory,
           THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)):
     processorFactory_(processorFactory) {
     setInputTransportFactory(boost::shared_ptr<TTransportFactory>(
@@ -166,7 +166,7 @@ protected:
   }
 
   template<typename ProcessorFactory>
-  TServer(const boost::shared_ptr<TProcessorFactory>& processorFactory,
+  TServer(const boost::shared_ptr<ProcessorFactory>& processorFactory,
           const boost::shared_ptr<TServerTransport>& serverTransport,
           THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)):
     processorFactory_(processorFactory),
