@@ -20,6 +20,11 @@
  * @package thrift.transport
  */
 
+namespace Thrift\Transport;
+
+use Thrift\Transport\TTransport;
+use Thrift\Exception\TException;
+use Thrift\Factory\TStringFuncFactory;
 
 /**
  * Php stream transport. Reads to and writes from the php standard streams

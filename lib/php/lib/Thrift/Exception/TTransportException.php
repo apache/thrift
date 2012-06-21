@@ -20,31 +20,22 @@
  * @package thrift.transport
  */
 
-namespace Thrift\Transport;
+namespace Thrift\Exception;
 
-use Thrift\Transport\TTransport;
-use Thrift\Exception\TTransportException;
+use Thrift\Exception\TException;
 
 /**
- * Transport that only accepts writes and ignores them.
- * This is useful for measuring the serialized size of structures.
- *
- * @package thrift.transport
+ * Transport exceptions
  */
-class TNullTransport extends TTransport {
+class TTransportException extends TException {
 
-  public function isOpen() {
-    return true;
+  const UNKNOWN = 0;
+  const NOT_OPEN = 1;
+  const ALREADY_OPEN = 2;
+  const TIMED_OUT = 3;
+  const END_OF_FILE = 4;
+
+  function __construct($message=null, $code=0) {
+    parent::__construct($message, $code);
   }
-
-  public function open() {}
-
-  public function close() {}
-
-  public function read($len) {
-    throw new TTransportException("Can't read from TNullTransport.");
-  }
-
-  public function write($buf) {}
-
 }

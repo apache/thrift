@@ -20,6 +20,12 @@
  * @package thrift.transport
  */
 
+namespace Thrift\Transport;
+
+use Thrift\Transport\TTransport;
+use Thrift\Exception\TException;
+use Thrift\Exception\TTransportException;
+use Thrift\Factory\TStringFuncFactory;
 
 /**
  * Sockets implementation of the TTransport interface.

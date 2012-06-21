@@ -1,7 +1,9 @@
 <?php
 
-include_once $GLOBALS['THRIFT_ROOT'].'/transport/TServerTransport.php';
-include_once $GLOBALS['THRIFT_ROOT'].'/transport/TSocket.php';
+namespace Thrift\Server;
+
+use Thrift\Server\TServerTransport;
+use Thrift\Transport\TSocket;
 
 /**
  * Socket implementation of a server agent.
@@ -90,7 +92,7 @@ class TServerSocket extends TServerTransport {
 
     $socket = new TSocket();
     $socket->setHandle($handle);
-    
+
     return $socket;
   }
 }

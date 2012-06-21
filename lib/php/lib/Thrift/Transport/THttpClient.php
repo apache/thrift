@@ -20,6 +20,11 @@
  * @package thrift.transport
  */
 
+namespace Thrift\Transport;
+
+use Thrift\Transport\TTransport;
+use Thrift\Exception\TTransportException;
+use Thrift\Factory\TStringFuncFactory;
 
 /**
  * HTTP client for Thrift

@@ -20,6 +20,11 @@
  * @package thrift.transport
  */
 
+namespace Thrift\Transport;
+
+use Thrift\Transport\TTransport;
+use Thrift\Exception\TTransportException;
+use Thrift\Factory\TStringFuncFactory;
 
 /**
  * A memory buffer is a tranpsort that simply reads from and writes to an

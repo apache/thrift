@@ -1,5 +1,9 @@
 <?php
 
+namespace Thrift\Server;
+
+use Thrift\Exception\TTransportException;
+
 /**
  * Generic class for Server agent.
  *
@@ -44,7 +48,7 @@ abstract class TServerTransport {
     if ($transport == null) {
       throw new TTransportException("accept() may not return NULL");
     }
-    
+
     return $transport;
   }
 }

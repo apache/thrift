@@ -20,6 +20,10 @@
  * @package thrift.transport
  */
 
+namespace Thrift\Transport;
+
+use Thrift\Transport\TTransport;
+use Thrift\Factory\TStringFuncFactory;
 
 /**
  * Buffered transport. Stores data to an internal buffer that it doesn't
