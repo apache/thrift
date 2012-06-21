@@ -38,7 +38,7 @@ use Thrift\Base\TBase;
  * @param mixed $p1 Message (string) or type-spec (array)
  * @param mixed $p2 Code (integer) or values (array)
  */
-class TException extends Exception {
+class TException extends \Exception {
   function __construct($p1=null, $p2=0) {
     if (is_array($p1) && is_array($p2)) {
       $spec = $p1;
