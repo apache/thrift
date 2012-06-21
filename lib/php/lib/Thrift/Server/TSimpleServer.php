@@ -1,6 +1,9 @@
 <?php
 
-include_once $GLOBALS['THRIFT_ROOT'].'/server/TServer.php';
+namespace Thrift\Server;
+
+use Thrift\Server\TServer;
+use Thrift\Exception\TTransportException;
 
 /**
  * Simple implemtation of a Thrift server.
@@ -28,7 +31,7 @@ class TSimpleServer extends TServer {
     while (!$this->stop_) {
       try {
         $transport = $this->transport_->accept();
-        
+
         if ($transport != null) {
           $inputTransport = $this->inputTransportFactory_->getTransport($transport);
           $outputTransport = $this->outputTransportFactory_->getTransport($transport);

@@ -1,6 +1,11 @@
 <?php
 
-include_once $GLOBALS['THRIFT_ROOT'].'/server/TServer.php';
+namespace Thrift\Server;
+
+use Thrift\Server\TServer;
+use Thrift\Transport\TTransport;
+use Thrift\Exception\TException;
+use Thrift\Exception\TTransportException;
 
 /**
  * A forking implementation of a Thrift server.
@@ -83,7 +88,7 @@ class TForkingServer extends TServer {
       @$transport->close();
     }
     catch (TTransportException $e) { }
-    
+
     exit(0);
   }
 
