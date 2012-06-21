@@ -20,7 +20,12 @@
  * @package thrift.protocol
  */
 
-include_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
+namespace Thrift\Protocol;
+
+use Thrift\Protocol\TProtocol;
+use Thrift\Type\TType;
+use Thrift\Exception\TProtocolException;
+use Thrift\Factory\TStringFuncFactory;
 
 /**
  * Compact implementation of the Thrift protocol.
@@ -662,17 +667,3 @@ class TCompactProtocol extends TProtocol {
     }
   }
 }
-
-/**
- * Compact Protocol Factory
- */
-class TCompcatProtocolFactory implements TProtocolFactory {
-
-  public function __construct() {
-  }
-
-  public function getProtocol($trans) {
-    return new TCompactProtocol($trans);
-  }
-}
-

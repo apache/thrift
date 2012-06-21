@@ -20,7 +20,12 @@
  * @package thrift.protocol
  */
 
-include_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
+namespace Thrift\Protocol;
+
+use Thrift\Protocol\TProtocol;
+use Thrift\Type\TType;
+use Thrift\Exception\TProtocolException;
+use Thrift\Factory\TStringFuncFactory;
 
 /**
  * Binary implementation of the Thrift protocol.
@@ -387,43 +392,5 @@ class TBinaryProtocol extends TProtocol {
       $value = '';
     }
     return $result + $len;
-  }
-}
-
-/**
- * Binary Protocol Factory
- */
-class TBinaryProtocolFactory implements TProtocolFactory {
-  private $strictRead_ = false;
-  private $strictWrite_ = false;
-
-  public function __construct($strictRead=false, $strictWrite=false) {
-    $this->strictRead_ = $strictRead;
-    $this->strictWrite_ = $strictWrite;
-  }
-
-  public function getProtocol($trans) {
-    return new TBinaryProtocol($trans, $this->strictRead_, $this->strictWrite_);
-  }
-}
-
-/**
- * Accelerated binary protocol: used in conjunction with the thrift_protocol
- * extension for faster deserialization
- */
-class TBinaryProtocolAccelerated extends TBinaryProtocol {
-  public function __construct($trans, $strictRead=false, $strictWrite=true) {
-    // If the transport doesn't implement putBack, wrap it in a
-    // TBufferedTransport (which does)
-    if (!method_exists($trans, 'putBack')) {
-      $trans = new TBufferedTransport($trans);
-    }
-    parent::__construct($trans, $strictRead, $strictWrite);
-  }
-  public function isStrictRead() {
-    return $this->strictRead_;
-  }
-  public function isStrictWrite() {
-    return $this->strictWrite_;
   }
 }

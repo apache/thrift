@@ -21,6 +21,16 @@
  * @package thrift.protocol
  */
 
+namespace Thrift\Protocol;
+
+use Thrift\Protocol\TProtocol;
+use Thrift\Type\TType;
+use Thrift\Exception\TProtocolException;
+use Thrift\Protocol\JSON\BaseContext;
+use Thrift\Protocol\JSON\LookaheadReader;
+use Thrift\Protocol\JSON\PairContext;
+use Thrift\Protocol\JSON\ListContext;
+
 /**
  * JSON implementation of thrift protocol, ported from Java.
  */
@@ -163,14 +173,14 @@ class TJSONProtocol extends TProtocol
 
     public function __construct($trans) {
         parent::__construct($trans);
-        $this->context_ = new TJSONProtocol_JSONBaseContext();
-        $this->reader_ = new TJSONProtocol_LookaheadReader($this);
+        $this->context_ = new BaseContext();
+        $this->reader_ = new LookaheadReader($this);
     }
 
     public function reset() {
         $this->contextStack_ = array();
-        $this->context_ = new TJSONProtocol_JSONBaseContext();
-        $this->reader_ = new TJSONProtocol_LookaheadReader($this);
+        $this->context_ = new BaseContext();
+        $this->reader_ = new LookaheadReader($this);
     }
 
     private $tmpbuf_ = array(4);
@@ -204,13 +214,13 @@ class TJSONProtocol extends TProtocol
 
         if (is_numeric($b) && $this->context_->escapeNum()) {
             $this->trans_->write(self::QUOTE);
-        } 
+        }
 
         $this->trans_->write(json_encode($b));
 
         if (is_numeric($b) && $this->context_->escapeNum()) {
             $this->trans_->write(self::QUOTE);
-        } 
+        }
     }
 
     private function writeJSONInteger($num) {
@@ -251,7 +261,7 @@ class TJSONProtocol extends TProtocol
     private function writeJSONObjectStart() {
       $this->context_->write();
       $this->trans_->write(self::LBRACE);
-      $this->pushContext(new TJSONProtocol_JSONPairContext($this));
+      $this->pushContext(new PairContext($this));
     }
 
     private function writeJSONObjectEnd() {
@@ -262,7 +272,7 @@ class TJSONProtocol extends TProtocol
     private function writeJSONArrayStart() {
       $this->context_->write();
       $this->trans_->write(self::LBRACKET);
-      $this->pushContext(new TJSONProtocol_JSONListContext($this));
+      $this->pushContext(new ListContext($this));
     }
 
     private function writeJSONArrayEnd() {
@@ -417,7 +427,7 @@ class TJSONProtocol extends TProtocol
     private function readJSONObjectStart() {
         $this->context_->read();
         $this->readJSONSyntaxChar(self::LBRACE);
-        $this->pushContext(new TJSONProtocol_JSONPairContext($this));
+        $this->pushContext(new PairContext($this));
     }
 
     private function readJSONObjectEnd() {
@@ -429,7 +439,7 @@ class TJSONProtocol extends TProtocol
     {
         $this->context_->read();
         $this->readJSONSyntaxChar(self::LBRACKET);
-        $this->pushContext(new TJSONProtocol_JSONListContext($this));
+        $this->pushContext(new ListContext($this));
     }
 
     private function readJSONArrayEnd() {
@@ -682,127 +692,3 @@ class TJSONProtocol extends TProtocol
         return true;
     }
 }
-
-/**
- * JSON Protocol Factory
- */
-class TJSONProtocolFactory implements TProtocolFactory
-{
-    public function __construct()
-    {
-    }
-
-    public function getProtocol($trans)
-    {
-        return new TJSONProtocol($trans);
-    }
-}
-
-class TJSONProtocol_JSONBaseContext
-{
-    function escapeNum()
-    {
-        return false;
-    }
-
-    function write()
-    {
-    }
-
-    function read()
-    {
-    }
-}
-
-class TJSONProtocol_JSONListContext extends TJSONProtocol_JSONBaseContext
-{
-    private $first_ = true;
-    private $p_;
-
-    public function __construct($p) {
-        $this->p_ = $p;
-    }
-
-    public function write() {
-        if ($this->first_) {
-            $this->first_ = false;
-        } else {
-            $this->p_->getTransport()->write(TJSONProtocol::COMMA);
-        }
-    }
-
-    public function read() {
-        if ($this->first_) {
-            $this->first_ = false;
-        } else {
-            $this->p_->readJSONSyntaxChar(TJSONProtocol::COMMA);
-        }
-    }
-}
-
-class TJSONProtocol_JSONPairContext extends TJSONProtocol_JSONBaseContext {
-    private $first_ = true;
-    private $colon_ = true;
-    private $p_ = null;
-
-    public function __construct($p) {
-        $this->p_ = $p;
-    }
-
-    public function write() {
-        if ($this->first_) {
-            $this->first_ = false;
-            $this->colon_ = true;
-        } else {
-            $this->p_->getTransport()->write($this->colon_ ? TJSONProtocol::COLON : TJSONProtocol::COMMA);
-            $this->colon_ = !$this->colon_;
-        }
-    }
-
-    public function read() {
-        if ($this->first_) {
-            $this->first_ = false;
-            $this->colon_ = true;
-        } else {
-            $this->p_->readJSONSyntaxChar($this->colon_ ? TJSONProtocol::COLON : TJSONProtocol::COMMA);
-            $this->colon_ = !$this->colon_;
-        }
-    }
-
-    public function escapeNum() {
-        return $this->colon_;
-    }
-}
-
-class TJSONProtocol_LookaheadReader
-{
-    private $hasData_ = false;
-    private $data_ = array();
-    private $p_;
-
-    public function __construct($p)
-    {
-        $this->p_ = $p;
-    }
-
-    public function read() {
-        if ($this->hasData_) {
-            $this->hasData_ = false;
-        } else {
-            $this->data_ = $this->p_->getTransport()->readAll(1);
-        }
-
-        return substr($this->data_, 0, 1);
-    }
-
-    public function peek() {
-        if (!$this->hasData_) {
-            $this->data_ = $this->p_->getTransport()->readAll(1);
-        }
-
-        $this->hasData_ = true;
-        return substr($this->data_, 0, 1);
-    }
-}
-
-

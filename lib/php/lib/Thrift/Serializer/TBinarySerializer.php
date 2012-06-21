@@ -21,8 +21,11 @@
  * @author: rmarin (marin.radu@facebook.com)
  */
 
-require_once $GLOBALS['THRIFT_ROOT'].'/transport/TMemoryBuffer.php';
-require_once $GLOBALS['THRIFT_ROOT'].'/protocol/TBinaryProtocol.php';
+namespace Thrift\Serializer;
+
+use Thrift\Transport\TMemoryBuffer;
+use Thrift\Protocol\TBinaryProtocolAccelerated;
+use Thrift\Type\TMessageType;
 
 /**
  * Utility class for serializing and deserializing
