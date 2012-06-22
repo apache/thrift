@@ -134,7 +134,8 @@ class TBinaryProtocolT
 
   inline uint32_t writeDouble(const double dub);
 
-  inline uint32_t writeString(const std::string& str);
+  template <typename StrType>
+  inline uint32_t writeString(const StrType& str);
 
   inline uint32_t writeBinary(const std::string& str);
 
@@ -187,12 +188,14 @@ class TBinaryProtocolT
 
   inline uint32_t readDouble(double& dub);
 
-  inline uint32_t readString(std::string& str);
+  template<typename StrType>
+  inline uint32_t readString(StrType& str);
 
   inline uint32_t readBinary(std::string& str);
 
  protected:
-  uint32_t readStringBody(std::string& str, int32_t sz);
+  template<typename StrType>
+  uint32_t readStringBody(StrType& str, int32_t sz);
 
   Transport_* trans_;
 

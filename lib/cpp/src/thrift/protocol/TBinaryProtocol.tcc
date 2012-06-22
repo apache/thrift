@@ -176,7 +176,8 @@ uint32_t TBinaryProtocolT<Transport_>::writeDouble(const double dub) {
 
 
 template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::writeString(const std::string& str) {
+template<typename StrType>
+uint32_t TBinaryProtocolT<Transport_>::writeString(const StrType& str) {
   uint32_t size = str.size();
   uint32_t result = writeI32((int32_t)size);
   if (size > 0) {
@@ -401,7 +402,8 @@ uint32_t TBinaryProtocolT<Transport_>::readDouble(double& dub) {
 }
 
 template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readString(std::string& str) {
+template<typename StrType>
+uint32_t TBinaryProtocolT<Transport_>::readString(StrType& str) {
   uint32_t result;
   int32_t size;
   result = readI32(size);
@@ -414,7 +416,8 @@ uint32_t TBinaryProtocolT<Transport_>::readBinary(std::string& str) {
 }
 
 template <class Transport_>
-uint32_t TBinaryProtocolT<Transport_>::readStringBody(std::string& str,
+template<typename StrType>
+uint32_t TBinaryProtocolT<Transport_>::readStringBody(StrType& str,
                                                       int32_t size) {
   uint32_t result = 0;
 

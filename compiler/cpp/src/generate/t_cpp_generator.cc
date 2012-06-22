@@ -69,6 +69,9 @@ class t_cpp_generator : public t_oop_generator {
     iter = parsed_options.find("templates");
     gen_templates_ = (iter != parsed_options.end());
 
+    gen_templates_only_ =
+      (iter != parsed_options.end() && iter->second == "only");
+
     out_dir_base_ = "gen-cpp";
   }
 
@@ -253,7 +256,13 @@ class t_cpp_generator : public t_oop_generator {
   bool gen_templates_;
 
   /**
-   * True if we should use a path prefix in our #include statements for other
+   * True iff we should generate process function pointers for only templatized
+   * reader/writer methods.
+   */
+  bool gen_templates_only_;
+
+  /**
+   * True iff we should use a path prefix in our #include statements for other
    * thrift-generated header files.
    */
   bool use_include_prefix_;
@@ -2896,11 +2905,15 @@ void ProcessorGenerator::generate_class_definition() {
     f_header_ <<
       indent() << "processMap_[\"" << (*f_iter)->get_name() << "\"] = ";
     if (generator_->gen_templates_) {
-      f_header_ << "ProcessFunctions(" << endl <<
-        indent() << "  &" << class_name_ << "::process_" <<
-          (*f_iter)->get_name() << "," << endl <<
-        indent() << "  &" << class_name_ << "::process_" <<
-          (*f_iter)->get_name() << ")";
+      f_header_ << "ProcessFunctions(" << endl;
+      if (generator_->gen_templates_only_) {
+        indent(f_header_) << "  NULL," << endl;
+      } else {
+        indent(f_header_) << "  &" << class_name_ << "::process_" <<
+          (*f_iter)->get_name() << "," << endl;
+      }
+      indent(f_header_) << "  &" << class_name_ << "::process_" <<
+        (*f_iter)->get_name() << ")";
     } else {
       f_header_ << "&" << class_name_ << "::process_" << (*f_iter)->get_name();
     }
@@ -2988,7 +3001,12 @@ void ProcessorGenerator::generate_dispatch_call(bool template_protocol) {
     f_out_ <<
       indent() << "(this->*(pfn->second.specialized))";
   } else {
-    if (generator_->gen_templates_) {
+    if (generator_->gen_templates_only_) {
+      // TODO: This is a null pointer, so nothing good will come from calling
+      // it.  Throw an exception instead.
+      f_out_ <<
+        indent() << "(this->*(pfn->second.generic))";
+    } else if (generator_->gen_templates_) {
       f_out_ <<
         indent() << "(this->*(pfn->second.generic))";
     } else {
@@ -4246,6 +4264,11 @@ string t_cpp_generator::namespace_close(string ns) {
 string t_cpp_generator::type_name(t_type* ttype, bool in_typedef, bool arg) {
   if (ttype->is_base_type()) {
     string bname = base_type_name(((t_base_type*)ttype)->get_base());
+    std::map<string, string>::iterator it = ttype->annotations_.find("cpp.type");
+    if (it != ttype->annotations_.end()) {
+      bname = it->second;
+    }
+
     if (!arg) {
       return bname;
     }
