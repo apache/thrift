@@ -574,6 +574,7 @@ AC_CONFIG_FILES([
   Makefile
   compiler/cpp/Makefile
   compiler/cpp/version.h
+  compiler/cpp/src/windows/version.h
   lib/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
