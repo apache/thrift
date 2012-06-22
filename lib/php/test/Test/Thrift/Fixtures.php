@@ -21,8 +21,15 @@
  * @package thrift.test
  */
 
-$GLOBALS['THRIFT_ROOT'] = dirname(__FILE__) . '/../src';
-require_once $GLOBALS['THRIFT_ROOT'] . '/packages/ThriftTest/ThriftTest.php';
+namespace Test\Thrift;
+
+require_once __DIR__ . '/../../packages/ThriftTest/ThriftTest.php';
+require_once __DIR__ . '/../../packages/ThriftTest/Types.php';
+
+use ThriftTest\Xtruct;
+use ThriftTest\Xtruct2;
+use ThriftTest\Numberz;
+use ThriftTest\Insanity;
 
 class Fixtures
 {
@@ -32,7 +39,7 @@ class Fixtures
   {
     self::$testArgs['testString1'] = "Afrikaans, Alemannisch, Aragonés, العربية, مصرى, Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška, Беларуская, Беларуская (тарашкевіца), Български, Bamanankan, বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн, Cebuano, ᏣᎳᎩ, Česky, Словѣ́ньскъ / ⰔⰎⰑⰂⰡⰐⰠⰔⰍⰟ, Чӑвашла, Cymraeg, Dansk, Zazaki, ދިވެހިބަސް, Ελληνικά, Emiliàn e rumagnòl, English, Esperanto, Español, Eesti, Euskara, فارسی, Suomi, Võro, Føroyskt, Français, Arpetan, Furlan, Frysk, Gaeilge, 贛語, Gàidhlig, Galego, Avañe'ẽ, ગુજરાતી, Gaelg, עברית, हिन्दी, Fiji Hindi, Hrvatski, Kreyòl ayisyen, Magyar, Հայերեն, Interlingua, Bahasa Indonesia, Ilokano, Ido, Íslenska, Italiano, 日本語, Lojban, Basa Jawa, ქართული, Kongo, Kalaallisut, ಕನ್ನಡ, 한국어, Къарачай-Малкъар, Ripoarisch, Kurdî, Коми, Kernewek, Кыргызча, Latina, Ladino, Lëtzebuergesch, Limburgs, Lingála, ລາວ, Lietuvių, Latviešu, Basa Banyumasan, Malagasy, Македонски, മലയാളം, मराठी, Bahasa Melayu, مازِرونی, Nnapulitano, Nedersaksisch, नेपाल भाषा, Nederlands, ‪Norsk (nynorsk)‬, ‪Norsk (bokmål)‬, Nouormand, Diné bizaad, Occitan, Иронау, Papiamentu, Deitsch, Norfuk / Pitkern, Polski, پنجابی, پښتو, Português, Runa Simi, Rumantsch, Romani, Română, Русский, Саха тыла, Sardu, Sicilianu, Scots, Sámegiella, Simple English, Slovenčina, Slovenščina, Српски / Srpski, Seeltersk, Svenska, Kiswahili, தமிழ், తెలుగు, Тоҷикӣ, ไทย, Türkmençe, Tagalog, Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük, Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文, Bân-lâm-gú, 粵語";
 
-    self::$testArgs['testString2'] = 
+    self::$testArgs['testString2'] =
       "quote: \\\" backslash:" .
       " forwardslash-escaped: \\/ " .
       " backspace: \b formfeed: \f newline: \n return: \r tab: " .
@@ -58,33 +65,33 @@ class Fixtures
     }
 
     self::$testArgs['testStruct'] =
-      new ThriftTest_Xtruct(
-                            array(
-                                  'string_thing' => 'worked',
-                                  'byte_thing' => 0x01,
-                                  'i32_thing' => pow( 2, 30 ),
-                                  'i64_thing' => self::$testArgs['testI64']
-                                  )
-                            );
+      new Xtruct(
+            array(
+                    'string_thing' => 'worked',
+                    'byte_thing' => 0x01,
+                    'i32_thing' => pow( 2, 30 ),
+                    'i64_thing' => self::$testArgs['testI64']
+                    )
+            );
 
     self::$testArgs['testNestNested'] =
-      new ThriftTest_Xtruct(
-                            array(
-                                  'string_thing' => 'worked',
-                                  'byte_thing' => 0x01,
-                                  'i32_thing' => pow( 2, 30 ),
-                                  'i64_thing' => self::$testArgs['testI64']
-                                  )
-                            );
+      new Xtruct(
+            array(
+                    'string_thing' => 'worked',
+                    'byte_thing' => 0x01,
+                    'i32_thing' => pow( 2, 30 ),
+                    'i64_thing' => self::$testArgs['testI64']
+                    )
+            );
 
     self::$testArgs['testNest'] =
-      new ThriftTest_Xtruct2(
-                             array(
-                                   'byte_thing' => 0x01,
-                                   'struct_thing' => self::$testArgs['testNestNested'],
-                                   'i32_thing' => pow( 2, 15 )
-                                   )
-                             );
+      new Xtruct2(
+            array(
+                'byte_thing' => 0x01,
+                'struct_thing' => self::$testArgs['testNestNested'],
+                'i32_thing' => pow( 2, 15 )
+                )
+            );
 
     self::$testArgs['testMap'] =
       array(
@@ -107,7 +114,7 @@ class Fixtures
 
     self::$testArgs['testList'] = array( 1, 2, 3 );
 
-    self::$testArgs['testEnum'] = ThriftTest_Numberz::ONE;
+    self::$testArgs['testEnum'] = Numberz::ONE;
 
     self::$testArgs['testTypedef'] = 69;
 
@@ -130,58 +137,58 @@ class Fixtures
     // testInsanity ... takes a few steps to set up!
 
     $xtruct1 =
-      new ThriftTest_Xtruct(
-                            array(
-                                  'string_thing' => 'Goodbye4',
-                                  'byte_thing' => 4,
-                                  'i32_thing' => 4,
-                                  'i64_thing' => 4
-                                  )
-                            );
+      new Xtruct(
+            array(
+                'string_thing' => 'Goodbye4',
+                'byte_thing' => 4,
+                'i32_thing' => 4,
+                'i64_thing' => 4
+                )
+            );
 
     $xtruct2 =
-      new ThriftTest_Xtruct(
-                            array(
-                                  'string_thing' => 'Hello2',
-                                  'byte_thing' =>2,
-                                  'i32_thing' => 2,
-                                  'i64_thing' => 2
-                                  )
-                            );
+      new Xtruct(
+            array(
+                'string_thing' => 'Hello2',
+                'byte_thing' =>2,
+                'i32_thing' => 2,
+                'i64_thing' => 2
+                )
+            );
 
     $userMap =
       array(
-            ThriftTest_Numberz::FIVE => 5,
-            ThriftTest_Numberz::EIGHT => 8
+            Numberz::FIVE => 5,
+            Numberz::EIGHT => 8
             );
 
     $insanity2 =
-      new ThriftTest_Insanity(
-                              array(
-                                    'userMap' => $userMap,
-                                    'xtructs' => array($xtruct1,$xtruct2)
-                                    )
-                              );
+      new Insanity(
+            array(
+                'userMap' => $userMap,
+                'xtructs' => array($xtruct1,$xtruct2)
+                )
+            );
 
     $insanity3 = $insanity2;
 
     $insanity6 =
-      new ThriftTest_Insanity(
-                              array(
-                                    'userMap' => null,
-                                    'xtructs' => null
-                                    )
-                              );
+      new Insanity(
+            array(
+                'userMap' => null,
+                'xtructs' => null
+                )
+            );
 
     self::$testArgs['testInsanityExpectedResult'] =
       array(
             "1" => array(
-                         ThriftTest_Numberz::TWO => $insanity2,
-                         ThriftTest_Numberz::THREE => $insanity3
-                         ),
+                         Numberz::TWO => $insanity2,
+                         Numberz::THREE => $insanity3
+                    ),
             "2" => array(
-                         ThriftTest_Numberz::SIX => $insanity6
-                         )
+                         Numberz::SIX => $insanity6
+                    )
             );
 
   }

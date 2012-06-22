@@ -21,27 +21,36 @@
  * @package thrift.test
  */
 
+namespace test\Thrift\Protocol;
+
+use Symfony\Component\ClassLoader\UniversalClassLoader;
+use Symfony\Component\ClassLoader\DebugUniversalClassLoader;
+use Test\Thrift\Fixtures;
+use Thrift\Transport\TMemoryBuffer;
+use Thrift\Protocol\TJSONProtocol;
+
+
 define( 'BUFSIZ', 8192 ); //big enough to read biggest serialized Fixture arg.
 
-$GLOBALS['THRIFT_ROOT'] = dirname(__FILE__) . '/../../src';
+require_once __DIR__.'/../../../../lib/Symfony/Component/ClassLoader/UniversalClassLoader.php';
 
-require_once $GLOBALS['THRIFT_ROOT'] . '/Thrift.php';
-require_once $GLOBALS['THRIFT_ROOT'] . '/TStringUtils.php';
-require_once $GLOBALS['THRIFT_ROOT'] . '/protocol/TJSONProtocol.php';
-require_once $GLOBALS['THRIFT_ROOT'] . '/transport/TMemoryBuffer.php';
+$loader = new UniversalClassLoader();
+$loader->registerNamespace('Thrift', __DIR__ . '/../../../../lib');
+$loader->registerNamespace('Test', __DIR__ . '/../../..');
+$loader->register();
+
+require_once __DIR__ . '/../../../packages/ThriftTest/ThriftTest.php';
+require_once __DIR__ . '/../../../packages/ThriftTest/Types.php';
 
 /***
  * This test suite depends on running the compiler against the
  * standard ThriftTest.thrift file:
  *
  * lib/php/test$ ../../../compiler/cpp/thrift --gen php -r \
- *   --out ../src/packages ../../../test/ThriftTest.thrift
+ *   --out ./packages ../../../test/ThriftTest.thrift
  */
-require_once $GLOBALS['THRIFT_ROOT'] . '/packages/ThriftTest/ThriftTest.php';
 
-require_once dirname(__FILE__) . '/../Fixtures.php';
-
-class TestTJSONProtocol extends PHPUnit_Framework_TestCase
+class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
 {
   private $transport;
   private $protocol;
@@ -65,7 +74,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testVoid_Write()
   {
-    $args = new ThriftTest_ThriftTest_testVoid_args();
+    $args = new \ThriftTest\ThriftTest_testVoid_args();
     $args->write( $this->protocol );
 
     $actual = $this->transport->read( BUFSIZ );
@@ -76,7 +85,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testString1_Write()
   {
-    $args = new ThriftTest_ThriftTest_testString_args();
+    $args = new \ThriftTest\ThriftTest_testString_args();
     $args->thing = Fixtures::$testArgs['testString1'];
     $args->write( $this->protocol );
 
@@ -88,7 +97,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testString2_Write()
   {
-    $args = new ThriftTest_ThriftTest_testString_args();
+    $args = new \ThriftTest\ThriftTest_testString_args();
     $args->thing = Fixtures::$testArgs['testString2'];
     $args->write( $this->protocol );
 
@@ -100,7 +109,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testDouble_Write()
   {
-    $args = new ThriftTest_ThriftTest_testDouble_args();
+    $args = new \ThriftTest\ThriftTest_testDouble_args();
     $args->thing = Fixtures::$testArgs['testDouble'];
     $args->write( $this->protocol );
 
@@ -112,7 +121,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testByte_Write()
   {
-    $args = new ThriftTest_ThriftTest_testByte_args();
+    $args = new \ThriftTest\ThriftTest_testByte_args();
     $args->thing = Fixtures::$testArgs['testByte'];
     $args->write( $this->protocol );
 
@@ -124,7 +133,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testI32_Write()
   {
-    $args = new ThriftTest_ThriftTest_testI32_args();
+    $args = new \ThriftTest\ThriftTest_testI32_args();
     $args->thing = Fixtures::$testArgs['testI32'];
     $args->write( $this->protocol );
 
@@ -136,7 +145,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testI64_Write()
   {
-    $args = new ThriftTest_ThriftTest_testI64_args();
+    $args = new \ThriftTest\ThriftTest_testI64_args();
     $args->thing = Fixtures::$testArgs['testI64'];
     $args->write( $this->protocol );
 
@@ -148,7 +157,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testStruct_Write()
   {
-    $args = new ThriftTest_ThriftTest_testStruct_args();
+    $args = new \ThriftTest\ThriftTest_testStruct_args();
     $args->thing = Fixtures::$testArgs['testStruct'];
 
     $args->write( $this->protocol );
@@ -161,7 +170,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testNest_Write()
   {
-    $args = new ThriftTest_ThriftTest_testNest_args();
+    $args = new \ThriftTest\ThriftTest_testNest_args();
     $args->thing = Fixtures::$testArgs['testNest'];
 
     $args->write( $this->protocol );
@@ -174,7 +183,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testMap_Write()
   {
-    $args = new ThriftTest_ThriftTest_testMap_args();
+    $args = new \ThriftTest\ThriftTest_testMap_args();
     $args->thing = Fixtures::$testArgs['testMap'];
 
     $args->write( $this->protocol );
@@ -187,7 +196,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testStringMap_Write()
   {
-    $args = new ThriftTest_ThriftTest_testStringMap_args();
+    $args = new \ThriftTest\ThriftTest_testStringMap_args();
     $args->thing = Fixtures::$testArgs['testStringMap'];
 
     $args->write( $this->protocol );
@@ -200,7 +209,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testSet_Write()
   {
-    $args = new ThriftTest_ThriftTest_testSet_args();
+    $args = new \ThriftTest\ThriftTest_testSet_args();
     $args->thing = Fixtures::$testArgs['testSet'];
 
     $args->write( $this->protocol );
@@ -213,7 +222,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testList_Write()
   {
-    $args = new ThriftTest_ThriftTest_testList_args();
+    $args = new \ThriftTest\ThriftTest_testList_args();
     $args->thing = Fixtures::$testArgs['testList'];
 
     $args->write( $this->protocol );
@@ -226,7 +235,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testEnum_Write()
   {
-    $args = new ThriftTest_ThriftTest_testEnum_args();
+    $args = new \ThriftTest\ThriftTest_testEnum_args();
     $args->thing = Fixtures::$testArgs['testEnum'];
 
     $args->write( $this->protocol );
@@ -239,7 +248,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testTypedef_Write()
   {
-    $args = new ThriftTest_ThriftTest_testTypedef_args();
+    $args = new \ThriftTest\ThriftTest_testTypedef_args();
     $args->thing = Fixtures::$testArgs['testTypedef'];
 
     $args->write( $this->protocol );
@@ -259,7 +268,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testVoid']
 			    );
-    $args = new ThriftTest_ThriftTest_testVoid_args();
+    $args = new \ThriftTest\ThriftTest_testVoid_args();
     $args->read( $this->protocol );
   }
 
@@ -268,7 +277,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testString1']
 			    );
-    $args = new ThriftTest_ThriftTest_testString_args();
+    $args = new \ThriftTest\ThriftTest_testString_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -282,7 +291,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testString2']
 			    );
-    $args = new ThriftTest_ThriftTest_testString_args();
+    $args = new \ThriftTest\ThriftTest_testString_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -293,7 +302,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
 
   public function testString3_Write()
   {
-    $args = new ThriftTest_ThriftTest_testString_args();
+    $args = new \ThriftTest\ThriftTest_testString_args();
     $args->thing = Fixtures::$testArgs['testString3'];
     $args->write( $this->protocol );
 
@@ -308,7 +317,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testDouble']
 			    );
-    $args = new ThriftTest_ThriftTest_testDouble_args();
+    $args = new \ThriftTest\ThriftTest_testDouble_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -322,7 +331,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testByte']
 			    );
-    $args = new ThriftTest_ThriftTest_testByte_args();
+    $args = new \ThriftTest\ThriftTest_testByte_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -336,7 +345,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testI32']
 			    );
-    $args = new ThriftTest_ThriftTest_testI32_args();
+    $args = new \ThriftTest\ThriftTest_testI32_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -350,7 +359,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testI64']
 			    );
-    $args = new ThriftTest_ThriftTest_testI64_args();
+    $args = new \ThriftTest\ThriftTest_testI64_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -365,7 +374,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testStruct']
 			    );
-    $args = new ThriftTest_ThriftTest_testStruct_args();
+    $args = new \ThriftTest\ThriftTest_testStruct_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -380,7 +389,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testNest']
 			    );
-    $args = new ThriftTest_ThriftTest_testNest_args();
+    $args = new \ThriftTest\ThriftTest_testNest_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -395,7 +404,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testMap']
 			    );
-    $args = new ThriftTest_ThriftTest_testMap_args();
+    $args = new \ThriftTest\ThriftTest_testMap_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -410,7 +419,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testStringMap']
 			    );
-    $args = new ThriftTest_ThriftTest_testStringMap_args();
+    $args = new \ThriftTest\ThriftTest_testStringMap_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -425,7 +434,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testSet']
 			    );
-    $args = new ThriftTest_ThriftTest_testSet_args();
+    $args = new \ThriftTest\ThriftTest_testSet_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -440,7 +449,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testList']
 			    );
-    $args = new ThriftTest_ThriftTest_testList_args();
+    $args = new \ThriftTest\ThriftTest_testList_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -455,7 +464,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testEnum']
 			    );
-    $args = new ThriftTest_ThriftTest_testEnum_args();
+    $args = new \ThriftTest\ThriftTest_testEnum_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -470,7 +479,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testTypedef']
 			    );
-    $args = new ThriftTest_ThriftTest_testTypedef_args();
+    $args = new \ThriftTest\ThriftTest_testTypedef_args();
     $args->read( $this->protocol );
 
     $actual = $args->thing;
@@ -484,7 +493,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testMapMap']
 			    );
-    $result = new ThriftTest_ThriftTest_testMapMap_result();
+    $result = new \ThriftTest\ThriftTest_testMapMap_result();
     $result->read( $this->protocol );
 
     $actual = $result->success;
@@ -498,7 +507,7 @@ class TestTJSONProtocol extends PHPUnit_Framework_TestCase
     $this->transport->write(
 			    TestTJSONProtocol_Fixtures::$testArgsJSON['testInsanity']
 			    );
-    $result = new ThriftTest_ThriftTest_testInsanity_result();
+    $result = new \ThriftTest\ThriftTest_testInsanity_result();
     $result->read( $this->protocol );
 
     $actual = $result->success;
