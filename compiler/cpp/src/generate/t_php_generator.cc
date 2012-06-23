@@ -185,7 +185,7 @@ class t_php_generator : public t_oop_generator {
   std::string php_includes();
   std::string declare_field(t_field* tfield, bool init=false, bool obj=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
-  std::string argument_list(t_struct* tstruct);
+  std::string argument_list(t_struct* tstruct, bool addStructSignature = true);
   std::string type_to_cast(t_type* ttype);
   std::string type_to_enum(t_type* ttype);
 
@@ -226,11 +226,6 @@ class t_php_generator : public t_oop_generator {
   string php_namespace_autoload(const t_program* p) {
     std::string ns = php_namespace_base(p);
     return (nsglobal_.size() ? NSGLOBAL_B : NSGLOBAL) + (ns.size() ? (ns + "\\") : "");
-  }
-
-  string php_namespace_constant(const t_program* p) {
-    std::string ns = php_namespace_base(p); // FALSE TODO
-    return ns.size() ? (ns + "_") : "";
   }
 
   //declaring a type: typename or my_namespace_typename
@@ -322,7 +317,6 @@ class t_php_generator : public t_oop_generator {
    * File streams
    */
   std::ofstream f_types_;
-  std::ofstream f_consts_;
   std::ofstream f_helpers_;
   std::ofstream f_service_;
 
@@ -389,15 +383,6 @@ void t_php_generator::init_generator() {
   f_types_ << autogen_comment() << php_includes();
 
   f_types_ << endl;
-
-  // Print header
-  if (!program_->get_consts().empty()) {
-    string f_consts_name = package_dir_+program_name_+"_constants.php";
-    f_consts_.open(f_consts_name.c_str());
-    f_consts_ <<
-      "<?php" << endl;
-      f_consts_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl << endl;
-   }
 }
 
 /**
@@ -421,11 +406,6 @@ void t_php_generator::close_generator() {
   // Close types file
     f_types_ << endl;
   f_types_.close();
-
-  if (!program_->get_consts().empty()) {
-    f_consts_ << endl;
-    f_consts_.close();
-  }
 }
 
 /**
@@ -482,9 +462,9 @@ void t_php_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
 
-  f_consts_ << "$GLOBALS['" << php_namespace_constant(get_program()) << program_name_ << "_CONSTANTS']['" << name << "'] = ";
-  f_consts_ << render_const_value(type, value);
-  f_consts_ << ";" << endl << endl;
+  f_types_ << "define('" << program_name_ << "_CONSTANTS_" << name << "', ";
+  f_types_ << render_const_value(type, value);
+  f_types_ << ");" << endl << endl;
 }
 
 /**
@@ -1391,7 +1371,7 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
       }
     }
     f_service_ <<
-      indent() << "return $this->impl_->" << (*f_iter)->get_name() << "(" << argument_list((*f_iter)->get_arglist()) << ");" << endl;
+      indent() << "return $this->impl_->" << (*f_iter)->get_name() << "(" << argument_list((*f_iter)->get_arglist(), false) << ");" << endl;
     indent_down();
     indent(f_service_) <<
       "}" << endl <<
@@ -2277,7 +2257,7 @@ string t_php_generator::function_signature(t_function* tfunction,
 /**
  * Renders a field list
  */
-string t_php_generator::argument_list(t_struct* tstruct) {
+string t_php_generator::argument_list(t_struct* tstruct, bool addStructSignature) {
   string result = "";
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -2293,7 +2273,7 @@ string t_php_generator::argument_list(t_struct* tstruct) {
     t_type* type = (*f_iter)->get_type();
 
     //Set type name
-    if(type->is_struct())
+    if(addStructSignature and type->is_struct())
     {
       string className = php_namespace(type->get_program()) + php_namespace_directory("Definition", false) + classify(type->get_name());
 
