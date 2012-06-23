@@ -60,9 +60,6 @@ class t_php_generator : public t_oop_generator {
     iter = parsed_options.find("server");
     phps_ = (iter != parsed_options.end());
 
-    iter = parsed_options.find("autoload");
-    autoload_ = (iter != parsed_options.end());
-
     iter = parsed_options.find("oop");
     oop_ = (iter != parsed_options.end());
 
@@ -117,7 +114,6 @@ class t_php_generator : public t_oop_generator {
 
   void generate_php_struct(t_struct* tstruct, bool is_exception);
   void generate_php_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false);
-  void _generate_php_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false);
   void generate_php_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_php_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_php_function_helpers(t_function* tfunction);
@@ -133,7 +129,6 @@ class t_php_generator : public t_oop_generator {
   void generate_service_interface (t_service* tservice);
   void generate_service_rest      (t_service* tservice);
   void generate_service_client    (t_service* tservice);
-  void _generate_service_client   (std::ofstream &out, t_service* tservice);
   void generate_service_processor (t_service* tservice);
   void generate_process_function  (t_service* tservice, t_function* tfunction);
 
@@ -235,9 +230,9 @@ class t_php_generator : public t_oop_generator {
     if(!namespace_php_) return "";
 
     if(end) {
-      return ((autoload_) ? ("\\" + directory) + ";" : ";" );
+      return ";";
     } else {
-      return ((autoload_) ? (directory + "\\") : "" );
+      return "";
     }
   }
 
@@ -364,11 +359,6 @@ class t_php_generator : public t_oop_generator {
    * Generate stubs for a PHP server
    */
   bool phps_;
-
-  /**
-   * Generate PHP code that uses autoload
-   */
-  bool autoload_;
 
   /**
    * Whether to use OOP base class TBase
@@ -780,33 +770,6 @@ void t_php_generator::generate_php_struct_spec(ofstream& out,
   indent(out) << "}" << endl;
 }
 
-
-void t_php_generator::generate_php_struct_definition(ofstream& out,
-                                                     t_struct* tstruct,
-                                                     bool is_exception) {
-  if (autoload_) {
-    // Make output file
-    ofstream autoload_out;
-    string f_struct = program_name_+"."+(tstruct->get_name())+".php";
-    string f_struct_name = package_dir_+f_struct;
-    autoload_out.open(f_struct_name.c_str());
-    autoload_out << "<?php" << endl
-      << "/**" << endl << " *  @generated" << endl << " */" << endl;
-    if(namespace_php_) autoload_out << "namespace " << php_namespace_suffix(tstruct->get_program()) << ";" << endl;
-    _generate_php_struct_definition(autoload_out, tstruct, is_exception);
-    autoload_out << endl;
-    autoload_out.close();
-
-    f_types_ <<
-      "$GLOBALS['THRIFT_AUTOLOAD']['" <<
-      lowercase(php_namespace_autoload(tstruct->get_program()) + tstruct->get_name()) <<
-      "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
-
-  } else {
-    _generate_php_struct_definition(out, tstruct, is_exception);
-  }
-}
-
 /**
  * Generates a struct definition for a thrift data type. This is nothing in PHP
  * where the objects are all just associative arrays (unless of course we
@@ -814,7 +777,7 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
  *
  * @param tstruct The struct definition
  */
-void t_php_generator::_generate_php_struct_definition(ofstream& out,
+void t_php_generator::generate_php_struct_definition(ofstream& out,
                                                      t_struct* tstruct,
                                                      bool is_exception) {
   const vector<t_field*>& members = tstruct->get_members();
@@ -1533,36 +1496,12 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
     "}" << endl << endl;
 }
 
-void t_php_generator::generate_service_client(t_service* tservice) {
-  if (autoload_) {
-    // Make output file
-    ofstream autoload_out;
-    string f_struct = program_name_+"."+(tservice->get_name())+".client.php";
-    string f_struct_name = package_dir_+f_struct;
-    autoload_out.open(f_struct_name.c_str());
-    autoload_out << "<?php" << endl
-      << "/**" << endl << " *  @generated" << endl << " */" << endl;
-    if(namespace_php_) autoload_out << endl << "namespace " << php_namespace_suffix(tservice->get_program()) << ";" << endl << endl;
-    _generate_service_client(autoload_out, tservice);
-    autoload_out << endl;
-    autoload_out.close();
-
-    f_service_ <<
-      "$GLOBALS['THRIFT_AUTOLOAD']['" <<
-      lowercase(php_namespace_autoload(get_program()) + service_name_ + "Client") <<
-      "'] = '" << program_name_ << "/" << f_struct << "';" << endl;
-
-  } else {
-    _generate_service_client(f_service_, tservice);
-  }
-}
-
 /**
  * Generates a service client definition.
  *
  * @param tservice The service to generate a server for.
  */
-void t_php_generator::_generate_service_client(ofstream& out, t_service* tservice) {
+void t_php_generator::generate_service_client(t_service* tservice) {
   string extends = "";
   string extends_client = "";
   if (tservice->get_extends() != NULL) {
@@ -1570,33 +1509,33 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
     extends_client = " extends " + php_namespace(tservice->get_extends()->get_program()) + extends + "Client";
   }
 
-  out <<
+  f_service_ <<
     "class " << php_namespace_declaration(tservice) << "Client" << extends_client << " implements " <<  php_namespace(tservice->get_program()) << service_name_ << "If {" << endl;
   indent_up();
 
   // Private members
   if (extends.empty()) {
-    out <<
+    f_service_ <<
       indent() << "protected $input_ = null;" << endl <<
       indent() << "protected $output_ = null;" << endl <<
       endl;
-    out <<
+    f_service_ <<
       indent() << "protected $seqid_ = 0;" << endl <<
       endl;
   }
 
   // Constructor function
-  out <<
+  f_service_ <<
     indent() << "public function __construct($input, $output=null) {" << endl;
   if (!extends.empty()) {
-    out <<
+    f_service_ <<
       indent() << "  parent::__construct($input, $output);" << endl;
   } else {
-    out <<
+    f_service_ <<
       indent() << "  $this->input_ = $input;" << endl <<
       indent() << "  $this->output_ = $output ? $output : $input;" << endl;
   }
-  out <<
+  f_service_ <<
     indent() << "}" << endl << endl;
 
   // Generate client method implementations
@@ -1609,10 +1548,10 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
     string funname = (*f_iter)->get_name();
 
     // Open function
-    indent(out) <<
+    indent(f_service_) <<
       "public function " << function_signature(*f_iter) << endl;
-    scope_up(out);
-      indent(out) <<
+    scope_up(f_service_);
+      indent(f_service_) <<
         "$this->send_" << funname << "(";
 
       bool first = true;
@@ -1620,80 +1559,80 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
         if (first) {
           first = false;
         } else {
-          out << ", ";
+          f_service_ << ", ";
         }
-        out << "$" << (*fld_iter)->get_name();
+        f_service_ << "$" << (*fld_iter)->get_name();
       }
-      out << ");" << endl;
+      f_service_ << ");" << endl;
 
       if (!(*f_iter)->is_oneway()) {
-        out << indent();
+        f_service_ << indent();
         if (!(*f_iter)->get_returntype()->is_void()) {
-          out << "return ";
+          f_service_ << "return ";
         }
-        out <<
+        f_service_ <<
           "$this->recv_" << funname << "();" << endl;
       }
-    scope_down(out);
-    out << endl;
+    scope_down(f_service_);
+    f_service_ << endl;
 
-    indent(out) <<
+    indent(f_service_) <<
       "public function send_" << function_signature(*f_iter) << endl;
-    scope_up(out);
+    scope_up(f_service_);
 
       std::string argsname = php_namespace(tservice->get_program()) + service_name_ + "_" + (*f_iter)->get_name() + "_args";
 
-      out <<
+      f_service_ <<
         indent() << "$args = new " << argsname << "();" << endl;
 
       for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-        out <<
+        f_service_ <<
           indent() << "$args->" << (*fld_iter)->get_name() << " = $" << (*fld_iter)->get_name() << ";" << endl;
       }
 
-      out <<
+      f_service_ <<
         indent() << "$bin_accel = ($this->output_ instanceof " << NS_ROOT << "TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');" << endl;
 
-      out <<
+      f_service_ <<
         indent() << "if ($bin_accel)" << endl;
-      scope_up(out);
+      scope_up(f_service_);
 
-      out <<
+      f_service_ <<
         indent() << "thrift_protocol_write_binary($this->output_, '" << (*f_iter)->get_name() << "', " << NS_ROOT << "TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());" << endl;
 
-      scope_down(out);
-      out <<
+      scope_down(f_service_);
+      f_service_ <<
         indent() << "else" << endl;
-      scope_up(out);
+      scope_up(f_service_);
 
       // Serialize the request header
       if (binary_inline_) {
-        out <<
+        f_service_ <<
           indent() << "$buff = pack('N', (0x80010000 | " << NS_ROOT << "TMessageType::CALL));" << endl <<
           indent() << "$buff .= pack('N', strlen('" << funname << "'));" << endl <<
           indent() << "$buff .= '" << funname << "';" << endl <<
           indent() << "$buff .= pack('N', $this->seqid_);" << endl;
       } else {
-        out <<
+        f_service_ <<
           indent() << "$this->output_->writeMessageBegin('" << (*f_iter)->get_name() << "', " << NS_ROOT << "TMessageType::CALL, $this->seqid_);" << endl;
       }
 
       // Write to the stream
       if (binary_inline_) {
-        out <<
+        f_service_ <<
           indent() << "$args->write($buff);" << endl <<
           indent() << "$this->output_->write($buff);" << endl <<
           indent() << "$this->output_->flush();" << endl;
       } else {
-        out <<
+        f_service_ <<
           indent() << "$args->write($this->output_);" << endl <<
           indent() << "$this->output_->writeMessageEnd();" << endl <<
           indent() << "$this->output_->getTransport()->flush();" << endl;
       }
 
-    scope_down(out);
+    scope_down(f_service_);
 
-    scope_down(out);
+    scope_down(f_service_);
 
 
     if (!(*f_iter)->is_oneway()) {
@@ -1704,22 +1643,22 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
                                string("recv_") + (*f_iter)->get_name(),
                                &noargs);
       // Open function
-      out <<
+      f_service_ <<
         endl <<
         indent() << "public function " << function_signature(&recv_function) << endl;
-      scope_up(out);
+      scope_up(f_service_);
 
-      out <<
+      f_service_ <<
         indent() << "$bin_accel = ($this->input_ instanceof " << NS_ROOT << "TProtocol::$TBINARYPROTOCOLACCELERATED)"
                  << " && function_exists('thrift_protocol_read_binary');" << endl;
 
-      out <<
+      f_service_ <<
         indent() << "if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, '" << resultname << "', $this->input_->isStrictRead());" << endl;
-      out <<
+      f_service_ <<
         indent() << "else" << endl;
-      scope_up(out);
+      scope_up(f_service_);
 
-      out <<
+      f_service_ <<
         indent() << "$rseqid = 0;" << endl <<
         indent() << "$fname = null;" << endl <<
         indent() << "$mtype = 0;" << endl <<
@@ -1728,16 +1667,16 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
       if (binary_inline_) {
         t_field ffname(g_type_string, "fname");
         t_field fseqid(g_type_i32, "rseqid");
-        out <<
+        f_service_ <<
           indent() << "$ver = unpack('N', $this->input_->readAll(4));" << endl <<
           indent() << "$ver = $ver[1];" << endl <<
           indent() << "$mtype = $ver & 0xff;" << endl <<
           indent() << "$ver = $ver & 0xffff0000;" << endl <<
           indent() << "if ($ver != 0x80010000) throw new " << NS_ROOT << "TProtocolException('Bad version identifier: '.$ver, " << NS_ROOT << "TProtocolException::BAD_VERSION);" << endl;
-        generate_deserialize_field(out, &ffname, "", true);
-        generate_deserialize_field(out, &fseqid, "", true);
+        generate_deserialize_field(f_service_, &ffname, "", true);
+        generate_deserialize_field(f_service_, &fseqid, "", true);
       } else {
-        out <<
+        f_service_ <<
           indent() << "$this->input_->readMessageBegin($fname, $mtype, $rseqid);" << endl <<
           indent() << "if ($mtype == " << NS_ROOT << "TMessageType::EXCEPTION) {" << endl <<
           indent() << "  $x = new " << NS_ROOT << "TApplicationException();" << endl <<
@@ -1747,20 +1686,20 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
           indent() << "}" << endl;
       }
 
-      out <<
+      f_service_ <<
         indent() << "$result = new " << resultname << "();" << endl <<
         indent() << "$result->read($this->input_);" << endl;
 
       if (!binary_inline_) {
-        out <<
+        f_service_ <<
           indent() << "$this->input_->readMessageEnd();" << endl;
       }
 
-      scope_down(out);
+      scope_down(f_service_);
 
       // Careful, only return result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
-        out <<
+        f_service_ <<
           indent() << "if ($result->success !== null) {" << endl <<
           indent() << "  return $result->success;" << endl <<
           indent() << "}" << endl;
@@ -1770,7 +1709,7 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
       const std::vector<t_field*>& xceptions = xs->get_members();
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        out <<
+        f_service_ <<
           indent() << "if ($result->" << (*x_iter)->get_name() << " !== null) {" << endl <<
           indent() << "  throw $result->" << (*x_iter)->get_name() << ";" << endl <<
           indent() << "}" << endl;
@@ -1778,22 +1717,22 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
 
       // Careful, only return _result if not a void function
       if ((*f_iter)->get_returntype()->is_void()) {
-        indent(out) <<
+        indent(f_service_) <<
           "return;" << endl;
       } else {
-        out <<
+        f_service_ <<
           indent() << "throw new " << ((namespace_php_) ? "\\" : "" ) << "Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
 
     // Close function
-    scope_down(out);
-    out << endl;
+    scope_down(f_service_);
+    f_service_ << endl;
 
     }
   }
 
   indent_down();
-  out <<
+  f_service_ <<
     "}" << endl << endl;
 }
 
@@ -2531,7 +2470,6 @@ string t_php_generator ::type_to_enum(t_type* type) {
 THRIFT_REGISTER_GENERATOR(php, "PHP",
 "    inlined:         Generate PHP inlined files\n"
 "    server:          Generate PHP server stubs\n"
-"    autoload:        Generate PHP with autoload\n"
 "    oop:             Generate PHP with object oriented subclasses\n"
 "    rest:            Generate PHP REST processors\n"
 "    namespace:       Generate PHP namespaces as defined in PHP >= 5.3\n"
