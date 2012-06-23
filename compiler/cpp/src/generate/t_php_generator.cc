@@ -62,13 +62,9 @@ class t_php_generator : public t_oop_generator {
     iter = parsed_options.find("oop");
     oop_ = (iter != parsed_options.end());
 
-    iter = parsed_options.find("namespace");
-    namespace_php_ = (iter != parsed_options.end());
-
     iter = parsed_options.find("nsglobal");
     if(iter != parsed_options.end()) {
-      if(namespace_php_) nsglobal_ = iter->second;
-      else throw "cannot use nsglobal without namespace.";
+      nsglobal_ = iter->second;
     }
     else {
       nsglobal_ = ""; // by default global namespace is empty
@@ -193,9 +189,9 @@ class t_php_generator : public t_oop_generator {
   std::string type_to_cast(t_type* ttype);
   std::string type_to_enum(t_type* ttype);
 
-  std::string php_namespace_base(const t_program* p, bool modern) {
+  std::string php_namespace_base(const t_program* p) {
     std::string ns = p->get_namespace("php");
-    const char * delimiter = modern ? "\\" : "_";
+    const char * delimiter = "\\";
     size_t position = ns.find('.');
     while (position != string::npos) {
       ns.replace(position, 1, delimiter);
@@ -206,25 +202,19 @@ class t_php_generator : public t_oop_generator {
 
   //general use namespace prefixing: \my\namespace\ or my_namespace_
   string php_namespace(const t_program* p) {
-    string ns = php_namespace_base(p, namespace_php_);
-    if(namespace_php_) return (nsglobal_.size() ? NSGLOBAL_AB : NSGLOBAL_B) + (ns.size() ? (ns + "\\") : "");
-    else return (nsglobal_.size() ? NSGLOBAL + "_" : "") + (ns.size() ? (ns + "_") : "");
+    string ns = php_namespace_base(p);
+    return (nsglobal_.size() ? NSGLOBAL_AB : NSGLOBAL_B) + (ns.size() ? (ns + "\\") : "");
   }
 
   //setting the namespace of a file: my\namespace
   string php_namespace_suffix(const t_program* p) {
-    string ns = php_namespace_base(p, namespace_php_);
+    string ns = php_namespace_base(p);
 
-    if (namespace_php_) return (nsglobal_.size() ? NSGLOBAL_B : NSGLOBAL) + ns;
-    //provides consistent behavior even though this function is never called when namespace_php_ is false
-    else return (nsglobal_.size() ? (NSGLOBAL + "_") : "") + ns;
+    return (nsglobal_.size() ? NSGLOBAL_B : NSGLOBAL) + ns;
   }
 
   //add a directory to allready existing namespace
   string php_namespace_directory(string directory, bool end = true) {
-    //For security
-    if(!namespace_php_) return "";
-
     if(end) {
       return ";";
     } else {
@@ -234,20 +224,18 @@ class t_php_generator : public t_oop_generator {
 
   //writing an autload identifier into globa;ls: my\namespace\ or my_namespace_
   string php_namespace_autoload(const t_program* p) {
-    std::string ns = php_namespace_base(p, namespace_php_);
-    if (namespace_php_) return (nsglobal_.size() ? NSGLOBAL_B : NSGLOBAL) + (ns.size() ? (ns + "\\") : "");
-    else return (nsglobal_.size() ? (NSGLOBAL + "_") : "") + (ns.size() ? (ns + "_") : "");
+    std::string ns = php_namespace_base(p);
+    return (nsglobal_.size() ? NSGLOBAL_B : NSGLOBAL) + (ns.size() ? (ns + "\\") : "");
   }
 
   string php_namespace_constant(const t_program* p) {
-    std::string ns = php_namespace_base(p, false);
+    std::string ns = php_namespace_base(p); // FALSE TODO
     return ns.size() ? (ns + "_") : "";
   }
 
   //declaring a type: typename or my_namespace_typename
   string php_namespace_declaration(t_type* t) {
-    if(namespace_php_) return t->get_name();
-    return php_namespace(t->get_program()) + t->get_name();
+    return t->get_name();
   }
 
   std::string php_path(t_program* p) {
@@ -263,7 +251,7 @@ class t_php_generator : public t_oop_generator {
       }
     }
 
-    return ((namespace_php_) ? ns + '/' : "" ) + p->get_name();
+    return ns + '/';
   }
 
   /**
@@ -274,8 +262,6 @@ class t_php_generator : public t_oop_generator {
    */
   string classify(string str)
   {
-    if(!namespace_php_) return str;
-
     string classe = "";
 
     vector<string> x = split(str, '_');
@@ -362,11 +348,6 @@ class t_php_generator : public t_oop_generator {
   bool oop_;
 
   /**
-   * Generate namespaces in PHP5.3 style
-   */
-  bool namespace_php_;
-
-  /**
    * Global namespace for PHP 5.3
    */
   std::string nsglobal_;
@@ -389,19 +370,11 @@ void t_php_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
 
   // Create Real directory Namespaces
-  if(namespace_php_)
-  {
-	vector<string> NSx = split(php_namespace_suffix(get_program()), '\\');
-	package_dir_ = get_out_dir();
+  vector<string> NSx = split(php_namespace_suffix(get_program()), '\\');
+  package_dir_ = get_out_dir();
 
-	for (size_t i = 0; i < NSx.size(); ++i) {
-	  package_dir_ = package_dir_ + "/" + NSx[i] + "/";
-	  MKDIR(package_dir_.c_str());
-	}
-  }
-  else
-  {
-	package_dir_ = get_out_dir()+"/"+program_name_+"/";
+  for (size_t i = 0; i < NSx.size(); ++i) {
+	package_dir_ = package_dir_ + "/" + NSx[i] + "/";
 	MKDIR(package_dir_.c_str());
   }
 
@@ -412,7 +385,7 @@ void t_php_generator::init_generator() {
   // Print header
   f_types_ <<
     "<?php" << endl;
-    if(namespace_php_) f_types_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl << endl;
+    f_types_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl << endl;
   f_types_ << autogen_comment() << php_includes();
 
   f_types_ << endl;
@@ -423,10 +396,7 @@ void t_php_generator::init_generator() {
     f_consts_.open(f_consts_name.c_str());
     f_consts_ <<
       "<?php" << endl;
-     if(namespace_php_)
-     {
-       f_consts_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl << endl;
-     }
+      f_consts_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl << endl;
    }
 }
 
@@ -1034,7 +1004,7 @@ void t_php_generator::generate_service(t_service* tservice) {
   f_service_.open(f_service_name.c_str());
 
   f_service_ << "<?php" << endl;
-  if(namespace_php_) f_service_ << "namespace " << php_namespace_suffix(tservice->get_program()) << ";" << endl;
+  f_service_ << "namespace " << php_namespace_suffix(tservice->get_program()) << ";" << endl;
   f_service_ << autogen_comment() <<
     php_includes();
 
@@ -1126,7 +1096,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
     indent() << "if (!method_exists($this, $methodname)) {" << endl;
   if (binary_inline_) {
     f_service_ <<
-      indent() << "  throw new " << ((namespace_php_) ? "\\" : "" ) << "Exception('Function '.$fname.' not implemented.');" << endl;
+      indent() << "  throw new \\Exception('Function '.$fname.' not implemented.');" << endl;
   } else {
     f_service_ <<
       indent() << "  $input->skip(" << "TType::STRUCT);" << endl <<
@@ -1657,7 +1627,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
           "return;" << endl;
       } else {
         f_service_ <<
-          indent() << "throw new " << ((namespace_php_) ? "\\" : "" ) << "Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+          indent() << "throw new \\Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
 
     // Close function
@@ -2408,6 +2378,5 @@ THRIFT_REGISTER_GENERATOR(php, "PHP",
 "    server:          Generate PHP server stubs\n"
 "    oop:             Generate PHP with object oriented subclasses\n"
 "    rest:            Generate PHP REST processors\n"
-"    namespace:       Generate PHP namespaces as defined in PHP >= 5.3\n"
 )
 
