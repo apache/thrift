@@ -33,7 +33,7 @@ using namespace std;
 #define NSGLOBAL_A ("\\" + NSGLOBAL )
 #define NSGLOBAL_B ( NSGLOBAL + "\\")
 #define NSGLOBAL_AB ("\\" + NSGLOBAL + "\\")
-#define NS_ROOT ( (namespace_php_ and !sf2_) ? "\\" : "")
+#define NS_ROOT ""
 
 
 /**
@@ -65,9 +65,6 @@ class t_php_generator : public t_oop_generator {
 
     iter = parsed_options.find("namespace");
     namespace_php_ = (iter != parsed_options.end());
-
-    iter = parsed_options.find("sf2");
-    sf2_ = oop_ = namespace_php_ = (iter != parsed_options.end());
 
     iter = parsed_options.find("nsglobal");
     if(iter != parsed_options.end()) {
@@ -371,11 +368,6 @@ class t_php_generator : public t_oop_generator {
   bool namespace_php_;
 
   /**
-   * Generate PHP for Symfony 2
-   */
-  bool sf2_;
-
-  /**
    * Global namespace for PHP 5.3
    */
   std::string nsglobal_;
@@ -424,17 +416,6 @@ void t_php_generator::init_generator() {
     if(namespace_php_) f_types_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl << endl;
   f_types_ << autogen_comment() << php_includes();
 
-  // Include other Thrift includes
-  if(!sf2_) // Global are useless in SF2 mode
-  {
-    const vector<t_program*>& includes = program_->get_includes();
-    for (size_t i = 0; i < includes.size(); ++i) {
-      string package = includes[i]->get_name();
-      string prefix = php_path(includes[i]);
-      f_types_ <<
-        "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << prefix << "/" << "Types.php';" << endl;
-    }
-  }
   f_types_ << endl;
 
   // Print header
@@ -447,15 +428,6 @@ void t_php_generator::init_generator() {
      {
        f_consts_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl << endl;
      }
-
-	 if(!sf2_)
-     {
-		f_consts_ << autogen_comment() <<
-			"include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + php_path(program_) + "/" + "Types.php';" << endl <<
-		endl <<
-			"$GLOBALS['" << php_namespace_constant(get_program()) << program_name_ << "_CONSTANTS'] = array();" << endl <<
-		endl;
-	 }
    }
 }
 
@@ -463,22 +435,14 @@ void t_php_generator::init_generator() {
  * Prints standard php includes
  */
 string t_php_generator::php_includes() {
-  if(sf2_)
-  {
-    string TBase = "use Thrift\\Base\\TBase;\n";
-    string TType = "use Thrift\\Type\\TType;\n";
-    string TMessageType = "use Thrift\\Type\\TMessageType;\n";
-    string TException = "use Thrift\\Exception\\TException;\n";
-    string TProtocol = "use Thrift\\Protocol\\TProtocol;\n";
-    string TApplicationException = "use Thrift\\Exception\\TApplicationException;\n\n";
+  string TBase = "use Thrift\\Base\\TBase;\n";
+  string TType = "use Thrift\\Type\\TType;\n";
+  string TMessageType = "use Thrift\\Type\\TMessageType;\n";
+  string TException = "use Thrift\\Exception\\TException;\n";
+  string TProtocol = "use Thrift\\Protocol\\TProtocol;\n";
+  string TApplicationException = "use Thrift\\Exception\\TApplicationException;\n\n";
 
-    return TBase + TType + TMessageType + TException +TProtocol + TApplicationException;
-  }
-  else
-  {
-	return
-	  string("include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';\n\n");
-  }
+  return TBase + TType + TMessageType + TException +TProtocol + TApplicationException;
 }
 
 /**
@@ -513,22 +477,6 @@ void t_php_generator::generate_typedef(t_typedef* ttypedef) {
 void t_php_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
-
-  if(!sf2_)
-  {
-	f_types_ <<
-	  "$GLOBALS['" << php_namespace(tenum->get_program()) << "E_" << tenum->get_name() << "'] = array(" << endl;
-
-	for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-	  int value = (*c_iter)->get_value();
-	  f_types_ <<
-		"  '" << (*c_iter)->get_name() << "' => " << value << "," << endl;
-	}
-
-	f_types_ <<
-	  ");" << endl << endl;
-  }
-
 
   // We're also doing it this way to see how it performs. It's more legible
   // code but you can't do things like an 'extract' on it, which is a bit of
@@ -1090,17 +1038,6 @@ void t_php_generator::generate_service(t_service* tservice) {
   if(namespace_php_) f_service_ << "namespace " << php_namespace_suffix(tservice->get_program()) << ";" << endl;
   f_service_ << autogen_comment() <<
     php_includes();
-
-  if(!sf2_)
-  {
-	f_service_ <<
-	  "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << php_path(program_) << "/" << "Types.php';" << endl;
-
-	if (tservice->get_extends() != NULL) {
-	  f_service_ <<
-		"include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << php_path(tservice->get_extends()->get_program()) << "/" << tservice->get_extends()->get_name() << ".php';" << endl;
-	}
-  }
 
   f_service_ <<
     endl;
@@ -2473,6 +2410,5 @@ THRIFT_REGISTER_GENERATOR(php, "PHP",
 "    oop:             Generate PHP with object oriented subclasses\n"
 "    rest:            Generate PHP REST processors\n"
 "    namespace:       Generate PHP namespaces as defined in PHP >= 5.3\n"
-"    sf2:             Generate PHP for Symfony 2 (means oop and namespace)\n"
 )
 
