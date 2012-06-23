@@ -24,7 +24,6 @@
 namespace test\Thrift\Protocol;
 
 use Symfony\Component\ClassLoader\UniversalClassLoader;
-use Symfony\Component\ClassLoader\DebugUniversalClassLoader;
 use Test\Thrift\Fixtures;
 use Thrift\Transport\TMemoryBuffer;
 use Thrift\Protocol\TJSONProtocol;
