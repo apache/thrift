@@ -34,29 +34,62 @@ phpmoduledir = `php-config --extension-dir`
 phpmodule_SCRIPTS = src/ext/thrift_protocol/modules/thrift_protocol.so
 endif
 
-phpdir = $(PHP_PREFIX)
-php_DATA =  \
-  src/autoload.php \
-  src/Thrift.php
+phpdir = $(PHP_PREFIX)/Thrift
 
-phpprotocoldir = $(phpdir)/protocol
+phpbasedir = $(phpdir)/Base
+phpbase_DATA = \
+  lib/Thrift/Base/TBase.php
+
+phpexceptiondir = $(phpdir)/Exception
+phpexception_DATA = \
+  lib/Thrift/Exception/TApplicationException.php \
+  lib/Thrift/Exception/TException.php \
+  lib/Thrift/Exception/TProtocolException.php \
+  lib/Thrift/Exception/TTransportException.php
+
+phpfactorydir = $(phpdir)/Factory
+phpfactory_DATA = \
+  lib/Thrift/Factory/TBinaryProtocolFactory.php \
+  lib/Thrift/Factory/TCompactProtocolFactory.php \
+  lib/Thrift/Factory/TJSONProtocolFactory.php \
+  lib/Thrift/Factory/TProtocolFactory.php \
+  lib/Thrift/Factory/TTransportFactory.php
+
+phpprotocoldir = $(phpdir)/Protocol
 phpprotocol_DATA = \
-  src/protocol/TBinaryProtocol.php \
-  src/protocol/TBinarySerializer.php \
-  src/protocol/TProtocol.php \
-  src/protocol/TJSONProtocol.php
+  lib/Thrift/Protocol/TBinaryProtocolAccelerated.php \
+  lib/Thrift/Protocol/TBinaryProtocol.php \
+  lib/Thrift/Protocol/TCompactProtocol.php \
+  lib/Thrift/Protocol/TJSONProtocol.php \
+  lib/Thrift/Protocol/TProtocol.php
 
-phptransportdir = $(phpdir)/transport
+phpprotocoljsondir = $(phpprotocoldir)/JSON
+phpprotocoljson_DATA = \
+  lib/Thrift/Protocol/JSON/BaseContext.php \
+  lib/Thrift/Protocol/JSON/ListContext.php \
+  lib/Thrift/Protocol/JSON/LookaheadReader.php \
+  lib/Thrift/Protocol/JSON/PairContext.php
+
+phpserializerdir = $(phpdir)/Serializer
+phpserializer_DATA = \
+  lib/Thrift/Serializer/TBinarySerializer.php
+
+phptransportdir = $(phpdir)/Transport
 phptransport_DATA = \
-  src/transport/TBufferedTransport.php \
-  src/transport/TFramedTransport.php \
-  src/transport/THttpClient.php \
-  src/transport/TMemoryBuffer.php \
-  src/transport/TNullTransport.php \
-  src/transport/TPhpStream.php \
-  src/transport/TSocket.php \
-  src/transport/TSocketPool.php \
-  src/transport/TTransport.php
+  lib/Thrift/Transport/TBufferedTransport.php \
+  lib/Thrift/Transport/TFramedTransport.php \
+  lib/Thrift/Transport/THttpClient.php \
+  lib/Thrift/Transport/TMemoryBuffer.php \
+  lib/Thrift/Transport/TNullTransport.php \
+  lib/Thrift/Transport/TPhpStream.php \
+  lib/Thrift/Transport/TSocket.php \
+  lib/Thrift/Transport/TSocketPool.php \
+  lib/Thrift/Transport/TTransport.php
+
+phptypedir = $(phpdir)/Type
+phptype_DATA = \
+  lib/Thrift/Type/TMessageType.php \
+  lib/Thrift/Type/TType.php
 
 EXTRA_DIST = src thrift_protocol.ini README.apache
 
