@@ -68,7 +68,9 @@ gen-*
 /lib/cpp/Makefile
 /lib/cpp/Makefile.in
 /lib/cpp/Debug/
+/lib/cpp/Debug-mt/
 /lib/cpp/Release/
+/lib/cpp/Release-mt/
 /lib/cpp/src/thrift/qt/moc_TQTcpServer.cpp
 /lib/cpp/test/Makefile
 /lib/cpp/test/Makefile.in
@@ -91,7 +93,9 @@ gen-*
 /lib/cpp/concurrency_test
 /lib/cpp/*.pc
 /lib/cpp/x64/Debug/
+/lib/cpp/x64/Debug-mt/
 /lib/cpp/x64/Release
+/lib/cpp/x64/Release-mt
 /lib/c_glib/*.gcda
 /lib/c_glib/*.gcno
 /lib/c_glib/*.loT
