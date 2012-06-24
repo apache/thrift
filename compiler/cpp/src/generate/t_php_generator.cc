@@ -462,9 +462,9 @@ void t_php_generator::generate_const(t_const* tconst) {
   string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
 
-  f_types_ << "define('" << program_name_ << "_CONSTANTS_" << name << "', ";
+  f_types_ << "$GLOBALS['" << program_name_ << "_CONSTANTS']['" << name << "'] = ";
   f_types_ << render_const_value(type, value);
-  f_types_ << ");" << endl << endl;
+  f_types_ << ";" << endl << endl;
 }
 
 /**
