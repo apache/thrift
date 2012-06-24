@@ -782,14 +782,14 @@ void writeStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
     // WORKAROUND: To stop LDC from emitting the manifest constant »meta« below
     // into the writeStruct function body this is inside the string mixin
     // block – the code wouldn't depend on it (this is an LDC bug, and because
-    // of it a new array would be allocate on each method invocation at runtime).
+    // of it a new array would be allocated on each method invocation at runtime).
     foreach (name; StaticFilter!(
       Compose!(isNullable, PApply!(MemberType, T)),
       FieldNames!T
     )) {
        static if (memberReq!(T, name, fieldMetaData) == TReq.REQUIRED) {
-         code ~= `enforce(__traits(getMember, s, name) !is null,
-           new TException("Required field '` ~ name ~ `' is null."));\n`;
+         code ~= "enforce(__traits(getMember, s, `" ~ name ~ "`) !is null,
+           new TException(`Required field '" ~ name ~ "' is null.`));\n";
        }
     }
 
@@ -906,6 +906,40 @@ void writeStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
   }());
   p.writeFieldStop();
   p.writeStructEnd();
+}
+
+unittest {
+  // Ensure that the generated code at least compiles for the basic field type
+  // combinations. Functionality checks are covered by the rest of the test
+  // suite.
+
+  struct Test {
+    // Non-nullable.
+    int a1;
+    int a2;
+    int a3;
+    int a4;
+
+    // Nullable.
+    string b1;
+    string b2;
+    string b3;
+    string b4;
+
+    mixin TStructHelpers!([
+      TFieldMeta("a1", 1, TReq.OPT_IN_REQ_OUT),
+      TFieldMeta("a2", 2, TReq.OPTIONAL),
+      TFieldMeta("a3", 3, TReq.REQUIRED),
+      TFieldMeta("a4", 4, TReq.IGNORE),
+      TFieldMeta("b1", 5, TReq.OPT_IN_REQ_OUT),
+      TFieldMeta("b2", 6, TReq.OPTIONAL),
+      TFieldMeta("b3", 7, TReq.REQUIRED),
+      TFieldMeta("b4", 8, TReq.IGNORE),
+    ]);
+  }
+
+  static assert(__traits(compiles, { Test t; t.read(cast(TProtocol)null); }));
+  static assert(__traits(compiles, { Test t; t.write(cast(TProtocol)null); }));
 }
 
 private {
