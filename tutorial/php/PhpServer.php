@@ -1,5 +1,16 @@
 #!/usr/bin/env php
 <?php
+
+namespace tutorial\php;
+
+require_once __DIR__.'/../../lib/php/lib/Symfony/Component/ClassLoader/UniversalClassLoader.php';
+
+use Symfony\Component\ClassLoader\UniversalClassLoader;
+
+$loader = new UniversalClassLoader();
+$loader->registerNamespace('Thrift', __DIR__ . '/../../lib/php/lib');
+$loader->register();
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -31,12 +42,9 @@ if (php_sapi_name() == 'cli') {
   ini_set("display_errors", "stderr");
 }
 
-$GLOBALS['THRIFT_ROOT'] = realpath(dirname(__FILE__).'/../..').'/lib/php/src';
-
-require_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
-require_once $GLOBALS['THRIFT_ROOT'].'/protocol/TBinaryProtocol.php';
-require_once $GLOBALS['THRIFT_ROOT'].'/transport/TPhpStream.php';
-require_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
+use Thrift\Protocol\TBinaryProtocol;
+use Thrift\Transport\TPhpStream;
+use Thrift\Transport\TBufferedTransport;
 
 /**
  * Suppress errors in here, which happen because we have not installed into
@@ -46,15 +54,15 @@ require_once $GLOBALS['THRIFT_ROOT'].'/transport/TBufferedTransport.php';
  * include the other files from their packages/ folder locations, but we
  * include everything here due to the bogus path setup.
  */
-error_reporting(E_NONE);
+
 $GEN_DIR = realpath(dirname(__FILE__).'/..').'/gen-php';
 require_once $GEN_DIR.'/shared/SharedService.php';
-require_once $GEN_DIR.'/shared/shared_types.php';
+require_once $GEN_DIR.'/shared/Types.php';
 require_once $GEN_DIR.'/tutorial/Calculator.php';
-require_once $GEN_DIR.'/tutorial/tutorial_types.php';
+require_once $GEN_DIR.'/tutorial/Types.php';
 error_reporting(E_ALL);
 
-class CalculatorHandler implements CalculatorIf {
+class CalculatorHandler implements \tutorial\CalculatorIf {
   protected $log = array();
 
   public function ping() {
@@ -66,21 +74,21 @@ class CalculatorHandler implements CalculatorIf {
     return $num1 + $num2;
   }
 
-  public function calculate($logid, $w) {
+  public function calculate($logid, \tutorial\Work $w) {
     error_log("calculate({$logid}, {{$w->op}, {$w->num1}, {$w->num2}})");
     switch ($w->op) {
-      case tutorial_Operation::ADD:
+      case \tutorial\Operation::ADD:
         $val = $w->num1 + $w->num2;
         break;
-      case tutorial_Operation::SUBTRACT:
+      case \tutorial\Operation::SUBTRACT:
         $val = $w->num1 - $w->num2;
         break;
-      case tutorial_Operation::MULTIPLY:
+      case \tutorial\Operation::MULTIPLY:
         $val = $w->num1 * $w->num2;
         break;
-      case tutorial_Operation::DIVIDE:
+      case \tutorial\Operation::DIVIDE:
         if ($w->num2 == 0) {
-          $io = new tutorial_InvalidOperation();
+          $io = new \tutorial\InvalidOperation();
           $io->what = $w->op;
           $io->why = "Cannot divide by 0";
           throw $io;
@@ -88,13 +96,13 @@ class CalculatorHandler implements CalculatorIf {
         $val = $w->num1 / $w->num2;
         break;
       default:
-        $io = new tutorial_InvalidOperation();
+        $io = new \tutorial\InvalidOperation();
         $io->what = $w->op;
         $io->why = "Invalid Operation";
         throw $io;
     }
 
-    $log = new SharedStruct();
+    $log = new \shared\SharedStruct();
     $log->key = $logid;
     $log->value = (string)$val;
     $this->log[$logid] = $log;
@@ -107,7 +115,7 @@ class CalculatorHandler implements CalculatorIf {
     // This actually doesn't work because the PHP interpreter is
     // restarted for every request.
     //return $this->log[$key];
-    return new SharedStruct(array("key" => $key, "value" => "PHP is stateless!"));
+    return new \shared\SharedStruct(array("key" => $key, "value" => "PHP is stateless!"));
   }
 
   public function zip() {
@@ -122,7 +130,7 @@ if (php_sapi_name() == 'cli') {
 }
 
 $handler = new CalculatorHandler();
-$processor = new CalculatorProcessor($handler);
+$processor = new \tutorial\CalculatorProcessor($handler);
 
 $transport = new TBufferedTransport(new TPhpStream(TPhpStream::MODE_R | TPhpStream::MODE_W));
 $protocol = new TBinaryProtocol($transport, true, true);
