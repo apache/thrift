@@ -19,7 +19,7 @@
 
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 
-class ThriftExceptionSpec < Spec::ExampleGroup
+class ThriftExceptionSpec < RSpec::Core::ExampleGroup
   include Thrift
 
   describe Exception do

@@ -19,7 +19,7 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
 
-class StructNestedContainersSpec < Spec::ExampleGroup
+class StructNestedContainersSpec < RSpec::Core::ExampleGroup
   include Thrift
   include SpecNamespace
 

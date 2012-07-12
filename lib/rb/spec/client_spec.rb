@@ -19,7 +19,7 @@
 
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 
-class ThriftClientSpec < Spec::ExampleGroup
+class ThriftClientSpec < RSpec::Core::ExampleGroup
   include Thrift
 
   class ClientSpec
@@ -62,7 +62,7 @@ class ThriftClientSpec < Spec::ExampleGroup
         @prot.stub!(:trans).and_return mock("trans").as_null_object
         @client.send_message('testMessage', mock("args class").as_null_object)
         @client.send_message('testMessage2', mock("args class").as_null_object)
-        @client.send_message('testMessage3', mock("args class").as_null_object)        
+        @client.send_message('testMessage3', mock("args class").as_null_object)
       end
     end
 

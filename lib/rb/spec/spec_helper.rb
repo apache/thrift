@@ -18,7 +18,7 @@
 #
 
 require 'rubygems'
-require 'spec'
+require 'rspec'
 
 $:.unshift File.join(File.dirname(__FILE__), *%w[.. ext])
 
@@ -36,7 +36,7 @@ class Object
   end
 end
 
-Spec::Runner.configure do |configuration|
+RSpec.configure do |configuration|
   configuration.before(:each) do
     Thrift.type_checking = true
   end

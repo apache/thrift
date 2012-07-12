@@ -22,11 +22,11 @@ require File.expand_path("#{File.dirname(__FILE__)}/binary_protocol_spec_shared"
 
 if defined? Thrift::BinaryProtocolAccelerated
 
-  class ThriftBinaryProtocolAcceleratedSpec < Spec::ExampleGroup
+  class ThriftBinaryProtocolAcceleratedSpec < RSpec::Core::ExampleGroup
     include Thrift
 
     describe Thrift::BinaryProtocolAccelerated do
-      # since BinaryProtocolAccelerated should be directly equivalent to 
+      # since BinaryProtocolAccelerated should be directly equivalent to
       # BinaryProtocol, we don't need any custom specs!
       it_should_behave_like 'a binary protocol'
 

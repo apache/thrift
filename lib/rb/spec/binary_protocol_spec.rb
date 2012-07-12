@@ -20,7 +20,7 @@
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 require File.expand_path("#{File.dirname(__FILE__)}/binary_protocol_spec_shared")
 
-class ThriftBinaryProtocolSpec < Spec::ExampleGroup
+class ThriftBinaryProtocolSpec < RSpec::Core::ExampleGroup
   include Thrift
 
   describe BinaryProtocol do
@@ -47,7 +47,7 @@ class ThriftBinaryProtocolSpec < Spec::ExampleGroup
     it "should raise an exception if the message header does not exist and strict_read is enabled" do
       @prot.should_receive(:read_i32).and_return(42)
       @prot.should_receive(:strict_read).and_return(true)
-      lambda { @prot.read_message_begin }.should raise_error(Thrift::ProtocolException, 'No version identifier, old protocol client?') do |e|        
+      lambda { @prot.read_message_begin }.should raise_error(Thrift::ProtocolException, 'No version identifier, old protocol client?') do |e|
         e.type == Thrift::ProtocolException::BAD_VERSION
       end
     end

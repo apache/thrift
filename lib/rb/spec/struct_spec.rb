@@ -19,7 +19,7 @@
 
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 
-class ThriftStructSpec < Spec::ExampleGroup
+class ThriftStructSpec < RSpec::Core::ExampleGroup
   include Thrift
   include SpecNamespace
 

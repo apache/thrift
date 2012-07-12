@@ -19,7 +19,7 @@
 
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 
-class ThriftProcessorSpec < Spec::ExampleGroup
+class ThriftProcessorSpec < RSpec::Core::ExampleGroup
   include Thrift
 
   class ProcessorSpec
