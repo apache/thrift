@@ -293,6 +293,7 @@ abstract class TSaslTransport extends TTransport {
       }
     } catch (SaslException e) {
       try {
+        LOGGER.error("SASL negotiation failure", e);
         sendAndThrowMessage(NegotiationStatus.BAD, e.getMessage());
       } finally {
         underlyingTransport.close();
