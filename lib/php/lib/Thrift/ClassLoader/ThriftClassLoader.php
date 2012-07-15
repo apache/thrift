@@ -178,11 +178,11 @@ class ThriftClassLoader
                 foreach ($dirs as $dir)
                 {
                     /**
-                     * Available in service: Interface, Client, Processor
+                     * Available in service: Interface, Client, Processor, Rest
                      * And every service methods (_.+)
                      */
                     if(
-                        0 === preg_match('#(.+)(if|client|processor)$#i', $class, $n) and
+                        0 === preg_match('#(.+)(if|client|processor|rest)$#i', $class, $n) and
                         0 === preg_match('#(.+)_[a-z0-9]+_(args|result)$#i', $class, $n)
                     )
                     {
