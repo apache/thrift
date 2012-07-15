@@ -20,7 +20,7 @@
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
-class ThriftServerSocketSpec < Spec::ExampleGroup
+class ThriftServerSocketSpec < RSpec::Core::ExampleGroup
   include Thrift
 
   describe ServerSocket do

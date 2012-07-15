@@ -19,7 +19,7 @@
 
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 
-class ThriftHTTPClientTransportSpec < Spec::ExampleGroup
+class ThriftHTTPClientTransportSpec < RSpec::Core::ExampleGroup
   include Thrift
 
   describe HTTPClientTransport do

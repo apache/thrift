@@ -19,7 +19,7 @@
 
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 
-class ThriftBaseTransportSpec < Spec::ExampleGroup
+class ThriftBaseTransportSpec < RSpec::Core::ExampleGroup
   include Thrift
 
   describe TransportException do

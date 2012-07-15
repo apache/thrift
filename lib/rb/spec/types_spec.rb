@@ -19,7 +19,7 @@
 
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 
-class ThriftTypesSpec < Spec::ExampleGroup
+class ThriftTypesSpec < RSpec::Core::ExampleGroup
   include Thrift
 
   before(:each) do

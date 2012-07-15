@@ -19,7 +19,7 @@
 
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 
-class ThriftNonblockingServerSpec < Spec::ExampleGroup
+class ThriftNonblockingServerSpec < RSpec::Core::ExampleGroup
   include Thrift
   include SpecNamespace
 

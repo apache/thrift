@@ -18,7 +18,7 @@
 #
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 
-class ThriftServerSpec < Spec::ExampleGroup
+class ThriftServerSpec < RSpec::Core::ExampleGroup
   include Thrift
 
   describe BaseServer do

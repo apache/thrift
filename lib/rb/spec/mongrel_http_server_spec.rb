@@ -20,7 +20,7 @@
 require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
 require 'thrift/server/mongrel_http_server'
 
-class ThriftHTTPServerSpec < Spec::ExampleGroup
+class ThriftHTTPServerSpec < RSpec::Core::ExampleGroup
   include Thrift
 
   Handler = MongrelHTTPServer::Handler
