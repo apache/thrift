@@ -2,12 +2,20 @@
 
 namespace test\php;
 
-require_once __DIR__.'/../../lib/php/lib/Symfony/Component/ClassLoader/UniversalClassLoader.php';
+require_once __DIR__.'/../../lib/php/lib/Thrift/ClassLoader/ThriftClassLoader.php';
 
-use Symfony\Component\ClassLoader\UniversalClassLoader;
+use Thrift\ClassLoader\ThriftClassLoader;
 
-$loader = new UniversalClassLoader();
+if (!isset($GEN_DIR)) {
+  $GEN_DIR = 'gen-php';
+}
+if (!isset($MODE)) {
+  $MODE = 'normal';
+}
+
+$loader = new ThriftClassLoader();
 $loader->registerNamespace('Thrift', __DIR__ . '/../../lib/php/lib');
+$loader->registerDefinition('ThriftTest', $GEN_DIR);
 $loader->register();
 
 /*
@@ -29,13 +37,6 @@ $loader->register();
  * under the License.
  */
 
-if (!isset($GEN_DIR)) {
-  $GEN_DIR = 'gen-php';
-}
-if (!isset($MODE)) {
-  $MODE = 'normal';
-}
-
 /** Include the Thrift base */
 /** Include the binary protocol */
 use Thrift\Protocol\TBinaryProtocol;
@@ -47,18 +48,6 @@ use Thrift\Transport\TSocketPool;
 /** Include the socket layer */
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TBufferedTransport;
-
-echo '==============================='."\n";
-echo ' SAFE TO IGNORE THESE IN TEST'."\n";
-echo '==============================='."\n";
-
-/** Include the generated code */
-require_once $GEN_DIR.'/ThriftTest/ThriftTest.php';
-require_once $GEN_DIR.'/ThriftTest/Types.php';
-
-echo '==============================='."\n";
-echo ' END OF SAFE ERRORS SECTION'."\n";
-echo '==============================='."\n\n";
 
 $host = 'localhost';
 $port = 9090;

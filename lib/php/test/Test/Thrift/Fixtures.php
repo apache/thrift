@@ -23,9 +23,6 @@
 
 namespace Test\Thrift;
 
-require_once __DIR__ . '/../../packages/ThriftTest/ThriftTest.php';
-require_once __DIR__ . '/../../packages/ThriftTest/Types.php';
-
 use ThriftTest\Xtruct;
 use ThriftTest\Xtruct2;
 use ThriftTest\Numberz;

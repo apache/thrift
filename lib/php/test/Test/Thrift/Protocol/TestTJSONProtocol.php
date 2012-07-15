@@ -23,7 +23,7 @@
 
 namespace test\Thrift\Protocol;
 
-use Symfony\Component\ClassLoader\UniversalClassLoader;
+use Thrift\ClassLoader\ThriftClassLoader;
 use Test\Thrift\Fixtures;
 use Thrift\Transport\TMemoryBuffer;
 use Thrift\Protocol\TJSONProtocol;
@@ -31,15 +31,13 @@ use Thrift\Protocol\TJSONProtocol;
 
 define( 'BUFSIZ', 8192 ); //big enough to read biggest serialized Fixture arg.
 
-require_once __DIR__.'/../../../../lib/Symfony/Component/ClassLoader/UniversalClassLoader.php';
+require_once __DIR__.'/../../../../lib/Thrift/ClassLoader/ThriftClassLoader.php';
 
-$loader = new UniversalClassLoader();
+$loader = new ThriftClassLoader();
 $loader->registerNamespace('Thrift', __DIR__ . '/../../../../lib');
 $loader->registerNamespace('Test', __DIR__ . '/../../..');
+$loader->registerDefinition('ThriftTest', __DIR__ . '/../../../packages');
 $loader->register();
-
-require_once __DIR__ . '/../../../packages/ThriftTest/ThriftTest.php';
-require_once __DIR__ . '/../../../packages/ThriftTest/Types.php';
 
 /***
  * This test suite depends on running the compiler against the

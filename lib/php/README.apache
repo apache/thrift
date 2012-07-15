@@ -42,17 +42,12 @@ $THRIFT_ROOT = '/your/thrift/root/lib';
 /**
  * Init Autloader
  */
-require_once $THRIFT_ROOT . '/Symfony/Component/ClassLoader/UniversalClassLoader.php';
+require_once $THRIFT_ROOT . '/Thrift/ClassLoader/ThriftClassLoader.php';
 
-$loader = new UniversalClassLoader();
+$loader = new ThriftClassLoader();
 $loader->registerNamespace('Thrift', $THRIFT_ROOT);
+$loader->registerDefinition('Thrift', $THRIFT_ROOT . '/packages');
 $loader->register();
-
-/**
- * Include lib
- */
-require_once $THRIFT_ROOT . '/packages/Service/Service.php';
-require_once $THRIFT_ROOT . '/packages/Service/Types.php';
 
 use Thrift\Transport\TPhpStream;
 use Thrift\Protocol\TBinaryProtocol;

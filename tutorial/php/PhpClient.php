@@ -3,12 +3,18 @@
 
 namespace tutorial\php;
 
-require_once __DIR__.'/../../lib/php/lib/Symfony/Component/ClassLoader/UniversalClassLoader.php';
+error_reporting(E_ALL);
 
-use Symfony\Component\ClassLoader\UniversalClassLoader;
+require_once __DIR__.'/../../lib/php/lib/Thrift/ClassLoader/ThriftClassLoader.php';
 
-$loader = new UniversalClassLoader();
+use Thrift\ClassLoader\ThriftClassLoader;
+
+$GEN_DIR = realpath(dirname(__FILE__).'/..').'/gen-php';
+
+$loader = new ThriftClassLoader();
 $loader->registerNamespace('Thrift', __DIR__ . '/../../lib/php/lib');
+$loader->registerDefinition('shared', $GEN_DIR);
+$loader->registerDefinition('tutorial', $GEN_DIR);
 $loader->register();
 
 /*
@@ -35,22 +41,6 @@ use Thrift\Transport\TSocket;
 use Thrift\Transport\THttpClient;
 use Thrift\Transport\TBufferedTransport;
 use Thrift\Exception\TException;
-
-/**
- * Suppress errors in here, which happen because we have not installed into
- * $GLOBALS['THRIFT_ROOT'].'/packages/tutorial' like we are supposed to!
- *
- * Normally we would only have to include Calculator.php which would properly
- * include the other files from their packages/ folder locations, but we
- * include everything here due to the bogus path setup.
- */
-
-$GEN_DIR = '../gen-php';
-require_once $GEN_DIR.'/shared/SharedService.php';
-require_once $GEN_DIR.'/shared/Types.php';
-require_once $GEN_DIR.'/tutorial/Calculator.php';
-require_once $GEN_DIR.'/tutorial/Types.php';
-error_reporting(E_ALL);
 
 try {
   if (array_search('--http', $argv)) {
