@@ -615,6 +615,10 @@ void TNonblockingServer::TConnection::transition() {
       return;
     } else {
       try {
+	if (serverEventHandler_ != NULL) {
+	    serverEventHandler_->processContext(connectionContext_,
+						getTSocket());
+	}
         // Invoke the processor
         processor_->process(inputProtocol_, outputProtocol_,
                             connectionContext_);
