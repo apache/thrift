@@ -615,8 +615,6 @@ AC_OUTPUT
 echo
 echo "$PACKAGE $VERSION"
 echo
-echo "Building code generators ..... : $thrift_generators"
-echo
 echo "Building C++ Library ......... : $have_cpp"
 echo "Building C (GLib) Library .... : $have_c_glib"
 echo "Building Java Library ........ : $have_java"
@@ -629,6 +627,7 @@ echo "Building PHP Library ......... : $have_php"
 echo "Building Erlang Library ...... : $have_erlang"
 echo "Building Go Library .......... : $have_go"
 echo "Building D Library ........... : $have_d"
+
 if test "$have_cpp" = "yes" ; then
   echo
   echo "C++ Library:"
