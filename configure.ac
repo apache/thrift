@@ -126,7 +126,11 @@ if test "$with_cpp" = "yes";  then
   AX_LIB_ZLIB([1.2.3])
   have_zlib=$success
   
-  PKG_CHECK_MODULES([QT], [QtCore >= 4.3, QtNetwork >= 4.3], have_qt=yes, have_qt=no)
+  AX_THRIFT_LIB(qt4, [Qt], yes)
+  have_qt=no
+  if test "$with_qt4" = "yes";  then
+    PKG_CHECK_MODULES([QT], [QtCore >= 4.3, QtNetwork >= 4.3], have_qt=yes, have_qt=no)
+  fi
   if test "$have_qt" = "yes"; then
     AC_PATH_PROGS([QT_MOC], [moc-qt4 moc])
     have_qt=$success
