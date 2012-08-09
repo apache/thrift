@@ -22,7 +22,7 @@ if defined?(RUBY_ENGINE) && RUBY_ENGINE =~ /jruby/
 else
   require 'mkmf'
 
-  $CFLAGS = "-g -O2 -Wall -Werror"
+  $CFLAGS = "-g -O2 -Wall -Werror " + Config::CONFIG["CFLAGS"]
 
   have_func("strlcpy", "string.h")
 
