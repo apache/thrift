@@ -847,6 +847,9 @@ private {
         return "lst";
       case TType.SET:
         return "set";
+      case TType.STOP: goto case;
+      case TType.VOID:
+        assert(false, "Invalid type passed.");
     }
   }
 

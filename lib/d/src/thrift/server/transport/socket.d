@@ -284,7 +284,7 @@ Socket makeSocketAndListen(ushort port, int backlog, ushort retryLimit,
 
   // Turn linger off to avoid blocking on socket close.
   try {
-    linger l;
+    Linger l;
     l.on = 0;
     l.time = 0;
     socket.setOption(lvlSock, SocketOption.LINGER, l);

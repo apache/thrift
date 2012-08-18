@@ -253,7 +253,7 @@ protected:
 /**
  * Skips a field of the given type on the protocol.
  *
- * The main purpose of skip() is to allow treating struct and cotainer types,
+ * The main purpose of skip() is to allow treating struct and container types,
  * (where multiple primitive types have to be skipped) the same as scalar types
  * in generated code.
  */
@@ -322,6 +322,9 @@ void skip(Protocol)(Protocol prot, TType type) if (is(Protocol : TProtocol)) {
       }
       prot.readSetEnd();
       break;
+    case TType.STOP: goto case;
+    case TType.VOID:
+      assert(false, "Invalid field type passed.");
   }
 }
 

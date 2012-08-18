@@ -158,7 +158,7 @@ protected:
   void setSocketOpts() {
     try {
       alias SocketOptionLevel.SOCKET lvlSock;
-      linger l;
+      Linger l;
       l.on = 0;
       l.time = 0;
       socket_.setOption(lvlSock, SocketOption.LINGER, l);
@@ -438,7 +438,7 @@ protected:
         socket_.setOption(SocketOptionLevel.SOCKET, type, value);
       } catch (SocketException e) {
         throw new TTransportException(
-          "Could not set send timeout: " ~ socketErrnoString(e.errorCode),
+          "Could not set timeout.",
           TTransportException.Type.UNKNOWN,
           __FILE__,
           __LINE__,
