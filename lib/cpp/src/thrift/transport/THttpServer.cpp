@@ -88,6 +88,7 @@ void THttpServer::flush() {
     "HTTP/1.1 200 OK" << CRLF <<
     "Date: " << getTimeRFC1123() << CRLF <<
     "Server: Thrift/" << VERSION << CRLF <<
+    "Access-Control-Allow-Origin: *" << CRLF <<
     "Content-Type: application/x-thrift" << CRLF <<
     "Content-Length: " << len << CRLF <<
     "Connection: Keep-Alive" << CRLF <<
