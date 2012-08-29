@@ -556,8 +556,60 @@ end;
 { TProtocolUtil }
 
 class procedure TProtocolUtil.Skip( prot: IProtocol; type_: TType);
+var field : IField;
+    map   : IMap;
+    set_  : ISet;
+    list  : IList;
+    i     : Integer;
 begin
+  case type_ of
+    // simple types
+    TType.Bool_   :  prot.ReadBool();
+    TType.Byte_   :  prot.ReadByte();
+    TType.I16     :  prot.ReadI16();
+    TType.I32     :  prot.ReadI32();
+    TType.I64     :  prot.ReadI64();
+    TType.Double_ :  prot.ReadDouble();
+    TType.String_ :  prot.ReadBinary();// Don't try to decode the string, just skip it.
 
+    // structured types
+    TType.Struct :  begin
+      prot.ReadStructBegin();
+      while TRUE do begin
+        field := prot.ReadFieldBegin();
+        if (field.Type_ = TType.Stop) then Break;
+        Skip(prot, field.Type_);
+        prot.ReadFieldEnd();
+      end;
+      prot.ReadStructEnd();
+    end;
+
+    TType.Map :  begin
+      map := prot.ReadMapBegin();
+      for i := 0 to map.Count-1 do begin
+        Skip(prot, map.KeyType);
+        Skip(prot, map.ValueType);
+      end;
+      prot.ReadMapEnd();
+    end;
+
+    TType.Set_ :  begin
+      set_ := prot.ReadSetBegin();
+      for i := 0 to set_.Count-1
+      do Skip( prot, set_.ElementType);
+      prot.ReadSetEnd();
+    end;
+
+    TType.List :  begin
+      list := prot.ReadListBegin();
+      for i := 0 to list.Count-1
+      do Skip( prot, list.ElementType);
+      prot.ReadListEnd();
+    end;
+
+  else
+    ASSERT( FALSE); // any new types?
+  end;
 end;
 
 { TStructImpl }
@@ -1090,7 +1142,7 @@ begin
     version := VERSION_1 or Cardinal( msg.Type_);
     WriteI32( Integer( version) );
     WriteString( msg.Name);
-  	WriteI32( msg.SeqID);
+    WriteI32( msg.SeqID);
   end else
   begin
     WriteString( msg.Name);
