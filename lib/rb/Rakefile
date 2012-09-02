@@ -101,8 +101,8 @@ task :install => [:gem] do
   end
 end
 
-CLEAN.include [ 'ext/*.{o,bundle,so,dll}', 'mkmf.log', 'ext/mkmf.log', 'ext/Makefile', 
-  'Gemfile.lock', '.bundle', 
-  'spec/gen-rb', 'test', 'benchmark/gen-rb',
-  'pkg', 'thrift-*.gem'
+CLEAN.include [
+  '.bundle', 'benchmark/gen-rb', 'coverage', 'ext/*.{o,bundle,so,dll}', 'ext/mkmf.log',
+  'ext/Makefile', 'ext/conftest.dSYM', 'Gemfile.lock', 'mkmf.log', 'pkg',  'spec/gen-rb',
+  'test', 'thrift-*.gem'
 ]
