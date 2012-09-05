@@ -187,7 +187,7 @@ gen-*
 /lib/php/src/ext/thrift_protocol/run-tests.php
 /lib/php/src/ext/thrift_protocol/thrift_protocol.la
 /lib/php/src/ext/thrift_protocol/tmp-php.ini
-/lib/php/src/packages/
+/lib/php/test/packages/
 /lib/php/test/Makefile
 /lib/php/test/Makefile.in
 /lib/php/test/phpunit.xml

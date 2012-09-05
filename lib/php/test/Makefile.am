@@ -20,14 +20,14 @@
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 stubs: ../../../test/ThriftTest.thrift
-	mkdir -p ../src/packages
-	$(THRIFT) --gen php -r --out ../src/packages ../../../test/ThriftTest.thrift
+	mkdir -p ./packages
+	$(THRIFT) --gen php -r --out ./packages ../../../test/ThriftTest.thrift
 
 if HAVE_PHPUNIT
 check: stubs
-	$(PHPUNIT) --log-junit=phpunit.xml protocol/TestTJSONProtocol.php
+	$(PHPUNIT) --log-junit=phpunit.xml Test/Thrift/Protocol/TestTJSONProtocol.php
 endif
 
 clean-local:
-	$(RM) -r gen-php
+	$(RM) -r ./packages
 
