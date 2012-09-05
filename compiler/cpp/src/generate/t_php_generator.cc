@@ -393,10 +393,11 @@ string t_php_generator::php_includes() {
   string TType = "use Thrift\\Type\\TType;\n";
   string TMessageType = "use Thrift\\Type\\TMessageType;\n";
   string TException = "use Thrift\\Exception\\TException;\n";
+  string TProtocolException = "use Thrift\\Exception\\TProtocolException;\n";
   string TProtocol = "use Thrift\\Protocol\\TProtocol;\n";
   string TApplicationException = "use Thrift\\Exception\\TApplicationException;\n\n";
 
-  return TBase + TType + TMessageType + TException +TProtocol + TApplicationException;
+  return TBase + TType + TMessageType + TException + TProtocolException + TProtocol + TApplicationException;
 }
 
 /**
