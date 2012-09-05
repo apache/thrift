@@ -32,17 +32,29 @@ Sample Code
 
 <?php
 
+namespace MyNamespace;
+
+/**
+ * Include path
+ */
+$THRIFT_ROOT = '/your/thrift/root/lib';
+
+/**
+ * Init Autloader
+ */
+require_once $THRIFT_ROOT . '/Thrift/ClassLoader/ThriftClassLoader.php';
+
+$loader = new ThriftClassLoader();
+$loader->registerNamespace('Thrift', $THRIFT_ROOT);
+$loader->registerDefinition('Thrift', $THRIFT_ROOT . '/packages');
+$loader->register();
+
+use Thrift\Transport\TPhpStream;
+use Thrift\Protocol\TBinaryProtocol;
+
 /**
  * Example of how to build a Thrift server in Apache/PHP
- *
  */
-
-$GLOBALS['THRIFT_ROOT'] = '/your/thrift/root';
-
-include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
-include_once $GLOBALS['THRIFT_ROOT'].'/packages/Service/Service.php';
-include_once $GLOBALS['THRIFT_ROOT'].'/transport/TPhpStream.php';
-include_once $GLOBALS['THRIFT_ROOT'].'/protocol/TBinaryProtocol.php';
 
 class ServiceHandler implements ServiceIf {
   // Implement your interface and methods here
