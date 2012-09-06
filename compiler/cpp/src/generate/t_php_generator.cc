@@ -2274,7 +2274,7 @@ string t_php_generator::argument_list(t_struct* tstruct, bool addStructSignature
     t_type* type = (*f_iter)->get_type();
 
     //Set type name
-    if(addStructSignature and type->is_struct())
+    if(addStructSignature && type->is_struct())
     {
       string className = php_namespace(type->get_program()) + php_namespace_directory("Definition", false) + classify(type->get_name());
 
