@@ -50,6 +50,12 @@ class t_csharp_generator : public t_oop_generator
       iter = parsed_options.find("async");
       async_ctp_ = (iter != parsed_options.end());
 
+      iter = parsed_options.find("serial");
+      serialize_ = (iter != parsed_options.end());
+	  if (serialize_) {
+		  wcf_namespace_ = iter->second;  // since there can be only one namespace
+	  }
+
 	  iter = parsed_options.find("wcf");
 	  wcf_ = (iter != parsed_options.end());
 	  if (wcf_) {
@@ -142,6 +148,7 @@ class t_csharp_generator : public t_oop_generator
     std::ofstream f_service_;
     std::string namespace_dir_;
     bool async_ctp_;
+    bool serialize_;
     bool wcf_;
     std::string wcf_namespace_;
 };
@@ -192,7 +199,7 @@ string t_csharp_generator::csharp_type_usings() {
 	(async_ctp_ ? "using System.Threading.Tasks;\n" : "") +
     "using Thrift;\n" +
     "using Thrift.Collections;\n" +
-        (wcf_ ? "using System.ServiceModel;\n" : "") +
+    (wcf_ ? "//using System.ServiceModel;\n" : "") +
     "using System.Runtime.Serialization;\n";
 }
 
@@ -444,10 +451,10 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
 
   indent(out) << "#if !SILVERLIGHT" << endl;
   indent(out) << "[Serializable]" << endl; 
-  if (wcf_ &&!is_exception) {
+  indent(out) << "#endif" << endl;
+  if ((serialize_||wcf_) &&!is_exception) {
 	  indent(out) << "[DataContract(Namespace=\"" << wcf_namespace_ << "\")]" << endl; // do not make exception classes directly WCF serializable, we provide a seperate "fault" for that
   }
-  indent(out) << "#endif" << endl;
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
  
   indent(out) << "public " << (is_final ? "sealed " : "") << "partial class " << tstruct->get_name() << " : ";
@@ -482,11 +489,12 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
       indent() << "public Isset __isset;" << endl <<
       indent() << "#if !SILVERLIGHT" << endl <<
       indent() << "[Serializable]" << endl;
-      if (wcf_) {
+    out <<
+      indent() << "#endif" << endl;
+    if ((serialize_||wcf_)) {
 	  indent(out) << "[DataContract]" << endl;
       }
     out <<
-      indent() << "#endif" << endl <<
       indent() << "public struct Isset {" << endl;
     indent_up();
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -525,7 +533,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
   out << endl;
 
   // generate a corresponding WCF fault to wrap the exception
-  if(wcf_ && is_exception) {
+  if((serialize_||wcf_) && is_exception) {
 	  generate_csharp_wcffault(out, tstruct);
   }
 
@@ -539,8 +547,8 @@ void t_csharp_generator::generate_csharp_wcffault(ofstream& out, t_struct* tstru
   out << endl;
   indent(out) << "#if !SILVERLIGHT" << endl;
   indent(out) << "[Serializable]" << endl;
-  indent(out) << "[DataContract]" << endl;
   indent(out) << "#endif" << endl;
+  indent(out) << "[DataContract]" << endl;
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
 
   indent(out) << "public " << (is_final ? "sealed " : "") << "partial class " << tstruct->get_name() << "Fault" << endl;
@@ -1761,7 +1769,7 @@ void t_csharp_generator::generate_property(ofstream& out, t_field* tfield, bool 
     generate_csharp_property(out, tfield, isPublic, generateIsset, "_");
 }
 void t_csharp_generator::generate_csharp_property(ofstream& out, t_field* tfield, bool isPublic, bool generateIsset, std::string fieldPrefix) {
-	if(wcf_ && isPublic) {
+	if((serialize_||wcf_) && isPublic) {
 		indent(out) << "[DataMember]" << endl;
 	}
     indent(out) << (isPublic ? "public " : "private ") << type_name(tfield->get_type())
@@ -2027,5 +2035,6 @@ std::string t_csharp_generator::get_enum_class_name(t_type* type) {
 THRIFT_REGISTER_GENERATOR(csharp, "C#",
 "    async:           Adds Async CTP support.\n"
 "    wcf:             Adds bindings for WCF to generated classes.\n"
+"    serial:          Add serialization support to generated classes.\n"
 )
 
