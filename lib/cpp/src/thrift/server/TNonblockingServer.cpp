@@ -360,7 +360,7 @@ class TNonblockingServer::TConnection::Task: public Runnable {
       GlobalOutput.printf("TNonblockingServer: client died: %s", ttx.what());
     } catch (const bad_alloc&) {
       GlobalOutput("TNonblockingServer: caught bad_alloc exception.");
-      exit(-1);
+      exit(1);
     } catch (const std::exception& x) {
       GlobalOutput.printf("TNonblockingServer: process() exception: %s: %s",
                           typeid(x).name(), x.what());
