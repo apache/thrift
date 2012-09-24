@@ -182,13 +182,14 @@ class t_program : public t_doc {
       it=my_copy.find(base_language);
 
       if (it == my_copy.end()) {
-        throw "No generator named '" + base_language + "' could be found!";
-      }
-
-      if (sub_index != std::string::npos) {
-        std::string sub_namespace = language.substr(sub_index+1);
-        if(! it->second->is_valid_namespace(sub_namespace)) {
-          throw base_language +" generator does not accept '" + sub_namespace + "' as sub-namespace!";
+        std::string warning = "No generator named '" + base_language + "' could be found!";
+        pwarning(1, warning.c_str());
+      } else {
+        if (sub_index != std::string::npos) {
+          std::string sub_namespace = language.substr(sub_index+1);
+          if ( ! it->second->is_valid_namespace(sub_namespace)) {
+            throw base_language + " generator does not accept '" + sub_namespace + "' as sub-namespace!";
+          }
         }
       }
     }
