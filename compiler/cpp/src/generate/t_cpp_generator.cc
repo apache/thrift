@@ -2797,8 +2797,8 @@ void ProcessorGenerator::generate_class_definition() {
     indent() << "boost::shared_ptr<" << if_name_ << "> iface_;" << endl;
   f_header_ <<
     indent() << "virtual " << ret_type_ << "dispatchCall(" << finish_cob_ <<
-      "apache::thrift::protocol::TProtocol* iprot, " <<
-      "apache::thrift::protocol::TProtocol* oprot, " <<
+      "::apache::thrift::protocol::TProtocol* iprot, " <<
+      "::apache::thrift::protocol::TProtocol* oprot, " <<
       "const std::string& fname, int32_t seqid" << call_context_ << ");" <<
       endl;
   if (generator_->gen_templates_) {
@@ -2819,8 +2819,8 @@ void ProcessorGenerator::generate_class_definition() {
   f_header_ <<
     indent() << "typedef  void (" << class_name_ << "::*" <<
       "ProcessFunction)(" << finish_cob_decl_ << "int32_t, " <<
-      "apache::thrift::protocol::TProtocol*, " <<
-      "apache::thrift::protocol::TProtocol*" << call_context_decl_ << ");" <<
+      "::apache::thrift::protocol::TProtocol*, " <<
+      "::apache::thrift::protocol::TProtocol*" << call_context_decl_ << ");" <<
       endl;
   if (generator_->gen_templates_) {
     f_header_ <<
@@ -2850,7 +2850,7 @@ void ProcessorGenerator::generate_class_definition() {
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     indent(f_header_) <<
-      "void process_" << (*f_iter)->get_name() << "(" << finish_cob_ << "int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot" << call_context_ << ");" << endl;
+      "void process_" << (*f_iter)->get_name() << "(" << finish_cob_ << "int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot" << call_context_ << ");" << endl;
     if (generator_->gen_templates_) {
       indent(f_header_) <<
         "void process_" << (*f_iter)->get_name() << "(" << finish_cob_ <<
@@ -2877,8 +2877,8 @@ void ProcessorGenerator::generate_class_definition() {
       f_header_ <<
         indent() << "void throw_" << (*f_iter)->get_name() <<
         "(std::tr1::function<void(bool ok)> cob, int32_t seqid, " <<
-        "apache::thrift::protocol::TProtocol* oprot, void* ctx, " <<
-        "apache::thrift::TDelayedException* _throw);" << endl;
+        "::apache::thrift::protocol::TProtocol* oprot, void* ctx, " <<
+        "::apache::thrift::TDelayedException* _throw);" << endl;
       if (generator_->gen_templates_) {
         f_header_ <<
           indent() << "void throw_" << (*f_iter)->get_name() <<
@@ -2942,7 +2942,7 @@ void ProcessorGenerator::generate_class_definition() {
     // template parameter here.
     f_header_ <<
       "typedef " << class_name_ <<
-      "<apache::thrift::protocol::TDummyProtocol> " <<
+      "< ::apache::thrift::protocol::TDummyProtocol > " <<
       service_name_ << pstyle_ << "Processor;" << endl << endl;
   }
 }
@@ -2978,7 +2978,7 @@ void ProcessorGenerator::generate_dispatch_call(bool template_protocol) {
     indent() << "if (pfn == processMap_.end()) {" << endl;
   if (extends_.empty()) {
     f_out_ <<
-      indent() << "  iprot->skip(apache::thrift::protocol::T_STRUCT);" << endl <<
+      indent() << "  iprot->skip(::apache::thrift::protocol::T_STRUCT);" << endl <<
       indent() << "  iprot->readMessageEnd();" << endl <<
       indent() << "  iprot->getTransport()->readEnd();" << endl <<
       indent() << "  ::apache::thrift::TApplicationException x(::apache::thrift::TApplicationException::UNKNOWN_METHOD, \"Invalid method name: '\"+fname+\"'\");" << endl <<
@@ -3225,7 +3225,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << "  ctx = this->eventHandler_->getContext(" <<
         service_func_name << ", callContext);" << endl <<
       indent() << "}" << endl <<
-      indent() << "apache::thrift::TProcessorContextFreer freer(" <<
+      indent() << "::apache::thrift::TProcessorContextFreer freer(" <<
         "this->eventHandler_.get(), ctx, " << service_func_name << ");" <<
         endl << endl <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
@@ -3318,10 +3318,10 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     if (!tfunction->is_oneway()) {
       out <<
         endl <<
-        indent() << "apache::thrift::TApplicationException x(e.what());" <<
+        indent() << "::apache::thrift::TApplicationException x(e.what());" <<
           endl <<
         indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() <<
-          "\", apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
+          "\", ::apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
         indent() << "x.write(oprot);" << endl <<
         indent() << "oprot->writeMessageEnd();" << endl <<
         indent() << "oprot->getTransport()->writeEnd();" << endl <<
@@ -3352,7 +3352,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         service_func_name << ");" << endl <<
       indent() << "}" << endl << endl <<
       indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() <<
-        "\", apache::thrift::protocol::T_REPLY, seqid);" << endl <<
+        "\", ::apache::thrift::protocol::T_REPLY, seqid);" << endl <<
       indent() << "result.write(oprot);" << endl <<
       indent() << "oprot->writeMessageEnd();" << endl <<
       indent() << "bytes = oprot->getTransport()->writeEnd();" << endl <<
@@ -3414,7 +3414,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << "  ctx = this->eventHandler_->getContext(" <<
         service_func_name << ", NULL);" << endl <<
       indent() << "}" << endl <<
-      indent() << "apache::thrift::TProcessorContextFreer freer(" <<
+      indent() << "::apache::thrift::TProcessorContextFreer freer(" <<
         "this->eventHandler_.get(), ctx, " << service_func_name << ");" <<
         endl << endl <<
       indent() << "try {" << endl;
@@ -3568,7 +3568,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         indent() << "  ctx = this->eventHandler_->getContext(" <<
           service_func_name << ", NULL);" << endl <<
         indent() << "}" << endl <<
-        indent() << "apache::thrift::TProcessorContextFreer freer(" <<
+        indent() << "::apache::thrift::TProcessorContextFreer freer(" <<
           "this->eventHandler_.get(), ctx, " << service_func_name <<
           ");" << endl << endl <<
         indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
@@ -3576,7 +3576,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
           service_func_name << ");" << endl <<
         indent() << "}" << endl << endl <<
         indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() <<
-          "\", apache::thrift::protocol::T_REPLY, seqid);" << endl <<
+          "\", ::apache::thrift::protocol::T_REPLY, seqid);" << endl <<
         indent() << "result.write(oprot);" << endl <<
         indent() << "oprot->writeMessageEnd();" << endl <<
         indent() << "uint32_t bytes = oprot->getTransport()->writeEnd();" <<
@@ -3626,7 +3626,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         indent() << "  ctx = this->eventHandler_->getContext(" <<
           service_func_name << ", NULL);" << endl <<
         indent() << "}" << endl <<
-        indent() << "apache::thrift::TProcessorContextFreer freer(" <<
+        indent() << "::apache::thrift::TProcessorContextFreer freer(" <<
           "this->eventHandler_.get(), ctx, " << service_func_name << ");" <<
           endl << endl;
 
@@ -3663,10 +3663,10 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
           service_func_name << ");" << endl <<
         indent() << "}" << endl <<
         endl <<
-        indent() << "apache::thrift::TApplicationException x(e.what());" <<
+        indent() << "::apache::thrift::TApplicationException x(e.what());" <<
           endl <<
         indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() <<
-          "\", apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
+          "\", ::apache::thrift::protocol::T_EXCEPTION, seqid);" << endl <<
         indent() << "x.write(oprot);" << endl <<
         indent() << "oprot->writeMessageEnd();" << endl <<
         indent() << "oprot->getTransport()->writeEnd();" << endl <<
@@ -3684,7 +3684,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
           service_func_name << ");" << endl <<
         indent() << "}" << endl << endl <<
         indent() << "oprot->writeMessageBegin(\"" << tfunction->get_name() <<
-          "\", apache::thrift::protocol::T_REPLY, seqid);" << endl <<
+          "\", ::apache::thrift::protocol::T_REPLY, seqid);" << endl <<
         indent() << "result.write(oprot);" << endl <<
         indent() << "oprot->writeMessageEnd();" << endl <<
         indent() << "uint32_t bytes = oprot->getTransport()->writeEnd();" <<
