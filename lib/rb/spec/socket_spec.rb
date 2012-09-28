@@ -28,6 +28,7 @@ describe 'Socket' do
       @handle = mock("Handle", :closed? => false)
       @handle.stub!(:close)
       @handle.stub!(:connect_nonblock)
+      @handle.stub!(:setsockopt)
       ::Socket.stub!(:new).and_return(@handle)
     end
 
@@ -39,14 +40,14 @@ describe 'Socket' do
     end
 
     it "should open a ::Socket with default args" do
-      ::Socket.should_receive(:new).and_return(mock("Handle", :connect_nonblock => true))
+      ::Socket.should_receive(:new).and_return(mock("Handle", :connect_nonblock => true, :setsockopt => nil))
       ::Socket.should_receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
       ::Socket.should_receive(:sockaddr_in)
       @socket.open
     end
 
     it "should accept host/port options" do
-      ::Socket.should_receive(:new).and_return(mock("Handle", :connect_nonblock => true))
+      ::Socket.should_receive(:new).and_return(mock("Handle", :connect_nonblock => true, :setsockopt => nil))
       ::Socket.should_receive(:getaddrinfo).with("my.domain", 1234, nil, ::Socket::SOCK_STREAM).and_return([[]])
       ::Socket.should_receive(:sockaddr_in)
       Thrift::Socket.new('my.domain', 1234).open
