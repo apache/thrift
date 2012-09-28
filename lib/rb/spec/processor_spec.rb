@@ -17,16 +17,15 @@
 # under the License.
 #
 
-require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require 'spec_helper'
 
-class ThriftProcessorSpec < Spec::ExampleGroup
-  include Thrift
+describe 'Processor' do
 
   class ProcessorSpec
     include Thrift::Processor
   end
 
-  describe "Processor" do
+  describe Thrift::Processor do
     before(:each) do
       @processor = ProcessorSpec.new(mock("MockHandler"))
       @prot = mock("MockProtocol")
@@ -41,21 +40,19 @@ class ThriftProcessorSpec < Spec::ExampleGroup
     end
 
     it "should call process_<message> when it receives that message" do
-      @prot.should_receive(:read_message_begin).ordered.and_return ['testMessage', MessageTypes::CALL, 17]
+      @prot.should_receive(:read_message_begin).ordered.and_return ['testMessage', Thrift::MessageTypes::CALL, 17]
       @processor.should_receive(:process_testMessage).with(17, @prot, @prot).ordered
       @processor.process(@prot, @prot).should == true
     end
 
     it "should raise an ApplicationException when the received message cannot be processed" do
-      @prot.should_receive(:read_message_begin).ordered.and_return ['testMessage', MessageTypes::CALL, 4]
-      @prot.should_receive(:skip).with(Types::STRUCT).ordered
+      @prot.should_receive(:read_message_begin).ordered.and_return ['testMessage', Thrift::MessageTypes::CALL, 4]
+      @prot.should_receive(:skip).with(Thrift::Types::STRUCT).ordered
       @prot.should_receive(:read_message_end).ordered
-      @prot.should_receive(:write_message_begin).with('testMessage', MessageTypes::EXCEPTION, 4).ordered
-      ApplicationException.should_receive(:new).with(ApplicationException::UNKNOWN_METHOD, "Unknown function testMessage").and_return do
-        mock(ApplicationException).tee do |e|
-          e.should_receive(:write).with(@prot).ordered
-        end
-      end
+      @prot.should_receive(:write_message_begin).with('testMessage', Thrift::MessageTypes::EXCEPTION, 4).ordered
+      e = mock(Thrift::ApplicationException)
+      e.should_receive(:write).with(@prot).ordered
+      Thrift::ApplicationException.should_receive(:new).with(Thrift::ApplicationException::UNKNOWN_METHOD, "Unknown function testMessage").and_return(e)
       @prot.should_receive(:write_message_end).ordered
       mock_trans(@prot)
       @processor.process(@prot, @prot)
@@ -72,7 +69,7 @@ class ThriftProcessorSpec < Spec::ExampleGroup
     end
 
     it "should write out a reply when asked" do
-      @prot.should_receive(:write_message_begin).with('testMessage', MessageTypes::REPLY, 23).ordered
+      @prot.should_receive(:write_message_begin).with('testMessage', Thrift::MessageTypes::REPLY, 23).ordered
       result = mock("MockResult")
       result.should_receive(:write).with(@prot).ordered
       @prot.should_receive(:write_message_end).ordered

@@ -17,14 +17,13 @@
 # under the License.
 #
 
-require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require 'spec_helper'
 
-class ThriftHTTPClientTransportSpec < Spec::ExampleGroup
-  include Thrift
+describe 'Thrift::HTTPClientTransport' do
 
-  describe HTTPClientTransport do
+  describe Thrift::HTTPClientTransport do
     before(:each) do
-      @client = HTTPClientTransport.new("http://my.domain.com/path/to/service?param=value")
+      @client = Thrift::HTTPClientTransport.new("http://my.domain.com/path/to/service?param=value")
     end
 
     it "should always be open" do

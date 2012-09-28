@@ -17,11 +17,9 @@
 # under the License.
 #
 
-require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
+require 'spec_helper'
 
-class StructNestedContainersSpec < Spec::ExampleGroup
-  include Thrift
-  include SpecNamespace
+describe 'StructNestedContainers' do
 
   def with_type_checking
     saved_type_checking, Thrift.type_checking = Thrift.type_checking, true
@@ -32,11 +30,11 @@ class StructNestedContainersSpec < Spec::ExampleGroup
     end
   end
 
-  describe Struct do
+  describe Thrift::Struct do
     # Nested container tests, see THRIFT-369.
     it "should support nested lists inside lists" do
       with_type_checking do
-        a, b = NestedListInList.new, NestedListInList.new
+        a, b = SpecNamespace::NestedListInList.new, SpecNamespace::NestedListInList.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = [ [1, 2, 3], [2, 3, 4] ]
           thrift_struct.validate
@@ -49,7 +47,7 @@ class StructNestedContainersSpec < Spec::ExampleGroup
 
     it "should support nested lists inside sets" do
       with_type_checking do
-        a, b = NestedListInSet.new, NestedListInSet.new
+        a, b = SpecNamespace::NestedListInSet.new, SpecNamespace::NestedListInSet.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = [ [1, 2, 3], [2, 3, 4] ].to_set
           thrift_struct.validate
@@ -62,7 +60,7 @@ class StructNestedContainersSpec < Spec::ExampleGroup
 
     it "should support nested lists in map keys" do
       with_type_checking do
-        a, b = NestedListInMapKey.new, NestedListInMapKey.new
+        a, b = SpecNamespace::NestedListInMapKey.new, SpecNamespace::NestedListInMapKey.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = { [1, 2, 3] => 1, [2, 3, 4] => 2 }
           thrift_struct.validate
@@ -75,7 +73,7 @@ class StructNestedContainersSpec < Spec::ExampleGroup
 
     it "should support nested lists in map values" do
       with_type_checking do
-        a, b = NestedListInMapValue.new, NestedListInMapValue.new
+        a, b = SpecNamespace::NestedListInMapValue.new, SpecNamespace::NestedListInMapValue.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = { 1 => [1, 2, 3], 2 => [2, 3, 4] }
           thrift_struct.validate
@@ -88,7 +86,7 @@ class StructNestedContainersSpec < Spec::ExampleGroup
 
     it "should support nested sets inside lists" do
       with_type_checking do
-        a, b = NestedSetInList.new, NestedSetInList.new
+        a, b = SpecNamespace::NestedSetInList.new, SpecNamespace::NestedSetInList.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = [ [1, 2, 3].to_set, [2, 3, 4].to_set ]
           thrift_struct.validate
@@ -101,7 +99,7 @@ class StructNestedContainersSpec < Spec::ExampleGroup
 
     it "should support nested sets inside sets" do
       with_type_checking do
-        a, b = NestedSetInSet.new, NestedSetInSet.new
+        a, b = SpecNamespace::NestedSetInSet.new, SpecNamespace::NestedSetInSet.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = [ [1, 2, 3].to_set, [2, 3, 4].to_set ].to_set
           thrift_struct.validate
@@ -114,7 +112,7 @@ class StructNestedContainersSpec < Spec::ExampleGroup
 
     it "should support nested sets in map keys" do
       with_type_checking do
-        a, b = NestedSetInMapKey.new, NestedSetInMapKey.new
+        a, b = SpecNamespace::NestedSetInMapKey.new, SpecNamespace::NestedSetInMapKey.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = { [1, 2, 3].to_set => 1, [2, 3, 4].to_set => 2 }
           thrift_struct.validate
@@ -127,7 +125,7 @@ class StructNestedContainersSpec < Spec::ExampleGroup
 
     it "should support nested sets in map values" do
       with_type_checking do
-        a, b = NestedSetInMapValue.new, NestedSetInMapValue.new
+        a, b = SpecNamespace::NestedSetInMapValue.new, SpecNamespace::NestedSetInMapValue.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = { 1 => [1, 2, 3].to_set, 2 => [2, 3, 4].to_set }
           thrift_struct.validate
@@ -140,7 +138,7 @@ class StructNestedContainersSpec < Spec::ExampleGroup
 
     it "should support nested maps inside lists" do
       with_type_checking do
-        a, b = NestedMapInList.new, NestedMapInList.new
+        a, b = SpecNamespace::NestedMapInList.new, SpecNamespace::NestedMapInList.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = [ {1 => 2, 3 => 4}, {2 => 3, 4 => 5} ]
           thrift_struct.validate
@@ -153,7 +151,7 @@ class StructNestedContainersSpec < Spec::ExampleGroup
 
     it "should support nested maps inside sets" do
       with_type_checking do
-        a, b = NestedMapInSet.new, NestedMapInSet.new
+        a, b = SpecNamespace::NestedMapInSet.new, SpecNamespace::NestedMapInSet.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = [ {1 => 2, 3 => 4}, {2 => 3, 4 => 5} ].to_set
           thrift_struct.validate
@@ -166,7 +164,7 @@ class StructNestedContainersSpec < Spec::ExampleGroup
 
     it "should support nested maps in map keys" do
       with_type_checking do
-        a, b = NestedMapInMapKey.new, NestedMapInMapKey.new
+        a, b = SpecNamespace::NestedMapInMapKey.new, SpecNamespace::NestedMapInMapKey.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = { { 1 => 2, 3 => 4} => 1, {2 => 3, 4 => 5}  => 2 }
           thrift_struct.validate
@@ -179,7 +177,7 @@ class StructNestedContainersSpec < Spec::ExampleGroup
 
     it "should support nested maps in map values" do
       with_type_checking do
-        a, b = NestedMapInMapValue.new, NestedMapInMapValue.new
+        a, b = SpecNamespace::NestedMapInMapValue.new, SpecNamespace::NestedMapInMapValue.new
         [a, b].each do |thrift_struct|
           thrift_struct.value = { 1 => { 1 => 2, 3 => 4}, 2 => {2 => 3, 4 => 5} }
           thrift_struct.validate

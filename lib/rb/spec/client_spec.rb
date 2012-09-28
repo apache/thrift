@@ -17,10 +17,9 @@
 # under the License.
 #
 
-require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require 'spec_helper'
 
-class ThriftClientSpec < Spec::ExampleGroup
-  include Thrift
+describe 'Client' do
 
   class ClientSpec
     include Thrift::Client
@@ -31,14 +30,14 @@ class ThriftClientSpec < Spec::ExampleGroup
     @client = ClientSpec.new(@prot)
   end
 
-  describe Client do
+  describe Thrift::Client do
     it "should re-use iprot for oprot if not otherwise specified" do
       @client.instance_variable_get(:'@iprot').should eql(@prot)
       @client.instance_variable_get(:'@oprot').should eql(@prot)
     end
 
     it "should send a test message" do
-      @prot.should_receive(:write_message_begin).with('testMessage', MessageTypes::CALL, 0)
+      @prot.should_receive(:write_message_begin).with('testMessage', Thrift::MessageTypes::CALL, 0)
       mock_args = mock('#<TestMessage_args:mock>')
       mock_args.should_receive(:foo=).with('foo')
       mock_args.should_receive(:bar=).with(42)
@@ -55,19 +54,19 @@ class ThriftClientSpec < Spec::ExampleGroup
 
     it "should increment the sequence id when sending messages" do
       pending "it seems sequence ids are completely ignored right now" do
-        @prot.should_receive(:write_message_begin).with('testMessage',  MessageTypes::CALL, 0).ordered
-        @prot.should_receive(:write_message_begin).with('testMessage2', MessageTypes::CALL, 1).ordered
-        @prot.should_receive(:write_message_begin).with('testMessage3', MessageTypes::CALL, 2).ordered
+        @prot.should_receive(:write_message_begin).with('testMessage',  Thrift::MessageTypes::CALL, 0).ordered
+        @prot.should_receive(:write_message_begin).with('testMessage2', Thrift::MessageTypes::CALL, 1).ordered
+        @prot.should_receive(:write_message_begin).with('testMessage3', Thrift::MessageTypes::CALL, 2).ordered
         @prot.stub!(:write_message_end)
         @prot.stub!(:trans).and_return mock("trans").as_null_object
         @client.send_message('testMessage', mock("args class").as_null_object)
         @client.send_message('testMessage2', mock("args class").as_null_object)
-        @client.send_message('testMessage3', mock("args class").as_null_object)        
+        @client.send_message('testMessage3', mock("args class").as_null_object)
       end
     end
 
     it "should receive a test message" do
-      @prot.should_receive(:read_message_begin).and_return [nil, MessageTypes::CALL, 0]
+      @prot.should_receive(:read_message_begin).and_return [nil, Thrift::MessageTypes::CALL, 0]
       @prot.should_receive(:read_message_end)
       mock_klass = mock("#<MockClass:mock>")
       mock_klass.should_receive(:read).with(@prot)
@@ -75,9 +74,9 @@ class ThriftClientSpec < Spec::ExampleGroup
     end
 
     it "should handle received exceptions" do
-      @prot.should_receive(:read_message_begin).and_return [nil, MessageTypes::EXCEPTION, 0]
+      @prot.should_receive(:read_message_begin).and_return [nil, Thrift::MessageTypes::EXCEPTION, 0]
       @prot.should_receive(:read_message_end)
-      ApplicationException.should_receive(:new).and_return do
+      Thrift::ApplicationException.should_receive(:new).and_return do
         StandardError.new.tee do |mock_exc|
           mock_exc.should_receive(:read).with(@prot)
         end

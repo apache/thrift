@@ -17,15 +17,14 @@
 # under the License.
 #
 
-require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require 'spec_helper'
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
-class ThriftServerSocketSpec < Spec::ExampleGroup
-  include Thrift
+describe 'Thrift::ServerSocket' do
 
-  describe ServerSocket do
+  describe Thrift::ServerSocket do
     before(:each) do
-      @socket = ServerSocket.new(1234)
+      @socket = Thrift::ServerSocket.new(1234)
     end
 
     it "should create a handle when calling listen" do
@@ -34,7 +33,7 @@ class ThriftServerSocketSpec < Spec::ExampleGroup
     end
 
     it "should accept an optional host argument" do
-      @socket = ServerSocket.new('localhost', 1234)
+      @socket = Thrift::ServerSocket.new('localhost', 1234)
       TCPServer.should_receive(:new).with('localhost', 1234)
       @socket.listen
     end
@@ -46,7 +45,7 @@ class ThriftServerSocketSpec < Spec::ExampleGroup
       sock = mock("sock")
       handle.should_receive(:accept).and_return(sock)
       trans = mock("Socket")
-     Socket.should_receive(:new).and_return(trans)
+      Thrift::Socket.should_receive(:new).and_return(trans)
       trans.should_receive(:handle=).with(sock)
       @socket.accept.should == trans
     end

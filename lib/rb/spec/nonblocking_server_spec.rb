@@ -17,11 +17,9 @@
 # under the License.
 #
 
-require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require 'spec_helper'
 
-class ThriftNonblockingServerSpec < Spec::ExampleGroup
-  include Thrift
-  include SpecNamespace
+describe 'NonblockingServer' do
 
   class Handler
     def initialize
@@ -55,7 +53,7 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
     end
   end
 
-  class SpecTransport < BaseTransport
+  class SpecTransport < Thrift::BaseTransport
     def initialize(transport, queue)
       @transport = transport
       @queue = queue
@@ -89,7 +87,7 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
     end
   end
 
-  class SpecServerSocket < ServerSocket
+  class SpecServerSocket < Thrift::ServerSocket
     def initialize(host, port, queue)
       super(host, port)
       @queue = queue
@@ -105,13 +103,13 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
     before(:each) do
       @port = 43251
       handler = Handler.new
-      processor = NonblockingService::Processor.new(handler)
+      processor = SpecNamespace::NonblockingService::Processor.new(handler)
       queue = Queue.new
       @transport = SpecServerSocket.new('localhost', @port, queue)
-      transport_factory = FramedTransportFactory.new
+      transport_factory = Thrift::FramedTransportFactory.new
       logger = Logger.new(STDERR)
       logger.level = Logger::WARN
-      @server = NonblockingServer.new(processor, @transport, transport_factory, nil, 5, logger)
+      @server = Thrift::NonblockingServer.new(processor, @transport, transport_factory, nil, 5, logger)
       handler.server = @server
       @server_thread = Thread.new(Thread.current) do |master_thread|
         begin
@@ -136,9 +134,9 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
     end
 
     def setup_client(queue = nil)
-      transport = SpecTransport.new(FramedTransport.new(Socket.new('localhost', @port)), queue)
-      protocol = BinaryProtocol.new(transport)
-      client = NonblockingService::Client.new(protocol)
+      transport = SpecTransport.new(Thrift::FramedTransport.new(Thrift::Socket.new('localhost', @port)), queue)
+      protocol = Thrift::BinaryProtocol.new(transport)
+      client = SpecNamespace::NonblockingService::Client.new(protocol)
       transport.open
       @clients << [client, transport]
       client
@@ -178,8 +176,8 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
 
     it "should handle basic message passing" do
       client = setup_client
-      client.greeting(true).should == Hello.new
-      client.greeting(false).should == Hello.new(:greeting => 'Aloha!')
+      client.greeting(true).should == SpecNamespace::Hello.new
+      client.greeting(false).should == SpecNamespace::Hello.new(:greeting => 'Aloha!')
       @server.shutdown
     end
 
@@ -214,15 +212,15 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
       queues[4] << :hello
       queues[5] << :hello
       queues[6] << :hello
-      3.times { result.pop.should == Hello.new }
-      client.greeting(true).should == Hello.new
+      3.times { result.pop.should == SpecNamespace::Hello.new }
+      client.greeting(true).should == SpecNamespace::Hello.new
       queues[5] << [:unblock, 4]
       4.times { result.pop.should be_true }
       queues[2] << :hello
-      result.pop.should == Hello.new
-      client.greeting(false).should == Hello.new(:greeting => 'Aloha!')
+      result.pop.should == SpecNamespace::Hello.new
+      client.greeting(false).should == SpecNamespace::Hello.new(:greeting => 'Aloha!')
       7.times { queues.shift << :exit }
-      client.greeting(true).should == Hello.new
+      client.greeting(true).should == SpecNamespace::Hello.new
       @server.shutdown
     end
 
@@ -257,7 +255,7 @@ class ThriftNonblockingServerSpec < Spec::ExampleGroup
 
     it "should allow shutting down in response to a message" do
       client = setup_client
-      client.greeting(true).should == Hello.new
+      client.greeting(true).should == SpecNamespace::Hello.new
       client.shutdown
       @server_thread.join(2).should_not be_nil
     end

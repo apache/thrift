@@ -17,17 +17,22 @@
 # under the License.
 #
 
-require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require 'spec_helper'
 require File.expand_path("#{File.dirname(__FILE__)}/binary_protocol_spec_shared")
 
-class ThriftBinaryProtocolSpec < Spec::ExampleGroup
-  include Thrift
+describe 'BinaryProtocol' do
 
-  describe BinaryProtocol do
-    it_should_behave_like 'a binary protocol'
+  it_should_behave_like 'a binary protocol'
 
-    def protocol_class
-      BinaryProtocol
+  def protocol_class
+    Thrift::BinaryProtocol
+  end
+
+  describe Thrift::BinaryProtocol do
+
+    before(:each) do
+      @trans = Thrift::MemoryBufferTransport.new
+      @prot = protocol_class.new(@trans)
     end
 
     it "should read a message header" do
@@ -47,15 +52,15 @@ class ThriftBinaryProtocolSpec < Spec::ExampleGroup
     it "should raise an exception if the message header does not exist and strict_read is enabled" do
       @prot.should_receive(:read_i32).and_return(42)
       @prot.should_receive(:strict_read).and_return(true)
-      lambda { @prot.read_message_begin }.should raise_error(Thrift::ProtocolException, 'No version identifier, old protocol client?') do |e|        
+      lambda { @prot.read_message_begin }.should raise_error(Thrift::ProtocolException, 'No version identifier, old protocol client?') do |e|
         e.type == Thrift::ProtocolException::BAD_VERSION
       end
     end
   end
 
-  describe BinaryProtocolFactory do
+  describe Thrift::BinaryProtocolFactory do
     it "should create a BinaryProtocol" do
-      BinaryProtocolFactory.new.get_protocol(mock("MockTransport")).should be_instance_of(BinaryProtocol)
+      Thrift::BinaryProtocolFactory.new.get_protocol(mock("MockTransport")).should be_instance_of(Thrift::BinaryProtocol)
     end
   end
 end

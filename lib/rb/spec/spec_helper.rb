@@ -18,7 +18,7 @@
 #
 
 require 'rubygems'
-require 'spec'
+require 'rspec'
 
 $:.unshift File.join(File.dirname(__FILE__), *%w[.. ext])
 
@@ -26,7 +26,7 @@ $:.unshift File.join(File.dirname(__FILE__), *%w[.. ext])
 # will get screwed up
 # $" << 'fastthread.bundle'
 
-require File.dirname(__FILE__) + '/../lib/thrift'
+require 'thrift'
 
 class Object
   # tee is a useful method, so let's let our tests have it
@@ -36,15 +36,15 @@ class Object
   end
 end
 
-Spec::Runner.configure do |configuration|
+RSpec.configure do |configuration|
   configuration.before(:each) do
     Thrift.type_checking = true
   end
 end
 
 $:.unshift File.join(File.dirname(__FILE__), *%w[.. test debug_proto gen-rb])
-require "srv"
-require "debug_proto_test_constants"
+require 'srv'
+require 'debug_proto_test_constants'
 
 $:.unshift File.join(File.dirname(__FILE__), *%w[gen-rb])
 require 'thrift_spec_types'

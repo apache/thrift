@@ -17,27 +17,24 @@
 # under the License.
 #
 
-require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require 'spec_helper'
 require 'thrift/server/mongrel_http_server'
 
-class ThriftHTTPServerSpec < Spec::ExampleGroup
-  include Thrift
+describe 'HTTPServer' do
 
-  Handler = MongrelHTTPServer::Handler
-
-  describe MongrelHTTPServer do
+  describe Thrift::MongrelHTTPServer do
     it "should have appropriate defaults" do
       mock_factory = mock("BinaryProtocolFactory")
       mock_proc = mock("Processor")
-      BinaryProtocolFactory.should_receive(:new).and_return(mock_factory)
+      Thrift::BinaryProtocolFactory.should_receive(:new).and_return(mock_factory)
       Mongrel::HttpServer.should_receive(:new).with("0.0.0.0", 80).and_return do
         mock("Mongrel::HttpServer").tee do |mock|
           handler = mock("Handler")
-          Handler.should_receive(:new).with(mock_proc, mock_factory).and_return(handler)
+          Thrift::MongrelHTTPServer::Handler.should_receive(:new).with(mock_proc, mock_factory).and_return(handler)
           mock.should_receive(:register).with("/", handler)
         end
       end
-      MongrelHTTPServer.new(mock_proc)
+      Thrift::MongrelHTTPServer.new(mock_proc)
     end
 
     it "should understand :ip, :port, :path, and :protocol_factory" do
@@ -46,19 +43,19 @@ class ThriftHTTPServerSpec < Spec::ExampleGroup
       Mongrel::HttpServer.should_receive(:new).with("1.2.3.4", 1234).and_return do
         mock("Mongrel::HttpServer").tee do |mock|
           handler = mock("Handler")
-          Handler.should_receive(:new).with(mock_proc, mock_factory).and_return(handler)
+          Thrift::MongrelHTTPServer::Handler.should_receive(:new).with(mock_proc, mock_factory).and_return(handler)
           mock.should_receive(:register).with("/foo", handler)
         end
       end
-      MongrelHTTPServer.new(mock_proc, :ip => "1.2.3.4", :port => 1234, :path => "foo",
+      Thrift::MongrelHTTPServer.new(mock_proc, :ip => "1.2.3.4", :port => 1234, :path => "foo",
                                              :protocol_factory => mock_factory)
     end
 
     it "should serve using Mongrel::HttpServer" do
-      BinaryProtocolFactory.stub!(:new)
+      Thrift::BinaryProtocolFactory.stub!(:new)
       Mongrel::HttpServer.should_receive(:new).and_return do
         mock("Mongrel::HttpServer").tee do |mock|
-          Handler.stub!(:new)
+          Thrift::MongrelHTTPServer::Handler.stub!(:new)
           mock.stub!(:register)
           mock.should_receive(:run).and_return do
             mock("Mongrel::HttpServer.run").tee do |runner|
@@ -67,15 +64,15 @@ class ThriftHTTPServerSpec < Spec::ExampleGroup
           end
         end
       end
-      MongrelHTTPServer.new(nil).serve
+      Thrift::MongrelHTTPServer.new(nil).serve
     end
   end
 
-  describe MongrelHTTPServer::Handler do
+  describe Thrift::MongrelHTTPServer::Handler do
     before(:each) do
       @processor = mock("Processor")
       @factory = mock("ProtocolFactory")
-      @handler = Handler.new(@processor, @factory)
+      @handler = described_class.new(@processor, @factory)
     end
 
     it "should return 404 for non-POST requests" do
@@ -91,7 +88,7 @@ class ThriftHTTPServerSpec < Spec::ExampleGroup
       response = mock("response")
       head = mock("head")
       head.should_receive(:[]=).with("Content-Type", "application/x-thrift")
-      IOStreamTransport.stub!(:new)
+      Thrift::IOStreamTransport.stub!(:new)
       @factory.stub!(:get_protocol)
       @processor.stub!(:process)
       response.should_receive(:start).with(200).and_yield(head, nil)
@@ -107,7 +104,7 @@ class ThriftHTTPServerSpec < Spec::ExampleGroup
       out = mock("out")
       protocol = mock("protocol")
       transport = mock("transport")
-      IOStreamTransport.should_receive(:new).with(body, out).and_return(transport)
+      Thrift::IOStreamTransport.should_receive(:new).with(body, out).and_return(transport)
       @factory.should_receive(:get_protocol).with(transport).and_return(protocol)
       @processor.should_receive(:process).with(protocol, protocol)
       response.should_receive(:start).with(200).and_yield(head, out)
