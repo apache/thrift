@@ -1,3 +1,4 @@
+# encoding: UTF-8
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -28,11 +29,13 @@ $:.unshift File.join(File.dirname(__FILE__), *%w[.. ext])
 
 require 'thrift'
 
-class Object
-  # tee is a useful method, so let's let our tests have it
-  def tee(&block)
-    block.call(self)
-    self
+unless Object.method_defined? :tap
+  # if Object#tap isn't defined, then add it; this should only happen in Ruby < 1.8.7
+  class Object
+    def tap(&block)
+      block.call(self)
+      self
+    end
   end
 end
 

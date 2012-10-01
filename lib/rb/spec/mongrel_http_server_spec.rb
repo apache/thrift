@@ -28,7 +28,7 @@ describe 'HTTPServer' do
       mock_proc = mock("Processor")
       Thrift::BinaryProtocolFactory.should_receive(:new).and_return(mock_factory)
       Mongrel::HttpServer.should_receive(:new).with("0.0.0.0", 80).and_return do
-        mock("Mongrel::HttpServer").tee do |mock|
+        mock("Mongrel::HttpServer").tap do |mock|
           handler = mock("Handler")
           Thrift::MongrelHTTPServer::Handler.should_receive(:new).with(mock_proc, mock_factory).and_return(handler)
           mock.should_receive(:register).with("/", handler)
@@ -41,7 +41,7 @@ describe 'HTTPServer' do
       mock_proc = mock("Processor")
       mock_factory = mock("ProtocolFactory")
       Mongrel::HttpServer.should_receive(:new).with("1.2.3.4", 1234).and_return do
-        mock("Mongrel::HttpServer").tee do |mock|
+        mock("Mongrel::HttpServer").tap do |mock|
           handler = mock("Handler")
           Thrift::MongrelHTTPServer::Handler.should_receive(:new).with(mock_proc, mock_factory).and_return(handler)
           mock.should_receive(:register).with("/foo", handler)
@@ -54,11 +54,11 @@ describe 'HTTPServer' do
     it "should serve using Mongrel::HttpServer" do
       Thrift::BinaryProtocolFactory.stub!(:new)
       Mongrel::HttpServer.should_receive(:new).and_return do
-        mock("Mongrel::HttpServer").tee do |mock|
+        mock("Mongrel::HttpServer").tap do |mock|
           Thrift::MongrelHTTPServer::Handler.stub!(:new)
           mock.stub!(:register)
           mock.should_receive(:run).and_return do
-            mock("Mongrel::HttpServer.run").tee do |runner|
+            mock("Mongrel::HttpServer.run").tap do |runner|
               runner.should_receive(:join)
             end
           end

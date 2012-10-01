@@ -33,7 +33,7 @@ describe 'Processor' do
 
     def mock_trans(obj)
       obj.should_receive(:trans).ordered.and_return do
-        mock("trans").tee do |trans|
+        mock("trans").tap do |trans|
           trans.should_receive(:flush).ordered
         end
       end
@@ -60,7 +60,7 @@ describe 'Processor' do
 
     it "should pass args off to the args class" do
       args_class = mock("MockArgsClass")
-      args = mock("#<MockArgsClass:mock>").tee do |args|
+      args = mock("#<MockArgsClass:mock>").tap do |args|
         args.should_receive(:read).with(@prot).ordered
       end
       args_class.should_receive(:new).and_return args

@@ -44,7 +44,7 @@ describe 'Client' do
       mock_args.should_receive(:write).with(@prot)
       @prot.should_receive(:write_message_end)
       @prot.should_receive(:trans) do
-        mock('trans').tee do |trans|
+        mock('trans').tap do |trans|
           trans.should_receive(:flush)
         end
       end
@@ -77,7 +77,7 @@ describe 'Client' do
       @prot.should_receive(:read_message_begin).and_return [nil, Thrift::MessageTypes::EXCEPTION, 0]
       @prot.should_receive(:read_message_end)
       Thrift::ApplicationException.should_receive(:new).and_return do
-        StandardError.new.tee do |mock_exc|
+        StandardError.new.tap do |mock_exc|
           mock_exc.should_receive(:read).with(@prot)
         end
       end
