@@ -114,8 +114,8 @@ class Monitor::Impl : public boost::condition_variable_any {
     struct timespec currenttime;
     Util::toTimespec(currenttime, Util::currentTime());
 
-	long tv_sec = abstime->tv_sec - currenttime.tv_sec;
-	long tv_nsec = abstime->tv_nsec - currenttime.tv_nsec;
+	long tv_sec = static_cast<long>(abstime->tv_sec - currenttime.tv_sec);
+	long tv_nsec = static_cast<long>(abstime->tv_nsec - currenttime.tv_nsec);
 	if(tv_sec < 0)
 		tv_sec = 0;
 	if(tv_nsec < 0)

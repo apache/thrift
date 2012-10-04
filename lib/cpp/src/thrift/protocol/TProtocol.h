@@ -129,10 +129,13 @@ using apache::thrift::transport::TTransport;
 #  include <byteswap.h>
 #  define ntohll(n) bswap_64(n)
 #  define htonll(n) bswap_64(n)
-# else /* GNUC & GLIBC */
+# elif defined(_MSC_VER) /* Microsoft Visual C++ */
+#  define ntohll(n) ( _byteswap_uint64((uint64_t)n) )
+#  define htonll(n) ( _byteswap_uint64((uint64_t)n) )
+# else /* Not GNUC/GLIBC or MSVC */
 #  define ntohll(n) ( (((uint64_t)ntohl(n)) << 32) + ntohl(n >> 32) )
 #  define htonll(n) ( (((uint64_t)htonl(n)) << 32) + htonl(n >> 32) )
-# endif /* GNUC & GLIBC */
+# endif /* GNUC/GLIBC or MSVC or something else */
 #else /* __THRIFT_BYTE_ORDER */
 # error "Can't define htonll or ntohll!"
 #endif

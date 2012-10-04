@@ -1,11 +1,11 @@
 /* socketpair.c
  * Copyright 2007 by Nathan C. Myers <ncm@cantrip.org>; some rights reserved.
- * This code is Free Software.  It may be copied freely, in original or 
+ * This code is Free Software.  It may be copied freely, in original or
  * modified form, subject only to the restrictions that (1) the author is
  * relieved from all responsibilities for any use for any purpose, and (2)
  * this copyright notice must be retained, unchanged, in its entirety.  If
  * for any reason the author might be held responsible for any consequences
- * of copying or use, license is withheld.  
+ * of copying or use, license is withheld.
  */
 
 /*
@@ -33,10 +33,9 @@
 #include <string.h>
 
 // Win32
-#include <Winsock2.h>
 #include <WS2tcpip.h>
 
-int socketpair(int d, int type, int protocol, int sv[2])
+int socketpair(int d, int type, int protocol, SOCKET sv[2])
 {
     union {
        struct sockaddr_in inaddr;
@@ -54,17 +53,17 @@ int socketpair(int d, int type, int protocol, int sv[2])
     }
 
     listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (listener == INVALID_SOCKET) 
+    if (listener == INVALID_SOCKET)
         return SOCKET_ERROR;
 
     memset(&a, 0, sizeof(a));
     a.inaddr.sin_family = AF_INET;
     a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    a.inaddr.sin_port = 0; 
+    a.inaddr.sin_port = 0;
 
     sv[0] = sv[1] = INVALID_SOCKET;
     do {
-        if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, 
+        if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
                (char*) &reuse, (socklen_t) sizeof(reuse)) == -1)
             break;
         if  (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)

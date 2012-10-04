@@ -126,13 +126,12 @@ inline int poll_win32(LPWSAPOLLFD fdArray, ULONG nfds, INT timeout)
 
   int sktready = select(1, read_fds_ptr, write_fds_ptr, NULL, time_out_ptr);
   if(sktready > 0) {
-    for(ULONG i=0; i<read_fds.fd_count; i++) {
+    for(ULONG i=0; i<nfds; i++) {
+      fdArray[i].revents = 0;
       if(FD_ISSET(fdArray[i].fd, &read_fds))
-        fdArray[i].revents = POLLIN;
-    }
-    for(ULONG i=0; i<write_fds.fd_count; i++) {
+        fdArray[i].revents |= POLLIN;
       if(FD_ISSET(fdArray[i].fd, &write_fds))
-        fdArray[i].revents = POLLOUT;
+        fdArray[i].revents |= POLLOUT;
     }
   }
   return sktready;

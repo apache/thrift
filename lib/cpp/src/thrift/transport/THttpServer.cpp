@@ -39,7 +39,7 @@ void THttpServer::parseHeader(char* header) {
   if (colon == NULL) {
     return;
   }
-  uint32_t sz = colon - header;
+  size_t sz = colon - header;
   char* value = colon+1;
 
   if (strncmp(header, "Transfer-Encoding", sz) == 0) {
@@ -96,7 +96,8 @@ void THttpServer::flush() {
   string header = h.str();
 
   // Write the header, then the data, then flush
-  transport_->write((const uint8_t*)header.c_str(), header.size());
+  // cast should be fine, because none of "header" is under attacker control
+  transport_->write((const uint8_t*)header.c_str(), static_cast<uint32_t>(header.size()));
   transport_->write(buf, len);
   transport_->flush();
 

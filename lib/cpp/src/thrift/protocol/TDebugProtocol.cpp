@@ -32,6 +32,7 @@ using std::string;
 static string byte_to_hex(const uint8_t byte) {
   char buf[3];
   int ret = std::sprintf(buf, "%02x", (int)byte);
+  ret = ret; //squelching "unused variable" warning
   assert(ret == 2);
   assert(buf[2] == '\0');
   return buf;
@@ -74,14 +75,23 @@ void TDebugProtocol::indentDown() {
 }
 
 uint32_t TDebugProtocol::writePlain(const string& str) {
-  trans_->write((uint8_t*)str.data(), str.length());
-  return str.length();
+  if(str.length() > (std::numeric_limits<uint32_t>::max)())
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  trans_->write((uint8_t*)str.data(), static_cast<uint32_t>(str.length()));
+  return static_cast<uint32_t>(str.length());
 }
 
 uint32_t TDebugProtocol::writeIndented(const string& str) {
-  trans_->write((uint8_t*)indent_str_.data(), indent_str_.length());
-  trans_->write((uint8_t*)str.data(), str.length());
-  return indent_str_.length() + str.length();
+  if(str.length() > (std::numeric_limits<uint32_t>::max)())
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  if(indent_str_.length() > (std::numeric_limits<uint32_t>::max)())
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  uint64_t total_len = indent_str_.length() + str.length();
+  if(total_len > (std::numeric_limits<uint32_t>::max)())
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  trans_->write((uint8_t*)indent_str_.data(), static_cast<uint32_t>(indent_str_.length()));
+  trans_->write((uint8_t*)str.data(), static_cast<uint32_t>(str.length()));
+  return static_cast<uint32_t>(indent_str_.length() + str.length());
 }
 
 uint32_t TDebugProtocol::startItem() {

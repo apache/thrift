@@ -49,10 +49,10 @@ class TSocketPoolServer {
   int port_;
 
   // Socket for the server
-  int socket_;
+  SOCKET socket_;
 
   // Last time connecting to this server failed
-  int lastFailTime_;
+  time_t lastFailTime_;
 
   // Number of consecutive times connecting to this server failed
   int consecutiveFailures_;
@@ -178,7 +178,7 @@ class TSocketPool : public TSocket {
    /** Retry interval in seconds, how long to not try a host if it has been
     * marked as down.
     */
-   int retryInterval_;
+   time_t retryInterval_;
 
    /** Max consecutive failures before marking a host down. */
    int maxConsecutiveFailures_;

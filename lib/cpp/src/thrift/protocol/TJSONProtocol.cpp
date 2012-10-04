@@ -380,7 +380,7 @@ void TJSONProtocol::popContext() {
 // Write the character ch as a JSON escape sequence ("\u00xx")
 uint32_t TJSONProtocol::writeJSONEscapeChar(uint8_t ch) {
   trans_->write((const uint8_t *)kJSONEscapePrefix.c_str(),
-                kJSONEscapePrefix.length());
+                static_cast<uint32_t>(kJSONEscapePrefix.length()));
   uint8_t outCh = hexChar(ch >> 4);
   trans_->write(&outCh, 1);
   outCh = hexChar(ch);
@@ -442,7 +442,9 @@ uint32_t TJSONProtocol::writeJSONBase64(const std::string &str) {
   trans_->write(&kJSONStringDelimiter, 1);
   uint8_t b[4];
   const uint8_t *bytes = (const uint8_t *)str.c_str();
-  uint32_t len = str.length();
+  if(str.length() > (std::numeric_limits<uint32_t>::max)())
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  uint32_t len = static_cast<uint32_t>(str.length());
   while (len >= 3) {
     // Encode 3 bytes at a time
     base64_encode(bytes, 3, b);
@@ -471,8 +473,10 @@ uint32_t TJSONProtocol::writeJSONInteger(NumberType num) {
     trans_->write(&kJSONStringDelimiter, 1);
     result += 1;
   }
-  trans_->write((const uint8_t *)val.c_str(), val.length());
-  result += val.length();
+  if(val.length() > (std::numeric_limits<uint32_t>::max)())
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  trans_->write((const uint8_t *)val.c_str(), static_cast<uint32_t>(val.length()));
+  result += static_cast<uint32_t>(val.length());
   if (escapeNum) {
     trans_->write(&kJSONStringDelimiter, 1);
     result += 1;
@@ -512,8 +516,10 @@ uint32_t TJSONProtocol::writeJSONDouble(double num) {
     trans_->write(&kJSONStringDelimiter, 1);
     result += 1;
   }
-  trans_->write((const uint8_t *)val.c_str(), val.length());
-  result += val.length();
+  if(val.length() > (std::numeric_limits<uint32_t>::max)())
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  trans_->write((const uint8_t *)val.c_str(), static_cast<uint32_t>(val.length()));
+  result += static_cast<uint32_t>(val.length());
   if (escapeNum) {
     trans_->write(&kJSONStringDelimiter, 1);
     result += 1;
@@ -721,7 +727,9 @@ uint32_t TJSONProtocol::readJSONBase64(std::string &str) {
   std::string tmp;
   uint32_t result = readJSONString(tmp);
   uint8_t *b = (uint8_t *)tmp.c_str();
-  uint32_t len = tmp.length();
+  if(tmp.length() > (std::numeric_limits<uint32_t>::max)())
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  uint32_t len = static_cast<uint32_t>(tmp.length());
   str.clear();
   while (len >= 4) {
     base64_decode(b, 4);
@@ -869,7 +877,9 @@ uint32_t TJSONProtocol::readMessageBegin(std::string& name,
   result += readJSONInteger(tmpVal);
   messageType = (TMessageType)tmpVal;
   result += readJSONInteger(tmpVal);
-  seqid = tmpVal;
+  if(tmpVal > static_cast<uint64_t>((std::numeric_limits<int32_t>::max)()))
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  seqid = static_cast<int32_t>(tmpVal);
   return result;
 }
 
@@ -900,7 +910,9 @@ uint32_t TJSONProtocol::readFieldBegin(std::string& name,
     uint64_t tmpVal = 0;
     std::string tmpStr;
     result += readJSONInteger(tmpVal);
-    fieldId = tmpVal;
+    if(tmpVal > static_cast<uint32_t>((std::numeric_limits<int16_t>::max)()))
+      throw TProtocolException(TProtocolException::SIZE_LIMIT);
+    fieldId = static_cast<int16_t>(tmpVal);
     result += readJSONObjectStart();
     result += readJSONString(tmpStr);
     fieldType = getTypeIDForTypeName(tmpStr);
@@ -923,7 +935,9 @@ uint32_t TJSONProtocol::readMapBegin(TType& keyType,
   result += readJSONString(tmpStr);
   valType = getTypeIDForTypeName(tmpStr);
   result += readJSONInteger(tmpVal);
-  size = tmpVal;
+  if(tmpVal > (std::numeric_limits<uint32_t>::max)())
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  size = static_cast<uint32_t>(tmpVal);
   result += readJSONObjectStart();
   return result;
 }
@@ -940,7 +954,9 @@ uint32_t TJSONProtocol::readListBegin(TType& elemType,
   result += readJSONString(tmpStr);
   elemType = getTypeIDForTypeName(tmpStr);
   result += readJSONInteger(tmpVal);
-  size = tmpVal;
+  if(tmpVal > (std::numeric_limits<uint32_t>::max)())
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  size = static_cast<uint32_t>(tmpVal);
   return result;
 }
 
@@ -956,7 +972,9 @@ uint32_t TJSONProtocol::readSetBegin(TType& elemType,
   result += readJSONString(tmpStr);
   elemType = getTypeIDForTypeName(tmpStr);
   result += readJSONInteger(tmpVal);
-  size = tmpVal;
+  if(tmpVal > (std::numeric_limits<uint32_t>::max)())
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  size = static_cast<uint32_t>(tmpVal);
   return result;
 }
 

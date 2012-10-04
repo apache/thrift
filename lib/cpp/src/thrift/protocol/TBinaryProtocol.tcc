@@ -178,7 +178,9 @@ uint32_t TBinaryProtocolT<Transport_>::writeDouble(const double dub) {
 template <class Transport_>
 template<typename StrType>
 uint32_t TBinaryProtocolT<Transport_>::writeString(const StrType& str) {
-  uint32_t size = str.size();
+  if(str.size() > static_cast<size_t>((std::numeric_limits<int32_t>::max)()))
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  uint32_t size = static_cast<uint32_t>(str.size());
   uint32_t result = writeI32((int32_t)size);
   if (size > 0) {
     this->trans_->write((uint8_t*)str.data(), size);

@@ -201,7 +201,7 @@ class TFileTransport : public TFileReaderTransport,
   uint32_t getCurChunk();
 
   // for changing the output file
-  void resetOutputFile(int fd, std::string filename, int64_t offset);
+  void resetOutputFile(int fd, std::string filename, off_t offset);
 
   // Setter/Getter functions for user-controllable options
   void setReadBuffSize(uint32_t readBuffSize) {

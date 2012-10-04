@@ -28,14 +28,22 @@
 #  error This is a MSVC header only.
 #endif
 
-#define NOMINMAX
-#define BOOST_ALL_NO_LIB 1
-#define BOOST_THREAD_NO_LIB 1
+#ifndef NOMINMAX
+#  define NOMINMAX
+#endif
+#ifndef USE_BOOST_THREAD
+#  define BOOST_ALL_NO_LIB 1
+#  define BOOST_THREAD_NO_LIB 1
+#endif
 #define TARGET_WIN_XP
 
 #ifdef TARGET_WIN_XP
-#  define WINVER 0x0501
-#  define _WIN32_WINNT 0x0501
+#  ifndef WINVER
+#    define WINVER 0x0501
+#  endif
+#  ifndef _WIN32_WINNT
+#    define _WIN32_WINNT 0x0501
+#  endif
 #endif
 
 #ifndef _WIN32_WINNT

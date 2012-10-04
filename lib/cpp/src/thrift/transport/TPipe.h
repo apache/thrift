@@ -32,16 +32,19 @@ namespace apache { namespace thrift { namespace transport {
  * Windows Pipes implementation of the TTransport interface.
  *
  */
+#ifdef _WIN32
 class TPipe : public TVirtualTransport<TPipe> {
  public:
 
   // Constructs a new pipe object.
   TPipe();
   // Named pipe constructors -
-  TPipe(int Pipe);
-  TPipe(std::string pipename);
+  explicit TPipe(HANDLE Pipe); //HANDLE is a void*
+  //need a const char * overload so string literals don't go to the HANDLE overload
+  explicit TPipe(const char *pipename);
+  explicit TPipe(const std::string &pipename);
   // Anonymous pipe -
-  TPipe(int PipeRd, int PipeWrt);
+  TPipe(HANDLE PipeRd, HANDLE PipeWrt);
 
   // Destroys the pipe object, closing it if necessary.
   virtual ~TPipe();
@@ -67,26 +70,25 @@ class TPipe : public TVirtualTransport<TPipe> {
 
   //Accessors
   std::string getPipename();
-  void setPipename(std::string pipename);
-  int getPipeHandle(); //doubles as the read handle for anon pipe
-  void setPipeHandle(int pipehandle);
-  int getWrtPipeHandle();
-  void setWrtPipeHandle(int pipehandle);
+  void setPipename(const std::string &pipename);
+  HANDLE getPipeHandle(); //doubles as the read handle for anon pipe
+  void setPipeHandle(HANDLE pipehandle);
+  HANDLE getWrtPipeHandle();
+  void setWrtPipeHandle(HANDLE pipehandle);
   long getConnectTimeout();
   void setConnectTimeout(long seconds);
 
  private:
   std::string pipename_;
+
   //Named pipe handles are R/W, while anonymous pipes are one or the other (half duplex).
-  int Pipe_, PipeWrt_;
+  HANDLE Pipe_, PipeWrt_;
   long TimeoutSeconds_;
   bool isAnonymous;
-
-#ifndef _WIN32
-  //*NIX named pipe implementation uses domain socket
-  boost::shared_ptr<TSocket> dsocket;
-#endif
 };
+#else
+typedef TSocket TPipe;
+#endif
 
 }}} // apache::thrift::transport
 

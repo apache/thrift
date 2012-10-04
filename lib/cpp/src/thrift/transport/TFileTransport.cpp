@@ -114,7 +114,7 @@ TFileTransport::TFileTransport(string path, bool readOnly)
   openLogFile();
 }
 
-void TFileTransport::resetOutputFile(int fd, string filename, int64_t offset) {
+void TFileTransport::resetOutputFile(int fd, string filename, off_t offset) {
   filename_ = filename;
   offset_ = offset;
 
@@ -827,7 +827,7 @@ void TFileTransport::performRecovery() {
       char errorMsg[1024];
       sprintf(errorMsg, "TFileTransport: log file corrupted at offset: %lu",
               (offset_ + readState_.lastDispatchPtr_));
-              
+
       GlobalOutput(errorMsg);
       throw TTransportException(errorMsg);
     }
@@ -1079,7 +1079,7 @@ void TFileProcessor::process(uint32_t numEvents, bool tail) {
       if ( (numEvents > 0) && (numProcessed == numEvents)) {
         return;
       }
-    } catch (TEOFException& teof) {
+    } catch (TEOFException&) {
       if (!tail) {
         break;
       }
@@ -1110,7 +1110,7 @@ void TFileProcessor::processChunk() {
       if (curChunk != inputTransport_->getCurChunk()) {
         break;
       }
-    } catch (TEOFException& teof) {
+    } catch (TEOFException&) {
       break;
     } catch (TException &te) {
       cerr << te.what() << endl;

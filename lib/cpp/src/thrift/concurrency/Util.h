@@ -67,7 +67,7 @@ class Util {
   }
 
   static void toTimeval(struct timeval& result, int64_t value) {
-    result.tv_sec = value / MS_PER_S; // ms to s
+    result.tv_sec = (uint32_t)(value / MS_PER_S); // ms to s
     result.tv_usec = (value % MS_PER_S) * US_PER_MS; // ms to us
   }
 

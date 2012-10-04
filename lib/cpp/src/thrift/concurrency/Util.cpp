@@ -38,6 +38,7 @@ int64_t Util::currentTimeTicks(int64_t ticksPerSec) {
   struct timespec now;
   int ret = clock_gettime(CLOCK_REALTIME, &now);
   assert(ret == 0);
+  ret = ret; //squelching "unused variable" warning
   toTicks(result, now, ticksPerSec);
 #elif defined(HAVE_GETTIMEOFDAY)
   struct timeval now;

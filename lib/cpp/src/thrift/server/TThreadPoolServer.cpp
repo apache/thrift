@@ -72,7 +72,7 @@ public:
           break;
         }
       }
-    } catch (const TTransportException& ttx) {
+    } catch (const TTransportException&) {
       // This is reasonably expected, client didn't send a full request so just
       // ignore him
       // string errStr = string("TThreadPoolServer client died: ") + ttx.what();
