@@ -347,9 +347,16 @@ namespace Thrift.Protocol
 		public override long ReadI64()
 		{
 			ReadAll(i64in, 0, 8);
-			return (long)(((long)(i64in[0] & 0xff) << 56) | ((long)(i64in[1] & 0xff) << 48) | ((long)(i64in[2] & 0xff) << 40) | ((long)(i64in[3] & 0xff) << 32) |
-				((long)(i64in[4] & 0xff) << 24) | ((long)(i64in[5] & 0xff) << 16) | ((long)(i64in[6] & 0xff) << 8) | ((long)(i64in[7] & 0xff)));
-		}
+            return (long)(
+                (ulong)((ulong)(i64in[0] & 0xff) << 56) |
+                (ulong)((ulong)(i64in[1] & 0xff) << 48) |
+                (ulong)((ulong)(i64in[2] & 0xff) << 40) |
+                (ulong)((ulong)(i64in[3] & 0xff) << 32) |
+                (ulong)((ulong)(i64in[4] & 0xff) << 24) |
+                (ulong)((ulong)(i64in[5] & 0xff) << 16) |
+                (ulong)((ulong)(i64in[6] & 0xff) << 8) |
+                (ulong)((ulong)(i64in[7] & 0xff)));
+        }
 
 		public override double ReadDouble()
 		{
