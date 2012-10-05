@@ -24,15 +24,15 @@ program skiptest_version1;
 uses
   Classes, Windows, SysUtils,
   Skiptest.One,
-  Thrift in '..\..\..\lib\delphi\src\Thrift.pas',
-  Thrift.Transport in '..\..\..\lib\delphi\src\Thrift.Transport.pas',
-  Thrift.Protocol in '..\..\..\lib\delphi\src\Thrift.Protocol.pas',
-  Thrift.Protocol.JSON in '..\..\..\lib\delphi\src\Thrift.Protocol.JSON.pas',
-  Thrift.Collections in '..\..\..\lib\delphi\src\Thrift.Collections.pas',
-  Thrift.Server in '..\..\..\lib\delphi\src\Thrift.Server.pas',
-  Thrift.Console in '..\..\..\lib\delphi\src\Thrift.Console.pas',
-  Thrift.Utils in '..\..\..\lib\delphi\src\Thrift.Utils.pas',
-  Thrift.Stream in '..\..\..\lib\delphi\src\Thrift.Stream.pas';
+  Thrift in '..\..\src\Thrift.pas',
+  Thrift.Transport in '..\..\src\Thrift.Transport.pas',
+  Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
+  Thrift.Protocol.JSON in '..\..\src\Thrift.Protocol.JSON.pas',
+  Thrift.Collections in '..\..\src\Thrift.Collections.pas',
+  Thrift.Server in '..\..\src\Thrift.Server.pas',
+  Thrift.Console in '..\..\src\Thrift.Console.pas',
+  Thrift.Utils in '..\..\src\Thrift.Utils.pas',
+  Thrift.Stream in '..\..\src\Thrift.Stream.pas';
 
 const
   REQUEST_EXT  = '.request';
@@ -105,7 +105,6 @@ end;
 
 procedure ReadResponse( protfact : IProtocolFactory; fname : string);
 var stm    : TFileStream;
-    ping   : IPing;
     proto  : IProtocol;
     client : TSkipTestService.TClient;   // we need access to send/recv_pingpong()
     cliRef : IUnknown;                   // holds the refcount
