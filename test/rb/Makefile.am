@@ -24,5 +24,5 @@ stubs: ../ThriftTest.thrift ../SmallTest.thrift
 	$(THRIFT) --gen rb ../SmallTest.thrift
 
 check: stubs
-	$(RUBY) test_suite.rb
+	$(RUBY) -I. test_suite.rb
 
