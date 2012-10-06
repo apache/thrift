@@ -32,7 +32,7 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
-#ifdef __linux__
+#ifndef _WIN32
    typedef int SOCKET;
 #endif
 

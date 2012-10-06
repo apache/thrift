@@ -22,7 +22,7 @@
 
 #include "TServerTransport.h"
 #include <boost/shared_ptr.hpp>
-#ifdef __linux__
+#ifndef _WIN32
    typedef int SOCKET;
 #endif
 
