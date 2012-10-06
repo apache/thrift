@@ -19,14 +19,17 @@
 
 unit TestServer;
 
+{$WARN SYMBOL_PLATFORM OFF}
+
 interface
 
 uses
-  SysUtils,
+  Windows, SysUtils,
   Generics.Collections,
   Thrift.Console,
   Thrift.Server,
   Thrift.Transport,
+  Thrift.Transport.Pipes,
   Thrift.Protocol,
   Thrift.Protocol.JSON,
   Thrift.Collections,
@@ -75,6 +78,7 @@ type
         procedure SetServer( const AServer : IServer );
       end;
 
+      class procedure LaunchAnonPipeChild( const app : string; const transport : IPipeServer);
       class procedure Execute( const args: array of string);
   end;
 
@@ -397,17 +401,63 @@ begin
   Result := thing;
 end;
 
+
 { TTestServer }
+
+
+class procedure TTestServer.LaunchAnonPipeChild( const app : string; const transport : IPipeServer);
+//Launch child process and pass R/W anonymous pipe handles on cmd line.
+//This is a simple example and does not include elevation or other
+//advanced features.
+var pi : PROCESS_INFORMATION;
+		si : STARTUPINFO;
+		sArg, sHandles, sCmdLine : string;
+    i : Integer;
+begin
+  GetStartupInfo( si);  //set startupinfo for the spawned process
+
+  // preformat handles args
+  sHandles := Format( '%d %d',
+                    [ Integer(transport.ClientAnonRead),
+                      Integer(transport.ClientAnonWrite)]);
+
+  // pass all settings to client
+  sCmdLine := app;
+  for i := 1 to ParamCount do begin
+    sArg := ParamStr(i);
+
+    // add anonymous handles and quote strings where appropriate
+    if sArg = '-anon'
+    then sArg := sArg +' '+ sHandles
+    else begin
+      if Pos(' ',sArg) > 0
+      then sArg := '"'+sArg+'"';
+    end;;
+
+    sCmdLine := sCmdLine +' '+ sArg;
+  end;
+
+  // spawn the child process
+  Console.WriteLine('Starting client '+sCmdLine);
+  Win32Check( CreateProcess( nil, PChar(sCmdLine), nil,nil,TRUE,0,nil,nil,si,pi));
+
+  CloseHandle( pi.hThread);
+	CloseHandle( pi.hProcess);
+end;
+
 
 class procedure TTestServer.Execute( const args: array of string);
 var
   UseBufferedSockets : Boolean;
   UseFramed : Boolean;
   Port : Integer;
+  AnonPipe : Boolean;
+  sPipeName : string;
   testHandler : ITestHandler;
   testProcessor : IProcessor;
-  ServerSocket : IServerTransport;
+  ServerTrans : IServerTransport;
   ServerEngine : IServer;
+  pipeserver : IPipeServer;
   TransportFactory : ITransportFactory;
   ProtocolFactory : IProtocolFactory;
   i : Integer;
@@ -417,8 +467,10 @@ begin
   try
     UseBufferedSockets := False;
     UseFramed := False;
+    AnonPipe := FALSE;
     protType := prot_Binary;
     Port := 9090;
+    sPipeName := '';
 
     i := 0;
     while ( i < Length(args) ) do begin
@@ -428,20 +480,29 @@ begin
       if StrToIntDef( s, -1) > 0 then
       begin
         Port :=  StrToIntDef( s, Port);
-      end else
-      if ( s = 'raw' ) then
+      end
+      else if ( s = 'raw' ) then
       begin
         // as default
-      end else
-      if ( s = 'buffered' ) then
+      end
+      else if ( s = 'buffered' ) then
       begin
         UseBufferedSockets := True;
-      end else
-      if ( s = 'framed' ) then
+      end
+      else if ( s = 'framed' ) then
       begin
         UseFramed := True;
-      end else
-      if (s = '-prot') then  // -prot JSON|binary
+      end
+      else if (s = '-pipe') then
+      begin
+        sPipeName := args[i];  // -pipe <name>
+        Inc( i );
+      end
+      else if (s = '-anon') then
+      begin
+        AnonPipe := TRUE;
+      end
+      else if (s = '-prot') then  // -prot JSON|binary
       begin
         s := args[i];
         Inc( i );
@@ -458,6 +519,9 @@ begin
       end
     end;
 
+
+    Console.WriteLine('Server configuration: ');
+
     // create protocol factory, default to BinaryProtocol
     case protType of
       prot_Binary:  ProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
@@ -466,29 +530,53 @@ begin
       ASSERT( FALSE);  // unhandled case!
       ProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
     end;
+    ASSERT( ProtocolFactory <> nil);
+    Console.WriteLine('- '+KNOWN_PROTOCOLS[protType]+' protocol');
 
-    testHandler := TTestHandlerImpl.Create;
 
+    if sPipeName <> '' then begin
+      Console.WriteLine('- named pipe ('+sPipeName+')');
+      pipeserver  := TServerPipeImpl.Create( sPipeName);
+      servertrans := pipeserver;
+    end
+    else if AnonPipe then begin
+      Console.WriteLine('- anonymous pipes');
+      pipeserver  := TServerPipeImpl.Create;
+      servertrans := pipeserver;
+    end
+    else begin
+      Console.WriteLine('- sockets (port '+IntToStr(port)+')');
+      if UseBufferedSockets then Console.WriteLine('- buffered sockets');
+      servertrans := TServerSocketImpl.Create( Port, 0, UseBufferedSockets);
+    end;
+    ASSERT( servertrans <> nil);
+
+    if UseFramed then begin
+      Console.WriteLine('- framed transport');
+      TransportFactory := TFramedTransportImpl.TFactory.Create
+    end
+    else begin
+      TransportFactory := TTransportFactoryImpl.Create;
+    end;
+    ASSERT( TransportFactory <> nil);
+
+    testHandler   := TTestHandlerImpl.Create;
     testProcessor := TThriftTest.TProcessorImpl.Create( testHandler );
-    ServerSocket := TServerSocketImpl.Create( Port, 0, UseBufferedSockets );
-
-    if UseFramed
-    then TransportFactory := TFramedTransportImpl.TFactory.Create
-    else TransportFactory := TTransportFactoryImpl.Create;
 
     ServerEngine := TSimpleServer.Create( testProcessor,
-                                          ServerSocket,
+                                          ServerTrans,
                                           TransportFactory,
                                           ProtocolFactory);
 
     testHandler.SetServer( ServerEngine);
 
-    Console.WriteLine('Starting the server on port ' + IntToStr( Port) +
-      IfValue(UseBufferedSockets, ' with buffered socket', '') +
-      IfValue(useFramed, ' with framed transport', '') +
-      ' using '+KNOWN_PROTOCOLS[protType]+' protocol' +
-      '...');
+    // start the client now when we have the anon handles, but before the server starts
+    if AnonPipe
+    then LaunchAnonPipeChild( ExtractFilePath(ParamStr(0))+'client.exe', pipeserver);
 
+
+    Console.WriteLine('');
+    Console.WriteLine('Starting the server ...');
     serverEngine.Serve;
     testHandler.SetServer( nil);
 

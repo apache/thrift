@@ -53,7 +53,7 @@ type
   protected
     function GetIsOpen: Boolean; virtual; abstract;
     property IsOpen: Boolean read GetIsOpen;
-    function Peek: Boolean;
+    function Peek: Boolean; virtual;
     procedure Open(); virtual; abstract;
     procedure Close(); virtual; abstract;
     function Read(var buf: TBytes; off: Integer; len: Integer): Integer; virtual; abstract;
