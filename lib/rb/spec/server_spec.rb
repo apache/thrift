@@ -92,41 +92,41 @@ describe 'Server' do
   describe Thrift::ThreadPoolServer do
     before(:each) do
       @processor = mock("Processor")
-      @serverTrans = mock("ServerTransport")
+      @server_trans = mock("ServerTransport")
       @trans = mock("BaseTransport")
       @prot = mock("BaseProtocol")
       @client = mock("Client")
-      @threadQ = mock("SizedQueue")
-      SizedQueue.should_receive(:new).with(20).and_return(@threadQ)
-      @excQ = mock("Queue")
-      Queue.should_receive(:new).and_return(@excQ)
-      @server = described_class.new(@processor, @serverTrans, @trans, @prot)
-    end
-
-    it "should set up the queues" do
-      @server.instance_variable_get(:'@thread_q').should be(@threadQ)
-      @server.instance_variable_get(:'@exception_q').should be(@excQ)
+      @server = described_class.new(@processor, @server_trans, @trans, @prot)
     end
 
     it "should serve inside a thread" do
-      @server.should_receive(:serve)
-      @excQ.should_receive(:pop).and_throw(:popped)
-      lambda { @server.rescuable_serve }.should throw_symbol(:popped)
+      exception_q = @server.instance_variable_get(:@exception_q)
+      described_class.any_instance.should_receive(:serve) do 
+        exception_q.push(StandardError.new('ERROR'))
+      end
+      expect { @server.rescuable_serve }.to(raise_error('ERROR'))
     end
 
     it "should avoid running the server twice when retrying rescuable_serve" do
-      @server.should_receive(:serve)
-      @excQ.should_receive(:pop).twice.and_throw(:popped)
-      lambda { @server.rescuable_serve }.should throw_symbol(:popped)
-      lambda { @server.rescuable_serve }.should throw_symbol(:popped)
+      exception_q = @server.instance_variable_get(:@exception_q)
+      described_class.any_instance.should_receive(:serve) do 
+        exception_q.push(StandardError.new('ERROR1'))
+        exception_q.push(StandardError.new('ERROR2'))
+      end
+      expect { @server.rescuable_serve }.to(raise_error('ERROR1'))
+      expect { @server.rescuable_serve }.to(raise_error('ERROR2'))
     end
 
     it "should serve using a thread pool" do
-      @serverTrans.should_receive(:listen).ordered
-      @threadQ.should_receive(:push).with(:token)
-      @threadQ.should_receive(:pop)
+      thread_q = mock("SizedQueue")
+      exception_q = mock("Queue")
+      @server.instance_variable_set(:@thread_q, thread_q)
+      @server.instance_variable_set(:@exception_q, exception_q)
+      @server_trans.should_receive(:listen).ordered
+      thread_q.should_receive(:push).with(:token)
+      thread_q.should_receive(:pop)
       Thread.should_receive(:new).and_yield
-      @serverTrans.should_receive(:accept).exactly(3).times.and_return(@client)
+      @server_trans.should_receive(:accept).exactly(3).times.and_return(@client)
       @trans.should_receive(:get_transport).exactly(3).times.and_return(@trans)
       @prot.should_receive(:get_protocol).exactly(3).times.and_return(@prot)
       x = 0
@@ -139,9 +139,9 @@ describe 'Server' do
         end
       end
       @trans.should_receive(:close).exactly(3).times
-      @excQ.should_receive(:push).with(error).and_throw(:stop)
-      @serverTrans.should_receive(:close)
-      lambda { @server.serve }.should throw_symbol(:stop)
+      exception_q.should_receive(:push).with(error).and_throw(:stop)
+      @server_trans.should_receive(:close)
+      expect { @server.serve }.to(throw_symbol(:stop))
     end
   end
 end

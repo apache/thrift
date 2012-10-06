@@ -28,7 +28,7 @@ Gem::Specification.new do |s|
   s.require_paths = %w[lib ext]
 
   s.add_development_dependency 'rake'
-  s.add_development_dependency 'rspec', '~> 2.11.0'
+  s.add_development_dependency 'rspec', '~> 2.10.0'
   s.add_development_dependency 'mongrel', "1.2.0.pre2"
 end
 
