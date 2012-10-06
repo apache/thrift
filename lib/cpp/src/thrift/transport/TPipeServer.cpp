@@ -257,7 +257,6 @@ bool TPipeServer::TCreateAnonPipe() {
   InitializeSecurityDescriptor(&sd,SECURITY_DESCRIPTOR_REVISION);
   SetSecurityDescriptorDacl(&sd, true, NULL, false);
   sa.lpSecurityDescriptor = &sd;
-  sa.lpSecurityDescriptor = NULL;
   sa.nLength = sizeof(SECURITY_ATTRIBUTES);
   sa.bInheritHandle = true; //allow passing handle to child
 
