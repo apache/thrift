@@ -23,6 +23,7 @@
  */
 
 #ifdef MINGW
+#include <direct.h>
 #include <io.h>
 #else
 #include <sys/types.h>

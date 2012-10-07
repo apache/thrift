@@ -217,6 +217,31 @@ char *saferealpath(const char *path, char *resolved_path) {
 #endif
 }
 
+bool check_is_directory(const char *dir_name) {
+#ifdef MINGW
+  DWORD attributes = ::GetFileAttributesA(dir_name);
+  if(attributes == INVALID_FILE_ATTRIBUTES) {
+    fprintf(stderr, "Output directory %s is unusable: GetLastError() = %ld\n", dir_name, GetLastError());
+    return false;
+  }
+  if((attributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY) {
+    fprintf(stderr, "Output directory %s exists but is not a directory\n", dir_name);
+    return false;
+  }
+  return true;
+#else
+  struct stat sb;
+  if (stat(dir_name, &sb) < 0) {
+    fprintf(stderr, "Output directory %s is unusable: %s\n", dir_name, strerror(errno));
+    return false;
+  }
+  if (! S_ISDIR(sb.st_mode)) {
+    fprintf(stderr, "Output directory %s exists but is not a directory\n", dir_name);
+    return false;
+  }
+  return true;
+#endif
+}
 
 /**
  * Report an error to the user. This is called yyerror for historical
@@ -1088,16 +1113,8 @@ int main(int argc, char** argv) {
           out_path.erase(last);
         }
 #endif
-
-        struct stat sb;
-        if (stat(out_path.c_str(), &sb) < 0) {
-          fprintf(stderr, "Output directory %s is unusable: %s\n", out_path.c_str(), strerror(errno));
+        if (!check_is_directory(out_path.c_str()))
           return -1;
-        }
-        if (! S_ISDIR(sb.st_mode)) {
-          fprintf(stderr, "Output directory %s exists but is not a directory\n", out_path.c_str());
-          return -1;
-        }
       } else {
         fprintf(stderr, "Unrecognized option: %s\n", arg);
         usage();

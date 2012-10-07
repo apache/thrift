@@ -1662,7 +1662,6 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
     "  /* public */" << endl;
 
   // for each field, add a member variable
-  bool has_nonrequired_fields = false;
   vector<t_field *>::const_iterator m_iter;
   const vector<t_field *> &members = tstruct->get_members();
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -1670,7 +1669,6 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
     f_types_ <<
       "  " << type_name (t) << " " << (*m_iter)->get_name() << ";" << endl;
     if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
-      has_nonrequired_fields = true;
       f_types_ <<
         "  gboolean __isset_" << (*m_iter)->get_name() << ";" << endl;
     }

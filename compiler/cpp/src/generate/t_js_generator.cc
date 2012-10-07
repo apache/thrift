@@ -434,10 +434,6 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
     out << "})";
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
-    bool    key_is_string = false;
-    if (ktype->is_base_type() && ((t_base_type*)ktype)->get_base() == t_base_type::TYPE_STRING){
-        key_is_string = true;
-    }
 
     t_type* vtype = ((t_map*)type)->get_val_type();
     out << "{";

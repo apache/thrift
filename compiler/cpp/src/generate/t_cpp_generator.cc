@@ -1263,51 +1263,56 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
       indent() << "  break;" << endl <<
       indent() << "}" << endl;
 
-    // Switch statement on the field we are reading
-    indent(out) <<
-      "switch (fid)" << endl;
+    if(fields.empty()) {
+      out <<
+        indent() << "xfer += iprot->skip(ftype);" << endl;
+    }
+    else {
+      // Switch statement on the field we are reading
+      indent(out) <<
+        "switch (fid)" << endl;
 
-      scope_up(out);
+        scope_up(out);
 
-      // Generate deserialization code for known cases
-      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-        indent(out) <<
-          "case " << (*f_iter)->get_key() << ":" << endl;
-        indent_up();
-        indent(out) <<
-          "if (ftype == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
-        indent_up();
+        // Generate deserialization code for known cases
+        for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+          indent(out) <<
+            "case " << (*f_iter)->get_key() << ":" << endl;
+          indent_up();
+          indent(out) <<
+            "if (ftype == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
+          indent_up();
 
-        const char *isset_prefix =
-          ((*f_iter)->get_req() != t_field::T_REQUIRED) ? "this->__isset." : "isset_";
+          const char *isset_prefix =
+            ((*f_iter)->get_req() != t_field::T_REQUIRED) ? "this->__isset." : "isset_";
 
 #if 0
-        // This code throws an exception if the same field is encountered twice.
-        // We've decided to leave it out for performance reasons.
-        // TODO(dreiss): Generate this code and "if" it out to make it easier
-        // for people recompiling thrift to include it.
-        out <<
-          indent() << "if (" << isset_prefix << (*f_iter)->get_name() << ")" << endl <<
-          indent() << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << endl;
+          // This code throws an exception if the same field is encountered twice.
+          // We've decided to leave it out for performance reasons.
+          // TODO(dreiss): Generate this code and "if" it out to make it easier
+          // for people recompiling thrift to include it.
+          out <<
+            indent() << "if (" << isset_prefix << (*f_iter)->get_name() << ")" << endl <<
+            indent() << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << endl;
 #endif
 
-        if (pointers && !(*f_iter)->get_type()->is_xception()) {
-          generate_deserialize_field(out, *f_iter, "(*(this->", "))");
-        } else {
-          generate_deserialize_field(out, *f_iter, "this->");
-        }
-        out <<
-          indent() << isset_prefix << (*f_iter)->get_name() << " = true;" << endl;
-        indent_down();
-        out <<
-          indent() << "} else {" << endl <<
-          indent() << "  xfer += iprot->skip(ftype);" << endl <<
-          // TODO(dreiss): Make this an option when thrift structs
-          // have a common base class.
-          // indent() << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << endl <<
-          indent() << "}" << endl <<
-          indent() << "break;" << endl;
-        indent_down();
+          if (pointers && !(*f_iter)->get_type()->is_xception()) {
+            generate_deserialize_field(out, *f_iter, "(*(this->", "))");
+          } else {
+            generate_deserialize_field(out, *f_iter, "this->");
+          }
+          out <<
+            indent() << isset_prefix << (*f_iter)->get_name() << " = true;" << endl;
+          indent_down();
+          out <<
+            indent() << "} else {" << endl <<
+            indent() << "  xfer += iprot->skip(ftype);" << endl <<
+            // TODO(dreiss): Make this an option when thrift structs
+            // have a common base class.
+            // indent() << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << endl <<
+            indent() << "}" << endl <<
+            indent() << "break;" << endl;
+          indent_down();
       }
 
       // In the default case we skip the field
@@ -1317,7 +1322,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out,
         indent() << "  break;" << endl;
 
       scope_down(out);
-
+    } //!fields.empty()
     // Read field end marker
     indent(out) <<
       "xfer += iprot->readFieldEnd();" << endl;
