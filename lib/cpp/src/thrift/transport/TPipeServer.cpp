@@ -53,11 +53,11 @@ TPipeServer::TPipeServer(const std::string &pipename, uint32_t bufsize, uint32_t
   bufsize_(bufsize),
   Pipe_(INVALID_HANDLE_VALUE),
   isAnonymous(false)
- {  //Restrict maxconns_ to 1-255
+ {  //Restrict maxconns_ to 1-PIPE_UNLIMITED_INSTANCES
     if(maxconnections == 0)
       maxconns_ = 1;
-    else if (maxconnections > 255)
-      maxconns_ = 255;
+    else if (maxconnections > PIPE_UNLIMITED_INSTANCES)
+      maxconns_ = PIPE_UNLIMITED_INSTANCES;
 	else
       maxconns_ = maxconnections;
 
