@@ -278,7 +278,7 @@ void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us,
   const FsyncLog::CallList* calls = log.getCalls();
   // We added 1 fsync call above.
   // Make sure TFileTransport called fsync at least once
-  BOOST_CHECK_GT(calls->size(),
+  BOOST_CHECK_GE(calls->size(),
                  static_cast<FsyncLog::CallList::size_type>(1));
 
   const struct timeval* prev_time = NULL;
