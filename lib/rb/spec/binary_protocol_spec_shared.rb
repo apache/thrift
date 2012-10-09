@@ -1,3 +1,4 @@
+# encoding: ascii-8bit
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -192,13 +193,41 @@ shared_examples_for 'a binary protocol' do
   it "should error gracefully when trying to write a nil double" do
     lambda { @prot.write_double(nil) }.should raise_error
   end
-  
-  it "should write a string" do
-    str = "hello world"
-    @prot.write_string(str)
-    @trans.read(@trans.available).should == [str.size].pack("N") + str
+
+  if RUBY_VERSION >= '1.9'
+    it 'should write a string' do
+      str = 'abc'
+      @prot.write_string(str)
+      a = @trans.read(@trans.available)
+      a.encoding.should == Encoding::BINARY
+      a.unpack('C*').should == [0x00, 0x00, 0x00, 0x03, 0x61, 0x62, 0x63]
+    end
+
+    it 'should write a string with unicode characters' do
+      str = "abc \u20AC \u20AD".encode('UTF-8')
+      @prot.write_string(str)
+      a = @trans.read(@trans.available)
+      a.encoding.should == Encoding::BINARY
+      a.unpack('C*').should == [0x00, 0x00, 0x00, 0x0B, 0x61, 0x62, 0x63, 0x20,
+                                0xE2, 0x82, 0xAC, 0x20, 0xE2, 0x82, 0xAD]
+    end
+
+    it 'should write should write a string with unicode characters and transcoding' do
+      str = "abc \u20AC".encode('ISO-8859-15')
+      @prot.write_string(str)
+      a = @trans.read(@trans.available)
+      a.encoding.should == Encoding::BINARY
+      a.unpack('C*').should == [0x00, 0x00, 0x00, 0x07, 0x61, 0x62, 0x63, 0x20, 0xE2, 0x82, 0xAC]
+    end
+  else
+    it 'should write a string' do
+      str = 'abc'
+      @prot.write_string(str)
+      a = @trans.read(@trans.available)
+      a.unpack('C*').should == [0x00, 0x00, 0x00, 0x03, 0x61, 0x62, 0x63]
+    end
   end
-  
+
   it "should error gracefully when trying to write a nil string" do
     lambda { @prot.write_string(nil) }.should raise_error
   end
@@ -294,11 +323,32 @@ shared_examples_for 'a binary protocol' do
       @prot.read_double.should == f
     end
   end
-  
-  it "should read a string" do
-    str = "hello world"
-    @trans.write([str.size].pack("N") + str)
-    @prot.read_string.should == str
+
+  if RUBY_VERSION >= '1.9'
+    it 'should read a string' do
+      # i32 of value 3, followed by three characters/UTF-8 bytes 'a', 'b', 'c'
+      buffer = [0x00, 0x00, 0x00, 0x03, 0x61, 0x62, 0x63].pack('C*')
+      @trans.write(buffer)
+      a = @prot.read_string
+      a.should == 'abc'.encode('UTF-8')
+      a.encoding.should == Encoding::UTF_8
+    end
+
+    it 'should read a string containing unicode characters from UTF-8 encoded buffer' do
+      # i32 of value 3, followed by one character U+20AC made up of three bytes
+      buffer = [0x00, 0x00, 0x00, 0x03, 0xE2, 0x82, 0xAC].pack('C*')
+      @trans.write(buffer)
+      a = @prot.read_string
+      a.should == "\u20AC".encode('UTF-8')
+      a.encoding.should == Encoding::UTF_8
+    end
+  else
+    it 'should read a string' do
+      # i32 of value 3, followed by three characters/UTF-8 bytes 'a', 'b', 'c'
+      buffer = [0x00, 0x00, 0x00, 0x03, 0x61, 0x62, 0x63].pack('C*')
+      @trans.write(buffer)
+      @prot.read_string.should == 'abc'
+    end
   end
 
   it "should perform a complete rpc with no args or return" do

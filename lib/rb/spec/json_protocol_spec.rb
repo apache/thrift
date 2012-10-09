@@ -1,3 +1,4 @@
+# encoding: UTF-8
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -220,9 +221,25 @@ describe 'JsonProtocol' do
       @trans.read(@trans.available).should == "\"-Infinity\""
     end
 
-    it "should write string" do
-      @prot.write_string("this is a test string")
-      @trans.read(@trans.available).should == "\"this is a test string\""
+    if RUBY_VERSION >= '1.9'
+      it 'should write string' do
+        @prot.write_string('this is a test string')
+        a = @trans.read(@trans.available)
+        a.should == '"this is a test string"'.force_encoding(Encoding::BINARY)
+        a.encoding.should == Encoding::BINARY
+      end
+
+      it 'should write string with unicode characters' do
+        @prot.write_string("this is a test string with unicode characters: \u20AC \u20AD")
+        a = @trans.read(@trans.available)
+        a.should == "\"this is a test string with unicode characters: \u20AC \u20AD\"".force_encoding(Encoding::BINARY)
+        a.encoding.should == Encoding::BINARY
+      end
+    else
+      it 'should write string' do
+        @prot.write_string('this is a test string')
+        @trans.read(@trans.available).should == '"this is a test string"'
+      end
     end
 
     it "should write binary" do
@@ -461,9 +478,25 @@ describe 'JsonProtocol' do
       @prot.read_double.should == 12.23
     end
 
-    it "should read string" do
-      @trans.write("\"this is a test string\"")
-      @prot.read_string.should == "this is a test string"
+    if RUBY_VERSION >= '1.9'
+      it 'should read string' do
+        @trans.write('"this is a test string"'.force_encoding(Encoding::BINARY))
+        a = @prot.read_string
+        a.should == 'this is a test string'
+        a.encoding.should == Encoding::UTF_8
+      end
+
+      it 'should read string with unicode characters' do
+        @trans.write('"this is a test string with unicode characters: \u20AC \u20AD"'.force_encoding(Encoding::BINARY))
+        a = @prot.read_string
+        a.should == "this is a test string with unicode characters: \u20AC \u20AD"
+        a.encoding.should == Encoding::UTF_8
+      end
+    else
+      it 'should read string' do
+        @trans.write('"this is a test string"')
+        @prot.read_string.should == 'this is a test string'
+      end
     end
 
     it "should read binary" do

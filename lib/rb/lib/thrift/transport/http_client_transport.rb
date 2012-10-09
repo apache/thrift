@@ -29,12 +29,12 @@ module Thrift
     def initialize(url)
       @url = URI url
       @headers = {'Content-Type' => 'application/x-thrift'}
-      @outbuf = ""
+      @outbuf = Bytes.empty_byte_buffer
     end
 
     def open?; true end
     def read(sz); @inbuf.read sz end
-    def write(buf); @outbuf << buf end
+    def write(buf); @outbuf << Bytes.force_binary_encoding(buf) end
 
     def add_headers(headers)
       @headers = @headers.merge(headers)
@@ -42,11 +42,12 @@ module Thrift
 
     def flush
       http = Net::HTTP.new @url.host, @url.port
-      http.use_ssl = @url.scheme == "https"
+      http.use_ssl = @url.scheme == 'https'
       resp = http.post(@url.request_uri, @outbuf, @headers)
       data = resp.body
+      data = Bytes.force_binary_encoding(data)
       @inbuf = StringIO.new data
-      @outbuf = ""
+      @outbuf = Bytes.empty_byte_buffer
     end
   end
 end

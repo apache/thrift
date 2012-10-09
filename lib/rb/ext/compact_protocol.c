@@ -20,9 +20,10 @@
 #include <ruby.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "constants.h"
-#include "struct.h"
-#include "macros.h"
+#include <constants.h>
+#include <struct.h>
+#include <macros.h>
+#include <bytes.h>
 
 #define LAST_ID(obj) FIX2INT(rb_ary_pop(rb_ivar_get(obj, last_field_id)))
 #define SET_LAST_ID(obj, val) rb_ary_push(rb_ivar_get(obj, last_field_id), val)
@@ -305,6 +306,7 @@ VALUE rb_thrift_compact_proto_write_double(VALUE self, VALUE dub) {
 
 VALUE rb_thrift_compact_proto_write_string(VALUE self, VALUE str) {
   VALUE transport = GET_TRANSPORT(self);
+  str = convert_to_utf8_byte_buffer(str);
   write_varint32(transport, RSTRING_LEN(str));
   WRITE(transport, RSTRING_PTR(str), RSTRING_LEN(str));
   return Qnil;
@@ -546,7 +548,8 @@ VALUE rb_thrift_compact_proto_read_double(VALUE self) {
 
 VALUE rb_thrift_compact_proto_read_string(VALUE self) {
   int64_t size = read_varint64(self);
-  return READ(self, size);
+  VALUE buffer = READ(self, size);
+  return convert_to_string(buffer);
 }
 
 static void Init_constants() {

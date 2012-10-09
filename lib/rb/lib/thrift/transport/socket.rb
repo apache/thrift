@@ -61,6 +61,7 @@ module Thrift
 
     def write(str)
       raise IOError, "closed stream" unless open?
+      str = Bytes.force_binary_encoding(str)
       begin
         if @timeout.nil? or @timeout == 0
           @handle.write(str)

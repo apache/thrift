@@ -1,3 +1,4 @@
+# encoding: UTF-8
 # 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -482,13 +483,21 @@ module Thrift
     end
 
     # Decodes the four hex parts of a JSON escaped string character and returns
-    # the character via out. The first two characters must be "00".
+    # the character via out.
+    #
+    # Note - this only supports Unicode characters in the BMP (U+0000 to U+FFFF);
+    # characters above the BMP are encoded as two escape sequences (surrogate pairs),
+    # which is not yet implemented
     def read_json_escape_char
-      read_json_syntax_char('0')
-      read_json_syntax_char('0')
       str = @reader.read
       str += @reader.read
-      str.hex.chr
+      str += @reader.read
+      str += @reader.read
+      if RUBY_VERSION >= '1.9'
+        str.hex.chr(Encoding::UTF_8)
+      else
+        str.hex.chr
+      end
     end
 
     # Decodes a JSON string, including unescaping, and returns the string via str

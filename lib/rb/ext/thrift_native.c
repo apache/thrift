@@ -18,6 +18,7 @@
  */
 
 #include <ruby.h>
+#include <bytes.h>
 #include <struct.h>
 #include <binary_protocol_accelerated.h>
 #include <compact_protocol.h>
@@ -27,6 +28,7 @@
 // cached classes/modules
 VALUE rb_cSet;
 VALUE thrift_module;
+VALUE thrift_bytes_module;
 VALUE thrift_types_module;
 
 // TType constants
@@ -90,6 +92,9 @@ ID write_method_id;
 ID read_all_method_id;
 ID read_into_buffer_method_id;
 ID native_qmark_method_id;
+ID force_binary_encoding_id;
+ID convert_to_utf8_byte_buffer_id;
+ID convert_to_string_id;
 
 // constant ids
 ID fields_const_id;
@@ -109,6 +114,7 @@ VALUE protocol_exception_class;
 void Init_thrift_native() {
   // cached classes
   thrift_module = rb_const_get(rb_cObject, rb_intern("Thrift"));
+  thrift_bytes_module = rb_const_get(thrift_module, rb_intern("Bytes"));
   thrift_types_module = rb_const_get(thrift_module, rb_intern("Types"));
   rb_cSet = rb_const_get(rb_cObject, rb_intern("Set"));
   protocol_exception_class = rb_const_get(thrift_module, rb_intern("ProtocolException"));
@@ -173,6 +179,9 @@ void Init_thrift_native() {
   read_all_method_id = rb_intern("read_all");
   read_into_buffer_method_id = rb_intern("read_into_buffer");
   native_qmark_method_id = rb_intern("native?");
+  force_binary_encoding_id = rb_intern("force_binary_encoding");
+  convert_to_utf8_byte_buffer_id = rb_intern("convert_to_utf8_byte_buffer");
+  convert_to_string_id = rb_intern("convert_to_string");
 
   // constant ids
   fields_const_id = rb_intern("FIELDS");

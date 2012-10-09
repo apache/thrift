@@ -28,7 +28,7 @@ module Thrift
     # this behavior is no longer required. If you wish to change it
     # go ahead, just make sure the specs pass
     def initialize(buffer = nil)
-      @buf = buffer || ''
+      @buf = buffer ? Bytes.force_binary_encoding(buffer) : Bytes.empty_byte_buffer
       @index = 0
     end
 
@@ -48,7 +48,7 @@ module Thrift
 
     # this method does not use the passed object directly but copies it
     def reset_buffer(new_buf = '')
-      @buf.replace new_buf
+      @buf.replace Bytes.force_binary_encoding(new_buf)
       @index = 0
     end
 
@@ -72,7 +72,7 @@ module Thrift
 
     def read_byte
       raise EOFError.new("Not enough bytes remain in buffer") if @index >= @buf.size
-      val = ::Thrift::TransportUtils.get_string_byte(@buf, @index)
+      val = Bytes.get_string_byte(@buf, @index)
       @index += 1
       if @index >= GARBAGE_BUFFER_SIZE
         @buf = @buf.slice(@index..-1)
@@ -87,8 +87,8 @@ module Thrift
         raise EOFError.new("Not enough bytes remain in buffer") if @index >= @buf.size
 
         # The read buffer has some data now, so copy bytes over to the output buffer.
-        byte = ::Thrift::TransportUtils.get_string_byte(@buf, @index)
-        ::Thrift::TransportUtils.set_string_byte(buffer, i, byte)
+        byte = Bytes.get_string_byte(@buf, @index)
+        Bytes.set_string_byte(buffer, i, byte)
         @index += 1
         i += 1
       end
@@ -100,7 +100,7 @@ module Thrift
     end
 
     def write(wbuf)
-      @buf << wbuf
+      @buf << Bytes.force_binary_encoding(wbuf)
     end
 
     def flush

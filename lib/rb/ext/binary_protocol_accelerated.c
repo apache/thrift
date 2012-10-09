@@ -22,7 +22,8 @@
 #include <stdint.h>
 #include <constants.h>
 #include <struct.h>
-#include "macros.h"
+#include <macros.h>
+#include <bytes.h>
 
 VALUE rb_thrift_binary_proto_native_qmark(VALUE self) {
   return Qtrue;
@@ -80,6 +81,7 @@ static void write_string_direct(VALUE trans, VALUE str) {
   if (TYPE(str) != T_STRING) {
     rb_raise(rb_eStandardError, "Value should be a string");    
   }
+  str = convert_to_utf8_byte_buffer(str);
   write_i32_direct(trans, RSTRING_LEN(str));
   rb_funcall(trans, write_method_id, 1, str);
 }
@@ -380,7 +382,8 @@ VALUE rb_thrift_binary_proto_read_double(VALUE self) {
 
 VALUE rb_thrift_binary_proto_read_string(VALUE self) {
   int size = read_i32_direct(self);
-  return READ(self, size);
+  VALUE buffer = READ(self, size);
+  return convert_to_string(buffer);
 }
 
 void Init_binary_protocol_accelerated() {
