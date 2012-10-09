@@ -62,10 +62,18 @@ public class TCompactProtocol extends TProtocol {
    * TProtocolFactory that produces TCompactProtocols.
    */
   public static class Factory implements TProtocolFactory {
-    public Factory() {}
+    private final long maxNetworkBytes_;
+
+    public Factory() {
+      maxNetworkBytes_ = -1;
+    }
+
+    public Factory(int maxNetworkBytes) {
+      maxNetworkBytes_ = maxNetworkBytes;
+    }
 
     public TProtocol getProtocol(TTransport trans) {
-      return new TCompactProtocol(trans);
+      return new TCompactProtocol(trans, maxNetworkBytes_);
     }
   }
 
@@ -114,12 +122,31 @@ public class TCompactProtocol extends TProtocol {
   private Boolean boolValue_ = null;
 
   /**
+   * The maximum number of bytes to read from the network for
+   * variable-length fields (such as strings or binary) or -1 for
+   * unlimited.
+   */
+  private final long maxNetworkBytes_;
+
+  /**
+   * Create a TCompactProtocol.
+   *
+   * @param transport the TTransport object to read from or write to.
+   * @param maxNetworkBytes the maximum number of bytes to read for
+   *     variable-length fields.
+   */
+  public TCompactProtocol(TTransport transport, long maxNetworkBytes) {
+    super(transport);
+    maxNetworkBytes_ = maxNetworkBytes;
+  }
+
+  /**
    * Create a TCompactProtocol.
    *
    * @param transport the TTransport object to read from or write to.
    */
   public TCompactProtocol(TTransport transport) {
-    super(transport);
+    this(transport, -1);
   }
 
   @Override
@@ -617,6 +644,10 @@ public class TCompactProtocol extends TProtocol {
       return "";
     }
 
+    if (maxNetworkBytes_ != -1 && length > maxNetworkBytes_) {
+      throw new TException("Read size greater than max allowed.");
+    }
+
     try {
       if (trans_.getBytesRemainingInBuffer() >= length) {
         String str = new String(trans_.getBuffer(), trans_.getBufferPosition(), length, "UTF-8");
@@ -636,6 +667,10 @@ public class TCompactProtocol extends TProtocol {
   public ByteBuffer readBinary() throws TException {
     int length = readVarint32();
     if (length == 0) return ByteBuffer.wrap(new byte[0]);
+
+    if (maxNetworkBytes_ != -1 && length > maxNetworkBytes_) {
+      throw new TException("Read size greater than max allowed.");
+    }
 
     byte[] buf = new byte[length];
     trans_.readAll(buf, 0, length);
