@@ -91,6 +91,10 @@ phptype_DATA = \
   lib/Thrift/Type/TMessageType.php \
   lib/Thrift/Type/TType.php
 
-EXTRA_DIST = src thrift_protocol.ini README.apache
+EXTRA_DIST = \
+	src \
+	lib \
+	thrift_protocol.ini \
+	README.apache
 
 MAINTAINERCLEANFILES = Makefile Makefile.in

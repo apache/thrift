@@ -31,3 +31,5 @@ endif
 clean-local:
 	$(RM) -r ./packages
 
+EXTRA_DIST = Test
+

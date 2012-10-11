@@ -60,6 +60,7 @@ thrift_SOURCES = src/main.cc \
                  src/parse/parse.cc \
                  src/generate/t_generator.h \
                  src/generate/t_oop_generator.h \
+                 src/generate/t_html_generator.h \
                  src/windows/config.h \
                  src/windows/version.h
 

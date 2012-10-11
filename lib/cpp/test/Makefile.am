@@ -231,4 +231,6 @@ clean-local:
 EXTRA_DIST = \
 	DenseProtoTest.cpp \
 	ThriftTest_extras.cpp \
-	DebugProtoTest_extras.cpp
+	DebugProtoTest_extras.cpp \
+	concurrency \
+	processor
