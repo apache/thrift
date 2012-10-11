@@ -6,7 +6,7 @@
     { "type" : "svn",
       "url" : "http://svn.apache.org/repos/asf/thrift/trunk/"
     },
-  "version": "0.9.0-dev",
+  "version": "0.9.0",
   "author":
     { "name": "Apache Thrift Developers",
       "email": "dev@thrift.apache.org",

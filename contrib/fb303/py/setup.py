@@ -26,7 +26,7 @@ except:
     from distutils.core import setup, Extension, Command
         
 setup(name = 'thrift',
-    version = '0.9.0-dev',
+    version = '0.9.0',
     description = 'Python bindings for the Apache Thrift FB303',
     author = ['Thrift Developers'],
     author_email = ['dev@thrift.apache.org'],
