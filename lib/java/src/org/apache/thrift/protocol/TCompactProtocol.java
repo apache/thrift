@@ -639,13 +639,10 @@ public class TCompactProtocol extends TProtocol {
    */
   public String readString() throws TException {
     int length = readVarint32();
+    checkReadLength(length);
 
     if (length == 0) {
       return "";
-    }
-
-    if (maxNetworkBytes_ != -1 && length > maxNetworkBytes_) {
-      throw new TException("Read size greater than max allowed.");
     }
 
     try {
@@ -666,11 +663,8 @@ public class TCompactProtocol extends TProtocol {
    */
   public ByteBuffer readBinary() throws TException {
     int length = readVarint32();
+    checkReadLength(length);
     if (length == 0) return ByteBuffer.wrap(new byte[0]);
-
-    if (maxNetworkBytes_ != -1 && length > maxNetworkBytes_) {
-      throw new TException("Read size greater than max allowed.");
-    }
 
     byte[] buf = new byte[length];
     trans_.readAll(buf, 0, length);
@@ -686,6 +680,15 @@ public class TCompactProtocol extends TProtocol {
     byte[] buf = new byte[length];
     trans_.readAll(buf, 0, length);
     return buf;
+  }
+
+  private void checkReadLength(int length) throws TProtocolException {
+    if (length < 0) {
+      throw new TProtocolException("Negative length: " + length);
+    }
+    if (maxNetworkBytes_ != -1 && length > maxNetworkBytes_) {
+      throw new TProtocolException("Length exceeded max allowed: " + length);
+    }
   }
 
   //
