@@ -130,3 +130,54 @@ struct Struct_with_union {
 struct StructWithEnumMap {
   1: map<SomeEnum, list<SomeEnum>> my_map;
 }
+
+# Nested lists
+struct NestedListInList {
+  1: list<list<byte>> value
+}
+
+struct NestedListInSet {
+  1: set<list<byte>> value
+}
+
+struct NestedListInMapKey {
+  1: map<list<byte>, byte> value
+}
+
+struct NestedListInMapValue {
+  1: map<byte, list<byte>> value
+}
+
+# Nested sets
+struct NestedSetInList {
+  1: list<set<byte>> value
+}
+
+struct NestedSetInSet {
+  1: set<set<byte>> value
+}
+
+struct NestedSetInMapKey {
+  1: map<set<byte>, byte> value
+}
+
+struct NestedSetInMapValue {
+  1: map<byte, set<byte>> value
+}
+
+# Nested maps
+struct NestedMapInList {
+  1: list<map<byte, byte>> value
+}
+
+struct NestedMapInSet {
+  1: set<map<byte, byte>> value
+}
+
+struct NestedMapInMapKey {
+  2: map<map<byte, byte>, byte> value
+}
+
+struct NestedMapInMapValue {
+  2: map<byte, map<byte, byte>> value
+}

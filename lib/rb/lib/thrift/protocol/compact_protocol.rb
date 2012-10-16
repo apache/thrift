@@ -100,8 +100,7 @@ module Thrift
       @boolean_value = nil
 
       # Pre-allocated read buffer for read_double().
-      @rbuf = "\0" * 8
-      @rbuf.force_encoding("BINARY") if @rbuf.respond_to?(:force_encoding)
+      @rbuf = Bytes.empty_byte_buffer(8)
     end
 
     def write_message_begin(name, type, seqid)
@@ -211,6 +210,7 @@ module Thrift
     end
 
     def write_string(str)
+      str = Bytes.convert_to_utf8_byte_buffer(str)
       write_varint32(str.length)
       @trans.write(str)
     end
@@ -333,7 +333,8 @@ module Thrift
 
     def read_string
       size = read_varint32()
-      trans.read_all(size)
+      buffer = trans.read_all(size)
+      Bytes.convert_to_string(buffer)
     end
     
     

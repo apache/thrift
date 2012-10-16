@@ -16,50 +16,49 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-'''
-TZlibTransport provides a compressed transport and transport factory
+
+"""TZlibTransport provides a compressed transport and transport factory
 class, using the python standard library zlib module to implement
 data compression.
-'''
+"""
 
 from __future__ import division
 import zlib
 from cStringIO import StringIO
 from TTransport import TTransportBase, CReadableTransport
 
+
 class TZlibTransportFactory(object):
-  '''
-  Factory transport that builds zlib compressed transports.
-  
+  """Factory transport that builds zlib compressed transports.
+
   This factory caches the last single client/transport that it was passed
   and returns the same TZlibTransport object that was created.
-  
+
   This caching means the TServer class will get the _same_ transport
   object for both input and output transports from this factory.
   (For non-threaded scenarios only, since the cache only holds one object)
-  
+
   The purpose of this caching is to allocate only one TZlibTransport where
   only one is really needed (since it must have separate read/write buffers),
   and makes the statistics from getCompSavings() and getCompRatio()
   easier to understand.
-  '''
-
+  """
   # class scoped cache of last transport given and zlibtransport returned
   _last_trans = None
   _last_z = None
 
   def getTransport(self, trans, compresslevel=9):
-    '''Wrap a transport , trans, with the TZlibTransport
+    """Wrap a transport, trans, with the TZlibTransport
     compressed transport class, returning a new
     transport to the caller.
-    
+
     @param compresslevel: The zlib compression level, ranging
     from 0 (no compression) to 9 (best compression).  Defaults to 9.
     @type compresslevel: int
-    
+
     This method returns a TZlibTransport which wraps the
     passed C{trans} TTransport derived instance.
-    '''
+    """
     if trans == self._last_trans:
       return self._last_z
     ztrans = TZlibTransport(trans, compresslevel)
@@ -69,27 +68,24 @@ class TZlibTransportFactory(object):
 
 
 class TZlibTransport(TTransportBase, CReadableTransport):
-  '''
-  Class that wraps a transport with zlib, compressing writes
+  """Class that wraps a transport with zlib, compressing writes
   and decompresses reads, using the python standard
   library zlib module.
-  '''
-
+  """
   # Read buffer size for the python fastbinary C extension,
   # the TBinaryProtocolAccelerated class.
   DEFAULT_BUFFSIZE = 4096
 
   def __init__(self, trans, compresslevel=9):
-    '''
-    Create a new TZlibTransport, wrapping C{trans}, another
+    """Create a new TZlibTransport, wrapping C{trans}, another
     TTransport derived object.
-    
+
     @param trans: A thrift transport object, i.e. a TSocket() object.
     @type trans: TTransport
     @param compresslevel: The zlib compression level, ranging
     from 0 (no compression) to 9 (best compression).  Default is 9.
     @type compresslevel: int
-    '''
+    """
     self.__trans = trans
     self.compresslevel = compresslevel
     self.__rbuf = StringIO()
@@ -98,49 +94,45 @@ class TZlibTransport(TTransportBase, CReadableTransport):
     self._init_stats()
 
   def _reinit_buffers(self):
-    '''
-    Internal method to initialize/reset the internal StringIO objects
+    """Internal method to initialize/reset the internal StringIO objects
     for read and write buffers.
-    '''
+    """
     self.__rbuf = StringIO()
     self.__wbuf = StringIO()
 
   def _init_stats(self):
-    '''
-    Internal method to reset the internal statistics counters
+    """Internal method to reset the internal statistics counters
     for compression ratios and bandwidth savings.
-    '''
+    """
     self.bytes_in = 0
     self.bytes_out = 0
     self.bytes_in_comp = 0
     self.bytes_out_comp = 0
 
   def _init_zlib(self):
-    '''
-    Internal method for setting up the zlib compression and
+    """Internal method for setting up the zlib compression and
     decompression objects.
-    '''
+    """
     self._zcomp_read = zlib.decompressobj()
     self._zcomp_write = zlib.compressobj(self.compresslevel)
 
   def getCompRatio(self):
-    '''
-    Get the current measured compression ratios (in,out) from
+    """Get the current measured compression ratios (in,out) from
     this transport.
-    
-    Returns a tuple of: 
+
+    Returns a tuple of:
     (inbound_compression_ratio, outbound_compression_ratio)
-    
+
     The compression ratios are computed as:
         compressed / uncompressed
 
     E.g., data that compresses by 10x will have a ratio of: 0.10
     and data that compresses to half of ts original size will
     have a ratio of 0.5
-    
+
     None is returned if no bytes have yet been processed in
     a particular direction.
-    '''
+    """
     r_percent, w_percent = (None, None)
     if self.bytes_in > 0:
       r_percent = self.bytes_in_comp / self.bytes_in
@@ -149,23 +141,22 @@ class TZlibTransport(TTransportBase, CReadableTransport):
     return (r_percent, w_percent)
 
   def getCompSavings(self):
-    '''
-    Get the current count of saved bytes due to data
+    """Get the current count of saved bytes due to data
     compression.
-    
+
     Returns a tuple of:
     (inbound_saved_bytes, outbound_saved_bytes)
-    
+
     Note: if compression is actually expanding your
     data (only likely with very tiny thrift objects), then
     the values returned will be negative.
-    '''
+    """
     r_saved = self.bytes_in - self.bytes_in_comp
     w_saved = self.bytes_out - self.bytes_out_comp
     return (r_saved, w_saved)
 
   def isOpen(self):
-    '''Return the underlying transport's open status'''
+    """Return the underlying transport's open status"""
     return self.__trans.isOpen()
 
   def open(self):
@@ -174,25 +165,24 @@ class TZlibTransport(TTransportBase, CReadableTransport):
     return self.__trans.open()
 
   def listen(self):
-    '''Invoke the underlying transport's listen() method'''
+    """Invoke the underlying transport's listen() method"""
     self.__trans.listen()
 
   def accept(self):
-    '''Accept connections on the underlying transport'''
+    """Accept connections on the underlying transport"""
     return self.__trans.accept()
 
   def close(self):
-    '''Close the underlying transport,'''
+    """Close the underlying transport,"""
     self._reinit_buffers()
     self._init_zlib()
     return self.__trans.close()
 
   def read(self, sz):
-    '''
-    Read up to sz bytes from the decompressed bytes buffer, and
+    """Read up to sz bytes from the decompressed bytes buffer, and
     read from the underlying transport if the decompression
     buffer is empty.
-    '''
+    """
     ret = self.__rbuf.read(sz)
     if len(ret) > 0:
       return ret
@@ -204,10 +194,9 @@ class TZlibTransport(TTransportBase, CReadableTransport):
     return ret
 
   def readComp(self, sz):
-    '''
-    Read compressed data from the underlying transport, then
+    """Read compressed data from the underlying transport, then
     decompress it and append it to the internal StringIO read buffer
-    '''
+    """
     zbuf = self.__trans.read(sz)
     zbuf = self._zcomp_read.unconsumed_tail + zbuf
     buf = self._zcomp_read.decompress(zbuf)
@@ -220,17 +209,15 @@ class TZlibTransport(TTransportBase, CReadableTransport):
     return True
 
   def write(self, buf):
-    '''
-    Write some bytes, putting them into the internal write
+    """Write some bytes, putting them into the internal write
     buffer for eventual compression.
-    '''
+    """
     self.__wbuf.write(buf)
 
   def flush(self):
-    '''
-    Flush any queued up data in the write buffer and ensure the
+    """Flush any queued up data in the write buffer and ensure the
     compression buffer is flushed out to the underlying transport
-    '''
+    """
     wout = self.__wbuf.getvalue()
     if len(wout) > 0:
       zbuf = self._zcomp_write.compress(wout)
@@ -247,11 +234,11 @@ class TZlibTransport(TTransportBase, CReadableTransport):
 
   @property
   def cstringio_buf(self):
-    '''Implement the CReadableTransport interface'''
+    """Implement the CReadableTransport interface"""
     return self.__rbuf
 
   def cstringio_refill(self, partialread, reqlen):
-    '''Implement the CReadableTransport interface for refill'''
+    """Implement the CReadableTransport interface for refill"""
     retstring = partialread
     if reqlen < self.DEFAULT_BUFFSIZE:
       retstring += self.read(self.DEFAULT_BUFFSIZE)

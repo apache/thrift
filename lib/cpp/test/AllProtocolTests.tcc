@@ -22,9 +22,9 @@
 
 #include <limits>
 
-#include <protocol/TBinaryProtocol.h>
-#include <transport/TBufferTransports.h>
-#include <Thrift.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/transport/TBufferTransports.h>
+#include <thrift/Thrift.h>
 
 #include "GenericHelpers.h"
 

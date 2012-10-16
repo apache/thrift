@@ -29,6 +29,7 @@ uses
   Thrift,
   Thrift.Protocol.JSON,
   Thrift.Protocol,
+  Thrift.Transport.Pipes,
   Thrift.Transport,
   Thrift.Stream,
   Thrift.Test,
@@ -59,13 +60,13 @@ type
     procedure StartTestGroup( const aGroup : string);
     procedure Expect( aTestResult : Boolean; const aTestInfo : string);
     procedure ReportResults;
-    
+
     procedure ClientTest;
     procedure JSONProtocolReadWriteTest;
   protected
     procedure Execute; override;
   public
-    constructor Create(ATransport: ITransport; AProtocol : IProtocol; ANumIteration: Integer);
+    constructor Create( const ATransport: ITransport; const AProtocol : IProtocol; ANumIteration: Integer);
     destructor Destroy; override;
   end;
 
@@ -88,6 +89,8 @@ begin
   else result := 'false';
 end;
 
+// not available in all versions, so make sure we have this one imported
+function IsDebuggerPresent: BOOL; stdcall; external KERNEL32 name 'IsDebuggerPresent';
 
 { TTestClient }
 
@@ -98,7 +101,10 @@ var
   port : Integer;
   url : string;
   bBuffered : Boolean;
+  bAnonPipe : Boolean;
   bFramed : Boolean;
+  sPipeName : string;
+  hAnonRead, hAnonWrite : THandle;
   s : string;
   n : Integer;
   threads : array of TThread;
@@ -118,10 +124,15 @@ begin
     host := 'localhost';
     port := 9090;
     url := '';
+    sPipeName := '';
+    bAnonPipe := FALSE;
+    hAnonRead := INVALID_HANDLE_VALUE;
+    hAnonWrite := INVALID_HANDLE_VALUE;
     i := 0;
     try
       while ( i < Length(args) ) do
       begin
+
         try
           if ( args[i] = '-h') then
           begin
@@ -136,33 +147,48 @@ begin
             begin
               host := s;
             end;
-          end else
-          if (args[i] = '-u') then
+          end
+          else if (args[i] = '-u') then
           begin
             Inc( i );
             url := args[i];
-          end else
-          if (args[i] = '-n') then
+          end
+          else if (args[i] = '-n') then
           begin
             Inc( i );
             FNumIteration := StrToInt( args[i] );
-          end else
-          if (args[i] = '-b') then
+          end
+          else if (args[i] = '-b') then
           begin
             bBuffered := True;
-            Console.WriteLine('Using buffered transport');
-          end else
-          if (args[i] = '-f' ) or ( args[i] = '-framed') then
+            Console.WriteLine('Buffered transport');
+          end
+          else if (args[i] = '-f' ) or ( args[i] = '-framed') then
           begin
             bFramed := True;
-            Console.WriteLine('Using framed transport');
-          end else
-          if (args[i] = '-t') then
+            Console.WriteLine('Framed transport');
+          end
+          else if (args[i] = '-pipe') then  // -pipe <name>
+          begin
+            Console.WriteLine('Named pipes transport');
+            Inc( i );
+            sPipeName := args[i];
+          end
+          else if (args[i] = '-anon') then  // -anon <hReadPipe> <hWritePipe>
+          begin
+            Console.WriteLine('Anonymous pipes transport');
+            Inc( i);
+            hAnonRead := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
+            Inc( i);
+            hAnonWrite := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
+            bAnonPipe := TRUE;
+          end
+          else if (args[i] = '-t') then
           begin
             Inc( i );
             FNumThread := StrToInt( args[i] );
-          end else
-          if (args[i] = '-prot') then  // -prot JSON|binary
+          end
+          else if (args[i] = '-prot') then  // -prot JSON|binary
           begin
             Inc( i );
             s := args[i];
@@ -177,7 +203,9 @@ begin
         finally
           Inc( i );
         end;
+
       end;
+
     except
       on E: Exception do
       begin
@@ -192,19 +220,34 @@ begin
     begin
       if url = '' then
       begin
-        streamtrans := TSocketImpl.Create( host, port );
-        trans := streamtrans;
-        if bBuffered then
-        begin
-          trans := TBufferedTransportImpl.Create( streamtrans );
+        if sPipeName <> '' then begin
+          Console.WriteLine('Using named pipe ('+sPipeName+')');
+          streamtrans := TNamedPipeImpl.Create( sPipeName);
+        end
+        else if bAnonPipe then begin
+          Console.WriteLine('Using anonymous pipes ('+IntToStr(Integer(hAnonRead))+' and '+IntToStr(Integer(hAnonWrite))+')');
+          streamtrans := TAnonymousPipeImpl.Create( hAnonRead, hAnonWrite, FALSE);
+        end
+        else begin
+          Console.WriteLine('Using sockets ('+host+' port '+IntToStr(port)+')');
+          streamtrans := TSocketImpl.Create( host, port );
         end;
 
-        if bFramed then
-        begin
-          trans := TFramedTransportImpl.Create(  trans );
+        trans := streamtrans;
+
+        if bBuffered then begin
+          trans := TBufferedTransportImpl.Create( streamtrans);
+          Console.WriteLine('Using buffered transport');
         end;
-      end else
-      begin
+
+        if bFramed then begin
+          trans := TFramedTransportImpl.Create( trans );
+          Console.WriteLine('Using framed transport');
+        end;
+
+      end
+      else begin
+        Console.WriteLine('Using HTTPClient');
         http := THTTPClientImpl.Create( url );
         trans := http;
       end;
@@ -264,9 +307,12 @@ var
   i2 : IXtruct2;
   mapout : IThriftDictionary<Integer,Integer>;
   mapin : IThriftDictionary<Integer,Integer>;
+  strmapout : IThriftDictionary<string,string>;
+  strmapin : IThriftDictionary<string,string>;
   j : Integer;
   first : Boolean;
   key : Integer;
+  strkey : string;
   listout : IThriftList<Integer>;
   listin : IThriftList<Integer>;
   setout : IHashSet<Integer>;
@@ -306,36 +352,51 @@ var
 
 begin
   client := TThriftTest.TClient.Create( FProtocol);
-  try
-    if not FTransport.IsOpen then
-    begin
-      FTransport.Open;
-    end;
-  except
-    on E: Exception do
-    begin
-      Console.WriteLine( E.Message );
-      Exit;
-    end;
-  end;
+  FTransport.Open;
 
   // in-depth exception test
   // (1) do we get an exception at all?
   // (2) do we get the right exception?
   // (3) does the exception contain the expected data?
   StartTestGroup( 'testException');
+  // case 1: exception type declared in IDL at the function call
   try
     client.testException('Xception');
     Expect( FALSE, 'testException(''Xception''): must trow an exception');
   except
     on e:TXception do begin
-      Expect( e.ErrorCode = 1001,                  'error code');
-      Expect( e.Message_  = 'This is an Xception', 'error message');
+      Expect( e.ErrorCode = 1001,       'error code');
+      Expect( e.Message_  = 'Xception', 'error message');
       Console.WriteLine( ' = ' + IntToStr(e.ErrorCode) + ', ' + e.Message_ );
     end;
     on e:TTransportException do Expect( FALSE, 'Unexpected : "'+e.ToString+'"');
     on e:Exception do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
   end;
+
+  // case 2: exception type NOT declared in IDL at the function call
+  // this will close the connection
+  try
+    client.testException('TException');
+    Expect( FALSE, 'testException(''TException''): must trow an exception');
+  except
+    on e:TTransportException do begin
+      Console.WriteLine( e.ClassName+' = '+e.Message); // this is what we get
+      if FTransport.IsOpen then FTransport.Close;
+      FTransport.Open;   // re-open connection, server has already closed
+    end;
+    on e:TException do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
+    on e:Exception do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
+  end;
+
+  // case 3: no exception
+  try
+    client.testException('something');
+    Expect( TRUE, 'testException(''something''): must not trow an exception');
+  except
+    on e:TTransportException do Expect( FALSE, 'Unexpected : "'+e.ToString+'"');
+    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
+  end;
+
 
   // simple things
   StartTestGroup( 'simple Thrift calls');
@@ -428,6 +489,40 @@ begin
   begin
     Expect( mapin[key] = mapout[key], 'testMap: '+IntToStr(key) + ' => ' + IntToStr( mapin[key]));
     Expect( mapin[key] = key - 10, 'testMap: mapin['+IntToStr(key)+'] = '+IntToStr( mapin[key]));
+  end;
+
+
+  // map<type1,type2>: A map of strictly unique keys to values.
+  // Translates to an STL map, Java HashMap, PHP associative array, Python/Ruby dictionary, etc.
+  StartTestGroup( 'testStringMap');
+  strmapout := TThriftDictionaryImpl<string,string>.Create;
+  for j := 0 to 4 do
+  begin
+    strmapout.AddOrSetValue( IntToStr(j), IntToStr(j - 10));
+  end;
+  Console.Write('testStringMap({');
+  first := True;
+  for strkey in strmapout.Keys do
+  begin
+    if first
+    then first := False
+    else Console.Write( ', ' );
+    Console.Write( strkey + ' => ' + strmapout[strkey]);
+  end;
+  Console.WriteLine('})');
+
+  strmapin := client.testStringMap( strmapout );
+  Expect( strmapin.Count = strmapout.Count, 'testStringMap: strmapin.Count = strmapout.Count');
+  for j := 0 to 4 do
+  begin
+    Expect( strmapout.ContainsKey(IntToStr(j)),
+            'testStringMap: strmapout.ContainsKey('+IntToStr(j)+') = '
+            + BoolToString(strmapout.ContainsKey(IntToStr(j))));
+  end;
+  for strkey in strmapin.Keys do
+  begin
+    Expect( strmapin[strkey] = strmapout[strkey], 'testStringMap: '+strkey + ' => ' + strmapin[strkey]);
+    Expect( strmapin[strkey] = IntToStr( StrToInt(strkey) - 10), 'testStringMap: strmapin['+strkey+'] = '+strmapin[strkey]);
   end;
 
 
@@ -609,7 +704,7 @@ begin
   Expect( not looney.__isset_UserMap, 'looney.__isset_UserMap = '+BoolToString(looney.__isset_UserMap));
   Expect( not looney.__isset_Xtructs, 'looney.__isset_Xtructs = '+BoolToString(looney.__isset_Xtructs));
   //
-  for ret in [TNumberz.SIX, TNumberz.THREE] do begin
+  for ret in [TNumberz.TWO, TNumberz.THREE] do begin
     crazy := first_map[ret];
     Console.WriteLine('first_map['+intToStr(Ord(ret))+']');
 
@@ -633,7 +728,7 @@ begin
     Expect( goodbye.__isset_I32_thing, 'goodbye.__isset_I32_thing = '+BoolToString(goodbye.__isset_I32_thing));
     Expect( goodbye.__isset_I64_thing, 'goodbye.__isset_I64_thing = '+BoolToString(goodbye.__isset_I64_thing));
 
-    Expect( hello.String_thing = 'hello', 'hello.String_thing = "'+hello.String_thing+'"');
+    Expect( hello.String_thing = 'Hello2', 'hello.String_thing = "'+hello.String_thing+'"');
     Expect( hello.Byte_thing = 2, 'hello.Byte_thing = '+IntToStr(hello.Byte_thing));
     Expect( hello.I32_thing = 2, 'hello.I32_thing = '+IntToStr(hello.I32_thing));
     Expect( hello.I64_thing = 2, 'hello.I64_thing = '+IntToStr(hello.I64_thing));
@@ -873,12 +968,13 @@ begin
     Console.WriteLine('FAILED TESTS:');
     for sLine in FErrors do Console.WriteLine('- '+sLine);
     Console.WriteLine( StringOfChar('=',60));
+    InterlockedIncrement( ExitCode);  // return <> 0 on errors
   end;
   Console.WriteLine('');
 end;
 
 
-constructor TClientThread.Create(ATransport: ITransport; AProtocol : IProtocol; ANumIteration: Integer);
+constructor TClientThread.Create( const ATransport: ITransport; const AProtocol : IProtocol; ANumIteration: Integer);
 begin
   inherited Create( True );
   FNumIteration := ANumIteration;

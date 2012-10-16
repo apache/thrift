@@ -38,6 +38,7 @@
 
 #include <string>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "main.h"
 #include "globals.h"

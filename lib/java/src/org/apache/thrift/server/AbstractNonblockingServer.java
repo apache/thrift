@@ -267,7 +267,7 @@ public abstract class AbstractNonblockingServer extends TServer {
    */
   protected class FrameBuffer {
     // the actual transport hooked up to the client.
-    private final TNonblockingTransport trans_;
+    public final TNonblockingTransport trans_;
 
     // the SelectionKey that corresponds to our transport
     private final SelectionKey selectionKey_;
@@ -332,10 +332,11 @@ public abstract class AbstractNonblockingServer extends TServer {
           }
 
           // increment the amount of memory allocated to read buffers
-          readBufferBytesAllocated.addAndGet(frameSize);
+          readBufferBytesAllocated.addAndGet(frameSize + 4);
 
           // reallocate the readbuffer as a frame-sized buffer
-          buffer_ = ByteBuffer.allocate(frameSize);
+          buffer_ = ByteBuffer.allocate(frameSize + 4);
+          buffer_.putInt(frameSize);
 
           state_ = FrameBufferState.READING_FRAME;
         } else {
@@ -492,7 +493,7 @@ public abstract class AbstractNonblockingServer extends TServer {
      * the data it needs to handle an invocation.
      */
     private TTransport getInputTransport() {
-      return new TMemoryInputTransport(buffer_.array());
+      return inputTransportFactory_.getTransport(new TMemoryInputTransport(buffer_.array()));
     }
 
     /**
@@ -549,4 +550,13 @@ public abstract class AbstractNonblockingServer extends TServer {
       }
     }
   } // FrameBuffer
+
+  public void setServerEventHandler(TServerEventHandler eventHandler) {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  public TServerEventHandler getEventHandler() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
 }

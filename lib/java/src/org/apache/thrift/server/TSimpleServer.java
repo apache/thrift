@@ -50,6 +50,11 @@ public class TSimpleServer extends TServer {
       return;
     }
 
+    // Run the preServe event
+    if (eventHandler_ != null) {
+      eventHandler_.preServe();
+    }
+
     setServing(true);
 
     while (!stopped_) {
@@ -59,6 +64,7 @@ public class TSimpleServer extends TServer {
       TTransport outputTransport = null;
       TProtocol inputProtocol = null;
       TProtocol outputProtocol = null;
+      ServerContext connectionContext = null;
       try {
         client = serverTransport_.accept();
         if (client != null) {
@@ -67,7 +73,17 @@ public class TSimpleServer extends TServer {
           outputTransport = outputTransportFactory_.getTransport(client);
           inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
           outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
-          while (processor.process(inputProtocol, outputProtocol)) {}
+          if (eventHandler_ != null) {
+            connectionContext = eventHandler_.createContext(inputProtocol, outputProtocol);
+          }
+          while (true) {
+            if (eventHandler_ != null) {
+              eventHandler_.processContext(connectionContext, inputTransport, outputTransport);
+            }
+            if(!processor.process(inputProtocol, outputProtocol)) {
+              break;
+            }
+          }
         }
       } catch (TTransportException ttx) {
         // Client died, just move on
@@ -79,6 +95,10 @@ public class TSimpleServer extends TServer {
         if (!stopped_) {
           LOGGER.error("Error occurred during processing of message.", x);
         }
+      }
+
+      if (eventHandler_ != null) {
+        eventHandler_.deleteContext(connectionContext, inputProtocol, outputProtocol);
       }
 
       if (inputTransport != null) {

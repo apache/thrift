@@ -17,6 +17,7 @@
  * under the License.
  */
 #import "TSocketClient.h"
+#import "TObjective-C.h"
 
 #if !TARGET_OS_IPHONE
 #import <CoreServices/CoreServices.h>
@@ -33,22 +34,24 @@
 	NSOutputStream * outputStream = NULL;
 	CFReadStreamRef readStream = NULL;
 	CFWriteStreamRef writeStream = NULL;
-	CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (CFStringRef)hostname, port, &readStream, &writeStream);
+	CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (bridge_stub CFStringRef)hostname, port, &readStream, &writeStream);
 	if (readStream && writeStream) {
 		CFReadStreamSetProperty(readStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
 		CFWriteStreamSetProperty(writeStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
 		
-		inputStream = (NSInputStream *)readStream;
-		[inputStream retain];
+		inputStream = (bridge_stub NSInputStream *)readStream;
+		[inputStream retain_stub];
 		[inputStream setDelegate:self];
 		[inputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
 		[inputStream open];
 		
-		outputStream = (NSOutputStream *)writeStream;
-		[outputStream retain];
+		outputStream = (bridge_stub NSOutputStream *)writeStream;
+		[outputStream retain_stub];
 		[outputStream setDelegate:self];
 		[outputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
 		[outputStream open];
+        CFRelease(readStream);
+        CFRelease(writeStream);
 	}
 	
 	self = [super initWithInputStream: inputStream outputStream: outputStream];

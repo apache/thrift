@@ -275,7 +275,7 @@ public class TestTSaslTransports extends TestCase {
     }
 
     @Override
-    public void startServer(final TProcessor processor, final TProtocolFactory protoFactory) throws Exception {
+    public void startServer(final TProcessor processor, final TProtocolFactory protoFactory, final TTransportFactory factory) throws Exception {
       serverThread = new Thread() {
         public void run() {
           try {

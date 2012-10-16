@@ -29,16 +29,24 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 import org.apache.thrift.TException;
-import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportFactory;
+import org.apache.thrift.transport.TFramedTransport.Factory;
 
-import thrift.test.*;
+import thrift.test.Insanity;
+import thrift.test.Numberz;
+import thrift.test.ThriftTest;
+import thrift.test.Xception;
+import thrift.test.Xception2;
+import thrift.test.Xtruct;
+import thrift.test.Xtruct2;
 
 public abstract class ServerTestBase extends TestCase {
 
@@ -278,7 +286,11 @@ public abstract class ServerTestBase extends TestCase {
   private static final Xtruct XSTRUCT = new Xtruct("Zero", (byte) 1, -3, -5);
   private static final Xtruct2 XSTRUCT2 = new Xtruct2((byte)1, XSTRUCT, 5);
 
-  public abstract void startServer(TProcessor processor, TProtocolFactory protoFactory) throws Exception;
+  public void startServer(TProcessor processor, TProtocolFactory protoFactory) throws Exception{
+    startServer(processor, protoFactory, null);
+  }
+
+  public abstract void startServer(TProcessor processor, TProtocolFactory protoFactory, TTransportFactory factory) throws Exception;
 
   public abstract void stopServer() throws Exception;
 
@@ -489,6 +501,45 @@ public abstract class ServerTestBase extends TestCase {
 
   private void testVoid(ThriftTest.Client testClient) throws TException {
     testClient.testVoid();
+  }
+
+  private static class CallCountingTransportFactory extends TTransportFactory {
+    public int count = 0;
+    private final Factory factory;
+
+    public CallCountingTransportFactory(Factory factory) {
+      this.factory = factory;
+    }
+
+    @Override
+    public TTransport getTransport(TTransport trans) {
+      count++;
+      return factory.getTransport(trans);
+    }
+  }
+
+  public void testTransportFactory() throws Exception {
+    
+    for (TProtocolFactory protoFactory : getProtocols()) {
+      TestHandler handler = new TestHandler();
+      ThriftTest.Processor processor = new ThriftTest.Processor(handler);
+  
+      final CallCountingTransportFactory factory = new CallCountingTransportFactory(new TFramedTransport.Factory());
+  
+      startServer(processor, protoFactory, factory);
+      assertEquals(0, factory.count);
+  
+      TSocket socket = new TSocket(HOST, PORT);
+      socket.setTimeout(SOCKET_TIMEOUT);
+      TTransport transport = getClientTransport(socket);
+      open(transport);
+  
+      TProtocol protocol = protoFactory.getProtocol(transport);
+      ThriftTest.Client testClient = new ThriftTest.Client(protocol);
+      assertEquals(0, testClient.testByte((byte) 0));
+      assertEquals(2, factory.count);
+      stopServer();
+    }
   }
 
   private void testException(ThriftTest.Client testClient) throws TException, Xception {

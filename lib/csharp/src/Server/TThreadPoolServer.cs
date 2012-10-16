@@ -75,15 +75,19 @@ namespace Thrift.Server
 			:base(processor, serverTransport, inputTransportFactory, outputTransportFactory,
 				  inputProtocolFactory, outputProtocolFactory, logDel)
 		{
-			if (!ThreadPool.SetMinThreads(minThreadPoolThreads, minThreadPoolThreads))
-			{
-				throw new Exception("Error: could not SetMinThreads in ThreadPool");
-			}
-			if (!ThreadPool.SetMaxThreads(maxThreadPoolThreads, maxThreadPoolThreads))
-			{
-				throw new Exception("Error: could not SetMaxThreads in ThreadPool");
+      lock (typeof(TThreadPoolServer))
+      {
+        if (!ThreadPool.SetMinThreads(minThreadPoolThreads, minThreadPoolThreads))
+        {
+          throw new Exception("Error: could not SetMinThreads in ThreadPool");
+        }
+        if (!ThreadPool.SetMaxThreads(maxThreadPoolThreads, maxThreadPoolThreads))
+        {
+          throw new Exception("Error: could not SetMaxThreads in ThreadPool");
+        }
 			}
 		}
+
 
 		/// <summary>
 		/// Use new ThreadPool thread for each new client connection

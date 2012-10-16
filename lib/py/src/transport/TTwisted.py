@@ -16,6 +16,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+
+from cStringIO import StringIO
+
 from zope.interface import implements, Interface, Attribute
 from twisted.internet.protocol import Protocol, ServerFactory, ClientFactory, \
     connectionDone
@@ -25,7 +28,6 @@ from twisted.python import log
 from twisted.web import server, resource, http
 
 from thrift.transport import TTransport
-from cStringIO import StringIO
 
 
 class TMessageSenderTransport(TTransport.TTransportBase):
@@ -79,7 +81,7 @@ class ThriftClientProtocol(basic.Int32StringReceiver):
         self.started.callback(self.client)
 
     def connectionLost(self, reason=connectionDone):
-        for k,v in self.client._reqs.iteritems():
+        for k, v in self.client._reqs.iteritems():
             tex = TTransport.TTransportException(
                 type=TTransport.TTransportException.END_OF_FILE,
                 message='Connection closed')

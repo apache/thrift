@@ -20,10 +20,10 @@
 #include <assert.h>
 #include <glib.h>
 
-#include "thrift_struct.h"
-#include "protocol/thrift_protocol.h"
-#include "protocol/thrift_binary_protocol.h"
-#include "transport/thrift_memory_buffer.h"
+#include <thrift/thrift_struct.h>
+#include <thrift/protocol/thrift_protocol.h>
+#include <thrift/protocol/thrift_binary_protocol.h>
+#include <thrift/transport/thrift_memory_buffer.h>
 #include "gen-c_glib/t_test_optional_required_test_types.h"
 
 #include "gen-c_glib/t_test_optional_required_test_types.c"
@@ -55,8 +55,10 @@ test_old_school1 (void)
   o->im_int = 10;
   o->im_str = g_strdup ("test");
   o->im_big = g_ptr_array_new ();
-  g_ptr_array_free (o->im_big, FALSE);
+  g_ptr_array_free (o->im_big, TRUE);
+  o->im_big = NULL;
   g_free (o->im_str);
+  o->im_str = NULL;
   g_object_unref (o);
 }
 

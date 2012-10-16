@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = 'thrift'
-  s.version     = '0.8.0.1'
+  s.version     = '0.9.0.1'
   s.authors     = ['Thrift Developers']
   s.email       = ['dev@thrift.apache.org']
   s.homepage    = 'http://thrift.apache.org'
@@ -27,8 +27,8 @@ Gem::Specification.new do |s|
 
   s.require_paths = %w[lib ext]
 
-  s.add_development_dependency "rake"
-  s.add_development_dependency "rspec", "1.3.2"
-  s.add_development_dependency "mongrel"
+  s.add_development_dependency 'rake'
+  s.add_development_dependency 'rspec', '~> 2.10.0'
+  s.add_development_dependency 'mongrel', "1.2.0.pre2"
 end
 

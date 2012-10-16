@@ -1,5 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE OverloadedStrings #-}
 --
 -- Licensed to the Apache Software Foundation (ASF) under one
 -- or more contributor license agreements. See the NOTICE file
@@ -30,6 +31,7 @@ import Control.Monad ( liftM )
 import qualified Data.Binary
 import Data.Bits
 import Data.Int
+import Data.Text.Lazy.Encoding ( decodeUtf8, encodeUtf8 )
 
 import GHC.Exts
 import GHC.Word
@@ -38,7 +40,6 @@ import Thrift.Protocol
 import Thrift.Transport
 
 import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Lazy.Char8 as LBSChar8
 
 version_mask :: Int32
 version_mask = 0xffff0000
@@ -76,7 +77,9 @@ instance Protocol BinaryProtocol where
     writeI32 p b = tWrite (getTransport p) $ Data.Binary.encode b
     writeI64 p b = tWrite (getTransport p) $ Data.Binary.encode b
     writeDouble p d = writeI64 p (fromIntegral $ floatBits d)
-    writeString p s = writeI32 p (fromIntegral $ length s) >> tWrite (getTransport p) (LBSChar8.pack s)
+    writeString p s = writeI32 p (fromIntegral $ LBS.length s') >> tWrite (getTransport p) s'
+      where
+        s' = encodeUtf8 s
     writeBinary p s = writeI32 p (fromIntegral $ LBS.length s) >> tWrite (getTransport p) s
 
     readMessageBegin p = do
@@ -136,7 +139,7 @@ instance Protocol BinaryProtocol where
 
     readString p = do
         i <- readI32 p
-        LBSChar8.unpack `liftM` tReadAll (getTransport p) (fromIntegral i)
+        decodeUtf8 `liftM` tReadAll (getTransport p) (fromIntegral i)
 
     readBinary p = do
         i <- readI32 p

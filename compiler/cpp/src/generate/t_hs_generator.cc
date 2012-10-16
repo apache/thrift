@@ -168,7 +168,7 @@ class t_hs_generator : public t_oop_generator {
   string type_to_enum(t_type* ttype);
 
   string render_hs_type(t_type* type,
-                        bool needs_parens = true);
+                        bool needs_parens);
 
  private:
   ofstream f_types_;
@@ -211,6 +211,7 @@ void t_hs_generator::init_generator() {
 
 string t_hs_generator::hs_language_pragma() {
   return string("{-# LANGUAGE DeriveDataTypeable #-}\n"
+                "{-# LANGUAGE OverloadedStrings #-}\n"
                 "{-# OPTIONS_GHC -fno-warn-missing-fields #-}\n"
                 "{-# OPTIONS_GHC -fno-warn-missing-signatures #-}\n"
                 "{-# OPTIONS_GHC -fno-warn-name-shadowing #-}\n"
@@ -238,16 +239,21 @@ string t_hs_generator::hs_imports() {
       "import Prelude ( Bool(..), Enum, Double, String, Maybe(..),\n"
       "                 Eq, Show, Ord,\n"
       "                 return, length, IO, fromIntegral, fromEnum, toEnum,\n"
-      "                 (&&), (||), (==), (++), ($), (-) )\n"
+      "                 (.), (&&), (||), (==), (++), ($), (-) )\n"
       "\n"
       "import Control.Exception\n"
       "import Data.ByteString.Lazy\n"
+      "import Data.Hashable\n"
       "import Data.Int\n"
+      "import Data.Text.Lazy ( Text )\n"
+      "import qualified Data.Text.Lazy as TL\n"
       "import Data.Typeable ( Typeable )\n"
-      "import qualified Data.Map as Map\n"
-      "import qualified Data.Set as Set\n"
+      "import qualified Data.HashMap.Strict as Map\n"
+      "import qualified Data.HashSet as Set\n"
+      "import qualified Data.Vector as Vector\n"
       "\n"
       "import Thrift\n"
+      "import Thrift.Types ()\n"
       "\n");
 
   for (size_t i = 0; i < includes.size(); ++i)
@@ -303,22 +309,19 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
   indent_down();
 
   string ename = capitalize(tenum->get_name());
+
   indent(f_types_) << "instance Enum " << ename << " where" << endl;
   indent_up();
-
   indent(f_types_) << "fromEnum t = case t of" << endl;
   indent_up();
-
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
     indent(f_types_) << name << " -> " << value << endl;
   }
   indent_down();
-
   indent(f_types_) << "toEnum t = case t of" << endl;
   indent_up();
-
   for(c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     string name = capitalize((*c_iter)->get_name());
@@ -326,6 +329,11 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
   }
   indent(f_types_) << "_ -> throw ThriftException" << endl;
   indent_down();
+  indent_down();
+
+  indent(f_types_) << "instance Hashable " << ename << " where" << endl;
+  indent_up();
+  indent(f_types_) << "hashWithSalt salt = hashWithSalt salt . fromEnum" << endl;
   indent_down();
 }
 
@@ -463,9 +471,9 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
     vector<t_const_value*>::const_iterator v_iter;
 
     if (type->is_set())
-      out << "(Set.fromList ";
-
-    out << "[";
+      out << "(Set.fromList [";
+    else
+      out << "(Vector.fromList ";
 
     bool first = true;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
@@ -474,10 +482,7 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
       first = false;
     }
 
-    out << "]";
-
-    if (type->is_set())
-      out << ")";
+    out << "])";
 
   } else {
     throw "CANNOT GENERATE CONSTANT FOR TYPE: " + type->get_name();
@@ -535,16 +540,26 @@ void t_hs_generator::generate_hs_struct_definition(ofstream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       string mname = (*m_iter)->get_name();
       out << (first ? "" : ",");
-      out << "f_" << tname << "_" << mname << " :: Maybe " << render_hs_type((*m_iter)->get_type());
+      out << "f_" << tname << "_" << mname << " :: Maybe " << render_hs_type((*m_iter)->get_type(), true);
       first = false;
     }
     out << "}";
   }
 
-  out << " deriving (Show,Eq,Ord,Typeable)" << endl;
+  out << " deriving (Show,Eq,Typeable)" << endl;
 
   if (is_exception)
     out << "instance Exception " << tname << endl;
+
+  indent(out) << "instance Hashable " << tname << " where" << endl;
+  indent_up();
+  indent(out) << "hashWithSalt salt record = salt";
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    string mname = (*m_iter)->get_name();
+    indent(out) << " `hashWithSalt` " << "f_" << tname << "_" << mname << " record";
+  }
+  indent(out) << endl;
+  indent_down();
 
   generate_hs_struct_writer(out, tstruct);
   generate_hs_struct_reader(out, tstruct);
@@ -971,7 +986,7 @@ void t_hs_generator::generate_service_server(t_service* tservice) {
     indent(f_service_) << "skip iprot T_STRUCT" << endl;
     indent(f_service_) << "readMessageEnd iprot" << endl;
     indent(f_service_) << "writeMessageBegin oprot (name,M_EXCEPTION,seqid)" << endl;
-    indent(f_service_) << "writeAppExn oprot (AppExn AE_UNKNOWN_METHOD (\"Unknown function \" ++ name))" << endl;
+    indent(f_service_) << "writeAppExn oprot (AppExn AE_UNKNOWN_METHOD (\"Unknown function \" ++ TL.unpack name))" << endl;
     indent(f_service_) << "writeMessageEnd oprot" << endl;
     indent(f_service_) << "tFlush (getTransport oprot)" << endl;
     indent_down();
@@ -1210,9 +1225,9 @@ void t_hs_generator::generate_deserialize_container(ofstream &out,
     out << ";r <- f (n-1); return $ v:r}} in do {(" << etype << "," << size << ") <- readSetBegin iprot; l <- f " << size << "; return $ Set.fromList l})";
 
   } else if (ttype->is_list()) {
-    out << "(let {f 0 = return []; f n = do {v <- ";
+    out << "(let f n = Vector.replicateM (fromIntegral n) (";
     generate_deserialize_type(out,((t_map*)ttype)->get_key_type());
-    out << ";r <- f (n-1); return $ v:r}} in do {(" << etype << "," << size << ") <- readListBegin iprot; f " << size << "})";
+    out << ") in do {(" << etype << "," << size << ") <- readListBegin iprot; f " << size << "})";
   }
 }
 
@@ -1323,9 +1338,9 @@ void t_hs_generator::generate_serialize_container(ofstream &out,
 
   } else if (ttype->is_list()) {
     string v = tmp("_viter");
-    out << "(let {f [] = return (); f (" << v << ":t) = do {";
+    out << "(let f = Vector.mapM_ (\\" << v << " -> ";
     generate_serialize_list_element(out, (t_list*)ttype, v);
-    out << ";f t}} in do {writeListBegin oprot (" << type_to_enum(((t_list*)ttype)->get_elem_type()) << ",fromIntegral $ Prelude.length " << prefix << "); f " << prefix << ";writeListEnd oprot})";
+    out << ") in do {writeListBegin oprot (" << type_to_enum(((t_list*)ttype)->get_elem_type()) << ",fromIntegral $ Vector.length " << prefix << "); f " << prefix << ";writeListEnd oprot})";
   }
 
 }
@@ -1450,7 +1465,7 @@ string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_VOID:   return "()";
-    case t_base_type::TYPE_STRING: return (((t_base_type*)type)->is_binary() ? "ByteString" : "String");
+    case t_base_type::TYPE_STRING: return (((t_base_type*)type)->is_binary() ? "ByteString" : "Text");
     case t_base_type::TYPE_BOOL:   return "Bool";
     case t_base_type::TYPE_BYTE:   return "Int8";
     case t_base_type::TYPE_I16:    return "Int16";
@@ -1468,15 +1483,15 @@ string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    type_repr = "Map.Map " + render_hs_type(ktype, true) + " " + render_hs_type(vtype, true);
+    type_repr = "Map.HashMap " + render_hs_type(ktype, true) + " " + render_hs_type(vtype, true);
 
   } else if (type->is_set()) {
     t_type* etype = ((t_set*)type)->get_elem_type();
-    type_repr = "Set.Set " + render_hs_type(etype, true) ;
+    type_repr = "Set.HashSet " + render_hs_type(etype, true) ;
 
   } else if (type->is_list()) {
     t_type* etype = ((t_list*)type)->get_elem_type();
-    return "[" + render_hs_type(etype, false) + "]";
+    type_repr = "Vector.Vector " + render_hs_type(etype, true);
 
   } else {
     throw "INVALID TYPE IN type_to_enum: " + type->get_name();

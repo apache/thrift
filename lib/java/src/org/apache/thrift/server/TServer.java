@@ -125,6 +125,8 @@ public abstract class TServer {
 
   private boolean isServing;
 
+  protected TServerEventHandler eventHandler_;
+
   protected TServer(AbstractServerArgs args) {
     processorFactory_ = args.processorFactory;
     serverTransport_ = args.serverTransport;
@@ -151,5 +153,13 @@ public abstract class TServer {
 
   protected void setServing(boolean serving) {
     isServing = serving;
+  }
+
+  public void setServerEventHandler(TServerEventHandler eventHandler) {
+    eventHandler_ = eventHandler;
+  }
+
+  public TServerEventHandler getEventHandler() {
+    return eventHandler_;
   }
 }

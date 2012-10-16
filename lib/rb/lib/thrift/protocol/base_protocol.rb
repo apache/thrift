@@ -114,6 +114,13 @@ module Thrift
       raise NotImplementedError
     end
 
+    # Writes a Thrift String. In Ruby 1.9+, the String passed will be transcoded to UTF-8.
+    #
+    # str - The String to write.
+    #
+    # Raises EncodingError if the transcoding to UTF-8 fails.
+    #
+    # Returns nothing.
     def write_string(str)
       raise NotImplementedError
     end
@@ -178,6 +185,9 @@ module Thrift
       raise NotImplementedError
     end
 
+    # Reads a Thrift String. In Ruby 1.9+, all String will be returned with an Encoding of UTF-8.
+    #
+    # Returns a String.
     def read_string
       raise NotImplementedError
     end

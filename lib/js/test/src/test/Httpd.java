@@ -72,6 +72,12 @@ import org.apache.thrift.transport.TMemoryBuffer;
 import thrift.test.ThriftTest;
 import org.apache.thrift.server.ServerTestBase.TestHandler;
 
+import eu.medsea.mimeutil.detector.ExtensionMimeDetector;
+import eu.medsea.mimeutil.MimeUtil2;
+import eu.medsea.mimeutil.MimeType;
+import java.util.Collection;
+import java.util.Iterator;
+
 /**
  * Basic, yet fully functional and spec compliant, HTTP/1.1 file server.
  * <p>
@@ -177,8 +183,20 @@ public class Httpd {
 
                 } else {
 
+		    String mimeType = "application/octet-stream";
+		    MimeUtil2 mimeUtil = new MimeUtil2();
+		    mimeUtil.registerMimeDetector(ExtensionMimeDetector.class.getName());
+		    Collection<MimeType> collection = mimeUtil.getMimeTypes(file);
+		    Iterator<MimeType> iterator = collection.iterator();
+		    while(iterator.hasNext()) {
+			MimeType mt = iterator.next();
+			mimeType =  mt.getMediaType() + "/" + mt.getSubType();
+			break;
+		    }
+
                     response.setStatusCode(HttpStatus.SC_OK);
-                    FileEntity body = new FileEntity(file, "text/html");
+                    FileEntity body = new FileEntity(file, mimeType);
+                    response.addHeader("Content-Type", mimeType);
                     response.setEntity(body);
                     System.out.println("Serving file " + file.getPath());
 

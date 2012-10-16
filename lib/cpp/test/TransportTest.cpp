@@ -34,11 +34,11 @@
 #include <boost/type_traits.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <transport/TBufferTransports.h>
-#include <transport/TFDTransport.h>
-#include <transport/TFileTransport.h>
-#include <transport/TZlibTransport.h>
-#include <transport/TSocket.h>
+#include <thrift/transport/TBufferTransports.h>
+#include <thrift/transport/TFDTransport.h>
+#include <thrift/transport/TFileTransport.h>
+#include <thrift/transport/TZlibTransport.h>
+#include <thrift/transport/TSocket.h>
 
 using namespace apache::thrift::transport;
 
@@ -561,6 +561,7 @@ void test_rw(uint32_t totalSize,
   BOOST_CHECK_EQUAL(memcmp(rbuf.get(), wbuf.get(), totalSize), 0);
 }
 
+
 template <class CoupledTransports>
 void test_read_part_available() {
   CoupledTransports transports;
@@ -579,6 +580,33 @@ void test_read_part_available() {
   uint32_t bytes_read = transports.in->read(read_buf, 10);
   BOOST_CHECK_EQUAL(numTriggersFired, (unsigned int) 0);
   BOOST_CHECK_EQUAL(bytes_read, (uint32_t) 9);
+
+  clear_triggers();
+}
+
+template <class CoupledTransports>
+void test_read_part_available_in_chunks() {
+  CoupledTransports transports;
+  BOOST_REQUIRE(transports.in != NULL);
+  BOOST_REQUIRE(transports.out != NULL);
+
+  uint8_t write_buf[16];
+  uint8_t read_buf[16];
+  memset(write_buf, 'a', sizeof(write_buf));
+
+  // Write 10 bytes (in a single frame, for transports that use framing)
+  transports.out->write(write_buf, 10);
+  transports.out->flush();
+
+  // Read 1 byte, to force the transport to read the frame
+  uint32_t bytes_read = transports.in->read(read_buf, 1);
+  BOOST_CHECK_EQUAL(bytes_read, 1);
+
+  // Read more than what is remaining and verify the transport does not block
+  set_trigger(3, transports.out, 1);
+  bytes_read = transports.in->read(read_buf, 10);
+  BOOST_CHECK_EQUAL(numTriggersFired, 0);
+  BOOST_CHECK_EQUAL(bytes_read, 9);
 
   clear_triggers();
 }
@@ -910,6 +938,12 @@ class TransportTestGen {
              transportName);
     tc = boost::unit_test::make_test_case(
           test_read_part_available<CoupledTransports>, name);
+    suite_->add(tc, expectedFailures);
+
+    snprintf(name, sizeof(name), "%s::test_read_part_available_in_chunks()",
+             transportName);
+    tc = boost::unit_test::make_test_case(
+          test_read_part_available_in_chunks<CoupledTransports>, name);
     suite_->add(tc, expectedFailures);
 
     snprintf(name, sizeof(name), "%s::test_read_partial_midframe()",

@@ -385,12 +385,12 @@ public class TBinaryProtocol extends TProtocol {
 
   protected void checkReadLength(int length) throws TException {
     if (length < 0) {
-      throw new TException("Negative length: " + length);
+      throw new TProtocolException("Negative length: " + length);
     }
     if (checkReadLength_) {
       readLength_ -= length;
       if (readLength_ < 0) {
-        throw new TException("Message length exceeded: " + length);
+        throw new TProtocolException("Message length exceeded: " + length);
       }
     }
   }

@@ -76,6 +76,9 @@ extern ID write_method_id;
 extern ID read_all_method_id;
 extern ID read_into_buffer_method_id;
 extern ID native_qmark_method_id;
+extern ID force_binary_encoding_id;
+extern ID convert_to_utf8_byte_buffer_id;
+extern ID convert_to_string_id;
 
 extern ID fields_const_id;
 extern ID transport_ivar_id;
@@ -92,5 +95,6 @@ extern VALUE class_sym;
 extern VALUE rb_cSet;
 extern VALUE thrift_module;
 extern VALUE thrift_types_module;
+extern VALUE thrift_bytes_module;
 extern VALUE class_thrift_protocol;
 extern VALUE protocol_exception_class;

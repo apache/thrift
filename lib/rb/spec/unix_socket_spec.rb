@@ -17,16 +17,15 @@
 # under the License.
 #
 
-require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require 'spec_helper'
 require File.expand_path("#{File.dirname(__FILE__)}/socket_spec_shared")
 
-class ThriftUNIXSocketSpec < Spec::ExampleGroup
-  include Thrift
+describe 'UNIXSocket' do
 
-  describe UNIXSocket do
+  describe Thrift::UNIXSocket do
     before(:each) do
       @path = '/tmp/thrift_spec_socket'
-      @socket = UNIXSocket.new(@path)
+      @socket = Thrift::UNIXSocket.new(@path)
       @handle = mock("Handle", :closed? => false)
       @handle.stub!(:close)
       ::UNIXSocket.stub!(:new).and_return(@handle)
@@ -41,14 +40,14 @@ class ThriftUNIXSocketSpec < Spec::ExampleGroup
 
     it "should accept an optional timeout" do
       ::UNIXSocket.stub!(:new)
-      UNIXSocket.new(@path, 5).timeout.should == 5
+      Thrift::UNIXSocket.new(@path, 5).timeout.should == 5
     end
   end
 
-  describe UNIXServerSocket do
+  describe Thrift::UNIXServerSocket do
     before(:each) do
       @path = '/tmp/thrift_spec_socket'
-      @socket = UNIXServerSocket.new(@path)
+      @socket = Thrift::UNIXServerSocket.new(@path)
     end
 
     it "should create a handle when calling listen" do
@@ -63,7 +62,7 @@ class ThriftUNIXSocketSpec < Spec::ExampleGroup
       sock = mock("sock")
       handle.should_receive(:accept).and_return(sock)
       trans = mock("UNIXSocket")
-      UNIXSocket.should_receive(:new).and_return(trans)
+      Thrift::UNIXSocket.should_receive(:new).and_return(trans)
       trans.should_receive(:handle=).with(sock)
       @socket.accept.should == trans
     end

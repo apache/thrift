@@ -39,9 +39,6 @@ libthriftnb
   This library contains the Thrift nonblocking server, which uses libevent.
   To link this library you will also need to link libevent.
 
-You MUST apply this patch to make generated code compile.
-https://issues.apache.org/jira/browse/THRIFT-1139
-
 Linking Against Thrift
 ======================
 
@@ -78,10 +75,24 @@ to have to link with boost thread as a static library.
 If you wanted instead to link with boost thread as a shared library,
 you'll need to uncomment those two lines, and recompile.
 
+Windows version compatibility
+=============================
+The Thrift library targets Windows XP for broadest compatbility. A notable
+difference is in the Windows-specific implementation of the socket poll
+function. To target Vista, Win7 or other versions, comment out the line
+#define TARGET_WIN_XP.
+
+Named Pipes
+===========
+- Named Pipe transport has been added in the TPipe and TPipeServer classes.
+  This is currently Windows-only (see below).
+
 Known issues
 ============
 
-- Does not support named pipes. (Supported in unix through unix domain sockets).
+- Named pipe transport for *NIX has not been implemented. Domain sockets are
+  a better choice for local IPC under non-Windows OS's. *NIX named pipes 
+  only support 1:1 client-server connection.
 
 TODO
 ====

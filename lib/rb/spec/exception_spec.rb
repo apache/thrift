@@ -17,29 +17,28 @@
 # under the License.
 #
 
-require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require 'spec_helper'
 
-class ThriftExceptionSpec < Spec::ExampleGroup
-  include Thrift
+describe 'Exception' do
 
-  describe Exception do
+  describe Thrift::Exception do
     it "should have an accessible message" do
-      e = Exception.new("test message")
+      e = Thrift::Exception.new("test message")
       e.message.should == "test message"
     end
   end
 
-  describe ApplicationException do
+  describe Thrift::ApplicationException do
     it "should inherit from Thrift::Exception" do
-      ApplicationException.superclass.should == Exception
+      Thrift::ApplicationException.superclass.should == Thrift::Exception
     end
 
     it "should have an accessible type and message" do
-      e = ApplicationException.new
-      e.type.should == ApplicationException::UNKNOWN
+      e = Thrift::ApplicationException.new
+      e.type.should == Thrift::ApplicationException::UNKNOWN
       e.message.should be_nil
-      e = ApplicationException.new(ApplicationException::UNKNOWN_METHOD, "test message")
-      e.type.should == ApplicationException::UNKNOWN_METHOD
+      e = Thrift::ApplicationException.new(Thrift::ApplicationException::UNKNOWN_METHOD, "test message")
+      e.type.should == Thrift::ApplicationException::UNKNOWN_METHOD
       e.message.should == "test message"
     end
 
@@ -47,79 +46,79 @@ class ThriftExceptionSpec < Spec::ExampleGroup
       prot = mock("MockProtocol")
       prot.should_receive(:read_struct_begin).ordered
       prot.should_receive(:read_field_begin).exactly(3).times.and_return(
-        ["message", Types::STRING, 1],
-        ["type", Types::I32, 2],
-        [nil, Types::STOP, 0]
+        ["message", Thrift::Types::STRING, 1],
+        ["type", Thrift::Types::I32, 2],
+        [nil, Thrift::Types::STOP, 0]
       )
       prot.should_receive(:read_string).ordered.and_return "test message"
-      prot.should_receive(:read_i32).ordered.and_return ApplicationException::BAD_SEQUENCE_ID
+      prot.should_receive(:read_i32).ordered.and_return Thrift::ApplicationException::BAD_SEQUENCE_ID
       prot.should_receive(:read_field_end).exactly(2).times
       prot.should_receive(:read_struct_end).ordered
 
-      e = ApplicationException.new
+      e = Thrift::ApplicationException.new
       e.read(prot)
       e.message.should == "test message"
-      e.type.should == ApplicationException::BAD_SEQUENCE_ID
+      e.type.should == Thrift::ApplicationException::BAD_SEQUENCE_ID
     end
 
     it "should skip bad fields when reading a struct" do
       prot = mock("MockProtocol")
       prot.should_receive(:read_struct_begin).ordered
       prot.should_receive(:read_field_begin).exactly(5).times.and_return(
-        ["type", Types::I32, 2],
-        ["type", Types::STRING, 2],
-        ["message", Types::MAP, 1],
-        ["message", Types::STRING, 3],
-        [nil, Types::STOP, 0]
+        ["type", Thrift::Types::I32, 2],
+        ["type", Thrift::Types::STRING, 2],
+        ["message", Thrift::Types::MAP, 1],
+        ["message", Thrift::Types::STRING, 3],
+        [nil, Thrift::Types::STOP, 0]
       )
-      prot.should_receive(:read_i32).and_return ApplicationException::INVALID_MESSAGE_TYPE
-      prot.should_receive(:skip).with(Types::STRING).twice
-      prot.should_receive(:skip).with(Types::MAP)
+      prot.should_receive(:read_i32).and_return Thrift::ApplicationException::INVALID_MESSAGE_TYPE
+      prot.should_receive(:skip).with(Thrift::Types::STRING).twice
+      prot.should_receive(:skip).with(Thrift::Types::MAP)
       prot.should_receive(:read_field_end).exactly(4).times
       prot.should_receive(:read_struct_end).ordered
 
-      e = ApplicationException.new
+      e = Thrift::ApplicationException.new
       e.read(prot)
       e.message.should be_nil
-      e.type.should == ApplicationException::INVALID_MESSAGE_TYPE
+      e.type.should == Thrift::ApplicationException::INVALID_MESSAGE_TYPE
     end
 
     it "should write a Thrift::ApplicationException struct to the oprot" do
       prot = mock("MockProtocol")
       prot.should_receive(:write_struct_begin).with("Thrift::ApplicationException").ordered
-      prot.should_receive(:write_field_begin).with("message", Types::STRING, 1).ordered
+      prot.should_receive(:write_field_begin).with("message", Thrift::Types::STRING, 1).ordered
       prot.should_receive(:write_string).with("test message").ordered
-      prot.should_receive(:write_field_begin).with("type", Types::I32, 2).ordered
-      prot.should_receive(:write_i32).with(ApplicationException::UNKNOWN_METHOD).ordered
+      prot.should_receive(:write_field_begin).with("type", Thrift::Types::I32, 2).ordered
+      prot.should_receive(:write_i32).with(Thrift::ApplicationException::UNKNOWN_METHOD).ordered
       prot.should_receive(:write_field_end).twice
       prot.should_receive(:write_field_stop).ordered
       prot.should_receive(:write_struct_end).ordered
 
-      e = ApplicationException.new(ApplicationException::UNKNOWN_METHOD, "test message")
+      e = Thrift::ApplicationException.new(Thrift::ApplicationException::UNKNOWN_METHOD, "test message")
       e.write(prot)
     end
 
     it "should skip nil fields when writing to the oprot" do
       prot = mock("MockProtocol")
       prot.should_receive(:write_struct_begin).with("Thrift::ApplicationException").ordered
-      prot.should_receive(:write_field_begin).with("message", Types::STRING, 1).ordered
+      prot.should_receive(:write_field_begin).with("message", Thrift::Types::STRING, 1).ordered
       prot.should_receive(:write_string).with("test message").ordered
       prot.should_receive(:write_field_end).ordered
       prot.should_receive(:write_field_stop).ordered
       prot.should_receive(:write_struct_end).ordered
 
-      e = ApplicationException.new(nil, "test message")
+      e = Thrift::ApplicationException.new(nil, "test message")
       e.write(prot)
 
       prot = mock("MockProtocol")
       prot.should_receive(:write_struct_begin).with("Thrift::ApplicationException").ordered
-      prot.should_receive(:write_field_begin).with("type", Types::I32, 2).ordered
-      prot.should_receive(:write_i32).with(ApplicationException::BAD_SEQUENCE_ID).ordered
+      prot.should_receive(:write_field_begin).with("type", Thrift::Types::I32, 2).ordered
+      prot.should_receive(:write_i32).with(Thrift::ApplicationException::BAD_SEQUENCE_ID).ordered
       prot.should_receive(:write_field_end).ordered
       prot.should_receive(:write_field_stop).ordered
       prot.should_receive(:write_struct_end).ordered
 
-      e = ApplicationException.new(ApplicationException::BAD_SEQUENCE_ID)
+      e = Thrift::ApplicationException.new(Thrift::ApplicationException::BAD_SEQUENCE_ID)
       e.write(prot)
 
       prot = mock("MockProtocol")
@@ -127,15 +126,15 @@ class ThriftExceptionSpec < Spec::ExampleGroup
       prot.should_receive(:write_field_stop).ordered
       prot.should_receive(:write_struct_end).ordered
 
-      e = ApplicationException.new(nil)
+      e = Thrift::ApplicationException.new(nil)
       e.write(prot)
     end
   end
 
-  describe ProtocolException do
+  describe Thrift::ProtocolException do
     it "should have an accessible type" do
-      prot = ProtocolException.new(ProtocolException::SIZE_LIMIT, "message")
-      prot.type.should == ProtocolException::SIZE_LIMIT
+      prot = Thrift::ProtocolException.new(Thrift::ProtocolException::SIZE_LIMIT, "message")
+      prot.type.should == Thrift::ProtocolException::SIZE_LIMIT
       prot.message.should == "message"
     end
   end

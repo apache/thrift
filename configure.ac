@@ -19,7 +19,7 @@
 
 AC_PREREQ(2.65)
 
-AC_INIT([thrift], [0.8.0-dev])
+AC_INIT([thrift], [1.0.0-dev])
 
 AC_CONFIG_AUX_DIR([.])
 
@@ -89,6 +89,13 @@ AC_ARG_VAR([GOBIN], [Binary directory for Go.
                            Default = "/usr/local/bin"])
 AS_IF([test "x$GOBIN" = x], [GOBIN="/usr/local/bin"])
 
+AC_ARG_VAR([D_IMPORT_PREFIX], [Prefix for installing D modules.
+                           [INCLUDEDIR/d2]])
+AS_IF([test "x$D_IMPORT_PREFIX" = x], [D_IMPORT_PREFIX="${includedir}/d2"])
+
+AC_ARG_VAR([DMD_LIBEVENT_FLAGS], [DMD flags for linking libevent (auto-detected if not set).])
+AC_ARG_VAR([DMD_OPENSSL_FLAGS], [DMD flags for linking OpenSSL (auto-detected if not set).])
+
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_CXX
@@ -108,7 +115,7 @@ AC_LANG([C++])
 AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
 if test "$with_cpp" = "yes";  then
-  AX_BOOST_BASE([1.33.1])
+  AX_BOOST_BASE([1.40.0])
   if test "x$succeeded" = "xyes" ; then
     have_cpp="yes"
   fi
@@ -118,12 +125,23 @@ if test "$with_cpp" = "yes";  then
 
   AX_LIB_ZLIB([1.2.3])
   have_zlib=$success
+  
+  AX_THRIFT_LIB(qt4, [Qt], yes)
+  have_qt=no
+  if test "$with_qt4" = "yes";  then
+    PKG_CHECK_MODULES([QT], [QtCore >= 4.3, QtNetwork >= 4.3], have_qt=yes, have_qt=no)
+  fi
+  if test "$have_qt" = "yes"; then
+    AC_PATH_PROGS([QT_MOC], [moc-qt4 moc])
+    have_qt=$success
+  fi
 fi
 AM_CONDITIONAL([WITH_CPP], [test "$have_cpp" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$have_libevent" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$have_zlib" = "yes"])
+AM_CONDITIONAL([AMX_HAVE_QT], [test "$have_qt" = "yes"])
 
-AX_THRIFT_LIB(c_glib, [C (GLib)], no)
+AX_THRIFT_LIB(c_glib, [C (GLib)], yes)
 if test "$with_c_glib" = "yes"; then
   PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.0], have_glib2=yes, have_glib2=no)
   PKG_CHECK_MODULES([GOBJECT], [gobject-2.0 >= 2.0], have_gobject2=yes, have_gobject2=no)
@@ -216,6 +234,9 @@ if test "$with_php_extension" = "yes"; then
 fi
 AM_CONDITIONAL(WITH_PHP_EXTENSION, [test "$have_php_extension" = "yes"])
 
+AC_PATH_PROG([PHPUNIT], [phpunit])
+AM_CONDITIONAL(HAVE_PHPUNIT, [test "x$PHPUNIT" != "x"])
+
 AX_THRIFT_LIB(ruby, [Ruby], yes)
 have_ruby=no
 if test "$with_ruby" = "yes"; then
@@ -277,11 +298,111 @@ if test "$with_go" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
 
+
+AX_THRIFT_LIB(d, [D], yes)
+if test "$with_d" = "yes";  then
+  AX_DMD
+  AC_SUBST(DMD)
+  if test "x$DMD" != "x"; then
+    have_d="yes"
+  fi
+fi
+
+# Determine actual name of the generated D library for use in the command line
+# when compiling tests. This is needed because the -l<lib> syntax doesn't work
+# with OPTLINK (Windows).
+lib_prefix=lib
+lib_suffix=a
+case "$host_os" in
+  cygwin* | mingw* | pw32* | cegcc*)
+    lib_prefix=""
+    lib_suffix=lib
+    ;;
+esac
+D_LIB_NAME="${lib_prefix}thriftd.${lib_suffix}"
+AC_SUBST(D_LIB_NAME)
+D_EVENT_LIB_NAME="${lib_prefix}thriftd-event.${lib_suffix}"
+AC_SUBST(D_EVENT_LIB_NAME)
+D_SSL_LIB_NAME="${lib_prefix}thriftd-ssl.${lib_suffix}"
+AC_SUBST(D_SSL_LIB_NAME)
+
+if test "$have_d" = "yes"; then
+  AX_CHECK_D_MODULE(deimos.event2.event)
+  have_deimos_event2=$success
+
+  with_d_event_tests="no"
+  if test "$have_deimos_event2" = "yes"; then
+    if test "x$DMD_LIBEVENT_FLAGS" = "x"; then
+      if test "$dmd_optlink" = "yes"; then
+        AC_MSG_WARN([D libevent interface found, but cannot auto-detect \
+linker flags for OPTLINK. Please set DMD_LIBEVENT_FLAGS manually.])
+      else
+        AX_LIB_EVENT([2.0])
+        if test "$success" = "yes"; then
+          DMD_LIBEVENT_FLAGS=$(echo "$LIBEVENT_LDFLAGS $LIBEVENT_LIBS" | \
+            sed -e 's/^ *//g;s/ *$//g;s/^\(.\)/-L\1/g;s/  */ -L/g')
+          with_d_event_tests="yes"
+        else
+          AC_MSG_WARN([D libevent interface present, but libevent library not found.])
+        fi
+      fi
+    else
+      with_d_event_tests="yes"
+    fi
+  fi
+
+  AX_CHECK_D_MODULE(deimos.openssl.ssl)
+  have_deimos_openssl=$success
+
+  with_d_ssl_tests="no"
+  if test "$have_deimos_openssl" = "yes"; then
+    if test "x$DMD_OPENSSL_FLAGS" = "x"; then
+      if test "$dmd_optlink" = "yes"; then
+        AC_MSG_WARN([D OpenSSL interface found, but cannot auto-detect \
+linker flags for OPTLINK. Please set DMD_OPENSSL_FLAGS manually.])
+      else
+        AX_CHECK_OPENSSL([with_d_ssl_tests="yes"])
+        if test "$with_d_ssl_tests" = "yes"; then
+          DMD_OPENSSL_FLAGS=$(echo "$OPENSSL_LDFLAGS $OPENSSL_LIBS" | \
+            sed -e 's/^ *//g;s/ *$//g;s/^\(.\)/-L\1/g;s/  */ -L/g')
+        else
+          AC_MSG_WARN([D OpenSSL interface present, but OpenSSL library not found.])
+        fi
+      fi
+    else
+      with_d_ssl_tests="yes"
+    fi
+  fi
+fi
+
+AM_CONDITIONAL(WITH_D, [test "$have_d" = "yes"])
+AM_CONDITIONAL(DMD_OPTLINK, [test "$dmd_optlink" = "yes"])
+AC_SUBST(DMD_OF_DIRSEP, "$dmd_of_dirsep")
+AM_CONDITIONAL(HAVE_DEIMOS_EVENT2, [test "$have_deimos_event2" = "yes"])
+AM_CONDITIONAL(WITH_D_EVENT_TESTS, [test "$with_d_event_tests" = "yes"])
+AC_SUBST(DMD_LIBEVENT_FLAGS)
+AM_CONDITIONAL(HAVE_DEIMOS_OPENSSL, [test "$have_deimos_openssl" = "yes"])
+AM_CONDITIONAL(WITH_D_SSL_TESTS, [test "$with_d_ssl_tests" = "yes"])
+AC_SUBST(DMD_OPENSSL_FLAGS)
+
+
 have_tests=yes
 if test "$with_tests" = "no"; then
   have_tests="no"
 fi
 AM_CONDITIONAL(WITH_TESTS, [test "$have_tests" = "yes"])
+
+AM_CONDITIONAL(MINGW, false)
+case "${host_os}" in
+*mingw*)
+  mingw32_support="yes"
+  AC_CHECK_HEADER(windows.h)
+  AM_CONDITIONAL(MINGW, true)
+  ;;
+*)
+  AC_ISC_POSIX
+  ;;
+esac
 
 AC_C_CONST
 AC_C_INLINE
@@ -313,6 +434,7 @@ AC_CHECK_HEADERS([malloc.h])
 AC_CHECK_HEADERS([openssl/ssl.h])
 AC_CHECK_HEADERS([openssl/rand.h])
 AC_CHECK_HEADERS([openssl/x509v3.h])
+AC_CHECK_HEADERS([sched.h])
 
 AC_CHECK_LIB(pthread, pthread_create)
 dnl NOTE(dreiss): I haven't been able to find any really solid docs
@@ -456,29 +578,36 @@ AC_CONFIG_FILES([
   Makefile
   compiler/cpp/Makefile
   compiler/cpp/version.h
+  compiler/cpp/src/windows/version.h
   lib/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
   lib/cpp/thrift-nb.pc
   lib/cpp/thrift-z.pc
+  lib/cpp/thrift-qt.pc
   lib/cpp/thrift.pc
   lib/c_glib/Makefile
   lib/c_glib/thrift_c_glib.pc
   lib/c_glib/test/Makefile
   lib/csharp/Makefile
+  lib/d/Makefile
+  lib/d/test/Makefile
   lib/erl/Makefile
-  lib/erl/src/thrift.app.src
   lib/hs/Makefile
   lib/java/Makefile
   lib/js/test/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile
   lib/php/Makefile
+  lib/php/test/Makefile
   lib/py/Makefile
   lib/rb/Makefile
   test/Makefile
   test/cpp/Makefile
   test/hs/Makefile
+  test/nodejs/Makefile
+  test/php/Makefile
+  test/perl/Makefile
   test/py/Makefile
   test/py.twisted/Makefile
   test/rb/Makefile
@@ -489,8 +618,6 @@ AC_OUTPUT
 
 echo
 echo "$PACKAGE $VERSION"
-echo
-echo "Building code generators ..... :$thrift_generators"
 echo
 echo "Building C++ Library ......... : $have_cpp"
 echo "Building C (GLib) Library .... : $have_c_glib"
@@ -503,53 +630,72 @@ echo "Building Perl Library ........ : $have_perl"
 echo "Building PHP Library ......... : $have_php"
 echo "Building Erlang Library ...... : $have_erlang"
 echo "Building Go Library .......... : $have_go"
+echo "Building D Library ........... : $have_d"
+
 if test "$have_cpp" = "yes" ; then
   echo
-  echo "Building TZlibTransport ...... : $have_zlib"
-  echo "Building TNonblockingServer .. : $have_libevent"
+  echo "C++ Library:"
+  echo "   Build TZlibTransport ...... : $have_zlib"
+  echo "   Build TNonblockingServer .. : $have_libevent"
+  echo "   Build TQTcpServer (Qt) .... : $have_qt"
 fi
 if test "$have_java" = "yes" ; then
   echo
-  echo "Using javac .................. : $JAVAC"
-  echo "Using java ................... : $JAVA"
-  echo "Using ant .................... : $ANT"
+  echo "Java Library:"
+  echo "   Using javac ............... : $JAVAC"
+  echo "   Using java ................ : $JAVA"
+  echo "   Using ant ................. : $ANT"
 fi
 if test "$have_csharp" = "yes" ; then
   echo
-  echo "Using .NET 3.5 ............... : $net_3_5"
+  echo "C# Library:"
+  echo "   Using .NET 3.5 ............ : $net_3_5"
 fi
 if test "$have_python" = "yes" ; then
   echo
-  echo "Using Python ................. : $PYTHON"
+  echo "Python Library:"
+  echo "   Using Python .............. : $PYTHON"
 fi
 if test "$have_php" = "yes" ; then
   echo
-  echo "Using php-config ............. : $PHP_CONFIG"
+  echo "PHP Library:"
+  echo "   Using php-config .......... : $PHP_CONFIG"
 fi
 if test "$have_ruby" = "yes" ; then
   echo
-  echo "Using Ruby ................... : $RUBY"
+  echo "Ruby Library:"
+  echo "   Using Ruby ................ : $RUBY"
 fi
 if test "$have_haskell" = "yes" ; then
   echo
-  echo "Using Haskell ................ : $RUNHASKELL"
-  echo "Using Cabal .................. : $CABAL"
+  echo "Haskell Library:"
+  echo "   Using Haskell ............. : $RUNHASKELL"
+  echo "   Using Cabal ............... : $CABAL"
 fi
 if test "$have_perl" = "yes" ; then
   echo
-  echo "Using Perl ................... : $PERL"
+  echo "Perl Library:"
+  echo "   Using Perl ................ : $PERL"
 fi
 if test "$have_erlang" = "yes" ; then
   echo
-  echo "Using erlc ................... : $ERLC"
+  echo "Erlang Library:"
+  echo "   Using erlc ................ : $ERLC"
 fi
 if test "$have_go" = "yes" ; then
   echo
-  echo "Using GOROOT.................. : $GOROOT"
-  echo "Using GOBIN................... : $GOBIN"
-  echo "Using GOARCH.................. : $GOARCH"
-  echo "Using GO Compiler............. : $GO_C"
-  echo "Using GO Linker............... : $GO_L"
+  echo "Go Library:"
+  echo "   Using GOROOT............... : $GOROOT"
+  echo "   Using GOBIN................ : $GOBIN"
+  echo "   Using GOARCH............... : $GOARCH"
+  echo "   Using GO Compiler.......... : $GO_C"
+  echo "   Using GO Linker............ : $GO_L"
+fi
+if test "$have_d" = "yes" ; then
+  echo
+  echo "Using D Compiler ............. : $DMD"
+  echo "Building D libevent tests .... : $with_d_event_tests"
+  echo "Building D SSL tests ......... : $with_d_ssl_tests"
 fi
 echo
 echo "If something is missing that you think should be present,"

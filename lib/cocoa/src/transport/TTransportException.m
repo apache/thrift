@@ -18,6 +18,7 @@
  */
 
 #import "TTransportException.h"
+#import "TObjective-C.h"
 
 @implementation TTransportException
 

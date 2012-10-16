@@ -47,13 +47,14 @@ public class TestTSSLTransportFactory extends ServerTestBase {
   }
 
   @Override
-  public void startServer(final TProcessor processor, final TProtocolFactory protoFactory)
+  public void startServer(final TProcessor processor, final TProtocolFactory protoFactory, final TTransportFactory factory)
   throws Exception {
     serverThread = new Thread() {
       public void run() {
         try {
           TServerTransport serverTransport = TSSLTransportFactory.getServerSocket(PORT);
-          server = new TSimpleServer(new Args(serverTransport).processor(processor));
+          final Args args = new Args(serverTransport).processor(processor);
+          server = new TSimpleServer(args);
           server.serve();
         } catch (TTransportException e) {
           e.printStackTrace();
@@ -78,5 +79,10 @@ public class TestTSSLTransportFactory extends ServerTestBase {
   @Override
   public List<TProtocolFactory> getProtocols() {
     return protocols;
+  }
+
+  @Override
+  public void testTransportFactory() throws Exception {
+    // this test doesn't really apply to this suite, so let's skip it.
   }
 }

@@ -14,5 +14,11 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-ALL:	
+all:	
 	../../../compiler/cpp/thrift --gen js:node user.thrift
+
+server: all	
+	NODE_PATH=../lib:../lib/thrift node server.js
+
+client: all	
+	NODE_PATH=../lib:../lib/thrift node client.js

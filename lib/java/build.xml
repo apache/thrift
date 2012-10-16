@@ -242,6 +242,9 @@
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
       <arg line="--gen java:beans,nocamel ${test.thrift.home}/JavaBeansTest.thrift"/>
     </exec>
+    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+      <arg line="--gen java:hashcode ${test.thrift.home}/ManyOptionals.thrift"/>
+    </exec>
   </target>
 
   <target name="proxy" if="proxy.enabled">
@@ -303,11 +306,11 @@
       <developer id="jfarrell" name="Jake Farrell"/>
 
       <!-- Thrift dependencies list -->
-      <dependency groupId="org.slf4j" artifactId="slf4j-api" version="1.5.8"/>
-      <dependency groupId="commons-lang" artifactId="commons-lang" version="2.5"/>
-      <dependency groupId="javax.servlet" artifactId="servlet-api" version="2.5" scope="provided"/>
-      <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="4.1.2"/>      
-      <dependency groupId="org.apache.httpcomponents" artifactId="httpcore" version="4.1.3"/>
+      <dependency groupId="org.slf4j" artifactId="slf4j-api" version="${slf4j.version}"/>
+      <dependency groupId="commons-lang" artifactId="commons-lang" version="${commons-lang.version}"/>
+      <dependency groupId="javax.servlet" artifactId="servlet-api" version="${servlet.version}" scope="provided"/>
+      <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="${httpclient.version}"/>
+      <dependency groupId="org.apache.httpcomponents" artifactId="httpcore" version="${httpcore.version}"/>
     </artifact:pom>
 
     <!-- Generate the pom file -->

@@ -19,6 +19,7 @@
 
 #import "TMemoryBuffer.h"
 #import "TTransportException.h"
+#import "TObjective-C.h"
 
 #define GARBAGE_BUFFER_SIZE 4096 // 4KiB
 
@@ -61,11 +62,11 @@
 }
 
 - (NSData *)getBuffer {
-	return [[mBuffer copy] autorelease];
+	return [[mBuffer copy] autorelease_stub];
 }
 
 - (void)dealloc {
-	[mBuffer release];
-	[super dealloc];
+	[mBuffer release_stub];
+	[super dealloc_stub];
 }
 @end

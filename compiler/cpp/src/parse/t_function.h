@@ -82,6 +82,8 @@ class t_function : public t_doc {
     return oneway_;
   }
 
+  std::map<std::string, std::string> annotations_;
+
  private:
   t_type* returntype_;
   std::string name_;

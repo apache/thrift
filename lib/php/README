@@ -29,24 +29,14 @@ features (i.e. APC cacheing using asbolute path URLs) as simple as possible.
 
 To use Thrift in your PHP codebase, take the following steps:
 
-#1) Copy all of thrift/lib/php/src into your PHP codebase
-#2) Set $GLOBALS['THRIFT_ROOT'] to the path you installed Thrift
-#3) include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
+#1) Copy all of thrift/lib/php/lib into your PHP codebase
+#2) Configure Symfony Autoloader (or whatever you usually use)
 
-Note that #3 must be done before including any other Thrift files.
-If you do not do #2, Thrift.php will set this global for you, but it will be
-done using dirname(__FILE__), which is less efficient than providing the static
-string yourself.
+After thaht, you have to manually include the Thrift package
+created by the compiler:
 
-When you generate a Thrift package using the compiler, it makes an assumption
-about where your generated code will live. If your file is "MyPackage.thrift",
-the generated files must be installed into:
-
-$GLOBALS['THRIFT_ROOT'].'/packages/MyPackage/';
-
-This allows the code generator to compile your code without any extra flags
-for the target directory names while still allowing your include paths to
-be absolute (if you have an absolute THRIFT_ROOT).
+require_once 'packages/Service/Service.php';
+require_once 'packages/Service/Types.php';
 
 Dependencies
 ============

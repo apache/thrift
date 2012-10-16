@@ -20,23 +20,23 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include <concurrency/ThreadManager.h>
-#include <concurrency/PlatformThreadFactory.h>
-#include <protocol/TBinaryProtocol.h>
-#include <protocol/TJSONProtocol.h>
-#include <server/TSimpleServer.h>
-#include <server/TThreadedServer.h>
-#include <server/TThreadPoolServer.h>
-#include <async/TEvhttpServer.h>
-#include <async/TAsyncBufferProcessor.h>
-#include <async/TAsyncProtocolProcessor.h>
-#include <server/TNonblockingServer.h>
-#include <transport/TServerSocket.h>
-#include <transport/TSSLServerSocket.h>
-#include <transport/TSSLSocket.h>
-#include <transport/THttpServer.h>
-#include <transport/THttpTransport.h>
-#include <transport/TTransportUtils.h>
+#include <thrift/concurrency/ThreadManager.h>
+#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/protocol/TJSONProtocol.h>
+#include <thrift/server/TSimpleServer.h>
+#include <thrift/server/TThreadedServer.h>
+#include <thrift/server/TThreadPoolServer.h>
+#include <thrift/async/TEvhttpServer.h>
+#include <thrift/async/TAsyncBufferProcessor.h>
+#include <thrift/async/TAsyncProtocolProcessor.h>
+#include <thrift/server/TNonblockingServer.h>
+#include <thrift/transport/TServerSocket.h>
+#include <thrift/transport/TSSLServerSocket.h>
+#include <thrift/transport/TSSLSocket.h>
+#include <thrift/transport/THttpServer.h>
+#include <thrift/transport/THttpTransport.h>
+#include <thrift/transport/TTransportUtils.h>
 #include "ThriftTest.h"
 
 #include <iostream>
@@ -284,7 +284,7 @@ class TestHandler : public ThriftTestIf {
       e.errorCode = 1001;
       e.message = arg;
       throw e;
-    } else if (arg.compare("ApplicationException") == 0) {
+    } else if (arg.compare("TException") == 0) {
       apache::thrift::TException e;
       throw e;
     } else {
@@ -360,7 +360,7 @@ class TestProcessorEventHandler : public TProcessorEventHandler {
 
 class TestHandlerAsync : public ThriftTestCobSvIf {
 public:
-  TestHandlerAsync(shared_ptr<TestHandler>& handler) : _delegate(handler) {}
+  TestHandlerAsync(boost::shared_ptr<TestHandler>& handler) : _delegate(handler) {}
   virtual ~TestHandlerAsync() {}
 
   virtual void testVoid(std::tr1::function<void()> cob) {
@@ -485,7 +485,7 @@ public:
   }
 
 protected:
-  shared_ptr<TestHandler> _delegate;
+  boost::shared_ptr<TestHandler> _delegate;
 };
 
 
@@ -566,56 +566,56 @@ int main(int argc, char **argv) {
   }
 
   // Dispatcher
-  shared_ptr<TProtocolFactory> protocolFactory;
+  boost::shared_ptr<TProtocolFactory> protocolFactory;
   if (protocol_type == "json") {
-    shared_ptr<TProtocolFactory> jsonProtocolFactory(new TJSONProtocolFactory());
+    boost::shared_ptr<TProtocolFactory> jsonProtocolFactory(new TJSONProtocolFactory());
     protocolFactory = jsonProtocolFactory;
   } else {
-    shared_ptr<TProtocolFactory> binaryProtocolFactory(new TBinaryProtocolFactoryT<TBufferBase>());
+    boost::shared_ptr<TProtocolFactory> binaryProtocolFactory(new TBinaryProtocolFactoryT<TBufferBase>());
     protocolFactory = binaryProtocolFactory;
   }
 
   // Processor
-  shared_ptr<TestHandler> testHandler(new TestHandler());
-  shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
+  boost::shared_ptr<TestHandler> testHandler(new TestHandler());
+  boost::shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
   
   if (vm.count("processor-events")) {
-    testProcessor->setEventHandler(shared_ptr<TProcessorEventHandler>(
+    testProcessor->setEventHandler(boost::shared_ptr<TProcessorEventHandler>(
           new TestProcessorEventHandler()));
   }
   
   // Transport
-  shared_ptr<TSSLSocketFactory> sslSocketFactory;
-  shared_ptr<TServerSocket> serverSocket;
+  boost::shared_ptr<TSSLSocketFactory> sslSocketFactory;
+  boost::shared_ptr<TServerSocket> serverSocket;
 
   if (ssl) {
-    sslSocketFactory = shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
+    sslSocketFactory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     sslSocketFactory->loadCertificate("./server-certificate.pem");
     sslSocketFactory->loadPrivateKey("./server-private-key.pem");
     sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    serverSocket = shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
+    serverSocket = boost::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
   } else {
 	if (domain_socket != "") {
 	  unlink(domain_socket.c_str());
-	  serverSocket = shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
+	  serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
 	  port = 0;
 	}
 	else {
-      serverSocket = shared_ptr<TServerSocket>(new TServerSocket(port));
+      serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(port));
 	}
   }
 
   // Factory
-  shared_ptr<TTransportFactory> transportFactory;
+  boost::shared_ptr<TTransportFactory> transportFactory;
   
   if (transport_type == "http" && server_type != "nonblocking") {
-    shared_ptr<TTransportFactory> httpTransportFactory(new THttpServerTransportFactory()); 
+    boost::shared_ptr<TTransportFactory> httpTransportFactory(new THttpServerTransportFactory()); 
     transportFactory = httpTransportFactory;
   } else if (transport_type == "framed") {
-    shared_ptr<TTransportFactory> framedTransportFactory(new TFramedTransportFactory()); 
+    boost::shared_ptr<TTransportFactory> framedTransportFactory(new TFramedTransportFactory()); 
     transportFactory = framedTransportFactory;
   } else {
-    shared_ptr<TTransportFactory> bufferedTransportFactory(new TBufferedTransportFactory()); 
+    boost::shared_ptr<TTransportFactory> bufferedTransportFactory(new TBufferedTransportFactory()); 
     transportFactory = bufferedTransportFactory;
   }
 
@@ -638,11 +638,11 @@ int main(int argc, char **argv) {
 
   } else if (server_type == "thread-pool") {
 
-    shared_ptr<ThreadManager> threadManager =
+    boost::shared_ptr<ThreadManager> threadManager =
       ThreadManager::newSimpleThreadManager(workers);
 
-    shared_ptr<PlatformThreadFactory> threadFactory =
-      shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+    boost::shared_ptr<PlatformThreadFactory> threadFactory =
+      boost::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
     threadManager->threadFactory(threadFactory);
 
@@ -667,9 +667,9 @@ int main(int argc, char **argv) {
 
   } else if (server_type == "nonblocking") {
     if(transport_type == "http") {
-      shared_ptr<TestHandlerAsync> testHandlerAsync(new TestHandlerAsync(testHandler));
-      shared_ptr<TAsyncProcessor> testProcessorAsync(new ThriftTestAsyncProcessor(testHandlerAsync));
-      shared_ptr<TAsyncBufferProcessor> testBufferProcessor(new TAsyncProtocolProcessor(testProcessorAsync, protocolFactory));
+      boost::shared_ptr<TestHandlerAsync> testHandlerAsync(new TestHandlerAsync(testHandler));
+      boost::shared_ptr<TAsyncProcessor> testProcessorAsync(new ThriftTestAsyncProcessor(testHandlerAsync));
+      boost::shared_ptr<TAsyncBufferProcessor> testBufferProcessor(new TAsyncProtocolProcessor(testProcessorAsync, protocolFactory));
       
       TEvhttpServer nonblockingServer(testBufferProcessor, port);
       nonblockingServer.serve();

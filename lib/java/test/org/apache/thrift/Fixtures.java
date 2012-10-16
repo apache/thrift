@@ -329,7 +329,7 @@ public class Fixtures {
 
       // superhuge compact proto test struct
       compactProtoTestStruct = new CompactProtoTestStruct(
-          thrift.test.Constants.COMPACT_TEST);
+          thrift.test.DebugProtoTestConstants.COMPACT_TEST);
       compactProtoTestStruct.setA_binary(ByteBuffer.wrap(new byte[] { 0, 1, 2,
           3, 4, 5, 6, 7, 8 }));
     } catch (Exception e) {

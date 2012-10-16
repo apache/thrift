@@ -20,8 +20,8 @@
 from TProtocol import *
 from struct import pack, unpack
 
-class TBinaryProtocol(TProtocolBase):
 
+class TBinaryProtocol(TProtocolBase):
   """Binary implementation of the Thrift protocol driver."""
 
   # NastyHaxx. Python 2.4+ on 32-bit machines forces hex constants to be
@@ -68,7 +68,7 @@ class TBinaryProtocol(TProtocolBase):
     pass
 
   def writeFieldStop(self):
-    self.writeByte(TType.STOP);
+    self.writeByte(TType.STOP)
 
   def writeMapBegin(self, ktype, vtype, size):
     self.writeByte(ktype)
@@ -127,13 +127,16 @@ class TBinaryProtocol(TProtocolBase):
     if sz < 0:
       version = sz & TBinaryProtocol.VERSION_MASK
       if version != TBinaryProtocol.VERSION_1:
-        raise TProtocolException(type=TProtocolException.BAD_VERSION, message='Bad version in readMessageBegin: %d' % (sz))
+        raise TProtocolException(
+          type=TProtocolException.BAD_VERSION,
+          message='Bad version in readMessageBegin: %d' % (sz))
       type = sz & TBinaryProtocol.TYPE_MASK
       name = self.readString()
       seqid = self.readI32()
     else:
       if self.strictRead:
-        raise TProtocolException(type=TProtocolException.BAD_VERSION, message='No protocol version header')
+        raise TProtocolException(type=TProtocolException.BAD_VERSION,
+                                 message='No protocol version header')
       name = self.trans.readAll(sz)
       type = self.readByte()
       seqid = self.readI32()
@@ -231,7 +234,6 @@ class TBinaryProtocolFactory:
 
 
 class TBinaryProtocolAccelerated(TBinaryProtocol):
-
   """C-Accelerated version of TBinaryProtocol.
 
   This class does not override any of TBinaryProtocol's methods,
@@ -250,7 +252,6 @@ class TBinaryProtocolAccelerated(TBinaryProtocol):
          Please feel free to report bugs and/or success stories
          to the public mailing list.
   """
-
   pass
 
 

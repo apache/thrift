@@ -1,3 +1,4 @@
+# encoding: UTF-8
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -18,7 +19,7 @@
 #
 
 require 'rubygems'
-require 'spec'
+require 'rspec'
 
 $:.unshift File.join(File.dirname(__FILE__), *%w[.. ext])
 
@@ -26,25 +27,27 @@ $:.unshift File.join(File.dirname(__FILE__), *%w[.. ext])
 # will get screwed up
 # $" << 'fastthread.bundle'
 
-require File.dirname(__FILE__) + '/../lib/thrift'
+require 'thrift'
 
-class Object
-  # tee is a useful method, so let's let our tests have it
-  def tee(&block)
-    block.call(self)
-    self
+unless Object.method_defined? :tap
+  # if Object#tap isn't defined, then add it; this should only happen in Ruby < 1.8.7
+  class Object
+    def tap(&block)
+      block.call(self)
+      self
+    end
   end
 end
 
-Spec::Runner.configure do |configuration|
+RSpec.configure do |configuration|
   configuration.before(:each) do
     Thrift.type_checking = true
   end
 end
 
 $:.unshift File.join(File.dirname(__FILE__), *%w[.. test debug_proto gen-rb])
-require "srv"
-require "debug_proto_test_constants"
+require 'srv'
+require 'debug_proto_test_constants'
 
 $:.unshift File.join(File.dirname(__FILE__), *%w[gen-rb])
 require 'thrift_spec_types'

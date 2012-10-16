@@ -45,6 +45,7 @@ public class TThreadPoolServer extends TServer {
   public static class Args extends AbstractServerArgs<Args> {
     public int minWorkerThreads = 5;
     public int maxWorkerThreads = Integer.MAX_VALUE;
+    public ExecutorService executorService;
     public int stopTimeoutVal = 60;
     public TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
 
@@ -59,6 +60,11 @@ public class TThreadPoolServer extends TServer {
 
     public Args maxWorkerThreads(int n) {
       maxWorkerThreads = n;
+      return this;
+    }
+
+    public Args executorService(ExecutorService executorService) {
+      this.executorService = executorService;
       return this;
     }
   }
@@ -76,17 +82,21 @@ public class TThreadPoolServer extends TServer {
   public TThreadPoolServer(Args args) {
     super(args);
 
-    SynchronousQueue<Runnable> executorQueue =
-      new SynchronousQueue<Runnable>();
-
     stopTimeoutUnit = args.stopTimeoutUnit;
     stopTimeoutVal = args.stopTimeoutVal;
 
-    executorService_ = new ThreadPoolExecutor(args.minWorkerThreads,
-                                              args.maxWorkerThreads,
-                                              60,
-                                              TimeUnit.SECONDS,
-                                              executorQueue);
+    executorService_ = args.executorService != null ?
+        args.executorService : createDefaultExecutorService(args);
+  }
+
+  private static ExecutorService createDefaultExecutorService(Args args) {
+    SynchronousQueue<Runnable> executorQueue =
+      new SynchronousQueue<Runnable>();
+    return new ThreadPoolExecutor(args.minWorkerThreads,
+                                  args.maxWorkerThreads,
+                                  60,
+                                  TimeUnit.SECONDS,
+                                  executorQueue);
   }
 
 
@@ -96,6 +106,11 @@ public class TThreadPoolServer extends TServer {
     } catch (TTransportException ttx) {
       LOGGER.error("Error occurred during listening.", ttx);
       return;
+    }
+
+    // Run the preServe event
+    if (eventHandler_ != null) {
+      eventHandler_.preServe();
     }
 
     stopped_ = false;
@@ -165,21 +180,43 @@ public class TThreadPoolServer extends TServer {
       TTransport outputTransport = null;
       TProtocol inputProtocol = null;
       TProtocol outputProtocol = null;
+
+      TServerEventHandler eventHandler = null;
+      ServerContext connectionContext = null;
+
       try {
         processor = processorFactory_.getProcessor(client_);
         inputTransport = inputTransportFactory_.getTransport(client_);
         outputTransport = outputTransportFactory_.getTransport(client_);
         inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
-        outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
+        outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);	  
+
+        eventHandler = getEventHandler();
+        if (eventHandler != null) {
+          connectionContext = eventHandler.createContext(inputProtocol, outputProtocol);
+        }
         // we check stopped_ first to make sure we're not supposed to be shutting
         // down. this is necessary for graceful shutdown.
-        while (!stopped_ && processor.process(inputProtocol, outputProtocol)) {}
+        while (true) {
+
+            if (eventHandler != null) {
+              eventHandler.processContext(connectionContext, inputTransport, outputTransport);
+            }
+
+            if(stopped_ || !processor.process(inputProtocol, outputProtocol)) {
+              break;
+            }
+        }
       } catch (TTransportException ttx) {
         // Assume the client died and continue silently
       } catch (TException tx) {
         LOGGER.error("Thrift error occurred during processing of message.", tx);
       } catch (Exception x) {
         LOGGER.error("Error occurred during processing of message.", x);
+      }
+
+      if (eventHandler != null) {
+        eventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
       }
 
       if (inputTransport != null) {

@@ -25,7 +25,7 @@ using System;
 
 namespace Thrift.Transport
 {
-	public abstract class TTransport
+	public abstract class TTransport : IDisposable
 	{
 		public abstract bool IsOpen
 		{
@@ -53,7 +53,9 @@ namespace Thrift.Transport
 				ret = Read(buf, off + got, len - got);
 				if (ret <= 0)
 				{
-					throw new TTransportException("Cannot read, Remote side has closed");
+					throw new TTransportException(
+						TTransportException.ExceptionType.EndOfFile,
+						"Cannot read, Remote side has closed");
 				}
 				got += ret;
 			}
@@ -71,5 +73,26 @@ namespace Thrift.Transport
 		public virtual void Flush()
 		{
 		}
+        
+        public virtual IAsyncResult BeginFlush(AsyncCallback callback, object state)
+        {
+            return null;
+        }
+
+        public virtual void EndFlush(IAsyncResult asyncResult)
+        {
+        }
+
+		#region " IDisposable Support "
+		// IDisposable
+		protected abstract void Dispose(bool disposing);
+
+		public void Dispose()
+		{
+			// Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+		#endregion
 	}
 }

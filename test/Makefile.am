@@ -17,10 +17,18 @@
 # under the License.
 #
 
-SUBDIRS =
+SUBDIRS = nodejs
 
 if WITH_CPP
 SUBDIRS += cpp
+endif
+
+if WITH_PERL
+SUBDIRS += perl
+endif
+
+if WITH_PHP
+SUBDIRS += php
 endif
 
 if WITH_PYTHON
@@ -36,11 +44,18 @@ if WITH_HASKELL
 SUBDIRS += hs
 endif
 
+#
+# generate html for ThriftTest.thrift
+#
+check-local:
+	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/test/ThriftTest.thrift
+
 EXTRA_DIST = \
+	test.sh \
 	cpp \
 	csharp \
-	erl \
 	hs \
+	nodejs \
 	ocaml \
 	perl \
 	php \
@@ -55,6 +70,7 @@ EXTRA_DIST = \
 	DenseLinkingTest.thrift \
 	DocTest.thrift \
 	JavaBeansTest.thrift \
+	ManyOptionals.thrift \
 	ManyTypedefs.thrift \
 	OptionalRequiredTest.thrift \
 	SmallTest.thrift \

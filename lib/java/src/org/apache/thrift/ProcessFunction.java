@@ -7,9 +7,13 @@ import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class ProcessFunction<I, T extends TBase> {
   private final String methodName;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ProcessFunction.class.getName());
 
   public ProcessFunction(String methodName) {
     this.methodName = methodName;
@@ -29,16 +33,34 @@ public abstract class ProcessFunction<I, T extends TBase> {
       return;
     }
     iprot.readMessageEnd();
-    TBase result = getResult(iface, args);
-    oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.REPLY, seqid));
-    result.write(oprot);
-    oprot.writeMessageEnd();
-    oprot.getTransport().flush();
+    TBase result = null;
+
+    try {
+      result = getResult(iface, args);
+    } catch(Throwable th) {
+      LOGGER.error("Internal error processing " + getMethodName(), th);
+      TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, 
+        "Internal error processing " + getMethodName());
+      oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
+      x.write(oprot);
+      oprot.writeMessageEnd();
+      oprot.getTransport().flush();
+      return;
+    }
+
+    if(!isOneway()) {
+      oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.REPLY, seqid));
+      result.write(oprot);
+      oprot.writeMessageEnd();
+      oprot.getTransport().flush();
+    }
   }
 
-  protected abstract TBase getResult(I iface, T args) throws TException;
+  protected abstract boolean isOneway();
 
-  protected abstract T getEmptyArgsInstance();
+  public abstract TBase getResult(I iface, T args) throws TException;
+
+  public abstract T getEmptyArgsInstance();
 
   public String getMethodName() {
     return methodName;

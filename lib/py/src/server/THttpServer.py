@@ -22,6 +22,7 @@ import BaseHTTPServer
 from thrift.server import TServer
 from thrift.transport import TTransport
 
+
 class ResponseException(Exception):
   """Allows handlers to override the HTTP response
 
@@ -39,16 +40,19 @@ class THttpServer(TServer.TServer):
   """A simple HTTP-based Thrift server
 
   This class is not very performant, but it is useful (for example) for
-  acting as a mock version of an Apache-based PHP Thrift endpoint."""
-
-  def __init__(self, processor, server_address,
-      inputProtocolFactory, outputProtocolFactory = None,
-      server_class = BaseHTTPServer.HTTPServer):
+  acting as a mock version of an Apache-based PHP Thrift endpoint.
+  """
+  def __init__(self,
+               processor,
+               server_address,
+               inputProtocolFactory,
+               outputProtocolFactory=None,
+               server_class=BaseHTTPServer.HTTPServer):
     """Set up protocol factories and HTTP server.
 
     See BaseHTTPServer for server_address.
-    See TServer for protocol factories."""
-
+    See TServer for protocol factories.
+    """
     if outputProtocolFactory is None:
       outputProtocolFactory = inputProtocolFactory
 
@@ -62,13 +66,14 @@ class THttpServer(TServer.TServer):
         # Don't care about the request path.
         itrans = TTransport.TFileObjectTransport(self.rfile)
         otrans = TTransport.TFileObjectTransport(self.wfile)
-        itrans = TTransport.TBufferedTransport(itrans, int(self.headers['Content-Length']))
+        itrans = TTransport.TBufferedTransport(
+          itrans, int(self.headers['Content-Length']))
         otrans = TTransport.TMemoryBuffer()
         iprot = thttpserver.inputProtocolFactory.getProtocol(itrans)
         oprot = thttpserver.outputProtocolFactory.getProtocol(otrans)
         try:
           thttpserver.processor.process(iprot, oprot)
-        except ResponseException, exn:
+        except ResponseException as exn:
           exn.handler(self)
         else:
           self.send_response(200)

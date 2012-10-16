@@ -126,22 +126,36 @@ namespace Thrift.Transport
 			{
 				TcpClient result = server.AcceptTcpClient();
 				TSocket result2 = new TSocket(result);
-				result2.Timeout = clientTimeout;
-				if (useBufferedSockets)
-				{
-					TBufferedTransport result3 = new TBufferedTransport(result2);
-					return result3;
-				}
-				else
-				{
-					return result2;
-				}
-			}
-			catch (Exception ex)
-			{
-				throw new TTransportException(ex.ToString());
-			}
-		}
+        try
+        {
+          result2 = new TSocket(result);
+          result2.Timeout = clientTimeout;
+          if (useBufferedSockets)
+          {
+            TBufferedTransport result3 = new TBufferedTransport(result2);
+            return result3;
+          }
+          else
+          {
+            return result2;
+          }
+        }
+        catch (System.Exception)
+        {
+          // If a TSocket was successfully created, then let 
+          // it do proper cleanup of the TcpClient object.
+          if (result2 != null)
+            result2.Dispose();
+          else //  Otherwise, clean it up ourselves.
+            ((IDisposable)result).Dispose();
+          throw;
+        }
+      }
+      catch (Exception ex)
+      {
+        throw new TTransportException(ex.ToString());
+      }
+    }
 
 		public override void Close()
 		{

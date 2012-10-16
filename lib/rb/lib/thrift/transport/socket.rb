@@ -34,8 +34,9 @@ module Thrift
 
     def open
       begin
-        addrinfo = ::Socket::getaddrinfo(@host, @port).first
+        addrinfo = ::Socket::getaddrinfo(@host, @port, nil, ::Socket::SOCK_STREAM).first
         @handle = ::Socket.new(addrinfo[4], ::Socket::SOCK_STREAM, 0)
+        @handle.setsockopt(::Socket::IPPROTO_TCP, ::Socket::TCP_NODELAY, 1)
         sockaddr = ::Socket.sockaddr_in(addrinfo[1], addrinfo[3])
         begin
           @handle.connect_nonblock(sockaddr)
@@ -60,6 +61,7 @@ module Thrift
 
     def write(str)
       raise IOError, "closed stream" unless open?
+      str = Bytes.force_binary_encoding(str)
       begin
         if @timeout.nil? or @timeout == 0
           @handle.write(str)

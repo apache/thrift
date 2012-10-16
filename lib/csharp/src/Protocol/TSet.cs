@@ -39,6 +39,11 @@ namespace Thrift.Protocol
 			this.count = count;
 		}
 
+		public TSet(TList list)
+			: this(list.ElementType, list.Count)
+		{
+		}
+
 		public TType ElementType
 		{
 			get { return elementType; }

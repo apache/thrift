@@ -25,16 +25,17 @@ program client;
 uses
   SysUtils,
   TestClient in 'TestClient.pas',
-  Thrift.Test in 'gen-delphi\Thrift.Test.pas',
-  Thrift in '..\..\..\lib\delphi\src\Thrift.pas',
-  Thrift.Transport in '..\..\..\lib\delphi\src\Thrift.Transport.pas',
-  Thrift.Protocol in '..\..\..\lib\delphi\src\Thrift.Protocol.pas',
-  Thrift.Protocol.JSON in '..\..\..\lib\delphi\src\Thrift.Protocol.JSON.pas',
-  Thrift.Collections in '..\..\..\lib\delphi\src\Thrift.Collections.pas',
-  Thrift.Server in '..\..\..\lib\delphi\src\Thrift.Server.pas',
-  Thrift.Stream in '..\..\..\lib\delphi\src\Thrift.Stream.pas',
-  Thrift.Console in '..\..\..\lib\delphi\src\Thrift.Console.pas',
-  Thrift.Utils in '..\..\..\lib\delphi\src\Thrift.Utils.pas';
+  Thrift.Test, // in 'gen-delphi\Thrift.Test.pas',
+  Thrift in '..\src\Thrift.pas',
+  Thrift.Transport in '..\src\Thrift.Transport.pas',
+  Thrift.Transport.Pipes in '..\src\Thrift.Transport.Pipes.pas',
+  Thrift.Protocol in '..\src\Thrift.Protocol.pas',
+  Thrift.Protocol.JSON in '..\src\Thrift.Protocol.JSON.pas',
+  Thrift.Collections in '..\src\Thrift.Collections.pas',
+  Thrift.Server in '..\src\Thrift.Server.pas',
+  Thrift.Stream in '..\src\Thrift.Stream.pas',
+  Thrift.Console in '..\src\Thrift.Console.pas',
+  Thrift.Utils in '..\src\Thrift.Utils.pas';
 
 var
   nParamCount : Integer;
@@ -56,8 +57,10 @@ begin
     TTestClient.Execute( args );
     Readln;
   except
-    on E: Exception do
+    on E: Exception do begin
       Writeln(E.ClassName, ': ', E.Message);
+      ExitCode := $FFFF;
+    end;
   end;
 end.
 

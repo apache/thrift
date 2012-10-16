@@ -20,14 +20,14 @@
 #include <assert.h>
 #include <netdb.h>
 
-#include "transport/thrift_transport.h"
-#include "transport/thrift_socket.h"
-#include "transport/thrift_server_transport.h"
-#include "transport/thrift_server_socket.h"
+#include <thrift/transport/thrift_transport.h>
+#include <thrift/transport/thrift_socket.h>
+#include <thrift/transport/thrift_server_transport.h>
+#include <thrift/transport/thrift_server_socket.h>
 
 #define TEST_DATA { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' }
 
-#include "../src/transport/thrift_framed_transport.c"
+#include "../src/thrift/transport/thrift_framed_transport.c"
 
 static const char TEST_ADDRESS[] = "localhost";
 static const short TEST_PORT = 64444;
@@ -150,7 +150,7 @@ thrift_server (const int port)
   int bytes = 0;
   ThriftServerTransport *transport = NULL;
   ThriftTransport *client = NULL;
-  guchar buf[10]; /* a buffer */
+  guchar buf[12]; /* a buffer */
   guchar match[10] = TEST_DATA;
 
   ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,

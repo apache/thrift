@@ -86,7 +86,7 @@ public final class TTupleProtocol extends TCompactProtocol {
    * @return a byte array of at least length 1
    */
   public static byte[] toByteArray(BitSet bits, int vectorWidth) {
-    byte[] bytes = new byte[vectorWidth / 8 + 1];
+    byte[] bytes = new byte[(int) Math.ceil(vectorWidth/8.0)];
     for (int i = 0; i < bits.length(); i++) {
       if (bits.get(i)) {
         bytes[bytes.length - i / 8 - 1] |= 1 << (i % 8);

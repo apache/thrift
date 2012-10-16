@@ -19,19 +19,18 @@
 
 #include <cstdlib>
 #include <stdexcept>
-#include <Thrift.h>
-#include <transport/TTransportUtils.h>
-#include <transport/TBufferTransports.h>
+#include <thrift/Thrift.h>
+#include <thrift/transport/TTransportUtils.h>
+#include <thrift/transport/TBufferTransports.h>
 using namespace std;
-using boost::shared_ptr;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TPipedTransport;
 using apache::thrift::transport::TMemoryBuffer;
 
 int main() {
-  shared_ptr<TMemoryBuffer> underlying(new TMemoryBuffer);
-  shared_ptr<TMemoryBuffer> pipe(new TMemoryBuffer);
-  shared_ptr<TPipedTransport> trans(new TPipedTransport(underlying, pipe));
+  boost::shared_ptr<TMemoryBuffer> underlying(new TMemoryBuffer);
+  boost::shared_ptr<TMemoryBuffer> pipe(new TMemoryBuffer);
+  boost::shared_ptr<TPipedTransport> trans(new TPipedTransport(underlying, pipe));
 
   uint8_t buffer[4];
 

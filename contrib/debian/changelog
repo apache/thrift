@@ -1,8 +1,14 @@
+thrift (0.9.0) stable; urgency=low
+
+  * update to 0.9.0
+
+ -- Jake Farrell <jfarrell@apache.org>  Wed, 10 Oct 2012 12:00:00 -0500
+
 thrift (0.7.0) stable; urgency=low
 
   * update to 0.7.0
 
- -- Jake Farrell <jfarrell@apache.org> Tue, 10 Aug 2011 17:01:53 -0500
+ -- Jake Farrell <jfarrell@apache.org>  Tue, 10 Aug 2011 17:01:53 -0500
 
 thrift (0.7.0-dev1) stable; urgency=low
   * added glib

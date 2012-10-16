@@ -17,7 +17,7 @@
 # under the License.
 #
 
-noinst_LTLIBRARIES = libtestgencpp.la
+noinst_LTLIBRARIES = libtestgencpp.la libprocessortest.la
 nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/DebugProtoTest_types.cpp \
 	gen-cpp/OptionalRequiredTest_types.cpp \
@@ -28,6 +28,14 @@ nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/ThriftTest_types.h \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp
+
+nodist_libprocessortest_la_SOURCES = \
+	gen-cpp/ChildService.cpp \
+	gen-cpp/ChildService.h \
+	gen-cpp/ParentService.cpp \
+	gen-cpp/ParentService.h \
+	gen-cpp/proc_types.cpp \
+	gen-cpp/proc_types.h
 
 ThriftTest_extras.o: gen-cpp/ThriftTest_types.h
 DebugProtoTest_extras.o: gen-cpp/DebugProtoTest_types.h
@@ -53,6 +61,9 @@ check_PROGRAMS = \
 	ZlibTest \
 	TFileTransportTest \
 	UnitTests
+# disable these test ... too strong
+#       processor_test
+#	concurrency_test
 
 TESTS_ENVIRONMENT= \
 	BOOST_TEST_LOG_SINK=tests.xml \
@@ -65,7 +76,13 @@ TESTS = \
 UnitTests_SOURCES = \
 	UnitTestMain.cpp \
 	TMemoryBufferTest.cpp \
-	TBufferBaseTest.cpp
+	TBufferBaseTest.cpp \
+	Base64Test.cpp
+
+if !WITH_BOOSTTHREADS
+UnitTests_SOURCES += \
+        RWMutexStarveTest.cpp
+endif
 
 UnitTests_LDADD = \
   libtestgencpp.la \
@@ -158,7 +175,29 @@ SpecializationTest_SOURCES = \
 
 SpecializationTest_LDADD = libtestgencpp.la
 
+concurrency_test_SOURCES = \
+	concurrency/Tests.cpp \
+	concurrency/ThreadFactoryTests.h \
+	concurrency/ThreadManagerTests.h \
+	concurrency/TimerManagerTests.h
 
+concurrency_test_LDADD = \
+  $(top_builddir)/lib/cpp/libthrift.la
+
+processor_test_SOURCES = \
+	processor/ProcessorTest.cpp \
+	processor/EventLog.cpp \
+	processor/ServerThread.cpp \
+	processor/EventLog.h \
+	processor/Handlers.h \
+	processor/ServerThread.h
+
+processor_test_LDADD = libprocessortest.la \
+                       $(top_builddir)/lib/cpp/libthrift.la \
+                       $(top_builddir)/lib/cpp/libthriftnb.la \
+                       $(BOOST_LDFLAGS) \
+                       -levent \
+                       $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
 #
 # Common thrift code generation rules
 #
@@ -176,6 +215,9 @@ gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: $(top_srcdir)/test/StressTest.
 gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen cpp:dense $<
 
+gen-cpp/ChildService.cpp: processor/proc.thrift
+	$(THRIFT) --gen cpp:templates,cob_style $<
+
 INCLUDES = \
 	-I$(top_srcdir)/lib/cpp/src
 
@@ -189,4 +231,6 @@ clean-local:
 EXTRA_DIST = \
 	DenseProtoTest.cpp \
 	ThriftTest_extras.cpp \
-	DebugProtoTest_extras.cpp
+	DebugProtoTest_extras.cpp \
+	concurrency \
+	processor

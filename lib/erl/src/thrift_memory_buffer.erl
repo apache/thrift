@@ -60,10 +60,3 @@ read(State = #memory_buffer{buffer = Buf}, Len) when is_integer(Len) ->
     Give = min(iolist_size(Binary), Len),
     {Result, Remaining} = split_binary(Binary, Give),
     {State#memory_buffer{buffer = Remaining}, {ok, Result}}.
-
-%%--------------------------------------------------------------------
-%% Internal functions
-%%--------------------------------------------------------------------
-min(A,B) when A<B -> A;
-min(_,B)          -> B.
-

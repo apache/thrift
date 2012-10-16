@@ -195,11 +195,11 @@ type
     function GetCount: Integer;
     property Count: Integer read GetCount;
     property IsReadOnly: Boolean read GetIsReadOnly;
-    procedure Add( item: TValue);
+    procedure Add( const item: TValue);
     procedure Clear;
-    function Contains( item: TValue): Boolean;
+    function Contains( const item: TValue): Boolean;
     procedure CopyTo(var A: TArray<TValue>; arrayIndex: Integer);
-    function Remove( item: TValue ): Boolean;
+    function Remove( const item: TValue ): Boolean;
   end;
 
   THashSetImpl<TValue> = class( TInterfacedObject, IHashSet<TValue>)
@@ -212,11 +212,11 @@ type
     function GetCount: Integer;
     property Count: Integer read GetCount;
     property IsReadOnly: Boolean read FIsReadOnly;
-    procedure Add( item: TValue);
+    procedure Add( const item: TValue);
     procedure Clear;
-    function Contains( item: TValue): Boolean;
+    function Contains( const item: TValue): Boolean;
     procedure CopyTo(var A: TArray<TValue>; arrayIndex: Integer);
-    function Remove( item: TValue ): Boolean;
+    function Remove( const item: TValue ): Boolean;
   public
     constructor Create;
   end;
@@ -225,7 +225,7 @@ implementation
 
 { THashSetImpl<TValue> }
 
-procedure THashSetImpl<TValue>.Add(item: TValue);
+procedure THashSetImpl<TValue>.Add( const item: TValue);
 begin
   if not FDictionary.ContainsKey(item) then
   begin
@@ -238,7 +238,7 @@ begin
   FDictionary.Clear;
 end;
 
-function THashSetImpl<TValue>.Contains(item: TValue): Boolean;
+function THashSetImpl<TValue>.Contains( const item: TValue): Boolean;
 begin
   Result := FDictionary.ContainsKey(item);
 end;
@@ -277,7 +277,7 @@ begin
   Result := FIsReadOnly;
 end;
 
-function THashSetImpl<TValue>.Remove(item: TValue): Boolean;
+function THashSetImpl<TValue>.Remove( const item: TValue): Boolean;
 begin
   Result := False;
   if FDictionary.ContainsKey( item ) then
@@ -330,8 +330,7 @@ begin
 end;
 
 {$IF CompilerVersion >= 21.0}
-function TThriftDictionaryImpl<TKey, TValue>.ExtractPair(
-  const Key: TKey): TPair<TKey, TValue>;
+function TThriftDictionaryImpl<TKey, TValue>.ExtractPair( const Key: TKey): TPair<TKey, TValue>;
 begin
   Result := FDictionaly.ExtractPair( Key);
 end;

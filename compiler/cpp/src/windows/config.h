@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <direct.h>
 
-#define strtoll(begin_ptr, end_ptr, length) strtol(begin_ptr, end_ptr, length)
+#define strtoll(begin_ptr, end_ptr, length) _strtoi64(begin_ptr, end_ptr, length)
 
 #define PRIu64 "I64d"
 #define PRIi64 "I64d"

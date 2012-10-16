@@ -71,7 +71,8 @@ clean:
 		  test/thriftTest_* \
 		  test/optionalRequiredTest_* \
 		  test/yowza_* \
-		  test/reverseOrderService_*
+		  test/reverseOrderService_* \
+		  test/manyOptionals_*
 	./rebar clean
 
 maintainer-clean-local:

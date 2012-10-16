@@ -68,4 +68,4 @@ printf "Generating bindings... \n"
 $THRIFT_BIN --gen hs $THRIFT_FILE
 
 printf "Running test... \n"
-runhaskell -Wall -Werror -i$BASE/lib/hs/src -igen-hs $TEST_SOURCE_FILE
+runhaskell -Wall -i$BASE/lib/hs/src -igen-hs $TEST_SOURCE_FILE

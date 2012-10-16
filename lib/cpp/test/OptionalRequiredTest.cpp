@@ -24,9 +24,9 @@
 #include <cassert>
 #include <map>
 #include <iostream>
-#include <protocol/TDebugProtocol.h>
-#include <protocol/TBinaryProtocol.h>
-#include <transport/TBufferTransports.h>
+#include <thrift/protocol/TDebugProtocol.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/transport/TBufferTransports.h>
 #include "gen-cpp/OptionalRequiredTest_types.h"
 
 using std::cout;
@@ -240,6 +240,22 @@ int main() {
     assert(t1 != t2);
     t2.__isset.im_optional = false;
     assert(t1 != t2);
+  }
+
+  {
+    OptionalDefault t1, t2;
+    cout << ThriftDebugString(t1) << endl;
+    assert(t1.__isset.opt_int == true);
+    assert(t1.__isset.opt_str == true);
+    assert(t1.opt_int == t2.opt_int);
+    assert(t1.opt_str == t2.opt_str);
+
+    write_to_read(t1, t2);
+    cout << ThriftDebugString(t2) << endl;
+    assert(t2.__isset.opt_int == true);
+    assert(t2.__isset.opt_str == true);
+    assert(t1.opt_int == t2.opt_int);
+    assert(t1.opt_str == t2.opt_str);
   }
 
   return 0;

@@ -22,6 +22,7 @@
 
 $:.unshift File.dirname(__FILE__)
 
+require 'thrift/bytes'
 require 'thrift/core_ext'
 require 'thrift/exceptions'
 require 'thrift/types'
@@ -40,6 +41,7 @@ require 'thrift/protocol/base_protocol'
 require 'thrift/protocol/binary_protocol'
 require 'thrift/protocol/binary_protocol_accelerated'
 require 'thrift/protocol/compact_protocol'
+require 'thrift/protocol/json_protocol'
 
 # transport
 require 'thrift/transport/base_transport'

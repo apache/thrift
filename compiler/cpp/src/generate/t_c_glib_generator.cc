@@ -124,6 +124,7 @@ class t_c_glib_generator : public t_oop_generator {
   string argument_list(t_struct *tstruct);
   string xception_list(t_struct *tstruct);
   string declare_field(t_field *tfield, bool init=false, bool pointer=false, bool constant=false, bool reference=false);
+  void declare_local_variable(ofstream &out, t_type *ttype, string &base_name);
 
   /* generation functions */
   void generate_const_initializer(string name, t_type *type, t_const_value *value);
@@ -140,15 +141,19 @@ class t_c_glib_generator : public t_oop_generator {
   void generate_serialize_set_element(ofstream &out, t_set *tset, string element, int error_ret);
   void generate_serialize_list_element(ofstream &out, t_list *tlist, string list, string index, int error_ret);
 
-  void generate_deserialize_field(ofstream &out, t_field *tfield, string prefix, string suffix, int error_ret);
-  void generate_deserialize_struct(ofstream &out, t_struct *tstruct, string prefix, int error_ret);
+  void generate_deserialize_field(ofstream &out, t_field *tfield, string prefix, string suffix, int error_ret, bool allocate=true);
+  void generate_deserialize_struct(ofstream &out, t_struct *tstruct, string prefix, int error_ret, bool allocate=true);
   void generate_deserialize_container(ofstream &out, t_type *ttype, string prefix, int error_ret);
   void generate_deserialize_map_element(ofstream &out, t_map *tmap, string prefix, int error_ret);
   void generate_deserialize_set_element(ofstream &out, t_set *tset, string prefix, int error_ret);
   void generate_deserialize_list_element(ofstream &out, t_list *tlist, string prefix, string index, int error_ret);
 
-  string generate_new_hash_from_type(t_type * ttype);
+  string generate_new_hash_from_type(t_type * key, t_type * value);
   string generate_new_array_from_type(t_type * ttype); 
+
+  string generate_free_func_from_type(t_type * ttype);
+  string generate_hash_func_from_type(t_type * ttype);
+  string generate_cmp_func_from_type(t_type * ttype);
 };
 
 /**
@@ -185,15 +190,15 @@ void t_c_glib_generator::init_generator() {
   f_types_ <<
     "/* base includes */" << endl <<
     "#include <glib-object.h>" << endl <<
-    "#include <thrift_struct.h>" << endl <<
-    "#include <protocol/thrift_protocol.h>" << endl;
+    "#include <thrift/thrift_struct.h>" << endl <<
+    "#include <thrift/protocol/thrift_protocol.h>" << endl;
 
   /* include other thrift includes */
   const vector<t_program *> &includes = program_->get_includes();
   for (size_t i = 0; i < includes.size(); ++i) {
     f_types_ <<
       "/* other thrift includes */" << endl <<
-      "#include \"" << this->nspace_lc << includes[i]->get_name() <<
+      "#include \"" << this->nspace_lc << initial_caps_to_underscores(includes[i]->get_name()) <<
           "_types.h\"" << endl;
   }
   f_types_ << endl;
@@ -217,7 +222,7 @@ void t_c_glib_generator::init_generator() {
     endl <<
     "#include \"" << this->nspace_lc << program_name_u << 
         "_types.h\"" << endl <<
-    "#include <thrift.h>" << endl <<
+    "#include <thrift/thrift.h>" << endl <<
     endl;
 
   f_types_ <<
@@ -410,8 +415,8 @@ void t_c_glib_generator::generate_service (t_service *tservice) {
   // include the headers
   f_service_ <<
     "#include <string.h>" << endl <<
-    "#include <thrift.h>" << endl <<
-    "#include <thrift_application_exception.h>" << endl <<
+    "#include <thrift/thrift.h>" << endl <<
+    "#include <thrift/thrift_application_exception.h>" << endl <<
     "#include \"" << filename << ".h\"" << endl <<
     endl;
 
@@ -650,7 +655,7 @@ string t_c_glib_generator::constant_value(string name, t_type *type, t_const_val
     t_base_type::t_base tbase = ((t_base_type *) type)->get_base();
     switch (tbase) {
       case t_base_type::TYPE_STRING:
-        render << "\"" + value->get_string() + "\"";
+        render << "g_strdup (\"" + value->get_string() + "\")";
         break;
       case t_base_type::TYPE_BOOL:
         render << ((value->get_integer() != 0) ? 1 : 0);
@@ -805,6 +810,8 @@ string t_c_glib_generator::declare_field(t_field *tfield,
       }
     } else if (type->is_enum()) {
       result += " = (" + type_name (type) + ") 0";
+    } else if (type->is_struct() || type->is_container()) {
+      result += " = NULL";
     }
   }
 
@@ -876,7 +883,8 @@ void t_c_glib_generator::generate_const_initializer(string name, t_type *type, t
       endl;
   } else if (type->is_list()) {
     string list_type = "GPtrArray *";
-    string list_initializer = "g_ptr_array_new()";
+    // TODO: This initialization should contain a free function for container
+    string list_initializer = "g_ptr_array_new();";
     string list_appender = "g_ptr_array_add";
     bool list_variable = false;
 
@@ -885,6 +893,7 @@ void t_c_glib_generator::generate_const_initializer(string name, t_type *type, t
     vector<t_const_value*>::const_iterator v_iter;
     ostringstream initializers;
 
+    list_initializer = generate_new_array_from_type (etype);
     if (etype->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type *) etype)->get_base();
       switch (tbase) {
@@ -897,7 +906,6 @@ void t_c_glib_generator::generate_const_initializer(string name, t_type *type, t
         case t_base_type::TYPE_I64:
         case t_base_type::TYPE_DOUBLE:
           list_type = "GArray *";
-          list_initializer = generate_new_array_from_type (etype);
           list_appender = "g_array_append_val";
           list_variable = true;
           break;
@@ -932,7 +940,7 @@ void t_c_glib_generator::generate_const_initializer(string name, t_type *type, t
       "  static " << list_type << " constant = NULL;" << endl <<
       "  if (constant == NULL)" << endl <<
       "  {" << endl <<
-      "    constant = " << list_initializer << ";" << endl <<
+      "    constant = " << list_initializer << endl <<
       initializers.str() << endl <<
       "  }" << endl <<
       "  return constant;" << endl <<
@@ -961,6 +969,7 @@ void t_c_glib_generator::generate_const_initializer(string name, t_type *type, t
       "  static GHashTable *constant = NULL;" << endl <<
       "  if (constant == NULL)" << endl <<
       "  {" << endl <<
+      // TODO: This initialization should contain a free function for elements
       "    constant = g_hash_table_new (NULL, NULL);" << endl <<
       initializers.str() << endl <<
       "  }" << endl <<
@@ -997,6 +1006,7 @@ void t_c_glib_generator::generate_const_initializer(string name, t_type *type, t
       "  static GHashTable *constant = NULL;" << endl <<
       "  if (constant == NULL)" << endl <<
       "  {" << endl <<
+      // TODO: This initialization should contain a free function for elements
       "    constant = g_hash_table_new (NULL, NULL);" << endl <<
       initializers.str() << endl <<
       "  }" << endl <<
@@ -1652,7 +1662,6 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
     "  /* public */" << endl;
 
   // for each field, add a member variable
-  bool has_nonrequired_fields = false;
   vector<t_field *>::const_iterator m_iter;
   const vector<t_field *> &members = tstruct->get_members();
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -1660,7 +1669,6 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
     f_types_ <<
       "  " << type_name (t) << " " << (*m_iter)->get_name() << ";" << endl;
     if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
-      has_nonrequired_fields = true;
       f_types_ <<
         "  gboolean __isset_" << (*m_iter)->get_name() << ";" << endl;
     }
@@ -1736,36 +1744,22 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
       indent(f_types_impl_) << "object->" << name << " = NULL;" << endl;
     } else if (t->is_container()) {
       string name = (*m_iter)->get_name();
+      string init_function;
 
-      if (t->is_map() || t->is_set()) {
-        indent(f_types_impl_) << "object->" << name << " = g_hash_table_new (NULL, NULL);" << endl;
+      if (t->is_map()) {
+        t_type *key = ((t_map *) t)->get_key_type();
+        t_type *value = ((t_map *) t)->get_val_type();
+        init_function = generate_new_hash_from_type (key, value);
+      } else if (t->is_set()) {
+        t_type *etype = ((t_set *) t)->get_elem_type();
+        init_function = generate_new_hash_from_type (etype, NULL);
       } else if (t->is_list()) {
         t_type *etype = ((t_list *) t)->get_elem_type();
-        string init_function = "g_ptr_array_new()";
-
-        if (etype->is_base_type()) {
-          t_base_type::t_base tbase = ((t_base_type *) etype)->get_base();
-          switch (tbase) {
-            case t_base_type::TYPE_VOID:
-              throw "compiler error: cannot determine array type";
-            case t_base_type::TYPE_BOOL:
-            case t_base_type::TYPE_BYTE:
-            case t_base_type::TYPE_I16:
-            case t_base_type::TYPE_I32:
-            case t_base_type::TYPE_I64:
-            case t_base_type::TYPE_DOUBLE:
-              init_function = generate_new_array_from_type (etype);
-              break;
-            case t_base_type::TYPE_STRING:
-              break;
-            default:
-              throw "compiler error: no array info for type";
-          }
-        }
-
-        indent(f_types_impl_) << "object->" << name << " = " <<
-                                  init_function << ";" << endl;
+        init_function = generate_new_array_from_type (etype);
       }
+
+      indent(f_types_impl_) << "object->" << name << " = " <<
+                                  init_function << endl;
 
     }
 
@@ -1800,8 +1794,14 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
     if (t->is_container()) { 
       string name = (*m_iter)->get_name();
       if (t->is_map() || t->is_set()) {
-        f_types_impl_ <<
-          indent() << "g_hash_table_unref (tobject->" << name << ");" << endl;
+        f_types_impl_ << indent() << "if (tobject->" << name << " != NULL)" << endl;
+        f_types_impl_ << indent() << "{" << endl;
+	indent_up();
+	f_types_impl_ <<
+	indent() << "g_hash_table_destroy (tobject->" << name << ");" << endl;
+	f_types_impl_ << indent() << "tobject->" << name << " = NULL;" << endl;
+	indent_down();
+	f_types_impl_ << indent() << "}" << endl;
       } else if (t->is_list()) {
         t_type *etype = ((t_list *) t)->get_elem_type();
         string destructor_function = "g_ptr_array_free";
@@ -1826,10 +1826,39 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
           }
         }
 
+        f_types_impl_ << indent() << "if (tobject->" << name << " != NULL)" << endl;
+        f_types_impl_ << indent() << "{" << endl;
+        indent_up();
         f_types_impl_ <<
           indent() << destructor_function << " (tobject->" << name <<
-                       ", FALSE);" << endl;
+                       ", TRUE);" << endl;
+        f_types_impl_ << indent() << "tobject->" << name << " = NULL;" << endl;
+        indent_down();
+        f_types_impl_ << indent() << "}" << endl;
       }
+    } else if (t->is_struct() || t->is_xception()) {
+      string name = (*m_iter)->get_name();
+      // TODO: g_clear_object needs glib >= 2.28
+      // f_types_impl_ << indent() << "g_clear_object (&(tobject->" << name << "));" << endl;
+      // does g_object_unref the trick?
+      f_types_impl_ << indent() << "if (tobject->" << name << " != NULL)" << endl;
+      f_types_impl_ << indent() << "{" << endl;
+      indent_up();
+      f_types_impl_ <<
+      indent() << "g_object_unref(tobject->" << name << ");" << endl;
+      f_types_impl_ << indent() << "tobject->" << name << " = NULL;" << endl;
+      indent_down();
+      f_types_impl_ << indent() << "}" << endl;
+    } else if (t->is_string()) {
+      string name = (*m_iter)->get_name();
+      f_types_impl_ << indent() << "if (tobject->" << name << " != NULL)" << endl;
+      f_types_impl_ << indent() << "{" << endl;
+      indent_up();
+      f_types_impl_ <<
+      indent() << "g_free (tobject->" << name << ");" << endl;
+      f_types_impl_ << indent() << "tobject->" << name << " = NULL;" << endl;
+      indent_down();
+      f_types_impl_ << indent() << "}" << endl;
     }
   }
 
@@ -2008,7 +2037,7 @@ void t_c_glib_generator::generate_struct_reader(ofstream &out,
   out <<
     indent() << "gint32 ret;" << endl <<
     indent() << "gint32 xfer = 0;" << endl <<
-    indent() << "gchar *name;" << endl <<
+    indent() << "gchar *name = NULL;" << endl <<
     indent() << "ThriftType ftype;" << endl <<
     indent() << "gint16 fid;" << endl <<
     indent() << "guint32 len = 0;" << endl <<
@@ -2044,6 +2073,7 @@ void t_c_glib_generator::generate_struct_reader(ofstream &out,
     indent() << "}" << endl <<
     indent() << "xfer += ret;" << endl <<
     indent() << "if (name) g_free (name);" << endl <<
+    indent() << "name = NULL;" << endl <<
     endl;
 
   // read the struct fields
@@ -2062,6 +2092,7 @@ void t_c_glib_generator::generate_struct_reader(ofstream &out,
     indent() << "}" << endl <<
     indent() << "xfer += ret;" << endl <<
     indent() << "if (name) g_free (name);" << endl <<
+    indent() << "name = NULL;" << endl <<
     endl;
 
   // check for field STOP marker
@@ -2093,7 +2124,7 @@ void t_c_glib_generator::generate_struct_reader(ofstream &out,
 
     indent_up();
     // generate deserialize field
-    generate_deserialize_field (out, *f_iter, this_name, "", error_ret);
+    generate_deserialize_field (out, *f_iter, this_name, "", error_ret, false);
     indent_down();
 
     out <<
@@ -2319,9 +2350,11 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
       indent() << "GList *key_list = NULL, *iter = NULL;" << endl <<
       indent() << telem_name << telem_ptr << " elem;" << endl <<
       indent() << "gpointer value;" << endl <<
+      indent() << "THRIFT_UNUSED_VAR (value);" << endl <<
+      endl <<
       indent() << "g_hash_table_foreach ((GHashTable *) " << prefix <<
                    ", thrift_hash_table_get_keys, &key_list);" << endl <<
-      indent() << telem_name << telem_ptr << "keys[g_list_length (key_list)];" << endl <<
+      indent() << telem_name << telem_ptr << " keys[g_list_length (key_list)];" << endl <<
       indent() << "int i=0, key_count = g_list_length (key_list);" << endl <<
       indent() << "for (iter = g_list_first (key_list); iter; iter = iter->next)" << endl <<
       indent() << "{" << endl <<
@@ -2347,17 +2380,19 @@ void t_c_glib_generator::generate_serialize_container(ofstream &out,
       indent() << "xfer += ret;" << endl;
   } else if (ttype->is_list()) {
     string length = prefix + "->len";
+    string i = tmp("i");
     out <<
       indent() << "if ((ret = thrift_protocol_write_list_begin (protocol, " <<
                    type_to_enum (((t_list *) ttype)->get_elem_type()) <<
                    ", (gint32) " << length << ", error)) < 0)" << endl <<
       indent() << "  return " << error_ret << ";" << endl <<
       indent() << "xfer += ret;" << endl <<
-      indent() << "guint i;" << endl <<
-      indent() << "for (i=0; i<" << length << "; i++)" << endl;
+      indent() << "guint " << i << ";" << endl <<
+      indent() << "for ("<< i << "=0; " << i << "<" << length << "; " << i <<
+                         "++)" << endl;
 
     scope_up(out);
-    generate_serialize_list_element (out, (t_list *) ttype, prefix, "i", error_ret);
+    generate_serialize_list_element (out, (t_list *) ttype, prefix, i, error_ret);
     scope_down(out);
 
     out <<
@@ -2397,6 +2432,7 @@ void t_c_glib_generator::generate_serialize_list_element(ofstream &out,
   t_type *ttype = tlist->get_elem_type();
 
   // cast to non-const
+  string cast = "";
   string name = "g_ptr_array_index ((GPtrArray *) " + list + ", "
                 + index + ")";
 
@@ -2425,13 +2461,40 @@ void t_c_glib_generator::generate_serialize_list_element(ofstream &out,
         name = "g_array_index (" + list + ", gdouble, " + index + ")";
         break;
       case t_base_type::TYPE_STRING:
+        cast = "(gchar*)";
         break;
       default:
         throw "compiler error: no array info for type";
     }
+  } else if (ttype->is_map() || ttype->is_set()) {
+    cast = "(GHashTable*)";
+  } else if (ttype->is_list()) {
+    t_type *base = ((t_list *)ttype)->get_elem_type();
+    if (base->is_base_type()) {
+      switch (((t_base_type *) base)->get_base()) {
+        case t_base_type::TYPE_VOID:
+          throw "compiler error: cannot determine array type";
+          break;
+        case t_base_type::TYPE_BOOL:
+        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I16:
+        case t_base_type::TYPE_I32:
+        case t_base_type::TYPE_I64:
+        case t_base_type::TYPE_DOUBLE:
+          cast = "(GArray*)";
+          break;
+        case t_base_type::TYPE_STRING:
+          cast = "(GPtrArray*)";
+          break;
+        default:
+          throw "Compiler error: no array info for type";
+      }
+    } else {
+      cast = "(GPtrArray*)";
+    }
   }
 
-  t_field efield (ttype, name);
+  t_field efield (ttype, "(" + cast + name + ")");
   generate_serialize_field (out, &efield, "", "", error_ret);
 }
 
@@ -2440,7 +2503,8 @@ void t_c_glib_generator::generate_deserialize_field(ofstream &out,
                                                     t_field *tfield,
                                                     string prefix,
                                                     string suffix,
-                                                    int error_ret) {
+                                                    int error_ret,
+                                                    bool allocate) {
   t_type *type = get_true_type (tfield->get_type());
 
   if (type->is_void()) {
@@ -2451,12 +2515,21 @@ void t_c_glib_generator::generate_deserialize_field(ofstream &out,
   string name = prefix + tfield->get_name() + suffix;
 
   if (type->is_struct() || type->is_xception()) {
-    generate_deserialize_struct (out, (t_struct *) type, name, error_ret);
+    generate_deserialize_struct (out, (t_struct *) type, name, error_ret, allocate);
   } else if (type->is_container()) {
     generate_deserialize_container (out, type, name, error_ret);
   } else if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type *) type)->get_base();
-
+    if (tbase == t_base_type::TYPE_STRING) {
+      indent(out) << "if (" << name << " != NULL)" << endl <<
+        indent() << "{" << endl;
+      indent_up();
+      indent(out) << "g_free(" << name << ");" << endl <<
+        indent() << name << " = NULL;" << endl;
+      indent_down();
+      indent(out) << "}" << endl <<
+      endl;
+    }
     indent(out) << "if ((ret = thrift_protocol_read_";
 
     switch (tbase) {
@@ -2529,12 +2602,39 @@ void t_c_glib_generator::generate_deserialize_field(ofstream &out,
 void t_c_glib_generator::generate_deserialize_struct(ofstream &out,
                                                      t_struct *tstruct,
                                                      string prefix,
-                                                     int error_ret) {
+                                                     int error_ret,
+                                                     bool allocate) {
   string name_uc = to_upper_case(initial_caps_to_underscores(tstruct->get_name()));
+  if (tstruct->is_xception()) {
+    out <<
+      indent() << "/* This struct is an exception */" << endl;
+    allocate = true;
+  }
+
+  if (allocate) {
+    out <<
+      indent() << "if ( " << prefix << " != NULL)" << endl <<
+      indent() << "{" << endl;
+    indent_up();
+    out <<
+      indent() << "g_object_unref (" << prefix << ");" << endl;
+    indent_down();
+    out <<
+      indent() << "}" << endl <<
+      indent() << prefix << " = g_object_new (" << this->nspace_uc << "TYPE_" << name_uc << ", NULL);" << endl;
+  }
   out <<
-    indent() << prefix << " = g_object_new (" << this->nspace_uc << "TYPE_" << name_uc << ", NULL);" << endl <<
     indent() << "if ((ret = thrift_struct_read (THRIFT_STRUCT (" << prefix << "), protocol, error)) < 0)" << endl <<
-    indent() << "  return " << error_ret << ";" << endl <<
+    indent() << "{" << endl;
+  indent_up();
+  if (allocate) {
+    indent(out) << "g_object_unref (" << prefix << ");" << endl;
+  }
+  out <<
+    indent() << "return " << error_ret << ";" << endl;
+  indent_down();
+  out <<
+    indent() << "}" << endl <<
     indent() << "xfer += ret;" << endl;
 }
 
@@ -2624,35 +2724,36 @@ void t_c_glib_generator::generate_deserialize_container (ofstream &out, t_type *
   scope_down(out);
 }
 
+void t_c_glib_generator::declare_local_variable(ofstream &out, t_type *ttype, string &name) {
+  string tname = type_name (ttype);
+  string ptr = ttype->is_string() || !ttype->is_base_type() ? "" : "*";
+
+  if (ttype->is_map()) {
+    out <<
+    indent() << tname << ptr << " " << name << " = g_hash_table_new (NULL, NULL);" << endl;
+  } else if (ttype->is_enum()) {
+    out <<
+    indent() << tname << ptr << " " << name << ";" << endl;
+  } else {
+    out <<
+    indent() << tname << ptr << " " << name << (ptr != "" ? " = g_new (" + tname + ", 1)" : " = NULL") << ";" << endl;
+  }
+}
+
+
 void t_c_glib_generator::generate_deserialize_map_element(ofstream &out,
                                                           t_map *tmap,
                                                           string prefix,
                                                           int error_ret) {
   t_type *tkey = tmap->get_key_type();
   t_type *tval = tmap->get_val_type();
-  string tkey_name = type_name (tkey);
-  string tval_name = type_name (tval);
   string tkey_ptr = tkey->is_string() || !tkey->is_base_type() ? "" : "*";
   string tval_ptr = tval->is_string() || !tval->is_base_type() ? "" : "*";
-
   string keyname = tmp("key");
   string valname = tmp("val");
 
-  if (tkey->is_map()) {
-    out <<
-      indent() << tkey_name << tkey_ptr << " " << keyname << " = g_hash_table_new (NULL, NULL);" << endl;
-  } else {
-    out <<
-      indent() << tkey_name << tkey_ptr << " " << keyname << (tkey_ptr != "" ? " = g_new (" + tkey_name + ", 1)" : "") << ";" << endl;
-  }
-
-  if (tval->is_map()) {
-    out <<
-      indent() << tval_name << tval_ptr << " " << valname << " = g_hash_table_new (NULL, NULL);" << endl;
-  } else {
-    out <<
-      indent() << tval_name << tval_ptr << " " << valname << (tval_ptr != "" ? " = g_new (" + tval_name + ", 1)" : "") << ";" << endl;
-  }
+  declare_local_variable(out, tkey, keyname);
+  declare_local_variable(out, tval, valname);
 
   // deserialize the fields of the map element
   t_field fkey (tkey, tkey_ptr + keyname);
@@ -2660,10 +2761,8 @@ void t_c_glib_generator::generate_deserialize_map_element(ofstream &out,
   t_field fval (tval, tval_ptr + valname);
   generate_deserialize_field (out, &fval, "", "", error_ret);
 
-  // insert into the hashtable.  if the field is not a pointer, then use
-  // the address of the object.
   indent(out) <<
-    "g_hash_table_insert ((GHashTable *)" << prefix << ", (gpointer) " << (tkey_ptr != "" ? "" : "&") << keyname << ", (gpointer) " << (tval_ptr != "" ? "" : "&") << valname << ");" << endl;
+    "g_hash_table_insert ((GHashTable *)" << prefix << ", (gpointer) " << keyname << ", (gpointer) " << valname << ");" << endl;
 }
 
 void t_c_glib_generator::generate_deserialize_set_element(ofstream &out,
@@ -2671,22 +2770,17 @@ void t_c_glib_generator::generate_deserialize_set_element(ofstream &out,
                                                           string prefix,
                                                           int error_ret) {
   t_type *telem = tset->get_elem_type();
-  string telem_name = type_name (telem);
+  string elem = tmp ("_elem");
   string telem_ptr = telem->is_string() || !telem->is_base_type() ? "" : "*";
 
-  if (telem->is_map()) {
-    out <<
-      indent() << telem_name << telem_ptr << " elem = g_hash_table_new (NULL, NULL);" << endl;
-  } else {
-    out <<
-      indent() << telem_name << telem_ptr << " elem" << (telem_ptr != "" ? " = g_new (" + telem_name + ", 1)" : "") << ";" << endl;
-  }
+  declare_local_variable(out, telem, elem);
 
-  t_field felem (telem, telem_ptr + "elem");
+  t_field felem (telem, telem_ptr + elem);
   generate_deserialize_field (out, &felem, "", "", error_ret);
 
   indent(out) <<
-    "g_hash_table_insert ((GHashTable *) " << prefix << ", (gpointer) elem, (gpointer) 1);" << endl;
+    "g_hash_table_insert ((GHashTable *) " << prefix << ", (gpointer) " <<
+                              elem << ", (gpointer) 1);" << endl;
 }
 
 void t_c_glib_generator::generate_deserialize_list_element(ofstream &out,
@@ -2695,15 +2789,17 @@ void t_c_glib_generator::generate_deserialize_list_element(ofstream &out,
                                                            string index,
                                                            int error_ret) {
   (void) index;
+  t_type *ttype = tlist->get_elem_type();
   string elem = tmp ("_elem");
-  t_field felem (tlist->get_elem_type(), elem);
+  string telem_ptr = ttype->is_string() || !ttype->is_base_type() ? "" : "*";
 
-  indent(out) << declare_field (&felem, true) << endl;
+  declare_local_variable(out, ttype, elem);
+
+  t_field felem (ttype, telem_ptr + elem);
   generate_deserialize_field (out, &felem, "", "", error_ret);
 
   indent(out);
 
-  t_type *ttype = tlist->get_elem_type();
   if (ttype->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type *) ttype)->get_base();
     switch (tbase) {
@@ -2727,7 +2823,10 @@ void t_c_glib_generator::generate_deserialize_list_element(ofstream &out,
   out << "g_ptr_array_add (" << prefix << ", " << elem << ");" << endl;
 }
 
-string t_c_glib_generator::generate_new_hash_from_type (t_type * ttype) {
+string t_c_glib_generator::generate_free_func_from_type (t_type * ttype) {
+  if (ttype == NULL)
+    return "NULL";
+
   if (ttype->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type *) ttype)->get_base();
     switch (tbase) {
@@ -2735,24 +2834,135 @@ string t_c_glib_generator::generate_new_hash_from_type (t_type * ttype) {
         throw "compiler error: cannot determine hash type";
         break;
       case t_base_type::TYPE_BOOL:
-        return "g_hash_table_new (thrift_gboolean_hash, thrift_gboolean_equal);";
       case t_base_type::TYPE_BYTE:
-        return "g_hash_table_new (thrift_gint8_hash, thrift_gint8_equal);";
       case t_base_type::TYPE_I16:
-        return "g_hash_table_new (thrift_gint16_hash, thrift_gint16_equal);";
       case t_base_type::TYPE_I32:
-        return "g_hash_table_new (thrift_gint32_hash, thrift_gint32_equal);";
       case t_base_type::TYPE_I64:
-        return "g_hash_table_new (thrift_gint64_hash, thrift_gint64_equal);";
       case t_base_type::TYPE_DOUBLE:
-        return "g_hash_table_new (thrift_gdouble_hash, thrift_gdouble_equal);";
+        return "NULL";
       case t_base_type::TYPE_STRING:
-        return "g_hash_table_new (g_str_hash, g_str_equal);";
+        return "g_free";
       default:
         throw "compiler error: no hash table info for type";
     }
+  } else if (ttype->is_enum()) {
+    return "NULL";
+  } else if (ttype->is_map() || ttype->is_set()) {
+    return "(GDestroyNotify) g_hash_table_destroy";
+  } else if (ttype->is_struct()) {
+    return "g_object_unref";
+  } else if (ttype->is_list()) {
+    t_type *etype = ((t_list *) ttype)->get_elem_type();
+    if (etype->is_base_type()) {
+      t_base_type::t_base tbase = ((t_base_type *) etype)->get_base();
+      switch (tbase) {
+        case t_base_type::TYPE_VOID:
+          throw "compiler error: cannot determine array type";
+          break;
+        case t_base_type::TYPE_BOOL:
+        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I16:
+        case t_base_type::TYPE_I32:
+        case t_base_type::TYPE_I64:
+        case t_base_type::TYPE_DOUBLE:
+          return "(GDestroyNotify) g_array_unref";
+        case t_base_type::TYPE_STRING:
+          return "(GDestroyNotify) g_ptr_array_unref";
+        default:
+          throw "compiler error: no array info for type";
+      }
+    } else if (etype->is_container() || etype->is_struct()) {
+      return "(GDestroyNotify) g_ptr_array_unref";;
+    } else if (etype->is_enum()) {
+      return "(GDestroyNotify) g_array_unref";
+    }
+    printf("Type not expected inside the array: %s\n", etype->get_name().c_str());
+    throw "Type not expected inside array" ;
+  } else if (ttype->is_typedef()) {
+    return generate_free_func_from_type(((t_typedef *) ttype)->get_type());
   }
-  return "g_hash_table_new (NULL, NULL);";
+  printf("Type not expected: %s\n", ttype->get_name().c_str());
+  throw "Type not expected";
+}
+
+string t_c_glib_generator::generate_hash_func_from_type (t_type * ttype) {
+  if (ttype == NULL)
+    return "NULL";
+
+  if (ttype->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type *) ttype)->get_base();
+    switch (tbase) {
+      case t_base_type::TYPE_VOID:
+        throw "compiler error: cannot determine hash type";
+        break;
+      case t_base_type::TYPE_BOOL:
+      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I16:
+      case t_base_type::TYPE_I32:
+        return "g_int_hash";
+      case t_base_type::TYPE_I64:
+        return "g_int64_hash";
+      case t_base_type::TYPE_DOUBLE:
+        return "g_double_hash";
+      case t_base_type::TYPE_STRING:
+        return "g_str_hash";
+      default:
+        throw "compiler error: no hash table info for type";
+    }
+  } else if (ttype->is_enum()) {
+    return "g_direct_hash";
+  } else if (ttype->is_container() || ttype->is_struct()) {
+    return "g_direct_hash";
+  } else if (ttype->is_typedef()) {
+    return generate_hash_func_from_type(((t_typedef *) ttype)->get_type());
+  }
+  printf("Type not expected: %s\n", ttype->get_name().c_str());
+  throw "Type not expected";
+}
+
+string t_c_glib_generator::generate_cmp_func_from_type (t_type * ttype) {
+  if (ttype == NULL)
+    return "NULL";
+
+  if (ttype->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type *) ttype)->get_base();
+    switch (tbase) {
+      case t_base_type::TYPE_VOID:
+        throw "compiler error: cannot determine hash type";
+        break;
+      case t_base_type::TYPE_BOOL:
+      case t_base_type::TYPE_BYTE:
+      case t_base_type::TYPE_I16:
+      case t_base_type::TYPE_I32:
+        return "g_int_equal";
+      case t_base_type::TYPE_I64:
+        return "g_int64_equal";
+      case t_base_type::TYPE_DOUBLE:
+        return "g_double_equal";
+      case t_base_type::TYPE_STRING:
+        return "g_str_equal";
+      default:
+        throw "compiler error: no hash table info for type";
+    }
+  } else if (ttype->is_enum()) {
+    return "NULL";
+  } else if (ttype->is_container() || ttype->is_struct()) {
+    return "g_direct_equal";
+  } else if (ttype->is_typedef()) {
+    return generate_cmp_func_from_type(((t_typedef *) ttype)->get_type());
+  }
+  printf("Type not expected: %s\n", ttype->get_name().c_str());
+  throw "Type not expected";
+}
+
+string t_c_glib_generator::generate_new_hash_from_type (t_type * key, t_type *value) {
+  string hash_func = generate_hash_func_from_type(key);
+  string cmp_func = generate_cmp_func_from_type(key);
+  string key_free_func = generate_free_func_from_type(key);
+  string value_free_func = generate_free_func_from_type(value);
+
+  return "g_hash_table_new_full (" + hash_func + ", " + cmp_func + ", " +
+                              key_free_func + ", " + value_free_func + ");";
 }
 
 string t_c_glib_generator::generate_new_array_from_type(t_type * ttype) {
@@ -2775,11 +2985,17 @@ string t_c_glib_generator::generate_new_array_from_type(t_type * ttype) {
       case t_base_type::TYPE_DOUBLE:
         return "g_array_new (0, 1, sizeof (gdouble));";
       case t_base_type::TYPE_STRING:
-        return "g_ptr_array_new();";
+        return "g_ptr_array_new_with_free_func (g_free);";
       default:
         throw "compiler error: no array info for type";
     }
+  } else if (ttype->is_enum()) {
+    return "g_array_new (0, 1, sizeof (gint32));";
+  } else {
+    string free_func = generate_free_func_from_type(ttype);
+    return "g_ptr_array_new_with_free_func (" + free_func + ");";
   }
+
   return "g_ptr_array_new();";
 }
 

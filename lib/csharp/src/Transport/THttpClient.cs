@@ -23,21 +23,32 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Threading;
 
 namespace Thrift.Transport
 {
-	public class THttpClient : TTransport
+	public class THttpClient : TTransport, IDisposable
 	{
 		private readonly Uri uri;
 		private Stream inputStream;
 		private MemoryStream outputStream = new MemoryStream();
-		private int connectTimeout = 0;
-		private int readTimeout = 0;
+
+        // Timeouts in milliseconds
+        private int connectTimeout = 30000;
+
+        private int readTimeout = 30000;
+
 		private IDictionary<String, String> customHeaders = new Dictionary<string, string>();
 
-		public THttpClient(Uri u)
+        private HttpWebRequest connection = null;
+#if !SILVERLIGHT
+        private IWebProxy proxy = WebRequest.DefaultWebProxy;
+#endif
+
+        public THttpClient(Uri u)
 		{
 			uri = u;
+            connection = CreateRequest();
 		}
 
 		public int ConnectTimeout
@@ -63,6 +74,16 @@ namespace Thrift.Transport
 				return customHeaders;
 			}
 		}
+
+#if !SILVERLIGHT
+        public IWebProxy Proxy
+        {
+            set
+            {
+                proxy = value;
+            }
+        }
+#endif
 
 		public override bool IsOpen
 		{
@@ -119,6 +140,7 @@ namespace Thrift.Transport
 			outputStream.Write(buf, off, len);
 		}
 
+#if !SILVERLIGHT
 		public override void Flush()
 		{
 			try 
@@ -140,9 +162,11 @@ namespace Thrift.Transport
 				byte[] data = outputStream.ToArray();
 				connection.ContentLength = data.Length;
 
-				Stream requestStream = connection.GetRequestStream();
-				requestStream.Write(data, 0, data.Length);
-				inputStream = connection.GetResponse().GetResponseStream();
+				using (Stream requestStream = connection.GetRequestStream())
+				{
+					requestStream.Write(data, 0, data.Length);
+					inputStream = connection.GetResponse().GetResponseStream();
+				}
 			}
 			catch (IOException iox)
 			{
@@ -153,11 +177,12 @@ namespace Thrift.Transport
 				throw new TTransportException(TTransportException.ExceptionType.Unknown, "Couldn't connect to server: " + wx);
 			}
 		}
-
-		private HttpWebRequest CreateRequest()
+#endif
+				private HttpWebRequest CreateRequest()
 		{
 			HttpWebRequest connection = (HttpWebRequest)WebRequest.Create(uri);
 
+#if !SILVERLIGHT
 			if (connectTimeout > 0)
 			{
 				connection.Timeout = connectTimeout;
@@ -166,23 +191,211 @@ namespace Thrift.Transport
 			{
 				connection.ReadWriteTimeout = readTimeout;
 			}
-
+#endif
 			// Make the request
 			connection.ContentType = "application/x-thrift";
 			connection.Accept = "application/x-thrift";
 			connection.UserAgent = "C#/THttpClient";
 			connection.Method = "POST";
+#if !SILVERLIGHT
 			connection.ProtocolVersion = HttpVersion.Version10;
+#endif
 
-			//add custom headers here
+            //add custom headers here
 			foreach (KeyValuePair<string, string> item in customHeaders)
 			{
+#if !SILVERLIGHT
 				connection.Headers.Add(item.Key, item.Value);
+#else
+                connection.Headers[item.Key] = item.Value;
+#endif
 			}
 
-			connection.Proxy = null;
+#if !SILVERLIGHT
+            connection.Proxy = proxy;
+#endif
 
-			return connection;
+            return connection;
 		}
+
+#if SILVERLIGHT
+        public override IAsyncResult BeginFlush(AsyncCallback callback, object state)
+        {
+            // Extract request and reset buffer
+            var data = outputStream.ToArray();
+
+            //requestBuffer_ = new MemoryStream();
+
+            try
+            {
+                // Create connection object
+                var flushAsyncResult = new FlushAsyncResult(callback, state);
+                flushAsyncResult.Connection = CreateRequest();
+
+                flushAsyncResult.Data = data;
+
+
+                flushAsyncResult.Connection.BeginGetRequestStream(GetRequestStreamCallback, flushAsyncResult);
+                return flushAsyncResult;
+
+            }
+            catch (IOException iox)
+            {
+                throw new TTransportException(iox.ToString());
+            }
+        }
+
+        public override void EndFlush(IAsyncResult asyncResult)
+        {
+            try
+            {
+                var flushAsyncResult = (FlushAsyncResult) asyncResult;
+
+                if (!flushAsyncResult.IsCompleted)
+                {
+                    var waitHandle = flushAsyncResult.AsyncWaitHandle;
+                    waitHandle.WaitOne();  // blocking INFINITEly
+                    waitHandle.Close();
+                }
+
+                if (flushAsyncResult.AsyncException != null)
+                {
+                    throw flushAsyncResult.AsyncException;
+                }
+            } finally
+            {
+                outputStream = new MemoryStream();
+            }
+
+        }
+
+
+        private void GetRequestStreamCallback(IAsyncResult asynchronousResult)
+        {
+            var flushAsyncResult = (FlushAsyncResult)asynchronousResult.AsyncState;
+            try
+            {
+                var reqStream = flushAsyncResult.Connection.EndGetRequestStream(asynchronousResult);
+                reqStream.Write(flushAsyncResult.Data, 0, flushAsyncResult.Data.Length);
+                reqStream.Flush();
+                reqStream.Close();
+
+                // Start the asynchronous operation to get the response
+                flushAsyncResult.Connection.BeginGetResponse(GetResponseCallback, flushAsyncResult);
+            }
+            catch (Exception exception)
+            {
+                flushAsyncResult.AsyncException = new TTransportException(exception.ToString());
+                flushAsyncResult.UpdateStatusToComplete();
+                flushAsyncResult.NotifyCallbackWhenAvailable();
+            }
+        }
+
+        private void GetResponseCallback(IAsyncResult asynchronousResult)
+        {
+            var flushAsyncResult = (FlushAsyncResult)asynchronousResult.AsyncState;
+            try
+            {
+                inputStream = flushAsyncResult.Connection.EndGetResponse(asynchronousResult).GetResponseStream();
+            }
+            catch (Exception exception)
+            {
+                flushAsyncResult.AsyncException = new TTransportException(exception.ToString());
+            }
+            flushAsyncResult.UpdateStatusToComplete();
+            flushAsyncResult.NotifyCallbackWhenAvailable();
+        }
+
+        // Based on http://msmvps.com/blogs/luisabreu/archive/2009/06/15/multithreading-implementing-the-iasyncresult-interface.aspx
+        class FlushAsyncResult : IAsyncResult
+        {
+            private volatile Boolean _isCompleted;
+            private ManualResetEvent _evt;
+            private readonly AsyncCallback _cbMethod;
+            private readonly Object _state;
+
+            public FlushAsyncResult(AsyncCallback cbMethod, Object state)
+            {
+                _cbMethod = cbMethod;
+                _state = state;
+            }
+
+            internal byte[] Data { get; set; }
+            internal HttpWebRequest Connection { get; set; }
+            internal TTransportException AsyncException { get; set; }
+
+            public object AsyncState
+            {
+                get { return _state; }
+            }
+            public WaitHandle AsyncWaitHandle
+            {
+                get { return GetEvtHandle(); }
+            }
+            public bool CompletedSynchronously
+            {
+                get { return false; }
+            }
+            public bool IsCompleted
+            {
+                get { return _isCompleted; }
+            }
+            private readonly Object _locker = new Object();
+            private ManualResetEvent GetEvtHandle()
+            {
+                lock (_locker)
+                {
+                    if (_evt == null)
+                    {
+                        _evt = new ManualResetEvent(false);
+                    }
+                    if (_isCompleted)
+                    {
+                        _evt.Set();
+                    }
+                }
+                return _evt;
+            }
+            internal void UpdateStatusToComplete()
+            {
+                _isCompleted = true; //1. set _iscompleted to true 
+                lock (_locker)
+                {
+                    if (_evt != null)
+                    {
+                        _evt.Set(); //2. set the event, when it exists 
+                    }
+                }
+            }
+
+            internal void NotifyCallbackWhenAvailable()
+            {
+                if (_cbMethod != null)
+                {
+                    _cbMethod(this);
+                }
+            }
+        }
+
+#endif
+#region " IDisposable Support "
+		private bool _IsDisposed;
+
+		// IDisposable
+		protected override void Dispose(bool disposing)
+		{
+			if (!_IsDisposed)
+			{
+				if (disposing)
+				{
+					if (inputStream != null)
+						inputStream.Dispose();
+					if (outputStream != null)
+						outputStream.Dispose();
+				}
+			}
+			_IsDisposed = true;
+		}
+#endregion
 	}
 }

@@ -23,6 +23,7 @@ package org.apache.thrift.test;
 import thrift.test.*;
 
 import org.apache.thrift.TApplicationException;
+import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TSocket;
@@ -372,7 +373,69 @@ public class TestClient {
         }
         System.out.print("}\n");
 
-        // Test oneway
+        
+        /**
+         * EXECPTION TEST
+         */
+        try {
+          System.out.print("testClient.testException(\"Xception\") =>");
+          testClient.testException("Xception");
+          System.out.print("  void\nFAILURE\n");
+        } catch(Xception e) {
+          System.out.printf("  {%u, \"%s\"}\n", e.errorCode, e.message);
+        }
+        
+        try {
+          System.out.print("testClient.testException(\"TException\") =>");
+          testClient.testException("TException");
+          System.out.print("  void\nFAILURE\n");
+        } catch(TException e) {
+          System.out.printf("  {\"%s\"}\n", e.getMessage());
+        }
+        
+        try {
+          System.out.print("testClient.testException(\"success\") =>");
+          testClient.testException("success");
+          System.out.print("  void\n");
+        }catch(Exception e) {
+          System.out.printf("  exception\nFAILURE\n");
+        }
+        
+        
+        /**
+         * MULTI EXCEPTION TEST
+         */
+        
+        try {
+          System.out.printf("testClient.testMultiException(\"Xception\", \"test 1\") =>");
+          testClient.testMultiException("Xception", "test 1");
+          System.out.print("  result\nFAILURE\n");
+        } catch(Xception e) {
+          System.out.printf("  {%u, \"%s\"}\n", e.errorCode, e.message);
+        }
+        
+        try {
+          System.out.printf("testClient.testMultiException(\"Xception2\", \"test 2\") =>");
+          testClient.testMultiException("Xception2", "test 2");
+          System.out.print("  result\nFAILURE\n");
+        } catch(Xception2 e) {
+          System.out.printf("  {%u, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing);
+        }
+        
+        try {
+          System.out.print("testClient.testMultiException(\"success\", \"test 3\") =>");
+          Xtruct result;
+          result = testClient.testMultiException("success", "test 3");
+          System.out.printf("  {{\"%s\"}}\n", result.string_thing);
+        } catch(Exception e) {
+          System.out.printf("  exception\nFAILURE\n");
+        }
+
+
+        
+        /**
+         * ONEWAY TEST
+         */
         System.out.print("testOneway(3)...");
         long startOneway = System.nanoTime();
         testClient.testOneway(3);

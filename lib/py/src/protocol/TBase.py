@@ -26,12 +26,13 @@ try:
 except:
   fastbinary = None
 
+
 class TBase(object):
   __slots__ = []
 
   def __repr__(self):
     L = ['%s=%r' % (key, getattr(self, key))
-              for key in self.__slots__ ]
+              for key in self.__slots__]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
@@ -43,30 +44,38 @@ class TBase(object):
       if my_val != other_val:
         return False
     return True
-    
+
   def __ne__(self, other):
     return not (self == other)
-  
+
   def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+    if (iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
+        isinstance(iprot.trans, TTransport.CReadableTransport) and
+        self.thrift_spec is not None and
+        fastbinary is not None):
+      fastbinary.decode_binary(self,
+                               iprot.trans,
+                               (self.__class__, self.thrift_spec))
       return
     iprot.readStruct(self, self.thrift_spec)
 
   def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+    if (oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and
+        self.thrift_spec is not None and
+        fastbinary is not None):
+      oprot.trans.write(
+        fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStruct(self, self.thrift_spec)
+
 
 class TExceptionBase(Exception):
   # old style class so python2.4 can raise exceptions derived from this
   #  This can't inherit from TBase because of that limitation.
   __slots__ = []
-  
+
   __repr__ = TBase.__repr__.im_func
   __eq__ = TBase.__eq__.im_func
   __ne__ = TBase.__ne__.im_func
   read = TBase.read.im_func
   write = TBase.write.im_func
-  

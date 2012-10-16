@@ -49,6 +49,11 @@ struct Tricky3 {
   1: required i16 im_required;
 }
 
+struct OptionalDefault {
+  1: optional i16 opt_int = 1234;
+  2: optional string opt_str = "default";
+}
+
 struct Complex {
   1:          i16 cp_default;
   2: required i16 cp_required;

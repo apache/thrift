@@ -74,7 +74,13 @@ public abstract class ProtocolTestBase extends TestCase {
   }
 
   public void testBinary() throws Exception {
-    for (byte[] b : Arrays.asList(new byte[0], new byte[]{0,1,2,3,4,5,6,7,8,9,10}, new byte[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14}, new byte[128])) {
+    for (byte[] b : Arrays.asList(new byte[0],
+                                  new byte[]{0,1,2,3,4,5,6,7,8,9,10},
+                                  new byte[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14},
+                                  new byte[]{0x5D},
+                                  new byte[]{(byte)0xD5,(byte)0x5D},
+                                  new byte[]{(byte)0xFF,(byte)0xD5,(byte)0x5D},
+                                  new byte[128])) {
       if (canBeUsedNaked()) {
         internalTestNakedBinary(b);
       }

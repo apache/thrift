@@ -84,8 +84,9 @@ namespace Thrift.Protocol
 		public abstract long ReadI64();
 		public abstract double ReadDouble();
 		public virtual string ReadString() {
-		       return Encoding.UTF8.GetString(ReadBinary());
-		}
+            var buf = ReadBinary();
+            return Encoding.UTF8.GetString(buf, 0, buf.Length);
+        }
 		public abstract byte[] ReadBinary();
 	}
 }

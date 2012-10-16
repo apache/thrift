@@ -145,5 +145,24 @@ namespace Thrift.Transport
 				client = null;
 			}
 		}
-	}
+
+    #region " IDisposable Support "
+    private bool _IsDisposed;
+
+    // IDisposable
+    protected override void Dispose(bool disposing)
+    {
+      if (!_IsDisposed)
+      {
+        if (disposing)
+        {
+          if (client != null)
+            ((IDisposable)client).Dispose();
+          base.Dispose(disposing);
+        }
+      }
+      _IsDisposed = true;
+    }
+    #endregion
+  }
 }

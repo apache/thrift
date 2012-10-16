@@ -19,6 +19,7 @@
 
 #import "TApplicationException.h"
 #import "TProtocolUtil.h"
+#import "TObjective-C.h"
 
 @implementation TApplicationException
 
@@ -124,7 +125,7 @@
                                       reason: (NSString *) reason
 {
   return [[[TApplicationException alloc] initWithType: type
-                                         reason: reason] autorelease];
+                                         reason: reason] autorelease_stub];
 }
 
 @end

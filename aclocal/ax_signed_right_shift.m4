@@ -104,7 +104,7 @@ AC_DEFUN([AX_SIGNED_RIGHT_SHIFT],
           AC_DEFINE([LOGICAL_RIGHT_SHIFT], 2, [Possible value for SIGNED_RIGHT_SHIFT_IS])
           AC_DEFINE([UNKNOWN_RIGHT_SHIFT], 3, [Possible value for SIGNED_RIGHT_SHIFT_IS])
 
-          if test "$success_arithmetic" = "yes" && test "$success_logica" = "yes" ; then
+          if test "$success_arithmetic" = "yes" && test "$success_logical" = "yes" ; then
             AC_MSG_ERROR("Right shift appears to be both arithmetic and logical!")
           elif test "$success_arithmetic" = "yes" ; then
             ax_signed_right_shift=arithmetic

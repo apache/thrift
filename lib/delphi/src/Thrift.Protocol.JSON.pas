@@ -48,7 +48,7 @@ type
     type
       TFactory = class( TInterfacedObject, IProtocolFactory)
       public
-        function GetProtocol( trans: ITransport): IProtocol;
+        function GetProtocol( const trans: ITransport): IProtocol;
       end;
 
   private
@@ -62,7 +62,7 @@ type
       // This base context does nothing.
       TJSONBaseContext = class
       protected
-        FProto : IJSONProtocol;
+        FProto : Pointer;  // weak IJSONProtocol;
       public
         constructor Create( const aProto : IJSONProtocol);
         procedure Write;  virtual;
@@ -97,7 +97,7 @@ type
       // Holds up to one byte from the transport
       TLookaheadReader = class
       protected
-        FProto : IJSONProtocol;
+        FProto : Pointer;  // weak IJSONProtocol;
         constructor Create( const aProto : IJSONProtocol);
 
       private
@@ -125,12 +125,13 @@ type
     FReader : TLookaheadReader;
 
     // Push/pop a new JSON context onto/from the stack.
-    procedure PushContext( aCtx : TJSONBaseContext);
+    procedure ResetContextStack;
+    procedure PushContext( const aCtx : TJSONBaseContext);
     procedure PopContext;
 
   public
     // TJSONProtocolImpl Constructor
-    constructor Create( aTrans : ITransport);
+    constructor Create( const aTrans : ITransport);
     destructor Destroy;   override;
 
   protected
@@ -147,11 +148,11 @@ type
 
     // Write the bytes in array buf as a JSON characters, escaping as needed
     procedure WriteJSONString( const b : TBytes);  overload;
-    procedure WriteJSONString( str : string);  overload;
+    procedure WriteJSONString( const str : string);  overload;
 
     // Write out number as a JSON value. If the context dictates so, it will be
     // wrapped in quotes to output as a JSON string.
-    procedure WriteJSONInteger( num : Int64);
+    procedure WriteJSONInteger( const num : Int64);
 
     // Write out a double as a JSON value. If it is NaN or infinity or if the
     // context dictates escaping, Write out as JSON string.
@@ -167,25 +168,25 @@ type
 
   public
     // IProtocol
-    procedure WriteMessageBegin( aMsg : IMessage); override;
+    procedure WriteMessageBegin( const aMsg : IMessage); override;
     procedure WriteMessageEnd; override;
-    procedure WriteStructBegin(struc: IStruct); override;
+    procedure WriteStructBegin( const struc: IStruct); override;
     procedure WriteStructEnd; override;
-    procedure WriteFieldBegin(field: IField); override;
+    procedure WriteFieldBegin( const field: IField); override;
     procedure WriteFieldEnd; override;
     procedure WriteFieldStop; override;
-    procedure WriteMapBegin(map: IMap); override;
+    procedure WriteMapBegin( const map: IMap); override;
     procedure WriteMapEnd; override;
-    procedure WriteListBegin( list: IList); override;
+    procedure WriteListBegin( const list: IList); override;
     procedure WriteListEnd(); override;
-    procedure WriteSetBegin( set_: ISet ); override;
+    procedure WriteSetBegin( const set_: ISet ); override;
     procedure WriteSetEnd(); override;
     procedure WriteBool( b: Boolean); override;
     procedure WriteByte( b: ShortInt); override;
     procedure WriteI16( i16: SmallInt); override;
     procedure WriteI32( i32: Integer); override;
-    procedure WriteI64( i64: Int64); override;
-    procedure WriteDouble( d: Double); override;
+    procedure WriteI64( const i64: Int64); override;
+    procedure WriteDouble( const d: Double); override;
     procedure WriteString( const s: string );   override;
     procedure WriteBinary( const b: TBytes); override;
     //
@@ -289,7 +290,7 @@ const
 //--- TJSONProtocolImpl ----------------------
 
 
-function TJSONProtocolImpl.TFactory.GetProtocol( trans: ITransport): IProtocol;
+function TJSONProtocolImpl.TFactory.GetProtocol( const trans: ITransport): IProtocol;
 begin
   result := TJSONProtocolImpl.Create(trans);
 end;
@@ -334,7 +335,7 @@ end;
 constructor TJSONProtocolImpl.TJSONBaseContext.Create( const aProto : IJSONProtocol);
 begin
   inherited Create;
-  FProto := aProto;
+  FProto := Pointer(aProto);
 end;
 
 
@@ -367,7 +368,7 @@ procedure TJSONProtocolImpl.TJSONListContext.Write;
 begin
   if FFirst
   then FFirst := FALSE
-  else FProto.Transport.Write( COMMA);
+  else IJSONProtocol(FProto).Transport.Write( COMMA);
 end;
 
 
@@ -375,7 +376,7 @@ procedure TJSONProtocolImpl.TJSONListContext.Read;
 begin
   if FFirst
   then FFirst := FALSE
-  else FProto.ReadJSONSyntaxChar( COMMA[0]);
+  else IJSONProtocol(FProto).ReadJSONSyntaxChar( COMMA[0]);
 end;
 
 
@@ -395,8 +396,8 @@ begin
   end
   else begin
     if FColon
-    then FProto.Transport.Write( COLON)
-    else FProto.Transport.Write( COMMA);
+    then IJSONProtocol(FProto).Transport.Write( COLON)
+    else IJSONProtocol(FProto).Transport.Write( COMMA);
     FColon := not FColon;
   end;
 end;
@@ -410,8 +411,8 @@ begin
   end
   else begin
     if FColon
-    then FProto.ReadJSONSyntaxChar( COLON[0])
-    else FProto.ReadJSONSyntaxChar( COMMA[0]);
+    then IJSONProtocol(FProto).ReadJSONSyntaxChar( COLON[0])
+    else IJSONProtocol(FProto).ReadJSONSyntaxChar( COMMA[0]);
     FColon := not FColon;
   end;
 end;
@@ -426,7 +427,7 @@ end;
 constructor TJSONProtocolImpl.TLookaheadReader.Create( const aProto : IJSONProtocol);
 begin
   inherited Create;
-  FProto   := aProto;
+  FProto   := Pointer(aProto);
   FHasData := FALSE;
 end;
 
@@ -437,7 +438,7 @@ begin
   then FHasData := FALSE
   else begin
     SetLength( FData, 1);
-    FProto.Transport.ReadAll( FData, 0, 1);
+    IJSONProtocol(FProto).Transport.ReadAll( FData, 0, 1);
   end;
   result := FData[0];
 end;
@@ -447,27 +448,14 @@ function TJSONProtocolImpl.TLookaheadReader.Peek : Byte;
 begin
   if not FHasData then begin
     SetLength( FData, 1);
-    FProto.Transport.ReadAll( FData, 0, 1);
+    IJSONProtocol(FProto).Transport.ReadAll( FData, 0, 1);
     FHasData := TRUE;
   end;
   result := FData[0];
 end;
 
 
-procedure TJSONProtocolImpl.PushContext( aCtx : TJSONBaseContext);
-begin
-  FContextStack.Push( FContext);
-  FContext := aCtx;
-end;
-
-procedure TJSONProtocolImpl.PopContext;
-begin
-  FreeAndNil(FContext);
-  FContext := FContextStack.Pop;
-end;
-
-
-constructor TJSONProtocolImpl.Create( aTrans : ITransport);
+constructor TJSONProtocolImpl.Create( const aTrans : ITransport);
 begin
   inherited Create( aTrans);
 
@@ -482,12 +470,34 @@ end;
 destructor TJSONProtocolImpl.Destroy;
 begin
   try
+    ResetContextStack;  // free any contents
     FreeAndNil( FReader);
     FreeAndNil( FContext);
     FreeAndNil( FContextStack);
   finally
     inherited Destroy;
   end;
+end;
+
+
+procedure TJSONProtocolImpl.ResetContextStack;
+begin
+  while FContextStack.Count > 0
+  do PopContext;
+end;
+
+
+procedure TJSONProtocolImpl.PushContext( const aCtx : TJSONBaseContext);
+begin
+  FContextStack.Push( FContext);
+  FContext := aCtx;
+end;
+
+
+procedure TJSONProtocolImpl.PopContext;
+begin
+  FreeAndNil(FContext);
+  FContext := FContextStack.Pop;
 end;
 
 
@@ -518,7 +528,7 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteJSONString( str : string);
+procedure TJSONProtocolImpl.WriteJSONString( const str : string);
 begin
   WriteJSONString( SysUtils.TEncoding.UTF8.GetBytes( str));
 end;
@@ -565,7 +575,7 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteJSONInteger( num : Int64);
+procedure TJSONProtocolImpl.WriteJSONInteger( const num : Int64);
 var str : String;
     escapeNum : Boolean;
 begin
@@ -666,8 +676,10 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteMessageBegin( aMsg : IMessage);
+procedure TJSONProtocolImpl.WriteMessageBegin( const aMsg : IMessage);
 begin
+  ResetContextStack;  // THRIFT-1473
+
   WriteJSONArrayStart;
   WriteJSONInteger(VERSION);
 
@@ -683,7 +695,7 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteStructBegin( struc: IStruct);
+procedure TJSONProtocolImpl.WriteStructBegin( const struc: IStruct);
 begin
   WriteJSONObjectStart;
 end;
@@ -695,7 +707,7 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteFieldBegin( field : IField);
+procedure TJSONProtocolImpl.WriteFieldBegin( const field : IField);
 begin
   WriteJSONInteger(field.ID);
   WriteJSONObjectStart;
@@ -714,7 +726,7 @@ begin
   // nothing to do
 end;
 
-procedure TJSONProtocolImpl.WriteMapBegin( map: IMap);
+procedure TJSONProtocolImpl.WriteMapBegin( const map: IMap);
 begin
   WriteJSONArrayStart;
   WriteJSONString( GetTypeNameForTypeID( map.KeyType));
@@ -731,7 +743,7 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteListBegin( list: IList);
+procedure TJSONProtocolImpl.WriteListBegin( const list: IList);
 begin
   WriteJSONArrayStart;
   WriteJSONString( GetTypeNameForTypeID( list.ElementType));
@@ -745,7 +757,7 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteSetBegin( set_: ISet);
+procedure TJSONProtocolImpl.WriteSetBegin( const set_: ISet);
 begin
   WriteJSONArrayStart;
   WriteJSONString( GetTypeNameForTypeID( set_.ElementType));
@@ -780,12 +792,12 @@ begin
   WriteJSONInteger( i32);
 end;
 
-procedure TJSONProtocolImpl.WriteI64( i64: Int64);
+procedure TJSONProtocolImpl.WriteI64( const i64: Int64);
 begin
   WriteJSONInteger(i64);
 end;
 
-procedure TJSONProtocolImpl.WriteDouble( d: Double);
+procedure TJSONProtocolImpl.WriteDouble( const d: Double);
 begin
   WriteJSONDouble( d);
 end;
@@ -842,7 +854,7 @@ begin
     end;
 
     SetLength( result, buffer.Size);
-    Move( buffer.Memory^, result[0], Length(result));
+    if buffer.Size > 0 then Move( buffer.Memory^, result[0], Length(result));
 
   finally
     buffer.Free;
@@ -980,6 +992,8 @@ end;
 
 function TJSONProtocolImpl.ReadMessageBegin: IMessage;
 begin
+  ResetContextStack;  // THRIFT-1473
+
   result := TMessageImpl.Create;
   ReadJSONArrayStart;
 

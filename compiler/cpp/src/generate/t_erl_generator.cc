@@ -76,7 +76,8 @@ class t_erl_generator : public t_generator {
   std::string render_member_value(t_field * field);
   std::string render_member_requiredness(t_field * field);
 
-  std::string render_default_value(t_type* type);
+//  std::string render_default_value(t_type* type);
+  std::string render_default_value(t_field * field);
   std::string render_const_value(t_type* type, t_const_value* value);
   std::string render_type_term(t_type* ttype, bool expand_structs, bool extended_info = false);
 
@@ -128,6 +129,8 @@ class t_erl_generator : public t_generator {
   static std::string comment(string in);
 
  private:
+
+  bool has_default_value(t_field *);
 
   /**
    * add function to export list
@@ -461,7 +464,8 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
 }
 
 
-string t_erl_generator::render_default_value(t_type* type) {
+string t_erl_generator::render_default_value(t_field* field) {
+  t_type *type = field->get_type();
   if (type->is_struct() || type->is_xception()) {
     return "#" + uncapitalize(type->get_name()) + "{}";
   } else if (type->is_map()) {
@@ -481,7 +485,7 @@ string t_erl_generator::render_member_type(t_field * field) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      return "string()";
+      return "string() | binary()";
     case t_base_type::TYPE_BOOL:
       return "boolean()";
     case t_base_type::TYPE_BYTE:
@@ -561,7 +565,7 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tst
   for (vector<t_field*>::const_iterator m_iter = members.begin(); m_iter != members.end();) {
     generate_erl_struct_member(buf, *m_iter);
     if ( ++m_iter != members.end() ) {
-      buf << ", " << endl << field_indent;
+      buf << "," << endl << field_indent;
     }
   }
   buf << "}).";
@@ -576,13 +580,32 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tst
 void t_erl_generator::generate_erl_struct_member(ostream & out, t_field * tmember)
 {
   out << uncapitalize(tmember->get_name());
-  out << " = "  << render_member_value(tmember);
+  if (has_default_value(tmember))
+    out << " = "  << render_member_value(tmember);
   out << " :: " << render_member_type(tmember);
+}
+
+bool t_erl_generator::has_default_value(t_field * field) {
+  t_type *type = field->get_type();
+  if (!field->get_value()) {
+    if ( field->get_req() == t_field::T_REQUIRED) {
+      if (type->is_struct() || type->is_xception() || type->is_map() ||
+          type->is_set() || type->is_list()) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  } else {
+    return true;
+  }
 }
 
 string t_erl_generator::render_member_value(t_field * field) {
   if (!field->get_value()) {
-    return render_default_value(field->get_type());
+    return render_default_value(field);
   } else {
     return render_const_value(field->get_type(), field->get_value());
   }
@@ -935,6 +958,7 @@ std::string t_erl_generator::render_type_term(t_type* type, bool expand_structs,
 
       std::stringstream buf;
       buf << "{struct, [";
+      string field_indent(buf.str().size(), ' ');
 
       t_struct::members_type const& fields = static_cast<t_struct*>(type)->get_members();
       t_struct::members_type::const_iterator i, end = fields.end();
@@ -956,7 +980,7 @@ std::string t_erl_generator::render_type_term(t_type* type, bool expand_structs,
         }
 
         if ( ++i != end ) {
-          buf << ", ";
+          buf << "," << endl << field_indent;
         }
       }
 

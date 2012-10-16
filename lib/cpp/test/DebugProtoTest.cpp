@@ -20,7 +20,7 @@
 #include <iostream>
 #include <cmath>
 #include "gen-cpp/DebugProtoTest_types.h"
-#include <protocol/TDebugProtocol.h>
+#include <thrift/protocol/TDebugProtocol.h>
 
 int main() {
   using std::cout;

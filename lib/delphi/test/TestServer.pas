@@ -19,14 +19,17 @@
 
 unit TestServer;
 
+{$WARN SYMBOL_PLATFORM OFF}
+
 interface
 
 uses
-  SysUtils,
+  Windows, SysUtils,
   Generics.Collections,
   Thrift.Console,
   Thrift.Server,
   Thrift.Transport,
+  Thrift.Transport.Pipes,
   Thrift.Protocol,
   Thrift.Protocol.JSON,
   Thrift.Collections,
@@ -42,7 +45,7 @@ type
     type
 
       ITestHandler = interface( TThriftTest.Iface )
-        procedure SetServer( AServer : IServer );
+        procedure SetServer( const AServer : IServer );
       end;
 
       TTestHandlerImpl = class( TInterfacedObject, ITestHandler )
@@ -50,39 +53,40 @@ type
         FServer : IServer;
       protected
         procedure testVoid();
-        function testString(thing: string): string;
+        function testString(const thing: string): string;
         function testByte(thing: ShortInt): ShortInt;
         function testI32(thing: Integer): Integer;
-        function testI64(thing: Int64): Int64;
-        function testDouble(thing: Double): Double;
-        function testStruct(thing: IXtruct): IXtruct;
-        function testNest(thing: IXtruct2): IXtruct2;
-        function testMap(thing: IThriftDictionary<Integer, Integer>): IThriftDictionary<Integer, Integer>;
-        function testStringMap(thing: IThriftDictionary<string, string>): IThriftDictionary<string, string>;
-        function testSet(thing: IHashSet<Integer>): IHashSet<Integer>;
-        function testList(thing: IThriftList<Integer>): IThriftList<Integer>;
+        function testI64(const thing: Int64): Int64;
+        function testDouble(const thing: Double): Double;
+        function testStruct(const thing: IXtruct): IXtruct;
+        function testNest(const thing: IXtruct2): IXtruct2;
+        function testMap(const thing: IThriftDictionary<Integer, Integer>): IThriftDictionary<Integer, Integer>;
+        function testStringMap(const thing: IThriftDictionary<string, string>): IThriftDictionary<string, string>;
+        function testSet(const thing: IHashSet<Integer>): IHashSet<Integer>;
+        function testList(const thing: IThriftList<Integer>): IThriftList<Integer>;
         function testEnum(thing: TNumberz): TNumberz;
-        function testTypedef(thing: Int64): Int64;
+        function testTypedef(const thing: Int64): Int64;
         function testMapMap(hello: Integer): IThriftDictionary<Integer, IThriftDictionary<Integer, Integer>>;
-        function testInsanity(argument: IInsanity): IThriftDictionary<Int64, IThriftDictionary<TNumberz, IInsanity>>;
-        function testMulti(arg0: ShortInt; arg1: Integer; arg2: Int64; arg3: IThriftDictionary<SmallInt, string>; arg4: TNumberz; arg5: Int64): IXtruct;
-        procedure testException(arg: string);
-        function testMultiException(arg0: string; arg1: string): IXtruct;
+        function testInsanity(const argument: IInsanity): IThriftDictionary<Int64, IThriftDictionary<TNumberz, IInsanity>>;
+        function testMulti(arg0: ShortInt; arg1: Integer; const arg2: Int64; const arg3: IThriftDictionary<SmallInt, string>; arg4: TNumberz; const arg5: Int64): IXtruct;
+        procedure testException(const arg: string);
+        function testMultiException(const arg0: string; const arg1: string): IXtruct;
         procedure testOneway(secondsToSleep: Integer);
 
          procedure testStop;
 
-        procedure SetServer( AServer : IServer );
+        procedure SetServer( const AServer : IServer );
       end;
 
-      class procedure Execute( args: array of string);
+      class procedure LaunchAnonPipeChild( const app : string; const transport : IPipeServer);
+      class procedure Execute( const args: array of string);
   end;
 
 implementation
 
 { TTestServer.TTestHandlerImpl }
 
-procedure TTestServer.TTestHandlerImpl.SetServer(AServer: IServer);
+procedure TTestServer.TTestHandlerImpl.SetServer( const AServer: IServer);
 begin
   FServer := AServer;
 end;
@@ -93,7 +97,7 @@ begin
   Result := thing;
 end;
 
-function TTestServer.TTestHandlerImpl.testDouble(thing: Double): Double;
+function TTestServer.TTestHandlerImpl.testDouble( const thing: Double): Double;
 begin
   Console.WriteLine('testDouble("' + FloatToStr( thing ) + '")');
   Result := thing;
@@ -105,19 +109,20 @@ begin
   Result := thing;
 end;
 
-procedure TTestServer.TTestHandlerImpl.testException(arg: string);
-var
-  x : TXception;
+procedure TTestServer.TTestHandlerImpl.testException(const arg: string);
 begin
   Console.WriteLine('testException(' + arg + ')');
   if ( arg = 'Xception') then
   begin
-    x := TXception.Create;
-    x.ErrorCode := 1001;
-    x.Message_ := 'This is an Xception';
-    x.UpdateMessageProperty;
-    raise x;
+    raise TXception.Create( 1001, arg);
   end;
+
+  if (arg = 'TException') then
+  begin
+    raise TException.Create('');
+  end;
+
+  // else do not throw anything
 end;
 
 function TTestServer.TTestHandlerImpl.testI32(thing: Integer): Integer;
@@ -126,14 +131,14 @@ begin
   Result := thing;
 end;
 
-function TTestServer.TTestHandlerImpl.testI64(thing: Int64): Int64;
+function TTestServer.TTestHandlerImpl.testI64( const thing: Int64): Int64;
 begin
   Console.WriteLine('testI64("' + IntToStr( thing) + '")');
   Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testInsanity(
-  argument: IInsanity): IThriftDictionary<Int64, IThriftDictionary<TNumberz, IInsanity>>;
+  const argument: IInsanity): IThriftDictionary<Int64, IThriftDictionary<TNumberz, IInsanity>>;
 var
   hello, goodbye : IXtruct;
   crazy : IInsanity;
@@ -146,7 +151,7 @@ begin
 
   Console.WriteLine('testInsanity()');
   hello := TXtructImpl.Create;
-  hello.String_thing := 'hello';
+  hello.String_thing := 'Hello2';
   hello.Byte_thing := 2;
   hello.I32_thing := 2;
   hello.I64_thing := 2;
@@ -170,7 +175,7 @@ begin
   first_map := TThriftDictionaryImpl<TNumberz, IInsanity>.Create;
   second_map := TThriftDictionaryImpl<TNumberz, IInsanity>.Create;
 
-  first_map.AddOrSetValue( TNumberz.SIX, crazy);
+  first_map.AddOrSetValue( TNumberz.TWO, crazy);
   first_map.AddOrSetValue( TNumberz.THREE, crazy);
 
   second_map.AddOrSetValue( TNumberz.SIX, looney);
@@ -184,7 +189,7 @@ begin
 end;
 
 function TTestServer.TTestHandlerImpl.testList(
-  thing: IThriftList<Integer>): IThriftList<Integer>;
+  const thing: IThriftList<Integer>): IThriftList<Integer>;
 var
   first : Boolean;
   elem : Integer;
@@ -207,7 +212,7 @@ begin
 end;
 
 function TTestServer.TTestHandlerImpl.testMap(
-  thing: IThriftDictionary<Integer, Integer>): IThriftDictionary<Integer, Integer>;
+  const thing: IThriftDictionary<Integer, Integer>): IThriftDictionary<Integer, Integer>;
 var
   first : Boolean;
   key : Integer;
@@ -255,8 +260,8 @@ begin
 end;
 
 function TTestServer.TTestHandlerImpl.testMulti(arg0: ShortInt; arg1: Integer;
-  arg2: Int64; arg3: IThriftDictionary<SmallInt, string>; arg4: TNumberz;
-  arg5: Int64): IXtruct;
+  const arg2: Int64; const arg3: IThriftDictionary<SmallInt, string>;
+  arg4: TNumberz; const arg5: Int64): IXtruct;
 var
   hello : IXtruct;
 begin
@@ -269,24 +274,18 @@ begin
   Result := hello;
 end;
 
-function TTestServer.TTestHandlerImpl.testMultiException(arg0,
-  arg1: string): IXtruct;
+function TTestServer.TTestHandlerImpl.testMultiException( const arg0, arg1: string): IXtruct;
 var
-  x : TXception;
   x2 : TXception2;
 begin
   Console.WriteLine('testMultiException(' + arg0 + ', ' + arg1 + ')');
   if ( arg0 = 'Xception') then
   begin
-    x := TXception.Create;
-    x.ErrorCode := 1001;
-    x.Message_ := 'This is an Xception';
-    x.UpdateMessageProperty;
-    raise x;
+    raise TXception.Create( 1001, 'This is an Xception');  // test the new rich CTOR 
   end else
   if ( arg0 = 'Xception2') then
   begin
-    x2 := TXception2.Create;
+    x2 := TXception2.Create;  // the old way still works too?
     x2.ErrorCode := 2002;
     x2.Struct_thing := TXtructImpl.Create;
     x2.Struct_thing.String_thing := 'This is an Xception2';
@@ -298,7 +297,7 @@ begin
   Result.String_thing := arg1;
 end;
 
-function TTestServer.TTestHandlerImpl.testNest(thing: IXtruct2): IXtruct2;
+function TTestServer.TTestHandlerImpl.testNest( const thing: IXtruct2): IXtruct2;
 var
   temp : IXtruct;
 begin
@@ -321,7 +320,7 @@ begin
 end;
 
 function TTestServer.TTestHandlerImpl.testSet(
-  thing: IHashSet<Integer>):IHashSet<Integer>;
+  const thing: IHashSet<Integer>):IHashSet<Integer>;
 var
   first : Boolean;
   elem : Integer;
@@ -352,19 +351,36 @@ begin
   end;
 end;
 
-function TTestServer.TTestHandlerImpl.testString(thing: string): string;
+function TTestServer.TTestHandlerImpl.testString( const thing: string): string;
 begin
   Console.WriteLine('teststring("' + thing + '")');
   Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testStringMap(
-  thing: IThriftDictionary<string, string>): IThriftDictionary<string, string>;
+  const thing: IThriftDictionary<string, string>): IThriftDictionary<string, string>;
+var
+  first : Boolean;
+  key : string;
 begin
-
+  Console.Write('testStringMap({');
+  first := True;
+  for key in thing.Keys do
+  begin
+    if (first) then
+    begin
+      first := false;
+    end else
+    begin
+      Console.Write(', ');
+    end;
+    Console.Write(key + ' => ' + thing[key]);
+  end;
+  Console.WriteLine('})');
+  Result := thing;
 end;
 
-function TTestServer.TTestHandlerImpl.testTypedef(thing: Int64): Int64;
+function TTestServer.TTestHandlerImpl.testTypedef( const thing: Int64): Int64;
 begin
   Console.WriteLine('testTypedef(' + IntToStr( thing) + ')');
   Result := thing;
@@ -375,7 +391,7 @@ begin
   Console.WriteLine('testVoid()');
 end;
 
-function TTestServer.TTestHandlerImpl.testStruct(thing: IXtruct): IXtruct;
+function TTestServer.TTestHandlerImpl.testStruct( const thing: IXtruct): IXtruct;
 begin
   Console.WriteLine('testStruct({' +
     '"' + thing.String_thing + '", ' +
@@ -385,17 +401,63 @@ begin
   Result := thing;
 end;
 
+
 { TTestServer }
 
-class procedure TTestServer.Execute(args: array of string);
+
+class procedure TTestServer.LaunchAnonPipeChild( const app : string; const transport : IPipeServer);
+//Launch child process and pass R/W anonymous pipe handles on cmd line.
+//This is a simple example and does not include elevation or other
+//advanced features.
+var pi : PROCESS_INFORMATION;
+		si : STARTUPINFO;
+		sArg, sHandles, sCmdLine : string;
+    i : Integer;
+begin
+  GetStartupInfo( si);  //set startupinfo for the spawned process
+
+  // preformat handles args
+  sHandles := Format( '%d %d',
+                    [ Integer(transport.ClientAnonRead),
+                      Integer(transport.ClientAnonWrite)]);
+
+  // pass all settings to client
+  sCmdLine := app;
+  for i := 1 to ParamCount do begin
+    sArg := ParamStr(i);
+
+    // add anonymous handles and quote strings where appropriate
+    if sArg = '-anon'
+    then sArg := sArg +' '+ sHandles
+    else begin
+      if Pos(' ',sArg) > 0
+      then sArg := '"'+sArg+'"';
+    end;;
+
+    sCmdLine := sCmdLine +' '+ sArg;
+  end;
+
+  // spawn the child process
+  Console.WriteLine('Starting client '+sCmdLine);
+  Win32Check( CreateProcess( nil, PChar(sCmdLine), nil,nil,TRUE,0,nil,nil,si,pi));
+
+  CloseHandle( pi.hThread);
+	CloseHandle( pi.hProcess);
+end;
+
+
+class procedure TTestServer.Execute( const args: array of string);
 var
   UseBufferedSockets : Boolean;
   UseFramed : Boolean;
   Port : Integer;
+  AnonPipe : Boolean;
+  sPipeName : string;
   testHandler : ITestHandler;
   testProcessor : IProcessor;
-  ServerSocket : IServerTransport;
+  ServerTrans : IServerTransport;
   ServerEngine : IServer;
+  pipeserver : IPipeServer;
   TransportFactory : ITransportFactory;
   ProtocolFactory : IProtocolFactory;
   i : Integer;
@@ -405,8 +467,10 @@ begin
   try
     UseBufferedSockets := False;
     UseFramed := False;
+    AnonPipe := FALSE;
     protType := prot_Binary;
     Port := 9090;
+    sPipeName := '';
 
     i := 0;
     while ( i < Length(args) ) do begin
@@ -416,20 +480,29 @@ begin
       if StrToIntDef( s, -1) > 0 then
       begin
         Port :=  StrToIntDef( s, Port);
-      end else
-      if ( s = 'raw' ) then
+      end
+      else if ( s = 'raw' ) then
       begin
         // as default
-      end else
-      if ( s = 'buffered' ) then
+      end
+      else if ( s = 'buffered' ) then
       begin
         UseBufferedSockets := True;
-      end else
-      if ( s = 'framed' ) then
+      end
+      else if ( s = 'framed' ) then
       begin
         UseFramed := True;
-      end else
-      if (s = '-prot') then  // -prot JSON|binary
+      end
+      else if (s = '-pipe') then
+      begin
+        sPipeName := args[i];  // -pipe <name>
+        Inc( i );
+      end
+      else if (s = '-anon') then
+      begin
+        AnonPipe := TRUE;
+      end
+      else if (s = '-prot') then  // -prot JSON|binary
       begin
         s := args[i];
         Inc( i );
@@ -446,6 +519,9 @@ begin
       end
     end;
 
+
+    Console.WriteLine('Server configuration: ');
+
     // create protocol factory, default to BinaryProtocol
     case protType of
       prot_Binary:  ProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
@@ -454,29 +530,53 @@ begin
       ASSERT( FALSE);  // unhandled case!
       ProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
     end;
+    ASSERT( ProtocolFactory <> nil);
+    Console.WriteLine('- '+KNOWN_PROTOCOLS[protType]+' protocol');
 
-    testHandler := TTestHandlerImpl.Create;
 
+    if sPipeName <> '' then begin
+      Console.WriteLine('- named pipe ('+sPipeName+')');
+      pipeserver  := TServerPipeImpl.Create( sPipeName);
+      servertrans := pipeserver;
+    end
+    else if AnonPipe then begin
+      Console.WriteLine('- anonymous pipes');
+      pipeserver  := TServerPipeImpl.Create;
+      servertrans := pipeserver;
+    end
+    else begin
+      Console.WriteLine('- sockets (port '+IntToStr(port)+')');
+      if UseBufferedSockets then Console.WriteLine('- buffered sockets');
+      servertrans := TServerSocketImpl.Create( Port, 0, UseBufferedSockets);
+    end;
+    ASSERT( servertrans <> nil);
+
+    if UseFramed then begin
+      Console.WriteLine('- framed transport');
+      TransportFactory := TFramedTransportImpl.TFactory.Create
+    end
+    else begin
+      TransportFactory := TTransportFactoryImpl.Create;
+    end;
+    ASSERT( TransportFactory <> nil);
+
+    testHandler   := TTestHandlerImpl.Create;
     testProcessor := TThriftTest.TProcessorImpl.Create( testHandler );
-    ServerSocket := TServerSocketImpl.Create( Port, 0, UseBufferedSockets );
-
-    if UseFramed
-    then TransportFactory := TFramedTransportImpl.TFactory.Create
-    else TransportFactory := TTransportFactoryImpl.Create;
 
     ServerEngine := TSimpleServer.Create( testProcessor,
-                                          ServerSocket,
+                                          ServerTrans,
                                           TransportFactory,
                                           ProtocolFactory);
 
     testHandler.SetServer( ServerEngine);
 
-    Console.WriteLine('Starting the server on port ' + IntToStr( Port) +
-      IfValue(UseBufferedSockets, ' with buffered socket', '') +
-      IfValue(useFramed, ' with framed transport', '') +
-      ' using '+KNOWN_PROTOCOLS[protType]+' protocol' +
-      '...');
+    // start the client now when we have the anon handles, but before the server starts
+    if AnonPipe
+    then LaunchAnonPipeChild( ExtractFilePath(ParamStr(0))+'client.exe', pipeserver);
 
+
+    Console.WriteLine('');
+    Console.WriteLine('Starting the server ...');
     serverEngine.Serve;
     testHandler.SetServer( nil);
 

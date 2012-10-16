@@ -87,7 +87,7 @@ flush(State = #http_transport{host = Host,
             {State, ok};
         WBinary ->
             {ok, {{_Version, 200, _ReasonPhrase}, _Headers, Body}} =
-              http:request(post,
+              httpc:request(post,
                            {"http://" ++ Host ++ Path,
                             [{"User-Agent", "Erlang/thrift_http_transport"} | ExtraHeaders],
                             "application/x-thrift",
@@ -114,6 +114,3 @@ read(State = #http_transport{read_buffer = RBuf}, Len) when is_integer(Len) ->
         _ ->
             {State, {error, 'EOF'}}
     end.
-
-min(A,B) when A<B -> A;
-min(_,B)          -> B.

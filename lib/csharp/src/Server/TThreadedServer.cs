@@ -185,14 +185,18 @@ namespace Thrift.Server
 			TProtocol outputProtocol = null;
 			try
 			{
-				inputTransport = inputTransportFactory.GetTransport(client);
-				outputTransport = outputTransportFactory.GetTransport(client);
-				inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
-				outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
-				while (processor.Process(inputProtocol, outputProtocol))
-				{
-					//keep processing requests until client disconnects
-				}
+        using (inputTransport = inputTransportFactory.GetTransport(client))
+        {
+          using (outputTransport = outputTransportFactory.GetTransport(client))
+          {
+            inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
+            outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
+            while (processor.Process(inputProtocol, outputProtocol))
+            {
+              //keep processing requests until client disconnects
+            }
+          }
+        }
 			}
 			catch (TTransportException)
 			{
@@ -200,15 +204,6 @@ namespace Thrift.Server
 			catch (Exception x)
 			{
 				logDelegate("Error: " + x);
-			}
-
-			if (inputTransport != null)
-			{
-				inputTransport.Close();
-			}
-			if (outputTransport != null)
-			{
-				outputTransport.Close();
 			}
 
 			lock (clientLock)

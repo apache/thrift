@@ -34,10 +34,10 @@ namespace Thrift.Protocol
 			{
 				dst[dstOff + 1] =
 					(byte)ENCODE_TABLE[
-						((src[srcOff] << 4) + (src[srcOff + 1] >> 4)) & 0x3F];
+						((src[srcOff] << 4) & 0x30) | ((src[srcOff + 1] >> 4) & 0x0F)];
 				dst[dstOff + 2] =
 					(byte)ENCODE_TABLE[
-						((src[srcOff + 1] << 2) + (src[srcOff + 2] >> 6)) & 0x3F];
+						((src[srcOff + 1] << 2) & 0x3C) | ((src[srcOff + 2] >> 6) & 0x03)];
 				dst[dstOff + 3] =
 					(byte)ENCODE_TABLE[src[srcOff + 2] & 0x3F];
 			}
@@ -45,15 +45,15 @@ namespace Thrift.Protocol
 			{
 				dst[dstOff + 1] =
 					(byte)ENCODE_TABLE[
-						((src[srcOff] << 4) + (src[srcOff + 1] >> 4)) & 0x3F];
+						((src[srcOff] << 4) & 0x30) | ((src[srcOff + 1] >> 4) & 0x0F)];
 				dst[dstOff + 2] =
-					(byte)ENCODE_TABLE[(src[srcOff + 1] << 2) & 0x3F];
+					(byte)ENCODE_TABLE[(src[srcOff + 1] << 2) & 0x3C];
 
 			}
 			else
 			{ // len == 1) {
 				dst[dstOff + 1] =
-					(byte)ENCODE_TABLE[(src[srcOff] << 4) & 0x3F];
+					(byte)ENCODE_TABLE[(src[srcOff] << 4) & 0x30];
 			}
 		}
 

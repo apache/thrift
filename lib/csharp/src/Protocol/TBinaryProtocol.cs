@@ -201,7 +201,12 @@ namespace Thrift.Protocol
 
 		public override void WriteDouble(double d)
 		{
+#if !SILVERLIGHT
 			WriteI64(BitConverter.DoubleToInt64Bits(d));
+#else
+            var bytes = BitConverter.GetBytes(d);
+            WriteI64(BitConverter.ToInt64(bytes, 0));
+#endif
 		}
 
 		public override void WriteBinary(byte[] b)
@@ -342,13 +347,26 @@ namespace Thrift.Protocol
 		public override long ReadI64()
 		{
 			ReadAll(i64in, 0, 8);
-			return (long)(((long)(i64in[0] & 0xff) << 56) | ((long)(i64in[1] & 0xff) << 48) | ((long)(i64in[2] & 0xff) << 40) | ((long)(i64in[3] & 0xff) << 32) |
-				((long)(i64in[4] & 0xff) << 24) | ((long)(i64in[5] & 0xff) << 16) | ((long)(i64in[6] & 0xff) << 8) | ((long)(i64in[7] & 0xff)));
-		}
+            return (long)(
+                (ulong)((ulong)(i64in[0] & 0xff) << 56) |
+                (ulong)((ulong)(i64in[1] & 0xff) << 48) |
+                (ulong)((ulong)(i64in[2] & 0xff) << 40) |
+                (ulong)((ulong)(i64in[3] & 0xff) << 32) |
+                (ulong)((ulong)(i64in[4] & 0xff) << 24) |
+                (ulong)((ulong)(i64in[5] & 0xff) << 16) |
+                (ulong)((ulong)(i64in[6] & 0xff) << 8) |
+                (ulong)((ulong)(i64in[7] & 0xff)));
+        }
 
 		public override double ReadDouble()
 		{
+#if !SILVERLIGHT
 			return BitConverter.Int64BitsToDouble(ReadI64());
+#else
+            var value = ReadI64();
+            var bytes = BitConverter.GetBytes(value);
+            return BitConverter.ToDouble(bytes, 0);
+#endif
 		}
 
 		public void SetReadLength(int readLength)
@@ -382,7 +400,7 @@ namespace Thrift.Protocol
 			CheckReadLength(size);
 			byte[] buf = new byte[size];
 			trans.ReadAll(buf, 0, size);
-			return Encoding.UTF8.GetString(buf);
+			return Encoding.UTF8.GetString(buf, 0, buf.Length);
 		}
 
 		private int ReadAll(byte[] buf, int off, int len)
