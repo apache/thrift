@@ -335,7 +335,8 @@ static void writeDouble(PyObject* outbuf, double dub) {
 /* --- MAIN RECURSIVE OUTPUT FUCNTION -- */
 
 static int
-output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs) {
+output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs,
+           bool utf8str) {
   /*
    * Refcounting Strategy:
    *
@@ -414,14 +415,29 @@ output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs) {
   }
 
   case T_STRING: {
-    Py_ssize_t len = PyString_Size(value);
+    Py_ssize_t len;
+    PyObject* str_value;
+    if (utf8str & PyUnicode_Check(value)) {
+      str_value = PyUnicode_AsUTF8String(value);
+      len = PyString_Size(str_value);
 
-    if (!check_ssize_t_32(len)) {
-      return false;
+      if (!check_ssize_t_32(len)) {
+        return false;
+      }
+
+      writeI32(output, (int32_t) len);
+      PycStringIO->cwrite(output, PyString_AsString(str_value), (int32_t) len);
+      Py_DECREF(str_value);
+    } else {
+      len = PyString_Size(value);
+
+      if (!check_ssize_t_32(len)) {
+        return false;
+      }
+
+      writeI32(output, (int32_t) len);
+      PycStringIO->cwrite(output, PyString_AsString(value), (int32_t) len);
     }
-
-    writeI32(output, (int32_t) len);
-    PycStringIO->cwrite(output, PyString_AsString(value), (int32_t) len);
     break;
   }
 
@@ -451,7 +467,8 @@ output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs) {
     }
 
     while ((item = PyIter_Next(iterator))) {
-      if (!output_val(output, item, parsedargs.element_type, parsedargs.typeargs)) {
+      if (!output_val(output, item, parsedargs.element_type, 
+                      parsedargs.typeargs, utf8str)) {
         Py_DECREF(item);
         Py_DECREF(iterator);
         return false;
@@ -495,8 +512,9 @@ output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs) {
       Py_INCREF(k);
       Py_INCREF(v);
 
-      if (!output_val(output, k, parsedargs.ktag, parsedargs.ktypeargs)
-          || !output_val(output, v, parsedargs.vtag, parsedargs.vtypeargs)) {
+      if (!output_val(output, k, parsedargs.ktag, parsedargs.ktypeargs, utf8str)
+          || !output_val(output, v, parsedargs.vtag, 
+                         parsedargs.vtypeargs, utf8str)) {
         Py_DECREF(k);
         Py_DECREF(v);
         return false;
@@ -552,7 +570,8 @@ output_val(PyObject* output, PyObject* value, TType type, PyObject* typeargs) {
       writeByte(output, (int8_t) parsedspec.type);
       writeI16(output, parsedspec.tag);
 
-      if (!output_val(output, instval, parsedspec.type, parsedspec.typeargs)) {
+      if (!output_val(output, instval, parsedspec.type, parsedspec.typeargs, 
+                      utf8str)) {
         Py_DECREF(instval);
         return false;
       }
@@ -585,15 +604,21 @@ static PyObject *
 encode_binary(PyObject *self, PyObject *args) {
   PyObject* enc_obj;
   PyObject* type_args;
+  PyObject* utf8str_arg = NULL;
+  bool utf8str = false;
   PyObject* buf;
   PyObject* ret = NULL;
 
-  if (!PyArg_ParseTuple(args, "OO", &enc_obj, &type_args)) {
+  if (!PyArg_ParseTuple(args, "OO|O", &enc_obj, &type_args, &utf8str_arg)) {
     return NULL;
   }
 
+  if (utf8str_arg) {
+    utf8str = PyObject_IsTrue(utf8str_arg);
+  } 
+
   buf = PycStringIO->NewOutput(INIT_OUTBUF_SIZE);
-  if (output_val(buf, enc_obj, T_STRUCT, type_args)) {
+  if (output_val(buf, enc_obj, T_STRUCT, type_args, utf8str)) {
     ret = PycStringIO->cgetvalue(buf);
   }
 
@@ -868,10 +893,11 @@ skip(DecodeBuffer* input, TType type) {
 /* --- HELPER FUNCTION FOR DECODE_VAL --- */
 
 static PyObject*
-decode_val(DecodeBuffer* input, TType type, PyObject* typeargs);
+decode_val(DecodeBuffer* input, TType type, PyObject* typeargs, bool utf8str);
 
 static bool
-decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq) {
+decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq,
+              bool utf8str) {
   int spec_seq_len = PyTuple_Size(spec_seq);
   if (spec_seq_len == -1) {
     return false;
@@ -921,7 +947,7 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq) {
       }
     }
 
-    fieldval = decode_val(input, parsedspec.type, parsedspec.typeargs);
+    fieldval = decode_val(input, parsedspec.type, parsedspec.typeargs, utf8str);
     if (fieldval == NULL) {
       return false;
     }
@@ -940,7 +966,7 @@ decode_struct(DecodeBuffer* input, PyObject* output, PyObject* spec_seq) {
 
 // Returns a new reference.
 static PyObject*
-decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
+decode_val(DecodeBuffer* input, TType type, PyObject* typeargs, bool utf8str) {
   switch (type) {
 
   case T_BOOL: {
@@ -1009,7 +1035,11 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
       return NULL;
     }
 
-    return PyString_FromStringAndSize(buf, len);
+    if (utf8str) {
+      return PyUnicode_DecodeUTF8(buf, len, "");
+    } else {
+      return PyString_FromStringAndSize(buf, len);
+    }
   }
 
   case T_LIST:
@@ -1038,7 +1068,8 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
     }
 
     for (i = 0; i < len; i++) {
-      PyObject* item = decode_val(input, parsedargs.element_type, parsedargs.typeargs);
+      PyObject* item = decode_val(input, parsedargs.element_type,
+                                  parsedargs.typeargs, utf8str);
       if (!item) {
         Py_DECREF(ret);
         return NULL;
@@ -1093,11 +1124,11 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
     for (i = 0; i < len; i++) {
       PyObject* k = NULL;
       PyObject* v = NULL;
-      k = decode_val(input, parsedargs.ktag, parsedargs.ktypeargs);
+      k = decode_val(input, parsedargs.ktag, parsedargs.ktypeargs, utf8str);
       if (k == NULL) {
         goto loop_error;
       }
-      v = decode_val(input, parsedargs.vtag, parsedargs.vtypeargs);
+      v = decode_val(input, parsedargs.vtag, parsedargs.vtypeargs, utf8str);
       if (v == NULL) {
         goto loop_error;
       }
@@ -1135,7 +1166,7 @@ decode_val(DecodeBuffer* input, TType type, PyObject* typeargs) {
       return NULL;
     }
 
-    if (!decode_struct(input, ret, parsedargs.spec)) {
+    if (!decode_struct(input, ret, parsedargs.spec, utf8str)) {
       Py_DECREF(ret);
       return NULL;
     }
@@ -1162,11 +1193,18 @@ decode_binary(PyObject *self, PyObject *args) {
   PyObject* output_obj = NULL;
   PyObject* transport = NULL;
   PyObject* typeargs = NULL;
+  PyObject* utf8str_arg = NULL;
+  bool utf8str = false;
   StructTypeArgs parsedargs;
   DecodeBuffer input = {0, 0};
   
-  if (!PyArg_ParseTuple(args, "OOO", &output_obj, &transport, &typeargs)) {
+  if (!PyArg_ParseTuple(args, "OOO|O", &output_obj, &transport, &typeargs, 
+                        &utf8str_arg)) {
     return NULL;
+  }
+
+  if (utf8str_arg) {
+    utf8str = PyObject_IsTrue(utf8str_arg);
   }
 
   if (!parse_struct_args(&parsedargs, typeargs)) {
@@ -1177,7 +1215,7 @@ decode_binary(PyObject *self, PyObject *args) {
     return NULL;
   }
 
-  if (!decode_struct(&input, output_obj, parsedargs.spec)) {
+  if (!decode_struct(&input, output_obj, parsedargs.spec, utf8str)) {
     free_decodebuf(&input);
     return NULL;
   }

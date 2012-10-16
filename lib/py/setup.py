@@ -66,7 +66,7 @@ def run_setup(with_binary):
         extensions = dict()
         
     setup(name = 'thrift',
-        version = '1.0.0-dev',
+        version = '1.0.0-unicode',
         description = 'Python bindings for the Apache Thrift RPC system',
         author = ['Thrift Developers'],
         author_email = ['dev@thrift.apache.org'],
