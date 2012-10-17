@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <limits>
 #include <cstdlib>
 #include <sstream>
 #include <boost/algorithm/string.hpp>
