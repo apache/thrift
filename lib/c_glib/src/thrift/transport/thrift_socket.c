@@ -129,7 +129,7 @@ thrift_socket_read (ThriftTransport *transport, gpointer buf,
 
   while (got < len)
   {
-    ret = recv (socket->sd, buf, len, 0);
+    ret = recv (socket->sd, buf+got, len-got, 0);
     if (ret < 0)
     {
       g_set_error (error, THRIFT_TRANSPORT_ERROR,
