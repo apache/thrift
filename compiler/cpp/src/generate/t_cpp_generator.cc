@@ -1999,7 +1999,10 @@ void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
     "using boost::shared_ptr;" << endl <<
     endl;
 
-  if (!ns.empty()) {
+  // the following code would not compile:
+  // using namespace ;
+  // using namespace ::;
+  if ( (!ns.empty()) && (ns.compare(" ::") != 0)) {
     f_skeleton <<
       "using namespace " << string(ns, 0, ns.size()-2) << ";" << endl <<
       endl;
@@ -3739,7 +3742,10 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
     "using boost::shared_ptr;" << endl <<
     endl;
 
-  if (!ns.empty()) {
+  // the following code would not compile:
+  // using namespace ;
+  // using namespace ::;
+  if ( (!ns.empty()) && (ns.compare(" ::") != 0)) {
     f_skeleton <<
       "using namespace " << string(ns, 0, ns.size()-2) << ";" << endl <<
       endl;
