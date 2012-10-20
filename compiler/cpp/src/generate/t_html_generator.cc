@@ -579,6 +579,8 @@ void t_html_generator::generate_struct(t_struct* tstruct) {
   f_out_ << "<h3 id=\"Struct_" << name << "\">";
   if (tstruct->is_xception()) {
     f_out_ << "Exception: ";
+  } else if (tstruct->is_union()) {
+    f_out_ << "Union: ";
   } else {
     f_out_ << "Struct: ";
   }
