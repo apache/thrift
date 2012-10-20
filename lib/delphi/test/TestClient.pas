@@ -213,6 +213,13 @@ begin
       end;
     end;
 
+    // In the anonymous pipes mode the client is launched by the test server
+    // -> behave nicely and allow for attaching a debugger to this process
+    if bAnonPipe and not IsDebuggerPresent
+    then MessageBox( 0, 'Attach Debugger and/or click OK to continue.',
+                        'Thrift TestClient (Delphi)',
+                        MB_OK or MB_ICONEXCLAMATION);
+
     SetLength( threads, FNumThread);
     dtStart := Now;
 

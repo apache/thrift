@@ -33,79 +33,110 @@ const
 
 
 type
-  IPipe = interface( IStreamTransport)
-    ['{5E05CC85-434F-428F-BFB2-856A168B5558}']
-  end;
+  //--- Pipe Streams ---
 
 
-  TPipeStreamImpl = class( TThriftStreamImpl)
-  private
-    FPipe : THandle;
-    FOwner : Boolean;
-    FPipeName : string;
+  TPipeStreamBaseImpl = class( TThriftStreamImpl)
+  strict protected
+    FPipe    : THandle;
     FTimeout : DWORD;
-    FShareMode: DWORD;
-    FSecurityAttribs : PSecurityAttributes;
 
-  protected
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer); override;
     function  Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; override;
-    procedure Open; override;
+    //procedure Open; override; - see derived classes
     procedure Close; override;
     procedure Flush; override;
 
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
   public
-    constructor Create( const aPipeHandle : THandle; aOwnsHandle : Boolean);  overload;
-    constructor Create( const aPipeName : string;
-                        const aShareMode: DWORD = 0;
-                        const aSecurityAttributes: PSecurityAttributes = nil;
-                        const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);  overload;
+    constructor Create( const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);
     destructor Destroy;  override;
   end;
 
 
-  TNamedPipeImpl = class( TStreamTransportImpl, IPipe)
-  public
-    FOwner : Boolean;
+  TNamedPipeStreamImpl = class sealed( TPipeStreamBaseImpl)
+  private
+    FPipeName  : string;
+    FShareMode : DWORD;
+    FSecurityAttribs : PSecurityAttributes;
 
-    // Constructs a new pipe object.
-    constructor Create(); overload;
+  protected
+    procedure Open; override;
+
+  public
+    constructor Create( const aPipeName : string;
+                        const aShareMode: DWORD = 0;
+                        const aSecurityAttributes: PSecurityAttributes = nil;
+                        const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);  overload;
+  end;
+
+
+  THandlePipeStreamImpl = class sealed( TPipeStreamBaseImpl)
+  private
+    FSrcHandle : THandle;
+
+  protected
+    procedure Open; override;
+
+  public
+    constructor Create( const aPipeHandle : THandle; aOwnsHandle : Boolean);  overload;
+    destructor Destroy;  override;
+  end;
+
+
+  //--- Pipe Transports ---
+
+
+  IPipe = interface( IStreamTransport)
+    ['{5E05CC85-434F-428F-BFB2-856A168B5558}']
+  end;
+
+
+  TPipeTransportBaseImpl = class( TStreamTransportImpl, IPipe)
+  public
+    // ITransport
+    function  GetIsOpen: Boolean; override;
+    procedure Open; override;
+    procedure Close; override;
+  end;
+
+
+  TNamedPipeImpl = class( TPipeTransportBaseImpl)
+  public
     // Named pipe constructors
     constructor Create( aPipe : THandle; aOwnsHandle : Boolean); overload;
     constructor Create( const aPipeName : string;
                         const aShareMode: DWORD = 0;
                         const aSecurityAttributes: PSecurityAttributes = nil;
                         const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);  overload;
-
-    // ITransport
-    function  GetIsOpen: Boolean; override;
-    procedure Open; override;
-    procedure Close; override;
   end;
 
 
-  TAnonymousPipeImpl = class( TStreamTransportImpl, IPipe)
+  TNamedPipeServerImpl = class( TNamedPipeImpl)
+  strict private
+    FHandle : THandle;
   public
-    FOwner : Boolean;
+    // ITransport
+    procedure Close; override;
+    constructor Create( aPipe : THandle; aOwnsHandle : Boolean); reintroduce;
+  end;
 
-    // Constructs a new pipe object.
-    constructor Create(); overload;
+
+  TAnonymousPipeImpl = class( TPipeTransportBaseImpl)
+  public
     // Anonymous pipe constructor
     constructor Create( const aPipeRead, aPipeWrite : THandle; aOwnsHandles : Boolean); overload;
-
-    // ITransport
-    function  GetIsOpen: Boolean; override;
-    procedure Open; override;
-    procedure Close; override;
   end;
 
 
-  IPipeServer = interface( IServerTransport)
+  //--- Server Transports ---
+
+
+  IAnonymousServerPipe = interface( IServerTransport)
     ['{7AEE6793-47B9-4E49-981A-C39E9108E9AD}']
     // Server side anonymous pipe ends
-    function Handle : THandle;
+    function ReadHandle : THandle;
     function WriteHandle : THandle;
     // Client side anonymous pipe ends
     function ClientAnonRead : THandle;
@@ -113,14 +144,24 @@ type
   end;
 
 
-  TServerPipeImpl = class( TServerTransportImpl, IPipeServer)
-  private
-    FPipeName     : string;
-    FMaxConns     : DWORD;
-    FBufSize      : DWORD;
-    FAnonymous    : Boolean;
+  INamedServerPipe = interface( IServerTransport)
+    ['{9DF9EE48-D065-40AF-8F67-D33037D3D960}']
+    function Handle : THandle;
+  end;
 
-    FHandle,
+
+  TServerPipeBaseImpl = class( TServerTransportImpl)
+  public
+    procedure Listen; override;
+  end;
+
+
+  TAnonymousServerPipeImpl = class( TServerPipeBaseImpl, IAnonymousServerPipe)
+  private
+    FBufSize      : DWORD;
+
+    // Server side anonymous pipe handles
+    FReadHandle,
     FWriteHandle : THandle;
 
     //Client side anonymous pipe handles
@@ -130,68 +171,82 @@ type
   protected
     function AcceptImpl: ITransport; override;
 
-    function CreateNamedPipe : Boolean;
     function CreateAnonPipe : Boolean;
 
-    // IPipeServer
-    function Handle : THandle;
+    // IAnonymousServerPipe
+    function ReadHandle : THandle;
     function WriteHandle : THandle;
     function ClientAnonRead : THandle;
     function ClientAnonWrite  : THandle;
 
   public
-    // Constructors
-    constructor Create();  overload;
-    // Named Pipe
-    constructor Create( aPipename : string);  overload;
-    constructor Create( aPipename : string; aBufsize : Cardinal);  overload;
-    constructor Create( aPipename : string; aBufsize, aMaxConns : Cardinal);  overload;
-    // Anonymous pipe
-    constructor Create( aBufsize : Cardinal);  overload;
+    constructor Create( aBufsize : Cardinal = 4096);
 
-    procedure Listen; override;
     procedure Close; override;
   end;
 
 
-const
-  TPIPE_SERVER_MAX_CONNS_DEFAULT = 10;
+  TNamedServerPipeImpl = class( TServerPipeBaseImpl, INamedServerPipe)
+  private
+    FPipeName     : string;
+    FMaxConns     : DWORD;
+    FBufSize      : DWORD;
+
+    FHandle : THandle;
+
+  protected
+    function AcceptImpl: ITransport; override;
+
+    function CreateNamedPipe : Boolean;
+
+    // INamedServerPipe
+    function Handle : THandle;
+
+  public
+    constructor Create( aPipename : string; aBufsize : Cardinal = 4096;
+                        aMaxConns : Cardinal = PIPE_UNLIMITED_INSTANCES);
+
+    procedure Close; override;
+  end;
 
 
 implementation
 
 
-{ TPipeStreamImpl }
-
-
-constructor TPipeStreamImpl.Create( const aPipeHandle : THandle; aOwnsHandle : Boolean);
+procedure ClosePipeHandle( var hPipe : THandle);
 begin
-  FPipe            := aPipeHandle;
-  FOwner           := aOwnsHandle;
-  FPipeName        := '';
-  FTimeout         := DEFAULT_THRIFT_PIPE_TIMEOUT;
-  FShareMode       := 0;
-  FSecurityAttribs := nil;
+  if hPipe <> INVALID_HANDLE_VALUE
+  then try
+    CloseHandle( hPipe);
+  finally
+    hPipe := INVALID_HANDLE_VALUE;
+  end;
 end;
 
 
-constructor TPipeStreamImpl.Create( const aPipeName : string; const aShareMode: DWORD;
-                                    const aSecurityAttributes: PSecurityAttributes;
-                                    const aTimeOut : DWORD);
+function DuplicatePipeHandle( const hSource : THandle) : THandle;
 begin
-  FPipe            := INVALID_HANDLE_VALUE;
-  FOwner           := TRUE;
-  FPipeName        := aPipeName;
-  FTimeout         := aTimeOut;
-  FShareMode       := aShareMode;
-  FSecurityAttribs := aSecurityAttributes;
-
-  if Copy(FPipeName,1,2) <> '\\'
-  then FPipeName := '\\.\pipe\' + FPipeName;  // assume localhost
+  if not DuplicateHandle( GetCurrentProcess, hSource,
+                          GetCurrentProcess, @result,
+                          0, FALSE, DUPLICATE_SAME_ACCESS)
+  then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                         'DuplicateHandle: '+SysErrorMessage(GetLastError));
 end;
 
 
-destructor TPipeStreamImpl.Destroy;
+
+{ TPipeStreamBaseImpl }
+
+
+constructor TPipeStreamBaseImpl.Create( const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);
+begin
+  inherited Create;
+  FPipe    := INVALID_HANDLE_VALUE;
+  FTimeout := aTimeOut;
+end;
+
+
+destructor TPipeStreamBaseImpl.Destroy;
 begin
   try
     Close;
@@ -201,73 +256,25 @@ begin
 end;
 
 
-procedure TPipeStreamImpl.Close;
+procedure TPipeStreamBaseImpl.Close;
 begin
-  if IsOpen then try
-    if FOwner
-    then CloseHandle( FPipe);
-  finally
-    FPipe := INVALID_HANDLE_VALUE;
-  end;
+  ClosePipeHandle( FPipe);
 end;
 
 
-procedure TPipeStreamImpl.Flush;
+procedure TPipeStreamBaseImpl.Flush;
 begin
   // nothing to do
 end;
 
 
-function TPipeStreamImpl.IsOpen: Boolean;
+function TPipeStreamBaseImpl.IsOpen: Boolean;
 begin
   result := (FPipe <> INVALID_HANDLE_VALUE);
 end;
 
 
-procedure TPipeStreamImpl.Open;
-var retries  : Integer;
-    hPipe    : THandle;
-    dwMode   : DWORD;
-const INTERVAL = 500; // ms
-begin
-  if IsOpen then Exit;
-
-  // open that thingy
-  retries  := Max( 1, Round( 1.0 * FTimeout / INTERVAL));
-  hPipe    := INVALID_HANDLE_VALUE;
-  while TRUE do begin
-    hPipe := CreateFile( PChar( FPipeName),
-                         GENERIC_READ or GENERIC_WRITE,
-                         FShareMode,        // sharing
-                         FSecurityAttribs,  // security attributes
-                         OPEN_EXISTING,     // opens existing pipe
-                         0,                 // default attributes
-                         0);                // no template file
-
-    if hPipe <> INVALID_HANDLE_VALUE
-    then Break;
-
-    Dec( retries);
-    if (retries > 0) or (FTimeout = INFINITE)
-    then Sleep( INTERVAL)
-    else raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                           'Unable to open pipe');
-  end;
-
-  // pipe connected; change to message-read mode.
-  dwMode := PIPE_READMODE_MESSAGE;
-  if not SetNamedPipeHandleState( hPipe, dwMode, nil, nil) then begin
-    Close;
-    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                      'SetNamedPipeHandleState failed');
-  end;
-
-  // everything fine
-  FPipe := hPipe;
-end;
-
-
-procedure TPipeStreamImpl.Write(const buffer: TBytes; offset, count: Integer);
+procedure TPipeStreamBaseImpl.Write(const buffer: TBytes; offset, count: Integer);
 var cbWritten : DWORD;
 begin
   if not IsOpen
@@ -280,8 +287,8 @@ begin
 end;
 
 
-function TPipeStreamImpl.Read( var buffer: TBytes; offset, count: Integer): Integer;
-var cbRead  : DWORD;
+function TPipeStreamBaseImpl.Read( var buffer: TBytes; offset, count: Integer): Integer;
+var cbRead, dwErr  : DWORD;
     bytes, retries  : LongInt;
     bOk     : Boolean;
 const INTERVAL = 10;  // ms
@@ -301,6 +308,14 @@ begin
       and (bytes > 0)
       then Break;  // there are data
 
+      dwErr := GetLastError;
+      if (dwErr = ERROR_BROKEN_PIPE)
+      or (dwErr = ERROR_PIPE_NOT_CONNECTED)
+      then begin
+        result := 0;  // other side closed the pipe
+        Exit;
+      end;
+
       Dec( retries);
       if retries > 0
       then Sleep( INTERVAL)
@@ -317,7 +332,7 @@ begin
 end;
 
 
-function TPipeStreamImpl.ToArray: TBytes;
+function TPipeStreamBaseImpl.ToArray: TBytes;
 var bytes : LongInt;
 begin
   SetLength( result, 0);
@@ -333,15 +348,117 @@ begin
 end;
 
 
-{ TNamedPipeImpl }
+{ TNamedPipeStreamImpl }
 
 
-constructor TNamedPipeImpl.Create();
-// Constructs a new pipe object / provides defaults
+constructor TNamedPipeStreamImpl.Create( const aPipeName : string; const aShareMode: DWORD;
+                                         const aSecurityAttributes: PSecurityAttributes;
+                                         const aTimeOut : DWORD);
 begin
-  inherited Create( nil, nil);
-  FOwner := FALSE;
+  inherited Create( aTimeout);
+
+  FPipeName        := aPipeName;
+  FShareMode       := aShareMode;
+  FSecurityAttribs := aSecurityAttributes;
+
+  if Copy(FPipeName,1,2) <> '\\'
+  then FPipeName := '\\.\pipe\' + FPipeName;  // assume localhost
 end;
+
+
+procedure TNamedPipeStreamImpl.Open;
+var hPipe    : THandle;
+    dwMode   : DWORD;
+begin
+  if IsOpen then Exit;
+
+  // open that thingy
+
+  if not WaitNamedPipe( PChar(FPipeName), FTimeout)
+  then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                         'Unable to open pipe, '+SysErrorMessage(GetLastError));
+
+  hPipe := CreateFile( PChar( FPipeName),
+                       GENERIC_READ or GENERIC_WRITE,
+                       FShareMode,        // sharing
+                       FSecurityAttribs,  // security attributes
+                       OPEN_EXISTING,     // opens existing pipe
+                       0,                 // default attributes
+                       0);                // no template file
+
+  if hPipe = INVALID_HANDLE_VALUE
+  then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                         'Unable to open pipe, '+SysErrorMessage(GetLastError));
+
+  // pipe connected; change to message-read mode.
+  dwMode := PIPE_READMODE_MESSAGE;
+  if not SetNamedPipeHandleState( hPipe, dwMode, nil, nil) then begin
+    Close;
+    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                      'SetNamedPipeHandleState failed');
+  end;
+
+  // everything fine
+  FPipe := hPipe;
+end;
+
+
+{ THandlePipeStreamImpl }
+
+
+constructor THandlePipeStreamImpl.Create( const aPipeHandle : THandle; aOwnsHandle : Boolean);
+begin
+  inherited Create( DEFAULT_THRIFT_PIPE_TIMEOUT);
+
+  if aOwnsHandle
+  then FSrcHandle := aPipeHandle
+  else FSrcHandle := DuplicatePipeHandle( aPipeHandle);
+
+  Open;
+end;
+
+
+destructor THandlePipeStreamImpl.Destroy;
+begin
+  try
+    ClosePipeHandle( FSrcHandle);
+  finally
+    inherited Destroy;
+  end;
+end;
+
+
+procedure THandlePipeStreamImpl.Open;
+begin
+  if not IsOpen
+  then FPipe := DuplicatePipeHandle( FSrcHandle);
+end;
+
+
+{ TPipeTransportBaseImpl }
+
+
+function TPipeTransportBaseImpl.GetIsOpen: Boolean;
+begin
+  result := (FInputStream <> nil);
+end;
+
+
+procedure TPipeTransportBaseImpl.Open;
+begin
+  FInputStream.Open;
+  FOutputStream.Open;
+end;
+
+
+procedure TPipeTransportBaseImpl.Close;
+begin
+  FInputStream.Close;
+  FOutputStream.Close;
+end;
+
+
+{ TNamedPipeImpl }
 
 
 constructor TNamedPipeImpl.Create( const aPipeName : string; const aShareMode: DWORD;
@@ -349,140 +466,72 @@ constructor TNamedPipeImpl.Create( const aPipeName : string; const aShareMode: D
                                    const aTimeOut : DWORD);
 // Named pipe constructor
 begin
-  Create();
-  FInputStream  := TPipeStreamImpl.Create( aPipeName, aShareMode, aSecurityAttributes, aTimeOut);
+  inherited Create( nil, nil);
+  FInputStream  := TNamedPipeStreamImpl.Create( aPipeName, aShareMode, aSecurityAttributes, aTimeOut);
   FOutputStream := FInputStream;  // true for named pipes
-  FOwner        := TRUE;
 end;
 
 
 constructor TNamedPipeImpl.Create( aPipe : THandle; aOwnsHandle : Boolean);
 // Named pipe constructor
 begin
-  Create();
-  FInputStream  := TPipeStreamImpl.Create( aPipe, aOwnsHandle);
+  inherited Create( nil, nil);
+  FInputStream  := THandlePipeStreamImpl.Create( aPipe, aOwnsHandle);
   FOutputStream := FInputStream;  // true for named pipes
-  FOwner        := aOwnsHandle;
 end;
 
 
-function TNamedPipeImpl.GetIsOpen: Boolean;
+{ TNamedPipeServerImpl }
+
+
+constructor TNamedPipeServerImpl.Create( aPipe : THandle; aOwnsHandle : Boolean);
+// Named pipe constructor
 begin
-  result := (FInputStream <> nil);
+  FHandle := DuplicatePipeHandle( aPipe);
+  inherited Create( aPipe, aOwnsHandle);
 end;
 
 
-procedure TNamedPipeImpl.Open;
+procedure TNamedPipeServerImpl.Close;
 begin
-  if FOwner then begin
-    FInputStream.Open;
-    if (FOutputStream <> nil) and (FOutputStream <> FInputStream)
-    then FOutputStream.Open;
-  end;
-end;
+  FlushFileBuffers( FHandle);
+  DisconnectNamedPipe( FHandle);  // force client off the pipe
+  ClosePipeHandle( FHandle);
 
-
-procedure TNamedPipeImpl.Close;
-begin
-  if FOwner then begin
-    FInputStream.Close;
-    if (FOutputStream <> nil) and (FOutputStream <> FInputStream)
-    then FOutputStream.Close;
-  end;
+  inherited Close;
 end;
 
 
 { TAnonymousPipeImpl }
 
 
-constructor TAnonymousPipeImpl.Create();
-// Constructs a new pipe object / provides defaults
-begin
-  inherited Create( nil, nil);
-  FOwner := FALSE;
-end;
-
-
 constructor TAnonymousPipeImpl.Create( const aPipeRead, aPipeWrite : THandle; aOwnsHandles : Boolean);
 // Anonymous pipe constructor
 begin
-  Create();
-  FInputStream  := TPipeStreamImpl.Create( aPipeRead, aOwnsHandles);
-  FOutputStream := TPipeStreamImpl.Create( aPipeWrite, aOwnsHandles);
-  FOwner        := aOwnsHandles;
+  inherited Create( nil, nil);
+  FInputStream  := THandlePipeStreamImpl.Create( aPipeRead, aOwnsHandles);
+  FOutputStream := THandlePipeStreamImpl.Create( aPipeWrite, aOwnsHandles);
 end;
 
 
-function TAnonymousPipeImpl.GetIsOpen: Boolean;
+{ TServerPipeBaseImpl }
+
+
+procedure TServerPipeBaseImpl.Listen;
 begin
-  result := (FInputStream <> nil) or (FOutputStream <> nil);
+  // not much to do here
 end;
 
 
-procedure TAnonymousPipeImpl.Open;
-begin
-  if FOwner then begin
-    FInputStream.Open;
-    if (FOutputStream <> nil) and (FOutputStream <> FInputStream)
-    then FOutputStream.Open;
-  end;
-end;
+{ TAnonymousServerPipeImpl }
 
 
-procedure TAnonymousPipeImpl.Close;
-begin
-  if FOwner then begin
-    FInputStream.Close;
-    if (FOutputStream <> nil) and (FOutputStream <> FInputStream)
-    then FOutputStream.Close;
-  end;
-end;
-
-
-{ TServerPipeImpl }
-
-
-constructor TServerPipeImpl.Create( aPipename : string; aBufsize, aMaxConns : Cardinal);
-// Named Pipe CTOR
-begin
-  inherited Create;
-  FPipeName := aPipename;
-  FBufsize  := aBufSize;
-  FMaxConns := Max( 1, Min( 255, aMaxConns));  // restrict to 1-255 connections
-  FAnonymous := FALSE;
-  FHandle := INVALID_HANDLE_VALUE;
-  FWriteHandle := INVALID_HANDLE_VALUE;
-  FClientAnonRead := INVALID_HANDLE_VALUE;
-  FClientAnonWrite := INVALID_HANDLE_VALUE;
-
-  if Copy(FPipeName,1,2) <> '\\'
-  then FPipeName := '\\.\pipe\' + FPipeName;  // assume localhost
-end;
-
-
-constructor TServerPipeImpl.Create( aPipename : string; aBufsize : Cardinal);
-// Named Pipe CTOR
-begin
-  Create( aPipename, aBufSize, TPIPE_SERVER_MAX_CONNS_DEFAULT);
-end;
-
-
-constructor TServerPipeImpl.Create( aPipename : string);
-// Named Pipe CTOR
-begin
-  Create( aPipename, 1024, TPIPE_SERVER_MAX_CONNS_DEFAULT);
-end;
-
-
-constructor TServerPipeImpl.Create( aBufsize : Cardinal);
+constructor TAnonymousServerPipeImpl.Create( aBufsize : Cardinal);
 // Anonymous pipe CTOR
 begin
   inherited Create;
-  FPipeName := '';
   FBufsize  := aBufSize;
-  FMaxConns := 1;
-  FAnonymous := TRUE;
-  FHandle := INVALID_HANDLE_VALUE;
+  FReadHandle := INVALID_HANDLE_VALUE;
   FWriteHandle := INVALID_HANDLE_VALUE;
   FClientAnonRead := INVALID_HANDLE_VALUE;
   FClientAnonWrite := INVALID_HANDLE_VALUE;
@@ -496,119 +545,148 @@ begin
 end;
 
 
-constructor TServerPipeImpl.Create();
-// Anonymous pipe CTOR
-begin
-  Create( 1024);
-end;
-
-
-function TServerPipeImpl.AcceptImpl: ITransport;
+function TAnonymousServerPipeImpl.AcceptImpl: ITransport;
 var buf    : Byte;
     br     : DWORD;
-    connectRet : Boolean;
 begin
-  if FAnonymous then begin   //Anonymous Pipe
-
-    // This 0-byte read serves merely as a blocking call.
-    if not ReadFile( FHandle, buf, 0, br, nil)
-    and (GetLastError() <> ERROR_MORE_DATA)
-    then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                           'TPipeServer unable to initiate pipe communication');
-	  result := TAnonymousPipeImpl.Create( FHandle, FWriteHandle, FALSE);
-
-  end
-  else begin  //Named Pipe
-
-    while TRUE do begin
-      if not CreateNamedPipe()
-      then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                             'TPipeServer CreateNamedPipe failed');
-
-      // Wait for the client to connect; if it succeeds, the
-      // function returns a nonzero value. If the function returns
-      // zero, GetLastError should return ERROR_PIPE_CONNECTED.
-      if ConnectNamedPipe( FHandle,nil)
-      then connectRet := TRUE
-      else connectRet := (GetLastError() = ERROR_PIPE_CONNECTED);
-
-      if connectRet
-      then Break;
-
-      Close;
-      raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                        'TPipeServer: client connection failed');
-    end;
-
-	  result := TNamedPipeImpl.Create( FHandle, TRUE);
-  end;
+  // This 0-byte read serves merely as a blocking call.
+  if not ReadFile( FReadHandle, buf, 0, br, nil)
+  and (GetLastError() <> ERROR_MORE_DATA)
+  then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                         'TServerPipe unable to initiate pipe communication');
+  result := TAnonymousPipeImpl.Create( FReadHandle, FWriteHandle, FALSE);
 end;
 
 
-procedure TServerPipeImpl.Listen;
+procedure TAnonymousServerPipeImpl.Close;
 begin
-  // not much to do here
+  ClosePipeHandle( FReadHandle);
+  ClosePipeHandle( FWriteHandle);
+  ClosePipeHandle( FClientAnonRead);
+  ClosePipeHandle( FClientAnonWrite);
 end;
 
 
-procedure TServerPipeImpl.Close;
+function TAnonymousServerPipeImpl.ReadHandle : THandle;
 begin
-  if not FAnonymous then begin
-
-    if FHandle <> INVALID_HANDLE_VALUE then begin
-      DisconnectNamedPipe( FHandle);
-      CloseHandle( FHandle);
-      FHandle := INVALID_HANDLE_VALUE;
-    end;
-
-  end
-  else begin
-
-    if FHandle <> INVALID_HANDLE_VALUE then begin
-      CloseHandle( FHandle);
-      FHandle := INVALID_HANDLE_VALUE;
-    end;
-    if FWriteHandle <> INVALID_HANDLE_VALUE then begin
-      CloseHandle( FWriteHandle);
-      FWriteHandle := INVALID_HANDLE_VALUE;
-    end;
-    if FClientAnonRead <> INVALID_HANDLE_VALUE then begin
-      CloseHandle( FClientAnonRead);
-      FClientAnonRead := INVALID_HANDLE_VALUE;
-    end;
-    if FClientAnonWrite <> INVALID_HANDLE_VALUE then begin
-      CloseHandle( FClientAnonWrite);
-      FClientAnonWrite := INVALID_HANDLE_VALUE;
-    end;
-  end;
+  result := FReadHandle;
 end;
 
 
-function TServerPipeImpl.Handle : THandle;
-begin
-  result := FHandle;
-end;
-
-
-function TServerPipeImpl.WriteHandle : THandle;
+function TAnonymousServerPipeImpl.WriteHandle : THandle;
 begin
   result := FWriteHandle;
 end;
 
 
-function TServerPipeImpl.ClientAnonRead : THandle;
+function TAnonymousServerPipeImpl.ClientAnonRead : THandle;
 begin
   result := FClientAnonRead;
 end;
 
 
-function TServerPipeImpl.ClientAnonWrite  : THandle;
+function TAnonymousServerPipeImpl.ClientAnonWrite  : THandle;
 begin
   result := FClientAnonWrite;
 end;
 
 
-function TServerPipeImpl.CreateNamedPipe : Boolean;
+function TAnonymousServerPipeImpl.CreateAnonPipe : Boolean;
+var sd           : PSECURITY_DESCRIPTOR;
+    sa           : SECURITY_ATTRIBUTES; //TSecurityAttributes;
+    hCAR, hPipeW, hCAW, hPipe : THandle;
+begin
+  result := FALSE;
+
+  sd := PSECURITY_DESCRIPTOR( LocalAlloc( LPTR,SECURITY_DESCRIPTOR_MIN_LENGTH));
+  Win32Check( InitializeSecurityDescriptor( sd, SECURITY_DESCRIPTOR_REVISION));
+  Win32Check( SetSecurityDescriptorDacl( sd, TRUE, nil, FALSE));
+
+  sa.nLength := sizeof( sa);
+  sa.lpSecurityDescriptor := sd;
+  sa.bInheritHandle       := TRUE; //allow passing handle to child
+
+  if not CreatePipe( hCAR, hPipeW, @sa, FBufSize) then begin   //create stdin pipe
+    Console.WriteLine( 'TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
+    Exit;
+  end;
+
+  if not CreatePipe( hPipe, hCAW, @sa, FBufSize) then begin  //create stdout pipe
+    Console.WriteLine( 'TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
+    CloseHandle( hCAR);
+    CloseHandle( hPipeW);
+    Exit;
+  end;
+
+  FClientAnonRead  := hCAR;
+  FClientAnonWrite := hCAW;
+  FReadHandle      := hPipe;
+  FWriteHandle     := hPipeW;
+
+  result := TRUE;
+end;
+
+
+{ TNamedServerPipeImpl }
+
+
+constructor TNamedServerPipeImpl.Create( aPipename : string; aBufsize, aMaxConns : Cardinal);
+// Named Pipe CTOR
+begin
+  inherited Create;
+  FPipeName := aPipename;
+  FBufsize  := aBufSize;
+  FMaxConns := Max( 1, Min( PIPE_UNLIMITED_INSTANCES, aMaxConns));
+  FHandle   := INVALID_HANDLE_VALUE;
+
+  if Copy(FPipeName,1,2) <> '\\'
+  then FPipeName := '\\.\pipe\' + FPipeName;  // assume localhost
+end;
+
+
+function TNamedServerPipeImpl.AcceptImpl: ITransport;
+var connectRet : Boolean;
+begin
+  if not CreateNamedPipe()
+  then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                         'TServerPipe CreateNamedPipe failed');
+
+  // Wait for the client to connect; if it succeeds, the
+  // function returns a nonzero value. If the function returns
+  // zero, GetLastError should return ERROR_PIPE_CONNECTED.
+  if ConnectNamedPipe( FHandle,nil)
+  then connectRet := TRUE
+  else connectRet := (GetLastError() = ERROR_PIPE_CONNECTED);
+
+  if not connectRet then begin
+    Close;
+    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                      'TServerPipe: client connection failed');
+  end;
+
+  result := TNamedPipeServerImpl.Create( FHandle, TRUE);
+end;
+
+
+procedure TNamedServerPipeImpl.Close;
+begin
+  if FHandle <> INVALID_HANDLE_VALUE
+  then try
+    FlushFileBuffers( FHandle);
+    DisconnectNamedPipe( FHandle);
+  finally
+    ClosePipeHandle( FHandle);
+  end;
+end;
+
+
+function TNamedServerPipeImpl.Handle : THandle;
+begin
+  result := FHandle;
+end;
+
+
+function TNamedServerPipeImpl.CreateNamedPipe : Boolean;
 var SIDAuthWorld : SID_IDENTIFIER_AUTHORITY ;
     everyone_sid : PSID;
     ea           : EXPLICIT_ACCESS;
@@ -664,42 +742,6 @@ begin
 
   FHandle := hPipe;
   result  := TRUE;
-end;
-
-
-function TServerPipeImpl.CreateAnonPipe : Boolean;
-var sd           : PSECURITY_DESCRIPTOR;
-    sa           : SECURITY_ATTRIBUTES; //TSecurityAttributes;
-    hCAR, hPipeW, hCAW, hPipe : THandle;
-begin
-  result := FALSE;
-
-  sd := PSECURITY_DESCRIPTOR( LocalAlloc( LPTR,SECURITY_DESCRIPTOR_MIN_LENGTH));
-  Win32Check( InitializeSecurityDescriptor( sd, SECURITY_DESCRIPTOR_REVISION));
-  Win32Check( SetSecurityDescriptorDacl( sd, TRUE, nil, FALSE));
-
-  sa.nLength := sizeof( sa);
-  sa.lpSecurityDescriptor := sd;
-  sa.bInheritHandle       := TRUE; //allow passing handle to child
-
-  if not CreatePipe( hCAR, hPipeW, @sa, FBufSize) then begin   //create stdin pipe
-    Console.WriteLine( 'TPipeServer CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
-    Exit;
-  end;
-
-  if not CreatePipe( hPipe, hCAW, @sa, FBufSize) then begin  //create stdout pipe
-    Console.WriteLine( 'TPipeServer CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
-    CloseHandle( hCAR);
-    CloseHandle( hPipeW);
-    Exit;
-  end;
-
-  FClientAnonRead  := hCAR;
-  FClientAnonWrite := hCAW;
-  FHandle          := hPipe;
-  FWriteHandle     := hPipeW;
-
-  result := TRUE;
 end;
 
 

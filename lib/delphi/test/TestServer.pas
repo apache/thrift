@@ -78,7 +78,7 @@ type
         procedure SetServer( const AServer : IServer );
       end;
 
-      class procedure LaunchAnonPipeChild( const app : string; const transport : IPipeServer);
+      class procedure LaunchAnonPipeChild( const app : string; const transport : IAnonymousServerPipe);
       class procedure Execute( const args: array of string);
   end;
 
@@ -405,7 +405,7 @@ end;
 { TTestServer }
 
 
-class procedure TTestServer.LaunchAnonPipeChild( const app : string; const transport : IPipeServer);
+class procedure TTestServer.LaunchAnonPipeChild( const app : string; const transport : IAnonymousServerPipe);
 //Launch child process and pass R/W anonymous pipe handles on cmd line.
 //This is a simple example and does not include elevation or other
 //advanced features.
@@ -457,7 +457,8 @@ var
   testProcessor : IProcessor;
   ServerTrans : IServerTransport;
   ServerEngine : IServer;
-  pipeserver : IPipeServer;
+  anonymouspipe : IAnonymousServerPipe;
+  namedpipe : INamedServerPipe;
   TransportFactory : ITransportFactory;
   ProtocolFactory : IProtocolFactory;
   i : Integer;
@@ -536,13 +537,13 @@ begin
 
     if sPipeName <> '' then begin
       Console.WriteLine('- named pipe ('+sPipeName+')');
-      pipeserver  := TServerPipeImpl.Create( sPipeName);
-      servertrans := pipeserver;
+      namedpipe   := TNamedServerPipeImpl.Create( sPipeName);
+      servertrans := namedpipe;
     end
     else if AnonPipe then begin
       Console.WriteLine('- anonymous pipes');
-      pipeserver  := TServerPipeImpl.Create;
-      servertrans := pipeserver;
+      anonymouspipe := TAnonymousServerPipeImpl.Create;
+      servertrans   := anonymouspipe;
     end
     else begin
       Console.WriteLine('- sockets (port '+IntToStr(port)+')');
@@ -572,7 +573,7 @@ begin
 
     // start the client now when we have the anon handles, but before the server starts
     if AnonPipe
-    then LaunchAnonPipeChild( ExtractFilePath(ParamStr(0))+'client.exe', pipeserver);
+    then LaunchAnonPipeChild( ExtractFilePath(ParamStr(0))+'client.exe', anonymouspipe);
 
 
     Console.WriteLine('');
