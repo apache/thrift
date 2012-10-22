@@ -71,14 +71,11 @@ client.testI64(5, function(err, response) {
 	passed();
 });
 
-/*
- * FATAL ERROR: CALL_AND_RETRY_2 Allocation failed - process out of memory
 client.testI64(-5, function(err, response) {
   if (err) { return failed(err); }
   console.log("testI64(-5) = ", response);
 	passed();
 });
- */
 
 client.testI64(-34359738368, function(err, response) {
   if (err) { return failed(err); }

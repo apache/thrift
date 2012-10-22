@@ -126,6 +126,10 @@ do_test "nodejs-nodejs" "binary" "framed-ip" \
         "make -C nodejs/ client" \
         "make -C nodejs/ server" \
         "1"
+do_test "nodejs-cpp" "binary" "framed-ip" \
+        "make -C nodejs/ client" \
+        "cpp/TestServer --transport=framed" \
+        "1"
 do_test "cpp-nodejs" "binary" "framed-ip" \
         "cpp/TestClient --transport=framed" \
         "make -C nodejs/ server" \
