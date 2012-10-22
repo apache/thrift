@@ -611,6 +611,9 @@ AC_CONFIG_FILES([
   test/py/Makefile
   test/py.twisted/Makefile
   test/rb/Makefile
+  tutorial/Makefile
+  tutorial/java/Makefile
+  tutorial/js/Makefile
 ])
 
 AC_OUTPUT

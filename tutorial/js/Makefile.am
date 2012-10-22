@@ -1,5 +1,3 @@
-#!/bin/sh
-
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -19,4 +17,15 @@
 # under the License.
 #
 
-java -cp ../../lib/java/build/lib/*:../../lib/java/build/*:tutorial.jar JavaClient $1
+export CLASSPATH
+
+# Make sure this doesn't fail if ant is not configured.
+clean-local:
+	ANT=$(ANT) ; if test -z "$$ANT" ; then ANT=: ; fi ; \
+	$$ANT $(ANT_FLAGS) clean
+
+check-local: all
+	$(ANT) $(ANT_FLAGS) test
+
+tutorialserver: all
+	$(ANT) $(ANT_FLAGS) tutorialserver

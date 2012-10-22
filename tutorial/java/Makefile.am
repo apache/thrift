@@ -1,5 +1,3 @@
-#!/bin/sh
-
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -19,11 +17,21 @@
 # under the License.
 #
 
-# Optionally the following properties could be set for SSL instead
-# of configuring it in the code
-# -Djavax.net.ssl.trustStore=../../lib/java/test/.truststore
-# -Djavax.net.ssl.trustStorePassword=thrift
-# -Djavax.net.ssl.keyStore=../../lib/java/test/.keystore
-# -Djavax.net.ssl.keyStorePassword=thrift
+export CLASSPATH
 
-java -cp ../../lib/java/build/lib/*:../../lib/java/build/*:tutorial.jar JavaServer
+# Make sure this doesn't fail if ant is not configured.
+clean-local:
+	ANT=$(ANT) ; if test -z "$$ANT" ; then ANT=: ; fi ; \
+	$$ANT $(ANT_FLAGS) clean
+
+check-local: all
+	$(ANT) $(ANT_FLAGS) test
+
+tutorial: all
+	$(ANT) $(ANT_FLAGS) tutorial
+
+tutorialserver: all
+	$(ANT) $(ANT_FLAGS) tutorialserver
+
+tutorialclient: all
+	$(ANT) $(ANT_FLAGS) tutorialclient

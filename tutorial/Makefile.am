@@ -17,28 +17,40 @@
 # under the License.
 #
 
-ACLOCAL_AMFLAGS = -I ./aclocal
+SUBDIRS = 
 
-SUBDIRS = compiler/cpp lib tutorial
-
-if WITH_TESTS
-SUBDIRS += test
+if WITH_CPP
+#SUBDIRS += cpp
 endif
 
-dist-hook:
-	find $(distdir) -type f \( -iname ".deps" -or -iname ".libs" -or -iname ".gitignore" \
-		-or -iname ".DS_Store" -or -iname "._*" \) | xargs rm -rf
-	find $(distdir) -type d \( -iname ".svn" -or -iname ".git" \) | xargs rm -rf
+if WITH_JAVA
+SUBDIRS += java
+SUBDIRS += js
+endif
 
-print-version:
-	@echo $(VERSION)
+if WITH_PERL
+#SUBDIRS += perl
+endif
 
-EXTRA_DIST = \
- 			doc \
-			tutorial \
-			contrib \
-			CONTRIBUTORS \
-			LICENSE \
-			CHANGES \
-			DISCLAIMER \
-			NOTICE
+if WITH_PHP
+#SUBDIRS += php
+endif
+
+if WITH_PYTHON
+#SUBDIRS += py
+#SUBDIRS += py.twisted
+endif
+
+if WITH_RUBY
+#SUBDIRS += rb
+endif
+
+if WITH_HASKELL
+#SUBDIRS += hs
+endif
+
+#
+# generate html for ThriftTest.thrift
+#
+check-local:
+	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
