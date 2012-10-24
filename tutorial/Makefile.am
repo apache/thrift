@@ -20,7 +20,7 @@
 SUBDIRS = 
 
 if WITH_CPP
-#SUBDIRS += cpp
+SUBDIRS += cpp
 endif
 
 if WITH_JAVA
@@ -52,5 +52,5 @@ endif
 #
 # generate html for ThriftTest.thrift
 #
-check-local:
+all-local:
 	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift

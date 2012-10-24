@@ -24,6 +24,9 @@ clean-local:
 	ANT=$(ANT) ; if test -z "$$ANT" ; then ANT=: ; fi ; \
 	$$ANT $(ANT_FLAGS) clean
 
+all-local:
+	$(ANT) $(ANT_FLAGS) compile
+
 check-local: all
 	$(ANT) $(ANT_FLAGS) test
 

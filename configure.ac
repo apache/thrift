@@ -612,6 +612,7 @@ AC_CONFIG_FILES([
   test/py.twisted/Makefile
   test/rb/Makefile
   tutorial/Makefile
+  tutorial/cpp/Makefile
   tutorial/java/Makefile
   tutorial/js/Makefile
 ])

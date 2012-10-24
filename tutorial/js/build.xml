@@ -83,6 +83,7 @@
   
   <target name="clean">
     <delete dir="${build}" />
+    <delete dir="gen-js"/>
     <delete file="tutorial-js.jar" />
   </target>
 

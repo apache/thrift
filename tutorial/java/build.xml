@@ -106,6 +106,7 @@
 
   <target name="clean">
     <delete dir="${build}" />
+    <delete dir="${gen}"/>
     <delete file="tutorial.jar" />
   </target>
 
