@@ -19,6 +19,10 @@
 
 SUBDIRS = 
 
+if MINGW
+# do nothing, just build the compiler
+else
+
 if WITH_CPP
 SUBDIRS += cpp
 endif
@@ -54,3 +58,5 @@ endif
 #
 all-local:
 	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
+
+endif
