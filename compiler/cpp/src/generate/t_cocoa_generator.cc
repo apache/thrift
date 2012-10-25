@@ -1254,17 +1254,25 @@ void t_cocoa_generator::generate_cocoa_service_protocol(ofstream& out,
  */
 void t_cocoa_generator::generate_cocoa_service_client_interface(ofstream& out,
                                                                 t_service* tservice) {
-  out << "@interface " << cocoa_prefix_ << tservice->get_name() << "Client : NSObject <" <<
-    cocoa_prefix_ << tservice->get_name() << "> ";
+  if(tservice->get_extends() != NULL){
+    out << "@interface " << cocoa_prefix_ << tservice->get_name() << "Client : " << tservice->get_extends()->get_name() << "Client <" <<
+      cocoa_prefix_ << tservice->get_name() << ">";
+    scope_up(out);
+    scope_down(out);
+  }else{
+    out << "@interface " << cocoa_prefix_ << tservice->get_name() << "Client : NSObject <" <<
+      cocoa_prefix_ << tservice->get_name() << ">";
 
-  scope_up(out);
-  out << indent() << "id <TProtocol> inProtocol;" << endl;
-  out << indent() << "id <TProtocol> outProtocol;" << endl;
-  scope_down(out);
+    scope_up(out);
+    out << indent() << "id <TProtocol> inProtocol;" << endl;
+    out << indent() << "id <TProtocol> outProtocol;" << endl;
+    scope_down(out);
 
-  out << "- (id) initWithProtocol: (id <TProtocol>) protocol;" << endl;
-  out << "- (id) initWithInProtocol: (id <TProtocol>) inProtocol outProtocol: (id <TProtocol>) outProtocol;" << endl;
-  out << "@end" << endl << endl;
+    out << "- (id) initWithProtocol: (id <TProtocol>) protocol;" << endl;
+    out << "- (id) initWithInProtocol: (id <TProtocol>) inProtocol outProtocol: (id <TProtocol>) outProtocol;" << endl;
+  }
+
+  out << "@end" << endl << endl;  
 }
 
 
