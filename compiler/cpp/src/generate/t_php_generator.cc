@@ -33,7 +33,7 @@ using namespace std;
 #define NSGLOBAL_A ("\\" + NSGLOBAL )
 #define NSGLOBAL_B ( NSGLOBAL + "\\")
 #define NSGLOBAL_AB ("\\" + NSGLOBAL + "\\")
-#define NS_ROOT ( namespace_php_ ? "\\" : "")
+#define NS_ROOT ( (namespace_php_ and !sf2_) ? "\\" : "")
 
 
 /**
@@ -68,6 +68,9 @@ class t_php_generator : public t_oop_generator {
 
     iter = parsed_options.find("namespace");
     namespace_php_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("sf2");
+    sf2_ = oop_ = namespace_php_ = (iter != parsed_options.end());
 
     iter = parsed_options.find("nsglobal");
     if(iter != parsed_options.end()) {
@@ -220,12 +223,25 @@ class t_php_generator : public t_oop_generator {
   //setting the namespace of a file: my\namespace
   string php_namespace_suffix(const t_program* p) {
     string ns = php_namespace_base(p, namespace_php_);
+
     if (namespace_php_) return (nsglobal_.size() ? NSGLOBAL_B : NSGLOBAL) + ns;
     //provides consistent behavior even though this function is never called when namespace_php_ is false
     else return (nsglobal_.size() ? (NSGLOBAL + "_") : "") + ns;
   }
 
-  //writing an autload identifier into globals: my\namespace\ or my_namespace_
+  //add a directory to allready existing namespace
+  string php_namespace_directory(string directory, bool end = true) {
+    //For security
+    if(!namespace_php_) return "";
+
+    if(end) {
+      return ((autoload_) ? ("\\" + directory) + ";" : ";" );
+    } else {
+      return ((autoload_) ? (directory + "\\") : "" );
+    }
+  }
+
+  //writing an autload identifier into globa;ls: my\namespace\ or my_namespace_
   string php_namespace_autoload(const t_program* p) {
     std::string ns = php_namespace_base(p, namespace_php_);
     if (namespace_php_) return (nsglobal_.size() ? NSGLOBAL_B : NSGLOBAL) + (ns.size() ? (ns + "\\") : "");
@@ -257,6 +273,70 @@ class t_php_generator : public t_oop_generator {
     }
 
     return ((namespace_php_) ? ns + '/' : "" ) + p->get_name();
+  }
+
+  /**
+   * Transform class_method into ClassMethod
+   *
+   * @param str
+   * @return stirng
+   */
+  string classify(string str)
+  {
+    if(!namespace_php_) return str;
+
+    string classe = "";
+
+    vector<string> x = split(str, '_');
+
+    for (size_t i = 0; i < x.size(); ++i) {
+      classe = classe + capitalize(x[i]);
+    }
+
+    return classe;
+  }
+
+  /**
+   * Split method
+   * @param s
+   * @param delim
+   * @param elems
+   * @return
+   */
+  vector<string> &split(const string &s, char delim, vector<string> &elems) {
+    stringstream ss(s);
+    string item;
+
+    while(getline(ss, item, delim)) {
+      elems.push_back(item);
+    }
+
+    return elems;
+  }
+
+  vector<string> split(const string &s, char delim) {
+    vector<string> elems;
+
+    return split(s, delim, elems);
+  }
+
+  /**
+   * Capitalize method
+   * @param str
+   * @return
+   */
+  string capitalize(string str)
+  {
+    string::iterator it(str.begin());
+
+    if (it != str.end())
+        str[0] = toupper((unsigned char)str[0]);
+
+//    while(++it != str.end())
+//    {
+//      *it = tolower((unsigned char)*it);
+//    }
+    return str;
   }
 
  private:
@@ -294,12 +374,17 @@ class t_php_generator : public t_oop_generator {
    * Whether to use OOP base class TBase
    */
   bool oop_;
-  
+
   /**
    * Generate namespaces in PHP5.3 style
    */
   bool namespace_php_;
- 
+
+  /**
+   * Generate PHP for Symfony 2
+   */
+  bool sf2_;
+
   /**
    * Global namespace for PHP 5.3
    */
@@ -321,25 +406,44 @@ bool t_php_generator::is_valid_namespace(const std::string& sub_namespace) {
 void t_php_generator::init_generator() {
   // Make output directory
   MKDIR(get_out_dir().c_str());
-  package_dir_ = get_out_dir()+"/"+program_name_+"/";
-  MKDIR(package_dir_.c_str());
+
+  // Create Real directory Namespaces
+  if(namespace_php_)
+  {
+	vector<string> NSx = split(php_namespace_suffix(get_program()), '\\');
+	package_dir_ = get_out_dir();
+
+	for (size_t i = 0; i < NSx.size(); ++i) {
+	  package_dir_ = package_dir_ + "/" + NSx[i] + "/";
+	  MKDIR(package_dir_.c_str());
+	}
+  }
+  else
+  {
+	package_dir_ = get_out_dir()+"/"+program_name_+"/";
+	MKDIR(package_dir_.c_str());
+  }
+
   // Make output file
-  string f_types_name = package_dir_+program_name_+"_types.php";
+  string f_types_name = package_dir_+"Types.php";
   f_types_.open(f_types_name.c_str());
 
   // Print header
   f_types_ <<
     "<?php" << endl;
-  if(namespace_php_) f_types_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl;
+    if(namespace_php_) f_types_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl << endl;
   f_types_ << autogen_comment() << php_includes();
 
   // Include other Thrift includes
-  const vector<t_program*>& includes = program_->get_includes();
-  for (size_t i = 0; i < includes.size(); ++i) {
-    string package = includes[i]->get_name();
-    string prefix = php_path(includes[i]);
-    f_types_ <<
-      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << prefix << "/" << package << "_types.php';" << endl;
+  if(!sf2_) // Global are useless in SF2 mode
+  {
+    const vector<t_program*>& includes = program_->get_includes();
+    for (size_t i = 0; i < includes.size(); ++i) {
+      string package = includes[i]->get_name();
+      string prefix = php_path(includes[i]);
+      f_types_ <<
+        "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << prefix << "/" << "Types.php';" << endl;
+    }
   }
   f_types_ << endl;
 
@@ -349,21 +453,42 @@ void t_php_generator::init_generator() {
     f_consts_.open(f_consts_name.c_str());
     f_consts_ <<
       "<?php" << endl;
-     if(namespace_php_) f_consts_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl;
-     f_consts_ << autogen_comment() <<
-      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + php_path(program_) + "/" + program_name_ + "_types.php';" << endl <<
-      endl <<
-      "$GLOBALS['" << php_namespace_constant(get_program()) << program_name_ << "_CONSTANTS'] = array();" << endl <<
-      endl;
-  }
+     if(namespace_php_)
+     {
+       f_consts_ << "namespace " << php_namespace_suffix(get_program()) << ";" << endl << endl;
+     }
+
+	 if(!sf2_)
+     {
+		f_consts_ << autogen_comment() <<
+			"include_once $GLOBALS['THRIFT_ROOT'].'/packages/" + php_path(program_) + "/" + "Types.php';" << endl <<
+		endl <<
+			"$GLOBALS['" << php_namespace_constant(get_program()) << program_name_ << "_CONSTANTS'] = array();" << endl <<
+		endl;
+	 }
+   }
 }
 
 /**
  * Prints standard php includes
  */
 string t_php_generator::php_includes() {
-  return
-    string("include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';\n\n");
+  if(sf2_)
+  {
+    string TBase = "use Thrift\\Base\\TBase;\n";
+    string TType = "use Thrift\\Type\\TType;\n";
+    string TMessageType = "use Thrift\\Type\\TMessageType;\n";
+    string TException = "use Thrift\\Exception\\TException;\n";
+    string TProtocol = "use Thrift\\Protocol\\TProtocol;\n";
+    string TApplicationException = "use Thrift\\Exception\\TApplicationException;\n\n";
+
+    return TBase + TType + TMessageType + TException +TProtocol + TApplicationException;
+  }
+  else
+  {
+	return
+	  string("include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';\n\n");
+  }
 }
 
 /**
@@ -371,11 +496,11 @@ string t_php_generator::php_includes() {
  */
 void t_php_generator::close_generator() {
   // Close types file
-  f_types_ << "?>" << endl;
+    f_types_ << endl;
   f_types_.close();
 
   if (!program_->get_consts().empty()) {
-    f_consts_ << "?>" << endl;
+    f_consts_ << endl;
     f_consts_.close();
   }
 }
@@ -396,19 +521,23 @@ void t_php_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_php_generator::generate_enum(t_enum* tenum) {
-  f_types_ <<
-    "$GLOBALS['" << php_namespace(tenum->get_program()) << "E_" << tenum->get_name() << "'] = array(" << endl;
-
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
-  for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    int value = (*c_iter)->get_value();
-    f_types_ <<
-      "  '" << (*c_iter)->get_name() << "' => " << value << "," << endl;
-  }
 
-  f_types_ <<
-    ");" << endl << endl;
+  if(!sf2_)
+  {
+	f_types_ <<
+	  "$GLOBALS['" << php_namespace(tenum->get_program()) << "E_" << tenum->get_name() << "'] = array(" << endl;
+
+	for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+	  int value = (*c_iter)->get_value();
+	  f_types_ <<
+		"  '" << (*c_iter)->get_name() << "' => " << value << "," << endl;
+	}
+
+	f_types_ <<
+	  ");" << endl << endl;
+  }
 
 
   // We're also doing it this way to see how it performs. It's more legible
@@ -665,7 +794,7 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
       << "/**" << endl << " *  @generated" << endl << " */" << endl;
     if(namespace_php_) autoload_out << "namespace " << php_namespace_suffix(tstruct->get_program()) << ";" << endl;
     _generate_php_struct_definition(autoload_out, tstruct, is_exception);
-    autoload_out << endl << "?>" << endl;
+    autoload_out << endl;
     autoload_out.close();
 
     f_types_ <<
@@ -999,12 +1128,15 @@ void t_php_generator::generate_service(t_service* tservice) {
   f_service_ << autogen_comment() <<
     php_includes();
 
-  f_service_ <<
-    "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << php_path(program_) << "/" << program_name_ << "_types.php';" << endl;
+  if(!sf2_)
+  {
+	f_service_ <<
+	  "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << php_path(program_) << "/" << "Types.php';" << endl;
 
-  if (tservice->get_extends() != NULL) {
-    f_service_ <<
-      "include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << php_path(tservice->get_extends()->get_program()) << "/" << tservice->get_extends()->get_name() << ".php';" << endl;
+	if (tservice->get_extends() != NULL) {
+	  f_service_ <<
+		"include_once $GLOBALS['THRIFT_ROOT'].'/packages/" << php_path(tservice->get_extends()->get_program()) << "/" << tservice->get_extends()->get_name() << ".php';" << endl;
+	}
   }
 
   f_service_ <<
@@ -1022,7 +1154,7 @@ void t_php_generator::generate_service(t_service* tservice) {
   }
 
   // Close service file
-  f_service_ << "?>" << endl;
+  f_service_ << endl;
   f_service_.close();
 }
 
@@ -1095,7 +1227,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
     indent() << "if (!method_exists($this, $methodname)) {" << endl;
   if (binary_inline_) {
     f_service_ <<
-      indent() << "  throw new Exception('Function '.$fname.' not implemented.');" << endl;
+      indent() << "  throw new " << ((namespace_php_) ? "\\" : "" ) << "Exception('Function '.$fname.' not implemented.');" << endl;
   } else {
     f_service_ <<
       indent() << "  $input->skip(" << NS_ROOT << "TType::STRUCT);" << endl <<
@@ -1192,7 +1324,7 @@ void t_php_generator::generate_process_function(t_service* tservice,
     indent_down();
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ <<
-        indent() << "} catch (" << php_namespace((*x_iter)->get_type()->get_program()) << (*x_iter)->get_type()->get_name() << " $" << (*x_iter)->get_name() << ") {" << endl;
+        indent() << "} catch (" << php_namespace(get_true_type((*x_iter)->get_type())->get_program()) << (*x_iter)->get_type()->get_name() << " $" << (*x_iter)->get_name() << ") {" << endl;
       if (!tfunction->is_oneway()) {
         indent_up();
         f_service_ <<
@@ -1411,7 +1543,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       << "/**" << endl << " *  @generated" << endl << " */" << endl;
     if(namespace_php_) autoload_out << endl << "namespace " << php_namespace_suffix(tservice->get_program()) << ";" << endl << endl;
     _generate_service_client(autoload_out, tservice);
-    autoload_out << endl << "?>" << endl;
+    autoload_out << endl;
     autoload_out.close();
 
     f_service_ <<
@@ -1649,7 +1781,7 @@ void t_php_generator::_generate_service_client(ofstream& out, t_service* tservic
           "return;" << endl;
       } else {
         out <<
-          indent() << "throw new " << NS_ROOT << "Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+          indent() << "throw new " << ((namespace_php_) ? "\\" : "" ) << "Exception(\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
 
     // Close function
@@ -2311,6 +2443,17 @@ string t_php_generator::argument_list(t_struct* tstruct) {
     } else {
       result += ", ";
     }
+
+    t_type* type = (*f_iter)->get_type();
+
+    //Set type name
+    if(type->is_struct())
+    {
+      string className = php_namespace(type->get_program()) + php_namespace_directory("Definition", false) + classify(type->get_name());
+
+      result += className + " ";
+    }
+
     result += "$" + (*f_iter)->get_name();
   }
   return result;
@@ -2391,5 +2534,6 @@ THRIFT_REGISTER_GENERATOR(php, "PHP",
 "    oop:             Generate PHP with object oriented subclasses\n"
 "    rest:            Generate PHP REST processors\n"
 "    namespace:       Generate PHP namespaces as defined in PHP >= 5.3\n"
+"    sf2:             Generate PHP for Symfony 2 (means oop and namespace)\n"
 )
 

@@ -1,0 +1,19 @@
+{
+    "name": "ebuzzing/thrift",
+    "description": "Thrift fork",
+    "homepage": "https://github.com/ebuzzing/thrift.git",
+    "type": "library",
+    "authors": [
+    {
+      "name": "OverBlog",
+      "homepage": "http://www.over-blog.com"
+    }
+  ],
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+        "psr-0": {"Thrift": "lib/phpsf2/src/"}
+    },
+    "minimum-stability": "dev"
+}
