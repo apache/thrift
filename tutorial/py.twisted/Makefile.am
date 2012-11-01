@@ -30,6 +30,9 @@ tutorialserver: all
 tutorialclient: all
 	${PYTHON} PythonClient.py
 
+clean-local:
+	$(RM) -r gen-*
+
 EXTRA_DIST = \
 	PythonServer.py \
 	PythonClient.py
