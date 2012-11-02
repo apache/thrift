@@ -19,8 +19,8 @@
 # under the License.
 #
 from __future__ import division
-import sys, glob, time
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+import sys, glob, time, os
+sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib.*'))[0])
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -40,7 +40,7 @@ parser.add_option('-q', '--quiet', action="store_const",
     dest="verbose", const=0,
     help="minimal output")
 parser.add_option('--proto',  dest="proto", type="string",
-    help="protocol to use, one of: accel, binary, compact")
+    help="protocol to use, one of: accel, binary, compact, json")
 parser.set_defaults(port=9090, verbose=1, proto='binary')
 options, args = parser.parse_args()
 
@@ -53,11 +53,13 @@ from thrift.transport import TSocket
 from thrift.transport import TZlibTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TCompactProtocol
+from thrift.protocol import TJSONProtocol
 from thrift.server import TServer, TNonblockingServer, THttpServer
 
 PROT_FACTORIES = {'binary': TBinaryProtocol.TBinaryProtocolFactory,
     'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory,
-    'compact': TCompactProtocol.TCompactProtocolFactory}
+    'compact': TCompactProtocol.TCompactProtocolFactory,
+    'json': TJSONProtocol.TJSONProtocolFactory}
 
 class TestHandler:
 
@@ -156,7 +158,7 @@ class TestHandler:
   def testMulti(self, arg0, arg1, arg2, arg3, arg4, arg5):
     if options.verbose > 1:
       print 'testMulti(%s)' % [arg0, arg1, arg2, arg3, arg4, arg5]
-    x = Xtruct(byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
+    x = Xtruct(string_thing='Hello2', byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
     return x
 
 # set up the protocol factory form the --proto option

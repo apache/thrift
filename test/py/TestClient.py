@@ -19,8 +19,8 @@
 # under the License.
 #
 
-import sys, glob
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
+import sys, glob, os
+sys.path.insert(0, glob.glob(os.path.join(os.path.dirname(__file__),'../../lib/py/build/lib.*'))[0])
 
 import unittest
 import time
@@ -63,6 +63,7 @@ from thrift.transport import THttpClient
 from thrift.transport import TZlibTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol import TCompactProtocol
+from thrift.protocol import TJSONProtocol
 
 class AbstractTest(unittest.TestCase):
   def setUp(self):
@@ -125,7 +126,7 @@ class AbstractTest(unittest.TestCase):
   def testNest(self):
     inner = Xtruct(string_thing="Zero", byte_thing=1, i32_thing=-3,
       i64_thing=-5)
-    x = Xtruct2(struct_thing=inner)
+    x = Xtruct2(struct_thing=inner, byte_thing=0, i32_thing=0)
     y = self.client.testNest(x)
     self.assertEqual(y, x)
 
@@ -163,13 +164,13 @@ class AbstractTest(unittest.TestCase):
       pass
 
   def testMulti(self):
-    xpected = Xtruct(byte_thing=74, i32_thing=0xff00ff, i64_thing=0xffffffffd0d0)
+    xpected = Xtruct(string_thing='Hello2', byte_thing=74, i32_thing=0xff00ff, i64_thing=0xffffffffd0d0)
     y = self.client.testMulti(xpected.byte_thing,
           xpected.i32_thing,
           xpected.i64_thing,
           { 0:'abc' },
           Numberz.FIVE,
-          0xf0f0f0)
+          0xf0f0f0)  
     self.assertEqual(y, xpected)
 
   def testException(self):
@@ -208,6 +209,9 @@ class NormalBinaryTest(AbstractTest):
 class CompactTest(AbstractTest):
   protocol_factory = TCompactProtocol.TCompactProtocolFactory()
 
+class JSONTest(AbstractTest):
+  protocol_factory = TJSONProtocol.TJSONProtocolFactory()
+
 class AcceleratedBinaryTest(AbstractTest):
   protocol_factory = TBinaryProtocol.TBinaryProtocolAcceleratedFactory()
 
@@ -220,6 +224,8 @@ def suite():
     suite.addTest(loader.loadTestsFromTestCase(AcceleratedBinaryTest))
   elif options.proto == 'compact':
     suite.addTest(loader.loadTestsFromTestCase(CompactTest))
+  elif options.proto == 'json':
+    suite.addTest(loader.loadTestsFromTestCase(JSONTest))
   else:
     raise AssertionError('Unknown protocol given with --proto: %s' % options.proto)
   return suite

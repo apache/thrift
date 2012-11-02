@@ -55,6 +55,7 @@ do_test () {
       echo "=================== client message ==================="
       tail log/${testname}_client.log
       echo "======================================================"
+      echo ""
       print_header
     fi
     sleep 10
@@ -93,7 +94,42 @@ for proto in $protocols; do
   done;
 done;
 
-
+do_test "py-py" "binary" "buffered-ip" \
+        "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
+        "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
+        "10"
+do_test "py-py" "json" "buffered-ip" \
+        "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
+        "py/TestServer.py --proto=json --port=9090 --genpydir=py/gen-py TSimpleServer" \
+        "10"
+do_test "py-cpp" "binary" "buffered-ip" \
+        "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
+        "cpp/TestServer" \
+        "10"
+do_test "py-cpp" "json" "buffered-ip" \
+        "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
+        "cpp/TestServer --protocol=json" \
+        "10"
+do_test "cpp-py" "binary" "buffered-ip" \
+        "cpp/TestClient --protocol=binary --port=9090" \
+        "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
+        "10"
+do_test "cpp-py" "json" "buffered-ip" \
+        "cpp/TestClient --protocol=json --port=9090" \
+        "py/TestServer.py --proto=json --port=9090 --genpydir=py/gen-py TSimpleServer" \
+        "10"
+do_test "py-java"  "binary" "buffered-ip" \
+        "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
+        "ant -f  ../lib/java/build.xml testserver" \
+        "100"
+do_test "py-java"  "json"   "buffered-ip" \
+        "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
+        "ant -f  ../lib/java/build.xml testserver" \
+        "100"
+do_test "java-py"  "binary" "buffered-ip" \
+        "ant -f  ../lib/java/build.xml testclient" \
+        "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
+        "10"
 do_test "java-java" "binary" "buffered-ip" \
         "ant -f  ../lib/java/build.xml testclient" \
         "ant -f  ../lib/java/build.xml testserver" \
