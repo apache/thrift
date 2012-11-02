@@ -94,6 +94,9 @@ for proto in $protocols; do
   done;
 done;
 
+# delete Unix Domain Socket used by cpp tests
+rm -f /tmp/ThriftTest.thrift
+
 do_test "py-py" "binary" "buffered-ip" \
         "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
         "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
