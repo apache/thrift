@@ -46,7 +46,7 @@ CTYPES = {TType.BOOL:       'tf',
           TType.I64:        'i64',
           TType.DOUBLE:     'dbl',
           TType.STRING:     'str',
-          TType.STRUCT:     'rect',
+          TType.STRUCT:     'rec',
           TType.LIST:       'lst',
           TType.SET:        'set',
           TType.MAP:        'map'}
