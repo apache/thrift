@@ -243,7 +243,7 @@ public class THttpClient extends TTransport {
       is = response.getEntity().getContent();
       
       if (responseCode != HttpStatus.SC_OK) {
-        throw new TTransportException("HTTP Response code: " + responseCode);
+        throw new TTransportException("HTTP Response code: " + responseCode + ", " + new String(data, "utf-8"));
       }
 
       // Read the responses into a byte array so we can release the connection
