@@ -40,7 +40,7 @@ public abstract class ProcessFunction<I, T extends TBase> {
     } catch(Throwable th) {
       LOGGER.error("Internal error processing " + getMethodName(), th);
       TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, 
-        "Internal error processing " + getMethodName());
+        "Internal error processing " + getMethodName() + ", " + th.getMessage());
       oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
       x.write(oprot);
       oprot.writeMessageEnd();
