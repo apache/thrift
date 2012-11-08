@@ -94,9 +94,10 @@ class TSSLSocket(TSocket.TSocket):
         break
     except socket.error as e:
       if self._unix_socket:
-        message = 'Could not connect to secure socket %s' % self._unix_socket
+        message = 'Could not connect to secure socket %s: %s' \
+                % (self._unix_socket, e)
       else:
-        message = 'Could not connect to %s:%d' % (self.host, self.port)
+        message = 'Could not connect to %s:%d: %s' % (self.host, self.port, e)
       raise TTransportException(type=TTransportException.NOT_OPEN,
                                 message=message)
     if self.validate:
