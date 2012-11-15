@@ -93,7 +93,7 @@
   <target name="compile" depends="init">
     <javac srcdir="${src}" destdir="${build.dir}" source="1.5" target="1.5" 
     debug="true" classpathref="compile.classpath" includeantruntime="false">
-      <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:unchecked"/>
     </javac>
   </target>
 
@@ -157,13 +157,16 @@
 
   <target name="compile-test" description="Build the test suite classes" depends="generate,dist">
     <javac debug="true" srcdir="${gen}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false">
-        <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:deprecation"/>
+      <!--<compilerarg value="-Xlint:unchecked"/>-->
     </javac>  
     <javac debug="true" srcdir="${genbean}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false">
-     <compilerarg value="-Xlint:deprecation"/>  
+      <compilerarg value="-Xlint:deprecation"/>
+      <!--<compilerarg value="-Xlint:unchecked"/>-->
     </javac>  
     <javac debug="true" srcdir="${src.test}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false">
-     <compilerarg value="-Xlint:deprecation"/>
+      <compilerarg value="-Xlint:deprecation"/>
+      <!--<compilerarg value="-Xlint:unchecked"/>-->
     </javac>  
     <copy todir="${build.test.dir}">
       <fileset dir="${src.test}" includes="log4j.properties"/>
