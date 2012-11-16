@@ -1989,7 +1989,6 @@ void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
     endl <<
     "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\"" << endl <<
     "#include <thrift/protocol/TBinaryProtocol.h>" << endl <<
-    "#include <thrift/async/TEventServer.h>" << endl <<
     endl <<
     "using namespace ::apache::thrift;" << endl <<
     "using namespace ::apache::thrift::protocol;" << endl <<
