@@ -43,6 +43,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <limits>
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -658,7 +659,7 @@ eventInfo* TFileTransport::readEvent() {
     if (readState_.bufferPtr_ == readState_.bufferLen_) {
       // advance the offset pointer
       offset_ += readState_.bufferLen_;
-      readState_.bufferLen_ = ::read(fd_, readBuff_, readBuffSize_);
+      readState_.bufferLen_ = static_cast<uint32_t>(::read(fd_, readBuff_, readBuffSize_));
       //       if (readState_.bufferLen_) {
       //         T_DEBUG_L(1, "Amount read: %u (offset: %lu)", readState_.bufferLen_, offset_);
       //       }
@@ -785,7 +786,7 @@ bool TFileTransport::isEventCorrupted() {
     // 3. size indicates that event crosses chunk boundary
     T_ERROR("Read corrupt event. Event crosses chunk boundary. Event size:%u  Offset:%lu",
             readState_.event_->eventSize_,
-            (offset_ + readState_.bufferPtr_ + 4));
+            static_cast<unsigned long>(offset_ + readState_.bufferPtr_ + 4));
 
     return true;
   }
@@ -826,7 +827,7 @@ void TFileTransport::performRecovery() {
       currentEvent_ = NULL;
       char errorMsg[1024];
       sprintf(errorMsg, "TFileTransport: log file corrupted at offset: %lu",
-              (offset_ + readState_.lastDispatchPtr_));
+              static_cast<unsigned long>(offset_ + readState_.lastDispatchPtr_));
 
       GlobalOutput(errorMsg);
       throw TTransportException(errorMsg);
@@ -915,7 +916,10 @@ uint32_t TFileTransport::getNumChunks() {
   }
 
   if (f_info.st_size > 0) {
-    return ((f_info.st_size)/chunkSize_) + 1;
+    size_t numChunks = ((f_info.st_size)/chunkSize_) + 1;
+    if (numChunks > (std::numeric_limits<uint32_t>::max)())
+      throw TTransportException("Too many chunks");
+    return static_cast<uint32_t>(numChunks);
   }
 
   // empty file has no chunks
@@ -923,7 +927,7 @@ uint32_t TFileTransport::getNumChunks() {
 }
 
 uint32_t TFileTransport::getCurChunk() {
-  return offset_/chunkSize_;
+  return static_cast<uint32_t>(offset_/chunkSize_);
 }
 
 // Utility Functions

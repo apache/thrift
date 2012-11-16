@@ -179,7 +179,9 @@ bool TFramedTransport::readFrame() {
   uint32_t size_bytes_read = 0;
   while (size_bytes_read < sizeof(sz)) {
     uint8_t* szp = reinterpret_cast<uint8_t*>(&sz) + size_bytes_read;
-    uint32_t bytes_read = transport_->read(szp, sizeof(sz) - size_bytes_read);
+    uint32_t bytes_read = transport_->read(
+      szp,
+      static_cast<uint32_t>(sizeof(sz)) - size_bytes_read);
     if (bytes_read == 0) {
       if (size_bytes_read == 0) {
         // EOF before any data was read.
@@ -259,7 +261,9 @@ void TFramedTransport::flush()  {
     wBase_ = wBuf_.get() + sizeof(sz_nbo);
 
     // Write size and frame body.
-    transport_->write(wBuf_.get(), sizeof(sz_nbo)+sz_hbo);
+    transport_->write(
+      wBuf_.get(),
+      static_cast<uint32_t>(sizeof(sz_nbo))+sz_hbo);
   }
 
   // Flush the underlying transport.

@@ -253,8 +253,8 @@ inline uint32_t TDenseProtocol::vlqWrite(uint64_t vlq) {
   // Back up one step before writing.
   pos++;
 
-  trans_->write(buf+pos, sizeof(buf) - pos);
-  return sizeof(buf) - pos;
+  trans_->write(buf+pos, static_cast<uint32_t>(sizeof(buf) - pos));
+  return static_cast<uint32_t>(sizeof(buf) - pos);
 }
 
 

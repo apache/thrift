@@ -22,9 +22,6 @@
 #endif
 #include <cstring>
 #include <sstream>
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
@@ -32,9 +29,6 @@
 #include <sys/poll.h>
 #endif
 #include <sys/types.h>
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -159,7 +153,7 @@ bool TSocket::peek() {
     return false;
   }
   uint8_t buf;
-  int r = recv(socket_, cast_sockopt(&buf), 1, MSG_PEEK);
+  int r = static_cast<int>(recv(socket_, cast_sockopt(&buf), 1, MSG_PEEK));
   if (r == -1) {
     int errno_copy = errno;
     #if defined __FreeBSD__ || defined __MACH__
@@ -448,7 +442,7 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
     // an EAGAIN is due to a timeout or an out-of-resource condition.
     begin.tv_sec = begin.tv_usec = 0;
   }
-  int got = recv(socket_, cast_sockopt(buf), len, 0);
+  int got = static_cast<int>(recv(socket_, cast_sockopt(buf), len, 0));
   int errno_copy = errno; //gettimeofday can change errno
   ++g_socket_syscalls;
 
@@ -463,8 +457,9 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
       // check if this is the lack of resources or timeout case
       struct timeval end;
       gettimeofday(&end, NULL);
-      uint32_t readElapsedMicros =  (((end.tv_sec - begin.tv_sec) * 1000 * 1000)
-                                     + (((uint64_t)(end.tv_usec - begin.tv_usec))));
+      uint32_t readElapsedMicros =  static_cast<uint32_t>(
+         ((end.tv_sec - begin.tv_sec) * 1000 * 1000)
+         + (((uint64_t)(end.tv_usec - begin.tv_usec))));
 
       if (!eagainThresholdMicros || (readElapsedMicros < eagainThresholdMicros)) {
         if (retries++ < maxRecvRetries_) {
@@ -564,7 +559,7 @@ uint32_t TSocket::write_partial(const uint8_t* buf, uint32_t len) {
   flags |= MSG_NOSIGNAL;
 #endif // ifdef MSG_NOSIGNAL
 
-  int b = send(socket_, const_cast_sockopt(buf + sent), len - sent, flags);
+  int b = static_cast<int>(send(socket_, const_cast_sockopt(buf + sent), len - sent, flags));
   ++g_socket_syscalls;
 
   if (b < 0) {

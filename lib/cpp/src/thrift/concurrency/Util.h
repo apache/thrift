@@ -67,8 +67,8 @@ class Util {
   }
 
   static void toTimeval(struct timeval& result, int64_t value) {
-    result.tv_sec = (uint32_t)(value / MS_PER_S); // ms to s
-    result.tv_usec = (value % MS_PER_S) * US_PER_MS; // ms to us
+    result.tv_sec  = static_cast<uint32_t>(value / MS_PER_S); // ms to s
+    result.tv_usec = static_cast<uint32_t>((value % MS_PER_S) * US_PER_MS); // ms to us
   }
 
   static void toTicks(int64_t& result, int64_t secs, int64_t oldTicks,
