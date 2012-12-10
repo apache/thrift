@@ -59,7 +59,7 @@ class TProcessPoolServer(TServer):
                 self.serveClient(client)
             except (KeyboardInterrupt, SystemExit):
                 return 0
-            except Exception as x:
+            except Exception, x:
                 logging.exception(x)
 
     def serveClient(self, client):
@@ -74,7 +74,7 @@ class TProcessPoolServer(TServer):
                 self.processor.process(iprot, oprot)
         except TTransportException, tx:
             pass
-        except Exception as x:
+        except Exception, x:
             logging.exception(x)
 
         itrans.close()
@@ -106,7 +106,7 @@ class TProcessPoolServer(TServer):
                 break
             except (SystemExit, KeyboardInterrupt):
                 break
-            except Exception as x:
+            except Exception, x:
                 logging.exception(x)
 
         self.isRunning.value = False

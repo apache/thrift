@@ -1801,7 +1801,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
         indent() << "  error.raiseException()" << endl;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
-          indent() << "except " << type_name((*x_iter)->get_type()) << " as " << (*x_iter)->get_name() << ":" << endl;
+          indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
         if (!tfunction->is_oneway()) {
           indent_up();
           f_service_ <<
@@ -1856,7 +1856,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
       indent_down();
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
-          indent() << "except " << type_name((*x_iter)->get_type()) << " as " << (*x_iter)->get_name() << ":" << endl;
+          indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
         if (!tfunction->is_oneway()) {
           indent_up();
           f_service_ <<
