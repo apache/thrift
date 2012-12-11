@@ -960,7 +960,7 @@ FieldIdentifier:
              * warn if the user-specified negative value isn't what
              * thrift would have auto-assigned.
              */
-            pwarning(1, "Negative field key (%d) differs from what would be "
+            pwarning(1, "Nonpositive field key (%"PRIi64") differs from what would be "
                      "auto-assigned by thrift (%d).\n", $1, y_field_val);
           }
           /*
@@ -971,7 +971,7 @@ FieldIdentifier:
           $$.value = $1;
           $$.auto_assigned = false;
         } else {
-          pwarning(1, "Nonpositive value (%d) not allowed as a field key.\n",
+          pwarning(1, "Nonpositive value (%"PRIi64") not allowed as a field key.\n",
                    $1);
           $$.value = y_field_val--;
           $$.auto_assigned = true;
