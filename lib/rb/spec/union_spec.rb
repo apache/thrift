@@ -93,9 +93,21 @@ describe 'Union' do
       lambda { union.some_characters }.should raise_error(RuntimeError, "some_characters is not union's set field.")
     end
 
-    it "should serialize correctly" do
+    it "should serialize to binary correctly" do
       trans = Thrift::MemoryBufferTransport.new
       proto = Thrift::BinaryProtocol.new(trans)
+
+      union = SpecNamespace::My_union.new(:integer32, 25)
+      union.write(proto)
+
+      other_union = SpecNamespace::My_union.new(:integer32, 25)
+      other_union.read(proto)
+      other_union.should == union
+    end
+
+    it "should serialize to json correctly" do
+      trans = Thrift::MemoryBufferTransport.new
+      proto = Thrift::JsonProtocol.new(trans)
 
       union = SpecNamespace::My_union.new(:integer32, 25)
       union.write(proto)
