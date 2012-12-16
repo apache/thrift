@@ -47,10 +47,15 @@ class t_csharp_generator : public t_oop_generator
       (void) option_string;
 
       std::map<std::string, std::string>::const_iterator iter;
+
       iter = parsed_options.find("async");
       async_ = (iter != parsed_options.end());
       iter = parsed_options.find("asyncctp");
       async_ctp_ = (iter != parsed_options.end());
+      if (async_ && async_ctp_) {
+        throw "argument error: Cannot specify both async and asyncctp; they are incompatible.";
+      }
+
       iter = parsed_options.find("nullable");
       nullable_ = (iter != parsed_options.end());
 
@@ -982,7 +987,8 @@ void t_csharp_generator::generate_service_interface(t_service* tservice) {
     if(async_||async_ctp_) {
       indent(f_service_) <<
         function_signature_async(*f_iter) << ";" << endl;
-    } else {
+    }
+    if (!async_) {
       indent(f_service_) << "#endif" << endl;
     }
   }
