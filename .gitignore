@@ -30,6 +30,7 @@ gen-*
 /compiler/cpp/libparse.a
 /compiler/cpp/Makefile
 /compiler/cpp/Makefile.in
+/compiler/cpp/src/windows/version.h
 /compiler/cpp/thrift
 /compiler/cpp/thriftl.cc
 /compiler/cpp/thrifty.cc
@@ -191,6 +192,7 @@ gen-*
 /lib/php/test/Makefile
 /lib/php/test/Makefile.in
 /lib/php/test/phpunit.xml
+/lib/php/test/packages/
 /lib/erl/logs/
 /lib/erl/Makefile
 /lib/erl/Makefile.in
@@ -226,4 +228,20 @@ gen-*
 /test/py.twisted/test_suite.pyc
 /test/rb/Makefile
 /test/rb/Makefile.in
+/tutorial/Makefile
+/tutorial/Makefile.in
+/tutorial/cpp/Makefile
+/tutorial/cpp/Makefile.in
+/tutorial/cpp/TutorialClient
+/tutorial/cpp/TutorialServer
+/tutorial/java/Makefile
+/tutorial/java/Makefile.in
+/tutorial/java/build/
+/tutorial/js/Makefile
+/tutorial/js/Makefile.in
+/tutorial/js/build/
+/tutorial/py.twisted/Makefile
+/tutorial/py.twisted/Makefile.in
+/tutorial/py/Makefile
+/tutorial/py/Makefile.in
 /ylwrap

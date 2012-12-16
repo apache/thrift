@@ -62,6 +62,9 @@ public:
     iter = parsed_options.find("android_legacy");
     android_legacy_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("sorted_containers");
+    sorted_containers_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("java5");
     java5_ = (iter != parsed_options.end());
     if (java5_) {
@@ -292,6 +295,7 @@ public:
   bool gen_hash_code_;
   bool android_legacy_;
   bool java5_;
+  bool sorted_containers_;
 };
 
 
@@ -341,8 +345,14 @@ string t_java_generator::java_package() {
  */
 string t_java_generator::java_type_imports() {
   string hash_builder;
+  string tree_set_and_map;
   if (gen_hash_code_) {
     hash_builder = "import org.apache.commons.lang.builder.HashCodeBuilder;\n";
+  }
+  if (sorted_containers_) {
+    tree_set_and_map = string() + 
+      "import java.util.TreeSet;\n" +
+      "import java.util.TreeMap;\n";
   }
 
   return
@@ -364,6 +374,7 @@ string t_java_generator::java_type_imports() {
     "import java.util.Set;\n" +
     "import java.util.HashSet;\n" +
     "import java.util.EnumSet;\n" +
+    tree_set_and_map + 
     "import java.util.Collections;\n" +
     "import java.util.BitSet;\n" +
     "import java.nio.ByteBuffer;\n"
@@ -2879,10 +2890,15 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
 
   indent(out) << prefix << " = new " << type_name(ttype, false, true);
   // size the collection correctly
-  out << "("
-    << (ttype->is_list() ? "" : "2*" )
-    << obj << ".size"
-    << ");" << endl;
+  if (sorted_containers_ && (ttype->is_map() || ttype->is_set())) {
+    // TreeSet and TreeMap don't have any constructor which takes a capactity as an argument
+    out << "();" << endl;
+  } else {
+    out << "("
+      << (ttype->is_list() ? "" : "2*" )
+      << obj << ".size"
+      << ");" << endl;
+  }
 
   // For loop iterates over elements
   string i = tmp("_i");
@@ -3190,7 +3206,11 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*) ttype;
     if (in_init) {
-      prefix = "HashMap";
+      if (sorted_containers_) {
+        prefix = "TreeMap";
+      } else {
+        prefix = "HashMap";
+      }
     } else {
       prefix = "Map";
     }
@@ -3200,7 +3220,11 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*) ttype;
     if (in_init) {
-      prefix = "HashSet";
+      if (sorted_containers_) {
+        prefix = "TreeSet";
+      } else { 
+        prefix = "HashSet";
+      }
     } else {
       prefix = "Set";
     }
@@ -4194,5 +4218,7 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    hashcode:        Generate quality hashCode methods.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
 "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
+"    sorted_containers:\n"
+"                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of set/map.\n"
 )
 
