@@ -56,7 +56,7 @@ for key in CTYPES.keys():
   JTYPES[CTYPES[key]] = key
 
 
-class JSONBaseContext():
+class JSONBaseContext(object):
 
   def __init__(self, protocol):
     self.protocol = protocol
@@ -135,6 +135,8 @@ class TJSONProtocolBase(TProtocolBase):
 
   def __init__(self, trans):
     TProtocolBase.__init__(self, trans)
+    self.resetWriteContext()
+    self.resetReadContext()
 
   def resetWriteContext(self):
     self.contextStack = []
@@ -261,7 +263,7 @@ class TJSONProtocolBase(TProtocolBase):
         self.readJSONSyntaxChar(QUOTE)
       try:
         return float(self.readJSONNumericChars())
-      except ValueErro:
+      except ValueError:
         raise TProtocolException(TProtocolException.INVALID_DATA,
                                  "Bad data encounted in numeric data")
 
@@ -312,15 +314,15 @@ class TJSONProtocol(TJSONProtocolBase):
 
   def readFieldBegin(self):
     character = self.reader.peek()
-    type = 0
+    ttype = 0
     id = 0
     if character == RBRACE:
-      type = TType.STOP
+      ttype = TType.STOP
     else:
       id = self.readJSONInteger()
       self.readJSONObjectStart()
-      type = JTYPES[self.readJSONString(False)]
-    return (None, type, id)
+      ttype = JTYPES[self.readJSONString(False)]
+    return (None, ttype, id)
 
   def readFieldEnd(self):
     self.readJSONObjectEnd()
@@ -341,7 +343,7 @@ class TJSONProtocol(TJSONProtocolBase):
     self.readJSONArrayStart()
     elemType = JTYPES[self.readJSONString(False)]
     size = self.readJSONInteger()
-    return (type, size)
+    return (elemType, size)
   readListBegin = readCollectionBegin
   readSetBegin = readCollectionBegin
 
@@ -386,10 +388,10 @@ class TJSONProtocol(TJSONProtocolBase):
   def writeStructEnd(self):
     self.writeJSONObjectEnd()
 
-  def writeFieldBegin(self, name, type, id):
+  def writeFieldBegin(self, name, ttype, id):
     self.writeJSONNumber(id)
     self.writeJSONObjectStart()
-    self.writeJSONString(CTYPES[type])
+    self.writeJSONString(CTYPES[ttype])
 
   def writeFieldEnd(self):
     self.writeJSONObjectEnd()
