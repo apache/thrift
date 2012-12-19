@@ -19,7 +19,8 @@
 
 -module(thrift_client_util).
 
--export([new/4, new_ssl/4]).
+-export([new/4]).
+-export([new_ssl/4]).
 
 %%
 %% Splits client options into client, protocol, and transport options
