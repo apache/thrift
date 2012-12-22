@@ -101,6 +101,9 @@ class TApplicationException(TException):
   MISSING_RESULT = 5
   INTERNAL_ERROR = 6
   PROTOCOL_ERROR = 7
+  INVALID_TRANSFORM = 8
+  INVALID_PROTOCOL = 9
+  UNSUPPORTED_CLIENT_TYPE = 10
 
   def __init__(self, type=UNKNOWN, message=None):
     TException.__init__(self, message)
@@ -119,6 +122,16 @@ class TApplicationException(TException):
       return 'Bad sequence ID'
     elif self.type == self.MISSING_RESULT:
       return 'Missing result'
+    elif self.type == self.INTERNAL_ERROR:
+      return 'Internal error'
+    elif self.type == self.PROTOCOL_ERROR:
+      return 'Protocol error'
+    elif self.type == self.INVALID_TRANSFORM:
+      return 'Invalid transform'
+    elif self.type == self.INVALID_PROTOCOL:
+      return 'Invalid protocol'
+    elif self.type == self.UNSUPPORTED_CLIENT_TYPE:
+      return 'Unsupported client type'
     else:
       return 'Default (unknown) TApplicationException'
 

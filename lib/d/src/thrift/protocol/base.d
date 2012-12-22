@@ -345,7 +345,10 @@ class TApplicationException : TException {
     BAD_SEQUENCE_ID = 4, ///
     MISSING_RESULT = 5, ///
     INTERNAL_ERROR = 6, ///
-    PROTOCOL_ERROR = 7 ///
+    PROTOCOL_ERROR = 7, ///
+    INVALID_TRANSFORM = 8, ///
+    INVALID_PROTOCOL = 9, ///
+    UNSUPPORTED_CLIENT_TYPE = 10 ///
   }
 
   ///
@@ -358,6 +361,11 @@ class TApplicationException : TException {
         case Type.WRONG_METHOD_NAME: return "Wrong method name";
         case Type.BAD_SEQUENCE_ID: return "Bad sequence identifier";
         case Type.MISSING_RESULT: return "Missing result";
+        case Type.INTERNAL_ERROR: return "Internal error";
+        case Type.PROTOCOL_ERROR: return "Protocol error";
+        case Type.INVALID_TRANSFORM: return "Invalid transform";
+        case Type.INVALID_PROTOCOL: return "Invalid protocol";
+        case Type.UNSUPPORTED_CLIENT_TYPE: return "Unsupported client type";
         default: return "(Invalid exception type)";
       }
     }

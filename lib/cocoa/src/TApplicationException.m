@@ -45,6 +45,21 @@
   case TApplicationException_MISSING_RESULT:
     name = @"Missing result";
     break;
+  case TApplicationException_INTERNAL_ERROR:
+    name = @"Internal error";
+    break;
+  case TApplicationException_PROTOCOL_ERROR:
+    name = @"Protocol error";
+    break;
+  case TApplicationException_INVALID_TRANSFORM:
+    name = @"Invalid transform";
+    break;
+  case TApplicationException_INVALID_PROTOCOL:
+    name = @"Invalid protocol";
+    break;
+  case TApplicationException_UNSUPPORTED_CLIENT_TYPE:
+    name = @"Unsupported client type";
+    break;
   default:
     name = @"Unknown";
     break;

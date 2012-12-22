@@ -69,14 +69,17 @@ sub new {
 package TApplicationException;
 use base('Thrift::TException');
 
-use constant UNKNOWN              => 0;
-use constant UNKNOWN_METHOD       => 1;
-use constant INVALID_MESSAGE_TYPE => 2;
-use constant WRONG_METHOD_NAME    => 3;
-use constant BAD_SEQUENCE_ID      => 4;
-use constant MISSING_RESULT       => 5;
-use constant INTERNAL_ERROR       => 6;
-use constant PROTOCOL_ERROR       => 7;
+use constant UNKNOWN                 => 0;
+use constant UNKNOWN_METHOD          => 1;
+use constant INVALID_MESSAGE_TYPE    => 2;
+use constant WRONG_METHOD_NAME       => 3;
+use constant BAD_SEQUENCE_ID         => 4;
+use constant MISSING_RESULT          => 5;
+use constant INTERNAL_ERROR          => 6;
+use constant PROTOCOL_ERROR          => 7;
+use constant INVALID_TRANSFORM       => 8;
+use constant INVALID_PROTOCOL        => 9;
+use constant UNSUPPORTED_CLIENT_TYPE => 10;
 
 sub new {
     my $classname = shift;

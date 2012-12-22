@@ -42,11 +42,14 @@ package org.apache.thrift {
     public static const MISSING_RESULT:int = 5;
     public static const INTERNAL_ERROR:int = 6;
     public static const PROTOCOL_ERROR:int = 7;
+    public static const INVALID_TRANSFORM:int = 8;
+    public static const INVALID_PROTOCOL:int = 9;
+    public static const UNSUPPORTED_CLIENT_TYPE:int = 10;
 
     public function TApplicationError(type:int = UNKNOWN, message:String = "") {
       super(message, type);
     }
-    
+
     public static function read(iprot:TProtocol):TApplicationError {
       var field:TField;
       iprot.readStructBegin();
