@@ -35,14 +35,14 @@ public class TSimpleServer extends TServer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TSimpleServer.class.getName());
 
-  private boolean stopped_ = false;
+  // Please see THRIFT-1795 for the usage of this flag
+  private volatile boolean stopped_ = false;
 
   public TSimpleServer(AbstractServerArgs args) {
     super(args);
   }
 
   public void serve() {
-    stopped_ = false;
     try {
       serverTransport_.listen();
     } catch (TTransportException ttx) {

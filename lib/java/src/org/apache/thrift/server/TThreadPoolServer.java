@@ -73,7 +73,8 @@ public class TThreadPoolServer extends TServer {
   private ExecutorService executorService_;
 
   // Flag for stopping the server
-  private volatile boolean stopped_;
+  // Please see THRIFT-1795 for the usage of this flag
+  private volatile boolean stopped_ = false;
 
   private final TimeUnit stopTimeoutUnit;
 
