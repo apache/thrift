@@ -32,6 +32,8 @@
 using namespace std;
 
 
+enum input_type { INPUT_UNKNOWN, INPUT_UTF8, INPUT_PLAIN };
+
 /**
  * HTML code generator
  *
@@ -48,6 +50,7 @@ class t_html_generator : public t_generator {
     (void) parsed_options;
     (void) option_string;  
     out_dir_base_ = "gen-html";
+    input_type_ = INPUT_UNKNOWN;
     
     std::map<std::string, std::string>::const_iterator iter;
     iter = parsed_options.find("standalone");
@@ -67,10 +70,13 @@ class t_html_generator : public t_generator {
   void generate_program_toc_rows(t_program* tprog,
          std::vector<t_program*>& finished);
   void generate_index();
+  std::string escape_html(std::string const & str);
   void generate_css();
   void generate_css_content(std::ofstream & f_target);
   void generate_style_tag();
   std::string make_file_link( std::string name);
+  bool is_utf8_sequence(std::string const & str, size_t firstpos);
+  void detect_input_encoding(std::string const & str, size_t firstpos);
   
   /**
    * Program-level generation functions
@@ -91,9 +97,11 @@ class t_html_generator : public t_generator {
  private:
   std::ofstream f_out_;
   std::string  current_file_;
+  input_type input_type_;
  
   bool standalone_; 
 };
+
 
 /**
  * Emits the Table of Contents links at the top of the module's page
@@ -301,7 +309,7 @@ void t_html_generator::generate_program() {
 
   f_out_ << "</div></body></html>" << endl;
   f_out_.close();
-
+  
   generate_index();
   generate_css();
 }
@@ -383,18 +391,146 @@ void t_html_generator::print_doc(t_doc* tdoc) {
     size_t index;
     while ((index = doc.find_first_of("\r\n")) != string::npos) {
       if (index == 0) {
-  f_out_ << "<p/>" << endl;
+        f_out_ << "<p/>" << endl;
       } else {
-  f_out_ << doc.substr(0, index) << endl;
+        f_out_ << escape_html( doc.substr(0, index)) << endl;
       }
       if (index + 1 < doc.size() && doc.at(index) != doc.at(index + 1) &&
-    (doc.at(index + 1) == '\r' || doc.at(index + 1) == '\n')) {
-  index++;
+         (doc.at(index + 1) == '\r' || doc.at(index + 1) == '\n')) {
+        index++;
       }
       doc = doc.substr(index + 1);
     }
-    f_out_ << doc << "<br/>";
+    f_out_ << escape_html(doc) << "<br/>";
   }
+}
+
+bool t_html_generator::is_utf8_sequence(std::string const & str, size_t firstpos) {
+  // leading char determines the length of the sequence
+  unsigned char c = str.at(firstpos);
+  int count = 0;
+  if(        (c & 0xE0) == 0xC0) {
+    count = 1;
+  } else if( (c & 0xF0) == 0xE0) {
+    count = 2;
+  } else if( (c & 0xF8) == 0xF0) {
+    count = 3;
+  } else if( (c & 0xFC) == 0xF8) {
+    count = 4;
+  } else if( (c & 0xFE) == 0xFC) {
+    count = 5;
+  } else {
+    //pdebug("UTF-8 test: char '%c' (%d) is not a valid UTF-8 leading byte", c, int(c));
+    return false;  // no UTF-8
+  }
+
+  // following chars
+  size_t pos = firstpos + 1;
+  while( (pos < str.length()) && (0 < count))
+  {
+    c = str.at(pos);
+    if( (c & 0xC0) !=  0x80) {
+      //pdebug("UTF-8 test: char '%c' (%d) is not a valid UTF-8 following byte", c, int(c));
+      return false;  // no UTF-8
+    }    
+    --count;
+    ++pos;
+  }
+  
+  // true if the sequence is complete
+  return (0 == count);
+}
+
+void t_html_generator::detect_input_encoding(std::string const & str, size_t firstpos) {
+  if( is_utf8_sequence(str,firstpos))
+  {
+    pdebug( "Input seems to be already UTF-8 encoded");
+    input_type_ = INPUT_UTF8;
+    return;
+  }
+
+  // fallback 
+  pwarning( 1, "Input is not UTF-8, treating as plain ANSI");
+  input_type_ = INPUT_PLAIN;
+}
+
+std::string t_html_generator::escape_html(std::string const & str) {
+
+  // the generated HTML header says it is UTF-8 encoded
+  // if UTF-8 input has been detected before, we don't need to change anything
+  if( input_type_ == INPUT_UTF8) {
+    return str;
+  }
+  
+  // convert unsafe chars to their &#<num>; equivalent
+  std::ostringstream result;
+  unsigned char c = '?';
+  unsigned int ic = 0;
+  size_t lastpos;
+  size_t firstpos = 0;
+  while( firstpos < str.length()) {
+
+    // look for non-ASCII char  
+    lastpos = firstpos;    
+    while( lastpos < str.length()) {
+      c = str.at(lastpos);
+      ic = c;
+      if( (32 > ic) || (127 < ic)) {
+        break;
+      }
+      ++lastpos;
+    }
+    
+    // copy what we got so far    
+    if( lastpos > firstpos) {
+      result << str.substr( firstpos, lastpos-firstpos);
+      firstpos = lastpos;
+    }
+
+    // some control code?
+    if( (0 <= ic) && (31 >= ic))
+    {
+      switch( c)
+      {
+        case '\r' :  
+        case '\n' :  
+          result << "<br/>";  
+          break;
+        case '\t' :
+          result << " ";  
+          break;
+      }
+      ++firstpos;
+      continue;        
+    }
+    
+    // reached the end?
+    if( firstpos >= str.length()) {
+      break;
+    }
+
+    // try to detect input encoding
+    if( input_type_ == INPUT_UNKNOWN) {
+      detect_input_encoding(str,firstpos);
+      if( input_type_ == INPUT_UTF8) {
+        lastpos = str.length();
+        result << str.substr( firstpos, lastpos-firstpos);
+        break;
+      }
+    }
+    
+    // convert the character to something useful based on the detected encoding
+    switch( input_type_) {
+      case INPUT_PLAIN: 
+        result << "&#" << ic << ";";  
+        ++firstpos;
+        break;
+      default:
+        throw "Unexpected or unrecognized input encoding";
+    }
+  }
+  
+  return result.str();
 }
 
 /**
@@ -460,7 +596,7 @@ void t_html_generator::print_const_value(t_const_value* tvalue) {
     f_out_ << tvalue->get_double();
     break;
   case t_const_value::CV_STRING:
-    f_out_ << '"' << get_escaped_string(tvalue) << '"';
+    f_out_ << '"' << escape_html( get_escaped_string(tvalue)) << '"';
     break;
   case t_const_value::CV_MAP:
     {
@@ -521,7 +657,7 @@ void t_html_generator::print_fn_args_doc(t_function* tfunction) {
       for ( ; arg_iter != args.end(); arg_iter++) {
         f_out_ << "<tr><td>" << (*arg_iter)->get_name();
         f_out_ << "</td><td>";
-        f_out_ << (*arg_iter)->get_doc();
+        f_out_ << escape_html( (*arg_iter)->get_doc());
         f_out_ << "</td></tr>" << endl;
       }
       f_out_ << "</table>";
@@ -545,7 +681,7 @@ void t_html_generator::print_fn_args_doc(t_function* tfunction) {
       for ( ; ex_iter != excepts.end(); ex_iter++) {
         f_out_ << "<tr><td>" << (*ex_iter)->get_type()->get_name();
         f_out_ << "</td><td>";
-        f_out_ << (*ex_iter)->get_doc();
+        f_out_ << escape_html( (*ex_iter)->get_doc());
         f_out_ << "</td></tr>" << endl;
       }
       f_out_ << "</table>";
@@ -640,7 +776,7 @@ void t_html_generator::generate_struct(t_struct* tstruct) {
     f_out_ << "</td><td>";
     print_type((*mem_iter)->get_type());
     f_out_ << "</td><td>";
-    f_out_ << (*mem_iter)->get_doc();
+    f_out_ << escape_html( (*mem_iter)->get_doc());
     f_out_ << "</td><td>";
     if ((*mem_iter)->get_req() == t_field::T_OPTIONAL) {
       f_out_ << "optional";
