@@ -45,6 +45,9 @@ public class TApplicationException extends TException {
   public static final int MISSING_RESULT = 5;
   public static final int INTERNAL_ERROR = 6;
   public static final int PROTOCOL_ERROR = 7;
+  public static final int INVALID_TRANSFORM = 8;
+  public static final int INVALID_PROTOCOL = 9;
+  public static final int UNSUPPORTED_CLIENT_TYPE = 10;
 
   protected int type_ = UNKNOWN;
 

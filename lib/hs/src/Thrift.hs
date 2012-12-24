@@ -54,6 +54,9 @@ data AppExnType
     | AE_MISSING_RESULT
     | AE_INTERNAL_ERROR
     | AE_PROTOCOL_ERROR
+    | AE_INVALID_TRANSFORM
+    | AE_INVALID_PROTOCOL
+    | AE_UNSUPPORTED_CLIENT_TYPE
       deriving ( Eq, Show, Typeable )
 
 instance Enum AppExnType where
@@ -65,6 +68,9 @@ instance Enum AppExnType where
     toEnum 5 = AE_MISSING_RESULT
     toEnum 6 = AE_INTERNAL_ERROR
     toEnum 7 = AE_PROTOCOL_ERROR
+    toEnum 8 = AE_INVALID_TRANSFORM
+    toEnum 9 = AE_INVALID_PROTOCOL
+    toEnum 10 = AE_UNSUPPORTED_CLIENT_TYPE
     toEnum t = error $ "Invalid AppExnType " ++ show t
 
     fromEnum AE_UNKNOWN = 0
@@ -75,6 +81,9 @@ instance Enum AppExnType where
     fromEnum AE_MISSING_RESULT = 5
     fromEnum AE_INTERNAL_ERROR = 6
     fromEnum AE_PROTOCOL_ERROR = 7
+    fromEnum AE_INVALID_TRANSFORM = 8
+    fromEnum AE_INVALID_PROTOCOL = 9
+    fromEnum AE_UNSUPPORTED_CLIENT_TYPE = 10
 
 data AppExn = AppExn { ae_type :: AppExnType, ae_message :: String }
   deriving ( Show, Typeable )

@@ -43,7 +43,12 @@ type
         InvalidMessageType,
         WrongMethodName,
         BadSequenceID,
-        MissingResult
+        MissingResult,
+        InternalError,
+        ProtocolError,
+        InvalidTransform,
+        InvalidProtocol,
+        UnsupportedClientType
       );
 {$SCOPEDENUMS OFF}
   private

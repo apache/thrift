@@ -181,7 +181,8 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
   }
 
   // Flag for stopping the server
-  private volatile boolean stopped_ = true;
+  // Please see THRIFT-1795 for the usage of this flag
+  private volatile boolean stopped_ = false;
 
   // The thread handling all accepts
   private AcceptThread acceptThread;
@@ -220,7 +221,6 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
       }
       acceptThread = new AcceptThread((TNonblockingServerTransport) serverTransport_,
         createSelectorThreadLoadBalancer(selectorThreads));
-      stopped_ = false;
       for (SelectorThread thread : selectorThreads) {
         thread.start();
       }

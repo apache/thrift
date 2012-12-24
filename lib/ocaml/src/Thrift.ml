@@ -294,6 +294,9 @@ struct
       | MISSING_RESULT
       | INTERNAL_ERROR
       | PROTOCOL_ERROR
+      | INVALID_TRANSFORM
+      | INVALID_PROTOCOL
+      | UNSUPPORTED_CLIENT_TYPE
 
   let typ_of_i = function
       0l -> UNKNOWN
@@ -304,6 +307,9 @@ struct
     | 5l -> MISSING_RESULT
     | 6l -> INTERNAL_ERROR
     | 7l -> PROTOCOL_ERROR
+    | 8l -> INVALID_TRANSFORM
+    | 9l -> INVALID_PROTOCOL
+    | 10l -> UNSUPPORTED_CLIENT_TYPE
     | _ -> raise Thrift_error;;
   let typ_to_i = function
     | UNKNOWN -> 0l
@@ -314,6 +320,9 @@ struct
     | MISSING_RESULT -> 5l
     | INTERNAL_ERROR -> 6l
     | PROTOCOL_ERROR -> 7l
+    | INVALID_TRANSFORM -> 8l
+    | INVALID_PROTOCOL -> 9l
+    | UNSUPPORTED_CLIENT_TYPE -> 10l
 
   class t =
   object (self)

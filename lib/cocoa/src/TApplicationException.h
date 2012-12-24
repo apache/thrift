@@ -28,7 +28,10 @@ enum {
   TApplicationException_BAD_SEQUENCE_ID = 4,
   TApplicationException_MISSING_RESULT = 5,
   TApplicationException_INTERNAL_ERROR = 6,
-  TApplicationException_PROTOCOL_ERROR = 7
+  TApplicationException_PROTOCOL_ERROR = 7,
+  TApplicationException_INVALID_TRANSFORM = 8,
+  TApplicationException_INVALID_PROTOCOL = 9,
+  TApplicationException_UNSUPPORTED_CLIENT_TYPE = 10
 };
 
 // FIXME

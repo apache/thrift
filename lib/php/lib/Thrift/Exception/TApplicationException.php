@@ -40,6 +40,9 @@ class TApplicationException extends TException {
   const MISSING_RESULT = 5;
   const INTERNAL_ERROR = 6;
   const PROTOCOL_ERROR = 7;
+  const INVALID_TRANSFORM = 8;
+  const INVALID_PROTOCOL = 9;
+  const UNSUPPORTED_CLIENT_TYPE = 10;
 
   function __construct($message=null, $code=0) {
     parent::__construct($message, $code);
