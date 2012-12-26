@@ -245,3 +245,5 @@ gen-*
 /tutorial/py/Makefile
 /tutorial/py/Makefile.in
 /ylwrap
+.project
+.pydevproject
