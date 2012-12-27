@@ -219,12 +219,27 @@ shared_examples_for 'a binary protocol' do
       a.encoding.should == Encoding::BINARY
       a.unpack('C*').should == [0x00, 0x00, 0x00, 0x07, 0x61, 0x62, 0x63, 0x20, 0xE2, 0x82, 0xAC]
     end
+
+    it 'should write a binary string' do
+      buffer = [0, 1, 2, 3].pack('C*')
+      @prot.write_binary(buffer)
+      a = @trans.read(@trans.available)
+      a.encoding.should == Encoding::BINARY
+      a.unpack('C*').should == [0x00, 0x00, 0x00, 0x04, 0x00, 0x01, 0x02, 0x03]
+    end
   else
     it 'should write a string' do
       str = 'abc'
       @prot.write_string(str)
       a = @trans.read(@trans.available)
       a.unpack('C*').should == [0x00, 0x00, 0x00, 0x03, 0x61, 0x62, 0x63]
+    end
+
+    it 'should write a binary string' do
+      buffer = [0, 1, 2, 3].pack('C*')
+      @prot.write_binary(buffer)
+      a = @trans.read(@trans.available)
+      a.unpack('C*').should == [0x00, 0x00, 0x00, 0x04, 0x00, 0x01, 0x02, 0x03]
     end
   end
 
@@ -342,12 +357,27 @@ shared_examples_for 'a binary protocol' do
       a.should == "\u20AC".encode('UTF-8')
       a.encoding.should == Encoding::UTF_8
     end
+
+    it 'should read a binary string' do
+      buffer = [0x00, 0x00, 0x00, 0x04, 0x00, 0x01, 0x02, 0x03].pack('C*')
+      @trans.write(buffer)
+      a = @prot.read_binary
+      a.should == [0x00, 0x01, 0x02, 0x03].pack('C*')
+      a.encoding.should == Encoding::BINARY
+    end
   else
     it 'should read a string' do
       # i32 of value 3, followed by three characters/UTF-8 bytes 'a', 'b', 'c'
       buffer = [0x00, 0x00, 0x00, 0x03, 0x61, 0x62, 0x63].pack('C*')
       @trans.write(buffer)
       @prot.read_string.should == 'abc'
+    end
+
+    it 'should read a binary string' do
+      buffer = [0x00, 0x00, 0x00, 0x04, 0x00, 0x01, 0x02, 0x03].pack('C*')
+      @trans.write(buffer)
+      a = @prot.read_binary
+      a.should == [0x00, 0x01, 0x02, 0x03].pack('C*')
     end
   end
 

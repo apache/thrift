@@ -33,14 +33,21 @@ describe 'BaseProtocol' do
       @prot.trans.should eql(@trans)
     end
 
-    it "should write out a field nicely" do
+    it 'should write out a field nicely (deprecated write_field signature)' do
       @prot.should_receive(:write_field_begin).with('field', 'type', 'fid').ordered
-      @prot.should_receive(:write_type).with('type', 'value').ordered
+      @prot.should_receive(:write_type).with({:name => 'field', :type => 'type'}, 'value').ordered
       @prot.should_receive(:write_field_end).ordered
       @prot.write_field('field', 'type', 'fid', 'value')
     end
 
-    it "should write out the different types" do
+    it 'should write out a field nicely' do
+      @prot.should_receive(:write_field_begin).with('field', 'type', 'fid').ordered
+      @prot.should_receive(:write_type).with({:name => 'field', :type => 'type', :binary => false}, 'value').ordered
+      @prot.should_receive(:write_field_end).ordered
+      @prot.write_field({:name => 'field', :type => 'type', :binary => false}, 'fid', 'value')
+    end
+
+    it 'should write out the different types (deprecated write_type signature)' do
       @prot.should_receive(:write_bool).with('bool').ordered
       @prot.should_receive(:write_byte).with('byte').ordered
       @prot.should_receive(:write_double).with('double').ordered
@@ -60,11 +67,37 @@ describe 'BaseProtocol' do
       @prot.write_type(Thrift::Types::STRUCT, struct)
       # all other types are not implemented
       [Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP, Thrift::Types::SET, Thrift::Types::LIST].each do |type|
-        lambda { @prot.write_type(type, type.to_s) }.should raise_error(NotImplementedError)
+        expect { @prot.write_type(type, type.to_s) }.to raise_error(NotImplementedError)
       end
     end
 
-    it "should read the different types" do
+    it 'should write out the different types' do
+      @prot.should_receive(:write_bool).with('bool').ordered
+      @prot.should_receive(:write_byte).with('byte').ordered
+      @prot.should_receive(:write_double).with('double').ordered
+      @prot.should_receive(:write_i16).with('i16').ordered
+      @prot.should_receive(:write_i32).with('i32').ordered
+      @prot.should_receive(:write_i64).with('i64').ordered
+      @prot.should_receive(:write_string).with('string').ordered
+      @prot.should_receive(:write_binary).with('binary').ordered
+      struct = mock('Struct')
+      struct.should_receive(:write).with(@prot).ordered
+      @prot.write_type({:type => Thrift::Types::BOOL}, 'bool')
+      @prot.write_type({:type => Thrift::Types::BYTE}, 'byte')
+      @prot.write_type({:type => Thrift::Types::DOUBLE}, 'double')
+      @prot.write_type({:type => Thrift::Types::I16}, 'i16')
+      @prot.write_type({:type => Thrift::Types::I32}, 'i32')
+      @prot.write_type({:type => Thrift::Types::I64}, 'i64')
+      @prot.write_type({:type => Thrift::Types::STRING}, 'string')
+      @prot.write_type({:type => Thrift::Types::STRING, :binary => true}, 'binary')
+      @prot.write_type({:type => Thrift::Types::STRUCT}, struct)
+      # all other types are not implemented
+      [Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP, Thrift::Types::SET, Thrift::Types::LIST].each do |type|
+        expect { @prot.write_type({:type => type}, type.to_s) }.to raise_error(NotImplementedError)
+      end
+    end
+
+    it 'should read the different types (deprecated read_type signature)' do
       @prot.should_receive(:read_bool).ordered
       @prot.should_receive(:read_byte).ordered
       @prot.should_receive(:read_i16).ordered
@@ -80,8 +113,33 @@ describe 'BaseProtocol' do
       @prot.read_type(Thrift::Types::DOUBLE)
       @prot.read_type(Thrift::Types::STRING)
       # all other types are not implemented
-      [Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP, Thrift::Types::SET, Thrift::Types::LIST].each do |type|
-        lambda { @prot.read_type(type) }.should raise_error(NotImplementedError)
+      [Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP,
+       Thrift::Types::SET, Thrift::Types::LIST, Thrift::Types::STRUCT].each do |type|
+        expect { @prot.read_type(type) }.to raise_error(NotImplementedError)
+      end
+    end
+
+    it 'should read the different types' do
+      @prot.should_receive(:read_bool).ordered
+      @prot.should_receive(:read_byte).ordered
+      @prot.should_receive(:read_i16).ordered
+      @prot.should_receive(:read_i32).ordered
+      @prot.should_receive(:read_i64).ordered
+      @prot.should_receive(:read_double).ordered
+      @prot.should_receive(:read_string).ordered
+      @prot.should_receive(:read_binary).ordered
+      @prot.read_type({:type => Thrift::Types::BOOL})
+      @prot.read_type({:type => Thrift::Types::BYTE})
+      @prot.read_type({:type => Thrift::Types::I16})
+      @prot.read_type({:type => Thrift::Types::I32})
+      @prot.read_type({:type => Thrift::Types::I64})
+      @prot.read_type({:type => Thrift::Types::DOUBLE})
+      @prot.read_type({:type => Thrift::Types::STRING})
+      @prot.read_type({:type => Thrift::Types::STRING, :binary => true})
+      # all other types are not implemented
+      [Thrift::Types::STOP, Thrift::Types::VOID, Thrift::Types::MAP,
+       Thrift::Types::SET, Thrift::Types::LIST, Thrift::Types::STRUCT].each do |type|
+        expect { @prot.read_type({:type => type}) }.to raise_error(NotImplementedError)
       end
     end
 

@@ -134,12 +134,10 @@ describe Thrift::CompactProtocol do
   end
   
   def writer(sym)
-    sym = sym == :binary ? :string : sym
     "write_#{sym.to_s}"
   end
   
   def reader(sym)
-    sym = sym == :binary ? :string : sym
     "read_#{sym.to_s}"
   end
 end

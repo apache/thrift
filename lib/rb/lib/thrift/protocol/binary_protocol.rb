@@ -107,9 +107,13 @@ module Thrift
     end
 
     def write_string(str)
-      str = Bytes.convert_to_utf8_byte_buffer(str)
-      write_i32(str.length)
-      trans.write(str)
+      buf = Bytes.convert_to_utf8_byte_buffer(str)
+      write_binary(buf)
+    end
+
+    def write_binary(buf)
+      write_i32(buf.bytesize)
+      trans.write(buf)
     end
 
     def read_message_begin
@@ -214,9 +218,13 @@ module Thrift
     end
 
     def read_string
-      size = read_i32
-      buffer = trans.read_all(size)
+      buffer = read_binary
       Bytes.convert_to_string(buffer)
+    end
+
+    def read_binary
+      size = read_i32
+      trans.read_all(size)
     end
 
   end

@@ -79,7 +79,7 @@ static void write_i64_direct(VALUE trans, int64_t value) {
 
 static void write_string_direct(VALUE trans, VALUE str) {
   if (TYPE(str) != T_STRING) {
-    rb_raise(rb_eStandardError, "Value should be a string");    
+    rb_raise(rb_eStandardError, "Value should be a string");
   }
   str = convert_to_utf8_byte_buffer(str);
   write_i32_direct(trans, RSTRING_LEN(str));
@@ -219,11 +219,21 @@ VALUE rb_thrift_binary_proto_write_string(VALUE self, VALUE str) {
   return Qnil;
 }
 
+VALUE rb_thrift_binary_proto_write_binary(VALUE self, VALUE buf) {
+  CHECK_NIL(buf);
+  VALUE trans = GET_TRANSPORT(self);
+  buf = force_binary_encoding(buf);
+  write_i32_direct(trans, RSTRING_LEN(buf));
+  rb_funcall(trans, write_method_id, 1, buf);
+  return Qnil;
+}
+
 //---------------------------------------
 // interface reading methods
 //---------------------------------------
 
 VALUE rb_thrift_binary_proto_read_string(VALUE self);
+VALUE rb_thrift_binary_proto_read_binary(VALUE self);
 VALUE rb_thrift_binary_proto_read_byte(VALUE self);
 VALUE rb_thrift_binary_proto_read_i32(VALUE self);
 VALUE rb_thrift_binary_proto_read_i16(VALUE self);
@@ -381,9 +391,13 @@ VALUE rb_thrift_binary_proto_read_double(VALUE self) {
 }
 
 VALUE rb_thrift_binary_proto_read_string(VALUE self) {
-  int size = read_i32_direct(self);
-  VALUE buffer = READ(self, size);
+  VALUE buffer = rb_thrift_binary_proto_read_binary(self);
   return convert_to_string(buffer);
+}
+
+VALUE rb_thrift_binary_proto_read_binary(VALUE self) {
+  int size = read_i32_direct(self);
+  return READ(self, size);
 }
 
 void Init_binary_protocol_accelerated() {
@@ -410,6 +424,7 @@ void Init_binary_protocol_accelerated() {
   rb_define_method(bpa_class, "write_i64",           rb_thrift_binary_proto_write_i64, 1);
   rb_define_method(bpa_class, "write_double",        rb_thrift_binary_proto_write_double, 1);
   rb_define_method(bpa_class, "write_string",        rb_thrift_binary_proto_write_string, 1);
+  rb_define_method(bpa_class, "write_binary",        rb_thrift_binary_proto_write_binary, 1);
   // unused methods
   rb_define_method(bpa_class, "write_message_end", rb_thrift_binary_proto_write_message_end, 0);
   rb_define_method(bpa_class, "write_struct_begin", rb_thrift_binary_proto_write_struct_begin, 1);
@@ -431,6 +446,7 @@ void Init_binary_protocol_accelerated() {
   rb_define_method(bpa_class, "read_i64",            rb_thrift_binary_proto_read_i64, 0);
   rb_define_method(bpa_class, "read_double",         rb_thrift_binary_proto_read_double, 0);
   rb_define_method(bpa_class, "read_string",         rb_thrift_binary_proto_read_string, 0);
+  rb_define_method(bpa_class, "read_binary",         rb_thrift_binary_proto_read_binary, 0);
   // unused methods
   rb_define_method(bpa_class, "read_message_end", rb_thrift_binary_proto_read_message_end, 0);
   rb_define_method(bpa_class, "read_struct_begin", rb_thift_binary_proto_read_struct_begin, 0);

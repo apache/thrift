@@ -125,6 +125,16 @@ module Thrift
       raise NotImplementedError
     end
 
+    # Writes a Thrift Binary (Thrift String with no encoding). In Ruby 1.9+, the String passed
+    # will forced into BINARY encoding.
+    #
+    # buf - The String to write.
+    #
+    # Returns nothing.
+    def write_binary(buf)
+      raise NotImplementedError
+    end
+
     def read_message_begin
       raise NotImplementedError
     end
@@ -185,21 +195,67 @@ module Thrift
       raise NotImplementedError
     end
 
-    # Reads a Thrift String. In Ruby 1.9+, all String will be returned with an Encoding of UTF-8.
+    # Reads a Thrift String. In Ruby 1.9+, all Strings will be returned with an Encoding of UTF-8.
     #
     # Returns a String.
     def read_string
       raise NotImplementedError
     end
 
-    def write_field(name, type, fid, value)
-      write_field_begin(name, type, fid)
-      write_type(type, value)
+    # Reads a Thrift Binary (Thrift String without encoding). In Ruby 1.9+, all Strings will be returned
+    # with an Encoding of BINARY.
+    #
+    # Returns a String.
+    def read_binary
+      raise NotImplementedError
+    end
+
+    # Writes a field based on the field information, field ID and value.
+    #
+    # field_info - A Hash containing the definition of the field:
+    #              :name   - The name of the field.
+    #              :type   - The type of the field, which must be a Thrift::Types constant.
+    #              :binary - A Boolean flag that indicates if Thrift::Types::STRING is a binary string (string without encoding).
+    # fid        - The ID of the field.
+    # value      - The field's value to write; object type varies based on :type.
+    #
+    # Returns nothing.
+    def write_field(*args)
+      if args.size == 3
+        # handles the documented method signature - write_field(field_info, fid, value)
+        field_info = args[0]
+        fid = args[1]
+        value = args[2]
+      elsif args.size == 4
+        # handles the deprecated method signature - write_field(name, type, fid, value)
+        field_info = {:name => args[0], :type => args[1]}
+        fid = args[2]
+        value = args[3]
+      else
+        raise ArgumentError, "wrong number of arguments (#{args.size} for 3)"
+      end
+
+      write_field_begin(field_info[:name], field_info[:type], fid)
+      write_type(field_info, value)
       write_field_end
     end
 
-    def write_type(type, value)
-      case type
+    # Writes a field value based on the field information.
+    #
+    # field_info - A Hash containing the definition of the field:
+    #              :type   - The Thrift::Types constant that determines how the value is written.
+    #              :binary - A Boolean flag that indicates if Thrift::Types::STRING is a binary string (string without encoding).
+    # value      - The field's value to write; object type varies based on field_info[:type].
+    #
+    # Returns nothing.
+    def write_type(field_info, value)
+      # if field_info is a Fixnum, assume it is a Thrift::Types constant
+      # convert it into a field_info Hash for backwards compatibility
+      if field_info.is_a? Fixnum
+        field_info = {:type => field_info}
+      end
+
+      case field_info[:type]
       when Types::BOOL
         write_bool(value)
       when Types::BYTE
@@ -213,7 +269,11 @@ module Thrift
       when Types::I64
         write_i64(value)
       when Types::STRING
-        write_string(value)
+        if field_info[:binary]
+          write_binary(value)
+        else
+          write_string(value)
+        end
       when Types::STRUCT
         value.write(self)
       else
@@ -221,8 +281,21 @@ module Thrift
       end
     end
 
-    def read_type(type)
-      case type
+    # Reads a field value based on the field information.
+    #
+    # field_info - A Hash containing the pertinent data to write:
+    #              :type   - The Thrift::Types constant that determines how the value is written.
+    #              :binary - A flag that indicates if Thrift::Types::STRING is a binary string (string without encoding).
+    #
+    # Returns the value read; object type varies based on field_info[:type].
+    def read_type(field_info)
+      # if field_info is a Fixnum, assume it is a Thrift::Types constant
+      # convert it into a field_info Hash for backwards compatibility
+      if field_info.is_a? Fixnum
+        field_info = {:type => field_info}
+      end
+
+      case field_info[:type]
       when Types::BOOL
         read_bool
       when Types::BYTE
@@ -236,7 +309,11 @@ module Thrift
       when Types::I64
         read_i64
       when Types::STRING
-        read_string
+        if field_info[:binary]
+          read_binary
+        else
+          read_string
+        end
       else
         raise NotImplementedError
       end
