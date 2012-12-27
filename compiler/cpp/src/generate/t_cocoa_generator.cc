@@ -1575,9 +1575,6 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   // generate a process_XXXX method for each service function, which reads args, calls the service, and writes results
   functions = tservice->get_functions();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    if ((*f_iter)->is_oneway()) {
-        continue;
-    }
     out << endl;
     string funname = (*f_iter)->get_name();
     out << indent() << "- (void) process_" << funname << "_withSequenceID: (int32_t) seqID inProtocol: (id<TProtocol>) inProtocol outProtocol: (id<TProtocol>) outProtocol" << endl;
@@ -1587,8 +1584,11 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     out << indent() << "[args read: inProtocol];" << endl;
     out << indent() << "[inProtocol readMessageEnd];" << endl;
     
-    string resulttype = cocoa_prefix_ + function_result_helper_struct_type(*f_iter);
-    out << indent() << resulttype << " * result = [[" << resulttype << " alloc] init];" << endl;
+    // prepare the result if not oneway
+    if (!(*f_iter)->is_oneway()) {
+        string resulttype = cocoa_prefix_ + function_result_helper_struct_type(*f_iter);
+        out << indent() << resulttype << " * result = [[" << resulttype << " alloc] init];" << endl;
+    }
 
     // make the call to the actual service object
     out << indent();
@@ -1616,14 +1616,16 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     }
     out << ";" << endl;
     
-    // write out the result
-    out << indent() << "[outProtocol writeMessageBeginWithName: @\"" << funname << "\"" << endl;
-    out << indent() << "                                  type: TMessageType_REPLY" << endl;
-    out << indent() << "                            sequenceID: seqID];" << endl;
-    out << indent() << "[result write: outProtocol];" << endl;
-    out << indent() << "[outProtocol writeMessageEnd];" << endl;
-    out << indent() << "[[outProtocol transport] flush];" << endl;
-    out << indent() << "[result release_stub];" << endl;
+    // write out the result if not oneway
+    if (!(*f_iter)->is_oneway()) {
+        out << indent() << "[outProtocol writeMessageBeginWithName: @\"" << funname << "\"" << endl;
+        out << indent() << "                                  type: TMessageType_REPLY" << endl;
+        out << indent() << "                            sequenceID: seqID];" << endl;
+        out << indent() << "[result write: outProtocol];" << endl;
+        out << indent() << "[outProtocol writeMessageEnd];" << endl;
+        out << indent() << "[[outProtocol transport] flush];" << endl;
+        out << indent() << "[result release_stub];" << endl;
+    }
     out << indent() << "[args release_stub];" << endl;
     
     scope_down(out);
