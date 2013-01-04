@@ -26,6 +26,7 @@ gen-*
 /aclocal.m4
 /autom4te.cache
 /autoscan.log
+/autoscan-*.log
 /compiler/cpp/Debug
 /compiler/cpp/libparse.a
 /compiler/cpp/Makefile
@@ -128,6 +129,19 @@ gen-*
 /lib/d/Makefile.in
 /lib/d/test/Makefile
 /lib/d/test/Makefile.in
+/lib/delphi/src/*.dcu
+/lib/delphi/test/*.identcache
+/lib/delphi/test/*.local
+/lib/delphi/test/skip/*.local
+/lib/delphi/test/skip/*.identcache
+/lib/delphi/test/skip/*.identcache
+/lib/delphi/test/serializer/*.identcache
+/lib/delphi/test/*.dproj
+/lib/delphi/test/*.dproj
+/lib/delphi/test/skip/*.dproj
+/lib/delphi/test/skip/*.dproj
+/lib/delphi/test/serializer/*.dproj
+/lib/delphi/test/serializer/*.local
 /lib/erl/.generated
 /lib/erl/.eunit
 /lib/erl/ebin
