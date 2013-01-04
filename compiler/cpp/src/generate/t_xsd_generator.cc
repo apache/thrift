@@ -26,8 +26,16 @@
 #include <sstream>
 #include "t_generator.h"
 #include "platform.h"
-using namespace std;
 
+using std::map;
+using std::ofstream;
+using std::ostream;
+using std::ostringstream;
+using std::string;
+using std::stringstream;
+using std::vector;
+
+static const string endl = "\n";  // avoid ostream << std::endl flushes
 
 /**
  * XSD generator, creates an XSD for the base types etc.
