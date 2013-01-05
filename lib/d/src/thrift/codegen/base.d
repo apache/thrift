@@ -913,7 +913,7 @@ unittest {
   // combinations. Functionality checks are covered by the rest of the test
   // suite.
 
-  struct Test {
+  static struct Test {
     // Non-nullable.
     int a1;
     int a2;

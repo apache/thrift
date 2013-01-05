@@ -669,7 +669,7 @@ void main(string[] args) {
   // each send() call.  If we have more than ~400 outstanding 1-byte write
   // requests, additional send() calls start blocking.
   testRw!CoupledSocketTransports(1024 * 16, 1, 1,
-          0, 0, 400);
+          0, 0, 250);
   testRw!CoupledSocketTransports(1024 * 256, 0, 0,
           rand4k, rand4k, socketMaxOutstanding);
   testRw!CoupledSocketTransports(1024 * 256, rand4k, rand4k,
@@ -677,7 +677,7 @@ void main(string[] args) {
   testRw!CoupledSocketTransports(1024 * 256, 167, 163,
           rand4k, rand4k, socketMaxOutstanding);
   testRw!CoupledSocketTransports(1024 * 16, 1, 1,
-          rand4k, rand4k, 400);
+          rand4k, rand4k, 250);
 
   testBlocking!CoupledSocketTransports();
 
