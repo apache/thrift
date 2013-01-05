@@ -48,6 +48,7 @@ sys.path.insert(0, options.genpydir)
 
 from ThriftTest import ThriftTest
 from ThriftTest.ttypes import *
+from thrift.Thrift import TException
 from thrift.transport import TTransport
 from thrift.transport import TSocket
 from thrift.transport import TZlibTransport
@@ -102,16 +103,24 @@ class TestHandler:
       print 'testStruct({%s, %d, %d, %d})' % (thing.string_thing, thing.byte_thing, thing.i32_thing, thing.i64_thing)
     return thing
 
-  def testException(self, str):
+  def testException(self, arg):
+    #if options.verbose > 1:
+    print 'testException(%s)' % arg
+    if arg == 'Xception':
+      raise Xception(errorCode=1001, message=arg)
+    elif arg == 'TException':
+      raise TException(message='This is a TException')
+
+  def testMultiException(self, arg0, arg1):
     if options.verbose > 1:
-      print 'testException(%s)' % str
-    if str == 'Xception':
-      x = Xception()
-      x.errorCode = 1001
-      x.message = str
-      raise x
-    elif str == "throw_undeclared":
-      raise ValueError("Exception test PASSES.")
+      print 'testMultiException(%s, %s)' % (arg0, arg1)
+    if arg0 == 'Xception':
+      raise Xception(errorCode=1001, message='This is an Xception')
+    elif arg0 == 'Xception2':
+      raise Xception2(
+        errorCode=2002,
+        struct_thing=Xtruct(string_thing='This is an Xception2'))
+    return Xtruct(string_thing=arg1)
 
   def testOneway(self, seconds):
     if options.verbose > 1:
@@ -153,13 +162,19 @@ class TestHandler:
   def testMapMap(self, thing):
     if options.verbose > 1:
       print 'testMapMap(%s)' % thing
-    return thing
+    return {thing: {thing: thing}}
+
+  def testInsanity(self, argument):
+    if options.verbose > 1:
+      print 'testInsanity(%s)' % argument
+    return {123489: {Numberz.ONE:argument}}
 
   def testMulti(self, arg0, arg1, arg2, arg3, arg4, arg5):
     if options.verbose > 1:
       print 'testMulti(%s)' % [arg0, arg1, arg2, arg3, arg4, arg5]
-    x = Xtruct(string_thing='Hello2', byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
-    return x
+    return Xtruct(string_thing='Hello2',
+                  byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
+
 
 # set up the protocol factory form the --proto option
 pfactory_cls = PROT_FACTORIES.get(options.proto, None)
