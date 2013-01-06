@@ -234,7 +234,7 @@ public abstract class ServerTestBase extends TestCase {
         x.errorCode = 1001;
         x.message = arg;
         throw x;
-      } else if (arg.equals("ApplicationException")) {
+      } else if (arg.equals("TException")) {
         throw new TException(arg);
       } else {
         Xtruct result = new Xtruct();

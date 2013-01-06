@@ -27,7 +27,6 @@
 # THRIFT-819 add Enumeration for protocol, transport and server types
 
 BASEDIR=$(dirname $0)
-echo $BASEDIR
 cd $BASEDIR
 
 print_header() {
@@ -41,9 +40,10 @@ do_test () {
     client_exec=$4
     server_exec=$5
     server_startup_time=$6
+    client_delay=$7
     
     testname=${client_server}_${protocol}_${transport}
-    server_timeout=$((${server_startup_time}+10))
+    server_timeout=$((${server_startup_time}+${client_delay}))
     printf "%-16s %-11s %-17s" ${client_server} ${protocol} ${transport} 
     timeout $server_timeout $server_exec > log/${testname}_server.log 2>&1 &
     sleep $server_startup_time
@@ -61,7 +61,7 @@ do_test () {
       echo ""
       print_header
     fi
-    sleep 10
+    sleep ${client_delay}
 }
 
 echo "Apache Thrift - integration test suite"
@@ -94,7 +94,7 @@ for proto in $protocols; do
       do_test "cpp-cpp"   "${proto}" "${trans}-${sock}" \
               "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
               "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "10"
+              "10" "5"
     done;
   done;
 done;
@@ -105,78 +105,78 @@ rm -f /tmp/ThriftTest.thrift
 do_test "py-py" "binary" "buffered-ip" \
         "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
         "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10"
+        "10" "10"
 do_test "py-py" "json" "buffered-ip" \
         "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
         "py/TestServer.py --proto=json --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10"
+        "10" "10"
 do_test "py-cpp" "binary" "buffered-ip" \
         "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
         "cpp/TestServer" \
-        "10"
+        "10" "10"
 do_test "py-cpp" "json" "buffered-ip" \
         "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
         "cpp/TestServer --protocol=json" \
-        "10"
+        "10" "10"
 do_test "cpp-py" "binary" "buffered-ip" \
         "cpp/TestClient --protocol=binary --port=9090" \
         "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10"
+        "10" "10"
 do_test "cpp-py" "json" "buffered-ip" \
         "cpp/TestClient --protocol=json --port=9090" \
         "py/TestServer.py --proto=json --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10"
+        "10" "10"
 do_test "py-java"  "binary" "buffered-ip" \
         "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
         "ant -f  ../lib/java/build.xml testserver" \
-        "120"
+        "120" "10"
 do_test "py-java"  "json"   "buffered-ip" \
         "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
         "ant -f  ../lib/java/build.xml testserver" \
-        "120"
+        "120" "10"
 do_test "java-py"  "binary" "buffered-ip" \
         "ant -f  ../lib/java/build.xml testclient" \
         "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10"
+        "10" "35"
 do_test "java-java" "binary" "buffered-ip" \
         "ant -f  ../lib/java/build.xml testclient" \
         "ant -f  ../lib/java/build.xml testserver" \
-        "120"
+        "120" "35"
 do_test "cpp-java"  "binary" "buffered-ip" \
         "cpp/TestClient" \
         "ant -f  ../lib/java/build.xml testserver" \
-        "100"
+        "100" "10"
 do_test "cpp-java"  "json"   "buffered-ip" \
         "cpp/TestClient" \
         "ant -f  ../lib/java/build.xml testserver" \
-        "100"
+        "100" "10"
 do_test "js-java"   "json "  "http-ip" \
         "" \
         "ant -f  ../lib/js/test/build.xml unittest" \
-        "120"
+        "120" "10"
 do_test "java-cpp"  "binary" "buffered-ip" \
         "ant -f  ../lib/java/build.xml testclient" \
         "cpp/TestServer" \
-        "10"
+        "10" "35"
 do_test "perl-cpp"  "binary" "buffered-ip" \
         "perl -I perl/gen-perl/ -I../lib/perl/lib/ perl/TestClient.pl" \
         "cpp/TestServer" \
-        "10"
+        "10" "10"
 do_test "php-cpp"  "binary" "buffered-ip" \
         "make -C php/ client" \
         "cpp/TestServer" \
-        "10"
+        "10" "10"
 do_test "nodejs-nodejs" "binary" "framed-ip" \
         "make -C nodejs/ client" \
         "make -C nodejs/ server" \
-        "1"
+        "1" "10"
 do_test "nodejs-cpp" "binary" "framed-ip" \
         "make -C nodejs/ client" \
         "cpp/TestServer --transport=framed" \
-        "1"
+        "1" "10"
 do_test "cpp-nodejs" "binary" "framed-ip" \
         "cpp/TestClient --transport=framed" \
         "make -C nodejs/ server" \
-        "1"
+        "1" "10"
 
 cd -
