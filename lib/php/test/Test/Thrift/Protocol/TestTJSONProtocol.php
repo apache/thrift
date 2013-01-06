@@ -535,11 +535,18 @@ class TestTJSONProtocol_Fixtures
 
     self::$testArgsJSON['testI32'] = '{"1":{"i32":1073741824}}';
 
-    self::$testArgsJSON['testI64'] = '{"1":{"i64":1152921504606847000}}';
-
-    self::$testArgsJSON['testStruct'] = '{"1":{"rec":{"1":{"str":"worked"},"4":{"i8":1},"9":{"i32":1073741824},"11":{"i64":1152921504606847000}}}}';
-
-    self::$testArgsJSON['testNest'] = '{"1":{"rec":{"1":{"i8":1},"2":{"rec":{"1":{"str":"worked"},"4":{"i8":1},"9":{"i32":1073741824},"11":{"i64":1152921504606847000}}},"3":{"i32":32768}}}}';
+    if ( PHP_INT_SIZE == 8 )
+    {
+      self::$testArgsJSON['testI64'] = '{"1":{"i64":'.pow( 2, 60 ).'}}';
+      self::$testArgsJSON['testStruct'] = '{"1":{"rec":{"1":{"str":"worked"},"4":{"i8":1},"9":{"i32":1073741824},"11":{"i64":'.pow( 2, 60 ).'}}}}';
+      self::$testArgsJSON['testNest'] = '{"1":{"rec":{"1":{"i8":1},"2":{"rec":{"1":{"str":"worked"},"4":{"i8":1},"9":{"i32":1073741824},"11":{"i64":'.pow( 2, 60 ).'}}},"3":{"i32":32768}}}}';
+    }
+    else
+    {
+      self::$testArgsJSON['testI64'] = '{"1":{"i64":1152921504606847000}}';
+      self::$testArgsJSON['testStruct'] = '{"1":{"rec":{"1":{"str":"worked"},"4":{"i8":1},"9":{"i32":1073741824},"11":{"i64":1152921504606847000}}}}';
+      self::$testArgsJSON['testNest'] = '{"1":{"rec":{"1":{"i8":1},"2":{"rec":{"1":{"str":"worked"},"4":{"i8":1},"9":{"i32":1073741824},"11":{"i64":1152921504606847000}}},"3":{"i32":32768}}}}';
+    }
 
     self::$testArgsJSON['testMap'] = '{"1":{"map":["i32","i32",3,{"7":77,"8":88,"9":99}]}}';
 

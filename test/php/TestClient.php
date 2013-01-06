@@ -257,23 +257,23 @@ print_r("}\n");
  * ENUM TEST
  */
 print_r("testEnum(ONE)");
-$ret = $testClient->testEnum(ThriftTest_Numberz::ONE);
+$ret = $testClient->testEnum(\ThriftTest\Numberz::ONE);
 print_r(" = $ret\n");
 
 print_r("testEnum(TWO)");
-$ret = $testClient->testEnum(ThriftTest_Numberz::TWO);
+$ret = $testClient->testEnum(\ThriftTest\Numberz::TWO);
 print_r(" = $ret\n");
 
 print_r("testEnum(THREE)");
-$ret = $testClient->testEnum(ThriftTest_Numberz::THREE);
+$ret = $testClient->testEnum(\ThriftTest\Numberz::THREE);
 print_r(" = $ret\n");
 
 print_r("testEnum(FIVE)");
-$ret = $testClient->testEnum(ThriftTest_Numberz::FIVE);
+$ret = $testClient->testEnum(\ThriftTest\Numberz::FIVE);
 print_r(" = $ret\n");
 
 print_r("testEnum(EIGHT)");
-$ret = $testClient->testEnum(ThriftTest_Numberz::EIGHT);
+$ret = $testClient->testEnum(\ThriftTest\Numberz::EIGHT);
 print_r(" = $ret\n");
 
 /**
@@ -302,7 +302,7 @@ print_r("}\n");
  * INSANITY TEST
  */
 $insane = new \ThriftTest\Insanity();
-$insane->userMap[ThriftTest_Numberz::FIVE] = 5000;
+$insane->userMap[\ThriftTest\Numberz::FIVE] = 5000;
 $truck = new \ThriftTest\Xtruct();
 $truck->string_thing = "Truck";
 $truck->byte_thing = 8;
@@ -348,7 +348,7 @@ print_r("testException('Xception')");
 try {
   $testClient->testException('Xception');
   print_r("  void\nFAILURE\n");
-} catch (ThriftTest_Xception $x) {
+} catch (\ThriftTest\Xception $x) {
   print_r(' caught xception '.$x->errorCode.': '.$x->message."\n");
 }
 
