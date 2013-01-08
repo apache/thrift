@@ -749,6 +749,16 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
     indent(out) << "thrift_spec = None" << endl;
   }
 
+  out << indent() << "def __hash__(self):" << endl;
+  indent_up();
+  indent(out) << "return 0";
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    out << " + hash(self." << (*m_iter)->get_name() + ")";
+  }
+  out << endl;
+  indent_down();
+
+  out << endl;
 
   if (members.size() > 0) {
     out <<
