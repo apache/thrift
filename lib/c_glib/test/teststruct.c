@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <glib-object.h>
 
-#include "../src/thrift/thrift_struct.c"
+#include "../src/thrift/c_glib/thrift_struct.c"
 
 /* tests to ensure we can extend a ThriftStruct */
 

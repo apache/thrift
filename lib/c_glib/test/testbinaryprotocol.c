@@ -24,9 +24,9 @@
 #include <netdb.h>
 #include <string.h>
 
-#include <thrift/protocol/thrift_protocol.h>
-#include <thrift/transport/thrift_socket.h>
-#include <thrift/transport/thrift_server_socket.h>
+#include <thrift/c_glib/protocol/thrift_protocol.h>
+#include <thrift/c_glib/transport/thrift_socket.h>
+#include <thrift/c_glib/transport/thrift_server_socket.h>
 
 #define TEST_BOOL TRUE
 #define TEST_BYTE 123
@@ -71,7 +71,7 @@ my_thrift_transport_write (ThriftTransport *transport, const gpointer buf,
 
 #define thrift_transport_read my_thrift_transport_read
 #define thrift_transport_write my_thrift_transport_write
-#include "../src/thrift/protocol/thrift_binary_protocol.c"
+#include "../src/thrift/c_glib/protocol/thrift_binary_protocol.c"
 #undef thrift_transport_read
 #undef thrift_transport_write
 
