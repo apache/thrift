@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
+.NOTPARALLEL:
 noinst_LTLIBRARIES = libtestgencpp.la libprocessortest.la
 nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/DebugProtoTest_types.cpp \

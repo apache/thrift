@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
+.NOTPARALLEL:
 SUBDIRS =
 
 AM_CPPFLAGS = -g -Wall -I../src $(GLIB_CFLAGS)

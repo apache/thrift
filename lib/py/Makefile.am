@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
+.NOTPARALLEL:
 DESTDIR ?= /
 EXTRA_DIST = setup.py setup.cfg src compat
 
