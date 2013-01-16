@@ -29,8 +29,14 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.THttpClient;
 import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TFastFramedTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.apache.thrift.transport.TSSLTransportFactory;
+import org.apache.thrift.transport.TSSLTransportFactory.TSSLTransportParameters;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TJSONProtocol;
+import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TSimpleJSONProtocol;
 
 import java.util.Map;
@@ -50,44 +56,92 @@ public class TestClient {
   public static void main(String [] args) {
     String host = "localhost";
     int port = 9090;
-    String url = null;
     int numTests = 1;
-    boolean framed = false;
+    String protocol_type = "binary";
+    String transport_type = "buffered";
+    boolean ssl = false;
 
     int socketTimeout = 1000;
 
     try {
       for (int i = 0; i < args.length; ++i) {
-        if (args[i].equals("-h")) {
-          String[] hostport = (args[++i]).split(":");
-          host = hostport[0];
-          port = Integer.valueOf(hostport[1]);
-        } else if (args[i].equals("-f") || args[i].equals("-framed")) {
-          framed = true;
-        } else if (args[i].equals("-u")) {
-          url = args[++i];
-        } else if (args[i].equals("-n")) {
-          numTests = Integer.valueOf(args[++i]);
-        } else if (args[i].equals("-timeout")) {
-          socketTimeout = Integer.valueOf(args[++i]);
+        if (args[i].startsWith("--host")) {
+          host = args[i].split("=")[1];
+          host.trim();
+        } else if (args[i].startsWith("--port")) {
+          port = Integer.valueOf(args[i].split("=")[1]); 
+        } else if (args[i].startsWith("--n") || 
+            args[i].startsWith("--testloops")){
+          numTests = Integer.valueOf(args[i].split("=")[1]);
+        } else if (args[i].equals("--timeout")) {
+          socketTimeout = Integer.valueOf(args[i].split("=")[1]);
+        } else if (args[i].startsWith("--protocol")) {
+          protocol_type = args[i].split("=")[1];
+          protocol_type.trim();
+        } else if (args[i].startsWith("--transport")) {
+          transport_type = args[i].split("=")[1];
+          transport_type.trim();
+        } else if (args[i].equals("--ssl")) {
+          ssl = true;
+        } else if (args[i].equals("--help")) {
+          System.out.println("Allowed options:");
+          System.out.println("  --help\t\t\tProduce help message"); 
+          System.out.println("  --host=arg (=" + host + ")\tHost to connect");
+          System.out.println("  --port=arg (=" + port + ")\tPort number to connect");
+          System.out.println("  --transport=arg (=" + transport_type + ")\n\t\t\t\tTransport: buffered, framed, fastframed, http");
+          System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, json, compact");
+          System.out.println("  --ssl\t\t\tEncrypted Transport using SSL");
+          System.out.println("  --testloops[--n]=arg (=" + numTests + ")\tNumber of Tests");
+          System.exit(0);
         }
       }
     } catch (Exception x) {
-      x.printStackTrace();
+      System.err.println("Can not parse arguments! See --help");
+      System.exit(1);
+    }
+
+    try {
+      if (protocol_type.equals("binary")) {
+      } else if (protocol_type.equals("compact")) {
+      } else if (protocol_type.equals("json")) {
+      } else {
+        throw new Exception("Unknown protocol type! " + protocol_type); 
+      }
+      if (transport_type.equals("buffered")) {
+      } else if (transport_type.equals("framed")) {
+      } else if (transport_type.equals("fastframed")) {
+      } else if (transport_type.equals("http")) {
+      } else {
+        throw new Exception("Unknown transport type! " + transport_type);
+      }
+      if (transport_type.equals("http") && ssl == true) {
+        throw new Exception("SSL is not supported over http.");
+      }
+    } catch (Exception e) {
+      System.err.println("Error: " + e.getMessage());
       System.exit(1);
     }
 
     TTransport transport = null;
 
     try {
-      if (url != null) {
+      if (transport_type.equals("http")) {
+        String url = "http://" + host + ":" + port + "/service";
         transport = new THttpClient(url);
       } else {
-        TSocket socket = new TSocket(host, port);
+        TSocket socket = null;
+        if (ssl == true) {
+          socket = TSSLTransportFactory.getClientSocket(host, port, 0);
+        } else {
+          socket = new TSocket(host, port);
+        }
         socket.setTimeout(socketTimeout);
         transport = socket;
-        if (framed) {
+        if (transport_type.equals("buffered")) {
+        } else if (transport_type.equals("framed")) {
           transport = new TFramedTransport(transport);
+        } else if (transport_type.equals("fastframed")) {
+          transport = new TFastFramedTransport(transport);
         }
       }
     } catch (Exception x) {
@@ -95,10 +149,17 @@ public class TestClient {
       System.exit(1);
     }
 
-    TBinaryProtocol binaryProtocol =
-      new TBinaryProtocol(transport);
+    TProtocol tProtocol = null;
+    if (protocol_type.equals("json")) {
+      tProtocol = new TJSONProtocol(transport);
+    } else if (protocol_type.equals("compact")) {
+      tProtocol = new TCompactProtocol(transport);
+    } else {
+      tProtocol = new TBinaryProtocol(transport);
+    }
+
     ThriftTest.Client testClient =
-      new ThriftTest.Client(binaryProtocol);
+      new ThriftTest.Client(tProtocol);
     Insanity insane = new Insanity();
 
     long timeMin = 0;
@@ -113,12 +174,14 @@ public class TestClient {
          */
         System.out.println("Test #" + (test+1) + ", " + "connect " + host + ":" + port);
 
-        try {
-          transport.open();
-        } catch (TTransportException ttx) {
-          ttx.printStackTrace();
-          System.out.println("Connect failed: " + ttx.getMessage());
-          System.exit(1);
+        if (transport.isOpen() == false) {
+          try {
+            transport.open();
+          } catch (TTransportException ttx) {
+            ttx.printStackTrace();
+            System.out.println("Connect failed: " + ttx.getMessage());
+            System.exit(1);
+          }
         }
 
         long start = System.nanoTime();

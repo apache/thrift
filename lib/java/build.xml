@@ -155,7 +155,12 @@
     <delete dir="${genbean}"/>
   </target>
 
-  <target name="compile-test" description="Build the test suite classes" depends="generate,dist">
+  <target name="optional-generate" unless="no-gen-thrift"> 
+    <antcall target="generate">
+    </antcall>
+  </target>
+
+  <target name="compile-test" description="Build the test suite classes" depends="optional-generate,dist">
     <javac debug="true" srcdir="${gen}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false">
       <compilerarg value="-Xlint:deprecation"/>
       <!--<compilerarg value="-Xlint:unchecked"/>-->
@@ -212,15 +217,19 @@
 
   <target name="testclient" description="Run a test client" depends="compile-test">
     <java classname="org.apache.thrift.test.TestClient"
-      classpathref="test.classpath" failonerror="true">
+      classpathref="test.classpath" failonerror="true" fork="true">
+      <sysproperty key="javax.net.ssl.trustStore" value="${src.test}/.truststore"/>
+      <sysproperty key="javax.net.ssl.trustStorePassword" value="thrift"/>
       <arg line="${testargs}"/>
     </java>
   </target>
 
   <target name="testserver" description="Run a test server" depends="compile-test">
     <java classname="org.apache.thrift.test.TestServer"
-      classpathref="test.classpath" failonerror="true">
-      <arg line="${testargs}"/>
+      classpathref="test.classpath" failonerror="true" fork="true"> 
+      <sysproperty key="javax.net.ssl.keyStore" value="${src.test}/.keystore"/>
+      <sysproperty key="javax.net.ssl.keyStorePassword" value="thrift"/>
+      <arg line="${testargs}"/> 
     </java>
   </target>
 
