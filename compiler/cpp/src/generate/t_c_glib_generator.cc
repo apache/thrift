@@ -2821,7 +2821,7 @@ void t_c_glib_generator::generate_deserialize_list_element(ofstream &out,
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
       case t_base_type::TYPE_DOUBLE:
-        out << "g_array_append_val (" << prefix << ", " << elem << ");" << endl;
+        out << "g_array_append_vals (" << prefix << ", " << elem << ", 1);" << endl;
         return;
       default:
         throw "compiler error: no array info for type";
