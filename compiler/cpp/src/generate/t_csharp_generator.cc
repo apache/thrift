@@ -1178,43 +1178,40 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) <<
       "public " << function_signature(*f_iter) << endl;
     scope_up(f_service_);
-    indent(f_service_) << "#if !SILVERLIGHT" << endl;
-    indent(f_service_) <<
-      "send_" << funname << "(";
 
-    first = true;
-    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      if (first) {
-        first = false;
-      } else {
-        f_service_ << ", ";
+    if (!async_) {
+      indent(f_service_) << "#if !SILVERLIGHT" << endl;
+      indent(f_service_) <<
+        "send_" << funname << "(";
+
+      first = true;
+      for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+        if (first) {
+          first = false;
+        } else {
+          f_service_ << ", ";
+        }
+        f_service_ << (*fld_iter)->get_name();
       }
-      f_service_ << (*fld_iter)->get_name();
-    }
-    f_service_ << ");" << endl;
+      f_service_ << ");" << endl;
 
-    if (!(*f_iter)->is_oneway()) {
-      f_service_ << indent();
-      if (!(*f_iter)->get_returntype()->is_void()) {
-        f_service_ << "return ";
+      if (!(*f_iter)->is_oneway()) {
+        f_service_ << indent();
+        if (!(*f_iter)->get_returntype()->is_void()) {
+          f_service_ << "return ";
+        }
+        f_service_ <<
+          "recv_" << funname << "();" << endl;
       }
-      f_service_ <<
-        "recv_" << funname << "();" << endl;
-    }
-    f_service_ << endl;
+      f_service_ << endl;
 
-    indent(f_service_) << "#else" << endl;
+      indent(f_service_) << "#else" << endl;
+    }
 
     // Silverlight synchronous invoke
-    indent(f_service_) << "var asyncResult = Begin_" << funname << "(null, null, ";
-    first = true;
+    indent(f_service_) << "var asyncResult = Begin_" << funname << "(null, null";
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      if (first) {
-        first = false;
-      } else {
-        f_service_ << ", ";
-      }
-      f_service_ << (*fld_iter)->get_name();
+      f_service_ << ", " << (*fld_iter)->get_name();
     }
     f_service_ << ");" << endl;
 
@@ -1228,8 +1225,9 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     }
     f_service_ << endl;
 
-
-    indent(f_service_) << "#endif" << endl;
+    if (!async_) {
+      indent(f_service_) << "#endif" << endl;
+    }
     scope_down(f_service_);
 
     // Send
@@ -2073,7 +2071,8 @@ string t_csharp_generator::function_signature(t_function* tfunction, string pref
 }
 
 string t_csharp_generator::function_signature_async_begin(t_function* tfunction, string prefix) {
-  return "IAsyncResult " + prefix + tfunction->get_name() + "(AsyncCallback callback, object state, " + argument_list(tfunction->get_arglist()) + ")";
+  string comma = (tfunction->get_arglist()->get_members().size() > 0 ? ", " : "");
+  return "IAsyncResult " + prefix + tfunction->get_name() + "(AsyncCallback callback, object state" + comma + argument_list(tfunction->get_arglist()) + ")";
 }
 
 string t_csharp_generator::function_signature_async_end(t_function* tfunction, string prefix) {
