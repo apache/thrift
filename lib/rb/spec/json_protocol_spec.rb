@@ -435,8 +435,8 @@ describe 'JsonProtocol' do
     end
 
     it "should read set begin" do
-      @trans.write("[")
-      @prot.read_set_begin.should == nil
+      @trans.write("[\"rec\",2\"\"")
+      @prot.read_set_begin.should == [12, 2]
     end
 
     it "should read set end" do

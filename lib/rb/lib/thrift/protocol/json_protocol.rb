@@ -717,6 +717,7 @@ module Thrift
 
     def read_set_begin
       read_json_array_start
+      [get_type_id_for_type_name(read_json_string), read_json_integer]
     end
 
     def read_set_end
