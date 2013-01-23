@@ -196,8 +196,7 @@ type
 
   protected
     function AcceptImpl: ITransport; override;
-
-    function CreateNamedPipe : Boolean;
+    procedure CreateNamedPipe;
 
     // INamedServerPipe
     function Handle : THandle;
@@ -599,31 +598,36 @@ begin
   result := FALSE;
 
   sd := PSECURITY_DESCRIPTOR( LocalAlloc( LPTR,SECURITY_DESCRIPTOR_MIN_LENGTH));
-  Win32Check( InitializeSecurityDescriptor( sd, SECURITY_DESCRIPTOR_REVISION));
-  Win32Check( SetSecurityDescriptorDacl( sd, TRUE, nil, FALSE));
+  try
+    Win32Check( InitializeSecurityDescriptor( sd, SECURITY_DESCRIPTOR_REVISION));
+    Win32Check( SetSecurityDescriptorDacl( sd, TRUE, nil, FALSE));
 
-  sa.nLength := sizeof( sa);
-  sa.lpSecurityDescriptor := sd;
-  sa.bInheritHandle       := TRUE; //allow passing handle to child
+    sa.nLength := sizeof( sa);
+    sa.lpSecurityDescriptor := sd;
+    sa.bInheritHandle       := TRUE; //allow passing handle to child
 
-  if not CreatePipe( hCAR, hPipeW, @sa, FBufSize) then begin   //create stdin pipe
-    Console.WriteLine( 'TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
-    Exit;
+    if not CreatePipe( hCAR, hPipeW, @sa, FBufSize) then begin   //create stdin pipe
+      Console.WriteLine( 'TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
+      Exit;
+    end;
+
+    if not CreatePipe( hPipe, hCAW, @sa, FBufSize) then begin  //create stdout pipe
+      Console.WriteLine( 'TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
+      CloseHandle( hCAR);
+      CloseHandle( hPipeW);
+      Exit;
+    end;
+
+    FClientAnonRead  := hCAR;
+    FClientAnonWrite := hCAW;
+    FReadHandle      := hPipe;
+    FWriteHandle     := hPipeW;
+
+    result := TRUE;
+  
+  finally
+    if sd <> nil then LocalFree( Cardinal(sd));
   end;
-
-  if not CreatePipe( hPipe, hCAW, @sa, FBufSize) then begin  //create stdout pipe
-    Console.WriteLine( 'TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
-    CloseHandle( hCAR);
-    CloseHandle( hPipeW);
-    Exit;
-  end;
-
-  FClientAnonRead  := hCAR;
-  FClientAnonWrite := hCAW;
-  FReadHandle      := hPipe;
-  FWriteHandle     := hPipeW;
-
-  result := TRUE;
 end;
 
 
@@ -647,9 +651,7 @@ end;
 function TNamedServerPipeImpl.AcceptImpl: ITransport;
 var connectRet : Boolean;
 begin
-  if not CreateNamedPipe()
-  then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                         'TServerPipe CreateNamedPipe failed');
+  CreateNamedPipe;
 
   // Wait for the client to connect; if it succeeds, the
   // function returns a nonzero value. If the function returns
@@ -686,7 +688,7 @@ begin
 end;
 
 
-function TNamedServerPipeImpl.CreateNamedPipe : Boolean;
+procedure TNamedServerPipeImpl.CreateNamedPipe;
 var SIDAuthWorld : SID_IDENTIFIER_AUTHORITY ;
     everyone_sid : PSID;
     ea           : EXPLICIT_ACCESS;
@@ -698,50 +700,54 @@ const
   SECURITY_WORLD_SID_AUTHORITY  : TSIDIdentifierAuthority = (Value : (0,0,0,0,0,1));
   SECURITY_WORLD_RID = $00000000;
 begin
-  // Windows - set security to allow non-elevated apps
-  // to access pipes created by elevated apps.
-  SIDAuthWorld := SECURITY_WORLD_SID_AUTHORITY;
+  sd := nil;
   everyone_sid := nil;
-  AllocateAndInitializeSid( SIDAuthWorld, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, everyone_sid);
+  try
+    // Windows - set security to allow non-elevated apps
+    // to access pipes created by elevated apps.
+    SIDAuthWorld := SECURITY_WORLD_SID_AUTHORITY;
+    AllocateAndInitializeSid( SIDAuthWorld, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, everyone_sid);
 
-  ZeroMemory( @ea, SizeOf(ea));
-  ea.grfAccessPermissions := SPECIFIC_RIGHTS_ALL or STANDARD_RIGHTS_ALL;
-  ea.grfAccessMode        := SET_ACCESS;
-  ea.grfInheritance       := NO_INHERITANCE;
-  ea.Trustee.TrusteeForm  := TRUSTEE_IS_SID;
-  ea.Trustee.TrusteeType  := TRUSTEE_IS_WELL_KNOWN_GROUP;
-  ea.Trustee.ptstrName    := PChar(everyone_sid);
+    ZeroMemory( @ea, SizeOf(ea));
+    ea.grfAccessPermissions := GENERIC_ALL; //SPECIFIC_RIGHTS_ALL or STANDARD_RIGHTS_ALL;
+    ea.grfAccessMode        := SET_ACCESS;
+    ea.grfInheritance       := NO_INHERITANCE;
+    ea.Trustee.TrusteeForm  := TRUSTEE_IS_SID;
+    ea.Trustee.TrusteeType  := TRUSTEE_IS_WELL_KNOWN_GROUP;
+    ea.Trustee.ptstrName    := PChar(everyone_sid);
 
-  acl := nil;
-  SetEntriesInAcl( 1, @ea, nil, acl);
+    acl := nil;
+    SetEntriesInAcl( 1, @ea, nil, acl);
 
-  sd := PSECURITY_DESCRIPTOR( LocalAlloc( LPTR,SECURITY_DESCRIPTOR_MIN_LENGTH));
-  Win32Check( InitializeSecurityDescriptor( sd, SECURITY_DESCRIPTOR_REVISION));
-  Win32Check( SetSecurityDescriptorDacl( sd, TRUE, acl, FALSE));
+    sd := PSECURITY_DESCRIPTOR( LocalAlloc( LPTR,SECURITY_DESCRIPTOR_MIN_LENGTH));
+    Win32Check( InitializeSecurityDescriptor( sd, SECURITY_DESCRIPTOR_REVISION));
+    Win32Check( SetSecurityDescriptorDacl( sd, TRUE, acl, FALSE));
 
-  sa.nLength := SizeOf(sa);
-  sa.lpSecurityDescriptor := sd;
-  sa.bInheritHandle       := FALSE;
+    sa.nLength := SizeOf(sa);
+    sa.lpSecurityDescriptor := sd;
+    sa.bInheritHandle       := FALSE;
 
-  // Create an instance of the named pipe
-  hPipe := Windows.CreateNamedPipe( PChar( FPipeName),        // pipe name
-                                    PIPE_ACCESS_DUPLEX,       // read/write access
-                                    PIPE_TYPE_MESSAGE or      // message type pipe
-                                    PIPE_READMODE_MESSAGE,    // message-read mode
-                                    FMaxConns,                // max. instances
-                                    FBufSize,                 // output buffer size
-                                    FBufSize,                 // input buffer size
-                                    0,                        // client time-out
-                                    @sa);                     // default security attribute
+    // Create an instance of the named pipe
+    hPipe := Windows.CreateNamedPipe( PChar( FPipeName),        // pipe name
+                                      PIPE_ACCESS_DUPLEX,       // read/write access
+                                      PIPE_TYPE_MESSAGE or      // message type pipe
+                                      PIPE_READMODE_MESSAGE,    // message-read mode
+                                      FMaxConns,                // max. instances
+                                      FBufSize,                 // output buffer size
+                                      FBufSize,                 // input buffer size
+                                      0,                        // client time-out
+                                      @sa);                     // default security attribute
 
-  if( hPipe = INVALID_HANDLE_VALUE) then begin
-    FHandle := INVALID_HANDLE_VALUE;
-    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                      'CreateNamedPipe() failed ' + IntToStr(GetLastError));
+    FHandle := hPipe;
+    if( FHandle = INVALID_HANDLE_VALUE)
+    then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                           'CreateNamedPipe() failed ' + IntToStr(GetLastError));
+
+  finally
+    if sd <> nil then LocalFree( Cardinal( sd));
+    if acl <> nil then LocalFree( Cardinal( acl));
+    if everyone_sid <> nil then FreeSid(everyone_sid);
   end;
-
-  FHandle := hPipe;
-  result  := TRUE;
 end;
 
 

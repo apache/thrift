@@ -138,7 +138,6 @@ procedure TSerializer.Serialize( const input : IBase; const aStm : TStream);
 // Serialize the Thrift object into a byte array. The process is simple,
 // just clear the byte array output, write the object into it, and grab the
 // raw bytes. 
-var iBytes : Int64;
 const COPY_ENTIRE_STREAM = 0;
 begin
   try

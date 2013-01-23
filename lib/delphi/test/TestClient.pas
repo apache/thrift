@@ -176,6 +176,10 @@ begin
           end
           else if (args[i] = '-anon') then  // -anon <hReadPipe> <hWritePipe>
           begin
+            if Length(args) <= (i+2) then begin
+              Console.WriteLine('Invalid args: -anon <hRead> <hWrite> or use "server.exe -anon"');
+              Halt(1);
+            end;
             Console.WriteLine('Anonymous pipes transport');
             Inc( i);
             hAnonRead := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
