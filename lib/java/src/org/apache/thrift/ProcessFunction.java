@@ -37,8 +37,8 @@ public abstract class ProcessFunction<I, T extends TBase> {
 
     try {
       result = getResult(iface, args);
-    } catch(Throwable th) {
-      LOGGER.error("Internal error processing " + getMethodName(), th);
+    } catch(TException tex) {
+      LOGGER.error("Internal error processing " + getMethodName(), tex);
       TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, 
         "Internal error processing " + getMethodName());
       oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
