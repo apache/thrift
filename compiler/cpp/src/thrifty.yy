@@ -902,7 +902,7 @@ FieldList:
       pdebug("FieldList -> FieldList , Field");
       $$ = $1;
       if (!($$->append($2))) {
-        yyerror("Field identifier %d for \"%s\" has already been used", $2->get_key(), $2->get_name().c_str());
+        yyerror("\"%d: %s\" - field identifier/name has already been used", $2->get_key(), $2->get_name().c_str());
         exit(1);
       }
     }

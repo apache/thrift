@@ -108,8 +108,6 @@ class t_struct : public t_type {
   }
 
   bool append(t_field* elem) {
-    members_.push_back(elem);
-
     typedef members_type::iterator iter_type;
     std::pair<iter_type, iter_type> bounds = std::equal_range(
             members_in_id_order_.begin(), members_in_id_order_.end(), elem, t_field::key_compare()
@@ -117,6 +115,11 @@ class t_struct : public t_type {
     if (bounds.first != bounds.second) {
       return false;
     }
+    // returns false when there is a conflict of field names
+    if (get_field_by_name(elem->get_name()) != NULL) {
+      return false; 
+    }
+    members_.push_back(elem);
     members_in_id_order_.insert(bounds.second, elem);
     validate_union_member( elem);
     return true;
