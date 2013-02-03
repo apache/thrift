@@ -808,8 +808,24 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
 }
 
 void t_java_generator::generate_union_constructor(ofstream& out, t_struct* tstruct) {
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator m_iter;
+
   indent(out) << "public " << type_name(tstruct) << "() {" << endl;
-  indent(out) << "  super();" << endl;
+  indent_up();
+  bool default_value = false;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* type = get_true_type((*m_iter)->get_type());
+    if ((*m_iter)->get_value() != NULL) {
+      indent(out) << "super(_Fields." << constant_name((*m_iter)->get_name()) << ", " << render_const_value(out, type, (*m_iter)->get_value()) << ");" << endl;
+      default_value = true;
+      break;
+    }
+  }
+  if (default_value == false) {
+    indent(out) << "super();" << endl;
+  }
+  indent_down();
   indent(out) << "}" << endl << endl;
 
   indent(out) << "public " << type_name(tstruct) << "(_Fields setField, Object value) {" << endl;
@@ -825,8 +841,6 @@ void t_java_generator::generate_union_constructor(ofstream& out, t_struct* tstru
   indent(out) << "}" << endl << endl;
 
   // generate "constructors" for each field
-  const vector<t_field*>& members = tstruct->get_members();
-  vector<t_field*>::const_iterator m_iter;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* type = (*m_iter)->get_type();
     indent(out) << "public static " << type_name(tstruct) << " " << (*m_iter)->get_name() << "(" << type_name(type) << " value) {" << endl;
