@@ -261,7 +261,7 @@ public:
   std::string java_type_imports();
   std::string type_name(t_type* ttype, bool in_container=false, bool in_init=false, bool skip_generic=false);
   std::string base_type_name(t_base_type* tbase, bool in_container=false);
-  std::string declare_field(t_field* tfield, bool init=false);
+  std::string declare_field(t_field* tfield, bool init=false, bool comment=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string function_signature_async(t_function* tfunction, bool use_base_method = false, std::string prefix="");
   std::string argument_list(t_struct* tstruct, bool include_types = true);
@@ -1292,7 +1292,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
       generate_java_doc(out, *m_iter);
       indent(out) << "public ";
     }
-    out << declare_field(*m_iter, false) << endl;
+    out << declare_field(*m_iter, false, true) << endl;
   }
 
   out << endl;
@@ -3300,7 +3300,7 @@ string t_java_generator::base_type_name(t_base_type* type,
  * @param tfield The field
  * @param init Whether to initialize the field
  */
-string t_java_generator::declare_field(t_field* tfield, bool init) {
+string t_java_generator::declare_field(t_field* tfield, bool init, bool comment) {
   // TODO(mcslee): do we ever need to initialize the field?
   string result = type_name(tfield->get_type()) + " " + tfield->get_name();
   if (init) {
@@ -3337,11 +3337,13 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
       result += " = new " + type_name(ttype, false, true) + "()";;
     }
   }
-  result += "; // ";
-  if (tfield->get_req() == t_field::T_OPTIONAL) {
-    result += "optional";
-  } else {
-    result += "required";
+  if (comment) {
+    result += "; // ";
+    if (tfield->get_req() == t_field::T_OPTIONAL) {
+      result += "optional";
+    } else {
+      result += "required";
+    }
   }
   return result;
 }
