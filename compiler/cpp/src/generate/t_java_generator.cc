@@ -3337,8 +3337,9 @@ string t_java_generator::declare_field(t_field* tfield, bool init, bool comment)
       result += " = new " + type_name(ttype, false, true) + "()";;
     }
   }
+  result += ";";
   if (comment) {
-    result += "; // ";
+    result += " // ";
     if (tfield->get_req() == t_field::T_OPTIONAL) {
       result += "optional";
     } else {
