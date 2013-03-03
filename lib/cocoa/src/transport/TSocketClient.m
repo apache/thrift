@@ -25,13 +25,20 @@
 #import <CFNetwork/CFNetwork.h>
 #endif
 
+@interface TSocketClient ()
+{
+    NSInputStream * inputStream;
+	NSOutputStream * outputStream;
+}
+@end
+
 @implementation TSocketClient
 
 - (id) initWithHostname: (NSString *) hostname
                    port: (int) port
 {
-	NSInputStream * inputStream = NULL;
-	NSOutputStream * outputStream = NULL;
+	inputStream = NULL;
+	outputStream = NULL;
 	CFReadStreamRef readStream = NULL;
 	CFWriteStreamRef writeStream = NULL;
 	CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (bridge_stub CFStringRef)hostname, port, &readStream, &writeStream);
@@ -57,6 +64,20 @@
 	self = [super initWithInputStream: inputStream outputStream: outputStream];
 	
 	return self;
+}
+
+-(void)dealloc
+{
+    [inputStream close];
+    [inputStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    [inputStream setDelegate:nil];
+    [inputStream release_stub];
+    
+    [outputStream close];
+    [outputStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    [outputStream setDelegate:nil];
+    [outputStream release_stub];
+    [super dealloc_stub];
 }
 
 
