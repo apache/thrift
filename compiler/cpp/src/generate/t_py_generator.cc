@@ -31,8 +31,14 @@
 #include "platform.h"
 #include "version.h"
 
-using namespace std;
+using std::map;
+using std::ofstream;
+using std::ostringstream;
+using std::string;
+using std::stringstream;
+using std::vector;
 
+static const string endl = "\n";  // avoid ostream << std::endl flushes
 
 /**
  * Python code generator.
@@ -89,7 +95,7 @@ class t_py_generator : public t_generator {
     gen_utf8strings_ = (iter != parsed_options.end());
 
     copy_options_ = option_string;
-    
+
     if (gen_twisted_){
       out_dir_base_ = "gen-py.twisted";
     } else {
@@ -254,17 +260,17 @@ class t_py_generator : public t_generator {
    * True if we should generate dynamic style classes.
    */
   bool gen_dynamic_;
- 
+
   bool gen_dynbase_;
   std::string gen_dynbaseclass_;
   std::string gen_dynbaseclass_exc_;
- 
+
   std::string import_dynbase_;
 
   bool gen_slots_;
 
   std::string copy_options_;
- 
+
   /**
    * True if we should generate Twisted-friendly RPC services.
    */
@@ -284,6 +290,7 @@ class t_py_generator : public t_generator {
   std::ofstream f_service_;
 
   std::string package_dir_;
+  std::string module_;
 
 };
 
@@ -298,6 +305,7 @@ void t_py_generator::init_generator() {
   // Make output directory
   string module = get_real_py_module(program_, gen_twisted_);
   package_dir_ = get_out_dir();
+  module_ = module;
   while (true) {
     // TODO: Do better error checking here.
     MKDIR(package_dir_.c_str());
@@ -439,7 +447,7 @@ void t_py_generator::generate_enum(t_enum* tenum) {
   f_types_ <<
     "class " << tenum->get_name() <<
     (gen_newstyle_ ? "(object)" : "") <<
-    (gen_dynamic_ ? "(" + gen_dynbaseclass_ + ")" : "") <<  
+    (gen_dynamic_ ? "(" + gen_dynbaseclass_ + ")" : "") <<
     ":" << endl;
   indent_up();
   generate_python_docstring(f_types_, tenum);
@@ -518,7 +526,7 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_enum()) {
     indent(out) << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    out << type->get_name() << "(**{" << endl;
+    out << type_name(type) << "(**{" << endl;
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -797,7 +805,7 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
       indent() << "    for key in self.__slots__]" << endl <<
       indent() << "  return '%s(%s)' % (self.__class__.__name__, ', '.join(L))" << endl <<
       endl;
-    
+
     // Equality method that compares each attribute by value and type, walking __slots__
     out <<
       indent() << "def __eq__(self, other):" << endl <<
@@ -810,7 +818,7 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
       indent() << "      return False" << endl <<
       indent() << "  return True" << endl <<
       endl;
-    
+
     out <<
       indent() << "def __ne__(self, other):" << endl <<
       indent() << "  return not (self == other)" << endl <<
@@ -1404,6 +1412,13 @@ void t_py_generator::generate_service_client(t_service* tservice) {
  */
 void t_py_generator::generate_service_remote(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
+  //Get all function from parents
+  t_service* parent = tservice->get_extends();
+  while(parent != NULL) {
+    vector<t_function*> p_functions = parent->get_functions();
+    functions.insert(functions.end(), p_functions.begin(), p_functions.end());
+    parent = parent->get_extends();
+  }
   vector<t_function*>::iterator f_iter;
 
   string f_remote_name = package_dir_+"/"+service_name_+"-remote";
@@ -1423,8 +1438,8 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     endl;
 
   f_remote <<
-    "import " << service_name_ << endl <<
-    "from ttypes import *" << endl <<
+    "from " << module_ << " import " << service_name_ << endl <<
+    "from " << module_ << ".ttypes import *" << endl <<
     endl;
 
   f_remote <<
@@ -1792,7 +1807,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
         indent() << "  error.raiseException()" << endl;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
-          indent() << "except " << type_name((*x_iter)->get_type()) << " as " << (*x_iter)->get_name() << ":" << endl;
+          indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
         if (!tfunction->is_oneway()) {
           indent_up();
           f_service_ <<
@@ -1847,7 +1862,7 @@ void t_py_generator::generate_process_function(t_service* tservice,
       indent_down();
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         f_service_ <<
-          indent() << "except " << type_name((*x_iter)->get_type()) << " as " << (*x_iter)->get_name() << ":" << endl;
+          indent() << "except " << type_name((*x_iter)->get_type()) << ", " << (*x_iter)->get_name() << ":" << endl;
         if (!tfunction->is_oneway()) {
           indent_up();
           f_service_ <<
@@ -2367,11 +2382,15 @@ string t_py_generator::render_field_default_value(t_field* tfield) {
  * @return String of rendered function definition
  */
 string t_py_generator::function_signature(t_function* tfunction,
-                                           string prefix) {
-  // TODO(mcslee): Nitpicky, no ',' if argument_list is empty
-  return
-    prefix + tfunction->get_name() +
-    "(self, " + argument_list(tfunction->get_arglist()) + ")";
+                                          string prefix) {
+  string argument_list_result = argument_list(tfunction->get_arglist());
+  if (!argument_list_result.empty()) {
+    argument_list_result = "self, " + argument_list_result;
+  } else {
+    argument_list_result = "self";
+  }
+
+  return prefix + tfunction->get_name() + "(" + argument_list_result + ")";
 }
 
 /**
@@ -2381,14 +2400,16 @@ string t_py_generator::function_signature(t_function* tfunction,
  * @return String of rendered function definition
  */
 string t_py_generator::function_signature_if(t_function* tfunction,
-                                           string prefix) {
-  // TODO(mcslee): Nitpicky, no ',' if argument_list is empty
-  string signature = prefix + tfunction->get_name() + "(";
+                                             string prefix) {
+  string argument_list_result = argument_list(tfunction->get_arglist());
   if (!gen_twisted_) {
-    signature += "self, ";
+    if (!argument_list_result.empty()) {
+      argument_list_result = "self, " + argument_list_result;
+    } else {
+      argument_list_result = "self";
+    }
   }
-  signature += argument_list(tfunction->get_arglist()) + ")";
-  return signature;
+  return prefix + tfunction->get_name() + "(" + argument_list_result + ")";
 }
 
 
@@ -2509,4 +2530,3 @@ THRIFT_REGISTER_GENERATOR(py, "Python",
 "    dynexc=CLS       Derive generated exceptions from CLS instead of TExceptionBase.\n" \
 "    dynimport='from foo.bar import CLS'\n" \
 "                     Add an import line to generated code to find the dynbase class.\n")
-

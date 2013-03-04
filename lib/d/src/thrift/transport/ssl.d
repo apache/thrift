@@ -23,7 +23,7 @@
 module thrift.transport.ssl;
 
 import core.exception : onOutOfMemoryError;
-import core.stdc.errno : getErrno, EINTR;
+import core.stdc.errno : errno, EINTR;
 import core.sync.mutex : Mutex;
 import core.memory : GC;
 import core.stdc.config;
@@ -149,7 +149,7 @@ final class TSSLSocket : TSocket {
       bytes = SSL_read(ssl_, buf.ptr, cast(int)buf.length);
       if (bytes >= 0) break;
 
-      auto errnoCopy = getErrno();
+      auto errnoCopy = errno;
       if (SSL_get_error(ssl_, bytes) == SSL_ERROR_SYSCALL) {
         if (ERR_get_error() == 0 && errnoCopy == EINTR) {
           // FIXME: Windows.

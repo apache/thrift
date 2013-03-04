@@ -32,7 +32,7 @@ namespace apache { namespace thrift { namespace async {
 template <class Protocol_>
 class TAsyncDispatchProcessorT : public TAsyncProcessor {
  public:
-  virtual void process(std::tr1::function<void(bool success)> _return,
+  virtual void process(apache::thrift::stdcxx::function<void(bool success)> _return,
                        boost::shared_ptr<protocol::TProtocol> in,
                        boost::shared_ptr<protocol::TProtocol> out) {
     protocol::TProtocol* inRaw = in.get();
@@ -69,7 +69,7 @@ class TAsyncDispatchProcessorT : public TAsyncProcessor {
     return this->dispatchCall(_return, inRaw, outRaw, fname, seqid);
   }
 
-  void processFast(std::tr1::function<void(bool success)> _return,
+  void processFast(apache::thrift::stdcxx::function<void(bool success)> _return,
                    Protocol_* in, Protocol_* out) {
     std::string fname;
     protocol::TMessageType mtype;
@@ -86,12 +86,12 @@ class TAsyncDispatchProcessorT : public TAsyncProcessor {
     return this->dispatchCallTemplated(_return, in, out, fname, seqid);
   }
 
-  virtual void dispatchCall(std::tr1::function<void(bool ok)> _return,
+  virtual void dispatchCall(apache::thrift::stdcxx::function<void(bool ok)> _return,
                             apache::thrift::protocol::TProtocol* in,
                             apache::thrift::protocol::TProtocol* out,
                             const std::string& fname, int32_t seqid) = 0;
 
-  virtual void dispatchCallTemplated(std::tr1::function<void(bool ok)> _return,
+  virtual void dispatchCallTemplated(apache::thrift::stdcxx::function<void(bool ok)> _return,
                                      Protocol_* in, Protocol_* out,
                                      const std::string& fname,
                                      int32_t seqid) = 0;
@@ -103,7 +103,7 @@ class TAsyncDispatchProcessorT : public TAsyncProcessor {
  */
 class TAsyncDispatchProcessor : public TAsyncProcessor {
  public:
-  virtual void process(std::tr1::function<void(bool success)> _return,
+  virtual void process(apache::thrift::stdcxx::function<void(bool success)> _return,
                        boost::shared_ptr<protocol::TProtocol> in,
                        boost::shared_ptr<protocol::TProtocol> out) {
     protocol::TProtocol* inRaw = in.get();
@@ -129,7 +129,7 @@ class TAsyncDispatchProcessor : public TAsyncProcessor {
     return dispatchCall(_return, inRaw, outRaw, fname, seqid);
   }
 
-  virtual void dispatchCall(std::tr1::function<void(bool ok)> _return,
+  virtual void dispatchCall(apache::thrift::stdcxx::function<void(bool ok)> _return,
                             apache::thrift::protocol::TProtocol* in,
                             apache::thrift::protocol::TProtocol* out,
                             const std::string& fname, int32_t seqid) = 0;

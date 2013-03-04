@@ -31,7 +31,14 @@
 #include "platform.h"
 #include "t_oop_generator.h"
 
-using namespace std;
+using std::map;
+using std::ofstream;
+using std::ostringstream;
+using std::string;
+using std::stringstream;
+using std::vector;
+
+static const string endl = "\n";  // avoid ostream << std::endl flushes
 
 /* forward declarations */
 string initial_caps_to_underscores(string name);
@@ -190,8 +197,8 @@ void t_c_glib_generator::init_generator() {
   f_types_ <<
     "/* base includes */" << endl <<
     "#include <glib-object.h>" << endl <<
-    "#include <thrift/thrift_struct.h>" << endl <<
-    "#include <thrift/protocol/thrift_protocol.h>" << endl;
+    "#include <thrift/c_glib/thrift_struct.h>" << endl <<
+    "#include <thrift/c_glib/protocol/thrift_protocol.h>" << endl;
 
   /* include other thrift includes */
   const vector<t_program *> &includes = program_->get_includes();
@@ -222,7 +229,7 @@ void t_c_glib_generator::init_generator() {
     endl <<
     "#include \"" << this->nspace_lc << program_name_u << 
         "_types.h\"" << endl <<
-    "#include <thrift/thrift.h>" << endl <<
+    "#include <thrift/c_glib/thrift.h>" << endl <<
     endl;
 
   f_types_ <<
@@ -415,8 +422,8 @@ void t_c_glib_generator::generate_service (t_service *tservice) {
   // include the headers
   f_service_ <<
     "#include <string.h>" << endl <<
-    "#include <thrift/thrift.h>" << endl <<
-    "#include <thrift/thrift_application_exception.h>" << endl <<
+    "#include <thrift/c_glib/thrift.h>" << endl <<
+    "#include <thrift/c_glib/thrift_application_exception.h>" << endl <<
     "#include \"" << filename << ".h\"" << endl <<
     endl;
 
@@ -1662,7 +1669,6 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
     "  /* public */" << endl;
 
   // for each field, add a member variable
-  bool has_nonrequired_fields = false;
   vector<t_field *>::const_iterator m_iter;
   const vector<t_field *> &members = tstruct->get_members();
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -1670,7 +1676,6 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
     f_types_ <<
       "  " << type_name (t) << " " << (*m_iter)->get_name() << ";" << endl;
     if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
-      has_nonrequired_fields = true;
       f_types_ <<
         "  gboolean __isset_" << (*m_iter)->get_name() << ";" << endl;
     }
@@ -2816,7 +2821,7 @@ void t_c_glib_generator::generate_deserialize_list_element(ofstream &out,
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
       case t_base_type::TYPE_DOUBLE:
-        out << "g_array_append_val (" << prefix << ", " << elem << ");" << endl;
+        out << "g_array_append_vals (" << prefix << ", " << elem << ", 1);" << endl;
         return;
       default:
         throw "compiler error: no array info for type";

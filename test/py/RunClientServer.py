@@ -46,7 +46,11 @@ generated_dirs = []
 for gp_dir in options.genpydirs.split(','):
   generated_dirs.append('gen-py-%s' % (gp_dir))
 
-SCRIPTS = ['SerializationTest.py', 'TestEof.py', 'TestSyntax.py', 'TestSocket.py']
+SCRIPTS = ['TSimpleJSONProtocolTest.py',
+           'SerializationTest.py',
+           'TestEof.py',
+           'TestSyntax.py',
+           'TestSocket.py']
 FRAMED = ["TNonblockingServer"]
 SKIP_ZLIB = ['TNonblockingServer', 'THttpServer']
 SKIP_SSL = ['TNonblockingServer', 'THttpServer']
@@ -55,7 +59,9 @@ EXTRA_DELAY = dict(TProcessPoolServer=3.5)
 PROTOS= [
     'accel',
     'binary',
-    'compact' ]
+    'compact']
+# FIXME: add json
+# disabled because json HTTP test hangs... why?
 
 SERVERS = [
   "TSimpleServer",

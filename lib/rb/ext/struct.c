@@ -627,9 +627,6 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
     rb_raise(rb_eRuntimeError, "too many fields in union!");
   }
 
-  // read field end
-  default_read_field_end(protocol);
-
   // read struct end
   default_read_struct_end(protocol);
 

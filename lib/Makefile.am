@@ -71,6 +71,7 @@ endif
 EXTRA_DIST = \
 			as3 \
 			cocoa \
+			d \
 			delphi \
 			go \
 			javame \

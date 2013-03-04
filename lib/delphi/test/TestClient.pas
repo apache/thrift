@@ -29,6 +29,7 @@ uses
   Thrift,
   Thrift.Protocol.JSON,
   Thrift.Protocol,
+  Thrift.Transport.Pipes,
   Thrift.Transport,
   Thrift.Stream,
   Thrift.Test,
@@ -59,7 +60,7 @@ type
     procedure StartTestGroup( const aGroup : string);
     procedure Expect( aTestResult : Boolean; const aTestInfo : string);
     procedure ReportResults;
-    
+
     procedure ClientTest;
     procedure JSONProtocolReadWriteTest;
   protected
@@ -100,7 +101,10 @@ var
   port : Integer;
   url : string;
   bBuffered : Boolean;
+  bAnonPipe : Boolean;
   bFramed : Boolean;
+  sPipeName : string;
+  hAnonRead, hAnonWrite : THandle;
   s : string;
   n : Integer;
   threads : array of TThread;
@@ -120,10 +124,15 @@ begin
     host := 'localhost';
     port := 9090;
     url := '';
+    sPipeName := '';
+    bAnonPipe := FALSE;
+    hAnonRead := INVALID_HANDLE_VALUE;
+    hAnonWrite := INVALID_HANDLE_VALUE;
     i := 0;
     try
       while ( i < Length(args) ) do
       begin
+
         try
           if ( args[i] = '-h') then
           begin
@@ -138,33 +147,52 @@ begin
             begin
               host := s;
             end;
-          end else
-          if (args[i] = '-u') then
+          end
+          else if (args[i] = '-u') then
           begin
             Inc( i );
             url := args[i];
-          end else
-          if (args[i] = '-n') then
+          end
+          else if (args[i] = '-n') then
           begin
             Inc( i );
             FNumIteration := StrToInt( args[i] );
-          end else
-          if (args[i] = '-b') then
+          end
+          else if (args[i] = '-b') then
           begin
             bBuffered := True;
-            Console.WriteLine('Using buffered transport');
-          end else
-          if (args[i] = '-f' ) or ( args[i] = '-framed') then
+            Console.WriteLine('Buffered transport');
+          end
+          else if (args[i] = '-f' ) or ( args[i] = '-framed') then
           begin
             bFramed := True;
-            Console.WriteLine('Using framed transport');
-          end else
-          if (args[i] = '-t') then
+            Console.WriteLine('Framed transport');
+          end
+          else if (args[i] = '-pipe') then  // -pipe <name>
+          begin
+            Console.WriteLine('Named pipes transport');
+            Inc( i );
+            sPipeName := args[i];
+          end
+          else if (args[i] = '-anon') then  // -anon <hReadPipe> <hWritePipe>
+          begin
+            if Length(args) <= (i+2) then begin
+              Console.WriteLine('Invalid args: -anon <hRead> <hWrite> or use "server.exe -anon"');
+              Halt(1);
+            end;
+            Console.WriteLine('Anonymous pipes transport');
+            Inc( i);
+            hAnonRead := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
+            Inc( i);
+            hAnonWrite := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
+            bAnonPipe := TRUE;
+          end
+          else if (args[i] = '-t') then
           begin
             Inc( i );
             FNumThread := StrToInt( args[i] );
-          end else
-          if (args[i] = '-prot') then  // -prot JSON|binary
+          end
+          else if (args[i] = '-prot') then  // -prot JSON|binary
           begin
             Inc( i );
             s := args[i];
@@ -179,13 +207,22 @@ begin
         finally
           Inc( i );
         end;
+
       end;
+
     except
       on E: Exception do
       begin
         Console.WriteLine( E.Message );
       end;
     end;
+
+    // In the anonymous pipes mode the client is launched by the test server
+    // -> behave nicely and allow for attaching a debugger to this process
+    if bAnonPipe and not IsDebuggerPresent
+    then MessageBox( 0, 'Attach Debugger and/or click OK to continue.',
+                        'Thrift TestClient (Delphi)',
+                        MB_OK or MB_ICONEXCLAMATION);
 
     SetLength( threads, FNumThread);
     dtStart := Now;
@@ -194,19 +231,34 @@ begin
     begin
       if url = '' then
       begin
-        streamtrans := TSocketImpl.Create( host, port );
-        trans := streamtrans;
-        if bBuffered then
-        begin
-          trans := TBufferedTransportImpl.Create( streamtrans );
+        if sPipeName <> '' then begin
+          Console.WriteLine('Using named pipe ('+sPipeName+')');
+          streamtrans := TNamedPipeImpl.Create( sPipeName);
+        end
+        else if bAnonPipe then begin
+          Console.WriteLine('Using anonymous pipes ('+IntToStr(Integer(hAnonRead))+' and '+IntToStr(Integer(hAnonWrite))+')');
+          streamtrans := TAnonymousPipeImpl.Create( hAnonRead, hAnonWrite, FALSE);
+        end
+        else begin
+          Console.WriteLine('Using sockets ('+host+' port '+IntToStr(port)+')');
+          streamtrans := TSocketImpl.Create( host, port );
         end;
 
-        if bFramed then
-        begin
-          trans := TFramedTransportImpl.Create(  trans );
+        trans := streamtrans;
+
+        if bBuffered then begin
+          trans := TBufferedTransportImpl.Create( streamtrans);
+          Console.WriteLine('Using buffered transport');
         end;
-      end else
-      begin
+
+        if bFramed then begin
+          trans := TFramedTransportImpl.Create( trans );
+          Console.WriteLine('Using framed transport');
+        end;
+
+      end
+      else begin
+        Console.WriteLine('Using HTTPClient');
         http := THTTPClientImpl.Create( url );
         trans := http;
       end;

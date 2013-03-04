@@ -287,14 +287,13 @@ begin
     except
       on E: TTransportException do
       begin
-        if FStop then
-        begin
-          FLogDelegate('TSimpleServer was shutting down, caught ' + E.ClassName);
-        end;
+        if FStop
+        then FLogDelegate('TSimpleServer was shutting down, caught ' + E.ToString)
+        else FLogDelegate( E.ToString);
       end;
       on E: Exception do
       begin
-        FLogDelegate( E.ToString );
+        FLogDelegate( E.ToString);
       end;
     end;
     if InputTransport <> nil then

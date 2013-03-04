@@ -84,7 +84,7 @@ class TSimpleServer(TServer):
           self.processor.process(iprot, oprot)
       except TTransport.TTransportException, tx:
         pass
-      except Exception as x:
+      except Exception, x:
         logging.exception(x)
 
       itrans.close()
@@ -108,7 +108,7 @@ class TThreadedServer(TServer):
         t.start()
       except KeyboardInterrupt:
         raise
-      except Exception as x:
+      except Exception, x:
         logging.exception(x)
 
   def handle(self, client):
@@ -121,7 +121,7 @@ class TThreadedServer(TServer):
         self.processor.process(iprot, oprot)
     except TTransport.TTransportException, tx:
       pass
-    except Exception as x:
+    except Exception, x:
       logging.exception(x)
 
     itrans.close()
@@ -161,7 +161,7 @@ class TThreadPoolServer(TServer):
         self.processor.process(iprot, oprot)
     except TTransport.TTransportException, tx:
       pass
-    except Exception as x:
+    except Exception, x:
       logging.exception(x)
 
     itrans.close()
@@ -174,7 +174,7 @@ class TThreadPoolServer(TServer):
         t = threading.Thread(target=self.serveThread)
         t.setDaemon(self.daemon)
         t.start()
-      except Exception as x:
+      except Exception, x:
         logging.exception(x)
 
     # Pump the socket for clients
@@ -183,7 +183,7 @@ class TThreadPoolServer(TServer):
       try:
         client = self.serverTransport.accept()
         self.clients.put(client)
-      except Exception as x:
+      except Exception, x:
         logging.exception(x)
 
 
@@ -208,7 +208,7 @@ class TForkingServer(TServer):
     def try_close(file):
       try:
         file.close()
-      except IOError as e:
+      except IOError, e:
         logging.warning(e, exc_info=True)
 
     self.serverTransport.listen()
@@ -242,7 +242,7 @@ class TForkingServer(TServer):
                 self.processor.process(iprot, oprot)
             except TTransport.TTransportException, tx:
               pass
-            except Exception as e:
+            except Exception, e:
               logging.exception(e)
               ecode = 1
           finally:
@@ -253,7 +253,7 @@ class TForkingServer(TServer):
 
       except TTransport.TTransportException, tx:
         pass
-      except Exception as x:
+      except Exception, x:
         logging.exception(x)
 
   def collect_children(self):

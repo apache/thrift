@@ -17,12 +17,9 @@
  * under the License.
  */
 
-#include "Fcntl.h"
+#include "WinFcntl.h"
 
-// Win32
-#include <Winsock2.h>
-
-int fcntl(int fd, int cmd, int flags)
+int fcntl(SOCKET fd, int cmd, int flags)
 {
     if(cmd != F_GETFL && cmd != F_SETFL)
     {

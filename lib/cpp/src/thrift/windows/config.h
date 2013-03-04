@@ -31,7 +31,7 @@
 #pragma warning(disable: 4996) // Depreciated posix name.
 #pragma warning(disable: 4250) // Inherits via dominance.
 
-#define VERSION "0.9.0-dev"
+#define VERSION "1.0.0-dev"
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SYS_STAT_H 1
 
@@ -126,13 +126,12 @@ inline int poll_win32(LPWSAPOLLFD fdArray, ULONG nfds, INT timeout)
 
   int sktready = select(1, read_fds_ptr, write_fds_ptr, NULL, time_out_ptr);
   if(sktready > 0) {
-    for(ULONG i=0; i<read_fds.fd_count; i++) {
+    for(ULONG i=0; i<nfds; i++) {
+      fdArray[i].revents = 0;
       if(FD_ISSET(fdArray[i].fd, &read_fds))
-        fdArray[i].revents = POLLIN;
-    }
-    for(ULONG i=0; i<write_fds.fd_count; i++) {
+        fdArray[i].revents |= POLLIN;
       if(FD_ISSET(fdArray[i].fd, &write_fds))
-        fdArray[i].revents = POLLOUT;
+        fdArray[i].revents |= POLLOUT;
     }
   }
   return sktready;

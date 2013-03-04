@@ -360,7 +360,7 @@ class TNonblockingServer::TConnection::Task: public Runnable {
       GlobalOutput.printf("TNonblockingServer: client died: %s", ttx.what());
     } catch (const bad_alloc&) {
       GlobalOutput("TNonblockingServer: caught bad_alloc exception.");
-      exit(-1);
+      exit(1);
     } catch (const std::exception& x) {
       GlobalOutput.printf("TNonblockingServer: process() exception: %s: %s",
                           typeid(x).name(), x.what());
@@ -615,6 +615,10 @@ void TNonblockingServer::TConnection::transition() {
       return;
     } else {
       try {
+	if (serverEventHandler_ != NULL) {
+	    serverEventHandler_->processContext(connectionContext_,
+						getTSocket());
+	}
         // Invoke the processor
         processor_->process(inputProtocol_, outputProtocol_,
                             connectionContext_);
@@ -1118,7 +1122,7 @@ void TNonblockingServer::listenSocket(int s) {
 void TNonblockingServer::setThreadManager(boost::shared_ptr<ThreadManager> threadManager) {
   threadManager_ = threadManager;
   if (threadManager != NULL) {
-    threadManager->setExpireCallback(std::tr1::bind(&TNonblockingServer::expireClose, this, std::tr1::placeholders::_1));
+    threadManager->setExpireCallback(apache::thrift::stdcxx::bind(&TNonblockingServer::expireClose, this, apache::thrift::stdcxx::placeholders::_1));
     threadPoolProcessing_ = true;
   } else {
     threadPoolProcessing_ = false;

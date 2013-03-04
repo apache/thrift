@@ -48,7 +48,8 @@ public class TNonblockingServer extends AbstractNonblockingServer {
   }
 
   // Flag for stopping the server
-  private volatile boolean stopped_ = true;
+  // Please see THRIFT-1795 for the usage of this flag
+  private volatile boolean stopped_ = false;
 
   private SelectAcceptThread selectAcceptThread_;
 
@@ -68,7 +69,6 @@ public class TNonblockingServer extends AbstractNonblockingServer {
     // start the selector
     try {
       selectAcceptThread_ = new SelectAcceptThread((TNonblockingServerTransport)serverTransport_);
-      stopped_ = false;
       selectAcceptThread_.start();
       return true;
     } catch (IOException e) {

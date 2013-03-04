@@ -32,7 +32,7 @@ module Thrift
 
     def open?; not @input.closed? or not @output.closed? end
     def read(sz); @input.read(sz) end
-    def write(buf); @output.write(buf) end
+    def write(buf); @output.write(Bytes.force_binary_encoding(buf)) end
     def close; @input.close; @output.close end
     def to_io; @input end # we're assuming this is used in a IO.select for reading
   end

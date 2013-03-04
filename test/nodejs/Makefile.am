@@ -27,7 +27,7 @@ clean-local:
 	$(RM) -r gen-nodejs
 
 server: stubs
-	NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift node server.js
+	NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift:$(NODE_PATH) node server.js
 
 client: stubs
-	NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift node client.js
+	NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift:$(NODE_PATH) node client.js

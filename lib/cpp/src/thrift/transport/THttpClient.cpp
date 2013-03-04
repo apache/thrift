@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <limits>
 #include <cstdlib>
 #include <sstream>
 #include <boost/algorithm/string.hpp>
@@ -49,7 +50,7 @@ void THttpClient::parseHeader(char* header) {
     if (boost::iends_with(value, "chunked")) {
       chunked_ = true;
     }
-  } else if (boost::istarts_with(header, "Content-Length")) { 
+  } else if (boost::istarts_with(header, "Content-Length")) {
     chunked_ = false;
     contentLength_ = atoi(value);
   }
@@ -101,8 +102,10 @@ void THttpClient::flush() {
     CRLF;
   string header = h.str();
 
+  if(header.size() > (std::numeric_limits<uint32_t>::max)())
+    throw TTransportException("Header too big");
   // Write the header, then the data, then flush
-  transport_->write((const uint8_t*)header.c_str(), header.size());
+  transport_->write((const uint8_t*)header.c_str(), static_cast<uint32_t>(header.size()));
   transport_->write(buf, len);
   transport_->flush();
 

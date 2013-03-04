@@ -18,10 +18,10 @@
 -->
 <project name="tutorial" default="tutorial" basedir=".">
 
-  <description>Thrift Tutorial</description>
+  <description>Thrift Java Tutorial</description>
 
   <property name="src" location="src" />
-  <property name="gen" location="../gen-java" />
+  <property name="gen" location="gen-java" />
   <property name="build" location="build" />
 
   <path id="libs.classpath">
@@ -37,23 +37,76 @@
     <path refid="libs.classpath" />
     <pathelement path="${gen}" />
   </path>
-
+  <path id="tutorial.classpath">
+    <path refid="build.classpath" />
+    <pathelement path="${build}" />
+    <pathelement path="tutorial.jar" />
+  </path>
+  
   <target name="init">
     <tstamp />
     <mkdir dir="${build}"/>
+    <mkdir dir="${build}/log"/>
   </target>
 
-  <target name="compile" depends="init">
+  <target name="compile" depends="init, generate">
     <javac srcdir="${gen}" destdir="${build}" classpathref="libs.classpath" />
     <javac srcdir="${src}" destdir="${build}" classpathref="build.classpath" />
   </target>
 
-  <target name="tutorial" depends="compile">
+  <target name="test" depends="tutorial" />
+
+  <target name="tutorial" description="Run the tutorial" depends="compile">
     <jar jarfile="tutorial.jar" basedir="${build}"/>
+    <parallel>
+      <java classname="JavaServer" fork="true" timeout="10000"
+        classpathref="tutorial.classpath" failonerror="false" output="${build}/log/tutorial.log">
+      </java>
+      <sequential>
+        <sleep seconds="2"/>
+        <echo>tutorial client simple:</echo>
+        <java classname="JavaClient"
+          classpathref="tutorial.classpath" failonerror="true">
+          <arg line="simple"/>
+        </java>
+        <echo>tutorial client secure:</echo>
+        <java classname="JavaClient"
+          classpathref="tutorial.classpath" failonerror="true">
+          <arg line="secure"/>
+        </java>
+      </sequential>
+    </parallel>
+  </target>
+
+  <target name="generate">
+    <!-- Generate the thrift gen-java source -->
+    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+      <arg line="--gen java -r  ../tutorial.thrift"/>
+    </exec>
+  </target>
+
+  <target name="tutorialclient" description="Run a tutorial client" depends="compile">
+    <echo>tutorial client simple:</echo>
+    <java classname="JavaClient"
+      classpathref="tutorial.classpath" failonerror="true">
+      <arg line="simple"/>
+    </java>
+    <echo>tutorial client secure:</echo>
+    <java classname="JavaClient"
+      classpathref="tutorial.classpath" failonerror="true">
+      <arg line="secure"/>
+    </java>
+  </target>
+
+  <target name="tutorialserver" description="Run a tutorial server" depends="compile">
+      <java classname="JavaServer" fork="true"
+        classpathref="tutorial.classpath" failonerror="false" output="${build}/log/tutorial.log">
+      </java>
   </target>
 
   <target name="clean">
     <delete dir="${build}" />
+    <delete dir="${gen}"/>
     <delete file="tutorial.jar" />
   </target>
 

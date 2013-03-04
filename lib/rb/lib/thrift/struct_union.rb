@@ -101,7 +101,7 @@ module Thrift
         end
         iprot.read_set_end
       else
-        value = iprot.read_type(field[:type])
+        value = iprot.read_type(field)
       end
       value
     end
@@ -110,7 +110,7 @@ module Thrift
       if is_container? field[:type]
         write_container(oprot, value, field)
       else
-        oprot.write_type(field[:type], value)
+        oprot.write_type(field, value)
       end
     end
 

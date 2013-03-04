@@ -32,8 +32,7 @@ module Thrift
 
       # Pre-allocated read buffer for fixed-size read methods. Needs to be at least 8 bytes long for
       # read_i64() and read_double().
-      @rbuf = "\0" * 8
-      @rbuf.force_encoding("BINARY") if @rbuf.respond_to?(:force_encoding)
+      @rbuf = Bytes.empty_byte_buffer(8)
     end
 
     def write_message_begin(name, type, seqid)
@@ -108,8 +107,13 @@ module Thrift
     end
 
     def write_string(str)
-      write_i32(str.length)
-      trans.write(str)
+      buf = Bytes.convert_to_utf8_byte_buffer(str)
+      write_binary(buf)
+    end
+
+    def write_binary(buf)
+      write_i32(buf.bytesize)
+      trans.write(buf)
     end
 
     def read_message_begin
@@ -214,9 +218,13 @@ module Thrift
     end
 
     def read_string
-      sz = read_i32
-      dat = trans.read_all(sz)
-      dat
+      buffer = read_binary
+      Bytes.convert_to_string(buffer)
+    end
+
+    def read_binary
+      size = read_i32
+      trans.read_all(size)
     end
 
   end

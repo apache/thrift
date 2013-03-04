@@ -29,8 +29,15 @@
 
 #include "platform.h"
 #include "t_oop_generator.h"
-using namespace std;
 
+using std::map;
+using std::ofstream;
+using std::ostringstream;
+using std::string;
+using std::stringstream;
+using std::vector;
+
+static const string endl = "\n";  // avoid ostream << std::endl flushes
 
 /**
  * Java code generator.
@@ -61,6 +68,9 @@ public:
 
     iter = parsed_options.find("android_legacy");
     android_legacy_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("sorted_containers");
+    sorted_containers_ = (iter != parsed_options.end());
 
     iter = parsed_options.find("java5");
     java5_ = (iter != parsed_options.end());
@@ -251,7 +261,7 @@ public:
   std::string java_type_imports();
   std::string type_name(t_type* ttype, bool in_container=false, bool in_init=false, bool skip_generic=false);
   std::string base_type_name(t_base_type* tbase, bool in_container=false);
-  std::string declare_field(t_field* tfield, bool init=false);
+  std::string declare_field(t_field* tfield, bool init=false, bool comment=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string function_signature_async(t_function* tfunction, bool use_base_method = false, std::string prefix="");
   std::string argument_list(t_struct* tstruct, bool include_types = true);
@@ -292,6 +302,7 @@ public:
   bool gen_hash_code_;
   bool android_legacy_;
   bool java5_;
+  bool sorted_containers_;
 };
 
 
@@ -341,8 +352,14 @@ string t_java_generator::java_package() {
  */
 string t_java_generator::java_type_imports() {
   string hash_builder;
+  string tree_set_and_map;
   if (gen_hash_code_) {
     hash_builder = "import org.apache.commons.lang.builder.HashCodeBuilder;\n";
+  }
+  if (sorted_containers_) {
+    tree_set_and_map = string() + 
+      "import java.util.TreeSet;\n" +
+      "import java.util.TreeMap;\n";
   }
 
   return
@@ -364,6 +381,7 @@ string t_java_generator::java_type_imports() {
     "import java.util.Set;\n" +
     "import java.util.HashSet;\n" +
     "import java.util.EnumSet;\n" +
+    tree_set_and_map + 
     "import java.util.Collections;\n" +
     "import java.util.BitSet;\n" +
     "import java.nio.ByteBuffer;\n"
@@ -1245,7 +1263,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   if (is_exception) {
     out << "extends TException ";
   }
-  out << "implements org.apache.thrift.TBase<" << tstruct->get_name() << ", " << tstruct->get_name() << "._Fields>, java.io.Serializable, Cloneable";
+  out << "implements org.apache.thrift.TBase<" << tstruct->get_name() << ", " << tstruct->get_name() << "._Fields>, java.io.Serializable, Cloneable, Comparable<" << tstruct->get_name() << ">";
 
   out << " ";
 
@@ -1274,7 +1292,7 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
       generate_java_doc(out, *m_iter);
       indent(out) << "public ";
     }
-    out << declare_field(*m_iter, false) << endl;
+    out << declare_field(*m_iter, false, true) << endl;
   }
 
   out << endl;
@@ -1577,6 +1595,7 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
 }
 
 void t_java_generator::generate_java_struct_compare_to(ofstream& out, t_struct* tstruct) {
+  indent(out) << "@Override" << endl;
   indent(out) << "public int compareTo(" << type_name(tstruct) << " other) {" << endl;
   indent_up();
 
@@ -1586,20 +1605,19 @@ void t_java_generator::generate_java_struct_compare_to(ofstream& out, t_struct* 
   out << endl;
 
   indent(out) << "int lastComparison = 0;" << endl;
-  indent(out) << type_name(tstruct) << " typedOther = (" << type_name(tstruct) << ")other;" << endl;
   out << endl;
 
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_field* field = *m_iter;
-    indent(out) << "lastComparison = Boolean.valueOf(" << generate_isset_check(field) << ").compareTo(typedOther." << generate_isset_check(field) << ");" << endl;
+    indent(out) << "lastComparison = Boolean.valueOf(" << generate_isset_check(field) << ").compareTo(other." << generate_isset_check(field) << ");" << endl;
     indent(out) << "if (lastComparison != 0) {" << endl;
     indent(out) << "  return lastComparison;" << endl;
     indent(out) << "}" << endl;
 
     indent(out) << "if (" << generate_isset_check(field) << ") {" << endl;
-    indent(out) << "  lastComparison = org.apache.thrift.TBaseHelper.compareTo(this." << field->get_name() << ", typedOther." << field->get_name() << ");" << endl;
+    indent(out) << "  lastComparison = org.apache.thrift.TBaseHelper.compareTo(this." << field->get_name() << ", other." << field->get_name() << ");" << endl;
     indent(out) << "  if (lastComparison != 0) {" << endl;
     indent(out) << "    return lastComparison;" << endl;
     indent(out) << "  }" << endl;
@@ -2879,10 +2897,15 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
 
   indent(out) << prefix << " = new " << type_name(ttype, false, true);
   // size the collection correctly
-  out << "("
-    << (ttype->is_list() ? "" : "2*" )
-    << obj << ".size"
-    << ");" << endl;
+  if (sorted_containers_ && (ttype->is_map() || ttype->is_set())) {
+    // TreeSet and TreeMap don't have any constructor which takes a capactity as an argument
+    out << "();" << endl;
+  } else {
+    out << "("
+      << (ttype->is_list() ? "" : "2*" )
+      << obj << ".size"
+      << ");" << endl;
+  }
 
   // For loop iterates over elements
   string i = tmp("_i");
@@ -3190,7 +3213,11 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   } else if (ttype->is_map()) {
     t_map* tmap = (t_map*) ttype;
     if (in_init) {
-      prefix = "HashMap";
+      if (sorted_containers_) {
+        prefix = "TreeMap";
+      } else {
+        prefix = "HashMap";
+      }
     } else {
       prefix = "Map";
     }
@@ -3200,7 +3227,11 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*) ttype;
     if (in_init) {
-      prefix = "HashSet";
+      if (sorted_containers_) {
+        prefix = "TreeSet";
+      } else { 
+        prefix = "HashSet";
+      }
     } else {
       prefix = "Set";
     }
@@ -3269,7 +3300,7 @@ string t_java_generator::base_type_name(t_base_type* type,
  * @param tfield The field
  * @param init Whether to initialize the field
  */
-string t_java_generator::declare_field(t_field* tfield, bool init) {
+string t_java_generator::declare_field(t_field* tfield, bool init, bool comment) {
   // TODO(mcslee): do we ever need to initialize the field?
   string result = type_name(tfield->get_type()) + " " + tfield->get_name();
   if (init) {
@@ -3306,11 +3337,14 @@ string t_java_generator::declare_field(t_field* tfield, bool init) {
       result += " = new " + type_name(ttype, false, true) + "()";;
     }
   }
-  result += "; // ";
-  if (tfield->get_req() == t_field::T_OPTIONAL) {
-    result += "optional";
-  } else {
-    result += "required";
+  result += ";";
+  if (comment) {
+    result += " // ";
+    if (tfield->get_req() == t_field::T_OPTIONAL) {
+      result += "optional";
+    } else {
+      result += "required";
+    }
   }
   return result;
 }
@@ -4194,5 +4228,7 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    hashcode:        Generate quality hashCode methods.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
 "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
+"    sorted_containers:\n"
+"                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of set/map.\n"
 )
 

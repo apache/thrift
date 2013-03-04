@@ -22,11 +22,12 @@
 
   <property name="src" location="src" />
   <property name="javasrc" location="../java/src" />
-  <property name="gen" location="../gen-java" />
+  <property name="gen" location="../java/gen-java" />
   <property name="build" location="build" />
 
   <!-- the root directory, where you unpack thrift distibution (e.g. thrift-0.x.x.tar.gz) -->
   <property name="thrift.dir" location="../../" />
+  <!-- JavaScript tutorial depends on the java tutorial thrift handler and server infrastructure -->
   <property name="thrift.java.dir" location="${thrift.dir}/lib/java" />
 
   <path id="libs.classpath">
@@ -61,19 +62,28 @@
     </javac>
   </target>
 
+  <target name="test" depends="tutorial" />
+
   <target name="tutorial" depends="compile">
     <jar jarfile="tutorial-js.jar" basedir="${build}"/>
   </target>
 
-  <target name="test" description="run the test server" depends="tutorial">
+  <target name="tutorialserver" description="run the test server" depends="tutorial, generate">
     <java classname="Httpd" fork="true"
       classpathref="build.classpath" failonerror="true">
       <arg value="../../" />
     </java>
   </target>
 
+  <target name="generate">
+    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+      <arg line="--gen js -r  ../tutorial.thrift"/>
+    </exec>
+  </target>
+  
   <target name="clean">
     <delete dir="${build}" />
+    <delete dir="gen-js"/>
     <delete file="tutorial-js.jar" />
   </target>
 

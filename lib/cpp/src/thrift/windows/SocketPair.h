@@ -28,6 +28,9 @@
 #error This is a MSVC header only.
 #endif
 
-int socketpair(int d, int type, int protocol, int sv[2]);
+// Win32
+#include <Winsock2.h>
+
+int socketpair(int d, int type, int protocol, SOCKET sv[2]);
 
 #endif // _THRIFT_WINDOWS_SOCKETPAIR_H_

@@ -22,9 +22,6 @@
 #endif
 #include <cstring>
 #include <sstream>
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
@@ -32,9 +29,6 @@
 #include <sys/poll.h>
 #endif
 #include <sys/types.h>
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -129,7 +123,7 @@ TSocket::TSocket() :
   cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
 }
 
-TSocket::TSocket(int socket) :
+TSocket::TSocket(SOCKET socket) :
   host_(""),
   port_(0),
   path_(""),
@@ -151,7 +145,7 @@ TSocket::~TSocket() {
 }
 
 bool TSocket::isOpen() {
-  return (socket_ >= 0);
+  return (socket_ != -1);
 }
 
 bool TSocket::peek() {
@@ -159,12 +153,12 @@ bool TSocket::peek() {
     return false;
   }
   uint8_t buf;
-  int r = recv(socket_, cast_sockopt(&buf), 1, MSG_PEEK);
+  int r = static_cast<int>(recv(socket_, cast_sockopt(&buf), 1, MSG_PEEK));
   if (r == -1) {
     int errno_copy = errno;
     #if defined __FreeBSD__ || defined __MACH__
     /* shigin:
-     * freebsd returns -1 and ECONNRESET if socket was closed by 
+     * freebsd returns -1 and ECONNRESET if socket was closed by
      * the other side
      */
     if (errno_copy == ECONNRESET)
@@ -264,7 +258,7 @@ void TSocket::openConnection(struct addrinfo *res) {
 #endif
 
   } else {
-    ret = connect(socket_, res->ai_addr, res->ai_addrlen);
+    ret = connect(socket_, res->ai_addr, static_cast<int>(res->ai_addrlen));
   }
 
   // success case
@@ -319,7 +313,7 @@ void TSocket::openConnection(struct addrinfo *res) {
   fcntl(socket_, F_SETFL, flags);
 
   if (path_.empty()) {
-    setCachedAddress(res->ai_addr, res->ai_addrlen);
+    setCachedAddress(res->ai_addr, static_cast<socklen_t>(res->ai_addrlen));
   }
 }
 
@@ -382,7 +376,7 @@ void TSocket::local_open(){
     try {
       openConnection(res);
       break;
-    } catch (TTransportException& ttx) {
+    } catch (TTransportException&) {
       if (res->ai_next) {
         close();
       } else {
@@ -398,7 +392,7 @@ void TSocket::local_open(){
 }
 
 void TSocket::close() {
-  if (socket_ >= 0) {
+  if (socket_ != -1) {
 
 #ifdef _WIN32
       shutdown(socket_, SD_BOTH);
@@ -413,14 +407,14 @@ void TSocket::close() {
 }
 
 void TSocket::setSocketFD(int socket) {
-  if (socket_ >= 0) {
+  if (socket_ != -1) {
     close();
   }
   socket_ = socket;
 }
 
 uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
-  if (socket_ < 0) {
+  if (socket_ == -1) {
     throw TTransportException(TTransportException::NOT_OPEN, "Called read on non-open socket");
   }
 
@@ -448,7 +442,7 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
     // an EAGAIN is due to a timeout or an out-of-resource condition.
     begin.tv_sec = begin.tv_usec = 0;
   }
-  int got = recv(socket_, cast_sockopt(buf), len, 0);
+  int got = static_cast<int>(recv(socket_, cast_sockopt(buf), len, 0));
   int errno_copy = errno; //gettimeofday can change errno
   ++g_socket_syscalls;
 
@@ -463,8 +457,9 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
       // check if this is the lack of resources or timeout case
       struct timeval end;
       gettimeofday(&end, NULL);
-      uint32_t readElapsedMicros =  (((end.tv_sec - begin.tv_sec) * 1000 * 1000)
-                                     + (((uint64_t)(end.tv_usec - begin.tv_usec))));
+      uint32_t readElapsedMicros =  static_cast<uint32_t>(
+         ((end.tv_sec - begin.tv_sec) * 1000 * 1000)
+         + (((uint64_t)(end.tv_usec - begin.tv_usec))));
 
       if (!eagainThresholdMicros || (readElapsedMicros < eagainThresholdMicros)) {
         if (retries++ < maxRecvRetries_) {
@@ -489,7 +484,7 @@ uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
     #if defined __FreeBSD__ || defined __MACH__
     if (errno_copy == ECONNRESET) {
       /* shigin: freebsd doesn't follow POSIX semantic of recv and fails with
-       * ECONNRESET if peer performed shutdown 
+       * ECONNRESET if peer performed shutdown
        * edhall: eliminated close() since we do that in the destructor.
        */
       return 0;
@@ -551,7 +546,7 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
 }
 
 uint32_t TSocket::write_partial(const uint8_t* buf, uint32_t len) {
-  if (socket_ < 0) {
+  if (socket_ == -1) {
     throw TTransportException(TTransportException::NOT_OPEN, "Called write on non-open socket");
   }
 
@@ -564,7 +559,7 @@ uint32_t TSocket::write_partial(const uint8_t* buf, uint32_t len) {
   flags |= MSG_NOSIGNAL;
 #endif // ifdef MSG_NOSIGNAL
 
-  int b = send(socket_, const_cast_sockopt(buf + sent), len - sent, flags);
+  int b = static_cast<int>(send(socket_, const_cast_sockopt(buf + sent), len - sent, flags));
   ++g_socket_syscalls;
 
   if (b < 0) {
@@ -582,7 +577,7 @@ uint32_t TSocket::write_partial(const uint8_t* buf, uint32_t len) {
 
     throw TTransportException(TTransportException::UNKNOWN, "write() send()", errno_copy);
   }
-  
+
   // Fail on blocked send
   if (b == 0) {
     throw TTransportException(TTransportException::NOT_OPEN, "Socket send returned 0.");
@@ -609,7 +604,7 @@ void TSocket::setPort(int port) {
 void TSocket::setLinger(bool on, int linger) {
   lingerOn_ = on;
   lingerVal_ = linger;
-  if (socket_ < 0) {
+  if (socket_ == -1) {
     return;
   }
 
@@ -623,7 +618,7 @@ void TSocket::setLinger(bool on, int linger) {
 
 void TSocket::setNoDelay(bool noDelay) {
   noDelay_ = noDelay;
-  if (socket_ < 0 || !path_.empty()) {
+  if (socket_ == -1 || !path_.empty()) {
     return;
   }
 
@@ -649,7 +644,7 @@ void TSocket::setRecvTimeout(int ms) {
   }
   recvTimeout_ = ms;
 
-  if (socket_ < 0) {
+  if (socket_ == -1) {
     return;
   }
 
@@ -674,7 +669,7 @@ void TSocket::setSendTimeout(int ms) {
   }
   sendTimeout_ = ms;
 
-  if (socket_ < 0) {
+  if (socket_ == -1) {
     return;
   }
 
@@ -708,7 +703,7 @@ std::string TSocket::getPeerHost() {
     struct sockaddr* addrPtr;
     socklen_t addrLen;
 
-    if (socket_ < 0) {
+    if (socket_ == -1) {
       return host_;
     }
 
@@ -742,7 +737,7 @@ std::string TSocket::getPeerAddress() {
     struct sockaddr* addrPtr;
     socklen_t addrLen;
 
-    if (socket_ < 0) {
+    if (socket_ == -1) {
       return peerAddress_;
     }
 
@@ -810,7 +805,7 @@ sockaddr* TSocket::getCachedAddress(socklen_t* len) const {
   default:
     return NULL;
   }
-} 
+}
 
 bool TSocket::useLowMinRto_ = false;
 void TSocket::setUseLowMinRto(bool useLowMinRto) {

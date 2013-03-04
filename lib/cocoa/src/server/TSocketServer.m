@@ -96,7 +96,7 @@ NSString * const kTSockerServer_TransportKey = @"TSockerServer_Transport";
 
 
 - (void) dealloc {
-  [[NSNotificationCenter defaultCenter] removeObject: self];
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
   [mInputProtocolFactory release_stub];
   [mOutputProtocolFactory release_stub];
   [mProcessorFactory release_stub];

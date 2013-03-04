@@ -24,13 +24,13 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <thrift/thrift.h>
-#include <thrift/processor/thrift_processor.h>
-#include <thrift/transport/thrift_server_socket.h>
+#include <thrift/c_glib/thrift.h>
+#include <thrift/c_glib/processor/thrift_processor.h>
+#include <thrift/c_glib/transport/thrift_server_socket.h>
 
 #define TEST_PORT 51199
 
-#include <thrift/server/thrift_simple_server.c>
+#include <thrift/c_glib/server/thrift_simple_server.c>
 
 /* create a rudimentary processor */
 #define TEST_PROCESSOR_TYPE (test_processor_get_type ())

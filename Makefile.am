@@ -19,7 +19,7 @@
 
 ACLOCAL_AMFLAGS = -I ./aclocal
 
-SUBDIRS = compiler/cpp lib
+SUBDIRS = compiler/cpp lib tutorial
 
 if WITH_TESTS
 SUBDIRS += test

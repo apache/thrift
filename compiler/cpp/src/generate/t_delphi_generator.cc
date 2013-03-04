@@ -35,8 +35,15 @@
 #include "platform.h"
 #include "t_oop_generator.h"
 
-using namespace std;
+using std::map;
+using std::ofstream;
+using std::ostream;
+using std::ostringstream;
+using std::string;
+using std::stringstream;
+using std::vector;
 
+static const string endl = "\n";  // avoid ostream << std::endl flushes
 
 class t_delphi_generator : public t_oop_generator
 {
@@ -78,7 +85,8 @@ class t_delphi_generator : public t_oop_generator
     void generate_delphi_property_reader_definition(ostream& out, t_field* tfield, bool is_xception_class);
     void generate_delphi_property_writer_definition(ostream& out, t_field* tfield, bool is_xception_class);
     void generate_delphi_property_reader_impl(ostream& out, std::string cls_prefix, std::string name, t_type* type, t_field* tfield, std::string fieldPrefix, bool is_xception_class);
-    void generate_delphi_property_writer_impl(ostream& out, std::string cls_prefix, std::string name, t_type* type, t_field* tfield, std::string fieldPrefix, bool is_xception_class, bool is_xception_factory, std::string xception_factroy_name);
+    void generate_delphi_property_writer_impl(ostream& out, std::string cls_prefix, std::string name, t_type* type, t_field* tfield, std::string fieldPrefix, bool is_xception_class, bool is_union, bool is_xception_factory, std::string xception_factroy_name);
+    void generate_delphi_clear_union_value(ostream& out, std::string cls_prefix, std::string name, t_type* type, t_field* tfield, std::string fieldPrefix, bool is_xception_class, bool is_union, bool is_xception_factory, std::string xception_factroy_name);
     void generate_delphi_isset_reader_impl(ostream& out, std::string cls_prefix, std::string name, t_type* type, t_field* tfield, std::string fieldPrefix, bool is_xception);
     void generate_delphi_struct_writer_impl(ostream& out, std::string cls_prefix, t_struct* tstruct, bool is_exception);
     void generate_delphi_struct_result_writer_impl(ostream& out, std::string cls_prefix, t_struct* tstruct, bool is_exception);
@@ -995,13 +1003,29 @@ void t_delphi_generator::generate_delphi_struct_impl( ostream& out, string cls_p
   indent_down_impl();
   indent_impl(out) << "end;" << endl << endl;
 
+  if ( tstruct->is_union() ) {
+    indent_impl(out) << "procedure "  << cls_prefix << cls_nm <<  "." << "ClearUnionValues;" << endl;
+    indent_impl(out) << "begin" << endl;
+    indent_up_impl();
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* t = (*m_iter)->get_type();
+      while (t->is_typedef()) {
+        t = ((t_typedef*)t)->get_type();
+      }
+
+      generate_delphi_clear_union_value( out, cls_prefix, cls_nm, t, *m_iter, "F", is_exception, tstruct->is_union(), is_x_factory, exception_factory_name);
+    }
+    indent_down_impl();
+    indent_impl(out) << "end;" << endl << endl;
+  }
+
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = (*m_iter)->get_type();
     while (t->is_typedef()) {
       t = ((t_typedef*)t)->get_type();
     }
     generate_delphi_property_reader_impl( out, cls_prefix, cls_nm, t, *m_iter, "F", is_exception);
-    generate_delphi_property_writer_impl( out, cls_prefix, cls_nm, t, *m_iter, "F", is_exception , is_x_factory, exception_factory_name);
+    generate_delphi_property_writer_impl( out, cls_prefix, cls_nm, t, *m_iter, "F", is_exception, tstruct->is_union(), is_x_factory, exception_factory_name);
     if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
       generate_delphi_isset_reader_impl( out, cls_prefix, cls_nm, t, *m_iter, "F", is_exception);
     }
@@ -1141,6 +1165,12 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struc
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_delphi_property_reader_definition( out, *m_iter, is_exception);
     generate_delphi_property_writer_definition( out, *m_iter, is_exception);
+  }
+
+  if (tstruct->is_union()) {
+    out << endl;
+    indent(out) << "// Clear values(for union's property setter)" << endl;
+    indent(out) << "procedure ClearUnionValues;" << endl;
   }
 
   if (members.size() > 0) {
@@ -2510,7 +2540,21 @@ void t_delphi_generator::generate_delphi_isset_reader_definition(ostream& out, t
   indent(out) << "function Get__isset_" << prop_name( tfield, is_xception) << ": Boolean;" << endl;
 }
 
-void t_delphi_generator::generate_delphi_property_writer_impl(ostream& out, std::string cls_prefix, std::string name, t_type* type, t_field* tfield, std::string fieldPrefix, bool is_xception_class, bool is_xception_factory, std::string xception_factroy_name) {
+void t_delphi_generator::generate_delphi_clear_union_value(ostream& out, std::string cls_prefix, std::string name, t_type* type, t_field* tfield, std::string fieldPrefix, bool is_xception_class, bool is_union, bool is_xception_factory, std::string xception_factroy_name) {
+  (void) type;
+
+  t_type * ftype = tfield->get_type();
+  bool is_xception = ftype->is_xception();
+
+  indent_impl(out) << "if F__isset_" << prop_name(tfield, is_xception_class) << " then begin" << endl;
+  indent_up_impl();
+  indent_impl(out) << "F__isset_" << prop_name(tfield, is_xception_class) << " := False;" << endl;
+  indent_impl(out) << fieldPrefix << prop_name(tfield, is_xception_class) << " := " << "Default( " << type_name(ftype,false,true,is_xception,true) << ");" << endl;
+  indent_down_impl();
+  indent_impl(out) << "end;" << endl;
+}
+
+void t_delphi_generator::generate_delphi_property_writer_impl(ostream& out, std::string cls_prefix, std::string name, t_type* type, t_field* tfield, std::string fieldPrefix, bool is_xception_class, bool is_union, bool is_xception_factory, std::string xception_factroy_name) {
   (void) type;
 
   t_type * ftype = tfield->get_type();
@@ -2519,6 +2563,9 @@ void t_delphi_generator::generate_delphi_property_writer_impl(ostream& out, std:
   indent_impl(out) << "procedure " << cls_prefix << name << "." << "Set" << prop_name(tfield, is_xception_class) << "( const Value: " << type_name(ftype,false,true,is_xception,true) << ");" << endl;
   indent_impl(out) << "begin" << endl;
   indent_up_impl();
+  if ( is_union ) {
+    indent_impl(out) << "ClearUnionValues;" << endl;
+  }
   if (tfield->get_req() != t_field::T_REQUIRED) {
     indent_impl(out) << "F__isset_" << prop_name(tfield, is_xception_class) << " := True;" << endl;
   }

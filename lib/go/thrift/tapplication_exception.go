@@ -32,6 +32,9 @@ const (
   MISSING_RESULT                 = 5
   INTERNAL_ERROR                 = 6
   PROTOCOL_ERROR                 = 7
+  INVALID_TRANSFORM              = 8
+  INVALID_PROTOCOL               = 9
+  UNSUPPORTED_CLIENT_TYPE        = 10
 )
 
 

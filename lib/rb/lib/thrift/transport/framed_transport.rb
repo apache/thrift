@@ -22,8 +22,8 @@ module Thrift
   class FramedTransport < BaseTransport
     def initialize(transport, read=true, write=true)
       @transport = transport
-      @rbuf      = ''
-      @wbuf      = ''
+      @rbuf      = Bytes.empty_byte_buffer
+      @wbuf      = Bytes.empty_byte_buffer
       @read      = read
       @write     = write
       @index      = 0
@@ -44,12 +44,12 @@ module Thrift
     def read(sz)
       return @transport.read(sz) unless @read
 
-      return '' if sz <= 0
+      return Bytes.empty_byte_buffer if sz <= 0
 
       read_frame if @index >= @rbuf.length
 
       @index += sz
-      @rbuf.slice(@index - sz, sz) || ''
+      @rbuf.slice(@index - sz, sz) || Bytes.empty_byte_buffer
     end
 
     def read_byte
@@ -60,7 +60,7 @@ module Thrift
       # The read buffer has some data now, read a single byte. Using get_string_byte() avoids
       # allocating a temp string of size 1 unnecessarily.
       @index += 1
-      return ::Thrift::TransportUtils.get_string_byte(@rbuf, @index - 1)
+      return Bytes.get_string_byte(@rbuf, @index - 1)
     end
 
     def read_into_buffer(buffer, size)
@@ -69,18 +69,18 @@ module Thrift
         read_frame if @index >= @rbuf.length
 
         # The read buffer has some data now, so copy bytes over to the output buffer.
-        byte = ::Thrift::TransportUtils.get_string_byte(@rbuf, @index)
-        ::Thrift::TransportUtils.set_string_byte(buffer, i, byte)
+        byte = Bytes.get_string_byte(@rbuf, @index)
+        Bytes.set_string_byte(buffer, i, byte)
         @index += 1
         i += 1
       end
       i
     end
 
-
-    def write(buf,sz=nil)
+    def write(buf, sz=nil)
       return @transport.write(buf) unless @write
 
+      buf = Bytes.force_binary_encoding(buf)
       @wbuf << (sz ? buf[0...sz] : buf)
     end
 
@@ -92,10 +92,11 @@ module Thrift
       return @transport.flush unless @write
 
       out = [@wbuf.length].pack('N')
+      # Array#pack should return a BINARY encoded String, so it shouldn't be necessary to force encoding
       out << @wbuf
       @transport.write(out)
       @transport.flush
-      @wbuf = ''
+      @wbuf = Bytes.empty_byte_buffer
     end
 
     private

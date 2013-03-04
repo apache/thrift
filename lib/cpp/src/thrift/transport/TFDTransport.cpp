@@ -66,7 +66,9 @@ uint32_t TFDTransport::read(uint8_t* buf, uint32_t len) {
                                 "TFDTransport::read()",
                                 errno_copy);
     }
-    return rv;
+    //this should be fine, since we already checked for negative values,
+    //and ::read should only return a 32-bit value since len is 32-bit.
+    return static_cast<uint32_t>(rv);
   }
 }
 
@@ -85,7 +87,9 @@ void TFDTransport::write(const uint8_t* buf, uint32_t len) {
     }
 
     buf += rv;
-    len -= rv;
+    //this should be fine, as we've already checked for negative values, and
+    //::write shouldn't return more than a uint32_t since len is a uint32_t
+    len -= static_cast<uint32_t>(rv);
   }
 }
 

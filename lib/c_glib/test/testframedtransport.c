@@ -20,14 +20,14 @@
 #include <assert.h>
 #include <netdb.h>
 
-#include <thrift/transport/thrift_transport.h>
-#include <thrift/transport/thrift_socket.h>
-#include <thrift/transport/thrift_server_transport.h>
-#include <thrift/transport/thrift_server_socket.h>
+#include <thrift/c_glib/transport/thrift_transport.h>
+#include <thrift/c_glib/transport/thrift_socket.h>
+#include <thrift/c_glib/transport/thrift_server_transport.h>
+#include <thrift/c_glib/transport/thrift_server_socket.h>
 
 #define TEST_DATA { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' }
 
-#include "../src/thrift/transport/thrift_framed_transport.c"
+#include "../src/thrift/c_glib/transport/thrift_framed_transport.c"
 
 static const char TEST_ADDRESS[] = "localhost";
 static const short TEST_PORT = 64444;

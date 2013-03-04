@@ -22,16 +22,25 @@
 
 #include <string>
 
+#include "TTransport.h"
+#include "TVirtualTransport.h"
+#include "TServerSocket.h"
+
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
-
-#include "TTransport.h"
-#include "TVirtualTransport.h"
-#include "TServerSocket.h"
+#ifndef _WIN32
+   typedef int SOCKET;
+#endif
 
 namespace apache { namespace thrift { namespace transport {
 
@@ -197,7 +206,7 @@ class TSocket : public TVirtualTransport<TSocket> {
   /**
    * Returns the underlying socket file descriptor.
    */
-  int getSocketFD() {
+  SOCKET getSocketFD() {
     return socket_;
   }
 
@@ -228,7 +237,7 @@ class TSocket : public TVirtualTransport<TSocket> {
   /**
    * Constructor to create socket from raw UNIX handle.
    */
-  TSocket(int socket);
+  TSocket(SOCKET socket);
 
   /**
    * Set a cache of the peer address (used when trivially available: e.g.
@@ -259,7 +268,7 @@ class TSocket : public TVirtualTransport<TSocket> {
   std::string path_;
 
   /** Underlying UNIX socket handle */
-  int socket_;
+  SOCKET socket_;
 
   /** Connect timeout in ms */
   int connTimeout_;

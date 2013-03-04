@@ -102,7 +102,7 @@ class TimerManager::Dispatcher: public Runnable {
           assert((timeout != 0 && manager_->taskCount_ > 0) || (timeout == 0 && manager_->taskCount_ == 0));
           try {
             manager_->monitor_.wait(timeout);
-          } catch (TimedOutException &e) {}
+          } catch (TimedOutException &) {}
           now = Util::currentTime();
         }
 
@@ -140,12 +140,20 @@ class TimerManager::Dispatcher: public Runnable {
   friend class TimerManager;
 };
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable: 4355) // 'this' used in base member initializer list
+#endif
+
 TimerManager::TimerManager() :
   taskCount_(0),
   state_(TimerManager::UNINITIALIZED),
   dispatcher_(shared_ptr<Dispatcher>(new Dispatcher(this))) {
 }
 
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 TimerManager::~TimerManager() {
 

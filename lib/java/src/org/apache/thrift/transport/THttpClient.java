@@ -29,6 +29,7 @@ import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -36,7 +37,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.params.CoreConnectionPNames;
-import org.apache.http.util.EntityUtils;
 
 /**
  * HTTP implementation of the TTransport interface. Used for working with a
@@ -197,6 +197,22 @@ public class THttpClient extends TTransport {
     requestBuffer_.write(buf, off, len);
   }
 
+  /**
+   * copy from org.apache.http.util.EntityUtils#consume. Android has it's own httpcore
+   * that doesn't have a consume.
+   */
+  private static void consume(final HttpEntity entity) throws IOException {
+      if (entity == null) {
+          return;
+      }
+      if (entity.isStreaming()) {
+          InputStream instream = entity.getContent();
+          if (instream != null) {
+              instream.close();
+          }
+      }
+  }
+
   private void flushUsingHttpClient() throws TTransportException {
     
     if (null == this.client) {
@@ -266,7 +282,7 @@ public class THttpClient extends TTransport {
       
       try {
         // Indicate we're done with the content.
-        EntityUtils.consume(response.getEntity());
+        consume(response.getEntity());
       } catch (IOException ioe) {
         // We ignore this exception, it might only mean the server has no
         // keep-alive capability.

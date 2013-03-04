@@ -141,7 +141,7 @@ AC_DEFUN([AX_LIB_EVENT],
 
           dnl Allow search path to be overridden on the command line.
           AC_ARG_WITH([libevent],
-                      AS_HELP_STRING([--with-libevent@<:@=DIR@:>@], [use libevent (default is yes) - it is possible to specify an alternate root directory for libevent]),
+                      AS_HELP_STRING([--with-libevent@<:@=DIR@:>@], [use libevent [default=yes]. Optionally specify the root prefix dir where libevent is installed]),
                       [
                        if test "x$withval" = "xno"; then
                          want_libevent="no"

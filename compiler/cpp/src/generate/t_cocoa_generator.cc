@@ -27,8 +27,15 @@
 #include <sstream>
 #include "t_oop_generator.h"
 #include "platform.h"
-using namespace std;
 
+using std::map;
+using std::ofstream;
+using std::ostringstream;
+using std::string;
+using std::stringstream;
+using std::vector;
+
+static const string endl = "\n";  // avoid ostream << std::endl flushes
 
 /**
  * Objective-C code generator.
@@ -395,10 +402,10 @@ void t_cocoa_generator::generate_consts(std::vector<t_const*> consts) {
     if ((*c_iter)->get_type()->is_container() ||
         (*c_iter)->get_type()->is_struct()) {
       print_const_value(f_impl_, 
-			cocoa_prefix_+(*c_iter)->get_name(),
-			(*c_iter)->get_type(),
-			(*c_iter)->get_value(),
-			false, false);
+           cocoa_prefix_+(*c_iter)->get_name(),
+           (*c_iter)->get_type(),
+           (*c_iter)->get_value(),
+           false, false);
       f_impl_ << ";" << endl;
     }
   }
@@ -731,10 +738,10 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream &out,
     if (members.size() > 0) {
       out << "#if TARGET_OS_IPHONE || (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5)" << endl;
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-	t_type* t = get_true_type((*m_iter)->get_type());
-	if ((*m_iter)->get_value() != NULL) {
-	  print_const_value(out, "self."+(*m_iter)->get_name(), t, (*m_iter)->get_value(), false, true);
-	}
+        t_type* t = get_true_type((*m_iter)->get_type());
+        if ((*m_iter)->get_value() != NULL) {
+          print_const_value(out, "self."+(*m_iter)->get_name(), t, (*m_iter)->get_value(), false, true);
+        }
       }
       out << "#endif" << endl;
     }
@@ -758,9 +765,9 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream &out,
       t_type* t = get_true_type((*m_iter)->get_type());
       out << indent() << "__" << (*m_iter)->get_name() << " = ";
       if (type_can_be_null(t)) {
-	out << "[" << (*m_iter)->get_name() << " retain_stub];" << endl;
+        out << "[" << (*m_iter)->get_name() << " retain_stub];" << endl;
       } else {
-	out << (*m_iter)->get_name() << ";" << endl;
+        out << (*m_iter)->get_name() << ";" << endl;
       }
       out << indent() << "__" << (*m_iter)->get_name() << "_isset = YES;" << endl;
     }
@@ -1461,12 +1468,14 @@ void t_cocoa_generator::generate_cocoa_service_client_implementation(ofstream& o
     // Declare the function arguments
     bool first = true;
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      string fieldName = (*fld_iter)->get_name();
+      out << " ";
       if (first) {
         first = false;
+        out << ": " << fieldName;
       } else {
-        out << " ";
+        out << fieldName << ": " << fieldName;
       }
-      out << ": " << (*fld_iter)->get_name();
     }
     out << "];" << endl;
 
@@ -1573,9 +1582,6 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   // generate a process_XXXX method for each service function, which reads args, calls the service, and writes results
   functions = tservice->get_functions();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    if ((*f_iter)->is_oneway()) {
-        continue;
-    }
     out << endl;
     string funname = (*f_iter)->get_name();
     out << indent() << "- (void) process_" << funname << "_withSequenceID: (int32_t) seqID inProtocol: (id<TProtocol>) inProtocol outProtocol: (id<TProtocol>) outProtocol" << endl;
@@ -1585,8 +1591,11 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     out << indent() << "[args read: inProtocol];" << endl;
     out << indent() << "[inProtocol readMessageEnd];" << endl;
     
-    string resulttype = cocoa_prefix_ + function_result_helper_struct_type(*f_iter);
-    out << indent() << resulttype << " * result = [[" << resulttype << " alloc] init];" << endl;
+    // prepare the result if not oneway
+    if (!(*f_iter)->is_oneway()) {
+        string resulttype = cocoa_prefix_ + function_result_helper_struct_type(*f_iter);
+        out << indent() << resulttype << " * result = [[" << resulttype << " alloc] init];" << endl;
+    }
 
     // make the call to the actual service object
     out << indent();
@@ -1598,9 +1607,15 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator fld_iter;
+    bool first = true;
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       string fieldName = (*fld_iter)->get_name();
-      out << ": [args " << fieldName << "]";
+      if (first) {
+        first = false;
+        out << ": [args " << fieldName << "]";
+      } else {
+        out << " " << fieldName << ": [args " << fieldName << "]";
+      }
     }
     out << "]";
     if (!(*f_iter)->get_returntype()->is_void()) {
@@ -1608,14 +1623,16 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     }
     out << ";" << endl;
     
-    // write out the result
-    out << indent() << "[outProtocol writeMessageBeginWithName: @\"" << funname << "\"" << endl;
-    out << indent() << "                                  type: TMessageType_REPLY" << endl;
-    out << indent() << "                            sequenceID: seqID];" << endl;
-    out << indent() << "[result write: outProtocol];" << endl;
-    out << indent() << "[outProtocol writeMessageEnd];" << endl;
-    out << indent() << "[[outProtocol transport] flush];" << endl;
-    out << indent() << "[result release_stub];" << endl;
+    // write out the result if not oneway
+    if (!(*f_iter)->is_oneway()) {
+        out << indent() << "[outProtocol writeMessageBeginWithName: @\"" << funname << "\"" << endl;
+        out << indent() << "                                  type: TMessageType_REPLY" << endl;
+        out << indent() << "                            sequenceID: seqID];" << endl;
+        out << indent() << "[result write: outProtocol];" << endl;
+        out << indent() << "[outProtocol writeMessageEnd];" << endl;
+        out << indent() << "[[outProtocol transport] flush];" << endl;
+        out << indent() << "[result release_stub];" << endl;
+    }
     out << indent() << "[args release_stub];" << endl;
     
     scope_down(out);

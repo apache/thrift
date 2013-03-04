@@ -25,5 +25,5 @@ WriteMakefile( 'NAME' => 'Thrift',
                    'Class::Accessor' => 0
                },
                ($] >= 5.005 ?
- (                AUTHOR     => 'T Jake Luciani <jakers@gmail.com>') : ()),
+ (                AUTHOR     => 'Apache Thrift <dev@thrift.apache.org>') : ()),
                );

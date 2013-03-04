@@ -475,6 +475,8 @@ private:
         return CType.SET;
       case TType.LIST:
         return CType.LIST;
+      case TType.VOID:
+        assert(false, "Invalid type passed.");
     }
   }
 

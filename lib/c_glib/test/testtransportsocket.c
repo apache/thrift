@@ -20,9 +20,9 @@
 #include <assert.h>
 #include <netdb.h>
 
-#include <thrift/transport/thrift_transport.h>
-#include <thrift/transport/thrift_server_transport.h>
-#include <thrift/transport/thrift_server_socket.h>
+#include <thrift/c_glib/transport/thrift_transport.h>
+#include <thrift/c_glib/transport/thrift_server_transport.h>
+#include <thrift/c_glib/transport/thrift_server_socket.h>
 
 #define TEST_DATA { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' }
 
@@ -63,7 +63,7 @@ my_send(int socket, const void *buffer, size_t length, int flags)
 #define socket my_socket
 #define recv my_recv
 #define send my_send
-#include "../src/thrift/transport/thrift_socket.c"
+#include "../src/thrift/c_glib/transport/thrift_socket.c"
 #undef socket
 #undef recv
 #undef send

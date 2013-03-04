@@ -504,11 +504,15 @@ TypeDefinition:
     }
 
 Typedef:
-  tok_typedef FieldType tok_identifier
+  tok_typedef FieldType tok_identifier TypeAnnotations
     {
       pdebug("TypeDef -> tok_typedef FieldType tok_identifier");
       t_typedef *td = new t_typedef(g_program, $2, $3);
       $$ = td;
+      if ($4 != NULL) {
+        $$->annotations_ = $4->annotations_;
+        delete $4;
+      }
     }
 
 CommaOrSemicolonOptional:
@@ -520,11 +524,15 @@ CommaOrSemicolonOptional:
     {}
 
 Enum:
-  tok_enum tok_identifier '{' EnumDefList '}'
+  tok_enum tok_identifier '{' EnumDefList '}' TypeAnnotations
     {
       pdebug("Enum -> tok_enum tok_identifier { EnumDefList }");
       $$ = $4;
       $$->set_name($2);
+      if ($6 != NULL) {
+        $$->annotations_ = $6->annotations_;
+        delete $6;
+      }
       $$->resolve_values();
       // make constants for all the enum values
       if (g_parse_mode == PROGRAM) {
@@ -556,7 +564,7 @@ EnumDefList:
     }
 
 EnumDef:
-  CaptureDocText tok_identifier '=' tok_int_constant CommaOrSemicolonOptional
+  CaptureDocText tok_identifier '=' tok_int_constant TypeAnnotations CommaOrSemicolonOptional
     {
       pdebug("EnumDef -> tok_identifier = tok_int_constant");
       if ($4 < 0) {
@@ -569,22 +577,34 @@ EnumDef:
       if ($1 != NULL) {
         $$->set_doc($1);
       }
+      if ($5 != NULL) {
+        $$->annotations_ = $5->annotations_;
+        delete $5;
+      }
     }
 |
-  CaptureDocText tok_identifier CommaOrSemicolonOptional
+  CaptureDocText tok_identifier TypeAnnotations CommaOrSemicolonOptional
     {
       pdebug("EnumDef -> tok_identifier");
       $$ = new t_enum_value($2);
       if ($1 != NULL) {
         $$->set_doc($1);
       }
+      if ($3 != NULL) {
+        $$->annotations_ = $3->annotations_;
+        delete $3;
+      }
     }
 
 Senum:
-  tok_senum tok_identifier '{' SenumDefList '}'
+  tok_senum tok_identifier '{' SenumDefList '}' TypeAnnotations
     {
       pdebug("Senum -> tok_senum tok_identifier { SenumDefList }");
       $$ = new t_typedef(g_program, $4, $2);
+      if ($6 != NULL) {
+        $$->annotations_ = $6->annotations_;
+        delete $6;
+      }
     }
 
 SenumDefList:
@@ -771,21 +791,29 @@ XsdAttributes:
     }
 
 Xception:
-  tok_xception tok_identifier '{' FieldList '}'
+  tok_xception tok_identifier '{' FieldList '}' TypeAnnotations
     {
       pdebug("Xception -> tok_xception tok_identifier { FieldList }");
       $4->set_name($2);
       $4->set_xception(true);
       $$ = $4;
+      if ($6 != NULL) {
+        $$->annotations_ = $6->annotations_;
+        delete $6;
+      }
     }
 
 Service:
-  tok_service tok_identifier Extends '{' FlagArgs FunctionList UnflagArgs '}'
+  tok_service tok_identifier Extends '{' FlagArgs FunctionList UnflagArgs '}' TypeAnnotations
     {
       pdebug("Service -> tok_service tok_identifier { FunctionList }");
       $$ = $6;
       $$->set_name($2);
       $$->set_extends($3);
+      if ($9 != NULL) {
+        $$->annotations_ = $9->annotations_;
+        delete $9;
+      }
     }
 
 FlagArgs:
@@ -830,12 +858,16 @@ FunctionList:
     }
 
 Function:
-  CaptureDocText Oneway FunctionType tok_identifier '(' FieldList ')' Throws CommaOrSemicolonOptional
+  CaptureDocText Oneway FunctionType tok_identifier '(' FieldList ')' Throws TypeAnnotations CommaOrSemicolonOptional
     {
       $6->set_name(std::string($4) + "_args");
       $$ = new t_function($3, $4, $6, $8, $2);
       if ($1 != NULL) {
         $$->set_doc($1);
+      }
+      if ($9 != NULL) {
+        $$->annotations_ = $9->annotations_;
+        delete $9;
       }
     }
 
@@ -870,7 +902,7 @@ FieldList:
       pdebug("FieldList -> FieldList , Field");
       $$ = $1;
       if (!($$->append($2))) {
-        yyerror("Field identifier %d for \"%s\" has already been used", $2->get_key(), $2->get_name().c_str());
+        yyerror("\"%d: %s\" - field identifier/name has already been used", $2->get_key(), $2->get_name().c_str());
         exit(1);
       }
     }
@@ -928,7 +960,7 @@ FieldIdentifier:
              * warn if the user-specified negative value isn't what
              * thrift would have auto-assigned.
              */
-            pwarning(1, "Negative field key (%d) differs from what would be "
+            pwarning(1, "Nonpositive field key (%"PRIi64") differs from what would be "
                      "auto-assigned by thrift (%d).\n", $1, y_field_val);
           }
           /*
@@ -939,7 +971,7 @@ FieldIdentifier:
           $$.value = $1;
           $$.auto_assigned = false;
         } else {
-          pwarning(1, "Nonpositive value (%d) not allowed as a field key.\n",
+          pwarning(1, "Nonpositive value (%"PRIi64") not allowed as a field key.\n",
                    $1);
           $$.value = y_field_val--;
           $$.auto_assigned = true;

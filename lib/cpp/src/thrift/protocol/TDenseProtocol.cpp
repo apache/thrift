@@ -245,7 +245,7 @@ inline uint32_t TDenseProtocol::vlqWrite(uint64_t vlq) {
 
   while (vlq > 0) {
     assert(pos >= 0);
-    buf[pos] = (vlq | 0x80);
+    buf[pos] = static_cast<uint8_t>(vlq | 0x80);
     vlq >>= 7;
     pos--;
   }
@@ -253,8 +253,8 @@ inline uint32_t TDenseProtocol::vlqWrite(uint64_t vlq) {
   // Back up one step before writing.
   pos++;
 
-  trans_->write(buf+pos, sizeof(buf) - pos);
-  return sizeof(buf) - pos;
+  trans_->write(buf+pos, static_cast<uint32_t>(sizeof(buf) - pos));
+  return static_cast<uint32_t>(sizeof(buf) - pos);
 }
 
 
@@ -463,7 +463,9 @@ inline uint32_t TDenseProtocol::subWriteI32(const int32_t i32) {
 }
 
 uint32_t TDenseProtocol::subWriteString(const std::string& str) {
-  uint32_t size = str.size();
+  if(str.size() > static_cast<size_t>((std::numeric_limits<int32_t>::max)()))
+    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  uint32_t size = static_cast<uint32_t>(str.size());
   uint32_t xfer = subWriteI32((int32_t)size);
   if (size > 0) {
     trans_->write((uint8_t*)str.data(), size);

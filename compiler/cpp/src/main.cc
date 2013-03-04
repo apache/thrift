@@ -217,6 +217,31 @@ char *saferealpath(const char *path, char *resolved_path) {
 #endif
 }
 
+bool check_is_directory(const char *dir_name) {
+#ifdef MINGW
+  DWORD attributes = ::GetFileAttributesA(dir_name);
+  if(attributes == INVALID_FILE_ATTRIBUTES) {
+    fprintf(stderr, "Output directory %s is unusable: GetLastError() = %ld\n", dir_name, GetLastError());
+    return false;
+  }
+  if((attributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY) {
+    fprintf(stderr, "Output directory %s exists but is not a directory\n", dir_name);
+    return false;
+  }
+  return true;
+#else
+  struct stat sb;
+  if (stat(dir_name, &sb) < 0) {
+    fprintf(stderr, "Output directory %s is unusable: %s\n", dir_name, strerror(errno));
+    return false;
+  }
+  if (! S_ISDIR(sb.st_mode)) {
+    fprintf(stderr, "Output directory %s exists but is not a directory\n", dir_name);
+    return false;
+  }
+  return true;
+#endif
+}
 
 /**
  * Report an error to the user. This is called yyerror for historical
@@ -633,9 +658,18 @@ void version() {
 }
 
 /**
- * Diplays the usage message and then exits with an error code.
+ * Display the usage message and then exit with an error code.
  */
 void usage() {
+  fprintf(stderr, "Usage: thrift [options] file\n\n");
+  fprintf(stderr, "Use thrift -help for a list of options\n");
+  exit(1);
+}
+
+/**
+ * Diplays the help message and then exits with an error code.
+ */
+void help() {
   fprintf(stderr, "Usage: thrift [options] file\n");
   fprintf(stderr, "Options:\n");
   fprintf(stderr, "  -version    Print the compiler version\n");
@@ -971,7 +1005,9 @@ int main(int argc, char** argv) {
         ++arg;
       }
 
-      if (strcmp(arg, "-version") == 0) {
+      if (strcmp(arg, "-help") == 0) {
+        help();
+      } else if (strcmp(arg, "-version") == 0) {
         version();
         exit(1);
       } else if (strcmp(arg, "-debug") == 0) {
@@ -992,7 +1028,7 @@ int main(int argc, char** argv) {
       } else if (strcmp(arg, "-gen") == 0) {
         arg = argv[++i];
         if (arg == NULL) {
-          fprintf(stderr, "!!! Missing generator specification\n");
+          fprintf(stderr, "Missing generator specification\n");
           usage();
         }
         generator_strings.push_back(arg);
@@ -1055,7 +1091,7 @@ int main(int argc, char** argv) {
         arg = argv[++i];
 
         if (arg == NULL) {
-          fprintf(stderr, "!!! Missing Include directory\n");
+          fprintf(stderr, "Missing Include directory\n");
           usage();
         }
         g_incl_searchpath.push_back(arg);
@@ -1077,18 +1113,10 @@ int main(int argc, char** argv) {
           out_path.erase(last);
         }
 #endif
-
-        struct stat sb;
-        if (stat(out_path.c_str(), &sb) < 0) {
-          fprintf(stderr, "Output directory %s is unusable: %s\n", out_path.c_str(), strerror(errno));
+        if (!check_is_directory(out_path.c_str()))
           return -1;
-        }
-        if (! S_ISDIR(sb.st_mode)) {
-          fprintf(stderr, "Output directory %s exists but is not a directory\n", out_path.c_str());
-          return -1;
-        }
       } else {
-        fprintf(stderr, "!!! Unrecognized option: %s\n", arg);
+        fprintf(stderr, "Unrecognized option: %s\n", arg);
         usage();
       }
 
@@ -1097,103 +1125,27 @@ int main(int argc, char** argv) {
     }
   }
 
+  // display help
+  if ((strcmp(argv[argc-1], "-help") == 0) || (strcmp(argv[argc-1], "--help") == 0)) {
+    help();
+  }
+
   // if you're asking for version, you have a right not to pass a file
-  if (strcmp(argv[argc-1], "-version") == 0) {
+  if ((strcmp(argv[argc-1], "-version") == 0) || (strcmp(argv[argc-1], "--version") == 0)) {
     version();
     exit(1);
   }
 
-  // TODO(dreiss): Delete these when everyone is using the new hotness.
-  if (gen_cpp) {
-    pwarning(1, "-cpp is deprecated.  Use --gen cpp");
-    string gen_string = "cpp:";
-    if (gen_dense) {
-      gen_string.append("dense,");
-    }
-    if (g_cpp_use_include_prefix) {
-      gen_string.append("include_prefix,");
-    }
-    generator_strings.push_back(gen_string);
-  }
-  if (gen_java) {
-    pwarning(1, "-java is deprecated.  Use --gen java");
-    generator_strings.push_back("java");
-  }
-  if (gen_javabean) {
-    pwarning(1, "-javabean is deprecated.  Use --gen java:beans");
-    generator_strings.push_back("java:beans");
-  }
-  if (gen_csharp) {
-    pwarning(1, "-csharp is deprecated.  Use --gen csharp");
-    generator_strings.push_back("csharp");
-  }
-  if (gen_delphi) {
-    pwarning(1, "-delphi is deprecated.  Use --gen delphi");
-    generator_strings.push_back("delphi");
-  }
-  if (gen_py) {
-    pwarning(1, "-py is deprecated.  Use --gen py");
-    generator_strings.push_back("py");
-  }
-  if (gen_rb) {
-    pwarning(1, "-rb is deprecated.  Use --gen rb");
-    generator_strings.push_back("rb");
-  }
-  if (gen_perl) {
-    pwarning(1, "-perl is deprecated.  Use --gen perl");
-    generator_strings.push_back("perl");
-  }
-  if (gen_php || gen_phpi) {
-    pwarning(1, "-php is deprecated.  Use --gen php");
-    string gen_string = "php:";
-    if (gen_phpi) {
-      gen_string.append("inlined,");
-    } else if(gen_phps) {
-      gen_string.append("server,");
-    } else if(gen_phpa) {
-      gen_string.append("autoload,");
-    } else if(gen_phpo) {
-      gen_string.append("oop,");
-    } else if(gen_rest) {
-      gen_string.append("rest,");
-    }
-    generator_strings.push_back(gen_string);
-  }
-  if (gen_cocoa) {
-    pwarning(1, "-cocoa is deprecated.  Use --gen cocoa");
-    generator_strings.push_back("cocoa");
-  }
-  if (gen_erl) {
-    pwarning(1, "-erl is deprecated.  Use --gen erl");
-    generator_strings.push_back("erl");
-  }
-  if (gen_st) {
-    pwarning(1, "-st is deprecated.  Use --gen st");
-    generator_strings.push_back("st");
-  }
-  if (gen_ocaml) {
-    pwarning(1, "-ocaml is deprecated.  Use --gen ocaml");
-    generator_strings.push_back("ocaml");
-  }
-  if (gen_hs) {
-    pwarning(1, "-hs is deprecated.  Use --gen hs");
-    generator_strings.push_back("hs");
-  }
-  if (gen_xsd) {
-    pwarning(1, "-xsd is deprecated.  Use --gen xsd");
-    generator_strings.push_back("xsd");
-  }
-
   // You gotta generate something!
   if (generator_strings.empty()) {
-    fprintf(stderr, "!!! No output language(s) specified\n\n");
+    fprintf(stderr, "No output language(s) specified\n");
     usage();
   }
 
   // Real-pathify it
   char rp[PATH_MAX];
   if (argv[i] == NULL) {
-    fprintf(stderr, "!!! Missing file name\n");
+    fprintf(stderr, "Missing file name\n");
     usage();
   }
   if (saferealpath(argv[i], rp) == NULL) {

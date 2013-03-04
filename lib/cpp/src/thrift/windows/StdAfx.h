@@ -32,7 +32,10 @@
 #include "Config.h"
 
 // Exclude rarely-used stuff from Windows headers
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
+
 #include <Windows.h>
 
 #endif // _THRIFT_WINDOWS_STDAFX_H_

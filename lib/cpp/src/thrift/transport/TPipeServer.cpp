@@ -32,72 +32,55 @@
 
 namespace apache { namespace thrift { namespace transport {
 
+#ifdef _WIN32
+
 using namespace std;
 using boost::shared_ptr;
 
 //---- Constructors ----
-TPipeServer::TPipeServer(string pipename, uint32_t bufsize) :
+TPipeServer::TPipeServer(const std::string &pipename, uint32_t bufsize) :
   pipename_(pipename),
   bufsize_(bufsize),
-  Pipe_(-1),
+  Pipe_(INVALID_HANDLE_VALUE),
   maxconns_(TPIPE_SERVER_MAX_CONNS_DEFAULT),
   isAnonymous(false)
  {
-#ifdef _WIN32
-    if(pipename_.find("\\\\") == 0) {
-      pipename_ = "\\\\.\\pipe\\" + pipename_;
-    }
-#else
-    dsrvsocket.reset(new TServerSocket(pipename));
-#endif
+    setPipename(pipename);
  }
 
-TPipeServer::TPipeServer(string pipename, uint32_t bufsize, uint32_t maxconnections) :
+TPipeServer::TPipeServer(const std::string &pipename, uint32_t bufsize, uint32_t maxconnections) :
   pipename_(pipename),
   bufsize_(bufsize),
-  Pipe_(-1),
+  Pipe_(INVALID_HANDLE_VALUE),
   isAnonymous(false)
- {  //Restrict maxconns_ to 1-255
+ {  //Restrict maxconns_ to 1-PIPE_UNLIMITED_INSTANCES
     if(maxconnections == 0)
       maxconns_ = 1;
-    else if (maxconnections > 255)
-      maxconns_ = 255;
+    else if (maxconnections > PIPE_UNLIMITED_INSTANCES)
+      maxconns_ = PIPE_UNLIMITED_INSTANCES;
 	else
       maxconns_ = maxconnections;
 
-#ifdef _WIN32
-    if(pipename_.find("\\\\") == -1) {
-      pipename_ = "\\\\.\\pipe\\" + pipename_;
-    }
-#else
-    dsrvsocket.reset(new TServerSocket(pipename));
-#endif
+    setPipename(pipename);
  }
 
-TPipeServer::TPipeServer(string pipename) :
+TPipeServer::TPipeServer(const std::string &pipename) :
   pipename_(pipename),
   bufsize_(1024),
-  Pipe_(-1),
+  Pipe_(INVALID_HANDLE_VALUE),
   maxconns_(TPIPE_SERVER_MAX_CONNS_DEFAULT),
   isAnonymous(false)
  {
-#ifdef _WIN32
-    if(pipename_.find("\\\\") == 0) {
-      pipename_ = "\\\\.\\pipe\\" + pipename_;
-    }
-#else
-    dsrvsocket.reset(new TServerSocket(pipename));
-#endif
+    setPipename(pipename);
  }
 
-TPipeServer::TPipeServer(int bufsize) : 
+TPipeServer::TPipeServer(int bufsize) :
   pipename_(""),
   bufsize_(bufsize),
-  Pipe_(-1),
+  Pipe_(INVALID_HANDLE_VALUE),
   maxconns_(1),
   isAnonymous(true)
  {
-#ifdef _WIN32
   //The anonymous pipe needs to be created first so that the server can
   //pass the handles on to the client before the serve (acceptImpl)
   //blocking call.
@@ -105,28 +88,19 @@ TPipeServer::TPipeServer(int bufsize) :
     GlobalOutput.perror("TPipeServer Create(Anon)Pipe failed, GLE=", GetLastError());
     throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer Create(Anon)Pipe failed");
   }
-#else
-  GlobalOutput.perror("TPipeServer: Anonymous pipes not yet supported under *NIX", -99);
-  throw TTransportException(TTransportException::NOT_OPEN, " Anonymous pipes not yet supported under *NIX");
-#endif
 }
 
-TPipeServer::TPipeServer() : 
+TPipeServer::TPipeServer() :
   pipename_(""),
   bufsize_(1024),
-  Pipe_(-1),
+  Pipe_(INVALID_HANDLE_VALUE),
   maxconns_(1),
   isAnonymous(true)
 {
-#ifdef _WIN32
   if (!TCreateAnonPipe()) {
     GlobalOutput.perror("TPipeServer Create(Anon)Pipe failed, GLE=", GetLastError());
     throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer Create(Anon)Pipe failed");
   }
-#else
-  GlobalOutput.perror("TPipeServer: Anonymous pipes not yet supported under *NIX", -99);
-  throw TTransportException(TTransportException::NOT_OPEN, " Anonymous pipes not yet supported under *NIX");
-#endif
 }
 
 //---- Destructor ----
@@ -138,8 +112,6 @@ TPipeServer::~TPipeServer() {
 // Transport callbacks
 //---------------------------------------------------------
 
-#ifdef _WIN32
-
 shared_ptr<TTransport> TPipeServer::acceptImpl() {
   shared_ptr<TPipe> client;
 
@@ -148,11 +120,11 @@ shared_ptr<TTransport> TPipeServer::acceptImpl() {
     //This 0-byte read serves merely as a blocking call.
     byte buf;
     DWORD br;
-    int fSuccess = ReadFile( 
-          (HANDLE)Pipe_, // pipe handle 
-          &buf,   // buffer to receive reply 
-          0,      // size of buffer 
-          &br,    // number of bytes read 
+    int fSuccess = ReadFile(
+          Pipe_, // pipe handle
+          &buf,   // buffer to receive reply
+          0,      // size of buffer
+          &br,    // number of bytes read
           NULL);  // not overlapped
 
     if ( !fSuccess && GetLastError() != ERROR_MORE_DATA ) {
@@ -172,9 +144,9 @@ shared_ptr<TTransport> TPipeServer::acceptImpl() {
       }
 
       // Wait for the client to connect; if it succeeds, the
-      // function returns a nonzero value. If the function returns 
-      // zero, GetLastError should return ERROR_PIPE_CONNECTED. 
-      ConnectRet = ConnectNamedPipe((HANDLE)Pipe_, NULL) ? 
+      // function returns a nonzero value. If the function returns
+      // zero, GetLastError should return ERROR_PIPE_CONNECTED.
+      ConnectRet = ConnectNamedPipe(Pipe_, NULL) ?
                     TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 
       if (ConnectRet == TRUE)
@@ -196,27 +168,27 @@ shared_ptr<TTransport> TPipeServer::acceptImpl() {
 }
 
 void TPipeServer::interrupt() {
-  if(Pipe_ != -1) {
-    CancelIo((HANDLE)Pipe_);
+  if(Pipe_ != INVALID_HANDLE_VALUE) {
+    CancelIo(Pipe_);
   }
 }
 
 void TPipeServer::close() {
   if(!isAnonymous)
   {
-    if(Pipe_ != -1) {
-      DisconnectNamedPipe((HANDLE)Pipe_);
-      CloseHandle((HANDLE)Pipe_);
-      Pipe_ = -1;
+    if(Pipe_ != INVALID_HANDLE_VALUE) {
+      DisconnectNamedPipe(Pipe_);
+      CloseHandle(Pipe_);
+      Pipe_ = INVALID_HANDLE_VALUE;
     }
   }
   else
   {
     try {
-      CloseHandle((HANDLE)Pipe_);
-      CloseHandle((HANDLE)PipeW_);
-      CloseHandle((HANDLE)ClientAnonRead);
-      CloseHandle((HANDLE)ClientAnonWrite);
+      CloseHandle(Pipe_);
+      CloseHandle(PipeW_);
+      CloseHandle(ClientAnonRead);
+      CloseHandle(ClientAnonWrite);
     }
     catch(...) {
         GlobalOutput.perror("TPipeServer anon close GLE=", GetLastError());
@@ -255,26 +227,26 @@ bool TPipeServer::TCreateNamedPipe() {
   sa.bInheritHandle = FALSE;
 
   // Create an instance of the named pipe
-  HANDLE hPipe_ = CreateNamedPipe( 
-        pipename_.c_str(),        // pipe name 
-        PIPE_ACCESS_DUPLEX,       // read/write access 
-        PIPE_TYPE_MESSAGE |       // message type pipe 
-        PIPE_READMODE_MESSAGE,    // message-read mode 
-        maxconns_,                // max. instances  
-        bufsize_,                 // output buffer size 
-        bufsize_,                 // input buffer size 
-        0,                        // client time-out 
-        &sa);                     // default security attribute 
+  HANDLE hPipe_ = CreateNamedPipe(
+        pipename_.c_str(),        // pipe name
+        PIPE_ACCESS_DUPLEX,       // read/write access
+        PIPE_TYPE_MESSAGE |       // message type pipe
+        PIPE_READMODE_MESSAGE,    // message-read mode
+        maxconns_,                // max. instances
+        bufsize_,                 // output buffer size
+        bufsize_,                 // input buffer size
+        0,                        // client time-out
+        &sa);                     // default security attribute
 
   if(hPipe_ == INVALID_HANDLE_VALUE)
   {
-    Pipe_ = -1;
+    Pipe_ = INVALID_HANDLE_VALUE;
     GlobalOutput.perror("TPipeServer::TCreateNamedPipe() GLE=", GetLastError());
     throw TTransportException(TTransportException::NOT_OPEN, "TCreateNamedPipe() failed", GetLastError());
     return false;
   }
 
-  Pipe_ = (int)hPipe_;
+  Pipe_ = hPipe_;
   return true;
 }
 
@@ -285,7 +257,6 @@ bool TPipeServer::TCreateAnonPipe() {
   InitializeSecurityDescriptor(&sd,SECURITY_DESCRIPTOR_REVISION);
   SetSecurityDescriptorDacl(&sd, true, NULL, false);
   sa.lpSecurityDescriptor = &sd;
-  sa.lpSecurityDescriptor = NULL;
   sa.nLength = sizeof(SECURITY_ATTRIBUTES);
   sa.bInheritHandle = true; //allow passing handle to child
 
@@ -302,42 +273,13 @@ bool TPipeServer::TCreateAnonPipe() {
     CloseHandle(PipeW_H);
     return false;
   }
-  ClientAnonRead  = (int)ClientAnonReadH;
-  ClientAnonWrite = (int)ClientAnonWriteH;
-  Pipe_  = (int)Pipe_H;
-  PipeW_ = (int)PipeW_H;
+  ClientAnonRead  = ClientAnonReadH;
+  ClientAnonWrite = ClientAnonWriteH;
+  Pipe_  = Pipe_H;
+  PipeW_ = PipeW_H;
 
   return true;
 }
-
-#else
-//*NIX implementation uses Unix Domain Sockets.
-void TPipeServer::listen() {
-  dsrvsocket->listen();
-}
-
-shared_ptr<TTransport> TPipeServer::acceptImpl() {
-//	return boost::shared_dynamic_cast<apache::thrift::transport::TServerSocket>(dsrvsocket)->accept();
-  return dsrvsocket->accept();
-}
-
-void TPipeServer::interrupt() {
-  dsrvsocket->interrupt();
-}
-
-void TPipeServer::close() {
-  dsrvsocket->close();
-}
-
-bool TPipeServer::TCreateNamedPipe() {
-  return false; //placeholder
-}
-
-bool TPipeServer::TCreateAnonPipe() {
-  return false; //currently unimplemented
-}
-#endif //_WIN32
-
 
 //---------------------------------------------------------
 // Accessors
@@ -347,8 +289,11 @@ string TPipeServer::getPipename() {
   return pipename_;
 }
 
-void TPipeServer::setPipename(std::string pipename) {
-  pipename_ = pipename;
+void TPipeServer::setPipename(const std::string &pipename) {
+  if(pipename.find("\\\\") == -1)
+    pipename_ = "\\\\.\\pipe\\" + pipename;
+  else
+    pipename_ = pipename;
 }
 
 int  TPipeServer::getBufferSize() {
@@ -359,21 +304,21 @@ void TPipeServer::setBufferSize(int bufsize) {
   bufsize_ = bufsize;
 }
 
-int TPipeServer::getPipeHandle() {
+HANDLE TPipeServer::getPipeHandle() {
   return Pipe_;
 }
 
-int TPipeServer::getWrtPipeHandle()
+HANDLE TPipeServer::getWrtPipeHandle()
 {
   return PipeW_;
 }
 
-int TPipeServer::getClientRdPipeHandle()
+HANDLE TPipeServer::getClientRdPipeHandle()
 {
   return ClientAnonRead;
 }
 
-int TPipeServer::getClientWrtPipeHandle()
+HANDLE TPipeServer::getClientWrtPipeHandle()
 {
   return ClientAnonWrite;
 }
@@ -385,5 +330,6 @@ bool TPipeServer::getAnonymous() {
 void TPipeServer::setAnonymous(bool anon) {
   isAnonymous = anon;
 }
+#endif //_WIN32
 
 }}} // apache::thrift::transport

@@ -44,7 +44,7 @@ class TThreadPoolServer : public TServer {
       const boost::shared_ptr<TTransportFactory>& transportFactory,
       const boost::shared_ptr<TProtocolFactory>& protocolFactory,
       const boost::shared_ptr<ThreadManager>& threadManager,
-      THRIFT_OVERLOAD_IF(ProcessorFactory, TProtocolFactory)) :
+      THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)) :
     TServer(processorFactory, serverTransport, transportFactory,
             protocolFactory),
     threadManager_(threadManager),

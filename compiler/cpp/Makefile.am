@@ -60,6 +60,7 @@ thrift_SOURCES = src/main.cc \
                  src/parse/parse.cc \
                  src/generate/t_generator.h \
                  src/generate/t_oop_generator.h \
+                 src/generate/t_html_generator.h \
                  src/windows/config.h \
                  src/windows/version.h
 
@@ -105,6 +106,6 @@ EXTRA_DIST = \
              $(WINDOWS_DIST)
 
 clean-local:
-	$(RM) thriftl.cc thrifty.cc thrifty.h version.h
+	$(RM) thriftl.cc thrifty.cc thrifty.h version.h windows/version.h
 
 src/main.cc: version.h

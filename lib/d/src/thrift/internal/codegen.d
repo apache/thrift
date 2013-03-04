@@ -201,7 +201,7 @@ template AllMemberMethodNames(T) if (isService!T) {
   ) AllMemberMethodNames;
 }
 
-private template FilterMethodNames(T, MemberNames...) {
+template FilterMethodNames(T, MemberNames...) {
   alias StaticFilter!(
     CompilesAndTrue!(
       Compose!(isSomeFunction, TypeOf, PApply!(GetMember, T))

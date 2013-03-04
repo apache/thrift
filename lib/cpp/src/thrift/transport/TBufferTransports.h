@@ -634,7 +634,7 @@ class TMemoryBuffer : public TVirtualTransport<TMemoryBuffer, TBufferBase> {
     // Move it into ourself.
     this->swap(new_buffer);
     // Our old self gets destroyed.
-  }    
+  }
 
   std::string readAsString(uint32_t len) {
     std::string str;
@@ -646,7 +646,8 @@ class TMemoryBuffer : public TVirtualTransport<TMemoryBuffer, TBufferBase> {
 
   // return number of bytes read
   uint32_t readEnd() {
-    uint32_t bytes = rBase_ - buffer_;
+    //This cast should be safe, because buffer_'s size is a uint32_t
+    uint32_t bytes = static_cast<uint32_t>(rBase_ - buffer_);
     if (rBase_ == wBase_) {
       resetBuffer();
     }
@@ -655,7 +656,8 @@ class TMemoryBuffer : public TVirtualTransport<TMemoryBuffer, TBufferBase> {
 
   // Return number of bytes written
   uint32_t writeEnd() {
-    return wBase_ - buffer_;
+    //This cast should be safe, because buffer_'s size is a uint32_t
+    return static_cast<uint32_t>(wBase_ - buffer_);
   }
 
   uint32_t available_read() const {

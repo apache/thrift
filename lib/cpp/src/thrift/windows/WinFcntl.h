@@ -28,6 +28,9 @@
 #error This is a MSVC header only.
 #endif
 
+// Win32
+#include <Winsock2.h>
+
 #define O_NONBLOCK 1
 
 enum
@@ -36,6 +39,6 @@ enum
     F_SETFL,
 };
 
-int fcntl(int fd, int cmd, int flags);
+int fcntl(SOCKET fd, int cmd, int flags);
 
 #endif // _THRIFT_WINDOWS_FCNTL_H_

@@ -60,6 +60,8 @@ class t_enum_value : public t_doc {
     value_ = val;
   }
 
+  std::map<std::string, std::string> annotations_;
+
  private:
   std::string name_;
   bool has_value_;

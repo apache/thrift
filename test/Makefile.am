@@ -51,6 +51,7 @@ check-local:
 	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/test/ThriftTest.thrift
 
 EXTRA_DIST = \
+	test.sh \
 	cpp \
 	csharp \
 	hs \
@@ -69,6 +70,7 @@ EXTRA_DIST = \
 	DenseLinkingTest.thrift \
 	DocTest.thrift \
 	JavaBeansTest.thrift \
+	ManyOptionals.thrift \
 	ManyTypedefs.thrift \
 	OptionalRequiredTest.thrift \
 	SmallTest.thrift \

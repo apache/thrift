@@ -17,22 +17,21 @@
 # under the License.
 #
 
-require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require 'spec_helper'
 
-class ThriftBaseTransportSpec < Spec::ExampleGroup
-  include Thrift
+describe 'BaseTransport' do
 
-  describe TransportException do
+  describe Thrift::TransportException do
     it "should make type accessible" do
-      exc = TransportException.new(TransportException::ALREADY_OPEN, "msg")
-      exc.type.should == TransportException::ALREADY_OPEN
+      exc = Thrift::TransportException.new(Thrift::TransportException::ALREADY_OPEN, "msg")
+      exc.type.should == Thrift::TransportException::ALREADY_OPEN
       exc.message.should == "msg"
     end
   end
 
-  describe BaseTransport do
+  describe Thrift::BaseTransport do
     it "should read the specified size" do
-      transport = BaseTransport.new
+      transport = Thrift::BaseTransport.new
       transport.should_receive(:read).with(40).ordered.and_return("10 letters")
       transport.should_receive(:read).with(30).ordered.and_return("fifteen letters")
       transport.should_receive(:read).with(15).ordered.and_return("more characters")
@@ -42,47 +41,47 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
     it "should stub out the rest of the methods" do
       # can't test for stubbiness, so just make sure they're defined
       [:open?, :open, :close, :read, :write, :flush].each do |sym|
-        BaseTransport.method_defined?(sym).should be_true
+        Thrift::BaseTransport.method_defined?(sym).should be_true
       end
     end
 
     it "should alias << to write" do
-      BaseTransport.instance_method(:<<).should == BaseTransport.instance_method(:write)
+      Thrift::BaseTransport.instance_method(:<<).should == Thrift::BaseTransport.instance_method(:write)
     end
   end
 
-  describe BaseServerTransport do
+  describe Thrift::BaseServerTransport do
     it "should stub out its methods" do
       [:listen, :accept, :close].each do |sym|
-        BaseServerTransport.method_defined?(sym).should be_true
+        Thrift::BaseServerTransport.method_defined?(sym).should be_true
       end
     end
   end
 
-  describe BaseTransportFactory do
+  describe Thrift::BaseTransportFactory do
     it "should return the transport it's given" do
       transport = mock("Transport")
-      BaseTransportFactory.new.get_transport(transport).should eql(transport)
+      Thrift::BaseTransportFactory.new.get_transport(transport).should eql(transport)
     end
   end
 
-  describe BufferedTransport do
+  describe Thrift::BufferedTransport do
     it "should pass through everything but write/flush/read" do
       trans = mock("Transport")
       trans.should_receive(:open?).ordered.and_return("+ open?")
       trans.should_receive(:open).ordered.and_return("+ open")
       trans.should_receive(:flush).ordered # from the close
       trans.should_receive(:close).ordered.and_return("+ close")
-      btrans = BufferedTransport.new(trans)
+      btrans = Thrift::BufferedTransport.new(trans)
       btrans.open?.should == "+ open?"
       btrans.open.should == "+ open"
       btrans.close.should == "+ close"
     end
-    
-    it "should buffer reads in chunks of #{BufferedTransport::DEFAULT_BUFFER}" do
+
+    it "should buffer reads in chunks of #{Thrift::BufferedTransport::DEFAULT_BUFFER}" do
       trans = mock("Transport")
-      trans.should_receive(:read).with(BufferedTransport::DEFAULT_BUFFER).and_return("lorum ipsum dolor emet")
-      btrans = BufferedTransport.new(trans)
+      trans.should_receive(:read).with(Thrift::BufferedTransport::DEFAULT_BUFFER).and_return("lorum ipsum dolor emet")
+      btrans = Thrift::BufferedTransport.new(trans)
       btrans.read(6).should == "lorum "
       btrans.read(6).should == "ipsum "
       btrans.read(6).should == "dolor "
@@ -91,7 +90,7 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
 
     it "should buffer writes and send them on flush" do
       trans = mock("Transport")
-      btrans = BufferedTransport.new(trans)
+      btrans = Thrift::BufferedTransport.new(trans)
       btrans.write("one/")
       btrans.write("two/")
       btrans.write("three/")
@@ -102,7 +101,7 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
 
     it "should only send buffered data once" do
       trans = mock("Transport")
-      btrans = BufferedTransport.new(trans)
+      btrans = Thrift::BufferedTransport.new(trans)
       btrans.write("one/")
       btrans.write("two/")
       btrans.write("three/")
@@ -112,39 +111,39 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
       # Nothing to flush with no data
       btrans.flush
     end
-    
+
     it "should flush on close" do
       trans = mock("Transport")
       trans.should_receive(:close)
-      btrans = BufferedTransport.new(trans)
+      btrans = Thrift::BufferedTransport.new(trans)
       btrans.should_receive(:flush)
       btrans.close
     end
-    
+
     it "should not write to socket if there's no data" do
       trans = mock("Transport")
       trans.should_receive(:flush)
-      btrans = BufferedTransport.new(trans)
+      btrans = Thrift::BufferedTransport.new(trans)
       btrans.flush
     end
   end
 
-  describe BufferedTransportFactory do
+  describe Thrift::BufferedTransportFactory do
     it "should wrap the given transport in a BufferedTransport" do
       trans = mock("Transport")
       btrans = mock("BufferedTransport")
-      BufferedTransport.should_receive(:new).with(trans).and_return(btrans)
-      BufferedTransportFactory.new.get_transport(trans).should == btrans
+      Thrift::BufferedTransport.should_receive(:new).with(trans).and_return(btrans)
+      Thrift::BufferedTransportFactory.new.get_transport(trans).should == btrans
     end
   end
 
-  describe FramedTransport do
+  describe Thrift::FramedTransport do
     before(:each) do
       @trans = mock("Transport")
     end
 
     it "should pass through open?/open/close" do
-      ftrans = FramedTransport.new(@trans)
+      ftrans = Thrift::FramedTransport.new(@trans)
       @trans.should_receive(:open?).ordered.and_return("+ open?")
       @trans.should_receive(:open).ordered.and_return("+ open")
       @trans.should_receive(:close).ordered.and_return("+ close")
@@ -154,13 +153,13 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
     end
 
     it "should pass through read when read is turned off" do
-      ftrans = FramedTransport.new(@trans, false, true)
+      ftrans = Thrift::FramedTransport.new(@trans, false, true)
       @trans.should_receive(:read).with(17).ordered.and_return("+ read")
       ftrans.read(17).should == "+ read"
     end
 
     it "should pass through write/flush when write is turned off" do
-      ftrans = FramedTransport.new(@trans, true, false)
+      ftrans = Thrift::FramedTransport.new(@trans, true, false)
       @trans.should_receive(:write).with("foo").ordered.and_return("+ write")
       @trans.should_receive(:flush).ordered.and_return("+ flush")
       ftrans.write("foo").should == "+ write"
@@ -171,21 +170,21 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
       frame = "this is a frame"
       @trans.should_receive(:read_all).with(4).and_return("\000\000\000\017")
       @trans.should_receive(:read_all).with(frame.length).and_return(frame)
-      FramedTransport.new(@trans).read(frame.length + 10).should == frame
+      Thrift::FramedTransport.new(@trans).read(frame.length + 10).should == frame
     end
 
     it "should return slices of the frame when asked for < the frame's length" do
       frame = "this is a frame"
       @trans.should_receive(:read_all).with(4).and_return("\000\000\000\017")
       @trans.should_receive(:read_all).with(frame.length).and_return(frame)
-      ftrans = FramedTransport.new(@trans)
+      ftrans = Thrift::FramedTransport.new(@trans)
       ftrans.read(4).should == "this"
       ftrans.read(4).should == " is "
       ftrans.read(16).should == "a frame"
     end
 
     it "should return nothing if asked for <= 0" do
-      FramedTransport.new(@trans).read(-2).should == ""
+      Thrift::FramedTransport.new(@trans).read(-2).should == ""
     end
 
     it "should pull a new frame when the first is exhausted" do
@@ -194,7 +193,7 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
       @trans.should_receive(:read_all).with(4).and_return("\000\000\000\017", "\000\000\000\021")
       @trans.should_receive(:read_all).with(frame.length).and_return(frame)
       @trans.should_receive(:read_all).with(frame2.length).and_return(frame2)
-      ftrans = FramedTransport.new(@trans)
+      ftrans = Thrift::FramedTransport.new(@trans)
       ftrans.read(4).should == "this"
       ftrans.read(8).should == " is a fr"
       ftrans.read(6).should == "ame"
@@ -203,7 +202,7 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
     end
 
     it "should buffer writes" do
-      ftrans = FramedTransport.new(@trans)
+      ftrans = Thrift::FramedTransport.new(@trans)
       @trans.should_not_receive(:write)
       ftrans.write("foo")
       ftrans.write("bar")
@@ -211,7 +210,7 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
     end
 
     it "should write slices of the buffer" do
-      ftrans = FramedTransport.new(@trans)
+      ftrans = Thrift::FramedTransport.new(@trans)
       ftrans.write("foobar", 3)
       ftrans.write("barfoo", 1)
       @trans.stub!(:flush)
@@ -220,7 +219,7 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
     end
 
     it "should flush frames with a 4-byte header" do
-      ftrans = FramedTransport.new(@trans)
+      ftrans = Thrift::FramedTransport.new(@trans)
       @trans.should_receive(:write).with("\000\000\000\035one/two/three/this is a frame").ordered
       @trans.should_receive(:flush).ordered
       ftrans.write("one/")
@@ -231,7 +230,7 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
     end
 
     it "should not flush the same buffered data twice" do
-      ftrans = FramedTransport.new(@trans)
+      ftrans = Thrift::FramedTransport.new(@trans)
       @trans.should_receive(:write).with("\000\000\000\007foo/bar")
       @trans.stub!(:flush)
       ftrans.write("foo")
@@ -242,22 +241,22 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
     end
   end
 
-  describe FramedTransportFactory do
+  describe Thrift::FramedTransportFactory do
     it "should wrap the given transport in a FramedTransport" do
       trans = mock("Transport")
-      FramedTransport.should_receive(:new).with(trans)
-      FramedTransportFactory.new.get_transport(trans)
+      Thrift::FramedTransport.should_receive(:new).with(trans)
+      Thrift::FramedTransportFactory.new.get_transport(trans)
     end
   end
 
-  describe MemoryBufferTransport do
+  describe Thrift::MemoryBufferTransport do
     before(:each) do
-      @buffer = MemoryBufferTransport.new
+      @buffer = Thrift::MemoryBufferTransport.new
     end
 
     it "should accept a buffer on input and use it directly" do
       s = "this is a test"
-      @buffer = MemoryBufferTransport.new(s)
+      @buffer = Thrift::MemoryBufferTransport.new(s)
       @buffer.read(4).should == "this"
       s.slice!(-4..-1)
       @buffer.read(@buffer.available).should == " is a "
@@ -307,7 +306,7 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
       @buffer.write " bar"
       @buffer.read(@buffer.available).should == "foo bar"
     end
-    
+
     it "should throw an EOFError when there isn't enough data in the buffer" do
       @buffer.reset_buffer("")
       lambda{@buffer.read(1)}.should raise_error(EOFError)
@@ -317,11 +316,11 @@ class ThriftBaseTransportSpec < Spec::ExampleGroup
     end
   end
 
-  describe IOStreamTransport do
+  describe Thrift::IOStreamTransport do
     before(:each) do
       @input = mock("Input", :closed? => false)
       @output = mock("Output", :closed? => false)
-      @trans = IOStreamTransport.new(@input, @output)
+      @trans = Thrift::IOStreamTransport.new(@input, @output)
     end
 
     it "should be open as long as both input or output are open" do

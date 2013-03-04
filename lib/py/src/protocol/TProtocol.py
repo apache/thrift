@@ -40,7 +40,7 @@ class TProtocolBase:
   def __init__(self, trans):
     self.trans = trans
 
-  def writeMessageBegin(self, name, type, seqid):
+  def writeMessageBegin(self, name, ttype, seqid):
     pass
 
   def writeMessageEnd(self):
@@ -52,7 +52,7 @@ class TProtocolBase:
   def writeStructEnd(self):
     pass
 
-  def writeFieldBegin(self, name, type, id):
+  def writeFieldBegin(self, name, ttype, fid):
     pass
 
   def writeFieldEnd(self):
@@ -79,7 +79,7 @@ class TProtocolBase:
   def writeSetEnd(self):
     pass
 
-  def writeBool(self, bool):
+  def writeBool(self, bool_val):
     pass
 
   def writeByte(self, byte):
@@ -97,7 +97,7 @@ class TProtocolBase:
   def writeDouble(self, dub):
     pass
 
-  def writeString(self, str):
+  def writeString(self, str_val):
     pass
 
   def readMessageBegin(self):
@@ -157,46 +157,46 @@ class TProtocolBase:
   def readString(self):
     pass
 
-  def skip(self, type):
-    if type == TType.STOP:
+  def skip(self, ttype):
+    if ttype == TType.STOP:
       return
-    elif type == TType.BOOL:
+    elif ttype == TType.BOOL:
       self.readBool()
-    elif type == TType.BYTE:
+    elif ttype == TType.BYTE:
       self.readByte()
-    elif type == TType.I16:
+    elif ttype == TType.I16:
       self.readI16()
-    elif type == TType.I32:
+    elif ttype == TType.I32:
       self.readI32()
-    elif type == TType.I64:
+    elif ttype == TType.I64:
       self.readI64()
-    elif type == TType.DOUBLE:
+    elif ttype == TType.DOUBLE:
       self.readDouble()
-    elif type == TType.STRING:
+    elif ttype == TType.STRING:
       self.readString()
-    elif type == TType.STRUCT:
+    elif ttype == TType.STRUCT:
       name = self.readStructBegin()
       while True:
-        (name, type, id) = self.readFieldBegin()
-        if type == TType.STOP:
+        (name, ttype, id) = self.readFieldBegin()
+        if ttype == TType.STOP:
           break
-        self.skip(type)
+        self.skip(ttype)
         self.readFieldEnd()
       self.readStructEnd()
-    elif type == TType.MAP:
+    elif ttype == TType.MAP:
       (ktype, vtype, size) = self.readMapBegin()
-      for i in range(size):
+      for i in xrange(size):
         self.skip(ktype)
         self.skip(vtype)
       self.readMapEnd()
-    elif type == TType.SET:
+    elif ttype == TType.SET:
       (etype, size) = self.readSetBegin()
-      for i in range(size):
+      for i in xrange(size):
         self.skip(etype)
       self.readSetEnd()
-    elif type == TType.LIST:
+    elif ttype == TType.LIST:
       (etype, size) = self.readListBegin()
-      for i in range(size):
+      for i in xrange(size):
         self.skip(etype)
       self.readListEnd()
 

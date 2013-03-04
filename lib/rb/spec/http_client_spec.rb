@@ -17,14 +17,13 @@
 # under the License.
 #
 
-require File.expand_path("#{File.dirname(__FILE__)}/spec_helper")
+require 'spec_helper'
 
-class ThriftHTTPClientTransportSpec < Spec::ExampleGroup
-  include Thrift
+describe 'Thrift::HTTPClientTransport' do
 
-  describe HTTPClientTransport do
+  describe Thrift::HTTPClientTransport do
     before(:each) do
-      @client = HTTPClientTransport.new("http://my.domain.com/path/to/service?param=value")
+      @client = Thrift::HTTPClientTransport.new("http://my.domain.com/path/to/service?param=value")
     end
 
     it "should always be open" do
@@ -37,10 +36,10 @@ class ThriftHTTPClientTransportSpec < Spec::ExampleGroup
       @client.write "a test"
       @client.write " frame"
       Net::HTTP.should_receive(:new).with("my.domain.com", 80).and_return do
-        mock("Net::HTTP").tee do |http|
+        mock("Net::HTTP").tap do |http|
           http.should_receive(:use_ssl=).with(false)
           http.should_receive(:post).with("/path/to/service?param=value", "a test frame", {"Content-Type"=>"application/x-thrift"}).and_return do
-            mock("Net::HTTPOK").tee do |response|
+            mock("Net::HTTPOK").tap do |response|
               response.should_receive(:body).and_return "data"
             end
           end
@@ -57,10 +56,10 @@ class ThriftHTTPClientTransportSpec < Spec::ExampleGroup
 
       @client.add_headers(custom_headers)
       Net::HTTP.should_receive(:new).with("my.domain.com", 80).and_return do
-        mock("Net::HTTP").tee do |http|
+        mock("Net::HTTP").tap do |http|
           http.should_receive(:use_ssl=).with(false)
           http.should_receive(:post).with("/path/to/service?param=value", "test", headers).and_return do
-            mock("Net::HTTPOK").tee do |response|
+            mock("Net::HTTPOK").tap do |response|
               response.should_receive(:body).and_return "data"
             end
           end

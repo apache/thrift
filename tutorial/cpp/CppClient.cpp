@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     work.num2 = 0;
 
     try {
-      int32_t quotient = client.calculate(1, work);
+      client.calculate(1, work);
       printf("Whoa? We can divide by zero!\n");
     } catch (InvalidOperation &io) {
       printf("InvalidOperation: %s\n", io.why.c_str());

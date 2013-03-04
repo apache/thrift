@@ -24,8 +24,8 @@ module Thrift
     
     def initialize(transport)
       @transport = transport
-      @wbuf = ''
-      @rbuf = ''
+      @wbuf = Bytes.empty_byte_buffer
+      @rbuf = Bytes.empty_byte_buffer
       @index = 0
     end
 
@@ -44,12 +44,12 @@ module Thrift
 
     def read(sz)
       @index += sz
-      ret = @rbuf.slice(@index - sz, sz) || ''
+      ret = @rbuf.slice(@index - sz, sz) || Bytes.empty_byte_buffer
 
       if ret.length == 0
         @rbuf = @transport.read([sz, DEFAULT_BUFFER].max)
         @index = sz
-        ret = @rbuf.slice(0, sz) || ''
+        ret = @rbuf.slice(0, sz) || Bytes.empty_byte_buffer
       end
 
       ret
@@ -65,9 +65,15 @@ module Thrift
       # The read buffer has some data now, read a single byte. Using get_string_byte() avoids
       # allocating a temp string of size 1 unnecessarily.
       @index += 1
-      return ::Thrift::TransportUtils.get_string_byte(@rbuf, @index - 1)
+      return Bytes.get_string_byte(@rbuf, @index - 1)
     end
 
+    # Reads a number of bytes from the transport into the buffer passed.
+    #
+    # buffer - The String (byte buffer) to write data to; this is assumed to have a BINARY encoding.
+    # size   - The number of bytes to read from the transport and write to the buffer.
+    #
+    # Returns the number of bytes read.
     def read_into_buffer(buffer, size)
       i = 0
       while i < size
@@ -78,8 +84,8 @@ module Thrift
         end
 
         # The read buffer has some data now, so copy bytes over to the output buffer.
-        byte = ::Thrift::TransportUtils.get_string_byte(@rbuf, @index)
-        ::Thrift::TransportUtils.set_string_byte(buffer, i, byte)
+        byte = Bytes.get_string_byte(@rbuf, @index)
+        Bytes.set_string_byte(buffer, i, byte)
         @index += 1
         i += 1
       end
@@ -87,13 +93,13 @@ module Thrift
     end
 
     def write(buf)
-      @wbuf << buf
+      @wbuf << Bytes.force_binary_encoding(buf)
     end
 
     def flush
-      if @wbuf != ''
+      unless @wbuf.empty?
         @transport.write(@wbuf)
-        @wbuf = ''
+        @wbuf = Bytes.empty_byte_buffer
       end
       
       @transport.flush

@@ -30,8 +30,15 @@
 #include "platform.h"
 #include "version.h"
 
-using namespace std;
+using std::ios;
+using std::map;
+using std::ofstream;
+using std::ostringstream;
+using std::string;
+using std::stringstream;
+using std::vector;
 
+static const string endl = "\n";  // avoid ostream << std::endl flushes
 
 /**
  * OCaml code generator.

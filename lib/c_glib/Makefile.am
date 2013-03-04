@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
+.NOTPARALLEL:
 SUBDIRS = . test
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -24,7 +24,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 lib_LTLIBRARIES = libthrift_c_glib.la
 pkgconfig_DATA = thrift_c_glib.pc
 
-common_cflags = -g -Wall -W -Werror -Isrc -I src/thrift $(GLIB_CFLAGS)
+common_cflags = -g -Wall -W -Werror -Isrc -I src/thrift/c_glib $(GLIB_CFLAGS)
 common_ldflags = -g -Wall -W $(GLIB_LDFLAGS) @GCOV_LDFLAGS@
 
 # this removes optimizations and adds coverage flags
@@ -32,56 +32,56 @@ CFLAGS = @GCOV_CFLAGS@
 
 # Define the source files for the module
 
-libthrift_c_glib_la_SOURCES = src/thrift/thrift.c \
-                              src/thrift/thrift_struct.c \
-                              src/thrift/thrift_application_exception.c \
-                              src/thrift/processor/thrift_processor.c \
-                              src/thrift/protocol/thrift_protocol.c \
-                              src/thrift/protocol/thrift_protocol_factory.c \
-                              src/thrift/protocol/thrift_binary_protocol.c \
-                              src/thrift/protocol/thrift_binary_protocol_factory.c \
-                              src/thrift/transport/thrift_transport.c \
-                              src/thrift/transport/thrift_transport_factory.c \
-                              src/thrift/transport/thrift_socket.c \
-                              src/thrift/transport/thrift_server_transport.c \
-                              src/thrift/transport/thrift_server_socket.c \
-                              src/thrift/transport/thrift_buffered_transport.c \
-                              src/thrift/transport/thrift_framed_transport.c \
-                              src/thrift/transport/thrift_memory_buffer.c \
-                              src/thrift/server/thrift_server.c \
-                              src/thrift/server/thrift_simple_server.c
+libthrift_c_glib_la_SOURCES = src/thrift/c_glib/thrift.c \
+                              src/thrift/c_glib/thrift_struct.c \
+                              src/thrift/c_glib/thrift_application_exception.c \
+                              src/thrift/c_glib/processor/thrift_processor.c \
+                              src/thrift/c_glib/protocol/thrift_protocol.c \
+                              src/thrift/c_glib/protocol/thrift_protocol_factory.c \
+                              src/thrift/c_glib/protocol/thrift_binary_protocol.c \
+                              src/thrift/c_glib/protocol/thrift_binary_protocol_factory.c \
+                              src/thrift/c_glib/transport/thrift_transport.c \
+                              src/thrift/c_glib/transport/thrift_transport_factory.c \
+                              src/thrift/c_glib/transport/thrift_socket.c \
+                              src/thrift/c_glib/transport/thrift_server_transport.c \
+                              src/thrift/c_glib/transport/thrift_server_socket.c \
+                              src/thrift/c_glib/transport/thrift_buffered_transport.c \
+                              src/thrift/c_glib/transport/thrift_framed_transport.c \
+                              src/thrift/c_glib/transport/thrift_memory_buffer.c \
+                              src/thrift/c_glib/server/thrift_server.c \
+                              src/thrift/c_glib/server/thrift_simple_server.c
 
 libthrift_c_glib_la_CFLAGS = $(common_cflags)
 
 include_thriftdir = $(includedir)/thrift/c_glib
 include_thrift_HEADERS = \
                          $(top_builddir)/config.h \
-                         src/thrift/thrift.h \
-                         src/thrift/thrift_application_exception.h \
-                         src/thrift/thrift_struct.h
+                         src/thrift/c_glib/thrift.h \
+                         src/thrift/c_glib/thrift_application_exception.h \
+                         src/thrift/c_glib/thrift_struct.h
 
 include_protocoldir = $(include_thriftdir)/protocol
-include_protocol_HEADERS = src/thrift/protocol/thrift_protocol.h \
-                           src/thrift/protocol/thrift_protocol_factory.h \
-                           src/thrift/protocol/thrift_binary_protocol.h \
-                           src/thrift/protocol/thrift_binary_protocol_factory.h
+include_protocol_HEADERS = src/thrift/c_glib/protocol/thrift_protocol.h \
+                           src/thrift/c_glib/protocol/thrift_protocol_factory.h \
+                           src/thrift/c_glib/protocol/thrift_binary_protocol.h \
+                           src/thrift/c_glib/protocol/thrift_binary_protocol_factory.h
 
 include_transportdir = $(include_thriftdir)/transport
-include_transport_HEADERS = src/thrift/transport/thrift_buffered_transport.h \
-                            src/thrift/transport/thrift_framed_transport.h \
-                            src/thrift/transport/thrift_memory_buffer.h \
-                            src/thrift/transport/thrift_server_socket.h \
-                            src/thrift/transport/thrift_server_transport.h \
-                            src/thrift/transport/thrift_socket.h \
-                            src/thrift/transport/thrift_transport.h \
-                            src/thrift/transport/thrift_transport_factory.h
+include_transport_HEADERS = src/thrift/c_glib/transport/thrift_buffered_transport.h \
+                            src/thrift/c_glib/transport/thrift_framed_transport.h \
+                            src/thrift/c_glib/transport/thrift_memory_buffer.h \
+                            src/thrift/c_glib/transport/thrift_server_socket.h \
+                            src/thrift/c_glib/transport/thrift_server_transport.h \
+                            src/thrift/c_glib/transport/thrift_socket.h \
+                            src/thrift/c_glib/transport/thrift_transport.h \
+                            src/thrift/c_glib/transport/thrift_transport_factory.h
 
 include_serverdir = $(include_thriftdir)/server
-include_server_HEADERS = src/thrift/server/thrift_server.h \
-                         src/thrift/server/thrift_simple_server.h
+include_server_HEADERS = src/thrift/c_glib/server/thrift_server.h \
+                         src/thrift/c_glib/server/thrift_simple_server.h
 
 include_processordir = $(include_thriftdir)/processor
-include_processor_HEADERS = src/thrift/processor/thrift_processor.h
+include_processor_HEADERS = src/thrift/c_glib/processor/thrift_processor.h
 
 
 EXTRA_DIST = \

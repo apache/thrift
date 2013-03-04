@@ -29,8 +29,14 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.THttpClient;
 import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TFastFramedTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.apache.thrift.transport.TSSLTransportFactory;
+import org.apache.thrift.transport.TSSLTransportFactory.TSSLTransportParameters;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TJSONProtocol;
+import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TSimpleJSONProtocol;
 
 import java.util.Map;
@@ -48,69 +54,134 @@ import java.util.ArrayList;
  */
 public class TestClient {
   public static void main(String [] args) {
+    String host = "localhost";
+    int port = 9090;
+    int numTests = 1;
+    String protocol_type = "binary";
+    String transport_type = "buffered";
+    boolean ssl = false;
+
+    int socketTimeout = 1000;
+
     try {
-      String host = "localhost";
-      int port = 9090;
-      String url = null;
-      int numTests = 1;
-      boolean framed = false;
-
-      int socketTimeout = 1000;
-
-      try {
-        for (int i = 0; i < args.length; ++i) {
-          if (args[i].equals("-h")) {
-            String[] hostport = (args[++i]).split(":");
-            host = hostport[0];
-            port = Integer.valueOf(hostport[1]);
-          } else if (args[i].equals("-f") || args[i].equals("-framed")) {
-            framed = true;
-          } else if (args[i].equals("-u")) {
-            url = args[++i];
-          } else if (args[i].equals("-n")) {
-            numTests = Integer.valueOf(args[++i]);
-          } else if (args[i].equals("-timeout")) {
-            socketTimeout = Integer.valueOf(args[++i]);
-          }
+      for (int i = 0; i < args.length; ++i) {
+        if (args[i].startsWith("--host")) {
+          host = args[i].split("=")[1];
+          host.trim();
+        } else if (args[i].startsWith("--port")) {
+          port = Integer.valueOf(args[i].split("=")[1]); 
+        } else if (args[i].startsWith("--n") || 
+            args[i].startsWith("--testloops")){
+          numTests = Integer.valueOf(args[i].split("=")[1]);
+        } else if (args[i].equals("--timeout")) {
+          socketTimeout = Integer.valueOf(args[i].split("=")[1]);
+        } else if (args[i].startsWith("--protocol")) {
+          protocol_type = args[i].split("=")[1];
+          protocol_type.trim();
+        } else if (args[i].startsWith("--transport")) {
+          transport_type = args[i].split("=")[1];
+          transport_type.trim();
+        } else if (args[i].equals("--ssl")) {
+          ssl = true;
+        } else if (args[i].equals("--help")) {
+          System.out.println("Allowed options:");
+          System.out.println("  --help\t\t\tProduce help message"); 
+          System.out.println("  --host=arg (=" + host + ")\tHost to connect");
+          System.out.println("  --port=arg (=" + port + ")\tPort number to connect");
+          System.out.println("  --transport=arg (=" + transport_type + ")\n\t\t\t\tTransport: buffered, framed, fastframed, http");
+          System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, json, compact");
+          System.out.println("  --ssl\t\t\tEncrypted Transport using SSL");
+          System.out.println("  --testloops[--n]=arg (=" + numTests + ")\tNumber of Tests");
+          System.exit(0);
         }
-      } catch (Exception x) {
-        x.printStackTrace();
       }
+    } catch (Exception x) {
+      System.err.println("Can not parse arguments! See --help");
+      System.exit(1);
+    }
 
-      TTransport transport;
+    try {
+      if (protocol_type.equals("binary")) {
+      } else if (protocol_type.equals("compact")) {
+      } else if (protocol_type.equals("json")) {
+      } else {
+        throw new Exception("Unknown protocol type! " + protocol_type); 
+      }
+      if (transport_type.equals("buffered")) {
+      } else if (transport_type.equals("framed")) {
+      } else if (transport_type.equals("fastframed")) {
+      } else if (transport_type.equals("http")) {
+      } else {
+        throw new Exception("Unknown transport type! " + transport_type);
+      }
+      if (transport_type.equals("http") && ssl == true) {
+        throw new Exception("SSL is not supported over http.");
+      }
+    } catch (Exception e) {
+      System.err.println("Error: " + e.getMessage());
+      System.exit(1);
+    }
 
-      if (url != null) {
+    TTransport transport = null;
+
+    try {
+      if (transport_type.equals("http")) {
+        String url = "http://" + host + ":" + port + "/service";
         transport = new THttpClient(url);
       } else {
-        TSocket socket = new TSocket(host, port);
+        TSocket socket = null;
+        if (ssl == true) {
+          socket = TSSLTransportFactory.getClientSocket(host, port, 0);
+        } else {
+          socket = new TSocket(host, port);
+        }
         socket.setTimeout(socketTimeout);
         transport = socket;
-        if (framed) {
+        if (transport_type.equals("buffered")) {
+        } else if (transport_type.equals("framed")) {
           transport = new TFramedTransport(transport);
+        } else if (transport_type.equals("fastframed")) {
+          transport = new TFastFramedTransport(transport);
         }
       }
+    } catch (Exception x) {
+      x.printStackTrace();
+      System.exit(1);
+    }
 
-      TBinaryProtocol binaryProtocol =
-        new TBinaryProtocol(transport);
-      ThriftTest.Client testClient =
-        new ThriftTest.Client(binaryProtocol);
-      Insanity insane = new Insanity();
+    TProtocol tProtocol = null;
+    if (protocol_type.equals("json")) {
+      tProtocol = new TJSONProtocol(transport);
+    } else if (protocol_type.equals("compact")) {
+      tProtocol = new TCompactProtocol(transport);
+    } else {
+      tProtocol = new TBinaryProtocol(transport);
+    }
 
-      long timeMin = 0;
-      long timeMax = 0;
-      long timeTot = 0;
+    ThriftTest.Client testClient =
+      new ThriftTest.Client(tProtocol);
+    Insanity insane = new Insanity();
 
-      for (int test = 0; test < numTests; ++test) {
+    long timeMin = 0;
+    long timeMax = 0;
+    long timeTot = 0;
 
+    int failCount = 0;
+    for (int test = 0; test < numTests; ++test) {
+      try {
         /**
          * CONNECT TEST
          */
         System.out.println("Test #" + (test+1) + ", " + "connect " + host + ":" + port);
-        try {
-          transport.open();
-        } catch (TTransportException ttx) {
-          System.out.println("Connect failed: " + ttx.getMessage());
-          continue;
+
+        if (transport.isOpen() == false) {
+          try {
+            transport.open();
+          } catch (TTransportException ttx) {
+            ttx.printStackTrace();
+            System.out.println("Connect failed: " + ttx.getMessage());
+            System.exit(1);
+          }
         }
 
         long start = System.nanoTime();
@@ -124,6 +195,7 @@ public class TestClient {
           System.out.print(" = void\n");
         } catch (TApplicationException tax) {
           tax.printStackTrace();
+          failCount++;
         }
 
         /**
@@ -132,6 +204,10 @@ public class TestClient {
         System.out.print("testString(\"Test\")");
         String s = testClient.testString("Test");
         System.out.print(" = \"" + s + "\"\n");
+        if (!s.equals("Test")) {
+          failCount++;
+          System.out.println("FAILURE\n");
+        }
 
         /**
          * BYTE TEST
@@ -139,6 +215,10 @@ public class TestClient {
         System.out.print("testByte(1)");
         byte i8 = testClient.testByte((byte)1);
         System.out.print(" = " + i8 + "\n");
+        if (i8 != 1) {
+          failCount++; 
+          System.out.println("FAILURE\n");
+        }
 
         /**
          * I32 TEST
@@ -146,6 +226,10 @@ public class TestClient {
         System.out.print("testI32(-1)");
         int i32 = testClient.testI32(-1);
         System.out.print(" = " + i32 + "\n");
+        if (i32 != -1) {
+          failCount++; 
+          System.out.println("FAILURE\n");
+        }
 
         /**
          * I64 TEST
@@ -153,13 +237,21 @@ public class TestClient {
         System.out.print("testI64(-34359738368)");
         long i64 = testClient.testI64(-34359738368L);
         System.out.print(" = " + i64 + "\n");
+        if (i64 != -34359738368L) {
+          failCount++;
+          System.out.println("FAILURE\n");
+        }
 
         /**
          * DOUBLE TEST
          */
-        System.out.print("testDouble(5.325098235)");
-        double dub = testClient.testDouble(5.325098235);
+        System.out.print("testDouble(-5.325098235)");
+        double dub = testClient.testDouble(-5.325098235);
         System.out.print(" = " + dub + "\n");
+        if (Math.abs(dub - (-5.325098235)) > 0.001) {
+          failCount++;
+          System.out.println("FAILURE\n");
+        }
 
         /**
          * STRUCT TEST
@@ -171,7 +263,15 @@ public class TestClient {
         out.i32_thing = -3;
         out.i64_thing = -5;
         Xtruct in = testClient.testStruct(out);
-        System.out.print(" = {" + "\"" + in.string_thing + "\", " + in.byte_thing + ", " + in.i32_thing + ", " + in.i64_thing + "}\n");
+        System.out.print(" = {" + "\"" + 
+                         in.string_thing + "\"," + 
+                         in.byte_thing + ", " + 
+                         in.i32_thing + ", " + 
+                         in.i64_thing + "}\n");
+        if (!in.equals(out)) {
+          failCount++; 
+          System.out.println("FAILURE\n");
+        }
 
         /**
          * NESTED STRUCT TEST
@@ -183,7 +283,16 @@ public class TestClient {
         out2.i32_thing = 5;
         Xtruct2 in2 = testClient.testNest(out2);
         in = in2.struct_thing;
-        System.out.print(" = {" + in2.byte_thing + ", {" + "\"" + in.string_thing + "\", " + in.byte_thing + ", " + in.i32_thing + ", " + in.i64_thing + "}, " + in2.i32_thing + "}\n");
+        System.out.print(" = {" + in2.byte_thing + ", {" + "\"" + 
+                         in.string_thing + "\", " + 
+                         in.byte_thing + ", " +
+                         in.i32_thing + ", " +
+                         in.i64_thing + "}, " +
+                         in2.i32_thing + "}\n");
+        if (!in2.equals(out2)) {
+          failCount++;
+          System.out.println("FAILURE\n");
+        }
 
         /**
          * MAP TEST
@@ -215,6 +324,15 @@ public class TestClient {
           System.out.print(key + " => " + mapout.get(key));
         }
         System.out.print("}\n");
+        if (!mapout.equals(mapin)) {
+          failCount++; 
+          System.out.println("FAILURE\n");
+        }
+
+        /**
+         * STRING MAP TEST
+         *  missing
+         */
 
         /**
          * SET TEST
@@ -246,6 +364,10 @@ public class TestClient {
           System.out.print(elem);
         }
         System.out.print("}\n");
+        if (!setout.equals(setin)) {
+          failCount++; 
+          System.out.println("FAILURE\n");
+        }
 
         /**
          * LIST TEST
@@ -277,6 +399,10 @@ public class TestClient {
           System.out.print(elem);
         }
         System.out.print("}\n");
+        if (!listout.equals(listin)) {
+          failCount++; 
+          System.out.println("FAILURE\n");
+        }
 
         /**
          * ENUM TEST
@@ -284,22 +410,42 @@ public class TestClient {
         System.out.print("testEnum(ONE)");
         Numberz ret = testClient.testEnum(Numberz.ONE);
         System.out.print(" = " + ret + "\n");
+        if (ret != Numberz.ONE) {
+          failCount++;
+          System.out.println("FAILURE\n");
+        }
 
         System.out.print("testEnum(TWO)");
         ret = testClient.testEnum(Numberz.TWO);
         System.out.print(" = " + ret + "\n");
+        if (ret != Numberz.TWO) {
+          failCount++; 
+          System.out.println("FAILURE\n");
+        }
 
         System.out.print("testEnum(THREE)");
         ret = testClient.testEnum(Numberz.THREE);
         System.out.print(" = " + ret + "\n");
+        if (ret != Numberz.THREE) {
+          failCount++;
+          System.out.println("FAILURE\n");
+        }
 
         System.out.print("testEnum(FIVE)");
         ret = testClient.testEnum(Numberz.FIVE);
         System.out.print(" = " + ret + "\n");
+        if (ret != Numberz.FIVE) {
+          failCount++;
+          System.out.println("FAILURE\n");
+        }
 
         System.out.print("testEnum(EIGHT)");
         ret = testClient.testEnum(Numberz.EIGHT);
         System.out.print(" = " + ret + "\n");
+        if (ret != Numberz.EIGHT) {
+          failCount++;
+          System.out.println("FAILURE\n");
+        }
 
         /**
          * TYPEDEF TEST
@@ -307,6 +453,10 @@ public class TestClient {
         System.out.print("testTypedef(309858235082523)");
         long uid = testClient.testTypedef(309858235082523L);
         System.out.print(" = " + uid + "\n");
+        if (uid != 309858235082523L) {
+          failCount++;
+          System.out.println("FAILURE\n");
+        }
 
         /**
          * NESTED MAP TEST
@@ -381,14 +531,16 @@ public class TestClient {
           System.out.print("testClient.testException(\"Xception\") =>");
           testClient.testException("Xception");
           System.out.print("  void\nFAILURE\n");
+          failCount++;
         } catch(Xception e) {
-          System.out.printf("  {%u, \"%s\"}\n", e.errorCode, e.message);
+          System.out.printf("  {%d, \"%s\"}\n", e.errorCode, e.message);
         }
         
         try {
           System.out.print("testClient.testException(\"TException\") =>");
           testClient.testException("TException");
           System.out.print("  void\nFAILURE\n");
+          failCount++;
         } catch(TException e) {
           System.out.printf("  {\"%s\"}\n", e.getMessage());
         }
@@ -399,6 +551,7 @@ public class TestClient {
           System.out.print("  void\n");
         }catch(Exception e) {
           System.out.printf("  exception\nFAILURE\n");
+          failCount++;
         }
         
         
@@ -410,16 +563,18 @@ public class TestClient {
           System.out.printf("testClient.testMultiException(\"Xception\", \"test 1\") =>");
           testClient.testMultiException("Xception", "test 1");
           System.out.print("  result\nFAILURE\n");
+          failCount++;
         } catch(Xception e) {
-          System.out.printf("  {%u, \"%s\"}\n", e.errorCode, e.message);
+          System.out.printf("  {%d, \"%s\"}\n", e.errorCode, e.message);
         }
         
         try {
           System.out.printf("testClient.testMultiException(\"Xception2\", \"test 2\") =>");
           testClient.testMultiException("Xception2", "test 2");
           System.out.print("  result\nFAILURE\n");
+          failCount++;
         } catch(Xception2 e) {
-          System.out.printf("  {%u, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing);
+          System.out.printf("  {%d, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing);
         }
         
         try {
@@ -429,6 +584,7 @@ public class TestClient {
           System.out.printf("  {{\"%s\"}}\n", result.string_thing);
         } catch(Exception e) {
           System.out.printf("  exception\nFAILURE\n");
+          failCount++;
         }
 
 
@@ -441,9 +597,10 @@ public class TestClient {
         testClient.testOneway(3);
         long onewayElapsedMillis = (System.nanoTime() - startOneway) / 1000000;
         if (onewayElapsedMillis > 200) {
-          throw new Exception("Oneway test failed: took " +
+          System.out.println("Oneway test failed: took " +
                               Long.toString(onewayElapsedMillis) +
                               "ms");
+          failCount++;
         } else {
           System.out.println("Success - took " +
                              Long.toString(onewayElapsedMillis) +
@@ -465,22 +622,27 @@ public class TestClient {
         timeTot += tot;
 
         transport.close();
+      } catch (Exception x) {
+        x.printStackTrace();
+        failCount++;
       }
-
-      long timeAvg = timeTot / numTests;
-
-      System.out.println("Min time: " + timeMin/1000 + "us");
-      System.out.println("Max time: " + timeMax/1000 + "us");
-      System.out.println("Avg time: " + timeAvg/1000 + "us");
-
-      String json = (new TSerializer(new TSimpleJSONProtocol.Factory())).toString(insane);
-
-      System.out.println("\nFor good meausre here is some JSON:\n" + json);
-
-    } catch (Exception x) {
-      x.printStackTrace();
     }
 
-  }
+    long timeAvg = timeTot / numTests;
 
+    System.out.println("Min time: " + timeMin/1000 + "us");
+    System.out.println("Max time: " + timeMax/1000 + "us");
+    System.out.println("Avg time: " + timeAvg/1000 + "us");
+
+    try {
+      String json = (new TSerializer(new TSimpleJSONProtocol.Factory())).toString(insane);
+      System.out.println("\nFor good meausre here is some JSON:\n" + json);
+    } catch (TException x) {
+      x.printStackTrace();
+      System.exit(1);
+    }
+
+
+    System.exit(failCount);
+  }
 }

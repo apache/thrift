@@ -35,22 +35,14 @@ module Thrift
   end
 
   module TransportUtils
-    if RUBY_VERSION >= '1.9'
-      def self.get_string_byte(string, index)
-        string.getbyte(index)
-      end
+    # Deprecated: Use Thrift::Bytes instead
+    def self.get_string_byte(string, index)
+      Bytes.get_string_byte(string, index)
+    end
 
-      def self.set_string_byte(string, index, byte)
-        string.setbyte(index, byte)
-      end
-    else
-      def self.get_string_byte(string, index)
-        string[index]
-      end
-
-      def self.set_string_byte(string, index, byte)
-        string[index] = byte
-      end
+    # Deprecated: Use Thrift::Bytes instead
+    def self.set_string_byte(string, index, byte)
+      Bytes.set_string_byte(string, index, byte)
     end
   end
 
@@ -61,6 +53,11 @@ module Thrift
 
     def close; end
 
+    # Reads a number of bytes from the transports. In Ruby 1.9+, the String returned will have a BINARY (aka ASCII8BIT) encoding.
+    #
+    # sz - The number of bytes to read from the transport.
+    #
+    # Returns a String acting as a byte buffer.
     def read(sz)
       raise NotImplementedError
     end
@@ -68,7 +65,7 @@ module Thrift
     # Returns an unsigned byte as a Fixnum in the range (0..255).
     def read_byte
       buf = read_all(1)
-      return ::Thrift::TransportUtils.get_string_byte(buf, 0)
+      return Bytes.get_string_byte(buf, 0)
     end
 
     # Reads size bytes and copies them into buffer[0..size].
@@ -76,14 +73,14 @@ module Thrift
       tmp = read_all(size)
       i = 0
       tmp.each_byte do |byte|
-        ::Thrift::TransportUtils.set_string_byte(buffer, i, byte)
+        Bytes.set_string_byte(buffer, i, byte)
         i += 1
       end
       i
     end
 
     def read_all(size)
-      return '' if size <= 0
+      return Bytes.empty_byte_buffer if size <= 0
       buf = read(size)
       while (buf.length < size)
         chunk = read(size - buf.length)
@@ -92,7 +89,12 @@ module Thrift
     
       buf
     end
-  
+
+    # Writes the byte buffer to the transport. In Ruby 1.9+, the buffer will be forced into BINARY encoding.
+    #
+    # buf - A String acting as a byte buffer.
+    #
+    # Returns nothing.
     def write(buf); end
     alias_method :<<, :write
 

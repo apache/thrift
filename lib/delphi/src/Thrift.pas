@@ -25,7 +25,7 @@ uses
   SysUtils, Thrift.Protocol;
 
 const
-  Version = '0.9.0-dev';
+  Version = '1.0.0-dev';
 
 type
   IProcessor = interface
@@ -43,7 +43,12 @@ type
         InvalidMessageType,
         WrongMethodName,
         BadSequenceID,
-        MissingResult
+        MissingResult,
+        InternalError,
+        ProtocolError,
+        InvalidTransform,
+        InvalidProtocol,
+        UnsupportedClientType
       );
 {$SCOPEDENUMS OFF}
   private

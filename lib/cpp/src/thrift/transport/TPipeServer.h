@@ -33,13 +33,14 @@ namespace apache { namespace thrift { namespace transport {
 /**
  * Windows Pipes implementation of TServerTransport.
  */
+#ifdef _WIN32
 class TPipeServer : public TServerTransport {
  public:
   //Constructors
   // Named Pipe -
-  TPipeServer(std::string pipename, uint32_t bufsize);
-  TPipeServer(std::string pipename, uint32_t bufsize, uint32_t maxconnections);
-  TPipeServer(std::string pipename);
+  TPipeServer(const std::string &pipename, uint32_t bufsize);
+  TPipeServer(const std::string &pipename, uint32_t bufsize, uint32_t maxconnections);
+  TPipeServer(const std::string &pipename);
   // Anonymous pipe -
   TPipeServer(int bufsize);
   TPipeServer();
@@ -59,33 +60,30 @@ class TPipeServer : public TServerTransport {
  public:
   //Accessors
   std::string getPipename();
-  void setPipename(std::string pipename);
+  void setPipename(const std::string &pipename);
   int  getBufferSize();
   void setBufferSize(int bufsize);
-  int getPipeHandle();  //Named Pipe R/W -or- Anonymous pipe Read handle
-  int getWrtPipeHandle();
-  int getClientRdPipeHandle();
-  int getClientWrtPipeHandle();
+  HANDLE getPipeHandle();  //Named Pipe R/W -or- Anonymous pipe Read handle
+  HANDLE getWrtPipeHandle();
+  HANDLE getClientRdPipeHandle();
+  HANDLE getClientWrtPipeHandle();
   bool getAnonymous();
   void setAnonymous(bool anon);
 
  private:
   std::string pipename_;
   uint32_t bufsize_;
-  int Pipe_;  //Named Pipe (R/W) or Anonymous Pipe (R)
+  HANDLE Pipe_;  //Named Pipe (R/W) or Anonymous Pipe (R)
   uint32_t maxconns_;
-  int PipeW_; //Anonymous Pipe (W)
-  int ClientAnonRead, ClientAnonWrite; //Client side anonymous pipe handles
+  HANDLE PipeW_; //Anonymous Pipe (W)
+  HANDLE ClientAnonRead, ClientAnonWrite; //Client side anonymous pipe handles
   //? Do we need duplicates to send to client?
   bool isAnonymous;
-
-public:
-#ifndef _WIN32
-  //*NIX named pipe implementation uses domain socket
-  void listen(); //Only needed for domain sockets
-  boost::shared_ptr<TServerSocket> dsrvsocket;
-#endif
 };
+#else //_WIN32
+//*NIX named pipe implementation uses domain socket
+typedef TServerSocket TPipeServer;
+#endif
 
 }}} // apache::thrift::transport
 

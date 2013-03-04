@@ -19,6 +19,11 @@
 
 package org.apache.thrift.protocol;
 
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.TException;
+
+import thrift.test.Bonk;
+
 public class TestTBinaryProtocol extends ProtocolTestBase {
   @Override
   protected TProtocolFactory getFactory() {
@@ -28,5 +33,18 @@ public class TestTBinaryProtocol extends ProtocolTestBase {
   @Override
   protected boolean canBeUsedNaked() {
     return true;
+  }
+
+  public void testOOMDenialOfService() throws Exception {
+    TDeserializer deser = new TDeserializer(new TBinaryProtocol
+					    .Factory(false, false, 1000));
+    Bonk bonk = new Bonk();
+    try {
+      // Invalid read length specified here. Would cause an OOM
+      // without the limit on the read length
+      deser.deserialize(bonk, new byte[]{11, 0, 1, 127, -1, -1, -1});
+    } catch (TException e) {
+      // Ignore as we are only checking for OOM in the failure case
+    }
   }
 }

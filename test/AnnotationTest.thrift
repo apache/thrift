@@ -30,5 +30,33 @@ struct foo {
   java.final = "",
 )
 
-typedef string ( unicode.encoding = "UTF-16" ) non_latin_string
+exception foo_error {
+  1: i32 error_code ( foo="bar" )
+  2: string error_msg
+} (foo = "bar")
+
+typedef string ( unicode.encoding = "UTF-16" ) non_latin_string (foo="bar")
 typedef list< double ( cpp.fixed_point = "16" ) > tiny_float_list
+
+enum weekdays {
+  SUNDAY ( weekend = "yes" ),
+  MONDAY,
+  TUESDAY,
+  WEDNESDAY,
+  THURSDAY,
+  FRIDAY,
+  SATURDAY ( weekend = "yes" )
+} (foo.bar="baz")
+
+/* Note that annotations on senum values are not supported. */
+senum seasons {
+  "Spring",
+  "Summer", 
+  "Fall",
+  "Winter"
+} ( foo = "bar" )
+
+service foo_service {
+  void foo() ( foo = "bar" )
+} (a.b="c")
+

@@ -151,7 +151,7 @@ void TServerSocket::setTcpRecvBuffer(int tcpRecvBuffer) {
 }
 
 void TServerSocket::listen() {
-  int sv[2];
+  SOCKET sv[2];
   if (-1 == socketpair(AF_LOCAL, SOCK_STREAM, 0, sv)) {
     GlobalOutput.perror("TServerSocket::listen() socketpair() ", errno);
     intSock1_ = -1;
@@ -243,7 +243,7 @@ void TServerSocket::listen() {
   #ifdef IPV6_V6ONLY
   if (res->ai_family == AF_INET6 && path_.empty()) {
     int zero = 0;
-    if (-1 == setsockopt(serverSocket_, IPPROTO_IPV6, IPV6_V6ONLY, 
+    if (-1 == setsockopt(serverSocket_, IPPROTO_IPV6, IPV6_V6ONLY,
           cast_sockopt(&zero), sizeof(zero))) {
       GlobalOutput.perror("TServerSocket::listen() IPV6_V6ONLY ", errno);
     }
@@ -321,7 +321,7 @@ void TServerSocket::listen() {
 #endif
   } else {
     do {
-      if (0 == ::bind(serverSocket_, res->ai_addr, res->ai_addrlen)) {
+      if (0 == ::bind(serverSocket_, res->ai_addr, static_cast<int>(res->ai_addrlen))) {
         break;
       }
       // use short circuit evaluation here to only sleep if we need to
@@ -358,7 +358,7 @@ void TServerSocket::listen() {
 }
 
 shared_ptr<TTransport> TServerSocket::acceptImpl() {
-  if (serverSocket_ < 0) {
+  if (serverSocket_ == -1) {
     throw TTransportException(TTransportException::NOT_OPEN, "TServerSocket not listening");
   }
 
@@ -371,7 +371,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     std::memset(fds, 0 , sizeof(fds));
     fds[0].fd = serverSocket_;
     fds[0].events = POLLIN;
-    if (intSock2_ >= 0) {
+    if (intSock2_ != -1) {
       fds[1].fd = intSock2_;
       fds[1].events = POLLIN;
     }
@@ -393,7 +393,7 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
       throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
     } else if (ret > 0) {
       // Check for an interrupt signal
-      if (intSock2_ >= 0 && (fds[1].revents & POLLIN)) {
+      if (intSock2_ != -1 && (fds[1].revents & POLLIN)) {
         int8_t buf;
         if (-1 == recv(intSock2_, cast_sockopt(&buf), sizeof(int8_t), 0)) {
           GlobalOutput.perror("TServerSocket::acceptImpl() recv() interrupt ", errno);
@@ -413,11 +413,11 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
 
   struct sockaddr_storage clientAddress;
   int size = sizeof(clientAddress);
-  int clientSocket = ::accept(serverSocket_,
+  SOCKET clientSocket = ::accept(serverSocket_,
                               (struct sockaddr *) &clientAddress,
                               (socklen_t *) &size);
 
-  if (clientSocket < 0) {
+  if (clientSocket == -1) {
     int errno_copy = errno;
     GlobalOutput.perror("TServerSocket::acceptImpl() ::accept() ", errno_copy);
     throw TTransportException(TTransportException::UNKNOWN, "accept()", errno_copy);
@@ -445,16 +445,16 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     client->setRecvTimeout(recvTimeout_);
   }
   client->setCachedAddress((sockaddr*) &clientAddress, size);
-  
+
   return client;
 }
 
-shared_ptr<TSocket> TServerSocket::createSocket(int clientSocket) {
+shared_ptr<TSocket> TServerSocket::createSocket(SOCKET clientSocket) {
   return shared_ptr<TSocket>(new TSocket(clientSocket));
 }
 
 void TServerSocket::interrupt() {
-  if (intSock1_ >= 0) {
+  if (intSock1_ != -1) {
     int8_t byte = 0;
     if (-1 == send(intSock1_, cast_sockopt(&byte), sizeof(int8_t), 0)) {
       GlobalOutput.perror("TServerSocket::interrupt() send() ", errno);
@@ -463,7 +463,7 @@ void TServerSocket::interrupt() {
 }
 
 void TServerSocket::close() {
-  if (serverSocket_ >= 0) {
+  if (serverSocket_ != -1) {
 
 #ifdef _WIN32
       shutdown(serverSocket_, SD_BOTH);
@@ -474,10 +474,10 @@ void TServerSocket::close() {
 #endif
 
   }
-  if (intSock1_ >= 0) {
+  if (intSock1_ != -1) {
       ::close(intSock1_);
   }
-  if (intSock2_ >= 0) {
+  if (intSock2_ != -1) {
     ::close(intSock2_);
   }
   serverSocket_ = -1;

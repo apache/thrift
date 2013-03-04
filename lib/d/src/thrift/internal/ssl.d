@@ -20,7 +20,7 @@ module thrift.internal.ssl;
 
 import core.memory : GC;
 import core.stdc.config;
-import core.stdc.errno : getErrno;
+import core.stdc.errno : errno;
 import core.stdc.string : strerror;
 import deimos.openssl.err;
 import deimos.openssl.ssl;
@@ -188,7 +188,7 @@ Exception getSSLException(string location = null, string clientFile = __FILE__,
   }
   initMessage();
 
-  auto errn = getErrno();
+  auto errn = errno;
 
   const(char)* file = void;
   int line = void;

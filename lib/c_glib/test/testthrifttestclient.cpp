@@ -314,9 +314,9 @@ extern "C" {
 
 #include "t_test_thrift_test.h"
 #include "t_test_thrift_test_types.h"
-#include <thrift/transport/thrift_socket.h>
-#include <thrift/protocol/thrift_protocol.h>
-#include <thrift/protocol/thrift_binary_protocol.h>
+#include <thrift/c_glib/transport/thrift_socket.h>
+#include <thrift/c_glib/protocol/thrift_protocol.h>
+#include <thrift/c_glib/protocol/thrift_binary_protocol.h>
 
 static void
 test_thrift_client (void)

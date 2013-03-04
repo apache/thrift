@@ -53,7 +53,7 @@ class TThreadedServer : public TServer {
                   const boost::shared_ptr<TTransportFactory>& transportFactory,
                   const boost::shared_ptr<TProtocolFactory>& protocolFactory,
                   const boost::shared_ptr<ThreadFactory>& threadFactory,
-                  THRIFT_OVERLOAD_IF(ProcessorFactory, TProtocolFactory));
+                  THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory));
 
   template<typename Processor>
   TThreadedServer(const boost::shared_ptr<Processor>& processor,
@@ -109,7 +109,7 @@ TThreadedServer::TThreadedServer(
     const boost::shared_ptr<TTransportFactory>& transportFactory,
     const boost::shared_ptr<TProtocolFactory>& protocolFactory,
     const boost::shared_ptr<ThreadFactory>& threadFactory,
-    THRIFT_OVERLOAD_IF_DEFN(ProcessorFactory, TProtocolFactory)) :
+    THRIFT_OVERLOAD_IF_DEFN(ProcessorFactory, TProcessorFactory)) :
   TServer(processorFactory, serverTransport, transportFactory,
           protocolFactory),
   threadFactory_(threadFactory) {
