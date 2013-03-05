@@ -20,6 +20,7 @@
 require 'mongrel'
 
 ## Sticks a service on a URL, using mongrel to do the HTTP work
+# <b>DEPRECATED:</b> Please use <tt>Thrift::ThinHTTPServer</tt> instead.
 module Thrift
   class MongrelHTTPServer < BaseServer
     class Handler < Mongrel::HttpHandler
@@ -43,6 +44,7 @@ module Thrift
     end
 
     def initialize(processor, opts={})
+      Kernel.warn "[DEPRECATION WARNING] `Thrift::MongrelHTTPServer` is deprecated.  Please use `Thrift::ThinHTTPServer` instead."
       port = opts[:port] || 80
       ip = opts[:ip] || "0.0.0.0"
       path = opts[:path] || ""
