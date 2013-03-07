@@ -125,7 +125,7 @@ if test "$with_cpp" = "yes";  then
 
   AX_LIB_ZLIB([1.2.3])
   have_zlib=$success
-  
+
   AX_THRIFT_LIB(qt4, [Qt], yes)
   have_qt=no
   if test "$with_qt4" = "yes";  then
@@ -610,6 +610,7 @@ AC_CONFIG_FILES([
   test/perl/Makefile
   test/py/Makefile
   test/py.twisted/Makefile
+  test/py.tornado/Makefile
   test/rb/Makefile
   tutorial/Makefile
   tutorial/cpp/Makefile
@@ -617,6 +618,7 @@ AC_CONFIG_FILES([
   tutorial/js/Makefile
   tutorial/py/Makefile
   tutorial/py.twisted/Makefile
+  tutorial/py.tornado/Makefile
 ])
 
 AC_OUTPUT

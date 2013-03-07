@@ -91,13 +91,22 @@ class t_py_generator : public t_generator {
     iter = parsed_options.find("twisted");
     gen_twisted_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("tornado");
+    gen_tornado_ = (iter != parsed_options.end());
+
+    if (gen_twisted_ && gen_tornado_) {
+      throw "at most one of 'twisted' and 'tornado' are allowed";
+    }
+
     iter = parsed_options.find("utf8strings");
     gen_utf8strings_ = (iter != parsed_options.end());
 
     copy_options_ = option_string;
 
-    if (gen_twisted_){
+    if (gen_twisted_) {
       out_dir_base_ = "gen-py.twisted";
+    } else if (gen_tornado_) {
+      out_dir_base_ = "gen-py.tornado";
     } else {
       out_dir_base_ = "gen-py";
     }
@@ -214,6 +223,17 @@ class t_py_generator : public t_generator {
                                           t_doc* tdoc);
 
   /**
+   * a type for specifying to function_signature what type of Tornado callback
+   * parameter to add
+   */
+
+  enum tornado_callback_t {
+    NONE = 0,
+    MANDATORY_FOR_ONEWAY_ELSE_NONE = 1,
+    OPTIONAL_FOR_ONEWAY_ELSE_MANDATORY = 2,
+  };
+
+  /**
    * Helper rendering functions
    */
 
@@ -224,9 +244,12 @@ class t_py_generator : public t_generator {
   std::string declare_argument(t_field* tfield);
   std::string render_field_default_value(t_field* tfield);
   std::string type_name(t_type* ttype);
-  std::string function_signature(t_function* tfunction, std::string prefix="");
-  std::string function_signature_if(t_function* tfunction, std::string prefix="");
-  std::string argument_list(t_struct* tstruct);
+  std::string function_signature(t_function* tfunction,
+                                 bool interface=false,
+                                 tornado_callback_t callback=NONE);
+  std::string argument_list(t_struct* tstruct,
+                            std::vector<std::string> *pre=NULL,
+                            std::vector<std::string> *post=NULL);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
 
@@ -275,6 +298,11 @@ class t_py_generator : public t_generator {
    * True if we should generate Twisted-friendly RPC services.
    */
   bool gen_twisted_;
+
+  /**
+   * True if we should generate code for use with Tornado
+   */
+  bool gen_tornado_;
 
   /**
    * True if strings should be encoded using utf-8.
@@ -1027,6 +1055,9 @@ void t_py_generator::generate_service(t_service* tservice) {
       "from zope.interface import Interface, implements" << endl <<
       "from twisted.internet import defer" << endl <<
       "from thrift.transport import TTwisted" << endl;
+  } else if (gen_tornado_) {
+    f_service_ << "from tornado import gen" << endl;
+    f_service_ << "from tornado import stack_context" << endl;
   }
 
   f_service_ << endl;
@@ -1098,7 +1129,7 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
   } else {
     if (gen_twisted_) {
       extends_if = "(Interface)";
-    } else if (gen_newstyle_ || gen_dynamic_) {
+    } else if (gen_newstyle_ || gen_dynamic_ || gen_tornado_) {
       extends_if = "(object)";
     }
   }
@@ -1115,7 +1146,7 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
     vector<t_function*>::iterator f_iter;
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
       f_service_ <<
-        indent() << "def " << function_signature_if(*f_iter) << ":" << endl;
+        indent() << "def " << function_signature(*f_iter, true, OPTIONAL_FOR_ONEWAY_ELSE_MANDATORY) << ":" << endl;
       indent_up();
       generate_python_docstring(f_service_, (*f_iter));
       f_service_ <<
@@ -1165,6 +1196,9 @@ void t_py_generator::generate_service_client(t_service* tservice) {
   if (gen_twisted_) {
     f_service_ <<
       indent() << "def __init__(self, transport, oprot_factory):" << endl;
+  } else if (gen_tornado_) {
+    f_service_ <<
+      indent() << "def __init__(self, transport, iprot_factory, oprot_factory=None):" << endl;
   } else {
     f_service_ <<
       indent() << "def __init__(self, iprot, oprot=None):" << endl;
@@ -1174,6 +1208,15 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       f_service_ <<
         indent() << "  self._transport = transport" << endl <<
         indent() << "  self._oprot_factory = oprot_factory" << endl <<
+        indent() << "  self._seqid = 0" << endl <<
+        indent() << "  self._reqs = {}" << endl <<
+        endl;
+    } else if (gen_tornado_) {
+      f_service_ <<
+        indent() << "  self._transport = transport" << endl <<
+        indent() << "  self._iprot_factory = iprot_factory" << endl <<
+        indent() << "  self._oprot_factory = (oprot_factory if oprot_factory is not None" << endl <<
+        indent() << "                         else iprot_factory)" << endl <<
         indent() << "  self._seqid = 0" << endl <<
         indent() << "  self._reqs = {}" << endl <<
         endl;
@@ -1190,11 +1233,33 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       f_service_ <<
         indent() << "  " << extends << ".Client.__init__(self, transport, oprot_factory)" << endl <<
         endl;
+    } else if (gen_tornado_) {
+      f_service_ <<
+        indent() << "  " << extends << ".Client.__init__(self, transport, iprot_factory, oprot_factory)" << endl <<
+        endl;
     } else {
       f_service_ <<
         indent() << "  " << extends << ".Client.__init__(self, iprot, oprot)" << endl <<
         endl;
     }
+  }
+
+  if (gen_tornado_ && extends.empty()) {
+    f_service_ <<
+      indent() << "@gen.engine" << endl <<
+      indent() << "def recv_dispatch(self):" << endl <<
+      indent() << "  \"\"\"read a response from the wire. schedule exactly one per send that" << endl <<
+      indent() << "  expects a response, but it doesn't matter which callee gets which" << endl <<
+      indent() << "  response; they're dispatched here properly\"\"\"" << endl <<
+      endl <<
+      indent() << "  # wait for a frame header" << endl <<
+      indent() << "  frame = yield gen.Task(self._transport.readFrame)" << endl <<
+      indent() << "  tr = TTransport.TMemoryBuffer(frame)" << endl <<
+      indent() << "  iprot = self._iprot_factory.getProtocol(tr)" << endl <<
+      indent() << "  (fname, mtype, rseqid) = iprot.readMessageBegin()" << endl <<
+      indent() << "  method = getattr(self, 'recv_' + fname)" << endl <<
+      indent() << "  method(iprot, mtype, rseqid)" << endl <<
+      endl;
   }
 
   // Generate client method implementations
@@ -1208,7 +1273,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
 
     // Open function
     indent(f_service_) <<
-      "def " << function_signature(*f_iter) << ":" << endl;
+      "def " << function_signature(*f_iter, false, OPTIONAL_FOR_ONEWAY_ELSE_MANDATORY) << ":" << endl;
     indent_up();
     generate_python_docstring(f_service_, (*f_iter));
     if (gen_twisted_) {
@@ -1216,6 +1281,12 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       if (!(*f_iter)->is_oneway()) {
         indent(f_service_) <<
           "d = self._reqs[self._seqid] = defer.Deferred()" << endl;
+      }
+    } else if (gen_tornado_) {
+      indent(f_service_) << "self._seqid += 1" << endl;
+      if (!(*f_iter)->is_oneway()) {
+        indent(f_service_) <<
+          "self._reqs[self._seqid] = callback" << endl;
       }
     }
 
@@ -1231,12 +1302,24 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       }
       f_service_ << (*fld_iter)->get_name();
     }
+
+    if (gen_tornado_ && (*f_iter)->is_oneway()) {
+      if (first) {
+        first = false;
+      } else {
+        f_service_ << ", ";
+      }
+      f_service_ << "callback";
+    }
+
     f_service_ << ")" << endl;
 
     if (!(*f_iter)->is_oneway()) {
       f_service_ << indent();
       if (gen_twisted_) {
         f_service_ << "return d" << endl;
+      } else if (gen_tornado_) {
+        f_service_ << "self.recv_dispatch()" << endl;
       } else {
         if (!(*f_iter)->get_returntype()->is_void()) {
           f_service_ << "return ";
@@ -1254,14 +1337,14 @@ void t_py_generator::generate_service_client(t_service* tservice) {
     f_service_ << endl;
 
     indent(f_service_) <<
-      "def send_" << function_signature(*f_iter) << ":" << endl;
+      "def send_" << function_signature(*f_iter, false, MANDATORY_FOR_ONEWAY_ELSE_NONE) << ":" << endl;
 
     indent_up();
 
     std::string argsname = (*f_iter)->get_name() + "_args";
 
     // Serialize the request header
-    if (gen_twisted_) {
+    if (gen_twisted_ || gen_tornado_) {
       f_service_ <<
         indent() << "oprot = self._oprot_factory.getProtocol(self._transport)" << endl <<
         indent() <<
@@ -1286,6 +1369,19 @@ void t_py_generator::generate_service_client(t_service* tservice) {
         indent() << "args.write(oprot)" << endl <<
         indent() << "oprot.writeMessageEnd()" << endl <<
         indent() << "oprot.trans.flush()" << endl;
+    } else if (gen_tornado_) {
+      f_service_ <<
+        indent() << "args.write(oprot)" << endl <<
+        indent() << "oprot.writeMessageEnd()" << endl;
+      if ((*f_iter)->is_oneway()) {
+        // send_* carry the callback so you can block on the write's flush
+        // (rather than on receipt of the response)
+        f_service_ <<
+          indent() << "oprot.trans.flush(callback=callback)" << endl;
+      } else {
+        f_service_ <<
+          indent() << "oprot.trans.flush()" << endl;
+      }
     } else {
       f_service_ <<
         indent() << "args.write(self._oprot)" << endl <<
@@ -1300,7 +1396,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       // Open function
       f_service_ <<
         endl;
-      if (gen_twisted_) {
+      if (gen_twisted_ || gen_tornado_) {
         f_service_ <<
           indent() << "def recv_" << (*f_iter)->get_name() <<
               "(self, iprot, mtype, rseqid):" << endl;
@@ -1319,6 +1415,9 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       if (gen_twisted_) {
         f_service_ <<
           indent() << "d = self._reqs.pop(rseqid)" << endl;
+      } else if (gen_tornado_) {
+        f_service_ <<
+          indent() << "callback = self._reqs.pop(rseqid)" << endl;
       } else {
         f_service_ <<
           indent() << "(fname, mtype, rseqid) = self._iprot.readMessageBegin()" << endl;
@@ -1333,6 +1432,15 @@ void t_py_generator::generate_service_client(t_service* tservice) {
           indent() << "  x.read(iprot)" << endl <<
           indent() << "  iprot.readMessageEnd()" << endl <<
           indent() << "  return d.errback(x)" << endl <<
+          indent() << "result = " << resultname << "()" << endl <<
+          indent() << "result.read(iprot)" << endl <<
+          indent() << "iprot.readMessageEnd()" << endl;
+      } else if (gen_tornado_) {
+        f_service_ <<
+          indent() << "  x.read(iprot)" << endl <<
+          indent() << "  iprot.readMessageEnd()" << endl <<
+          indent() << "  callback(x)" << endl <<
+          indent() << "  return" << endl <<
           indent() << "result = " << resultname << "()" << endl <<
           indent() << "result.read(iprot)" << endl <<
           indent() << "iprot.readMessageEnd()" << endl;
@@ -1353,6 +1461,10 @@ void t_py_generator::generate_service_client(t_service* tservice) {
           if (gen_twisted_) {
             f_service_ <<
               indent() << "  return d.callback(result.success)" << endl;
+          } else if (gen_tornado_) {
+            f_service_ <<
+              indent() << "  callback(result.success)" << endl <<
+              indent() << "  return" << endl;
           } else {
             f_service_ <<
               indent() << "  return result.success" << endl;
@@ -1369,6 +1481,10 @@ void t_py_generator::generate_service_client(t_service* tservice) {
             f_service_ <<
               indent() << "  return d.errback(result." << (*x_iter)->get_name() << ")" << endl;
 
+          } else if (gen_tornado_) {
+            f_service_ <<
+              indent() << "  callback(result." << (*x_iter)->get_name() << ")" << endl <<
+              indent() << "  return" << endl;
           } else {
             f_service_ <<
               indent() << "  raise result." << (*x_iter)->get_name() << "" << endl;
@@ -1378,16 +1494,24 @@ void t_py_generator::generate_service_client(t_service* tservice) {
       // Careful, only return _result if not a void function
       if ((*f_iter)->get_returntype()->is_void()) {
         if (gen_twisted_) {
-          indent(f_service_) <<
-            "return d.callback(None)" << endl;
+          f_service_ <<
+            indent() << "return d.callback(None)" << endl;
+        } else if (gen_tornado_) {
+          f_service_ <<
+            indent() << "callback(None)" << endl <<
+            indent() << "return" << endl;
         } else {
-          indent(f_service_) <<
-            "return" << endl;
+          f_service_ <<
+            indent() << "return" << endl;
         }
       } else {
         if (gen_twisted_) {
           f_service_ <<
             indent() << "return d.errback(TApplicationException(TApplicationException.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\"))" << endl;
+        } else if (gen_tornado_) {
+          f_service_ <<
+            indent() << "callback(TApplicationException(TApplicationException.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\"))" << endl <<
+            indent() << "return" << endl;
         } else {
           f_service_ <<
             indent() << "raise TApplicationException(TApplicationException.MISSING_RESULT, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
@@ -1645,9 +1769,22 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   f_service_ << endl;
 
   // Generate the server implementation
-  indent(f_service_) <<
-    "def process(self, iprot, oprot):" << endl;
-  indent_up();
+  if (gen_tornado_) {
+    f_service_ <<
+      indent() << "@gen.engine" << endl <<
+      indent() << "def process(self, transport, iprot_factory, oprot, callback):" << endl;
+    indent_up();
+    f_service_ <<
+      indent() << "# wait for a frame header" << endl <<
+      indent() << "frame = yield gen.Task(transport.readFrame)" << endl <<
+      indent() << "tr = TTransport.TMemoryBuffer(frame)" << endl <<
+      indent() << "iprot = iprot_factory.getProtocol(tr)" << endl <<
+      endl;
+  } else {
+    f_service_ <<
+      indent() << "def process(self, iprot, oprot):" << endl;
+    indent_up();
+  }
 
   f_service_ <<
     indent() << "(name, type, seqid) = iprot.readMessageBegin()" << endl;
@@ -1668,6 +1805,8 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   if (gen_twisted_) {
     f_service_ <<
       indent() << "  return defer.succeed(None)" << endl;
+  } else if (gen_tornado_) {
+    // nothing
   } else {
     f_service_ <<
       indent() << "  return" << endl;
@@ -1679,6 +1818,10 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   if (gen_twisted_) {
     f_service_ <<
       indent() << "  return self._processMap[name](self, seqid, iprot, oprot)" << endl;
+  } else if (gen_tornado_) {
+    f_service_ <<
+      indent() << "  yield gen.Task(self._processMap[name], self, seqid, iprot, oprot)" << endl <<
+      indent() << "callback()" << endl;
   } else {
     f_service_ <<
       indent() << "  self._processMap[name](self, seqid, iprot, oprot)" << endl;
@@ -1709,9 +1852,17 @@ void t_py_generator::generate_process_function(t_service* tservice,
                                                t_function* tfunction) {
   (void) tservice;
   // Open function
-  indent(f_service_) <<
-    "def process_" << tfunction->get_name() <<
-    "(self, seqid, iprot, oprot):" << endl;
+  if (gen_tornado_) {
+    f_service_ <<
+      indent() << "@gen.engine" << endl <<
+      indent() << "def process_" << tfunction->get_name() <<
+                  "(self, seqid, iprot, oprot, callback):" << endl;
+  } else {
+    f_service_ <<
+      indent() << "def process_" << tfunction->get_name() <<
+                  "(self, seqid, iprot, oprot):" << endl;
+  }
+
   indent_up();
 
   string argsname = tfunction->get_name() + "_args";
@@ -1827,8 +1978,81 @@ void t_py_generator::generate_process_function(t_service* tservice,
       indent_down();
       f_service_ << endl;
     }
-  } else {
 
+  } else if (gen_tornado_) {
+    if (!tfunction->is_oneway() && xceptions.size() > 0) {
+      f_service_ <<
+        endl <<
+        indent() << "def handle_exception(xtype, value, traceback):" << endl;
+
+      for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+        f_service_ <<
+          indent() << "  if xtype == " << type_name((*x_iter)->get_type()) << ":" << endl;
+        if (!tfunction->is_oneway()) {
+          f_service_ <<
+            indent() << "    result." << (*x_iter)->get_name() << " = value" << endl;
+        }
+        f_service_ <<
+          indent() << "    return True" << endl;
+      }
+
+      f_service_ <<
+        endl <<
+        indent() << "with stack_context.ExceptionStackContext(handle_exception):" << endl;
+      indent_up();
+    }
+
+    // Generate the function call
+    t_struct* arg_struct = tfunction->get_arglist();
+    const std::vector<t_field*>& fields = arg_struct->get_members();
+    vector<t_field*>::const_iterator f_iter;
+
+    f_service_ << indent();
+    if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
+      f_service_ << "result.success = ";
+    }
+    f_service_ <<
+      "yield gen.Task(self._handler." << tfunction->get_name() << ", ";
+    bool first = true;
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      if (first) {
+        first = false;
+      } else {
+        f_service_ << ", ";
+      }
+      f_service_ << "args." << (*f_iter)->get_name();
+    }
+    f_service_ << ")" << endl;
+
+    if (xceptions.size() > 0) {
+      f_service_ << endl;
+    }
+
+    if (!tfunction->is_oneway() && xceptions.size() > 0) {
+      indent_down();
+    }
+
+    // Shortcut out here for oneway functions
+    if (tfunction->is_oneway()) {
+      f_service_ <<
+        indent() << "callback()" << endl;
+      indent_down();
+      f_service_ << endl;
+      return;
+    }
+
+    f_service_ <<
+      indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name() << "\", TMessageType.REPLY, seqid)" << endl <<
+      indent() << "result.write(oprot)" << endl <<
+      indent() << "oprot.writeMessageEnd()" << endl <<
+      indent() << "oprot.trans.flush()" << endl <<
+      indent() << "callback()" << endl;
+
+    // Close function
+    indent_down();
+    f_service_ << endl;
+
+  } else {  // py
     // Try block for a function with exceptions
     if (xceptions.size() > 0) {
       f_service_ <<
@@ -2001,7 +2225,7 @@ void t_py_generator::generate_deserialize_container(ofstream &out,
   if (ttype->is_map()) {
     out <<
       indent() << prefix << " = {}" << endl <<
-      indent() << "(" << ktype << ", " << vtype << ", " << size << " ) = iprot.readMapBegin() " << endl;
+      indent() << "(" << ktype << ", " << vtype << ", " << size << " ) = iprot.readMapBegin()" << endl;
   } else if (ttype->is_set()) {
     out <<
       indent() << prefix << " = set()" << endl <<
@@ -2382,46 +2606,56 @@ string t_py_generator::render_field_default_value(t_field* tfield) {
  * @return String of rendered function definition
  */
 string t_py_generator::function_signature(t_function* tfunction,
-                                          string prefix) {
-  string argument_list_result = argument_list(tfunction->get_arglist());
-  if (!argument_list_result.empty()) {
-    argument_list_result = "self, " + argument_list_result;
-  } else {
-    argument_list_result = "self";
+                                          bool interface,
+                                          tornado_callback_t callback) {
+  vector<string> pre;
+  vector<string> post;
+  string signature = tfunction->get_name() + "(";
+
+  if (!(gen_twisted_ && interface)) {
+    pre.push_back("self");
   }
 
-  return prefix + tfunction->get_name() + "(" + argument_list_result + ")";
-}
-
-/**
- * Renders an interface function signature of the form 'type name(args)'
- *
- * @param tfunction Function definition
- * @return String of rendered function definition
- */
-string t_py_generator::function_signature_if(t_function* tfunction,
-                                             string prefix) {
-  string argument_list_result = argument_list(tfunction->get_arglist());
-  if (!gen_twisted_) {
-    if (!argument_list_result.empty()) {
-      argument_list_result = "self, " + argument_list_result;
-    } else {
-      argument_list_result = "self";
+  if (gen_tornado_) {
+    if (callback == NONE) {
+    } else if (callback == MANDATORY_FOR_ONEWAY_ELSE_NONE) {
+      if (tfunction->is_oneway()) {
+        // Tornado send_* carry the callback so you can block on the write's flush
+        // (rather than on receipt of the response)
+        post.push_back("callback");
+      }
+    } else if (callback == OPTIONAL_FOR_ONEWAY_ELSE_MANDATORY) {
+      if (tfunction->is_oneway()) {
+        post.push_back("callback=None");
+      } else {
+        post.push_back("callback");
+      }
     }
   }
-  return prefix + tfunction->get_name() + "(" + argument_list_result + ")";
+  signature += argument_list(tfunction->get_arglist(), &pre, &post) + ")";
+  return signature;
 }
-
 
 /**
  * Renders a field list
  */
-string t_py_generator::argument_list(t_struct* tstruct) {
+string t_py_generator::argument_list(t_struct* tstruct, vector<string> *pre, vector<string> *post) {
   string result = "";
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
+  vector<string>::const_iterator s_iter;
   bool first = true;
+  if (pre) {
+    for (s_iter = pre->begin(); s_iter != pre->end(); ++s_iter) {
+      if (first) {
+        first = false;
+      } else {
+        result += ", ";
+      }
+      result += *s_iter;
+    }
+  }
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
       first = false;
@@ -2429,6 +2663,16 @@ string t_py_generator::argument_list(t_struct* tstruct) {
       result += ", ";
     }
     result += (*f_iter)->get_name();
+  }
+  if (post) {
+    for (s_iter = post->begin(); s_iter != post->end(); ++s_iter) {
+      if (first) {
+        first = false;
+      } else {
+        result += ", ";
+      }
+      result += *s_iter;
+    }
   }
   return result;
 }
@@ -2523,6 +2767,7 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
 THRIFT_REGISTER_GENERATOR(py, "Python",
 "    new_style:       Generate new-style classes.\n" \
 "    twisted:         Generate Twisted-friendly RPC services.\n" \
+"    tornado:         Generate code for use with Tornado.\n" \
 "    utf8strings:     Encode/decode strings using utf8 in the generated code.\n" \
 "    slots:           Generate code using slots for instance members.\n" \
 "    dynamic:         Generate dynamic code, less code generated but slower.\n" \

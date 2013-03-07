@@ -17,47 +17,22 @@
 # under the License.
 #
 
-SUBDIRS =
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-if MINGW
-# do nothing, just build the compiler
-else
+gen-py.tornado/tutorial/Calculator.py gen-py.tornado/shared/SharedService.py: $(top_srcdir)/tutorial/tutorial.thrift
+	$(THRIFT) --gen py:tornado -r $<
 
-if WITH_CPP
-SUBDIRS += cpp
-endif
+all-local: gen-py.tornado/tutorial/Calculator.py
 
-if WITH_JAVA
-SUBDIRS += java
-SUBDIRS += js
-endif
+tutorialserver: all
+	${PYTHON} PythonServer.py
 
-if WITH_PERL
-#SUBDIRS += perl
-endif
+tutorialclient: all
+	${PYTHON} PythonClient.py
 
-if WITH_PHP
-#SUBDIRS += php
-endif
+clean-local:
+	$(RM) -r gen-*
 
-if WITH_PYTHON
-SUBDIRS += py
-SUBDIRS += py.twisted
-SUBDIRS += py.tornado
-endif
-
-if WITH_RUBY
-#SUBDIRS += rb
-endif
-
-if WITH_HASKELL
-#SUBDIRS += hs
-endif
-
-#
-# generate html for ThriftTest.thrift
-#
-all-local:
-	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
-
-endif
+EXTRA_DIST = \
+	PythonServer.py \
+	PythonClient.py

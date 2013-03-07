@@ -34,6 +34,7 @@ endif
 if WITH_PYTHON
 SUBDIRS += py
 SUBDIRS += py.twisted
+SUBDIRS += py.tornado
 endif
 
 if WITH_RUBY
@@ -61,6 +62,7 @@ EXTRA_DIST = \
 	php \
 	py \
 	py.twisted \
+	py.tornado \
 	rb \
 	threads \
 	AnnotationTest.thrift \

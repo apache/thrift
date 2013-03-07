@@ -17,47 +17,14 @@
 # under the License.
 #
 
-SUBDIRS =
+THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
-if MINGW
-# do nothing, just build the compiler
-else
+thrift_gen: ../ThriftTest.thrift ../SmallTest.thrift
+	$(THRIFT) --gen py:tornado ../ThriftTest.thrift
+	$(THRIFT) --gen py:tornado ../SmallTest.thrift
 
-if WITH_CPP
-SUBDIRS += cpp
-endif
+check: thrift_gen
+	./test_suite.py
 
-if WITH_JAVA
-SUBDIRS += java
-SUBDIRS += js
-endif
-
-if WITH_PERL
-#SUBDIRS += perl
-endif
-
-if WITH_PHP
-#SUBDIRS += php
-endif
-
-if WITH_PYTHON
-SUBDIRS += py
-SUBDIRS += py.twisted
-SUBDIRS += py.tornado
-endif
-
-if WITH_RUBY
-#SUBDIRS += rb
-endif
-
-if WITH_HASKELL
-#SUBDIRS += hs
-endif
-
-#
-# generate html for ThriftTest.thrift
-#
-all-local:
-	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
-
-endif
+clean-local:
+	$(RM) -r gen-py.tornado

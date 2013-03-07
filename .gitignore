@@ -241,6 +241,9 @@ gen-*
 /test/py.twisted/Makefile.in
 /test/py.twisted/_trial_temp/
 /test/py.twisted/test_suite.pyc
+/test/py.tornado/Makefile
+/test/py.tornado/Makefile.in
+/test/py.tornado/*.pyc
 /test/rb/Makefile
 /test/rb/Makefile.in
 /tutorial/Makefile
@@ -257,6 +260,8 @@ gen-*
 /tutorial/js/build/
 /tutorial/py.twisted/Makefile
 /tutorial/py.twisted/Makefile.in
+/tutorial/py.tornado/Makefile
+/tutorial/py.tornado/Makefile.in
 /tutorial/py/Makefile
 /tutorial/py/Makefile.in
 /ylwrap
