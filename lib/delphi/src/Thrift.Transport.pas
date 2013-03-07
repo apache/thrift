@@ -26,6 +26,7 @@ interface
 uses
   Classes,
   SysUtils,
+  Math,
   Sockets,
   Generics.Collections,
   Thrift.Collections,
@@ -202,7 +203,8 @@ type
   private
     FStream : IThriftStream;
     FBufSize : Integer;
-    FBuffer : TMemoryStream;
+    FReadBuffer : TMemoryStream;
+    FWriteBuffer : TMemoryStream;
   protected
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer); override;
     function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; override;
@@ -769,15 +771,20 @@ procedure TBufferedStreamImpl.Close;
 begin
   Flush;
   FStream := nil;
-  FBuffer.Free;
-  FBuffer := nil;
+
+  FReadBuffer.Free;
+  FReadBuffer := nil;
+
+  FWriteBuffer.Free;
+  FWriteBuffer := nil;
 end;
 
 constructor TBufferedStreamImpl.Create( const AStream: IThriftStream; ABufSize: Integer);
 begin
   FStream := AStream;
   FBufSize := ABufSize;
-  FBuffer := TMemoryStream.Create;
+  FReadBuffer := TMemoryStream.Create;
+  FWriteBuffer := TMemoryStream.Create;
 end;
 
 destructor TBufferedStreamImpl.Destroy;
@@ -793,21 +800,23 @@ var
 begin
   if IsOpen then
   begin
-    len := FBuffer.Size;
+    len := FWriteBuffer.Size;
     if len > 0 then
     begin
       SetLength( buf, len );
-      FBuffer.Position := 0;
-      FBuffer.Read( Pointer(@buf[0])^, len );
+      FWriteBuffer.Position := 0;
+      FWriteBuffer.Read( Pointer(@buf[0])^, len );
       FStream.Write( buf, 0, len );
     end;
-    FBuffer.Clear;
+    FWriteBuffer.Clear;
   end;
 end;
 
 function TBufferedStreamImpl.IsOpen: Boolean;
 begin
-  Result := (FBuffer <> nil) and ( FStream <> nil);
+  Result := (FWriteBuffer <> nil)
+        and (FReadBuffer <> nil)
+        and (FStream <> nil);
 end;
 
 procedure TBufferedStreamImpl.Open;
@@ -822,25 +831,27 @@ var
 begin
   inherited;
   Result := 0;
-  if count > 0 then
+  if IsOpen then
   begin
-    if IsOpen then
-    begin
-      if FBuffer.Position >= FBuffer.Size then
+    while count > 0 do begin
+
+      if FReadBuffer.Position >= FReadBuffer.Size then
       begin
-        FBuffer.Clear;
+        FReadBuffer.Clear;
         SetLength( tempbuf, FBufSize);
         nRead := FStream.Read( tempbuf, 0, FBufSize );
-        if nRead > 0 then
-        begin
-          FBuffer.WriteBuffer( Pointer(@tempbuf[0])^, nRead );
-          FBuffer.Position := 0;
-        end;
+        if nRead = 0 then Break; // avoid infinite loop
+
+        FReadBuffer.WriteBuffer( Pointer(@tempbuf[0])^, nRead );
+        FReadBuffer.Position := 0;
       end;
 
-      if FBuffer.Position < FBuffer.Size then
+      if FReadBuffer.Position < FReadBuffer.Size then
       begin
-        Result := FBuffer.Read( Pointer(@buffer[offset])^, count );
+        nRead  := Min( FReadBuffer.Size - FReadBuffer.Position, count);
+        Inc( Result, FReadBuffer.Read( Pointer(@buffer[offset])^, nRead));
+        Dec( count, nRead);
+        Inc( offset, nRead);
       end;
     end;
   end;
@@ -854,15 +865,15 @@ begin
 
   if IsOpen then
   begin
-    len := FBuffer.Size;
+    len := FReadBuffer.Size;
   end;
 
   SetLength( Result, len);
 
   if len > 0 then
   begin
-    FBuffer.Position := 0;
-    FBuffer.Read( Pointer(@Result[0])^, len );
+    FReadBuffer.Position := 0;
+    FReadBuffer.Read( Pointer(@Result[0])^, len );
   end;
 end;
 
@@ -873,8 +884,8 @@ begin
   begin
     if IsOpen then
     begin
-      FBuffer.Write( Pointer(@buffer[offset])^, count );
-      if FBuffer.Size > FBufSize then
+      FWriteBuffer.Write( Pointer(@buffer[offset])^, count );
+      if FWriteBuffer.Size > FBufSize then
       begin
         Flush;
       end;
