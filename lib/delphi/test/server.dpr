@@ -24,7 +24,7 @@ program server;
 uses
   SysUtils,
   TestServer in 'TestServer.pas',
-  Thrift.Test in 'gen-delphi\Thrift.Test.pas',
+  Thrift.Test,  // in gen-delphi folder
   Thrift in '..\src\Thrift.pas',
   Thrift.Transport in '..\src\Thrift.Transport.pas',
   Thrift.Transport.Pipes in '..\src\Thrift.Transport.Pipes.pas',

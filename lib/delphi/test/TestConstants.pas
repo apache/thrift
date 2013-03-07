@@ -29,6 +29,10 @@ const
   KNOWN_PROTOCOLS : array[TKnownProtocol] of string
                   = ('binary', 'JSON');
 
+  // defaults are: read=false, write=true
+  BINARY_STRICT_READ  = FALSE;
+  BINARY_STRICT_WRITE = FALSE;
+
 implementation
 
 // nothing

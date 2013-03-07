@@ -116,6 +116,11 @@ var
   streamtrans : IStreamTransport;
   http : IHTTPClient;
   protType, p : TKnownProtocol;
+const
+  // pipe timeouts to be used
+  DEBUG_TIMEOUT   = 30 * 1000;
+  RELEASE_TIMEOUT = DEFAULT_THRIFT_PIPE_TIMEOUT;
+  TIMEOUT         = RELEASE_TIMEOUT;
 begin
   bBuffered := False;;
   bFramed := False;
@@ -233,7 +238,7 @@ begin
       begin
         if sPipeName <> '' then begin
           Console.WriteLine('Using named pipe ('+sPipeName+')');
-          streamtrans := TNamedPipeImpl.Create( sPipeName);
+          streamtrans := TNamedPipeImpl.Create( sPipeName, 0, nil, TIMEOUT);
         end
         else if bAnonPipe then begin
           Console.WriteLine('Using anonymous pipes ('+IntToStr(Integer(hAnonRead))+' and '+IntToStr(Integer(hAnonWrite))+')');
@@ -247,7 +252,7 @@ begin
         trans := streamtrans;
 
         if bBuffered then begin
-          trans := TBufferedTransportImpl.Create( streamtrans);
+          trans := TBufferedTransportImpl.Create( streamtrans, 32);  // small buffer to test read()
           Console.WriteLine('Using buffered transport');
         end;
 
@@ -265,11 +270,11 @@ begin
 
       // create protocol instance, default to BinaryProtocol
       case protType of
-        prot_Binary:  prot := TBinaryProtocolImpl.Create( trans);
+        prot_Binary:  prot := TBinaryProtocolImpl.Create( trans, BINARY_STRICT_READ, BINARY_STRICT_WRITE);
         prot_JSON  :  prot := TJSONProtocolImpl.Create( trans);
       else
         ASSERT( FALSE);  // unhandled case!
-        prot := TBinaryProtocolImpl.Create( trans);  // use default
+        prot := TBinaryProtocolImpl.Create( trans, BINARY_STRICT_READ, BINARY_STRICT_WRITE);  // use default
       end;
 
       thread := TClientThread.Create( trans, prot, FNumIteration);

@@ -191,6 +191,7 @@ type
     FPipeName     : string;
     FMaxConns     : DWORD;
     FBufSize      : DWORD;
+    FTimeout      : DWORD;
 
     FHandle : THandle;
 
@@ -203,7 +204,8 @@ type
 
   public
     constructor Create( aPipename : string; aBufsize : Cardinal = 4096;
-                        aMaxConns : Cardinal = PIPE_UNLIMITED_INSTANCES);
+                        aMaxConns : Cardinal = PIPE_UNLIMITED_INSTANCES;
+                        aTimeOut : Cardinal = 0);
 
     procedure Close; override;
   end;
@@ -439,7 +441,8 @@ end;
 
 function TPipeTransportBaseImpl.GetIsOpen: Boolean;
 begin
-  result := (FInputStream <> nil);
+  result := (FInputStream <> nil)  and (FInputStream.IsOpen)
+        and (FOutputStream <> nil) and (FOutputStream.IsOpen);
 end;
 
 
@@ -634,7 +637,7 @@ end;
 { TNamedServerPipeImpl }
 
 
-constructor TNamedServerPipeImpl.Create( aPipename : string; aBufsize, aMaxConns : Cardinal);
+constructor TNamedServerPipeImpl.Create( aPipename : string; aBufsize, aMaxConns, aTimeOut : Cardinal);
 // Named Pipe CTOR
 begin
   inherited Create;
@@ -642,6 +645,7 @@ begin
   FBufsize  := aBufSize;
   FMaxConns := Max( 1, Min( PIPE_UNLIMITED_INSTANCES, aMaxConns));
   FHandle   := INVALID_HANDLE_VALUE;
+  FTimeout  := aTimeOut;
 
   if Copy(FPipeName,1,2) <> '\\'
   then FPipeName := '\\.\pipe\' + FPipeName;  // assume localhost
@@ -735,7 +739,7 @@ begin
                                       FMaxConns,                // max. instances
                                       FBufSize,                 // output buffer size
                                       FBufSize,                 // input buffer size
-                                      0,                        // client time-out
+                                      FTimeout,                 // time-out, see MSDN
                                       @sa);                     // default security attribute
 
     FHandle := hPipe;

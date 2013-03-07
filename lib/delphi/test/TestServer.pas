@@ -464,6 +464,11 @@ var
   i : Integer;
   s : string;
   protType, p : TKnownProtocol;
+const
+  // pipe timeouts to be used
+  DEBUG_TIMEOUT   = 30 * 1000;
+  RELEASE_TIMEOUT = 0;  // server-side default
+  TIMEOUT         = RELEASE_TIMEOUT;
 begin
   try
     UseBufferedSockets := False;
@@ -525,11 +530,11 @@ begin
 
     // create protocol factory, default to BinaryProtocol
     case protType of
-      prot_Binary:  ProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
+      prot_Binary:  ProtocolFactory := TBinaryProtocolImpl.TFactory.Create( BINARY_STRICT_READ, BINARY_STRICT_WRITE);
       prot_JSON  :  ProtocolFactory := TJSONProtocolImpl.TFactory.Create;
     else
       ASSERT( FALSE);  // unhandled case!
-      ProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
+      ProtocolFactory := TBinaryProtocolImpl.TFactory.Create( BINARY_STRICT_READ, BINARY_STRICT_WRITE);
     end;
     ASSERT( ProtocolFactory <> nil);
     Console.WriteLine('- '+KNOWN_PROTOCOLS[protType]+' protocol');
@@ -537,7 +542,7 @@ begin
 
     if sPipeName <> '' then begin
       Console.WriteLine('- named pipe ('+sPipeName+')');
-      namedpipe   := TNamedServerPipeImpl.Create( sPipeName);
+      namedpipe   := TNamedServerPipeImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES, TIMEOUT);
       servertrans := namedpipe;
     end
     else if AnonPipe then begin
