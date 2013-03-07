@@ -1225,7 +1225,7 @@ end;
 
 function TBinaryProtocolImpl.TFactory.GetProtocol( const trans: ITransport): IProtocol;
 begin
-  Result := TBinaryProtocolImpl.Create( trans );
+  Result := TBinaryProtocolImpl.Create( trans, FStrictRead, FStrictWrite);
 end;
 
 end.
