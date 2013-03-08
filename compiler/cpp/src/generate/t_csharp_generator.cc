@@ -514,7 +514,6 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
   bool has_non_required_fields = false;
   bool has_non_required_default_value_fields = false;
   bool has_required_fields = false;
-  bool has_default_values = false;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_csharp_doc(out, *m_iter);
     generate_property(out, *m_iter, true, true);
@@ -524,12 +523,9 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
       has_required_fields = true;
     } else {
       if (has_default) {
-	has_non_required_default_value_fields = true;
+        has_non_required_default_value_fields = true;
       }
       has_non_required_fields = true;
-    }
-    if (has_default) {
-      has_default_values = true;
     }
   }
 
