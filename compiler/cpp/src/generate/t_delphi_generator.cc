@@ -819,7 +819,7 @@ void t_delphi_generator::print_const_value( std::ostream& vars, std::ostream& ou
     string v2 = render_const_value( vars, out, name, type, value);
     indent_impl(out) << name << " := " << v2 << ";" << endl;
   } else if (truetype->is_enum()) {
-    indent_impl(out) << name << " := " << type_name(type) << "(" << value->get_integer() << ");" << endl;
+    indent_impl(out) << name << " := " << type_name(type) << "." << value->get_identifier_name() << ";" << endl;
   } else {
     string typname;
     typname = type_name( type, true, false, type->is_xception(), type->is_xception());
@@ -882,7 +882,7 @@ string t_delphi_generator::render_const_value(ostream& vars, ostream& out, strin
           render << "";
     }
   } else if (truetype->is_enum()) {
-    render << type_name( type, false) << "(" << value->get_integer() << ")";
+    render << type_name( type, false) << "." << value->get_identifier_name();
   } else {
     string t = tmp("tmp");
     vars <<  "  " << t << " : " << type_name(type) << ";" << endl;
