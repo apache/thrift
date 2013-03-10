@@ -389,7 +389,7 @@ bool t_csharp_generator::print_const_value(std::ofstream& out, string name, t_ty
     out << name << " = " << v2 << ";" << endl;
     need_static_construction = false;
   } else if (type->is_enum()) {
-    out << name << " = (" << type_name(type, false, true) << ")" << value->get_integer() << ";" << endl;
+    out << name << " = " << type_name(type, false, true) << "." << value->get_identifier_name() << ";" << endl;
     need_static_construction = false;
   } else if (type->is_struct() || type->is_xception()) {
     out << name << " = new " << type_name(type) << "();" << endl;
@@ -436,7 +436,7 @@ std::string t_csharp_generator::render_const_value(ofstream& out, string name, t
         throw "compiler error: no const of base type " + tbase;
     }
   } else if (type->is_enum()) {
-    render << "(" << type->get_name() << ")" << value->get_integer();
+    render << type->get_name() << "." << value->get_identifier_name();
   } else {
     string t = tmp("tmp");
     print_const_value(out, t, type, value, true, true, true);
@@ -569,7 +569,11 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
       t = ((t_typedef*)t)->get_type();
     }
     if ((*m_iter)->get_value() != NULL) {
-      print_const_value(out, "this._" + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
+      if (field_is_required((*m_iter))) {
+        print_const_value(out, "this." + prop_name(*m_iter), t, (*m_iter)->get_value(), true, true);
+      } else {
+        print_const_value(out, "this._" + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
+      }
     }
   }
   indent_down();
@@ -580,12 +584,12 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
     bool first = true;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if (field_is_required((*m_iter))) {
-	if (first) {
-	  first = false;
-	} else {
-	  out << ", ";
-	}
-	out << type_name((*m_iter)->get_type()) << " " << (*m_iter)->get_name();
+        if (first) {
+          first = false;
+        } else {
+          out << ", ";
+        }
+        out << type_name((*m_iter)->get_type()) << " " << (*m_iter)->get_name();
       }
     }
     out << ") : this() {" << endl;
@@ -593,7 +597,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if (field_is_required((*m_iter))) {
-	indent(out) << "this." << prop_name((*m_iter)) << " = " << (*m_iter)->get_name() << ";" << endl;
+        indent(out) << "this." << prop_name((*m_iter)) << " = " << (*m_iter)->get_name() << ";" << endl;
       }
     }
 
