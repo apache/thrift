@@ -338,6 +338,7 @@ void t_delphi_generator::create_keywords() {
   delphi_keywords["automated"] = 1;
   delphi_keywords["at"] = 1;
   delphi_keywords["on"] = 1;
+  delphi_keywords["result"] = 1;
 
   delphi_reserved_method["create"] = 1;
   delphi_reserved_method["free"] = 1;
