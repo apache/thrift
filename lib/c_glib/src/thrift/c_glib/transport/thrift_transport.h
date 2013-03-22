@@ -42,6 +42,8 @@ G_BEGIN_DECLS
 #define THRIFT_IS_TRANSPORT_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_TRANSPORT))
 #define THRIFT_TRANSPORT_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_TRANSPORT, ThriftTransportClass))
 
+typedef struct _ThriftTransport ThriftTransport;
+
 /*!
  * Thrift Protocol object
  */
@@ -49,7 +51,8 @@ struct _ThriftTransport
 {
   GObject parent;
 };
-typedef struct _ThriftTransport ThriftTransport;
+
+typedef struct _ThriftTransportClass ThriftTransportClass;
 
 /*!
  * Thrift Transport class
@@ -70,7 +73,6 @@ struct _ThriftTransportClass
   gboolean (*write_end) (ThriftTransport *transport, GError **error);
   gboolean (*flush) (ThriftTransport *transport, GError **error);
 };
-typedef struct _ThriftTransportClass ThriftTransportClass;
 
 /* used by THRIFT_TYPE_TRANSPORT */
 GType thrift_transport_get_type (void);

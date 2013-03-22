@@ -40,6 +40,8 @@ G_BEGIN_DECLS
 #define THRIFT_IS_BUFFERED_TRANSPORT_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_BUFFERED_TRANSPORT)
 #define THRIFT_BUFFERED_TRANSPORT_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_BUFFERED_TRANSPORT, ThriftBufferedTransportClass))
 
+typedef struct _ThriftBufferedTransport ThriftBufferedTransport;
+
 /*!
  * ThriftBufferedTransport  instance.
  */
@@ -56,7 +58,8 @@ struct _ThriftBufferedTransport
   guint32 r_buf_size;
   guint32 w_buf_size;
 };
-typedef struct _ThriftBufferedTransport ThriftBufferedTransport;
+
+typedef struct _ThriftBufferedTransportClass ThriftBufferedTransportClass;
 
 /*!
  * ThriftBufferedTransport class.
@@ -65,7 +68,6 @@ struct _ThriftBufferedTransportClass
 {
   ThriftTransportClass parent;
 };
-typedef struct _ThriftBufferedTransportClass ThriftBufferedTransportClass;
 
 /* used by THRIFT_TYPE_BUFFERED_TRANSPORT */
 GType thrift_buffered_transport_get_type (void);

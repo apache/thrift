@@ -33,6 +33,8 @@ G_BEGIN_DECLS
 #define THRIFT_IS_STRUCT_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_STRUCT))
 #define THRIFT_STRUCT_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_STRUCT, ThriftStructClass))
 
+typedef struct _ThriftStruct ThriftStruct;
+
 /* struct */
 struct _ThriftStruct
 {
@@ -40,7 +42,8 @@ struct _ThriftStruct
 
   /* private */
 };
-typedef struct _ThriftStruct ThriftStruct;
+
+typedef struct _ThriftStructClass ThriftStructClass;
 
 struct _ThriftStructClass
 {
@@ -52,7 +55,6 @@ struct _ThriftStructClass
   gint32 (*write) (ThriftStruct *object, ThriftProtocol *protocol,
                    GError **error);
 };
-typedef struct _ThriftStructClass ThriftStructClass;
 
 GType thrift_struct_get_type (void);
 

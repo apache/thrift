@@ -37,6 +37,8 @@ G_BEGIN_DECLS
 #define THRIFT_IS_APPLICATION_EXCEPTION_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_APPLICATION_EXCEPTION))
 #define THRIFT_APPLICATION_EXCEPTION_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_APPLICATION_EXCEPTION, ThriftApplicationExceptionClass))
 
+typedef struct _ThriftApplicationException ThriftApplicationException;
+
 struct _ThriftApplicationException
 {
   ThriftStruct parent;
@@ -47,13 +49,13 @@ struct _ThriftApplicationException
   gchar *message;
   gboolean __isset_message;
 };
-typedef struct _ThriftApplicationException ThriftApplicationException;
+
+typedef struct _ThriftApplicationExceptionClass ThriftApplicationExceptionClass;
 
 struct _ThriftApplicationExceptionClass
 {
   ThriftStructClass parent;
 };
-typedef struct _ThriftApplicationExceptionClass ThriftApplicationExceptionClass;
 
 GType thrift_application_exception_get_type (void);
 

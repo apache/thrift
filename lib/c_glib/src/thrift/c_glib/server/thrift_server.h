@@ -41,6 +41,8 @@ G_BEGIN_DECLS
 #define THRIFT_IS_SERVER_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_SERVER))
 #define THRIFT_SERVER_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_SERVER, ThriftServerClass))
 
+typedef struct _ThriftServer ThriftServer;
+
 /*!
  * Thrift Server object
  */
@@ -56,7 +58,8 @@ struct _ThriftServer
   ThriftProtocolFactory *input_protocol_factory;
   ThriftProtocolFactory *output_protocol_factory;
 };
-typedef struct _ThriftServer ThriftServer;
+
+typedef struct _ThriftServerClass ThriftServerClass;
 
 /*!
  * Thrift Server class
@@ -69,7 +72,6 @@ struct _ThriftServerClass
   void (*serve) (ThriftServer *server);
   void (*stop) (ThriftServer *server);
 };
-typedef struct _ThriftServerClass ThriftServerClass;
 
 /* used by THRIFT_TYPE_SERVER */
 GType thrift_server_get_type (void);

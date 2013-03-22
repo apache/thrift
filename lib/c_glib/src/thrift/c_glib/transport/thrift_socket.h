@@ -39,6 +39,8 @@ G_BEGIN_DECLS
 #define THRIFT_IS_SOCKET_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_SOCKET))
 #define THRIFT_SOCKET_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_SOCKET, ThriftSocketClass))
 
+typedef struct _ThriftSocket ThriftSocket;
+
 /*!
  * Thrift Socket instance.
  */
@@ -54,7 +56,8 @@ struct _ThriftSocket
   guint32 buf_size;
   guint32 buf_len;
 };
-typedef struct _ThriftSocket ThriftSocket;
+
+typedef struct _ThriftSocketClass ThriftSocketClass;
 
 /*!
  * Thrift Socket class.
@@ -63,7 +66,6 @@ struct _ThriftSocketClass
 {
   ThriftTransportClass parent;
 };
-typedef struct _ThriftSocketClass ThriftSocketClass;
 
 /* used by THRIFT_TYPE_SOCKET */
 GType thrift_socket_get_type (void);

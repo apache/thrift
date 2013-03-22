@@ -39,6 +39,8 @@ G_BEGIN_DECLS
 #define THRIFT_IS_PROTOCOL_FACTORY_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_PROTOCOL_FACTORY))
 #define THRIFT_PROTOCOL_FACTORY_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_PROTOCOL_FACTORY, ThriftProtocolFactoryClass))
 
+typedef struct _ThriftProtocolFactory ThriftProtocolFactory;
+
 /*!
  * Thrift Protocol Factory object
  */
@@ -46,7 +48,8 @@ struct _ThriftProtocolFactory
 {
   GObject parent;
 };
-typedef struct _ThriftProtocolFactory ThriftProtocolFactory;
+
+typedef struct _ThriftProtocolFactoryClass ThriftProtocolFactoryClass;
 
 /*!
  * Thrift Protocol Factory class
@@ -58,7 +61,6 @@ struct _ThriftProtocolFactoryClass
   ThriftProtocol *(*get_protocol) (ThriftProtocolFactory *factory,
                                    ThriftTransport *transport);
 };
-typedef struct _ThriftProtocolFactoryClass ThriftProtocolFactoryClass;
 
 /* used by THRIFT_TYPE_PROTOCOL_FACTORY */
 GType thrift_protocol_factory_get_type (void);

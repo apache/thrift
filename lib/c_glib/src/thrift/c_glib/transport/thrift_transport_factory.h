@@ -40,12 +40,15 @@ G_BEGIN_DECLS
 #define THRIFT_IS_TRANSPORT_FACTORY_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_TRANSPORT_FACTORY))
 #define THRIFT_TRANSPORT_FACTORY_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_TRANSPORT_FACTORY, ThriftTransportFactoryClass))
 
+typedef struct _ThriftTransportFactory ThriftTransportFactory;
+
 /* Thrift Transport Factory instance */
 struct _ThriftTransportFactory
 {
   GObject parent;
 };
-typedef struct _ThriftTransportFactory ThriftTransportFactory;
+
+typedef struct _ThriftTransportFactoryClass ThriftTransportFactoryClass;
 
 /* Thrift Transport Factory class */
 struct _ThriftTransportFactoryClass
@@ -56,7 +59,6 @@ struct _ThriftTransportFactoryClass
   ThriftTransport *(*get_transport) (ThriftTransportFactory *factory,
                                      ThriftTransport *transport);
 };
-typedef struct _ThriftTransportFactoryClass ThriftTransportFactoryClass;
 
 /* used by THRIFT_TYPE_TRANSPORT_FACTORY */
 GType thrift_transport_factory_get_type (void);

@@ -39,6 +39,8 @@ G_BEGIN_DECLS
 #define THRIFT_IS_SERVER_SOCKET_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_SERVER_SOCKET))
 #define THRIFT_SERVER_SOCKET_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_SERVER_SOCKET, ThriftServerSocketClass))
 
+typedef struct _ThriftServerSocket ThriftServerSocket;
+
 /*!
  * Thrift ServerSocket instance.
  */
@@ -54,7 +56,8 @@ struct _ThriftServerSocket
   guint32 buf_size;
   guint32 buf_len;
 };
-typedef struct _ThriftServerSocket ThriftServerSocket;
+
+typedef struct _ThriftServerSocketClass ThriftServerSocketClass;
 
 /*!
  * Thrift ServerSocket class.
@@ -63,7 +66,6 @@ struct _ThriftServerSocketClass
 {
   ThriftServerTransportClass parent;
 };
-typedef struct _ThriftServerSocketClass ThriftServerSocketClass;
 
 /* used by THRIFT_TYPE_SERVER_SOCKET */
 GType thrift_server_socket_get_type (void);

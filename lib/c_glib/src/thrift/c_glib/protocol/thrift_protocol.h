@@ -75,6 +75,8 @@ typedef enum {
 #define THRIFT_IS_PROTOCOL_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_PROTOCOL))
 #define THRIFT_PROTOCOL_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_PROTOCOL, ThriftProtocolClass))
 
+typedef struct _ThriftProtocol ThriftProtocol;
+
 /*!
  * Thrift Protocol object
  */
@@ -85,7 +87,8 @@ struct _ThriftProtocol
   /* protected */
   ThriftTransport *transport;
 };
-typedef struct _ThriftProtocol ThriftProtocol;
+
+typedef struct _ThriftProtocolClass ThriftProtocolClass;
 
 /*!
  * Thrift Protocol class
@@ -169,7 +172,6 @@ struct _ThriftProtocolClass
   gint32 (*read_binary) (ThriftProtocol *protocol, gpointer *buf,
                          guint32 *len, GError **error);
 };
-typedef struct _ThriftProtocolClass ThriftProtocolClass;
 
 /* used by THRIFT_TYPE_PROTOCOL */
 GType thrift_protocol_get_type (void);

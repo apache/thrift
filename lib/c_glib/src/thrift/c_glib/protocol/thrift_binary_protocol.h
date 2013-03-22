@@ -44,6 +44,8 @@ G_BEGIN_DECLS
 #define THRIFT_BINARY_PROTOCOL_VERSION_1 0x80010000
 #define THRIFT_BINARY_PROTOCOL_VERSION_MASK 0xffff0000
 
+typedef struct _ThriftBinaryProtocol ThriftBinaryProtocol;
+
 /*!
  * Thrift Binary Protocol instance.
  */
@@ -51,7 +53,8 @@ struct _ThriftBinaryProtocol
 {
   ThriftProtocol parent;
 };
-typedef struct _ThriftBinaryProtocol ThriftBinaryProtocol;
+
+typedef struct _ThriftBinaryProtocolClass ThriftBinaryProtocolClass;
 
 /*!
  * Thrift Binary Protocol class.
@@ -60,7 +63,6 @@ struct _ThriftBinaryProtocolClass
 {
   ThriftProtocolClass parent;
 };
-typedef struct _ThriftBinaryProtocolClass ThriftBinaryProtocolClass;
 
 /* used by THRIFT_TYPE_BINARY_PROTOCOL */
 GType thrift_binary_protocol_get_type (void);

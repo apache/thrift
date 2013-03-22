@@ -39,6 +39,8 @@ G_BEGIN_DECLS
 #define THRIFT_IS_MEMORY_BUFFER_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_MEMORY_BUFFER)
 #define THRIFT_MEMORY_BUFFER_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_MEMORY_BUFFER, ThriftMemoryBufferClass))
 
+typedef struct _ThriftMemoryBuffer ThriftMemoryBuffer;
+
 /*!
  * ThriftMemoryBuffer instance.
  */
@@ -50,7 +52,8 @@ struct _ThriftMemoryBuffer
   GByteArray *buf;
   guint32 buf_size;
 };
-typedef struct _ThriftMemoryBuffer ThriftMemoryBuffer;
+
+typedef struct _ThriftMemoryBufferClass ThriftMemoryBufferClass;
 
 /*!
  * ThriftMemoryBuffer class.
@@ -59,7 +62,6 @@ struct _ThriftMemoryBufferClass
 {
   ThriftTransportClass parent;
 };
-typedef struct _ThriftMemoryBufferClass ThriftMemoryBufferClass;
 
 /* used by THRIFT_TYPE_MEMORY_BUFFER */
 GType thrift_memory_buffer_get_type (void);

@@ -40,6 +40,8 @@ G_BEGIN_DECLS
 #define THRIFT_IS_FRAMED_TRANSPORT_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_FRAMED_TRANSPORT)
 #define THRIFT_FRAMED_TRANSPORT_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_FRAMED_TRANSPORT, ThriftFramedTransportClass))
 
+typedef struct _ThriftFramedTransport ThriftFramedTransport;
+
 /*!
  * ThriftFramedTransport instance.
  */
@@ -56,7 +58,8 @@ struct _ThriftFramedTransport
   guint32 r_buf_size;
   guint32 w_buf_size;
 };
-typedef struct _ThriftFramedTransport ThriftFramedTransport;
+
+typedef struct _ThriftFramedTransportClass ThriftFramedTransportClass;
 
 /*!
  * ThriftFramedTransport class.
@@ -65,7 +68,6 @@ struct _ThriftFramedTransportClass
 {
   ThriftTransportClass parent;
 };
-typedef struct _ThriftFramedTransportClass ThriftFramedTransportClass;
 
 /* used by THRIFT_TYPE_FRAMED_TRANSPORT */
 GType thrift_framed_transport_get_type (void);

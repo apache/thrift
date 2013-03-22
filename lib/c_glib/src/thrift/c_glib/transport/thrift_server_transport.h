@@ -38,11 +38,14 @@ G_BEGIN_DECLS
 #define THRIFT_IS_SERVER_TRANSPORT_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_SERVER_TRANSPORT))
 #define THRIFT_SERVER_TRANSPORT_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_SERVER_TRANSPORT, ThriftServerTransportClass))
 
+typedef struct _ThriftServerTransport ThriftServerTransport;
+
 struct _ThriftServerTransport
 {
   GObject parent;
 };
-typedef struct _ThriftServerTransport ThriftServerTransport;
+
+typedef struct _ThriftServerTransportClass ThriftServerTransportClass;
 
 /*!
  * Thrift Transport class
@@ -56,7 +59,6 @@ struct _ThriftServerTransportClass
   ThriftTransport *(*accept) (ThriftServerTransport *transport, GError **error);
   gboolean (*close) (ThriftServerTransport *transport, GError **error);
 };
-typedef struct _ThriftServerTransportClass ThriftServerTransportClass;
 
 /* used by THRIFT_TYPE_SERVER_TRANSPORT */
 GType thrift_server_transport_get_type (void);
