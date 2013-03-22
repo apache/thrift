@@ -3594,8 +3594,29 @@ void t_java_generator::generate_deep_copy_container(ofstream &out, std::string s
     source_name = source_name_p1;
   else
     source_name = source_name_p1 + "." + source_name_p2;
+  
+  bool copy_construct_container;
+  if (container->is_map()) {
+    t_map *tmap = (t_map *)container;
+    copy_construct_container = tmap->get_key_type()->is_base_type() && tmap->get_val_type()->is_base_type();
+  } else {
+    t_type* elem_type = container->is_list() ? ((t_list *) container)->get_elem_type() :
+                                               ((t_set *) container)->get_elem_type();
+    copy_construct_container = elem_type->is_base_type();
+  }
 
-  indent(out) << type_name(type, true, false) << " " << result_name << " = new " << type_name(container, false, true) << "();" << endl;
+  if (copy_construct_container) {
+    // deep copy of base types can be done much more efficiently than iterating over all the elements manually
+    indent(out) << type_name(type, true, false) << " " << result_name << " = new " << type_name(container, false, true) << "(" << source_name << ");" << endl;
+    return;
+  }
+
+  std::string capacity;
+  if (!(sorted_containers_ && (container->is_map() || container->is_set()))) {
+    // unsorted containers accept a capacity value
+    capacity = source_name + ".size()";
+  }
+  indent(out) << type_name(type, true, false) << " " << result_name << " = new " << type_name(container, false, true) << "(" << capacity << ");" << endl;
 
   std::string iterator_element_name = source_name_p1 + "_element";
   std::string result_element_name = result_name + "_copy";
