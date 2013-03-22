@@ -53,6 +53,7 @@ phpfactory_DATA = \
   lib/Thrift/Factory/TCompactProtocolFactory.php \
   lib/Thrift/Factory/TJSONProtocolFactory.php \
   lib/Thrift/Factory/TProtocolFactory.php \
+  lib/Thrift/Factory/TStringFuncFactory.php \
   lib/Thrift/Factory/TTransportFactory.php
 
 phpprotocoldir = $(phpdir)/Protocol
