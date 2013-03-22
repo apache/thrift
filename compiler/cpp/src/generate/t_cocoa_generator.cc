@@ -288,6 +288,7 @@ string t_cocoa_generator::cocoa_thrift_imports() {
     "#import \"TProtocolUtil.h\"\n" +
     "#import \"TProcessor.h\"\n" +
     "#import \"TObjective-C.h\"\n" +
+    "#import \"TBase.h\"\n" +
     "\n";
 
   // Include other Thrift includes
@@ -469,7 +470,7 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream &out,
   } else {
     out << "NSObject ";
   }
-  out << "<NSCoding> ";
+  out << "<TBase, NSCoding> ";
 
   scope_up(out);
 
