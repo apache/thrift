@@ -56,6 +56,9 @@ class t_cocoa_generator : public t_oop_generator {
     iter = parsed_options.find("log_unexpected");
     log_unexpected_ = (iter != parsed_options.end());    
     
+    iter = parsed_options.find("validate_required");
+    validate_required_ = (iter != parsed_options.end());    
+    
     out_dir_base_ = "gen-cocoa";
   }
 
@@ -101,6 +104,7 @@ class t_cocoa_generator : public t_oop_generator {
   void generate_cocoa_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_result_writer(std::ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_writer(std::ofstream& out, t_struct* tstruct);
+  void generate_cocoa_struct_validator(std::ofstream& out, t_struct* tstruct);
   void generate_cocoa_struct_description(std::ofstream& out, t_struct* tstruct);
 
   std::string function_result_helper_struct_type(t_function* tfunction);
@@ -217,6 +221,7 @@ class t_cocoa_generator : public t_oop_generator {
   std::ofstream f_impl_;
 
   bool log_unexpected_;
+  bool validate_required_;
 };
 
 
@@ -279,6 +284,7 @@ string t_cocoa_generator::cocoa_thrift_imports() {
   string result = string() +
     "#import \"TProtocol.h\"\n" +
     "#import \"TApplicationException.h\"\n" +
+    "#import \"TProtocolException.h\"\n" +
     "#import \"TProtocolUtil.h\"\n" +
     "#import \"TProcessor.h\"\n" +
     "#import \"TObjective-C.h\"\n" +
@@ -513,6 +519,9 @@ void t_cocoa_generator::generate_cocoa_struct_interface(ofstream &out,
   out << "- (void) read: (id <TProtocol>) inProtocol;" << endl;
   out << "- (void) write: (id <TProtocol>) outProtocol;" << endl;
   out << endl;
+
+  // validator
+  out << "- (void) validate;" << endl << endl;
 
   // getters and setters
   generate_cocoa_struct_field_accessor_declarations(out, tstruct, is_exception);
@@ -807,6 +816,7 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream &out,
   } else {
     generate_cocoa_struct_writer(out, tstruct);
   }
+  generate_cocoa_struct_validator(out, tstruct);
   generate_cocoa_struct_description(out, tstruct);
 
   out << "@end" << endl << endl;
@@ -909,6 +919,12 @@ void t_cocoa_generator::generate_cocoa_struct_reader(ofstream& out,
 
     out <<
       indent() << "[inProtocol readStructEnd];" << endl;
+
+    // performs various checks (e.g. check that all required fields are set)
+    if (validate_required_) {
+      out <<
+        indent() << "[self validate];" << endl;
+    }
 
   indent_down();
   out <<
@@ -1039,6 +1055,39 @@ void t_cocoa_generator::generate_cocoa_struct_result_writer(ofstream& out,
     endl <<
     indent() << "[outProtocol writeFieldStop];" << endl <<
     indent() << "[outProtocol writeStructEnd];" << endl;
+
+  indent_down();
+  out <<
+    indent() << "}" << endl <<
+    endl;
+}
+
+/**
+ * Generates a function to perform various checks
+ * (e.g. check that all required fields are set)
+ *
+ * @param tstruct The struct definition
+ */
+void t_cocoa_generator::generate_cocoa_struct_validator(ofstream& out,
+                                                        t_struct* tstruct) {
+  out <<
+    indent() << "- (void) validate {" << endl;
+  indent_up();
+
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+    
+  out << indent() << "// check for required fields" << endl;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field* field = (*f_iter);
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      out <<
+        indent() << "if (!__" << field->get_name() << "_isset) {" << endl <<
+        indent() << "  @throw [TProtocolException exceptionWithName: @\"TProtocolException\"" << endl <<
+        indent() << "                             reason: @\"Required field '" << (*f_iter)->get_name() << "' is not set.\"];" << endl <<
+        indent() << "}" << endl;
+    }
+  }
 
   indent_down();
   out <<
@@ -2671,5 +2720,7 @@ string t_cocoa_generator::call_field_setter(t_field* tfield, string fieldName) {
 
 THRIFT_REGISTER_GENERATOR(cocoa, "Cocoa",
 "    log_unexpected:  Log every time an unexpected field ID or type is encountered.\n"
+"    validate_required:\n"
+"                     Throws exception if any required field is not set.\n"
 )
 
