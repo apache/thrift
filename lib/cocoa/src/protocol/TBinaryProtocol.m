@@ -118,7 +118,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
                                  reason: @"Bad version in readMessageBegin"];
     }
     if (type != NULL) {
-      *type = version & 0x00FF;
+      *type = size & 0x00FF;
     }
     NSString * messageName = [self readString];
     if (name != NULL) {
