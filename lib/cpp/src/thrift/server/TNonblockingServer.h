@@ -256,6 +256,14 @@ class TNonblockingServer : public TServer {
   std::stack<TConnection*> connectionStack_;
 
   /**
+   * This container holds pointers to all active connections. This container
+   * allows the server to clean up unlcosed connection objects at destruction,
+   * which in turn allows their transports, protocols, processors and handlers
+   * to deallocate and clean up correctly.
+   */
+  std::vector<TConnection*> activeConnections_;
+
+  /**
    * Called when server socket had something happen.  We accept all waiting
    * client connections on listen socket fd and assign TConnection objects
    * to handle those requests.

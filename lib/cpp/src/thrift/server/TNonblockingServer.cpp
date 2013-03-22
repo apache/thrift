@@ -215,9 +215,6 @@ class TNonblockingServer::TConnection {
    */
   void workSocket();
 
-  /// Close this connection and free or reset its resources.
-  void close();
-
  public:
 
   class Task;
@@ -243,6 +240,9 @@ class TNonblockingServer::TConnection {
   ~TConnection() {
     std::free(readBuffer_);
   }
+
+  /// Close this connection and free or reset its resources.
+  void close();
 
  /**
    * Check buffers against any size limits and shrink it if exceeded.
@@ -861,17 +861,23 @@ void TNonblockingServer::TConnection::checkIdleBufferMemLimit(
 }
 
 TNonblockingServer::~TNonblockingServer() {
-  // TODO: We currently leak any active TConnection objects.
-  // Since we're shutting down and destroying the event_base, the TConnection
-  // objects will never receive any additional callbacks.  (And even if they
-  // did, it would be bad, since they keep a pointer around to the server,
-  // which is being destroyed.)
-
+  // Close any active connections (moves them to the idle connection stack)
+  while (activeConnections_.size()) {
+	  activeConnections_.front()->close();
+  }
   // Clean up unused TConnection objects in connectionStack_
   while (!connectionStack_.empty()) {
     TConnection* connection = connectionStack_.top();
     connectionStack_.pop();
     delete connection;
+  }
+  // The TNonblockingIOThread objects have shared_ptrs to the Thread
+  // objects and the Thread objects have shared_ptrs to the TNonblockingIOThread
+  // objects (as runnable) so these objects will never deallocate without help.
+  while (!ioThreads_.empty()) {
+	  boost::shared_ptr<TNonblockingIOThread> iot = ioThreads_.back();
+	  ioThreads_.pop_back();
+	  iot->setThread(boost::shared_ptr<Thread>());
   }
 }
 
@@ -901,6 +907,7 @@ TNonblockingServer::TConnection* TNonblockingServer::createConnection(
     connectionStack_.pop();
     result->init(socket, ioThread, addr, addrLen);
   }
+  activeConnections_.push_back(result);
   return result;
 }
 
@@ -909,6 +916,8 @@ TNonblockingServer::TConnection* TNonblockingServer::createConnection(
  */
 void TNonblockingServer::returnConnection(TConnection* connection) {
   Guard g(connMutex_);
+
+  activeConnections_.erase(std::remove(activeConnections_.begin(), activeConnections_.end(), connection), activeConnections_.end());
 
   if (connectionStackLimit_ &&
       (connectionStack_.size() >= connectionStackLimit_)) {
