@@ -102,10 +102,10 @@
       </Version>
     </release>
     <repository>
-      <SVNRepository>
-        <location rdf:resource="http://svn.apache.org/repos/asf/thrift"/>
-        <browse rdf:resource="http://svn.apache.org/viewvc/thrift"/>
-      </SVNRepository>
+      <GitRepository>
+        <location rdf:resource="https://git-wip-us.apache.org/repos/asf/thrift.git"/>
+        <browse rdf:resource="https://git-wip-us.apache.org/repos/asf?p=thrift.git"/>
+      </GitRepository>
     </repository>
     <maintainer>
       <foaf:Person>

@@ -4,8 +4,8 @@
   "description": "node.js test server and client for the Apache Thrift",
   "homepage": "http://thrift.apache.org/",
   "repository":
-    { "type" : "svn",
-      "url" : "http://svn.apache.org/repos/asf/thrift/trunk/"
+    { "type" : "git",
+      "url" : "https://git-wip-us.apache.org/repos/asf/thrift.git"
     },
   "author":
     { "name": "Apache Thrift Developers",
