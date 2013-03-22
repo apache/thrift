@@ -801,7 +801,7 @@ TType TCompactProtocolT<Transport_>::getTType(int8_t type) {
     case detail::compact::CT_STRUCT:
       return T_STRUCT;
     default:
-      throw TException("don't know what type: " + type);
+      throw TException(std::string("don't know what type: ") + (char)type);
   }
   return T_STOP;
 }
