@@ -80,7 +80,7 @@ class t_program : public t_doc {
   const std::string& get_out_path() const { return out_path_; }
 
   // Create gen-* dir accessor
-  bool is_out_path_absolute() { return out_path_is_absolute_; }
+  const bool is_out_path_absolute() const { return out_path_is_absolute_; }
 
   // Name accessor
   const std::string& get_name() const { return name_; }

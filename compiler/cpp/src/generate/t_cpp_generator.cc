@@ -2147,11 +2147,11 @@ void t_cpp_generator::generate_service_multiface(t_service* tservice) {
       indent() << "size_t sz = ifaces_.size();" << endl <<
       indent() << "size_t i = 0;" << endl <<
       indent() << "for (; i < (sz - 1); ++i) {" << endl;
-	indent_up();
-	f_header_ <<
+    indent_up();
+    f_header_ <<
       indent() << call << ";" << endl;
-	indent_down();
-	f_header_ <<
+    indent_down();
+    f_header_ <<
       indent() << "}" << endl;
 
     if (!(*f_iter)->get_returntype()->is_void()) {
@@ -4615,7 +4615,9 @@ string t_cpp_generator::get_include_prefix(const t_program& program) const {
 
   string::size_type last_slash = string::npos;
   if ((last_slash = include_prefix.rfind("/")) != string::npos) {
-    return include_prefix.substr(0, last_slash) + "/" + out_dir_base_ + "/";
+    return include_prefix.substr(0, last_slash) +
+      (get_program()->is_out_path_absolute() ? "/" : "/" + out_dir_base_ + "/");
+
   }
 
   return "";
