@@ -1089,7 +1089,7 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
         this->nspace_uc << "TYPE_" << service_name_uc << "_IF, " <<
         this->nspace << service_name_ << "If))" << endl <<
     "#define " << this->nspace_uc << "IS_" << service_name_uc << "_IF(obj) " <<
-        "(G_TYPE_CHECK_INSTANCE_TYPE ((obj, " <<
+        "(G_TYPE_CHECK_INSTANCE_TYPE ((obj), " <<
         this->nspace_uc << "TYPE_" << service_name_uc << "_IF))" << endl <<
     "#define " << this->nspace_uc << service_name_uc <<
         "_IF_GET_INTERFACE(inst) (G_TYPE_INSTANCE_GET_INTERFACE ((inst), " <<
