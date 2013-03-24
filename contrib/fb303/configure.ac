@@ -71,8 +71,47 @@ FB_ENABLE_DEFAULT_STATIC
 # Example: sets $(thrift_home) variable with default path set to /usr/local.
 FB_WITH_PATH([thrift_home], [thriftpath], [/usr/local])
 
-# Require boost 1.33.1 or later
-AX_BOOST_BASE([1.33.1])
+AX_THRIFT_LIB(cpp, [C++], yes)
+have_cpp=no
+if test "$with_cpp" = "yes"; then
+  # Require boost 1.40.0 or later
+  AX_BOOST_BASE([1.40.0])
+  if test "x$succeeded" = "xyes"; then
+    have_cpp="yes"
+  fi
+fi
+AM_CONDITIONAL([WITH_CPP], [test "$have_cpp" = "yes"])
+
+AX_THRIFT_LIB(java, [Java], yes)
+if test "$with_java" = "yes"; then
+  AX_JAVAC_AND_JAVA
+  AC_PATH_PROG([ANT], [ant])
+  AX_CHECK_ANT_VERSION($ANT, 1.7)
+  AC_SUBST(CLASSPATH)
+  AC_SUBST(ANT_FLAGS)
+  if test "x$JAVAC" != "x" && test "x$JAVAC" != "x" && test "x$ANT" != "x" ; then
+    have_java="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_JAVA, [test "$have_java" = "yes"])
+
+AX_THRIFT_LIB(php, [PHP], yes)
+if test "$with_php" = "yes"; then
+  AC_PATH_PROG([PHP], [php])
+  if test "x$PHP" != "x" && test "x$PHP" != "x:" ; then
+    have_php="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_PHP, [test "$have_php" = "yes"])
+
+AX_THRIFT_LIB(python, [Python], yes)
+if test "$with_python" = "yes"; then
+  AM_PATH_PYTHON(2.4,, :)
+  if test "x$PYTHON" != "x" && test "x$PYTHON" != "x:" ; then
+    have_python="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_PYTHON, [test "$have_python" = "yes"])
 
 # Generates Makefile from Makefile.am. Modify when new subdirs are added.
 # Change Makefile.am also to add subdirectly.
@@ -92,6 +131,11 @@ AC_OUTPUT
 ######### FINISH ############################################################
 
 echo "EXTERNAL_PATH $EXTERNAL_PATH"
+echo
+echo "Building C++ Library ......... : $have_cpp"
+echo "Building Java Library ........ : $have_java"
+echo "Building Python Library ...... : $have_python"
+echo "Building PHP Library ......... : $have_php"
 
 
 #

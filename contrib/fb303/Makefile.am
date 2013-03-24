@@ -21,10 +21,25 @@
 
 @PRODUCT_MK@
 
-SUBDIRS = . cpp py
+SUBDIRS = .
+
+if WITH_CPP
+SUBDIRS += cpp
+endif
+
+if WITH_JAVA
+SUBDIRS += java
+endif
+
+if WITH_PHP
+SUBDIRS += php
+endif
+
+if WITH_PYTHON
+SUBDIRS += py
+endif
 
 BUILT_SOURCES =
-
 
 clean-local: clean-common
 
