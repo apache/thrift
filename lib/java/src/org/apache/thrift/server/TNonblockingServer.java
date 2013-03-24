@@ -150,6 +150,10 @@ public class TNonblockingServer extends AbstractNonblockingServer {
      */
     public void run() {
       try {
+        if (eventHandler_ != null) {
+          eventHandler_.preServe();
+        }
+
         while (!stopped_) {
           select();
           processInterestChanges();
