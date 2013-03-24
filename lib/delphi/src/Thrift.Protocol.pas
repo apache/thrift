@@ -437,6 +437,69 @@ type
     procedure SetReadLength( readLength: Integer );
   end;
 
+
+  { TProtocolDecorator forwards all requests to an enclosed TProtocol instance,
+    providing a way to author concise concrete decorator subclasses. The decorator
+    does not (and should not) modify the behaviour of the enclosed TProtocol
+
+    See p.175 of Design Patterns (by Gamma et al.)
+  }
+  TProtocolDecorator = class( TProtocolImpl)
+  private
+    FWrappedProtocol : IProtocol;
+
+  public
+    // Encloses the specified protocol.
+    // All operations will be forward to the given protocol.  Must be non-null.
+    constructor Create( const aProtocol : IProtocol);
+
+    procedure WriteMessageBegin( const msg: IMessage); override;
+    procedure WriteMessageEnd; override;
+    procedure WriteStructBegin( const struc: IStruct); override;
+    procedure WriteStructEnd; override;
+    procedure WriteFieldBegin( const field: IField); override;
+    procedure WriteFieldEnd; override;
+    procedure WriteFieldStop; override;
+    procedure WriteMapBegin( const map: IMap); override;
+    procedure WriteMapEnd; override;
+    procedure WriteListBegin( const list: IList); override;
+    procedure WriteListEnd(); override;
+    procedure WriteSetBegin( const set_: ISet ); override;
+    procedure WriteSetEnd(); override;
+    procedure WriteBool( b: Boolean); override;
+    procedure WriteByte( b: ShortInt); override;
+    procedure WriteI16( i16: SmallInt); override;
+    procedure WriteI32( i32: Integer); override;
+    procedure WriteI64( const i64: Int64); override;
+    procedure WriteDouble( const d: Double); override;
+    procedure WriteString( const s: string ); override;
+    procedure WriteAnsiString( const s: AnsiString); override;
+    procedure WriteBinary( const b: TBytes); override;
+
+    function ReadMessageBegin: IMessage; override;
+    procedure ReadMessageEnd(); override;
+    function ReadStructBegin: IStruct; override;
+    procedure ReadStructEnd; override;
+    function ReadFieldBegin: IField; override;
+    procedure ReadFieldEnd(); override;
+    function ReadMapBegin: IMap; override;
+    procedure ReadMapEnd(); override;
+    function ReadListBegin: IList; override;
+    procedure ReadListEnd(); override;
+    function ReadSetBegin: ISet; override;
+    procedure ReadSetEnd(); override;
+    function ReadBool: Boolean; override;
+    function ReadByte: ShortInt; override;
+    function ReadI16: SmallInt; override;
+    function ReadI32: Integer; override;
+    function ReadI64: Int64; override;
+    function ReadDouble:Double; override;
+    function ReadBinary: TBytes; override;
+    function ReadString: string; override;
+    function ReadAnsiString: AnsiString; override;
+  end;
+
+
 implementation
 
 function ConvertInt64ToDouble( const n: Int64): Double;
@@ -1227,6 +1290,276 @@ function TBinaryProtocolImpl.TFactory.GetProtocol( const trans: ITransport): IPr
 begin
   Result := TBinaryProtocolImpl.Create( trans, FStrictRead, FStrictWrite);
 end;
+
+
+{ TProtocolDecorator }
+
+constructor TProtocolDecorator.Create( const aProtocol : IProtocol);
+begin
+  ASSERT( aProtocol <> nil);
+  inherited Create( aProtocol.Transport);
+  FWrappedProtocol := aProtocol;
+end;
+
+
+procedure TProtocolDecorator.WriteMessageBegin( const msg: IMessage);
+begin
+  FWrappedProtocol.WriteMessageBegin( msg);
+end;
+
+
+procedure TProtocolDecorator.WriteMessageEnd;
+begin
+  FWrappedProtocol.WriteMessageEnd;
+end;
+
+
+procedure TProtocolDecorator.WriteStructBegin( const struc: IStruct);
+begin
+  FWrappedProtocol.WriteStructBegin( struc);
+end;
+
+
+procedure TProtocolDecorator.WriteStructEnd;
+begin
+  FWrappedProtocol.WriteStructEnd;
+end;
+
+
+procedure TProtocolDecorator.WriteFieldBegin( const field: IField);
+begin
+  FWrappedProtocol.WriteFieldBegin( field);
+end;
+
+
+procedure TProtocolDecorator.WriteFieldEnd;
+begin
+  FWrappedProtocol.WriteFieldEnd;
+end;
+
+
+procedure TProtocolDecorator.WriteFieldStop;
+begin
+  FWrappedProtocol.WriteFieldStop;
+end;
+
+
+procedure TProtocolDecorator.WriteMapBegin( const map: IMap);
+begin
+  FWrappedProtocol.WriteMapBegin( map);
+end;
+
+
+procedure TProtocolDecorator.WriteMapEnd;
+begin
+  FWrappedProtocol.WriteMapEnd;
+end;
+
+
+procedure TProtocolDecorator.WriteListBegin( const list: IList);
+begin
+  FWrappedProtocol.WriteListBegin( list);
+end;
+
+
+procedure TProtocolDecorator.WriteListEnd();
+begin
+  FWrappedProtocol.WriteListEnd();
+end;
+
+
+procedure TProtocolDecorator.WriteSetBegin( const set_: ISet );
+begin
+  FWrappedProtocol.WriteSetBegin( set_);
+end;
+
+
+procedure TProtocolDecorator.WriteSetEnd();
+begin
+  FWrappedProtocol.WriteSetEnd();
+end;
+
+
+procedure TProtocolDecorator.WriteBool( b: Boolean);
+begin
+  FWrappedProtocol.WriteBool( b);
+end;
+
+
+procedure TProtocolDecorator.WriteByte( b: ShortInt);
+begin
+  FWrappedProtocol.WriteByte( b);
+end;
+
+
+procedure TProtocolDecorator.WriteI16( i16: SmallInt);
+begin
+  FWrappedProtocol.WriteI16( i16);
+end;
+
+
+procedure TProtocolDecorator.WriteI32( i32: Integer);
+begin
+  FWrappedProtocol.WriteI32( i32);
+end;
+
+
+procedure TProtocolDecorator.WriteI64( const i64: Int64);
+begin
+  FWrappedProtocol.WriteI64( i64);
+end;
+
+
+procedure TProtocolDecorator.WriteDouble( const d: Double);
+begin
+  FWrappedProtocol.WriteDouble( d);
+end;
+
+
+procedure TProtocolDecorator.WriteString( const s: string );
+begin
+  FWrappedProtocol.WriteString( s);
+end;
+
+
+procedure TProtocolDecorator.WriteAnsiString( const s: AnsiString);
+begin
+  FWrappedProtocol.WriteAnsiString( s);
+end;
+
+
+procedure TProtocolDecorator.WriteBinary( const b: TBytes);
+begin
+  FWrappedProtocol.WriteBinary( b);
+end;
+
+
+function TProtocolDecorator.ReadMessageBegin: IMessage;
+begin
+  result := FWrappedProtocol.ReadMessageBegin;
+end;
+
+
+procedure TProtocolDecorator.ReadMessageEnd();
+begin
+  FWrappedProtocol.ReadMessageEnd();
+end;
+
+
+function TProtocolDecorator.ReadStructBegin: IStruct;
+begin
+  result := FWrappedProtocol.ReadStructBegin;
+end;
+
+
+procedure TProtocolDecorator.ReadStructEnd;
+begin
+  FWrappedProtocol.ReadStructEnd;
+end;
+
+
+function TProtocolDecorator.ReadFieldBegin: IField;
+begin
+  result := FWrappedProtocol.ReadFieldBegin;
+end;
+
+
+procedure TProtocolDecorator.ReadFieldEnd();
+begin
+  FWrappedProtocol.ReadFieldEnd();
+end;
+
+
+function TProtocolDecorator.ReadMapBegin: IMap;
+begin
+  result := FWrappedProtocol.ReadMapBegin;
+end;
+
+
+procedure TProtocolDecorator.ReadMapEnd();
+begin
+  FWrappedProtocol.ReadMapEnd();
+end;
+
+
+function TProtocolDecorator.ReadListBegin: IList;
+begin
+  result := FWrappedProtocol.ReadListBegin;
+end;
+
+
+procedure TProtocolDecorator.ReadListEnd();
+begin
+  FWrappedProtocol.ReadListEnd();
+end;
+
+
+function TProtocolDecorator.ReadSetBegin: ISet;
+begin
+  result := FWrappedProtocol.ReadSetBegin;
+end;
+
+
+procedure TProtocolDecorator.ReadSetEnd();
+begin
+  FWrappedProtocol.ReadSetEnd();
+end;
+
+
+function TProtocolDecorator.ReadBool: Boolean;
+begin
+  result := FWrappedProtocol.ReadBool;
+end;
+
+
+function TProtocolDecorator.ReadByte: ShortInt;
+begin
+  result := FWrappedProtocol.ReadByte;
+end;
+
+
+function TProtocolDecorator.ReadI16: SmallInt;
+begin
+  result := FWrappedProtocol.ReadI16;
+end;
+
+
+function TProtocolDecorator.ReadI32: Integer;
+begin
+  result := FWrappedProtocol.ReadI32;
+end;
+
+
+function TProtocolDecorator.ReadI64: Int64;
+begin
+  result := FWrappedProtocol.ReadI64;
+end;
+
+
+function TProtocolDecorator.ReadDouble:Double;
+begin
+  result := FWrappedProtocol.ReadDouble;
+end;
+
+
+function TProtocolDecorator.ReadBinary: TBytes;
+begin
+  result := FWrappedProtocol.ReadBinary;
+end;
+
+
+function TProtocolDecorator.ReadString: string;
+begin
+  result := FWrappedProtocol.ReadString;
+end;
+
+
+function TProtocolDecorator.ReadAnsiString: AnsiString;
+begin
+  result := FWrappedProtocol.ReadAnsiString;
+end;
+
+
 
 end.
 
