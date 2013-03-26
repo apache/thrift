@@ -337,7 +337,7 @@ void t_py_generator::init_generator() {
   while (true) {
     // TODO: Do better error checking here.
     MKDIR(package_dir_.c_str());
-    std::ofstream init_py((package_dir_+"/__init__.py").c_str());
+    std::ofstream init_py((package_dir_+"/__init__.py").c_str(), std::ios_base::app);
     init_py.close();
     if (module.empty()) {
       break;
