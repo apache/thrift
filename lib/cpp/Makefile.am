@@ -63,6 +63,7 @@ libthrift_la_SOURCES = src/thrift/Thrift.cpp \
                        src/thrift/protocol/TDenseProtocol.cpp \
                        src/thrift/protocol/TJSONProtocol.cpp \
                        src/thrift/protocol/TBase64Utils.cpp \
+                       src/thrift/protocol/TMultiplexedProtocol.cpp \
                        src/thrift/transport/TTransportException.cpp \
                        src/thrift/transport/TFDTransport.cpp \
                        src/thrift/transport/TFileTransport.cpp \
@@ -155,6 +156,8 @@ include_protocol_HEADERS = \
                          src/thrift/protocol/TDebugProtocol.h \
                          src/thrift/protocol/TBase64Utils.h \
                          src/thrift/protocol/TJSONProtocol.h \
+                         src/thrift/protocol/TMultiplexedProtocol.h \
+                         src/thrift/protocol/TProtocolDecorator.h \
                          src/thrift/protocol/TProtocolTap.h \
                          src/thrift/protocol/TProtocolException.h \
                          src/thrift/protocol/TVirtualProtocol.h \
@@ -195,7 +198,8 @@ include_server_HEADERS = \
 include_processordir = $(include_thriftdir)/processor
 include_processor_HEADERS = \
                          src/thrift/processor/PeekProcessor.h \
-                         src/thrift/processor/StatsProcessor.h
+                         src/thrift/processor/StatsProcessor.h \
+                         src/thrift/processor/TMultiplexedProcessor.h
 
 include_asyncdir = $(include_thriftdir)/async
 include_async_HEADERS = \
