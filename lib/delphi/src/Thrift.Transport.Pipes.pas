@@ -23,9 +23,8 @@ unit Thrift.Transport.Pipes;
 interface
 
 uses
-  Windows, SysUtils, Math, AccCtrl, AclAPI,
+  Windows, SysUtils, Math, AccCtrl, AclAPI, SyncObjs,
   Thrift.Transport,
-  Thrift.Console,
   Thrift.Stream;
 
 const
@@ -36,7 +35,7 @@ type
   //--- Pipe Streams ---
 
 
-  TPipeStreamBaseImpl = class( TThriftStreamImpl)
+  TPipeStreamBase = class( TThriftStreamImpl)
   strict protected
     FPipe    : THandle;
     FTimeout : DWORD;
@@ -55,7 +54,7 @@ type
   end;
 
 
-  TNamedPipeStreamImpl = class sealed( TPipeStreamBaseImpl)
+  TNamedPipeStreamImpl = class sealed( TPipeStreamBase)
   private
     FPipeName  : string;
     FShareMode : DWORD;
@@ -72,7 +71,7 @@ type
   end;
 
 
-  THandlePipeStreamImpl = class sealed( TPipeStreamBaseImpl)
+  THandlePipeStreamImpl = class sealed( TPipeStreamBase)
   private
     FSrcHandle : THandle;
 
@@ -88,12 +87,12 @@ type
   //--- Pipe Transports ---
 
 
-  IPipe = interface( IStreamTransport)
+  IPipeTransport = interface( IStreamTransport)
     ['{5E05CC85-434F-428F-BFB2-856A168B5558}']
   end;
 
 
-  TPipeTransportBaseImpl = class( TStreamTransportImpl, IPipe)
+  TPipeTransportBase = class( TStreamTransportImpl, IPipeTransport)
   public
     // ITransport
     function  GetIsOpen: Boolean; override;
@@ -102,7 +101,7 @@ type
   end;
 
 
-  TNamedPipeImpl = class( TPipeTransportBaseImpl)
+  TNamedPipeTransportClientEndImpl = class( TPipeTransportBase)
   public
     // Named pipe constructors
     constructor Create( aPipe : THandle; aOwnsHandle : Boolean); overload;
@@ -113,7 +112,7 @@ type
   end;
 
 
-  TNamedPipeServerImpl = class( TNamedPipeImpl)
+  TNamedPipeTransportServerEndImpl = class( TNamedPipeTransportClientEndImpl)
   strict private
     FHandle : THandle;
   public
@@ -123,7 +122,7 @@ type
   end;
 
 
-  TAnonymousPipeImpl = class( TPipeTransportBaseImpl)
+  TAnonymousPipeTransportImpl = class( TPipeTransportBase)
   public
     // Anonymous pipe constructor
     constructor Create( const aPipeRead, aPipeWrite : THandle; aOwnsHandles : Boolean); overload;
@@ -133,7 +132,7 @@ type
   //--- Server Transports ---
 
 
-  IAnonymousServerPipe = interface( IServerTransport)
+  IAnonymousPipeServerTransport = interface( IServerTransport)
     ['{7AEE6793-47B9-4E49-981A-C39E9108E9AD}']
     // Server side anonymous pipe ends
     function ReadHandle : THandle;
@@ -144,19 +143,23 @@ type
   end;
 
 
-  INamedServerPipe = interface( IServerTransport)
+  INamedPipeServerTransport = interface( IServerTransport)
     ['{9DF9EE48-D065-40AF-8F67-D33037D3D960}']
     function Handle : THandle;
   end;
 
 
-  TServerPipeBaseImpl = class( TServerTransportImpl)
+  TPipeServerTransportBase = class( TServerTransportImpl)
+  protected
+    FStopServer   : Boolean;
+    procedure InternalClose; virtual; abstract;
   public
     procedure Listen; override;
+    procedure Close; override;
   end;
 
 
-  TAnonymousServerPipeImpl = class( TServerPipeBaseImpl, IAnonymousServerPipe)
+  TAnonymousPipeServerTransportImpl = class( TPipeServerTransportBase, IAnonymousPipeServerTransport)
   private
     FBufSize      : DWORD;
 
@@ -173,41 +176,41 @@ type
 
     function CreateAnonPipe : Boolean;
 
-    // IAnonymousServerPipe
+    // IAnonymousPipeServerTransport
     function ReadHandle : THandle;
     function WriteHandle : THandle;
     function ClientAnonRead : THandle;
     function ClientAnonWrite  : THandle;
 
+    procedure InternalClose; override;
+
   public
     constructor Create( aBufsize : Cardinal = 4096);
-
-    procedure Close; override;
   end;
 
 
-  TNamedServerPipeImpl = class( TServerPipeBaseImpl, INamedServerPipe)
+  TNamedPipeServerTransportImpl = class( TPipeServerTransportBase, INamedPipeServerTransport)
   private
     FPipeName     : string;
     FMaxConns     : DWORD;
     FBufSize      : DWORD;
     FTimeout      : DWORD;
+    FHandle       : THandle;
+    FConnected    : Boolean;
 
-    FHandle : THandle;
-
-  protected
+  protected
     function AcceptImpl: ITransport; override;
-    procedure CreateNamedPipe;
+    function CreateNamedPipe : THandle;
+    function CreateTransportInstance : ITransport;
 
-    // INamedServerPipe
+    // INamedPipeServerTransport
     function Handle : THandle;
+    procedure InternalClose; override;
 
   public
     constructor Create( aPipename : string; aBufsize : Cardinal = 4096;
                         aMaxConns : Cardinal = PIPE_UNLIMITED_INSTANCES;
                         aTimeOut : Cardinal = 0);
-
-    procedure Close; override;
   end;
 
 
@@ -236,10 +239,10 @@ end;
 
 
 
-{ TPipeStreamBaseImpl }
+{ TPipeStreamBase }
 
 
-constructor TPipeStreamBaseImpl.Create( const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);
+constructor TPipeStreamBase.Create( const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);
 begin
   inherited Create;
   FPipe    := INVALID_HANDLE_VALUE;
@@ -247,7 +250,7 @@ begin
 end;
 
 
-destructor TPipeStreamBaseImpl.Destroy;
+destructor TPipeStreamBase.Destroy;
 begin
   try
     Close;
@@ -257,25 +260,25 @@ begin
 end;
 
 
-procedure TPipeStreamBaseImpl.Close;
+procedure TPipeStreamBase.Close;
 begin
   ClosePipeHandle( FPipe);
 end;
 
 
-procedure TPipeStreamBaseImpl.Flush;
+procedure TPipeStreamBase.Flush;
 begin
   // nothing to do
 end;
 
 
-function TPipeStreamBaseImpl.IsOpen: Boolean;
+function TPipeStreamBase.IsOpen: Boolean;
 begin
   result := (FPipe <> INVALID_HANDLE_VALUE);
 end;
 
 
-procedure TPipeStreamBaseImpl.Write(const buffer: TBytes; offset, count: Integer);
+procedure TPipeStreamBase.Write(const buffer: TBytes; offset, count: Integer);
 var cbWritten : DWORD;
 begin
   if not IsOpen
@@ -288,7 +291,7 @@ begin
 end;
 
 
-function TPipeStreamBaseImpl.Read( var buffer: TBytes; offset, count: Integer): Integer;
+function TPipeStreamBase.Read( var buffer: TBytes; offset, count: Integer): Integer;
 var cbRead, dwErr  : DWORD;
     bytes, retries  : LongInt;
     bOk     : Boolean;
@@ -310,7 +313,8 @@ begin
       then Break;  // there are data
 
       dwErr := GetLastError;
-      if (dwErr = ERROR_BROKEN_PIPE)
+      if (dwErr = ERROR_INVALID_HANDLE)
+      or (dwErr = ERROR_BROKEN_PIPE)
       or (dwErr = ERROR_PIPE_NOT_CONNECTED)
       then begin
         result := 0;  // other side closed the pipe
@@ -333,7 +337,7 @@ begin
 end;
 
 
-function TPipeStreamBaseImpl.ToArray: TBytes;
+function TPipeStreamBase.ToArray: TBytes;
 var bytes : LongInt;
 begin
   SetLength( result, 0);
@@ -436,34 +440,34 @@ begin
 end;
 
 
-{ TPipeTransportBaseImpl }
+{ TPipeTransportBase }
 
 
-function TPipeTransportBaseImpl.GetIsOpen: Boolean;
+function TPipeTransportBase.GetIsOpen: Boolean;
 begin
   result := (FInputStream <> nil)  and (FInputStream.IsOpen)
         and (FOutputStream <> nil) and (FOutputStream.IsOpen);
 end;
 
 
-procedure TPipeTransportBaseImpl.Open;
+procedure TPipeTransportBase.Open;
 begin
   FInputStream.Open;
   FOutputStream.Open;
 end;
 
 
-procedure TPipeTransportBaseImpl.Close;
+procedure TPipeTransportBase.Close;
 begin
   FInputStream.Close;
   FOutputStream.Close;
 end;
 
 
-{ TNamedPipeImpl }
+{ TNamedPipeTransportClientEndImpl }
 
 
-constructor TNamedPipeImpl.Create( const aPipeName : string; const aShareMode: DWORD;
+constructor TNamedPipeTransportClientEndImpl.Create( const aPipeName : string; const aShareMode: DWORD;
                                    const aSecurityAttributes: PSecurityAttributes;
                                    const aTimeOut : DWORD);
 // Named pipe constructor
@@ -474,7 +478,7 @@ begin
 end;
 
 
-constructor TNamedPipeImpl.Create( aPipe : THandle; aOwnsHandle : Boolean);
+constructor TNamedPipeTransportClientEndImpl.Create( aPipe : THandle; aOwnsHandle : Boolean);
 // Named pipe constructor
 begin
   inherited Create( nil, nil);
@@ -483,10 +487,10 @@ begin
 end;
 
 
-{ TNamedPipeServerImpl }
+{ TNamedPipeTransportServerEndImpl }
 
 
-constructor TNamedPipeServerImpl.Create( aPipe : THandle; aOwnsHandle : Boolean);
+constructor TNamedPipeTransportServerEndImpl.Create( aPipe : THandle; aOwnsHandle : Boolean);
 // Named pipe constructor
 begin
   FHandle := DuplicatePipeHandle( aPipe);
@@ -494,7 +498,7 @@ begin
 end;
 
 
-procedure TNamedPipeServerImpl.Close;
+procedure TNamedPipeTransportServerEndImpl.Close;
 begin
   FlushFileBuffers( FHandle);
   DisconnectNamedPipe( FHandle);  // force client off the pipe
@@ -504,10 +508,10 @@ begin
 end;
 
 
-{ TAnonymousPipeImpl }
+{ TAnonymousPipeTransportImpl }
 
 
-constructor TAnonymousPipeImpl.Create( const aPipeRead, aPipeWrite : THandle; aOwnsHandles : Boolean);
+constructor TAnonymousPipeTransportImpl.Create( const aPipeRead, aPipeWrite : THandle; aOwnsHandles : Boolean);
 // Anonymous pipe constructor
 begin
   inherited Create( nil, nil);
@@ -516,19 +520,26 @@ begin
 end;
 
 
-{ TServerPipeBaseImpl }
+{ TPipeServerTransportBase }
 
 
-procedure TServerPipeBaseImpl.Listen;
+procedure TPipeServerTransportBase.Listen;
 begin
-  // not much to do here
+  FStopServer := FALSE;
 end;
 
 
-{ TAnonymousServerPipeImpl }
+procedure TPipeServerTransportBase.Close;
+begin
+  FStopServer := TRUE;
+  InternalClose;
+end;
 
 
-constructor TAnonymousServerPipeImpl.Create( aBufsize : Cardinal);
+{ TAnonymousPipeServerTransportImpl }
+
+
+constructor TAnonymousPipeServerTransportImpl.Create( aBufsize : Cardinal);
 // Anonymous pipe CTOR
 begin
   inherited Create;
@@ -547,7 +558,7 @@ begin
 end;
 
 
-function TAnonymousServerPipeImpl.AcceptImpl: ITransport;
+function TAnonymousPipeServerTransportImpl.AcceptImpl: ITransport;
 var buf    : Byte;
     br     : DWORD;
 begin
@@ -556,11 +567,13 @@ begin
   and (GetLastError() <> ERROR_MORE_DATA)
   then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
                                          'TServerPipe unable to initiate pipe communication');
-  result := TAnonymousPipeImpl.Create( FReadHandle, FWriteHandle, FALSE);
+
+  // create the transport impl
+  result := TAnonymousPipeTransportImpl.Create( FReadHandle, FWriteHandle, FALSE);
 end;
 
 
-procedure TAnonymousServerPipeImpl.Close;
+procedure TAnonymousPipeServerTransportImpl.InternalClose;
 begin
   ClosePipeHandle( FReadHandle);
   ClosePipeHandle( FWriteHandle);
@@ -569,31 +582,31 @@ begin
 end;
 
 
-function TAnonymousServerPipeImpl.ReadHandle : THandle;
+function TAnonymousPipeServerTransportImpl.ReadHandle : THandle;
 begin
   result := FReadHandle;
 end;
 
 
-function TAnonymousServerPipeImpl.WriteHandle : THandle;
+function TAnonymousPipeServerTransportImpl.WriteHandle : THandle;
 begin
   result := FWriteHandle;
 end;
 
 
-function TAnonymousServerPipeImpl.ClientAnonRead : THandle;
+function TAnonymousPipeServerTransportImpl.ClientAnonRead : THandle;
 begin
   result := FClientAnonRead;
 end;
 
 
-function TAnonymousServerPipeImpl.ClientAnonWrite  : THandle;
+function TAnonymousPipeServerTransportImpl.ClientAnonWrite  : THandle;
 begin
   result := FClientAnonWrite;
 end;
 
 
-function TAnonymousServerPipeImpl.CreateAnonPipe : Boolean;
+function TAnonymousPipeServerTransportImpl.CreateAnonPipe : Boolean;
 var sd           : PSECURITY_DESCRIPTOR;
     sa           : SECURITY_ATTRIBUTES; //TSecurityAttributes;
     hCAR, hPipeW, hCAW, hPipe : THandle;
@@ -610,14 +623,16 @@ begin
     sa.bInheritHandle       := TRUE; //allow passing handle to child
 
     if not CreatePipe( hCAR, hPipeW, @sa, FBufSize) then begin   //create stdin pipe
-      Console.WriteLine( 'TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
+      raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                        'TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
       Exit;
     end;
 
     if not CreatePipe( hPipe, hCAW, @sa, FBufSize) then begin  //create stdout pipe
-      Console.WriteLine( 'TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
       CloseHandle( hCAR);
       CloseHandle( hPipeW);
+      raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                        'TServerPipe CreatePipe (anon) failed, '+SysErrorMessage(GetLastError));
       Exit;
     end;
 
@@ -634,72 +649,128 @@ begin
 end;
 
 
-{ TNamedServerPipeImpl }
+{ TNamedPipeServerTransportImpl }
 
 
-constructor TNamedServerPipeImpl.Create( aPipename : string; aBufsize, aMaxConns, aTimeOut : Cardinal);
+constructor TNamedPipeServerTransportImpl.Create( aPipename : string; aBufsize, aMaxConns, aTimeOut : Cardinal);
 // Named Pipe CTOR
 begin
   inherited Create;
-  FPipeName := aPipename;
-  FBufsize  := aBufSize;
-  FMaxConns := Max( 1, Min( PIPE_UNLIMITED_INSTANCES, aMaxConns));
-  FHandle   := INVALID_HANDLE_VALUE;
-  FTimeout  := aTimeOut;
+  FPipeName  := aPipename;
+  FBufsize   := aBufSize;
+  FMaxConns  := Max( 1, Min( PIPE_UNLIMITED_INSTANCES, aMaxConns));
+  FHandle    := INVALID_HANDLE_VALUE;
+  FTimeout   := aTimeOut;
+  FConnected := FALSE;
 
   if Copy(FPipeName,1,2) <> '\\'
   then FPipeName := '\\.\pipe\' + FPipeName;  // assume localhost
 end;
 
 
-function TNamedServerPipeImpl.AcceptImpl: ITransport;
-var connectRet : Boolean;
+function TNamedPipeServerTransportImpl.AcceptImpl: ITransport;
+var dwError, dwWait, dwDummy : DWORD;
+    overlapped : TOverlapped;
+    event      : TEvent;
 begin
-  CreateNamedPipe;
+  FillChar( overlapped, SizeOf(overlapped), 0);
+  event := TEvent.Create( nil, TRUE, FALSE, '');  // always ManualReset, see MSDN
+  try
+    overlapped.hEvent := event.Handle;
 
-  // Wait for the client to connect; if it succeeds, the
-  // function returns a nonzero value. If the function returns
-  // zero, GetLastError should return ERROR_PIPE_CONNECTED.
-  if ConnectNamedPipe( FHandle,nil)
-  then connectRet := TRUE
-  else connectRet := (GetLastError() = ERROR_PIPE_CONNECTED);
+    ASSERT( not FConnected);
+    while not FConnected do begin
+      InternalClose;
+      if FStopServer then Abort;
+      CreateNamedPipe;
 
-  if not connectRet then begin
-    Close;
-    raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                      'TServerPipe: client connection failed');
-  end;
+      // Wait for the client to connect; if it succeeds, the
+      // function returns a nonzero value. If the function returns
+      // zero, GetLastError should return ERROR_PIPE_CONNECTED.
+      if ConnectNamedPipe( Handle, @overlapped)
+      then FConnected := TRUE
+      else begin
+        // ConnectNamedPipe() returns FALSE for OverlappedIO, even if connected.
+        // We have to check GetLastError() explicitly to find out
+        dwError := GetLastError;
+        case dwError of
+          ERROR_PIPE_CONNECTED : begin
+            FConnected := TRUE;  // special case: pipe immediately connected
+          end;
 
-  result := TNamedPipeServerImpl.Create( FHandle, TRUE);
-end;
+          ERROR_IO_PENDING : begin
+            dwWait := WaitForSingleObject( overlapped.hEvent, DEFAULT_THRIFT_PIPE_TIMEOUT);
+            FConnected := (dwWait = WAIT_OBJECT_0)
+                      and GetOverlappedResult( Handle, overlapped, dwDummy, TRUE);
+          end;
 
+        else
+          InternalClose;
+          raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                            'Client connection failed');
+        end;
+      end;
+    end;
 
-procedure TNamedServerPipeImpl.Close;
-begin
-  if FHandle <> INVALID_HANDLE_VALUE
-  then try
-    FlushFileBuffers( FHandle);
-    DisconnectNamedPipe( FHandle);
+    // create the transport impl
+    result := CreateTransportInstance;
+
   finally
-    ClosePipeHandle( FHandle);
+    event.Free;
   end;
 end;
 
 
-function TNamedServerPipeImpl.Handle : THandle;
+function TNamedPipeServerTransportImpl.CreateTransportInstance : ITransport;
+// create the transport impl
+var hPipe : THandle;
 begin
-  result := FHandle;
+  hPipe := THandle( InterlockedExchangePointer( Pointer(FHandle), Pointer(INVALID_HANDLE_VALUE)));
+  try
+    FConnected := FALSE;
+    result := TNamedPipeTransportServerEndImpl.Create( hPipe, TRUE);
+  except
+    ClosePipeHandle(hPipe);
+    raise;
+  end;
 end;
 
 
-procedure TNamedServerPipeImpl.CreateNamedPipe;
+procedure TNamedPipeServerTransportImpl.InternalClose;
+var hPipe : THandle;
+begin
+  hPipe := THandle( InterlockedExchangePointer( Pointer(FHandle), Pointer(INVALID_HANDLE_VALUE)));
+  if hPipe = INVALID_HANDLE_VALUE then Exit;
+
+  try
+    if FConnected
+    then FlushFileBuffers( hPipe)
+    else CancelIo( hPipe);
+    DisconnectNamedPipe( hPipe);
+  finally
+    ClosePipeHandle( hPipe);
+    FConnected := FALSE;
+  end;
+end;
+
+
+function TNamedPipeServerTransportImpl.Handle : THandle;
+begin
+  {$IFDEF WIN64}
+  result := THandle( InterlockedExchangeAdd64( Integer(FHandle), 0));
+  {$ELSE}
+  result := THandle( InterlockedExchangeAdd( Integer(FHandle), 0));
+  {$ENDIF}
+end;
+
+
+function TNamedPipeServerTransportImpl.CreateNamedPipe : THandle;
 var SIDAuthWorld : SID_IDENTIFIER_AUTHORITY ;
     everyone_sid : PSID;
     ea           : EXPLICIT_ACCESS;
     acl          : PACL;
     sd           : PSECURITY_DESCRIPTOR;
     sa           : SECURITY_ATTRIBUTES;
-    hPipe : THandle;
 const
   SECURITY_WORLD_SID_AUTHORITY  : TSIDIdentifierAuthority = (Value : (0,0,0,0,0,1));
   SECURITY_WORLD_RID = $00000000;
@@ -707,6 +778,8 @@ begin
   sd := nil;
   everyone_sid := nil;
   try
+    ASSERT( (FHandle = INVALID_HANDLE_VALUE) and not FConnected);
+
     // Windows - set security to allow non-elevated apps
     // to access pipes created by elevated apps.
     SIDAuthWorld := SECURITY_WORLD_SID_AUTHORITY;
@@ -732,19 +805,20 @@ begin
     sa.bInheritHandle       := FALSE;
 
     // Create an instance of the named pipe
-    hPipe := Windows.CreateNamedPipe( PChar( FPipeName),        // pipe name
-                                      PIPE_ACCESS_DUPLEX,       // read/write access
-                                      PIPE_TYPE_MESSAGE or      // message type pipe
-                                      PIPE_READMODE_MESSAGE,    // message-read mode
-                                      FMaxConns,                // max. instances
-                                      FBufSize,                 // output buffer size
-                                      FBufSize,                 // input buffer size
-                                      FTimeout,                 // time-out, see MSDN
-                                      @sa);                     // default security attribute
+    result := Windows.CreateNamedPipe( PChar( FPipeName),        // pipe name
+                                       PIPE_ACCESS_DUPLEX or     // read/write access
+                                       FILE_FLAG_OVERLAPPED,     // async mode
+                                       PIPE_TYPE_MESSAGE or      // message type pipe
+                                       PIPE_READMODE_MESSAGE,    // message-read mode
+                                       FMaxConns,                // max. instances
+                                       FBufSize,                 // output buffer size
+                                       FBufSize,                 // input buffer size
+                                       FTimeout,                 // time-out, see MSDN
+                                       @sa);                     // default security attribute
 
-    FHandle := hPipe;
-    if( FHandle = INVALID_HANDLE_VALUE)
-    then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+    if( result <> INVALID_HANDLE_VALUE)
+    then InterlockedExchangePointer( Pointer(FHandle), Pointer(result))
+    else raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
                                            'CreateNamedPipe() failed ' + IntToStr(GetLastError));
 
   finally

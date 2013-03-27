@@ -19,6 +19,9 @@
 
 unit TestClient;
 
+{.$DEFINE StressTest}   // activate to stress-test the server with frequent connects/disconnects
+{.$DEFINE PerfTest}     // activate to activate the performance test
+
 interface
 
 uses
@@ -63,6 +66,7 @@ type
 
     procedure ClientTest;
     procedure JSONProtocolReadWriteTest;
+    procedure StressTest(const client : TThriftTest.Iface);
   protected
     procedure Execute; override;
   public
@@ -238,11 +242,11 @@ begin
       begin
         if sPipeName <> '' then begin
           Console.WriteLine('Using named pipe ('+sPipeName+')');
-          streamtrans := TNamedPipeImpl.Create( sPipeName, 0, nil, TIMEOUT);
+          streamtrans := TNamedPipeTransportClientEndImpl.Create( sPipeName, 0, nil, TIMEOUT);
         end
         else if bAnonPipe then begin
           Console.WriteLine('Using anonymous pipes ('+IntToStr(Integer(hAnonRead))+' and '+IntToStr(Integer(hAnonWrite))+')');
-          streamtrans := TAnonymousPipeImpl.Create( hAnonRead, hAnonWrite, FALSE);
+          streamtrans := TAnonymousPipeTransportImpl.Create( hAnonRead, hAnonWrite, FALSE);
         end
         else begin
           Console.WriteLine('Using sockets ('+host+' port '+IntToStr(port)+')');
@@ -370,6 +374,10 @@ begin
   client := TThriftTest.TClient.Create( FProtocol);
   FTransport.Open;
 
+  {$IFDEF StressTest}
+  StressTest( client);
+  {$ENDIF StressTest}
+
   // in-depth exception test
   // (1) do we get an exception at all?
   // (2) do we get the right exception?
@@ -421,6 +429,11 @@ begin
 
   s := client.testString('Test');
   Expect( s = 'Test', 'testString(''Test'') = "'+s+'"');
+
+  s := client.testString(HUGE_TEST_STRING);
+  Expect( length(s) = length(HUGE_TEST_STRING),
+          'testString( lenght(HUGE_TEST_STRING) = '+IntToStr(Length(HUGE_TEST_STRING))+') '
+         +'=> length(result) = '+IntToStr(Length(s)));
 
   i8 := client.testByte(1);
   Expect( i8 = 1, 'testByte(1) = ' + IntToStr( i8 ));
@@ -831,6 +844,7 @@ begin
   Expect( TRUE, 'Test Oneway(1)');  // success := no exception
 
   // call time
+  {$IFDEF PerfTest}
   StartTestGroup( 'Test Calltime()');
   StartTick := GetTIckCount;
   for k := 0 to 1000 - 1 do
@@ -838,9 +852,28 @@ begin
     client.testVoid();
   end;
   Console.WriteLine(' = ' + FloatToStr( (GetTickCount - StartTick) / 1000 ) + ' ms a testVoid() call' );
+  {$ENDIF PerfTest}
 
   // no more tests here
   StartTestGroup( '');
+end;
+
+
+procedure TClientThread.StressTest(const client : TThriftTest.Iface);
+begin
+  while TRUE do begin
+    try
+      if not FTransport.IsOpen then FTransport.Open;   // re-open connection, server has already closed
+      try
+        client.testString('Test');
+        Write('.');
+      finally
+        if FTransport.IsOpen then FTransport.Close;
+      end;
+    except
+      on e:Exception do Writeln(#10+e.message);
+    end;
+  end;
 end;
 
 

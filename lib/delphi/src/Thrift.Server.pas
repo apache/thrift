@@ -266,16 +266,18 @@ begin
   end;
 
   client := nil;
-  InputTransport := nil;
-  OutputTransport := nil;
-  InputProtocol := nil;
-  OutputProtocol := nil;
-
   while (not FStop) do
   begin
     try
+      // clean up any old instances before waiting for clients
+      InputTransport := nil;
+      OutputTransport := nil;
+      InputProtocol := nil;
+      OutputProtocol := nil;
+
       client := FServerTransport.Accept;
       FLogDelegate( 'Client Connected!');
+
       InputTransport := FInputTransportFactory.GetTransport( client );
       OutputTransport := FOutputTransportFactory.GetTransport( client );
       InputProtocol := FInputProtocolFactory.GetProtocol( InputTransport );
@@ -284,6 +286,7 @@ begin
       begin
         if FStop then Break;
       end;
+
     except
       on E: TTransportException do
       begin

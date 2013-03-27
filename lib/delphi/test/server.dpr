@@ -54,7 +54,7 @@ begin
       args[i-1] := arg;
     end;
     TTestServer.Execute( args );
-    Readln;
+    Writeln('Press ENTER to close ... '); Readln;
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);
