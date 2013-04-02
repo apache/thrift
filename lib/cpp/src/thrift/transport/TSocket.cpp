@@ -22,6 +22,9 @@
 #endif
 #include <cstring>
 #include <sstream>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
