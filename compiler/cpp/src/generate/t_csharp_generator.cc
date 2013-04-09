@@ -573,6 +573,8 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
         print_const_value(out, "this." + prop_name(*m_iter), t, (*m_iter)->get_value(), true, true);
       } else {
         print_const_value(out, "this._" + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
+        // Optionals with defaults are marked set
+        indent(out) << "this.__isset." << (*m_iter)->get_name() << " = true;" << endl;
       }
     }
   }
