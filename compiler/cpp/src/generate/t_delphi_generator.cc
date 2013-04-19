@@ -527,12 +527,9 @@ void t_delphi_generator::close_generator() {
   f_all.close();
   
   if( ! typedefs_pending.empty()) {
-    printf("Typedefs with unresolved type references left:\n");
+    pwarning(0, "%d typedefs with unresolved type references left:\n", typedefs_pending.size());
     for( std::list<t_typedef*>::iterator iter = typedefs_pending.begin();  typedefs_pending.end() != iter;  ++iter) {
-      printf( "typedef %s.%s = %s\n", 
-              (*iter)->get_type()->get_program()->get_name().c_str(), 
-              (*iter)->get_type()->get_name().c_str(), 
-              (*iter)->get_symbolic().c_str());
+      pwarning(0, "- %s\n", (*iter)->get_symbolic().c_str());
     }
   }
 }
@@ -549,6 +546,7 @@ void t_delphi_generator::generate_typedef(t_typedef* ttypedef) {
 
   // write now or save for later?  
   if( ! is_fully_defined_type( type)) {
+    pverbose("typedef %s: unresolved dependencies found\n", type_name(ttypedef).c_str());
     typedefs_pending.push_back( ttypedef); 
     return;
   }
@@ -571,6 +569,14 @@ void t_delphi_generator::generate_typedef(t_typedef* ttypedef) {
 }
 
 bool t_delphi_generator::is_fully_defined_type( t_type* ttype) {
+  if( (NULL != ttype->get_program()) && (ttype->get_program() != program_)) {
+    t_scope* scope = ttype->get_program()->scope();
+    if( NULL != scope->get_type( ttype->get_name())) {
+      //printf("type %s found in included scope %s\n", ttype->get_name().c_str(), ttype->get_program()->get_name().c_str());
+      return true;
+    }
+  }
+
   if (ttype->is_typedef()) {
     return (1 == types_known[ type_name(ttype)]);
   }
@@ -591,14 +597,6 @@ bool t_delphi_generator::is_fully_defined_type( t_type* ttype) {
     return is_fully_defined_type( tlist->get_elem_type());
   }
 
-  if( (NULL != ttype->get_program()) && (ttype->get_program() != program_)) {
-    t_scope* scope = ttype->get_program()->scope();
-    if( NULL != scope->get_type( ttype->get_name())) {
-      printf("type %s found in included scope %s\n", ttype->get_name().c_str(), ttype->get_program()->get_name().c_str());
-      return true;
-    }
-  }
-  
   return (1 == types_known[ type_name(ttype)]);
 }
 
@@ -617,7 +615,8 @@ void t_delphi_generator::add_defined_type( t_type* ttype) {
     {
       t_typedef* ttypedef = (*iter);
       if( is_fully_defined_type( ttypedef->get_type()))
-      {
+      {      
+        pverbose("typedef %s: all pending references are now resolved\n", type_name(ttypedef).c_str());
         typedefs_pending.erase( iter);
         generate_typedef( ttypedef);
         more = true;

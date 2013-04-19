@@ -48,6 +48,11 @@ void pdebug(const char* fmt, ...);
 void pwarning(int level, const char* fmt, ...);
 
 /**
+ * Print verbose output message
+ */
+void pverbose(const char* fmt, ...);
+
+/**
  * Failure!
  */
 void failure(const char* fmt, ...);
