@@ -29,12 +29,6 @@ use Thrift\Exception\TProtocolException;
  * Protocol base class module.
  */
 abstract class TProtocol {
-  // The below may seem silly, but it is to get around the problem that the
-  // "instanceof" operator can only take in a T_VARIABLE and not a T_STRING
-  // or T_CONSTANT_ENCAPSED_STRING. Using "is_a()" instead of "instanceof" is
-  // a workaround but is deprecated in PHP5. This is used in the generated
-  // deserialization code.
-  static $TBINARYPROTOCOLACCELERATED = 'TBinaryProtocolAccelerated';
 
   /**
    * Underlying transport

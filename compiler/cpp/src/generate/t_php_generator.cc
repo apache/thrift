@@ -403,9 +403,10 @@ string t_php_generator::php_includes() {
   string TException = "use Thrift\\Exception\\TException;\n";
   string TProtocolException = "use Thrift\\Exception\\TProtocolException;\n";
   string TProtocol = "use Thrift\\Protocol\\TProtocol;\n";
+  string TBinaryProtocolAccelerated = "use Thrift\\Protocol\\TBinaryProtocolAccelerated;\n";
   string TApplicationException = "use Thrift\\Exception\\TApplicationException;\n\n";
 
-  return TBase + TType + TMessageType + TException + TProtocolException + TProtocol + TApplicationException;
+  return TBase + TType + TMessageType + TException + TProtocolException + TProtocol + TBinaryProtocolAccelerated + TApplicationException;
 }
 
 /**
@@ -1205,7 +1206,7 @@ void t_php_generator::generate_process_function(t_service* tservice,
   }
 
   f_service_ <<
-    indent() << "$bin_accel = ($output instanceof " << "TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');" << endl;
+    indent() << "$bin_accel = ($output instanceof " << "TBinaryProtocolAccelerated) && function_exists('thrift_protocol_write_binary');" << endl;
 
   f_service_ <<
     indent() << "if ($bin_accel)" << endl;
@@ -1486,7 +1487,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       }
 
       f_service_ <<
-        indent() << "$bin_accel = ($this->output_ instanceof " << "TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');" << endl;
+        indent() << "$bin_accel = ($this->output_ instanceof " << "TBinaryProtocolAccelerated) && function_exists('thrift_protocol_write_binary');" << endl;
 
       f_service_ <<
         indent() << "if ($bin_accel)" << endl;
@@ -1544,7 +1545,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
       scope_up(f_service_);
 
       f_service_ <<
-        indent() << "$bin_accel = ($this->input_ instanceof " << "TProtocol::$TBINARYPROTOCOLACCELERATED)"
+        indent() << "$bin_accel = ($this->input_ instanceof " << "TBinaryProtocolAccelerated)"
                  << " && function_exists('thrift_protocol_read_binary');" << endl;
 
       f_service_ <<
