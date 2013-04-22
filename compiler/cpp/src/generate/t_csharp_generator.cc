@@ -66,6 +66,9 @@ class t_csharp_generator : public t_oop_generator
       iter = parsed_options.find("nullable");
       nullable_ = (iter != parsed_options.end());
 
+      iter = parsed_options.find("union");
+      union_ = (iter != parsed_options.end());
+
       iter = parsed_options.find("serial");
       serialize_ = (iter != parsed_options.end());
       if (serialize_) {
@@ -88,6 +91,7 @@ class t_csharp_generator : public t_oop_generator
     void generate_typedef (t_typedef* ttypedef);
     void generate_enum (t_enum* tenum);
     void generate_struct (t_struct* tstruct);
+    void generate_union (t_struct* tunion);
     void generate_xception (t_struct* txception);
     void generate_service (t_service* tservice);
     void generate_property(ofstream& out, t_field* tfield, bool isPublic, bool generateIsset);
@@ -98,12 +102,16 @@ class t_csharp_generator : public t_oop_generator
     void print_const_def_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
 
     void generate_csharp_struct(t_struct* tstruct, bool is_exception);
+    void generate_csharp_union(t_struct* tunion);
     void generate_csharp_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception=false, bool in_class=false, bool is_result=false);
+    void generate_csharp_union_definition(std::ofstream& out, t_struct* tunion);
+    void generate_csharp_union_class(std::ofstream& out, t_struct* tunion, t_field* tfield);
     void generate_csharp_wcffault(std::ofstream& out, t_struct* tstruct);
     void generate_csharp_struct_reader(std::ofstream& out, t_struct* tstruct);
     void generate_csharp_struct_result_writer(std::ofstream& out, t_struct* tstruct);
     void generate_csharp_struct_writer(std::ofstream& out, t_struct* tstruct);
     void generate_csharp_struct_tostring(std::ofstream& out, t_struct* tstruct);
+    void generate_csharp_union_reader(std::ofstream& out, t_struct* tunion);
 
     void generate_function_helpers(t_function* tfunction);
     void generate_service_interface (t_service* tservice);
@@ -112,13 +120,13 @@ class t_csharp_generator : public t_oop_generator
     void generate_service_server (t_service* tservice);
     void generate_process_function (t_service* tservice, t_function* function);
 
-    void generate_deserialize_field (std::ofstream& out, t_field* tfield, std::string prefix="");
+    void generate_deserialize_field (std::ofstream& out, t_field* tfield, std::string prefix="", bool is_propertyless=false);
     void generate_deserialize_struct (std::ofstream& out, t_struct* tstruct, std::string prefix="");
     void generate_deserialize_container (std::ofstream& out, t_type* ttype, std::string prefix="");
     void generate_deserialize_set_element (std::ofstream& out, t_set* tset, std::string prefix="");
     void generate_deserialize_map_element (std::ofstream& out, t_map* tmap, std::string prefix="");
     void generate_deserialize_list_element (std::ofstream& out, t_list* list, std::string prefix="");
-    void generate_serialize_field (std::ofstream& out, t_field* tfield, std::string prefix="", bool is_element=false);
+    void generate_serialize_field (std::ofstream& out, t_field* tfield, std::string prefix="", bool is_element=false, bool is_propertyless=false);
     void generate_serialize_struct (std::ofstream& out, t_struct* tstruct, std::string prefix="");
     void generate_serialize_container (std::ofstream& out, t_type* ttype, std::string prefix="");
     void generate_serialize_map_element (std::ofstream& out, t_map* tmap, std::string iter, std::string map);
@@ -174,6 +182,7 @@ class t_csharp_generator : public t_oop_generator
     bool async_;
     bool async_ctp_;
     bool nullable_;
+    bool union_;
     bool serialize_;
     bool wcf_;
     std::string wcf_namespace_;
@@ -447,7 +456,11 @@ std::string t_csharp_generator::render_const_value(ofstream& out, string name, t
 }
 
 void t_csharp_generator::generate_struct(t_struct* tstruct) {
-  generate_csharp_struct(tstruct, false);
+  if (union_ && tstruct->is_union()) {
+    generate_csharp_union(tstruct);
+  } else {
+    generate_csharp_struct(tstruct, false);
+  }
 }
 
 void t_csharp_generator::generate_xception(t_struct* txception) {
@@ -920,6 +933,102 @@ void t_csharp_generator::generate_csharp_struct_tostring(ofstream& out, t_struct
     "sb.Append(\")\");" << endl;
   indent(out) <<
     "return sb.ToString();" << endl;
+
+  indent_down();
+  indent(out) << "}" << endl << endl;
+}
+
+
+void t_csharp_generator::generate_csharp_union(t_struct* tunion) {
+  string f_union_name = namespace_dir_ + "/" + (tunion->get_name()) + ".cs";
+  ofstream f_union;
+
+  f_union.open(f_union_name.c_str());
+
+  f_union <<
+    autogen_comment() <<
+    csharp_type_usings() <<
+    csharp_thrift_usings() << endl;
+
+  generate_csharp_union_definition(f_union, tunion);
+
+  f_union.close();
+}
+
+void t_csharp_generator::generate_csharp_union_definition(std::ofstream& out, t_struct* tunion) {
+  // Let's define the class first
+  start_csharp_namespace(out);
+
+  indent(out) << "public abstract class " << tunion->get_name() << " : TAbstractBase {" << endl;
+
+  indent_up();
+
+  indent(out) << "public abstract void Write(TProtocol protocol);" << endl;
+  indent(out) << "public readonly bool Isset;" << endl;
+  indent(out) << "public abstract object Data { get; }" << endl;
+
+  indent(out) << "protected " << tunion->get_name() << "(bool isset) {" << endl;
+  indent_up();
+  indent(out) << "Isset = isset;" << endl;
+  indent_down();
+  indent(out) << "}" << endl << endl;
+
+  indent(out) << "public class ___undefined : " << tunion->get_name() << " {" << endl;
+  indent_up();
+
+  indent(out) << "public override object Data { get { return null; } }" << endl;
+
+  indent(out) << "public ___undefined() : base(false) {}" << endl << endl;
+
+  indent(out) << "public override void Write(TProtocol protocol) {" << endl;
+  indent_up();
+  indent(out) << "throw new Exception(\"Cannot persist an union type which is not set.\");" << endl;
+  indent_down();
+  indent(out) << "}" << endl << endl;
+
+  indent_down();
+  indent(out) << "}" << endl << endl;
+
+  const vector<t_field*>& fields = tunion->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    generate_csharp_union_class(out, tunion, (*f_iter));
+  }
+
+  generate_csharp_union_reader(out, tunion);
+
+  indent_down();
+  indent(out) << "}" << endl << endl;
+
+  end_csharp_namespace(out);
+}
+
+void t_csharp_generator::generate_csharp_union_class(std::ofstream& out, t_struct* tunion, t_field* tfield) {
+  indent(out) << "public class " << tfield->get_name() << " : " << tunion->get_name() << " {" << endl;
+  indent_up();
+  indent(out) << "private " << type_name(tfield->get_type()) << " _data;" << endl;
+  indent(out) << "public override object Data { get { return _data; } }" << endl;
+  indent(out) << "public " << tfield->get_name() << "(" << type_name(tfield->get_type()) << " data) : base(true) {" << endl;
+  indent_up();
+  indent(out) << "this._data = data;" << endl;
+  indent_down();
+  indent(out) << "}" << endl;
+  indent(out) << "public override void Write(TProtocol oprot) {" << endl;
+  indent_up();
+  indent(out) << "TField field = new TField();" << endl;
+  indent(out) << "field.Name = \"" << tfield->get_name() << "\";" << endl;
+  indent(out) << "field.Type = " << type_to_enum(tfield->get_type()) << ";" << endl;
+  indent(out) << "field.ID = " << tfield->get_key() << ";" << endl;
+  indent(out) << "oprot.WriteFieldBegin(field);" << endl;
+  
+  generate_serialize_field(out, tfield, "_data", true, true);
+
+  indent(out) << "oprot.WriteFieldEnd();" << endl;
+  indent(out) << "oprot.WriteFieldStop();" << endl;
+  indent(out) << "oprot.WriteStructEnd();" << endl;
+  indent_down();
+  indent(out) << "}" << endl;
 
   indent_down();
   indent(out) << "}" << endl << endl;
@@ -1576,7 +1685,79 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
   f_service_ << endl;
 }
 
-void t_csharp_generator::generate_deserialize_field(ofstream& out, t_field* tfield, string prefix) {
+void t_csharp_generator::generate_csharp_union_reader(std::ofstream& out, t_struct* tunion) {
+  // Thanks to THRIFT-1768, we don't need to check for required fields in the union
+  const vector<t_field*>& fields = tunion->get_members();
+  vector<t_field*>::const_iterator f_iter;
+
+  indent(out) << "public static " << tunion->get_name() << " Read(TProtocol iprot)" << endl;
+  scope_up(out);
+  indent(out) << tunion->get_name() << " retval;" << endl;
+  indent(out) << "iprot.ReadStructBegin();" << endl;
+  indent(out) << "TField field = iprot.ReadFieldBegin();" << endl;
+  // we cannot have the first field be a stop -- we must have a single field defined
+  indent(out) << "if (field.Type == TType.Stop)" << endl;
+  scope_up(out);
+  indent(out) << "iprot.ReadFieldEnd();" << endl;
+  indent(out) << "retval = new ___undefined();" << endl;
+  scope_down(out);
+  indent(out) << "else" << endl;
+  scope_up(out);
+  indent(out) << "switch (field.ID)" << endl;
+  scope_up(out);
+
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    indent(out) <<
+      "case " << (*f_iter)->get_key() << ":" << endl;
+    indent_up();
+    indent(out) << "if (field.Type == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
+    indent_up();
+
+    indent(out) << type_name((*f_iter)->get_type()) << " temp;" << endl;
+    generate_deserialize_field(out, (*f_iter), "temp", true);
+    indent(out) << "retval = new " << (*f_iter)->get_name() << "(temp);" << endl;
+    
+    indent_down();
+    out <<
+      indent() << "} else { " << endl <<
+      indent() << "  TProtocolUtil.Skip(iprot, field.Type);" << endl <<
+      indent() << "  retval = new ___undefined();" << endl <<
+      indent() << "}" << endl <<
+      indent() << "break;" << endl;
+    indent_down();
+  }
+
+  indent(out) <<
+    "default: " << endl;
+  indent_up();
+  indent(out) << "TProtocolUtil.Skip(iprot, field.Type);" << endl <<
+    indent() << "retval = new ___undefined();" << endl;
+  indent(out) << "break;" << endl;
+  indent_down();
+
+  scope_down(out);
+
+  indent(out) << "iprot.ReadFieldEnd();" << endl;
+
+  indent(out) << "if (iprot.ReadFieldBegin().Type != TType.Stop)" << endl;
+  scope_up(out);
+  indent(out) << "throw new TProtocolException(TProtocolException.INVALID_DATA);" << endl;
+  scope_down(out);
+
+  // end of else for TStop
+  scope_down(out);
+
+  indent(out) <<
+    "iprot.ReadStructEnd();" << endl;
+
+  indent(out) << "return retval;" << endl;
+
+  indent_down();
+
+  indent(out) << "}" << endl << endl;
+}
+
+void t_csharp_generator::generate_deserialize_field(ofstream& out, t_field* tfield, string prefix, bool is_propertyless) {
   t_type* type = tfield->get_type();
   while(type->is_typedef()) {
     type = ((t_typedef*)type)->get_type();
@@ -1586,7 +1767,7 @@ void t_csharp_generator::generate_deserialize_field(ofstream& out, t_field* tfie
     throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " + prefix + tfield->get_name();
   }
 
-  string name = prefix + prop_name(tfield);
+  string name = prefix + (is_propertyless ? "" : prop_name(tfield));
 
   if (type->is_struct() || type->is_xception()) {
     generate_deserialize_struct(out, (t_struct*)type, name);
@@ -1647,9 +1828,13 @@ void t_csharp_generator::generate_deserialize_field(ofstream& out, t_field* tfie
 }
 
 void t_csharp_generator::generate_deserialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
-  out <<
-    indent() << prefix << " = new " << type_name(tstruct) << "();" << endl <<
-    indent() << prefix << ".Read(iprot);" << endl;
+  if (union_ && tstruct->is_union()) {
+    out << indent() << prefix << " = " << type_name(tstruct) << ".Read(iprot);" << endl;
+  } else {
+    out <<
+      indent() << prefix << " = new " << type_name(tstruct) << "();" << endl <<
+      indent() << prefix << ".Read(iprot);" << endl;
+  }
 }
 
 void t_csharp_generator::generate_deserialize_container(ofstream& out, t_type* ttype, string prefix) {
@@ -1749,13 +1934,13 @@ void t_csharp_generator::generate_deserialize_list_element(ofstream& out, t_list
     prefix << ".Add(" << elem << ");" << endl;
 }
 
-void t_csharp_generator::generate_serialize_field(ofstream& out, t_field* tfield, string prefix, bool is_element) {
+ void t_csharp_generator::generate_serialize_field(ofstream& out, t_field* tfield, string prefix, bool is_element, bool is_propertyless) {
   t_type* type = tfield->get_type();
   while (type->is_typedef()) {
     type = ((t_typedef*)type)->get_type();
   }
 
-  string name = prefix + prop_name(tfield);
+  string name = prefix + (is_propertyless ? "" : prop_name(tfield));
   
   if (type->is_void()) {
     throw "CANNOT GENERATE SERIALIZE CODE FOR void TYPE: " + name;
@@ -2209,5 +2394,6 @@ THRIFT_REGISTER_GENERATOR(csharp, "C#",
 "    wcf:             Adds bindings for WCF to generated classes.\n"
 "    serial:          Add serialization support to generated classes.\n"
 "    nullable:        Use nullable types for properties.\n"
+"    union:           Use new union typing, which includes a static read function for union types.\n"
 )
 
