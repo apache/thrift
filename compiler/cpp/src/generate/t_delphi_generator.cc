@@ -960,6 +960,9 @@ void t_delphi_generator::generate_delphi_struct_impl( ostream& out, string cls_p
     }
     if ((*m_iter)->get_value() != NULL) {
       initialize_field( vars, code, "F" + prop_name( (*m_iter)->get_name(), is_exception), t, (*m_iter)->get_value());
+      if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
+        indent_impl(code) << "F__isset_" << prop_name((*m_iter), is_exception) << " := True;" << endl;
+      }
     }
   }
   indent_down_impl();
