@@ -2196,7 +2196,7 @@ string t_csharp_generator::base_type_name(t_base_type* tbase, bool in_container,
     case t_base_type::TYPE_BOOL:
       return "bool" + postfix;
     case t_base_type::TYPE_BYTE:
-      return "byte" + postfix;
+      return "sbyte" + postfix;
     case t_base_type::TYPE_I16:
       return "short" + postfix;
     case t_base_type::TYPE_I32:

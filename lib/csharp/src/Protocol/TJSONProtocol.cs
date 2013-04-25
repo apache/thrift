@@ -672,7 +672,7 @@ namespace Thrift.Protocol
 			WriteJSONInteger(b ? (long)1 : (long)0);
 		}
 
-		public override void WriteByte(byte b)
+		public override void WriteByte(sbyte b)
 		{
 			WriteJSONInteger((long)b);
 		}
@@ -1033,9 +1033,9 @@ namespace Thrift.Protocol
 			return (ReadJSONInteger() == 0 ? false : true);
 		}
 
-		public override byte ReadByte()
+		public override sbyte ReadByte()
 		{
-			return (byte)ReadJSONInteger();
+			return (sbyte)ReadJSONInteger();
 		}
 
 		public override short ReadI16()

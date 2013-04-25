@@ -319,9 +319,9 @@ namespace Thrift.Protocol
         /** 
          * Write a byte. Nothing to see here!
          */
-        public override void WriteByte(byte b)
+        public override void WriteByte(sbyte b)
         {
-            WriteByteDirect(b);
+            WriteByteDirect((byte)b);
         }
 
         /**
@@ -479,12 +479,12 @@ namespace Thrift.Protocol
    */
         public override TMessage ReadMessageBegin()
         {
-            byte protocolId = ReadByte();
+            byte protocolId = (byte)ReadByte();
             if (protocolId != PROTOCOL_ID)
             {
                 throw new TProtocolException("Expected protocol id " + PROTOCOL_ID.ToString("X") + " but got " + protocolId.ToString("X"));
             }
-            byte versionAndType = ReadByte();
+            byte versionAndType = (byte)ReadByte();
             byte version = (byte)(versionAndType & VERSION_MASK);
             if (version != VERSION)
             {
@@ -522,7 +522,7 @@ namespace Thrift.Protocol
          */
         public override TField ReadFieldBegin()
         {
-            byte type = ReadByte();
+            byte type = (byte)ReadByte();
 
             // if it's a stop, then we can return immediately, as the struct is over.
             if (type == Types.STOP)
@@ -567,7 +567,7 @@ namespace Thrift.Protocol
         public override TMap ReadMapBegin()
         {
             int size = (int)ReadVarint32();
-            byte keyAndValueType = size == 0 ? (byte)0 : ReadByte();
+            byte keyAndValueType = size == 0 ? (byte)0 : (byte)ReadByte();
             return new TMap(getTType((byte)(keyAndValueType >> 4)), getTType((byte)(keyAndValueType & 0xf)), size);
         }
 
@@ -579,7 +579,7 @@ namespace Thrift.Protocol
          */
         public override TList ReadListBegin()
         {
-            byte size_and_type = ReadByte();
+            byte size_and_type = (byte)ReadByte();
             int size = (size_and_type >> 4) & 0x0f;
             if (size == 15)
             {
@@ -620,10 +620,10 @@ namespace Thrift.Protocol
         /**
          * Read a single byte off the wire. Nothing interesting here.
          */
-        public override byte ReadByte()
+        public override sbyte ReadByte()
         {
             trans.ReadAll(byteRawBuf, 0, 1);
-            return byteRawBuf[0];
+            return (sbyte)byteRawBuf[0];
         }
 
         /**
@@ -724,7 +724,7 @@ namespace Thrift.Protocol
             int shift = 0;
             while (true)
             {
-                byte b = ReadByte();
+                byte b = (byte)ReadByte();
                 result |= (uint)(b & 0x7f) << shift;
                 if ((b & 0x80) != 0x80) break;
                 shift += 7;
@@ -742,7 +742,7 @@ namespace Thrift.Protocol
             ulong result = 0;
             while (true)
             {
-                byte b = ReadByte();
+                byte b = (byte)ReadByte();
                 result |= (ulong)(b & 0x7f) << shift;
                 if ((b & 0x80) != 0x80) break;
                 shift += 7;

@@ -55,7 +55,7 @@ namespace Thrift.Protocol
 		public abstract void WriteSetBegin(TSet set);
 		public abstract void WriteSetEnd();
 		public abstract void WriteBool(bool b);
-		public abstract void WriteByte(byte b);
+		public abstract void WriteByte(sbyte b);
 		public abstract void WriteI16(short i16);
 		public abstract void WriteI32(int i32);
 		public abstract void WriteI64(long i64);
@@ -78,7 +78,7 @@ namespace Thrift.Protocol
 		public abstract TSet ReadSetBegin();
 		public abstract void ReadSetEnd();
 		public abstract bool ReadBool();
-		public abstract byte ReadByte();
+		public abstract sbyte ReadByte();
 		public abstract short ReadI16();
 		public abstract int ReadI32();
 		public abstract long ReadI64();

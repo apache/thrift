@@ -92,7 +92,7 @@ namespace Thrift.Protocol
 			else
 			{
 				WriteString(message.Name);
-				WriteByte((byte)message.Type);
+				WriteByte((sbyte)message.Type);
 				WriteI32(message.SeqID);
 			}
 		}
@@ -111,7 +111,7 @@ namespace Thrift.Protocol
 
 		public override void WriteFieldBegin(TField field)
 		{
-			WriteByte((byte)field.Type);
+			WriteByte((sbyte)field.Type);
 			WriteI16(field.ID);
 		}
 
@@ -121,13 +121,13 @@ namespace Thrift.Protocol
 
 		public override void WriteFieldStop()
 		{
-			WriteByte((byte)TType.Stop);
+			WriteByte((sbyte)TType.Stop);
 		}
 
 		public override void WriteMapBegin(TMap map)
 		{
-			WriteByte((byte)map.KeyType);
-			WriteByte((byte)map.ValueType);
+			WriteByte((sbyte)map.KeyType);
+			WriteByte((sbyte)map.ValueType);
 			WriteI32(map.Count);
 		}
 
@@ -137,7 +137,7 @@ namespace Thrift.Protocol
 
 		public override void WriteListBegin(TList list)
 		{
-			WriteByte((byte)list.ElementType);
+			WriteByte((sbyte)list.ElementType);
 			WriteI32(list.Count);
 		}
 
@@ -147,7 +147,7 @@ namespace Thrift.Protocol
 
 		public override void WriteSetBegin(TSet set)
 		{
-			WriteByte((byte)set.ElementType);
+			WriteByte((sbyte)set.ElementType);
 			WriteI32(set.Count);
 		}
 
@@ -157,13 +157,13 @@ namespace Thrift.Protocol
 
 		public override void WriteBool(bool b)
 		{
-			WriteByte(b ? (byte)1 : (byte)0);
+			WriteByte(b ? (sbyte)1 : (sbyte)0);
 		}
 
 		private byte[] bout = new byte[1];
-		public override void WriteByte(byte b)
+		public override void WriteByte(sbyte b)
 		{
-			bout[0] = b;
+			bout[0] = (byte)b;
 			trans.Write(bout, 0, 1);
 		}
 
@@ -323,10 +323,10 @@ namespace Thrift.Protocol
 		}
 
 		private byte[] bin = new byte[1];
-		public override byte ReadByte()
+		public override sbyte ReadByte()
 		{
 			ReadAll(bin, 0, 1);
-			return bin[0];
+			return (sbyte)bin[0];
 		}
 
 		private byte[] i16in = new byte[2];
