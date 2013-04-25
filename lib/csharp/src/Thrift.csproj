@@ -114,6 +114,7 @@
     <Compile Include="Transport\TTransport.cs" />
     <Compile Include="Transport\TTransportException.cs" />
     <Compile Include="Transport\TTransportFactory.cs" />
+    <Compile Include="Transport\TMemoryBuffer.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

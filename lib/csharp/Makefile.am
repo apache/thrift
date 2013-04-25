@@ -53,6 +53,7 @@ THRIFTCODE= \
             src/Transport/TTransportFactory.cs \
             src/Transport/THttpClient.cs \
             src/Transport/THttpHandler.cs \
+            src/Transport/TMemoryBuffer.cs \
             src/TProcessor.cs \
             src/TApplicationException.cs
 
