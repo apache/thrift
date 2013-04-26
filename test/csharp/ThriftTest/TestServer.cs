@@ -50,7 +50,7 @@ namespace Test
 				return thing;
 			}
 
-			public byte testByte(byte thing)
+			public sbyte testByte(sbyte thing)
 			{
 				Console.WriteLine("testByte(" + thing + ")");
 				return thing;
@@ -221,7 +221,7 @@ namespace Test
 
 				Xtruct goodbye = new Xtruct();
 				goodbye.String_thing = "Goodbye4";
-				goodbye.Byte_thing = (byte)4;
+				goodbye.Byte_thing = (sbyte)4;
 				goodbye.I32_thing = 4;
 				goodbye.I64_thing = (long)4;
 
@@ -251,7 +251,7 @@ namespace Test
 				return insane;
 			}
 
-			public Xtruct testMulti(byte arg0, int arg1, long arg2, Dictionary<short, string> arg3, Numberz arg4, long arg5)
+			public Xtruct testMulti(sbyte arg0, int arg1, long arg2, Dictionary<short, string> arg3, Numberz arg4, long arg5)
 			{
 				Console.WriteLine("testMulti()");
 

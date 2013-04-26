@@ -163,7 +163,7 @@ namespace Test
 			Console.WriteLine(" = \"" + s + "\"");
 
 			Console.Write("testByte(1)");
-			byte i8 = client.testByte((byte)1);
+			sbyte i8 = client.testByte((sbyte)1);
 			Console.WriteLine(" = " + i8);
 
 			Console.Write("testI32(-1)");
@@ -181,7 +181,7 @@ namespace Test
 			Console.Write("testStruct({\"Zero\", 1, -3, -5})");
 			Xtruct o = new Xtruct();
 			o.String_thing = "Zero";
-			o.Byte_thing = (byte)1;
+			o.Byte_thing = (sbyte)1;
 			o.I32_thing = -3;
 			o.I64_thing = -5;
 			Xtruct i = client.testStruct(o);
@@ -189,7 +189,7 @@ namespace Test
 
 			Console.Write("testNest({1, {\"Zero\", 1, -3, -5}, 5})");
 			Xtruct2 o2 = new Xtruct2();
-			o2.Byte_thing = (byte)1;
+			o2.Byte_thing = (sbyte)1;
 			o2.Struct_thing = o;
 			o2.I32_thing = 5;
 			Xtruct2 i2 = client.testNest(o2);
@@ -359,7 +359,7 @@ namespace Test
 			insane.UserMap[Numberz.FIVE] = 5000L;
 			Xtruct truck = new Xtruct();
 			truck.String_thing = "Truck";
-			truck.Byte_thing = (byte)8;
+			truck.Byte_thing = (sbyte)8;
 			truck.I32_thing = 8;
 			truck.I64_thing = 8;
 			insane.Xtructs = new List<Xtruct>();
@@ -416,7 +416,7 @@ namespace Test
 			Console.WriteLine("}");
 
 
-			byte arg0 = 1;
+			sbyte arg0 = 1;
 			int arg1 = 2;
 			long arg2 = long.MaxValue;
 			Dictionary<short, string> multiDict = new Dictionary<short, string>();
