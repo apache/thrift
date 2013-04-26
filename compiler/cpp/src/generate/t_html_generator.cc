@@ -733,7 +733,9 @@ void t_html_generator::generate_enum(t_enum* tenum) {
     f_out_ << (*val_iter)->get_name();
     f_out_ << "</code></td><td><code>";
     f_out_ << (*val_iter)->get_value();
-    f_out_ << "</code></td></tr>" << endl;
+    f_out_ << "</code></td><td>" << endl;
+    print_doc((*val_iter));
+    f_out_ << "</td></tr>" << endl;
   }
   f_out_ << "</table></div>" << endl;
 }
