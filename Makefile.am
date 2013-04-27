@@ -37,8 +37,6 @@ EXTRA_DIST = \
  			doc \
 			tutorial \
 			contrib \
-			CONTRIBUTORS \
 			LICENSE \
 			CHANGES \
-			DISCLAIMER \
 			NOTICE
