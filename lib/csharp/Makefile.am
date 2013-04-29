@@ -19,6 +19,7 @@
 
 THRIFTCODE= \
             src/Collections/THashSet.cs \
+            src/Collections/TCollections.cs \
             src/Properties/AssemblyInfo.cs \
             src/Protocol/TAbstractBase.cs \
             src/Protocol/TBase.cs \

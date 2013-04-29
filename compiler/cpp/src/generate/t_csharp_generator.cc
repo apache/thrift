@@ -66,6 +66,9 @@ class t_csharp_generator : public t_oop_generator
       iter = parsed_options.find("nullable");
       nullable_ = (iter != parsed_options.end());
 
+      iter = parsed_options.find("hashcode");
+      hashcode_ = (iter != parsed_options.end());
+
       iter = parsed_options.find("union");
       union_ = (iter != parsed_options.end());
 
@@ -111,6 +114,8 @@ class t_csharp_generator : public t_oop_generator
     void generate_csharp_struct_result_writer(std::ofstream& out, t_struct* tstruct);
     void generate_csharp_struct_writer(std::ofstream& out, t_struct* tstruct);
     void generate_csharp_struct_tostring(std::ofstream& out, t_struct* tstruct);
+    void generate_csharp_struct_equals(std::ofstream& out, t_struct* tstruct);
+    void generate_csharp_struct_hashcode(std::ofstream& out, t_struct* tstruct);
     void generate_csharp_union_reader(std::ofstream& out, t_struct* tunion);
 
     void generate_function_helpers(t_function* tfunction);
@@ -183,6 +188,7 @@ class t_csharp_generator : public t_oop_generator
     bool async_ctp_;
     bool nullable_;
     bool union_;
+    bool hashcode_;
     bool serialize_;
     bool wcf_;
     std::string wcf_namespace_;
@@ -576,6 +582,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
   // We always want a default, no argument constructor for Reading
   indent(out) << "public " << tstruct->get_name() << "() {" << endl;
   indent_up();
+
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = (*m_iter)->get_type();
     while (t->is_typedef()) {
@@ -625,6 +632,10 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
     generate_csharp_struct_result_writer(out, tstruct);
   } else {
     generate_csharp_struct_writer(out, tstruct);
+  }
+  if (hashcode_) {
+    generate_csharp_struct_equals(out, tstruct);
+    generate_csharp_struct_hashcode(out, tstruct);
   }
   generate_csharp_struct_tostring(out, tstruct);
   scope_down(out);
@@ -1030,6 +1041,94 @@ void t_csharp_generator::generate_csharp_union_class(std::ofstream& out, t_struc
   indent_down();
   indent(out) << "}" << endl;
 
+  indent_down();
+  indent(out) << "}" << endl << endl;
+}
+
+
+void t_csharp_generator::generate_csharp_struct_equals(ofstream& out, t_struct* tstruct) {
+  indent(out) << "public override bool Equals(object that) {" << endl;
+  indent_up();
+  
+  indent(out) << "var other = that as " << type_name(tstruct) << ";" << endl;
+  indent(out) << "if (other == null) return false;" << endl;
+  indent(out) << "if (ReferenceEquals(this, other)) return true;" << endl;
+  
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+  
+  bool first = true;
+  
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if (first) {
+      first = false;
+      indent(out) << "return ";
+      indent_up();
+    } else {
+      out << endl;
+      indent(out) << "&& ";
+    }
+    if (!field_is_required((*f_iter)) && !(nullable_ && !field_has_default((*f_iter)))) {
+      out << "((__isset." << (*f_iter)->get_name() << " == other.__isset." << (*f_iter)->get_name() << ") && ((!__isset." << (*f_iter)->get_name() << ") || (";
+    }
+    t_type* ttype = (*f_iter)->get_type();
+    if (ttype->is_container()) {
+      out << "TCollections.Equals(" << prop_name((*f_iter)) << ", other." << prop_name((*f_iter)) << ")";
+    } else {
+      out << prop_name((*f_iter)) << ".Equals(other." << prop_name((*f_iter)) << ")";
+    }
+    if (!field_is_required((*f_iter)) && !(nullable_ && !field_has_default((*f_iter)))) {
+      out << ")))";
+    }
+  }
+  if (first) {
+    indent(out) << "return true;" << endl;
+  } else {
+    out << ";" << endl;
+    indent_down();
+  }
+  
+  indent_down();
+  indent(out) << "}" << endl << endl;
+}
+
+void t_csharp_generator::generate_csharp_struct_hashcode(ofstream& out, t_struct* tstruct) {
+  indent(out) << "public override int GetHashCode() {" << endl;
+  indent_up();
+  
+  indent(out) << "int hashcode = 0;" << endl;
+  indent(out) << "unchecked {" << endl;
+  indent_up();
+  
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+  
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_type* ttype = (*f_iter)->get_type();
+    indent(out) << "hashcode = (hashcode * 397) ^ ";
+    if (field_is_required((*f_iter))) {
+    out << "(";
+    } else if ( nullable_) {
+      out << "(" << prop_name((*f_iter)) << " == null ? 0 : ";
+    }else {
+      out << "(!__isset." << (*f_iter)->get_name() << " ? 0 : ";
+    }
+    if (ttype->is_container()) {
+    	out << "(TCollections.GetHashCode("
+    		<< prop_name((*f_iter))
+    		<< "))";
+    } else {
+		out << "("
+			<< prop_name((*f_iter))
+			<< ".GetHashCode())";
+    }
+    out << ");" << endl;
+  }
+  
+  indent_down();
+  indent(out) << "}" << endl;
+  indent(out) << "return hashcode;" << endl;
+  
   indent_down();
   indent(out) << "}" << endl << endl;
 }
@@ -2394,6 +2493,7 @@ THRIFT_REGISTER_GENERATOR(csharp, "C#",
 "    wcf:             Adds bindings for WCF to generated classes.\n"
 "    serial:          Add serialization support to generated classes.\n"
 "    nullable:        Use nullable types for properties.\n"
+"    hashcode:        Generate a hashcode and equals implementation for classes.\n"
 "    union:           Use new union typing, which includes a static read function for union types.\n"
 )
 

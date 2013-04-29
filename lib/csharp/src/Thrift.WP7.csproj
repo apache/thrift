@@ -70,6 +70,7 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collections\TCollections.cs" />
     <Compile Include="Collections\THashSet.cs" />
     <Compile Include="Properties\AssemblyInfo.WP7.cs" />
     <Compile Include="Protocol\TBase.cs" />
