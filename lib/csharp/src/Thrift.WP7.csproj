@@ -73,6 +73,7 @@
     <Compile Include="Collections\TCollections.cs" />
     <Compile Include="Collections\THashSet.cs" />
     <Compile Include="Properties\AssemblyInfo.WP7.cs" />
+    <Compile Include="Protocol\TAbstractBase.cs" />
     <Compile Include="Protocol\TBase.cs" />
     <Compile Include="Protocol\TBase64Utils.cs" />
     <Compile Include="Protocol\TBinaryProtocol.cs" />
@@ -97,6 +98,7 @@
     <Compile Include="Transport\TTransport.cs" />
     <Compile Include="Transport\TTransportException.cs" />
     <Compile Include="Transport\TTransportFactory.cs" />
+    <Compile Include="Transport\TMemoryBuffer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.$(TargetFrameworkProfile).Overrides.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.CSharp.targets" />
