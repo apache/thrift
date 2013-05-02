@@ -1027,6 +1027,9 @@ void t_csharp_generator::generate_csharp_union_class(std::ofstream& out, t_struc
   indent(out) << "}" << endl;
   indent(out) << "public override void Write(TProtocol oprot) {" << endl;
   indent_up();
+  indent(out) << "TStruct struc = new TStruct(\"" << tunion->get_name() << "\");" << endl;
+  indent(out) << "oprot.WriteStructBegin(struc);" << endl;
+
   indent(out) << "TField field = new TField();" << endl;
   indent(out) << "field.Name = \"" << tfield->get_name() << "\";" << endl;
   indent(out) << "field.Type = " << type_to_enum(tfield->get_type()) << ";" << endl;
