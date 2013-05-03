@@ -354,7 +354,7 @@ string t_java_generator::java_type_imports() {
   string hash_builder;
   string tree_set_and_map;
   if (gen_hash_code_) {
-    hash_builder = "import org.apache.commons.lang.builder.HashCodeBuilder;\n";
+    hash_builder = "import org.apache.commons.lang3.builder.HashCodeBuilder;\n";
   }
   if (sorted_containers_) {
     tree_set_and_map = string() + 

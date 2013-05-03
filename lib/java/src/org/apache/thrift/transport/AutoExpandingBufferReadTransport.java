@@ -18,8 +18,6 @@
  */
 package org.apache.thrift.transport;
 
-import org.apache.commons.lang.NotImplementedException;
-
 /**
  * TTransport for reading from an AutoExpandingBuffer.
  */
@@ -60,7 +58,7 @@ public class AutoExpandingBufferReadTransport extends TTransport {
 
   @Override
   public void write(byte[] buf, int off, int len) throws TTransportException {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException();
   }
 
   @Override

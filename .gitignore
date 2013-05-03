@@ -15,6 +15,10 @@ gen-*
 *.dll
 *_ReSharper*
 *.opensdf
+*.swp
+.project
+.pydevproject
+.DS_Store
 
 /Makefile
 /Makefile.in
@@ -265,6 +269,4 @@ gen-*
 /tutorial/py/Makefile
 /tutorial/py/Makefile.in
 /ylwrap
-.project
-.pydevproject
-*.swp
+
