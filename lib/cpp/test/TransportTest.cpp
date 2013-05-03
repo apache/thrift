@@ -236,6 +236,7 @@ class CoupledSocketTransports : public CoupledTransports<TSocket> {
 
     in.reset(new TSocket(sockets[0]));
     out.reset(new TSocket(sockets[1]));
+    out->setSendTimeout(100);
   }
 };
 
@@ -511,7 +512,14 @@ void test_rw(uint32_t totalSize,
         write_size = wchunk_size - chunk_written;
       }
 
-      transports.out->write(wbuf.get() + total_written, write_size);
+      try {
+        transports.out->write(wbuf.get() + total_written, write_size);
+      }
+      catch (TTransportException & te) {
+        if (te.getType() == TTransportException::TIMED_OUT)
+          break;
+        throw te;
+      }
       chunk_written += write_size;
       total_written += write_size;
     }
@@ -856,7 +864,7 @@ class TransportTestGen {
     // each send() call.  If we have more than ~400 outstanding 1-byte write
     // requests, additional send() calls start blocking.
     TEST_RW(CoupledSocketTransports, 1024*16, 1, 1,
-            0, 0, 400);
+            0, 0, socket_max_outstanding);
     TEST_RW(CoupledSocketTransports, 1024*256, 0, 0,
             rand4k, rand4k, socket_max_outstanding);
     TEST_RW(CoupledSocketTransports, 1024*256, rand4k, rand4k,
@@ -864,7 +872,7 @@ class TransportTestGen {
     TEST_RW(CoupledSocketTransports, 1024*256, 167, 163,
             rand4k, rand4k, socket_max_outstanding);
     TEST_RW(CoupledSocketTransports, 1024*16, 1, 1,
-            rand4k, rand4k, 400);
+            rand4k, rand4k, socket_max_outstanding);
 
     TEST_BLOCKING_BEHAVIOR(CoupledSocketTransports);
 
