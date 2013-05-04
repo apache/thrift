@@ -62,8 +62,8 @@ script:
   - make
   - make dist
   - make check
+  - sh test/test.sh
 # TODO: add these steps
-#  - bash test/test.sh
 #  - sh bootstrap.sh ; sh contrib/mingw-cross-compile.sh
 #  - sh bootstrap.sh ; dpkg-buildpackage -tc
 
