@@ -1,0 +1,69 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# build Apache Thrift on Travis CI - https://travis-ci.org/
+
+language: cpp
+
+# see what we need: http://thrift.apache.org/docs/install/ubuntu
+before_install:
+ - sudo apt-get update -qq
+ - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev 
+# Java
+ - sudo apt-get install -qq libcommons-lang3-java ant
+# TODO: fix ruby support
+# Ruby
+# - sudo apt-get install -qq ruby1.9.1-full ruby1.9.1-dev ruby-rspec rake rubygems libdaemons-ruby libgemplugin-ruby mongrel
+# - sudo /usr/bin/gem1.9.1 install bundler
+# - sudo /usr/bin/gem1.9.1 install rack-test
+# Python
+ - sudo apt-get install -qq python-all python-all-dev python-all-dbg
+# Perl
+ - sudo apt-get install -qq libbit-vector-perl
+# PHP
+ - sudo apt-get install -qq php5-dev php5-cli phpunit
+# c_glib
+ - sudo apt-get install -qq libglib2.0-dev
+# Erlang
+ - sudo apt-get install -qq erlang-base erlang-eunit erlang-dev
+# Csharp
+ - sudo apt-get install -qq mono-gmcs mono-devel libmono-system-web2.0-cil
+# Haskell
+ - sudo apt-get install -qq ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev
+# Thrift Compiler for Windows
+ - sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime
+
+
+install:
+  - sh bootstrap.sh
+
+script:
+# TODO: fix ruby support
+#  - export PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/var/lib/gems/1.9.1/bin
+#  - sh configure RUBY=/usr/bin/ruby1.9.1 RAKE=/usr/bin/rake1.9.1
+# TODO: fix these languages
+  - sh configure --without-ruby --without-haskell --without-perl --without-php
+  - make
+  - make dist
+  - make check
+# TODO: add these steps
+#  - bash test/test.sh
+#  - sh bootstrap.sh ; sh contrib/mingw-cross-compile.sh
+#  - sh bootstrap.sh ; dpkg-buildpackage -tc
+
