@@ -111,12 +111,6 @@ string g_curpath;
 vector<string> g_incl_searchpath;
 
 /**
- * Should C++ include statements use path prefixes for other thrift-generated
- * header files
- */
-bool g_cpp_use_include_prefix = false;
-
-/**
  * Global debug state
  */
 int g_debug = 0;
@@ -164,28 +158,6 @@ int g_allow_64bit_consts = 0;
 /**
  * Flags to control code generation
  */
-bool gen_cpp = false;
-bool gen_dense = false;
-bool gen_java = false;
-bool gen_javabean = false;
-bool gen_rb = false;
-bool gen_py = false;
-bool gen_py_newstyle = false;
-bool gen_xsd = false;
-bool gen_php = false;
-bool gen_phpi = false;
-bool gen_phps = true;
-bool gen_phpa = false;
-bool gen_phpo = false;
-bool gen_rest = false;
-bool gen_perl = false;
-bool gen_erl = false;
-bool gen_ocaml = false;
-bool gen_hs = false;
-bool gen_cocoa = false;
-bool gen_csharp = false;
-bool gen_delphi = false;
-bool gen_st = false;
 bool gen_recurse = false;
 
 /**
@@ -1032,60 +1004,6 @@ int main(int argc, char** argv) {
           usage();
         }
         generator_strings.push_back(arg);
-      } else if (strcmp(arg, "-dense") == 0) {
-        gen_dense = true;
-      } else if (strcmp(arg, "-cpp") == 0) {
-        gen_cpp = true;
-      } else if (strcmp(arg, "-javabean") == 0) {
-        gen_javabean = true;
-      } else if (strcmp(arg, "-java") == 0) {
-        gen_java = true;
-      } else if (strcmp(arg, "-php") == 0) {
-        gen_php = true;
-      } else if (strcmp(arg, "-phpi") == 0) {
-        gen_phpi = true;
-      } else if (strcmp(arg, "-phps") == 0) {
-        gen_php = true;
-        gen_phps = true;
-      } else if (strcmp(arg, "-phpl") == 0) {
-        gen_php = true;
-        gen_phps = false;
-      } else if (strcmp(arg, "-phpa") == 0) {
-        gen_php = true;
-        gen_phps = false;
-        gen_phpa = true;
-      } else if (strcmp(arg, "-phpo") == 0) {
-        gen_php = true;
-        gen_phpo = true;
-      } else if (strcmp(arg, "-rest") == 0) {
-        gen_rest = true;
-      } else if (strcmp(arg, "-py") == 0) {
-        gen_py = true;
-      } else if (strcmp(arg, "-pyns") == 0) {
-        gen_py = true;
-        gen_py_newstyle = true;
-      } else if (strcmp(arg, "-rb") == 0) {
-        gen_rb = true;
-      } else if (strcmp(arg, "-xsd") == 0) {
-        gen_xsd = true;
-      } else if (strcmp(arg, "-perl") == 0) {
-        gen_perl = true;
-      } else if (strcmp(arg, "-erl") == 0) {
-        gen_erl = true;
-      } else if (strcmp(arg, "-ocaml") == 0) {
-        gen_ocaml = true;
-      } else if (strcmp(arg, "-hs") == 0) {
-        gen_hs = true;
-      } else if (strcmp(arg, "-cocoa") == 0) {
-        gen_cocoa = true;
-      } else if (strcmp(arg, "-st") == 0) {
-        gen_st = true;
-      } else if (strcmp(arg, "-csharp") == 0) {
-        gen_csharp = true;
-      } else if (strcmp(arg, "-delphi") == 0) {
-        gen_delphi = true;
-      } else if (strcmp(arg, "-cpp_use_include_prefix") == 0) {
-        g_cpp_use_include_prefix = true;
       } else if (strcmp(arg, "-I") == 0) {
         // An argument of "-I\ asdf" is invalid and has unknown results
         arg = argv[++i];
@@ -1097,8 +1015,7 @@ int main(int argc, char** argv) {
         g_incl_searchpath.push_back(arg);
       } else if ((strcmp(arg, "-o") == 0) || (strcmp(arg, "-out") == 0)) {
         out_path_is_absolute = (strcmp(arg, "-out") == 0) ? true : false;
-		  
-		arg = argv[++i];
+        arg = argv[++i];
         if (arg == NULL) {
           fprintf(stderr, "-o: missing output directory\n");
           usage();
