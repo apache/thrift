@@ -152,7 +152,7 @@ void TThreadPoolServer::serve() {
       // Add to threadmanager pool
       shared_ptr<TThreadPoolServer::Task> task(new TThreadPoolServer::Task(
             *this, processor, inputProtocol, outputProtocol, client));
-      threadManager_->add(task, timeout_);
+      threadManager_->add(task, timeout_, taskExpiration_);
 
     } catch (TTransportException& ttx) {
       if (inputTransport != NULL) { inputTransport->close(); }
@@ -200,6 +200,14 @@ int64_t TThreadPoolServer::getTimeout() const {
 
 void TThreadPoolServer::setTimeout(int64_t value) {
   timeout_ = value;
+}
+
+int64_t TThreadPoolServer::getTaskExpiration() const {
+  return taskExpiration_;
+}
+
+void TThreadPoolServer::setTaskExpiration(int64_t value) {
+  taskExpiration_ = value;
 }
 
 }}} // apache::thrift::server

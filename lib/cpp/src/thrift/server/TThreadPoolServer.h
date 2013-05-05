@@ -49,7 +49,8 @@ class TThreadPoolServer : public TServer {
             protocolFactory),
     threadManager_(threadManager),
     stop_(false),
-    timeout_(0) {}
+    timeout_(0),
+    taskExpiration_(0) {}
 
   template<typename Processor>
   TThreadPoolServer(
@@ -62,7 +63,8 @@ class TThreadPoolServer : public TServer {
     TServer(processor, serverTransport, transportFactory, protocolFactory),
     threadManager_(threadManager),
     stop_(false),
-    timeout_(0) {}
+    timeout_(0),
+    taskExpiration_(0) {}
 
   template<typename ProcessorFactory>
   TThreadPoolServer(
@@ -79,7 +81,8 @@ class TThreadPoolServer : public TServer {
             inputProtocolFactory, outputProtocolFactory),
     threadManager_(threadManager),
     stop_(false),
-    timeout_(0) {}
+    timeout_(0),
+    taskExpiration_(0) {}
 
   template<typename Processor>
   TThreadPoolServer(
@@ -96,7 +99,8 @@ class TThreadPoolServer : public TServer {
             inputProtocolFactory, outputProtocolFactory),
     threadManager_(threadManager),
     stop_(false),
-    timeout_(0) {}
+    timeout_(0),
+    taskExpiration_(0) {}
 
   virtual ~TThreadPoolServer();
 
@@ -111,6 +115,10 @@ class TThreadPoolServer : public TServer {
     serverTransport_->interrupt();
   }
 
+  virtual int64_t getTaskExpiration() const;
+
+  virtual void setTaskExpiration(int64_t value);
+
  protected:
 
   boost::shared_ptr<ThreadManager> threadManager_;
@@ -118,6 +126,8 @@ class TThreadPoolServer : public TServer {
   volatile bool stop_;
 
   volatile int64_t timeout_;
+
+  volatile int64_t taskExpiration_;
 
 };
 
