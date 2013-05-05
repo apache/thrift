@@ -22,7 +22,6 @@
 #include <struct.h>
 #include <binary_protocol_accelerated.h>
 #include <compact_protocol.h>
-#include <protocol.h>
 #include <memory_buffer.h>
 
 // cached classes/modules
@@ -64,7 +63,6 @@ ID write_list_begin_method_id;
 ID write_list_end_method_id;
 ID write_set_begin_method_id;
 ID write_set_end_method_id;
-ID size_method_id;
 ID read_bool_method_id;
 ID read_byte_method_id;
 ID read_i16_method_id;
@@ -83,15 +81,12 @@ ID read_struct_end_method_id;
 ID read_field_begin_method_id;
 ID read_field_end_method_id;
 ID keys_method_id;
-ID entries_method_id; 
-ID name_method_id; 
-ID sort_method_id;
+ID entries_method_id;
 ID write_field_stop_method_id;
 ID skip_method_id;
 ID write_method_id;
 ID read_all_method_id;
 ID read_into_buffer_method_id;
-ID native_qmark_method_id;
 ID force_binary_encoding_id;
 ID convert_to_utf8_byte_buffer_id;
 ID convert_to_string_id;
@@ -151,7 +146,6 @@ void Init_thrift_native() {
   write_list_end_method_id = rb_intern("write_list_end");
   write_set_begin_method_id = rb_intern("write_set_begin");
   write_set_end_method_id = rb_intern("write_set_end");
-  size_method_id = rb_intern("size");
   read_bool_method_id = rb_intern("read_bool");
   read_byte_method_id = rb_intern("read_byte");
   read_i16_method_id = rb_intern("read_i16");
@@ -171,14 +165,11 @@ void Init_thrift_native() {
   read_field_end_method_id = rb_intern("read_field_end");
   keys_method_id = rb_intern("keys");
   entries_method_id = rb_intern("entries");
-  name_method_id = rb_intern("name");
-  sort_method_id = rb_intern("sort");
   write_field_stop_method_id = rb_intern("write_field_stop");
   skip_method_id = rb_intern("skip");
   write_method_id = rb_intern("write");
   read_all_method_id = rb_intern("read_all");
   read_into_buffer_method_id = rb_intern("read_into_buffer");
-  native_qmark_method_id = rb_intern("native?");
   force_binary_encoding_id = rb_intern("force_binary_encoding");
   convert_to_utf8_byte_buffer_id = rb_intern("convert_to_utf8_byte_buffer");
   convert_to_string_id = rb_intern("convert_to_string");
@@ -197,7 +188,6 @@ void Init_thrift_native() {
   element_sym = ID2SYM(rb_intern("element"));
   class_sym = ID2SYM(rb_intern("class"));
 
-  Init_protocol();
   Init_struct();
   Init_binary_protocol_accelerated();
   Init_compact_protocol();
