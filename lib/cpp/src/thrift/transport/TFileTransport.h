@@ -94,6 +94,11 @@ typedef struct readState {
     event_ = 0;
   }
 
+  inline uint32_t getEventSize() {
+  	  const void *buffer=reinterpret_cast<const void *>(eventSizeBuff_);
+	  return *reinterpret_cast<const uint32_t *>(buffer);
+  }
+
   readState() {
     event_ = 0;
    resetAllValues();

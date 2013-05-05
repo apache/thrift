@@ -711,9 +711,10 @@ eventInfo* TFileTransport::readEvent() {
 
         readState_.eventSizeBuff_[readState_.eventSizeBuffPos_++] =
           readBuff_[readState_.bufferPtr_++];
+
         if (readState_.eventSizeBuffPos_ == 4) {
-          // 0 length event indicates padding
-          if (*((uint32_t *)(readState_.eventSizeBuff_)) == 0) {
+          if (readState_.getEventSize() == 0) {
+            // 0 length event indicates padding
             //            T_DEBUG_L(1, "Got padding");
             readState_.resetState(readState_.lastDispatchPtr_);
             continue;
@@ -724,7 +725,7 @@ eventInfo* TFileTransport::readEvent() {
             delete(readState_.event_);
           }
           readState_.event_ = new eventInfo();
-          readState_.event_->eventSize_ = *((uint32_t *)(readState_.eventSizeBuff_));
+          readState_.event_->eventSize_ = readState_.getEventSize();
 
           // check if the event is corrupted and perform recovery if required
           if (isEventCorrupted()) {
