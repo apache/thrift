@@ -78,7 +78,7 @@ Package: libthrift-java
 Architecture: all
 Section: libs
 Depends: java-gcj-compat | java1-runtime | java2-runtime, ${misc:Depends}
-Recommends: libcommons-lang-java
+Recommends: libcommons-lang3-java
 Description: Java bindings for Thrift
  Thrift is a software framework for scalable cross-language services
  development. It combines a software stack with a code generation engine to
