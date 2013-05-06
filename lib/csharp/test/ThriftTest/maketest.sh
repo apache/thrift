@@ -19,11 +19,11 @@
 # under the License.
 #
 
-../../../compiler/cpp/thrift --gen csharp -o . ../../ThriftTest.thrift
-gmcs /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/* /reference:../../../lib/csharp/Thrift.dll
-gmcs  /out:TestClientServer.exe /reference:../../../lib/csharp/Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs Program.cs
+../../../../compiler/cpp/thrift --gen csharp -o . ../../../../test/ThriftTest.thrift
+gmcs /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/* /reference:../../Thrift.dll
+gmcs  /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs Program.cs
 
-export MONO_PATH=../../../lib/csharp/
+export MONO_PATH=../../
 
 timeout 120 ./TestClientServer.exe server &
 ./TestClientServer.exe client
