@@ -1210,7 +1210,7 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
 
     string field_name;
     string escape_field_name;
-    t_const_value* field_default_value;
+    //t_const_value* field_default_value;
     t_field::e_req field_required;
     bool field_can_be_nil = false;
     int32_t field_id = -1;
@@ -1277,7 +1277,7 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
         field_id = (*f_iter)->get_key();
         field_name = (*f_iter)->get_name();
         escape_field_name = escape_string(field_name);
-        field_default_value = (*f_iter)->get_value();
+        //field_default_value = (*f_iter)->get_value();
         field_required = (*f_iter)->get_req();
         field_can_be_nil = can_be_nil((*f_iter)->get_type());
 
