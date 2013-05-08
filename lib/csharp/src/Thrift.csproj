@@ -91,7 +91,10 @@
     <Compile Include="Protocol\TMap.cs" />
     <Compile Include="Protocol\TMessage.cs" />
     <Compile Include="Protocol\TMessageType.cs" />
+    <Compile Include="Protocol\TMultiplexedProcessor.cs" />
+    <Compile Include="Protocol\TMultiplexedProtocol.cs" />
     <Compile Include="Protocol\TProtocol.cs" />
+    <Compile Include="Protocol\TProtocolDecorator.cs" />
     <Compile Include="Protocol\TProtocolException.cs" />
     <Compile Include="Protocol\TProtocolFactory.cs" />
     <Compile Include="Protocol\TProtocolUtil.cs" />

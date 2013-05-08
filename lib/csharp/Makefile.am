@@ -33,6 +33,9 @@ THRIFTCODE= \
             src/Protocol/TProtocolUtil.cs \
             src/Protocol/TMessageType.cs \
             src/Protocol/TProtocol.cs \
+            src/Protocol/TProtocolDecorator.cs \
+            src/Protocol/TMultiplexedProtocol.cs \
+            src/Protocol/TMultiplexedProcessor.cs \
             src/Protocol/TType.cs \
             src/Protocol/TField.cs \
             src/Protocol/TMessage.cs \
