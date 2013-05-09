@@ -75,10 +75,16 @@ Thrift.dll: $(THRIFTCODE)
 clean-local:
 	$(RM) Thrift.dll
 
+# run csharp tests?
+# check:
+# 	cd test/ThriftTest && ./maketest.sh 
+# 	cd test/Multiplex && ./maketest.sh
+    
 EXTRA_DIST = \
              $(THRIFTCODE) \
              ThriftMSBuildTask \
              src/Thrift.csproj \
              src/Thrift.sln \
              src/Thrift.WP7.csproj \
-             src/Properties/AssemblyInfo.WP7.cs
+             src/Properties/AssemblyInfo.WP7.cs \
+             test

@@ -54,7 +54,6 @@ check-local:
 EXTRA_DIST = \
 	test.sh \
 	cpp \
-	csharp \
 	hs \
 	nodejs \
 	ocaml \
