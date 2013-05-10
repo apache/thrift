@@ -17,6 +17,7 @@
  * under the License.
  */
 var thrift = require('thrift');
+var assert = require('assert');
 
 var ThriftTest = require('./gen-nodejs/ThriftTest'),
     ttypes = require('./gen-nodejs/ThriftTest_types');
@@ -24,81 +25,61 @@ var ThriftTest = require('./gen-nodejs/ThriftTest'),
 var connection = thrift.createConnection('localhost', 9090),
     client = thrift.createClient(ThriftTest, connection);
 
-var tfailed = 0;
-var tpassed = 0;
-
-function failed(err) {
-  console.trace(err);
-	return tfailed++;
-}
-function passed() {
-	return tpassed++;
-}
-
 connection.on('error', function(err) {
-  failed(err);
+  assert(false, err);
 });
 
-console.time("Tests completed in");
+
 
 client.testVoid(function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testVoid() = ", response);
-	passed();
+  assert( ! err);
+  assert.equal(undefined, response);
 });
 
 client.testString("Test", function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testString('Test') = ", response);
-	passed();
+  assert( ! err);
+  assert.equal("Test", response);
 });
 
 client.testByte(1, function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testByte(1) = ", response);
-	passed();
+  assert( ! err);
+  assert.equal(1, response);
 });
 
 client.testI32(-1, function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testI32(-1) = ", response);
-	passed();
+  assert( ! err);
+  assert.equal(-1, response);
 });
 
 client.testI64(5, function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testI64(5) = ", response);
-	passed();
+  assert( ! err);
+  assert.equal(5, response);
 });
 
 client.testI64(-5, function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testI64(-5) = ", response);
-	passed();
+  assert( ! err);
+  assert.equal(-5, response);
 });
 
 client.testI64(-34359738368, function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testI64(-34359738368) = ", response);
-	passed();
+  assert( ! err);
+  assert.equal(-34359738368, response);
 });
 
 client.testDouble(-5.2098523, function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testDouble(-5.2098523) = ", response);
-	passed();
+  assert( ! err);
+  assert.equal(-5.2098523, response);
 });
 
 var out = new ttypes.Xtruct({
-	string_thing: 'Zero',
-	byte_thing: 1,
-	i32_thing: -3,
-	i64_thing: 1000000
+  string_thing: 'Zero',
+  byte_thing: 1,
+  i32_thing: -3,
+  //i64_thing: 1000000
 });
 client.testStruct(out, function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testStruct(", out, ") = \n", response);
-	passed();
+  assert( ! err);
+  assert.deepEqual(out, response);
 });
 
 var out2 = new ttypes.Xtruct2();
@@ -106,9 +87,8 @@ out2.byte_thing = 1;
 out2.struct_thing = out;
 out2.i32_thing = 5;
 client.testNest(out2, function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testNest(", out2, ") = \n", response);
-	passed();
+  assert( ! err);
+  assert.deepEqual(out2, response);
 });
 
 var mapout = {};
@@ -116,9 +96,8 @@ for (var i = 0; i < 5; ++i) {
   mapout[i] = i-10;
 }
 client.testMap(mapout, function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testMap(", mapout, ") = \n", response);
-	passed();
+  assert( ! err);
+  assert.deepEqual(mapout, response);
 });
 
 /*
@@ -127,25 +106,26 @@ client.testMap(mapout, function(err, response) {
 
 
 client.testException('ApplicationException', function(err, response) {
-  console.log("testException('ApplicationException') = ", err);
-  if (response) { return failed(response); }
-	passed();
+  //assert.equal('ApplicationException', err);
+  assert( ! response);
 });
 
 client.testException('Xception', function(err, response) {
-  console.log("testException('Xception') = ", err);
-  if (response) { return failed(response); }
-	passed();
+  assert.equal('Xception', err.message);
+  assert( ! response);
 });
 
 client.testException('success', function(err, response) {
-  if (err) { return failed(err); }
-  console.log("testException('success') = ", response);
-	passed();
+  assert( ! err);
+  //assert.equal('success', response);
 });
 
-setTimeout(function(){
-  console.timeEnd("Tests completed in");
-	console.log(tpassed + " passed, " + tfailed + " failed");
-	connection.end();
+
+setTimeout(function() {
+  console.log("Server successfully tested!");
+  connection.end();
 }, 200);
+
+// to make it also run on expresso
+exports.expressoTest = function() {};
+
