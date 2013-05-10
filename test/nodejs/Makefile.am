@@ -22,6 +22,14 @@ stubs: ../ThriftTest.thrift
 	$(THRIFT) --gen js:node ../ThriftTest.thrift
 
 check: stubs
+	@if which expresso &> /dev/null ; then \
+		echo "   Testing thrift/binary"; \
+		NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift:$(NODE_PATH) nodeunit ../../lib/nodejs/test/binary.test.js; \
+	fi
+	timeout 2 $(MAKE) server &
+	@sleep 1
+	$(MAKE) client
+	@sleep 1
 
 clean-local:
 	$(RM) -r gen-nodejs
