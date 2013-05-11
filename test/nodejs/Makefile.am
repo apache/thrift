@@ -28,8 +28,8 @@ check: stubs
 	fi
 	@if which node &> /dev/null ; then \
 		echo "   Testing Client/Server"; \
-		timeout 2 $(MAKE) server & \
-		sleep 1; $(MAKE) client; sleep 1; \
+		timeout -s14 3 $(MAKE) server & \
+		sleep 1; $(MAKE) client; sleep 2; \
 	fi
 
 clean-local:

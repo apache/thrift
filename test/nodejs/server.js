@@ -123,7 +123,9 @@ var server = thrift.createServer(ThriftTest, {
   },
 
   testInsanity: function(argument, result) {
-    console.log('testInsanity()');
+    console.log('testInsanity(');
+    console.log(argument);
+    console.log(')');
 
     var hello = new ttypes.Xtruct();
     hello.string_thing = 'Hello2';
@@ -141,9 +143,7 @@ var server = thrift.createServer(ThriftTest, {
     crazy.userMap = [];
     crazy.userMap[ttypes.Numberz.EIGHT] = 8;
     crazy.userMap[ttypes.Numberz.FIVE] = 5;
-    crazy.xtructs = [];
-    crazy.xtructs.add(goodbye);
-    crazy.xtructs.add(hello);
+    crazy.xtructs = [goodbye, hello];
 
     var first_map = [];
     var second_map = [];
@@ -158,6 +158,8 @@ var server = thrift.createServer(ThriftTest, {
     insane[1] = first_map;
     insane[2] = second_map;
 
+    console.log('insane result:');
+    console.log(insane);
     result(null, insane);
   },
 
@@ -179,31 +181,29 @@ var server = thrift.createServer(ThriftTest, {
       x.errorCode = 1001;
       x.message = arg;
       result(x);
-    } else if (arg === 'ApplicationException') {
+    } else if (arg === 'TException') {
       result(new Thrift.TException(arg));
     } else {
-      var res = new ttypes.Xtruct();
-      res.string_thing = arg;
-			result(null, res);
+      result(null);
     }
   },
 
   testMultiException: function(arg0, arg1, result) {
     console.log('testMultiException(' + arg0 + ', ' + arg1 + ')');
     if (arg0 === ('Xception')) {
-      var x = new Xception();
+      var x = new ttypes.Xception();
       x.errorCode = 1001;
       x.message = 'This is an Xception';
       result(x);
     } else if (arg0 === ('Xception2')) {
-      var x = new Xception2();
+      var x = new ttypes.Xception2();
       x.errorCode = 2002;
-      x.struct_thing = new Xtruct();
+      x.struct_thing = new ttypes.Xtruct();
       x.struct_thing.string_thing = 'This is an Xception2';
       result(x);
     }
 
-    var res = new Xtruct();
+    var res = new ttypes.Xtruct();
     res.string_thing = arg1;
     result(null, res);
   },
@@ -211,9 +211,8 @@ var server = thrift.createServer(ThriftTest, {
   testOneway: function(sleepFor, result) {
     console.log('testOneway(' + sleepFor + ') => sleeping...');
     setTimeout(function(){
-      console.log('Done sleeping!');
-    }, sleepFor);
-		result(null);
+      console.log('Done sleeping for testOneway!');
+    }, sleepFor*1000); //seconds
   }
 });
 

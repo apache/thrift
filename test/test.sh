@@ -221,7 +221,7 @@ do_test "php-cpp"  "binary" "buffered-ip" \
 do_test "nodejs-nodejs" "binary" "framed-ip" \
         "make -C nodejs/ client" \
         "make -C nodejs/ server" \
-        "1" "10"
+        "1" "5"
 do_test "nodejs-cpp" "binary" "framed-ip" \
         "make -C nodejs/ client" \
         "cpp/TestServer --transport=framed" \
@@ -229,6 +229,6 @@ do_test "nodejs-cpp" "binary" "framed-ip" \
 do_test "cpp-nodejs" "binary" "framed-ip" \
         "cpp/TestClient --transport=framed" \
         "make -C nodejs/ server" \
-        "1" "10"
+        "1" "5"
 
 cd -
