@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.thrift.TBaseAsyncProcessor;
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
@@ -62,12 +63,12 @@ public abstract class AbstractNonblockingServer extends TServer {
    * time. Without this limit, the server will gladly allocate client buffers
    * right into an out of memory exception, rather than waiting.
    */
-  private final long MAX_READ_BUFFER_BYTES;
+  final long MAX_READ_BUFFER_BYTES;
 
   /**
    * How many bytes are currently allocated to read buffers.
    */
-  private final AtomicLong readBufferBytesAllocated = new AtomicLong(0);
+  final AtomicLong readBufferBytesAllocated = new AtomicLong(0);
 
   public AbstractNonblockingServer(AbstractNonblockingServerArgs args) {
     super(args);
@@ -265,40 +266,42 @@ public abstract class AbstractNonblockingServer extends TServer {
    * response data back to the client. In the process it manages flipping the
    * read and write bits on the selection key for its client.
    */
-  protected class FrameBuffer {
+   public class FrameBuffer {
+    private final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
+
     // the actual transport hooked up to the client.
-    public final TNonblockingTransport trans_;
+    protected final TNonblockingTransport trans_;
 
     // the SelectionKey that corresponds to our transport
-    private final SelectionKey selectionKey_;
+    protected final SelectionKey selectionKey_;
 
     // the SelectThread that owns the registration of our transport
-    private final AbstractSelectThread selectThread_;
+    protected final AbstractSelectThread selectThread_;
 
     // where in the process of reading/writing are we?
-    private FrameBufferState state_ = FrameBufferState.READING_FRAME_SIZE;
+    protected FrameBufferState state_ = FrameBufferState.READING_FRAME_SIZE;
 
     // the ByteBuffer we'll be using to write and read, depending on the state
-    private ByteBuffer buffer_;
+    protected ByteBuffer buffer_;
 
-    private final TByteArrayOutputStream response_;
+    protected final TByteArrayOutputStream response_;
     
     // the frame that the TTransport should wrap.
-    private final TMemoryInputTransport frameTrans_;
+    protected final TMemoryInputTransport frameTrans_;
     
     // the transport that should be used to connect to clients
-    private final TTransport inTrans_;
+    protected final TTransport inTrans_;
     
-    private final TTransport outTrans_;
+    protected final TTransport outTrans_;
     
     // the input protocol to use on frames
-    private final TProtocol inProt_;
+    protected final TProtocol inProt_;
     
     // the output protocol to use on frames
-    private final TProtocol outProt_;
+    protected final TProtocol outProt_;
     
     // context associated with this connection
-    private final ServerContext context_;
+    protected final ServerContext context_;
 
     public FrameBuffer(final TNonblockingTransport trans,
         final SelectionKey selectionKey,
@@ -561,7 +564,7 @@ public abstract class AbstractNonblockingServer extends TServer {
      * current thread is this FrameBuffer's select thread, then it just does the
      * interest change immediately.
      */
-    private void requestSelectInterestChange() {
+    protected void requestSelectInterestChange() {
       if (Thread.currentThread() == this.selectThread_) {
         changeSelectInterests();
       } else {
@@ -569,4 +572,39 @@ public abstract class AbstractNonblockingServer extends TServer {
       }
     }
   } // FrameBuffer
+
+  public class AsyncFrameBuffer extends FrameBuffer {
+    public AsyncFrameBuffer(TNonblockingTransport trans, SelectionKey selectionKey, AbstractSelectThread selectThread) {
+      super(trans, selectionKey, selectThread);
+    }
+
+    public TProtocol getInputProtocol() {
+      return  inProt_;
+    }
+
+    public TProtocol getOutputProtocol() {
+      return outProt_;
+    }
+
+
+    public void invoke() {
+      frameTrans_.reset(buffer_.array());
+      response_.reset();
+
+      try {
+        if (eventHandler_ != null) {
+          eventHandler_.processContext(context_, inTrans_, outTrans_);
+        }
+        ((TBaseAsyncProcessor)processorFactory_.getProcessor(inTrans_)).process(this);
+        return;
+      } catch (TException te) {
+        LOGGER.warn("Exception while invoking!", te);
+      } catch (Throwable t) {
+        LOGGER.error("Unexpected throwable while invoking!", t);
+      }
+      // This will only be reached when there is a throwable.
+      state_ = FrameBufferState.AWAITING_CLOSE;
+      requestSelectInterestChange();
+    }
+  }
 }

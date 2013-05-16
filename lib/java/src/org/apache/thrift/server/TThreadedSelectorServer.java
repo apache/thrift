@@ -606,7 +606,10 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
       try {
         clientKey = accepted.registerSelector(selector, SelectionKey.OP_READ);
 
-        FrameBuffer frameBuffer = new FrameBuffer(accepted, clientKey, SelectorThread.this);
+        FrameBuffer frameBuffer = processorFactory_.isAsyncProcessor() ?
+                new AsyncFrameBuffer(accepted, clientKey, SelectorThread.this) :
+                new FrameBuffer(accepted, clientKey, SelectorThread.this);
+
         clientKey.attach(frameBuffer);
       } catch (IOException e) {
         LOGGER.warn("Failed to register accepted connection to selector!", e);
