@@ -188,8 +188,7 @@ class t_program : public t_doc {
         if (sub_index != std::string::npos) {
           std::string sub_namespace = language.substr(sub_index+1);
           if ( ! it->second->is_valid_namespace(sub_namespace)) {
-            std::string warning = base_language + " generator does not accept '" + sub_namespace + "' as sub-namespace!";
-            pwarning(1, warning.c_str());
+            throw base_language + " generator does not accept '" + sub_namespace + "' as sub-namespace!";
           }
         }
       }

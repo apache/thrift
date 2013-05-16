@@ -35,12 +35,6 @@ namespace go ThriftTest
 namespace php ThriftTest
 namespace delphi Thrift.Test
 namespace cocoa ThriftTest
-
-// Presence of namespaces and sub-namespaces for which there is
-// no generator should compile with warnings only
-namespace noexist ThriftTest
-namespace cpp.noexist ThriftTest
-
 namespace * thrift.test
 
 /**
