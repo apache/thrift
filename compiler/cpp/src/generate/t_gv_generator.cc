@@ -54,6 +54,10 @@ class t_gv_generator : public t_generator {
       (void) parsed_options;
       (void) option_string;
       out_dir_base_ = "gen-gv";
+
+      std::map<std::string, std::string>::const_iterator iter;
+      iter = parsed_options.find("exceptions");
+      exception_arrows = (iter != parsed_options.end());
     }
 
     /**
@@ -81,6 +85,7 @@ class t_gv_generator : public t_generator {
   private:
     std::ofstream f_out_;
     std::list<string> edges;
+    bool exception_arrows;
 };
 
 /**
@@ -99,6 +104,7 @@ void t_gv_generator::init_generator() {
   f_out_.open(fname.c_str());
   f_out_ << "digraph \""  << escape_string(program_name_) << "\" {" << endl;
   f_out_ << "node [style=filled, shape=record];" << endl;
+  f_out_ << "edge [arrowsize=0.5];" << endl;
   f_out_ << "rankdir=LR" << endl;
 }
 
@@ -116,18 +122,18 @@ void t_gv_generator::close_generator() {
   }
 
   // Print graph end } and close file
-  f_out_ << "}" << endl;
-  f_out_.close();
+f_out_ << "}" << endl;
+f_out_.close();
 }
 
 void t_gv_generator::generate_typedef (t_typedef* ttypedef) {
   string name = ttypedef->get_name();
   f_out_ << "node [fillcolor=azure];" << endl;
-  f_out_ << "type_" << name << " [label=\"";
+  f_out_ << name << " [label=\"";
 
   f_out_ << escape_string(name);
   f_out_ << " :: ";
-  print_type(ttypedef->get_type(), "type_" + name);
+  print_type(ttypedef->get_type(), name);
 
   f_out_ << "\"];" << endl;
 }
@@ -135,7 +141,7 @@ void t_gv_generator::generate_typedef (t_typedef* ttypedef) {
 void t_gv_generator::generate_enum (t_enum* tenum) {
   string name = tenum->get_name();
   f_out_ << "node [fillcolor=white];" << endl;
-  f_out_ << "type_" << name << " [label=\"enum " << escape_string(name);
+  f_out_ << name << " [label=\"enum " << escape_string(name);
 
   vector<t_enum_value*> values = tenum->get_constants();
   vector<t_enum_value*>::iterator val_iter;
@@ -168,15 +174,15 @@ void t_gv_generator::generate_struct  (t_struct*   tstruct) {
 
   if (tstruct->is_xception()) {
     f_out_ << "node [fillcolor=lightpink];" << endl;
-    f_out_ << "type_" << name << " [label=\"";
+    f_out_ << name << " [label=\"";
     f_out_ << "exception " << escape_string(name);
   } else if (tstruct->is_union()) {
     f_out_ << "node [fillcolor=lightcyan];" << endl;
-    f_out_ << "type_" << name << " [label=\"";
+    f_out_ << name << " [label=\"";
     f_out_ << "union " << escape_string(name);
   } else {
     f_out_ << "node [fillcolor=beige];" << endl;
-    f_out_ << "type_" << name << " [label=\"";
+    f_out_ << name << " [label=\"";
     f_out_ << "struct " << escape_string(name);
   }
 
@@ -192,7 +198,7 @@ void t_gv_generator::generate_struct  (t_struct*   tstruct) {
     f_out_ << (*mem_iter)->get_name();
     f_out_ << " :: ";
     print_type((*mem_iter)->get_type(),
-               "type_" + name + ":field_" + field_name);
+        name + ":field_" + field_name);
   }
 
   f_out_ << "\"];" << endl;
@@ -219,7 +225,7 @@ void t_gv_generator::print_type(t_type* ttype, string struct_field_ref) {
     f_out_ << (((t_base_type*)ttype)->is_binary() ? "binary" : ttype->get_name());
   } else {
     f_out_ << ttype->get_name();
-    edges.push_back(struct_field_ref + " -> type_" + ttype->get_name());
+    edges.push_back(struct_field_ref + " -> " + ttype->get_name());
   }
 }
 
@@ -306,14 +312,27 @@ void t_gv_generator::generate_service (t_service*  tservice) {
       }
       f_out_ << " :: ";
       print_type((*arg_iter)->get_type(),
-                 "function_" + fn_name + ":param_" + (*arg_iter)->get_name());
+          "function_" + fn_name + ":param_" + (*arg_iter)->get_name());
+
     }
-    // TODO: throws exceptions
+    // end of node
     f_out_ << "\"];" << endl;
+
+    // Exception edges
+    if (exception_arrows) {
+      vector<t_field*> excepts = (*fn_iter)->get_xceptions()->get_members();
+      vector<t_field*>::iterator ex_iter = excepts.begin();
+      for ( ; ex_iter != excepts.end(); ex_iter++) {
+        edges.push_back("function_" + fn_name + " -> " +
+            (*ex_iter)->get_type()->get_name() + " [color=red]");
+      }
+    }
   }
 
-  f_out_ << " }";
+  f_out_ << " }" << endl;
 }
 
-THRIFT_REGISTER_GENERATOR(gv, "Graphviz", "")
+THRIFT_REGISTER_GENERATOR(gv, "Graphviz",
+    "    exceptions:      Whether to draw arrows from functions to exception.\n"
+    )
 
