@@ -1076,10 +1076,11 @@ void t_csharp_generator::generate_csharp_struct_equals(ofstream& out, t_struct* 
     }
     t_type* ttype = (*f_iter)->get_type();
     if (ttype->is_container()) {
-      out << "TCollections.Equals(" << prop_name((*f_iter)) << ", other." << prop_name((*f_iter)) << ")";
+      out << "TCollections.Equals(";
     } else {
-      out << prop_name((*f_iter)) << ".Equals(other." << prop_name((*f_iter)) << ")";
+      out << "System.Object.Equals(";
     }
+    out << prop_name((*f_iter)) << ", other." << prop_name((*f_iter)) << ")";
     if (!field_is_required((*f_iter)) && !(nullable_ && !field_has_default((*f_iter)))) {
       out << ")))";
     }
