@@ -20,16 +20,18 @@
 
 require 'net/http'
 require 'net/https'
+require 'openssl'
 require 'uri'
 require 'stringio'
 
 module Thrift
   class HTTPClientTransport < BaseTransport
 
-    def initialize(url)
+    def initialize(url, opts = {})
       @url = URI url
       @headers = {'Content-Type' => 'application/x-thrift'}
       @outbuf = Bytes.empty_byte_buffer
+      @ssl_verify_mode = opts.fetch(:ssl_verify_mode, OpenSSL::SSL::VERIFY_PEER)
     end
 
     def open?; true end
@@ -43,6 +45,7 @@ module Thrift
     def flush
       http = Net::HTTP.new @url.host, @url.port
       http.use_ssl = @url.scheme == 'https'
+      http.verify_mode = @ssl_verify_mode if @url.scheme == 'https'
       resp = http.post(@url.request_uri, @outbuf, @headers)
       data = resp.body
       data = Bytes.force_binary_encoding(data)

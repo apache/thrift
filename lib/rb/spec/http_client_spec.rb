@@ -68,4 +68,53 @@ describe 'Thrift::HTTPClientTransport' do
       @client.flush
     end
   end
+
+  describe 'ssl enabled' do
+    before(:each) do
+      @service_path = "/path/to/service?param=value"
+      @server_uri = "https://my.domain.com"
+    end
+
+    it "should use SSL for https" do
+      client = Thrift::HTTPClientTransport.new("#{@server_uri}#{@service_path}")
+
+      client.write "test"
+
+      Net::HTTP.should_receive(:new).with("my.domain.com", 443).and_return do
+        mock("Net::HTTP").tap do |http|
+          http.should_receive(:use_ssl=).with(true)
+          http.should_receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+          http.should_receive(:post).with(@service_path, "test",
+              "Content-Type" => "application/x-thrift").and_return do
+            mock("Net::HTTPOK").tap do |response|
+              response.should_receive(:body).and_return "data"
+            end
+          end
+        end
+      end
+      client.flush
+      client.read(4).should == "data"
+    end
+
+    it "should set SSL verify mode when specified" do
+      client = Thrift::HTTPClientTransport.new("#{@server_uri}#{@service_path}",
+          :ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE)
+
+      client.write "test"
+      Net::HTTP.should_receive(:new).with("my.domain.com", 443).and_return do
+        mock("Net::HTTP").tap do |http|
+          http.should_receive(:use_ssl=).with(true)
+          http.should_receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+          http.should_receive(:post).with(@service_path, "test",
+              "Content-Type" => "application/x-thrift").and_return do
+            mock("Net::HTTPOK").tap do |response|
+              response.should_receive(:body).and_return "data"
+            end
+          end
+        end
+      end
+      client.flush
+      client.read(4).should == "data"
+    end
+  end
 end
