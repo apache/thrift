@@ -291,7 +291,7 @@ void t_csharp_generator::generate_consts(std::vector<t_const*> consts) {
   if (consts.empty()){
     return;
   }
-  string f_consts_name = namespace_dir_ + "/Constants.cs";
+  string f_consts_name = namespace_dir_ + '/' + program_name_ +  ".Constants.cs";
   ofstream f_consts;
   f_consts.open(f_consts_name.c_str());
 
@@ -302,7 +302,7 @@ void t_csharp_generator::generate_consts(std::vector<t_const*> consts) {
   start_csharp_namespace(f_consts);
 
   indent(f_consts) <<
-    "public class Constants" << endl;
+    "public static class " << program_name_ << "Constants" << endl;
   scope_up(f_consts);
 
   vector<t_const*>::iterator c_iter;
@@ -372,7 +372,7 @@ void t_csharp_generator::print_const_def_value(std::ofstream& out, string name, 
 }
 
 void t_csharp_generator::print_const_constructor(std::ofstream& out, std::vector<t_const*> consts) {
-  indent(out) << "static Constants()" << endl;
+  indent(out) << "static " << program_name_ << "Constants()" << endl;
   scope_up(out);
   vector<t_const*>::iterator c_iter;
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
