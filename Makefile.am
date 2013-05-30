@@ -34,9 +34,13 @@ print-version:
 	@echo $(VERSION)
 
 EXTRA_DIST = \
- 			doc \
-			tutorial \
+			.travis.yml \
 			contrib \
+			doc \
+			doap.rdf \
+			sonar-project.properties \
+			tutorial \
+			Vagrantfile \
 			LICENSE \
 			CHANGES \
 			NOTICE
