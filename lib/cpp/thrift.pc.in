@@ -26,4 +26,4 @@ Name: Thrift
 Description: Thrift C++ API
 Version: @VERSION@
 Libs: -L${libdir} -lthrift
-Cflags: -I${includedir}/thrift
+Cflags: -I${includedir}

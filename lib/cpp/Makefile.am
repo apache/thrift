@@ -48,7 +48,7 @@ pkgconfig_DATA += thrift-qt.pc
 endif
 
 AM_CXXFLAGS = -Wall
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(srcdir)/src -I$(srcdir)/src/thrift
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(srcdir)/src
 AM_LDFLAGS = $(BOOST_LDFLAGS)
 
 # Define the source files for the module

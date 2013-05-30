@@ -27,4 +27,4 @@ Description: Thrift Qt API
 Version: @VERSION@
 Requires: thrift = @VERSION@
 Libs: -L${libdir} -lthriftqt
-Cflags: -I${includedir}/thrift
+Cflags: -I${includedir}
