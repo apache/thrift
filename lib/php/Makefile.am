@@ -40,6 +40,10 @@ phpbasedir = $(phpdir)/Base
 phpbase_DATA = \
   lib/Thrift/Base/TBase.php
 
+phpclassloaderdir = $(phpdir)/ClassLoader
+phpclassloader_DATA = \
+  lib/Thrift/ClassLoader/ThriftClassLoader.php
+
 phpexceptiondir = $(phpdir)/Exception
 phpexception_DATA = \
   lib/Thrift/Exception/TApplicationException.php \
@@ -74,6 +78,20 @@ phpprotocoljson_DATA = \
 phpserializerdir = $(phpdir)/Serializer
 phpserializer_DATA = \
   lib/Thrift/Serializer/TBinarySerializer.php
+
+phpserverdir = $(phpdir)/Server
+phpserver_DATA = \
+  lib/Thrift/Server/TServerSocket.php \
+  lib/Thrift/Server/TForkingServer.php \
+  lib/Thrift/Server/TServer.php \
+  lib/Thrift/Server/TServerTransport.php \
+  lib/Thrift/Server/TSimpleServer.php
+
+phpstringfuncdir = $(phpdir)/StringFunc
+phpstringfunc_DATA = \
+  lib/Thrift/StringFunc/Mbstring.php \
+  lib/Thrift/StringFunc/Core.php \
+  lib/Thrift/StringFunc/TStringFunc.php
 
 phptransportdir = $(phpdir)/Transport
 phptransport_DATA = \
