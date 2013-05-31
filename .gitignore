@@ -18,6 +18,7 @@ gen-*
 *.swp
 .project
 .pydevproject
+.sonar
 .DS_Store
 
 /Makefile
