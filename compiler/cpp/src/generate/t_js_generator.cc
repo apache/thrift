@@ -270,7 +270,8 @@ void t_js_generator::init_generator() {
   // Print header
   f_types_ <<
     autogen_comment() <<
-    js_includes() << endl;
+    js_includes() << endl <<
+    render_includes() << endl;
 
   if (gen_node_) {
     f_types_ << "var ttypes = module.exports = {};" << endl;
