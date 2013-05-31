@@ -23,7 +23,6 @@ using Thrift.Protocol;
 
 namespace Thrift.Transport {
 	public class TMemoryBuffer : TTransport {
-
 		private readonly MemoryStream byteStream;
 
 		public TMemoryBuffer() {
@@ -60,8 +59,12 @@ namespace Thrift.Transport {
 		}
 
 		public static byte[] Serialize(TBase s) {
+			return Serialize(s, new TBinaryProtocol.Factory());
+		}
+
+		public static byte[] Serialize(TBase s, TProtocolFactory factory) {
 			var t = new TMemoryBuffer();
-			var p = new TBinaryProtocol(t);
+			var p = factory.GetProtocol(t);
 
 			s.Write(p);
 
@@ -69,9 +72,13 @@ namespace Thrift.Transport {
 		}
 
 		public static T DeSerialize<T>(byte[] buf) where T : TBase, new() {
+			return DeSerialize<T>(buf, new TBinaryProtocol.Factory());
+		}
+
+		public static T DeSerialize<T>(byte[] buf, TProtocolFactory factory) where T : TBase, new() {
 		       var t = new T();
 		       var trans = new TMemoryBuffer(buf);
-		       var p = new TBinaryProtocol(trans);
+		       var p = factory.GetProtocol(trans);
 		       t.Read(p);
 		       return t;
 		}

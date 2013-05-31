@@ -442,7 +442,7 @@ namespace Thrift.Protocol
          */
         private ulong longToZigzag(long n)
         {
-            return (ulong)(((ulong)n << 1) ^ ((ulong)n >> 63));
+            return (ulong)(n << 1) ^ (ulong)(n >> 63);
         }
 
         /**
@@ -451,7 +451,7 @@ namespace Thrift.Protocol
          */
         private uint intToZigZag(int n)
         {
-            return (uint)(((uint)n << 1) ^ ((uint)n >> 31));
+            return (uint)(n << 1) ^ (uint)(n >> 31);
         }
 
         /**

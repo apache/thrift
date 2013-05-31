@@ -61,7 +61,16 @@ THRIFTCODE= \
             src/TProcessor.cs \
             src/TApplicationException.cs
 
+THRIFTTESTCODE = \
+	    test/ThriftTest/Program.cs \
+	    test/ThriftTest/TestClient.cs \
+	    test/ThriftTest/TestServer.cs \
+	    test/ThriftTest/RoundTripTest.cs \
+	    test/ThriftTest/Thrift/Test/*.cs
+
 CSC=gmcs
+NUNIT=nunit-console
+THRIFT=../../compiler/cpp/thrift
 
 if NET_2_0
 MONO_DEFINES=/d:NET_2_0
@@ -71,6 +80,15 @@ all-local: Thrift.dll
 
 Thrift.dll: $(THRIFTCODE)
 	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library /reference:System.Web $(MONO_DEFINES)
+
+test/ThriftTest/Thrift/Test/*.cs: ../../test/ThriftTest.thrift
+	$(THRIFT) -gen csharp:hashcode -out test/ThriftTest ../../test/ThriftTest.thrift
+
+ThriftTest.exe: Thrift.dll $(THRIFTTESTCODE)
+	$(CSC) $(THRIFTTESTCODE) /out:ThriftTest.exe /target:exe /reference:nunit.framework /reference:Thrift.dll $(MONO_DEFINES)
+
+check-local: ThriftTest.exe
+	$(NUNIT) ThriftTest.exe
 
 clean-local:
 	$(RM) Thrift.dll

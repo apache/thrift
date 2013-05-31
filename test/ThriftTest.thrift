@@ -375,3 +375,11 @@ struct StructB {
   1: optional StructA aa;
   2: required StructA ab;
 }
+
+struct Primitives {
+  1: optional byte byte_thing;
+  2: optional i16 i16_thing;
+  3: optional i32 i32_thing;
+  4: optional i64 i64_thing;
+  5: optional bool bool_thing;
+}
