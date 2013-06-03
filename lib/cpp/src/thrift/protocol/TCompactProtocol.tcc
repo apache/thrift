@@ -641,12 +641,13 @@ uint32_t TCompactProtocolT<Transport_>::readDouble(double& dub) {
   BOOST_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
   BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
 
-  uint64_t bits;
-  uint8_t b[8];
-  trans_->readAll(b, 8);
-  bits = *(uint64_t*)b;
-  bits = letohll(bits);
-  dub = bitwise_cast<double>(bits);
+  union {
+    uint64_t bits;
+    uint8_t b[8];
+  } u;
+  trans_->readAll(u.b, 8);
+  u.bits = letohll(u.bits);
+  dub = bitwise_cast<double>(u.bits);
   return 8;
 }
 
