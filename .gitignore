@@ -23,7 +23,7 @@ gen-*
 
 /Makefile
 /Makefile.in
-/.vagrant/
+/contrib/.vagrant/
 /aclocal/libtool.m4
 /aclocal/ltoptions.m4
 /aclocal/ltsugar.m4

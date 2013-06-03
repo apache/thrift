@@ -40,7 +40,6 @@ EXTRA_DIST = \
 			doap.rdf \
 			sonar-project.properties \
 			tutorial \
-			Vagrantfile \
 			LICENSE \
 			CHANGES \
 			NOTICE
