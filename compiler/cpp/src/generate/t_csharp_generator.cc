@@ -21,6 +21,8 @@
  * details.
  */
 
+#include <cassert>
+
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -160,6 +162,8 @@ class t_csharp_generator : public t_oop_generator
     std::string type_to_enum(t_type* ttype);
     std::string prop_name(t_field* tfield);
     std::string get_enum_class_name(t_type* type);
+    
+    std::string make_valid_csharp_identifier( std::string const & fromName);
 
     bool field_has_default(t_field* tfield) {
       return tfield->get_value() != NULL;
@@ -302,7 +306,7 @@ void t_csharp_generator::generate_consts(std::vector<t_const*> consts) {
   start_csharp_namespace(f_consts);
 
   indent(f_consts) <<
-    "public static class " << program_name_ << "Constants" << endl;
+    "public static class " << make_valid_csharp_identifier(program_name_) << "Constants" << endl;
   scope_up(f_consts);
 
   vector<t_const*>::iterator c_iter;
@@ -372,7 +376,7 @@ void t_csharp_generator::print_const_def_value(std::ofstream& out, string name, 
 }
 
 void t_csharp_generator::print_const_constructor(std::ofstream& out, std::vector<t_const*> consts) {
-  indent(out) << "static " << program_name_ << "Constants()" << endl;
+  indent(out) << "static " << make_valid_csharp_identifier(program_name_).c_str() << "Constants()" << endl;
   scope_up(out);
   vector<t_const*>::iterator c_iter;
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
@@ -2244,6 +2248,35 @@ void t_csharp_generator::generate_csharp_property(ofstream& out, t_field* tfield
       scope_down(out);
     }
     out << endl;
+}
+
+std::string t_csharp_generator::make_valid_csharp_identifier( std::string const & fromName) {
+    std::string str = fromName;
+    if( str.empty()) {
+        return str;
+    }
+
+    // tests rely on this
+    assert( ('A' < 'Z') && ('a' < 'z') && ('0' < '9'));
+    
+    // if the first letter is a number, we add an additional underscore in front of it
+    char c = str.at(0);
+    if( ('0' <= c) && (c <= '9')) {
+        str = "_" + str;
+    }
+
+    // following chars: letter, number or underscore
+    for( size_t i = 0;  i < str.size();  ++i) {
+        c = str.at(i);        
+        if( (('A' > c) || (c > 'Z')) && 
+            (('a' > c) || (c > 'z')) && 
+            (('0' > c) || (c > '9')) && 
+            ('_' != c) ) {
+            str.replace( i, 1, "_");
+        }
+    }
+
+    return str;
 }
 
 std::string t_csharp_generator::prop_name(t_field* tfield) {
