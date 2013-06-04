@@ -89,7 +89,7 @@ void unexpected_token(char* text) {
 intconstant   ([+-]?[0-9]+)
 hexconstant   ("0x"[0-9A-Fa-f]+)
 dubconstant   ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
-identifier    ([a-zA-Z_][\.a-zA-Z_0-9]*)
+identifier    ([a-zA-Z_](\.[a-zA-Z_0-9]|[a-zA-Z_0-9])*)
 whitespace    ([ \t\r\n]*)
 sillycomm     ("/*""*"*"*/")
 multicomm     ("/*"[^*]"/"*([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
@@ -97,7 +97,7 @@ doctext       ("/**"([^*/]|[^*]"/"|"*"[^/])*"*"*"*/")
 comment       ("//"[^\n]*)
 unixcomment   ("#"[^\n]*)
 symbol        ([:;\,\{\}\(\)\=<>\[\]])
-st_identifier ([a-zA-Z-][\.a-zA-Z_0-9-]*)
+st_identifier ([a-zA-Z-](\.[a-zA-Z_0-9-]|[a-zA-Z_0-9-])*)
 literal_begin (['\"])
 
 %%
