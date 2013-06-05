@@ -129,9 +129,6 @@
         <include name="org/apache/thrift/**/*.class"/>
         <include name="META-INF/*.txt"/>
       </fileset>
-      <fileset dir="src">
-        <include name="**/*.java"/>
-      </fileset>
     </jar>
   </target>
 
