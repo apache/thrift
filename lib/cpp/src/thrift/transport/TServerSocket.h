@@ -37,6 +37,8 @@ class TSocket;
  */
 class TServerSocket : public TServerTransport {
  public:
+  const static int DEFAULT_BACKLOG = 1024;
+
   TServerSocket(int port);
   TServerSocket(int port, int sendTimeout, int recvTimeout);
   TServerSocket(std::string path);
@@ -47,6 +49,7 @@ class TServerSocket : public TServerTransport {
   void setRecvTimeout(int recvTimeout);
 
   void setAcceptTimeout(int accTimeout);
+  void setAcceptBacklog(int accBacklog);
 
   void setRetryLimit(int retryLimit);
   void setRetryDelay(int retryDelay);
