@@ -431,7 +431,7 @@ void t_as3_generator::generate_consts(std::vector<t_const*> consts) {
     return;
   }
 
-  string f_consts_name = package_dir_+"/Constants.as";
+  string f_consts_name = package_dir_+ "/" + program_name_ +  "Constants.as";
   ofstream f_consts;
   f_consts.open(f_consts_name.c_str());
 
@@ -447,7 +447,7 @@ void t_as3_generator::generate_consts(std::vector<t_const*> consts) {
  
   
   indent(f_consts) <<
-    "public class Constants {" << endl <<
+    "public class " << program_name_ << "Constants {" << endl <<
     endl;
   indent_up();
   vector<t_const*>::iterator c_iter;
