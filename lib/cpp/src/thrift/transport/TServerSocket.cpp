@@ -78,7 +78,7 @@ using boost::shared_ptr;
 TServerSocket::TServerSocket(int port) :
   port_(port),
   serverSocket_(-1),
-  acceptBacklog_(1024),
+  acceptBacklog_(DEFAULT_BACKLOG),
   sendTimeout_(0),
   recvTimeout_(0),
   accTimeout_(-1),
@@ -92,7 +92,7 @@ TServerSocket::TServerSocket(int port) :
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   port_(port),
   serverSocket_(-1),
-  acceptBacklog_(1024),
+  acceptBacklog_(DEFAULT_BACKLOG),
   sendTimeout_(sendTimeout),
   recvTimeout_(recvTimeout),
   accTimeout_(-1),
@@ -107,7 +107,7 @@ TServerSocket::TServerSocket(string path) :
   port_(0),
   path_(path),
   serverSocket_(-1),
-  acceptBacklog_(1024),
+  acceptBacklog_(DEFAULT_BACKLOG),
   sendTimeout_(0),
   recvTimeout_(0),
   accTimeout_(-1),
@@ -132,6 +132,10 @@ void TServerSocket::setRecvTimeout(int recvTimeout) {
 
 void TServerSocket::setAcceptTimeout(int accTimeout) {
   accTimeout_ = accTimeout;
+}
+
+void TServerSocket::setAcceptBacklog(int accBacklog) {
+  acceptBacklog_ = accBacklog;
 }
 
 void TServerSocket::setRetryLimit(int retryLimit) {

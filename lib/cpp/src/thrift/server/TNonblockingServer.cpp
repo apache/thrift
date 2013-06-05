@@ -64,6 +64,7 @@
 
 #ifdef _MSC_VER
 #define PRIu32 "I32u"
+#define PRIu64 "I64u"
 #endif
 
 namespace apache { namespace thrift { namespace server {
@@ -478,9 +479,10 @@ void TNonblockingServer::TConnection::workSocket() {
       // Don't allow giant frame sizes.  This prevents bad clients from
       // causing us to try and allocate a giant buffer.
       GlobalOutput.printf("TNonblockingServer: frame size too large "
-                          "(%"PRIu32" > %zu) from client %s. remote side not "
-                          "using TFramedTransport?",
-                          readWant_, server_->getMaxFrameSize(),
+                          "(%"PRIu32" > %"PRIu64") from client %s. "
+                          "Remote side not using TFramedTransport?",
+                          readWant_,
+                          (uint64_t)server_->getMaxFrameSize(),
                           tSocket_->getSocketInfo().c_str());
       close();
       return;

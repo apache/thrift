@@ -153,6 +153,8 @@
       <developer id="molinaro" name="Anthony Molinaro"/>
       <developer id="roger" name="Roger Meier"/>
       <developer id="jfarrell" name="Jake Farrell"/>
+      <developer id="jensg" name="Jens Geyer"/>
+      <developer id="carl" name="Carl Yeksigian"/>
 
       <!-- Thrift dependencies list -->
       <dependency groupId="org.apache.thrift" artifactId="libthrift" version="${version}"/>

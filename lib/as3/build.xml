@@ -141,6 +141,8 @@
       <developer id="molinaro" name="Anthony Molinaro"/>
       <developer id="roger" name="Roger Meier"/>
       <developer id="jfarrell" name="Jake Farrell"/>
+      <developer id="jensg" name="Jens Geyer"/>
+      <developer id="carl" name="Carl Yeksigian"/>
     </artifact:pom>
 
     <!-- Generate the pom file -->

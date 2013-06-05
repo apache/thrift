@@ -143,7 +143,10 @@ literal_begin (['\"])
 "double"             { return tok_double;               }
 "string"             { return tok_string;               }
 "binary"             { return tok_binary;               }
-"slist"              { return tok_slist;                }
+"slist" {
+  pwarning(0, "\"slist\" is deprecated and will be removed in a future compiler version.  This type should be replaced with \"string\".\n");
+  return tok_slist;
+}
 "senum"              { return tok_senum;                }
 "map"                { return tok_map;                  }
 "list"               { return tok_list;                 }

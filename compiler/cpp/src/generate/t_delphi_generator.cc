@@ -60,6 +60,8 @@ class t_delphi_generator : public t_oop_generator
 
       iter = parsed_options.find("ansistr_binary");
       ansistr_binary_ = (iter != parsed_options.end());
+      iter = parsed_options.find("register_types");
+	  register_types_ = (iter != parsed_options.end());
 
       out_dir_base_ = "gen-delphi";
       escape_.clear();
@@ -108,6 +110,9 @@ class t_delphi_generator : public t_oop_generator
 
     void generate_delphi_struct(t_struct* tstruct, bool is_exception);
     void generate_delphi_struct_impl( ostream& out, std::string cls_prefix, t_struct* tstruct, bool is_exception, bool is_result = false, bool is_x_factory = false);
+	void print_delphi_struct_type_factory_func(  ostream& out, t_struct* tstruct);
+	void generate_delphi_struct_type_factory(  ostream& out, std::string cls_prefix, t_struct* tstruct, bool is_exception, bool is_result = false, bool is_x_factory = false);
+	void generate_delphi_struct_type_factory_registration(  ostream& out, std::string cls_prefix, t_struct* tstruct, bool is_exception, bool is_result = false, bool is_x_factory = false);
     void generate_delphi_struct_definition(std::ostream& out, t_struct* tstruct, bool is_xception=false, bool in_class=false, bool is_result=false, bool is_x_factory = false);
     void generate_delphi_struct_reader(std::ostream& out, t_struct* tstruct);
     void generate_delphi_struct_result_writer(std::ostream& out, t_struct* tstruct);
@@ -188,6 +193,8 @@ class t_delphi_generator : public t_oop_generator
     std::ostringstream s_const_impl;
     std::ostringstream s_struct_impl;
     std::ostringstream s_service_impl;
+	std::ostringstream s_type_factory_registration;
+	std::ostringstream s_type_factory_funcs;
     bool has_enum;
     bool has_const;
     std::string namespace_dir_;
@@ -207,6 +214,7 @@ class t_delphi_generator : public t_oop_generator
     bool is_void( t_type* type );
     int indent_impl_;
     bool ansistr_binary_;
+	bool register_types_;
     void indent_up_impl(){
       ++indent_impl_;
     };
@@ -428,6 +436,11 @@ void t_delphi_generator::init_generator() {
   add_delphi_uses_list("Thrift.Protocol");
   add_delphi_uses_list("Thrift.Transport");
 
+  if (register_types_)
+  {
+	  add_delphi_uses_list("Thrift.TypeRegistry");
+  }
+
   init_known_types_list();
   
   string unitname, nsname;
@@ -509,20 +522,39 @@ void t_delphi_generator::close_generator() {
   f_all  << s_struct_impl.str();
   f_all  << s_service_impl.str();
   f_all  << s_const_impl.str();
-
-  if ( has_const ) {
-    f_all  << "{$IF CompilerVersion < 21.0}" << endl;
-    f_all  << "initialization" << endl;
-    f_all  << "begin" << endl;
-    f_all  << "  TConstants_Initialize;" << endl;
-    f_all  << "end;" << endl << endl;
-
-    f_all  << "finalization" << endl;
-    f_all  << "begin" << endl;
-    f_all  << "  TConstants_Finalize;" << endl;
-    f_all  << "end;" << endl;
-    f_all  << "{$IFEND}" << endl << endl;
+  
+  
+  if (register_types_)
+  {
+	  f_all  << endl;
+	  f_all  << "// Type factory methods and registration" << endl;
+	  f_all  << s_type_factory_funcs.str();
+	  f_all << "procedure RegisterTypeFactories;" << endl;
+	  f_all << "begin" << endl;
+	  f_all << s_type_factory_registration.str();	  
+	  f_all << "end;" << endl;
   }
+  f_all  << endl;
+
+  f_all  << "initialization" << endl;
+  if ( has_const ) {    
+	f_all  << "{$IF CompilerVersion < 21.0}" << endl;
+    f_all  << "  TConstants_Initialize;" << endl;
+	f_all  << "{$IFEND}" << endl;
+  }
+  if (register_types_) {
+	  f_all << "  RegisterTypeFactories;" << endl;
+  }
+  f_all  << endl;
+
+  f_all  << "finalization" << endl;
+  if ( has_const ) {    
+	f_all  << "{$IF CompilerVersion < 21.0}" << endl;
+    f_all  << "  TConstants_Finalize;" << endl;
+	f_all  << "{$IFEND}" << endl;
+  }
+  f_all  << endl << endl;
+  
   f_all  << "end." << endl;
   f_all.close();
   
@@ -924,6 +956,10 @@ void t_delphi_generator::generate_delphi_struct(t_struct* tstruct, bool is_excep
   add_defined_type( tstruct);
 
   generate_delphi_struct_impl(s_struct_impl, "", tstruct, is_exception);
+  if (register_types_) {
+	generate_delphi_struct_type_factory(s_type_factory_funcs, "", tstruct, is_exception);
+	generate_delphi_struct_type_factory_registration(s_type_factory_registration, "", tstruct, is_exception);
+  }
 }
 
 void t_delphi_generator::generate_delphi_struct_impl( ostream& out, string cls_prefix, t_struct* tstruct, bool is_exception, bool is_result, bool is_x_factory) {
@@ -1062,6 +1098,54 @@ void t_delphi_generator::generate_delphi_struct_impl( ostream& out, string cls_p
   if (is_exception && is_x_factory) {
     generate_delphi_create_exception_impl( out, cls_prefix, tstruct, is_exception);
   }
+}
+
+void t_delphi_generator::print_delphi_struct_type_factory_func(  ostream& out, t_struct* tstruct) {
+	string struct_intf_name = type_name(tstruct);
+	out << "Create_";
+	out << struct_intf_name;
+	out << "_Impl";
+}
+
+
+void t_delphi_generator::generate_delphi_struct_type_factory( ostream& out, string cls_prefix, t_struct* tstruct, bool is_exception, bool is_result, bool is_x_factory) {
+	
+	if (is_exception)
+		return;
+	if (is_result)
+		return;
+	if (is_x_factory)
+		return;
+
+	string struct_intf_name = type_name(tstruct);
+	string cls_nm = type_name(tstruct,true,false);
+
+	out << "function ";
+	print_delphi_struct_type_factory_func(out, tstruct);
+	out << ": ";
+	out << struct_intf_name;
+	out << ";" << endl;
+	out << "begin" << endl;
+	indent_up();
+	indent(out) << "Result := " << cls_nm << ".Create;" << endl;
+	indent_down();
+	out << "end;" << endl << endl;
+}
+
+void t_delphi_generator::generate_delphi_struct_type_factory_registration( ostream& out, string cls_prefix, t_struct* tstruct, bool is_exception, bool is_result, bool is_x_factory) {
+	if (is_exception)
+		return;
+	if (is_result)
+		return;
+	if (is_x_factory)
+		return;
+
+	string struct_intf_name = type_name(tstruct);
+
+	indent(out) << "  TypeRegistry.RegisterTypeFactory<" << struct_intf_name << ">(";
+	print_delphi_struct_type_factory_func(out, tstruct);
+	out << ");";
+	out << endl;
 }
 
 void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struct* tstruct, bool is_exception, bool in_class, bool is_result, bool is_x_factory) {
@@ -3038,6 +3122,7 @@ bool t_delphi_generator::is_void( t_type* type ) {
   return false;
 }
 
-THRIFT_REGISTER_GENERATOR(delphi, "delphi",
-"    ansistr_binary:  Use AnsiString as binary properties.\n")
+THRIFT_REGISTER_GENERATOR(delphi, "delphi", 
+"    ansistr_binary:  Use AnsiString as binary properties.\n" 
+"    register_types:  Register structs and there implementations in a global type registry\n");
 

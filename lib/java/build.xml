@@ -129,9 +129,6 @@
         <include name="org/apache/thrift/**/*.class"/>
         <include name="META-INF/*.txt"/>
       </fileset>
-      <fileset dir="src">
-        <include name="**/*.java"/>
-      </fileset>
     </jar>
   </target>
 
@@ -316,6 +313,8 @@
       <developer id="molinaro" name="Anthony Molinaro"/>
       <developer id="roger" name="Roger Meier"/>
       <developer id="jfarrell" name="Jake Farrell"/>
+      <developer id="jensg" name="Jens Geyer"/>
+      <developer id="carl" name="Carl Yeksigian"/>
 
       <!-- Thrift dependencies list -->
       <dependency groupId="org.slf4j" artifactId="slf4j-api" version="${slf4j.version}"/>
