@@ -1,6 +1,6 @@
 Apache Thrift
 
-Last Modified: 2010-Nov-04
+Last Modified: 2013-June-6
 
 License
 =======
@@ -135,3 +135,23 @@ to Java, Ruby, PHP).
 
 Look for the README file in the lib/<language>/ folder for more details on the
 installation of each language library package.
+
+Testing
+=======
+
+There are a large number of client library tests that can all be run
+from the top-level directory.
+
+          make -k check
+
+This will make all of the libraries (as necessary), and run through
+the unit tests defined in each of the client libraries. If a single
+language fails, the make check will continue on and provide a synopsis
+at the end.
+
+To run the cross-language test suite, please run:
+
+          sh test/test.sh
+
+This will run a set of tests that use different language clients and
+servers.
