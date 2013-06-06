@@ -17,6 +17,7 @@
  * under the License.
  */
 
+using System;
 using System.IO;
 using System.Reflection;
 using Thrift.Protocol;
@@ -59,7 +60,7 @@ namespace Thrift.Transport {
 			get { return true; }
 		}
 
-		public static byte[] Serialize(TBase s) {
+		public static byte[] Serialize(TAbstractBase s) {
 			var t = new TMemoryBuffer();
 			var p = new TBinaryProtocol(t);
 
@@ -68,12 +69,18 @@ namespace Thrift.Transport {
 			return t.GetBuffer();
 		}
 
-		public static T DeSerialize<T>(byte[] buf) where T : TBase, new() {
-		       var t = new T();
-		       var trans = new TMemoryBuffer(buf);
-		       var p = new TBinaryProtocol(trans);
-		       t.Read(p);
-		       return t;
+		public static T DeSerialize<T>(byte[] buf) where T : TAbstractBase {
+			var trans = new TMemoryBuffer(buf);
+			var p = new TBinaryProtocol(trans);
+			if (typeof (TBase).IsAssignableFrom(typeof (T))) {
+				var method = typeof (T).GetMethod("Read", BindingFlags.Instance | BindingFlags.Public);
+				var t = Activator.CreateInstance<T>();
+				method.Invoke(t, new object[] {p});
+				return t;
+			 } else {
+			       var method = typeof (T).GetMethod("Read", BindingFlags.Static | BindingFlags.Public);
+				return (T) method.Invoke(null, new object[] {p});
+			}
 		}
 
 		private bool _IsDisposed;
