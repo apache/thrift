@@ -24,7 +24,7 @@ module Main where
 
 import qualified Control.Exception
 import qualified Data.ByteString.Lazy as DBL
-import qualified Maybe
+import qualified Data.Maybe
 import qualified Network
 
 import Thrift.Protocol.Binary
@@ -127,7 +127,7 @@ instance SIface.Srv_Iface InheritedHandler where
 instance IIface.Inherited_Iface InheritedHandler where
     identity _ arg = do
         ThriftTestUtils.serverLog $ "Got identity method: " ++ show arg
-        return $ Maybe.fromJust arg
+        return $ Data.Maybe.fromJust arg
 
 client :: (String, Network.PortID) -> IO ()
 client addr = do
