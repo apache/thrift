@@ -29,6 +29,7 @@ namespace apache { namespace thrift {
 TOutput GlobalOutput;
 
 void TOutput::printf(const char *message, ...) {
+#ifndef THRIFT_SQUELCH_CONSOLE_OUTPUT
   // Try to reduce heap usage, even if printf is called rarely.
   static const int STACK_BUF_SIZE = 256;
   char stack_buf[STACK_BUF_SIZE];
@@ -77,6 +78,18 @@ void TOutput::printf(const char *message, ...) {
     f_(heap_buf);
   }
   free(heap_buf);
+#endif
+}
+
+void TOutput::errorTimeWrapper(const char* msg) {
+#ifndef THRIFT_SQUELCH_CONSOLE_OUTPUT
+  time_t now;
+  char dbgtime[26];
+  time(&now);
+  THRIFT_CTIME_R(&now, dbgtime);
+  dbgtime[24] = 0;
+  fprintf(stderr, "Thrift: %s %s\n", dbgtime, msg);
+#endif
 }
 
 void TOutput::perror(const char *message, int errno_copy) {

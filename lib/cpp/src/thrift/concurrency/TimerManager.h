@@ -77,7 +77,15 @@ class TimerManager {
    * @param task The task to execute
    * @param timeout Absolute time in the future to execute task.
    */
-  virtual void add(boost::shared_ptr<Runnable> task, const struct timespec& timeout);
+  virtual void add(boost::shared_ptr<Runnable> task, const struct THRIFT_TIMESPEC& timeout);
+
+  /**
+   * Adds a task to be executed at some time in the future by a worker thread.
+   *
+   * @param task The task to execute
+   * @param timeout Absolute time in the future to execute task.
+   */
+  virtual void add(boost::shared_ptr<Runnable> task, const struct timeval& timeout);
 
   /**
    * Removes a pending task

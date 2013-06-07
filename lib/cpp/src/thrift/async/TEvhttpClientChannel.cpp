@@ -142,7 +142,7 @@ void TEvhttpClientChannel::finish(struct evhttp_request* req) {
   }
   recvBuf_->resetBuffer(
       EVBUFFER_DATA(req->input_buffer),
-      EVBUFFER_LENGTH(req->input_buffer));
+      static_cast<uint32_t>(EVBUFFER_LENGTH(req->input_buffer)));
   cob_();
   return;
 }

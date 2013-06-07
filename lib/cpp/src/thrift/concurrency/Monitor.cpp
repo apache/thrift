@@ -20,11 +20,11 @@
 #include "Monitor.h"
 #include "Exception.h"
 #include "Util.h"
+#include <thrift/transport/PlatformSocket.h>
 
 #include <boost/scoped_ptr.hpp>
 
 #include <assert.h>
-#include <errno.h>
 
 #include <iostream>
 
@@ -77,7 +77,7 @@ class Monitor::Impl {
    */
   void wait(int64_t timeout_ms) const {
     int result = waitForTimeRelative(timeout_ms);
-    if (result == ETIMEDOUT) {
+    if (result == THRIFT_ETIMEDOUT) {
       // pthread_cond_timedwait has been observed to return early on
       // various platforms, so comment out this assert.
       //assert(Util::currentTime() >= (now + timeout));
@@ -92,23 +92,23 @@ class Monitor::Impl {
    * Waits until the specified timeout in milliseconds for the condition to
    * occur, or waits forever if timeout_ms == 0.
    *
-   * Returns 0 if condition occurs, ETIMEDOUT on timeout, or an error code.
+   * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
    */
   int waitForTimeRelative(int64_t timeout_ms) const {
     if (timeout_ms == 0LL) {
       return waitForever();
     }
 
-    struct timespec abstime;
+    struct THRIFT_TIMESPEC abstime;
     Util::toTimespec(abstime, Util::currentTime() + timeout_ms);
     return waitForTime(&abstime);
   }
 
   /**
-   * Waits until the absolute time specified using struct timespec.
-   * Returns 0 if condition occurs, ETIMEDOUT on timeout, or an error code.
+   * Waits until the absolute time specified using struct THRIFT_TIMESPEC.
+   * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
    */
-  int waitForTime(const timespec* abstime) const {
+  int waitForTime(const THRIFT_TIMESPEC* abstime) const {
     assert(mutex_);
     pthread_mutex_t* mutexImpl =
       reinterpret_cast<pthread_mutex_t*>(mutex_->getUnderlyingImpl());
@@ -120,6 +120,12 @@ class Monitor::Impl {
                                   abstime);
   }
 
+  int waitForTime(const struct timeval* abstime) const {
+    struct THRIFT_TIMESPEC temp;
+    temp.tv_sec  = abstime->tv_sec;
+    temp.tv_nsec = abstime->tv_usec * 1000;
+    return waitForTime(&temp);
+  }
   /**
    * Waits forever until the condition occurs.
    * Returns 0 if condition occurs, or an error code otherwise.
@@ -136,12 +142,14 @@ class Monitor::Impl {
   void notify() {
     // XXX Need to assert that caller owns mutex
     int iret = pthread_cond_signal(&pthread_cond_);
+    THRIFT_UNUSED_VARIABLE(iret);
     assert(iret == 0);
   }
 
   void notifyAll() {
     // XXX Need to assert that caller owns mutex
     int iret = pthread_cond_broadcast(&pthread_cond_);
+    THRIFT_UNUSED_VARIABLE(iret);
     assert(iret == 0);
   }
 
@@ -164,6 +172,7 @@ class Monitor::Impl {
     if (condInitialized_) {
       condInitialized_ = false;
       int iret = pthread_cond_destroy(&pthread_cond_);
+      THRIFT_UNUSED_VARIABLE(iret);
       assert(iret == 0);
     }
   }
@@ -189,7 +198,11 @@ void Monitor::unlock() const { impl_->unlock(); }
 
 void Monitor::wait(int64_t timeout) const { impl_->wait(timeout); }
 
-int Monitor::waitForTime(const timespec* abstime) const {
+int Monitor::waitForTime(const THRIFT_TIMESPEC* abstime) const {
+  return impl_->waitForTime(abstime);
+}
+
+int Monitor::waitForTime(const timeval* abstime) const {
   return impl_->waitForTime(abstime);
 }
 

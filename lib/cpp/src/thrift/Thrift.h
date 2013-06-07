@@ -20,13 +20,10 @@
 #ifndef _THRIFT_THRIFT_H_
 #define _THRIFT_THRIFT_H_ 1
 
-#ifdef _WIN32
-#include <thrift/windows/config.h>
-#endif
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include "transport/PlatformSocket.h"
 #include <stdio.h>
 #include <assert.h>
 
@@ -71,6 +68,8 @@
 
 #define THRIFT_OVERLOAD_IF(T, Y) \
   THRIFT_OVERLOAD_IF_DEFN(T, Y) = NULL
+
+#define THRIFT_UNUSED_VARIABLE(x) ((x)=(x))
 
 namespace apache { namespace thrift {
 
@@ -125,14 +124,7 @@ class TOutput {
 
   void printf(const char *message, ...);
 
-  inline static void errorTimeWrapper(const char* msg) {
-    time_t now;
-    char dbgtime[26];
-    time(&now);
-    ctime_r(&now, dbgtime);
-    dbgtime[24] = 0;
-    fprintf(stderr, "Thrift: %s %s\n", dbgtime, msg);
-  }
+  static void errorTimeWrapper(const char* msg);
 
   /** Just like strerror_r but returns a C++ string object. */
   static std::string strerror_s(int errno_copy);

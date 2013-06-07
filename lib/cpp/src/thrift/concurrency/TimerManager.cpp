@@ -263,7 +263,7 @@ void TimerManager::add(shared_ptr<Runnable> task, int64_t timeout) {
   }
 }
 
-void TimerManager::add(shared_ptr<Runnable> task, const struct timespec& value) {
+void TimerManager::add(shared_ptr<Runnable> task, const struct THRIFT_TIMESPEC& value) {
 
   int64_t expiration;
   Util::toMilliseconds(expiration, value);
@@ -277,6 +277,19 @@ void TimerManager::add(shared_ptr<Runnable> task, const struct timespec& value) 
   add(task, expiration - now);
 }
 
+void TimerManager::add(shared_ptr<Runnable> task, const struct timeval& value) {
+
+  int64_t expiration;
+  Util::toMilliseconds(expiration, value);
+
+  int64_t now = Util::currentTime();
+
+  if (expiration < now) {
+    throw  InvalidArgumentException();
+  }
+
+  add(task, expiration - now);
+}
 
 void TimerManager::remove(shared_ptr<Runnable> task) {
   (void) task;

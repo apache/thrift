@@ -37,6 +37,7 @@
 #include <openssl/x509v3.h>
 #include <thrift/concurrency/Mutex.h>
 #include "TSSLSocket.h"
+#include "PlatformSocket.h"
 
 #define OPENSSL_VERSION_NO_THREAD_ID 0x10000000L
 
@@ -105,8 +106,9 @@ bool TSSLSocket::isOpen() {
     return false;
   }
   int shutdown = SSL_get_shutdown(ssl_);
-  bool shutdownReceived = (shutdown & SSL_RECEIVED_SHUTDOWN);
-  bool shutdownSent     = (shutdown & SSL_SENT_SHUTDOWN);
+  // "!!" is squelching C4800 "forcing bool -> true or false" perfomance warning
+  bool shutdownReceived = !!(shutdown & SSL_RECEIVED_SHUTDOWN);
+  bool shutdownSent     = !!(shutdown & SSL_SENT_SHUTDOWN);
   if (shutdownReceived && shutdownSent) {
     return false;
   }
@@ -122,7 +124,7 @@ bool TSSLSocket::peek() {
   uint8_t byte;
   rc = SSL_peek(ssl_, &byte, 1);
   if (rc < 0) {
-    int errno_copy = errno;
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
     string errors;
     buildErrors(errors, errno_copy);
     throw TSSLException("SSL_peek: " + errors);
@@ -147,7 +149,7 @@ void TSSLSocket::close() {
       rc = SSL_shutdown(ssl_);
     }
     if (rc < 0) {
-      int errno_copy = errno;
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
       string errors;
       buildErrors(errors, errno_copy);
       GlobalOutput(("SSL_shutdown: " + errors).c_str());
@@ -166,9 +168,9 @@ uint32_t TSSLSocket::read(uint8_t* buf, uint32_t len) {
     bytes = SSL_read(ssl_, buf, len);
     if (bytes >= 0)
       break;
-    int errno_copy = errno;
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
     if (SSL_get_error(ssl_, bytes) == SSL_ERROR_SYSCALL) {
-      if (ERR_get_error() == 0 && errno_copy == EINTR) {
+      if (ERR_get_error() == 0 && errno_copy == THRIFT_EINTR) {
         continue;
       }
     }
@@ -186,7 +188,7 @@ void TSSLSocket::write(const uint8_t* buf, uint32_t len) {
   while (written < len) {
     int32_t bytes = SSL_write(ssl_, &buf[written], len - written);
     if (bytes <= 0) {
-      int errno_copy = errno;
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
       string errors;
       buildErrors(errors, errno_copy);
       throw TSSLException("SSL_write: " + errors);
@@ -206,7 +208,7 @@ void TSSLSocket::flush() {
     throw TSSLException("SSL_get_wbio returns NULL");
   }
   if (BIO_flush(bio) != 1) {
-    int errno_copy = errno;
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
     string errors;
     buildErrors(errors, errno_copy);
     throw TSSLException("BIO_flush: " + errors);
@@ -229,7 +231,7 @@ void TSSLSocket::checkHandshake() {
     rc = SSL_connect(ssl_);
   }
   if (rc <= 0) {
-    int errno_copy = errno;
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
     string fname(server() ? "SSL_accept" : "SSL_connect");
     string errors;
     buildErrors(errors, errno_copy);
@@ -426,7 +428,7 @@ void TSSLSocketFactory::loadCertificate(const char* path, const char* format) {
   }
   if (strcmp(format, "PEM") == 0) {
     if (SSL_CTX_use_certificate_chain_file(ctx_->get(), path) == 0) {
-      int errno_copy = errno;
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
       string errors;
       buildErrors(errors, errno_copy);
       throw TSSLException("SSL_CTX_use_certificate_chain_file: " + errors);
@@ -443,7 +445,7 @@ void TSSLSocketFactory::loadPrivateKey(const char* path, const char* format) {
   }
   if (strcmp(format, "PEM") == 0) {
     if (SSL_CTX_use_PrivateKey_file(ctx_->get(), path, SSL_FILETYPE_PEM) == 0) {
-      int errno_copy = errno;
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
       string errors;
       buildErrors(errors, errno_copy);
       throw TSSLException("SSL_CTX_use_PrivateKey_file: " + errors);
@@ -457,7 +459,7 @@ void TSSLSocketFactory::loadTrustedCertificates(const char* path) {
          "loadTrustedCertificates: <path> is NULL");
   }
   if (SSL_CTX_load_verify_locations(ctx_->get(), path, NULL) == 0) {
-    int errno_copy = errno;
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
     string errors;
     buildErrors(errors, errno_copy);
     throw TSSLException("SSL_CTX_load_verify_locations: " + errors);
@@ -579,7 +581,7 @@ void buildErrors(string& errors, int errno_copy) {
     }
     const char* reason = ERR_reason_error_string(errorCode);
     if (reason == NULL) {
-      snprintf(message, sizeof(message) - 1, "SSL error # %lu", errorCode);
+      THRIFT_SNPRINTF(message, sizeof(message) - 1, "SSL error # %lu", errorCode);
       reason = message;
     }
     errors += reason;
@@ -598,7 +600,7 @@ void buildErrors(string& errors, int errno_copy) {
  * Default implementation of AccessManager
  */
 Decision DefaultClientAccessManager::verify(const sockaddr_storage& sa)
-  throw() { 
+  throw() {
   (void) sa;
   return SKIP;
 }

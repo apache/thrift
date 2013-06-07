@@ -108,7 +108,7 @@ void TPipe::open() {
               NULL);          // no template file
 
     if (hPipe_ == INVALID_HANDLE_VALUE)
-      sleep(SleepInterval);
+      ::Sleep(SleepInterval);
     else
       break;
   }

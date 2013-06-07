@@ -35,13 +35,13 @@
 // Win32
 #include <WS2tcpip.h>
 
-int socketpair(int d, int type, int protocol, SOCKET sv[2])
+int thrift_socketpair(int d, int type, int protocol, THRIFT_SOCKET sv[2])
 {
     union {
        struct sockaddr_in inaddr;
        struct sockaddr addr;
     } a;
-    SOCKET listener;
+    THRIFT_SOCKET listener;
     int e;
     socklen_t addrlen = sizeof(a.inaddr);
     DWORD flags = 0;
@@ -63,9 +63,11 @@ int socketpair(int d, int type, int protocol, SOCKET sv[2])
 
     sv[0] = sv[1] = INVALID_SOCKET;
     do {
-        if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
-               (char*) &reuse, (socklen_t) sizeof(reuse)) == -1)
-            break;
+        //ignore errors coming out of this setsockopt.  This is because
+        //SO_EXCLUSIVEADDRUSE requires admin privileges on WinXP, but we don't
+        //want to force socket pairs to be an admin.
+        setsockopt(listener, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+               (char*) &reuse, (socklen_t) sizeof(reuse));
         if  (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)
             break;
         if  (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)

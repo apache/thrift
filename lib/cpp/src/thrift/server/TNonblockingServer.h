@@ -22,6 +22,7 @@
 
 #include <thrift/Thrift.h>
 #include <thrift/server/TServer.h>
+#include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/concurrency/ThreadManager.h>
@@ -32,7 +33,6 @@
 #include <stack>
 #include <vector>
 #include <string>
-#include <errno.h>
 #include <cstdlib>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -67,7 +67,7 @@ using apache::thrift::concurrency::Guard;
 #endif
 
 #if LIBEVENT_VERSION_NUMBER < 0x02000000
- typedef int evutil_socket_t;
+ typedef THRIFT_SOCKET evutil_socket_t;
 #endif
 
 #ifndef SOCKOPT_CAST_T
@@ -146,7 +146,7 @@ class TNonblockingServer : public TServer {
   static const int DEFAULT_IO_THREADS = 1;
 
   /// File descriptor of an invalid socket
-  static const int INVALID_SOCKET_VALUE = -1;
+  static const THRIFT_SOCKET INVALID_SOCKET_VALUE = -1;
 
   /// # of IO threads this server will use
   size_t numIOThreads_;
@@ -155,7 +155,7 @@ class TNonblockingServer : public TServer {
   bool useHighPriorityIOThreads_;
 
   /// Server socket file descriptor
-  int serverSocket_;
+  THRIFT_SOCKET serverSocket_;
 
   /// Port server runs on
   int port_;
@@ -271,7 +271,7 @@ class TNonblockingServer : public TServer {
    * @param fd the listen socket.
    * @param which the event flag that triggered the handler.
    */
-  void handleEvent(int fd, short which);
+  void handleEvent(THRIFT_SOCKET fd, short which);
 
   void init(int port) {
     serverSocket_ = -1;
@@ -774,7 +774,7 @@ class TNonblockingServer : public TServer {
    *
    * @param fd descriptor of socket to be initialized/
    */
-  void listenSocket(int fd);
+  void listenSocket(THRIFT_SOCKET fd);
   /**
    * Return an initialized connection object.  Creates or recovers from
    * pool a TConnection and initializes it with the provided socket FD
@@ -785,7 +785,7 @@ class TNonblockingServer : public TServer {
    * @param addrLen the length of addr
    * @return pointer to initialized TConnection object.
    */
-  TConnection* createConnection(int socket, const sockaddr* addr,
+  TConnection* createConnection(THRIFT_SOCKET socket, const sockaddr* addr,
                                             socklen_t addrLen);
 
   /**
@@ -805,7 +805,7 @@ class TNonblockingIOThread : public Runnable {
   // listenSocket is < 0, accepting will not be done.
   TNonblockingIOThread(TNonblockingServer* server,
                        int number,
-                       int listenSocket,
+                       THRIFT_SOCKET listenSocket,
                        bool useHighPriority);
 
   ~TNonblockingIOThread();
@@ -896,7 +896,7 @@ class TNonblockingIOThread : public Runnable {
   Thread::id_t threadId_;
 
   /// If listenSocket_ >= 0, adds an event on the event_base to accept conns
-  int listenSocket_;
+  THRIFT_SOCKET listenSocket_;
 
   /// Sets a high scheduling priority when running
   bool useHighPriority_;

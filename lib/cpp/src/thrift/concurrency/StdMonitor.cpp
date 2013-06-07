@@ -26,40 +26,46 @@
 #include <thrift/transport/PlatformSocket.h>
 #include <assert.h>
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/thread.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <condition_variable>
+#include <chrono>
+#include <thread>
+#include <mutex>
 
 namespace apache { namespace thrift { namespace concurrency {
 
 /**
- * Monitor implementation using the boost thread library
+ * Monitor implementation using the std thread library
  *
  * @version $Id:$
  */
-class Monitor::Impl : public boost::condition_variable_any {
+class Monitor::Impl {
 
  public:
 
   Impl()
      : ownedMutex_(new Mutex()),
+       conditionVariable_(),
        mutex_(NULL) {
     init(ownedMutex_.get());
   }
 
   Impl(Mutex* mutex)
-     : mutex_(NULL) {
+     : ownedMutex_(),
+       conditionVariable_(),
+       mutex_(NULL) {
     init(mutex);
   }
 
   Impl(Monitor* monitor)
-     : mutex_(NULL) {
+     : ownedMutex_(),
+       conditionVariable_(),
+       mutex_(NULL) {
     init(&(monitor->mutex()));
   }
 
   Mutex& mutex() { return *mutex_; }
-  void lock() { mutex().lock(); }
-  void unlock() { mutex().unlock(); }
+  void lock() { mutex_->lock(); }
+  void unlock() { mutex_->unlock(); }
 
   /**
    * Exception-throwing version of waitForTimeRelative(), called simply
@@ -90,14 +96,14 @@ class Monitor::Impl : public boost::condition_variable_any {
     }
 
     assert(mutex_);
-	boost::timed_mutex* mutexImpl =
-      reinterpret_cast<boost::timed_mutex*>(mutex_->getUnderlyingImpl());
+    std::timed_mutex* mutexImpl =
+      static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
-	boost::timed_mutex::scoped_lock lock(*mutexImpl, boost::adopt_lock);
-	int res = timed_wait(lock, boost::get_system_time()+boost::posix_time::milliseconds(timeout_ms)) ? 0 : THRIFT_ETIMEDOUT;
-	lock.release();
-	return res;
+    std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
+    bool timedout = (conditionVariable_.wait_for(lock, std::chrono::milliseconds(timeout_ms)) == std::cv_status::timeout);
+    lock.release();
+    return (timedout ? THRIFT_ETIMEDOUT : 0);
   }
 
   /**
@@ -117,27 +123,26 @@ class Monitor::Impl : public boost::condition_variable_any {
    */
   int waitForTime(const struct timeval* abstime) {
     assert(mutex_);
-    boost::timed_mutex* mutexImpl =
-      static_cast<boost::timed_mutex*>(mutex_->getUnderlyingImpl());
+    std::timed_mutex* mutexImpl =
+      static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     struct timeval currenttime;
     Util::toTimeval(currenttime, Util::currentTime());
 
-	long tv_sec = static_cast<long>(abstime->tv_sec - currenttime.tv_sec);
-	long tv_usec = static_cast<long>(abstime->tv_usec - currenttime.tv_usec);
-	if(tv_sec < 0)
-		tv_sec = 0;
-	if(tv_usec < 0)
-		tv_usec = 0;
+    long tv_sec  = static_cast<long>(abstime->tv_sec  - currenttime.tv_sec);
+    long tv_usec = static_cast<long>(abstime->tv_usec - currenttime.tv_usec);
+    if(tv_sec < 0)
+      tv_sec = 0;
+    if(tv_usec < 0)
+      tv_usec = 0;
 
-	boost::timed_mutex::scoped_lock lock(*mutexImpl, boost::adopt_lock);
-	int res = timed_wait(lock, boost::get_system_time() +
-		boost::posix_time::seconds(tv_sec) +
-		boost::posix_time::microseconds(tv_usec)
-		) ? 0 : THRIFT_ETIMEDOUT;
-	lock.release();
-	return res;
+    std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
+    bool timedout = (conditionVariable_.wait_for(lock,
+      std::chrono::seconds(tv_sec) +
+      std::chrono::microseconds(tv_usec)) == std::cv_status::timeout);
+    lock.release();
+    return (timedout ? THRIFT_ETIMEDOUT : 0);
   }
 
   /**
@@ -146,23 +151,23 @@ class Monitor::Impl : public boost::condition_variable_any {
    */
   int waitForever() {
     assert(mutex_);
-    boost::timed_mutex* mutexImpl =
-      reinterpret_cast<boost::timed_mutex*>(mutex_->getUnderlyingImpl());
+    std::timed_mutex* mutexImpl =
+      static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
-	boost::timed_mutex::scoped_lock lock(*mutexImpl, boost::adopt_lock);
-	((boost::condition_variable_any*)this)->wait(lock);
-	lock.release();
+    std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
+    conditionVariable_.wait(lock);
+    lock.release();
     return 0;
   }
 
 
   void notify() {
-	  notify_one();
+    conditionVariable_.notify_one();
   }
 
   void notifyAll() {
-	  notify_all();
+    conditionVariable_.notify_all();
   }
 
  private:
@@ -171,7 +176,8 @@ class Monitor::Impl : public boost::condition_variable_any {
     mutex_ = mutex;
   }
 
-  boost::scoped_ptr<Mutex> ownedMutex_;
+  const std::unique_ptr<Mutex> ownedMutex_;
+  std::condition_variable_any conditionVariable_;
   Mutex* mutex_;
 };
 

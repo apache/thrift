@@ -30,15 +30,17 @@
 
 // Win32
 #include <Winsock2.h>
+#include <thrift/transport/PlatformSocket.h>
 
-#define O_NONBLOCK 1
-
-enum
-{
-    F_GETFL,
-    F_SETFL,
+#if WINVER <= 0x0502 //XP, Server2003
+struct thrift_pollfd {
+  THRIFT_SOCKET  fd;
+  SHORT   events;
+  SHORT   revents;
 };
+#endif
 
-int fcntl(SOCKET fd, int cmd, int flags);
+int thrift_fcntl(THRIFT_SOCKET fd, int cmd, int flags);
+int thrift_poll(THRIFT_POLLFD *fdArray, ULONG nfds, INT timeout);
 
 #endif // _THRIFT_WINDOWS_FCNTL_H_

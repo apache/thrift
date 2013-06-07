@@ -20,8 +20,8 @@
 #ifndef _THRIFT_CONCURRENCY_FUNCTION_RUNNER_H
 #define _THRIFT_CONCURRENCY_FUNCTION_RUNNER_H 1
 
-#include "thrift/cxxfunctional.h"
-#include "thrift/lib/cpp/concurrency/Thread.h"
+#include <thrift/cxxfunctional.h>
+#include <thrift/concurrency/Thread.h>
 
 namespace apache { namespace thrift { namespace concurrency {
 
@@ -68,20 +68,26 @@ class FunctionRunner : public Runnable {
     return boost::shared_ptr<FunctionRunner>(new FunctionRunner(func, arg));
   }
 
-
+private:
+  static void pthread_func_wrapper(PthreadFuncPtr func, void *arg)
+  {
+    //discard return value
+    func(arg);
+  }
+public:
   /**
    * Given a 'pthread_create' style callback, this FunctionRunner will
    * execute the given callback.  Note that the 'void*' return value is ignored.
    */
   FunctionRunner(PthreadFuncPtr func, void* arg)
-   : func_(apache::thrift::stdcxx::bind(func, arg)), repFunc_(0)
+   : func_(apache::thrift::stdcxx::bind(pthread_func_wrapper, func, arg))
   { }
 
   /**
    * Given a generic callback, this FunctionRunner will execute it.
    */
   FunctionRunner(const VoidFunc& cob)
-   : func_(cob), repFunc_(0)
+   : func_(cob)
   { }
 
   /**
@@ -91,13 +97,13 @@ class FunctionRunner : public Runnable {
    * be intervalMs plus execution time of the callback.
    */
   FunctionRunner(const BoolFunc& cob, int intervalMs)
-   : func_(0), repFunc_(cob), intervalMs_(intervalMs)
+   : repFunc_(cob), intervalMs_(intervalMs)
   { }
 
   void run() {
     if (repFunc_) {
       while(repFunc_()) {
-        usleep(intervalMs_*1000);
+        THRIFT_SLEEP_USEC(intervalMs_*1000);
       }
     } else {
       func_();

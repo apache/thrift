@@ -17,16 +17,22 @@
  * under the License.
  */
 
-#include "StdAfx.h"
 #include "TWinsockSingleton.h"
 
 // boost
 #include <boost/assert.hpp>
+#include <stdexcept>
 
 namespace apache { namespace thrift { namespace transport {
 
 TWinsockSingleton::instance_ptr TWinsockSingleton::instance_ptr_(NULL);
+#if USE_BOOST_THREAD
 boost::once_flag                TWinsockSingleton::flags_ = BOOST_ONCE_INIT;
+#elif USE_STD_THREAD
+std::once_flag                  TWinsockSingleton::flags_;
+#else
+#error For windows you must choose USE_BOOST_THREAD or USE_STD_THREAD
+#endif
 
 //------------------------------------------------------------------------------
 TWinsockSingleton::TWinsockSingleton(void)
@@ -51,7 +57,11 @@ TWinsockSingleton::~TWinsockSingleton(void)
 //------------------------------------------------------------------------------
 void TWinsockSingleton::create(void)
 {
+#if USE_BOOST_THREAD
     boost::call_once(init, flags_);
+#elif USE_STD_THREAD
+    std::call_once(flags_, init);
+#endif
 }
 
 //------------------------------------------------------------------------------

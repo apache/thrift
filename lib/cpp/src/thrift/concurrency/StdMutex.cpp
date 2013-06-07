@@ -17,21 +17,40 @@
  * under the License.
  */
 
-#ifndef _THRIFT_WINDOWS_SOCKETPAIR_H_
-#define _THRIFT_WINDOWS_SOCKETPAIR_H_ 1
-
-#if defined(_MSC_VER) && (_MSC_VER > 1200)
-#pragma once
-#endif // _MSC_VER
-
-#ifndef _WIN32
-#error This is a MSVC header only.
+#ifdef HAVE_CONFIG_H
+#include <config.h>
 #endif
+#include "Mutex.h"
+#include "Util.h"
 
-// Win32
-#include <Winsock2.h>
-#include "config.h"
+#include <cassert>
+#include <chrono>
+#include <mutex>
 
-int thrift_socketpair(int d, int type, int protocol, THRIFT_SOCKET sv[2]);
+namespace apache { namespace thrift { namespace concurrency {
 
-#endif // _THRIFT_WINDOWS_SOCKETPAIR_H_
+/**
+ * Implementation of Mutex class using C++11 std::timed_mutex
+ *
+ * @version $Id:$
+ */
+class Mutex::impl : public std::timed_mutex {
+};
+
+Mutex::Mutex(Initializer init) : impl_(new Mutex::impl()) {}
+
+void* Mutex::getUnderlyingImpl() const { return impl_.get(); }
+
+void Mutex::lock() const { impl_->lock(); }
+
+bool Mutex::trylock() const { return impl_->try_lock(); }
+
+bool Mutex::timedlock(int64_t ms) const { return impl_->try_lock_for(std::chrono::milliseconds(ms)); }
+
+void Mutex::unlock() const { impl_->unlock(); }
+
+void Mutex::DEFAULT_INITIALIZER(void* arg) {
+}
+
+}}} // apache::thrift::concurrency
+

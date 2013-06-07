@@ -20,35 +20,22 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-
+#include <thrift/Thrift.h>
 #include "Util.h"
 
-#if defined(HAVE_CLOCK_GETTIME)
-#include <time.h>
-#elif defined(HAVE_SYS_TIME_H)
+#if defined(HAVE_SYS_TIME_H)
 #include <sys/time.h>
-#endif // defined(HAVE_CLOCK_GETTIME)
+#endif
 
 namespace apache { namespace thrift { namespace concurrency {
 
 int64_t Util::currentTimeTicks(int64_t ticksPerSec) {
   int64_t result;
-
-#if defined(HAVE_CLOCK_GETTIME)
-  struct timespec now;
-  int ret = clock_gettime(CLOCK_REALTIME, &now);
-  assert(ret == 0);
-  ret = ret; //squelching "unused variable" warning
-  toTicks(result, now, ticksPerSec);
-#elif defined(HAVE_GETTIMEOFDAY)
   struct timeval now;
-  int ret = gettimeofday(&now, NULL);
+  int ret = THRIFT_GETTIMEOFDAY(&now, NULL);
   assert(ret == 0);
+  THRIFT_UNUSED_VARIABLE(ret); //squelching "unused variable" warning
   toTicks(result, now, ticksPerSec);
-#else
-#error "No high-precision clock is available."
-#endif // defined(HAVE_CLOCK_GETTIME)
-
   return result;
 }
 
