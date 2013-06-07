@@ -147,7 +147,10 @@ literal_begin (['\"])
   pwarning(0, "\"slist\" is deprecated and will be removed in a future compiler version.  This type should be replaced with \"string\".\n");
   return tok_slist;
 }
-"senum"              { return tok_senum;                }
+"senum" {
+  pwarning(0, "\"senum\" is deprecated and will be removed in a future compiler version.  This type should be replaced with \"string\".\n");
+  return tok_senum;
+}
 "map"                { return tok_map;                  }
 "list"               { return tok_list;                 }
 "set"                { return tok_set;                  }
