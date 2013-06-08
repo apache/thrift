@@ -43,6 +43,8 @@ class TSSLSocket(TSocket.TSocket):
                port=9090,
                validate=True,
                ca_certs=None,
+               keyfile=None,
+               certfile=None,
                unix_socket=None):
     """Create SSL TSocket
 
@@ -52,7 +54,11 @@ class TSSLSocket(TSocket.TSocket):
     file downloaded from: http://curl.haxx.se/ca/cacert.pem  This is passed to
     the ssl_wrap function as the 'ca_certs' parameter.
     @type ca_certs: str
-
+    @param keyfile: The private key
+    @type keyfile: str
+    @param certfile: The cert file
+    @type certfile: str
+    
     Raises an IOError exception if validate is True and the ca_certs file is
     None, not present or unreadable.
     """
@@ -64,6 +70,8 @@ class TSSLSocket(TSocket.TSocket):
     else:
       self.cert_reqs = ssl.CERT_REQUIRED
     self.ca_certs = ca_certs
+    self.keyfile = keyfile
+    self.certfile = certfile
     if validate:
       if ca_certs is None or not os.access(ca_certs, os.R_OK):
         raise IOError('Certificate Authority ca_certs file "%s" '
@@ -82,6 +90,8 @@ class TSSLSocket(TSocket.TSocket):
                                       ssl_version=self.SSL_VERSION,
                                       do_handshake_on_connect=True,
                                       ca_certs=self.ca_certs,
+                                      keyfile=self.keyfile,
+                                      certfile=self.certfile,
                                       cert_reqs=self.cert_reqs)
         self.handle.settimeout(self._timeout)
         try:
@@ -129,6 +139,7 @@ class TSSLSocket(TSocket.TSocket):
       if cert_key != 'commonName':
         continue
       certhost = cert_value
+      # this check should be performed by some sort of Access Manager
       if certhost == self.host:
         # success, cert commonName matches desired hostname
         self.is_valid = True
