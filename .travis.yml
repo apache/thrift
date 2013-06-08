@@ -23,6 +23,7 @@ language: cpp
 
 # see what we need: http://thrift.apache.org/docs/install/ubuntu
 before_install:
+ - export NUM_CPU="`grep processor /proc/cpuinfo | wc -l`"; echo $NUM_CPU
  - sudo apt-get update -qq
  - sudo apt-get upgrade -qq
  - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev 
@@ -44,15 +45,16 @@ before_install:
 # Erlang
  - sudo apt-get install -qq erlang-base erlang-eunit erlang-dev
 # Csharp
- - sudo apt-get install -qq mono-gmcs mono-devel libmono-system-web2.0-cil
+ - sudo apt-get install -qq mono-gmcs mono-devel libmono-system-web2.0-cil nunit nunit-console
 # Haskell
  - sudo apt-get install -qq ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev
 # Thrift Compiler for Windows
  - sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime
 # node.js
  - sudo apt-get install -qq nodejs npm
- - sudo npm install nodeunit -g
- - cd lib/nodejs; npm install; cd ../..
+ - sudo npm install nodeunit -g || true
+# TODO: move npm install to nodejs Makefile
+ - cd lib/nodejs; npm install & cd ../..
 
 
 install:
@@ -64,10 +66,8 @@ script:
 #  - sh configure RUBY=/usr/bin/ruby1.9.1 RAKE=/usr/bin/rake1.9.1
 # TODO: fix these languages
   - sh configure --without-ruby --without-haskell --without-perl --without-php  --without-python
-  - make
-  - make dist
-  - make check
-  - sh test/test.sh
+  - make -j$NUM_CPU && make dist
+  - make check -j$NUM_CPU && sh test/test.sh
 # TODO: add these steps
 #  - sh bootstrap.sh ; sh contrib/mingw-cross-compile.sh
 #  - sh bootstrap.sh ; dpkg-buildpackage -tc
