@@ -17,47 +17,22 @@
 # under the License.
 #
 
-SUBDIRS =
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-if MINGW
-# do nothing, just build the compiler
-else
+gen-py/calculator.rb gen-py/shared_service.rb: $(top_srcdir)/tutorial/tutorial.thrift
+	$(THRIFT) --gen rb -r $<
 
-if WITH_CPP
-SUBDIRS += cpp
-endif
+all-local: gen-py/calculator.rb
 
-if WITH_JAVA
-SUBDIRS += java
-SUBDIRS += js
-endif
+tutorialserver: all
+	${RUBY} RubyServer.rb
 
-if WITH_PERL
-#SUBDIRS += perl
-endif
+tutorialclient: all
+	${RUBY} RubyClient.rb
 
-if WITH_PHP
-#SUBDIRS += php
-endif
+clean-local:
+	$(RM) -r gen-*
 
-if WITH_PYTHON
-SUBDIRS += py
-SUBDIRS += py.twisted
-SUBDIRS += py.tornado
-endif
-
-if WITH_RUBY
-SUBDIRS += rb
-endif
-
-if WITH_HASKELL
-#SUBDIRS += hs
-endif
-
-#
-# generate html for ThriftTest.thrift
-#
-all-local:
-	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
-
-endif
+EXTRA_DIST = \
+	RubyServer.rb \
+	RubyClient.rb

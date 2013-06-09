@@ -270,5 +270,7 @@ gen-*
 /tutorial/py.tornado/Makefile.in
 /tutorial/py/Makefile
 /tutorial/py/Makefile.in
+/tutorial/rb/Makefile
+/tutorial/rb/Makefile.in
 /ylwrap
 

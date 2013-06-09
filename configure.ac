@@ -629,6 +629,7 @@ AC_CONFIG_FILES([
   tutorial/py/Makefile
   tutorial/py.twisted/Makefile
   tutorial/py.tornado/Makefile
+  tutorial/rb/Makefile
 ])
 
 AC_OUTPUT

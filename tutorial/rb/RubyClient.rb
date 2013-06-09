@@ -19,7 +19,7 @@
 # under the License.
 #
 
-$:.push('../gen-rb')
+$:.push('gen-rb')
 $:.unshift '../../lib/rb/lib'
 
 require 'thrift'
