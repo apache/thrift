@@ -17,14 +17,14 @@
  * under the License.
  */
 var thrift = require('thrift');
-//var ttransport = require('transport');
+var ttransport = require('transport');
 var assert = require('assert');
 
 var ThriftTest = require('./gen-nodejs/ThriftTest'),
     ttypes = require('./gen-nodejs/ThriftTest_types');
 
-//var connection = thrift.createConnection('localhost', 9090, { 'transport': ttransport.TFramedTransport }),
-var connection = thrift.createConnection('localhost', 9090),
+var connection = thrift.createConnection('localhost', 9090, { 'transport': ttransport.TFramedTransport }),
+//var connection = thrift.createConnection('localhost', 9090),
     client = thrift.createClient(ThriftTest, connection);
 
 connection.on('error', function(err) {
@@ -255,7 +255,7 @@ client.testI32(-1, function(err, response) {
 setTimeout(function() {
   console.log("Server successfully tested!");
   connection.end();
-}, 200);
+}, 1500);
 
 // to make it also run on expresso
 exports.expressoTest = function() {};

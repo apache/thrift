@@ -18,6 +18,7 @@
  */
 var thrift = require('thrift');
 var Thrift = thrift.Thrift;
+var ttransport = require('transport');
 
 var ThriftTest = require('./gen-nodejs/ThriftTest'),
     ttypes = require('./gen-nodejs/ThriftTest_types');
@@ -214,6 +215,8 @@ var server = thrift.createServer(ThriftTest, {
       console.log('Done sleeping for testOneway!');
     }, sleepFor*1000); //seconds
   }
+}, { //server options
+  'transport': ttransport.TFramedTransport
 });
 
 server.listen(9090);

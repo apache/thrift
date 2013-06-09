@@ -28,7 +28,7 @@ check: stubs
 	fi
 	@if which node &> /dev/null ; then \
 		echo "   Testing Client/Server"; \
-		timeout -s14 3 $(MAKE) server & \
+		timeout -s14 5 $(MAKE) server & \
 		sleep 1; $(MAKE) client; sleep 2; \
 	fi
 
