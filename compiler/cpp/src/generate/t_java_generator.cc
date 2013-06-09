@@ -1043,6 +1043,7 @@ void t_java_generator::generate_standard_scheme_read_value(ofstream& out, t_stru
   indent_down();
   indent(out) << "} else {" << endl;
   indent_up();  
+  indent(out) << "org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);" << endl;
   indent(out) << "return null;" << endl;
   indent_down();
   indent(out) << "}" << endl;
