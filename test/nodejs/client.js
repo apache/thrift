@@ -23,7 +23,7 @@ var assert = require('assert');
 var ThriftTest = require('./gen-nodejs/ThriftTest'),
     ttypes = require('./gen-nodejs/ThriftTest_types');
 
-//var connection = thrift.createConnection('localhost', 9090, { 'transport': ttransport.TBufferedTransport }),
+//var connection = thrift.createConnection('localhost', 9090, { 'transport': ttransport.TFramedTransport }),
 var connection = thrift.createConnection('localhost', 9090),
     client = thrift.createClient(ThriftTest, connection);
 
