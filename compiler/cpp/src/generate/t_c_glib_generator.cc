@@ -1200,6 +1200,10 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
     }
   }
 
+  /* write out the get/set function prototypes */
+  f_header_ << "void " + service_name_lc + "_client_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec);" << endl;
+  f_header_ << "void " + service_name_lc + "_client_get_property (GObject *object, guint property_id, GValue *value, GParamSpec *pspec);" << endl;
+
   f_header_ << endl;
   // end of header code
 
@@ -1262,7 +1266,14 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
     "      sizeof (" << this->nspace << service_name_ << "IfInterface)," <<
         endl <<
     "      NULL,  /* base_init */" << endl <<
-    "      NULL  /* base_finalize */" << endl <<
+    "      NULL,  /* base_finalize */" << endl <<
+    "      NULL,  /* class_init */" << endl <<
+    "      NULL,  /* class_finalize */" << endl <<
+    "      NULL,  /* class_data */" << endl <<
+    "      0,     /* instance_size */" << endl <<
+    "      0,     /* n_preallocs */" << endl <<
+    "      NULL,  /* instance_init */" << endl <<
+    "      NULL   /* value_table */" << endl <<
     "    };" << endl <<
     "    type = g_type_register_static (G_TYPE_INTERFACE," << endl <<
     "                                   \"" << this->nspace << service_name_ <<
@@ -1717,7 +1728,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
 
   // generate the instance init function
   f_types_impl_ <<
-    "void " << endl <<
+    "static void " << endl <<
     this->nspace_lc << name_u << "_instance_init (" << this->nspace << name << " * object)" << endl <<
     "{" << endl;
 
@@ -1782,7 +1793,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
 
   /* create the destructor */
   f_types_impl_ <<
-    "void " << endl <<
+    "static void " << endl <<
     this->nspace_lc << name_u << "_finalize (GObject *object)" << endl <<
     "{" << endl;
   indent_up();
@@ -1876,7 +1887,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
 
 
   f_types_impl_ <<
-    "void " << endl <<
+    "static void " << endl <<
     this->nspace_lc << name_u << "_class_init (ThriftStructClass * cls)" << endl <<
     "{" << endl;
   indent_up();
@@ -1945,7 +1956,7 @@ void t_c_glib_generator::generate_struct_writer (ofstream &out,
   if (is_function) {
     error_ret = -1;
     indent(out) <<
-      "gint32" << endl <<
+      "static gint32" << endl <<
       this->nspace_lc << name_u <<
       "_write (ThriftStruct *object, ThriftProtocol *protocol, GError **error)" << endl;
   }
@@ -2032,7 +2043,7 @@ void t_c_glib_generator::generate_struct_reader(ofstream &out,
     error_ret = -1;
     indent(out) <<
       "/* reads a " << name_u << " object */" << endl <<
-      "gint32" << endl <<
+      "static gint32" << endl <<
       this->nspace_lc << name_u <<
           "_read (ThriftStruct *object, ThriftProtocol *protocol, GError **error)" << endl;
   }
