@@ -20,8 +20,8 @@
 #ifndef _THRIFT_TNAME_ME_H_
 #define _THRIFT_TNAME_ME_H_ 1
 
-#include "TAsyncProcessor.h"
-#include "TAsyncBufferProcessor.h"
+#include <thrift/async/TAsyncProcessor.h>
+#include <thrift/async/TAsyncBufferProcessor.h>
 #include <thrift/protocol/TProtocol.h>
 
 namespace apache { namespace thrift { namespace async {

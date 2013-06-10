@@ -24,7 +24,7 @@
 #include <boost/shared_ptr.hpp>
 #include <openssl/ssl.h>
 #include <thrift/concurrency/Mutex.h>
-#include "TSocket.h"
+#include <thrift/transport/TSocket.h>
 
 namespace apache { namespace thrift { namespace transport {
 

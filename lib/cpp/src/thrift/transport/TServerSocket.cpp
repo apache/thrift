@@ -43,9 +43,9 @@
 #include <unistd.h>
 #endif
 
-#include "TSocket.h"
-#include "TServerSocket.h"
-#include "PlatformSocket.h"
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TServerSocket.h>
+#include <thrift/transport/PlatformSocket.h>
 #include <boost/shared_ptr.hpp>
 
 #ifndef AF_LOCAL

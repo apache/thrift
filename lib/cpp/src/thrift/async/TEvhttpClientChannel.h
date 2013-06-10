@@ -22,7 +22,7 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
-#include "TAsyncChannel.h"
+#include <thrift/async/TAsyncChannel.h>
 
 struct event_base;
 struct evhttp_connection;

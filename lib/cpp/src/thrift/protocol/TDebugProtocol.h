@@ -20,7 +20,7 @@
 #ifndef _THRIFT_PROTOCOL_TDEBUGPROTOCOL_H_
 #define _THRIFT_PROTOCOL_TDEBUGPROTOCOL_H_ 1
 
-#include "TVirtualProtocol.h"
+#include <thrift/protocol/TVirtualProtocol.h>
 
 #include <boost/shared_ptr.hpp>
 

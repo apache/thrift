@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "WinFcntl.h"
+#include <thrift/windows/WinFcntl.h>
 
 int thrift_fcntl(THRIFT_SOCKET fd, int cmd, int flags)
 {

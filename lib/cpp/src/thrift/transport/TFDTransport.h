@@ -25,8 +25,8 @@
 #include <sys/time.h>
 #endif
 
-#include "TTransport.h"
-#include "TVirtualTransport.h"
+#include <thrift/transport/TTransport.h>
+#include <thrift/transport/TVirtualTransport.h>
 
 namespace apache { namespace thrift { namespace transport {
 

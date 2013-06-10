@@ -20,8 +20,8 @@
 #ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_
 #define _THRIFT_TRANSPORT_TSERVERSOCKET_H_ 1
 
-#include "TServerTransport.h"
-#include "PlatformSocket.h"
+#include <thrift/transport/TServerTransport.h>
+#include <thrift/transport/PlatformSocket.h>
 #include <boost/shared_ptr.hpp>
 
 namespace apache { namespace thrift { namespace transport {

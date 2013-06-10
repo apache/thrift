@@ -20,7 +20,7 @@
 #ifndef _THRIFT_TRANSPORT_TSERVERWINPIPES_H_
 #define _THRIFT_TRANSPORT_TSERVERWINPIPES_H_ 1
 
-#include "TServerTransport.h"
+#include <thrift/transport/TServerTransport.h>
 #include <boost/shared_ptr.hpp>
 #ifndef _WIN32
 #  include "TServerSocket.h"

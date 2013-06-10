@@ -20,8 +20,8 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-#include "PosixThreadFactory.h"
-#include "Exception.h"
+#include <thrift/concurrency/PosixThreadFactory.h>
+#include <thrift/concurrency/Exception.h>
 
 #if GOOGLE_PERFTOOLS_REGISTER_THREAD
 #  include <google/profiler.h>

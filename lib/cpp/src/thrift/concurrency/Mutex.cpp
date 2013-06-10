@@ -21,8 +21,8 @@
 #include <config.h>
 #endif
 #include <thrift/Thrift.h>
-#include "Mutex.h"
-#include "Util.h"
+#include <thrift/concurrency/Mutex.h>
+#include <thrift/concurrency/Util.h>
 
 #include <assert.h>
 #ifdef HAVE_PTHREAD_H

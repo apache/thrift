@@ -20,9 +20,9 @@
 #ifndef _THRIFT_CONCURRENCY_TIMERMANAGER_H_
 #define _THRIFT_CONCURRENCY_TIMERMANAGER_H_ 1
 
-#include "Exception.h"
-#include "Monitor.h"
-#include "Thread.h"
+#include <thrift/concurrency/Exception.h>
+#include <thrift/concurrency/Monitor.h>
+#include <thrift/concurrency/Thread.h>
 
 #include <boost/shared_ptr.hpp>
 #include <map>

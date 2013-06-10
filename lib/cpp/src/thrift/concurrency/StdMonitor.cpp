@@ -20,9 +20,9 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-#include "Monitor.h"
-#include "Exception.h"
-#include "Util.h"
+#include <thrift/concurrency/Monitor.h>
+#include <thrift/concurrency/Exception.h>
+#include <thrift/concurrency/Util.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <assert.h>
 

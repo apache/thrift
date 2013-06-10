@@ -23,7 +23,7 @@
 #include <config.h>
 #endif
 
-#include "TNonblockingServer.h"
+#include <thrift/server/TNonblockingServer.h>
 #include <thrift/concurrency/Exception.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>

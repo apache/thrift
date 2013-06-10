@@ -20,8 +20,8 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-#include "Mutex.h"
-#include "Util.h"
+#include <thrift/concurrency/Mutex.h>
+#include <thrift/concurrency/Util.h>
 
 #include <cassert>
 #include <chrono>

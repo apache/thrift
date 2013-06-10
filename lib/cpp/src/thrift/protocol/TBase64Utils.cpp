@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "TBase64Utils.h"
+#include <thrift/protocol/TBase64Utils.h>
 
 #include <boost/static_assert.hpp>
 

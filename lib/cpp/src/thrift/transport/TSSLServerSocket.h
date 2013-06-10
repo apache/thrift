@@ -21,7 +21,7 @@
 #define _THRIFT_TRANSPORT_TSSLSERVERSOCKET_H_ 1
 
 #include <boost/shared_ptr.hpp>
-#include "TServerSocket.h"
+#include <thrift/transport/TServerSocket.h>
 
 namespace apache { namespace thrift { namespace transport {
 

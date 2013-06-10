@@ -21,10 +21,10 @@
 #include <config.h>
 #endif
 
-#include "ThreadManager.h"
-#include "Exception.h"
-#include "Monitor.h"
-#include "Util.h"
+#include <thrift/concurrency/ThreadManager.h>
+#include <thrift/concurrency/Exception.h>
+#include <thrift/concurrency/Monitor.h>
+#include <thrift/concurrency/Util.h>
 
 #include <boost/shared_ptr.hpp>
 

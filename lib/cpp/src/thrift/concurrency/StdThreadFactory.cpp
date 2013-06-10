@@ -20,8 +20,8 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-#include "StdThreadFactory.h"
-#include "Exception.h"
+#include <thrift/concurrency/StdThreadFactory.h>
+#include <thrift/concurrency/Exception.h>
 
 #include <cassert>
 

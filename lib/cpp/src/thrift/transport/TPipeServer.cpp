@@ -22,8 +22,8 @@
 #endif
 #include <cstring>
 
-#include "TPipe.h"
-#include "TPipeServer.h"
+#include <thrift/transport/TPipe.h>
+#include <thrift/transport/TPipeServer.h>
 #include <boost/shared_ptr.hpp>
 #ifdef _WIN32
 #  include <AccCtrl.h>

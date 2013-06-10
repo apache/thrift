@@ -20,8 +20,8 @@
 #ifndef _THRIFT_PROTOCOL_TBINARYPROTOCOL_H_
 #define _THRIFT_PROTOCOL_TBINARYPROTOCOL_H_ 1
 
-#include "TProtocol.h"
-#include "TVirtualProtocol.h"
+#include <thrift/protocol/TProtocol.h>
+#include <thrift/protocol/TVirtualProtocol.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -277,6 +277,6 @@ typedef TBinaryProtocolFactoryT<TTransport> TBinaryProtocolFactory;
 
 }}} // apache::thrift::protocol
 
-#include "TBinaryProtocol.tcc"
+#include <thrift/protocol/TBinaryProtocol.tcc>
 
 #endif // #ifndef _THRIFT_PROTOCOL_TBINARYPROTOCOL_H_

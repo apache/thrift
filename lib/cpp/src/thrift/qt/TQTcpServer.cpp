@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include "TQTcpServer.h"
-#include "TQIODeviceTransport.h"
+#include <thrift/qt/TQTcpServer.h>
+#include <thrift/qt/TQIODeviceTransport.h>
 
 #include <QTcpSocket>
 

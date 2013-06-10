@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include "TSocketPool.h"
+#include <thrift/transport/TSocketPool.h>
 
 namespace apache { namespace thrift { namespace transport {
 

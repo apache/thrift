@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "GetTimeOfDay.h"
+#include <thrift/windows/GetTimeOfDay.h>
 #include "config.h"
 
 // win32

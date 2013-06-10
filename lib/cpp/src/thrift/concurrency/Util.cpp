@@ -21,7 +21,7 @@
 #include <config.h>
 #endif
 #include <thrift/Thrift.h>
-#include "Util.h"
+#include <thrift/concurrency/Util.h>
 
 #if defined(HAVE_SYS_TIME_H)
 #include <sys/time.h>

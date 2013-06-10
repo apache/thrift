@@ -20,7 +20,7 @@
 #ifndef _THRIFT_CONCURRENCY_POSIXTHREADFACTORY_H_
 #define _THRIFT_CONCURRENCY_POSIXTHREADFACTORY_H_ 1
 
-#include "Thread.h"
+#include <thrift/concurrency/Thread.h>
 
 #include <boost/shared_ptr.hpp>
 

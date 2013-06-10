@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "TAsyncProtocolProcessor.h"
+#include <thrift/async/TAsyncProtocolProcessor.h>
 
 using apache::thrift::transport::TBufferBase;
 using apache::thrift::protocol::TProtocol;

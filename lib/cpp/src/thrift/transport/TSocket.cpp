@@ -42,9 +42,9 @@
 #include <fcntl.h>
 
 #include <thrift/concurrency/Monitor.h>
-#include "TSocket.h"
-#include "TTransportException.h"
-#include "PlatformSocket.h"
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TTransportException.h>
+#include <thrift/transport/PlatformSocket.h>
 
 #ifndef SOCKOPT_CAST_T
 #   ifndef _WIN32

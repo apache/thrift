@@ -23,7 +23,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "transport/PlatformSocket.h"
+#include <thrift/transport/PlatformSocket.h>
 #include <stdio.h>
 #include <assert.h>
 
@@ -45,7 +45,7 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_convertible.hpp>
 
-#include "TLogging.h"
+#include <thrift/TLogging.h>
 
 /**
  * Helper macros to allow function overloading even when using

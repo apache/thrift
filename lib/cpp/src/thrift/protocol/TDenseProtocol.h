@@ -20,7 +20,7 @@
 #ifndef _THRIFT_PROTOCOL_TDENSEPROTOCOL_H_
 #define _THRIFT_PROTOCOL_TDENSEPROTOCOL_H_ 1
 
-#include "TBinaryProtocol.h"
+#include <thrift/protocol/TBinaryProtocol.h>
 
 namespace apache { namespace thrift { namespace protocol {
 

@@ -21,9 +21,9 @@
 #include "config.h"
 #endif
 
-#include "TFileTransport.h"
-#include "TTransportUtils.h"
-#include "PlatformSocket.h"
+#include <thrift/transport/TFileTransport.h>
+#include <thrift/transport/TTransportUtils.h>
+#include <thrift/transport/PlatformSocket.h>
 #include <thrift/concurrency/FunctionRunner.h>
 
 #ifdef HAVE_SYS_TIME_H

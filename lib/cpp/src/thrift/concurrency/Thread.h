@@ -25,7 +25,7 @@
 #include <boost/weak_ptr.hpp>
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #if USE_BOOST_THREAD

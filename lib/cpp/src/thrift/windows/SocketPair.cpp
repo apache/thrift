@@ -27,7 +27,7 @@
  * under the License.
  */
 
-#include "SocketPair.h"
+#include <thrift/windows/SocketPair.h>
 
 // stl
 #include <string.h>

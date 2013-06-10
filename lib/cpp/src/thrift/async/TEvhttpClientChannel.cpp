@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "TEvhttpClientChannel.h"
+#include <thrift/async/TEvhttpClientChannel.h>
 #include <evhttp.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TProtocolException.h>

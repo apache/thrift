@@ -23,7 +23,7 @@
 #include <boost/shared_ptr.hpp>
 #include <thrift/cxxfunctional.h>
 #include <sys/types.h>
-#include "Thread.h"
+#include <thrift/concurrency/Thread.h>
 
 namespace apache { namespace thrift { namespace concurrency {
 

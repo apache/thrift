@@ -17,8 +17,8 @@
 * under the License.
 */
 
-#include "TTransportException.h"
-#include "TPipe.h"
+#include <thrift/transport/TTransportException.h>
+#include <thrift/transport/TPipe.h>
 
 namespace apache { namespace thrift { namespace transport {
 

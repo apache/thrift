@@ -36,8 +36,8 @@
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 #include <thrift/concurrency/Mutex.h>
-#include "TSSLSocket.h"
-#include "PlatformSocket.h"
+#include <thrift/transport/TSSLSocket.h>
+#include <thrift/transport/PlatformSocket.h>
 
 #define OPENSSL_VERSION_NO_THREAD_ID 0x10000000L
 

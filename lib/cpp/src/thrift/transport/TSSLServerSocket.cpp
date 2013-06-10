@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include "TSSLServerSocket.h"
-#include "TSSLSocket.h"
+#include <thrift/transport/TSSLServerSocket.h>
+#include <thrift/transport/TSSLSocket.h>
 
 namespace apache { namespace thrift { namespace transport {
 

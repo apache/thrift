@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "TWinsockSingleton.h"
+#include <thrift/windows/TWinsockSingleton.h>
 
 // boost
 #include <boost/assert.hpp>

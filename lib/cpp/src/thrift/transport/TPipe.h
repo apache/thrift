@@ -23,7 +23,7 @@
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TVirtualTransport.h>
 #ifndef _WIN32
-#  include "TSocket.h"
+#  include <thrift/transport/TSocket.h>
 #endif
 
 namespace apache { namespace thrift { namespace transport {

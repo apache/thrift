@@ -19,7 +19,7 @@
 #ifndef _THRIFT_ASYNC_TASYNCDISPATCHPROCESSOR_H_
 #define _THRIFT_ASYNC_TASYNCDISPATCHPROCESSOR_H_ 1
 
-#include "TAsyncProcessor.h"
+#include <thrift/async/TAsyncProcessor.h>
 
 namespace apache { namespace thrift { namespace async {
 
