@@ -105,6 +105,7 @@
     <Compile Include="Server\TServer.cs" />
     <Compile Include="Server\TSimpleServer.cs" />
     <Compile Include="Server\TThreadPoolServer.cs" />
+    <Compile Include="TException.cs" />
     <Compile Include="TApplicationException.cs" />
     <Compile Include="TProcessor.cs" />
     <Compile Include="Transport\TBufferedTransport.cs" />

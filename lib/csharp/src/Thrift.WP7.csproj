@@ -93,6 +93,7 @@
     <Compile Include="Protocol\TSet.cs" />
     <Compile Include="Protocol\TStruct.cs" />
     <Compile Include="Protocol\TType.cs" />
+    <Compile Include="TException.cs" />
     <Compile Include="TApplicationException.cs" />
     <Compile Include="TProcessor.cs" />
     <Compile Include="Transport\TFramedTransport.cs" />

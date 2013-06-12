@@ -514,7 +514,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
   indent(out) << "public " << (is_final ? "sealed " : "") << "partial class " << tstruct->get_name() << " : ";
 
   if (is_exception) {
-    out << "Exception, ";
+    out << "TException, ";
   }
   out << "TBase";
 
@@ -997,7 +997,7 @@ void t_csharp_generator::generate_csharp_union_definition(std::ofstream& out, t_
 
   indent(out) << "public override void Write(TProtocol protocol) {" << endl;
   indent_up();
-  indent(out) << "throw new Exception(\"Cannot persist an union type which is not set.\");" << endl;
+  indent(out) << "throw new TProtocolException( TProtocolException.INVALID_DATA, \"Cannot persist an union type which is not set.\");" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
 
