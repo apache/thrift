@@ -42,6 +42,9 @@ class t_function : public t_doc {
     arglist_(arglist),
     oneway_(oneway) {
     xceptions_ = new t_struct(NULL);
+    if (oneway_ && (! returntype_->is_void())) {
+      pwarning(1, "Oneway methods should return void.\n");
+    }
   }
 
   t_function(t_type* returntype,
@@ -57,6 +60,9 @@ class t_function : public t_doc {
   {
     if (oneway_ && !xceptions_->get_members().empty()) {
       throw std::string("Oneway methods can't throw exceptions.");
+    }
+    if (oneway_ && (! returntype_->is_void())) {
+      pwarning(1, "Oneway methods should return void.\n");
     }
   }
 
