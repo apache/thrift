@@ -54,6 +54,10 @@ if WITH_HASKELL
 #SUBDIRS += hs
 endif
 
+if WITH_GO
+SUBDIRS += go
+endif
+
 #
 # generate html for ThriftTest.thrift
 #

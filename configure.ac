@@ -75,20 +75,6 @@ AC_ARG_VAR([CABAL_CONFIGURE_FLAGS],
 
 AC_SUBST(CABAL_CONFIGURE_FLAGS)
 
-AC_ARG_VAR([GOROOT], [Prefix for the Go source directory.
-                           (Normal --prefix is ignored for Go because
-                           Go has different conventions.)
-                           Default = "/usr/local/share/go"])
-AS_IF([test "x$GOROOT" = x], [GOROOT="/usr/local/share/go"])
-
-AC_ARG_VAR([GOARCH], [Architecture default for Go.
-                           Default = "amd64"])
-AS_IF([test "x$GOARCH" = x], [GOARCH="amd64"])
-
-AC_ARG_VAR([GOBIN], [Binary directory for Go.
-                           Default = "/usr/local/bin"])
-AS_IF([test "x$GOBIN" = x], [GOBIN="/usr/local/bin"])
-
 AC_ARG_VAR([D_IMPORT_PREFIX], [Prefix for installing D modules.
                            [INCLUDEDIR/d2]])
 AS_IF([test "x$D_IMPORT_PREFIX" = x], [D_IMPORT_PREFIX="${includedir}/d2"])
@@ -270,29 +256,8 @@ AM_CONDITIONAL(WITH_HASKELL, [test "$have_haskell" = "yes"])
 
 AX_THRIFT_LIB(go, [Go], yes)
 if test "$with_go" = "yes";  then
-  case X"$GOARCH" in
-  Xamd64)
-    GOARCH_NUM=6
-  	;;
-  X386)
-    GOARCH_NUM=8
-  	;;
-  Xarm)
-    GOARCH_NUM=5
-  	;;
-  *)
-    GOARCH_NUM=6
-    ;;
-  esac
-  GO_C=${GOBIN}/${GOARCH_NUM}g
-  GO_L=${GOBIN}/${GOARCH_NUM}l
-  GOMAKE=${GOBIN}/gomake
-  GOINSTALL=${GOBIN}/goinstall
-  AC_PATH_PROG([GO_C], [${GOARCH_NUM}g])
-  AC_PATH_PROG([GO_L], [${GOARCH_NUM}l])
-  AC_PATH_PROG([GOMAKE], [gomake])
-  AC_PATH_PROG([GOINSTALL], [goinstall])
-  if [[ -x "$GO_C" -a -x "$GO_L" -a -x "$GOMAKE" -a -x "$GOINSTALL" ]] ; then
+  AC_PATH_PROG([GO], [go])
+  if [[ -x "$GO" ]] ; then
     have_go="yes"
   fi
 fi
@@ -603,6 +568,7 @@ AC_CONFIG_FILES([
   lib/d/Makefile
   lib/d/test/Makefile
   lib/erl/Makefile
+  lib/go/Makefile
   lib/hs/Makefile
   lib/java/Makefile
   lib/js/test/Makefile
@@ -624,6 +590,7 @@ AC_CONFIG_FILES([
   test/rb/Makefile
   tutorial/Makefile
   tutorial/cpp/Makefile
+  tutorial/go/Makefile
   tutorial/java/Makefile
   tutorial/js/Makefile
   tutorial/py/Makefile
@@ -704,11 +671,8 @@ fi
 if test "$have_go" = "yes" ; then
   echo
   echo "Go Library:"
-  echo "   Using GOROOT............... : $GOROOT"
-  echo "   Using GOBIN................ : $GOBIN"
-  echo "   Using GOARCH............... : $GOARCH"
-  echo "   Using GO Compiler.......... : $GO_C"
-  echo "   Using GO Linker............ : $GO_L"
+  echo "   Using Go................... : $GO"
+  echo "   Using Go version........... : $(go version)"
 fi
 if test "$have_d" = "yes" ; then
   echo

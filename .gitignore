@@ -160,6 +160,8 @@ gen-*
 /lib/hs/dist
 /lib/hs/Makefile
 /lib/hs/Makefile.in
+/lib/go/Makefile
+/lib/go/Makefile.in
 /lib/java/Makefile
 /lib/java/Makefile.in
 /lib/java/build
@@ -258,6 +260,13 @@ gen-*
 /tutorial/cpp/Makefile.in
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
+/tutorial/go/Makefile
+/tutorial/go/Makefile.in
+/tutorial/go/go-tutorial
+/tutorial/go/calculator-remote
+/tutorial/go/src/shared
+/tutorial/go/src/tutorial
+/tutorial/go/src/git.apache.org
 /tutorial/java/Makefile
 /tutorial/java/Makefile.in
 /tutorial/java/build/
