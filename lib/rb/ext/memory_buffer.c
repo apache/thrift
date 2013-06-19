@@ -22,28 +22,28 @@
 #include <bytes.h>
 #include <macros.h>
 
-ID buf_ivar_id;
-ID index_ivar_id;
+static ID buf_ivar_id;
+static ID index_ivar_id;
 
-ID slice_method_id;
+static ID slice_method_id;
 
-int GARBAGE_BUFFER_SIZE;
+static int GARBAGE_BUFFER_SIZE;
 
 #define GET_BUF(self) rb_ivar_get(self, buf_ivar_id)
 
-VALUE rb_thrift_memory_buffer_write(VALUE self, VALUE str);
-VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value);
-VALUE rb_thrift_memory_buffer_read_byte(VALUE self);
-VALUE rb_thrift_memory_buffer_read_into_buffer(VALUE self, VALUE buffer_value, VALUE size_value);
+static VALUE rb_thrift_memory_buffer_write(VALUE self, VALUE str);
+static VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value);
+static VALUE rb_thrift_memory_buffer_read_byte(VALUE self);
+static VALUE rb_thrift_memory_buffer_read_into_buffer(VALUE self, VALUE buffer_value, VALUE size_value);
 
-VALUE rb_thrift_memory_buffer_write(VALUE self, VALUE str) {
+static VALUE rb_thrift_memory_buffer_write(VALUE self, VALUE str) {
   VALUE buf = GET_BUF(self);
   str = force_binary_encoding(str);
   rb_str_buf_cat(buf, RSTRING_PTR(str), RSTRING_LEN(str));
   return Qnil;
 }
 
-VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value) {
+static VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value) {
   int length = FIX2INT(length_value);
   
   VALUE index_value = rb_ivar_get(self, index_ivar_id);
@@ -69,7 +69,7 @@ VALUE rb_thrift_memory_buffer_read(VALUE self, VALUE length_value) {
   return data;
 }
 
-VALUE rb_thrift_memory_buffer_read_byte(VALUE self) {
+static VALUE rb_thrift_memory_buffer_read_byte(VALUE self) {
   VALUE index_value = rb_ivar_get(self, index_ivar_id);
   int index = FIX2INT(index_value);
 
@@ -89,7 +89,7 @@ VALUE rb_thrift_memory_buffer_read_byte(VALUE self) {
   return INT2FIX(result);
 }
 
-VALUE rb_thrift_memory_buffer_read_into_buffer(VALUE self, VALUE buffer_value, VALUE size_value) {
+static VALUE rb_thrift_memory_buffer_read_into_buffer(VALUE self, VALUE buffer_value, VALUE size_value) {
   int i = 0;
   int size = FIX2INT(size_value);
   int index;
