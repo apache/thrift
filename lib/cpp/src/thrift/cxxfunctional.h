@@ -120,4 +120,7 @@
   }}} // apache::thrift::stdcxx
 #endif
 
+  // Alias for thrift c++ compatibility namespace
+  namespace tcxx = apache::thrift::stdcxx;
+
 #endif // #ifndef _THRIFT_CXXFUNCTIONAL_H_
