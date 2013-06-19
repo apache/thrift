@@ -46,6 +46,7 @@ clean-local:
 	$(RM) -r gen-*
 
 EXTRA_DIST = \
-	client.py \
-	handler.py \
-	server.py
+	src/client.go \
+	src/handler.go \
+	src/server.go \
+	src/main.go
