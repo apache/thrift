@@ -25,6 +25,9 @@
 #include <macros.h>
 #include <bytes.h>
 
+//#define LOG_FUNC() printf("Compact %s\n", __FUNCTION__);
+#define LOG_FUNC()
+
 #define LAST_ID(obj) FIX2INT(rb_ary_pop(rb_ivar_get(obj, last_field_id)))
 #define SET_LAST_ID(obj, val) rb_ary_push(rb_ivar_get(obj, last_field_id), val)
 
@@ -174,16 +177,19 @@ VALUE rb_thrift_compact_proto_write_message_end(VALUE self) {
 }
 
 VALUE rb_thrift_compact_proto_write_struct_begin(VALUE self, VALUE name) {
+  LOG_FUNC();
   rb_ary_push(rb_ivar_get(self, last_field_id), INT2FIX(0));
   return Qnil;
 }
 
 VALUE rb_thrift_compact_proto_write_struct_end(VALUE self) {
+  LOG_FUNC();
   rb_ary_pop(rb_ivar_get(self, last_field_id));
   return Qnil;
 }
 
 VALUE rb_thrift_compact_proto_write_field_end(VALUE self) {
+  LOG_FUNC();
   return Qnil;
 }
 
@@ -210,6 +216,7 @@ VALUE rb_thrift_compact_proto_write_message_begin(VALUE self, VALUE name, VALUE 
 }
 
 VALUE rb_thrift_compact_proto_write_field_begin(VALUE self, VALUE name, VALUE type, VALUE id) {
+  LOG_FUNC();
   if (FIX2INT(type) == TTYPE_BOOL) {
     // we want to possibly include the value, so we'll wait.
     rb_ivar_set(self, boolean_field_id, rb_ary_new3(2, type, id));

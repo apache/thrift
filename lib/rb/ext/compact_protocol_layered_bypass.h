@@ -1,0 +1,1 @@
+ void Init_layered_bypass_compact_protocol();

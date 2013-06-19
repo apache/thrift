@@ -23,7 +23,10 @@
 #include <binary_protocol_accelerated.h>
 #include <compact_protocol.h>
 #include <memory_buffer.h>
-
+#include <compact_protocol_buffered.h>
+#include <compact_protocol_layered.h>
+#include <compact_protocol_layered_buffered.h>
+#include <compact_protocol_layered_bypass.h>
 // cached classes/modules
 VALUE rb_cSet;
 VALUE thrift_module;
@@ -191,5 +194,9 @@ void Init_thrift_native() {
   Init_struct();
   Init_binary_protocol_accelerated();
   Init_compact_protocol();
+  Init_compact_protocol_buffered();
+  Init_layered_compact_protocol();
+  Init_layered_buffered_compact_protocol();
+  Init_layered_bypass_compact_protocol();  
   Init_memory_buffer();
 }
