@@ -3,8 +3,9 @@
 
 #include "protocol_transfer.h"
 
+#define BUFFER_LEN 8192
 
-void buffer_transfer_initialize(protocol_transfer* pt, VALUE transport, VALUE strbuf);
-protocol_transfer* buffer_transfer_create(VALUE transport, VALUE strbuf);
+void buffer_transfer_initialize(protocol_transfer* pt, VALUE transport, VALUE wbuf, VALUE rbuf);
+protocol_transfer* buffer_transfer_create(VALUE transport, VALUE wbuf, VALUE rbuf);
 
 #endif

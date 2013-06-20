@@ -20,11 +20,13 @@ static VALUE rb_initialize(VALUE self, VALUE transport)
 {
   rb_call_super(1, &transport);
 
-  char buf[8192];
-  VALUE strbuf = rb_str_new(buf, 4096);
-  rb_ivar_set(self, rb_intern("@strbuf"), strbuf);
+  char buf[BUFFER_LEN];
+  VALUE rbuf = rb_str_new(buf, BUFFER_LEN);
+  VALUE wbuf = rb_str_new(buf, BUFFER_LEN);
+  rb_ivar_set(self, rb_intern("@rbuf"), rbuf);
+  rb_ivar_set(self, rb_intern("@wbuf"), wbuf);
 
-  get_cdata(self)->pt = buffer_transfer_create(transport, strbuf);
+  get_cdata(self)->pt = buffer_transfer_create(transport, wbuf, rbuf);
   return self;
 }
 
