@@ -21,7 +21,7 @@ static VALUE rb_initialize(VALUE self, VALUE transport)
   rb_call_super(1, &transport);
 
   char buf[8192];
-  VALUE strbuf = rb_str_new(buf, 8192);
+  VALUE strbuf = rb_str_new(buf, 4096);
   rb_ivar_set(self, rb_intern("@strbuf"), strbuf);
 
   get_cdata(self)->pt = buffer_transfer_create(transport, strbuf);

@@ -90,8 +90,8 @@ int pop_last_field_id(compact_data* cdata)
 
         DEBUG_FUNCTION_ENTRY();
 
-        if (cdata->last_field_index <= 0) return 0;
-        // if (cdata->last_field_index <= 0) rb_bug("Structure nesting corrupt!");
+        //if (cdata->last_field_index <= 0) return 0;
+        if (cdata->last_field_index <= 0) rb_bug("Structure nesting corrupt!");
 
         cdata->last_field_index--;
 

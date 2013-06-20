@@ -2,14 +2,18 @@
 #include <ruby.h>
 #include "protocol_transfer.h"
 
-#define DEBUG 0
 #define BUFFER_LEN 4096
+#define DEBUG 0
 
 #if DEBUG
-  #define DEBUG_FUNCTION_ENTRY() printf("Layered %s\n", __FUNCTION__);
+  #define DEBUG_FUNCTION_ENTRY() printf("buffered %s\n", __FUNCTION__);
+  #define DEBUG_FUNCTION_PROGRESS() printf("%s, %s:%d\n", __FILE__, __FUNCTION__, __LINE__);
 #else
   #define DEBUG_FUNCTION_ENTRY()
+  #define DEBUG_FUNCTION_PROGRESS() 
 #endif
+
+
 //#define LOG_FUNC()
 
 struct _buffer_data;
@@ -75,10 +79,12 @@ static int protocol_read(protocol_transfer* pt, char* buffer, int length)
 		VALUE buf;
 		//No, let's fetch some
 		int available = NUM2INT(rb_funcall(data->transport, available_method_id, 0));
-		int read_sz = available < BUFFER_LEN ? available : BUFFER_LEN;
+		int read_sz = (available < BUFFER_LEN) ? available : BUFFER_LEN;
 
 		if (read_sz > RSTRING_LEN(data->strbuf))
-			buf = rb_funcall(data->transport, read_into_buffer_method_id, 1, INT2FIX(read_sz));
+		{
+			buf = rb_funcall(data->transport, read_all_method_id, 1, INT2FIX(read_sz));
+		}
 		else
 		{
 			rb_funcall(data->transport, read_into_buffer_method_id, 2, data->strbuf, INT2FIX(read_sz));
@@ -86,8 +92,8 @@ static int protocol_read(protocol_transfer* pt, char* buffer, int length)
 		}
 
 		data->read_buffer_idx = 0;
-		data->read_buffer_sz = RSTRING_LEN(buf);
-		memcpy(data->read_buffer, RSTRING_PTR(buf), RSTRING_LEN(buf));
+		data->read_buffer_sz = read_sz;
+		memcpy(data->read_buffer, RSTRING_PTR(buf), read_sz);
 	}
 
 	int rsz = MIN(length, data->read_buffer_sz - data->read_buffer_idx);
@@ -137,6 +143,7 @@ void buffer_transfer_initialize(protocol_transfer* pt, VALUE transport, VALUE st
 	write_method_id = rb_intern("write");
 	read_byte_method_id = rb_intern("read_byte");
 	available_method_id = rb_intern("available");
+	read_into_buffer_method_id = rb_intern("read_into_buffer");
 
 	data->write_buffer = malloc(BUFFER_LEN);
 	data->read_buffer = malloc(BUFFER_LEN);
