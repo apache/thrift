@@ -26,6 +26,18 @@
 
 #define DEBUG 0
 
+#if SIZEOF_VOIDP <= SIZEOF_LONG
+  #define NUM2PTR(x) NUM2ULONG(x)
+  #define PTR2NUM(x) ULONG2NUM((unsigned long)x)
+#elif SIZEOF_VOIDP <= SIZEOF_LONG_LONG
+  #define NUM2PTR(x) NUM2ULL(x)
+  #define PTR2NUM(x) ULL2NUM((unsigned long long)x)
+#else
+ #error "Pointer size too large, could not determine a good way to convert a C pointer to a Ruby object"
+#endif
+
+
+
 #if DEBUG
   #define DEBUG_FUNCTION_ENTRY() printf("Layered %s\n", __FUNCTION__);
   #define DEBUG_FUNCTION_PROGRES() printf("%s, %s:%d\n", __FILE__, __FUNCTION__, __LINE__);
@@ -102,14 +114,14 @@ int pop_last_field_id(compact_data* cdata)
 /* Getter / Setter for the C data structure tied to the ruby object. May be easily swapped to a more efficient implementation later */
 compact_data* get_cdata(VALUE self)
 {
-    compact_data* cdata = (compact_data*)NUM2ULONG(rb_ivar_get(self, cdata_id));
+    compact_data* cdata = (compact_data*)NUM2PTR(rb_ivar_get(self, cdata_id));
     return cdata;
 }
 
 /* Getter / Setter for the C data structure tied to the ruby object. May be easily swapped to a more efficient implementation later */
 void set_cdata(VALUE self, compact_data* cdata)
 {
-  rb_ivar_set(self, cdata_id, ULONG2NUM((long)cdata));
+  rb_ivar_set(self, cdata_id, PTR2NUM(cdata));
 }
 
 static int get_compact_type(VALUE type_value) {
