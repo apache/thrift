@@ -476,11 +476,7 @@ void t_go_generator::init_generator()
 
     for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
         string service_dir = package_dir_ + "/" + underscore((*sv_iter)->get_name()) + "-remote";
-#ifdef MINGW
-        mkdir(service_dir.c_str());
-#else
-        mkdir(service_dir.c_str(), 0755);
-#endif
+        MKDIR(service_dir.c_str());
     }
 
     // Print header
@@ -2131,6 +2127,7 @@ void t_go_generator::generate_service_remote(t_service* tservice)
     // Close service file
     f_remote.close();
     format_go_output(f_remote_name);
+#ifndef _MSC_VER
     // Make file executable, love that bitwise OR action
     chmod(f_remote_name.c_str(),
           S_IRUSR
@@ -2143,6 +2140,7 @@ void t_go_generator::generate_service_remote(t_service* tservice)
           | S_IXOTH
 #endif
          );
+#endif
 }
 
 /**
