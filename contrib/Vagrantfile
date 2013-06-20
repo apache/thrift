@@ -37,7 +37,7 @@ sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime
 echo I am building Apache Thrift ...
 cd /thrift
 sh bootstrap.sh
-sh configure
+sh configure --without-erlang
 make
 make dist
 make check
