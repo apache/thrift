@@ -4,7 +4,7 @@
 #include "protocol_transfer.h"
 
 
-void buffer_transfer_initialize(protocol_transfer* pt, VALUE transport);
-protocol_transfer* buffer_transfer_create(VALUE transport);
+void buffer_transfer_initialize(protocol_transfer* pt, VALUE transport, VALUE strbuf);
+protocol_transfer* buffer_transfer_create(VALUE transport, VALUE strbuf);
 
 #endif

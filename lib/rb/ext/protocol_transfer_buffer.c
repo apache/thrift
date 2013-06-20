@@ -15,6 +15,14 @@
 struct _buffer_data;
 typedef struct _buffer_data buffer_data;
 
+static	ID read_into_buffer_method_id;
+static	ID read_all_method_id;
+static 	ID read_byte_method_id;
+static 	ID write_method_id;
+static 	ID available_method_id;
+
+
+
 struct _buffer_data
 {
 	char* write_buffer;
@@ -24,12 +32,8 @@ struct _buffer_data
 	int read_buffer_idx;
 	int read_buffer_sz;
 
-	ID read_all_method_id;
-	ID read_byte_method_id;
-	ID write_method_id;
-	ID available_method_id;
-
 	VALUE transport;
+	VALUE strbuf;
 };
 
 static int protocol_read(protocol_transfer* pt, char* buffer, int length);
@@ -68,11 +72,18 @@ static int protocol_read(protocol_transfer* pt, char* buffer, int length)
 	//Do we have data in the read buffer?
 	if (data->read_buffer_idx == data->read_buffer_sz)
 	{
+		VALUE buf;
 		//No, let's fetch some
-		int available = NUM2INT(rb_funcall(data->transport, data->available_method_id, 0));
+		int available = NUM2INT(rb_funcall(data->transport, available_method_id, 0));
 		int read_sz = available < BUFFER_LEN ? available : BUFFER_LEN;
 
-		VALUE buf = rb_funcall(data->transport, data->read_all_method_id, 1, INT2FIX(read_sz));
+		if (read_sz > RSTRING_LEN(data->strbuf))
+			buf = rb_funcall(data->transport, read_into_buffer_method_id, 1, INT2FIX(read_sz));
+		else
+		{
+			rb_funcall(data->transport, read_into_buffer_method_id, 2, data->strbuf, INT2FIX(read_sz));
+			buf = data->strbuf;
+		}
 
 		data->read_buffer_idx = 0;
 		data->read_buffer_sz = RSTRING_LEN(buf);
@@ -110,22 +121,22 @@ static void protocol_flush(protocol_transfer* pt)
 {
 	buffer_data* data = (buffer_data*)pt->data;	      
 
-	rb_funcall(data->transport, data->write_method_id, 1, rb_str_new(data->write_buffer, data->write_bufer_idx));
+	rb_funcall(data->transport, write_method_id, 1, rb_str_new(data->write_buffer, data->write_bufer_idx));
 	data->write_bufer_idx = 0;
 }
 
 
-void buffer_transfer_initialize(protocol_transfer* pt, VALUE transport)
+void buffer_transfer_initialize(protocol_transfer* pt, VALUE transport, VALUE strbuf)
 {
 	buffer_data* data = (buffer_data*)malloc(sizeof(buffer_data));
 
 
 	pt->data = data;
 	data->transport = transport;
-	data->read_all_method_id = rb_intern("read_all");;
-	data->write_method_id = rb_intern("write");
-	data->read_byte_method_id = rb_intern("read_byte");
-	data->available_method_id = rb_intern("available");
+	read_all_method_id = rb_intern("read_all");;
+	write_method_id = rb_intern("write");
+	read_byte_method_id = rb_intern("read_byte");
+	available_method_id = rb_intern("available");
 
 	data->write_buffer = malloc(BUFFER_LEN);
 	data->read_buffer = malloc(BUFFER_LEN);
@@ -133,6 +144,8 @@ void buffer_transfer_initialize(protocol_transfer* pt, VALUE transport)
 	data->write_bufer_idx = 0;
 	data->read_buffer_idx = 0;
 	data->read_buffer_sz = 0;
+
+	data->strbuf = strbuf;
 
 	pt->free = protocol_free;
 	pt->read = protocol_read;
@@ -142,9 +155,9 @@ void buffer_transfer_initialize(protocol_transfer* pt, VALUE transport)
 	pt->initialized = 1;
 }
 
-protocol_transfer* buffer_transfer_create(VALUE transport)
+protocol_transfer* buffer_transfer_create(VALUE transport, VALUE strbuf)
 {
 	protocol_transfer* pt = malloc(sizeof(protocol_transfer));
-	buffer_transfer_initialize(pt, transport);
+	buffer_transfer_initialize(pt, transport, strbuf);
 	return pt;
 }
