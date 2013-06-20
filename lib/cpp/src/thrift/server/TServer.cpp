@@ -43,7 +43,7 @@ int increase_max_fds(int max_fds=(1<<24))  {
     max_fds /= 2;
   }
 
-  return  fdmaxrl.rlim_cur;
+  return static_cast<int>(fdmaxrl.rlim_cur);
 }
 
 }}} // apache::thrift::server
