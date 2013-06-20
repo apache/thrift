@@ -1,5 +1,4 @@
-# encoding: UTF-8
-#
+# 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -7,26 +6,35 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License. You may obtain a copy of the License at
-#
+# 
 #   http://www.apache.org/licenses/LICENSE-2.0
-#
+# 
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#
+# 
 
-require 'spec_helper'
-require File.expand_path("#{File.dirname(__FILE__)}/compact_protocol_spec_shared")
+=begin
+The only change required for a transport to support BinaryProtocolAccelerated is to implement 2 methods:
+  * borrow(size), which takes an optional argument and returns atleast _size_ bytes from the transport, 
+                  or the default buffer size if no argument is given
+  * consume!(size), which removes size bytes from the front of the buffer
 
-describe Thrift::CompactProtocol do
+See MemoryBuffer and BufferedTransport for examples.
+=end
 
-
-  it_should_behave_like 'a compact protocol'
-
-  def protocol_class
-    Thrift::CompactProtocol
+module Thrift
+  class CompactProtocolBufferedFactory < BaseProtocolFactory
+    def get_protocol(trans)
+      if (defined? CompactProtocolBuffered)
+        CompactProtocolBuffered.new(trans)
+      else
+        puts "Falling back to CompactProtocol"
+        CompactProtocol.new(trans)
+      end
+    end
   end
 end
