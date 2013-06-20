@@ -87,4 +87,56 @@ shared_examples_for 'a memory buffer' do
 
  	end
  end
+
+ it 'should respond correctly to resetting the buffer' do
+
+  str = "The red fox jumps over the lazy brown dog";
+
+  @trans.reset_buffer(str);
+  expect(@trans.read(@trans.available)).to eq str
+
+  @trans.reset_buffer(str);
+  expect(@trans.read(@trans.available)).to eq str
+
+  @trans.write("AABBCCDD");
+  @trans.reset_buffer(str);
+  expect(@trans.read(@trans.available)).to eq str
+
+  @trans.write("AABBCCDD");
+  @trans.reset_buffer(str);
+  @trans.reset_buffer(str);
+  expect(@trans.read(@trans.available)).to eq str  
+end
+
+it 'should respond correctly to resetting the buffer without an argument' do
+
+  @trans.reset_buffer;
+  expect(@trans.available).to eq 0
+
+  @trans.reset_buffer;
+  expect(@trans.available).to eq 0
+
+  @trans.write("AABBCCDD");
+  @trans.reset_buffer;
+  expect(@trans.available).to eq 0
+end
+
+it 'should return the correct number of bytes when read_into_buffer is called' do
+
+  str = "The red fox jumps over the lazy brown dog";
+
+  @trans.reset_buffer(str);
+
+  buf = ""
+
+  expect{@trans.read_into_buffer(buf, 2)}.to raise_error(StandardError)
+
+  buf = " " * 200;
+
+  expect(@trans.read_into_buffer(buf, 2)).to eq 2
+  expect(@trans.read_into_buffer(buf, 7)).to eq 7
+  expect(@trans.read_into_buffer(buf, 4)).to eq 4
+end
+
+
 end

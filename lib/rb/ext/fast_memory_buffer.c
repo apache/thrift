@@ -22,7 +22,19 @@
 #include <bytes.h>
 #include <macros.h>
 
+#define DEBUG 0
+
+#if DEBUG
+  #define DEBUG_FUNCTION_ENTRY() printf("FMEM %s\n", __FUNCTION__);
+  #define DEBUG_FUNCTION_PROGRES() printf("%s, %s:%d\n", __FILE__, __FUNCTION__, __LINE__);
+#else
+  #define DEBUG_FUNCTION_ENTRY()
+  #define DEBUG_FUNCTION_PROGRES() 
+#endif
+
 #define GARBAGE_BUFFER_SIZE 32768 //32k
+
+//#define GARBAGE_BUFFER_SIZE 16 //32k
 
 static ID cdata_id;
 
@@ -36,6 +48,11 @@ struct _fmem_data {
   int buf_rd_idx;
   int buf_wr_idx;
  };
+
+static VALUE rb_write(VALUE self, VALUE str);
+
+
+
 
  /* Getter / Setter for the C data structure tied to the ruby object. May be easily swapped to a more efficient implementation later */
 static fmem_data* get_cdata(VALUE self)
@@ -66,19 +83,44 @@ static void collect_garbage(fmem_data* fm)
 
 static VALUE rb_initialize(VALUE self)
 {
+  DEBUG_FUNCTION_ENTRY();
   fmem_data* fm = calloc(sizeof(fmem_data), 1);
 
   set_cdata(self, fm);
   return self;
 }
 
+static VALUE rb_reset_buffer(int argc, VALUE* argv, VALUE self)
+{
+    DEBUG_FUNCTION_ENTRY();
+
+    fmem_data* fm = get_cdata(self);
+
+    fm->buf_rd_idx = 0;
+    fm->buf_wr_idx = 0;
+
+    collect_garbage(fm);
+
+    if (argc > 1)
+      rb_raise(rb_eArgError, "wrong number of arguments");
+
+    if (argc == 1)
+      rb_write(self, argv[0]);
+
+    return Qnil;
+}
+
 static VALUE rb_available(VALUE self)
 {
+  DEBUG_FUNCTION_ENTRY();
+
   fmem_data* fm = get_cdata(self);
   return INT2FIX(fm->buf_wr_idx - fm->buf_rd_idx);
 }
 
 static VALUE rb_write(VALUE self, VALUE str) {
+  DEBUG_FUNCTION_ENTRY();
+
   fmem_data* fm = get_cdata(self);
 
   str = force_binary_encoding(str);
@@ -101,6 +143,7 @@ static VALUE rb_write(VALUE self, VALUE str) {
 }
 
 static VALUE rb_read(VALUE self, VALUE length_value) {
+  DEBUG_FUNCTION_ENTRY();
 
   fmem_data* fm = get_cdata(self);
 
@@ -121,6 +164,8 @@ static VALUE rb_read(VALUE self, VALUE length_value) {
 }
 
 static VALUE rb_read_byte(VALUE self) {
+  DEBUG_FUNCTION_ENTRY();
+
   fmem_data* fm = get_cdata(self);
 
   if (fm->buf_sz - fm->buf_rd_idx < 1)
@@ -137,6 +182,8 @@ static VALUE rb_read_byte(VALUE self) {
 }
 
 static VALUE rb_read_into_buffer(VALUE self, VALUE buffer_value, VALUE size_value) {
+  DEBUG_FUNCTION_ENTRY();
+
   fmem_data* fm = get_cdata(self);
 
 
@@ -157,13 +204,13 @@ static VALUE rb_read_into_buffer(VALUE self, VALUE buffer_value, VALUE size_valu
     return Qnil;
   }
 
-  memcpy(buf, fm->buffer + fm->buf_rd_idx, size_value);
+  memcpy(buf, fm->buffer + fm->buf_rd_idx, len);
 
-  fm->buf_rd_idx += size_value;
+  fm->buf_rd_idx += len;
 
   collect_garbage(fm);
 
-  return INT2FIX(size_value);
+  return INT2FIX(len);
 }
 
 void Init_fast_memory_buffer() {
@@ -173,6 +220,7 @@ void Init_fast_memory_buffer() {
 
   rb_define_method(thrift_memory_buffer_class, "initialize", rb_initialize, 0);
   rb_define_method(thrift_memory_buffer_class, "available", rb_available, 0);
+  rb_define_method(thrift_memory_buffer_class, "reset_buffer", rb_reset_buffer, -1);
   rb_define_method(thrift_memory_buffer_class, "write", rb_write, 1);
   rb_define_method(thrift_memory_buffer_class, "read", rb_read, 1);
   rb_define_method(thrift_memory_buffer_class, "read_byte", rb_read_byte, 0);
