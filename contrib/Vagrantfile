@@ -28,12 +28,22 @@ sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options
 sudo apt-get install -qq ant openjdk-7-jdk
 sudo apt-get install -qq python-all python-all-dev python-all-dbg
 sudo apt-get install -qq libbit-vector-perl
-sudo apt-get install -qq php5-dev php5-cli phpunit
+sudo apt-get install -qq php5-dev php5-cli 
 sudo apt-get install -qq libglib2.0-dev
 sudo apt-get install -qq git erlang-base erlang-eunit erlang-dev
 sudo apt-get install -qq mono-gmcs mono-devel libmono-system-web2.0-cil
 #sudo apt-get install -qq ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev
 sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime
+
+# PHPUnit package broken in ubuntu. see https://bugs.launchpad.net/ubuntu/+source/phpunit/+bug/701544
+sudo apt-get upgrade pear
+sudo pear channel-discover pear.phpunit.de
+sudo pear channel-discover pear.symfony.com
+sudo pear channel-discover components.ez.no
+sudo pear update-channels
+sudo pear upgrade-all
+sudo pear install --alldeps phpunit/PHPUnit
+
 echo I am building Apache Thrift ...
 cd /thrift
 sh bootstrap.sh
