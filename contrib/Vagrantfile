@@ -54,6 +54,11 @@ Vagrant.configure("2") do |config|
 
   config.vm.synced_folder "../", "/thrift"
 
+  config.vm.provider :virtualbox do |vbox|
+    vbox.customize ["modifyvm", :id, "--memory", "1024"]
+    vbox.customize ["modifyvm", :id, "--cpus", "2"]
+  end
+
   # call the script
   config.vm.provision :shell, :inline => $script
 end
