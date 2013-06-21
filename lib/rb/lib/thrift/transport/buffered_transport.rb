@@ -1,3 +1,5 @@
+
+
 # encoding: ascii-8bit
 # 
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -23,7 +25,8 @@ module Thrift
     DEFAULT_BUFFER = 4096
     
     def initialize(transport)
-      @transport = transport
+        print __FILE__
+    @transport = transport
       @wbuf = Bytes.empty_byte_buffer
       @rbuf = Bytes.empty_byte_buffer
       @index = 0

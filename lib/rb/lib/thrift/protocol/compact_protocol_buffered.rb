@@ -17,17 +17,24 @@
 # under the License.
 # 
 
-module Thrift
-  class Deserializer
-    def initialize(protocol_factory = BinaryProtocolFactory.new, transport_factory = MemoryBufferTransportFactory.new)
-      @transport = transport_factory.createTransport()
-      @protocol = protocol_factory.get_protocol(@transport)
-    end
+=begin
+The only change required for a transport to support BinaryProtocolAccelerated is to implement 2 methods:
+  * borrow(size), which takes an optional argument and returns atleast _size_ bytes from the transport, 
+                  or the default buffer size if no argument is given
+  * consume!(size), which removes size bytes from the front of the buffer
 
-    def deserialize(base, buffer)
-      @transport.reset_buffer(buffer)
-      base.read(@protocol)
-      base
+See MemoryBuffer and BufferedTransport for examples.
+=end
+
+module Thrift
+  class CompactProtocolBufferedFactory < BaseProtocolFactory
+    def get_protocol(trans)
+      if (defined? CompactProtocolBuffered)
+        CompactProtocolBuffered.new(trans)
+      else
+        puts "Falling back to CompactProtocol"
+        CompactProtocol.new(trans)
+      end
     end
   end
 end

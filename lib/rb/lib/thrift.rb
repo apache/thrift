@@ -41,6 +41,8 @@ require 'thrift/protocol/base_protocol'
 require 'thrift/protocol/binary_protocol'
 require 'thrift/protocol/binary_protocol_accelerated'
 require 'thrift/protocol/compact_protocol'
+require 'thrift/protocol/compact_protocol_buffered'
+require 'thrift/protocol/compact_protocol_layered'
 require 'thrift/protocol/json_protocol'
 
 # transport
@@ -55,6 +57,7 @@ require 'thrift/transport/framed_transport'
 require 'thrift/transport/http_client_transport'
 require 'thrift/transport/io_stream_transport'
 require 'thrift/transport/memory_buffer_transport'
+require 'thrift/transport/memory_buffer_transport_factory'
 
 # server
 require 'thrift/server/base_server'

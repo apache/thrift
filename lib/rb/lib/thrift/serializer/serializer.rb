@@ -19,8 +19,8 @@
 
 module Thrift
   class Serializer
-    def initialize(protocol_factory = BinaryProtocolFactory.new)
-      @transport = MemoryBufferTransport.new
+    def initialize(protocol_factory = BinaryProtocolFactory.new, transport_factory = MemoryBufferTransportFactory.new)
+      @transport = transport_factory.createTransport
       @protocol = protocol_factory.get_protocol(@transport)
     end
 

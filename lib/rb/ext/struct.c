@@ -22,13 +22,50 @@
 #include "macros.h"
 #include "strlcpy.h"
 
-VALUE thrift_union_class;
+ #define DEBUG 0
 
-ID setfield_id;
-ID setvalue_id;
 
-ID to_s_method_id;
-ID name_to_id_method_id;
+ #if SIZEOF_VOIDP <= SIZEOF_LONG
+  #define NUM2PTR(x) (void*)NUM2ULONG(x)
+  #define PTR2NUM(x) ULONG2NUM((unsigned long)x)
+#elif SIZEOF_VOIDP <= SIZEOF_LONG_LONG
+  #define NUM2PTR(x) (void*)NUM2ULL(x)
+  #define PTR2NUM(x) ULL2NUM((unsigned long long)x)
+#else
+ #error "Pointer size too large, could not determine a good way to convert a C pointer to a Ruby object"
+#endif
+
+
+
+#if DEBUG
+  #define DEBUG_FUNCTION_ENTRY() printf("%s\n", __FUNCTION__);
+  #define DEBUG_FUNCTION_PROGRES() printf("%s, %s:%d\n", __FILE__, __FUNCTION__, __LINE__);
+#else
+  #define DEBUG_FUNCTION_ENTRY()
+  #define DEBUG_FUNCTION_PROGRES() 
+#endif
+
+
+
+
+
+static protocol_method_table default_table;
+
+static ID get_protocol_method_table_ID;
+
+
+
+
+
+
+
+static VALUE thrift_union_class;
+
+static ID setfield_id;
+static ID setvalue_id;
+
+static ID to_s_method_id;
+static ID name_to_id_method_id;
 static ID sorted_field_ids_method_id;
 
 #define IS_CONTAINER(ttype) ((ttype) == TTYPE_MAP || (ttype) == TTYPE_LIST || (ttype) == TTYPE_SET)
@@ -38,173 +75,12 @@ static ID sorted_field_ids_method_id;
 // Writing section
 //-------------------------------------------
 
-// default fn pointers for protocol stuff here
 
-VALUE default_write_bool(VALUE protocol, VALUE value) {
-  rb_funcall(protocol, write_boolean_method_id, 1, value);
-  return Qnil;
-}
+static VALUE union_write (VALUE self, VALUE protocol, protocol_method_table *pmt);
+static VALUE struct_write(VALUE self, VALUE protocol, protocol_method_table *pmt);
+static void write_anything_pmt(int ttype, VALUE value, VALUE protocol, VALUE field_info, protocol_method_table *pmt);
 
-VALUE default_write_byte(VALUE protocol, VALUE value) {
-  rb_funcall(protocol, write_byte_method_id, 1, value);
-  return Qnil;
-}
-
-VALUE default_write_i16(VALUE protocol, VALUE value) {
-  rb_funcall(protocol, write_i16_method_id, 1, value);
-  return Qnil;
-}
-
-VALUE default_write_i32(VALUE protocol, VALUE value) {
-  rb_funcall(protocol, write_i32_method_id, 1, value);
-  return Qnil;
-}
-
-VALUE default_write_i64(VALUE protocol, VALUE value) {
-  rb_funcall(protocol, write_i64_method_id, 1, value);
-  return Qnil;
-}
-
-VALUE default_write_double(VALUE protocol, VALUE value) {
-  rb_funcall(protocol, write_double_method_id, 1, value);
-  return Qnil;
-}
-
-VALUE default_write_string(VALUE protocol, VALUE value) {
-  rb_funcall(protocol, write_string_method_id, 1, value);
-  return Qnil;
-}
-
-VALUE default_write_list_begin(VALUE protocol, VALUE etype, VALUE length) {
-  rb_funcall(protocol, write_list_begin_method_id, 2, etype, length);
-  return Qnil;
-}
-
-VALUE default_write_list_end(VALUE protocol) {
-  rb_funcall(protocol, write_list_end_method_id, 0);
-  return Qnil;
-}
-
-VALUE default_write_set_begin(VALUE protocol, VALUE etype, VALUE length) {
-  rb_funcall(protocol, write_set_begin_method_id, 2, etype, length);
-  return Qnil;
-}
-
-VALUE default_write_set_end(VALUE protocol) {
-  rb_funcall(protocol, write_set_end_method_id, 0);
-  return Qnil;
-}
-
-VALUE default_write_map_begin(VALUE protocol, VALUE ktype, VALUE vtype, VALUE length) {
-  rb_funcall(protocol, write_map_begin_method_id, 3, ktype, vtype, length);
-  return Qnil;
-}
-
-VALUE default_write_map_end(VALUE protocol) {
-  rb_funcall(protocol, write_map_end_method_id, 0);
-  return Qnil;
-}
-
-VALUE default_write_struct_begin(VALUE protocol, VALUE struct_name) {
-  rb_funcall(protocol, write_struct_begin_method_id, 1, struct_name);
-  return Qnil;
-}
-
-VALUE default_write_struct_end(VALUE protocol) {
-  rb_funcall(protocol, write_struct_end_method_id, 0);
-  return Qnil;
-}
-
-VALUE default_write_field_begin(VALUE protocol, VALUE name, VALUE type, VALUE id) {
-  rb_funcall(protocol, write_field_begin_method_id, 3, name, type, id);
-  return Qnil;
-}
-
-VALUE default_write_field_end(VALUE protocol) {
-  rb_funcall(protocol, write_field_end_method_id, 0);
-  return Qnil;
-}
-
-VALUE default_write_field_stop(VALUE protocol) {
-  rb_funcall(protocol, write_field_stop_method_id, 0);
-  return Qnil;
-}
-
-VALUE default_read_field_begin(VALUE protocol) {
-  return rb_funcall(protocol, read_field_begin_method_id, 0);
-}
-
-VALUE default_read_field_end(VALUE protocol) {
-  return rb_funcall(protocol, read_field_end_method_id, 0);
-}
-
-VALUE default_read_map_begin(VALUE protocol) {
-  return rb_funcall(protocol, read_map_begin_method_id, 0);
-}
-
-VALUE default_read_map_end(VALUE protocol) {
-  return rb_funcall(protocol, read_map_end_method_id, 0);
-}
-
-VALUE default_read_list_begin(VALUE protocol) {
-  return rb_funcall(protocol, read_list_begin_method_id, 0);
-}
-
-VALUE default_read_list_end(VALUE protocol) {
-  return rb_funcall(protocol, read_list_end_method_id, 0);
-}
-
-VALUE default_read_set_begin(VALUE protocol) {
-  return rb_funcall(protocol, read_set_begin_method_id, 0);
-}
-
-VALUE default_read_set_end(VALUE protocol) {
-  return rb_funcall(protocol, read_set_end_method_id, 0);
-}
-
-VALUE default_read_byte(VALUE protocol) {
-  return rb_funcall(protocol, read_byte_method_id, 0);
-}
-
-VALUE default_read_bool(VALUE protocol) {
-  return rb_funcall(protocol, read_bool_method_id, 0);
-}
-
-VALUE default_read_i16(VALUE protocol) {
-  return rb_funcall(protocol, read_i16_method_id, 0);
-}
-
-VALUE default_read_i32(VALUE protocol) {
-  return rb_funcall(protocol, read_i32_method_id, 0);
-}
-
-VALUE default_read_i64(VALUE protocol) {
-  return rb_funcall(protocol, read_i64_method_id, 0);
-}
-
-VALUE default_read_double(VALUE protocol) {
-  return rb_funcall(protocol, read_double_method_id, 0);
-}
-
-VALUE default_read_string(VALUE protocol) {
-  return rb_funcall(protocol, read_string_method_id, 0);
-}
-
-VALUE default_read_struct_begin(VALUE protocol) {
-  return rb_funcall(protocol, read_struct_begin_method_id, 0);
-}
-
-VALUE default_read_struct_end(VALUE protocol) {
-  return rb_funcall(protocol, read_struct_end_method_id, 0);
-}
-
-// end default protocol methods
-
-static VALUE rb_thrift_union_write (VALUE self, VALUE protocol);
-static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol);
-static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_info);
-
-VALUE get_field_value(VALUE obj, VALUE field_name) {
+static VALUE get_field_value(VALUE obj, VALUE field_name) {
   char name_buf[RSTRING_LEN(field_name) + 2];
 
   name_buf[0] = '@';
@@ -215,7 +91,7 @@ VALUE get_field_value(VALUE obj, VALUE field_name) {
   return value;
 }
 
-static void write_container(int ttype, VALUE field_info, VALUE value, VALUE protocol) {
+static void write_container(int ttype, VALUE field_info, VALUE value, VALUE protocol, protocol_method_table* pmt) {
   int sz, i;
 
   if (ttype == TTYPE_MAP) {
@@ -237,26 +113,26 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
 
     sz = RARRAY_LEN(keys);
 
-    default_write_map_begin(protocol, keytype_value, valuetype_value, INT2FIX(sz));
+    fastcall_call(pmt->write_map_begin, protocol, keytype_value, valuetype_value, INT2FIX(sz));
 
     for (i = 0; i < sz; i++) {
       key = rb_ary_entry(keys, i);
       val = rb_hash_aref(value, key);
 
       if (IS_CONTAINER(keytype)) {
-        write_container(keytype, key_info, key, protocol);
+        write_container(keytype, key_info, key, protocol, pmt);
       } else {
-        write_anything(keytype, key, protocol, key_info);
+        write_anything_pmt(keytype, key, protocol, key_info, pmt);
       }
 
       if (IS_CONTAINER(valuetype)) {
-        write_container(valuetype, value_info, val, protocol);
+        write_container(valuetype, value_info, val, protocol, pmt);
       } else {
-        write_anything(valuetype, val, protocol, value_info);
+        write_anything_pmt(valuetype, val, protocol, value_info, pmt);
       }
     }
 
-    default_write_map_end(protocol);
+    fastcall_call(pmt->write_map_end, protocol, Qnil);
   } else if (ttype == TTYPE_LIST) {
     Check_Type(value, T_ARRAY);
 
@@ -266,16 +142,16 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
     VALUE element_type_value = rb_hash_aref(element_type_info, type_sym);
     int element_type = FIX2INT(element_type_value);
 
-    default_write_list_begin(protocol, element_type_value, INT2FIX(sz));
+    fastcall_call(pmt->write_list_begin, protocol, element_type_value, INT2FIX(sz));
     for (i = 0; i < sz; ++i) {
       VALUE val = rb_ary_entry(value, i);
       if (IS_CONTAINER(element_type)) {
-        write_container(element_type, element_type_info, val, protocol);
+        write_container(element_type, element_type_info, val, protocol, pmt);
       } else {
-        write_anything(element_type, val, protocol, element_type_info);
+        write_anything_pmt(element_type, val, protocol, element_type_info, pmt);
       }
     }
-    default_write_list_end(protocol);
+    fastcall_call(pmt->write_list_end, protocol, Qnil);
   } else if (ttype == TTYPE_SET) {
     VALUE items;
 
@@ -296,57 +172,60 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
     VALUE element_type_value = rb_hash_aref(element_type_info, type_sym);
     int element_type = FIX2INT(element_type_value);
 
-    default_write_set_begin(protocol, element_type_value, INT2FIX(sz));
+    fastcall_call(pmt->write_set_begin, protocol, element_type_value, INT2FIX(sz));
 
     for (i = 0; i < sz; i++) {
       VALUE val = rb_ary_entry(items, i);
       if (IS_CONTAINER(element_type)) {
-        write_container(element_type, element_type_info, val, protocol);
+        write_container(element_type, element_type_info, val, protocol, pmt);
       } else {
-        write_anything(element_type, val, protocol, element_type_info);
+        write_anything_pmt(element_type, val, protocol, element_type_info, pmt);
       }
     }
 
-    default_write_set_end(protocol);
+    fastcall_call(pmt->write_set_end, protocol, Qnil);
   } else {
     rb_raise(rb_eNotImpError, "can't write container of type: %d", ttype);
   }
 }
 
-static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_info) {
+static void write_anything_pmt(int ttype, VALUE value, VALUE protocol, VALUE field_info, protocol_method_table *pmt) {
   if (ttype == TTYPE_BOOL) {
-    default_write_bool(protocol, value);
+    fastcall_call(pmt->write_bool, protocol, value);
   } else if (ttype == TTYPE_BYTE) {
-    default_write_byte(protocol, value);
+    fastcall_call(pmt->write_byte, protocol, value);
   } else if (ttype == TTYPE_I16) {
-    default_write_i16(protocol, value);
+    fastcall_call(pmt->write_i16, protocol, value);
   } else if (ttype == TTYPE_I32) {
-    default_write_i32(protocol, value);
+    fastcall_call(pmt->write_i32, protocol, value);
   } else if (ttype == TTYPE_I64) {
-    default_write_i64(protocol, value);
+    fastcall_call(pmt->write_i64, protocol, value);
   } else if (ttype == TTYPE_DOUBLE) {
-    default_write_double(protocol, value);
+    fastcall_call(pmt->write_double, protocol, value);
   } else if (ttype == TTYPE_STRING) {
-    default_write_string(protocol, value);
+    fastcall_call(pmt->write_string, protocol, value);
   } else if (IS_CONTAINER(ttype)) {
-    write_container(ttype, field_info, value, protocol);
+    write_container(ttype, field_info, value, protocol, pmt);
   } else if (ttype == TTYPE_STRUCT) {
     if (rb_obj_is_kind_of(value, thrift_union_class)) {
-      rb_thrift_union_write(value, protocol);
+      union_write(value, protocol, pmt);
     } else {
-      rb_thrift_struct_write(value, protocol);
+      struct_write(value, protocol, pmt);
     }
   } else {
     rb_raise(rb_eNotImpError, "Unknown type for binary_encoding: %d", ttype);
   }
 }
 
-static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
+
+
+static VALUE struct_write(VALUE self, VALUE protocol, protocol_method_table* pmt)
+{
   // call validate
   rb_funcall(self, validate_method_id, 0);
 
   // write struct begin
-  default_write_struct_begin(protocol, rb_class_name(CLASS_OF(self)));
+  fastcall_call(pmt->write_struct_begin, protocol, rb_class_name(CLASS_OF(self)));
 
   // iterate through all the fields here
   VALUE struct_fields = STRUCT_FIELDS(self);
@@ -365,28 +244,51 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
     VALUE field_value = get_field_value(self, field_name);
 
     if (!NIL_P(field_value)) {
-      default_write_field_begin(protocol, field_name, ttype_value, field_id);
+      fastcall_call(pmt->write_field_begin, protocol, field_name, ttype_value, field_id);
 
-      write_anything(ttype, field_value, protocol, field_info);
+      write_anything_pmt(ttype, field_value, protocol, field_info, pmt);
 
-      default_write_field_end(protocol);
+      fastcall_call(pmt->write_field_end, protocol, Qnil);
     }
   }
 
-  default_write_field_stop(protocol);
+  fastcall_call(pmt->write_field_stop, protocol, Qnil);
 
   // write struct end
-  default_write_struct_end(protocol);
+  fastcall_call(pmt->write_struct_end, protocol, Qnil);
 
   return Qnil;
+}
+
+
+static VALUE rb_struct_write(VALUE self, VALUE protocol) {
+  DEBUG_FUNCTION_ENTRY();
+  protocol_method_table* pmt;
+
+  //We haven't been supplied with a method table, try retrieving it...
+  int has_gmt = rb_respond_to(protocol, rb_intern("get_protocol_method_table"));
+
+  if (has_gmt)
+  {
+    pmt = NUM2PTR(rb_funcall(protocol, get_protocol_method_table_ID, 0));
+  }
+  else
+  {
+    pmt = &default_table;
+  }
+
+  return struct_write(self, protocol, pmt);
 }
 
 //-------------------------------------------
 // Reading section
 //-------------------------------------------
 
-static VALUE rb_thrift_union_read(VALUE self, VALUE protocol);
-static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol);
+static VALUE rb_union_read(VALUE self, VALUE protocol);
+static VALUE rb_struct_read(VALUE self, VALUE protocol);
+static VALUE struct_read(VALUE self, VALUE protocol, protocol_method_table *pmt);
+static VALUE union_read(VALUE self, VALUE protocol, protocol_method_table *pmt);
+
 static void skip_map_contents(VALUE protocol, VALUE key_type_value, VALUE value_type_value, int size);
 static void skip_list_or_set_contents(VALUE protocol, VALUE element_type_value, int size);
 
@@ -416,36 +318,36 @@ static void skip_list_or_set_contents(VALUE protocol, VALUE element_type_value, 
   }
 }
 
-static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
+static VALUE read_anything_pmt(VALUE protocol, int ttype, VALUE field_info, protocol_method_table *pmt) {
   VALUE result = Qnil;
 
   if (ttype == TTYPE_BOOL) {
-    result = default_read_bool(protocol);
+    result = fastcall_call(pmt->read_bool, protocol, Qnil);
   } else if (ttype == TTYPE_BYTE) {
-    result = default_read_byte(protocol);
+    result = fastcall_call(pmt->read_byte, protocol, Qnil);
   } else if (ttype == TTYPE_I16) {
-    result = default_read_i16(protocol);
+    result = fastcall_call(pmt->read_i16, protocol, Qnil);
   } else if (ttype == TTYPE_I32) {
-    result = default_read_i32(protocol);
+    result = fastcall_call(pmt->read_i32, protocol, Qnil);
   } else if (ttype == TTYPE_I64) {
-    result = default_read_i64(protocol);
+    result = fastcall_call(pmt->read_i64, protocol, Qnil);
   } else if (ttype == TTYPE_STRING) {
-    result = default_read_string(protocol);
+    result = fastcall_call(pmt->read_string, protocol, Qnil);
   } else if (ttype == TTYPE_DOUBLE) {
-    result = default_read_double(protocol);
+    result = fastcall_call(pmt->read_double, protocol, Qnil);
   } else if (ttype == TTYPE_STRUCT) {
     VALUE klass = rb_hash_aref(field_info, class_sym);
     result = rb_class_new_instance(0, NULL, klass);
 
     if (rb_obj_is_kind_of(result, thrift_union_class)) {
-      rb_thrift_union_read(result, protocol);
+      union_read(result, protocol, pmt);
     } else {
-      rb_thrift_struct_read(result, protocol);
+      struct_read(result, protocol, pmt);
     }
   } else if (ttype == TTYPE_MAP) {
     int i;
 
-    VALUE map_header = default_read_map_begin(protocol);
+    VALUE map_header = fastcall_call(pmt->read_map_begin, protocol, Qnil);
     int key_ttype = FIX2INT(rb_ary_entry(map_header, 0));
     int value_ttype = FIX2INT(rb_ary_entry(map_header, 1));
     int num_entries = FIX2INT(rb_ary_entry(map_header, 2));
@@ -464,8 +366,8 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
         for (i = 0; i < num_entries; ++i) {
           VALUE key, val;
 
-          key = read_anything(protocol, key_ttype, key_info);
-          val = read_anything(protocol, value_ttype, value_info);
+          key = read_anything_pmt(protocol, key_ttype, key_info, pmt);
+          val = read_anything_pmt(protocol, value_ttype, value_info, pmt);
 
           rb_hash_aset(result, key, val);
         }
@@ -476,11 +378,11 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
       skip_map_contents(protocol, INT2FIX(key_ttype), INT2FIX(value_ttype), num_entries);
     }
 
-    default_read_map_end(protocol);
+    fastcall_call(pmt->read_map_end, protocol, Qnil);
   } else if (ttype == TTYPE_LIST) {
     int i;
 
-    VALUE list_header = default_read_list_begin(protocol);
+    VALUE list_header = fastcall_call(pmt->read_list_begin, protocol, Qnil);
     int element_ttype = FIX2INT(rb_ary_entry(list_header, 0));
     int num_elements = FIX2INT(rb_ary_entry(list_header, 1));
 
@@ -493,7 +395,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
         result = rb_ary_new2(num_elements);
 
         for (i = 0; i < num_elements; ++i) {
-          rb_ary_push(result, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
+          rb_ary_push(result, read_anything_pmt(protocol, element_ttype, rb_hash_aref(field_info, element_sym), pmt));
         }
       } else {
         skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
@@ -502,12 +404,12 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
       skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
     }
 
-    default_read_list_end(protocol);
+    fastcall_call(pmt->read_list_end, protocol, Qnil);
   } else if (ttype == TTYPE_SET) {
     VALUE items;
     int i;
 
-    VALUE set_header = default_read_set_begin(protocol);
+    VALUE set_header = fastcall_call(pmt->read_set_begin, protocol, Qnil);
     int element_ttype = FIX2INT(rb_ary_entry(set_header, 0));
     int num_elements = FIX2INT(rb_ary_entry(set_header, 1));
 
@@ -520,7 +422,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
         items = rb_ary_new2(num_elements);
 
         for (i = 0; i < num_elements; ++i) {
-          rb_ary_push(items, read_anything(protocol, element_ttype, rb_hash_aref(field_info, element_sym)));
+          rb_ary_push(items, read_anything_pmt(protocol, element_ttype, rb_hash_aref(field_info, element_sym), pmt));
         }
 
         result = rb_class_new_instance(1, &items, rb_cSet);
@@ -531,7 +433,7 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
       skip_list_or_set_contents(protocol, INT2FIX(element_ttype), num_elements);
     }
 
-    default_read_set_end(protocol);
+    fastcall_call(pmt->read_set_end, protocol, Qnil);
   } else {
     rb_raise(rb_eNotImpError, "read_anything not implemented for type %d!", ttype);
   }
@@ -539,15 +441,16 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
   return result;
 }
 
-static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
+static VALUE struct_read(VALUE self, VALUE protocol, protocol_method_table *pmt)
+{
   // read struct begin
-  default_read_struct_begin(protocol);
+  fastcall_call(pmt->read_struct_begin, protocol, Qnil);
 
   VALUE struct_fields = STRUCT_FIELDS(self);
 
   // read each field
   while (true) {
-    VALUE field_header = default_read_field_begin(protocol);
+    VALUE field_header = fastcall_call(pmt->read_field_begin, protocol, Qnil);
     VALUE field_type_value = rb_ary_entry(field_header, 1);
     int field_type = FIX2INT(field_type_value);
 
@@ -563,7 +466,7 @@ static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
       if (field_type == specified_type) {
         // read the value
         VALUE name = rb_hash_aref(field_info, name_sym);
-        set_field_value(self, name, read_anything(protocol, field_type, field_info));
+        set_field_value(self, name, read_anything_pmt(protocol, field_type, field_info, pmt));
       } else {
         rb_funcall(protocol, skip_method_id, 1, field_type_value);
       }
@@ -572,11 +475,11 @@ static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
     }
 
     // read field end
-    default_read_field_end(protocol);
+    fastcall_call(pmt->read_field_end, protocol, Qnil);
   }
 
   // read struct end
-  default_read_struct_end(protocol);
+  fastcall_call(pmt->read_struct_end, protocol, Qnil);
 
   // call validate
   rb_funcall(self, validate_method_id, 0);
@@ -584,18 +487,38 @@ static VALUE rb_thrift_struct_read(VALUE self, VALUE protocol) {
   return Qnil;
 }
 
+static VALUE rb_struct_read(VALUE self, VALUE protocol) {
+  DEBUG_FUNCTION_ENTRY();
+  protocol_method_table *pmt;
+
+  //We haven't been supplied with a method table, try retrieving it...
+  int has_gmt = rb_respond_to(protocol, rb_intern("get_protocol_method_table"));
+
+  if (has_gmt)
+    pmt = NUM2PTR(rb_funcall(protocol, get_protocol_method_table_ID, 0));
+  else
+    pmt = &default_table;
+
+  return struct_read(self, protocol, pmt);
+}
+
+
+
 
 // --------------------------------
 // Union section
 // --------------------------------
 
-static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
+static VALUE union_read(VALUE self, VALUE protocol, protocol_method_table *pmt)
+{
+  DEBUG_FUNCTION_ENTRY();
+
   // read struct begin
-  default_read_struct_begin(protocol);
+  fastcall_call(pmt->read_struct_begin, protocol, Qnil);
 
   VALUE struct_fields = STRUCT_FIELDS(self);
 
-  VALUE field_header = default_read_field_begin(protocol);
+  VALUE field_header = fastcall_call(pmt->read_field_begin, protocol, Qnil);
   VALUE field_type_value = rb_ary_entry(field_header, 1);
   int field_type = FIX2INT(field_type_value);
 
@@ -608,7 +531,7 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
       // read the value
       VALUE name = rb_hash_aref(field_info, name_sym);
       rb_iv_set(self, "@setfield", ID2SYM(rb_intern(RSTRING_PTR(name))));
-      rb_iv_set(self, "@value", read_anything(protocol, field_type, field_info));
+      rb_iv_set(self, "@value", read_anything_pmt(protocol, field_type, field_info, pmt));
     } else {
       rb_funcall(protocol, skip_method_id, 1, field_type_value);
     }
@@ -617,9 +540,9 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
   }
 
   // read field end
-  default_read_field_end(protocol);
+  fastcall_call(pmt->read_field_end, protocol, Qnil);
 
-  field_header = default_read_field_begin(protocol);
+  field_header = fastcall_call(pmt->read_field_begin, protocol, Qnil);
   field_type_value = rb_ary_entry(field_header, 1);
   field_type = FIX2INT(field_type_value);
 
@@ -628,7 +551,7 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
   }
 
   // read struct end
-  default_read_struct_end(protocol);
+  fastcall_call(pmt->read_struct_end, protocol, Qnil);
 
   // call validate
   rb_funcall(self, validate_method_id, 0);
@@ -636,12 +559,34 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
   return Qnil;
 }
 
-static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
+
+static VALUE rb_union_read(VALUE self, VALUE protocol) {
+  DEBUG_FUNCTION_ENTRY();
+  protocol_method_table* pmt;
+
+  //We haven't been supplied with a method table, try retrieving it...
+  int has_gmt = rb_respond_to(protocol, rb_intern("get_protocol_method_table"));
+
+  if (has_gmt)
+  {
+    pmt = NUM2PTR(rb_funcall(protocol, get_protocol_method_table_ID, 0));
+  }
+  else
+  {
+    pmt = &default_table;
+  }
+
+  return union_read(self, protocol, pmt);
+}
+
+static VALUE union_write(VALUE self, VALUE protocol, protocol_method_table *pmt)
+{
   // call validate
   rb_funcall(self, validate_method_id, 0);
 
+
   // write struct begin
-  default_write_struct_begin(protocol, rb_class_name(CLASS_OF(self)));
+  fastcall_call(pmt->write_struct_begin, protocol, rb_class_name(CLASS_OF(self)));
 
   VALUE struct_fields = STRUCT_FIELDS(self);
 
@@ -654,31 +599,96 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
   VALUE ttype_value = rb_hash_aref(field_info, type_sym);
   int ttype = FIX2INT(ttype_value);
 
-  default_write_field_begin(protocol, setfield, ttype_value, field_id);
+  fastcall_call(pmt->write_field_begin, protocol, setfield, ttype_value, field_id);
 
-  write_anything(ttype, setvalue, protocol, field_info);
+  write_anything_pmt(ttype, setvalue, protocol, field_info, pmt);
 
-  default_write_field_end(protocol);
+  fastcall_call(pmt->write_field_end, protocol, Qnil);
 
-  default_write_field_stop(protocol);
+  fastcall_call(pmt->write_field_stop, protocol, Qnil);
 
   // write struct end
-  default_write_struct_end(protocol);
+  fastcall_call(pmt->write_struct_end, protocol, Qnil);
 
   return Qnil;
 }
 
+static VALUE rb_union_write(VALUE self, VALUE protocol) {
+  DEBUG_FUNCTION_ENTRY();
+  protocol_method_table* pmt;
+
+  //We haven't been supplied with a method table, try retrieving it...
+  int has_gmt = rb_respond_to(protocol, rb_intern("get_protocol_method_table"));
+
+  if (has_gmt)
+  {
+    pmt = NUM2PTR(rb_funcall(protocol, get_protocol_method_table_ID, 0));
+  }
+  else
+  {
+    pmt = &default_table;
+  }
+
+  return union_write(self, protocol, pmt);
+}
+
+static void Init_default_table()
+{
+  fastcall_init_ruby(default_table.write_bool, rb_intern("write_bool"), 1);
+  fastcall_init_ruby(default_table.write_byte, rb_intern("write_byte"), 1);
+  fastcall_init_ruby(default_table.write_double, rb_intern("write_double"), 1);
+  fastcall_init_ruby(default_table.write_i16, rb_intern("write_i16"), 1);
+  fastcall_init_ruby(default_table.write_i32, rb_intern("write_i32"), 1);
+  fastcall_init_ruby(default_table.write_i64, rb_intern("write_i64"), 1);
+  fastcall_init_ruby(default_table.write_set_begin, rb_intern("write_set_begin"), 2);
+  fastcall_init_ruby(default_table.write_set_end, rb_intern("write_set_end"), 0);
+  fastcall_init_ruby(default_table.write_map_begin, rb_intern("write_map_begin"), 3);
+  fastcall_init_ruby(default_table.write_map_end, rb_intern("write_map_end"), 0);
+  fastcall_init_ruby(default_table.write_list_begin, rb_intern("write_list_begin"), 2);
+  fastcall_init_ruby(default_table.write_list_end, rb_intern("write_list_end"), 0);
+  fastcall_init_ruby(default_table.write_field_begin, rb_intern("write_field_begin"), 3);
+  fastcall_init_ruby(default_table.write_field_end, rb_intern("write_field_end"), 0);
+  fastcall_init_ruby(default_table.write_field_stop, rb_intern("write_field_stop"), 0);
+  fastcall_init_ruby(default_table.write_struct_begin, rb_intern("write_struct_begin"), 1);
+  fastcall_init_ruby(default_table.write_struct_end, rb_intern("write_struct_end"), 0);
+  fastcall_init_ruby(default_table.write_string, rb_intern("write_string"), 1);
+
+
+  fastcall_init_ruby(default_table.read_bool, rb_intern("read_bool"), 0);
+  fastcall_init_ruby(default_table.read_byte, rb_intern("read_byte"), 0);
+  fastcall_init_ruby(default_table.read_double, rb_intern("read_double"), 0);
+  fastcall_init_ruby(default_table.read_i16, rb_intern("read_i16"), 0);
+  fastcall_init_ruby(default_table.read_i32, rb_intern("read_i32"), 0);
+  fastcall_init_ruby(default_table.read_i64, rb_intern("read_i64"), 0);
+  fastcall_init_ruby(default_table.read_set_begin, rb_intern("read_set_begin"), 0);
+  fastcall_init_ruby(default_table.read_set_end, rb_intern("read_set_end"), 0);
+  fastcall_init_ruby(default_table.read_map_begin, rb_intern("read_map_begin"), 0);
+  fastcall_init_ruby(default_table.read_map_end, rb_intern("read_map_end"), 0);
+  fastcall_init_ruby(default_table.read_list_begin, rb_intern("read_list_begin"), 0);
+  fastcall_init_ruby(default_table.read_list_end, rb_intern("read_list_end"), 0);
+  fastcall_init_ruby(default_table.read_field_begin, rb_intern("read_field_begin"), 0);
+  fastcall_init_ruby(default_table.read_field_end, rb_intern("read_field_end"), 0);
+  fastcall_init_ruby(default_table.read_struct_begin, rb_intern("read_struct_begin"), 0);
+  fastcall_init_ruby(default_table.read_struct_end, rb_intern("read_struct_end"), 0);
+  fastcall_init_ruby(default_table.read_string, rb_intern("read_string"), 0);
+}
+
 void Init_struct() {
+
+  Init_default_table();
+
   VALUE struct_module = rb_const_get(thrift_module, rb_intern("Struct"));
 
-  rb_define_method(struct_module, "write", rb_thrift_struct_write, 1);
-  rb_define_method(struct_module, "read", rb_thrift_struct_read, 1);
+  rb_define_method(struct_module, "write", rb_struct_write, 1);
+  rb_define_method(struct_module, "read", rb_struct_read, 1);
 
   thrift_union_class = rb_const_get(thrift_module, rb_intern("Union"));
 
-  rb_define_method(thrift_union_class, "write", rb_thrift_union_write, 1);
-  rb_define_method(thrift_union_class, "read", rb_thrift_union_read, 1);
+  rb_define_method(thrift_union_class, "write", rb_union_write, 1);
+  rb_define_method(thrift_union_class, "read", rb_union_read, 1);
 
+  get_protocol_method_table_ID = rb_intern("get_protocol_method_table");
+  
   setfield_id = rb_intern("@setfield");
   setvalue_id = rb_intern("@value");
 

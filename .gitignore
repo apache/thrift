@@ -21,6 +21,15 @@ gen-*
 .sonar
 .DS_Store
 
+.bin
+.bundle
+.ruby-version
+Gemfile*
+conf*
+dobuild.sh
+doconfig.sh
+vendor
+
 /Makefile
 /Makefile.in
 /contrib/.vagrant/
