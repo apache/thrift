@@ -20,7 +20,7 @@
 #ifndef _THRIFT_CONCURRENCY_PLATFORMTHREADFACTORY_H_
 #define _THRIFT_CONCURRENCY_PLATFORMTHREADFACTORY_H_ 1
 
-#include <config.h>
+#include <thrift/thrift-config.h>
 #if USE_BOOST_THREAD
 #  include <thrift/concurrency/BoostThreadFactory.h>
 #elif USE_STD_THREAD

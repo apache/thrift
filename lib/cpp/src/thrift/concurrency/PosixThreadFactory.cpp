@@ -17,9 +17,8 @@
  * under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include <thrift/thrift-config.h>
+
 #include <thrift/concurrency/PosixThreadFactory.h>
 #include <thrift/concurrency/Exception.h>
 

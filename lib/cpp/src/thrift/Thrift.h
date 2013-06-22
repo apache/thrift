@@ -20,10 +20,10 @@
 #ifndef _THRIFT_THRIFT_H_
 #define _THRIFT_THRIFT_H_ 1
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 #include <thrift/transport/PlatformSocket.h>
+
+#include <thrift/thrift-config.h>
+
 #include <stdio.h>
 #include <assert.h>
 

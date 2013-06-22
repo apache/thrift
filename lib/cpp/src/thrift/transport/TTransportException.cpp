@@ -21,9 +21,7 @@
 #include <boost/lexical_cast.hpp>
 #include <cstring>
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include <thrift/thrift-config.h>
 
 using std::string;
 using boost::lexical_cast;
@@ -31,4 +29,3 @@ using boost::lexical_cast;
 namespace apache { namespace thrift { namespace transport {
 
 }}} // apache::thrift::transport
-
