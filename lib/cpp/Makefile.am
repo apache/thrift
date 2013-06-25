@@ -124,6 +124,7 @@ libthriftqt_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS) $(QT_LIBS)
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
                          $(top_builddir)/config.h \
+                         src/thrift/thrift-config.h \
                          src/thrift/TDispatchProcessor.h \
                          src/thrift/Thrift.h \
                          src/thrift/TReflectionLocal.h \
@@ -165,6 +166,7 @@ include_protocol_HEADERS = \
 
 include_transportdir = $(include_thriftdir)/transport
 include_transport_HEADERS = \
+                         src/thrift/transport/PlatformSocket.h \
                          src/thrift/transport/TFDTransport.h \
                          src/thrift/transport/TFileTransport.h \
                          src/thrift/transport/TSimpleFileTransport.h \
