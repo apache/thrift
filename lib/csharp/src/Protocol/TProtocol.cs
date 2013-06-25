@@ -27,7 +27,7 @@ using Thrift.Transport;
 
 namespace Thrift.Protocol
 {
-	public abstract class TProtocol
+	public abstract class TProtocol : IDisposable
 	{
 		protected TTransport trans;
 
@@ -40,6 +40,29 @@ namespace Thrift.Protocol
 		{
 			get { return trans; }
 		}
+
+        #region " IDisposable Support "
+        private bool _IsDisposed;
+
+        // IDisposable
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_IsDisposed)
+            {
+                if (disposing)
+                {
+                    if (trans is IDisposable)
+                        (trans as IDisposable).Dispose();
+                }
+            }
+            _IsDisposed = true;
+        }
+        #endregion
 
 		public abstract void WriteMessageBegin(TMessage message);
 		public abstract void WriteMessageEnd();

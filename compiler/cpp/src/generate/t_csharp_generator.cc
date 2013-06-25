@@ -1244,6 +1244,8 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends());
     extends_client = extends + ".Client, ";
+  } else {
+    extends_client = "IDisposable, ";
   }
 
   generate_csharp_doc(f_service_, tservice);
@@ -1289,6 +1291,35 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     scope_up(f_service_);
     indent(f_service_) << "get { return oprot_; }" << endl;
     scope_down(f_service_);
+    f_service_ << endl << endl;
+    
+    indent(f_service_) << "#region \" IDisposable Support \"" << endl;
+    indent(f_service_) << "private bool _IsDisposed;" << endl << endl;
+    indent(f_service_) << "// IDisposable" << endl;
+    indent(f_service_) << "public void Dispose()" << endl;
+    scope_up(f_service_);
+    indent(f_service_) << "Dispose(true);" << endl;
+    scope_down(f_service_);
+    indent(f_service_) << endl << endl;
+    indent(f_service_) << "protected virtual void Dispose(bool disposing)" << endl;
+    scope_up(f_service_);
+    indent(f_service_) << "if (!_IsDisposed)" << endl;
+    scope_up(f_service_);
+    indent(f_service_) << "if (disposing)" << endl;
+    scope_up(f_service_);
+    indent(f_service_) << "if (iprot_ != null)" << endl;
+    scope_up(f_service_);
+    indent(f_service_) << "((IDisposable)iprot_).Dispose();" << endl;
+    scope_down(f_service_);
+    indent(f_service_) << "if (oprot_ != null)" << endl;
+    scope_up(f_service_);
+    indent(f_service_) << "((IDisposable)oprot_).Dispose();" << endl;
+    scope_down(f_service_);
+    scope_down(f_service_);
+    scope_down(f_service_);
+    indent(f_service_) << "_IsDisposed = true;" << endl;
+    scope_down(f_service_);
+    indent(f_service_) << "#endregion" << endl;
     f_service_ << endl << endl;
   }
 

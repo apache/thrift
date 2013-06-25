@@ -116,48 +116,48 @@ namespace Thrift.Transport
 			}
 		}
 
-		protected override TTransport AcceptImpl()
-		{
-			if (server == null)
-			{
-				throw new TTransportException(TTransportException.ExceptionType.NotOpen, "No underlying server socket.");
-			}
-			try
-			{
-				TcpClient result = server.AcceptTcpClient();
-				TSocket result2 = new TSocket(result);
-        try
+        protected override TTransport AcceptImpl()
         {
-          result2 = new TSocket(result);
-          result2.Timeout = clientTimeout;
-          if (useBufferedSockets)
-          {
-            TBufferedTransport result3 = new TBufferedTransport(result2);
-            return result3;
-          }
-          else
-          {
-            return result2;
-          }
+            if (server == null)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen, "No underlying server socket.");
+            }
+            try
+            {
+                TSocket result2 = null;
+                TcpClient result = server.AcceptTcpClient();
+                try
+                {
+                    result2 = new TSocket(result);
+                    result2.Timeout = clientTimeout;
+                    if (useBufferedSockets)
+                    {
+                        TBufferedTransport result3 = new TBufferedTransport(result2);
+                        return result3;
+                    }
+                    else
+                    {
+                        return result2;
+                    }
+                }
+                catch (System.Exception)
+                {
+                    // If a TSocket was successfully created, then let 
+                    // it do proper cleanup of the TcpClient object.
+                    if (result2 != null)
+                        result2.Dispose();
+                    else //  Otherwise, clean it up ourselves.
+                        ((IDisposable)result).Dispose();
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new TTransportException(ex.ToString());
+            }
         }
-        catch (System.Exception)
-        {
-          // If a TSocket was successfully created, then let 
-          // it do proper cleanup of the TcpClient object.
-          if (result2 != null)
-            result2.Dispose();
-          else //  Otherwise, clean it up ourselves.
-            ((IDisposable)result).Dispose();
-          throw;
-        }
-      }
-      catch (Exception ex)
-      {
-        throw new TTransportException(ex.ToString());
-      }
-    }
 
-		public override void Close()
+        public override void Close()
 		{
 			if (server != null)
 			{
