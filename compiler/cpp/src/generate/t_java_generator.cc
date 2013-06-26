@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include <cassert>
+
 #include <sstream>
 #include <string>
 #include <fstream>
@@ -276,6 +278,9 @@ public:
   void generate_field_descs(ofstream& out, t_struct* tstruct);
   void generate_field_name_constants(ofstream& out, t_struct* tstruct);
 
+  std::string make_valid_java_filename( std::string const & fromName);
+  std::string make_valid_java_identifier( std::string const & fromName);
+  
   bool type_can_be_null(t_type* ttype) {
     ttype = get_true_type(ttype);
 
@@ -418,7 +423,7 @@ void t_java_generator::generate_typedef(t_typedef* ttypedef) {
  */
 void t_java_generator::generate_enum(t_enum* tenum) {
   // Make output file
-  string f_enum_name = package_dir_+"/"+(tenum->get_name())+".java";
+  string f_enum_name = package_dir_+"/"+make_valid_java_filename(tenum->get_name())+".java";
   ofstream f_enum;
   f_enum.open(f_enum_name.c_str());
 
@@ -510,7 +515,7 @@ void t_java_generator::generate_consts(std::vector<t_const*> consts) {
     return;
   }
 
-  string f_consts_name = package_dir_+ '/' + program_name_ + "Constants.java";
+  string f_consts_name = package_dir_+ '/' + make_valid_java_filename(program_name_) + "Constants.java";
   ofstream f_consts;
   f_consts.open(f_consts_name.c_str());
 
@@ -521,7 +526,7 @@ void t_java_generator::generate_consts(std::vector<t_const*> consts) {
     java_type_imports();
 
   f_consts <<
-    "public class " << program_name_ << "Constants {" << endl <<
+    "public class " << make_valid_java_identifier(program_name_) << "Constants {" << endl <<
     endl;
   indent_up();
   vector<t_const*>::iterator c_iter;
@@ -714,7 +719,7 @@ void t_java_generator::generate_xception(t_struct* txception) {
 void t_java_generator::generate_java_struct(t_struct* tstruct,
                                             bool is_exception) {
   // Make output file
-  string f_struct_name = package_dir_+"/"+(tstruct->get_name())+".java";
+  string f_struct_name = package_dir_+"/"+make_valid_java_filename(tstruct->get_name())+".java";
   ofstream f_struct;
   f_struct.open(f_struct_name.c_str());
 
@@ -736,7 +741,7 @@ void t_java_generator::generate_java_struct(t_struct* tstruct,
  */
 void t_java_generator::generate_java_union(t_struct* tstruct) {
   // Make output file
-  string f_struct_name = package_dir_+"/"+(tstruct->get_name())+".java";
+  string f_struct_name = package_dir_+"/"+make_valid_java_filename(tstruct->get_name())+".java";
   ofstream f_struct;
   f_struct.open(f_struct_name.c_str());
 
@@ -2228,7 +2233,7 @@ void t_java_generator::generate_field_value_meta_data(std::ofstream& out, t_type
  */
 void t_java_generator::generate_service(t_service* tservice) {
   // Make output file
-  string f_service_name = package_dir_+"/"+service_name_+".java";
+  string f_service_name = package_dir_+"/"+make_valid_java_filename(service_name_)+".java";
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<
@@ -3724,6 +3729,53 @@ string t_java_generator::type_to_enum(t_type* type) {
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
+
+/**
+ * Takes a name and produes a valid Java source file name from it
+ *
+ * @param fromName The name which shall become a valid Java source file name
+ * @return The produced identifier
+ */
+std::string t_java_generator::make_valid_java_filename( std::string const & fromName) {
+    // if any further rules apply to source file names in Java, modify as necessary
+    return make_valid_java_identifier(fromName);
+}
+
+/**
+ * Takes a name and produes a valid Java identifier from it
+ *
+ * @param fromName The name which shall become a valid Java identifier
+ * @return The produced identifier
+ */
+std::string t_java_generator::make_valid_java_identifier( std::string const & fromName) {
+    std::string str = fromName;
+    if( str.empty()) {
+        return str;
+    }
+
+    // tests rely on this
+    assert( ('A' < 'Z') && ('a' < 'z') && ('0' < '9'));
+    
+    // if the first letter is a number, we add an additional underscore in front of it
+    char c = str.at(0);
+    if( ('0' <= c) && (c <= '9')) {
+        str = "_" + str;
+    }
+
+    // following chars: letter, number or underscore
+    for( size_t i = 0;  i < str.size();  ++i) {
+        c = str.at(i);        
+        if( (('A' > c) || (c > 'Z')) && 
+            (('a' > c) || (c > 'z')) && 
+            (('0' > c) || (c > '9')) && 
+            ('_' != c) ) {
+            str.replace( i, 1, "_");
+        }
+    }
+
+    return str;
+}
+
 
 /**
  * Applies the correct style to a string based on the value of nocamel_style_
