@@ -407,6 +407,7 @@ namespace Thrift.Protocol
 			}
 			else if ((ch >= 'a') && (ch <= 'f'))
 			{
+				ch += 10;
 				return (byte)((char)ch - 'a');
 			}
 			else
@@ -428,6 +429,7 @@ namespace Thrift.Protocol
 			}
 			else
 			{
+				val -= 10;
 				return (byte)((char)val + 'a');
 			}
 		}
