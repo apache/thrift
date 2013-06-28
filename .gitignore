@@ -81,6 +81,8 @@ gen-*
 /lib/cpp/Release/
 /lib/cpp/Release-mt/
 /lib/cpp/src/thrift/qt/moc_TQTcpServer.cpp
+/lib/cpp/src/thrift/config.h
+/lib/cpp/src/thrift/stamp-h2
 /lib/cpp/test/Makefile
 /lib/cpp/test/Makefile.in
 /lib/cpp/test/Benchmark
@@ -179,6 +181,7 @@ gen-*
 /lib/py/Makefile
 /lib/py/Makefile.in
 /lib/py/build
+/lib/py/thrift.egg-info/
 /lib/rb/Makefile
 /lib/rb/Makefile.in
 /lib/rb/debug_proto_test
