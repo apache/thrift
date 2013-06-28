@@ -18,7 +18,7 @@
  */
 
 #include <thrift/windows/GetTimeOfDay.h>
-#include "config.h"
+#include <thrift/thrift-config.h>
 
 // win32
 #include <time.h>

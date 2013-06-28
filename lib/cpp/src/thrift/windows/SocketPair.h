@@ -30,7 +30,7 @@
 
 // Win32
 #include <Winsock2.h>
-#include "config.h"
+#include <thrift/thrift-config.h>
 
 int thrift_socketpair(int d, int type, int protocol, THRIFT_SOCKET sv[2]);
 
