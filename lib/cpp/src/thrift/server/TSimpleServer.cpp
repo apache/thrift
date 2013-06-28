@@ -46,7 +46,7 @@ void TSimpleServer::serve() {
   serverTransport_->listen();
 
   // Run the preServe event
-  if (eventHandler_ != NULL) {
+  if (eventHandler_) {
     eventHandler_->preServe();
   }
 
@@ -59,25 +59,25 @@ void TSimpleServer::serve() {
       inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
       outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
     } catch (TTransportException& ttx) {
-      if (inputTransport != NULL) { inputTransport->close(); }
-      if (outputTransport != NULL) { outputTransport->close(); }
-      if (client != NULL) { client->close(); }
+      if (inputTransport) { inputTransport->close(); }
+      if (outputTransport) { outputTransport->close(); }
+      if (client) { client->close(); }
       if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
           string errStr = string("TServerTransport died on accept: ") + ttx.what();
           GlobalOutput(errStr.c_str());
       }
       continue;
     } catch (TException& tx) {
-      if (inputTransport != NULL) { inputTransport->close(); }
-      if (outputTransport != NULL) { outputTransport->close(); }
-      if (client != NULL) { client->close(); }
+      if (inputTransport) { inputTransport->close(); }
+      if (outputTransport) { outputTransport->close(); }
+      if (client) { client->close(); }
       string errStr = string("Some kind of accept exception: ") + tx.what();
       GlobalOutput(errStr.c_str());
       continue;
     } catch (string s) {
-      if (inputTransport != NULL) { inputTransport->close(); }
-      if (outputTransport != NULL) { outputTransport->close(); }
-      if (client != NULL) { client->close(); }
+      if (inputTransport) { inputTransport->close(); }
+      if (outputTransport) { outputTransport->close(); }
+      if (client) { client->close(); }
       string errStr = string("Some kind of accept exception: ") + s;
       GlobalOutput(errStr.c_str());
       break;
@@ -88,12 +88,12 @@ void TSimpleServer::serve() {
                                                     outputProtocol, client);
 
     void* connectionContext = NULL;
-    if (eventHandler_ != NULL) {
+    if (eventHandler_) {
       connectionContext = eventHandler_->createContext(inputProtocol, outputProtocol);
     }
     try {
       for (;;) {
-        if (eventHandler_ != NULL) {
+        if (eventHandler_) {
           eventHandler_->processContext(connectionContext, client);
         }
         if (!processor->process(inputProtocol, outputProtocol,
@@ -112,7 +112,7 @@ void TSimpleServer::serve() {
     } catch (...) {
       GlobalOutput("TSimpleServer uncaught exception.");
     }
-    if (eventHandler_ != NULL) {
+    if (eventHandler_) {
       eventHandler_->deleteContext(connectionContext, inputProtocol, outputProtocol);
     }
 

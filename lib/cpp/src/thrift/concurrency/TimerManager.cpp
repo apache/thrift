@@ -174,7 +174,7 @@ void TimerManager::start() {
   bool doStart = false;
   {
     Synchronized s(monitor_);
-    if (threadFactory_ == NULL) {
+    if (!threadFactory_) {
       throw InvalidArgumentException();
     }
     if (state_ == TimerManager::UNINITIALIZED) {

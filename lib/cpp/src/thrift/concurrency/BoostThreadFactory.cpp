@@ -115,7 +115,7 @@ void* BoostThread::threadMain(void* arg) {
   shared_ptr<BoostThread> thread = *(shared_ptr<BoostThread>*)arg;
   delete reinterpret_cast<shared_ptr<BoostThread>*>(arg);
 
-  if (thread == NULL) {
+  if (!thread) {
     return (void*)0;
   }
 

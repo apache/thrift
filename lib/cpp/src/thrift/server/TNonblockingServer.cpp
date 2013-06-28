@@ -347,7 +347,7 @@ class TNonblockingServer::TConnection::Task: public Runnable {
   void run() {
     try {
       for (;;) {
-        if (serverEventHandler_ != NULL) {
+        if (serverEventHandler_) {
           serverEventHandler_->processContext(connectionContext_, connection_->getTSocket());
         }
         if (!processor_->process(input_, output_, connectionContext_) ||
@@ -424,7 +424,7 @@ void TNonblockingServer::TConnection::init(THRIFT_SOCKET socket,
 
   // Set up for any server event handler
   serverEventHandler_ = server_->getEventHandler();
-  if (serverEventHandler_ != NULL) {
+  if (serverEventHandler_) {
     connectionContext_ = serverEventHandler_->createContext(inputProtocol_,
                                                             outputProtocol_);
   } else {
@@ -615,10 +615,10 @@ void TNonblockingServer::TConnection::transition() {
       return;
     } else {
       try {
-	if (serverEventHandler_ != NULL) {
-	    serverEventHandler_->processContext(connectionContext_,
-						getTSocket());
-	}
+        if (serverEventHandler_) {
+          serverEventHandler_->processContext(connectionContext_,
+                                              getTSocket());
+        }
         // Invoke the processor
         processor_->process(inputProtocol_, outputProtocol_,
                             connectionContext_);
@@ -828,7 +828,7 @@ void TNonblockingServer::TConnection::close() {
     GlobalOutput.perror("TConnection::close() event_del", THRIFT_GET_SOCKET_ERROR);
   }
 
-  if (serverEventHandler_ != NULL) {
+  if (serverEventHandler_) {
     serverEventHandler_->deleteContext(connectionContext_, inputProtocol_, outputProtocol_);
   }
   ioThread_ = NULL;
@@ -1130,7 +1130,7 @@ void TNonblockingServer::listenSocket(THRIFT_SOCKET s) {
 
 void TNonblockingServer::setThreadManager(boost::shared_ptr<ThreadManager> threadManager) {
   threadManager_ = threadManager;
-  if (threadManager != NULL) {
+  if (threadManager) {
     threadManager->setExpireCallback(apache::thrift::stdcxx::bind(&TNonblockingServer::expireClose, this, apache::thrift::stdcxx::placeholders::_1));
     threadPoolProcessing_ = true;
   } else {
@@ -1215,7 +1215,7 @@ void TNonblockingServer::serve() {
   }
 
   // Notify handler of the preServe event
-  if (eventHandler_ != NULL) {
+  if (eventHandler_) {
     eventHandler_->preServe();
   }
 

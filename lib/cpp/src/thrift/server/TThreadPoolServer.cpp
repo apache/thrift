@@ -57,12 +57,12 @@ public:
     boost::shared_ptr<TServerEventHandler> eventHandler =
       server_.getEventHandler();
     void* connectionContext = NULL;
-    if (eventHandler != NULL) {
+    if (eventHandler) {
       connectionContext = eventHandler->createContext(input_, output_);
     }
     try {
       for (;;) {
-        if (eventHandler != NULL) {
+        if (eventHandler) {
           eventHandler->processContext(connectionContext, transport_);
         }
         if (!processor_->process(input_, output_, connectionContext) ||
@@ -83,7 +83,7 @@ public:
                    "TThreadPoolServer::Task::run()");
     }
 
-    if (eventHandler != NULL) {
+    if (eventHandler) {
       eventHandler->deleteContext(connectionContext, input_, output_);
     }
 
@@ -123,7 +123,7 @@ void TThreadPoolServer::serve() {
   serverTransport_->listen();
 
   // Run the preServe event
-  if (eventHandler_ != NULL) {
+  if (eventHandler_) {
     eventHandler_->preServe();
   }
 
@@ -153,25 +153,25 @@ void TThreadPoolServer::serve() {
       threadManager_->add(task, timeout_, taskExpiration_);
 
     } catch (TTransportException& ttx) {
-      if (inputTransport != NULL) { inputTransport->close(); }
-      if (outputTransport != NULL) { outputTransport->close(); }
-      if (client != NULL) { client->close(); }
+      if (inputTransport) { inputTransport->close(); }
+      if (outputTransport) { outputTransport->close(); }
+      if (client) { client->close(); }
       if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
         string errStr = string("TThreadPoolServer: TServerTransport died on accept: ") + ttx.what();
         GlobalOutput(errStr.c_str());
       }
       continue;
     } catch (TException& tx) {
-      if (inputTransport != NULL) { inputTransport->close(); }
-      if (outputTransport != NULL) { outputTransport->close(); }
-      if (client != NULL) { client->close(); }
+      if (inputTransport) { inputTransport->close(); }
+      if (outputTransport) { outputTransport->close(); }
+      if (client) { client->close(); }
       string errStr = string("TThreadPoolServer: Caught TException: ") + tx.what();
       GlobalOutput(errStr.c_str());
       continue;
     } catch (string s) {
-      if (inputTransport != NULL) { inputTransport->close(); }
-      if (outputTransport != NULL) { outputTransport->close(); }
-      if (client != NULL) { client->close(); }
+      if (inputTransport) { inputTransport->close(); }
+      if (outputTransport) { outputTransport->close(); }
+      if (client) { client->close(); }
       string errStr = "TThreadPoolServer: Unknown exception: " + s;
       GlobalOutput(errStr.c_str());
       break;

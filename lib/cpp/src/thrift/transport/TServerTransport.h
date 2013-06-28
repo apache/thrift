@@ -55,7 +55,7 @@ class TServerTransport {
    */
   boost::shared_ptr<TTransport> accept() {
     boost::shared_ptr<TTransport> result = acceptImpl();
-    if (result == NULL) {
+    if (!result) {
       throw TTransportException("accept() may not return NULL");
     }
     return result;

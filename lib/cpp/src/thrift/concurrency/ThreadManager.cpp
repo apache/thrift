@@ -308,7 +308,7 @@ class ThreadManager::Worker: public Runnable {
         }
       }
 
-      if (task != NULL) {
+      if (task) {
         if (task->state_ == ThreadManager::Task::EXECUTING) {
           try {
             task->run();
@@ -375,7 +375,7 @@ void ThreadManager::Impl::start() {
   {
     Synchronized s(monitor_);
     if (state_ == ThreadManager::UNINITIALIZED) {
-      if (threadFactory_ == NULL) {
+      if (!threadFactory_) {
         throw InvalidArgumentException();
       }
       state_ = ThreadManager::STARTED;
