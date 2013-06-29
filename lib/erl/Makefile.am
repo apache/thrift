@@ -32,7 +32,7 @@ all: .generated
 	./rebar compile
 
 check: .generated
-	./rebar eunit
+	./rebar skip_deps=true eunit
 
 install: all
 	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
