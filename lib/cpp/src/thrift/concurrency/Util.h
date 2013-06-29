@@ -29,6 +29,8 @@
 #include <sys/time.h>
 #endif
 
+#include <thrift/transport/PlatformSocket.h>
+
 namespace apache { namespace thrift { namespace concurrency {
 
 /**
@@ -72,7 +74,7 @@ class Util {
   }
 
   static void toTicks(int64_t& result, int64_t secs, int64_t oldTicks,
-                            int64_t oldTicksPerSec, int64_t newTicksPerSec) {
+                      int64_t oldTicksPerSec, int64_t newTicksPerSec) {
     result = secs * newTicksPerSec;
     result += oldTicks * newTicksPerSec / oldTicksPerSec;
 
@@ -85,8 +87,8 @@ class Util {
    * Converts struct THRIFT_TIMESPEC to arbitrary-sized ticks since epoch
    */
   static void toTicks(int64_t& result,
-                            const struct THRIFT_TIMESPEC& value,
-                            int64_t ticksPerSec) {
+                      const struct THRIFT_TIMESPEC& value,
+                      int64_t ticksPerSec) {
     return toTicks(result, value.tv_sec, value.tv_nsec, NS_PER_S, ticksPerSec);
   }
 
@@ -94,8 +96,8 @@ class Util {
    * Converts struct timeval to arbitrary-sized ticks since epoch
    */
   static void toTicks(int64_t& result,
-                            const struct timeval& value,
-                            int64_t ticksPerSec) {
+                      const struct timeval& value,
+                      int64_t ticksPerSec) {
     return toTicks(result, value.tv_sec, value.tv_usec, US_PER_S, ticksPerSec);
   }
 
@@ -103,7 +105,7 @@ class Util {
    * Converts struct THRIFT_TIMESPEC to milliseconds
    */
   static void toMilliseconds(int64_t& result,
-                                   const struct THRIFT_TIMESPEC& value) {
+                             const struct THRIFT_TIMESPEC& value) {
     return toTicks(result, value, MS_PER_S);
   }
 
@@ -111,7 +113,7 @@ class Util {
    * Converts struct timeval to milliseconds
    */
   static void toMilliseconds(int64_t& result,
-                                   const struct timeval& value) {
+                             const struct timeval& value) {
     return toTicks(result, value, MS_PER_S);
   }
 
