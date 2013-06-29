@@ -446,8 +446,8 @@ void ThreadManager::Impl::removeWorker(size_t value) {
     }
 
     for (std::set<shared_ptr<Thread> >::iterator ix = deadWorkers_.begin(); ix != deadWorkers_.end(); ix++) {
-      workers_.erase(*ix);
       idMap_.erase((*ix)->getId());
+      workers_.erase(*ix);
     }
 
     deadWorkers_.clear();
