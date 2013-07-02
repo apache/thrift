@@ -21,12 +21,22 @@
 require 'spec_helper'
 require File.expand_path("#{File.dirname(__FILE__)}/compact_protocol_spec_shared")
 
-describe Thrift::CompactProtocol do
+describe Thrift::BufferedLayeredCompactProtocol do
 
 
   it_should_behave_like 'a compact protocol'
 
   def protocol_class
-    Thrift::CompactProtocol
+    Thrift::BufferedLayeredCompactProtocol
+  end
+end
+
+describe Thrift::BypassLayeredCompactProtocol do
+
+
+  it_should_behave_like 'a compact protocol'
+
+  def protocol_class
+    Thrift::BypassLayeredCompactProtocol
   end
 end
