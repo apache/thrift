@@ -65,25 +65,6 @@ static VALUE union_write (VALUE self, VALUE protocol, protocol_method_table *pmt
 static VALUE struct_write(VALUE self, VALUE protocol, protocol_method_table *pmt);
 static void write_anything(VALUE value, VALUE protocol, field_metadata* fmd, protocol_method_table *pmt);
 
-
-static VALUE get_field_value(VALUE obj, char* field_name) {
-  DEBUG_FUNCTION_ENTRY();
-  char name_buf[strlen(field_name) + 2];
-
-  name_buf[0] = '@';
-  strcpy(&name_buf[1], field_name);
-
-  DEBUGF("namebuf=%s", name_buf);
-
-  VALUE val = rb_ivar_get(obj, rb_intern(name_buf));
-
-  DEBUGF("%s ==> %s", field_name, RSTRING_PTR(rb_inspect(val)));
-
-  DEBUG_FUNCTION_EXIT();
-
-  return val;
-}
-
 static void write_container(field_metadata *fmd, VALUE value, VALUE protocol, protocol_method_table* pmt) {
   int sz, i;
 
@@ -233,7 +214,7 @@ static VALUE struct_write(VALUE self, VALUE protocol, protocol_method_table* pmt
     field_metadata* fmd = getFieldMetadataByIndex(md, i);
 
     DEBUGF("name=%s", fmd->name);
-    VALUE field_value = get_field_value(self, fmd->name);
+    VALUE field_value = rb_ivar_get(self, fmd->name_id);
     VALUE field_name = rb_str_new_cstr(fmd->name);
     DEBUGF("type=%d", TYPE(field_value));
     DEBUG_FUNCTION_PROGRESS();
@@ -301,21 +282,6 @@ static VALUE union_read(VALUE self, VALUE protocol, protocol_method_table *pmt);
 
 static void skip_map_contents(VALUE protocol, VALUE key_type_value, VALUE value_type_value, int size);
 static void skip_list_or_set_contents(VALUE protocol, VALUE element_type_value, int size);
-
-static void set_field_value(VALUE obj, char* field_name, VALUE value) {
-  DEBUG_FUNCTION_ENTRY();
-
-  char name_buf[strlen(field_name) + 2];
-
-  name_buf[0] = '@';
-  strcpy(&name_buf[1], field_name);
-
-  rb_ivar_set(obj, rb_intern(name_buf), value);
-
-  DEBUGF("%s ==> %s", field_name, RSTRING_PTR(rb_inspect(value)));
-
-  DEBUG_FUNCTION_EXIT();
-}
 
 // Helper method to skip the contents of a map (assumes the map header has been read).
 static void skip_map_contents(VALUE protocol, VALUE key_type_value, VALUE value_type_value, int size) {
@@ -486,7 +452,7 @@ static VALUE struct_read(VALUE self, VALUE protocol, protocol_method_table *pmt)
       int specified_type = fmd->type;
       if (field_type == specified_type) {
         // read the value
-        set_field_value(self, fmd->name, read_anything(protocol, fmd, pmt));
+        rb_ivar_set(self, fmd->name_id, read_anything(protocol, fmd, pmt));
       } else {
         rb_funcall(protocol, skip_method_id, 1, field_type_value);
       }

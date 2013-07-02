@@ -19,7 +19,20 @@ static field_metadata* createAndCompileField(int id, VALUE field_info);
 static void compileField(int id, VALUE field_info, field_metadata* fmd);
 
 
+static VALUE get_name_id(char* field_name) {
+  DEBUG_FUNCTION_ENTRY();
 
+  char name_buf[strlen(field_name) + 2];
+
+  name_buf[0] = '@';
+  strcpy(&name_buf[1], field_name);
+
+  VALUE v = rb_intern(name_buf);
+
+  DEBUG_FUNCTION_EXIT();
+
+  return v;
+}
 
 
 field_metadata* getFieldMetadataByID(struct_metadata* md, int id)
@@ -86,6 +99,7 @@ static void compileField(int id, VALUE field_info, field_metadata* fmd)
 	DEBUG_FUNCTION_PROGRESS();
 	VALUE v_name = rb_hash_aref(field_info, name_sym);
 	fmd->name = v_name == Qnil ? 0 : strdup(RSTRING_PTR(v_name));
+	fmd->name_id = v_name == Qnil ? Qnil : get_name_id(fmd->name);
 
 	DEBUG_FUNCTION_PROGRESS();
   	DEBUGF("id=%d type=%d, name=%s", fmd->id, fmd->type, fmd->name);

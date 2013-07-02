@@ -15,6 +15,7 @@ struct _field_metadata
 	int type;
 	//int optional; not used currently -- TODO
 	char* name;
+	ID name_id;
 	struct_metadata* klass_md;
 	VALUE klass_v;
 
