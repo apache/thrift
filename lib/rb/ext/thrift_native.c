@@ -23,6 +23,7 @@
 #include <binary_protocol_accelerated.h>
 #include <compact_protocol.h>
 #include <memory_buffer.h>
+#include <fast_memory_buffer.h>
 
 // cached classes/modules
 VALUE rb_cSet;
@@ -192,4 +193,5 @@ void Init_thrift_native() {
   Init_binary_protocol_accelerated();
   Init_compact_protocol();
   Init_memory_buffer();
+  Init_fast_memory_buffer();
 }
