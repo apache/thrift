@@ -23,6 +23,7 @@
 #include <constants.h>
 #include <struct.h>
 #include <bytes.h>
+#include "fastcall.h"
 #include "struct.h"
 #include "ruby_ptr.h"
 
@@ -32,12 +33,15 @@
 #include "protocol_transfer.h"
 #include "compact_protocol_layered.h"
 
+
 #define CHECK_NIL(obj) if (NIL_P(obj)) { rb_raise(rb_eStandardError, "nil argument not allowed!");}
 
 
 static VALUE rb_native_qmark(VALUE self) {
   return Qtrue;
 }
+
+static protocol_method_table method_table;
 
 static int VERSION;
 static int VERSION_MASK;
@@ -942,8 +946,56 @@ static VALUE rb_initialize(VALUE self, VALUE transport)
   return self;
 } 
 
+VALUE rb_get_protocol_method_table(VALUE self)
+{
+  return PTR2NUM(&method_table);
+}
+
+void Init_protocol_method_table()
+{
+  fastcall_init_c(method_table.write_bool, (rfunc)rb_write_bool);
+  fastcall_init_c(method_table.write_byte, (rfunc)rb_write_byte);
+  fastcall_init_c(method_table.write_double, (rfunc)rb_write_double);
+  fastcall_init_c(method_table.write_i16, (rfunc)rb_write_i16);
+  fastcall_init_c(method_table.write_i32, (rfunc)rb_write_i32);
+  fastcall_init_c(method_table.write_i64, (rfunc)rb_write_i64);
+  fastcall_init_c(method_table.write_set_begin, (rfunc)rb_write_set_begin);
+  fastcall_init_c(method_table.write_set_end, (rfunc)rb_write_set_end);
+  fastcall_init_c(method_table.write_map_begin, (rfunc)rb_write_map_begin);
+  fastcall_init_c(method_table.write_map_end, (rfunc)rb_write_map_end);
+  fastcall_init_c(method_table.write_list_begin, (rfunc)rb_write_list_begin);
+  fastcall_init_c(method_table.write_list_end, (rfunc)rb_write_list_end);
+  fastcall_init_c(method_table.write_field_begin, (rfunc)rb_write_field_begin);
+  fastcall_init_c(method_table.write_field_end, (rfunc)rb_write_field_end);
+  fastcall_init_c(method_table.write_field_stop, (rfunc)rb_write_field_stop);
+  fastcall_init_c(method_table.write_struct_begin, (rfunc)rb_write_struct_begin);
+  fastcall_init_c(method_table.write_struct_end, (rfunc)rb_write_struct_end);
+  fastcall_init_c(method_table.write_string, (rfunc)rb_write_string);
+
+  fastcall_init_c(method_table.read_bool, (rfunc)rb_read_bool);
+  fastcall_init_c(method_table.read_byte, (rfunc)rb_read_byte);
+  fastcall_init_c(method_table.read_double, (rfunc)rb_read_double);
+  fastcall_init_c(method_table.read_i16, (rfunc)rb_read_i16);
+  fastcall_init_c(method_table.read_i32, (rfunc)rb_read_i32);
+  fastcall_init_c(method_table.read_i64, (rfunc)rb_read_i64);
+  fastcall_init_c(method_table.read_set_begin, (rfunc)rb_read_set_begin);
+  fastcall_init_c(method_table.read_set_end, (rfunc)rb_read_set_end);
+  fastcall_init_c(method_table.read_map_begin, (rfunc)rb_read_map_begin);
+  fastcall_init_c(method_table.read_map_end, (rfunc)rb_read_map_end);
+  fastcall_init_c(method_table.read_list_begin, (rfunc)rb_read_list_begin);
+  fastcall_init_c(method_table.read_list_end, (rfunc)rb_read_list_end);
+  fastcall_init_c(method_table.read_field_begin, (rfunc)rb_read_field_begin);
+  fastcall_init_c(method_table.read_field_end, (rfunc)rb_read_field_end);
+  fastcall_init_c(method_table.read_struct_begin, (rfunc)rb_read_struct_begin);
+  fastcall_init_c(method_table.read_struct_end, (rfunc)rb_read_struct_end);
+  fastcall_init_c(method_table.read_string, (rfunc)rb_read_string);
+
+  fastcall_init_c(method_table.flush, (rfunc)rb_flush);
+}  
 
 void Init_compact_protocol_layered() {
+  Init_protocol_method_table();
+
   VALUE thrift_compact_protocol_class = rb_const_get(thrift_module, rb_intern("CompactProtocol"));
   VALUE bpa_class = rb_define_class_under(thrift_module, "LayeredCompactProtocol", thrift_compact_protocol_class);
 
@@ -1007,4 +1059,6 @@ void Init_compact_protocol_layered() {
   rb_define_method(bpa_class, "read_map_end",       rb_read_map_end, 0);
   rb_define_method(bpa_class, "read_list_end",      rb_read_list_end, 0);
   rb_define_method(bpa_class, "read_set_end",       rb_read_set_end, 0);
+
+  rb_define_method(bpa_class, "get_protocol_method_table", rb_get_protocol_method_table, 0);
 }
