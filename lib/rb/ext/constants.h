@@ -75,6 +75,7 @@ extern ID read_into_buffer_method_id;
 extern ID force_binary_encoding_id;
 extern ID convert_to_utf8_byte_buffer_id;
 extern ID convert_to_string_id;
+extern ID flush_method_id;
 
 extern ID fields_const_id;
 extern ID transport_ivar_id;
