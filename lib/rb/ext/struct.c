@@ -198,6 +198,11 @@ VALUE default_read_struct_end(VALUE protocol) {
   return rb_funcall(protocol, read_struct_end_method_id, 0);
 }
 
+VALUE default_flush(VALUE protocol)
+{
+  return rb_funcall(protocol, flush_method_id, 0);
+}
+
 // end default protocol methods
 
 static VALUE rb_thrift_union_write (VALUE self, VALUE protocol);
@@ -377,6 +382,7 @@ static VALUE rb_thrift_struct_write(VALUE self, VALUE protocol) {
 
   // write struct end
   default_write_struct_end(protocol);
+  default_flush(protocol);
 
   return Qnil;
 }
@@ -665,6 +671,7 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
   // write struct end
   default_write_struct_end(protocol);
 
+  default_flush(protocol);
   return Qnil;
 }
 

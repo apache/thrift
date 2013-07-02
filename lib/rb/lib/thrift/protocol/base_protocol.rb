@@ -240,6 +240,8 @@ module Thrift
       write_field_end
     end
 
+    def flush; end
+
     # Writes a field value based on the field information.
     #
     # field_info - A Hash containing the definition of the field:
