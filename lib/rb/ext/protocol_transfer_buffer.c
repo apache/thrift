@@ -65,6 +65,8 @@ static int protocol_read(protocol_transfer* pt, char* buffer, int length)
 	{
 		//No, let's fetch some
 		int available = NUM2INT(rb_funcall(data->transport, available_method_id, 0));
+		if (available == 0) rb_raise(rb_eEOFError, "Not enough bytes remain in memory buffer");
+
 		int read_sz = (available < BUFFER_LEN) ? available : BUFFER_LEN;
 
 		rb_funcall(data->transport, read_into_buffer_method_id, 2, data->rbuf, INT2FIX(read_sz));
