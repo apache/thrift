@@ -48,7 +48,7 @@ uninstall:
 
 clean:
 	./rebar clean
-	rm .generated
+	rm -f .generated
 	rm -f test/secondService_* \
 		  test/aService_* \
 		  test/serviceForExceptionWithAMap_* \
