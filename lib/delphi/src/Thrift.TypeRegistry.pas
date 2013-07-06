@@ -22,7 +22,8 @@ unit Thrift.TypeRegistry;
 interface
 
 uses
-  Generics.Collections;
+  Generics.Collections, TypInfo,
+  Thrift.Protocol;
 
 type
   TFactoryMethod<T> = function:T;
@@ -35,12 +36,11 @@ type
     class destructor Destroy;
     class procedure RegisterTypeFactory<F>(const aFactoryMethod: TFactoryMethod<F>);
     class function  Construct<F>: F;
+    class function  ConstructFromTypeInfo(const aTypeInfo: PTypeInfo): IBase;
   end;
 
 implementation
 
-uses
-  TypInfo;
 
 { TypeRegistration }
 
@@ -79,6 +79,17 @@ begin
     then Result := TFactoryMethod<F>(Factory)();
   end;
 end;
+
+class function TypeRegistry.ConstructFromTypeInfo(const aTypeInfo: PTypeInfo): IBase;
+var
+  Factory      : Pointer;
+begin
+  Result := nil;
+  if FTypeInfoToFactoryLookup.TryGetValue(aTypeInfo, Factory)
+  then Result := IBase(TFactoryMethod<IBase>(Factory)());
+end;
+
+
 
 
 end.
