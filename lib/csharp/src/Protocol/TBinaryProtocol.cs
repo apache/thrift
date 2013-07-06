@@ -343,7 +343,9 @@ namespace Thrift.Protocol
 			return (int)(((i32in[0] & 0xff) << 24) | ((i32in[1] & 0xff) << 16) | ((i32in[2] & 0xff) << 8) | ((i32in[3] & 0xff)));
 		}
 
-		private byte[] i64in = new byte[8];
+#pragma warning disable 675
+
+        private byte[] i64in = new byte[8];
 		public override long ReadI64()
 		{
 			ReadAll(i64in, 0, 8);
@@ -360,7 +362,9 @@ namespace Thrift.Protocol
             }
         }
 
-		public override double ReadDouble()
+#pragma warning restore 675
+
+        public override double ReadDouble()
 		{
 #if !SILVERLIGHT
 			return BitConverter.Int64BitsToDouble(ReadI64());
