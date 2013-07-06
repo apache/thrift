@@ -25,6 +25,7 @@ using System;
 using System.Text;
 using Thrift.Transport;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Thrift.Protocol 
 {
@@ -102,46 +103,56 @@ namespace Thrift.Protocol
                 message header.  This pulls the message "off the wire", which we'll
                 deal with at the end of this method. */
 
-            TMessage message = iprot.ReadMessageBegin();
-
-            if ((message.Type != TMessageType.Call) && (message.Type != TMessageType.Oneway)) 
+            try
             {
-                Fail( oprot, message, 
-                      TApplicationException.ExceptionType.InvalidMessageType, 
-                      "Message type CALL or ONEWAY expected");
-                return false;
-            }
+                TMessage message = iprot.ReadMessageBegin();
 
-            // Extract the service name
-            int index = message.Name.IndexOf(TMultiplexedProtocol.SEPARATOR);
-            if (index < 0) {
-                Fail( oprot, message, 
-                      TApplicationException.ExceptionType.InvalidProtocol,
-                      "Service name not found in message name: " + message.Name + ". "+
-                      "Did you forget to use a TMultiplexProtocol in your client?");
-                return false;
-            }
+                if ((message.Type != TMessageType.Call) && (message.Type != TMessageType.Oneway))
+                {
+                    Fail(oprot, message,
+                          TApplicationException.ExceptionType.InvalidMessageType,
+                          "Message type CALL or ONEWAY expected");
+                    return false;
+                }
 
-            // Create a new TMessage, something that can be consumed by any TProtocol
-            string serviceName = message.Name.Substring(0, index);
-            TProcessor actualProcessor;
-            if( ! ServiceProcessorMap.TryGetValue(serviceName, out actualProcessor))
+                // Extract the service name
+                int index = message.Name.IndexOf(TMultiplexedProtocol.SEPARATOR);
+                if (index < 0)
+                {
+                    Fail(oprot, message,
+                          TApplicationException.ExceptionType.InvalidProtocol,
+                          "Service name not found in message name: " + message.Name + ". " +
+                          "Did you forget to use a TMultiplexProtocol in your client?");
+                    return false;
+                }
+
+                // Create a new TMessage, something that can be consumed by any TProtocol
+                string serviceName = message.Name.Substring(0, index);
+                TProcessor actualProcessor;
+                if (!ServiceProcessorMap.TryGetValue(serviceName, out actualProcessor))
+                {
+                    Fail(oprot, message,
+                          TApplicationException.ExceptionType.InternalError,
+                          "Service name not found: " + serviceName + ". " +
+                          "Did you forget to call RegisterProcessor()?");
+                    return false;
+                }
+
+                // Create a new TMessage, removing the service name
+                TMessage newMessage = new TMessage(
+                        message.Name.Substring(serviceName.Length + TMultiplexedProtocol.SEPARATOR.Length),
+                        message.Type,
+                        message.SeqID);
+
+                // Dispatch processing to the stored processor
+                return actualProcessor.Process(new StoredMessageProtocol(iprot, newMessage), oprot);
+
+            }
+            catch (IOException)
             {
-                Fail( oprot, message, 
-                      TApplicationException.ExceptionType.InternalError,
-                      "Service name not found: " + serviceName + ". "+ 
-                      "Did you forget to call RegisterProcessor()?");
-                return false;
+                return false;  // similar to all other processors
             }
 
-            // Create a new TMessage, removing the service name
-            TMessage newMessage = new TMessage(
-                    message.Name.Substring(serviceName.Length + TMultiplexedProtocol.SEPARATOR.Length),
-                    message.Type,
-                    message.SeqID);
-
-            // Dispatch processing to the stored processor
-            return actualProcessor.Process(new StoredMessageProtocol(iprot, newMessage), oprot);
         }
 
         /**
