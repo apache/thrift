@@ -1191,13 +1191,12 @@ void TNonblockingServer::stop() {
   }
 }
 
-/**
- * Main workhorse function, starts up the server listening on a port and
- * loops over the libevent handler.
- */
-void TNonblockingServer::serve() {
+void TNonblockingServer::registerEvents(event_base* user_event_base) {
+  userEventBase_ = user_event_base;
+
   // init listen socket
-  createAndListenOnSocket();
+  if (serverSocket_ < 0)
+    createAndListenOnSocket();
 
   // set up the IO threads
   assert(ioThreads_.empty());
@@ -1248,6 +1247,18 @@ void TNonblockingServer::serve() {
     }
   }
 
+  // Register the events for the primary (listener) IO thread
+  ioThreads_[0]->registerEvents();
+}
+
+/**
+ * Main workhorse function, starts up the server listening on a port and
+ * loops over the libevent handler.
+ */
+void TNonblockingServer::serve() {
+
+  registerEvents(NULL);
+
   // Run the primary (listener) IO thread loop in our main thread; this will
   // only return when the server is shutting down.
   ioThreads_[0]->run();
@@ -1267,7 +1278,8 @@ TNonblockingIOThread::TNonblockingIOThread(TNonblockingServer* server,
       , number_(number)
       , listenSocket_(listenSocket)
       , useHighPriority_(useHighPriority)
-      , eventBase_(NULL) {
+      , eventBase_(NULL)
+      , ownEventBase_(false) {
   notificationPipeFDs_[0] = -1;
   notificationPipeFDs_[1] = -1;
 }
@@ -1276,8 +1288,9 @@ TNonblockingIOThread::~TNonblockingIOThread() {
   // make sure our associated thread is fully finished
   join();
 
-  if (eventBase_) {
+  if (eventBase_ && ownEventBase_) {
     event_base_free(eventBase_);
+    ownEventBase_ = false;
   }
 
   if (listenSocket_ >= 0) {
@@ -1330,6 +1343,22 @@ void TNonblockingIOThread::createNotificationPipe() {
  * Register the core libevent events onto the proper base.
  */
 void TNonblockingIOThread::registerEvents() {
+  threadId_ = Thread::get_current();
+
+  assert(eventBase_ == 0);
+  eventBase_ = getServer()->getUserEventBase();
+  if (eventBase_ == NULL) {
+    eventBase_ = event_base_new();
+    ownEventBase_ = true;
+  }
+
+  // Print some libevent stats
+  if (number_ == 0) {
+    GlobalOutput.printf("TNonblockingServer: using libevent %s method %s",
+            event_get_version(),
+            event_base_get_method(eventBase_));
+  }
+
   if (listenSocket_ >= 0) {
     // Register the server event
     event_set(&serverEvent_,
@@ -1478,20 +1507,8 @@ void TNonblockingIOThread::setCurrentThreadHighPriority(bool value) {
 }
 
 void TNonblockingIOThread::run() {
-  threadId_ = Thread::get_current();
-
-  assert(eventBase_ == 0);
-  eventBase_ = event_base_new();
-
-  // Print some libevent stats
-  if (number_ == 0) {
-    GlobalOutput.printf("TNonblockingServer: using libevent %s method %s",
-            event_get_version(),
-            event_base_get_method(eventBase_));
-  }
-
-
-  registerEvents();
+  if (eventBase_ == NULL)
+    registerEvents();
 
   GlobalOutput.printf("TNonblockingServer: IO thread #%d entering loop...",
                       number_);

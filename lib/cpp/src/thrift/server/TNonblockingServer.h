@@ -160,6 +160,9 @@ class TNonblockingServer : public TServer {
   /// Port server runs on
   int port_;
 
+  /// The optional user-provided event-base (for single-thread servers)
+  event_base* userEventBase_;
+
   /// For processing via thread pool, may be NULL
   boost::shared_ptr<ThreadManager> threadManager_;
 
@@ -279,6 +282,7 @@ class TNonblockingServer : public TServer {
     nextIOThread_ = 0;
     useHighPriorityIOThreads_ = false;
     port_ = port;
+    userEventBase_ = NULL;
     threadPoolProcessing_ = false;
     numTConnections_ = 0;
     numActiveProcessors_ = 0;
@@ -756,15 +760,6 @@ class TNonblockingServer : public TServer {
    */
   void stop();
 
- private:
-  /**
-   * Callback function that the threadmanager calls when a task reaches
-   * its expiration time.  It is needed to clean up the expired connection.
-   *
-   * @param task the runnable associated with the expired task.
-   */
-  void expireClose(boost::shared_ptr<Runnable> task);
-
   /// Creates a socket to listen on and binds it to the local port.
   void createAndListenOnSocket();
 
@@ -775,6 +770,32 @@ class TNonblockingServer : public TServer {
    * @param fd descriptor of socket to be initialized/
    */
   void listenSocket(THRIFT_SOCKET fd);
+
+  /**
+   * Register the optional user-provided event-base (for single-thread servers)
+   *
+   * This method should be used when the server is running in a single-thread
+   * mode, and the event base is provided by the user (i.e., the caller).
+   *
+   * @param user_event_base the user-provided event-base. The user is
+   * responsible for freeing the event base memory.
+   */
+  void registerEvents(event_base* user_event_base);
+
+  /**
+   * Returns the optional user-provided event-base (for single-thread servers).
+   */
+  event_base* getUserEventBase() const { return userEventBase_; }
+
+ private:
+  /**
+   * Callback function that the threadmanager calls when a task reaches
+   * its expiration time.  It is needed to clean up the expired connection.
+   *
+   * @param task the runnable associated with the expired task.
+   */
+  void expireClose(boost::shared_ptr<Runnable> task);
+
   /**
    * Return an initialized connection object.  Creates or recovers from
    * pool a TConnection and initializes it with the provided socket FD
@@ -847,6 +868,9 @@ class TNonblockingIOThread : public Runnable {
   // Ensures that the event-loop thread is fully finished and shut down.
   void join();
 
+  /// Registers the events for the notification & listen sockets
+  void registerEvents();
+
  private:
   /**
    * C-callable event handler for signaling task completion.  Provides a
@@ -872,9 +896,6 @@ class TNonblockingIOThread : public Runnable {
 
   /// Exits the loop ASAP in case of shutdown or error.
   void breakLoop(bool error);
-
-  /// Registers the events for the notification & listen sockets
-  void registerEvents();
 
   /// Create the pipe used to notify I/O process of task completion.
   void createNotificationPipe();
@@ -903,6 +924,10 @@ class TNonblockingIOThread : public Runnable {
 
   /// pointer to eventbase to be used for looping
   event_base* eventBase_;
+
+  /// Set to true if this class is responsible for freeing the event base
+  /// memory.
+  bool ownEventBase_;
 
   /// Used with eventBase_ for connection events (only in listener thread)
   struct event serverEvent_;
