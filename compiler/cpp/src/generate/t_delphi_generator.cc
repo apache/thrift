@@ -3123,6 +3123,7 @@ bool t_delphi_generator::is_void( t_type* type ) {
 }
 
 THRIFT_REGISTER_GENERATOR(delphi, "delphi", 
-"    ansistr_binary:  Use AnsiString as binary properties.\n" 
-"    register_types:  Register structs and there implementations in a global type registry\n");
+"    ansistr_binary:  Use AnsiString for binary datatype (default is TBytes).\n" 
+"    register_types:  Enable TypeRegistry, allows for creation of struct, union\n" 
+"                     and container instances by interface or TypeInfo()\n");
 
