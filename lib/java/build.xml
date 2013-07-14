@@ -123,7 +123,7 @@
         <attribute name="Bundle-Description" value="Apache Thrift library"/>
         <attribute name="Bundle-License" value="${license}"/>
         <attribute name="Bundle-ActivationPolicy" value="lazy"/>
-        <attribute name="Export-Package" value="${thrift.groupid};version=${version}"/>
+        <attribute name="Export-Package" value="${thrift.groupid},${thrift.groupid}.async,${thrift.groupid}.meta_data,${thrift.groupid}.protocol,${thrift.groupid}.scheme,${thrift.groupid}.server,${thrift.groupid}.transport;version=${version}"/>
       </manifest>
       <fileset dir="${build.dir}">
         <include name="org/apache/thrift/**/*.class"/>
