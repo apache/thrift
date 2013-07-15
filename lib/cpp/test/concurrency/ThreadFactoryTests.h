@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <config.h>
+#include <thrift/thrift-config.h>
 #include <thrift/concurrency/Thread.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>

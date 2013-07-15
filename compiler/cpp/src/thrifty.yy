@@ -450,6 +450,10 @@ Definition:
         if (g_parent_scope != NULL) {
           g_parent_scope->add_type(g_parent_prefix + $1->get_name(), $1);
         }
+        if (! g_program->is_unique_typename($1)) {
+          yyerror("Type \"%s\" is already defined.", $1->get_name().c_str());
+          exit(1);
+        }
       }
       $$ = $1;
     }
@@ -462,6 +466,10 @@ Definition:
           g_parent_scope->add_service(g_parent_prefix + $1->get_name(), $1);
         }
         g_program->add_service($1);
+        if (! g_program->is_unique_typename($1)) {
+          yyerror("Type \"%s\" is already defined.", $1->get_name().c_str());
+          exit(1);
+        }
       }
       $$ = $1;
     }
