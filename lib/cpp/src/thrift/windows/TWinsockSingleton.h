@@ -57,12 +57,6 @@ public:
 
 private:
 
-#if USE_BOOST_THREAD
-    friend void boost::call_once(void (*func)(void), boost::once_flag& flag);
-#endif
-
-private:
-
     TWinsockSingleton(void);
 
 public:
