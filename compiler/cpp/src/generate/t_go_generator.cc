@@ -208,6 +208,7 @@ public:
     std::string go_imports_begin();
     std::string go_imports_end();
     std::string render_includes();
+    std::string render_import_protection();
     std::string render_fastbinary_includes();
     std::string declare_argument(t_field* tfield);
     std::string render_field_default_value(t_field* tfield, const string& name);
@@ -250,6 +251,7 @@ private:
     std::string package_dir_;
 
     static std::string publicize(const std::string& value);
+    static std::string new_prefix(const std::string& value);
     static std::string privatize(const std::string& value);
     static std::string variable_name_to_go_name(const std::string& value);
     static bool can_be_nil(t_type* value);
@@ -263,7 +265,13 @@ std::string t_go_generator::publicize(const std::string& value)
         return value;
     }
 
-    std::string value2(value);
+    std::string value2(value), prefix;
+
+    string::size_type dot_pos = value.rfind('.');
+    if (dot_pos != string::npos) {
+      prefix = value.substr(0, dot_pos + 1) + prefix;
+      value2 = value.substr(dot_pos + 1);
+    }
 
     if (!isupper(value2[0])) {
         value2[0] = toupper(value2[0]);
@@ -276,7 +284,20 @@ std::string t_go_generator::publicize(const std::string& value)
         }
     }
 
-    return value2;
+    return prefix + value2;
+}
+
+std::string t_go_generator::new_prefix(const std::string& value)
+{
+    if (value.size() <= 0) {
+        return value;
+    }
+
+    string::size_type dot_pos = value.rfind('.');
+    if (dot_pos != string::npos) {
+      return value.substr(0, dot_pos + 1) + "New" + publicize(value.substr(dot_pos + 1));
+    }
+    return "New" + publicize(value);
 }
 
 std::string t_go_generator::privatize(const std::string& value)
@@ -483,9 +504,8 @@ void t_go_generator::init_generator()
     f_types_ <<
              go_package() <<
              go_autogen_comment() <<
-             go_imports_begin() <<
-             render_fastbinary_includes() <<
-             go_imports_end();
+             render_includes() <<
+             render_import_protection();
 
     f_consts_ <<
               go_package() <<
@@ -502,16 +522,22 @@ string t_go_generator::render_includes()
 {
     const vector<t_program*>& includes = program_->get_includes();
     string result = "";
+    string unused_prot = "";
 
     for (size_t i = 0; i < includes.size(); ++i) {
         result += "\t\"" + gen_package_prefix_ + get_real_go_module(includes[i]) + "\"\n";
+        unused_prot += "var _ = " + get_real_go_module(includes[i]) + ".GoUnusedProtection__\n";
     }
 
     if (includes.size() > 0) {
         result += "\n";
     }
 
-    return result;
+    return go_imports_begin() + result + go_imports_end() + unused_prot;
+}
+
+string t_go_generator::render_import_protection() {
+  return string("var GoUnusedProtection__ int;\n\n");
 }
 
 /**
@@ -565,7 +591,9 @@ string t_go_generator::go_imports_end()
         string(
             ")\n\n"
             "// (needed to ensure safety because of naive import list constrution.)\n"
-            "var _ = math.MinInt32\n\n");
+            "var _ = math.MinInt32\n"
+            "var _ = thrift.ZERO\n"
+            "var _ = fmt.Printf\n\n");
 }
 
 /**
@@ -1346,14 +1374,7 @@ void t_go_generator::generate_service(t_service* tservice)
     f_service_ <<
                go_autogen_comment() <<
                go_package() <<
-               go_imports_begin();
-
-    if (tservice->get_extends() != NULL) {
-        f_service_ << "\t\"" << gen_package_prefix_ + get_real_go_module(tservice->get_extends()->get_program()) << "\"\n";
-    }
-
-    f_service_ << render_fastbinary_includes();
-    f_service_ << go_imports_end();
+               render_includes();
 
     generate_service_interface(tservice);
     generate_service_client(tservice);
@@ -1610,7 +1631,7 @@ void t_go_generator::generate_service_client(t_service* tservice)
                    indent() << "}" << endl << endl <<
                    indent() << "func (p *" << serviceName << "Client) send" << function_signature(*f_iter) << "(err error) {" << endl;
         indent_up();
-        std::string argsname = privatize((*f_iter)->get_name()) + "Args";
+        std::string argsname = publicize((*f_iter)->get_name()) + "Args";
         // Serialize the request header
         string args(tmp("args"));
         f_service_ <<
@@ -1639,7 +1660,7 @@ void t_go_generator::generate_service_client(t_service* tservice)
                    indent() << "}" << endl << endl;
 
         if (true) { //!(*f_iter)->is_oneway() || true) {}
-            std::string resultname = privatize((*f_iter)->get_name()) + "Result";
+            std::string resultname = publicize((*f_iter)->get_name()) + "Result";
             // Open function
             f_service_ << endl <<
                        indent() << "func (p *" << serviceName << "Client) recv" << publicize((*f_iter)->get_name()) <<
@@ -2486,7 +2507,7 @@ void t_go_generator::generate_deserialize_field(ofstream &out,
         string wrap;
 
         if (type->is_enum() || orig_type->is_typedef()) {
-            wrap = publicize(orig_type->get_name());
+            wrap = publicize(type_name(orig_type));
         } else if (((t_base_type*)type)->get_base() == t_base_type::TYPE_BYTE) {
             wrap = "int8";
         }
@@ -2518,7 +2539,7 @@ void t_go_generator::generate_deserialize_struct(ofstream &out,
     }
 
     out <<
-        indent() << prefix << eq << "New" << publicize(type_name(tstruct)) << "()" << endl <<
+        indent() << prefix << eq << new_prefix(type_name(tstruct)) << "()" << endl <<
         indent() << "if err := " << prefix << ".Read(iprot); err != nil {" << endl <<
         indent() << "  return fmt.Errorf(\"%T error reading struct: %s\", " << prefix << ")" << endl <<
         indent() << "}" << endl;
@@ -3069,12 +3090,8 @@ string t_go_generator::type_name(t_type* ttype)
 {
     t_program* program = ttype->get_program();
 
-    if (ttype->is_service()) {
-        return get_real_go_module(program) + "." + ttype->get_name();
-    }
-
     if (program != NULL && program != program_) {
-        return get_real_go_module(program) + ".ttypes." + ttype->get_name();
+        return get_real_go_module(program) + "." + ttype->get_name();
     }
 
     return ttype->get_name();
@@ -3194,9 +3211,9 @@ string t_go_generator::type_to_go_type(t_type* type)
             return "float64";
         }
     } else if (type->is_enum()) {
-        return publicize(type->get_name());
+        return publicize(type_name(type));
     } else if (type->is_struct() || type->is_xception()) {
-        return string("*") + publicize(type->get_name());
+        return string("*") + publicize(type_name(type));
     } else if (type->is_map()) {
         t_map* t = (t_map*)type;
         string keyType = type_to_go_key_type(t->get_key_type());

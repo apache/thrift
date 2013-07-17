@@ -28,19 +28,19 @@ all-local: gen-go/tutorial/calculator.go
 check: src/git.apache.org/thrift.git/lib/go/thrift
 	$(THRIFT) -r --gen go $(top_srcdir)/tutorial/tutorial.thrift
 	cp -r gen-go/* src/
-	GOPATH=`pwd` go build ./...
-	GOPATH=`pwd` go build -o go-tutorial src/*.go
-	GOPATH=`pwd` go build -o calculator-remote src/tutorial/calculator-remote/calculator-remote.go
+	GOPATH=`pwd` $(GO) build ./...
+	GOPATH=`pwd` $(GO) build -o go-tutorial src/*.go
+	GOPATH=`pwd` $(GO) build -o calculator-remote src/tutorial/calculator-remote/calculator-remote.go
 
 src/git.apache.org/thrift.git/lib/go/thrift:
 	mkdir -p src/git.apache.org/thrift.git/lib/go
 	ln -sf $(realpath $(top_srcdir)/lib/go/thrift) src/git.apache.org/thrift.git/lib/go/thrift
 
 tutorialserver: all
-	GOPATH=`pwd` go run src/*.go -server=true
+	GOPATH=`pwd` $(GO) run src/*.go -server=true
 
 tutorialclient: all
-	GOPATH=`pwd` go run src/*.go -client=true
+	GOPATH=`pwd` $(GO) run src/*.go -client=true
 
 clean-local:
 	$(RM) -r gen-*

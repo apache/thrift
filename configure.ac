@@ -570,6 +570,7 @@ AC_CONFIG_FILES([
   lib/d/test/Makefile
   lib/erl/Makefile
   lib/go/Makefile
+  lib/go/test/Makefile
   lib/hs/Makefile
   lib/java/Makefile
   lib/js/test/Makefile
@@ -673,7 +674,7 @@ if test "$have_go" = "yes" ; then
   echo
   echo "Go Library:"
   echo "   Using Go................... : $GO"
-  echo "   Using Go version........... : $(go version)"
+  echo "   Using Go version........... : $($GO version)"
 fi
 if test "$have_d" = "yes" ; then
   echo

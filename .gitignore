@@ -236,6 +236,10 @@ gen-*
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient
 /test/cpp/TestServer
+/lib/go/test/Makefile
+/lib/go/test/Makefile.in
+/lib/go/test/gopath/
+/lib/go/test/ThriftTest.thrift
 /test/hs/Makefile
 /test/hs/Makefile.in
 /test/log/
