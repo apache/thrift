@@ -72,6 +72,15 @@ class t_program : public t_doc {
     name_ = program_name(path);
     scope_ = new t_scope();
   }
+  
+  ~t_program()
+  {
+   if(scope_)
+   {
+     delete scope_; 
+     scope_ = NULL; 
+   }
+  }
 
   // Path accessor
   const std::string& get_path() const { return path_; }
