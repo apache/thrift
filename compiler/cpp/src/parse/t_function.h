@@ -66,7 +66,13 @@ class t_function : public t_doc {
     }
   }
 
-  ~t_function() {}
+  ~t_function() {
+   if(xceptions_) 
+   {
+    delete xceptions_;
+    xceptions_ = NULL;
+   }
+  }
 
   t_type* get_returntype() const {
     return returntype_;
