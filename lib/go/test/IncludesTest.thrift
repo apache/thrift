@@ -17,19 +17,25 @@
 # under the License.
 #
 
-if WITH_TESTS
-SUBDIRS = test
-endif
+include "ThriftTest.thrift"
 
-install:
-	@echo '##############################################################'
-	@echo '##############################################################'
-	@echo 'The Go client library should be installed via "go get", please see /lib/go/README'
-	@echo '##############################################################'
-	@echo '##############################################################'
+struct testStruct {
+  1: list<ThriftTest.Numberz> listNumbers
+}
 
-check-local:
-	$(GO) test ./thrift
+struct TestStruct2 {
+  1: testStruct blah,
+}
 
-all-local: check-local
+service testService extends ThriftTest.SecondService {
+  ThriftTest.CrazyNesting getCrazyNesting(
+    1: ThriftTest.StructA a,
+    2: ThriftTest.Numberz numbers
+  ) throws(1: ThriftTest.Xception err1),
 
+  void getSomeValue_DO_NOT_CALL(),
+}
+
+service ExtendedService extends testService {
+  void extendedMethod(),
+}
