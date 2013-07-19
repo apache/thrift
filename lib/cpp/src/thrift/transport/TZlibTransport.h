@@ -23,6 +23,7 @@
 #include <boost/lexical_cast.hpp>
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TVirtualTransport.h>
+#include <zlib.h>
 
 struct z_stream_s;
 
@@ -59,12 +60,7 @@ class TZlibTransportException : public TTransportException {
 };
 
 /**
- * This transport uses zlib's compressed format on the "far" side.
- *
- * There are two kinds of TZlibTransport objects:
- * - Standalone objects are used to encode self-contained chunks of data
- *   (like structures).  They include checksums.
- * - Non-standalone transports are used for RPC.  They are not implemented yet.
+ * This transport uses zlib to compress on write and decompress on read 
  *
  * TODO(dreiss): Don't do an extra copy of the compressed data if
  *               the underlying transport is TBuffered or TMemory.
@@ -72,7 +68,7 @@ class TZlibTransportException : public TTransportException {
  */
 class TZlibTransport : public TVirtualTransport<TZlibTransport> {
  public:
-
+ 
   /**
    * @param transport    The transport to read compressed data from
    *                     and write compressed data to.
@@ -80,14 +76,14 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
    * @param crbuf_size   Compressed buffer size for reading.
    * @param uwbuf_size   Uncompressed buffer size for writing.
    * @param cwbuf_size   Compressed buffer size for writing.
-   *
-   * TODO(dreiss): Write a constructor that isn't a pain.
+   * @param comp_level   Compression level (0=none[fast], 6=default, 9=max[slow]).
    */
   TZlibTransport(boost::shared_ptr<TTransport> transport,
                  int urbuf_size = DEFAULT_URBUF_SIZE,
                  int crbuf_size = DEFAULT_CRBUF_SIZE,
                  int uwbuf_size = DEFAULT_UWBUF_SIZE,
-                 int cwbuf_size = DEFAULT_CWBUF_SIZE) :
+                 int cwbuf_size = DEFAULT_CWBUF_SIZE,
+                 int16_t comp_level = Z_DEFAULT_COMPRESSION) :
     transport_(transport),
     urpos_(0),
     uwpos_(0),
@@ -102,7 +98,8 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
     uwbuf_(NULL),
     cwbuf_(NULL),
     rstream_(NULL),
-    wstream_(NULL)
+    wstream_(NULL),
+    comp_level_(comp_level)
   {
     if (uwbuf_size_ < MIN_DIRECT_DEFLATE_SIZE) {
       // Have to copy this into a local because of a linking issue.
@@ -198,32 +195,6 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
   void flushToZlib(const uint8_t* buf, int len, int flush);
   bool readFromZlib();
 
- private:
-  // Deprecated constructor signature.
-  //
-  // This used to be the constructor signature.  If you are getting a compile
-  // error because you are trying to use this constructor, you need to update
-  // your code as follows:
-  // - Remove the use_for_rpc argument in the constructur.
-  //   There is no longer any distinction between RPC and standalone zlib
-  //   transports.  (Previously, only standalone was allowed, anyway.)
-  // - Replace TZlibTransport::flush() calls with TZlibTransport::finish()
-  //   in your code.  Previously, flush() used to finish the zlib stream.
-  //   Now flush() only flushes out pending data, so more writes can be
-  //   performed after a flush().  The finish() method can be used to finalize
-  //   the zlib stream.
-  //
-  // If we don't declare this constructor, old code written as
-  // TZlibTransport(trans, false) still compiles but behaves incorrectly.
-  // The second bool argument is converted to an integer and used as the
-  // urbuf_size.
-  TZlibTransport(boost::shared_ptr<TTransport> transport,
-                 bool use_for_rpc,
-                 int urbuf_size = DEFAULT_URBUF_SIZE,
-                 int crbuf_size = DEFAULT_CRBUF_SIZE,
-                 int uwbuf_size = DEFAULT_UWBUF_SIZE,
-                 int cwbuf_size = DEFAULT_CWBUF_SIZE);
-
  protected:
   // Writes smaller than this are buffered up.
   // Larger (or equal) writes are dumped straight to zlib.
@@ -251,6 +222,8 @@ class TZlibTransport : public TVirtualTransport<TZlibTransport> {
 
   struct z_stream_s* rstream_;
   struct z_stream_s* wstream_;
+
+  const int comp_level_;
 };
 
 
