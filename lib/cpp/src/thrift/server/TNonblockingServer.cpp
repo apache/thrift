@@ -1195,7 +1195,7 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
   userEventBase_ = user_event_base;
 
   // init listen socket
-  if (serverSocket_ < 0)
+  if (serverSocket_ == THRIFT_INVALID_SOCKET)
     createAndListenOnSocket();
 
   // set up the IO threads
