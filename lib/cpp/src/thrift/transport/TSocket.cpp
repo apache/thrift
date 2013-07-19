@@ -79,7 +79,7 @@ TSocket::TSocket(string host, int port) :
   host_(host),
   port_(port),
   path_(""),
-  socket_(-1),
+  socket_(THRIFT_INVALID_SOCKET),
   connTimeout_(0),
   sendTimeout_(0),
   recvTimeout_(0),
@@ -95,7 +95,7 @@ TSocket::TSocket(string path) :
   host_(""),
   port_(0),
   path_(path),
-  socket_(-1),
+  socket_(THRIFT_INVALID_SOCKET),
   connTimeout_(0),
   sendTimeout_(0),
   recvTimeout_(0),
@@ -112,7 +112,7 @@ TSocket::TSocket() :
   host_(""),
   port_(0),
   path_(""),
-  socket_(-1),
+  socket_(THRIFT_INVALID_SOCKET),
   connTimeout_(0),
   sendTimeout_(0),
   recvTimeout_(0),
@@ -147,7 +147,7 @@ TSocket::~TSocket() {
 }
 
 bool TSocket::isOpen() {
-  return (socket_ != -1);
+  return (socket_ != THRIFT_INVALID_SOCKET);
 }
 
 bool TSocket::peek() {
@@ -187,7 +187,7 @@ void TSocket::openConnection(struct addrinfo *res) {
     socket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   }
 
-  if (socket_ == -1) {
+  if (socket_ == THRIFT_INVALID_SOCKET) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
     GlobalOutput.perror("TSocket::open() socket() " + getSocketInfo(), errno_copy);
     throw TTransportException(TTransportException::NOT_OPEN, "socket()", errno_copy);
@@ -394,22 +394,22 @@ void TSocket::local_open(){
 }
 
 void TSocket::close() {
-  if (socket_ != -1) {
+  if (socket_ != THRIFT_INVALID_SOCKET) {
     shutdown(socket_, THRIFT_SHUT_RDWR);
     ::THRIFT_CLOSESOCKET(socket_);
   }
-  socket_ = -1;
+  socket_ = THRIFT_INVALID_SOCKET;
 }
 
 void TSocket::setSocketFD(THRIFT_SOCKET socket) {
-  if (socket_ != -1) {
+  if (socket_ != THRIFT_INVALID_SOCKET) {
     close();
   }
   socket_ = socket;
 }
 
 uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
-  if (socket_ == -1) {
+  if (socket_ == THRIFT_INVALID_SOCKET) {
     throw TTransportException(TTransportException::NOT_OPEN, "Called read on non-open socket");
   }
 
@@ -541,7 +541,7 @@ void TSocket::write(const uint8_t* buf, uint32_t len) {
 }
 
 uint32_t TSocket::write_partial(const uint8_t* buf, uint32_t len) {
-  if (socket_ == -1) {
+  if (socket_ == THRIFT_INVALID_SOCKET) {
     throw TTransportException(TTransportException::NOT_OPEN, "Called write on non-open socket");
   }
 
@@ -599,7 +599,7 @@ void TSocket::setPort(int port) {
 void TSocket::setLinger(bool on, int linger) {
   lingerOn_ = on;
   lingerVal_ = linger;
-  if (socket_ == -1) {
+  if (socket_ == THRIFT_INVALID_SOCKET) {
     return;
   }
 
@@ -613,7 +613,7 @@ void TSocket::setLinger(bool on, int linger) {
 
 void TSocket::setNoDelay(bool noDelay) {
   noDelay_ = noDelay;
-  if (socket_ == -1 || !path_.empty()) {
+  if (socket_ == THRIFT_INVALID_SOCKET || !path_.empty()) {
     return;
   }
 
@@ -639,7 +639,7 @@ void TSocket::setRecvTimeout(int ms) {
   }
   recvTimeout_ = ms;
 
-  if (socket_ == -1) {
+  if (socket_ == THRIFT_INVALID_SOCKET) {
     return;
   }
 
@@ -664,7 +664,7 @@ void TSocket::setSendTimeout(int ms) {
   }
   sendTimeout_ = ms;
 
-  if (socket_ == -1) {
+  if (socket_ == THRIFT_INVALID_SOCKET) {
     return;
   }
 
@@ -698,7 +698,7 @@ std::string TSocket::getPeerHost() {
     struct sockaddr* addrPtr;
     socklen_t addrLen;
 
-    if (socket_ == -1) {
+    if (socket_ == THRIFT_INVALID_SOCKET) {
       return host_;
     }
 
@@ -732,7 +732,7 @@ std::string TSocket::getPeerAddress() {
     struct sockaddr* addrPtr;
     socklen_t addrLen;
 
-    if (socket_ == -1) {
+    if (socket_ == THRIFT_INVALID_SOCKET) {
       return peerAddress_;
     }
 

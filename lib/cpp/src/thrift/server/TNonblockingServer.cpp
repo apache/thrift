@@ -1206,7 +1206,7 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
 
   for (uint32_t id = 0; id < numIOThreads_; ++id) {
     // the first IO thread also does the listening on server socket
-    THRIFT_SOCKET listenFd = (id == 0 ? serverSocket_ : -1);
+    THRIFT_SOCKET listenFd = (id == 0 ? serverSocket_ : THRIFT_INVALID_SOCKET);
 
     shared_ptr<TNonblockingIOThread> thread(
       new TNonblockingIOThread(this, id, listenFd, useHighPriorityIOThreads_));
@@ -1298,7 +1298,7 @@ TNonblockingIOThread::~TNonblockingIOThread() {
       GlobalOutput.perror("TNonblockingIOThread listenSocket_ close(): ",
                           THRIFT_GET_SOCKET_ERROR);
     }
-    listenSocket_ = TNonblockingServer::INVALID_SOCKET_VALUE;
+    listenSocket_ = THRIFT_INVALID_SOCKET;
   }
 
   for (int i = 0; i < 2; ++i) {
@@ -1307,7 +1307,7 @@ TNonblockingIOThread::~TNonblockingIOThread() {
         GlobalOutput.perror("TNonblockingIOThread notificationPipe close(): ",
                             THRIFT_GET_SOCKET_ERROR);
       }
-      notificationPipeFDs_[i] = TNonblockingServer::INVALID_SOCKET_VALUE;
+      notificationPipeFDs_[i] = THRIFT_INVALID_SOCKET;
     }
   }
 }
