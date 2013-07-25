@@ -120,12 +120,14 @@ func (p *TSimpleServer) Serve() error {
 	for !p.stopped {
 		client, err := p.serverTransport.Accept()
 		if err != nil {
-			return err
+			log.Println("Accept err: ", err)
 		}
 		if client != nil {
-			if err := p.processRequest(client); err != nil {
-				log.Println("error processing request:", err)
-			}
+			go func() {
+				if err := p.processRequest(client); err != nil {
+					log.Println("error processing request:", err)
+				}
+			}()
 		}
 	}
 	return nil
