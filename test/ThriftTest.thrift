@@ -68,6 +68,8 @@ struct Bonk
   2: i32 type
 }
 
+typedef map<string,Bonk> MapType
+
 struct Bools {
   1: bool im_true,
   2: bool im_false,

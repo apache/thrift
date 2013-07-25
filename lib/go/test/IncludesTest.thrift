@@ -19,6 +19,9 @@
 
 include "ThriftTest.thrift"
 
+const ThriftTest.UserId USERID = 42
+const ThriftTest.MapType MAPCONSTANT = {'hello':{}, 'goodnight':{}}
+
 struct testStruct {
   1: list<ThriftTest.Numberz> listNumbers
 }

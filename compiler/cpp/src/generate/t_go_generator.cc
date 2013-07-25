@@ -509,6 +509,7 @@ void t_go_generator::init_generator()
 
     f_consts_ <<
               go_package() <<
+              render_includes() <<              
               go_autogen_comment();
 
     f_const_values_ << endl << "func init() {" << endl;
@@ -767,7 +768,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
         indent(out) << value->get_integer();
     } else if (type->is_struct() || type->is_xception()) {
         out <<
-            "&" << publicize(type->get_name()) << "{";
+            "&" << publicize(type_name(type)) << "{";
         indent_up();
         const vector<t_field*>& fields = ((t_struct*)type)->get_members();
         vector<t_field*>::const_iterator f_iter;
