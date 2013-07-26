@@ -1,5 +1,3 @@
-package main
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -19,21 +17,13 @@ package main
  * under the License.
  */
 
+package thrift
+
 import (
-	"fmt"
-	"git.apache.org/thrift.git/lib/go/thrift"
-	"tutorial"
+	"testing"
 )
 
-func runServer(transportFactory thrift.TTransportFactory, protocolFactory thrift.TProtocolFactory, addr string) error {
-	transport, err := thrift.NewTServerSocket(addr)
-	if err != nil {
-		return err
-	}
-	handler := NewCalculatorHandler()
-	processor := tutorial.NewCalculatorProcessor(handler)
-	server := thrift.NewTSimpleServer4(processor, transport, transportFactory, protocolFactory)
-
-	fmt.Println("Starting the simple server... on ", transport.Addr())
-	return server.Serve()
+func TestBufferedTransport(t *testing.T) {
+	trans := NewTBufferedTransport(NewTMemoryBuffer(), 10240)
+	TransportTest(t, trans, trans)
 }

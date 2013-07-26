@@ -37,6 +37,8 @@ func main() {
 	server := flag.Bool("server", false, "Run server")
 	protocol := flag.String("P", "binary", "Specify the protocol (binary, compact, simplejson)")
 	framed := flag.Bool("framed", false, "Use framed transport")
+	buffered := flag.Bool("buffered", false, "Use buffered transport")
+	addr := flag.String("addr", "localhost:9090", "Address to listen to")
 
 	flag.Parse()
 
@@ -55,17 +57,24 @@ func main() {
 		Usage()
 		os.Exit(1)
 	}
-	transportFactory := thrift.NewTTransportFactory()
+
+	var transportFactory thrift.TTransportFactory
+	if *buffered {
+		transportFactory = thrift.NewTBufferedTransportFactory(8192)
+	} else {
+		transportFactory = thrift.NewTTransportFactory()
+	}
+
 	if *framed {
 		transportFactory = thrift.NewTFramedTransportFactory(transportFactory)
 	}
 
 	if *server {
-		if err := runServer(transportFactory, protocolFactory); err != nil {
+		if err := runServer(transportFactory, protocolFactory, *addr); err != nil {
 			fmt.Println("error running server:", err)
 		}
 	} else {
-		if err := runClient(transportFactory, protocolFactory); err != nil {
+		if err := runClient(transportFactory, protocolFactory, *addr); err != nil {
 			fmt.Println("error running client:", err)
 		}
 	}

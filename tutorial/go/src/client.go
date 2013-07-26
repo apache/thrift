@@ -69,9 +69,9 @@ func handleClient(client *tutorial.CalculatorClient) (err error) {
 	return err
 }
 
-func runClient(transportFactory thrift.TTransportFactory, protocolFactory thrift.TProtocolFactory) error {
+func runClient(transportFactory thrift.TTransportFactory, protocolFactory thrift.TProtocolFactory, addr string) error {
 	var transport thrift.TTransport
-	transport, err := thrift.NewTSocket("localhost:9090")
+	transport, err := thrift.NewTSocket(addr)
 	if err != nil {
 		fmt.Println("Error opening socket:", err)
 		return err
