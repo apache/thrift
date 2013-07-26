@@ -1259,7 +1259,11 @@ void t_js_generator::generate_deserialize_field(ofstream &out,
           name;
         break;
       case t_base_type::TYPE_STRING:
-        out << "readString()";
+        if (((t_base_type*)type)->is_binary()) {
+          out << "readBinary()";
+        } else {
+          out << "readString()";
+        }
         break;
       case t_base_type::TYPE_BOOL:
         out << "readBool()";
@@ -1420,8 +1424,14 @@ void t_js_generator::generate_deserialize_map_element(ofstream &out,
   generate_deserialize_field(out, &fkey);
   generate_deserialize_field(out, &fval);
 
-  indent(out) <<
+  t_type* keytype = get_true_type(fkey.get_type());
+  if (((t_base_type*)keytype)->is_binary()) {
+    indent(out) <<
+      prefix << "[" << key << ".toString('binary')] = " << val << ";" << endl;
+  } else {
+    indent(out) <<
       prefix << "[" << key << "] = " << val << ";" << endl;
+  }
 }
 
 void t_js_generator::generate_deserialize_set_element(ofstream &out,
