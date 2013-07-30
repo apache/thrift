@@ -28,6 +28,7 @@ struct testStruct {
 
 struct TestStruct2 {
   1: testStruct blah,
+  2: ThriftTest.UserId id
 }
 
 service testService extends ThriftTest.SecondService {

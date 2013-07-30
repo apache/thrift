@@ -3229,7 +3229,7 @@ string t_go_generator::type_to_go_type(t_type* type)
         string elemType = type_to_go_type(t->get_elem_type());
         return string("[]") + elemType;
     } else if (type->is_typedef()) {
-        return publicize(((t_typedef*)type)->get_symbolic());
+        return publicize(type_name(type));
     }
 
     throw "INVALID TYPE IN type_to_go_type: " + type->get_name();
