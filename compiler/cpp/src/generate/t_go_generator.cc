@@ -502,15 +502,15 @@ void t_go_generator::init_generator()
 
     // Print header
     f_types_ <<
-             go_package() <<
              go_autogen_comment() <<
+             go_package() <<
              render_includes() <<
              render_import_protection();
 
     f_consts_ <<
+              go_autogen_comment() <<
               go_package() <<
-              render_includes() <<
-              go_autogen_comment();
+              render_includes();
 
     f_const_values_ << endl << "func init() {" << endl;
 
@@ -601,7 +601,7 @@ string t_go_generator::go_imports_end()
     return
         string(
             ")\n\n"
-            "// (needed to ensure safety because of naive import list constrution.)\n"
+            "// (needed to ensure safety because of naive import list construction.)\n"
             "var _ = math.MinInt32\n"
             "var _ = thrift.ZERO\n"
             "var _ = fmt.Printf\n\n");
@@ -1787,8 +1787,8 @@ void t_go_generator::generate_service_remote(t_service* tservice)
     }
 
     f_remote <<
-             indent() << "package main" << endl << endl <<
              go_autogen_comment() <<
+             indent() << "package main" << endl << endl <<
              indent() << "import (" << endl <<
              indent() << "        \"flag\"" << endl <<
              indent() << "        \"fmt\"" << endl <<
