@@ -18,9 +18,14 @@
 #
 
 include "ThriftTest.thrift"
+include "NamespacedTest.thrift"
 
 const ThriftTest.UserId USERID = 42
+const NamespacedTest.UserId USERID1 = 41
 const ThriftTest.MapType MAPCONSTANT = {'hello':{}, 'goodnight':{}}
+
+const i32 TWO = NamespacedTest.Stuff.TWO
+const i32 THREE = NamespacedTest.THREE
 
 struct testStruct {
   1: list<ThriftTest.Numberz> listNumbers
@@ -28,7 +33,8 @@ struct testStruct {
 
 struct TestStruct2 {
   1: testStruct blah,
-  2: ThriftTest.UserId id
+  2: ThriftTest.UserId id,
+  3: NamespacedTest.Stuff stuff,
 }
 
 service testService extends ThriftTest.SecondService {
@@ -42,4 +48,10 @@ service testService extends ThriftTest.SecondService {
 
 service ExtendedService extends testService {
   void extendedMethod(),
+  NamespacedTest.StuffStruct extendedMethod2(),
 }
+
+service Extended2Service extends NamespacedTest.NamespacedService {
+  void extendedMethod3(),
+}
+

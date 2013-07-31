@@ -509,7 +509,7 @@ void t_go_generator::init_generator()
 
     f_consts_ <<
               go_package() <<
-              render_includes() <<              
+              render_includes() <<
               go_autogen_comment();
 
     f_const_values_ << endl << "func init() {" << endl;
@@ -526,8 +526,18 @@ string t_go_generator::render_includes()
     string unused_prot = "";
 
     for (size_t i = 0; i < includes.size(); ++i) {
-        result += "\t\"" + gen_package_prefix_ + get_real_go_module(includes[i]) + "\"\n";
-        unused_prot += "var _ = " + get_real_go_module(includes[i]) + ".GoUnusedProtection__\n";
+        string go_module = get_real_go_module(includes[i]);
+        size_t found = 0;
+        for (size_t j = 0; j < go_module.size(); j++) {
+            // Import statement uses slashes ('/') in namespace
+            if (go_module[j] == '.') {
+                go_module[j] = '/';
+                found = j + 1;
+            }
+        }
+
+        result += "\t\"" + gen_package_prefix_ + go_module + "\"\n";
+        unused_prot += "var _ = " + go_module.substr(found) + ".GoUnusedProtection__\n";
     }
 
     if (includes.size() > 0) {
@@ -3092,7 +3102,13 @@ string t_go_generator::type_name(t_type* ttype)
     t_program* program = ttype->get_program();
 
     if (program != NULL && program != program_) {
-        return get_real_go_module(program) + "." + ttype->get_name();
+        string module(get_real_go_module(program));
+        // for namespaced includes, only keep part after dot.
+        size_t dot = module.rfind('.');
+        if (dot != string::npos) {
+            module = module.substr(dot + 1);
+        }
+        return module + "." + ttype->get_name();
     }
 
     return ttype->get_name();

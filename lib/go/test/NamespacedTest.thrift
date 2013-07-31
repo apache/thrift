@@ -17,25 +17,24 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
-THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
+include "ThriftTest.thrift"
 
-# Thrift for GO has problems with complex map keys: THRIFT-2063
-gopath: $(THRIFT) $(THRIFTTEST) IncludesTest.thrift NamespacedTest.thrift
-	mkdir -p gopath/src
-	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
-	$(THRIFT) --gen go:thrift_import=thrift -r IncludesTest.thrift
-	ln -nfs ../../gen-go/ThriftTest gopath/src/ThriftTest
-	ln -nfs ../../gen-go/IncludesTest gopath/src/IncludesTest
-	ln -nfs ../../gen-go/lib gopath/src/lib
-	ln -nfs ../../../thrift gopath/src/thrift
-	touch gopath
+namespace go lib.go.test.NamespacedTest
 
-check: gopath
-	GOPATH=`pwd`/gopath $(GO) build IncludesTest
+enum Stuff {
+  ONE = 1,
+  TWO = 2,
+}
 
-clean-local:
-	$(RM) -r gen-go gopath
+const i32 THREE = 3;
 
-client: stubs
-	$(GO) run TestClient.go
+typedef i64 UserId
+
+struct StuffStruct {
+  2: Stuff stuff,
+}
+
+service NamespacedService {
+  ThriftTest.UserId getUserID(),
+}
+
