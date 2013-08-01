@@ -19,37 +19,39 @@
 
 -module(thrift_multiplexed_map_wrapper).
 
--export([new/0,
-		 store/3,
-		 find/2,
-		 fetch/2]).
+-export([
+          new/0
+         ,store/3
+         ,find/2
+         ,fetch/2
+        ]).
 
--type key()   :: term().
--type value() :: term().
--type map()   :: [{Key :: key(), Value :: value()}].
+-type service_handler()     :: nonempty_string().
+-type module()              :: atom().
+-type service_handler_map() :: [{ServiceHandler::service_handler(), Module::module()}].
 
--spec new() -> map().
+-spec new() -> service_handler_map().
 new() ->
-	orddict:new().
+    orddict:new().
 
--spec store(Key, Value, Map) -> NewMap when
-	Key 		:: key(),
-	Value 		:: value(),
-	Map    		:: map(),
-	NewMap		:: map().
-store(Key, Value, Map) ->
-	orddict:store(Key, Value, Map).
+-spec store(ServiceHandler, Module, Map) -> NewMap when
+    ServiceHandler :: service_handler(),
+    Module         :: module(),
+    Map            :: service_handler_map(),
+    NewMap         :: service_handler_map().
+store(ServiceHandler, Module, Map) ->
+    orddict:store(ServiceHandler, Module, Map).
 
--spec find(Key, Map) -> {ok, Value} | error when
-	Key 		:: key(),
-	Value 		:: value(),
-	Map    		:: map().
-find(Key, Map) ->
-	orddict:find(Key, Map).
+-spec find(ServiceHandler, Map) -> {ok, Module} | error when
+    ServiceHandler :: service_handler(),
+    Module         :: module(),
+    Map            :: service_handler_map().
+find(ServiceHandler, Map) ->
+    orddict:find(ServiceHandler, Map).
 
--spec fetch(Key, Map) -> Value when
-	Key 		:: key(),
-	Value 		:: value(),
-	Map    		:: map().
-fetch(Key, Map) ->
-	orddict:fetch(Key, Map).
+-spec fetch(ServiceHandler, Map) -> Module when
+    ServiceHandler :: service_handler(),
+    Module         :: module(),
+    Map            :: service_handler_map().
+fetch(ServiceHandler, Map) ->
+    orddict:fetch(ServiceHandler, Map).
