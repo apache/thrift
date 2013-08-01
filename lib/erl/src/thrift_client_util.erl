@@ -22,6 +22,10 @@
 -export([new/4]).
 -export([new_multiplexed/3, new_multiplexed/4]).
 
+-type service_name()            :: nonempty_string().
+-type service_module()          :: atom().
+-type multiplexed_service_map() :: [{ServiceName::service_name(), ServiceModule::service_module()}].
+
 %%
 %% Splits client options into client, protocol, and transport options
 %%
@@ -64,7 +68,7 @@ new(Host, Port, Service, Options)
 -spec new_multiplexed(Host, Port, Services, Options) -> {ok, ServiceThriftClientList} when
     Host        :: nonempty_string(),
     Port        :: non_neg_integer(),
-    Services    :: list(),
+    Services    :: multiplexed_service_map(),
     Options     :: list(),
     ServiceThriftClientList :: [{ServiceName::list(), ThriftClient::term()}].
 new_multiplexed(Host, Port, Services, Options) when is_integer(Port),
@@ -74,7 +78,7 @@ new_multiplexed(Host, Port, Services, Options) when is_integer(Port),
 
 -spec new_multiplexed(TransportFactoryTuple, Services, Options) -> {ok, ServiceThriftClientList} when
     TransportFactoryTuple   :: {ok, TransportFactory::term()},
-    Services                :: list(),
+    Services                :: multiplexed_service_map(),
     Options                 :: list(),
     ServiceThriftClientList :: [{ServiceName::list(), ThriftClient::term()}].
 new_multiplexed(TransportFactoryTuple, Services, Options) when is_list(Services),
@@ -88,4 +92,4 @@ new_multiplexed(TransportFactoryTuple, Services, Options) when is_list(Services)
 
     {ok, Protocol} = ProtocolFactory(),
 
-    {ok, [{ServiceName, thrift_client:new(element(2, thrift_multiplexed_protocol:new(Protocol, ServiceName)), Service)} || {ServiceName, Service} <- Services]}.
+    {ok, [{ServiceName, element(2, thrift_client:new(element(2, thrift_multiplexed_protocol:new(Protocol, ServiceName)), Service))} || {ServiceName, Service} <- Services]}.
