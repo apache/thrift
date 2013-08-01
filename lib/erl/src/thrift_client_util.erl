@@ -80,7 +80,7 @@ new_multiplexed(Host, Port, Services, Options) when is_integer(Port),
     TransportFactoryTuple   :: {ok, TransportFactory::term()},
     Services                :: multiplexed_service_map(),
     Options                 :: list(),
-    ServiceThriftClientList :: [{ServiceName::list(), ThriftClient::term()}].
+    ServiceThriftClientList :: [{ServiceName::service_name(), ThriftClient::term()}].
 new_multiplexed(TransportFactoryTuple, Services, Options) when is_list(Services),
                                                                is_list(Options),
                                                                is_tuple(TransportFactoryTuple) ->
