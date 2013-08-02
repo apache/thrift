@@ -32,7 +32,7 @@ To use Thrift in your PHP codebase, take the following steps:
 #1) Copy all of thrift/lib/php/lib into your PHP codebase
 #2) Configure Symfony Autoloader (or whatever you usually use)
 
-After thaht, you have to manually include the Thrift package
+After that, you have to manually include the Thrift package
 created by the compiler:
 
 require_once 'packages/Service/Service.php';
