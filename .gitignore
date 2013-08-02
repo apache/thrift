@@ -35,6 +35,7 @@ cmake-*
 node_modules
 compile
 test-driver
+erl_crash.dump
 
 .sonar
 .DS_Store
@@ -182,6 +183,9 @@ test-driver
 /lib/erl/.eunit
 /lib/erl/ebin
 /lib/erl/deps/
+/lib/erl/src/thrift.app.src
+/lib/erl/test/*.hrl
+/lib/erl/test/*.beam
 /lib/haxe/test/bin
 /lib/hs/dist
 /lib/java/build
