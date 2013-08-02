@@ -39,6 +39,7 @@ call(Client = #tclient{}, Function, Args)
 when is_atom(Function), is_list(Args) ->
   case send_function_call(Client, Function, Args) of
     {ok, Client1} -> receive_function_result(Client1, Function);
+    {{error, X}, Client1} -> {Client1, {error, X}};
     Else -> Else
   end.
 
@@ -66,7 +67,7 @@ close(#tclient{protocol=Protocol}) ->
 send_function_call(Client = #tclient{service = Service}, Function, Args) ->
   {Params, Reply} = try
     {Service:function_info(Function, params_type), Service:function_info(Function, reply_type)}
-  catch error:function_clause -> no_function
+  catch error:function_clause -> {no_function, 0}
   end,
   MsgType = case Reply of
     oneway_void -> ?tMessageType_ONEWAY;
