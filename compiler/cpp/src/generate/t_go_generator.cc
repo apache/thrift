@@ -3175,15 +3175,14 @@ string t_go_generator::type_to_enum(t_type* type)
  */
 string t_go_generator::type_to_go_key_type(t_type* type)
 {
-    string go_type = type_to_go_type(type);
+    t_type* resolved_type = type;
 
-    while (type->is_typedef()) {
-        type = ((t_typedef*)type)->get_type();
+    while (resolved_type->is_typedef()) {
+        resolved_type = ((t_typedef*)resolved_type)->get_type();
     }
 
-    if (type->is_map() || type->is_list() || type->is_set()) {
+    if (resolved_type->is_map() || resolved_type->is_list() || resolved_type->is_set()) {
         throw "Cannot produce a valid type for a Go map key: "  + type_to_go_type(type) + " - aborting.";
-
     }
 
     return type_to_go_type(type);

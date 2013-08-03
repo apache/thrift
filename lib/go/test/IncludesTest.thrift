@@ -55,3 +55,13 @@ service Extended2Service extends NamespacedTest.NamespacedService {
   void extendedMethod3(),
 }
 
+typedef map<ThriftTest.UserId, map<NamespacedTest.UserId, list<TestStruct2> > > ComplexMapType
+
+struct ComplexMapStruct {
+  1: ComplexMapType complex,
+}
+
+service ComplexMapService {
+  ComplexMapStruct transformMap(1: ComplexMapStruct input),
+}
+
