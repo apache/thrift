@@ -1508,7 +1508,11 @@ void t_js_generator::generate_serialize_field(ofstream &out,
           "compiler error: cannot serialize void field in a struct: " + name;
         break;
       case t_base_type::TYPE_STRING:
-        out << "writeString(" << name << ")";
+        if (((t_base_type*)type)->is_binary()) {
+          out << "writeBinary(" << name << ")";
+        } else {
+          out << "writeString(" << name << ")";
+        }
         break;
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ")";
