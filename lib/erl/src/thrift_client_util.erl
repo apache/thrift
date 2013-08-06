@@ -20,7 +20,6 @@
 -module(thrift_client_util).
 
 -export([new/4]).
--export([new_ssl/4]).
 
 %%
 %% Splits client options into client, protocol, and transport options
@@ -41,21 +40,25 @@ split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
 split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
   when OptKey =:= framed;
        OptKey =:= connect_timeout;
-       OptKey =:= sockopts; 
-       OptKey =:= cacertfile;
-       OptKey =:= certfile;
-       OptKey =:= keyfile->
+       OptKey =:= sockopts;
+       OptKey =:= ssltransport;
+       OptKey =:= ssloptions->
     split_options(Rest, ProtoIn, [Opt | TransIn]).
 
 
 %% Client constructor for the common-case of socket transports
 %% with the binary protocol
-new_wrapper(Host, Port, Service, Options, TransportModule)
+new(Host, Port, Service, Options)
   when is_integer(Port), is_atom(Service), is_list(Options) ->
-    {ProtoOpts, TransOpts} = split_options(Options),
+    {ProtoOpts, TransOpts0} = split_options(Options),
+
+    {TransportModule, TransOpts2} = case lists:keytake(ssltransport, 1, TransOpts0) of
+                                        {value, {_, true}, TransOpts1} -> {thrift_sslsocket_transport, TransOpts1};
+                                        false -> {thrift_socket_transport, TransOpts0}
+                                    end,
 
     {ok, TransportFactory} =
-        TransportModule:new_transport_factory(Host, Port, TransOpts),
+        TransportModule:new_transport_factory(Host, Port, TransOpts2),
 
     {ok, ProtocolFactory} = thrift_binary_protocol:new_protocol_factory(
                               TransportFactory, ProtoOpts),
@@ -63,11 +66,3 @@ new_wrapper(Host, Port, Service, Options, TransportModule)
     {ok, Protocol} = ProtocolFactory(),
 
     thrift_client:new(Protocol, Service).
-
-new(Host, Port, Service, Options)
-  when is_integer(Port), is_atom(Service), is_list(Options) ->
-    new_wrapper(Host, Port, Service, Options, thrift_socket_transport).
-
-new_ssl(Host, Port, Service, Options)
-  when is_integer(Port), is_atom(Service), is_list(Options) ->
-    new_wrapper(Host, Port, Service, Options, thrift_sslsocket_transport).

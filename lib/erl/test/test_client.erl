@@ -37,6 +37,14 @@ parse_args([Head | Rest], Opts) ->
                 case Head of
                     "framed" ->
                         Opts#options{client_opts = [{framed, true} | Opts#options.client_opts]};
+                    "ssl" ->
+                        ssl:start(),
+                        SslOptions =
+                            {ssloptions, [
+                                {certfile, "ssl/certificate.pem"}
+                                ,{keyfile, "ssl/key.pem"}
+                            ]},
+                        Opts#options{client_opts = [{ssltransport, true} | [SslOptions | Opts#options.client_opts]]};
                     "" ->
                         Opts;
                     _Else ->

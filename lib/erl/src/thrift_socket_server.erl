@@ -40,9 +40,7 @@
          socket_opts=[{recv_timeout, 500}],
          framed=false,
          ssltransport=false,
-         cacertfile = undefined :: string(), %% Path to file containing PEM encoded CA certificates (trusted certificates used for verifying a peer certificate). May be omitted if you do not want to verify the peer.
-         certfile = undefined :: string(),   %% Path to a file containing the user's certificate.
-         keyfile = undefined :: string()    %% Path to file containing user's private PEM encoded key. As PEM-files may contain several entries this option defaults to the same file as given by certfile option.
+         ssloptions=[]
         }).
 
 start(State=#thrift_socket_server{}) ->
@@ -107,18 +105,14 @@ parse_options([{max, Max} | Rest], State) ->
                      Max
              end,
     parse_options(Rest, State#thrift_socket_server{max=MaxInt});
-    
+
 parse_options([{framed, Framed} | Rest], State) when is_boolean(Framed) ->
     parse_options(Rest, State#thrift_socket_server{framed=Framed});
+
 parse_options([{ssltransport, SSLTransport} | Rest], State) when is_boolean(SSLTransport) ->
     parse_options(Rest, State#thrift_socket_server{ssltransport=SSLTransport});
-
-parse_options([{cacertfile, Path} | Rest], State) when is_list(Path) ->
-    parse_options(Rest, State#thrift_socket_server{cacertfile=Path});
-parse_options([{certfile, Path} | Rest], State) when is_list(Path) ->
-    parse_options(Rest, State#thrift_socket_server{certfile=Path});
-parse_options([{keyfile, Path} | Rest], State) when is_list(Path) ->
-    parse_options(Rest, State#thrift_socket_server{keyfile=Path}).
+parse_options([{ssloptions, SSLOptions} | Rest], State) when is_list(SSLOptions) ->
+    parse_options(Rest, State#thrift_socket_server{ssloptions=SSLOptions}).
 
 start_server(State=#thrift_socket_server{name=Name}) ->
     case Name of
@@ -183,29 +177,27 @@ new_acceptor(State=#thrift_socket_server{max=0}) ->
 new_acceptor(State=#thrift_socket_server{listen=Listen,
                                          service=Service, handler=Handler,
                                          socket_opts=Opts, framed=Framed,
-                                         ssltransport=SSLTransport
+                                         ssltransport=SslTransport, ssloptions=SslOptions
                                         }) ->
     Pid = proc_lib:spawn_link(?MODULE, acceptor_loop,
-                              [{self(), Listen, Service, Handler, Opts, Framed, SSLTransport}]),
+                              [{self(), Listen, Service, Handler, Opts, Framed, SslTransport, SslOptions}]),
     State#thrift_socket_server{acceptor=Pid}.
 
-acceptor_loop({Server, Listen, Service, Handler, SocketOpts, Framed, SSLTransport})
+acceptor_loop({Server, Listen, Service, Handler, SocketOpts, Framed, SslTransport, SslOptions})
   when is_pid(Server), is_list(SocketOpts) ->
     case catch gen_tcp:accept(Listen) of % infinite timeout
         {ok, Socket} ->
             gen_server:cast(Server, {accepted, self()}),
             ProtoGen = fun() ->
-                               {ok, SocketTransport}   =
-                                   case SSLTransport of
-                                       true  -> thrift_sslsocket_transport:new_with_ssl_upgrade(Socket, SocketOpts);
-                                       false -> thrift_socket_transport:new(Socket, SocketOpts)
-                                   end,
-                               {ok, Transport}         =
-                                   case Framed of
-                                       true  -> thrift_framed_transport:new(SocketTransport);
-                                       false -> thrift_buffered_transport:new(SocketTransport)
-                                   end,
-                               {ok, Protocol}          = thrift_binary_protocol:new(Transport),
+                               {ok, SocketTransport} = case SslTransport of
+                                                           true  -> thrift_sslsocket_transport:new(Socket, SocketOpts, SslOptions);
+                                                           false -> thrift_socket_transport:new(Socket, SocketOpts)
+                                                       end,
+                               {ok, Transport}       = case Framed of
+                                                           true  -> thrift_framed_transport:new(SocketTransport);
+                                                           false -> thrift_buffered_transport:new(SocketTransport)
+                                                       end,
+                               {ok, Protocol}        = thrift_binary_protocol:new(Transport),
                                {ok, Protocol}
                        end,
             thrift_processor:init({Server, ProtoGen, Service, Handler});
