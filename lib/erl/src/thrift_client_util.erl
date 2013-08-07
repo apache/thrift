@@ -41,7 +41,9 @@ split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
   when OptKey =:= framed;
        OptKey =:= connect_timeout;
        OptKey =:= recv_timeout;
-       OptKey =:= sockopts ->
+       OptKey =:= sockopts;
+       OptKey =:= ssltransport;
+       OptKey =:= ssloptions->
     split_options(Rest, ProtoIn, [Opt | TransIn]).
 
 
@@ -49,10 +51,15 @@ split_options([Opt = {OptKey, _} | Rest], ProtoIn, TransIn)
 %% with the binary protocol
 new(Host, Port, Service, Options)
   when is_integer(Port), is_atom(Service), is_list(Options) ->
-    {ProtoOpts, TransOpts} = split_options(Options),
+    {ProtoOpts, TransOpts0} = split_options(Options),
+
+    {TransportModule, TransOpts2} = case lists:keytake(ssltransport, 1, TransOpts0) of
+                                        {value, {_, true}, TransOpts1} -> {thrift_sslsocket_transport, TransOpts1};
+                                        false -> {thrift_socket_transport, TransOpts0}
+                                    end,
 
     {ok, TransportFactory} =
-        thrift_socket_transport:new_transport_factory(Host, Port, TransOpts),
+        TransportModule:new_transport_factory(Host, Port, TransOpts2),
 
     {ok, ProtocolFactory} = thrift_binary_protocol:new_protocol_factory(
                               TransportFactory, ProtoOpts),
