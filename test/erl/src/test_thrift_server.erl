@@ -47,6 +47,14 @@ parse_args([Head | Rest], Opts) ->
                     _Else ->
                         Opts
                 end;
+            "--ssl" ->
+                ssl:start(),
+                SslOptions =
+                    {ssloptions, [
+                         {certfile, "../keys/server.crt"}
+                        ,{keyfile,  "../keys/server.key"}
+                    ]},
+                Opts#options{server_opts = [{ssltransport, true} | [SslOptions | Opts#options.server_opts]]};
             "--protocol=" ++ _ -> Opts;
             _Else ->
                 erlang:error({bad_arg, Head})

@@ -47,6 +47,14 @@ parse_args([Head | Rest], Opts) ->
                     _Else ->
                         Opts
                 end;
+            "--ssl" ->
+                ssl:start(),
+                SslOptions =
+                    {ssloptions, [
+                        {certfile, "../keys/client.crt"}
+                        ,{keyfile, "../keys/server.key"}
+                    ]},
+                Opts#options{client_opts = [{ssltransport, true} | [SslOptions | Opts#options.client_opts]]};
             "--protocol=binary" ->
                 % TODO: Enable JSON protocol
                 Opts;
