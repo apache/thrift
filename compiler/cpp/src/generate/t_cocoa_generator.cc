@@ -1632,6 +1632,9 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
   // generate a process_XXXX method for each service function, which reads args, calls the service, and writes results
   functions = tservice->get_functions();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    t_struct* xs = (*f_iter)->get_xceptions();
+    const std::vector<t_field*>& xceptions = xs->get_members();
+
     out << endl;
     string funname = (*f_iter)->get_name();
     out << indent() << "- (void) process_" << funname << "_withSequenceID: (int32_t) seqID inProtocol: (id<TProtocol>) inProtocol outProtocol: (id<TProtocol>) outProtocol" << endl;
@@ -1645,6 +1648,12 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     if (!(*f_iter)->is_oneway()) {
         string resulttype = cocoa_prefix_ + function_result_helper_struct_type(*f_iter);
         out << indent() << resulttype << " * result = [[" << resulttype << " alloc] init];" << endl;
+    }
+
+    // try block for a function with exceptions
+    if (!(*f_iter)->is_oneway() && xceptions.size() > 0) {
+        out << indent() << "@try {" << endl;
+        indent_up();
     }
 
     // make the call to the actual service object
@@ -1673,6 +1682,20 @@ void t_cocoa_generator::generate_cocoa_service_server_implementation(ofstream& o
     }
     out << ";" << endl;
     
+    // handling function exceptions
+    if (!(*f_iter)->is_oneway() && xceptions.size() > 0) {
+        indent_down();
+        out << indent() << "}" << endl;
+        vector<t_field*>::const_iterator x_iter;
+        for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+            out << indent() << "@catch (" << type_name((*x_iter)->get_type()) << " " << (*x_iter)->get_name() << ") {" << endl;
+            indent_up();
+            out << indent() << "[result set" << capitalize((*x_iter)->get_name()) << ": " << (*x_iter)->get_name() << "];" << endl;
+            indent_down();
+            out << indent() << "}" << endl;
+        }
+    }
+
     // write out the result if not oneway
     if (!(*f_iter)->is_oneway()) {
         out << indent() << "[outProtocol writeMessageBeginWithName: @\"" << funname << "\"" << endl;
