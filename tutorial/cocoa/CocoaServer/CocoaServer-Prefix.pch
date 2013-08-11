@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'CocoaServer' target in the 'CocoaServer' project
+//
+
+#ifdef __OBJC__
+    #import <Cocoa/Cocoa.h>
+#endif
