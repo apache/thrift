@@ -83,7 +83,7 @@
     SharedStruct *sharedStruct = [[SharedStruct alloc] initWithKey:logid
                                                              value:[result stringValue]];
     [self.logDictionary setObject:sharedStruct
-                           forKey:result];
+                           forKey:[NSNumber numberWithInt:logid]];
 
     return value;
 }

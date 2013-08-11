@@ -40,9 +40,6 @@ int main(int argc, const char * argv[])
         // Create a calculator client to use the protocol encoder
         CalculatorClient *calculatorClient = [[CalculatorClient alloc] initWithProtocol:protocol];
 
-        // Create a shared service client to use the protocol encoder
-        SharedServiceClient *sharedServiceClient = [[SharedServiceClient alloc] initWithProtocol:protocol];
-
         @try {
             [calculatorClient ping];
             NSLog(@"ping()");
@@ -78,7 +75,7 @@ int main(int argc, const char * argv[])
             NSLog(@"zip()");
 
             @try {
-                SharedStruct *sharedStruct = [sharedServiceClient getStruct:1];
+                SharedStruct *sharedStruct = [calculatorClient getStruct:1];
                 NSLog(@"Check log: %@", sharedStruct.value);
             }
             @catch (TApplicationException *applicationException) {

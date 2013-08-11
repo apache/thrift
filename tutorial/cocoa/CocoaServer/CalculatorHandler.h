@@ -19,7 +19,7 @@
 
 #import <tutorial.h>
 
-@interface CalculatorHandler : NSObject <Calculator, SharedService>
+@interface CalculatorHandler : NSObject <Calculator>
 
 - (void) ping;  // throws TException
 - (int32_t) add: (int32_t) num1 num2: (int32_t) num2;  // throws TException
