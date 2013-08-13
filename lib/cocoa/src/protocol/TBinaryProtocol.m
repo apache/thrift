@@ -49,7 +49,7 @@ static TBinaryProtocolFactory * gSharedFactory = nil;
 
 - (id) initWithTransport: (id <TTransport>) transport
 {
-  return [self initWithTransport: transport strictRead: NO strictWrite: NO];
+  return [self initWithTransport: transport strictRead: NO strictWrite: YES];
 }
 
 - (id) initWithTransport: (id <TTransport>) transport
