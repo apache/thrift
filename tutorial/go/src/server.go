@@ -33,9 +33,7 @@ func runServer(transportFactory thrift.TTransportFactory, protocolFactory thrift
 		cfg := new(tls.Config)
 		if cert, err := tls.LoadX509KeyPair("server.crt", "server.key"); err == nil {
 			cfg.Certificates = append(cfg.Certificates, cert)
-		}
-		if err != nil {
-			fmt.Println("Unable to load server certificate and key")
+		} else {
 			return err
 		}
 		transport, err = thrift.NewTSSLServerSocket(addr, cfg)
