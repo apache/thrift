@@ -39,6 +39,7 @@ func main() {
 	framed := flag.Bool("framed", false, "Use framed transport")
 	buffered := flag.Bool("buffered", false, "Use buffered transport")
 	addr := flag.String("addr", "localhost:9090", "Address to listen to")
+	secure := flag.Bool("secure", false, "Use tls secure transport")
 
 	flag.Parse()
 
@@ -70,11 +71,11 @@ func main() {
 	}
 
 	if *server {
-		if err := runServer(transportFactory, protocolFactory, *addr); err != nil {
+		if err := runServer(transportFactory, protocolFactory, *addr, *secure); err != nil {
 			fmt.Println("error running server:", err)
 		}
 	} else {
-		if err := runClient(transportFactory, protocolFactory, *addr); err != nil {
+		if err := runClient(transportFactory, protocolFactory, *addr, *secure); err != nil {
 			fmt.Println("error running client:", err)
 		}
 	}

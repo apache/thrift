@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"tutorial"
+	"crypto/tls"
 )
 
 func handleClient(client *tutorial.CalculatorClient) (err error) {
@@ -69,9 +70,16 @@ func handleClient(client *tutorial.CalculatorClient) (err error) {
 	return err
 }
 
-func runClient(transportFactory thrift.TTransportFactory, protocolFactory thrift.TProtocolFactory, addr string) error {
+func runClient(transportFactory thrift.TTransportFactory, protocolFactory thrift.TProtocolFactory, addr string, secure bool) error {
 	var transport thrift.TTransport
-	transport, err := thrift.NewTSocket(addr)
+	var err error
+	if secure {
+		cfg := new(tls.Config)
+		cfg.InsecureSkipVerify = true
+		transport, err = thrift.NewTSSLSocket(addr, cfg)
+	} else {
+		transport, err = thrift.NewTSocket(addr)
+	}
 	if err != nil {
 		fmt.Println("Error opening socket:", err)
 		return err

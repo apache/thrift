@@ -40,7 +40,13 @@ tutorialserver: all
 	GOPATH=`pwd` $(GO) run src/*.go -server=true
 
 tutorialclient: all
-	GOPATH=`pwd` $(GO) run src/*.go -client=true
+	GOPATH=`pwd` $(GO) run src/*.go 
+
+tutorialsecureserver: all
+	GOPATH=`pwd` $(GO) run src/*.go -server=true -secure=true
+
+tutorialsecureclient: all
+	GOPATH=`pwd` $(GO) run src/*.go -secure=true
 
 clean-local:
 	$(RM) -r gen-*
