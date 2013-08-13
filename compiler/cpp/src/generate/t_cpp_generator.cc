@@ -670,11 +670,14 @@ void t_cpp_generator::print_const_value(ofstream& out, string name, t_type* type
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    bool is_nonrequired_field = false;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
+      is_nonrequired_field = false;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
           field_type = (*f_iter)->get_type();
+          is_nonrequired_field = (*f_iter)->get_req() != t_field::T_REQUIRED;
         }
       }
       if (field_type == NULL) {
@@ -682,7 +685,9 @@ void t_cpp_generator::print_const_value(ofstream& out, string name, t_type* type
       }
       string val = render_const_value(out, name, field_type, v_iter->second);
       indent(out) << name << "." << v_iter->first->get_string() << " = " << val << ";" << endl;
-      indent(out) << name << ".__isset." << v_iter->first->get_string() << " = true;" << endl;
+      if(is_nonrequired_field) {
+          indent(out) << name << ".__isset." << v_iter->first->get_string() << " = true;" << endl;
+      }
     }
     out << endl;
   } else if (type->is_map()) {
