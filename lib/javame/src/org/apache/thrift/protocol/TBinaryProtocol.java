@@ -1,4 +1,4 @@
-/*
+ /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -35,9 +35,6 @@ public class TBinaryProtocol extends TProtocol {
 
   protected boolean strictRead_ = false;
   protected boolean strictWrite_ = true;
-
-  protected int readLength_;
-  protected boolean checkReadLength_ = false;
 
   /**
    * Factory
@@ -311,7 +308,6 @@ public class TBinaryProtocol extends TProtocol {
 
   public String readStringBody(int size) throws TException {
     try {
-      checkReadLength(size);
       byte[] buf = new byte[size];
       trans_.readAll(buf, 0, size);
       return new String(buf, "UTF-8");
@@ -322,29 +318,12 @@ public class TBinaryProtocol extends TProtocol {
 
   public byte[] readBinary() throws TException {
     int size = readI32();
-    checkReadLength(size);
     byte[] buf = new byte[size];
     trans_.readAll(buf, 0, size);
     return buf;
   }
 
   private int readAll(byte[] buf, int off, int len) throws TException {
-    checkReadLength(len);
     return trans_.readAll(buf, off, len);
   }
-
-  public void setReadLength(int readLength) {
-    readLength_ = readLength;
-    checkReadLength_ = true;
-  }
-
-  protected void checkReadLength(int length) throws TException {
-    if (checkReadLength_) {
-      readLength_ -= length;
-      if (readLength_ < 0) {
-        throw new TException("Message length exceeded: " + length);
-      }
-    }
-  }
-
 }

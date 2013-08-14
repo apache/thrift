@@ -370,13 +370,11 @@ type
   protected
     FStrictRead : Boolean;
     FStrictWrite : Boolean;
-    FReadLength : Integer;
-    FCheckReadLength : Boolean;
 
   private
     function ReadAll( var buf: TBytes; off: Integer; len: Integer ): Integer;
     function ReadStringBody( size: Integer): string;
-    procedure CheckReadLength( len: Integer );
+
   public
 
     type
@@ -434,7 +432,6 @@ type
     function ReadDouble:Double; override;
     function ReadBinary: TBytes; override;
 
-    procedure SetReadLength( readLength: Integer );
   end;
 
 
@@ -859,18 +856,6 @@ begin
   Create( trans, False, True);
 end;
 
-procedure TBinaryProtocolImpl.CheckReadLength(len: Integer);
-begin
-  if FCheckReadLength then
-  begin
-    Dec( FReadLength, len);
-    if FReadLength < 0 then
-    begin
-      raise Exception.Create( 'Message length exceeded: ' + IntToStr( len ) );
-    end;
-  end;
-end;
-
 constructor TBinaryProtocolImpl.Create( const trans: ITransport; strictRead,
   strictWrite: Boolean);
 begin
@@ -882,7 +867,6 @@ end;
 function TBinaryProtocolImpl.ReadAll( var buf: TBytes; off,
   len: Integer): Integer;
 begin
-  CheckReadLength( len );
   Result := FTrans.ReadAll( buf, off, len );
 end;
 
@@ -892,7 +876,6 @@ var
   buf : TBytes;
 begin
   size := ReadI32;
-  CheckReadLength( size );
   SetLength( buf, size );
   FTrans.ReadAll( buf, 0, size);
   Result := buf;
@@ -1063,7 +1046,6 @@ function TBinaryProtocolImpl.ReadStringBody( size: Integer): string;
 var
   buf : TBytes;
 begin
-  CheckReadLength( size );
   SetLength( buf, size );
   FTrans.ReadAll( buf, 0, size );
   Result := TEncoding.UTF8.GetString( buf);
@@ -1078,12 +1060,6 @@ procedure TBinaryProtocolImpl.ReadStructEnd;
 begin
   inherited;
 
-end;
-
-procedure TBinaryProtocolImpl.SetReadLength(readLength: Integer);
-begin
-  FReadLength := readLength;
-  FCheckReadLength := True;
 end;
 
 procedure TBinaryProtocolImpl.WriteBinary( const b: TBytes);

@@ -38,37 +38,24 @@ public class TBinaryProtocol extends TProtocol {
   protected boolean strictRead_ = false;
   protected boolean strictWrite_ = true;
 
-  protected int readLength_;
-  protected boolean checkReadLength_ = false;
-
   /**
    * Factory
    */
   public static class Factory implements TProtocolFactory {
     protected boolean strictRead_ = false;
     protected boolean strictWrite_ = true;
-    protected int readLength_;
 
     public Factory() {
       this(false, true);
     }
 
     public Factory(boolean strictRead, boolean strictWrite) {
-      this(strictRead, strictWrite, 0);
-    }
-
-    public Factory(boolean strictRead, boolean strictWrite, int readLength) {
       strictRead_ = strictRead;
       strictWrite_ = strictWrite;
-      readLength_ = readLength;
     }
 
     public TProtocol getProtocol(TTransport trans) {
-      TBinaryProtocol proto = new TBinaryProtocol(trans, strictRead_, strictWrite_);
-      if (readLength_ != 0) {
-        proto.setReadLength(readLength_);
-      }
-      return proto;
+      return new TBinaryProtocol(trans, strictRead_, strictWrite_);
     }
   }
 
@@ -349,7 +336,6 @@ public class TBinaryProtocol extends TProtocol {
 
   public String readStringBody(int size) throws TException {
     try {
-      checkReadLength(size);
       byte[] buf = new byte[size];
       trans_.readAll(buf, 0, size);
       return new String(buf, "UTF-8");
@@ -360,7 +346,6 @@ public class TBinaryProtocol extends TProtocol {
 
   public ByteBuffer readBinary() throws TException {
     int size = readI32();
-    checkReadLength(size);
 
     if (trans_.getBytesRemainingInBuffer() >= size) {
       ByteBuffer bb = ByteBuffer.wrap(trans_.getBuffer(), trans_.getBufferPosition(), size);
@@ -374,25 +359,6 @@ public class TBinaryProtocol extends TProtocol {
   }
 
   private int readAll(byte[] buf, int off, int len) throws TException {
-    checkReadLength(len);
     return trans_.readAll(buf, off, len);
   }
-
-  public void setReadLength(int readLength) {
-    readLength_ = readLength;
-    checkReadLength_ = true;
-  }
-
-  protected void checkReadLength(int length) throws TException {
-    if (length < 0) {
-      throw new TProtocolException("Negative length: " + length);
-    }
-    if (checkReadLength_) {
-      readLength_ -= length;
-      if (readLength_ < 0) {
-        throw new TProtocolException("Message length exceeded: " + length);
-      }
-    }
-  }
-
 }

@@ -35,10 +35,6 @@ namespace Thrift.Protocol
 		protected bool strictRead_ = false;
 		protected bool strictWrite_ = true;
 
-		protected int readLength_;
-		protected bool checkReadLength_ = false;
-
-
 		#region BinaryProtocol Factory
 		 /**
 		  * Factory
@@ -375,35 +371,15 @@ namespace Thrift.Protocol
 #endif
 		}
 
-		public void SetReadLength(int readLength)
-		{
-			readLength_ = readLength;
-			checkReadLength_ = true;
-		}
-
-		protected void CheckReadLength(int length)
-		{
-			if (checkReadLength_)
-			{
-				readLength_ -= length;
-				if (readLength_ < 0)
-				{
-					throw new Exception("Message length exceeded: " + length);
-				}
-			}
-		}
-
 		public override byte[] ReadBinary()
 		{
 			int size = ReadI32();
-			CheckReadLength(size);
 			byte[] buf = new byte[size];
 			trans.ReadAll(buf, 0, size);
 			return buf;
 		}
 		private  string ReadStringBody(int size)
 		{
-			CheckReadLength(size);
 			byte[] buf = new byte[size];
 			trans.ReadAll(buf, 0, size);
 			return Encoding.UTF8.GetString(buf, 0, buf.Length);
@@ -411,7 +387,6 @@ namespace Thrift.Protocol
 
 		private int ReadAll(byte[] buf, int off, int len)
 		{
-			CheckReadLength(len);
 			return trans.ReadAll(buf, off, len);
 		}
 

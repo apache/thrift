@@ -30,8 +30,6 @@ type TBinaryProtocol struct {
 	trans           TTransport
 	strictRead      bool
 	strictWrite     bool
-	readLength      int
-	checkReadLength bool
 	buffer          [8]byte
 }
 
@@ -45,8 +43,7 @@ func NewTBinaryProtocolTransport(t TTransport) *TBinaryProtocol {
 }
 
 func NewTBinaryProtocol(t TTransport, strictRead, strictWrite bool) *TBinaryProtocol {
-	//return &TBinaryProtocol{TProtocolBase:TProtocolBase{trans:t}, strictRead:strictRead, strictWrite:strictWrite, readLength:0, checkReadLength:false};
-	return &TBinaryProtocol{trans: t, strictRead: strictRead, strictWrite: strictWrite, readLength: 0, checkReadLength: false}
+	return &TBinaryProtocol{trans: t, strictRead: strictRead, strictWrite: strictWrite}
 }
 
 func NewTBinaryProtocolFactoryDefault() *TBinaryProtocolFactory {
@@ -412,9 +409,6 @@ func (p *TBinaryProtocol) ReadBinary() ([]byte, error) {
 		return nil, e
 	}
 	isize := int(size)
-	if e = p.readLengthOk(isize); e != nil {
-		return nil, e
-	}
 	buf := make([]byte, isize)
 	_, err := io.ReadFull(p.trans, buf)
 	return buf, NewTProtocolException(err)
@@ -433,34 +427,13 @@ func (p *TBinaryProtocol) Transport() TTransport {
 }
 
 func (p *TBinaryProtocol) readAll(buf []byte) error {
-	if e := p.readLengthOk(len(buf)); e != nil {
-		return e
-	}
 	_, err := io.ReadFull(p.trans, buf)
 	return NewTProtocolException(err)
-}
-
-func (p *TBinaryProtocol) setReadLength(readLength int) {
-	p.readLength = readLength
-	p.checkReadLength = true
-}
-
-func (p *TBinaryProtocol) readLengthOk(length int) error {
-	if p.checkReadLength {
-		p.readLength = p.readLength - length
-		if p.readLength < 0 {
-			return NewTProtocolExceptionWithType(UNKNOWN_PROTOCOL_EXCEPTION, fmt.Errorf("Message length exceeded: %d", length))
-		}
-	}
-	return nil
 }
 
 func (p *TBinaryProtocol) readStringBody(size int) (value string, err error) {
 	if size < 0 {
 		return "", nil
-	}
-	if err := p.readLengthOk(size); err != nil {
-		return "", err
 	}
 	isize := int(size)
 	buf := make([]byte, isize)
