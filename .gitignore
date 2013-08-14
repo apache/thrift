@@ -141,10 +141,13 @@ gen-*
 /lib/delphi/src/*.dcu
 /lib/delphi/test/*.identcache
 /lib/delphi/test/*.local
+/lib/delphi/test/codegen/*.bat
 /lib/delphi/test/skip/*.local
 /lib/delphi/test/skip/*.identcache
 /lib/delphi/test/skip/*.identcache
 /lib/delphi/test/serializer/*.identcache
+/lib/delphi/test/*.dcu
+/lib/delphi/test/*.2007
 /lib/delphi/test/*.dproj
 /lib/delphi/test/*.dproj
 /lib/delphi/test/skip/*.dproj
