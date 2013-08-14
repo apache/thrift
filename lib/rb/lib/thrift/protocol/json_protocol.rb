@@ -18,21 +18,6 @@
 # under the License.
 # 
 
-@@kJSONObjectStart = '{'
-@@kJSONObjectEnd = '}'
-@@kJSONArrayStart = '['
-@@kJSONArrayEnd = ']'
-@@kJSONNewline = '\n'
-@@kJSONElemSeparator = ','
-@@kJSONPairSeparator = ':'
-@@kJSONBackslash = '\\'
-@@kJSONStringDelimiter = '"'
-
-@@kThriftVersion1 = 1
-
-@@kThriftNan = "NaN"
-@@kThriftInfinity = "Infinity"
-@@kThriftNegativeInfinity = "-Infinity"
 
 module Thrift
   class LookaheadReader
@@ -66,6 +51,7 @@ module Thrift
   # implementations
   #
   class JSONContext
+    @@kJSONElemSeparator = ','
     #
     # Write context data to the trans. Default is to do nothing.
     #
@@ -89,6 +75,8 @@ module Thrift
 
   # Context class for object member key-value pairs
   class JSONPairContext < JSONContext
+    @@kJSONPairSeparator = ':'
+
     def initialize
       @first = true
       @colon = true
@@ -146,6 +134,21 @@ module Thrift
   end
 
   class JsonProtocol < BaseProtocol
+
+    @@kJSONObjectStart = '{'
+    @@kJSONObjectEnd = '}'
+    @@kJSONArrayStart = '['
+    @@kJSONArrayEnd = ']'
+    @@kJSONNewline = '\n'
+    @@kJSONBackslash = '\\'
+    @@kJSONStringDelimiter = '"'
+
+    @@kThriftVersion1 = 1
+
+    @@kThriftNan = "NaN"
+    @@kThriftInfinity = "Infinity"
+    @@kThriftNegativeInfinity = "-Infinity"
+
     def initialize(trans)
       super(trans)
       @context = JSONContext.new
