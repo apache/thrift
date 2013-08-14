@@ -1503,6 +1503,8 @@ void TNonblockingIOThread::setCurrentThreadHighPriority(bool value) {
   } else {
     GlobalOutput.perror("TNonblocking: pthread_setschedparam(): ", THRIFT_GET_SOCKET_ERROR);
   }
+#else
+  THRIFT_UNUSED_VARIABLE(value);
 #endif
 }
 

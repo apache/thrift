@@ -28,6 +28,7 @@
  */
 
 #include <thrift/windows/SocketPair.h>
+#include <thrift/Thrift.h>
 
 // stl
 #include <string.h>
@@ -37,6 +38,10 @@
 
 int thrift_socketpair(int d, int type, int protocol, THRIFT_SOCKET sv[2])
 {
+    THRIFT_UNUSED_VARIABLE(protocol);
+    THRIFT_UNUSED_VARIABLE(type);
+    THRIFT_UNUSED_VARIABLE(d);
+
     union {
        struct sockaddr_in inaddr;
        struct sockaddr addr;
