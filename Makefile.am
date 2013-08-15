@@ -36,6 +36,7 @@ print-version:
 EXTRA_DIST = \
 			.travis.yml \
 			contrib \
+			debian \
 			doc \
 			doap.rdf \
 			sonar-project.properties \
