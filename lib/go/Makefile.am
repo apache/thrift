@@ -33,3 +33,5 @@ check-local:
 
 all-local: check-local
 
+EXTRA_DIST = \
+	thrift

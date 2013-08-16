@@ -39,3 +39,7 @@ clean-local:
 
 client: stubs
 	$(GO) run TestClient.go
+
+EXTRA_DIST = \
+	IncludesTest.thrift \
+	NamespacedTest.thrift
