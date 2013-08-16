@@ -2241,16 +2241,16 @@ void t_go_generator::generate_service_server(t_service* tservice)
                    indent() << "  if err != nil { return false, err }" << endl <<
                    indent() << "  if processor, ok := p.GetProcessorFunction(name); ok {" << endl <<
                    indent() << "    return processor.Process(seqId, iprot, oprot)" << endl <<
-                   indent() << "  } else {" << endl <<
-                   indent() << "    iprot.Skip(thrift.STRUCT)" << endl <<
-                   indent() << "    iprot.ReadMessageEnd()" << endl <<
-                   indent() << "    " << x << " := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, \"Unknown function \" + name)" << endl <<
-                   indent() << "    oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)" << endl <<
-                   indent() << "    " << x << ".Write(oprot)" << endl <<
-                   indent() << "    oprot.WriteMessageEnd()" << endl <<
-                   indent() << "    oprot.Flush()" << endl <<
-                   indent() << "    return false, " << x << endl <<
                    indent() << "  }" << endl <<
+                   indent() << "  iprot.Skip(thrift.STRUCT)" << endl <<
+                   indent() << "  iprot.ReadMessageEnd()" << endl <<
+                   indent() << "  " << x << " := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, \"Unknown function \" + name)" << endl <<
+                   indent() << "  oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)" << endl <<
+                   indent() << "  " << x << ".Write(oprot)" << endl <<
+                   indent() << "  oprot.WriteMessageEnd()" << endl <<
+                   indent() << "  oprot.Flush()" << endl <<
+                   indent() << "  return false, " << x << endl <<
+                   indent() << "" << endl <<
                    indent() << "}" << endl << endl;
     } else {
         f_service_ <<
