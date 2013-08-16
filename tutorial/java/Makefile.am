@@ -38,3 +38,7 @@ tutorialserver: all
 
 tutorialclient: all
 	$(ANT) $(ANT_FLAGS) tutorialclient
+
+EXTRA_DIST = \
+	build.xml \
+	src

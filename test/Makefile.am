@@ -70,6 +70,7 @@ EXTRA_DIST = \
 	DebugProtoTest.thrift \
 	DenseLinkingTest.thrift \
 	DocTest.thrift \
+	Include.thrift \
 	JavaBeansTest.thrift \
 	ManyOptionals.thrift \
 	ManyTypedefs.thrift \
