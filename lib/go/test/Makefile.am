@@ -35,7 +35,7 @@ check: gopath
 	GOPATH=`pwd`/gopath $(GO) build IncludesTest
 
 clean-local:
-	$(RM) -r gen-go gopath
+	$(RM) -r gen-go gopath ThriftTest.thrift
 
 client: stubs
 	$(GO) run TestClient.go
