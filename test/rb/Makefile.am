@@ -24,5 +24,8 @@ stubs: ../ThriftTest.thrift ../SmallTest.thrift
 	$(THRIFT) --gen rb ../SmallTest.thrift
 
 check: stubs
-	$(RUBY) -I. test_suite.rb
+if HAVE_BUNDLER
+	$(BUNDLER) install
+	$(BUNDLER) exec $(RUBY) -I. test_suite.rb
+endif
 
