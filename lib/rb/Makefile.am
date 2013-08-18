@@ -31,7 +31,10 @@ EXTRA_DIST = \
 DESTDIR ?= /
 
 all-local:
-	$(RAKE) 
+if HAVE_BUNDLER
+	$(BUNDLER) install
+	$(BUNDLER) exec rake
+endif
 
 install-exec-hook:
 	$(RAKE) install
