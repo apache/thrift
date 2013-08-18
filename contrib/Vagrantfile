@@ -28,10 +28,10 @@ sudo apt-get upgrade -qq -y
 # Install Dependencies
 # ---
 # General dependencies
-sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev make libqt4-dev git
+sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev make libqt4-dev git debhelper
 
 # Java dependencies
-sudo apt-get install -qq ant openjdk-7-jdk
+sudo apt-get install -qq ant openjdk-7-jdk libcommons-lang3-java
 
 # Python dependencies
 sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools
@@ -44,7 +44,7 @@ sudo gem install bundler rake
 sudo apt-get install -qq libbit-vector-perl
 
 # Php dependencies
-sudo apt-get install -qq php5-dev php5-cli php-pear
+sudo apt-get install -qq php5 php5-dev php5-cli php-pear
 
 # GlibC dependencies
 sudo apt-get install -qq libglib2.0-dev
