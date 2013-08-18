@@ -3,6 +3,202 @@ Thrift Changelog
 Version 1.0
 - Coming Soon
 
+Version 0.9.1
+
+THRIFT-2137   Ruby                 Ruby test lib fails jenkins build #864
+THRIFT-2136   Build Proces         Vagrant build not compiling java, ruby, php, go libs due to missing dependencies 
+THRIFT-2135   Go                   GO lib leaves behind test files that are auto generated 
+THRIFT-2134   Compiler             mingw-cross-compile script failing with strip errors
+THRIFT-2133   Java                 java TestTBinaryProtocol.java test failing
+THRIFT-2129   PHP                  php ext missing from dist
+THRIFT-2128   Go                   lib GO tests fail with funct ends without a return statement
+THRIFT-2126   C++                  lib/cpp/src/thrift/concurrency/STD* files missing from DIST
+THRIFT-2125   Build Process        debian missing from DIST
+THRIFT-2124   Build Process        .o, .so, .la, .deps, .libs, gen-* files left tutorials, test and lib/cpp when making DIST
+THRIFT-2123                        GO lib missing files in DIST build
+THRIFT-2118                        Certificate error handling still incorrect
+THRIFT-2117   Cocoa                Cocoa TBinaryProtocol strictWrite should be set to true by default
+THRIFT-2112   Go                   Error in Go generator when using typedefs in map keys
+THRIFT-2109                        Secure connections should be supported in Go
+THRIFT-2107   Go                   minor Go generator fixes
+THRIFT-2106                        Fix support for namespaces in GO generator
+THRIFT-2105                        Generated code for default values of collections ignores t_field::T_REQUIRED
+THRIFT-2102                        constants are not referencing to correct type when included from another thrift file
+THRIFT-2100                        typedefs are not correctly referenced when including from other thrift files
+THRIFT-2091                        Unnecessary 'friend' declaration causes warning in TWinsockSingleton
+THRIFT-2090   Go                   Go generator, fix including of other thrift files
+THRIFT-2088   Compiler             Typos in Thrift compiler help text
+THRIFT-2084   Delphi               Delphi: Ability to create entity Thrift-generated instances based on TypeInfo
+THRIFT-2083   Go                   Improve the go lib: buffered Transport, save memory allocation, handle concurrent request
+THRIFT-2082   Build Process        Executing "gmake clean" is broken
+THRIFT-2081                        Specified timeout should be used in TSocket.Open()
+THRIFT-2080   C#                   C# multiplex processor does not catch IOException
+THRIFT-2070                        Improper `HexChar' and 'HexVal' implementation in TJSONProtocol.cs
+THRIFT-2066   Build Process        'make install' does not install two headers required for C++ bindings
+THRIFT-2065   Java                 Not valid constants filename in Java 
+THRIFT-2057   Build Process        Vagrant fails on php tests
+THRIFT-2052   Build Process        Vagrant machine image defaults to only 384MB of RAM
+THRIFT-2051   Build Process        Vagrant fails to build erlang
+THRIFT-2050   Build Process        Vagrant C# lib compile fails with TException missing
+THRIFT-2047                        Thrift.Protocol.TCompactProtocol, intToZigZag data lost (TCompactProtocol.cs)
+THRIFT-2036                        Thrift gem warns about class variable access from top level
+THRIFT-2032   C#                   C# client leaks sockets/handles
+THRIFT-2017   Compiler             Resource Leak in thrift struct under compiler/cpp/src/parse/t_program.h
+THRIFT-2014   C++                  Change C++ lib includes to use <namespace/> style throughout
+THRIFT-2012   Go                   Modernizing Go 
+THRIFT-2003                        Deprecate senum
+THRIFT-2002   Haskell              Haskell: Test use Data.Maybe instead of Maybe
+THRIFT-2001   Website              http://thrift.apache.org/ Example "C++ Server" tab is broken
+THRIFT-1997                        Add accept backlog configuration method to  TServerSocket
+THRIFT-1996   JavaME               JavaME Constants generation is broken / inconsistent with regular Java generation
+THRIFT-1995   Compiler             '.' allowed at end of identifier generates non-compilable code
+THRIFT-1994   Compiler             Deprecate slist
+THRIFT-1993   Delphi               Factory to create instances from known (generated) interface types with Delphi
+THRIFT-1992                        casts in TCompactProtocol.tcc causing "dereferencing type-punned pointer will break strict-
+THRIFT-1988                        When trying to build a debian package it fails as the file NEWS doesn't exist
+THRIFT-1985   Build Process        add a Vagrantfile to build and test Apache Thrift fully reproducable
+THRIFT-1984   Python               namespace collision in python bindings
+THRIFT-1980   Go                   Modernize Go tooling, fix go client libary.
+THRIFT-1978   Ruby                 Ruby: Thrift should allow for the SSL verify mode to be set
+THRIFT-1977   C#                   C# compiler should generate constant files prefixed with thrift file name
+THRIFT-1975                        TBinaryProtocol CheckLength can't be used for a client
+THRIFT-1973   C#                   TCompactProtocol in C# lib does not serialize and deserialize negative int32 and int64 numb
+THRIFT-1972   Java                 Add support for async processors
+THRIFT-1971   Tutorial             [Graphviz] Adds tutorial/general description documentation
+THRIFT-1970                        [Graphviz] Adds option to render exceptions relationships
+THRIFT-1969   C#                   C#: Tests not properly linked from the solution
+THRIFT-1966                        Support different files for SSL certificates and keys
+THRIFT-1965                        Adds Graphviz (graph description language) generator
+THRIFT-1962                        Multiplex processor should send any TApplicationException back to client
+THRIFT-1961   C#                   C# tests should be in lib/csharp/test/...
+THRIFT-1960                        main() declares 22 unused gen bools
+THRIFT-1959   C#                   C#: Add Union TMemoryBuffer support
+THRIFT-1958   C#                   C#: Use static Object.Equals instead of .Equals() calls in equals
+THRIFT-1957   Node.js              NodeJS TFramedTransport and TBufferedTransport read bytes as unsigned
+THRIFT-1956   Java                 Switch to Apache Commons Lang 3
+THRIFT-1955                        Union Type writer generated in C# does not WriteStructBegin
+THRIFT-1952   Build Process        Travis CI
+THRIFT-1951   Java                 libthrift.jar has source files in it
+THRIFT-1949                        WP7 build broken
+THRIFT-1943                        docstrings for enum values are ignored
+THRIFT-1942   PHP                  Binary accelerated cpp extension does not use Thrift namespaces for Exceptions
+THRIFT-1934   Tutorial             Tabs in Example section on main page are not working
+THRIFT-1933                        Delphi generator crashes when a typedef references another typedef from an included file
+THRIFT-1930   C#                   C# generates unsigned byte for Thrift "byte" type
+THRIFT-1929   Website              Update website to use Mirrors for downloads
+THRIFT-1928                        Race may still exist in TFileTransport::flush()
+THRIFT-1924   Delphi               Delphi: Inconsistency in serialization of optional fields 
+THRIFT-1922   C#                   C#: Inconsistency in serialization of optional fields 
+THRIFT-1919                        libthrift depends on httpcore-4.1.3 (directly) and httpcore-4.1.4 (transitively)
+THRIFT-1913                        skipping unknown fields in java unions
+THRIFT-1907                        Compiling namespace and sub-namespace directives for unrecognized generators should only be
+THRIFT-1904                        Incorrect code is generated for typedefs which use included types
+THRIFT-1903   PHP                  PHP namespaces cause binary protocols to not be used
+THRIFT-1902   C++                  C++: Support for Multiplexing Services on any Transport, Protocol and Server
+THRIFT-1901   C#                   C#: Support for Multiplexing Services on any Transport, Protocol and Server
+THRIFT-1899   Celphi               Delphi: Support for Multiplexing Services on any Transport, Protocol and Server
+THRIFT-1897                        Support validation of required fields
+THRIFT-1896   Cocoa                Add TBase protocol for Cocoa
+THRIFT-1895   Delphi               Delphi: reserved variable name "result" not detected properly
+THRIFT-1890   C++                  C++: Make named pipes server work asynchronously 
+THRIFT-1888   Java                 Java Thrift client can't connect to Python Thrift server on same host
+THRIFT-1882                        Use single include
+THRIFT-1881                        TNonblockingServer does not release open connections or threads on shutdown
+THRIFT-1880                        Make named pipes server work asynchronously (overlapped) to allow for clean server stops
+THRIFT-1878                        Add the possibility to send custom headers
+THRIFT-1876                        Use enum names instead of casted integers in assignments
+THRIFT-1874                        timeout for the server-side end of a named pipe
+THRIFT-1873                        Binary protocol factory ignores struct read/write flags
+THRIFT-1872                        issues with TBufferedTransport buffer
+THRIFT-1869   Java                 TThreadPoolServer (java) dies when threadpool is consumed
+THRIFT-1864                        implement event handler for non-blocking server
+THRIFT-1859   C++                  Generated error c++ code with -out and include_prefix param
+THRIFT-1850                        make check hangs on TSocket tests in TransportTest.cpp
+THRIFT-1846                        Restore socket.h header to support builds with Android NDK
+THRIFT-1842                        Memory leak with Pipes
+THRIFT-1838   Compiler             Can't build compiler on OS X because of missing thrifty.h
+THRIFT-1831                        Bug in list deserializer
+THRIFT-1824                        many compile warning, becase Thread.h includes config.h
+THRIFT-1823                        Missing parenthesis breaks "IS_..." macro in generated code
+THRIFT-1822                        PHP unit test does not work
+THRIFT-1816                        Need "require" included thrift files in "xxx_types.js"
+THRIFT-1815                        Code generators line buffer output
+THRIFT-1806                        Python generation always truncates __init__.py files
+THRIFT-1804   Build Proces         Binary+compact protocol single byte error in Ruby library (ARM architecture): caused by dif
+THRIFT-1800                        Documentation text not always escaped correctly when rendered to HTML
+THRIFT-1799                        Option to generate HTML in "standalone mode"
+THRIFT-1794   C#                   C# asyncctp broken
+THRIFT-1793   C#                   C#: Use static read instead of instance read
+THRIFT-1791   Haskell              thrift's namespace directive when generating haskell code
+THRIFT-1788   C#                   C#: Constants static constructor does not compile
+THRIFT-1786   C#                   C# Union Typing
+THRIFT-1785   C#                   C#: Add TMemoryBuffer serializer/deserializer
+THRIFT-1783   C#                   C# doesn't handle required fields correctly
+THRIFT-1782   Javascript           async only defined in silverlight
+THRIFT-1780                        Add option to generate nullable values
+THRIFT-1779                        Missing process_XXXX method in generated TProcessor implementation for all 'oneway' service
+THRIFT-1778                        Configure requires manual intervention due to tar failure
+THRIFT-1777                        TPipeServer is UNSTOPPABLE
+THRIFT-1773   Python               Python library should run on python 2.4
+THRIFT-1769                        unions can't have required fields (C++)
+THRIFT-1768                        unions can't have required fields (Compiler)
+THRIFT-1767                        unions can't have required fields (Delphi)
+THRIFT-1765                        Incorrect error message printed for null or negative keys
+THRIFT-1764                        how to get the context of client when on a rpc call in server side?
+THRIFT-1756   Build Process       'make -j 8' fails with "unterminated #ifdef" error
+THRIFT-1753   C++                  Multiple C++ Windows, OSX, and iOS portability issues
+THRIFT-1749   Python               Python TSSLSocket error handling obscures actual error
+THRIFT-1748                        Guard and RWGuard macros defined in global namespace
+THRIFT-1742   C#                   Optionally implement hashcode and equals in c#
+THRIFT-1740   C++                  Make C++ library build on OS X and iOS
+THRIFT-1739   Node.js              missing license header in node.js files
+THRIFT-1735   Tutorials            integrate tutorial into regular build
+THRIFT-1734   Website              Front webpage is still advertising v0.8 as current release
+THRIFT-1733   Build Process        Fix RPM build issues on RHEL6/OL6 systems
+THRIFT-1729   GLibC                C glib refactor left empty folders in svn
+THRIFT-1728                        Upgradation of httpcomponents
+THRIFT-1720   Ruby                 JRuby times out on successful connection
+THRIFT-1716                        max allowed connections should be PIPE_UNLIMITED_INSTANCES
+THRIFT-1715                        Allow excluding python parts when building contrib/fb303
+THRIFT-1713                        Named and Anonymous Pipe transport (Delphi)
+THRIFT-1699                        Native Union#read has extra read_field_end call
+THRIFT-1695                        allow warning-free compilation in VS 2012 and GNU 4.6
+THRIFT-1681   Lua                  Add Lua Support
+THRIFT-1666   CPP                  htonll usage in TBinaryProtocol.tcc generates warning with MSVC2010
+THRIFT-1660   Python               Python Thrift library can be installed with pip but not easy_install
+THRIFT-1657   Javascript           Chrome browser sending OPTIONS method before POST in xmlHttpRequest
+THRIFT-1648   Node.js              NodeJS clients always receive 0 for 'double' values.
+THRIFT-1637   Node.js              NPM registry does not include version 0.8
+THRIFT-1629   Ruby                 Ruby 1.9 Compatibility during Thrift configure, make, install
+THRIFT-1614                        Thrift build from svn repo sources fails with automake-1.12
+THRIFT-1603                        Thrift IDL allows for multiple exceptions, args or struct member names to be the same
+THRIFT-1600   Go - Compile         Thrift Go Compiler and Library out of date with Go 1 Release.
+THRIFT-1595                        Java test server should follow the documented behavior as of THRIFT-1590
+THRIFT-1594                        Java test clients should have a return codes that reflect whether it succeeds or not. 
+THRIFT-1574                        Apache project branding requirements: DOAP file [PATCH]
+THRIFT-1440                        debian packaging: minor-ish policy problems
+THRIFT-1402                        Generated Y_types.js does not require() X_types.js when an include in the IDL file was used
+THRIFT-1353                        Switch to performance branch, get rid of BinaryParser
+THRIFT-1347   GO                   Unify the exceptions returned in generated Go code
+THRIFT-1264   Cocoa                TSocketClient is queried by run loop after deallocation in Cocoa
+THRIFT-1062   Python               Problems with python tutorials
+THRIFT-991    Haskell              Refactor Haskell code and generator
+THRIFT-990    C++                  Sanify gettimeofday usage codebase-wide
+THRIFT-986    Smalltalk            st: add version Info to the library
+THRIFT-985    PHP                  php: add version Info to the library
+THRIFT-984    OCaml                ocaml: add version Info to the library
+THRIFT-930    Haskell              Ruby and Haskell bindings don't properly support DESTDIR (makes packaging painful)
+THRIFT-864                         default value fails if identifier is a struct
+THRIFT-820                         The readLength attribute of TBinaryProtocol is used as an instance variable and is decremen
+THRIFT-801    Ruby                 Provide an interactive shell (irb) when generating ruby bindings
+THRIFT-791    C++                  Let C++ TSimpleServer be driven by an external main loop
+THRIFT-591                         Make the C++ runtime library be compatible with Windows and Visual Studio
+THRIFT-563                         Support for Multiplexing Services on any Transport, Protocol and Server
+THRIFT-514    Compiler             Add option to configure compiler output directory
+THRIFT-474    Ruby                 Generating Ruby on Rails friendly code
+THRIFT-274    Build Process        Towards a working release/versioning process
+
+
 Version 0.9.0
 
 THRIFT-164    Website              Build web tutorial on Incubator web  site
