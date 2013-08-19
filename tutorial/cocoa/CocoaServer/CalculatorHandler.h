@@ -17,29 +17,15 @@
  * under the License.
  */
 
-#import <Foundation/Foundation.h>
-#import "TNSStreamTransport.h"
+#import <tutorial.h>
 
-@interface TSocketClient : TNSStreamTransport 
-#if TARGET_OS_IPHONE || (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6)
-<NSStreamDelegate>
-#endif
-{
-}
+@interface CalculatorHandler : NSObject <Calculator>
 
-- (id) initWithHostname: (NSString *) hostname
-                   port: (int) port;
+- (void) ping;  // throws TException
+- (int32_t) add: (int32_t) num1 num2: (int32_t) num2;  // throws TException
+- (int32_t) calculate: (int32_t) logid w: (Work *) w;  // throws InvalidOperation *, TException
+- (void) zip;  // throws TException
 
-- (id) initWithHostname: (NSString *) hostname
-                   port: (int) port
-                 useSSL: (bool) useSSL;
-
-- (id) initWithHostname: (NSString *) hostname
-                   port: (int) port
-                 useSSL: (bool) useSSL
-            sslSettings: (NSDictionary *) sslSettings;
+- (SharedStruct *) getStruct: (int32_t) key;  // throws TException
 
 @end
-
-
-

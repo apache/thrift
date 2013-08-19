@@ -20,6 +20,7 @@ gen-*
 .pydevproject
 .sonar
 .DS_Store
+xcuserdata
 
 /Makefile
 /Makefile.in
@@ -270,6 +271,7 @@ gen-*
 /tutorial/cpp/Makefile.in
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
+/tutorial/cocoa/build
 /tutorial/go/Makefile
 /tutorial/go/Makefile.in
 /tutorial/go/go-tutorial
