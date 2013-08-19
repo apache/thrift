@@ -37,6 +37,26 @@
 - (id) initWithHostname: (NSString *) hostname
                    port: (int) port
 {
+    return [self initWithHostname: hostname
+                             port: port
+                           useSSL: NO];
+}
+
+- (id) initWithHostname: (NSString *) hostname
+                   port: (int) port
+                 useSSL: (bool) useSSL
+{
+    return [self initWithHostname: hostname
+                             port: port
+                           useSSL: useSSL
+                      sslSettings: nil];
+}
+
+- (id) initWithHostname: (NSString *) hostname
+                   port: (int) port
+                 useSSL: (bool) useSSL
+            sslSettings: (NSDictionary *) sslSettings
+{
 	inputStream = NULL;
 	outputStream = NULL;
 	CFReadStreamRef readStream = NULL;
@@ -50,13 +70,29 @@
 		[inputStream retain_stub];
 		[inputStream setDelegate:self];
 		[inputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-		[inputStream open];
 		
 		outputStream = (bridge_stub NSOutputStream *)writeStream;
 		[outputStream retain_stub];
 		[outputStream setDelegate:self];
 		[outputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-		[outputStream open];
+
+        if (useSSL) {
+            // configure with default settings if the sslSettings are not set
+            sslSettings = (sslSettings) ? sslSettings : [NSDictionary dictionaryWithObjectsAndKeys:
+                                                         (NSString *)kCFStreamSocketSecurityLevelNegotiatedSSL, kCFStreamSSLLevel,
+                                                         kCFBooleanFalse, kCFStreamSSLAllowsExpiredRoots,
+                                                         kCFBooleanFalse, kCFStreamSSLAllowsAnyRoot,
+                                                         kCFBooleanTrue, kCFStreamSSLValidatesCertificateChain,
+                                                         nil];
+            [inputStream setProperty:sslSettings
+                              forKey:(NSString *)kCFStreamPropertySSLSettings];
+            [outputStream setProperty:sslSettings
+                               forKey:(NSString *)kCFStreamPropertySSLSettings];
+        }
+
+        [inputStream open];
+        [outputStream open];
+
         CFRelease(readStream);
         CFRelease(writeStream);
 	}

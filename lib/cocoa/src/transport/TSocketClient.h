@@ -30,6 +30,15 @@
 - (id) initWithHostname: (NSString *) hostname
                    port: (int) port;
 
+- (id) initWithHostname: (NSString *) hostname
+                   port: (int) port
+                 useSSL: (bool) useSSL;
+
+- (id) initWithHostname: (NSString *) hostname
+                   port: (int) port
+                 useSSL: (bool) useSSL
+            sslSettings: (NSDictionary *) sslSettings;
+
 @end
 
 
