@@ -44,6 +44,7 @@
 		63C35A0C17B663410041CC9F /* TSharedProcessorFactory.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359F017B663410041CC9F /* TSharedProcessorFactory.m */; };
 		63C35A0D17B663AA0041CC9F /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6398488F17B5ACB300F9D817 /* Cocoa.framework */; };
 		63C35A1117B664720041CC9F /* CalculatorHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C35A1017B664720041CC9F /* CalculatorHandler.m */; };
+		63F699FC17C22D6800255365 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 63F699FB17C22D6800255365 /* CFNetwork.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -117,6 +118,7 @@
 		63C35A0F17B664720041CC9F /* CalculatorHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CalculatorHandler.h; sourceTree = "<group>"; };
 		63C35A1017B664720041CC9F /* CalculatorHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CalculatorHandler.m; sourceTree = "<group>"; };
 		63C35A1817B6AEA10041CC9F /* CocoaClient-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CocoaClient-Prefix.pch"; sourceTree = "<group>"; };
+		63F699FB17C22D6800255365 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +126,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63F699FC17C22D6800255365 /* CFNetwork.framework in Frameworks */,
 				639848E517B5B2C500F9D817 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -163,6 +166,7 @@
 		6398488017B5974900F9D817 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				63F699FB17C22D6800255365 /* CFNetwork.framework */,
 				6398488F17B5ACB300F9D817 /* Cocoa.framework */,
 				6398488117B5974900F9D817 /* Foundation.framework */,
 			);

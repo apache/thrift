@@ -36,6 +36,9 @@ tutorialserver: CocoaServer
 tutorialclient: CocoaClient
 	./build/$(COCOA_BUILD_CONFIG)/$<
 
+tutorialclient_ssl: CocoaClient
+	./build/$(COCOA_BUILD_CONFIG)/$< -ssl
+
 clean:
 	@$(RM) -r gen-*
 	@$(RM) -r build

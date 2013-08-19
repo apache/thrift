@@ -23,6 +23,17 @@
 
 #import <tutorial.h>
 
+BOOL isOptionSetWrapperHelper(const char * option, int argc, const char * argv[], BOOL optionFound)
+{
+    return (argc <= 0 || optionFound) ? optionFound
+                                      : isOptionSetWrapperHelper(option, argc - 1, argv, strcasecmp(option, argv[argc]) == 0);
+}
+
+BOOL isOptionSet(const char * option, int argc, const char * argv[])
+{
+    return isOptionSetWrapperHelper(option, argc, argv, NO);
+}
+
 int main(int argc, const char * argv[])
 {
 
@@ -32,7 +43,17 @@ int main(int argc, const char * argv[])
         int port = 9090;
 
         // Make socket
-        TSocketClient *transport = [[TSocketClient alloc] initWithHostname:host port:port];
+        TSocketClient *transport = [[TSocketClient alloc] initWithHostname:host
+                                                                      port:port
+                                                                    useSSL:isOptionSet("-ssl", argc - 1, argv)
+                                                               sslSettings:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                                            (NSString *)kCFStreamSocketSecurityLevelNegotiatedSSL, kCFStreamSSLLevel,
+                                                                            kCFBooleanTrue, kCFStreamSSLAllowsExpiredCertificates,
+                                                                            kCFBooleanTrue, kCFStreamSSLAllowsExpiredRoots,
+                                                                            kCFBooleanTrue, kCFStreamSSLAllowsAnyRoot,
+                                                                            kCFBooleanFalse, kCFStreamSSLValidatesCertificateChain,
+                                                                            [NSNull null], kCFStreamSSLPeerName,
+                                                                            nil]];
 
         // Wrap in a protocol
         TBinaryProtocol *protocol = [[TBinaryProtocol alloc] initWithTransport:transport];
