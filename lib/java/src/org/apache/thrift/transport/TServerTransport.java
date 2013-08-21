@@ -19,11 +19,13 @@
 
 package org.apache.thrift.transport;
 
+import java.io.Closeable;
+
 /**
  * Server transport. Object which provides client transports.
  *
  */
-public abstract class TServerTransport {
+public abstract class TServerTransport implements Closeable {
 
   public abstract void listen() throws TTransportException;
 
