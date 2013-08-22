@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'CocoaMultiplexedClient' target in the 'CocoaMultiplexedClient' project
+//
+
+#ifdef __OBJC__
+    #import <Foundation/Foundation.h>
+#endif
