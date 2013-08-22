@@ -7,6 +7,29 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6358FE4217C5552500EA157B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6398488117B5974900F9D817 /* Foundation.framework */; };
+		6358FE4517C5552500EA157B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 6358FE4417C5552500EA157B /* main.m */; };
+		6358FE5117C56BC600EA157B /* TProtocolDecorator.m in Sources */ = {isa = PBXBuildFile; fileRef = 6358FE4F17C56BC600EA157B /* TProtocolDecorator.m */; };
+		6358FE5217C56BC600EA157B /* TProtocolDecorator.m in Sources */ = {isa = PBXBuildFile; fileRef = 6358FE4F17C56BC600EA157B /* TProtocolDecorator.m */; };
+		6358FE5317C56BC600EA157B /* TProtocolDecorator.m in Sources */ = {isa = PBXBuildFile; fileRef = 6358FE4F17C56BC600EA157B /* TProtocolDecorator.m */; };
+		6358FE5417C56BC600EA157B /* TMultiplexedProtocol.m in Sources */ = {isa = PBXBuildFile; fileRef = 6358FE5017C56BC600EA157B /* TMultiplexedProtocol.m */; };
+		6358FE5517C56BC600EA157B /* TMultiplexedProtocol.m in Sources */ = {isa = PBXBuildFile; fileRef = 6358FE5017C56BC600EA157B /* TMultiplexedProtocol.m */; };
+		6358FE5617C56BC600EA157B /* TMultiplexedProtocol.m in Sources */ = {isa = PBXBuildFile; fileRef = 6358FE5017C56BC600EA157B /* TMultiplexedProtocol.m */; };
+		6358FE7A17C56C3500EA157B /* TBinaryProtocol.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359CE17B663410041CC9F /* TBinaryProtocol.m */; };
+		6358FE7B17C56C3500EA157B /* TProtocolException.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359D117B663410041CC9F /* TProtocolException.m */; };
+		6358FE7C17C56C3500EA157B /* TProtocolUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359D417B663410041CC9F /* TProtocolUtil.m */; };
+		6358FE7D17C56C3500EA157B /* TSocketServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359D717B663410041CC9F /* TSocketServer.m */; };
+		6358FE7E17C56C3500EA157B /* TApplicationException.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359D917B663410041CC9F /* TApplicationException.m */; };
+		6358FE7F17C56C3500EA157B /* TException.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359DB17B663410041CC9F /* TException.m */; };
+		6358FE8017C56C3500EA157B /* TFramedTransport.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359E117B663410041CC9F /* TFramedTransport.m */; };
+		6358FE8117C56C3500EA157B /* THTTPClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359E317B663410041CC9F /* THTTPClient.m */; };
+		6358FE8217C56C3500EA157B /* TMemoryBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359E517B663410041CC9F /* TMemoryBuffer.m */; };
+		6358FE8317C56C3500EA157B /* TNSFileHandleTransport.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359E717B663410041CC9F /* TNSFileHandleTransport.m */; };
+		6358FE8417C56C3500EA157B /* TNSStreamTransport.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359E917B663410041CC9F /* TNSStreamTransport.m */; };
+		6358FE8517C56C3500EA157B /* TSocketClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359EB17B663410041CC9F /* TSocketClient.m */; };
+		6358FE8617C56C3500EA157B /* TTransportException.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359EE17B663410041CC9F /* TTransportException.m */; };
+		6358FE8717C56C3500EA157B /* TSharedProcessorFactory.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359F017B663410041CC9F /* TSharedProcessorFactory.m */; };
+		6358FE8A17C5733900EA157B /* multiplexing.m in Sources */ = {isa = PBXBuildFile; fileRef = 6358FE8917C5733900EA157B /* multiplexing.m */; };
 		639848E517B5B2C500F9D817 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6398488117B5974900F9D817 /* Foundation.framework */; };
 		639848E817B5B2C500F9D817 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 639848E717B5B2C500F9D817 /* main.m */; };
 		63C359B917B662AB0041CC9F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C359B817B662AB0041CC9F /* main.m */; };
@@ -47,6 +70,15 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		6358FE3F17C5552500EA157B /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		639848E217B5B2C500F9D817 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -68,6 +100,15 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6358FE4117C5552500EA157B /* CocoaMultiplexedClient */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CocoaMultiplexedClient; sourceTree = BUILT_PRODUCTS_DIR; };
+		6358FE4417C5552500EA157B /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		6358FE4717C5552500EA157B /* CocoaMultiplexedClient-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CocoaMultiplexedClient-Prefix.pch"; sourceTree = "<group>"; };
+		6358FE4D17C56BC600EA157B /* TProtocolDecorator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TProtocolDecorator.h; sourceTree = "<group>"; };
+		6358FE4E17C56BC600EA157B /* TMultiplexedProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TMultiplexedProtocol.h; sourceTree = "<group>"; };
+		6358FE4F17C56BC600EA157B /* TProtocolDecorator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TProtocolDecorator.m; sourceTree = "<group>"; };
+		6358FE5017C56BC600EA157B /* TMultiplexedProtocol.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TMultiplexedProtocol.m; sourceTree = "<group>"; };
+		6358FE8817C5733900EA157B /* multiplexing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = multiplexing.h; sourceTree = "<group>"; };
+		6358FE8917C5733900EA157B /* multiplexing.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = multiplexing.m; sourceTree = "<group>"; };
 		6398488117B5974900F9D817 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		6398488F17B5ACB300F9D817 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		639848E417B5B2C500F9D817 /* CocoaClient */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CocoaClient; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -120,6 +161,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		6358FE3E17C5552500EA157B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6358FE4217C5552500EA157B /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		639848E117B5B2C500F9D817 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -139,6 +188,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6358FE4317C5552500EA157B /* CocoaMultiplexedClient */ = {
+			isa = PBXGroup;
+			children = (
+				6358FE4417C5552500EA157B /* main.m */,
+				6358FE4617C5552500EA157B /* Supporting Files */,
+			);
+			path = CocoaMultiplexedClient;
+			sourceTree = "<group>";
+		};
+		6358FE4617C5552500EA157B /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				6358FE4717C5552500EA157B /* CocoaMultiplexedClient-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
 		6398487517B5974900F9D817 = {
 			isa = PBXGroup;
 			children = (
@@ -146,6 +212,7 @@
 				63C359C117B6632C0041CC9F /* gen-cocoa */,
 				639848E617B5B2C500F9D817 /* CocoaClient */,
 				63C359B717B662AB0041CC9F /* CocoaServer */,
+				6358FE4317C5552500EA157B /* CocoaMultiplexedClient */,
 				6398488017B5974900F9D817 /* Frameworks */,
 				6398487F17B5974900F9D817 /* Products */,
 			);
@@ -156,6 +223,7 @@
 			children = (
 				639848E417B5B2C500F9D817 /* CocoaClient */,
 				63C359B517B662AB0041CC9F /* CocoaServer */,
+				6358FE4117C5552500EA157B /* CocoaMultiplexedClient */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -200,6 +268,8 @@
 		63C359C117B6632C0041CC9F /* gen-cocoa */ = {
 			isa = PBXGroup;
 			children = (
+				6358FE8817C5733900EA157B /* multiplexing.h */,
+				6358FE8917C5733900EA157B /* multiplexing.m */,
 				63C359C217B6632C0041CC9F /* shared.h */,
 				63C359C317B6632C0041CC9F /* shared.m */,
 				63C359C417B6632C0041CC9F /* tutorial.h */,
@@ -231,6 +301,10 @@
 		63C359CB17B663410041CC9F /* protocol */ = {
 			isa = PBXGroup;
 			children = (
+				6358FE4D17C56BC600EA157B /* TProtocolDecorator.h */,
+				6358FE4F17C56BC600EA157B /* TProtocolDecorator.m */,
+				6358FE4E17C56BC600EA157B /* TMultiplexedProtocol.h */,
+				6358FE5017C56BC600EA157B /* TMultiplexedProtocol.m */,
 				63C359CC17B663410041CC9F /* TBase.h */,
 				63C359CD17B663410041CC9F /* TBinaryProtocol.h */,
 				63C359CE17B663410041CC9F /* TBinaryProtocol.m */,
@@ -286,6 +360,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		6358FE4017C5552500EA157B /* CocoaMultiplexedClient */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6358FE4A17C5552500EA157B /* Build configuration list for PBXNativeTarget "CocoaMultiplexedClient" */;
+			buildPhases = (
+				6358FE3D17C5552500EA157B /* Sources */,
+				6358FE3E17C5552500EA157B /* Frameworks */,
+				6358FE3F17C5552500EA157B /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CocoaMultiplexedClient;
+			productName = CocoaMultiplexedClient;
+			productReference = 6358FE4117C5552500EA157B /* CocoaMultiplexedClient */;
+			productType = "com.apple.product-type.tool";
+		};
 		639848E317B5B2C500F9D817 /* CocoaClient */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 639848ED17B5B2C500F9D817 /* Build configuration list for PBXNativeTarget "CocoaClient" */;
@@ -343,11 +434,37 @@
 			targets = (
 				639848E317B5B2C500F9D817 /* CocoaClient */,
 				63C359B417B662AB0041CC9F /* CocoaServer */,
+				6358FE4017C5552500EA157B /* CocoaMultiplexedClient */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		6358FE3D17C5552500EA157B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6358FE7A17C56C3500EA157B /* TBinaryProtocol.m in Sources */,
+				6358FE7B17C56C3500EA157B /* TProtocolException.m in Sources */,
+				6358FE7C17C56C3500EA157B /* TProtocolUtil.m in Sources */,
+				6358FE7D17C56C3500EA157B /* TSocketServer.m in Sources */,
+				6358FE7E17C56C3500EA157B /* TApplicationException.m in Sources */,
+				6358FE7F17C56C3500EA157B /* TException.m in Sources */,
+				6358FE8017C56C3500EA157B /* TFramedTransport.m in Sources */,
+				6358FE8117C56C3500EA157B /* THTTPClient.m in Sources */,
+				6358FE8217C56C3500EA157B /* TMemoryBuffer.m in Sources */,
+				6358FE8317C56C3500EA157B /* TNSFileHandleTransport.m in Sources */,
+				6358FE8417C56C3500EA157B /* TNSStreamTransport.m in Sources */,
+				6358FE8517C56C3500EA157B /* TSocketClient.m in Sources */,
+				6358FE8617C56C3500EA157B /* TTransportException.m in Sources */,
+				6358FE8717C56C3500EA157B /* TSharedProcessorFactory.m in Sources */,
+				6358FE4517C5552500EA157B /* main.m in Sources */,
+				6358FE5217C56BC600EA157B /* TProtocolDecorator.m in Sources */,
+				6358FE5517C56BC600EA157B /* TMultiplexedProtocol.m in Sources */,
+				6358FE8A17C5733900EA157B /* multiplexing.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		639848E017B5B2C500F9D817 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -369,6 +486,8 @@
 				63C35A0717B663410041CC9F /* TSocketClient.m in Sources */,
 				63C35A0917B663410041CC9F /* TTransportException.m in Sources */,
 				63C35A0B17B663410041CC9F /* TSharedProcessorFactory.m in Sources */,
+				6358FE5117C56BC600EA157B /* TProtocolDecorator.m in Sources */,
+				6358FE5417C56BC600EA157B /* TMultiplexedProtocol.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -394,12 +513,42 @@
 				63C35A0A17B663410041CC9F /* TTransportException.m in Sources */,
 				63C35A0C17B663410041CC9F /* TSharedProcessorFactory.m in Sources */,
 				63C35A1117B664720041CC9F /* CalculatorHandler.m in Sources */,
+				6358FE5317C56BC600EA157B /* TProtocolDecorator.m in Sources */,
+				6358FE5617C56BC600EA157B /* TMultiplexedProtocol.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		6358FE4B17C5552500EA157B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SRCROOT)",
+					"$(inherited)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "CocoaMultiplexedClient/CocoaMultiplexedClient-Prefix.pch";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		6358FE4C17C5552500EA157B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SRCROOT)",
+					"$(inherited)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "CocoaMultiplexedClient/CocoaMultiplexedClient-Prefix.pch";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		6398488A17B5974900F9D817 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -531,6 +680,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		6358FE4A17C5552500EA157B /* Build configuration list for PBXNativeTarget "CocoaMultiplexedClient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6358FE4B17C5552500EA157B /* Debug */,
+				6358FE4C17C5552500EA157B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		6398487917B5974900F9D817 /* Build configuration list for PBXProject "Tutorial" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
