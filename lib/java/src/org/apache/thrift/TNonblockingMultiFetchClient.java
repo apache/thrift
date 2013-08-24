@@ -17,7 +17,8 @@
  */
 package org.apache.thrift;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -74,8 +75,10 @@ import java.util.concurrent.TimeoutException;
  *
  */
 public class TNonblockingMultiFetchClient {
-  private static final Logger LOG = Logger.getLogger(
-    TNonblockingMultiFetchClient.class);
+  
+  private static final Logger LOGGER = LoggerFactory.getLogger(
+    TNonblockingMultiFetchClient.class.getName()
+  );
 
   // if the size of the response msg exceeds this limit (in byte), we will
   // not read the msg
@@ -163,15 +166,15 @@ public class TNonblockingMultiFetchClient {
     } catch(InterruptedException ie) {
       // attempt to cancel execution of the task.
       task.cancel(true);
-      LOG.error("interrupted during fetch: "+ie.toString());
+      LOGGER.error("interrupted during fetch: "+ie.toString());
     } catch(ExecutionException ee) {
       // attempt to cancel execution of the task.
       task.cancel(true);
-      LOG.error("exception during fetch: "+ee.toString());
+      LOGGER.error("exception during fetch: "+ee.toString());
     } catch(TimeoutException te) {
       // attempt to cancel execution of the task.  
       task.cancel(true);
-      LOG.error("timeout for fetch: "+te.toString());
+      LOGGER.error("timeout for fetch: "+te.toString());
     }
 
     executor.shutdownNow();
@@ -213,7 +216,7 @@ public class TNonblockingMultiFetchClient {
       try {
         selector = Selector.open();
       } catch (IOException e) {
-        LOG.error("selector opens error: "+e.toString());
+        LOGGER.error("selector opens error: "+e.toString());
         return;
       }
 
@@ -239,7 +242,7 @@ public class TNonblockingMultiFetchClient {
           stats.incNumConnectErrorServers();  
           String err = String.format("set up socket to server %s error: %s",
             server.toString(), e.toString());
-          LOG.error(err);
+          LOGGER.error(err);
           // free resource
           if (s != null) {
             try {s.close();} catch (Exception ex) {}
@@ -261,7 +264,7 @@ public class TNonblockingMultiFetchClient {
         try{
           selector.select();
         } catch (Exception e) {
-          LOG.error("selector selects error: "+e.toString());
+          LOGGER.error("selector selects error: "+e.toString());
           continue;
         }
 
@@ -284,7 +287,7 @@ public class TNonblockingMultiFetchClient {
               String err = String.format("socket %d connects to server %s " +
                 "error: %s",
                 index, servers.get(index).toString(), e.toString());
-              LOG.error(err);
+              LOGGER.error(err);
             }
           }
 
@@ -299,7 +302,7 @@ public class TNonblockingMultiFetchClient {
                 String err = String.format("socket %d writes to server %s " +
                   "error: %s",
                   index, servers.get(index).toString(), e.toString());
-                LOG.error(err);
+                LOGGER.error(err);
               }
             }
           }
@@ -325,7 +328,7 @@ public class TNonblockingMultiFetchClient {
                     String err = String.format("Read an invalid frame size %d"
                       + " from %s. Does the server use TFramedTransport? ",
                       frameSize[index], servers.get(index).toString());
-                    LOG.error(err);
+                    LOGGER.error(err);
                     sChannel.close();
                     continue;
                   }
@@ -340,7 +343,7 @@ public class TNonblockingMultiFetchClient {
                       + " total buffer size would exceed limit %d",
                       frameSize[index], servers.get(index).toString(),
                       maxRecvBufBytesPerServer);
-                    LOG.error(err);                      
+                    LOGGER.error(err);                      
                     sChannel.close();
                     continue;
                   }
@@ -366,7 +369,7 @@ public class TNonblockingMultiFetchClient {
               String err = String.format("socket %d reads from server %s " +
                 "error: %s",
                 index, servers.get(index).toString(), e.toString());
-              LOG.error(err);
+              LOGGER.error(err);
             }
           }
         }
@@ -389,7 +392,7 @@ public class TNonblockingMultiFetchClient {
           selector.close();
         }
       } catch (IOException e) {
-        LOG.error("free resource error: "+e.toString());
+        LOGGER.error("free resource error: "+e.toString());
       }
     }
   }
