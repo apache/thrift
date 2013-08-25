@@ -58,6 +58,11 @@ void pverbose(const char* fmt, ...);
 void failure(const char* fmt, ...);
 
 /**
+ * Check simple identifier names
+ */
+void validate_simple_identifier(const char* identifier);
+
+/**
  * Check constant types
  */
 void validate_const_type(t_const* c);

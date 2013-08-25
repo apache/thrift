@@ -515,6 +515,7 @@ Typedef:
   tok_typedef FieldType tok_identifier TypeAnnotations
     {
       pdebug("TypeDef -> tok_typedef FieldType tok_identifier");
+      validate_simple_identifier( $3);
       t_typedef *td = new t_typedef(g_program, $2, $3);
       $$ = td;
       if ($4 != NULL) {
@@ -536,6 +537,7 @@ Enum:
     {
       pdebug("Enum -> tok_enum tok_identifier { EnumDefList }");
       $$ = $4;
+      validate_simple_identifier( $2);
       $$->set_name($2);
       if ($6 != NULL) {
         $$->annotations_ = $6->annotations_;
@@ -581,6 +583,7 @@ EnumDef:
       if ($4 > INT_MAX) {
         pwarning(1, "64-bit value supplied for enum %s.\n", $2);
       }
+      validate_simple_identifier( $2);
       $$ = new t_enum_value($2, $4);
       if ($1 != NULL) {
         $$->set_doc($1);
@@ -594,6 +597,7 @@ EnumDef:
   CaptureDocText tok_identifier TypeAnnotations CommaOrSemicolonOptional
     {
       pdebug("EnumDef -> tok_identifier");
+      validate_simple_identifier( $2);
       $$ = new t_enum_value($2);
       if ($1 != NULL) {
         $$->set_doc($1);
@@ -608,6 +612,7 @@ Senum:
   tok_senum tok_identifier '{' SenumDefList '}' TypeAnnotations
     {
       pdebug("Senum -> tok_senum tok_identifier { SenumDefList }");
+      validate_simple_identifier( $2);
       $$ = new t_typedef(g_program, $4, $2);
       if ($6 != NULL) {
         $$->annotations_ = $6->annotations_;
@@ -641,6 +646,7 @@ Const:
     {
       pdebug("Const -> tok_const FieldType tok_identifier = ConstValue");
       if (g_parse_mode == PROGRAM) {
+        validate_simple_identifier( $3);
         g_scope->resolve_const_value($5, $2);
         $$ = new t_const($2, $3, $5);
         validate_const_type($$);
@@ -748,6 +754,7 @@ Struct:
   StructHead tok_identifier XsdAll '{' FieldList '}' TypeAnnotations
     {
       pdebug("Struct -> tok_struct tok_identifier { FieldList }");
+      validate_simple_identifier( $2);
       $5->set_xsd_all($3);
       $5->set_union($1 == struct_is_union);
       $$ = $5;
@@ -802,6 +809,7 @@ Xception:
   tok_xception tok_identifier '{' FieldList '}' TypeAnnotations
     {
       pdebug("Xception -> tok_xception tok_identifier { FieldList }");
+      validate_simple_identifier( $2);
       $4->set_name($2);
       $4->set_xception(true);
       $$ = $4;
@@ -815,6 +823,7 @@ Service:
   tok_service tok_identifier Extends '{' FlagArgs FunctionList UnflagArgs '}' TypeAnnotations
     {
       pdebug("Service -> tok_service tok_identifier { FunctionList }");
+      validate_simple_identifier( $2);
       $$ = $6;
       $$->set_name($2);
       $$->set_extends($3);
@@ -868,6 +877,7 @@ FunctionList:
 Function:
   CaptureDocText Oneway FunctionType tok_identifier '(' FieldList ')' Throws TypeAnnotations CommaOrSemicolonOptional
     {
+      validate_simple_identifier( $4);
       $6->set_name(std::string($4) + "_args");
       $$ = new t_function($3, $4, $6, $8, $2);
       if ($1 != NULL) {
@@ -932,6 +942,7 @@ Field:
           exit(1);
         }
       }
+      validate_simple_identifier($5);
       $$ = new t_field($4, $5, $2.value);
       $$->set_req($3);
       if ($6 != NULL) {

@@ -806,6 +806,18 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
 }
 
 /**
+ * Check simple identifier names
+ * It's easier to do it this way instead of rewriting the whole grammar etc.
+ */
+void validate_simple_identifier(const char* identifier) {
+  string name( identifier);
+  if( name.find(".") != string::npos) {
+    yyerror("Identifier %s can't have a dot.", identifier);
+    exit(1);
+  }
+}
+
+/**
  * Check the type of the parsed const information against its declared type
  */
 void validate_const_type(t_const* c) {
