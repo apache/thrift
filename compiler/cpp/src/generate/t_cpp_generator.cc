@@ -72,6 +72,9 @@ class t_cpp_generator : public t_oop_generator {
     iter = parsed_options.find("no_client_completion");
     gen_no_client_completion_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("no_default_operators");
+    gen_no_default_operators_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("templates");
     gen_templates_ = (iter != parsed_options.end());
 
@@ -282,6 +285,11 @@ class t_cpp_generator : public t_oop_generator {
    * True if we should omit calls to completion__() in CobClient class.
    */
   bool gen_no_client_completion_;
+
+  /**
+   * True if we should omit generating the default opeartors ==, != and <.
+   */
+  bool gen_no_default_operators_;
 
   /**
    * Strings for namespace, computed once up front then used directly
@@ -970,44 +978,47 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   out << endl;
 
   if (!pointers) {
-    // Generate an equality testing operator.  Make it inline since the compiler
-    // will do a better job than we would when deciding whether to inline it.
-    out <<
-      indent() << "bool operator == (const " << tstruct->get_name() << " & " <<
-      (members.size() > 0 ? "rhs" : "/* rhs */") << ") const" << endl;
-    scope_up(out);
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      // Most existing Thrift code does not use isset or optional/required,
-      // so we treat "default" fields as required.
-      if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
-        out <<
-          indent() << "if (!(" << (*m_iter)->get_name()
-                   << " == rhs." << (*m_iter)->get_name() << "))" << endl <<
-          indent() << "  return false;" << endl;
-      } else {
-        out <<
-          indent() << "if (__isset." << (*m_iter)->get_name()
-                   << " != rhs.__isset." << (*m_iter)->get_name() << ")" << endl <<
-          indent() << "  return false;" << endl <<
-          indent() << "else if (__isset." << (*m_iter)->get_name() << " && !("
-                   << (*m_iter)->get_name() << " == rhs." << (*m_iter)->get_name()
-                   << "))" << endl <<
-          indent() << "  return false;" << endl;
+    // Should we generate default operators?
+    if (!gen_no_default_operators_) {
+      // Generate an equality testing operator.  Make it inline since the compiler
+      // will do a better job than we would when deciding whether to inline it.
+      out <<
+        indent() << "bool operator == (const " << tstruct->get_name() << " & " <<
+        (members.size() > 0 ? "rhs" : "/* rhs */") << ") const" << endl;
+      scope_up(out);
+      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        // Most existing Thrift code does not use isset or optional/required,
+        // so we treat "default" fields as required.
+        if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
+          out <<
+            indent() << "if (!(" << (*m_iter)->get_name()
+                     << " == rhs." << (*m_iter)->get_name() << "))" << endl <<
+            indent() << "  return false;" << endl;
+        } else {
+          out <<
+            indent() << "if (__isset." << (*m_iter)->get_name()
+                     << " != rhs.__isset." << (*m_iter)->get_name() << ")" << endl <<
+            indent() << "  return false;" << endl <<
+            indent() << "else if (__isset." << (*m_iter)->get_name() << " && !("
+                     << (*m_iter)->get_name() << " == rhs." << (*m_iter)->get_name()
+                     << "))" << endl <<
+            indent() << "  return false;" << endl;
+        }
       }
-    }
-    indent(out) << "return true;" << endl;
-    scope_down(out);
-    out <<
-      indent() << "bool operator != (const " << tstruct->get_name() << " &rhs) const {" << endl <<
-      indent() << "  return !(*this == rhs);" << endl <<
-      indent() << "}" << endl << endl;
+      indent(out) << "return true;" << endl;
+      scope_down(out);
+      out <<
+        indent() << "bool operator != (const " << tstruct->get_name() << " &rhs) const {" << endl <<
+        indent() << "  return !(*this == rhs);" << endl <<
+        indent() << "}" << endl << endl;
 
-    // Generate the declaration of a less-than operator.  This must be
-    // implemented by the application developer if they wish to use it.  (They
-    // will get a link error if they try to use it without an implementation.)
-    out <<
-      indent() << "bool operator < (const "
-               << tstruct->get_name() << " & ) const;" << endl << endl;
+      // Generate the declaration of a less-than operator.  This must be
+      // implemented by the application developer if they wish to use it.  (They
+      // will get a link error if they try to use it without an implementation.)
+      out <<
+        indent() << "bool operator < (const "
+                 << tstruct->get_name() << " & ) const;" << endl << endl;
+    }
   }
 
   if (read) {
@@ -4635,6 +4646,8 @@ THRIFT_REGISTER_GENERATOR(cpp, "C++",
 "    cob_style:       Generate \"Continuation OBject\"-style classes.\n"
 "    no_client_completion:\n"
 "                     Omit calls to completion__() in CobClient class.\n"
+"    no_default_operators:\n"
+"                     Omits generation of default operators ==, != and <\n"
 "    templates:       Generate templatized reader/writer methods.\n"
 "    pure_enums:      Generate pure enums instead of wrapper classes.\n"
 "    dense:           Generate type specifications for the dense protocol.\n"
