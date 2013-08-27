@@ -88,6 +88,10 @@
     <mkdir dir="${build.lib.dir}"/>
     <mkdir dir="${build.tools.dir}"/>
     <mkdir dir="${build.test.dir}"/>
+    <echo file="maven-settings.xml">
+      &lt;settings&gt;
+      &lt;/settings&gt;
+    </echo>
   </target>
 
   <target name="compile" depends="init">
@@ -259,6 +263,18 @@
   <target name="proxy" if="proxy.enabled">
     <setproxy proxyhost="${proxy.host}" proxyport="${proxy.port}"
       proxyuser="${proxy.user}" proxypassword="${proxy.pass}"/>
+    <echo file="maven-settings.xml">
+      &lt;settings&gt;
+          &lt;proxies&gt;
+              &lt;proxy&gt;
+                  &lt;protocol&gt;http&lt;/protocol&gt;
+                  &lt;host&gt;${proxy.host}&lt;/host&gt;
+                  &lt;port&gt;${proxy.port}&lt;/port&gt;
+                  &lt;nonProxyHosts&gt;localhost&lt;/nonProxyHosts&gt;
+              &lt;/proxy&gt;
+          &lt;/proxies&gt;
+      &lt;/settings&gt;
+    </echo>
   </target>
 
   <target name="mvn.ant.tasks.download" depends="setup.init,mvn.ant.tasks.check,proxy" unless="mvn.ant.tasks.found">
@@ -328,7 +344,7 @@
     <artifact:writepom pomRefId="pom" file="${pom.xml}"/>
 
     <!-- Download the dependencies -->
-    <artifact:dependencies filesetId="build-dependency-jars" pomRefId="pom"/>
+    <artifact:dependencies filesetId="build-dependency-jars" pomRefId="pom" settingsFile="maven-settings.xml"/>
 
     <!-- Copy the dependencies to the build/lib dir -->
     <copy todir="${build.dir}/lib">
@@ -337,7 +353,7 @@
     </copy>
 
     <!-- Dependencies needed for testing -->
-    <artifact:dependencies filesetId="test-dependency-jars" useScope="runtime">
+    <artifact:dependencies filesetId="test-dependency-jars" useScope="runtime" settingsFile="maven-settings.xml">
       <dependency groupId="org.slf4j" artifactId="slf4j-log4j12" version="1.5.8"/>
       <dependency groupId="junit" artifactId="junit" version="4.4"/>
     </artifact:dependencies>
