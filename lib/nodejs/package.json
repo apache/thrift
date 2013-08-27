@@ -27,5 +27,8 @@
   "dependencies": {
     "node-int64": "~0.3.0",
     "nodeunit": "~0.8.0"
+  },
+  "devDependencies": {
+    "connect": "2.7.x"
   }
 }
