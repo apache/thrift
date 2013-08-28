@@ -981,7 +981,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     f_service_ <<
       indent() << "  this.output = output;" << endl <<
       indent() << "  this.pClass = pClass;" << endl <<
-      indent() << "  this.seqid = 0;" << endl <<
+      indent() << "  this._seqid = 0;" << endl <<
       indent() << "  this._reqs = {};" << endl;
   } else {
     f_service_ <<
@@ -1007,6 +1007,11 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       indent(f_service_) <<  js_namespace(tservice->get_program())<<service_name_ << "Client.prototype = {};"<<endl;
   }
 
+  // utils for multiplexed services
+  if (gen_node_) {
+    indent(f_service_) <<  js_namespace(tservice->get_program())<<service_name_ << "Client.prototype.seqid = function() { return this._seqid; }" << endl <<
+    js_namespace(tservice->get_program())<<service_name_ << "Client.prototype.new_seqid = function() { this._seqid += 1; }" << endl;
+  }
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
@@ -1025,8 +1030,8 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
     if (gen_node_) {
       f_service_ <<
-        indent() << "this.seqid += 1;" << endl <<
-        indent() << "this._reqs[this.seqid] = callback;" << endl;
+        indent() << "this._seqid = this.new_seqid();" << endl <<
+        indent() << "this._reqs[this.seqid()] = callback;" << endl;
     } else if (gen_jquery_) {
       f_service_ <<
         indent() << "if (callback === undefined) {" << endl;
@@ -1082,8 +1087,12 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     std::string argsname =  js_namespace(program_)+ service_name_ + "_" + (*f_iter)->get_name() + "_args";
 
     // Serialize the request header
-    f_service_ <<
-      indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name() << "', Thrift.MessageType.CALL, this.seqid);" << endl;
+    if (gen_node_) {
+       f_service_ << indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name() << "', Thrift.MessageType.CALL, this.seqid());" << endl;
+    }
+    else {
+       f_service_ << indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name() << "', Thrift.MessageType.CALL, this.seqid);" << endl;
+    }
 
     f_service_ <<
       indent() << "var args = new " << argsname << "();" << endl; 
