@@ -69,7 +69,7 @@
 #define THRIFT_OVERLOAD_IF(T, Y) \
   THRIFT_OVERLOAD_IF_DEFN(T, Y) = NULL
 
-#define THRIFT_UNUSED_VARIABLE(x) ((x)=(x))
+#define THRIFT_UNUSED_VARIABLE(x) ((void)(x))
 
 namespace apache { namespace thrift {
 
