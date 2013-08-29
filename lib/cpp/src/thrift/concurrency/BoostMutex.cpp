@@ -21,6 +21,7 @@
 
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Util.h>
+#include <thrift/Thrift.h>
 
 #include <cassert>
 #include <boost/thread.hpp>
@@ -37,7 +38,8 @@ namespace apache { namespace thrift { namespace concurrency {
 class Mutex::impl : public boost::timed_mutex {
 };
 
-Mutex::Mutex(Initializer init) : impl_(new Mutex::impl()) {}
+Mutex::Mutex(Initializer init) : impl_(new Mutex::impl())
+{ THRIFT_UNUSED_VARIABLE(init); }
 
 void* Mutex::getUnderlyingImpl() const { return impl_.get(); }
 
@@ -50,7 +52,7 @@ bool Mutex::timedlock(int64_t ms) const { return impl_->timed_lock(boost::get_sy
 void Mutex::unlock() const { impl_->unlock(); }
 
 void Mutex::DEFAULT_INITIALIZER(void* arg) {
+  THRIFT_UNUSED_VARIABLE(arg);
 }
 
 }}} // apache::thrift::concurrency
-
