@@ -24,6 +24,10 @@ Place a copy of bison.simple in thrift/compiler/cpp
 > bison -y -o "src/thrifty.cc" --defines src/thrifty.yy
 > move src\thrifty.cc.hh  src\thrifty.hh
 
+Bison might generate the yacc header file "thrifty.cc.h" with just one h ".h" extension; in this case you'll have to rename to "thrifty.h".
+
+> move src\windows\version.h.in src\windows\version.h
+
 Download inttypes.h from the interwebs and place it in an include path
 location (e.g. thrift/compiler/cpp/src).
 
