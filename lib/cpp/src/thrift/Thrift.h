@@ -86,6 +86,7 @@ class TEnumIterator : public std::iterator<std::forward_iterator_tag, std::pair<
   }
 
   bool operator !=(const TEnumIterator& end) {
+    (void)end;  // avoid "unused" warning with NDEBUG
     assert(end.n_ == -1);
     return (ii_ != n_);
   }
