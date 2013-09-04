@@ -846,6 +846,24 @@ bool validate_throws(t_struct* throws) {
 }
 
 /**
+ * Skips UTF-8 BOM if there is one
+ */
+bool skip_utf8_bom(FILE* f) {
+
+  // pretty straightforward, but works
+  if( fgetc(f) == 0xEF) {
+    if( fgetc(f) == 0xBB) {
+      if( fgetc(f) == 0xBF) {
+        return true;
+      } 
+    } 
+  } 
+  
+  rewind(f); 
+  return false;
+}
+
+/**
  * Parses a program
  */
 void parse(t_program* program, t_program* parent_program) {
@@ -857,11 +875,14 @@ void parse(t_program* program, t_program* parent_program) {
   g_curpath = path;
 
   // Open the file
+  // skip UTF-8 BOM if there is one
   yyin = fopen(path.c_str(), "r");
   if (yyin == 0) {
     failure("Could not open input file: \"%s\"", path.c_str());
   }
-
+  if( skip_utf8_bom( yyin))
+    pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
+  
   // Create new scope and scan for includes
   pverbose("Scanning %s for includes\n", path.c_str());
   g_parse_mode = INCLUDES;
@@ -891,10 +912,16 @@ void parse(t_program* program, t_program* parent_program) {
   g_parent_scope = (parent_program != NULL) ? parent_program->scope() : NULL;
   g_parent_prefix = program->get_name() + ".";
   g_curpath = path;
+
+  // Open the file
+  // skip UTF-8 BOM if there is one
   yyin = fopen(path.c_str(), "r");
   if (yyin == 0) {
     failure("Could not open input file: \"%s\"", path.c_str());
   }
+  if( skip_utf8_bom( yyin))
+    pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
+  
   pverbose("Parsing %s for types\n", path.c_str());
   yylineno = 1;
   try {
