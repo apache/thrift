@@ -270,6 +270,14 @@ gen-*
 /tutorial/cpp/Makefile.in
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
+/tutorial/delphi/*.dsk
+/tutorial/delphi/*.local
+/tutorial/delphi/DelphiClient/dcu
+/tutorial/delphi/DelphiServer/dcu
+/tutorial/delphi/DelphiClient/*.local
+/tutorial/delphi/DelphiClient/*.identcache
+/tutorial/delphi/DelphiServer/*.identcache
+/tutorial/delphi/DelphiServer/*.local
 /tutorial/go/Makefile
 /tutorial/go/Makefile.in
 /tutorial/go/go-tutorial
