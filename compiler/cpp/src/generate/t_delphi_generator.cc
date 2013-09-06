@@ -21,6 +21,8 @@
  * details.
  */
 
+#include <cassert>
+
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -62,6 +64,9 @@ class t_delphi_generator : public t_oop_generator
       ansistr_binary_ = (iter != parsed_options.end());
       iter = parsed_options.find("register_types");
 	  register_types_ = (iter != parsed_options.end());
+      iter = parsed_options.find("constprefix");
+	  constprefix_ = (iter != parsed_options.end());
+      
 
       out_dir_base_ = "gen-delphi";
       escape_.clear();
@@ -107,6 +112,7 @@ class t_delphi_generator : public t_oop_generator
     void finalize_field(std::ostream& out, std::string name, t_type* type, t_const_value* value, std::string cls_nm = "");
     std::string render_const_value( std::ostream& local_vars, std::ostream& out, std::string name, t_type* type, t_const_value* value);
     void print_const_def_value( std::ostream& vars, std::ostream& out, std::string name, t_type* type, t_const_value* value, std::string cls_nm = "");
+    std::string make_constants_classname();
 
     void generate_delphi_struct(t_struct* tstruct, bool is_exception);
     void generate_delphi_struct_impl( ostream& out, std::string cls_prefix, t_struct* tstruct, bool is_exception, bool is_result = false, bool is_x_factory = false);
@@ -146,6 +152,7 @@ class t_delphi_generator : public t_oop_generator
 
     std::string type_name( t_type* ttype, bool b_cls=false, bool b_no_postfix=false, bool b_exception_factory=false, bool b_full_exception_factory = false);
     std::string normalize_clsnm(std::string name, std::string prefix, bool b_no_check_keyword = false);
+    std::string make_valid_delphi_identifier( std::string const & fromName);
     std::string input_arg_prefix( t_type* ttype);
   
     std::string base_type_name(t_base_type* tbase);
@@ -215,6 +222,7 @@ class t_delphi_generator : public t_oop_generator
     int indent_impl_;
     bool ansistr_binary_;
 	bool register_types_;
+    bool constprefix_;
     void indent_up_impl(){
       ++indent_impl_;
     };
@@ -536,10 +544,12 @@ void t_delphi_generator::close_generator() {
   }
   f_all  << endl;
 
+  string constants_class = make_constants_classname();
+
   f_all  << "initialization" << endl;
   if ( has_const ) {    
 	f_all  << "{$IF CompilerVersion < 21.0}" << endl;
-    f_all  << "  TConstants_Initialize;" << endl;
+    f_all  << "  " << constants_class.c_str() << "_Initialize;" << endl;
 	f_all  << "{$IFEND}" << endl;
   }
   if (register_types_) {
@@ -550,7 +560,7 @@ void t_delphi_generator::close_generator() {
   f_all  << "finalization" << endl;
   if ( has_const ) {    
 	f_all  << "{$IF CompilerVersion < 21.0}" << endl;
-    f_all  << "  TConstants_Finalize;" << endl;
+    f_all  << "  " << constants_class.c_str() << "_Finalize;" << endl;
 	f_all  << "{$IFEND}" << endl;
   }
   f_all  << endl << endl;
@@ -692,16 +702,57 @@ void t_delphi_generator::generate_enum(t_enum* tenum) {
   indent_down();
 }
 
+
+std::string t_delphi_generator::make_valid_delphi_identifier( std::string const & fromName) {
+    std::string str = fromName;
+    if( str.empty()) {
+        return str;
+    }
+
+    // tests rely on this
+    assert( ('A' < 'Z') && ('a' < 'z') && ('0' < '9'));
+    
+    // if the first letter is a number, we add an additional underscore in front of it
+    char c = str.at(0);
+    if( ('0' <= c) && (c <= '9')) {
+        str = "_" + str;
+    }
+
+    // following chars: letter, number or underscore
+    for( size_t i = 0;  i < str.size();  ++i) {
+        c = str.at(i);        
+        if( (('A' > c) || (c > 'Z')) && 
+            (('a' > c) || (c > 'z')) && 
+            (('0' > c) || (c > '9')) && 
+            ('_' != c) ) {
+            str.replace( i, 1, "_");
+        }
+    }
+
+    return str;
+}
+
+
+std::string t_delphi_generator::make_constants_classname() {
+  if( constprefix_) {
+    return make_valid_delphi_identifier( "T" + program_name_ + "Constants");
+  } else {
+    return "TConstants";  // compatibility 
+  }
+}
+
+
 void t_delphi_generator::generate_consts(std::vector<t_const*> consts) {
   if (consts.empty()){
     return;
   }
 
   has_const = true;
+  string constants_class = make_constants_classname();
 
   indent_up();
   indent(s_const) <<
-    "TConstants = class" << endl;
+    constants_class.c_str() << " = class" << endl;
   indent(s_const) << "private" << endl;
   indent_up();
   vector<t_const*>::iterator c_iter;
@@ -734,7 +785,7 @@ void t_delphi_generator::generate_consts(std::vector<t_const*> consts) {
   indent_down_impl();
 
   indent_impl(s_const_impl) << "{$IF CompilerVersion >= 21.0}" << endl;
-  indent_impl(s_const_impl) << "class constructor TConstants.Create;" << endl;
+  indent_impl(s_const_impl) << "class constructor " << constants_class.c_str() << ".Create;" << endl;
 
   if ( ! vars.str().empty() ) {
     indent_impl(s_const_impl) << "var" << endl;
@@ -745,7 +796,7 @@ void t_delphi_generator::generate_consts(std::vector<t_const*> consts) {
     s_const_impl << code.str();
   }
   indent_impl(s_const_impl) << "end;" << endl << endl;
-  indent_impl(s_const_impl) << "class destructor TConstants.Destroy;" << endl;
+  indent_impl(s_const_impl) << "class destructor " << constants_class.c_str() << ".Destroy;" << endl;
   indent_impl(s_const_impl) << "begin" << endl;
   indent_up_impl();
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
@@ -762,12 +813,12 @@ void t_delphi_generator::generate_consts(std::vector<t_const*> consts) {
 
   indent_up_impl();
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
-    initialize_field( vars, code, "TConstants.F" + prop_name( (*c_iter)->get_name()),
+    initialize_field( vars, code, constants_class + ".F" + prop_name( (*c_iter)->get_name()),
       (*c_iter)->get_type(), (*c_iter)->get_value());
   }
   indent_down_impl();
 
-  indent_impl(s_const_impl) << "procedure TConstants_Initialize;" << endl;
+  indent_impl(s_const_impl) << "procedure " << constants_class.c_str() << "_Initialize;" << endl;
   if ( ! vars.str().empty() ) {
     indent_impl(s_const_impl) << "var" << endl;
     s_const_impl << vars.str();
@@ -778,12 +829,12 @@ void t_delphi_generator::generate_consts(std::vector<t_const*> consts) {
   }
   indent_impl(s_const_impl) << "end;" << endl << endl;
 
-  indent_impl(s_const_impl) << "procedure TConstants_Finalize;" << endl;
+  indent_impl(s_const_impl) << "procedure " << constants_class.c_str() << "_Finalize;" << endl;
   indent_impl(s_const_impl) << "begin" << endl;
   indent_up_impl();
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
     finalize_field(s_const_impl, normalize_name( (*c_iter)->get_name()),
-      (*c_iter)->get_type(), (*c_iter)->get_value(), "TConstants" );
+      (*c_iter)->get_type(), (*c_iter)->get_value(), constants_class);
   }
   indent_down_impl();
   indent_impl(s_const_impl) << "end;" << endl;
@@ -3126,5 +3177,6 @@ bool t_delphi_generator::is_void( t_type* type ) {
 THRIFT_REGISTER_GENERATOR(delphi, "delphi", 
 "    ansistr_binary:  Use AnsiString for binary datatype (default is TBytes).\n" 
 "    register_types:  Enable TypeRegistry, allows for creation of struct, union\n" 
-"                     and container instances by interface or TypeInfo()\n");
+"                     and container instances by interface or TypeInfo()\n"
+"    constprefix:     Name TConstants classes after IDL to reduce ambiguities\n");
 
