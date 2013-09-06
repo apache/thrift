@@ -66,7 +66,9 @@ type
 
     procedure ClientTest;
     procedure JSONProtocolReadWriteTest;
+    {$IFDEF StressTest}
     procedure StressTest(const client : TThriftTest.Iface);
+    {$ENDIF}
   protected
     procedure Execute; override;
   public
@@ -859,6 +861,7 @@ begin
 end;
 
 
+{$IFDEF StressTest}
 procedure TClientThread.StressTest(const client : TThriftTest.Iface);
 begin
   while TRUE do begin
@@ -875,7 +878,7 @@ begin
     end;
   end;
 end;
-
+{$ENDIF}
 
 procedure TClientThread.JSONProtocolReadWriteTest;
 // Tests only then read/write procedures of the JSON protocol
@@ -1080,6 +1083,7 @@ end;
 
 constructor TThreadConsole.Create(AThread: TThread);
 begin
+  inherited Create;
   FThread := AThread;
 end;
 

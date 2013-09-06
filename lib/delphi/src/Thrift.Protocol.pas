@@ -516,6 +516,7 @@ end;
 constructor TFieldImpl.Create(const AName: string; const AType: TType;
   AId: SmallInt);
 begin
+  inherited Create;
   FName := AName;
   FType := AType;
   FId := AId;
@@ -523,6 +524,7 @@ end;
 
 constructor TFieldImpl.Create;
 begin
+  inherited Create;
   FName := '';
   FType := Low(TType);
   FId   := 0;
@@ -702,7 +704,7 @@ end;
 
 constructor TMapImpl.Create;
 begin
-
+  inherited Create;
 end;
 
 function TMapImpl.GetCount: Integer;
@@ -792,7 +794,7 @@ end;
 
 constructor TSetImpl.Create;
 begin
-
+  inherited Create;
 end;
 
 function TSetImpl.GetCount: Integer;
@@ -826,7 +828,7 @@ end;
 
 constructor TListImpl.Create;
 begin
-
+  inherited Create;
 end;
 
 function TListImpl.GetCount: Integer;
@@ -853,6 +855,7 @@ end;
 
 constructor TBinaryProtocolImpl.Create( const trans: ITransport);
 begin
+  //no inherited
   Create( trans, False, True);
 end;
 
@@ -1253,12 +1256,14 @@ end;
 
 constructor TBinaryProtocolImpl.TFactory.Create(AStrictRead, AStrictWrite: Boolean);
 begin
+  inherited Create;
   FStrictRead := AStrictRead;
   FStrictWrite := AStrictWrite;
 end;
 
 constructor TBinaryProtocolImpl.TFactory.Create;
 begin
+  //no inherited;  
   Create( False, True )
 end;
 

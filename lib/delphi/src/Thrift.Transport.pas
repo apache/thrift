@@ -502,6 +502,7 @@ end;
 
 constructor TTransportException.Create(AType: TExceptionType);
 begin
+  //no inherited;  
   Create( AType, '' )
 end;
 
@@ -539,17 +540,20 @@ end;
 
 constructor TServerSocketImpl.Create( const AServer: TTcpServer; AClientTimeout: Integer);
 begin
+  inherited Create;
   FServer := AServer;
   FClientTimeout := AClientTimeout;
 end;
 
 constructor TServerSocketImpl.Create( const AServer: TTcpServer);
 begin
+  //no inherited;  
   Create( AServer, 0 );
 end;
 
 constructor TServerSocketImpl.Create(APort: Integer);
 begin
+  //no inherited;  
   Create( APort, 0 );
 end;
 
@@ -616,6 +620,7 @@ end;
 constructor TServerSocketImpl.Create(APort, AClientTimeout: Integer;
   AUseBufferedSockets: Boolean);
 begin
+  inherited Create;
   FPort := APort;
   FClientTimeout := AClientTimeout;
   FUseBufferedSocket := AUseBufferedSockets;
@@ -655,6 +660,7 @@ end;
 
 constructor TServerSocketImpl.Create(APort, AClientTimeout: Integer);
 begin
+  //no inherited;  
   Create( APort, AClientTimeout, False );
 end;
 
@@ -666,27 +672,25 @@ var
 begin
   FClient := AClient;
   stream := TTcpSocketStreamImpl.Create( FClient);
-  FInputStream := stream;
-  FOutputStream := stream;
+  inherited Create( stream, stream);
 end;
 
 constructor TSocketImpl.Create(const AHost: string; APort: Integer);
 begin
+  //no inherited;  
   Create( AHost, APort, 0);
 end;
 
 procedure TSocketImpl.Close;
 begin
   inherited Close;
-  if FClient <> nil then
-  begin
-    FClient.Free;
-    FClient := nil;
-  end;
+  if FClient <> nil
+  then FreeAndNil( FClient);
 end;
 
 constructor TSocketImpl.Create(const AHost: string; APort, ATimeout: Integer);
 begin
+  inherited Create(nil,nil);
   FHost := AHost;
   FPort := APort;
   FTimeout := ATimeout;
@@ -781,6 +785,7 @@ end;
 
 constructor TBufferedStreamImpl.Create( const AStream: IThriftStream; ABufSize: Integer);
 begin
+  inherited Create;
   FStream := AStream;
   FBufSize := ABufSize;
   FReadBuffer := TMemoryStream.Create;
@@ -916,6 +921,7 @@ end;
 
 constructor TStreamTransportImpl.Create( const AInputStream : IThriftStream; const AOutputStream : IThriftStream);
 begin
+  inherited Create;
   FInputStream := AInputStream;
   FOutputStream := AOutputStream;
 end;
@@ -980,6 +986,7 @@ end;
 
 constructor TBufferedTransportImpl.Create( const ATransport: IStreamTransport);
 begin
+  //no inherited;  
   Create( ATransport, 1024 );
 end;
 
@@ -991,6 +998,7 @@ end;
 constructor TBufferedTransportImpl.Create( const ATransport: IStreamTransport;
   ABufSize: Integer);
 begin
+  inherited Create;
   FTransport := ATransport;
   FBufSize := ABufSize;
   InitBuffers;
@@ -1067,6 +1075,7 @@ end;
 
 constructor TFramedTransportImpl.Create;
 begin
+  inherited Create;
   InitWriteBuffer;
 end;
 
@@ -1077,6 +1086,7 @@ end;
 
 constructor TFramedTransportImpl.Create( const ATrans: ITransport);
 begin
+  inherited Create;
   InitWriteBuffer;
   FTransport := ATrans;
 end;
@@ -1206,6 +1216,7 @@ end;
 
 constructor TTcpSocketStreamImpl.Create( const ATcpClient: TCustomIpClient);
 begin
+  inherited Create;
   FTcpClient := ATcpClient;
 end;
 

@@ -120,6 +120,7 @@ begin
   InputTransFactory := TTransportFactoryImpl.Create;
   OutputTransFactory := TTransportFactoryImpl.Create;
 
+  //no inherited;  
   Create(
     AProcessor,
     AServerTransport,
@@ -143,6 +144,7 @@ begin
   InputTransFactory := TTransportFactoryImpl.Create;
   OutputTransFactory := TTransportFactoryImpl.Create;
 
+  //no inherited;  
   Create(
     AProcessor,
     AServerTransport,
@@ -163,6 +165,7 @@ begin
   InputProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
   OutputProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
 
+  //no inherited;  
   Create( AProcessor, AServerTransport, ATransportFactory, ATransportFactory,
     InputProtocolFactory, OutputProtocolFactory, DefaultLogDelegate);
 end;
@@ -173,6 +176,7 @@ constructor TServerImpl.Create(const AProcessor: IProcessor;
   const AInputProtocolFactory, AOutputProtocolFactory: IProtocolFactory;
   const ALogDelegate : TLogDelegate);
 begin
+  inherited Create;
   FProcessor := AProcessor;
   FServerTransport := AServerTransport;
   FInputTransportFactory := AInputTransportFactory;
@@ -191,6 +195,7 @@ constructor TServerImpl.Create( const AProcessor: IProcessor;
   const AServerTransport: IServerTransport; const ATransportFactory: ITransportFactory;
   const AProtocolFactory: IProtocolFactory);
 begin
+  //no inherited;  
   Create( AProcessor, AServerTransport,
           ATransportFactory, ATransportFactory,
           AProtocolFactory, AProtocolFactory,

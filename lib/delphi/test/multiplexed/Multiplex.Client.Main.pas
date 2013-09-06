@@ -78,6 +78,7 @@ end;
 
 constructor TTestClient.Create( const args: array of string);
 begin
+  inherited;  
   ParseArgs(args);
   Setup;
 end;

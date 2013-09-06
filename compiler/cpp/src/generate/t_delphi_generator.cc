@@ -1441,6 +1441,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
     ".TClient.Create( const iprot: IProtocol; const oprot: IProtocol);" << endl;
   indent_impl(s_service_impl) <<  "begin" << endl;
   indent_up_impl();
+  indent_impl(s_service_impl) << "inherited Create;" << endl;    
   indent_impl(s_service_impl) << "iprot_ := iprot;" << endl;    
   indent_impl(s_service_impl) << "oprot_ := oprot;" << endl;    
   indent_down_impl();

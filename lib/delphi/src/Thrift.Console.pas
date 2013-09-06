@@ -84,6 +84,7 @@ end;
 
 constructor TGUIConsole.Create( AMemo: TMemo);
 begin
+  inherited Create;
   FMemo := AMemo;
   FLineBreak := True;
 end;
