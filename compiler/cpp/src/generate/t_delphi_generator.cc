@@ -869,9 +869,9 @@ void t_delphi_generator::print_const_value( std::ostream& vars, std::ostream& ou
     indent_impl(out) << name << " := " << type_name(type) << "." << value->get_identifier_name() << ";" << endl;
   } else {
     string typname;
-    typname = type_name( type, true, false, type->is_xception(), type->is_xception());
+    typname = type_name( truetype, true, false, type->is_xception(), type->is_xception());
     indent_impl(out) << name << " := " << typname << ".Create;" << endl;
-    print_const_def_value( vars, out, name, type, value);
+    print_const_def_value( vars, out, name, truetype, value);
   }
 }
 
