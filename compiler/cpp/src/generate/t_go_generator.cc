@@ -1129,7 +1129,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
     indent_up();
     out <<
         indent() << "if _, err := iprot.ReadStructBegin(); err != nil {" << endl <<
-        indent() << "  return fmt.Errorf(\"%T read error\", p)" << endl <<
+        indent() << "  return fmt.Errorf(\"%T read error: %s\", p, err)" << endl <<
         indent() << "}" << endl;
     // Loop over reading in fields
     indent(out) << "for {" << endl;

@@ -35,7 +35,7 @@ func Usage() {
 func main() {
 	flag.Usage = Usage
 	server := flag.Bool("server", false, "Run server")
-	protocol := flag.String("P", "binary", "Specify the protocol (binary, compact, simplejson)")
+	protocol := flag.String("P", "binary", "Specify the protocol (binary, compact, json, simplejson)")
 	framed := flag.Bool("framed", false, "Use framed transport")
 	buffered := flag.Bool("buffered", false, "Use buffered transport")
 	addr := flag.String("addr", "localhost:9090", "Address to listen to")
