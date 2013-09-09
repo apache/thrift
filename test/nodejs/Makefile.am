@@ -30,12 +30,14 @@ check: stubs
 		echo "   Testing Client/Server"; \
 		timeout -s14 5 $(MAKE) server & \
 		sleep 1; $(MAKE) client; sleep 2; \
-	fi
-
-	@if which node &> /dev/null ; then \
+		\
 		echo "   Testing Multiplex Client/Server"; \
 		sleep 4; timeout -s14 5 $(MAKE) mserver & \
 		sleep 1; $(MAKE) mclient; sleep 2; \
+		\
+		echo "   Testing Client/Server examples"; \
+		sleep 4; timeout -s14 5 $(MAKE) -C ../../lib/nodejs/examples server & \
+		sleep 1; $(MAKE) -C ../../lib/nodejs/examples client; sleep 2; \
 	fi
 
 clean-local:

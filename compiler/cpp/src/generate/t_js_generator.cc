@@ -1010,7 +1010,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
   // utils for multiplexed services
   if (gen_node_) {
     indent(f_service_) <<  js_namespace(tservice->get_program())<<service_name_ << "Client.prototype.seqid = function() { return this._seqid; }" << endl <<
-    js_namespace(tservice->get_program())<<service_name_ << "Client.prototype.new_seqid = function() { this._seqid += 1; }" << endl;
+    js_namespace(tservice->get_program())<<service_name_ << "Client.prototype.new_seqid = function() { return this._seqid += 1; }" << endl;
   }
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
