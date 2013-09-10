@@ -322,9 +322,6 @@ func (p *TSimpleJSONProtocol) ReadFieldBegin() (string, TType, int16, error) {
 	if err := p.ParsePreValue(); err != nil {
 		return "", STOP, 0, err
 	}
-	if p.reader.Buffered() < 1 {
-		return "", STOP, 0, nil
-	}
 	b, _ := p.reader.Peek(1)
 	if len(b) > 0 {
 		switch b[0] {
@@ -482,11 +479,7 @@ func (p *TSimpleJSONProtocol) ReadString() (string, error) {
 		return v, err
 	}
 	var b []byte
-	if p.reader.Buffered() >= len(JSON_NULL) {
-		b, _ = p.reader.Peek(len(JSON_NULL))
-	} else {
-		b, _ = p.reader.Peek(1)
-	}
+	b, _ = p.reader.Peek(len(JSON_NULL))
 	if len(b) > 0 && b[0] == JSON_QUOTE {
 		p.reader.ReadByte()
 		value, err := p.ParseStringBody()
@@ -732,9 +725,6 @@ func (p *TSimpleJSONProtocol) ParsePreValue() error {
 		return NewTProtocolException(e)
 	}
 	cxt := _ParseContext(p.parseContextStack[len(p.parseContextStack)-1])
-	if p.reader.Buffered() < 1 {
-		return nil
-	}
 	b, _ := p.reader.Peek(1)
 	switch cxt {
 	case _CONTEXT_IN_LIST:
@@ -813,7 +803,7 @@ func (p *TSimpleJSONProtocol) ParsePostValue() error {
 }
 
 func (p *TSimpleJSONProtocol) readNonSignificantWhitespace() error {
-	for p.reader.Buffered() > 0 {
+	for {
 		b, _ := p.reader.Peek(1)
 		if len(b) < 1 {
 			return nil
@@ -950,11 +940,7 @@ func (p *TSimpleJSONProtocol) ParseObjectStart() (bool, error) {
 		return false, err
 	}
 	var b []byte
-	if p.reader.Buffered() >= len(JSON_NULL) {
-		b, _ = p.reader.Peek(len(JSON_NULL))
-	} else if p.reader.Buffered() >= 1 {
-		b, _ = p.reader.Peek(1)
-	}
+	b, _ = p.reader.Peek(len(JSON_NULL))
 	if len(b) > 0 && b[0] == JSON_LBRACE[0] {
 		p.reader.ReadByte()
 		p.parseContextStack = append(p.parseContextStack, int(_CONTEXT_IN_OBJECT_FIRST))
@@ -997,11 +983,7 @@ func (p *TSimpleJSONProtocol) ParseListBegin() (isNull bool, err error) {
 		return false, e
 	}
 	var b []byte
-	if p.reader.Buffered() >= len(JSON_NULL) {
-		b, err = p.reader.Peek(len(JSON_NULL))
-	} else {
-		b, err = p.reader.Peek(1)
-	}
+	b, err = p.reader.Peek(len(JSON_NULL))
 	if err != nil {
 		return false, err
 	}
@@ -1134,7 +1116,7 @@ func (p *TSimpleJSONProtocol) readSingleValue() (interface{}, TType, error) {
 
 func (p *TSimpleJSONProtocol) readIfNull() (bool, error) {
 	cont := true
-	for p.reader.Buffered() > 0 && cont {
+	for cont {
 		b, _ := p.reader.Peek(1)
 		if len(b) < 1 {
 			return false, nil
@@ -1150,9 +1132,6 @@ func (p *TSimpleJSONProtocol) readIfNull() (bool, error) {
 			break
 		}
 	}
-	if p.reader.Buffered() == 0 {
-		return false, nil
-	}
 	b, _ := p.reader.Peek(len(JSON_NULL))
 	if string(b) == string(JSON_NULL) {
 		p.reader.Read(b[0:len(JSON_NULL)])
@@ -1162,9 +1141,6 @@ func (p *TSimpleJSONProtocol) readIfNull() (bool, error) {
 }
 
 func (p *TSimpleJSONProtocol) readQuoteIfNext() {
-	if p.reader.Buffered() < 1 {
-		return
-	}
 	b, _ := p.reader.Peek(1)
 	if len(b) > 0 && b[0] == JSON_QUOTE {
 		p.reader.ReadByte()
