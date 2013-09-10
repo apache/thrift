@@ -3129,10 +3129,11 @@ string t_go_generator::type_to_enum(t_type* type)
             throw "NO T_VOID CONSTRUCT";
 
         case t_base_type::TYPE_STRING:
+            /* this is wrong, binary is still a string type internally
             if (((t_base_type*)type)->is_binary()) {
                 return "thrift.BINARY";
             }
-
+            */
             return "thrift.STRING";
 
         case t_base_type::TYPE_BOOL:

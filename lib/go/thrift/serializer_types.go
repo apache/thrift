@@ -470,7 +470,7 @@ func (p *TestStruct) writeField7(oprot TProtocol) (err error) {
 
 func (p *TestStruct) writeField8(oprot TProtocol) (err error) {
 	if p.Bin != nil {
-		if err := oprot.WriteFieldBegin("bin", BINARY, 8); err != nil {
+		if err := oprot.WriteFieldBegin("bin", STRING, 8); err != nil {
 			return fmt.Errorf("%T write field begin error 8:bin: %s", p, err)
 		}
 		if err := oprot.WriteBinary(p.Bin); err != nil {
