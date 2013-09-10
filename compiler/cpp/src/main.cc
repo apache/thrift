@@ -1020,7 +1020,7 @@ int main(int argc, char** argv) {
         help();
       } else if (strcmp(arg, "-version") == 0) {
         version();
-        exit(1);
+        exit(0);
       } else if (strcmp(arg, "-debug") == 0) {
         g_debug = 1;
       } else if (strcmp(arg, "-nowarn") == 0) {
