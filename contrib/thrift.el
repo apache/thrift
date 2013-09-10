@@ -1,4 +1,7 @@
-;;
+;;; thrift.el --- Major mode for Apache Thrift files
+
+;; Keywords: files
+
 ;; Licensed to the Apache Software Foundation (ASF) under one
 ;; or more contributor license agreements. See the NOTICE file
 ;; distributed with this work for additional information
@@ -17,9 +20,16 @@
 ;; under the License.
 ;;
 
+;;; Commentary:
+
+;;
+
+;;; Code:
+
 (require 'font-lock)
 
 (defvar thrift-mode-hook nil)
+;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.thrift\\'" . thrift-mode))
 
 (defvar thrift-indent-level 2
@@ -34,7 +44,7 @@
    '("\\<\\([0-9]+\\)\\>" . font-lock-variable-name-face)   ;; ordinals
    '("\\<\\(\\w+\\)\\s-*(" (1 font-lock-function-name-face))  ;; functions
    )
-  "Thrift Keywords")
+  "Thrift Keywords.")
 
 ;; indentation
 (defun thrift-indent-line ()
@@ -112,8 +122,9 @@
     thrift-mode-syntax-table)
   "Syntax table for thrift-mode")
 
+;;;###autoload
 (defun thrift-mode ()
-  "Mode for editing Thrift files"
+  "Mode for editing Thrift files."
   (interactive)
   (kill-all-local-variables)
   (set-syntax-table thrift-mode-syntax-table)
@@ -123,4 +134,7 @@
   (run-hooks 'thrift-mode-hook)
   (set (make-local-variable 'indent-line-function) 'thrift-indent-line)
   )
-(provide 'thrift-mode)
+
+(provide 'thrift)
+;;; thrift.el ends here
+
