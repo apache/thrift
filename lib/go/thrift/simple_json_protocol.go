@@ -330,6 +330,9 @@ func (p *TSimpleJSONProtocol) ReadFieldBegin() (string, TType, int16, error) {
 		case JSON_QUOTE:
 			p.reader.ReadByte()
 			name, err := p.ParseStringBody()
+            // simplejson is not meant to be read back into thrift 
+            // - see http://wiki.apache.org/thrift/ThriftUsageJava
+            // - use JSON instead
 			if err != nil {
 				return name, STOP, 0, err
 			}

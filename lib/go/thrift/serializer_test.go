@@ -146,7 +146,7 @@ func TestSerializer(t *testing.T) {
 	protocol_factories = make(map[string]ProtocolFactory)
 	protocol_factories["Binary"] = NewTBinaryProtocolFactoryDefault()
 	protocol_factories["Compact"] = NewTCompactProtocolFactory()
-	protocol_factories["SimpleJSON"] = NewTSimpleJSONProtocolFactory()
+	//protocol_factories["SimpleJSON"] = NewTSimpleJSONProtocolFactory() - write only, can't be read back by design
 	protocol_factories["JSON"] = NewTJSONProtocolFactory()
 
 	var tests map[string]func(*testing.T, ProtocolFactory) (bool, error)
