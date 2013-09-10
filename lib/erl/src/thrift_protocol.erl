@@ -208,7 +208,6 @@ read_struct_loop(IProto0, SDict, RTuple) ->
                             skip_field(FType, IProto1, SDict, RTuple)
                     end;
                 _Else2 ->
-                    error_logger:info_msg("Skipping field ~p with unknown fid~n", [Fid]),
                     skip_field(FType, IProto1, SDict, RTuple)
             end
     end.
