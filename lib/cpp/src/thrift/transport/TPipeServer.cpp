@@ -23,7 +23,10 @@
 #include <thrift/transport/TPipe.h>
 #include <thrift/transport/TPipeServer.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
+
 #ifdef _WIN32
+#  include <thrift/windows/OverlappedSubmissionThread.h>
 #  include <AccCtrl.h>
 #  include <Aclapi.h>
 #endif //_WIN32
@@ -35,230 +38,295 @@ namespace apache { namespace thrift { namespace transport {
 using namespace std;
 using boost::shared_ptr;
 
+class TPipeServerImpl : boost::noncopyable {
+public:
+  TPipeServerImpl() {}
+  virtual ~TPipeServerImpl() = 0 {}
+  virtual void interrupt() = 0;
+  virtual void close() = 0;
+  virtual boost::shared_ptr<TTransport> acceptImpl() = 0;
+
+  virtual HANDLE getPipeHandle() = 0;
+  virtual HANDLE getWrtPipeHandle() = 0;
+  virtual HANDLE getClientRdPipeHandle()= 0;
+  virtual HANDLE getClientWrtPipeHandle()= 0;
+  virtual HANDLE getNativeWaitHandle() {return NULL;}
+};
+
+class TAnonPipeServer : public TPipeServerImpl {
+public:
+  TAnonPipeServer()
+  {
+    //The anonymous pipe needs to be created first so that the server can
+    //pass the handles on to the client before the serve (acceptImpl)
+    //blocking call.
+    if (!createAnonPipe()) {
+      GlobalOutput.perror("TPipeServer Create(Anon)Pipe failed, GLE=", GetLastError());
+      throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer Create(Anon)Pipe failed");
+    }
+  }
+
+  virtual ~TAnonPipeServer() {}
+
+  virtual void interrupt() {} //not currently implemented
+  virtual void close() {
+    PipeR_.reset();
+    PipeW_.reset();
+    ClientAnonRead_.reset();
+    ClientAnonWrite_.reset();
+  }
+
+  virtual boost::shared_ptr<TTransport> acceptImpl();
+
+  virtual HANDLE getPipeHandle()          {return PipeR_.h;}
+  virtual HANDLE getWrtPipeHandle()       {return PipeW_.h;}
+  virtual HANDLE getClientRdPipeHandle()  {return ClientAnonRead_.h;}
+  virtual HANDLE getClientWrtPipeHandle() {return ClientAnonWrite_.h;}
+private:
+  bool createAnonPipe();
+
+  TAutoHandle PipeR_; // Anonymous Pipe (R)
+  TAutoHandle PipeW_; // Anonymous Pipe (W)
+
+  //Client side anonymous pipe handles
+  //? Do we need duplicates to send to client?
+  TAutoHandle ClientAnonRead_;
+  TAutoHandle ClientAnonWrite_;
+};
+
+class TNamedPipeServer : public TPipeServerImpl {
+public:
+  TNamedPipeServer(
+    const std::string &pipename,
+    uint32_t bufsize,
+    uint32_t maxconnections) :
+      stopping_(false),
+      pipename_(pipename),
+      bufsize_(bufsize),
+      maxconns_(maxconnections)
+  {
+    connectOverlap_.action = TOverlappedWorkItem::CONNECT;
+    cancelOverlap_.action = TOverlappedWorkItem::CANCELIO;
+    initiateNamedConnect();
+  }
+  virtual ~TNamedPipeServer() {}
+
+  virtual void interrupt()
+  {
+    TAutoCrit lock(pipe_protect_);
+    cached_client_.reset();
+    if(Pipe_.h != INVALID_HANDLE_VALUE) {
+      stopping_ = true;
+      cancelOverlap_.h = Pipe_.h;
+      // This should wake up GetOverlappedResult
+      thread_->addWorkItem(&cancelOverlap_);
+      close();
+    }
+  }
+
+  virtual void close() {
+    Pipe_.reset();
+  }
+
+  virtual boost::shared_ptr<TTransport> acceptImpl();
+
+  virtual HANDLE getPipeHandle()          {return Pipe_.h;}
+  virtual HANDLE getWrtPipeHandle()       {return INVALID_HANDLE_VALUE;}
+  virtual HANDLE getClientRdPipeHandle()  {return INVALID_HANDLE_VALUE;}
+  virtual HANDLE getClientWrtPipeHandle() {return INVALID_HANDLE_VALUE;}
+  virtual HANDLE getNativeWaitHandle()    {return listen_event_.h;}
+private:
+  bool createNamedPipe();
+  void initiateNamedConnect();
+
+  TAutoOverlapThread thread_;
+  TOverlappedWorkItem connectOverlap_;
+  TOverlappedWorkItem cancelOverlap_;
+
+  bool stopping_;
+  std::string pipename_;
+  uint32_t bufsize_;
+  uint32_t maxconns_;
+  TManualResetEvent listen_event_;
+  boost::shared_ptr<TPipe> cached_client_;
+  TAutoHandle Pipe_;
+  TCriticalSection pipe_protect_;
+};
+
+HANDLE TPipeServer::getNativeWaitHandle()
+{
+  if(impl_) return impl_->getNativeWaitHandle();
+  return NULL;
+}
+
 //---- Constructors ----
 TPipeServer::TPipeServer(const std::string &pipename, uint32_t bufsize) :
-  pipename_(pipename),
   bufsize_(bufsize),
-  Pipe_(INVALID_HANDLE_VALUE),
-  wakeup(INVALID_HANDLE_VALUE),
-  maxconns_(TPIPE_SERVER_MAX_CONNS_DEFAULT),
-  isAnonymous(false),
-  stop_(false)
- {
-    setPipename(pipename);
-    createWakeupEvent();
- }
+  isAnonymous_(false)
+{
+  setMaxConnections(TPIPE_SERVER_MAX_CONNS_DEFAULT);
+  setPipename(pipename);
+}
 
 TPipeServer::TPipeServer(const std::string &pipename, uint32_t bufsize, uint32_t maxconnections) :
-  pipename_(pipename),
   bufsize_(bufsize),
-  Pipe_(INVALID_HANDLE_VALUE),
-  wakeup(INVALID_HANDLE_VALUE),
-  isAnonymous(false),
-  stop_(false)
- {  //Restrict maxconns_ to 1-PIPE_UNLIMITED_INSTANCES
-    if(maxconnections == 0)
-      maxconns_ = 1;
-    else if (maxconnections > PIPE_UNLIMITED_INSTANCES)
-      maxconns_ = PIPE_UNLIMITED_INSTANCES;
-	else
-      maxconns_ = maxconnections;
-
-    setPipename(pipename);
-    createWakeupEvent();
- }
+  isAnonymous_(false)
+{
+  setMaxConnections(maxconnections);
+  setPipename(pipename);
+}
 
 TPipeServer::TPipeServer(const std::string &pipename) :
-  pipename_(pipename),
   bufsize_(1024),
-  Pipe_(INVALID_HANDLE_VALUE),
-  wakeup(INVALID_HANDLE_VALUE),
-  maxconns_(TPIPE_SERVER_MAX_CONNS_DEFAULT),
-  isAnonymous(false),
-  stop_(false)
- {
-    setPipename(pipename);
-    createWakeupEvent();
- }
+  isAnonymous_(false)
+{
+  setMaxConnections(TPIPE_SERVER_MAX_CONNS_DEFAULT);
+  setPipename(pipename);
+}
 
 TPipeServer::TPipeServer(int bufsize) :
-  pipename_(""),
   bufsize_(bufsize),
-  Pipe_(INVALID_HANDLE_VALUE),
-  wakeup(INVALID_HANDLE_VALUE),
-  maxconns_(1),
-  isAnonymous(true),
-  stop_(false)
- {
-  //The anonymous pipe needs to be created first so that the server can
-  //pass the handles on to the client before the serve (acceptImpl)
-  //blocking call.
-  if (!TCreateAnonPipe()) {
-    GlobalOutput.perror("TPipeServer Create(Anon)Pipe failed, GLE=", GetLastError());
-    throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer Create(Anon)Pipe failed");
-  }
-  createWakeupEvent();
+  isAnonymous_(true)
+{
+  setMaxConnections(1);
+  impl_.reset(new TAnonPipeServer);
 }
 
 TPipeServer::TPipeServer() :
-  pipename_(""),
   bufsize_(1024),
-  Pipe_(INVALID_HANDLE_VALUE),
-  wakeup(INVALID_HANDLE_VALUE),
-  maxconns_(1),
-  isAnonymous(true),
-  stop_(false)
+  isAnonymous_(true)
 {
-  if (!TCreateAnonPipe()) {
-    GlobalOutput.perror("TPipeServer Create(Anon)Pipe failed, GLE=", GetLastError());
-    throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer Create(Anon)Pipe failed");
-  }
-  createWakeupEvent();
+  setMaxConnections(1);
+  impl_.reset(new TAnonPipeServer);
 }
 
 //---- Destructor ----
-TPipeServer::~TPipeServer() {
-  close();
-  CloseHandle( wakeup);
-  wakeup = INVALID_HANDLE_VALUE;
-}
+TPipeServer::~TPipeServer() {}
 
 //---------------------------------------------------------
 // Transport callbacks
 //---------------------------------------------------------
+void TPipeServer::listen() {
+  if(isAnonymous_) return;
+  impl_.reset(new TNamedPipeServer(pipename_, bufsize_, maxconns_));
+}
 
 shared_ptr<TTransport> TPipeServer::acceptImpl() {
-  shared_ptr<TPipe> client;
+  return impl_->acceptImpl();
+}
 
-  stop_ = FALSE;
+shared_ptr<TTransport> TAnonPipeServer::acceptImpl() {
+  //This 0-byte read serves merely as a blocking call.
+  byte buf;
+  DWORD br;
+  int fSuccess = ReadFile(
+        PipeR_.h, // pipe handle
+        &buf,   // buffer to receive reply
+        0,      // size of buffer
+        &br,    // number of bytes read
+        NULL);  // not overlapped
 
-  if(isAnonymous)
-  { //Anonymous Pipe
-    //This 0-byte read serves merely as a blocking call.
-    byte buf;
-    DWORD br;
-    int fSuccess = ReadFile(
-          Pipe_, // pipe handle
-          &buf,   // buffer to receive reply
-          0,      // size of buffer
-          &br,    // number of bytes read
-          NULL);  // not overlapped
-
-    if ( !fSuccess && GetLastError() != ERROR_MORE_DATA ) {
-      GlobalOutput.perror("TPipeServer unable to initiate pipe comms, GLE=", GetLastError());
-      throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer unable to initiate pipe comms");
-    }
-    client.reset(new TPipe(Pipe_, PipeW_));
+  if ( !fSuccess && GetLastError() != ERROR_MORE_DATA ) {
+    GlobalOutput.perror("TPipeServer unable to initiate pipe comms, GLE=", GetLastError());
+    throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer unable to initiate pipe comms");
   }
-  else
-  { //Named Pipe
-    if (!TCreateNamedPipe()) {
-      GlobalOutput.perror("TPipeServer CreateNamedPipe failed, GLE=", GetLastError());
-      throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer CreateNamedPipe failed");
-    }
-
-    struct TEventCleaner {
-      HANDLE hEvent;
-      ~TEventCleaner() {CloseHandle(hEvent);}
-    };
-
-    OVERLAPPED overlapped;
-    memset( &overlapped, 0, sizeof(overlapped));
-    overlapped.hEvent = CreateEvent( NULL, TRUE, FALSE, NULL);
-    {
-      TEventCleaner cleaner = {overlapped.hEvent};
-      while( ! stop_)
-      {
-        // Wait for the client to connect; if it succeeds, the
-        // function returns a nonzero value. If the function returns
-        // zero, GetLastError should return ERROR_PIPE_CONNECTED.
-        if( ConnectNamedPipe(Pipe_, &overlapped))
-        {
-          GlobalOutput.printf("Client connected.");
-          client.reset(new TPipe(Pipe_));
-          return client;
-        }
-
-        DWORD dwErr = GetLastError();
-        HANDLE events[2] = {overlapped.hEvent, wakeup};
-        switch( dwErr)
-        {
-        case ERROR_PIPE_CONNECTED:
-          GlobalOutput.printf("Client connected.");
-          client.reset(new TPipe(Pipe_));
-          return client;
-
-        case ERROR_IO_PENDING:
-          DWORD dwWait, dwDummy;
-          dwWait = WaitForMultipleObjects( 2, events, FALSE, 3000);
-          switch(dwWait)
-          {
-          case WAIT_OBJECT_0:
-            if(GetOverlappedResult(Pipe_, &overlapped, &dwDummy, TRUE))
-            {
-              GlobalOutput.printf("Client connected.");
-              client.reset(new TPipe(Pipe_));
-              return client;
-            }
-            break;
-          case WAIT_OBJECT_0 + 1:
-            stop_ = TRUE;
-            break;
-          default:
-            break;
-          }
-          break;
-
-        default:
-          break;
-        }
-
-        CancelIo(Pipe_);
-        DisconnectNamedPipe(Pipe_);
-      }
-
-      close();
-      GlobalOutput.perror("TPipeServer ConnectNamedPipe GLE=", GetLastError());
-      throw TTransportException(TTransportException::NOT_OPEN, "TPipeServer: client connection failed");
-    }
-  }
-
+  shared_ptr<TPipe> client(new TPipe(PipeR_.h, PipeW_.h));
   return client;
 }
 
-void TPipeServer::interrupt() {
-  if(Pipe_ != INVALID_HANDLE_VALUE) {
-    stop_ = TRUE;
-    CancelIo(Pipe_);
-    SetEvent(wakeup);
+void TNamedPipeServer::initiateNamedConnect() {
+  if (stopping_) return;
+  if (!createNamedPipe()) {
+    GlobalOutput.perror("TPipeServer CreateNamedPipe failed, GLE=", GetLastError());
+    throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer CreateNamedPipe failed");
   }
+
+  // The prior connection has been handled, so close the gate
+  ResetEvent(listen_event_.h);
+  connectOverlap_.reset(NULL, 0, listen_event_.h);
+  connectOverlap_.h = Pipe_.h;
+  thread_->addWorkItem(&connectOverlap_);
+
+  // Wait for the client to connect; if it succeeds, the
+  // function returns a nonzero value. If the function returns
+  // zero, GetLastError should return ERROR_PIPE_CONNECTED.
+  if( connectOverlap_.success )
+  {
+    GlobalOutput.printf("Client connected.");
+    cached_client_.reset(new TPipe(Pipe_.h));
+    Pipe_.release();
+    // make sure people know that a connection is ready
+    SetEvent(listen_event_.h);
+    return;
+  }
+
+  DWORD dwErr = connectOverlap_.last_error;
+  switch( dwErr)
+  {
+  case ERROR_PIPE_CONNECTED:
+    GlobalOutput.printf("Client connected.");
+    cached_client_.reset(new TPipe(Pipe_.h));
+    Pipe_.release();
+    // make sure people know that a connection is ready
+    SetEvent(listen_event_.h);
+    return;
+  case ERROR_IO_PENDING:
+    return; //acceptImpl will do the appropriate WaitForMultipleObjects
+  default:
+    GlobalOutput.perror("TPipeServer ConnectNamedPipe failed, GLE=", dwErr);
+    throw TTransportException(TTransportException::NOT_OPEN, " TPipeServer ConnectNamedPipe failed");
+  }
+}
+
+shared_ptr<TTransport> TNamedPipeServer::acceptImpl() {
+  {
+    TAutoCrit lock(pipe_protect_);
+    if(cached_client_.get() != NULL)
+    {
+      shared_ptr<TPipe> client;
+      //zero out cached_client, since we are about to return it.
+      client.swap(cached_client_);
+
+      //kick off the next connection before returning
+      initiateNamedConnect();
+      return client;  //success!
+    }
+  }
+
+  if(Pipe_.h == INVALID_HANDLE_VALUE) {
+    throw TTransportException(
+      TTransportException::NOT_OPEN,
+      "TNamedPipeServer: someone called accept on a closed pipe server");
+  }
+
+  DWORD dwDummy = 0;
+  if(GetOverlappedResult(Pipe_.h, &connectOverlap_.overlap, &dwDummy, TRUE))
+  {
+    TAutoCrit lock(pipe_protect_);
+    GlobalOutput.printf("Client connected.");
+    shared_ptr<TPipe> client(new TPipe(Pipe_.h));
+    Pipe_.release();
+    //kick off the next connection before returning
+    initiateNamedConnect();
+    return client; //success!
+  }
+  //if we got here, then we are in an error / shutdown case
+  DWORD gle = GetLastError(); //save error before doing cleanup
+  close();
+  GlobalOutput.perror("TPipeServer ConnectNamedPipe GLE=", gle);
+  throw TTransportException(TTransportException::NOT_OPEN, "TPipeServer: client connection failed");
+}
+
+void TPipeServer::interrupt() {
+  if(impl_) impl_->interrupt();
 }
 
 void TPipeServer::close() {
-  if(!isAnonymous)
-  {
-    if(Pipe_ != INVALID_HANDLE_VALUE) {
-      DisconnectNamedPipe(Pipe_);
-      CloseHandle(Pipe_);
-      Pipe_ = INVALID_HANDLE_VALUE;
-    }
-  }
-  else
-  {
-    try {
-      CloseHandle(Pipe_);
-      CloseHandle(PipeW_);
-      CloseHandle(ClientAnonRead);
-      CloseHandle(ClientAnonWrite);
-    }
-    catch(...) {
-        GlobalOutput.perror("TPipeServer anon close GLE=", GetLastError());
-    }
-  }
+  if(impl_) impl_->close();
 }
 
 
-bool TPipeServer::TCreateNamedPipe() {
+bool TNamedPipeServer::createNamedPipe() {
 
   //Windows - set security to allow non-elevated apps
   //to access pipes created by elevated apps.
@@ -288,31 +356,31 @@ bool TPipeServer::TCreateNamedPipe() {
   sa.bInheritHandle = FALSE;
 
   // Create an instance of the named pipe
-  HANDLE hPipe_ = CreateNamedPipe(
+  TAutoHandle hPipe(CreateNamedPipe(
         pipename_.c_str(),        // pipe name
         PIPE_ACCESS_DUPLEX |      // read/write access
         FILE_FLAG_OVERLAPPED,     // async mode
-        PIPE_TYPE_MESSAGE |       // message type pipe
-        PIPE_READMODE_MESSAGE,    // message-read mode
+        PIPE_TYPE_BYTE |          // byte type pipe
+        PIPE_READMODE_BYTE,       // byte read mode
         maxconns_,                // max. instances
         bufsize_,                 // output buffer size
         bufsize_,                 // input buffer size
         0,                        // client time-out
-        &sa);                     // default security attribute
+        &sa));                    // security attributes
 
-  if(hPipe_ == INVALID_HANDLE_VALUE)
+  if(hPipe.h == INVALID_HANDLE_VALUE)
   {
-    Pipe_ = INVALID_HANDLE_VALUE;
+    Pipe_.reset();
     GlobalOutput.perror("TPipeServer::TCreateNamedPipe() GLE=", GetLastError());
     throw TTransportException(TTransportException::NOT_OPEN, "TCreateNamedPipe() failed", GetLastError());
     return false;
   }
 
-  Pipe_ = hPipe_;
+  Pipe_.reset(hPipe.release());
   return true;
 }
 
-bool TPipeServer::TCreateAnonPipe() {
+bool TAnonPipeServer::createAnonPipe() {
   SECURITY_ATTRIBUTES sa;
   SECURITY_DESCRIPTOR sd; //security information for pipes
 
@@ -335,26 +403,19 @@ bool TPipeServer::TCreateAnonPipe() {
     CloseHandle(PipeW_H);
     return false;
   }
-  ClientAnonRead  = ClientAnonReadH;
-  ClientAnonWrite = ClientAnonWriteH;
-  Pipe_  = Pipe_H;
-  PipeW_ = PipeW_H;
+
+  ClientAnonRead_.reset(ClientAnonReadH);
+  ClientAnonWrite_.reset(ClientAnonWriteH);
+  PipeR_.reset(Pipe_H);
+  PipeW_.reset(PipeW_H);
 
   return true;
 }
 
-void TPipeServer::createWakeupEvent() {
-  wakeup = CreateEvent( NULL, TRUE, FALSE, NULL);
-}
-
-
 //---------------------------------------------------------
 // Accessors
 //---------------------------------------------------------
-
-string TPipeServer::getPipename() {
-  return pipename_;
-}
+string TPipeServer::getPipename() {return pipename_;}
 
 void TPipeServer::setPipename(const std::string &pipename) {
   if(pipename.find("\\\\") == -1)
@@ -363,40 +424,27 @@ void TPipeServer::setPipename(const std::string &pipename) {
     pipename_ = pipename;
 }
 
-int  TPipeServer::getBufferSize() {
-  return bufsize_;
-}
+int  TPipeServer::getBufferSize() {return bufsize_;}
+void TPipeServer::setBufferSize(int bufsize) {bufsize_ = bufsize;}
 
-void TPipeServer::setBufferSize(int bufsize) {
-  bufsize_ = bufsize;
-}
+HANDLE TPipeServer::getPipeHandle()          {return impl_?impl_->getPipeHandle()         :INVALID_HANDLE_VALUE;}
+HANDLE TPipeServer::getWrtPipeHandle()       {return impl_?impl_->getWrtPipeHandle()      :INVALID_HANDLE_VALUE;}
+HANDLE TPipeServer::getClientRdPipeHandle()  {return impl_?impl_->getClientRdPipeHandle() :INVALID_HANDLE_VALUE;}
+HANDLE TPipeServer::getClientWrtPipeHandle() {return impl_?impl_->getClientWrtPipeHandle():INVALID_HANDLE_VALUE;}
 
-HANDLE TPipeServer::getPipeHandle() {
-  return Pipe_;
-}
+bool TPipeServer::getAnonymous() { return isAnonymous_; }
+void TPipeServer::setAnonymous(bool anon) { isAnonymous_ = anon;}
 
-HANDLE TPipeServer::getWrtPipeHandle()
+void TPipeServer::setMaxConnections(uint32_t maxconnections)
 {
-  return PipeW_;
+  if(maxconnections == 0)
+    maxconns_ = 1;
+  else if (maxconnections > PIPE_UNLIMITED_INSTANCES)
+    maxconns_ = PIPE_UNLIMITED_INSTANCES;
+  else
+    maxconns_ = maxconnections;
 }
 
-HANDLE TPipeServer::getClientRdPipeHandle()
-{
-  return ClientAnonRead;
-}
-
-HANDLE TPipeServer::getClientWrtPipeHandle()
-{
-  return ClientAnonWrite;
-}
-
-bool TPipeServer::getAnonymous() {
-  return isAnonymous;
-}
-
-void TPipeServer::setAnonymous(bool anon) {
-  isAnonymous = anon;
-}
 #endif //_WIN32
 
 }}} // apache::thrift::transport
