@@ -337,6 +337,29 @@ void TServerSocket::listen() {
 
     // free addrinfo
     freeaddrinfo(res0);
+
+    // retrieve bind info
+    if (port_ == 0 && retries <= retryLimit_) {
+      struct sockaddr sa;
+      socklen_t len = sizeof(sa);
+      std::memset(&sa, 0, len);
+      if (::getsockname(serverSocket_, &sa, &len) < 0) {
+        int errno_copy = errno;
+        GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
+      }
+      else {
+        if (sa.sa_family == AF_INET6) {
+          const struct sockaddr_in6*
+            sin = reinterpret_cast<const struct sockaddr_in6 *>(&sa);
+          port_ = ntohs(sin->sin6_port);
+        }
+        else {
+          const struct sockaddr_in*
+            sin = reinterpret_cast<const struct sockaddr_in *>(&sa);
+          port_ = ntohs(sin->sin_port);
+        }
+      }
+    }
   }
 
   // throw an error if we failed to bind properly
@@ -363,6 +386,10 @@ void TServerSocket::listen() {
   }
 
   // The socket is now listening!
+}
+
+int TServerSocket::getPort() {
+    return port_;
 }
 
 shared_ptr<TTransport> TServerSocket::acceptImpl() {
