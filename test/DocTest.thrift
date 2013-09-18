@@ -244,4 +244,6 @@ typedef i32 BigDog
 */
 typedef i32 TotallyDegenerate
 
+/**no room for newline here*/
+
 /* THE END */
