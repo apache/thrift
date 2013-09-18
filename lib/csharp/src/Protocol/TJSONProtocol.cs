@@ -863,7 +863,7 @@ namespace Thrift.Protocol
 				}
 				try
 				{
-					return Double.Parse(ReadJSONNumericChars());
+					return Double.Parse(ReadJSONNumericChars(), CultureInfo.InvariantCulture);
 				}
 				catch (FormatException)
 				{
