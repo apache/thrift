@@ -1,8 +1,10 @@
 Thrift Javascript Library
+=========================
+This browser based Apache Thrift implementation supports
+RPC using the JSON protocol over Http[s] with XHR.
 
 License
-=======
-
+-------
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements. See the NOTICE file
 distributed with this work for additional information
@@ -20,21 +22,53 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 
-Using Thrift with Javascript
-=====================
+Example
+-------
+The listing below demonstrates a simple browser based JavaScript
+Thrift client and Node.js JavaScript server for the HelloSvc service. 
 
-Allows javascript client interfaces to Thrift services.
-This is geared for use in a web browser.
+### hello.thrift - Service IDL
+    service HelloSvc {
+        string hello_func(),
+    }
 
-This client can only speak the JSON Protocol and the only supported
-transport is AJAX.
+### hello.html - Browser Client
+    <!doctype html>
+    <html lang="en">
+    <head>
+        <script src="thrift.js" type="text/javascript"></script>
+        <script src="gen-js/HelloSvc.js" type="text/javascript"></script>
+    </head>
+    <body>
+        <h1>Apache Thrift JavaScript Browser Client Demo</h1>
+        <button id="btn">Get Message from Node Server</button>
+        <script type="text/javascript">
+            document.getElementById("btn").addEventListener("click", getMessage, false);
+    
+            function getMessage() {
+                var transport = new Thrift.Transport("http://localhost:8585");
+                var protocol  = new Thrift.Protocol(transport);
+                var client = new HelloSvcClient(protocol);
+                var msg = client.hello_func();
+                document.getElementById("output").innerHTML = msg;
+            }
+        </script>
+        <h2>Server Response: <div id="output"></div></h2>
+    </body> 
+    </html>
 
-There is a test httpd service in the test dir that requires
-http://hc.apache.org under test dir
-
-Dependencies
-============
-A JavaScript enabled browser. Tested with:
- *IE 6,7,8
- *FF 2,3
- *Safari 3 & 4
+### hello.js - Node Server
+    var thrift = require('thrift');
+    var TJSONProtocol = require('thrift/protocol').TJSONProtocol;
+    var HelloSvc = require('./gen-nodejs/HelloSvc.js');
+    
+    var call_counter = 0;
+        
+    var server = thrift.createHttpGetPostServer(HelloSvc, {
+      hello_func: function(result) {
+        console.log("Client call: " + (++call_counter));
+        result(null, "Hello Apache Thrift for JavaScript " + call_counter);
+      }
+    }, {protocol: TJSONProtocol});
+    
+    server.listen(8585);
