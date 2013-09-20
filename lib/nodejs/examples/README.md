@@ -25,5 +25,8 @@ NODE_PATH=../lib:../lib/thrift node server.js
 #Now run the client:
 NODE_PATH=../lib:../lib/thrift node client.js
 
+#For an example using JavaScript in the browser to connect to 
+#a node.js server look at hello.html, hello.js and hello.thrift
+
 
     
