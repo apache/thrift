@@ -359,21 +359,19 @@ void t_rb_generator::generate_enum(t_enum* tenum) {
   
   // Create a hash mapping values back to their names (as strings) since ruby has no native enum type
   f_types_.indent() << "VALUE_MAP = {";
-  bool first = true;
   for(c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     // Populate the hash
     int value = (*c_iter)->get_value();
-    first ? first = false : f_types_ << ", ";
+    if (c_iter != constants.begin()) f_types_ << ", ";
     f_types_ << value << " => \"" << capitalize((*c_iter)->get_name()) << "\"";
   }
   f_types_ << "}" << endl;
   
   // Create a set with valid values for this enum
   f_types_.indent() << "VALID_VALUES = Set.new([";
-  first = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     // Populate the set
-    first ? first = false : f_types_ << ", ";
+    if (c_iter != constants.begin()) f_types_ << ", ";
     f_types_ << capitalize((*c_iter)->get_name());
   }
   f_types_ << "]).freeze" << endl;

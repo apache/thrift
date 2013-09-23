@@ -2824,10 +2824,9 @@ void t_java_generator::generate_process_async_function(t_service* tservice,
      t_struct* xs = tfunction->get_xceptions();
      const std::vector<t_field*>& xceptions = xs->get_members();
      vector<t_field*>::const_iterator x_iter;
-     bool first = true;
      if (xceptions.size() > 0) {
     	 for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-    		 first ? first = false : indent(f_service_) << "else ";
+    		 if (x_iter != xceptions.begin()) indent(f_service_) << "else ";
     		 indent(f_service_) << "if (e instanceof " << type_name((*x_iter)->get_type(), false, false)<<") {" << endl;
     		 indent(f_service_) << indent() << "result." << (*x_iter)->get_name() << " = (" << type_name((*x_iter)->get_type(), false, false) << ") e;" << endl;
     	  	 indent(f_service_) << indent() << "result.set" << get_cap_name((*x_iter)->get_name()) << get_cap_name("isSet") << "(true);" << endl;
