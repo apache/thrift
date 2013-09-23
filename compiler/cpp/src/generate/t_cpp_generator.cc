@@ -1079,6 +1079,9 @@ void t_cpp_generator::generate_struct_fingerprint(ofstream& out,
     comment = "; // ";
   }
 
+  if (! tstruct->has_fingerprint()) {
+    tstruct->generate_fingerprint();  // lazy fingerprint generation
+  }
   if (tstruct->has_fingerprint()) {
     out <<
       indent() << stat << "const char* " << nspace
@@ -1105,8 +1108,9 @@ void t_cpp_generator::generate_local_reflection(std::ofstream& out,
     return;
   }
   ttype = get_true_type(ttype);
-  assert(ttype->has_fingerprint());
   string key = ttype->get_ascii_fingerprint() + (is_definition ? "-defn" : "-decl");
+  assert(ttype->has_fingerprint());  // test AFTER get due to lazy fingerprint generation
+
   // Note that we have generated this fingerprint.  If we already did, bail out.
   if (!reflected_fingerprints_.insert(key).second) {
     return;
