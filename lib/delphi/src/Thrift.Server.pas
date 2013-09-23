@@ -19,10 +19,12 @@
 
  unit Thrift.Server;
 
+{$I-}  // prevent annoying errors with default log delegate and no console
+
 interface
 
 uses
-  SysUtils,
+  Windows, SysUtils,
   Thrift,
   Thrift.Protocol,
   Thrift.Transport;
@@ -188,7 +190,12 @@ end;
 
 class procedure TServerImpl.DefaultLogDelegate( const str: string);
 begin
-  Writeln( str );
+  try
+    Writeln( str);
+    if IoResult <> 0 then OutputDebugString(PChar(str));
+  except
+    OutputDebugString(PChar(str));
+  end;
 end;
 
 constructor TServerImpl.Create( const AProcessor: IProcessor;
