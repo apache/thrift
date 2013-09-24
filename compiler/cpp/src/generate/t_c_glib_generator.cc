@@ -490,10 +490,7 @@ bool t_c_glib_generator::is_complex_type(t_type *ttype) {
 
   return ttype->is_container()
          || ttype->is_struct()
-         || ttype->is_xception()
-         || (ttype->is_base_type()
-             && (((t_base_type *) ttype)->get_base()
-                  == t_base_type::TYPE_STRING));
+         || ttype->is_xception();
 }
 
 
@@ -1873,7 +1870,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
       f_types_impl_ << indent() << "{" << endl;
       indent_up();
       f_types_impl_ <<
-      indent() << "g_free (tobject->" << name << ");" << endl;
+          indent() << generate_free_func_from_type(t) << "(tobject->" << name << ");" << endl;
       f_types_impl_ << indent() << "tobject->" << name << " = NULL;" << endl;
       indent_down();
       f_types_impl_ << indent() << "}" << endl;
@@ -2859,6 +2856,9 @@ string t_c_glib_generator::generate_free_func_from_type (t_type * ttype) {
       case t_base_type::TYPE_DOUBLE:
         return "NULL";
       case t_base_type::TYPE_STRING:
+        if (((t_base_type *) ttype)->is_binary()) {
+            return "thrift_string_free";
+        }
         return "g_free";
       default:
         throw "compiler error: no hash table info for type";

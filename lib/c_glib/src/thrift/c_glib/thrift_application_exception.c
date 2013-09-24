@@ -171,9 +171,23 @@ thrift_application_exception_init (ThriftApplicationException *object)
 }
 
 void
+thrift_application_exception_finalize (GObject *object)
+{
+  ThriftApplicationException *tae = THRIFT_APPLICATION_EXCEPTION (object);
+
+  if (tae->__isset_message) {
+		g_free(tae->message);
+  }
+}
+
+void
 thrift_application_exception_class_init (ThriftApplicationExceptionClass *class)
 {
+  GObjectClass *gobject_class = G_OBJECT_CLASS(class);
   ThriftStructClass *cls = THRIFT_STRUCT_CLASS(class);
+
   cls->read = thrift_application_exception_read;
   cls->write = thrift_application_exception_write;
+
+  gobject_class->finalize = thrift_application_exception_finalize;
 }
