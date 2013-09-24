@@ -25,17 +25,21 @@
 #ifndef _WIN32
 #  include <thrift/transport/TSocket.h>
 #endif
+#include <boost/noncopyable.hpp>
 
 namespace apache { namespace thrift { namespace transport {
 
 /**
  * Windows Pipes implementation of the TTransport interface.
- *
+ * Don't destroy a TPipe at global scope, as that will cause a thread join
+ * during DLLMain.  That also means that client objects using TPipe shouldn't be at global
+ * scope.
  */
 #ifdef _WIN32
+class TPipeImpl;
+
 class TPipe : public TVirtualTransport<TPipe> {
  public:
-
   // Constructs a new pipe object.
   TPipe();
   // Named pipe constructors -
@@ -78,14 +82,18 @@ class TPipe : public TVirtualTransport<TPipe> {
   long getConnectTimeout();
   void setConnectTimeout(long seconds);
 
+  //this function is intended to be used in generic / template situations,
+  //so its name needs to be the same as TPipeServer's
+  HANDLE getNativeWaitHandle();
  private:
+  boost::shared_ptr<TPipeImpl> impl_;
+
   std::string pipename_;
 
-  //Named pipe handles are R/W, while anonymous pipes are one or the other (half duplex).
-  HANDLE Pipe_, PipeWrt_;
   long TimeoutSeconds_;
-  bool isAnonymous;
+  bool isAnonymous_;
 };
+
 #else
 typedef TSocket TPipe;
 #endif

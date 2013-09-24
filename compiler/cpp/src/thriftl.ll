@@ -36,6 +36,7 @@
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-label"
 
+#include <cassert>
 #include <string>
 #include <errno.h>
 #include <stdlib.h>
@@ -366,7 +367,9 @@ literal_begin (['\"])
   if (g_parse_mode == PROGRAM) {
     clear_doctext();
     g_doctext = strdup(yytext + 3);
-    g_doctext[strlen(g_doctext) - 2] = '\0';
+    assert(strlen(g_doctext) >= 2);
+    g_doctext[strlen(g_doctext) - 2] = ' ';
+    g_doctext[strlen(g_doctext) - 1] = '\0';
     g_doctext = clean_up_doctext(g_doctext);
     g_doctext_lineno = yylineno;
   }

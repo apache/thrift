@@ -517,8 +517,13 @@ char* clean_up_doctext(char* doctext) {
     docstring += '\n';
   }
 
-  assert(docstring.length() <= strlen(doctext));
-  strcpy(doctext, docstring.c_str());
+  //assert(docstring.length() <= strlen(doctext));  may happen, see THRIFT-1755
+  if(docstring.length() <= strlen(doctext)) {
+    strcpy(doctext, docstring.c_str());
+  } else {
+    free(doctext);  // too short
+    doctext = strdup(docstring.c_str());
+  }
   return doctext;
 }
 

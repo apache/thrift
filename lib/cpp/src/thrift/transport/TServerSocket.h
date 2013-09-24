@@ -59,6 +59,7 @@ class TServerSocket : public TServerTransport {
   void close();
 
   void interrupt();
+  int getPort();
 
  protected:
   boost::shared_ptr<TTransport> acceptImpl();
