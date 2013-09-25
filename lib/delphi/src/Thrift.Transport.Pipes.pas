@@ -172,7 +172,7 @@ type
     FClientAnonWrite  : THandle;
 
   protected
-    function AcceptImpl: ITransport; override;
+    function Accept(const fnAccepting: TProc): ITransport; override;
 
     function CreateAnonPipe : Boolean;
 
@@ -198,8 +198,9 @@ type
     FHandle       : THandle;
     FConnected    : Boolean;
 
-  protected
-    function AcceptImpl: ITransport; override;
+
+  protected
+    function Accept(const fnAccepting: TProc): ITransport; override;
     function CreateNamedPipe : THandle;
     function CreateTransportInstance : ITransport;
 
@@ -558,10 +559,13 @@ begin
 end;
 
 
-function TAnonymousPipeServerTransportImpl.AcceptImpl: ITransport;
+function TAnonymousPipeServerTransportImpl.Accept(const fnAccepting: TProc): ITransport;
 var buf    : Byte;
     br     : DWORD;
 begin
+  if Assigned(fnAccepting)
+  then fnAccepting();
+
   // This 0-byte read serves merely as a blocking call.
   if not ReadFile( FReadHandle, buf, 0, br, nil)
   and (GetLastError() <> ERROR_MORE_DATA)
@@ -668,7 +672,7 @@ begin
 end;
 
 
-function TNamedPipeServerTransportImpl.AcceptImpl: ITransport;
+function TNamedPipeServerTransportImpl.Accept(const fnAccepting: TProc): ITransport;
 var dwError, dwWait, dwDummy : DWORD;
     overlapped : TOverlapped;
     event      : TEvent;
@@ -684,31 +688,38 @@ begin
       if FStopServer then Abort;
       CreateNamedPipe;
 
+      if Assigned(fnAccepting)
+      then fnAccepting();
+
       // Wait for the client to connect; if it succeeds, the
       // function returns a nonzero value. If the function returns
       // zero, GetLastError should return ERROR_PIPE_CONNECTED.
-      if ConnectNamedPipe( Handle, @overlapped)
-      then FConnected := TRUE
-      else begin
-        // ConnectNamedPipe() returns FALSE for OverlappedIO, even if connected.
-        // We have to check GetLastError() explicitly to find out
-        dwError := GetLastError;
-        case dwError of
-          ERROR_PIPE_CONNECTED : begin
-            FConnected := TRUE;  // special case: pipe immediately connected
-          end;
+      if ConnectNamedPipe( Handle, @overlapped) then begin
+        FConnected := TRUE;
+        Break;
+      end;
 
-          ERROR_IO_PENDING : begin
-            dwWait := WaitForSingleObject( overlapped.hEvent, DEFAULT_THRIFT_PIPE_TIMEOUT);
-            FConnected := (dwWait = WAIT_OBJECT_0)
-                      and GetOverlappedResult( Handle, overlapped, dwDummy, TRUE);
-          end;
-
-        else
-          InternalClose;
-          raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
-                                            'Client connection failed');
+      // ConnectNamedPipe() returns FALSE for OverlappedIO, even if connected.
+      // We have to check GetLastError() explicitly to find out
+      dwError := GetLastError;
+      case dwError of
+        ERROR_PIPE_CONNECTED : begin
+          FConnected := not FStopServer;  // special case: pipe immediately connected
         end;
+
+        ERROR_IO_PENDING : begin
+          repeat
+            dwWait := WaitForSingleObject( overlapped.hEvent, DEFAULT_THRIFT_PIPE_TIMEOUT);
+          until (dwWait <> WAIT_TIMEOUT) or FStopServer;
+          FConnected := (dwWait = WAIT_OBJECT_0)
+                    and GetOverlappedResult( Handle, overlapped, dwDummy, TRUE)
+                    and not FStopServer;
+        end;
+
+      else
+        InternalClose;
+        raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
+                                          'Client connection failed');
       end;
     end;
 

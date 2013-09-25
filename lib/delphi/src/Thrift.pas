@@ -28,11 +28,6 @@ const
   Version = '1.0.0-dev';
 
 type
-  IProcessor = interface
-    ['{B1538A07-6CAC-4406-8A4C-AFED07C70A89}']
-    function Process( const iprot :IProtocol; const oprot: IProtocol): Boolean;
-  end;
-
   TApplicationException = class( SysUtils.Exception )
   public
     type
