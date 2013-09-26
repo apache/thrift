@@ -530,7 +530,7 @@ type
 
   IProcessor = interface
     ['{7BAE92A5-46DA-4F13-B6EA-0EABE233EE5F}']
-    function Process( const iprot :IProtocol; const oprot: IProtocol; const events : IProcessorEvents): Boolean;
+    function Process( const iprot :IProtocol; const oprot: IProtocol; const events : IProcessorEvents = nil): Boolean;
   end;
 
 
