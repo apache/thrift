@@ -34,5 +34,5 @@ void
 thrift_string_free (gpointer str)
 {
 	GByteArray* ptr = str;
-	g_byte_array_free(ptr, TRUE);
+	g_byte_array_unref(ptr);
 }

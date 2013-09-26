@@ -1870,7 +1870,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
       f_types_impl_ << indent() << "{" << endl;
       indent_up();
       f_types_impl_ <<
-          indent() << generate_free_func_from_type(t) << "(tobject->" << name << ");" << endl;
+      indent() << generate_free_func_from_type(t) << "(tobject->" << name << ");" << endl;
       f_types_impl_ << indent() << "tobject->" << name << " = NULL;" << endl;
       indent_down();
       f_types_impl_ << indent() << "}" << endl;
