@@ -99,7 +99,7 @@ class t_html_generator : public t_generator {
 
   void print_doc        (t_doc* tdoc);
   int  print_type       (t_type* ttype);
-  void print_const_value(t_const_value* tvalue);
+  void print_const_value(t_type* type, t_const_value* tvalue);
   void print_fn_args_doc(t_function* tfunction);
 
  private:
@@ -594,7 +594,7 @@ int t_html_generator::print_type(t_type* ttype) {
 /**
  * Prints out an HTML representation of the provided constant value
  */
-void t_html_generator::print_const_value(t_const_value* tvalue) {
+void t_html_generator::print_const_value(t_type* type, t_const_value* tvalue) {
   bool first = true;
   switch (tvalue->get_type()) {
   case t_const_value::CV_INTEGER:
@@ -616,9 +616,9 @@ void t_html_generator::print_const_value(t_const_value* tvalue) {
           f_out_ << ", ";
         }
         first = false;
-        print_const_value(map_iter->first);
+        print_const_value( ((t_map*)type)->get_key_type(), map_iter->first);
         f_out_ << " = ";
-        print_const_value(map_iter->second);
+        print_const_value( ((t_map*)type)->get_val_type(), map_iter->second);
       }
       f_out_ << " }";
     }
@@ -633,10 +633,17 @@ void t_html_generator::print_const_value(t_const_value* tvalue) {
           f_out_ << ", ";
         }
         first = false;
-        print_const_value(*list_iter);
+        if (type->is_list()) {
+          print_const_value( ((t_list*)type)->get_elem_type(), *list_iter);
+        } else {
+          print_const_value( ((t_set*)type)->get_elem_type(), *list_iter);
+        } 
       }
       f_out_ << " }";
     }
+    break;
+  case t_const_value::CV_IDENTIFIER:
+    f_out_ << escape_html(type->get_name()) << "." << escape_html(tvalue->get_identifier_name());
     break;
   default:
     f_out_ << "UNKNOWN";
@@ -749,7 +756,7 @@ void t_html_generator::generate_const(t_const* tconst) {
    << "</code></td><td>";
   print_type(tconst->get_type());
   f_out_ << "</td><td><code>";
-  print_const_value(tconst->get_value());
+  print_const_value(tconst->get_type(), tconst->get_value());
   f_out_ << "</code></td></tr>";
   if (tconst->has_doc()) {
     f_out_ << "<tr><td colspan=\"3\"><blockquote>";
@@ -798,7 +805,7 @@ void t_html_generator::generate_struct(t_struct* tstruct) {
     f_out_ << "</td><td>";
     t_const_value* default_val = (*mem_iter)->get_value();
     if (default_val != NULL) {
-      print_const_value(default_val);
+      print_const_value((*mem_iter)->get_type(), default_val);
     }
     f_out_ << "</td></tr>" << endl;
   }
@@ -858,7 +865,7 @@ void t_html_generator::generate_service(t_service* tservice) {
       f_out_ << " " << (*arg_iter)->get_name();
       if ((*arg_iter)->get_value() != NULL) {
         f_out_ << " = ";
-        print_const_value((*arg_iter)->get_value());
+        print_const_value((*arg_iter)->get_type(), (*arg_iter)->get_value());
       }
     }
     f_out_ << ")" << endl;

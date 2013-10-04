@@ -80,7 +80,7 @@ class t_gv_generator : public t_generator {
      * Helpers
      */
     void print_type(t_type* ttype, string struct_field_ref);
-    void print_const_value(t_const_value* tvalue);
+    void print_const_value(t_type* type, t_const_value* tvalue);
 
   private:
     std::ofstream f_out_;
@@ -162,7 +162,7 @@ void t_gv_generator::generate_const (t_const* tconst) {
 
   f_out_ << escape_string(name);
   f_out_ << " = ";
-  print_const_value(tconst->get_value());
+  print_const_value( tconst->get_type(), tconst->get_value());
   f_out_ << " :: ";
   print_type(tconst->get_type(), "const_" + name);
 
@@ -232,7 +232,7 @@ void t_gv_generator::print_type(t_type* ttype, string struct_field_ref) {
 /**
  * Prints out an string representation of the provided constant value
  */
-void t_gv_generator::print_const_value(t_const_value* tvalue) {
+void t_gv_generator::print_const_value(t_type* type, t_const_value* tvalue) {
   bool first = true;
   switch (tvalue->get_type()) {
     case t_const_value::CV_INTEGER:
@@ -254,9 +254,9 @@ void t_gv_generator::print_const_value(t_const_value* tvalue) {
             f_out_ << ", ";
           }
           first = false;
-          print_const_value(map_iter->first);
+          print_const_value( ((t_map*)type)->get_key_type(), map_iter->first);
           f_out_ << " = ";
-          print_const_value(map_iter->second);
+          print_const_value( ((t_map*)type)->get_val_type(), map_iter->second);
         }
         f_out_ << " \\}";
       }
@@ -271,10 +271,17 @@ void t_gv_generator::print_const_value(t_const_value* tvalue) {
             f_out_ << ", ";
           }
           first = false;
-          print_const_value(*list_iter);
+          if (type->is_list()) {
+            print_const_value( ((t_list*)type)->get_elem_type(), *list_iter);
+          } else {
+            print_const_value( ((t_set*)type)->get_elem_type(), *list_iter);
+          } 
         }
         f_out_ << " \\}";
       }
+      break;
+    case t_const_value::CV_IDENTIFIER:
+      f_out_ << escape_string(type->get_name()) << "." << escape_string(tvalue->get_identifier_name());
       break;
     default:
       f_out_ << "UNKNOWN";
@@ -308,7 +315,7 @@ void t_gv_generator::generate_service (t_service*  tservice) {
       f_out_ << (*arg_iter)->get_name();
       if ((*arg_iter)->get_value() != NULL) {
         f_out_ << " = ";
-        print_const_value((*arg_iter)->get_value());
+        print_const_value((*arg_iter)->get_type(), (*arg_iter)->get_value());
       }
       f_out_ << " :: ";
       print_type((*arg_iter)->get_type(),
