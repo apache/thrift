@@ -34,10 +34,18 @@
 #include <stdint.h>
 #endif
 #include <limits.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "main.h"
 #include "globals.h"
 #include "parse/t_program.h"
 #include "parse/t_scope.h"
+
+#ifdef _MSC_VER
+//warning C4065: switch statement contains 'default' but no 'case' labels
+#pragma warning(disable:4065)
+#endif
 
 /**
  * This global variable is used for automatic numbering of field indices etc.
@@ -584,7 +592,7 @@ EnumDef:
         pwarning(1, "64-bit value supplied for enum %s.\n", $2);
       }
       validate_simple_identifier( $2);
-      $$ = new t_enum_value($2, $4);
+      $$ = new t_enum_value($2, static_cast<int>($4));
       if ($1 != NULL) {
         $$->set_doc($1);
       }
@@ -764,7 +772,7 @@ Struct:
         delete $7;
       }
     }
-    
+
 XsdAll:
   tok_xsd_all
     {
@@ -986,17 +994,17 @@ FieldIdentifier:
            * Leave $1 as-is, and update y_field_val to be one less than $1.
            * The FieldList parsing will catch any duplicate key values.
            */
-          y_field_val = $1 - 1;
-          $$.value = $1;
+          y_field_val = static_cast<int32_t>($1 - 1);
+          $$.value = static_cast<int32_t>($1);
           $$.auto_assigned = false;
         } else {
-          pwarning(1, "Nonpositive value (%"PRIi64") not allowed as a field key.\n",
+          pwarning(1, "Nonpositive value (%d) not allowed as a field key.\n",
                    $1);
           $$.value = y_field_val--;
           $$.auto_assigned = true;
         }
       } else {
-        $$.value = $1;
+        $$.value = static_cast<int32_t>($1);
         $$.auto_assigned = false;
       }
     }

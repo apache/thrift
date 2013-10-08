@@ -33,14 +33,26 @@
  * We should revert the Makefile.am changes once Apple ships a reasonable
  * GCC.
  */
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-label"
+#endif
+
+#ifdef _MSC_VER
+//warning C4102: 'find_rule' : unreferenced label
+#pragma warning(disable:4102)
+//avoid isatty redefinition
+#define YY_NEVER_INTERACTIVE 1
+#endif
 
 #include <cassert>
 #include <string>
 #include <errno.h>
 #include <stdlib.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "main.h"
 #include "globals.h"
 #include "parse/t_program.h"
