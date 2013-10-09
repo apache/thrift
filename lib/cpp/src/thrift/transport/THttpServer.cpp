@@ -92,7 +92,7 @@ bool THttpServer::parseStatusLine(char* status) {
     string header = h.str();
 
     // Write the header, then the data, then flush
-    transport_->write((const uint8_t*)header.c_str(), header.size());
+    transport_->write((const uint8_t*)header.c_str(), static_cast<uint32_t>(header.size()));
     transport_->write(buf, len);
     transport_->flush();
 
