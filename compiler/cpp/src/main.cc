@@ -39,14 +39,13 @@
 #include <errno.h>
 #include <limits.h>
 
-#ifdef _WIN32
+#ifdef MINGW
 # include <windows.h> /* for GetFullPathName */
 #endif
 
 // Careful: must include globals first for extern definitions
 #include "globals.h"
 
-#include "platform.h"
 #include "main.h"
 #include "parse/t_program.h"
 #include "parse/t_scope.h"
@@ -162,11 +161,11 @@ int g_allow_64bit_consts = 0;
 bool gen_recurse = false;
 
 /**
- * Win32 doesn't have realpath, so use fallback implementation in that case,
+ * MinGW doesn't have realpath, so use fallback implementation in that case,
  * otherwise this just calls through to realpath
  */
 char *saferealpath(const char *path, char *resolved_path) {
-#ifdef _WIN32
+#ifdef MINGW
   char buf[MAX_PATH];
   char* basename;
   DWORD len = GetFullPathName(path, MAX_PATH, buf, &basename);
@@ -191,7 +190,7 @@ char *saferealpath(const char *path, char *resolved_path) {
 }
 
 bool check_is_directory(const char *dir_name) {
-#ifdef _WIN32
+#ifdef MINGW
   DWORD attributes = ::GetFileAttributesA(dir_name);
   if(attributes == INVALID_FILE_ATTRIBUTES) {
     fprintf(stderr, "Output directory %s is unusable: GetLastError() = %ld\n", dir_name, GetLastError());
@@ -337,7 +336,7 @@ string include_file(string filename) {
   // Absolute path? Just try that
   if (filename[0] == '/') {
     // Realpath!
-    char rp[THRIFT_PATH_MAX];
+    char rp[PATH_MAX];
     if (saferealpath(filename.c_str(), rp) == NULL) {
       pwarning(0, "Cannot open include file %s\n", filename.c_str());
       return std::string();
@@ -359,7 +358,7 @@ string include_file(string filename) {
       string sfilename = *(it) + "/" + filename;
 
       // Realpath!
-      char rp[THRIFT_PATH_MAX];
+      char rp[PATH_MAX];
       if (saferealpath(sfilename.c_str(), rp) == NULL) {
         continue;
       }
@@ -758,8 +757,8 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
       }
     }
     if (!found) {
-      throw "type error: const " + name + " was declared as type "
-        + type->get_name() + " which is an enum, but "
+      throw "type error: const " + name + " was declared as type " 
+        + type->get_name() + " which is an enum, but " 
         + value->get_identifier() + " is not a valid value for that enum";
     }
   } else if (type->is_struct() || type->is_xception()) {
@@ -1067,7 +1066,7 @@ int main(int argc, char** argv) {
         }
         out_path = arg;
 
-#ifdef _WIN32
+#ifdef MINGW
         //strip out trailing \ on Windows
         int last = out_path.length()-1;
         if (out_path[last] == '\\')
@@ -1105,7 +1104,7 @@ int main(int argc, char** argv) {
   }
 
   // Real-pathify it
-  char rp[THRIFT_PATH_MAX];
+  char rp[PATH_MAX];
   if (argv[i] == NULL) {
     fprintf(stderr, "Missing file name\n");
     usage();

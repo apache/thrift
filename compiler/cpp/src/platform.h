@@ -22,11 +22,7 @@
  * is different for the non-POSIX MinGW
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#ifdef _WIN32
+#ifdef MINGW
 #include <direct.h>
 #include <io.h>
 #else
@@ -34,14 +30,8 @@
 #include <sys/stat.h>
 #endif
 
-#ifdef _WIN32
+#if defined MINGW
 #define MKDIR(x) mkdir(x)
 #else
 #define MKDIR(x) mkdir(x, S_IRWXU | S_IRWXG | S_IRWXO)
-#endif
-
-#ifdef PATH_MAX
-#define THRIFT_PATH_MAX PATH_MAX
-#else
-#define THRIFT_PATH_MAX MAX_PATH
 #endif

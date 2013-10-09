@@ -1697,7 +1697,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
           S_IRUSR
         | S_IWUSR
         | S_IXUSR
-#ifndef _WIN32
+#ifndef MINGW
         | S_IRGRP
         | S_IXGRP
         | S_IROTH

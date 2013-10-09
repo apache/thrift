@@ -155,7 +155,7 @@ class t_field : public t_doc {
  * not it was specified by the user or automatically chosen.
  */
 struct t_field_id {
-  int32_t value;
+  int64_t value;
   bool auto_assigned;
 };
 

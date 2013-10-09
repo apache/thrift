@@ -3341,11 +3341,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       }
     }
 
-    if (!tfunction->is_oneway()) {
-       out << " catch (const std::exception& e) {" << endl;
-    } else {
-       out << " catch (const std::exception&) {" << endl;
-    }
+    out << " catch (const std::exception& e) {" << endl;
 
     indent_up();
     out <<
@@ -3475,7 +3471,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
 
     // TODO(dreiss): Handle TExceptions?  Expose to server?
     out <<
-      indent() << "catch (const std::exception&) {" << endl <<
+      indent() << "catch (const std::exception& exn) {" << endl <<
       indent() << "  if (this->eventHandler_.get() != NULL) {" << endl <<
       indent() << "    this->eventHandler_->handlerError(ctx, " <<
         service_func_name << ");" << endl <<
