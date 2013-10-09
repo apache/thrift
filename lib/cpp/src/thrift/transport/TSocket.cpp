@@ -144,6 +144,12 @@ TSocket::TSocket(THRIFT_SOCKET socket) :
   recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
   recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
   cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
+#ifdef SO_NOSIGPIPE
+  {
+    int one = 1;
+    setsockopt(socket_, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one));
+  }
+#endif
 }
 
 TSocket::~TSocket() {
@@ -216,6 +222,13 @@ void TSocket::openConnection(struct addrinfo *res) {
 
   // No delay
   setNoDelay(noDelay_);
+
+#ifdef SO_NOSIGPIPE
+  {
+    int one = 1;
+    setsockopt(socket_, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one));
+  }
+#endif
 
   // Uses a low min RTO if asked to.
 #ifdef TCP_LOW_MIN_RTO
