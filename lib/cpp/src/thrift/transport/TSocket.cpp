@@ -83,6 +83,7 @@ TSocket::TSocket(string host, int port) :
   connTimeout_(0),
   sendTimeout_(0),
   recvTimeout_(0),
+  keepAlive_(false),
   lingerOn_(1),
   lingerVal_(0),
   noDelay_(1),
@@ -99,6 +100,7 @@ TSocket::TSocket(string path) :
   connTimeout_(0),
   sendTimeout_(0),
   recvTimeout_(0),
+  keepAlive_(false),
   lingerOn_(1),
   lingerVal_(0),
   noDelay_(1),
@@ -116,6 +118,7 @@ TSocket::TSocket() :
   connTimeout_(0),
   sendTimeout_(0),
   recvTimeout_(0),
+  keepAlive_(false),
   lingerOn_(1),
   lingerVal_(0),
   noDelay_(1),
@@ -133,6 +136,7 @@ TSocket::TSocket(THRIFT_SOCKET socket) :
   connTimeout_(0),
   sendTimeout_(0),
   recvTimeout_(0),
+  keepAlive_(false),
   lingerOn_(1),
   lingerVal_(0),
   noDelay_(1),
@@ -201,6 +205,10 @@ void TSocket::openConnection(struct addrinfo *res) {
   // Recv timeout
   if (recvTimeout_ > 0) {
     setRecvTimeout(recvTimeout_);
+  }
+
+  if(keepAlive_) {
+    setKeepAlive(keepAlive_);
   }
 
   // Linger
@@ -674,6 +682,22 @@ void TSocket::setSendTimeout(int ms) {
   if (ret == -1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;  // Copy THRIFT_GET_SOCKET_ERROR because we're allocating memory.
     GlobalOutput.perror("TSocket::setSendTimeout() setsockopt() " + getSocketInfo(), errno_copy);
+  }
+}
+
+void TSocket::setKeepAlive(bool keepAlive) {
+  keepAlive_ = keepAlive;
+
+  if (socket_ == -1) {
+    return;
+  }
+
+  int value = keepAlive_;
+  int ret = setsockopt(socket_, SOL_SOCKET, SO_KEEPALIVE, const_cast_sockopt(&value), sizeof(value));
+
+  if (ret == -1) {
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;  // Copy THRIFT_GET_SOCKET_ERROR because we're allocating memory.
+    GlobalOutput.perror("TSocket::setKeepAlive() setsockopt() " + getSocketInfo(), errno_copy);
   }
 }
 

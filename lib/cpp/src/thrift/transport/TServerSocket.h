@@ -52,6 +52,8 @@ class TServerSocket : public TServerTransport {
   void setRetryLimit(int retryLimit);
   void setRetryDelay(int retryDelay);
 
+  void setKeepAlive(bool keepAlive) {keepAlive_ = keepAlive;}
+
   void setTcpSendBuffer(int tcpSendBuffer);
   void setTcpRecvBuffer(int tcpRecvBuffer);
 
@@ -77,6 +79,7 @@ class TServerSocket : public TServerTransport {
   int retryDelay_;
   int tcpSendBuffer_;
   int tcpRecvBuffer_;
+  bool keepAlive_;
 
   THRIFT_SOCKET intSock1_;
   THRIFT_SOCKET intSock2_;

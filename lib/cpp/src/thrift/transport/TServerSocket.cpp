@@ -86,7 +86,9 @@ TServerSocket::TServerSocket(int port) :
   tcpSendBuffer_(0),
   tcpRecvBuffer_(0),
   intSock1_(THRIFT_INVALID_SOCKET),
-  intSock2_(THRIFT_INVALID_SOCKET) {}
+  intSock2_(THRIFT_INVALID_SOCKET),
+  keepAlive_(false)
+{}
 
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   port_(port),
@@ -100,7 +102,9 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   tcpSendBuffer_(0),
   tcpRecvBuffer_(0),
   intSock1_(THRIFT_INVALID_SOCKET),
-  intSock2_(THRIFT_INVALID_SOCKET) {}
+  intSock2_(THRIFT_INVALID_SOCKET),
+  keepAlive_(false)
+{}
 
 TServerSocket::TServerSocket(string path) :
   port_(0),
@@ -115,7 +119,9 @@ TServerSocket::TServerSocket(string path) :
   tcpSendBuffer_(0),
   tcpRecvBuffer_(0),
   intSock1_(THRIFT_INVALID_SOCKET),
-  intSock2_(THRIFT_INVALID_SOCKET) {}
+  intSock2_(THRIFT_INVALID_SOCKET),
+  keepAlive_(false)
+{}
 
 TServerSocket::~TServerSocket() {
   close();
@@ -479,6 +485,9 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   }
   if (recvTimeout_ > 0) {
     client->setRecvTimeout(recvTimeout_);
+  }
+  if (keepAlive_) {
+    client->setKeepAlive(keepAlive_);
   }
   client->setCachedAddress((sockaddr*) &clientAddress, size);
 
