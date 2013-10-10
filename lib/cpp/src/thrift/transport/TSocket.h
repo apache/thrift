@@ -294,9 +294,6 @@ class TSocket : public TVirtualTransport<TSocket> {
   /** Recv EGAIN retries */
   int maxRecvRetries_;
 
-  /** Recv timeout timeval */
-  struct timeval recvTimeval_;
-
   /** Cached peer address */
   union {
     sockaddr_in ipv4;

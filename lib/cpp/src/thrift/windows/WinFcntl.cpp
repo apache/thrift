@@ -75,7 +75,7 @@ int thrift_poll(THRIFT_POLLFD *fdArray, ULONG nfds, INT timeout)
   timeval time_out;
   timeval* time_out_ptr = NULL;
   if(timeout >= 0) {
-    timeval time_out = {timeout / 1000, timeout * 1000};
+    timeval time_out = {timeout / 1000, (timeout % 1000) * 1000};
     time_out_ptr = &time_out;
   }
   else { //to avoid compiler warnings

@@ -88,8 +88,6 @@ TSocket::TSocket(string host, int port) :
   lingerVal_(0),
   noDelay_(1),
   maxRecvRetries_(5) {
-  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
-  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
 }
 
 TSocket::TSocket(string path) :
@@ -105,8 +103,6 @@ TSocket::TSocket(string path) :
   lingerVal_(0),
   noDelay_(1),
   maxRecvRetries_(5) {
-  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
-  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
   cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
 }
 
@@ -123,8 +119,6 @@ TSocket::TSocket() :
   lingerVal_(0),
   noDelay_(1),
   maxRecvRetries_(5) {
-  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
-  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
   cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
 }
 
@@ -141,8 +135,6 @@ TSocket::TSocket(THRIFT_SOCKET socket) :
   lingerVal_(0),
   noDelay_(1),
   maxRecvRetries_(5) {
-  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
-  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
   cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
 #ifdef SO_NOSIGPIPE
   {
@@ -651,51 +643,42 @@ void TSocket::setConnTimeout(int ms) {
   connTimeout_ = ms;
 }
 
-void TSocket::setRecvTimeout(int ms) {
-  if (ms < 0) {
+void setGenericTimeout(THRIFT_SOCKET s, int timeout_ms, int optname)
+{
+  if (timeout_ms < 0) {
     char errBuf[512];
-    sprintf(errBuf, "TSocket::setRecvTimeout with negative input: %d\n", ms);
+    sprintf(errBuf, "TSocket::setGenericTimeout with negative input: %d\n", timeout_ms);
     GlobalOutput(errBuf);
     return;
   }
-  recvTimeout_ = ms;
 
-  if (socket_ == THRIFT_INVALID_SOCKET) {
+  if (s == THRIFT_INVALID_SOCKET) {
     return;
   }
 
-  recvTimeval_.tv_sec = (int)(recvTimeout_/1000);
-  recvTimeval_.tv_usec = (int)((recvTimeout_%1000)*1000);
+  #ifdef _WIN32
+  DWORD platform_time = static_cast<DWORD>(timeout_ms);
+  #else
+  struct timeval platform_time = {
+    (int)(timeout_ms/1000),
+    (int)((timeout_ms%1000)*1000)};
+  #endif
 
-  // Copy because THRIFT_POLL may modify
-  struct timeval r = recvTimeval_;
-  int ret = setsockopt(socket_, SOL_SOCKET, SO_RCVTIMEO, cast_sockopt(&r), sizeof(r));
+  int ret = setsockopt(s, SOL_SOCKET, optname, cast_sockopt(&platform_time), sizeof(platform_time));
   if (ret == -1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;  // Copy THRIFT_GET_SOCKET_ERROR because we're allocating memory.
-    GlobalOutput.perror("TSocket::setRecvTimeout() setsockopt() " + getSocketInfo(), errno_copy);
+    GlobalOutput.perror("TSocket::setGenericTimeout() setsockopt() ", errno_copy);
   }
 }
 
+void TSocket::setRecvTimeout(int ms) {
+  setGenericTimeout(socket_, ms, SO_RCVTIMEO);
+  recvTimeout_ = ms;
+}
+
 void TSocket::setSendTimeout(int ms) {
-  if (ms < 0) {
-    char errBuf[512];
-    sprintf(errBuf, "TSocket::setSendTimeout with negative input: %d\n", ms);
-    GlobalOutput(errBuf);
-    return;
-  }
+  setGenericTimeout(socket_, ms, SO_SNDTIMEO);
   sendTimeout_ = ms;
-
-  if (socket_ == THRIFT_INVALID_SOCKET) {
-    return;
-  }
-
-  struct timeval s = {(int)(sendTimeout_/1000),
-                      (int)((sendTimeout_%1000)*1000)};
-  int ret = setsockopt(socket_, SOL_SOCKET, SO_SNDTIMEO, cast_sockopt(&s), sizeof(s));
-  if (ret == -1) {
-    int errno_copy = THRIFT_GET_SOCKET_ERROR;  // Copy THRIFT_GET_SOCKET_ERROR because we're allocating memory.
-    GlobalOutput.perror("TSocket::setSendTimeout() setsockopt() " + getSocketInfo(), errno_copy);
-  }
 }
 
 void TSocket::setKeepAlive(bool keepAlive) {
