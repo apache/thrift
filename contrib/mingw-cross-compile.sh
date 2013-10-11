@@ -15,8 +15,7 @@ set -e
   --without-go \
   --without-d \
   --build=i686-pc-linux-gnu \
-  --host=i586-mingw32msvc \
-  CPPFLAGS='-DMINGW'
+  --host=i586-mingw32msvc
 
 make
 
