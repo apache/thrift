@@ -2165,7 +2165,7 @@ void t_go_generator::generate_service_remote(t_service* tservice)
           S_IRUSR
           | S_IWUSR
           | S_IXUSR
-#ifndef MINGW
+#ifndef _WIN32
           | S_IRGRP
           | S_IXGRP
           | S_IROTH
