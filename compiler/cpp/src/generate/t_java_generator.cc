@@ -264,6 +264,7 @@ public:
 
   std::string java_package();
   std::string java_type_imports();
+  std::string java_suppressions();
   std::string type_name(t_type* ttype, bool in_container=false, bool in_init=false, bool skip_generic=false);
   std::string base_type_name(t_base_type* tbase, bool in_container=false);
   std::string declare_field(t_field* tfield, bool init=false, bool comment=false);
@@ -400,6 +401,10 @@ string t_java_generator::java_type_imports() {
     "import org.slf4j.LoggerFactory;\n\n";
 }
 
+string t_java_generator::java_suppressions() {
+  return "@SuppressWarnings({\"cast\", \"rawtypes\", \"serial\", \"unchecked\"})\n";
+}
+
 /**
  * Nothing in Java
  */
@@ -523,7 +528,8 @@ void t_java_generator::generate_consts(std::vector<t_const*> consts) {
   f_consts <<
     autogen_comment() <<
     java_package() <<
-    java_type_imports();
+    java_type_imports() <<
+    java_suppressions();
 
   f_consts <<
     "public class " << make_valid_java_identifier(program_name_) << "Constants {" << endl <<
@@ -726,7 +732,8 @@ void t_java_generator::generate_java_struct(t_struct* tstruct,
   f_struct <<
     autogen_comment() <<
     java_package() <<
-    java_type_imports();
+    java_type_imports() <<
+    java_suppressions();
 
   generate_java_struct_definition(f_struct,
                                   tstruct,
@@ -748,7 +755,8 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
   f_struct <<
     autogen_comment() <<
     java_package() <<
-    java_type_imports();
+    java_type_imports() <<
+    java_suppressions();
 
   generate_java_doc(f_struct, tstruct);
 
@@ -2239,7 +2247,8 @@ void t_java_generator::generate_service(t_service* tservice) {
   f_service_ <<
     autogen_comment() <<
     java_package() <<
-    java_type_imports();
+    java_type_imports() <<
+    java_suppressions();
 
   f_service_ << "public class " << service_name_ << " {" << endl << endl;
   indent_up();
