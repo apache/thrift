@@ -383,6 +383,8 @@ void TServerSocket::listen() {
                               THRIFT_GET_SOCKET_ERROR);
   }
 
+  if(listenCallback_) listenCallback_(serverSocket_);
+
   // Call listen
   if (-1 == ::listen(serverSocket_, acceptBacklog_)) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
@@ -490,6 +492,8 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
     client->setKeepAlive(keepAlive_);
   }
   client->setCachedAddress((sockaddr*) &clientAddress, size);
+
+  if(acceptCallback_) acceptCallback_(clientSocket);
 
   return client;
 }
