@@ -106,7 +106,10 @@ read_result(Client = #tclient{protocol = Proto0,
             handle_application_exception(NewClient);
 
         #protocol_message_begin{type = ?tMessageType_REPLY} ->
-            handle_reply(NewClient, Function, ReplyType)
+            handle_reply(NewClient, Function, ReplyType);
+
+        _Any ->
+            erlang:exit(_Any)
     end.
 
 

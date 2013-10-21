@@ -333,7 +333,11 @@ parse_factory_options([{strict_write, Bool} | Rest], Opts) when is_boolean(Bool)
 new_protocol_factory(TransportFactory, Options) ->
     ParsedOpts = parse_factory_options(Options, #tbp_opts{}),
     F = fun() ->
-                {ok, Transport} = TransportFactory(),
+                {ok, Transport} = 
+                    case TransportFactory() of
+                        {ok, Tran} -> {ok, Tran};
+                        _Any       -> erlang:exit(_Any)
+                    end,
                 thrift_binary_protocol:new(
                   Transport,
                   [{strict_read,  ParsedOpts#tbp_opts.strict_read},
