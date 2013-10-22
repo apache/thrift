@@ -857,7 +857,7 @@ void t_java_generator::generate_union_constructor(ofstream& out, t_struct* tstru
     if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
       indent(out) << "public static " << type_name(tstruct) << " " << (*m_iter)->get_name() << "(byte[] value) {" << endl;
       indent(out) << "  " << type_name(tstruct) << " x = new " << type_name(tstruct) << "();" << endl;
-      indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name()) << "(ByteBuffer.wrap(value));" << endl;
+      indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name()) << "(ByteBuffer.wrap(Arrays.copyOf(value, value.length)));" << endl;
       indent(out) << "  return x;" << endl;
       indent(out) << "}" << endl << endl;
     }
@@ -892,7 +892,7 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
 
       indent(out) << "public ByteBuffer buffer" << get_cap_name("for") << get_cap_name(field->get_name()) << "() {" << endl;
       indent(out) << "  if (getSetField() == _Fields." << constant_name(field->get_name()) << ") {" << endl;
-      indent(out) << "    return (ByteBuffer)getFieldValue();" << endl;
+      indent(out) << "    return org.apache.thrift.TBaseHelper.copyBinary((ByteBuffer)getFieldValue());" << endl;
       indent(out) << "  } else {" << endl;
       indent(out) << "    throw new RuntimeException(\"Cannot get field '" << field->get_name()
         << "' because union is currently set to \" + getFieldDesc(getSetField()).name);" << endl;
@@ -914,7 +914,7 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
     generate_java_doc(out, field);
     if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
       indent(out) << "public void set" << get_cap_name(field->get_name()) << "(byte[] value) {" << endl;
-      indent(out) << "  set" << get_cap_name(field->get_name()) << "(ByteBuffer.wrap(value));" << endl;
+      indent(out) << "  set" << get_cap_name(field->get_name()) << "(ByteBuffer.wrap(Arrays.copyOf(value, value.length)));" << endl;
       indent(out) << "}" << endl;
 
       out << endl;
@@ -1409,8 +1409,15 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     indent(out) << "this();" << endl;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
-        indent(out) << "this." << (*m_iter)->get_name() << " = " <<
-          (*m_iter)->get_name() << ";" << endl;
+        t_type* type = get_true_type((*m_iter)->get_type());
+        if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+          indent(out) << "this." << (*m_iter)->get_name()
+            << " = org.apache.thrift.TBaseHelper.copyBinary("
+            << (*m_iter)->get_name() << ");" << endl;
+        } else {
+          indent(out) << "this." << (*m_iter)->get_name() << " = "
+            << (*m_iter)->get_name() << ";" << endl;
+        }
         generate_isset_set(out, (*m_iter), "");
       }
     }
@@ -1947,7 +1954,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       indent(out) << "}" << endl << endl;
 
       indent(out) << "public ByteBuffer buffer" << get_cap_name("for") << cap_name << "() {" << endl;
-      indent(out) << "  return " << field_name << ";" << endl;
+      indent(out) << "  return org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ");" << endl;
       indent(out) << "}" << endl << endl;
     } else {
       indent(out) << "public " << type_name(type);
@@ -1974,7 +1981,10 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
         out << type_name(tstruct);
       }
       out << " set" << cap_name << "(byte[] " << field_name << ") {" << endl;
-      indent(out) << "  set" << cap_name << "(" << field_name << " == null ? (ByteBuffer)null : ByteBuffer.wrap(" << field_name << "));" << endl;
+      indent(out) << "  this." << field_name << " = "
+        << field_name << " == null ? (ByteBuffer)null"
+        << " : ByteBuffer.wrap(Arrays.copyOf("
+        << field_name << ", " << field_name << ".length));" << endl;
       if (!bean_style_) {
         indent(out) << "  return this;" << endl;
       }
@@ -1988,7 +1998,13 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     }
     out << " set" << cap_name << "(" << type_name(type) << " " << field_name << ") {" << endl;
     indent_up();
-    indent(out) << "this." << field_name << " = " << field_name << ";" << endl;
+    indent(out) << "this." << field_name << " = ";
+    if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+      out << "org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ")";
+    } else {
+      out << field_name;
+    }
+    out << ";" << endl;
     generate_isset_set(out, field, "");
     if (!bean_style_) {
       indent(out) << "return this;" << endl;
