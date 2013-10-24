@@ -421,6 +421,8 @@ public class TJSONProtocol extends TProtocol {
         special = true;
       }
       break;
+    default:
+      break;
     }
 
     boolean escapeNum = special || context_.escapeNum();

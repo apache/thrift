@@ -19,6 +19,8 @@
 
 package org.apache.thrift.protocol;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 /**
  * Helper class that encapsulates struct metadata.
  *
@@ -44,14 +46,22 @@ public final class TMessage {
   }
 
   @Override
-  public boolean equals(Object other) {
-    if (other instanceof TMessage) {
-      return equals((TMessage) other);
-    }
-    return false;
+  public int hashCode() {
+    return new HashCodeBuilder()
+      .append(name)
+      .append(type)
+      .append(seqid)
+      .toHashCode();
   }
 
-  public boolean equals(TMessage other) {
+  @Override
+  public boolean equals(Object object) {
+    if (this == object) {
+      return true;
+    } else if (!(object instanceof TMessage)) {
+      return false;
+    }
+    TMessage other = (TMessage) object;
     return name.equals(other.name) && type == other.type && seqid == other.seqid;
   }
 }
