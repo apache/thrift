@@ -22,6 +22,7 @@ package org.apache.thrift.transport;
 import java.io.FileInputStream;
 import java.net.InetAddress;
 import java.security.KeyStore;
+import java.util.Arrays;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -176,14 +177,24 @@ public class TSSLTransportFactory {
       if (params.isTrustStoreSet) {
         tmf = TrustManagerFactory.getInstance(params.trustManagerType);
         KeyStore ts = KeyStore.getInstance(params.trustStoreType);
-        ts.load(new FileInputStream(params.trustStore), params.trustPass.toCharArray());
+        FileInputStream fis = new FileInputStream(params.trustStore);
+        try {
+          ts.load(fis, params.trustPass.toCharArray());
+        } finally {
+          fis.close();
+        }
         tmf.init(ts);
       }
 
       if (params.isKeyStoreSet) {
         kmf = KeyManagerFactory.getInstance(params.keyManagerType);
         KeyStore ks = KeyStore.getInstance(params.keyStoreType);
-        ks.load(new FileInputStream(params.keyStore), params.keyPass.toCharArray());
+        FileInputStream fis = new FileInputStream(params.keyStore);
+        try {
+          ks.load(fis, params.keyPass.toCharArray());
+        } finally {
+          fis.close();
+        }
         kmf.init(ks, params.keyPass.toCharArray());
       }
 
@@ -256,7 +267,7 @@ public class TSSLTransportFactory {
       if (protocol != null) {
         this.protocol = protocol;
       }
-      this.cipherSuites = cipherSuites;
+      this.cipherSuites = Arrays.copyOf(cipherSuites, cipherSuites.length);
       this.clientAuth = clientAuth;
     }
 

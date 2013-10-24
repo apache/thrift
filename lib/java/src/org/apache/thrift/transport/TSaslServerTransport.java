@@ -126,7 +126,7 @@ public class TSaslServerTransport extends TSaslTransport {
 
     LOGGER.debug("Received start message with status {}", message.status);
     if (message.status != NegotiationStatus.START) {
-      sendAndThrowMessage(NegotiationStatus.ERROR, "Expecting START status, received " + message.status);
+      throw sendAndThrowMessage(NegotiationStatus.ERROR, "Expecting START status, received " + message.status);
     }
 
     // Get the mechanism name.
@@ -135,7 +135,7 @@ public class TSaslServerTransport extends TSaslTransport {
     LOGGER.debug("Received mechanism name '{}'", mechanismName);
 
     if (serverDefinition == null) {
-      sendAndThrowMessage(NegotiationStatus.BAD, "Unsupported mechanism type " + mechanismName);
+      throw sendAndThrowMessage(NegotiationStatus.BAD, "Unsupported mechanism type " + mechanismName);
     }
     SaslServer saslServer = Sasl.createSaslServer(serverDefinition.mechanism,
         serverDefinition.protocol, serverDefinition.serverName, serverDefinition.props,

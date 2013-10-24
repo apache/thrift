@@ -45,13 +45,13 @@ public class TSimpleJSONProtocol extends TProtocol {
     }
   }
 
-  public static final byte[] COMMA = new byte[] {','};
-  public static final byte[] COLON = new byte[] {':'};
-  public static final byte[] LBRACE = new byte[] {'{'};
-  public static final byte[] RBRACE = new byte[] {'}'};
-  public static final byte[] LBRACKET = new byte[] {'['};
-  public static final byte[] RBRACKET = new byte[] {']'};
-  public static final char QUOTE = '"';
+  private static final byte[] COMMA = new byte[] {','};
+  private static final byte[] COLON = new byte[] {':'};
+  private static final byte[] LBRACE = new byte[] {'{'};
+  private static final byte[] RBRACE = new byte[] {'}'};
+  private static final byte[] LBRACKET = new byte[] {'['};
+  private static final byte[] RBRACKET = new byte[] {']'};
+  private static final char QUOTE = '"';
 
   private static final TStruct ANONYMOUS_STRUCT = new TStruct();
   private static final TField ANONYMOUS_FIELD = new TField();

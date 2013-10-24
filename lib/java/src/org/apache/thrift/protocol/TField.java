@@ -19,6 +19,8 @@
 
 package org.apache.thrift.protocol;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 /**
  * Helper class that encapsulates field metadata.
  *
@@ -42,7 +44,23 @@ public class TField {
     return "<TField name:'" + name + "' type:" + type + " field-id:" + id + ">";
   }
 
-  public boolean equals(TField otherField) {
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder()
+      .append(name)
+      .append(type)
+      .append(id)
+      .toHashCode();
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (this == object) {
+      return true;
+    } else if (!(object instanceof TField)) {
+      return false;
+    }
+    TField otherField = (TField) object;
     return type == otherField.type && id == otherField.id;
   }
 }
