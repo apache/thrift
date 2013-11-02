@@ -41,6 +41,8 @@
 
 using namespace std;
 
+static const string endl = "\n";  // avoid ostream << std::endl flushes
+
 /**
  * A helper for automatically formatting the emitted Go code from the Thrift
  * IDL per the Go style guide.
