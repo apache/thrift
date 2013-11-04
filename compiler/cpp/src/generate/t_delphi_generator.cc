@@ -3167,12 +3167,20 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out, stri
 
   string tmp_sb = "__sb";
   string tmp_first = "__first";
+  bool useFirstFlag = false;
 
   indent_impl(out) << "function " << cls_prefix << cls_nm << ".ToString: string;" << endl;
   indent_impl(out) << "var" << endl;
   indent_up_impl();
   indent_impl(out) << tmp_sb << " : TThriftStringBuilder;" << endl;
-  indent_impl(out) << tmp_first << " : Boolean;" << endl;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    bool is_optional  = ((*f_iter)->get_req() != t_field::T_REQUIRED);
+    if( is_optional) {
+      indent_impl(out) << tmp_first << " : Boolean;" << endl;
+      useFirstFlag = true;
+    }
+    break;
+  }
   indent_down_impl();
   indent_impl(out) << "begin" << endl;
   indent_up_impl();
@@ -3181,7 +3189,10 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out, stri
   indent_impl(out) << "try" << endl;
   indent_up_impl();
 
-  indent_impl(out) << tmp_first << " := TRUE;" << endl;
+  if( useFirstFlag) {
+    indent_impl(out) << tmp_first << " := TRUE;" << endl;
+  }
+  
   bool had_required = false;  // set to true after first required field has been processed
   
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -3201,9 +3212,9 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out, stri
       }
     }
 
-    if( ! had_required)	{
-	  indent_impl(out) << "if not " << tmp_first << " then " << tmp_sb << ".Append(',');" << endl;
-	  if (is_optional) {
+    if( useFirstFlag && (! had_required)) {
+      indent_impl(out) << "if not " << tmp_first << " then " << tmp_sb << ".Append(',');" << endl;
+      if (is_optional) {
         indent_impl(out) << tmp_first << " := FALSE;" << endl;
       }
       indent_impl(out) <<
@@ -3212,7 +3223,7 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out, stri
       indent_impl(out) <<
         tmp_sb << ".Append(', " << prop_name((*f_iter), is_exception) << ": ');" << endl;
     }
-	
+
 
     t_type* ttype = (*f_iter)->get_type();
     if (ttype->is_xception() || ttype->is_struct()) {
@@ -3225,12 +3236,12 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out, stri
       indent_impl(out) <<
         tmp_sb << ".Append(" << prop_name((*f_iter), is_exception)  << ");" << endl;
     }
-	
+    
     if (null_allowed || is_optional) {
       indent_down_impl();
       indent_impl(out) << "end;" << endl;
     } 
-	
+    
     if (!is_optional) {
       had_required = true;  // now __first must be false, so we don't need to check it anymore
     }
@@ -3240,8 +3251,10 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out, stri
     tmp_sb << ".Append(')');" << endl;
   indent_impl(out) <<
     "Result := " << tmp_sb <<  ".ToString;" << endl;
-  indent_impl(out) <<
-    "if " << tmp_first <<  " then {prevent warning};" << endl;
+  if( useFirstFlag) {
+    indent_impl(out) <<
+      "if " << tmp_first <<  " then {prevent warning};" << endl;
+  }
 
   indent_down_impl();
   indent_impl(out) << "finally" << endl;

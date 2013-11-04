@@ -922,7 +922,15 @@ void t_csharp_generator::generate_csharp_struct_tostring(ofstream& out, t_struct
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  indent(out) << "bool __first = true;" << endl;
+  bool useFirstFlag = false;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if( ! field_is_required((*f_iter))) {
+      indent(out) << "bool __first = true;" << endl;
+	  useFirstFlag = true;
+    }
+    break;
+  }
+
   bool had_required = false;  // set to true after first required field has been processed
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -944,17 +952,17 @@ void t_csharp_generator::generate_csharp_struct_tostring(ofstream& out, t_struct
       }
     }
 
-    if( ! had_required)	{
+    if( useFirstFlag && (! had_required)) {
       indent(out) << "if(!__first) { __sb.Append(\", \"); }" << endl;
-	  if( ! is_required) {
+      if( ! is_required) {
         indent(out) << "__first = false;" << endl;
-	  }
+      }
       indent(out) <<
         "__sb.Append(\"" << prop_name((*f_iter)) << ": \");" << endl;
     } else {
       indent(out) <<
         "__sb.Append(\", " << prop_name((*f_iter)) << ": \");" << endl;
-	}
+    }
         
           
     t_type* ttype = (*f_iter)->get_type();
