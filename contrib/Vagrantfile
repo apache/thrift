@@ -31,7 +31,7 @@ sudo apt-get upgrade -qq -y
 sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev make libqt4-dev git debhelper
 
 # Java dependencies
-sudo apt-get install -qq ant openjdk-7-jdk libcommons-lang3-java
+sudo apt-get install -qq ant openjdk-7-jdk
 
 # Python dependencies
 sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools

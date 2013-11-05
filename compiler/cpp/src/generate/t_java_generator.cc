@@ -363,9 +363,6 @@ string t_java_generator::java_package() {
 string t_java_generator::java_type_imports() {
   string hash_builder;
   string tree_set_and_map;
-  if (gen_hash_code_) {
-    hash_builder = "import org.apache.commons.lang3.builder.HashCodeBuilder;\n";
-  }
   if (sorted_containers_) {
     tree_set_and_map = string() + 
       "import java.util.TreeSet;\n" +
@@ -1240,19 +1237,19 @@ void t_java_generator::generate_union_hashcode(ofstream& out, t_struct* tstruct)
   if (gen_hash_code_) {
     indent(out) << "@Override" << endl;
     indent(out) << "public int hashCode() {" << endl;
-    indent(out) << "  HashCodeBuilder hcb = new HashCodeBuilder();" << endl;
-    indent(out) << "  hcb.append(this.getClass().getName());" << endl;
+    indent(out) << "  List<Object> list = new ArrayList<Object>();" << endl;
+    indent(out) << "  list.add(this.getClass().getName());" << endl;
     indent(out) << "  org.apache.thrift.TFieldIdEnum setField = getSetField();" << endl;
     indent(out) << "  if (setField != null) {" << endl;
-    indent(out) << "    hcb.append(setField.getThriftFieldId());" << endl;
+    indent(out) << "    list.add(setField.getThriftFieldId());" << endl;
     indent(out) << "    Object value = getFieldValue();" << endl;
     indent(out) << "    if (value instanceof org.apache.thrift.TEnum) {" << endl;
-    indent(out) << "      hcb.append(((org.apache.thrift.TEnum)getFieldValue()).getValue());" << endl;
+    indent(out) << "      list.add(((org.apache.thrift.TEnum)getFieldValue()).getValue());" << endl;
     indent(out) << "    } else {" << endl;
-    indent(out) << "      hcb.append(value);" << endl;
+    indent(out) << "      list.add(value);" << endl;
     indent(out) << "    }" << endl;
     indent(out) << "  }" << endl;
-    indent(out) << "  return hcb.toHashCode();" << endl;
+    indent(out) << "  return list.hashCode();" << endl;
     indent(out) << "}";
   } else {
     indent(out) << "/**" << endl;
@@ -1591,7 +1588,7 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
     indent() << "public int hashCode() {" << endl;
   indent_up();
   if (gen_hash_code_) {
-    indent(out) << "HashCodeBuilder builder = new HashCodeBuilder();" << endl;
+    indent(out) << "List<Object> list = new ArrayList<Object>();" << endl;
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       out << endl;
@@ -1608,17 +1605,17 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
       }
 
       indent(out) << "boolean present_" << name << " = " << present << ";" << endl;
-      indent(out) << "builder.append(present_" << name << ");" << endl;
+      indent(out) << "list.add(present_" << name << ");" << endl;
       indent(out) << "if (present_" << name << ")" << endl;
       if (t->is_enum()) {
-        indent(out) << "  builder.append(" << name << ".getValue());" << endl;
+        indent(out) << "  list.add(" << name << ".getValue());" << endl;
       } else {
-        indent(out) << "  builder.append(" << name << ");" << endl;
+        indent(out) << "  list.add(" << name << ");" << endl;
       }
     }
 
     out << endl;
-    indent(out) << "return builder.toHashCode();" << endl;
+    indent(out) << "return list.hashCode();" << endl;
   } else {
     indent(out) << "return 0;" << endl;
   }
