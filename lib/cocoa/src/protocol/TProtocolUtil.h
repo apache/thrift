@@ -26,4 +26,4 @@
 
 + (void) skipType: (int) type onProtocol: (id <TProtocol>) protocol;
 
-@end;
+@end
