@@ -27,7 +27,7 @@ from thrift.transport.TTransport import TTransportException
 
 from tornado import gen
 from tornado import iostream
-from tornado import netutil
+from tornado import tcpserver
 
 
 class TTornadoStreamTransport(TTransport.TTransportBase):
@@ -125,7 +125,7 @@ class TTornadoStreamTransport(TTransport.TTransportBase):
         self.stream.write(buf, callback)
 
 
-class TTornadoServer(netutil.TCPServer):
+class TTornadoServer(tcpserver.TCPServer):
     def __init__(self, processor, iprot_factory, oprot_factory=None,
                  *args, **kwargs):
         super(TTornadoServer, self).__init__(*args, **kwargs)
