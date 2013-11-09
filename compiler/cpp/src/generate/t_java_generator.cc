@@ -18,6 +18,7 @@
  */
 
 #include <cassert>
+#include <ctime>
 
 #include <sstream>
 #include <string>
@@ -177,6 +178,7 @@ public:
   void generate_java_struct_tuple_reader(ofstream& out, t_struct* tstruct);
   void generate_java_struct_tuple_writer(ofstream& out, t_struct* tstruct);
 
+  void generate_javax_generated_annotation(ofstream& out);
   /**
    * Serialization constructs
    */
@@ -396,6 +398,7 @@ string t_java_generator::java_type_imports() {
     "import java.util.BitSet;\n" +
     "import java.nio.ByteBuffer;\n"
     "import java.util.Arrays;\n" +
+    "import javax.annotation.Generated;\n" +
     "import org.slf4j.Logger;\n" +
     "import org.slf4j.LoggerFactory;\n\n";
 }
@@ -1280,6 +1283,10 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
   generate_java_doc(out, tstruct);
 
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
+
+  if (!in_class) {
+    generate_javax_generated_annotation(out);
+  }
 
   indent(out) <<
     "public " << (is_final ? "final " : "") <<
@@ -2241,6 +2248,7 @@ void t_java_generator::generate_service(t_service* tservice) {
     java_package() <<
     java_type_imports();
 
+  generate_javax_generated_annotation(f_service_);
   f_service_ << "public class " << service_name_ << " {" << endl << endl;
   indent_up();
 
@@ -4516,6 +4524,15 @@ void t_java_generator::generate_java_struct_tuple_scheme(ofstream& out, t_struct
   generate_java_struct_tuple_reader(out, tstruct);
   indent_down();
   out << indent() << "}" << endl << endl;
+}
+
+void t_java_generator::generate_javax_generated_annotation(ofstream& out){
+  time_t seconds = time(NULL);
+  struct tm *now = localtime(&seconds);
+  indent(out) << "@Generated(value = \"" << autogen_summary()
+              << "\", date = \"" << (now->tm_year + 1900)
+              << "-" << (now->tm_mon + 1) << "-" << now->tm_mday
+              << "\")" << endl;
 }
 
 THRIFT_REGISTER_GENERATOR(java, "Java",
