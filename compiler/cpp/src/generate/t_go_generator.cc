@@ -1021,6 +1021,12 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
         indent() << "  return fmt.Sprintf(\"" << escape_string(tstruct_name) << "(%+v)\", *p)" << endl <<
         indent() << "}" << endl << endl;
 
+    if(is_exception) {
+        out <<
+            indent() << "func (p *" << tstruct_name << ") Error() string {" << endl <<
+            indent() << "  return p.String()" << endl <<
+            indent() << "}" << endl << endl;
+    }
 }
 
 /**
