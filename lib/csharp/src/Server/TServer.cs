@@ -59,8 +59,14 @@ namespace Thrift.Server
 		 * Output Protocol Factory
 		 */
 		protected TProtocolFactory outputProtocolFactory;
-		public delegate void LogDelegate(string str);
-		protected LogDelegate logDelegate;
+
+        public delegate void LogDelegate(string str);
+        private LogDelegate _logDelegate;
+        protected LogDelegate logDelegate
+        {
+            get { return _logDelegate; }
+            set { _logDelegate = (value != null) ? value : DefaultLogDelegate; } 
+        }
 
 		/**
 		 * Default constructors.
@@ -120,7 +126,7 @@ namespace Thrift.Server
 			this.outputTransportFactory = outputTransportFactory;
 			this.inputProtocolFactory = inputProtocolFactory;
 			this.outputProtocolFactory = outputProtocolFactory;
-			this.logDelegate = logDelegate;
+			this.logDelegate = (logDelegate != null) ? logDelegate : DefaultLogDelegate;
 		}
 
 		/**
