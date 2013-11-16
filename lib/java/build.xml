@@ -318,7 +318,6 @@
 
       <!-- Thrift dependencies list -->
       <dependency groupId="org.slf4j" artifactId="slf4j-api" version="${slf4j.version}"/>
-      <dependency groupId="org.apache.commons" artifactId="commons-lang3" version="${commons-lang3.version}"/>
       <dependency groupId="javax.servlet" artifactId="servlet-api" version="${servlet.version}" scope="provided"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="${httpclient.version}"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpcore" version="${httpcore.version}"/>
