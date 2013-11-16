@@ -66,9 +66,6 @@ public:
     iter = parsed_options.find("nocamel");
     nocamel_style_ = (iter != parsed_options.end());
 
-    iter = parsed_options.find("hashcode");
-    gen_hash_code_ = (iter != parsed_options.end());
-
     iter = parsed_options.find("android_legacy");
     android_legacy_ = (iter != parsed_options.end());
 
@@ -310,7 +307,6 @@ public:
   bool bean_style_;
   bool private_members_;
   bool nocamel_style_;
-  bool gen_hash_code_;
   bool android_legacy_;
   bool java5_;
   bool sorted_containers_;
@@ -1242,32 +1238,22 @@ void t_java_generator::generate_union_comparisons(ofstream& out, t_struct* tstru
 
 void t_java_generator::generate_union_hashcode(ofstream& out, t_struct* tstruct) {
   (void) tstruct;
-  if (gen_hash_code_) {
-    indent(out) << "@Override" << endl;
-    indent(out) << "public int hashCode() {" << endl;
-    indent(out) << "  List<Object> list = new ArrayList<Object>();" << endl;
-    indent(out) << "  list.add(this.getClass().getName());" << endl;
-    indent(out) << "  org.apache.thrift.TFieldIdEnum setField = getSetField();" << endl;
-    indent(out) << "  if (setField != null) {" << endl;
-    indent(out) << "    list.add(setField.getThriftFieldId());" << endl;
-    indent(out) << "    Object value = getFieldValue();" << endl;
-    indent(out) << "    if (value instanceof org.apache.thrift.TEnum) {" << endl;
-    indent(out) << "      list.add(((org.apache.thrift.TEnum)getFieldValue()).getValue());" << endl;
-    indent(out) << "    } else {" << endl;
-    indent(out) << "      list.add(value);" << endl;
-    indent(out) << "    }" << endl;
-    indent(out) << "  }" << endl;
-    indent(out) << "  return list.hashCode();" << endl;
-    indent(out) << "}";
-  } else {
-    indent(out) << "/**" << endl;
-    indent(out) << " * If you'd like this to perform more respectably, use the hashcode generator option." << endl;
-    indent(out) << " */" << endl;
-    indent(out) << "@Override" << endl;
-    indent(out) << "public int hashCode() {" << endl;
-    indent(out) << "  return 0;" << endl;
-    indent(out) << "}" << endl;
-  }
+  indent(out) << "@Override" << endl;
+  indent(out) << "public int hashCode() {" << endl;
+  indent(out) << "  List<Object> list = new ArrayList<Object>();" << endl;
+  indent(out) << "  list.add(this.getClass().getName());" << endl;
+  indent(out) << "  org.apache.thrift.TFieldIdEnum setField = getSetField();" << endl;
+  indent(out) << "  if (setField != null) {" << endl;
+  indent(out) << "    list.add(setField.getThriftFieldId());" << endl;
+  indent(out) << "    Object value = getFieldValue();" << endl;
+  indent(out) << "    if (value instanceof org.apache.thrift.TEnum) {" << endl;
+  indent(out) << "      list.add(((org.apache.thrift.TEnum)getFieldValue()).getValue());" << endl;
+  indent(out) << "    } else {" << endl;
+  indent(out) << "      list.add(value);" << endl;
+  indent(out) << "    }" << endl;
+  indent(out) << "  }" << endl;
+  indent(out) << "  return list.hashCode();" << endl;
+  indent(out) << "}";
 }
 
 /**
@@ -1595,38 +1581,34 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
   out << indent() << "@Override" << endl <<
     indent() << "public int hashCode() {" << endl;
   indent_up();
-  if (gen_hash_code_) {
-    indent(out) << "List<Object> list = new ArrayList<Object>();" << endl;
+  indent(out) << "List<Object> list = new ArrayList<Object>();" << endl;
 
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out << endl;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    out << endl;
 
-      t_type* t = get_true_type((*m_iter)->get_type());
-      bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
-      bool can_be_null = type_can_be_null(t);
-      string name = (*m_iter)->get_name();
+    t_type* t = get_true_type((*m_iter)->get_type());
+    bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
+    bool can_be_null = type_can_be_null(t);
+    string name = (*m_iter)->get_name();
 
-      string present = "true";
+    string present = "true";
 
-      if (is_optional || can_be_null) {
-        present += " && (" + generate_isset_check(*m_iter) + ")";
-      }
-
-      indent(out) << "boolean present_" << name << " = " << present << ";" << endl;
-      indent(out) << "list.add(present_" << name << ");" << endl;
-      indent(out) << "if (present_" << name << ")" << endl;
-      if (t->is_enum()) {
-        indent(out) << "  list.add(" << name << ".getValue());" << endl;
-      } else {
-        indent(out) << "  list.add(" << name << ");" << endl;
-      }
+    if (is_optional || can_be_null) {
+      present += " && (" + generate_isset_check(*m_iter) + ")";
     }
 
-    out << endl;
-    indent(out) << "return list.hashCode();" << endl;
-  } else {
-    indent(out) << "return 0;" << endl;
+    indent(out) << "boolean present_" << name << " = " << present << ";" << endl;
+    indent(out) << "list.add(present_" << name << ");" << endl;
+    indent(out) << "if (present_" << name << ")" << endl;
+    if (t->is_enum()) {
+      indent(out) << "  list.add(" << name << ".getValue());" << endl;
+    } else {
+      indent(out) << "  list.add(" << name << ");" << endl;
+    }
   }
+
+  out << endl;
+  indent(out) << "return list.hashCode();" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
 }
@@ -4545,7 +4527,6 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    beans:           Members will be private, and setter methods will return void.\n"
 "    private-members: Members will be private, but setter methods will return 'this' like usual.\n"
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
-"    hashcode:        Generate quality hashCode methods.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
 "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
 "    sorted_containers:\n"
