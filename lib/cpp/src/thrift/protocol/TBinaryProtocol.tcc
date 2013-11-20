@@ -446,17 +446,8 @@ uint32_t TBinaryProtocolT<Transport_>::readStringBody(StrType& str,
     return size;
   }
 
-  // Use the heap here to prevent stack overflow for v. large strings
-  if (size > this->string_buf_size_ || this->string_buf_ == NULL) {
-    void* new_string_buf = std::realloc(this->string_buf_, (uint32_t)size);
-    if (new_string_buf == NULL) {
-      throw std::bad_alloc();
-    }
-    this->string_buf_ = (uint8_t*)new_string_buf;
-    this->string_buf_size_ = size;
-  }
-  this->trans_->readAll(this->string_buf_, size);
-  str.assign((char*)this->string_buf_, size);
+  str.resize(size);
+  this->trans_->readAll(reinterpret_cast<uint8_t *>(&str[0]), size);
   return (uint32_t)size;
 }
 

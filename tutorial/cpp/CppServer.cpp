@@ -113,11 +113,11 @@ protected:
 
 int main(int argc, char **argv) {
 
-  shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-  shared_ptr<CalculatorHandler> handler(new CalculatorHandler());
-  shared_ptr<TProcessor> processor(new CalculatorProcessor(handler));
-  shared_ptr<TServerTransport> serverTransport(new TServerSocket(9090));
-  shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+  boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+  boost::shared_ptr<CalculatorHandler> handler(new CalculatorHandler());
+  boost::shared_ptr<TProcessor> processor(new CalculatorProcessor(handler));
+  boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(9090));
+  boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
 
   TSimpleServer server(processor,
                        serverTransport,
@@ -128,10 +128,10 @@ int main(int argc, char **argv) {
   /**
    * Or you could do one of these
 
-  shared_ptr<ThreadManager> threadManager =
+  boost::shared_ptr<ThreadManager> threadManager =
     ThreadManager::newSimpleThreadManager(workerCount);
-  shared_ptr<PosixThreadFactory> threadFactory =
-    shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
+  boost::shared_ptr<PosixThreadFactory> threadFactory =
+    boost::shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
   threadManager->threadFactory(threadFactory);
   threadManager->start();
   TThreadPoolServer server(processor,

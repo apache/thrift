@@ -893,7 +893,7 @@ TNonblockingServer::TConnection* TNonblockingServer::createConnection(
   // pick an IO thread to handle this connection -- currently round robin
   assert(nextIOThread_ < ioThreads_.size());
   int selectedThreadIdx = nextIOThread_;
-  nextIOThread_ = (nextIOThread_ + 1) % ioThreads_.size();
+  nextIOThread_ = static_cast<uint32_t>((nextIOThread_ + 1) % ioThreads_.size());
 
   TNonblockingIOThread* ioThread = ioThreads_[selectedThreadIdx].get();
 
@@ -1421,7 +1421,7 @@ void TNonblockingIOThread::notifyHandler(evutil_socket_t fd, short which, void* 
   while (true) {
     TNonblockingServer::TConnection* connection = 0;
     const int kSize = sizeof(connection);
-    int nBytes = recv(fd, cast_sockopt(&connection), kSize, 0);
+    long nBytes = recv(fd, cast_sockopt(&connection), kSize, 0);
     if (nBytes == kSize) {
       if (connection == NULL) {
         // this is the command to stop our thread, exit the handler!

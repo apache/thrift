@@ -39,7 +39,14 @@
 #include "platform.h"
 #include "version.h"
 
-using namespace std;
+using std::map;
+using std::ofstream;
+using std::ostringstream;
+using std::string;
+using std::stringstream;
+using std::vector;
+
+static const string endl = "\n";  // avoid ostream << std::endl flushes
 
 /**
  * A helper for automatically formatting the emitted Go code from the Thrift
@@ -133,7 +140,8 @@ public:
                                     bool        declare,
                                     std::string prefix = "",
                                     bool inclass = false,
-                                    bool coerceData = false);
+                                    bool coerceData = false,
+                                    bool inkey = false);
 
     void generate_deserialize_struct(std::ofstream &out,
                                      t_struct*   tstruct,
@@ -162,7 +170,8 @@ public:
 
     void generate_serialize_field(std::ofstream &out,
                                   t_field*    tfield,
-                                  std::string prefix = "");
+                                  std::string prefix = "",
+                                  bool inkey = false);
 
     void generate_serialize_struct(std::ofstream &out,
                                    t_struct*   tstruct,
@@ -1012,6 +1021,12 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
         indent() << "  return fmt.Sprintf(\"" << escape_string(tstruct_name) << "(%+v)\", *p)" << endl <<
         indent() << "}" << endl << endl;
 
+    if(is_exception) {
+        out <<
+            indent() << "func (p *" << tstruct_name << ") Error() string {" << endl <<
+            indent() << "  return p.String()" << endl <<
+            indent() << "}" << endl << endl;
+    }
 }
 
 /**
@@ -2165,7 +2180,7 @@ void t_go_generator::generate_service_remote(t_service* tservice)
           S_IRUSR
           | S_IWUSR
           | S_IXUSR
-#ifndef MINGW
+#ifndef _WIN32
           | S_IRGRP
           | S_IXGRP
           | S_IROTH
@@ -2435,7 +2450,8 @@ void t_go_generator::generate_deserialize_field(ofstream &out,
         bool declare,
         string prefix,
         bool inclass,
-        bool coerceData)
+        bool coerceData,
+        bool inkey)
 {
     t_type* orig_type = tfield->get_type();
     t_type* type = get_true_type(orig_type);
@@ -2455,7 +2471,9 @@ void t_go_generator::generate_deserialize_field(ofstream &out,
     } else if (type->is_base_type() || type->is_enum()) {
 
         if (declare) {
-            out << "var " << tfield->get_name() << " " << type_to_go_type(tfield->get_type()) << endl;
+            string type_name = inkey ? type_to_go_key_type(tfield->get_type()) :
+                type_to_go_type(tfield->get_type());
+            out << "var " << tfield->get_name() << " " << type_name << endl;
         }
 
         indent(out) <<
@@ -2471,7 +2489,7 @@ void t_go_generator::generate_deserialize_field(ofstream &out,
                 break;
 
             case t_base_type::TYPE_STRING:
-                if (((t_base_type*)type)->is_binary()) {
+                if (((t_base_type*)type)->is_binary() && !inkey) {
                     out << "ReadBinary()";
                 } else {
                     out << "ReadString()";
@@ -2579,7 +2597,7 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
             indent() << "if err != nil {" << endl <<
             indent() << "  return fmt.Errorf(\"error reading map begin: %s\")" << endl <<
             indent() << "}" << endl <<
-            indent() << prefix << eq << "make(map[" << type_to_go_type(t->get_key_type()) << "]" <<  type_to_go_type(t->get_val_type()) << ", size)" << endl;
+            indent() << prefix << eq << "make(map[" << type_to_go_key_type(t->get_key_type()) << "]" <<  type_to_go_type(t->get_val_type()) << ", size)" << endl;
     } else if (ttype->is_set()) {
         t_set* t = (t_set*)ttype;
         out <<
@@ -2587,7 +2605,7 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
             indent() << "if err != nil {" << endl <<
             indent() << "  return fmt.Errorf(\"error reading set being: %s\")" << endl <<
             indent() << "}" << endl <<
-            indent() << prefix << eq << "make(map[" << type_to_go_type(t->get_elem_type()) << "]bool, size)" << endl;
+            indent() << prefix << eq << "make(map[" << type_to_go_key_type(t->get_elem_type()) << "]bool, size)" << endl;
     } else if (ttype->is_list()) {
         t_list* t = (t_list*)ttype;
         out <<
@@ -2649,7 +2667,7 @@ void t_go_generator::generate_deserialize_map_element(ofstream &out,
     string val = tmp("_val");
     t_field fkey(tmap->get_key_type(), key);
     t_field fval(tmap->get_val_type(), val);
-    generate_deserialize_field(out, &fkey, true);
+    generate_deserialize_field(out, &fkey, true, "", false, false, true);
     generate_deserialize_field(out, &fval, true);
     indent(out) <<
                 prefix << "[" << key << "] = " << val << endl;
@@ -2695,7 +2713,8 @@ void t_go_generator::generate_deserialize_list_element(ofstream &out,
  */
 void t_go_generator::generate_serialize_field(ofstream &out,
         t_field* tfield,
-        string prefix)
+        string prefix,
+        bool inkey)
 {
     t_type* type = get_true_type(tfield->get_type());
     string name(prefix + publicize(variable_name_to_go_name(tfield->get_name())));
@@ -2727,7 +2746,7 @@ void t_go_generator::generate_serialize_field(ofstream &out,
                 break;
 
             case t_base_type::TYPE_STRING:
-                if (((t_base_type*)type)->is_binary()) {
+                if (((t_base_type*)type)->is_binary() && !inkey) {
                     out << "WriteBinary(" << name << ")";
                 } else {
                     out << "WriteString(string(" << name << "))";
@@ -2875,7 +2894,7 @@ void t_go_generator::generate_serialize_map_element(ofstream &out,
         string viter)
 {
     t_field kfield(tmap->get_key_type(), "");
-    generate_serialize_field(out, &kfield, kiter);
+    generate_serialize_field(out, &kfield, kiter, true);
     t_field vfield(tmap->get_val_type(), "");
     generate_serialize_field(out, &vfield, viter);
 }
@@ -3185,6 +3204,10 @@ string t_go_generator::type_to_go_key_type(t_type* type)
     if (resolved_type->is_map() || resolved_type->is_list() || resolved_type->is_set()) {
         throw "Cannot produce a valid type for a Go map key: "  + type_to_go_type(type) + " - aborting.";
     }
+
+    if (resolved_type->is_string() &&
+        ((t_base_type*) resolved_type)->is_binary())
+        return "string";
 
     return type_to_go_type(type);
 }

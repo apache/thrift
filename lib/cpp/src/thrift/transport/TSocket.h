@@ -179,6 +179,11 @@ class TSocket : public TVirtualTransport<TSocket> {
   void setMaxRecvRetries(int maxRecvRetries);
 
   /**
+   * Set SO_KEEPALIVE
+   */
+  void setKeepAlive(bool keepAlive);
+
+  /**
    * Get socket information formated as a string <Host: x Port: x>
    */
   std::string getSocketInfo();
@@ -274,6 +279,9 @@ class TSocket : public TVirtualTransport<TSocket> {
   /** Recv timeout in ms */
   int recvTimeout_;
 
+  /** Keep alive on */
+  bool keepAlive_;
+
   /** Linger on */
   bool lingerOn_;
 
@@ -285,9 +293,6 @@ class TSocket : public TVirtualTransport<TSocket> {
 
   /** Recv EGAIN retries */
   int maxRecvRetries_;
-
-  /** Recv timeout timeval */
-  struct timeval recvTimeval_;
 
   /** Cached peer address */
   union {

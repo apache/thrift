@@ -32,6 +32,7 @@
 
 namespace apache { namespace thrift { namespace server {
 
+#ifdef HAVE_SYS_RESOURCE_H
 int increase_max_fds(int max_fds=(1<<24))  {
   struct rlimit fdmaxrl;
 
@@ -43,5 +44,6 @@ int increase_max_fds(int max_fds=(1<<24))  {
 
   return static_cast<int>(fdmaxrl.rlim_cur);
 }
+#endif
 
 }}} // apache::thrift::server

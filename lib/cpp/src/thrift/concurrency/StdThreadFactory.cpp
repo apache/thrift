@@ -19,6 +19,8 @@
 
 #include <thrift/thrift-config.h>
 
+#ifdef USE_STD_THREAD
+
 #include <thrift/concurrency/StdThreadFactory.h>
 #include <thrift/concurrency/Exception.h>
 
@@ -169,3 +171,5 @@ void StdThreadFactory::setDetached(bool value) { impl_->setDetached(value); }
 Thread::id_t StdThreadFactory::getCurrentThreadId() const { return impl_->getCurrentThreadId(); }
 
 }}} // apache::thrift::concurrency
+
+#endif // USE_STD_THREAD

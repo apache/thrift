@@ -75,10 +75,6 @@ static inline To bitwise_cast(From from) {
 }
 
 
-namespace apache { namespace thrift { namespace protocol {
-
-using apache::thrift::transport::TTransport;
-
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
@@ -139,6 +135,10 @@ using apache::thrift::transport::TTransport;
 #else /* __THRIFT_BYTE_ORDER */
 # error "Can't define htonll or ntohll!"
 #endif
+
+namespace apache { namespace thrift { namespace protocol {
+
+using apache::thrift::transport::TTransport;
 
 /**
  * Enumerated definition of the types that the Thrift protocol supports.

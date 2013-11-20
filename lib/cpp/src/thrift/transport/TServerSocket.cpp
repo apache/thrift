@@ -85,8 +85,10 @@ TServerSocket::TServerSocket(int port) :
   retryDelay_(0),
   tcpSendBuffer_(0),
   tcpRecvBuffer_(0),
+  keepAlive_(false),
   intSock1_(THRIFT_INVALID_SOCKET),
-  intSock2_(THRIFT_INVALID_SOCKET) {}
+  intSock2_(THRIFT_INVALID_SOCKET)
+{}
 
 TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   port_(port),
@@ -99,8 +101,10 @@ TServerSocket::TServerSocket(int port, int sendTimeout, int recvTimeout) :
   retryDelay_(0),
   tcpSendBuffer_(0),
   tcpRecvBuffer_(0),
+  keepAlive_(false),
   intSock1_(THRIFT_INVALID_SOCKET),
-  intSock2_(THRIFT_INVALID_SOCKET) {}
+  intSock2_(THRIFT_INVALID_SOCKET)
+{}
 
 TServerSocket::TServerSocket(string path) :
   port_(0),
@@ -114,8 +118,10 @@ TServerSocket::TServerSocket(string path) :
   retryDelay_(0),
   tcpSendBuffer_(0),
   tcpRecvBuffer_(0),
+  keepAlive_(false),
   intSock1_(THRIFT_INVALID_SOCKET),
-  intSock2_(THRIFT_INVALID_SOCKET) {}
+  intSock2_(THRIFT_INVALID_SOCKET)
+{}
 
 TServerSocket::~TServerSocket() {
   close();
@@ -377,6 +383,8 @@ void TServerSocket::listen() {
                               THRIFT_GET_SOCKET_ERROR);
   }
 
+  if(listenCallback_) listenCallback_(serverSocket_);
+
   // Call listen
   if (-1 == ::listen(serverSocket_, acceptBacklog_)) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
@@ -480,7 +488,12 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   if (recvTimeout_ > 0) {
     client->setRecvTimeout(recvTimeout_);
   }
+  if (keepAlive_) {
+    client->setKeepAlive(keepAlive_);
+  }
   client->setCachedAddress((sockaddr*) &clientAddress, size);
+
+  if(acceptCallback_) acceptCallback_(clientSocket);
 
   return client;
 }

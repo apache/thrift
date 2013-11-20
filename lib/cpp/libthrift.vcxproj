@@ -39,6 +39,7 @@
     <ClCompile Include="src\thrift\concurrency\BoostMonitor.cpp" />
     <ClCompile Include="src\thrift\concurrency\BoostMutex.cpp" />
     <ClCompile Include="src\thrift\concurrency\BoostThreadFactory.cpp" />
+    <ClCompile Include="src\thrift\concurrency\StdThreadFactory.cpp" />
     <ClCompile Include="src\thrift\concurrency\ThreadManager.cpp"/>
     <ClCompile Include="src\thrift\concurrency\TimerManager.cpp"/>
     <ClCompile Include="src\thrift\concurrency\Util.cpp"/>
@@ -87,6 +88,7 @@
   <ItemGroup>
     <ClInclude Include="src\thrift\async\TAsyncChannel.h" />
     <ClInclude Include="src\thrift\concurrency\BoostThreadFactory.h" />
+    <ClInclude Include="src\thrift\concurrency\StdThreadFactory.h" />
     <ClInclude Include="src\thrift\concurrency\Exception.h" />
     <ClInclude Include="src\thrift\concurrency\PlatformThreadFactory.h" />
     <ClInclude Include="src\thrift\processor\PeekProcessor.h" />

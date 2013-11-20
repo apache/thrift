@@ -20,12 +20,12 @@
 package thrift
 
 import (
+	"bytes"
 	"testing"
 )
 
 func TestReadWriteCompactProtocol(t *testing.T) {
 	ReadWriteProtocolTest(t, NewTCompactProtocolFactory())
-	/*
 	   transports := []TTransport{
 	     NewTMemoryBuffer(),
 	     NewStreamTransportRW(bytes.NewBuffer(make([]byte, 0, 16384))),
@@ -50,5 +50,4 @@ func TestReadWriteCompactProtocol(t *testing.T) {
 	     ReadWriteBinary(t, p, trans);
 	     trans.Close();
 	   }
-	*/
 }

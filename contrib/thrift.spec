@@ -154,7 +154,7 @@ ln -s libthriftz-%{version}.so ${RPM_BUILD_ROOT}%{_libdir}/libthriftz.so.0
 
 %if 0%{!?without_java:1}
 mkdir -p $RPM_BUILD_ROOT%{_javadir}
-cp -p lib/java/*.jar $RPM_BUILD_ROOT%{_javadir}
+cp -p lib/java/build/*.jar $RPM_BUILD_ROOT%{_javadir}
 %endif
 
 %if 0%{!?without_python:1}

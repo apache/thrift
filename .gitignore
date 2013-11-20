@@ -5,6 +5,8 @@
 *.deps
 *.libs
 gen-*
+*.log
+*.trs
 *.suo
 *.cache
 *.user

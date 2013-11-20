@@ -497,6 +497,44 @@ type
   end;
 
 
+type
+  IRequestEvents = interface
+    ['{F926A26A-5B00-4560-86FA-2CAE3BA73DAF}']
+    // Called before reading arguments.
+    procedure PreRead;
+    // Called between reading arguments and calling the handler.
+    procedure PostRead;
+    // Called between calling the handler and writing the response.
+    procedure PreWrite;
+    // Called after writing the response.
+    procedure PostWrite;
+    // Called when an oneway (async) function call completes successfully.
+    procedure OnewayComplete;
+    // Called if the handler throws an undeclared exception.
+    procedure UnhandledError( const e : Exception);
+    // Called when a client has finished request-handling to clean up
+    procedure CleanupContext;
+  end;
+
+
+  IProcessorEvents = interface
+    ['{A8661119-657C-447D-93C5-512E36162A45}']
+    // Called when a client is about to call the processor.
+    procedure Processing( const transport : ITransport);
+    // Called on any service function invocation
+    function  CreateRequestContext( const aFunctionName : string) : IRequestEvents;
+    // Called when a client has finished request-handling to clean up
+    procedure CleanupContext;
+  end;
+
+
+  IProcessor = interface
+    ['{7BAE92A5-46DA-4F13-B6EA-0EABE233EE5F}']
+    function Process( const iprot :IProtocol; const oprot: IProtocol; const events : IProcessorEvents = nil): Boolean;
+  end;
+
+
+
 implementation
 
 function ConvertInt64ToDouble( const n: Int64): Double;

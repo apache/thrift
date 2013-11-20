@@ -30,10 +30,26 @@ uses
   Thrift.Transport;
 
 type
+  IServerEvents = interface
+    ['{9E2A99C5-EE85-40B2-9A52-2D1722B18176}']
+    // Called before the server begins.
+    procedure PreServe;
+    // Called when the server transport is ready to accept requests
+    procedure PreAccept;
+    // Called when a new client has connected and the server is about to being processing.
+    function  CreateProcessingContext( const input, output : IProtocol) : IProcessorEvents;
+  end;
+
+
   IServer = interface
-    ['{CF9F56C6-BB39-4C7D-877B-43B416572CE6}']
+    ['{ADC46F2D-8199-4D1C-96D2-87FD54351723}']
     procedure Serve;
     procedure Stop;
+
+    function GetServerEvents : IServerEvents;
+    procedure SetServerEvents( const value : IServerEvents);
+
+    property ServerEvents : IServerEvents read GetServerEvents write SetServerEvents;
   end;
 
   TServerImpl = class abstract( TInterfacedObject, IServer )
@@ -48,8 +64,12 @@ type
     FInputProtocolFactory : IProtocolFactory;
     FOutputProtocolFactory : IProtocolFactory;
     FLogDelegate : TLogDelegate;
+    FServerEvents : IServerEvents;
 
     class procedure DefaultLogDelegate( const str: string);
+
+    function GetServerEvents : IServerEvents;
+    procedure SetServerEvents( const value : IServerEvents);
 
     procedure Serve; virtual; abstract;
     procedure Stop; virtual; abstract;
@@ -64,7 +84,7 @@ type
       const ALogDelegate : TLogDelegate
       ); overload;
 
-    constructor Create( 
+    constructor Create(
       const AProcessor :IProcessor;
       const AServerTransport: IServerTransport
 	  ); overload;
@@ -122,7 +142,7 @@ begin
   InputTransFactory := TTransportFactoryImpl.Create;
   OutputTransFactory := TTransportFactoryImpl.Create;
 
-  //no inherited;  
+  //no inherited;
   Create(
     AProcessor,
     AServerTransport,
@@ -202,12 +222,26 @@ constructor TServerImpl.Create( const AProcessor: IProcessor;
   const AServerTransport: IServerTransport; const ATransportFactory: ITransportFactory;
   const AProtocolFactory: IProtocolFactory);
 begin
-  //no inherited;  
+  //no inherited;
   Create( AProcessor, AServerTransport,
           ATransportFactory, ATransportFactory,
           AProtocolFactory, AProtocolFactory,
           DefaultLogDelegate);
 end;
+
+
+function TServerImpl.GetServerEvents : IServerEvents;
+begin
+  result := FServerEvents;
+end;
+
+
+procedure TServerImpl.SetServerEvents( const value : IServerEvents);
+begin
+  // if you need more than one, provide a specialized IServerEvents implementation
+  FServerEvents := value;
+end;
+
 
 { TSimpleServer }
 
@@ -267,6 +301,7 @@ var
   OutputTransport : ITransport;
   InputProtocol : IProtocol;
   OutputProtocol : IProtocol;
+  context : IProcessorEvents;
 begin
   try
     FServerTransport.Listen;
@@ -276,6 +311,9 @@ begin
       FLogDelegate( E.ToString);
     end;
   end;
+
+  if FServerEvents <> nil
+  then FServerEvents.PreServe;
 
   client := nil;
   while (not FStop) do
@@ -287,16 +325,34 @@ begin
       InputProtocol := nil;
       OutputProtocol := nil;
 
-      client := FServerTransport.Accept;
+      client := FServerTransport.Accept( procedure
+                                         begin
+                                           if FServerEvents <> nil
+                                           then FServerEvents.PreAccept;
+                                         end);
+
+      if client = nil then begin
+        if FStop
+        then Abort  // silent exception
+        else raise TTransportException.Create( 'ServerTransport.Accept() may not return NULL' );
+      end;
+
       FLogDelegate( 'Client Connected!');
 
       InputTransport := FInputTransportFactory.GetTransport( client );
       OutputTransport := FOutputTransportFactory.GetTransport( client );
       InputProtocol := FInputProtocolFactory.GetProtocol( InputTransport );
       OutputProtocol := FOutputProtocolFactory.GetProtocol( OutputTransport );
-      while ( FProcessor.Process( InputProtocol, OutputProtocol )) do
-      begin
-        if FStop then Break;
+
+      if FServerEvents <> nil
+      then context := FServerEvents.CreateProcessingContext( InputProtocol, OutputProtocol)
+      else context := nil;
+
+      while not FStop do begin
+        if context <> nil
+        then context.Processing( client);
+        if not FProcessor.Process( InputProtocol, OutputProtocol, context)
+        then Break;
       end;
 
     except
@@ -311,6 +367,13 @@ begin
         FLogDelegate( E.ToString);
       end;
     end;
+
+    if context <> nil
+    then begin
+      context.CleanupContext;
+      context := nil;
+    end;
+
     if InputTransport <> nil then
     begin
       InputTransport.Close;

@@ -92,7 +92,7 @@
 
   <target name="compile" depends="init">
     <javac srcdir="${src}" destdir="${build.dir}" source="1.5" target="1.5" 
-    debug="true" classpathref="compile.classpath" includeantruntime="false">
+    debug="true" classpathref="compile.classpath" includeantruntime="false" encoding="UTF-8">
       <compilerarg value="-Xlint:unchecked"/>
     </javac>
   </target>
@@ -158,15 +158,15 @@
   </target>
 
   <target name="compile-test" description="Build the test suite classes" depends="optional-generate,dist">
-    <javac debug="true" srcdir="${gen}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false">
+    <javac debug="true" srcdir="${gen}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false" encoding="UTF-8">
       <compilerarg value="-Xlint:deprecation"/>
       <!--<compilerarg value="-Xlint:unchecked"/>-->
     </javac>  
-    <javac debug="true" srcdir="${genbean}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false">
+    <javac debug="true" srcdir="${genbean}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false" encoding="UTF-8">
       <compilerarg value="-Xlint:deprecation"/>
       <!--<compilerarg value="-Xlint:unchecked"/>-->
     </javac>  
-    <javac debug="true" srcdir="${src.test}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false">
+    <javac debug="true" srcdir="${src.test}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false" encoding="UTF-8">
       <compilerarg value="-Xlint:deprecation"/>
       <!--<compilerarg value="-Xlint:unchecked"/>-->
     </javac>  
@@ -318,7 +318,6 @@
 
       <!-- Thrift dependencies list -->
       <dependency groupId="org.slf4j" artifactId="slf4j-api" version="${slf4j.version}"/>
-      <dependency groupId="org.apache.commons" artifactId="commons-lang3" version="${commons-lang3.version}"/>
       <dependency groupId="javax.servlet" artifactId="servlet-api" version="${servlet.version}" scope="provided"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="${httpclient.version}"/>
       <dependency groupId="org.apache.httpcomponents" artifactId="httpcore" version="${httpcore.version}"/>

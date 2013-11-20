@@ -129,19 +129,17 @@ type
   end;
 
   IServerTransport = interface
-    ['{BF6B7043-DA22-47BF-8B11-2B88EC55FE12}']
+    ['{C43B87ED-69EA-47C4-B77C-15E288252900}']
     procedure Listen;
     procedure Close;
-    function Accept: ITransport;
+    function Accept( const fnAccepting: TProc): ITransport;
   end;
 
   TServerTransportImpl = class( TInterfacedObject, IServerTransport)
   protected
-    function AcceptImpl: ITransport; virtual; abstract;
-  public
     procedure Listen; virtual; abstract;
     procedure Close; virtual; abstract;
-    function Accept: ITransport;
+    function Accept( const fnAccepting: TProc): ITransport;  virtual; abstract;
   end;
 
   ITransportFactory = interface
@@ -226,7 +224,7 @@ type
     FUseBufferedSocket : Boolean;
     FOwnsServer : Boolean;
   protected
-    function AcceptImpl: ITransport; override;
+    function Accept( const fnAccepting: TProc) : ITransport; override;
   public
     constructor Create( const AServer: TTcpServer ); overload;
     constructor Create( const AServer: TTcpServer; AClientTimeout: Integer); overload;
@@ -518,17 +516,6 @@ begin
   inherited Create(msg);
 end;
 
-{ TServerTransportImpl }
-
-function TServerTransportImpl.Accept: ITransport;
-begin
-  Result := AcceptImpl;
-  if Result = nil then
-  begin
-    raise TTransportException.Create( 'accept() may not return NULL' );
-  end;
-end;
-
 { TTransportFactoryImpl }
 
 function TTransportFactoryImpl.GetTransport( const ATrans: ITransport): ITransport;
@@ -557,11 +544,10 @@ begin
   Create( APort, 0 );
 end;
 
-function TServerSocketImpl.AcceptImpl: ITransport;
+function TServerSocketImpl.Accept( const fnAccepting: TProc): ITransport;
 var
-  ret : TCustomIpClient;
-  ret2 : IStreamTransport;
-  ret3 : ITransport;
+  client : TCustomIpClient;
+  trans  : IStreamTransport;
 begin
   if FServer = nil then
   begin
@@ -570,29 +556,28 @@ begin
   end;
 
   try
-    ret := TCustomIpClient.Create(nil);
-    if ( not FServer.Accept( ret )) then
+    client := TCustomIpClient.Create(nil);
+
+    if Assigned(fnAccepting)
+    then fnAccepting();
+
+    if ( not FServer.Accept( client)) then
     begin
-      ret.Free;
+      client.Free;
       Result := nil;
       Exit;
     end;
 
-    if ret = nil then
+    if client = nil then
     begin
       Result := nil;
       Exit;
     end;
 
-    ret2 := TSocketImpl.Create( ret );
-    if FUseBufferedSocket then
-    begin
-      ret3 := TBufferedTransportImpl.Create(ret2);
-      Result := ret3;
-    end else
-    begin
-      Result := ret2;
-    end;
+    trans := TSocketImpl.Create( client);
+    if FUseBufferedSocket
+    then result := TBufferedTransportImpl.Create( trans)
+    else result := trans;
 
   except
     on E: Exception do

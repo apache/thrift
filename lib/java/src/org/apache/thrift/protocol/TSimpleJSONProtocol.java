@@ -59,9 +59,17 @@ public class TSimpleJSONProtocol extends TProtocol {
   private static final TSet EMPTY_SET = new TSet();
   private static final TList EMPTY_LIST = new TList();
   private static final TMap EMPTY_MAP = new TMap();
+  private static final String LIST = "list";
+  private static final String SET = "set";
+  private static final String MAP = "map";
 
   protected class Context {
     protected void write() throws TException {}
+
+    /**
+     * Returns whether the current value is a key in a map
+     */
+    protected boolean isMapKey() { return  false; }
   }
 
   protected class ListContext extends Context {
@@ -91,6 +99,22 @@ public class TSimpleJSONProtocol extends TProtocol {
     }
   }
 
+  protected class MapContext extends StructContext {
+    protected boolean isKey = true;
+
+    @Override
+    protected void write() throws TException {
+      super.write();
+      isKey = !isKey;
+    }
+
+    protected boolean isMapKey() {
+      // we want to coerce map keys to json strings regardless
+      // of their type
+      return isKey;
+    }
+  }
+
   protected final Context BASE_CONTEXT = new Context();
 
   /**
@@ -116,6 +140,15 @@ public class TSimpleJSONProtocol extends TProtocol {
    */
   protected void popWriteContext() {
     writeContext_ = writeContextStack_.pop();
+  }
+
+  /**
+   * Used to make sure that we are not encountering a map whose keys are containers
+   */
+  protected void assertContextIsNotMapKey(String invalidKeyType) throws CollectionMapKeyException {
+    if (writeContext_.isMapKey()) {
+      throw new CollectionMapKeyException("Cannot serialize a map with keys that are of type " + invalidKeyType);
+    }
   }
 
   /**
@@ -159,9 +192,10 @@ public class TSimpleJSONProtocol extends TProtocol {
   public void writeFieldStop() {}
 
   public void writeMapBegin(TMap map) throws TException {
+    assertContextIsNotMapKey(MAP);
     writeContext_.write();
     trans_.write(LBRACE);
-    pushWriteContext(new StructContext());
+    pushWriteContext(new MapContext());
     // No metadata!
   }
 
@@ -171,6 +205,7 @@ public class TSimpleJSONProtocol extends TProtocol {
   }
 
   public void writeListBegin(TList list) throws TException {
+    assertContextIsNotMapKey(LIST);
     writeContext_.write();
     trans_.write(LBRACKET);
     pushWriteContext(new ListContext());
@@ -183,6 +218,7 @@ public class TSimpleJSONProtocol extends TProtocol {
   }
 
   public void writeSetBegin(TSet set) throws TException {
+    assertContextIsNotMapKey(SET);
     writeContext_.write();
     trans_.write(LBRACKET);
     pushWriteContext(new ListContext());
@@ -207,8 +243,12 @@ public class TSimpleJSONProtocol extends TProtocol {
   }
 
   public void writeI32(int i32) throws TException {
-    writeContext_.write();
-    _writeStringData(Integer.toString(i32));
+    if(writeContext_.isMapKey()) {
+      writeString(Integer.toString(i32));
+    } else {
+      writeContext_.write();
+      _writeStringData(Integer.toString(i32));
+    }
   }
 
   public void _writeStringData(String s) throws TException {
@@ -221,13 +261,21 @@ public class TSimpleJSONProtocol extends TProtocol {
   }
 
   public void writeI64(long i64) throws TException {
-    writeContext_.write();
-    _writeStringData(Long.toString(i64));
+    if(writeContext_.isMapKey()) {
+      writeString(Long.toString(i64));
+    } else {
+      writeContext_.write();
+      _writeStringData(Long.toString(i64));
+    }
   }
 
   public void writeDouble(double dub) throws TException {
-    writeContext_.write();
-    _writeStringData(Double.toString(dub));
+    if(writeContext_.isMapKey()) {
+      writeString(Double.toString(dub));
+    } else {
+      writeContext_.write();
+      _writeStringData(Double.toString(dub));
+    }
   }
 
   public void writeString(String str) throws TException {
@@ -382,4 +430,9 @@ public class TSimpleJSONProtocol extends TProtocol {
     return ByteBuffer.wrap(new byte[0]);
   }
 
+  public static class CollectionMapKeyException extends TException {
+    public CollectionMapKeyException(String message) {
+      super(message);
+    }
+  }
 }
