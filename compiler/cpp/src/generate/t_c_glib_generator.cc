@@ -1819,7 +1819,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
 	f_types_impl_ << indent() << "}" << endl;
       } else if (t->is_list()) {
         t_type *etype = ((t_list *) t)->get_elem_type();
-        string destructor_function = "g_ptr_array_free";
+        string destructor_function = "g_ptr_array_unref";
 
         if (etype->is_base_type()) {
           t_base_type::t_base tbase = ((t_base_type *) etype)->get_base();
@@ -1832,7 +1832,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
             case t_base_type::TYPE_I32:           
             case t_base_type::TYPE_I64:
             case t_base_type::TYPE_DOUBLE:
-              destructor_function = "g_array_free";
+              destructor_function = "g_array_unref";
               break;
             case t_base_type::TYPE_STRING:
               break;
@@ -1846,7 +1846,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
         indent_up();
         f_types_impl_ <<
           indent() << destructor_function << " (tobject->" << name <<
-                       ", TRUE);" << endl;
+                       ");" << endl;
         f_types_impl_ << indent() << "tobject->" << name << " = NULL;" << endl;
         indent_down();
         f_types_impl_ << indent() << "}" << endl;
