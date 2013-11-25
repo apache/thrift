@@ -19,6 +19,7 @@
 
 require 'spec_helper'
 require 'rack/test'
+require 'thrift/server/thin_http_server'
 
 describe Thrift::ThinHTTPServer do
 
