@@ -33,7 +33,7 @@ class TSocketBase(TTransportBase):
     else:
       return socket.getaddrinfo(self.host,
                                 self.port,
-                                socket.self._socket_family,
+                                self._socket_family,
                                 socket.SOCK_STREAM,
                                 0,
                                 socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
