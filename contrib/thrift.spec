@@ -17,6 +17,10 @@
 # under the License.
 #
 
+%define without_java 1
+%define without_python 1
+%define without_tests 1
+
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 %{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
@@ -24,7 +28,7 @@ Name:           thrift
 License:        Apache License v2.0
 Group:          Development
 Summary:        RPC and serialization framework
-Version:        0.9.0
+Version:        0.9.1
 Release:        0
 URL:            http://thrift.apache.org
 Packager:       Thrift Developers <dev@thrift.apache.org>
@@ -127,12 +131,13 @@ Python libraries for Thrift.
 %configure \
   %{?without_libevent: --without-libevent } \
   %{?without_zlib:     --without-zlib     } \
-  --without-java \
+  %{?without_tests:    --without-tests    } \
+  %{?without_java:     --without-java     } \
+  %{?without_python:   --without-python   } \
   --without-csharp \
-  --without-python \
   --without-erlang \
 
-make
+make %{?_smp_mflags}
 
 %if 0%{!?without_java:1}
 cd lib/java
