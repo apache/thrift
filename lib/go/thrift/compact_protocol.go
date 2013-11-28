@@ -352,6 +352,7 @@ func (p *TCompactProtocol) ReadStructBegin() (name string, err error) {
 func (p *TCompactProtocol) ReadStructEnd() error {
 	// consume the last field we read off the wire.
 	p.lastFieldId = p.lastField[len(p.lastField)-1]
+	p.lastField = p.lastField[:len(p.lastField)-1]
 	return nil
 }
 
