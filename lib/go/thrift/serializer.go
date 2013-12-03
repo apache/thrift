@@ -20,7 +20,7 @@
 package thrift
 
 type TSerializer struct {
-	Transport TTransport
+	Transport *TMemoryBuffer
 	Protocol  TProtocol
 }
 
@@ -30,9 +30,7 @@ type TStruct interface {
 }
 
 func NewTSerializer() *TSerializer {
-	var transport TTransport
-	transport = NewTMemoryBufferLen(1024)
-
+	transport := NewTMemoryBufferLen(1024)
 	protocol := NewTBinaryProtocolFactoryDefault().GetProtocol(transport)
 
 	return &TSerializer{
@@ -41,8 +39,7 @@ func NewTSerializer() *TSerializer {
 }
 
 func (t *TSerializer) WriteString(msg TStruct) (s string, err error) {
-	s = ""
-	err = nil
+	t.Transport.Reset()
 
 	if err = msg.Write(t.Protocol); err != nil {
 		return
@@ -55,19 +52,11 @@ func (t *TSerializer) WriteString(msg TStruct) (s string, err error) {
 		return
 	}
 
-	var buf []byte
-	var place int
-	buf = make([]byte, 1024)
-	if place, err = t.Transport.Read(buf); err != nil {
-		return
-	}
-
-	s = string(buf[:place])
-	return
+	return t.Transport.String(), nil
 }
 
 func (t *TSerializer) Write(msg TStruct) (b []byte, err error) {
-	err = nil
+	t.Transport.Reset()
 
 	if err = msg.Write(t.Protocol); err != nil {
 		return
@@ -81,13 +70,6 @@ func (t *TSerializer) Write(msg TStruct) (b []byte, err error) {
 		return
 	}
 
-	var buf []byte
-	var place int
-	buf = make([]byte, 1024)
-	if place, err = t.Transport.Read(buf); err != nil {
-		return
-	}
-
-	b = buf[:place]
+	b = append(b, t.Transport.Bytes()...)
 	return
 }
