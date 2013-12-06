@@ -603,13 +603,12 @@ void t_delphi_generator::generate_typedef(t_typedef* ttypedef) {
   indent(s_struct) << 
     type_name(ttypedef) << " = ";
 
-  bool container = type->is_list() || type->is_map() || type->is_set();
-
   // commented out: the benefit is not big enough to risk breaking existing code
+  //bool container = type->is_list() || type->is_map() || type->is_set();
   //if( ! container)
   //  s_struct << "type ";  //the "type A = type B" syntax leads to E2574 with generics
 
-  s_struct << type_name(ttypedef->get_type(), ! container) << ";" << endl <<
+  s_struct << type_name(ttypedef->get_type()) << ";" << endl <<
     endl;
   indent_down();
   
