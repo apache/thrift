@@ -442,7 +442,11 @@ func (p *TJSONProtocol) ReadBinary() ([]byte, error) {
 }
 
 func (p *TJSONProtocol) Flush() (err error) {
-	return NewTProtocolException(p.writer.Flush())
+	err = p.writer.Flush()
+	if err == nil {
+		err = p.trans.Flush()
+	}
+	return NewTProtocolException(err)
 }
 
 func (p *TJSONProtocol) Skip(fieldType TType) (err error) {
