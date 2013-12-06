@@ -1667,7 +1667,13 @@ void t_go_generator::generate_service_client(t_service* tservice)
                    indent() << "  p.OutputProtocol = oprot" << endl <<
                    indent() << "}" << endl <<
                    indent() << "p.SeqId++" << endl <<
-                   indent() << "oprot.WriteMessageBegin(\"" << (*f_iter)->get_name() << "\", thrift.CALL, p.SeqId)" << endl <<
+                   indent() << "if err = oprot.WriteMessageBegin(\"" << (*f_iter)->get_name() << "\", thrift.CALL, p.SeqId); err != nil {" << endl;
+        indent_up();
+        f_service_ <<
+                   indent() << "return" << endl;
+        indent_down();
+        f_service_ <<
+                   indent() << "}" << endl <<
                    indent() << args << " := New" << publicize(argsname) << "()" << endl;
 
         for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
@@ -1677,10 +1683,21 @@ void t_go_generator::generate_service_client(t_service* tservice)
 
         // Write to the stream
         f_service_ <<
-                   indent() << "err = " << args << ".Write(oprot)" << endl <<
-                   indent() << "oprot.WriteMessageEnd()" << endl <<
-                   indent() << "oprot.Flush()" << endl <<
+                   indent() << "if err = " << args << ".Write(oprot); err != nil {" << endl;
+        indent_up();
+        f_service_ <<
                    indent() << "return" << endl;
+        indent_down();
+        f_service_ <<
+                   indent() << "}" << endl <<
+                   indent() << "if err = oprot.WriteMessageEnd(); err != nil {" << endl;
+        indent_up();
+        f_service_ <<
+                   indent() << "return" << endl;
+        indent_down();
+        f_service_ <<
+                   indent() << "}" << endl <<
+                   indent() << "return oprot.Flush()" << endl;
         indent_down();
         f_service_ <<
                    indent() << "}" << endl << endl;
@@ -1739,8 +1756,12 @@ void t_go_generator::generate_service_client(t_service* tservice)
                        indent() << "  return" << endl <<
                        indent() << "}" << endl <<
                        indent() << result << " := New" << publicize(resultname) << "()" << endl <<
-                       indent() << "err = " << result << ".Read(iprot)" << endl <<
-                       indent() << "iprot.ReadMessageEnd()" << endl;
+                       indent() << "if err = " << result << ".Read(iprot); err != nil {" << endl <<
+                       indent() << "  return" << endl <<
+                       indent() << "}" << endl <<
+                       indent() << "if err = iprot.ReadMessageEnd(); err != nil {" << endl <<
+                       indent() << "  return" << endl <<
+                       indent() << "}" << endl;
 
             // Careful, only return _result if not a void function
             if (!(*f_iter)->get_returntype()->is_void()) {
