@@ -638,22 +638,27 @@ void t_go_generator::close_generator()
 }
 
 /**
- * Generates a typedef. This is not done in go, types are all implicit.
+ * Generates a typedef.
  *
  * @param ttypedef The type definition
  */
 void t_go_generator::generate_typedef(t_typedef* ttypedef)
 {
     generate_go_docstring(f_types_, ttypedef);
-    string newTypeDef(publicize(ttypedef->get_symbolic()));
-    string baseType(type_to_go_type(ttypedef->get_type()));
+    string new_type_name(publicize(ttypedef->get_symbolic()));
+    string base_type(type_to_go_type(ttypedef->get_type()));
 
-    if (baseType == newTypeDef) {
+    if (base_type == new_type_name) {
         return;
     }
 
     f_types_ <<
-             "type " << newTypeDef << " " << baseType << endl << endl;
+             "type " << new_type_name << " " << base_type << endl << endl;
+    // Generate a convenience function that converts an instance of a type
+    // (which may be a constant) into a pointer to an instance of a type.
+    f_types_ <<
+             "func " << new_type_name << "Ptr(v " << new_type_name <<  ") *" << new_type_name <<
+             " { return &v }" << endl << endl;
 }
 
 /**
@@ -720,6 +725,12 @@ void t_go_generator::generate_enum(t_enum* tenum)
              << to_string_mapping.str() << endl
              << from_string_mapping.str() << endl << endl;
 
+    // Generate a convenience function that converts an instance of an enum
+    // (which may be a constant) into a pointer to an instance of that enum
+    // type.
+    f_types_ <<
+             "func " << tenum_name << "Ptr(v " << tenum_name <<  ") *" << tenum_name <<
+             " { return &v }" << endl << endl;
 }
 
 
@@ -1031,7 +1042,9 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
             t_const_value* def_value;
             get_publicized_name_and_def_value(*m_iter, &publicized_name, &def_value);
             if (def_value != NULL) {
-                t_type* ttype = get_true_type((*m_iter)->get_type());
+                // XXX
+                // t_type* ttype = get_true_type((*m_iter)->get_type());
+                t_type* ttype = (*m_iter)->get_type();
                 out << indent() << "*(rval." << publicized_name << ") = " << render_const_value(ttype, def_value, (*m_iter)->get_name()) << endl;
             }
         }
