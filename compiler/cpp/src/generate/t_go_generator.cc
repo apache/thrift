@@ -1286,9 +1286,9 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
     // Write the struct map
     out <<
         indent() << "if err := oprot.WriteFieldStop(); err != nil {" << endl <<
-        indent() << "  return fmt.Errorf(\"%T write field stop error: %s\", err) }" << endl <<
+        indent() << "  return fmt.Errorf(\"write field stop error: %s\", err) }" << endl <<
         indent() << "if err := oprot.WriteStructEnd(); err != nil {" << endl <<
-        indent() << "  return fmt.Errorf(\"%T write struct stop error: %s\", err) }" << endl <<
+        indent() << "  return fmt.Errorf(\"write struct stop error: %s\", err) }" << endl <<
         indent() << "return nil" << endl;
     indent_down();
     out <<
@@ -2526,7 +2526,7 @@ void t_go_generator::generate_deserialize_field(ofstream &out,
 
         out << "; err != nil {" << endl <<
             indent() << "return fmt.Errorf(\"error reading field " <<
-            tfield->get_key()  << ": %s\")" << endl;
+            tfield->get_key()  << ": %s\", err)" << endl;
 
         out << "} else {" << endl;
         string wrap;
@@ -2568,7 +2568,7 @@ void t_go_generator::generate_deserialize_struct(ofstream &out,
     out <<
         indent() << prefix << eq << new_prefix(type_name(tstruct)) << "()" << endl <<
         indent() << "if err := " << prefix << ".Read(iprot); err != nil {" << endl <<
-        indent() << "  return fmt.Errorf(\"%T error reading struct: %s\", " << prefix << ")" << endl <<
+        indent() << "  return fmt.Errorf(\"%T error reading struct: %s\", " << prefix << ", err)" << endl <<
         indent() << "}" << endl;
 }
 
@@ -2800,7 +2800,7 @@ void t_go_generator::generate_serialize_field(ofstream &out,
 
         out << "; err != nil {" << endl
             << indent() << "return fmt.Errorf(\"%T." << escape_string(tfield->get_name())
-            << " (" << tfield->get_key() << ") field write error: %s\", p) }" << endl;
+            << " (" << tfield->get_key() << ") field write error: %s\", p, err) }" << endl;
     } else {
         throw "compiler error: Invalid type in generate_serialize_field '" + type->get_name() + "' for field '" + name + "'";
     }
@@ -2818,7 +2818,7 @@ void t_go_generator::generate_serialize_struct(ofstream &out,
 {
     out <<
         indent() << "if err := " << prefix << ".Write(oprot); err != nil {" << endl <<
-        indent() << "  return fmt.Errorf(\"%T error writing struct: %s\", " << prefix << ")" << endl <<
+        indent() << "  return fmt.Errorf(\"%T error writing struct: %s\", " << prefix << ", err)" << endl <<
         indent() << "}" << endl;
 }
 
