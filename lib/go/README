@@ -1,4 +1,4 @@
-Thrift Python Software Library
+Thrift Go Software Library
 
 License
 =======
@@ -20,12 +20,47 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 
+
 Using Thrift with Go
 ====================
 
 In following Go conventions, we reccomend you use the 'go' tool to install
 Thrift for go.
 
-$ go get git.apache.org/thrift.git/lib/go/thrift
+    $ go get git.apache.org/thrift.git/lib/go/thrift
 
 Will install the last stable release.
+
+
+A note about optional fields
+============================
+
+The thrift-to-Go compiler tries to represent thrift IDL structs as Go structs.
+We must be able to distinguish between optional fields that are set to their
+default value and optional values which are actually unset, so the generated
+code represents optional fields via pointers.
+
+This is generally intuitive and works well much of the time, but Go does not
+have a syntax for creating a pointer to a constant in a single expression. That
+is, given a struct like
+
+    struct SomeIDLType {
+    	OptionalField *int32
+    }
+
+, the following will not compile:
+
+    x := &SomeIDLType{
+    	OptionalField: &(3),
+    }
+
+(Nor is there any other syntax that's built in to the language)
+
+As such, we provide some helpers that do just this under lib/go/thrift/. E.g.,
+
+    x := &SomeIDLType{
+    	OptionalField: thrift.Int32Ptr(3),
+    }
+
+And so on. The code generator also creates analogous helpers for user-defined
+typedefs and enums.
