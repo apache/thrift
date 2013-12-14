@@ -52,6 +52,7 @@ thrift/
     language of implementation.
 
     cpp/
+    go/
     java/
     php/
     py/
