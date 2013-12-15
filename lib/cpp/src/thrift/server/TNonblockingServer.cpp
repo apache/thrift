@@ -1405,8 +1405,9 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
   }
 
   const int kSize = sizeof(conn);
-  if (send(fd, const_cast_sockopt(&conn), kSize, 0) != kSize) {
-    return false;
+  while (send(fd, const_cast_sockopt(&conn), kSize, 0) != kSize) {
+    usleep(10);
+    //return false;
   }
 
   return true;
