@@ -1,6 +1,6 @@
 Apache Thrift
 
-Last Modified: 2013-June-6
+Last Modified: 2013-Dec-17
 
 License
 =======
@@ -52,6 +52,7 @@ thrift/
     language of implementation.
 
     cpp/
+    go/
     java/
     php/
     py/
