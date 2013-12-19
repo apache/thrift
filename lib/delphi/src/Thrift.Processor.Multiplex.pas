@@ -99,7 +99,7 @@ type
       An exception is thrown if the message type is not CALL or ONEWAY
       or if the service is unknown (or not properly registered).
     }
-    function Process(const iprot, oprot : IProtocol) : Boolean;
+    function Process( const iprot, oprot: IProtocol; const events : IProcessorEvents = nil): Boolean;
   end;
 
 
@@ -162,7 +162,7 @@ begin
 end;
 
 
-function TMultiplexedProcessorImpl.Process(const iprot, oprot : IProtocol) : Boolean;
+function TMultiplexedProcessorImpl.Process(const iprot, oprot : IProtocol; const events : IProcessorEvents = nil): Boolean;
 var msg, newMsg : IMessage;
     idx         : Integer;
     sService    : string;
@@ -208,7 +208,7 @@ begin
 
   // Dispatch processing to the stored processor
   protocol := TStoredMessageProtocol.Create( iprot, newMsg);
-  result   := processor.process( protocol, oprot);
+  result   := processor.process( protocol, oprot, events);
 end;
 
 
