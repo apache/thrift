@@ -2606,7 +2606,7 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
             indent() << "  return fmt.Errorf(\"error reading set begin: %s\")" << endl <<
             indent() << "}" << endl <<
             indent() << "tSet := make(map[" << type_to_go_key_type(t->get_elem_type()) << "]bool, size)" << endl <<
-            indent() << prefix << eq << "tSet" << endl;
+            indent() << prefix << eq << " " << (optional_field ? "&" : "") << "tSet" << endl;
     } else if (ttype->is_list()) {
         out <<
             indent() << "_, size, err := iprot.ReadListBegin()" << endl <<
