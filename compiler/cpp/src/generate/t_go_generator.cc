@@ -1856,6 +1856,7 @@ void t_go_generator::generate_service_remote(t_service* tservice)
              indent() << "var parsedUrl url.URL" << endl <<
              indent() << "var trans thrift.TTransport" << endl <<
              indent() << "_ = strconv.Atoi" << endl <<
+             indent() << "_ = math.Abs" << endl <<
              indent() << "flag.Usage = Usage" << endl <<
              indent() << "flag.StringVar(&host, \"h\", \"localhost\", \"Specify host and port\")" << endl <<
              indent() << "flag.IntVar(&port, \"p\", 9090, \"Specify port\")" << endl <<
