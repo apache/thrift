@@ -507,13 +507,13 @@ module Thrift
     def read_json_string(skipContext = false)
       # This string's characters must match up with the elements in escape_char_vals.
       # I don't have '/' on this list even though it appears on www.json.org --
-      # it is not in the RFC
-      escape_chars = "\"\\bfnrt"
+      # it is not in the RFC -> it is. See RFC 4627
+      escape_chars = "\"\\/bfnrt"
 
       # The elements of this array must match up with the sequence of characters in
       # escape_chars
       escape_char_vals = [
-        '"', '\\', '\b', '\f', '\n', '\r', '\t',
+        '"', '\\', '/', '\b', '\f', '\n', '\r', '\t',
       ]
 
       if !skipContext
