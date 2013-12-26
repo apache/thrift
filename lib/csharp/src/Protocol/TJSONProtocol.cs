@@ -69,10 +69,10 @@ namespace Thrift.Protocol
 	1,  1,(byte)'"',  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
   };
 
-		private char[] ESCAPE_CHARS = "\"\\bfnrt".ToCharArray();
+		private char[] ESCAPE_CHARS = "\"\\/bfnrt".ToCharArray();
 
 		private byte[] ESCAPE_CHAR_VALS = {
-	(byte)'"', (byte)'\\', (byte)'\b', (byte)'\f', (byte)'\n', (byte)'\r', (byte)'\t',
+	(byte)'"', (byte)'\\', (byte)'/', (byte)'\b', (byte)'\f', (byte)'\n', (byte)'\r', (byte)'\t',
   };
 
 		private const int DEF_STRING_SIZE = 16;
