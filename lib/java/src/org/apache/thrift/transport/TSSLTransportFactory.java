@@ -20,6 +20,7 @@
 package org.apache.thrift.transport;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.security.KeyStore;
 
@@ -168,6 +169,8 @@ public class TSSLTransportFactory {
 
   private static SSLContext createSSLContext(TSSLTransportParameters params) throws TTransportException {
     SSLContext ctx;
+    FileInputStream fin = null;
+
     try {
       ctx = SSLContext.getInstance(params.protocol);
       TrustManagerFactory tmf = null;
@@ -176,14 +179,16 @@ public class TSSLTransportFactory {
       if (params.isTrustStoreSet) {
         tmf = TrustManagerFactory.getInstance(params.trustManagerType);
         KeyStore ts = KeyStore.getInstance(params.trustStoreType);
-        ts.load(new FileInputStream(params.trustStore), params.trustPass.toCharArray());
+        fin = new FileInputStream(params.trustStore);
+        ts.load(fin, params.trustPass.toCharArray());
         tmf.init(ts);
       }
 
       if (params.isKeyStoreSet) {
         kmf = KeyManagerFactory.getInstance(params.keyManagerType);
         KeyStore ks = KeyStore.getInstance(params.keyStoreType);
-        ks.load(new FileInputStream(params.keyStore), params.keyPass.toCharArray());
+        fin = new FileInputStream(params.keyStore);
+        ks.load(fin, params.keyPass.toCharArray());
         kmf.init(ks, params.keyPass.toCharArray());
       }
 
@@ -199,7 +204,16 @@ public class TSSLTransportFactory {
 
     } catch (Exception e) {
       throw new TTransportException("Error creating the transport", e);
+    } finally {
+      if (fin != null) {
+        try {
+          fin.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
     }
+
     return ctx;
   }
 
