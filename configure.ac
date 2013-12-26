@@ -678,9 +678,10 @@ if test "$have_go" = "yes" ; then
 fi
 if test "$have_d" = "yes" ; then
   echo
-  echo "Using D Compiler ............. : $DMD"
-  echo "Building D libevent tests .... : $with_d_event_tests"
-  echo "Building D SSL tests ......... : $with_d_ssl_tests"
+  echo "D Library:"
+  echo "   Using D Compiler .......... : $DMD"
+  echo "   Building D libevent tests . : $with_d_event_tests"
+  echo "   Building D SSL tests ...... : $with_d_ssl_tests"
 fi
 echo
 echo "If something is missing that you think should be present,"
