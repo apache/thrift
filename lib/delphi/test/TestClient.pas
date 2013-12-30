@@ -898,6 +898,9 @@ const
   TEST_DOUBLE  = -1.234e-56;
   DELTA_DOUBLE = TEST_DOUBLE * 1e-14;
   TEST_STRING  = 'abc-'#$00E4#$00f6#$00fc; // german umlauts (en-us: "funny chars")
+  // test both possible solidus encodings
+  SOLIDUS_JSON_DATA = '"one/two\/three"';
+  SOLIDUS_EXCPECTED = 'one/two/three';
 begin
   stm  := TStringStream.Create;
   try
@@ -961,6 +964,17 @@ begin
     else Expect( FALSE, 'Binary data check at offset '+IntToStr(iErr));
 
     Expect( stm.Position = stm.Size, 'Stream position after read');
+
+    // Solidus can be encoded in two ways. Make sure we can read both
+    stm.Position := 0;
+    stm.Size     := 0;
+    stm.WriteString(SOLIDUS_JSON_DATA);
+    stm.Position := 0;
+    prot := TJSONProtocolImpl.Create(
+              TStreamTransportImpl.Create(
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+    Expect( prot.ReadString = SOLIDUS_EXCPECTED, 'Solidus encoding');
+
 
   finally
     stm.Free;

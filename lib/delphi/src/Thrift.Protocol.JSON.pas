@@ -264,8 +264,8 @@ const
                      0,0,0,0, 0,0,0,0, 0,0,0,0,  0,0,0,0,
                      1,1,Byte('"'),1,  1,1,1,1, 1,1,1,1, 1,1,1,1);
 
-  ESCAPE_CHARS     = '"\btnfr';
-  ESCAPE_CHAR_VALS = '"\'#8#9#10#12#13;
+  ESCAPE_CHARS     = '"\/btnfr';
+  ESCAPE_CHAR_VALS = '"\/'#8#9#10#12#13;
 
   DEF_STRING_SIZE = 16;
 
