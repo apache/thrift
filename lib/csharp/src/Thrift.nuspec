@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+     <id>$id$</id>
+     <version>$version$</version>
+     <authors>$author$</authors>
+     <owners>$author$</owners>
+     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
+     <projectUrl>http://thrift.apache.org/</projectUrl>
+     <requireLicenseAcceptance>false</requireLicenseAcceptance>
+     <description>$description$</description>
+     <tags>Thrift</tags>
+  </metadata>
+  <files>
+     <file src="bin\Release\Thrift.*" target="lib\net35" />
+     <file src="thrift*.exe" target="tools" />
+     <file src="..\README*" target="" />
+  </files>
+</package>
