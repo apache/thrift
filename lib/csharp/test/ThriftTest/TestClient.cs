@@ -99,7 +99,10 @@ namespace Test
 							trans = new TBufferedTransport(trans as TStreamTransport);
 						if (framed)
 							trans = new TFramedTransport(trans);
-							
+
+                        //Test transport open/close capabilities
+                        trans.Open();
+                        trans.Close();
 						t.Start(trans);
 					}
 					else
