@@ -2254,16 +2254,15 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
   if (style != "Cob") {
     f_header_ <<
       indent() << service_name_ << style << "Client" << short_suffix <<
-      "(" << prot_ptr << " prot) :" <<
-      endl;
+      "(" << prot_ptr << " prot) ";
+
     if (extends.empty()) {
+      f_header_ <<  "{" << endl;
       f_header_ <<
-        indent() << "  piprot_(prot)," << endl <<
-        indent() << "  poprot_(prot) {" << endl <<
-        indent() << "  iprot_ = prot.get();" << endl <<
-        indent() << "  oprot_ = prot.get();" << endl <<
+      indent() << "  setProtocol(prot);" << endl <<
         indent() << "}" << endl;
     } else {
+      f_header_ <<  ":" << endl;
       f_header_ <<
         indent() << "  " << extends << style << client_suffix <<
         "(prot, prot) {}" << endl;
@@ -2271,19 +2270,42 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
 
     f_header_ <<
       indent() << service_name_ << style << "Client" << short_suffix <<
-      "(" << prot_ptr << " iprot, " << prot_ptr << " oprot) :" << endl;
+      "(" << prot_ptr << " iprot, " << prot_ptr << " oprot) ";
     if (extends.empty()) {
+      f_header_ <<  "{" << endl;
       f_header_ <<
-        indent() << "  piprot_(iprot)," << endl <<
-        indent() << "  poprot_(oprot) {" << endl <<
-        indent() << "  iprot_ = iprot.get();" << endl <<
-        indent() << "  oprot_ = oprot.get();" << endl <<
+      indent() << "  setProtocol(iprot,oprot);" << endl <<
         indent() << "}" << endl;
     } else {
-      f_header_ <<
+      f_header_ << ":" <<
         indent() << "  " << extends << style << client_suffix <<
         "(iprot, oprot) {}" << endl;
     }
+
+    // create the setProtocol methods
+    if (extends.empty()) {
+      f_header_ << " private:"<<endl;
+      // 1: one parameter
+      f_header_ <<
+      indent() << "void setProtocol" << short_suffix << "("
+        << prot_ptr << " prot) {" <<endl;
+      f_header_ << indent() << "setProtocol(prot,prot);"<<endl;
+      f_header_ << indent() << "}"<<endl;
+      // 2: two parameter
+      f_header_ <<
+      indent() << "void setProtocol" << short_suffix <<
+      "(" << prot_ptr << " iprot, " << prot_ptr << " oprot) {"<<endl;
+
+      f_header_ <<
+      indent() << "  piprot_=iprot;"<<endl <<
+      indent() << "  poprot_=oprot;"<<endl <<
+      indent() << "  iprot_ = iprot.get();"<<endl <<
+      indent() << "  oprot_ = oprot.get();"<<endl;
+
+      f_header_ << indent() << "}"<<endl;
+      f_header_ << " public:"<<endl;
+    }
+
 
     // Generate getters for the protocols.
     // Note that these are not currently templated for simplicity.
