@@ -25,7 +25,7 @@ language: cpp
 before_install:
  - export NUM_CPU="`grep processor /proc/cpuinfo | wc -l`"; echo $NUM_CPU
  - sudo apt-get update -qq
- - sudo apt-get upgrade -qq
+ - sudo DEBIAN_FRONTEND=noninteractive apt-get -qq -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
  - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev 
 # Java
  - sudo apt-get install -qq libcommons-lang3-java ant
