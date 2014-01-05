@@ -2259,7 +2259,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
     if (extends.empty()) {
       f_header_ <<  "{" << endl;
       f_header_ <<
-      indent() << "  setProtocol(prot);" << endl <<
+      indent() << "  setProtocol" << short_suffix << "(prot);" << endl <<
         indent() << "}" << endl;
     } else {
       f_header_ <<  ":" << endl;
@@ -2274,7 +2274,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
     if (extends.empty()) {
       f_header_ <<  "{" << endl;
       f_header_ <<
-      indent() << "  setProtocol(iprot,oprot);" << endl <<
+      indent() << "  setProtocol" << short_suffix << "(iprot,oprot);" << endl <<
         indent() << "}" << endl;
     } else {
       f_header_ << ":" <<
@@ -2289,7 +2289,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
       f_header_ <<
       indent() << "void setProtocol" << short_suffix << "("
         << prot_ptr << " prot) {" <<endl;
-      f_header_ << indent() << "setProtocol(prot,prot);"<<endl;
+      f_header_ << indent() << "setProtocol" << short_suffix << "(prot,prot);"<<endl;
       f_header_ << indent() << "}"<<endl;
       // 2: two parameter
       f_header_ <<
