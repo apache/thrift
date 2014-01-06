@@ -18,7 +18,7 @@ all:
 	../../../compiler/cpp/thrift --gen js:node user.thrift
 
 server: all	
-	NODE_PATH=../lib:../lib/thrift node server.js
+	NODE_PATH=../lib:../lib/thrift:$(NODE_PATH) node server.js
 
 client: all	
-	NODE_PATH=../lib:../lib/thrift node client.js
+	NODE_PATH=../lib:../lib/thrift:$(NODE_PATH) node client.js
