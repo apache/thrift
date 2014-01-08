@@ -349,7 +349,7 @@ BOOST_AUTO_TEST_CASE( test_MemoryBuffer_Write_Read_Incomplete ) {
       int write_index = 0;
       unsigned int to_write = (1<<14)-42;
       while (to_write > 0) {
-        int write_amt = std::min(dist[d1][write_index], to_write);
+        int write_amt = (std::min)(dist[d1][write_index], to_write);
         buffer.write(&data[write_offset], write_amt);
         write_offset += write_amt;
         write_index++;
@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_CASE( test_MemoryBuffer_Write_Read_Incomplete ) {
       int read_index = 0;
       unsigned int to_read = (1<<13)-42;
       while (to_read > 0) {
-        int read_amt = std::min(dist[d2][read_index], to_read);
+        int read_amt = (std::min)(dist[d2][read_index], to_read);
         int got = buffer.read(&data_out[read_offset], read_amt);
         BOOST_CHECK_EQUAL(got, read_amt);
         read_offset += read_amt;
@@ -374,7 +374,7 @@ BOOST_AUTO_TEST_CASE( test_MemoryBuffer_Write_Read_Incomplete ) {
       int second_index = write_index-1;
       unsigned int to_second = (1<<14)+42;
       while (to_second > 0) {
-        int second_amt = std::min(dist[d1][second_index], to_second);
+        int second_amt = (std::min)(dist[d1][second_index], to_second);
         //printf("%d\n", second_amt);
         buffer.write(&data[second_offset], second_amt);
         second_offset += second_amt;

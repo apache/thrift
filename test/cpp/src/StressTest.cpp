@@ -39,9 +39,11 @@
 #include <stdexcept>
 #include <sstream>
 #include <map>
+#if _WIN32
+   #include <thrift/windows/TWinsockSingleton.h>
+#endif
 
 using namespace std;
-using namespace boost;
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -169,6 +171,7 @@ public:
       int8_t arg = 1;
       int8_t result;
       result =_client->echoByte(arg);
+      (void)result;
       assert(result == arg);
     }
   }
@@ -178,6 +181,7 @@ public:
       int32_t arg = 1;
       int32_t result;
       result =_client->echoI32(arg);
+      (void)result;
       assert(result == arg);
     }
   }
@@ -187,6 +191,7 @@ public:
       int64_t arg = 1;
       int64_t result;
       result =_client->echoI64(arg);
+      (void)result;
       assert(result == arg);
     }
   }
@@ -212,8 +217,31 @@ public:
   Monitor _sleep;
 };
 
+class TStartObserver : public apache::thrift::server::TServerEventHandler
+{
+public:
+   TStartObserver() : awake_(false) {}
+   virtual void preServe()
+   {
+      apache::thrift::concurrency::Synchronized s(m_);
+      awake_ = true;
+      m_.notifyAll();
+   }
+   void waitForService()
+   {
+      apache::thrift::concurrency::Synchronized s(m_);
+      while(!awake_)
+         m_.waitForever();
+   }
+ private:
+   apache::thrift::concurrency::Monitor m_;
+   bool awake_;
+};
 
 int main(int argc, char **argv) {
+#if _WIN32
+  transport::TWinsockSingleton::create();
+#endif
 
   int port = 9091;
   string serverType = "thread-pool";
@@ -323,7 +351,7 @@ int main(int argc, char **argv) {
 
   } catch(std::exception& e) {
     cerr << e.what() << endl;
-    cerr << usage;
+    cerr << usage.str();
   }
 
   boost::shared_ptr<PlatformThreadFactory> threadFactory = boost::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
@@ -376,15 +404,15 @@ int main(int argc, char **argv) {
         boost::shared_ptr<TTransportFactory>(new TPipedTransportFactory(fileTransport));
     }
 
-    boost::shared_ptr<Thread> serverThread;
+    boost::shared_ptr<TServer> server;
 
     if (serverType == "simple") {
 
-      serverThread = threadFactory->newThread(boost::shared_ptr<TServer>(new TSimpleServer(serviceProcessor, serverSocket, transportFactory, protocolFactory)));
+      server.reset(new TSimpleServer(serviceProcessor, serverSocket, transportFactory, protocolFactory));
 
     } else if (serverType == "threaded") {
 
-      serverThread = threadFactory->newThread(boost::shared_ptr<TServer>(new TThreadedServer(serviceProcessor, serverSocket, transportFactory, protocolFactory)));
+      server.reset(new TThreadedServer(serviceProcessor, serverSocket, transportFactory, protocolFactory));
 
     } else if (serverType == "thread-pool") {
 
@@ -392,15 +420,19 @@ int main(int argc, char **argv) {
 
       threadManager->threadFactory(threadFactory);
       threadManager->start();
-      serverThread = threadFactory->newThread(boost::shared_ptr<TServer>(new TThreadPoolServer(serviceProcessor, serverSocket, transportFactory, protocolFactory, threadManager)));
+      server.reset(new TThreadPoolServer(serviceProcessor, serverSocket, transportFactory, protocolFactory, threadManager));
     }
+
+    boost::shared_ptr<TStartObserver> observer(new TStartObserver);
+    server->setServerEventHandler(observer);
+    boost::shared_ptr<Thread> serverThread = threadFactory->newThread(server);
 
     cerr << "Starting the server on port " << port << endl;
 
     serverThread->start();
+    observer->waitForService();
 
     // If we aren't running clients, just wait forever for external clients
-
     if (clientCount == 0) {
       serverThread->join();
     }
@@ -463,7 +495,7 @@ int main(int argc, char **argv) {
 
     for (set<boost::shared_ptr<Thread> >::iterator ix = clientThreads.begin(); ix != clientThreads.end(); ix++) {
 
-      boost::shared_ptr<ClientThread> client = dynamic_pointer_cast<ClientThread>((*ix)->runnable());
+      boost::shared_ptr<ClientThread> client = boost::dynamic_pointer_cast<ClientThread>((*ix)->runnable());
 
       int64_t delta = client->_endTime - client->_startTime;
 

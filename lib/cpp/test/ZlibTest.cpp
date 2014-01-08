@@ -26,11 +26,10 @@
 
 #include <stdint.h>
 #include <inttypes.h>
-#include <getopt.h>
 #include <cstddef>
 #include <fstream>
 #include <iostream>
-#include <tr1/functional>
+#include <thrift/cxxfunctional.h>
 
 #include <boost/random.hpp>
 #include <boost/shared_array.hpp>
@@ -40,7 +39,6 @@
 #include <thrift/transport/TZlibTransport.h>
 
 using namespace std;
-using namespace boost;
 using namespace apache::thrift::transport;
 
 boost::mt19937 rng;
@@ -69,7 +67,7 @@ class ConstantSizeGenerator : public SizeGenerator {
 class LogNormalSizeGenerator : public SizeGenerator {
  public:
   LogNormalSizeGenerator(double mean, double std_dev) :
-      gen_(rng, lognormal_distribution<double>(mean, std_dev)) {}
+      gen_(rng, boost::lognormal_distribution<double>(mean, std_dev)) {}
 
   virtual unsigned int getSize() {
     // Loop until we get a size of 1 or more
@@ -82,7 +80,7 @@ class LogNormalSizeGenerator : public SizeGenerator {
   }
 
  private:
-  variate_generator< mt19937, lognormal_distribution<double> > gen_;
+  boost::variate_generator< boost::mt19937, boost::lognormal_distribution<double> > gen_;
 };
 
 uint8_t* gen_uniform_buffer(uint32_t buf_len, uint8_t c) {
@@ -169,7 +167,7 @@ void test_separate_checksum(const uint8_t* buf, uint32_t buf_len) {
   membuf->appendBufferToString(tmp_buf);
   zlib_trans.reset(new TZlibTransport(membuf,
                                       TZlibTransport::DEFAULT_URBUF_SIZE,
-                                      tmp_buf.length()-1));
+                                      static_cast<uint32_t>(tmp_buf.length()-1)));
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
   uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
@@ -190,7 +188,7 @@ void test_incomplete_checksum(const uint8_t* buf, uint32_t buf_len) {
   tmp_buf.erase(tmp_buf.length() - 1);
   membuf->resetBuffer(const_cast<uint8_t*>(
                         reinterpret_cast<const uint8_t*>(tmp_buf.data())),
-                      tmp_buf.length());
+                      static_cast<uint32_t>(tmp_buf.length()));
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
   uint32_t got = zlib_trans->readAll(mirror.get(), buf_len);
@@ -264,11 +262,11 @@ void test_invalid_checksum(const uint8_t* buf, uint32_t buf_len) {
   // (When this occurs, verifyChecksum() throws an exception indicating
   // that the end of the data hasn't been reached.)  I haven't seen this
   // error when only modifying checksum bytes.
-  int index = tmp_buf.size() - 1;
+  int index = static_cast<int>(tmp_buf.size() - 1);
   tmp_buf[index]++;
   membuf->resetBuffer(const_cast<uint8_t*>(
                         reinterpret_cast<const uint8_t*>(tmp_buf.data())),
-                      tmp_buf.length());
+                      static_cast<uint32_t>(tmp_buf.length()));
 
   boost::shared_array<uint8_t> mirror(new uint8_t[buf_len]);
   try {
@@ -337,12 +335,12 @@ void test_no_write() {
     ::std::ostringstream name_ss; \
     name_ss << name << "-" << BOOST_STRINGIZE(function); \
     ::boost::unit_test::test_case* tc = ::boost::unit_test::make_test_case( \
-        ::std::tr1::bind(function, ## __VA_ARGS__), \
+        ::apache::thrift::stdcxx::bind(function, ## __VA_ARGS__), \
         name_ss.str()); \
     (suite)->add(tc); \
   } while (0)
 
-void add_tests(unit_test::test_suite* suite,
+void add_tests(boost::unit_test::test_suite* suite,
                const uint8_t* buf,
                uint32_t buf_len,
                const char* name) {
@@ -387,60 +385,12 @@ void print_usage(FILE* f, const char* argv0) {
   fprintf(f, "  --help\n");
 }
 
-void parse_args(int argc, char* argv[]) {
-  uint32_t seed = 0;
-  bool has_seed = false;
-
-  struct option long_opts[] = {
-    { "help", false, NULL, 'h' },
-    { "seed", true, NULL, 's' },
-    { NULL, 0, NULL, 0 }
-  };
-
-  while (true) {
-    optopt = 1;
-    int optchar = getopt_long(argc, argv, "hs:", long_opts, NULL);
-    if (optchar == -1) {
-      break;
-    }
-
-    switch (optchar) {
-      case 's': {
-        char *endptr;
-        seed = strtol(optarg, &endptr, 0);
-        if (endptr == optarg || *endptr != '\0') {
-          fprintf(stderr, "invalid seed value \"%s\": must be a positive "
-                  "integer\n", optarg);
-          exit(1);
-        }
-        has_seed = true;
-        break;
-      }
-      case 'h':
-        print_usage(stdout, argv[0]);
-        exit(0);
-      case '?':
-        exit(1);
-      default:
-        // Only happens if someone adds another option to the optarg string,
-        // but doesn't update the switch statement to handle it.
-        fprintf(stderr, "unknown option \"-%c\"\n", optchar);
-        exit(1);
-    }
-  }
-
-  if (!has_seed) {
-    seed = time(NULL);
-  }
-
+boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
+  uint32_t seed = static_cast<uint32_t>(time(NULL));
   printf("seed: %" PRIu32 "\n", seed);
   rng.seed(seed);
-}
 
-unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
-  parse_args(argc, argv);
-
-  unit_test::test_suite* suite =
+  boost::unit_test::test_suite* suite =
     &boost::unit_test::framework::master_test_suite();
   suite->p_name.value = "ZlibTest";
 

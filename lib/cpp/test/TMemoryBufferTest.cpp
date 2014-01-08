@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE( test_roundtrip ) {
     shared_ptr<TMemoryBuffer> strBuffer2(new TMemoryBuffer());
     shared_ptr<TBinaryProtocol> binaryProtcol2(new TBinaryProtocol(strBuffer2));
 
-    strBuffer2->resetBuffer((uint8_t*)serialized.data(), serialized.length());
+    strBuffer2->resetBuffer((uint8_t*)serialized.data(), static_cast<uint32_t>(serialized.length()));
     thrift::test::Xtruct a2;
     a2.read(binaryProtcol2.get());
 
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( test_copy )
 
     string* str1 = new string("abcd1234");
     const char* data1 = str1->data();
-    TMemoryBuffer buf((uint8_t*)str1->data(), str1->length(), TMemoryBuffer::COPY);
+    TMemoryBuffer buf((uint8_t*)str1->data(), static_cast<uint32_t>(str1->length()), TMemoryBuffer::COPY);
     delete str1;
     string* str2 = new string("plsreuse");
     bool obj_reuse = (str1 == str2);
@@ -94,12 +94,12 @@ BOOST_AUTO_TEST_CASE( test_exceptions )
     try {
       buf1.write((const uint8_t*)"foo", 3);
       assert(false);
-    } catch (TTransportException& ex) {}
+    } catch (TTransportException&) {}
 
     TMemoryBuffer buf2((uint8_t*)data, 7, TMemoryBuffer::COPY);
     try {
       buf2.write((const uint8_t*)"bar", 3);
-    } catch (TTransportException& ex) {
+    } catch (TTransportException&) {
       assert(false);
     }
   }

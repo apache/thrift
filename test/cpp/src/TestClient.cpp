@@ -21,8 +21,6 @@
 #include <inttypes.h>
 
 #include <iostream>
-#include <unistd.h>
-#include <sys/time.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TJSONProtocol.h>
 #include <thrift/transport/THttpClient.h>
@@ -34,11 +32,13 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/program_options.hpp>
-#include <tr1/functional>
+#include <thrift/cxxfunctional.h>
+#if _WIN32
+   #include <thrift/windows/TWinsockSingleton.h>
+#endif
 
 #include "ThriftTest.h"
 
-using namespace boost;
 using namespace std;
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -54,7 +54,7 @@ uint64_t now()
   int64_t ret;
   struct timeval tv;
 
-  gettimeofday(&tv, NULL);
+  THRIFT_GETTIMEOFDAY(&tv, NULL);
   ret = tv.tv_sec;
   ret = ret*1000*1000 + tv.tv_usec;
   return ret;
@@ -69,7 +69,7 @@ static void testString_clientReturn(const char* host, int port, event_base *base
     client->recv_testString(s);
     cout << "testString: " << s << endl;
   } catch (TException& exn) {
-    cout << "Error: " << exn.what() << endl;    
+    cout << "Error: " << exn.what() << endl;
   }
 
   event_base_loopbreak(base); // end test
@@ -86,11 +86,14 @@ static void testVoid_clientReturn(const char* host, int port, event_base *base, 
     client = new ThriftTestCobClient(channel, protocolFactory);
     client->testString(tr1::bind(testString_clientReturn, host, port, base, protocolFactory, std::tr1::placeholders::_1), "Test");
   } catch (TException& exn) {
-    cout << "Error: " << exn.what() << endl;    
+    cout << "Error: " << exn.what() << endl;
   }
 }
 
 int main(int argc, char** argv) {
+#if _WIN32
+  transport::TWinsockSingleton::create();
+#endif
   string host = "localhost";
   int port = 9090;
   int numTests = 1;
@@ -99,28 +102,28 @@ int main(int argc, char** argv) {
   string protocol_type = "binary";
   string domain_socket = "";
 
-  program_options::options_description desc("Allowed options");
+  boost::program_options::options_description desc("Allowed options");
   desc.add_options()
       ("help,h", "produce help message")
-      ("host", program_options::value<string>(&host)->default_value(host), "Host to connect")
-      ("port", program_options::value<int>(&port)->default_value(port), "Port number to connect")
-	  ("domain-socket", program_options::value<string>(&domain_socket)->default_value(domain_socket), "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
-      ("transport", program_options::value<string>(&transport_type)->default_value(transport_type), "Transport: buffered, framed, http, evhttp")
-      ("protocol", program_options::value<string>(&protocol_type)->default_value(protocol_type), "Protocol: binary, json")
+      ("host", boost::program_options::value<string>(&host)->default_value(host), "Host to connect")
+      ("port", boost::program_options::value<int>(&port)->default_value(port), "Port number to connect")
+	  ("domain-socket", boost::program_options::value<string>(&domain_socket)->default_value(domain_socket), "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
+      ("transport", boost::program_options::value<string>(&transport_type)->default_value(transport_type), "Transport: buffered, framed, http, evhttp")
+      ("protocol", boost::program_options::value<string>(&protocol_type)->default_value(protocol_type), "Protocol: binary, json")
 	  ("ssl", "Encrypted Transport using SSL")
-      ("testloops,n", program_options::value<int>(&numTests)->default_value(numTests), "Number of Tests")
+      ("testloops,n", boost::program_options::value<int>(&numTests)->default_value(numTests), "Number of Tests")
   ;
 
-  program_options::variables_map vm;
-  program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
-  program_options::notify(vm);    
+  boost::program_options::variables_map vm;
+  boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
+  boost::program_options::notify(vm);
 
   if (vm.count("help")) {
     cout << desc << "\n";
     return 1;
   }
 
-  try {   
+  try {
     if (!protocol_type.empty()) {
       if (protocol_type == "binary") {
       } else if (protocol_type == "json") {
@@ -210,7 +213,7 @@ int main(int argc, char** argv) {
     boost::shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
     ThriftTestCobClient* client = new ThriftTestCobClient(channel, protocolFactory.get());
     client->testVoid(tr1::bind(testVoid_clientReturn, host.c_str(), port, base, protocolFactory.get(), std::tr1::placeholders::_1));
-    
+
     event_base_loop(base, 0);
     return 0;
   }
@@ -574,7 +577,7 @@ int main(int argc, char** argv) {
         printf("  void\nFAILURE\n");
         failCount++;
 
-      } catch(TException& e) {
+      } catch(const TException&) {
         printf("  Caught TException\n");
       }
 
@@ -622,9 +625,9 @@ int main(int argc, char** argv) {
 
     /* test oneway void */
     {
-        printf("testClient.testOneway(3) =>");
+        printf("testClient.testOneway(1) =>");
         uint64_t startOneway = now();
-        testClient.testOneway(3);
+        testClient.testOneway(1);
         uint64_t elapsed = now() - startOneway;
         if (elapsed > 200 * 1000) { // 0.2 seconds
             printf("  FAILURE - took %.2f ms\n", (double)elapsed/1000.0);

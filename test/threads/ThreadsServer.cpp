@@ -29,6 +29,9 @@
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
+#if _WIN32
+   #include <thrift/windows/TWinsockSingleton.h>
+#endif
 
 using boost::shared_ptr;
 using namespace apache::thrift;
@@ -85,11 +88,12 @@ class ThreadsTestHandler : virtual public ThreadsTestIf {
 protected:
   void go2sleep(int thread, int seconds) {
     Monitor m;
+    Synchronized s(m);
     for (int i = 0; i < seconds; ++i) {
       fprintf(stderr, "Thread %d: sleep %d\n", thread, i);
       try {
         m.wait(1000);
-      } catch(TimedOutException& e) {
+      } catch(const TimedOutException&) {
       }
     }
     fprintf(stderr, "THREAD %d DONE\n", thread);
@@ -101,6 +105,9 @@ private:
 };
 
 int main(int argc, char **argv) {
+#if _WIN32
+  transport::TWinsockSingleton::create();
+#endif
   int port = 9090;
   shared_ptr<ThreadsTestHandler> handler(new ThreadsTestHandler());
   shared_ptr<TProcessor> processor(new ThreadsTestProcessor(handler));

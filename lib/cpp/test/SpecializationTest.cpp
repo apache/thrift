@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include <iostream>
 #include <cmath>
 #include <thrift/transport/TTransportUtils.h>
@@ -32,7 +33,7 @@ int main() {
   n.my_ooe.integer16 = 16;
   n.my_ooe.integer32 = 32;
   n.my_ooe.integer64 = 64;
-  n.my_ooe.double_precision = (std::sqrt(5)+1)/2;
+  n.my_ooe.double_precision = (std::sqrt(5.0)+1)/2;
   n.my_ooe.some_characters  = ":R (me going \"rrrr\")";
   n.my_ooe.zomg_unicode     = "\xd3\x80\xe2\x85\xae\xce\x9d\x20"
                               "\xd0\x9d\xce\xbf\xe2\x85\xbf\xd0\xbe\xc9\xa1\xd0\xb3\xd0\xb0\xcf\x81\xe2\x84\x8e"

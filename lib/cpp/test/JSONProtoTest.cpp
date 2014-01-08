@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#define _USE_MATH_DEFINES
 #include <iostream>
 #include <cmath>
 #include <thrift/transport/TBufferTransports.h>
