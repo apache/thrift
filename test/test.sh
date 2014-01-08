@@ -57,10 +57,13 @@ do_test () {
     testname=${client_server}_${protocol}_${transport}
     server_timeout=$((${server_startup_time}+${client_delay}))
     printf "%-16s %-11s %-17s" ${client_server} ${protocol} ${transport} 
-    timeout $server_timeout $server_exec > log/${testname}_server.log 2>&1 &
+    mkfifo thrift_test_communication
+    timeout $server_timeout $server_exec < thrift_test_communication > log/${testname}_server.log 2>&1 &
     sleep $server_startup_time
     $client_exec > log/${testname}_client.log 2>&1
-    
+    echo "done" > thrift_test_communication
+    rm -f thrift_test_communication
+
     if [ "$?" -eq "0" ]; then
       echo " success"
     else
