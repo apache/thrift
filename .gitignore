@@ -197,6 +197,7 @@ gen-*
 /lib/py/Makefile.in
 /lib/py/build
 /lib/py/thrift.egg-info/
+/lib/rb/Gemfile.lock
 /lib/rb/Makefile
 /lib/rb/Makefile.in
 /lib/rb/debug_proto_test
@@ -274,6 +275,7 @@ gen-*
 /test/py.tornado/Makefile
 /test/py.tornado/Makefile.in
 /test/py.tornado/*.pyc
+/test/rb/Gemfile.lock
 /test/rb/Makefile
 /test/rb/Makefile.in
 /tutorial/Makefile
