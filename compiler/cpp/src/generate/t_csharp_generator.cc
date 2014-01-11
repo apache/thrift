@@ -218,6 +218,15 @@ void t_csharp_generator::init_generator() {
   }
 
   namespace_dir_ = subdir;
+  
+  pverbose("C# options:\n");
+  pverbose("- async ...... %s\n", (async_ ? "ON" : "off"));
+  pverbose("- async_ctp .. %s\n", (async_ctp_ ? "ON" : "off"));
+  pverbose("- nullable ... %s\n", (nullable_ ? "ON" : "off"));
+  pverbose("- union ...... %s\n", (union_ ? "ON" : "off"));
+  pverbose("- hashcode ... %s\n", (hashcode_ ? "ON" : "off"));
+  pverbose("- serialize .. %s\n", (serialize_ ? "ON" : "off"));
+  pverbose("- wcf ........ %s\n", (wcf_ ? "ON" : "off"));
 }
 
 void t_csharp_generator::start_csharp_namespace(ofstream& out) {
@@ -244,6 +253,9 @@ string t_csharp_generator::csharp_type_usings() {
     ((async_||async_ctp_) ? "using System.Threading.Tasks;\n" : "") +
     "using Thrift;\n" +
     "using Thrift.Collections;\n" +
+	((serialize_||wcf_) ? "#if !SILVERLIGHT\n" : "") +
+	((serialize_||wcf_) ? "using System.Xml.Serialization;\n" : "") +
+	((serialize_||wcf_) ? "#endif\n" : "") +
     (wcf_ ? "//using System.ServiceModel;\n" : "") +
     "using System.Runtime.Serialization;\n";
 }
@@ -557,15 +569,20 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
     || (!nullable_ && has_non_required_fields);
   if (generate_isset) {
     out <<
-      endl <<
+      endl;
+    if(serialize_||wcf_) {
+      out <<
+        indent() << "[XmlIgnore] // XmlSerializer" << endl <<
+        indent() << "[DataMember(Order = 1)]  // XmlObjectSerializer, DataContractJsonSerializer, etc." << endl;
+    }
+    out <<
       indent() << "public Isset __isset;" << endl <<
       indent() << "#if !SILVERLIGHT" << endl <<
       indent() << "[Serializable]" << endl <<
       indent() << "#endif" << endl;
-    if ((serialize_||wcf_)) {
+    if (serialize_||wcf_) {
       indent(out) << "[DataContract]" << endl;
     }
-    
     indent(out) << "public struct Isset {" << endl;
     indent_up();
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -575,12 +592,37 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
       // if it is not required, if it has a default value, we need to generate Isset
       // if we are not nullable, then we generate Isset
       if (!is_required && (!nullable_ || has_default)) {
+        if(serialize_||wcf_) {
+          indent(out) << "[DataMember]" << endl;
+        } 
         indent(out) << "public bool " << (*m_iter)->get_name() << ";" << endl;
       }
     }
 
     indent_down();
     indent(out) << "}" << endl << endl;
+	
+    if(generate_isset && (serialize_||wcf_)) {
+      indent(out) << "#region XmlSerializer support" << endl << endl;
+ 
+      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        bool is_required = field_is_required((*m_iter));
+        bool has_default = field_has_default((*m_iter));
+        // if it is required, don't need Isset for that variable
+        // if it is not required, if it has a default value, we need to generate Isset
+        // if we are not nullable, then we generate Isset
+        if (!is_required && (!nullable_ || has_default)) {
+		  indent(out) << "public bool ShouldSerialize" << prop_name((*m_iter)) << "()" << endl;
+		  indent(out) << "{" << endl;
+          indent_up();
+          indent(out) << "return __isset." << (*m_iter)->get_name() << ";" << endl;
+          indent_down();
+		  indent(out) << "}" << endl << endl;
+        }
+      }
+
+      indent(out) << "#endregion XmlSerializer support" << endl << endl;
+    }
   }
   
   // We always want a default, no argument constructor for Reading
@@ -2275,7 +2317,7 @@ void t_csharp_generator::generate_property(ofstream& out, t_field* tfield, bool 
 }
 void t_csharp_generator::generate_csharp_property(ofstream& out, t_field* tfield, bool isPublic, bool generateIsset, std::string fieldPrefix) {
     if((serialize_||wcf_) && isPublic) {
-      indent(out) << "[DataMember]" << endl;
+      indent(out) << "[DataMember(Order = 0)]" << endl;
     }
     bool has_default = field_has_default(tfield);
     bool is_required = field_is_required(tfield);
