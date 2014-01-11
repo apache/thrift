@@ -1746,9 +1746,12 @@ void t_go_generator::generate_service_client(t_service* tservice)
             vector<t_field*>::const_iterator x_iter;
 
             for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+                const std::string varname = variable_name_to_go_name((*x_iter)->get_name());
+                const std::string pubname = publicize(varname);
+
                 f_service_ <<
-                           indent() << "if " << result << "." << publicize((*x_iter)->get_name()) << " != nil {" << endl <<
-                           indent() << "  " << (*x_iter)->get_name() << " = " << result << "." << publicize((*x_iter)->get_name()) << endl <<
+                           indent() << "if " << result << "." << pubname << " != nil {" << endl <<
+                           indent() << "  " << varname << " = " << result << "." << pubname << endl <<
                            indent() << "}" << endl;
             }
 
