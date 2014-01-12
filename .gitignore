@@ -140,6 +140,9 @@ gen-*
 /lib/d/Makefile.in
 /lib/d/test/Makefile
 /lib/d/test/Makefile.in
+/lib/d/test/serialization_benchmark
+/lib/d/test/transport_test
+/lib/d/unittest/
 /lib/delphi/src/*.dcu
 /lib/delphi/test/*.identcache
 /lib/delphi/test/*.local
@@ -186,6 +189,7 @@ gen-*
 /lib/js/test/Makefile
 /lib/js/test/Makefile.in
 /lib/perl/MANIFEST
+/lib/perl/MYMETA.yml
 /lib/perl/Makefile
 /lib/perl/Makefile.in
 /lib/perl/Makefile-perl.mk
