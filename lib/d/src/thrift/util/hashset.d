@@ -23,6 +23,8 @@ import std.conv : to;
 import std.traits : isImplicitlyConvertible, ParameterTypeTuple;
 import std.range : ElementType, isInputRange;
 
+struct Void {}
+
 /**
  * A quickly hacked together hash set implementation backed by built-in
  * associative arrays to have something to compile Thrift's set<> to until
@@ -41,7 +43,7 @@ final class HashSet(E) {
 
   ///
   void insert(Stuff)(Stuff stuff) if (isImplicitlyConvertible!(Stuff, E)) {
-    aa_[*(cast(immutable(E)*)&stuff)] = [];
+    aa_[*(cast(immutable(E)*)&stuff)] = Void.init;
   }
 
   ///
@@ -49,7 +51,7 @@ final class HashSet(E) {
     isInputRange!Stuff && isImplicitlyConvertible!(ElementType!Stuff, E)
   ) {
     foreach (e; stuff) {
-      aa_[*(cast(immutable(E)*)&e)] = [];
+      aa_[*(cast(immutable(E)*)&e)] = Void.init;
     }
   }
 
@@ -115,7 +117,6 @@ final class HashSet(E) {
   }
 
 private:
-  alias void[0] Void;
   Void[immutable(E)] aa_;
 }
 
