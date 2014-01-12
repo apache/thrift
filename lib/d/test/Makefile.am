@@ -52,7 +52,7 @@ ran_tests__ = client_pool_test \
 
 libevent_dependent_targets = async_test_client client_pool_test \
 	stress_test_server thrift_test_server
-libevent_dependent_ran_tests = async_test_runner.sh thrift_test_runner.sh
+libevent_dependent_ran_tests = client_pool_test async_test_runner.sh thrift_test_runner.sh
 
 openssl_dependent_targets = async_test thrift_test_client thrift_test_server
 openssl_dependent_ran_tests = async_test_runner.sh thrift_test_runner.sh
