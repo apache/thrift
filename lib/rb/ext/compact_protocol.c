@@ -315,7 +315,7 @@ VALUE rb_thrift_compact_proto_write_binary(VALUE self, VALUE buf) {
   buf = force_binary_encoding(buf);
   VALUE transport = GET_TRANSPORT(self);
   write_varint32(transport, RSTRING_LEN(buf));
-  WRITE(transport, RSTRING_PTR(buf), RSTRING_LEN(buf));
+  WRITE(transport, StringValuePtr(buf), RSTRING_LEN(buf));
   return Qnil;
 }
 
