@@ -18,7 +18,6 @@
 #
 
 EXTRA_DIST = \
-	CHANGELOG \
 	Rakefile \
 	Gemfile \
 	thrift.gemspec \
