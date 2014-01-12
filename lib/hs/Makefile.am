@@ -26,18 +26,18 @@ EXTRA_DIST = \
   src
 
 all-local:
-	$(RUNHASKELL) Setup.lhs configure $(CABAL_CONFIGURE_FLAGS)
-	$(RUNHASKELL) Setup.lhs build
+	$(CABAL) configure $(CABAL_CONFIGURE_FLAGS)
+	$(CABAL) build
 
 install-exec-hook:
-	$(RUNHASKELL) Setup.lhs install
+	$(CABAL) install
 
 # Make sure this doesn't fail if Haskell is not configured.
 clean-local:
-	$(RUNHASKELL) Setup.lhs clean
+	$(CABAL) clean
 
 maintainer-clean-local:
-	$(RUNHASKELL) Setup.lhs clean
+	$(CABAL) clean
 
 check-local:
 	$(CABAL) check
