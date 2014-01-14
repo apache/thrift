@@ -50,7 +50,7 @@ client:
 	NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift:$(NODE_PATH) node client.js
 
 mserver:
-	NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift:$(NODE_PATH) node --harmony multiplex_server.js
+	NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift:$(NODE_PATH) node multiplex_server.js
 
 mclient:
-	NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift:$(NODE_PATH) node --harmony multiplex_client.js
+	NODE_PATH=../../lib/nodejs/lib:../../lib/nodejs/lib/thrift:$(NODE_PATH) node multiplex_client.js
