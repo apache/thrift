@@ -119,7 +119,7 @@ func (p *TSimpleServer) Serve() error {
 	}
 	for !p.stopped {
 		client, err := p.serverTransport.Accept()
-		if err != nil {
+		if err != nil && !p.stopped {
 			log.Println("Accept err: ", err)
 		}
 		if client != nil {
@@ -136,6 +136,7 @@ func (p *TSimpleServer) Serve() error {
 func (p *TSimpleServer) Stop() error {
 	p.stopped = true
 	p.serverTransport.Interrupt()
+	p.serverTransport.Close()
 	return nil
 }
 
