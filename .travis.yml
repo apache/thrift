@@ -68,7 +68,7 @@ install:
 
 script:
 # TODO: fix these languages
-  - sh configure --without-erlang --without-haskell --without-perl --without-python
+  - sh configure --without-erlang --without-haskell --without-python
   - make -j$NUM_CPU && make dist
   - make check -j$NUM_CPU && sh test/test.sh
   - sh bootstrap.sh ; sh contrib/mingw-cross-compile.sh
