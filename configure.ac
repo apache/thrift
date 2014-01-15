@@ -97,6 +97,7 @@ AC_PROG_AWK
 AC_PROG_RANLIB
 
 AC_LANG([C++])
+AX_CXX_COMPILE_STDCXX_11([noext])
 
 AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
