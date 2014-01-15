@@ -37,7 +37,7 @@ before_install:
 # Python
  - sudo apt-get install -qq python-all python-all-dev python-all-dbg
 # Perl
- - sudo apt-get install -qq libbit-vector-perl
+ - sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl
 # PHP
  - sudo apt-get install -qq php5-dev php5-cli phpunit
  - sudo apt-get upgrade pear
