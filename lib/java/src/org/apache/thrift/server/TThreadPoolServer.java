@@ -117,13 +117,13 @@ public class TThreadPoolServer extends TServer {
 
     stopped_ = false;
     setServing(true);
-    while (!stopped_) {
-      int failureCount = 0;
+    int failureCount = 0;
+    while (!stopped_) {      
       try {
         TTransport client = serverTransport_.accept();
         WorkerProcess wp = new WorkerProcess(client);
+        int rejections = 0;
         while(true) {
-          int rejections = 0;
           try {
             executorService_.execute(wp);
             break;
