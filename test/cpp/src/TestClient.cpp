@@ -288,7 +288,7 @@ int main(int argc, char** argv) {
      */
     printf("testI64(-34359738368)");
     int64_t i64 = testClient.testI64(-34359738368LL);
-    printf(" = %"PRId64"\n", i64);
+    printf(" = %" PRId64 "\n", i64);
     if (i64 != -34359738368LL)
         failCount++;
     /**
@@ -311,7 +311,7 @@ int main(int argc, char** argv) {
     out.i64_thing = -5;
     Xtruct in;
     testClient.testStruct(in, out);
-    printf(" = {\"%s\", %d, %d, %"PRId64"}\n",
+    printf(" = {\"%s\", %d, %d, %" PRId64 "}\n",
            in.string_thing.c_str(),
            (int)in.byte_thing,
            in.i32_thing,
@@ -330,7 +330,7 @@ int main(int argc, char** argv) {
     Xtruct2 in2;
     testClient.testNest(in2, out2);
     in = in2.struct_thing;
-    printf(" = {%d, {\"%s\", %d, %d, %"PRId64"}, %d}\n",
+    printf(" = {%d, {\"%s\", %d, %d, %" PRId64 "}, %d}\n",
            in2.byte_thing,
            in.string_thing.c_str(),
            (int)in.byte_thing,
@@ -488,7 +488,7 @@ int main(int argc, char** argv) {
      */
     printf("testTypedef(309858235082523)");
     UserId uid = testClient.testTypedef(309858235082523LL);
-    printf(" = %"PRId64"\n", uid);
+    printf(" = %" PRId64 "\n", uid);
     if (uid != 309858235082523LL)
     	failCount++;
 
@@ -527,7 +527,7 @@ int main(int argc, char** argv) {
     printf(" = {");
     map<UserId, map<Numberz::type,Insanity> >::const_iterator i_iter;
     for (i_iter = whoa.begin(); i_iter != whoa.end(); ++i_iter) {
-      printf("%"PRId64" => {", i_iter->first);
+      printf("%" PRId64 " => {", i_iter->first);
       map<Numberz::type,Insanity>::const_iterator i2_iter;
       for (i2_iter = i_iter->second.begin();
            i2_iter != i_iter->second.end();
@@ -537,7 +537,7 @@ int main(int argc, char** argv) {
         map<Numberz::type, UserId>::const_iterator um;
         printf("{");
         for (um = userMap.begin(); um != userMap.end(); ++um) {
-          printf("%d => %"PRId64", ", um->first, um->second);
+          printf("%d => %" PRId64 ", ", um->first, um->second);
         }
         printf("}, ");
 
@@ -545,7 +545,7 @@ int main(int argc, char** argv) {
         vector<Xtruct>::const_iterator x;
         printf("{");
         for (x = xtructs.begin(); x != xtructs.end(); ++x) {
-          printf("{\"%s\", %d, %d, %"PRId64"}, ",
+          printf("{\"%s\", %d, %d, %" PRId64 "}, ",
                  x->string_thing.c_str(),
                  (int)x->byte_thing,
                  x->i32_thing,
@@ -658,7 +658,7 @@ int main(int argc, char** argv) {
     uint64_t stop = now();
     uint64_t tot = stop-start;
 
-    printf("Total time: %"PRIu64" us\n", stop-start);
+    printf("Total time: %" PRIu64 " us\n", stop-start);
 
     time_tot += tot;
     if (time_min == 0 || tot < time_min) {
@@ -676,9 +676,9 @@ int main(int argc, char** argv) {
 
   uint64_t time_avg = time_tot / numTests;
 
-  printf("Min time: %"PRIu64" us\n", time_min);
-  printf("Max time: %"PRIu64" us\n", time_max);
-  printf("Avg time: %"PRIu64" us\n", time_avg);
+  printf("Min time: %" PRIu64 " us\n", time_min);
+  printf("Max time: %" PRIu64 " us\n", time_max);
+  printf("Avg time: %" PRIu64 " us\n", time_avg);
 
   return failCount;
 }
