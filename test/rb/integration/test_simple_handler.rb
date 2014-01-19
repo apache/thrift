@@ -17,10 +17,11 @@
 # under the License.
 #
 
-require File.join(File.dirname(__FILE__), '../test_helper')
+$:.push File.dirname(__FILE__) + '/..'
 
+require 'test_helper'
 require 'thrift'
-require 'ThriftTest'
+require 'thrift_test'
 
 class TestHandler
   [:testString, :testByte, :testI32, :testI64, :testDouble,
