@@ -233,5 +233,12 @@ do_test "cpp-nodejs" "binary" "framed-ip" \
         "cpp/TestClient --transport=framed" \
         "make -C nodejs/ server" \
         "1" "5"
-
+do_test "rb-rb" "binary" "buffered-ip" \
+        "ruby rb/integration/simple_client.rb" \
+        "ruby rb/integration/simple_server.rb" \
+        "1" "5"
+do_test "rb-rb" "binary-accel" "buffered-ip" \
+        "ruby rb/integration/accelerated_buffered_client.rb" \
+        "ruby rb/integration/accelerated_buffered_server.rb" \
+        "1" "5"
 cd -

@@ -17,11 +17,11 @@
 # under the License.
 #
 
-$:.push File.dirname(__FILE__) + '/../gen-rb'
-$:.push File.join(File.dirname(__FILE__), '../../../lib/rb/lib')
+$:.push File.dirname(__FILE__) + '/..'
 
+require 'test_helper'
 require 'thrift'
-require 'ThriftTest'
+require 'thrift_test'
 
 class SimpleHandler
   [:testString, :testByte, :testI32, :testI64, :testDouble,
