@@ -50,7 +50,7 @@ class TSSLServerSocket: public TServerSocket {
   TSSLServerSocket(int port, int sendTimeout, int recvTimeout,
                    boost::shared_ptr<TSSLSocketFactory> factory);
  protected:
-  boost::shared_ptr<TSocket> createSocket(int socket);
+  boost::shared_ptr<TSocket> createSocket(THRIFT_SOCKET socket);
   boost::shared_ptr<TSSLSocketFactory> factory_;
 };
 
