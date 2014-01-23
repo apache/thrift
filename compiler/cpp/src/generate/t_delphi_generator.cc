@@ -3223,8 +3223,11 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out, stri
         tmp_sb << ".Append(', " << prop_name((*f_iter), is_exception) << ": ');" << endl;
     }
 
-
     t_type* ttype = (*f_iter)->get_type();
+    while (ttype->is_typedef()) {
+      ttype = ((t_typedef*)ttype)->get_type();
+    }
+
     if (ttype->is_xception() || ttype->is_struct()) {
       indent_impl(out) <<
         "if (" << prop_name((*f_iter), is_exception) << " = nil) then " << tmp_sb <<  ".Append('<null>') else " << tmp_sb <<  ".Append("<< prop_name((*f_iter), is_exception)  << ".ToString());" << endl;
