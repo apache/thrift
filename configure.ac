@@ -232,9 +232,8 @@ AX_THRIFT_LIB(ruby, [Ruby], yes)
 have_ruby=no
 if test "$with_ruby" = "yes"; then
   AC_PATH_PROG([RUBY], [ruby])
-  AC_PATH_PROG([RAKE], [rake])
   AC_PATH_PROG([BUNDLER], [bundle])
-  if test "x$RUBY" != "x" -a "x$RAKE" != "x"; then
+  if test "x$RUBY" != "x" -a "x$BUNDLER" != "x"; then
     have_ruby="yes"
   fi
 fi
