@@ -20,6 +20,8 @@
 #ifndef T_DOC_H
 #define T_DOC_H
 
+#include "globals.h"
+
 /**
  * Documentation stubs
  *
@@ -32,6 +34,9 @@ class t_doc {
   void set_doc(const std::string& doc) {
     doc_ = doc;
     has_doc_ = true;
+    if( (g_program_doctext_lineno == g_doctext_lineno) &&  (g_program_doctext_status == STILL_CANDIDATE)) {
+      g_program_doctext_status = ALREADY_PROCESSED;
+    }
   }
 
   const std::string& get_doc() const {

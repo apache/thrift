@@ -146,6 +146,13 @@ char* g_doctext;
  */
 int g_doctext_lineno;
 
+/** 
+ * The First doctext comment
+ */
+char* g_program_doctext_candidate;
+int  g_program_doctext_lineno = 0;
+PROGDOCTEXT_STATUS  g_program_doctext_status = INVALID;
+
 /**
  * Whether or not negative field keys are accepted.
  */
@@ -387,6 +394,27 @@ void clear_doctext() {
   }
   free(g_doctext);
   g_doctext = NULL;
+}
+
+/**
+ * Reset program doctext information after processing a file
+ */
+void reset_program_doctext_info() {
+  if(g_program_doctext_candidate != NULL) {
+    free(g_program_doctext_candidate);
+    g_program_doctext_candidate = NULL;
+  }
+  g_program_doctext_lineno = 0;
+  g_program_doctext_status = INVALID;
+}
+
+/**
+ * We are sure the program doctext candidate is really the program doctext.
+ */
+void declare_valid_program_doctext() {
+  if((g_program_doctext_candidate != NULL) && (g_program_doctext_status == STILL_CANDIDATE)) {
+    g_program_doctext_status = ABSOLUTELY_SURE;  
+  }
 }
 
 /**
@@ -910,6 +938,9 @@ void parse(t_program* program, t_program* parent_program) {
   for (iter = includes.begin(); iter != includes.end(); ++iter) {
     parse(*iter, program);
   }
+
+  // reset program doctext status before parsing a new file
+  reset_program_doctext_info();
 
   // Parse the program file
   g_parse_mode = PROGRAM;

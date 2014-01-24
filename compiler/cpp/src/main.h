@@ -103,6 +103,12 @@ void clear_doctext();
 char* clean_up_doctext(char* doctext);
 
 /**
+ * We are sure the program doctext candidate is really the program doctext.
+ */
+void declare_valid_program_doctext();
+
+
+/**
  * Flex utilities
  */
 
