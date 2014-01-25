@@ -27,7 +27,7 @@ using namespace boost;
 /**
  * SSL server socket implementation.
  */
-TSSLServerSocket::TSSLServerSocket(int port,
+TSSLServerSocket::TSSLServerSocket(THRIFT_SOCKET port,
                                    shared_ptr<TSSLSocketFactory> factory):
                                    TServerSocket(port), factory_(factory) {
   factory_->server(true);
