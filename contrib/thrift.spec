@@ -163,6 +163,7 @@ PHP libraries for Thrift.
 %setup -q
 
 %build
+[[ -e Makefile.in ]] || ./bootstrap.sh
 export GEM_HOME=${PWD}/.gem-home
 export RUBYLIB=${PWD}/lib/rb/lib
 %configure \
