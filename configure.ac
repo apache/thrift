@@ -178,6 +178,18 @@ if test "$with_erlang" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_ERLANG, [test "$have_erlang" = "yes"])
 
+AX_THRIFT_LIB(nodejs, [Nodejs], yes)
+have_nodejs=no
+if test "$with_nodejs" = "yes"; then
+  AC_PATH_PROGS([NODEJS], [nodejs node])
+  AC_PATH_PROG([NPM], [npm])
+  if test "x$NODEJS" != "x" -a "x$NPM" != "x"; then
+    have_nodejs="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_NODEJS, [test "$have_nodejs" = "yes"])
+AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
+
 AX_THRIFT_LIB(python, [Python], yes)
 if test "$with_python" = "yes";  then
   AM_PATH_PYTHON(2.4,, :)
@@ -547,7 +559,7 @@ AC_CONFIG_HEADERS(lib/cpp/src/thrift/config.h:config.hin)
 # gruard against pre defined config.h
 AH_TOP([
 #ifndef CONFIG_H
-#define CONFIG_H 
+#define CONFIG_H
 ])
 AH_BOTTOM([
 #endif
@@ -578,6 +590,7 @@ AC_CONFIG_FILES([
   lib/hs/Makefile
   lib/java/Makefile
   lib/js/test/Makefile
+  lib/nodejs/Makefile
   lib/perl/Makefile
   lib/perl/test/Makefile
   lib/php/Makefile
@@ -587,7 +600,6 @@ AC_CONFIG_FILES([
   test/Makefile
   test/cpp/Makefile
   test/hs/Makefile
-  test/nodejs/Makefile
   test/php/Makefile
   test/perl/Makefile
   test/py/Makefile
@@ -623,6 +635,7 @@ echo "Building PHP Library ......... : $have_php"
 echo "Building Erlang Library ...... : $have_erlang"
 echo "Building Go Library .......... : $have_go"
 echo "Building D Library ........... : $have_d"
+echo "Building NodeJS Library ...... : $have_nodejs"
 
 if test "$have_cpp" = "yes" ; then
   echo
@@ -686,6 +699,12 @@ if test "$have_d" = "yes" ; then
   echo "   Using D Compiler .......... : $DMD"
   echo "   Building D libevent tests . : $with_d_event_tests"
   echo "   Building D SSL tests ...... : $with_d_ssl_tests"
+fi
+if test "$have_nodejs" = "yes" ; then
+  echo
+  echo "NodeJS Library:"
+  echo "   Using NodeJS .............. : $NODEJS"
+  echo "   Using NodeJS version....... : $($NODEJS --version)"
 fi
 echo
 echo "If something is missing that you think should be present,"

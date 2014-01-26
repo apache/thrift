@@ -101,6 +101,9 @@ cpp_sockets="ip domain"
 java_sockets="ip ip-ssl"
 # TODO fastframed java transport is another implementation of framed transport
 
+nodejs_protocols="binary json"
+nodejs_transports="buffered framed"
+nodejs_sockets="ip"
 
 ant -f ../lib/java/build.xml compile-test 1>/dev/null
 
@@ -170,6 +173,34 @@ for proto in $(intersection "${cpp_protocols}" "${java_protocols}"); do
   done
 done
 
+
+NODE_TEST_DIR=${BASEDIR}/../bin/nodejs/tests
+export NODE_PATH=${NODE_TEST_DIR}:${NODE_TEST_DIR}/../lib:${NODE_PATH}
+######### nodejs client - cpp server ##############
+##
+for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
+  for trans in $(intersection "${nodejs_transports}" "${cpp_transports}"); do
+    for sock in $(intersection "${nodejs_sockets}" "${cpp_sockets}"); do
+      do_test "nodejs-cpp" "${proto}" "${trans}-ip" \
+              "nodejs ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans}" \
+              "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "10" "10"
+    done
+  done
+done
+
+######### cpp client - nodejs server ##############
+for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
+  for trans in $(intersection "${nodejs_transports}" "${cpp_transports}"); do
+    for sock in $(intersection "${nodejs_sockets}" "${cpp_sockets}"); do
+      do_test "cpp-nodejs" "${proto}" "${trans}-ip" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans}" \
+              "nodejs ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans}" \
+              "10" "10"
+    done
+  done
+done
+
 # delete Unix Domain Socket used by cpp tests
 rm -f /tmp/ThriftTest.thrift
 
@@ -221,18 +252,6 @@ do_test "php-cpp"  "binary" "buffered-ip" \
         "make -C php/ client" \
         "cpp/TestServer" \
         "10" "10"
-do_test "nodejs-nodejs" "binary" "framed-ip" \
-        "make -C nodejs/ client" \
-        "make -C nodejs/ server" \
-        "1" "5"
-do_test "nodejs-cpp" "binary" "framed-ip" \
-        "make -C nodejs/ client" \
-        "cpp/TestServer --transport=framed" \
-        "1" "10"
-do_test "cpp-nodejs" "binary" "framed-ip" \
-        "cpp/TestClient --transport=framed" \
-        "make -C nodejs/ server" \
-        "1" "5"
 do_test "rb-rb" "binary" "buffered-ip" \
         "ruby rb/integration/simple_client.rb" \
         "ruby rb/integration/simple_server.rb" \
