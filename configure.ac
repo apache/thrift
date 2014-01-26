@@ -366,12 +366,25 @@ AM_CONDITIONAL(HAVE_DEIMOS_OPENSSL, [test "$have_deimos_openssl" = "yes"])
 AM_CONDITIONAL(WITH_D_SSL_TESTS, [test "$with_d_ssl_tests" = "yes"])
 AC_SUBST(DMD_OPENSSL_FLAGS)
 
-
+AC_ARG_ENABLE([tests],
+  AS_HELP_STRING([--enable-tests], [build tests [default=yes]]),
+  [], enable_tests=yes
+)
 have_tests=yes
-if test "$with_tests" = "no"; then
+if test "$enable_tests" = "no"; then
   have_tests="no"
 fi
 AM_CONDITIONAL(WITH_TESTS, [test "$have_tests" = "yes"])
+
+AC_ARG_ENABLE([tutorial],
+  AS_HELP_STRING([--enable-tutorial], [build tutorial [default=yes]]),
+  [], enable_tutorial=yes
+)
+have_tutorial=yes
+if test "$enable_tutorial" = "no"; then
+  have_tutorial="no"
+fi
+AM_CONDITIONAL(WITH_TUTORIAL, [test "$have_tutorial" = "yes"])
 
 AM_CONDITIONAL(MINGW, false)
 case "${host_os}" in

@@ -19,13 +19,15 @@
 
 ACLOCAL_AMFLAGS = -I ./aclocal
 
-SUBDIRS = compiler/cpp lib tutorial
+SUBDIRS = compiler/cpp lib
 
 if WITH_TESTS
 SUBDIRS += test
 endif
 
+if WITH_TUTORIAL
 SUBDIRS += tutorial
+endif
 
 dist-hook:
 	find $(distdir) -type f \( -iname ".DS_Store" -or -iname "._*" -or -iname ".gitignore" \) | xargs rm -rf
