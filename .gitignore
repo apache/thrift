@@ -188,6 +188,9 @@ gen-*
 /lib/js/test/build
 /lib/js/test/Makefile
 /lib/js/test/Makefile.in
+/lib/nodejs/Makefile
+/lib/nodejs/Makefile.in
+/lib/nodejs/node_modules/
 /lib/perl/MANIFEST
 /lib/perl/MYMETA.yml
 /lib/perl/Makefile
