@@ -624,6 +624,7 @@ AC_CONFIG_FILES([
   tutorial/go/Makefile
   tutorial/java/Makefile
   tutorial/js/Makefile
+  tutorial/nodejs/Makefile
   tutorial/py/Makefile
   tutorial/py.twisted/Makefile
   tutorial/py.tornado/Makefile

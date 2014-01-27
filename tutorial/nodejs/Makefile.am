@@ -17,57 +17,22 @@
 # under the License.
 #
 
-SUBDIRS =
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-if MINGW
-# do nothing, just build the compiler
-else
+gen-nodejs/Calculator.js gen-nodejs/SharedService.js: $(top_srcdir)/tutorial/tutorial.thrift
+	$(THRIFT) --gen js:node -r $<
 
-if WITH_CPP
-SUBDIRS += cpp
-endif
+all-local: gen-nodejs/Calculator.js
 
-if WITH_JAVA
-SUBDIRS += java
-SUBDIRS += js
-endif
+tutorialserver: all
+	NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeServer.js
 
-if WITH_PYTHON
-SUBDIRS += py
-SUBDIRS += py.twisted
-SUBDIRS += py.tornado
-endif
+tutorialclient: all
+	NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeClient.js
 
-if WITH_RUBY
-SUBDIRS += rb
-endif
+clean-local:
+	$(RM) -r gen-*
 
-if WITH_GO
-SUBDIRS += go
-endif
-
-if WITH_NODEJS
-SUBDIRS += nodejs
-endif
-
-#
-# generate html for ThriftTest.thrift
-#
-all-local:
-	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
-endif
-
-# Any folders or files not listed above being added to SUBDIR need to be placed here in
-# EXTRA_DIST to be included in the release
 EXTRA_DIST = \
-	csharp \
-	d \
-	delphi \
-	erl \
-	gen-html \
-	hs \
-	ocaml \
-	perl \
-	php \
-	shared.thrift \
-	tutorial.thrift
+	NodeServer.js \
+	NodeClient.js
