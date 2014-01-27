@@ -312,6 +312,8 @@ gen-*
 /tutorial/js/Makefile
 /tutorial/js/Makefile.in
 /tutorial/js/build/
+/tutorial/nodejs/Makefile
+/tutorial/nodejs/Makefile.in
 /tutorial/py.twisted/Makefile
 /tutorial/py.twisted/Makefile.in
 /tutorial/py.tornado/Makefile
