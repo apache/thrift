@@ -20,13 +20,19 @@
 package thrift
 
 import (
+	"errors"
 	"io"
 )
+
+type timeoutable interface {
+	Timeout() bool
+}
 
 // Thrift Transport exception
 type TTransportException interface {
 	TException
 	TypeId() int
+	Err() error
 }
 
 const (
@@ -38,8 +44,8 @@ const (
 )
 
 type tTransportException struct {
-	typeId  int
-	message string
+	typeId int
+	err    error
 }
 
 func (p *tTransportException) TypeId() int {
@@ -47,22 +53,38 @@ func (p *tTransportException) TypeId() int {
 }
 
 func (p *tTransportException) Error() string {
-	return p.message
+	return p.err.Error()
 }
 
-func NewTTransportException(t int, m string) TTransportException {
-	return &tTransportException{typeId: t, message: m}
+func (p *tTransportException) Err() error {
+	return p.err
+}
+
+func NewTTransportException(t int, e string) TTransportException {
+	return &tTransportException{typeId: t, err: errors.New(e)}
 }
 
 func NewTTransportExceptionFromError(e error) TTransportException {
 	if e == nil {
 		return nil
 	}
+
 	if t, ok := e.(TTransportException); ok {
 		return t
 	}
-	if e == io.EOF {
-		return NewTTransportException(END_OF_FILE, e.Error())
+
+	switch v := e.(type) {
+	case TTransportException:
+		return v
+	case timeoutable:
+		if v.Timeout() {
+			return &tTransportException{typeId: TIMED_OUT, err: e}
+		}
 	}
-	return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, e.Error())
+
+	if e == io.EOF {
+		return &tTransportException{typeId: END_OF_FILE, err: e}
+	}
+
+	return &tTransportException{typeId: UNKNOWN_TRANSPORT_EXCEPTION, err: e}
 }
