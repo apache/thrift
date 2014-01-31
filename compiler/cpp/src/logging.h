@@ -17,42 +17,30 @@
  * under the License.
  */
 
-#ifndef T_DOC_H
-#define T_DOC_H
+#ifndef T_LOGGING_H
+#define T_LOGGING_H
 
-#include "globals.h"
-#include "logging.h"
+#include <string>
 
 /**
- * Documentation stubs
- *
+ * Parse debugging output, used to print helpful info
  */
-class t_doc {
+void pdebug(const char* fmt, ...);
 
- public:
-  t_doc() : has_doc_(false) {}
+/**
+ * Parser warning
+ */
+void pwarning(int level, const char* fmt, ...);
 
-  void set_doc(const std::string& doc) {
-    doc_ = doc;
-    has_doc_ = true;
-    if( (g_program_doctext_lineno == g_doctext_lineno) &&  (g_program_doctext_status == STILL_CANDIDATE)) {
-      g_program_doctext_status = ALREADY_PROCESSED;
-      pdebug("%s","program doctext set to ALREADY_PROCESSED");
-    }
-  }
+/**
+ * Print verbose output message
+ */
+void pverbose(const char* fmt, ...);
 
-  const std::string& get_doc() const {
-    return doc_;
-  }
+/**
+ * Failure!
+ */
+void failure(const char* fmt, ...);
 
-  bool has_doc() {
-    return has_doc_;
-  }
-
- private:
-  std::string doc_;
-  bool has_doc_;
-
-};
 
 #endif

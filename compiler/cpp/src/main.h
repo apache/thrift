@@ -21,6 +21,7 @@
 #define T_MAIN_H
 
 #include <string>
+#include "logging.h"
 #include "parse/t_const.h"
 #include "parse/t_field.h"
 
@@ -36,26 +37,6 @@ int yyparse(void);
  * Expected to be defined by Flex/Bison
  */
 void yyerror(const char* fmt, ...);
-
-/**
- * Parse debugging output, used to print helpful info
- */
-void pdebug(const char* fmt, ...);
-
-/**
- * Parser warning
- */
-void pwarning(int level, const char* fmt, ...);
-
-/**
- * Print verbose output message
- */
-void pverbose(const char* fmt, ...);
-
-/**
- * Failure!
- */
-void failure(const char* fmt, ...);
 
 /**
  * Check simple identifier names

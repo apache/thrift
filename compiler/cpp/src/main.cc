@@ -406,6 +406,7 @@ void reset_program_doctext_info() {
   }
   g_program_doctext_lineno = 0;
   g_program_doctext_status = INVALID;
+  pdebug("%s","program doctext set to INVALID");
 }
 
 /**
@@ -414,6 +415,10 @@ void reset_program_doctext_info() {
 void declare_valid_program_doctext() {
   if((g_program_doctext_candidate != NULL) && (g_program_doctext_status == STILL_CANDIDATE)) {
     g_program_doctext_status = ABSOLUTELY_SURE;  
+    pdebug("%s","program doctext set to ABSOLUTELY_SURE");
+  } else {
+    g_program_doctext_status = NO_PROGRAM_DOCTEXT;  
+    pdebug("%s","program doctext set to NO_PROGRAM_DOCTEXT");
   }
 }
 
