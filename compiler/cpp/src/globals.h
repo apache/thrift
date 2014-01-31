@@ -121,7 +121,8 @@ enum PROGDOCTEXT_STATUS {
   INVALID = 0,
   STILL_CANDIDATE = 1,      // the text may or may not be the program doctext
   ALREADY_PROCESSED = 2,    // doctext has been used and is no longer available
-  ABSOLUTELY_SURE = 3       // this is the program doctext
+  ABSOLUTELY_SURE = 3,      // this is the program doctext
+  NO_PROGRAM_DOCTEXT = 4    // there is no program doctext
 };
 
 
