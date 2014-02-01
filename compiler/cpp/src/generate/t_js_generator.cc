@@ -815,7 +815,7 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
                << indent() << "  input.skip(Thrift.Type.STRUCT);" << endl
                << indent() << "  input.readMessageEnd();" << endl
                << indent() << "  var x = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN_METHOD, 'Unknown function ' + r.fname);" << endl
-               << indent() << "  output.writeMessageBegin(r.fname, Thrift.MessageType.Exception, r.rseqid);" << endl
+               << indent() << "  output.writeMessageBegin(r.fname, Thrift.MessageType.EXCEPTION, r.rseqid);" << endl
                << indent() << "  x.write(output);" << endl
                << indent() << "  output.writeMessageEnd();" << endl
                << indent() << "  output.flush();" << endl
