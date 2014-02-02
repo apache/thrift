@@ -58,7 +58,7 @@ rem * compile all thrift files, generate PAS and C++ code
 echo.
 echo Generating code, please wait ...
 cd "%TARGET%"
-for %%a in (*.thrift) do "%BIN%\thrift.exe" -v --gen delphi:ansistr_binary,register_types,constprefix,events "%%a" 2>> "%LOGFILE%"
+for %%a in (*.thrift) do "%BIN%\thrift.exe" -v --gen delphi:ansistr_binary,register_types,constprefix,events,xmldoc "%%a" 2>> "%LOGFILE%"
 REM * for %%a in (*.thrift) do "%BIN%\thrift.exe" -v --gen cpp "%%a" >> NUL:
 cmd /c start notepad "%LOGFILE%"
 cd ..

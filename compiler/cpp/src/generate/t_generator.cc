@@ -92,14 +92,14 @@ void t_generator::generate_consts(vector<t_const*> consts) {
   }
 }
 
-void t_generator::generate_docstring_comment(ofstream& out,
+void t_generator::generate_docstring_comment(ostream& out,
                                              const string& comment_start,
                                              const string& line_prefix,
                                              const string& contents,
                                              const string& comment_end) {
   if (comment_start != "") indent(out) << comment_start;
   stringstream docs(contents, ios_base::in);
-  while (!docs.eof()) {
+  while ( ! (docs.eof() || docs.fail())) {
     char line[1024];
     docs.getline(line, 1024);
 

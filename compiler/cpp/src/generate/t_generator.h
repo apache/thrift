@@ -59,7 +59,7 @@ class t_generator {
 
   const t_program* get_program() const { return program_; }
 
-  void generate_docstring_comment(std::ofstream& out,
+  void generate_docstring_comment(std::ostream& out,
                                   const std::string& comment_start,
                                   const std::string& line_prefix,
                                   const std::string& contents,
