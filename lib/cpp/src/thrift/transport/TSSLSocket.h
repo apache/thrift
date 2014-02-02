@@ -75,7 +75,7 @@ protected:
    *
    * @param socket An existing socket
    */
-  TSSLSocket(boost::shared_ptr<SSLContext> ctx, int socket);
+  TSSLSocket(boost::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket);
   /**
    * Constructor.
    *
@@ -120,7 +120,7 @@ class TSSLSocketFactory {
    *
    * @param socket An existing socket.
    */
-  virtual boost::shared_ptr<TSSLSocket> createSocket(int socket);
+  virtual boost::shared_ptr<TSSLSocket> createSocket(THRIFT_SOCKET socket);
    /**
    * Create an instance of TSSLSocket.
    *
