@@ -40,7 +40,7 @@ TSSLServerSocket::TSSLServerSocket(int port, int sendTimeout, int recvTimeout,
   factory_->server(true);
 }
 
-shared_ptr<TSocket> TSSLServerSocket::createSocket(int client) {
+shared_ptr<TSocket> TSSLServerSocket::createSocket(THRIFT_SOCKET client) {
   return factory_->createSocket(client);
 }
 

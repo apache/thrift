@@ -88,7 +88,7 @@ TSSLSocket::TSSLSocket(boost::shared_ptr<SSLContext> ctx):
   TSocket(), server_(false), ssl_(NULL), ctx_(ctx) {
 }
 
-TSSLSocket::TSSLSocket(boost::shared_ptr<SSLContext> ctx, int socket):
+TSSLSocket::TSSLSocket(boost::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket):
   TSocket(socket), server_(false), ssl_(NULL), ctx_(ctx) {
 }
 
@@ -376,7 +376,7 @@ boost::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket() {
   return ssl;
 }
 
-boost::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(int socket) {
+boost::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(THRIFT_SOCKET socket) {
   boost::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, socket));
   setup(ssl);
   return ssl;
