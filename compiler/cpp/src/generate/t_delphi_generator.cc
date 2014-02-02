@@ -68,6 +68,8 @@ class t_delphi_generator : public t_oop_generator
       constprefix_ = (iter != parsed_options.end());
       iter = parsed_options.find("events");
       events_ = (iter != parsed_options.end());
+      iter = parsed_options.find("xmldoc");
+      xmldoc_ = (iter != parsed_options.end());
       
 
       out_dir_base_ = "gen-delphi";
@@ -182,6 +184,15 @@ class t_delphi_generator : public t_oop_generator
         " *)\n";
     }
 
+    string replace_all( string contents, string search, string replace);
+    string xml_encode( string contents);
+    string xmldoc_encode( string contents);
+	string xmlattrib_encode( string contents);
+    void generate_delphi_doc (std::ostream& out, t_field*    field);
+    void generate_delphi_doc (std::ostream& out, t_doc*      tdoc);
+    void generate_delphi_doc (std::ostream& out, t_function* tdoc);
+    void generate_delphi_docstring_comment (std::ostream &out, string contents);
+
     bool type_can_be_null(t_type* ttype) {
       while (ttype->is_typedef()) {
         ttype = ((t_typedef*)ttype)->get_type();
@@ -226,6 +237,7 @@ class t_delphi_generator : public t_oop_generator
     bool register_types_;
     bool constprefix_;
     bool events_;
+	bool xmldoc_;
     void indent_up_impl(){
       ++indent_impl_;
     };
@@ -244,6 +256,112 @@ class t_delphi_generator : public t_oop_generator
       return os << indent_impl();
     };
 };
+
+string t_delphi_generator::replace_all( string contents, string search, string repl) {
+  string str( contents);
+  
+  size_t slen = search.length();
+  size_t rlen = repl.length();
+  size_t incr = (rlen > 0) ? rlen : 1;
+
+  if( slen > 0) {
+    size_t found = str.find(search);
+    while( (found != string::npos) && (found < str.length())) {
+      str.replace( found, slen, repl);
+	  found = str.find(search, found+incr);
+    }
+  }
+  
+  return str;
+};
+
+// XML encoding 
+string t_delphi_generator::xml_encode( string contents) {
+  string str( contents);
+  
+  // escape the escape
+  str = replace_all( str, "&", "&amp;");
+  
+  // other standard XML entities
+  str = replace_all( str, "<", "&lt;");
+  str = replace_all( str, ">", "&gt;");
+  
+  return str;
+}
+
+// XML attribute encoding 
+string t_delphi_generator::xmlattrib_encode( string contents) {
+  string str( xml_encode( contents));
+  
+  // our attribs are enclosed in "
+  str = replace_all( str, "\"", "\\\"");
+  
+  return str;
+}
+
+// XML encoding for doc comments
+string t_delphi_generator::xmldoc_encode( string contents) {
+  string str( xml_encode( contents));
+  
+  // XMLDoc specific: convert linebreaks into <para>graphs</para>
+  str = replace_all( str, "\r\n", "\r");
+  str = replace_all( str, "\n",   "\r");
+  str = replace_all( str, "\r",   "</para>\n<para>");
+  
+  return str;
+}
+
+void t_delphi_generator::generate_delphi_docstring_comment(ostream &out, string contents) {
+  if( xmldoc_) {
+    generate_docstring_comment(out,
+                               "{$REGION 'XMLDoc'}/// <summary>\n",
+                               "/// ", "<para>" + contents + "</para>",
+                               "/// </summary>\n{$ENDREGION}\n");
+  }
+};
+
+void t_delphi_generator::generate_delphi_doc(ostream &out, t_field* field) {
+  if( xmldoc_) {
+    if (field->get_type()->is_enum()) {
+      string combined_message = xmldoc_encode( field->get_doc()) 
+	                          + "\n<seealso cref=\"" 
+                              + xmldoc_encode( type_name(field->get_type()))
+                              + "\"/>";
+      generate_delphi_docstring_comment(out, combined_message);
+    } else {
+      generate_delphi_doc(out, (t_doc*)field);
+    }
+  }
+}
+
+void t_delphi_generator::generate_delphi_doc(ostream &out, t_doc* tdoc) {
+  if (tdoc->has_doc() && xmldoc_) {
+    generate_delphi_docstring_comment(out, xmldoc_encode( tdoc->get_doc()));
+  }
+}
+
+void t_delphi_generator::generate_delphi_doc(ostream &out, t_function* tfunction) {
+  if (tfunction->has_doc() && xmldoc_) {
+    stringstream ps;
+    const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
+    vector<t_field*>::const_iterator p_iter;
+    for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
+      t_field* p = *p_iter;
+      ps << "\n<param name=\"" << xmlattrib_encode( p->get_name()) << "\">";
+      if (p->has_doc()) {
+        std::string str = p->get_doc();
+        str.erase(std::remove(str.begin(), str.end(), '\n'), str.end()); // remove the newlines that appear from the parser
+        ps << xmldoc_encode(str);
+      }
+      ps << "</param>";
+    }
+    generate_docstring_comment(out,
+                               "{$REGION 'XMLDoc'}",
+                               "/// ",
+                               "<summary><para>" + xmldoc_encode(tfunction->get_doc()) + "</para></summary>" + ps.str(),
+                               "{$ENDREGION}\n");
+  }
+}
 
 bool t_delphi_generator::find_keyword( std::map<std::string, int>& keyword_map, std::string name) {
   int len = name.length();
@@ -487,6 +605,7 @@ void t_delphi_generator::close_generator() {
   f_all.open( f_name.c_str() );
 
   f_all << autogen_comment() << endl;
+  generate_delphi_doc(f_all, program_);
   f_all << "unit " << unitname << ";" << endl << endl;
   f_all << "interface" << endl << endl;
   f_all  << "uses"  << endl;
@@ -519,6 +638,7 @@ void t_delphi_generator::close_generator() {
   indent(f_all)  << "c" << tmp_unit << "_Option_Register_Types = " << ( register_types_ ? "True" : "False") << ";" << endl;
   indent(f_all)  << "c" << tmp_unit << "_Option_ConstPrefix    = " << ( constprefix_    ? "True" : "False") << ";" << endl;
   indent(f_all)  << "c" << tmp_unit << "_Option_Events         = " << ( events_         ? "True" : "False") << ";" << endl;
+  indent(f_all)  << "c" << tmp_unit << "_Option_XmlDoc         = " << ( xmldoc_         ? "True" : "False") << ";" << endl;
   indent_down();
 
   f_all  << "type"  << endl;
@@ -600,6 +720,7 @@ void t_delphi_generator::generate_typedef(t_typedef* ttypedef) {
   }
   
   indent_up();
+  generate_delphi_doc(s_struct, ttypedef);
   indent(s_struct) << 
     type_name(ttypedef) << " = ";
 
@@ -688,6 +809,7 @@ void t_delphi_generator::init_known_types_list() {
 void t_delphi_generator::generate_enum(t_enum* tenum) {
   has_enum = true;
   indent_up();
+  generate_delphi_doc( s_enum, tenum);
   indent(s_enum) <<
     type_name(tenum,true,true) << " = " <<  "("  << endl;
   indent_up();
@@ -699,6 +821,7 @@ void t_delphi_generator::generate_enum(t_enum* tenum) {
       s_enum << ",";
       s_enum << endl;
     }
+	generate_delphi_doc(s_enum, *c_iter);
     indent(s_enum) << normalize_name((*c_iter)->get_name()) << " = " << value;
   }
   s_enum << endl;
@@ -769,6 +892,7 @@ void t_delphi_generator::generate_consts(std::vector<t_const*> consts) {
   indent(s_const) << "public" << endl;
   indent_up();
   for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+    generate_delphi_doc(s_const, *c_iter);
     print_const_prop(s_const, normalize_name((*c_iter)->get_name()), 
       (*c_iter)->get_type(), (*c_iter)->get_value());
   }
@@ -1231,6 +1355,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struc
 
   if ((! is_exception) || is_x_factory) {
 
+    generate_delphi_doc(out, tstruct);
     indent(out) << struct_intf_name << " = interface(IBase)" << endl;
     indent_up();
 
@@ -1275,6 +1400,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struc
     indent(out) << "end;" << endl << endl;
   }
 
+  generate_delphi_doc(out, tstruct);
   indent(out) << struct_name << " = ";
   if (is_final) {
     out << "sealed ";
@@ -1402,6 +1528,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream &out, t_struc
 
 void t_delphi_generator::generate_service(t_service* tservice) {
   indent_up();
+  generate_delphi_doc(s_service, tservice);
   indent(s_service) << normalize_clsnm(service_name_, "T") << " = class" << endl;
   indent(s_service) << "public" << endl;
   indent_up();
@@ -1423,9 +1550,11 @@ void t_delphi_generator::generate_service_interface(t_service* tservice) {
 
   indent_up();
 
+  generate_delphi_doc(s_service, tservice);
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends(), true, true);
     extends_iface = extends + ".Iface";
+    generate_delphi_doc(s_service, tservice);
     indent(s_service) <<
       "Iface = interface(" << extends_iface << ")" << endl;
   } else {
@@ -1438,7 +1567,8 @@ void t_delphi_generator::generate_service_interface(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter)
   {
-    indent(s_service) <<
+    generate_delphi_doc(s_service, *f_iter);
+	indent(s_service) <<
       function_signature(*f_iter) << endl;
   }
   indent_down();
@@ -1468,6 +1598,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
     extends_client = extends + ".Client, ";
   }
 
+  generate_delphi_doc(s_service, tservice);
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends(), true, true);
     extends_client = extends + ".TClient";
@@ -1528,6 +1659,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
   indent(s_service) << "// Iface" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     string funname = (*f_iter)->get_name();
+    generate_delphi_doc(s_service, *f_iter);
     indent(s_service) << function_signature(*f_iter) << endl;
   }
   indent_down();
@@ -2375,6 +2507,7 @@ void t_delphi_generator::generate_delphi_property(ostream& out, bool struct_is_x
 
   t_type* ftype = tfield->get_type();
   bool is_xception = ftype->is_xception();
+  generate_delphi_doc(out,tfield);
   indent(out) << "property " << prop_name(tfield, struct_is_xception) << ": " << type_name(ftype, false, true, is_xception, true) << " read " << fieldPrefix + prop_name(tfield, struct_is_xception)
     << " write Set" << prop_name(tfield, struct_is_xception) << ";" << endl;
 }
@@ -3288,5 +3421,6 @@ THRIFT_REGISTER_GENERATOR(delphi, "delphi",
 "    register_types:  Enable TypeRegistry, allows for creation of struct, union\n" 
 "                     and container instances by interface or TypeInfo()\n"
 "    constprefix:     Name TConstants classes after IDL to reduce ambiguities\n"
-"    events:          Enable and use processing events in the generated code.\n");
+"    events:          Enable and use processing events in the generated code.\n"
+"    xmldoc:          Enable XMLDoc comments for Help Insight etc.\n");
 
