@@ -363,6 +363,7 @@ TSSLSocketFactory::TSSLSocketFactory(): server_(false) {
 
 TSSLSocketFactory::~TSSLSocketFactory() {
   Guard guard(mutex_);
+  ctx_.reset();
   count_--;
   if (count_ == 0) {
     cleanupOpenSSL();
