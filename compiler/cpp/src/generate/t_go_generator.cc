@@ -1717,7 +1717,7 @@ void t_go_generator::generate_service_client(t_service* tservice)
                        indent() << "  return" << endl <<
                        indent() << "}" << endl <<
                        indent() << "if p.SeqId != seqId {" << endl <<
-                       indent() << "  err = thrift.NewTApplicationException(thrift.BAD_SEQUENCE_ID, \"ping failed: out of sequence response\")" << endl <<
+                       indent() << "  err = thrift.NewTApplicationException(thrift.BAD_SEQUENCE_ID, \"" << (*f_iter)->get_name() << " failed: out of sequence response\")" << endl <<
                        indent() << "  return" << endl <<
                        indent() << "}" << endl <<
                        indent() << result << " := New" << publicize(resultname) << "()" << endl <<
@@ -2351,28 +2351,37 @@ void t_go_generator::generate_process_function(t_service* tservice,
         f_service_ << "args." << publicize(variable_name_to_go_name((*f_iter)->get_name()));
     }
 
-    f_service_ << "); err2 != nil {" << endl <<
-               indent() << "switch v := err2.(type) {" << endl;
-
+    f_service_ << "); err2 != nil {" << endl;
+    
     t_struct* exceptions = tfunction->get_xceptions();
     const vector<t_field*>& x_fields = exceptions->get_members();
-    vector<t_field*>::const_iterator xf_iter;
+	if( ! x_fields.empty()) {
+        f_service_ << indent() << "switch v := err2.(type) {" << endl;
 
-    for (xf_iter = x_fields.begin(); xf_iter != x_fields.end(); ++xf_iter) {
-        f_service_ <<
-                    indent() << "  case *" << type_name((*xf_iter)->get_type()) << ":" << endl <<
-                    indent() << "result." << publicize(variable_name_to_go_name((*xf_iter)->get_name())) << " = v" << endl;
+        vector<t_field*>::const_iterator xf_iter;
+
+        for (xf_iter = x_fields.begin(); xf_iter != x_fields.end(); ++xf_iter) {
+            f_service_ <<
+                        indent() << "  case *" << type_name((*xf_iter)->get_type()) << ":" << endl <<
+                        indent() << "result." << publicize(variable_name_to_go_name((*xf_iter)->get_name())) << " = v" << endl;
+        }
+        
+		f_service_ <<
+                   indent() << "  default:" << endl;
     }
 
     f_service_ <<
-               indent() << "  default:" << endl <<
                indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, \"Internal error processing " << escape_string(tfunction->get_name()) << ": \" + err.Error())" << endl <<
                indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name()) << "\", thrift.EXCEPTION, seqId)" << endl <<
                indent() << "  x.Write(oprot)" << endl <<
                indent() << "  oprot.WriteMessageEnd()" << endl <<
                indent() << "  oprot.Flush()" << endl <<
-               indent() << "  return false, err2" << endl <<
-               indent() << "}" << endl;
+               indent() << "  return false, err2" << endl ;
+			   
+    if( ! x_fields.empty()) {
+	    f_service_ <<
+                   indent() << "}" << endl;
+    }			   
 
     f_service_ <<
                indent() << "}" << endl <<
