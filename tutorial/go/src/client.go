@@ -39,10 +39,13 @@ func handleClient(client *tutorial.CalculatorClient) (err error) {
 	work.Num2 = 0
 	quotient, err := client.Calculate(1, work)
 	if err != nil {
-		fmt.Println("Error during operation:", err)
+		switch v := err.(type) {
+		case *tutorial.InvalidOperation:
+			fmt.Println("Invalid operation:", v)
+		default:
+			fmt.Println("Error during operation:", err)
+		}
 		return err
-	//} else if ouch != nil {
-	//	fmt.Println("Invalid operation:", ouch)
 	} else {
 		fmt.Println("Whoa we can divide by 0 with new value:", quotient)
 	}
@@ -52,10 +55,13 @@ func handleClient(client *tutorial.CalculatorClient) (err error) {
 	work.Num2 = 10
 	diff, err := client.Calculate(1, work)
 	if err != nil {
-		fmt.Println("Error during operation:", err)
+		switch v := err.(type) {
+		case *tutorial.InvalidOperation:
+			fmt.Println("Invalid operation:", v)
+		default:
+			fmt.Println("Error during operation:", err)
+		}
 		return err
-	//} else if ouch != nil {
-	//	fmt.Println("Invalid operation:", ouch)
 	} else {
 		fmt.Print("15-10=", diff, "\n")
 	}
