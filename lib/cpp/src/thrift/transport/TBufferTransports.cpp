@@ -360,6 +360,8 @@ void TMemoryBuffer::ensureCanWrite(uint32_t len) {
   rBound_ += offset;
   wBase_ += offset;
   wBound_ = buffer_ + bufferSize_;
+  delete new_buffer;
+  new_buffer=NULL;
 }
 
 void TMemoryBuffer::writeSlow(const uint8_t* buf, uint32_t len) {
