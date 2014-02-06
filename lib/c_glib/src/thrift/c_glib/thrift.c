@@ -30,3 +30,9 @@ thrift_hash_table_get_keys (gpointer key, gpointer value, gpointer user_data)
   *list = g_list_append (*list, key);
 }
 
+void
+thrift_string_free (gpointer str)
+{
+	GByteArray* ptr = str;
+	g_byte_array_unref(ptr);
+}
