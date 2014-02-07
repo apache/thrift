@@ -1,7 +1,7 @@
 Thrift Javascript Library
 =========================
 This browser based Apache Thrift implementation supports
-RPC using the JSON protocol over Http[s] with XHR.
+RPC clients using the JSON protocol over Http[s] with XHR.
 
 License
 -------
@@ -25,50 +25,74 @@ under the License.
 Example
 -------
 The listing below demonstrates a simple browser based JavaScript
-Thrift client and Node.js JavaScript server for the HelloSvc service. 
+Thrift client and Node.js JavaScript server for the hello_svc 
+service. 
 
 ### hello.thrift - Service IDL
-    service HelloSvc {
-        string hello_func(),
+    service hello_svc {
+      string get_message(1: string name)
     }
 
 ### hello.html - Browser Client
-    <!doctype html>
+    <!DOCTYPE html>
     <html lang="en">
-    <head>
-        <script src="thrift.js" type="text/javascript"></script>
-        <script src="gen-js/HelloSvc.js" type="text/javascript"></script>
-    </head>
-    <body>
-        <h1>Apache Thrift JavaScript Browser Client Demo</h1>
-        <button id="btn">Get Message from Node Server</button>
-        <script type="text/javascript">
-            document.getElementById("btn").addEventListener("click", getMessage, false);
-    
-            function getMessage() {
-                var transport = new Thrift.Transport("http://localhost:8585");
-                var protocol  = new Thrift.Protocol(transport);
-                var client = new HelloSvcClient(protocol);
-                var msg = client.hello_func();
-                document.getElementById("output").innerHTML = msg;
-            }
+      <head>
+        <meta charset="utf-8">
+        <title>Hello Thrift</title>
+      </head>
+      <body>
+        Name: <input type="text" id="name_in">
+        <input type="button" id="get_msg" value="Get Message" >
+        <div id="output"></div>
+  
+        <script src="thrift.js"></script>
+        <script src="gen-js/hello_svc.js"></script>
+        <script>
+          (function() {
+            var transport = new Thrift.Transport("/hello");
+            var protocol  = new Thrift.Protocol(transport);
+            var client    = new hello_svcClient(protocol);
+            var nameElement = document.getElementById("name_in");
+            var outputElement = document.getElementById("output");
+            document.getElementById("get_msg")
+              .addEventListener("click", function(){
+                client.get_message(nameElement.value, function(result) {
+                  outputElement.innerHTML = result;
+                });
+              });
+          })();
         </script>
-        <h2>Server Response: <div id="output"></div></h2>
-    </body> 
+      </body>
     </html>
 
 ### hello.js - Node Server
-    var thrift = require('thrift');
-    var TJSONProtocol = require('thrift/protocol').TJSONProtocol;
-    var HelloSvc = require('./gen-nodejs/HelloSvc.js');
+    var Thrift = require('thrift');
+    var TBufferedTransport = require('thrift/lib/thrift/transport').TBufferedTransport;
+    var TJSONProtocol = require('thrift/lib/thrift/protocol').TJSONProtocol;
+    var hello_svc = require('./gen-nodejs/hello_svc.js');
     
-    var call_counter = 0;
-        
-    var server = thrift.createHttpGetPostServer(HelloSvc, {
-      hello_func: function(result) {
-        console.log("Client call: " + (++call_counter));
-        result(null, "Hello Apache Thrift for JavaScript " + call_counter);
+    var hello_handler = {
+      get_message: function(name, result) {
+        var msg = "Hello " + name + "!";
+        result(null, msg);
       }
-    }, {protocol: TJSONProtocol});
+    }
     
-    server.listen(8585);
+    var hello_svc_opt = {
+      transport: TBufferedTransport,
+      protocol: TJSONProtocol,
+      cls: hello_svc,
+      handler: hello_handler
+    };
+    
+    var server_opt = {
+      staticFilePath: ".",
+      services: {
+        "/hello": hello_svc_opt
+      }
+    }
+    
+    var server = Thrift.createStaticHttpThriftServer(server_opt);
+    var port = 9099;
+    server.listen(port);
+    console.log("Http/Thrift Server running on port: " + port);`
