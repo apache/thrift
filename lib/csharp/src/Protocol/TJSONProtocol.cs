@@ -58,7 +58,6 @@ namespace Thrift.Protocol
 		private static byte[] RBRACKET = new byte[] { (byte)']' };
 		private static byte[] QUOTE = new byte[] { (byte)'"' };
 		private static byte[] BACKSLASH = new byte[] { (byte)'\\' };
-		private static byte[] ZERO = new byte[] { (byte)'0' };
 
 		private byte[] ESCSEQ = new byte[] { (byte)'\\', (byte)'u', (byte)'0', (byte)'0' };
 
@@ -735,28 +734,38 @@ namespace Thrift.Protocol
 				{
 					break;
 				}
-				if (ch == ESCSEQ[0])
+
+				// escaped?
+				if (ch != ESCSEQ[0])
 				{
-					ch = reader.Read();
-					if (ch == ESCSEQ[1])
-					{
-						ReadJSONSyntaxChar(ZERO);
-						ReadJSONSyntaxChar(ZERO);
-						trans.ReadAll(tempBuffer, 0, 2);
-						ch = (byte)((HexVal((byte)tempBuffer[0]) << 4) + HexVal(tempBuffer[1]));
-					}
-					else
-					{
-						int off = Array.IndexOf(ESCAPE_CHARS, (char)ch);
-						if (off == -1)
-						{
-							throw new TProtocolException(TProtocolException.INVALID_DATA,
-														 "Expected control char");
-						}
-						ch = ESCAPE_CHAR_VALS[off];
-					}
+					buffer.Write(new byte[] { (byte)ch }, 0, 1);
+					continue;
 				}
-				buffer.Write(new byte[] { (byte)ch }, 0, 1);
+
+				// distinguish between \uXXXX and \?
+				ch = reader.Read();
+				if (ch != ESCSEQ[1])  // control chars like \n
+				{
+					int off = Array.IndexOf(ESCAPE_CHARS, (char)ch);
+					if (off == -1)
+					{
+						throw new TProtocolException(TProtocolException.INVALID_DATA,
+														"Expected control char");
+					}
+					ch = ESCAPE_CHAR_VALS[off];
+					buffer.Write(new byte[] { (byte)ch }, 0, 1);
+					continue;
+				}
+
+
+				// it's \uXXXX
+				trans.ReadAll(tempBuffer, 0, 4);
+				var wch = (short)((HexVal((byte)tempBuffer[0]) << 12) +
+								  (HexVal((byte)tempBuffer[1]) << 8) +
+								  (HexVal((byte)tempBuffer[2]) << 4) + 
+								   HexVal(tempBuffer[3]));
+				var tmp = utf8Encoding.GetBytes(new char[] { (char)wch });
+				buffer.Write(tmp, 0, tmp.Length);
 			}
 			return buffer.ToArray();
 		}
