@@ -60,6 +60,10 @@ class t_js_generator : public t_oop_generator {
      iter = parsed_options.find("jquery");
      gen_jquery_ = (iter != parsed_options.end());
 
+	 if (gen_node_ && gen_jquery_) {
+       throw "Invalid switch: [-gen js:node,jquery] options not compatible, try: [-gen js:node -gen js:jquery]";
+	 }
+
      if (gen_node_) {
        out_dir_base_ = "gen-nodejs";
      } else {
@@ -234,7 +238,7 @@ class t_js_generator : public t_oop_generator {
  private:
 
   /**
-   * True iff we should generate NodeJS-friendly RPC services.
+   * True if we should generate NodeJS-friendly RPC services.
    */
   bool gen_node_;
 
@@ -1024,46 +1028,52 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
     // Open function
     f_service_ <<  js_namespace(tservice->get_program())<<service_name_<<"Client.prototype." <<
-      function_signature(*f_iter, "", gen_node_ || gen_jquery_) << " {" << endl;
+      function_signature(*f_iter, "", true) << " {" << endl;
 
     indent_up();
 
-    if (gen_node_) {
+    if (gen_node_) {          //Node.js output      ./gen-nodejs
       f_service_ <<
         indent() << "this._seqid = this.new_seqid();" << endl <<
-        indent() << "this._reqs[this.seqid()] = callback;" << endl;
-    } else if (gen_jquery_) {
-      f_service_ <<
-        indent() << "if (callback === undefined) {" << endl;
-        indent_up();
+        indent() << "this._reqs[this.seqid()] = callback;" << endl <<
+        indent() << "this.send_" << funname << "(" << arglist << ");" << endl;
     }
-
-    f_service_ << indent() <<
-      "this.send_" << funname << "(" << arglist << ");" << endl;
-
-    if (!gen_node_ && !(*f_iter)->is_oneway()) {
-      f_service_ << indent();
-      if (!(*f_iter)->get_returntype()->is_void()) {
-        f_service_ << "return ";
+    else if (gen_jquery_) {   //jQuery output       ./gen-js
+		  f_service_ << indent() << "if (callback === undefined) {" << endl;
+      indent_up();
+      f_service_ << indent() << "this.send_" << funname << "(" << arglist << ");" << endl;
+      if (!(*f_iter)->is_oneway()) {
+        f_service_ << indent();
+        if (!(*f_iter)->get_returntype()->is_void()) {
+          f_service_ << "return ";
+        }
+        f_service_ << "this.recv_" << funname << "();" << endl;
       }
-      f_service_ <<
-        "this.recv_" << funname << "();" << endl;
-    }
-
-    if (gen_jquery_) {
       indent_down();
       f_service_ << indent() << "} else {" << endl;
       indent_up();
-        f_service_ << indent() << "var postData = this.send_" << funname <<
-           "(" << arglist << (arglist.empty() ? "" : ", ") << "true);" << endl;
-        f_service_ << indent() << "return this.output.getTransport()" << endl;
-        indent_up();
-          f_service_ << indent() << ".jqRequest(this, postData, arguments, this.recv_" << funname << ");" << endl;
-        indent_down();
+      f_service_ << indent() << "var postData = this.send_" << funname <<
+        "(" << arglist << (arglist.empty() ? "" : ", ") << "true);" << endl;
+      f_service_ << indent() << "return this.output.getTransport()" << endl;
+      indent_up();
+      f_service_ << indent() << ".jqRequest(this, postData, arguments, this.recv_" << funname << ");" << endl;
+      indent_down();
       indent_down();
       f_service_ << indent() << "}" << endl;
+    } else {                  //Standard JavaScript ./gen-js
+      f_service_ << indent() <<
+        "this.send_" << funname << "(" << arglist << (arglist.empty() ? "" : ", ") << "callback); " << endl;
+      if (!(*f_iter)->is_oneway()) {
+		    f_service_ << indent() << "if (!callback) {" << endl;
+        f_service_ << indent();
+        if (!(*f_iter)->get_returntype()->is_void()) {
+          f_service_ << "  return ";
+        }
+        f_service_ << "this.recv_" << funname << "();" << endl;
+        f_service_ << indent() << "}" << endl;
+      }
     }
-
+  
     indent_down();
 
     f_service_ << "};" << endl << endl;
@@ -1071,7 +1081,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
     // Send function
     f_service_ <<  js_namespace(tservice->get_program())<<service_name_ <<
-        "Client.prototype.send_" << function_signature(*f_iter, "", gen_jquery_) << " {" <<endl;
+      "Client.prototype.send_" << function_signature(*f_iter, "", !gen_node_) << " {" << endl;
 
     indent_up();
 
@@ -1113,10 +1123,25 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       if (gen_jquery_) {
         f_service_ << indent() << "return this.output.getTransport().flush(callback);" << endl;
       } else {
-        f_service_ << indent() << "return this.output.getTransport().flush();" << endl;
+        f_service_ << indent() << "if (callback) {" << endl; 
+        f_service_ << indent() << "  var self = this;" << endl;
+        f_service_ << indent() << "  this.output.getTransport().flush(true, function() {" << endl;
+        f_service_ << indent() << "    if (this.readyState == 4 && this.status == 200) {" << endl;
+        f_service_ << indent() << "      self.output.getTransport().setRecvBuffer(this.responseText);" << endl;
+        f_service_ << indent() << "      var result = null;" << endl;
+        f_service_ << indent() << "      try {" << endl;
+        f_service_ << indent() << "        result = self.recv_" << funname << "();" << endl;
+        f_service_ << indent() << "      } catch (e) {" << endl;
+        f_service_ << indent() << "        result = e;" << endl;
+        f_service_ << indent() << "      }" << endl;
+        f_service_ << indent() << "      callback(result);" << endl;
+        f_service_ << indent() << "    }" << endl;
+        f_service_ << indent() << "  });" << endl;
+        f_service_ << indent() << "} else {" << endl;
+        f_service_ << indent() << "  return this.output.getTransport().flush();" << endl;
+        f_service_ << indent() << "}" << endl;
       }
     }
-
 
     indent_down();
 
@@ -1813,4 +1838,5 @@ string t_js_generator ::type_to_enum(t_type* type) {
 THRIFT_REGISTER_GENERATOR(js, "Javascript",
 "    jquery:          Generate jQuery compatible code.\n"
 "    node:            Generate node.js compatible code.\n")
+
 
