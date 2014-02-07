@@ -1,4 +1,4 @@
-(*
+﻿(*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -898,6 +898,9 @@ const
   TEST_DOUBLE  = -1.234e-56;
   DELTA_DOUBLE = TEST_DOUBLE * 1e-14;
   TEST_STRING  = 'abc-'#$00E4#$00f6#$00fc; // german umlauts (en-us: "funny chars")
+  // Test THRIFT-2336 with 'Русское Название';
+  RUSSIAN_TEXT = #$0420#$0443#$0441#$0441#$043a#$043e#$0435' '#$041d#$0430#$0437#$0432#$0430#$043d#$0438#$0435;
+  RUSSIAN_JSON = '"\u0420\u0443\u0441\u0441\u043a\u043e\u0435 \u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435"';
   // test both possible solidus encodings
   SOLIDUS_JSON_DATA = '"one/two\/three"';
   SOLIDUS_EXCPECTED = 'one/two/three';
@@ -965,6 +968,7 @@ begin
 
     Expect( stm.Position = stm.Size, 'Stream position after read');
 
+
     // Solidus can be encoded in two ways. Make sure we can read both
     stm.Position := 0;
     stm.Size     := 0;
@@ -974,6 +978,32 @@ begin
               TStreamTransportImpl.Create(
                 TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
     Expect( prot.ReadString = SOLIDUS_EXCPECTED, 'Solidus encoding');
+
+
+    // Widechars should work too. Do they?
+    // After writing, we ensure that we are able to read it back
+    // We can't assume hex-encoding, since (nearly) any Unicode char is valid JSON
+    stm.Position := 0;
+    stm.Size     := 0;
+    prot := TJSONProtocolImpl.Create(
+              TStreamTransportImpl.Create(
+                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE)));
+    prot.WriteString( RUSSIAN_TEXT);
+    stm.Position := 0;
+    prot := TJSONProtocolImpl.Create(
+              TStreamTransportImpl.Create(
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+    Expect( prot.ReadString = RUSSIAN_TEXT, 'Writing JSON with chars > 8 bit');
+
+    // Widechars should work with hex-encoding too. Do they?
+    stm.Position := 0;
+    stm.Size     := 0;
+    stm.WriteString( RUSSIAN_JSON);
+    stm.Position := 0;
+    prot := TJSONProtocolImpl.Create(
+              TStreamTransportImpl.Create(
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+    Expect( prot.ReadString = RUSSIAN_TEXT, 'Reading JSON with chars > 8 bit');
 
 
   finally
@@ -1068,10 +1098,10 @@ var
 begin
   // perform all tests
   try
+    JSONProtocolReadWriteTest;
     for i := 0 to FNumIteration - 1 do
     begin
       ClientTest;
-      JSONProtocolReadWriteTest;
     end;
   except
     on e:Exception do Expect( FALSE, 'unexpected exception: "'+e.message+'"');
