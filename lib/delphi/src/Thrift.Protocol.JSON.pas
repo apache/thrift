@@ -254,7 +254,6 @@ var
   RBRACKET  : TBytes;
   QUOTE     : TBytes;
   BACKSLASH : TBytes;
-  ZERO      : TBytes;
   ESCSEQ    : TBytes;
 
 const
@@ -815,7 +814,8 @@ end;
 
 function TJSONProtocolImpl.ReadJSONString( skipContext : Boolean) : TBytes;
 var buffer : TMemoryStream;
-    ch : Byte;
+    ch  : Byte;
+    wch : Word;
     off : Integer;
     tmp : TBytes;
 begin
@@ -832,25 +832,34 @@ begin
       if (ch = QUOTE[0])
       then Break;
 
-      if (ch = ESCSEQ[0])
-      then begin
-        ch := FReader.Read;
-        if (ch = ESCSEQ[1])
-        then begin
-          ReadJSONSyntaxChar( ZERO[0]);
-          ReadJSONSyntaxChar( ZERO[0]);
-          SetLength( tmp, 2);
-          Transport.ReadAll( tmp, 0, 2);
-          ch := (HexVal(tmp[0]) shl 4) + HexVal(tmp[1]);
-        end
-        else begin
-          off := Pos( Char(ch), ESCAPE_CHARS);
-          if off < 1
-          then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected control char');
-          ch := Byte( ESCAPE_CHAR_VALS[off]);
-        end;
+      // check for escapes
+      if (ch <> ESCSEQ[0]) then begin
+        buffer.Write( ch, 1);
+        Continue;
       end;
-      buffer.Write( ch, 1);
+
+      // distuinguish between \uNNNN and \?
+      ch := FReader.Read;
+      if (ch <> ESCSEQ[1])
+      then begin
+        off := Pos( Char(ch), ESCAPE_CHARS);
+        if off < 1
+        then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected control char');
+        ch := Byte( ESCAPE_CHAR_VALS[off]);
+        buffer.Write( ch, 1);
+        Continue;
+      end;
+
+      // it is \uXXXX
+      SetLength( tmp, 4);
+      Transport.ReadAll( tmp, 0, 4);
+      wch := (HexVal(tmp[0]) shl 12)
+           + (HexVal(tmp[1]) shl 8)
+           + (HexVal(tmp[2]) shl 4)
+           +  HexVal(tmp[3]);
+      // we need to make UTF8 bytes from it, to be decoded later
+      tmp := SysUtils.TEncoding.UTF8.GetBytes(Char(wch));
+      buffer.Write( tmp[0], length(tmp));
     end;
 
     SetLength( result, buffer.Size);
@@ -1174,6 +1183,5 @@ initialization
   InitBytes( RBRACKET,  [Byte(']')]);
   InitBytes( QUOTE,     [Byte('"')]);
   InitBytes( BACKSLASH, [Byte('\')]);
-  InitBytes( ZERO,      [Byte('0')]);
   InitBytes( ESCSEQ,    [Byte('\'),Byte('u'),Byte('0'),Byte('0')]);
 end.
