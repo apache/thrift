@@ -205,7 +205,7 @@ class t_php_generator : public t_oop_generator {
   std::string php_includes();
   std::string declare_field(t_field* tfield, bool init=false, bool obj=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
-  std::string argument_list(t_struct* tstruct, bool addStructSignature = true);
+  std::string argument_list(t_struct* tstruct, bool addTypeHints = true);
   std::string type_to_cast(t_type* ttype);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_phpdoc(t_type* ttype);
@@ -2374,7 +2374,7 @@ string t_php_generator::function_signature(t_function* tfunction,
 /**
  * Renders a field list
  */
-string t_php_generator::argument_list(t_struct* tstruct, bool addStructSignature) {
+string t_php_generator::argument_list(t_struct* tstruct, bool addTypeHints) {
   string result = "";
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -2390,11 +2390,18 @@ string t_php_generator::argument_list(t_struct* tstruct, bool addStructSignature
     t_type* type = (*f_iter)->get_type();
 
     //Set type name
-    if(addStructSignature && type->is_struct())
+    if (addTypeHints)
     {
-      string className = php_namespace(type->get_program()) + php_namespace_directory("Definition", false) + classify(type->get_name());
+      if (type->is_struct())
+      {
+        string className = php_namespace(type->get_program()) + php_namespace_directory("Definition", false) + classify(type->get_name());
 
-      result += className + " ";
+        result += className + " ";
+      }
+      else if (type->is_container())
+      {
+        result += "array ";
+      }
     }
 
     result += "$" + (*f_iter)->get_name();
