@@ -2,18 +2,7 @@
 set -e
 
 ./configure \
-  --without-cpp \
-  --without-c_glib \
-  --without-java \
-  --without-csharp \
-  --without-python \
-  --without-ruby \
-  --without-haskell \
-  --without-perl \
-  --without-php \
-  --without-erlang \
-  --without-go \
-  --without-d \
+  --disable-libs \
   --build=i686-pc-linux-gnu \
   --host=i586-mingw32msvc
 
