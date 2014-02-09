@@ -99,6 +99,30 @@ AC_PROG_RANLIB
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11([noext])
 
+AC_ARG_ENABLE([libs],
+  AS_HELP_STRING([--enable-libs], [build the Apache Thrift libraries [default=yes]]),
+  [], enable_libs=yes
+)
+have_libs=yes
+if test "$enable_libs" = "no"; then
+  have_libs="no"
+  with_cpp="no"
+  with_c_glib="no"
+  with_java="no"
+  with_csharp="no"
+  with_python="no"
+  with_ruby="no"
+  with_haskell="no"
+  with_perl="no"
+  with_php="no"
+  with_php_extension="no"
+  with_erlang="no"
+  with_go="no"
+  with_d="no"
+  with_nodejs="no"
+fi
+
+
 AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
 if test "$with_cpp" = "yes";  then
