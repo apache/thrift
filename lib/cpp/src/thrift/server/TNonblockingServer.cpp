@@ -1002,61 +1002,83 @@ void TNonblockingServer::handleEvent(THRIFT_SOCKET fd, short which) {
 void TNonblockingServer::createAndListenOnSocket() {
   THRIFT_SOCKET s;
 
-  struct addrinfo hints, *res, *res0;
+  int addrlen;
+  struct sockaddr_un uaddr;
+  struct sockaddr *addr;
+  struct addrinfo *res, *res0 = NULL;
   int error;
 
-  char port[sizeof("65536") + 1];
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = PF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
-  sprintf(port, "%d", port_);
+  // UNIX Domain Socket requested
+  if (!unix_socket_.empty()) {
+    s = socket(AF_UNIX, SOCK_STREAM, 0);
 
-  // Wildcard address
-  error = getaddrinfo(NULL, port, &hints, &res0);
-  if (error) {
-    throw TException("TNonblockingServer::serve() getaddrinfo "
-                     + string(THRIFT_GAI_STRERROR(error)));
-  }
+    memset(&uaddr, 0, sizeof(uaddr));
+    uaddr.sun_family = AF_UNIX;
+    strncpy(uaddr.sun_path, unix_socket_.c_str(), sizeof(uaddr.sun_path)-1);
+    addr = (struct sockaddr*)&uaddr;
+    addrlen = sizeof(uaddr);
 
-  // Pick the ipv6 address first since ipv4 addresses can be mapped
-  // into ipv6 space.
-  for (res = res0; res; res = res->ai_next) {
-    if (res->ai_family == AF_INET6 || res->ai_next == NULL)
-      break;
-  }
+    unlink(unix_socket_.c_str());
+  } else {
+    // TCP socket requested
+    struct addrinfo hints;
+    char port[sizeof("65536") + 1];
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
+    sprintf(port, "%d", listenPort_);
 
-  // Create the server socket
-  s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-  if (s == -1) {
-    freeaddrinfo(res0);
-    throw TException("TNonblockingServer::serve() socket() -1");
-  }
-
-#ifdef IPV6_V6ONLY
-  if (res->ai_family == AF_INET6) {
-    int zero = 0;
-    if (-1 == setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, const_cast_sockopt(&zero), sizeof(zero))) {
-      GlobalOutput("TServerSocket::listen() IPV6_V6ONLY");
+    // Wildcard address
+    error = getaddrinfo(NULL, port, &hints, &res0);
+    if (error) {
+        throw TException("TNonblockingServer::serve() getaddrinfo " +
+                        string(THRIFT_GAI_STRERROR(error)));
     }
+
+    // Pick the ipv6 address first since ipv4 addresses can be mapped
+    // into ipv6 space.
+    for (res = res0; res; res = res->ai_next) {
+        if (res->ai_family == AF_INET6 || res->ai_next == NULL)
+        break;
+    }
+
+    // Create the server socket
+    s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (s == -1) {
+        freeaddrinfo(res0);
+        throw TException("TNonblockingServer::serve() socket() -1");
+    }
+
+    #ifdef IPV6_V6ONLY
+    if (res->ai_family == AF_INET6) {
+        int zero = 0;
+        if (-1 == setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, const_cast_sockopt(&zero), sizeof(zero))) {
+        GlobalOutput("TServerSocket::listen() IPV6_V6ONLY");
+        }
+    }
+    #endif // #ifdef IPV6_V6ONLY
+    addr = res->ai_addr;
+    addrlen = static_cast<int>(res->ai_addrlen);
   }
-#endif // #ifdef IPV6_V6ONLY
 
   int one = 1;
 
   // Set THRIFT_NO_SOCKET_CACHING to avoid 2MSL delay on server restart
   setsockopt(s, SOL_SOCKET, THRIFT_NO_SOCKET_CACHING, const_cast_sockopt(&one), sizeof(one));
 
-  if (::bind(s, res->ai_addr, static_cast<int>(res->ai_addrlen)) == -1) {
+  if (::bind(s, addr, addrlen) == -1) {
     ::THRIFT_CLOSESOCKET(s);
-    freeaddrinfo(res0);
+    if (res0)
+      freeaddrinfo(res0);
     throw TTransportException(TTransportException::NOT_OPEN,
                               "TNonblockingServer::serve() bind",
                               THRIFT_GET_SOCKET_ERROR);
   }
 
   // Done with the addr info
-  freeaddrinfo(res0);
+  if (res0)
+    freeaddrinfo(res0);
 
   // Set up this file descriptor for listening
   listenSocket(s);
@@ -1104,7 +1126,7 @@ void TNonblockingServer::listenSocket(THRIFT_SOCKET s) {
   // Cool, this socket is good to go, set it as the serverSocket_
   serverSocket_ = s;
 
-  if (!port_) {
+  if (!listenPort_) {
     sockaddr_in addr;
     socklen_t size = sizeof(addr);
     if (!getsockname(serverSocket_, reinterpret_cast<sockaddr*>(&addr), &size)) {
@@ -1171,7 +1193,7 @@ void TNonblockingServer::expireClose(boost::shared_ptr<Runnable> task) {
 }
 
 void TNonblockingServer::stop() {
-  if (!port_) {
+  if (!listenPort_) {
     listenPort_ = 0;
   }
   // Breaks the event loop in all threads so that they end ASAP.
@@ -1214,9 +1236,12 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
   assert(ioThreads_.size() == numIOThreads_);
   assert(ioThreads_.size() > 0);
 
-  GlobalOutput.printf("TNonblockingServer: Serving on port %d, %d io threads.",
-                      listenPort_,
-                      ioThreads_.size());
+  if (unix_socket_.empty())
+    GlobalOutput.printf("TNonblockingServer: Serving on port %d, %d io threads.",
+                 listenPort_, ioThreads_.size());
+  else
+    GlobalOutput.printf("TNonblockingServer: Serving on unix domain socket %s, %d io threads.",
+                 unix_socket_.c_str(), ioThreads_.size());
 
   // Launch all the secondary IO threads in separate threads
   if (ioThreads_.size() > 1) {
