@@ -38,7 +38,8 @@ endif
 
 AM_CPPFLAGS = -I..
 AM_CPPFLAGS += -Igen-cpp
-AM_CPPFLAGS += -I$(thrift_home)/include/thrift 
+AM_CPPFLAGS += -I$(thrift_home)/include
+AM_CPPFLAGS += -I../../../lib/cpp/src
 AM_CPPFLAGS += $(BOOST_CPPFLAGS)
 AM_CPPFLAGS += $(FB_CPPFLAGS) $(DEBUG_CPPFLAGS)
 

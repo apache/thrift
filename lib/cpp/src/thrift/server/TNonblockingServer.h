@@ -37,6 +37,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
 #include <event.h>
 
 
@@ -157,6 +160,9 @@ class TNonblockingServer : public TServer {
   /// Port server runs on
   int port_;
 
+  /// Path to UNIX domain socket the server listens to
+  std::string unix_socket_;
+
   /// The optional user-provided event-base (for single-thread servers)
   event_base* userEventBase_;
 
@@ -273,12 +279,23 @@ class TNonblockingServer : public TServer {
    */
   void handleEvent(THRIFT_SOCKET fd, short which);
 
+  void init(const std::string& path) {
+    unix_socket_ = path.substr(0, sizeof((struct sockaddr_un*)0)->sun_path);
+    port_ = -1;
+    do_init();
+  }
+
   void init(int port) {
+    unix_socket_.clear();
+    port_ = port;
+    do_init();
+  }
+
+  void do_init() {
     serverSocket_ = THRIFT_INVALID_SOCKET;
     numIOThreads_ = DEFAULT_IO_THREADS;
     nextIOThread_ = 0;
     useHighPriorityIOThreads_ = false;
-    port_ = port;
     userEventBase_ = NULL;
     threadPoolProcessing_ = false;
     numTConnections_ = 0;
@@ -300,28 +317,28 @@ class TNonblockingServer : public TServer {
   }
 
  public:
-  template<typename ProcessorFactory>
+  template<typename ProcessorFactory, typename AddrType>
   TNonblockingServer(
       const boost::shared_ptr<ProcessorFactory>& processorFactory,
-      int port,
+      AddrType port,
       THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)) :
     TServer(processorFactory) {
     init(port);
   }
 
-  template<typename Processor>
+  template<typename Processor, typename AddrType>
   TNonblockingServer(const boost::shared_ptr<Processor>& processor,
-                     int port,
+                     AddrType port,
                      THRIFT_OVERLOAD_IF(Processor, TProcessor)) :
     TServer(processor) {
     init(port);
   }
 
-  template<typename ProcessorFactory>
+  template<typename ProcessorFactory, typename AddrType>
   TNonblockingServer(
       const boost::shared_ptr<ProcessorFactory>& processorFactory,
       const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-      int port,
+      AddrType port,
       const boost::shared_ptr<ThreadManager>& threadManager =
         boost::shared_ptr<ThreadManager>(),
       THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)) :
@@ -334,11 +351,11 @@ class TNonblockingServer : public TServer {
     setThreadManager(threadManager);
   }
 
-  template<typename Processor>
+  template<typename Processor, typename AddrType>
   TNonblockingServer(
       const boost::shared_ptr<Processor>& processor,
       const boost::shared_ptr<TProtocolFactory>& protocolFactory,
-      int port,
+      AddrType port,
       const boost::shared_ptr<ThreadManager>& threadManager =
         boost::shared_ptr<ThreadManager>(),
       THRIFT_OVERLOAD_IF(Processor, TProcessor)) :
@@ -351,14 +368,14 @@ class TNonblockingServer : public TServer {
     setThreadManager(threadManager);
   }
 
-  template<typename ProcessorFactory>
+  template<typename ProcessorFactory, typename AddrType>
   TNonblockingServer(
       const boost::shared_ptr<ProcessorFactory>& processorFactory,
       const boost::shared_ptr<TTransportFactory>& inputTransportFactory,
       const boost::shared_ptr<TTransportFactory>& outputTransportFactory,
       const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
       const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory,
-      int port,
+      AddrType port,
       const boost::shared_ptr<ThreadManager>& threadManager =
         boost::shared_ptr<ThreadManager>(),
       THRIFT_OVERLOAD_IF(ProcessorFactory, TProcessorFactory)) :
@@ -373,14 +390,14 @@ class TNonblockingServer : public TServer {
     setThreadManager(threadManager);
   }
 
-  template<typename Processor>
+  template<typename Processor, typename AddrType>
   TNonblockingServer(
       const boost::shared_ptr<Processor>& processor,
       const boost::shared_ptr<TTransportFactory>& inputTransportFactory,
       const boost::shared_ptr<TTransportFactory>& outputTransportFactory,
       const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
       const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory,
-      int port,
+      AddrType port,
       const boost::shared_ptr<ThreadManager>& threadManager =
         boost::shared_ptr<ThreadManager>(),
       THRIFT_OVERLOAD_IF(Processor, TProcessor)) :
