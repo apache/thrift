@@ -387,8 +387,8 @@ class TCompactProtocol extends TProtocol {
     if ($version != TCompactProtocol::VERSION) {
       throw new TProtocolException('Bad version in TCompact message');
     }
-    $result += $this->readVarint($seqId);
-    $name += $this->readString($name);
+    $result += $this->readVarint($seqid);
+    $result += $this->readString($name);
 
     return $result;
   }
