@@ -23,6 +23,7 @@
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/protocol/TCompactProtocol.h>
 #include <thrift/protocol/TJSONProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadedServer.h>
@@ -515,7 +516,7 @@ int main(int argc, char **argv) {
       ("transport", boost::program_options::value<string>(&transport_type)->default_value(transport_type),
         "transport: buffered, framed, http")
       ("protocol", boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
-        "protocol: binary, json")
+        "protocol: binary, compact, json")
 	  ("ssl", "Encrypted Transport using SSL")
 	  ("processor-events", "processor-events")
       ("workers,n", boost::program_options::value<size_t>(&workers)->default_value(workers),
@@ -574,6 +575,9 @@ int main(int argc, char **argv) {
   if (protocol_type == "json") {
     boost::shared_ptr<TProtocolFactory> jsonProtocolFactory(new TJSONProtocolFactory());
     protocolFactory = jsonProtocolFactory;
+  } else if (protocol_type == "compact") {
+    boost::shared_ptr<TProtocolFactory> compactProtocolFactory(new TCompactProtocolFactory());
+    protocolFactory = compactProtocolFactory;
   } else {
     boost::shared_ptr<TProtocolFactory> binaryProtocolFactory(new TBinaryProtocolFactoryT<TBufferBase>());
     protocolFactory = binaryProtocolFactory;

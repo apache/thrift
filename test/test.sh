@@ -91,8 +91,8 @@ print_header
 #TODO add enum for parameters
 #TODO align program arguments across languages
 
-cpp_protocols="binary json"
-java_protocols="binary json compact"
+cpp_protocols="binary compact json"
+java_protocols="binary compact json"
 cpp_transports="buffered framed http"
 java_server_transports="buffered framed fastframed"
 java_client_transports=${java_server_transports}" http"
