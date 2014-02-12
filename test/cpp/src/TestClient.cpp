@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/protocol/TCompactProtocol.h>
 #include <thrift/protocol/TJSONProtocol.h>
 #include <thrift/transport/THttpClient.h>
 #include <thrift/transport/TTransportUtils.h>
@@ -109,7 +110,7 @@ int main(int argc, char** argv) {
       ("port", boost::program_options::value<int>(&port)->default_value(port), "Port number to connect")
 	  ("domain-socket", boost::program_options::value<string>(&domain_socket)->default_value(domain_socket), "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
       ("transport", boost::program_options::value<string>(&transport_type)->default_value(transport_type), "Transport: buffered, framed, http, evhttp")
-      ("protocol", boost::program_options::value<string>(&protocol_type)->default_value(protocol_type), "Protocol: binary, json")
+      ("protocol", boost::program_options::value<string>(&protocol_type)->default_value(protocol_type), "Protocol: binary, compact, json")
 	  ("ssl", "Encrypted Transport using SSL")
       ("testloops,n", boost::program_options::value<int>(&numTests)->default_value(numTests), "Number of Tests")
   ;
@@ -188,6 +189,9 @@ int main(int argc, char** argv) {
   if (protocol_type.compare("json") == 0) {
     boost::shared_ptr<TProtocol> jsonProtocol(new TJSONProtocol(transport));
     protocol = jsonProtocol;
+  } else if (protocol_type.compare("compact") == 0) {
+    boost::shared_ptr<TProtocol> compactProtocol(new TCompactProtocol(transport));
+    protocol = compactProtocol;
   } else{
     boost::shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol(transport));
     protocol = binaryProtocol;
