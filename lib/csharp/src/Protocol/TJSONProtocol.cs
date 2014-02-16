@@ -891,7 +891,13 @@ namespace Thrift.Protocol
 			int len = b.Length;
 			int off = 0;
 			int size = 0;
-			while (len >= 4)
+			// reduce len to ignore fill bytes 
+			while ((len > 0) && (b[len - 1] == '='))
+			{
+				--len;
+			}
+			// read & decode full byte triplets = 4 source bytes
+			while (len > 4)
 			{
 				// Decode 4 bytes at a time
 				TBase64Utils.decode(b, off, 4, b, size); // NB: decoded in place
