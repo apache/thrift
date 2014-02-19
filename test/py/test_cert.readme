@@ -1,7 +1,0 @@
-NOTE:
-The test_cert.pem file in this directory must never be used on production systems.
-
-The key it represents is a self-signed key intended only for use by the unit
-testing framework.  It is a publicly exposed private key.
-
-Do not use test_cert.pem in production environments under any circumstances.

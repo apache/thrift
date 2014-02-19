@@ -1,8 +1,10 @@
 # Test Keys and Certificates
 This folder is dedicated to test keys and certificates provided in multiple formats.
-Primary use are language test suites and cross language tests.
+Primary use are unit test suites and cross language tests.
 
     test/keys
+
+**The files in this directory must never be used on production systems.**
 
 ## SSL Keys and Certificates
 
@@ -22,6 +24,7 @@ we use the following parameters for test key and certificate creation
 
     openssl req -new -x509 -nodes  -days 3000 -out server.crt -keyout server.key
     openssl x509 -in server.crt -text > CA.pem
+    cat server.crt server.key > server.pem
 
 ### create client key and certificate
 
