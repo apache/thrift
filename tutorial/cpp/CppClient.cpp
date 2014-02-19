@@ -35,8 +35,6 @@ using namespace apache::thrift::transport;
 using namespace tutorial;
 using namespace shared;
 
-using namespace boost;
-
 int main(int argc, char** argv) {
   boost::shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
   boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));

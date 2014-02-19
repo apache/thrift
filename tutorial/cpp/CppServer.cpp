@@ -41,8 +41,6 @@ using namespace apache::thrift::server;
 using namespace tutorial;
 using namespace shared;
 
-using namespace boost;
-
 class CalculatorHandler : public CalculatorIf {
  public:
   CalculatorHandler() {}

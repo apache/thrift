@@ -41,7 +41,6 @@
 #define OPENSSL_VERSION_NO_THREAD_ID 0x10000000L
 
 using namespace std;
-using namespace boost;
 using namespace apache::thrift::concurrency;
 
 struct CRYPTO_dynlock_value {
@@ -490,7 +489,7 @@ int TSSLSocketFactory::passwordCallback(char* password,
   return length;
 }
 
-static shared_array<Mutex> mutexes;
+static boost::shared_array<Mutex> mutexes;
 
 static void callbackLocking(int mode, int n, const char*, int) {
   if (mode & CRYPTO_LOCK) {
@@ -534,7 +533,7 @@ void TSSLSocketFactory::initializeOpenSSL() {
   SSL_library_init();
   SSL_load_error_strings();
   // static locking
-  mutexes = shared_array<Mutex>(new Mutex[::CRYPTO_num_locks()]);
+  mutexes = boost::shared_array<Mutex>(new Mutex[::CRYPTO_num_locks()]);
   if (mutexes == NULL) {
     throw TTransportException(TTransportException::INTERNAL_ERROR,
           "initializeOpenSSL() failed, "
@@ -592,7 +591,7 @@ void buildErrors(string& errors, int errno_copy) {
     }
   }
   if (errors.empty()) {
-    errors = "error code: " + lexical_cast<string>(errno_copy);
+    errors = "error code: " + boost::lexical_cast<string>(errno_copy);
   }
 }
 
