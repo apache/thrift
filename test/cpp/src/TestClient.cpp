@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
   if (ssl) {
     factory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    factory->loadTrustedCertificates("./trusted-ca-certificate.pem");
+    factory->loadTrustedCertificates("keys/CA.pem");
     factory->authenticate(true);
     socket = factory->createSocket(host, port);
   } else {
