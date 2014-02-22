@@ -40,7 +40,6 @@ namespace Thrift.Transport
 
 		private IDictionary<String, String> customHeaders = new Dictionary<string, string>();
 
-        private HttpWebRequest connection = null;
 #if !SILVERLIGHT
         private IWebProxy proxy = WebRequest.DefaultWebProxy;
 #endif
@@ -48,7 +47,6 @@ namespace Thrift.Transport
         public THttpClient(Uri u)
 		{
 			uri = u;
-            connection = CreateRequest();
 		}
 
 		public int ConnectTimeout
@@ -178,7 +176,7 @@ namespace Thrift.Transport
 			}
 		}
 #endif
-				private HttpWebRequest CreateRequest()
+		private HttpWebRequest CreateRequest()
 		{
 			HttpWebRequest connection = (HttpWebRequest)WebRequest.Create(uri);
 
