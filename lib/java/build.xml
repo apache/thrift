@@ -93,7 +93,6 @@
   <target name="compile" depends="init">
     <javac srcdir="${src}" destdir="${build.dir}" source="1.5" target="1.5" 
     debug="true" classpathref="compile.classpath" includeantruntime="false" encoding="UTF-8">
-      <compilerarg value="-Xlint:unchecked"/>
     </javac>
   </target>
 
