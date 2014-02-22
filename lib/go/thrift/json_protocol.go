@@ -158,12 +158,10 @@ func (p *TJSONProtocol) WriteSetEnd() error {
 }
 
 func (p *TJSONProtocol) WriteBool(b bool) error {
-	//return p.OutputBool(b) - not for Thrift JSON
 	if b {
 		return p.WriteI32(1)
-    } else {
-		return p.WriteI32(0)
     }
+	return p.WriteI32(0)
 }
 
 func (p *TJSONProtocol) WriteByte(b byte) error {
