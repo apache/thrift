@@ -26,6 +26,10 @@ we use the following parameters for test key and certificate creation
     openssl x509 -in server.crt -text > CA.pem
     cat server.crt server.key > server.pem
 
+Export password is **thrift**
+
+    openssl pkcs12 -export -clcerts -in server.crt -inkey server.key -out server.p12
+
 ### create client key and certificate
 
     openssl genrsa -out client.key
@@ -45,3 +49,29 @@ export certificate in PKCS12 format
 export certificate in PEM format for OpenSSL usage
 
     openssl pkcs12 -in client.p12 -out client.pem -clcerts
+
+
+## Java key and certificate import
+Java Test Environment uses key and trust store password **thrift**
+
+list keystore entries
+
+    keytool -list -storepass thrift -keystore ../../lib/java/test/.keystore
+
+list truststore entries
+
+    keytool -list -storepass thrift -keystore ../../lib/java/test/.truststore
+
+import certificate into truststore
+
+    keytool -importcert -storepass thrift -keystore ../../lib/java/test/.truststore -alias ssltest --file server.crt
+
+import key into keystore
+
+    keytool -importkeystore -storepass thrift -keystore ../../lib/java/test/.keystore -srcstoretype pkcs12 -srckeystore server.p12
+
+# Test SSL server and clients
+
+    openssl s_client -connect localhost:9090
+    openssl s_server -accept 9090 -www
+
