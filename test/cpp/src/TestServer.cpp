@@ -598,19 +598,18 @@ int main(int argc, char **argv) {
 
   if (ssl) {
     sslSocketFactory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
-    sslSocketFactory->loadCertificate("./server-certificate.pem");
-    sslSocketFactory->loadPrivateKey("./server-private-key.pem");
+    sslSocketFactory->loadCertificate("keys/server.crt");
+    sslSocketFactory->loadPrivateKey("keys/server.key");
     sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
     serverSocket = boost::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
   } else {
-	if (domain_socket != "") {
-	  unlink(domain_socket.c_str());
-	  serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
-	  port = 0;
-	}
-	else {
+    if (domain_socket != "") {
+      unlink(domain_socket.c_str());
+      serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(domain_socket));
+      port = 0;
+    } else {
       serverSocket = boost::shared_ptr<TServerSocket>(new TServerSocket(port));
-	}
+    }
   }
 
   // Factory
