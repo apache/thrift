@@ -103,7 +103,7 @@ java_sockets="ip ip-ssl"
 
 nodejs_protocols="binary json"
 nodejs_transports="buffered framed"
-nodejs_sockets="ip"
+nodejs_sockets="ip ip-ssl"
 
 ant -f ../lib/java/build.xml compile-test 1>/dev/null
 
@@ -181,8 +181,12 @@ export NODE_PATH=${NODE_TEST_DIR}:${NODE_TEST_DIR}/../lib:${NODE_PATH}
 for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
   for trans in $(intersection "${nodejs_transports}" "${cpp_transports}"); do
     for sock in $(intersection "${nodejs_sockets}" "${cpp_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
       do_test "nodejs-cpp" "${proto}" "${trans}-ip" \
-              "nodejs ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans}" \
+              "nodejs ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
               "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
               "10" "10"
     done
@@ -193,9 +197,13 @@ done
 for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
   for trans in $(intersection "${nodejs_transports}" "${cpp_transports}"); do
     for sock in $(intersection "${nodejs_sockets}" "${cpp_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
       do_test "cpp-nodejs" "${proto}" "${trans}-ip" \
-              "cpp/TestClient --protocol=${proto} --transport=${trans}" \
-              "nodejs ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans}" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "nodejs ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
               "10" "10"
     done
   done

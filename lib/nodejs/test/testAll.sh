@@ -25,24 +25,24 @@ export NODE_PATH="${DIR}:${DIR}/../lib:${NODE_PATH}"
 
 testClientServer()
 {
-  echo "   Testing Client/Server with protocol $1 and transport $2";
+  echo "   Testing Client/Server with protocol $1 and transport $2 $3";
   RET=0
-  node ${DIR}/server.js -p $1 -t $2 &
+  node ${DIR}/server.js -p $1 -t $2 $3 &
   SERVERPID=$!
   sleep 1
-  node ${DIR}/client.js -p $1 -t $2 || RET=1
+  node ${DIR}/client.js -p $1 -t $2 $3 || RET=1
   kill -9 $SERVERPID || RET=1
   return $RET
 }
 
 testMultiplexedClientServer()
 {
-  echo "   Testing Multiplexed Client/Server with protocol $1 and transport $2";
+  echo "   Testing Multiplexed Client/Server with protocol $1 and transport $2 $3";
   RET=0
-  node ${DIR}/multiplex_server.js -p $1 -t $2 &
+  node ${DIR}/multiplex_server.js -p $1 -t $2 $3 &
   SERVERPID=$!
   sleep 1
-  node ${DIR}/multiplex_client.js -p $1 -t $2 || RET=1
+  node ${DIR}/multiplex_client.js -p $1 -t $2 $3 || RET=1
   kill -9 $SERVERPID || RET=1 #f
   return $RET
 }
@@ -65,9 +65,15 @@ testClientServer json buffered || TESTOK=1
 testClientServer binary framed || TESTOK=1
 testClientServer json framed || TESTOK=1
 
+#tests for multiplexed services
 testMultiplexedClientServer binary buffered || TESTOK=1
 testMultiplexedClientServer json buffered || TESTOK=1
 testMultiplexedClientServer binary framed || TESTOK=1
 testMultiplexedClientServer json framed || TESTOK=1
+
+#test ssl connection
+testClientServer binary framed --ssl || TESTOK=1
+testMultiplexedClientServer binary framed --ssl || TESTOK=1
+
 
 exit $TESTOK
