@@ -37,6 +37,10 @@ dist-hook:
 print-version:
 	@echo $(VERSION)
 
+
+cross: check
+	sh test/test.sh
+
 EXTRA_DIST = \
 	.travis.yml \
 	contrib \
