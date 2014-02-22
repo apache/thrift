@@ -26,6 +26,7 @@ stubs: ../../../test/ThriftTest.thrift
 if HAVE_PHPUNIT
 check: stubs
 	$(PHPUNIT) --log-junit=phpunit.xml Test/Thrift/Protocol/TestTJSONProtocol.php
+	$(PHPUNIT) --log-junit=phpunit.xml Test/Thrift/Protocol/TestBinarySerializer.php
 endif
 
 clean-local:

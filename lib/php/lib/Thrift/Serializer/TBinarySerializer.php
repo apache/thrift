@@ -59,8 +59,14 @@ class TBinarySerializer {
      $transport = new TMemoryBuffer();
      $protocol = new TBinaryProtocolAccelerated($transport);
      if (function_exists('thrift_protocol_read_binary')) {
+       // NOTE (t.heintz) TBinaryProtocolAccelerated internally wraps our TMemoryBuffer in a
+       // TBufferedTransport, so we have to retrieve it again or risk losing data when writing
+       // less than 512 bytes to the transport (see the comment there as well).
+       // @see THRIFT-1579
        $protocol->writeMessageBegin('', TMessageType::REPLY, 0);
-       $transport->write($string_object);
+       $protocolTransport = $protocol->getTransport();
+       $protocolTransport->write($string_object);
+       $protocolTransport->flush();
        return thrift_protocol_read_binary($protocol, $class_name,
                                           $protocol->isStrictRead());
      } else {
