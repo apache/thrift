@@ -51,12 +51,12 @@ class t_js_generator : public t_oop_generator {
                 const std::string& option_string) :
      t_oop_generator(program) {
      (void) option_string;
-     
+
      std::map<std::string, std::string>::const_iterator iter;
-     
+
      iter = parsed_options.find("node");
      gen_node_ = (iter != parsed_options.end());
-     
+
      iter = parsed_options.find("jquery");
      gen_jquery_ = (iter != parsed_options.end());
 
@@ -302,7 +302,7 @@ void t_js_generator::init_generator() {
  */
 string t_js_generator::js_includes() {
   if (gen_node_) {
-    return string("var Thrift = require('thrift').Thrift;");
+    return string("var Thrift = require('thrift').Thrift;\nvar Q = require('q');");
   }
   string inc;
 
@@ -859,44 +859,83 @@ void t_js_generator::generate_process_function(t_service* tservice,
     const std::vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator f_iter;
 
-    f_service_ <<
-      indent() << "this._handler." << tfunction->get_name() << "(";
-
-    bool first = true;
-    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-      if (first) {
-        first = false;
-      } else {
-        f_service_ << ", ";
-      }
-      f_service_ << "args." << (*f_iter)->get_name();
-    }
-
     // Shortcut out here for oneway functions
     if (tfunction->is_oneway()) {
+      indent(f_service_) << "this._handler." << tfunction->get_name() << "(";
+
+      bool first = true;
+      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        if (first) {
+          first = false;
+        } else {
+          f_service_ << ", ";
+        }
+        f_service_ << "args." << (*f_iter)->get_name();
+      }
+
       f_service_ << ")" << endl;
       scope_down(f_service_);
       f_service_ << endl;
       return;
     }
 
-    if (!first) {
-        f_service_ << ", ";
+    f_service_ <<
+        indent() << "if (this._handler." << tfunction->get_name() << ".length === " << fields.size() <<") {" << endl;
+    indent_up();
+    indent(f_service_) << "Q.fcall(this._handler." << tfunction->get_name();
+
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      f_service_ << ", args." << (*f_iter)->get_name();
     }
-    f_service_ << "function (err, result) {" << endl;
+
+    f_service_ << ")" << endl;
+    indent_up();
+    indent(f_service_) << ".then(function(result) {" << endl;
+    indent_up();
+    f_service_ <<
+        indent() << "var result = new " << resultname << "({success: result});" << endl <<
+        indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
+        "\", Thrift.MessageType.REPLY, seqid);" << endl <<
+        indent() << "result.write(output);" << endl <<
+        indent() << "output.writeMessageEnd();" << endl <<
+        indent() << "output.flush();" << endl;
+    indent_down();
+    indent(f_service_) << "}, function (err) {" << endl;
+    indent_up();
+    f_service_ <<
+        indent() << "var result = new " << resultname << "(err);" << endl <<
+        indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
+        "\", Thrift.MessageType.REPLY, seqid);" << endl <<
+        indent() << "result.write(output);" << endl <<
+        indent() << "output.writeMessageEnd();" << endl <<
+        indent() << "output.flush();" << endl;
+    indent_down();
+    indent(f_service_) << "});" << endl;
+    indent_down();
+    indent_down();
+    indent(f_service_) << "} else {" << endl;
+    indent_up();
+    indent(f_service_) << "this._handler." << tfunction->get_name() << "(";
+
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      f_service_ << "args." << (*f_iter)->get_name() << ", ";
+    }
+
+    f_service_ << " function (err, result) {" << endl;
     indent_up();
 
     f_service_ <<
-      indent() << "var result = new " << resultname << "((err != null ? err : {success: result}));" << endl <<
-      indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
+        indent() << "var result = new " << resultname << "((err != null ? err : {success: result}));" << endl <<
+        indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
         "\", Thrift.MessageType.REPLY, seqid);" << endl <<
-      indent() << "result.write(output);" << endl <<
-      indent() << "output.writeMessageEnd();" << endl <<
-      indent() << "output.flush();" << endl;
+        indent() << "result.write(output);" << endl <<
+        indent() << "output.writeMessageEnd();" << endl <<
+        indent() << "output.flush();" << endl;
 
     indent_down();
-    indent(f_service_) << "})" << endl;
-
+    indent(f_service_) << "});" << endl;
+    indent_down();
+    indent(f_service_) << "}" << endl;
     scope_down(f_service_);
     f_service_ << endl;
 }
@@ -971,7 +1010,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
   if (gen_node_) {
     f_service_ <<
-        js_namespace(tservice->get_program()) << service_name_ << "Client = " << 
+        js_namespace(tservice->get_program()) << service_name_ << "Client = " <<
         "exports.Client = function(output, pClass) {"<<endl;
   } else {
     f_service_ <<
@@ -1035,8 +1074,34 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     if (gen_node_) {          //Node.js output      ./gen-nodejs
       f_service_ <<
         indent() << "this._seqid = this.new_seqid();" << endl <<
+        indent() << "if (callback === undefined) {" << endl;
+      indent_up();
+      f_service_ <<
+        indent() << "var _defer = Q.defer();" << endl <<
+        indent() << "this._reqs[this.seqid()] = function(error, result) {" << endl;
+      indent_up();
+      indent(f_service_) << "if (error) {" << endl;
+      indent_up();
+      indent(f_service_) << "_defer.reject(error);" << endl;
+      indent_down();
+      indent(f_service_) << "} else {" << endl;
+      indent_up();
+      indent(f_service_) << "_defer.resolve(result);" << endl;
+      indent_down();
+      indent(f_service_) << "}" << endl;
+      indent_down();
+      indent(f_service_) << "};" << endl;
+      f_service_ <<
+        indent() << "this.send_" << funname << "(" << arglist << ");" << endl <<
+        indent() << "return _defer.promise;" << endl;
+      indent_down();
+      indent(f_service_) << "} else {" << endl;
+      indent_up();
+      f_service_ <<
         indent() << "this._reqs[this.seqid()] = callback;" << endl <<
         indent() << "this.send_" << funname << "(" << arglist << ");" << endl;
+      indent_down();
+      indent(f_service_) << "}" << endl;
     }
     else if (gen_jquery_) {   //jQuery output       ./gen-js
 		  f_service_ << indent() << "if (callback === undefined) {" << endl;
@@ -1073,7 +1138,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
         f_service_ << indent() << "}" << endl;
       }
     }
-  
+
     indent_down();
 
     f_service_ << "};" << endl << endl;
@@ -1105,7 +1170,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     }
 
     f_service_ <<
-      indent() << "var args = new " << argsname << "();" << endl; 
+      indent() << "var args = new " << argsname << "();" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ <<
@@ -1123,7 +1188,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       if (gen_jquery_) {
         f_service_ << indent() << "return this.output.getTransport().flush(callback);" << endl;
       } else {
-        f_service_ << indent() << "if (callback) {" << endl; 
+        f_service_ << indent() << "if (callback) {" << endl;
         f_service_ << indent() << "  var self = this;" << endl;
         f_service_ << indent() << "  this.output.getTransport().flush(true, function() {" << endl;
         f_service_ << indent() << "    if (this.readyState == 4 && this.status == 200) {" << endl;
@@ -1838,5 +1903,3 @@ string t_js_generator ::type_to_enum(t_type* type) {
 THRIFT_REGISTER_GENERATOR(js, "Javascript",
 "    jquery:          Generate jQuery compatible code.\n"
 "    node:            Generate node.js compatible code.\n")
-
-
