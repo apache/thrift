@@ -595,59 +595,118 @@ int t_html_generator::print_type(t_type* ttype) {
  * Prints out an HTML representation of the provided constant value
  */
 void t_html_generator::print_const_value(t_type* type, t_const_value* tvalue) {
+
+  // if tvalue is an indentifier, the constant content is already shown elsewhere
+  if (tvalue->get_type() == t_const_value::CV_IDENTIFIER) {
+    string fname = program_->get_name() + ".html";
+    string name = escape_html( tvalue->get_identifier());
+    f_out_ << "<code><a href=\"" + make_file_link(fname) + "#Const_" + name +"\">" + name + "</a></code>";
+    return;
+  }
+  
+  t_type* truetype = type;
+  while (truetype->is_typedef()) {
+    truetype = ((t_typedef*)truetype)->get_type();
+  }
+  
   bool first = true;
-  switch (tvalue->get_type()) {
-  case t_const_value::CV_INTEGER:
-    f_out_ << tvalue->get_integer();
-    break;
-  case t_const_value::CV_DOUBLE:
-    f_out_ << tvalue->get_double();
-    break;
-  case t_const_value::CV_STRING:
-    f_out_ << '"' << escape_html( get_escaped_string(tvalue)) << '"';
-    break;
-  case t_const_value::CV_MAP:
-    {
-      f_out_ << "{ ";
-      map<t_const_value*, t_const_value*> map_elems = tvalue->get_map();
-      map<t_const_value*, t_const_value*>::iterator map_iter;
-      for (map_iter = map_elems.begin(); map_iter != map_elems.end(); map_iter++) {
-        if (!first) {
-          f_out_ << ", ";
-        }
-        first = false;
-        print_const_value( ((t_map*)type)->get_key_type(), map_iter->first);
-        f_out_ << " = ";
-        print_const_value( ((t_map*)type)->get_val_type(), map_iter->second);
-      }
-      f_out_ << " }";
-    }
-    break;
-  case t_const_value::CV_LIST:
-    {
-      f_out_ << "{ ";
-      vector<t_const_value*> list_elems = tvalue->get_list();;
-      vector<t_const_value*>::iterator list_iter;
-      for (list_iter = list_elems.begin(); list_iter != list_elems.end(); list_iter++) {
-        if (!first) {
-          f_out_ << ", ";
-        }
-        first = false;
-        if (type->is_list()) {
-          print_const_value( ((t_list*)type)->get_elem_type(), *list_iter);
+  if (truetype->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)truetype)->get_base();
+    switch (tbase) {
+      case t_base_type::TYPE_STRING:
+        f_out_ << '"' << escape_html( get_escaped_string(tvalue)) << '"';
+        break;
+      case t_base_type::TYPE_BOOL:
+        f_out_ << ((tvalue->get_integer() != 0) ? "true" : "false");
+        break;
+      case t_base_type::TYPE_BYTE:
+        f_out_ << tvalue->get_integer();
+        break;
+      case t_base_type::TYPE_I16:
+        f_out_ << tvalue->get_integer();
+        break;
+      case t_base_type::TYPE_I32:
+        f_out_ << tvalue->get_integer();
+        break;
+      case t_base_type::TYPE_I64:
+        f_out_ << tvalue->get_integer();
+        break;
+      case t_base_type::TYPE_DOUBLE:
+        if (tvalue->get_type() == t_const_value::CV_INTEGER) {
+          f_out_ << tvalue->get_integer();
         } else {
-          print_const_value( ((t_set*)type)->get_elem_type(), *list_iter);
-        } 
-      }
-      f_out_ << " }";
+          f_out_ << tvalue->get_double();
+        }
+        break;
+      default:
+          f_out_ << "UNKNOWN BASE TYPE";
     }
-    break;
-  case t_const_value::CV_IDENTIFIER:
-    f_out_ << escape_html(type->get_name()) << "." << escape_html(tvalue->get_identifier_name());
-    break;
-  default:
-    f_out_ << "UNKNOWN";
-    break;
+  } else if (truetype->is_enum()) {
+    f_out_ << escape_html(truetype->get_name()) << "." << escape_html(tvalue->get_identifier_name());
+  } else if (truetype->is_struct() || truetype->is_xception()) {
+    f_out_ << "{ ";
+    const vector<t_field*>& fields = ((t_struct*)truetype)->get_members();
+    vector<t_field*>::const_iterator f_iter;
+    const map<t_const_value*, t_const_value*>& val = tvalue->get_map();
+    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+      t_type* field_type = NULL;
+      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        if ((*f_iter)->get_name() == v_iter->first->get_string()) {
+          field_type = (*f_iter)->get_type();
+        }
+      }
+      if (field_type == NULL) {
+        throw "type error: " + truetype->get_name() + " has no field " + v_iter->first->get_string();
+      }
+      if (!first) {
+        f_out_ << ", ";
+      }
+      first = false;
+      f_out_ << escape_html( v_iter->first->get_string()) << " = ";
+      print_const_value( field_type, v_iter->second);
+    }
+    f_out_ << " }";
+  } else if (truetype->is_map()) {
+    f_out_ << "{ ";
+    map<t_const_value*, t_const_value*> map_elems = tvalue->get_map();
+    map<t_const_value*, t_const_value*>::iterator map_iter;
+    for (map_iter = map_elems.begin(); map_iter != map_elems.end(); map_iter++) {
+      if (!first) {
+        f_out_ << ", ";
+      }
+      first = false;
+      print_const_value( ((t_map*)truetype)->get_key_type(), map_iter->first);
+      f_out_ << " = ";
+      print_const_value( ((t_map*)truetype)->get_val_type(), map_iter->second);
+    }
+    f_out_ << " }";
+  } else if (truetype->is_list()) {
+    f_out_ << "{ ";
+    vector<t_const_value*> list_elems = tvalue->get_list();;
+    vector<t_const_value*>::iterator list_iter;
+    for (list_iter = list_elems.begin(); list_iter != list_elems.end(); list_iter++) {
+      if (!first) {
+        f_out_ << ", ";
+      }
+      first = false;
+      print_const_value( ((t_list*)truetype)->get_elem_type(), *list_iter);
+    }
+    f_out_ << " }";
+  } else if (truetype->is_set()) {
+    f_out_ << "{ ";
+    vector<t_const_value*> list_elems = tvalue->get_list();;
+    vector<t_const_value*>::iterator list_iter;
+    for (list_iter = list_elems.begin(); list_iter != list_elems.end(); list_iter++) {
+      if (!first) {
+        f_out_ << ", ";
+      }
+      first = false;
+      print_const_value( ((t_set*)truetype)->get_elem_type(), *list_iter);
+    }
+    f_out_ << " }";
+  } else {
+    f_out_ << "UNKNOWN TYPE";
   }
 }
 
@@ -805,7 +864,9 @@ void t_html_generator::generate_struct(t_struct* tstruct) {
     f_out_ << "</td><td>";
     t_const_value* default_val = (*mem_iter)->get_value();
     if (default_val != NULL) {
+      f_out_ << "<code>";
       print_const_value((*mem_iter)->get_type(), default_val);
+      f_out_ << "</code>";
     }
     f_out_ << "</td></tr>" << endl;
   }
