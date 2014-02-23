@@ -40,40 +40,43 @@ connection.on('error', function(err) {
 var client = thrift.createClient(Calculator, connection);
 
 
-client.ping(function(err, response) {
-  console.log('ping()');
-});
+client.ping()
+  .then(function() {
+    console.log('ping()');
+  });
 
-
-client.add(1,1, function(err, response) {
-  console.log("1+1=" + response);
-});
-
+client.add(1,1)
+  .then(function(response) {
+	  console.log("1+1=" + response);
+  });
 
 work = new ttypes.Work();
 work.op = ttypes.Operation.DIVIDE;
 work.num1 = 1;
 work.num2 = 0;
 
-client.calculate(1, work, function(err, message) {
-  if (err) {
+client.calculate(1, work)
+  .then(function(message) {
+	console.log('Whoa? You know how to divide by zero?');
+  })
+  .fail(function(err) {
     console.log("InvalidOperation " + err);
-  } else {
-    console.log('Whoa? You know how to divide by zero?');
-  }
-});
+  });
+
 
 work.op = ttypes.Operation.SUBTRACT;
 work.num1 = 15;
 work.num2 = 10;
 
-client.calculate(1, work, function(err, message) {
-  console.log('15-10=' + message);
-
-  client.getStruct(1, function(err, message){
-    console.log('Check log: ' + message.value);
-
-    //close the connection once we're done
-    connection.end();
+client.calculate(1, work)
+  .then(function(value) {
+	  console.log('15-10=' + value);
+	  return client.getStruct(1);
+  })
+  .then(function(message) {
+      console.log('Check log: ' + message.value);
+  })
+  .fin(function() {
+	  //close the connection once we're done
+      connection.end();
   });
-});

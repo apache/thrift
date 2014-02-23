@@ -75,5 +75,7 @@ testMultiplexedClientServer json framed || TESTOK=1
 testClientServer binary framed --ssl || TESTOK=1
 testMultiplexedClientServer binary framed --ssl || TESTOK=1
 
+#test promise style
+testClientServer binary framed --promise || TESTOK=1
 
 exit $TESTOK

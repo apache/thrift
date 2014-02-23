@@ -30,9 +30,18 @@ tutorialserver: all
 tutorialclient: all
 	NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeClient.js
 
+tutorialserver_promise: all
+	NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeServerPromise.js
+
+tutorialclient_promise: all
+	NODE_PATH="$(top_builddir)/lib/nodejs:$(top_builddir)/lib/nodejs/lib:$(NODEPATH)" $(NODEJS) NodeClientPromise.js
+
+
 clean-local:
 	$(RM) -r gen-*
 
 EXTRA_DIST = \
 	NodeServer.js \
-	NodeClient.js
+	NodeClient.js \
+	NodeServerPromise.js \
+	NodeClientPromise.js
