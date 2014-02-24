@@ -44,7 +44,8 @@ namespace Thrift.Transport
 			}
 		}
 
-		public TSocket(string host, int port) : this(host, port, 0)
+		public TSocket(string host, int port) 
+		    : this(host, port, 0)
 		{
 		}
 

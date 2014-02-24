@@ -20,7 +20,7 @@ using System;
 using System.IO;
 
 namespace Thrift.Transport
-{
+{ 
   public class TFramedTransport : TTransport, IDisposable
 	{
 		protected TTransport transport = null;
@@ -38,7 +38,7 @@ namespace Thrift.Transport
 			}
 		}
 
-		public TFramedTransport()
+		protected TFramedTransport()
 		{
 			InitWriteBuffer();
 		}
@@ -87,12 +87,7 @@ namespace Thrift.Transport
 		{
 			byte[] i32rd = new byte[header_size];
 			transport.ReadAll(i32rd, 0, header_size);
-			int size =
-				((i32rd[0] & 0xff) << 24) |
-				((i32rd[1] & 0xff) << 16) |
-				((i32rd[2] & 0xff) <<  8) |
-				((i32rd[3] & 0xff));
-
+			int size = DecodeFrameSize(i32rd);
 
 			byte[] buff = new byte[size];
 			transport.ReadAll(buff, 0, size);
@@ -115,10 +110,7 @@ namespace Thrift.Transport
 			InitWriteBuffer();
 
 			// Inject message header into the reserved buffer space
-			buf[0] = (byte)(0xff & (data_len >> 24));
-			buf[1] = (byte)(0xff & (data_len >> 16));
-			buf[2] = (byte)(0xff & (data_len >> 8));
-			buf[3] = (byte)(0xff & (data_len));
+			EncodeFrameSize(data_len,ref buf);
 
 			// Send the entire message at once
 			transport.Write(buf, 0, len);
@@ -134,22 +126,41 @@ namespace Thrift.Transport
 			// Reserve space for message header to be put right before sending it out
 			writeBuffer.Write ( header_dummy, 0, header_size );
 		}
-    #region " IDisposable Support "
-    private bool _IsDisposed;
+		
+		private static void EncodeFrameSize(int frameSize, ref byte[] buf) 
+		{
+			buf[0] = (byte)(0xff & (frameSize >> 24));
+			buf[1] = (byte)(0xff & (frameSize >> 16));
+			buf[2] = (byte)(0xff & (frameSize >> 8));
+			buf[3] = (byte)(0xff & (frameSize));
+		}
+		
+		private static int DecodeFrameSize(byte[] buf)
+		{
+			return 
+				((buf[0] & 0xff) << 24) |
+				((buf[1] & 0xff) << 16) |
+				((buf[2] & 0xff) <<  8) |
+				((buf[3] & 0xff));
+		}
 
-    // IDisposable
-    protected override void Dispose(bool disposing)
-    {
-      if (!_IsDisposed)
-      {
-        if (disposing)
-        {
-          if (readBuffer != null)
-            readBuffer.Dispose();
-        }
-      }
-      _IsDisposed = true;
-    }
-    #endregion
-  }
+
+		#region " IDisposable Support "
+		private bool _IsDisposed;
+		
+		// IDisposable
+		protected override void Dispose(bool disposing)
+		{
+			if (!_IsDisposed)
+			{
+				if (disposing)
+				{
+					if (readBuffer != null)
+						readBuffer.Dispose();
+				}
+			}
+			_IsDisposed = true;
+		}
+		#endregion
+	}
 }
