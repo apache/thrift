@@ -2092,13 +2092,6 @@ void t_go_generator::generate_service_remote(t_service* tservice)
                          indent() << "argvalue" << i << " := containerStruct" << i << "." << argName << endl;
             } else {
                 throw ("Invalid argument type in generate_service_remote");
-                string err1(tmp("err"));
-                f_remote <<
-                         indent() << "argvalue" << i << ", " << err1 << " := eval(flag.Arg(" << flagArg << "))" << endl <<
-                         indent() << "if " << err1 << " != nil {" << endl <<
-                         indent() << "  Usage()" << endl <<
-                         indent() << "  return" << endl <<
-                         indent() << "}" << endl;
             }
 
             if (the_type->is_typedef()) {
