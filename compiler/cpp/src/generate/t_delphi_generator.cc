@@ -3147,12 +3147,7 @@ void t_delphi_generator::generate_delphi_struct_result_writer_impl(ostream& out,
 
   if (fields.size() > 0) {
     indent_impl(code_block) << "field_ := TFieldImpl.Create;" << endl;
-    bool first = true;
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-      if (! first) {
-        indent_impl(code_block) << "end else" << endl;
-      }
-
       indent_impl(code_block) << "if (__isset_" << prop_name(*f_iter,is_exception) << ") then" << endl;
       indent_impl(code_block) << "begin" << endl;
       indent_up_impl();
@@ -3168,11 +3163,6 @@ void t_delphi_generator::generate_delphi_struct_result_writer_impl(ostream& out,
       indent_impl(code_block) << "oprot.WriteFieldEnd();" << endl;
       indent_down_impl();
     }
-
-    if (! first) {
-        indent_impl(code_block) << "end;" << endl;
-    }
-
   }
 
 
