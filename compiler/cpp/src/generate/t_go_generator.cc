@@ -1145,7 +1145,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
         }
 
         // if negative id, ensure we generate a valid method name
-        string field_method_prefix("readField");
+        string field_method_prefix("ReadField");
 
         if (field_id < 0) {
             field_method_prefix += "_";
@@ -1196,7 +1196,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         string field_type_name(publicize((*f_iter)->get_type()->get_name()));
         string field_name(publicize((*f_iter)->get_name()));
-        string field_method_prefix("readField");
+        string field_method_prefix("ReadField");
         int32_t field_id = (*f_iter)->get_key();
 
         if (field_id < 0) {
@@ -1977,8 +1977,13 @@ void t_go_generator::generate_service_remote(t_service* tservice)
                     break;
 
                 case t_base_type::TYPE_STRING:
-                    f_remote <<
-                             indent() << "argvalue" << i << " := flag.Arg(" << flagArg << ")" << endl;
+                    if (((t_base_type*)the_type2)->is_binary()) {
+                        f_remote <<
+                                 indent() << "argvalue" << i << " := []byte(flag.Arg(" << flagArg << "))" << endl;
+                    } else {
+                        f_remote <<
+                                 indent() << "argvalue" << i << " := flag.Arg(" << flagArg << ")" << endl;
+                    }
                     break;
 
                 case t_base_type::TYPE_BOOL:
