@@ -2930,7 +2930,7 @@ void t_go_generator::generate_serialize_map_element(ofstream &out,
     t_field vfield(tmap->get_val_type(), "");
     kfield.set_req(t_field::T_OPT_IN_REQ_OUT);
     vfield.set_req(t_field::T_OPT_IN_REQ_OUT);
-    generate_serialize_field(out, &kfield, kiter);
+    generate_serialize_field(out, &kfield, kiter, true);
     generate_serialize_field(out, &vfield, viter);
 }
 
