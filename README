@@ -152,7 +152,7 @@ at the end.
 
 To run the cross-language test suite, please run:
 
-          sh test/test.sh
+          make cross
 
 This will run a set of tests that use different language clients and
 servers.
