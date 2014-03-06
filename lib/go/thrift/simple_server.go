@@ -25,7 +25,7 @@ import (
 
 // Simple, non-concurrent server for testing.
 type TSimpleServer struct {
-	stopped bool
+	quit chan struct{}
 
 	processorFactory       TProcessorFactory
 	serverTransport        TServerTransport
@@ -78,12 +78,14 @@ func NewTSimpleServerFactory4(processorFactory TProcessorFactory, serverTranspor
 }
 
 func NewTSimpleServerFactory6(processorFactory TProcessorFactory, serverTransport TServerTransport, inputTransportFactory TTransportFactory, outputTransportFactory TTransportFactory, inputProtocolFactory TProtocolFactory, outputProtocolFactory TProtocolFactory) *TSimpleServer {
-	return &TSimpleServer{processorFactory: processorFactory,
+	return &TSimpleServer{
+		processorFactory:       processorFactory,
 		serverTransport:        serverTransport,
 		inputTransportFactory:  inputTransportFactory,
 		outputTransportFactory: outputTransportFactory,
 		inputProtocolFactory:   inputProtocolFactory,
 		outputProtocolFactory:  outputProtocolFactory,
+		quit: make(chan struct{}, 1),
 	}
 }
 
@@ -112,12 +114,19 @@ func (p *TSimpleServer) OutputProtocolFactory() TProtocolFactory {
 }
 
 func (p *TSimpleServer) Serve() error {
-	p.stopped = false
 	err := p.serverTransport.Listen()
 	if err != nil {
 		return err
 	}
-	for !p.stopped {
+
+loop:
+	for {
+		select {
+		case <-p.quit:
+			break loop
+		default:
+		}
+
 		client, err := p.serverTransport.Accept()
 		if err != nil {
 			log.Println("Accept err: ", err)
@@ -134,7 +143,7 @@ func (p *TSimpleServer) Serve() error {
 }
 
 func (p *TSimpleServer) Stop() error {
-	p.stopped = true
+	p.quit <- struct{}{}
 	p.serverTransport.Interrupt()
 	return nil
 }
