@@ -302,31 +302,31 @@ void t_js_generator::init_generator() {
  */
 string t_js_generator::js_includes() {
   if (gen_node_) {
-    return string("var Thrift = require('thrift').Thrift;\nvar Q = require('q');");
+    return string("var thrift = require('thrift');\n"
+      "var Thrift = thrift.Thrift;\n"
+      "var Q = thrift.Q;\n");
   }
-  string inc;
 
-  return inc;
+  return "";
 }
 
 /**
  * Renders all the imports necessary for including another Thrift program
  */
 string t_js_generator::render_includes() {
+  string result = "";
+
   if (gen_node_) {
     const vector<t_program*>& includes = program_->get_includes();
-    string result = "";
     for (size_t i = 0; i < includes.size(); ++i) {
       result += "var " + includes[i]->get_name() + "_ttypes = require('./" + includes[i]->get_name() + "_types')\n";
     }
     if (includes.size() > 0) {
       result += "\n";
     }
-    return result;
   }
-  string inc;
 
-  return inc;
+  return result;
 }
 
 /**
