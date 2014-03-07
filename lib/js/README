@@ -1,7 +1,8 @@
 Thrift Javascript Library
 =========================
 This browser based Apache Thrift implementation supports
-RPC clients using the JSON protocol over Http[s] with XHR.
+RPC clients using the JSON protocol over Http[s] with XHR
+and WebSocket.
 
 License
 -------
@@ -22,13 +23,44 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 
-Example
--------
+Grunt Build
+------------
+The is the base directory for the Apache Thrift JavaScript
+library. This directory contains a Gruntfile.js and a
+package.json. Many of the build and test tools used here
+require a recent version of Node.js to be installed. To 
+install the support files for the Grunt build tool execute
+the command:
+   $ npm install
+This reads the package.json and pulls in the appropriate
+sources from the internet. To build the JavaScript branch
+of Apache Thrift execute the command:
+   $ grunt
+This runs the grunt build tool, linting all of the source 
+files, setting up and running the tests, concatenating and
+minifying the main libraries and generating the html 
+documentation.
+
+Tree
+----
+The following directories are present (some only after the
+grunt build):
+  /src  - The JavaScript Apache Thrift source
+  /doc - HTML documentation
+  /dist - Distribution files (thrift.js and thrift.min.js)
+  /test - Various tests, this is a good place to look for
+          example code
+  /node_modules - Build support files installed by npm
+
+
+Example JavaScript Client and Server
+------------------------------------
 The listing below demonstrates a simple browser based JavaScript
 Thrift client and Node.js JavaScript server for the hello_svc 
 service. 
 
-### hello.thrift - Service IDL
+### hello.thrift - Service IDL 
+### build with: $ thrift -gen js -gen js:node hello.thrift
     service hello_svc {
       string get_message(1: string name)
     }
@@ -92,7 +124,8 @@ service.
       }
     }
     
-    var server = Thrift.createStaticHttpThriftServer(server_opt);
+    var server = Thrift.createThriftWebServer(server_opt);
     var port = 9099;
     server.listen(port);
-    console.log("Http/Thrift Server running on port: " + port);`
+    console.log("Http/Thrift Server running on port: " + port);
+
