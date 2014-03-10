@@ -240,7 +240,7 @@ do_test "py-java"  "binary" "buffered-ip" \
         "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
         "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" testserver" \
         "15" "15"
-do_test "py-java"  "json"   "json-ip" \
+do_test "py-java"  "json"   "buffered-ip" \
         "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
         "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=json\" testserver" \
         "15" "10"
