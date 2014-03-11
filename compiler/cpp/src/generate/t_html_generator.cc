@@ -70,6 +70,8 @@ class t_html_generator : public t_generator {
     escape_['>']  = "&gt;";
     escape_['"']  = "&quot;";
     escape_['\''] = "&apos;";
+
+    init_allowed__markup();
   }
 
   void generate_program();
@@ -79,12 +81,14 @@ class t_html_generator : public t_generator {
          std::vector<t_program*>& finished);
   void generate_index();
   std::string escape_html(std::string const & str);
+  std::string escape_html_tags(std::string const & str);
   void generate_css();
   void generate_css_content(std::ofstream & f_target);
   void generate_style_tag();
   std::string make_file_link( std::string name);
   bool is_utf8_sequence(std::string const & str, size_t firstpos);
   void detect_input_encoding(std::string const & str, size_t firstpos);
+  void init_allowed__markup();
   
   /**
    * Program-level generation functions
@@ -106,7 +110,7 @@ class t_html_generator : public t_generator {
   std::ofstream f_out_;
   std::string  current_file_;
   input_type input_type_;
- 
+  std::map<std::string, int> allowed_markup; 
   bool standalone_; 
 };
 
@@ -395,21 +399,7 @@ std::string t_html_generator::make_file_link( std::string filename) {
  */
 void t_html_generator::print_doc(t_doc* tdoc) {
   if (tdoc->has_doc()) {
-    string doc = tdoc->get_doc();
-    size_t index;
-    while ((index = doc.find_first_of("\r\n")) != string::npos) {
-      if (index == 0) {
-        f_out_ << "<p/>" << endl;
-      } else {
-        f_out_ << escape_html( doc.substr(0, index)) << endl;
-      }
-      if (index + 1 < doc.size() && doc.at(index) != doc.at(index + 1) &&
-         (doc.at(index + 1) == '\r' || doc.at(index + 1) == '\n')) {
-        index++;
-      }
-      doc = doc.substr(index + 1);
-    }
-    f_out_ << escape_html(doc) << "<br/>";
+    f_out_ << escape_html(tdoc->get_doc()) << "<br/>";
   }
 }
 
@@ -462,12 +452,141 @@ void t_html_generator::detect_input_encoding(std::string const & str, size_t fir
   input_type_ = INPUT_PLAIN;
 }
 
-std::string t_html_generator::escape_html(std::string const & str) {
+void t_html_generator::init_allowed__markup() {
+  allowed_markup.clear();
+  // standalone tags
+  allowed_markup["br"] = 1;
+  allowed_markup["br/"] = 1;
+  allowed_markup["img"] = 1;
+  // paired tags
+  allowed_markup["b"] = 1;
+  allowed_markup["/b"] = 1;
+  allowed_markup["u"] = 1;
+  allowed_markup["/u"] = 1;
+  allowed_markup["i"] = 1;
+  allowed_markup["/i"] = 1;
+  allowed_markup["s"] = 1;
+  allowed_markup["/s"] = 1;
+  allowed_markup["big"] = 1;
+  allowed_markup["/big"] = 1;
+  allowed_markup["small"] = 1;
+  allowed_markup["/small"] = 1;
+  allowed_markup["sup"] = 1;
+  allowed_markup["/sup"] = 1;
+  allowed_markup["sub"] = 1;
+  allowed_markup["/sub"] = 1;
+  allowed_markup["pre"] = 1;
+  allowed_markup["/pre"] = 1;
+  allowed_markup["tt"] = 1;
+  allowed_markup["/tt"] = 1;
+  allowed_markup["ul"] = 1;
+  allowed_markup["/ul"] = 1;
+  allowed_markup["ol"] = 1;
+  allowed_markup["/ol"] = 1;
+  allowed_markup["li"] = 1;
+  allowed_markup["/li"] = 1;
+  allowed_markup["a"] = 1;
+  allowed_markup["/a"] = 1;
+  allowed_markup["p"] = 1;
+  allowed_markup["/p"] = 1;
+  allowed_markup["code"] = 1;
+  allowed_markup["/code"] = 1;
+  allowed_markup["dl"] = 1;
+  allowed_markup["/dl"] = 1;
+  allowed_markup["dt"] = 1;
+  allowed_markup["/dt"] = 1;
+  allowed_markup["dd"] = 1;
+  allowed_markup["/dd"] = 1;
+  allowed_markup["h1"] = 1;
+  allowed_markup["/h1"] = 1;
+  allowed_markup["h2"] = 1;
+  allowed_markup["/h2"] = 1;
+  allowed_markup["h3"] = 1;
+  allowed_markup["/h3"] = 1;
+  allowed_markup["h4"] = 1;
+  allowed_markup["/h4"] = 1;
+  allowed_markup["h5"] = 1;
+  allowed_markup["/h5"] = 1;
+  allowed_markup["h6"] = 1;
+  allowed_markup["/h6"] = 1;
+}
+  
+std::string t_html_generator::escape_html_tags(std::string const & str) {
+  std::ostringstream result;
 
+  unsigned char c = '?';
+  size_t lastpos;
+  size_t firstpos = 0;
+  while( firstpos < str.length()) {
+
+    // look for non-ASCII char  
+    lastpos = firstpos;    
+    while( lastpos < str.length()) {
+      c = str.at(lastpos);
+      if( ('<' == c) || ('>' == c)) {
+        break;
+      }
+      ++lastpos;
+    }
+    
+    // copy what we got so far    
+    if( lastpos > firstpos) {
+      result << str.substr( firstpos, lastpos-firstpos);
+      firstpos = lastpos;
+    }
+    
+    // reached the end?
+    if( firstpos >= str.length()) {
+      break;
+    }
+
+    // tag end without corresponding begin
+    ++firstpos;
+    if( '>' == c) {
+      result << "&gt;";
+      continue;
+    }
+
+    // extract the tag
+    std::ostringstream tagstream;
+    while( firstpos < str.length()) {
+      c = str.at(firstpos);
+      ++firstpos;
+      if('<'==c) {
+        tagstream << "&lt;"; // nested begin?
+      } else if('>'==c) {
+        break;
+      } else {
+        tagstream << c;  // not very efficient, but tags should be quite short
+      }
+    }
+
+    // we allow for several markup in docstrings, all else will become escaped
+    string tag_content = tagstream.str();
+    string tag_key = tag_content;
+    size_t first_white = tag_key.find_first_of(" \t\f\v\n\r");
+    if( first_white != string::npos) {
+      tag_key.erase(first_white);
+    }
+    for (std::string::size_type i=0; i<tag_key.length(); ++i) {
+      tag_key[i] = tolower(tag_key[i]);
+    }
+    if( allowed_markup.find(tag_key) != allowed_markup.end()) {
+      result << "<" << tag_content << ">"; 
+    } else {
+      result << "&lt;" << tagstream.str() << "&gt;"; 
+      pverbose("illegal markup <%s> in doc-comment\n", tag_key.c_str());
+    }
+  }
+  
+  return result.str();
+}
+
+std::string t_html_generator::escape_html(std::string const & str) {
   // the generated HTML header says it is UTF-8 encoded
   // if UTF-8 input has been detected before, we don't need to change anything
   if( input_type_ == INPUT_UTF8) {
-    return str;
+    return escape_html_tags(str);
   }
   
   // convert unsafe chars to their &#<num>; equivalent
@@ -495,6 +614,11 @@ std::string t_html_generator::escape_html(std::string const & str) {
       firstpos = lastpos;
     }
 
+    // reached the end?
+    if( firstpos >= str.length()) {
+      break;
+    }
+
     // some control code?
     if( (0 <= ic) && (31 >= ic))
     {
@@ -502,10 +626,10 @@ std::string t_html_generator::escape_html(std::string const & str) {
       {
         case '\r' :  
         case '\n' :  
-          result << "<br/>";  
-          break;
         case '\t' :
-          result << " ";  
+          result << c;
+          break;
+        default: // silently consume all other ctrl chars
           break;
       }
       ++firstpos;
@@ -538,7 +662,7 @@ std::string t_html_generator::escape_html(std::string const & str) {
     }
   }
   
-  return result.str();
+  return escape_html_tags(result.str());
 }
 
 /**
