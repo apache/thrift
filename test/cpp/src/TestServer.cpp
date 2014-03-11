@@ -545,13 +545,14 @@ int main(int argc, char **argv) {
 
     if (!protocol_type.empty()) {
       if (protocol_type == "binary") {
+      } else if (protocol_type == "compact") {
       } else if (protocol_type == "json") {
       } else {
           throw invalid_argument("Unknown protocol type "+protocol_type);
       }
     }
 
-	if (!transport_type.empty()) {
+    if (!transport_type.empty()) {
       if (transport_type == "buffered") {
       } else if (transport_type == "framed") {
       } else if (transport_type == "http") {
@@ -689,8 +690,12 @@ int main(int argc, char **argv) {
     boost::shared_ptr<apache::thrift::concurrency::Thread> thread = factory.newThread(serverThreadRunner);
     thread->start();
 
-    cout<<"Press enter to stop the server."<<endl;
-    cin.ignore(); //wait until a key is pressed
+    // HACK: cross language test suite is unable to handle cin properly
+    //       that's why we stay in a endless loop here
+    while(1){}
+    // FIXME: find another way to stop the server (e.g. a signal)
+    // cout<<"Press enter to stop the server."<<endl;
+    // cin.ignore(); //wait until a key is pressed
 
     server->stop();
     thread->join();

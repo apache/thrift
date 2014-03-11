@@ -127,6 +127,7 @@ int main(int argc, char** argv) {
   try {
     if (!protocol_type.empty()) {
       if (protocol_type == "binary") {
+      } else if (protocol_type == "compact") {
       } else if (protocol_type == "json") {
       } else {
           throw invalid_argument("Unknown protocol type "+protocol_type);
