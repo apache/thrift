@@ -25,7 +25,7 @@ under the License.
 
 Grunt Build
 ------------
-The is the base directory for the Apache Thrift JavaScript
+This is the base directory for the Apache Thrift JavaScript
 library. This directory contains a Gruntfile.js and a
 package.json. Many of the build and test tools used here
 require a recent version of Node.js to be installed. To 
@@ -46,7 +46,7 @@ Tree
 The following directories are present (some only after the
 grunt build):
   /src  - The JavaScript Apache Thrift source
-  /doc - HTML documentation
+  /doc  - HTML documentation
   /dist - Distribution files (thrift.js and thrift.min.js)
   /test - Various tests, this is a good place to look for
           example code
@@ -81,8 +81,8 @@ service.
         <script src="gen-js/hello_svc.js"></script>
         <script>
           (function() {
-            var transport = new Thrift.Transport("/hello");
-            var protocol  = new Thrift.Protocol(transport);
+            var transport = new Thrift.TXHRTransport("/hello");
+            var protocol  = new Thrift.TJSONProtocol(transport);
             var client    = new hello_svcClient(protocol);
             var nameElement = document.getElementById("name_in");
             var outputElement = document.getElementById("output");
@@ -98,9 +98,7 @@ service.
     </html>
 
 ### hello.js - Node Server
-    var Thrift = require('thrift');
-    var TBufferedTransport = require('thrift/lib/thrift/transport').TBufferedTransport;
-    var TJSONProtocol = require('thrift/lib/thrift/protocol').TJSONProtocol;
+    var thrift = require('thrift');
     var hello_svc = require('./gen-nodejs/hello_svc.js');
     
     var hello_handler = {
@@ -111,9 +109,9 @@ service.
     }
     
     var hello_svc_opt = {
-      transport: TBufferedTransport,
-      protocol: TJSONProtocol,
-      cls: hello_svc,
+      transport: thrift.TBufferedTransport,
+      protocol: thrift.TJSONProtocol,
+      processor: hello_svc,
       handler: hello_handler
     };
     
@@ -124,7 +122,7 @@ service.
       }
     }
     
-    var server = Thrift.createThriftWebServer(server_opt);
+    var server = Thrift.createWebServer(server_opt);
     var port = 9099;
     server.listen(port);
     console.log("Http/Thrift Server running on port: " + port);

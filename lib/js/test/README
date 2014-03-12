@@ -1,7 +1,8 @@
 Thrift Javascript Library
 =========================
 This browser based Apache Thrift implementation supports
-RPC clients using the JSON protocol over Http[s] with XHR.
+RPC clients using the JSON protocol over Http[s] with XHR
+and WebSocket.
 
 License
 -------
@@ -32,14 +33,18 @@ server_http.js is a Node.js web server which support the
 standard Apache Thrift test suite (thrift/test/ThriftTest.thrift).
 The server supports Apache Thrift XHR and WebSocket clients.
 
-server_https.js is the same but uses SSL/TLS. The sec directory
-contains the server key and certificate used by the ssl server.
+server_https.js is the same but uses SSL/TLS. The server key 
+and cert are pulled from the thrift/test/keys folder.
+
 Both of these servers support WebSocket (the http: supports ws:,
 and the https: support wss:).
 
-To run the test servers use: $ make check (requires
-the Apache Thrift Java branch and make check must have
-been run in thrift/lib/java previously) or run the grunt
+To run the client test with the Java test server use: 
+$ make check (requires the Apache Thrift Java branch 
+and make check must have been run in thrift/lib/java 
+previously).
+
+To run the client tests with the Node servers run the grunt
  build in the parent js directory (see README there).
  
 Test Clients
@@ -54,10 +59,10 @@ Test Clients
 -rw-r--r-- 1 randy randy  2847 Feb  9 06:31 testws.html
 
 There are three html test driver files, all of which are
-QUnit based. test.html test the Apache Thrift jQuery
+QUnit based. test.html tests the Apache Thrift jQuery
 generated code (thrift -gen js:jquery). The test-nojq.html
-Runs almost identical tests against normal JavaScript builds
+runs almost identical tests against normal JavaScript builds
 (thrift -gen js). Both of the previous tests use the XHR 
 transport. The testws.html runs similar tests using the
 WebSocket transport. The test*.js files are loaded by the
-html drivers and contain the actualApache Thrift tests.
+html drivers and contain the actual Apache Thrift tests.
