@@ -38,7 +38,6 @@
 ;; syntax coloring
 (defconst thrift-font-lock-keywords
   (list
-   '("#.*$" . font-lock-comment-face)  ;; perl style comments
    '("\\<\\(include\\|struct\\|exception\\|typedef\\|const\\|enum\\|service\\|extends\\|void\\|oneway\\|throws\\|optional\\|required\\)\\>" . font-lock-keyword-face)  ;; keywords
    '("\\<\\(bool\\|byte\\|i16\\|i32\\|i64\\|double\\|string\\|binary\\|map\\|list\\|set\\)\\>" . font-lock-type-face)  ;; built-in types
    '("\\<\\([0-9]+\\)\\>" . font-lock-variable-name-face)   ;; ordinals
@@ -112,13 +111,14 @@
           (indent-line-to cur-indent)
         (indent-line-to 0)))))
 
-;; C/C++ comments; also allowing underscore in words
+;; C/C++- and sh-style comments; also allowing underscore in words
 (defvar thrift-mode-syntax-table
   (let ((thrift-mode-syntax-table (make-syntax-table)))
     (modify-syntax-entry ?_ "w" thrift-mode-syntax-table)
-    (modify-syntax-entry ?/ ". 1456" thrift-mode-syntax-table)
-    (modify-syntax-entry ?* ". 23" thrift-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b" thrift-mode-syntax-table)
+    (modify-syntax-entry ?# "<" thrift-mode-syntax-table) ; sh-style comments
+    (modify-syntax-entry ?/ ". 124" thrift-mode-syntax-table) ; c/c++-style comments
+    (modify-syntax-entry ?* ". 23b" thrift-mode-syntax-table)
+    (modify-syntax-entry ?\n ">" thrift-mode-syntax-table)
     thrift-mode-syntax-table)
   "Syntax table for thrift-mode")
 
