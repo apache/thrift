@@ -1,6 +1,7 @@
 Apache Thrift
+=============
 
-Last Modified: 2013-Dec-17
+Last Modified: 2014-03-16
 
 License
 =======
@@ -36,7 +37,7 @@ Thrift is specifically designed to support non-atomic version changes
 across client and server code.
 
 For more details on Thrift's design and implementation, take a gander at
-the Thrift whitepaper included in this distribution or at the README files
+the Thrift whitepaper included in this distribution or at the README.md files
 in your particular subdirectory of interest.
 
 Hierarchy
@@ -134,7 +135,7 @@ Note that some language packages must be installed manually using build tools
 better suited to those languages (at the time of this writing, this applies
 to Java, Ruby, PHP).
 
-Look for the README file in the lib/<language>/ folder for more details on the
+Look for the README.md file in the lib/<language>/ folder for more details on the
 installation of each language library package.
 
 Testing

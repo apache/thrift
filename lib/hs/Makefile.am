@@ -19,7 +19,7 @@
 
 EXTRA_DIST = \
   LICENSE \
-  README \
+  README.md \
   Setup.lhs \
   TODO \
   Thrift.cabal \

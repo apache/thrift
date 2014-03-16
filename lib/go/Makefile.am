@@ -24,7 +24,7 @@ endif
 install:
 	@echo '##############################################################'
 	@echo '##############################################################'
-	@echo 'The Go client library should be installed via "go get", please see /lib/go/README'
+	@echo 'The Go client library should be installed via "go get", please see /lib/go/README.md'
 	@echo '##############################################################'
 	@echo '##############################################################'
 
