@@ -661,6 +661,20 @@ void generate_all_fingerprints(t_program* program) {
   */
 }
 
+
+/**
+ * Emits a warning on list<byte>, binary type is typically a much better choice.
+ */
+void check_for_list_of_bytes(t_type* list_elem_type) {
+  if((g_parse_mode == PROGRAM) && (list_elem_type != NULL) && list_elem_type->is_base_type()) {
+    t_base_type* tbase = (t_base_type*)list_elem_type;
+    if(tbase->get_base() == t_base_type::TYPE_BYTE) {
+      pwarning(1,"Consider using the more efficient \"binary\" type instead of \"list<byte>\".");
+    }
+  }
+}
+
+
 /**
  * Prints the version number
  */
