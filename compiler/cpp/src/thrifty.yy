@@ -1213,6 +1213,7 @@ ListType:
   tok_list '<' FieldType '>' CppType
     {
       pdebug("ListType -> tok_list<FieldType>");
+      check_for_list_of_bytes($3);
       $$ = new t_list($3);
       if ($5 != NULL) {
         ((t_container*)$$)->set_cpp_name(std::string($5));
