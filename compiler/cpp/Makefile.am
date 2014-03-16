@@ -106,7 +106,7 @@ WINDOWS_DIST = \
              compiler.sln \
              compiler.vcxproj \
              compiler.vcxproj.filters \
-             README_Windows.txt
+             README_Windows.md
 
 EXTRA_DIST = \
              $(WINDOWS_DIST)

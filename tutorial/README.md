@@ -25,7 +25,7 @@ Tutorial
 
 1) First things first, you'll need to install the Thrift compiler and the
    language libraries. Do that using the instructions in the top level
-   README file.
+   README.md file.
 
 2) Read tutorial.thrift to learn about the syntax of a Thrift file
 
