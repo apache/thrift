@@ -96,17 +96,20 @@ read_result(Client = #tclient{protocol = Proto0,
                               seqid    = SeqId},
             Function,
             ReplyType) ->
-    {Proto1, MessageBegin} = thrift_protocol:read(Proto0, message_begin),
-    NewClient = Client#tclient{protocol = Proto1},
-    case MessageBegin of
-        #protocol_message_begin{seqid = RetSeqId} when RetSeqId =/= SeqId ->
-            {NewClient, {error, {bad_seq_id, SeqId}}};
-
-        #protocol_message_begin{type = ?tMessageType_EXCEPTION} ->
-            handle_application_exception(NewClient);
-
-        #protocol_message_begin{type = ?tMessageType_REPLY} ->
-            handle_reply(NewClient, Function, ReplyType)
+    case thrift_protocol:read(Proto0, message_begin) of
+         {Proto1, {error, Reason}} ->
+             NewClient = Client#tclient{protocol = Proto1},
+             {NewClient, {error, Reason}};
+         {Proto1, MessageBegin} ->
+             NewClient = Client#tclient{protocol = Proto1},
+             case MessageBegin of
+                 #protocol_message_begin{seqid = RetSeqId} when RetSeqId =/= SeqId ->
+                     {NewClient, {error, {bad_seq_id, SeqId}}};
+                 #protocol_message_begin{type = ?tMessageType_EXCEPTION} ->
+                     handle_application_exception(NewClient);
+                 #protocol_message_begin{type = ?tMessageType_REPLY} ->
+                     handle_reply(NewClient, Function, ReplyType)
+             end
     end.
 
 
