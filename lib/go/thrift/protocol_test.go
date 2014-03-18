@@ -58,8 +58,20 @@ func init() {
 }
 
 type HTTPEchoServer struct{}
+type HTTPHeaderEchoServer struct{}
 
 func (p *HTTPEchoServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	buf, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(buf)
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write(buf)
+	}
+}
+
+func (p *HTTPHeaderEchoServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	buf, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -82,6 +94,21 @@ func HttpClientSetupForTest(t *testing.T) (net.Listener, net.Addr) {
 		return l, addr
 	}
 	go http.Serve(l, &HTTPEchoServer{})
+	return l, addr
+}
+
+func HttpClientSetupForHeaderTest(t *testing.T) (net.Listener, net.Addr) {
+	addr, err := FindAvailableTCPServerPort(40000)
+	if err != nil {
+		t.Fatalf("Unable to find available tcp port addr: %s", err)
+		return nil, addr
+	}
+	l, err := net.Listen(addr.Network(), addr.String())
+	if err != nil {
+		t.Fatalf("Unable to setup tcp listener on %s: %s", addr.String(), err)
+		return l, addr
+	}
+	go http.Serve(l, &HTTPHeaderEchoServer{})
 	return l, addr
 }
 
@@ -145,13 +172,13 @@ func ReadWriteProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
 	}
 
 	for _, tf := range transports {
-	  trans := tf.GetTransport(nil)
-	  p := protocolFactory.GetProtocol(trans);
-	  ReadWriteI64(t, p, trans);
-	  ReadWriteDouble(t, p, trans);
-	  ReadWriteBinary(t, p, trans);
-	  ReadWriteByte(t, p, trans);
-	  trans.Close()
+		trans := tf.GetTransport(nil)
+		p := protocolFactory.GetProtocol(trans)
+		ReadWriteI64(t, p, trans)
+		ReadWriteDouble(t, p, trans)
+		ReadWriteBinary(t, p, trans)
+		ReadWriteByte(t, p, trans)
+		trans.Close()
 	}
 
 }
