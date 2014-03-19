@@ -37,7 +37,7 @@ namespace Test
 			{
 				string host = "localhost";
 				int port = 9090;
-				string url = null;
+				string url = null, pipe = null;
 				int numThreads = 1;
 				bool buffered = false, framed = false;
 
@@ -72,6 +72,11 @@ namespace Test
 							framed = true;
 							Console.WriteLine("Using framed transport");
 						}
+						else if (args[i] == "-pipe")  // -pipe <name>
+						{
+							pipe = args[++i];
+							Console.WriteLine("Using named pipes transport");
+						}
 						else if (args[i] == "-t")
 						{
 							numThreads = Convert.ToInt32(args[++i]);
@@ -94,7 +99,14 @@ namespace Test
 					threads[test] = t;
 					if (url == null)
 					{
-						TTransport trans = new TSocket(host, port);
+						// endpoint transport
+						TTransport trans = null;
+						if( pipe != null)
+							trans = new TNamedPipeClientTransport(pipe);
+						else
+							trans = new TSocket(host, port);
+						
+						// layered transport
 						if (buffered)
 							trans = new TBufferedTransport(trans as TStreamTransport);
 						if (framed)

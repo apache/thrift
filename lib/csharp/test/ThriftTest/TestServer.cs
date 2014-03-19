@@ -117,25 +117,25 @@ namespace Test
 				return thing;
 			}
 
-            public Dictionary<string, string> testStringMap(Dictionary<string, string> thing)
-            {
-                Console.WriteLine("testStringMap({");
-                bool first = true;
-                foreach (string key in thing.Keys)
-                {
-                    if (first)
-                    {
-                        first = false;
-                    }
-                    else
-                    {
-                        Console.WriteLine(", ");
-                    }
-                    Console.WriteLine(key + " => " + thing[key]);
-                }
-                Console.WriteLine("})");
-                return thing;
-            }
+			public Dictionary<string, string> testStringMap(Dictionary<string, string> thing)
+			{
+				Console.WriteLine("testStringMap({");
+				bool first = true;
+				foreach (string key in thing.Keys)
+				{
+					if (first)
+					{
+						first = false;
+					}
+					else
+					{
+						Console.WriteLine(", ");
+					}
+					Console.WriteLine(key + " => " + thing[key]);
+				}
+				Console.WriteLine("})");
+				return thing;
+			}
 
 			public THashSet<int> testSet(THashSet<int> thing)
 			{
@@ -322,29 +322,39 @@ namespace Test
 			try
 			{
 				bool useBufferedSockets = false, useFramed = false;
-				int port = 9090;
+				int port = 9090, i = 0;
+				string pipe = null;
 				if (args.Length > 0)
 				{
-					port = int.Parse(args[0]);
-
-					if (args.Length > 1)
+					i = 0;
+					if (args[i] == "-pipe")  // -pipe name
 					{
-						if ( args[1] == "raw" )
+						pipe = args[++i];
+					}
+					else  // default to port number (compatibility)
+					{
+						port = int.Parse(args[i]);
+					}
+
+					++i;
+					if (args.Length > i)
+					{
+						if ( args[i] == "raw" )
 						{
 							// as default
 						}
-						else if ( args[1] == "buffered" )
+						else if ( args[i] == "buffered" )
 						{
 							useBufferedSockets = true;
 						}
-						else if ( args[1] == "framed" )
+						else if (args[i] == "framed")
 						{
 							useFramed = true;
 						}
 						else
 						{
 							// Fall back to the older boolean syntax
-							bool.TryParse(args[1], out useBufferedSockets);
+							bool.TryParse(args[i], out useBufferedSockets);
 						}
 					}
 				}
@@ -354,14 +364,22 @@ namespace Test
 				ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
 
 				// Transport
-				TServerSocket tServerSocket = new TServerSocket(port, 0, useBufferedSockets);
+				TServerTransport trans;
+				if( pipe != null)
+				{
+					trans = new TNamedPipeServerTransport(pipe);
+				}
+				else
+				{
+					trans = new TServerSocket(port, 0, useBufferedSockets);
+				}
 
 				// Simple Server
 				TServer serverEngine;
 				if ( useFramed )
-					serverEngine = new TSimpleServer(testProcessor, tServerSocket, new TFramedTransport.Factory());
+					serverEngine = new TSimpleServer(testProcessor, trans, new TFramedTransport.Factory());
 				else
-					serverEngine = new TSimpleServer(testProcessor, tServerSocket);
+					serverEngine = new TSimpleServer(testProcessor, trans);
 
 				// ThreadPool Server
 				// serverEngine = new TThreadPoolServer(testProcessor, tServerSocket);
@@ -372,7 +390,8 @@ namespace Test
 				testHandler.server = serverEngine;
 
 				// Run it
-				Console.WriteLine("Starting the server on port " + port + 
+				string where = ( pipe != null ? "on pipe "+pipe : "on port " + port);
+				Console.WriteLine("Starting the server " +where+
 					(useBufferedSockets ? " with buffered socket" : "") + 
 					(useFramed ? " with framed transport" : "") + 
 					"...");
