@@ -2369,7 +2369,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
     }
 
     f_service_ <<
-               indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, \"Internal error processing " << escape_string(tfunction->get_name()) << ": \" + err.Error())" << endl <<
+               indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, \"Internal error processing " << escape_string(tfunction->get_name()) << ": \" + err2.Error())" << endl <<
                indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name()) << "\", thrift.EXCEPTION, seqId)" << endl <<
                indent() << "  x.Write(oprot)" << endl <<
                indent() << "  oprot.WriteMessageEnd()" << endl <<
