@@ -2615,7 +2615,7 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
         out <<
             indent() << "_, _, size, err := iprot.ReadMapBegin()" << endl <<
             indent() << "if err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error reading map begin: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error reading map begin: %s\", err)" << endl <<
             indent() << "}" << endl <<
             indent() << "tMap := make(" << type_to_go_type(orig_type) << ", size)" << endl <<
             indent() << prefix << eq << " " << (optional_field ? "&" : "") << "tMap" << endl;
@@ -2624,7 +2624,7 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
         out <<
             indent() << "_, size, err := iprot.ReadSetBegin()" << endl <<
             indent() << "if err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error reading set begin: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error reading set begin: %s\", err)" << endl <<
             indent() << "}" << endl <<
             indent() << "tSet := make(map[" << type_to_go_key_type(t->get_elem_type()) << "]bool, size)" << endl <<
             indent() << prefix << eq << " " << (optional_field ? "&" : "") << "tSet" << endl;
@@ -2632,7 +2632,7 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
         out <<
             indent() << "_, size, err := iprot.ReadListBegin()" << endl <<
             indent() << "if err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error reading list begin: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error reading list begin: %s\", err)" << endl <<
             indent() << "}" << endl <<
             indent() << "tSlice := make(" << type_to_go_type(orig_type) << ", 0, size)" << endl <<
             indent() << prefix << eq << " " << (optional_field ? "&" : "") << "tSlice" << endl;
@@ -2664,17 +2664,17 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
     if (ttype->is_map()) {
         out <<
             indent() << "if err := iprot.ReadMapEnd(); err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error reading map end: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error reading map end: %s\", err)" << endl <<
             indent() << "}" << endl;
     } else if (ttype->is_set()) {
         out <<
             indent() << "if err := iprot.ReadSetEnd(); err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error reading set end: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error reading set end: %s\", err)" << endl <<
             indent() << "}" << endl;
     } else if (ttype->is_list()) {
         out <<
             indent() << "if err := iprot.ReadListEnd(); err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error reading list end: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error reading list end: %s\", err)" << endl <<
             indent() << "}" << endl;
     }
 }
@@ -2857,21 +2857,21 @@ void t_go_generator::generate_serialize_container(ofstream &out,
             type_to_enum(((t_map*)ttype)->get_key_type()) << ", " <<
             type_to_enum(((t_map*)ttype)->get_val_type()) << ", " <<
             "len(" << prefix << ")); err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error writing map begin: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error writing map begin: %s\", err)" << endl <<
             indent() << "}" << endl;
     } else if (ttype->is_set()) {
         out <<
             indent() << "if err := oprot.WriteSetBegin(" <<
             type_to_enum(((t_set*)ttype)->get_elem_type()) << ", " <<
             "len(" << prefix << ")); err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error writing set begin: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error writing set begin: %s\", err)" << endl <<
             indent() << "}" << endl;
     } else if (ttype->is_list()) {
         out <<
             indent() << "if err := oprot.WriteListBegin(" <<
             type_to_enum(((t_list*)ttype)->get_elem_type()) << ", " <<
             "len(" << prefix << ")); err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error writing list begin: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error writing list begin: %s\", err)" << endl <<
             indent() << "}" << endl;
     } else {
         throw "compiler error: Invalid type in generate_serialize_container '" + ttype->get_name() + "' for prefix '" + prefix + "'";
@@ -2907,17 +2907,17 @@ void t_go_generator::generate_serialize_container(ofstream &out,
     if (ttype->is_map()) {
         out <<
             indent() << "if err := oprot.WriteMapEnd(); err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error writing map end: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error writing map end: %s\", err)" << endl <<
             indent() << "}" << endl;
     } else if (ttype->is_set()) {
         out <<
             indent() << "if err := oprot.WriteSetEnd(); err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error writing set end: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error writing set end: %s\", err)" << endl <<
             indent() << "}" << endl;
     } else if (ttype->is_list()) {
         out <<
             indent() << "if err := oprot.WriteListEnd(); err != nil {" << endl <<
-            indent() << "  return fmt.Errorf(\"error writing list end: %s\")" << endl <<
+            indent() << "  return fmt.Errorf(\"error writing list end: %s\", err)" << endl <<
             indent() << "}" << endl;
     }
 }
