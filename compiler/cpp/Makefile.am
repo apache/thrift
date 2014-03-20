@@ -49,6 +49,7 @@ thrift_SOURCES = src/main.cc \
                  src/parse/t_enum.h \
                  src/parse/t_enum_value.h \
                  src/parse/t_typedef.h \
+                 src/parse/t_typedef.cc \
                  src/parse/t_container.h \
                  src/parse/t_list.h \
                  src/parse/t_set.h \
