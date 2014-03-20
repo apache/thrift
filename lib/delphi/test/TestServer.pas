@@ -499,7 +499,7 @@ var
 const
   // pipe timeouts to be used
   DEBUG_TIMEOUT   = 30 * 1000;
-  RELEASE_TIMEOUT = 0;  // server-side default
+  RELEASE_TIMEOUT = DEFAULT_THRIFT_PIPE_TIMEOUT;  // server-side default
   TIMEOUT         = RELEASE_TIMEOUT;
 begin
   try
