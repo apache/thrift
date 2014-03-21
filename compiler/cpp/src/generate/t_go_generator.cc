@@ -1130,19 +1130,20 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
     // Check for field STOP marker and break
     out <<
         indent() << "if fieldTypeId == thrift.STOP { break; }" << endl;
-    // Switch statement on the field we are reading
-    bool first = true;
+
     string thriftFieldTypeId;
     // Generate deserialization code for known cases
     int32_t field_id = -1;
 
+    // Switch statement on the field we are reading, false if no fields present
+    bool have_switch = !fields.empty();
+    if( have_switch) {
+        indent(out) << "switch fieldId {" << endl;
+    }
+    
+    // All the fields we know
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         field_id = (*f_iter)->get_key();
-
-        if (first) {
-            first = false;
-            indent(out) << "switch fieldId {" << endl;
-        }
 
         // if negative id, ensure we generate a valid method name
         string field_method_prefix("ReadField");
@@ -1152,8 +1153,9 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
             field_id *= -1;
         }
 
+        out << 
+            indent() <<"case " << field_id << ":" << endl;
         indent_up();
-        out << "case " << field_id << ":" << endl;
         thriftFieldTypeId = type_to_enum((*f_iter)->get_type());
 
         if (thriftFieldTypeId == "thrift.BINARY") {
@@ -1167,13 +1169,23 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
         indent_down();
     }
 
-    // In the default case we skip the field
-    if (!first) {
+    // Begin switch default case 
+    if( have_switch) {
         out <<
-            indent() << "default:" << endl <<
-            indent() << "  if err := iprot.Skip(fieldTypeId); err != nil {" << endl <<
-            indent() << "    return err" << endl <<
-            indent() << "  }" << endl <<
+            indent() << "default:" << endl;
+            indent_up();
+    }
+            
+    // Skip unknown fields in either case
+    out <<
+        indent() << "if err := iprot.Skip(fieldTypeId); err != nil {" << endl <<
+        indent() << "  return err" << endl <<
+        indent() << "}" << endl;
+
+    // End switch default case
+    if( have_switch) {
+        indent_down();
+        out <<
             indent() << "}" << endl;
     }
 
