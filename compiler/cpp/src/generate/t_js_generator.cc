@@ -244,8 +244,6 @@ class t_js_generator : public t_oop_generator {
    * TypeScript Definition File helper functions
    */
 
-  string ts_service_includes();
-  string ts_render_includes();
   string ts_function_signature(t_function* tfunction);
   string ts_get_type(t_type* type);
 
@@ -285,7 +283,7 @@ class t_js_generator : public t_oop_generator {
       std::stringstream doc(tdoc->get_doc());
       string item;
       
-      result = ts_indent() + "/*" + endl;
+      result = ts_indent() + "/**" + endl;
       while (std::getline(doc, item)) {
         result += ts_indent() + " * " + item + endl;
       }
@@ -354,9 +352,7 @@ void t_js_generator::init_generator() {
     render_includes() << endl;
 
   if (gen_ts_) {
-    f_types_ts_ << 
-      ts_render_includes() <<
-      autogen_comment() << endl;
+    f_types_ts_ << autogen_comment() << endl;
   }
 
   if (gen_node_) {
@@ -417,30 +413,6 @@ string t_js_generator::render_includes() {
   }
 
   return result;
-}
-
-/**
- * Renders all the imports necessary for including another Thrift program
- */
-string t_js_generator::ts_render_includes() {
-  string result = "";
-  const vector<t_program*>& includes = program_->get_includes();
-  for (size_t i = 0; i < includes.size(); ++i) {
-    result += "/// <reference path=\"" + includes[i]->get_name() + "\" />\n";
-  }
-  if (includes.size() > 0) {
-    result += "\n";
-  }
-
-  return result;
-}
-
-/**
- * Prints standard ts service imports
- */
-string t_js_generator::ts_service_includes() {
-  return string("/// <reference path=\"thrift.d.ts\" />\n"
-    "/// <reference path=\"" + program_->get_name() + "_types.d.ts\" />\n");
 }
 
 /**
@@ -925,10 +897,7 @@ void t_js_generator::generate_service(t_service* tservice) {
       render_includes() << endl;
 
     if (gen_ts_) {
-      f_service_ts_ << 
-        ts_service_includes() << endl <<
-        ts_render_includes() << endl <<
-        autogen_comment() << endl;
+      f_service_ts_ << autogen_comment() << endl;
       if (!ts_module_.empty()) {
         f_service_ts_ << "declare module " << ts_module_ << " {" << endl;
       }
