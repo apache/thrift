@@ -160,6 +160,9 @@ void TServerSocket::setTcpRecvBuffer(int tcpRecvBuffer) {
 }
 
 void TServerSocket::listen() {
+#ifdef _WIN32
+    TWinsockSingleton::create();
+#endif // _WIN32
   THRIFT_SOCKET sv[2];
   if (-1 == THRIFT_SOCKETPAIR(AF_LOCAL, SOCK_STREAM, 0, sv)) {
     GlobalOutput.perror("TServerSocket::listen() socketpair() ", THRIFT_GET_SOCKET_ERROR);
