@@ -489,15 +489,16 @@ void t_js_generator::generate_enum(t_enum* tenum) {
   vector<t_enum_value*>::iterator c_iter;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
+    if (gen_ts_) {
+      f_types_ts_ << ts_indent() << "'" << (*c_iter)->get_name() << "' = " << value << "," << endl;
+      //add 'value: key' in addition to 'key: value' for TypeScript enums
+      f_types_ << indent() << "'" << value << "' : '" << (*c_iter)->get_name() << "'," << endl;
+    }
     f_types_ << indent() << "'" << (*c_iter)->get_name() << "' : " << value;
     if (c_iter != constants.end()-1) {
         f_types_ << ",";
     }
     f_types_ << endl;
-
-    if (gen_ts_) {
-      f_types_ts_ << ts_indent() << (*c_iter)->get_name() << " = " << value << "," << endl;
-    }
   }
 
   indent_down();
