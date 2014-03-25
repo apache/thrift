@@ -307,10 +307,8 @@ void t_c_glib_generator::generate_enum(t_enum *tenum) {
 
     f_types_ <<
       indent() << this->nspace_uc << name_uc << "_" << (*c_iter)->get_name();
-    if ((*c_iter)->has_value()) {
-      f_types_ <<
-        " = " << (*c_iter)->get_value();
-    }
+    f_types_ <<
+      " = " << (*c_iter)->get_value();
   }
 
   indent_down();
