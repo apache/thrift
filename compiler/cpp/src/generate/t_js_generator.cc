@@ -2108,22 +2108,44 @@ string t_js_generator::ts_get_type(t_type* type) {
     }
   } else if (type->is_enum() || type->is_struct() || type->is_xception()) {
     ts_type = type->get_name();
-  } else if (type->is_list() || type->is_set() || type->is_map()) {
+  } else if (type->is_list() || type->is_set()) {
     t_type* etype;
 
     if (type->is_list()) {
       etype = ((t_list*)type)->get_elem_type();
-    } else if (type->is_set()) {
+    } else {
       etype = ((t_set*)type)->get_elem_type();
-    } else if (type->is_map()) {
-      etype = ((t_map*)type)->get_val_type();
     }
 
     if (etype->is_base_type() || etype->is_enum() || etype->is_struct() || etype->is_xception()) {
-      ts_type = ts_get_type(etype) + "[]";
+      ts_type = ts_get_type(etype);
     } else {
-      ts_type = "any[]";
+      ts_type = "any";
     }
+
+    ts_type += "[]";
+  } else if (type->is_map()) {
+    t_type* ktype = ((t_map*)type)->get_key_type();
+    t_type* vtype = ((t_map*)type)->get_val_type();
+
+    ts_type = "{ [key: ";
+
+    //only string / number as keytype
+    if (ktype->is_base_type() && (ts_get_type(ktype) == "string" || ts_get_type(ktype) == "number")) {
+      ts_type += ts_get_type(ktype);
+    } else {
+      ts_type += "any";
+    }
+
+    ts_type += "]: ";
+    
+    if (vtype->is_base_type() || vtype->is_enum() || vtype->is_struct() || vtype->is_xception()) {
+      ts_type += ts_get_type(vtype);
+    } else {
+      ts_type += "any";
+    }
+
+    ts_type += "; }";
   }
 
   return ts_type;
