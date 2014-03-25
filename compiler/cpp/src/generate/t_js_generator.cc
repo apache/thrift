@@ -251,24 +251,47 @@ class t_js_generator : public t_oop_generator {
 
   /**
    * Special indentation for TypeScript Definitions because of the module.
-   * @return "  " if a module was defined.
+   * Returns "  " if a module was defined. Else an empty string is returned.
+   * @return string "  " | ""
    */
   string ts_indent() {
     return indent() + (!ts_module_.empty() ? "  " : "");
   }
 
   /**
-   * @return "declare " if no module was defined.
+   * Returns "declare " if no module was defined. Else an empty string is returned.
+   * @return string "declare " | ""
    */
   string ts_declare() {
     return (ts_module_.empty() ? "declare " : "");
   }
 
   /**
-   * @return "?" if the given field is optional.
+   * Returns "?" if the given field is optional. Else an empty string is returned.
+   * @return string "?" | ""
    */
   string ts_get_req(t_field* field) {
     return (field->get_req() == t_field::T_OPTIONAL ? "?" : "");
+  }
+
+  /**
+   * Return the documentation, if the provided documentable object has one.
+   * @return string The documentation
+   */
+  string ts_print_doc(t_doc* tdoc) {
+    string result = "";
+
+    if (tdoc->has_doc()) {
+      std::stringstream doc(tdoc->get_doc());
+      string item;
+      
+      result = ts_indent() + "/*" + endl;
+      while (std::getline(doc, item)) {
+        result += ts_indent() + " * " + item + endl;
+      }
+      result += ts_indent() + " */" + endl;
+    }
+    return result;
   }
 
  private:
@@ -455,7 +478,9 @@ void t_js_generator::generate_enum(t_enum* tenum) {
   f_types_ << js_type_namespace(tenum->get_program())<<tenum->get_name()<<" = {"<<endl;
 
   if (gen_ts_) {
-    f_types_ts_ << ts_indent() << ts_declare() << "enum " << tenum->get_name() << " {" << endl;
+    f_types_ts_ <<
+      ts_print_doc(tenum) <<
+      ts_indent() << ts_declare() << "enum " << tenum->get_name() << " {" << endl;
   }
 
   indent_up();
@@ -480,7 +505,7 @@ void t_js_generator::generate_enum(t_enum* tenum) {
   f_types_ << "};"<<endl;
 
   if (gen_ts_) {
-    f_types_ts_ << ts_indent() << "}" << endl;
+    f_types_ts_ << ts_indent() << "}" << endl << endl;
   }
 }
 
@@ -496,7 +521,9 @@ void t_js_generator::generate_const(t_const* tconst) {
   f_types_ << render_const_value(type, value) << ";" << endl;
 
   if (gen_ts_) {
-    f_types_ts_ << ts_indent() << name << ": " << ts_get_type(type) << endl;
+    f_types_ts_ <<
+      ts_print_doc(tconst) <<
+      ts_indent() << ts_declare() << "var " << name << ": " << ts_get_type(type) << endl;
   }
 }
 
@@ -650,7 +677,9 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
   } else {
     out << js_namespace(tstruct->get_program()) << tstruct->get_name() <<" = function(args) {" << endl;
     if (gen_ts_) {
-      f_types_ts_ << ts_indent() << ts_declare() << "class " << tstruct->get_name() << " {" << endl;
+      f_types_ts_ <<
+      ts_print_doc(tstruct) <<
+      ts_indent() << ts_declare() << "class " << tstruct->get_name() << " {" << endl;
     }
   }
 
@@ -723,7 +752,7 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
   indent_down();
   out << "};\n";
   if (gen_ts_) {
-    f_types_ts_ << ts_indent() << "}" << endl;
+    f_types_ts_ << ts_indent() << "}" << endl << endl;
   }
 
   if (is_exception) {
@@ -1172,7 +1201,9 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     f_service_ <<
         js_namespace(tservice->get_program()) << service_name_ << "Client = function(input, output) {"<<endl;
     if (gen_ts_) {
-      f_service_ts_ << ts_indent() << ts_declare() << "class " << service_name_ << "Client ";
+      f_service_ts_ <<
+      ts_print_doc(tservice) <<
+      ts_indent() << ts_declare() << "class " << service_name_ << "Client ";
       if (tservice->get_extends() != NULL) {
         f_service_ts_ << "extends " << tservice->get_extends()->get_name();
       }
@@ -1244,7 +1275,9 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     indent_up();
 
     if (gen_ts_) {
-      f_service_ts_ << ts_indent() << ts_function_signature(*f_iter) << ";" << endl;
+      f_service_ts_ <<
+      ts_print_doc(*f_iter) <<
+      ts_indent() << ts_function_signature(*f_iter) << ";" << endl << endl;
     }
 
     if (gen_node_) {          //Node.js output      ./gen-nodejs
@@ -1318,9 +1351,6 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     indent_down();
 
     f_service_ << "};" << endl << endl;
-    if (gen_ts_) {
-      f_service_ts_ << ts_indent() << "}" <<  endl;
-    }
 
 
     // Send function
@@ -1480,6 +1510,10 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       f_service_ << "};"<<endl;
 
     }
+  }
+
+  if (gen_ts_) {
+    f_service_ts_ << ts_indent() << "}" <<  endl;
   }
 
 }
