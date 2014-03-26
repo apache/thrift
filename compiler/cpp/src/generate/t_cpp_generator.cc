@@ -120,6 +120,7 @@ class t_cpp_generator : public t_oop_generator {
                                       bool write=true,
                                       bool swap=false);
   void generate_copy_constructor     (std::ofstream& out, t_struct* tstruct);
+  void generate_assignment_operator  (std::ofstream& out, t_struct* tstruct);
   void generate_struct_fingerprint   (std::ofstream& out, t_struct* tstruct, bool is_definition);
   void generate_struct_reader        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
   void generate_struct_writer        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
@@ -791,10 +792,6 @@ void t_cpp_generator::generate_forward_declaration(t_struct* tstruct) {
   f_types_ <<
     indent() << "class " << tstruct->get_name() << ";" << endl <<
     endl;
-  struct TypeInfo {
-    uint64_t id;
-    std::string name;
-  };
 }
 
 /**
@@ -817,6 +814,7 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   generate_struct_writer(out, tstruct);
   generate_struct_swap(f_types_impl_, tstruct);
   generate_copy_constructor(f_types_impl_, tstruct);
+  generate_assignment_operator(f_types_impl_, tstruct);
 }
 
 void t_cpp_generator::generate_copy_constructor(
@@ -834,7 +832,6 @@ void t_cpp_generator::generate_copy_constructor(
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
     if (is_reference(*f_iter)) {
       std::string type = type_name((*f_iter)->get_type());
-      indent(out) << "delete " << (*f_iter)->get_name() << ";" << endl;
       indent(out) << (*f_iter)->get_name() << " = new " << type << "(*" << tmp_name << "." <<
         (*f_iter)->get_name() << ");" << endl;
     } else {
@@ -847,6 +844,42 @@ void t_cpp_generator::generate_copy_constructor(
   indent(out) << "}" << endl;
 }
 
+void t_cpp_generator::generate_assignment_operator(
+  ofstream& out,
+  t_struct* tstruct) {
+  std::string tmp_name = tmp("other");
+
+  indent(out) << tstruct->get_name() << "& " << tstruct->get_name() << "::" 
+    "operator=(const " << tstruct->get_name() <<
+    "& " << tmp_name << ") {" << endl;
+  indent_up();
+
+  const vector<t_field*>& members = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+  for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
+    if (is_reference(*f_iter)) {
+      std::string type = type_name((*f_iter)->get_type());
+      indent(out) << "if (" << (*f_iter)->get_name() << ") {" << endl;
+      indent_up();
+      indent(out) << "*" << (*f_iter)->get_name() << " = *" << tmp_name << "." << 
+	(*f_iter)->get_name() << ";" << endl;
+      indent_down();
+      indent(out) << "} else {" << endl;
+      indent_up();
+      indent(out) << (*f_iter)->get_name() << " = new " << type << "(*" << tmp_name << "." <<
+        (*f_iter)->get_name() << ");" << endl;
+      indent_down();
+      indent(out) << "}" << endl;
+    } else {
+      indent(out) << (*f_iter)->get_name() << " = " << tmp_name << "." <<
+        (*f_iter)->get_name() << ";" << endl;
+    }
+  }
+
+  indent(out) << "return *this;" << endl;
+  indent_down();
+  indent(out) << "}" << endl;
+}
 
 /**
  * Writes the struct definition into the header file
@@ -935,9 +968,13 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     indent(out) << 
       tstruct->get_name() << "(const " << tstruct->get_name() << "&);" << endl;
 
+    // Assignment Operator
+    indent(out) << tstruct->get_name() << "& operator=(const " << tstruct->get_name() << "&);" << endl;
+
     // Default constructor
     indent(out) <<
       tstruct->get_name() << "()";
+    
 
     bool init_ctor = false;
 
@@ -1028,8 +1065,16 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     out << " val) {" << endl;
     indent_up();
     if (is_reference((*m_iter))) {
-      out << indent() << "delete " << (*m_iter)->get_name() << ";" << endl;
-      out << indent() << (*m_iter)->get_name() << " = new " << type_name((*m_iter)->get_type()) << "(val);" << endl;
+      std::string type = type_name((*m_iter)->get_type());
+      indent(out) << "if (" << (*m_iter)->get_name() << ") {" << endl;
+      indent_up();
+      indent(out) << "*" << (*m_iter)->get_name() << " = val;" << endl;
+      indent_down();
+      indent(out) << "} else {" << endl;
+      indent_up();
+      indent(out) << (*m_iter)->get_name() << " = new " << type << "(val);" << endl;
+      indent_down();
+      indent(out) << "}" << endl;
     } else {
       out << indent() << (*m_iter)->get_name() << " = val;" << endl;
     }
@@ -4006,8 +4051,11 @@ void t_cpp_generator::generate_deserialize_struct(ofstream& out,
                                                   string prefix,
 						  bool pointer) {
   if (pointer) {
-    indent(out) << "delete " << prefix << ";" << endl;
+    indent(out) << "if (!" << prefix << ") { " << endl;
+    indent_up();
     indent(out) << prefix << " = new " << type_name(tstruct) << ";" << endl;
+    indent_down();
+    indent(out) << "}" << endl;
     indent(out) <<
       "xfer += " << prefix << "->read(iprot);" << endl;
     indent(out) << "bool wasSet = false;" << endl;
@@ -4241,10 +4289,15 @@ void t_cpp_generator::generate_serialize_struct(ofstream& out,
                                                 string prefix,
 						bool pointer) {
   if (pointer) {
-    indent(out) << "if (" << prefix << ") {" <<
-      "xfer += " << prefix << "->write(oprot); " << endl
-                << "} else {" << "oprot->writeStructBegin(\"" <<
-      tstruct->get_name() << "\"); oprot->writeStructEnd(); oprot->writeFieldStop();}" << endl;
+    indent(out) << "if (" << prefix << ") {" << endl;
+    indent_up();
+    indent(out) << "xfer += " << prefix << "->write(oprot); " << endl;
+    indent(out)  << "} else {" << "oprot->writeStructBegin(\"" <<
+      tstruct->get_name() << "\"); " << endl;
+    indent(out) << "oprot->writeStructEnd();" << endl;
+    indent(out) << "oprot->writeFieldStop();" << endl;
+    indent_down();
+    indent(out) << "}" << endl;
   } else {
     indent(out) <<
       "xfer += " << prefix << ".write(oprot);" << endl;

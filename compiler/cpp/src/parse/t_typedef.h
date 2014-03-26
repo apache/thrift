@@ -79,7 +79,7 @@ class t_typedef : public t_type {
   }
 
  private:
-  mutable t_type* type_;
+  t_type* type_;
   std::string symbolic_;
   mutable bool seen_;
 };
