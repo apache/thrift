@@ -29,6 +29,7 @@ node_modules
 .pydevproject
 .sonar
 .DS_Store
+.svn
 
 /contrib/.vagrant/
 /autoscan.log
