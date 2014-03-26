@@ -490,10 +490,7 @@ bool t_c_glib_generator::is_complex_type(t_type *ttype) {
 
   return ttype->is_container()
          || ttype->is_struct()
-         || ttype->is_xception()
-         || (ttype->is_base_type()
-             && (((t_base_type *) ttype)->get_base()
-                  == t_base_type::TYPE_STRING));
+         || ttype->is_xception();
 }
 
 
@@ -1436,7 +1433,7 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
 
       f_service_ << endl <<
         indent() << "gint32 rseqid;" << endl <<
-        indent() << "gchar * fname;" << endl <<
+        indent() << "gchar * fname = NULL;" << endl <<
         indent() << "ThriftMessageType mtype;" << endl <<
         indent() << "ThriftProtocol * protocol = " << 
                       this->nspace_uc << service_name_uc <<
@@ -1822,7 +1819,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
 	f_types_impl_ << indent() << "}" << endl;
       } else if (t->is_list()) {
         t_type *etype = ((t_list *) t)->get_elem_type();
-        string destructor_function = "g_ptr_array_free";
+        string destructor_function = "g_ptr_array_unref";
 
         if (etype->is_base_type()) {
           t_base_type::t_base tbase = ((t_base_type *) etype)->get_base();
@@ -1835,7 +1832,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
             case t_base_type::TYPE_I32:           
             case t_base_type::TYPE_I64:
             case t_base_type::TYPE_DOUBLE:
-              destructor_function = "g_array_free";
+              destructor_function = "g_array_unref";
               break;
             case t_base_type::TYPE_STRING:
               break;
@@ -1849,7 +1846,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
         indent_up();
         f_types_impl_ <<
           indent() << destructor_function << " (tobject->" << name <<
-                       ", TRUE);" << endl;
+                       ");" << endl;
         f_types_impl_ << indent() << "tobject->" << name << " = NULL;" << endl;
         indent_down();
         f_types_impl_ << indent() << "}" << endl;
@@ -1873,7 +1870,7 @@ void t_c_glib_generator::generate_object(t_struct *tstruct) {
       f_types_impl_ << indent() << "{" << endl;
       indent_up();
       f_types_impl_ <<
-      indent() << "g_free (tobject->" << name << ");" << endl;
+      indent() << generate_free_func_from_type(t) << "(tobject->" << name << ");" << endl;
       f_types_impl_ << indent() << "tobject->" << name << " = NULL;" << endl;
       indent_down();
       f_types_impl_ << indent() << "}" << endl;
@@ -2859,6 +2856,9 @@ string t_c_glib_generator::generate_free_func_from_type (t_type * ttype) {
       case t_base_type::TYPE_DOUBLE:
         return "NULL";
       case t_base_type::TYPE_STRING:
+        if (((t_base_type *) ttype)->is_binary()) {
+            return "thrift_string_free";
+        }
         return "g_free";
       default:
         throw "compiler error: no hash table info for type";
