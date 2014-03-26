@@ -53,6 +53,13 @@
  * assigned starting from -1 and working their way down.
  */
 int y_field_val = -1;
+/**
+ * This global variable is used for automatic numbering of enum values.
+ * y_enum_val is the last value assigned; the next auto-assigned value will be
+ * y_enum_val+1, and then it continues working upwards.  Explicitly specified
+ * enum values reset y_enum_val to that value.
+ */
+int32_t y_enum_val = -1;
 int g_arglist = 0;
 const int struct_is_struct = 0;
 const int struct_is_union = 1;
@@ -197,6 +204,7 @@ const int struct_is_union = 1;
 %type<tenum>     Enum
 %type<tenum>     EnumDefList
 %type<tenumv>    EnumDef
+%type<tenumv>    EnumValue
 
 %type<ttypedef>  Senum
 %type<tbase>     SenumDefList
@@ -566,7 +574,7 @@ Enum:
         $$->annotations_ = $6->annotations_;
         delete $6;
       }
-      $$->resolve_values();
+
       // make constants for all the enum values
       if (g_parse_mode == PROGRAM) {
         const std::vector<t_enum_value*>& enum_values = $$->get_constants();
@@ -594,41 +602,60 @@ EnumDefList:
     {
       pdebug("EnumDefList -> ");
       $$ = new t_enum(g_program);
+      y_enum_val = -1;
     }
 
 EnumDef:
-  CaptureDocText tok_identifier '=' tok_int_constant TypeAnnotations CommaOrSemicolonOptional
+  CaptureDocText EnumValue TypeAnnotations CommaOrSemicolonOptional
     {
-      pdebug("EnumDef -> tok_identifier = tok_int_constant");
-      if ($4 < 0) {
-        pwarning(1, "Negative value supplied for enum %s.\n", $2);
-      }
-      if ($4 > INT_MAX) {
-        pwarning(1, "64-bit value supplied for enum %s.\n", $2);
-      }
-      validate_simple_identifier( $2);
-      $$ = new t_enum_value($2, static_cast<int>($4));
+      pdebug("EnumDef -> EnumValue");
+      $$ = $2;
       if ($1 != NULL) {
         $$->set_doc($1);
       }
-      if ($5 != NULL) {
-        $$->annotations_ = $5->annotations_;
-        delete $5;
-      }
-    }
-|
-  CaptureDocText tok_identifier TypeAnnotations CommaOrSemicolonOptional
-    {
-      pdebug("EnumDef -> tok_identifier");
-      validate_simple_identifier( $2);
-      $$ = new t_enum_value($2);
-      if ($1 != NULL) {
-        $$->set_doc($1);
+      if (g_parse_mode == PROGRAM) {
+        // The scope constants never get deleted, so it's okay for us
+        // to share a single t_const object between our scope and the parent
+        // scope
+        t_const* constant = new t_const(g_type_i32, $2->get_name(),
+                                        new t_const_value($2->get_value()));
+        g_scope->add_constant($2->get_name(), constant);
+        if (g_parent_scope != NULL) {
+          g_parent_scope->add_constant(g_parent_prefix + $2->get_name(),
+                                       constant);
+        }
       }
       if ($3 != NULL) {
         $$->annotations_ = $3->annotations_;
         delete $3;
       }
+    }
+
+EnumValue:
+  tok_identifier '=' tok_int_constant
+    {
+      pdebug("EnumValue -> tok_identifier = tok_int_constant");
+      if ($3 < INT32_MIN || $3 > INT32_MAX) {
+        // Note: this used to be just a warning.  However, since thrift always
+        // treats enums as i32 values, I'm changing it to a fatal error.
+        // I doubt this will affect many people, but users who run into this
+        // will have to update their thrift files to manually specify the
+        // truncated i32 value that thrift has always been using anyway.
+        failure("64-bit value supplied for enum %s will be truncated.", $1);
+      }
+      y_enum_val = $3;
+      $$ = new t_enum_value($1, y_enum_val);
+    }
+ |
+  tok_identifier
+    {
+      pdebug("EnumValue -> tok_identifier");
+      validate_simple_identifier( $1);
+      if (y_enum_val == INT32_MAX) {
+        failure("enum value overflow at enum %s", $1);
+      }
+      ++y_enum_val;
+      $$ = new t_enum_value($1, y_enum_val);
     }
 
 Senum:

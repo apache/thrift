@@ -686,11 +686,7 @@ void t_go_generator::generate_enum(t_enum* tenum)
     int value = -1;
 
     for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-        if ((*c_iter)->has_value()) {
-            value = (*c_iter)->get_value();
-        } else {
-            ++value;
-        }
+      value = (*c_iter)->get_value();
 
         string iter_std_name(escape_string((*c_iter)->get_name()));
         string iter_name((*c_iter)->get_name());
