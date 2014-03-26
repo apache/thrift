@@ -120,6 +120,7 @@ if test "$enable_libs" = "no"; then
   with_go="no"
   with_d="no"
   with_nodejs="no"
+  with_lua="no"
 fi
 
 
@@ -213,6 +214,16 @@ if test "$with_nodejs" = "yes"; then
 fi
 AM_CONDITIONAL(WITH_NODEJS, [test "$have_nodejs" = "yes"])
 AM_CONDITIONAL(HAVE_NPM, [test "x$NPM" != "x"])
+
+AX_THRIFT_LIB(lua, [Lua], yes)
+have_lua=no
+if test "$with_lua" = "yes"; then
+  AC_PATH_PROGS([LUA], [lua])
+  if test "x$LUA" != "x"; then
+    have_lua="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_LUA, [test "$have_lua" = "yes"])
 
 AX_THRIFT_LIB(python, [Python], yes)
 if test "$with_python" = "yes";  then
@@ -634,6 +645,7 @@ AC_CONFIG_FILES([
   lib/php/test/Makefile
   lib/py/Makefile
   lib/rb/Makefile
+  lib/lua/Makefile
   test/Makefile
   test/cpp/Makefile
   test/hs/Makefile
@@ -674,6 +686,7 @@ echo "Building Erlang Library ...... : $have_erlang"
 echo "Building Go Library .......... : $have_go"
 echo "Building D Library ........... : $have_d"
 echo "Building NodeJS Library ...... : $have_nodejs"
+echo "Building Lua Library ......... : $have_lua"
 
 if test "$have_cpp" = "yes" ; then
   echo
@@ -743,6 +756,11 @@ if test "$have_nodejs" = "yes" ; then
   echo "NodeJS Library:"
   echo "   Using NodeJS .............. : $NODEJS"
   echo "   Using NodeJS version....... : $($NODEJS --version)"
+fi
+if test "$have_lua" = "yes" ; then
+  echo
+  echo "Lua Library:"
+  echo "   Using Lua .............. : $LUA"
 fi
 echo
 echo "If something is missing that you think should be present,"
