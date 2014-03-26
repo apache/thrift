@@ -63,11 +63,16 @@ http://monkey.org/~provos/libevent/
 
 # Using Thrift with C++ on Windows
 
-You need to define an enviroment variable called THIRD_PARTY. The project
-assumes that you have extracted the dependancies into their default structure
-into the path defined by THIRD_PARTY.
+You need to define an environment variables for 3rd party components separately:
 
-e.g. $(THIRD_PARTY)/boost/boost_1_47_0/
+BOOST_ROOT : For boost, e.g. D:\boost_1_55_0
+OPENSSL_ROOT_DIR : For OpenSSL, e.g. D:\OpenSSL-Win32
+
+only required by libthriftnb:
+
+LIBEVENT_ROOT_DIR : For Libevent e.g. D:\libevent-2.0.21-stable
+
+See /3rdparty.user for more details.
 
 Thrift is divided into two libraries.
 
@@ -80,7 +85,7 @@ Thrift is divided into two libraries.
 ## Linking Against Thrift
 
 You need to link your project that uses thrift against all the thrift
-dependancies; in the case of libthrift, boost and for
+dependencies; in the case of libthrift, boost and for
 libthriftnb, libevent.
 
 In the project properties you must also set HAVE_CONFIG_H as force include
