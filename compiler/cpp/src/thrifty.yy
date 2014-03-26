@@ -1087,8 +1087,12 @@ FieldType:
         // Lookup the identifier in the current scope
         $$ = g_scope->get_type($1);
         if ($$ == NULL) {
-          yyerror("Type \"%s\" has not been defined.", $1);
-          exit(1);
+          /*
+           * Either this type isn't yet declared, or it's never
+             declared.  Either way allow it and we'll figure it out
+             during generation.
+           */
+          $$ = new t_typedef(g_program, $1);
         }
       }
     }
