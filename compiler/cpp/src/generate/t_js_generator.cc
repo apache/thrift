@@ -315,6 +315,11 @@ class t_js_generator : public t_oop_generator {
   string ts_module_;
 
   /**
+   * Separate output directory for TypeScript Definition Files.
+   */
+  string ts_outdir;
+
+  /**
    * File streams
    */
   std::ofstream f_types_;
@@ -341,7 +346,10 @@ void t_js_generator::init_generator() {
   f_types_.open(f_types_name.c_str());
 
   if (gen_ts_) {
-    string f_types_ts_name = outdir + program_->get_name() + "_types.d.ts";
+    ts_outdir = get_out_dir() + "../gen-ts/";
+    MKDIR(ts_outdir.c_str());
+
+    string f_types_ts_name = ts_outdir + program_->get_name() + "_types.d.ts";
     f_types_ts_.open(f_types_ts_name.c_str());
   }
 
@@ -887,7 +895,7 @@ void t_js_generator::generate_service(t_service* tservice) {
     f_service_.open(f_service_name.c_str());
 
     if (gen_ts_) {
-      string f_service_ts_name = get_out_dir() + service_name_ + ".d.ts";
+      string f_service_ts_name = ts_outdir + service_name_ + ".d.ts";
       f_service_ts_.open(f_service_ts_name.c_str());
     }
 
