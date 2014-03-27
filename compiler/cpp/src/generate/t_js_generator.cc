@@ -346,7 +346,7 @@ void t_js_generator::init_generator() {
   f_types_.open(f_types_name.c_str());
 
   if (gen_ts_) {
-    ts_outdir = get_out_dir() + "../gen-ts/";
+    ts_outdir = program_->get_out_path() + (program_->is_out_path_absolute() ? "/" : "/gen-ts/");
     MKDIR(ts_outdir.c_str());
 
     string f_types_ts_name = ts_outdir + program_->get_name() + "_types.d.ts";
