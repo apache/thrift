@@ -42,13 +42,13 @@ class ve_build_ext(build_ext):
     def run(self):
         try:
             build_ext.run(self)
-        except DistutilsPlatformError, x:
+        except DistutilsPlatformError as x:
             raise BuildFailed()
 
     def build_extension(self, ext):
         try:
             build_ext.build_extension(self, ext)
-        except ext_errors, x:
+        except ext_errors as x:
             raise BuildFailed()
 
 def run_setup(with_binary):
@@ -88,17 +88,18 @@ def run_setup(with_binary):
             'Topic :: Software Development :: Libraries',
             'Topic :: System :: Networking'
         ],
+        use_2to3 = True,
         **extensions
     )
 
 try:
     run_setup(True)
 except BuildFailed:
-    print
-    print '*' * 80
-    print "An error occured while trying to compile with the C extension enabled" 
-    print "Attempting to build without the extension now"
-    print '*' * 80
-    print
+    print()
+    print('*' * 80)
+    print("An error occured while trying to compile with the C extension enabled")
+    print("Attempting to build without the extension now")
+    print('*' * 80)
+    print()
 
     run_setup(False)
