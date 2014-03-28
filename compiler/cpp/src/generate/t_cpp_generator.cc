@@ -859,16 +859,13 @@ void t_cpp_generator::generate_assignment_operator(
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
     if (is_reference(*f_iter)) {
       std::string type = type_name((*f_iter)->get_type());
+      indent(out) << "if (this == &" << tmp_name << ") return *this;" << endl;
       indent(out) << "if (" << (*f_iter)->get_name() << ") {" << endl;
-      indent_up();
-      indent(out) << "*" << (*f_iter)->get_name() << " = *" << tmp_name << "." << 
+      indent(out) << "  *" << (*f_iter)->get_name() << " = *" << tmp_name << "." << 
 	(*f_iter)->get_name() << ";" << endl;
-      indent_down();
       indent(out) << "} else {" << endl;
-      indent_up();
-      indent(out) << (*f_iter)->get_name() << " = new " << type << "(*" << tmp_name << "." <<
+      indent(out) << "  " << (*f_iter)->get_name() << " = new " << type << "(*" << tmp_name << "." <<
         (*f_iter)->get_name() << ");" << endl;
-      indent_down();
       indent(out) << "}" << endl;
     } else {
       indent(out) << (*f_iter)->get_name() << " = " << tmp_name << "." <<
@@ -1067,13 +1064,9 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
     if (is_reference((*m_iter))) {
       std::string type = type_name((*m_iter)->get_type());
       indent(out) << "if (" << (*m_iter)->get_name() << ") {" << endl;
-      indent_up();
-      indent(out) << "*" << (*m_iter)->get_name() << " = val;" << endl;
-      indent_down();
+      indent(out) << "  *" << (*m_iter)->get_name() << " = val;" << endl;
       indent(out) << "} else {" << endl;
-      indent_up();
-      indent(out) << (*m_iter)->get_name() << " = new " << type << "(val);" << endl;
-      indent_down();
+      indent(out) << "  " << (*m_iter)->get_name() << " = new " << type << "(val);" << endl;
       indent(out) << "}" << endl;
     } else {
       out << indent() << (*m_iter)->get_name() << " = val;" << endl;
@@ -4052,9 +4045,7 @@ void t_cpp_generator::generate_deserialize_struct(ofstream& out,
 						  bool pointer) {
   if (pointer) {
     indent(out) << "if (!" << prefix << ") { " << endl;
-    indent_up();
-    indent(out) << prefix << " = new " << type_name(tstruct) << ";" << endl;
-    indent_down();
+    indent(out) << "  " << prefix << " = new " << type_name(tstruct) << ";" << endl;
     indent(out) << "}" << endl;
     indent(out) <<
       "xfer += " << prefix << "->read(iprot);" << endl;
@@ -4290,13 +4281,11 @@ void t_cpp_generator::generate_serialize_struct(ofstream& out,
 						bool pointer) {
   if (pointer) {
     indent(out) << "if (" << prefix << ") {" << endl;
-    indent_up();
-    indent(out) << "xfer += " << prefix << "->write(oprot); " << endl;
+    indent(out) << "  xfer += " << prefix << "->write(oprot); " << endl;
     indent(out)  << "} else {" << "oprot->writeStructBegin(\"" <<
       tstruct->get_name() << "\"); " << endl;
-    indent(out) << "oprot->writeStructEnd();" << endl;
-    indent(out) << "oprot->writeFieldStop();" << endl;
-    indent_down();
+    indent(out) << "  oprot->writeStructEnd();" << endl;
+    indent(out) << "  oprot->writeFieldStop();" << endl;
     indent(out) << "}" << endl;
   } else {
     indent(out) <<
