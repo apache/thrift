@@ -119,6 +119,7 @@ class t_cpp_generator : public t_oop_generator {
                                       bool read=true,
                                       bool write=true,
                                       bool swap=false);
+  void generate_struct_declaration   (std::ofstream& out, t_struct* tstruct);
   void generate_copy_constructor     (std::ofstream& out, t_struct* tstruct);
   void generate_assignment_operator  (std::ofstream& out, t_struct* tstruct);
   void generate_struct_fingerprint   (std::ofstream& out, t_struct* tstruct, bool is_definition);
@@ -157,7 +158,7 @@ class t_cpp_generator : public t_oop_generator {
                                           t_struct*   tstruct,
                                           std::string prefix="",
 					  bool pointer=false);
-
+  
   void generate_deserialize_container    (std::ofstream& out,
                                           t_type*     ttype,
                                           std::string prefix="");
@@ -804,6 +805,7 @@ void t_cpp_generator::generate_forward_declaration(t_struct* tstruct) {
 void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) {
   generate_struct_definition(f_types_, tstruct, is_exception,
                              false, true, true, true);
+  generate_struct_declaration(f_types_impl_, tstruct);
   generate_struct_fingerprint(f_types_impl_, tstruct, true);
   generate_local_reflection(f_types_, tstruct, false);
   generate_local_reflection(f_types_impl_, tstruct, true);
@@ -1016,18 +1018,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   if (tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
     out <<
       endl <<
-      indent() << "virtual ~" << tstruct->get_name() << "() throw() {" << endl;
-    indent_up();
-
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      if (is_reference(*m_iter)) {
-	out << indent() <<
-	  "delete " << (*m_iter)->get_name() << ";" << endl;
-      }
-    }    
-
-    indent_down();
-    out << indent() << "}" << endl << endl;
+      indent() << "virtual ~" << tstruct->get_name() << "() throw();" << endl;
   }
 
   // Pointer to this structure's reflection local typespec.
@@ -1059,30 +1050,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       endl <<
       indent() << "void __set_" << (*m_iter)->get_name() <<
         "(" << type_name((*m_iter)->get_type(), false, true);
-    out << " val) {" << endl;
-    indent_up();
-    if (is_reference((*m_iter))) {
-      std::string type = type_name((*m_iter)->get_type());
-      indent(out) << "if (" << (*m_iter)->get_name() << ") {" << endl;
-      indent(out) << "  *" << (*m_iter)->get_name() << " = val;" << endl;
-      indent(out) << "} else {" << endl;
-      indent(out) << "  " << (*m_iter)->get_name() << " = new " << type << "(val);" << endl;
-      indent(out) << "}" << endl;
-    } else {
-      out << indent() << (*m_iter)->get_name() << " = val;" << endl;
-    }
-    indent_down();
-
-    // assume all fields are required except optional fields.
-    // for optional fields change __isset.name to true
-    bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
-    if (is_optional) {
-      out <<
-        indent() <<
-        indent() << "__isset." << (*m_iter)->get_name() << " = true;" << endl;
-    }
-    out <<
-      indent()<< "}" << endl;
+    out << " val);" << endl;
   }
   out << endl;
 
@@ -1168,6 +1136,64 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   }
 }
 
+void t_cpp_generator::generate_struct_declaration(ofstream& out,
+						  t_struct* tstruct) {
+  // Get members
+  vector<t_field*>::const_iterator m_iter;
+  const vector<t_field*>& members = tstruct->get_members();
+
+
+  // Destructor
+  if (tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
+    out <<
+      endl <<
+      indent() << tstruct->get_name() << "::~" << tstruct->get_name() << "() throw() {" << endl;
+    indent_up();
+
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      if (is_reference(*m_iter)) {
+	out << indent() <<
+	  "delete " << (*m_iter)->get_name() << ";" << endl;
+      }
+    }    
+
+    indent_down();
+    out << indent() << "}" << endl << endl;
+  }
+
+  // Create a setter function for each field
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    out <<
+      endl <<
+      indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
+        "(" << type_name((*m_iter)->get_type(), false, true);
+    out << " val) {" << endl;
+    indent_up();
+    if (is_reference((*m_iter))) {
+      std::string type = type_name((*m_iter)->get_type());
+      indent(out) << "if (" << (*m_iter)->get_name() << ") {" << endl;
+      indent(out) << "  *" << (*m_iter)->get_name() << " = val;" << endl;
+      indent(out) << "} else {" << endl;
+      indent(out) << "  " << (*m_iter)->get_name() << " = new " << type << "(val);" << endl;
+      indent(out) << "}" << endl;
+    } else {
+      out << indent() << (*m_iter)->get_name() << " = val;" << endl;
+    }
+    indent_down();
+
+    // assume all fields are required except optional fields.
+    // for optional fields change __isset.name to true
+    bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
+    if (is_optional) {
+      out <<
+        indent() <<
+        indent() << "__isset." << (*m_iter)->get_name() << " = true;" << endl;
+    }
+    out <<
+      indent()<< "}" << endl;
+  }
+  out << endl;
+}
 /**
  * Writes the fingerprint of a struct to either the header or implementation.
  *
