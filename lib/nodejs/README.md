@@ -27,7 +27,7 @@ under the License.
 
 ## Thrift Compiler
 
-You can compile nodejs sources by running the following:
+You can compile IDL sources for Node.js with the following command:
 
     thrift --gen js:node thrift_file
 
