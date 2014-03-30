@@ -27,7 +27,7 @@ am__yacc_c2h = sed -e s/cc$$/h/ -e s/cpp$$/hpp/ -e s/cxx$$/hxx/ \
 
 AM_YFLAGS = -d
 LIBS =
-BUILT_SOURCES =
+BUILT_SOURCES = thrifty.cc
 
 bin_PROGRAMS = thrift
 
