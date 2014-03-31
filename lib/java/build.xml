@@ -47,6 +47,7 @@
 
   <property name="gen" location="gen-java"/>
   <property name="genbean" location="gen-javabean"/>
+  <property name="genreuse" location="gen-javareuse"/>
 
   <property name="jar.file" location="${build.dir}/${final.name}.jar"/>
   <property name="test.jar.file" location="${build.dir}/${final.name}-test.jar"/>
@@ -75,6 +76,7 @@
     <pathelement location="${build.test.dir}"/>
     <pathelement location="${jar.file}"/>
     <pathelement location="${test.jar.file}"/>
+
   </path>
 
   <!-- Tasks --> 
@@ -123,7 +125,21 @@
         <attribute name="Bundle-Description" value="Apache Thrift library"/>
         <attribute name="Bundle-License" value="${license}"/>
         <attribute name="Bundle-ActivationPolicy" value="lazy"/>
-        <attribute name="Export-Package" value="${thrift.groupid};version=${version}"/>
+        <attribute name="Export-Package" value="${thrift.groupid}.async;uses:=&quot;
+${thrift.groupid}.protocol,${thrift.groupid}.transport,org.slf4j,${thrift.groupid}&quot;;version=&quot;${version}&quot;,
+${thrift.groupid}.protocol;uses:=&quot;${thrift.groupid}.transport,${thrift.groupid},${thrift.groupid}.scheme&quot;
+;version=&quot;${version}&quot;,${thrift.groupid}.server;uses:=&quot;${thrift.groupid}.transport,${thrift.groupid}.protocol,
+${thrift.groupid},org.slf4j,javax.servlet,javax.servlet.http&quot;;version=&quot;${version}&quot;,${thrift.groupid}.transport;
+uses:=&quot;${thrift.groupid}.protocol,${thrift.groupid},org.apache.http.client,org.apache.http.params,org.apache.http.entity,
+org.apache.http.client.methods,org.apache.http,org.slf4j,javax.net.ssl,javax.net,javax.security.sasl,
+javax.security.auth.callback&quot;;version=&quot;${version}&quot;,${thrift.groupid};uses:=&quot;${thrift.groupid}.protocol,
+${thrift.groupid}.async,${thrift.groupid}.server,${thrift.groupid}.transport,org.slf4j,org.apache.log4j,
+${thrift.groupid}.scheme&quot;;version=&quot;${version}&quot;,${thrift.groupid}.meta_data;uses:=&quot;${thrift.groupid}&quot;
+;version=&quot;${version}&quot;,${thrift.groupid}.scheme;uses:=&quot;${thrift.groupid}.protocol,
+${thrift.groupid}&quot;;version=&quot;${version}&quot;"/>
+       <attribute name="Import-Package" value="javax.net,javax.net.ssl,javax.security.auth.callback,
+javax.security.sasl,javax.servlet;resolution:=optional,javax.servlet.http;resolution:=optional,
+resolution:=optional,org.slf4j;resolution:=optional;version=&quot;[1.4,2)&quot;"/>
       </manifest>
       <fileset dir="${build.dir}">
         <include name="org/apache/thrift/**/*.class"/>
@@ -150,6 +166,7 @@
     <delete dir="${build.dir}"/>
     <delete dir="${gen}"/>
     <delete dir="${genbean}"/>
+    <delete dir="${genreuse}"/>
   </target>
 
   <target name="optional-generate" unless="no-gen-thrift"> 
@@ -161,11 +178,15 @@
     <javac debug="true" srcdir="${gen}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false" encoding="UTF-8">
       <compilerarg value="-Xlint:deprecation"/>
       <!--<compilerarg value="-Xlint:unchecked"/>-->
-    </javac>  
+    </javac>
     <javac debug="true" srcdir="${genbean}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false" encoding="UTF-8">
       <compilerarg value="-Xlint:deprecation"/>
       <!--<compilerarg value="-Xlint:unchecked"/>-->
-    </javac>  
+    </javac>
+    <javac debug="true" srcdir="${genreuse}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false" encoding="UTF-8">
+      <compilerarg value="-Xlint:deprecation"/>
+      <!--<compilerarg value="-Xlint:unchecked"/>-->
+    </javac>
     <javac debug="true" srcdir="${src.test}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false" encoding="UTF-8">
       <compilerarg value="-Xlint:deprecation"/>
       <!--<compilerarg value="-Xlint:unchecked"/>-->
@@ -253,6 +274,12 @@
     </exec>
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
       <arg line="--gen java:hashcode ${test.thrift.home}/ManyOptionals.thrift"/>
+    </exec>
+    <exec executable="mkdir" failonerror="true">
+      <arg line="-p ${genreuse}"/>
+    </exec>
+    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+      <arg line="--gen java:reuse-objects -out ${genreuse} ${test.thrift.home}/ReuseObjects.thrift"/>
     </exec>
   </target>
 
