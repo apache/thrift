@@ -68,8 +68,8 @@ def run_setup(with_binary):
     setup(name = 'thrift',
         version = '1.0.0-dev',
         description = 'Python bindings for the Apache Thrift RPC system',
-        author = ['Thrift Developers'],
-        author_email = ['dev@thrift.apache.org'],
+        author = 'Thrift Developers',
+        author_email = 'dev@thrift.apache.org',
         url = 'http://thrift.apache.org',
         license = 'Apache License 2.0',
         packages = [
