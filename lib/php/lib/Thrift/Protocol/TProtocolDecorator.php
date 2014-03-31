@@ -219,7 +219,7 @@ abstract class TProtocolDecorator extends TProtocol
 
     public function readMapBegin(&$keyType, &$valType, &$size)
     {
-        $this->concreteProtocol_->readFieldEnd($keyType, $valType, $size);
+        $this->concreteProtocol_->readMapBegin($keyType, $valType, $size);
     }
 
     public function readMapEnd()
