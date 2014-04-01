@@ -22,6 +22,7 @@
 
 namespace Thrift;
 
+use Thrift\Exception\TException;
 use Thrift\Protocol\TProtocol;
 use Thrift\Protocol\TMultiplexedProtocol;
 use Thrift\Protocol\TProtocolDecorator;
