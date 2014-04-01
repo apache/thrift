@@ -1567,13 +1567,13 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
 
   f_remote <<
     "if len(sys.argv) <= 1 or sys.argv[1] == '--help':" << endl <<
-    "  print ''" << endl <<
-    "  print 'Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] function [arg1 [arg2...]]'" << endl <<
-    "  print ''" << endl <<
-    "  print 'Functions:'" << endl;
+    "  print('')" << endl <<
+    "  print('Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] function [arg1 [arg2...]]')" << endl <<
+    "  print('')" << endl <<
+    "  print('Functions:')" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_remote <<
-      "  print '  " << (*f_iter)->get_returntype()->get_name() << " " << (*f_iter)->get_name() << "(";
+      "  print('  " << (*f_iter)->get_returntype()->get_name() << " " << (*f_iter)->get_name() << "(";
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
     vector<t_field*>::const_iterator a_iter;
@@ -1588,10 +1588,10 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
       f_remote <<
         args[i]->get_type()->get_name() << " " << args[i]->get_name();
     }
-    f_remote << ")'" << endl;
+    f_remote << ")')" << endl;
   }
   f_remote <<
-    "  print ''" << endl <<
+    "  print('')" << endl <<
     "  sys.exit(0)" << endl <<
     endl;
 
@@ -1663,7 +1663,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     f_remote <<
       "if cmd == '" << (*f_iter)->get_name() << "':" << endl <<
       "  if len(args) != " << num_args << ":" << endl <<
-      "    print '" << (*f_iter)->get_name() << " requires " << num_args << " args'" << endl <<
+      "    print('" << (*f_iter)->get_name() << " requires " << num_args << " args')" << endl <<
       "    sys.exit(1)" << endl <<
       "  pp.pprint(client." << (*f_iter)->get_name() << "(";
     for (int i = 0; i < num_args; ++i) {
@@ -1680,7 +1680,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
 
   if (functions.size() > 0) {
     f_remote << "else:" << endl;
-    f_remote << "  print 'Unrecognized method %s' % cmd" << endl;
+    f_remote << "  print('Unrecognized method %s' % cmd)" << endl;
     f_remote << "  sys.exit(1)" << endl;
     f_remote << endl;
   }
