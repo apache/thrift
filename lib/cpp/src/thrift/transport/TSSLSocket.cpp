@@ -55,14 +55,45 @@ static bool matchName(const char* host, const char* pattern, int size);
 static char uppercase(char c);
 
 // SSLContext implementation
-SSLContext::SSLContext() {
-  ctx_ = SSL_CTX_new(TLSv1_method());
+SSLContext::SSLContext(const SSLProtocol& protocol) {
+  if(protocol == SSLTLS)
+  {
+    ctx_ = SSL_CTX_new(SSLv23_method());
+  }
+  else if(protocol == SSLv3)
+  {
+    ctx_ = SSL_CTX_new(SSLv3_method());
+  }
+  else if(protocol == TLSv1_0)
+  {
+    ctx_ = SSL_CTX_new(TLSv1_method());
+  }
+  else if(protocol == TLSv1_1)
+  {
+    ctx_ = SSL_CTX_new(TLSv1_1_method());
+  }
+  else if(protocol == TLSv1_2)
+  {
+    ctx_ = SSL_CTX_new(TLSv1_2_method());
+  }
+  else
+  {
+    /// UNKNOWN PROTOCOL!
+    throw TSSLException("SSL_CTX_new: Unknown protocol");
+  }
+
   if (ctx_ == NULL) {
     string errors;
     buildErrors(errors);
     throw TSSLException("SSL_CTX_new: " + errors);
   }
   SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
+
+  // Disable horribly insecure SSLv2!
+  if(protocol == SSLTLS)
+  {
+    SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv2);
+  }
 }
 
 SSLContext::~SSLContext() {
@@ -350,14 +381,14 @@ bool     TSSLSocketFactory::initialized = false;
 uint64_t TSSLSocketFactory::count_ = 0;
 Mutex    TSSLSocketFactory::mutex_;
 
-TSSLSocketFactory::TSSLSocketFactory(): server_(false) {
+TSSLSocketFactory::TSSLSocketFactory(const SSLProtocol& protocol): server_(false) {
   Guard guard(mutex_);
   if (count_ == 0) {
     initializeOpenSSL();
     randomize();
   }
   count_++;
-  ctx_ = boost::shared_ptr<SSLContext>(new SSLContext);
+  ctx_ = boost::shared_ptr<SSLContext>(new SSLContext(protocol));
 }
 
 TSSLSocketFactory::~TSSLSocketFactory() {
