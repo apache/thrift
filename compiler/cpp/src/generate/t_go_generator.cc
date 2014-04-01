@@ -114,7 +114,7 @@ public:
      */
 
     void generate_go_struct(t_struct* tstruct, bool is_exception);
-    void generate_go_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception = false, bool is_result = false);
+    void generate_go_struct_definition(std::ofstream& out, t_struct* tstruct, bool is_xception = false, bool is_result = false, bool is_args = false);
     void generate_isset_helpers(std::ofstream& out, t_struct* tstruct, const string& tstruct_name, bool is_result = false);
     void generate_go_struct_reader(std::ofstream& out, t_struct* tstruct, const string& tstruct_name, bool is_result = false);
     void generate_go_struct_writer(std::ofstream& out, t_struct* tstruct, const string& tstruct_name, bool is_result = false);
@@ -267,7 +267,7 @@ private:
     std::string package_name_;
     std::string package_dir_;
 
-    static std::string publicize(const std::string& value);
+    static std::string publicize(const std::string& value, bool is_args_or_result = false);
     static std::string new_prefix(const std::string& value);
     static std::string privatize(const std::string& value);
     static std::string variable_name_to_go_name(const std::string& value);
@@ -276,7 +276,7 @@ private:
 };
 
 
-std::string t_go_generator::publicize(const std::string& value)
+std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result)
 {
     if (value.size() <= 0) {
         return value;
@@ -298,6 +298,26 @@ std::string t_go_generator::publicize(const std::string& value)
     for (string::size_type i = 1; i < value2.size() - 1; ++i) {
         if (value2[i] == '_' && islower(value2[i + 1])) {
             value2.replace(i, 2, 1, toupper(value2[i + 1]));
+        }
+    }
+
+    // final length before further checks, the string may become longer
+    size_t len_before = value2.length();
+
+    // IDL identifiers may start with "New" which interferes with the CTOR pattern
+    // Adding an extra underscore to all those identifiers solves this
+    if( (len_before >= 3) && (value2.substr(0,3) == "New")) {
+        value2 += '_';
+    }
+
+    // IDL identifiers may end with "Args"/"Result" which interferes with the implicit service function structs
+    // Adding another extra underscore to all those identifiers solves this
+    // Suppress this check for the actual helper struct names
+    if(!is_args_or_result) {
+        bool ends_with_args = (len_before >= 4) && (value2.substr(len_before-4,4) == "Args");
+        bool ends_with_rslt = (len_before >= 6) && (value2.substr(len_before-6,6) == "Result");
+        if( ends_with_args || ends_with_rslt) {
+            value2 += '_';
         }
     }
 
@@ -944,13 +964,14 @@ void t_go_generator::get_publicized_name_and_def_value(t_field* tfield,
 void t_go_generator::generate_go_struct_definition(ofstream& out,
         t_struct* tstruct,
         bool is_exception,
-        bool is_result)
+        bool is_result,
+        bool is_args)
 {
     const vector<t_field*>& members = tstruct->get_members();
     const vector<t_field*>& sorted_members = tstruct->get_sorted_members();
     vector<t_field*>::const_iterator m_iter;
 
-    std::string tstruct_name(publicize(tstruct->get_name()));
+    std::string tstruct_name(publicize(tstruct->get_name(), is_args||is_result));
     out <<
         indent() << "type " << tstruct_name << " struct {" << endl;
     /*
@@ -1411,7 +1432,7 @@ void t_go_generator::generate_service_helpers(t_service* tservice)
 
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
         t_struct* ts = (*f_iter)->get_arglist();
-        generate_go_struct_definition(f_service_, ts, false);
+        generate_go_struct_definition(f_service_, ts, false, false, true);
         generate_go_function_helpers(*f_iter);
     }
 }
@@ -1641,7 +1662,7 @@ void t_go_generator::generate_service_client(t_service* tservice)
                    indent() << "}" << endl << endl <<
                    indent() << "func (p *" << serviceName << "Client) send" << function_signature(*f_iter) << "(err error) {" << endl;
         indent_up();
-        std::string argsname = publicize((*f_iter)->get_name()) + "Args";
+        std::string argsname = publicize((*f_iter)->get_name() + "_args",true);
         // Serialize the request header
         string args(tmp("args"));
         f_service_ <<
@@ -1658,7 +1679,7 @@ void t_go_generator::generate_service_client(t_service* tservice)
         indent_down();
         f_service_ <<
                    indent() << "}" << endl <<
-                   indent() << args << " := New" << publicize(argsname) << "()" << endl;
+                   indent() << args << " := New" << argsname << "()" << endl;
 
         for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
             f_service_ <<
@@ -1687,7 +1708,7 @@ void t_go_generator::generate_service_client(t_service* tservice)
                    indent() << "}" << endl << endl;
 
         if (true) { //!(*f_iter)->is_oneway() || true) {}
-            std::string resultname = publicize((*f_iter)->get_name()) + "Result";
+            std::string resultname = publicize((*f_iter)->get_name() + "_result",true);
             // Open function
             f_service_ << endl <<
                        indent() << "func (p *" << serviceName << "Client) recv" << publicize((*f_iter)->get_name()) <<
@@ -1732,7 +1753,7 @@ void t_go_generator::generate_service_client(t_service* tservice)
                        indent() << "  err = thrift.NewTApplicationException(thrift.BAD_SEQUENCE_ID, \"" << (*f_iter)->get_name() << " failed: out of sequence response\")" << endl <<
                        indent() << "  return" << endl <<
                        indent() << "}" << endl <<
-                       indent() << result << " := New" << publicize(resultname) << "()" << endl <<
+                       indent() << result << " := New" << resultname << "()" << endl <<
                        indent() << "if err = " << result << ".Read(iprot); err != nil {" << endl <<
                        indent() << "  return" << endl <<
                        indent() << "}" << endl <<
@@ -1958,6 +1979,7 @@ void t_go_generator::generate_service_remote(t_service* tservice)
         int num_args = args.size();
         string funcName((*f_iter)->get_name());
         string pubName(publicize(funcName));
+        string argumentsName(publicize(funcName+"_args",true));
         f_remote <<
                  indent() << "case \"" << escape_string(funcName) << "\":" << endl;
         indent_up();
@@ -2100,7 +2122,7 @@ void t_go_generator::generate_service_remote(t_service* tservice)
                          indent() << "}" << endl <<
                          indent() << factory << " := thrift.NewTSimpleJSONProtocolFactory()" << endl <<
                          indent() << jsProt << " := " << factory << ".GetProtocol(" << mbTrans << ")" << endl <<
-                         indent() << "containerStruct" << i << " := " << package_name_ << ".New" << pubName << "Args()" << endl <<
+                         indent() << "containerStruct" << i << " := " << package_name_ << ".New" << argumentsName << "()" << endl <<
                          indent() << err2 << " := containerStruct" << i << ".ReadField" << (i + 1) << "(" << jsProt << ")" << endl <<
                          indent() << "if " << err2 << " != nil {" << endl <<
                          indent() << "  Usage()" << endl <<
@@ -2310,8 +2332,8 @@ void t_go_generator::generate_process_function(t_service* tservice,
 {
     // Open function
     string processorName = privatize(tservice->get_name()) + "Processor" + publicize(tfunction->get_name());
-    string argsname = publicize(tfunction->get_name()) + "Args";
-    string resultname = publicize(tfunction->get_name()) + "Result";
+    string argsname = publicize(tfunction->get_name() + "_args",true);
+    string resultname = publicize(tfunction->get_name() + "_result",true);
     //t_struct* xs = tfunction->get_xceptions();
     //const std::vector<t_field*>& xceptions = xs->get_members();
     vector<t_field*>::const_iterator x_iter;
