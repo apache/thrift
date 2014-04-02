@@ -55,6 +55,7 @@ check_PROGRAMS = \
 	DebugProtoTest \
 	JSONProtoTest \
 	OptionalRequiredTest \
+	TerseWritesTest \
 	SpecializationTest \
 	AllProtocolsTest \
 	TransportTest \
@@ -168,6 +169,14 @@ OptionalRequiredTest_SOURCES = \
 OptionalRequiredTest_LDADD = libtestgencpp.la
 
 #
+# TerseWritesTest
+#
+TerseWritesTest_SOURCES = \
+	TerseWritesTest.cpp
+
+TerseWritesTest_LDADD = libtestgencpp.la
+
+#
 # SpecializationTest
 #
 SpecializationTest_SOURCES = \
@@ -213,7 +222,7 @@ gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: $(top_srcdir)/test/StressTest.
 	$(THRIFT) --gen cpp:dense $<
 
 gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: $(top_srcdir)/test/ThriftTest.thrift
-	$(THRIFT) --gen cpp:dense $<
+	$(THRIFT) --gen cpp:dense,terse_writes $<
 
 gen-cpp/ChildService.cpp: processor/proc.thrift
 	$(THRIFT) --gen cpp:templates,cob_style $<
