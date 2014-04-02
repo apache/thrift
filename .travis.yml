@@ -19,14 +19,16 @@
 
 # build Apache Thrift on Travis CI - https://travis-ci.org/
 
-language: ruby
-rvm:
-  - 1.9.3
+language: php
+
+cache:
+ - apt
+ - npm
 
 # see what we need: http://thrift.apache.org/docs/install/ubuntu
 before_install:
  - export NUM_CPU="`grep processor /proc/cpuinfo | wc -l`"; echo $NUM_CPU
-# - sudo apt-get update -qq
+ - sudo apt-get update -qq
 # - sudo DEBIAN_FRONTEND=noninteractive apt-get -qq -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
  - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev 
 # Java
@@ -39,11 +41,10 @@ before_install:
 # Perl
  - sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl
 # PHP
- - sudo apt-get install -qq php5-dev php5-cli phpunit
-# - sudo apt-get upgrade pear
+ - sudo apt-get install -qq php5-dev php5-cli phpunit php-pear
  - sudo pear channel-discover pear.phpunit.de
  - sudo pear channel-discover pear.symfony.com
- - sudo pear channel-discover components.ez.no
+# - sudo pear channel-discover components.ez.no
  - sudo pear update-channels
  - sudo pear upgrade-all
  - sudo pear install --alldeps phpunit/PHPUnit
