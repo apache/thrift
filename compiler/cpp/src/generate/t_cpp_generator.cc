@@ -113,13 +113,13 @@ class t_cpp_generator : public t_oop_generator {
   void print_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
   std::string render_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
 
-  void generate_struct_definition    (std::ofstream& out, t_struct* tstruct,
+  void generate_struct_declaration    (std::ofstream& out, t_struct* tstruct,
                                       bool is_exception=false,
                                       bool pointers=false,
                                       bool read=true,
                                       bool write=true,
                                       bool swap=false);
-  void generate_struct_declaration   (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_definition   (std::ofstream& out, t_struct* tstruct);
   void generate_copy_constructor     (std::ofstream& out, t_struct* tstruct);
   void generate_assignment_operator  (std::ofstream& out, t_struct* tstruct);
   void generate_struct_fingerprint   (std::ofstream& out, t_struct* tstruct, bool is_definition);
@@ -803,9 +803,9 @@ void t_cpp_generator::generate_forward_declaration(t_struct* tstruct) {
  * @param tstruct The struct definition
  */
 void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) {
-  generate_struct_definition(f_types_, tstruct, is_exception,
+  generate_struct_declaration(f_types_, tstruct, is_exception,
                              false, true, true, true);
-  generate_struct_declaration(f_types_impl_, tstruct);
+  generate_struct_definition(f_types_impl_, tstruct);
   generate_struct_fingerprint(f_types_impl_, tstruct, true);
   generate_local_reflection(f_types_, tstruct, false);
   generate_local_reflection(f_types_impl_, tstruct, true);
@@ -886,7 +886,7 @@ void t_cpp_generator::generate_assignment_operator(
  * @param out Output stream
  * @param tstruct The struct
  */
-void t_cpp_generator::generate_struct_definition(ofstream& out,
+void t_cpp_generator::generate_struct_declaration(ofstream& out,
                                                  t_struct* tstruct,
                                                  bool is_exception,
                                                  bool pointers,
@@ -1136,7 +1136,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   }
 }
 
-void t_cpp_generator::generate_struct_declaration(ofstream& out,
+void t_cpp_generator::generate_struct_definition(ofstream& out,
 						  t_struct* tstruct) {
   // Get members
   vector<t_field*>::const_iterator m_iter;
@@ -1886,11 +1886,11 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
 
     // TODO(dreiss): Why is this stuff not in generate_function_helpers?
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_args");
-    generate_struct_definition(f_header_, ts, false);
+    generate_struct_declaration(f_header_, ts, false);
     generate_struct_reader(out, ts);
     generate_struct_writer(out, ts);
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_pargs");
-    generate_struct_definition(f_header_, ts, false, true, false, true);
+    generate_struct_declaration(f_header_, ts, false, true, false, true);
     generate_struct_writer(out, ts, true);
     ts->set_name(name_orig);
 
@@ -3341,12 +3341,12 @@ void t_cpp_generator::generate_function_helpers(t_service* tservice,
     result.append(*f_iter);
   }
 
-  generate_struct_definition(f_header_, &result, false);
+  generate_struct_declaration(f_header_, &result, false);
   generate_struct_reader(out, &result);
   generate_struct_result_writer(out, &result);
 
   result.set_name(tservice->get_name() + "_" + tfunction->get_name() + "_presult");
-  generate_struct_definition(f_header_, &result, false, true, true, gen_cob_style_);
+  generate_struct_declaration(f_header_, &result, false, true, true, gen_cob_style_);
   generate_struct_reader(out, &result, true);
   if (gen_cob_style_) {
     generate_struct_writer(out, &result, true);
