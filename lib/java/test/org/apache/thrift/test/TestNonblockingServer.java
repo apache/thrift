@@ -52,7 +52,7 @@ public class TestNonblockingServer extends TestServer {
 
       // Transport
       TNonblockingServerSocket tServerSocket =
-        new TNonblockingServerSocket(port);
+        new TNonblockingServerSocket(new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(port));
 
       TServer serverEngine;
 

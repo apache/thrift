@@ -53,7 +53,9 @@ public class TestTAsyncClientManager extends TestCase {
   private TAsyncClientManager clientManager_;
 
   public void setUp() throws Exception {
-    server_ = new THsHaServer(new Args(new TNonblockingServerSocket(ServerTestBase.PORT)).processor(new Srv.Processor(new SrvHandler())));
+    server_ = new THsHaServer(new Args(new TNonblockingServerSocket(
+      new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(ServerTestBase.PORT))).
+      processor(new Srv.Processor(new SrvHandler())));
     serverThread_ = new Thread(new Runnable() {
       public void run() {
         server_.serve();
@@ -79,8 +81,8 @@ public class TestTAsyncClientManager extends TestCase {
     Srv.AsyncClient client = getClient();
     client.setTimeout(5000);
     basicCall(client);
-  } 
-  
+  }
+
   public void testTimeoutCall() throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     Srv.AsyncClient client = getClient();
@@ -98,7 +100,7 @@ public class TestTAsyncClientManager extends TestCase {
           latch.countDown();
         }
       }
-      
+
       @Override
       public void onComplete(primitiveMethod_call response) {
         try {
@@ -111,8 +113,8 @@ public class TestTAsyncClientManager extends TestCase {
     latch.await(2, TimeUnit.SECONDS);
     assertTrue(client.hasError());
     assertTrue(client.getError() instanceof TimeoutException);
-  } 
-  
+  }
+
   public void testVoidCall() throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean returned = new AtomicBoolean(false);
@@ -132,8 +134,8 @@ public class TestTAsyncClientManager extends TestCase {
     });
     latch.await(1, TimeUnit.SECONDS);
     assertTrue(returned.get());
-  } 
-  
+  }
+
   public void testOnewayCall() throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean returned = new AtomicBoolean(false);
@@ -153,8 +155,8 @@ public class TestTAsyncClientManager extends TestCase {
     });
     latch.await(1, TimeUnit.SECONDS);
     assertTrue(returned.get());
-  } 
-  
+  }
+
   public void testParallelCalls() throws Exception {
     // make multiple calls with deserialization in the selector thread (repro Eric's issue)
     int numThreads = 50;
@@ -176,13 +178,13 @@ public class TestTAsyncClientManager extends TestCase {
       numSuccesses += runnable.getNumSuccesses();
     }
     assertEquals(numThreads * numCallsPerThread, numSuccesses);
-  }  
-  
+  }
+
   private Srv.AsyncClient getClient() throws IOException {
     TNonblockingSocket clientSocket = new TNonblockingSocket(ServerTestBase.HOST, ServerTestBase.PORT);
     return new Srv.AsyncClient(new TBinaryProtocol.Factory(), clientManager_, clientSocket);
   }
-  
+
   private void basicCall(Srv.AsyncClient client) throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean returned = new AtomicBoolean(false);
@@ -198,7 +200,7 @@ public class TestTAsyncClientManager extends TestCase {
           latch.countDown();
         }
       }
-      
+
       @Override
       public void onError(Exception exception) {
         try {
@@ -213,7 +215,7 @@ public class TestTAsyncClientManager extends TestCase {
     latch.await(100, TimeUnit.SECONDS);
     assertTrue(returned.get());
   }
-  
+
   public class SrvHandler implements Iface {
     // Use this method for a standard call testing
     @Override
@@ -232,7 +234,7 @@ public class TestTAsyncClientManager extends TestCase {
       }
       return 0;
     }
-    
+
     @Override
     public void methodWithDefaultArgs(int something) throws TException { }
 
@@ -249,20 +251,20 @@ public class TestTAsyncClientManager extends TestCase {
     public void onewayMethod() throws TException {
     }
   }
-  
+
   private static abstract class FailureLessCallback<T extends TAsyncMethodCall> implements AsyncMethodCallback<T> {
     @Override
     public void onError(Exception exception) {
       fail(exception);
     }
   }
-  
+
   private static void fail(Exception exception) {
     StringWriter sink = new StringWriter();
     exception.printStackTrace(new PrintWriter(sink, true));
     fail("unexpected error " + sink.toString());
   }
-  
+
   private class JankyRunnable implements Runnable {
     private int numCalls_;
     private int numSuccesses_ = 0;
@@ -286,7 +288,7 @@ public class TestTAsyncClientManager extends TestCase {
           final CountDownLatch latch = new CountDownLatch(1);
           final AtomicBoolean returned = new AtomicBoolean(false);
           client_.Janky(1, new AsyncMethodCallback<Srv.AsyncClient.Janky_call>() {
-            
+
             @Override
             public void onComplete(Janky_call response) {
               try {
