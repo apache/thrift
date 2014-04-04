@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TSaslTransportException;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -226,6 +227,8 @@ public class TThreadPoolServer extends TServer {
               break;
             }
         }
+      } catch (TSaslTransportException ttx) {
+        // Something thats not SASL was in the stream, continue silently 
       } catch (TTransportException ttx) {
         // Assume the client died and continue silently
       } catch (TException tx) {
