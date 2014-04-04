@@ -54,6 +54,9 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
    */
   private int clientTimeout_ = 0;
 
+  public static class NonblockingAbstractServerSocketArgs extends
+      AbstractServerTransportArgs<NonblockingAbstractServerSocketArgs> {}
+
   /**
    * Creates just a port listening server socket
    */
@@ -65,7 +68,7 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
    * Creates just a port listening server socket
    */
   public TNonblockingServerSocket(int port, int clientTimeout) throws TTransportException {
-    this(new InetSocketAddress(port), clientTimeout);
+    this(new NonblockingAbstractServerSocketArgs().port(port).clientTimeout(clientTimeout));
   }
 
   public TNonblockingServerSocket(InetSocketAddress bindAddr) throws TTransportException {
@@ -73,7 +76,11 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
   }
 
   public TNonblockingServerSocket(InetSocketAddress bindAddr, int clientTimeout) throws TTransportException {
-    clientTimeout_ = clientTimeout;
+    this(new NonblockingAbstractServerSocketArgs().bindAddr(bindAddr).clientTimeout(clientTimeout));
+  }
+
+  public TNonblockingServerSocket(NonblockingAbstractServerSocketArgs args) throws TTransportException {
+    clientTimeout_ = args.clientTimeout;
     try {
       serverSocketChannel = ServerSocketChannel.open();
       serverSocketChannel.configureBlocking(false);
@@ -83,10 +90,10 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
       // Prevent 2MSL delay problem on server restarts
       serverSocket_.setReuseAddress(true);
       // Bind to listening port
-      serverSocket_.bind(bindAddr);
+      serverSocket_.bind(args.bindAddr, args.backlog);
     } catch (IOException ioe) {
       serverSocket_ = null;
-      throw new TTransportException("Could not create ServerSocket on address " + bindAddr.toString() + ".");
+      throw new TTransportException("Could not create ServerSocket on address " + args.bindAddr.toString() + ".");
     }
   }
 
