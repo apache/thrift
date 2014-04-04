@@ -171,7 +171,7 @@ for proto in $(intersection "${cpp_protocols}" "${java_protocols}"); do
 done
 
 
-NODE_TEST_DIR=${BASEDIR}/../bin/nodejs/tests
+NODE_TEST_DIR=${BASEDIR}/../../lib/nodejs/test
 export NODE_PATH=${NODE_TEST_DIR}:${NODE_TEST_DIR}/../lib:${NODE_PATH}
 ######### nodejs client - cpp server ##############
 ##
