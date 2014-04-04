@@ -17,24 +17,13 @@
  * under the License.
  */
 
-#import <Foundation/Foundation.h>
-#import "TTransport.h"
+#import "TTransportException.h"
 
-@interface TNSStreamTransport : NSObject <TTransport> {
+@interface TSSLSocketException : TTransportException
 
-}
++ (id) exceptionWithReason: (NSString *) reason
+                     error: (NSError *) error;
 
-@property (nonatomic, strong) NSInputStream * mInput;
-@property (nonatomic, strong) NSOutputStream * mOutput;
-
-- (id) initWithInputStream: (NSInputStream *) input
-              outputStream: (NSOutputStream *) output;
-
-- (id) initWithInputStream: (NSInputStream *) input;
-
-- (id) initWithOutputStream: (NSOutputStream *) output;
++ (id) exceptionWithReason: (NSString *) reason;
 
 @end
-
-
-

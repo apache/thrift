@@ -17,24 +17,26 @@
  * under the License.
  */
 
-#import <Foundation/Foundation.h>
-#import "TTransport.h"
+#import "TSSLSocketException.h"
 
-@interface TNSStreamTransport : NSObject <TTransport> {
+@implementation TSSLSocketException
 
++ (id) exceptionWithReason: (NSString *) reason
+                     error: (NSError *) error
+{
+    NSDictionary * userInfo = nil;
+    if (error != nil) {
+        userInfo = [NSDictionary dictionaryWithObject: error forKey: @"error"];
+    }
+    
+    return [super exceptionWithName: @"TSSLSocketException"
+                             reason: reason
+                           userInfo: userInfo];
 }
 
-@property (nonatomic, strong) NSInputStream * mInput;
-@property (nonatomic, strong) NSOutputStream * mOutput;
-
-- (id) initWithInputStream: (NSInputStream *) input
-              outputStream: (NSOutputStream *) output;
-
-- (id) initWithInputStream: (NSInputStream *) input;
-
-- (id) initWithOutputStream: (NSOutputStream *) output;
++ (id) exceptionWithReason: (NSString *) reason
+{
+    return [self exceptionWithReason: reason error: nil];
+}
 
 @end
-
-
-
