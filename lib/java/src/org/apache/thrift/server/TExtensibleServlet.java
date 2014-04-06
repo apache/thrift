@@ -57,7 +57,7 @@ public abstract class TExtensibleServlet extends HttpServlet {
 
   private TProtocolFactory outFactory;
 
-  private Collection<Map.Entry<String, String>> customHeaders;
+  private final Collection<Map.Entry<String, String>> customHeaders = new ArrayList<Map.Entry<String, String>>();
 
   /**
    * Returns the appropriate {@link TProcessor}. This will be called <b>once</b> just
@@ -89,7 +89,6 @@ public abstract class TExtensibleServlet extends HttpServlet {
     this.processor = getProcessor();
     this.inFactory = getInProtocolFactory();
     this.outFactory = getOutProtocolFactory();
-    this.customHeaders = new ArrayList<Map.Entry<String, String>>();
 
     if (processor == null) {
       throw new ServletException("processor must be set");
