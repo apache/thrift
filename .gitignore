@@ -19,14 +19,15 @@
 *.swp
 *.m4
 *~
+
+.*project
+junit*.properties
 gen-*
 Makefile
 Makefile.in
 autom4te.cache
 node_modules
 
-.project
-.pydevproject
 .sonar
 .DS_Store
 .svn
@@ -75,6 +76,7 @@ node_modules
 /lib/cpp/test/OptionalRequiredTest
 /lib/cpp/test/SpecializationTest
 /lib/cpp/test/ReflectionTest
+/lib/cpp/test/RecursiveTest
 /lib/cpp/test/TFDTransportTest
 /lib/cpp/test/TFileTransportTest
 /lib/cpp/test/TPipedTransportTest
