@@ -27,10 +27,14 @@ using System.Threading;
 
 namespace Thrift.Transport
 {
-	public class THttpClient : TTransport, IDisposable
+    using System.Linq;
+    using System.Security.Cryptography.X509Certificates;
+
+    public class THttpClient : TTransport, IDisposable
 	{
 		private readonly Uri uri;
-		private Stream inputStream;
+        private readonly X509Certificate[] certificates;
+        private Stream inputStream;
 		private MemoryStream outputStream = new MemoryStream();
 
         // Timeouts in milliseconds
@@ -44,12 +48,17 @@ namespace Thrift.Transport
         private IWebProxy proxy = WebRequest.DefaultWebProxy;
 #endif
 
-        public THttpClient(Uri u)
+        public THttpClient(Uri u) : this(u, Enumerable.Empty<X509Certificate>())
 		{
-			uri = u;
 		}
 
-		public int ConnectTimeout
+	    public THttpClient(Uri u, IEnumerable<X509Certificate> certificates)
+	    {
+	        uri = u;
+            this.certificates = (certificates ?? Enumerable.Empty<X509Certificate>()).ToArray();
+	    }
+
+        public int ConnectTimeout
 		{
 			set
 			{
@@ -179,6 +188,8 @@ namespace Thrift.Transport
 		private HttpWebRequest CreateRequest()
 		{
 			HttpWebRequest connection = (HttpWebRequest)WebRequest.Create(uri);
+
+		    connection.ClientCertificates.AddRange(certificates);
 
 #if !SILVERLIGHT
 			if (connectTimeout > 0)
