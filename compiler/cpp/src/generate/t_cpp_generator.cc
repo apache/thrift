@@ -157,7 +157,7 @@ class t_cpp_generator : public t_oop_generator {
   void generate_deserialize_struct       (std::ofstream& out,
                                           t_struct*   tstruct,
                                           std::string prefix="",
-					  bool pointer=false);
+                                          bool pointer=false);
   
   void generate_deserialize_container    (std::ofstream& out,
                                           t_type*     ttype,
@@ -185,7 +185,7 @@ class t_cpp_generator : public t_oop_generator {
   void generate_serialize_struct         (std::ofstream& out,
                                           t_struct*   tstruct,
                                           std::string prefix="",
-					  bool pointer=false);
+                                          bool pointer=false);
 
   void generate_serialize_container      (std::ofstream& out,
                                           t_type*     ttype,
@@ -864,7 +864,7 @@ void t_cpp_generator::generate_assignment_operator(
       indent(out) << "if (this == &" << tmp_name << ") return *this;" << endl;
       indent(out) << "if (" << (*f_iter)->get_name() << ") {" << endl;
       indent(out) << "  *" << (*f_iter)->get_name() << " = *" << tmp_name << "." << 
-	(*f_iter)->get_name() << ";" << endl;
+        (*f_iter)->get_name() << ";" << endl;
       indent(out) << "} else {" << endl;
       indent(out) << "  " << (*f_iter)->get_name() << " = new " << type << "(*" << tmp_name << "." <<
         (*f_iter)->get_name() << ");" << endl;
@@ -1137,8 +1137,8 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
 }
 
 void t_cpp_generator::generate_struct_definition(ofstream& out,
-						 t_struct* tstruct,
-						 bool setters) {
+                                                 t_struct* tstruct,
+                                                 bool setters) {
   // Get members
   vector<t_field*>::const_iterator m_iter;
   const vector<t_field*>& members = tstruct->get_members();
@@ -1153,8 +1153,8 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if (is_reference(*m_iter)) {
-	out << indent() <<
-	  "delete " << (*m_iter)->get_name() << ";" << endl;
+        out << indent() <<
+          "delete " << (*m_iter)->get_name() << ";" << endl;
       }
     }    
 
@@ -1166,20 +1166,20 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   if (setters) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       out <<
-	endl <<
-	indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
+        endl <<
+        indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
         "(" << type_name((*m_iter)->get_type(), false, true);
       out << " val) {" << endl;
       indent_up();
       if (is_reference((*m_iter))) {
-	std::string type = type_name((*m_iter)->get_type());
-	indent(out) << "if (" << (*m_iter)->get_name() << ") {" << endl;
-	indent(out) << "  *" << (*m_iter)->get_name() << " = val;" << endl;
-	indent(out) << "} else {" << endl;
-	indent(out) << "  " << (*m_iter)->get_name() << " = new " << type << "(val);" << endl;
-	indent(out) << "}" << endl;
+        std::string type = type_name((*m_iter)->get_type());
+        indent(out) << "if (" << (*m_iter)->get_name() << ") {" << endl;
+        indent(out) << "  *" << (*m_iter)->get_name() << " = val;" << endl;
+        indent(out) << "} else {" << endl;
+        indent(out) << "  " << (*m_iter)->get_name() << " = new " << type << "(val);" << endl;
+        indent(out) << "}" << endl;
       } else {
-	out << indent() << (*m_iter)->get_name() << " = val;" << endl;
+        out << indent() << (*m_iter)->get_name() << " = val;" << endl;
       }
       indent_down();
 
@@ -1187,12 +1187,12 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       // for optional fields change __isset.name to true
       bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
       if (is_optional) {
-	out <<
-	  indent() <<
-	  indent() << "__isset." << (*m_iter)->get_name() << " = true;" << endl;
+        out <<
+          indent() <<
+          indent() << "__isset." << (*m_iter)->get_name() << " = true;" << endl;
       }
       out <<
-	indent()<< "}" << endl;
+        indent()<< "}" << endl;
     }
   }
   out << endl;
@@ -4075,7 +4075,7 @@ void t_cpp_generator::generate_deserialize_field(ofstream& out,
 void t_cpp_generator::generate_deserialize_struct(ofstream& out,
                                                   t_struct* tstruct,
                                                   string prefix,
-						  bool pointer) {
+                                                  bool pointer) {
   if (pointer) {
     indent(out) << "if (!" << prefix << ") { " << endl;
     indent(out) << "  " << prefix << " = new " << type_name(tstruct) << ";" << endl;
@@ -4247,7 +4247,7 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
     generate_serialize_struct(out,
                               (t_struct*)type,
                               name, 
-			      is_reference(tfield));
+                              is_reference(tfield));
   } else if (type->is_container()) {
     generate_serialize_container(out, type, name);
   } else if (type->is_base_type() || type->is_enum()) {
@@ -4311,7 +4311,7 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
 void t_cpp_generator::generate_serialize_struct(ofstream& out,
                                                 t_struct* tstruct,
                                                 string prefix,
-						bool pointer) {
+                                                bool pointer) {
   if (pointer) {
     indent(out) << "if (" << prefix << ") {" << endl;
     indent(out) << "  xfer += " << prefix << "->write(oprot); " << endl;
