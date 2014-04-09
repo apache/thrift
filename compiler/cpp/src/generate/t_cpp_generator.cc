@@ -119,7 +119,7 @@ class t_cpp_generator : public t_oop_generator {
                                       bool read=true,
                                       bool write=true,
                                       bool swap=false);
-  void generate_struct_definition   (std::ofstream& out, t_struct* tstruct);
+  void generate_struct_definition   (std::ofstream& out, t_struct* tstruct, bool setters=true);
   void generate_copy_constructor     (std::ofstream& out, t_struct* tstruct);
   void generate_assignment_operator  (std::ofstream& out, t_struct* tstruct);
   void generate_struct_fingerprint   (std::ofstream& out, t_struct* tstruct, bool is_definition);
@@ -1137,7 +1137,8 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
 }
 
 void t_cpp_generator::generate_struct_definition(ofstream& out,
-						  t_struct* tstruct) {
+						 t_struct* tstruct,
+						 bool setters) {
   // Get members
   vector<t_field*>::const_iterator m_iter;
   const vector<t_field*>& members = tstruct->get_members();
@@ -1162,35 +1163,37 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   }
 
   // Create a setter function for each field
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    out <<
-      endl <<
-      indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
-        "(" << type_name((*m_iter)->get_type(), false, true);
-    out << " val) {" << endl;
-    indent_up();
-    if (is_reference((*m_iter))) {
-      std::string type = type_name((*m_iter)->get_type());
-      indent(out) << "if (" << (*m_iter)->get_name() << ") {" << endl;
-      indent(out) << "  *" << (*m_iter)->get_name() << " = val;" << endl;
-      indent(out) << "} else {" << endl;
-      indent(out) << "  " << (*m_iter)->get_name() << " = new " << type << "(val);" << endl;
-      indent(out) << "}" << endl;
-    } else {
-      out << indent() << (*m_iter)->get_name() << " = val;" << endl;
-    }
-    indent_down();
-
-    // assume all fields are required except optional fields.
-    // for optional fields change __isset.name to true
-    bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
-    if (is_optional) {
+  if (setters) {
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       out <<
-        indent() <<
-        indent() << "__isset." << (*m_iter)->get_name() << " = true;" << endl;
+	endl <<
+	indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
+        "(" << type_name((*m_iter)->get_type(), false, true);
+      out << " val) {" << endl;
+      indent_up();
+      if (is_reference((*m_iter))) {
+	std::string type = type_name((*m_iter)->get_type());
+	indent(out) << "if (" << (*m_iter)->get_name() << ") {" << endl;
+	indent(out) << "  *" << (*m_iter)->get_name() << " = val;" << endl;
+	indent(out) << "} else {" << endl;
+	indent(out) << "  " << (*m_iter)->get_name() << " = new " << type << "(val);" << endl;
+	indent(out) << "}" << endl;
+      } else {
+	out << indent() << (*m_iter)->get_name() << " = val;" << endl;
+      }
+      indent_down();
+
+      // assume all fields are required except optional fields.
+      // for optional fields change __isset.name to true
+      bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
+      if (is_optional) {
+	out <<
+	  indent() <<
+	  indent() << "__isset." << (*m_iter)->get_name() << " = true;" << endl;
+      }
+      out <<
+	indent()<< "}" << endl;
     }
-    out <<
-      indent()<< "}" << endl;
   }
   out << endl;
 }
@@ -1887,10 +1890,12 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
     // TODO(dreiss): Why is this stuff not in generate_function_helpers?
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_args");
     generate_struct_declaration(f_header_, ts, false);
+    generate_struct_definition(out, ts, false);
     generate_struct_reader(out, ts);
     generate_struct_writer(out, ts);
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_pargs");
     generate_struct_declaration(f_header_, ts, false, true, false, true);
+    generate_struct_definition(out, ts, false);
     generate_struct_writer(out, ts, true);
     ts->set_name(name_orig);
 
@@ -3342,11 +3347,13 @@ void t_cpp_generator::generate_function_helpers(t_service* tservice,
   }
 
   generate_struct_declaration(f_header_, &result, false);
+  generate_struct_definition(out, &result, false);
   generate_struct_reader(out, &result);
   generate_struct_result_writer(out, &result);
 
   result.set_name(tservice->get_name() + "_" + tfunction->get_name() + "_presult");
   generate_struct_declaration(f_header_, &result, false, true, true, gen_cob_style_);
+  generate_struct_definition(out, &result, false);
   generate_struct_reader(out, &result, true);
   if (gen_cob_style_) {
     generate_struct_writer(out, &result, true);
