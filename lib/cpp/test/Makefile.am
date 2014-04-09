@@ -25,6 +25,8 @@ nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/ThriftTest_types.cpp \
 	gen-cpp/DebugProtoTest_types.h \
 	gen-cpp/OptionalRequiredTest_types.h \
+	gen-cpp/Recursive_types.cpp \
+	gen-cpp/Recursive_types.h \
 	gen-cpp/ThriftTest_types.h \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp
@@ -55,6 +57,7 @@ check_PROGRAMS = \
 	DebugProtoTest \
 	JSONProtoTest \
 	OptionalRequiredTest \
+	RecursiveTest \
 	SpecializationTest \
 	AllProtocolsTest \
 	TransportTest \
@@ -168,6 +171,14 @@ OptionalRequiredTest_SOURCES = \
 OptionalRequiredTest_LDADD = libtestgencpp.la
 
 #
+# OptionalRequiredTest
+#
+RecursiveTest_SOURCES = \
+	RecursiveTest.cpp
+
+RecursiveTest_LDADD = libtestgencpp.la
+
+#
 # SpecializationTest
 #
 SpecializationTest_SOURCES = \
@@ -208,6 +219,9 @@ gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h: $(top_srcdir)/t
 
 gen-cpp/OptionalRequiredTest_types.cpp gen-cpp/OptionalRequiredTest_types.h: $(top_srcdir)/test/OptionalRequiredTest.thrift
 	$(THRIFT) --gen cpp:dense $<
+
+gen-cpp/Recursive_types.cpp gen-cpp/Recursive_types.h: $(top_srcdir)/test/Recursive.thrift
+	$(THRIFT) --gen cpp $<
 
 gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: $(top_srcdir)/test/StressTest.thrift
 	$(THRIFT) --gen cpp:dense $<
