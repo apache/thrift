@@ -109,7 +109,7 @@ REM -----------------------------------------------------
 echo Delphi Compiler (dcc32.exe) not found. 
 echo Please check the "DCC" setting in this batch.
 echo.
-cmd /c start notepad README.TXT
+cmd /c start notepad README.MD
 cmd /c start notepad %0
 pause
 GOTO EOF
@@ -119,7 +119,7 @@ REM -----------------------------------------------------
 :CONFIG_ERROR
 REM -----------------------------------------------------
 echo Missing, incomplete or wrong configuration settings!
-cmd /c start notepad README.TXT
+cmd /c start notepad README.MD
 cmd /c start notepad %0
 pause
 GOTO EOF
