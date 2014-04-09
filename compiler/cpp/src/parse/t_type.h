@@ -66,6 +66,10 @@ class t_type : public t_doc {
     return program_;
   }
 
+  const t_program* get_program() const {
+    return program_;
+  }
+
   t_type* get_true_type();
 
   // Return a string that uniquely identifies this type
