@@ -895,6 +895,9 @@ void t_js_generator::generate_service(t_service* tservice) {
       render_includes() << endl;
 
     if (gen_ts_) {
+      if (tservice->get_extends() != NULL) {
+        f_service_ts_ << "/// <reference path=\"" << tservice->get_extends()->get_name() << ".d.ts\" />" << endl;
+      }
       f_service_ts_ << autogen_comment() << endl;
       if (!ts_module_.empty()) {
         f_service_ts_ << "declare module " << ts_module_ << " {";
@@ -2111,18 +2114,25 @@ string t_js_generator::ts_get_type(t_type* type) {
     }
   } else if (type->is_enum() || type->is_struct() || type->is_xception()) {
     ts_type = type->get_name();
-  } else if (type->is_list() || type->is_set() || type->is_map()) {
+  } else if (type->is_list() || type->is_set()) {
     t_type* etype;
 
     if (type->is_list()) {
       etype = ((t_list*)type)->get_elem_type();
-    } else if (type->is_set()) {
-      etype = ((t_set*)type)->get_elem_type();
     } else {
-      etype = ((t_map*)type)->get_val_type();
+      etype = ((t_set*)type)->get_elem_type();
     }
 
     ts_type = ts_get_type(etype) + "[]";
+  } else if (type->is_map()) {
+    string ktype = ts_get_type(((t_map*)type)->get_key_type());
+    string vtype = ts_get_type(((t_map*)type)->get_val_type());
+
+    if (ktype == "number" || ktype == "string") {
+      ts_type = "{ [k: " + ktype + "]: " + vtype + " }";
+    } else {
+      ts_type = "any";
+    }
   }
 
   return ts_type;
