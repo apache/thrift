@@ -1145,7 +1145,7 @@ int main(int argc, char** argv) {
   // if you're asking for version, you have a right not to pass a file
   if ((strcmp(argv[argc-1], "-version") == 0) || (strcmp(argv[argc-1], "--version") == 0)) {
     version();
-    exit(1);
+    exit(0);
   }
 
   // You gotta generate something!
