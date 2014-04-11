@@ -2103,6 +2103,8 @@ string t_js_generator::ts_get_type(t_type* type) {
         ts_type = "boolean";
         break;
       case t_base_type::TYPE_BYTE:
+        ts_type = "any";
+        break;
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
