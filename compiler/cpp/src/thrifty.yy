@@ -1092,7 +1092,7 @@ FieldType:
              declared.  Either way allow it and we'll figure it out
              during generation.
            */
-          $$ = new t_typedef(g_program, $1);
+          $$ = new t_typedef(g_program, $1, true);
         }
       }
     }
