@@ -1707,7 +1707,7 @@ void t_go_generator::generate_service_client(t_service* tservice)
         f_service_ <<
                    indent() << "}" << endl << endl;
 
-        if (true) { //!(*f_iter)->is_oneway() || true) {}
+        if (!(*f_iter)->is_oneway()) {
             std::string resultname = publicize((*f_iter)->get_name() + "_result",true);
             // Open function
             f_service_ << endl <<
@@ -2354,8 +2354,12 @@ void t_go_generator::generate_process_function(t_service* tservice,
                indent() << "  oprot.Flush()" << endl <<
                indent() << "  return" << endl <<
                indent() << "}" << endl <<
-               indent() << "iprot.ReadMessageEnd()" << endl <<
-               indent() << "result := New" << resultname << "()" << endl <<
+               indent() << "iprot.ReadMessageEnd()" << endl;
+    if (!tfunction->is_oneway()) {
+    	f_service_ <<
+    			indent() << "result := New" << resultname << "()" << endl;
+    }
+    f_service_ <<
                indent() << "var err2 error" << endl <<
                indent() << "if ";
 
@@ -2414,21 +2418,24 @@ void t_go_generator::generate_process_function(t_service* tservice,
 	    f_service_ <<
                    indent() << "}" << endl;
     }			   
-
+	f_service_ <<
+			   indent() << "}" << endl;
+    if(!tfunction->is_oneway()) {
+    	f_service_ <<
+				   indent() << "if err2 = oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name()) << "\", thrift.REPLY, seqId); err2 != nil {" << endl <<
+				   indent() << "  err = err2" << endl <<
+				   indent() << "}" << endl <<
+				   indent() << "if err2 = result.Write(oprot); err == nil && err2 != nil {" << endl <<
+				   indent() << "  err = err2" << endl <<
+				   indent() << "}" << endl <<
+				   indent() << "if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {" << endl <<
+				   indent() << "  err = err2" << endl <<
+				   indent() << "}" << endl <<
+				   indent() << "if err2 = oprot.Flush(); err == nil && err2 != nil {" << endl <<
+				   indent() << "  err = err2" << endl <<
+				   indent() << "}" << endl;
+    }
     f_service_ <<
-               indent() << "}" << endl <<
-               indent() << "if err2 = oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name()) << "\", thrift.REPLY, seqId); err2 != nil {" << endl <<
-               indent() << "  err = err2" << endl <<
-               indent() << "}" << endl <<
-               indent() << "if err2 = result.Write(oprot); err == nil && err2 != nil {" << endl <<
-               indent() << "  err = err2" << endl <<
-               indent() << "}" << endl <<
-               indent() << "if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {" << endl <<
-               indent() << "  err = err2" << endl <<
-               indent() << "}" << endl <<
-               indent() << "if err2 = oprot.Flush(); err == nil && err2 != nil {" << endl <<
-               indent() << "  err = err2" << endl <<
-               indent() << "}" << endl <<
                indent() << "if err != nil {" << endl <<
                indent() << "  return" << endl <<
                indent() << "}" << endl <<
