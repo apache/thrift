@@ -47,7 +47,7 @@ gboolean
 thrift_socket_is_open (ThriftTransport *transport)
 {
   ThriftSocket *socket = THRIFT_SOCKET (transport);
-  return socket->sd != 0;
+  return socket->sd != THRIFT_INVALID_SOCKET;
 }
 
 /* implements thrift_transport_open */
@@ -63,7 +63,7 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
 #endif
 
   ThriftSocket *tsocket = THRIFT_SOCKET (transport);
-  g_return_val_if_fail (tsocket->sd == 0, FALSE);
+  g_return_val_if_fail (tsocket->sd == THRIFT_INVALID_SOCKET, FALSE);
 
   /* lookup the destination host */
 #if defined(HAVE_GETHOSTBYNAME_R)
@@ -122,7 +122,7 @@ thrift_socket_close (ThriftTransport *transport, GError **error)
     return FALSE;
   }
 
-  socket->sd = 0;
+  socket->sd = THRIFT_INVALID_SOCKET;
   return TRUE;
 }
 
@@ -172,7 +172,7 @@ thrift_socket_write (ThriftTransport *transport, const gpointer buf,
   guint sent = 0;
 
   ThriftSocket *socket = THRIFT_SOCKET (transport);
-  g_return_val_if_fail (socket->sd != 0, FALSE);
+  g_return_val_if_fail (socket->sd != THRIFT_INVALID_SOCKET, FALSE);
 
   while (sent < len)
   {
@@ -216,7 +216,7 @@ thrift_socket_flush (ThriftTransport *transport, GError **error)
 static void
 thrift_socket_init (ThriftSocket *socket)
 {
-  socket->sd = 0;
+  socket->sd = THRIFT_INVALID_SOCKET;
 }
 
 /* destructor */
@@ -231,11 +231,11 @@ thrift_socket_finalize (GObject *object)
   }
   socket->hostname = NULL;
 
-  if (socket->sd != 0)
+  if (socket->sd != THRIFT_INVALID_SOCKET)
   {
     close (socket->sd);
   }
-  socket->sd = 0;
+  socket->sd = THRIFT_INVALID_SOCKET;
 }
 
 /* property accessor */
