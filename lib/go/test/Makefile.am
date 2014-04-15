@@ -21,7 +21,10 @@ THRIFT = $(top_srcdir)/compiler/cpp/thrift -out gopath/src/ --gen go:thrift_impo
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
-gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) IncludesTest.thrift NamespacedTest.thrift OnewayTest.thrift
+gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
+				IncludesTest.thrift \
+				NamespacedTest.thrift \
+				OnewayTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
 	$(THRIFT) -r IncludesTest.thrift
