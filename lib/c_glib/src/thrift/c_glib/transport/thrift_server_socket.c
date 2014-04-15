@@ -103,7 +103,7 @@ thrift_server_socket_listen (ThriftServerTransport *transport, GError **error)
 ThriftTransport *
 thrift_server_socket_accept (ThriftServerTransport *transport, GError **error)
 {
-  int sd = 0;
+  int sd = THRIFT_INVALID_SOCKET;
   guint addrlen = 0;
   struct sockaddr_in address;
   ThriftSocket *socket = NULL;
@@ -137,7 +137,7 @@ thrift_server_socket_close (ThriftServerTransport *transport, GError **error)
                  "unable to close socket - %s", strerror(errno));
     return FALSE;
   }
-  tsocket->sd = 0;
+  tsocket->sd = THRIFT_INVALID_SOCKET;
 
   return TRUE;
 }
@@ -153,7 +153,7 @@ thrift_server_socket_error_quark (void)
 static void
 thrift_server_socket_init (ThriftServerSocket *socket)
 {
-  socket->sd = 0;
+  socket->sd = THRIFT_INVALID_SOCKET;
 }
 
 /* destructor */
@@ -162,11 +162,11 @@ thrift_server_socket_finalize (GObject *object)
 {
   ThriftServerSocket *socket = THRIFT_SERVER_SOCKET (object);
 
-  if (socket->sd != 0)
+  if (socket->sd != THRIFT_INVALID_SOCKET)
   {
     close (socket->sd);
   }
-  socket->sd = 0;
+  socket->sd = THRIFT_INVALID_SOCKET;
 }
 
 /* property accessor */
