@@ -1212,10 +1212,10 @@ void t_go_generator::generate_isset_helpers(ofstream& out,
 
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         const string field_name(publicize(variable_name_to_go_name(escape_string((*f_iter)->get_name()))));
-        out <<
-            indent() << "func (p *" << tstruct_name << ") IsSet" << field_name << "() bool {" << endl;
-        indent_up();
         if ((*f_iter)->get_req() == t_field::T_OPTIONAL) {
+            out <<
+                indent() << "func (p *" << tstruct_name << ") IsSet" << field_name << "() bool {" << endl;
+            indent_up();
         	t_type* ttype = (*f_iter)->get_type()->get_true_type();
         	bool is_byteslice = ttype->is_base_type() && ((t_base_type*)ttype)->is_binary() ;
         	bool compare_to_nil_only = ttype->is_set()
@@ -1233,14 +1233,10 @@ void t_go_generator::generate_isset_helpers(ofstream& out,
     				out << indent() << "return p." << field_name << " != "<<def_var_name  << endl;
                 }
             }
-        } else {
-			out <<
-				indent() << "return true" << endl;
-
+            indent_down();
+            out <<
+                indent() << "}" << endl << endl;
         }
-        indent_down();
-        out <<
-            indent() << "}" << endl << endl;
     }
 }
 
