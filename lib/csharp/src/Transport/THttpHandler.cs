@@ -63,30 +63,23 @@ namespace Thrift.Transport
         {
             TTransport transport = new TStreamTransport(input,output);
 
-            TProtocol inputProtocol = null;
-            TProtocol outputProtocol = null;
-
             try
             {
-                inputProtocol = inputProtocolFactory.GetProtocol(transport);
-                outputProtocol = outputProtocolFactory.GetProtocol(transport);
+                var inputProtocol = inputProtocolFactory.GetProtocol(transport);
+                var outputProtocol = outputProtocolFactory.GetProtocol(transport);
 
-                while (processor.Process(inputProtocol, outputProtocol)) { }
+                while (processor.Process(inputProtocol, outputProtocol))
+                {
+                }
             }
             catch (TTransportException)
             {
                 // Client died, just move on
             }
-            catch (TApplicationException tx)
+            finally
             {
-                Console.Error.Write(tx);
+                transport.Close();
             }
-            catch (Exception x)
-            {
-                Console.Error.Write(x);
-            }
-
-            transport.Close();
         }
 
         public bool IsReusable
