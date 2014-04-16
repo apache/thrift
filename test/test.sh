@@ -102,6 +102,28 @@ nodejs_protocols="binary json"
 nodejs_transports="buffered framed"
 nodejs_sockets="ip ip-ssl"
 
+csharp_protocols="binary compact json"
+csharp_transports="buffered framed"
+csharp_sockets="ip ip-ssl"
+
+######### csharp client - csharp server #############
+export MONO_PATH=../lib/csharp
+for proto in $csharp_protocols; do
+  for trans in $csharp_transports; do
+    for sock in $csharp_sockets; do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "csharp-csharp"   "${proto}" "${trans}-${sock}" \
+              "../lib/csharp/test/ThriftTest/TestClientServer.exe client --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "../lib/csharp/ ../lib/csharp/test/ThriftTest/TestClientServer.exe server --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "10" "10"
+    done
+  done
+done
+
+
 ant -f ../lib/java/build.xml compile-test 1>/dev/null
 
 ######### java client - java server #############
@@ -208,6 +230,7 @@ done
 
 # delete Unix Domain Socket used by cpp tests
 rm -f /tmp/ThriftTest.thrift
+
 
 do_test "py-py" "binary" "buffered-ip" \
         "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \

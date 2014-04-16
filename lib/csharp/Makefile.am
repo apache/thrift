@@ -60,6 +60,8 @@ THRIFTCODE= \
             src/Transport/TMemoryBuffer.cs \
             src/Transport/TNamedPipeClientTransport.cs \
             src/Transport/TNamedPipeServerTransport.cs \
+            src/Transport/TTLSSocket.cs \
+            src/Transport/TTLSServerSocket.cs \
             src/TProcessor.cs \
             src/TException.cs \
             src/TApplicationException.cs
