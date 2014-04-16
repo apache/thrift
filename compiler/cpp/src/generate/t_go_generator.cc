@@ -153,7 +153,7 @@ public:
 
     void generate_deserialize_container(std::ofstream &out,
                                         t_type*       ttype,
-                                        bool          optional_field,
+                                        bool          pointer_field,
                                         bool          declare,
                                         std::string   prefix = "");
 
@@ -183,7 +183,7 @@ public:
 
     void generate_serialize_container(std::ofstream &out,
                                       t_type*       ttype,
-                                      bool          optional_field,
+                                      bool          pointer_field,
                                       std::string   prefix = "");
 
     void generate_serialize_map_element(std::ofstream &out,
@@ -272,9 +272,97 @@ private:
     static std::string privatize(const std::string& value);
     static std::string variable_name_to_go_name(const std::string& value);
     static bool can_be_nil(t_type* value);
-
+    static bool is_pointer_field(t_field* tfield);
+    static bool omit_initialization(t_field* tfield);
 };
 
+//returns true if field initialization can be omitted since it has corresponding go type zero value
+//or default value is not set
+bool t_go_generator::omit_initialization(t_field* tfield) {
+	t_const_value* value = tfield->get_value();
+	if (!value) {
+		return true;
+	}
+	t_type* type = tfield->get_type()->get_true_type();
+    if (type->is_base_type()) {
+        t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+
+        switch (tbase) {
+        case t_base_type::TYPE_VOID:
+            throw "";
+
+        case t_base_type::TYPE_STRING:
+            if (((t_base_type*)type)->is_binary()) {
+            	//[]byte are always inline
+                return false;
+            }
+            //strings are pointers if has no default
+            return value->get_string().empty();
+
+        case t_base_type::TYPE_BOOL:
+        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I16:
+        case t_base_type::TYPE_I32:
+        case t_base_type::TYPE_I64:
+            return value->get_integer()==0;
+        case t_base_type::TYPE_DOUBLE:
+            if (value->get_type() == t_const_value::CV_INTEGER) {
+                return value->get_integer()==0;
+            } else {
+                return value->get_double()==0.;
+            }
+        }
+    }
+	return false;
+}
+
+//returns false if field could not use comparison to default value as !IsSet*
+bool t_go_generator::is_pointer_field(t_field* tfield) {
+	if (!(tfield->get_req() == t_field::T_OPTIONAL)) {
+		return false;
+	}
+	t_type* type = tfield->get_type()->get_true_type();
+
+	bool has_default = tfield->get_value();
+    if (type->is_base_type()) {
+        t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+
+        switch (tbase) {
+        case t_base_type::TYPE_VOID:
+            throw "";
+
+        case t_base_type::TYPE_STRING:
+            if (((t_base_type*)type)->is_binary()) {
+            	//[]byte are always inline
+                return false;
+            }
+            //strings are pointers if has no default
+            return !has_default;
+
+        case t_base_type::TYPE_BOOL:
+        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I16:
+        case t_base_type::TYPE_I32:
+        case t_base_type::TYPE_I64:
+        case t_base_type::TYPE_DOUBLE:
+            return !has_default;
+        }
+    } else if (type->is_enum()) {
+        return !has_default;
+    } else if (type->is_struct() || type->is_xception()) {
+    	return false; //structs are very special case, pointer is a part of the type
+    } else if (type->is_map()) {
+    	return has_default;
+    } else if (type->is_set()) {
+    	return has_default;
+    } else if (type->is_list()) {
+		return has_default;
+    } else if (type->is_typedef()) {
+		return has_default;
+    }
+
+    throw "INVALID TYPE IN type_to_go_type: " + type->get_name();
+}
 
 std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result)
 {
@@ -622,7 +710,8 @@ string t_go_generator::go_imports_begin()
 {
     return
         string("import (\n"
-               "\t\"fmt\"\n"
+                "\t\"bytes\"\n"
+                "\t\"fmt\"\n"
                "\t\"" + gen_thrift_import_ + "\"\n");
 }
 
@@ -639,7 +728,8 @@ string t_go_generator::go_imports_end()
             ")\n\n"
             "// (needed to ensure safety because of naive import list construction.)\n"
             "var _ = thrift.ZERO\n"
-            "var _ = fmt.Printf\n\n");
+            "var _ = fmt.Printf\n"
+        	"var _ = bytes.Equal\n\n");
 }
 
 /**
@@ -1010,8 +1100,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
             }
 
             t_type* fieldType = (*m_iter)->get_type();
-            bool optional_field = ((*m_iter)->get_req() == t_field::T_OPTIONAL);
-            string goType = type_to_go_type_with_opt(fieldType, optional_field);
+            string goType = type_to_go_type_with_opt(fieldType, is_pointer_field(*m_iter));
 
             indent(out) << publicize(variable_name_to_go_name((*m_iter)->get_name())) << " "
                         << goType << " `thrift:\""
@@ -1038,42 +1127,57 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
     out <<
         indent() << "}" << endl << endl <<
         indent() << "func New" << tstruct_name << "() *" << tstruct_name << " {" << endl <<
-        indent() << "  rval := &" << tstruct_name << "{";
+        indent() << "  return &" << tstruct_name << "{";
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        bool optional_field = ((*m_iter)->get_req() == t_field::T_OPTIONAL);
+        bool pointer_field = is_pointer_field(*m_iter);
 
         // Initialize struct fields, assigning defaults for non-optional (i.e.,
         // non-pointer) fields.
         string publicized_name;
         t_const_value* def_value;
         get_publicized_name_and_def_value(*m_iter, &publicized_name, &def_value);
-        if (def_value != NULL) {
-            out << endl << indent() << publicized_name << ": " << render_field_initial_value(*m_iter, (*m_iter)->get_name(), optional_field) << "," << endl;
+        if (!pointer_field && def_value != NULL && !omit_initialization(*m_iter)) {
+            out << endl << indent() << publicized_name << ": " << render_field_initial_value(*m_iter, (*m_iter)->get_name(), pointer_field) << "," << endl;
         }
     }
 
-    out << "}" << endl;
+    out << "}" << endl
+    	<< "}" << endl << endl;
 
-    // Assign actual default values for optional fields in a second pass. See
-    // the comment in render_field_initial_value for context and motivation.
+    // Default values for optional fields
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        string publicized_name;
+        t_const_value* def_value;
+        get_publicized_name_and_def_value(*m_iter, &publicized_name, &def_value);
+        t_type* fieldType = (*m_iter)->get_type();
+        string goType = type_to_go_type_with_opt(fieldType, false);
+        string def_var_name = tstruct_name + "_" + publicized_name + "_DEFAULT";
         if ((*m_iter)->get_req() == t_field::T_OPTIONAL) {
-            string publicized_name;
-            t_const_value* def_value;
-            get_publicized_name_and_def_value(*m_iter, &publicized_name, &def_value);
+            out << indent() << "var " << def_var_name <<" "<<goType ;
             if (def_value != NULL) {
-                // XXX
-                // t_type* ttype = get_true_type((*m_iter)->get_type());
-                t_type* ttype = (*m_iter)->get_type();
-                out << indent() << "*(rval." << publicized_name << ") = " << render_const_value(ttype, def_value, (*m_iter)->get_name()) << endl;
+                out << " = " << render_const_value(fieldType, def_value, (*m_iter)->get_name()) ;
             }
+            out <<endl;
+        }
+        if (is_pointer_field(*m_iter)) {
+            string goOptType = type_to_go_type_with_opt(fieldType, true);
+            string maybepointer = goOptType!=goType?"*":"";
+            out <<indent() << "func (p *" << tstruct_name << ") Get" << publicized_name << "() "<< goType<<" {" << endl
+                <<indent() << "  if !p.IsSet" <<publicized_name <<"() {" <<endl
+                <<indent() << "    return " <<def_var_name <<endl
+                <<indent() << "  }" <<endl
+                <<indent() << "return "<<maybepointer <<"p." <<publicized_name <<endl
+                <<indent() << "}" <<endl;
+        } else {
+            out <<endl
+            	<<indent() << "func (p *" << tstruct_name << ") Get" << publicized_name << "() "<< goType<<" {" << endl
+                <<indent() << "return p." <<publicized_name <<endl
+                <<indent() << "}" <<endl;
+
         }
     }
 
-    out << "return rval" << endl;
-
-    out << "}" << endl << endl;
     generate_isset_helpers(out, tstruct, tstruct_name, is_result);
     generate_go_struct_reader(out, tstruct, tstruct_name, is_result);
     generate_go_struct_writer(out, tstruct, tstruct_name, is_result);
@@ -1108,16 +1212,35 @@ void t_go_generator::generate_isset_helpers(ofstream& out,
 
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         const string field_name(publicize(variable_name_to_go_name(escape_string((*f_iter)->get_name()))));
+        out <<
+            indent() << "func (p *" << tstruct_name << ") IsSet" << field_name << "() bool {" << endl;
+        indent_up();
         if ((*f_iter)->get_req() == t_field::T_OPTIONAL) {
-            out <<
-                indent() << "func (p *" << tstruct_name << ") IsSet" << field_name << "() bool {" << endl;
-            indent_up();
-            out <<
-                indent() << "return p." << field_name << " != nil" << endl;
-            indent_down();
-            out <<
-                indent() << "}" << endl << endl;
+        	t_type* ttype = (*f_iter)->get_type()->get_true_type();
+        	bool is_byteslice = ttype->is_base_type() && ((t_base_type*)ttype)->is_binary() ;
+        	bool compare_to_nil_only = ttype->is_set()
+        			|| ttype->is_list()
+        			|| ttype->is_map()
+        			|| (is_byteslice && !(*f_iter)->get_value());
+            if (is_pointer_field(*f_iter) || compare_to_nil_only) {
+				out <<
+					indent() << "return p." << field_name << " != nil" << endl;
+            } else {
+                string def_var_name = tstruct_name + "_" + field_name + "_DEFAULT";
+                if (is_byteslice) {
+    				out << indent() << "return !bytes.Equal(p." << field_name << ", "<<def_var_name  << ")" << endl;
+                } else {
+    				out << indent() << "return p." << field_name << " != "<<def_var_name  << endl;
+                }
+            }
+        } else {
+			out <<
+				indent() << "return true" << endl;
+
         }
+        indent_down();
+        out <<
+            indent() << "}" << endl << endl;
     }
 }
 
@@ -2488,7 +2611,7 @@ void t_go_generator::generate_deserialize_field(ofstream &out,
     } else if (type->is_container()) {
         generate_deserialize_container(out,
                                        orig_type,
-                                       tfield->get_req() == t_field::T_OPTIONAL,
+                                       is_pointer_field(tfield),
                                        declare,
                                        name);
     } else if (type->is_base_type() || type->is_enum()) {
@@ -2564,7 +2687,7 @@ void t_go_generator::generate_deserialize_field(ofstream &out,
             wrap = "int8";
         }
 
-        string maybe_address = ((tfield->get_req() == t_field::T_OPTIONAL) ? "&" : "");
+        string maybe_address = (is_pointer_field(tfield) ? "&" : "");
         if (wrap == "") {
             indent(out) << name << " = " << maybe_address << "v" << endl;
         } else {
@@ -2605,7 +2728,7 @@ void t_go_generator::generate_deserialize_struct(ofstream &out,
  */
 void t_go_generator::generate_deserialize_container(ofstream &out,
         t_type* orig_type,
-        bool optional_field,
+        bool pointer_field,
         bool declare,
         string prefix)
 {
@@ -2624,7 +2747,7 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
             indent() << "  return fmt.Errorf(\"error reading map begin: %s\", err)" << endl <<
             indent() << "}" << endl <<
             indent() << "tMap := make(" << type_to_go_type(orig_type) << ", size)" << endl <<
-            indent() << prefix << eq << " " << (optional_field ? "&" : "") << "tMap" << endl;
+            indent() << prefix << eq << " " << (pointer_field ? "&" : "") << "tMap" << endl;
     } else if (ttype->is_set()) {
         t_set* t = (t_set*)ttype;
         out <<
@@ -2633,7 +2756,7 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
             indent() << "  return fmt.Errorf(\"error reading set begin: %s\", err)" << endl <<
             indent() << "}" << endl <<
             indent() << "tSet := make(map[" << type_to_go_key_type(t->get_elem_type()) << "]bool, size)" << endl <<
-            indent() << prefix << eq << " " << (optional_field ? "&" : "") << "tSet" << endl;
+            indent() << prefix << eq << " " << (pointer_field ? "&" : "") << "tSet" << endl;
     } else if (ttype->is_list()) {
         out <<
             indent() << "_, size, err := iprot.ReadListBegin()" << endl <<
@@ -2641,7 +2764,7 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
             indent() << "  return fmt.Errorf(\"error reading list begin: %s\", err)" << endl <<
             indent() << "}" << endl <<
             indent() << "tSlice := make(" << type_to_go_type(orig_type) << ", 0, size)" << endl <<
-            indent() << prefix << eq << " " << (optional_field ? "&" : "") << "tSlice" << endl;
+            indent() << prefix << eq << " " << (pointer_field ? "&" : "") << "tSlice" << endl;
     } else {
         throw "INVALID TYPE IN generate_deserialize_container '" + ttype->get_name() + "' for prefix '" + prefix + "'";
     }
@@ -2651,7 +2774,7 @@ void t_go_generator::generate_deserialize_container(ofstream &out,
         indent() << "for i := 0; i < size; i ++ {" << endl;
     indent_up();
 
-    if (optional_field) {
+    if (pointer_field) {
         prefix = "(*" + prefix + ")";
     }
     if (ttype->is_map()) {
@@ -2766,13 +2889,13 @@ void t_go_generator::generate_serialize_field(ofstream &out,
     } else if (type->is_container()) {
         generate_serialize_container(out,
                                      type,
-                                     tfield->get_req() == t_field::T_OPTIONAL,
+                                     is_pointer_field(tfield),
                                      name);
     } else if (type->is_base_type() || type->is_enum()) {
         indent(out) <<
                     "if err := oprot.";
 
-        if (tfield->get_req() == t_field::T_OPTIONAL) {
+        if (is_pointer_field(tfield)) {
             name = "*" + name;
         }
 
@@ -2851,10 +2974,10 @@ void t_go_generator::generate_serialize_struct(ofstream &out,
 
 void t_go_generator::generate_serialize_container(ofstream &out,
         t_type* ttype,
-        bool optional_field,
+        bool pointer_field,
         string prefix)
 {
-    if (optional_field) {
+    if (pointer_field) {
         prefix = "*" + prefix;
     }
     if (ttype->is_map()) {

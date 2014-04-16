@@ -24,12 +24,15 @@ THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 				IncludesTest.thrift \
 				NamespacedTest.thrift \
-				OnewayTest.thrift
+				OnewayTest.thrift \
+				OptionalFieldsTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
 	$(THRIFT) -r IncludesTest.thrift
 	$(THRIFT) BinaryKeyTest.thrift
 	$(THRIFT) OnewayTest.thrift
+	$(THRIFT) OptionalFieldsTest.thrift
+	GOPATH=`pwd`/gopath $(GO) get code.google.com/p/gomock/gomock
 	ln -nfs ../../../thrift gopath/src/thrift
 	ln -nfs ../../tests gopath/src/tests
 	touch gopath
