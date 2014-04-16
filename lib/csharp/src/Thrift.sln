@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift", "Thrift.csproj", "{499EB63C-D74C-47E8-AE48-A2FC94538E9D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThriftTest", "..\test\ThriftTest\ThriftTest.csproj", "{48DD757F-CA95-4DD7-BDA4-58DB6F108C2C}"
@@ -9,6 +9,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThriftTest", "..\test\Thrif
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThriftMSBuildTask", "..\ThriftMSBuildTask\ThriftMSBuildTask.csproj", "{EC0A0231-66EA-4593-A792-C6CA3BB8668E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift.Tests", "..\test\Thrift.Tests\Thrift.Tests.csproj", "{F4A4A2EA-9B67-447D-9826-A7579CD17A8C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{55FA5EC1-7111-414C-AA9C-887D6E6F6CE0}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,11 +37,15 @@ Global
 		{EC0A0231-66EA-4593-A792-C6CA3BB8668E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC0A0231-66EA-4593-A792-C6CA3BB8668E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC0A0231-66EA-4593-A792-C6CA3BB8668E}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = Thrift.csproj
+		{F4A4A2EA-9B67-447D-9826-A7579CD17A8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4A4A2EA-9B67-447D-9826-A7579CD17A8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4A4A2EA-9B67-447D-9826-A7579CD17A8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4A4A2EA-9B67-447D-9826-A7579CD17A8C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Thrift.csproj
 	EndGlobalSection
 EndGlobal
