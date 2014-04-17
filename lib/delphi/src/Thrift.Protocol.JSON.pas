@@ -28,6 +28,7 @@ uses
   SysUtils,
   Math,
   IdCoderMIME,
+  IdGlobal,
   Generics.Collections,
   Thrift.Transport,
   Thrift.Protocol;
@@ -633,7 +634,7 @@ begin
   // First base64-encode b, then write the resulting 8-bit chars
   // Unfortunately, EncodeBytes() returns a string of 16-bit (wide) chars
   // And for the sake of efficiency, we want to write everything at once
-  str := TIdEncoderMIME.EncodeBytes(b);
+  str := TIdEncoderMIME.EncodeBytes(TIdBytes (b));
   ASSERT( SizeOf(str[1]) = SizeOf(Word));
   SetLength( tmp, Length(str));
   for i := 1 to Length(str) do begin
@@ -956,7 +957,7 @@ begin
   b := ReadJSONString(false);
 
   SetString( str, PAnsiChar(b), Length(b));
-  result := TIdDecoderMIME.DecodeBytes( str);
+  result := TBytes (TIdDecoderMIME.DecodeBytes( str));
 end;
 
 

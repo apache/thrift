@@ -162,7 +162,7 @@ begin
 end;
 
 
-function TMultiplexedProcessorImpl.Process(const iprot, oprot : IProtocol) : Boolean;
+function TMultiplexedProcessorImpl.Process(const iprot, oprot : IProtocol; const events: IProcessorEvents = nil) : Boolean;
 var msg, newMsg : IMessage;
     idx         : Integer;
     sService    : string;
