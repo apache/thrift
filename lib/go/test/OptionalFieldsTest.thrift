@@ -18,3 +18,8 @@ struct all_optional {
  13: optional binary bin,
  14: optional binary bin2 = "asdf",
 }
+
+struct structB {
+ 1: required structA required_struct_thing
+ 2: optional structA optional_struct_thing
+}

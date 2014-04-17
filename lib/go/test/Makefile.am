@@ -27,7 +27,7 @@ gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 				OnewayTest.thrift \
 				OptionalFieldsTest.thrift
 	mkdir -p gopath/src
-	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
+	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) -r IncludesTest.thrift
 	$(THRIFT) BinaryKeyTest.thrift
 	$(THRIFT) OnewayTest.thrift
