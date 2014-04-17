@@ -332,6 +332,9 @@ static bool type_need_reference(t_type* type) {
 
 //returns false if field could not use comparison to default value as !IsSet*
 bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) {
+	if (tfield->annotations_.count("cpp.ref")!=0) {
+		return true;
+	}
 	t_type* type = tfield->get_type()->get_true_type();
 	//Structs in containers are pointers
 	if (in_container_value && type->is_struct()) {
@@ -1175,7 +1178,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
         t_type* fieldType = (*m_iter)->get_type();
         string goType = type_to_go_type_with_opt(fieldType, false);
         string def_var_name = tstruct_name + "_" + publicized_name + "_DEFAULT";
-        if ((*m_iter)->get_req() == t_field::T_OPTIONAL) {
+        if ((*m_iter)->get_req() == t_field::T_OPTIONAL || is_pointer_field(*m_iter)) {
             out << indent() << "var " << def_var_name <<" "<<goType ;
             if (def_value != NULL) {
                 out << " = " << render_const_value(fieldType, def_value, (*m_iter)->get_name()) ;
@@ -1234,7 +1237,7 @@ void t_go_generator::generate_isset_helpers(ofstream& out,
 
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         const string field_name(publicize(variable_name_to_go_name(escape_string((*f_iter)->get_name()))));
-        if ((*f_iter)->get_req() == t_field::T_OPTIONAL) {
+        if ((*f_iter)->get_req() == t_field::T_OPTIONAL || is_pointer_field(*f_iter)) {
             out <<
                 indent() << "func (p *" << tstruct_name << ") IsSet" << field_name << "() bool {" << endl;
             indent_up();
