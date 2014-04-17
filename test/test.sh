@@ -146,7 +146,7 @@ for proto in $(intersection "${java_protocols}" "${cpp_protocols}"); do
         "ip" ) extraparam="";;
         "ip-ssl" ) extraparam="--ssl";;
       esac
-      do_test "java-cpp" "${proto}" "${trans}-ip" \
+      do_test "java-cpp" "${proto}" "${trans}-${sock}" \
               "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" testclient" \
               "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}"\
               "10" "15"
@@ -162,9 +162,9 @@ for proto in $(intersection "${cpp_protocols}" "${java_protocols}"); do
         "ip" ) extraparam="";;
         "ip-ssl" ) extraparam="--ssl";;
       esac
-      do_test "cpp-java" "${proto}" "${trans}-ip" \
-              "cpp/TestClient --protocol=${proto} --transport=${trans}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans}\" testserver" \
+      do_test "cpp-java" "${proto}" "${trans}-${sock}" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans}  ${extraparam}\" testserver" \
               "15" "10"
     done
   done
