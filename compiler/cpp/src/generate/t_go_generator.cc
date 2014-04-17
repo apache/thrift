@@ -1810,7 +1810,6 @@ void t_go_generator::generate_service_client(t_service* tservice)
                        "err error) {" << endl;
             indent_up();
             // TODO(mcslee): Validate message reply here, seq ids etc.
-            string result(tmp("result"));
             string error(tmp("error"));
             string error2(tmp("error"));
             f_service_ <<
@@ -1840,8 +1839,8 @@ void t_go_generator::generate_service_client(t_service* tservice)
                        indent() << "  err = thrift.NewTApplicationException(thrift.BAD_SEQUENCE_ID, \"" << (*f_iter)->get_name() << " failed: out of sequence response\")" << endl <<
                        indent() << "  return" << endl <<
                        indent() << "}" << endl <<
-                       indent() << result << " := New" << resultname << "()" << endl <<
-                       indent() << "if err = " << result << ".Read(iprot); err != nil {" << endl <<
+                       indent() << "result := " << resultname << "{}" << endl <<
+                       indent() << "if err = result.Read(iprot); err != nil {" << endl <<
                        indent() << "  return" << endl <<
                        indent() << "}" << endl <<
                        indent() << "if err = iprot.ReadMessageEnd(); err != nil {" << endl <<
@@ -1857,8 +1856,8 @@ void t_go_generator::generate_service_client(t_service* tservice)
                 const std::string pubname = publicize(varname);
 
                 f_service_ <<
-                           indent() << "if " << result << "." << pubname << " != nil {" << endl <<
-                           indent() << "err = " << result << "." << pubname << endl <<
+                           indent() << "if result." << pubname << " != nil {" << endl <<
+                           indent() << "err = result." << pubname << endl <<
                            indent() << "return " << endl <<
                            indent() << "}";
 
@@ -1872,7 +1871,7 @@ void t_go_generator::generate_service_client(t_service* tservice)
             // Careful, only return _result if not a void function
             if (!(*f_iter)->get_returntype()->is_void()) {
                 f_service_ <<
-                           indent() << "value = " << result << ".GetSuccess()" << endl;
+                           indent() << "value = result.GetSuccess()" << endl;
             }
 
             f_service_ <<
