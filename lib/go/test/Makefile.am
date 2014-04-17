@@ -26,7 +26,8 @@ gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 				NamespacedTest.thrift \
 				OnewayTest.thrift \
 				OptionalFieldsTest.thrift \
-				ServicesTest.thrift
+				ServicesTest.thrift \
+				TypedefFieldTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) -r IncludesTest.thrift
@@ -34,13 +35,14 @@ gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 	$(THRIFT) OnewayTest.thrift
 	$(THRIFT) OptionalFieldsTest.thrift
 	$(THRIFT) ServicesTest.thrift
+	$(THRIFT) TypedefFieldTest.thrift
 	GOPATH=`pwd`/gopath $(GO) get code.google.com/p/gomock/gomock
 	ln -nfs ../../../thrift gopath/src/thrift
 	ln -nfs ../../tests gopath/src/tests
 	touch gopath
 
 check: gopath
-	GOPATH=`pwd`/gopath $(GO) build IncludesTest BinaryKeyTest ServicesTest
+	GOPATH=`pwd`/gopath $(GO) build IncludesTest BinaryKeyTest ServicesTest TypedefFieldTest
 	GOPATH=`pwd`/gopath $(GO) test thrift tests
 
 clean-local:
