@@ -318,6 +318,18 @@ bool t_go_generator::omit_initialization(t_field* tfield) {
 	return false;
 }
 
+//Returns true if the type need a reference if used as optional without default
+static bool type_need_reference(t_type* type) {
+	type = type->get_true_type();
+	if( type->is_map()
+	 || type->is_set()
+	 || type->is_list()
+	 || (type->is_string() && ((t_base_type*)type)->is_binary() )) {
+		return false;
+	}
+	return true;
+}
+
 //returns false if field could not use comparison to default value as !IsSet*
 bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) {
 	t_type* type = tfield->get_type()->get_true_type();
@@ -1531,6 +1543,7 @@ void t_go_generator::generate_go_function_helpers(t_function* tfunction)
     if (!tfunction->is_oneway()) {
         t_struct result(program_, tfunction->get_name() + "_result");
         t_field success(tfunction->get_returntype(), "success", 0);
+        success.set_req(t_field::T_OPTIONAL);
 
         if (!tfunction->get_returntype()->is_void()) {
             result.append(&success);
@@ -2430,7 +2443,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
                indent() << "func (p *" << processorName << ") Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {" << endl;
     indent_up();
     f_service_ <<
-               indent() << "args := New" << argsname << "()" << endl <<
+               indent() << "args := " << argsname << "{}" << endl <<
                indent() << "if err = args.Read(iprot); err != nil {" << endl <<
                indent() << "  iprot.ReadMessageEnd()" << endl;
     if (!tfunction->is_oneway()) {
@@ -2448,7 +2461,11 @@ void t_go_generator::generate_process_function(t_service* tservice,
 
     if (!tfunction->is_oneway()) {
         f_service_ <<
-                   indent() << "result := New" << resultname << "()" << endl;
+                   indent() << "result := " << resultname << "{}" << endl;
+    }
+    bool need_reference = type_need_reference(tfunction->get_returntype());
+    if (need_reference && !tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
+		f_service_ << "var retval " <<type_to_go_type(tfunction->get_returntype()) <<endl;
     }
 
     f_service_ <<
@@ -2457,7 +2474,11 @@ void t_go_generator::generate_process_function(t_service* tservice,
 
     if (!tfunction->is_oneway()) {
         if (!tfunction->get_returntype()->is_void()) {
-            f_service_ << "result.Success, ";
+        	if( need_reference) {
+                f_service_ << "retval, ";
+        	} else {
+                f_service_ << "result.Success, ";
+        	}
         }
     }
 
@@ -2490,7 +2511,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
 
         for (xf_iter = x_fields.begin(); xf_iter != x_fields.end(); ++xf_iter) {
             f_service_ <<
-                        indent() << "  case *" << type_name((*xf_iter)->get_type()) << ":" << endl <<
+                        indent() << "  case *" << type_to_go_type(((*xf_iter)->get_type())) << ":" << endl <<
                         indent() << "result." << publicize(variable_name_to_go_name((*xf_iter)->get_name())) << " = v" << endl;
         }
         
@@ -2520,6 +2541,9 @@ void t_go_generator::generate_process_function(t_service* tservice,
                indent() << "}" << endl;
 
     if (!tfunction->is_oneway()) {
+        if (need_reference && !tfunction->get_returntype()->is_void()) {
+    		f_service_ << "result.Success = &retval" << endl;
+        }
         f_service_ <<
                    indent() << "if err2 = oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name()) << 
                                "\", thrift.REPLY, seqId); err2 != nil {" << endl <<
