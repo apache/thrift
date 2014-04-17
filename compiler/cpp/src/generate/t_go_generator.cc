@@ -1750,7 +1750,6 @@ void t_go_generator::generate_service_client(t_service* tservice)
         indent_up();
         std::string argsname = publicize((*f_iter)->get_name() + "_args",true);
         // Serialize the request header
-        string args(tmp("args"));
         f_service_ <<
                    indent() << "oprot := p.OutputProtocol" << endl <<
                    indent() << "if oprot == nil {" << endl <<
@@ -1765,16 +1764,18 @@ void t_go_generator::generate_service_client(t_service* tservice)
         indent_down();
         f_service_ <<
                    indent() << "}" << endl <<
-                   indent() << args << " := New" << argsname << "()" << endl;
+                   indent() << "args := " << argsname << "{" << endl;
 
         for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
             f_service_ <<
-                       indent() << args << "." << publicize(variable_name_to_go_name((*fld_iter)->get_name())) << " = " << variable_name_to_go_name((*fld_iter)->get_name()) << endl;
+                       indent() << publicize(variable_name_to_go_name((*fld_iter)->get_name())) << " : " << variable_name_to_go_name((*fld_iter)->get_name()) << ","<< endl;
         }
+        f_service_ <<
+                indent() << "}" << endl;
 
         // Write to the stream
         f_service_ <<
-                   indent() << "if err = " << args << ".Write(oprot); err != nil {" << endl;
+                   indent() << "if err = args.Write(oprot); err != nil {" << endl;
         indent_up();
         f_service_ <<
                    indent() << "return" << endl;
