@@ -124,13 +124,13 @@ namespace Test
 							else
 								trans = new TSocket(host, port);
 						}
-						
+
 						// layered transport
 						if (buffered)
 							trans = new TBufferedTransport(trans as TStreamTransport);
 						if (framed)
 							trans = new TFramedTransport(trans);
-						
+
 						//ensure proper open/close of transport
 						trans.Open();
 						trans.Close();
@@ -454,7 +454,6 @@ namespace Test
 				Console.Write("}, ");
 			}
 			Console.WriteLine("}");
-
 
 			sbyte arg0 = 1;
 			int arg1 = 2;
