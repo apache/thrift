@@ -110,8 +110,8 @@ node_modules
 /lib/c_glib/test/testtransportsocket
 /lib/c_glib/thriftc.pc
 /lib/c_glib/thrift_c_glib.pc
-/lib/csharp/src/bin/
-/lib/csharp/src/obj/
+/lib/csharp/**/bin/
+/lib/csharp/**/obj/
 /lib/d/libthriftd.a
 /lib/d/test/serialization_benchmark
 /lib/d/test/transport_test
