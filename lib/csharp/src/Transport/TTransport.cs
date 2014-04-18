@@ -76,11 +76,16 @@ namespace Thrift.Transport
         
         public virtual IAsyncResult BeginFlush(AsyncCallback callback, object state)
         {
-            return null;
+            throw new TTransportException(
+                TTransportException.ExceptionType.Unknown,
+                "Asynchronous operations are not supported by this transport.");
         }
 
         public virtual void EndFlush(IAsyncResult asyncResult)
         {
+            throw new TTransportException(
+                TTransportException.ExceptionType.Unknown,
+                "Asynchronous operations are not supported by this transport.");
         }
 
 		#region " IDisposable Support "
