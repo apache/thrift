@@ -60,6 +60,7 @@ static const string endl = "\n";  // avoid ostream << std::endl flushes
 bool format_go_output(const string &file_path);
 
 const string default_thrift_import = "git.apache.org/thrift.git/lib/go/thrift";
+static std::string package_flag;
 
 /**
  * Go code generator.
@@ -86,6 +87,12 @@ public:
 
         if (iter != parsed_options.end()) {
             gen_thrift_import_ = (iter->second);
+        }
+
+        iter = parsed_options.find("package");
+
+        if (iter != parsed_options.end()) {
+        	package_flag = (iter->second);
         }
     }
 
@@ -242,6 +249,10 @@ public:
     std::string type_to_spec_args(t_type* ttype);
 
     static std::string get_real_go_module(const t_program* program) {
+
+    	if (!package_flag.empty()) {
+            return package_flag;
+        }
         std::string real_module = program->get_namespace("go");
 
         if (real_module.empty()) {
@@ -3495,4 +3506,5 @@ bool format_go_output(const string &file_path)
 
 THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    package_prefix= Package prefix for generated files.\n" \
-                          "    thrift_import=  Override thrift package import path (default:" + default_thrift_import + ")\n")
+                          "    thrift_import=  Override thrift package import path (default:" + default_thrift_import + ")\n" \
+                          "    package=  Package name (default: inferred from thrift file name)\n")
