@@ -714,7 +714,7 @@ void help() {
   fprintf(stderr, "                compatibility with older .thrift files)\n");
   fprintf(stderr, "  --allow-64bit-consts  Do not print warnings about using 64-bit constants\n");
   fprintf(stderr, "  --gen STR   Generate code with a dynamically-registered generator.\n");
-  fprintf(stderr, "                STR has the form language[:key1=val1[,key2,[key3=val3]]].\n");
+  fprintf(stderr, "                STR has the form language[:key1=val1[,key2[,key3=val3]]].\n");
   fprintf(stderr, "                Keys and values are options passed to the generator.\n");
   fprintf(stderr, "                Many options will not require values.\n");
   fprintf(stderr, "\n");
