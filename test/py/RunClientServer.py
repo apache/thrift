@@ -21,6 +21,7 @@
 
 from __future__ import division
 import time
+import socket
 import subprocess
 import sys
 import os
@@ -133,7 +134,30 @@ def runServiceTest(genpydir, server_class, proto, port, use_zlib, use_ssl):
   if options.verbose > 0:
     print 'Testing server %s: %s' % (server_class, ' '.join(server_args))
   serverproc = subprocess.Popen(server_args)
-  time.sleep(0.15)
+
+  def ensureServerAlive():
+    if serverproc.poll() is not None:
+      print ('FAIL: Server process (%s) failed with retcode %d'
+             % (' '.join(server_args), serverproc.returncode))
+      raise Exception('Server subprocess %s died, args: %s'
+                      % (server_class, ' '.join(server_args)))
+
+  # Wait for the server to start accepting connections on the given port.
+  sock = socket.socket()
+  sleep_time = 0.1  # Seconds
+  max_attempts = 100
+  try:
+    attempt = 0
+    while sock.connect_ex(('127.0.0.1', port)) != 0:
+      attempt += 1
+      if attempt >= max_attempts:
+        raise Exception("TestServer not ready on port %d after %.2f seconds"
+                        % (port, sleep_time * attempt))
+      ensureServerAlive()
+      time.sleep(sleep_time)
+  finally:
+    sock.close()
+
   try:
     if options.verbose > 0:
       print 'Testing client: %s' % (' '.join(cli_args))
@@ -142,19 +166,15 @@ def runServiceTest(genpydir, server_class, proto, port, use_zlib, use_ssl):
       raise Exception("Client subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(cli_args)))
   finally:
     # check that server didn't die
-    serverproc.poll()
-    if serverproc.returncode is not None:
-      print 'FAIL: Server process (%s) failed with retcode %d' % (' '.join(server_args), serverproc.returncode)
-      raise Exception('Server subprocess %s died, args: %s' % (server_class, ' '.join(server_args)))
-    else:
-      extra_sleep = EXTRA_DELAY.get(server_class, 0)
-      if extra_sleep > 0 and options.verbose > 0:
-        print 'Giving %s (proto=%s,zlib=%s,ssl=%s) an extra %d seconds for child processes to terminate via alarm' % (server_class,
-              proto, use_zlib, use_ssl, extra_sleep)
-        time.sleep(extra_sleep)
-      os.kill(serverproc.pid, signal.SIGKILL)
-  # wait for shutdown
-  time.sleep(0.05)
+    ensureServerAlive()
+    extra_sleep = EXTRA_DELAY.get(server_class, 0)
+    if extra_sleep > 0 and options.verbose > 0:
+      print ('Giving %s (proto=%s,zlib=%s,ssl=%s) an extra %d seconds for child'
+             'processes to terminate via alarm'
+             % (server_class, proto, use_zlib, use_ssl, extra_sleep))
+      time.sleep(extra_sleep)
+    os.kill(serverproc.pid, signal.SIGKILL)
+    serverproc.wait()
 
 test_count = 0
 # run tests without a client/server first
