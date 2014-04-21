@@ -75,6 +75,8 @@ class TSimpleServer(TServer):
     self.serverTransport.listen()
     while True:
       client = self.serverTransport.accept()
+      if not client:
+        continue
       itrans = self.inputTransportFactory.getTransport(client)
       otrans = self.outputTransportFactory.getTransport(client)
       iprot = self.inputProtocolFactory.getProtocol(itrans)
@@ -103,6 +105,8 @@ class TThreadedServer(TServer):
     while True:
       try:
         client = self.serverTransport.accept()
+        if not client:
+          continue
         t = threading.Thread(target=self.handle, args=(client,))
         t.setDaemon(self.daemon)
         t.start()
@@ -182,6 +186,8 @@ class TThreadPoolServer(TServer):
     while True:
       try:
         client = self.serverTransport.accept()
+        if not client:
+          continue
         self.clients.put(client)
       except Exception, x:
         logging.exception(x)
@@ -214,6 +220,8 @@ class TForkingServer(TServer):
     self.serverTransport.listen()
     while True:
       client = self.serverTransport.accept()
+      if not client:
+        continue
       try:
         pid = os.fork()
 
