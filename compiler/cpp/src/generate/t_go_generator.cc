@@ -1400,7 +1400,15 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
  */
 void t_go_generator::generate_service(t_service* tservice)
 {
-    string f_service_name = package_dir_ + "/" + underscore(service_name_) + ".go";
+	string test_suffix("_test");
+	string filename = underscore(service_name_);
+	string f_service_name;
+	if (filename.compare(filename.length() - test_suffix.length(),
+			test_suffix.length(), test_suffix) == 0) {
+		f_service_name = package_dir_ + "/" + filename + "_.go";
+	} else {
+		f_service_name = package_dir_ + "/" + filename + ".go";
+	}
     f_service_.open(f_service_name.c_str());
     f_service_ <<
                go_autogen_comment() <<
