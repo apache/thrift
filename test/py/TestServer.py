@@ -33,6 +33,8 @@ parser.add_option("--zlib", action="store_true", dest="zlib",
     help="use zlib wrapper for compressed transport")
 parser.add_option("--ssl", action="store_true", dest="ssl",
     help="use SSL for encrypted transport")
+parser.add_option("--multiple", action="store_true", dest="multiple",
+    help="use multiple service")
 parser.add_option('-v', '--verbose', action="store_const", 
     dest="verbose", const=2,
     help="verbose output")
@@ -46,9 +48,10 @@ options, args = parser.parse_args()
 
 sys.path.insert(0, options.genpydir)
 
-from ThriftTest import ThriftTest
+from ThriftTest import ThriftTest, SecondService
 from ThriftTest.ttypes import *
 from thrift.Thrift import TException
+from thrift import TMultiplexedProcessor
 from thrift.transport import TTransport
 from thrift.transport import TSocket
 from thrift.transport import TZlibTransport
@@ -61,6 +64,12 @@ PROT_FACTORIES = {'binary': TBinaryProtocol.TBinaryProtocolFactory,
     'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory,
     'compact': TCompactProtocol.TCompactProtocolFactory,
     'json': TJSONProtocol.TJSONProtocolFactory}
+
+class SecondHandler:
+
+  def blahBlah(self):
+    if options.verbose > 1:
+      print 'blahBlah()'
 
 class TestHandler:
 
@@ -188,8 +197,15 @@ if len(args) > 1:
 server_type = args[0]
 
 # Set up the handler and processor objects
-handler = TestHandler()
-processor = ThriftTest.Processor(handler)
+if not options.multiple:
+    handler   = TestHandler()
+    processor = ThriftTest.Processor(handler)
+else:
+    processor = TMultiplexedProcessor.TMultiplexedProcessor()
+    handler   = TestHandler()
+    processor.registerProcessor("ThriftTest", ThriftTest.Processor(handler))
+    handler   = SecondHandler()
+    processor.registerProcessor("SecondService", SecondService.Processor(handler))
 
 # Handle THttpServer as a special case
 if server_type == 'THttpServer':
