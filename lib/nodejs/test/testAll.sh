@@ -47,6 +47,18 @@ testMultiplexedClientServer()
   return $RET
 }
 
+testHttpClientServer()
+{
+  echo "   Testing HTTP Client/Server with protocol $1 and transport $2 $3";
+  RET=0
+  node ${DIR}/http_server.js -p $1 -t $2 $3 &
+  SERVERPID=$!
+  sleep 1
+  node ${DIR}/http_client.js -p $1 -t $2 $3 || RET=1
+  kill -9 $SERVERPID || RET=1
+  return $RET
+}
+
 
 TESTOK=0
 
@@ -60,6 +72,7 @@ node ${DIR}/binary.test.js || TESTOK=1
 
 #integration tests
 
+#TCP connection tests
 testClientServer binary buffered || TESTOK=1
 testClientServer json buffered || TESTOK=1
 testClientServer binary framed || TESTOK=1
@@ -77,5 +90,11 @@ testMultiplexedClientServer binary framed --ssl || TESTOK=1
 
 #test promise style
 testClientServer binary framed --promise || TESTOK=1
+
+#HTTP tests
+testHttpClientServer json buffered || TESTOK=1
+testHttpClientServer json framed || TESTOK=1
+testHttpClientServer binary buffered || TESTOK=1
+testHttpClientServer binary framed || TESTOK=1
 
 exit $TESTOK
