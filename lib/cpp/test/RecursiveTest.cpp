@@ -64,4 +64,12 @@ int main() {
   assert(c.other != NULL);
   assert(c.other->other.other == NULL);
 
+  RecList depthLimit;
+  depthLimit.nextitem = &depthLimit;
+  try {
+    depthLimit.write(prot.get());
+    assert(false);
+  } catch (const apache::thrift::protocol::TProtocolException& e) {
+  }
+
 }

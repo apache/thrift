@@ -1545,6 +1545,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
   out <<
     indent() << "uint32_t xfer = 0;" << endl;
 
+  indent(out) << "oprot->incrementRecursionDepth();" << endl;
   indent(out) <<
     "xfer += oprot->writeStructBegin(\"" << name << "\");" << endl;
 
@@ -1585,6 +1586,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
   out <<
     indent() << "xfer += oprot->writeFieldStop();" << endl <<
     indent() << "xfer += oprot->writeStructEnd();" << endl <<
+    indent() << "oprot->decrementRecursionDepth();" << endl <<
     indent() << "return xfer;" << endl;
 
   indent_down();
