@@ -235,7 +235,7 @@ class t_cpp_generator : public t_oop_generator {
   void generate_local_reflection_pointer(std::ofstream& out, t_type* ttype);
 
   bool is_reference(t_field* tfield) {
-    return tfield->annotations_.count("cpp.ref") != 0;
+    return tfield->get_reference();
   }
 
   bool is_complex_type(t_type* ttype) {
