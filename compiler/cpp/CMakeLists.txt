@@ -22,14 +22,19 @@ cmake_minimum_required(VERSION 2.8)
 
 project(thrift-compiler)
 
-# TODO: Where to get correct version information
-set(thrift_VERSION_MAJOR 0)
-set(thrift_VERSION_MINOR 9)
-set(thrift_VERSION_PATCH 2)
-set(thrift_VERSION "${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH}")
+# Read the version information from the Autoconf file
+file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../../configure.ac" CONFIGURE_AC REGEX "AC_INIT\\(.*\\)" )
 
 # The following variable is used in the version.h.in file
-set(PACKAGE_VERSION ${thrift_VERSION})
+string(REGEX REPLACE "AC_INIT\\(\\[.*\\], \\[([0-9]+\\.[0-9]+\\.[0-9]+(-dev)?)\\]\\)" "\\1" PACKAGE_VERSION ${CONFIGURE_AC})
+message(STATUS "Thrift package version: ${PACKAGE_VERSION}")
+
+# These are internal to CMake
+string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+)(-dev)?" "\\1" thrift_VERSION ${PACKAGE_VERSION})
+string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" thrift_VERSION_MAJOR ${thrift_VERSION})
+string(REGEX REPLACE "[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" thrift_VERSION_MINOR ${thrift_VERSION})
+string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${thrift_VERSION})
+message(STATUS "Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
 
 # Windows has a different header
 if(WIN32)
@@ -139,6 +144,8 @@ THRIFT_ADD_COMPILER(lua     "Enable compiler for Lua" ON)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
 
 add_executable(thrift ${thrift_SOURCES})
+set_target_properties(thrift PROPERTIES VERSION ${thrift_VERSION})
+
 target_link_libraries(thrift libparse)
 
 if(NOT WIN32)
