@@ -18,6 +18,7 @@
 
 #Generate the bindings:
 ../../../compiler/cpp/thrift --gen js:node user.thrift
+../../../compiler/cpp/thrift --gen js:node --gen py hello.thrift
 
 #To run the user example, first start up the server in one terminal:
 NODE_PATH=../lib:../lib/thrift node server.js
@@ -28,5 +29,6 @@ NODE_PATH=../lib:../lib/thrift node client.js
 #For an example using JavaScript in the browser to connect to 
 #a node.js server look at hello.html, hello.js and hello.thrift
 
-
+#HTTP examples are provided also: httpClient.js and httpServer.js
+#You can test HTTP cross platform with the httpServer.py Python server
     
