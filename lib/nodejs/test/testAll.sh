@@ -96,5 +96,7 @@ testHttpClientServer json buffered || TESTOK=1
 testHttpClientServer json framed || TESTOK=1
 testHttpClientServer binary buffered || TESTOK=1
 testHttpClientServer binary framed || TESTOK=1
+testHttpClientServer json buffered --promise || TESTOK=1
+testHttpClientServer binary framed --ssl || TESTOK=1
 
 exit $TESTOK
