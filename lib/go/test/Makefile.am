@@ -24,11 +24,13 @@ THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 				IncludesTest.thrift \
 				NamespacedTest.thrift \
+				MultiplexedProtocolTest.thrift \
 				OnewayTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
 	$(THRIFT) -r IncludesTest.thrift
 	$(THRIFT) BinaryKeyTest.thrift
+	$(THRIFT) MultiplexedProtocolTest.thrift
 	$(THRIFT) OnewayTest.thrift
 	ln -nfs ../../../thrift gopath/src/thrift
 	ln -nfs ../../tests gopath/src/tests
