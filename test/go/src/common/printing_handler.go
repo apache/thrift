@@ -149,13 +149,13 @@ func (p *printingHandler) TestStringMap(thing map[string]string) (r map[string]s
 func (p *printingHandler) TestSet(thing map[int32]bool) (r map[int32]bool, err error) {
 	fmt.Printf("testSet({")
 	first := true
-	for _, v := range thing {
+	for k, _ := range thing {
 		if first {
 			first = false
 		} else {
 			fmt.Printf(", ")
 		}
-		fmt.Printf("%d", v)
+		fmt.Printf("%d", k)
 	}
 	fmt.Printf("})\n")
 	return thing, nil
