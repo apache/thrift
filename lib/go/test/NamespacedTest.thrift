@@ -19,7 +19,7 @@
 
 include "ThriftTest.thrift"
 
-namespace go lib.go.test.NamespacedTest
+namespace go lib.go.test.namespacedtest
 
 enum Stuff {
   ONE = 1,
