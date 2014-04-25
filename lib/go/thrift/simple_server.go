@@ -113,17 +113,15 @@ func (p *TSimpleServer) OutputProtocolFactory() TProtocolFactory {
 	return p.outputProtocolFactory
 }
 
-func (p *TSimpleServer) Serve() error {
-	err := p.serverTransport.Listen()
-	if err != nil {
-		return err
-	}
+func (p *TSimpleServer) Listen() error {
+	return p.serverTransport.Listen()
+}
 
-loop:
+func (p *TSimpleServer) AcceptLoop() error {
 	for {
 		select {
 		case <-p.quit:
-			break loop
+			return nil
 		default:
 		}
 
@@ -139,6 +137,14 @@ loop:
 			}()
 		}
 	}
+}
+
+func (p *TSimpleServer) Serve() error {
+	err := p.Listen()
+	if err != nil {
+		return err
+	}
+	p.AcceptLoop()
 	return nil
 }
 
@@ -162,7 +168,7 @@ func (p *TSimpleServer) processRequest(client TTransport) error {
 	}
 	for {
 		ok, err := processor.Process(inputProtocol, outputProtocol)
-		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE{
+		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
 			return nil
 		} else if err != nil {
 			return err
