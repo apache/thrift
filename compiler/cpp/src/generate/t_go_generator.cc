@@ -240,12 +240,11 @@ public:
 
     static std::string get_real_go_module(const t_program* program) {
         std::string real_module = program->get_namespace("go");
-
-        if (real_module.empty()) {
-            return program->get_name();
+        if (!real_module.empty()) {
+        	return real_module;
         }
 
-        return real_module;
+        return lowercase(program->get_name());
     }
 
 private:
@@ -1401,7 +1400,7 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
 void t_go_generator::generate_service(t_service* tservice)
 {
 	string test_suffix("_test");
-	string filename = underscore(service_name_);
+	string filename = lowercase(service_name_);
 	string f_service_name;
 	if (filename.compare(filename.length() - test_suffix.length(),
 			test_suffix.length(), test_suffix) == 0) {

@@ -35,7 +35,7 @@ gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 	touch gopath
 
 check: gopath
-	GOPATH=`pwd`/gopath $(GO) build IncludesTest BinaryKeyTest
+	GOPATH=`pwd`/gopath $(GO) build includestest binarykeytest
 	GOPATH=`pwd`/gopath $(GO) test thrift tests
 
 clean-local:
