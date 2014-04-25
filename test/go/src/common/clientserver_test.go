@@ -3,7 +3,7 @@ package common
 import (
 	"code.google.com/p/gomock/gomock"
 	"errors"
-	"gen/ThriftTest"
+	"gen/thrifttest"
 	"reflect"
 	"testing"
 	"thrift"
@@ -57,16 +57,16 @@ var rmapmap = map[int32]map[int32]int32{
 	4:  map[int32]int32{4: 4, 3: 3, 2: 2, 1: 1},
 }
 
-var xxs = &ThriftTest.Xtruct{
+var xxs = &thrifttest.Xtruct{
 	StringThing: "Hello2",
 	ByteThing:   42,
 	I32Thing:    4242,
 	I64Thing:    424242,
 }
 
-var xcept = &ThriftTest.Xception{ErrorCode: 1001, Message: "some"}
+var xcept = &thrifttest.Xception{ErrorCode: 1001, Message: "some"}
 
-func callEverythingWithMock(t *testing.T, client *ThriftTest.ThriftTestClient, handler *MockThriftTest) {
+func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, handler *MockThriftTest) {
 	gomock.InOrder(
 		handler.EXPECT().TestVoid(),
 		handler.EXPECT().TestString("thing").Return("thing", nil),
@@ -74,21 +74,21 @@ func callEverythingWithMock(t *testing.T, client *ThriftTest.ThriftTestClient, h
 		handler.EXPECT().TestI32(int32(4242)).Return(int32(4242), nil),
 		handler.EXPECT().TestI64(int64(424242)).Return(int64(424242), nil),
 		handler.EXPECT().TestDouble(float64(42.42)).Return(float64(42.42), nil),
-		handler.EXPECT().TestStruct(&ThriftTest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}).Return(&ThriftTest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}, nil),
-		handler.EXPECT().TestNest(&ThriftTest.Xtruct2{StructThing: &ThriftTest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}).Return(&ThriftTest.Xtruct2{StructThing: &ThriftTest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}, nil),
+		handler.EXPECT().TestStruct(&thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}).Return(&thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}, nil),
+		handler.EXPECT().TestNest(&thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}).Return(&thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}, nil),
 		handler.EXPECT().TestMap(map[int32]int32{1: 2, 3: 4, 5: 42}).Return(map[int32]int32{1: 2, 3: 4, 5: 42}, nil),
 		handler.EXPECT().TestStringMap(map[string]string{"a": "2", "b": "blah", "some": "thing"}).Return(map[string]string{"a": "2", "b": "blah", "some": "thing"}, nil),
 		handler.EXPECT().TestSet(map[int32]bool{1: true, 2: true, 42: true}).Return(map[int32]bool{1: true, 2: true, 42: true}, nil),
 		handler.EXPECT().TestList([]int32{1, 2, 42}).Return([]int32{1, 2, 42}, nil),
-		handler.EXPECT().TestEnum(ThriftTest.Numberz_TWO).Return(ThriftTest.Numberz_TWO, nil),
-		handler.EXPECT().TestTypedef(ThriftTest.UserId(42)).Return(ThriftTest.UserId(42), nil),
+		handler.EXPECT().TestEnum(thrifttest.Numberz_TWO).Return(thrifttest.Numberz_TWO, nil),
+		handler.EXPECT().TestTypedef(thrifttest.UserId(42)).Return(thrifttest.UserId(42), nil),
 		handler.EXPECT().TestMapMap(int32(42)).Return(rmapmap, nil),
 		//not testing insanity
-		handler.EXPECT().TestMulti(int8(42), int32(4242), int64(424242), map[int16]string{1: "blah", 2: "thing"}, ThriftTest.Numberz_EIGHT, ThriftTest.UserId(24)).Return(xxs, nil),
+		handler.EXPECT().TestMulti(int8(42), int32(4242), int64(424242), map[int16]string{1: "blah", 2: "thing"}, thrifttest.Numberz_EIGHT, thrifttest.UserId(24)).Return(xxs, nil),
 		handler.EXPECT().TestException("some").Return(xcept),
 		handler.EXPECT().TestException("TException").Return(errors.New("Just random exception")),
-		handler.EXPECT().TestMultiException("Xception", "ignoreme").Return(nil, &ThriftTest.Xception{ErrorCode: 1001, Message: "This is an Xception"}),
-		handler.EXPECT().TestMultiException("Xception2", "ignoreme").Return(nil, &ThriftTest.Xception2{ErrorCode: 2002, StructThing: &ThriftTest.Xtruct{StringThing: "This is an Xception2"}}),
+		handler.EXPECT().TestMultiException("Xception", "ignoreme").Return(nil, &thrifttest.Xception{ErrorCode: 1001, Message: "This is an Xception"}),
+		handler.EXPECT().TestMultiException("Xception2", "ignoreme").Return(nil, &thrifttest.Xception2{ErrorCode: 2002, StructThing: &thrifttest.Xtruct{StringThing: "This is an Xception2"}}),
 		handler.EXPECT().TestOneway(int32(2)).Return(nil),
 		handler.EXPECT().TestVoid(),
 	)
@@ -137,7 +137,7 @@ func callEverythingWithMock(t *testing.T, client *ThriftTest.ThriftTestClient, h
 		t.Errorf("Unexpected TestDouble() result expected 42.42, got %f ", d)
 	}
 
-	xs := ThriftTest.NewXtruct()
+	xs := thrifttest.NewXtruct()
 	xs.StringThing = "thing"
 	xs.ByteThing = 42
 	xs.I32Thing = 4242
@@ -150,7 +150,7 @@ func callEverythingWithMock(t *testing.T, client *ThriftTest.ThriftTestClient, h
 		t.Errorf("Unexpected TestStruct() result expected %#v, got %#v ", xs, xsret)
 	}
 
-	x2 := ThriftTest.NewXtruct2()
+	x2 := thrifttest.NewXtruct2()
 	x2.StructThing = xs
 	x2ret, err := client.TestNest(x2)
 	if err != nil {
@@ -196,20 +196,20 @@ func callEverythingWithMock(t *testing.T, client *ThriftTest.ThriftTestClient, h
 		t.Errorf("Unexpected TestSet() result expected %#v, got %#v ", l, lret)
 	}
 
-	eret, err := client.TestEnum(ThriftTest.Numberz_TWO)
+	eret, err := client.TestEnum(thrifttest.Numberz_TWO)
 	if err != nil {
 		t.Errorf("Unexpected error in TestEnum() call: ", err)
 	}
-	if eret != ThriftTest.Numberz_TWO {
-		t.Errorf("Unexpected TestEnum() result expected %#v, got %#v ", ThriftTest.Numberz_TWO, eret)
+	if eret != thrifttest.Numberz_TWO {
+		t.Errorf("Unexpected TestEnum() result expected %#v, got %#v ", thrifttest.Numberz_TWO, eret)
 	}
 
-	tret, err := client.TestTypedef(ThriftTest.UserId(42))
+	tret, err := client.TestTypedef(thrifttest.UserId(42))
 	if err != nil {
 		t.Errorf("Unexpected error in TestTypedef() call: ", err)
 	}
-	if tret != ThriftTest.UserId(42) {
-		t.Errorf("Unexpected TestTypedef() result expected %#v, got %#v ", ThriftTest.UserId(42), tret)
+	if tret != thrifttest.UserId(42) {
+		t.Errorf("Unexpected TestTypedef() result expected %#v, got %#v ", thrifttest.UserId(42), tret)
 	}
 
 	mapmap, err := client.TestMapMap(42)
@@ -220,7 +220,7 @@ func callEverythingWithMock(t *testing.T, client *ThriftTest.ThriftTestClient, h
 		t.Errorf("Unexpected TestMapmap() result expected %#v, got %#v ", rmapmap, mapmap)
 	}
 
-	xxsret, err := client.TestMulti(42, 4242, 424242, map[int16]string{1: "blah", 2: "thing"}, ThriftTest.Numberz_EIGHT, ThriftTest.UserId(24))
+	xxsret, err := client.TestMulti(42, 4242, 424242, map[int16]string{1: "blah", 2: "thing"}, thrifttest.Numberz_EIGHT, thrifttest.UserId(24))
 	if err != nil {
 		t.Errorf("Unexpected error in TestMulti() call: ", err)
 	}
@@ -247,7 +247,7 @@ func callEverythingWithMock(t *testing.T, client *ThriftTest.ThriftTestClient, h
 	if ign != nil || err == nil {
 		t.Errorf("Expecting exception in TestMultiException() call")
 	}
-	if !reflect.DeepEqual(err, &ThriftTest.Xception{ErrorCode: 1001, Message: "This is an Xception"}) {
+	if !reflect.DeepEqual(err, &thrifttest.Xception{ErrorCode: 1001, Message: "This is an Xception"}) {
 		t.Errorf("Unexpected TestMultiException() %#v ", err)
 	}
 
@@ -255,7 +255,7 @@ func callEverythingWithMock(t *testing.T, client *ThriftTest.ThriftTestClient, h
 	if ign != nil || err == nil {
 		t.Errorf("Expecting exception in TestMultiException() call")
 	}
-	expecting := &ThriftTest.Xception2{ErrorCode: 2002, StructThing: &ThriftTest.Xtruct{StringThing: "This is an Xception2"}}
+	expecting := &thrifttest.Xception2{ErrorCode: 2002, StructThing: &thrifttest.Xtruct{StringThing: "This is an Xception2"}}
 
 	if !reflect.DeepEqual(err, expecting) {
 		t.Errorf("Unexpected TestMultiException() %#v ", err)

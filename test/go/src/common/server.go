@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"gen/ThriftTest"
+	"gen/thrifttest"
 	"thrift"
 )
 
@@ -24,7 +24,7 @@ func StartServer(
 	transport string,
 	protocol string,
 	ssl bool,
-	handler ThriftTest.ThriftTest) (srv *thrift.TSimpleServer, err error) {
+	handler thrifttest.ThriftTest) (srv *thrift.TSimpleServer, err error) {
 
 	hostPort := fmt.Sprintf("%s:%d", host, port)
 
@@ -84,7 +84,7 @@ func StartServer(
 	default:
 		return nil, fmt.Errorf("Invalid transport specified %s", transport)
 	}
-	processor := ThriftTest.NewThriftTestProcessor(handler)
+	processor := thrifttest.NewThriftTestProcessor(handler)
 	server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
 	if err = server.Listen(); err != nil {
 		return

@@ -3,7 +3,7 @@ package common
 import (
 	"errors"
 	"fmt"
-	. "gen/ThriftTest"
+	. "gen/thrifttest"
 	"time"
 )
 

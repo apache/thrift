@@ -2,7 +2,7 @@ package common
 
 import (
 	"errors"
-	. "gen/ThriftTest"
+	. "gen/thrifttest"
 	"time"
 )
 

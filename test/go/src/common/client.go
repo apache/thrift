@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"gen/ThriftTest"
+	"gen/thrifttest"
 	"thrift"
 )
 
@@ -20,7 +20,7 @@ func StartClient(
 	domain_socket string,
 	transport string,
 	protocol string,
-	ssl bool) (client *ThriftTest.ThriftTestClient, err error) {
+	ssl bool) (client *thrifttest.ThriftTestClient, err error) {
 
 	hostPort := fmt.Sprintf("%s:%d", host, port)
 
@@ -72,6 +72,6 @@ func StartClient(
 	if err = trans.Open(); err != nil {
 		return nil, err
 	}
-	client = ThriftTest.NewThriftTestClientFactory(trans, protocolFactory)
+	client = thrifttest.NewThriftTestClientFactory(trans, protocolFactory)
 	return
 }

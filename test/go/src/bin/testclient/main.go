@@ -3,7 +3,7 @@ package main
 import (
 	"common"
 	"flag"
-	"gen/ThriftTest"
+	"gen/thrifttest"
 	t "log"
 	"reflect"
 	"thrift"
@@ -11,7 +11,7 @@ import (
 
 var host = flag.String("host", "localhost", "Host to connect")
 var port = flag.Int64("port", 9090, "Port number to connect")
-var domain_socket = flag.String("domain-socket", "", "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
+var domain_socket = flag.String("domain-socket", "", "Domain Socket (e.g. /tmp/thrifttest.thrift), instead of host and port")
 var transport = flag.String("transport", "buffered", "Transport: buffered, framed, http")
 var protocol = flag.String("protocol", "binary", "Protocol: binary, compact, json")
 var ssl = flag.Bool("ssl", false, "Encrypted Transport using SSL")
@@ -33,16 +33,16 @@ var rmapmap = map[int32]map[int32]int32{
 	4:  map[int32]int32{4: 4, 3: 3, 2: 2, 1: 1},
 }
 
-var xxs = &ThriftTest.Xtruct{
+var xxs = &thrifttest.Xtruct{
 	StringThing: "Hello2",
 	ByteThing:   42,
 	I32Thing:    4242,
 	I64Thing:    424242,
 }
 
-var xcept = &ThriftTest.Xception{ErrorCode: 1001, Message: "Xception"}
+var xcept = &thrifttest.Xception{ErrorCode: 1001, Message: "Xception"}
 
-func callEverything(client *ThriftTest.ThriftTestClient) {
+func callEverything(client *thrifttest.ThriftTestClient) {
 	var err error
 	if err = client.TestVoid(); err != nil {
 		t.Fatalf("Unexpected error in TestVoid() call: ", err)
@@ -88,7 +88,7 @@ func callEverything(client *ThriftTest.ThriftTestClient) {
 		t.Fatalf("Unexpected TestDouble() result expected 42.42, got %f ", d)
 	}
 
-	xs := ThriftTest.NewXtruct()
+	xs := thrifttest.NewXtruct()
 	xs.StringThing = "thing"
 	xs.ByteThing = 42
 	xs.I32Thing = 4242
@@ -101,7 +101,7 @@ func callEverything(client *ThriftTest.ThriftTestClient) {
 		t.Fatalf("Unexpected TestStruct() result expected %#v, got %#v ", xs, xsret)
 	}
 
-	x2 := ThriftTest.NewXtruct2()
+	x2 := thrifttest.NewXtruct2()
 	x2.StructThing = xs
 	x2ret, err := client.TestNest(x2)
 	if err != nil {
@@ -147,20 +147,20 @@ func callEverything(client *ThriftTest.ThriftTestClient) {
 		t.Fatalf("Unexpected TestSet() result expected %#v, got %#v ", l, lret)
 	}
 
-	eret, err := client.TestEnum(ThriftTest.Numberz_TWO)
+	eret, err := client.TestEnum(thrifttest.Numberz_TWO)
 	if err != nil {
 		t.Fatalf("Unexpected error in TestEnum() call: ", err)
 	}
-	if eret != ThriftTest.Numberz_TWO {
-		t.Fatalf("Unexpected TestEnum() result expected %#v, got %#v ", ThriftTest.Numberz_TWO, eret)
+	if eret != thrifttest.Numberz_TWO {
+		t.Fatalf("Unexpected TestEnum() result expected %#v, got %#v ", thrifttest.Numberz_TWO, eret)
 	}
 
-	tret, err := client.TestTypedef(ThriftTest.UserId(42))
+	tret, err := client.TestTypedef(thrifttest.UserId(42))
 	if err != nil {
 		t.Fatalf("Unexpected error in TestTypedef() call: ", err)
 	}
-	if tret != ThriftTest.UserId(42) {
-		t.Fatalf("Unexpected TestTypedef() result expected %#v, got %#v ", ThriftTest.UserId(42), tret)
+	if tret != thrifttest.UserId(42) {
+		t.Fatalf("Unexpected TestTypedef() result expected %#v, got %#v ", thrifttest.UserId(42), tret)
 	}
 
 	mapmap, err := client.TestMapMap(42)
@@ -171,7 +171,7 @@ func callEverything(client *ThriftTest.ThriftTestClient) {
 		t.Fatalf("Unexpected TestMapmap() result expected %#v, got %#v ", rmapmap, mapmap)
 	}
 
-	xxsret, err := client.TestMulti(42, 4242, 424242, map[int16]string{1: "blah", 2: "thing"}, ThriftTest.Numberz_EIGHT, ThriftTest.UserId(24))
+	xxsret, err := client.TestMulti(42, 4242, 424242, map[int16]string{1: "blah", 2: "thing"}, thrifttest.Numberz_EIGHT, thrifttest.UserId(24))
 	if err != nil {
 		t.Fatalf("Unexpected error in TestMulti() call: ", err)
 	}
@@ -198,7 +198,7 @@ func callEverything(client *ThriftTest.ThriftTestClient) {
 	if ign != nil || err == nil {
 		t.Fatalf("Expecting exception in TestMultiException() call")
 	}
-	if !reflect.DeepEqual(err, &ThriftTest.Xception{ErrorCode: 1001, Message: "This is an Xception"}) {
+	if !reflect.DeepEqual(err, &thrifttest.Xception{ErrorCode: 1001, Message: "This is an Xception"}) {
 		t.Fatalf("Unexpected TestMultiException() %#v ", err)
 	}
 
@@ -206,7 +206,7 @@ func callEverything(client *ThriftTest.ThriftTestClient) {
 	if ign != nil || err == nil {
 		t.Fatalf("Expecting exception in TestMultiException() call")
 	}
-	expecting := &ThriftTest.Xception2{ErrorCode: 2002, StructThing: &ThriftTest.Xtruct{StringThing: "This is an Xception2"}}
+	expecting := &thrifttest.Xception2{ErrorCode: 2002, StructThing: &thrifttest.Xtruct{StringThing: "This is an Xception2"}}
 
 	if !reflect.DeepEqual(err, expecting) {
 		t.Fatalf("Unexpected TestMultiException() %#v ", err)
