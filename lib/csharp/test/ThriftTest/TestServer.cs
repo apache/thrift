@@ -23,6 +23,7 @@
 // http://developers.facebook.com/thrift/
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using Thrift.Collections;
 using Thrift.Test; //generated code
 using Thrift.Transport;
@@ -321,7 +322,7 @@ namespace Test
 		{
 			try
 			{
-				bool useBufferedSockets = false, useFramed = false;
+				bool useBufferedSockets = false, useFramed = false, useEncryption = false, compact = false, json = false;
 				int port = 9090, i = 0;
 				string pipe = null;
 				if (args.Length > 0)
@@ -343,13 +344,25 @@ namespace Test
 						{
 							// as default
 						}
-						else if ( args[i] == "buffered" )
+						else if (args[i] == "buffered")
 						{
 							useBufferedSockets = true;
 						}
 						else if (args[i] == "framed")
 						{
 							useFramed = true;
+						}
+						else if (args[i] == "ssl")
+						{
+							useEncryption = true;
+						}
+						else if (args[i] == "compact" )
+						{
+							compact = true;
+						}
+						else if (args[i] == "json" )
+						{
+							json = true;
 						}
 						else
 						{
@@ -371,15 +384,30 @@ namespace Test
 				}
 				else
 				{
-					trans = new TServerSocket(port, 0, useBufferedSockets);
+					if (useEncryption)
+					{
+						trans = new TTLSServerSocket(port, 0, useBufferedSockets, new X509Certificate2("../../../../../keys/server.pem"));
+					}
+					else
+					{
+						trans = new TServerSocket(port, 0, useBufferedSockets);
+					}
 				}
 
+				TProtocolFactory proto;
+				if ( compact )
+					proto = new TCompactProtocol.Factory();
+				else if ( json )
+					proto = new TJSONProtocol.Factory();
+				else
+					proto = new TBinaryProtocol.Factory();
+					
 				// Simple Server
 				TServer serverEngine;
 				if ( useFramed )
-					serverEngine = new TSimpleServer(testProcessor, trans, new TFramedTransport.Factory());
+					serverEngine = new TSimpleServer(testProcessor, trans, new TFramedTransport.Factory(), proto);
 				else
-					serverEngine = new TSimpleServer(testProcessor, trans);
+					serverEngine = new TSimpleServer(testProcessor, trans, new TTransportFactory(), proto);
 
 				// ThreadPool Server
 				// serverEngine = new TThreadPoolServer(testProcessor, tServerSocket);
@@ -391,9 +419,11 @@ namespace Test
 
 				// Run it
 				string where = ( pipe != null ? "on pipe "+pipe : "on port " + port);
-				Console.WriteLine("Starting the server " +where+
+				Console.WriteLine("Starting the server " + where +
 					(useBufferedSockets ? " with buffered socket" : "") + 
 					(useFramed ? " with framed transport" : "") + 
+					(useEncryption ? " with encryption" : "") + 
+					(compact ? " with compact protocol" : "") + 
 					"...");
 				serverEngine.Serve();
 

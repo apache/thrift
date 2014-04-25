@@ -1,5 +1,3 @@
-#!/bin/sh
-
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -19,12 +17,11 @@
 # under the License.
 #
 
-../../../../compiler/cpp/thrift --gen csharp -o . ../../../../test/ThriftTest.thrift
-gmcs /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/* /reference:../../Thrift.dll
-gmcs  /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs Program.cs
+service First {
+	i64 returnOne();
+}
 
-export MONO_PATH=../../
+service Second {
+	i64 returnTwo();
+}
 
-timeout 120 ./TestClientServer.exe server &
-sleep 1
-./TestClientServer.exe client
