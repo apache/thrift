@@ -27,28 +27,36 @@ import (
 	"io"
 )
 
+const DEFAULT_MAX_LENGTH = 16384000
+
 type TFramedTransport struct {
 	transport   TTransport
 	writeBuffer bytes.Buffer
 	reader      *bufio.Reader
 	frameSize   int //Current remaining size of the frame. if ==0 read next frame header
 	buffer      [4]byte
+	maxLength   int
 }
 
 type tFramedTransportFactory struct {
-	factory TTransportFactory
+	factory   TTransportFactory
+	maxLength int
 }
 
 func NewTFramedTransportFactory(factory TTransportFactory) TTransportFactory {
-	return &tFramedTransportFactory{factory: factory}
+	return &tFramedTransportFactory{factory: factory, maxLength: DEFAULT_MAX_LENGTH}
 }
 
 func (p *tFramedTransportFactory) GetTransport(base TTransport) TTransport {
-	return NewTFramedTransport(p.factory.GetTransport(base))
+	return NewTFramedTransportMaxLength(p.factory.GetTransport(base), p.maxLength)
 }
 
 func NewTFramedTransport(transport TTransport) *TFramedTransport {
-	return &TFramedTransport{transport: transport, reader: bufio.NewReader(transport)}
+	return &TFramedTransport{transport: transport, reader: bufio.NewReader(transport), maxLength: DEFAULT_MAX_LENGTH}
+}
+
+func NewTFramedTransportMaxLength(transport TTransport, maxLength int) *TFramedTransport {
+	return &TFramedTransport{transport: transport, reader: bufio.NewReader(transport), maxLength: maxLength}
 }
 
 func (p *TFramedTransport) Open() error {
@@ -111,8 +119,8 @@ func (p *TFramedTransport) readFrameHeader() (int, error) {
 		return 0, err
 	}
 	size := int(binary.BigEndian.Uint32(buf))
-	if size < 0 {
-		return 0, NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "Read a negative frame size ("+string(size)+")")
+	if size < 0 || size > p.maxLength {
+		return 0, NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, fmt.Sprintf("Incorrect frame size (%d)", size))
 	}
 	return size, nil
 }
