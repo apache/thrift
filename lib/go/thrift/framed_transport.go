@@ -20,15 +20,19 @@
 package thrift
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 )
 
 type TFramedTransport struct {
 	transport   TTransport
 	writeBuffer bytes.Buffer
-	readBuffer  bytes.Buffer
+	reader      *bufio.Reader
+	frameSize   int //Current remaining size of the frame. if ==0 read next frame header
+	buffer      [4]byte
 }
 
 type tFramedTransportFactory struct {
@@ -44,7 +48,7 @@ func (p *tFramedTransportFactory) GetTransport(base TTransport) TTransport {
 }
 
 func NewTFramedTransport(transport TTransport) *TFramedTransport {
-	return &TFramedTransport{transport: transport}
+	return &TFramedTransport{transport: transport, reader: bufio.NewReader(transport)}
 }
 
 func (p *TFramedTransport) Open() error {
@@ -59,18 +63,22 @@ func (p *TFramedTransport) Close() error {
 	return p.transport.Close()
 }
 
-func (p *TFramedTransport) Read(buf []byte) (int, error) {
-	if p.readBuffer.Len() > 0 {
-		got, err := p.readBuffer.Read(buf)
-		if got > 0 {
-			return got, NewTTransportExceptionFromError(err)
+func (p *TFramedTransport) Read(buf []byte) (l int, err error) {
+	if p.frameSize == 0 {
+		p.frameSize, err = p.readFrameHeader()
+		if err != nil {
+			return
 		}
 	}
-
-	// Read another frame of data
-	p.readFrame()
-
-	got, err := p.readBuffer.Read(buf)
+	if p.frameSize < len(buf) {
+		return 0, NewTTransportExceptionFromError(fmt.Errorf("Not enought frame size %d to read %d bytes", p.frameSize, len(buf)))
+	}
+	got, err := p.reader.Read(buf)
+	p.frameSize = p.frameSize - got
+	//sanity check
+	if p.frameSize < 0 {
+		return 0, NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "Negative frame size")
+	}
 	return got, NewTTransportExceptionFromError(err)
 }
 
@@ -81,7 +89,7 @@ func (p *TFramedTransport) Write(buf []byte) (int, error) {
 
 func (p *TFramedTransport) Flush() error {
 	size := p.writeBuffer.Len()
-	buf := []byte{0, 0, 0, 0}
+	buf := p.buffer[:4]
 	binary.BigEndian.PutUint32(buf, uint32(size))
 	_, err := p.transport.Write(buf)
 	if err != nil {
@@ -97,22 +105,14 @@ func (p *TFramedTransport) Flush() error {
 	return NewTTransportExceptionFromError(err)
 }
 
-func (p *TFramedTransport) readFrame() (int, error) {
-	buf := []byte{0, 0, 0, 0}
-	if _, err := io.ReadFull(p.transport, buf); err != nil {
+func (p *TFramedTransport) readFrameHeader() (int, error) {
+	buf := p.buffer[:4]
+	if _, err := io.ReadFull(p.reader, buf); err != nil {
 		return 0, err
 	}
 	size := int(binary.BigEndian.Uint32(buf))
 	if size < 0 {
 		return 0, NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "Read a negative frame size ("+string(size)+")")
 	}
-	if size == 0 {
-		return 0, nil
-	}
-	buf2 := make([]byte, size)
-	if n, err := io.ReadFull(p.transport, buf2); err != nil {
-		return n, err
-	}
-	p.readBuffer = bytes.NewBuffer(buf2)
 	return size, nil
 }
