@@ -40,7 +40,4 @@ type TTransport interface {
 
 	// Returns true if the transport is open
 	IsOpen() bool
-
-	// Returns true if there is more data to be read or the remote side is still open
-	Peek() bool
 }

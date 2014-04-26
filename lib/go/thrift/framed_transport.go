@@ -57,10 +57,6 @@ func (p *TFramedTransport) IsOpen() bool {
 	return p.transport.IsOpen()
 }
 
-func (p *TFramedTransport) Peek() bool {
-	return p.transport.Peek()
-}
-
 func (p *TFramedTransport) Close() error {
 	return p.transport.Close()
 }
