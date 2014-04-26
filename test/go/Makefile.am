@@ -21,7 +21,7 @@ THRIFT = $(top_srcdir)/compiler/cpp/thrift
 THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=thrift
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
-all: bin/testclient bin/testserver
+all: bin/testclient bin/testserver bin/stress
 
 ThriftTest.thrift: $(THRIFTTEST)
 	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
@@ -29,6 +29,7 @@ ThriftTest.thrift: $(THRIFTTEST)
 # Thrift for GO has problems with complex map keys: THRIFT-2063
 gopath: $(THRIFT) ThriftTest.thrift 
 	$(THRIFTCMD) ThriftTest.thrift
+	$(THRIFTCMD) ../StressTest.thrift
 	ln -nfs ../../../lib/go/thrift src/thrift
 	GOPATH=`pwd` $(GO) get code.google.com/p/gomock/gomock
 	touch gopath
@@ -38,6 +39,9 @@ bin/testclient: gopath
 
 bin/testserver: gopath
 	GOPATH=`pwd` $(GO) install bin/testserver
+
+bin/stress: gopath
+	GOPATH=`pwd` $(GO) install bin/stress
 
 clean-local:
 	$(RM) -r src/gen/* src/code.google.com src/thrift bin pkg gopath ThriftTest.thrift
