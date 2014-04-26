@@ -27,8 +27,8 @@ import (
 
 type TFramedTransport struct {
 	transport   TTransport
-	writeBuffer *bytes.Buffer
-	readBuffer  *bytes.Buffer
+	writeBuffer bytes.Buffer
+	readBuffer  bytes.Buffer
 }
 
 type tFramedTransportFactory struct {
@@ -44,9 +44,7 @@ func (p *tFramedTransportFactory) GetTransport(base TTransport) TTransport {
 }
 
 func NewTFramedTransport(transport TTransport) *TFramedTransport {
-	writeBuf := make([]byte, 0, 1024)
-	readBuf := make([]byte, 0, 1024)
-	return &TFramedTransport{transport: transport, writeBuffer: bytes.NewBuffer(writeBuf), readBuffer: bytes.NewBuffer(readBuf)}
+	return &TFramedTransport{transport: transport}
 }
 
 func (p *TFramedTransport) Open() error {
