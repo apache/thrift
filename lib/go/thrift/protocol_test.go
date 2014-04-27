@@ -183,7 +183,7 @@ func ReadWriteProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
 
 }
 
-func ReadWriteBool(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteBool(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(BOOL)
 	thelen := len(BOOL_VALUES)
 	err := p.WriteListBegin(thetype, thelen)
@@ -229,7 +229,7 @@ func ReadWriteBool(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteByte(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteByte(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(BYTE)
 	thelen := len(BYTE_VALUES)
 	err := p.WriteListBegin(thetype, thelen)
@@ -278,7 +278,7 @@ func ReadWriteByte(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteI16(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteI16(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(I16)
 	thelen := len(INT16_VALUES)
 	p.WriteListBegin(thetype, thelen)
@@ -315,7 +315,7 @@ func ReadWriteI16(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteI32(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteI32(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(I32)
 	thelen := len(INT32_VALUES)
 	p.WriteListBegin(thetype, thelen)
@@ -351,7 +351,7 @@ func ReadWriteI32(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteI64(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteI64(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(I64)
 	thelen := len(INT64_VALUES)
 	p.WriteListBegin(thetype, thelen)
@@ -387,7 +387,7 @@ func ReadWriteI64(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteDouble(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteDouble(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(DOUBLE)
 	thelen := len(DOUBLE_VALUES)
 	p.WriteListBegin(thetype, thelen)
@@ -429,7 +429,7 @@ func ReadWriteDouble(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteString(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteString(t testing.TB, p TProtocol, trans TTransport) {
 	thetype := TType(STRING)
 	thelen := len(STRING_VALUES)
 	p.WriteListBegin(thetype, thelen)
@@ -465,7 +465,7 @@ func ReadWriteString(t *testing.T, p TProtocol, trans TTransport) {
 	}
 }
 
-func ReadWriteBinary(t *testing.T, p TProtocol, trans TTransport) {
+func ReadWriteBinary(t testing.TB, p TProtocol, trans TTransport) {
 	v := protocol_bdata
 	p.WriteBinary(v)
 	p.Flush()
