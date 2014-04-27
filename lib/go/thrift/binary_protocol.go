@@ -27,10 +27,10 @@ import (
 )
 
 type TBinaryProtocol struct {
-	trans           TTransport
-	strictRead      bool
-	strictWrite     bool
-	buffer          [8]byte
+	trans       TTransport
+	strictRead  bool
+	strictWrite bool
+	buffer      [8]byte
 }
 
 type TBinaryProtocolFactory struct {
@@ -171,7 +171,8 @@ func (p *TBinaryProtocol) WriteBool(value bool) error {
 }
 
 func (p *TBinaryProtocol) WriteByte(value byte) error {
-	v := []byte{value}
+	v := p.buffer[0:1]
+	v[0] = value
 	_, e := p.trans.Write(v)
 	return NewTProtocolException(e)
 }
