@@ -396,13 +396,9 @@ func ReadWriteDouble(t testing.TB, p TProtocol, trans TTransport) {
 	}
 	p.WriteListEnd()
 	p.Flush()
-	wrotebuffer := ""
-	if memtrans, ok := trans.(*TMemoryBuffer); ok {
-		wrotebuffer = memtrans.String()
-	}
 	thetype2, thelen2, err := p.ReadListBegin()
 	if err != nil {
-		t.Errorf("%s: %T %T %q Error reading list: %q, wrote: %v", "ReadWriteDouble", p, trans, err, DOUBLE_VALUES, wrotebuffer)
+		t.Errorf("%s: %T %T %q Error reading list: %q", "ReadWriteDouble", p, trans, err, DOUBLE_VALUES)
 	}
 	if thetype != thetype2 {
 		t.Errorf("%s: %T %T type %s != type %s", "ReadWriteDouble", p, trans, thetype, thetype2)
