@@ -61,3 +61,10 @@ func (p *TBufferedTransport) Open() (err error) {
 func (p *TBufferedTransport) Close() (err error) {
 	return p.tp.Close()
 }
+
+func (p *TBufferedTransport) Flush() error {
+	if err := p.ReadWriter.Flush(); err != nil {
+		return err
+	}
+	return p.tp.Flush()
+}

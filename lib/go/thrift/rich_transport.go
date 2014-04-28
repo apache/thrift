@@ -20,36 +20,36 @@
 package thrift
 
 import (
-	"errors"
 	"io"
 )
 
-var errTransportInterrupted = errors.New("Transport Interrupted")
-
-type Flusher interface {
-	Flush() (err error)
+type RichTransport struct {
+	TTransport
 }
 
-// Encapsulates the I/O layer
-type TTransport interface {
-	io.ReadWriteCloser
-	Flusher
-
-	// Opens the transport for communication
-	Open() error
-
-	// Returns true if the transport is open
-	IsOpen() bool
+//Wraps Transport to provide TRichTransport interface
+func NewTRichTransport(trans TTransport) *RichTransport {
+	return &RichTransport{trans}
 }
 
-// This is "enchanced" transport with extra capabilities. You need to use one of these
-// to construct protocol.
-// Notably, TSocket does not implement this interface, and it is always a mistake to use
-// TSocket directly in protocol.
-type TRichTransport interface {
-	io.ReadWriter
-	io.ByteReader
-	io.ByteWriter
-	// WriteString(s string) (n int, err error)
-	Flusher
+func (r *RichTransport) ReadByte() (c byte, err error) {
+	return readByte(r.TTransport)
+}
+
+func (r *RichTransport) WriteByte(c byte) error {
+	return writeByte(r.TTransport, c)
+}
+
+func readByte(r io.Reader) (c byte, err error) {
+	v := [1]byte{0}
+	if _, err := r.Read(v[0:1]); err != nil {
+		return 0, err
+	}
+	return v[0], nil
+}
+
+func writeByte(w io.Writer, c byte) error {
+	v := [1]byte{c}
+	_, err := w.Write(v[0:1])
+	return err
 }

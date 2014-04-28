@@ -27,10 +27,11 @@ import (
 )
 
 type TBinaryProtocol struct {
-	trans       TTransport
-	strictRead  bool
-	strictWrite bool
-	buffer      [8]byte
+	trans         TRichTransport
+	origTransport TTransport
+	strictRead    bool
+	strictWrite   bool
+	buffer        [8]byte
 }
 
 type TBinaryProtocolFactory struct {
@@ -43,7 +44,14 @@ func NewTBinaryProtocolTransport(t TTransport) *TBinaryProtocol {
 }
 
 func NewTBinaryProtocol(t TTransport, strictRead, strictWrite bool) *TBinaryProtocol {
-	return &TBinaryProtocol{trans: t, strictRead: strictRead, strictWrite: strictWrite}
+	p := &TBinaryProtocol{origTransport: t, strictRead: strictRead, strictWrite: strictWrite}
+	if et, ok := t.(TRichTransport); ok {
+		p.trans = et
+	} else {
+		p.trans = NewTRichTransport(t)
+	}
+
+	return p
 }
 
 func NewTBinaryProtocolFactoryDefault() *TBinaryProtocolFactory {
@@ -171,9 +179,7 @@ func (p *TBinaryProtocol) WriteBool(value bool) error {
 }
 
 func (p *TBinaryProtocol) WriteByte(value byte) error {
-	v := p.buffer[0:1]
-	v[0] = value
-	_, e := p.trans.Write(v)
+	e := p.trans.WriteByte(value)
 	return NewTProtocolException(e)
 }
 
@@ -363,9 +369,7 @@ func (p *TBinaryProtocol) ReadBool() (bool, error) {
 }
 
 func (p *TBinaryProtocol) ReadByte() (value byte, err error) {
-	buf := p.buffer[0:1]
-	err = p.readAll(buf)
-	return buf[0], err
+	return p.trans.ReadByte()
 }
 
 func (p *TBinaryProtocol) ReadI16() (value int16, err error) {
@@ -424,7 +428,7 @@ func (p *TBinaryProtocol) Skip(fieldType TType) (err error) {
 }
 
 func (p *TBinaryProtocol) Transport() TTransport {
-	return p.trans
+	return p.origTransport
 }
 
 func (p *TBinaryProtocol) readAll(buf []byte) error {
