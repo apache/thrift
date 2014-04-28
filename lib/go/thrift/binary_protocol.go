@@ -31,7 +31,7 @@ type TBinaryProtocol struct {
 	origTransport TTransport
 	strictRead    bool
 	strictWrite   bool
-	buffer        [8]byte
+	buffer        [64]byte
 }
 
 type TBinaryProtocolFactory struct {
@@ -198,7 +198,7 @@ func (p *TBinaryProtocol) WriteI32(value int32) error {
 }
 
 func (p *TBinaryProtocol) WriteI64(value int64) error {
-	v := p.buffer[:]
+	v := p.buffer[0:8]
 	binary.BigEndian.PutUint64(v, uint64(value))
 	_, err := p.trans.Write(v)
 	return NewTProtocolException(err)
@@ -445,8 +445,12 @@ func (p *TBinaryProtocol) readStringBody(size int) (value string, err error) {
 	if size < 0 {
 		return "", nil
 	}
-	isize := int(size)
-	buf := make([]byte, isize)
+	var buf []byte
+	if size <= len(p.buffer) {
+		buf = p.buffer[0:size]
+	} else {
+		buf = make([]byte, size)
+	}
 	_, e := io.ReadFull(p.trans, buf)
 	return string(buf), NewTProtocolException(e)
 }
