@@ -209,7 +209,12 @@ func (p *TBinaryProtocol) WriteDouble(value float64) error {
 }
 
 func (p *TBinaryProtocol) WriteString(value string) error {
-	return p.WriteBinary([]byte(value))
+	e := p.WriteI32(int32(len(value)))
+	if e != nil {
+		return e
+	}
+	_, err := p.trans.WriteString(value)
+	return NewTProtocolException(err)
 }
 
 func (p *TBinaryProtocol) WriteBinary(value []byte) error {

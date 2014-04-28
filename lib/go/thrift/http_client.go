@@ -166,6 +166,10 @@ func (p *THttpClient) WriteByte(c byte) error {
 	return p.requestBuffer.WriteByte(c)
 }
 
+func (p *THttpClient) WriteString(s string) (n int, err error) {
+	return p.requestBuffer.WriteString(s)
+}
+
 func (p *THttpClient) Flush() error {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", p.url.String(), p.requestBuffer)

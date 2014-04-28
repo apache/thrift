@@ -40,6 +40,10 @@ func (r *RichTransport) WriteByte(c byte) error {
 	return writeByte(r.TTransport, c)
 }
 
+func (r *RichTransport) WriteString(s string) (n int, err error) {
+	return r.Write([]byte(s))
+}
+
 func readByte(r io.Reader) (c byte, err error) {
 	v := [1]byte{0}
 	if _, err := r.Read(v[0:1]); err != nil {

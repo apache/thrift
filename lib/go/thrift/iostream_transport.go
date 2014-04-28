@@ -158,9 +158,17 @@ func (p *StreamTransport) ReadByte() (c byte, err error) {
 }
 
 func (p *StreamTransport) WriteByte(c byte) error {
-	f, ok := p.Reader.(io.ByteWriter)
+	f, ok := p.Writer.(io.ByteWriter)
 	if ok {
 		return f.WriteByte(c)
 	}
 	return writeByte(p.Writer, c)
+}
+
+func (p *StreamTransport) WriteString(s string) (n int, err error) {
+	f, ok := p.Writer.(stringWriter)
+	if ok {
+		return f.WriteString(s)
+	}
+	return p.Writer.Write([]byte(s))
 }

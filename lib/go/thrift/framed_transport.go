@@ -116,6 +116,10 @@ func (p *TFramedTransport) WriteByte(c byte) error {
 	return p.buf.WriteByte(c)
 }
 
+func (p *TFramedTransport) WriteString(s string) (n int, err error) {
+	return p.buf.WriteString(s)
+}
+
 func (p *TFramedTransport) Flush() error {
 	size := p.buf.Len()
 	buf := p.buffer[:4]
