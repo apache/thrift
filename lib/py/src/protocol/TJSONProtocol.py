@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from TProtocol import TType, TProtocolBase, TProtocolException
+from .TProtocol import TType, TProtocolBase, TProtocolException
 import base64
 import json
 import math
