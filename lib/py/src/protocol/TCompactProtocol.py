@@ -17,8 +17,10 @@
 # under the License.
 #
 
-from TProtocol import *
+from .TProtocol import *
 from struct import pack, unpack
+from six.moves import map
+from six.moves import zip
 
 __all__ = ['TCompactProtocol', 'TCompactProtocolFactory']
 

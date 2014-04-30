@@ -29,6 +29,7 @@ from twisted.protocols import basic
 from twisted.web import server, resource, http
 
 from thrift.transport import TTransport
+import six
 
 
 class TMessageSenderTransport(TTransport.TTransportBase):
@@ -82,7 +83,7 @@ class ThriftClientProtocol(basic.Int32StringReceiver):
         self.started.callback(self.client)
 
     def connectionLost(self, reason=connectionDone):
-        for k, v in self.client._reqs.iteritems():
+        for k, v in six.iteritems(self.client._reqs):
             tex = TTransport.TTransportException(
                 type=TTransport.TTransportException.END_OF_FILE,
                 message='Connection closed')

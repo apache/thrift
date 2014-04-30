@@ -17,8 +17,7 @@
 # under the License.
 #
 
-from TProtocol import TType, TProtocolBase, TProtocolException, \
-    checkIntegerLimits
+from .TProtocol import TType, TProtocolBase, TProtocolException, checkIntegerLimits
 import base64
 import json
 import math

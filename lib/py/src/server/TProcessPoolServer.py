@@ -19,11 +19,9 @@
 
 
 import logging
-logger = logging.getLogger(__name__)
-
 from multiprocessing import  Process, Value, Condition, reduction
 
-from TServer import TServer
+from .TServer import TServer
 from thrift.transport.TTransport import TTransportException
 
 
@@ -64,7 +62,7 @@ class TProcessPoolServer(TServer):
             except (KeyboardInterrupt, SystemExit):
                 return 0
             except Exception as x:
-                logger.exception(x)
+                logging.exception(x)
 
     def serveClient(self, client):
         """Process input/output from a client for as long as possible"""
@@ -79,7 +77,7 @@ class TProcessPoolServer(TServer):
         except TTransportException as tx:
             pass
         except Exception as x:
-            logger.exception(x)
+            logging.exception(x)
 
         itrans.close()
         otrans.close()
@@ -100,7 +98,7 @@ class TProcessPoolServer(TServer):
                 w.start()
                 self.workers.append(w)
             except Exception as x:
-                logger.exception(x)
+                logging.exception(x)
 
         # wait until the condition is set by stop()
         while True:
@@ -111,7 +109,7 @@ class TProcessPoolServer(TServer):
             except (SystemExit, KeyboardInterrupt):
                 break
             except Exception as x:
-                logger.exception(x)
+                logging.exception(x)
 
         self.isRunning.value = False
 

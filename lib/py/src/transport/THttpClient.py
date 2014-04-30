@@ -17,17 +17,18 @@
 # under the License.
 #
 
-import httplib
 import os
 import socket
 import sys
 import urllib
-import urlparse
 import warnings
 
-from cStringIO import StringIO
+from six.moves.urllib import parse as urlparse
+from six.moves import http_client
+from six.moves import StringIO
 
-from TTransport import *
+from .TTransport import *
+import six
 
 
 class THttpClient(TTransportBase):
@@ -135,7 +136,7 @@ class THttpClient(TTransportBase):
       self.__http.putheader('User-Agent', user_agent)
 
     if self.__custom_headers:
-        for key, val in self.__custom_headers.iteritems():
+        for key, val in six.iteritems(self.__custom_headers):
             self.__http.putheader(key, val)
 
     self.__http.endheaders()
