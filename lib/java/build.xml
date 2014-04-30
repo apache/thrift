@@ -232,8 +232,9 @@ resolution:=optional,org.slf4j;resolution:=optional;version=&quot;[1.4,2)&quot;"
   </target>
 
   <target name="test" description="Run the full test suite" depends="junit-test,deprecated-test"/>
-
-  <target name="testclient" description="Run a test client" depends="compile-test">
+  
+  <target name="testclient" description="Run a test client" depends="compile-test, run-testclient"/>
+  <target name="run-testclient" description="Run a test client">
     <java classname="org.apache.thrift.test.TestClient"
       classpathref="test.classpath" failonerror="true" fork="true">
       <sysproperty key="javax.net.ssl.trustStore" value="${src.test}/.truststore"/>
@@ -241,8 +242,9 @@ resolution:=optional,org.slf4j;resolution:=optional;version=&quot;[1.4,2)&quot;"
       <arg line="${testargs}"/>
     </java>
   </target>
-
-  <target name="testserver" description="Run a test server" depends="compile-test">
+  
+  <target name="testserver" description="Run a test server" depends="compile-test, run-testserver"/>
+  <target name="run-testserver" description="Run a test server">
     <java classname="org.apache.thrift.test.TestServer"
       classpathref="test.classpath" failonerror="true" fork="true"> 
       <sysproperty key="javax.net.ssl.keyStore" value="${src.test}/.keystore"/>
@@ -250,8 +252,9 @@ resolution:=optional,org.slf4j;resolution:=optional;version=&quot;[1.4,2)&quot;"
       <arg line="${testargs}"/> 
     </java>
   </target>
-
-  <target name="testnonblockingserver" description="Run a test nonblocking server" depends="compile-test">
+  
+  <target name="testnonblockingserver" description="Run a test nonblocking server" depends="compile-test, run-testnonblockingserver"/>
+  <target name="run-testnonblockingserver" description="Run a test nonblocking server">
     <java classname="org.apache.thrift.test.TestNonblockingServer"
       classpathref="test.classpath" failonerror="true">
       <arg line="${testargs}"/>
