@@ -20,40 +20,25 @@
 package thrift
 
 import (
-	"errors"
-	"io"
+	"bytes"
+	"reflect"
+	"testing"
 )
 
-var errTransportInterrupted = errors.New("Transport Interrupted")
+func TestEnsureTransportsAreRich(t *testing.T) {
+	buf := bytes.NewBuffer(make([]byte, 0, 1024))
 
-type Flusher interface {
-	Flush() (err error)
-}
-
-// Encapsulates the I/O layer
-type TTransport interface {
-	io.ReadWriteCloser
-	Flusher
-
-	// Opens the transport for communication
-	Open() error
-
-	// Returns true if the transport is open
-	IsOpen() bool
-}
-
-type stringWriter interface {
-	WriteString(s string) (n int, err error)
-}
-
-// This is "enchanced" transport with extra capabilities. You need to use one of these
-// to construct protocol.
-// Notably, TSocket does not implement this interface, and it is always a mistake to use
-// TSocket directly in protocol.
-type TRichTransport interface {
-	io.ReadWriter
-	io.ByteReader
-	io.ByteWriter
-	stringWriter
-	Flusher
+	transports := []TTransportFactory{
+		NewTMemoryBufferTransportFactory(1024),
+		NewStreamTransportFactory(buf, buf, true),
+		NewTFramedTransportFactory(NewTMemoryBufferTransportFactory(1024)),
+		NewTHttpPostClientTransportFactory("http://127.0.0.1"),
+	}
+	for _, tf := range transports {
+		trans := tf.GetTransport(nil)
+		_, ok := trans.(TRichTransport)
+		if !ok {
+			t.Errorf("Transport %s does not implement TRichTransport interface", reflect.ValueOf(trans))
+		}
+	}
 }
