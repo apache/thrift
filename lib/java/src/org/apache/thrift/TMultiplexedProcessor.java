@@ -52,6 +52,7 @@ public class TMultiplexedProcessor implements TProcessor {
 
     private final Map<String,TProcessor> SERVICE_PROCESSOR_MAP
             = new HashMap<String,TProcessor>();
+    private TProcessor defaultProcessor;
 
     /**
      * 'Register' a service with this <code>TMultiplexedProcessor</code>.  This
@@ -65,6 +66,14 @@ public class TMultiplexedProcessor implements TProcessor {
      */
     public void registerProcessor(String serviceName, TProcessor processor) {
         SERVICE_PROCESSOR_MAP.put(serviceName, processor);
+    }
+
+    /**
+     * Register a service to be called to process queries without service name 
+     * @param processor
+     */
+    public void registerDefault(TProcessor processor) {
+        defaultProcessor = processor;
     }
 
     /**
@@ -100,6 +109,10 @@ public class TMultiplexedProcessor implements TProcessor {
         // Extract the service name
         int index = message.name.indexOf(TMultiplexedProtocol.SEPARATOR);
         if (index < 0) {
+        	if (defaultProcessor != null) {
+                // Dispatch processing to the stored processor
+                return defaultProcessor.process(new StoredMessageProtocol(iprot, message), oprot);
+        	}
             throw new TException("Service name not found in message name: " + message.name + ".  Did you " +
                     "forget to use a TMultiplexProtocol in your client?");
         }

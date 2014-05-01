@@ -369,6 +369,7 @@ resolution:=optional,org.slf4j;resolution:=optional;version=&quot;[1.4,2)&quot;"
     <artifact:dependencies filesetId="test-dependency-jars" useScope="runtime">
       <dependency groupId="org.slf4j" artifactId="slf4j-log4j12" version="1.5.8"/>
       <dependency groupId="junit" artifactId="junit" version="4.4"/>
+      <dependency groupId="org.mockito" artifactId="mockito-all" version="1.9.5"/>
     </artifact:dependencies>
 
     <!-- Copy the test dependencies to the build/lib dir -->
