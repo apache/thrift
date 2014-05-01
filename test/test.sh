@@ -26,8 +26,8 @@
 # THRIFT-847 Test Framework harmonization across all languages
 # THRIFT-819 add Enumeration for protocol, transport and server types
 
-BASEDIR=$(dirname $0)
-cd $BASEDIR
+cd "$( dirname "$0" )"
+BASEDIR=$(pwd)
 
 print_header() {
   printf "%-16s %-11s %-17s %-s\n" "client-server:" "protocol:" "transport:" "result:"
@@ -51,15 +51,18 @@ do_test () {
     transport=$3
     client_exec=$4
     server_exec=$5
-    server_startup_time=$6
-    client_delay=$7
+    client_timeout=$6
+    server_startup_time=$7
     
     testname=${client_server}_${protocol}_${transport}
-    server_timeout=$((${server_startup_time}+${client_delay}))
+    server_timeout=$(echo "(${server_startup_time}+${client_timeout})" | bc)
     printf "%-16s %-11s %-17s" ${client_server} ${protocol} ${transport} 
+    
     timeout $server_timeout $server_exec > log/${testname}_server.log 2>&1 &
+    server_pid=$!
+    
     sleep $server_startup_time
-    $client_exec > log/${testname}_client.log 2>&1
+    timeout $client_timeout $client_exec > log/${testname}_client.log 2>&1
 
     if [ "$?" -eq "0" ]; then
       echo " success"
@@ -73,11 +76,16 @@ do_test () {
       echo ""
       print_header
     fi
-    sleep ${client_delay}
+
+    # silently kill server
+    kill ${server_pid} 2>/dev/null && wait ${server_pid} 2>/dev/null
 }
 
 echo "Apache Thrift - integration test suite"
 date
+
+ant -f ../lib/java/build.xml compile-test 1>/dev/null
+
 echo "======================================================"
 
 rm -rf log
@@ -106,7 +114,6 @@ csharp_protocols="binary compact json"
 csharp_transports="buffered framed"
 csharp_sockets="ip ip-ssl"
 
-ant -f ../lib/java/build.xml compile-test 1>/dev/null
 
 ######### java client - java server #############
 for proto in $java_protocols; do
@@ -117,9 +124,9 @@ for proto in $java_protocols; do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "java-java" "${proto}" "${trans}-${sock}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" testclient" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" testserver" \
-            "15" "15"
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testclient" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testserver" \
+              "5" "1"
     done
   done
 done
@@ -136,10 +143,11 @@ for proto in $cpp_protocols; do
       do_test "cpp-cpp"   "${proto}" "${trans}-${sock}" \
               "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
               "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "10" "10"
+              "2" "0.1"
     done
   done
 done
+
 
 ######### java client - cpp server ##############
 # warning: ssl over http is not supported in java client!
@@ -151,9 +159,9 @@ for proto in $(intersection "${java_protocols}" "${cpp_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "java-cpp" "${proto}" "${trans}-${sock}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" testclient" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testclient" \
               "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}"\
-              "10" "15"
+              "5" "0.1"
     done
   done
 done
@@ -168,15 +176,16 @@ for proto in $(intersection "${cpp_protocols}" "${java_protocols}"); do
       esac
       do_test "cpp-java" "${proto}" "${trans}-${sock}" \
               "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans}  ${extraparam}\" testserver" \
-              "15" "10"
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans}  ${extraparam}\" run-testserver" \
+              "5" "1"
     done
   done
 done
 
 
-NODE_TEST_DIR=${BASEDIR}/../../lib/nodejs/test
+NODE_TEST_DIR=${BASEDIR}/../lib/nodejs/test
 export NODE_PATH=${NODE_TEST_DIR}:${NODE_TEST_DIR}/../lib:${NODE_PATH}
+
 ######### nodejs client - cpp server ##############
 ##
 for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
@@ -186,10 +195,10 @@ for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
         "ip" ) extraparam="";;
         "ip-ssl" ) extraparam="--ssl";;
       esac
-      do_test "nodejs-cpp" "${proto}" "${trans}-ip" \
-              "nodejs ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
+      do_test "nodejs-cpp" "${proto}" "${trans}-${sock}" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
               "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "10" "10"
+              "5" "0.2"
     done
   done
 done
@@ -202,10 +211,10 @@ for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
         "ip" ) extraparam="";;
         "ip-ssl" ) extraparam="--ssl";;
       esac
-      do_test "cpp-nodejs" "${proto}" "${trans}-ip" \
+      do_test "cpp-nodejs" "${proto}" "${trans}-${sock}" \
               "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "nodejs ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
-              "10" "10"
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
+              "5" "2"
     done
   done
 done
@@ -225,7 +234,7 @@ for proto in $csharp_protocols; do
       do_test "csharp-csharp"   "${proto}" "${trans}-${sock}" \
               "../lib/csharp/test/ThriftTest/TestClientServer.exe client --protocol=${proto} --transport=${trans} ${extraparam}" \
               "../lib/csharp/test/ThriftTest/TestClientServer.exe server --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "10" "10"
+              "5" "1"
     done
   done
 done
@@ -234,57 +243,57 @@ done
 do_test "py-py" "binary" "buffered-ip" \
         "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
         "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10" "10"
+        "10" "2"
 do_test "py-py" "json" "buffered-ip" \
         "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
         "py/TestServer.py --proto=json --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10" "10"
+        "10" "2"
 do_test "py-cpp" "binary" "buffered-ip" \
         "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
         "cpp/TestServer" \
-        "10" "10"
+        "10" "2"
 do_test "py-cpp" "json" "buffered-ip" \
         "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
         "cpp/TestServer --protocol=json" \
-        "10" "10"
+        "10" "2"
 do_test "cpp-py" "binary" "buffered-ip" \
         "cpp/TestClient --protocol=binary --port=9090" \
         "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10" "10"
+        "10" "2"
 do_test "cpp-py" "json" "buffered-ip" \
         "cpp/TestClient --protocol=json --port=9090" \
         "py/TestServer.py --proto=json --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10" "10"
+        "10" "2"
 do_test "py-java"  "binary" "buffered-ip" \
         "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
-        "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" testserver" \
-        "15" "15"
+        "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" run-testserver" \
+        "15" "2"
 do_test "py-java"  "json"   "buffered-ip" \
         "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
-        "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=json\" testserver" \
-        "15" "10"
+        "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=json\" run-testserver" \
+        "15" "2"
 do_test "java-py"  "binary" "buffered-ip" \
-        "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" testclient" \
+        "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" run-testclient" \
         "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10" "15"
+        "10" "5"
 do_test "js-java"   "json "  "http-ip" \
         "" \
         "ant -f  ../lib/js/test/build.xml unittest" \
-        "10" "15"
+        "2" "2"
 do_test "perl-cpp"  "binary" "buffered-ip" \
         "perl -I perl/gen-perl/ -I../lib/perl/lib/ perl/TestClient.pl" \
         "cpp/TestServer" \
-        "10" "10"
+        "10" "2"
 do_test "php-cpp"  "binary" "buffered-ip" \
         "make -C php/ client" \
         "cpp/TestServer" \
-        "10" "10"
+        "10" "2"
 do_test "rb-rb" "binary" "buffered-ip" \
         "ruby rb/integration/simple_client.rb" \
         "ruby rb/integration/simple_server.rb" \
-        "1" "5"
+        "5" "5"
 do_test "rb-rb" "binary-accl" "buffered-ip" \
         "ruby rb/integration/accelerated_buffered_client.rb" \
         "ruby rb/integration/accelerated_buffered_server.rb" \
-        "1" "5"
+        "5" "5"
 cd -
