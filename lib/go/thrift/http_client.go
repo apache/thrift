@@ -153,9 +153,21 @@ func (p *THttpClient) Read(buf []byte) (int, error) {
 	return n, NewTTransportExceptionFromError(err)
 }
 
+func (p *THttpClient) ReadByte() (c byte, err error) {
+	return readByte(p.response.Body)
+}
+
 func (p *THttpClient) Write(buf []byte) (int, error) {
 	n, err := p.requestBuffer.Write(buf)
 	return n, err
+}
+
+func (p *THttpClient) WriteByte(c byte) error {
+	return p.requestBuffer.WriteByte(c)
+}
+
+func (p *THttpClient) WriteString(s string) (n int, err error) {
+	return p.requestBuffer.WriteString(s)
 }
 
 func (p *THttpClient) Flush() error {

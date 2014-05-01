@@ -167,7 +167,7 @@ func (p *TSimpleServer) processRequest(client TTransport) error {
 		} else if err != nil {
 			return err
 		}
-		if !ok || !inputProtocol.Transport().Peek() {
+		if !ok {
 			break
 		}
 	}
