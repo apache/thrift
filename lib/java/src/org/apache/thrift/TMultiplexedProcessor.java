@@ -52,6 +52,7 @@ public class TMultiplexedProcessor implements TProcessor {
 
     private final Map<String,TProcessor> SERVICE_PROCESSOR_MAP
             = new HashMap<String,TProcessor>();
+    private TProcessor defaultProcessor;
 
     /**
      * 'Register' a service with this <code>TMultiplexedProcessor</code>.  This
@@ -68,6 +69,14 @@ public class TMultiplexedProcessor implements TProcessor {
     }
 
     /**
+     * Register a service to be called to process queries without service name
+     * @param processor
+     */
+    public void registerDefault(TProcessor processor) {
+        defaultProcessor = processor;
+    }
+
+    /**
      * This implementation of <code>process</code> performs the following steps:
      *
      * <ol>
@@ -77,7 +86,7 @@ public class TMultiplexedProcessor implements TProcessor {
      *     <li>Dispatch to the processor, with a decorated instance of TProtocol
      *         that allows readMessageBegin() to return the original TMessage.</li>
      * </ol>
-     *  
+     *
      * @throws TException If the message type is not CALL or ONEWAY, if
      * the service name was not found in the message, or if the service
      * name was not found in the service map.  You called {@link #registerProcessor(String, TProcessor) registerProcessor}
@@ -92,14 +101,16 @@ public class TMultiplexedProcessor implements TProcessor {
         TMessage message = iprot.readMessageBegin();
 
         if (message.type != TMessageType.CALL && message.type != TMessageType.ONEWAY) {
-            // TODO Apache Guys - Can the server ever get an EXCEPTION or REPLY?
-            // TODO Should we check for this here?
             throw new TException("This should not have happened!?");
         }
 
         // Extract the service name
         int index = message.name.indexOf(TMultiplexedProtocol.SEPARATOR);
         if (index < 0) {
+          if (defaultProcessor != null) {
+                // Dispatch processing to the stored processor
+                return defaultProcessor.process(new StoredMessageProtocol(iprot, message), oprot);
+          }
             throw new TException("Service name not found in message name: " + message.name + ".  Did you " +
                     "forget to use a TMultiplexProtocol in your client?");
         }
