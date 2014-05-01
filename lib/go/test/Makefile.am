@@ -28,11 +28,14 @@ gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 				OptionalFieldsTest.thrift \
 				ServicesTest.thrift \
 				TypedefFieldTest.thrift \
-				RefAnnotationFieldsTest.thrift
+				RefAnnotationFieldsTest.thrift \
+				MultiplexedProtocolTest.thrift \
+				OnewayTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) -r IncludesTest.thrift
 	$(THRIFT) BinaryKeyTest.thrift
+	$(THRIFT) MultiplexedProtocolTest.thrift
 	$(THRIFT) OnewayTest.thrift
 	$(THRIFT) OptionalFieldsTest.thrift
 	$(THRIFT) ServicesTest.thrift
