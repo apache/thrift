@@ -254,12 +254,11 @@ public:
             return package_flag;
         }
         std::string real_module = program->get_namespace("go");
-
-        if (real_module.empty()) {
-            return program->get_name();
+        if (!real_module.empty()) {
+        	return real_module;
         }
 
-        return real_module;
+        return lowercase(program->get_name());
     }
 
 private:
@@ -1510,7 +1509,15 @@ void t_go_generator::generate_go_struct_writer(ofstream& out,
  */
 void t_go_generator::generate_service(t_service* tservice)
 {
-    string f_service_name = package_dir_ + "/" + underscore(service_name_) + ".go";
+	string test_suffix("_test");
+	string filename = lowercase(service_name_);
+	string f_service_name;
+	if (filename.compare(filename.length() - test_suffix.length(),
+			test_suffix.length(), test_suffix) == 0) {
+		f_service_name = package_dir_ + "/" + filename + "_.go";
+	} else {
+		f_service_name = package_dir_ + "/" + filename + ".go";
+	}
     f_service_.open(f_service_name.c_str());
     f_service_ <<
                go_autogen_comment() <<
@@ -2544,7 +2551,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
     }
 
     f_service_ <<
-               indent() << "  return false, err2" << endl ;
+               indent() << "  return true, err2" << endl ;
 
     if( ! x_fields.empty()) {
         f_service_ <<

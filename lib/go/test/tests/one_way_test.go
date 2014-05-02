@@ -20,9 +20,9 @@
 package tests
 
 import (
-	"OnewayTest"
 	"fmt"
 	"net"
+	"onewaytest"
 	"testing"
 	"thrift"
 	"time"
@@ -47,7 +47,7 @@ const TIMEOUT = time.Second
 
 var addr net.Addr
 var server *thrift.TSimpleServer
-var client *OnewayTest.OneWayClient
+var client *onewaytest.OneWayClient
 
 func TestInitOneway(t *testing.T) {
 	var err error
@@ -56,7 +56,7 @@ func TestInitOneway(t *testing.T) {
 	if err != nil {
 		t.Fatal("Unable to create server socket", err)
 	}
-	processor := OnewayTest.NewOneWayProcessor(&impl{})
+	processor := onewaytest.NewOneWayProcessor(&impl{})
 	server = thrift.NewTSimpleServer2(processor, serverTransport)
 
 	go server.Serve()
@@ -65,7 +65,7 @@ func TestInitOneway(t *testing.T) {
 func TestInitOnewayClient(t *testing.T) {
 	transport := thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT)
 	protocol := thrift.NewTBinaryProtocolTransport(transport)
-	client = OnewayTest.NewOneWayClientProtocol(transport, protocol, protocol)
+	client = onewaytest.NewOneWayClientProtocol(transport, protocol, protocol)
 	err := transport.Open()
 	if err != nil {
 		t.Fatal("Unable to open client socket", err)
