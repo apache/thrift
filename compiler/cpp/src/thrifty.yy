@@ -165,6 +165,7 @@ const int struct_is_union = 1;
 %token tok_required
 %token tok_optional
 %token tok_union
+%token tok_reference
 
 /**
  * Grammar nodes
@@ -193,6 +194,7 @@ const int struct_is_union = 1;
 %type<ttype>     FieldType
 %type<tconstv>   FieldValue
 %type<tstruct>   FieldList
+%type<tbool>     FieldReference
 
 %type<tenum>     Enum
 %type<tenum>     EnumDefList
@@ -955,35 +957,36 @@ FieldList:
     }
 
 Field:
-  CaptureDocText FieldIdentifier FieldRequiredness FieldType tok_identifier FieldValue XsdOptional XsdNillable XsdAttributes TypeAnnotations CommaOrSemicolonOptional
+  CaptureDocText FieldIdentifier FieldRequiredness FieldType FieldReference tok_identifier FieldValue XsdOptional XsdNillable XsdAttributes TypeAnnotations CommaOrSemicolonOptional
     {
       pdebug("tok_int_constant : Field -> FieldType tok_identifier");
       if ($2.auto_assigned) {
-        pwarning(1, "No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", $5);
+        pwarning(1, "No field key specified for %s, resulting protocol may have conflicts or not be backwards compatible!\n", $6);
         if (g_strict >= 192) {
           yyerror("Implicit field keys are deprecated and not allowed with -strict");
           exit(1);
         }
       }
-      validate_simple_identifier($5);
-      $$ = new t_field($4, $5, $2.value);
+      validate_simple_identifier($6);
+      $$ = new t_field($4, $6, $2.value);
+      $$->set_reference($5);
       $$->set_req($3);
-      if ($6 != NULL) {
-        g_scope->resolve_const_value($6, $4);
-        validate_field_value($$, $6);
-        $$->set_value($6);
+      if ($7 != NULL) {
+        g_scope->resolve_const_value($7, $4);
+        validate_field_value($$, $7);
+        $$->set_value($7);
       }
-      $$->set_xsd_optional($7);
-      $$->set_xsd_nillable($8);
+      $$->set_xsd_optional($8);
+      $$->set_xsd_nillable($9);
       if ($1 != NULL) {
         $$->set_doc($1);
       }
-      if ($9 != NULL) {
-        $$->set_xsd_attrs($9);
-      }
       if ($10 != NULL) {
-        $$->annotations_ = $10->annotations_;
-        delete $10;
+        $$->set_xsd_attrs($10);
+      }
+      if ($11 != NULL) {
+        $$->annotations_ = $11->annotations_;
+        delete $11;
       }
     }
 
@@ -1028,6 +1031,16 @@ FieldIdentifier:
       $$.value = y_field_val--;
       $$.auto_assigned = true;
     }
+
+FieldReference:
+  tok_reference
+    {
+      $$ = true;
+    }
+|
+   {
+     $$ = false;
+   }
 
 FieldRequiredness:
   tok_required

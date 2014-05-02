@@ -68,13 +68,15 @@ do_test () {
       echo " success"
     else
       echo " failure"
-      echo "=================== server message ==================="
-      tail log/${testname}_server.log 
-      echo "=================== client message ==================="
-      tail log/${testname}_client.log
-      echo "======================================================"
-      echo ""
-      print_header
+      # add details to the error.log
+      print_header >> log/error.log
+      printf "%-16s %-11s %-17s\n" ${client_server} ${protocol} ${transport} >> log/error.log
+      echo "=================== server message ===================" >> log/error.log
+      tail log/${testname}_server.log  >> log/error.log
+      echo "=================== client message ===================" >> log/error.log
+      tail log/${testname}_client.log >> log/error.log
+      echo "======================================================" >> log/error.log
+      echo "" >> log/error.log
     fi
 
     # silently kill server
@@ -276,7 +278,7 @@ do_test "java-py"  "binary" "buffered-ip" \
         "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" run-testclient" \
         "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
         "10" "5"
-do_test "js-java"   "json "  "http-ip" \
+do_test "js-java"   "json"  "http-ip" \
         "" \
         "ant -f  ../lib/js/test/build.xml unittest" \
         "2" "2"
@@ -296,4 +298,8 @@ do_test "rb-rb" "binary-accl" "buffered-ip" \
         "ruby rb/integration/accelerated_buffered_client.rb" \
         "ruby rb/integration/accelerated_buffered_server.rb" \
         "5" "5"
+
+echo " failed tests are logged to test/log/error.log"
+echo " full log is here test/log/client_server_protocol_transport.log"
+date
 cd -
