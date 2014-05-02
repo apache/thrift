@@ -20,15 +20,15 @@
 package tests
 
 import (
-	"OptionalFieldsTest"
 	"bytes"
 	gomock "code.google.com/p/gomock/gomock"
+	"optionalfieldstest"
 	"testing"
 	"thrift"
 )
 
 func TestIsSetReturnFalseOnCreation(t *testing.T) {
-	ao := OptionalFieldsTest.NewAllOptional()
+	ao := optionalfieldstest.NewAllOptional()
 	if ao.IsSetS() {
 		t.Errorf("Optional field S is set on initialization")
 	}
@@ -71,7 +71,7 @@ func TestIsSetReturnFalseOnCreation(t *testing.T) {
 }
 
 func TestDefaultValuesOnCreation(t *testing.T) {
-	ao := OptionalFieldsTest.NewAllOptional()
+	ao := optionalfieldstest.NewAllOptional()
 	if ao.GetS() != "DEFAULT" {
 		t.Errorf("Unexpected default value %#v for field S", ao.GetS())
 	}
@@ -112,7 +112,7 @@ func TestDefaultValuesOnCreation(t *testing.T) {
 }
 
 func TestInitialValuesOnCreation(t *testing.T) {
-	ao := OptionalFieldsTest.NewAllOptional()
+	ao := optionalfieldstest.NewAllOptional()
 	if ao.S != "DEFAULT" {
 		t.Errorf("Unexpected initial value %#v for field S", ao.S)
 	}
@@ -152,11 +152,11 @@ func TestInitialValuesOnCreation(t *testing.T) {
 }
 
 func TestIsSetReturnTrueAfterUpdate(t *testing.T) {
-	ao := OptionalFieldsTest.NewAllOptional()
+	ao := optionalfieldstest.NewAllOptional()
 	ao.S = "somevalue"
 	ao.I = 123
 	ao.B = true
-	ao.Aa = OptionalFieldsTest.NewStructA()
+	ao.Aa = optionalfieldstest.NewStructA()
 	if !ao.IsSetS() {
 		t.Errorf("Field S should be set")
 	}
@@ -172,7 +172,7 @@ func TestIsSetReturnTrueAfterUpdate(t *testing.T) {
 }
 
 func TestListNotEmpty(t *testing.T) {
-	ao := OptionalFieldsTest.NewAllOptional()
+	ao := optionalfieldstest.NewAllOptional()
 	ao.L = []int64{1, 2, 3}
 	if !ao.IsSetL() {
 		t.Errorf("Field L should be set")
@@ -189,7 +189,7 @@ func TestNoOptionalUnsetFieldsOnWire(t *testing.T) {
 		proto.EXPECT().WriteFieldStop().Return(nil),
 		proto.EXPECT().WriteStructEnd().Return(nil),
 	)
-	ao := OptionalFieldsTest.NewAllOptional()
+	ao := optionalfieldstest.NewAllOptional()
 	ao.Write(proto)
 }
 
@@ -202,7 +202,7 @@ func TestNoSetToDefaultFieldsOnWire(t *testing.T) {
 		proto.EXPECT().WriteFieldStop().Return(nil),
 		proto.EXPECT().WriteStructEnd().Return(nil),
 	)
-	ao := OptionalFieldsTest.NewAllOptional()
+	ao := optionalfieldstest.NewAllOptional()
 	ao.I = 42
 	ao.Write(proto)
 }
@@ -220,7 +220,7 @@ func TestOneISetFieldOnWire(t *testing.T) {
 		proto.EXPECT().WriteFieldStop().Return(nil),
 		proto.EXPECT().WriteStructEnd().Return(nil),
 	)
-	ao := OptionalFieldsTest.NewAllOptional()
+	ao := optionalfieldstest.NewAllOptional()
 	ao.I = 123
 	ao.Write(proto)
 }
@@ -240,7 +240,7 @@ func TestOneLSetFieldOnWire(t *testing.T) {
 		proto.EXPECT().WriteFieldStop().Return(nil),
 		proto.EXPECT().WriteStructEnd().Return(nil),
 	)
-	ao := OptionalFieldsTest.NewAllOptional()
+	ao := optionalfieldstest.NewAllOptional()
 	ao.L = []int64{1, 2}
 	ao.Write(proto)
 }
@@ -257,7 +257,7 @@ func TestOneBinSetFieldOnWire(t *testing.T) {
 		proto.EXPECT().WriteFieldStop().Return(nil),
 		proto.EXPECT().WriteStructEnd().Return(nil),
 	)
-	ao := OptionalFieldsTest.NewAllOptional()
+	ao := optionalfieldstest.NewAllOptional()
 	ao.Bin = []byte("somebytestring")
 	ao.Write(proto)
 }
@@ -274,7 +274,7 @@ func TestOneEmptyBinSetFieldOnWire(t *testing.T) {
 		proto.EXPECT().WriteFieldStop().Return(nil),
 		proto.EXPECT().WriteStructEnd().Return(nil),
 	)
-	ao := OptionalFieldsTest.NewAllOptional()
+	ao := optionalfieldstest.NewAllOptional()
 	ao.Bin = []byte{}
 	ao.Write(proto)
 }
