@@ -188,6 +188,8 @@ data ProtocolExnType
     | PE_NEGATIVE_SIZE
     | PE_SIZE_LIMIT
     | PE_BAD_VERSION
+    | PE_NOT_IMPLEMENTED
+    | PE_DEPTH_LIMIT
       deriving ( Eq, Show, Typeable )
 
 data ProtocolExn = ProtocolExn ProtocolExnType String
