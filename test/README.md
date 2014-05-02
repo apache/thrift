@@ -48,5 +48,5 @@ return code shall be 0 on success or an integer in the range 1 - 255 on error
 
 ## SSL
 Test Keys and Certificates are provided in multiple formats under the following
-directory [test/keys](test/keys)
+directory [test/keys](keys)
 
