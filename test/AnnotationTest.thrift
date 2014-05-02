@@ -28,6 +28,7 @@ struct foo {
   cpp.type = "DenseFoo",
   python.type = "DenseFoo",
   java.final = "",
+  annotation.without.value,
 )
 
 exception foo_error {
