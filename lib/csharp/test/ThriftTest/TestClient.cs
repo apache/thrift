@@ -46,16 +46,7 @@ namespace Test
 				{
 					for (int i = 0; i < args.Length; i++)
 					{
-						if (args[i] == "-h")
-						{
-							string[] hostport = args[++i].Split(':');
-							host = hostport[0];
-							if (hostport.Length > 1)
-							{
-								port = Convert.ToInt32(hostport[1]);
-							}
-						}
-						else if (args[i] == "-u")
+						if (args[i] == "-u")
 						{
 							url = args[++i];
 						}
@@ -63,39 +54,47 @@ namespace Test
 						{
 							numIterations = Convert.ToInt32(args[++i]);
 						}
-						else if (args[i] == "-b" || args[i] == "-buffered")
-						{
-							buffered = true;
-							Console.WriteLine("Using buffered sockets");
-						}
-						else if (args[i] == "-f" || args[i] == "-framed")
-						{
-							framed = true;
-							Console.WriteLine("Using framed transport");
-						}
 						else if (args[i] == "-pipe")  // -pipe <name>
 						{
 							pipe = args[++i];
 							Console.WriteLine("Using named pipes transport");
 						}
+						else if (args[i].Contains("--host="))
+						{
+							host = args[i].Substring(args[i].IndexOf("=") + 1);
+						}
+						else if (args[i].Contains("--port="))
+						{
+							port = int.Parse(args[i].Substring(args[i].IndexOf("=")+1));
+						}
+						else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
+						{
+							buffered = true;
+							Console.WriteLine("Using buffered sockets");
+						}
+						else if (args[i] == "-f" || args[i] == "--framed"  || args[i] == "--transport=framed")
+						{
+							framed = true;
+							Console.WriteLine("Using framed transport");
+						}
 						else if (args[i] == "-t")
 						{
 							numThreads = Convert.ToInt32(args[++i]);
 						}
-						else if (args[i] == "-ssl")
-						{
-							encrypted = true;
-							Console.WriteLine("Using encrypted transport");
-						}
-						else if (args[i] == "-compact")
+						else if (args[i] == "--compact" || args[i] == "--protocol=compact")
 						{
 							protocol = "compact";
 							Console.WriteLine("Using compact protocol");
 						}
-						else if (args[i] == "-json")
+						else if (args[i] == "--json" || args[i] == "--protocol=json")
 						{
 							protocol = "json";
 							Console.WriteLine("Using JSON protocol");
+						}
+						else if (args[i] == "--ssl")
+						{
+							encrypted = true;
+							Console.WriteLine("Using encrypted transport");
 						}
 					}
 				}
