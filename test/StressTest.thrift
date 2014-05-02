@@ -19,6 +19,7 @@
 
 namespace cpp test.stress
 namespace d thrift.test.stress
+namespace go stress
 
 service Service {
 
