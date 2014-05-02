@@ -24,7 +24,8 @@ nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/ThriftTest_constants.h \
 	gen-cpp/ThriftTest_types.h \
 	gen-cpp/ThriftTest_types.tcc \
-	gen-cpp/ThriftTest.tcc
+	gen-cpp/ThriftTest.tcc \
+	src/ThriftTest_extras.cpp
 
 libtestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 

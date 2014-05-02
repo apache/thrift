@@ -85,7 +85,7 @@ static void testVoid_clientReturn(const char* host, int port, event_base *base, 
     delete client;
     boost::shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host, "/", host, port, base));
     client = new ThriftTestCobClient(channel, protocolFactory);
-    client->testString(tr1::bind(testString_clientReturn, host, port, base, protocolFactory, std::tr1::placeholders::_1), "Test");
+    client->testString(tcxx::bind(testString_clientReturn, host, port, base, protocolFactory, tcxx::placeholders::_1), "Test");
   } catch (TException& exn) {
     cout << "Error: " << exn.what() << endl;
   }
@@ -217,7 +217,7 @@ int main(int argc, char** argv) {
 
     boost::shared_ptr<TAsyncChannel> channel(new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
     ThriftTestCobClient* client = new ThriftTestCobClient(channel, protocolFactory.get());
-    client->testVoid(tr1::bind(testVoid_clientReturn, host.c_str(), port, base, protocolFactory.get(), std::tr1::placeholders::_1));
+    client->testVoid(tcxx::bind(testVoid_clientReturn, host.c_str(), port, base, protocolFactory.get(), tcxx::placeholders::_1));
 
     event_base_loop(base, 0);
     return 0;
