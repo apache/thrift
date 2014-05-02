@@ -44,7 +44,7 @@ int main() {
   assert(tree == result);
 
   RecList l;
-  RecList* l2(new RecList);
+  boost::shared_ptr<RecList> l2(new RecList);
   l.nextitem = l2;
 
   l.write(prot.get());
@@ -55,7 +55,7 @@ int main() {
   assert(resultlist.nextitem->nextitem == NULL);
 
   CoRec c;
-  CoRec2* r(new CoRec2);
+  boost::shared_ptr<CoRec2> r(new CoRec2);
   c.other = r;
 
   c.write(prot.get());
@@ -63,5 +63,13 @@ int main() {
   c.read(prot.get());
   assert(c.other != NULL);
   assert(c.other->other.other == NULL);
+
+  boost::shared_ptr<RecList> depthLimit(new RecList);
+  depthLimit->nextitem = depthLimit;
+  try {
+    depthLimit->write(prot.get());
+    assert(false);
+  } catch (const apache::thrift::protocol::TProtocolException& e) {
+  }
 
 }

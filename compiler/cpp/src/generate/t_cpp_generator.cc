@@ -235,7 +235,7 @@ class t_cpp_generator : public t_oop_generator {
   void generate_local_reflection_pointer(std::ofstream& out, t_type* ttype);
 
   bool is_reference(t_field* tfield) {
-    return tfield->annotations_.count("cpp.ref") != 0;
+    return tfield->get_reference();
   }
 
   bool is_complex_type(t_type* ttype) {
@@ -832,14 +832,8 @@ void t_cpp_generator::generate_copy_constructor(
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
-    if (is_reference(*f_iter)) {
-      std::string type = type_name((*f_iter)->get_type());
-      indent(out) << (*f_iter)->get_name() << " = new " << type << "(*" << tmp_name << "." <<
-        (*f_iter)->get_name() << ");" << endl;
-    } else {
-      indent(out) << (*f_iter)->get_name() << " = " << tmp_name << "." <<
-        (*f_iter)->get_name() << ";" << endl;
-    }
+    indent(out) << (*f_iter)->get_name() << " = " << tmp_name << "." <<
+      (*f_iter)->get_name() << ";" << endl;
   }
 
   indent_down();
@@ -859,20 +853,8 @@ void t_cpp_generator::generate_assignment_operator(
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
-    if (is_reference(*f_iter)) {
-      std::string type = type_name((*f_iter)->get_type());
-      indent(out) << "if (this == &" << tmp_name << ") return *this;" << endl;
-      indent(out) << "if (" << (*f_iter)->get_name() << ") {" << endl;
-      indent(out) << "  *" << (*f_iter)->get_name() << " = *" << tmp_name << "." << 
-        (*f_iter)->get_name() << ";" << endl;
-      indent(out) << "} else {" << endl;
-      indent(out) << "  " << (*f_iter)->get_name() << " = new " << type << "(*" << tmp_name << "." <<
-        (*f_iter)->get_name() << ");" << endl;
-      indent(out) << "}" << endl;
-    } else {
-      indent(out) << (*f_iter)->get_name() << " = " << tmp_name << "." <<
-        (*f_iter)->get_name() << ";" << endl;
-    }
+    indent(out) << (*f_iter)->get_name() << " = " << tmp_name << "." <<
+      (*f_iter)->get_name() << ";" << endl;
   }
 
   indent(out) << "return *this;" << endl;
@@ -1031,7 +1013,7 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
   // Declare all fields
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     indent(out) <<
-      declare_field(*m_iter, false, (pointers && !(*m_iter)->get_type()->is_xception()) || is_reference(*m_iter), !read) << endl;
+      declare_field(*m_iter, false, (pointers && !(*m_iter)->get_type()->is_xception()), !read) << endl;
   }
 
   // Add the __isset data member if we need it, using the definition from above
@@ -1046,11 +1028,19 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
     if (pointers) {
       continue;
     }
-    out <<
-      endl <<
-      indent() << "void __set_" << (*m_iter)->get_name() <<
+    if (is_reference((*m_iter))) {
+      out <<
+	endl <<
+	indent() << "void __set_" << (*m_iter)->get_name() <<
+        "(boost::shared_ptr<" << type_name((*m_iter)->get_type(), false, false) << ">";
+      out << " val);" << endl;
+    } else {
+      out <<
+	endl <<
+	indent() << "void __set_" << (*m_iter)->get_name() <<
         "(" << type_name((*m_iter)->get_type(), false, true);
-    out << " val);" << endl;
+      out << " val);" << endl;
+    }
   }
   out << endl;
 
@@ -1151,13 +1141,6 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
       indent() << tstruct->get_name() << "::~" << tstruct->get_name() << "() throw() {" << endl;
     indent_up();
 
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      if (is_reference(*m_iter)) {
-        out << indent() <<
-          "delete " << (*m_iter)->get_name() << ";" << endl;
-      }
-    }    
-
     indent_down();
     out << indent() << "}" << endl << endl;
   }
@@ -1165,22 +1148,22 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
   // Create a setter function for each field
   if (setters) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out <<
-        endl <<
-        indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
-        "(" << type_name((*m_iter)->get_type(), false, true);
-      out << " val) {" << endl;
-      indent_up();
       if (is_reference((*m_iter))) {
         std::string type = type_name((*m_iter)->get_type());
-        indent(out) << "if (" << (*m_iter)->get_name() << ") {" << endl;
-        indent(out) << "  *" << (*m_iter)->get_name() << " = val;" << endl;
-        indent(out) << "} else {" << endl;
-        indent(out) << "  " << (*m_iter)->get_name() << " = new " << type << "(val);" << endl;
-        indent(out) << "}" << endl;
+	out <<
+	  endl <<
+	  indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
+	  "(boost::shared_ptr<" << type_name((*m_iter)->get_type(), false, false) << ">";
+	out << " val) {" << endl;
       } else {
-        out << indent() << (*m_iter)->get_name() << " = val;" << endl;
+	out <<
+	  endl <<
+	  indent() << "void " << tstruct->get_name() << "::__set_" << (*m_iter)->get_name() <<
+	  "(" << type_name((*m_iter)->get_type(), false, true);
+	out << " val) {" << endl;
       }
+      indent_up();
+      out << indent() << (*m_iter)->get_name() << " = val;" << endl;
       indent_down();
 
       // assume all fields are required except optional fields.
@@ -1545,6 +1528,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
   out <<
     indent() << "uint32_t xfer = 0;" << endl;
 
+  indent(out) << "oprot->incrementRecursionDepth();" << endl;
   indent(out) <<
     "xfer += oprot->writeStructBegin(\"" << name << "\");" << endl;
 
@@ -1585,6 +1569,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out,
   out <<
     indent() << "xfer += oprot->writeFieldStop();" << endl <<
     indent() << "xfer += oprot->writeStructEnd();" << endl <<
+    indent() << "oprot->decrementRecursionDepth();" << endl <<
     indent() << "return xfer;" << endl;
 
   indent_down();
@@ -4078,7 +4063,7 @@ void t_cpp_generator::generate_deserialize_struct(ofstream& out,
                                                   bool pointer) {
   if (pointer) {
     indent(out) << "if (!" << prefix << ") { " << endl;
-    indent(out) << "  " << prefix << " = new " << type_name(tstruct) << ";" << endl;
+    indent(out) << "  " << prefix << " = boost::shared_ptr<" << type_name(tstruct) << ">(new " << type_name(tstruct) << ");" << endl;
     indent(out) << "}" << endl;
     indent(out) <<
       "xfer += " << prefix << "->read(iprot);" << endl;
@@ -4614,6 +4599,9 @@ string t_cpp_generator::declare_field(t_field* tfield, bool init, bool pointer, 
     result += "const ";
   }
   result += type_name(tfield->get_type());
+  if (is_reference(tfield)) {
+    result = "boost::shared_ptr<" + result + ">";
+  }
   if (pointer) {
     result += "*";
   }
