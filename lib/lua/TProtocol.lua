@@ -26,7 +26,7 @@ TProtocolException = TException:new {
   SIZE_LIMIT       = 3,
   BAD_VERSION      = 4,
   INVALID_PROTOCOL = 5,
-  MISSING_REQUIRED_FIELD = 6,
+  DEPTH_LIMIT      = 6,
   errorCode        = 0,
   __type = 'TProtocolException'
 }
@@ -41,8 +41,8 @@ function TProtocolException:__errorCodeToString()
     return 'Bad version'
   elseif self.errorCode == self.INVALID_PROTOCOL then
     return 'Invalid protocol'
-  elseif self.errorCode == self.MISSING_REQUIRED_FIELD then
-    return 'Missing required field'
+  elseif self.errorCode == self.DEPTH_LIMIT then
+    return 'Exceeded size limit'
   else
     return 'Default (unknown)'
   end
