@@ -187,6 +187,7 @@ const int struct_is_union = 1;
 %type<ttype>     TypeAnnotations
 %type<ttype>     TypeAnnotationList
 %type<tannot>    TypeAnnotation
+%type<id>        TypeAnnotationValue
 
 %type<tfield>    Field
 %type<tfieldid>  FieldIdentifier
@@ -1273,12 +1274,24 @@ TypeAnnotationList:
     }
 
 TypeAnnotation:
-  tok_identifier '=' tok_literal CommaOrSemicolonOptional
+  tok_identifier TypeAnnotationValue CommaOrSemicolonOptional
     {
-      pdebug("TypeAnnotation -> tok_identifier = tok_literal");
+      pdebug("TypeAnnotation -> TypeAnnotationValue");
       $$ = new t_annotation;
       $$->key = $1;
-      $$->val = $3;
+      $$->val = $2;
+    }
+
+TypeAnnotationValue:
+  '=' tok_literal
+    {
+      pdebug("TypeAnnotationValue -> = tok_literal");
+      $$ = $2;
+    }
+|
+    {
+      pdebug("TypeAnnotationValue ->");
+      $$ = strdup("1");
     }
 
 %%
