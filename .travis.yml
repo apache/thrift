@@ -19,23 +19,24 @@
 
 # build Apache Thrift on Travis CI - https://travis-ci.org/
 
-language: php
+language: cpp
 
 cache:
  - apt
  - npm
+ - maven
 
 # see what we need: http://thrift.apache.org/docs/install/ubuntu
 before_install:
  - export NUM_CPU="`grep processor /proc/cpuinfo | wc -l`"; echo $NUM_CPU
  - sudo apt-get update -qq
 # - sudo DEBIAN_FRONTEND=noninteractive apt-get -qq -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
- - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev 
+ - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev bc 
 # Java
  - sudo apt-get install -qq ant
 # Ruby
- - gem uninstall bundler -I -x
- - gem install bundler -v 1.3.5
+# - gem uninstall bundler -I -x
+ - gem install bundler -v 1.3.5 || true
 # Python
 # - sudo apt-get install -qq python-all python-all-dev python-all-dbg
 # Perl
@@ -71,7 +72,7 @@ script:
 # TODO: fix these languages
   - sh configure --without-erlang --without-haskell --without-python
   - make -j$NUM_CPU && make dist
-  - make check -j$NUM_CPU && sh test/test.sh
+  - make cross -j$NUM_CPU
   - sh bootstrap.sh ; sh contrib/mingw-cross-compile.sh
 # TODO: add these steps
 #  - sh bootstrap.sh ; dpkg-buildpackage -tc

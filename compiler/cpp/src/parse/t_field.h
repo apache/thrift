@@ -42,7 +42,8 @@ class t_field : public t_doc {
     value_(NULL),
     xsd_optional_(false),
     xsd_nillable_(false),
-    xsd_attrs_(NULL) {}
+    xsd_attrs_(NULL),
+    reference_(false) {}
 
   t_field(t_type* type, std::string name, int32_t key) :
     type_(type),
@@ -52,7 +53,8 @@ class t_field : public t_doc {
     value_(NULL),
     xsd_optional_(false),
     xsd_nillable_(false),
-    xsd_attrs_(NULL) {}
+    xsd_attrs_(NULL),
+    reference_(false) {}
 
   ~t_field() {}
 
@@ -137,6 +139,14 @@ class t_field : public t_doc {
 
   std::map<std::string, std::string> annotations_;
 
+  bool get_reference() {
+    return reference_;
+  }
+
+  void set_reference(bool reference) {
+    reference_ = reference;
+  }
+
  private:
   t_type* type_;
   std::string name_;
@@ -147,7 +157,7 @@ class t_field : public t_doc {
   bool xsd_optional_;
   bool xsd_nillable_;
   t_struct* xsd_attrs_;
-
+  bool reference_;
 };
 
 /**

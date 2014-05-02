@@ -27,10 +27,13 @@ import (
 )
 
 type TBinaryProtocol struct {
-	trans           TTransport
-	strictRead      bool
-	strictWrite     bool
-	buffer          [8]byte
+	trans         TRichTransport
+	origTransport TTransport
+	reader        io.Reader
+	writer        io.Writer
+	strictRead    bool
+	strictWrite   bool
+	buffer        [64]byte
 }
 
 type TBinaryProtocolFactory struct {
@@ -43,7 +46,15 @@ func NewTBinaryProtocolTransport(t TTransport) *TBinaryProtocol {
 }
 
 func NewTBinaryProtocol(t TTransport, strictRead, strictWrite bool) *TBinaryProtocol {
-	return &TBinaryProtocol{trans: t, strictRead: strictRead, strictWrite: strictWrite}
+	p := &TBinaryProtocol{origTransport: t, strictRead: strictRead, strictWrite: strictWrite}
+	if et, ok := t.(TRichTransport); ok {
+		p.trans = et
+	} else {
+		p.trans = NewTRichTransport(t)
+	}
+	p.reader = p.trans
+	p.writer = p.trans
+	return p
 }
 
 func NewTBinaryProtocolFactoryDefault() *TBinaryProtocolFactory {
@@ -171,29 +182,28 @@ func (p *TBinaryProtocol) WriteBool(value bool) error {
 }
 
 func (p *TBinaryProtocol) WriteByte(value byte) error {
-	v := []byte{value}
-	_, e := p.trans.Write(v)
+	e := p.trans.WriteByte(value)
 	return NewTProtocolException(e)
 }
 
 func (p *TBinaryProtocol) WriteI16(value int16) error {
 	v := p.buffer[0:2]
 	binary.BigEndian.PutUint16(v, uint16(value))
-	_, e := p.trans.Write(v)
+	_, e := p.writer.Write(v)
 	return NewTProtocolException(e)
 }
 
 func (p *TBinaryProtocol) WriteI32(value int32) error {
 	v := p.buffer[0:4]
 	binary.BigEndian.PutUint32(v, uint32(value))
-	_, e := p.trans.Write(v)
+	_, e := p.writer.Write(v)
 	return NewTProtocolException(e)
 }
 
 func (p *TBinaryProtocol) WriteI64(value int64) error {
-	v := p.buffer[:]
+	v := p.buffer[0:8]
 	binary.BigEndian.PutUint64(v, uint64(value))
-	_, err := p.trans.Write(v)
+	_, err := p.writer.Write(v)
 	return NewTProtocolException(err)
 }
 
@@ -202,7 +212,12 @@ func (p *TBinaryProtocol) WriteDouble(value float64) error {
 }
 
 func (p *TBinaryProtocol) WriteString(value string) error {
-	return p.WriteBinary([]byte(value))
+	e := p.WriteI32(int32(len(value)))
+	if e != nil {
+		return e
+	}
+	_, err := p.trans.WriteString(value)
+	return NewTProtocolException(err)
 }
 
 func (p *TBinaryProtocol) WriteBinary(value []byte) error {
@@ -210,7 +225,7 @@ func (p *TBinaryProtocol) WriteBinary(value []byte) error {
 	if e != nil {
 		return e
 	}
-	_, err := p.trans.Write(value)
+	_, err := p.writer.Write(value)
 	return NewTProtocolException(err)
 }
 
@@ -362,9 +377,7 @@ func (p *TBinaryProtocol) ReadBool() (bool, error) {
 }
 
 func (p *TBinaryProtocol) ReadByte() (value byte, err error) {
-	buf := p.buffer[0:1]
-	err = p.readAll(buf)
-	return buf[0], err
+	return p.trans.ReadByte()
 }
 
 func (p *TBinaryProtocol) ReadI16() (value int16, err error) {
@@ -423,11 +436,11 @@ func (p *TBinaryProtocol) Skip(fieldType TType) (err error) {
 }
 
 func (p *TBinaryProtocol) Transport() TTransport {
-	return p.trans
+	return p.origTransport
 }
 
 func (p *TBinaryProtocol) readAll(buf []byte) error {
-	_, err := io.ReadFull(p.trans, buf)
+	_, err := io.ReadFull(p.reader, buf)
 	return NewTProtocolException(err)
 }
 
@@ -435,8 +448,12 @@ func (p *TBinaryProtocol) readStringBody(size int) (value string, err error) {
 	if size < 0 {
 		return "", nil
 	}
-	isize := int(size)
-	buf := make([]byte, isize)
+	var buf []byte
+	if size <= len(p.buffer) {
+		buf = p.buffer[0:size]
+	} else {
+		buf = make([]byte, size)
+	}
 	_, e := io.ReadFull(p.trans, buf)
 	return string(buf), NewTProtocolException(e)
 }

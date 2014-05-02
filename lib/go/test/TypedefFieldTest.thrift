@@ -1,5 +1,3 @@
-#!/bin/sh
-
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -19,12 +17,23 @@
 # under the License.
 #
 
-../../../../compiler/cpp/thrift --gen csharp -o . ../../../../test/ThriftTest.thrift
-gmcs /t:library /out:./ThriftImpl.dll /recurse:./gen-csharp/* /reference:../../Thrift.dll
-gmcs  /out:TestClientServer.exe /reference:../../Thrift.dll /reference:ThriftImpl.dll TestClient.cs TestServer.cs Program.cs
+# We are only testing that generated code compiles, no correctness checking is done
 
-export MONO_PATH=../../
+enum Details {
+  Everything = 0
+  StateOnly = 1
+  StateAndOptions = 2
+  SomethingElse = 3
+}
 
-timeout 120 ./TestClientServer.exe server &
-sleep 1
-./TestClientServer.exe client
+typedef list< Details>  DetailsWanted
+
+struct BaseRequest {
+  1 : optional string RequestID
+}
+
+struct GetMyDetails {
+  1 : required BaseRequest base_
+  2 : required string ObjectID
+  3 : optional DetailsWanted DetailsWanted
+}

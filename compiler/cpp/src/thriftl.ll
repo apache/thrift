@@ -183,6 +183,7 @@ literal_begin (['\"])
   pwarning(0, "\"async\" is deprecated.  It is called \"oneway\" now.\n");
   return tok_oneway;
 }
+"&"                  { return tok_reference;            }
 
 
 "BEGIN"              { thrift_reserved_keyword(yytext); }

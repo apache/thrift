@@ -323,52 +323,37 @@ namespace Test
 			try
 			{
 				bool useBufferedSockets = false, useFramed = false, useEncryption = false, compact = false, json = false;
-				int port = 9090, i = 0;
+				int port = 9090;
 				string pipe = null;
-				if (args.Length > 0)
+				for (int i = 0; i < args.Length; i++)
 				{
-					i = 0;
 					if (args[i] == "-pipe")  // -pipe name
 					{
 						pipe = args[++i];
 					}
-					else  // default to port number (compatibility)
+					else if (args[i].Contains("--port="))
 					{
-						port = int.Parse(args[i]);
+						port = int.Parse(args[i].Substring(args[i].IndexOf("=")+1));
 					}
-
-					++i;
-					if (args.Length > i)
+					else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
 					{
-						if ( args[i] == "raw" )
-						{
-							// as default
-						}
-						else if (args[i] == "buffered")
-						{
-							useBufferedSockets = true;
-						}
-						else if (args[i] == "framed")
-						{
-							useFramed = true;
-						}
-						else if (args[i] == "ssl")
-						{
-							useEncryption = true;
-						}
-						else if (args[i] == "compact" )
-						{
-							compact = true;
-						}
-						else if (args[i] == "json" )
-						{
-							json = true;
-						}
-						else
-						{
-							// Fall back to the older boolean syntax
-							bool.TryParse(args[i], out useBufferedSockets);
-						}
+						useBufferedSockets = true;
+					}
+					else if (args[i] == "-f" || args[i] == "--framed"  || args[i] == "--transport=framed")
+					{
+						useFramed = true;
+					}
+					else if (args[i] == "--compact" || args[i] == "--protocol=compact")
+					{
+						compact = true;
+					}
+					else if (args[i] == "--json" || args[i] == "--protocol=json")
+					{
+						json = true;
+					}
+					else if (args[i] == "--ssl")
+					{
+						useEncryption = true;
 					}
 				}
 
@@ -420,10 +405,11 @@ namespace Test
 				// Run it
 				string where = ( pipe != null ? "on pipe "+pipe : "on port " + port);
 				Console.WriteLine("Starting the server " + where +
-					(useBufferedSockets ? " with buffered socket" : "") + 
-					(useFramed ? " with framed transport" : "") + 
-					(useEncryption ? " with encryption" : "") + 
-					(compact ? " with compact protocol" : "") + 
+					(useBufferedSockets ? " with buffered socket" : "") +
+					(useFramed ? " with framed transport" : "") +
+					(useEncryption ? " with encryption" : "") +
+					(compact ? " with compact protocol" : "") +
+					(json ? " with json protocol" : "") +
 					"...");
 				serverEngine.Serve();
 
