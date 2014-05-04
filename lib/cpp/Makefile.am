@@ -235,7 +235,6 @@ WINDOWS_DIST = \
 
 EXTRA_DIST = \
              README.md \
-             README.SSL.md \
              thrift-nb.pc.in \
              thrift.pc.in \
              thrift-z.pc.in \
