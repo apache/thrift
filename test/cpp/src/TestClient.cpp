@@ -102,6 +102,7 @@ int main(int argc, char** argv) {
   string transport_type = "buffered";
   string protocol_type = "binary";
   string domain_socket = "";
+  bool noinsane = false;
 
   boost::program_options::options_description desc("Allowed options");
   desc.add_options()
@@ -113,6 +114,7 @@ int main(int argc, char** argv) {
       ("protocol", boost::program_options::value<string>(&protocol_type)->default_value(protocol_type), "Protocol: binary, compact, json")
 	  ("ssl", "Encrypted Transport using SSL")
       ("testloops,n", boost::program_options::value<int>(&numTests)->default_value(numTests), "Number of Tests")
+      ("noinsane", "Do not run insanity test")
   ;
 
   boost::program_options::variables_map vm;
@@ -152,6 +154,10 @@ int main(int argc, char** argv) {
 
   if (vm.count("ssl")) {
     ssl = true;
+  }
+  
+  if (vm.count("noinsane")) {
+    noinsane = true;
   }
 
   boost::shared_ptr<TTransport> transport;
@@ -518,52 +524,53 @@ int main(int argc, char** argv) {
     /**
      * INSANITY TEST
      */
-    Insanity insane;
-    insane.userMap.insert(make_pair(Numberz::FIVE, 5000));
-    Xtruct truck;
-    truck.string_thing = "Truck";
-    truck.byte_thing = 8;
-    truck.i32_thing = 8;
-    truck.i64_thing = 8;
-    insane.xtructs.push_back(truck);
-    printf("testInsanity()");
-    map<UserId, map<Numberz::type,Insanity> > whoa;
-    testClient.testInsanity(whoa, insane);
-    printf(" = {");
-    map<UserId, map<Numberz::type,Insanity> >::const_iterator i_iter;
-    for (i_iter = whoa.begin(); i_iter != whoa.end(); ++i_iter) {
-      printf("%" PRId64 " => {", i_iter->first);
-      map<Numberz::type,Insanity>::const_iterator i2_iter;
-      for (i2_iter = i_iter->second.begin();
-           i2_iter != i_iter->second.end();
-           ++i2_iter) {
-        printf("%d => {", i2_iter->first);
-        map<Numberz::type, UserId> userMap = i2_iter->second.userMap;
-        map<Numberz::type, UserId>::const_iterator um;
-        printf("{");
-        for (um = userMap.begin(); um != userMap.end(); ++um) {
-          printf("%d => %" PRId64 ", ", um->first, um->second);
-        }
-        printf("}, ");
+    if (!noinsane) {
+      Insanity insane;
+      insane.userMap.insert(make_pair(Numberz::FIVE, 5000));
+      Xtruct truck;
+      truck.string_thing = "Truck";
+      truck.byte_thing = 8;
+      truck.i32_thing = 8;
+      truck.i64_thing = 8;
+      insane.xtructs.push_back(truck);
+      printf("testInsanity()");
+      map<UserId, map<Numberz::type,Insanity> > whoa;
+      testClient.testInsanity(whoa, insane);
+      printf(" = {");
+      map<UserId, map<Numberz::type,Insanity> >::const_iterator i_iter;
+      for (i_iter = whoa.begin(); i_iter != whoa.end(); ++i_iter) {
+        printf("%" PRId64 " => {", i_iter->first);
+        map<Numberz::type,Insanity>::const_iterator i2_iter;
+        for (i2_iter = i_iter->second.begin();
+             i2_iter != i_iter->second.end();
+             ++i2_iter) {
+          printf("%d => {", i2_iter->first);
+          map<Numberz::type, UserId> userMap = i2_iter->second.userMap;
+          map<Numberz::type, UserId>::const_iterator um;
+          printf("{");
+          for (um = userMap.begin(); um != userMap.end(); ++um) {
+            printf("%d => %" PRId64 ", ", um->first, um->second);
+          }
+          printf("}, ");
 
-        vector<Xtruct> xtructs = i2_iter->second.xtructs;
-        vector<Xtruct>::const_iterator x;
-        printf("{");
-        for (x = xtructs.begin(); x != xtructs.end(); ++x) {
-          printf("{\"%s\", %d, %d, %" PRId64 "}, ",
-                 x->string_thing.c_str(),
-                 (int)x->byte_thing,
-                 x->i32_thing,
-                 x->i64_thing);
-        }
-        printf("}");
+          vector<Xtruct> xtructs = i2_iter->second.xtructs;
+          vector<Xtruct>::const_iterator x;
+          printf("{");
+          for (x = xtructs.begin(); x != xtructs.end(); ++x) {
+            printf("{\"%s\", %d, %d, %" PRId64 "}, ",
+                   x->string_thing.c_str(),
+                   (int)x->byte_thing,
+                   x->i32_thing,
+                   x->i64_thing);
+          }
+          printf("}");
 
+          printf("}, ");
+        }
         printf("}, ");
       }
-      printf("}, ");
+      printf("}\n");
     }
-    printf("}\n");
-
     /* test exception */
 
     try {
