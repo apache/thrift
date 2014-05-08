@@ -180,4 +180,4 @@ TESTS = $(addprefix unittest/debug/, $(d_test_modules)) \
 EXTRA_DIST = \
 	src \
 	test \
-	README
+	README.md

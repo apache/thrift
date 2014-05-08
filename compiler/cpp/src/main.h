@@ -29,7 +29,9 @@
  * Defined in the flex library
  */
 
-int yylex(void);
+extern "C" {
+  int yylex(void);
+}
 
 int yyparse(void);
 
@@ -88,6 +90,10 @@ char* clean_up_doctext(char* doctext);
  */
 void declare_valid_program_doctext();
 
+/**
+ * Emits a warning on list<byte>, binary type is typically a much better choice.
+ */
+void check_for_list_of_bytes(t_type* list_elem_type);
 
 /**
  * Flex utilities

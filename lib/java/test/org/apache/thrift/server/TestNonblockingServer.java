@@ -53,7 +53,7 @@ public class TestNonblockingServer extends ServerTestBase {
         try {
           // Transport
           TNonblockingServerSocket tServerSocket =
-            new TNonblockingServerSocket(PORT);
+            new TNonblockingServerSocket(new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(PORT));
 
           server = getServer(processor, tServerSocket, protoFactory, factory);
 

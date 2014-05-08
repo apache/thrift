@@ -85,6 +85,7 @@ class t_delphi_generator : public t_oop_generator
 
     void generate_typedef (t_typedef* ttypedef);
     void generate_enum (t_enum* tenum);
+    void generate_forward_declaration(t_struct* tstruct);
     void generate_struct (t_struct* tstruct);
     void generate_xception (t_struct* txception);
     void generate_service (t_service* tservice);
@@ -187,7 +188,7 @@ class t_delphi_generator : public t_oop_generator
     string replace_all( string contents, string search, string replace);
     string xml_encode( string contents);
     string xmldoc_encode( string contents);
-	string xmlattrib_encode( string contents);
+    string xmlattrib_encode( string contents);
     void generate_delphi_doc (std::ostream& out, t_field*    field);
     void generate_delphi_doc (std::ostream& out, t_doc*      tdoc);
     void generate_delphi_doc (std::ostream& out, t_function* tdoc);
@@ -215,6 +216,7 @@ class t_delphi_generator : public t_oop_generator
     std::ostringstream s_service_impl;
     std::ostringstream s_type_factory_registration;
     std::ostringstream s_type_factory_funcs;
+    bool has_forward;
     bool has_enum;
     bool has_const;
     std::string namespace_dir_;
@@ -237,7 +239,7 @@ class t_delphi_generator : public t_oop_generator
     bool register_types_;
     bool constprefix_;
     bool events_;
-	bool xmldoc_;
+    bool xmldoc_;
     void indent_up_impl(){
       ++indent_impl_;
     };
@@ -268,7 +270,7 @@ string t_delphi_generator::replace_all( string contents, string search, string r
     size_t found = str.find(search);
     while( (found != string::npos) && (found < str.length())) {
       str.replace( found, slen, repl);
-	  found = str.find(search, found+incr);
+      found = str.find(search, found+incr);
     }
   }
   
@@ -324,7 +326,7 @@ void t_delphi_generator::generate_delphi_doc(ostream &out, t_field* field) {
   if( xmldoc_) {
     if (field->get_type()->is_enum()) {
       string combined_message = xmldoc_encode( field->get_doc()) 
-	                          + "\n<seealso cref=\"" 
+                              + "\n<seealso cref=\"" 
                               + xmldoc_encode( type_name(field->get_type()))
                               + "\"/>";
       generate_delphi_docstring_comment(out, combined_message);
@@ -553,6 +555,7 @@ void t_delphi_generator::add_delphi_uses_list( string unitname){
 void t_delphi_generator::init_generator() {
   indent_impl_ = 0;
   namespace_name_ = program_->get_namespace("delphi");
+  has_forward = false;
   has_enum = false;
   has_const = false;
   create_keywords();
@@ -641,8 +644,11 @@ void t_delphi_generator::close_generator() {
   indent(f_all)  << "c" << tmp_unit << "_Option_XmlDoc         = " << ( xmldoc_         ? "True" : "False") << ";" << endl;
   indent_down();
 
+  f_all  << endl;
   f_all  << "type"  << endl;
-  f_all  << s_forward_decr.str();
+  if(has_forward) {
+    f_all  << s_forward_decr.str() << endl;
+  }
   if (has_enum) {
     indent(f_all) << endl;
     indent(f_all) << "{$SCOPEDENUMS ON}" << endl << endl;
@@ -709,6 +715,21 @@ void t_delphi_generator::delphi_type_usings( ostream& out) {
   indent_down();
 }
 
+void t_delphi_generator::generate_forward_declaration(t_struct* tstruct) {
+  // Forward declare struct def
+  has_forward = true;
+  pverbose("forward declaration of %s\n", type_name(tstruct).c_str());
+  
+  string what = tstruct->is_xception() ? "class" : "interface";
+
+  indent_up();
+  indent(s_forward_decr) << 
+    type_name(tstruct,tstruct->is_xception(),true) << " = " << what << ";" << endl;
+  indent_down();
+  
+  add_defined_type(tstruct);
+}
+
 void t_delphi_generator::generate_typedef(t_typedef* ttypedef) {
   t_type* type = ttypedef->get_type();
 
@@ -718,7 +739,7 @@ void t_delphi_generator::generate_typedef(t_typedef* ttypedef) {
     typedefs_pending.push_back( ttypedef); 
     return;
   }
-  
+
   indent_up();
   generate_delphi_doc(s_struct, ttypedef);
   indent(s_struct) << 
@@ -821,7 +842,7 @@ void t_delphi_generator::generate_enum(t_enum* tenum) {
       s_enum << ",";
       s_enum << endl;
     }
-	generate_delphi_doc(s_enum, *c_iter);
+    generate_delphi_doc(s_enum, *c_iter);
     indent(s_enum) << normalize_name((*c_iter)->get_name()) << " = " << value;
   }
   s_enum << endl;
@@ -1568,7 +1589,7 @@ void t_delphi_generator::generate_service_interface(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter)
   {
     generate_delphi_doc(s_service, *f_iter);
-	indent(s_service) <<
+    indent(s_service) <<
       function_signature(*f_iter) << endl;
   }
   indent_down();
@@ -2541,9 +2562,18 @@ string t_delphi_generator::normalize_clsnm(string clsnm, string prefix, bool b_n
 }
 
 string t_delphi_generator::type_name( t_type* ttype, bool b_cls, bool b_no_postfix, bool b_exception_factory, bool b_full_exception_factory) {
-  
-  if (ttype->is_typedef()) {
-    return normalize_name( "T"+((t_typedef*)ttype)->get_symbolic());
+
+  if (ttype->is_typedef()) {    
+    t_typedef* tdef = (t_typedef*)ttype;
+    if( tdef->is_forward_typedef()) {  // forward types according to THRIFT-2421 
+      if( tdef->get_type() != NULL)  {
+        return type_name( tdef->get_type(), b_cls, b_no_postfix, b_exception_factory, b_full_exception_factory);
+      } else {
+        throw "unresolved forward declaration: " + tdef->get_symbolic();
+      }
+    } else {
+      return normalize_name( "T"+tdef->get_symbolic());
+    }
   }
   
   string typ_nm;

@@ -1054,7 +1054,7 @@ void t_csharp_generator::generate_csharp_union_definition(std::ofstream& out, t_
   // Let's define the class first
   start_csharp_namespace(out);
 
-  indent(out) << "public abstract class " << tunion->get_name() << " : TAbstractBase {" << endl;
+  indent(out) << "public abstract partial class " << tunion->get_name() << " : TAbstractBase {" << endl;
 
   indent_up();
 

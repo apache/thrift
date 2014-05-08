@@ -225,7 +225,6 @@ include_qt_HEADERS = \
 THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 WINDOWS_DIST = \
-             README_WINDOWS \
              src/thrift/windows \
              thrift.sln \
              libthrift.vcxproj \
@@ -234,8 +233,7 @@ WINDOWS_DIST = \
              libthriftnb.vcxproj.filters
 
 EXTRA_DIST = \
-             README \
-             README.SSL \
+             README.md \
              thrift-nb.pc.in \
              thrift.pc.in \
              thrift-z.pc.in \

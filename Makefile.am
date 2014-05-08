@@ -50,4 +50,5 @@ EXTRA_DIST = \
 	sonar-project.properties \
 	LICENSE \
 	CHANGES \
-	NOTICE
+	NOTICE \
+	README.md

@@ -44,9 +44,9 @@ and this for clients:
 If you have executed the **make check** or **make cross** then you will be able to browse
 [gen-html/ThriftTest.html](gen-html/ThriftTest.html) with the test documentation.
 
+return code shall be 0 on success or an integer in the range 1 - 255 on error
+
 ## SSL
 Test Keys and Certificates are provided in multiple formats under the following
-directory
-
-    test/keys
+directory [test/keys](keys)
 

@@ -73,7 +73,7 @@ public class TestTSaslTransports extends TestCase {
       + "score and seven years ago our fathers brought forth on this "
       + "continent a new nation, conceived in liberty, and dedicated to the "
       + "proposition that all men are created equal.";
-  
+
   private static final String testMessage2 = "I have a dream that one day "
       + "this nation will rise up and live out the true meaning of its creed: "
       + "'We hold these truths to be self-evident, that all men are created equal.'";
@@ -123,7 +123,9 @@ public class TestTSaslTransports extends TestCase {
     }
 
     private void internalRun() throws Exception {
-      TServerSocket serverSocket = new TServerSocket(ServerTestBase.PORT);
+      TServerSocket serverSocket = new TServerSocket(
+        new TServerSocket.ServerSocketTransportArgs().
+          port(ServerTestBase.PORT));
       try {
         acceptAndWrite(serverSocket);
       } finally {
@@ -280,7 +282,7 @@ public class TestTSaslTransports extends TestCase {
         public void run() {
           try {
             // Transport
-            TServerSocket socket = new TServerSocket(PORT);
+            TServerSocket socket = new TServerSocket(new TServerSocket.ServerSocketTransportArgs().port(PORT));
 
             TTransportFactory factory = new TSaslServerTransport.Factory(
               WRAPPED_MECHANISM, SERVICE, HOST, WRAPPED_PROPS,

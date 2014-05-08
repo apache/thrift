@@ -33,5 +33,6 @@
 
 void thrift_hash_table_get_keys (gpointer key, gpointer value,
                                  gpointer user_data);
+void thrift_string_free (gpointer str);
 
 #endif // #ifndef _THRIFT_THRIFT_H

@@ -216,7 +216,6 @@ namespace Thrift.Transport
             return connection;
 		}
 
-#if SILVERLIGHT
         public override IAsyncResult BeginFlush(AsyncCallback callback, object state)
         {
             // Extract request and reset buffer
@@ -266,7 +265,6 @@ namespace Thrift.Transport
             }
 
         }
-
 
         private void GetRequestStreamCallback(IAsyncResult asynchronousResult)
         {
@@ -375,7 +373,6 @@ namespace Thrift.Transport
             }
         }
 
-#endif
 #region " IDisposable Support "
 		private bool _IsDisposed;
 

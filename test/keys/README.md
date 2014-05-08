@@ -18,7 +18,7 @@ we use the following parameters for test key and certificate creation
     L=Forest Hill,
     O=The Apache Software Foundation,
     OU=Apache Thrift,
-    CN=ssltest/emailAddress=dev@thrift.apache.org
+    CN=localhost/emailAddress=dev@thrift.apache.org
 
 ### create self-signed server key and certificate
 
@@ -42,7 +42,7 @@ sign the client certificate with the server.key
 
     openssl x509 -req -days 365 -in client.csr -CA CA.pem -CAkey server.key -set_serial 01 -out client.crt
 
-export certificate in PKCS12 format
+export certificate in PKCS12 format (Export password is **thrift**)
 
     openssl pkcs12 -export -clcerts -in client.crt -inkey client.key -out client.p12
 
@@ -62,9 +62,15 @@ list truststore entries
 
     keytool -list -storepass thrift -keystore ../../lib/java/test/.truststore
 
+
+delete an entry
+
+    keytool -delete -storepass thrift -keystore ../../lib/java/test/.truststore -alias ssltest 
+
+
 import certificate into truststore
 
-    keytool -importcert -storepass thrift -keystore ../../lib/java/test/.truststore -alias ssltest --file server.crt
+    keytool -importcert -storepass thrift -keystore ../../lib/java/test/.truststore -alias localhost --file server.crt
 
 import key into keystore
 

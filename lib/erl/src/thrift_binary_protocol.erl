@@ -333,11 +333,15 @@ parse_factory_options([{strict_write, Bool} | Rest], Opts) when is_boolean(Bool)
 new_protocol_factory(TransportFactory, Options) ->
     ParsedOpts = parse_factory_options(Options, #tbp_opts{}),
     F = fun() ->
-                {ok, Transport} = TransportFactory(),
-                thrift_binary_protocol:new(
-                  Transport,
-                  [{strict_read,  ParsedOpts#tbp_opts.strict_read},
-                   {strict_write, ParsedOpts#tbp_opts.strict_write}])
+               case TransportFactory() of
+                    {ok, Transport} ->
+                        thrift_binary_protocol:new(
+                            Transport,
+                            [{strict_read,  ParsedOpts#tbp_opts.strict_read},
+                             {strict_write, ParsedOpts#tbp_opts.strict_write}]);
+                    {error, Error} ->
+                        {error, Error}
+                end
         end,
     {ok, F}.
 

@@ -235,7 +235,7 @@ class t_program : public t_doc {
   }
 
   // Scope accessor
-  t_scope* scope() {
+  t_scope* scope() const {
     return scope_;
   }
 

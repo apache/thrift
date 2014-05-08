@@ -78,6 +78,9 @@ public:
       android_legacy_ = true;
     }
 
+    iter = parsed_options.find("reuse-objects");
+    reuse_objects_ = (iter != parsed_options.end());
+
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
   }
 
@@ -197,16 +200,19 @@ public:
   void generate_deserialize_set_element  (std::ofstream& out,
                                           t_set*      tset,
                                           std::string prefix="",
+                                          std::string obj="",
                                           bool has_metadata = true);
 
   void generate_deserialize_map_element  (std::ofstream& out,
                                           t_map*      tmap,
                                           std::string prefix="",
+                                          std::string obj="",
                                           bool has_metadata = true);
 
   void generate_deserialize_list_element (std::ofstream& out,
                                           t_list*     tlist,
                                           std::string prefix="",
+                                          std::string obj="",
                                           bool has_metadata = true);
 
   void generate_serialize_field          (std::ofstream& out,
@@ -264,7 +270,7 @@ public:
   std::string java_package();
   std::string java_type_imports();
   std::string java_suppressions();
-  std::string type_name(t_type* ttype, bool in_container=false, bool in_init=false, bool skip_generic=false);
+  std::string type_name(t_type* ttype, bool in_container=false, bool in_init=false, bool skip_generic=false, bool force_namespace = false);
   std::string base_type_name(t_base_type* tbase, bool in_container=false);
   std::string declare_field(t_field* tfield, bool init=false, bool comment=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
@@ -310,6 +316,7 @@ public:
   bool android_legacy_;
   bool java5_;
   bool sorted_containers_;
+  bool reuse_objects_;
 };
 
 
@@ -3066,7 +3073,7 @@ void t_java_generator::generate_deserialize_field(ofstream& out,
     }
     out << endl;
   } else if (type->is_enum()) {
-    indent(out) << name << " = " << type_name(tfield->get_type(), true, false) + ".findByValue(iprot.readI32());" << endl;
+    indent(out) << name << " = " << type_name(tfield->get_type(), true, false, false, true) + ".findByValue(iprot.readI32());" << endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
            tfield->get_name().c_str(), type_name(type).c_str());
@@ -3079,9 +3086,17 @@ void t_java_generator::generate_deserialize_field(ofstream& out,
 void t_java_generator::generate_deserialize_struct(ofstream& out,
                                                    t_struct* tstruct,
                                                    string prefix) {
-  out <<
-    indent() << prefix << " = new " << type_name(tstruct) << "();" << endl <<
-    indent() << prefix << ".read(iprot);" << endl;
+
+    if (reuse_objects_) {
+      indent(out) << "if (" << prefix << " == null) {" << endl;
+      indent_up();
+    }
+    indent(out) << prefix << " = new " << type_name(tstruct) << "();" << endl;
+    if (reuse_objects_) {
+      indent_down();
+      indent(out) << "}" << endl;
+    }
+    indent(out) << prefix << ".read(iprot);" << endl;
 }
 
 /**
@@ -3126,7 +3141,14 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
     }
   }
 
-  indent(out) << prefix << " = new " << type_name(ttype, false, true);
+  if (reuse_objects_) {
+    indent(out) << "if (" << prefix << " == null) {" << endl;
+    indent_up();
+  }
+
+  out << 
+      indent() << prefix << " = new " << type_name(ttype, false, true); 
+
   // size the collection correctly
   if (sorted_containers_ && (ttype->is_map() || ttype->is_set())) {
     // TreeSet and TreeMap don't have any constructor which takes a capactity as an argument
@@ -3138,21 +3160,17 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
       << ");" << endl;
   }
 
-  // For loop iterates over elements
-  string i = tmp("_i");
-  indent(out) <<
-    "for (int " << i << " = 0; " <<
-    i << " < " << obj << ".size" << "; " <<
-    "++" << i << ")" << endl;
-
-  scope_up(out);
+  if (reuse_objects_) {
+    indent_down();
+    indent(out) << "}" << endl;
+  }
 
   if (ttype->is_map()) {
-    generate_deserialize_map_element(out, (t_map*)ttype, prefix, has_metadata);
+    generate_deserialize_map_element(out, (t_map*)ttype, prefix, obj, has_metadata);
   } else if (ttype->is_set()) {
-    generate_deserialize_set_element(out, (t_set*)ttype, prefix, has_metadata);
+    generate_deserialize_set_element(out, (t_set*)ttype, prefix, obj, has_metadata);
   } else if (ttype->is_list()) {
-    generate_deserialize_list_element(out, (t_list*)ttype, prefix, has_metadata);
+    generate_deserialize_list_element(out, (t_list*)ttype, prefix, obj, has_metadata);
   }
 
   scope_down(out);
@@ -3176,14 +3194,24 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
  */
 void t_java_generator::generate_deserialize_map_element(ofstream& out,
                                                         t_map* tmap,
-                                                        string prefix, bool has_metadata) {
+                                                        string prefix, 
+                                                        string obj, bool has_metadata) {
   string key = tmp("_key");
   string val = tmp("_val");
   t_field fkey(tmap->get_key_type(), key);
   t_field fval(tmap->get_val_type(), val);
 
-  indent(out) << declare_field(&fkey) << endl;
-  indent(out) << declare_field(&fval) << endl;
+  indent(out) << declare_field(&fkey, reuse_objects_, false) << endl;
+  indent(out) << declare_field(&fval, reuse_objects_, false) << endl;
+
+  // For loop iterates over elements
+     string i = tmp("_i");
+     indent(out) <<
+       "for (int " << i << " = 0; " <<
+          i << " < " << obj << ".size" << "; " <<
+          "++" << i << ")" << endl;
+  
+  scope_up(out);
 
   generate_deserialize_field(out, &fkey, "", has_metadata);
   generate_deserialize_field(out, &fval, "", has_metadata);
@@ -3196,15 +3224,25 @@ void t_java_generator::generate_deserialize_map_element(ofstream& out,
  */
 void t_java_generator::generate_deserialize_set_element(ofstream& out,
                                                         t_set* tset,
-                                                        string prefix, bool has_metadata) {
+                                                        string prefix, 
+                                                        string obj, bool has_metadata) {
   string elem = tmp("_elem");
   t_field felem(tset->get_elem_type(), elem);
 
-  indent(out) << declare_field(&felem) << endl;
+  indent(out) << declare_field(&felem, reuse_objects_, false) << endl;
 
+  // For loop iterates over elements
+     string i = tmp("_i");
+     indent(out) <<
+       "for (int " << i << " = 0; " <<
+          i << " < " << obj << ".size" << "; " <<
+          "++" << i << ")" << endl;
+  scope_up(out);
+  
   generate_deserialize_field(out, &felem, "", has_metadata);
 
   indent(out) << prefix << ".add(" << elem << ");" << endl;
+
 }
 
 /**
@@ -3212,12 +3250,21 @@ void t_java_generator::generate_deserialize_set_element(ofstream& out,
  */
 void t_java_generator::generate_deserialize_list_element(ofstream& out,
                                                          t_list* tlist,
-                                                         string prefix, bool has_metadata) {
+                                                         string prefix, 
+                                                         string obj, bool has_metadata) {
   string elem = tmp("_elem");
   t_field felem(tlist->get_elem_type(), elem);
 
-  indent(out) << declare_field(&felem) << endl;
+  indent(out) << declare_field(&felem, reuse_objects_, false) << endl;
 
+  // For loop iterates over elements
+     string i = tmp("_i");
+     indent(out) <<
+       "for (int " << i << " = 0; " <<
+          i << " < " << obj << ".size" << "; " <<
+          "++" << i << ")" << endl;
+  scope_up(out);
+ 
   generate_deserialize_field(out, &felem, "", has_metadata);
 
   indent(out) << prefix << ".add(" << elem << ");" << endl;
@@ -3434,7 +3481,7 @@ void t_java_generator::generate_serialize_list_element(ofstream& out,
  * @param container Is the type going inside a container?
  * @return Java type name, i.e. HashMap<Key,Value>
  */
-string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_init, bool skip_generic) {
+string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_init, bool skip_generic, bool force_namespace) {
   // In Java typedefs are just resolved to their real type
   ttype = get_true_type(ttype);
   string prefix;
@@ -3479,7 +3526,7 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
 
   // Check for namespacing
   t_program* program = ttype->get_program();
-  if (program != NULL && program != program_) {
+  if ((program != NULL && program != program_) || force_namespace) {
     string package = program->get_namespace("java");
     if (!package.empty()) {
       return package + "." + ttype->get_name();
@@ -4529,6 +4576,7 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
 "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
+"    reuse-objects:   Data objects will not be allocated, but existing instances will be used (read and write).\n"
 "    sorted_containers:\n"
 "                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of set/map.\n"
 )

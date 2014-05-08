@@ -21,9 +21,11 @@
 #import "TTransport.h"
 
 @interface TNSStreamTransport : NSObject <TTransport> {
-  NSInputStream * mInput;
-  NSOutputStream * mOutput;
+
 }
+
+@property (nonatomic, strong) NSInputStream * mInput;
+@property (nonatomic, strong) NSOutputStream * mOutput;
 
 - (id) initWithInputStream: (NSInputStream *) input
               outputStream: (NSOutputStream *) output;

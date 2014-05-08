@@ -207,7 +207,8 @@ class TProtocolException : TException {
     NEGATIVE_SIZE, ///
     SIZE_LIMIT, ///
     BAD_VERSION, ///
-    NOT_IMPLEMENTED ///
+    NOT_IMPLEMENTED, ///
+    DEPTH_LIMIT ///
   }
 
   ///
@@ -220,6 +221,7 @@ class TProtocolException : TException {
         case Type.SIZE_LIMIT: return "Exceeded size limit";
         case Type.BAD_VERSION: return "Invalid version";
         case Type.NOT_IMPLEMENTED: return "Not implemented";
+        case Type.DEPTH_LIMIT: return "Exceeded size limit";
         default: return "(Invalid exception type)";
       }
     }

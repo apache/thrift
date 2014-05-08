@@ -56,6 +56,8 @@ class TProcessPoolServer(TServer):
         while self.isRunning.value:
             try:
                 client = self.serverTransport.accept()
+                if not client:
+                  continue
                 self.serveClient(client)
             except (KeyboardInterrupt, SystemExit):
                 return 0

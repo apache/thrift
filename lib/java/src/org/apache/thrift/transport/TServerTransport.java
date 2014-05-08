@@ -20,12 +20,39 @@
 package org.apache.thrift.transport;
 
 import java.io.Closeable;
+import java.net.InetSocketAddress;
 
 /**
  * Server transport. Object which provides client transports.
  *
  */
 public abstract class TServerTransport implements Closeable {
+
+  public static abstract class AbstractServerTransportArgs<T extends AbstractServerTransportArgs<T>> {
+    int backlog = 0; // A value of 0 means the default value will be used (currently set at 50)
+    int clientTimeout = 0;
+    InetSocketAddress bindAddr;
+
+    public T backlog(int backlog) {
+      this.backlog = backlog;
+      return (T) this;
+    }
+
+    public T clientTimeout(int clientTimeout) {
+      this.clientTimeout = clientTimeout;
+      return (T) this;
+    }
+
+    public T port(int port) {
+      this.bindAddr = new InetSocketAddress(port);
+      return (T) this;
+    }
+
+    public T bindAddr(InetSocketAddress bindAddr) {
+      this.bindAddr = bindAddr;
+      return (T) this;
+    }
+  }
 
   public abstract void listen() throws TTransportException;
 

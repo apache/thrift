@@ -26,8 +26,8 @@ import (
 
 // StreamTransport is a Transport made of an io.Reader and/or an io.Writer
 type StreamTransport struct {
-	Reader       io.Reader
-	Writer       io.Writer
+	io.Reader
+	io.Writer
 	isReadWriter bool
 }
 
@@ -103,9 +103,9 @@ func (p *StreamTransport) Open() error {
 	return nil
 }
 
-func (p *StreamTransport) Peek() bool {
-	return p.IsOpen()
-}
+// func (p *StreamTransport) Peek() bool {
+// 	return p.IsOpen()
+// }
 
 // Closes both the input and output streams.
 func (p *StreamTransport) Close() error {
@@ -134,24 +134,6 @@ func (p *StreamTransport) Close() error {
 	return nil
 }
 
-// Reads from the underlying input stream if not null.
-func (p *StreamTransport) Read(buf []byte) (int, error) {
-	if p.Reader == nil {
-		return 0, NewTTransportException(NOT_OPEN, "Cannot read from null inputStream")
-	}
-	n, err := p.Reader.Read(buf)
-	return n, NewTTransportExceptionFromError(err)
-}
-
-// Writes to the underlying output stream if not null.
-func (p *StreamTransport) Write(buf []byte) (int, error) {
-	if p.Writer == nil {
-		return 0, NewTTransportException(NOT_OPEN, "Cannot write to null outputStream")
-	}
-	n, err := p.Writer.Write(buf)
-	return n, NewTTransportExceptionFromError(err)
-}
-
 // Flushes the underlying output stream if not null.
 func (p *StreamTransport) Flush() error {
 	if p.Writer == nil {
@@ -165,4 +147,28 @@ func (p *StreamTransport) Flush() error {
 		}
 	}
 	return nil
+}
+
+func (p *StreamTransport) ReadByte() (c byte, err error) {
+	f, ok := p.Reader.(io.ByteReader)
+	if ok {
+		return f.ReadByte()
+	}
+	return readByte(p.Reader)
+}
+
+func (p *StreamTransport) WriteByte(c byte) error {
+	f, ok := p.Writer.(io.ByteWriter)
+	if ok {
+		return f.WriteByte(c)
+	}
+	return writeByte(p.Writer, c)
+}
+
+func (p *StreamTransport) WriteString(s string) (n int, err error) {
+	f, ok := p.Writer.(stringWriter)
+	if ok {
+		return f.WriteString(s)
+	}
+	return p.Writer.Write([]byte(s))
 }

@@ -124,12 +124,12 @@ public class TestServer {
             protocol_type = args[i].split("=")[1];
             protocol_type.trim();
           } else if (args[i].startsWith("--transport")) {
-            transport_type = args[i].split("=")[1];  
+            transport_type = args[i].split("=")[1];
             transport_type.trim();
           } else if (args[i].equals("--ssl")) {
             ssl = true;
           } else if (args[i].equals("--help")) {
-            System.out.println("Allowed options:"); 
+            System.out.println("Allowed options:");
             System.out.println("  --help\t\t\tProduce help message");
             System.out.println("  --port=arg (=" + port + ")\tPort number to connect");
             System.out.println("  --transport=arg (=" + transport_type + ")\n\t\t\t\tTransport: buffered, framed, fastframed");
@@ -143,7 +143,7 @@ public class TestServer {
         System.err.println("Can not parse arguments! See --help");
         System.exit(1);
       }
-      
+
       try {
         if (server_type.equals("simple")) {
         } else if (server_type.equals("thread-pool")) {
@@ -156,13 +156,13 @@ public class TestServer {
             throw new Exception("SSL is not supported over nonblocking servers!");
           }
         } else {
-          throw new Exception("Unknown server type! " + server_type); 
+          throw new Exception("Unknown server type! " + server_type);
         }
         if (protocol_type.equals("binary")) {
         } else if (protocol_type.equals("json")) {
         } else if (protocol_type.equals("compact")) {
         } else {
-          throw new Exception("Unknown protocol type! " + protocol_type); 
+          throw new Exception("Unknown protocol type! " + protocol_type);
         }
         if (transport_type.equals("buffered")) {
         } else if (transport_type.equals("framed")) {
@@ -171,7 +171,7 @@ public class TestServer {
           throw new Exception("Unknown transport type! " + transport_type);
         }
       } catch (Exception e) {
-        System.err.println("Error: " + e.getMessage()); 
+        System.err.println("Error: " + e.getMessage());
         System.exit(1);
       }
 
@@ -204,15 +204,15 @@ public class TestServer {
       TServer serverEngine = null;
 
 
-      if (server_type.equals("nonblocking") || 
+      if (server_type.equals("nonblocking") ||
           server_type.equals("threaded-selector")) {
         // Nonblocking servers
         TNonblockingServerSocket tNonblockingServerSocket =
-          new TNonblockingServerSocket(port);
-          
+          new TNonblockingServerSocket(new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(port));
+
         if (server_type.equals("nonblocking")) {
           // Nonblocking Server
-          TNonblockingServer.Args tNonblockingServerArgs 
+          TNonblockingServer.Args tNonblockingServerArgs
               = new TNonblockingServer.Args(tNonblockingServerSocket);
           tNonblockingServerArgs.processor(testProcessor);
           tNonblockingServerArgs.protocolFactory(tProtocolFactory);
@@ -221,12 +221,12 @@ public class TestServer {
           serverEngine = new TNonblockingServer(tNonblockingServerArgs);
         } else { // server_type.equals("threaded-selector")
           // ThreadedSelector Server
-          TThreadedSelectorServer.Args tThreadedSelectorServerArgs 
+          TThreadedSelectorServer.Args tThreadedSelectorServerArgs
               = new TThreadedSelectorServer.Args(tNonblockingServerSocket);
           tThreadedSelectorServerArgs.processor(testProcessor);
           tThreadedSelectorServerArgs.protocolFactory(tProtocolFactory);
           tThreadedSelectorServerArgs.transportFactory(tTransportFactory);
-    
+
           serverEngine = new TThreadedSelectorServer(tThreadedSelectorServerArgs);
         }
       } else {
@@ -237,7 +237,7 @@ public class TestServer {
         if (ssl) {
           tServerSocket = TSSLTransportFactory.getServerSocket(port, 0);
         } else {
-          tServerSocket = new TServerSocket(port);
+          tServerSocket = new TServerSocket(new TServerSocket.ServerSocketTransportArgs().port(port));
         }
 
         if (server_type.equals("simple")) {
@@ -250,7 +250,7 @@ public class TestServer {
           serverEngine = new TSimpleServer(tServerArgs);
         } else { // server_type.equals("threadpool")
           // ThreadPool Server
-          TThreadPoolServer.Args tThreadPoolServerArgs 
+          TThreadPoolServer.Args tThreadPoolServerArgs
               = new TThreadPoolServer.Args(tServerSocket);
           tThreadPoolServerArgs.processor(testProcessor);
           tThreadPoolServerArgs.protocolFactory(tProtocolFactory);

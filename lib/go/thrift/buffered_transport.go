@@ -19,19 +19,17 @@
 
 package thrift
 
+import (
+	"bufio"
+)
+
 type TBufferedTransportFactory struct {
 	size int
 }
 
-type TBuffer struct {
-	buffer     []byte
-	pos, limit int
-}
-
 type TBufferedTransport struct {
-	tp   TTransport
-	rbuf *TBuffer
-	wbuf *TBuffer
+	bufio.ReadWriter
+	tp TTransport
 }
 
 func (p *TBufferedTransportFactory) GetTransport(trans TTransport) TTransport {
@@ -43,9 +41,13 @@ func NewTBufferedTransportFactory(bufferSize int) *TBufferedTransportFactory {
 }
 
 func NewTBufferedTransport(trans TTransport, bufferSize int) *TBufferedTransport {
-	rb := &TBuffer{buffer: make([]byte, bufferSize)}
-	wb := &TBuffer{buffer: make([]byte, bufferSize), limit: bufferSize}
-	return &TBufferedTransport{tp: trans, rbuf: rb, wbuf: wb}
+	return &TBufferedTransport{
+		ReadWriter: bufio.ReadWriter{
+			Reader: bufio.NewReaderSize(trans, bufferSize),
+			Writer: bufio.NewWriterSize(trans, bufferSize),
+		},
+		tp: trans,
+	}
 }
 
 func (p *TBufferedTransport) IsOpen() bool {
@@ -60,56 +62,9 @@ func (p *TBufferedTransport) Close() (err error) {
 	return p.tp.Close()
 }
 
-func (p *TBufferedTransport) Read(buf []byte) (n int, err error) {
-	rbuf := p.rbuf
-	if rbuf.pos == rbuf.limit { // no more data to read from buffer
-		rbuf.pos = 0
-		// read data, fill buffer
-		rbuf.limit, err = p.tp.Read(rbuf.buffer)
-		if err != nil {
-			return 0, err
-		}
-	}
-	n = copy(buf, rbuf.buffer[rbuf.pos:rbuf.limit])
-	rbuf.pos += n
-	return n, nil
-}
-
-func (p *TBufferedTransport) Write(buf []byte) (n int, err error) {
-	wbuf := p.wbuf
-	remaining := len(buf)
-
-	for remaining > 0 {
-		if wbuf.pos+remaining > wbuf.limit { // buffer is full, flush buffer
-			if err := p.Flush(); err != nil {
-				return n, err
-			}
-		}
-		copied := copy(wbuf.buffer[wbuf.pos:], buf[n:])
-
-		wbuf.pos += copied
-		n += copied
-		remaining -= copied
-	}
-
-	return n, nil
-}
-
 func (p *TBufferedTransport) Flush() error {
-	start := 0
-	wbuf := p.wbuf
-	for start < wbuf.pos {
-		n, err := p.tp.Write(wbuf.buffer[start:wbuf.pos])
-		if err != nil {
-			return err
-		}
-		start += n
+	if err := p.ReadWriter.Flush(); err != nil {
+		return err
 	}
-
-	wbuf.pos = 0
 	return p.tp.Flush()
-}
-
-func (p *TBufferedTransport) Peek() bool {
-	return p.rbuf.pos < p.rbuf.limit || p.tp.Peek()
 }
