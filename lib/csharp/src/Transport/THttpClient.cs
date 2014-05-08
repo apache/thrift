@@ -24,32 +24,42 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Thrift.Transport
 {
-	public class THttpClient : TTransport, IDisposable
-	{
-		private readonly Uri uri;
-		private Stream inputStream;
-		private MemoryStream outputStream = new MemoryStream();
+
+    public class THttpClient : TTransport, IDisposable
+    {
+        private readonly Uri uri;
+        private readonly X509Certificate[] certificates;
+        private Stream inputStream;
+        private MemoryStream outputStream = new MemoryStream();
 
         // Timeouts in milliseconds
         private int connectTimeout = 30000;
 
         private int readTimeout = 30000;
 
-		private IDictionary<String, String> customHeaders = new Dictionary<string, string>();
+        private IDictionary<String, String> customHeaders = new Dictionary<string, string>();
 
 #if !SILVERLIGHT
         private IWebProxy proxy = WebRequest.DefaultWebProxy;
 #endif
 
-        public THttpClient(Uri u)
+        public THttpClient(Uri u) 
+            : this(u, Enumerable.Empty<X509Certificate>())
 		{
-			uri = u;
 		}
 
-		public int ConnectTimeout
+	    public THttpClient(Uri u, IEnumerable<X509Certificate> certificates)
+	    {
+	        uri = u;
+            this.certificates = (certificates ?? Enumerable.Empty<X509Certificate>()).ToArray();
+	    }
+
+        public int ConnectTimeout
 		{
 			set
 			{
@@ -180,7 +190,12 @@ namespace Thrift.Transport
 		{
 			HttpWebRequest connection = (HttpWebRequest)WebRequest.Create(uri);
 
+
 #if !SILVERLIGHT
+			// Adding certificates through code is not supported with WP7 Silverlight
+			// see "Windows Phone 7 and Certificates_FINAL_121610.pdf"
+		    connection.ClientCertificates.AddRange(certificates);
+
 			if (connectTimeout > 0)
 			{
 				connection.Timeout = connectTimeout;
