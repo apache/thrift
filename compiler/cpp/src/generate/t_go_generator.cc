@@ -2551,7 +2551,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
     }
 
     f_service_ <<
-               indent() << "  return false, err2" << endl ;
+               indent() << "  return true, err2" << endl ;
 
     if( ! x_fields.empty()) {
         f_service_ <<
