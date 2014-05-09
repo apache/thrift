@@ -106,4 +106,6 @@ service a_serv {
 	struct_a struct_a_func_1ex_1int_1s(1: i64 i, 2: string s) throws(1: moderate_disaster err1)
 	struct_a struct_a_func_2ex_1int_1s(1: i64 i, 2: string s) throws(1: moderate_disaster err1, 2:total_disaster err2)
 
+	struct_a struct_a_func_1struct_a(1: struct_a st)
+
 }
