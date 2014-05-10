@@ -421,11 +421,16 @@ func (p *TCompactProtocol) ReadFieldEnd() error { return nil }
 // "correct" types.
 func (p *TCompactProtocol) ReadMapBegin() (keyType TType, valueType TType, size int, err error) {
 	size32, e := p.readVarint32()
-	size = int(size32)
 	if e != nil {
 		err = NewTProtocolException(e)
 		return
 	}
+	if size32 < 0 {
+		err = invalidDataLength
+		return
+	}
+	size = int(size32)
+
 	keyAndValueType := byte(STOP)
 	if size != 0 {
 		keyAndValueType, err = p.ReadByte()
@@ -454,6 +459,10 @@ func (p *TCompactProtocol) ReadListBegin() (elemType TType, size int, err error)
 		size2, e := p.readVarint32()
 		if e != nil {
 			err = NewTProtocolException(e)
+			return
+		}
+		if size2 < 0 {
+			err = invalidDataLength
 			return
 		}
 		size = int(size2)
@@ -541,6 +550,10 @@ func (p *TCompactProtocol) ReadString() (value string, err error) {
 	if e != nil {
 		return "", NewTProtocolException(e)
 	}
+	if length < 0 {
+		return "", invalidDataLength
+	}
+
 	if length == 0 {
 		return "", nil
 	}
@@ -561,7 +574,10 @@ func (p *TCompactProtocol) ReadBinary() (value []byte, err error) {
 		return nil, NewTProtocolException(e)
 	}
 	if length == 0 {
-		return nil, nil //nil == empty slice
+		return []byte{}, nil
+	}
+	if length < 0 {
+		return nil, invalidDataLength
 	}
 
 	buf := make([]byte, length)
