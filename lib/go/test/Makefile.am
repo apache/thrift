@@ -47,11 +47,11 @@ gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 
 check: gopath
 	GOPATH=`pwd`/gopath $(GO) build \
-				IncludesTest \
-				BinaryKeyTest \
-				ServicesTest \
-				TypedefFieldTest \
-				RefAnnotationFieldsTest
+				includestest \
+				binarykeytest \
+				servicestest \
+				typedeffieldtest \
+				refannotationfieldstest
 	GOPATH=`pwd`/gopath $(GO) test thrift tests
 
 clean-local:

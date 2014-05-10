@@ -20,7 +20,7 @@
 package tests
 
 import (
-	"MultiplexedProtocolTest"
+	"multiplexedprotocoltest"
 	"net"
 	"testing"
 	"thrift"
@@ -61,37 +61,37 @@ func TestInitTwoServers(t *testing.T) {
 	}
 	server = thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
 
-	firstProcessor := MultiplexedProtocolTest.NewFirstProcessor(&FirstImpl{})
+	firstProcessor := multiplexedprotocoltest.NewFirstProcessor(&FirstImpl{})
 	processor.RegisterProcessor("FirstService", firstProcessor)
 
-	secondProcessor := MultiplexedProtocolTest.NewSecondProcessor(&SecondImpl{})
+	secondProcessor := multiplexedprotocoltest.NewSecondProcessor(&SecondImpl{})
 	processor.RegisterProcessor("SecondService", secondProcessor)
 
 	go server.Serve()
 }
 
-var firstClient *MultiplexedProtocolTest.FirstClient
+var firstClient *multiplexedprotocoltest.FirstClient
 
 func TestInitClient1(t *testing.T) {
 	socket := thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT)
 	transport := thrift.NewTFramedTransport(socket)
 	var protocol thrift.TProtocol = thrift.NewTBinaryProtocolTransport(transport)
 	protocol = thrift.NewTMultiplexedProtocol(protocol, "FirstService")
-	firstClient = MultiplexedProtocolTest.NewFirstClientProtocol(transport, protocol, protocol)
+	firstClient = multiplexedprotocoltest.NewFirstClientProtocol(transport, protocol, protocol)
 	err := transport.Open()
 	if err != nil {
 		t.Fatal("Unable to open client socket", err)
 	}
 }
 
-var secondClient *MultiplexedProtocolTest.SecondClient
+var secondClient *multiplexedprotocoltest.SecondClient
 
 func TestInitClient2(t *testing.T) {
 	socket := thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT)
 	transport := thrift.NewTFramedTransport(socket)
 	var protocol thrift.TProtocol = thrift.NewTBinaryProtocolTransport(transport)
 	protocol = thrift.NewTMultiplexedProtocol(protocol, "SecondService")
-	secondClient = MultiplexedProtocolTest.NewSecondClientProtocol(transport, protocol, protocol)
+	secondClient = multiplexedprotocoltest.NewSecondClientProtocol(transport, protocol, protocol)
 	err := transport.Open()
 	if err != nil {
 		t.Fatal("Unable to open client socket", err)
@@ -99,11 +99,11 @@ func TestInitClient2(t *testing.T) {
 }
 
 //create client without service prefix
-func createLegacyClient(t *testing.T) *MultiplexedProtocolTest.SecondClient {
+func createLegacyClient(t *testing.T) *multiplexedprotocoltest.SecondClient {
 	socket := thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT)
 	transport := thrift.NewTFramedTransport(socket)
 	var protocol thrift.TProtocol = thrift.NewTBinaryProtocolTransport(transport)
-	legacyClient := MultiplexedProtocolTest.NewSecondClientProtocol(transport, protocol, protocol)
+	legacyClient := multiplexedprotocoltest.NewSecondClientProtocol(transport, protocol, protocol)
 	err := transport.Open()
 	if err != nil {
 		t.Fatal("Unable to open client socket", err)
@@ -139,7 +139,7 @@ func TestCallLegacy(t *testing.T) {
 		t.Fatal("Expecting error")
 	}
 	//register default processor and call again
-	processor.RegisterDefault(MultiplexedProtocolTest.NewSecondProcessor(&SecondImpl{}))
+	processor.RegisterDefault(multiplexedprotocoltest.NewSecondProcessor(&SecondImpl{}))
 	legacyClient = createLegacyClient(t)
 	ret, err = legacyClient.ReturnTwo()
 	if err != nil {

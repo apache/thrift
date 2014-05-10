@@ -17,20 +17,23 @@
 # under the License.
 #
 
-package tests
+from thrift.Thrift import TMessageType
+from thrift.protocol import TProtocolDecorator
 
-import (
-	st "ServicesTest"
-)
+SEPARATOR = ":"
 
-//this function is never called, it will fail to compile if check is failed
-func staticCheckStructArgsResults() {
-	//Check that struct args and results are passed by reference
-	var sa *st.StructA = &st.StructA{}
-	var iface st.AServ
-	var err error
+class TMultiplexedProtocol(TProtocolDecorator.TProtocolDecorator):
+  def __init__(self, protocol, serviceName):
+    TProtocolDecorator.TProtocolDecorator.__init__(self, protocol)
+    self.serviceName = serviceName
 
-	sa, err = iface.StructAFunc_1structA(sa)
-	_ = err
-	_ = sa
-}
+  def writeMessageBegin(self, name, type, seqid):
+    if (type == TMessageType.CALL or
+        type == TMessageType.ONEWAY):
+      self.protocol.writeMessageBegin(
+        self.serviceName + SEPARATOR + name,
+        type,
+        seqid
+      )
+    else:
+      self.protocol.writeMessageBegin(name, type, seqid)

@@ -319,6 +319,24 @@ void t_c_glib_generator::generate_enum(t_enum *tenum) {
     "};" << endl <<
     "typedef enum _" << this->nspace << name << " " << this->nspace << name << ";" << endl <<
     endl;
+
+  f_types_ << "/* return the name of the constant */" << endl;
+  f_types_ << "const char *" << endl;
+  f_types_ << "toString_"<<name<<"(int value); "<<endl<<endl;;
+  f_types_impl_ << "/* return the name of the constant */" << endl;
+  f_types_impl_ << "const char *" << endl;
+  f_types_impl_ << "toString_"<<name<<"(int value) "<<endl;
+  f_types_impl_ << "{" << endl;
+  f_types_impl_ << "  static __thread char buf[16] = {0};" << endl;
+  f_types_impl_ << "  switch(value) {" << endl;
+  for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+    f_types_impl_ << "  case " << this->nspace_uc << name_uc << "_" << (*c_iter)->get_name()
+        << ":" << "return \"" << this->nspace_uc << name_uc << "_" << (*c_iter)->get_name()
+        << "\";"<<endl;
+  }
+  f_types_impl_ << "  default: g_snprintf(buf, 16, \"%d\", value); return buf;" << endl;
+  f_types_impl_ << "  }" << endl;
+  f_types_impl_ << "}" << endl << endl;
 }
 
 /**
@@ -2644,6 +2662,9 @@ void t_c_glib_generator::generate_deserialize_struct(ofstream &out,
   indent_up();
   if (allocate) {
     indent(out) << "g_object_unref (" << prefix << ");" << endl;
+    if (tstruct->is_xception()) {
+      indent(out) << prefix << " = NULL;" << endl;
+    }
   }
   out <<
     indent() << "return " << error_ret << ";" << endl;

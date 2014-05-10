@@ -72,13 +72,14 @@ type
 
   TProtocolException = class( Exception )
   public
-    const
+    const // TODO(jensg): change into enum
       UNKNOWN : Integer = 0;
       INVALID_DATA : Integer = 1;
       NEGATIVE_SIZE : Integer = 2;
       SIZE_LIMIT : Integer = 3;
       BAD_VERSION : Integer = 4;
       NOT_IMPLEMENTED : Integer = 5;
+      DEPTH_LIMIT : Integer = 6;
   protected
     FType : Integer;
   public

@@ -17,20 +17,26 @@
 # under the License.
 #
 
-package tests
+from thrift.protocol.TProtocol import TProtocolBase
+from types import *
 
-import (
-	st "ServicesTest"
-)
+class TProtocolDecorator():
+  def __init__(self, protocol):
+    TProtocolBase(protocol)
+    self.protocol = protocol
 
-//this function is never called, it will fail to compile if check is failed
-func staticCheckStructArgsResults() {
-	//Check that struct args and results are passed by reference
-	var sa *st.StructA = &st.StructA{}
-	var iface st.AServ
-	var err error
+  def __getattr__(self, name):
+    if hasattr(self.protocol, name):
+      member = getattr(self.protocol, name)
+      if type(member) in [MethodType, UnboundMethodType, FunctionType, LambdaType, BuiltinFunctionType, BuiltinMethodType]:
+        return lambda *args, **kwargs: self._wrap(member, args, kwargs)
+      else:
+        return member
+    raise AttributeError(name)
 
-	sa, err = iface.StructAFunc_1structA(sa)
-	_ = err
-	_ = sa
-}
+  def _wrap(self, func, args, kwargs):
+    if type(func) == MethodType:
+      result = func(*args, **kwargs)
+    else:
+      result = func(self.protocol, *args, **kwargs)
+    return result
