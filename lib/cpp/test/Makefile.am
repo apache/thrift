@@ -89,7 +89,7 @@ endif
 
 UnitTests_LDADD = \
   libtestgencpp.la \
-  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
+  -l:libboost_unit_test_framework.a
 
 TransportTest_SOURCES = \
 	TransportTest.cpp
@@ -97,7 +97,7 @@ TransportTest_SOURCES = \
 TransportTest_LDADD = \
   libtestgencpp.la \
   $(top_builddir)/lib/cpp/libthriftz.la \
-  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a \
+  -l:libboost_unit_test_framework.a \
   -lz
 
 ZlibTest_SOURCES = \
@@ -106,7 +106,7 @@ ZlibTest_SOURCES = \
 ZlibTest_LDADD = \
   libtestgencpp.la \
   $(top_builddir)/lib/cpp/libthriftz.la \
-  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a \
+  -l:libboost_unit_test_framework.a \
   -lz
 
 TFileTransportTest_SOURCES = \
@@ -114,7 +114,7 @@ TFileTransportTest_SOURCES = \
 
 TFileTransportTest_LDADD = \
   libtestgencpp.la \
-  $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
+  -l:libboost_unit_test_framework.a
 
 #
 # TFDTransportTest
@@ -208,7 +208,7 @@ processor_test_LDADD = libprocessortest.la \
                        $(top_builddir)/lib/cpp/libthriftnb.la \
                        $(BOOST_LDFLAGS) \
                        -levent \
-                       $(BOOST_ROOT_PATH)/lib/libboost_unit_test_framework.a
+                       -l:libboost_unit_test_framework.a
 #
 # Common thrift code generation rules
 #
