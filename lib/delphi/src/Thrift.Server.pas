@@ -24,7 +24,7 @@
 interface
 
 uses
-  Windows, SysUtils,
+  SysUtils,
   Thrift,
   Thrift.Protocol,
   Thrift.Transport;
@@ -212,9 +212,10 @@ class procedure TServerImpl.DefaultLogDelegate( const str: string);
 begin
   try
     Writeln( str);
-    if IoResult <> 0 then OutputDebugString(PChar(str));
+    if IoResult <> 0 then
+      ; // OutputDebugString(PChar(str));
   except
-    OutputDebugString(PChar(str));
+    // OutputDebugString(PChar(str));
   end;
 end;
 

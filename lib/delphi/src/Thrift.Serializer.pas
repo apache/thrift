@@ -21,7 +21,7 @@ unit Thrift.Serializer;
 interface
 
 uses
-  Classes, Windows, SysUtils,
+  Classes, SysUtils,
   Thrift.Protocol,
   Thrift.Transport,
   Thrift.Stream;

@@ -21,11 +21,11 @@ unit Thrift.Utils;
 
 interface
 
-function IfValue(B: Boolean; const TrueValue, FalseValue: WideString): string;
+function IfValue(B: Boolean; const TrueValue, FalseValue: String): string;
 
 implementation
 
-function IfValue(B: Boolean; const TrueValue, FalseValue: WideString): string;
+function IfValue(B: Boolean; const TrueValue, FalseValue: String): string;
 begin
   if B then
     Result := TrueValue

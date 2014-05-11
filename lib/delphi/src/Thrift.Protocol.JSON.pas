@@ -956,7 +956,7 @@ var b : TBytes;
 begin
   b := ReadJSONString(false);
 
-  SetString( str, PAnsiChar(b), Length(b));
+  SetString( str, PChar (b), Length(b));
   result := TBytes (TIdDecoderMIME.DecodeBytes( str));
 end;
 

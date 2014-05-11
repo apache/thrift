@@ -22,7 +22,8 @@ unit Thrift.Console;
 interface
 
 uses
-  StdCtrls;
+  FMX.Memo;
+  // StdCtrls;
 
 type
   TThriftConsole = class

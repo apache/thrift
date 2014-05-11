@@ -23,7 +23,7 @@ unit Thrift.Transport.Pipes;
 interface
 
 uses
-  Windows, SysUtils, Math, AccCtrl, AclAPI, SyncObjs,
+  SysUtils, Math, SyncObjs,
   Thrift.Transport,
   Thrift.Stream;
 
@@ -38,7 +38,7 @@ type
   TPipeStreamBase = class( TThriftStreamImpl)
   strict protected
     FPipe    : THandle;
-    FTimeout : DWORD;
+    FTimeout : LongWord;
 
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer); override;
     function  Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; override;
@@ -49,7 +49,7 @@ type
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
   public
-    constructor Create( const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);
+    constructor Create( const aTimeOut : LongWord = DEFAULT_THRIFT_PIPE_TIMEOUT);
     destructor Destroy;  override;
   end;
 
@@ -57,7 +57,7 @@ type
   TNamedPipeStreamImpl = class sealed( TPipeStreamBase)
   private
     FPipeName  : string;
-    FShareMode : DWORD;
+    FShareMode : LongWord;
     FSecurityAttribs : PSecurityAttributes;
 
   protected
@@ -65,9 +65,9 @@ type
 
   public
     constructor Create( const aPipeName : string;
-                        const aShareMode: DWORD = 0;
+                        const aShareMode: LongWord = 0;
                         const aSecurityAttributes: PSecurityAttributes = nil;
-                        const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);  overload;
+                        const aTimeOut : LongWord = DEFAULT_THRIFT_PIPE_TIMEOUT);  overload;
   end;
 
 
@@ -106,9 +106,9 @@ type
     // Named pipe constructors
     constructor Create( aPipe : THandle; aOwnsHandle : Boolean); overload;
     constructor Create( const aPipeName : string;
-                        const aShareMode: DWORD = 0;
+                        const aShareMode: LongWord = 0;
                         const aSecurityAttributes: PSecurityAttributes = nil;
-                        const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);  overload;
+                        const aTimeOut : LongWord = DEFAULT_THRIFT_PIPE_TIMEOUT);  overload;
   end;
 
 
@@ -161,7 +161,7 @@ type
 
   TAnonymousPipeServerTransportImpl = class( TPipeServerTransportBase, IAnonymousPipeServerTransport)
   private
-    FBufSize      : DWORD;
+    FBufSize      : LongWord;
 
     // Server side anonymous pipe handles
     FReadHandle,
@@ -192,9 +192,9 @@ type
   TNamedPipeServerTransportImpl = class( TPipeServerTransportBase, INamedPipeServerTransport)
   private
     FPipeName     : string;
-    FMaxConns     : DWORD;
-    FBufSize      : DWORD;
-    FTimeout      : DWORD;
+    FMaxConns     : LongWord;
+    FBufSize      : LongWord;
+    FTimeout      : LongWord;
     FHandle       : THandle;
     FConnected    : Boolean;
 
@@ -243,7 +243,7 @@ end;
 { TPipeStreamBase }
 
 
-constructor TPipeStreamBase.Create( const aTimeOut : DWORD = DEFAULT_THRIFT_PIPE_TIMEOUT);
+constructor TPipeStreamBase.Create( const aTimeOut : LongWord = DEFAULT_THRIFT_PIPE_TIMEOUT);
 begin
   inherited Create;
   FPipe    := INVALID_HANDLE_VALUE;
@@ -280,7 +280,7 @@ end;
 
 
 procedure TPipeStreamBase.Write(const buffer: TBytes; offset, count: Integer);
-var cbWritten : DWORD;
+var cbWritten : LongWord;
 begin
   if not IsOpen
   then raise TTransportException.Create( TTransportException.TExceptionType.NotOpen,
@@ -293,7 +293,7 @@ end;
 
 
 function TPipeStreamBase.Read( var buffer: TBytes; offset, count: Integer): Integer;
-var cbRead, dwErr  : DWORD;
+var cbRead, dwErr  : LongWord;
     bytes, retries  : LongInt;
     bOk     : Boolean;
 const INTERVAL = 10;  // ms
@@ -357,9 +357,9 @@ end;
 { TNamedPipeStreamImpl }
 
 
-constructor TNamedPipeStreamImpl.Create( const aPipeName : string; const aShareMode: DWORD;
+constructor TNamedPipeStreamImpl.Create( const aPipeName : string; const aShareMode: LongWord;
                                          const aSecurityAttributes: PSecurityAttributes;
-                                         const aTimeOut : DWORD);
+                                         const aTimeOut : LongWord);
 begin
   inherited Create( aTimeout);
 
@@ -374,7 +374,7 @@ end;
 
 procedure TNamedPipeStreamImpl.Open;
 var hPipe    : THandle;
-    dwMode   : DWORD;
+    dwMode   : LongWord;
 begin
   if IsOpen then Exit;
 
@@ -468,9 +468,9 @@ end;
 { TNamedPipeTransportClientEndImpl }
 
 
-constructor TNamedPipeTransportClientEndImpl.Create( const aPipeName : string; const aShareMode: DWORD;
+constructor TNamedPipeTransportClientEndImpl.Create( const aPipeName : string; const aShareMode: LongWord;
                                    const aSecurityAttributes: PSecurityAttributes;
-                                   const aTimeOut : DWORD);
+                                   const aTimeOut : LongWord);
 // Named pipe constructor
 begin
   inherited Create( nil, nil);
@@ -561,7 +561,7 @@ end;
 
 function TAnonymousPipeServerTransportImpl.Accept(const fnAccepting: TProc): ITransport;
 var buf    : Byte;
-    br     : DWORD;
+    br     : LongWord;
 begin
   if Assigned(fnAccepting)
   then fnAccepting();
@@ -673,7 +673,7 @@ end;
 
 
 function TNamedPipeServerTransportImpl.Accept(const fnAccepting: TProc): ITransport;
-var dwError, dwWait, dwDummy : DWORD;
+var dwError, dwWait, dwDummy : LongWord;
     overlapped : TOverlapped;
     event      : TEvent;
 begin
