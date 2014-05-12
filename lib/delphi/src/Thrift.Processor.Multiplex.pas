@@ -99,7 +99,7 @@ type
       An exception is thrown if the message type is not CALL or ONEWAY
       or if the service is unknown (or not properly registered).
     }
-    function Process(const iprot, oprot : IProtocol; const events: IProcessorEvents = nil) : Boolean;
+    function Process(const iprot, oprot : IProtocol) : Boolean;
   end;
 
 
