@@ -249,7 +249,7 @@ string t_hs_generator::hs_imports() {
       "                 (.), (&&), (||), (==), (++), ($), (-) )\n"
       "\n"
       "import Control.Exception\n"
-      "import Data.ByteString.Lazy\n"
+      "import qualified Data.ByteString.Lazy as BL\n"
       "import Data.Hashable\n"
       "import Data.Int\n"
       "import Data.Text.Lazy ( Text )\n"
@@ -1472,7 +1472,7 @@ string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_VOID:   return "()";
-    case t_base_type::TYPE_STRING: return (((t_base_type*)type)->is_binary() ? "ByteString" : "Text");
+    case t_base_type::TYPE_STRING: return (((t_base_type*)type)->is_binary() ? "BL.ByteString" : "Text");
     case t_base_type::TYPE_BOOL:   return "Bool";
     case t_base_type::TYPE_BYTE:   return "Int8";
     case t_base_type::TYPE_I16:    return "Int16";

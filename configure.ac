@@ -660,6 +660,7 @@ AC_CONFIG_FILES([
   tutorial/Makefile
   tutorial/cpp/Makefile
   tutorial/go/Makefile
+  tutorial/hs/Makefile
   tutorial/java/Makefile
   tutorial/js/Makefile
   tutorial/nodejs/Makefile

@@ -17,6 +17,8 @@
 -- under the License.
 --
 
+{-# LANGUAGE OverloadedStrings #-}
+
 import qualified Calculator
 import Calculator_Iface
 import Tutorial_Types
@@ -28,6 +30,8 @@ import Thrift.Protocol.Binary
 import Thrift.Transport
 import Thrift.Server
 
+import Data.Int
+import Data.String
 import Data.Maybe
 import Text.Printf
 import Control.Exception (throw)
@@ -36,7 +40,7 @@ import qualified Data.Map as M
 import Data.Map ((!))
 import Data.Monoid
 
-data CalculatorHandler = CalculatorHandler {mathLog :: MVar (M.Map Int SharedStruct)}
+data CalculatorHandler = CalculatorHandler {mathLog :: MVar (M.Map Int32 SharedStruct)}
 
 newCalculatorHandler = do
   log <- newMVar mempty
@@ -70,16 +74,16 @@ instance Calculator_Iface CalculatorHandler where
                     if num2 work == 0 then
                         throw $
                               InvalidOperation {
-                                 f_InvalidOperation_what = Just $ fromEnum $ op work,
+                                 f_InvalidOperation_what = Just $ fromIntegral $ fromEnum $ op work,
                                  f_InvalidOperation_why = Just "Cannot divide by 0"
                                             }
                     else
                         num1 work `div` num2 work
 
-    let logEntry = SharedStruct (Just logid) (Just (show val))
+    let logEntry = SharedStruct (Just logid) (Just (fromString $ show $ val))
     modifyMVar_ (mathLog self) $ return .(M.insert logid logEntry)
 
-    return val
+    return $! val
 
    where
      -- stupid dynamic languages f'ing it up
