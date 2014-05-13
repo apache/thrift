@@ -19,30 +19,47 @@
 
 Name:           ThriftTutorial
 Version:        0.1.0
-Cabal-Version:  >= 1.2
-License:        Apache2
+Cabal-Version:  >= 1.4
+License:        OtherLicense
 Category:       Foreign
 Build-Type:     Simple
 Synopsis:       Thrift Tutorial library package
+Homepage:       http://thrift.apache.org
+Bug-Reports:    https://issues.apache.org/jira/browse/THRIFT
+Maintainer:     dev@thrift.apache.org
+License-File:   ../../LICENSE
+
+Description:
+  Haskell tutorial for the Apache Thrift RPC system. Requires the use of the thrift code generator.
 
 Executable HaskellServer
   Main-is: HaskellServer.hs
   Hs-Source-Dirs:
-    ., ../gen-hs/
+    ., gen-hs/
   Build-Depends:
-    base >=4, network, ghc-prim, containers, Thrift
-  ghc-options:
-    -fglasgow-exts
+    base >= 4, base < 5, network, ghc-prim, containers, thrift, vector, unordered-containers, text, hashable, bytestring
   Extensions:
-    DeriveDataTypeable
+    DeriveDataTypeable,
+    ExistentialQuantification,
+    FlexibleInstances,
+    KindSignatures,
+    MagicHash,
+    RankNTypes,
+    ScopedTypeVariables,
+    TypeSynonymInstances
 
 Executable HaskellClient
   Main-is: HaskellClient.hs
   Hs-Source-Dirs:
-    ., ../gen-hs/
+    ., gen-hs/
   Build-Depends:
-    base >=4, network, ghc-prim, containers, Thrift
-  ghc-options:
-    -fglasgow-exts
+    base >= 4, base < 5, network, ghc-prim, containers, thrift, vector
   Extensions:
-    DeriveDataTypeable
+    DeriveDataTypeable,
+    ExistentialQuantification,
+    FlexibleInstances,
+    KindSignatures,
+    MagicHash,
+    RankNTypes,
+    ScopedTypeVariables,
+    TypeSynonymInstances
