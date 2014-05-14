@@ -114,7 +114,7 @@ class t_cpp_generator : public t_oop_generator {
   void generate_struct_writer        (std::ofstream& out, t_struct* tstruct, bool pointers=false);
   void generate_struct_result_writer (std::ofstream& out, t_struct* tstruct, bool pointers=false);
   void generate_struct_swap          (std::ofstream& out, t_struct* tstruct);
-
+  void generate_struct_clear         (std::ofstream& out, t_struct* tstruct);
   /**
    * Service-level generation functions
    */
@@ -776,6 +776,7 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   generate_struct_reader(out, tstruct);
   generate_struct_writer(out, tstruct);
   generate_struct_swap(f_types_impl_, tstruct);
+  generate_struct_clear(out, tstruct);
 }
 
 /**
@@ -1019,6 +1020,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
         "::apache::thrift::protocol::TProtocol* oprot) const;" << endl;
     }
   }
+  out << indent() << "void clear();\n" ;
   out << endl;
 
   indent_down();
@@ -1557,6 +1559,42 @@ void t_cpp_generator::generate_struct_swap(ofstream& out, t_struct* tstruct) {
       indent() << "(void) b;" << endl;
   }
 
+  scope_down(out);
+  out << endl;
+}
+
+void t_cpp_generator::generate_struct_clear(std::ofstream& out, t_struct* tstruct) {
+  string name = tstruct->get_name();
+  out << indent() << "void " << name << "::clear() {" << endl;
+  indent_up();
+  const vector<t_field*>& fields = tstruct->get_members();
+  for (auto f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field *tfield = *f_iter;
+
+    if (tfield->get_req() != t_field::T_REQUIRED) {
+      out << indent() << "__isset." << tfield->get_name() << " = false;\n";
+    }
+    t_type* tt = tfield->get_type();
+    if (tt->is_struct() || tt->is_container() || tt->is_string()) {
+      out << indent() << tfield->get_name() << ".clear();\n";
+    } else if (tt->is_base_type()) {
+      t_base_type::t_base tbase = ((t_base_type*)tt)->get_base();
+      switch (tbase) {
+        case t_base_type::TYPE_BOOL:
+        case t_base_type::TYPE_BYTE:
+        case t_base_type::TYPE_I16:
+        case t_base_type::TYPE_I32:
+        case t_base_type::TYPE_I64:
+        case t_base_type::TYPE_DOUBLE:
+          out << indent() << tfield->get_name() << " = 0;\n";
+        break;
+
+        case t_base_type::TYPE_VOID:
+        case t_base_type::TYPE_STRING:
+        break;
+      }
+    }
+  }
   scope_down(out);
   out << endl;
 }
