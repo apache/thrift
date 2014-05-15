@@ -806,6 +806,7 @@ thrift_binary_protocol_read_binary (ThriftProtocol *protocol,
     }
     xfer += ret;
   } else {
+    *len = (guint32) read_len;
     *buf = NULL;
   }
 

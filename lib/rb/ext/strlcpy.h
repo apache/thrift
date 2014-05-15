@@ -17,14 +17,18 @@
  * under the License.
  */
 
-
 #include <sys/types.h>
 #include <string.h>
 
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
+
 #ifndef HAVE_STRLCPY
-size_t
-strlcpy (char *dst, const char *src, size_t dst_sz);
+size_t strlcpy (char *dst, const char *src, size_t dst_sz);
 #else
+#if !__has_builtin(strlcpy)
 extern size_t strlcpy(char *, const char *, size_t);
+#endif
 #endif
 

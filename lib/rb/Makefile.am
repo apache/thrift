@@ -18,7 +18,6 @@
 #
 
 EXTRA_DIST = \
-	CHANGELOG \
 	Rakefile \
 	Gemfile \
 	thrift.gemspec \
@@ -30,21 +29,21 @@ EXTRA_DIST = \
 
 DESTDIR ?= /
 
-all-local:
 if HAVE_BUNDLER
+
+all-local:
 	$(BUNDLER) install
 	$(BUNDLER) exec rake
-endif
 
 install-exec-hook:
-	$(RAKE) install
+	$(BUNDLER) exec rake install
 
 clean-local:
-	$(RAKE) clean
+	$(BUNDLER) exec rake clean
 
 check-local: all
-if HAVE_BUNDLER
 	$(BUNDLER) install
 	$(BUNDLER) exec rake
+
 endif
 

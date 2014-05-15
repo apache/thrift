@@ -607,7 +607,7 @@ static VALUE rb_thrift_union_read(VALUE self, VALUE protocol) {
     if (field_type == specified_type) {
       // read the value
       VALUE name = rb_hash_aref(field_info, name_sym);
-      rb_iv_set(self, "@setfield", ID2SYM(rb_intern(RSTRING_PTR(name))));
+      rb_iv_set(self, "@setfield", rb_str_intern(name));
       rb_iv_set(self, "@value", read_anything(protocol, field_type, field_info));
     } else {
       rb_funcall(protocol, skip_method_id, 1, field_type_value);

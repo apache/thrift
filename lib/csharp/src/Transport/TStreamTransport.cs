@@ -31,7 +31,7 @@ namespace Thrift.Transport
 		protected Stream inputStream;
 		protected Stream outputStream;
 
-		public TStreamTransport()
+		protected TStreamTransport()
 		{
 		}
 

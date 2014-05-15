@@ -57,10 +57,10 @@ class TJSONProtocol extends TProtocol
         1, 1, '"', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 2
     );
 
-    public static $ESCAPE_CHARS = array('"', '\\', "b", "f", "n", "r", "t");
+    public static $ESCAPE_CHARS = array('"', '\\', '/', "b", "f", "n", "r", "t");
 
     public static $ESCAPE_CHAR_VALS = array(
-        '"', '\\', "\x08", "\f", "\n", "\r", "\t",
+        '"', '\\', '/', "\x08", "\f", "\n", "\r", "\t",
     );
 
     const NAME_BOOL = "tf";

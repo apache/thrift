@@ -30,6 +30,16 @@ namespace apache { namespace thrift { namespace transport {
 
 class AccessManager;
 class SSLContext;
+ 
+enum SSLProtocol {
+	SSLTLS		= 0,	// Supports SSLv3 and TLSv1.
+	//SSLv2		= 1,	// HORRIBLY INSECURE!
+	SSLv3		= 2,	// Supports SSLv3 only.
+	TLSv1_0		= 3,	// Supports TLSv1_0 only.
+	TLSv1_1		= 4,	// Supports TLSv1_1 only.
+	TLSv1_2		= 5 	// Supports TLSv1_2 only.
+};
+
 
 /**
  * OpenSSL implementation for SSL socket interface.
@@ -75,7 +85,7 @@ protected:
    *
    * @param socket An existing socket
    */
-  TSSLSocket(boost::shared_ptr<SSLContext> ctx, int socket);
+  TSSLSocket(boost::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket);
   /**
    * Constructor.
    *
@@ -108,8 +118,10 @@ class TSSLSocketFactory {
  public:
   /**
    * Constructor/Destructor
+   *
+   * @param protocol The SSL/TLS protocol to use.
    */
-  TSSLSocketFactory();
+  TSSLSocketFactory(const SSLProtocol& protocol = SSLTLS);
   virtual ~TSSLSocketFactory();
   /**
    * Create an instance of TSSLSocket with a fresh new socket.
@@ -120,7 +132,7 @@ class TSSLSocketFactory {
    *
    * @param socket An existing socket.
    */
-  virtual boost::shared_ptr<TSSLSocket> createSocket(int socket);
+  virtual boost::shared_ptr<TSSLSocket> createSocket(THRIFT_SOCKET socket);
    /**
    * Create an instance of TSSLSocket.
    *
@@ -234,7 +246,7 @@ class TSSLException: public TTransportException {
  */
 class SSLContext {
  public:
-  SSLContext();
+  SSLContext(const SSLProtocol& protocol = SSLTLS);
   virtual ~SSLContext();
   SSL* createSSL();
   SSL_CTX* get() { return ctx_; }

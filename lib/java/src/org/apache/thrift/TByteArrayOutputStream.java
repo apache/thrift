@@ -27,16 +27,27 @@ import java.io.ByteArrayOutputStream;
  *
  */
 public class TByteArrayOutputStream extends ByteArrayOutputStream {
+
+  private final int initialSize;
+
   public TByteArrayOutputStream(int size) {
     super(size);
+    this.initialSize = size;
   }
 
   public TByteArrayOutputStream() {
-    super();
+    this(32);
   }
 
   public byte[] get() {
     return buf;
+  }
+
+  public void reset() {
+    super.reset();
+    if (buf.length > initialSize) {
+      buf = new byte[initialSize];
+    }
   }
 
   public int len() {

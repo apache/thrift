@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"net"
+	"sync"
 	"time"
 )
 
@@ -28,7 +29,10 @@ type TServerSocket struct {
 	listener      net.Listener
 	addr          net.Addr
 	clientTimeout time.Duration
-	interrupted   bool
+
+	// Protects the interrupted value to make it thread safe.
+	mu          sync.RWMutex
+	interrupted bool
 }
 
 func NewTServerSocket(listenAddr string) (*TServerSocket, error) {
@@ -56,7 +60,11 @@ func (p *TServerSocket) Listen() error {
 }
 
 func (p *TServerSocket) Accept() (TTransport, error) {
-	if p.interrupted {
+	p.mu.RLock()
+	interrupted := p.interrupted
+	p.mu.RUnlock()
+
+	if interrupted {
 		return nil, errTransportInterrupted
 	}
 	if p.listener == nil {
@@ -102,6 +110,9 @@ func (p *TServerSocket) Close() error {
 }
 
 func (p *TServerSocket) Interrupt() error {
+	p.mu.Lock()
 	p.interrupted = true
+	p.mu.Unlock()
+
 	return nil
 }

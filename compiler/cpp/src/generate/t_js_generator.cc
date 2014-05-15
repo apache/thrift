@@ -51,14 +51,18 @@ class t_js_generator : public t_oop_generator {
                 const std::string& option_string) :
      t_oop_generator(program) {
      (void) option_string;
-     
+
      std::map<std::string, std::string>::const_iterator iter;
-     
+
      iter = parsed_options.find("node");
      gen_node_ = (iter != parsed_options.end());
-     
+
      iter = parsed_options.find("jquery");
      gen_jquery_ = (iter != parsed_options.end());
+
+	 if (gen_node_ && gen_jquery_) {
+       throw "Invalid switch: [-gen js:node,jquery] options not compatible, try: [-gen js:node -gen js:jquery]";
+	 }
 
      if (gen_node_) {
        out_dir_base_ = "gen-nodejs";
@@ -234,7 +238,7 @@ class t_js_generator : public t_oop_generator {
  private:
 
   /**
-   * True iff we should generate NodeJS-friendly RPC services.
+   * True if we should generate NodeJS-friendly RPC services.
    */
   bool gen_node_;
 
@@ -298,31 +302,31 @@ void t_js_generator::init_generator() {
  */
 string t_js_generator::js_includes() {
   if (gen_node_) {
-    return string("var Thrift = require('thrift').Thrift;");
+    return string("var thrift = require('thrift');\n"
+      "var Thrift = thrift.Thrift;\n"
+      "var Q = thrift.Q;\n");
   }
-  string inc;
 
-  return inc;
+  return "";
 }
 
 /**
  * Renders all the imports necessary for including another Thrift program
  */
 string t_js_generator::render_includes() {
+  string result = "";
+
   if (gen_node_) {
     const vector<t_program*>& includes = program_->get_includes();
-    string result = "";
     for (size_t i = 0; i < includes.size(); ++i) {
       result += "var " + includes[i]->get_name() + "_ttypes = require('./" + includes[i]->get_name() + "_types')\n";
     }
     if (includes.size() > 0) {
       result += "\n";
     }
-    return result;
   }
-  string inc;
 
-  return inc;
+  return result;
 }
 
 /**
@@ -392,7 +396,7 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      out << "'" << value->get_string() << "'";
+      out << "'" << get_escaped_string(value) << "'";
       break;
     case t_base_type::TYPE_BOOL:
       out << (value->get_integer() > 0 ? "true" : "false");
@@ -815,7 +819,7 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
                << indent() << "  input.skip(Thrift.Type.STRUCT);" << endl
                << indent() << "  input.readMessageEnd();" << endl
                << indent() << "  var x = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN_METHOD, 'Unknown function ' + r.fname);" << endl
-               << indent() << "  output.writeMessageBegin(r.fname, Thrift.MessageType.Exception, r.rseqid);" << endl
+               << indent() << "  output.writeMessageBegin(r.fname, Thrift.MessageType.EXCEPTION, r.rseqid);" << endl
                << indent() << "  x.write(output);" << endl
                << indent() << "  output.writeMessageEnd();" << endl
                << indent() << "  output.flush();" << endl
@@ -855,44 +859,83 @@ void t_js_generator::generate_process_function(t_service* tservice,
     const std::vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator f_iter;
 
-    f_service_ <<
-      indent() << "this._handler." << tfunction->get_name() << "(";
-
-    bool first = true;
-    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-      if (first) {
-        first = false;
-      } else {
-        f_service_ << ", ";
-      }
-      f_service_ << "args." << (*f_iter)->get_name();
-    }
-
     // Shortcut out here for oneway functions
     if (tfunction->is_oneway()) {
+      indent(f_service_) << "this._handler." << tfunction->get_name() << "(";
+
+      bool first = true;
+      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        if (first) {
+          first = false;
+        } else {
+          f_service_ << ", ";
+        }
+        f_service_ << "args." << (*f_iter)->get_name();
+      }
+
       f_service_ << ")" << endl;
       scope_down(f_service_);
       f_service_ << endl;
       return;
     }
 
-    if (!first) {
-        f_service_ << ", ";
+    f_service_ <<
+        indent() << "if (this._handler." << tfunction->get_name() << ".length === " << fields.size() <<") {" << endl;
+    indent_up();
+    indent(f_service_) << "Q.fcall(this._handler." << tfunction->get_name();
+
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      f_service_ << ", args." << (*f_iter)->get_name();
     }
-    f_service_ << "function (err, result) {" << endl;
+
+    f_service_ << ")" << endl;
+    indent_up();
+    indent(f_service_) << ".then(function(result) {" << endl;
+    indent_up();
+    f_service_ <<
+        indent() << "var result = new " << resultname << "({success: result});" << endl <<
+        indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
+        "\", Thrift.MessageType.REPLY, seqid);" << endl <<
+        indent() << "result.write(output);" << endl <<
+        indent() << "output.writeMessageEnd();" << endl <<
+        indent() << "output.flush();" << endl;
+    indent_down();
+    indent(f_service_) << "}, function (err) {" << endl;
+    indent_up();
+    f_service_ <<
+        indent() << "var result = new " << resultname << "(err);" << endl <<
+        indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
+        "\", Thrift.MessageType.REPLY, seqid);" << endl <<
+        indent() << "result.write(output);" << endl <<
+        indent() << "output.writeMessageEnd();" << endl <<
+        indent() << "output.flush();" << endl;
+    indent_down();
+    indent(f_service_) << "});" << endl;
+    indent_down();
+    indent_down();
+    indent(f_service_) << "} else {" << endl;
+    indent_up();
+    indent(f_service_) << "this._handler." << tfunction->get_name() << "(";
+
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      f_service_ << "args." << (*f_iter)->get_name() << ", ";
+    }
+
+    f_service_ << " function (err, result) {" << endl;
     indent_up();
 
     f_service_ <<
-      indent() << "var result = new " << resultname << "((err != null ? err : {success: result}));" << endl <<
-      indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
+        indent() << "var result = new " << resultname << "((err != null ? err : {success: result}));" << endl <<
+        indent() << "output.writeMessageBegin(\"" << tfunction->get_name() <<
         "\", Thrift.MessageType.REPLY, seqid);" << endl <<
-      indent() << "result.write(output);" << endl <<
-      indent() << "output.writeMessageEnd();" << endl <<
-      indent() << "output.flush();" << endl;
+        indent() << "result.write(output);" << endl <<
+        indent() << "output.writeMessageEnd();" << endl <<
+        indent() << "output.flush();" << endl;
 
     indent_down();
-    indent(f_service_) << "})" << endl;
-
+    indent(f_service_) << "});" << endl;
+    indent_down();
+    indent(f_service_) << "}" << endl;
     scope_down(f_service_);
     f_service_ << endl;
 }
@@ -967,7 +1010,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
   if (gen_node_) {
     f_service_ <<
-        js_namespace(tservice->get_program()) << service_name_ << "Client = " << 
+        js_namespace(tservice->get_program()) << service_name_ << "Client = " <<
         "exports.Client = function(output, pClass) {"<<endl;
   } else {
     f_service_ <<
@@ -1024,44 +1067,76 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
     // Open function
     f_service_ <<  js_namespace(tservice->get_program())<<service_name_<<"Client.prototype." <<
-      function_signature(*f_iter, "", gen_node_ || gen_jquery_) << " {" << endl;
+      function_signature(*f_iter, "", true) << " {" << endl;
 
     indent_up();
 
-    if (gen_node_) {
+    if (gen_node_) {          //Node.js output      ./gen-nodejs
       f_service_ <<
         indent() << "this._seqid = this.new_seqid();" << endl <<
-        indent() << "this._reqs[this.seqid()] = callback;" << endl;
-    } else if (gen_jquery_) {
-      f_service_ <<
         indent() << "if (callback === undefined) {" << endl;
-        indent_up();
-    }
-
-    f_service_ << indent() <<
-      "this.send_" << funname << "(" << arglist << ");" << endl;
-
-    if (!gen_node_ && !(*f_iter)->is_oneway()) {
-      f_service_ << indent();
-      if (!(*f_iter)->get_returntype()->is_void()) {
-        f_service_ << "return ";
-      }
+      indent_up();
       f_service_ <<
-        "this.recv_" << funname << "();" << endl;
+        indent() << "var _defer = Q.defer();" << endl <<
+        indent() << "this._reqs[this.seqid()] = function(error, result) {" << endl;
+      indent_up();
+      indent(f_service_) << "if (error) {" << endl;
+      indent_up();
+      indent(f_service_) << "_defer.reject(error);" << endl;
+      indent_down();
+      indent(f_service_) << "} else {" << endl;
+      indent_up();
+      indent(f_service_) << "_defer.resolve(result);" << endl;
+      indent_down();
+      indent(f_service_) << "}" << endl;
+      indent_down();
+      indent(f_service_) << "};" << endl;
+      f_service_ <<
+        indent() << "this.send_" << funname << "(" << arglist << ");" << endl <<
+        indent() << "return _defer.promise;" << endl;
+      indent_down();
+      indent(f_service_) << "} else {" << endl;
+      indent_up();
+      f_service_ <<
+        indent() << "this._reqs[this.seqid()] = callback;" << endl <<
+        indent() << "this.send_" << funname << "(" << arglist << ");" << endl;
+      indent_down();
+      indent(f_service_) << "}" << endl;
     }
-
-    if (gen_jquery_) {
+    else if (gen_jquery_) {   //jQuery output       ./gen-js
+		  f_service_ << indent() << "if (callback === undefined) {" << endl;
+      indent_up();
+      f_service_ << indent() << "this.send_" << funname << "(" << arglist << ");" << endl;
+      if (!(*f_iter)->is_oneway()) {
+        f_service_ << indent();
+        if (!(*f_iter)->get_returntype()->is_void()) {
+          f_service_ << "return ";
+        }
+        f_service_ << "this.recv_" << funname << "();" << endl;
+      }
       indent_down();
       f_service_ << indent() << "} else {" << endl;
       indent_up();
-        f_service_ << indent() << "var postData = this.send_" << funname <<
-           "(" << arglist << (arglist.empty() ? "" : ", ") << "true);" << endl;
-        f_service_ << indent() << "return this.output.getTransport()" << endl;
-        indent_up();
-          f_service_ << indent() << ".jqRequest(this, postData, arguments, this.recv_" << funname << ");" << endl;
-        indent_down();
+      f_service_ << indent() << "var postData = this.send_" << funname <<
+        "(" << arglist << (arglist.empty() ? "" : ", ") << "true);" << endl;
+      f_service_ << indent() << "return this.output.getTransport()" << endl;
+      indent_up();
+      f_service_ << indent() << ".jqRequest(this, postData, arguments, this.recv_" << funname << ");" << endl;
+      indent_down();
       indent_down();
       f_service_ << indent() << "}" << endl;
+    } else {                  //Standard JavaScript ./gen-js
+      f_service_ << indent() <<
+        "this.send_" << funname << "(" << arglist << (arglist.empty() ? "" : ", ") << "callback); " << endl;
+      if (!(*f_iter)->is_oneway()) {
+		    f_service_ << indent() << "if (!callback) {" << endl;
+        f_service_ << indent();
+        if (!(*f_iter)->get_returntype()->is_void()) {
+          f_service_ << "  return ";
+        }
+        f_service_ << "this.recv_" << funname << "();" << endl;
+        f_service_ << indent() << "}" << endl;
+      }
     }
 
     indent_down();
@@ -1071,7 +1146,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
     // Send function
     f_service_ <<  js_namespace(tservice->get_program())<<service_name_ <<
-        "Client.prototype.send_" << function_signature(*f_iter, "", gen_jquery_) << " {" <<endl;
+      "Client.prototype.send_" << function_signature(*f_iter, "", !gen_node_) << " {" << endl;
 
     indent_up();
 
@@ -1095,7 +1170,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     }
 
     f_service_ <<
-      indent() << "var args = new " << argsname << "();" << endl; 
+      indent() << "var args = new " << argsname << "();" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ <<
@@ -1113,10 +1188,22 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       if (gen_jquery_) {
         f_service_ << indent() << "return this.output.getTransport().flush(callback);" << endl;
       } else {
-        f_service_ << indent() << "return this.output.getTransport().flush();" << endl;
+        f_service_ << indent() << "if (callback) {" << endl;
+        f_service_ << indent() << "  var self = this;" << endl;
+        f_service_ << indent() << "  this.output.getTransport().flush(true, function() {" << endl;
+        f_service_ << indent() << "    var result = null;" << endl;
+        f_service_ << indent() << "    try {" << endl;
+        f_service_ << indent() << "      result = self.recv_" << funname << "();" << endl;
+        f_service_ << indent() << "    } catch (e) {" << endl;
+        f_service_ << indent() << "      result = e;" << endl;
+        f_service_ << indent() << "    }" << endl;
+        f_service_ << indent() << "    callback(result);" << endl;
+        f_service_ << indent() << "  });" << endl;
+        f_service_ << indent() << "} else {" << endl;
+        f_service_ << indent() << "  return this.output.getTransport().flush();" << endl;
+        f_service_ << indent() << "}" << endl;
       }
     }
-
 
     indent_down();
 
@@ -1813,4 +1900,3 @@ string t_js_generator ::type_to_enum(t_type* type) {
 THRIFT_REGISTER_GENERATOR(js, "Javascript",
 "    jquery:          Generate jQuery compatible code.\n"
 "    node:            Generate node.js compatible code.\n")
-

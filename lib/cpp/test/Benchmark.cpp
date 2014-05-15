@@ -35,15 +35,15 @@ public:
   timeval vStart;
 
   Timer() {
-    gettimeofday(&vStart, 0);
+    THRIFT_GETTIMEOFDAY(&vStart, 0);
   }
   void start() {
-    gettimeofday(&vStart, 0);
+    THRIFT_GETTIMEOFDAY(&vStart, 0);
   }
 
   double frame() {
     timeval vEnd;
-    gettimeofday(&vEnd, 0);
+    THRIFT_GETTIMEOFDAY(&vEnd, 0);
     double dstart = vStart.tv_sec + ((double)vStart.tv_usec / 1000000.0);
     double dend = vEnd.tv_sec + ((double)vEnd.tv_usec / 1000000.0);
     return dend - dstart;

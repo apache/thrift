@@ -66,9 +66,6 @@ public:
     iter = parsed_options.find("nocamel");
     nocamel_style_ = (iter != parsed_options.end());
 
-    iter = parsed_options.find("hashcode");
-    gen_hash_code_ = (iter != parsed_options.end());
-
     iter = parsed_options.find("android_legacy");
     android_legacy_ = (iter != parsed_options.end());
 
@@ -80,6 +77,9 @@ public:
     if (java5_) {
       android_legacy_ = true;
     }
+
+    iter = parsed_options.find("reuse-objects");
+    reuse_objects_ = (iter != parsed_options.end());
 
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
   }
@@ -200,16 +200,19 @@ public:
   void generate_deserialize_set_element  (std::ofstream& out,
                                           t_set*      tset,
                                           std::string prefix="",
+                                          std::string obj="",
                                           bool has_metadata = true);
 
   void generate_deserialize_map_element  (std::ofstream& out,
                                           t_map*      tmap,
                                           std::string prefix="",
+                                          std::string obj="",
                                           bool has_metadata = true);
 
   void generate_deserialize_list_element (std::ofstream& out,
                                           t_list*     tlist,
                                           std::string prefix="",
+                                          std::string obj="",
                                           bool has_metadata = true);
 
   void generate_serialize_field          (std::ofstream& out,
@@ -267,7 +270,7 @@ public:
   std::string java_package();
   std::string java_type_imports();
   std::string java_suppressions();
-  std::string type_name(t_type* ttype, bool in_container=false, bool in_init=false, bool skip_generic=false);
+  std::string type_name(t_type* ttype, bool in_container=false, bool in_init=false, bool skip_generic=false, bool force_namespace = false);
   std::string base_type_name(t_base_type* tbase, bool in_container=false);
   std::string declare_field(t_field* tfield, bool init=false, bool comment=false);
   std::string function_signature(t_function* tfunction, std::string prefix="");
@@ -310,10 +313,10 @@ public:
   bool bean_style_;
   bool private_members_;
   bool nocamel_style_;
-  bool gen_hash_code_;
   bool android_legacy_;
   bool java5_;
   bool sorted_containers_;
+  bool reuse_objects_;
 };
 
 
@@ -1242,32 +1245,22 @@ void t_java_generator::generate_union_comparisons(ofstream& out, t_struct* tstru
 
 void t_java_generator::generate_union_hashcode(ofstream& out, t_struct* tstruct) {
   (void) tstruct;
-  if (gen_hash_code_) {
-    indent(out) << "@Override" << endl;
-    indent(out) << "public int hashCode() {" << endl;
-    indent(out) << "  List<Object> list = new ArrayList<Object>();" << endl;
-    indent(out) << "  list.add(this.getClass().getName());" << endl;
-    indent(out) << "  org.apache.thrift.TFieldIdEnum setField = getSetField();" << endl;
-    indent(out) << "  if (setField != null) {" << endl;
-    indent(out) << "    list.add(setField.getThriftFieldId());" << endl;
-    indent(out) << "    Object value = getFieldValue();" << endl;
-    indent(out) << "    if (value instanceof org.apache.thrift.TEnum) {" << endl;
-    indent(out) << "      list.add(((org.apache.thrift.TEnum)getFieldValue()).getValue());" << endl;
-    indent(out) << "    } else {" << endl;
-    indent(out) << "      list.add(value);" << endl;
-    indent(out) << "    }" << endl;
-    indent(out) << "  }" << endl;
-    indent(out) << "  return list.hashCode();" << endl;
-    indent(out) << "}";
-  } else {
-    indent(out) << "/**" << endl;
-    indent(out) << " * If you'd like this to perform more respectably, use the hashcode generator option." << endl;
-    indent(out) << " */" << endl;
-    indent(out) << "@Override" << endl;
-    indent(out) << "public int hashCode() {" << endl;
-    indent(out) << "  return 0;" << endl;
-    indent(out) << "}" << endl;
-  }
+  indent(out) << "@Override" << endl;
+  indent(out) << "public int hashCode() {" << endl;
+  indent(out) << "  List<Object> list = new ArrayList<Object>();" << endl;
+  indent(out) << "  list.add(this.getClass().getName());" << endl;
+  indent(out) << "  org.apache.thrift.TFieldIdEnum setField = getSetField();" << endl;
+  indent(out) << "  if (setField != null) {" << endl;
+  indent(out) << "    list.add(setField.getThriftFieldId());" << endl;
+  indent(out) << "    Object value = getFieldValue();" << endl;
+  indent(out) << "    if (value instanceof org.apache.thrift.TEnum) {" << endl;
+  indent(out) << "      list.add(((org.apache.thrift.TEnum)getFieldValue()).getValue());" << endl;
+  indent(out) << "    } else {" << endl;
+  indent(out) << "      list.add(value);" << endl;
+  indent(out) << "    }" << endl;
+  indent(out) << "  }" << endl;
+  indent(out) << "  return list.hashCode();" << endl;
+  indent(out) << "}";
 }
 
 /**
@@ -1595,38 +1588,34 @@ void t_java_generator::generate_java_struct_equality(ofstream& out,
   out << indent() << "@Override" << endl <<
     indent() << "public int hashCode() {" << endl;
   indent_up();
-  if (gen_hash_code_) {
-    indent(out) << "List<Object> list = new ArrayList<Object>();" << endl;
+  indent(out) << "List<Object> list = new ArrayList<Object>();" << endl;
 
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      out << endl;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    out << endl;
 
-      t_type* t = get_true_type((*m_iter)->get_type());
-      bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
-      bool can_be_null = type_can_be_null(t);
-      string name = (*m_iter)->get_name();
+    t_type* t = get_true_type((*m_iter)->get_type());
+    bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
+    bool can_be_null = type_can_be_null(t);
+    string name = (*m_iter)->get_name();
 
-      string present = "true";
+    string present = "true";
 
-      if (is_optional || can_be_null) {
-        present += " && (" + generate_isset_check(*m_iter) + ")";
-      }
-
-      indent(out) << "boolean present_" << name << " = " << present << ";" << endl;
-      indent(out) << "list.add(present_" << name << ");" << endl;
-      indent(out) << "if (present_" << name << ")" << endl;
-      if (t->is_enum()) {
-        indent(out) << "  list.add(" << name << ".getValue());" << endl;
-      } else {
-        indent(out) << "  list.add(" << name << ");" << endl;
-      }
+    if (is_optional || can_be_null) {
+      present += " && (" + generate_isset_check(*m_iter) + ")";
     }
 
-    out << endl;
-    indent(out) << "return list.hashCode();" << endl;
-  } else {
-    indent(out) << "return 0;" << endl;
+    indent(out) << "boolean present_" << name << " = " << present << ";" << endl;
+    indent(out) << "list.add(present_" << name << ");" << endl;
+    indent(out) << "if (present_" << name << ")" << endl;
+    if (t->is_enum()) {
+      indent(out) << "  list.add(" << name << ".getValue());" << endl;
+    } else {
+      indent(out) << "  list.add(" << name << ");" << endl;
+    }
   }
+
+  out << endl;
+  indent(out) << "return list.hashCode();" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
 }
@@ -3084,7 +3073,7 @@ void t_java_generator::generate_deserialize_field(ofstream& out,
     }
     out << endl;
   } else if (type->is_enum()) {
-    indent(out) << name << " = " << type_name(tfield->get_type(), true, false) + ".findByValue(iprot.readI32());" << endl;
+    indent(out) << name << " = " << type_name(tfield->get_type(), true, false, false, true) + ".findByValue(iprot.readI32());" << endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
            tfield->get_name().c_str(), type_name(type).c_str());
@@ -3097,9 +3086,17 @@ void t_java_generator::generate_deserialize_field(ofstream& out,
 void t_java_generator::generate_deserialize_struct(ofstream& out,
                                                    t_struct* tstruct,
                                                    string prefix) {
-  out <<
-    indent() << prefix << " = new " << type_name(tstruct) << "();" << endl <<
-    indent() << prefix << ".read(iprot);" << endl;
+
+    if (reuse_objects_) {
+      indent(out) << "if (" << prefix << " == null) {" << endl;
+      indent_up();
+    }
+    indent(out) << prefix << " = new " << type_name(tstruct) << "();" << endl;
+    if (reuse_objects_) {
+      indent_down();
+      indent(out) << "}" << endl;
+    }
+    indent(out) << prefix << ".read(iprot);" << endl;
 }
 
 /**
@@ -3144,7 +3141,14 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
     }
   }
 
-  indent(out) << prefix << " = new " << type_name(ttype, false, true);
+  if (reuse_objects_) {
+    indent(out) << "if (" << prefix << " == null) {" << endl;
+    indent_up();
+  }
+
+  out << 
+      indent() << prefix << " = new " << type_name(ttype, false, true); 
+
   // size the collection correctly
   if (sorted_containers_ && (ttype->is_map() || ttype->is_set())) {
     // TreeSet and TreeMap don't have any constructor which takes a capactity as an argument
@@ -3156,21 +3160,17 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
       << ");" << endl;
   }
 
-  // For loop iterates over elements
-  string i = tmp("_i");
-  indent(out) <<
-    "for (int " << i << " = 0; " <<
-    i << " < " << obj << ".size" << "; " <<
-    "++" << i << ")" << endl;
-
-  scope_up(out);
+  if (reuse_objects_) {
+    indent_down();
+    indent(out) << "}" << endl;
+  }
 
   if (ttype->is_map()) {
-    generate_deserialize_map_element(out, (t_map*)ttype, prefix, has_metadata);
+    generate_deserialize_map_element(out, (t_map*)ttype, prefix, obj, has_metadata);
   } else if (ttype->is_set()) {
-    generate_deserialize_set_element(out, (t_set*)ttype, prefix, has_metadata);
+    generate_deserialize_set_element(out, (t_set*)ttype, prefix, obj, has_metadata);
   } else if (ttype->is_list()) {
-    generate_deserialize_list_element(out, (t_list*)ttype, prefix, has_metadata);
+    generate_deserialize_list_element(out, (t_list*)ttype, prefix, obj, has_metadata);
   }
 
   scope_down(out);
@@ -3194,14 +3194,24 @@ void t_java_generator::generate_deserialize_container(ofstream& out,
  */
 void t_java_generator::generate_deserialize_map_element(ofstream& out,
                                                         t_map* tmap,
-                                                        string prefix, bool has_metadata) {
+                                                        string prefix, 
+                                                        string obj, bool has_metadata) {
   string key = tmp("_key");
   string val = tmp("_val");
   t_field fkey(tmap->get_key_type(), key);
   t_field fval(tmap->get_val_type(), val);
 
-  indent(out) << declare_field(&fkey) << endl;
-  indent(out) << declare_field(&fval) << endl;
+  indent(out) << declare_field(&fkey, reuse_objects_, false) << endl;
+  indent(out) << declare_field(&fval, reuse_objects_, false) << endl;
+
+  // For loop iterates over elements
+     string i = tmp("_i");
+     indent(out) <<
+       "for (int " << i << " = 0; " <<
+          i << " < " << obj << ".size" << "; " <<
+          "++" << i << ")" << endl;
+  
+  scope_up(out);
 
   generate_deserialize_field(out, &fkey, "", has_metadata);
   generate_deserialize_field(out, &fval, "", has_metadata);
@@ -3214,15 +3224,25 @@ void t_java_generator::generate_deserialize_map_element(ofstream& out,
  */
 void t_java_generator::generate_deserialize_set_element(ofstream& out,
                                                         t_set* tset,
-                                                        string prefix, bool has_metadata) {
+                                                        string prefix, 
+                                                        string obj, bool has_metadata) {
   string elem = tmp("_elem");
   t_field felem(tset->get_elem_type(), elem);
 
-  indent(out) << declare_field(&felem) << endl;
+  indent(out) << declare_field(&felem, reuse_objects_, false) << endl;
 
+  // For loop iterates over elements
+     string i = tmp("_i");
+     indent(out) <<
+       "for (int " << i << " = 0; " <<
+          i << " < " << obj << ".size" << "; " <<
+          "++" << i << ")" << endl;
+  scope_up(out);
+  
   generate_deserialize_field(out, &felem, "", has_metadata);
 
   indent(out) << prefix << ".add(" << elem << ");" << endl;
+
 }
 
 /**
@@ -3230,12 +3250,21 @@ void t_java_generator::generate_deserialize_set_element(ofstream& out,
  */
 void t_java_generator::generate_deserialize_list_element(ofstream& out,
                                                          t_list* tlist,
-                                                         string prefix, bool has_metadata) {
+                                                         string prefix, 
+                                                         string obj, bool has_metadata) {
   string elem = tmp("_elem");
   t_field felem(tlist->get_elem_type(), elem);
 
-  indent(out) << declare_field(&felem) << endl;
+  indent(out) << declare_field(&felem, reuse_objects_, false) << endl;
 
+  // For loop iterates over elements
+     string i = tmp("_i");
+     indent(out) <<
+       "for (int " << i << " = 0; " <<
+          i << " < " << obj << ".size" << "; " <<
+          "++" << i << ")" << endl;
+  scope_up(out);
+ 
   generate_deserialize_field(out, &felem, "", has_metadata);
 
   indent(out) << prefix << ".add(" << elem << ");" << endl;
@@ -3452,7 +3481,7 @@ void t_java_generator::generate_serialize_list_element(ofstream& out,
  * @param container Is the type going inside a container?
  * @return Java type name, i.e. HashMap<Key,Value>
  */
-string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_init, bool skip_generic) {
+string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_init, bool skip_generic, bool force_namespace) {
   // In Java typedefs are just resolved to their real type
   ttype = get_true_type(ttype);
   string prefix;
@@ -3497,7 +3526,7 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
 
   // Check for namespacing
   t_program* program = ttype->get_program();
-  if (program != NULL && program != program_) {
+  if ((program != NULL && program != program_) || force_namespace) {
     string package = program->get_namespace("java");
     if (!package.empty()) {
       return package + "." + ttype->get_name();
@@ -4545,9 +4574,9 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    beans:           Members will be private, and setter methods will return void.\n"
 "    private-members: Members will be private, but setter methods will return 'this' like usual.\n"
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
-"    hashcode:        Generate quality hashCode methods.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
 "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
+"    reuse-objects:   Data objects will not be allocated, but existing instances will be used (read and write).\n"
 "    sorted_containers:\n"
 "                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of set/map.\n"
 )

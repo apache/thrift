@@ -113,7 +113,7 @@ abstract class TSaslTransport extends TTransport {
   /**
    * Create a TSaslTransport. It's assumed that setSaslServer will be called
    * later to initialize the SASL endpoint underlying this transport.
-   * 
+   *
    * @param underlyingTransport
    *          The thrift transport which this transport is wrapping.
    */
@@ -123,7 +123,7 @@ abstract class TSaslTransport extends TTransport {
 
   /**
    * Create a TSaslTransport which acts as a client.
-   * 
+   *
    * @param saslClient
    *          The <code>SaslClient</code> which this transport will use for SASL
    *          negotiation.
@@ -144,7 +144,7 @@ abstract class TSaslTransport extends TTransport {
 
   /**
    * Send a complete Thrift SASL message.
-   * 
+   *
    * @param status
    *          The status to send.
    * @param payload
@@ -168,7 +168,7 @@ abstract class TSaslTransport extends TTransport {
 
   /**
    * Read a complete Thrift SASL message.
-   * 
+   *
    * @return The SASL status and payload from this message.
    * @throws TTransportException
    *           Thrown if there is a failure reading from the underlying
@@ -203,7 +203,7 @@ abstract class TSaslTransport extends TTransport {
    * Send a Thrift SASL message with the given status (usually BAD or ERROR) and
    * string message, and then throw a TTransportException with the given
    * message.
-   * 
+   *
    * @param status
    *          The Thrift SASL status code to send. Usually BAD or ERROR.
    * @param message
@@ -225,7 +225,7 @@ abstract class TSaslTransport extends TTransport {
    * Implemented by subclasses to start the Thrift SASL handshake process. When
    * this method completes, the <code>SaslParticipant</code> in this class is
    * assumed to be initialized.
-   * 
+   *
    * @throws TTransportException
    * @throws SaslException
    */
@@ -240,6 +240,13 @@ abstract class TSaslTransport extends TTransport {
    */
   @Override
   public void open() throws TTransportException {
+    /*
+     * readSaslHeader is used to tag whether the SASL header has been read properly.
+     * If there is a problem in reading the header, there might not be any
+     * data in the stream, possibly a TCP health check from load balancer.
+     */
+    boolean readSaslHeader = false;
+
     LOGGER.debug("opening transport {}", this);
     if (sasl != null && sasl.isComplete())
       throw new TTransportException("SASL transport already open");
@@ -251,6 +258,7 @@ abstract class TSaslTransport extends TTransport {
       // Negotiate a SASL mechanism. The client also sends its
       // initial response, or an empty one.
       handleSaslStartMessage();
+      readSaslHeader = true;
       LOGGER.debug("{}: Start message handled", getRole());
 
       SaslResponse message = null;
@@ -298,6 +306,17 @@ abstract class TSaslTransport extends TTransport {
       } finally {
         underlyingTransport.close();
       }
+    } catch (TTransportException e) {
+      /*
+       * If there is no-data or no-sasl header in the stream, throw a different
+       * type of exception so we can handle this scenario differently.
+       */
+      if (!readSaslHeader && e.getType() == TTransportException.END_OF_FILE) {
+        underlyingTransport.close();
+        LOGGER.debug("No data or no sasl data in the stream");
+        throw new TSaslTransportException("No data or no sasl data in the stream");
+      }
+      throw e;
     }
 
     String qop = (String) sasl.getNegotiatedProperty(Sasl.QOP);
@@ -307,7 +326,7 @@ abstract class TSaslTransport extends TTransport {
 
   /**
    * Get the underlying <code>SaslClient</code>.
-   * 
+   *
    * @return The <code>SaslClient</code>, or <code>null</code> if this transport
    *         is backed by a <code>SaslServer</code>.
    */
@@ -325,7 +344,7 @@ abstract class TSaslTransport extends TTransport {
 
   /**
    * Get the underlying <code>SaslServer</code>.
-   * 
+   *
    * @return The <code>SaslServer</code>, or <code>null</code> if this transport
    *         is backed by a <code>SaslClient</code>.
    */
@@ -336,7 +355,7 @@ abstract class TSaslTransport extends TTransport {
   /**
    * Read a 4-byte word from the underlying transport and interpret it as an
    * integer.
-   * 
+   *
    * @return The length prefix of the next SASL message to read.
    * @throws TTransportException
    *           Thrown if reading from the underlying transport fails.
@@ -349,7 +368,7 @@ abstract class TSaslTransport extends TTransport {
 
   /**
    * Write the given integer as 4 bytes to the underlying transport.
-   * 
+   *
    * @param length
    *          The length prefix of the next SASL message to write.
    * @throws TTransportException
@@ -413,7 +432,7 @@ abstract class TSaslTransport extends TTransport {
   /**
    * Read a single frame of data from the underlying transport, unwrapping if
    * necessary.
-   * 
+   *
    * @throws TTransportException
    *           Thrown if there's an error reading from the underlying transport.
    * @throws SaslException

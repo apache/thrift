@@ -41,7 +41,7 @@ sudo apt-get install -qq ruby rubygems
 sudo gem install bundler rake
 
 # Perl dependencies
-sudo apt-get install -qq libbit-vector-perl
+sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl
 
 # Php dependencies
 sudo apt-get install -qq php5 php5-dev php5-cli php-pear

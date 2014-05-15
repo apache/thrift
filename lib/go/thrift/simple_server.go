@@ -25,7 +25,7 @@ import (
 
 // Simple, non-concurrent server for testing.
 type TSimpleServer struct {
-	stopped bool
+	quit chan struct{}
 
 	processorFactory       TProcessorFactory
 	serverTransport        TServerTransport
@@ -78,12 +78,14 @@ func NewTSimpleServerFactory4(processorFactory TProcessorFactory, serverTranspor
 }
 
 func NewTSimpleServerFactory6(processorFactory TProcessorFactory, serverTransport TServerTransport, inputTransportFactory TTransportFactory, outputTransportFactory TTransportFactory, inputProtocolFactory TProtocolFactory, outputProtocolFactory TProtocolFactory) *TSimpleServer {
-	return &TSimpleServer{processorFactory: processorFactory,
+	return &TSimpleServer{
+		processorFactory:       processorFactory,
 		serverTransport:        serverTransport,
 		inputTransportFactory:  inputTransportFactory,
 		outputTransportFactory: outputTransportFactory,
 		inputProtocolFactory:   inputProtocolFactory,
 		outputProtocolFactory:  outputProtocolFactory,
+		quit: make(chan struct{}, 1),
 	}
 }
 
@@ -111,13 +113,18 @@ func (p *TSimpleServer) OutputProtocolFactory() TProtocolFactory {
 	return p.outputProtocolFactory
 }
 
-func (p *TSimpleServer) Serve() error {
-	p.stopped = false
-	err := p.serverTransport.Listen()
-	if err != nil {
-		return err
-	}
-	for !p.stopped {
+func (p *TSimpleServer) Listen() error {
+	return p.serverTransport.Listen()
+}
+
+func (p *TSimpleServer) AcceptLoop() error {
+	for {
+		select {
+		case <-p.quit:
+			return nil
+		default:
+		}
+
 		client, err := p.serverTransport.Accept()
 		if err != nil {
 			log.Println("Accept err: ", err)
@@ -130,11 +137,19 @@ func (p *TSimpleServer) Serve() error {
 			}()
 		}
 	}
+}
+
+func (p *TSimpleServer) Serve() error {
+	err := p.Listen()
+	if err != nil {
+		return err
+	}
+	p.AcceptLoop()
 	return nil
 }
 
 func (p *TSimpleServer) Stop() error {
-	p.stopped = true
+	p.quit <- struct{}{}
 	p.serverTransport.Interrupt()
 	return nil
 }
@@ -153,12 +168,12 @@ func (p *TSimpleServer) processRequest(client TTransport) error {
 	}
 	for {
 		ok, err := processor.Process(inputProtocol, outputProtocol)
-		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE{
+		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
 			return nil
 		} else if err != nil {
 			return err
 		}
-		if !ok || !inputProtocol.Transport().Peek() {
+		if !ok {
 			break
 		}
 	}

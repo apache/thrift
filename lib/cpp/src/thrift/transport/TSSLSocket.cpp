@@ -41,7 +41,6 @@
 #define OPENSSL_VERSION_NO_THREAD_ID 0x10000000L
 
 using namespace std;
-using namespace boost;
 using namespace apache::thrift::concurrency;
 
 struct CRYPTO_dynlock_value {
@@ -56,14 +55,45 @@ static bool matchName(const char* host, const char* pattern, int size);
 static char uppercase(char c);
 
 // SSLContext implementation
-SSLContext::SSLContext() {
-  ctx_ = SSL_CTX_new(TLSv1_method());
+SSLContext::SSLContext(const SSLProtocol& protocol) {
+  if(protocol == SSLTLS)
+  {
+    ctx_ = SSL_CTX_new(SSLv23_method());
+  }
+  else if(protocol == SSLv3)
+  {
+    ctx_ = SSL_CTX_new(SSLv3_method());
+  }
+  else if(protocol == TLSv1_0)
+  {
+    ctx_ = SSL_CTX_new(TLSv1_method());
+  }
+  else if(protocol == TLSv1_1)
+  {
+    ctx_ = SSL_CTX_new(TLSv1_1_method());
+  }
+  else if(protocol == TLSv1_2)
+  {
+    ctx_ = SSL_CTX_new(TLSv1_2_method());
+  }
+  else
+  {
+    /// UNKNOWN PROTOCOL!
+    throw TSSLException("SSL_CTX_new: Unknown protocol");
+  }
+
   if (ctx_ == NULL) {
     string errors;
     buildErrors(errors);
     throw TSSLException("SSL_CTX_new: " + errors);
   }
   SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
+
+  // Disable horribly insecure SSLv2!
+  if(protocol == SSLTLS)
+  {
+    SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv2);
+  }
 }
 
 SSLContext::~SSLContext() {
@@ -88,7 +118,7 @@ TSSLSocket::TSSLSocket(boost::shared_ptr<SSLContext> ctx):
   TSocket(), server_(false), ssl_(NULL), ctx_(ctx) {
 }
 
-TSSLSocket::TSSLSocket(boost::shared_ptr<SSLContext> ctx, int socket):
+TSSLSocket::TSSLSocket(boost::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket):
   TSocket(socket), server_(false), ssl_(NULL), ctx_(ctx) {
 }
 
@@ -351,18 +381,19 @@ bool     TSSLSocketFactory::initialized = false;
 uint64_t TSSLSocketFactory::count_ = 0;
 Mutex    TSSLSocketFactory::mutex_;
 
-TSSLSocketFactory::TSSLSocketFactory(): server_(false) {
+TSSLSocketFactory::TSSLSocketFactory(const SSLProtocol& protocol): server_(false) {
   Guard guard(mutex_);
   if (count_ == 0) {
     initializeOpenSSL();
     randomize();
   }
   count_++;
-  ctx_ = boost::shared_ptr<SSLContext>(new SSLContext);
+  ctx_ = boost::shared_ptr<SSLContext>(new SSLContext(protocol));
 }
 
 TSSLSocketFactory::~TSSLSocketFactory() {
   Guard guard(mutex_);
+  ctx_.reset();
   count_--;
   if (count_ == 0) {
     cleanupOpenSSL();
@@ -375,7 +406,7 @@ boost::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket() {
   return ssl;
 }
 
-boost::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(int socket) {
+boost::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(THRIFT_SOCKET socket) {
   boost::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, socket));
   setup(ssl);
   return ssl;
@@ -489,7 +520,7 @@ int TSSLSocketFactory::passwordCallback(char* password,
   return length;
 }
 
-static shared_array<Mutex> mutexes;
+static boost::shared_array<Mutex> mutexes;
 
 static void callbackLocking(int mode, int n, const char*, int) {
   if (mode & CRYPTO_LOCK) {
@@ -533,7 +564,7 @@ void TSSLSocketFactory::initializeOpenSSL() {
   SSL_library_init();
   SSL_load_error_strings();
   // static locking
-  mutexes = shared_array<Mutex>(new Mutex[::CRYPTO_num_locks()]);
+  mutexes = boost::shared_array<Mutex>(new Mutex[::CRYPTO_num_locks()]);
   if (mutexes == NULL) {
     throw TTransportException(TTransportException::INTERNAL_ERROR,
           "initializeOpenSSL() failed, "
@@ -591,7 +622,7 @@ void buildErrors(string& errors, int errno_copy) {
     }
   }
   if (errors.empty()) {
-    errors = "error code: " + lexical_cast<string>(errno_copy);
+    errors = "error code: " + boost::lexical_cast<string>(errno_copy);
   }
 }
 

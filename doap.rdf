@@ -54,7 +54,7 @@
     <category rdf:resource="http://projects.apache.org/category/library" />
     <category rdf:resource="http://projects.apache.org/category/network-client" />
     <category rdf:resource="http://projects.apache.org/category/network-server" />
-    <release>
+    <release rdf:parseType="Collection">
       <Version>
         <name>Apache Thrift</name>
         <created>2013-08-22</created>

@@ -107,9 +107,11 @@ var
   field : IField;
   msg : string;
   typ : TExceptionType;
+  struc : IStruct;
 begin
   msg := '';
   typ := TExceptionType.Unknown;
+  struc := iprot.ReadStructBegin;
   while ( True ) do
   begin
     field := iprot.ReadFieldBegin;

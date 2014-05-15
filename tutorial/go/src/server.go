@@ -20,10 +20,10 @@ package main
  */
 
 import (
+	"crypto/tls"
 	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"tutorial"
-	"crypto/tls"
 )
 
 func runServer(transportFactory thrift.TTransportFactory, protocolFactory thrift.TProtocolFactory, addr string, secure bool) error {

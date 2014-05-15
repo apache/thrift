@@ -28,6 +28,9 @@
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
+#if _WIN32
+   #include <thrift/windows/TWinsockSingleton.h>
+#endif
 
 using boost::shared_ptr;
 using namespace apache::thrift;
@@ -37,6 +40,9 @@ using namespace apache::thrift::server;
 using namespace apache::thrift::concurrency;
 
 int main(int argc, char **argv) {
+#if _WIN32
+  transport::TWinsockSingleton::create();
+#endif
   int port = 9090;
   std::string host = "localhost";
 

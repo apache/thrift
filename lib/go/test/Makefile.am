@@ -17,25 +17,45 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
+THRIFT = $(top_srcdir)/compiler/cpp/thrift -out gopath/src/ --gen go:thrift_import=thrift
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
-gopath: $(THRIFT) $(THRIFTTEST) IncludesTest.thrift NamespacedTest.thrift
+gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
+				IncludesTest.thrift \
+				NamespacedTest.thrift \
+				MultiplexedProtocolTest.thrift \
+				OnewayTest.thrift \
+				OptionalFieldsTest.thrift \
+				ServicesTest.thrift \
+				TypedefFieldTest.thrift \
+				RefAnnotationFieldsTest.thrift
 	mkdir -p gopath/src
-	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
-	$(THRIFT) --gen go:thrift_import=thrift -r IncludesTest.thrift
-	ln -nfs ../../gen-go/ThriftTest gopath/src/ThriftTest
-	ln -nfs ../../gen-go/IncludesTest gopath/src/IncludesTest
-	ln -nfs ../../gen-go/lib gopath/src/lib
+	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
+	$(THRIFT) -r IncludesTest.thrift
+	$(THRIFT) BinaryKeyTest.thrift
+	$(THRIFT) MultiplexedProtocolTest.thrift
+	$(THRIFT) OnewayTest.thrift
+	$(THRIFT) OptionalFieldsTest.thrift
+	$(THRIFT) ServicesTest.thrift
+	$(THRIFT) TypedefFieldTest.thrift
+	$(THRIFT) RefAnnotationFieldsTest.thrift
+	GOPATH=`pwd`/gopath $(GO) get code.google.com/p/gomock/gomock
 	ln -nfs ../../../thrift gopath/src/thrift
+	ln -nfs ../../tests gopath/src/tests
 	touch gopath
 
 check: gopath
-	GOPATH=`pwd`/gopath $(GO) build IncludesTest
+	GOPATH=`pwd`/gopath $(GO) build \
+				includestest \
+				binarykeytest \
+				servicestest \
+				typedeffieldtest \
+				refannotationfieldstest
+	GOPATH=`pwd`/gopath $(GO) test thrift tests
 
 clean-local:
-	$(RM) -r gen-go gopath ThriftTest.thrift
+	$(RM) -r gopath ThriftTest.thrift
 
 client: stubs
 	$(GO) run TestClient.go

@@ -27,7 +27,7 @@ struct Doubles {
  3: double neginf,
  4: double repeating,
  5: double big,
- 6: double small,
+ 6: double tiny,
  7: double zero,
  8: double negzero,
 }

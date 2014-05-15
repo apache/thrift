@@ -175,7 +175,7 @@ bool TFramedTransport::readFrame() {
   // We can't use readAll(&sz, sizeof(sz)), since that always throws an
   // exception on EOF.  We want to throw an exception only if EOF occurs after
   // partial size data.
-  int32_t sz;
+  int32_t sz = -1;
   uint32_t size_bytes_read = 0;
   while (size_bytes_read < sizeof(sz)) {
     uint8_t* szp = reinterpret_cast<uint8_t*>(&sz) + size_bytes_read;

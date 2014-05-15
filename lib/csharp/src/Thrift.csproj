@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -112,10 +112,14 @@
     <Compile Include="Transport\TFramedTransport.cs" />
     <Compile Include="Transport\THttpClient.cs" />
     <Compile Include="Transport\THttpHandler.cs" />
+    <Compile Include="Transport\TNamedPipeClientTransport.cs" />
+    <Compile Include="Transport\TNamedPipeServerTransport.cs" />
     <Compile Include="Transport\TServerSocket.cs" />
     <Compile Include="Transport\TServerTransport.cs" />
     <Compile Include="Transport\TSocket.cs" />
     <Compile Include="Transport\TStreamTransport.cs" />
+    <Compile Include="Transport\TTLSServerSocket.cs" />
+    <Compile Include="Transport\TTLSSocket.cs" />
     <Compile Include="Transport\TTransport.cs" />
     <Compile Include="Transport\TTransportException.cs" />
     <Compile Include="Transport\TTransportFactory.cs" />

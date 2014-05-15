@@ -381,6 +381,11 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
       } catch (Throwable t) {
         LOGGER.error("run() exiting due to uncaught error", t);
       } finally {
+        try {
+          acceptSelector.close();
+        } catch (IOException e) {
+          LOGGER.error("Got an IOException while closing accept selector!", e);
+        }
         // This will wake up the selector threads
         TThreadedSelectorServer.this.stop();
       }
@@ -547,6 +552,11 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
       } catch (Throwable t) {
         LOGGER.error("run() exiting due to uncaught error", t);
       } finally {
+        try {
+          selector.close();
+        } catch (IOException e) {
+          LOGGER.error("Got an IOException while closing selector!", e);
+        }
         // This will wake up the accept thread and the other selector threads
         TThreadedSelectorServer.this.stop();
       }

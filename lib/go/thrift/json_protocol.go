@@ -158,7 +158,10 @@ func (p *TJSONProtocol) WriteSetEnd() error {
 }
 
 func (p *TJSONProtocol) WriteBool(b bool) error {
-	return p.OutputBool(b)
+	if b {
+		return p.WriteI32(1)
+    }
+	return p.WriteI32(0)
 }
 
 func (p *TJSONProtocol) WriteByte(b byte) error {
@@ -325,45 +328,8 @@ func (p *TJSONProtocol) ReadSetEnd() error {
 }
 
 func (p *TJSONProtocol) ReadBool() (bool, error) {
-	var value bool
-	if err := p.ParsePreValue(); err != nil {
-		return value, err
-	}
-	b, _ := p.reader.Peek(len(JSON_FALSE))
-	if len(b) > 0 {
-		switch b[0] {
-		case JSON_TRUE[0]:
-			if string(b[0:len(JSON_TRUE)]) == string(JSON_TRUE) {
-				p.reader.Read(b[0:len(JSON_TRUE)])
-				value = true
-			} else {
-				e := fmt.Errorf("Expected \"true\" but found: %s", string(b))
-				return value, NewTProtocolExceptionWithType(INVALID_DATA, e)
-			}
-			break
-		case JSON_FALSE[0]:
-			if string(b[0:len(JSON_FALSE)]) == string(JSON_FALSE) {
-				p.reader.Read(b[0:len(JSON_FALSE)])
-				value = false
-			} else {
-				e := fmt.Errorf("Expected \"false\" but found: %s", string(b))
-				return value, NewTProtocolExceptionWithType(INVALID_DATA, e)
-			}
-			break
-		case JSON_NULL[0]:
-			if string(b[0:len(JSON_NULL)]) == string(JSON_NULL) {
-				p.reader.Read(b[0:len(JSON_NULL)])
-				value = false
-			} else {
-				e := fmt.Errorf("Expected \"null\" but found: %s", string(b))
-				return value, NewTProtocolExceptionWithType(INVALID_DATA, e)
-			}
-		default:
-			e := fmt.Errorf("Expected \"true\", \"false\", or \"null\" but found: %s", string(b))
-			return value, NewTProtocolExceptionWithType(INVALID_DATA, e)
-		}
-	}
-	return value, p.ParsePostValue()
+	value, err := p.ReadI32(); 
+	return (value != 0), err
 }
 
 func (p *TJSONProtocol) ReadByte() (byte, error) {
@@ -442,7 +408,11 @@ func (p *TJSONProtocol) ReadBinary() ([]byte, error) {
 }
 
 func (p *TJSONProtocol) Flush() (err error) {
-	return NewTProtocolException(p.writer.Flush())
+	err = p.writer.Flush()
+	if err == nil {
+		err = p.trans.Flush()
+	}
+	return NewTProtocolException(err)
 }
 
 func (p *TJSONProtocol) Skip(fieldType TType) (err error) {

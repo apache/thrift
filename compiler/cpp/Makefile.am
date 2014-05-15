@@ -27,7 +27,7 @@ am__yacc_c2h = sed -e s/cc$$/h/ -e s/cpp$$/hpp/ -e s/cxx$$/hxx/ \
 
 AM_YFLAGS = -d
 LIBS =
-BUILT_SOURCES =
+BUILT_SOURCES = thrifty.cc
 
 bin_PROGRAMS = thrift
 
@@ -49,6 +49,7 @@ thrift_SOURCES = src/main.cc \
                  src/parse/t_enum.h \
                  src/parse/t_enum_value.h \
                  src/parse/t_typedef.h \
+                 src/parse/t_typedef.cc \
                  src/parse/t_container.h \
                  src/parse/t_list.h \
                  src/parse/t_set.h \
@@ -90,7 +91,8 @@ thrift_SOURCES += src/generate/t_c_glib_generator.cc \
                   src/generate/t_delphi_generator.cc \
                   src/generate/t_go_generator.cc \
                   src/generate/t_gv_generator.cc \
-                  src/generate/t_d_generator.cc
+                  src/generate/t_d_generator.cc \
+                  src/generate/t_lua_generator.cc
 
 thrift_CPPFLAGS = -I$(srcdir)/src
 thrift_CXXFLAGS = -Wall
@@ -106,7 +108,7 @@ WINDOWS_DIST = \
              compiler.sln \
              compiler.vcxproj \
              compiler.vcxproj.filters \
-             README_Windows.txt
+             README_Windows.md
 
 EXTRA_DIST = \
              $(WINDOWS_DIST)

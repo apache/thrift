@@ -146,6 +146,13 @@ char* g_doctext;
  */
 int g_doctext_lineno;
 
+/** 
+ * The First doctext comment
+ */
+char* g_program_doctext_candidate;
+int  g_program_doctext_lineno = 0;
+PROGDOCTEXT_STATUS  g_program_doctext_status = INVALID;
+
 /**
  * Whether or not negative field keys are accepted.
  */
@@ -390,6 +397,32 @@ void clear_doctext() {
 }
 
 /**
+ * Reset program doctext information after processing a file
+ */
+void reset_program_doctext_info() {
+  if(g_program_doctext_candidate != NULL) {
+    free(g_program_doctext_candidate);
+    g_program_doctext_candidate = NULL;
+  }
+  g_program_doctext_lineno = 0;
+  g_program_doctext_status = INVALID;
+  pdebug("%s","program doctext set to INVALID");
+}
+
+/**
+ * We are sure the program doctext candidate is really the program doctext.
+ */
+void declare_valid_program_doctext() {
+  if((g_program_doctext_candidate != NULL) && (g_program_doctext_status == STILL_CANDIDATE)) {
+    g_program_doctext_status = ABSOLUTELY_SURE;  
+    pdebug("%s","program doctext set to ABSOLUTELY_SURE");
+  } else {
+    g_program_doctext_status = NO_PROGRAM_DOCTEXT;  
+    pdebug("%s","program doctext set to NO_PROGRAM_DOCTEXT");
+  }
+}
+
+/**
  * Cleans up text commonly found in doxygen-like comments
  *
  * Warning: if you mix tabs and spaces in a non-uniform way,
@@ -628,6 +661,20 @@ void generate_all_fingerprints(t_program* program) {
   */
 }
 
+
+/**
+ * Emits a warning on list<byte>, binary type is typically a much better choice.
+ */
+void check_for_list_of_bytes(t_type* list_elem_type) {
+  if((g_parse_mode == PROGRAM) && (list_elem_type != NULL) && list_elem_type->is_base_type()) {
+    t_base_type* tbase = (t_base_type*)list_elem_type;
+    if(tbase->get_base() == t_base_type::TYPE_BYTE) {
+      pwarning(1,"Consider using the more efficient \"binary\" type instead of \"list<byte>\".");
+    }
+  }
+}
+
+
 /**
  * Prints the version number
  */
@@ -667,7 +714,7 @@ void help() {
   fprintf(stderr, "                compatibility with older .thrift files)\n");
   fprintf(stderr, "  --allow-64bit-consts  Do not print warnings about using 64-bit constants\n");
   fprintf(stderr, "  --gen STR   Generate code with a dynamically-registered generator.\n");
-  fprintf(stderr, "                STR has the form language[:key1=val1[,key2,[key3=val3]]].\n");
+  fprintf(stderr, "                STR has the form language[:key1=val1[,key2[,key3=val3]]].\n");
   fprintf(stderr, "                Keys and values are options passed to the generator.\n");
   fprintf(stderr, "                Many options will not require values.\n");
   fprintf(stderr, "\n");
@@ -911,6 +958,9 @@ void parse(t_program* program, t_program* parent_program) {
     parse(*iter, program);
   }
 
+  // reset program doctext status before parsing a new file
+  reset_program_doctext_info();
+
   // Parse the program file
   g_parse_mode = PROGRAM;
   g_program = program;
@@ -1095,7 +1145,7 @@ int main(int argc, char** argv) {
   // if you're asking for version, you have a right not to pass a file
   if ((strcmp(argv[argc-1], "-version") == 0) || (strcmp(argv[argc-1], "--version") == 0)) {
     version();
-    exit(1);
+    exit(0);
   }
 
   // You gotta generate something!

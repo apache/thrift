@@ -83,23 +83,7 @@ class TTransportException : public apache::thrift::TException {
     return type_;
   }
 
-  virtual const char* what() const throw() {
-    if (message_.empty()) {
-      switch (type_) {
-        case UNKNOWN        : return "TTransportException: Unknown transport exception";
-        case NOT_OPEN       : return "TTransportException: Transport not open";
-        case TIMED_OUT      : return "TTransportException: Timed out";
-        case END_OF_FILE    : return "TTransportException: End of file";
-        case INTERRUPTED    : return "TTransportException: Interrupted";
-        case BAD_ARGS       : return "TTransportException: Invalid arguments";
-        case CORRUPTED_DATA : return "TTransportException: Corrupted Data";
-        case INTERNAL_ERROR : return "TTransportException: Internal error";
-        default             : return "TTransportException: (Invalid exception type)";
-      }
-    } else {
-      return message_.c_str();
-    }
-  }
+  virtual const char* what() const throw();
 
  protected:
   /** Just like strerror_r but returns a C++ string object. */

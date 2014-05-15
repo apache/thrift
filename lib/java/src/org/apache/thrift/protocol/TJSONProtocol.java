@@ -70,10 +70,10 @@ public class TJSONProtocol extends TProtocol {
     1,  1,'"',  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, // 2
   };
 
-  private static final String ESCAPE_CHARS = "\"\\bfnrt";
+  private static final String ESCAPE_CHARS = "\"\\/bfnrt";
 
   private static final byte[] ESCAPE_CHAR_VALS = {
-    '"', '\\', '\b', '\f', '\n', '\r', '\t',
+    '"', '\\', '/', '\b', '\f', '\n', '\r', '\t',
   };
 
   private static final int  DEF_STRING_SIZE = 16;

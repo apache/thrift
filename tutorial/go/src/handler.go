@@ -44,7 +44,7 @@ func (p *CalculatorHandler) Add(num1 int32, num2 int32) (retval17 int32, err err
 	return num1 + num2, nil
 }
 
-func (p *CalculatorHandler) Calculate(logid int32, w *tutorial.Work) (val int32, ouch *tutorial.InvalidOperation, err error) {
+func (p *CalculatorHandler) Calculate(logid int32, w *tutorial.Work) (val int32, err error) {
 	fmt.Print("calculate(", logid, ", {", w.Op, ",", w.Num1, ",", w.Num2, "})\n")
 	switch w.Op {
 	case tutorial.Operation_ADD:
@@ -58,17 +58,19 @@ func (p *CalculatorHandler) Calculate(logid int32, w *tutorial.Work) (val int32,
 		break
 	case tutorial.Operation_DIVIDE:
 		if w.Num2 == 0 {
-			ouch = tutorial.NewInvalidOperation()
+			ouch := tutorial.NewInvalidOperation()
 			ouch.What = int32(w.Op)
 			ouch.Why = "Cannot divide by 0"
+			err = ouch
 			return
 		}
 		val = w.Num1 / w.Num2
 		break
 	default:
-		ouch = tutorial.NewInvalidOperation()
+		ouch := tutorial.NewInvalidOperation()
 		ouch.What = int32(w.Op)
 		ouch.Why = "Unknown operation"
+		err = ouch
 		return
 	}
 	entry := shared.NewSharedStruct()
@@ -84,7 +86,7 @@ func (p *CalculatorHandler) Calculate(logid int32, w *tutorial.Work) (val int32,
 	   }
 	*/
 	p.log[k] = entry
-	return val, ouch, err
+	return val, err
 }
 
 func (p *CalculatorHandler) GetStruct(key int32) (*shared.SharedStruct, error) {

@@ -358,7 +358,7 @@ template BaseService(T) if (isDerivedService!T) {
 mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
   is(typeof(fieldMetaData) : TFieldMeta[])
 ) {
-  import std.algorithm : canFind;
+  import std.algorithm : any;
   import thrift.codegen.base;
   import thrift.internal.codegen : isNullable, MemberType, mergeFieldMeta,
     FieldNames;
@@ -459,7 +459,7 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
     return true;
   }
 
-  static if (canFind!`!a.defaultValue.empty`(mergeFieldMeta!(This, fieldMetaData))) {
+  static if (any!`!a.defaultValue.empty`(mergeFieldMeta!(This, fieldMetaData))) {
     static if (is(This _ == class)) {
       this() {
         mixin(thriftFieldInitCode!(mergeFieldMeta!(This, fieldMetaData))("this"));
@@ -500,10 +500,10 @@ string thriftFieldInitCode(alias fieldMeta)(string thisName) {
   return code;
 }
 
-version (unittest) {
+unittest {
   // Cannot make this nested in the unittest block due to a »no size yet for
   // forward reference« error.
-  struct Foo {
+  static struct Foo {
     string a;
     int b;
     int c;
@@ -514,8 +514,7 @@ version (unittest) {
       TFieldMeta("c", 3, TReq.REQUIRED, "4")
     ]);
   }
-}
-unittest {
+
   auto f = Foo();
 
   f.set!"b"(12345);

@@ -733,7 +733,7 @@ void t_cocoa_generator::generate_cocoa_struct_implementation(ofstream &out,
   if (is_exception) {
     out << indent() << "- (id) init" << endl;
     scope_up(out);
-    out << indent() << "return [super initWithName: @\"" << tstruct->get_name() <<
+    out << indent() << "return [super initWithName: @\"" << cocoa_prefix_ << tstruct->get_name() <<
         "\" reason: @\"unknown\" userInfo: nil];" << endl;
     scope_down(out);
     out << endl;
@@ -1175,7 +1175,7 @@ void t_cocoa_generator::generate_cocoa_struct_description(ofstream& out,
 
   out <<
     indent() << "NSMutableString * ms = [NSMutableString stringWithString: @\"" <<
-    tstruct->get_name() << "(\"];" << endl;
+    cocoa_prefix_ << tstruct->get_name() << "(\"];" << endl;
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;

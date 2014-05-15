@@ -261,6 +261,8 @@ struct
       | NEGATIVE_SIZE
       | SIZE_LIMIT
       | BAD_VERSION
+      | NOT_IMPLEMENTED
+      | DEPTH_LIMIT
 
   exception E of exn_type * string;;
 

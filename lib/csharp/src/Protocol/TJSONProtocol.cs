@@ -58,7 +58,6 @@ namespace Thrift.Protocol
 		private static byte[] RBRACKET = new byte[] { (byte)']' };
 		private static byte[] QUOTE = new byte[] { (byte)'"' };
 		private static byte[] BACKSLASH = new byte[] { (byte)'\\' };
-		private static byte[] ZERO = new byte[] { (byte)'0' };
 
 		private byte[] ESCSEQ = new byte[] { (byte)'\\', (byte)'u', (byte)'0', (byte)'0' };
 
@@ -69,10 +68,10 @@ namespace Thrift.Protocol
 	1,  1,(byte)'"',  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
   };
 
-		private char[] ESCAPE_CHARS = "\"\\bfnrt".ToCharArray();
+		private char[] ESCAPE_CHARS = "\"\\/bfnrt".ToCharArray();
 
 		private byte[] ESCAPE_CHAR_VALS = {
-	(byte)'"', (byte)'\\', (byte)'\b', (byte)'\f', (byte)'\n', (byte)'\r', (byte)'\t',
+	(byte)'"', (byte)'\\', (byte)'/', (byte)'\b', (byte)'\f', (byte)'\n', (byte)'\r', (byte)'\t',
   };
 
 		private const int DEF_STRING_SIZE = 16;
@@ -735,28 +734,38 @@ namespace Thrift.Protocol
 				{
 					break;
 				}
-				if (ch == ESCSEQ[0])
+
+				// escaped?
+				if (ch != ESCSEQ[0])
 				{
-					ch = reader.Read();
-					if (ch == ESCSEQ[1])
-					{
-						ReadJSONSyntaxChar(ZERO);
-						ReadJSONSyntaxChar(ZERO);
-						trans.ReadAll(tempBuffer, 0, 2);
-						ch = (byte)((HexVal((byte)tempBuffer[0]) << 4) + HexVal(tempBuffer[1]));
-					}
-					else
-					{
-						int off = Array.IndexOf(ESCAPE_CHARS, (char)ch);
-						if (off == -1)
-						{
-							throw new TProtocolException(TProtocolException.INVALID_DATA,
-														 "Expected control char");
-						}
-						ch = ESCAPE_CHAR_VALS[off];
-					}
+					buffer.Write(new byte[] { (byte)ch }, 0, 1);
+					continue;
 				}
-				buffer.Write(new byte[] { (byte)ch }, 0, 1);
+
+				// distinguish between \uXXXX and \?
+				ch = reader.Read();
+				if (ch != ESCSEQ[1])  // control chars like \n
+				{
+					int off = Array.IndexOf(ESCAPE_CHARS, (char)ch);
+					if (off == -1)
+					{
+						throw new TProtocolException(TProtocolException.INVALID_DATA,
+														"Expected control char");
+					}
+					ch = ESCAPE_CHAR_VALS[off];
+					buffer.Write(new byte[] { (byte)ch }, 0, 1);
+					continue;
+				}
+
+
+				// it's \uXXXX
+				trans.ReadAll(tempBuffer, 0, 4);
+				var wch = (short)((HexVal((byte)tempBuffer[0]) << 12) +
+								  (HexVal((byte)tempBuffer[1]) << 8) +
+								  (HexVal((byte)tempBuffer[2]) << 4) + 
+								   HexVal(tempBuffer[3]));
+				var tmp = utf8Encoding.GetBytes(new char[] { (char)wch });
+				buffer.Write(tmp, 0, tmp.Length);
 			}
 			return buffer.ToArray();
 		}
@@ -882,7 +891,13 @@ namespace Thrift.Protocol
 			int len = b.Length;
 			int off = 0;
 			int size = 0;
-			while (len >= 4)
+			// reduce len to ignore fill bytes 
+			while ((len > 0) && (b[len - 1] == '='))
+			{
+				--len;
+			}
+			// read & decode full byte triplets = 4 source bytes
+			while (len > 4)
 			{
 				// Decode 4 bytes at a time
 				TBase64Utils.decode(b, off, 4, b, size); // NB: decoded in place

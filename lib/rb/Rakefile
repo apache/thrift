@@ -93,7 +93,7 @@ end
 
 desc 'Install the thrift gem'
 task :install => [:gem] do
-  unless sh 'gem', 'install', 'thrift-*.gem'
+  unless sh 'gem', 'install', Dir.glob('thrift-*.gem').last
     $stderr.puts "Failed to install thrift gem"
     break
   end

@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS = nodejs
+SUBDIRS =
 
 if WITH_CPP
 SUBDIRS += cpp
@@ -45,6 +45,10 @@ if WITH_HASKELL
 SUBDIRS += hs
 endif
 
+if WITH_GO
+SUBDIRS += go
+endif
+
 #
 # generate html for ThriftTest.thrift
 #
@@ -55,7 +59,6 @@ EXTRA_DIST = \
 	test.sh \
 	cpp \
 	hs \
-	nodejs \
 	ocaml \
 	perl \
 	php \

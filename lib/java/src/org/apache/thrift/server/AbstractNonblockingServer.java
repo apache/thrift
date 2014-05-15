@@ -455,7 +455,9 @@ public abstract class AbstractNonblockingServer extends TServer {
     public void close() {
       // if we're being closed due to an error, we might have allocated a
       // buffer that we need to subtract for our memory accounting.
-      if (state_ == FrameBufferState.READING_FRAME || state_ == FrameBufferState.READ_FRAME_COMPLETE) {
+      if (state_ == FrameBufferState.READING_FRAME || 
+          state_ == FrameBufferState.READ_FRAME_COMPLETE ||
+          state_ == FrameBufferState.AWAITING_CLOSE) {
         readBufferBytesAllocated.addAndGet(-buffer_.array().length);
       }
       trans_.close();

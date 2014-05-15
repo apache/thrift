@@ -183,6 +183,7 @@ literal_begin (['\"])
   pwarning(0, "\"async\" is deprecated.  It is called \"oneway\" now.\n");
   return tok_oneway;
 }
+"&"                  { return tok_reference;            }
 
 
 "BEGIN"              { thrift_reserved_keyword(yytext); }
@@ -384,6 +385,12 @@ literal_begin (['\"])
     g_doctext[strlen(g_doctext) - 1] = '\0';
     g_doctext = clean_up_doctext(g_doctext);
     g_doctext_lineno = yylineno;
+    if( (g_program_doctext_candidate == NULL) && (g_program_doctext_status == INVALID)){
+      g_program_doctext_candidate = strdup(g_doctext);
+      g_program_doctext_lineno = g_doctext_lineno;
+      g_program_doctext_status = STILL_CANDIDATE;
+      pdebug("%s","program doctext set to STILL_CANDIDATE");
+    }
   }
 }
 

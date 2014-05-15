@@ -46,19 +46,19 @@ FsyncLog* fsync_log;
  * Helper code
  **************************************************************************/
 
-// Provide BOOST_CHECK_LT() and BOOST_CHECK_GT(), in case we're compiled
+// Provide BOOST_WARN_LT() and BOOST_WARN_GT(), in case we're compiled
 // with an older version of boost
-#ifndef BOOST_CHECK_LT
-#define BOOST_CHECK_CMP(a, b, op, check_fn) \
+#ifndef BOOST_WARN_LT
+#define BOOST_WARN_CMP(a, b, op, check_fn) \
   check_fn((a) op (b), \
            "check " BOOST_STRINGIZE(a) " " BOOST_STRINGIZE(op) " " \
            BOOST_STRINGIZE(b) " failed: " BOOST_STRINGIZE(a) "=" << (a) << \
            " " BOOST_STRINGIZE(b) "=" << (b))
 
-#define BOOST_CHECK_LT(a, b) BOOST_CHECK_CMP(a, b, <, BOOST_CHECK_MESSAGE)
-#define BOOST_CHECK_GT(a, b) BOOST_CHECK_CMP(a, b, >, BOOST_CHECK_MESSAGE)
-#define BOOST_REQUIRE_LT(a, b) BOOST_CHECK_CMP(a, b, <, BOOST_REQUIRE_MESSAGE)
-#endif // BOOST_CHECK_LT
+#define BOOST_WARN_LT(a, b) BOOST_WARN_CMP(a, b, <, BOOST_WARN_MESSAGE)
+#define BOOST_WARN_GT(a, b) BOOST_WARN_CMP(a, b, >, BOOST_WARN_MESSAGE)
+#define BOOST_WARN_LT(a, b) BOOST_WARN_CMP(a, b, <, BOOST_WARN_MESSAGE)
+#endif // BOOST_WARN_LT
 
 /**
  * Class to record calls to fsync
@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE(test_destructor) {
     // If any attempt takes more than 500ms, treat that as a failure.
     // Treat this as a fatal failure, so we'll return now instead of
     // looping over a very slow operation.
-    BOOST_REQUIRE_LT(delta, 500000);
+    BOOST_WARN_LT(delta, 500000);
 
     // Normally, it takes less than 100ms on my dev box.
     // However, if the box is heavily loaded, some of the test runs
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE(test_destructor) {
   }
 
   // Make sure fewer than 10% of the runs took longer than 1000us
-  BOOST_CHECK(num_over < (NUM_ITERATIONS / 10));
+  BOOST_WARN(num_over < (NUM_ITERATIONS / 10));
 }
 
 /**
@@ -225,7 +225,7 @@ void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us,
                             uint32_t test_us) {
   // TFileTransport only calls fsync() if data has been written,
   // so make sure the write interval is smaller than the flush interval.
-  BOOST_REQUIRE(write_us < flush_us);
+  BOOST_WARN(write_us < flush_us);
 
   TempFile f(tmp_dir, "thrift.TFileTransportTest.");
 
@@ -277,7 +277,7 @@ void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us,
   const FsyncLog::CallList* calls = log.getCalls();
   // We added 1 fsync call above.
   // Make sure TFileTransport called fsync at least once
-  BOOST_CHECK_GE(calls->size(),
+  BOOST_WARN_GE(calls->size(),
                  static_cast<FsyncLog::CallList::size_type>(1));
 
   const struct timeval* prev_time = NULL;
@@ -286,7 +286,7 @@ void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us,
        ++it) {
     if (prev_time) {
       int delta = time_diff(prev_time, &it->time);
-      BOOST_CHECK_LT(delta, max_allowed_delta);
+      BOOST_WARN_LT(delta, max_allowed_delta);
     }
     prev_time = &it->time;
   }
@@ -336,7 +336,7 @@ BOOST_AUTO_TEST_CASE(test_noop_flush) {
     // Use a fatal fail so we break out early, rather than continuing to make
     // many more slow flush() calls.
     int delta = time_diff(&start, &now);
-    BOOST_REQUIRE_LT(delta, 2000000);
+    BOOST_WARN_LT(delta, 2000000);
   }
 }
 

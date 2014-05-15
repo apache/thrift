@@ -29,6 +29,7 @@ package org.apache.thrift.protocol {
     public static const SIZE_LIMIT:int = 3;
     public static const BAD_VERSION:int = 4;
     public static const NOT_IMPLEMENTED:int = 5;
+    public static const DEPTH_LIMIT:int = 6;
   
     public function TProtocolError(error:int = UNKNOWN, message:String = "") {
       super(message, error);

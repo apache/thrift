@@ -56,6 +56,9 @@ new(Host, Port, Service, Options)
     {ok, ProtocolFactory} = thrift_binary_protocol:new_protocol_factory(
                               TransportFactory, ProtoOpts),
 
-    {ok, Protocol} = ProtocolFactory(),
-
-    thrift_client:new(Protocol, Service).
+    case ProtocolFactory() of
+        {ok, Protocol} ->
+            thrift_client:new(Protocol, Service);
+        {error, Error} ->
+            {error, Error}
+    end.

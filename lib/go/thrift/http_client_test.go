@@ -35,3 +35,16 @@ func TestHttpClient(t *testing.T) {
 	}
 	TransportTest(t, trans, trans)
 }
+
+func TestHttpClientHeaders(t *testing.T) {
+	l, addr := HttpClientSetupForTest(t)
+	if l != nil {
+		defer l.Close()
+	}
+	trans, err := NewTHttpPostClient("http://" + addr.String())
+	if err != nil {
+		l.Close()
+		t.Fatalf("Unable to connect to %s: %s", addr.String(), err)
+	}
+	TransportHeaderTest(t, trans, trans)
+}

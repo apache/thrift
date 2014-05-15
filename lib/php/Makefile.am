@@ -119,7 +119,7 @@ EXTRA_DIST = \
   src/Thrift.php \
   src/TStringUtils.php \
   thrift_protocol.ini \
-  README.apache
+  README.apache.md
 
 MAINTAINERCLEANFILES = \
   Makefile \

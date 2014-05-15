@@ -21,33 +21,42 @@
 
 language: cpp
 
+cache:
+ - apt
+ - npm
+ - maven
+
 # see what we need: http://thrift.apache.org/docs/install/ubuntu
 before_install:
  - export NUM_CPU="`grep processor /proc/cpuinfo | wc -l`"; echo $NUM_CPU
  - sudo apt-get update -qq
- - sudo apt-get upgrade -qq
- - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev 
+# - sudo DEBIAN_FRONTEND=noninteractive apt-get -qq -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
+ - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev bc 
 # Java
- - sudo apt-get install -qq libcommons-lang3-java ant
-# TODO: fix ruby support
+ - sudo apt-get install -qq ant
 # Ruby
-# - sudo apt-get install -qq ruby1.9.1-full ruby1.9.1-dev ruby-rspec rake rubygems libdaemons-ruby libgemplugin-ruby mongrel
-# - sudo /usr/bin/gem1.9.1 install bundler
-# - sudo /usr/bin/gem1.9.1 install rack-test
+# - gem uninstall bundler -I -x
+ - gem install bundler -v 1.3.5 || true
 # Python
- - sudo apt-get install -qq python-all python-all-dev python-all-dbg
+# - sudo apt-get install -qq python-all python-all-dev python-all-dbg
 # Perl
- - sudo apt-get install -qq libbit-vector-perl
+ - sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl
 # PHP
- - sudo apt-get install -qq php5-dev php5-cli phpunit
+ - sudo apt-get install -qq php5-dev php5-cli phpunit php-pear
+ - sudo pear channel-discover pear.phpunit.de
+ - sudo pear channel-discover pear.symfony.com
+# - sudo pear channel-discover components.ez.no
+ - sudo pear update-channels
+ - sudo pear upgrade-all
+ - sudo pear install --alldeps phpunit/PHPUnit
 # c_glib
  - sudo apt-get install -qq libglib2.0-dev
 # Erlang
- - sudo apt-get install -qq erlang-base erlang-eunit erlang-dev
+# - sudo apt-get install -qq erlang-base erlang-eunit erlang-dev
 # Csharp
  - sudo apt-get install -qq mono-gmcs mono-devel libmono-system-web2.0-cil nunit nunit-console
 # Haskell
- - sudo apt-get install -qq ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev
+# - sudo apt-get install -qq ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev
 # Thrift Compiler for Windows
  - sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime
 # node.js
@@ -56,18 +65,14 @@ before_install:
 # TODO: move npm install to nodejs Makefile
  - cd lib/nodejs; npm install & cd ../..
 
-
 install:
   - sh bootstrap.sh
 
 script:
-# TODO: fix ruby support
-#  - export PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/var/lib/gems/1.9.1/bin
-#  - sh configure RUBY=/usr/bin/ruby1.9.1 RAKE=/usr/bin/rake1.9.1
 # TODO: fix these languages
-  - sh configure --without-ruby --without-haskell --without-perl --without-php  --without-python
+  - sh configure --without-erlang --without-haskell --without-python
   - make -j$NUM_CPU && make dist
-  - make check -j$NUM_CPU && sh test/test.sh
+  - make cross -j$NUM_CPU
+  - sh bootstrap.sh ; sh contrib/mingw-cross-compile.sh
 # TODO: add these steps
-#  - sh bootstrap.sh ; sh contrib/mingw-cross-compile.sh
 #  - sh bootstrap.sh ; dpkg-buildpackage -tc
