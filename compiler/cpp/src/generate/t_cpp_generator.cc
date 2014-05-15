@@ -72,7 +72,7 @@ class t_cpp_generator : public t_oop_generator {
     gen_templates_only_ =
       (iter != parsed_options.end() && iter->second == "only");
 
-    out_dir_base_ = "gen-cpp";
+    out_dir_base_ = program->is_out_path_absolute() ? "" : "gen-cpp";
   }
 
   /**
@@ -4639,7 +4639,8 @@ string t_cpp_generator::get_include_prefix(const t_program& program) const {
     // if flag is turned off or this is absolute path, return empty prefix
     return "";
   }
-
+  if (out_dir_base_.empty())
+    return include_prefix;
   string::size_type last_slash = string::npos;
   if ((last_slash = include_prefix.rfind("/")) != string::npos) {
     return include_prefix.substr(0, last_slash) + "/" + out_dir_base_ + "/";
