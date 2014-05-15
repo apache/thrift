@@ -1631,6 +1631,8 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   }
   f_header_ <<
     "#include <thrift/TDispatchProcessor.h>" << endl;
+  /*f_header_ <<
+    "#include <boost/thread/tss.hpp>" << endl;*/
   if (gen_cob_style_) {
     f_header_ <<
       "#include <thrift/async/TAsyncDispatchProcessor.h>" << endl;
@@ -1764,6 +1766,7 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
     generate_struct_definition(f_header_, ts, false);
     generate_struct_reader(out, ts);
     generate_struct_writer(out, ts);
+    generate_struct_clear(out, ts);
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_pargs");
     generate_struct_definition(f_header_, ts, false, true, false, true);
     generate_struct_writer(out, ts, true);
@@ -2892,11 +2895,19 @@ void ProcessorGenerator::generate_class_definition() {
     indent() << "ProcessMap processMap_;" << endl;
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    string fname = (*f_iter)->get_name();
     indent(f_header_) <<
-      "void process_" << (*f_iter)->get_name() << "(" << finish_cob_ << "int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot" << call_context_ << ");" << endl;
+      "void process_" << fname << "(" << finish_cob_ << "int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot" << call_context_ << ");" << endl;
+
+    string argstype = service_->get_name() + "_" + fname + "_args";
+    string resulttype = service_->get_name() + "_" + fname + "_result";
+
+    // indent(f_header_) << "boost::thread_specific_ptr<" << argstype << "> " << fname << "_args_;\n";
+    // indent(f_header_) << "boost::thread_specific_ptr<" << resulttype << "> " << fname << "_result_;\n\n";
+
     if (generator_->gen_templates_) {
       indent(f_header_) <<
-        "void process_" << (*f_iter)->get_name() << "(" << finish_cob_ <<
+        "void process_" << fname << "(" << finish_cob_ <<
         "int32_t seqid, Protocol_* iprot, Protocol_* oprot" <<
         call_context_ << ");" << endl;
     }
@@ -3195,6 +3206,7 @@ void t_cpp_generator::generate_function_helpers(t_service* tservice,
   generate_struct_definition(f_header_, &result, false);
   generate_struct_reader(out, &result);
   generate_struct_result_writer(out, &result);
+  generate_struct_clear(out, &result);
 
   result.set_name(tservice->get_name() + "_" + tfunction->get_name() + "_presult");
   generate_struct_definition(f_header_, &result, false, true, true, gen_cob_style_);
