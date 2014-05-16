@@ -53,6 +53,3 @@ genmock: gopath
 	GOPATH=`pwd` $(GO) install code.google.com/p/gomock/mockgen
 	GOPATH=`pwd` bin/mockgen -destination=src/common/mock_handler.go -package=common gen/thrifttest ThriftTest
 
-EXTRA_DIST = \
-	IncludesTest.thrift \
-	NamespacedTest.thrift
