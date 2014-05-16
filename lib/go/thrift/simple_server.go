@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"log"
+	"runtime/debug"
 )
 
 // Simple, non-concurrent server for testing.
@@ -131,7 +132,7 @@ func (p *TSimpleServer) AcceptLoop() error {
 		}
 		if client != nil {
 			go func() {
-				if err := p.processRequest(client); err != nil {
+				if err := p.processRequests(client); err != nil {
 					log.Println("error processing request:", err)
 				}
 			}()
@@ -154,12 +155,17 @@ func (p *TSimpleServer) Stop() error {
 	return nil
 }
 
-func (p *TSimpleServer) processRequest(client TTransport) error {
+func (p *TSimpleServer) processRequests(client TTransport) error {
 	processor := p.processorFactory.GetProcessor(client)
 	inputTransport := p.inputTransportFactory.GetTransport(client)
 	outputTransport := p.outputTransportFactory.GetTransport(client)
 	inputProtocol := p.inputProtocolFactory.GetProtocol(inputTransport)
 	outputProtocol := p.outputProtocolFactory.GetProtocol(outputTransport)
+	defer func() {
+		if e := recover(); e != nil {
+			log.Printf("panic in processor: %s: %s", e, debug.Stack())
+		}
+	}()
 	if inputTransport != nil {
 		defer inputTransport.Close()
 	}
@@ -171,6 +177,7 @@ func (p *TSimpleServer) processRequest(client TTransport) error {
 		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
 			return nil
 		} else if err != nil {
+			log.Printf("error processing request: %s", err)
 			return err
 		}
 		if !ok {
