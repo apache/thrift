@@ -26,11 +26,71 @@
 # THRIFT-847 Test Framework harmonization across all languages
 # THRIFT-819 add Enumeration for protocol, transport and server types
 
+START_TIME=$SECONDS
 cd "$( dirname "$0" )"
 BASEDIR=$(pwd)
 
 print_header() {
   printf "%-16s %-11s %-17s %-s\n" "client-server:" "protocol:" "transport:" "result:"
+}
+
+STATUS_HTML="status.html"
+
+print_html_header() {
+cat << EOF > $STATUS_HTML
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Apache Thrift - integration test suite</title>
+<link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.0/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="http://cdn.datatables.net/1.10.0/js/jquery.dataTables.js"></script>
+<script>
+  var test_data;
+  \$(document).ready( function () {
+    testTable = \$('#test_results').DataTable( {
+      data: test_data
+    });
+  \$('#test_results_filter label input')
+    .focus()
+    .val('failure');
+  });
+</script>
+</head>
+<body>
+<h2>Apache Thrift - integration test suite: Results</h2>
+<table id="test_results" class="display">
+    <thead>
+        <tr>
+            <th>Server</th>
+            <th>Client</th>
+            <th>Protocol</th>
+            <th>Transport</th>
+            <th>Result (log)</th>
+        </tr>
+    </thead>
+</table>
+<script>
+test_data = [
+EOF
+}
+
+print_html_footer() {
+duration=$1
+cat << EOF >> $STATUS_HTML
+]
+</script>
+<h2>Test Information</h2>
+<pre>
+Test Date:     `date --iso-8601=seconds`
+Revision:      `git rev-parse --short HEAD`
+OS:            `uname -a`
+Test duration: $duration
+</pre>
+</body>
+</html>
+EOF
 }
 
 intersection() {
@@ -65,9 +125,11 @@ do_test () {
     timeout $client_timeout $client_exec > log/${testname}_client.log 2>&1
 
     if [ "$?" -eq "0" ]; then
-      echo " success"
+      result="success($?)"
+      echo " $result"
     else
-      echo " failure"
+      result="failure($?)"
+      echo " $result"
       # add details to the error.log
       print_header >> log/error.log
       printf "%-16s %-11s %-17s\n" ${client_server} ${protocol} ${transport} >> log/error.log
@@ -79,6 +141,21 @@ do_test () {
       echo "" >> log/error.log
     fi
 
+    # write json array
+    client_server=( ${client_server//[-]/ } )
+    server=${client_server[0]}
+    client=${client_server[1]}
+
+    cat << EOF >> $STATUS_HTML
+      [
+        "${client}",
+        "${server}",
+        "${protocol}",
+        "${transport}",
+        "${result} (<a href=\"log/${testname}_client.log\">client</a>, <a href=\"log/${testname}_server.log\">server</a>)"
+      ],
+EOF
+
     # silently kill server
     kill ${server_pid} 2>/dev/null && wait ${server_pid} 2>/dev/null
 }
@@ -86,14 +163,18 @@ do_test () {
 echo "Apache Thrift - integration test suite"
 date
 
-ant -f ../lib/java/build.xml compile-test 1>/dev/null
 
 echo "======================================================"
 
 rm -rf log
 mkdir -p log
 
+
 print_header
+print_html_header
+
+ant -f ../lib/java/build.xml compile-test 1>/dev/null
+
 
 #TODO add enum for parameters
 #TODO align program arguments across languages
@@ -300,6 +381,14 @@ do_test "rb-rb" "binary-accl" "buffered-ip" \
         "5" "5"
 
 echo " failed tests are logged to test/log/error.log"
-echo " full log is here test/log/client_server_protocol_transport.log"
+echo " full log is here test/log/client_server_protocol_transport_client.log"
+echo " full log is here test/log/client_server_protocol_transport_server.log"
+echo " or look at file://$BASEDIR/$STATUS_HTML"
+
+ELAPSED_TIME=$(($SECONDS - $START_TIME))
+DURATION="$(($ELAPSED_TIME/60)) min $(($ELAPSED_TIME%60)) sec"
+echo "test an took" $DURATION
+print_html_footer "$DURATION"
+
 date
 cd -
