@@ -24,12 +24,12 @@ under the License.
 Using Thrift with Go
 ====================
 
-In following Go conventions, we reccomend you use the 'go' tool to install
+In following Go conventions, we recommend you use the 'go' tool to install
 Thrift for go.
 
-    $ go get git.apache.org/thrift.git/lib/go/thrift
+    $ go get git-wip-us.apache.org/repos/asf/thrift.git/lib/go/thrift
 
-Will install the last stable release.
+Will retrieve and install the most recent version of the package.
 
 
 A note about optional fields
