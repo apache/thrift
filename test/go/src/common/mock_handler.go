@@ -23,8 +23,8 @@
 package common
 
 import (
-	thrifttest "gen/thrifttest"
 	gomock "code.google.com/p/gomock/gomock"
+	thrifttest "gen/thrifttest"
 )
 
 // Mock of ThriftTest interface

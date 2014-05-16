@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -301,6 +302,8 @@ func (p *TBinaryProtocol) ReadFieldEnd() error {
 	return nil
 }
 
+var invalidDataLength = NewTProtocolExceptionWithType(INVALID_DATA, errors.New("Invalid data length"))
+
 func (p *TBinaryProtocol) ReadMapBegin() (kType, vType TType, size int, err error) {
 	k, e := p.ReadByte()
 	if e != nil {
@@ -315,11 +318,15 @@ func (p *TBinaryProtocol) ReadMapBegin() (kType, vType TType, size int, err erro
 	}
 	vType = TType(v)
 	size32, e := p.ReadI32()
-	size = int(size32)
 	if e != nil {
 		err = NewTProtocolException(e)
 		return
 	}
+	if size32 < 0 {
+		err = invalidDataLength
+		return
+	}
+	size = int(size32)
 	return kType, vType, size, nil
 }
 
@@ -335,12 +342,17 @@ func (p *TBinaryProtocol) ReadListBegin() (elemType TType, size int, err error) 
 	}
 	elemType = TType(b)
 	size32, e := p.ReadI32()
-	size = int(size32)
 	if e != nil {
 		err = NewTProtocolException(e)
 		return
 	}
-	return elemType, size, nil
+	if size32 < 0 {
+		err = invalidDataLength
+		return
+	}
+	size = int(size32)
+
+	return
 }
 
 func (p *TBinaryProtocol) ReadListEnd() error {
@@ -355,11 +367,15 @@ func (p *TBinaryProtocol) ReadSetBegin() (elemType TType, size int, err error) {
 	}
 	elemType = TType(b)
 	size32, e := p.ReadI32()
-	size = int(size32)
 	if e != nil {
 		err = NewTProtocolException(e)
 		return
 	}
+	if size32 < 0 {
+		err = invalidDataLength
+		return
+	}
+	size = int(size32)
 	return elemType, size, nil
 }
 
@@ -413,6 +429,11 @@ func (p *TBinaryProtocol) ReadString() (value string, err error) {
 	if e != nil {
 		return "", e
 	}
+	if size < 0 {
+		err = invalidDataLength
+		return
+	}
+
 	return p.readStringBody(int(size))
 }
 
@@ -421,6 +442,10 @@ func (p *TBinaryProtocol) ReadBinary() ([]byte, error) {
 	if e != nil {
 		return nil, e
 	}
+	if size < 0 {
+		return nil, invalidDataLength
+	}
+
 	isize := int(size)
 	buf := make([]byte, isize)
 	_, err := io.ReadFull(p.trans, buf)
