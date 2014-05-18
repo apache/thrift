@@ -1593,6 +1593,8 @@ void t_cpp_generator::generate_struct_clear(std::ofstream& out, t_struct* tstruc
         case t_base_type::TYPE_STRING:
         break;
       }
+    } else if (tt->is_enum()) {
+      out << indent() << tfield->get_name() << " = (" + type_name(tt) + ")0;\n";
     }
   }
   if (has_optional) {
