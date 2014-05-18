@@ -653,7 +653,7 @@ ConstValue:
       $$ = new t_const_value();
       $$->set_integer($1);
       if (!g_allow_64bit_consts && ($1 < INT32_MIN || $1 > INT32_MAX)) {
-        pwarning(1, "64-bit constant \"%"PRIi64"\" may not work in all languages.\n", $1);
+        pwarning(1, "64-bit constant \"%" PRIi64 "\" may not work in all languages.\n", $1);
       }
     }
 | tok_dub_constant
