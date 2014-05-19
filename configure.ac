@@ -649,6 +649,7 @@ AC_CONFIG_FILES([
   lib/lua/Makefile
   test/Makefile
   test/cpp/Makefile
+  test/go/Makefile
   test/hs/Makefile
   test/php/Makefile
   test/perl/Makefile
@@ -659,6 +660,7 @@ AC_CONFIG_FILES([
   tutorial/Makefile
   tutorial/cpp/Makefile
   tutorial/go/Makefile
+  tutorial/hs/Makefile
   tutorial/java/Makefile
   tutorial/js/Makefile
   tutorial/nodejs/Makefile

@@ -334,6 +334,8 @@ static bool type_need_reference(t_type* type) {
 	if( type->is_map()
 	 || type->is_set()
 	 || type->is_list()
+	 || type->is_struct()
+	 || type->is_xception()
 	 || (type->is_string() && ((t_base_type*)type)->is_binary() )) {
 		return false;
 	}
@@ -347,7 +349,7 @@ bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) 
 	}
 	t_type* type = tfield->get_type()->get_true_type();
 	//Structs in containers are pointers
-	if (in_container_value && type->is_struct()) {
+	if (type->is_struct() || type->is_xception()) {
 		return true;
 	}
 	if (!(tfield->get_req() == t_field::T_OPTIONAL)) {
@@ -2532,7 +2534,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
 
         for (xf_iter = x_fields.begin(); xf_iter != x_fields.end(); ++xf_iter) {
             f_service_ <<
-                        indent() << "  case *" << type_to_go_type(((*xf_iter)->get_type())) << ":" << endl <<
+                        indent() << "  case " << type_to_go_type(((*xf_iter)->get_type())) << ":" << endl <<
                         indent() << "result." << publicize(variable_name_to_go_name((*xf_iter)->get_name())) << " = v" << endl;
         }
         
@@ -2551,7 +2553,7 @@ void t_go_generator::generate_process_function(t_service* tservice,
     }
 
     f_service_ <<
-               indent() << "  return false, err2" << endl ;
+               indent() << "  return true, err2" << endl ;
 
     if( ! x_fields.empty()) {
         f_service_ <<
@@ -3441,10 +3443,7 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type, bool optional_fiel
     } else if (type->is_enum()) {
         return maybe_pointer + publicize(type_name(type));
     } else if (type->is_struct() || type->is_xception()) {
-    	if (is_container_value) {
-    		maybe_pointer = "*";
-    	}
-        return maybe_pointer + publicize(type_name(type));
+        return "*" + publicize(type_name(type));
     } else if (type->is_map()) {
         t_map* t = (t_map*)type;
         string keyType = type_to_go_key_type(t->get_key_type());

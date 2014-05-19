@@ -17,61 +17,20 @@
 # under the License.
 #
 
-SUBDIRS =
+package tests
 
-if MINGW
-# do nothing, just build the compiler
-else
+import (
+	st "ServicesTest"
+)
 
-if WITH_CPP
-SUBDIRS += cpp
-endif
+//this function is never called, it will fail to compile if check is failed
+func staticCheckStructArgsResults() {
+	//Check that struct args and results are passed by reference
+	var sa *st.StructA = &st.StructA{}
+	var iface st.AServ
+	var err error
 
-if WITH_JAVA
-SUBDIRS += java
-SUBDIRS += js
-endif
-
-if WITH_PYTHON
-SUBDIRS += py
-SUBDIRS += py.twisted
-SUBDIRS += py.tornado
-endif
-
-if WITH_RUBY
-SUBDIRS += rb
-endif
-
-if WITH_HASKELL
-SUBDIRS += hs
-endif
-
-if WITH_GO
-SUBDIRS += go
-endif
-
-if WITH_NODEJS
-SUBDIRS += nodejs
-endif
-
-#
-# generate html for ThriftTest.thrift
-#
-all-local:
-	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift
-endif
-
-# Any folders or files not listed above being added to SUBDIR need to be placed here in
-# EXTRA_DIST to be included in the release
-EXTRA_DIST = \
-	csharp \
-	d \
-	delphi \
-	erl \
-	gen-html \
-	hs \
-	ocaml \
-	perl \
-	php \
-	shared.thrift \
-	tutorial.thrift
+	sa, err = iface.StructAFunc_1structA(sa)
+	_ = err
+	_ = sa
+}

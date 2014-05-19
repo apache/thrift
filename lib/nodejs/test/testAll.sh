@@ -73,6 +73,8 @@ node ${DIR}/binary.test.js || TESTOK=1
 #integration tests
 
 #TCP connection tests
+testClientServer compact buffered || TESTOK=1
+testClientServer compact framed || TESTOK=1
 testClientServer binary buffered || TESTOK=1
 testClientServer json buffered || TESTOK=1
 testClientServer binary framed || TESTOK=1
@@ -82,7 +84,7 @@ testClientServer json framed || TESTOK=1
 testMultiplexedClientServer binary buffered || TESTOK=1
 testMultiplexedClientServer json buffered || TESTOK=1
 testMultiplexedClientServer binary framed || TESTOK=1
-testMultiplexedClientServer json framed || TESTOK=1
+testMultiplexedClientServer compact framed || TESTOK=1
 
 #test ssl connection
 testClientServer binary framed --ssl || TESTOK=1
@@ -90,8 +92,11 @@ testMultiplexedClientServer binary framed --ssl || TESTOK=1
 
 #test promise style
 testClientServer binary framed --promise || TESTOK=1
+testClientServer compact buffered --promise || TESTOK=1
 
 #HTTP tests
+testHttpClientServer compact buffered || TESTOK=1
+testHttpClientServer compact framed || TESTOK=1
 testHttpClientServer json buffered || TESTOK=1
 testHttpClientServer json framed || TESTOK=1
 testHttpClientServer binary buffered || TESTOK=1
