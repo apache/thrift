@@ -244,7 +244,7 @@ class t_js_generator : public t_oop_generator {
    * TypeScript Definition File helper functions
    */
 
-  string ts_function_signature(t_function* tfunction);
+  string ts_function_signature(t_function* tfunction, bool include_callback);
   string ts_get_type(t_type* type);
 
   /**
@@ -1251,7 +1251,11 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     if (gen_ts_) {
       f_service_ts_ <<
       ts_print_doc(*f_iter) <<
-      ts_indent() << ts_function_signature(*f_iter) << endl;
+      //function definition without callback
+      ts_indent() << ts_function_signature(*f_iter, false) << endl <<
+      ts_print_doc(*f_iter) <<
+      //overload with callback
+      ts_indent() << ts_function_signature(*f_iter, true) << endl;
     }
 
     if (gen_node_) {          //Node.js output      ./gen-nodejs
@@ -2131,7 +2135,7 @@ string t_js_generator::ts_get_type(t_type* type) {
     string vtype = ts_get_type(((t_map*)type)->get_val_type());
 
     if (ktype == "number" || ktype == "string") {
-      ts_type = "{ [k: " + ktype + "]: " + vtype + " }";
+      ts_type = "{ [k: " + ktype + "]: " + vtype + "; }";
     } else {
       ts_type = "any";
     }
@@ -2144,9 +2148,10 @@ string t_js_generator::ts_get_type(t_type* type) {
  * Renders a TypeScript function signature of the form 'name(args: types): type;'
  *
  * @param t_function Function definition
+ * @param bool in-/exclude the callback argument
  * @return String of rendered function definition
  */
-std::string t_js_generator::ts_function_signature(t_function* tfunction) {
+std::string t_js_generator::ts_function_signature(t_function* tfunction, bool include_callback) {
   string str;
   const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -2154,10 +2159,24 @@ std::string t_js_generator::ts_function_signature(t_function* tfunction) {
   str = tfunction->get_name() + "(";
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    str += (*f_iter)->get_name() + ts_get_req(*f_iter) + ": " + ts_get_type((*f_iter)->get_type()) + ", ";
+    str += (*f_iter)->get_name() + ts_get_req(*f_iter) + ": " + ts_get_type((*f_iter)->get_type());
+    
+    if (f_iter + 1 != fields.end()) {
+      str += ", ";
+    }
   }
 
-  str += "callback?: Function): " + ts_get_type(tfunction->get_returntype()) + ";";
+  if (include_callback) {
+    str += ", callback: Function): ";
+
+    if (gen_jquery_) {
+      str += "JQueryXHR;";
+    } else {
+      str += "void;";
+    }
+  } else {
+    str += "): " + ts_get_type(tfunction->get_returntype()) + ";";
+  }
 
   return str;
 }
@@ -2166,4 +2185,4 @@ std::string t_js_generator::ts_function_signature(t_function* tfunction) {
 THRIFT_REGISTER_GENERATOR(js, "Javascript",
 "    jquery:          Generate jQuery compatible code.\n"
 "    node:            Generate node.js compatible code.\n"
-"    ts:              Generate TypeScript Definition File.\n")
+"    ts:              Generate TypeScript Definition Files.\n")
