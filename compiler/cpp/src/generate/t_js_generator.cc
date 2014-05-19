@@ -2185,4 +2185,4 @@ std::string t_js_generator::ts_function_signature(t_function* tfunction, bool in
 THRIFT_REGISTER_GENERATOR(js, "Javascript",
 "    jquery:          Generate jQuery compatible code.\n"
 "    node:            Generate node.js compatible code.\n"
-"    ts:              Generate TypeScript Definition Files.\n")
+"    ts:              Generate TypeScript definition files.\n")
