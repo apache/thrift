@@ -141,10 +141,9 @@ do_test () {
       echo "" >> log/error.log
     fi
 
-    # write json array
-    client_server=( ${client_server//[-]/ } )
-    server=${client_server[0]}
-    client=${client_server[1]}
+    # split client-server string
+    client=${client_server%-*}
+    server=${client_server#*-}
 
     cat << EOF >> $STATUS_HTML
       [
@@ -385,8 +384,8 @@ echo " full log is here test/log/client_server_protocol_transport_client.log"
 echo " full log is here test/log/client_server_protocol_transport_server.log"
 echo " or look at file://$BASEDIR/$STATUS_HTML"
 
-ELAPSED_TIME=$(($SECONDS - $START_TIME))
-DURATION="$(($ELAPSED_TIME/60)) min $(($ELAPSED_TIME%60)) sec"
+ELAPSED_TIME=$(echo "(${SECONDS} - ${START_TIME})" | bc)
+DURATION="${ELAPSED_TIME} seconds"
 echo "test an took" $DURATION
 print_html_footer "$DURATION"
 
