@@ -62,15 +62,13 @@ before_install:
 # node.js
  - sudo apt-get install -qq nodejs npm
  - sudo npm install nodeunit -g || true
-# TODO: move npm install to nodejs Makefile
- - cd lib/nodejs; npm install & cd ../..
 
 install:
   - sh bootstrap.sh
 
 script:
 # TODO: fix these languages
-  - sh configure --without-erlang --without-haskell --without-python
+  - sh configure --without-erlang --without-haskell --without-python --without-go --without-lua
   - make -j$NUM_CPU && make dist
   - make cross -j$NUM_CPU
   - sh bootstrap.sh ; sh contrib/mingw-cross-compile.sh
