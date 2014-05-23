@@ -147,8 +147,8 @@ do_test () {
 
     cat << EOF >> $STATUS_HTML
       [
-        "${client}",
         "${server}",
+        "${client}",
         "${protocol}",
         "${transport}",
         "${result} (<a href=\"log/${testname}_client.log\">client</a>, <a href=\"log/${testname}_server.log\">server</a>)"
