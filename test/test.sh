@@ -188,7 +188,7 @@ cpp_sockets="ip domain ip-ssl"
 java_sockets="ip ip-ssl"
 # TODO fastframed java transport is another implementation of framed transport
 
-nodejs_protocols="binary json"
+nodejs_protocols="binary compact json"
 nodejs_transports="buffered framed"
 nodejs_sockets="ip ip-ssl"
 
@@ -267,6 +267,22 @@ done
 
 NODE_TEST_DIR=${BASEDIR}/../lib/nodejs/test
 export NODE_PATH=${NODE_TEST_DIR}:${NODE_TEST_DIR}/../lib:${NODE_PATH}
+######### nodejs client - nodejs server ##############
+##
+for proto in ${nodejs_protocols}; do
+  for trans in ${nodejs_transports}; do
+    for sock in ${nodejs_sockets}; do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "nodejs-nodejs" "${proto}" "${trans}-${sock}" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
+              "5" "0.2"
+    done
+  done
+done
 
 ######### nodejs client - cpp server ##############
 ##
