@@ -92,4 +92,5 @@ EXTRA_DIST = \
              src/Thrift.sln \
              src/Thrift.WP7.csproj \
              src/Properties/AssemblyInfo.WP7.cs \
+             src/Transport/TSilverlightSocket.cs \
              test
