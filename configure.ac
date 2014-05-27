@@ -549,6 +549,8 @@ AC_CHECK_FUNCS([alarm])
 AC_CHECK_FUNCS([clock_gettime])
 AC_CHECK_FUNCS([sched_get_priority_min])
 AC_CHECK_FUNCS([sched_get_priority_max])
+AC_CHECK_FUNCS([inet_ntoa])
+AC_CHECK_FUNCS([pow])
 
 if test "$cross_compiling" = "no" ; then
   AX_SIGNED_RIGHT_SHIFT
