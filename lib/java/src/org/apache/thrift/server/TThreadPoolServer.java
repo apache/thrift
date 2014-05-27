@@ -140,7 +140,6 @@ public class TThreadPoolServer extends TServer {
               break;
             }
           } catch(OutOfMemoryError ex) {
-              client.close();
             LOGGER.warn("ExecutorService throws OutOfMemoryError "+ ex.getMessage() + (++rejections) +
                 " times(s)", ex);
             try {
