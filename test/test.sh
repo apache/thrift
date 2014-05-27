@@ -317,6 +317,39 @@ for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
   done
 done
 
+######### nodejs client - java server ##############
+##
+for proto in $(intersection "${nodejs_protocols}" "${java_protocols}"); do
+  for trans in $(intersection "${nodejs_transports}" "${java_server_transports}"); do
+    for sock in $(intersection "${nodejs_sockets}" "${java_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "nodejs-java" "${proto}" "${trans}-${sock}" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testserver" \
+              "5" "1"
+    done
+  done
+done
+
+######### java client - nodejs server ##############
+for proto in $(intersection "${nodejs_protocols}" "${java_protocols}"); do
+  for trans in $(intersection "${nodejs_transports}" "${java_client_transports}"); do
+    for sock in $(intersection "${nodejs_sockets}" "${java_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "java-nodejs" "${proto}" "${trans}-${sock}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testclient" \
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
+              "5" "2"
+    done
+  done
+done
+
 # delete Unix Domain Socket used by cpp tests
 rm -f /tmp/ThriftTest.thrift
 
