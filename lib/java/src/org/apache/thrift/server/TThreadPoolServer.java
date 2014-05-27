@@ -139,6 +139,17 @@ public class TThreadPoolServer extends TServer {
               Thread.currentThread().interrupt();
               break;
             }
+          } catch(OutOfMemoryError ex) {
+            LOGGER.warn("ExecutorService throws OutOfMemoryError "+ ex.getMessage() + (++rejections) +
+                " times(s)", ex);
+            try {
+              TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+              LOGGER.warn("Interrupted while waiting to place client on" +
+              		" executor queue.");
+              Thread.currentThread().interrupt();
+              break;
+            }
           }
         }
       } catch (TTransportException ttx) {
