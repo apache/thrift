@@ -643,7 +643,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
    * A round robin load balancer for choosing selector threads for new
    * connections.
    */
-  protected class SelectorThreadLoadBalancer {
+  protected static class SelectorThreadLoadBalancer {
     private final Collection<? extends SelectorThread> threads;
     private Iterator<? extends SelectorThread> nextThreadIterator;
 

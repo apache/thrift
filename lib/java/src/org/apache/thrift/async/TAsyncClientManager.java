@@ -19,6 +19,7 @@
 package org.apache.thrift.async;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -182,7 +183,7 @@ public class TAsyncClientManager {
   }
 
   /** Comparator used in TreeSet */
-  private static class TAsyncMethodCallTimeoutComparator implements Comparator<TAsyncMethodCall> {
+  private static class TAsyncMethodCallTimeoutComparator implements Comparator<TAsyncMethodCall>, Serializable {
     public int compare(TAsyncMethodCall left, TAsyncMethodCall right) {
       if (left.getTimeoutTimestamp() == right.getTimeoutTimestamp()) {
         return (int)(left.getSequenceId() - right.getSequenceId());
