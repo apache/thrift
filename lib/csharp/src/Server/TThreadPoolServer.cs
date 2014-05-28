@@ -75,16 +75,16 @@ namespace Thrift.Server
 			:base(processor, serverTransport, inputTransportFactory, outputTransportFactory,
 				  inputProtocolFactory, outputProtocolFactory, logDel)
 		{
-      lock (typeof(TThreadPoolServer))
-      {
-        if (!ThreadPool.SetMinThreads(minThreadPoolThreads, minThreadPoolThreads))
-        {
-          throw new Exception("Error: could not SetMinThreads in ThreadPool");
-        }
-        if (!ThreadPool.SetMaxThreads(maxThreadPoolThreads, maxThreadPoolThreads))
-        {
-          throw new Exception("Error: could not SetMaxThreads in ThreadPool");
-        }
+			lock (typeof(TThreadPoolServer))
+			{
+				if (!ThreadPool.SetMaxThreads(maxThreadPoolThreads, maxThreadPoolThreads))
+				{
+					throw new Exception("Error: could not SetMaxThreads in ThreadPool");
+				}
+				if (!ThreadPool.SetMinThreads(minThreadPoolThreads, minThreadPoolThreads))
+				{
+					throw new Exception("Error: could not SetMinThreads in ThreadPool");
+				}
 			}
 		}
 
