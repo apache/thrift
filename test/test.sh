@@ -196,6 +196,10 @@ csharp_protocols="binary compact json"
 csharp_transports="buffered framed"
 csharp_sockets="ip ip-ssl"
 
+py_protocols="binary compact json accel"
+py_transports="buffered"
+py_sockets="ip"
+
 
 ######### java client - java server #############
 for proto in $java_protocols; do
@@ -350,6 +354,120 @@ for proto in $(intersection "${nodejs_protocols}" "${java_protocols}"); do
   done
 done
 
+######### py client - py server ##############
+for proto in ${py_protocols}; do
+  for trans in ${py_transports}; do
+    for sock in ${py_sockets}; do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-py" "${proto}" "${trans}-${sock}" \
+              "py/TestClient.py --proto=${proto} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "py/TestServer.py --proto=${proto} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "10" "2"
+    done
+  done
+done
+
+######### py client - cpp server ##############
+for proto in $(intersection "${cpp_protocols}" "${py_protocols}"); do
+  for trans in $(intersection "${cpp_transports}" "${py_transports}"); do
+    for sock in $(intersection "${cpp_sockets}" "${py_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-cpp" "${proto}" "${trans}-${sock}" \
+              "py/TestClient.py --proto=${proto} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "10" "2"
+    done
+  done
+done
+
+######### cpp client - py server ##############
+for proto in $(intersection "${cpp_protocols}" "${py_protocols}"); do
+  for trans in $(intersection "${cpp_transports}" "${py_transports}"); do
+    for sock in $(intersection "${cpp_sockets}" "${py_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "cpp-py" "${proto}" "${trans}-${sock}" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "py/TestServer.py --proto=${proto} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "10" "2"
+    done
+  done
+done
+
+######### py client - java server ##############
+##
+for proto in $(intersection "${py_protocols}" "${java_protocols}"); do
+  for trans in $(intersection "${py_transports}" "${java_server_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${java_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-java" "${proto}" "${trans}-${sock}" \
+              "py/TestClient.py --proto=${proto} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testserver" \
+              "15" "2"
+    done
+  done
+done
+
+######### java client - py server ##############
+for proto in $(intersection "${py_protocols}" "${java_protocols}"); do
+  for trans in $(intersection "${py_transports}" "${java_client_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${java_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "java-py" "${proto}" "${trans}-${sock}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testclient" \
+              "py/TestServer.py --proto=${proto} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "10" "5"
+    done
+  done
+done
+
+######### py client - nodejs server ##############
+##
+for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
+  for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${nodejs_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-nodejs" "${proto}" "${trans}-${sock}" \
+              "py/TestClient.py --proto=${proto} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
+              "15" "2"
+    done
+  done
+done
+
+######### nodejs client - py server ##############
+for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
+  for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${nodejs_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "nodejs-py" "${proto}" "${trans}-${sock}" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
+              "py/TestServer.py --proto=${proto} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "10" "2"
+    done
+  done
+done
+
 # delete Unix Domain Socket used by cpp tests
 rm -f /tmp/ThriftTest.thrift
 
@@ -371,42 +489,6 @@ for proto in $csharp_protocols; do
 done
 
 
-do_test "py-py" "binary" "buffered-ip" \
-        "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
-        "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10" "2"
-do_test "py-py" "json" "buffered-ip" \
-        "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
-        "py/TestServer.py --proto=json --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10" "2"
-do_test "py-cpp" "binary" "buffered-ip" \
-        "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
-        "cpp/TestServer" \
-        "10" "2"
-do_test "py-cpp" "json" "buffered-ip" \
-        "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
-        "cpp/TestServer --protocol=json" \
-        "10" "2"
-do_test "cpp-py" "binary" "buffered-ip" \
-        "cpp/TestClient --protocol=binary --port=9090" \
-        "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10" "2"
-do_test "cpp-py" "json" "buffered-ip" \
-        "cpp/TestClient --protocol=json --port=9090" \
-        "py/TestServer.py --proto=json --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10" "2"
-do_test "py-java"  "binary" "buffered-ip" \
-        "py/TestClient.py --proto=binary --port=9090 --host=localhost --genpydir=py/gen-py" \
-        "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" run-testserver" \
-        "15" "2"
-do_test "py-java"  "json"   "buffered-ip" \
-        "py/TestClient.py --proto=json --port=9090 --host=localhost --genpydir=py/gen-py" \
-        "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=json\" run-testserver" \
-        "15" "2"
-do_test "java-py"  "binary" "buffered-ip" \
-        "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" run-testclient" \
-        "py/TestServer.py --proto=binary --port=9090 --genpydir=py/gen-py TSimpleServer" \
-        "10" "5"
 do_test "js-java"   "json"  "http-ip" \
         "" \
         "ant -f  ../lib/js/test/build.xml unittest" \
