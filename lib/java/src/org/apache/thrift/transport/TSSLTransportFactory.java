@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.security.KeyStore;
+import java.util.Arrays;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -171,6 +172,7 @@ public class TSSLTransportFactory {
   private static SSLContext createSSLContext(TSSLTransportParameters params) throws TTransportException {
     SSLContext ctx;
     FileInputStream fin = null;
+    FileInputStream fis = null;
 
     try {
       ctx = SSLContext.getInstance(params.protocol);
@@ -188,8 +190,8 @@ public class TSSLTransportFactory {
       if (params.isKeyStoreSet) {
         kmf = KeyManagerFactory.getInstance(params.keyManagerType);
         KeyStore ks = KeyStore.getInstance(params.keyStoreType);
-        fin = new FileInputStream(params.keyStore);
-        ks.load(fin, params.keyPass.toCharArray());
+        fis = new FileInputStream(params.keyStore);
+        ks.load(fis, params.keyPass.toCharArray());
         kmf.init(ks, params.keyPass.toCharArray());
       }
 
@@ -209,6 +211,13 @@ public class TSSLTransportFactory {
       if (fin != null) {
         try {
           fin.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+      if (fis != null) {
+        try {
+          fis.close();
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -271,7 +280,7 @@ public class TSSLTransportFactory {
       if (protocol != null) {
         this.protocol = protocol;
       }
-      this.cipherSuites = cipherSuites;
+      this.cipherSuites = Arrays.copyOf(cipherSuites, cipherSuites.length);
       this.clientAuth = clientAuth;
     }
 
