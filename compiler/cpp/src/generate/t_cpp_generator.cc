@@ -831,10 +831,16 @@ void t_cpp_generator::generate_copy_constructor(
 
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
+  bool has_nonrequired_fields = false;
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
+    if ((*f_iter)->get_req() != t_field::T_REQUIRED)
+      has_nonrequired_fields = true;
     indent(out) << (*f_iter)->get_name() << " = " << tmp_name << "." <<
       (*f_iter)->get_name() << ";" << endl;
   }
+
+  if (has_nonrequired_fields)
+    indent(out) << "__isset = " << tmp_name << ".__isset;" << endl;
 
   indent_down();
   indent(out) << "}" << endl;
@@ -852,10 +858,15 @@ void t_cpp_generator::generate_assignment_operator(
 
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
+  bool has_nonrequired_fields = false;
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
+    if ((*f_iter)->get_req() != t_field::T_REQUIRED)
+      has_nonrequired_fields = true;
     indent(out) << (*f_iter)->get_name() << " = " << tmp_name << "." <<
       (*f_iter)->get_name() << ";" << endl;
   }
+  if (has_nonrequired_fields)
+    indent(out) << "__isset = " << tmp_name << ".__isset;" << endl;
 
   indent(out) << "return *this;" << endl;
   indent_down();
