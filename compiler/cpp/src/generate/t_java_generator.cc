@@ -66,6 +66,9 @@ public:
     iter = parsed_options.find("nocamel");
     nocamel_style_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("fullcamel");
+    fullcamel_style_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("android_legacy");
     android_legacy_ = (iter != parsed_options.end());
 
@@ -313,6 +316,7 @@ public:
   bool bean_style_;
   bool private_members_;
   bool nocamel_style_;
+  bool fullcamel_style_;
   bool android_legacy_;
   bool java5_;
   bool sorted_containers_;
@@ -3821,10 +3825,26 @@ std::string t_java_generator::make_valid_java_identifier( std::string const & fr
 
 /**
  * Applies the correct style to a string based on the value of nocamel_style_
+ * and/or fullcamel_style_
  */
 std::string t_java_generator::get_cap_name(std::string name){
   if (nocamel_style_) {
     return "_" + name;
+  } if (fullcamel_style_) {
+    std::string new_name;
+    new_name += toupper(name[0]);
+    for (size_t i = 1; i < name.size(); i++) {
+      if (name[i] == '_') {
+        if (i < name.size()-1) {
+          i++;
+          new_name += toupper(name[i]);
+        }
+      }
+      else {
+        new_name += name[i];
+      }
+    }
+    return new_name;
   } else {
     name[0] = toupper(name[0]);
     return name;
@@ -4574,6 +4594,7 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    beans:           Members will be private, and setter methods will return void.\n"
 "    private-members: Members will be private, but setter methods will return 'this' like usual.\n"
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
+"    fullcamel:       Convert underscored_field_names to CamelCase.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
 "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
 "    reuse-objects:   Data objects will not be allocated, but existing instances will be used (read and write).\n"
