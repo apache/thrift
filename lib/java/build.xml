@@ -48,6 +48,7 @@
   <property name="gen" location="gen-java"/>
   <property name="genbean" location="gen-javabean"/>
   <property name="genreuse" location="gen-javareuse"/>
+  <property name="genfullcamel" location="gen-fullcamel"/>
 
   <property name="jar.file" location="${build.dir}/${final.name}.jar"/>
   <property name="test.jar.file" location="${build.dir}/${final.name}-test.jar"/>
@@ -167,6 +168,7 @@ resolution:=optional,org.slf4j;resolution:=optional;version=&quot;[1.4,2)&quot;"
     <delete dir="${gen}"/>
     <delete dir="${genbean}"/>
     <delete dir="${genreuse}"/>
+    <delete dir="${genfullcamel}"/>
   </target>
 
   <target name="optional-generate" unless="no-gen-thrift"> 
@@ -184,6 +186,10 @@ resolution:=optional,org.slf4j;resolution:=optional;version=&quot;[1.4,2)&quot;"
       <!--<compilerarg value="-Xlint:unchecked"/>-->
     </javac>
     <javac debug="true" srcdir="${genreuse}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false" encoding="UTF-8">
+      <compilerarg value="-Xlint:deprecation"/>
+      <!--<compilerarg value="-Xlint:unchecked"/>-->
+    </javac>
+    <javac debug="true" srcdir="${genfullcamel}" destdir="${build.test.dir}" classpathref="test.classpath" includeantruntime="false" encoding="UTF-8">
       <compilerarg value="-Xlint:deprecation"/>
       <!--<compilerarg value="-Xlint:unchecked"/>-->
     </javac>
@@ -277,6 +283,12 @@ resolution:=optional,org.slf4j;resolution:=optional;version=&quot;[1.4,2)&quot;"
     </exec>
     <exec executable="../../compiler/cpp/thrift" failonerror="true">
       <arg line="--gen java:hashcode ${test.thrift.home}/ManyOptionals.thrift"/>
+    </exec>
+    <exec executable="mkdir" failonerror="true">
+      <arg line="-p ${genfullcamel}"/>
+    </exec>
+    <exec executable="../../compiler/cpp/thrift" failonerror="true">
+      <arg line="--gen java:hashcode,fullcamel -out ${genfullcamel} ${test.thrift.home}/DenseLinkingTest.thrift"/>
     </exec>
     <exec executable="mkdir" failonerror="true">
       <arg line="-p ${genreuse}"/>
