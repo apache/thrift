@@ -1144,9 +1144,16 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
         int sorted_keys_pos = 0;
 
         for (m_iter = sorted_members.begin(); m_iter != sorted_members.end(); ++m_iter) {
-            for (; sorted_keys_pos != (*m_iter)->get_key(); sorted_keys_pos++) {
-                if (sorted_keys_pos != 0) {
-                    indent(out) << "// unused field # " << sorted_keys_pos << endl;
+            if( sorted_keys_pos != (*m_iter)->get_key()) {
+                int first_unused = std::max(1,sorted_keys_pos++);
+                while( sorted_keys_pos != (*m_iter)->get_key()) {
+                    ++sorted_keys_pos;
+                }
+                int last_unused = sorted_keys_pos - 1;
+                if (first_unused < last_unused) {
+                    indent(out) << "// unused fields # " << first_unused << " to "<< last_unused << endl;
+                } else if (first_unused == last_unused) {
+                    indent(out) << "// unused field # " << first_unused << endl;
                 }
             }
 
