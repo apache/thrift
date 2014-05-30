@@ -1,11 +1,5 @@
----
-title: "Windows Install"
-kind: doc
----
 ## Windows Setup
 The windows compiler is available as a prebuilt exe available [here](/download)
-
----
 
 ## Windows setup from source
 
