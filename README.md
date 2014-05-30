@@ -72,8 +72,7 @@ thrift/
 Requirements
 ============
 
-See http://wiki.apache.org/thrift/ThriftRequirements for
-an up-to-date list of build requirements.
+See http://thrift.apache.org/docs/install for an up-to-date list of build requirements.
 
 Resources
 =========
@@ -95,25 +94,29 @@ If you are building from the first time out of the source repository, you will
 need to generate the configure scripts.  (This is not necessary if you
 downloaded a tarball.)  From the top directory, do:
 
-	./bootstrap.sh
+    ./bootstrap.sh
 
 Once the configure scripts are generated, thrift can be configured.
 From the top directory, do:
 
-	./configure
+    ./configure
 
 You may need to specify the location of the boost files explicitly.
 If you installed boost in /usr/local, you would run configure as follows:
 
-	./configure --with-boost=/usr/local
+    ./configure --with-boost=/usr/local
 
 Note that by default the thrift C++ library is typically built with debugging
 symbols included. If you want to customize these options you should use the
 CXXFLAGS option in configure, as such:
 
-        ./configure CXXFLAGS='-g -O2'
-        ./configure CFLAGS='-g -O2'
-        ./configure CPPFLAGS='-DDEBUG_MY_FEATURE'
+    ./configure CXXFLAGS='-g -O2'
+    ./configure CFLAGS='-g -O2'
+    ./configure CPPFLAGS='-DDEBUG_MY_FEATURE'
+
+To enable gcov required options -fprofile-arcs -ftest-coverage enable them:
+
+    ./configure  --enable-coverage
 
 Run ./configure --help to see other configuration options
 
