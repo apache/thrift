@@ -2139,7 +2139,7 @@ void t_csharp_generator::generate_deserialize_set_element(ofstream& out, t_set* 
   t_field felem(tset->get_elem_type(), elem);
 
   indent(out) <<
-    declare_field(&felem, true) << endl;
+    declare_field(&felem) << endl;
 
   generate_deserialize_field(out, &felem);
 
@@ -2152,7 +2152,7 @@ void t_csharp_generator::generate_deserialize_list_element(ofstream& out, t_list
   t_field felem(tlist->get_elem_type(), elem);
 
   indent(out) <<
-    declare_field(&felem, true) << endl;
+    declare_field(&felem) << endl;
 
   generate_deserialize_field(out, &felem);
 
