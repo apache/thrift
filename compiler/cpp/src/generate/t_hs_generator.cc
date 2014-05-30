@@ -1482,7 +1482,7 @@ string t_hs_generator::render_hs_type(t_type* type, bool needs_parens) {
     }
 
   } else if (type->is_enum()) {
-    return capitalize(((t_enum*)type)->get_name());
+    return type_name((t_enum*)type);
 
   } else if (type->is_struct() || type->is_xception()) {
     return type_name((t_struct*)type);
