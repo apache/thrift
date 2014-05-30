@@ -464,11 +464,7 @@ std::string t_csharp_generator::render_const_value(ofstream& out, string name, t
         }
         break;
       default:
-      {
-        std::stringstream ss;
-        ss << "compiler error: no const of base type " << tbase;
-        throw ss.str();
-      }
+        throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
     render << type->get_name() << "." << value->get_identifier_name();
@@ -2038,11 +2034,7 @@ void t_csharp_generator::generate_deserialize_field(ofstream& out, t_field* tfie
           out << "ReadDouble();";
           break;
         default:
-        {
-          std::stringstream ss;
-          ss << "compiler error: no C# name for base type " << tbase;
-          throw ss.str();
-        }
+          throw "compiler error: no C# name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "ReadI32();";
@@ -2217,11 +2209,7 @@ void t_csharp_generator::generate_deserialize_list_element(ofstream& out, t_list
           out << "WriteDouble(" << nullable_name << ");";
           break;
         default:
-        {
-          std::stringstream ss;
-          ss << "compiler error: no C# name for base type " << tbase;
-          throw ss.str();
-        }
+          throw "compiler error: no C# name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "WriteI32((int)" << nullable_name << ");";
@@ -2465,11 +2453,7 @@ string t_csharp_generator::base_type_name(t_base_type* tbase, bool in_container,
     case t_base_type::TYPE_DOUBLE:
       return "double" + postfix;
     default:
-    {
-      std::stringstream ss;
-      ss << "compiler error: no C# name for base type " << tbase->get_base();
-      throw ss.str();
-    }
+      throw "compiler error: no C# name for base type " + t_base_type::t_base_name(tbase->get_base());
   }
 }
 

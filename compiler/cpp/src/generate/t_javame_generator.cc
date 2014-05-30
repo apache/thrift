@@ -2953,7 +2953,7 @@ string t_javame_generator::base_type_name(t_base_type* type,
   case t_base_type::TYPE_DOUBLE:
     return (in_container ? "Double" : "double");
   default:
-    throw "compiler error: no C++ name for base type " + t_base_type::t_base_name(tbase);
+    throw "compiler error: no Java name for base type " + t_base_type::t_base_name(tbase);
   }
 }
 

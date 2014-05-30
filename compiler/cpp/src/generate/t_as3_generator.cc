@@ -2499,7 +2499,7 @@ string t_as3_generator::base_type_name(t_base_type* type,
   case t_base_type::TYPE_DOUBLE:
     return "Number";
   default:
-    throw "compiler error: no C++ name for base type " + t_base_type::t_base_name(tbase);
+    throw "compiler error: no As3 name for base type " + t_base_type::t_base_name(tbase);
   }
 }
 
