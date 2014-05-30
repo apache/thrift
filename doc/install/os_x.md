@@ -1,7 +1,3 @@
----
-title: "OS X Install"
-kind: doc
----
 ## OS X Setup
 The following command install all the required tools and libraries to build and install the Apache Thrift compiler on a OS X based system. 
 

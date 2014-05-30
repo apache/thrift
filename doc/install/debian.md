@@ -1,7 +1,3 @@
----
-title: "Ubuntu Install"
-kind: doc
----
 ## Debian or Ubuntu setup
 The following command install all the required tools and libraries to build and install the Apache Thrift compiler on a Debian/Ubuntu Linux based system.
 

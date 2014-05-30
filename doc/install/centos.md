@@ -1,7 +1,3 @@
----
-title: "Centos Install"
-kind: doc
----
 ## CentOS setup
 The following command installs the required tools and libraries from the base repository needed to build and install the Apache Thrift compiler on a CentOS6/RHEL6 Linux based system. 
 
