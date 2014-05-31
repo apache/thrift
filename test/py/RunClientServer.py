@@ -34,10 +34,10 @@ parser.add_option('--genpydirs', type='string', dest='genpydirs',
     help='directory extensions for generated code, used as suffixes for \"gen-py-*\" added sys.path for individual tests')
 parser.add_option("--port", type="int", dest="port", default=9090,
     help="port number for server to listen on")
-parser.add_option('-v', '--verbose', action="store_const", 
+parser.add_option('-v', '--verbose', action="store_const",
     dest="verbose", const=2,
     help="verbose output")
-parser.add_option('-q', '--quiet', action="store_const", 
+parser.add_option('-q', '--quiet', action="store_const",
     dest="verbose", const=0,
     help="minimal output")
 parser.set_defaults(verbose=1)
@@ -107,14 +107,14 @@ def runScriptTest(genpydir, script):
   ret = subprocess.call(script_args)
   if ret != 0:
     raise Exception("Script subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(script_args)))
-  
+
 def runServiceTest(genpydir, server_class, proto, port, use_zlib, use_ssl):
   # Build command line arguments
   server_args = [sys.executable, relfile('TestServer.py') ]
   cli_args = [sys.executable, relfile('TestClient.py') ]
   for which in (server_args, cli_args):
     which.append('--genpydir=%s' % genpydir)
-    which.append('--proto=%s' % proto) # accel, binary or compact
+    which.append('--protocol=%s' % proto) # accel, binary or compact
     which.append('--port=%d' % port) # default to 9090
     if use_zlib:
       which.append('--zlib')
@@ -128,7 +128,9 @@ def runServiceTest(genpydir, server_class, proto, port, use_zlib, use_ssl):
   server_args.append(server_class)
   # client-specific cmdline options
   if server_class in FRAMED:
-    cli_args.append('--framed')
+    cli_args.append('--transport=framed')
+  else:
+     cli_args.append('--transport=buffered')
   if server_class == 'THttpServer':
     cli_args.append('--http=/')
   if options.verbose > 0:
@@ -186,7 +188,7 @@ print '----------------'
 for genpydir in generated_dirs:
   for script in SCRIPTS:
     runScriptTest(genpydir, script)
-  
+
 print '----------------'
 print ' Executing Client/Server tests with various generated code directories'
 print ' Servers to be tested: ' + ', '.join(SERVERS)

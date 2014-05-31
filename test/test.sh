@@ -31,7 +31,7 @@ cd "$( dirname "$0" )"
 BASEDIR=$(pwd)
 
 print_header() {
-  printf "%-16s %-11s %-17s %-s\n" "client-server:" "protocol:" "transport:" "result:"
+  printf "%-16s %-13s %-17s %-s\n" "client-server:" "protocol:" "transport:" "result:"
 }
 
 STATUS_HTML="status.html"
@@ -116,7 +116,7 @@ do_test () {
     
     testname=${client_server}_${protocol}_${transport}
     server_timeout=$(echo "(${server_startup_time}+${client_timeout})" | bc)
-    printf "%-16s %-11s %-17s" ${client_server} ${protocol} ${transport} 
+    printf "%-16s %-13s %-17s" ${client_server} ${protocol} ${transport}
     
     timeout $server_timeout $server_exec > log/${testname}_server.log 2>&1 &
     server_pid=$!
@@ -183,7 +183,6 @@ java_protocols="binary compact json"
 cpp_transports="buffered framed http"
 java_server_transports="buffered framed fastframed"
 java_client_transports=${java_server_transports}" http"
-# we need a test certificate first
 cpp_sockets="ip domain ip-ssl"
 java_sockets="ip ip-ssl"
 # TODO fastframed java transport is another implementation of framed transport
@@ -197,8 +196,8 @@ csharp_transports="buffered framed"
 csharp_sockets="ip ip-ssl"
 
 py_protocols="binary compact json accel"
-py_transports="buffered"
-py_sockets="ip"
+py_transports="buffered framed"
+py_sockets="ip ip-ssl"
 
 
 ######### java client - java server #############
@@ -363,12 +362,29 @@ for proto in ${py_protocols}; do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-py" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --proto=${proto} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
-              "py/TestServer.py --proto=${proto} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "py/TestClient.py --protocol=${proto} --transport={trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "py/TestServer.py --protocol=${proto} --transport={trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
               "10" "2"
     done
   done
 done
+
+for trans in ${py_transports}; do
+    for sock in ${py_sockets}; do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-py" "accel-binary" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "py/TestServer.py --protocol=binary --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "10" "2"
+      do_test "py-py" "binary-accel" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=binary --transport={trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "py/TestServer.py --protocol=accel --transport={trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "10" "2"
+    done
+  done
 
 ######### py client - cpp server ##############
 for proto in $(intersection "${cpp_protocols}" "${py_protocols}"); do
@@ -379,12 +395,25 @@ for proto in $(intersection "${cpp_protocols}" "${py_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-cpp" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --proto=${proto} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
               "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
               "10" "2"
     done
   done
 done
+
+for trans in $(intersection "${cpp_transports}" "${py_transports}"); do
+    for sock in $(intersection "${cpp_sockets}" "${py_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-cpp" "accel-binary" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "cpp/TestServer --protocol=binary --transport=${trans} ${extraparam}" \
+              "10" "2"
+    done
+  done
 
 ######### cpp client - py server ##############
 for proto in $(intersection "${cpp_protocols}" "${py_protocols}"); do
@@ -396,11 +425,24 @@ for proto in $(intersection "${cpp_protocols}" "${py_protocols}"); do
       esac
       do_test "cpp-py" "${proto}" "${trans}-${sock}" \
               "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
-              "py/TestServer.py --proto=${proto} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
               "10" "2"
     done
   done
 done
+
+for trans in $(intersection "${cpp_transports}" "${py_transports}"); do
+    for sock in $(intersection "${cpp_sockets}" "${py_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "cpp-py" "binary-accel" "${trans}-${sock}" \
+              "cpp/TestClient --protocol=binary --transport=${trans} ${extraparam}" \
+              "py/TestServer.py --protocol=accel --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "10" "2"
+    done
+  done
 
 ######### py client - java server ##############
 ##
@@ -412,12 +454,25 @@ for proto in $(intersection "${py_protocols}" "${java_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-java" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --proto=${proto} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
               "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testserver" \
               "15" "2"
     done
   done
 done
+
+for trans in $(intersection "${py_transports}" "${java_server_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${java_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-java" "accel-binary" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} ${extraparam}\" run-testserver" \
+              "15" "2"
+    done
+  done
 
 ######### java client - py server ##############
 for proto in $(intersection "${py_protocols}" "${java_protocols}"); do
@@ -429,11 +484,24 @@ for proto in $(intersection "${py_protocols}" "${java_protocols}"); do
       esac
       do_test "java-py" "${proto}" "${trans}-${sock}" \
               "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testclient" \
-              "py/TestServer.py --proto=${proto} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
               "10" "5"
     done
   done
 done
+
+for trans in $(intersection "${py_transports}" "${java_client_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${java_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "java-py" "binary-accel" "${trans}-${sock}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} ${extraparam}\" run-testclient" \
+              "py/TestServer.py --protocol=accel --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "10" "5"
+    done
+  done
 
 ######### py client - nodejs server ##############
 ##
@@ -445,12 +513,25 @@ for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
         "ip-ssl" ) extraparam="--ssl";;
       esac
       do_test "py-nodejs" "${proto}" "${trans}-${sock}" \
-              "py/TestClient.py --proto=${proto} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
               "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
               "15" "2"
     done
   done
 done
+
+for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${nodejs_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-nodejs" "${proto}" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "node ${NODE_TEST_DIR}/server.js -p binary -t ${trans} ${extraparam}" \
+              "15" "2"
+    done
+  done
 
 ######### nodejs client - py server ##############
 for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
@@ -462,11 +543,24 @@ for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
       esac
       do_test "nodejs-py" "${proto}" "${trans}-${sock}" \
               "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
-              "py/TestServer.py --proto=${proto} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
               "10" "2"
     done
   done
 done
+
+for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${nodejs_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "nodejs-py" "binary-accel" "${trans}-${sock}" \
+              "node ${NODE_TEST_DIR}/client.js -p binary -t ${trans} ${extraparam}" \
+              "py/TestServer.py --protocol=accel --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "10" "2"
+    done
+  done
 
 # delete Unix Domain Socket used by cpp tests
 rm -f /tmp/ThriftTest.thrift
