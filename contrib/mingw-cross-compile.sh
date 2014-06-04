@@ -4,7 +4,8 @@ set -e
 ./configure \
   --disable-libs \
   --build=i686-pc-linux-gnu \
-  --host=i586-mingw32msvc
+  --host=i586-mingw32msvc \
+  CC=i586-mingw32msvc-gcc CXX=i586-mingw32msvc-g++
 
 make
 

@@ -193,6 +193,7 @@ node_modules
 /ltmain.sh
 /missing
 /stamp-h1
+/test/status.html
 /test/cpp/StressTest
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient
