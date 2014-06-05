@@ -67,6 +67,11 @@ namespace Thrift.Transport
 		private X509Certificate certificate = null;
 
 		/// <summary>
+		/// User defined certificate validator.
+		/// </summary>
+		private RemoteCertificateValidationCallback certValidator = null;
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="TTLSSocket"/> class.
 		/// </summary>
 		/// <param name="client">An already created TCP-client</param>
@@ -91,8 +96,9 @@ namespace Thrift.Transport
 		/// <param name="host">The host, where the socket should connect to.</param>
 		/// <param name="port">The port.</param>
 		/// <param name="certificatePath">The certificate path.</param>
-		public TTLSSocket(string host, int port, string certificatePath)
-			: this(host, port, 0, X509Certificate.CreateFromCertFile(certificatePath))
+		/// <param name="certValidator">User defined cert validator.</param>
+		public TTLSSocket(string host, int port, string certificatePath, RemoteCertificateValidationCallback certValidator = null)
+			: this(host, port, 0, X509Certificate.CreateFromCertFile(certificatePath), certValidator)
 		{
 		}
 
@@ -102,8 +108,9 @@ namespace Thrift.Transport
 		/// <param name="host">The host, where the socket should connect to.</param>
 		/// <param name="port">The port.</param>
 		/// <param name="certificate">The certificate.</param>
-		public TTLSSocket(string host, int port, X509Certificate certificate)
-			: this(host, port, 0, certificate)
+		/// <param name="certValidator">User defined cert validator.</param>
+		public TTLSSocket(string host, int port, X509Certificate certificate, RemoteCertificateValidationCallback certValidator = null)
+			: this(host, port, 0, certificate, certValidator)
 		{
 		}
 
@@ -114,12 +121,14 @@ namespace Thrift.Transport
 		/// <param name="port">The port.</param>
 		/// <param name="timeout">The timeout.</param>
 		/// <param name="certificate">The certificate.</param>
-		public TTLSSocket(string host, int port, int timeout, X509Certificate certificate)
+		/// <param name="certValidator">User defined cert validator.</param>
+		public TTLSSocket(string host, int port, int timeout, X509Certificate certificate, RemoteCertificateValidationCallback certValidator = null)
 		{
 			this.host = host;
 			this.port = port;
 			this.timeout = timeout;
 			this.certificate = certificate;
+			this.certValidator = certValidator;
 
 			InitSocket();
 		}
@@ -254,7 +263,14 @@ namespace Thrift.Transport
 				X509CertificateCollection validCerts = new X509CertificateCollection();
 				validCerts.Add(certificate);
 
-				this.secureStream = new SslStream(this.client.GetStream(), false, new RemoteCertificateValidationCallback(CertificateValidator));
+				if (this.certValidator != null)
+				{
+					this.secureStream = new SslStream(this.client.GetStream(), false, new RemoteCertificateValidationCallback(this.certValidator));
+				}
+				else
+				{
+					this.secureStream = new SslStream(this.client.GetStream(), false, new RemoteCertificateValidationCallback(CertificateValidator));
+				}
 				this.secureStream.AuthenticateAsClient(host, validCerts, SslProtocols.Tls, true);
 			}
 
