@@ -104,52 +104,60 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(LIBEVENT_ROOT)\WIN32-Code\;$(LIBEVENT_ROOT)\include;$(LIBEVENT_ROOT)\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(LIBEVENT_ROOT)\WIN32-Code\;$(LIBEVENT_ROOT)\include;$(LIBEVENT_ROOT)\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(LIBEVENT_ROOT)\WIN32-Code\;$(LIBEVENT_ROOT)\include;$(LIBEVENT_ROOT)\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|x64'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(LIBEVENT_ROOT)\WIN32-Code\;$(LIBEVENT_ROOT)\include;$(LIBEVENT_ROOT)\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(LIBEVENT_ROOT)\WIN32-Code\;$(LIBEVENT_ROOT)\include;$(LIBEVENT_ROOT)\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(LIBEVENT_ROOT)\WIN32-Code\;$(LIBEVENT_ROOT)\include;$(LIBEVENT_ROOT)\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(LIBEVENT_ROOT)\WIN32-Code\;$(LIBEVENT_ROOT)\include;$(LIBEVENT_ROOT)\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|x64'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\WIN32-Code\;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\include;$(THIRD_PARTY)\libevent\libevent-2.0.13-stable\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(LIBEVENT_ROOT)\WIN32-Code\;$(LIBEVENT_ROOT)\include;$(LIBEVENT_ROOT)\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
