@@ -95,6 +95,7 @@ node_modules
 /lib/c_glib/*.gcda
 /lib/c_glib/*.gcno
 /lib/c_glib/*.loT
+/lib/c_glib/test/*.gcno
 /lib/c_glib/test/testwrapper.sh
 /lib/c_glib/test/testwrapper-test*
 /lib/c_glib/test/testbinaryprotocol
