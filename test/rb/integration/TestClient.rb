@@ -23,16 +23,68 @@ require 'test_helper'
 require 'thrift'
 require 'thrift_test'
 
-class BufferedClientTest < Test::Unit::TestCase
-  def setup
+$protocolType = "binary"
+$host = "localhost"
+$port = 9090
+$transport = "buffered"
+ARGV.each do|a|
+  if a == "--help"
+    puts "Allowed options:"
+    puts "\t -h [ --help ] \t produce help message"
+    puts "\t--host arg (=localhost) \t Host to connect"
+    puts "\t--port arg (=9090) \t Port number to listen"
+    puts "\t--protocol arg (=binary) \t protocol: binary, accel"
+    puts "\t--transport arg (=buffered) transport: buffered, framed, http"
+    exit
+  elsif a.start_with?("--host")
+    $host = a.split("=")[1]
+  elsif a.start_with?("--protocol")
+    $protocolType = a.split("=")[1]
+  elsif a.start_with?("--transport")
+    $transport = a.split("=")[1]
+  elsif a.start_with?("--port")
+    $port = a.split("=")[1].to_i 
+  end
+end
+ARGV=[]
+
+class SimpleClientTest < Test::Unit::TestCase
+  def setup 
     unless @socket
-      @socket   = Thrift::Socket.new('localhost', 9090)
-      @protocol = Thrift::BinaryProtocol.new(Thrift::BufferedTransport.new(@socket))
+      @socket   = Thrift::Socket.new($host, $port)
+      transportFactory = Thrift::BufferedTransport.new(@socket)
+      if $transport == "buffered"
+        transportFactory = Thrift::BufferedTransport.new(@socket)
+      elsif $transport == ""
+        transportFactory = Thrift::BufferedTransport.new(@socket)
+      elsif $transport == "framed"
+        transportFactory = Thrift::FramedTransport.new(@socket)
+      else
+        raise 'Unknown transport type'
+      end
+
+      if $protocolType == "binary"
+        @protocol = Thrift::BinaryProtocol.new(transportFactory)
+      elsif $protocolType == ""
+        @protocol = Thrift::BinaryProtocol.new(transportFactory)
+      elsif $protocolType == "compact"
+        @protocol = Thrift::CompactProtocol.new(transportFactory)
+      elsif $protocolType == "json"
+        @protocol = Thrift::JsonProtocol.new(transportFactory)
+      elsif $protocolType == "accel"
+        @protocol = Thrift::BinaryProtocolAccelerated.new(transportFactory)
+      else
+        raise 'Unknown protocol type'
+      end
       @client   = Thrift::Test::ThriftTest::Client.new(@protocol)
       @socket.open
     end
   end
   
+  def test_void
+    @client.testVoid()
+  end
+
   def test_string
     assert_equal(@client.testString('string'), 'string')
   end
@@ -84,6 +136,8 @@ class BufferedClientTest < Test::Unit::TestCase
 
   def test_typedef
     #UserId  testTypedef(1: UserId thing),
+    assert_equal(@client.testTypedef(309858235082523), 309858235082523)
+    assert_kind_of(Fixnum, @client.testTypedef(309858235082523))
     true
   end
 
@@ -122,7 +176,7 @@ class BufferedClientTest < Test::Unit::TestCase
     assert_kind_of(Thrift::Test::Xtruct2, ret)
   end
 
-  def test_insane
+  def test_insanity
     insane = Thrift::Test::Insanity.new({
       'userMap' => { Thrift::Test::Numberz::ONE => 44 },
       'xtructs' => [get_struct,
@@ -157,8 +211,30 @@ class BufferedClientTest < Test::Unit::TestCase
 
   def test_exception
     assert_raise Thrift::Test::Xception do
-      @client.testException('foo')
+      @client.testException('Xception')
     end
+#    assert_raise Thrift::TException do
+#      @client.testException('TException')
+#    end
+    assert_equal( @client.testException('test'), "test")
   end
+
+  def test_multi_exception
+    assert_raise Thrift::Test::Xception do
+      @client.testMultiException("Xception", "test 1")
+    end
+    assert_raise Thrift::Test::Xception2 do
+      @client.testMultiException("Xception2", "test 2")
+    end
+    assert_equal( @client.testMultiException("Success", "test 3").string_thing, "test 3")
+  end
+
+  def test_oneway
+    time1 = Time.now.to_f
+    @client.testOneway(3)
+    time2 = Time.now.to_f
+    assert_equal((time2-time1)*1000000<400, true)
+  end
+
 end
 
