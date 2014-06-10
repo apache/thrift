@@ -199,6 +199,10 @@ py_protocols="binary compact json accel"
 py_transports="buffered framed"
 py_sockets="ip ip-ssl"
 
+ruby_protocols="binary compact json accel"
+ruby_transports="buffered framed"
+ruby_sockets="ip"
+
 
 ######### java client - java server #############
 for proto in $java_protocols; do
@@ -271,7 +275,6 @@ done
 NODE_TEST_DIR=${BASEDIR}/../lib/nodejs/test
 export NODE_PATH=${NODE_TEST_DIR}:${NODE_TEST_DIR}/../lib:${NODE_PATH}
 ######### nodejs client - nodejs server ##############
-##
 for proto in ${nodejs_protocols}; do
   for trans in ${nodejs_transports}; do
     for sock in ${nodejs_sockets}; do
@@ -288,7 +291,6 @@ for proto in ${nodejs_protocols}; do
 done
 
 ######### nodejs client - cpp server ##############
-##
 for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
   for trans in $(intersection "${nodejs_transports}" "${cpp_transports}"); do
     for sock in $(intersection "${nodejs_sockets}" "${cpp_sockets}"); do
@@ -321,7 +323,6 @@ for proto in $(intersection "${nodejs_protocols}" "${cpp_protocols}"); do
 done
 
 ######### nodejs client - java server ##############
-##
 for proto in $(intersection "${nodejs_protocols}" "${java_protocols}"); do
   for trans in $(intersection "${nodejs_transports}" "${java_server_transports}"); do
     for sock in $(intersection "${nodejs_sockets}" "${java_sockets}"); do
@@ -445,7 +446,6 @@ for trans in $(intersection "${cpp_transports}" "${py_transports}"); do
   done
 
 ######### py client - java server ##############
-##
 for proto in $(intersection "${py_protocols}" "${java_protocols}"); do
   for trans in $(intersection "${py_transports}" "${java_server_transports}"); do
     for sock in $(intersection "${py_sockets}" "${java_sockets}"); do
@@ -504,7 +504,6 @@ for trans in $(intersection "${py_transports}" "${java_client_transports}"); do
   done
 
 ######### py client - nodejs server ##############
-##
 for proto in $(intersection "${py_protocols}" "${nodejs_protocols}"); do
   for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
     for sock in $(intersection "${py_sockets}" "${nodejs_sockets}"); do
@@ -562,6 +561,280 @@ for trans in $(intersection "${py_transports}" "${nodejs_transports}"); do
     done
   done
 
+######### ruby client - ruby server ##############
+for proto in ${ruby_protocols}; do
+  for trans in ${ruby_transports}; do
+    for sock in ${ruby_sockets}; do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-ruby" "${proto}" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans} --port=9091" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans} --port=9091" \
+              "5" "5"
+    done
+  done
+done
+
+for trans in ${ruby_transports}; do
+    for sock in ${ruby_sockets}; do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-ruby" "accel-binary" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans} --port=9091" \
+              "ruby rb/integration/TestServer.rb --protocol=binary --transport=${trans} --port=9091" \
+              "5" "5"
+      do_test "ruby-ruby" "binary-accel" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=binary --transport=${trans} --port=9091" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans} --port=9091" \
+              "5" "5"
+    done
+  done
+
+######### ruby client - cpp server ##############
+for proto in $(intersection "${cpp_protocols}" "${ruby_protocols}"); do
+  for trans in $(intersection "${cpp_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${cpp_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-cpp" "${proto}" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans}" \
+              "cpp/TestServer --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "5" "5"
+    done
+  done
+done
+
+for trans in $(intersection "${cpp_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${cpp_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-cpp" "accel-binary" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans}" \
+              "cpp/TestServer --protocol=binary --transport=${trans} ${extraparam}" \
+              "5" "5"
+    done
+  done
+
+######### cpp client - ruby server ##############
+for proto in $(intersection "${cpp_protocols}" "${ruby_protocols}"); do
+  for trans in $(intersection "${cpp_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${cpp_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "cpp-ruby" "${proto}" "${trans}-${sock}" \
+              "cpp/TestClient --protocol=${proto} --transport=${trans} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans}" \
+              "5" "5"
+    done
+  done
+done
+
+for trans in $(intersection "${cpp_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${cpp_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "cpp-ruby" "binary-accel" "${trans}-${sock}" \
+              "cpp/TestClient --protocol=binary --transport=${trans} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans}" \
+              "5" "5"
+    done
+  done
+
+######### ruby client - java server ##############
+for proto in $(intersection "${ruby_protocols}" "${java_protocols}"); do
+  for trans in $(intersection "${ruby_transports}" "${java_server_transports}"); do
+    for sock in $(intersection "${ruby_sockets}" "${java_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-java" "${proto}" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testserver" \
+              "15" "5"
+    done
+  done
+done
+
+for trans in $(intersection "${ruby_transports}" "${java_server_transports}"); do
+    for sock in $(intersection "${ruby_sockets}" "${java_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-java" "accel-binary" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} ${extraparam}\" run-testserver" \
+              "15" "5"
+    done
+  done
+
+######### java client - ruby server ##############
+for proto in $(intersection "${ruby_protocols}" "${java_protocols}"); do
+  for trans in $(intersection "${ruby_transports}" "${java_client_transports}"); do
+    for sock in $(intersection "${ruby_sockets}" "${java_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "java-ruby" "${proto}" "${trans}-${sock}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=${proto} --transport=${trans} ${extraparam}\" run-testclient" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans}" \
+              "10" "5"
+    done
+  done
+done
+
+for trans in $(intersection "${ruby_transports}" "${java_client_transports}"); do
+    for sock in $(intersection "${ruby_sockets}" "${java_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "java-ruby" "binary-accel" "${trans}-${sock}" \
+              "ant -f  ../lib/java/build.xml -Dno-gen-thrift=\"\" -Dtestargs \"--protocol=binary --transport=${trans} ${extraparam}\" run-testclient" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans}" \
+              "10" "5"
+    done
+  done
+
+######### ruby client - nodejs server ##############
+for proto in $(intersection "${ruby_protocols}" "${nodejs_protocols}"); do
+  for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
+    for sock in $(intersection "${ruby_sockets}" "${nodejs_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-nodejs" "${proto}" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans}" \
+              "node ${NODE_TEST_DIR}/server.js -p ${proto} -t ${trans} ${extraparam}" \
+              "5" "2"
+    done
+  done
+done
+
+for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
+    for sock in $(intersection "${ruby_sockets}" "${nodejs_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-nodejs" "${proto}" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans}" \
+              "node ${NODE_TEST_DIR}/server.js -p binary -t ${trans} ${extraparam}" \
+              "5" "2"
+    done
+  done
+
+######### nodejs client - ruby server ##############
+for proto in $(intersection "${ruby_protocols}" "${nodejs_protocols}"); do
+  for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
+    for sock in $(intersection "${ruby_sockets}" "${nodejs_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "nodejs-ruby" "${proto}" "${trans}-${sock}" \
+              "node ${NODE_TEST_DIR}/client.js -p ${proto} -t ${trans} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans}" \
+              "10" "5"
+    done
+  done
+done
+
+for trans in $(intersection "${ruby_transports}" "${nodejs_transports}"); do
+    for sock in $(intersection "${ruby_sockets}" "${nodejs_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "nodejs-ruby" "binary-accel" "${trans}-${sock}" \
+              "node ${NODE_TEST_DIR}/client.js -p binary -t ${trans} ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans}" \
+              "10" "2"
+    done
+  done
+
+  ######### py client - ruby server ##############
+for proto in $(intersection "${py_protocols}" "${ruby_protocols}"); do
+  for trans in $(intersection "${py_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-ruby" "${proto}" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=${proto} --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=${proto} --transport=${trans}" \
+              "15" "5"
+    done
+  done
+done
+
+for trans in $(intersection "${py_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "py-ruby" "${proto}" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=accel --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=binary --transport=${trans}" \
+              "15" "5"
+      do_test "py-ruby" "${proto}" "${trans}-${sock}" \
+              "py/TestClient.py --protocol=binary --transport=${trans} --port=9090 --host=localhost --genpydir=py/gen-py ${extraparam}" \
+              "ruby rb/integration/TestServer.rb --protocol=accel --transport=${trans}" \
+              "15" "5"
+    done
+  done
+
+######### ruby client - py server ##############
+for proto in $(intersection "${py_protocols}" "${ruby_protocols}"); do
+  for trans in $(intersection "${py_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-py" "${proto}" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=${proto} --transport=${trans}" \
+              "py/TestServer.py --protocol=${proto} --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "5" "2"
+    done
+  done
+done
+
+for trans in $(intersection "${py_transports}" "${ruby_transports}"); do
+    for sock in $(intersection "${py_sockets}" "${ruby_sockets}"); do
+      case "$sock" in
+        "ip" ) extraparam="";;
+        "ip-ssl" ) extraparam="--ssl";;
+      esac
+      do_test "ruby-py" "binary-accel" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=binary --transport=${trans}" \
+              "py/TestServer.py --protocol=accel --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "5" "2"
+      do_test "ruby-py" "accel-binary" "${trans}-${sock}" \
+              "ruby rb/integration/TestClient.rb --protocol=accel --transport=${trans}" \
+              "py/TestServer.py --protocol=binary --transport=${trans} --port=9090 --genpydir=py/gen-py TSimpleServer ${extraparam}" \
+              "5" "2"
+    done
+  done
+
+
 # delete Unix Domain Socket used by cpp tests
 rm -f /tmp/ThriftTest.thrift
 
@@ -595,14 +868,6 @@ do_test "php-cpp"  "binary" "buffered-ip" \
         "make -C php/ client" \
         "cpp/TestServer" \
         "10" "2"
-do_test "rb-rb" "binary" "buffered-ip" \
-        "ruby rb/integration/simple_client.rb" \
-        "ruby rb/integration/simple_server.rb" \
-        "5" "5"
-do_test "rb-rb" "binary-accl" "buffered-ip" \
-        "ruby rb/integration/accelerated_buffered_client.rb" \
-        "ruby rb/integration/accelerated_buffered_server.rb" \
-        "5" "5"
 
 echo " failed tests are logged to test/log/error.log"
 echo " full log is here test/log/client_server_protocol_transport_client.log"
