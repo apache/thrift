@@ -37,7 +37,7 @@ string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${t
 message(STATUS "Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
 
 # Windows has a different header
-if(WIN32)
+if(MSVC)
     set(FLEX_FLAGS "--wincompat") # Don't use unistd.h on windows
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/windows/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version.h)
 else()
@@ -144,7 +144,6 @@ THRIFT_ADD_COMPILER(lua     "Enable compiler for Lua" ON)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
 
 add_executable(thrift ${thrift_SOURCES})
-set_target_properties(thrift PROPERTIES VERSION ${thrift_VERSION})
 
 target_link_libraries(thrift libparse)
 

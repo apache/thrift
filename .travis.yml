@@ -72,5 +72,7 @@ script:
   - make -j$NUM_CPU && make dist
   - make cross -j$NUM_CPU
   - sh bootstrap.sh ; sh contrib/mingw-cross-compile.sh
+  - mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make; cd ..
+  - mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make; cd ..
 # TODO: add these steps
 #  - sh bootstrap.sh ; dpkg-buildpackage -tc
