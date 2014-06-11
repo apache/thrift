@@ -1,0 +1,67 @@
+{
+    "client": [
+        {
+            "description": "Python TestClient",
+            "lib": "py",
+            "executable": "py/TestClient.py",
+            "extra_args":  ["--genpydir=py/gen-py"],
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ]
+        },
+        {
+            "description": "C++ TestClient",
+            "lib": "cpp",
+            "executable": "cpp/TestClient",
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed",
+                "http"
+            ]
+        }
+    ],
+    "server": [
+        {
+            "description": "Python TSimpleServer",
+            "lib": "py",
+            "executable": "py/TestServer.py",
+            "extra_args": ["--genpydir=py/gen-py", "TSimpleServer"],
+            "extra_delay": 0,
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ]
+        },
+        {
+            "description": "C++ TestServer",
+            "lib": "cpp",
+            "executable": "cpp/TestServer",
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed",
+                "http"
+            ]
+        }
+    ]
+}
