@@ -99,8 +99,8 @@ void TFileTransport::resetOutputFile(int fd, string filename, off_t offset) {
     // flush any events in the queue
     flush();
     GlobalOutput.printf("error, current file (%s) not closed", filename_.c_str());
-    if (-1 == ::THRIFT_CLOSESOCKET(fd_)) {
-      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    if (-1 == ::THRIFT_CLOSE(fd_)) {
+      int errno_copy = THRIFT_ERRNO;
       GlobalOutput.perror("TFileTransport: resetOutputFile() ::close() ", errno_copy);
       throw TTransportException(TTransportException::UNKNOWN, "TFileTransport: error in file close", errno_copy);
     } else {
@@ -154,8 +154,8 @@ TFileTransport::~TFileTransport() {
 
   // close logfile
   if (fd_ > 0) {
-    if(-1 == ::THRIFT_CLOSESOCKET(fd_)) {
-      GlobalOutput.perror("TFileTransport: ~TFileTransport() ::close() ", THRIFT_GET_SOCKET_ERROR);
+    if(-1 == ::THRIFT_CLOSE(fd_)) {
+      GlobalOutput.perror("TFileTransport: ~TFileTransport() ::close() ", THRIFT_ERRNO);
     } else {
       //successfully closed fd
       fd_ = 0;
@@ -300,7 +300,7 @@ void TFileTransport::writerThread() {
     try {
       openLogFile();
     } catch (...) {
-      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      int errno_copy = THRIFT_ERRNO;
       GlobalOutput.perror("TFileTransport: writerThread() openLogFile() ", errno_copy);
       fd_ = 0;
       hasIOError = true;
@@ -320,7 +320,7 @@ void TFileTransport::writerThread() {
 #endif
       readState_.resetAllValues();
     } catch (...) {
-      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      int errno_copy = THRIFT_ERRNO;
       GlobalOutput.perror("TFileTransport: writerThread() initialization ", errno_copy);
       hasIOError = true;
     }
@@ -343,8 +343,8 @@ void TFileTransport::writerThread() {
 #ifndef _WIN32
         fsync(fd_);
 #endif
-        if (-1 == ::THRIFT_CLOSESOCKET(fd_)) {
-          int errno_copy = THRIFT_GET_SOCKET_ERROR;
+        if (-1 == ::THRIFT_CLOSE(fd_)) {
+          int errno_copy = THRIFT_ERRNO;
           GlobalOutput.perror("TFileTransport: writerThread() ::close() ", errno_copy);
         } else {
           //fd successfully closed
@@ -369,7 +369,7 @@ void TFileTransport::writerThread() {
             return;
           }
           if (!fd_) {
-            ::THRIFT_CLOSESOCKET(fd_);
+            ::THRIFT_CLOSE(fd_);
             fd_ = 0;
           }
           try {
@@ -410,7 +410,7 @@ void TFileTransport::writerThread() {
             memset(zeros, '\0', padding);
             boost::scoped_array<uint8_t> array(zeros);
             if (-1 == ::write(fd_, zeros, padding)) {
-              int errno_copy = THRIFT_GET_SOCKET_ERROR;
+              int errno_copy = THRIFT_ERRNO;
               GlobalOutput.perror("TFileTransport: writerThread() error while padding zeros ", errno_copy);
               hasIOError = true;
               continue;
@@ -423,7 +423,7 @@ void TFileTransport::writerThread() {
         // write the dequeued event to the file
         if (outEvent->eventSize_ > 0) {
           if (-1 == ::write(fd_, outEvent->eventBuff_, outEvent->eventSize_)) {
-            int errno_copy = THRIFT_GET_SOCKET_ERROR;
+            int errno_copy = THRIFT_ERRNO;
             GlobalOutput.perror("TFileTransport: error while writing event ", errno_copy);
             hasIOError = true;
             continue;
@@ -809,11 +809,11 @@ void TFileTransport::seekToChunk(int32_t chunk) {
     seekToEnd = true;
     chunk = numChunks - 1;
     // this is the min offset to process events till
-    minEndOffset = lseek(fd_, 0, SEEK_END);
+    minEndOffset = ::THRIFT_LSEEK(fd_, 0, SEEK_END);
   }
 
   off_t newOffset = off_t(chunk) * chunkSize_;
-  offset_ = lseek(fd_, newOffset, SEEK_SET);
+  offset_ = ::THRIFT_LSEEK(fd_, newOffset, SEEK_SET);
   readState_.resetAllValues();
   currentEvent_ = NULL;
   if (offset_ == -1) {
@@ -877,17 +877,16 @@ void TFileTransport::openLogFile() {
 #ifndef _WIN32
   mode_t mode = readOnly_ ? S_IRUSR | S_IRGRP | S_IROTH : S_IRUSR | S_IWUSR| S_IRGRP | S_IROTH;
   int flags = readOnly_ ? O_RDONLY : O_RDWR | O_CREAT | O_APPEND;
-  fd_ = ::open(filename_.c_str(), flags, mode);
 #else
   int mode = readOnly_ ? _S_IREAD : _S_IREAD | _S_IWRITE;
   int flags = readOnly_ ? _O_RDONLY : _O_RDWR | _O_CREAT | _O_APPEND;
-  fd_ = ::_open(filename_.c_str(), flags, mode);
 #endif
+  fd_ = ::THRIFT_OPEN(filename_.c_str(), flags, mode);
   offset_ = 0;
 
   // make sure open call was successful
   if(fd_ == -1) {
-    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    int errno_copy = THRIFT_ERRNO;
     GlobalOutput.perror("TFileTransport: openLogFile() ::open() file: " + filename_, errno_copy);
     throw TTransportException(TTransportException::NOT_OPEN, filename_, errno_copy);
   }
