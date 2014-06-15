@@ -63,7 +63,8 @@ check_PROGRAMS = \
 	TransportTest \
 	ZlibTest \
 	TFileTransportTest \
-	UnitTests
+	UnitTests \
+	link_test
 # disable these test ... too strong
 #       processor_test
 #	concurrency_test
@@ -194,6 +195,11 @@ concurrency_test_SOURCES = \
 
 concurrency_test_LDADD = \
   $(top_builddir)/lib/cpp/libthrift.la
+
+link_test_SOURCES = \
+  link/LinkTest.cpp \
+  link/TemplatedService1.cpp \
+  link/TemplatedService2.cpp
 
 processor_test_SOURCES = \
 	processor/ProcessorTest.cpp \
