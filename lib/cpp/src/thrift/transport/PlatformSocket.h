@@ -22,7 +22,7 @@
 
 #ifdef _WIN32
 #  define THRIFT_GET_SOCKET_ERROR ::WSAGetLastError()
-#  define THRIFT_ERRORNO _errno
+#  define THRIFT_ERRNO (*_errno())
 #  define THRIFT_EINPROGRESS WSAEINPROGRESS
 #  define THRIFT_EAGAIN WSAEWOULDBLOCK
 #  define THRIFT_EINTR WSAEINTR
@@ -43,6 +43,13 @@
 #  define THRIFT_CLOSESOCKET closesocket
 #  define THRIFT_CLOSE _close
 #  define THRIFT_OPEN _open
+#  define THRIFT_FTRUNCATE _chsize_s
+#  define THRIFT_FSYNC _commit
+#  define THRIFT_LSEEK _lseek
+#  define THRIFT_WRITE _write
+#  define THRIFT_READ _read
+#  define THRIFT_FSTAT _fstat
+#  define THRIFT_STAT _stat
 #  define THRIFT_GAI_STRERROR gai_strerrorA
 #  define THRIFT_SSIZET ptrdiff_t
 #  define THRIFT_SNPRINTF _snprintf
@@ -64,7 +71,7 @@
 #else //not _WIN32
 #  include <errno.h>
 #  define THRIFT_GET_SOCKET_ERROR errno
-#  define THRIFT_ERRORNO errno
+#  define THRIFT_ERRNO errno
 #  define THRIFT_EINTR       EINTR
 #  define THRIFT_EINPROGRESS EINPROGRESS
 #  define THRIFT_ECONNRESET  ECONNRESET
@@ -85,6 +92,13 @@
 #  define THRIFT_CLOSESOCKET close
 #  define THRIFT_CLOSE close
 #  define THRIFT_OPEN open
+#  define THRIFT_FTRUNCATE ftruncate
+#  define THRIFT_FSYNC fsync
+#  define THRIFT_LSEEK lseek
+#  define THRIFT_WRITE write
+#  define THRIFT_READ read
+#  define THRIFT_STAT stat
+#  define THRIFT_FSTAT fstat
 #  define THRIFT_GAI_STRERROR gai_strerror
 #  define THRIFT_SSIZET ssize_t
 #  define THRIFT_SNPRINTF snprintf

@@ -313,11 +313,7 @@ void TFileTransport::writerThread() {
       seekToEnd();
       // throw away any partial events
       offset_ += readState_.lastDispatchPtr_;
-#ifndef _WIN32
-      ftruncate(fd_, offset_);
-#else
-      _chsize_s(fd_, offset_);
-#endif
+	  THRIFT_FTRUNCATE(fd_, offset_);
       readState_.resetAllValues();
     } catch (...) {
       int errno_copy = THRIFT_ERRNO;
@@ -340,9 +336,7 @@ void TFileTransport::writerThread() {
 
       // Try to empty buffers before exit
       if (enqueueBuffer_->isEmpty() && dequeueBuffer_->isEmpty()) {
-#ifndef _WIN32
-        fsync(fd_);
-#endif
+		::THRIFT_FSYNC(fd_);
         if (-1 == ::THRIFT_CLOSE(fd_)) {
           int errno_copy = THRIFT_ERRNO;
           GlobalOutput.perror("TFileTransport: writerThread() ::close() ", errno_copy);
@@ -403,7 +397,7 @@ void TFileTransport::writerThread() {
           // if adding this event will cross a chunk boundary, pad the chunk with zeros
           if (chunk1 != chunk2) {
             // refetch the offset to keep in sync
-            offset_ = lseek(fd_, 0, SEEK_CUR);
+            offset_ = THRIFT_LSEEK(fd_, 0, SEEK_CUR);
             int32_t padding = (int32_t)((offset_ / chunkSize_ + 1) * chunkSize_ - offset_);
 
             uint8_t* zeros = new uint8_t[padding];
@@ -422,7 +416,7 @@ void TFileTransport::writerThread() {
 
         // write the dequeued event to the file
         if (outEvent->eventSize_ > 0) {
-          if (-1 == ::write(fd_, outEvent->eventBuff_, outEvent->eventSize_)) {
+          if (-1 == ::THRIFT_WRITE(fd_, outEvent->eventBuff_, outEvent->eventSize_)) {
             int errno_copy = THRIFT_ERRNO;
             GlobalOutput.perror("TFileTransport: error while writing event ", errno_copy);
             hasIOError = true;
@@ -487,9 +481,7 @@ void TFileTransport::writerThread() {
 
     if (flush) {
       // sync (force flush) file to disk
-#ifndef _WIN32
-      fsync(fd_);
-#endif
+	  THRIFT_FSYNC(fd_);
       unflushed = 0;
       getNextFlushTime(&ts_next_flush);
 
@@ -600,7 +592,7 @@ eventInfo* TFileTransport::readEvent() {
     if (readState_.bufferPtr_ == readState_.bufferLen_) {
       // advance the offset pointer
       offset_ += readState_.bufferLen_;
-      readState_.bufferLen_ = static_cast<uint32_t>(::read(fd_, readBuff_, readBuffSize_));
+	  readState_.bufferLen_ = static_cast<uint32_t>(::THRIFT_READ(fd_, readBuff_, readBuffSize_));
       //       if (readState_.bufferLen_) {
       //         T_DEBUG_L(1, "Amount read: %u (offset: %lu)", readState_.bufferLen_, offset_);
       //       }
@@ -847,11 +839,11 @@ uint32_t TFileTransport::getNumChunks() {
     return 0;
   }
 
-  struct stat f_info;
-  int rv = fstat(fd_, &f_info);
+  struct THRIFT_STAT f_info;
+  int rv = ::THRIFT_FSTAT(fd_, &f_info);
 
   if (rv < 0) {
-    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    int errno_copy = THRIFT_ERRNO;
     throw TTransportException(TTransportException::UNKNOWN,
                               "TFileTransport::getNumChunks() (fstat)",
                               errno_copy);
