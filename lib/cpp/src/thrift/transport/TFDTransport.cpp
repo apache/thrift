@@ -45,9 +45,8 @@ void TFDTransport::close() {
   fd_ = -1;
   // Have to check uncaught_exception because this is called in the destructor.
   if (rv < 0 && !std::uncaught_exception()) {
-    throw TTransportException(TTransportException::UNKNOWN,
-                              "TFDTransport::close()",
-                              errno_copy);
+	 //Prevent exceptions from leaving destructor
+	 GlobalOutput.perror("TFDTransport::close() ", errno_copy);
   }
 }
 
