@@ -107,10 +107,10 @@ libparse_a_SOURCES = src/thrifty.yy \
 WINDOWS_DIST = \
              compiler.sln \
              compiler.vcxproj \
-             compiler.vcxproj.filters \
-             README_Windows.md
+             compiler.vcxproj.filters
 
 EXTRA_DIST = \
+             README.md \
              $(WINDOWS_DIST)
 
 clean-local:
