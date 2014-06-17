@@ -1,15 +1,33 @@
 # Build compiler using CMake
 
-Use the following steps to build using cmake
+Use the following steps to build using cmake:
 
     mkdir build
     cd build
     cmake ..
     make
 
+
+### Create an eclipse project
+
+    mkdir build_ec && cd build_ec
+    cmake -G "Eclipse CDT4 - Unix Makefiles" ..
+    make
+
+Now open the folder build_ec using eclipse.
+
+
+### Cross compile using mingw32
+
+    mkdir build_mingw32 && cd build_mingw32
+    cmake -DCMAKE_TOOLCHAIN_FILE=../../../contrib/mingw32-toolchain.cmake ..
+    make
+
+
+
 ## Build on windows
 
-In order to build on windows a few additional steps are necessary
+In order to build on windows a few additional steps are necessary:
 
 1. Download winflexbison from http://sourceforge.net/projects/winflexbison/
 2. Extract the winflex bison files to for e.g. C:\winflexbison
@@ -17,8 +35,21 @@ In order to build on windows a few additional steps are necessary
   * FLEX_EXECUTBALE = C:/winbuild/win_flex.exe
   * BISON_EXECUTBALE = C:/winbuild/win_bison.exe
 
+
+### Create a Visual Studio project
+
+    mkdir build_vs && cd build_vs
+    cmake -G "Visual Studio 12" ..
+
+Now open the folder build_vs using Visual Studio 2013.
+
+
+
+
 # Building the Thrift IDL compiler in Windows
 
+If you don't want to use CMake you can use the already available Visual Studio
+2010 solution.
 The Visual Studio project contains pre-build commands to generate the
 thriftl.cc, thrifty.cc and thrifty.hh files which are necessary to build
 the compiler. These depend on bison, flex and their dependencies to
