@@ -378,6 +378,13 @@ void TSocket::local_open(){
 
   error = getaddrinfo(host_.c_str(), port, &hints, &res0);
 
+#ifdef _WIN32
+  if (error == WSANO_DATA) {
+    hints.ai_flags &= ~AI_ADDRCONFIG;
+    error = getaddrinfo(host_.c_str(), port, &hints, &res0);
+  }
+#endif
+
   if (error) {
     string errStr = "TSocket::open() getaddrinfo() " + getSocketInfo() + string(THRIFT_GAI_STRERROR(error));
     GlobalOutput(errStr.c_str());
