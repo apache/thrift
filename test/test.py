@@ -27,6 +27,8 @@ import sys
 import os
 import signal
 import json
+import shutil
+import threading
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -44,7 +46,7 @@ options, args = parser.parse_args()
 def relfile(fname):
     return os.path.join(os.path.dirname(__file__), fname)
 
-def runServiceTest(server_executable, server_extra_args, client_executable, client_extra_args, protocol, transport, port, use_zlib, use_ssl):
+def runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, transport, port, use_zlib, use_ssl):
   # Build command line arguments
   server_args = [relfile(server_executable)]
   cli_args = [relfile(client_executable)]
@@ -63,12 +65,14 @@ def runServiceTest(server_executable, server_extra_args, client_executable, clie
 
   server_args.extend(server_extra_args)
   cli_args.extend(client_extra_args)
+  server_log=open("log/" + test_name + "_server.log","a")
+  client_log=open("log/" + test_name + "_client.log","a")
 
   if options.verbose > 0:
     print 'Testing server: %s' % (' '.join(server_args))
-    serverproc = subprocess.Popen(server_args)  
+    serverproc = subprocess.Popen(server_args, stdout=server_log, stderr=server_log)
   else:
-    serverproc = subprocess.Popen(server_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    serverproc = subprocess.Popen(server_args, stdout=server_log, stderr=server_log)
   
   def ensureServerAlive():
     if serverproc.poll() is not None:
@@ -94,17 +98,32 @@ def runServiceTest(server_executable, server_extra_args, client_executable, clie
     sock.close()
 
   try:
-    if options.verbose > 0:
-      print 'Testing client: %s' % (' '.join(cli_args))
-      ret = subprocess.call(cli_args)
-    else:
-      ret = subprocess.call(cli_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    o = []
+    def target():
+      if options.verbose > 0:
+        print 'Testing client: %s' % (' '.join(cli_args))
+        process = subprocess.Popen(cli_args, stdout=client_log, stderr=client_log)
+        o.append(process)
+        process.communicate()
+      else:
+        process = subprocess.Popen(cli_args, stdout=client_log, stderr=client_log)
+        o.append(process)
+        process.communicate()
+    thread = threading.Thread(target=target)
+    thread.start()
+
+    thread.join(10)
+    if thread.is_alive():
+      print 'Terminating process'
+      o[0].terminate()
+      thread.join()
+    ret = o[0].returncode
     if ret != 0:
       return "Client subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(cli_args))
       #raise Exception("Client subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(cli_args)))
   finally:
     # check that server didn't die
-    ensureServerAlive()
+    #ensureServerAlive()
     extra_sleep = 0
     if extra_sleep > 0 and options.verbose > 0:
       print ('Giving (protocol=%s,zlib=%s,ssl=%s) an extra %d seconds for child'
@@ -113,39 +132,56 @@ def runServiceTest(server_executable, server_extra_args, client_executable, clie
       time.sleep(extra_sleep)
     os.kill(serverproc.pid, signal.SIGKILL)
     serverproc.wait()
+  client_log.flush()
+  server_log.flush()
+  client_log.close()
+  server_log.close()
 
 test_count = 0
 failed = 0
 
+if os.path.exists('log'): shutil.rmtree('log')
+os.makedirs('log')
+
 with open('tests.json') as data_file:    
     data = json.load(data_file)
+
+#subprocess.call("export NODE_PATH=../lib/nodejs/test:../lib/nodejs/lib:${NODE_PATH}")
 
 for server in data["server"]:
   server_executable = server["executable"]
   server_extra_args = ""
+  server_lib = server["lib"]
   if "extra_args" in server:
     server_extra_args = server["extra_args"]
   for protocol in server["protocols"]:
     for transport in server["transports"]:
-      for client in data["client"]:
-        client_executable = client["executable"]
-        client_extra_args = ""
-        if "extra_args" in client:
-          client_extra_args = client["extra_args"]
-        if protocol in client["protocols"]:
-          if transport in client["transports"]:
-            ret = runServiceTest(server_executable, server_extra_args, client_executable, client_extra_args, protocol, transport, 9090, 0, 0)
-            if ret != None:
-              failed += 1
-              print "Error: %s" % ret
-              print "Using"   
-              print (' Server: %s --protocol=%s --transport=%s %s'
-                % (server_executable, protocol, transport, ' '.join(server_extra_args)))
-              print (' Client: %s --protocol=%s --transport=%s %s'
-                % (client_executable, protocol, transport, ''.join(client_extra_args)))
+      for sock in server["sockets"]:
+        for client in data["client"]:
+          client_executable = client["executable"]
+          client_extra_args = ""
+          client_lib = client["lib"]
+          if "extra_args" in client:
+            client_extra_args = client["extra_args"]
+          if protocol in client["protocols"]:
+            if transport in client["transports"]:
+              if sock in client["sockets"]:
+                test_name = server_lib + "_" + client_lib + "_" + protocol + "_" + transport + "_" + sock
+                ssl = 0
+                if sock == 'ip-ssl':
+                  ssl = 1
+                ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, transport, 9090, 0, ssl)
+                if ret != None:
+                  failed += 1
+                  print "Error: %s" % ret
+                  print "Using"
+                  print (' Server: %s --protocol=%s --transport=%s %s'
+                    % (server_executable, protocol, transport, ' '.join(server_extra_args)))
+                  print (' Client: %s --protocol=%s --transport=%s %s'
+                    % (client_executable, protocol, transport, ''.join(client_extra_args)))
 
 
-            test_count += 1
+                test_count += 1
 
 print '%s failed of %s tests in total' % (failed, test_count)
 

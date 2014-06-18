@@ -8,11 +8,16 @@
             "protocols": [
                 "binary",
                 "compact",
-                "json"
+                "json",
+                "accel"
             ],
             "transports": [
                 "buffered",
                 "framed"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
             ]
         },
         {
@@ -28,6 +33,46 @@
                 "buffered",
                 "framed",
                 "http"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
+            ]
+        },
+        {
+            "description": "Nodejs TestClient",
+            "lib": "nodejs",
+            "executable": "../lib/nodejs/test/client.js",
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
+            ]
+        },
+        {
+            "description": "Ruby TestClient",
+            "lib": "ruby",
+            "executable": "rb/integration/TestClient.rb",
+            "protocols": [
+                "binary",
+                "compact",
+                "json",
+                "accel"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip"
             ]
         }
     ],
@@ -41,11 +86,16 @@
             "protocols": [
                 "binary",
                 "compact",
-                "json"
+                "json",
+                "accel"
             ],
             "transports": [
                 "buffered",
                 "framed"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
             ]
         },
         {
@@ -61,6 +111,46 @@
                 "buffered",
                 "framed",
                 "http"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
+            ]
+        },
+        {
+            "description": "Ruby TestServer",
+            "lib": "ruby",
+            "executable": "rb/integration/TestServer.rb",
+            "protocols": [
+                "binary",
+                "compact",
+                "json",
+                "accel"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip"
+            ]
+        },
+        {
+            "description": "Nodejs TestServer",
+            "lib": "nodejs",
+            "executable": "../lib/nodejs/test/server.js",
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
             ]
         }
     ]
