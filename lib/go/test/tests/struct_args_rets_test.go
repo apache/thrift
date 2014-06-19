@@ -20,7 +20,7 @@
 package tests
 
 import (
-	st "ServicesTest"
+	st "servicestest"
 )
 
 //this function is never called, it will fail to compile if check is failed
