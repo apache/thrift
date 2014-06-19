@@ -1662,7 +1662,6 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   f_service_ <<
     autogen_comment();
   f_service_ <<  "#include <string.h>" << endl;
-  f_service_ <<  "#include <boost/thread/tss.hpp>" << endl;
   f_service_ <<
     "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\"" << endl;
 
@@ -3258,8 +3257,11 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     string fname = tfunction->get_name();
     string argstype = tservice->get_name() + "_" + fname + "_args";
     string resulttype = tservice->get_name() + "_" + fname + "_result";
-    out << "static boost::thread_specific_ptr<" << argstype << "> " << fname << "_args;\n";
-    out << "static boost::thread_specific_ptr<" << resulttype << "> " << fname << "_result;\n\n";
+    string args_obj = fname + "_args";
+    string result_obj = fname + "_result";
+
+    out << "static __thread " << argstype << "* " << args_obj << " = nullptr;\n";
+    out << "static __thread " << resulttype << "* " << result_obj << " = nullptr;\n\n";
 
     out <<
       "void " << tservice->get_name() << "Processor" << class_suffix << "::" <<
@@ -3289,16 +3291,13 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << "  this->eventHandler_->preRead(ctx, " <<
         service_func_name << ");" << endl <<
       indent() << "}" << endl << endl <<
-      indent() << argstype << "* args = " << fname << "_args.get();" << endl <<
-      indent() << "if (args == nullptr) {\n" <<
-      indent() << "  args = new " << argstype << ";\n" <<
-      indent() << "  " << fname << "_args.reset(args);\n" <<
+      indent() << "if (" << args_obj << " == nullptr) {\n" <<
+      indent() << "  " << args_obj << " = new " << argstype << ";\n" <<
       indent() << "} else {\n" <<
-      indent() << "  args->clear();\n" << indent() << "}\n\n" <<
-      indent() << "args->read(iprot);" << endl <<
+      indent() << "  " << args_obj << "->clear();\n" << indent() << "}\n\n" <<
+      indent() << args_obj << "->read(iprot);" << endl <<
       indent() << "iprot->readMessageEnd();" << endl <<
-      indent() << "uint32_t bytes = iprot->getTransport()->readEnd();" <<
-        endl << endl <<
+      indent() << "uint32_t bytes = iprot->getTransport()->readEnd();" << endl << endl <<
       indent() << "if (this->eventHandler_.get() != NULL) {" << endl <<
       indent() << "  this->eventHandler_->postRead(ctx, " <<
         service_func_name << ", bytes);" << endl <<
@@ -3308,11 +3307,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     // Declare result
     if (!tfunction->is_oneway()) {
       out <<
-        indent() << resulttype << "* result = " << fname << "_result.get();" << endl <<
-        indent() << "if (result == nullptr) {\n" <<
-        indent() << "  result = new " << resulttype << ";\n" <<
-        indent() << "  " << fname << "_result.reset(result);\n" <<
-        indent() << "} else {\n" << indent() << "  result->clear();\n" <<
+        indent() << "if (" << result_obj << " == nullptr) {\n" <<
+        indent() << "  " << result_obj << " = new " << resulttype << ";\n" <<
+        indent() << "} else {\n" << indent() << "  " << result_obj << "->clear();\n" <<
         indent() << "}\n";
     }
 
@@ -3327,9 +3324,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
     if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
       if (is_complex_type(tfunction->get_returntype())) {
         first = false;
-        out << "iface_->" << fname << "(result->success";
+        out << "iface_->" << fname << "(" << result_obj << "->success";
       } else {
-        out << "result->success = iface_->" << fname << "(";
+        out << result_obj << "->success = iface_->" << fname << "(";
       }
     } else {
       out <<
@@ -3341,14 +3338,14 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       } else {
         out << ", ";
       }
-      out << "args->" << (*f_iter)->get_name();
+      out << args_obj << "->" << (*f_iter)->get_name();
     }
     out << ");" << endl;
 
     // Set isset on success field
     if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
       out <<
-        indent() << "result->__isset.success = true;" << endl;
+        indent() << result_obj << "->__isset.success = true;" << endl;
     }
 
     indent_down();
@@ -3361,9 +3358,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
         if (!tfunction->is_oneway()) {
           indent_up();
           out <<
-            indent() << "result->" << (*x_iter)->get_name() << " = " <<
+            indent() << result_obj << "->" << (*x_iter)->get_name() << " = " <<
               (*x_iter)->get_name() << ";" << endl <<
-            indent() << "result->__isset." << (*x_iter)->get_name() <<
+            indent() << result_obj << "->__isset." << (*x_iter)->get_name() <<
               " = true;" << endl;
           indent_down();
           out << indent() << "}";
@@ -3420,7 +3417,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
       indent() << "}" << endl << endl <<
       indent() << "oprot->writeMessageBegin(\"" << fname <<
         "\", ::apache::thrift::protocol::T_REPLY, seqid);" << endl <<
-      indent() << "result->write(oprot);" << endl <<
+      indent() << result_obj << "->write(oprot);" << endl <<
       indent() << "oprot->writeMessageEnd();" << endl <<
       indent() << "bytes = oprot->getTransport()->writeEnd();" << endl <<
       indent() << "oprot->getTransport()->flush();" << endl << endl <<
