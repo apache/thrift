@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Apache Thrift - integration test suite</title>
+<link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.0/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="http://cdn.datatables.net/1.10.0/js/jquery.dataTables.js"></script>
+<script>
+  var test_data;
+  
+    $(document).ready( function () {
+      $.getJSON('/results.json', function(testData) {
+          testTable = $('#test_results').DataTable( {
+            data: testData
+          });
+        $('#test_results_filter label input')
+          .focus()
+          .val('failure');
+        });
+      });
+    
+</script>
+</head>
+<body>
+<h2>Apache Thrift - integration test suite: Results</h2>
+<table id="test_results" class="display">
+    <thead>
+        <tr>
+            <th>Server</th>
+            <th>Client</th>
+            <th>Protocol</th>
+            <th>Transport</th>
+            <th>Result (log)</th>
+        </tr>
+    </thead>
+</table>
+</body>
+</html>

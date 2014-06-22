@@ -142,12 +142,15 @@ failed = 0
 
 if os.path.exists('log'): shutil.rmtree('log')
 os.makedirs('log')
+if os.path.exists('results.json'): os.remove('results.json')
+results_json = open("results.json","a")
+results_json.write("[\n")
 
 with open('tests.json') as data_file:    
     data = json.load(data_file)
 
 #subprocess.call("export NODE_PATH=../lib/nodejs/test:../lib/nodejs/lib:${NODE_PATH}")
-
+count = 0
 for server in data["server"]:
   server_executable = server["executable"]
   server_extra_args = ""
@@ -166,6 +169,10 @@ for server in data["server"]:
           if protocol in client["protocols"]:
             if transport in client["transports"]:
               if sock in client["sockets"]:
+                if count != 0:
+                  results_json.write(",\n")
+                count = 1
+                results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"" + protocol + "\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
                 test_name = server_lib + "_" + client_lib + "_" + protocol + "_" + transport + "_" + sock
                 ssl = 0
                 if sock == 'ip-ssl':
@@ -179,9 +186,13 @@ for server in data["server"]:
                     % (server_executable, protocol, transport, ' '.join(server_extra_args)))
                   print (' Client: %s --protocol=%s --transport=%s %s'
                     % (client_executable, protocol, transport, ''.join(client_extra_args)))
-
-
+                  results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
+                else:
+                  results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
+                results_json.write("\t]")
                 test_count += 1
-
+results_json.write("\n]")
+results_json.flush()
+results_json.close()
 print '%s failed of %s tests in total' % (failed, test_count)
 
