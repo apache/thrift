@@ -1175,7 +1175,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
 	out << " val) {" << endl;
       }
       indent_up();
-      out << indent() << (*m_iter)->get_name() << " = val;" << endl;
+      out << indent() << "this->" << (*m_iter)->get_name() << " = val;" << endl;
       indent_down();
 
       // assume all fields are required except optional fields.
