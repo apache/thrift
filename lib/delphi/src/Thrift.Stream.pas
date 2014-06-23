@@ -26,8 +26,7 @@ uses
   SysUtils,
   SysConst,
   RTLConsts,
-  Thrift.Utils,
-  ActiveX;
+  Thrift.Utils;
 
 type
 
@@ -72,111 +71,111 @@ type
     destructor Destroy; override;
   end;
 
-  TThriftStreamAdapterCOM = class( TThriftStreamImpl)
-  private
-    FStream : IStream;
-  protected
-    procedure Write( const buffer: TBytes; offset: Integer; count: Integer); override;
-    function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; override;
-    procedure Open; override;
-    procedure Close; override;
-    procedure Flush; override;
-    function IsOpen: Boolean; override;
-    function ToArray: TBytes; override;
-  public
-    constructor Create( const AStream: IStream);
-  end;
-
+//  TThriftStreamAdapterCOM = class( TThriftStreamImpl)
+//  private
+//    FStream : IStream;
+//  protected
+//    procedure Write( const buffer: TBytes; offset: Integer; count: Integer); override;
+//    function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; override;
+//    procedure Open; override;
+//    procedure Close; override;
+//    procedure Flush; override;
+//    function IsOpen: Boolean; override;
+//    function ToArray: TBytes; override;
+//  public
+//    constructor Create( const AStream: IStream);
+//  end;
+//
 implementation
 
-{ TThriftStreamAdapterCOM }
-
-procedure TThriftStreamAdapterCOM.Close;
-begin
-  FStream := nil;
-end;
-
-constructor TThriftStreamAdapterCOM.Create( const AStream: IStream);
-begin
-  inherited Create;
-  FStream := AStream;
-end;
-
-procedure TThriftStreamAdapterCOM.Flush;
-begin
-  if IsOpen then
-  begin
-    if FStream <> nil then
-    begin
-      FStream.Commit( STGC_DEFAULT );
-    end;
-  end;
-end;
-
-function TThriftStreamAdapterCOM.IsOpen: Boolean;
-begin
-  Result := FStream <> nil;
-end;
-
-procedure TThriftStreamAdapterCOM.Open;
-begin
-
-end;
-
-function TThriftStreamAdapterCOM.Read( var buffer: TBytes; offset: Integer; count: Integer): Integer;
-begin
-  inherited;
-  Result := 0;
-  if FStream <> nil then
-  begin
-    if count > 0 then
-    begin
-      FStream.Read( @buffer[offset], count, @Result);
-    end;
-  end;
-end;
-
-function TThriftStreamAdapterCOM.ToArray: TBytes;
-var
-  statstg: TStatStg;
-  len : Integer;
-  NewPos : Int64;
-  cbRead : Integer;
-begin
-  FillChar( statstg, SizeOf( statstg), 0);
-  len := 0;
-  if IsOpen then
-  begin
-    if Succeeded( FStream.Stat( statstg, STATFLAG_NONAME )) then
-    begin
-      len := statstg.cbSize;
-    end;
-  end;
-
-  SetLength( Result, len );
-
-  if len > 0 then
-  begin
-    if Succeeded( FStream.Seek( 0, STREAM_SEEK_SET, NewPos) ) then
-    begin
-      FStream.Read( @Result[0], len, @cbRead);
-    end;
-  end;
-end;
-
-procedure TThriftStreamAdapterCOM.Write( const buffer: TBytes; offset: Integer; count: Integer);
-var
-  nWritten : Integer;
-begin
-  inherited;
-  if IsOpen then
-  begin
-    if count > 0 then
-    begin
-      FStream.Write( @buffer[0], count, @nWritten);
-    end;
-  end;
-end;
+//{ TThriftStreamAdapterCOM }
+//
+//procedure TThriftStreamAdapterCOM.Close;
+//begin
+//  FStream := nil;
+//end;
+//
+//constructor TThriftStreamAdapterCOM.Create( const AStream: IStream);
+//begin
+//  inherited Create;
+//  FStream := AStream;
+//end;
+//
+//procedure TThriftStreamAdapterCOM.Flush;
+//begin
+//  if IsOpen then
+//  begin
+//    if FStream <> nil then
+//    begin
+//      FStream.Commit( STGC_DEFAULT );
+//    end;
+//  end;
+//end;
+//
+//function TThriftStreamAdapterCOM.IsOpen: Boolean;
+//begin
+//  Result := FStream <> nil;
+//end;
+//
+//procedure TThriftStreamAdapterCOM.Open;
+//begin
+//
+//end;
+//
+//function TThriftStreamAdapterCOM.Read( var buffer: TBytes; offset: Integer; count: Integer): Integer;
+//begin
+//  inherited;
+//  Result := 0;
+//  if FStream <> nil then
+//  begin
+//    if count > 0 then
+//    begin
+//      FStream.Read( @buffer[offset], count, @Result);
+//    end;
+//  end;
+//end;
+//
+//function TThriftStreamAdapterCOM.ToArray: TBytes;
+//var
+//  statstg: TStatStg;
+//  len : Integer;
+//  NewPos : Int64;
+//  cbRead : Integer;
+//begin
+//  FillChar( statstg, SizeOf( statstg), 0);
+//  len := 0;
+//  if IsOpen then
+//  begin
+//    if Succeeded( FStream.Stat( statstg, STATFLAG_NONAME )) then
+//    begin
+//      len := statstg.cbSize;
+//    end;
+//  end;
+//
+//  SetLength( Result, len );
+//
+//  if len > 0 then
+//  begin
+//    if Succeeded( FStream.Seek( 0, STREAM_SEEK_SET, NewPos) ) then
+//    begin
+//      FStream.Read( @Result[0], len, @cbRead);
+//    end;
+//  end;
+//end;
+//
+//procedure TThriftStreamAdapterCOM.Write( const buffer: TBytes; offset: Integer; count: Integer);
+//var
+//  nWritten : Integer;
+//begin
+//  inherited;
+//  if IsOpen then
+//  begin
+//    if count > 0 then
+//    begin
+//      FStream.Write( @buffer[0], count, @nWritten);
+//    end;
+//  end;
+//end;
 
 { TThriftStreamImpl }
 

@@ -255,6 +255,7 @@ var
   RBRACKET  : TBytes;
   QUOTE     : TBytes;
   BACKSLASH : TBytes;
+  ZERO      : TBytes;
   ESCSEQ    : TBytes;
 
 const
@@ -264,8 +265,8 @@ const
                      0,0,0,0, 0,0,0,0, 0,0,0,0,  0,0,0,0,
                      1,1,Byte('"'),1,  1,1,1,1, 1,1,1,1, 1,1,1,1);
 
-  ESCAPE_CHARS     = '"\/btnfr';
-  ESCAPE_CHAR_VALS = '"\/'#8#9#10#12#13;
+  ESCAPE_CHARS     = '"\btnfr';
+  ESCAPE_CHAR_VALS = '"\'#8#9#10#12#13;
 
   DEF_STRING_SIZE = 16;
 
@@ -815,8 +816,7 @@ end;
 
 function TJSONProtocolImpl.ReadJSONString( skipContext : Boolean) : TBytes;
 var buffer : TMemoryStream;
-    ch  : Byte;
-    wch : Word;
+    ch : Byte;
     off : Integer;
     tmp : TBytes;
 begin
@@ -833,34 +833,25 @@ begin
       if (ch = QUOTE[0])
       then Break;
 
-      // check for escapes
-      if (ch <> ESCSEQ[0]) then begin
-        buffer.Write( ch, 1);
-        Continue;
-      end;
-
-      // distuinguish between \uNNNN and \?
-      ch := FReader.Read;
-      if (ch <> ESCSEQ[1])
+      if (ch = ESCSEQ[0])
       then begin
-        off := Pos( Char(ch), ESCAPE_CHARS);
-        if off < 1
-        then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected control char');
-        ch := Byte( ESCAPE_CHAR_VALS[off]);
-        buffer.Write( ch, 1);
-        Continue;
+        ch := FReader.Read;
+        if (ch = ESCSEQ[1])
+        then begin
+          ReadJSONSyntaxChar( ZERO[0]);
+          ReadJSONSyntaxChar( ZERO[0]);
+          SetLength( tmp, 2);
+          Transport.ReadAll( tmp, 0, 2);
+          ch := (HexVal(tmp[0]) shl 4) + HexVal(tmp[1]);
+        end
+        else begin
+          off := Pos( Char(ch), ESCAPE_CHARS);
+          if off < 1
+          then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected control char');
+          ch := Byte( ESCAPE_CHAR_VALS[off]);
+        end;
       end;
-
-      // it is \uXXXX
-      SetLength( tmp, 4);
-      Transport.ReadAll( tmp, 0, 4);
-      wch := (HexVal(tmp[0]) shl 12)
-           + (HexVal(tmp[1]) shl 8)
-           + (HexVal(tmp[2]) shl 4)
-           +  HexVal(tmp[3]);
-      // we need to make UTF8 bytes from it, to be decoded later
-      tmp := SysUtils.TEncoding.UTF8.GetBytes(Char(wch));
-      buffer.Write( tmp[0], length(tmp));
+      buffer.Write( ch, 1);
     end;
 
     SetLength( result, buffer.Size);
@@ -965,7 +956,7 @@ var b : TBytes;
 begin
   b := ReadJSONString(false);
 
-  SetString( str, PChar (b), Length(b));
+  SetString( str, PAnsiChar(b), Length(b));
   result := TBytes (TIdDecoderMIME.DecodeBytes( str));
 end;
 
@@ -1184,5 +1175,6 @@ initialization
   InitBytes( RBRACKET,  [Byte(']')]);
   InitBytes( QUOTE,     [Byte('"')]);
   InitBytes( BACKSLASH, [Byte('\')]);
+  InitBytes( ZERO,      [Byte('0')]);
   InitBytes( ESCSEQ,    [Byte('\'),Byte('u'),Byte('0'),Byte('0')]);
 end.
