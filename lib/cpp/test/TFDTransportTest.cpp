@@ -35,6 +35,7 @@ int main() {
   try {
     {
       TFDTransport t(256, TFDTransport::CLOSE_ON_DESTROY);
+      t.close();
     }
     std::abort();
   } catch (TTransportException) {
@@ -47,7 +48,7 @@ int main() {
     }
     std::abort();
   } catch (TTransportException&) {
-    abort();
+    std::abort();
   } catch (DummyException&) {
   }
 
