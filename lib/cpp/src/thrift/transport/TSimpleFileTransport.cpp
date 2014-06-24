@@ -54,7 +54,7 @@ TSimpleFileTransport(const std::string& path, bool read, bool write)
 #else
   int mode = _S_IREAD | _S_IWRITE;
 #endif
-  int fd = ::open(path.c_str(),
+  int fd = ::THRIFT_OPEN(path.c_str(),
                   flags,
                   mode);
   if (fd < 0) {
