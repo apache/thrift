@@ -17,8 +17,11 @@
  * under the License.
  */
 
-#include <thrift/thrift-config.h>
-
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#include <pthread.h>
+#include <arpa/inet.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include <thrift/transport/TTransportException.h>
 #include <thrift/concurrency/Thread.h>
@@ -57,12 +60,12 @@ public:
     boost::shared_ptr<TServerEventHandler> eventHandler =
       server_.getEventHandler();
     void* connectionContext = NULL;
-    if (eventHandler) {
+    if (eventHandler != NULL) {
       connectionContext = eventHandler->createContext(input_, output_);
     }
     try {
       for (;;) {
-        if (eventHandler) {
+        if (eventHandler != NULL) {
           eventHandler->processContext(connectionContext, transport_);
         }
         if (!processor_->process(input_, output_, connectionContext) ||
@@ -83,7 +86,7 @@ public:
                    "TThreadPoolServer::Task::run()");
     }
 
-    if (eventHandler) {
+    if (eventHandler != NULL) {
       eventHandler->deleteContext(connectionContext, input_, output_);
     }
 
@@ -123,7 +126,7 @@ void TThreadPoolServer::serve() {
   serverTransport_->listen();
 
   // Run the preServe event
-  if (eventHandler_) {
+  if (eventHandler_ != NULL) {
     eventHandler_->preServe();
   }
 
@@ -150,28 +153,28 @@ void TThreadPoolServer::serve() {
       // Add to threadmanager pool
       shared_ptr<TThreadPoolServer::Task> task(new TThreadPoolServer::Task(
             *this, processor, inputProtocol, outputProtocol, client));
-      threadManager_->add(task, timeout_, taskExpiration_);
+      threadManager_->add(task, timeout_);
 
     } catch (TTransportException& ttx) {
-      if (inputTransport) { inputTransport->close(); }
-      if (outputTransport) { outputTransport->close(); }
-      if (client) { client->close(); }
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
       if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
         string errStr = string("TThreadPoolServer: TServerTransport died on accept: ") + ttx.what();
         GlobalOutput(errStr.c_str());
       }
       continue;
     } catch (TException& tx) {
-      if (inputTransport) { inputTransport->close(); }
-      if (outputTransport) { outputTransport->close(); }
-      if (client) { client->close(); }
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
       string errStr = string("TThreadPoolServer: Caught TException: ") + tx.what();
       GlobalOutput(errStr.c_str());
       continue;
     } catch (string s) {
-      if (inputTransport) { inputTransport->close(); }
-      if (outputTransport) { outputTransport->close(); }
-      if (client) { client->close(); }
+      if (inputTransport != NULL) { inputTransport->close(); }
+      if (outputTransport != NULL) { outputTransport->close(); }
+      if (client != NULL) { client->close(); }
       string errStr = "TThreadPoolServer: Unknown exception: " + s;
       GlobalOutput(errStr.c_str());
       break;
@@ -198,14 +201,6 @@ int64_t TThreadPoolServer::getTimeout() const {
 
 void TThreadPoolServer::setTimeout(int64_t value) {
   timeout_ = value;
-}
-
-int64_t TThreadPoolServer::getTaskExpiration() const {
-  return taskExpiration_;
-}
-
-void TThreadPoolServer::setTaskExpiration(int64_t value) {
-  taskExpiration_ = value;
 }
 
 }}} // apache::thrift::server

@@ -20,29 +20,20 @@
 #ifndef _THRIFT_TRANSPORT_TSERVERWINPIPES_H_
 #define _THRIFT_TRANSPORT_TSERVERWINPIPES_H_ 1
 
-#include <thrift/transport/TServerTransport.h>
+#include "TServerTransport.h"
 #include <boost/shared_ptr.hpp>
 #ifndef _WIN32
-#  include <thrift/transport/TServerSocket.h>
-#endif
-#ifdef _WIN32
-#  include <thrift/windows/Sync.h>
+#  include "TServerSocket.h"
 #endif
 
-#define TPIPE_SERVER_MAX_CONNS_DEFAULT PIPE_UNLIMITED_INSTANCES
+#define TPIPE_SERVER_MAX_CONNS_DEFAULT 10
 
 namespace apache { namespace thrift { namespace transport {
 
 /**
  * Windows Pipes implementation of TServerTransport.
- * Don't destroy a TPipeServer at global scope, as that will cause a thread join
- * during DLLMain.  That also means that TServer's using TPipeServer shouldn't be at global
- * scope.
  */
 #ifdef _WIN32
-class TPipeServerImpl;
-class TPipe;
-
 class TPipeServer : public TServerTransport {
  public:
   //Constructors
@@ -55,13 +46,18 @@ class TPipeServer : public TServerTransport {
   TPipeServer();
 
   //Destructor
-  virtual ~TPipeServer();
+  ~TPipeServer();
 
   //Standard transport callbacks
-  virtual void interrupt();
-  virtual void close();
-  virtual void listen();
+  void interrupt();
+  void close();
+ protected:
+  boost::shared_ptr<TTransport> acceptImpl();
 
+  bool TCreateNamedPipe();
+  bool TCreateAnonPipe();
+
+ public:
   //Accessors
   std::string getPipename();
   void setPipename(const std::string &pipename);
@@ -73,21 +69,16 @@ class TPipeServer : public TServerTransport {
   HANDLE getClientWrtPipeHandle();
   bool getAnonymous();
   void setAnonymous(bool anon);
-  void setMaxConnections(uint32_t maxconnections);
-
-  //this function is intended to be used in generic / template situations,
-  //so its name needs to be the same as TPipe's
-  HANDLE getNativeWaitHandle();
-protected:
-  virtual boost::shared_ptr<TTransport> acceptImpl();
 
  private:
-  boost::shared_ptr<TPipeServerImpl> impl_;
-
   std::string pipename_;
   uint32_t bufsize_;
+  HANDLE Pipe_;  //Named Pipe (R/W) or Anonymous Pipe (R)
   uint32_t maxconns_;
-  bool isAnonymous_;
+  HANDLE PipeW_; //Anonymous Pipe (W)
+  HANDLE ClientAnonRead, ClientAnonWrite; //Client side anonymous pipe handles
+  //? Do we need duplicates to send to client?
+  bool isAnonymous;
 };
 #else //_WIN32
 //*NIX named pipe implementation uses domain socket

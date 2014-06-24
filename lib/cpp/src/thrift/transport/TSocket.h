@@ -22,19 +22,29 @@
 
 #include <string>
 
-#include <thrift/transport/TTransport.h>
-#include <thrift/transport/TVirtualTransport.h>
-#include <thrift/transport/TServerSocket.h>
-#include <thrift/transport/PlatformSocket.h>
+#include "TTransport.h"
+#include "TVirtualTransport.h"
+#include "TServerSocket.h"
 
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <netinet/tcp.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <poll.h> 
+#include <sys/time.h>
+
+
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+#ifndef _WIN32
+   typedef int SOCKET;
 #endif
 
 namespace apache { namespace thrift { namespace transport {
@@ -173,15 +183,10 @@ class TSocket : public TVirtualTransport<TSocket> {
   void setSendTimeout(int ms);
 
   /**
-   * Set the max number of recv retries in case of an THRIFT_EAGAIN
+   * Set the max number of recv retries in case of an EAGAIN
    * error
    */
   void setMaxRecvRetries(int maxRecvRetries);
-
-  /**
-   * Set SO_KEEPALIVE
-   */
-  void setKeepAlive(bool keepAlive);
 
   /**
    * Get socket information formated as a string <Host: x Port: x>
@@ -206,7 +211,7 @@ class TSocket : public TVirtualTransport<TSocket> {
   /**
    * Returns the underlying socket file descriptor.
    */
-  THRIFT_SOCKET getSocketFD() {
+  SOCKET getSocketFD() {
     return socket_;
   }
 
@@ -217,7 +222,7 @@ class TSocket : public TVirtualTransport<TSocket> {
    *
    * @param fd the descriptor for an already-connected socket
    */
-  void setSocketFD(THRIFT_SOCKET fd);
+  void setSocketFD(int fd);
 
   /*
    * Returns a cached copy of the peer address.
@@ -237,7 +242,7 @@ class TSocket : public TVirtualTransport<TSocket> {
   /**
    * Constructor to create socket from raw UNIX handle.
    */
-  TSocket(THRIFT_SOCKET socket);
+  TSocket(SOCKET socket);
 
   /**
    * Set a cache of the peer address (used when trivially available: e.g.
@@ -268,7 +273,7 @@ class TSocket : public TVirtualTransport<TSocket> {
   std::string path_;
 
   /** Underlying UNIX socket handle */
-  THRIFT_SOCKET socket_;
+  SOCKET socket_;
 
   /** Connect timeout in ms */
   int connTimeout_;
@@ -278,9 +283,6 @@ class TSocket : public TVirtualTransport<TSocket> {
 
   /** Recv timeout in ms */
   int recvTimeout_;
-
-  /** Keep alive on */
-  bool keepAlive_;
 
   /** Linger on */
   bool lingerOn_;
@@ -294,11 +296,17 @@ class TSocket : public TVirtualTransport<TSocket> {
   /** Recv EGAIN retries */
   int maxRecvRetries_;
 
+  /** Recv timeout timeval */
+  struct timeval recvTimeval_;
+
   /** Cached peer address */
   union {
     sockaddr_in ipv4;
     sockaddr_in6 ipv6;
   } cachedPeerAddr_;
+
+  /** Connection start time */
+  timespec startTime_;
 
   /** Whether to use low minimum TCP retransmission timeout */
   static bool useLowMinRto_;

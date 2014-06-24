@@ -20,14 +20,20 @@
 #ifndef _THRIFT_TLOGGING_H_
 #define _THRIFT_TLOGGING_H_ 1
 
-#include <thrift/thrift-config.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /**
  * Contains utility macros for debugging and logging.
  *
  */
 
+#ifndef HAVE_CLOCK_GETTIME
 #include <time.h>
+#else
+#include <sys/time.h>
+#endif
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
@@ -76,7 +82,7 @@
         time_t now;                                                       \
         char dbgtime[26] ;                                                \
         time(&now);                                                       \
-        THRIFT_CTIME_R(&now, dbgtime);                                           \
+        ctime_r(&now, dbgtime);                                           \
         dbgtime[24] = '\0';                                               \
         fprintf(stderr,"[%s,%d] [%s] " format_string " \n", __FILE__, __LINE__,dbgtime,##__VA_ARGS__); \
       }                                                                   \
@@ -109,7 +115,7 @@
     time_t now;                                                         \
     char dbgtime[26] ;                                                  \
     time(&now);                                                         \
-    THRIFT_CTIME_R(&now, dbgtime);                                             \
+    ctime_r(&now, dbgtime);                                             \
     dbgtime[24] = '\0';                                                 \
     fprintf(stderr,"[%s,%d] [%s] ERROR: " format_string " \n", __FILE__, __LINE__,dbgtime,##__VA_ARGS__); \
   }
@@ -126,7 +132,7 @@
     time_t now;                                                         \
     char dbgtime[26] ;                                                  \
     time(&now);                                                         \
-    THRIFT_CTIME_R(&now, dbgtime);                                             \
+    ctime_r(&now, dbgtime);                                             \
     dbgtime[24] = '\0';                                                 \
     fprintf(stderr,"[%s,%d] [%s] ERROR: Going to abort " format_string " \n", __FILE__, __LINE__,dbgtime,##__VA_ARGS__); \
     exit(1);                                                            \
@@ -145,7 +151,7 @@
         time_t now;                                                           \
         char dbgtime[26] ;                                                    \
         time(&now);                                                           \
-        THRIFT_CTIME_R(&now, dbgtime);                                               \
+        ctime_r(&now, dbgtime);                                               \
         dbgtime[24] = '\0';                                                   \
         fprintf(stderr,"[%s] " format_string " \n", dbgtime,##__VA_ARGS__);  \
       }                                                                       \

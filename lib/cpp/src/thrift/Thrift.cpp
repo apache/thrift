@@ -29,25 +29,11 @@ namespace apache { namespace thrift {
 TOutput GlobalOutput;
 
 void TOutput::printf(const char *message, ...) {
-#ifndef THRIFT_SQUELCH_CONSOLE_OUTPUT
   // Try to reduce heap usage, even if printf is called rarely.
   static const int STACK_BUF_SIZE = 256;
   char stack_buf[STACK_BUF_SIZE];
   va_list ap;
 
-#ifdef _MSC_VER
-  va_start(ap, message);
-  int need = _vscprintf(message, ap);
-  va_end(ap);
-
-  if (need < STACK_BUF_SIZE) {
-    va_start(ap, message);
-    vsnprintf_s(stack_buf, STACK_BUF_SIZE, _TRUNCATE, message, ap);
-    va_end(ap);
-    f_(stack_buf);
-    return;
-  }
-#else
   va_start(ap, message);
   int need = vsnprintf(stack_buf, STACK_BUF_SIZE, message, ap);
   va_end(ap);
@@ -56,15 +42,9 @@ void TOutput::printf(const char *message, ...) {
     f_(stack_buf);
     return;
   }
-#endif
 
   char *heap_buf = (char*)malloc((need+1) * sizeof(char));
   if (heap_buf == NULL) {
-#ifdef _MSC_VER
-    va_start(ap, message);
-    vsnprintf_s(stack_buf, STACK_BUF_SIZE, _TRUNCATE, message, ap);
-    va_end(ap);
-#endif
     // Malloc failed.  We might as well print the stack buffer.
     f_(stack_buf);
     return;
@@ -78,18 +58,6 @@ void TOutput::printf(const char *message, ...) {
     f_(heap_buf);
   }
   free(heap_buf);
-#endif
-}
-
-void TOutput::errorTimeWrapper(const char* msg) {
-#ifndef THRIFT_SQUELCH_CONSOLE_OUTPUT
-  time_t now;
-  char dbgtime[26];
-  time(&now);
-  THRIFT_CTIME_R(&now, dbgtime);
-  dbgtime[24] = 0;
-  fprintf(stderr, "Thrift: %s %s\n", dbgtime, msg);
-#endif
 }
 
 void TOutput::perror(const char *message, int errno_copy) {

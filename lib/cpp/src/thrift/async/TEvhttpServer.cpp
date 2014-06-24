@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include <thrift/async/TEvhttpServer.h>
-#include <thrift/async/TAsyncBufferProcessor.h>
+#include "TEvhttpServer.h"
+#include "TAsyncBufferProcessor.h"
 #include <thrift/transport/TBufferTransports.h>
 #include <evhttp.h>
 
@@ -99,7 +99,7 @@ int TEvhttpServer::serve() {
 
 
 TEvhttpServer::RequestContext::RequestContext(struct evhttp_request* req) : req(req)
-  , ibuf(new TMemoryBuffer(EVBUFFER_DATA(req->input_buffer), static_cast<uint32_t>(EVBUFFER_LENGTH(req->input_buffer))))
+  , ibuf(new TMemoryBuffer(EVBUFFER_DATA(req->input_buffer), EVBUFFER_LENGTH(req->input_buffer)))
   , obuf(new TMemoryBuffer())
 {}
 
@@ -116,11 +116,11 @@ void TEvhttpServer::request(struct evhttp_request* req, void* self) {
 void TEvhttpServer::process(struct evhttp_request* req) {
   RequestContext* ctx = new RequestContext(req);
   return processor_->process(
-      apache::thrift::stdcxx::bind(
+      std::tr1::bind(
         &TEvhttpServer::complete,
         this,
         ctx,
-        apache::thrift::stdcxx::placeholders::_1),
+        std::tr1::placeholders::_1),
       ctx->ibuf,
       ctx->obuf);
 }

@@ -17,12 +17,12 @@
  * under the License.
  */
 
-#include <thrift/thrift-config.h>
-
-#include <thrift/Thrift.h>
-#include <thrift/concurrency/Mutex.h>
-#include <thrift/concurrency/Util.h>
-
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#include "Mutex.h"
+#include "Util.h"
+#include <pthread.h>
 #include <assert.h>
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
@@ -127,7 +127,6 @@ class Mutex::impl {
     if (initialized_) {
       initialized_ = false;
       int ret = pthread_mutex_destroy(&pthread_mutex_);
-      THRIFT_UNUSED_VARIABLE(ret);
       assert(ret == 0);
     }
   }
@@ -144,7 +143,7 @@ class Mutex::impl {
 #if defined(_POSIX_TIMEOUTS) && _POSIX_TIMEOUTS >= 200112L
     PROFILE_MUTEX_START_LOCK();
 
-    struct THRIFT_TIMESPEC ts;
+    struct timespec ts;
     Util::toTimespec(ts, milliseconds + Util::currentTime());
     int ret = pthread_mutex_timedlock(&pthread_mutex_, &ts);
     if (ret == 0) {
@@ -156,7 +155,7 @@ class Mutex::impl {
     return false;
 #else
     /* Otherwise follow solution used by Mono for Android */
-    struct THRIFT_TIMESPEC sleepytime, now, to;
+    struct timespec sleepytime, now, to;
 
     /* This is just to avoid a completely busy wait */
     sleepytime.tv_sec = 0;
@@ -171,7 +170,7 @@ class Mutex::impl {
       }
       nanosleep(&sleepytime, NULL);
     }
-
+ 
     return true;
 #endif
   }
@@ -207,7 +206,6 @@ void Mutex::unlock() const { impl_->unlock(); }
 void Mutex::DEFAULT_INITIALIZER(void* arg) {
   pthread_mutex_t* pthread_mutex = (pthread_mutex_t*)arg;
   int ret = pthread_mutex_init(pthread_mutex, NULL);
-  THRIFT_UNUSED_VARIABLE(ret);
   assert(ret == 0);
 }
 
@@ -226,7 +224,6 @@ static void init_with_kind(pthread_mutex_t* mutex, int kind) {
 
   ret = pthread_mutexattr_destroy(&mutexattr);
   assert(ret == 0);
-  THRIFT_UNUSED_VARIABLE(ret);
 }
 #endif
 
@@ -263,7 +260,6 @@ public:
     profileTime_ = 0;
 #endif
     int ret = pthread_rwlock_init(&rw_lock_, NULL);
-    THRIFT_UNUSED_VARIABLE(ret);
     assert(ret == 0);
     initialized_ = true;
   }
@@ -272,7 +268,6 @@ public:
     if(initialized_) {
       initialized_ = false;
       int ret = pthread_rwlock_destroy(&rw_lock_);
-      THRIFT_UNUSED_VARIABLE(ret);
       assert(ret == 0);
     }
   }

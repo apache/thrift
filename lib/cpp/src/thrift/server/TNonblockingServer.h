@@ -22,7 +22,6 @@
 
 #include <thrift/Thrift.h>
 #include <thrift/server/TServer.h>
-#include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/concurrency/ThreadManager.h>
@@ -33,7 +32,11 @@
 #include <stack>
 #include <vector>
 #include <string>
+#include <errno.h>
 #include <cstdlib>
+#include <unistd.h>
+#include <fcntl.h>
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -67,7 +70,7 @@ using apache::thrift::concurrency::Guard;
 #endif
 
 #if LIBEVENT_VERSION_NUMBER < 0x02000000
- typedef THRIFT_SOCKET evutil_socket_t;
+ typedef int evutil_socket_t;
 #endif
 
 #ifndef SOCKOPT_CAST_T
@@ -145,6 +148,9 @@ class TNonblockingServer : public TServer {
   /// # of IO threads to use by default
   static const int DEFAULT_IO_THREADS = 1;
 
+  /// File descriptor of an invalid socket
+  static const int INVALID_SOCKET_VALUE = -1;
+
   /// # of IO threads this server will use
   size_t numIOThreads_;
 
@@ -152,13 +158,10 @@ class TNonblockingServer : public TServer {
   bool useHighPriorityIOThreads_;
 
   /// Server socket file descriptor
-  THRIFT_SOCKET serverSocket_;
+  int serverSocket_;
 
   /// Port server runs on
   int port_;
-
-  /// The optional user-provided event-base (for single-thread servers)
-  event_base* userEventBase_;
 
   /// For processing via thread pool, may be NULL
   boost::shared_ptr<ThreadManager> threadManager_;
@@ -256,14 +259,6 @@ class TNonblockingServer : public TServer {
   std::stack<TConnection*> connectionStack_;
 
   /**
-   * This container holds pointers to all active connections. This container
-   * allows the server to clean up unlcosed connection objects at destruction,
-   * which in turn allows their transports, protocols, processors and handlers
-   * to deallocate and clean up correctly.
-   */
-  std::vector<TConnection*> activeConnections_;
-
-  /**
    * Called when server socket had something happen.  We accept all waiting
    * client connections on listen socket fd and assign TConnection objects
    * to handle those requests.
@@ -271,15 +266,14 @@ class TNonblockingServer : public TServer {
    * @param fd the listen socket.
    * @param which the event flag that triggered the handler.
    */
-  void handleEvent(THRIFT_SOCKET fd, short which);
+  void handleEvent(int fd, short which);
 
   void init(int port) {
-    serverSocket_ = THRIFT_INVALID_SOCKET;
+    serverSocket_ = -1;
     numIOThreads_ = DEFAULT_IO_THREADS;
     nextIOThread_ = 0;
     useHighPriorityIOThreads_ = false;
     port_ = port;
-    userEventBase_ = NULL;
     threadPoolProcessing_ = false;
     numTConnections_ = 0;
     numActiveProcessors_ = 0;
@@ -757,33 +751,6 @@ class TNonblockingServer : public TServer {
    */
   void stop();
 
-  /// Creates a socket to listen on and binds it to the local port.
-  void createAndListenOnSocket();
-
-  /**
-   * Takes a socket created by createAndListenOnSocket() and sets various
-   * options on it to prepare for use in the server.
-   *
-   * @param fd descriptor of socket to be initialized/
-   */
-  void listenSocket(THRIFT_SOCKET fd);
-
-  /**
-   * Register the optional user-provided event-base (for single-thread servers)
-   *
-   * This method should be used when the server is running in a single-thread
-   * mode, and the event base is provided by the user (i.e., the caller).
-   *
-   * @param user_event_base the user-provided event-base. The user is
-   * responsible for freeing the event base memory.
-   */
-  void registerEvents(event_base* user_event_base);
-
-  /**
-   * Returns the optional user-provided event-base (for single-thread servers).
-   */
-  event_base* getUserEventBase() const { return userEventBase_; }
-
  private:
   /**
    * Callback function that the threadmanager calls when a task reaches
@@ -793,6 +760,16 @@ class TNonblockingServer : public TServer {
    */
   void expireClose(boost::shared_ptr<Runnable> task);
 
+  /// Creates a socket to listen on and binds it to the local port.
+  void createAndListenOnSocket();
+
+  /**
+   * Takes a socket created by createAndListenOnSocket() and sets various
+   * options on it to prepare for use in the server.
+   *
+   * @param fd descriptor of socket to be initialized/
+   */
+  void listenSocket(int fd);
   /**
    * Return an initialized connection object.  Creates or recovers from
    * pool a TConnection and initializes it with the provided socket FD
@@ -803,7 +780,7 @@ class TNonblockingServer : public TServer {
    * @param addrLen the length of addr
    * @return pointer to initialized TConnection object.
    */
-  TConnection* createConnection(THRIFT_SOCKET socket, const sockaddr* addr,
+  TConnection* createConnection(int socket, const sockaddr* addr,
                                             socklen_t addrLen);
 
   /**
@@ -823,7 +800,7 @@ class TNonblockingIOThread : public Runnable {
   // listenSocket is < 0, accepting will not be done.
   TNonblockingIOThread(TNonblockingServer* server,
                        int number,
-                       THRIFT_SOCKET listenSocket,
+                       int listenSocket,
                        bool useHighPriority);
 
   ~TNonblockingIOThread();
@@ -865,9 +842,6 @@ class TNonblockingIOThread : public Runnable {
   // Ensures that the event-loop thread is fully finished and shut down.
   void join();
 
-  /// Registers the events for the notification & listen sockets
-  void registerEvents();
-
  private:
   /**
    * C-callable event handler for signaling task completion.  Provides a
@@ -894,6 +868,9 @@ class TNonblockingIOThread : public Runnable {
   /// Exits the loop ASAP in case of shutdown or error.
   void breakLoop(bool error);
 
+  /// Registers the events for the notification & listen sockets
+  void registerEvents();
+
   /// Create the pipe used to notify I/O process of task completion.
   void createNotificationPipe();
 
@@ -914,17 +891,13 @@ class TNonblockingIOThread : public Runnable {
   Thread::id_t threadId_;
 
   /// If listenSocket_ >= 0, adds an event on the event_base to accept conns
-  THRIFT_SOCKET listenSocket_;
+  int listenSocket_;
 
   /// Sets a high scheduling priority when running
   bool useHighPriority_;
 
   /// pointer to eventbase to be used for looping
   event_base* eventBase_;
-
-  /// Set to true if this class is responsible for freeing the event base
-  /// memory.
-  bool ownEventBase_;
 
   /// Used with eventBase_ for connection events (only in listener thread)
   struct event serverEvent_;

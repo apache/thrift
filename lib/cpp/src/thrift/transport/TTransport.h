@@ -24,6 +24,7 @@
 #include <boost/shared_ptr.hpp>
 #include <thrift/transport/TTransportException.h>
 #include <string>
+#include <stdint.h>
 
 namespace apache { namespace thrift { namespace transport {
 

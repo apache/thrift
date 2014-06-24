@@ -198,20 +198,16 @@ uint32_t TCompactProtocolT<Transport_>::writeBool(const bool value) {
 
   if (booleanField_.name != NULL) {
     // we haven't written the field header yet
-    wsize
-      += writeFieldBeginInternal(booleanField_.name,
-                                 booleanField_.fieldType,
-                                 booleanField_.fieldId,
-                                 static_cast<int8_t>(value
-                                                     ? detail::compact::CT_BOOLEAN_TRUE
-                                                     : detail::compact::CT_BOOLEAN_FALSE));
+    wsize += writeFieldBeginInternal(booleanField_.name,
+                                     booleanField_.fieldType,
+                                     booleanField_.fieldId,
+                                     value ? detail::compact::CT_BOOLEAN_TRUE :
+                                     detail::compact::CT_BOOLEAN_FALSE);
     booleanField_.name = NULL;
   } else {
     // we're not part of a field, so just write the value
-    wsize
-      += writeByte(static_cast<int8_t>(value
-                                       ? detail::compact::CT_BOOLEAN_TRUE
-                                       : detail::compact::CT_BOOLEAN_FALSE));
+    wsize += writeByte(value ? detail::compact::CT_BOOLEAN_TRUE :
+                       detail::compact::CT_BOOLEAN_FALSE);
   }
   return wsize;
 }
@@ -270,15 +266,8 @@ uint32_t TCompactProtocolT<Transport_>::writeString(const std::string& str) {
 
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::writeBinary(const std::string& str) {
-  if(str.size() > (std::numeric_limits<uint32_t>::max)())
-    throw TProtocolException(TProtocolException::SIZE_LIMIT);
-  uint32_t ssize = static_cast<uint32_t>(str.size());
-  uint32_t wsize = writeVarint32(ssize) ;
-  // checking ssize + wsize > uint_max, but we don't want to overflow while checking for overflows.
-  // transforming the check to ssize > uint_max - wsize
-  if(ssize > (std::numeric_limits<uint32_t>::max)() - wsize)
-    throw TProtocolException(TProtocolException::SIZE_LIMIT);
-  wsize += ssize;
+  uint32_t ssize = str.size();
+  uint32_t wsize = writeVarint32(ssize) + ssize;
   trans_->write((uint8_t*)str.data(), ssize);
   return wsize;
 }
@@ -307,8 +296,7 @@ int32_t TCompactProtocolT<Transport_>::writeFieldBeginInternal(
   // check if we can use delta encoding for the field id
   if (fieldId > lastFieldId_ && fieldId - lastFieldId_ <= 15) {
     // write them together
-    wsize += writeByte(static_cast<int8_t>((fieldId - lastFieldId_)
-                                           << 4 | typeToWrite));
+    wsize += writeByte((fieldId - lastFieldId_) << 4 | typeToWrite);
   } else {
     // write them separate
     wsize += writeByte(typeToWrite);
@@ -324,12 +312,11 @@ int32_t TCompactProtocolT<Transport_>::writeFieldBeginInternal(
  * the wire differ only by the type indicator.
  */
 template <class Transport_>
-uint32_t TCompactProtocolT<Transport_>::writeCollectionBegin(const TType elemType,
+uint32_t TCompactProtocolT<Transport_>::writeCollectionBegin(int8_t elemType,
                                                              int32_t size) {
   uint32_t wsize = 0;
   if (size <= 14) {
-    wsize += writeByte(static_cast<int8_t>(size
-                                           << 4 | getCompactType(elemType)));
+    wsize += writeByte(size << 4 | getCompactType(elemType));
   } else {
     wsize += writeByte(0xf0 | getCompactType(elemType));
     wsize += writeVarint32(size);
@@ -401,7 +388,7 @@ uint32_t TCompactProtocolT<Transport_>::i32ToZigzag(const int32_t n) {
  * Given a TType value, find the appropriate detail::compact::Types value
  */
 template <class Transport_>
-int8_t TCompactProtocolT<Transport_>::getCompactType(const TType ttype) {
+int8_t TCompactProtocolT<Transport_>::getCompactType(int8_t ttype) {
   return detail::compact::TTypeToCType[ttype];
 }
 
@@ -654,13 +641,12 @@ uint32_t TCompactProtocolT<Transport_>::readDouble(double& dub) {
   BOOST_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
   BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
 
-  union {
-    uint64_t bits;
-    uint8_t b[8];
-  } u;
-  trans_->readAll(u.b, 8);
-  u.bits = letohll(u.bits);
-  dub = bitwise_cast<double>(u.bits);
+  uint64_t bits;
+  uint8_t b[8];
+  trans_->readAll(b, 8);
+  bits = *(uint64_t*)b;
+  bits = letohll(bits);
+  dub = bitwise_cast<double>(bits);
   return 8;
 }
 
@@ -775,7 +761,7 @@ uint32_t TCompactProtocolT<Transport_>::readVarint64(int64_t& i64) {
  */
 template <class Transport_>
 int32_t TCompactProtocolT<Transport_>::zigzagToI32(uint32_t n) {
-  return (n >> 1) ^ static_cast<uint32_t>(-static_cast<int32_t>(n & 1));
+  return (n >> 1) ^ -(n & 1);
 }
 
 /**
@@ -783,7 +769,7 @@ int32_t TCompactProtocolT<Transport_>::zigzagToI32(uint32_t n) {
  */
 template <class Transport_>
 int64_t TCompactProtocolT<Transport_>::zigzagToI64(uint64_t n) {
-  return (n >> 1) ^ static_cast<uint64_t>(-static_cast<int64_t>(n & 1));
+  return (n >> 1) ^ -(n & 1);
 }
 
 template <class Transport_>
@@ -815,7 +801,7 @@ TType TCompactProtocolT<Transport_>::getTType(int8_t type) {
     case detail::compact::CT_STRUCT:
       return T_STRUCT;
     default:
-      throw TException(std::string("don't know what type: ") + (char)type);
+      throw TException("don't know what type: " + type);
   }
   return T_STOP;
 }

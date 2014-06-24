@@ -17,19 +17,23 @@
  * under the License.
  */
 
-#include <thrift/thrift-config.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <thrift/transport/TFileTransport.h>
-#include <thrift/transport/TTransportUtils.h>
-#include <thrift/transport/PlatformSocket.h>
-#include <thrift/concurrency/FunctionRunner.h>
+#include "TFileTransport.h"
+#include "TTransportUtils.h"
 
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
 #include <time.h>
 #endif
 #include <fcntl.h>
+#include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -39,7 +43,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <limits>
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -56,6 +59,27 @@ using namespace std;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::concurrency;
 
+#ifndef HAVE_CLOCK_GETTIME
+
+/**
+ * Fake clock_gettime for systems like darwin
+ *
+ */
+#define CLOCK_REALTIME 0
+static int clock_gettime(int clk_id /*ignored*/, struct timespec *tp) {
+  struct timeval now;
+
+  int rv = gettimeofday(&now, NULL);
+  if (rv != 0) {
+    return rv;
+  }
+
+  tp->tv_sec = now.tv_sec;
+  tp->tv_nsec = now.tv_usec * 1000;
+  return 0;
+}
+#endif
+
 TFileTransport::TFileTransport(string path, bool readOnly)
   : readState_()
   , readBuff_(NULL)
@@ -71,6 +95,7 @@ TFileTransport::TFileTransport(string path, bool readOnly)
   , eofSleepTime_(DEFAULT_EOF_SLEEP_TIME_US)
   , corruptedEventSleepTime_(DEFAULT_CORRUPTED_SLEEP_TIME_US)
   , writerThreadIOErrorSleepTime_(DEFAULT_WRITER_THREAD_SLEEP_TIME_US)
+  , writerThreadId_(0)
   , dequeueBuffer_(NULL)
   , enqueueBuffer_(NULL)
   , notFull_(&mutex_)
@@ -86,7 +111,6 @@ TFileTransport::TFileTransport(string path, bool readOnly)
   , numCorruptedEventsInChunk_(0)
   , readOnly_(readOnly)
 {
-  threadFactory_.setDetached(false);
   openLogFile();
 }
 
@@ -99,8 +123,8 @@ void TFileTransport::resetOutputFile(int fd, string filename, off_t offset) {
     // flush any events in the queue
     flush();
     GlobalOutput.printf("error, current file (%s) not closed", filename_.c_str());
-    if (-1 == ::THRIFT_CLOSESOCKET(fd_)) {
-      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    if (-1 == ::close(fd_)) {
+      int errno_copy = errno;
       GlobalOutput.perror("TFileTransport: resetOutputFile() ::close() ", errno_copy);
       throw TTransportException(TTransportException::UNKNOWN, "TFileTransport: error in file close", errno_copy);
     } else {
@@ -120,16 +144,25 @@ void TFileTransport::resetOutputFile(int fd, string filename, off_t offset) {
 
 TFileTransport::~TFileTransport() {
   // flush the buffer if a writer thread is active
-  if(writerThread_.get()) {
+#ifdef USE_BOOST_THREAD
+  if(writerThreadId_.get()) {
+#else
+  if (writerThreadId_ > 0) {
+#endif
     // set state to closing
     closing_ = true;
 
     // wake up the writer thread
     // Since closing_ is true, it will attempt to flush all data, then exit.
-    notEmpty_.notify();
+	notEmpty_.notify();
 
-    writerThread_->join();
-    writerThread_.reset();
+#ifdef USE_BOOST_THREAD
+    writerThreadId_->join();
+	writerThreadId_.reset();
+#else
+    pthread_join(writerThreadId_, NULL);
+    writerThreadId_ = 0;
+#endif
   }
 
   if (dequeueBuffer_) {
@@ -154,8 +187,8 @@ TFileTransport::~TFileTransport() {
 
   // close logfile
   if (fd_ > 0) {
-    if(-1 == ::THRIFT_CLOSESOCKET(fd_)) {
-      GlobalOutput.perror("TFileTransport: ~TFileTransport() ::close() ", THRIFT_GET_SOCKET_ERROR);
+    if(-1 == ::close(fd_)) {
+      GlobalOutput.perror("TFileTransport: ~TFileTransport() ::close() ", errno);
     } else {
       //successfully closed fd
       fd_ = 0;
@@ -169,11 +202,18 @@ bool TFileTransport::initBufferAndWriteThread() {
     return false;
   }
 
-  if(!writerThread_.get()) {
-    writerThread_ = threadFactory_.newThread(
-      apache::thrift::concurrency::FunctionRunner::create(startWriterThread, this));
-    writerThread_->start();
+#ifdef USE_BOOST_THREAD
+  if(!writerThreadId_.get()) {
+    writerThreadId_ = std::auto_ptr<boost::thread>(new boost::thread(boost::bind(startWriterThread, (void *)this)));
   }
+#else
+  if (writerThreadId_ == 0) {
+    if (pthread_create(&writerThreadId_, NULL, startWriterThread, (void *)this) != 0) {
+      T_ERROR("%s", "Could not create writer thread");
+      return false;
+    }
+  }
+#endif
 
   dequeueBuffer_ = new TFileTransportBuffer(eventBufferSize_);
   enqueueBuffer_ = new TFileTransportBuffer(eventBufferSize_);
@@ -254,7 +294,7 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
   // it is probably a non-factor for the time being
 }
 
-bool TFileTransport::swapEventBuffers(struct timeval* deadline) {
+bool TFileTransport::swapEventBuffers(struct timespec* deadline) {
   bool swap;
   Guard g(mutex_);
 
@@ -300,7 +340,7 @@ void TFileTransport::writerThread() {
     try {
       openLogFile();
     } catch (...) {
-      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      int errno_copy = errno;
       GlobalOutput.perror("TFileTransport: writerThread() openLogFile() ", errno_copy);
       fd_ = 0;
       hasIOError = true;
@@ -320,14 +360,14 @@ void TFileTransport::writerThread() {
 #endif
       readState_.resetAllValues();
     } catch (...) {
-      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      int errno_copy = errno;
       GlobalOutput.perror("TFileTransport: writerThread() initialization ", errno_copy);
       hasIOError = true;
     }
   }
 
   // Figure out the next time by which a flush must take place
-  struct timeval ts_next_flush;
+  struct timespec ts_next_flush;
   getNextFlushTime(&ts_next_flush);
   uint32_t unflushed = 0;
 
@@ -335,7 +375,11 @@ void TFileTransport::writerThread() {
     // this will only be true when the destructor is being invoked
     if (closing_) {
       if (hasIOError) {
-        return;
+#ifndef USE_BOOST_THREAD
+		  pthread_exit(NULL);
+#else
+		  return;
+#endif
       }
 
       // Try to empty buffers before exit
@@ -343,15 +387,19 @@ void TFileTransport::writerThread() {
 #ifndef _WIN32
         fsync(fd_);
 #endif
-        if (-1 == ::THRIFT_CLOSESOCKET(fd_)) {
-          int errno_copy = THRIFT_GET_SOCKET_ERROR;
+        if (-1 == ::close(fd_)) {
+          int errno_copy = errno;
           GlobalOutput.perror("TFileTransport: writerThread() ::close() ", errno_copy);
         } else {
           //fd successfully closed
           fd_ = 0;
         }
+#ifndef USE_BOOST_THREAD
+        pthread_exit(NULL);
+#else
         return;
-      }
+#endif
+	  }
     }
 
     if (swapEventBuffers(&ts_next_flush)) {
@@ -364,12 +412,16 @@ void TFileTransport::writerThread() {
 
         while (hasIOError) {
           T_ERROR("TFileTransport: writer thread going to sleep for %d microseconds due to IO errors", writerThreadIOErrorSleepTime_);
-          THRIFT_SLEEP_USEC(writerThreadIOErrorSleepTime_);
+          usleep(writerThreadIOErrorSleepTime_);
           if (closing_) {
+#ifndef USE_BOOST_THREAD
+            pthread_exit(NULL);
+#else
             return;
+#endif
           }
           if (!fd_) {
-            ::THRIFT_CLOSESOCKET(fd_);
+            ::close(fd_);
             fd_ = 0;
           }
           try {
@@ -410,7 +462,7 @@ void TFileTransport::writerThread() {
             memset(zeros, '\0', padding);
             boost::scoped_array<uint8_t> array(zeros);
             if (-1 == ::write(fd_, zeros, padding)) {
-              int errno_copy = THRIFT_GET_SOCKET_ERROR;
+              int errno_copy = errno;
               GlobalOutput.perror("TFileTransport: writerThread() error while padding zeros ", errno_copy);
               hasIOError = true;
               continue;
@@ -423,7 +475,7 @@ void TFileTransport::writerThread() {
         // write the dequeued event to the file
         if (outEvent->eventSize_ > 0) {
           if (-1 == ::write(fd_, outEvent->eventBuff_, outEvent->eventSize_)) {
-            int errno_copy = THRIFT_GET_SOCKET_ERROR;
+            int errno_copy = errno;
             GlobalOutput.perror("TFileTransport: error while writing event ", errno_copy);
             hasIOError = true;
             continue;
@@ -470,11 +522,11 @@ void TFileTransport::writerThread() {
     if (forced_flush || unflushed > flushMaxBytes_) {
       flush = true;
     } else {
-      struct timeval current_time;
-      THRIFT_GETTIMEOFDAY(&current_time, NULL);
+      struct timespec current_time;
+      clock_gettime(CLOCK_REALTIME, &current_time);
       if (current_time.tv_sec > ts_next_flush.tv_sec ||
           (current_time.tv_sec == ts_next_flush.tv_sec &&
-           current_time.tv_usec > ts_next_flush.tv_usec)) {
+           current_time.tv_nsec > ts_next_flush.tv_nsec)) {
         if (unflushed > 0) {
           flush = true;
         } else {
@@ -507,9 +559,15 @@ void TFileTransport::writerThread() {
 
 void TFileTransport::flush() {
   // file must be open for writing for any flushing to take place
-  if (!writerThread_.get()) {
+#ifdef USE_BOOST_THREAD
+  if (!writerThreadId_.get()) {
     return;
   }
+#else
+  if (writerThreadId_ <= 0) {
+    return;
+  }
+#endif
   // wait for flush to take place
   Guard g(mutex_);
 
@@ -600,7 +658,7 @@ eventInfo* TFileTransport::readEvent() {
     if (readState_.bufferPtr_ == readState_.bufferLen_) {
       // advance the offset pointer
       offset_ += readState_.bufferLen_;
-      readState_.bufferLen_ = static_cast<uint32_t>(::read(fd_, readBuff_, readBuffSize_));
+      readState_.bufferLen_ = ::read(fd_, readBuff_, readBuffSize_);
       //       if (readState_.bufferLen_) {
       //         T_DEBUG_L(1, "Amount read: %u (offset: %lu)", readState_.bufferLen_, offset_);
       //       }
@@ -615,7 +673,7 @@ eventInfo* TFileTransport::readEvent() {
       } else if (readState_.bufferLen_ == 0) {  // EOF
         // wait indefinitely if there is no timeout
         if (readTimeout_ == TAIL_READ_TIMEOUT) {
-          THRIFT_SLEEP_USEC(eofSleepTime_);
+          usleep(eofSleepTime_);
           continue;
         } else if (readTimeout_ == NO_TAIL_READ_TIMEOUT) {
           // reset state
@@ -627,7 +685,7 @@ eventInfo* TFileTransport::readEvent() {
             readState_.resetState(0);
             return NULL;
           } else {
-            THRIFT_SLEEP_USEC(readTimeout_ * 1000);
+            usleep(readTimeout_ * 1000);
             readTries++;
             continue;
           }
@@ -652,10 +710,9 @@ eventInfo* TFileTransport::readEvent() {
 
         readState_.eventSizeBuff_[readState_.eventSizeBuffPos_++] =
           readBuff_[readState_.bufferPtr_++];
-
         if (readState_.eventSizeBuffPos_ == 4) {
-          if (readState_.getEventSize() == 0) {
-            // 0 length event indicates padding
+          // 0 length event indicates padding
+          if (*((uint32_t *)(readState_.eventSizeBuff_)) == 0) {
             //            T_DEBUG_L(1, "Got padding");
             readState_.resetState(readState_.lastDispatchPtr_);
             continue;
@@ -666,7 +723,7 @@ eventInfo* TFileTransport::readEvent() {
             delete(readState_.event_);
           }
           readState_.event_ = new eventInfo();
-          readState_.event_->eventSize_ = readState_.getEventSize();
+          readState_.event_->eventSize_ = *((uint32_t *)(readState_.eventSizeBuff_));
 
           // check if the event is corrupted and perform recovery if required
           if (isEventCorrupted()) {
@@ -728,7 +785,7 @@ bool TFileTransport::isEventCorrupted() {
     // 3. size indicates that event crosses chunk boundary
     T_ERROR("Read corrupt event. Event crosses chunk boundary. Event size:%u  Offset:%lu",
             readState_.event_->eventSize_,
-            static_cast<unsigned long>(offset_ + readState_.bufferPtr_ + 4));
+            (offset_ + readState_.bufferPtr_ + 4));
 
     return true;
   }
@@ -759,7 +816,7 @@ void TFileTransport::performRecovery() {
       // if tailing the file, wait until there is enough data to start
       // the next chunk
       while(curChunk == (getNumChunks() - 1)) {
-        THRIFT_SLEEP_USEC(DEFAULT_CORRUPTED_SLEEP_TIME_US);
+        usleep(DEFAULT_CORRUPTED_SLEEP_TIME_US);
       }
       seekToChunk(curChunk + 1);
     } else {
@@ -769,7 +826,7 @@ void TFileTransport::performRecovery() {
       currentEvent_ = NULL;
       char errorMsg[1024];
       sprintf(errorMsg, "TFileTransport: log file corrupted at offset: %lu",
-              static_cast<unsigned long>(offset_ + readState_.lastDispatchPtr_));
+              (offset_ + readState_.lastDispatchPtr_));
 
       GlobalOutput(errorMsg);
       throw TTransportException(errorMsg);
@@ -851,17 +908,14 @@ uint32_t TFileTransport::getNumChunks() {
   int rv = fstat(fd_, &f_info);
 
   if (rv < 0) {
-    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    int errno_copy = errno;
     throw TTransportException(TTransportException::UNKNOWN,
                               "TFileTransport::getNumChunks() (fstat)",
                               errno_copy);
   }
 
   if (f_info.st_size > 0) {
-    size_t numChunks = ((f_info.st_size)/chunkSize_) + 1;
-    if (numChunks > (std::numeric_limits<uint32_t>::max)())
-      throw TTransportException("Too many chunks");
-    return static_cast<uint32_t>(numChunks);
+    return ((f_info.st_size)/chunkSize_) + 1;
   }
 
   // empty file has no chunks
@@ -869,7 +923,7 @@ uint32_t TFileTransport::getNumChunks() {
 }
 
 uint32_t TFileTransport::getCurChunk() {
-  return static_cast<uint32_t>(offset_/chunkSize_);
+  return offset_/chunkSize_;
 }
 
 // Utility Functions
@@ -887,22 +941,21 @@ void TFileTransport::openLogFile() {
 
   // make sure open call was successful
   if(fd_ == -1) {
-    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    int errno_copy = errno;
     GlobalOutput.perror("TFileTransport: openLogFile() ::open() file: " + filename_, errno_copy);
     throw TTransportException(TTransportException::NOT_OPEN, filename_, errno_copy);
   }
 
 }
 
-void TFileTransport::getNextFlushTime(struct timeval* ts_next_flush) {
-  THRIFT_GETTIMEOFDAY(ts_next_flush, NULL);
-
-  ts_next_flush->tv_usec += flushMaxUs_;
-  if (ts_next_flush->tv_usec > 1000000) {
-    long extra_secs = ts_next_flush->tv_usec / 1000000;
-    ts_next_flush->tv_usec %= 1000000;
-    ts_next_flush->tv_sec += extra_secs;
+void TFileTransport::getNextFlushTime(struct timespec* ts_next_flush) {
+  clock_gettime(CLOCK_REALTIME, ts_next_flush);
+  ts_next_flush->tv_nsec += (flushMaxUs_ % 1000000) * 1000;
+  if (ts_next_flush->tv_nsec > 1000000000) {
+    ts_next_flush->tv_nsec -= 1000000000;
+    ts_next_flush->tv_sec += 1;
   }
+  ts_next_flush->tv_sec += flushMaxUs_ / 1000000;
 }
 
 TFileTransportBuffer::TFileTransportBuffer(uint32_t size)

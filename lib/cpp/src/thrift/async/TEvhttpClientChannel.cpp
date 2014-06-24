@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <thrift/async/TEvhttpClientChannel.h>
+#include "TEvhttpClientChannel.h"
 #include <evhttp.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TProtocolException.h>
@@ -142,7 +142,7 @@ void TEvhttpClientChannel::finish(struct evhttp_request* req) {
   }
   recvBuf_->resetBuffer(
       EVBUFFER_DATA(req->input_buffer),
-      static_cast<uint32_t>(EVBUFFER_LENGTH(req->input_buffer)));
+      EVBUFFER_LENGTH(req->input_buffer));
   cob_();
   return;
 }

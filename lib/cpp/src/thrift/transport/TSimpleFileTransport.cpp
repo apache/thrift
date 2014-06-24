@@ -17,9 +17,10 @@
  * under the License.
  */
 
-#include <thrift/thrift-config.h>
-
-#include <thrift/transport/TSimpleFileTransport.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#include "TSimpleFileTransport.h"
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_STAT_H
