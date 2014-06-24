@@ -20,8 +20,8 @@
 #ifndef _THRIFT_TRANSPORT_TSERVERTRANSPORT_H_
 #define _THRIFT_TRANSPORT_TSERVERTRANSPORT_H_ 1
 
-#include <thrift/transport/TTransport.h>
-#include <thrift/transport/TTransportException.h>
+#include "TTransport.h"
+#include "TTransportException.h"
 #include <boost/shared_ptr.hpp>
 
 namespace apache { namespace thrift { namespace transport {
@@ -55,7 +55,7 @@ class TServerTransport {
    */
   boost::shared_ptr<TTransport> accept() {
     boost::shared_ptr<TTransport> result = acceptImpl();
-    if (!result) {
+    if (result == NULL) {
       throw TTransportException("accept() may not return NULL");
     }
     return result;

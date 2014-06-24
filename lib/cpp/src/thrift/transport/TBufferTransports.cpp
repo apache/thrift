@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <arpa/inet.h>
 #include <cassert>
 #include <algorithm>
 
@@ -175,13 +176,11 @@ bool TFramedTransport::readFrame() {
   // We can't use readAll(&sz, sizeof(sz)), since that always throws an
   // exception on EOF.  We want to throw an exception only if EOF occurs after
   // partial size data.
-  int32_t sz = -1;
+  int32_t sz;
   uint32_t size_bytes_read = 0;
   while (size_bytes_read < sizeof(sz)) {
     uint8_t* szp = reinterpret_cast<uint8_t*>(&sz) + size_bytes_read;
-    uint32_t bytes_read = transport_->read(
-      szp,
-      static_cast<uint32_t>(sizeof(sz)) - size_bytes_read);
+    uint32_t bytes_read = transport_->read(szp, sizeof(sz) - size_bytes_read);
     if (bytes_read == 0) {
       if (size_bytes_read == 0) {
         // EOF before any data was read.
@@ -261,9 +260,7 @@ void TFramedTransport::flush()  {
     wBase_ = wBuf_.get() + sizeof(sz_nbo);
 
     // Write size and frame body.
-    transport_->write(
-      wBuf_.get(),
-      static_cast<uint32_t>(sizeof(sz_nbo))+sz_hbo);
+    transport_->write(wBuf_.get(), sizeof(sz_nbo)+sz_hbo);
   }
 
   // Flush the underlying transport.

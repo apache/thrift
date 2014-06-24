@@ -21,7 +21,7 @@
 #define _THRIFT_TRANSPORT_TSOCKETPOOL_H_ 1
 
 #include <vector>
-#include <thrift/transport/TSocket.h>
+#include "TSocket.h"
 
 namespace apache { namespace thrift { namespace transport {
 
@@ -49,7 +49,7 @@ class TSocketPoolServer {
   int port_;
 
   // Socket for the server
-  THRIFT_SOCKET socket_;
+  SOCKET socket_;
 
   // Last time connecting to this server failed
   time_t lastFailTime_;

@@ -17,12 +17,11 @@
  * under the License.
  */
 
-#include <thrift/thrift-config.h>
-
-#ifdef USE_BOOST_THREAD
-
-#include <thrift/concurrency/BoostThreadFactory.h>
-#include <thrift/concurrency/Exception.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#include "BoostThreadFactory.h"
+#include "Exception.h"
 
 #include <cassert>
 
@@ -117,7 +116,7 @@ void* BoostThread::threadMain(void* arg) {
   shared_ptr<BoostThread> thread = *(shared_ptr<BoostThread>*)arg;
   delete reinterpret_cast<shared_ptr<BoostThread>*>(arg);
 
-  if (!thread) {
+  if (thread == NULL) {
     return (void*)0;
   }
 
@@ -180,5 +179,3 @@ void BoostThreadFactory::setDetached(bool value) { impl_->setDetached(value); }
 Thread::id_t BoostThreadFactory::getCurrentThreadId() const { return impl_->getCurrentThreadId(); }
 
 }}} // apache::thrift::concurrency
-
-#endif // USE_BOOST_THREAD

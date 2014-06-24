@@ -20,10 +20,13 @@
 #ifndef _THRIFT_THRIFT_H_
 #define _THRIFT_THRIFT_H_ 1
 
-#include <thrift/transport/PlatformSocket.h>
+#ifdef _WIN32
+#include <thrift/windows/config.h>
+#endif
 
-#include <thrift/thrift-config.h>
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <stdio.h>
 #include <assert.h>
 
@@ -45,7 +48,7 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_convertible.hpp>
 
-#include <thrift/TLogging.h>
+#include "TLogging.h"
 
 /**
  * Helper macros to allow function overloading even when using
@@ -69,8 +72,6 @@
 #define THRIFT_OVERLOAD_IF(T, Y) \
   THRIFT_OVERLOAD_IF_DEFN(T, Y) = NULL
 
-#define THRIFT_UNUSED_VARIABLE(x) ((void)(x))
-
 namespace apache { namespace thrift {
 
 class TEnumIterator : public std::iterator<std::forward_iterator_tag, std::pair<int, const char*> > {
@@ -86,7 +87,6 @@ class TEnumIterator : public std::iterator<std::forward_iterator_tag, std::pair<
   }
 
   bool operator !=(const TEnumIterator& end) {
-    (void)end;  // avoid "unused" warning with NDEBUG
     assert(end.n_ == -1);
     return (ii_ != n_);
   }
@@ -125,7 +125,14 @@ class TOutput {
 
   void printf(const char *message, ...);
 
-  static void errorTimeWrapper(const char* msg);
+  inline static void errorTimeWrapper(const char* msg) {
+    time_t now;
+    char dbgtime[26];
+    time(&now);
+    ctime_r(&now, dbgtime);
+    dbgtime[24] = 0;
+    fprintf(stderr, "Thrift: %s %s\n", dbgtime, msg);
+  }
 
   /** Just like strerror_r but returns a C++ string object. */
   static std::string strerror_s(int errno_copy);

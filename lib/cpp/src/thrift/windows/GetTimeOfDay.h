@@ -28,16 +28,6 @@
 #error This is a MSVC header only.
 #endif
 
-#include <thrift/thrift-config.h>
-
-struct thrift_timespec {
-  int64_t tv_sec;
-  int64_t tv_nsec;
-};
-
-int thrift_gettimeofday(struct timeval * tv, struct timezone * tz);
-int thrift_sleep(unsigned int seconds);
-int thrift_usleep(unsigned int micro_seconds);
-char *thrift_ctime_r(const time_t *_clock, char *_buf);
+int gettimeofday(struct timeval * tv, struct timezone * tz);
 
 #endif // _THRIFT_WINDOWS_GETTIMEOFDAY_H_

@@ -17,13 +17,15 @@
  * under the License.
  */
 
-#include <thrift/thrift-config.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#include "Monitor.h"
+#include "Exception.h"
+#include "Util.h"
 
-#include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Exception.h>
-#include <thrift/concurrency/Util.h>
-#include <thrift/transport/PlatformSocket.h>
 #include <assert.h>
+#include <errno.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
@@ -69,7 +71,7 @@ class Monitor::Impl : public boost::condition_variable_any {
    */
   void wait(int64_t timeout_ms) {
     int result = waitForTimeRelative(timeout_ms);
-    if (result == THRIFT_ETIMEDOUT) {
+    if (result == ETIMEDOUT) {
       throw TimedOutException();
     } else if (result != 0) {
       throw TException(
@@ -81,7 +83,7 @@ class Monitor::Impl : public boost::condition_variable_any {
    * Waits until the specified timeout in milliseconds for the condition to
    * occur, or waits forever if timeout_ms == 0.
    *
-   * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
+   * Returns 0 if condition occurs, ETIMEDOUT on timeout, or an error code.
    */
   int waitForTimeRelative(int64_t timeout_ms) {
     if (timeout_ms == 0LL) {
@@ -94,47 +96,36 @@ class Monitor::Impl : public boost::condition_variable_any {
     assert(mutexImpl);
 
 	boost::timed_mutex::scoped_lock lock(*mutexImpl, boost::adopt_lock);
-	int res = timed_wait(lock, boost::get_system_time()+boost::posix_time::milliseconds(timeout_ms)) ? 0 : THRIFT_ETIMEDOUT;
+	int res = timed_wait(lock, boost::get_system_time()+boost::posix_time::milliseconds(timeout_ms)) ? 0 : ETIMEDOUT;
 	lock.release();
 	return res;
   }
 
   /**
-   * Waits until the absolute time specified using struct THRIFT_TIMESPEC.
-   * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
+   * Waits until the absolute time specified using struct timespec.
+   * Returns 0 if condition occurs, ETIMEDOUT on timeout, or an error code.
    */
-  int waitForTime(const THRIFT_TIMESPEC* abstime) {
-    struct timeval temp;
-    temp.tv_sec  = static_cast<long>(abstime->tv_sec);
-    temp.tv_usec = static_cast<long>(abstime->tv_nsec) / 1000;
-    return waitForTime(&temp);
-  }
-
-  /**
-   * Waits until the absolute time specified using struct timeval.
-   * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
-   */
-  int waitForTime(const struct timeval* abstime) {
+  int waitForTime(const timespec* abstime) {
     assert(mutex_);
     boost::timed_mutex* mutexImpl =
-      static_cast<boost::timed_mutex*>(mutex_->getUnderlyingImpl());
+      reinterpret_cast<boost::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
-    struct timeval currenttime;
-    Util::toTimeval(currenttime, Util::currentTime());
+    struct timespec currenttime;
+    Util::toTimespec(currenttime, Util::currentTime());
 
 	long tv_sec = static_cast<long>(abstime->tv_sec - currenttime.tv_sec);
-	long tv_usec = static_cast<long>(abstime->tv_usec - currenttime.tv_usec);
+	long tv_nsec = static_cast<long>(abstime->tv_nsec - currenttime.tv_nsec);
 	if(tv_sec < 0)
 		tv_sec = 0;
-	if(tv_usec < 0)
-		tv_usec = 0;
+	if(tv_nsec < 0)
+		tv_nsec = 0;
 
 	boost::timed_mutex::scoped_lock lock(*mutexImpl, boost::adopt_lock);
 	int res = timed_wait(lock, boost::get_system_time() +
 		boost::posix_time::seconds(tv_sec) +
-		boost::posix_time::microseconds(tv_usec)
-		) ? 0 : THRIFT_ETIMEDOUT;
+		boost::posix_time::microseconds(tv_nsec / 1000)
+		) ? 0 : ETIMEDOUT;
 	lock.release();
 	return res;
   }
@@ -188,11 +179,7 @@ void Monitor::unlock() const { const_cast<Monitor::Impl*>(impl_)->unlock(); }
 
 void Monitor::wait(int64_t timeout) const { const_cast<Monitor::Impl*>(impl_)->wait(timeout); }
 
-int Monitor::waitForTime(const THRIFT_TIMESPEC* abstime) const {
-  return const_cast<Monitor::Impl*>(impl_)->waitForTime(abstime);
-}
-
-int Monitor::waitForTime(const timeval* abstime) const {
+int Monitor::waitForTime(const timespec* abstime) const {
   return const_cast<Monitor::Impl*>(impl_)->waitForTime(abstime);
 }
 

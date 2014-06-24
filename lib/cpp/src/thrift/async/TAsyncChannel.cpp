@@ -18,15 +18,15 @@
  */
 
 #include <thrift/async/TAsyncChannel.h>
-#include <thrift/cxxfunctional.h>
+#include <tr1/functional>
 
 namespace apache { namespace thrift { namespace async {
 
 void TAsyncChannel::sendAndRecvMessage(const VoidCallback& cob,
                                        TMemoryBuffer* sendBuf,
                                        TMemoryBuffer* recvBuf) {
-  apache::thrift::stdcxx::function<void()> send_done =
-    apache::thrift::stdcxx::bind(&TAsyncChannel::recvMessage, this, cob, recvBuf);
+  std::tr1::function<void()> send_done =
+    std::tr1::bind(&TAsyncChannel::recvMessage, this, cob, recvBuf);
 
   sendMessage(send_done, sendBuf);
 }

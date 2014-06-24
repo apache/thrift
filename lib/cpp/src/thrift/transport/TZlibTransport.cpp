@@ -21,6 +21,7 @@
 #include <cstring>
 #include <algorithm>
 #include <thrift/transport/TZlibTransport.h>
+#include <zlib.h>
 
 using std::string;
 
@@ -56,7 +57,7 @@ void TZlibTransport::initZlib() {
     // Have to set this flag so we know whether to de-initialize.
     r_init = true;
 
-    rv = deflateInit(wstream_, comp_level_);
+    rv = deflateInit(wstream_, Z_DEFAULT_COMPRESSION);
     checkZlibRv(rv, wstream_->msg);
   }
 
@@ -143,7 +144,7 @@ uint32_t TZlibTransport::read(uint8_t* buf, uint32_t len) {
   while (true) {
     // Copy out whatever we have available, then give them the min of
     // what we have and what they want, then advance indices.
-    int give = (std::min)((uint32_t) readAvail(), need);
+    int give = std::min((uint32_t) readAvail(), need);
     memcpy(buf, urbuf_ + urpos_, give);
     need -= give;
     buf += give;

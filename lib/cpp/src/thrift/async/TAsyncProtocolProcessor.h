@@ -20,8 +20,8 @@
 #ifndef _THRIFT_TNAME_ME_H_
 #define _THRIFT_TNAME_ME_H_ 1
 
-#include <thrift/async/TAsyncProcessor.h>
-#include <thrift/async/TAsyncBufferProcessor.h>
+#include "TAsyncProcessor.h"
+#include "TAsyncBufferProcessor.h"
 #include <thrift/protocol/TProtocol.h>
 
 namespace apache { namespace thrift { namespace async {
@@ -36,7 +36,7 @@ class TAsyncProtocolProcessor : public TAsyncBufferProcessor {
   {}
 
   virtual void process(
-      apache::thrift::stdcxx::function<void(bool healthy)> _return,
+      std::tr1::function<void(bool healthy)> _return,
       boost::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
       boost::shared_ptr<apache::thrift::transport::TBufferBase> obuf);
 
@@ -44,7 +44,7 @@ class TAsyncProtocolProcessor : public TAsyncBufferProcessor {
 
  private:
   static void finish(
-      apache::thrift::stdcxx::function<void(bool healthy)> _return,
+      std::tr1::function<void(bool healthy)> _return,
       boost::shared_ptr<apache::thrift::protocol::TProtocol> oprot,
       bool healthy);
 

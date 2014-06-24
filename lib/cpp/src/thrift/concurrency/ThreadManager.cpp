@@ -17,12 +17,14 @@
  * under the License.
  */
 
-#include <thrift/thrift-config.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
-#include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/Exception.h>
-#include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Util.h>
+#include "ThreadManager.h"
+#include "Exception.h"
+#include "Monitor.h"
+#include "Util.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -308,7 +310,7 @@ class ThreadManager::Worker: public Runnable {
         }
       }
 
-      if (task) {
+      if (task != NULL) {
         if (task->state_ == ThreadManager::Task::EXECUTING) {
           try {
             task->run();
@@ -375,7 +377,7 @@ void ThreadManager::Impl::start() {
   {
     Synchronized s(monitor_);
     if (state_ == ThreadManager::UNINITIALIZED) {
-      if (!threadFactory_) {
+      if (threadFactory_ == NULL) {
         throw InvalidArgumentException();
       }
       state_ = ThreadManager::STARTED;
@@ -446,8 +448,8 @@ void ThreadManager::Impl::removeWorker(size_t value) {
     }
 
     for (std::set<shared_ptr<Thread> >::iterator ix = deadWorkers_.begin(); ix != deadWorkers_.end(); ix++) {
-      idMap_.erase((*ix)->getId());
       workers_.erase(*ix);
+      idMap_.erase((*ix)->getId());
     }
 
     deadWorkers_.clear();

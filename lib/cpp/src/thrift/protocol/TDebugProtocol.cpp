@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <thrift/protocol/TDebugProtocol.h>
+#include "TDebugProtocol.h"
 
 #include <cassert>
 #include <cctype>
@@ -32,7 +32,7 @@ using std::string;
 static string byte_to_hex(const uint8_t byte) {
   char buf[3];
   int ret = std::sprintf(buf, "%02x", (int)byte);
-  THRIFT_UNUSED_VARIABLE(ret);
+  ret = ret; //squelching "unused variable" warning
   assert(ret == 2);
   assert(buf[2] == '\0');
   return buf;

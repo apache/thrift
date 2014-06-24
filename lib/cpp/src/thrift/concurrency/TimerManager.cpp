@@ -17,9 +17,9 @@
  * under the License.
  */
 
-#include <thrift/concurrency/TimerManager.h>
-#include <thrift/concurrency/Exception.h>
-#include <thrift/concurrency/Util.h>
+#include "TimerManager.h"
+#include "Exception.h"
+#include "Util.h"
 
 #include <assert.h>
 #include <iostream>
@@ -174,7 +174,7 @@ void TimerManager::start() {
   bool doStart = false;
   {
     Synchronized s(monitor_);
-    if (!threadFactory_) {
+    if (threadFactory_ == NULL) {
       throw InvalidArgumentException();
     }
     if (state_ == TimerManager::UNINITIALIZED) {
@@ -263,7 +263,7 @@ void TimerManager::add(shared_ptr<Runnable> task, int64_t timeout) {
   }
 }
 
-void TimerManager::add(shared_ptr<Runnable> task, const struct THRIFT_TIMESPEC& value) {
+void TimerManager::add(shared_ptr<Runnable> task, const struct timespec& value) {
 
   int64_t expiration;
   Util::toMilliseconds(expiration, value);
@@ -277,19 +277,6 @@ void TimerManager::add(shared_ptr<Runnable> task, const struct THRIFT_TIMESPEC& 
   add(task, expiration - now);
 }
 
-void TimerManager::add(shared_ptr<Runnable> task, const struct timeval& value) {
-
-  int64_t expiration;
-  Util::toMilliseconds(expiration, value);
-
-  int64_t now = Util::currentTime();
-
-  if (expiration < now) {
-    throw  InvalidArgumentException();
-  }
-
-  add(task, expiration - now);
-}
 
 void TimerManager::remove(shared_ptr<Runnable> task) {
   (void) task;

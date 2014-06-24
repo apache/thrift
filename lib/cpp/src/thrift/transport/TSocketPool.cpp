@@ -17,12 +17,10 @@
  * under the License.
  */
 
-#include <thrift/thrift-config.h>
-
 #include <algorithm>
 #include <iostream>
 
-#include <thrift/transport/TSocketPool.h>
+#include "TSocketPool.h"
 
 namespace apache { namespace thrift { namespace transport {
 
@@ -37,7 +35,7 @@ using boost::shared_ptr;
 TSocketPoolServer::TSocketPoolServer()
   : host_(""),
     port_(0),
-    socket_(THRIFT_INVALID_SOCKET),
+    socket_(-1),
     lastFailTime_(0),
     consecutiveFailures_(0) {}
 
@@ -47,7 +45,7 @@ TSocketPoolServer::TSocketPoolServer()
 TSocketPoolServer::TSocketPoolServer(const string &host, int port)
   : host_(host),
     port_(port),
-    socket_(THRIFT_INVALID_SOCKET),
+    socket_(-1),
     lastFailTime_(0),
     consecutiveFailures_(0) {}
 
@@ -178,7 +176,7 @@ void TSocketPool::open() {
 
   size_t numServers = servers_.size();
   if (numServers == 0) {
-    socket_ = THRIFT_INVALID_SOCKET;
+    socket_ = -1;
     throw TTransportException(TTransportException::NOT_OPEN);
   }
 
@@ -219,7 +217,7 @@ void TSocketPool::open() {
         } catch (TException e) {
           string errStr = "TSocketPool::open failed "+getSocketInfo()+": "+e.what();
           GlobalOutput(errStr.c_str());
-          socket_ = THRIFT_INVALID_SOCKET;
+          socket_ = -1;
           continue;
         }
 
@@ -247,7 +245,7 @@ void TSocketPool::open() {
 void TSocketPool::close() {
   TSocket::close();
   if (currentServer_) {
-    currentServer_->socket_ = THRIFT_INVALID_SOCKET;
+    currentServer_->socket_ = -1;
   }
 }
 

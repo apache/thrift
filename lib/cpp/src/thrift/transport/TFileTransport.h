@@ -27,13 +27,19 @@
 #include <string>
 #include <stdio.h>
 
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
+
+#ifdef USE_BOOST_THREAD
+#include <boost/thread.hpp>
+#endif
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
-#include <thrift/concurrency/Thread.h>
 
 namespace apache { namespace thrift { namespace transport {
 
@@ -86,11 +92,6 @@ typedef struct readState {
       delete(event_);
     }
     event_ = 0;
-  }
-
-  inline uint32_t getEventSize() {
-  	  const void *buffer=reinterpret_cast<const void *>(eventSizeBuff_);
-	  return *reinterpret_cast<const uint32_t *>(buffer);
   }
 
   readState() {
@@ -301,13 +302,13 @@ class TFileTransport : public TFileReaderTransport,
  private:
   // helper functions for writing to a file
   void enqueueEvent(const uint8_t* buf, uint32_t eventLen);
-  bool swapEventBuffers(struct timeval* deadline);
+  bool swapEventBuffers(struct timespec* deadline);
   bool initBufferAndWriteThread();
 
   // control for writer thread
   static void* startWriterThread(void* ptr) {
-    static_cast<TFileTransport*>(ptr)->writerThread();
-    return NULL;
+    (((TFileTransport*)ptr)->writerThread());
+    return 0;
   }
   void writerThread();
 
@@ -320,7 +321,7 @@ class TFileTransport : public TFileReaderTransport,
 
   // Utility functions
   void openLogFile();
-  void getNextFlushTime(struct timeval* ts_next_flush);
+  void getNextFlushTime(struct timespec* ts_next_flush);
 
   // Class variables
   readState readState_;
@@ -369,9 +370,12 @@ class TFileTransport : public TFileReaderTransport,
   uint32_t writerThreadIOErrorSleepTime_;
   static const uint32_t DEFAULT_WRITER_THREAD_SLEEP_TIME_US = 60 * 1000 * 1000;
 
-  // writer thread
-  apache::thrift::concurrency::PlatformThreadFactory threadFactory_;
-  boost::shared_ptr<apache::thrift::concurrency::Thread> writerThread_;
+  // writer thread id
+#ifdef USE_BOOST_THREAD
+	std::auto_ptr<boost::thread> writerThreadId_;
+#else
+	pthread_t writerThreadId_;
+#endif
 
   // buffers to hold data before it is flushed. Each element of the buffer stores a msg that
   // needs to be written to the file.  The buffers are swapped by the writer thread.

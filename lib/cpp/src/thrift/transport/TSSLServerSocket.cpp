@@ -17,28 +17,30 @@
  * under the License.
  */
 
-#include <thrift/transport/TSSLServerSocket.h>
-#include <thrift/transport/TSSLSocket.h>
+#include "TSSLServerSocket.h"
+#include "TSSLSocket.h"
 
 namespace apache { namespace thrift { namespace transport {
+
+using namespace boost;
 
 /**
  * SSL server socket implementation.
  */
-TSSLServerSocket::TSSLServerSocket(THRIFT_SOCKET port,
-                                   boost::shared_ptr<TSSLSocketFactory> factory):
+TSSLServerSocket::TSSLServerSocket(int port,
+                                   shared_ptr<TSSLSocketFactory> factory):
                                    TServerSocket(port), factory_(factory) {
   factory_->server(true);
 }
 
 TSSLServerSocket::TSSLServerSocket(int port, int sendTimeout, int recvTimeout,
-                                   boost::shared_ptr<TSSLSocketFactory> factory):
+                                   shared_ptr<TSSLSocketFactory> factory):
                                    TServerSocket(port, sendTimeout, recvTimeout),
                                    factory_(factory) {
   factory_->server(true);
 }
 
-boost::shared_ptr<TSocket> TSSLServerSocket::createSocket(THRIFT_SOCKET client) {
+shared_ptr<TSocket> TSSLServerSocket::createSocket(int client) {
   return factory_->createSocket(client);
 }
 

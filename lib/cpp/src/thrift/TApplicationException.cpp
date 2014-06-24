@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
+#include <stdint.h>
 #include <thrift/TApplicationException.h>
 #include <thrift/protocol/TProtocol.h>
 

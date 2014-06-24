@@ -20,8 +20,8 @@
 #ifndef _THRIFT_CONCURRENCY_MONITOR_H_
 #define _THRIFT_CONCURRENCY_MONITOR_H_ 1
 
-#include <thrift/concurrency/Exception.h>
-#include <thrift/concurrency/Mutex.h>
+#include "Exception.h"
+#include "Mutex.h"
 
 #include <boost/utility.hpp>
 
@@ -70,21 +70,15 @@ class Monitor : boost::noncopyable {
    * Waits a maximum of the specified timeout in milliseconds for the condition
    * to occur, or waits forever if timeout_ms == 0.
    *
-   * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
+   * Returns 0 if condition occurs, ETIMEDOUT on timeout, or an error code.
    */
   int waitForTimeRelative(int64_t timeout_ms) const;
 
   /**
-   * Waits until the absolute time specified using struct THRIFT_TIMESPEC.
-   * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
+   * Waits until the absolute time specified using struct timespec.
+   * Returns 0 if condition occurs, ETIMEDOUT on timeout, or an error code.
    */
-  int waitForTime(const THRIFT_TIMESPEC* abstime) const;
-
-  /**
-   * Waits until the absolute time specified using struct timeval.
-   * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
-   */
-  int waitForTime(const struct timeval* abstime) const;
+  int waitForTime(const timespec* abstime) const;
 
   /**
    * Waits forever until the condition occurs.

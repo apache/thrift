@@ -20,7 +20,7 @@
 #ifndef _THRIFT_PROTOCOL_TCOMPACTPROTOCOL_H_
 #define _THRIFT_PROTOCOL_TCOMPACTPROTOCOL_H_ 1
 
-#include <thrift/protocol/TVirtualProtocol.h>
+#include "TVirtualProtocol.h"
 
 #include <stack>
 #include <boost/shared_ptr.hpp>
@@ -35,10 +35,10 @@ class TCompactProtocolT
   : public TVirtualProtocol< TCompactProtocolT<Transport_> > {
 
  protected:
-  static const int8_t  PROTOCOL_ID = (int8_t)0x82u;
+  static const int8_t  PROTOCOL_ID = (int8_t)0x82;
   static const int8_t  VERSION_N = 1;
   static const int8_t  VERSION_MASK = 0x1f; // 0001 1111
-  static const int8_t  TYPE_MASK = (int8_t)0xE0u; // 1110 0000
+  static const int8_t  TYPE_MASK = (int8_t)0xE0; // 1110 0000
   static const int32_t TYPE_SHIFT_AMOUNT = 5;
 
   Transport_* trans_;
@@ -161,12 +161,12 @@ class TCompactProtocolT
                                   const TType fieldType,
                                   const int16_t fieldId,
                                   int8_t typeOverride);
-  uint32_t writeCollectionBegin(const TType elemType, int32_t size);
+  uint32_t writeCollectionBegin(int8_t elemType, int32_t size);
   uint32_t writeVarint32(uint32_t n);
   uint32_t writeVarint64(uint64_t n);
   uint64_t i64ToZigzag(const int64_t l);
   uint32_t i32ToZigzag(const int32_t n);
-  inline int8_t getCompactType(const TType ttype);
+  inline int8_t getCompactType(int8_t ttype);
 
  public:
   uint32_t readMessageBegin(std::string& name,
@@ -284,6 +284,6 @@ typedef TCompactProtocolFactoryT<TTransport> TCompactProtocolFactory;
 
 }}} // apache::thrift::protocol
 
-#include <thrift/protocol/TCompactProtocol.tcc>
+#include "TCompactProtocol.tcc"
 
 #endif

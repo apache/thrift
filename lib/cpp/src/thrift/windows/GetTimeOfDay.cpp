@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include <thrift/windows/GetTimeOfDay.h>
-#include <thrift/thrift-config.h>
+#include "GetTimeOfDay.h"
+#include "config.h"
 
 // win32
 #include <time.h>
@@ -35,7 +35,7 @@ struct timezone
     int  tz_dsttime;     /* type of dst correction */
 };
 
-int thrift_gettimeofday(struct timeval * tv, struct timezone * tz)
+int gettimeofday(struct timeval * tv, struct timezone * tz)
 {
     FILETIME         ft;
     unsigned __int64 tmpres(0);
@@ -50,7 +50,7 @@ int thrift_gettimeofday(struct timeval * tv, struct timezone * tz)
         tmpres |= ft.dwLowDateTime;
 
         /*converting file time to unix epoch*/
-        tmpres -= DELTA_EPOCH_IN_MICROSECS;
+        tmpres -= DELTA_EPOCH_IN_MICROSECS; 
         tmpres /= 10;  /*convert into microseconds*/
         tv->tv_sec = (long)(tmpres / 1000000UL);
         tv->tv_usec = (long)(tmpres % 1000000UL);
@@ -88,25 +88,5 @@ int thrift_gettimeofday(struct timeval * tv, struct timezone * tz)
         }
     }
 
-    return 0;
+    return -1;
 }
-
-int thrift_sleep(unsigned int seconds)
-{
-  ::Sleep(seconds * 1000);
-  return 0;
-}
-int thrift_usleep(unsigned int microseconds)
-{
-  unsigned int milliseconds = (microseconds + 999)/ 1000;
-  ::Sleep(milliseconds);
-  return 0;
-}
-
-char *thrift_ctime_r(const time_t *_clock, char *_buf)
-{
-   strcpy(_buf, ctime(_clock));
-   return _buf;
-}
-
-

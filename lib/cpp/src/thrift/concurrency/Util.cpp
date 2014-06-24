@@ -17,24 +17,39 @@
  * under the License.
  */
 
-#include <thrift/thrift-config.h>
-
-#include <thrift/Thrift.h>
-#include <thrift/concurrency/Util.h>
-
-#if defined(HAVE_SYS_TIME_H)
-#include <sys/time.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
 #endif
+#define HAVE_GETTIMEOFDAY
+
+#include "Util.h"
+
+#if defined(HAVE_CLOCK_GETTIME)
+#include <time.h>
+#elif defined(HAVE_SYS_TIME_H)
+#include <sys/time.h>
+#endif // defined(HAVE_CLOCK_GETTIME)
 
 namespace apache { namespace thrift { namespace concurrency {
 
 int64_t Util::currentTimeTicks(int64_t ticksPerSec) {
   int64_t result;
-  struct timeval now;
-  int ret = THRIFT_GETTIMEOFDAY(&now, NULL);
+
+#if defined(HAVE_CLOCK_GETTIME)
+  struct timespec now;
+  int ret = clock_gettime(CLOCK_REALTIME, &now);
   assert(ret == 0);
-  THRIFT_UNUSED_VARIABLE(ret); //squelching "unused variable" warning
+  ret = ret; //squelching "unused variable" warning
   toTicks(result, now, ticksPerSec);
+#elif defined(HAVE_GETTIMEOFDAY)
+  struct timeval now;
+  int ret = gettimeofday(&now, NULL);
+  assert(ret == 0);
+  toTicks(result, now, ticksPerSec);
+#else
+//#error "No high-precision clock is available."
+#endif // defined(HAVE_CLOCK_GETTIME)
+
   return result;
 }
 
