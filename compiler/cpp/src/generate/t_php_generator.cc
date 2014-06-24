@@ -70,6 +70,9 @@ class t_php_generator : public t_oop_generator {
     iter = parsed_options.find("oop");
     oop_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("validate");
+    validate_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("nsglobal");
     if(iter != parsed_options.end()) {
       nsglobal_ = iter->second;
@@ -118,6 +121,9 @@ class t_php_generator : public t_oop_generator {
   void generate_php_struct_reader(std::ofstream& out, t_struct* tstruct);
   void generate_php_struct_writer(std::ofstream& out, t_struct* tstruct);
   void generate_php_function_helpers(t_function* tfunction);
+  void generate_php_struct_required_validator(ofstream& out, t_struct* tstruct, std::string method_name, bool be_strict);
+  void generate_php_struct_read_validator(ofstream& out, t_struct* tstruct);
+  void generate_php_struct_write_validator(ofstream& out, t_struct* tstruct);
 
   void generate_php_type_spec(std::ofstream &out, t_type* t);
   void generate_php_struct_spec(std::ofstream &out, t_struct* tstruct);
@@ -362,6 +368,11 @@ class t_php_generator : public t_oop_generator {
    * Whether to use OOP base class TBase
    */
   bool oop_;
+
+  /**
+   * Whether to generate validator code
+   */
+  bool validate_;
 
   /**
    * Global namespace for PHP 5.3
@@ -817,6 +828,10 @@ void t_php_generator::generate_php_struct_definition(ofstream& out,
 
   generate_php_struct_reader(out, tstruct);
   generate_php_struct_writer(out, tstruct);
+  if (validate_) {
+    generate_php_struct_read_validator(out, tstruct);
+    generate_php_struct_write_validator(out, tstruct);
+  }
 
   indent_down();
   out <<
@@ -837,7 +852,13 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
   scope_up(out);
 
   if (oop_) {
-    indent(out) << "return $this->_read('" << tstruct->get_name() << "', self::$_TSPEC, $input);" << endl;
+    if (validate_) {
+      indent(out) << "$tmp = $this->_read('" << tstruct->get_name() << "', self::$_TSPEC, $input);" << endl;
+      indent(out) << "$this->validateForRead();" << endl;
+      indent(out) << "return $tmp;" << endl;
+    } else {
+      indent(out) << "return $this->_read('" << tstruct->get_name() << "', self::$_TSPEC, $input);" << endl;
+    }
     scope_down(out);
     return;
   }
@@ -963,6 +984,10 @@ void t_php_generator::generate_php_struct_writer(ofstream& out,
   }
   indent_up();
 
+  if (validate_) {
+    indent(out) << "$this->validateForWrite();" << endl;
+  }
+
   if (oop_) {
     indent(out) << "return $this->_write('" << tstruct->get_name() << "', self::$_TSPEC, $output);" << endl;
     scope_down(out);
@@ -1038,9 +1063,47 @@ void t_php_generator::generate_php_struct_writer(ofstream& out,
     indent() << "return $xfer;" << endl;
 
   indent_down();
-  out <<
-    indent() << "}" << endl <<
-    endl;
+  out << indent() << "}" << endl << endl;
+}
+
+void t_php_generator::generate_php_struct_read_validator(ofstream& out,
+                                                          t_struct* tstruct) {
+  generate_php_struct_required_validator(out, tstruct, "validateForRead", false);
+}
+
+void t_php_generator::generate_php_struct_write_validator(ofstream& out,
+                                                          t_struct* tstruct) {
+  generate_php_struct_required_validator(out, tstruct, "validateForWrite", true);
+}
+
+void t_php_generator::generate_php_struct_required_validator(ofstream& out,
+                                                             t_struct* tstruct,
+                                                             std::string method_name,
+                                                             bool be_strict) {
+  indent(out) << "public function " << method_name << "() {" << endl;
+  indent_up();
+
+  const vector<t_field*>& fields = tstruct->get_members();
+
+  if (fields.size() > 0) {
+    vector<t_field*>::const_iterator f_iter;
+
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      t_field* field = (*f_iter);
+      if (field->get_req() == t_field::T_REQUIRED ||
+          (field->get_req() == t_field::T_OPT_IN_REQ_OUT && be_strict)) {
+        indent(out) << "if ($this->" << field->get_name() << " === null) {" << endl;
+        indent_up();
+        indent(out) << "throw new TProtocolException('Required field " <<
+          tstruct->get_name() << "." << field->get_name() << " is unset!');" << endl;
+        indent_down();
+        indent(out) << "}" << endl;
+      }
+    }
+  }
+
+  indent_down();
+  indent(out) << "}" << endl << endl;
 }
 
 /**
