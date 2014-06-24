@@ -75,6 +75,7 @@
     <ClCompile Include="src\main.cc" />
     <ClCompile Include="src\md5.c" />
     <ClCompile Include="src\parse\parse.cc" />
+    <ClCompile Include="src\parse\t_typedef.cc" />
     <ClCompile Include="src\thriftl.cc" />
     <ClCompile Include="src\thrifty.cc" />
   </ItemGroup>

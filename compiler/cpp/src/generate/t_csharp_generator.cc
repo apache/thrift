@@ -27,6 +27,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <cctype>
 
 #include <stdlib.h>
 #include <sys/stat.h>
