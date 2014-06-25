@@ -67,7 +67,6 @@ def runServiceTest(test_name, server_executable, server_extra_args, client_execu
   cli_args.extend(client_extra_args)
   server_log=open("log/" + test_name + "_server.log","a")
   client_log=open("log/" + test_name + "_client.log","a")
-
   if options.verbose > 0:
     print 'Testing server: %s' % (' '.join(server_args))
     serverproc = subprocess.Popen(server_args, stdout=server_log, stderr=server_log)
