@@ -102,3 +102,9 @@ int thrift_poll(THRIFT_POLLFD *fdArray, ULONG nfds, INT timeout)
 }
 #endif // WINVER
 
+#ifdef _WIN32_WCE
+std::string thrift_wstr2str(std::wstring ws) {
+	std::string s(ws.begin(), ws.end());
+	return s;
+}
+#endif
