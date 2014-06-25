@@ -70,7 +70,7 @@ def runServiceTest(test_name, server_executable, server_extra_args, client_execu
  
   if options.verbose > 0:
     print 'Testing server: %s' % (' '.join(server_args))
-    serverproc = subprocess.Popen(server_args, stdout=server_log, stderr=server_log)
+    serverproc = subprocess.Popen(server_args, stdout=server_log, stderr=server_log)  
   else:
     serverproc = subprocess.Popen(server_args, stdout=server_log, stderr=server_log)
   
@@ -99,7 +99,7 @@ def runServiceTest(test_name, server_executable, server_extra_args, client_execu
 
   try:
     o = []
-    def target():
+    def target():  
       if options.verbose > 0:
         print 'Testing client: %s' % (' '.join(cli_args))
         process = subprocess.Popen(cli_args, stdout=client_log, stderr=client_log)
@@ -181,7 +181,7 @@ for server in data["server"]:
                 if ret != None:
                   failed += 1
                   print "Error: %s" % ret
-                  print "Using"
+                  print "Using"   
                   print (' Server: %s --protocol=%s --transport=%s %s'
                     % (server_executable, protocol, transport, ' '.join(server_extra_args)))
                   print (' Client: %s --protocol=%s --transport=%s %s'
