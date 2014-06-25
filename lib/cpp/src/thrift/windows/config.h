@@ -84,7 +84,10 @@ typedef boost::uint8_t    uint8_t;
 // windows
 #include <Winsock2.h>
 #include <ws2tcpip.h>
+#ifdef _WIN32_WCE
+#pragma comment(lib, "Ws2.lib")
+#else
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "advapi32.lib") //For security APIs in TPipeServer
-
+#endif
 #endif // _THRIFT_WINDOWS_CONFIG_H_

@@ -50,7 +50,11 @@
 #  define THRIFT_READ _read
 #  define THRIFT_FSTAT _fstat
 #  define THRIFT_STAT _stat
-#  define THRIFT_GAI_STRERROR gai_strerrorA
+#  ifdef _WIN32_WCE
+#    define THRIFT_GAI_STRERROR(...) thrift_wstr2str(gai_strerrorW(__VA_ARGS__))
+#  else
+#    define THRIFT_GAI_STRERROR gai_strerrorA
+#  endif
 #  define THRIFT_SSIZET ptrdiff_t
 #  define THRIFT_SNPRINTF _snprintf
 #  define THRIFT_SLEEP_SEC thrift_sleep
