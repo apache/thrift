@@ -740,7 +740,12 @@ class t_d_generator : public t_oop_generator {
     case t_field::T_REQUIRED:
       return "TReq.REQUIRED";
     default:
-      throw "Compiler error: Invalid requirement level: " + req;
+      {
+        std::stringstream ss;
+        ss << "Compiler error: Invalid requirement level " << req;
+        throw ss.str();
+      }
+	  
     }
   }
 

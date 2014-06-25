@@ -28,6 +28,7 @@ gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 				OnewayTest.thrift \
 				OptionalFieldsTest.thrift \
 				ServicesTest.thrift \
+				GoTagTest.thrift \
 				TypedefFieldTest.thrift \
 				RefAnnotationFieldsTest.thrift
 	mkdir -p gopath/src
@@ -38,6 +39,7 @@ gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
 	$(THRIFT) OnewayTest.thrift
 	$(THRIFT) OptionalFieldsTest.thrift
 	$(THRIFT) ServicesTest.thrift
+	$(THRIFT) GoTagTest.thrift
 	$(THRIFT) TypedefFieldTest.thrift
 	$(THRIFT) RefAnnotationFieldsTest.thrift
 	GOPATH=`pwd`/gopath $(GO) get code.google.com/p/gomock/gomock

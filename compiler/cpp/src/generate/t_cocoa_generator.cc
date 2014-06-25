@@ -2029,7 +2029,7 @@ void t_cocoa_generator::generate_serialize_field(ofstream& out,
         out << "writeDouble: " << fieldName << "];";
         break;
       default:
-        throw "compiler error: no Java name for base type " + t_base_type::t_base_name(tbase);
+        throw "compiler error: no Objective-C name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "writeI32: " << fieldName << "];";
@@ -2271,7 +2271,7 @@ string t_cocoa_generator::base_type_name(t_base_type* type) {
   case t_base_type::TYPE_DOUBLE:
     return "double";
   default:
-    throw "compiler error: no objective-c name for base type " + t_base_type::t_base_name(tbase);
+    throw "compiler error: no Objective-C name for base type " + t_base_type::t_base_name(tbase);
   }
 }
 

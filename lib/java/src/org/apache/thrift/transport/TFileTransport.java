@@ -38,14 +38,14 @@ import java.util.Random;
  */
 public class TFileTransport extends TTransport {
 
-  public static class truncableBufferedInputStream extends BufferedInputStream {
+  public static class TruncableBufferedInputStream extends BufferedInputStream {
     public void trunc() {
       pos = count = 0;
     }        
-    public truncableBufferedInputStream(InputStream in) {
+    public TruncableBufferedInputStream(InputStream in) {
       super(in);
     }
-    public truncableBufferedInputStream(InputStream in, int size) {
+    public TruncableBufferedInputStream(InputStream in, int size) {
       super(in, size);
     }
   }
@@ -87,7 +87,7 @@ public class TFileTransport extends TTransport {
     }
   };
 
-  public static class chunkState {
+  public static class ChunkState {
     /**
      * Chunk Size. Must be same across all implementations
      */
@@ -96,8 +96,8 @@ public class TFileTransport extends TTransport {
     private int chunk_size_ = DEFAULT_CHUNK_SIZE;
     private long offset_ = 0;
 
-    public chunkState() {}
-    public chunkState(int chunk_size) { chunk_size_ = chunk_size; }
+    public ChunkState() {}
+    public ChunkState(int chunk_size) { chunk_size_ = chunk_size; }
 
     public void skip(int size) {offset_ += size; }
     public void seek(long offset) {offset_ = offset;}
@@ -108,7 +108,7 @@ public class TFileTransport extends TTransport {
     public long getOffset() { return (offset_);}
   }
 
-  public static enum tailPolicy {
+  public static enum TailPolicy {
 
     NOWAIT(0, 0),
       WAIT_FOREVER(500, -1);
@@ -133,7 +133,7 @@ public class TFileTransport extends TTransport {
      * @param retries number of retries
      */
 
-    tailPolicy(int timeout, int retries) {
+    TailPolicy(int timeout, int retries) {
       timeout_ = timeout;
       retries_ = retries;
     }
@@ -142,7 +142,7 @@ public class TFileTransport extends TTransport {
   /**
    * Current tailing policy
    */
-  tailPolicy currentPolicy_ = tailPolicy.NOWAIT;
+  TailPolicy currentPolicy_ = TailPolicy.NOWAIT;
 
 
   /** 
@@ -169,12 +169,7 @@ public class TFileTransport extends TTransport {
   /**
    * current Chunk state
    */
-  chunkState cs = null;
-
-  /**
-   * Read timeout
-   */
-  private int readTimeout_ = 0;
+  ChunkState cs = null;
 
   /**
    * is read only?
@@ -186,7 +181,7 @@ public class TFileTransport extends TTransport {
    * 
    * @return current read policy
    */
-  public tailPolicy getTailPolicy() {
+  public TailPolicy getTailPolicy() {
     return (currentPolicy_);
   }
 
@@ -196,8 +191,8 @@ public class TFileTransport extends TTransport {
    * @param policy New policy to set
    * @return Old policy
    */
-  public tailPolicy setTailPolicy(tailPolicy policy) {
-    tailPolicy old = currentPolicy_;
+  public TailPolicy setTailPolicy(TailPolicy policy) {
+    TailPolicy old = currentPolicy_;
     currentPolicy_ = policy;
     return (old);
   }
@@ -212,10 +207,10 @@ public class TFileTransport extends TTransport {
     InputStream is;
     try {
       if(inputStream_ != null) {
-        ((truncableBufferedInputStream)inputStream_).trunc();
+        ((TruncableBufferedInputStream)inputStream_).trunc();
         is = inputStream_;
       } else {
-        is = new truncableBufferedInputStream(inputFile_.getInputStream());
+        is = new TruncableBufferedInputStream(inputFile_.getInputStream());
       }
     } catch (IOException iox) {
       System.err.println("createInputStream: "+iox.getMessage());
@@ -236,7 +231,7 @@ public class TFileTransport extends TTransport {
    * @return number of bytes read
    */
   private int tailRead(InputStream is, byte[] buf, 
-                       int off, int len, tailPolicy tp) throws TTransportException {
+                       int off, int len, TailPolicy tp) throws TTransportException {
     int orig_len = len;
     try {
       int retries = 0;
@@ -369,7 +364,7 @@ public class TFileTransport extends TTransport {
 
     try {
       inputStream_ = createInputStream();
-      cs = new chunkState();
+      cs = new ChunkState();
       currentEvent_ = new Event(new byte [256]);
 
       if(!readOnly_)
@@ -545,7 +540,7 @@ public class TFileTransport extends TTransport {
     if(seekToEnd) {
       // waiting forever here - otherwise we can hit EOF and end up
       // having consumed partial data from the data stream.
-      tailPolicy old = setTailPolicy(tailPolicy.WAIT_FOREVER);
+      TailPolicy old = setTailPolicy(TailPolicy.WAIT_FOREVER);
       while(cs.getOffset() < eofOffset) { readEvent(); }
       currentEvent_.setAvailable(0);
       setTailPolicy(old);

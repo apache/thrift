@@ -183,7 +183,7 @@ abstract class TSaslTransport extends TTransport {
 
     NegotiationStatus status = NegotiationStatus.byValue(statusByte);
     if (status == null) {
-      sendAndThrowMessage(NegotiationStatus.ERROR, "Invalid status " + statusByte);
+      throw sendAndThrowMessage(NegotiationStatus.ERROR, "Invalid status " + statusByte);
     } else if (status == NegotiationStatus.BAD || status == NegotiationStatus.ERROR) {
       try {
         String remoteMessage = new String(payload, "UTF-8");
@@ -210,8 +210,10 @@ abstract class TSaslTransport extends TTransport {
    *          The optional message to send to the other side.
    * @throws TTransportException
    *           Always thrown with the message provided.
+   * @return always throws TTransportException but declares return type to allow
+   *          throw sendAndThrowMessage(...) to inform compiler control flow
    */
-  protected void sendAndThrowMessage(NegotiationStatus status, String message) throws TTransportException {
+  protected TTransportException sendAndThrowMessage(NegotiationStatus status, String message) throws TTransportException {
     try {
       sendSaslMessage(status, message.getBytes());
     } catch (Exception e) {
@@ -302,7 +304,7 @@ abstract class TSaslTransport extends TTransport {
     } catch (SaslException e) {
       try {
         LOGGER.error("SASL negotiation failure", e);
-        sendAndThrowMessage(NegotiationStatus.BAD, e.getMessage());
+        throw sendAndThrowMessage(NegotiationStatus.BAD, e.getMessage());
       } finally {
         underlyingTransport.close();
       }

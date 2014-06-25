@@ -1,0 +1,157 @@
+{
+    "client": [
+        {
+            "description": "Python TestClient",
+            "lib": "py",
+            "executable": "py/TestClient.py",
+            "extra_args":  ["--genpydir=py/gen-py"],
+            "protocols": [
+                "binary",
+                "compact",
+                "json",
+                "accel"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
+            ]
+        },
+        {
+            "description": "C++ TestClient",
+            "lib": "cpp",
+            "executable": "cpp/TestClient",
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed",
+                "http"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
+            ]
+        },
+        {
+            "description": "Nodejs TestClient",
+            "lib": "nodejs",
+            "executable": "../lib/nodejs/test/client.js",
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
+            ]
+        },
+        {
+            "description": "Ruby TestClient",
+            "lib": "ruby",
+            "executable": "rb/integration/TestClient.rb",
+            "protocols": [
+                "binary",
+                "compact",
+                "json",
+                "accel"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip"
+            ]
+        }
+    ],
+    "server": [
+        {
+            "description": "Python TSimpleServer",
+            "lib": "py",
+            "executable": "py/TestServer.py",
+            "extra_args": ["--genpydir=py/gen-py", "TSimpleServer"],
+            "extra_delay": 0,
+            "protocols": [
+                "binary",
+                "compact",
+                "json",
+                "accel"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
+            ]
+        },
+        {
+            "description": "C++ TestServer",
+            "lib": "cpp",
+            "executable": "cpp/TestServer",
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed",
+                "http"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
+            ]
+        },
+        {
+            "description": "Ruby TestServer",
+            "lib": "ruby",
+            "executable": "rb/integration/TestServer.rb",
+            "protocols": [
+                "binary",
+                "compact",
+                "json",
+                "accel"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip"
+            ]
+        },
+        {
+            "description": "Nodejs TestServer",
+            "lib": "nodejs",
+            "executable": "../lib/nodejs/test/server.js",
+            "protocols": [
+                "binary",
+                "compact",
+                "json"
+            ],
+            "transports": [
+                "buffered",
+                "framed"
+            ],
+            "sockets": [
+                "ip",
+                "ip-ssl"
+            ]
+        }
+    ]
+}

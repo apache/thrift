@@ -27,6 +27,8 @@ Makefile
 Makefile.in
 autom4te.cache
 node_modules
+compile
+test-driver
 
 .sonar
 .DS_Store
@@ -84,6 +86,7 @@ node_modules
 /lib/cpp/test/UnitTests
 /lib/cpp/test/ZlibTest
 /lib/cpp/test/concurrency_test
+/lib/cpp/test/link_test
 /lib/cpp/test/processor_test
 /lib/cpp/test/tests.xml
 /lib/cpp/concurrency_test
@@ -95,6 +98,7 @@ node_modules
 /lib/c_glib/*.gcda
 /lib/c_glib/*.gcno
 /lib/c_glib/*.loT
+/lib/c_glib/test/*.gcno
 /lib/c_glib/test/testwrapper.sh
 /lib/c_glib/test/testwrapper-test*
 /lib/c_glib/test/testbinaryprotocol
@@ -193,6 +197,7 @@ node_modules
 /ltmain.sh
 /missing
 /stamp-h1
+/test/status.html
 /test/cpp/StressTest
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient

@@ -66,6 +66,9 @@ public:
     iter = parsed_options.find("nocamel");
     nocamel_style_ = (iter != parsed_options.end());
 
+    iter = parsed_options.find("fullcamel");
+    fullcamel_style_ = (iter != parsed_options.end());
+
     iter = parsed_options.find("android_legacy");
     android_legacy_ = (iter != parsed_options.end());
 
@@ -313,6 +316,7 @@ public:
   bool bean_style_;
   bool private_members_;
   bool nocamel_style_;
+  bool fullcamel_style_;
   bool android_legacy_;
   bool java5_;
   bool sorted_containers_;
@@ -868,7 +872,7 @@ void t_java_generator::generate_union_constructor(ofstream& out, t_struct* tstru
     if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
       indent(out) << "public static " << type_name(tstruct) << " " << (*m_iter)->get_name() << "(byte[] value) {" << endl;
       indent(out) << "  " << type_name(tstruct) << " x = new " << type_name(tstruct) << "();" << endl;
-      indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name()) << "(ByteBuffer.wrap(value));" << endl;
+      indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name()) << "(ByteBuffer.wrap(Arrays.copyOf(value, value.length)));" << endl;
       indent(out) << "  return x;" << endl;
       indent(out) << "}" << endl << endl;
     }
@@ -903,7 +907,7 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
 
       indent(out) << "public ByteBuffer buffer" << get_cap_name("for") << get_cap_name(field->get_name()) << "() {" << endl;
       indent(out) << "  if (getSetField() == _Fields." << constant_name(field->get_name()) << ") {" << endl;
-      indent(out) << "    return (ByteBuffer)getFieldValue();" << endl;
+      indent(out) << "    return org.apache.thrift.TBaseHelper.copyBinary((ByteBuffer)getFieldValue());" << endl;
       indent(out) << "  } else {" << endl;
       indent(out) << "    throw new RuntimeException(\"Cannot get field '" << field->get_name()
         << "' because union is currently set to \" + getFieldDesc(getSetField()).name);" << endl;
@@ -925,7 +929,7 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
     generate_java_doc(out, field);
     if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
       indent(out) << "public void set" << get_cap_name(field->get_name()) << "(byte[] value) {" << endl;
-      indent(out) << "  set" << get_cap_name(field->get_name()) << "(ByteBuffer.wrap(value));" << endl;
+      indent(out) << "  set" << get_cap_name(field->get_name()) << "(ByteBuffer.wrap(Arrays.copyOf(value, value.length)));" << endl;
       indent(out) << "}" << endl;
 
       out << endl;
@@ -1414,8 +1418,15 @@ void t_java_generator::generate_java_struct_definition(ofstream &out,
     indent(out) << "this();" << endl;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
-        indent(out) << "this." << (*m_iter)->get_name() << " = " <<
-          (*m_iter)->get_name() << ";" << endl;
+        t_type* type = get_true_type((*m_iter)->get_type());
+        if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+          indent(out) << "this." << (*m_iter)->get_name()
+            << " = org.apache.thrift.TBaseHelper.copyBinary("
+            << (*m_iter)->get_name() << ");" << endl;
+        } else {
+          indent(out) << "this." << (*m_iter)->get_name() << " = "
+            << (*m_iter)->get_name() << ";" << endl;
+        }
         generate_isset_set(out, (*m_iter), "");
       }
     }
@@ -1948,7 +1959,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
       indent(out) << "}" << endl << endl;
 
       indent(out) << "public ByteBuffer buffer" << get_cap_name("for") << cap_name << "() {" << endl;
-      indent(out) << "  return " << field_name << ";" << endl;
+      indent(out) << "  return org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ");" << endl;
       indent(out) << "}" << endl << endl;
     } else {
       indent(out) << "public " << type_name(type);
@@ -1975,7 +1986,10 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
         out << type_name(tstruct);
       }
       out << " set" << cap_name << "(byte[] " << field_name << ") {" << endl;
-      indent(out) << "  set" << cap_name << "(" << field_name << " == null ? (ByteBuffer)null : ByteBuffer.wrap(" << field_name << "));" << endl;
+      indent(out) << "  this." << field_name << " = "
+        << field_name << " == null ? (ByteBuffer)null"
+        << " : ByteBuffer.wrap(Arrays.copyOf("
+        << field_name << ", " << field_name << ".length));" << endl;
       if (!bean_style_) {
         indent(out) << "  return this;" << endl;
       }
@@ -1989,7 +2003,13 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out,
     }
     out << " set" << cap_name << "(" << type_name(type) << " " << field_name << ") {" << endl;
     indent_up();
-    indent(out) << "this." << field_name << " = " << field_name << ";" << endl;
+    indent(out) << "this." << field_name << " = ";
+    if (type->is_base_type() && ((t_base_type*)type)->is_binary()) {
+      out << "org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ")";
+    } else {
+      out << field_name;
+    }
+    out << ";" << endl;
     generate_isset_set(out, field, "");
     if (!bean_style_) {
       indent(out) << "return this;" << endl;
@@ -3526,7 +3546,7 @@ string t_java_generator::type_name(t_type* ttype, bool in_container, bool in_ini
 
   // Check for namespacing
   t_program* program = ttype->get_program();
-  if ((program != NULL && program != program_) || force_namespace) {
+  if ((program != NULL) && ((program != program_) || force_namespace)) {
     string package = program->get_namespace("java");
     if (!package.empty()) {
       return package + "." + ttype->get_name();
@@ -3821,10 +3841,26 @@ std::string t_java_generator::make_valid_java_identifier( std::string const & fr
 
 /**
  * Applies the correct style to a string based on the value of nocamel_style_
+ * and/or fullcamel_style_
  */
 std::string t_java_generator::get_cap_name(std::string name){
   if (nocamel_style_) {
     return "_" + name;
+  } if (fullcamel_style_) {
+    std::string new_name;
+    new_name += toupper(name[0]);
+    for (size_t i = 1; i < name.size(); i++) {
+      if (name[i] == '_') {
+        if (i < name.size()-1) {
+          i++;
+          new_name += toupper(name[i]);
+        }
+      }
+      else {
+        new_name += name[i];
+      }
+    }
+    return new_name;
   } else {
     name[0] = toupper(name[0]);
     return name;
@@ -4574,6 +4610,7 @@ THRIFT_REGISTER_GENERATOR(java, "Java",
 "    beans:           Members will be private, and setter methods will return void.\n"
 "    private-members: Members will be private, but setter methods will return 'this' like usual.\n"
 "    nocamel:         Do not use CamelCase field accessors with beans.\n"
+"    fullcamel:       Convert underscored_field_names to CamelCase.\n"
 "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
 "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
 "    reuse-objects:   Data objects will not be allocated, but existing instances will be used (read and write).\n"

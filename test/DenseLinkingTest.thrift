@@ -34,6 +34,7 @@ then compiling this should give errors because of doubly defined symbols.
 */
 
 namespace cpp thrift.test
+namespace java thrift.test
 
 struct OneOfEachZZ {
   1: bool im_true,

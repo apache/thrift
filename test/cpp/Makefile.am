@@ -20,10 +20,12 @@
 noinst_LTLIBRARIES = libtestgencpp.la libstresstestgencpp.la
 nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/ThriftTest_constants.cpp \
-	gen-cpp/ThriftTest_types.cpp \
 	gen-cpp/ThriftTest_constants.h \
+	gen-cpp/ThriftTest_types.cpp \
 	gen-cpp/ThriftTest_types.h \
 	gen-cpp/ThriftTest_types.tcc \
+	gen-cpp/ThriftTest.cpp \
+	gen-cpp/ThriftTest.h \
 	gen-cpp/ThriftTest.tcc \
 	src/ThriftTest_extras.cpp
 

@@ -1127,7 +1127,7 @@ string t_delphi_generator::render_const_value(ostream& vars, ostream& out, strin
         }
         break;
       default:
-          render << "";
+          throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (truetype->is_enum()) {
     render << type_name( type, false) << "." << value->get_identifier_name();
@@ -2232,7 +2232,7 @@ void t_delphi_generator::generate_deserialize_field(ostream& out, bool is_xcepti
           out << "ReadDouble();";
           break;
         default:
-          throw "compiler error: no C# name for base type " + tbase;
+          throw "compiler error: no Delphi name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "ReadI32()";
@@ -2415,7 +2415,7 @@ void t_delphi_generator::generate_serialize_field(ostream& out, bool is_xception
           out << "WriteDouble(" << name << ");";
           break;
         default:
-          throw "compiler error: no Delphi name for base type " + tbase;
+          throw "compiler error: no Delphi name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
       out << "WriteI32(Integer(" << name << "));";
@@ -2662,7 +2662,7 @@ string t_delphi_generator::input_arg_prefix( t_type* ttype) {
       
       // we better always report any unknown types
       default:
-        throw "compiler error: no input_arg_prefix() for base type " + (((t_base_type*)ttype)->get_base());
+        throw "compiler error: no input_arg_prefix() for base type " + t_base_type::t_base_name(((t_base_type*)ttype)->get_base());
     }
   
   // enums
@@ -2713,7 +2713,7 @@ string t_delphi_generator::base_type_name(t_base_type* tbase) {
     case t_base_type::TYPE_DOUBLE:
       return "Double";
     default:
-      throw "compiler error: no Delphi name for base type " + tbase->get_base();
+      throw "compiler error: no Delphi name for base type " + t_base_type::t_base_name(tbase->get_base());
   }
 }
 

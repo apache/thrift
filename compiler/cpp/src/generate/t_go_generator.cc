@@ -1144,15 +1144,26 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
         int sorted_keys_pos = 0;
 
         for (m_iter = sorted_members.begin(); m_iter != sorted_members.end(); ++m_iter) {
-            for (; sorted_keys_pos != (*m_iter)->get_key(); sorted_keys_pos++) {
-                if (sorted_keys_pos != 0) {
-                    indent(out) << "// unused field # " << sorted_keys_pos << endl;
+            if( sorted_keys_pos != (*m_iter)->get_key()) {
+                int first_unused = std::max(1,sorted_keys_pos++);
+                while( sorted_keys_pos != (*m_iter)->get_key()) {
+                    ++sorted_keys_pos;
+                }
+                int last_unused = sorted_keys_pos - 1;
+                if (first_unused < last_unused) {
+                    indent(out) << "// unused fields # " << first_unused << " to "<< last_unused << endl;
+                } else if (first_unused == last_unused) {
+                    indent(out) << "// unused field # " << first_unused << endl;
                 }
             }
 
             t_type* fieldType = (*m_iter)->get_type();
             string goType = type_to_go_type_with_opt(fieldType, is_pointer_field(*m_iter));
-
+            string gotag("json:\"" + escape_string((*m_iter)->get_name()) + "\"");
+            std::map<string, string>::iterator it = (*m_iter)->annotations_.find("go.tag");
+            if (it != (*m_iter)->annotations_.end()) {
+            	gotag = it->second;
+            }
             indent(out) << publicize(variable_name_to_go_name((*m_iter)->get_name())) << " "
                         << goType << " `thrift:\""
                         << escape_string((*m_iter)->get_name())
@@ -1162,7 +1173,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
                 out << ",required";
             }
 
-            out << "\"`" << endl;
+            out << "\" " <<gotag <<"`" << endl;
             sorted_keys_pos ++;
         }
     } else {

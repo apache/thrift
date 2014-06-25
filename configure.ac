@@ -127,7 +127,7 @@ fi
 AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
 if test "$with_cpp" = "yes";  then
-  AX_BOOST_BASE([1.53.0])
+  AX_BOOST_BASE([1.54.0])
   if test "x$succeeded" = "xyes" ; then
     have_cpp="yes"
   fi
@@ -549,6 +549,8 @@ AC_CHECK_FUNCS([alarm])
 AC_CHECK_FUNCS([clock_gettime])
 AC_CHECK_FUNCS([sched_get_priority_min])
 AC_CHECK_FUNCS([sched_get_priority_max])
+AC_CHECK_FUNCS([inet_ntoa])
+AC_CHECK_FUNCS([pow])
 
 if test "$cross_compiling" = "no" ; then
   AX_SIGNED_RIGHT_SHIFT
