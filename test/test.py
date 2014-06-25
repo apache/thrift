@@ -46,19 +46,30 @@ options, args = parser.parse_args()
 def relfile(fname):
     return os.path.join(os.path.dirname(__file__), fname)
 
-def runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, server_protocol, client_protocol, transport, port, use_zlib, use_ssl):
+def getSocketArgs(socket_type):
+  if socket_type == 'ip':
+    return ""
+  elif socket_type == 'ip-ssl':
+    return "--ssl"
+  elif socket_type == 'domain':
+    return "--domain-socket=/tmp/ThriftTest.thrift"
+
+def runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, server_protocol, client_protocol, transport, port, use_zlib, socket_type):
   # Build command line arguments
   server_args = [relfile(server_executable)]
   cli_args = [relfile(client_executable)]
   server_args.append('--protocol=%s' % server_protocol)
   cli_args.append('--protocol=%s' % client_protocol)
+
   for which in (server_args, cli_args):
     which.append('--transport=%s' % transport)
     which.append('--port=%d' % port) # default to 9090
     if use_zlib:
       which.append('--zlib')
-    if use_ssl:
+    if socket_type == 'ip-ssl':
       which.append('--ssl')
+    elif socket_type == 'domain':
+      which.append('--domain-socket=/tmp/ThriftTest.thrift')
 #    if options.verbose == 0:
 #      which.append('-q')
 #    if options.verbose == 2:
@@ -88,13 +99,15 @@ def runServiceTest(test_name, server_executable, server_extra_args, client_execu
   max_attempts = 100
   try:
     attempt = 0
-    while sock.connect_ex(('127.0.0.1', port)) != 0:
-      attempt += 1
-      if attempt >= max_attempts:
-        raise Exception("TestServer not ready on port %d after %.2f seconds"
-                        % (port, sleep_time * attempt))
-      ensureServerAlive()
-      time.sleep(sleep_time)
+
+    if socket_type != 'domain':
+      while sock.connect_ex(('127.0.0.1', port)) != 0:
+        attempt += 1
+        if attempt >= max_attempts:
+          raise Exception("TestServer not ready on port %d after %.2f seconds"
+                          % (port, sleep_time * attempt))
+        ensureServerAlive()
+        time.sleep(sleep_time)
   finally:
     sock.close()
 
@@ -175,18 +188,15 @@ for server in data["server"]:
                 count = 1
                 results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"" + protocol + "\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
                 test_name = server_lib + "_" + client_lib + "_" + protocol + "_" + transport + "_" + sock
-                ssl = 0
-                if sock == 'ip-ssl':
-                  ssl = 1
-                ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, protocol, transport, 9090, 0, ssl)
+                ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, protocol, transport, 9090, 0, sock)
                 if ret != None:
                   failed += 1
                   print "Error: %s" % ret
                   print "Using"
-                  print (' Server: %s --protocol=%s --transport=%s %s'
-                    % (server_executable, protocol, transport, ' '.join(server_extra_args)))
-                  print (' Client: %s --protocol=%s --transport=%s %s'
-                    % (client_executable, protocol, transport, ''.join(client_extra_args)))
+                  print (' Server: %s --protocol=%s --transport=%s %s %s'
+                    % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
+                  print (' Client: %s --protocol=%s --transport=%s %s %s'
+                    % (client_executable, protocol, transport, getSocketArgs(sock), ''.join(client_extra_args)))
                   results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
                 else:
                   results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
@@ -200,18 +210,15 @@ for server in data["server"]:
                 count = 1
                 results_json.write("\t[\n\t\t\"" + server_lib + "\",\n\t\t\"" + client_lib + "\",\n\t\t\"accel-binary\",\n\t\t\"" + transport + "-" + sock + "\",\n" )
                 test_name = server_lib + "_" + client_lib + "_accel-binary_" + transport + "_" + sock
-                ssl = 0
-                if sock == 'ip-ssl':
-                  ssl = 1
-                ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, 'accel', transport, 9090, 0, ssl)
+                ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, 'accel', transport, 9090, 0, sock)
                 if ret != None:
                   failed += 1
                   print "Error: %s" % ret
                   print "Using"
-                  print (' Server: %s --protocol=%s --transport=%s %s'
-                    % (server_executable, protocol, transport, ' '.join(server_extra_args)))
-                  print (' Client: %s --protocol=%s --transport=%s %s'
-                    % (client_executable, protocol, transport, ''.join(client_extra_args)))
+                  print (' Server: %s --protocol=%s --transport=%s %s %s'
+                    % (server_executable, protocol, transport, getSocketArgs(sock), ' '.join(server_extra_args)))
+                  print (' Client: %s --protocol=%s --transport=%s %s %s'
+                    % (client_executable, protocol, transport , getSocketArgs(sock), ''.join(client_extra_args)))
                   results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
                 else:
                   results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
@@ -228,15 +235,15 @@ for server in data["server"]:
                 ssl = 0
                 if sock == 'ip-ssl':
                   ssl = 1
-                ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, 'binary', transport, 9090, 0, ssl)
+                ret = runServiceTest(test_name, server_executable, server_extra_args, client_executable, client_extra_args, protocol, 'binary', transport, 9090, 0, sock)
                 if ret != None:
                   failed += 1
                   print "Error: %s" % ret
                   print "Using"
-                  print (' Server: %s --protocol=%s --transport=%s %s'
-                    % (server_executable, protocol, transport, ' '.join(server_extra_args)))
-                  print (' Client: %s --protocol=%s --transport=%s %s'
-                    % (client_executable, protocol, transport, ''.join(client_extra_args)))
+                  print (' Server: %s --protocol=%s --transport=%s %s %s'
+                    % (server_executable, protocol, transport + sock, getSocketArgs(sock), ' '.join(server_extra_args)))
+                  print (' Client: %s --protocol=%s --transport=%s %s %s'
+                    % (client_executable, protocol, transport + sock, getSocketArgs(sock), ''.join(client_extra_args)))
                   results_json.write("\t\t\"failure (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
                 else:
                   results_json.write("\t\t\"success (<a href=\\\"log/" + test_name + "_client.log\\\">client</a>, <a href=\\\"log/" + test_name + "_server.log\\\">server</a>)\"\n")
