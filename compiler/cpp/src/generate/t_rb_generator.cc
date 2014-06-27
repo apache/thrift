@@ -82,6 +82,7 @@ class t_rb_generator : public t_oop_generator {
     out_dir_base_ = "gen-rb";
 
     require_rubygems_ = (parsed_options.find("rubygems") != parsed_options.end());
+    namespaced_ = (parsed_options.find("namespaced") != parsed_options.end());
   }
 
   /**
@@ -201,7 +202,7 @@ class t_rb_generator : public t_oop_generator {
   std::string function_signature(t_function* tfunction, std::string prefix="");
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
-
+  std::string rb_namespace_to_path_prefix(std::string rb_namespace);
 
 
   std::vector<std::string> ruby_modules(t_program* p) {
@@ -238,8 +239,14 @@ class t_rb_generator : public t_oop_generator {
   t_rb_ofstream f_consts_;
   t_rb_ofstream f_service_;
 
+  std::string namespace_dir_;
+  std::string require_prefix_;
+
   /** If true, add a "require 'rubygems'" line to the top of each gen-rb file. */
   bool require_rubygems_;
+
+  /** If true, generate files in idiomatic namespaced directories. */
+  bool namespaced_;
 };
 
 
@@ -250,14 +257,31 @@ class t_rb_generator : public t_oop_generator {
  * @param tprogram The program to generate
  */
 void t_rb_generator::init_generator() {
+  string subdir = get_out_dir();
+
   // Make output directory
-  MKDIR(get_out_dir().c_str());
+  MKDIR(subdir.c_str());
+
+  if (namespaced_) {
+    require_prefix_ = rb_namespace_to_path_prefix(program_->get_namespace("rb"));
+
+    string dir = require_prefix_;
+    string::size_type loc;
+
+    while ((loc = dir.find("/")) != string::npos) {
+      subdir = subdir + dir.substr(0, loc) + "/";
+      MKDIR(subdir.c_str());
+      dir = dir.substr(loc+1);
+    }
+  }
+
+  namespace_dir_ = subdir;
 
   // Make output file
-  string f_types_name = get_out_dir()+underscore(program_name_)+"_types.rb";
+  string f_types_name = namespace_dir_+underscore(program_name_)+"_types.rb";
   f_types_.open(f_types_name.c_str());
 
-  string f_consts_name = get_out_dir()+underscore(program_name_)+"_constants.rb";
+  string f_consts_name = namespace_dir_+underscore(program_name_)+"_constants.rb";
   f_consts_.open(f_consts_name.c_str());
 
   // Print header
@@ -268,7 +292,7 @@ void t_rb_generator::init_generator() {
 
   f_consts_ <<
     rb_autogen_comment() << endl << render_require_thrift() <<
-    "require '" << underscore(program_name_) << "_types'" << endl <<
+    "require '" << require_prefix_ << underscore(program_name_) << "_types'" << endl <<
     endl;
     begin_namespace(f_consts_, ruby_modules(program_));
 
@@ -292,7 +316,10 @@ string t_rb_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   for (size_t i = 0; i < includes.size(); ++i) {
-    result += "require '" + underscore(includes[i]->get_name()) + "_types'\n";
+    t_program* included = includes[i];
+    std::string included_require_prefix = rb_namespace_to_path_prefix(included->get_namespace("rb"));
+    std::string included_name = included->get_name();
+    result += "require '" + included_require_prefix + underscore(included_name) + "_types'\n";
   }
   if (includes.size() > 0) {
     result += "\n";
@@ -728,7 +755,7 @@ void t_rb_generator::end_namespace(t_rb_ofstream& out, vector<std::string> modul
  * @param tservice The service definition
  */
 void t_rb_generator::generate_service(t_service* tservice) {
-  string f_service_name = get_out_dir()+underscore(service_name_)+".rb";
+  string f_service_name = namespace_dir_+underscore(service_name_)+".rb";
   f_service_.open(f_service_name.c_str());
 
   f_service_ <<
@@ -736,11 +763,11 @@ void t_rb_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != NULL) {
     f_service_ <<
-      "require '" << underscore(tservice->get_extends()->get_name()) << "'" << endl;
+      "require '" << require_prefix_ << underscore(tservice->get_extends()->get_name()) << "'" << endl;
   }
 
   f_service_ <<
-    "require '" << underscore(program_name_) << "_types'" << endl <<
+    "require '" << require_prefix_ << underscore(program_name_) << "_types'" << endl <<
     endl;
 
   begin_namespace(f_service_, ruby_modules(tservice->get_program()));
@@ -1138,6 +1165,22 @@ string t_rb_generator::type_to_enum(t_type* type) {
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
 
+string t_rb_generator::rb_namespace_to_path_prefix(string rb_namespace) {
+  string namespaces_left = rb_namespace;
+  string::size_type loc;
+
+  string path_prefix = "";
+
+  while ((loc = namespaces_left.find(".")) != string::npos) {
+    path_prefix = path_prefix + underscore(namespaces_left.substr(0, loc)) + "/";
+    namespaces_left = namespaces_left.substr(loc+1);
+  }
+  if (namespaces_left.size() > 0) {
+    path_prefix = path_prefix + underscore(namespaces_left) + "/";
+  }
+  return path_prefix;
+}
+
 
 void t_rb_generator::generate_rdoc(t_rb_ofstream& out, t_doc* tdoc) {
   if (tdoc->has_doc()) {
@@ -1221,4 +1264,5 @@ void t_rb_generator::generate_rb_union_validator(t_rb_ofstream& out,
 }
 
 THRIFT_REGISTER_GENERATOR(rb, "Ruby",
-"    rubygems:        Add a \"require 'rubygems'\" line to the top of each generated file.\n")
+"    rubygems:        Add a \"require 'rubygems'\" line to the top of each generated file.\n"
+"    namespaced:      Generate files in idiomatic namespaced directories.\n")

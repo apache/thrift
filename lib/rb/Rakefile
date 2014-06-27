@@ -38,11 +38,16 @@ RSpec::Core::RakeTask.new(:'spec:rcov') do |t|
 end
 
 desc 'Compile the .thrift files for the specs'
-task :'gen-rb' => [:'gen-rb:spec', :'gen-rb:benchmark', :'gen-rb:debug_proto']
+task :'gen-rb' => [:'gen-rb:spec', :'gen-rb:namespaced_spec', :'gen-rb:benchmark', :'gen-rb:debug_proto']
 namespace :'gen-rb' do
   task :'spec' do
     dir = File.dirname(__FILE__) + '/spec'
     sh THRIFT, '--gen', 'rb', '-o', dir, "#{dir}/ThriftSpec.thrift"
+  end
+
+  task :'namespaced_spec' do
+    dir = File.dirname(__FILE__) + '/spec'
+    sh THRIFT, '--gen', 'rb:namespaced', '-recurse', '-o', dir, "#{dir}/ThriftNamespacedSpec.thrift"
   end
 
   task :'benchmark' do
