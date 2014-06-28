@@ -1556,6 +1556,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     "from urlparse import urlparse" << endl <<
     "from thrift.transport import TTransport" << endl <<
     "from thrift.transport import TSocket" << endl <<
+    "from thrift.transport import TSSLSocket" << endl <<
     "from thrift.transport import THttpClient" << endl <<
     "from thrift.protocol import TBinaryProtocol" << endl <<
     endl;
@@ -1568,7 +1569,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
   f_remote <<
     "if len(sys.argv) <= 1 or sys.argv[1] == '--help':" << endl <<
     "  print('')" << endl <<
-    "  print('Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] function [arg1 [arg2...]]')" << endl <<
+    "  print('Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] [-s[sl]] function [arg1 [arg2...]]')" << endl <<
     "  print('')" << endl <<
     "  print('Functions:')" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1601,6 +1602,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     "port = 9090" << endl <<
     "uri = ''" << endl <<
     "framed = False" << endl <<
+    "ssl = False" << endl <<
     "http = False" << endl <<
     "argi = 1" << endl <<
     endl <<
@@ -1629,13 +1631,17 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     "  framed = True" << endl <<
     "  argi += 1" << endl <<
     endl <<
+    "if sys.argv[argi] == '-s' or sys.argv[argi] == '-ssl':" << endl <<
+    "  ssl = True" << endl <<
+    "  argi += 1" << endl <<
+    endl <<
     "cmd = sys.argv[argi]" << endl <<
     "args = sys.argv[argi+1:]" << endl <<
     endl <<
     "if http:" << endl <<
     "  transport = THttpClient.THttpClient(host, port, uri)" << endl <<
     "else:" << endl <<
-    "  socket = TSocket.TSocket(host, port)" << endl <<
+    "  socket = TSSLSocket.TSSLSocket(host, port, validate=False) if ssl else TSocket.TSocket(host, port)" << endl <<
     "  if framed:" << endl <<
     "    transport = TTransport.TFramedTransport(socket)" << endl <<
     "  else:" << endl <<
