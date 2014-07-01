@@ -71,6 +71,7 @@ FB_ENABLE_DEFAULT_STATIC
 # Example: sets $(thrift_home) variable with default path set to /usr/local.
 FB_WITH_PATH([thrift_home], [thriftpath], [/usr/local])
 
+AX_CXX_COMPILE_STDCXX_11([noext])
 AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
 if test "$with_cpp" = "yes"; then
