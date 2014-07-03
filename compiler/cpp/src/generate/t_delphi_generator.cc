@@ -1733,12 +1733,15 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
     string args_clsnm = normalize_clsnm( argsname, "T");
     string args_intfnm= normalize_clsnm( argsname, "I");
 
+    string argsvar = tmp("_args");
+    string msgvar  = tmp("_msg");
+
     indent(s_service) << function_signature(&send_function) << endl;
     indent_impl(s_service_impl) << function_signature(&send_function, full_cls) << endl;
     indent_impl(s_service_impl) << "var" << endl;
     indent_up_impl();
-    indent_impl(s_service_impl) << "args : " << args_intfnm << ";" << endl;
-    indent_impl(s_service_impl) << "msg : IMessage;" << endl;
+    indent_impl(s_service_impl) << argsvar << " : " << args_intfnm << ";" << endl;
+    indent_impl(s_service_impl) << msgvar << " : Thrift.Protocol.IMessage;" << endl;
     indent_down_impl();
     indent_impl(s_service_impl) << "begin" << endl;
     indent_up_impl();
@@ -1746,21 +1749,21 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
     indent_impl(s_service_impl) <<
       "seqid_ := seqid_ + 1;" << endl;
     indent_impl(s_service_impl) <<
-      "msg := TMessageImpl.Create('" << funname << "', TMessageType.Call, seqid_);" << endl;
+      msgvar << " := Thrift.Protocol.TMessageImpl.Create('" << funname << "', TMessageType.Call, seqid_);" << endl;
 
     indent_impl(s_service_impl) <<
-      "oprot_.WriteMessageBegin( msg );" << endl;
+      "oprot_.WriteMessageBegin( " << msgvar << " );" << endl;
     indent_impl(s_service_impl) <<
-      "args := " << args_clsnm << "Impl.Create();" << endl;
+      argsvar << " := " << args_clsnm << "Impl.Create();" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       indent_impl(s_service_impl) <<
-        "args." << prop_name(*fld_iter) << " := " << normalize_name( (*fld_iter)->get_name()) << ";" << endl;
+        argsvar << "." << prop_name(*fld_iter) << " := " << normalize_name( (*fld_iter)->get_name()) << ";" << endl;
     }
-    indent_impl(s_service_impl) << "args.Write(oprot_);" << endl;
+    indent_impl(s_service_impl) << argsvar << ".Write(oprot_);" << endl;
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       indent_impl(s_service_impl) <<
-        "args." << prop_name(*fld_iter) << " := " << empty_value((*fld_iter)->get_type()) << ";" << endl;
+        argsvar << "." << prop_name(*fld_iter) << " := " << empty_value((*fld_iter)->get_type()) << ";" << endl;
     }
 
     indent_impl(s_service_impl) << "oprot_.WriteMessageEnd();" << endl;
@@ -1783,42 +1786,46 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
       t_struct *xs = (*f_iter)->get_xceptions();
       const std::vector<t_field*>& xceptions = xs->get_members();
 
+      string exceptvar = tmp("_ex");
+      string appexvar = tmp("_ax");
+      string retvar = tmp("_ret");
+
       indent(s_service) << function_signature(&recv_function) << endl;
       indent_impl(s_service_impl) << function_signature(&recv_function, full_cls) << endl;
       indent_impl(s_service_impl) << "var" << endl;
       indent_up_impl();
-      indent_impl(s_service_impl) << "msg : IMessage;" << endl;
+      indent_impl(s_service_impl) << msgvar << " : Thrift.Protocol.IMessage;" << endl;
       if ( xceptions.size() > 0) {
-        indent_impl(s_service_impl) << "ex : Exception;" << endl;
+        indent_impl(s_service_impl) << exceptvar << " : Exception;" << endl;
       }
-      indent_impl(s_service_impl) << "x : TApplicationException;" << endl;
-      indent_impl(s_service_impl) << "ret : " << result_intfnm << ";" << endl;
+      indent_impl(s_service_impl) << appexvar << " : TApplicationException;" << endl;
+      indent_impl(s_service_impl) << retvar << " : " << result_intfnm << ";" << endl;
 
       indent_down_impl();
       indent_impl(s_service_impl) << "begin" << endl;
       indent_up_impl();
-      indent_impl(s_service_impl) << "msg := iprot_.ReadMessageBegin();" << endl;
-      indent_impl(s_service_impl) << "if (msg.Type_ = TMessageType.Exception) then" << endl;
+      indent_impl(s_service_impl) << msgvar << " := iprot_.ReadMessageBegin();" << endl;
+      indent_impl(s_service_impl) << "if (" << msgvar << ".Type_ = TMessageType.Exception) then" << endl;
       indent_impl(s_service_impl) << "begin" << endl;
       indent_up_impl();
-      indent_impl(s_service_impl) << "x := TApplicationException.Read(iprot_);" << endl;
+      indent_impl(s_service_impl) << appexvar << " := TApplicationException.Read(iprot_);" << endl;
       indent_impl(s_service_impl) << "iprot_.ReadMessageEnd();" << endl;
-      indent_impl(s_service_impl) << "raise x;" << endl;
+      indent_impl(s_service_impl) << "raise " << appexvar << ";" << endl;
       indent_down_impl();
       indent_impl(s_service_impl) << "end;" << endl;
 
-      indent_impl(s_service_impl) << "ret := " << result_clsnm << "Impl.Create();" << endl;
-      indent_impl(s_service_impl) << "ret.Read(iprot_);" << endl;
+      indent_impl(s_service_impl) << retvar << " := " << result_clsnm << "Impl.Create();" << endl;
+      indent_impl(s_service_impl) << retvar << ".Read(iprot_);" << endl;
       indent_impl(s_service_impl) << "iprot_.ReadMessageEnd();" << endl;
 
       if (!(*f_iter)->get_returntype()->is_void()) {
-        indent_impl(s_service_impl) << "if (ret.__isset_success) then" << endl;
+        indent_impl(s_service_impl) << "if (" << retvar << ".__isset_success) then" << endl;
         indent_impl(s_service_impl) << "begin" << endl;
         indent_up_impl();
-        indent_impl(s_service_impl) << "Result := ret.Success;" << endl;
+        indent_impl(s_service_impl) << "Result := " << retvar << ".Success;" << endl;
         t_type *type = (*f_iter)->get_returntype();
         if (type->is_struct() || type->is_xception() || type->is_map() || type->is_list() || type->is_set()) {
-          indent_impl(s_service_impl) << "ret.Success := nil;" << endl;
+          indent_impl(s_service_impl) << retvar << ".Success := nil;" << endl;
         }
         indent_impl(s_service_impl) << "Exit;" << endl;
         indent_down_impl();
@@ -1827,11 +1834,11 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
 
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        indent_impl(s_service_impl) << "if (ret.__isset_" << prop_name(*x_iter) << ") then" << endl;
+        indent_impl(s_service_impl) << "if (" << retvar << ".__isset_" << prop_name(*x_iter) << ") then" << endl;
         indent_impl(s_service_impl) << "begin" << endl;
         indent_up_impl();
-        indent_impl(s_service_impl) << "ex := ret." << prop_name(*x_iter) << ".CreateException;" << endl;
-        indent_impl(s_service_impl) << "raise ex;" << endl;
+        indent_impl(s_service_impl) << exceptvar << " := " << retvar << "." << prop_name(*x_iter) << ".CreateException;" << endl;
+        indent_impl(s_service_impl) << "raise " << exceptvar << ";" << endl;
         indent_down_impl();
         indent_impl(s_service_impl) << "end;" << endl;
       }
@@ -1939,7 +1946,7 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent_impl(s_service_impl) << "function " << full_cls << ".Process( const iprot: IProtocol; const oprot: IProtocol; const events : IProcessorEvents): Boolean;" << endl;;
   indent_impl(s_service_impl) << "var" << endl;
   indent_up_impl();
-  indent_impl(s_service_impl) << "msg : IMessage;" << endl;
+  indent_impl(s_service_impl) << "msg : Thrift.Protocol.IMessage;" << endl;
   indent_impl(s_service_impl) << "fn : TProcessFunction;" << endl;
   indent_impl(s_service_impl) << "x : TApplicationException;" << endl;
   if( events_) {
@@ -1959,7 +1966,7 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent_impl(s_service_impl) << "TProtocolUtil.Skip(iprot, TType.Struct);" << endl;
   indent_impl(s_service_impl) << "iprot.ReadMessageEnd();" << endl;
   indent_impl(s_service_impl) << "x := TApplicationException.Create(TApplicationException.TExceptionType.UnknownMethod, 'Invalid method name: ''' + msg.Name + '''');" << endl;
-  indent_impl(s_service_impl) << "msg := TMessageImpl.Create(msg.Name, TMessageType.Exception, msg.SeqID);" << endl;
+  indent_impl(s_service_impl) << "msg := Thrift.Protocol.TMessageImpl.Create(msg.Name, TMessageType.Exception, msg.SeqID);" << endl;
   indent_impl(s_service_impl) << "oprot.WriteMessageBegin( msg);" << endl;
   indent_impl(s_service_impl) << "x.Write(oprot);" << endl;
   indent_impl(s_service_impl) << "oprot.WriteMessageEnd();" << endl;
@@ -2064,7 +2071,7 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
   indent_up_impl();
   indent_impl(s_service_impl) << "args: " << args_intfnm << ";" << endl;
   if (!tfunction->is_oneway()) {
-    indent_impl(s_service_impl) << "msg: IMessage;" << endl;
+    indent_impl(s_service_impl) << "msg: Thrift.Protocol.IMessage;" << endl;
     indent_impl(s_service_impl) << "ret: " << result_intfnm << ";" << endl;
   }
 
@@ -2153,7 +2160,7 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
     if (events_) {
       indent_impl(s_service_impl) << "if events <> nil then events.PreWrite;" << endl;
     }
-    indent_impl(s_service_impl) << "msg := TMessageImpl.Create('" << tfunction->get_name() << "', TMessageType.Reply, seqid); " << endl;
+    indent_impl(s_service_impl) << "msg := Thrift.Protocol.TMessageImpl.Create('" << tfunction->get_name() << "', TMessageType.Reply, seqid); " << endl;
     indent_impl(s_service_impl) << "oprot.WriteMessageBegin( msg); " << endl;
     indent_impl(s_service_impl) << "ret.Write(oprot);" << endl;
     indent_impl(s_service_impl) << "oprot.WriteMessageEnd();" << endl;
@@ -3317,8 +3324,8 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out, stri
     cls_nm = type_name(tstruct,true,false);
   }
 
-  string tmp_sb = "__sb";
-  string tmp_first = "__first";
+  string tmp_sb = tmp("_sb");
+  string tmp_first = tmp("_first");
   bool useFirstFlag = false;
 
   indent_impl(out) << "function " << cls_prefix << cls_nm << ".ToString: string;" << endl;
