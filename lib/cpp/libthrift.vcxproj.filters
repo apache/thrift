@@ -36,6 +36,9 @@
     <ClCompile Include="src\thrift\protocol\TJSONProtocol.cpp">
       <Filter>protocal</Filter>
     </ClCompile>
+    <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp">
+      <Filter>protocal</Filter>
+    </ClCompile>
     <ClCompile Include="src\thrift\transport\TFDTransport.cpp">
       <Filter>transport</Filter>
     </ClCompile>
@@ -167,6 +170,9 @@
     <ClInclude Include="src\thrift\processor\PeekProcessor.h">
       <Filter>processor</Filter>
     </ClInclude>
+    <ClInclude Include="src\thrift\processor\TMultiplexedProcessor.h">
+      <Filter>processor</Filter>
+    </ClInclude>
     <ClInclude Include="src\thrift\transport\TFDTransport.h">
       <Filter>transport</Filter>
     </ClInclude>
@@ -189,6 +195,9 @@
       <Filter>transport</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\protocol\TJSONProtocol.h">
+      <Filter>protocal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\protocol\TMultiplexedProtocol.h">
       <Filter>protocal</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\protocol\TDenseProtocol.h">
