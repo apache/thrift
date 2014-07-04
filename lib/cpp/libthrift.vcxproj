@@ -48,6 +48,7 @@
     <ClCompile Include="src\thrift\protocol\TDebugProtocol.cpp"/>
     <ClCompile Include="src\thrift\protocol\TDenseProtocol.cpp"/>
     <ClCompile Include="src\thrift\protocol\TJSONProtocol.cpp"/>
+    <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp"/>
     <ClCompile Include="src\thrift\server\TSimpleServer.cpp"/>
     <ClCompile Include="src\thrift\server\TThreadPoolServer.cpp"/>
     <ClCompile Include="src\thrift\TApplicationException.cpp"/>
@@ -93,10 +94,12 @@
     <ClInclude Include="src\thrift\concurrency\Exception.h" />
     <ClInclude Include="src\thrift\concurrency\PlatformThreadFactory.h" />
     <ClInclude Include="src\thrift\processor\PeekProcessor.h" />
+    <ClInclude Include="src\thrift\processor\TMultiplexedProcessor.h" />
     <ClInclude Include="src\thrift\protocol\TBinaryProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TDebugProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TDenseProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TJSONProtocol.h" />
+    <ClInclude Include="src\thrift\protocol\TMultiplexedProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TVirtualProtocol.h" />
     <ClInclude Include="src\thrift\server\TServer.h" />
