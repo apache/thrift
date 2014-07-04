@@ -51,6 +51,7 @@
     <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp"/>
     <ClCompile Include="src\thrift\server\TSimpleServer.cpp"/>
     <ClCompile Include="src\thrift\server\TThreadPoolServer.cpp"/>
+    <ClCompile Include="src\thrift\server\TThreadedServer.cpp"/>
     <ClCompile Include="src\thrift\TApplicationException.cpp"/>
     <ClCompile Include="src\thrift\Thrift.cpp"/>
     <ClCompile Include="src\thrift\transport\TBufferTransports.cpp"/>
@@ -105,6 +106,7 @@
     <ClInclude Include="src\thrift\server\TServer.h" />
     <ClInclude Include="src\thrift\server\TSimpleServer.h" />
     <ClInclude Include="src\thrift\server\TThreadPoolServer.h" />
+    <ClInclude Include="src\thrift\server\TThreadedServer.h" />
     <ClInclude Include="src\thrift\TApplicationException.h" />
     <ClInclude Include="src\thrift\Thrift.h" />
     <ClInclude Include="src\thrift\TProcessor.h" />
