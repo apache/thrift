@@ -74,6 +74,8 @@ class t_js_generator : public t_oop_generator {
      } else {
        out_dir_base_ = "gen-js";
      }
+
+     escape_['\''] = "\\'";
   }
 
   /**
