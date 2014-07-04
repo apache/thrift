@@ -102,6 +102,7 @@ class t_php_generator : public t_oop_generator {
   void generate_typedef  (t_typedef*  ttypedef);
   void generate_enum     (t_enum*     tenum);
   void generate_const    (t_const*    tconst);
+  void generate_consts   (vector<t_const*> consts);
   void generate_struct   (t_struct*   tstruct);
   void generate_xception (t_struct*   txception);
   void generate_service  (t_service*  tservice);
@@ -480,17 +481,57 @@ void t_php_generator::generate_enum(t_enum* tenum) {
 }
 
 /**
+ * Generate constant class
+ *
+ * Override the one from t_generator
+ */
+void t_php_generator::generate_consts(vector<t_const*> consts) {
+    vector<t_const*>::iterator c_iter;
+
+    // Create class only if needed
+    if(consts.size() > 0)
+    {
+        f_types_ << "final class Constant extends \\Thrift\\Type\\TConstant {" << endl;
+        indent_up();
+
+        // Create static property
+        for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+            string name = (*c_iter)->get_name();
+
+            indent(f_types_) << "static protected $" << name << ";" << endl;
+        }
+
+        // Create init function
+        for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+            string name = (*c_iter)->get_name();
+
+            f_types_ << endl;
+
+            indent(f_types_) << "static protected function init_" << name << "() {" << endl;
+            indent_up();
+
+            indent(f_types_) << "return ";
+            generate_const(*c_iter);
+            f_types_ << ";" << endl;
+
+            indent_down();
+            indent(f_types_) << "}" << endl;
+        }
+
+        indent_down();
+        f_types_ << "}" << endl << endl;
+    }
+}
+
+/**
  * Generate a constant value
  */
 void t_php_generator::generate_const(t_const* tconst) {
   t_type* type = tconst->get_type();
-  string name = tconst->get_name();
   t_const_value* value = tconst->get_value();
 
   generate_php_doc(f_types_, tconst);
-  f_types_ << "$GLOBALS['" << program_name_ << "_CONSTANTS']['" << name << "'] = ";
   f_types_ << render_const_value(type, value);
-  f_types_ << ";" << endl << endl;
 }
 
 /**
