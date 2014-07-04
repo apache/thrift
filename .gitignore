@@ -225,6 +225,7 @@ test-driver
 /tutorial/go/src/shared
 /tutorial/go/src/tutorial
 /tutorial/go/src/git.apache.org
+/tutorial/hs/dist/
 /tutorial/java/build/
 /tutorial/js/build/
 /ylwrap
