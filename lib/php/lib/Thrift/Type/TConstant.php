@@ -24,8 +24,6 @@ namespace Thrift\Type;
 
 /**
  * Base class for constant Management
- *
- * @author Xavier HAUSHERR <xavier.hausherr@ebuzzing.com>
  */
 abstract class TConstant
 {
