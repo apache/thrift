@@ -156,12 +156,6 @@ class TNonblockingServer::TConnection {
   /// Count of the number of calls for use with getResizeBufferEveryN().
   int32_t callsForResize_;
 
-  /// Task handle
-  int taskHandle_;
-
-  /// Task event
-  struct event taskEvent_;
-
   /// Transport to read from
   boost::shared_ptr<TMemoryBuffer> inputTransport_;
 
