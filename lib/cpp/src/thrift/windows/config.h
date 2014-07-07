@@ -53,6 +53,11 @@
 #  define _WIN32_WINNT 0x0601
 #endif
 
+#if defined(_M_IX86) || defined(_M_X64)
+#  define ARITHMETIC_RIGHT_SHIFT 1
+#  define SIGNED_RIGHT_SHIFT_IS 1
+#endif
+
 #pragma warning(disable: 4996) // Deprecated posix name.
 
 #define VERSION "1.0.0-dev"
