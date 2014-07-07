@@ -553,8 +553,7 @@ class SimpleThreadManager : public ThreadManager::Impl {
  public:
   SimpleThreadManager(size_t workerCount=4, size_t pendingTaskCountMax=0) :
     workerCount_(workerCount),
-    pendingTaskCountMax_(pendingTaskCountMax),
-    firstTime_(true) {
+    pendingTaskCountMax_(pendingTaskCountMax) {
   }
 
   void start() {
@@ -566,7 +565,6 @@ class SimpleThreadManager : public ThreadManager::Impl {
  private:
   const size_t workerCount_;
   const size_t pendingTaskCountMax_;
-  bool firstTime_;
   Monitor monitor_;
 };
 
