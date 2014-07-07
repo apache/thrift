@@ -751,7 +751,7 @@ void TFileTransport::performRecovery() {
       // if tailing the file, wait until there is enough data to start
       // the next chunk
       while(curChunk == (getNumChunks() - 1)) {
-        THRIFT_SLEEP_USEC(DEFAULT_CORRUPTED_SLEEP_TIME_US);
+        THRIFT_SLEEP_USEC(corruptedEventSleepTime_);
       }
       seekToChunk(curChunk + 1);
     } else {
