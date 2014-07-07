@@ -840,6 +840,9 @@ void TNonblockingServer::TConnection::close() {
   factoryInputTransport_->close();
   factoryOutputTransport_->close();
 
+  // release processor and handler
+  processor_.reset();
+
   // Give this object back to the server that owns it
   server_->returnConnection(this);
 }
