@@ -310,15 +310,14 @@ void TServerSocket::listen() {
 #ifndef _WIN32
 
     // Unix Domain Socket
-    struct sockaddr_un address = {0};
-    size_t len = path_.size()+1;
-
-    if (len > sizeof(address.sun_path)) {
+    size_t len = path_.size() + 1;
+    if (len > sizeof(sockaddr_un::sun_path)) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::listen() Unix Domain socket path too long", errno_copy);
       throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
     }
 
+    struct sockaddr_un address;
     address.sun_family = AF_UNIX;
     memcpy(address.sun_path, path_.c_str(), len);
     socklen_t structlen = static_cast<socklen_t>(sizeof(address));
