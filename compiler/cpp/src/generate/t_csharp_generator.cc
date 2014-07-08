@@ -161,11 +161,9 @@ class t_csharp_generator : public t_oop_generator
     std::string function_signature(t_function* tfunction, std::string prefix="");
     std::string argument_list(t_struct* tstruct);
     std::string type_to_enum(t_type* ttype);
-    std::string prop_name(t_field* tfield);
+    std::string prop_name(t_field* tfield, bool suppress_mapping = false);
     std::string get_enum_class_name(t_type* type);
     
-    std::string make_valid_csharp_identifier( std::string const & fromName);
-
     bool field_has_default(t_field* tfield) {
       return tfield->get_value() != NULL;
     }
@@ -198,10 +196,18 @@ class t_csharp_generator : public t_oop_generator
     bool wcf_;
     std::string wcf_namespace_;
 
-    std::map<std::string, int> csharp_keywords;	
+    std::map<std::string, int> csharp_keywords;
+
+    void* member_mapping_scope;
+    std::map<std::string, std::string> member_name_mapping;
 
     void init_keywords();
     std::string normalize_name( std::string name);
+    std::string make_valid_csharp_identifier( std::string const & fromName);
+    void prepare_member_name_mapping( t_struct* tstruct);
+    void prepare_member_name_mapping( void* scope, const vector<t_field*>& members, const string & structname);
+    void cleanup_member_name_mapping( void* scope);
+    string get_mapped_member_name( string oldname);
 };
 
 
@@ -225,6 +231,7 @@ void t_csharp_generator::init_generator() {
 
   namespace_dir_ = subdir;
   init_keywords();
+  member_mapping_scope = NULL;
   
   pverbose("C# options:\n");
   pverbose("- async ...... %s\n", (async_ ? "ON" : "off"));
@@ -381,9 +388,9 @@ string t_csharp_generator::csharp_type_usings() {
     ((async_||async_ctp_) ? "using System.Threading.Tasks;\n" : "") +
     "using Thrift;\n" +
     "using Thrift.Collections;\n" +
-	((serialize_||wcf_) ? "#if !SILVERLIGHT\n" : "") +
-	((serialize_||wcf_) ? "using System.Xml.Serialization;\n" : "") +
-	((serialize_||wcf_) ? "#endif\n" : "") +
+    ((serialize_||wcf_) ? "#if !SILVERLIGHT\n" : "") +
+    ((serialize_||wcf_) ? "using System.Xml.Serialization;\n" : "") +
+    ((serialize_||wcf_) ? "#endif\n" : "") +
     (wcf_ ? "//using System.ServiceModel;\n" : "") +
     "using System.Runtime.Serialization;\n";
 }
@@ -642,6 +649,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
   out << endl;
 
   generate_csharp_doc(out, tstruct);
+  prepare_member_name_mapping( tstruct);
 
   indent(out) << "#if !SILVERLIGHT" << endl;
   indent(out) << "[Serializable]" << endl; 
@@ -729,7 +737,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
 
     indent_down();
     indent(out) << "}" << endl << endl;
-	
+
     if(generate_isset && (serialize_||wcf_)) {
       indent(out) << "#region XmlSerializer support" << endl << endl;
  
@@ -740,12 +748,12 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
         // if it is not required, if it has a default value, we need to generate Isset
         // if we are not nullable, then we generate Isset
         if (!is_required && (!nullable_ || has_default)) {
-		  indent(out) << "public bool ShouldSerialize" << prop_name((*m_iter)) << "()" << endl;
-		  indent(out) << "{" << endl;
+          indent(out) << "public bool ShouldSerialize" << prop_name((*m_iter)) << "()" << endl;
+          indent(out) << "{" << endl;
           indent_up();
           indent(out) << "return __isset." << normalize_name((*m_iter)->get_name()) << ";" << endl;
           indent_down();
-		  indent(out) << "}" << endl << endl;
+          indent(out) << "}" << endl << endl;
         }
       }
 
@@ -820,6 +828,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream &out, t_stru
     generate_csharp_wcffault(out, tstruct);
   }
 
+  cleanup_member_name_mapping( tstruct);
   if (!in_class) {
     end_csharp_namespace(out);
   }
@@ -1096,7 +1105,7 @@ void t_csharp_generator::generate_csharp_struct_tostring(ofstream& out, t_struct
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if( ! field_is_required((*f_iter))) {
       indent(out) << "bool __first = true;" << endl;
-	  useFirstFlag = true;
+      useFirstFlag = true;
     }
     break;
   }
@@ -1551,6 +1560,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
       "return " << "send_" << funname << "(callback, state";
 
     t_struct* arg_struct = (*f_iter)->get_arglist();
+    prepare_member_name_mapping( arg_struct); 
 
     const vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator fld_iter;
@@ -1730,6 +1740,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
       indent(f_service_) << "#endif" << endl;
     }
 
+    cleanup_member_name_mapping( arg_struct); 
     scope_down(f_service_);
     f_service_ << endl;
 
@@ -1744,6 +1755,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
       indent(f_service_) <<
         "public " << function_signature(&recv_function) << endl;
       scope_up(f_service_);
+      prepare_member_name_mapping( (*f_iter)->get_xceptions()); 
 
       f_service_ <<
         indent() << "TMessage msg = iprot_.ReadMessageBegin();" << endl <<
@@ -1807,6 +1819,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
           indent() << "throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, \"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
       }
 
+      cleanup_member_name_mapping( (*f_iter)->get_xceptions()); 
       scope_down(f_service_);
       f_service_ << endl;
     }
@@ -1983,6 +1996,7 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
   f_service_ <<
     "iface_." << normalize_name(tfunction->get_name()) << "(";
   bool first = true;
+  prepare_member_name_mapping(arg_struct); 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if (first) {
       first = false;
@@ -1994,11 +2008,13 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
       f_service_ << ".Value";
     }
   }
+  cleanup_member_name_mapping(arg_struct); 
   f_service_ << ");" << endl;
 
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
     indent_down();
     f_service_ << indent() << "}";
+    prepare_member_name_mapping( xs); 
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ << " catch (" << type_name((*x_iter)->get_type(), false, false) << " " << (*x_iter)->get_name() << ") {" << endl;
       if (!tfunction->is_oneway()) {
@@ -2011,6 +2027,7 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
         f_service_ << "}";
       }
     }
+    cleanup_member_name_mapping( xs); 
     f_service_ << endl;
   }
 
@@ -2520,9 +2537,85 @@ std::string t_csharp_generator::make_valid_csharp_identifier( std::string const 
     return str;
 }
 
-std::string t_csharp_generator::prop_name(t_field* tfield) {
+void t_csharp_generator::cleanup_member_name_mapping( void* scope) {
+  if( member_mapping_scope != scope) {
+    if( member_mapping_scope == NULL) {
+      throw "internal error: cleanup_member_name_mapping() not active";
+    } else {
+      throw "internal error: cleanup_member_name_mapping() called for wrong struct";
+    }
+  }
+
+  member_mapping_scope = NULL;
+  member_name_mapping.clear();
+}
+
+string t_csharp_generator::get_mapped_member_name( string name) {
+  map<string,string>::iterator iter = member_name_mapping.find( name);
+  if( member_name_mapping.end() != iter) {
+    return iter->second;
+  }
+  pverbose("no mapping for member %s\n", name.c_str());
+  return name;
+}
+
+void t_csharp_generator::prepare_member_name_mapping( t_struct* tstruct) {
+  prepare_member_name_mapping( tstruct, tstruct->get_members(), tstruct->get_name());
+}
+
+void t_csharp_generator::prepare_member_name_mapping( void* scope, const vector<t_field*>& members, const string & structname) {
+  if( member_mapping_scope != NULL) {
+    if( member_mapping_scope != scope) {
+      throw "internal error: prepare_member_name_mapping() already active for different struct";
+    } else {
+      throw "internal error: prepare_member_name_mapping() already active for this struct";
+    }
+  }
+
+  member_mapping_scope = scope;
+  member_name_mapping.clear();
+  
+  std::set<std::string> used_member_names;
+  vector<t_field*>::const_iterator iter;
+  
+  // current C# generator policy: 
+  // - prop names are always rendered with an Uppercase first letter
+  // - struct names are used as given
+  
+  for (iter = members.begin(); iter != members.end(); ++iter) {
+    string oldname = (*iter)->get_name();
+    string newname = prop_name(*iter, true);
+    while( true) {
+      // name conflicts with struct (CS0542 error)
+      if( structname.compare( newname) == 0) {
+        pverbose("struct %s: member %s conflicts with struct (preventing CS0542)\n", structname.c_str(), newname.c_str());
+        newname += '_';      
+      }
+
+      // new name conflicts with another member
+      if( used_member_names.find(newname) != used_member_names.end()) {
+        pverbose("struct %s: member %s conflicts with another member\n", structname.c_str(), newname.c_str());
+        newname += '_';
+        continue;
+      }
+
+      // add always, this helps us to detect edge cases like 
+      // different spellings ("foo" and "Foo") within the same struct
+      pverbose("struct %s: member mapping %s => %s\n", structname.c_str(), oldname.c_str(), newname.c_str());
+      member_name_mapping[oldname] = newname;
+      used_member_names.insert(newname);
+      break;
+    }
+  }
+}
+
+std::string t_csharp_generator::prop_name(t_field* tfield, bool suppress_mapping) {
     string name (tfield->get_name());
-    name[0] = toupper(name[0]);
+    if( suppress_mapping) {
+      name[0] = toupper(name[0]);
+    } else {
+      name = get_mapped_member_name( name);
+    }
     return name;
 }
 
