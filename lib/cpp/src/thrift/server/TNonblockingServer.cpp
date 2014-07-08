@@ -265,7 +265,7 @@ class TNonblockingServer::TConnection {
    * @param v void* callback arg where we placed TConnection's "this".
    */
   static void eventHandler(evutil_socket_t fd, short /* which */, void* v) {
-    assert(fd == ((TConnection*)v)->getTSocket()->getSocketFD());
+    assert(fd == static_cast<evutil_socket_t>(((TConnection*)v)->getTSocket()->getSocketFD()));
     ((TConnection*)v)->workSocket();
   }
 
