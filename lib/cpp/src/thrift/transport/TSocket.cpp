@@ -622,7 +622,12 @@ void TSocket::setLinger(bool on, int linger) {
     return;
   }
 
+#ifndef _WIN32
   struct linger l = {(lingerOn_ ? 1 : 0), lingerVal_};
+#else
+  struct linger l = {(lingerOn_ ? 1 : 0), static_cast<u_short>(lingerVal_)};
+#endif
+
   int ret = setsockopt(socket_, SOL_SOCKET, SO_LINGER, cast_sockopt(&l), sizeof(l));
   if (ret == -1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;  // Copy THRIFT_GET_SOCKET_ERROR because we're allocating memory.
