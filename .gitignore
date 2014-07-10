@@ -17,7 +17,6 @@
 *_ReSharper*
 *.opensdf
 *.swp
-*.m4
 *~
 
 .*project
@@ -25,6 +24,8 @@ junit*.properties
 gen-*
 Makefile
 Makefile.in
+aclocal.m4
+acinclude.m4
 autom4te.cache
 node_modules
 compile
@@ -35,6 +36,8 @@ test-driver
 .svn
 
 /contrib/.vagrant/
+/aclocal/libtool.m4
+/aclocal/lt*.m4
 /autoscan.log
 /autoscan-*.log
 /compiler/cpp/Debug
