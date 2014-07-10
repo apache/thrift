@@ -186,7 +186,6 @@ binary-common:
 	dh_strip -Npython-thrift-dbg
 	dh_compress
 	dh_fixperms
-	dh_pysupport
 	dh_makeshlibs
 	dh_installdeb
 	dh_perl
