@@ -29,3 +29,10 @@ check: deps
 
 clean-local:
 	$(RM) -r test/gen-nodejs
+
+EXTRA_DIST = \
+	examples \
+	lib \
+	package.json \
+	test \
+	README.md

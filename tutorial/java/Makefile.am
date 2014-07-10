@@ -41,4 +41,5 @@ tutorialclient: all
 
 EXTRA_DIST = \
 	build.xml \
-	src
+	src \
+	README.md

@@ -21,10 +21,6 @@
 # Please see doc/old-thrift-license.txt in the Thrift distribution for
 # details.
 
-# Override Automake rule that forces .hh extension 
-am__yacc_c2h = sed -e s/cc$$/h/ -e s/cpp$$/hpp/ -e s/cxx$$/hxx/ \
-           -e s/c++$$/h++/ -e s/c$$/h/
-
 AM_YFLAGS = -d
 LIBS =
 BUILT_SOURCES = thrifty.cc
@@ -42,6 +38,7 @@ thrift_SOURCES = src/main.cc \
                  src/globals.h \
                  src/main.h \
                  src/platform.h \
+                 src/logging.h \
                  src/md5.h \
                  src/parse/t_doc.h \
                  src/parse/t_type.h \
@@ -111,6 +108,7 @@ WINDOWS_DIST = \
 
 EXTRA_DIST = \
              README.md \
+             CMakeLists.txt \
              $(WINDOWS_DIST)
 
 clean-local:

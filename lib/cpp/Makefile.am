@@ -100,7 +100,7 @@ endif
 libthriftnb_la_SOURCES = src/thrift/server/TNonblockingServer.cpp \
                          src/thrift/async/TAsyncProtocolProcessor.cpp \
                          src/thrift/async/TEvhttpServer.cpp \
-                         src/thrift/async/TEvhttpClientChannel.cpp 
+                         src/thrift/async/TEvhttpClientChannel.cpp
 
 libthriftz_la_SOURCES = src/thrift/transport/TZlibTransport.cpp
 
@@ -230,7 +230,8 @@ WINDOWS_DIST = \
              libthrift.vcxproj \
              libthrift.vcxproj.filters \
              libthriftnb.vcxproj \
-             libthriftnb.vcxproj.filters
+             libthriftnb.vcxproj.filters \
+             3rdparty.props
 
 EXTRA_DIST = \
              README.md \
