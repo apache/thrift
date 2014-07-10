@@ -64,6 +64,7 @@ endif
 # Any folders or files not listed above being added to SUBDIR need to be placed here in
 # EXTRA_DIST to be included in the release
 EXTRA_DIST = \
+	as3 \
 	csharp \
 	d \
 	delphi \
@@ -74,4 +75,5 @@ EXTRA_DIST = \
 	perl \
 	php \
 	shared.thrift \
-	tutorial.thrift
+	tutorial.thrift \
+	README.md

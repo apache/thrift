@@ -17,7 +17,13 @@
 # under the License.
 #
 
-SUBDIRS = . test
+AUTOMAKE_OPTIONS = serial-tests
+
+SUBDIRS = .
+
+if WITH_TESTS
+SUBDIRS += test
+endif
 
 #
 # Enumeration of all the public and private modules.

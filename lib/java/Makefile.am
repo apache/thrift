@@ -17,8 +17,6 @@
 # under the License.
 #
 
-EXTRA_DIST = build.xml build.properties src test
-
 export CLASSPATH
 
 all-local:
@@ -36,3 +34,9 @@ clean-local:
 check-local: all
 	$(ANT) $(ANT_FLAGS) test
 
+EXTRA_DIST = \
+	build.xml \
+	build.properties \
+	src \
+	test \
+	README.md

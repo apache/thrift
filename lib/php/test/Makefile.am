@@ -32,5 +32,7 @@ endif
 clean-local:
 	$(RM) -r ./packages
 
-EXTRA_DIST = Test
+EXTRA_DIST = \
+	Test \
+	phpunit.xml
 
