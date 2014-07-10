@@ -7,6 +7,7 @@
 *.log
 *.trs
 *.suo
+*.pyc
 *.cache
 *.user
 *.ipch
@@ -210,8 +211,6 @@ test-driver
 /test/log/
 /test/test.log
 /test/py.twisted/_trial_temp/
-/test/py.twisted/test_suite.pyc
-/test/py.tornado/*.pyc
 /test/rb/Gemfile.lock
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
