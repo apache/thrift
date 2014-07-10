@@ -22,8 +22,17 @@
 
 $build_and_test = <<SCRIPT
 echo "Provisioning system to compile and test Apache Thrift."
-sudo apt-get update -qq -y
-sudo apt-get upgrade -qq -y
+
+# Create swap space
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+sudo swapon -s
+
+# Update the system
+sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq -y
+sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -qq -y
 
 # Install Dependencies
 # ---
@@ -34,17 +43,17 @@ sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options
 sudo apt-get install -qq ant openjdk-7-jdk
 
 # Python dependencies
-sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools
+sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support
 
 # Ruby dependencies
-sudo apt-get install -qq ruby rubygems
+sudo apt-get install -qq ruby ruby-dev
 sudo gem install bundler rake
 
 # Perl dependencies
 sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl
 
 # Php dependencies
-sudo apt-get install -qq php5 php5-dev php5-cli php-pear
+sudo apt-get install -qq php5 php5-dev php5-cli php-pear re2c
 
 # GlibC dependencies
 sudo apt-get install -qq libglib2.0-dev
@@ -57,10 +66,14 @@ echo "golang-go golang-go/dashboard boolean false" | debconf-set-selections
 sudo apt-get -y install -qq golang golang-go
 
 # Haskell dependencies
-sudo apt-get install -qq ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev libghc-hashable-dev libghc-unordered-containers-dev libghc-vector-dev
+sudo apt-get install -qq ghc cabal-install libghc-binary-dev libghc-network-dev libghc-http-dev libghc-hashable-dev libghc-unordered-containers-dev libghc-vector-dev
+
+# Lua dependencies
+sudo apt-get install -qq lua5.2 lua5.2-dev
 
 # Node.js dependencies
-sudo apt-get install -qq npm
+sudo apt-get install -qq nodejs nodejs-dev npm
+sudo update-alternatives --install /usr/bin/node node /usr/bin/nodejs 10
 
 # CSharp
 sudo apt-get install -qq mono-gmcs mono-devel libmono-system-web2.0-cil
@@ -89,18 +102,15 @@ cd /thrift
 sh bootstrap.sh
 sh configure --without-erlang
 make
-make dist
 make check
 echo "Finished building Apache Thrift."
 
 SCRIPT
 
 Vagrant.configure("2") do |config|
-  # Ubuntu 12.04 LTS (Precise Pangolin)
-  config.vm.box = "precise64"
-  config.vm.box_url = "http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-vagrant-amd64-disk1.box"
-  # config.vm.box = "precise32"
-  # config.vm.box_url = "http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-vagrant-i386-disk1.box"
+  # Ubuntu 14.04 LTS (Trusty Tahr)
+  config.vm.box = "trusty64"
+  config.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
   config.vm.synced_folder "../", "/thrift"
 
