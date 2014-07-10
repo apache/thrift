@@ -22,11 +22,10 @@ if WITH_TESTS
 SUBDIRS = test
 endif
 
-%.so:
-	cd src/ext/thrift_protocol/ \
-	  && $(MAKE)
-
 if WITH_PHP_EXTENSION
+%.so:
+	cd src/ext/thrift_protocol/ && $(MAKE)
+
 phpconfdir=$(PHP_CONFIG_PREFIX)
 phpconf_DATA=thrift_protocol.ini
 
