@@ -265,10 +265,12 @@ AM_CONDITIONAL(WITH_PHP, [test "$have_php" = "yes"])
 
 AX_THRIFT_LIB(php_extension, [PHP_EXTENSION], yes)
 if test "$with_php_extension" = "yes"; then
-  AC_PATH_PROG([PHP_CONFIG], [php-config])
-  if test -n "$PHP_CONFIG" ; then
-    AC_CONFIG_SUBDIRS([lib/php/src/ext/thrift_protocol])
-    have_php_extension="yes"
+  if test -f "lib/php/src/ext/thrift_protocol/configure"; then
+    AC_PATH_PROG([PHP_CONFIG], [php-config])
+    if test -n "$PHP_CONFIG" ; then
+      AC_CONFIG_SUBDIRS([lib/php/src/ext/thrift_protocol])
+      have_php_extension="yes"
+    fi
   fi
 fi
 AM_CONDITIONAL(WITH_PHP_EXTENSION, [test "$have_php_extension" = "yes"])

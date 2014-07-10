@@ -196,6 +196,7 @@ test-driver
 /lib/php/src/packages/
 /lib/php/test/phpunit.xml
 /lib/php/test/packages/
+/lib/py/dist/
 /lib/erl/logs/
 /libtool
 /ltmain.sh
