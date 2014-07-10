@@ -69,7 +69,6 @@ EXTRA_DIST = \
 	d \
 	delphi \
 	erl \
-	gen-html \
 	hs \
 	ocaml \
 	perl \
