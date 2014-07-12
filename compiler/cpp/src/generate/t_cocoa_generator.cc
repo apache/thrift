@@ -2211,7 +2211,8 @@ void t_cocoa_generator::generate_serialize_list_element(ofstream& out,
  */
 string t_cocoa_generator::type_name(t_type* ttype, bool class_ref) {
   if (ttype->is_typedef()) {
-    return cocoa_prefix_ + ttype->get_name();
+    t_program* program = ttype->get_program();
+    return program ? (program->get_namespace("cocoa") + ttype->get_name()) : ttype->get_name();
   }
 
   string result;
