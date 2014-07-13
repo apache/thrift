@@ -28,167 +28,186 @@ using Thrift.Transport;
 
 namespace Thrift.Server
 {
-	/// <summary>
-	/// Server that uses C# built-in ThreadPool to spawn threads when handling requests
-	/// </summary>
-	public class TThreadPoolServer : TServer
-	{
-		private const int DEFAULT_MIN_THREADS = 10;
-		private const int DEFAULT_MAX_THREADS = 100;
-		private volatile bool stop = false;
+  /// <summary>
+  /// Server that uses C# built-in ThreadPool to spawn threads when handling requests
+  /// </summary>
+  public class TThreadPoolServer : TServer
+  {
+    private const int DEFAULT_MIN_THREADS = 10;
+    private const int DEFAULT_MAX_THREADS = 100;
+    private volatile bool stop = false;
 
-		public TThreadPoolServer(TProcessor processor, TServerTransport serverTransport)
-			:this(processor, serverTransport,
-				 new TTransportFactory(), new TTransportFactory(),
-				 new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
-				 DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, DefaultLogDelegate)
-		{
-		}
+    public TThreadPoolServer(TProcessor processor, TServerTransport serverTransport)
+      : this(processor, serverTransport,
+         new TTransportFactory(), new TTransportFactory(),
+         new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
+         DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, DefaultLogDelegate)
+    {
+    }
 
-		public TThreadPoolServer(TProcessor processor, TServerTransport serverTransport, LogDelegate logDelegate)
-			: this(processor, serverTransport,
-				 new TTransportFactory(), new TTransportFactory(),
-				 new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
-				 DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, logDelegate)
-		{
-		}
-
-
-		public TThreadPoolServer(TProcessor processor,
-								 TServerTransport serverTransport,
-								 TTransportFactory transportFactory,
-								 TProtocolFactory protocolFactory)
-			:this(processor, serverTransport,
-				 transportFactory, transportFactory,
-				 protocolFactory, protocolFactory,
-				 DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, DefaultLogDelegate)
-		{
-		}
-
-		public TThreadPoolServer(TProcessor processor,
-								 TServerTransport serverTransport,
-								 TTransportFactory inputTransportFactory,
-								 TTransportFactory outputTransportFactory,
-								 TProtocolFactory inputProtocolFactory,
-								 TProtocolFactory outputProtocolFactory,
-								 int minThreadPoolThreads, int maxThreadPoolThreads, LogDelegate logDel)
-			:base(processor, serverTransport, inputTransportFactory, outputTransportFactory,
-				  inputProtocolFactory, outputProtocolFactory, logDel)
-		{
-			lock (typeof(TThreadPoolServer))
-			{
-				if (!ThreadPool.SetMaxThreads(maxThreadPoolThreads, maxThreadPoolThreads))
-				{
-					throw new Exception("Error: could not SetMaxThreads in ThreadPool");
-				}
-				if (!ThreadPool.SetMinThreads(minThreadPoolThreads, minThreadPoolThreads))
-				{
-					throw new Exception("Error: could not SetMinThreads in ThreadPool");
-				}
-			}
-		}
+    public TThreadPoolServer(TProcessor processor, TServerTransport serverTransport, LogDelegate logDelegate)
+      : this(processor, serverTransport,
+         new TTransportFactory(), new TTransportFactory(),
+         new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
+         DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, logDelegate)
+    {
+    }
 
 
-		/// <summary>
-		/// Use new ThreadPool thread for each new client connection
-		/// </summary>
-		public override void Serve()
-		{
-			try
-			{
-				serverTransport.Listen();
-			}
-			catch (TTransportException ttx)
-			{
-				logDelegate("Error, could not listen on ServerTransport: " + ttx);
-				return;
-			}
+    public TThreadPoolServer(TProcessor processor,
+                 TServerTransport serverTransport,
+                 TTransportFactory transportFactory,
+                 TProtocolFactory protocolFactory)
+      : this(processor, serverTransport,
+         transportFactory, transportFactory,
+         protocolFactory, protocolFactory,
+         DEFAULT_MIN_THREADS, DEFAULT_MAX_THREADS, DefaultLogDelegate)
+    {
+    }
 
-			while (!stop)
-			{
-				int failureCount = 0;
-				try
-				{
-					TTransport client = serverTransport.Accept();
-					ThreadPool.QueueUserWorkItem(this.Execute, client);
-				}
-				catch (TTransportException ttx)
-				{
-					if (stop)
-					{
-						logDelegate("TThreadPoolServer was shutting down, caught " + ttx.GetType().Name);
-					}
-					else
-					{
-						++failureCount;
-						logDelegate(ttx.ToString());
-					}
+    public TThreadPoolServer(TProcessor processor,
+                 TServerTransport serverTransport,
+                 TTransportFactory inputTransportFactory,
+                 TTransportFactory outputTransportFactory,
+                 TProtocolFactory inputProtocolFactory,
+                 TProtocolFactory outputProtocolFactory,
+                 int minThreadPoolThreads, int maxThreadPoolThreads, LogDelegate logDel)
+      : base(processor, serverTransport, inputTransportFactory, outputTransportFactory,
+          inputProtocolFactory, outputProtocolFactory, logDel)
+    {
+      lock (typeof(TThreadPoolServer))
+      {
+        if (!ThreadPool.SetMaxThreads(maxThreadPoolThreads, maxThreadPoolThreads))
+        {
+          throw new Exception("Error: could not SetMaxThreads in ThreadPool");
+        }
+        if (!ThreadPool.SetMinThreads(minThreadPoolThreads, minThreadPoolThreads))
+        {
+          throw new Exception("Error: could not SetMinThreads in ThreadPool");
+        }
+      }
+    }
 
-				}
-			}
 
-			if (stop)
-			{
-				try
-				{
-					serverTransport.Close();
-				}
-				catch (TTransportException ttx)
-				{
-					logDelegate("TServerTransport failed on close: " + ttx.Message);
-				}
-				stop = false;
-			}
-		}
+    /// <summary>
+    /// Use new ThreadPool thread for each new client connection
+    /// </summary>
+    public override void Serve()
+    {
+      try
+      {
+        serverTransport.Listen();
+      }
+      catch (TTransportException ttx)
+      {
+        logDelegate("Error, could not listen on ServerTransport: " + ttx);
+        return;
+      }
 
-		/// <summary>
-		/// Loops on processing a client forever
-		/// threadContext will be a TTransport instance
-		/// </summary>
-		/// <param name="threadContext"></param>
-		private void Execute(Object threadContext)
-		{
-			TTransport client = (TTransport)threadContext;
-			TTransport inputTransport = null;
-			TTransport outputTransport = null;
-			TProtocol inputProtocol = null;
-			TProtocol outputProtocol = null;
-			try
-			{
-				inputTransport = inputTransportFactory.GetTransport(client);
-				outputTransport = outputTransportFactory.GetTransport(client);
-				inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
-				outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
-				while (processor.Process(inputProtocol, outputProtocol))
-				{
-					//keep processing requests until client disconnects
-				}
-			}
-			catch (TTransportException)
-			{
-				// Assume the client died and continue silently
-				//Console.WriteLine(ttx);
-			}
-			
-			catch (Exception x)
-			{
-				logDelegate("Error: " + x);
-			}
+      //Fire the preServe server event when server is up but before any client connections
+      if (serverEventHandler != null)
+        serverEventHandler.preServe();
 
-			if (inputTransport != null)
-			{
-				inputTransport.Close();
-			}
-			if (outputTransport != null)
-			{
-				outputTransport.Close();
-			}
-		}
+      while (!stop)
+      {
+        int failureCount = 0;
+        try
+        {
+          TTransport client = serverTransport.Accept();
+          ThreadPool.QueueUserWorkItem(this.Execute, client);
+        }
+        catch (TTransportException ttx)
+        {
+          if (stop)
+          {
+            logDelegate("TThreadPoolServer was shutting down, caught " + ttx.GetType().Name);
+          }
+          else
+          {
+            ++failureCount;
+            logDelegate(ttx.ToString());
+          }
 
-		public override void Stop()
-		{
-			stop = true;
-			serverTransport.Close();
-		}
-	}
+        }
+      }
+
+      if (stop)
+      {
+        try
+        {
+          serverTransport.Close();
+        }
+        catch (TTransportException ttx)
+        {
+          logDelegate("TServerTransport failed on close: " + ttx.Message);
+        }
+        stop = false;
+      }
+    }
+
+    /// <summary>
+    /// Loops on processing a client forever
+    /// threadContext will be a TTransport instance
+    /// </summary>
+    /// <param name="threadContext"></param>
+    private void Execute(Object threadContext)
+    {
+      TTransport client = (TTransport)threadContext;
+      TTransport inputTransport = null;
+      TTransport outputTransport = null;
+      TProtocol inputProtocol = null;
+      TProtocol outputProtocol = null;
+      Object connectionContext = null;
+      try
+      {
+        inputTransport = inputTransportFactory.GetTransport(client);
+        outputTransport = outputTransportFactory.GetTransport(client);
+        inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
+        outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
+
+        //Recover event handler (if any) and fire createContext server event when a client connects
+        if (serverEventHandler != null)
+          connectionContext = serverEventHandler.createContext(inputProtocol, outputProtocol);
+
+        //Process client requests until client disconnects
+        while (true)
+        {
+          //Fire processContext server event
+          //N.B. This is the pattern implemented in C++ and the event fires provisionally.
+          //That is to say it may be many minutes between the event firing and the client request
+          //actually arriving or the client may hang up without ever makeing a request.
+          if (serverEventHandler != null)
+            serverEventHandler.processContext(connectionContext, inputTransport);
+          //Process client request (blocks until transport is readable)
+          if (!processor.Process(inputProtocol, outputProtocol))
+            break;
+        }
+      }
+      catch (TTransportException)
+      {
+        //Usually a client disconnect, expected
+      }
+      catch (Exception x)
+      {
+        //Unexpected
+        logDelegate("Error: " + x);
+      }
+
+      //Fire deleteContext server event after client disconnects
+      if (serverEventHandler != null)
+        serverEventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
+
+      //Close transports
+      if (inputTransport != null)
+        inputTransport.Close();
+      if (outputTransport != null)
+        outputTransport.Close();
+    }
+
+    public override void Stop()
+    {
+      stop = true;
+      serverTransport.Close();
+    }
+  }
 }
