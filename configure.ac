@@ -88,7 +88,7 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
-AC_PROG_BISON
+AC_PROG_BISON(2.5)
 AC_PROG_YACC
 AC_PROG_LEX
 AM_PROG_LEX
@@ -265,10 +265,12 @@ AM_CONDITIONAL(WITH_PHP, [test "$have_php" = "yes"])
 
 AX_THRIFT_LIB(php_extension, [PHP_EXTENSION], yes)
 if test "$with_php_extension" = "yes"; then
-  AC_PATH_PROG([PHP_CONFIG], [php-config])
-  if test -n "$PHP_CONFIG" ; then
-    AC_CONFIG_SUBDIRS([lib/php/src/ext/thrift_protocol])
-    have_php_extension="yes"
+  if test -f "lib/php/src/ext/thrift_protocol/configure"; then
+    AC_PATH_PROG([PHP_CONFIG], [php-config])
+    if test -n "$PHP_CONFIG" ; then
+      AC_CONFIG_SUBDIRS([lib/php/src/ext/thrift_protocol])
+      have_php_extension="yes"
+    fi
   fi
 fi
 AM_CONDITIONAL(WITH_PHP_EXTENSION, [test "$have_php_extension" = "yes"])

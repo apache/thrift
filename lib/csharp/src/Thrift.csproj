@@ -103,6 +103,7 @@
     <Compile Include="Protocol\TType.cs" />
     <Compile Include="Server\TThreadedServer.cs" />
     <Compile Include="Server\TServer.cs" />
+    <Compile Include="Server\TServerEventHandler.cs" />
     <Compile Include="Server\TSimpleServer.cs" />
     <Compile Include="Server\TThreadPoolServer.cs" />
     <Compile Include="TException.cs" />

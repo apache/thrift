@@ -34,6 +34,28 @@ namespace Test
 {
 	public class TestServer
 	{
+    public class TradeServerEventHandler : TServerEventHandler
+    {
+      public int callCount = 0;
+      public void preServe()
+      {
+        callCount++;
+      }
+      public Object createContext(Thrift.Protocol.TProtocol input, Thrift.Protocol.TProtocol output)
+      {
+        callCount++;
+        return null;
+      }
+      public void deleteContext(Object serverContext, Thrift.Protocol.TProtocol input, Thrift.Protocol.TProtocol output)
+      {
+        callCount++;
+      }
+      public void processContext(Object serverContext, Thrift.Transport.TTransport transport)
+      {
+        callCount++;
+      }
+    };
+
 		public class TestHandler : ThriftTest.Iface
 		{
 			public TServer server;
@@ -399,6 +421,10 @@ namespace Test
 
 				// Threaded Server
 				// serverEngine = new TThreadedServer(testProcessor, tServerSocket);
+
+        //Server event handler
+        TradeServerEventHandler serverEvents = new TradeServerEventHandler();
+        serverEngine.setEventHandler(serverEvents);
 
 				testHandler.server = serverEngine;
 
