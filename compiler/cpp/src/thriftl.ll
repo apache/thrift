@@ -52,6 +52,8 @@
 
 #ifdef _MSC_VER
 #include "windows/config.h"
+#else
+#include "config.h"
 #endif
 #include "main.h"
 #include "globals.h"
