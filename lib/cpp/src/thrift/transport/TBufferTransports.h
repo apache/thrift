@@ -335,16 +335,19 @@ class TFramedTransport
     , wBufSize_(DEFAULT_BUFFER_SIZE)
     , rBuf_()
     , wBuf_(new uint8_t[wBufSize_])
+    , bufReclaimThresh_(std::numeric_limits<uint32_t>::max())
   {
     initPointers();
   }
 
-  TFramedTransport(boost::shared_ptr<TTransport> transport, uint32_t sz)
+  TFramedTransport(boost::shared_ptr<TTransport> transport, uint32_t sz, 
+          uint32_t bufReclaimThresh = std::numeric_limits<uint32_t>::max())
     : transport_(transport)
     , rBufSize_(0)
     , wBufSize_(sz)
     , rBuf_()
     , wBuf_(new uint8_t[wBufSize_])
+    , bufReclaimThresh_(bufReclaimThresh)
   {
     initPointers();
   }
@@ -414,6 +417,7 @@ class TFramedTransport
   uint32_t wBufSize_;
   boost::scoped_array<uint8_t> rBuf_;
   boost::scoped_array<uint8_t> wBuf_;
+  uint32_t bufReclaimThresh_;
 };
 
 /**
