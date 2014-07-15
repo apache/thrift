@@ -508,7 +508,7 @@ string t_erl_generator::render_member_type(t_field * field) {
   } else if (type->is_enum()) {
     return "integer()";
   } else if (type->is_struct() || type->is_xception()) {
-    return "#" + uncapitalize(type->get_name()) + "{}";
+    return uncapitalize(type->get_name()) + "()";
   } else if (type->is_map()) {
     return "dict()";
   } else if (type->is_set()) {
@@ -577,7 +577,10 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tst
   }
   buf << "}).";
 
-  out << buf.str() << endl << endl;
+  out << buf.str() << endl;
+  out <<
+    "-type "+type_name (tstruct) << "() :: #" + type_name (tstruct) + "{}."
+      << endl << endl;
 }
 
 /**
