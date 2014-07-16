@@ -248,18 +248,6 @@ public:
                                           std::string iter,
                                           bool has_metadata = true);
 
-  void generate_java_doc                 (std::ofstream& out,
-                                          t_field*    field);
-
-  void generate_java_doc                 (std::ofstream& out,
-                                          t_doc*      tdoc);
-
-  void generate_java_doc                 (std::ofstream& out,
-                                          t_function* tdoc);
-
-  void generate_java_docstring_comment   (std::ofstream &out,
-                                          string contents);
-
   void generate_deep_copy_container(std::ofstream& out, std::string source_name_p1, std::string source_name_p2, std::string result_name, t_type* type);
   void generate_deep_copy_non_container(std::ofstream& out, std::string source_name, std::string dest_name, t_type* type);
 
@@ -282,7 +270,6 @@ public:
   std::string async_function_call_arglist(t_function* tfunc, bool use_base_method = true, bool include_types = true);
   std::string async_argument_list(t_function* tfunct, t_struct* tstruct, t_type* ttype, bool include_types=false);
   std::string type_to_enum(t_type* ttype);
-  std::string get_enum_class_name(t_type* type);
   void generate_struct_desc(ofstream& out, t_struct* tstruct);
   void generate_field_descs(ofstream& out, t_struct* tstruct);
   void generate_field_name_constants(ofstream& out, t_struct* tstruct);
@@ -1680,7 +1667,7 @@ void t_java_generator::generate_java_struct_reader(ofstream& out,
   indent(out) << "schemes.get(iprot.getScheme()).getScheme().read(iprot, this);" << endl; 
   indent_down();
   indent(out) << "}" << endl <<
-  endl;	
+  endl;
 }
 
 // generates java method to perform various checks
@@ -1740,7 +1727,7 @@ void t_java_generator::generate_java_struct_writer(ofstream& out,
   indent(out) << "schemes.get(oprot.getScheme()).getScheme().write(oprot, this);" << endl;
 
   indent_down();
-  indent(out) << "}" << endl << endl;	
+  indent(out) << "}" << endl << endl;
 }
 
 /**
@@ -1759,7 +1746,7 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out,
   indent(out) << "schemes.get(oprot.getScheme()).getScheme().write(oprot, this);" << endl;
   
   indent_down();
-  indent(out) << "  }" << endl << endl;	
+  indent(out) << "  }" << endl << endl;
 }
 
 void t_java_generator::generate_java_struct_field_by_id(ofstream& out, t_struct* tstruct) {
@@ -2809,18 +2796,18 @@ void t_java_generator::generate_process_async_function(t_service* tservice,
   indent(f_service_) << "final org.apache.thrift.AsyncProcessFunction fcall = this;"<<endl;
   indent(f_service_) << "return new AsyncMethodCallback<"<<resulttype<<">() { " << endl;
   indent_up();
-  indent(f_service_) <<	"public void onComplete(" << resulttype <<" o) {" << endl;
+  indent(f_service_) << "public void onComplete(" << resulttype <<" o) {" << endl;
 
   indent_up();
   if (!tfunction->is_oneway()) {
     indent(f_service_) <<resultname<<" result = new "<<resultname<<"();"<<endl;
 
     if (!tfunction->get_returntype()->is_void()) {
-  	  indent(f_service_) << "result.success = o;"<<endl;
+      indent(f_service_) << "result.success = o;"<<endl;
       // Set isset on success field
-  	  if (!type_can_be_null(tfunction->get_returntype())) {
-  	    indent(f_service_) << "result.set" << get_cap_name("success") << get_cap_name("isSet") << "(true);" << endl;
-  	  }
+      if (!type_can_be_null(tfunction->get_returntype())) {
+        indent(f_service_) << "result.set" << get_cap_name("success") << get_cap_name("isSet") << "(true);" << endl;
+      }
     }
 
     indent(f_service_) << "try {"<<endl;
@@ -2840,24 +2827,24 @@ void t_java_generator::generate_process_async_function(t_service* tservice,
 
 
   if (!tfunction->is_oneway()) {
-	 indent(f_service_) <<"byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;"<<endl;
-	 indent(f_service_) <<"org.apache.thrift.TBase msg;"<<endl;
+     indent(f_service_) <<"byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;"<<endl;
+     indent(f_service_) <<"org.apache.thrift.TBase msg;"<<endl;
      indent(f_service_) <<resultname<<" result = new "<<resultname<<"();"<<endl;
 
      t_struct* xs = tfunction->get_xceptions();
      const std::vector<t_field*>& xceptions = xs->get_members();
      vector<t_field*>::const_iterator x_iter;
      if (xceptions.size() > 0) {
-    	 for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-    		 if (x_iter != xceptions.begin()) indent(f_service_) << "else ";
-    		 indent(f_service_) << "if (e instanceof " << type_name((*x_iter)->get_type(), false, false)<<") {" << endl;
-    		 indent(f_service_) << indent() << "result." << (*x_iter)->get_name() << " = (" << type_name((*x_iter)->get_type(), false, false) << ") e;" << endl;
-    	  	 indent(f_service_) << indent() << "result.set" << get_cap_name((*x_iter)->get_name()) << get_cap_name("isSet") << "(true);" << endl;
-    		 indent(f_service_) << indent() << "msg = result;"<<endl;
+       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
+         if (x_iter != xceptions.begin()) indent(f_service_) << "else ";
+         indent(f_service_) << "if (e instanceof " << type_name((*x_iter)->get_type(), false, false)<<") {" << endl;
+         indent(f_service_) << indent() << "result." << (*x_iter)->get_name() << " = (" << type_name((*x_iter)->get_type(), false, false) << ") e;" << endl;
+         indent(f_service_) << indent() << "result.set" << get_cap_name((*x_iter)->get_name()) << get_cap_name("isSet") << "(true);" << endl;
+         indent(f_service_) << indent() << "msg = result;"<<endl;
 
-    	  	 indent(f_service_) << "}"<<endl;
-    	 }
-    	 indent(f_service_) << " else "<<endl;
+         indent(f_service_) << "}"<<endl;
+       }
+       indent(f_service_) << " else "<<endl;
      }
 
      indent(f_service_) << "{"<<endl;
@@ -2907,7 +2894,7 @@ void t_java_generator::generate_process_async_function(t_service* tservice,
     f_service_ << "args." << (*f_iter)->get_name();
   }
   if (!first)
-	  f_service_ << ",";
+      f_service_ << ",";
   f_service_ << "resultHandler";
   f_service_ << ");" << endl;
 
@@ -3889,57 +3876,6 @@ string t_java_generator::constant_name(string name) {
   return constant_name;
 }
 
-void t_java_generator::generate_java_docstring_comment(ofstream &out, string contents) {
-  generate_docstring_comment(out,
-                             "/**\n",
-                             " * ", contents,
-                             " */\n");
-}
-
-void t_java_generator::generate_java_doc(ofstream &out,
-                                         t_field* field) {
-  if (field->get_type()->is_enum()) {
-    string combined_message = field->get_doc() + "\n@see " + get_enum_class_name(field->get_type());
-    generate_java_docstring_comment(out, combined_message);
-  } else {
-    generate_java_doc(out, (t_doc*)field);
-  }
-}
-
-/**
- * Emits a JavaDoc comment if the provided object has a doc in Thrift
- */
-void t_java_generator::generate_java_doc(ofstream &out,
-                                         t_doc* tdoc) {
-  if (tdoc->has_doc()) {
-    generate_java_docstring_comment(out, tdoc->get_doc());
-  }
-}
-
-/**
- * Emits a JavaDoc comment if the provided function object has a doc in Thrift
- */
-void t_java_generator::generate_java_doc(ofstream &out,
-                                         t_function* tfunction) {
-  if (tfunction->has_doc()) {
-    stringstream ss;
-    ss << tfunction->get_doc();
-    const vector<t_field*>& fields = tfunction->get_arglist()->get_members();
-    vector<t_field*>::const_iterator p_iter;
-    for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
-      t_field* p = *p_iter;
-      ss << "\n@param " << p->get_name();
-      if (p->has_doc()) {
-        ss << " " << p->get_doc();
-      }
-    }
-    generate_docstring_comment(out,
-                               "/**\n",
-                               " * ", ss.str(),
-                               " */\n");
-  }
-}
-
 void t_java_generator::generate_deep_copy_container(ofstream &out, std::string source_name_p1, std::string source_name_p2,
                                                     std::string result_name, t_type* type) {
 
@@ -4085,15 +4021,6 @@ void t_java_generator::generate_isset_set(ofstream& out, t_field* field, string 
   if (!type_can_be_null(field->get_type())) {
     indent(out) << prefix << "set" << get_cap_name(field->get_name()) << get_cap_name("isSet") << "(true);" << endl;
   }
-}
-
-std::string t_java_generator::get_enum_class_name(t_type* type) {
-  string package = "";
-  t_program* program = type->get_program();
-  if (program != NULL && program != program_) {
-    package = program->get_namespace("java") + ".";
-  }
-  return package + type->get_name();
 }
 
 void t_java_generator::generate_struct_desc(ofstream& out, t_struct* tstruct) {
@@ -4412,7 +4339,7 @@ void t_java_generator::generate_standard_reader(ofstream& out, t_struct* tstruct
   indent(out) << "struct.validate();" << endl;
 
   indent_down();
-  out << indent() << "}" << endl;	
+  out << indent() << "}" << endl;
 }
 
 void t_java_generator::generate_standard_writer(ofstream& out, t_struct* tstruct, bool is_result) {
