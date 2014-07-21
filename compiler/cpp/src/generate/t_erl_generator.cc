@@ -301,10 +301,10 @@ void t_erl_generator::close_generator() {
   f_types_file_ << "-export([" << export_types_lines_.str() << "])." << endl << endl;
 
   f_types_file_ << f_info_.str();
-  f_types_file_ << "struct_info('i am a dummy struct') -> undefined." << endl << endl;
+  f_types_file_ << "struct_info(_) -> erlang:error(function_clause)." << endl << endl;
 
   f_types_file_ << f_info_ext_.str();
-  f_types_file_ << "struct_info_ext('i am a dummy struct') -> undefined." << endl << endl;
+  f_types_file_ << "struct_info_ext(_) -> erlang:error(function_clause)." << endl << endl;
 
   hrl_footer(f_types_hrl_file_, string("BOGUS"));
 
@@ -716,7 +716,7 @@ void t_erl_generator::generate_service_helpers(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_erl_function_helpers(*f_iter);
   }
-  f_service_    << "struct_info('i am a dummy struct') -> undefined." << endl;
+  f_service_    << "struct_info(_) -> erlang:error(function_clause)." << endl;
 }
 
 /**
@@ -755,8 +755,9 @@ void t_erl_generator::generate_service_interface(t_service* tservice) {
                          << "_thrift:function_info(Function, InfoType)." << endl;
       indent_down();
   } else {
-      // Use a special return code for nonexistent functions
-      indent(f_service_) << "function_info(_Func, _Info) -> no_function." << endl;
+      // return function_clause error for non-existent functions
+      indent(f_service_) << "function_info(_Func, _Info) -> erlang:error(function_clause)."
+                         << endl;
   }
 
   indent(f_service_) << endl;
