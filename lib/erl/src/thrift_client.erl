@@ -67,7 +67,9 @@ send_function_call(Client = #tclient{protocol = Proto0,
                                      seqid    = SeqId},
                    Function,
                    Args) ->
-    Params = Service:function_info(Function, params_type),
+    Params = try Service:function_info(Function, params_type)
+    catch error:function_clause -> no_function
+    end,
     case Params of
         no_function ->
             {Client, {error, {no_function, Function}}};
