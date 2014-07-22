@@ -28,7 +28,7 @@ cache:
  
 env:
  - CONFIG="--disable-libs"
- - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-rb --without-java"
+ - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
  - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua"
 
 # see what we need: http://thrift.apache.org/docs/install/ubuntu
@@ -41,13 +41,14 @@ install:
 script:
 # TODO: fix these languages
  - sh configure $CONFIG
- - make -j4 && make dist
   
  - function build_n_test {
      if [ $CONFIG == "--disable-libs" ]; then
+       make check -j4
        mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4; cd ..
        mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4; cd ..
      else
+       make -j4 && make dist
        make cross -j4;
      fi
    }
