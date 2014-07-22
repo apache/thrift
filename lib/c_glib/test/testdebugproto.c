@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <assert.h>
 #include <math.h>
 #include <glib-object.h>
 
@@ -24,10 +25,15 @@
 #define M_PI 3.1415926535897932385
 #endif
 
+#include <thrift/c_glib/protocol/thrift_protocol.h>
+#include <thrift/c_glib/protocol/thrift_binary_protocol.h>
+
 #include "gen-c_glib/t_test_debug_proto_test_types.h"
+#include "gen-c_glib/t_test_srv.h"
+#include "gen-c_glib/t_test_inherited.h"
 
 static void
-test_debug_proto(void)
+test_structs(void)
 {
   TTestOneOfEach *ooe = NULL;
   TTestNesting *n = NULL;
@@ -79,13 +85,55 @@ test_debug_proto(void)
   return 0;
 }
 
+static void
+test_service_inheritance (void)
+{
+  ThriftProtocol *protocol;
+  TTestInheritedClient *inherited_client;
+  GObject *input_protocol, *output_protocol;
+
+  protocol = g_object_new (THRIFT_TYPE_BINARY_PROTOCOL, NULL);
+  inherited_client = g_object_new (T_TEST_TYPE_INHERITED_CLIENT,
+                                   NULL);
+
+  /* TTestInheritedClient inherits from TTestSrvClient */
+  assert (g_type_is_a (T_TEST_TYPE_INHERITED_CLIENT,
+                       T_TEST_TYPE_SRV_CLIENT));
+
+  /* TTestInheritedClient implements TTestSrvClient's interface */
+  assert (g_type_is_a (T_TEST_TYPE_INHERITED_CLIENT,
+                       T_TEST_TYPE_SRV_IF));
+
+  /* TTestInheritedClient's inherited properties can be set and
+   * retrieved */
+  g_object_set (inherited_client,
+                "input_protocol", protocol,
+                "output_protocol", protocol,
+                NULL);
+
+  g_object_get (inherited_client,
+                "input_protocol", &input_protocol,
+                "output_protocol", &output_protocol,
+                NULL);
+
+  assert (input_protocol == G_OBJECT(protocol));
+  assert (output_protocol == G_OBJECT(protocol));
+
+  g_object_unref (output_protocol);
+  g_object_unref (input_protocol);
+  g_object_unref (inherited_client);
+  g_object_unref (protocol);
+}
+
 int
 main(int argc, char *argv[])
 {
   g_type_init();
   g_test_init (&argc, &argv, NULL);
 
-  g_test_add_func ("/testdebugproto/DebugProto", test_debug_proto);
+  g_test_add_func ("/testdebugproto/DebugProto/Structs", test_structs);
+  g_test_add_func ("/testdebugproto/DebugProto/ServiceInheritance",
+                   test_service_inheritance);
 
   return g_test_run ();
 }
