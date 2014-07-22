@@ -74,4 +74,4 @@ sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime
 # Customize the system
 # ---
 # Default java to latest 1.7 version
-update-java-alternatives -s java-1.7.0-openjdk-amd64 
+sudo update-java-alternatives -s java-1.7.0-openjdk-amd64 
