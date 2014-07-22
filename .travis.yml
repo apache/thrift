@@ -27,7 +27,6 @@ cache:
  - maven
  
 env:
- - CONFIG="--disable-libs"
  - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
  - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua"
  
