@@ -28,39 +28,7 @@ cache:
 
 # see what we need: http://thrift.apache.org/docs/install/ubuntu
 before_install:
- - sudo apt-add-repository "deb http://archive.ubuntu.com/ubuntu/ trusty main restricted" -y
- - sudo apt-get update -qq
- - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev bc 
- - dpkg -S /usr/include/boost/version.hpp
-# Java
- - sudo apt-get install -qq ant
-# Ruby
- - gem install bundler -v 1.3.5 || true
-# Python
-# - sudo apt-get install -qq python-all python-all-dev python-all-dbg
-# Perl
- - sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl
-# PHP
- - sudo apt-get install -qq php5-dev php5-cli phpunit php-pear
- - sudo pear channel-discover pear.phpunit.de
- - sudo pear channel-discover pear.symfony.com
-# - sudo pear channel-discover components.ez.no
- - sudo pear update-channels
- - sudo pear upgrade-all
- - sudo pear install --alldeps phpunit/PHPUnit
-# c_glib
- - sudo apt-get install -qq libglib2.0-dev
-# Erlang
-# - sudo apt-get install -qq erlang-base erlang-eunit erlang-dev
-# Csharp
- - sudo apt-get install -qq mono-gmcs mono-devel libmono-system-web2.0-cil nunit nunit-console
-# Haskell
-# - sudo apt-get install -qq ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev
-# Thrift Compiler for Windows
- - sudo apt-get install -qq mingw32
-# node.js
- - sudo apt-get install -qq nodejs npm
- - sudo npm install nodeunit -g || true
+ - sh contrib/installDependencies.sh
 
 install:
   - sh bootstrap.sh
