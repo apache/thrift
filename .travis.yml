@@ -33,9 +33,9 @@ env:
 matrix:
   include:
     - compiler: gcc
-      CONFIG="--disable-libs"
+      env: CONFIG="--disable-libs"
     - compiler: clang
-      CONFIG="--disable-libs"
+      env: CONFIG="--disable-libs"
 
 
 # see what we need: http://thrift.apache.org/docs/install/ubuntu
