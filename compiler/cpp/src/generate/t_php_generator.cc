@@ -2639,5 +2639,6 @@ THRIFT_REGISTER_GENERATOR(php, "PHP",
 "    server:          Generate PHP server stubs\n"
 "    oop:             Generate PHP with object oriented subclasses\n"
 "    rest:            Generate PHP REST processors\n"
+"    validate:        Generate PHP validator methods\n"
 )
 
