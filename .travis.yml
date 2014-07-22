@@ -44,11 +44,11 @@ script:
   
  - function build_n_test {
      if [ $CONFIG == "--disable-libs" ]; then
-       make check -j4
-       mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4; cd ..
-       mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4; cd ..
+       make check -j4;
+       mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4; cd ..;
+       mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4; cd ..;
      else
-       make -j4 && make dist
+       make -j4 && make dist;
        make cross -j4;
      fi
    }
