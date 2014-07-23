@@ -36,6 +36,7 @@ matrix:
       env: CONFIG="--disable-libs"
     - compiler: clang
       env: CONFIG="--disable-libs"
+      script: make check -j5;
 
 
 # see what we need: http://thrift.apache.org/docs/install/ubuntu
