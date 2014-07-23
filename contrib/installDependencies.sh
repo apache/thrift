@@ -19,6 +19,7 @@
 
 
 # Mainly aiming Travis CI's Ubuntu machines for now
+# see what we need: http://thrift.apache.org/docs/install/ubuntu
 
 
 # General dependencies
