@@ -589,7 +589,7 @@ void t_erl_generator::generate_erl_struct_definition(ostream& out, t_struct* tst
 
 void t_erl_generator::generate_erl_struct_member(ostream & out, t_field * tmember)
 {
-  out << uncapitalize(tmember->get_name());
+  out << "'" << tmember->get_name() << "'";
   if (has_default_value(tmember))
     out << " = "  << render_member_value(tmember);
   out << " :: " << render_member_type(tmember);
@@ -984,7 +984,7 @@ std::string t_erl_generator::render_type_term(t_type* type, bool expand_structs,
           buf << "{" << key << ", "  << type << "}";
         } else {
           // Convert to format: {struct, [{Fid, Req, Type, Name, Def}|...]}
-          string  name         = uncapitalize(member->get_name());
+          string  name         = member->get_name();
           string  value        = render_member_value(member);
           string  requiredness = render_member_requiredness(member);
           buf << "{" << key << ", "  << requiredness << ", "  << type << ", '" << name << "'"<< ", "  << value << "}";
