@@ -18,11 +18,9 @@
 # under the License.
 
 
-# Mainly aiming Travis CI's Ubuntu for now
+# Mainly aiming Travis CI's Ubuntu machines for now
 
 
-# Install Dependencies
-# ---
 # General dependencies
 sudo apt-add-repository "deb http://archive.ubuntu.com/ubuntu/ trusty main restricted" -y
 sudo apt-get update -qq
@@ -31,6 +29,7 @@ dpkg -S /usr/include/boost/version.hpp
 
 # Java dependencies
 sudo apt-get install -qq ant openjdk-7-jdk
+sudo update-java-alternatives -s java-1.7.0-openjdk-amd64 
 
 # Python dependencies
 sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support
@@ -38,7 +37,6 @@ sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setupto
 # Ruby dependencies
 sudo apt-get install -qq ruby ruby-dev
 sudo gem install bundler rake
-#gem install bundler -v 1.3.5
 
 # Perl dependencies
 sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl
@@ -56,7 +54,7 @@ sudo apt-get install -qq erlang-base erlang-eunit erlang-dev
 echo "golang-go golang-go/dashboard boolean false" | debconf-set-selections
 sudo apt-get -y install -qq golang golang-go
 
-# Haskell dependencies
+# Haskell dependencies TODO
 #sudo apt-get install -qq ghc cabal-install libghc-binary-dev libghc-network-dev libghc-http-dev libghc-hashable-dev libghc-unordered-containers-dev libghc-vector-dev
 #sudo cabal update
 
@@ -70,8 +68,3 @@ sudo update-alternatives --install /usr/bin/node node /usr/bin/nodejs 10
 # CSharp
 sudo apt-get install -qq mono-gmcs mono-devel libmono-system-web2.0-cil
 sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime
-
-# Customize the system
-# ---
-# Default java to latest 1.7 version
-sudo update-java-alternatives -s java-1.7.0-openjdk-amd64 
