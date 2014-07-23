@@ -26,12 +26,15 @@ cache:
  - npm
  - maven
 
- 
+
+
+## Build matrix:
 env:
  # Small Set
  - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
 
- # Build All: TODO: fix these languages
+ # Build All
+ # TODO: fix these languages
  - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua"
 
  
@@ -54,6 +57,8 @@ matrix:
        - make check -j4;
 
 
+
+## Default build sequence:
 before_install:
  - sh contrib/installDependencies.sh 1> /dev/null;
 
