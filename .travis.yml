@@ -40,25 +40,25 @@ matrix:
     - compiler: gcc
       env: CONFIG="--disable-libs"
       script:
-        make check -j4;
-        mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4; cd ..;
-        mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4; cd ..;
+       - make check -j4;
+       - mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4; cd ..;
+       - mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4; cd ..;
 
     - compiler: clang
       env: CONFIG="--disable-libs"
-      script: make check -j4;
-
+      script:
+       - make check -j4;
 
 
 before_install:
-   sh contrib/installDependencies.sh
+ - sh contrib/installDependencies.sh
 
 install:
-   sh bootstrap.sh
-   sh configure $CONFIG
+ - sh bootstrap.sh
+ - sh configure $CONFIG
 
 script:
-   make -j4 && make dist;
-   make cross -j4;
+ - make -j4 && make dist;
+ - make cross -j4;
 # TODO: add these steps
 #  - sh bootstrap.sh ; dpkg-buildpackage -tc
