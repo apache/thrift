@@ -963,6 +963,11 @@ void t_php_generator::generate_php_struct_reader(ofstream& out,
       "$xfer += $input->readStructEnd();" << endl;
   }
 
+  if (validate_ && get_php_num_required_fields(tstruct->get_members(), false) > 0) {
+    indent(out) <<
+      "$this->validateForRead();" << endl;
+  }
+
   indent(out) <<
     "return $xfer;" << endl;
 
