@@ -28,6 +28,7 @@ cache:
  
 env:
  - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
+# TODO: fix these languages
  - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua"
  
 matrix:
@@ -45,11 +46,9 @@ before_install:
 
 install:
  - sh bootstrap.sh
+ - sh configure $CONFIG
 
 script:
-# TODO: fix these languages
- - sh configure $CONFIG
-  
  - function build_n_test {
      if [ $CONFIG == "--disable-libs" ]; then
        make check -j4;
