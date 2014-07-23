@@ -25,40 +25,40 @@ cache:
  - apt
  - npm
  - maven
+
  
 env:
+ # Small Set
  - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
-# TODO: fix these languages
+
+ # Build All: TODO: fix these languages
  - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua"
+
  
 matrix:
   include:
     - compiler: gcc
       env: CONFIG="--disable-libs"
+      script:
+        make check -j4;
+        mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4; cd ..;
+        mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4; cd ..;
+
     - compiler: clang
       env: CONFIG="--disable-libs"
-      script: make check -j5;
+      script: make check -j4;
 
 
-# see what we need: http://thrift.apache.org/docs/install/ubuntu
+
 before_install:
- - sh contrib/installDependencies.sh
+   sh contrib/installDependencies.sh
 
 install:
- - sh bootstrap.sh
- - sh configure $CONFIG
+   sh bootstrap.sh
+   sh configure $CONFIG
 
 script:
- - function build_n_test {
-     if [ $CONFIG == "--disable-libs" ]; then
-       make check -j4;
-       mkdir build_native && cd build_native && cmake ../compiler/cpp/ && make -j4; cd ..;
-       mkdir build_mingw32 && cd build_mingw32 && cmake -DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake ../compiler/cpp/ && make -j4; cd ..;
-     else
-       make -j4 && make dist;
-       make cross -j4;
-     fi
-   }
- - build_n_test
+   make -j4 && make dist;
+   make cross -j4;
 # TODO: add these steps
 #  - sh bootstrap.sh ; dpkg-buildpackage -tc
