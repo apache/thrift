@@ -384,3 +384,8 @@ struct StructB {
   1: optional StructA aa;
   2: required StructA ab;
 }
+
+union UnionOfStrings {
+  1: string aa;
+  2: string bb;
+}

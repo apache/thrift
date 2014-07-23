@@ -20,13 +20,20 @@
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
 stubs: ../ThriftTest.thrift
+	mkdir -p gen-phpv gen-phpvo
 	$(THRIFT) --gen php ../ThriftTest.thrift
 	$(THRIFT) --gen php:inlined ../ThriftTest.thrift
+	$(THRIFT) --gen php:validate --out gen-phpv ../ThriftTest.thrift
+	$(THRIFT) --gen php:validate,oop --out gen-phpvo ../ThriftTest.thrift
 
-check: stubs
+check: check-validators
+
+check-validators: stubs
+	php TestValidators.php
+	php TestValidators.php -oop
 
 clean-local:
-	$(RM) -r gen-php gen-phpi
+	$(RM) -r gen-php gen-phpi gen-phpv gen-phpvo
 
 client: stubs
 	php TestClient.php
