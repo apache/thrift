@@ -154,4 +154,10 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
     close();
   }
 
+  public int getPort() {
+    if (serverSocket_ == null)
+      return -1;
+    return serverSocket_.getLocalPort();
+  }
+
 }
