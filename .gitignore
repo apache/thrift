@@ -105,6 +105,7 @@ test-driver
 /lib/c_glib/test/*.gcno
 /lib/c_glib/test/testwrapper.sh
 /lib/c_glib/test/testwrapper-test*
+/lib/c_glib/test/testapplicationexception
 /lib/c_glib/test/testbinaryprotocol
 /lib/c_glib/test/testbufferedtransport
 /lib/c_glib/test/testdebugproto
