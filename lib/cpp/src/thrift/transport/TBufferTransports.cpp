@@ -303,8 +303,8 @@ uint32_t TFramedTransport::readEnd() {
       rBuf_.reset();
       setReadBuffer(rBuf_.get(), rBufSize_);
   }
- 
-  return bytes_read;   
+
+  return bytes_read;
 }
 
 void TMemoryBuffer::computeRead(uint32_t len, uint8_t** out_start, uint32_t* out_give) {

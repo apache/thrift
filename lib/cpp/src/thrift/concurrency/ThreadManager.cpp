@@ -516,7 +516,7 @@ boost::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
 
   shared_ptr<ThreadManager::Task> task = tasks_.front();
   tasks_.pop();
-  
+
   return task->getRunnable();
 }
 

@@ -80,7 +80,7 @@ class BoostThread: public Thread {
     if (state_ != uninitialized) {
       return;
     }
-  
+
   // Create reference
     shared_ptr<BoostThread>* selfRef = new shared_ptr<BoostThread>();
     *selfRef = self_.lock();

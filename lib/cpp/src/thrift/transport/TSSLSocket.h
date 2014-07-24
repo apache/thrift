@@ -30,7 +30,7 @@ namespace apache { namespace thrift { namespace transport {
 
 class AccessManager;
 class SSLContext;
- 
+
 enum SSLProtocol {
 	SSLTLS		= 0,	// Supports SSLv3 and TLSv1.
 	//SSLv2		= 1,	// HORRIBLY INSECURE!

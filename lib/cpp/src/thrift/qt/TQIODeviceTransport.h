@@ -55,7 +55,7 @@ class TQIODeviceTransport : public apache::thrift::transport::TVirtualTransport<
  private:
    TQIODeviceTransport(const TQIODeviceTransport&);
    TQIODeviceTransport& operator=(const TQIODeviceTransport&);
-   
+
    boost::shared_ptr<QIODevice> dev_;
 };
 }}} // apache::thrift::transport
