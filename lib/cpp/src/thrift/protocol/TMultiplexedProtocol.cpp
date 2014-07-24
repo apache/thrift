@@ -21,11 +21,11 @@
 #include <thrift/processor/TMultiplexedProcessor.h>
 #include <thrift/protocol/TProtocolDecorator.h>
 
-namespace apache 
-{ 
-    namespace thrift 
-    { 
-        namespace protocol 
+namespace apache
+{
+    namespace thrift
+    {
+        namespace protocol
         {
             uint32_t TMultiplexedProtocol::writeMessageBegin_virt(
                 const std::string& _name,

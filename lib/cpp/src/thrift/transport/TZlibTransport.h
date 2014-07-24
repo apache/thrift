@@ -60,7 +60,7 @@ class TZlibTransportException : public TTransportException {
 };
 
 /**
- * This transport uses zlib to compress on write and decompress on read 
+ * This transport uses zlib to compress on write and decompress on read
  *
  * TODO(dreiss): Don't do an extra copy of the compressed data if
  *               the underlying transport is TBuffered or TMemory.
@@ -68,7 +68,7 @@ class TZlibTransportException : public TTransportException {
  */
 class TZlibTransport : public TVirtualTransport<TZlibTransport> {
  public:
- 
+
   /**
    * @param transport    The transport to read compressed data from
    *                     and write compressed data to.
