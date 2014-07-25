@@ -364,7 +364,7 @@ void TSSLSocket::authorize() {
       ASN1_STRING* common = X509_NAME_ENTRY_get_data(entry);
       int size = ASN1_STRING_to_UTF8(&utf8, common);
       if (host.empty()) {
-        host = (server() ? getHost() : getHost());
+        host = (server() ? getPeerHost() : getHost());
       }
       decision = access_->verify(host, (char*)utf8, size);
       OPENSSL_free(utf8);
