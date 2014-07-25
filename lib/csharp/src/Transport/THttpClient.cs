@@ -173,7 +173,26 @@ namespace Thrift.Transport
 				using (Stream requestStream = connection.GetRequestStream())
 				{
 					requestStream.Write(data, 0, data.Length);
-					inputStream = connection.GetResponse().GetResponseStream();
+
+					// Resolve HTTP hang that can happens after successive calls by making sure
+					// that we release the response and response stream. To support this, we copy
+					// the response to a memory stream.
+					using (var response = connection.GetResponse())
+					{
+						using (var responseStream = response.GetResponseStream())
+						{
+							// Copy the response to a memory stream so that we can
+							// cleanly close the response and response stream.
+							inputStream = new MemoryStream();
+							byte[] buffer = new byte[8096];
+							int bytesRead;
+							while ((bytesRead = responseStream.Read(buffer, 0, buffer.Length)) > 0)
+							{
+								inputStream.Write (buffer, 0, bytesRead);
+							}
+							inputStream.Seek(0, 0);
+						}
+					}
 				}
 			}
 			catch (IOException iox)
