@@ -217,6 +217,14 @@ public class TNonblockingServer extends AbstractNonblockingServer {
       }
     }
 
+    protected FrameBuffer createFrameBuffer(final TNonblockingTransport trans,
+        final SelectionKey selectionKey,
+        final AbstractSelectThread selectThread) {
+        return processorFactory_.isAsyncProcessor() ?
+                  new AsyncFrameBuffer(trans, selectionKey, selectThread) :
+                  new FrameBuffer(trans, selectionKey, selectThread);
+    }
+
     /**
      * Accept a new connection.
      */
@@ -229,9 +237,7 @@ public class TNonblockingServer extends AbstractNonblockingServer {
         clientKey = client.registerSelector(selector, SelectionKey.OP_READ);
 
         // add this key to the map
-          FrameBuffer frameBuffer = processorFactory_.isAsyncProcessor() ?
-                  new AsyncFrameBuffer(client, clientKey,SelectAcceptThread.this) :
-                  new FrameBuffer(client, clientKey,SelectAcceptThread.this);
+          FrameBuffer frameBuffer = createFrameBuffer(client, clientKey, SelectAcceptThread.this);
 
           clientKey.attach(frameBuffer);
       } catch (TTransportException tte) {
