@@ -183,7 +183,8 @@ public class TSSLTransportFactory {
         tmf = TrustManagerFactory.getInstance(params.trustManagerType);
         KeyStore ts = KeyStore.getInstance(params.trustStoreType);
         fin = new FileInputStream(params.trustStore);
-        ts.load(fin, params.trustPass.toCharArray());
+        ts.load(fin,
+          (params.trustPass != null ? params.trustPass.toCharArray() : null));
         tmf.init(ts);
       }
 
