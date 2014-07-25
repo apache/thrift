@@ -19,9 +19,7 @@
 
 package thrift
 
-import (
-	"io"
-)
+import "io"
 
 type RichTransport struct {
 	TTransport
@@ -46,7 +44,14 @@ func (r *RichTransport) WriteString(s string) (n int, err error) {
 
 func readByte(r io.Reader) (c byte, err error) {
 	v := [1]byte{0}
-	if _, err := r.Read(v[0:1]); err != nil {
+	n, err := r.Read(v[0:1])
+	if n > 0 && (err == nil || err == io.EOF) {
+		return v[0], nil
+	}
+	if n > 0 && err != nil {
+		return v[0], err
+	}
+	if err != nil {
 		return 0, err
 	}
 	return v[0], nil
