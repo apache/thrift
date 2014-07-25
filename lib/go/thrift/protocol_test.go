@@ -170,7 +170,6 @@ func ReadWriteProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
 		ReadWriteBinary(t, p, trans)
 		trans.Close()
 	}
-
 	for _, tf := range transports {
 		trans := tf.GetTransport(nil)
 		p := protocolFactory.GetProtocol(trans)
@@ -180,7 +179,6 @@ func ReadWriteProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
 		ReadWriteByte(t, p, trans)
 		trans.Close()
 	}
-
 }
 
 func ReadWriteBool(t testing.TB, p TProtocol, trans TTransport) {

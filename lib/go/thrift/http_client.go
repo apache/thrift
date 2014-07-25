@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -150,6 +151,9 @@ func (p *THttpClient) Read(buf []byte) (int, error) {
 		return 0, NewTTransportException(NOT_OPEN, "Response buffer is empty, no request.")
 	}
 	n, err := p.response.Body.Read(buf)
+	if n > 0 && (err == nil || err == io.EOF) {
+		return n, nil
+	}
 	return n, NewTTransportExceptionFromError(err)
 }
 
