@@ -798,45 +798,16 @@ void t_py_generator::generate_py_struct_definition(ofstream& out,
   }
 
   out << indent() << "def __hash__(self):" << endl;
-  indent_up();
-  indent(out) << "value = ctypes.c_uint32(0x345678)";
-  out << endl;
-  indent(out) << "mult = ctypes.c_uint32(0xf4243)";
-  out << endl;
-  indent(out) << "uhash = ctypes.c_uint32(0xf4243)";
-  out << endl;
-  indent(out) << "members_count = members.size()";
-  out << endl;
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-	indent(out) << "obj_hash = ctypes.c_uint32( hash(self." << (*m_iter)->get_name() + ") )";
-	out << endl;
-	indent(out) << "if obj_hash == -1:";
-	out << endl;
-	indent_up();
-	indent(out) << " return -1";
-	out << endl;
-	indent_down();
-	indent(out) << "value = (value ^ obj_hash) * mult";
-	out << endl;
-	indent(out) << "members_count -= 1";
-	out << endl;
-	indent(out) << "mult = ctypes.c_uint32(82520L + members_count + members_count).value";
-	out << endl;
-  }
-  indent(out) << "value += 97531L";
-  out << endl;
-  indent(out) << "if value == ctypes.c_uint32(-1):";
-  out << endl;
-  indent_up();
-  indent(out) << " return -2";
-  out << endl;
-  indent_down();
-  indent(out) << "return value";
-  out << endl;
-  indent_down();
-  out << endl;
-
-
+  indent_up(); 
+  indent(out) << "value = PYTHONHASHSEED" << endl; 
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) { 
+    indent(out) << "value = (value * 31) ^ hash(self." << (*m_iter)->get_name() + ")" << endl; 
+  } 
+  indent(out) << "return value" << endl; 
+  indent_down(); 
+  out << endl; 
+  
+  
   if (!gen_slots_) {
     // Printing utilities so that on the command line thrift
     // structs look pretty like dictionaries
