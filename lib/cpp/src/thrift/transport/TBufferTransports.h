@@ -340,7 +340,7 @@ class TFramedTransport
     initPointers();
   }
 
-  TFramedTransport(boost::shared_ptr<TTransport> transport, uint32_t sz, 
+  TFramedTransport(boost::shared_ptr<TTransport> transport, uint32_t sz,
           uint32_t bufReclaimThresh = std::numeric_limits<uint32_t>::max())
     : transport_(transport)
     , rBufSize_(0)

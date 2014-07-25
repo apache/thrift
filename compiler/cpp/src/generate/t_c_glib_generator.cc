@@ -1046,6 +1046,42 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
   string service_name_lc = to_lower_case(initial_caps_to_underscores(service_name_));
   string service_name_uc = to_upper_case(service_name_lc);
 
+  string parent_service_name;
+  string parent_service_name_lc;
+  string parent_service_name_uc;
+
+  string parent_class_name = "GObject";
+  string parent_type_name = "G_TYPE_OBJECT";
+
+  // The service this service extends, or NULL if it extends no
+  // service
+  t_service *extends_service = tservice->get_extends();
+  if (extends_service) {
+    // The name of the parent service
+    parent_service_name = extends_service->get_name();
+    parent_service_name_lc =
+      to_lower_case(initial_caps_to_underscores(parent_service_name));
+    parent_service_name_uc = to_upper_case(parent_service_name_lc);
+
+    // The names of the client class' parent class and type
+    parent_class_name = this->nspace + parent_service_name + "Client";
+    parent_type_name =
+      this->nspace_uc + "TYPE_" + parent_service_name_uc + "_CLIENT";
+  }
+
+  // The base service (the topmost in the "extends" hierarchy), on
+  // whose client class the "input_protocol" and "output_protocol"
+  // properties are defined
+  t_service *base_service = tservice;
+  while (base_service->get_extends()) {
+    base_service = base_service->get_extends();
+  }
+
+  string base_service_name = base_service->get_name();
+  string base_service_name_lc =
+    to_lower_case(initial_caps_to_underscores(base_service_name));
+  string base_service_name_uc = to_upper_case(base_service_name_lc);
+
   // Generate the client interface dummy object in the header.
   f_header_ <<
     "/* " << service_name_ << " service interface */" << endl <<
@@ -1139,10 +1175,17 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
     "/* " << service_name_ << " service client */" << endl <<
     "struct _" << this->nspace << service_name_ << "Client" << endl <<
     "{" << endl <<
-    "  GObject parent;" << endl <<
-    endl <<
-    "  ThriftProtocol *input_protocol;" << endl <<
-    "  ThriftProtocol *output_protocol;" << endl <<
+    "  " << parent_class_name << " parent;" << endl;
+  if (!extends_service) {
+    // Define "input_protocol" and "output_protocol" properties only
+    // for base services; child service-client classes will inherit
+    // these
+    f_header_ <<
+      endl <<
+      "  ThriftProtocol *input_protocol;" << endl <<
+      "  ThriftProtocol *output_protocol;" << endl;
+  }
+  f_header_ <<
     "};" << endl <<
     "typedef struct _" << this->nspace << service_name_ << "Client " <<
       this->nspace << service_name_ << "Client;" << endl <<
@@ -1152,7 +1195,7 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
   f_header_ <<
     "struct _" << this->nspace << service_name_ << "ClientClass" << endl <<
     "{" << endl <<
-    "  GObjectClass parent;" << endl <<
+    "  " << parent_class_name << "Class parent;" << endl <<
     "};" << endl <<
     "typedef struct _" << this->nspace << service_name_ << "ClientClass " <<
       this->nspace << service_name_ << "ClientClass;" << endl <<
@@ -1308,79 +1351,83 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
     endl <<
     "G_DEFINE_TYPE_WITH_CODE (" << this->nspace << service_name_ <<
       "Client, " << this->nspace_lc << service_name_lc << "_client," << endl <<
-      "                       G_TYPE_OBJECT, " << endl <<
+    "                         " << parent_type_name << ", " << endl <<
     "                         G_IMPLEMENT_INTERFACE (" <<
         this->nspace_uc << "TYPE_" << service_name_uc << "_IF," << endl <<
     "                                                " <<
         this->nspace_lc << service_name_lc << "_if_interface_init));" << endl <<
     endl;
 
-  // Generate client properties
-  f_service_ <<
-    "enum _" << this->nspace << service_name_ << "ClientProperties" << endl <<
-    "{" << endl <<
-    "  PROP_0," << endl <<
-    "  PROP_" << this->nspace_uc << service_name_uc <<
-        "_CLIENT_INPUT_PROTOCOL," <<
-        endl <<
-    "  PROP_" << this->nspace_uc << service_name_uc <<
-        "_CLIENT_OUTPUT_PROTOCOL" <<
-        endl <<
-    "};" << endl <<
-  endl;
+  // Generate property-related code only for base services---child
+  // service-client classes have only properties inherited from their
+  // parent class
+  if (!extends_service) {
+    // Generate client properties
+    f_service_ <<
+      "enum _" << this->nspace << service_name_ << "ClientProperties" << endl <<
+      "{" << endl <<
+      "  PROP_0," << endl <<
+      "  PROP_" << this->nspace_uc << service_name_uc <<
+          "_CLIENT_INPUT_PROTOCOL," <<
+          endl <<
+      "  PROP_" << this->nspace_uc << service_name_uc <<
+          "_CLIENT_OUTPUT_PROTOCOL" <<
+          endl <<
+      "};" << endl <<
+    endl;
 
-  // generate property setter
-  f_service_ <<
-    "void" << endl <<
-    this->nspace_lc << service_name_lc << "_client_set_property (" <<
-        "GObject *object, guint property_id, const GValue *value, " <<
-        "GParamSpec *pspec)" << endl <<
-    "{" << endl <<
-    "  " << this->nspace << service_name_ << "Client *client = " <<
-        this->nspace_uc << service_name_uc << "_CLIENT (object);" << endl <<
-    endl <<
-    "  THRIFT_UNUSED_VAR (pspec);" << endl <<
-    endl <<
-    "  switch (property_id)" << endl <<
-    "  {" << endl <<
-    "    case PROP_" << this->nspace_uc << service_name_uc <<
-        "_CLIENT_INPUT_PROTOCOL:" << endl <<
-    "      client->input_protocol = g_value_get_object (value);" << endl <<
-    "      break;" << endl <<
-    "    case PROP_" << this->nspace_uc << service_name_uc <<
-        "_CLIENT_OUTPUT_PROTOCOL:" << endl <<
-    "      client->output_protocol = g_value_get_object (value);" << endl <<
-    "      break;" << endl <<
-    "  }" << endl <<
-    "}" << endl <<
-  endl;
+    // generate property setter
+    f_service_ <<
+      "void" << endl <<
+      this->nspace_lc << service_name_lc << "_client_set_property (" <<
+          "GObject *object, guint property_id, const GValue *value, " <<
+          "GParamSpec *pspec)" << endl <<
+      "{" << endl <<
+      "  " << this->nspace << service_name_ << "Client *client = " <<
+          this->nspace_uc << service_name_uc << "_CLIENT (object);" << endl <<
+      endl <<
+      "  THRIFT_UNUSED_VAR (pspec);" << endl <<
+      endl <<
+      "  switch (property_id)" << endl <<
+      "  {" << endl <<
+      "    case PROP_" << this->nspace_uc << service_name_uc <<
+          "_CLIENT_INPUT_PROTOCOL:" << endl <<
+      "      client->input_protocol = g_value_get_object (value);" << endl <<
+      "      break;" << endl <<
+      "    case PROP_" << this->nspace_uc << service_name_uc <<
+          "_CLIENT_OUTPUT_PROTOCOL:" << endl <<
+      "      client->output_protocol = g_value_get_object (value);" << endl <<
+      "      break;" << endl <<
+      "  }" << endl <<
+      "}" << endl <<
+    endl;
 
-  // generate property getter
-  f_service_ <<
-    "void" << endl <<
-    this->nspace_lc << service_name_lc << "_client_get_property (" <<
-        "GObject *object, guint property_id, GValue *value, " <<
-        "GParamSpec *pspec)" << endl <<
-    "{" << endl <<
-    "  " << this->nspace << service_name_ << "Client *client = " <<
-        this->nspace_uc << service_name_uc << "_CLIENT (object);" << endl <<
-    endl <<
-    "  THRIFT_UNUSED_VAR (pspec);" << endl <<
-    endl <<
-    "  switch (property_id)" << endl <<
-    "  {" << endl <<
-    "    case PROP_" << this->nspace_uc << service_name_uc <<
-        "_CLIENT_INPUT_PROTOCOL:" << endl <<
-    "      g_value_set_object (value, client->input_protocol);" << endl <<
-    "      break;" << endl <<
-    "    case PROP_" << this->nspace_uc << service_name_uc <<
-        "_CLIENT_OUTPUT_PROTOCOL:" << endl <<
-    "      g_value_set_object (value, client->output_protocol);" << endl <<
-    "      break;" << endl <<
-    "  }" << endl <<
-    "}" << endl <<
-  endl;
-
+    // generate property getter
+    f_service_ <<
+      "void" << endl <<
+      this->nspace_lc << service_name_lc << "_client_get_property (" <<
+          "GObject *object, guint property_id, GValue *value, " <<
+          "GParamSpec *pspec)" << endl <<
+      "{" << endl <<
+      "  " << this->nspace << service_name_ << "Client *client = " <<
+          this->nspace_uc << service_name_uc << "_CLIENT (object);" << endl <<
+      endl <<
+      "  THRIFT_UNUSED_VAR (pspec);" << endl <<
+      endl <<
+      "  switch (property_id)" << endl <<
+      "  {" << endl <<
+      "    case PROP_" << this->nspace_uc << service_name_uc <<
+          "_CLIENT_INPUT_PROTOCOL:" << endl <<
+      "      g_value_set_object (value, client->input_protocol);" << endl <<
+      "      break;" << endl <<
+      "    case PROP_" << this->nspace_uc << service_name_uc <<
+          "_CLIENT_OUTPUT_PROTOCOL:" << endl <<
+      "      g_value_set_object (value, client->output_protocol);" << endl <<
+      "      break;" << endl <<
+      "  }" << endl <<
+      "}" << endl <<
+    endl;
+  }
 
   // Generate client method implementations
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1405,7 +1452,7 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
     f_service_ <<
       indent() << "gint32 cseqid = 0;" << endl <<
       indent() << "ThriftProtocol * protocol = " << 
-        this->nspace_uc << service_name_uc << 
+        this->nspace_uc << base_service_name_uc <<
         "_CLIENT (iface)->output_protocol;" << endl <<
       endl <<
       indent() << "if (thrift_protocol_write_message_begin (protocol, \"" <<
@@ -1454,7 +1501,7 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
         indent() << "gchar * fname = NULL;" << endl <<
         indent() << "ThriftMessageType mtype;" << endl <<
         indent() << "ThriftProtocol * protocol = " << 
-                      this->nspace_uc << service_name_uc <<
+                      this->nspace_uc << base_service_name_uc <<
                       "_CLIENT (iface)->input_protocol;" << endl <<
         endl <<
         indent() << "if (thrift_protocol_read_message_begin " << 
@@ -1620,9 +1667,13 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
     "static void" << endl <<
     this->nspace_lc << service_name_lc << "_client_init (" <<
         this->nspace << service_name_ << "Client *client)" << endl <<
-    "{" << endl <<
-    "  client->input_protocol = NULL;" << endl <<
-    "  client->output_protocol = NULL;" << endl <<
+    "{" << endl;
+  if(!extends_service) {
+    f_service_ <<
+      "  client->input_protocol = NULL;" << endl <<
+      "  client->output_protocol = NULL;" << endl;
+  }
+  f_service_ <<
     "}" << endl <<
     endl;
 
@@ -1631,36 +1682,40 @@ void t_c_glib_generator::generate_service_client(t_service *tservice) {
     "static void" << endl <<
     this->nspace_lc << service_name_lc << "_client_class_init (" <<
         this->nspace << service_name_ << "ClientClass *cls)" << endl <<
-    "{" << endl <<
-    "  GObjectClass *gobject_class = G_OBJECT_CLASS (cls);" << endl <<
-    "  GParamSpec *param_spec;" << endl <<
-    endl <<
-    "  gobject_class->set_property = " << this->nspace_lc <<
-        service_name_lc << "_client_set_property;" << endl <<
-    "  gobject_class->get_property = " << this->nspace_lc <<
-        service_name_lc << "_client_get_property;" << endl <<
-    endl <<
-    "  param_spec = g_param_spec_object (\"input_protocol\"," << endl <<
-    "                                    \"input protocol (construct)\"," <<
-        endl <<
-    "                                    \"Set the client input protocol\"," <<
-        endl <<
-    "                                    THRIFT_TYPE_PROTOCOL," << endl <<
-    "                                    G_PARAM_READWRITE);" << endl <<
-    "  g_object_class_install_property (gobject_class," << endl <<
-    "                                   PROP_" << this->nspace_uc <<
-        service_name_uc << "_CLIENT_INPUT_PROTOCOL, param_spec);" << endl <<
-    endl <<
-    "  param_spec = g_param_spec_object (\"output_protocol\"," << endl <<
-    "                                    \"output protocol (construct)\"," <<
-        endl <<
-    "                                    \"Set the client output protocol\"," <<
-        endl <<
-    "                                    THRIFT_TYPE_PROTOCOL," << endl <<
-    "                                    G_PARAM_READWRITE);" << endl <<
-    "  g_object_class_install_property (gobject_class," << endl <<
-    "                                   PROP_" << this->nspace_uc <<
-        service_name_uc << "_CLIENT_OUTPUT_PROTOCOL, param_spec);" << endl <<
+    "{" << endl;
+  if (!extends_service) {
+    f_service_ <<
+      "  GObjectClass *gobject_class = G_OBJECT_CLASS (cls);" << endl <<
+      "  GParamSpec *param_spec;" << endl <<
+      endl <<
+      "  gobject_class->set_property = " << this->nspace_lc <<
+          service_name_lc << "_client_set_property;" << endl <<
+      "  gobject_class->get_property = " << this->nspace_lc <<
+          service_name_lc << "_client_get_property;" << endl <<
+      endl <<
+      "  param_spec = g_param_spec_object (\"input_protocol\"," << endl <<
+      "                                    \"input protocol (construct)\"," <<
+          endl <<
+      "                                    \"Set the client input protocol\"," <<
+          endl <<
+      "                                    THRIFT_TYPE_PROTOCOL," << endl <<
+      "                                    G_PARAM_READWRITE);" << endl <<
+      "  g_object_class_install_property (gobject_class," << endl <<
+      "                                   PROP_" << this->nspace_uc <<
+          service_name_uc << "_CLIENT_INPUT_PROTOCOL, param_spec);" << endl <<
+      endl <<
+      "  param_spec = g_param_spec_object (\"output_protocol\"," << endl <<
+      "                                    \"output protocol (construct)\"," <<
+          endl <<
+      "                                    \"Set the client output protocol\"," <<
+          endl <<
+      "                                    THRIFT_TYPE_PROTOCOL," << endl <<
+      "                                    G_PARAM_READWRITE);" << endl <<
+      "  g_object_class_install_property (gobject_class," << endl <<
+      "                                   PROP_" << this->nspace_uc <<
+        service_name_uc << "_CLIENT_OUTPUT_PROTOCOL, param_spec);" << endl;
+  }
+  f_service_ <<
     "}" << endl <<
     endl;
 }

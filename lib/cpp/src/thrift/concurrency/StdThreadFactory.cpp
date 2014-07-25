@@ -81,7 +81,7 @@ class StdThread: public Thread, public boost::enable_shared_from_this<StdThread>
     if (state_ != uninitialized) {
       return;
     }
-	
+
     boost::shared_ptr<StdThread> selfRef = shared_from_this();
     state_ = starting;
 

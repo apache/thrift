@@ -25,7 +25,7 @@
 #include <thrift/transport/TBufferTransports.h>
 
 using boost::shared_ptr;
-  
+
 namespace apache { namespace thrift { namespace transport {
 
 TQIODeviceTransport::TQIODeviceTransport(shared_ptr<QIODevice> dev)

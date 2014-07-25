@@ -26,6 +26,7 @@ CFLAGS = @GCOV_CFLAGS@
 CXXFLAGS = -g
 
 check_PROGRAMS = \
+  testapplicationexception \
   testtransportsocket \
   testbinaryprotocol \
   testbufferedtransport \
@@ -40,6 +41,13 @@ check_PROGRAMS = \
 if WITH_CPP
   check_PROGRAMS += testthrifttestclient
 endif
+
+testapplicationexception_SOURCES = testapplicationexception.c
+testapplicationexception_LDADD = \
+    ../libthrift_c_glib_la-thrift_application_exception.o \
+    ../libthrift_c_glib_la-thrift_protocol.o \
+    ../libthrift_c_glib_la-thrift_struct.o \
+    ../libthrift_c_glib_la-thrift_transport.o
 
 testtransportsocket_SOURCES = testtransportsocket.c
 testtransportsocket_LDADD = \

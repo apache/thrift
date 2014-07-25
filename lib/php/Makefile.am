@@ -95,6 +95,7 @@ phpstringfunc_DATA = \
 phptransportdir = $(phpdir)/Transport
 phptransport_DATA = \
   lib/Thrift/Transport/TBufferedTransport.php \
+  lib/Thrift/Transport/TCurlClient.php \
   lib/Thrift/Transport/TFramedTransport.php \
   lib/Thrift/Transport/THttpClient.php \
   lib/Thrift/Transport/TMemoryBuffer.php \

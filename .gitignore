@@ -105,6 +105,7 @@ test-driver
 /lib/c_glib/test/*.gcno
 /lib/c_glib/test/testwrapper.sh
 /lib/c_glib/test/testwrapper-test*
+/lib/c_glib/test/testapplicationexception
 /lib/c_glib/test/testbinaryprotocol
 /lib/c_glib/test/testbufferedtransport
 /lib/c_glib/test/testdebugproto
@@ -211,6 +212,12 @@ test-driver
 /lib/go/test/ThriftTest.thrift
 /test/log/
 /test/test.log
+/test/go/ThriftTest.thrift
+/test/go/gopath
+/test/go/pkg/
+/test/go/src/code.google.com/
+/test/go/src/gen/
+/test/go/src/thrift
 /test/py.twisted/_trial_temp/
 /test/rb/Gemfile.lock
 /tutorial/cpp/TutorialClient
