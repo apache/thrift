@@ -80,18 +80,18 @@ def runServiceTest(test_name, server_executable, server_extra_args, client_execu
   server_log=open("log/" + test_name + "_server.log","a")
   client_log=open("log/" + test_name + "_client.log","a")
 
-  if options.verbose > 0:
-    print 'Testing server: %s' % (' '.join(server_args))
-    serverproc = subprocess.Popen(server_args, stdout=server_log, stderr=server_log)
-  else:
-    serverproc = subprocess.Popen(server_args, stdout=server_log, stderr=server_log)
+  try:
+    if options.verbose > 0:
+      print 'Testing server: %s' % (' '.join(server_args))
+      serverproc = subprocess.Popen(server_args, stdout=server_log, stderr=server_log)
+    else:
+      serverproc = subprocess.Popen(server_args, stdout=server_log, stderr=server_log)
+  except OSError as e:
+    return "OS error({0}): {1}".format(e.errno, e.strerror)
 
   def ensureServerAlive():
     if serverproc.poll() is not None:
-      print ('FAIL: Server process (%s) failed with retcode %d'
-             % (' '.join(server_args), serverproc.returncode))
-      raise Exception('Server subprocess died, args: %s'
-                      % (' '.join(server_args)))
+      return 'Server subprocess died, args: %s' % (' '.join(server_args))
 
   # Wait for the server to start accepting connections on the given port.
   sock = socket.socket()
@@ -104,8 +104,7 @@ def runServiceTest(test_name, server_executable, server_extra_args, client_execu
       while sock.connect_ex(('127.0.0.1', port)) != 0:
         attempt += 1
         if attempt >= max_attempts:
-          raise Exception("TestServer not ready on port %d after %.2f seconds"
-                          % (port, sleep_time * attempt))
+          return "TestServer not ready on port %d after %.2f seconds" % (port, sleep_time * attempt)
         ensureServerAlive()
         time.sleep(sleep_time)
   finally:
@@ -114,15 +113,20 @@ def runServiceTest(test_name, server_executable, server_extra_args, client_execu
   try:
     o = []
     def target():
-      if options.verbose > 0:
-        print 'Testing client: %s' % (' '.join(cli_args))
-        process = subprocess.Popen(cli_args, stdout=client_log, stderr=client_log)
-        o.append(process)
-        process.communicate()
-      else:
-        process = subprocess.Popen(cli_args, stdout=client_log, stderr=client_log)
-        o.append(process)
-        process.communicate()
+      try:
+        if options.verbose > 0:
+          print 'Testing client: %s' % (' '.join(cli_args))
+          process = subprocess.Popen(cli_args, stdout=client_log, stderr=client_log)
+          o.append(process)
+          process.communicate()
+        else:
+          process = subprocess.Popen(cli_args, stdout=client_log, stderr=client_log)
+          o.append(process)
+          process.communicate()
+      except OSError as e:
+        return "OS error({0}): {1}".format(e.errno, e.strerror)
+      except:
+        return "Unexpected error:", sys.exc_info()[0]
     thread = threading.Thread(target=target)
     thread.start()
 
@@ -131,6 +135,8 @@ def runServiceTest(test_name, server_executable, server_extra_args, client_execu
       print 'Terminating process'
       o[0].terminate()
       thread.join()
+    if(len(o)==0):
+      return "Client subprocess failed, args: %s" % (' '.join(cli_args))
     ret = o[0].returncode
     if ret != 0:
       return "Client subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(cli_args))
