@@ -52,9 +52,10 @@ sudo apt-get install -qq erlang-base erlang-eunit erlang-dev
 echo "golang-go golang-go/dashboard boolean false" | debconf-set-selections
 sudo apt-get -y install -qq golang golang-go
 
-# Haskell dependencies TODO
-#sudo apt-get install -qq ghc cabal-install libghc-binary-dev libghc-network-dev libghc-http-dev libghc-hashable-dev libghc-unordered-containers-dev libghc-vector-dev
-#sudo cabal update
+# Haskell dependencies
+sudo add-apt-repository -y ppa:hvr/ghc
+sudo apt-get update
+sudo apt-get install cabal-install-1.20 ghc-$GHCVER
 
 # Lua dependencies
 sudo apt-get install -qq lua5.2 lua5.2-dev

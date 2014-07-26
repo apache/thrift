@@ -33,11 +33,14 @@ env:
  # Small Set
  - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua --without-d --without-ruby --without-nodejs --without-java"
 
+ # C & C++ & Haskell (for some reason qt4 is required)
+ - CONFIG="--without-csharp --without-java --without-erlang --without-nodejs --without-lua --without-python --without-perl --without-php --without-php-extension --without-ruby --without-go --without-d" GHCVER=7.8.3
+
  # Build All
  # TODO: fix these languages
- - CONFIG="--without-erlang --without-haskell --without-python --without-go --without-lua"
+ - CONFIG="--without-erlang --without-python --without-go --without-lua" GHCVER=7.8.3
 
- 
+
 matrix:
   include:
     - compiler: gcc
@@ -61,6 +64,8 @@ matrix:
 ## Default build sequence:
 before_install:
  - sh contrib/installDependencies.sh 1> /dev/null;
+ - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH
+ - cabal update
 
 install:
  - sh bootstrap.sh;
