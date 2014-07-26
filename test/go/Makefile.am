@@ -28,7 +28,7 @@ ThriftTest.thrift: $(THRIFTTEST)
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
 gopath: $(THRIFT) ThriftTest.thrift
-	mkdir src/gen
+	mkdir -p src/gen
 	$(THRIFTCMD) ThriftTest.thrift
 	$(THRIFTCMD) ../StressTest.thrift
 	ln -nfs ../../../lib/go/thrift src/thrift
